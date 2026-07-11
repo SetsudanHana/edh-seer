@@ -1,0 +1,10 @@
+{
+  "cards": [
+    { "name": "Krenko, Mob Boss", "typeLine": "Legendary Creature — Goblin Warrior", "oracleText": "Tap: Create a number of 1/1 red Goblin creature tokens equal to the number of Goblins you control.", "keywords": [], "colors": ["R"], "manaValue": 4 },
+    { "name": "Impact Tremors", "typeLine": "Enchantment", "oracleText": "Whenever a creature enters the battlefield under your control, Impact Tremors deals 1 damage to each opponent.", "keywords": [], "colors": ["R"], "manaValue": 2 },
+    { "name": "Dockside Extortionist", "typeLine": "Legendary Creature — Goblin Pirate", "oracleText": "When Dockside Extortionist enters the battlefield, create a number of Treasure tokens equal to the number of artifacts and enchantments your opponents control.", "keywords": [], "colors": ["R"], "manaValue": 2 },
+    { "name": "Reckless Fireweaver", "typeLine": "Creature — Human Artificer", "oracleText": "Whenever an artifact enters the battlefield under your control, Reckless Fireweaver deals 1 damage to each opponent.", "keywords": [], "colors": ["R"], "manaValue": 2 },
+    { "name": "Cultivate", "typeLine": "Sorcery", "oracleText": "Search your library for up to two basic land cards, reveal them, put one onto the battlefield tapped and the other into your hand, then shuffle.", "keywords": [], "colors": ["G"], "manaValue": 3 }
+  ],
+  "combos": []
+}
