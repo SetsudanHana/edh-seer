@@ -5,6 +5,6 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "tsc -b"
+    "typecheck": "npm run typecheck --workspaces --if-present"
   }
 }
