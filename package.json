@@ -1,0 +1,10 @@
+{
+  "name": "mtg-deckbuilder",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}
