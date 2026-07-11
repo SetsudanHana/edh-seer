@@ -1,5 +1,6 @@
 import type { Card } from "./card.js";
 import { extractTags, type Tag } from "./tags.js";
+import type { ComboIndex } from "./combos.js";
 
 export interface Reason {
   /** The tag that produced this reason, or "combo". */
@@ -32,11 +33,19 @@ function matchDirection(
   }
 }
 
-export function synergyScore(a: Card, b: Card): SynergyResult {
+export function synergyScore(a: Card, b: Card, combos?: ComboIndex): SynergyResult {
   const ta = extractTags(a);
   const tb = extractTags(b);
   const reasons: Reason[] = [];
   matchDirection(a, ta.produces, b, tb.cares, reasons);
   matchDirection(b, tb.produces, a, ta.cares, reasons);
+
+  const found = combos?.combosContainedIn(new Set([a.name, b.name])) ?? [];
+  if (found.length > 0) {
+    for (const c of found) {
+      reasons.push({ tag: "combo", text: `Combo: ${a.name} + ${b.name} — ${c.result}` });
+    }
+    return { score: 100, reasons, combo: true };
+  }
   return { score: reasons.length, reasons, combo: false };
 }
