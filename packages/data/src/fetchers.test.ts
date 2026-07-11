@@ -16,14 +16,36 @@ test("fetchOracleCards follows the bulk-data download_uri", async () => {
     .mockResolvedValueOnce(jsonResponse([{ oracle_id: "a", name: "A", type_line: "T" }]));
 
   const cards = await fetchOracleCards(fetchImpl as unknown as typeof fetch);
-  expect(fetchImpl).toHaveBeenNthCalledWith(1, "https://api.scryfall.com/bulk-data");
-  expect(fetchImpl).toHaveBeenNthCalledWith(2, "https://dl/oracle");
+  expect(fetchImpl).toHaveBeenNthCalledWith(
+    1,
+    "https://api.scryfall.com/bulk-data",
+    expect.objectContaining({
+      headers: expect.objectContaining({ "User-Agent": expect.any(String) }),
+    }),
+  );
+  expect(fetchImpl).toHaveBeenNthCalledWith(
+    2,
+    "https://dl/oracle",
+    expect.objectContaining({
+      headers: expect.objectContaining({ "User-Agent": expect.any(String) }),
+    }),
+  );
+  expect(fetchImpl.mock.calls[0][1].headers["User-Agent"]).toBeTruthy();
   expect(cards).toHaveLength(1);
+});
+
+test("fetchOracleCards throws a clear error when the metadata response has no data array", async () => {
+  const fetchImpl = vi.fn().mockResolvedValueOnce(jsonResponse({ object: "error" }, false, 400));
+
+  await expect(fetchOracleCards(fetchImpl as unknown as typeof fetch)).rejects.toThrow(
+    "Scryfall bulk-data request failed: unexpected response",
+  );
 });
 
 test("fetchVariants unwraps the variants envelope", async () => {
   const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ variants: [{ id: "v1" }] }));
   const variants = await fetchVariants(fetchImpl as unknown as typeof fetch);
+  expect(fetchImpl.mock.calls[0][1].headers["User-Agent"]).toBeTruthy();
   expect(variants).toEqual([{ id: "v1" }]);
 });
 

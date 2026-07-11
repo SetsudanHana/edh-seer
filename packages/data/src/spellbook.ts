@@ -29,10 +29,17 @@ export function normalizeVariant(raw: SpellbookVariant): NormalizedCombo | null 
 
 export type FetchFn = typeof fetch;
 
+const SPELLBOOK_HEADERS = {
+  "User-Agent": "mtg-synergy-engine/0.1",
+  Accept: "application/json",
+};
+
 export async function fetchVariants(
   fetchImpl: FetchFn = fetch,
 ): Promise<SpellbookVariant[]> {
-  const res = await fetchImpl("https://json.commanderspellbook.com/variants.json");
+  const res = await fetchImpl("https://json.commanderspellbook.com/variants.json", {
+    headers: SPELLBOOK_HEADERS,
+  });
   const json = (await res.json()) as { variants?: SpellbookVariant[] } | SpellbookVariant[];
   return Array.isArray(json) ? json : json.variants ?? [];
 }
