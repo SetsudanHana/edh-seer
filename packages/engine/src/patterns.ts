@@ -69,13 +69,21 @@ export const PATTERNS: Pattern[] = [
     name: "sacrifice-outlet",
     // "sacrifice a/another creature" appearing before a colon = an activated sac ability.
     matches: (c) => /sacrifice (a|another) creature/.test(oracle(c)),
-    produces: ["sacrifice-event", "mana"],
+    produces: ["sacrifice-event"],
     cares: ["sacrifice-fodder"],
   },
   {
     name: "death-payoff",
     matches: (c) => has(c, "creature dies", "another creature dies", "a creature you control dies", "whenever a creature dies"),
     cares: ["creature-death", "sacrifice-event"],
+  },
+
+  // --- Mana ---
+  {
+    name: "mana-source",
+    // "add {C}{C}" / "add two colorless mana" / "add one mana of any color" etc.
+    matches: (c) => /add .*mana/.test(oracle(c)),
+    produces: ["mana"],
   },
 
   // --- Lands / ramp ---
