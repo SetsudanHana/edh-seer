@@ -26,3 +26,13 @@ export function normalizeVariant(raw: SpellbookVariant): NormalizedCombo | null 
 
   return { id: raw.id, combo: { cards, result: results.join(", ") } };
 }
+
+export type FetchFn = typeof fetch;
+
+export async function fetchVariants(
+  fetchImpl: FetchFn = fetch,
+): Promise<SpellbookVariant[]> {
+  const res = await fetchImpl("https://json.commanderspellbook.com/variants.json");
+  const json = (await res.json()) as { variants?: SpellbookVariant[] } | SpellbookVariant[];
+  return Array.isArray(json) ? json : json.variants ?? [];
+}

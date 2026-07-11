@@ -47,3 +47,18 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
 
   return { oracleId: raw.oracle_id, card, faceNames };
 }
+
+export type FetchFn = typeof fetch;
+
+export async function fetchOracleCards(
+  fetchImpl: FetchFn = fetch,
+): Promise<ScryfallCard[]> {
+  const meta = await fetchImpl("https://api.scryfall.com/bulk-data");
+  const metaJson = (await meta.json()) as {
+    data: Array<{ type: string; download_uri: string }>;
+  };
+  const entry = metaJson.data.find((d) => d.type === "oracle_cards");
+  if (!entry) throw new Error("Scryfall oracle_cards bulk entry not found");
+  const res = await fetchImpl(entry.download_uri);
+  return (await res.json()) as ScryfallCard[];
+}
