@@ -8,7 +8,8 @@
     "start": "tsx src/main.ts"
   },
   "dependencies": {
-    "@mtg/engine": "*"
+    "@mtg/engine": "*",
+    "@mtg/data": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
