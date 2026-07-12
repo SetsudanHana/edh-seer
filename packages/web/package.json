@@ -1,0 +1,36 @@
+{
+  "name": "@mtg/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build:server": "nest build",
+    "start:server": "node dist/main.js",
+    "dev:server": "nest start --watch",
+    "dev:client": "vite --config client/vite.config.ts",
+    "dev": "concurrently -n server,client -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "build:client": "vite --config client/vite.config.ts build",
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "vitest run --config server/vitest.config.ts",
+    "test:client": "vitest run --config client/vitest.config.ts",
+    "typecheck": "tsc -p server/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@mtg/engine": "*",
+    "@mtg/data": "*",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-fastify": "^11.0.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/testing": "^11.0.0",
+    "@swc/core": "^1.7.0",
+    "unplugin-swc": "^1.5.1",
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0",
+    "vitest": "^1.6.0",
+    "concurrently": "^9.0.0"
+  }
+}
