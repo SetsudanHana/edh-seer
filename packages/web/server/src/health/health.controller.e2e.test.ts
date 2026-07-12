@@ -2,12 +2,15 @@ import "reflect-metadata";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import { Test } from "@nestjs/testing";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
-import { AppModule } from "../app.module.js";
+import { HealthController } from "./health.controller.js";
 
 let app: NestFastifyApplication;
 
 beforeAll(async () => {
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  // Use a minimal module (just HealthController) rather than AppModule: since Task 4,
+  // AppModule imports DataModule, which connects Mongo at init — a liveness check
+  // must not require a database.
+  const moduleRef = await Test.createTestingModule({ controllers: [HealthController] }).compile();
   app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
   app.setGlobalPrefix("api");
   await app.init();
