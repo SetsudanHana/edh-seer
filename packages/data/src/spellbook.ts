@@ -1,8 +1,13 @@
 import { Readable } from "node:stream";
-import { parser } from "stream-json";
-import { pick } from "stream-json/filters/Pick.js";
-import { streamArray } from "stream-json/streamers/StreamArray.js";
+import { createRequire } from "node:module";
 import type { Combo } from "@mtg/engine";
+
+// stream-json is CommonJS; Node's native ESM loader (used by tsx at runtime)
+// cannot statically resolve its named exports, so load it via createRequire.
+const require = createRequire(import.meta.url);
+const { parser } = require("stream-json");
+const { pick } = require("stream-json/filters/Pick");
+const { streamArray } = require("stream-json/streamers/StreamArray");
 
 export interface SpellbookVariant {
   id?: string;
