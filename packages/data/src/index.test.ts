@@ -11,6 +11,8 @@ test("exposes the public API surface", () => {
     "parseMoxfieldId",
     "fetchMoxfieldDeck",
     "normalizeName",
+    "fetchFlavorNames",
+    "ingestFlavorNames",
   ]) {
     expect(typeof (data as Record<string, unknown>)[name]).toBe("function");
   }

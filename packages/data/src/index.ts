@@ -10,3 +10,10 @@ export { parseMoxfieldId, fetchMoxfieldDeck } from "./moxfield.js";
 export { normalizeName } from "./names.js";
 export { toCardDoc, docToCard, type CardDoc, type ComboDoc } from "./docs.js";
 export { ingestCards, ingestCombos, runIngest, type IngestCounts } from "./ingest.js";
+export {
+  fetchFlavorNames,
+  ingestFlavorNames,
+  extractFlavorPairs,
+  type FlavorPair,
+  type FlavorCounts,
+} from "./flavor.js";
