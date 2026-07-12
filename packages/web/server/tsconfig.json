@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    // NodeNext with no "type":"module" in package.json keeps nest build (tsc) output as CJS;
+    // do not set a "builder":"swc" in nest-cli.json without re-checking the module format.
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2022",
