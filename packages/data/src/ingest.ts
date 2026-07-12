@@ -12,6 +12,7 @@ import {
 import { toCardDoc, type CardDoc, type ComboDoc } from "./docs.js";
 import { connect } from "./db.js";
 import { loadConfig } from "./config.js";
+import { fetchFlavorNames, ingestFlavorNames } from "./flavor.js";
 
 export interface IngestCounts {
   processed: number;
@@ -63,6 +64,10 @@ export async function runIngest(): Promise<void> {
     const cardRaws = await fetchOracleCards();
     const c = await ingestCards(cardRaws, store.cards);
     console.log(`Cards: ${c.processed} processed, ${c.skipped} skipped`);
+
+    console.log("Downloading flavor names...");
+    const f = await ingestFlavorNames(await fetchFlavorNames(), store.cards);
+    console.log(`Flavor names: ${f.applied} applied, ${f.skipped} skipped`);
 
     console.log("Downloading Commander Spellbook variants...");
     const k = await ingestCombos(streamVariants(), store.combos);
