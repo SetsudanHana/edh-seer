@@ -6,7 +6,7 @@ import {
 } from "./scryfall.js";
 import {
   normalizeVariant,
-  fetchVariants,
+  streamVariants,
   type SpellbookVariant,
 } from "./spellbook.js";
 import { toCardDoc, type CardDoc, type ComboDoc } from "./docs.js";
@@ -38,12 +38,12 @@ export async function ingestCards(
 }
 
 export async function ingestCombos(
-  raws: SpellbookVariant[],
+  variants: AsyncIterable<SpellbookVariant> | Iterable<SpellbookVariant>,
   combos: Collection<ComboDoc>,
 ): Promise<IngestCounts> {
   let processed = 0;
   let skipped = 0;
-  for (const raw of raws) {
+  for await (const raw of variants) {
     const n = normalizeVariant(raw);
     if (!n) {
       skipped++;
@@ -65,8 +65,7 @@ export async function runIngest(): Promise<void> {
     console.log(`Cards: ${c.processed} processed, ${c.skipped} skipped`);
 
     console.log("Downloading Commander Spellbook variants...");
-    const comboRaws = await fetchVariants();
-    const k = await ingestCombos(comboRaws, store.combos);
+    const k = await ingestCombos(streamVariants(), store.combos);
     console.log(`Combos: ${k.processed} processed, ${k.skipped} skipped`);
   } finally {
     await store.close();

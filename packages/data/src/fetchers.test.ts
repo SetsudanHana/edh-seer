@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
 import { fetchOracleCards } from "./scryfall.js";
-import { fetchVariants } from "./spellbook.js";
+import { streamVariants } from "./spellbook.js";
 import { parseMoxfieldId, fetchMoxfieldDeck } from "./moxfield.js";
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
@@ -42,11 +42,14 @@ test("fetchOracleCards throws a clear error when the metadata response has no da
   );
 });
 
-test("fetchVariants unwraps the variants envelope", async () => {
-  const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ variants: [{ id: "v1" }] }));
-  const variants = await fetchVariants(fetchImpl as unknown as typeof fetch);
-  expect(fetchImpl.mock.calls[0][1].headers["User-Agent"]).toBeTruthy();
-  expect(variants).toEqual([{ id: "v1" }]);
+test("streamVariants yields each variant from the streamed variants array", async () => {
+  const body = JSON.stringify({ variants: [{ id: "v1" }, { id: "v2" }] });
+  const fetchImpl = vi.fn().mockResolvedValue(new Response(body, { status: 200 }));
+  const out: unknown[] = [];
+  for await (const v of streamVariants(fetchImpl as unknown as typeof fetch)) {
+    out.push(v);
+  }
+  expect(out).toEqual([{ id: "v1" }, { id: "v2" }]);
 });
 
 test("parseMoxfieldId extracts id from URL or passes a bare id", () => {

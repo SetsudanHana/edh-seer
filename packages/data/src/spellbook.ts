@@ -1,3 +1,7 @@
+import { Readable } from "node:stream";
+import { parser } from "stream-json";
+import { pick } from "stream-json/filters/Pick.js";
+import { streamArray } from "stream-json/streamers/StreamArray.js";
 import type { Combo } from "@mtg/engine";
 
 export interface SpellbookVariant {
@@ -34,12 +38,22 @@ const SPELLBOOK_HEADERS = {
   Accept: "application/json",
 };
 
-export async function fetchVariants(
+/**
+ * Streams the Commander Spellbook variants.json (~577MB) instead of
+ * buffering it whole: `await res.json()` on a body this large throws
+ * `ERR_STRING_TOO_LONG` because it exceeds Node's ~512MB max string length.
+ */
+export async function* streamVariants(
   fetchImpl: FetchFn = fetch,
-): Promise<SpellbookVariant[]> {
+): AsyncGenerator<SpellbookVariant> {
   const res = await fetchImpl("https://json.commanderspellbook.com/variants.json", {
     headers: SPELLBOOK_HEADERS,
   });
-  const json = (await res.json()) as { variants?: SpellbookVariant[] } | SpellbookVariant[];
-  return Array.isArray(json) ? json : json.variants ?? [];
+  if (!res.ok) throw new Error(`Spellbook fetch failed: ${res.status}`);
+  if (!res.body) throw new Error("Spellbook response has no body");
+  const nodeStream = Readable.fromWeb(res.body as any);
+  const pipeline = nodeStream.pipe(parser()).pipe(pick({ filter: "variants" })).pipe(streamArray());
+  for await (const { value } of pipeline) {
+    yield value as SpellbookVariant;
+  }
 }
