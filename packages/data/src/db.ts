@@ -12,7 +12,15 @@ export interface Store {
 
 export async function connect(config: DataConfig): Promise<Store> {
   const client = new MongoClient(config.mongoUri);
-  await client.connect();
+  try {
+    await client.connect();
+  } catch (err) {
+    throw new Error(
+      `Cannot reach MongoDB at ${config.mongoUri}. Start it with: ` +
+        `docker compose -f packages/data/docker-compose.yml up -d`,
+      { cause: err },
+    );
+  }
   const db = client.db(config.dbName);
   const cards = db.collection<CardDoc>("cards");
   const combos = db.collection<ComboDoc>("combos");

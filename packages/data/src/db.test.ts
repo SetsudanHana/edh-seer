@@ -5,6 +5,12 @@ import type { CardDoc } from "./docs.js";
 const uri = process.env.MONGO_TEST_URI;
 const suite = uri ? describe : describe.skip;
 
+test("connect throws a friendly error when Mongo is unreachable", async () => {
+  await expect(
+    connect({ mongoUri: "mongodb://127.0.0.1:1/?serverSelectionTimeoutMS=300", dbName: "x" }),
+  ).rejects.toThrow(/docker compose/);
+});
+
 suite("mongo db layer", () => {
   let store: Store;
 

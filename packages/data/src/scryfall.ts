@@ -61,6 +61,7 @@ export async function fetchOracleCards(
   const meta = await fetchImpl("https://api.scryfall.com/bulk-data", {
     headers: SCRYFALL_HEADERS,
   });
+  if (!meta.ok) throw new Error(`Scryfall bulk-data request failed: ${meta.status}`);
   const metaJson = (await meta.json()) as {
     data: Array<{ type: string; download_uri: string }>;
   };
@@ -70,5 +71,6 @@ export async function fetchOracleCards(
   const entry = metaJson.data.find((d) => d.type === "oracle_cards");
   if (!entry) throw new Error("Scryfall oracle_cards bulk entry not found");
   const res = await fetchImpl(entry.download_uri, { headers: SCRYFALL_HEADERS });
+  if (!res.ok) throw new Error(`Scryfall bulk download failed: ${res.status}`);
   return (await res.json()) as ScryfallCard[];
 }

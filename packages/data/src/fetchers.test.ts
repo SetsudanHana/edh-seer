@@ -35,11 +35,16 @@ test("fetchOracleCards follows the bulk-data download_uri", async () => {
 });
 
 test("fetchOracleCards throws a clear error when the metadata response has no data array", async () => {
-  const fetchImpl = vi.fn().mockResolvedValueOnce(jsonResponse({ object: "error" }, false, 400));
+  const fetchImpl = vi.fn().mockResolvedValueOnce(jsonResponse({ object: "error" }));
 
   await expect(fetchOracleCards(fetchImpl as unknown as typeof fetch)).rejects.toThrow(
     "Scryfall bulk-data request failed: unexpected response",
   );
+});
+
+test("fetchOracleCards throws on a non-ok metadata response", async () => {
+  const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 500 } as unknown as Response);
+  await expect(fetchOracleCards(fetchImpl as unknown as typeof fetch)).rejects.toThrow(/500/);
 });
 
 test("streamVariants yields each variant from the streamed variants array", async () => {
