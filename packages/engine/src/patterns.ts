@@ -9,6 +9,42 @@ export interface Pattern {
   cares?: Tag[] | ((view: CardView) => Tag[]);
 }
 
+// A curated set of common EDH creature types, used to keep the tribal PAYOFF side
+// precise ("Artifacts you control" must not become tribe:artifact). The PRODUCER
+// side reads subtypes straight off the type line, so it needs no list.
+const CREATURE_TYPES = new Set([
+  "goblin", "elf", "zombie", "human", "wizard", "soldier", "warrior", "cleric", "rogue",
+  "dragon", "vampire", "angel", "demon", "beast", "cat", "dog", "bird", "snake", "spider",
+  "elemental", "spirit", "merfolk", "faerie", "knight", "pirate", "dinosaur", "hydra",
+  "sliver", "saproling", "myr", "construct", "golem", "elephant", "wolf", "werewolf",
+  "treefolk", "giant", "shaman", "druid", "assassin", "ninja", "samurai", "monk",
+]);
+
+function pluralOrSingular(word: string): [string, string] {
+  return word.endsWith("s") ? [word, word.slice(0, -1)] : [`${word}s`, word];
+}
+
+function tribalCares(view: CardView): Tag[] {
+  const out: Tag[] = [];
+  for (const type of CREATURE_TYPES) {
+    const [plural, singular] = pluralOrSingular(type);
+    // A tribal payoff references the type in a "matters" phrase.
+    if (
+      has(
+        view,
+        `other ${plural}`,
+        `${plural} you control`,
+        `each ${singular}`,
+        `${singular} creatures`,
+        `${plural} you control get`,
+      )
+    ) {
+      out.push(tag("tribe", type));
+    }
+  }
+  return out;
+}
+
 export const PATTERNS: Pattern[] = [
   // --- Treasure / artifacts ---
   {
@@ -98,5 +134,35 @@ export const PATTERNS: Pattern[] = [
       matchWord(v, /(destroy|exile) target (creature|permanent|artifact|enchantment|planeswalker)/) ||
       has(v, "deals damage to any target", "deals damage to target creature"),
     produces: ["removal"],
+  },
+
+  // --- Tribal / kindred (showcase) ---
+  {
+    name: "tribal-member",
+    matches: (v) => v.types.has("creature") && v.subtypes.size > 0,
+    produces: (v) => [...v.subtypes].map((s) => tag("tribe", s)),
+  },
+  {
+    name: "tribal-payoff",
+    matches: (v) => tribalCares(v).length > 0,
+    cares: (v) => tribalCares(v),
+  },
+
+  // --- Spellslinger (showcase) ---
+  {
+    name: "spell-caster",
+    matches: (v) => v.types.has("instant") || v.types.has("sorcery"),
+    produces: (v) => {
+      const out: Tag[] = [];
+      if (v.types.has("instant")) out.push(tag("cast", "instant"));
+      if (v.types.has("sorcery")) out.push(tag("cast", "sorcery"));
+      return out;
+    },
+  },
+  {
+    name: "magecraft-payoff",
+    matches: (v) =>
+      has(v, "magecraft", "whenever you cast an instant or sorcery", "instant and sorcery spells", "instant or sorcery spell", "cast or copy an instant or sorcery"),
+    cares: () => [tag("cast", "instant"), tag("cast", "sorcery")],
   },
 ];
