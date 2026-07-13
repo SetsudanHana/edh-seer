@@ -132,6 +132,23 @@ export const PATTERNS: Pattern[] = [
     cares: ["lifegain"],
   },
 
+  // --- Blink / flicker ---
+  {
+    name: "blink-enabler",
+    matches: (v) => matchWord(v, /exile .*return .*to the battlefield/) || has(v, "flicker"),
+    produces: ["blink"],
+    cares: ["creature-etb"],
+  },
+  {
+    name: "etb-value-creature",
+    // A creature with its own enters-the-battlefield trigger (self-name heuristic),
+    // distinct from a card that merely triggers on "another creature enters".
+    matches: (v) =>
+      v.types.has("creature") && v.oracle.includes(`${v.name.toLowerCase()} enters the battlefield`),
+    produces: ["creature-etb"],
+    cares: ["blink"],
+  },
+
   // --- Mana ---
   {
     name: "mana-source",

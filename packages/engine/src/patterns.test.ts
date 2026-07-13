@@ -105,3 +105,17 @@ test("lifegain source produces lifegain (gain N life or lifelink)", () => {
 test("lifegain payoff cares about lifegain", () => {
   expect(extractTags(FIXTURES.archangelOfThune).cares.has("lifegain")).toBe(true);
 });
+
+test("etb-value-creature: own-ETB creature produces creature-etb + cares blink; 'another creature enters' does not", () => {
+  const m = extractTags(FIXTURES.mulldrifter);
+  expect(m.produces.has("creature-etb")).toBe(true);
+  expect(m.cares.has("blink")).toBe(true);
+  // Soul Warden triggers on "another creature enters", not its own ETB — must not want blink.
+  expect(extractTags(FIXTURES.soulWarden).cares.has("blink")).toBe(false);
+});
+
+test("blink enabler produces blink and cares about creature-etb", () => {
+  const e = extractTags(FIXTURES.ephemerate);
+  expect(e.produces.has("blink")).toBe(true);
+  expect(e.cares.has("creature-etb")).toBe(true);
+});

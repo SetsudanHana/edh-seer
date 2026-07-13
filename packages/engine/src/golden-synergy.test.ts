@@ -46,3 +46,9 @@ test("Lifegain: source + payoff synergize on lifegain", () => {
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "lifegain")).toBe(true);
 });
+
+test("Blink: flicker spell + own-ETB value creature synergize on blink", () => {
+  const r = synergyScore(FIXTURES.ephemerate, FIXTURES.mulldrifter);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "blink")).toBe(true);
+});

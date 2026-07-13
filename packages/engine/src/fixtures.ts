@@ -138,4 +138,16 @@ export const FIXTURES: Record<string, Card> = {
     "Whenever you gain life, put a +1/+1 counter on each creature you control.",
     { colors: ["W"], manaValue: 5, keywords: ["Flying", "Lifelink"] },
   ),
+  ephemerate: card(
+    "Ephemerate",
+    "Instant",
+    "Exile target creature you control, then return it to the battlefield under its owner's control.",
+    { colors: ["W"], manaValue: 1 },
+  ),
+  mulldrifter: card(
+    "Mulldrifter",
+    "Creature — Elemental",
+    "When Mulldrifter enters the battlefield, draw two cards.",
+    { colors: ["U"], manaValue: 5, keywords: ["Flying"] },
+  ),
 };
