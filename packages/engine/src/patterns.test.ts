@@ -135,3 +135,11 @@ test("an Equipment produces the equipment tag", () => {
 test("an equipment payoff cares about equipment", () => {
   expect(extractTags(FIXTURES.puresteelPaladin).cares.has("equipment")).toBe(true);
 });
+
+test("self-mill precision: library-peek and opponent discard are NOT graveyard", () => {
+  expect(extractTags(make("Enchantment", "Look at the top card of your library.")).produces.has("graveyard")).toBe(false);
+  expect(extractTags(make("Sorcery", "Each opponent discards a card.")).produces.has("graveyard")).toBe(false);
+  // real self-mill / discard-your-hand still fires
+  expect(extractTags(FIXTURES.stitchersSupplier).produces.has("graveyard")).toBe(true);
+  expect(extractTags(make("Sorcery", "Discard your hand, then draw seven cards.")).produces.has("graveyard")).toBe(true);
+});

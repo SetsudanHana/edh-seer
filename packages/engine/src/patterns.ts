@@ -109,7 +109,7 @@ export const PATTERNS: Pattern[] = [
     name: "self-mill",
     matches: (v) =>
       matchWord(v, /mill \w+ cards?/) ||
-      hasClause(v, "into your graveyard", "from the top of your library", "discard a card", "discard your hand"),
+      hasClause(v, "into your graveyard", "discard your hand"),
     produces: ["graveyard"],
   },
   {
