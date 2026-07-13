@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "ingest": "tsx src/bin/ingest.ts"
+    "ingest": "tsx src/bin/ingest.ts",
+    "refresh-mechanics": "tsx src/bin/refresh-mechanics.ts"
   },
   "dependencies": {
     "@mtg/engine": "*",
