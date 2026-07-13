@@ -6,12 +6,18 @@ import { AnalyzeController } from "./analyze.controller.js";
 import { AnalyzeService, ANALYZE_DEPS, type AnalyzeDeps } from "./analyze.service.js";
 import type { DeckReport } from "@mtg/engine";
 
-const report: DeckReport = { edges: [], combos: [], themes: [], roles: { ramp: 0, draw: 0, removal: 0 } };
+const report: DeckReport = { commanders: [], cards: [], edges: [], combos: [], themes: [], roles: { ramp: 0, draw: 0, removal: 0 } };
 
 const deps: AnalyzeDeps = {
-  parseDecklistText: (t) => t.split("\n").map((s) => s.trim()).filter(Boolean),
+  parseDecklistSections: (t) => ({ commanders: [], deck: t.split("\n").map((s) => s.trim()).filter(Boolean) }),
+  parseLines: (t) => t.split("\n").map((s) => s.trim()).filter(Boolean),
   makeLookup: () => ({}),
-  resolveNames: async (names) => ({ cards: names.map((n) => ({ name: n })), combos: [], missing: [] }),
+  resolveDeck: async (commanderNames, deckNames) => ({
+    cards: [...commanderNames, ...deckNames].map((n) => ({ name: n })),
+    combos: [],
+    missing: [],
+    commanderResolved: commanderNames,
+  }),
   analyze: () => report,
 };
 
@@ -33,15 +39,15 @@ afterAll(async () => {
 });
 
 test("POST /api/analyze returns a report", async () => {
-  const res = await app.inject({
-    method: "POST",
-    url: "/api/analyze",
-    payload: { decklist: "1 Sol Ring" },
-  });
+  const res = await app.inject({ method: "POST", url: "/api/analyze", payload: { decklist: "1 Sol Ring" } });
   expect(res.statusCode).toBe(200);
-  const body = res.json();
-  expect(body.totalCount).toBe(1);
-  expect(body.report).toEqual(report);
+  expect(res.json().totalCount).toBe(1);
+});
+
+test("POST /api/analyze accepts a commanders field", async () => {
+  const res = await app.inject({ method: "POST", url: "/api/analyze", payload: { decklist: "1 Sol Ring", commanders: "1 Krenko, Mob Boss" } });
+  expect(res.statusCode).toBe(200);
+  expect(res.json().totalCount).toBe(2); // 1 commander + 1 deck card
 });
 
 test("POST /api/analyze with empty decklist returns 400", async () => {

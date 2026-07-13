@@ -27,12 +27,14 @@ suite("POST /api/analyze against real Mongo", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/analyze",
-      payload: { decklist: "1 Sol Ring\n1 Krenko, Mob Boss\n1 Impact Tremors" },
+      payload: { decklist: "1 Sol Ring\n1 Impact Tremors", commanders: "1 Krenko, Mob Boss" },
     });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.totalCount).toBe(3);
     expect(Array.isArray(body.report.edges)).toBe(true);
+    expect(Array.isArray(body.report.commanders)).toBe(true);
+    expect(Array.isArray(body.report.cards)).toBe(true);
     expect(Array.isArray(body.missing)).toBe(true);
   });
 });
