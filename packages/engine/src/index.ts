@@ -13,3 +13,11 @@ export {
 } from "./analyze.js";
 export { suggestCards, type Suggestion } from "./suggest.js";
 export { FIXTURES } from "./fixtures.js";
+export {
+  MECHANICS,
+  mechanicCoverageSummary,
+  type MechanicEntry,
+  type MechanicStatus,
+  type MechanicSource,
+  type MechanicCoverageSummary,
+} from "./mechanics.js";
