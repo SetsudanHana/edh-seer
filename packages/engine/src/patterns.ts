@@ -1,6 +1,6 @@
 import type { Tag } from "./tags.js";
 import { tag } from "./tags.js";
-import { type CardView, has, hasClause, matchWord } from "./cardview.js";
+import { type CardView, has, hasClause, hasKeyword, matchWord } from "./cardview.js";
 
 export interface Pattern {
   name: string;
@@ -102,6 +102,22 @@ export const PATTERNS: Pattern[] = [
     name: "death-payoff",
     matches: (v) => hasClause(v, "creature dies", "another creature dies", "a creature you control dies", "whenever a creature dies"),
     cares: ["creature-death", "sacrifice-event"],
+  },
+
+  // --- Graveyard / recursion ---
+  {
+    name: "self-mill",
+    matches: (v) =>
+      matchWord(v, /mill \w+ cards?/) ||
+      hasClause(v, "into your graveyard", "from the top of your library", "discard a card", "discard your hand"),
+    produces: ["graveyard"],
+  },
+  {
+    name: "graveyard-payoff",
+    matches: (v) =>
+      has(v, "from your graveyard", "in your graveyard", "creature card in your graveyard") ||
+      hasKeyword(v, "delve") || hasKeyword(v, "escape") || hasKeyword(v, "flashback") || hasKeyword(v, "dredge"),
+    cares: ["graveyard"],
   },
 
   // --- Mana ---

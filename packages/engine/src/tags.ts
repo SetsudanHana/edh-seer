@@ -15,6 +15,7 @@ const BARE_LABELS: Record<string, string> = {
   "sacrifice-event": "sacrifice",
   "land-etb": "lands entering",
   "card-draw": "card draw",
+  "graveyard": "the graveyard",
 };
 
 function capitalize(s: string): string {

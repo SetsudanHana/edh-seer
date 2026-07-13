@@ -86,3 +86,13 @@ test("tribal payoff uses word boundaries: 'each golemancer' is not tribe:golem",
   const p = extractTags(make("Enchantment", "Whenever you cast a spell, each golemancer gains haste."));
   expect(p.cares.has("tribe:golem")).toBe(false);
 });
+
+test("self-mill produces graveyard; a negated 'put into your graveyard' clause does not", () => {
+  expect(extractTags(FIXTURES.stitchersSupplier).produces.has("graveyard")).toBe(true);
+  const neg = extractTags(make("Enchantment", "Cards in libraries can't be put into your graveyard."));
+  expect(neg.produces.has("graveyard")).toBe(false);
+});
+
+test("graveyard payoff cares about the graveyard", () => {
+  expect(extractTags(FIXTURES.gravedigger).cares.has("graveyard")).toBe(true);
+});

@@ -34,3 +34,9 @@ test("Regression: token maker still triggers a creature-ETB payoff", () => {
   const r = synergyScore(FIXTURES.krenko, FIXTURES.impactTremors);
   expect(r.reasons.some((x) => x.tag === "creature-etb")).toBe(true);
 });
+
+test("Graveyard: self-mill + reanimator synergize on graveyard", () => {
+  const r = synergyScore(FIXTURES.stitchersSupplier, FIXTURES.gravedigger);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "graveyard")).toBe(true);
+});

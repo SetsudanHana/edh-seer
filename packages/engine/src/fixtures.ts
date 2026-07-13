@@ -114,4 +114,16 @@ export const FIXTURES: Record<string, Card> = {
     "Players can't sacrifice a creature.",
     {},
   ),
+  stitchersSupplier: card(
+    "Stitcher's Supplier",
+    "Creature — Zombie",
+    "When Stitcher's Supplier enters the battlefield or dies, mill three cards.",
+    { colors: ["B"], manaValue: 1 },
+  ),
+  gravedigger: card(
+    "Gravedigger",
+    "Creature — Zombie",
+    "When Gravedigger enters the battlefield, return target creature card from your graveyard to your hand.",
+    { colors: ["B"], manaValue: 4 },
+  ),
 };
