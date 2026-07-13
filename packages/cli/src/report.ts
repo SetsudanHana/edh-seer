@@ -3,11 +3,19 @@ import type { DeckReport } from "@mtg/engine";
 export function formatReport(report: DeckReport): string {
   const lines: string[] = [];
 
-  lines.push("=== Top synergies ===");
-  for (const edge of report.edges.slice(0, 15)) {
-    lines.push(`[${edge.score}] ${edge.a} + ${edge.b}`);
-    for (const r of edge.reasons) {
-      lines.push(`    - ${r.text}`);
+  lines.push("=== Commanders ===");
+  lines.push(report.commanders.length ? `  ${report.commanders.join(", ")}` : "  (none specified)");
+
+  lines.push("");
+  lines.push("=== Card synergies (ranked) ===");
+  for (const c of report.cards.slice(0, 20)) {
+    const tag = c.isCommander ? " [commander]" : "";
+    const plural = c.partnerCount === 1 ? "" : "s";
+    lines.push(`[${c.score}] ${c.name}${tag} — synergizes with ${c.partnerCount} card${plural}`);
+    for (const p of c.topPartners.slice(0, 3)) {
+      for (const r of p.reasons) {
+        lines.push(`    - ${p.name}: ${r.text}`);
+      }
     }
   }
 
