@@ -8,6 +8,7 @@ test("exposes the public API surface", () => {
     "mongoLookup",
     "resolveNames",
     "parseDecklistText",
+    "parseDecklistSections",
     "parseMoxfieldId",
     "fetchMoxfieldDeck",
     "normalizeName",

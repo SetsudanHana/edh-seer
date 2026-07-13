@@ -2,19 +2,30 @@ import type { AnalyzeResponse } from "./types.js";
 
 export const SAMPLE: AnalyzeResponse = {
   report: {
-    edges: [
+    commanders: ["Krenko, Mob Boss"],
+    cards: [
       {
-        a: "Krenko, Mob Boss",
-        b: "Impact Tremors",
+        name: "Krenko, Mob Boss",
+        isCommander: true,
+        score: 6,
+        partnerCount: 2,
+        topPartners: [
+          { name: "Impact Tremors", score: 2, reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }] },
+        ],
+      },
+      {
+        name: "Impact Tremors",
+        isCommander: false,
         score: 2,
-        reasons: [{ tag: "token", text: "Krenko makes tokens; this pays off tokens." }],
+        partnerCount: 1,
+        topPartners: [
+          { name: "Krenko, Mob Boss", score: 2, reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }] },
+        ],
       },
     ],
+    edges: [],
     combos: [{ cards: ["Phyrexian Altar", "Retribution of the Ancients"], result: "Infinite loop" }],
-    themes: [
-      { tag: "token", count: 4 },
-      { tag: "sacrifice", count: 3 },
-    ],
+    themes: [{ tag: "token", count: 4 }],
     roles: { ramp: 4, draw: 10, removal: 6 },
   },
   missing: ["Beholder's Death Ray"],

@@ -19,11 +19,20 @@ export const STORE = "MONGO_STORE";
         const data = await import("@mtg/data");
         const engine = await import("@mtg/engine");
         return {
-          parseDecklistText: data.parseDecklistText,
+          parseDecklistSections: data.parseDecklistSections,
+          parseLines: data.parseDecklistText,
           makeLookup: () => data.mongoLookup(store as never),
-          resolveNames: (names, lookup) => data.resolveNames(names, lookup as never),
-          analyze: (cards, combos) =>
-            engine.analyzeDeck(cards as never, new engine.ComboIndex(combos as never)),
+          resolveDeck: async (commanderNames: string[], deckNames: string[], lookup: unknown) => {
+            const names = [...commanderNames, ...deckNames];
+            const { cards, combos, missing } = await data.resolveNames(names, lookup as never);
+            const cmdNorm = new Set(commanderNames.map(data.normalizeName));
+            const commanderResolved = (cards as Array<{ name: string }>)
+              .filter((c) => cmdNorm.has(data.normalizeName(c.name)))
+              .map((c) => c.name);
+            return { cards, combos, missing, commanderResolved };
+          },
+          analyze: (cards, combos, commanderNames) =>
+            engine.analyzeDeck(cards as never, new engine.ComboIndex(combos as never), commanderNames as string[]),
         };
       },
     },

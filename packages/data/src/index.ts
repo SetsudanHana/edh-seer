@@ -6,6 +6,7 @@ export {
   type ResolveResult,
 } from "./resolve.js";
 export { parseDecklistText } from "./decklist.js";
+export { parseDecklistSections } from "./sections.js";
 export { parseMoxfieldId, fetchMoxfieldDeck } from "./moxfield.js";
 export { normalizeName } from "./names.js";
 export { toCardDoc, docToCard, type CardDoc, type ComboDoc } from "./docs.js";
