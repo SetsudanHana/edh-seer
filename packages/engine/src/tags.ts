@@ -18,6 +18,7 @@ const BARE_LABELS: Record<string, string> = {
   "graveyard": "the graveyard",
   "lifegain": "life gain",
   "blink": "blink/flicker",
+  "enchantment": "enchantments",
 };
 
 function capitalize(s: string): string {

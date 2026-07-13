@@ -52,3 +52,9 @@ test("Blink: flicker spell + own-ETB value creature synergize on blink", () => {
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "blink")).toBe(true);
 });
+
+test("Enchantress: an enchantment + a cast-enchantment payoff synergize on enchantment", () => {
+  const r = synergyScore(FIXTURES.wildGrowth, FIXTURES.enchantressPresence);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "enchantment")).toBe(true);
+});

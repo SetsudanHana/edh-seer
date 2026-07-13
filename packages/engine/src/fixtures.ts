@@ -150,4 +150,16 @@ export const FIXTURES: Record<string, Card> = {
     "When Mulldrifter enters the battlefield, draw two cards.",
     { colors: ["U"], manaValue: 5, keywords: ["Flying"] },
   ),
+  wildGrowth: card(
+    "Wild Growth",
+    "Enchantment — Aura",
+    "Enchant land. Whenever enchanted land is tapped for mana, its controller adds an additional {G}.",
+    { colors: ["G"], manaValue: 1 },
+  ),
+  enchantressPresence: card(
+    "Enchantress's Presence",
+    "Enchantment",
+    "Whenever you cast an enchantment spell, draw a card.",
+    { colors: ["G"], manaValue: 3 },
+  ),
 };

@@ -119,3 +119,11 @@ test("blink enabler produces blink and cares about creature-etb", () => {
   expect(e.produces.has("blink")).toBe(true);
   expect(e.cares.has("creature-etb")).toBe(true);
 });
+
+test("an enchantment permanent produces the enchantment tag", () => {
+  expect(extractTags(FIXTURES.wildGrowth).produces.has("enchantment")).toBe(true);
+});
+
+test("an enchantress payoff cares about enchantments", () => {
+  expect(extractTags(FIXTURES.enchantressPresence).cares.has("enchantment")).toBe(true);
+});
