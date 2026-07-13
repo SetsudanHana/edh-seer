@@ -14,9 +14,15 @@ test("Spellslinger: Lightning Bolt + Archmage Emeritus synergize on cast:instant
   expect(r.reasons.some((x) => x.tag === "cast:instant")).toBe(true);
 });
 
-test("Negation: a 'can't be sacrificed' card is not a sacrifice outlet", () => {
-  const tags = extractTags(FIXTURES.guardianOfFaith);
-  expect(tags.produces.has("sacrifice-event")).toBe(false);
+test("Negation: negated 'sacrifice a creature' clause is not a sacrifice outlet (a real outlet still is)", () => {
+  // plan case: an unrelated non-sacrifice card is not tagged
+  expect(extractTags(FIXTURES.guardianOfFaith).produces.has("sacrifice-event")).toBe(false);
+  // the real matcher needle "sacrifice a creature" sits inside a negated ("can't") clause,
+  // so hasClause's negation-skip must keep it from being tagged as a sacrifice outlet
+  expect(extractTags(FIXTURES.sacImmunity).produces.has("sacrifice-event")).toBe(false);
+  // positive control: the same needle un-negated DOES produce the tag,
+  // proving the needle is real and the test above is meaningful
+  expect(extractTags(FIXTURES.ashnods).produces.has("sacrifice-event")).toBe(true);
 });
 
 test("Regression: Treasure maker still pays off an artifact payoff", () => {

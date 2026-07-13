@@ -108,4 +108,10 @@ export const FIXTURES: Record<string, Card> = {
     "Creatures you control can't be sacrificed.",
     { colors: ["W"], manaValue: 3 },
   ),
+  sacImmunity: card(
+    "Sacrosanct Ward",
+    "Enchantment",
+    "Players can't sacrifice a creature.",
+    {},
+  ),
 };
