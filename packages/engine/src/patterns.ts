@@ -37,19 +37,11 @@ function tribalCares(view: CardView): Tag[] {
   const out: Tag[] = [];
   for (const type of CREATURE_TYPES) {
     const [plural, singular] = pluralOrSingular(type);
-    // A tribal payoff references the type in a "matters" phrase.
-    if (
-      has(
-        view,
-        `other ${plural}`,
-        `${plural} you control`,
-        `each ${singular}`,
-        `${singular} creatures`,
-        `${plural} you control get`,
-      )
-    ) {
-      out.push(tag("tribe", type));
-    }
+    // Word-boundary match so "each golem" does not fire on "each golemancer".
+    const re = new RegExp(
+      `\\b(other ${plural}|${plural} you control|each ${singular}|${singular} creatures)\\b`,
+    );
+    if (matchWord(view, re)) out.push(tag("tribe", type));
   }
   return out;
 }

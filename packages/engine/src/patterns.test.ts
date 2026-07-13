@@ -81,3 +81,8 @@ test("tribal payoff resolves irregular plurals (Elves, Wolves)", () => {
   const wolves = extractTags(make("Enchantment", "Wolves you control get +1/+1."));
   expect(wolves.cares.has("tribe:wolf")).toBe(true);
 });
+
+test("tribal payoff uses word boundaries: 'each golemancer' is not tribe:golem", () => {
+  const p = extractTags(make("Enchantment", "Whenever you cast a spell, each golemancer gains haste."));
+  expect(p.cares.has("tribe:golem")).toBe(false);
+});
