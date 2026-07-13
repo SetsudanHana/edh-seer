@@ -78,4 +78,34 @@ export const FIXTURES: Record<string, Card> = {
     "Name a card. Exile the top six cards of your library, then exile all cards with that name from your library. Put the rest into your hand.",
     { colors: ["B"], manaValue: 1 },
   ),
+  goblinChieftain: card(
+    "Goblin Chieftain",
+    "Creature — Goblin",
+    "Other Goblin creatures you control get +1/+1 and have haste.",
+    { colors: ["R"], manaValue: 3 },
+  ),
+  goblinRecruiter: card(
+    "Goblin Recruiter",
+    "Creature — Goblin",
+    "When Goblin Recruiter enters the battlefield, search your library for any number of Goblin cards.",
+    { colors: ["R"], manaValue: 3 },
+  ),
+  lightningBolt: card(
+    "Lightning Bolt",
+    "Instant",
+    "Lightning Bolt deals 3 damage to any target.",
+    { colors: ["R"], manaValue: 1 },
+  ),
+  archmageEmeritus: card(
+    "Archmage Emeritus",
+    "Creature — Human Wizard",
+    "Magecraft — Whenever you cast or copy an instant or sorcery spell, draw a card.",
+    { colors: ["U"], manaValue: 4 },
+  ),
+  guardianOfFaith: card(
+    "Guardian of Faith",
+    "Creature — Spirit Cleric",
+    "Creatures you control can't be sacrificed.",
+    { colors: ["W"], manaValue: 3 },
+  ),
 };
