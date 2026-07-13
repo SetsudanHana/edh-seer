@@ -123,7 +123,7 @@ export const PATTERNS: Pattern[] = [
   // --- Lifegain / aristocrats ---
   {
     name: "lifegain-source",
-    matches: (v) => matchWord(v, /gains? \d+ life/) || has(v, "gain life") || hasKeyword(v, "lifelink"),
+    matches: (v) => matchWord(v, /gains? (?:\d+\s+)?life/) || hasKeyword(v, "lifelink"),
     produces: ["lifegain"],
   },
   {

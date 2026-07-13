@@ -143,3 +143,9 @@ test("self-mill precision: library-peek and opponent discard are NOT graveyard",
   expect(extractTags(FIXTURES.stitchersSupplier).produces.has("graveyard")).toBe(true);
   expect(extractTags(make("Sorcery", "Discard your hand, then draw seven cards.")).produces.has("graveyard")).toBe(true);
 });
+
+test("lifegain source catches 'gains life equal to X' (Swords)", () => {
+  expect(extractTags(FIXTURES.swordsToPlowshares).produces.has("lifegain")).toBe(true);
+  // still a removal spell
+  expect(extractTags(FIXTURES.swordsToPlowshares).produces.has("removal")).toBe(true);
+});
