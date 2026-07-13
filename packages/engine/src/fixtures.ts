@@ -126,4 +126,16 @@ export const FIXTURES: Record<string, Card> = {
     "When Gravedigger enters the battlefield, return target creature card from your graveyard to your hand.",
     { colors: ["B"], manaValue: 4 },
   ),
+  soulWarden: card(
+    "Soul Warden",
+    "Creature — Human Cleric",
+    "Whenever another creature enters the battlefield, you gain 1 life.",
+    { colors: ["W"], manaValue: 1 },
+  ),
+  archangelOfThune: card(
+    "Archangel of Thune",
+    "Creature — Angel",
+    "Whenever you gain life, put a +1/+1 counter on each creature you control.",
+    { colors: ["W"], manaValue: 5, keywords: ["Flying", "Lifelink"] },
+  ),
 };

@@ -120,6 +120,18 @@ export const PATTERNS: Pattern[] = [
     cares: ["graveyard"],
   },
 
+  // --- Lifegain / aristocrats ---
+  {
+    name: "lifegain-source",
+    matches: (v) => matchWord(v, /gains? \d+ life/) || has(v, "gain life") || hasKeyword(v, "lifelink"),
+    produces: ["lifegain"],
+  },
+  {
+    name: "lifegain-payoff",
+    matches: (v) => has(v, "whenever you gain life", "gained life this turn", "if you gained life"),
+    cares: ["lifegain"],
+  },
+
   // --- Mana ---
   {
     name: "mana-source",

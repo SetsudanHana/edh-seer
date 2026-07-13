@@ -96,3 +96,12 @@ test("self-mill produces graveyard; a negated 'put into your graveyard' clause d
 test("graveyard payoff cares about the graveyard", () => {
   expect(extractTags(FIXTURES.gravedigger).cares.has("graveyard")).toBe(true);
 });
+
+test("lifegain source produces lifegain (gain N life or lifelink)", () => {
+  expect(extractTags(FIXTURES.soulWarden).produces.has("lifegain")).toBe(true);
+  expect(extractTags(make("Creature — Angel", "Flying.", ["Lifelink"])).produces.has("lifegain")).toBe(true);
+});
+
+test("lifegain payoff cares about lifegain", () => {
+  expect(extractTags(FIXTURES.archangelOfThune).cares.has("lifegain")).toBe(true);
+});

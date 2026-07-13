@@ -40,3 +40,9 @@ test("Graveyard: self-mill + reanimator synergize on graveyard", () => {
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "graveyard")).toBe(true);
 });
+
+test("Lifegain: source + payoff synergize on lifegain", () => {
+  const r = synergyScore(FIXTURES.soulWarden, FIXTURES.archangelOfThune);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "lifegain")).toBe(true);
+});
