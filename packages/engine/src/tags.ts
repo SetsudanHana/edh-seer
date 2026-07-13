@@ -1,5 +1,6 @@
 import type { Card } from "./card.js";
 import { PATTERNS } from "./patterns.js";
+import { toCardView, type CardView } from "./cardview.js";
 
 export type Tag = string;
 
@@ -38,17 +39,22 @@ export function describeTag(t: Tag): string {
   }
 }
 
-export function text(card: Card): string {
-  return card.oracleText.toLowerCase();
+function resolveTags(
+  spec: Tag[] | ((view: CardView) => Tag[]) | undefined,
+  view: CardView,
+): Tag[] {
+  if (!spec) return [];
+  return typeof spec === "function" ? spec(view) : spec;
 }
 
 export function extractTags(card: Card): { produces: Set<Tag>; cares: Set<Tag> } {
+  const view = toCardView(card);
   const produces = new Set<Tag>();
   const cares = new Set<Tag>();
   for (const p of PATTERNS) {
-    if (p.matches(card)) {
-      p.produces?.forEach((t) => produces.add(t));
-      p.cares?.forEach((t) => cares.add(t));
+    if (p.matches(view)) {
+      for (const t of resolveTags(p.produces, view)) produces.add(t);
+      for (const t of resolveTags(p.cares, view)) cares.add(t);
     }
   }
   return { produces, cares };
