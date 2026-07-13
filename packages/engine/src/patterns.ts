@@ -1,6 +1,6 @@
 import type { Tag } from "./tags.js";
 import { tag } from "./tags.js";
-import { type CardView, has, hasClause, matchWord } from "./cardview.js";
+import { type CardView, has, hasClause, hasKeyword, matchWord } from "./cardview.js";
 
 export interface Pattern {
   name: string;
@@ -37,19 +37,11 @@ function tribalCares(view: CardView): Tag[] {
   const out: Tag[] = [];
   for (const type of CREATURE_TYPES) {
     const [plural, singular] = pluralOrSingular(type);
-    // A tribal payoff references the type in a "matters" phrase.
-    if (
-      has(
-        view,
-        `other ${plural}`,
-        `${plural} you control`,
-        `each ${singular}`,
-        `${singular} creatures`,
-        `${plural} you control get`,
-      )
-    ) {
-      out.push(tag("tribe", type));
-    }
+    // Word-boundary match so "each golem" does not fire on "each golemancer".
+    const re = new RegExp(
+      `\\b(other ${plural}|${plural} you control|each ${singular}|${singular} creatures)\\b`,
+    );
+    if (matchWord(view, re)) out.push(tag("tribe", type));
   }
   return out;
 }
@@ -110,6 +102,51 @@ export const PATTERNS: Pattern[] = [
     name: "death-payoff",
     matches: (v) => hasClause(v, "creature dies", "another creature dies", "a creature you control dies", "whenever a creature dies"),
     cares: ["creature-death", "sacrifice-event"],
+  },
+
+  // --- Graveyard / recursion ---
+  {
+    name: "self-mill",
+    matches: (v) =>
+      matchWord(v, /mill \w+ cards?/) ||
+      hasClause(v, "into your graveyard", "from the top of your library", "discard a card", "discard your hand"),
+    produces: ["graveyard"],
+  },
+  {
+    name: "graveyard-payoff",
+    matches: (v) =>
+      has(v, "from your graveyard", "in your graveyard", "creature card in your graveyard") ||
+      hasKeyword(v, "delve") || hasKeyword(v, "escape") || hasKeyword(v, "flashback") || hasKeyword(v, "dredge"),
+    cares: ["graveyard"],
+  },
+
+  // --- Lifegain / aristocrats ---
+  {
+    name: "lifegain-source",
+    matches: (v) => matchWord(v, /gains? \d+ life/) || has(v, "gain life") || hasKeyword(v, "lifelink"),
+    produces: ["lifegain"],
+  },
+  {
+    name: "lifegain-payoff",
+    matches: (v) => has(v, "whenever you gain life", "gained life this turn", "if you gained life"),
+    cares: ["lifegain"],
+  },
+
+  // --- Blink / flicker ---
+  {
+    name: "blink-enabler",
+    matches: (v) => matchWord(v, /exile .*return .*to the battlefield/) || has(v, "flicker"),
+    produces: ["blink"],
+    cares: ["creature-etb"],
+  },
+  {
+    name: "etb-value-creature",
+    // A creature with its own enters-the-battlefield trigger (self-name heuristic),
+    // distinct from a card that merely triggers on "another creature enters".
+    matches: (v) =>
+      v.types.has("creature") && v.oracle.includes(`${v.name.toLowerCase()} enters the battlefield`),
+    produces: ["creature-etb"],
+    cares: ["blink"],
   },
 
   // --- Mana ---
@@ -173,5 +210,31 @@ export const PATTERNS: Pattern[] = [
     matches: (v) =>
       has(v, "magecraft", "whenever you cast an instant or sorcery", "instant and sorcery spells", "instant or sorcery spell", "cast or copy an instant or sorcery"),
     cares: () => [tag("cast", "instant"), tag("cast", "sorcery")],
+  },
+
+  // --- Enchantress ---
+  {
+    name: "enchantment-permanent",
+    matches: (v) => v.types.has("enchantment"),
+    produces: ["enchantment"],
+  },
+  {
+    name: "enchantress-payoff",
+    matches: (v) =>
+      has(v, "whenever you cast an enchantment", "an enchantment you control enters", "constellation", "for each enchantment"),
+    cares: ["enchantment"],
+  },
+
+  // --- Equipment / Voltron ---
+  {
+    name: "equipment-permanent",
+    matches: (v) => v.subtypes.has("equipment"),
+    produces: ["equipment"],
+  },
+  {
+    name: "equipment-payoff",
+    matches: (v) =>
+      has(v, "equipped creature", "equipment you control", "whenever you attach", "for each equipment"),
+    cares: ["equipment"],
   },
 ];

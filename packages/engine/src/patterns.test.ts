@@ -81,3 +81,57 @@ test("tribal payoff resolves irregular plurals (Elves, Wolves)", () => {
   const wolves = extractTags(make("Enchantment", "Wolves you control get +1/+1."));
   expect(wolves.cares.has("tribe:wolf")).toBe(true);
 });
+
+test("tribal payoff uses word boundaries: 'each golemancer' is not tribe:golem", () => {
+  const p = extractTags(make("Enchantment", "Whenever you cast a spell, each golemancer gains haste."));
+  expect(p.cares.has("tribe:golem")).toBe(false);
+});
+
+test("self-mill produces graveyard; a negated 'put into your graveyard' clause does not", () => {
+  expect(extractTags(FIXTURES.stitchersSupplier).produces.has("graveyard")).toBe(true);
+  const neg = extractTags(make("Enchantment", "Cards in libraries can't be put into your graveyard."));
+  expect(neg.produces.has("graveyard")).toBe(false);
+});
+
+test("graveyard payoff cares about the graveyard", () => {
+  expect(extractTags(FIXTURES.gravedigger).cares.has("graveyard")).toBe(true);
+});
+
+test("lifegain source produces lifegain (gain N life or lifelink)", () => {
+  expect(extractTags(FIXTURES.soulWarden).produces.has("lifegain")).toBe(true);
+  expect(extractTags(make("Creature — Angel", "Flying.", ["Lifelink"])).produces.has("lifegain")).toBe(true);
+});
+
+test("lifegain payoff cares about lifegain", () => {
+  expect(extractTags(FIXTURES.archangelOfThune).cares.has("lifegain")).toBe(true);
+});
+
+test("etb-value-creature: own-ETB creature produces creature-etb + cares blink; 'another creature enters' does not", () => {
+  const m = extractTags(FIXTURES.mulldrifter);
+  expect(m.produces.has("creature-etb")).toBe(true);
+  expect(m.cares.has("blink")).toBe(true);
+  // Soul Warden triggers on "another creature enters", not its own ETB — must not want blink.
+  expect(extractTags(FIXTURES.soulWarden).cares.has("blink")).toBe(false);
+});
+
+test("blink enabler produces blink and cares about creature-etb", () => {
+  const e = extractTags(FIXTURES.ephemerate);
+  expect(e.produces.has("blink")).toBe(true);
+  expect(e.cares.has("creature-etb")).toBe(true);
+});
+
+test("an enchantment permanent produces the enchantment tag", () => {
+  expect(extractTags(FIXTURES.wildGrowth).produces.has("enchantment")).toBe(true);
+});
+
+test("an enchantress payoff cares about enchantments", () => {
+  expect(extractTags(FIXTURES.enchantressPresence).cares.has("enchantment")).toBe(true);
+});
+
+test("an Equipment produces the equipment tag", () => {
+  expect(extractTags(FIXTURES.bonesplitter).produces.has("equipment")).toBe(true);
+});
+
+test("an equipment payoff cares about equipment", () => {
+  expect(extractTags(FIXTURES.puresteelPaladin).cares.has("equipment")).toBe(true);
+});

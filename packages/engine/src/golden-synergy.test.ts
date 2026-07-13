@@ -34,3 +34,33 @@ test("Regression: token maker still triggers a creature-ETB payoff", () => {
   const r = synergyScore(FIXTURES.krenko, FIXTURES.impactTremors);
   expect(r.reasons.some((x) => x.tag === "creature-etb")).toBe(true);
 });
+
+test("Graveyard: self-mill + reanimator synergize on graveyard", () => {
+  const r = synergyScore(FIXTURES.stitchersSupplier, FIXTURES.gravedigger);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "graveyard")).toBe(true);
+});
+
+test("Lifegain: source + payoff synergize on lifegain", () => {
+  const r = synergyScore(FIXTURES.soulWarden, FIXTURES.archangelOfThune);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "lifegain")).toBe(true);
+});
+
+test("Blink: flicker spell + own-ETB value creature synergize on blink", () => {
+  const r = synergyScore(FIXTURES.ephemerate, FIXTURES.mulldrifter);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "blink")).toBe(true);
+});
+
+test("Enchantress: an enchantment + a cast-enchantment payoff synergize on enchantment", () => {
+  const r = synergyScore(FIXTURES.wildGrowth, FIXTURES.enchantressPresence);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "enchantment")).toBe(true);
+});
+
+test("Equipment: an Equipment + an equipment payoff synergize on equipment", () => {
+  const r = synergyScore(FIXTURES.bonesplitter, FIXTURES.puresteelPaladin);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "equipment")).toBe(true);
+});
