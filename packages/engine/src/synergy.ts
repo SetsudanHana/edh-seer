@@ -1,5 +1,5 @@
 import type { Card } from "./card.js";
-import { extractTags, type Tag } from "./tags.js";
+import { extractTags, describeTag, type Tag } from "./tags.js";
 import type { ComboIndex } from "./combos.js";
 
 export interface Reason {
@@ -25,9 +25,10 @@ function matchDirection(
 ): void {
   for (const tag of produces) {
     if (cares.has(tag)) {
+      const label = describeTag(tag);
       reasons.push({
         tag,
-        text: `${producer.name} produces ${tag}; ${payoff.name} pays off ${tag}.`,
+        text: `${producer.name} produces ${label}; ${payoff.name} pays off ${label}.`,
       });
     }
   }
