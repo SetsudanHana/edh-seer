@@ -10,8 +10,8 @@ test("typing a decklist and clicking Analyze renders the report", async () => {
   render(<App />);
   await userEvent.type(screen.getByRole("textbox"), "1 Krenko, Mob Boss");
   await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
-  await waitFor(() => expect(screen.getByText(/Top synergies/)).toBeInTheDocument());
-  expect(screen.getByText(/Impact Tremors/)).toBeInTheDocument();
+  await waitFor(() => expect(screen.getByText(/Card synergies/)).toBeInTheDocument());
+  expect(screen.getAllByText(/Impact Tremors/).length).toBeGreaterThan(0);
   expect(screen.getByText(/Unresolved cards/)).toBeInTheDocument();
 });
 

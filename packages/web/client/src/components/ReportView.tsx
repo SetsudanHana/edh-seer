@@ -1,5 +1,5 @@
 import type { AnalyzeResponse } from "../types.js";
-import { SynergyList } from "./SynergyList.js";
+import { CardSynergyList } from "./CardSynergyList.js";
 import { ComboList } from "./ComboList.js";
 import { ThemeBars } from "./ThemeBars.js";
 import { MissingCards } from "./MissingCards.js";
@@ -10,7 +10,7 @@ export function ReportView({ data }: { data: AnalyzeResponse }) {
       <p className="text-sm text-default-500">
         Resolved {data.resolvedCount} / {data.totalCount} cards
       </p>
-      <SynergyList edges={data.report.edges} />
+      <CardSynergyList cards={data.report.cards} commanders={data.report.commanders} />
       <ComboList combos={data.report.combos} />
       <ThemeBars themes={data.report.themes} roles={data.report.roles} />
       <MissingCards missing={data.missing} />
