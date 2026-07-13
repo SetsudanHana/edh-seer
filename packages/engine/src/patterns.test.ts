@@ -74,3 +74,10 @@ test("Divination is card-draw", () => {
   const t = extractTags(FIXTURES.divination);
   expect(t.produces.has("card-draw")).toBe(true);
 });
+
+test("tribal payoff resolves irregular plurals (Elves, Wolves)", () => {
+  const elves = extractTags(make("Creature — Elf", "Other Elves you control get +1/+1."));
+  expect(elves.cares.has("tribe:elf")).toBe(true);
+  const wolves = extractTags(make("Enchantment", "Wolves you control get +1/+1."));
+  expect(wolves.cares.has("tribe:wolf")).toBe(true);
+});

@@ -20,8 +20,17 @@ const CREATURE_TYPES = new Set([
   "treefolk", "giant", "shaman", "druid", "assassin", "ninja", "samurai", "monk",
 ]);
 
+const IRREGULAR_PLURALS: Record<string, string> = {
+  elf: "elves",
+  wolf: "wolves",
+  werewolf: "werewolves",
+  dwarf: "dwarves",
+};
+
 function pluralOrSingular(word: string): [string, string] {
-  return word.endsWith("s") ? [word, word.slice(0, -1)] : [`${word}s`, word];
+  if (word.endsWith("s")) return [word, word.slice(0, -1)];
+  const plural = IRREGULAR_PLURALS[word] ?? `${word}s`;
+  return [plural, word];
 }
 
 function tribalCares(view: CardView): Tag[] {
