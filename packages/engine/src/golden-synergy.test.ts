@@ -58,3 +58,9 @@ test("Enchantress: an enchantment + a cast-enchantment payoff synergize on encha
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "enchantment")).toBe(true);
 });
+
+test("Equipment: an Equipment + an equipment payoff synergize on equipment", () => {
+  const r = synergyScore(FIXTURES.bonesplitter, FIXTURES.puresteelPaladin);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "equipment")).toBe(true);
+});

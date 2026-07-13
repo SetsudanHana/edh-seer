@@ -224,4 +224,17 @@ export const PATTERNS: Pattern[] = [
       has(v, "whenever you cast an enchantment", "an enchantment you control enters", "constellation", "for each enchantment"),
     cares: ["enchantment"],
   },
+
+  // --- Equipment / Voltron ---
+  {
+    name: "equipment-permanent",
+    matches: (v) => v.subtypes.has("equipment"),
+    produces: ["equipment"],
+  },
+  {
+    name: "equipment-payoff",
+    matches: (v) =>
+      has(v, "equipped creature", "equipment you control", "whenever you attach", "for each equipment"),
+    cares: ["equipment"],
+  },
 ];

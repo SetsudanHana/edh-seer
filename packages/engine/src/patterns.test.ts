@@ -127,3 +127,11 @@ test("an enchantment permanent produces the enchantment tag", () => {
 test("an enchantress payoff cares about enchantments", () => {
   expect(extractTags(FIXTURES.enchantressPresence).cares.has("enchantment")).toBe(true);
 });
+
+test("an Equipment produces the equipment tag", () => {
+  expect(extractTags(FIXTURES.bonesplitter).produces.has("equipment")).toBe(true);
+});
+
+test("an equipment payoff cares about equipment", () => {
+  expect(extractTags(FIXTURES.puresteelPaladin).cares.has("equipment")).toBe(true);
+});

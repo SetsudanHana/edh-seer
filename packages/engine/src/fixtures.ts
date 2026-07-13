@@ -162,4 +162,16 @@ export const FIXTURES: Record<string, Card> = {
     "Whenever you cast an enchantment spell, draw a card.",
     { colors: ["G"], manaValue: 3 },
   ),
+  bonesplitter: card(
+    "Bonesplitter",
+    "Artifact — Equipment",
+    "Equipped creature gets +2/+0. Equip {1}.",
+    { manaValue: 1 },
+  ),
+  puresteelPaladin: card(
+    "Puresteel Paladin",
+    "Creature — Human Soldier",
+    "Whenever an Equipment you control becomes attached to a creature, draw a card. Metalcraft — Equipment you control have equip {0} as long as you control three or more artifacts.",
+    { colors: ["W"], manaValue: 2 },
+  ),
 };
