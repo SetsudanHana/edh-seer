@@ -240,12 +240,6 @@ export const FIXTURES: Record<string, Card> = {
     "During your turn, spells your opponents cast cost {1} more and abilities your opponents activate cost {1} more unless they're mana abilities. Afterlife 1 (When this creature dies, create a 1/1 white and black Spirit creature token with flying.)",
     { colors: ["W"], manaValue: 2, keywords: ["Afterlife"] },
   ),
-  vulturousAven: card(
-    "Vulturous Aven",
-    "Creature — Bird Warrior",
-    "Flying. Exploit (When this creature enters the battlefield, you may sacrifice a creature.) When Vulturous Aven exploits a creature, each opponent loses 2 life and you draw two cards.",
-    { colors: ["B"], manaValue: 4, keywords: ["Flying", "Exploit"] },
-  ),
   sokenzanSmelter: card(
     "Sokenzan Smelter",
     "Creature — Ogre Shaman",

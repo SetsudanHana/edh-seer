@@ -268,7 +268,7 @@ test("spellcast-payoff: a plain vanilla creature does not false-care cast", () =
 });
 
 test("sac-outlet-keyword: an exploit creature is a sac outlet", () => {
-  const p = extractTags(FIXTURES.vulturousAven);
+  const p = extractTags(make("Creature — Bird Warrior", "Flying. Whenever this creature exploits a creature, draw a card.", ["Flying", "Exploit"]));
   expect(p.produces.has("sacrifice-event")).toBe(true);
   expect(p.cares.has("sacrifice-fodder")).toBe(true);
 });
@@ -285,7 +285,7 @@ test("devour is multi-tag: sac outlet + counter source", () => {
 });
 
 test("death-value-creature: an afterlife creature is multi-tag (death + fodder + token)", () => {
-  const p = extractTags(FIXTURES.titheTaker);
+  const p = extractTags(make("Creature — Human Soldier", "Afterlife 2.", ["Afterlife"]));
   expect(p.produces.has("creature-death")).toBe(true);
   expect(p.produces.has("sacrifice-fodder")).toBe(true);
   expect(p.produces.has("token")).toBe(true);
