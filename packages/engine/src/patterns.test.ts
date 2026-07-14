@@ -235,3 +235,34 @@ test("keyword-action needles are word-bounded (no afraid/amassed/adaptable false
 test("graveyard-payoff keyword branch: a Flashback card cares about graveyard", () => {
   expect(extractTags(make("Instant", "Deal 2 damage to any target.", ["Flashback"])).cares.has("graveyard")).toBe(true);
 });
+
+test("spellcast-payoff: prowess creature cares about cast tags", () => {
+  const p = extractTags(FIXTURES.monasterySwiftspear);
+  expect(p.cares.has("cast:instant")).toBe(true);
+  expect(p.cares.has("cast:sorcery")).toBe(true);
+});
+
+test("spellcast-payoff: a storm sorcery both produces and cares cast tags", () => {
+  const p = extractTags(FIXTURES.grapeshot);
+  // storm keyword -> cares (payoff side)
+  expect(p.cares.has("cast:instant")).toBe(true);
+  expect(p.cares.has("cast:sorcery")).toBe(true);
+  // sorcery type -> produces (spell side, via spell-caster)
+  expect(p.produces.has("cast:sorcery")).toBe(true);
+});
+
+test("spellcast-payoff: second-spell text cares about cast tags", () => {
+  const p = extractTags(make("Enchantment", "Whenever you cast your second spell each turn, deal 2 damage to any target."));
+  expect(p.cares.has("cast:instant")).toBe(true);
+});
+
+test("spellcast-payoff: cost-reducer text cares about cast tags", () => {
+  const p = extractTags(make("Creature — Goblin Wizard", "Noncreature spells you control cost {1} less to cast."));
+  expect(p.cares.has("cast:instant")).toBe(true);
+  expect(p.cares.has("cast:sorcery")).toBe(true);
+});
+
+test("spellcast-payoff: a plain vanilla creature does not false-care cast", () => {
+  const p = extractTags(make("Creature — Bird", "Flying."));
+  expect(p.cares.has("cast:instant")).toBe(false);
+});

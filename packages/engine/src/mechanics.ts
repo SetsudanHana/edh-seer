@@ -65,6 +65,13 @@ const COVERED_BATCH2: MechanicEntry[] = [
   ),
 ];
 
+const COVERED_BATCH3: MechanicEntry[] = [
+  // spellslinger cast-matters payoffs
+  ...["prowess", "storm", "surge"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "covered", tags: ["cast:instant", "cast:sorcery"], patterns: ["spellcast-payoff"] }),
+  ),
+];
+
 // --- Archetype: our strategic tag families (not Scryfall keywords). ---
 const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tribal", source: "archetype", status: "covered", tags: ["tribe:goblin"], patterns: ["tribal-member", "tribal-payoff"], note: "parametric tribe:<subtype>" },
@@ -86,10 +93,6 @@ const ARCHETYPES: MechanicEntry[] = [
 
 // --- Planned: synergy-relevant, no pattern yet. ---
 const PLANNED: MechanicEntry[] = [
-  // spellslinger / cast-matters
-  ...["prowess", "storm", "cascade", "replicate", "conspire", "buyback", "overload", "surge", "spectacle", "flashback"].filter((m) => m !== "flashback").map(
-    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "spellslinger / cast-matters" }),
-  ),
   // sacrifice / aristocrats
   ...["exploit", "casualty", "devour", "afterlife", "blitz"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "aristocrats" }),
@@ -158,6 +161,8 @@ const SKIP: MechanicEntry[] = [
     "shadow", "warp", "station", "undaunted", "gift", "impending", "harmonize", "exhaust", "max speed",
     "tiered", "job select", "mayhem", "web-slinging", "prowl", "solved", "sneak", "increment", "paradigm",
     "teamwork", "firebending", "power-up",
+    // spellslinger single-spell value: no cross-card producer/payoff axis
+    "cascade", "replicate", "conspire", "buyback", "overload", "spectacle",
   ]),
   ...skips("keyword-action", [
     "scry", "seek", "heal", "activate", "attach", "cast", "counter", "destroy", "discard", "exchange",
@@ -178,7 +183,7 @@ const SKIP: MechanicEntry[] = [
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...ARCHETYPES, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;
