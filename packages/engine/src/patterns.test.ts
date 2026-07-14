@@ -198,3 +198,12 @@ test("Mentor is both a counter source and an attack trigger", () => {
 test("a cast-from-graveyard keyword (Unearth) cares about the graveyard", () => {
   expect(extractTags(FIXTURES.anathemancer).cares.has("graveyard")).toBe(true);
 });
+
+test("a token keyword (Fabricate) produces tokens", () => {
+  expect(extractTags(FIXTURES.angelOfInvention).produces.has("token")).toBe(true);
+});
+
+test("a token doubler cares about tokens; unrelated 'twice' text does not", () => {
+  expect(extractTags(FIXTURES.parallelLives).cares.has("token")).toBe(true);
+  expect(extractTags(make("Sorcery", "Roll two dice twice.")).cares.has("token")).toBe(false);
+});

@@ -36,6 +36,8 @@ const GRAVEYARD_KEYWORDS = [
   "embalm", "eternalize", "unearth", "encore", "disturb", "aftermath", "jump-start", "retrace", "recover", "scavenge",
 ];
 
+const TOKEN_KEYWORDS = ["fabricate", "myriad"];
+
 function pluralOrSingular(word: string): [string, string] {
   if (word.endsWith("s")) return [word, word.slice(0, -1)];
   const plural = IRREGULAR_PLURALS[word] ?? `${word}s`;
@@ -84,6 +86,16 @@ export const PATTERNS: Pattern[] = [
     name: "creature-etb-payoff",
     matches: (v) => has(v, "a creature enters", "another creature enters", "creature you control enters"),
     cares: ["creature-etb"],
+  },
+  {
+    name: "token-keyword-maker",
+    matches: (v) => TOKEN_KEYWORDS.some((k) => hasKeyword(v, k)) || has(v, "populate", "amass"),
+    produces: ["token", "creature-etb"],
+  },
+  {
+    name: "token-doubler",
+    matches: (v) => has(v, "twice that many", "create twice", "double the number of tokens"),
+    cares: ["token"],
   },
 
   // --- +1/+1 counters ---

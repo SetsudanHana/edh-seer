@@ -204,4 +204,16 @@ export const FIXTURES: Record<string, Card> = {
     "When Anathemancer enters the battlefield, it deals damage to target player equal to the number of nonbasic lands that player controls.",
     { colors: ["B", "R"], manaValue: 3, keywords: ["Unearth"] },
   ),
+  angelOfInvention: card(
+    "Angel of Invention",
+    "Creature — Angel",
+    "Flying, vigilance. Fabricate 2. Other creatures you control get +1/+1.",
+    { colors: ["W"], manaValue: 5, keywords: ["Flying", "Vigilance", "Fabricate"] },
+  ),
+  parallelLives: card(
+    "Parallel Lives",
+    "Enchantment",
+    "If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.",
+    { colors: ["G"], manaValue: 4 },
+  ),
 };

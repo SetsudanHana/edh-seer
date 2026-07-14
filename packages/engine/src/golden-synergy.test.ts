@@ -82,3 +82,9 @@ test("Graveyard-recursion: an Unearth creature + a self-mill card synergize on g
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "graveyard")).toBe(true);
 });
+
+test("Tokens: a Fabricate creature + a token doubler synergize on token", () => {
+  const r = synergyScore(FIXTURES.angelOfInvention, FIXTURES.parallelLives);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "token")).toBe(true);
+});
