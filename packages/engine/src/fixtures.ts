@@ -228,4 +228,28 @@ export const FIXTURES: Record<string, Card> = {
     "Grapeshot deals 1 damage to any target.",
     { colors: ["R"], manaValue: 1, keywords: ["Storm"] },
   ),
+  mycoloth: card(
+    "Mycoloth",
+    "Creature — Fungus",
+    "Devour 1 (As this enters the battlefield, you may sacrifice any number of creatures. This creature enters the battlefield with that many +1/+1 counters on it.) At the beginning of your upkeep, create a 1/1 green Saproling creature token for each +1/+1 counter on Mycoloth.",
+    { colors: ["G"], manaValue: 5, keywords: ["Devour"] },
+  ),
+  titheTaker: card(
+    "Tithe Taker",
+    "Creature — Human Advisor",
+    "During your turn, spells your opponents cast cost {1} more and abilities your opponents activate cost {1} more unless they're mana abilities. Afterlife 1 (When this creature dies, create a 1/1 white and black Spirit creature token with flying.)",
+    { colors: ["W"], manaValue: 2, keywords: ["Afterlife"] },
+  ),
+  vulturousAven: card(
+    "Vulturous Aven",
+    "Creature — Bird Warrior",
+    "Flying. Exploit (When this creature enters the battlefield, you may sacrifice a creature.) When Vulturous Aven exploits a creature, each opponent loses 2 life and you draw two cards.",
+    { colors: ["B"], manaValue: 4, keywords: ["Flying", "Exploit"] },
+  ),
+  sokenzanSmelter: card(
+    "Sokenzan Smelter",
+    "Creature — Ogre Shaman",
+    "Blitz {2}{R}{R} (You may cast this spell for its blitz cost. If you do, it gains haste and \"When this creature dies, draw a card.\" Sacrifice it at the beginning of the next end step.) When Sokenzan Smelter enters the battlefield, it deals 2 damage to any target.",
+    { colors: ["R"], manaValue: 4, keywords: ["Blitz"] },
+  ),
 };
