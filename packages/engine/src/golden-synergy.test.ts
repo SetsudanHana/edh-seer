@@ -94,3 +94,15 @@ test("Spellslinger: Monastery Swiftspear + Lightning Bolt synergize on cast:inst
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "cast:instant")).toBe(true);
 });
+
+test("Aristocrats: an afterlife creature + Blood Artist synergize on creature-death", () => {
+  const r = synergyScore(FIXTURES.titheTaker, FIXTURES.bloodArtist);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "creature-death")).toBe(true);
+});
+
+test("Aristocrats: a devour sac outlet + Blood Artist synergize on sacrifice-event", () => {
+  const r = synergyScore(FIXTURES.mycoloth, FIXTURES.bloodArtist);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "sacrifice-event")).toBe(true);
+});
