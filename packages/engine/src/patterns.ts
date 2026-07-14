@@ -89,12 +89,12 @@ export const PATTERNS: Pattern[] = [
   },
   {
     name: "token-keyword-maker",
-    matches: (v) => TOKEN_KEYWORDS.some((k) => hasKeyword(v, k)) || has(v, "populate", "amass"),
-    produces: ["token", "creature-etb"],
+    matches: (v) => TOKEN_KEYWORDS.some((k) => hasKeyword(v, k)) || matchWord(v, /\b(populate|amass)\b/),
+    produces: ["token"],
   },
   {
     name: "token-doubler",
-    matches: (v) => has(v, "twice that many", "create twice", "double the number of tokens"),
+    matches: (v) => has(v, "twice that many"),
     cares: ["token"],
   },
 
@@ -112,7 +112,7 @@ export const PATTERNS: Pattern[] = [
   },
   {
     name: "counter-keyword-source",
-    matches: (v) => COUNTER_KEYWORDS.some((k) => hasKeyword(v, k)) || has(v, "adapt", "bolster"),
+    matches: (v) => COUNTER_KEYWORDS.some((k) => hasKeyword(v, k)) || matchWord(v, /\b(adapt|bolster)\b/),
     produces: () => [tag("counter", "+1/+1")],
   },
   {
@@ -278,13 +278,13 @@ export const PATTERNS: Pattern[] = [
     matches: (v) =>
       matchWord(v, /when(ever)? [^.]*attacks/) ||
       ATTACK_TRIGGER_KEYWORDS.some((k) => hasKeyword(v, k)) ||
-      has(v, "battalion", "raid"),
+      matchWord(v, /\b(battalion|raid)\b/),
     produces: ["attack-trigger"],
   },
   {
     name: "attack-trigger-payoff",
     matches: (v) =>
-      has(v, "whenever a creature you control attacks", "one or more creatures you control attack", "attacking causes a triggered ability", "an additional time"),
+      has(v, "whenever a creature you control attacks", "one or more creatures you control attack", "attacking causes a triggered ability"),
     cares: ["attack-trigger"],
   },
 ];
