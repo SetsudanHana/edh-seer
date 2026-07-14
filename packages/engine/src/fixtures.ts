@@ -174,4 +174,46 @@ export const FIXTURES: Record<string, Card> = {
     "Whenever an Equipment you control becomes attached to a creature, draw a card. Metalcraft — Equipment you control have equip {0} as long as you control three or more artifacts.",
     { colors: ["W"], manaValue: 2 },
   ),
+  arcboundRavager: card(
+    "Arcbound Ravager",
+    "Artifact Creature — Beast",
+    "Sacrifice an artifact: Put a +1/+1 counter on Arcbound Ravager.",
+    { manaValue: 2, keywords: ["Modular"] },
+  ),
+  evolutionSage: card(
+    "Evolution Sage",
+    "Creature — Elf Druid",
+    "Landfall — Whenever a land enters the battlefield under your control, proliferate.",
+    { colors: ["G"], manaValue: 4 },
+  ),
+  isshin: card(
+    "Isshin, Two Heavens as One",
+    "Legendary Creature — Human Samurai",
+    "Double strike. If a creature entering the battlefield or attacking causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.",
+    { colors: ["R", "W", "B"], manaValue: 3, keywords: ["Double strike"] },
+  ),
+  goblinRabblemaster: card(
+    "Goblin Rabblemaster",
+    "Creature — Goblin Warrior",
+    "Other Goblin creatures you control attack each combat if able. At the beginning of combat on your turn, create a 1/1 red Goblin creature token with haste. Whenever Goblin Rabblemaster attacks, create a 1/1 red Goblin creature token that's tapped and attacking.",
+    { colors: ["R"], manaValue: 3 },
+  ),
+  anathemancer: card(
+    "Anathemancer",
+    "Creature — Zombie Wizard",
+    "When Anathemancer enters the battlefield, it deals damage to target player equal to the number of nonbasic lands that player controls.",
+    { colors: ["B", "R"], manaValue: 3, keywords: ["Unearth"] },
+  ),
+  angelOfInvention: card(
+    "Angel of Invention",
+    "Creature — Angel",
+    "Flying, vigilance. Fabricate 2. Other creatures you control get +1/+1.",
+    { colors: ["W"], manaValue: 5, keywords: ["Flying", "Vigilance", "Fabricate"] },
+  ),
+  parallelLives: card(
+    "Parallel Lives",
+    "Enchantment",
+    "If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.",
+    { colors: ["G"], manaValue: 4 },
+  ),
 };

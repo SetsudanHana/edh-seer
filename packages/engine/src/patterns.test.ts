@@ -164,3 +164,46 @@ test("etb-value-creature also matches a generic 'this creature enters the battle
   expect(extractTags(FIXTURES.mulldrifter).cares.has("blink")).toBe(true);
   expect(extractTags(FIXTURES.soulWarden).cares.has("blink")).toBe(false);
 });
+
+test("a counter keyword (Modular) produces the +1/+1 counter tag", () => {
+  expect(extractTags(FIXTURES.arcboundRavager).produces.has("counter:+1/+1")).toBe(true);
+});
+
+test("proliferate cares about +1/+1 counters", () => {
+  expect(extractTags(FIXTURES.evolutionSage).cares.has("counter:+1/+1")).toBe(true);
+});
+
+test("counter-keyword-source isolates the keyword branch (Graft, no counter text)", () => {
+  // "Flying." does not match counter-maker's /put .*\+1\/\+1 counter/ or "with a +1/+1 counter",
+  // so this only tags counter:+1/+1 via the Graft keyword -> genuinely exercises counter-keyword-source.
+  const p = extractTags(make("Creature — Insect", "Flying.", ["Graft"]));
+  expect(p.produces.has("counter:+1/+1")).toBe(true);
+});
+
+test("an attack trigger creature produces attack-trigger; a blocks trigger does not", () => {
+  expect(extractTags(FIXTURES.goblinRabblemaster).produces.has("attack-trigger")).toBe(true);
+  expect(extractTags(make("Creature — Wall", "Whenever this creature blocks, draw a card.")).produces.has("attack-trigger")).toBe(false);
+});
+
+test("an attack-trigger doubler (Isshin) cares about attack-trigger", () => {
+  expect(extractTags(FIXTURES.isshin).cares.has("attack-trigger")).toBe(true);
+});
+
+test("Mentor is both a counter source and an attack trigger", () => {
+  const mentor = extractTags(make("Creature — Human Soldier", "Some ability text.", ["Mentor"]));
+  expect(mentor.produces.has("counter:+1/+1")).toBe(true);
+  expect(mentor.produces.has("attack-trigger")).toBe(true);
+});
+
+test("a cast-from-graveyard keyword (Unearth) cares about the graveyard", () => {
+  expect(extractTags(FIXTURES.anathemancer).cares.has("graveyard")).toBe(true);
+});
+
+test("a token keyword (Fabricate) produces tokens", () => {
+  expect(extractTags(FIXTURES.angelOfInvention).produces.has("token")).toBe(true);
+});
+
+test("a token doubler cares about tokens; unrelated 'twice' text does not", () => {
+  expect(extractTags(FIXTURES.parallelLives).cares.has("token")).toBe(true);
+  expect(extractTags(make("Sorcery", "Roll two dice twice.")).cares.has("token")).toBe(false);
+});

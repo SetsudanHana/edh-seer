@@ -27,6 +27,17 @@ const IRREGULAR_PLURALS: Record<string, string> = {
   dwarf: "dwarves",
 };
 
+const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "bloodthirst"];
+
+const ATTACK_TRIGGER_KEYWORDS = ["exalted", "battle cry", "mentor", "myriad", "melee", "afflict", "dethrone", "boast", "enlist", "annihilator"];
+
+const GRAVEYARD_KEYWORDS = [
+  "delve", "escape", "flashback", "dredge",
+  "embalm", "eternalize", "unearth", "encore", "disturb", "aftermath", "jump-start", "retrace", "recover", "scavenge",
+];
+
+const TOKEN_KEYWORDS = ["fabricate", "myriad"];
+
 function pluralOrSingular(word: string): [string, string] {
   if (word.endsWith("s")) return [word, word.slice(0, -1)];
   const plural = IRREGULAR_PLURALS[word] ?? `${word}s`;
@@ -76,6 +87,16 @@ export const PATTERNS: Pattern[] = [
     matches: (v) => has(v, "a creature enters", "another creature enters", "creature you control enters"),
     cares: ["creature-etb"],
   },
+  {
+    name: "token-keyword-maker",
+    matches: (v) => TOKEN_KEYWORDS.some((k) => hasKeyword(v, k)) || has(v, "populate", "amass"),
+    produces: ["token", "creature-etb"],
+  },
+  {
+    name: "token-doubler",
+    matches: (v) => has(v, "twice that many", "create twice", "double the number of tokens"),
+    cares: ["token"],
+  },
 
   // --- +1/+1 counters ---
   {
@@ -87,6 +108,16 @@ export const PATTERNS: Pattern[] = [
     name: "counter-payoff",
     matches: (v) =>
       has(v, "for each +1/+1 counter", "a +1/+1 counter is put", "with +1/+1 counters", "creatures you control with a +1/+1 counter"),
+    cares: () => [tag("counter", "+1/+1")],
+  },
+  {
+    name: "counter-keyword-source",
+    matches: (v) => COUNTER_KEYWORDS.some((k) => hasKeyword(v, k)) || has(v, "adapt", "bolster"),
+    produces: () => [tag("counter", "+1/+1")],
+  },
+  {
+    name: "proliferate-payoff",
+    matches: (v) => has(v, "proliferate"),
     cares: () => [tag("counter", "+1/+1")],
   },
 
@@ -116,7 +147,7 @@ export const PATTERNS: Pattern[] = [
     name: "graveyard-payoff",
     matches: (v) =>
       has(v, "from your graveyard", "in your graveyard", "creature card in your graveyard") ||
-      hasKeyword(v, "delve") || hasKeyword(v, "escape") || hasKeyword(v, "flashback") || hasKeyword(v, "dredge"),
+      GRAVEYARD_KEYWORDS.some((k) => hasKeyword(v, k)),
     cares: ["graveyard"],
   },
 
@@ -238,5 +269,22 @@ export const PATTERNS: Pattern[] = [
     matches: (v) =>
       has(v, "equipped creature", "equipment you control", "whenever you attach", "for each equipment"),
     cares: ["equipment"],
+  },
+
+  // --- Attack-matters ---
+  {
+    name: "attacker-trigger",
+    // in-clause: "whenever ~ attacks" must not span a sentence period
+    matches: (v) =>
+      matchWord(v, /when(ever)? [^.]*attacks/) ||
+      ATTACK_TRIGGER_KEYWORDS.some((k) => hasKeyword(v, k)) ||
+      has(v, "battalion", "raid"),
+    produces: ["attack-trigger"],
+  },
+  {
+    name: "attack-trigger-payoff",
+    matches: (v) =>
+      has(v, "whenever a creature you control attacks", "one or more creatures you control attack", "attacking causes a triggered ability", "an additional time"),
+    cares: ["attack-trigger"],
   },
 ];

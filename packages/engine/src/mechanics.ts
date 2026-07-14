@@ -35,8 +35,37 @@ const COVERED: MechanicEntry[] = [
   { mechanic: "constellation", source: "ability-word", status: "covered", tags: ["enchantment"], patterns: ["enchantress-payoff"] },
 ];
 
+const COVERED_BATCH2: MechanicEntry[] = [
+  // +1/+1 counters
+  ...["modular", "graft", "outlast", "training", "bloodthirst"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "covered", tags: ["counter:+1/+1"], patterns: ["counter-keyword-source"] }),
+  ),
+  ...["adapt", "bolster"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-action", status: "covered", tags: ["counter:+1/+1"], patterns: ["counter-keyword-source"] }),
+  ),
+  { mechanic: "proliferate", source: "keyword-action", status: "covered", tags: ["counter:+1/+1"], patterns: ["proliferate-payoff"] },
+  // attack-matters
+  ...["exalted", "battle cry", "melee", "afflict", "dethrone", "boast", "enlist", "annihilator"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "covered", tags: ["attack-trigger"], patterns: ["attacker-trigger"] }),
+  ),
+  ...["battalion", "raid"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "ability-word", status: "covered", tags: ["attack-trigger"], patterns: ["attacker-trigger"] }),
+  ),
+  // mentor & myriad are multi-tag
+  { mechanic: "mentor", source: "keyword-ability", status: "covered", tags: ["counter:+1/+1", "attack-trigger"], patterns: ["counter-keyword-source", "attacker-trigger"] },
+  { mechanic: "myriad", source: "keyword-ability", status: "covered", tags: ["attack-trigger", "token"], patterns: ["attacker-trigger", "token-keyword-maker"] },
+  // graveyard-recursion
+  ...["scavenge", "recover", "retrace", "embalm", "eternalize", "unearth", "encore", "disturb", "aftermath", "jump-start"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "covered", tags: ["graveyard"], patterns: ["graveyard-payoff"] }),
+  ),
+  // tokens
+  { mechanic: "fabricate", source: "keyword-ability", status: "covered", tags: ["token"], patterns: ["token-keyword-maker"] },
+  ...["populate", "amass"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-action", status: "covered", tags: ["token"], patterns: ["token-keyword-maker"] }),
+  ),
+];
+
 // --- Archetype: our strategic tag families (not Scryfall keywords). ---
-// Implemented ones are `covered`; attack-matters is `planned` (no pattern yet).
 const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tribal", source: "archetype", status: "covered", tags: ["tribe:goblin"], patterns: ["tribal-member", "tribal-payoff"], note: "parametric tribe:<subtype>" },
   { mechanic: "spellslinger", source: "archetype", status: "covered", tags: ["cast:instant", "cast:sorcery"], patterns: ["spell-caster", "magecraft-payoff"] },
@@ -49,7 +78,7 @@ const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "removal", source: "archetype", status: "covered", tags: ["removal"], patterns: ["removal"] },
   { mechanic: "enchantress", source: "archetype", status: "covered", tags: ["enchantment"], patterns: ["enchantment-permanent", "enchantress-payoff"] },
   { mechanic: "equipment", source: "archetype", status: "covered", tags: ["equipment"], patterns: ["equipment-permanent", "equipment-payoff"] },
-  { mechanic: "attack-matters", source: "archetype", status: "planned", note: "attack/combat-trigger doublers + payoffs (Isshin, 'whenever a creature attacks'); no pattern yet" },
+  { mechanic: "attack-matters", source: "archetype", status: "covered", tags: ["attack-trigger"], patterns: ["attacker-trigger", "attack-trigger-payoff"] },
   { mechanic: "graveyard", source: "archetype", status: "covered", tags: ["graveyard"], patterns: ["self-mill", "graveyard-payoff"] },
   { mechanic: "lifegain", source: "archetype", status: "covered", tags: ["lifegain"], patterns: ["lifegain-source", "lifegain-payoff"] },
   { mechanic: "blink", source: "archetype", status: "covered", tags: ["blink"], patterns: ["blink-enabler", "etb-value-creature"] },
@@ -57,10 +86,6 @@ const ARCHETYPES: MechanicEntry[] = [
 
 // --- Planned: synergy-relevant, no pattern yet. ---
 const PLANNED: MechanicEntry[] = [
-  // graveyard recursion
-  ...["scavenge", "recover", "retrace", "embalm", "eternalize", "unearth", "encore", "disturb", "aftermath", "jump-start"].map(
-    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "graveyard recursion" }),
-  ),
   // spellslinger / cast-matters
   ...["prowess", "storm", "cascade", "replicate", "conspire", "buyback", "overload", "surge", "spectacle", "flashback"].filter((m) => m !== "flashback").map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "spellslinger / cast-matters" }),
@@ -70,11 +95,11 @@ const PLANNED: MechanicEntry[] = [
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "aristocrats" }),
   ),
   // +1/+1 counters (keyword-abilities; note: `adapt` and `bolster` are keyword-ACTIONS, listed below)
-  ...["modular", "graft", "outlast", "training", "renown", "bloodthirst"].map(
+  ...["renown"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "counters" }),
   ),
   // tokens (keyword-abilities)
-  ...["fabricate", "myriad", "living weapon", "offspring"].map(
+  ...["living weapon", "offspring"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "tokens" }),
   ),
   // mana / ramp
@@ -88,18 +113,18 @@ const PLANNED: MechanicEntry[] = [
   // lifegain / drain
   ...["extort", "absorb"].map((m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "lifegain / drain" })),
   // attack-matters (combat TRIGGERS — Isshin & attack payoffs)
-  ...["exalted", "battle cry", "mentor", "melee", "afflict", "dethrone", "boast", "enlist", "double team", "mobilize", "annihilator"].map(
+  ...["double team", "mobilize"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "attack-matters" }),
   ),
   // keyword-action planned (populate & amass are ACTIONS, not abilities)
-  ...["proliferate", "populate", "amass", "adapt", "investigate", "explore", "connive", "surveil", "forage", "collect evidence", "incubate", "food", "bolster", "monstrosity", "manifest", "manifest dread", "cloak", "conjure", "goad"].map(
+  ...["investigate", "explore", "connive", "surveil", "forage", "collect evidence", "incubate", "food", "monstrosity", "manifest", "manifest dread", "cloak", "conjure", "goad"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-action", status: "planned" }),
   ),
   // ability-word planned (graveyard/threshold, attack-matters, type-matters conditions)
   ...["threshold", "delirium", "undergrowth", "descend", "fathomless descent", "morbid", "revolt", "metalcraft", "domain", "coven", "celebration", "corrupted", "void", "eerie", "survival", "spell mastery", "addendum"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "ability-word", status: "planned" }),
   ),
-  ...["battalion", "raid", "pack tactics", "ferocious", "formidable", "valiant", "flurry", "bloodrush", "rally"].map(
+  ...["pack tactics", "ferocious", "formidable", "valiant", "flurry", "bloodrush", "rally"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "ability-word", status: "planned", note: "attack-matters" }),
   ),
 ];
@@ -153,7 +178,7 @@ const SKIP: MechanicEntry[] = [
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...ARCHETYPES, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;

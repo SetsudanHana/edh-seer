@@ -64,3 +64,27 @@ test("Equipment: an Equipment + an equipment payoff synergize on equipment", () 
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "equipment")).toBe(true);
 });
+
+test("Counters: a Modular creature + a proliferate card synergize on +1/+1 counters", () => {
+  const r = synergyScore(FIXTURES.arcboundRavager, FIXTURES.evolutionSage);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "counter:+1/+1")).toBe(true);
+});
+
+test("Attack-matters: an attacker-trigger creature + Isshin synergize on attack-trigger", () => {
+  const r = synergyScore(FIXTURES.goblinRabblemaster, FIXTURES.isshin);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "attack-trigger")).toBe(true);
+});
+
+test("Graveyard-recursion: an Unearth creature + a self-mill card synergize on graveyard", () => {
+  const r = synergyScore(FIXTURES.anathemancer, FIXTURES.stitchersSupplier);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "graveyard")).toBe(true);
+});
+
+test("Tokens: a Fabricate creature + a token doubler synergize on token", () => {
+  const r = synergyScore(FIXTURES.angelOfInvention, FIXTURES.parallelLives);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "token")).toBe(true);
+});
