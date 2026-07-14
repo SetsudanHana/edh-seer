@@ -198,4 +198,10 @@ export const FIXTURES: Record<string, Card> = {
     "Other Goblin creatures you control attack each combat if able. At the beginning of combat on your turn, create a 1/1 red Goblin creature token with haste. Whenever Goblin Rabblemaster attacks, create a 1/1 red Goblin creature token that's tapped and attacking.",
     { colors: ["R"], manaValue: 3 },
   ),
+  anathemancer: card(
+    "Anathemancer",
+    "Creature — Zombie Wizard",
+    "When Anathemancer enters the battlefield, it deals damage to target player equal to the number of nonbasic lands that player controls.",
+    { colors: ["B", "R"], manaValue: 3, keywords: ["Unearth"] },
+  ),
 };

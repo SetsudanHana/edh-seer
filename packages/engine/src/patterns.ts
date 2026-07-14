@@ -31,6 +31,11 @@ const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "
 
 const ATTACK_TRIGGER_KEYWORDS = ["exalted", "battle cry", "mentor", "myriad", "melee", "afflict", "dethrone", "boast", "enlist", "annihilator"];
 
+const GRAVEYARD_KEYWORDS = [
+  "delve", "escape", "flashback", "dredge",
+  "embalm", "eternalize", "unearth", "encore", "disturb", "aftermath", "jump-start", "retrace", "recover", "scavenge",
+];
+
 function pluralOrSingular(word: string): [string, string] {
   if (word.endsWith("s")) return [word, word.slice(0, -1)];
   const plural = IRREGULAR_PLURALS[word] ?? `${word}s`;
@@ -130,7 +135,7 @@ export const PATTERNS: Pattern[] = [
     name: "graveyard-payoff",
     matches: (v) =>
       has(v, "from your graveyard", "in your graveyard", "creature card in your graveyard") ||
-      hasKeyword(v, "delve") || hasKeyword(v, "escape") || hasKeyword(v, "flashback") || hasKeyword(v, "dredge"),
+      GRAVEYARD_KEYWORDS.some((k) => hasKeyword(v, k)),
     cares: ["graveyard"],
   },
 

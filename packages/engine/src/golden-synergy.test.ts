@@ -76,3 +76,9 @@ test("Attack-matters: an attacker-trigger creature + Isshin synergize on attack-
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "attack-trigger")).toBe(true);
 });
+
+test("Graveyard-recursion: an Unearth creature + a self-mill card synergize on graveyard", () => {
+  const r = synergyScore(FIXTURES.anathemancer, FIXTURES.stitchersSupplier);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "graveyard")).toBe(true);
+});

@@ -194,3 +194,7 @@ test("Mentor is both a counter source and an attack trigger", () => {
   expect(mentor.produces.has("counter:+1/+1")).toBe(true);
   expect(mentor.produces.has("attack-trigger")).toBe(true);
 });
+
+test("a cast-from-graveyard keyword (Unearth) cares about the graveyard", () => {
+  expect(extractTags(FIXTURES.anathemancer).cares.has("graveyard")).toBe(true);
+});
