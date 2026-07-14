@@ -244,6 +244,15 @@ export const PATTERNS: Pattern[] = [
       has(v, "magecraft", "whenever you cast an instant or sorcery", "instant and sorcery spells", "instant or sorcery spell", "cast or copy an instant or sorcery"),
     cares: () => [tag("cast", "instant"), tag("cast", "sorcery")],
   },
+  {
+    name: "spellcast-payoff",
+    matches: (v) =>
+      hasKeyword(v, "prowess") || hasKeyword(v, "storm") || hasKeyword(v, "surge") ||
+      has(v, "whenever you cast a noncreature spell", "your second spell each turn",
+            "cast your second spell", "noncreature spells you control cost",
+            "instant and sorcery spells you control cost"),
+    cares: () => [tag("cast", "instant"), tag("cast", "sorcery")],
+  },
 
   // --- Enchantress ---
   {
