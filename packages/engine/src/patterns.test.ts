@@ -207,3 +207,10 @@ test("a token doubler cares about tokens; unrelated 'twice' text does not", () =
   expect(extractTags(FIXTURES.parallelLives).cares.has("token")).toBe(true);
   expect(extractTags(make("Sorcery", "Roll two dice twice.")).cares.has("token")).toBe(false);
 });
+
+test("attack-trigger-payoff does not false-care on a non-attack doubler (Panharmonicon-style)", () => {
+  const panharmonicon = make("Artifact", "If a triggered ability of an artifact or creature you control triggers, that ability triggers an additional time.");
+  expect(extractTags(panharmonicon).cares.has("attack-trigger")).toBe(false);
+  // Isshin (which gates on attacking) still cares
+  expect(extractTags(FIXTURES.isshin).cares.has("attack-trigger")).toBe(true);
+});

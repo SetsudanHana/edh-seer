@@ -284,7 +284,7 @@ export const PATTERNS: Pattern[] = [
   {
     name: "attack-trigger-payoff",
     matches: (v) =>
-      has(v, "whenever a creature you control attacks", "one or more creatures you control attack", "attacking causes a triggered ability", "an additional time"),
+      has(v, "whenever a creature you control attacks", "one or more creatures you control attack", "attacking causes a triggered ability"),
     cares: ["attack-trigger"],
   },
 ];
