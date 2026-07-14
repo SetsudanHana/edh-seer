@@ -164,3 +164,11 @@ test("etb-value-creature also matches a generic 'this creature enters the battle
   expect(extractTags(FIXTURES.mulldrifter).cares.has("blink")).toBe(true);
   expect(extractTags(FIXTURES.soulWarden).cares.has("blink")).toBe(false);
 });
+
+test("a counter keyword (Modular) produces the +1/+1 counter tag", () => {
+  expect(extractTags(FIXTURES.arcboundRavager).produces.has("counter:+1/+1")).toBe(true);
+});
+
+test("proliferate cares about +1/+1 counters", () => {
+  expect(extractTags(FIXTURES.evolutionSage).cares.has("counter:+1/+1")).toBe(true);
+});

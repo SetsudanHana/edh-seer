@@ -174,4 +174,16 @@ export const FIXTURES: Record<string, Card> = {
     "Whenever an Equipment you control becomes attached to a creature, draw a card. Metalcraft — Equipment you control have equip {0} as long as you control three or more artifacts.",
     { colors: ["W"], manaValue: 2 },
   ),
+  arcboundRavager: card(
+    "Arcbound Ravager",
+    "Artifact Creature — Beast",
+    "Sacrifice an artifact: Put a +1/+1 counter on Arcbound Ravager.",
+    { manaValue: 2, keywords: ["Modular"] },
+  ),
+  evolutionSage: card(
+    "Evolution Sage",
+    "Creature — Elf Druid",
+    "Landfall — Whenever a land enters the battlefield under your control, proliferate.",
+    { colors: ["G"], manaValue: 4 },
+  ),
 };

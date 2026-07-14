@@ -27,6 +27,8 @@ const IRREGULAR_PLURALS: Record<string, string> = {
   dwarf: "dwarves",
 };
 
+const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "bloodthirst"];
+
 function pluralOrSingular(word: string): [string, string] {
   if (word.endsWith("s")) return [word, word.slice(0, -1)];
   const plural = IRREGULAR_PLURALS[word] ?? `${word}s`;
@@ -87,6 +89,16 @@ export const PATTERNS: Pattern[] = [
     name: "counter-payoff",
     matches: (v) =>
       has(v, "for each +1/+1 counter", "a +1/+1 counter is put", "with +1/+1 counters", "creatures you control with a +1/+1 counter"),
+    cares: () => [tag("counter", "+1/+1")],
+  },
+  {
+    name: "counter-keyword-source",
+    matches: (v) => COUNTER_KEYWORDS.some((k) => hasKeyword(v, k)) || has(v, "adapt", "bolster"),
+    produces: () => [tag("counter", "+1/+1")],
+  },
+  {
+    name: "proliferate-payoff",
+    matches: (v) => has(v, "proliferate"),
     cares: () => [tag("counter", "+1/+1")],
   },
 

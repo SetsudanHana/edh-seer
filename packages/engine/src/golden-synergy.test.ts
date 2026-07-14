@@ -64,3 +64,9 @@ test("Equipment: an Equipment + an equipment payoff synergize on equipment", () 
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "equipment")).toBe(true);
 });
+
+test("Counters: a Modular creature + a proliferate card synergize on +1/+1 counters", () => {
+  const r = synergyScore(FIXTURES.arcboundRavager, FIXTURES.evolutionSage);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "counter:+1/+1")).toBe(true);
+});
