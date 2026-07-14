@@ -27,7 +27,7 @@ const IRREGULAR_PLURALS: Record<string, string> = {
   dwarf: "dwarves",
 };
 
-const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "bloodthirst"];
+const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "bloodthirst", "devour"];
 
 const ATTACK_TRIGGER_KEYWORDS = ["exalted", "battle cry", "mentor", "myriad", "melee", "afflict", "dethrone", "boast", "enlist", "annihilator"];
 
@@ -36,7 +36,11 @@ const GRAVEYARD_KEYWORDS = [
   "embalm", "eternalize", "unearth", "encore", "disturb", "aftermath", "jump-start", "retrace", "recover", "scavenge",
 ];
 
-const TOKEN_KEYWORDS = ["fabricate", "myriad"];
+const TOKEN_KEYWORDS = ["fabricate", "myriad", "afterlife"];
+
+const ARISTOCRAT_SAC_KEYWORDS = ["exploit", "casualty", "devour"];
+
+const DEATH_VALUE_KEYWORDS = ["afterlife", "blitz"];
 
 function pluralOrSingular(word: string): [string, string] {
   if (word.endsWith("s")) return [word, word.slice(0, -1)];
@@ -133,6 +137,17 @@ export const PATTERNS: Pattern[] = [
     name: "death-payoff",
     matches: (v) => hasClause(v, "creature dies", "another creature dies", "a creature you control dies", "whenever a creature dies"),
     cares: ["creature-death", "sacrifice-event"],
+  },
+  {
+    name: "sac-outlet-keyword",
+    matches: (v) => ARISTOCRAT_SAC_KEYWORDS.some((k) => hasKeyword(v, k)),
+    produces: ["sacrifice-event"],
+    cares: ["sacrifice-fodder"],
+  },
+  {
+    name: "death-value-creature",
+    matches: (v) => DEATH_VALUE_KEYWORDS.some((k) => hasKeyword(v, k)),
+    produces: ["creature-death", "sacrifice-fodder"],
   },
 
   // --- Graveyard / recursion ---

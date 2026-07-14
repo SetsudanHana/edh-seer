@@ -266,3 +266,39 @@ test("spellcast-payoff: a plain vanilla creature does not false-care cast", () =
   const p = extractTags(make("Creature — Bird", "Flying."));
   expect(p.cares.has("cast:instant")).toBe(false);
 });
+
+test("sac-outlet-keyword: an exploit creature is a sac outlet", () => {
+  const p = extractTags(FIXTURES.vulturousAven);
+  expect(p.produces.has("sacrifice-event")).toBe(true);
+  expect(p.cares.has("sacrifice-fodder")).toBe(true);
+});
+
+test("sac-outlet-keyword: a casualty spell is a sac outlet", () => {
+  const p = extractTags(make("Sorcery", "Casualty 1. Deal 3 damage to any target.", ["Casualty"]));
+  expect(p.produces.has("sacrifice-event")).toBe(true);
+});
+
+test("devour is multi-tag: sac outlet + counter source", () => {
+  const p = extractTags(FIXTURES.mycoloth);
+  expect(p.produces.has("sacrifice-event")).toBe(true);
+  expect(p.produces.has("counter:+1/+1")).toBe(true);
+});
+
+test("death-value-creature: an afterlife creature is multi-tag (death + fodder + token)", () => {
+  const p = extractTags(FIXTURES.titheTaker);
+  expect(p.produces.has("creature-death")).toBe(true);
+  expect(p.produces.has("sacrifice-fodder")).toBe(true);
+  expect(p.produces.has("token")).toBe(true);
+});
+
+test("death-value-creature: a blitz creature produces death + fodder", () => {
+  const p = extractTags(FIXTURES.sokenzanSmelter);
+  expect(p.produces.has("creature-death")).toBe(true);
+  expect(p.produces.has("sacrifice-fodder")).toBe(true);
+});
+
+test("aristocrats keywords do not fire on a plain creature", () => {
+  const p = extractTags(make("Creature — Bird", "Flying."));
+  expect(p.produces.has("sacrifice-event")).toBe(false);
+  expect(p.produces.has("creature-death")).toBe(false);
+});
