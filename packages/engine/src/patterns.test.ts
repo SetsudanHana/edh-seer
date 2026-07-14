@@ -257,7 +257,7 @@ test("spellcast-payoff: second-spell text cares about cast tags", () => {
 });
 
 test("spellcast-payoff: cost-reducer text cares about cast tags", () => {
-  const p = extractTags(make("Creature — Goblin Wizard", "Instant and sorcery spells you control cost {1} less to cast."));
+  const p = extractTags(make("Creature — Goblin Wizard", "Noncreature spells you control cost {1} less to cast."));
   expect(p.cares.has("cast:instant")).toBe(true);
   expect(p.cares.has("cast:sorcery")).toBe(true);
 });
