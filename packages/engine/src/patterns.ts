@@ -94,7 +94,7 @@ export const PATTERNS: Pattern[] = [
   },
   {
     name: "token-doubler",
-    matches: (v) => has(v, "twice that many", "create twice", "double the number of tokens"),
+    matches: (v) => has(v, "twice that many"),
     cares: ["token"],
   },
 

@@ -231,3 +231,7 @@ test("keyword-action needles are word-bounded (no afraid/amassed/adaptable false
   expect(extractTags(make("Sorcery", "Amass 2.")).produces.has("token")).toBe(true);
   expect(extractTags(make("Creature — Snake", "Adapt 2.")).produces.has("counter:+1/+1")).toBe(true);
 });
+
+test("graveyard-payoff keyword branch: a Flashback card cares about graveyard", () => {
+  expect(extractTags(make("Instant", "Deal 2 damage to any target.", ["Flashback"])).cares.has("graveyard")).toBe(true);
+});
