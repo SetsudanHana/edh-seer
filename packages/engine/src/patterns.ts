@@ -90,7 +90,7 @@ export const PATTERNS: Pattern[] = [
   {
     name: "token-keyword-maker",
     matches: (v) => TOKEN_KEYWORDS.some((k) => hasKeyword(v, k)) || has(v, "populate", "amass"),
-    produces: ["token", "creature-etb"],
+    produces: ["token"],
   },
   {
     name: "token-doubler",

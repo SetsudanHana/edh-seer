@@ -214,3 +214,9 @@ test("attack-trigger-payoff does not false-care on a non-attack doubler (Panharm
   // Isshin (which gates on attacking) still cares
   expect(extractTags(FIXTURES.isshin).cares.has("attack-trigger")).toBe(true);
 });
+
+test("token-keyword-maker does not over-claim creature-etb (populate copies any token)", () => {
+  const p = extractTags(make("Instant", "Populate."));
+  expect(p.produces.has("token")).toBe(true);
+  expect(p.produces.has("creature-etb")).toBe(false);
+});
