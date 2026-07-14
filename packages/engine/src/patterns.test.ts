@@ -135,3 +135,32 @@ test("an Equipment produces the equipment tag", () => {
 test("an equipment payoff cares about equipment", () => {
   expect(extractTags(FIXTURES.puresteelPaladin).cares.has("equipment")).toBe(true);
 });
+
+test("self-mill precision: library-peek and opponent discard are NOT graveyard", () => {
+  expect(extractTags(make("Enchantment", "Look at the top card of your library.")).produces.has("graveyard")).toBe(false);
+  expect(extractTags(make("Sorcery", "Each opponent discards a card.")).produces.has("graveyard")).toBe(false);
+  // real self-mill / discard-your-hand still fires
+  expect(extractTags(FIXTURES.stitchersSupplier).produces.has("graveyard")).toBe(true);
+  expect(extractTags(make("Sorcery", "Discard your hand, then draw seven cards.")).produces.has("graveyard")).toBe(true);
+});
+
+test("lifegain source catches 'gains life equal to X' (Swords)", () => {
+  expect(extractTags(FIXTURES.swordsToPlowshares).produces.has("lifegain")).toBe(true);
+  // still a removal spell
+  expect(extractTags(FIXTURES.swordsToPlowshares).produces.has("removal")).toBe(true);
+});
+
+test("blink-enabler precision: exile + unrelated return in separate sentences is NOT blink", () => {
+  expect(extractTags(make("Sorcery", "Exile target creature. Return all artifacts to the battlefield.")).produces.has("blink")).toBe(false);
+  // a real single-clause flicker still fires
+  expect(extractTags(FIXTURES.ephemerate).produces.has("blink")).toBe(true);
+});
+
+test("etb-value-creature also matches a generic 'this creature enters the battlefield'", () => {
+  const generic = extractTags(make("Creature — Elemental", "When this creature enters the battlefield, draw a card."));
+  expect(generic.produces.has("creature-etb")).toBe(true);
+  expect(generic.cares.has("blink")).toBe(true);
+  // own-name still works; 'another creature enters' still does not want blink
+  expect(extractTags(FIXTURES.mulldrifter).cares.has("blink")).toBe(true);
+  expect(extractTags(FIXTURES.soulWarden).cares.has("blink")).toBe(false);
+});

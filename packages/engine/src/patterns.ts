@@ -109,7 +109,7 @@ export const PATTERNS: Pattern[] = [
     name: "self-mill",
     matches: (v) =>
       matchWord(v, /mill \w+ cards?/) ||
-      hasClause(v, "into your graveyard", "from the top of your library", "discard a card", "discard your hand"),
+      hasClause(v, "into your graveyard", "discard your hand"),
     produces: ["graveyard"],
   },
   {
@@ -123,7 +123,7 @@ export const PATTERNS: Pattern[] = [
   // --- Lifegain / aristocrats ---
   {
     name: "lifegain-source",
-    matches: (v) => matchWord(v, /gains? \d+ life/) || has(v, "gain life") || hasKeyword(v, "lifelink"),
+    matches: (v) => matchWord(v, /gains? (?:\d+\s+)?life/) || hasKeyword(v, "lifelink"),
     produces: ["lifegain"],
   },
   {
@@ -135,16 +135,18 @@ export const PATTERNS: Pattern[] = [
   // --- Blink / flicker ---
   {
     name: "blink-enabler",
-    matches: (v) => matchWord(v, /exile .*return .*to the battlefield/) || has(v, "flicker"),
+    matches: (v) => matchWord(v, /exile [^.]*return [^.]*to the battlefield/) || has(v, "flicker"),
     produces: ["blink"],
     cares: ["creature-etb"],
   },
   {
     name: "etb-value-creature",
-    // A creature with its own enters-the-battlefield trigger (self-name heuristic),
-    // distinct from a card that merely triggers on "another creature enters".
+    // Own enters-the-battlefield trigger. v.name is case-preserved in toCardView, so
+    // the inline .toLowerCase() is required; also accept the generic self-reference.
     matches: (v) =>
-      v.types.has("creature") && v.oracle.includes(`${v.name.toLowerCase()} enters the battlefield`),
+      v.types.has("creature") &&
+      (v.oracle.includes(`${v.name.toLowerCase()} enters the battlefield`) ||
+        v.oracle.includes("this creature enters the battlefield")),
     produces: ["creature-etb"],
     cares: ["blink"],
   },

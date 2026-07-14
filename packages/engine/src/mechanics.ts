@@ -50,13 +50,9 @@ const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "enchantress", source: "archetype", status: "covered", tags: ["enchantment"], patterns: ["enchantment-permanent", "enchantress-payoff"] },
   { mechanic: "equipment", source: "archetype", status: "covered", tags: ["equipment"], patterns: ["equipment-permanent", "equipment-payoff"] },
   { mechanic: "attack-matters", source: "archetype", status: "planned", note: "attack/combat-trigger doublers + payoffs (Isshin, 'whenever a creature attacks'); no pattern yet" },
-];
-
-// --- Tighten: handled but imprecise (the standing precision backlog). ---
-const TIGHTEN: MechanicEntry[] = [
-  { mechanic: "graveyard", source: "archetype", status: "tighten", tags: ["graveyard"], patterns: ["self-mill", "graveyard-payoff"], note: "self-mill needles (discard/'from the top of your library') broader than the archetype" },
-  { mechanic: "lifegain", source: "archetype", status: "tighten", tags: ["lifegain"], patterns: ["lifegain-source", "lifegain-payoff"], note: "has('gain life') misses 'gains life equal to X' (Swords/Congregate)" },
-  { mechanic: "blink", source: "archetype", status: "tighten", tags: ["blink"], patterns: ["blink-enabler", "etb-value-creature"], note: "enabler regex crosses sentence periods; etb self-name heuristic fragile" },
+  { mechanic: "graveyard", source: "archetype", status: "covered", tags: ["graveyard"], patterns: ["self-mill", "graveyard-payoff"] },
+  { mechanic: "lifegain", source: "archetype", status: "covered", tags: ["lifegain"], patterns: ["lifegain-source", "lifegain-payoff"] },
+  { mechanic: "blink", source: "archetype", status: "covered", tags: ["blink"], patterns: ["blink-enabler", "etb-value-creature"] },
 ];
 
 // --- Planned: synergy-relevant, no pattern yet. ---
@@ -157,7 +153,7 @@ const SKIP: MechanicEntry[] = [
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...ARCHETYPES, ...TIGHTEN, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;
