@@ -72,6 +72,16 @@ const COVERED_BATCH3: MechanicEntry[] = [
   ),
 ];
 
+const COVERED_BATCH4: MechanicEntry[] = [
+  // aristocrats
+  ...["exploit", "casualty"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "covered", tags: ["sacrifice-event"], patterns: ["sac-outlet-keyword"] }),
+  ),
+  { mechanic: "devour", source: "keyword-ability", status: "covered", tags: ["sacrifice-event", "counter:+1/+1"], patterns: ["sac-outlet-keyword", "counter-keyword-source"] },
+  { mechanic: "afterlife", source: "keyword-ability", status: "covered", tags: ["creature-death", "sacrifice-fodder", "token"], patterns: ["death-value-creature", "token-keyword-maker"] },
+  { mechanic: "blitz", source: "keyword-ability", status: "covered", tags: ["creature-death", "sacrifice-fodder"], patterns: ["death-value-creature"] },
+];
+
 // --- Archetype: our strategic tag families (not Scryfall keywords). ---
 const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tribal", source: "archetype", status: "covered", tags: ["tribe:goblin"], patterns: ["tribal-member", "tribal-payoff"], note: "parametric tribe:<subtype>" },
@@ -93,10 +103,6 @@ const ARCHETYPES: MechanicEntry[] = [
 
 // --- Planned: synergy-relevant, no pattern yet. ---
 const PLANNED: MechanicEntry[] = [
-  // sacrifice / aristocrats
-  ...["exploit", "casualty", "devour", "afterlife", "blitz"].map(
-    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "aristocrats" }),
-  ),
   // +1/+1 counters (keyword-abilities; note: `adapt` and `bolster` are keyword-ACTIONS, listed below)
   ...["renown"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "counters" }),
@@ -183,7 +189,7 @@ const SKIP: MechanicEntry[] = [
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...ARCHETYPES, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;
