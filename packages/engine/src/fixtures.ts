@@ -186,4 +186,16 @@ export const FIXTURES: Record<string, Card> = {
     "Landfall — Whenever a land enters the battlefield under your control, proliferate.",
     { colors: ["G"], manaValue: 4 },
   ),
+  isshin: card(
+    "Isshin, Two Heavens as One",
+    "Legendary Creature — Human Samurai",
+    "Double strike. If a creature entering the battlefield or attacking causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.",
+    { colors: ["R", "W", "B"], manaValue: 3, keywords: ["Double strike"] },
+  ),
+  goblinRabblemaster: card(
+    "Goblin Rabblemaster",
+    "Creature — Goblin Warrior",
+    "Other Goblin creatures you control attack each combat if able. At the beginning of combat on your turn, create a 1/1 red Goblin creature token with haste. Whenever Goblin Rabblemaster attacks, create a 1/1 red Goblin creature token that's tapped and attacking.",
+    { colors: ["R"], manaValue: 3 },
+  ),
 };

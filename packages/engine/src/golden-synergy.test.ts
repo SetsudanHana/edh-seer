@@ -70,3 +70,9 @@ test("Counters: a Modular creature + a proliferate card synergize on +1/+1 count
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "counter:+1/+1")).toBe(true);
 });
+
+test("Attack-matters: an attacker-trigger creature + Isshin synergize on attack-trigger", () => {
+  const r = synergyScore(FIXTURES.goblinRabblemaster, FIXTURES.isshin);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "attack-trigger")).toBe(true);
+});

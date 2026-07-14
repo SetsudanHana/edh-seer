@@ -29,6 +29,8 @@ const IRREGULAR_PLURALS: Record<string, string> = {
 
 const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "bloodthirst"];
 
+const ATTACK_TRIGGER_KEYWORDS = ["exalted", "battle cry", "mentor", "myriad", "melee", "afflict", "dethrone", "boast", "enlist", "annihilator"];
+
 function pluralOrSingular(word: string): [string, string] {
   if (word.endsWith("s")) return [word, word.slice(0, -1)];
   const plural = IRREGULAR_PLURALS[word] ?? `${word}s`;
@@ -250,5 +252,22 @@ export const PATTERNS: Pattern[] = [
     matches: (v) =>
       has(v, "equipped creature", "equipment you control", "whenever you attach", "for each equipment"),
     cares: ["equipment"],
+  },
+
+  // --- Attack-matters ---
+  {
+    name: "attacker-trigger",
+    // in-clause: "whenever ~ attacks" must not span a sentence period
+    matches: (v) =>
+      matchWord(v, /when(ever)? [^.]*attacks/) ||
+      ATTACK_TRIGGER_KEYWORDS.some((k) => hasKeyword(v, k)) ||
+      has(v, "battalion", "raid"),
+    produces: ["attack-trigger"],
+  },
+  {
+    name: "attack-trigger-payoff",
+    matches: (v) =>
+      has(v, "whenever a creature you control attacks", "one or more creatures you control attack", "attacking causes a triggered ability", "an additional time"),
+    cares: ["attack-trigger"],
   },
 ];

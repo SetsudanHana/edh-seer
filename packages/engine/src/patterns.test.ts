@@ -179,3 +179,18 @@ test("counter-keyword-source isolates the keyword branch (Graft, no counter text
   const p = extractTags(make("Creature — Insect", "Flying.", ["Graft"]));
   expect(p.produces.has("counter:+1/+1")).toBe(true);
 });
+
+test("an attack trigger creature produces attack-trigger; a blocks trigger does not", () => {
+  expect(extractTags(FIXTURES.goblinRabblemaster).produces.has("attack-trigger")).toBe(true);
+  expect(extractTags(make("Creature — Wall", "Whenever this creature blocks, draw a card.")).produces.has("attack-trigger")).toBe(false);
+});
+
+test("an attack-trigger doubler (Isshin) cares about attack-trigger", () => {
+  expect(extractTags(FIXTURES.isshin).cares.has("attack-trigger")).toBe(true);
+});
+
+test("Mentor is both a counter source and an attack trigger", () => {
+  const mentor = extractTags(make("Creature — Human Soldier", "Some ability text.", ["Mentor"]));
+  expect(mentor.produces.has("counter:+1/+1")).toBe(true);
+  expect(mentor.produces.has("attack-trigger")).toBe(true);
+});
