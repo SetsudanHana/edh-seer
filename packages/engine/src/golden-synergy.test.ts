@@ -88,3 +88,9 @@ test("Tokens: a Fabricate creature + a token doubler synergize on token", () => 
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "token")).toBe(true);
 });
+
+test("Spellslinger: Monastery Swiftspear + Lightning Bolt synergize on cast:instant", () => {
+  const r = synergyScore(FIXTURES.monasterySwiftspear, FIXTURES.lightningBolt);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "cast:instant")).toBe(true);
+});
