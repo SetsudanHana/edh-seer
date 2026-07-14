@@ -172,3 +172,10 @@ test("a counter keyword (Modular) produces the +1/+1 counter tag", () => {
 test("proliferate cares about +1/+1 counters", () => {
   expect(extractTags(FIXTURES.evolutionSage).cares.has("counter:+1/+1")).toBe(true);
 });
+
+test("counter-keyword-source isolates the keyword branch (Graft, no counter text)", () => {
+  // "Flying." does not match counter-maker's /put .*\+1\/\+1 counter/ or "with a +1/+1 counter",
+  // so this only tags counter:+1/+1 via the Graft keyword -> genuinely exercises counter-keyword-source.
+  const p = extractTags(make("Creature — Insect", "Flying.", ["Graft"]));
+  expect(p.produces.has("counter:+1/+1")).toBe(true);
+});
