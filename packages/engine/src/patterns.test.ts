@@ -220,3 +220,14 @@ test("token-keyword-maker does not over-claim creature-etb (populate copies any 
   expect(p.produces.has("token")).toBe(true);
   expect(p.produces.has("creature-etb")).toBe(false);
 });
+
+test("keyword-action needles are word-bounded (no afraid/amassed/adaptable false positives)", () => {
+  // negatives: substrings inside longer words must not fire
+  expect(extractTags(make("Creature — Zombie", "When this dies, each player is afraid.")).produces.has("attack-trigger")).toBe(false);
+  expect(extractTags(make("Creature — Human", "Amassed armies grow stronger.")).produces.has("token")).toBe(false);
+  expect(extractTags(make("Creature — Beast", "This creature is adaptable.")).produces.has("counter:+1/+1")).toBe(false);
+  // positives: the real keyword actions still fire
+  expect(extractTags(make("Enchantment", "Raid — At the beginning of your end step, draw a card.")).produces.has("attack-trigger")).toBe(true);
+  expect(extractTags(make("Sorcery", "Amass 2.")).produces.has("token")).toBe(true);
+  expect(extractTags(make("Creature — Snake", "Adapt 2.")).produces.has("counter:+1/+1")).toBe(true);
+});

@@ -89,7 +89,7 @@ export const PATTERNS: Pattern[] = [
   },
   {
     name: "token-keyword-maker",
-    matches: (v) => TOKEN_KEYWORDS.some((k) => hasKeyword(v, k)) || has(v, "populate", "amass"),
+    matches: (v) => TOKEN_KEYWORDS.some((k) => hasKeyword(v, k)) || matchWord(v, /\b(populate|amass)\b/),
     produces: ["token"],
   },
   {
@@ -112,7 +112,7 @@ export const PATTERNS: Pattern[] = [
   },
   {
     name: "counter-keyword-source",
-    matches: (v) => COUNTER_KEYWORDS.some((k) => hasKeyword(v, k)) || has(v, "adapt", "bolster"),
+    matches: (v) => COUNTER_KEYWORDS.some((k) => hasKeyword(v, k)) || matchWord(v, /\b(adapt|bolster)\b/),
     produces: () => [tag("counter", "+1/+1")],
   },
   {
@@ -278,7 +278,7 @@ export const PATTERNS: Pattern[] = [
     matches: (v) =>
       matchWord(v, /when(ever)? [^.]*attacks/) ||
       ATTACK_TRIGGER_KEYWORDS.some((k) => hasKeyword(v, k)) ||
-      has(v, "battalion", "raid"),
+      matchWord(v, /\b(battalion|raid)\b/),
     produces: ["attack-trigger"],
   },
   {
