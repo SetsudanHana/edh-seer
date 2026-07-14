@@ -216,4 +216,16 @@ export const FIXTURES: Record<string, Card> = {
     "If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.",
     { colors: ["G"], manaValue: 4 },
   ),
+  monasterySwiftspear: card(
+    "Monastery Swiftspear",
+    "Creature — Human Monk",
+    "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)",
+    { colors: ["R"], manaValue: 1, keywords: ["Haste", "Prowess"] },
+  ),
+  grapeshot: card(
+    "Grapeshot",
+    "Sorcery",
+    "Grapeshot deals 1 damage to any target.",
+    { colors: ["R"], manaValue: 1, keywords: ["Storm"] },
+  ),
 };
