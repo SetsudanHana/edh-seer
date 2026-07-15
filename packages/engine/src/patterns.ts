@@ -42,6 +42,8 @@ const ARISTOCRAT_SAC_KEYWORDS = ["exploit", "casualty", "devour"];
 
 const DEATH_VALUE_KEYWORDS = ["afterlife", "blitz"];
 
+const ARTIFACT_COST_KEYWORDS = ["affinity", "improvise"];
+
 function pluralOrSingular(word: string): [string, string] {
   if (word.endsWith("s")) return [word, word.slice(0, -1)];
   const plural = IRREGULAR_PLURALS[word] ?? `${word}s`;
@@ -73,6 +75,17 @@ export const PATTERNS: Pattern[] = [
     matches: (v) =>
       has(v, "an artifact enters", "whenever you cast an artifact", "artifacts you control", "for each artifact"),
     cares: ["artifact"],
+  },
+  {
+    name: "cost-reduction-payoff",
+    matches: (v) =>
+      ARTIFACT_COST_KEYWORDS.some((k) => hasKeyword(v, k)) || hasKeyword(v, "convoke"),
+    cares: (v) => {
+      const out: Tag[] = [];
+      if (ARTIFACT_COST_KEYWORDS.some((k) => hasKeyword(v, k))) out.push("artifact");
+      if (hasKeyword(v, "convoke")) out.push("token");
+      return out;
+    },
   },
 
   // --- Tokens ---
@@ -214,6 +227,13 @@ export const PATTERNS: Pattern[] = [
     name: "landfall-payoff",
     matches: (v) => has(v, "landfall", "a land enters"),
     cares: ["land-etb"],
+  },
+  {
+    name: "ramp-payoff",
+    // A card costing 6+ mana is what a ramp deck accelerates into; 6 is the
+    // common "needs acceleration" line. Closes the produce-only `ramp` tag.
+    matches: (v) => v.manaValue >= 6,
+    cares: ["ramp"],
   },
 
   // --- Roles ---
