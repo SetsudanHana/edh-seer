@@ -302,3 +302,35 @@ test("aristocrats keywords do not fire on a plain creature", () => {
   expect(p.produces.has("sacrifice-event")).toBe(false);
   expect(p.produces.has("creature-death")).toBe(false);
 });
+
+test("cost-reduction-payoff: an affinity card cares about artifacts (keyword-only)", () => {
+  const p = extractTags(make("Artifact Creature — Frog", "Affinity for artifacts.", ["Affinity"]));
+  expect(p.cares.has("artifact")).toBe(true);
+});
+
+test("cost-reduction-payoff: an improvise card cares about artifacts", () => {
+  const p = extractTags(FIXTURES.maverickThopterist);
+  expect(p.cares.has("artifact")).toBe(true);
+});
+
+test("cost-reduction-payoff: a convoke card cares about tokens, not artifacts", () => {
+  const p = extractTags(FIXTURES.chordOfCalling);
+  expect(p.cares.has("token")).toBe(true);
+  expect(p.cares.has("artifact")).toBe(false);
+});
+
+test("ramp-payoff: an expensive card (manaValue >= 6) cares about ramp", () => {
+  const p = extractTags(FIXTURES.craterhoofBehemoth);
+  expect(p.cares.has("ramp")).toBe(true);
+});
+
+test("ramp-payoff: a cheap card (manaValue < 6) does not care about ramp", () => {
+  const p = extractTags(FIXTURES.divination); // manaValue 3
+  expect(p.cares.has("ramp")).toBe(false);
+});
+
+test("mana/cost-reduction keywords do not fire on a plain creature", () => {
+  const p = extractTags(make("Creature — Bird", "Flying.")); // make hardcodes manaValue 0
+  expect(p.cares.has("artifact")).toBe(false);
+  expect(p.cares.has("ramp")).toBe(false);
+});

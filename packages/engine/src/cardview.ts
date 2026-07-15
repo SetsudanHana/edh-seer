@@ -6,6 +6,7 @@ export interface CardView {
   types: Set<string>;
   subtypes: Set<string>;
   keywords: Set<string>;
+  manaValue: number;
 }
 
 const NEGATION_CUES = [
@@ -42,6 +43,7 @@ export function toCardView(card: Card): CardView {
     types: tokenize(left),
     subtypes: tokenize(right),
     keywords: new Set(card.keywords.map((k) => k.toLowerCase())),
+    manaValue: card.manaValue,
   };
 }
 

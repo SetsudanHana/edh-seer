@@ -82,6 +82,14 @@ const COVERED_BATCH4: MechanicEntry[] = [
   { mechanic: "blitz", source: "keyword-ability", status: "covered", tags: ["creature-death", "sacrifice-fodder"], patterns: ["death-value-creature"] },
 ];
 
+const COVERED_BATCH5: MechanicEntry[] = [
+  // mana / cost-reduction payoffs
+  ...["affinity", "improvise"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "covered", tags: ["artifact"], patterns: ["cost-reduction-payoff"] }),
+  ),
+  { mechanic: "convoke", source: "keyword-ability", status: "covered", tags: ["token"], patterns: ["cost-reduction-payoff"] },
+];
+
 // --- Archetype: our strategic tag families (not Scryfall keywords). ---
 const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tribal", source: "archetype", status: "covered", tags: ["tribe:goblin"], patterns: ["tribal-member", "tribal-payoff"], note: "parametric tribe:<subtype>" },
@@ -90,7 +98,7 @@ const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tokens", source: "archetype", status: "covered", tags: ["token", "creature-etb"], patterns: ["creature-token-maker", "token-payoff", "creature-etb-payoff"] },
   { mechanic: "counters", source: "archetype", status: "covered", tags: ["counter:+1/+1"], patterns: ["counter-maker", "counter-payoff"] },
   { mechanic: "aristocrats", source: "archetype", status: "covered", tags: ["sacrifice-event", "creature-death", "sacrifice-fodder"], patterns: ["sacrifice-outlet", "death-payoff"] },
-  { mechanic: "ramp", source: "archetype", status: "covered", tags: ["ramp", "land-etb", "mana"], patterns: ["ramp", "landfall-payoff", "mana-source"] },
+  { mechanic: "ramp", source: "archetype", status: "covered", tags: ["ramp", "land-etb", "mana"], patterns: ["ramp", "landfall-payoff", "mana-source", "ramp-payoff"] },
   { mechanic: "card-draw", source: "archetype", status: "covered", tags: ["card-draw"], patterns: ["card-draw"] },
   { mechanic: "removal", source: "archetype", status: "covered", tags: ["removal"], patterns: ["removal"] },
   { mechanic: "enchantress", source: "archetype", status: "covered", tags: ["enchantment"], patterns: ["enchantment-permanent", "enchantress-payoff"] },
@@ -110,10 +118,6 @@ const PLANNED: MechanicEntry[] = [
   // tokens (keyword-abilities)
   ...["living weapon", "offspring"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "tokens" }),
-  ),
-  // mana / ramp
-  ...["convoke", "improvise", "affinity", "sunburst"].map(
-    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "mana / cost reduction" }),
   ),
   // enchantress / equipment / voltron
   ...["bestow", "reconfigure", "fortify", "for mirrodin!"].map(
@@ -169,6 +173,8 @@ const SKIP: MechanicEntry[] = [
     "teamwork", "firebending", "power-up",
     // spellslinger single-spell value: no cross-card producer/payoff axis
     "cascade", "replicate", "conspire", "buyback", "overload", "spectacle",
+    // 5-color-mana gated; no clean cross-card producer/payoff axis
+    "sunburst",
   ]),
   ...skips("keyword-action", [
     "scry", "seek", "heal", "activate", "attach", "cast", "counter", "destroy", "discard", "exchange",
@@ -189,7 +195,7 @@ const SKIP: MechanicEntry[] = [
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...ARCHETYPES, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;

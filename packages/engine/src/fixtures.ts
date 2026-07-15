@@ -246,4 +246,22 @@ export const FIXTURES: Record<string, Card> = {
     "Blitz {2}{R}{R} (You may cast this spell for its blitz cost. If you do, it gains haste and \"When this creature dies, draw a card.\" Sacrifice it at the beginning of the next end step.) When Sokenzan Smelter enters the battlefield, it deals 2 damage to any target.",
     { colors: ["R"], manaValue: 4, keywords: ["Blitz"] },
   ),
+  maverickThopterist: card(
+    "Maverick Thopterist",
+    "Creature — Human Artificer",
+    "Improvise (Your artifacts can help cast this spell. Each artifact you tap after you're done activating mana abilities pays for {1}.) When Maverick Thopterist enters the battlefield, create two 1/1 colorless Thopter artifact creature tokens with flying.",
+    { colors: ["U"], manaValue: 5, keywords: ["Improvise"] },
+  ),
+  chordOfCalling: card(
+    "Chord of Calling",
+    "Instant",
+    "Convoke (Your creatures can help cast this spell. Each creature you tap while casting this spell pays for {1} or one mana of that creature's color.) Search your library for a creature card, put it onto the battlefield, then shuffle.",
+    { colors: ["G"], manaValue: 3, keywords: ["Convoke"] },
+  ),
+  craterhoofBehemoth: card(
+    "Craterhoof Behemoth",
+    "Creature — Beast",
+    "Haste. When Craterhoof Behemoth enters the battlefield, creatures you control gain trample and get +X/+X until end of turn, where X is the number of creatures you control.",
+    { colors: ["G"], manaValue: 8, keywords: ["Haste", "Trample"] },
+  ),
 };

@@ -106,3 +106,9 @@ test("Aristocrats: a devour sac outlet + Blood Artist synergize on sacrifice-eve
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "sacrifice-event")).toBe(true);
 });
+
+test("Ramp: Cultivate + Craterhoof Behemoth synergize on ramp", () => {
+  const r = synergyScore(FIXTURES.cultivate, FIXTURES.craterhoofBehemoth);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "ramp")).toBe(true);
+});
