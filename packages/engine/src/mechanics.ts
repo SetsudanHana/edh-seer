@@ -112,6 +112,12 @@ const COVERED_BATCH6: MechanicEntry[] = [
   ),
 ];
 
+const COVERED_BATCH7: MechanicEntry[] = [
+  { mechanic: "bestow", source: "keyword-ability", status: "covered", tags: ["aura", "enchantment"], patterns: ["aura-permanent", "enchantment-permanent"] },
+  { mechanic: "reconfigure", source: "keyword-ability", status: "covered", tags: ["equipment"], patterns: ["equipment-permanent"] },
+  { mechanic: "for mirrodin!", source: "keyword-ability", status: "covered", tags: ["equipment"], patterns: ["equipment-permanent"] },
+];
+
 // --- Archetype: our strategic tag families (not Scryfall keywords). ---
 const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tribal", source: "archetype", status: "covered", tags: ["tribe:goblin"], patterns: ["tribal-member", "tribal-payoff"], note: "parametric tribe:<subtype>" },
@@ -125,6 +131,7 @@ const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "removal", source: "archetype", status: "covered", tags: ["removal"], patterns: ["removal"] },
   { mechanic: "enchantress", source: "archetype", status: "covered", tags: ["enchantment"], patterns: ["enchantment-permanent", "enchantress-payoff"] },
   { mechanic: "equipment", source: "archetype", status: "covered", tags: ["equipment"], patterns: ["equipment-permanent", "equipment-payoff"] },
+  { mechanic: "auras", source: "archetype", status: "covered", tags: ["aura"], patterns: ["aura-permanent", "aura-payoff"] },
   { mechanic: "attack-matters", source: "archetype", status: "covered", tags: ["attack-trigger"], patterns: ["attacker-trigger", "attack-trigger-payoff"] },
   { mechanic: "graveyard", source: "archetype", status: "covered", tags: ["graveyard"], patterns: ["self-mill", "graveyard-payoff"] },
   { mechanic: "lifegain", source: "archetype", status: "covered", tags: ["lifegain"], patterns: ["lifegain-source", "lifegain-payoff"] },
@@ -140,10 +147,6 @@ const PLANNED: MechanicEntry[] = [
   // tokens (keyword-abilities)
   ...["living weapon", "offspring"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "tokens" }),
-  ),
-  // enchantress / equipment / voltron
-  ...["bestow", "reconfigure", "fortify", "for mirrodin!"].map(
-    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "auras / equipment" }),
   ),
   // lifegain / drain
   ...["extort", "absorb"].map((m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "lifegain / drain" })),
@@ -170,6 +173,8 @@ const SKIP: MechanicEntry[] = [
     "indestructible", "defender", "first strike", "double strike", "shroud", "ward",
     "intimidate", "fear", "horsemanship", "skulk", "protection", "flanking", "banding",
     "rampage", "provoke", "frenzy", "bushido", "dash",
+    // Fortifications attach to lands (~4 cards exist); no cross-card producer/payoff axis
+    "fortify",
     // set-mechanic one-offs / cosmetic / cost variants / landwalk & cycling variants, no cross-card synergy
     "commander ninjutsu", "ninjutsu", "legendary landwalk", "nonbasic landwalk", "megamorph", "morph",
     "haunt", "forecast", "gravestorm", "hideaway", "level up", "infect", "phasing", "multikicker",
@@ -215,7 +220,7 @@ const SKIP: MechanicEntry[] = [
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...ARCHETYPES, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...COVERED_BATCH7, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;
