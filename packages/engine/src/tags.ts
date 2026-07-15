@@ -19,6 +19,7 @@ const BARE_LABELS: Record<string, string> = {
   "lifegain": "life gain",
   "blink": "blink/flicker",
   "enchantment": "enchantments",
+  "aura": "auras",
   "equipment": "equipment",
   "attack-trigger": "attack triggers",
 };

@@ -394,3 +394,32 @@ test("counter-keyword-source keyword branch: connive + monstrosity produce +1/+1
   expect(extractTags(make("Creature — Rogue", "Connive.", ["Connive"])).produces.has("counter:+1/+1")).toBe(true);
   expect(extractTags(make("Creature — Beast", "Monstrosity 3.", ["Monstrosity"])).produces.has("counter:+1/+1")).toBe(true);
 });
+
+test("aura-permanent: a printed Aura produces the aura tag", () => {
+  const p = extractTags(make("Enchantment — Aura", "Enchant creature. Enchanted creature gets +2/+0."));
+  expect(p.produces.has("aura")).toBe(true);
+  // producer, not payoff: it must NOT care aura
+  expect(p.cares.has("aura")).toBe(false);
+});
+
+test("aura-permanent: a bestow creature produces aura (keyword) + enchantment (type)", () => {
+  const p = extractTags(FIXTURES.boonSatyr);
+  expect(p.produces.has("aura")).toBe(true);
+  expect(p.produces.has("enchantment")).toBe(true);
+});
+
+test("aura-payoff: a cast-an-Aura payoff cares about aura", () => {
+  const p = extractTags(make("Creature — Kor Wizard", "Whenever you cast an Aura spell, draw a card."));
+  expect(p.cares.has("aura")).toBe(true);
+});
+
+test("aura-payoff: a for-each-Aura payoff cares about aura", () => {
+  const p = extractTags(make("Creature — Human", "This creature gets +1/+1 for each Aura you control."));
+  expect(p.cares.has("aura")).toBe(true);
+});
+
+test("aura patterns do not fire on a plain creature", () => {
+  const p = extractTags(make("Creature — Bird", "Flying."));
+  expect(p.produces.has("aura")).toBe(false);
+  expect(p.cares.has("aura")).toBe(false);
+});
