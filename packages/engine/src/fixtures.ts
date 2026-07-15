@@ -282,4 +282,22 @@ export const FIXTURES: Record<string, Card> = {
     "At the beginning of your end step, manifest the top card of your library.",
     { colors: ["G"], manaValue: 5, keywords: ["Manifest"] },
   ),
+  rancor: card(
+    "Rancor",
+    "Enchantment — Aura",
+    "Enchant creature. Enchanted creature gets +2/+0 and has trample. When Rancor is put into a graveyard from the battlefield, return Rancor to its owner's hand.",
+    { colors: ["G"], manaValue: 1 },
+  ),
+  korSpiritdancer: card(
+    "Kor Spiritdancer",
+    "Creature — Kor Wizard",
+    "Whenever you cast an Aura spell, draw a card. Kor Spiritdancer gets +2/+2 for each Aura attached to it.",
+    { colors: ["W"], manaValue: 2 },
+  ),
+  boonSatyr: card(
+    "Boon Satyr",
+    "Enchantment Creature — Satyr",
+    "Flash. Bestow {3}{G}{G}. Enchanted creature gets +4/+2. As long as this isn't attached to a creature, it's a creature in addition to its other types.",
+    { colors: ["G"], manaValue: 4, keywords: ["Flash", "Bestow"] },
+  ),
 };
