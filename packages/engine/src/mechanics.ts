@@ -90,6 +90,28 @@ const COVERED_BATCH5: MechanicEntry[] = [
   { mechanic: "convoke", source: "keyword-ability", status: "covered", tags: ["token"], patterns: ["cost-reduction-payoff"] },
 ];
 
+const COVERED_BATCH6: MechanicEntry[] = [
+  // artifact-token makers (Clue / Food / Incubator)
+  ...["investigate", "incubate"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-action", status: "covered", tags: ["artifact", "token", "sacrifice-fodder"], patterns: ["clue-food-maker"] }),
+  ),
+  { mechanic: "food", source: "keyword-action", status: "covered", tags: ["artifact", "token", "sacrifice-fodder", "lifegain"], patterns: ["clue-food-maker"] },
+  // face-down creature makers
+  ...["manifest", "cloak"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-action", status: "covered", tags: ["creature-etb", "sacrifice-fodder"], patterns: ["facedown-creature-maker"] }),
+  ),
+  { mechanic: "manifest dread", source: "keyword-action", status: "covered", tags: ["creature-etb", "sacrifice-fodder", "graveyard"], patterns: ["facedown-creature-maker", "self-mill"] },
+  // graveyard fill / payoff
+  { mechanic: "surveil", source: "keyword-action", status: "covered", tags: ["graveyard"], patterns: ["self-mill"] },
+  ...["collect evidence", "forage"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-action", status: "covered", tags: ["graveyard"], patterns: ["graveyard-payoff"] }),
+  ),
+  // counter producers
+  ...["connive", "monstrosity"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-action", status: "covered", tags: ["counter:+1/+1"], patterns: ["counter-keyword-source"] }),
+  ),
+];
+
 // --- Archetype: our strategic tag families (not Scryfall keywords). ---
 const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tribal", source: "archetype", status: "covered", tags: ["tribe:goblin"], patterns: ["tribal-member", "tribal-payoff"], note: "parametric tribe:<subtype>" },
@@ -128,10 +150,6 @@ const PLANNED: MechanicEntry[] = [
   // attack-matters (combat TRIGGERS — Isshin & attack payoffs)
   ...["double team", "mobilize"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "attack-matters" }),
-  ),
-  // keyword-action planned (populate & amass are ACTIONS, not abilities)
-  ...["investigate", "explore", "connive", "surveil", "forage", "collect evidence", "incubate", "food", "monstrosity", "manifest", "manifest dread", "cloak", "conjure", "goad"].map(
-    (m): MechanicEntry => ({ mechanic: m, source: "keyword-action", status: "planned" }),
   ),
   // ability-word planned (graveyard/threshold, attack-matters, type-matters conditions)
   ...["threshold", "delirium", "undergrowth", "descend", "fathomless descent", "morbid", "revolt", "metalcraft", "domain", "coven", "celebration", "corrupted", "void", "eerie", "survival", "spell mastery", "addendum"].map(
@@ -184,6 +202,8 @@ const SKIP: MechanicEntry[] = [
     "fight", "assemble", "suspect", "role token", "plot", "harness", "draft from a spellbook", "heist",
     "endure", "prepared", "incorporate", "exert", "convert", "waterbend", "airbend", "earthbend", "blight",
     "behold", "double", "triple",
+    // no cross-card synergy axis: explore is conditional card-selection; conjure is hand advantage; goad is political/combat
+    "explore", "conjure", "goad",
   ]),
   ...skips("ability-word", [
     "channel", "chroma", "cohort", "converge", "fateful hour", "grandeur", "hellbent", "heroic",
@@ -195,7 +215,7 @@ const SKIP: MechanicEntry[] = [
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...ARCHETYPES, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;

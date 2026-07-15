@@ -112,3 +112,15 @@ test("Ramp: Cultivate + Craterhoof Behemoth synergize on ramp", () => {
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "ramp")).toBe(true);
 });
+
+test("Keyword-actions: Thraben Inspector (investigate) + Reckless Fireweaver synergize on artifact", () => {
+  const r = synergyScore(FIXTURES.thrabenInspector, FIXTURES.fireweaver);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "artifact")).toBe(true);
+});
+
+test("Keyword-actions: Whisperwood Elemental (manifest) + Impact Tremors synergize on creature-etb", () => {
+  const r = synergyScore(FIXTURES.whisperwoodElemental, FIXTURES.impactTremors);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "creature-etb")).toBe(true);
+});
