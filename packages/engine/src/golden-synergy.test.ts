@@ -124,3 +124,9 @@ test("Keyword-actions: Whisperwood Elemental (manifest) + Impact Tremors synergi
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "creature-etb")).toBe(true);
 });
+
+test("Auras: Rancor + Kor Spiritdancer synergize on aura", () => {
+  const r = synergyScore(FIXTURES.rancor, FIXTURES.korSpiritdancer);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "aura")).toBe(true);
+});
