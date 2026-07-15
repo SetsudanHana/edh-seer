@@ -264,4 +264,22 @@ export const FIXTURES: Record<string, Card> = {
     "Haste. When Craterhoof Behemoth enters the battlefield, creatures you control gain trample and get +X/+X until end of turn, where X is the number of creatures you control.",
     { colors: ["G"], manaValue: 8, keywords: ["Haste", "Trample"] },
   ),
+  thrabenInspector: card(
+    "Thraben Inspector",
+    "Creature — Human Soldier",
+    "When Thraben Inspector enters the battlefield, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this artifact: Draw a card.\")",
+    { colors: ["W"], manaValue: 1, keywords: ["Investigate"] },
+  ),
+  gildedGoose: card(
+    "Gilded Goose",
+    "Creature — Bird",
+    "Flying. When Gilded Goose enters the battlefield, create a Food token.",
+    { colors: ["G"], manaValue: 1, keywords: ["Flying", "Food"] },
+  ),
+  whisperwoodElemental: card(
+    "Whisperwood Elemental",
+    "Creature — Elemental",
+    "At the beginning of your end step, manifest the top card of your library.",
+    { colors: ["G"], manaValue: 5, keywords: ["Manifest"] },
+  ),
 };
