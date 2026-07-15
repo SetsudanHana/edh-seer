@@ -27,13 +27,14 @@ const IRREGULAR_PLURALS: Record<string, string> = {
   dwarf: "dwarves",
 };
 
-const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "bloodthirst", "devour"];
+const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "bloodthirst", "devour", "connive", "monstrosity"];
 
 const ATTACK_TRIGGER_KEYWORDS = ["exalted", "battle cry", "mentor", "myriad", "melee", "afflict", "dethrone", "boast", "enlist", "annihilator"];
 
 const GRAVEYARD_KEYWORDS = [
   "delve", "escape", "flashback", "dredge",
   "embalm", "eternalize", "unearth", "encore", "disturb", "aftermath", "jump-start", "retrace", "recover", "scavenge",
+  "collect evidence", "forage",
 ];
 
 const TOKEN_KEYWORDS = ["fabricate", "myriad", "afterlife"];
@@ -47,6 +48,8 @@ const ARTIFACT_COST_KEYWORDS = ["affinity", "improvise"];
 const ARTIFACT_TOKEN_KEYWORDS = ["investigate", "food", "incubate"];
 
 const FACEDOWN_KEYWORDS = ["manifest", "cloak", "manifest dread"];
+
+const GRAVEYARD_FILL_KEYWORDS = ["surveil", "manifest dread"];
 
 function pluralOrSingular(word: string): [string, string] {
   if (word.endsWith("s")) return [word, word.slice(0, -1)];
@@ -186,7 +189,8 @@ export const PATTERNS: Pattern[] = [
     name: "self-mill",
     matches: (v) =>
       matchWord(v, /mill \w+ cards?/) ||
-      hasClause(v, "into your graveyard", "discard your hand"),
+      hasClause(v, "into your graveyard", "discard your hand") ||
+      GRAVEYARD_FILL_KEYWORDS.some((k) => hasKeyword(v, k)),
     produces: ["graveyard"],
   },
   {

@@ -374,3 +374,23 @@ test("keyword-action makers do not fire on a plain creature", () => {
   expect(p.produces.has("artifact")).toBe(false);
   expect(p.produces.has("creature-etb")).toBe(false);
 });
+
+test("self-mill keyword branch: surveil fills the graveyard", () => {
+  expect(extractTags(make("Instant", "Surveil 2.", ["Surveil"])).produces.has("graveyard")).toBe(true);
+});
+
+test("manifest dread is multi-tag (creature-etb + graveyard)", () => {
+  const p = extractTags(make("Creature — Human", "Manifest dread.", ["Manifest Dread"]));
+  expect(p.produces.has("creature-etb")).toBe(true);
+  expect(p.produces.has("graveyard")).toBe(true);
+});
+
+test("graveyard-payoff keyword branch: collect evidence + forage care graveyard", () => {
+  expect(extractTags(make("Sorcery", "Collect evidence 4.", ["Collect Evidence"])).cares.has("graveyard")).toBe(true);
+  expect(extractTags(make("Instant", "Forage.", ["Forage"])).cares.has("graveyard")).toBe(true);
+});
+
+test("counter-keyword-source keyword branch: connive + monstrosity produce +1/+1 counters", () => {
+  expect(extractTags(make("Creature — Rogue", "Connive.", ["Connive"])).produces.has("counter:+1/+1")).toBe(true);
+  expect(extractTags(make("Creature — Beast", "Monstrosity 3.", ["Monstrosity"])).produces.has("counter:+1/+1")).toBe(true);
+});
