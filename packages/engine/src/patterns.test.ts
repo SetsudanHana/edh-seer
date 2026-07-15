@@ -334,3 +334,43 @@ test("mana/cost-reduction keywords do not fire on a plain creature", () => {
   expect(p.cares.has("artifact")).toBe(false);
   expect(p.cares.has("ramp")).toBe(false);
 });
+
+test("clue-food-maker: investigate produces artifact + token + fodder, not lifegain", () => {
+  const p = extractTags(make("Creature — Human", "Investigate.", ["Investigate"]));
+  expect(p.produces.has("artifact")).toBe(true);
+  expect(p.produces.has("token")).toBe(true);
+  expect(p.produces.has("sacrifice-fodder")).toBe(true);
+  expect(p.produces.has("lifegain")).toBe(false);
+});
+
+test("clue-food-maker: incubate produces artifact + token", () => {
+  const p = extractTags(make("Sorcery", "Incubate 2.", ["Incubate"]));
+  expect(p.produces.has("artifact")).toBe(true);
+  expect(p.produces.has("token")).toBe(true);
+});
+
+test("clue-food-maker: food is multi-tag (artifact + token + fodder + lifegain)", () => {
+  const p = extractTags(FIXTURES.gildedGoose);
+  expect(p.produces.has("artifact")).toBe(true);
+  expect(p.produces.has("token")).toBe(true);
+  expect(p.produces.has("sacrifice-fodder")).toBe(true);
+  expect(p.produces.has("lifegain")).toBe(true);
+});
+
+test("facedown-creature-maker: manifest produces creature-etb + fodder, NOT token", () => {
+  const p = extractTags(make("Creature — Elemental", "Manifest the top card of your library.", ["Manifest"]));
+  expect(p.produces.has("creature-etb")).toBe(true);
+  expect(p.produces.has("sacrifice-fodder")).toBe(true);
+  expect(p.produces.has("token")).toBe(false);
+});
+
+test("facedown-creature-maker: cloak produces creature-etb", () => {
+  const p = extractTags(make("Instant", "Cloak the top card of your library.", ["Cloak"]));
+  expect(p.produces.has("creature-etb")).toBe(true);
+});
+
+test("keyword-action makers do not fire on a plain creature", () => {
+  const p = extractTags(make("Creature — Bird", "Flying."));
+  expect(p.produces.has("artifact")).toBe(false);
+  expect(p.produces.has("creature-etb")).toBe(false);
+});

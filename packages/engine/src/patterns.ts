@@ -44,6 +44,10 @@ const DEATH_VALUE_KEYWORDS = ["afterlife", "blitz"];
 
 const ARTIFACT_COST_KEYWORDS = ["affinity", "improvise"];
 
+const ARTIFACT_TOKEN_KEYWORDS = ["investigate", "food", "incubate"];
+
+const FACEDOWN_KEYWORDS = ["manifest", "cloak", "manifest dread"];
+
 function pluralOrSingular(word: string): [string, string] {
   if (word.endsWith("s")) return [word, word.slice(0, -1)];
   const plural = IRREGULAR_PLURALS[word] ?? `${word}s`;
@@ -113,6 +117,20 @@ export const PATTERNS: Pattern[] = [
     name: "token-doubler",
     matches: (v) => has(v, "twice that many"),
     cares: ["token"],
+  },
+  {
+    name: "clue-food-maker",
+    matches: (v) => ARTIFACT_TOKEN_KEYWORDS.some((k) => hasKeyword(v, k)),
+    produces: (v) => {
+      const out: Tag[] = ["artifact", "token", "sacrifice-fodder"];
+      if (hasKeyword(v, "food")) out.push("lifegain");
+      return out;
+    },
+  },
+  {
+    name: "facedown-creature-maker",
+    matches: (v) => FACEDOWN_KEYWORDS.some((k) => hasKeyword(v, k)),
+    produces: ["creature-etb", "sacrifice-fodder"],
   },
 
   // --- +1/+1 counters ---
