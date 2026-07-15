@@ -323,6 +323,18 @@ export const PATTERNS: Pattern[] = [
       has(v, "whenever you cast an enchantment", "an enchantment you control enters", "constellation", "for each enchantment"),
     cares: ["enchantment"],
   },
+  {
+    name: "aura-permanent",
+    // subtype Aura catches printed Auras; bestow creatures are Auras via the
+    // keyword (their printed subtype is the creature type, not Aura).
+    matches: (v) => v.subtypes.has("aura") || hasKeyword(v, "bestow"),
+    produces: ["aura"],
+  },
+  {
+    name: "aura-payoff",
+    matches: (v) => has(v, "cast an aura", "aura spell", "for each aura", "auras you control"),
+    cares: ["aura"],
+  },
 
   // --- Equipment / Voltron ---
   {
