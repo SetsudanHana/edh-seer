@@ -106,6 +106,26 @@ test("lifegain payoff cares about lifegain", () => {
   expect(extractTags(FIXTURES.archangelOfThune).cares.has("lifegain")).toBe(true);
 });
 
+test("lifegain-source: an extort creature produces lifegain (keyword-only)", () => {
+  const p = extractTags(make("Creature — Human Cleric", "Extort", ["Extort"]));
+  expect(p.produces.has("lifegain")).toBe(true);
+});
+
+test("lifegain-source: a drain card with 'gain that much life' produces lifegain", () => {
+  const p = extractTags(make("Creature — Zombie", "When this creature dies, each opponent loses 2 life and you gain that much life."));
+  expect(p.produces.has("lifegain")).toBe(true);
+});
+
+test("lifegain-source: an absorb (damage-prevention) card does not produce lifegain", () => {
+  const p = extractTags(make("Creature — Wall", "Absorb 2 (If a source would deal damage to this creature, prevent 2 of that damage.)", ["Absorb"]));
+  expect(p.produces.has("lifegain")).toBe(false);
+});
+
+test("lifegain-source: a plain creature does not produce lifegain", () => {
+  const p = extractTags(make("Creature — Bird", "Flying."));
+  expect(p.produces.has("lifegain")).toBe(false);
+});
+
 test("etb-value-creature: own-ETB creature produces creature-etb + cares blink; 'another creature enters' does not", () => {
   const m = extractTags(FIXTURES.mulldrifter);
   expect(m.produces.has("creature-etb")).toBe(true);
