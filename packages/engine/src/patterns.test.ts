@@ -423,3 +423,31 @@ test("aura patterns do not fire on a plain creature", () => {
   expect(p.produces.has("aura")).toBe(false);
   expect(p.cares.has("aura")).toBe(false);
 });
+
+test("mobilize produces attack-trigger + token (keyword-only)", () => {
+  const p = extractTags(make("Creature — Rabbit Warrior", "Mobilize 2.", ["Mobilize"]));
+  expect(p.produces.has("attack-trigger")).toBe(true);
+  expect(p.produces.has("token")).toBe(true);
+});
+
+test("double team produces attack-trigger + token (keyword-only)", () => {
+  const p = extractTags(make("Creature — Human Soldier", "Double team.", ["Double Team"]));
+  expect(p.produces.has("attack-trigger")).toBe(true);
+  expect(p.produces.has("token")).toBe(true);
+});
+
+test("rally (ability-word) produces attack-trigger via the text branch", () => {
+  const p = extractTags(make("Creature — Kor Ally", "Rally — Whenever you activate an ability, allies you control get +1/+1."));
+  expect(p.produces.has("attack-trigger")).toBe(true);
+});
+
+test("a ferocious power-condition card does not produce attack-trigger", () => {
+  const p = extractTags(make("Instant", "Ferocious — If you control a creature with power 4 or greater, draw two cards."));
+  expect(p.produces.has("attack-trigger")).toBe(false);
+});
+
+test("attack-matters keywords do not fire on a plain creature", () => {
+  const p = extractTags(make("Creature — Bird", "Flying."));
+  expect(p.produces.has("attack-trigger")).toBe(false);
+  expect(p.produces.has("token")).toBe(false);
+});

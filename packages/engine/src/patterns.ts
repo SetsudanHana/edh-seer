@@ -29,7 +29,7 @@ const IRREGULAR_PLURALS: Record<string, string> = {
 
 const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "bloodthirst", "devour", "connive", "monstrosity"];
 
-const ATTACK_TRIGGER_KEYWORDS = ["exalted", "battle cry", "mentor", "myriad", "melee", "afflict", "dethrone", "boast", "enlist", "annihilator"];
+const ATTACK_TRIGGER_KEYWORDS = ["exalted", "battle cry", "mentor", "myriad", "melee", "afflict", "dethrone", "boast", "enlist", "annihilator", "double team", "mobilize"];
 
 const GRAVEYARD_KEYWORDS = [
   "delve", "escape", "flashback", "dredge",
@@ -37,7 +37,7 @@ const GRAVEYARD_KEYWORDS = [
   "collect evidence", "forage",
 ];
 
-const TOKEN_KEYWORDS = ["fabricate", "myriad", "afterlife"];
+const TOKEN_KEYWORDS = ["fabricate", "myriad", "afterlife", "double team", "mobilize"];
 
 const ARISTOCRAT_SAC_KEYWORDS = ["exploit", "casualty", "devour"];
 
@@ -356,7 +356,7 @@ export const PATTERNS: Pattern[] = [
     matches: (v) =>
       matchWord(v, /when(ever)? [^.]*attacks/) ||
       ATTACK_TRIGGER_KEYWORDS.some((k) => hasKeyword(v, k)) ||
-      matchWord(v, /\b(battalion|raid)\b/),
+      matchWord(v, /\b(battalion|raid|rally)\b/),
     produces: ["attack-trigger"],
   },
   {
