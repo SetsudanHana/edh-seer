@@ -130,3 +130,17 @@ test("Auras: Rancor + Kor Spiritdancer synergize on aura", () => {
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "aura")).toBe(true);
 });
+
+test("Attack-matters: a Mobilize creature + Isshin synergize on attack-trigger", () => {
+  const mobilizer = {
+    name: "Salt Road Skirmisher",
+    typeLine: "Creature — Rabbit Warrior",
+    oracleText: "Mobilize 2.",
+    keywords: ["Mobilize"],
+    colors: ["R"],
+    manaValue: 3,
+  };
+  const r = synergyScore(mobilizer, FIXTURES.isshin);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "attack-trigger")).toBe(true);
+});
