@@ -118,6 +118,13 @@ const COVERED_BATCH7: MechanicEntry[] = [
   { mechanic: "for mirrodin!", source: "keyword-ability", status: "covered", tags: ["equipment"], patterns: ["equipment-permanent"] },
 ];
 
+const COVERED_BATCH8: MechanicEntry[] = [
+  ...["double team", "mobilize"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "covered", tags: ["attack-trigger", "token"], patterns: ["attacker-trigger", "token-keyword-maker"] }),
+  ),
+  { mechanic: "rally", source: "ability-word", status: "covered", tags: ["attack-trigger"], patterns: ["attacker-trigger"] },
+];
+
 // --- Archetype: our strategic tag families (not Scryfall keywords). ---
 const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tribal", source: "archetype", status: "covered", tags: ["tribe:goblin"], patterns: ["tribal-member", "tribal-payoff"], note: "parametric tribe:<subtype>" },
@@ -150,16 +157,9 @@ const PLANNED: MechanicEntry[] = [
   ),
   // lifegain / drain
   ...["extort", "absorb"].map((m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "lifegain / drain" })),
-  // attack-matters (combat TRIGGERS — Isshin & attack payoffs)
-  ...["double team", "mobilize"].map(
-    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "attack-matters" }),
-  ),
   // ability-word planned (graveyard/threshold, attack-matters, type-matters conditions)
   ...["threshold", "delirium", "undergrowth", "descend", "fathomless descent", "morbid", "revolt", "metalcraft", "domain", "coven", "celebration", "corrupted", "void", "eerie", "survival", "spell mastery", "addendum"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "ability-word", status: "planned" }),
-  ),
-  ...["pack tactics", "ferocious", "formidable", "valiant", "flurry", "bloodrush", "rally"].map(
-    (m): MechanicEntry => ({ mechanic: m, source: "ability-word", status: "planned", note: "attack-matters" }),
   ),
 ];
 
@@ -217,10 +217,12 @@ const SKIP: MechanicEntry[] = [
     "enrage", "hero's reward", "kinfall", "landship", "legacy", "underdog", "alliance", "secret council",
     "paradox", "disappear", "will of the planeswalkers", "start your engines!", "renew", "repartee",
     "opus", "infusion", "covercast", "vivid",
+    // power/attack conditions with no cross-card producer/payoff axis; valiant (target-triggered) and flurry (second-spell) are not attack-matters
+    "pack tactics", "ferocious", "formidable", "valiant", "flurry", "bloodrush",
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...COVERED_BATCH7, ...ARCHETYPES, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...COVERED_BATCH7, ...COVERED_BATCH8, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;
