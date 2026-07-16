@@ -172,3 +172,17 @@ test("Morbid: a morbid payoff + Tithe Taker synergize on creature-death", () => 
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "creature-death")).toBe(true);
 });
+
+test("Lifegain: an extort creature + Archangel of Thune synergize on lifegain", () => {
+  const kingpinsPet = {
+    name: "Kingpin's Pet",
+    typeLine: "Creature — Vampire",
+    oracleText: "Flying. Extort.",
+    keywords: ["Flying", "Extort"],
+    colors: ["W", "B"],
+    manaValue: 3,
+  };
+  const r = synergyScore(kingpinsPet, FIXTURES.archangelOfThune);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "lifegain")).toBe(true);
+});
