@@ -144,3 +144,31 @@ test("Attack-matters: a Mobilize creature + Isshin synergize on attack-trigger",
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "attack-trigger")).toBe(true);
 });
+
+test("Graveyard-count: a threshold payoff + Stitcher's Supplier synergize on graveyard", () => {
+  const nimbleMongoose = {
+    name: "Nimble Mongoose",
+    typeLine: "Creature — Snake",
+    oracleText: "Threshold — Nimble Mongoose gets +2/+2 as long as seven or more cards are in your graveyard.",
+    keywords: [],
+    colors: ["G"],
+    manaValue: 1,
+  };
+  const r = synergyScore(nimbleMongoose, FIXTURES.stitchersSupplier);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "graveyard")).toBe(true);
+});
+
+test("Morbid: a morbid payoff + Tithe Taker synergize on creature-death", () => {
+  const tragicSlip = {
+    name: "Tragic Slip",
+    typeLine: "Instant",
+    oracleText: "Target creature gets -1/-1 until end of turn. Morbid — That creature gets -13/-13 instead if a creature died this turn.",
+    keywords: [],
+    colors: ["B"],
+    manaValue: 1,
+  };
+  const r = synergyScore(tragicSlip, FIXTURES.titheTaker);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "creature-death")).toBe(true);
+});

@@ -451,3 +451,34 @@ test("attack-matters keywords do not fire on a plain creature", () => {
   expect(p.produces.has("attack-trigger")).toBe(false);
   expect(p.produces.has("token")).toBe(false);
 });
+
+test("graveyard-payoff: threshold cares about graveyard (marker, no 'in your graveyard' text)", () => {
+  const p = extractTags(make("Creature — Snake", "Threshold — This creature gets +2/+2 as long as threshold is active."));
+  expect(p.cares.has("graveyard")).toBe(true);
+});
+
+test("graveyard-payoff: delirium cares about graveyard", () => {
+  const p = extractTags(make("Creature — Human", "Delirium — This creature has trample as long as delirium is active."));
+  expect(p.cares.has("graveyard")).toBe(true);
+});
+
+test("graveyard-payoff: spell mastery cares about graveyard", () => {
+  const p = extractTags(make("Instant", "Spell mastery — Draw an additional card if spell mastery is active."));
+  expect(p.cares.has("graveyard")).toBe(true);
+});
+
+test("graveyard-payoff: descend and fathomless descent markers care about graveyard", () => {
+  expect(extractTags(make("Creature — Merfolk", "Descend 8 — Whenever this attacks, if you have descended, draw a card.")).cares.has("graveyard")).toBe(true);
+  expect(extractTags(make("Sorcery", "Deal damage equal to permanents in your descent tally.")).cares.has("graveyard")).toBe(true);
+});
+
+test("death-payoff: morbid cares about creature-death (past-tense 'died')", () => {
+  const p = extractTags(make("Instant", "Morbid — Deal 4 damage to any target. If a creature died this turn, deal 6 damage instead."));
+  expect(p.cares.has("creature-death")).toBe(true);
+});
+
+test("graveyard/death count conditions do not fire on a plain creature", () => {
+  const p = extractTags(make("Creature — Bird", "Flying."));
+  expect(p.cares.has("graveyard")).toBe(false);
+  expect(p.cares.has("creature-death")).toBe(false);
+});

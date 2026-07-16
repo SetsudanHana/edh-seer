@@ -125,6 +125,13 @@ const COVERED_BATCH8: MechanicEntry[] = [
   { mechanic: "rally", source: "ability-word", status: "covered", tags: ["attack-trigger"], patterns: ["attacker-trigger"] },
 ];
 
+const COVERED_BATCH9: MechanicEntry[] = [
+  ...["threshold", "delirium", "undergrowth", "descend", "fathomless descent", "spell mastery"].map(
+    (m): MechanicEntry => ({ mechanic: m, source: "ability-word", status: "covered", tags: ["graveyard"], patterns: ["graveyard-payoff"] }),
+  ),
+  { mechanic: "morbid", source: "ability-word", status: "covered", tags: ["creature-death"], patterns: ["death-payoff"] },
+];
+
 // --- Archetype: our strategic tag families (not Scryfall keywords). ---
 const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tribal", source: "archetype", status: "covered", tags: ["tribe:goblin"], patterns: ["tribal-member", "tribal-payoff"], note: "parametric tribe:<subtype>" },
@@ -157,8 +164,8 @@ const PLANNED: MechanicEntry[] = [
   ),
   // lifegain / drain
   ...["extort", "absorb"].map((m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "lifegain / drain" })),
-  // ability-word planned (graveyard/threshold, attack-matters, type-matters conditions)
-  ...["threshold", "delirium", "undergrowth", "descend", "fathomless descent", "morbid", "revolt", "metalcraft", "domain", "coven", "celebration", "corrupted", "void", "eerie", "survival", "spell mastery", "addendum"].map(
+  // ability-word planned (non-graveyard conditions: artifact/type/permanent-count axes, future batches)
+  ...["metalcraft", "domain", "coven", "celebration", "corrupted", "void", "eerie", "survival", "addendum"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "ability-word", status: "planned" }),
   ),
 ];
@@ -219,10 +226,12 @@ const SKIP: MechanicEntry[] = [
     "opus", "infusion", "covercast", "vivid",
     // power/attack conditions with no cross-card producer/payoff axis; valiant (target-triggered) and flurry (second-spell) are not attack-matters
     "pack tactics", "ferocious", "formidable", "valiant", "flurry", "bloodrush",
+    // "a permanent left the battlefield this turn" — broader than any current tag (sac/fetch/blink); no clean axis
+    "revolt",
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...COVERED_BATCH7, ...COVERED_BATCH8, ...ARCHETYPES, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...COVERED_BATCH7, ...COVERED_BATCH8, ...COVERED_BATCH9, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;
