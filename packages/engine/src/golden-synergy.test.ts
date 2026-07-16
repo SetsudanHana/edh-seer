@@ -130,3 +130,9 @@ test("Auras: Rancor + Kor Spiritdancer synergize on aura", () => {
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "aura")).toBe(true);
 });
+
+test("Attack-matters: Goblin Rabblemaster + Isshin synergize on attack-trigger", () => {
+  const r = synergyScore(FIXTURES.goblinRabblemaster, FIXTURES.isshin);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "attack-trigger")).toBe(true);
+});
