@@ -169,7 +169,7 @@ export const PATTERNS: Pattern[] = [
   },
   {
     name: "death-payoff",
-    matches: (v) => hasClause(v, "creature dies", "another creature dies", "a creature you control dies", "whenever a creature dies"),
+    matches: (v) => hasClause(v, "creature dies", "another creature dies", "a creature you control dies", "whenever a creature dies", "creature died", "morbid"),
     cares: ["creature-death", "sacrifice-event"],
   },
   {
@@ -196,7 +196,8 @@ export const PATTERNS: Pattern[] = [
   {
     name: "graveyard-payoff",
     matches: (v) =>
-      has(v, "from your graveyard", "in your graveyard", "creature card in your graveyard") ||
+      has(v, "from your graveyard", "in your graveyard", "creature card in your graveyard",
+            "threshold", "delirium", "undergrowth", "descend", "descent", "spell mastery") ||
       GRAVEYARD_KEYWORDS.some((k) => hasKeyword(v, k)),
     cares: ["graveyard"],
   },
