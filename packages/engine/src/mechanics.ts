@@ -132,6 +132,10 @@ const COVERED_BATCH9: MechanicEntry[] = [
   { mechanic: "morbid", source: "ability-word", status: "covered", tags: ["creature-death"], patterns: ["death-payoff"] },
 ];
 
+const COVERED_BATCH10: MechanicEntry[] = [
+  { mechanic: "extort", source: "keyword-ability", status: "covered", tags: ["lifegain"], patterns: ["lifegain-source"] },
+];
+
 // --- Archetype: our strategic tag families (not Scryfall keywords). ---
 const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tribal", source: "archetype", status: "covered", tags: ["tribe:goblin"], patterns: ["tribal-member", "tribal-payoff"], note: "parametric tribe:<subtype>" },
@@ -162,8 +166,6 @@ const PLANNED: MechanicEntry[] = [
   ...["living weapon", "offspring"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "tokens" }),
   ),
-  // lifegain / drain
-  ...["extort", "absorb"].map((m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "lifegain / drain" })),
   // ability-word planned (non-graveyard conditions: artifact/type/permanent-count axes, future batches)
   ...["metalcraft", "domain", "coven", "celebration", "corrupted", "void", "eerie", "survival", "addendum"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "ability-word", status: "planned" }),
@@ -182,6 +184,8 @@ const SKIP: MechanicEntry[] = [
     "rampage", "provoke", "frenzy", "bushido", "dash",
     // Fortifications attach to lands (~4 cards exist); no cross-card producer/payoff axis
     "fortify",
+    // Absorb N is damage prevention, not lifegain/drain — no cross-card synergy axis
+    "absorb",
     // set-mechanic one-offs / cosmetic / cost variants / landwalk & cycling variants, no cross-card synergy
     "commander ninjutsu", "ninjutsu", "legendary landwalk", "nonbasic landwalk", "megamorph", "morph",
     "haunt", "forecast", "gravestorm", "hideaway", "level up", "infect", "phasing", "multikicker",
@@ -231,7 +235,7 @@ const SKIP: MechanicEntry[] = [
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...COVERED_BATCH7, ...COVERED_BATCH8, ...COVERED_BATCH9, ...ARCHETYPES, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...COVERED_BATCH7, ...COVERED_BATCH8, ...COVERED_BATCH9, ...COVERED_BATCH10, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;
