@@ -99,3 +99,28 @@ test("Coverage: Kindred Discovery gains edges to both Wizards in a mini wizard d
   expect(kindred).toBeDefined();
   expect(kindred!.partnerCount).toBe(2);
 });
+
+// Vanilla Human Wizard producer — only emits tribe tags, no payoff text.
+const wiz = (n: string): Card => ({
+  name: n, typeLine: "Creature — Human Wizard", oracleText: "", keywords: [], colors: ["U"], manaValue: 2,
+});
+
+test("cohesion identifies tribe:wizard as the dominant theme of a wizard-heavy deck", () => {
+  const report = analyzeDeck([wiz("W1"), wiz("W2"), wiz("W3"), wiz("W4"), FIXTURES.archmageOfEchoes]);
+  expect(report.cohesion).not.toBeNull();
+  expect(report.cohesion!.tag).toBe("tribe:wizard");
+  expect(report.cohesion!.score).toBeGreaterThan(0);
+});
+
+test("a wizard payoff outranks the vanilla wizards it enables", () => {
+  // Archmage cares tribe:wizard, so it edges to all four vanilla wizards (partnerCount 4);
+  // each vanilla wizard edges only to Archmage. Damped weighted sum puts Archmage on top.
+  const report = analyzeDeck([wiz("W1"), wiz("W2"), wiz("W3"), wiz("W4"), FIXTURES.archmageOfEchoes]);
+  expect(report.cards[0].name).toBe("Archmage of Echoes");
+});
+
+test("cohesion is null for a deck with no tagged cards", () => {
+  const blank = (n: string): Card => ({ name: n, typeLine: "Land", oracleText: "", keywords: [], colors: [], manaValue: 0 });
+  const report = analyzeDeck([blank("L1"), blank("L2")]);
+  expect(report.cohesion).toBeNull();
+});
