@@ -524,3 +524,25 @@ test("non-graveyard ability-words do not fire on a plain creature", () => {
   expect(p.cares.has("enchantment")).toBe(false);
   expect(p.cares.has("token")).toBe(false);
 });
+
+test("living weapon produces token (keyword) + equipment (subtype)", () => {
+  const p = extractTags(make("Artifact — Equipment", "Living weapon", ["Living Weapon"]));
+  expect(p.produces.has("token")).toBe(true);
+  expect(p.produces.has("equipment")).toBe(true);
+});
+
+test("offspring produces token (keyword-only)", () => {
+  const p = extractTags(make("Creature — Human", "Offspring {1}", ["Offspring"]));
+  expect(p.produces.has("token")).toBe(true);
+});
+
+test("renown produces +1/+1 counters (keyword-only)", () => {
+  const p = extractTags(make("Creature — Soldier", "Renown 1", ["Renown"]));
+  expect(p.produces.has("counter:+1/+1")).toBe(true);
+});
+
+test("final keywords do not fire on a plain creature", () => {
+  const p = extractTags(make("Creature — Bird", "Flying."));
+  expect(p.produces.has("token")).toBe(false);
+  expect(p.produces.has("counter:+1/+1")).toBe(false);
+});

@@ -27,7 +27,7 @@ const IRREGULAR_PLURALS: Record<string, string> = {
   dwarf: "dwarves",
 };
 
-const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "bloodthirst", "devour", "connive", "monstrosity"];
+const COUNTER_KEYWORDS = ["modular", "graft", "outlast", "training", "mentor", "bloodthirst", "devour", "connive", "monstrosity", "renown"];
 
 const ATTACK_TRIGGER_KEYWORDS = ["exalted", "battle cry", "mentor", "myriad", "melee", "afflict", "dethrone", "boast", "enlist", "annihilator", "double team", "mobilize"];
 
@@ -37,7 +37,7 @@ const GRAVEYARD_KEYWORDS = [
   "collect evidence", "forage",
 ];
 
-const TOKEN_KEYWORDS = ["fabricate", "myriad", "afterlife", "double team", "mobilize"];
+const TOKEN_KEYWORDS = ["fabricate", "myriad", "afterlife", "double team", "mobilize", "living weapon", "offspring"];
 
 const ARISTOCRAT_SAC_KEYWORDS = ["exploit", "casualty", "devour"];
 

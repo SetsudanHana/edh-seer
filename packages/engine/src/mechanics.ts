@@ -142,6 +142,12 @@ const COVERED_BATCH11: MechanicEntry[] = [
   { mechanic: "celebration", source: "ability-word", status: "covered", tags: ["token"], patterns: ["token-payoff"] },
 ];
 
+const COVERED_BATCH12: MechanicEntry[] = [
+  { mechanic: "living weapon", source: "keyword-ability", status: "covered", tags: ["token", "equipment"], patterns: ["token-keyword-maker", "equipment-permanent"] },
+  { mechanic: "offspring", source: "keyword-ability", status: "covered", tags: ["token"], patterns: ["token-keyword-maker"] },
+  { mechanic: "renown", source: "keyword-ability", status: "covered", tags: ["counter:+1/+1"], patterns: ["counter-keyword-source"] },
+];
+
 // --- Archetype: our strategic tag families (not Scryfall keywords). ---
 const ARCHETYPES: MechanicEntry[] = [
   { mechanic: "tribal", source: "archetype", status: "covered", tags: ["tribe:goblin"], patterns: ["tribal-member", "tribal-payoff"], note: "parametric tribe:<subtype>" },
@@ -163,16 +169,7 @@ const ARCHETYPES: MechanicEntry[] = [
 ];
 
 // --- Planned: synergy-relevant, no pattern yet. ---
-const PLANNED: MechanicEntry[] = [
-  // +1/+1 counters (keyword-abilities; note: `adapt` and `bolster` are keyword-ACTIONS, listed below)
-  ...["renown"].map(
-    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "counters" }),
-  ),
-  // tokens (keyword-abilities)
-  ...["living weapon", "offspring"].map(
-    (m): MechanicEntry => ({ mechanic: m, source: "keyword-ability", status: "planned", note: "tokens" }),
-  ),
-];
+const PLANNED: MechanicEntry[] = [];
 
 // --- Skip: no plausible synergy axis (pure evasion / combat-math / cosmetic). ---
 // Filled from mechanics.catalog.json: every snapshot keyword not classified above.
@@ -239,7 +236,7 @@ const SKIP: MechanicEntry[] = [
   ]),
 ];
 
-export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...COVERED_BATCH7, ...COVERED_BATCH8, ...COVERED_BATCH9, ...COVERED_BATCH10, ...COVERED_BATCH11, ...ARCHETYPES, ...PLANNED, ...SKIP];
+export const MECHANICS: MechanicEntry[] = [...COVERED, ...COVERED_BATCH2, ...COVERED_BATCH3, ...COVERED_BATCH4, ...COVERED_BATCH5, ...COVERED_BATCH6, ...COVERED_BATCH7, ...COVERED_BATCH8, ...COVERED_BATCH9, ...COVERED_BATCH10, ...COVERED_BATCH11, ...COVERED_BATCH12, ...ARCHETYPES, ...PLANNED, ...SKIP];
 
 export interface MechanicCoverageSummary {
   total: number;
