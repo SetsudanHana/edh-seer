@@ -79,9 +79,13 @@ export function computeCohesion(
   deckFreq: Map<Tag, number>,
   nonlandCount: number,
 ): Cohesion | null {
-  if (ranked.length === 0 || nonlandCount === 0) return null;
-  const primary = ranked[0];
-  const secondary = ranked[1] ?? null;
+  // `tribe-nontoken:X` is a matching-precision shadow of `tribe:X`, not a distinct
+  // theme — drop it from theme naming so cohesion reports "Wizards", not the
+  // near-duplicate "nontoken Wizards". It still carries edge weight via rankThemes.
+  const themes = ranked.filter((t) => !t.startsWith("tribe-nontoken:"));
+  if (themes.length === 0 || nonlandCount === 0) return null;
+  const primary = themes[0];
+  const secondary = themes[1] ?? null;
   const score = Math.min(1, (deckFreq.get(primary) ?? 0) / nonlandCount);
   return {
     theme: describeTag(primary),

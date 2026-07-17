@@ -48,6 +48,15 @@ test("cohesion names primary + secondary theme and scores the primary's deck sha
   expect(c.label).toBe(cohesionLabel(c.score));
 });
 
+test("cohesion skips tribe-nontoken shadows when naming the theme", () => {
+  // rankThemes would rank the nontoken shadow first (rarer), but it is not a real theme.
+  const ranked = ["tribe-nontoken:wizard", "tribe:wizard", "cast:instant"];
+  const deckFreq = new Map<string, number>([["tribe-nontoken:wizard", 6], ["tribe:wizard", 6], ["cast:instant", 3]]);
+  const c = computeCohesion(ranked, deckFreq, 10)!;
+  expect(c.tag).toBe("tribe:wizard");
+  expect(c.secondaryTag).toBe("cast:instant");
+});
+
 test("cohesion caps at 1 and is null when there are no themes or no nonland cards", () => {
   const deckFreq = new Map<string, number>([["tribe:wizard", 40]]);
   expect(computeCohesion(rankThemes(deckFreq, stats), deckFreq, 20)!.score).toBe(1);
