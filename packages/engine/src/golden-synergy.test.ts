@@ -55,7 +55,8 @@ test("Blink: flicker spell + own-ETB value creature synergize on blink", () => {
 
 test("Blink does not synergize with a token-maker (tokens cease to exist when blinked)", () => {
   const r = synergyScore(FIXTURES.ephemerate, FIXTURES.krenko);
-  expect(r.reasons.some((x) => x.tag === "blink" || x.tag === "nontoken-etb")).toBe(false);
+  expect(r.score).toBe(0);
+  expect(r.reasons).toHaveLength(0);
 });
 
 test("Blink synergizes with a nontoken ETB-value creature", () => {
