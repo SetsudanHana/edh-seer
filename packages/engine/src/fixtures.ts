@@ -336,4 +336,16 @@ export const FIXTURES: Record<string, Card> = {
     "As this enchantment enters, choose a creature type. Wizards you control get +1/+1. Whenever a creature you control of the chosen type enters, draw a card.",
     { colors: ["U"], manaValue: 4 },
   ),
+  typeSweeper: card(
+    "Type Sweeper",
+    "Sorcery",
+    "Choose a card type. Destroy all permanents of that type.",
+    { colors: ["W"], manaValue: 5 },
+  ),
+  partyFlavor: card(
+    "Party Crasher",
+    "Instant",
+    "Target creature can't block this turn. It was quite the party.",
+    { colors: ["R"], manaValue: 1 },
+  ),
 };

@@ -293,7 +293,7 @@ export const PATTERNS: Pattern[] = [
   {
     name: "chosen-type-payoff",
     matches: (v) =>
-      has(v, "choose a creature type", "the chosen type", "of that type",
+      has(v, "choose a creature type", "the chosen type",
             "of the chosen type", "creature type of your choice", "shares a creature type"),
     cares: ["tribe:*"],
   },
@@ -304,7 +304,7 @@ export const PATTERNS: Pattern[] = [
   },
   {
     name: "party-payoff",
-    matches: (v) => matchWord(v, /\bparty\b/),
+    matches: (v) => has(v, "your party"),
     cares: () => [tag("tribe", "cleric"), tag("tribe", "rogue"), tag("tribe", "warrior"), tag("tribe", "wizard")],
   },
 

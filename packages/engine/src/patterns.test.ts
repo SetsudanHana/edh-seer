@@ -571,3 +571,21 @@ test("final keywords do not fire on a plain creature", () => {
   expect(p.produces.has("token")).toBe(false);
   expect(p.produces.has("counter:+1/+1")).toBe(false);
 });
+
+test("chosen-type: a non-creature-type 'of that type' card does not care tribe:*", () => {
+  expect(extractTags(FIXTURES.typeSweeper).cares.has("tribe:*")).toBe(false);
+});
+
+test("chosen-type: Kindred Discovery still cares tribe:* after tightening", () => {
+  expect(extractTags(FIXTURES.kindredDiscovery).cares.has("tribe:*")).toBe(true);
+});
+
+test("party: a flavor 'party' mention does not care party tribes", () => {
+  const cares = extractTags(FIXTURES.partyFlavor).cares;
+  expect(cares.has("tribe:cleric")).toBe(false);
+  expect(cares.has("tribe:wizard")).toBe(false);
+});
+
+test("party: real party payoff still cares party tribes after anchoring", () => {
+  expect(extractTags(FIXTURES.partyPayoff).cares.has("tribe:wizard")).toBe(true);
+});
