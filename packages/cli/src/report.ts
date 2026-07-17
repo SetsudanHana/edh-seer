@@ -9,7 +9,8 @@ export function formatReport(report: DeckReport): string {
   lines.push("");
   lines.push("=== Deck cohesion ===");
   if (report.cohesion) {
-    lines.push(`  Theme: ${report.cohesion.theme}`);
+    const secondary = report.cohesion.secondary ? ` / ${report.cohesion.secondary}` : "";
+    lines.push(`  Theme: ${report.cohesion.theme}${secondary}`);
     lines.push(`  Cohesion: ${report.cohesion.score.toFixed(2)} (${report.cohesion.label})`);
   } else {
     lines.push("  (no themes)");

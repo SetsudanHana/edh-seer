@@ -24,7 +24,14 @@ const report: DeckReport = {
   combos: [{ cards: ["A", "B"], result: "Win" }],
   themes: [{ tag: "token", count: 2 }],
   roles: { ramp: 1, draw: 0, removal: 0 },
-  cohesion: { theme: "Goblins", tag: "tribe:goblin", score: 0.5, label: "focused" },
+  cohesion: {
+    theme: "Goblins",
+    tag: "tribe:goblin",
+    secondary: "Treasures",
+    secondaryTag: "treasure",
+    score: 0.5,
+    label: "focused",
+  },
 };
 
 test("formatReport shows commanders, ranked cards with partner counts, and reasons", () => {
@@ -36,7 +43,7 @@ test("formatReport shows commanders, ranked cards with partner counts, and reaso
   expect(out).toContain("Win"); // combo still rendered
   expect(out).toContain("token: 2"); // themes still rendered
   expect(out).toContain("Deck cohesion");
-  expect(out).toContain("Goblins");
+  expect(out).toContain("Goblins / Treasures"); // primary / secondary theme
   expect(out).toContain("0.50 (focused)");
   expect(out).toContain("[6.00]"); // score now formatted to 2 decimals
 });

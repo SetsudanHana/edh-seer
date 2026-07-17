@@ -3,7 +3,7 @@ import type { Card } from "./card.js";
 import { synergyScore, type Reason } from "./synergy.js";
 import { extractTags, type Tag } from "./tags.js";
 import type { Combo, ComboIndex } from "./combos.js";
-import { tagWeight, weightedEdge, dampedScore, computeCohesion, type TagStats, type Cohesion } from "./weights.js";
+import { themeWeights, rankThemes, weightedEdge, dampedScore, computeCohesion, type TagStats, type Cohesion } from "./weights.js";
 
 const TAG_STATS: TagStats = JSON.parse(
   readFileSync(new URL("./tag-weights.json", import.meta.url), "utf8"),
@@ -69,7 +69,8 @@ export function analyzeDeck(
       deckFreq.set(t, (deckFreq.get(t) ?? 0) + 1);
     }
   }
-  const weightOf = (t: string): number => tagWeight(TAG_STATS, t, deckFreq.get(t) ?? 0);
+  const tw = themeWeights(deckFreq, TAG_STATS);
+  const weightOf = (t: string): number => tw.get(t) ?? 0;
 
   const agg = new Map<string, Agg>();
   for (const card of cards) {
@@ -126,7 +127,8 @@ export function analyzeDeck(
     .map(([tag, count]) => ({ tag, count }))
     .sort((x, y) => y.count - x.count);
 
-  const cohesion = computeCohesion(deckFreq, TAG_STATS);
+  const nonlandCount = cards.filter((c) => !c.typeLine.toLowerCase().includes("land")).length;
+  const cohesion = computeCohesion(rankThemes(deckFreq, TAG_STATS), deckFreq, nonlandCount);
 
   return { commanders: presentCommanders, cards: cardSynergies, edges, combos: foundCombos, themes, roles, cohesion };
 }
