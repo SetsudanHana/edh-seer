@@ -302,3 +302,18 @@ test("Dedup: a payoff caring a concrete tribe AND the wildcard yields one reason
   const r = synergyScore(FIXTURES.academyWizard, FIXTURES.dualTribalPayoff);
   expect(r.reasons.length).toBe(1);
 });
+
+test("A wizard lord synergizes with a card that makes Wizard tokens", () => {
+  const r = synergyScore(FIXTURES.wizardLord, FIXTURES.wizardTokenMaker);
+  expect(r.reasons.some((x) => x.tag === "tribe:wizard")).toBe(true);
+});
+
+test("A nontoken-Wizard payoff does NOT synergize with a Wizard-token maker", () => {
+  const r = synergyScore(FIXTURES.nontokenWizardPayoff, FIXTURES.wizardTokenMaker);
+  expect(r.reasons.some((x) => x.tag === "tribe-nontoken:wizard")).toBe(false);
+});
+
+test("A nontoken-Wizard payoff synergizes with a printed (nontoken) Wizard", () => {
+  const r = synergyScore(FIXTURES.nontokenWizardPayoff, FIXTURES.academyWizard);
+  expect(r.reasons.some((x) => x.tag === "tribe-nontoken:wizard")).toBe(true);
+});

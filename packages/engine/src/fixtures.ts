@@ -354,4 +354,16 @@ export const FIXTURES: Record<string, Card> = {
     "Target creature can't block this turn. It was quite the party.",
     { colors: ["R"], manaValue: 1 },
   ),
+  wizardLord: card(
+    "Wizard Lord",
+    "Creature — Human Wizard",
+    "Other Wizards you control get +1/+1.",
+    { colors: ["U"], manaValue: 3 },
+  ),
+  nontokenWizardPayoff: card(
+    "Eminent Archmage",
+    "Legendary Creature — Human Wizard",
+    "Whenever a nontoken Wizard you control enters, draw a card.",
+    { colors: ["U"], manaValue: 4 },
+  ),
 };

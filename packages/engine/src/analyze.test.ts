@@ -105,10 +105,13 @@ const wiz = (n: string): Card => ({
   name: n, typeLine: "Creature — Human Wizard", oracleText: "", keywords: [], colors: ["U"], manaValue: 2,
 });
 
-test("cohesion identifies tribe:wizard as the dominant theme of a wizard-heavy deck", () => {
+test("cohesion identifies the Wizard theme as dominant in a wizard-heavy deck", () => {
   const report = analyzeDeck([wiz("W1"), wiz("W2"), wiz("W3"), wiz("W4"), FIXTURES.archmageOfEchoes]);
   expect(report.cohesion).not.toBeNull();
-  expect(report.cohesion!.tag).toBe("tribe:wizard");
+  // Every producer here is a printed (nontoken) Wizard, so tribe:wizard and
+  // tribe-nontoken:wizard co-occur on every card; either may rank first depending
+  // on corpus IDF (tribe-nontoken is a newer, rarer tag family in tag-weights.json).
+  expect(["tribe:wizard", "tribe-nontoken:wizard"]).toContain(report.cohesion!.tag);
   expect(report.cohesion!.score).toBeGreaterThan(0);
 });
 

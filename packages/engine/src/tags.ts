@@ -36,6 +36,8 @@ export function describeTag(t: Tag): string {
   switch (family) {
     case "tribe":
       return `${capitalize(value ?? "")}s`;
+    case "tribe-nontoken":
+      return `nontoken ${capitalize(value ?? "")}s`;
     case "counter":
       return `${value} counters`;
     case "cast":
