@@ -63,7 +63,9 @@ function tribalCares(view: CardView): Tag[] {
     const [plural, singular] = pluralOrSingular(type);
     // Word-boundary match so "each golem" does not fire on "each golemancer".
     const re = new RegExp(
-      `\\b(other ${plural}|${plural} you control|each ${singular}|${singular} creatures)\\b`,
+      `\\b(other ${plural}|${plural} you control|each ${singular}|${singular} creatures` +
+        `|cast (?:a|an|another) ${singular}|${singular} permanent spell|${singular} spell` +
+        `|${singular} spells you control)\\b`,
     );
     if (matchWord(view, re)) out.push(tag("tribe", type));
   }
@@ -287,6 +289,23 @@ export const PATTERNS: Pattern[] = [
     name: "tribal-payoff",
     matches: (v) => tribalCares(v).length > 0,
     cares: (v) => tribalCares(v),
+  },
+  {
+    name: "chosen-type-payoff",
+    matches: (v) =>
+      has(v, "choose a creature type", "the chosen type",
+            "of the chosen type", "creature type of your choice", "shares a creature type"),
+    cares: ["tribe:*"],
+  },
+  {
+    name: "changeling-member",
+    matches: (v) => hasKeyword(v, "changeling") || has(v, "is every creature type", "all creature types"),
+    produces: ["tribe:*"],
+  },
+  {
+    name: "party-payoff",
+    matches: (v) => has(v, "your party"),
+    cares: () => [tag("tribe", "cleric"), tag("tribe", "rogue"), tag("tribe", "warrior"), tag("tribe", "wizard")],
   },
 
   // --- Spellslinger (showcase) ---

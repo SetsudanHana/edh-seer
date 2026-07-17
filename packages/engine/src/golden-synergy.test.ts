@@ -256,3 +256,32 @@ test("Renown: a renown creature + Evolution Sage synergize on +1/+1 counters", (
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "counter:+1/+1")).toBe(true);
 });
+
+test("Chosen-type: Kindred Discovery pays off a Wizard producer (wildcard care)", () => {
+  const r = synergyScore(FIXTURES.kindredDiscovery, FIXTURES.archmageOfEchoes);
+  expect(r.score).toBeGreaterThan(0);
+  const wild = r.reasons.find((x) => x.text.includes("any creature type"));
+  expect(wild).toBeDefined();
+  expect(wild!.tag.startsWith("tribe:")).toBe(true);
+});
+
+test("Tribal cast: Archmage of Echoes pays off a Wizard producer", () => {
+  const r = synergyScore(FIXTURES.archmageOfEchoes, FIXTURES.academyWizard);
+  expect(r.reasons.some((x) => x.tag === "tribe:wizard")).toBe(true);
+});
+
+test("Changeling: producer wildcard pays off a concrete tribal payoff", () => {
+  const r = synergyScore(FIXTURES.changelingHost, FIXTURES.goblinChieftain);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "tribe:goblin" && x.text.includes("any creature type"))).toBe(true);
+});
+
+test("Party: payoff pays off a Wizard producer", () => {
+  const r = synergyScore(FIXTURES.partyPayoff, FIXTURES.academyWizard);
+  expect(r.reasons.some((x) => x.tag === "tribe:wizard")).toBe(true);
+});
+
+test("Dedup: a payoff caring a concrete tribe AND the wildcard yields one reason, not two", () => {
+  const r = synergyScore(FIXTURES.academyWizard, FIXTURES.dualTribalPayoff);
+  expect(r.reasons.length).toBe(1);
+});

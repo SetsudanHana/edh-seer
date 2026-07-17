@@ -102,6 +102,31 @@ test("lifegain source produces lifegain (gain N life or lifelink)", () => {
   expect(extractTags(make("Creature — Angel", "Flying.", ["Lifelink"])).produces.has("lifegain")).toBe(true);
 });
 
+test("Kindred Discovery cares about any creature type (wildcard)", () => {
+  expect(extractTags(FIXTURES.kindredDiscovery).cares.has("tribe:*")).toBe(true);
+});
+
+test("Archmage of Echoes cares about Wizards via cast trigger", () => {
+  expect(extractTags(FIXTURES.archmageOfEchoes).cares.has("tribe:wizard")).toBe(true);
+});
+
+test("Academy Wizard is a plain Wizard producer", () => {
+  const t = extractTags(FIXTURES.academyWizard);
+  expect(t.produces.has("tribe:wizard")).toBe(true);
+});
+
+test("Changeling produces the wildcard creature type", () => {
+  expect(extractTags(FIXTURES.changelingHost).produces.has("tribe:*")).toBe(true);
+});
+
+test("Party payoff cares about all four party tribes", () => {
+  const cares = extractTags(FIXTURES.partyPayoff).cares;
+  expect(cares.has("tribe:cleric")).toBe(true);
+  expect(cares.has("tribe:rogue")).toBe(true);
+  expect(cares.has("tribe:warrior")).toBe(true);
+  expect(cares.has("tribe:wizard")).toBe(true);
+});
+
 test("lifegain payoff cares about lifegain", () => {
   expect(extractTags(FIXTURES.archangelOfThune).cares.has("lifegain")).toBe(true);
 });
@@ -545,4 +570,22 @@ test("final keywords do not fire on a plain creature", () => {
   const p = extractTags(make("Creature — Bird", "Flying."));
   expect(p.produces.has("token")).toBe(false);
   expect(p.produces.has("counter:+1/+1")).toBe(false);
+});
+
+test("chosen-type: a non-creature-type 'of that type' card does not care tribe:*", () => {
+  expect(extractTags(FIXTURES.typeSweeper).cares.has("tribe:*")).toBe(false);
+});
+
+test("chosen-type: Kindred Discovery still cares tribe:* after tightening", () => {
+  expect(extractTags(FIXTURES.kindredDiscovery).cares.has("tribe:*")).toBe(true);
+});
+
+test("party: a flavor 'party' mention does not care party tribes", () => {
+  const cares = extractTags(FIXTURES.partyFlavor).cares;
+  expect(cares.has("tribe:cleric")).toBe(false);
+  expect(cares.has("tribe:wizard")).toBe(false);
+});
+
+test("party: real party payoff still cares party tribes after anchoring", () => {
+  expect(extractTags(FIXTURES.partyPayoff).cares.has("tribe:wizard")).toBe(true);
 });

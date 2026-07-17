@@ -15,6 +15,13 @@ export interface SynergyResult {
   combo: boolean;
 }
 
+const TRIBE_PREFIX = "tribe:";
+const TRIBE_WILDCARD = "tribe:*";
+
+function concreteTribes(tags: Set<Tag>): Tag[] {
+  return [...tags].filter((t) => t.startsWith(TRIBE_PREFIX) && t !== TRIBE_WILDCARD);
+}
+
 /** Push a reason for every tag that `producer` makes and `payoff` cares about. */
 function matchDirection(
   producer: Card,
@@ -23,12 +30,51 @@ function matchDirection(
   cares: Set<Tag>,
   reasons: Reason[],
 ): void {
-  for (const tag of produces) {
-    if (cares.has(tag)) {
-      const label = describeTag(tag);
+  const payoffWild = cares.has(TRIBE_WILDCARD);
+  const producerWild = produces.has(TRIBE_WILDCARD);
+
+  // Pass 1: concrete + non-tribe exact matches. Skip a concrete tribe tag when the
+  // payoff also cares about the wildcard — the wildcard branch emits the one collapsed
+  // reason for it, so pass 1 must not also push an exact tribe reason (avoids double-count).
+  for (const t of produces) {
+    if (t === TRIBE_WILDCARD) continue;
+    if (payoffWild && t.startsWith(TRIBE_PREFIX)) continue;
+    if (cares.has(t)) {
+      const label = describeTag(t);
       reasons.push({
-        tag,
+        tag: t,
         text: `${producer.name} produces ${label}; ${payoff.name} pays off ${label}.`,
+      });
+    }
+  }
+
+  // Pass 2: wildcard payoff ("of the chosen type") — one collapsed reason.
+  if (payoffWild) {
+    const prodTribes = concreteTribes(produces);
+    if (prodTribes.length > 0) {
+      const t = prodTribes[0];
+      reasons.push({
+        tag: t,
+        text: `${producer.name} produces ${describeTag(t)}; ${payoff.name} pays off any creature type.`,
+      });
+    } else if (producerWild) {
+      reasons.push({
+        tag: TRIBE_WILDCARD,
+        text: `${producer.name} produces any creature type; ${payoff.name} pays off any creature type.`,
+      });
+    }
+  }
+
+  // Pass 3: wildcard producer (changeling) vs a concrete tribal payoff — one collapsed
+  // reason. Exclude tribes the producer also makes concretely (already exact-matched in
+  // pass 1) so the same tribe is never reasoned twice.
+  if (producerWild && !payoffWild) {
+    const careTribes = concreteTribes(cares).filter((t) => !produces.has(t));
+    if (careTribes.length > 0) {
+      const t = careTribes[0];
+      reasons.push({
+        tag: t,
+        text: `${producer.name} produces any creature type; ${payoff.name} pays off ${describeTag(t)}.`,
       });
     }
   }

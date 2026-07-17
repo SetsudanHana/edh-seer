@@ -300,4 +300,52 @@ export const FIXTURES: Record<string, Card> = {
     "Flash. Bestow {3}{G}{G}. Enchanted creature gets +4/+2. As long as this isn't attached to a creature, it's a creature in addition to its other types.",
     { colors: ["G"], manaValue: 4, keywords: ["Flash", "Bestow"] },
   ),
+  kindredDiscovery: card(
+    "Kindred Discovery",
+    "Enchantment",
+    "As this enchantment enters, choose a creature type. Whenever a creature you control of the chosen type enters or attacks, draw a card.",
+    { colors: ["U"], manaValue: 5 },
+  ),
+  archmageOfEchoes: card(
+    "Archmage of Echoes",
+    "Creature — Faerie Wizard",
+    "Flying, ward {2}. Whenever you cast a Faerie or Wizard permanent spell, copy it. (The copy becomes a token.)",
+    { colors: ["U"], manaValue: 4, keywords: ["Flying", "Ward"] },
+  ),
+  academyWizard: card(
+    "Academy Wizard",
+    "Creature — Human Wizard",
+    "",
+    { colors: ["U"], manaValue: 2 },
+  ),
+  changelingHost: card(
+    "Woodland Changeling",
+    "Creature — Shapeshifter",
+    "Changeling (This card is every creature type.)",
+    { colors: ["G"], manaValue: 2, keywords: ["Changeling"] },
+  ),
+  partyPayoff: card(
+    "Acquisitions Expert",
+    "Creature — Human Rogue",
+    "When Acquisitions Expert enters the battlefield, you may reveal the top cards of your library for each creature in your party, then put revealed creature cards into your hand. (Your party consists of up to one each of a Cleric, Rogue, Warrior, and Wizard.)",
+    { colors: ["B"], manaValue: 4 },
+  ),
+  dualTribalPayoff: card(
+    "Dual Tribal Payoff",
+    "Enchantment",
+    "As this enchantment enters, choose a creature type. Wizards you control get +1/+1. Whenever a creature you control of the chosen type enters, draw a card.",
+    { colors: ["U"], manaValue: 4 },
+  ),
+  typeSweeper: card(
+    "Type Sweeper",
+    "Sorcery",
+    "Choose a card type. Destroy all permanents of that type.",
+    { colors: ["W"], manaValue: 5 },
+  ),
+  partyFlavor: card(
+    "Party Crasher",
+    "Instant",
+    "Target creature can't block this turn. It was quite the party.",
+    { colors: ["R"], manaValue: 1 },
+  ),
 };
