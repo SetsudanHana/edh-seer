@@ -72,6 +72,32 @@ function tribalCares(view: CardView): Tag[] {
   return out;
 }
 
+/** Creature-type tokens a card creates, e.g. "create a 1/1 Wizard creature token" → tribe:wizard. */
+function tokenTribes(view: CardView): Tag[] {
+  const out: Tag[] = [];
+  for (const type of CREATURE_TYPES) {
+    const [plural, singular] = pluralOrSingular(type);
+    // "create ... <type> ... creature token(s)" — the token IS a creature of that type.
+    // [^.]* keeps the match inside one sentence (so "Create X. When an Elf enters ..."
+    // does not read Elf as the token's type); requiring "creature token" binds the type.
+    const re = new RegExp(`\\bcreate\\b[^.]*\\b(${plural}|${singular})\\b[^.]*\\bcreature tokens?\\b`);
+    if (matchWord(view, re)) out.push(tag("tribe", type));
+  }
+  return out;
+}
+
+/** Payoffs that name a nontoken tribal member, e.g. "nontoken Wizard" → tribe-nontoken:wizard. */
+function nontokenTribalCares(view: CardView): Tag[] {
+  const out: Tag[] = [];
+  for (const type of CREATURE_TYPES) {
+    const [, singular] = pluralOrSingular(type);
+    if (matchWord(view, new RegExp(`\\bnontoken ${singular}\\b`))) {
+      out.push(tag("tribe-nontoken", type));
+    }
+  }
+  return out;
+}
+
 export const PATTERNS: Pattern[] = [
   // --- Treasure / artifacts ---
   {
@@ -225,7 +251,7 @@ export const PATTERNS: Pattern[] = [
     name: "blink-enabler",
     matches: (v) => matchWord(v, /exile [^.]*return [^.]*to the battlefield/) || has(v, "flicker"),
     produces: ["blink"],
-    cares: ["creature-etb"],
+    cares: ["nontoken-etb"],
   },
   {
     name: "etb-value-creature",
@@ -235,7 +261,7 @@ export const PATTERNS: Pattern[] = [
       v.types.has("creature") &&
       (v.oracle.includes(`${v.name.toLowerCase()} enters the battlefield`) ||
         v.oracle.includes("this creature enters the battlefield")),
-    produces: ["creature-etb"],
+    produces: ["creature-etb", "nontoken-etb"],
     cares: ["blink"],
   },
 
@@ -283,12 +309,22 @@ export const PATTERNS: Pattern[] = [
   {
     name: "tribal-member",
     matches: (v) => v.types.has("creature") && v.subtypes.size > 0,
-    produces: (v) => [...v.subtypes].map((s) => tag("tribe", s)),
+    produces: (v) => [...v.subtypes].flatMap((s) => [tag("tribe", s), tag("tribe-nontoken", s)]),
+  },
+  {
+    name: "token-tribe-maker",
+    matches: (v) => tokenTribes(v).length > 0,
+    produces: (v) => tokenTribes(v),
   },
   {
     name: "tribal-payoff",
     matches: (v) => tribalCares(v).length > 0,
     cares: (v) => tribalCares(v),
+  },
+  {
+    name: "nontoken-tribal-payoff",
+    matches: (v) => nontokenTribalCares(v).length > 0,
+    cares: (v) => nontokenTribalCares(v),
   },
   {
     name: "chosen-type-payoff",

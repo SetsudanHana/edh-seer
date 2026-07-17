@@ -10,6 +10,7 @@ export function tag(family: string, value?: string): Tag {
 
 const BARE_LABELS: Record<string, string> = {
   "creature-etb": "creatures entering",
+  "nontoken-etb": "a nontoken creature entering",
   "creature-death": "creatures dying",
   "sacrifice-fodder": "sacrifice fodder",
   "sacrifice-event": "sacrifice",
@@ -35,6 +36,8 @@ export function describeTag(t: Tag): string {
   switch (family) {
     case "tribe":
       return `${capitalize(value ?? "")}s`;
+    case "tribe-nontoken":
+      return `nontoken ${capitalize(value ?? "")}s`;
     case "counter":
       return `${value} counters`;
     case "cast":

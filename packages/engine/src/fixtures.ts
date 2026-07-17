@@ -150,6 +150,18 @@ export const FIXTURES: Record<string, Card> = {
     "When Mulldrifter enters the battlefield, draw two cards.",
     { colors: ["U"], manaValue: 5, keywords: ["Flying"] },
   ),
+  decoyTokenMaker: card(
+    "Decoy Rally",
+    "Sorcery",
+    "Create three 1/1 white creature tokens. When an Elf enters the battlefield, draw a card.",
+    { colors: ["W"], manaValue: 4 },
+  ),
+  wizardTokenMaker: card(
+    "Wizard Standard",
+    "Enchantment",
+    "At the beginning of your upkeep, create a 1/1 blue Wizard creature token.",
+    { colors: ["U"], manaValue: 3 },
+  ),
   wildGrowth: card(
     "Wild Growth",
     "Enchantment — Aura",
@@ -347,5 +359,17 @@ export const FIXTURES: Record<string, Card> = {
     "Instant",
     "Target creature can't block this turn. It was quite the party.",
     { colors: ["R"], manaValue: 1 },
+  ),
+  wizardLord: card(
+    "Wizard Lord",
+    "Creature — Human Wizard",
+    "Other Wizards you control get +1/+1.",
+    { colors: ["U"], manaValue: 3 },
+  ),
+  nontokenWizardPayoff: card(
+    "Eminent Archmage",
+    "Legendary Creature — Human Wizard",
+    "Whenever a nontoken Wizard you control enters, draw a card.",
+    { colors: ["U"], manaValue: 4 },
   ),
 };

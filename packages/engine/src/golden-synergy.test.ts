@@ -53,6 +53,23 @@ test("Blink: flicker spell + own-ETB value creature synergize on blink", () => {
   expect(r.reasons.some((x) => x.tag === "blink")).toBe(true);
 });
 
+test("Blink does not synergize with a token-maker (tokens cease to exist when blinked)", () => {
+  const r = synergyScore(FIXTURES.ephemerate, FIXTURES.krenko);
+  expect(r.score).toBe(0);
+  expect(r.reasons).toHaveLength(0);
+});
+
+test("Blink synergizes with a nontoken ETB-value creature", () => {
+  const r = synergyScore(FIXTURES.ephemerate, FIXTURES.mulldrifter);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "blink" || x.tag === "nontoken-etb")).toBe(true);
+});
+
+test("A creature-enters pinger still synergizes with a token-maker (tokens count for pingers)", () => {
+  const r = synergyScore(FIXTURES.krenko, FIXTURES.impactTremors);
+  expect(r.reasons.some((x) => x.tag === "creature-etb")).toBe(true);
+});
+
 test("Enchantress: an enchantment + a cast-enchantment payoff synergize on enchantment", () => {
   const r = synergyScore(FIXTURES.wildGrowth, FIXTURES.enchantressPresence);
   expect(r.score).toBeGreaterThan(0);
@@ -284,4 +301,24 @@ test("Party: payoff pays off a Wizard producer", () => {
 test("Dedup: a payoff caring a concrete tribe AND the wildcard yields one reason, not two", () => {
   const r = synergyScore(FIXTURES.academyWizard, FIXTURES.dualTribalPayoff);
   expect(r.reasons.length).toBe(1);
+});
+
+test("A wizard lord synergizes with a card that makes Wizard tokens", () => {
+  const r = synergyScore(FIXTURES.wizardLord, FIXTURES.wizardTokenMaker);
+  expect(r.reasons.some((x) => x.tag === "tribe:wizard")).toBe(true);
+});
+
+test("token-tribe detection does not cross a sentence boundary (a payoff type is not the token's type)", () => {
+  // "Create three ... creature tokens. When an Elf enters ..." must NOT read Elf as the token type.
+  expect(extractTags(FIXTURES.decoyTokenMaker).produces.has("tribe:elf")).toBe(false);
+});
+
+test("A nontoken-Wizard payoff does NOT synergize with a Wizard-token maker", () => {
+  const r = synergyScore(FIXTURES.nontokenWizardPayoff, FIXTURES.wizardTokenMaker);
+  expect(r.reasons.some((x) => x.tag === "tribe-nontoken:wizard")).toBe(false);
+});
+
+test("A nontoken-Wizard payoff synergizes with a printed (nontoken) Wizard", () => {
+  const r = synergyScore(FIXTURES.nontokenWizardPayoff, FIXTURES.academyWizard);
+  expect(r.reasons.some((x) => x.tag === "tribe-nontoken:wizard")).toBe(true);
 });

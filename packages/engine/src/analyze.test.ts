@@ -105,9 +105,10 @@ const wiz = (n: string): Card => ({
   name: n, typeLine: "Creature — Human Wizard", oracleText: "", keywords: [], colors: ["U"], manaValue: 2,
 });
 
-test("cohesion identifies tribe:wizard as the dominant theme of a wizard-heavy deck", () => {
+test("cohesion identifies the Wizard theme as dominant in a wizard-heavy deck", () => {
   const report = analyzeDeck([wiz("W1"), wiz("W2"), wiz("W3"), wiz("W4"), FIXTURES.archmageOfEchoes]);
   expect(report.cohesion).not.toBeNull();
+  // computeCohesion skips the tribe-nontoken:X shadow, so the named theme is tribe:wizard.
   expect(report.cohesion!.tag).toBe("tribe:wizard");
   expect(report.cohesion!.score).toBeGreaterThan(0);
 });
