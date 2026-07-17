@@ -115,6 +115,18 @@ test("Academy Wizard is a plain Wizard producer", () => {
   expect(t.produces.has("tribe:wizard")).toBe(true);
 });
 
+test("Changeling produces the wildcard creature type", () => {
+  expect(extractTags(FIXTURES.changelingHost).produces.has("tribe:*")).toBe(true);
+});
+
+test("Party payoff cares about all four party tribes", () => {
+  const cares = extractTags(FIXTURES.partyPayoff).cares;
+  expect(cares.has("tribe:cleric")).toBe(true);
+  expect(cares.has("tribe:rogue")).toBe(true);
+  expect(cares.has("tribe:warrior")).toBe(true);
+  expect(cares.has("tribe:wizard")).toBe(true);
+});
+
 test("lifegain payoff cares about lifegain", () => {
   expect(extractTags(FIXTURES.archangelOfThune).cares.has("lifegain")).toBe(true);
 });

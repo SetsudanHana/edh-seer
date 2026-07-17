@@ -297,6 +297,16 @@ export const PATTERNS: Pattern[] = [
             "of the chosen type", "creature type of your choice", "shares a creature type"),
     cares: ["tribe:*"],
   },
+  {
+    name: "changeling-member",
+    matches: (v) => hasKeyword(v, "changeling") || has(v, "is every creature type", "all creature types"),
+    produces: ["tribe:*"],
+  },
+  {
+    name: "party-payoff",
+    matches: (v) => matchWord(v, /\bparty\b/),
+    cares: () => [tag("tribe", "cleric"), tag("tribe", "rogue"), tag("tribe", "warrior"), tag("tribe", "wizard")],
+  },
 
   // --- Spellslinger (showcase) ---
   {

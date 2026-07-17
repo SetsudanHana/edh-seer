@@ -318,4 +318,16 @@ export const FIXTURES: Record<string, Card> = {
     "",
     { colors: ["U"], manaValue: 2 },
   ),
+  changelingHost: card(
+    "Woodland Changeling",
+    "Creature — Shapeshifter",
+    "Changeling (This card is every creature type.)",
+    { colors: ["G"], manaValue: 2, keywords: ["Changeling"] },
+  ),
+  partyPayoff: card(
+    "Acquisitions Expert",
+    "Creature — Human Rogue",
+    "When Acquisitions Expert enters the battlefield, you may reveal the top cards of your library for each creature in your party, then put revealed creature cards into your hand. (Your party consists of up to one each of a Cleric, Rogue, Warrior, and Wizard.)",
+    { colors: ["B"], manaValue: 4 },
+  ),
 };
