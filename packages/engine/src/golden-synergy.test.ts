@@ -186,3 +186,45 @@ test("Lifegain: an extort creature + Archangel of Thune synergize on lifegain", 
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "lifegain")).toBe(true);
 });
+
+test("Metalcraft: a metalcraft payoff + Dockside Extortionist synergize on artifact", () => {
+  const ardentRecruit = {
+    name: "Ardent Recruit",
+    typeLine: "Creature — Human Soldier",
+    oracleText: "Metalcraft — Ardent Recruit gets +1/+1 as long as you control three or more artifacts.",
+    keywords: [],
+    colors: ["W"],
+    manaValue: 1,
+  };
+  const r = synergyScore(ardentRecruit, FIXTURES.dockside);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "artifact")).toBe(true);
+});
+
+test("Eerie: an eerie payoff + Wild Growth synergize on enchantment", () => {
+  const overgrownPest = {
+    name: "Overgrown Pest",
+    typeLine: "Creature — Insect",
+    oracleText: "Eerie — Whenever an enchantment enters the battlefield under your control, put a +1/+1 counter on this creature.",
+    keywords: [],
+    colors: ["G"],
+    manaValue: 2,
+  };
+  const r = synergyScore(overgrownPest, FIXTURES.wildGrowth);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "enchantment")).toBe(true);
+});
+
+test("Celebration: a celebration payoff + Krenko synergize on token", () => {
+  const festivalCrasher = {
+    name: "Festival Crasher",
+    typeLine: "Creature — Human",
+    oracleText: "Celebration — Festival Crasher gets +2/+2 as long as two or more nonland permanents entered this turn.",
+    keywords: [],
+    colors: ["R"],
+    manaValue: 2,
+  };
+  const r = synergyScore(festivalCrasher, FIXTURES.krenko);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "token")).toBe(true);
+});
