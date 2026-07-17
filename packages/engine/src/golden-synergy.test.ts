@@ -308,6 +308,11 @@ test("A wizard lord synergizes with a card that makes Wizard tokens", () => {
   expect(r.reasons.some((x) => x.tag === "tribe:wizard")).toBe(true);
 });
 
+test("token-tribe detection does not cross a sentence boundary (a payoff type is not the token's type)", () => {
+  // "Create three ... creature tokens. When an Elf enters ..." must NOT read Elf as the token type.
+  expect(extractTags(FIXTURES.decoyTokenMaker).produces.has("tribe:elf")).toBe(false);
+});
+
 test("A nontoken-Wizard payoff does NOT synergize with a Wizard-token maker", () => {
   const r = synergyScore(FIXTURES.nontokenWizardPayoff, FIXTURES.wizardTokenMaker);
   expect(r.reasons.some((x) => x.tag === "tribe-nontoken:wizard")).toBe(false);

@@ -150,6 +150,12 @@ export const FIXTURES: Record<string, Card> = {
     "When Mulldrifter enters the battlefield, draw two cards.",
     { colors: ["U"], manaValue: 5, keywords: ["Flying"] },
   ),
+  decoyTokenMaker: card(
+    "Decoy Rally",
+    "Sorcery",
+    "Create three 1/1 white creature tokens. When an Elf enters the battlefield, draw a card.",
+    { colors: ["W"], manaValue: 4 },
+  ),
   wizardTokenMaker: card(
     "Wizard Standard",
     "Enchantment",

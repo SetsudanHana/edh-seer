@@ -77,8 +77,10 @@ function tokenTribes(view: CardView): Tag[] {
   const out: Tag[] = [];
   for (const type of CREATURE_TYPES) {
     const [plural, singular] = pluralOrSingular(type);
-    // "create ... <type> ... token(s)" — the token is a creature of that type.
-    const re = new RegExp(`\\bcreate\\b.*\\b(${plural}|${singular})\\b.*\\btokens?\\b`);
+    // "create ... <type> ... creature token(s)" — the token IS a creature of that type.
+    // [^.]* keeps the match inside one sentence (so "Create X. When an Elf enters ..."
+    // does not read Elf as the token's type); requiring "creature token" binds the type.
+    const re = new RegExp(`\\bcreate\\b[^.]*\\b(${plural}|${singular})\\b[^.]*\\bcreature tokens?\\b`);
     if (matchWord(view, re)) out.push(tag("tribe", type));
   }
   return out;
