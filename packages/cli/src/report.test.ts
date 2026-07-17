@@ -15,7 +15,7 @@ const report: DeckReport = {
     {
       name: "Impact Tremors",
       isCommander: false,
-      score: 2,
+      score: 2.375,
       partnerCount: 1,
       topPartners: [{ name: "Krenko, Mob Boss", score: 2, reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }] }],
     },
@@ -45,7 +45,8 @@ test("formatReport shows commanders, ranked cards with partner counts, and reaso
   expect(out).toContain("Deck cohesion");
   expect(out).toContain("Goblins / Treasures"); // primary / secondary theme
   expect(out).toContain("0.50 (focused)");
-  expect(out).toContain("[6.00]"); // score now formatted to 2 decimals
+  expect(out).toContain("[6.00]"); // integer score formatted to 2 decimals
+  expect(out).toContain("[2.38]"); // fractional score rounds to 2 decimals (2.375 -> 2.38)
 });
 
 test("formatReport renders a placeholder when cohesion is null", () => {
