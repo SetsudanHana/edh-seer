@@ -10,6 +10,7 @@ export function tag(family: string, value?: string): Tag {
 
 const BARE_LABELS: Record<string, string> = {
   "creature-etb": "creatures entering",
+  "nontoken-etb": "a nontoken creature entering",
   "creature-death": "creatures dying",
   "sacrifice-fodder": "sacrifice fodder",
   "sacrifice-event": "sacrifice",

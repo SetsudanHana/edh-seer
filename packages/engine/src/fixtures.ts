@@ -150,6 +150,12 @@ export const FIXTURES: Record<string, Card> = {
     "When Mulldrifter enters the battlefield, draw two cards.",
     { colors: ["U"], manaValue: 5, keywords: ["Flying"] },
   ),
+  wizardTokenMaker: card(
+    "Wizard Standard",
+    "Enchantment",
+    "At the beginning of your upkeep, create a 1/1 blue Wizard creature token.",
+    { colors: ["U"], manaValue: 3 },
+  ),
   wildGrowth: card(
     "Wild Growth",
     "Enchantment — Aura",

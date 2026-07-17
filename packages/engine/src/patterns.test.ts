@@ -159,10 +159,10 @@ test("etb-value-creature: own-ETB creature produces creature-etb + cares blink; 
   expect(extractTags(FIXTURES.soulWarden).cares.has("blink")).toBe(false);
 });
 
-test("blink enabler produces blink and cares about creature-etb", () => {
+test("blink enabler produces blink and cares about nontoken-etb", () => {
   const e = extractTags(FIXTURES.ephemerate);
   expect(e.produces.has("blink")).toBe(true);
-  expect(e.cares.has("creature-etb")).toBe(true);
+  expect(e.cares.has("nontoken-etb")).toBe(true);
 });
 
 test("an enchantment permanent produces the enchantment tag", () => {

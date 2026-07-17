@@ -225,7 +225,7 @@ export const PATTERNS: Pattern[] = [
     name: "blink-enabler",
     matches: (v) => matchWord(v, /exile [^.]*return [^.]*to the battlefield/) || has(v, "flicker"),
     produces: ["blink"],
-    cares: ["creature-etb"],
+    cares: ["nontoken-etb"],
   },
   {
     name: "etb-value-creature",
@@ -235,7 +235,7 @@ export const PATTERNS: Pattern[] = [
       v.types.has("creature") &&
       (v.oracle.includes(`${v.name.toLowerCase()} enters the battlefield`) ||
         v.oracle.includes("this creature enters the battlefield")),
-    produces: ["creature-etb"],
+    produces: ["creature-etb", "nontoken-etb"],
     cares: ["blink"],
   },
 

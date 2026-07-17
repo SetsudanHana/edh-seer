@@ -53,6 +53,22 @@ test("Blink: flicker spell + own-ETB value creature synergize on blink", () => {
   expect(r.reasons.some((x) => x.tag === "blink")).toBe(true);
 });
 
+test("Blink does not synergize with a token-maker (tokens cease to exist when blinked)", () => {
+  const r = synergyScore(FIXTURES.ephemerate, FIXTURES.krenko);
+  expect(r.reasons.some((x) => x.tag === "blink" || x.tag === "nontoken-etb")).toBe(false);
+});
+
+test("Blink synergizes with a nontoken ETB-value creature", () => {
+  const r = synergyScore(FIXTURES.ephemerate, FIXTURES.mulldrifter);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "blink" || x.tag === "nontoken-etb")).toBe(true);
+});
+
+test("A creature-enters pinger still synergizes with a token-maker (tokens count for pingers)", () => {
+  const r = synergyScore(FIXTURES.krenko, FIXTURES.impactTremors);
+  expect(r.reasons.some((x) => x.tag === "creature-etb")).toBe(true);
+});
+
 test("Enchantress: an enchantment + a cast-enchantment payoff synergize on enchantment", () => {
   const r = synergyScore(FIXTURES.wildGrowth, FIXTURES.enchantressPresence);
   expect(r.score).toBeGreaterThan(0);
