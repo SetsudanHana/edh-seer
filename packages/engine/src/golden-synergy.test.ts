@@ -228,3 +228,31 @@ test("Celebration: a celebration payoff + Krenko synergize on token", () => {
   expect(r.score).toBeGreaterThan(0);
   expect(r.reasons.some((x) => x.tag === "token")).toBe(true);
 });
+
+test("Offspring: an offspring creature + Parallel Lives synergize on token", () => {
+  const deepCavernBat = {
+    name: "Deep-Cavern Bat",
+    typeLine: "Creature — Bat",
+    oracleText: "Flying. Offspring {2}. When this creature enters, exile target nonland card from an opponent's hand.",
+    keywords: ["Flying", "Offspring"],
+    colors: ["B"],
+    manaValue: 2,
+  };
+  const r = synergyScore(deepCavernBat, FIXTURES.parallelLives);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "token")).toBe(true);
+});
+
+test("Renown: a renown creature + Evolution Sage synergize on +1/+1 counters", () => {
+  const kytheonsIrregulars = {
+    name: "Kytheon's Irregulars",
+    typeLine: "Creature — Human Soldier",
+    oracleText: "Renown 2. Whenever this creature attacks, tap target creature defending player controls.",
+    keywords: ["Renown"],
+    colors: ["W"],
+    manaValue: 3,
+  };
+  const r = synergyScore(kytheonsIrregulars, FIXTURES.evolutionSage);
+  expect(r.score).toBeGreaterThan(0);
+  expect(r.reasons.some((x) => x.tag === "counter:+1/+1")).toBe(true);
+});
