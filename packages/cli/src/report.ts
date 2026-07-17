@@ -7,11 +7,21 @@ export function formatReport(report: DeckReport): string {
   lines.push(report.commanders.length ? `  ${report.commanders.join(", ")}` : "  (none specified)");
 
   lines.push("");
+  lines.push("=== Deck cohesion ===");
+  if (report.cohesion) {
+    const secondary = report.cohesion.secondary ? ` / ${report.cohesion.secondary}` : "";
+    lines.push(`  Theme: ${report.cohesion.theme}${secondary}`);
+    lines.push(`  Cohesion: ${report.cohesion.score.toFixed(2)} (${report.cohesion.label})`);
+  } else {
+    lines.push("  (no themes)");
+  }
+
+  lines.push("");
   lines.push("=== Card synergies (ranked) ===");
   for (const c of report.cards.slice(0, 20)) {
     const tag = c.isCommander ? " [commander]" : "";
     const plural = c.partnerCount === 1 ? "" : "s";
-    lines.push(`[${c.score}] ${c.name}${tag} — synergizes with ${c.partnerCount} card${plural}`);
+    lines.push(`[${c.score.toFixed(2)}] ${c.name}${tag} — synergizes with ${c.partnerCount} card${plural}`);
     for (const p of c.topPartners.slice(0, 3)) {
       for (const r of p.reasons) {
         lines.push(`    - ${p.name}: ${r.text}`);

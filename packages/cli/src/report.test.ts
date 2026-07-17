@@ -15,7 +15,7 @@ const report: DeckReport = {
     {
       name: "Impact Tremors",
       isCommander: false,
-      score: 2,
+      score: 2.375,
       partnerCount: 1,
       topPartners: [{ name: "Krenko, Mob Boss", score: 2, reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }] }],
     },
@@ -24,6 +24,14 @@ const report: DeckReport = {
   combos: [{ cards: ["A", "B"], result: "Win" }],
   themes: [{ tag: "token", count: 2 }],
   roles: { ramp: 1, draw: 0, removal: 0 },
+  cohesion: {
+    theme: "Goblins",
+    tag: "tribe:goblin",
+    secondary: "Treasures",
+    secondaryTag: "treasure",
+    score: 0.5,
+    label: "focused",
+  },
 };
 
 test("formatReport shows commanders, ranked cards with partner counts, and reasons", () => {
@@ -34,4 +42,15 @@ test("formatReport shows commanders, ranked cards with partner counts, and reaso
   expect(out).toContain("pays off tokens");
   expect(out).toContain("Win"); // combo still rendered
   expect(out).toContain("token: 2"); // themes still rendered
+  expect(out).toContain("Deck cohesion");
+  expect(out).toContain("Goblins / Treasures"); // primary / secondary theme
+  expect(out).toContain("0.50 (focused)");
+  expect(out).toContain("[6.00]"); // integer score formatted to 2 decimals
+  expect(out).toContain("[2.38]"); // fractional score rounds to 2 decimals (2.375 -> 2.38)
+});
+
+test("formatReport renders a placeholder when cohesion is null", () => {
+  const out = formatReport({ ...report, cohesion: null });
+  expect(out).toContain("=== Deck cohesion ===");
+  expect(out).toContain("(no themes)");
 });

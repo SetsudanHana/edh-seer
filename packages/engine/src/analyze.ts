@@ -1,7 +1,13 @@
+import { readFileSync } from "node:fs";
 import type { Card } from "./card.js";
 import { synergyScore, type Reason } from "./synergy.js";
 import { extractTags, type Tag } from "./tags.js";
 import type { Combo, ComboIndex } from "./combos.js";
+import { themeWeights, rankThemes, weightedEdge, dampedScore, computeCohesion, type TagStats, type Cohesion } from "./weights.js";
+
+const TAG_STATS: TagStats = JSON.parse(
+  readFileSync(new URL("./tag-weights.json", import.meta.url), "utf8"),
+) as TagStats;
 
 export const COMMANDER_BOOST = 3;
 
@@ -27,11 +33,12 @@ export interface DeckReport {
   combos: Combo[];
   themes: { tag: string; count: number }[];
   roles: { ramp: number; draw: number; removal: number };
+  cohesion: Cohesion | null;
 }
 
 interface Agg {
   name: string;
-  score: number;
+  weighted: number;
   partnerCount: number;
   partners: { name: string; score: number; reasons: Reason[]; contribution: number }[];
 }
@@ -54,24 +61,36 @@ export function analyzeDeck(
   }
   edges.sort((x, y) => y.score - x.score);
 
+  // Deck-local tag frequency: cards whose produces ∪ cares contains the tag.
+  const deckFreq = new Map<Tag, number>();
+  for (const card of cards) {
+    const { produces, cares } = extractTags(card);
+    for (const t of new Set<Tag>([...produces, ...cares])) {
+      deckFreq.set(t, (deckFreq.get(t) ?? 0) + 1);
+    }
+  }
+  const tw = themeWeights(deckFreq, TAG_STATS);
+  const weightOf = (t: string): number => tw.get(t) ?? 0;
+
   const agg = new Map<string, Agg>();
   for (const card of cards) {
-    agg.set(card.name, { name: card.name, score: 0, partnerCount: 0, partners: [] });
+    agg.set(card.name, { name: card.name, weighted: 0, partnerCount: 0, partners: [] });
   }
   for (const edge of edges) {
+    const w = weightedEdge(edge.reasons, weightOf);
     const boostForA = commanderSet.has(edge.b) ? COMMANDER_BOOST : 1;
     const boostForB = commanderSet.has(edge.a) ? COMMANDER_BOOST : 1;
     const a = agg.get(edge.a);
     const b = agg.get(edge.b);
     if (a) {
-      a.score += edge.score * boostForA;
+      a.weighted += w * boostForA;
       a.partnerCount += 1;
-      a.partners.push({ name: edge.b, score: edge.score, reasons: edge.reasons, contribution: edge.score * boostForA });
+      a.partners.push({ name: edge.b, score: edge.score, reasons: edge.reasons, contribution: w * boostForA });
     }
     if (b) {
-      b.score += edge.score * boostForB;
+      b.weighted += w * boostForB;
       b.partnerCount += 1;
-      b.partners.push({ name: edge.a, score: edge.score, reasons: edge.reasons, contribution: edge.score * boostForB });
+      b.partners.push({ name: edge.a, score: edge.score, reasons: edge.reasons, contribution: w * boostForB });
     }
   }
 
@@ -79,7 +98,7 @@ export function analyzeDeck(
     .map((v) => ({
       name: v.name,
       isCommander: commanderSet.has(v.name),
-      score: v.score,
+      score: dampedScore(v.weighted, v.partnerCount),
       partnerCount: v.partnerCount,
       topPartners: v.partners
         .sort((x, y) => y.contribution - x.contribution)
@@ -108,5 +127,8 @@ export function analyzeDeck(
     .map(([tag, count]) => ({ tag, count }))
     .sort((x, y) => y.count - x.count);
 
-  return { commanders: presentCommanders, cards: cardSynergies, edges, combos: foundCombos, themes, roles };
+  const nonlandCount = cards.filter((c) => !c.typeLine.toLowerCase().includes("land")).length;
+  const cohesion = computeCohesion(rankThemes(deckFreq, TAG_STATS), deckFreq, nonlandCount);
+
+  return { commanders: presentCommanders, cards: cardSynergies, edges, combos: foundCombos, themes, roles, cohesion };
 }
