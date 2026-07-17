@@ -102,6 +102,19 @@ test("lifegain source produces lifegain (gain N life or lifelink)", () => {
   expect(extractTags(make("Creature — Angel", "Flying.", ["Lifelink"])).produces.has("lifegain")).toBe(true);
 });
 
+test("Kindred Discovery cares about any creature type (wildcard)", () => {
+  expect(extractTags(FIXTURES.kindredDiscovery).cares.has("tribe:*")).toBe(true);
+});
+
+test("Archmage of Echoes cares about Wizards via cast trigger", () => {
+  expect(extractTags(FIXTURES.archmageOfEchoes).cares.has("tribe:wizard")).toBe(true);
+});
+
+test("Academy Wizard is a plain Wizard producer", () => {
+  const t = extractTags(FIXTURES.academyWizard);
+  expect(t.produces.has("tribe:wizard")).toBe(true);
+});
+
 test("lifegain payoff cares about lifegain", () => {
   expect(extractTags(FIXTURES.archangelOfThune).cares.has("lifegain")).toBe(true);
 });
