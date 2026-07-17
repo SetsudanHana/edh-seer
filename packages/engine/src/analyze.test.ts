@@ -88,3 +88,14 @@ test("commanderNames not present in cards are ignored", () => {
   const report = analyzeDeck([A, B], undefined, ["Not In Deck"]);
   expect(report.commanders).toEqual([]);
 });
+
+test("Coverage: Kindred Discovery gains edges to both Wizards in a mini wizard deck", () => {
+  const report = analyzeDeck([
+    FIXTURES.kindredDiscovery,
+    FIXTURES.archmageOfEchoes,
+    FIXTURES.academyWizard,
+  ]);
+  const kindred = report.cards.find((c) => c.name === "Kindred Discovery");
+  expect(kindred).toBeDefined();
+  expect(kindred!.partnerCount).toBe(2);
+});
