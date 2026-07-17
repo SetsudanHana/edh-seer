@@ -11,6 +11,7 @@ export {
   type SynergyEdge,
   type CardSynergy,
 } from "./analyze.js";
+export { type Cohesion } from "./weights.js";
 export { suggestCards, type Suggestion } from "./suggest.js";
 export { FIXTURES } from "./fixtures.js";
 export {
