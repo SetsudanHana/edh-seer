@@ -330,4 +330,10 @@ export const FIXTURES: Record<string, Card> = {
     "When Acquisitions Expert enters the battlefield, you may reveal the top cards of your library for each creature in your party, then put revealed creature cards into your hand. (Your party consists of up to one each of a Cleric, Rogue, Warrior, and Wizard.)",
     { colors: ["B"], manaValue: 4 },
   ),
+  dualTribalPayoff: card(
+    "Dual Tribal Payoff",
+    "Enchantment",
+    "As this enchantment enters, choose a creature type. Wizards you control get +1/+1. Whenever a creature you control of the chosen type enters, draw a card.",
+    { colors: ["U"], manaValue: 4 },
+  ),
 };

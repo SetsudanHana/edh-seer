@@ -280,3 +280,8 @@ test("Party: payoff pays off a Wizard producer", () => {
   const r = synergyScore(FIXTURES.partyPayoff, FIXTURES.academyWizard);
   expect(r.reasons.some((x) => x.tag === "tribe:wizard")).toBe(true);
 });
+
+test("Dedup: a payoff caring a concrete tribe AND the wildcard yields one reason, not two", () => {
+  const r = synergyScore(FIXTURES.academyWizard, FIXTURES.dualTribalPayoff);
+  expect(r.reasons.length).toBe(1);
+});
