@@ -502,3 +502,25 @@ test("graveyard/death count conditions do not fire on a plain creature", () => {
   expect(p.cares.has("graveyard")).toBe(false);
   expect(p.cares.has("creature-death")).toBe(false);
 });
+
+test("artifact-payoff: metalcraft cares about artifacts", () => {
+  const p = extractTags(make("Creature — Human Artificer", "Metalcraft — This creature gets +2/+2 as long as metalcraft is active."));
+  expect(p.cares.has("artifact")).toBe(true);
+});
+
+test("enchantress-payoff: eerie cares about enchantments", () => {
+  const p = extractTags(make("Creature — Human", "Eerie — Whenever this eerie condition is met, draw a card."));
+  expect(p.cares.has("enchantment")).toBe(true);
+});
+
+test("token-payoff: celebration cares about tokens", () => {
+  const p = extractTags(make("Instant", "Celebration — Deal 3 damage to any target if celebration is active."));
+  expect(p.cares.has("token")).toBe(true);
+});
+
+test("non-graveyard ability-words do not fire on a plain creature", () => {
+  const p = extractTags(make("Creature — Bird", "Flying."));
+  expect(p.cares.has("artifact")).toBe(false);
+  expect(p.cares.has("enchantment")).toBe(false);
+  expect(p.cares.has("token")).toBe(false);
+});

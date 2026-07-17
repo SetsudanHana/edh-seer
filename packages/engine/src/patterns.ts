@@ -80,7 +80,7 @@ export const PATTERNS: Pattern[] = [
   {
     name: "artifact-payoff",
     matches: (v) =>
-      has(v, "an artifact enters", "whenever you cast an artifact", "artifacts you control", "for each artifact"),
+      has(v, "an artifact enters", "whenever you cast an artifact", "artifacts you control", "for each artifact", "metalcraft"),
     cares: ["artifact"],
   },
   {
@@ -103,7 +103,7 @@ export const PATTERNS: Pattern[] = [
   },
   {
     name: "token-payoff",
-    matches: (v) => has(v, "tokens you control", "for each token", "a token you control"),
+    matches: (v) => has(v, "tokens you control", "for each token", "a token you control", "celebration"),
     cares: ["token"],
   },
   {
@@ -325,7 +325,7 @@ export const PATTERNS: Pattern[] = [
   {
     name: "enchantress-payoff",
     matches: (v) =>
-      has(v, "whenever you cast an enchantment", "an enchantment you control enters", "constellation", "for each enchantment"),
+      has(v, "whenever you cast an enchantment", "an enchantment you control enters", "constellation", "for each enchantment", "eerie"),
     cares: ["enchantment"],
   },
   {
