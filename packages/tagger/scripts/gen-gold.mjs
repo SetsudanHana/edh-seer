@@ -353,7 +353,19 @@ const CARDS = [
     colors: ["U"], colorIdentity: ["U"], power: "0", toughness: "0", manaValue: 4, keywords: [],
     oracleText:
       "You may have this creature enter as a copy of a creature or planeswalker you control, except it enters with an additional +1/+1 counter on it if it's a creature, it enters with an additional loyalty counter on it if it's a planeswalker, and it isn't legendary.",
-    abilities: [{ kind: "static", effect: { kind: "clone", subject: subj({ token: null }) } }],
+    // Enters as a NONlegendary copy of a creature or planeswalker you control (so it dodges
+    // the legend rule and lets you run two of a legendary). Creature copy gains +1/+1;
+    // planeswalker copy gains a loyalty counter. (Legendary-ness of the copy = Stage-2 clone flag.)
+    abilities: [
+      {
+        kind: "static",
+        effect: { kind: "clone", subject: subj({ type: ["creature", "planeswalker"], token: null }) },
+        emits: [
+          counterAdded("+1/+1"),
+          counterAdded("loyalty", { type: "planeswalker", control: "you", token: null }),
+        ],
+      },
+    ],
   },
   // ============ Hidetsugu / combo-value ============
   {

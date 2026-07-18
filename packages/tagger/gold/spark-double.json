@@ -46,9 +46,33 @@
           "kind": "clone",
           "subject": {
             "control": "you",
-            "token": null
+            "token": null,
+            "type": [
+              "creature",
+              "planeswalker"
+            ]
           }
-        }
+        },
+        "emits": [
+          {
+            "verb": "counter-added",
+            "subject": {
+              "type": "creature",
+              "control": "you",
+              "token": null,
+              "counter": "+1/+1"
+            }
+          },
+          {
+            "verb": "counter-added",
+            "subject": {
+              "type": "planeswalker",
+              "control": "you",
+              "token": null,
+              "counter": "loyalty"
+            }
+          }
+        ]
       }
     ]
   }
