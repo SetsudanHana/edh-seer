@@ -79,13 +79,9 @@ function validateEvent(e: unknown, i: number): GameEvent {
 function validateSubject(s: unknown, i: number): SubjectFilter {
   if (typeof s !== "object" || s === null) throw new Error(`ability[${i}] missing subject`);
   const o = s as Record<string, unknown>;
-  if (typeof o.control !== "string" || !CONTROLS.includes(o.control as Control)) {
-    throw new Error(`ability[${i}] invalid subject.control: ${String(o.control)}`);
-  }
-  if (!(o.token === true || o.token === false || o.token === null)) {
-    throw new Error(`ability[${i}] subject.token must be true, false, or null`);
-  }
-  const out: SubjectFilter = { control: o.control as Control, token: o.token as boolean | null };
+  // token/control are normalized, never rejected — a local LLM omits or varies them, and
+  // dropping the whole card over a missing default loses more than a lenient default costs.
+  const out: SubjectFilter = { control: normControl(o.control), token: normToken(o.token) };
   const type = strOrStrArray(o.type);
   if (type !== undefined) out.type = type;
   const subtype = strOrStrArray(o.subtype);
@@ -95,6 +91,22 @@ function validateSubject(s: unknown, i: number): SubjectFilter {
   if (typeof o.counter === "string") out.counter = o.counter;
   if (typeof o.zone === "string") out.zone = o.zone;
   return out;
+}
+
+/** Normalize control to you/opp/any, mapping common LLM synonyms; default "you". */
+function normControl(v: unknown): Control {
+  if (typeof v === "string") {
+    const s = v.toLowerCase();
+    if (CONTROLS.includes(s as Control)) return s as Control;
+    if (s.includes("opp") || s.includes("each player") || s.includes("target player")) return "opp";
+    if (s.includes("any") || s === "anyone" || s === "target") return "any";
+  }
+  return "you";
+}
+
+/** Normalize token to the tri-state true/false/null; anything unclear → null (any). */
+function normToken(v: unknown): boolean | null {
+  return v === true ? true : v === false ? false : null;
 }
 
 /** Accept a single type/subtype string, or a non-empty array of strings (OR). */

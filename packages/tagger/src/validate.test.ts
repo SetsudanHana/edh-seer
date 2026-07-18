@@ -32,11 +32,29 @@ test("throws on unknown verb", () => {
   expect(() => parseAbilities(raw)).toThrow(/verb/i);
 });
 
-test("throws on bad control value", () => {
+test("normalizes missing/unknown control and token instead of throwing", () => {
+  // LLM omits token and uses an unknown control word.
   const raw = JSON.stringify({
-    abilities: [{ kind: "static", effect: { kind: "lord", subject: { subtype: "wizard", control: "mine", token: false } } }],
+    abilities: [{ kind: "static", effect: { kind: "lord", subject: { subtype: "wizard", control: "mine" } } }],
   });
-  expect(() => parseAbilities(raw)).toThrow(/control/i);
+  const [a] = parseAbilities(raw);
+  expect(a.effect.subject!.control).toBe("you"); // unknown -> default you
+  expect(a.effect.subject!.token).toBe(null); // missing -> null (any)
+});
+
+test("maps opponent synonyms to opp and coerces stray token to null", () => {
+  const raw = JSON.stringify({
+    abilities: [
+      {
+        kind: "triggered",
+        trigger: { verbs: ["dies"], subject: { type: "creature", control: "each opponent", token: "null" } },
+        effect: { kind: "drain" },
+      },
+    ],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.trigger!.subject.control).toBe("opp");
+  expect(a.trigger!.subject.token).toBe(null);
 });
 
 test("throws when triggered ability lacks a trigger", () => {
