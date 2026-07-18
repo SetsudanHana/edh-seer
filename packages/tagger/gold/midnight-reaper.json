@@ -55,7 +55,16 @@
         },
         "effect": {
           "kind": "draw-card"
-        }
+        },
+        "emits": [
+          {
+            "verb": "draw",
+            "subject": {
+              "control": "you",
+              "token": null
+            }
+          }
+        ]
       }
     ]
   }

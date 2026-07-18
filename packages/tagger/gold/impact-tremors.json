@@ -56,7 +56,16 @@
             "control": "opp",
             "token": null
           }
-        }
+        },
+        "emits": [
+          {
+            "verb": "non-combat-damage",
+            "subject": {
+              "control": "opp",
+              "token": null
+            }
+          }
+        ]
       }
     ]
   }

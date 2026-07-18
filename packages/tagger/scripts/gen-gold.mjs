@@ -47,6 +47,32 @@ const sacEmits = (control = "you") => [
 const counterAdded = (kind, subject = { type: "creature", control: "you", token: null }) =>
   ev("counter-added", { ...subject, counter: kind });
 
+// Events an effect emits purely from what it DOES (its label), so damage/draw/life
+// payoffs can consume them. Token/sacrifice/counter emits are authored explicitly per
+// ability; these are merged in on top. Single source of truth for the effect->event map.
+function effectEmits(effect) {
+  const c = effect.subject?.control ?? "you";
+  switch (effect.kind) {
+    case "player-damage":
+    case "noncombat-damage":
+      return [ev("non-combat-damage", { control: c, token: null })];
+    case "player-life-loss":
+      return [ev("lose-life", { control: c, token: null })];
+    case "drain":
+      return [ev("lose-life", { control: "opp", token: null }), ev("gain-life", { control: "you", token: null })];
+    case "draw-card":
+      return [ev("draw", { control: "you", token: null })];
+    default:
+      return [];
+  }
+}
+
+// Merge authored emits (tokens/sac/counters) with effect-derived emits (damage/draw/life).
+function withEmits(ability) {
+  const emits = [...(ability.emits ?? []), ...effectEmits(ability.effect)];
+  return emits.length ? { ...ability, emits } : ability;
+}
+
 // ---- the gold cards ----
 // Each: [oracleId, name, typeLine, colors, colorIdentity, power, toughness, cmc, keywords, oracleText, abilities]
 const CARDS = [
@@ -557,7 +583,7 @@ for (const c of CARDS) {
       promptVersion: 1,
       model: "gold",
       characteristics: chars(card),
-      abilities: c.abilities,
+      abilities: c.abilities.map(withEmits),
     },
   };
   writeFileSync(join(GOLD_DIR, `${slug(c.name)}.json`), JSON.stringify(gold, null, 2) + "\n");

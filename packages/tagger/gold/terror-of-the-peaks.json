@@ -62,7 +62,16 @@
             "control": "any",
             "token": null
           }
-        }
+        },
+        "emits": [
+          {
+            "verb": "non-combat-damage",
+            "subject": {
+              "control": "any",
+              "token": null
+            }
+          }
+        ]
       },
       {
         "kind": "static",

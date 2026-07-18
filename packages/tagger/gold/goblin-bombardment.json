@@ -64,6 +64,13 @@
               "control": "you",
               "token": null
             }
+          },
+          {
+            "verb": "non-combat-damage",
+            "subject": {
+              "control": "any",
+              "token": null
+            }
           }
         ]
       }

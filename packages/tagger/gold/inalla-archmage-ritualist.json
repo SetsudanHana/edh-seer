@@ -98,7 +98,16 @@
             "control": "opp",
             "token": null
           }
-        }
+        },
+        "emits": [
+          {
+            "verb": "lose-life",
+            "subject": {
+              "control": "opp",
+              "token": null
+            }
+          }
+        ]
       }
     ]
   }

@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 7;
+export const PROMPT_VERSION = 8;
 
 export const EFFECT_KINDS = [
   "token-generation",
@@ -71,7 +71,12 @@ INVARIANT — emits:
   ramp. Use "land-play" only for the narrower "whenever you play a land" land-drop action.
 - A modal trigger ("choose one — ...") becomes one ability per mode, all sharing the
   same trigger.
-- Effects whose verb no trigger consumes need no emits.`;
+- An effect emits the event for its action so payoffs can consume it: dealing damage →
+  { verb: "non-combat-damage" } (or "combat-damage" for combat damage); a player losing
+  life → { verb: "lose-life" }; gaining life → { verb: "gain-life" }; drawing → { verb:
+  "draw" }; milling → { verb: "mill" }; discarding → { verb: "discard" }. The event's
+  subject carries the affected player's control (you/opp/any).
+- Effects whose verb no trigger consumes (pumps, cost reduction, taxes) need no emits.`;
 
 const FEW_SHOT = `EXAMPLE 1
 Card: Inalla, Archmage Ritualist — Legendary Creature — Human Wizard
@@ -87,7 +92,8 @@ Output:
     ] },
   { "kind": "activated",
     "cost": "Tap five untapped Wizards you control",
-    "effect": { "kind": "player-life-loss", "subject": { "control": "opp", "token": null } } }
+    "effect": { "kind": "player-life-loss", "subject": { "control": "opp", "token": null } },
+    "emits": [ { "verb": "lose-life", "subject": { "control": "opp", "token": null } } ] }
 ] }
 
 EXAMPLE 2
@@ -97,7 +103,8 @@ Output:
 { "abilities": [
   { "kind": "triggered",
     "trigger": { "verbs": ["enters", "attacks"], "subject": { "type": "creature", "control": "you", "token": null, "chosenType": true } },
-    "effect": { "kind": "draw-card" } }
+    "effect": { "kind": "draw-card" },
+    "emits": [ { "verb": "draw", "subject": { "control": "you", "token": null } } ] }
 ] }
 
 EXAMPLE 3

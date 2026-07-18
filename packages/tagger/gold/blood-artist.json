@@ -58,7 +58,23 @@
             "control": "opp",
             "token": null
           }
-        }
+        },
+        "emits": [
+          {
+            "verb": "lose-life",
+            "subject": {
+              "control": "opp",
+              "token": null
+            }
+          },
+          {
+            "verb": "gain-life",
+            "subject": {
+              "control": "you",
+              "token": null
+            }
+          }
+        ]
       }
     ]
   }

@@ -64,7 +64,16 @@
         },
         "effect": {
           "kind": "draw-card"
-        }
+        },
+        "emits": [
+          {
+            "verb": "draw",
+            "subject": {
+              "control": "you",
+              "token": null
+            }
+          }
+        ]
       },
       {
         "kind": "triggered",
@@ -83,7 +92,16 @@
             "control": "opp",
             "token": null
           }
-        }
+        },
+        "emits": [
+          {
+            "verb": "lose-life",
+            "subject": {
+              "control": "opp",
+              "token": null
+            }
+          }
+        ]
       }
     ]
   }
