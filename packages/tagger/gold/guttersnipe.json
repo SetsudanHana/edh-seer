@@ -70,6 +70,13 @@
               "control": "opp",
               "token": null
             }
+          },
+          {
+            "verb": "lose-life",
+            "subject": {
+              "control": "opp",
+              "token": null
+            }
           }
         ]
       }

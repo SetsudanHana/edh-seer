@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 13;
+export const PROMPT_VERSION = 14;
 
 export const EFFECT_KINDS = [
   "token-generation",
@@ -26,6 +26,7 @@ export const EFFECT_KINDS = [
   "enters-with-counters",
   "mana-generation",
   "copy-spell",
+  "speed-increase",
 ] as const;
 
 const INSTRUCTIONS = `You decompose a Magic: The Gathering card's rules text into structured abilities.
@@ -87,7 +88,10 @@ INVARIANT — emits:
   { verb: "non-combat-damage" } (or "combat-damage" for combat damage); a player losing
   life → { verb: "lose-life" }; gaining life → { verb: "gain-life" }; drawing → { verb:
   "draw" }; milling → { verb: "mill" }; discarding → { verb: "discard" }. The event's
-  subject carries the affected player's control (you/opp/any).
+  subject carries the affected player's control (you/opp/any). Damage dealt to a PLAYER
+  also emits { verb: "lose-life" } (damage is life loss); damage to "any target" does not.
+- "speed-increase" is the "Start your engines!" speed mechanic; its speed rises when an
+  opponent loses life, so model it as a trigger on { verb: "lose-life", control: "opp" }.
 - Effects whose verb no trigger consumes (pumps, cost reduction, taxes) need no emits.`;
 
 const FEW_SHOT = `EXAMPLE 1

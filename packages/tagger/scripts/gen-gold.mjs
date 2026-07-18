@@ -54,7 +54,10 @@ function effectEmits(effect) {
   const c = effect.subject?.control ?? "you";
   switch (effect.kind) {
     case "player-damage":
+      // Damage to a player IS life loss — emit both so life-loss payoffs (Samut speed) edge.
+      return [ev("non-combat-damage", { control: c, token: null }), ev("lose-life", { control: c, token: null })];
     case "noncombat-damage":
+      // "any target" may hit a creature, so don't assume player life loss.
       return [ev("non-combat-damage", { control: c, token: null })];
     case "player-life-loss":
       return [ev("lose-life", { control: c, token: null })];
@@ -422,8 +425,15 @@ const CARDS = [
     oracleText:
       "First strike, vigilance, haste\nStart your engines! (If you have no speed, it starts at 1. It increases once on each of your turns when an opponent loses life. Max speed is 4.)\nOther creatures you control get +X/+0, where X is your speed.\nNoncreature spells you cast cost {X} less to cast, where X is your speed.",
     abilities: [
+      // Speed increases when an opponent loses life on your turn — a lose-life{opp} payoff.
+      {
+        kind: "triggered",
+        trigger: { verbs: ["lose-life"], subject: { control: "opp", token: null } },
+        effect: { kind: "speed-increase" },
+      },
       { kind: "static", effect: { kind: "pump", subject: subj({ type: "creature", token: null }) } },
-      { kind: "static", effect: { kind: "cost-reduction", subject: subj({ token: false }) } },
+      // Cost reduction applies to NONCREATURE spells you cast.
+      { kind: "static", effect: { kind: "cost-reduction", subject: subj({ type: "noncreature", token: false }) } },
     ],
   },
   {

@@ -60,6 +60,21 @@
     },
     "abilities": [
       {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "lose-life"
+          ],
+          "subject": {
+            "control": "opp",
+            "token": null
+          }
+        },
+        "effect": {
+          "kind": "speed-increase"
+        }
+      },
+      {
         "kind": "static",
         "effect": {
           "kind": "pump",
@@ -76,7 +91,8 @@
           "kind": "cost-reduction",
           "subject": {
             "control": "you",
-            "token": false
+            "token": false,
+            "type": "noncreature"
           }
         }
       }
