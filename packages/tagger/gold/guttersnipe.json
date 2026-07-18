@@ -50,7 +50,10 @@
           "subject": {
             "control": "you",
             "token": false,
-            "type": "instant-or-sorcery"
+            "type": [
+              "instant",
+              "sorcery"
+            ]
           }
         },
         "effect": {

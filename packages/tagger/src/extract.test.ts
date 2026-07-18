@@ -36,7 +36,7 @@ test("assembles characteristics + abilities + provenance", async () => {
   expect(tags.oracleId).toBe("oid-1");
   expect(tags.model).toBe("test-model");
   expect(tags.schemaVersion).toBe(1);
-  expect(tags.promptVersion).toBe(9);
+  expect(tags.promptVersion).toBe(10);
   expect(tags.characteristics.types).toEqual(["enchantment"]);
   expect(tags.abilities).toHaveLength(1);
 });

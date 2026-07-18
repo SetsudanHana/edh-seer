@@ -43,3 +43,18 @@ test("throws when triggered ability lacks a trigger", () => {
   const raw = JSON.stringify({ abilities: [{ kind: "triggered", effect: { kind: "x" } }] });
   expect(() => parseAbilities(raw)).toThrow(/trigger/i);
 });
+
+test("accepts array-valued type/subtype (OR)", () => {
+  const raw = JSON.stringify({
+    abilities: [
+      {
+        kind: "triggered",
+        trigger: { verbs: ["cast"], subject: { type: ["instant", "sorcery"], control: "you", token: false } },
+        effect: { kind: "player-damage", subject: { subtype: ["faerie", "wizard"], control: "you", token: null } },
+      },
+    ],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.trigger!.subject.type).toEqual(["instant", "sorcery"]);
+  expect(a.effect.subject!.subtype).toEqual(["faerie", "wizard"]);
+});

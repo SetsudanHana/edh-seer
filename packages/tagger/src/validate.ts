@@ -86,13 +86,25 @@ function validateSubject(s: unknown, i: number): SubjectFilter {
     throw new Error(`ability[${i}] subject.token must be true, false, or null`);
   }
   const out: SubjectFilter = { control: o.control as Control, token: o.token as boolean | null };
-  if (typeof o.type === "string") out.type = o.type;
-  if (typeof o.subtype === "string") out.subtype = o.subtype;
+  const type = strOrStrArray(o.type);
+  if (type !== undefined) out.type = type;
+  const subtype = strOrStrArray(o.subtype);
+  if (subtype !== undefined) out.subtype = subtype;
   if (Array.isArray(o.colors)) out.colors = o.colors.filter((c): c is string => typeof c === "string");
   if (o.chosenType === true) out.chosenType = true;
   if (typeof o.counter === "string") out.counter = o.counter;
   if (typeof o.zone === "string") out.zone = o.zone;
   return out;
+}
+
+/** Accept a single type/subtype string, or a non-empty array of strings (OR). */
+function strOrStrArray(v: unknown): string | string[] | undefined {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) {
+    const a = v.filter((x): x is string => typeof x === "string");
+    if (a.length > 0) return a;
+  }
+  return undefined;
 }
 
 function asVerb(v: unknown, i: number): Verb {

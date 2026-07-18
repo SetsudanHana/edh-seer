@@ -56,7 +56,10 @@
           "subject": {
             "control": "you",
             "token": false,
-            "subtype": "wizard"
+            "subtype": [
+              "faerie",
+              "wizard"
+            ]
           }
         },
         "effect": {
@@ -64,7 +67,10 @@
           "subject": {
             "control": "you",
             "token": true,
-            "subtype": "wizard"
+            "subtype": [
+              "faerie",
+              "wizard"
+            ]
           }
         },
         "emits": [
@@ -73,7 +79,10 @@
             "subject": {
               "control": "you",
               "token": true,
-              "subtype": "wizard"
+              "subtype": [
+                "faerie",
+                "wizard"
+              ]
             }
           },
           {
@@ -81,7 +90,10 @@
             "subject": {
               "control": "you",
               "token": true,
-              "subtype": "wizard"
+              "subtype": [
+                "faerie",
+                "wizard"
+              ]
             }
           }
         ]

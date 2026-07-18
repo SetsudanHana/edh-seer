@@ -108,9 +108,9 @@ const CARDS = [
     abilities: [
       {
         kind: "triggered",
-        trigger: { verbs: ["cast"], subject: subj({ subtype: "wizard", token: false }) },
-        effect: { kind: "copy-spell", subject: tok({ subtype: "wizard" }) },
-        emits: tokenEmits(tok({ subtype: "wizard" })),
+        trigger: { verbs: ["cast"], subject: subj({ subtype: ["faerie", "wizard"], token: false }) },
+        effect: { kind: "copy-spell", subject: tok({ subtype: ["faerie", "wizard"] }) },
+        emits: tokenEmits(tok({ subtype: ["faerie", "wizard"] })),
       },
     ],
   },
@@ -149,7 +149,7 @@ const CARDS = [
     abilities: [
       {
         kind: "triggered",
-        trigger: { verbs: ["cast"], subject: subj({ type: "instant-or-sorcery", token: false }) },
+        trigger: { verbs: ["cast"], subject: subj({ type: ["instant", "sorcery"], token: false }) },
         effect: { kind: "pump-tribe", subject: subj({ subtype: "wizard", token: null }) },
       },
     ],
@@ -219,7 +219,7 @@ const CARDS = [
     abilities: [
       {
         kind: "triggered",
-        trigger: { verbs: ["cast"], subject: subj({ type: "instant-or-sorcery", token: false }) },
+        trigger: { verbs: ["cast"], subject: subj({ type: ["instant", "sorcery"], token: false }) },
         effect: { kind: "player-damage", subject: subj({ control: "opp", token: null }) },
       },
     ],

@@ -43,10 +43,16 @@ function abilityKey(a: Ability): string {
   return `${a.kind}::${verbs}::${subject}::${a.effect.kind}`;
 }
 
+/** Normalize a string-or-array field to a sorted array so "x" ≡ ["x"] and order is irrelevant. */
+function normList(v: string | string[] | undefined): string[] | null {
+  if (v === undefined) return null;
+  return (Array.isArray(v) ? [...v] : [v]).sort();
+}
+
 function subjectKey(s: SubjectFilter): string {
   return JSON.stringify({
-    type: s.type ?? null,
-    subtype: s.subtype ?? null,
+    type: normList(s.type),
+    subtype: normList(s.subtype),
     colors: s.colors ? [...s.colors].sort() : null,
     control: s.control,
     token: s.token,

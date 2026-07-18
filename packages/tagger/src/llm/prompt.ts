@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 9;
+export const PROMPT_VERSION = 10;
 
 export const EFFECT_KINDS = [
   "token-generation",
@@ -40,7 +40,9 @@ An Ability is:
 }
 
 A SubjectFilter is:
-{ "type"?: string, "subtype"?: string, "colors"?: string[],
+{ "type"?: string | string[],        // array = OR, e.g. ["instant","sorcery"]
+  "subtype"?: string | string[],     // array = OR, e.g. ["faerie","wizard"]
+  "colors"?: string[],
   "control": "you" | "opp" | "any",
   "token": true | false | null,        // true=token only, false=nontoken only, null=any
   "chosenType"?: true,                 // only for "the chosen type" wording
@@ -72,9 +74,9 @@ INVARIANT — emits:
 - A modal trigger ("choose one — ...") becomes one ability per mode, all sharing the
   same trigger.
 - A "cast" trigger's subject captures the SPELL category cast: use the card type
-  ("creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker"), the
-  grouping "instant-or-sorcery" or "noncreature", or a subtype (e.g. "zombie" for a
-  "Zombie spell"). Omit type for "a spell" (any).
+  ("creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker"), an ARRAY
+  for OR (instant or sorcery → type: ["instant","sorcery"]), "noncreature", or a subtype
+  (e.g. "zombie" for a "Zombie spell"). Omit type for "a spell" (any).
 - An effect emits the event for its action so payoffs can consume it: dealing damage →
   { verb: "non-combat-damage" } (or "combat-damage" for combat damage); a player losing
   life → { verb: "lose-life" }; gaining life → { verb: "gain-life" }; drawing → { verb:

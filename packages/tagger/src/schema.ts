@@ -4,8 +4,10 @@ export type Control = "you" | "opp" | "any";
 
 /** A characteristic filter: what a trigger cares about, or what an effect targets/produces. */
 export interface SubjectFilter {
-  type?: string;
-  subtype?: string;
+  /** A card type, or an array of types meaning OR (e.g. ["instant","sorcery"]). */
+  type?: string | string[];
+  /** A subtype, or an array meaning OR (e.g. ["faerie","wizard"]). */
+  subtype?: string | string[];
   colors?: string[];
   control: Control;
   /** false = nontoken only, true = token only, null = any. */
