@@ -56,7 +56,25 @@
             "control": "opp",
             "token": null
           }
-        }
+        },
+        "emits": [
+          {
+            "verb": "sacrifice",
+            "subject": {
+              "type": "creature",
+              "control": "opp",
+              "token": null
+            }
+          },
+          {
+            "verb": "dies",
+            "subject": {
+              "type": "creature",
+              "control": "opp",
+              "token": null
+            }
+          }
+        ]
       }
     ]
   }

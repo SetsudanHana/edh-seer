@@ -210,6 +210,7 @@ const CARDS = [
         kind: "triggered",
         trigger: { verbs: ["dies"], subject: subj({ type: "creature", token: null }) },
         effect: { kind: "forced-sacrifice", subject: subj({ control: "opp", token: null }) },
+        emits: sacEmits("opp"),
       },
     ],
   },
