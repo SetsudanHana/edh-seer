@@ -367,9 +367,11 @@ const CARDS = [
         effect: { kind: "draw-card" },
       },
       {
+        // dies: opponent loses life; if the exiled card is instant/sorcery, free-cast it.
         kind: "triggered",
         trigger: { verbs: ["dies"], subject: subj({ token: false }) },
         effect: { kind: "player-life-loss", subject: subj({ control: "opp", token: null }) },
+        emits: [ev("cast", { type: ["instant", "sorcery"], control: "you", token: false })],
       },
     ],
   },

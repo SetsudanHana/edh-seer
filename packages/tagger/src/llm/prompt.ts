@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 10;
+export const PROMPT_VERSION = 11;
 
 export const EFFECT_KINDS = [
   "token-generation",
@@ -77,6 +77,9 @@ INVARIANT — emits:
   ("creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker"), an ARRAY
   for OR (instant or sorcery → type: ["instant","sorcery"]), "noncreature", or a subtype
   (e.g. "zombie" for a "Zombie spell"). Omit type for "a spell" (any).
+- An effect that lets you cast a card ("you may cast it", cascade, impulse-cast) emits
+  { verb: "cast" } with the cast card's subject. A permanent cast this way also emits
+  "enters"; an instant/sorcery cast does not (it never enters the battlefield).
 - An effect emits the event for its action so payoffs can consume it: dealing damage →
   { verb: "non-combat-damage" } (or "combat-damage" for combat damage); a player losing
   life → { verb: "lose-life" }; gaining life → { verb: "gain-life" }; drawing → { verb:

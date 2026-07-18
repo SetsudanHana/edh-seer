@@ -95,6 +95,17 @@
         },
         "emits": [
           {
+            "verb": "cast",
+            "subject": {
+              "type": [
+                "instant",
+                "sorcery"
+              ],
+              "control": "you",
+              "token": false
+            }
+          },
+          {
             "verb": "lose-life",
             "subject": {
               "control": "opp",
