@@ -201,7 +201,12 @@ const CARDS = [
         trigger: { verbs: ["enters"], subject: subj({ type: "creature", token: null }) },
         effect: { kind: "noncombat-damage", subject: subj({ control: "any", token: null }) },
       },
-      { kind: "static", effect: { kind: "tax", subject: subj({ control: "opp", token: null }) } },
+      // Tax is paid in LIFE (3 life to target it), so it also causes opponent life loss.
+      {
+        kind: "static",
+        effect: { kind: "tax", subject: subj({ control: "opp", token: null }) },
+        emits: [ev("lose-life", { control: "opp", token: null })],
+      },
     ],
   },
   {
