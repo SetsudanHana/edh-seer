@@ -4,3 +4,4 @@ dist/
 .DS_Store
 .superpowers/
 .claude/settings.local.json
+packages/tagger/score-debug.json

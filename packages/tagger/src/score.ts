@@ -36,6 +36,11 @@ function countMatches(a: Set<string>, b: Set<string>): number {
   return n;
 }
 
+/** The scored canonical keys for a set of abilities — exposed for diffing predicted vs gold. */
+export function abilityKeys(abilities: Ability[]): string[] {
+  return abilities.map(abilityKey);
+}
+
 /** Canonical string of the scored ability fields: verbs + subject + effect.kind. */
 function abilityKey(a: Ability): string {
   const verbs = a.trigger ? [...a.trigger.verbs].sort().join("|") : "";
