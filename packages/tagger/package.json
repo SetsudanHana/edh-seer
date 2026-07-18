@@ -1,0 +1,23 @@
+{
+  "name": "@mtg/tagger",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "tag-decks": "tsx src/bin/tag-decks.ts",
+    "score-gold": "tsx src/bin/score-gold.ts"
+  },
+  "dependencies": {
+    "@mtg/data": "*",
+    "@mtg/engine": "*",
+    "mongodb": "^6.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.15.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
