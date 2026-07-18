@@ -44,7 +44,13 @@
         "kind": "activated",
         "cost": "Sacrifice a creature",
         "effect": {
-          "kind": "counter-self"
+          "kind": "counter-placement",
+          "subject": {
+            "control": "you",
+            "token": false,
+            "type": "creature",
+            "counter": "+1/+1"
+          }
         },
         "emits": [
           {
@@ -61,6 +67,15 @@
               "type": "creature",
               "control": "you",
               "token": null
+            }
+          },
+          {
+            "verb": "counter-added",
+            "subject": {
+              "type": "creature",
+              "control": "you",
+              "token": null,
+              "counter": "+1/+1"
             }
           }
         ]

@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 3;
+export const PROMPT_VERSION = 4;
 
 const EFFECT_KINDS = [
   "token-generation",
@@ -42,7 +42,8 @@ A SubjectFilter is:
 { "type"?: string, "subtype"?: string, "colors"?: string[],
   "control": "you" | "opp" | "any",
   "token": true | false | null,        // true=token only, false=nontoken only, null=any
-  "chosenType"?: true }                // only for "the chosen type" wording
+  "chosenType"?: true,                 // only for "the chosen type" wording
+  "counter"?: string }                 // counter kind for counter-added events, e.g. "+1/+1"
 
 An Event is { "verb": Verb, "subject": SubjectFilter } with a CONCRETE subject.
 
@@ -57,6 +58,8 @@ INVARIANT — emits:
 - A "Sacrifice a creature" cost or effect emits { verb: "sacrifice" } AND { verb: "dies" }
   (a sacrificed creature dies), both with the sacrificed creature's subject. Sacrificing a
   NONcreature (e.g. a Treasure/artifact) emits { verb: "sacrifice" } ONLY.
+- An effect that puts a counter on a permanent emits { verb: "counter-added" } with the
+  recipient's subject and subject.counter set to the counter kind (e.g. "+1/+1").
 - Effects whose verb no trigger consumes need no emits.`;
 
 const FEW_SHOT = `EXAMPLE 1

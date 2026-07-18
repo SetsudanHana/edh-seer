@@ -43,6 +43,9 @@ const sacEmits = (control = "you") => [
   ev("sacrifice", { type: "creature", control, token: null }),
   ev("dies", { type: "creature", control, token: null }),
 ];
+// a counter-added event carrying the counter kind (+1/+1 etc.) on the recipient.
+const counterAdded = (kind, subject = { type: "creature", control: "you", token: null }) =>
+  ev("counter-added", { ...subject, counter: kind });
 
 // ---- the gold cards ----
 // Each: [oracleId, name, typeLine, colors, colorIdentity, power, toughness, cmc, keywords, oracleText, abilities]
@@ -278,7 +281,14 @@ const CARDS = [
     typeLine: "Creature — Zombie",
     colors: ["B"], colorIdentity: ["B"], power: "1", toughness: "1", manaValue: 1, keywords: [],
     oracleText: "This creature can't block.\nSacrifice a creature: Put a +1/+1 counter on this creature.",
-    abilities: [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "counter-self" }, emits: sacEmits() }],
+    abilities: [
+      {
+        kind: "activated",
+        cost: "Sacrifice a creature",
+        effect: { kind: "counter-placement", subject: subj({ type: "creature", counter: "+1/+1" }) },
+        emits: [...sacEmits(), counterAdded("+1/+1")],
+      },
+    ],
   },
   // ============ Clone / tokens / Gogo ============
   {

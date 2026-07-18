@@ -51,6 +51,7 @@ function subjectKey(s: SubjectFilter): string {
     control: s.control,
     token: s.token,
     chosenType: s.chosenType ?? false,
+    counter: s.counter ?? null,
   });
 }
 

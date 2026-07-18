@@ -12,6 +12,8 @@ export interface SubjectFilter {
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */
   chosenType?: boolean;
+  /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
+  counter?: string;
 }
 
 export type Verb =
