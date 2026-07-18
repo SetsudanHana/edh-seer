@@ -49,6 +49,24 @@ test("extra predicted ability is a false positive", () => {
   expect(scoreCard(pred, gold).abilityFP).toBe(1);
 });
 
+test("duplicate gold abilities canonicalizing to the same key count as one TP", () => {
+  // Gold has two structurally-identical abilities (same kind, trigger verbs/subject,
+  // effect.kind) that canonicalize to the same abilityKey, plus one distinct unmatched
+  // ability. goldSet dedupes to 2 distinct keys; predSet matches only one of them.
+  // Old (array-loop) TP counting would double-count the duplicate as TP=2; the
+  // set-based fix must count it once: TP=1, FN=1.
+  const other = {
+    kind: "triggered" as const,
+    trigger: { verbs: ["attacks" as const], subject: { subtype: "wizard", control: "you" as const, token: false } },
+    effect: { kind: "draw-card" },
+  };
+  const gold = tags({ abilities: [ability, { ...ability }, other] });
+  const pred = tags({ abilities: [ability] });
+  const s = scoreCard(pred, gold);
+  expect(s.abilityTP).toBe(1);
+  expect(s.abilityFN).toBe(1);
+});
+
 test("aggregate computes precision, recall, f1", () => {
   const r = aggregate([
     { oracleId: "a", charsExact: true, abilityTP: 1, abilityFP: 0, abilityFN: 0 },

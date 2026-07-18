@@ -21,11 +21,9 @@ export function scoreCard(predicted: CardTags, gold: CardTags): CardScore {
     canonical(predicted.characteristics) === canonical(gold.characteristics);
 
   const predSet = new Set(predicted.abilities.map(abilityKey));
-  const goldKeys = gold.abilities.map(abilityKey);
-  const goldSet = new Set(goldKeys);
+  const goldSet = new Set(gold.abilities.map(abilityKey));
 
-  let abilityTP = 0;
-  for (const k of goldKeys) if (predSet.has(k)) abilityTP++;
+  const abilityTP = countMatches(goldSet, predSet);
   const abilityFN = goldSet.size - countMatches(goldSet, predSet);
   const abilityFP = predSet.size - countMatches(predSet, goldSet);
 
