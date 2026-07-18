@@ -42,6 +42,29 @@
     },
     "abilities": [
       {
+        "kind": "static",
+        "effect": {
+          "kind": "enters-with-counters",
+          "subject": {
+            "subtype": "zombie",
+            "zone": "graveyard",
+            "control": "you",
+            "token": false
+          }
+        },
+        "emits": [
+          {
+            "verb": "counter-added",
+            "subject": {
+              "type": "creature",
+              "control": "you",
+              "token": null,
+              "counter": "+1/+1"
+            }
+          }
+        ]
+      },
+      {
         "kind": "triggered",
         "trigger": {
           "verbs": [

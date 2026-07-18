@@ -14,6 +14,8 @@ export interface SubjectFilter {
   chosenType?: boolean;
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
+  /** Zone the subject lives in; omitted means battlefield. E.g. "graveyard", "hand", "exile". */
+  zone?: string;
 }
 
 export type Verb =

@@ -1,9 +1,9 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 4;
+export const PROMPT_VERSION = 5;
 
-const EFFECT_KINDS = [
+export const EFFECT_KINDS = [
   "token-generation",
   "player-damage",
   "player-life-loss",
@@ -21,7 +21,8 @@ const EFFECT_KINDS = [
   "damage-multiplier",
   "tax",
   "scry",
-  "counter-self",
+  "counter-placement",
+  "enters-with-counters",
   "mana-generation",
   "copy-spell",
 ] as const;
@@ -43,7 +44,8 @@ A SubjectFilter is:
   "control": "you" | "opp" | "any",
   "token": true | false | null,        // true=token only, false=nontoken only, null=any
   "chosenType"?: true,                 // only for "the chosen type" wording
-  "counter"?: string }                 // counter kind for counter-added events, e.g. "+1/+1"
+  "counter"?: string,                  // counter kind for counter-added events, e.g. "+1/+1"
+  "zone"?: string }                    // subject's zone if not battlefield, e.g. "graveyard", "hand", "exile"
 
 An Event is { "verb": Verb, "subject": SubjectFilter } with a CONCRETE subject.
 
@@ -60,6 +62,8 @@ INVARIANT — emits:
   NONcreature (e.g. a Treasure/artifact) emits { verb: "sacrifice" } ONLY.
 - An effect that puts a counter on a permanent emits { verb: "counter-added" } with the
   recipient's subject and subject.counter set to the counter kind (e.g. "+1/+1").
+- A static ability whose condition or magnitude reads cards in a zone ("for each Zombie
+  card in your graveyard") sets subject.zone to that zone (e.g. "graveyard").
 - Effects whose verb no trigger consumes need no emits.`;
 
 const FEW_SHOT = `EXAMPLE 1

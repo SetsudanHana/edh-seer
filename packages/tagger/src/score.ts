@@ -52,6 +52,7 @@ function subjectKey(s: SubjectFilter): string {
     token: s.token,
     chosenType: s.chosenType ?? false,
     counter: s.counter ?? null,
+    zone: s.zone ?? null,
   });
 }
 

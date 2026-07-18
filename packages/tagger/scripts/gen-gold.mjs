@@ -247,6 +247,16 @@ const CARDS = [
       "This creature enters with a +1/+1 counter on it for each Zombie card in your graveyard.\nWhenever you cast a Zombie spell, create a tapped 2/2 black Zombie creature token.",
     abilities: [
       {
+        // ETB scales with Zombie cards in the graveyard (cards = nontoken); also puts +1/+1
+        // counters on itself. Cares about a graveyard-fill payoff; feeds counter payoffs.
+        kind: "static",
+        effect: {
+          kind: "enters-with-counters",
+          subject: { subtype: "zombie", zone: "graveyard", control: "you", token: false },
+        },
+        emits: [counterAdded("+1/+1")],
+      },
+      {
         kind: "triggered",
         trigger: { verbs: ["cast"], subject: subj({ subtype: "zombie", token: false }) },
         effect: { kind: "token-generation", subject: tok({ subtype: "zombie" }) },
