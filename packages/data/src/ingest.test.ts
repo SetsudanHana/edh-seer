@@ -1,6 +1,8 @@
-import { afterAll, beforeAll, expect, test, describe } from "vitest";
+import { afterAll, beforeAll, expect, test, describe, vi } from "vitest";
+import type { Collection } from "mongodb";
 import { connect, type Store } from "./db.js";
 import { ingestCards, ingestCombos } from "./ingest.js";
+import type { CardDoc } from "./docs.js";
 import type { ScryfallCard } from "./scryfall.js";
 import type { SpellbookVariant } from "./spellbook.js";
 
@@ -15,6 +17,25 @@ const comboRaws: SpellbookVariant[] = [
   { id: "v1", uses: [{ card: { name: "A" } }], produces: [{ feature: { name: "Win" } }] },
   { id: "bad", uses: [], produces: [] },
 ];
+
+test("ingestCards batches upserts via bulkWrite and reports progress (no Mongo)", async () => {
+  const bulkWrite = vi.fn(async () => ({}));
+  const cards = { bulkWrite } as unknown as Collection<CardDoc>;
+  const progress: Array<[number, number]> = [];
+  const counts = await ingestCards(cardRaws, cards, (done, total) => progress.push([done, total]));
+
+  expect(counts).toEqual({ processed: 1, skipped: 1 });
+  // One bulkWrite call carrying a single replaceOne-upsert op (Sol Ring); malformed skipped.
+  expect(bulkWrite).toHaveBeenCalledTimes(1);
+  const ops = (bulkWrite as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0] as Array<{
+    replaceOne: { filter: { _id: string }; upsert: boolean };
+  }>;
+  expect(ops).toHaveLength(1);
+  expect(ops[0].replaceOne.upsert).toBe(true);
+  expect(ops[0].replaceOne.filter._id).toBe("a");
+  // Progress ends at total (2 raws seen).
+  expect(progress.at(-1)).toEqual([2, 2]);
+});
 
 suite("ingest idempotency", () => {
   let store: Store;
