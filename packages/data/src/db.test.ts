@@ -35,6 +35,9 @@ suite("mongo db layer", () => {
       keywords: [],
       colors: [],
       manaValue: 1,
+      colorIdentity: [],
+      power: null,
+      toughness: null,
       tags: { produces: [], cares: [] },
       searchNames: ["sol ring"],
     };

@@ -11,4 +11,10 @@ export interface Card {
   colors: string[];
   /** Scryfall cmc / mana value. */
   manaValue: number;
+  /** Scryfall color_identity, e.g. ["B","R","U"]. */
+  colorIdentity?: string[];
+  /** Scryfall power; null for non-creatures. May be "*". */
+  power?: string | null;
+  /** Scryfall toughness; null for non-creatures. May be "*". */
+  toughness?: string | null;
 }

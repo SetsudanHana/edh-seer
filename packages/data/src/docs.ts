@@ -10,6 +10,9 @@ export interface CardDoc {
   keywords: string[];
   colors: string[];
   manaValue: number;
+  colorIdentity: string[];
+  power: string | null;
+  toughness: string | null;
   tags: { produces: string[]; cares: string[] };
   searchNames: string[];
 }
@@ -33,6 +36,9 @@ export function toCardDoc(n: NormalizedCard): CardDoc {
     keywords: n.card.keywords,
     colors: n.card.colors,
     manaValue: n.card.manaValue,
+    colorIdentity: n.card.colorIdentity ?? [],
+    power: n.card.power ?? null,
+    toughness: n.card.toughness ?? null,
     tags: { produces: [...produces], cares: [...cares] },
     searchNames,
   };
@@ -46,5 +52,8 @@ export function docToCard(d: CardDoc): Card {
     keywords: d.keywords,
     colors: d.colors,
     manaValue: d.manaValue,
+    colorIdentity: d.colorIdentity,
+    power: d.power,
+    toughness: d.toughness,
   };
 }

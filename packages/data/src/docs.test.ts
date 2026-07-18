@@ -13,6 +13,9 @@ const treasureMaker: NormalizedCard = {
     keywords: [],
     colors: ["R"],
     manaValue: 2,
+    colorIdentity: ["R"],
+    power: "1",
+    toughness: "1",
   },
 };
 

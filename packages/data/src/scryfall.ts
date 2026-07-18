@@ -9,6 +9,9 @@ export interface ScryfallCard {
   colors?: string[];
   cmc?: number;
   card_faces?: Array<{ oracle_text?: string; colors?: string[] }>;
+  color_identity?: string[];
+  power?: string;
+  toughness?: string;
 }
 
 export interface NormalizedCard {
@@ -43,6 +46,9 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     keywords: raw.keywords ?? [],
     colors,
     manaValue: raw.cmc ?? 0,
+    colorIdentity: raw.color_identity ?? [],
+    power: raw.power ?? null,
+    toughness: raw.toughness ?? null,
   };
 
   return { oracleId: raw.oracle_id, card, faceNames };

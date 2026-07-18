@@ -18,6 +18,9 @@ suite("ingestFlavorNames", () => {
     keywords: [],
     colors: ["B"],
     manaValue: 4,
+    colorIdentity: ["B"],
+    power: null,
+    toughness: null,
     tags: { produces: [], cares: [] },
     searchNames: ["snuff out"],
   };

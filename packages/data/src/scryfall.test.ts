@@ -49,3 +49,36 @@ test("skips records missing required fields", () => {
   expect(normalizeScryfallCard({ name: "No id or type" })).toBeNull();
   expect(normalizeScryfallCard({ oracle_id: "x", type_line: "y" })).toBeNull();
 });
+
+test("normalize captures color identity, power, toughness", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "abc",
+    name: "Inalla, Archmage Ritualist",
+    type_line: "Legendary Creature — Human Wizard",
+    oracle_text: "…",
+    colors: ["U", "B", "R"],
+    color_identity: ["B", "R", "U"],
+    power: "4",
+    toughness: "5",
+    cmc: 5,
+  });
+  expect(n).not.toBeNull();
+  expect(n!.card.colorIdentity).toEqual(["B", "R", "U"]);
+  expect(n!.card.power).toBe("4");
+  expect(n!.card.toughness).toBe("5");
+});
+
+test("normalize leaves power/toughness null for non-creatures", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "def",
+    name: "Kindred Discovery",
+    type_line: "Enchantment",
+    oracle_text: "…",
+    colors: ["U"],
+    color_identity: ["U"],
+    cmc: 5,
+  });
+  expect(n!.card.power).toBeNull();
+  expect(n!.card.toughness).toBeNull();
+  expect(n!.card.colorIdentity).toEqual(["U"]);
+});

@@ -11,6 +11,9 @@ function doc(name: string, search: string[]): CardDoc {
     keywords: [],
     colors: [],
     manaValue: 1,
+    colorIdentity: [],
+    power: null,
+    toughness: null,
     tags: { produces: [], cares: [] },
     searchNames: search,
   };
