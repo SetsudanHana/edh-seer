@@ -15,6 +15,7 @@ import { upsertCardTags, needsRetag, type TagCollection } from "../store.js";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";
 import { loadTaggerConfig } from "../config.js";
+import { mapPool } from "../pool.js";
 
 const DECKS = ["inalla", "chandra", "gisa", "gogo", "hidetsugu", "samut"];
 const DECK_DIR = join(process.cwd(), "..", "cli", "decks");
@@ -43,15 +44,17 @@ async function main(): Promise<void> {
 
   let tagged = 0;
   let skipped = 0;
-  for (const [oracleId, card] of seen) {
+  let failed = 0;
+  const entries = [...seen.entries()];
+  await mapPool(entries, cfg.concurrency, async ([oracleId, card]) => {
     const existing = await cardTags.findOne({ oracleId });
     if (!needsRetag(existing, SCHEMA_VERSION, PROMPT_VERSION)) {
       skipped++;
-      continue;
+      return;
     }
     if (!card.oracleText.trim()) {
       skipped++;
-      continue; // skip vanilla/lands with no text
+      return; // skip vanilla/lands with no text
     }
     try {
       const tags = await extractCardTags(oracleId, card, llm);
@@ -59,10 +62,11 @@ async function main(): Promise<void> {
       tagged++;
       console.log(`tagged ${names.get(oracleId)} (${tags.abilities.length} abilities)`);
     } catch (err) {
+      failed++;
       console.error(`FAILED ${names.get(oracleId)}: ${(err as Error).message}`);
     }
-  }
-  console.log(`done: ${tagged} tagged, ${skipped} skipped`);
+  });
+  console.log(`done: ${tagged} tagged, ${skipped} skipped, ${failed} failed (concurrency ${cfg.concurrency})`);
   await store.close();
 }
 
