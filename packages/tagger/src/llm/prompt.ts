@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 12;
+export const PROMPT_VERSION = 13;
 
 export const EFFECT_KINDS = [
   "token-generation",
@@ -11,7 +11,7 @@ export const EFFECT_KINDS = [
   "drain",
   "draw-card",
   "forced-sacrifice",
-  "pump-tribe",
+  "pump",
   "lord",
   "cost-reduction",
   "trigger-doubling",
@@ -55,6 +55,7 @@ An Event is { "verb": Verb, "subject": SubjectFilter } with a CONCRETE subject.
 Verb must be one of: ${VERB_VOCAB.join(", ")}.
 effect.kind should be one of: ${EFFECT_KINDS.join(", ")} (choose the closest; these are the recognized labels).
 "top-manipulation" = looking at / reordering / putting cards on top of a library, or scry/surveil that stack the top (Brainstorm, Sensei's Divining Top). An ability with several effects becomes one ability per effect, sharing the trigger.
+"pump" gives +X/+X or +X/+0; the subject says who — a subtype for a tribe ("wizard"), type:"creature" for your whole team.
 
 INVARIANT — emits:
 - A "cast" ability emits BOTH { verb: "cast" } and { verb: "enters" }.

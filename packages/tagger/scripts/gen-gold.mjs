@@ -150,7 +150,7 @@ const CARDS = [
       {
         kind: "triggered",
         trigger: { verbs: ["cast"], subject: subj({ type: ["instant", "sorcery"], token: false }) },
-        effect: { kind: "pump-tribe", subject: subj({ subtype: "wizard", token: null }) },
+        effect: { kind: "pump", subject: subj({ subtype: "wizard", token: null }) },
       },
     ],
   },
@@ -181,7 +181,7 @@ const CARDS = [
         trigger: { verbs: ["enters"], subject: subj({ type: "creature", token: null }) },
         effect: { kind: "player-damage", subject: subj({ control: "opp", token: null }) },
       },
-      { kind: "activated", cost: "{2}{R}", effect: { kind: "pump-tribe", subject: subj({ type: "creature", token: null }) } },
+      { kind: "activated", cost: "{2}{R}", effect: { kind: "pump", subject: subj({ type: "creature", token: null }) } },
     ],
   },
   // ============ Burn / Chandra ============
@@ -422,7 +422,7 @@ const CARDS = [
     oracleText:
       "First strike, vigilance, haste\nStart your engines! (If you have no speed, it starts at 1. It increases once on each of your turns when an opponent loses life. Max speed is 4.)\nOther creatures you control get +X/+0, where X is your speed.\nNoncreature spells you cast cost {X} less to cast, where X is your speed.",
     abilities: [
-      { kind: "static", effect: { kind: "pump-tribe", subject: subj({ type: "creature", token: null }) } },
+      { kind: "static", effect: { kind: "pump", subject: subj({ type: "creature", token: null }) } },
       { kind: "static", effect: { kind: "cost-reduction", subject: subj({ token: false }) } },
     ],
   },

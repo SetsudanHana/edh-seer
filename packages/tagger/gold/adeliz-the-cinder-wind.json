@@ -68,7 +68,7 @@
           }
         },
         "effect": {
-          "kind": "pump-tribe",
+          "kind": "pump",
           "subject": {
             "control": "you",
             "token": null,
