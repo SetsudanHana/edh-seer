@@ -1,0 +1,90 @@
+{
+  "oracleId": "18591d9e-c9f5-4ae8-aee1-8580bc8fa600",
+  "card": {
+    "name": "Hidetsugu and Kairi",
+    "typeLine": "Legendary Creature — Ogre Demon Dragon",
+    "oracleText": "Flying\nWhen Hidetsugu and Kairi enters, draw three cards, then put two cards from your hand on top of your library in any order.\nWhen Hidetsugu and Kairi dies, exile the top card of your library. Target opponent loses life equal to its mana value. If it's an instant or sorcery card, you may cast it without paying its mana cost.",
+    "keywords": [
+      "Flying"
+    ],
+    "colors": [
+      "B",
+      "U"
+    ],
+    "colorIdentity": [
+      "U",
+      "B"
+    ],
+    "power": "5",
+    "toughness": "5",
+    "manaValue": 5
+  },
+  "expected": {
+    "oracleId": "18591d9e-c9f5-4ae8-aee1-8580bc8fa600",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "legendary",
+        "creature"
+      ],
+      "subtypes": [
+        "ogre",
+        "demon",
+        "dragon"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "identity": [
+        "U",
+        "B"
+      ],
+      "cmc": 5,
+      "power": "5",
+      "toughness": "5",
+      "token": false,
+      "keywords": [
+        "flying"
+      ]
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "enters"
+          ],
+          "subject": {
+            "control": "you",
+            "token": false
+          }
+        },
+        "effect": {
+          "kind": "draw-card"
+        }
+      },
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "dies"
+          ],
+          "subject": {
+            "control": "you",
+            "token": false
+          }
+        },
+        "effect": {
+          "kind": "player-life-loss",
+          "subject": {
+            "control": "opp",
+            "token": null
+          }
+        }
+      }
+    ]
+  }
+}

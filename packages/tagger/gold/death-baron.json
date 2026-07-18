@@ -1,0 +1,57 @@
+{
+  "oracleId": "99024aa8-5687-4d38-8a4b-feef42d6c1ff",
+  "card": {
+    "name": "Death Baron",
+    "typeLine": "Creature — Zombie Wizard",
+    "oracleText": "Skeletons you control and other Zombies you control get +1/+1 and have deathtouch. (Any amount of damage they deal to a creature is enough to destroy it.)",
+    "keywords": [],
+    "colors": [
+      "B"
+    ],
+    "colorIdentity": [
+      "B"
+    ],
+    "power": "2",
+    "toughness": "2",
+    "manaValue": 3
+  },
+  "expected": {
+    "oracleId": "99024aa8-5687-4d38-8a4b-feef42d6c1ff",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "zombie",
+        "wizard"
+      ],
+      "colors": [
+        "B"
+      ],
+      "identity": [
+        "B"
+      ],
+      "cmc": 3,
+      "power": "2",
+      "toughness": "2",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "static",
+        "effect": {
+          "kind": "lord",
+          "subject": {
+            "control": "you",
+            "token": null,
+            "subtype": "zombie"
+          }
+        }
+      }
+    ]
+  }
+}

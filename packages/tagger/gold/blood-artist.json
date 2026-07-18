@@ -1,0 +1,65 @@
+{
+  "oracleId": "310f141c-7f37-4729-aed6-dd9c09db448d",
+  "card": {
+    "name": "Blood Artist",
+    "typeLine": "Creature — Vampire",
+    "oracleText": "Whenever this creature or another creature dies, target player loses 1 life and you gain 1 life.",
+    "keywords": [],
+    "colors": [
+      "B"
+    ],
+    "colorIdentity": [
+      "B"
+    ],
+    "power": "0",
+    "toughness": "1",
+    "manaValue": 2
+  },
+  "expected": {
+    "oracleId": "310f141c-7f37-4729-aed6-dd9c09db448d",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "vampire"
+      ],
+      "colors": [
+        "B"
+      ],
+      "identity": [
+        "B"
+      ],
+      "cmc": 2,
+      "power": "0",
+      "toughness": "1",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "dies"
+          ],
+          "subject": {
+            "control": "any",
+            "token": null,
+            "type": "creature"
+          }
+        },
+        "effect": {
+          "kind": "drain",
+          "subject": {
+            "control": "opp",
+            "token": null
+          }
+        }
+      }
+    ]
+  }
+}

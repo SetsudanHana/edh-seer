@@ -1,0 +1,52 @@
+{
+  "oracleId": "a1cc5e37-b09a-4b7f-afd5-77c1c35aa425",
+  "card": {
+    "name": "Carrion Feeder",
+    "typeLine": "Creature — Zombie",
+    "oracleText": "This creature can't block.\nSacrifice a creature: Put a +1/+1 counter on this creature.",
+    "keywords": [],
+    "colors": [
+      "B"
+    ],
+    "colorIdentity": [
+      "B"
+    ],
+    "power": "1",
+    "toughness": "1",
+    "manaValue": 1
+  },
+  "expected": {
+    "oracleId": "a1cc5e37-b09a-4b7f-afd5-77c1c35aa425",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "zombie"
+      ],
+      "colors": [
+        "B"
+      ],
+      "identity": [
+        "B"
+      ],
+      "cmc": 1,
+      "power": "1",
+      "toughness": "1",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "activated",
+        "cost": "Sacrifice a creature",
+        "effect": {
+          "kind": "counter-self"
+        }
+      }
+    ]
+  }
+}

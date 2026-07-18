@@ -1,0 +1,88 @@
+{
+  "oracleId": "2d3e6549-6cc6-434f-a189-ba3b55e64c34",
+  "card": {
+    "name": "Rampaging Baloths",
+    "typeLine": "Creature — Beast",
+    "oracleText": "Trample\nLandfall — Whenever a land you control enters, create a 4/4 green Beast creature token.",
+    "keywords": [
+      "Trample"
+    ],
+    "colors": [
+      "G"
+    ],
+    "colorIdentity": [
+      "G"
+    ],
+    "power": "7",
+    "toughness": "7",
+    "manaValue": 6
+  },
+  "expected": {
+    "oracleId": "2d3e6549-6cc6-434f-a189-ba3b55e64c34",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "beast"
+      ],
+      "colors": [
+        "G"
+      ],
+      "identity": [
+        "G"
+      ],
+      "cmc": 6,
+      "power": "7",
+      "toughness": "7",
+      "token": false,
+      "keywords": [
+        "trample"
+      ]
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "land-play"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "land"
+          }
+        },
+        "effect": {
+          "kind": "token-generation",
+          "subject": {
+            "control": "you",
+            "token": true,
+            "subtype": "beast"
+          }
+        },
+        "emits": [
+          {
+            "verb": "create-token",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "subtype": "beast"
+            }
+          },
+          {
+            "verb": "enters",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "subtype": "beast"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

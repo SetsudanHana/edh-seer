@@ -1,0 +1,84 @@
+{
+  "oracleId": "697bcfe1-ecbf-42a1-bfc7-0766d48ca56b",
+  "card": {
+    "name": "Dockside Extortionist",
+    "typeLine": "Creature — Goblin Pirate",
+    "oracleText": "When this creature enters, create X Treasure tokens, where X is the number of artifacts and enchantments your opponents control. (Treasure tokens are artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+    "keywords": [],
+    "colors": [
+      "R"
+    ],
+    "colorIdentity": [
+      "R"
+    ],
+    "power": "1",
+    "toughness": "2",
+    "manaValue": 2
+  },
+  "expected": {
+    "oracleId": "697bcfe1-ecbf-42a1-bfc7-0766d48ca56b",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "goblin",
+        "pirate"
+      ],
+      "colors": [
+        "R"
+      ],
+      "identity": [
+        "R"
+      ],
+      "cmc": 2,
+      "power": "1",
+      "toughness": "2",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "enters"
+          ],
+          "subject": {
+            "control": "you",
+            "token": false
+          }
+        },
+        "effect": {
+          "kind": "token-generation",
+          "subject": {
+            "control": "you",
+            "token": true,
+            "type": "artifact"
+          }
+        },
+        "emits": [
+          {
+            "verb": "create-token",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "type": "artifact"
+            }
+          },
+          {
+            "verb": "enters",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "type": "artifact"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

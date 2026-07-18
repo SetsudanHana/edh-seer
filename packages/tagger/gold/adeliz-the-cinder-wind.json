@@ -1,0 +1,77 @@
+{
+  "oracleId": "850eb3c3-029b-49b0-91a9-6daeb1b3a9e8",
+  "card": {
+    "name": "Adeliz, the Cinder Wind",
+    "typeLine": "Legendary Creature — Human Wizard",
+    "oracleText": "Flying, haste\nWhenever you cast an instant or sorcery spell, Wizards you control get +1/+1 until end of turn.",
+    "keywords": [
+      "Flying",
+      "Haste"
+    ],
+    "colors": [
+      "R",
+      "U"
+    ],
+    "colorIdentity": [
+      "U",
+      "R"
+    ],
+    "power": "2",
+    "toughness": "2",
+    "manaValue": 3
+  },
+  "expected": {
+    "oracleId": "850eb3c3-029b-49b0-91a9-6daeb1b3a9e8",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "legendary",
+        "creature"
+      ],
+      "subtypes": [
+        "human",
+        "wizard"
+      ],
+      "colors": [
+        "R",
+        "U"
+      ],
+      "identity": [
+        "U",
+        "R"
+      ],
+      "cmc": 3,
+      "power": "2",
+      "toughness": "2",
+      "token": false,
+      "keywords": [
+        "flying",
+        "haste"
+      ]
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "cast"
+          ],
+          "subject": {
+            "control": "you",
+            "token": false
+          }
+        },
+        "effect": {
+          "kind": "pump-tribe",
+          "subject": {
+            "control": "you",
+            "token": null,
+            "subtype": "wizard"
+          }
+        }
+      }
+    ]
+  }
+}

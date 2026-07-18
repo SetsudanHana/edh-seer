@@ -1,0 +1,85 @@
+{
+  "oracleId": "fd62ad01-601f-4250-bc2a-8ef3982e45c4",
+  "card": {
+    "name": "Diregraf Colossus",
+    "typeLine": "Creature — Zombie Giant",
+    "oracleText": "This creature enters with a +1/+1 counter on it for each Zombie card in your graveyard.\nWhenever you cast a Zombie spell, create a tapped 2/2 black Zombie creature token.",
+    "keywords": [],
+    "colors": [
+      "B"
+    ],
+    "colorIdentity": [
+      "B"
+    ],
+    "power": "0",
+    "toughness": "0",
+    "manaValue": 3
+  },
+  "expected": {
+    "oracleId": "fd62ad01-601f-4250-bc2a-8ef3982e45c4",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "zombie",
+        "giant"
+      ],
+      "colors": [
+        "B"
+      ],
+      "identity": [
+        "B"
+      ],
+      "cmc": 3,
+      "power": "0",
+      "toughness": "0",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "cast"
+          ],
+          "subject": {
+            "control": "you",
+            "token": false,
+            "subtype": "zombie"
+          }
+        },
+        "effect": {
+          "kind": "token-generation",
+          "subject": {
+            "control": "you",
+            "token": true,
+            "subtype": "zombie"
+          }
+        },
+        "emits": [
+          {
+            "verb": "create-token",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "subtype": "zombie"
+            }
+          },
+          {
+            "verb": "enters",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "subtype": "zombie"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

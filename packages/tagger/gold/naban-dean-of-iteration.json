@@ -1,0 +1,58 @@
+{
+  "oracleId": "cffb9b7f-d52c-43e0-a4a6-b06dea83eb53",
+  "card": {
+    "name": "Naban, Dean of Iteration",
+    "typeLine": "Legendary Creature — Human Wizard",
+    "oracleText": "If a Wizard you control entering causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.",
+    "keywords": [],
+    "colors": [
+      "U"
+    ],
+    "colorIdentity": [
+      "U"
+    ],
+    "power": "2",
+    "toughness": "1",
+    "manaValue": 2
+  },
+  "expected": {
+    "oracleId": "cffb9b7f-d52c-43e0-a4a6-b06dea83eb53",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "legendary",
+        "creature"
+      ],
+      "subtypes": [
+        "human",
+        "wizard"
+      ],
+      "colors": [
+        "U"
+      ],
+      "identity": [
+        "U"
+      ],
+      "cmc": 2,
+      "power": "2",
+      "toughness": "1",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "static",
+        "effect": {
+          "kind": "trigger-doubling",
+          "subject": {
+            "control": "you",
+            "token": null,
+            "subtype": "wizard"
+          }
+        }
+      }
+    ]
+  }
+}

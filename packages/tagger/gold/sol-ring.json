@@ -1,0 +1,42 @@
+{
+  "oracleId": "6ad8011d-3471-4369-9d68-b264cc027487",
+  "card": {
+    "name": "Sol Ring",
+    "typeLine": "Artifact",
+    "oracleText": "{T}: Add {C}{C}.",
+    "keywords": [],
+    "colors": [],
+    "colorIdentity": [],
+    "power": null,
+    "toughness": null,
+    "manaValue": 1
+  },
+  "expected": {
+    "oracleId": "6ad8011d-3471-4369-9d68-b264cc027487",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "artifact"
+      ],
+      "subtypes": [],
+      "colors": [],
+      "identity": [],
+      "cmc": 1,
+      "power": null,
+      "toughness": null,
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "activated",
+        "cost": "{T}",
+        "effect": {
+          "kind": "mana-generation"
+        }
+      }
+    ]
+  }
+}

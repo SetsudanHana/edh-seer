@@ -1,0 +1,63 @@
+{
+  "oracleId": "6f4ac4a4-53ec-4bc9-8f5c-d4b801d867b2",
+  "card": {
+    "name": "Grave Pact",
+    "typeLine": "Enchantment",
+    "oracleText": "Whenever a creature you control dies, each other player sacrifices a creature of their choice.",
+    "keywords": [],
+    "colors": [
+      "B"
+    ],
+    "colorIdentity": [
+      "B"
+    ],
+    "power": null,
+    "toughness": null,
+    "manaValue": 4
+  },
+  "expected": {
+    "oracleId": "6f4ac4a4-53ec-4bc9-8f5c-d4b801d867b2",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "enchantment"
+      ],
+      "subtypes": [],
+      "colors": [
+        "B"
+      ],
+      "identity": [
+        "B"
+      ],
+      "cmc": 4,
+      "power": null,
+      "toughness": null,
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "dies"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "creature"
+          }
+        },
+        "effect": {
+          "kind": "forced-sacrifice",
+          "subject": {
+            "control": "opp",
+            "token": null
+          }
+        }
+      }
+    ]
+  }
+}

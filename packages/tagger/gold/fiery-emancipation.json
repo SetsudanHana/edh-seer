@@ -1,0 +1,49 @@
+{
+  "oracleId": "52159875-354c-47f9-bb1c-cd65395fcc68",
+  "card": {
+    "name": "Fiery Emancipation",
+    "typeLine": "Enchantment",
+    "oracleText": "If a source you control would deal damage to a permanent or player, it deals triple that damage to that permanent or player instead.",
+    "keywords": [],
+    "colors": [
+      "R"
+    ],
+    "colorIdentity": [
+      "R"
+    ],
+    "power": null,
+    "toughness": null,
+    "manaValue": 6
+  },
+  "expected": {
+    "oracleId": "52159875-354c-47f9-bb1c-cd65395fcc68",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "enchantment"
+      ],
+      "subtypes": [],
+      "colors": [
+        "R"
+      ],
+      "identity": [
+        "R"
+      ],
+      "cmc": 6,
+      "power": null,
+      "toughness": null,
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "static",
+        "effect": {
+          "kind": "damage-multiplier"
+        }
+      }
+    ]
+  }
+}

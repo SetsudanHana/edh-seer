@@ -1,0 +1,105 @@
+{
+  "oracleId": "21bdba6e-3f9d-4ead-8212-0cbb0ce7f8cc",
+  "card": {
+    "name": "Inalla, Archmage Ritualist",
+    "typeLine": "Legendary Creature — Human Wizard",
+    "oracleText": "Eminence — Whenever another nontoken Wizard you control enters, if Inalla is in the command zone or on the battlefield, you may pay {1}. If you do, create a token that's a copy of that Wizard. The token gains haste. Exile it at the beginning of the next end step.\nTap five untapped Wizards you control: Target player loses 7 life.",
+    "keywords": [],
+    "colors": [
+      "B",
+      "R",
+      "U"
+    ],
+    "colorIdentity": [
+      "U",
+      "B",
+      "R"
+    ],
+    "power": "4",
+    "toughness": "5",
+    "manaValue": 5
+  },
+  "expected": {
+    "oracleId": "21bdba6e-3f9d-4ead-8212-0cbb0ce7f8cc",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "legendary",
+        "creature"
+      ],
+      "subtypes": [
+        "human",
+        "wizard"
+      ],
+      "colors": [
+        "B",
+        "R",
+        "U"
+      ],
+      "identity": [
+        "U",
+        "B",
+        "R"
+      ],
+      "cmc": 5,
+      "power": "4",
+      "toughness": "5",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "enters"
+          ],
+          "subject": {
+            "control": "you",
+            "token": false,
+            "subtype": "wizard"
+          }
+        },
+        "effect": {
+          "kind": "token-generation",
+          "subject": {
+            "control": "you",
+            "token": true,
+            "subtype": "wizard"
+          }
+        },
+        "emits": [
+          {
+            "verb": "create-token",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "subtype": "wizard"
+            }
+          },
+          {
+            "verb": "enters",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "subtype": "wizard"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "activated",
+        "cost": "Tap five untapped Wizards you control",
+        "effect": {
+          "kind": "player-life-loss",
+          "subject": {
+            "control": "opp",
+            "token": null
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "oracleId": "f1ecb3d7-5ea0-45b2-b1b0-d7ae304db2a1",
+  "card": {
+    "name": "Archmage of Echoes",
+    "typeLine": "Creature — Faerie Wizard",
+    "oracleText": "Flying, ward {2}\nWhenever you cast a Faerie or Wizard permanent spell, copy it. (The copy becomes a token.)",
+    "keywords": [
+      "Flying",
+      "Ward"
+    ],
+    "colors": [
+      "U"
+    ],
+    "colorIdentity": [
+      "U"
+    ],
+    "power": "3",
+    "toughness": "3",
+    "manaValue": 5
+  },
+  "expected": {
+    "oracleId": "f1ecb3d7-5ea0-45b2-b1b0-d7ae304db2a1",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "faerie",
+        "wizard"
+      ],
+      "colors": [
+        "U"
+      ],
+      "identity": [
+        "U"
+      ],
+      "cmc": 5,
+      "power": "3",
+      "toughness": "3",
+      "token": false,
+      "keywords": [
+        "flying",
+        "ward"
+      ]
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "cast"
+          ],
+          "subject": {
+            "control": "you",
+            "token": false,
+            "subtype": "wizard"
+          }
+        },
+        "effect": {
+          "kind": "copy-spell",
+          "subject": {
+            "control": "you",
+            "token": true,
+            "subtype": "wizard"
+          }
+        },
+        "emits": [
+          {
+            "verb": "create-token",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "subtype": "wizard"
+            }
+          },
+          {
+            "verb": "enters",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "subtype": "wizard"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

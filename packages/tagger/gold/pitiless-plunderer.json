@@ -1,0 +1,85 @@
+{
+  "oracleId": "a784481f-eccb-4112-bb38-04a659319660",
+  "card": {
+    "name": "Pitiless Plunderer",
+    "typeLine": "Creature — Human Pirate",
+    "oracleText": "Whenever another creature you control dies, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+    "keywords": [],
+    "colors": [
+      "B"
+    ],
+    "colorIdentity": [
+      "B"
+    ],
+    "power": "1",
+    "toughness": "4",
+    "manaValue": 4
+  },
+  "expected": {
+    "oracleId": "a784481f-eccb-4112-bb38-04a659319660",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "human",
+        "pirate"
+      ],
+      "colors": [
+        "B"
+      ],
+      "identity": [
+        "B"
+      ],
+      "cmc": 4,
+      "power": "1",
+      "toughness": "4",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "dies"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "creature"
+          }
+        },
+        "effect": {
+          "kind": "token-generation",
+          "subject": {
+            "control": "you",
+            "token": true,
+            "type": "artifact"
+          }
+        },
+        "emits": [
+          {
+            "verb": "create-token",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "type": "artifact"
+            }
+          },
+          {
+            "verb": "enters",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "type": "artifact"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "oracleId": "edad60c6-80de-4033-af1b-a703ac332983",
+  "card": {
+    "name": "Goblin Bombardment",
+    "typeLine": "Enchantment",
+    "oracleText": "Sacrifice a creature: This enchantment deals 1 damage to any target.",
+    "keywords": [],
+    "colors": [
+      "R"
+    ],
+    "colorIdentity": [
+      "R"
+    ],
+    "power": null,
+    "toughness": null,
+    "manaValue": 2
+  },
+  "expected": {
+    "oracleId": "edad60c6-80de-4033-af1b-a703ac332983",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "enchantment"
+      ],
+      "subtypes": [],
+      "colors": [
+        "R"
+      ],
+      "identity": [
+        "R"
+      ],
+      "cmc": 2,
+      "power": null,
+      "toughness": null,
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "activated",
+        "cost": "Sacrifice a creature",
+        "effect": {
+          "kind": "noncombat-damage",
+          "subject": {
+            "control": "any",
+            "token": null
+          }
+        }
+      }
+    ]
+  }
+}

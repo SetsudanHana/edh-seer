@@ -1,0 +1,84 @@
+{
+  "oracleId": "aa854d50-444c-49d9-bfb1-5476b33c1c0b",
+  "card": {
+    "name": "Scute Swarm",
+    "typeLine": "Creature — Insect",
+    "oracleText": "Landfall — Whenever a land you control enters, create a 1/1 green Insect creature token. If you control six or more lands, create a token that's a copy of this creature instead.",
+    "keywords": [],
+    "colors": [
+      "G"
+    ],
+    "colorIdentity": [
+      "G"
+    ],
+    "power": "1",
+    "toughness": "1",
+    "manaValue": 3
+  },
+  "expected": {
+    "oracleId": "aa854d50-444c-49d9-bfb1-5476b33c1c0b",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "insect"
+      ],
+      "colors": [
+        "G"
+      ],
+      "identity": [
+        "G"
+      ],
+      "cmc": 3,
+      "power": "1",
+      "toughness": "1",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "land-play"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "land"
+          }
+        },
+        "effect": {
+          "kind": "token-generation",
+          "subject": {
+            "control": "you",
+            "token": true,
+            "subtype": "insect"
+          }
+        },
+        "emits": [
+          {
+            "verb": "create-token",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "subtype": "insect"
+            }
+          },
+          {
+            "verb": "enters",
+            "subject": {
+              "control": "you",
+              "token": true,
+              "subtype": "insect"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

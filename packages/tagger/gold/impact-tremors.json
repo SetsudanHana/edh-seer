@@ -1,0 +1,63 @@
+{
+  "oracleId": "9242cd3e-1a71-4700-8182-9c1005616033",
+  "card": {
+    "name": "Impact Tremors",
+    "typeLine": "Enchantment",
+    "oracleText": "Whenever a creature you control enters, this enchantment deals 1 damage to each opponent.",
+    "keywords": [],
+    "colors": [
+      "R"
+    ],
+    "colorIdentity": [
+      "R"
+    ],
+    "power": null,
+    "toughness": null,
+    "manaValue": 2
+  },
+  "expected": {
+    "oracleId": "9242cd3e-1a71-4700-8182-9c1005616033",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "enchantment"
+      ],
+      "subtypes": [],
+      "colors": [
+        "R"
+      ],
+      "identity": [
+        "R"
+      ],
+      "cmc": 2,
+      "power": null,
+      "toughness": null,
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "enters"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "creature"
+          }
+        },
+        "effect": {
+          "kind": "player-damage",
+          "subject": {
+            "control": "opp",
+            "token": null
+          }
+        }
+      }
+    ]
+  }
+}

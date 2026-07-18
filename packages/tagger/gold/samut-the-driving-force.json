@@ -1,0 +1,85 @@
+{
+  "oracleId": "ee89c719-5ae8-4316-bfd0-cfe3684b5859",
+  "card": {
+    "name": "Samut, the Driving Force",
+    "typeLine": "Legendary Creature — Human Warrior Cleric",
+    "oracleText": "First strike, vigilance, haste\nStart your engines! (If you have no speed, it starts at 1. It increases once on each of your turns when an opponent loses life. Max speed is 4.)\nOther creatures you control get +X/+0, where X is your speed.\nNoncreature spells you cast cost {X} less to cast, where X is your speed.",
+    "keywords": [
+      "First strike",
+      "Vigilance",
+      "Haste"
+    ],
+    "colors": [
+      "G",
+      "R",
+      "W"
+    ],
+    "colorIdentity": [
+      "R",
+      "G",
+      "W"
+    ],
+    "power": "5",
+    "toughness": "5",
+    "manaValue": 6
+  },
+  "expected": {
+    "oracleId": "ee89c719-5ae8-4316-bfd0-cfe3684b5859",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "legendary",
+        "creature"
+      ],
+      "subtypes": [
+        "human",
+        "warrior",
+        "cleric"
+      ],
+      "colors": [
+        "G",
+        "R",
+        "W"
+      ],
+      "identity": [
+        "R",
+        "G",
+        "W"
+      ],
+      "cmc": 6,
+      "power": "5",
+      "toughness": "5",
+      "token": false,
+      "keywords": [
+        "first strike",
+        "vigilance",
+        "haste"
+      ]
+    },
+    "abilities": [
+      {
+        "kind": "static",
+        "effect": {
+          "kind": "pump-tribe",
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "creature"
+          }
+        }
+      },
+      {
+        "kind": "static",
+        "effect": {
+          "kind": "cost-reduction",
+          "subject": {
+            "control": "you",
+            "token": false
+          }
+        }
+      }
+    ]
+  }
+}

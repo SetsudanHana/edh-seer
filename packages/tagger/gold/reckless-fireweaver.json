@@ -1,0 +1,66 @@
+{
+  "oracleId": "180e1a7e-890d-477c-80a5-da8a5f2857b3",
+  "card": {
+    "name": "Reckless Fireweaver",
+    "typeLine": "Creature — Human Artificer",
+    "oracleText": "Whenever an artifact you control enters, this creature deals 1 damage to each opponent.",
+    "keywords": [],
+    "colors": [
+      "R"
+    ],
+    "colorIdentity": [
+      "R"
+    ],
+    "power": "1",
+    "toughness": "3",
+    "manaValue": 2
+  },
+  "expected": {
+    "oracleId": "180e1a7e-890d-477c-80a5-da8a5f2857b3",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "human",
+        "artificer"
+      ],
+      "colors": [
+        "R"
+      ],
+      "identity": [
+        "R"
+      ],
+      "cmc": 2,
+      "power": "1",
+      "toughness": "3",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "enters"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "artifact"
+          }
+        },
+        "effect": {
+          "kind": "player-damage",
+          "subject": {
+            "control": "opp",
+            "token": null
+          }
+        }
+      }
+    ]
+  }
+}

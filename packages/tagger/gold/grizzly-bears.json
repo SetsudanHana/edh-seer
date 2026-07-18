@@ -1,0 +1,44 @@
+{
+  "oracleId": "14c8f55d-d177-4c25-a931-ebeb9e6062a0",
+  "card": {
+    "name": "Grizzly Bears",
+    "typeLine": "Creature — Bear",
+    "oracleText": "",
+    "keywords": [],
+    "colors": [
+      "G"
+    ],
+    "colorIdentity": [
+      "G"
+    ],
+    "power": "2",
+    "toughness": "2",
+    "manaValue": 2
+  },
+  "expected": {
+    "oracleId": "14c8f55d-d177-4c25-a931-ebeb9e6062a0",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "bear"
+      ],
+      "colors": [
+        "G"
+      ],
+      "identity": [
+        "G"
+      ],
+      "cmc": 2,
+      "power": "2",
+      "toughness": "2",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": []
+  }
+}

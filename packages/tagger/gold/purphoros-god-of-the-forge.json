@@ -1,0 +1,83 @@
+{
+  "oracleId": "4fdbbec2-e921-4b63-958d-f9ba1e417197",
+  "card": {
+    "name": "Purphoros, God of the Forge",
+    "typeLine": "Legendary Enchantment Creature — God",
+    "oracleText": "Indestructible\nAs long as your devotion to red is less than five, Purphoros isn't a creature.\nWhenever another creature you control enters, Purphoros deals 2 damage to each opponent.\n{2}{R}: Creatures you control get +1/+0 until end of turn.",
+    "keywords": [
+      "Indestructible"
+    ],
+    "colors": [
+      "R"
+    ],
+    "colorIdentity": [
+      "R"
+    ],
+    "power": "7",
+    "toughness": "6",
+    "manaValue": 4
+  },
+  "expected": {
+    "oracleId": "4fdbbec2-e921-4b63-958d-f9ba1e417197",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "legendary",
+        "enchantment",
+        "creature"
+      ],
+      "subtypes": [
+        "god"
+      ],
+      "colors": [
+        "R"
+      ],
+      "identity": [
+        "R"
+      ],
+      "cmc": 4,
+      "power": "7",
+      "toughness": "6",
+      "token": false,
+      "keywords": [
+        "indestructible"
+      ]
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "enters"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "creature"
+          }
+        },
+        "effect": {
+          "kind": "player-damage",
+          "subject": {
+            "control": "opp",
+            "token": null
+          }
+        }
+      },
+      {
+        "kind": "activated",
+        "cost": "{2}{R}",
+        "effect": {
+          "kind": "pump-tribe",
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "creature"
+          }
+        }
+      }
+    ]
+  }
+}

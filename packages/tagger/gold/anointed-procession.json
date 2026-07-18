@@ -1,0 +1,49 @@
+{
+  "oracleId": "7246d45b-2185-4cdd-981b-5419b7d52bce",
+  "card": {
+    "name": "Anointed Procession",
+    "typeLine": "Enchantment",
+    "oracleText": "If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.",
+    "keywords": [],
+    "colors": [
+      "W"
+    ],
+    "colorIdentity": [
+      "W"
+    ],
+    "power": null,
+    "toughness": null,
+    "manaValue": 4
+  },
+  "expected": {
+    "oracleId": "7246d45b-2185-4cdd-981b-5419b7d52bce",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "enchantment"
+      ],
+      "subtypes": [],
+      "colors": [
+        "W"
+      ],
+      "identity": [
+        "W"
+      ],
+      "cmc": 4,
+      "power": null,
+      "toughness": null,
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "static",
+        "effect": {
+          "kind": "token-doubling"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "oracleId": "76b003e0-15af-4f22-bdf2-1ade5430964a",
+  "card": {
+    "name": "Zulaport Cutthroat",
+    "typeLine": "Creature — Human Rogue Ally",
+    "oracleText": "Whenever this creature or another creature you control dies, each opponent loses 1 life and you gain 1 life.",
+    "keywords": [],
+    "colors": [
+      "B"
+    ],
+    "colorIdentity": [
+      "B"
+    ],
+    "power": "1",
+    "toughness": "1",
+    "manaValue": 2
+  },
+  "expected": {
+    "oracleId": "76b003e0-15af-4f22-bdf2-1ade5430964a",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "human",
+        "rogue",
+        "ally"
+      ],
+      "colors": [
+        "B"
+      ],
+      "identity": [
+        "B"
+      ],
+      "cmc": 2,
+      "power": "1",
+      "toughness": "1",
+      "token": false,
+      "keywords": []
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "dies"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "creature"
+          }
+        },
+        "effect": {
+          "kind": "drain",
+          "subject": {
+            "control": "opp",
+            "token": null
+          }
+        }
+      }
+    ]
+  }
+}

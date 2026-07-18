@@ -1,0 +1,79 @@
+{
+  "oracleId": "f8e17f4f-080d-4bba-bd05-ca27e94ccecc",
+  "card": {
+    "name": "Terror of the Peaks",
+    "typeLine": "Creature — Dragon",
+    "oracleText": "Flying\nSpells your opponents cast that target this creature cost an additional 3 life to cast.\nWhenever another creature you control enters, this creature deals damage equal to that creature's power to any target.",
+    "keywords": [
+      "Flying"
+    ],
+    "colors": [
+      "R"
+    ],
+    "colorIdentity": [
+      "R"
+    ],
+    "power": "5",
+    "toughness": "4",
+    "manaValue": 5
+  },
+  "expected": {
+    "oracleId": "f8e17f4f-080d-4bba-bd05-ca27e94ccecc",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "creature"
+      ],
+      "subtypes": [
+        "dragon"
+      ],
+      "colors": [
+        "R"
+      ],
+      "identity": [
+        "R"
+      ],
+      "cmc": 5,
+      "power": "5",
+      "toughness": "4",
+      "token": false,
+      "keywords": [
+        "flying"
+      ]
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "enters"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "creature"
+          }
+        },
+        "effect": {
+          "kind": "noncombat-damage",
+          "subject": {
+            "control": "any",
+            "token": null
+          }
+        }
+      },
+      {
+        "kind": "static",
+        "effect": {
+          "kind": "tax",
+          "subject": {
+            "control": "opp",
+            "token": null
+          }
+        }
+      }
+    ]
+  }
+}
