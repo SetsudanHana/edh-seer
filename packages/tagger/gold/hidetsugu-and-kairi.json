@@ -79,6 +79,21 @@
         "kind": "triggered",
         "trigger": {
           "verbs": [
+            "enters"
+          ],
+          "subject": {
+            "control": "you",
+            "token": false
+          }
+        },
+        "effect": {
+          "kind": "top-manipulation"
+        }
+      },
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
             "dies"
           ],
           "subject": {

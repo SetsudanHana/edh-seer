@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 11;
+export const PROMPT_VERSION = 12;
 
 export const EFFECT_KINDS = [
   "token-generation",
@@ -21,6 +21,7 @@ export const EFFECT_KINDS = [
   "damage-multiplier",
   "tax",
   "scry",
+  "top-manipulation",
   "counter-placement",
   "enters-with-counters",
   "mana-generation",
@@ -53,6 +54,7 @@ An Event is { "verb": Verb, "subject": SubjectFilter } with a CONCRETE subject.
 
 Verb must be one of: ${VERB_VOCAB.join(", ")}.
 effect.kind should be one of: ${EFFECT_KINDS.join(", ")} (choose the closest; these are the recognized labels).
+"top-manipulation" = looking at / reordering / putting cards on top of a library, or scry/surveil that stack the top (Brainstorm, Sensei's Divining Top). An ability with several effects becomes one ability per effect, sharing the trigger.
 
 INVARIANT — emits:
 - A "cast" ability emits BOTH { verb: "cast" } and { verb: "enters" }.

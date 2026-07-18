@@ -367,6 +367,13 @@ const CARDS = [
         effect: { kind: "draw-card" },
       },
       {
+        // ETB also stacks the top of the library ("put two cards on top in any order"),
+        // setting up the dies reveal — top-manipulation theme (scry/surveil/Top).
+        kind: "triggered",
+        trigger: { verbs: ["enters"], subject: subj({ token: false }) },
+        effect: { kind: "top-manipulation" },
+      },
+      {
         // dies: opponent loses life; if the exiled card is instant/sorcery, free-cast it.
         kind: "triggered",
         trigger: { verbs: ["dies"], subject: subj({ token: false }) },
