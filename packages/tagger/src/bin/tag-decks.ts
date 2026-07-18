@@ -16,6 +16,7 @@ import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";
 import { loadTaggerConfig } from "../config.js";
 import { mapPool } from "../pool.js";
+import { startProgress } from "../progress.js";
 
 const DECKS = ["inalla", "chandra", "gisa", "gogo", "hidetsugu", "samut"];
 const DECK_DIR = join(process.cwd(), "..", "cli", "decks");
@@ -44,29 +45,29 @@ async function main(): Promise<void> {
 
   let tagged = 0;
   let skipped = 0;
-  let failed = 0;
+  const failures: string[] = [];
   const entries = [...seen.entries()];
+  console.log(`tagging ${entries.length} unique cards at concurrency ${cfg.concurrency} (model ${cfg.model})...`);
+  const progress = startProgress(entries.length);
   await mapPool(entries, cfg.concurrency, async ([oracleId, card]) => {
-    const existing = await cardTags.findOne({ oracleId });
-    if (!needsRetag(existing, SCHEMA_VERSION, PROMPT_VERSION)) {
-      skipped++;
-      return;
-    }
-    if (!card.oracleText.trim()) {
-      skipped++;
-      return; // skip vanilla/lands with no text
-    }
     try {
-      const tags = await extractCardTags(oracleId, card, llm);
-      await upsertCardTags(cardTags, tags);
-      tagged++;
-      console.log(`tagged ${names.get(oracleId)} (${tags.abilities.length} abilities)`);
+      const existing = await cardTags.findOne({ oracleId });
+      if (!needsRetag(existing, SCHEMA_VERSION, PROMPT_VERSION)) {
+        skipped++;
+      } else if (!card.oracleText.trim()) {
+        skipped++; // vanilla/lands with no text
+      } else {
+        const tags = await extractCardTags(oracleId, card, llm);
+        await upsertCardTags(cardTags, tags);
+        tagged++;
+      }
     } catch (err) {
-      failed++;
-      console.error(`FAILED ${names.get(oracleId)}: ${(err as Error).message}`);
+      failures.push(`${names.get(oracleId)}: ${(err as Error).message}`);
     }
+    progress.tick();
   });
-  console.log(`done: ${tagged} tagged, ${skipped} skipped, ${failed} failed (concurrency ${cfg.concurrency})`);
+  console.log(`done: ${tagged} tagged, ${skipped} skipped, ${failures.length} failed`);
+  for (const f of failures) console.log(`  FAILED ${f}`);
   await store.close();
 }
 

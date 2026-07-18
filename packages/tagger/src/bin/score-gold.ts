@@ -5,6 +5,7 @@ import { OllamaProvider } from "../llm/ollama.js";
 import { loadTaggerConfig } from "../config.js";
 import { formatReport } from "../report.js";
 import { mapPool } from "../pool.js";
+import { startProgress } from "../progress.js";
 
 async function main(): Promise<void> {
   const cfg = loadTaggerConfig();
@@ -12,8 +13,9 @@ async function main(): Promise<void> {
   const gold = loadGold();
   const scores: CardScore[] = [];
   const failures: string[] = [];
-  let done = 0;
 
+  console.log(`scoring ${gold.length} gold cards at concurrency ${cfg.concurrency} (model ${cfg.model})...`);
+  const progress = startProgress(gold.length);
   await mapPool(gold, cfg.concurrency, async (g) => {
     try {
       const predicted = await extractCardTags(g.oracleId, g.card, llm);
@@ -22,10 +24,9 @@ async function main(): Promise<void> {
       // One card the model won't produce valid output for shouldn't sink the whole run.
       failures.push(`${g.card.name}: ${(err as Error).message}`);
     }
-    process.stdout.write(`\rscored ${++done}/${gold.length} (x${cfg.concurrency}) ...`);
+    progress.tick();
   });
 
-  process.stdout.write("\n");
   console.log(formatReport(aggregate(scores)));
   if (failures.length > 0) {
     console.log(`\nextraction failures: ${failures.length}/${gold.length} (excluded from F1)`);
