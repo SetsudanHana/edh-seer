@@ -1,4 +1,4 @@
-import { MongoClient, type Collection } from "mongodb";
+import { MongoClient, type Collection, type Db } from "mongodb";
 import type { DataConfig } from "./config.js";
 import type { CardDoc, ComboDoc } from "./docs.js";
 import { normalizeName } from "./names.js";
@@ -7,6 +7,7 @@ import type { CardLookup } from "./resolve.js";
 export interface Store {
   cards: Collection<CardDoc>;
   combos: Collection<ComboDoc>;
+  db: Db;
   close(): Promise<void>;
 }
 
@@ -25,7 +26,7 @@ export async function connect(config: DataConfig): Promise<Store> {
   const cards = db.collection<CardDoc>("cards");
   const combos = db.collection<ComboDoc>("combos");
   await cards.createIndex({ searchNames: 1 });
-  return { cards, combos, close: () => client.close() };
+  return { cards, combos, db, close: () => client.close() };
 }
 
 export function mongoLookup(store: Store): CardLookup {
