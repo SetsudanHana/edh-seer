@@ -505,8 +505,11 @@ const CARDS = [
     typeLine: "Artifact",
     colors: [], colorIdentity: [], power: null, toughness: null, manaValue: 1, keywords: [],
     oracleText: "{T}: Add {C}{C}.",
-    // Fast mana: 1-cost rock that taps for two — nets more mana than it cost.
-    abilities: [{ kind: "activated", cost: "{T}", effect: { kind: "fast-mana" } }],
+    // Fast mana: 1-cost rock that taps for two colorless — nets more mana than it cost.
+    // subject.colors = the mana produced ("C" = colorless) for mana-color payoffs (Forsaken Monument).
+    abilities: [
+      { kind: "activated", cost: "{T}", effect: { kind: "fast-mana", subject: subj({ colors: ["C"], token: null }) } },
+    ],
   },
   {
     oracleId: "14c8f55d-d177-4c25-a931-ebeb9e6062a0",

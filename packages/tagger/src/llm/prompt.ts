@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 15;
+export const PROMPT_VERSION = 16;
 
 export const EFFECT_KINDS = [
   "token-generation",
@@ -59,7 +59,7 @@ Verb must be one of: ${VERB_VOCAB.join(", ")}.
 effect.kind should be one of: ${EFFECT_KINDS.join(", ")} (choose the closest; these are the recognized labels).
 "top-manipulation" = looking at / reordering / putting cards on top of a library, or scry/surveil that stack the top (Brainstorm, Sensei's Divining Top). An ability with several effects becomes one ability per effect, sharing the trigger.
 "pump" gives +X/+X or +X/+0; the subject says who — a subtype for a tribe ("wizard"), type:"creature" for your whole team.
-"mana-generation" = break-even mana (Signets); "fast-mana" = a source that nets MORE mana than it cost (Sol Ring, Ancient Tomb, Mana Crypt); "ritual" = a one-shot spell adding more mana than it cost (Dark Ritual, Jeska's Will).
+"mana-generation" = break-even mana (Signets); "fast-mana" = a source that nets MORE mana than it cost (Sol Ring, Ancient Tomb, Mana Crypt); "ritual" = a one-shot spell adding more mana than it cost (Dark Ritual, Jeska's Will). For any mana effect, set subject.colors to the mana produced — WUBRG letters, or "C" for colorless (Sol Ring → ["C"]) — so mana-color payoffs (Forsaken Monument, Cabal Coffers) can match.
 
 INVARIANT — emits:
 - A "cast" ability emits BOTH { verb: "cast" } and { verb: "enters" }.

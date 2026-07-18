@@ -34,7 +34,14 @@
         "kind": "activated",
         "cost": "{T}",
         "effect": {
-          "kind": "fast-mana"
+          "kind": "fast-mana",
+          "subject": {
+            "control": "you",
+            "token": null,
+            "colors": [
+              "C"
+            ]
+          }
         }
       }
     ]
