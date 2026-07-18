@@ -10,8 +10,8 @@ const card = {
   manaValue: 2,
 };
 
-test("prompt version is 16", () => {
-  expect(PROMPT_VERSION).toBe(16);
+test("prompt version is 17", () => {
+  expect(PROMPT_VERSION).toBe(17);
 });
 
 test("prompt includes the oracle text, the closed verb list, and the abilities key", () => {

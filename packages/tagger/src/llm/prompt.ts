@@ -1,18 +1,16 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 16;
+export const PROMPT_VERSION = 17;
 
 export const EFFECT_KINDS = [
   "token-generation",
-  "player-damage",
+  "damage",
   "player-life-loss",
-  "noncombat-damage",
   "drain",
   "draw-card",
   "forced-sacrifice",
   "pump",
-  "lord",
   "cost-reduction",
   "trigger-doubling",
   "graveyard-recursion",
@@ -20,7 +18,6 @@ export const EFFECT_KINDS = [
   "token-doubling",
   "damage-multiplier",
   "tax",
-  "scry",
   "top-manipulation",
   "counter-placement",
   "enters-with-counters",
@@ -58,8 +55,22 @@ An Event is { "verb": Verb, "subject": SubjectFilter } with a CONCRETE subject.
 Verb must be one of: ${VERB_VOCAB.join(", ")}.
 effect.kind should be one of: ${EFFECT_KINDS.join(", ")} (choose the closest; these are the recognized labels).
 "top-manipulation" = looking at / reordering / putting cards on top of a library, or scry/surveil that stack the top (Brainstorm, Sensei's Divining Top). An ability with several effects becomes one ability per effect, sharing the trigger.
-"pump" gives +X/+X or +X/+0; the subject says who — a subtype for a tribe ("wizard"), type:"creature" for your whole team.
+"pump" gives +X/+X or +X/+0 to creatures (static or triggered); the subject says who — a subtype for a tribe ("wizard"), type:"creature" for your whole team. Use it for anthems/lords too.
+"damage" = dealing damage; subject.control says who ("opp" for "each opponent"/a player, "any" for "any target"). Do not split into player- vs noncombat- variants.
+"drain" = one ability that BOTH drains life from a player AND you gain life (Blood Artist, Zulaport) — do not split it into two abilities.
 "mana-generation" = break-even mana (Signets); "fast-mana" = a source that nets MORE mana than it cost (Sol Ring, Ancient Tomb, Mana Crypt); "ritual" = a one-shot spell adding more mana than it cost (Dark Ritual, Jeska's Will). For any mana effect, set subject.colors to the mana produced — WUBRG letters, or "C" for colorless (Sol Ring → ["C"]) — so mana-color payoffs (Forsaken Monument, Cabal Coffers) can match.
+
+RULES:
+- kind: "triggered" is ONLY for "when/whenever/at" clauses. Continuous or replacement effects
+  ("... instead", "as long as", "creatures you control get ...", anthems, doublers) are
+  kind:"static". A "{cost}: {effect}" ability (including "{T}" or "Sacrifice ...") is
+  kind:"activated".
+- For a trigger about the card ITSELF ("When ~ enters", "When ~ dies"), leave the subject's
+  type/subtype UNSET (just control:"you"); do NOT fill in the card's own printed types.
+- Ignore evergreen keywords (flying, trample, vigilance, haste, first strike, indestructible,
+  ward, "can't block"), reminder text in (parentheses), and mana costs. Tag ONLY abilities with
+  a synergy-relevant effect; a card whose only text is keywords/vanilla has abilities: [].
+- Never output duplicate abilities.
 
 INVARIANT — emits:
 - A "cast" ability emits BOTH { verb: "cast" } and { verb: "enters" }.

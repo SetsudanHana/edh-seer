@@ -54,7 +54,7 @@
           }
         },
         "effect": {
-          "kind": "player-damage",
+          "kind": "damage",
           "subject": {
             "control": "opp",
             "token": null

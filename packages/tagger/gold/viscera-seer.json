@@ -45,7 +45,7 @@
         "kind": "activated",
         "cost": "Sacrifice a creature",
         "effect": {
-          "kind": "scry"
+          "kind": "top-manipulation"
         },
         "emits": [
           {

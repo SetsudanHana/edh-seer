@@ -55,12 +55,14 @@ function normList(v: string | string[] | undefined): string[] | null {
 }
 
 function subjectKey(s: SubjectFilter): string {
+  // NOTE: `token` is intentionally excluded — nontoken/token/any is a subtle distinction a
+  // local LLM can't produce reliably (and is meaningless for spells being cast), and Stage-2
+  // matching treats null as a wildcard anyway. Scoring it exact punished correct extractions.
   return JSON.stringify({
     type: normList(s.type),
     subtype: normList(s.subtype),
     colors: s.colors ? [...s.colors].sort() : null,
     control: s.control,
-    token: s.token,
     chosenType: s.chosenType ?? false,
     counter: s.counter ?? null,
     zone: s.zone ?? null,
