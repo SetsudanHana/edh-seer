@@ -372,8 +372,8 @@ const CARDS = [
       {
         kind: "triggered",
         trigger: { verbs: ["enters"], subject: subj({ token: false }) },
-        effect: { kind: "token-generation", subject: tok({ type: "artifact" }) },
-        emits: tokenEmits(tok({ type: "artifact" })),
+        effect: { kind: "token-generation", subject: tok({ type: "artifact", subtype: "treasure" }) },
+        emits: tokenEmits(tok({ type: "artifact", subtype: "treasure" })),
       },
     ],
   },
@@ -503,8 +503,8 @@ const CARDS = [
       {
         kind: "triggered",
         trigger: { verbs: ["dies"], subject: subj({ type: "creature", token: null }) },
-        effect: { kind: "token-generation", subject: tok({ type: "artifact" }) },
-        emits: tokenEmits(tok({ type: "artifact" })),
+        effect: { kind: "token-generation", subject: tok({ type: "artifact", subtype: "treasure" }) },
+        emits: tokenEmits(tok({ type: "artifact", subtype: "treasure" })),
       },
     ],
   },

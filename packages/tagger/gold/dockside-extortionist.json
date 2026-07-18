@@ -57,7 +57,8 @@
           "subject": {
             "control": "you",
             "token": true,
-            "type": "artifact"
+            "type": "artifact",
+            "subtype": "treasure"
           }
         },
         "emits": [
@@ -66,7 +67,8 @@
             "subject": {
               "control": "you",
               "token": true,
-              "type": "artifact"
+              "type": "artifact",
+              "subtype": "treasure"
             }
           },
           {
@@ -74,7 +76,8 @@
             "subject": {
               "control": "you",
               "token": true,
-              "type": "artifact"
+              "type": "artifact",
+              "subtype": "treasure"
             }
           }
         ]

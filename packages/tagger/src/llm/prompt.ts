@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 5;
+export const PROMPT_VERSION = 6;
 
 export const EFFECT_KINDS = [
   "token-generation",
@@ -57,6 +57,8 @@ INVARIANT — emits:
 - Every other way a permanent enters (token, reanimation, blink) emits { verb: "enters" } ONLY.
 - A token-maker emits { verb: "create-token", subject: {...token:true} } AND
   { verb: "enters", subject: {...token:true} } so downstream payoffs see the token entering.
+  Include the token's subtype when it has one (e.g. subtype "treasure", "food", "clue",
+  "blood", "aura", "role"), since payoffs care about specific token subtypes.
 - A "Sacrifice a creature" cost or effect emits { verb: "sacrifice" } AND { verb: "dies" }
   (a sacrificed creature dies), both with the sacrificed creature's subject. Sacrificing a
   NONcreature (e.g. a Treasure/artifact) emits { verb: "sacrifice" } ONLY.
