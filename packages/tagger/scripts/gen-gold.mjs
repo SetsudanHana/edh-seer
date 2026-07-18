@@ -400,7 +400,7 @@ const CARDS = [
     abilities: [
       {
         kind: "triggered",
-        trigger: { verbs: ["land-play"], subject: subj({ type: "land", token: null }) },
+        trigger: { verbs: ["enters"], subject: subj({ type: "land", token: null }) },
         effect: { kind: "token-generation", subject: tok({ subtype: "beast" }) },
         emits: tokenEmits(tok({ subtype: "beast" })),
       },
@@ -416,7 +416,7 @@ const CARDS = [
     abilities: [
       {
         kind: "triggered",
-        trigger: { verbs: ["land-play"], subject: subj({ type: "land", token: null }) },
+        trigger: { verbs: ["enters"], subject: subj({ type: "land", token: null }) },
         effect: { kind: "token-generation", subject: tok({ subtype: "insect" }) },
         emits: tokenEmits(tok({ subtype: "insect" })),
       },
@@ -429,12 +429,19 @@ const CARDS = [
     colors: ["W"], colorIdentity: ["W"], power: null, toughness: null, manaValue: 4, keywords: [],
     oracleText:
       "Landfall — Whenever a land you control enters, choose one —\n• Create a 2/2 white Cat Beast creature token.\n• Put a +1/+1 counter on each creature you control. Those creatures gain vigilance until end of turn.",
+    // Modal landfall: token OR +1/+1 counters. Both modes captured as siblings.
     abilities: [
       {
         kind: "triggered",
-        trigger: { verbs: ["land-play"], subject: subj({ type: "land", token: null }) },
+        trigger: { verbs: ["enters"], subject: subj({ type: "land", token: null }) },
         effect: { kind: "token-generation", subject: tok({ subtype: "cat" }) },
         emits: tokenEmits(tok({ subtype: "cat" })),
+      },
+      {
+        kind: "triggered",
+        trigger: { verbs: ["enters"], subject: subj({ type: "land", token: null }) },
+        effect: { kind: "counter-placement", subject: subj({ type: "creature", counter: "+1/+1" }) },
+        emits: [counterAdded("+1/+1")],
       },
     ],
   },

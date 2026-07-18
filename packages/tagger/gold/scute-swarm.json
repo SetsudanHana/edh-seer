@@ -44,7 +44,7 @@
         "kind": "triggered",
         "trigger": {
           "verbs": [
-            "land-play"
+            "enters"
           ],
           "subject": {
             "control": "you",

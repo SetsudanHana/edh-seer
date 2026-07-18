@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 6;
+export const PROMPT_VERSION = 7;
 
 export const EFFECT_KINDS = [
   "token-generation",
@@ -66,6 +66,11 @@ INVARIANT — emits:
   recipient's subject and subject.counter set to the counter kind (e.g. "+1/+1").
 - A static ability whose condition or magnitude reads cards in a zone ("for each Zombie
   card in your graveyard") sets subject.zone to that zone (e.g. "graveyard").
+- Landfall ("whenever a land you control enters") is verb "enters" with subject
+  { type: "land" } — it fires on lands played, fetched, or put onto the battlefield by
+  ramp. Use "land-play" only for the narrower "whenever you play a land" land-drop action.
+- A modal trigger ("choose one — ...") becomes one ability per mode, all sharing the
+  same trigger.
 - Effects whose verb no trigger consumes need no emits.`;
 
 const FEW_SHOT = `EXAMPLE 1

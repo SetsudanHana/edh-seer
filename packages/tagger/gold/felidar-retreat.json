@@ -42,7 +42,7 @@
         "kind": "triggered",
         "trigger": {
           "verbs": [
-            "land-play"
+            "enters"
           ],
           "subject": {
             "control": "you",
@@ -73,6 +73,39 @@
               "control": "you",
               "token": true,
               "subtype": "cat"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "enters"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null,
+            "type": "land"
+          }
+        },
+        "effect": {
+          "kind": "counter-placement",
+          "subject": {
+            "control": "you",
+            "token": false,
+            "type": "creature",
+            "counter": "+1/+1"
+          }
+        },
+        "emits": [
+          {
+            "verb": "counter-added",
+            "subject": {
+              "type": "creature",
+              "control": "you",
+              "token": null,
+              "counter": "+1/+1"
             }
           }
         ]
