@@ -37,6 +37,12 @@ const ev = (verb, subject) => ({ verb, subject });
 const tok = (o) => ({ control: "you", token: true, ...o });
 // emits for a token maker: create-token + enters, same concrete token subject.
 const tokenEmits = (t) => [ev("create-token", t), ev("enters", t)];
+// emits for a "Sacrifice a creature" cost/effect: sacrifice + dies (a sacrificed
+// creature dies). Sacrificing a noncreature would emit only sacrifice.
+const sacEmits = (control = "you") => [
+  ev("sacrifice", { type: "creature", control, token: null }),
+  ev("dies", { type: "creature", control, token: null }),
+];
 
 // ---- the gold cards ----
 // Each: [oracleId, name, typeLine, colors, colorIdentity, power, toughness, cmc, keywords, oracleText, abilities]
@@ -264,7 +270,7 @@ const CARDS = [
     typeLine: "Creature — Vampire Wizard",
     colors: ["B"], colorIdentity: ["B"], power: "1", toughness: "1", manaValue: 1, keywords: [],
     oracleText: "Sacrifice a creature: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
-    abilities: [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "scry" } }],
+    abilities: [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "scry" }, emits: sacEmits() }],
   },
   {
     oracleId: "a1cc5e37-b09a-4b7f-afd5-77c1c35aa425",
@@ -272,7 +278,7 @@ const CARDS = [
     typeLine: "Creature — Zombie",
     colors: ["B"], colorIdentity: ["B"], power: "1", toughness: "1", manaValue: 1, keywords: [],
     oracleText: "This creature can't block.\nSacrifice a creature: Put a +1/+1 counter on this creature.",
-    abilities: [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "counter-self" } }],
+    abilities: [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "counter-self" }, emits: sacEmits() }],
   },
   // ============ Clone / tokens / Gogo ============
   {
@@ -457,7 +463,12 @@ const CARDS = [
     colors: ["R"], colorIdentity: ["R"], power: null, toughness: null, manaValue: 2, keywords: [],
     oracleText: "Sacrifice a creature: This enchantment deals 1 damage to any target.",
     abilities: [
-      { kind: "activated", cost: "Sacrifice a creature", effect: { kind: "noncombat-damage", subject: subj({ control: "any", token: null }) } },
+      {
+        kind: "activated",
+        cost: "Sacrifice a creature",
+        effect: { kind: "noncombat-damage", subject: subj({ control: "any", token: null }) },
+        emits: sacEmits(),
+      },
     ],
   },
   {

@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 2;
+export const PROMPT_VERSION = 3;
 
 const EFFECT_KINDS = [
   "token-generation",
@@ -54,6 +54,9 @@ INVARIANT — emits:
 - Every other way a permanent enters (token, reanimation, blink) emits { verb: "enters" } ONLY.
 - A token-maker emits { verb: "create-token", subject: {...token:true} } AND
   { verb: "enters", subject: {...token:true} } so downstream payoffs see the token entering.
+- A "Sacrifice a creature" cost or effect emits { verb: "sacrifice" } AND { verb: "dies" }
+  (a sacrificed creature dies), both with the sacrificed creature's subject. Sacrificing a
+  NONcreature (e.g. a Treasure/artifact) emits { verb: "sacrifice" } ONLY.
 - Effects whose verb no trigger consumes need no emits.`;
 
 const FEW_SHOT = `EXAMPLE 1

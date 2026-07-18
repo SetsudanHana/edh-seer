@@ -46,7 +46,25 @@
         "cost": "Sacrifice a creature",
         "effect": {
           "kind": "scry"
-        }
+        },
+        "emits": [
+          {
+            "verb": "sacrifice",
+            "subject": {
+              "type": "creature",
+              "control": "you",
+              "token": null
+            }
+          },
+          {
+            "verb": "dies",
+            "subject": {
+              "type": "creature",
+              "control": "you",
+              "token": null
+            }
+          }
+        ]
       }
     ]
   }

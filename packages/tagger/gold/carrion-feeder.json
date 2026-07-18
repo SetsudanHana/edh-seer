@@ -45,7 +45,25 @@
         "cost": "Sacrifice a creature",
         "effect": {
           "kind": "counter-self"
-        }
+        },
+        "emits": [
+          {
+            "verb": "sacrifice",
+            "subject": {
+              "type": "creature",
+              "control": "you",
+              "token": null
+            }
+          },
+          {
+            "verb": "dies",
+            "subject": {
+              "type": "creature",
+              "control": "you",
+              "token": null
+            }
+          }
+        ]
       }
     ]
   }
