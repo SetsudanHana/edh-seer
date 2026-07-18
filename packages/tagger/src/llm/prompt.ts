@@ -1,7 +1,7 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 8;
+export const PROMPT_VERSION = 9;
 
 export const EFFECT_KINDS = [
   "token-generation",
@@ -71,6 +71,10 @@ INVARIANT — emits:
   ramp. Use "land-play" only for the narrower "whenever you play a land" land-drop action.
 - A modal trigger ("choose one — ...") becomes one ability per mode, all sharing the
   same trigger.
+- A "cast" trigger's subject captures the SPELL category cast: use the card type
+  ("creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker"), the
+  grouping "instant-or-sorcery" or "noncreature", or a subtype (e.g. "zombie" for a
+  "Zombie spell"). Omit type for "a spell" (any).
 - An effect emits the event for its action so payoffs can consume it: dealing damage →
   { verb: "non-combat-damage" } (or "combat-damage" for combat damage); a player losing
   life → { verb: "lose-life" }; gaining life → { verb: "gain-life" }; drawing → { verb:

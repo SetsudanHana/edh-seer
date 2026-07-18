@@ -60,7 +60,8 @@
           ],
           "subject": {
             "control": "you",
-            "token": false
+            "token": false,
+            "type": "instant-or-sorcery"
           }
         },
         "effect": {

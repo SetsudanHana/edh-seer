@@ -149,7 +149,7 @@ const CARDS = [
     abilities: [
       {
         kind: "triggered",
-        trigger: { verbs: ["cast"], subject: subj({ token: false }) },
+        trigger: { verbs: ["cast"], subject: subj({ type: "instant-or-sorcery", token: false }) },
         effect: { kind: "pump-tribe", subject: subj({ subtype: "wizard", token: null }) },
       },
     ],
@@ -219,7 +219,7 @@ const CARDS = [
     abilities: [
       {
         kind: "triggered",
-        trigger: { verbs: ["cast"], subject: subj({ token: false }) },
+        trigger: { verbs: ["cast"], subject: subj({ type: "instant-or-sorcery", token: false }) },
         effect: { kind: "player-damage", subject: subj({ control: "opp", token: null }) },
       },
     ],
