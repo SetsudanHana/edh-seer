@@ -1,7 +1,30 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
 
-export const PROMPT_VERSION = 1;
+export const PROMPT_VERSION = 2;
+
+const EFFECT_KINDS = [
+  "token-generation",
+  "player-damage",
+  "player-life-loss",
+  "noncombat-damage",
+  "drain",
+  "draw-card",
+  "forced-sacrifice",
+  "pump-tribe",
+  "lord",
+  "cost-reduction",
+  "trigger-doubling",
+  "graveyard-recursion",
+  "clone",
+  "token-doubling",
+  "damage-multiplier",
+  "tax",
+  "scry",
+  "counter-self",
+  "mana-generation",
+  "copy-spell",
+] as const;
 
 const INSTRUCTIONS = `You decompose a Magic: The Gathering card's rules text into structured abilities.
 Return ONLY JSON of the form { "abilities": Ability[] }. Do not include characteristics.
@@ -24,6 +47,7 @@ A SubjectFilter is:
 An Event is { "verb": Verb, "subject": SubjectFilter } with a CONCRETE subject.
 
 Verb must be one of: ${VERB_VOCAB.join(", ")}.
+effect.kind should be one of: ${EFFECT_KINDS.join(", ")} (choose the closest; these are the recognized labels).
 
 INVARIANT — emits:
 - A "cast" ability emits BOTH { verb: "cast" } and { verb: "enters" }.
@@ -34,7 +58,7 @@ INVARIANT — emits:
 
 const FEW_SHOT = `EXAMPLE 1
 Card: Inalla, Archmage Ritualist — Legendary Creature — Human Wizard
-Text: "Whenever another Wizard you control enters, you may pay {1}{R/W}. If you do, create a token that's a copy of that Wizard. Tap five untapped Wizards you control: Inalla deals 10 damage to target player."
+Text: "Eminence — Whenever another nontoken Wizard you control enters, if Inalla is in the command zone or on the battlefield, you may pay {1}. If you do, create a token that's a copy of that Wizard. The token gains haste. Exile it at the beginning of the next end step.\nTap five untapped Wizards you control: Target player loses 7 life."
 Output:
 { "abilities": [
   { "kind": "triggered",
@@ -46,7 +70,7 @@ Output:
     ] },
   { "kind": "activated",
     "cost": "Tap five untapped Wizards you control",
-    "effect": { "kind": "player-damage", "subject": { "control": "opp", "token": null } } }
+    "effect": { "kind": "player-life-loss", "subject": { "control": "opp", "token": null } } }
 ] }
 
 EXAMPLE 2

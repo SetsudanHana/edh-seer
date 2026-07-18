@@ -10,8 +10,8 @@ const card = {
   manaValue: 2,
 };
 
-test("prompt version starts at 1", () => {
-  expect(PROMPT_VERSION).toBe(1);
+test("prompt version starts at 2", () => {
+  expect(PROMPT_VERSION).toBe(2);
 });
 
 test("prompt includes the oracle text, the closed verb list, and the abilities key", () => {
@@ -26,4 +26,9 @@ test("prompt includes the emits invariant and a few-shot example", () => {
   const p = buildAbilityPrompt(card);
   expect(p.toLowerCase()).toContain("cast");
   expect(p).toContain("Inalla"); // few-shot anchor
+});
+
+test("prompt includes the closed effect.kind label set", () => {
+  const p = buildAbilityPrompt(card);
+  expect(p).toContain("player-life-loss");
 });
