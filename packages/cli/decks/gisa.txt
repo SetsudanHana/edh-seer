@@ -1,0 +1,79 @@
+1 Gisa, the Hellraiser (OTJ) 288
+1 Altar of Dementia (BRR) 66
+1 Animate Dead (SLD) 2189
+1 Arcane Signet (SLD) 1641
+1 Archenemy's Charm (EOE) 307
+1 Ashnod's Altar (BRR) 67
+1 Ayara, First of Locthwain (MUL) 13
+1 Baleful Mastery (STX) 301
+1 Beholder's Death Ray (SLD) 1792
+1 Bitter Triumph (SOA) 26
+1 Black Market Connections (CLB) 620
+1 Blasphemous Edict (FDN) 317
+1 Blasting Station (5DN) 107
+1 Blood Artist (2X2) 352
+1 Boggart Trawler / Boggart Bog (MH3) 243
+1 Bojuka Bog (SLD) 1532
+1 Braids, Arisen Nightmare (DMU) 288
+1 Cabal Stronghold (DOM) 238
+1 Castle Locthwain (ELD) 241
+1 Cling to Dust (PLST) THB-87
+1 Cordyceps Excision (SLD) 2199
+1 Cremate (RTR) 59
+1 Crypt Ghast (RVR) 423
+1 Cryptbreaker (EMN) 86
+1 Culling the Weak (SLD) 1818
+1 Dark Ritual (STA) 26
+1 Dauthi Voidwalker (SLD) 1760
+1 Deadly Rollick (SLD) 1754
+1 Demolition Field (FIC) 385
+1 Dismember (SOA) 28
+1 Feed the Swarm (MAR) 16
+1 Fell the Profane / Fell Mire (MH3) 244
+1 Flare of Malice (MH3) 331
+1 Grave Researcher / Reanimate (SOS) 325
+1 Gray Merchant of Asphodel (SLC) 7
+1 Jet Medallion (MH3) 346
+1 Keen Duelist (SLD) 828
+1 Liquimetal Torque (MH2) 428
+1 Malakir Rebirth / Malakir Mire (ZNR) 111
+1 Meathook Massacre II (DSK) 311
+1 Mirkwood Bats (LTR) 421
+1 Morbid Opportunist (SPG) 32
+1 Muraganda Raceway (DFT) 426 *F*
+1 Myriad Landscape (CMM) 660
+1 Nadier's Nightblade (CMM) 641
+1 Necromancy (MKC) 131
+1 Phyrexian Altar (2X2) 396
+1 Phyrexian Arena (SLD) 2318
+1 Phyrexian Tower (MH3) 355
+1 Pitiless Plunderer (SLD) 1431
+1 Priest of Forgotten Gods (SLD) 2006
+1 Reanimate (MAR) 20
+1 Retribution of the Ancients (KTK) 85
+1 Ripples of Undeath (MH3) 455
+1 Sanguinary Priest (40K) 53
+1 Saw in Half (SLD) 1755
+1 Sceptre of Eternal Glory (40K) 166
+1 Sol Ring (CMM) 703
+1 Stensian Sanguinist / Exsanguinate (SOC) 78
+22 Swamp (NEO) 298
+1 Syr Konrad, the Grim (SLD) 1297
+1 Takenuma, Abandoned Mire (NEO) 416
+1 Temple of the False God (SLC) 20
+1 Terrain Generator (EOS) 43
+1 The Darkness Crystal (FIN) 335
+1 The Meathook Massacre (INR) 486
+1 Tinybones, the Pickpocket (OTJ) 290
+1 Toxic Deluge (CC2) 6
+1 Tragic Slip (SPG) 22
+1 Undead Augur (SCD) 114
+1 Vein Ripper (MKM) 346
+1 Vengeful Bloodwitch (FDN) 325
+1 War Room (WHO) 533
+1 Warren Soultrader (MH3) 332
+1 Wayfarer's Bauble (FIC) 372
+1 Witch's Cottage (ELD) 249
+1 Withering Torment (DSK) 313
+1 Yawgmoth, Thran Physician (DMR) 431
+1 Zulaport Cutthroat (ZNC) 57
