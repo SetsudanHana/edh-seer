@@ -34,7 +34,7 @@
         "kind": "activated",
         "cost": "{T}",
         "effect": {
-          "kind": "mana-generation"
+          "kind": "fast-mana"
         }
       }
     ]

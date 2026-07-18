@@ -505,7 +505,8 @@ const CARDS = [
     typeLine: "Artifact",
     colors: [], colorIdentity: [], power: null, toughness: null, manaValue: 1, keywords: [],
     oracleText: "{T}: Add {C}{C}.",
-    abilities: [{ kind: "activated", cost: "{T}", effect: { kind: "mana-generation" } }],
+    // Fast mana: 1-cost rock that taps for two — nets more mana than it cost.
+    abilities: [{ kind: "activated", cost: "{T}", effect: { kind: "fast-mana" } }],
   },
   {
     oracleId: "14c8f55d-d177-4c25-a931-ebeb9e6062a0",
