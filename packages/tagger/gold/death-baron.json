@@ -44,7 +44,7 @@
       {
         "kind": "static",
         "effect": {
-          "kind": "lord",
+          "kind": "pump",
           "subject": {
             "control": "you",
             "token": null,

@@ -1,8 +1,26 @@
-import type { LlmProvider } from "./provider.js";
+import type { ChatMessage, LlmProvider } from "./provider.js";
 
 export interface OllamaOptions {
   model?: string;
   host?: string;
+  /** Send format:"json" to grammar-constrain output. Default true. Turn OFF for reasoning models
+   *  (qwen3) whose <think> phase the JSON grammar would suppress — enforce JSON via prompt instead. */
+  jsonFormat?: boolean;
+  /** Ollama `think` flag: enable a reasoning phase on thinking-capable models. Default false. */
+  think?: boolean;
+  /** Context window cap. Reasoning models default to a huge context; capping (e.g. 8192) keeps
+   *  concurrent KV buffers in RAM instead of swapping to disk. Unset = Ollama default. */
+  numCtx?: number;
+  /** Sampling temperature. Unset = Ollama default. */
+  temperature?: number;
+  /** Nucleus sampling top_p. Unset = Ollama default. */
+  topP?: number;
+  /** top_k. Unset = Ollama default. */
+  topK?: number;
+  /** repeat_penalty. Unset = Ollama default. */
+  repeatPenalty?: number;
+  /** min_p. Unset = Ollama default. */
+  minP?: number;
   fetchImpl?: typeof fetch;
 }
 
@@ -12,24 +30,41 @@ const DEFAULT_HOST = "http://localhost:11434";
 export class OllamaProvider implements LlmProvider {
   readonly model: string;
   private readonly host: string;
+  private readonly jsonFormat: boolean;
+  private readonly think: boolean;
+  private readonly options: Record<string, number>;
   private readonly fetchImpl: typeof fetch;
 
   constructor(opts: OllamaOptions = {}) {
     this.model = opts.model ?? DEFAULT_MODEL;
     this.host = opts.host ?? DEFAULT_HOST;
+    this.jsonFormat = opts.jsonFormat ?? true;
+    this.think = opts.think ?? false;
+    this.options = {};
+    if (opts.numCtx !== undefined) this.options.num_ctx = opts.numCtx;
+    if (opts.temperature !== undefined) this.options.temperature = opts.temperature;
+    if (opts.topP !== undefined) this.options.top_p = opts.topP;
+    if (opts.topK !== undefined) this.options.top_k = opts.topK;
+    if (opts.repeatPenalty !== undefined) this.options.repeat_penalty = opts.repeatPenalty;
+    if (opts.minP !== undefined) this.options.min_p = opts.minP;
     this.fetchImpl = opts.fetchImpl ?? fetch;
   }
 
-  async complete(prompt: string): Promise<string> {
-    const res = await this.fetchImpl(`${this.host}/api/generate`, {
+  async chat(messages: ChatMessage[]): Promise<string> {
+    // /api/chat keeps the static system + few-shot turns as a stable prefix, so Ollama's
+    // slot KV cache can reuse them across cards instead of re-prefilling every call.
+    const body: Record<string, unknown> = { model: this.model, messages, stream: false, think: this.think };
+    if (this.jsonFormat) body.format = "json";
+    if (Object.keys(this.options).length > 0) body.options = this.options;
+    const res = await this.fetchImpl(`${this.host}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: this.model, prompt, stream: false, format: "json" }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) {
       throw new Error(`Ollama request failed: ${res.status} ${await res.text()}`);
     }
-    const json = (await res.json()) as { response?: string };
-    return json.response ?? "";
+    const json = (await res.json()) as { message?: { content?: string } };
+    return json.message?.content ?? "";
   }
 }

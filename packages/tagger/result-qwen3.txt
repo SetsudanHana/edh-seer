@@ -1,0 +1,22 @@
+scoring 33 gold cards at concurrency 4 (ollama qwen3:14b)...
+[########################] 33/33
+wrote per-card key diff to /Users/setsudanhana/projects/mtg-synergy-engine/packages/tagger/score-debug-qwen3-14b-qwen3-nothink.json
+cards scored: 33
+chars exact:  100.0%
+precision:    68.1%
+recall:       78.0%
+F1:           72.7%  [gate 80.0% → FAIL]
+
+misses:
+  850eb3c3-029b-49b0-91a9-6daeb1b3a9e8: chars=ok fp=1 fn=0
+  f1ecb3d7-5ea0-45b2-b1b0-d7ae304db2a1: chars=ok fp=1 fn=1
+  a1cc5e37-b09a-4b7f-afd5-77c1c35aa425: chars=ok fp=1 fn=0
+  697bcfe1-ecbf-42a1-bfc7-0766d48ca56b: chars=ok fp=1 fn=1
+  fd62ad01-601f-4250-bc2a-8ef3982e45c4: chars=ok fp=1 fn=1
+  09ff28b1-b6c9-48e6-b12e-2f0e644f709f: chars=ok fp=0 fn=1
+  005ee549-1bf5-478f-bc3f-3e791bd7eecf: chars=ok fp=1 fn=0
+  18591d9e-c9f5-4ae8-aee1-8580bc8fa600: chars=ok fp=5 fn=3
+  e8c7566d-7cc0-48af-a986-83223ec7e06c: chars=ok fp=1 fn=0
+  4fdbbec2-e921-4b63-958d-f9ba1e417197: chars=ok fp=1 fn=0
+  6ad8011d-3471-4369-9d68-b264cc027487: chars=ok fp=1 fn=1
+  8dcb35e5-ae44-455f-86e3-4a77d496ff34: chars=ok fp=1 fn=1

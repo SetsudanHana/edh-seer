@@ -1,9 +1,13 @@
 import {
+  EFFECT_ALIASES,
+  EFFECT_KINDS,
+  VERB_ALIASES,
   VERB_VOCAB,
   type Ability,
   type AbilityKind,
   type Control,
   type Effect,
+  type EffectKind,
   type GameEvent,
   type SubjectFilter,
   type Verb,
@@ -12,11 +16,12 @@ import {
 const KINDS: readonly AbilityKind[] = ["triggered", "activated", "static"];
 const CONTROLS: readonly Control[] = ["you", "opp", "any"];
 const VERBS = new Set<string>(VERB_VOCAB);
+const EFFECTS = new Set<string>(EFFECT_KINDS);
 
 export function parseAbilities(raw: string): Ability[] {
   let root: unknown;
   try {
-    root = JSON.parse(raw);
+    root = JSON.parse(extractJsonObject(raw));
   } catch (err) {
     throw new Error(`Ability JSON parse failed: ${(err as Error).message}`);
   }
@@ -24,10 +29,38 @@ export function parseAbilities(raw: string): Ability[] {
   if (!Array.isArray(abilities)) {
     throw new Error('Ability JSON missing "abilities" array');
   }
-  return abilities.map((a, i) => validateAbility(a, i));
+  // An ability whose effect.kind is unknown after aliasing is dropped (returns null), not thrown:
+  // it is almost always a keyword the model mistook for an ability, and one bad label should not
+  // sink an otherwise-valid card.
+  return abilities.map((a, i) => validateAbility(a, i)).filter((a): a is Ability => a !== null);
 }
 
-function validateAbility(a: unknown, i: number): Ability {
+/** Pull the abilities JSON object out of a raw completion that may be wrapped in a reasoning
+ *  block (<think>...</think>), code fences, or prose — the case when format:"json" is off (e.g.
+ *  reasoning models) or a chat model adds commentary. Slices the first balanced top-level object. */
+export function extractJsonObject(raw: string): string {
+  const s = raw.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/```(?:json)?/gi, "");
+  const start = s.indexOf("{");
+  if (start === -1) return s.trim();
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < s.length; i++) {
+    const ch = s[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}" && --depth === 0) return s.slice(start, i + 1);
+  }
+  return s.slice(start).trim(); // unbalanced; let JSON.parse surface the error
+}
+
+function validateAbility(a: unknown, i: number): Ability | null {
   if (typeof a !== "object" || a === null) throw new Error(`ability[${i}] not an object`);
   const o = a as Record<string, unknown>;
   const kind = o.kind;
@@ -35,6 +68,7 @@ function validateAbility(a: unknown, i: number): Ability {
     throw new Error(`ability[${i}] invalid kind: ${String(kind)}`);
   }
   const effect = validateEffect(o.effect, i);
+  if (effect === null) return null;
   const out: Ability = { kind: kind as AbilityKind, effect };
 
   if (kind === "triggered") {
@@ -45,7 +79,9 @@ function validateAbility(a: unknown, i: number): Ability {
     if (!Array.isArray(t.verbs) || t.verbs.length === 0) {
       throw new Error(`ability[${i}] trigger.verbs must be a non-empty array`);
     }
-    const verbs = t.verbs.map((v) => asVerb(v, i));
+    // Unknown trigger verbs are dropped; if none survive, the trigger is meaningless → drop ability.
+    const verbs = t.verbs.map(normVerb).filter((v): v is Verb => v !== null);
+    if (verbs.length === 0) return null;
     out.trigger = { verbs, subject: validateSubject(t.subject, i) };
   }
   if (o.cost !== undefined) {
@@ -54,47 +90,98 @@ function validateAbility(a: unknown, i: number): Ability {
   }
   if (o.emits !== undefined) {
     if (!Array.isArray(o.emits)) throw new Error(`ability[${i}] emits must be an array`);
-    out.emits = o.emits.map((e) => validateEvent(e, i));
+    // Emits are advisory downstream hints; drop any with an unrecognized verb rather than
+    // failing the whole card (e.g. "put-on-top", which has no verb equivalent).
+    out.emits = o.emits.map((e) => validateEvent(e, i)).filter((e): e is GameEvent => e !== null);
   }
   return out;
 }
 
-function validateEffect(e: unknown, i: number): Effect {
+function validateEffect(e: unknown, i: number): Effect | null {
   if (typeof e !== "object" || e === null) throw new Error(`ability[${i}] missing effect`);
   const o = e as Record<string, unknown>;
   if (typeof o.kind !== "string" || o.kind.length === 0) {
     throw new Error(`ability[${i}] effect.kind must be a non-empty string`);
   }
-  const out: Effect = { kind: o.kind };
+  const kind = normEffectKind(o.kind);
+  if (kind === null) return null; // unknown label after aliasing → drop the ability
+  const out: Effect = { kind };
   if (o.subject !== undefined) out.subject = validateSubject(o.subject, i);
   return out;
 }
 
-function validateEvent(e: unknown, i: number): GameEvent {
+/** Lowercase/trim, apply the alias map, and confirm membership in the closed EFFECT_KINDS set.
+ *  Returns null for a label that is neither a known kind nor an alias of one. */
+function normEffectKind(raw: string): EffectKind | null {
+  const s = raw.trim().toLowerCase();
+  if (EFFECTS.has(s)) return s as EffectKind;
+  return EFFECT_ALIASES[s] ?? null;
+}
+
+function validateEvent(e: unknown, i: number): GameEvent | null {
   if (typeof e !== "object" || e === null) throw new Error(`ability[${i}] emit not an object`);
   const o = e as Record<string, unknown>;
-  return { verb: asVerb(o.verb, i), subject: validateSubject(o.subject, i) };
+  const verb = normVerb(o.verb);
+  if (verb === null) return null;
+  return { verb, subject: validateSubject(o.subject, i) };
 }
+
+/** The values legal in the `type` position: real card types plus the pipeline's category words.
+ *  Anything else the model puts in `type` (e.g. "faerie", "wizard") is a creature subtype that
+ *  belongs in `subtype` — every model mislabels tribal-spell subjects this way. */
+const TYPE_VOCAB = new Set<string>([
+  "creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "land", "battle",
+  "tribal", "kindred", "noncreature", "nonland", "permanent", "spell",
+]);
 
 function validateSubject(s: unknown, i: number): SubjectFilter {
   if (typeof s !== "object" || s === null) throw new Error(`ability[${i}] missing subject`);
   const o = s as Record<string, unknown>;
-  if (typeof o.control !== "string" || !CONTROLS.includes(o.control as Control)) {
-    throw new Error(`ability[${i}] invalid subject.control: ${String(o.control)}`);
-  }
-  if (!(o.token === true || o.token === false || o.token === null)) {
-    throw new Error(`ability[${i}] subject.token must be true, false, or null`);
-  }
-  const out: SubjectFilter = { control: o.control as Control, token: o.token as boolean | null };
-  const type = strOrStrArray(o.type);
+  // token/control are normalized, never rejected — a local LLM omits or varies them, and
+  // dropping the whole card over a missing default loses more than a lenient default costs.
+  const out: SubjectFilter = { control: normControl(o.control), token: normToken(o.token) };
+  const { type, subtype } = splitTypeSubtype(strOrStrArray(o.type), strOrStrArray(o.subtype));
   if (type !== undefined) out.type = type;
-  const subtype = strOrStrArray(o.subtype);
   if (subtype !== undefined) out.subtype = subtype;
   if (Array.isArray(o.colors)) out.colors = o.colors.filter((c): c is string => typeof c === "string");
   if (o.chosenType === true) out.chosenType = true;
   if (typeof o.counter === "string") out.counter = o.counter;
   if (typeof o.zone === "string") out.zone = o.zone;
   return out;
+}
+
+/** Move any non-card-type value out of `type` and into `subtype` (a subtype the model misfiled).
+ *  Collapses single-element arrays to a bare string so "x" and ["x"] compare equal downstream. */
+function splitTypeSubtype(
+  rawType: string | string[] | undefined,
+  rawSubtype: string | string[] | undefined,
+): { type?: string | string[]; subtype?: string | string[] } {
+  const asArr = (v: string | string[] | undefined): string[] => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
+  const types: string[] = [];
+  const subtypes = asArr(rawSubtype);
+  for (const t of asArr(rawType)) {
+    if (TYPE_VOCAB.has(t.toLowerCase())) types.push(t);
+    else if (!subtypes.includes(t)) subtypes.push(t);
+  }
+  const collapse = (a: string[]): string | string[] | undefined =>
+    a.length === 0 ? undefined : a.length === 1 ? a[0] : a;
+  return { type: collapse(types), subtype: collapse(subtypes) };
+}
+
+/** Normalize control to you/opp/any, mapping common LLM synonyms; default "you". */
+function normControl(v: unknown): Control {
+  if (typeof v === "string") {
+    const s = v.toLowerCase();
+    if (CONTROLS.includes(s as Control)) return s as Control;
+    if (s.includes("opp") || s.includes("each player") || s.includes("target player")) return "opp";
+    if (s.includes("any") || s === "anyone" || s === "target") return "any";
+  }
+  return "you";
+}
+
+/** Normalize token to the tri-state true/false/null; anything unclear → null (any). */
+function normToken(v: unknown): boolean | null {
+  return v === true ? true : v === false ? false : null;
 }
 
 /** Accept a single type/subtype string, or a non-empty array of strings (OR). */
@@ -107,9 +194,10 @@ function strOrStrArray(v: unknown): string | string[] | undefined {
   return undefined;
 }
 
-function asVerb(v: unknown, i: number): Verb {
-  if (typeof v !== "string" || !VERBS.has(v)) {
-    throw new Error(`ability[${i}] invalid verb: ${String(v)}`);
-  }
-  return v as Verb;
+/** Lowercase/trim, apply the alias map, confirm membership. Returns null for an unknown verb. */
+function normVerb(v: unknown): Verb | null {
+  if (typeof v !== "string") return null;
+  const s = v.trim().toLowerCase();
+  if (VERBS.has(s)) return s as Verb;
+  return VERB_ALIASES[s] ?? null;
 }

@@ -1,0 +1,29 @@
+scoring 33 gold cards at concurrency 4 (ollama qwen3.5:9b)...
+[########################] 33/33
+wrote per-card key diff to /Users/setsudanhana/projects/mtg-synergy-engine/packages/tagger/score-debug-qwen3.5-9b-qwen3.5-nothink.json
+cards scored: 31
+chars exact:  100.0%
+precision:    63.9%
+recall:       59.0%
+F1:           61.3%  [gate 80.0% → FAIL]
+
+misses:
+  f1ecb3d7-5ea0-45b2-b1b0-d7ae304db2a1: chars=ok fp=1 fn=1
+  310f141c-7f37-4729-aed6-dd9c09db448d: chars=ok fp=1 fn=1
+  850eb3c3-029b-49b0-91a9-6daeb1b3a9e8: chars=ok fp=1 fn=1
+  fd62ad01-601f-4250-bc2a-8ef3982e45c4: chars=ok fp=1 fn=1
+  697bcfe1-ecbf-42a1-bfc7-0766d48ca56b: chars=ok fp=0 fn=1
+  16629f59-bae8-4c19-bf50-443eb0ed6856: chars=ok fp=1 fn=2
+  09ff28b1-b6c9-48e6-b12e-2f0e644f709f: chars=ok fp=0 fn=1
+  c6bdaf76-6a03-4695-9c4b-f040e73435af: chars=ok fp=1 fn=1
+  18591d9e-c9f5-4ae8-aee1-8580bc8fa600: chars=ok fp=0 fn=1
+  21bdba6e-3f9d-4ead-8212-0cbb0ce7f8cc: chars=ok fp=1 fn=1
+  005ee549-1bf5-478f-bc3f-3e791bd7eecf: chars=ok fp=2 fn=1
+  4fdbbec2-e921-4b63-958d-f9ba1e417197: chars=ok fp=1 fn=1
+  180e1a7e-890d-477c-80a5-da8a5f2857b3: chars=ok fp=1 fn=1
+  8dcb35e5-ae44-455f-86e3-4a77d496ff34: chars=ok fp=2 fn=1
+  f8e17f4f-080d-4bba-bd05-ca27e94ccecc: chars=ok fp=0 fn=1
+
+extraction failures: 2/33 (excluded from F1)
+  Carrion Feeder: Ability extraction failed after 2 attempts: ability[0] missing subject
+  Fiery Emancipation: Ability extraction failed after 2 attempts: ability[0] cost must be a string

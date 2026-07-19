@@ -53,12 +53,13 @@ const counterAdded = (kind, subject = { type: "creature", control: "you", token:
 function effectEmits(effect) {
   const c = effect.subject?.control ?? "you";
   switch (effect.kind) {
-    case "player-damage":
-      // Damage to a player IS life loss — emit both so life-loss payoffs (Samut speed) edge.
-      return [ev("non-combat-damage", { control: c, token: null }), ev("lose-life", { control: c, token: null })];
-    case "noncombat-damage":
-      // "any target" may hit a creature, so don't assume player life loss.
-      return [ev("non-combat-damage", { control: c, token: null })];
+    case "damage": {
+      // Ability damage emits non-combat-damage. Damage to a PLAYER (control opp) is also
+      // life loss (feeds Samut speed); "any target" (control any) may hit a creature, so no.
+      const emits = [ev("non-combat-damage", { control: c, token: null })];
+      if (c === "opp") emits.push(ev("lose-life", { control: "opp", token: null }));
+      return emits;
+    }
     case "player-life-loss":
       return [ev("lose-life", { control: c, token: null })];
     case "drain":
@@ -167,7 +168,7 @@ const CARDS = [
       {
         kind: "triggered",
         trigger: { verbs: ["enters"], subject: subj({ type: "creature", token: null }) },
-        effect: { kind: "player-damage", subject: subj({ control: "opp", token: null }) },
+        effect: { kind: "damage", subject: subj({ control: "opp", token: null }) },
       },
     ],
   },
@@ -182,7 +183,7 @@ const CARDS = [
       {
         kind: "triggered",
         trigger: { verbs: ["enters"], subject: subj({ type: "creature", token: null }) },
-        effect: { kind: "player-damage", subject: subj({ control: "opp", token: null }) },
+        effect: { kind: "damage", subject: subj({ control: "opp", token: null }) },
       },
       { kind: "activated", cost: "{2}{R}", effect: { kind: "pump", subject: subj({ type: "creature", token: null }) } },
     ],
@@ -199,7 +200,7 @@ const CARDS = [
       {
         kind: "triggered",
         trigger: { verbs: ["enters"], subject: subj({ type: "creature", token: null }) },
-        effect: { kind: "noncombat-damage", subject: subj({ control: "any", token: null }) },
+        effect: { kind: "damage", subject: subj({ control: "any", token: null }) },
       },
       // Tax is paid in LIFE (3 life to target it), so it also causes opponent life loss.
       {
@@ -228,7 +229,7 @@ const CARDS = [
       {
         kind: "triggered",
         trigger: { verbs: ["cast"], subject: subj({ type: ["instant", "sorcery"], token: false }) },
-        effect: { kind: "player-damage", subject: subj({ control: "opp", token: null }) },
+        effect: { kind: "damage", subject: subj({ control: "opp", token: null }) },
       },
     ],
   },
@@ -318,7 +319,7 @@ const CARDS = [
     typeLine: "Creature — Vampire Wizard",
     colors: ["B"], colorIdentity: ["B"], power: "1", toughness: "1", manaValue: 1, keywords: [],
     oracleText: "Sacrifice a creature: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
-    abilities: [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "scry" }, emits: sacEmits() }],
+    abilities: [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "top-manipulation" }, emits: sacEmits() }],
   },
   {
     oracleId: "a1cc5e37-b09a-4b7f-afd5-77c1c35aa425",
@@ -412,7 +413,7 @@ const CARDS = [
       {
         kind: "triggered",
         trigger: { verbs: ["enters"], subject: subj({ type: "artifact", token: null }) },
-        effect: { kind: "player-damage", subject: subj({ control: "opp", token: null }) },
+        effect: { kind: "damage", subject: subj({ control: "opp", token: null }) },
       },
     ],
   },
@@ -560,7 +561,7 @@ const CARDS = [
       {
         kind: "activated",
         cost: "Sacrifice a creature",
-        effect: { kind: "noncombat-damage", subject: subj({ control: "any", token: null }) },
+        effect: { kind: "damage", subject: subj({ control: "any", token: null }) },
         emits: sacEmits(),
       },
     ],
@@ -589,7 +590,7 @@ const CARDS = [
     oracleText:
       "Skeletons you control and other Zombies you control get +1/+1 and have deathtouch. (Any amount of damage they deal to a creature is enough to destroy it.)",
     abilities: [
-      { kind: "static", effect: { kind: "lord", subject: subj({ subtype: "zombie", token: null }) } },
+      { kind: "static", effect: { kind: "pump", subject: subj({ subtype: "zombie", token: null }) } },
     ],
   },
 ];

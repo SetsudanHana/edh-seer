@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { buildAbilityPrompt, PROMPT_VERSION } from "./prompt.js";
+import { buildAbilityMessages, PROMPT_VERSION } from "./prompt.js";
 
 const card = {
   name: "Impact Tremors",
@@ -10,25 +10,37 @@ const card = {
   manaValue: 2,
 };
 
-test("prompt version is 16", () => {
-  expect(PROMPT_VERSION).toBe(16);
+/** Flatten the message turns into one string for content assertions. */
+function flat(): string {
+  return buildAbilityMessages(card)
+    .map((m) => `${m.role}:${m.content}`)
+    .join("\n");
+}
+
+test("prompt version is 17", () => {
+  expect(PROMPT_VERSION).toBe(17);
 });
 
-test("prompt includes the oracle text, the closed verb list, and the abilities key", () => {
-  const p = buildAbilityPrompt(card);
-  expect(p).toContain(card.oracleText);
+test("first message is the system instruction, last is the card under test", () => {
+  const msgs = buildAbilityMessages(card);
+  expect(msgs[0].role).toBe("system");
+  expect(msgs.at(-1)?.role).toBe("user");
+  expect(msgs.at(-1)?.content).toContain(card.oracleText);
+});
+
+test("messages include the closed verb list and the abilities key", () => {
+  const p = flat();
   expect(p).toContain("create-token");
   expect(p).toContain("enters");
   expect(p).toContain('"abilities"');
 });
 
-test("prompt includes the emits invariant and a few-shot example", () => {
-  const p = buildAbilityPrompt(card);
+test("messages include the emits invariant and a few-shot example", () => {
+  const p = flat();
   expect(p.toLowerCase()).toContain("cast");
   expect(p).toContain("Inalla"); // few-shot anchor
 });
 
-test("prompt includes the closed effect.kind label set", () => {
-  const p = buildAbilityPrompt(card);
-  expect(p).toContain("player-life-loss");
+test("messages include the closed effect.kind label set", () => {
+  expect(flat()).toContain("player-life-loss");
 });

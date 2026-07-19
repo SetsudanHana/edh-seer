@@ -42,7 +42,7 @@
         "kind": "activated",
         "cost": "Sacrifice a creature",
         "effect": {
-          "kind": "noncombat-damage",
+          "kind": "damage",
           "subject": {
             "control": "any",
             "token": null
