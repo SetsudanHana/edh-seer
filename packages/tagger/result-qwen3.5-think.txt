@@ -1,0 +1,28 @@
+scoring 33 gold cards at concurrency 4 (ollama qwen3.5:9b)...
+[########################] 33/33
+wrote per-card key diff to /Users/setsudanhana/projects/mtg-synergy-engine/packages/tagger/score-debug-qwen3.5-9b-qwen3.5-think.json
+cards scored: 31
+chars exact:  100.0%
+precision:    73.5%
+recall:       67.6%
+F1:           70.4%  [gate 80.0% → FAIL]
+
+misses:
+  310f141c-7f37-4729-aed6-dd9c09db448d: chars=ok fp=1 fn=1
+  f1ecb3d7-5ea0-45b2-b1b0-d7ae304db2a1: chars=ok fp=1 fn=1
+  52159875-354c-47f9-bb1c-cd65395fcc68: chars=ok fp=0 fn=1
+  fd62ad01-601f-4250-bc2a-8ef3982e45c4: chars=ok fp=0 fn=1
+  697bcfe1-ecbf-42a1-bfc7-0766d48ca56b: chars=ok fp=1 fn=1
+  09ff28b1-b6c9-48e6-b12e-2f0e644f709f: chars=ok fp=0 fn=1
+  18591d9e-c9f5-4ae8-aee1-8580bc8fa600: chars=ok fp=0 fn=1
+  9242cd3e-1a71-4700-8182-9c1005616033: chars=ok fp=1 fn=1
+  005ee549-1bf5-478f-bc3f-3e791bd7eecf: chars=ok fp=2 fn=1
+  cffb9b7f-d52c-43e0-a4a6-b06dea83eb53: chars=ok fp=0 fn=1
+  4fdbbec2-e921-4b63-958d-f9ba1e417197: chars=ok fp=1 fn=0
+  6ad8011d-3471-4369-9d68-b264cc027487: chars=ok fp=1 fn=1
+  8dcb35e5-ae44-455f-86e3-4a77d496ff34: chars=ok fp=1 fn=0
+  76b003e0-15af-4f22-bdf2-1ade5430964a: chars=ok fp=0 fn=1
+
+extraction failures: 2/33 (excluded from F1)
+  Inalla, Archmage Ritualist: Ability extraction failed after 2 attempts: Ability JSON parse failed: Expected ',' or '}' after property value in JSON at position 1020 (line 3 column 387)
+  Terror of the Peaks: Ability extraction failed after 2 attempts: ability[0] cost must be a string
