@@ -15,6 +15,12 @@ export interface OllamaOptions {
   temperature?: number;
   /** Nucleus sampling top_p. Unset = Ollama default. */
   topP?: number;
+  /** top_k. Unset = Ollama default. */
+  topK?: number;
+  /** repeat_penalty. Unset = Ollama default. */
+  repeatPenalty?: number;
+  /** min_p. Unset = Ollama default. */
+  minP?: number;
   fetchImpl?: typeof fetch;
 }
 
@@ -38,6 +44,9 @@ export class OllamaProvider implements LlmProvider {
     if (opts.numCtx !== undefined) this.options.num_ctx = opts.numCtx;
     if (opts.temperature !== undefined) this.options.temperature = opts.temperature;
     if (opts.topP !== undefined) this.options.top_p = opts.topP;
+    if (opts.topK !== undefined) this.options.top_k = opts.topK;
+    if (opts.repeatPenalty !== undefined) this.options.repeat_penalty = opts.repeatPenalty;
+    if (opts.minP !== undefined) this.options.min_p = opts.minP;
     this.fetchImpl = opts.fetchImpl ?? fetch;
   }
 

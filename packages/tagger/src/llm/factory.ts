@@ -25,6 +25,9 @@ export function createProvider(cfg: TaggerConfig, fetchImpl?: typeof fetch): Llm
     numCtx: cfg.ollamaNumCtx,
     temperature: cfg.ollamaTemperature,
     topP: cfg.ollamaTopP,
+    topK: cfg.ollamaTopK,
+    repeatPenalty: cfg.ollamaRepeatPenalty,
+    minP: cfg.ollamaMinP,
     fetchImpl,
   });
 }

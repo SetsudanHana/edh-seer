@@ -17,6 +17,33 @@ test("OLLAMA_FORMAT_JSON=false and OLLAMA_THINK=true flip the reasoning-model fl
   expect(cfg.ollamaThink).toBe(true);
 });
 
+test("OLLAMA_PRESET=qwen3.5 sets the thinking precise-coding bundle", () => {
+  const cfg = loadTaggerConfig({ OLLAMA_PRESET: "qwen3.5" });
+  expect(cfg.ollamaThink).toBe(true);
+  expect(cfg.ollamaJsonFormat).toBe(false);
+  expect(cfg.ollamaTemperature).toBe(0.6);
+  expect(cfg.ollamaTopP).toBe(0.95);
+  expect(cfg.ollamaTopK).toBe(20);
+  expect(cfg.ollamaMinP).toBe(0);
+  expect(cfg.ollamaRepeatPenalty).toBe(1.05);
+  expect(cfg.ollamaNumCtx).toBe(8192);
+});
+
+test("OLLAMA_PRESET=qwen2.5 sets non-thinking json bundle", () => {
+  const cfg = loadTaggerConfig({ OLLAMA_PRESET: "qwen2.5" });
+  expect(cfg.ollamaThink).toBe(false);
+  expect(cfg.ollamaJsonFormat).toBe(true);
+  expect(cfg.ollamaTemperature).toBe(0.7);
+  expect(cfg.ollamaTopP).toBe(0.8);
+});
+
+test("an explicit env var overrides a preset field", () => {
+  const cfg = loadTaggerConfig({ OLLAMA_PRESET: "qwen3.5", OLLAMA_TEMPERATURE: "0.2", OLLAMA_THINK: "false" });
+  expect(cfg.ollamaTemperature).toBe(0.2); // env wins over preset 0.6
+  expect(cfg.ollamaThink).toBe(false); // env wins over preset true
+  expect(cfg.ollamaTopP).toBe(0.95); // preset field left intact
+});
+
 test("sampling/context options are read as numbers, or left undefined when absent/invalid", () => {
   const cfg = loadTaggerConfig({ OLLAMA_NUM_CTX: "8192", OLLAMA_TEMPERATURE: "0.6", OLLAMA_TOP_P: "0.95" });
   expect(cfg.ollamaNumCtx).toBe(8192);
