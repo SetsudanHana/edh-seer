@@ -9,7 +9,7 @@ import {
   docToCard,
 } from "@mtg/data";
 import type { Card } from "@mtg/engine";
-import { OllamaProvider } from "../llm/ollama.js";
+import { createProvider } from "../llm/factory.js";
 import { extractCardTags } from "../extract.js";
 import { upsertCardTags, needsRetag, type TagCollection } from "../store.js";
 import { SCHEMA_VERSION } from "../schema.js";
@@ -25,7 +25,7 @@ async function main(): Promise<void> {
   const cfg = loadTaggerConfig();
   const store = await connect(loadConfig());
   const cardTags = store.db.collection("cardTags") as unknown as TagCollection;
-  const llm = new OllamaProvider({ model: cfg.model, host: cfg.ollamaHost });
+  const llm = createProvider(cfg);
   const lookup = mongoLookup(store);
 
   // Collect unique oracle cards across all decks (dedupe by oracle id = CardDoc._id).
