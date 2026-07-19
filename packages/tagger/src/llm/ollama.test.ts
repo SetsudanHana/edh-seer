@@ -25,6 +25,20 @@ test("posts messages to ollama chat endpoint with json format, returns message c
   expect(body.format).toBe("json");
 });
 
+test("omits format and enables think when configured for a reasoning model", async () => {
+  const fetchImpl = vi.fn(async () =>
+    new Response(JSON.stringify({ message: { content: '{"abilities":[]}' } }), { status: 200 }),
+  ) as unknown as typeof fetch;
+
+  const p = new OllamaProvider({ model: "qwen3:14b", jsonFormat: false, think: true, fetchImpl });
+  await p.chat([{ role: "user", content: "x" }]);
+
+  const [, init] = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+  const body = JSON.parse((init as RequestInit).body as string);
+  expect(body.format).toBeUndefined();
+  expect(body.think).toBe(true);
+});
+
 test("throws on non-ok response", async () => {
   const fetchImpl = vi.fn(async () => new Response("boom", { status: 500 })) as unknown as typeof fetch;
   const p = new OllamaProvider({ fetchImpl });

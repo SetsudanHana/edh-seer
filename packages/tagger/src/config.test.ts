@@ -1,12 +1,20 @@
 import { expect, test } from "vitest";
 import { loadTaggerConfig } from "./config.js";
 
-test("defaults to the ollama provider with qwen model", () => {
+test("defaults to the ollama provider with qwen model, json format on, think off", () => {
   const cfg = loadTaggerConfig({});
   expect(cfg.provider).toBe("ollama");
   expect(cfg.model).toBe("qwen2.5:14b");
   expect(cfg.ollamaHost).toBe("http://localhost:11434");
   expect(cfg.concurrency).toBe(4);
+  expect(cfg.ollamaJsonFormat).toBe(true);
+  expect(cfg.ollamaThink).toBe(false);
+});
+
+test("OLLAMA_FORMAT_JSON=false and OLLAMA_THINK=true flip the reasoning-model flags", () => {
+  const cfg = loadTaggerConfig({ OLLAMA_FORMAT_JSON: "false", OLLAMA_THINK: "true" });
+  expect(cfg.ollamaJsonFormat).toBe(false);
+  expect(cfg.ollamaThink).toBe(true);
 });
 
 test("ollama model/host/concurrency overridable by env", () => {

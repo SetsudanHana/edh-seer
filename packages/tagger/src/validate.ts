@@ -21,7 +21,7 @@ const EFFECTS = new Set<string>(EFFECT_KINDS);
 export function parseAbilities(raw: string): Ability[] {
   let root: unknown;
   try {
-    root = JSON.parse(raw);
+    root = JSON.parse(extractJsonObject(raw));
   } catch (err) {
     throw new Error(`Ability JSON parse failed: ${(err as Error).message}`);
   }
@@ -33,6 +33,31 @@ export function parseAbilities(raw: string): Ability[] {
   // it is almost always a keyword the model mistook for an ability, and one bad label should not
   // sink an otherwise-valid card.
   return abilities.map((a, i) => validateAbility(a, i)).filter((a): a is Ability => a !== null);
+}
+
+/** Pull the abilities JSON object out of a raw completion that may be wrapped in a reasoning
+ *  block (<think>...</think>), code fences, or prose — the case when format:"json" is off (e.g.
+ *  reasoning models) or a chat model adds commentary. Slices the first balanced top-level object. */
+export function extractJsonObject(raw: string): string {
+  const s = raw.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/```(?:json)?/gi, "");
+  const start = s.indexOf("{");
+  if (start === -1) return s.trim();
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < s.length; i++) {
+    const ch = s[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}" && --depth === 0) return s.slice(start, i + 1);
+  }
+  return s.slice(start).trim(); // unbalanced; let JSON.parse surface the error
 }
 
 function validateAbility(a: unknown, i: number): Ability | null {

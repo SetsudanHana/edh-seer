@@ -6,6 +6,10 @@ export interface TaggerConfig {
   /** Active model id for the chosen provider (recorded on tag output). */
   model: string;
   ollamaHost: string;
+  /** Send Ollama format:"json". Off for reasoning models; JSON is then enforced via prompt. */
+  ollamaJsonFormat: boolean;
+  /** Enable Ollama's `think` reasoning phase (qwen3 etc.). */
+  ollamaThink: boolean;
   /** Anthropic API key; required only when provider=anthropic. */
   anthropicApiKey?: string;
   anthropicBaseUrl: string;
@@ -34,6 +38,8 @@ export function loadTaggerConfig(env: NodeJS.ProcessEnv = process.env): TaggerCo
     provider,
     model,
     ollamaHost: env.OLLAMA_HOST ?? "http://localhost:11434",
+    ollamaJsonFormat: env.OLLAMA_FORMAT_JSON !== "false",
+    ollamaThink: env.OLLAMA_THINK === "true",
     anthropicApiKey: env.ANTHROPIC_API_KEY,
     anthropicBaseUrl: env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com",
     maxTokens,

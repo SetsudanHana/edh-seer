@@ -1,5 +1,19 @@
 import { expect, test } from "vitest";
-import { parseAbilities } from "./validate.js";
+import { parseAbilities, extractJsonObject } from "./validate.js";
+
+test("extracts the abilities object from think-wrapped, fenced, prose output", () => {
+  const raw =
+    'Sure! <think>this card has one static ability</think>\nHere it is:\n```json\n{ "abilities": [] }\n```\nDone.';
+  expect(extractJsonObject(raw)).toBe('{ "abilities": [] }');
+});
+
+test("parseAbilities tolerates a reasoning-model wrapper around the JSON", () => {
+  const raw =
+    '<think>trigger on dies, drain</think>{"abilities":[{"kind":"triggered","trigger":{"verbs":["dies"],"subject":{"type":"creature","control":"you","token":null}},"effect":{"kind":"drain"}}]}';
+  const [a] = parseAbilities(raw);
+  expect(a.kind).toBe("triggered");
+  expect(a.effect.kind).toBe("drain");
+});
 
 test("parses a valid triggered ability", () => {
   const raw = JSON.stringify({

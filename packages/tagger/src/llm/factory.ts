@@ -17,5 +17,11 @@ export function createProvider(cfg: TaggerConfig, fetchImpl?: typeof fetch): Llm
       fetchImpl,
     });
   }
-  return new OllamaProvider({ model: cfg.model, host: cfg.ollamaHost, fetchImpl });
+  return new OllamaProvider({
+    model: cfg.model,
+    host: cfg.ollamaHost,
+    jsonFormat: cfg.ollamaJsonFormat,
+    think: cfg.ollamaThink,
+    fetchImpl,
+  });
 }
