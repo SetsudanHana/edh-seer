@@ -42,8 +42,10 @@ async function main(): Promise<void> {
     progress.tick();
   });
 
-  // Dump predicted-vs-gold ability keys for diagnosis (gitignored).
-  const debugPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "score-debug.json");
+  // Dump predicted-vs-gold ability keys for diagnosis (gitignored), one file per run so
+  // model/preset comparisons don't clobber each other. e.g. score-debug-qwen2.5-14b-qwen2.5.json
+  const slug = [cfg.model, cfg.ollamaPreset].filter(Boolean).join("-").replace(/[^A-Za-z0-9.]+/g, "-");
+  const debugPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", `score-debug-${slug}.json`);
   writeFileSync(debugPath, JSON.stringify(debug, null, 2) + "\n");
   console.log(`wrote per-card key diff to ${debugPath}`);
 

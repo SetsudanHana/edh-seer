@@ -17,6 +17,8 @@ export interface TaggerConfig {
   ollamaTopK?: number;
   ollamaRepeatPenalty?: number;
   ollamaMinP?: number;
+  /** Selected preset name (OLLAMA_PRESET), used to label per-run output files. */
+  ollamaPreset?: string;
   /** Anthropic API key; required only when provider=anthropic. */
   anthropicApiKey?: string;
   anthropicBaseUrl: string;
@@ -90,6 +92,7 @@ export function loadTaggerConfig(env: NodeJS.ProcessEnv = process.env): TaggerCo
     ollamaTopK: numOrUndefined(env.OLLAMA_TOP_K) ?? p.topK,
     ollamaRepeatPenalty: numOrUndefined(env.OLLAMA_REPEAT_PENALTY) ?? p.repeatPenalty,
     ollamaMinP: numOrUndefined(env.OLLAMA_MIN_P) ?? p.minP,
+    ollamaPreset: env.OLLAMA_PRESET || undefined,
     anthropicApiKey: env.ANTHROPIC_API_KEY,
     anthropicBaseUrl: env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com",
     maxTokens,

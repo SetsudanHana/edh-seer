@@ -27,6 +27,7 @@ test("OLLAMA_PRESET=qwen3.5 sets the thinking precise-coding bundle", () => {
   expect(cfg.ollamaMinP).toBe(0);
   expect(cfg.ollamaRepeatPenalty).toBe(1.05);
   expect(cfg.ollamaNumCtx).toBe(8192);
+  expect(cfg.ollamaPreset).toBe("qwen3.5");
 });
 
 test("OLLAMA_PRESET=qwen2.5 sets non-thinking json bundle", () => {
