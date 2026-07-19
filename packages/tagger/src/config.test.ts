@@ -17,6 +17,17 @@ test("OLLAMA_FORMAT_JSON=false and OLLAMA_THINK=true flip the reasoning-model fl
   expect(cfg.ollamaThink).toBe(true);
 });
 
+test("sampling/context options are read as numbers, or left undefined when absent/invalid", () => {
+  const cfg = loadTaggerConfig({ OLLAMA_NUM_CTX: "8192", OLLAMA_TEMPERATURE: "0.6", OLLAMA_TOP_P: "0.95" });
+  expect(cfg.ollamaNumCtx).toBe(8192);
+  expect(cfg.ollamaTemperature).toBe(0.6);
+  expect(cfg.ollamaTopP).toBe(0.95);
+
+  const bare = loadTaggerConfig({ OLLAMA_TEMPERATURE: "nope" });
+  expect(bare.ollamaNumCtx).toBeUndefined();
+  expect(bare.ollamaTemperature).toBeUndefined();
+});
+
 test("ollama model/host/concurrency overridable by env", () => {
   const cfg = loadTaggerConfig({ OLLAMA_MODEL: "llama3.1:8b", OLLAMA_HOST: "http://x:1", OLLAMA_CONCURRENCY: "8" });
   expect(cfg.model).toBe("llama3.1:8b");

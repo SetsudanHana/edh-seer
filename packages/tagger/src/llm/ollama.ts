@@ -8,6 +8,13 @@ export interface OllamaOptions {
   jsonFormat?: boolean;
   /** Ollama `think` flag: enable a reasoning phase on thinking-capable models. Default false. */
   think?: boolean;
+  /** Context window cap. Reasoning models default to a huge context; capping (e.g. 8192) keeps
+   *  concurrent KV buffers in RAM instead of swapping to disk. Unset = Ollama default. */
+  numCtx?: number;
+  /** Sampling temperature. Unset = Ollama default. */
+  temperature?: number;
+  /** Nucleus sampling top_p. Unset = Ollama default. */
+  topP?: number;
   fetchImpl?: typeof fetch;
 }
 
@@ -19,6 +26,7 @@ export class OllamaProvider implements LlmProvider {
   private readonly host: string;
   private readonly jsonFormat: boolean;
   private readonly think: boolean;
+  private readonly options: Record<string, number>;
   private readonly fetchImpl: typeof fetch;
 
   constructor(opts: OllamaOptions = {}) {
@@ -26,6 +34,10 @@ export class OllamaProvider implements LlmProvider {
     this.host = opts.host ?? DEFAULT_HOST;
     this.jsonFormat = opts.jsonFormat ?? true;
     this.think = opts.think ?? false;
+    this.options = {};
+    if (opts.numCtx !== undefined) this.options.num_ctx = opts.numCtx;
+    if (opts.temperature !== undefined) this.options.temperature = opts.temperature;
+    if (opts.topP !== undefined) this.options.top_p = opts.topP;
     this.fetchImpl = opts.fetchImpl ?? fetch;
   }
 
@@ -34,6 +46,7 @@ export class OllamaProvider implements LlmProvider {
     // slot KV cache can reuse them across cards instead of re-prefilling every call.
     const body: Record<string, unknown> = { model: this.model, messages, stream: false, think: this.think };
     if (this.jsonFormat) body.format = "json";
+    if (Object.keys(this.options).length > 0) body.options = this.options;
     const res = await this.fetchImpl(`${this.host}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

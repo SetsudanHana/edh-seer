@@ -10,6 +10,10 @@ export interface TaggerConfig {
   ollamaJsonFormat: boolean;
   /** Enable Ollama's `think` reasoning phase (qwen3 etc.). */
   ollamaThink: boolean;
+  /** Ollama sampling/context options; each undefined = leave Ollama's default. */
+  ollamaNumCtx?: number;
+  ollamaTemperature?: number;
+  ollamaTopP?: number;
   /** Anthropic API key; required only when provider=anthropic. */
   anthropicApiKey?: string;
   anthropicBaseUrl: string;
@@ -21,6 +25,13 @@ export interface TaggerConfig {
 
 const DEFAULT_OLLAMA_MODEL = "qwen2.5:14b";
 const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5";
+
+/** Parse an env value to a finite number, or undefined if absent/invalid (→ Ollama's default). */
+function numOrUndefined(v: string | undefined): number | undefined {
+  if (v === undefined) return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
 
 export function loadTaggerConfig(env: NodeJS.ProcessEnv = process.env): TaggerConfig {
   const provider: TaggerProvider = env.TAGGER_PROVIDER === "anthropic" ? "anthropic" : "ollama";
@@ -40,6 +51,9 @@ export function loadTaggerConfig(env: NodeJS.ProcessEnv = process.env): TaggerCo
     ollamaHost: env.OLLAMA_HOST ?? "http://localhost:11434",
     ollamaJsonFormat: env.OLLAMA_FORMAT_JSON !== "false",
     ollamaThink: env.OLLAMA_THINK === "true",
+    ollamaNumCtx: numOrUndefined(env.OLLAMA_NUM_CTX),
+    ollamaTemperature: numOrUndefined(env.OLLAMA_TEMPERATURE),
+    ollamaTopP: numOrUndefined(env.OLLAMA_TOP_P),
     anthropicApiKey: env.ANTHROPIC_API_KEY,
     anthropicBaseUrl: env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com",
     maxTokens,

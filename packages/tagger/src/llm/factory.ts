@@ -22,6 +22,9 @@ export function createProvider(cfg: TaggerConfig, fetchImpl?: typeof fetch): Llm
     host: cfg.ollamaHost,
     jsonFormat: cfg.ollamaJsonFormat,
     think: cfg.ollamaThink,
+    numCtx: cfg.ollamaNumCtx,
+    temperature: cfg.ollamaTemperature,
+    topP: cfg.ollamaTopP,
     fetchImpl,
   });
 }
