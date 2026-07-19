@@ -1,33 +1,10 @@
 import type { Card } from "@mtg/engine";
-import { VERB_VOCAB } from "../schema.js";
+import { EFFECT_KINDS, VERB_VOCAB } from "../schema.js";
 import type { ChatMessage } from "./provider.js";
 
 export const PROMPT_VERSION = 17;
 
-export const EFFECT_KINDS = [
-  "token-generation",
-  "damage",
-  "player-life-loss",
-  "drain",
-  "draw-card",
-  "forced-sacrifice",
-  "pump",
-  "cost-reduction",
-  "trigger-doubling",
-  "graveyard-recursion",
-  "clone",
-  "token-doubling",
-  "damage-multiplier",
-  "tax",
-  "top-manipulation",
-  "counter-placement",
-  "enters-with-counters",
-  "mana-generation",
-  "fast-mana",
-  "ritual",
-  "copy-spell",
-  "speed-increase",
-] as const;
+export { EFFECT_KINDS };
 
 const INSTRUCTIONS = `You decompose a Magic: The Gathering card's rules text into structured abilities.
 Return ONLY JSON of the form { "abilities": Ability[] }. Do not include characteristics.

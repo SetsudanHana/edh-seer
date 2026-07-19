@@ -1,9 +1,12 @@
 import {
+  EFFECT_ALIASES,
+  EFFECT_KINDS,
   VERB_VOCAB,
   type Ability,
   type AbilityKind,
   type Control,
   type Effect,
+  type EffectKind,
   type GameEvent,
   type SubjectFilter,
   type Verb,
@@ -12,6 +15,7 @@ import {
 const KINDS: readonly AbilityKind[] = ["triggered", "activated", "static"];
 const CONTROLS: readonly Control[] = ["you", "opp", "any"];
 const VERBS = new Set<string>(VERB_VOCAB);
+const EFFECTS = new Set<string>(EFFECT_KINDS);
 
 export function parseAbilities(raw: string): Ability[] {
   let root: unknown;
@@ -24,10 +28,13 @@ export function parseAbilities(raw: string): Ability[] {
   if (!Array.isArray(abilities)) {
     throw new Error('Ability JSON missing "abilities" array');
   }
-  return abilities.map((a, i) => validateAbility(a, i));
+  // An ability whose effect.kind is unknown after aliasing is dropped (returns null), not thrown:
+  // it is almost always a keyword the model mistook for an ability, and one bad label should not
+  // sink an otherwise-valid card.
+  return abilities.map((a, i) => validateAbility(a, i)).filter((a): a is Ability => a !== null);
 }
 
-function validateAbility(a: unknown, i: number): Ability {
+function validateAbility(a: unknown, i: number): Ability | null {
   if (typeof a !== "object" || a === null) throw new Error(`ability[${i}] not an object`);
   const o = a as Record<string, unknown>;
   const kind = o.kind;
@@ -35,6 +42,7 @@ function validateAbility(a: unknown, i: number): Ability {
     throw new Error(`ability[${i}] invalid kind: ${String(kind)}`);
   }
   const effect = validateEffect(o.effect, i);
+  if (effect === null) return null;
   const out: Ability = { kind: kind as AbilityKind, effect };
 
   if (kind === "triggered") {
@@ -59,15 +67,25 @@ function validateAbility(a: unknown, i: number): Ability {
   return out;
 }
 
-function validateEffect(e: unknown, i: number): Effect {
+function validateEffect(e: unknown, i: number): Effect | null {
   if (typeof e !== "object" || e === null) throw new Error(`ability[${i}] missing effect`);
   const o = e as Record<string, unknown>;
   if (typeof o.kind !== "string" || o.kind.length === 0) {
     throw new Error(`ability[${i}] effect.kind must be a non-empty string`);
   }
-  const out: Effect = { kind: o.kind };
+  const kind = normEffectKind(o.kind);
+  if (kind === null) return null; // unknown label after aliasing → drop the ability
+  const out: Effect = { kind };
   if (o.subject !== undefined) out.subject = validateSubject(o.subject, i);
   return out;
+}
+
+/** Lowercase/trim, apply the alias map, and confirm membership in the closed EFFECT_KINDS set.
+ *  Returns null for a label that is neither a known kind nor an alias of one. */
+function normEffectKind(raw: string): EffectKind | null {
+  const s = raw.trim().toLowerCase();
+  if (EFFECTS.has(s)) return s as EffectKind;
+  return EFFECT_ALIASES[s] ?? null;
 }
 
 function validateEvent(e: unknown, i: number): GameEvent {

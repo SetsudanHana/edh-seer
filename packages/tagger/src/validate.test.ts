@@ -27,9 +27,29 @@ test("throws on non-JSON", () => {
 
 test("throws on unknown verb", () => {
   const raw = JSON.stringify({
-    abilities: [{ kind: "triggered", trigger: { verbs: ["explodes"], subject: { control: "you", token: null } }, effect: { kind: "x" } }],
+    abilities: [{ kind: "triggered", trigger: { verbs: ["explodes"], subject: { control: "you", token: null } }, effect: { kind: "damage" } }],
   });
   expect(() => parseAbilities(raw)).toThrow(/verb/i);
+});
+
+test("aliases a near-miss effect.kind to its canonical label", () => {
+  const raw = JSON.stringify({
+    abilities: [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "counter-added" } }],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.effect.kind).toBe("counter-placement");
+});
+
+test("drops an ability whose effect.kind is unknown after aliasing, keeps valid ones", () => {
+  const raw = JSON.stringify({
+    abilities: [
+      { kind: "static", effect: { kind: "trample" } }, // keyword mistaken for an ability
+      { kind: "static", effect: { kind: "token-doubling" } },
+    ],
+  });
+  const abilities = parseAbilities(raw);
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0].effect.kind).toBe("token-doubling");
 });
 
 test("normalizes missing/unknown control and token instead of throwing", () => {
@@ -58,7 +78,7 @@ test("maps opponent synonyms to opp and coerces stray token to null", () => {
 });
 
 test("throws when triggered ability lacks a trigger", () => {
-  const raw = JSON.stringify({ abilities: [{ kind: "triggered", effect: { kind: "x" } }] });
+  const raw = JSON.stringify({ abilities: [{ kind: "triggered", effect: { kind: "damage" } }] });
   expect(() => parseAbilities(raw)).toThrow(/trigger/i);
 });
 
