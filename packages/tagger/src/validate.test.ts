@@ -122,6 +122,36 @@ test("throws when triggered ability lacks a trigger", () => {
   expect(() => parseAbilities(raw)).toThrow(/trigger/i);
 });
 
+test("reclassifies non-card-type values from type into subtype (tribal-spell subjects)", () => {
+  const raw = JSON.stringify({
+    abilities: [
+      {
+        kind: "triggered",
+        trigger: { verbs: ["cast"], subject: { type: ["faerie", "wizard"], control: "you", token: null } },
+        effect: { kind: "copy-spell" },
+      },
+    ],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.trigger!.subject.type).toBeUndefined();
+  expect(a.trigger!.subject.subtype).toEqual(["faerie", "wizard"]);
+});
+
+test("keeps real card types in type, moves only the stray subtype", () => {
+  const raw = JSON.stringify({
+    abilities: [
+      {
+        kind: "triggered",
+        trigger: { verbs: ["cast"], subject: { type: ["creature", "goblin"], control: "you", token: null } },
+        effect: { kind: "damage" },
+      },
+    ],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.trigger!.subject.type).toBe("creature"); // single real type collapses to string
+  expect(a.trigger!.subject.subtype).toBe("goblin");
+});
+
 test("accepts array-valued type/subtype (OR)", () => {
   const raw = JSON.stringify({
     abilities: [

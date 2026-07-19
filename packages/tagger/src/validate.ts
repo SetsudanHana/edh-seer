@@ -126,21 +126,46 @@ function validateEvent(e: unknown, i: number): GameEvent | null {
   return { verb, subject: validateSubject(o.subject, i) };
 }
 
+/** The values legal in the `type` position: real card types plus the pipeline's category words.
+ *  Anything else the model puts in `type` (e.g. "faerie", "wizard") is a creature subtype that
+ *  belongs in `subtype` — every model mislabels tribal-spell subjects this way. */
+const TYPE_VOCAB = new Set<string>([
+  "creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "land", "battle",
+  "tribal", "kindred", "noncreature", "nonland", "permanent", "spell",
+]);
+
 function validateSubject(s: unknown, i: number): SubjectFilter {
   if (typeof s !== "object" || s === null) throw new Error(`ability[${i}] missing subject`);
   const o = s as Record<string, unknown>;
   // token/control are normalized, never rejected — a local LLM omits or varies them, and
   // dropping the whole card over a missing default loses more than a lenient default costs.
   const out: SubjectFilter = { control: normControl(o.control), token: normToken(o.token) };
-  const type = strOrStrArray(o.type);
+  const { type, subtype } = splitTypeSubtype(strOrStrArray(o.type), strOrStrArray(o.subtype));
   if (type !== undefined) out.type = type;
-  const subtype = strOrStrArray(o.subtype);
   if (subtype !== undefined) out.subtype = subtype;
   if (Array.isArray(o.colors)) out.colors = o.colors.filter((c): c is string => typeof c === "string");
   if (o.chosenType === true) out.chosenType = true;
   if (typeof o.counter === "string") out.counter = o.counter;
   if (typeof o.zone === "string") out.zone = o.zone;
   return out;
+}
+
+/** Move any non-card-type value out of `type` and into `subtype` (a subtype the model misfiled).
+ *  Collapses single-element arrays to a bare string so "x" and ["x"] compare equal downstream. */
+function splitTypeSubtype(
+  rawType: string | string[] | undefined,
+  rawSubtype: string | string[] | undefined,
+): { type?: string | string[]; subtype?: string | string[] } {
+  const asArr = (v: string | string[] | undefined): string[] => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
+  const types: string[] = [];
+  const subtypes = asArr(rawSubtype);
+  for (const t of asArr(rawType)) {
+    if (TYPE_VOCAB.has(t.toLowerCase())) types.push(t);
+    else if (!subtypes.includes(t)) subtypes.push(t);
+  }
+  const collapse = (a: string[]): string | string[] | undefined =>
+    a.length === 0 ? undefined : a.length === 1 ? a[0] : a;
+  return { type: collapse(types), subtype: collapse(subtypes) };
 }
 
 /** Normalize control to you/opp/any, mapping common LLM synonyms; default "you". */
