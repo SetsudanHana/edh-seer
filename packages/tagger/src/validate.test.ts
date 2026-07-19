@@ -25,11 +25,37 @@ test("throws on non-JSON", () => {
   expect(() => parseAbilities("not json")).toThrow(/parse/i);
 });
 
-test("throws on unknown verb", () => {
+test("drops a triggered ability whose only trigger verb is unrecognized", () => {
   const raw = JSON.stringify({
     abilities: [{ kind: "triggered", trigger: { verbs: ["explodes"], subject: { control: "you", token: null } }, effect: { kind: "damage" } }],
   });
-  expect(() => parseAbilities(raw)).toThrow(/verb/i);
+  expect(parseAbilities(raw)).toEqual([]);
+});
+
+test("aliases a near-miss verb (die -> dies) in a trigger", () => {
+  const raw = JSON.stringify({
+    abilities: [{ kind: "triggered", trigger: { verbs: ["die"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "drain" } }],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.trigger!.verbs).toEqual(["dies"]);
+});
+
+test("drops an emit with an unrecognized verb, keeps the ability and valid emits", () => {
+  const raw = JSON.stringify({
+    abilities: [
+      {
+        kind: "triggered",
+        trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+        effect: { kind: "top-manipulation" },
+        emits: [
+          { verb: "put-on-top", subject: { control: "you", token: null } },
+          { verb: "draw", subject: { control: "you", token: null } },
+        ],
+      },
+    ],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.emits).toEqual([{ verb: "draw", subject: { control: "you", token: null } }]);
 });
 
 test("aliases a near-miss effect.kind to its canonical label", () => {

@@ -59,6 +59,22 @@ export const VERB_VOCAB: readonly Verb[] = [
   "land-play",
 ];
 
+/** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */
+export const VERB_ALIASES: Readonly<Record<string, Verb>> = {
+  die: "dies",
+  dying: "dies",
+  death: "dies",
+  enter: "enters",
+  "enters-the-battlefield": "enters",
+  etb: "enters",
+  attack: "attacks",
+  tap: "taps",
+  "add-counter": "counter-added",
+  "counter-add": "counter-added",
+  "play-land": "land-play",
+  "create-tokens": "create-token",
+};
+
 /** An event an ability puts out for OTHER cards to trigger on. Subject is concrete. */
 export interface GameEvent {
   verb: Verb;

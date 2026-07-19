@@ -1,6 +1,7 @@
 import {
   EFFECT_ALIASES,
   EFFECT_KINDS,
+  VERB_ALIASES,
   VERB_VOCAB,
   type Ability,
   type AbilityKind,
@@ -53,7 +54,9 @@ function validateAbility(a: unknown, i: number): Ability | null {
     if (!Array.isArray(t.verbs) || t.verbs.length === 0) {
       throw new Error(`ability[${i}] trigger.verbs must be a non-empty array`);
     }
-    const verbs = t.verbs.map((v) => asVerb(v, i));
+    // Unknown trigger verbs are dropped; if none survive, the trigger is meaningless → drop ability.
+    const verbs = t.verbs.map(normVerb).filter((v): v is Verb => v !== null);
+    if (verbs.length === 0) return null;
     out.trigger = { verbs, subject: validateSubject(t.subject, i) };
   }
   if (o.cost !== undefined) {
@@ -62,7 +65,9 @@ function validateAbility(a: unknown, i: number): Ability | null {
   }
   if (o.emits !== undefined) {
     if (!Array.isArray(o.emits)) throw new Error(`ability[${i}] emits must be an array`);
-    out.emits = o.emits.map((e) => validateEvent(e, i));
+    // Emits are advisory downstream hints; drop any with an unrecognized verb rather than
+    // failing the whole card (e.g. "put-on-top", which has no verb equivalent).
+    out.emits = o.emits.map((e) => validateEvent(e, i)).filter((e): e is GameEvent => e !== null);
   }
   return out;
 }
@@ -88,10 +93,12 @@ function normEffectKind(raw: string): EffectKind | null {
   return EFFECT_ALIASES[s] ?? null;
 }
 
-function validateEvent(e: unknown, i: number): GameEvent {
+function validateEvent(e: unknown, i: number): GameEvent | null {
   if (typeof e !== "object" || e === null) throw new Error(`ability[${i}] emit not an object`);
   const o = e as Record<string, unknown>;
-  return { verb: asVerb(o.verb, i), subject: validateSubject(o.subject, i) };
+  const verb = normVerb(o.verb);
+  if (verb === null) return null;
+  return { verb, subject: validateSubject(o.subject, i) };
 }
 
 function validateSubject(s: unknown, i: number): SubjectFilter {
@@ -137,9 +144,10 @@ function strOrStrArray(v: unknown): string | string[] | undefined {
   return undefined;
 }
 
-function asVerb(v: unknown, i: number): Verb {
-  if (typeof v !== "string" || !VERBS.has(v)) {
-    throw new Error(`ability[${i}] invalid verb: ${String(v)}`);
-  }
-  return v as Verb;
+/** Lowercase/trim, apply the alias map, confirm membership. Returns null for an unknown verb. */
+function normVerb(v: unknown): Verb | null {
+  if (typeof v !== "string") return null;
+  const s = v.trim().toLowerCase();
+  if (VERBS.has(s)) return s as Verb;
+  return VERB_ALIASES[s] ?? null;
 }
