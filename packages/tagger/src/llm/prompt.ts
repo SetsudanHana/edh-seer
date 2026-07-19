@@ -1,5 +1,6 @@
 import type { Card } from "@mtg/engine";
 import { VERB_VOCAB } from "../schema.js";
+import type { ChatMessage } from "./provider.js";
 
 export const PROMPT_VERSION = 17;
 
@@ -108,11 +109,24 @@ INVARIANT — emits:
   opponent loses life, so model it as a trigger on { verb: "lose-life", control: "opp" }.
 - Effects whose verb no trigger consumes (pumps, cost reduction, taxes) need no emits.`;
 
-const FEW_SHOT = `EXAMPLE 1
-Card: Inalla, Archmage Ritualist — Legendary Creature — Human Wizard
-Text: "Eminence — Whenever another nontoken Wizard you control enters, if Inalla is in the command zone or on the battlefield, you may pay {1}. If you do, create a token that's a copy of that Wizard. The token gains haste. Exile it at the beginning of the next end step.\nTap five untapped Wizards you control: Target player loses 7 life."
-Output:
-{ "abilities": [
+/** One card presented to the model as the user turn. */
+function cardTurn(name: string, typeLine: string, text: string): string {
+  return `Card: ${name} — ${typeLine}\nText: "${text}"`;
+}
+
+/** Few-shot examples as real chat turns — models follow example turns better than an inlined blob. */
+const FEW_SHOT_TURNS: ChatMessage[] = [
+  {
+    role: "user",
+    content: cardTurn(
+      "Inalla, Archmage Ritualist",
+      "Legendary Creature — Human Wizard",
+      "Eminence — Whenever another nontoken Wizard you control enters, if Inalla is in the command zone or on the battlefield, you may pay {1}. If you do, create a token that's a copy of that Wizard. The token gains haste. Exile it at the beginning of the next end step.\nTap five untapped Wizards you control: Target player loses 7 life.",
+    ),
+  },
+  {
+    role: "assistant",
+    content: `{ "abilities": [
   { "kind": "triggered",
     "trigger": { "verbs": ["enters"], "subject": { "subtype": "wizard", "control": "you", "token": false } },
     "effect": { "kind": "token-generation", "subject": { "subtype": "wizard", "control": "you", "token": true } },
@@ -124,30 +138,36 @@ Output:
     "cost": "Tap five untapped Wizards you control",
     "effect": { "kind": "player-life-loss", "subject": { "control": "opp", "token": null } },
     "emits": [ { "verb": "lose-life", "subject": { "control": "opp", "token": null } } ] }
-] }
-
-EXAMPLE 2
-Card: Kindred Discovery — Enchantment
-Text: "As this enchantment enters, choose a creature type. Whenever a creature you control of the chosen type enters or attacks, draw a card."
-Output:
-{ "abilities": [
+] }`,
+  },
+  {
+    role: "user",
+    content: cardTurn(
+      "Kindred Discovery",
+      "Enchantment",
+      "As this enchantment enters, choose a creature type. Whenever a creature you control of the chosen type enters or attacks, draw a card.",
+    ),
+  },
+  {
+    role: "assistant",
+    content: `{ "abilities": [
   { "kind": "triggered",
     "trigger": { "verbs": ["enters", "attacks"], "subject": { "type": "creature", "control": "you", "token": null, "chosenType": true } },
     "effect": { "kind": "draw-card" },
     "emits": [ { "verb": "draw", "subject": { "control": "you", "token": null } } ] }
-] }
+] }`,
+  },
+  {
+    role: "user",
+    content: cardTurn("Grizzly Bears", "Creature — Bear", "3/3 vanilla creature, no rules text."),
+  },
+  { role: "assistant", content: `{ "abilities": [] }` },
+];
 
-EXAMPLE 3
-Card: Grizzly Bears — Creature — Bear (vanilla)
-Output: { "abilities": [] }`;
-
-export function buildAbilityPrompt(card: Card): string {
-  return `${INSTRUCTIONS}
-
-${FEW_SHOT}
-
-NOW DECOMPOSE
-Card: ${card.name} — ${card.typeLine}
-Text: "${card.oracleText}"
-Output:`;
+export function buildAbilityMessages(card: Card): ChatMessage[] {
+  return [
+    { role: "system", content: INSTRUCTIONS },
+    ...FEW_SHOT_TURNS,
+    { role: "user", content: cardTurn(card.name, card.typeLine, card.oracleText) },
+  ];
 }

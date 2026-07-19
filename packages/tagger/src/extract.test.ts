@@ -15,9 +15,9 @@ const card = {
 };
 
 function provider(responses: string[]): LlmProvider {
-  const complete = vi.fn();
-  responses.forEach((r) => complete.mockResolvedValueOnce(r));
-  return { model: "test-model", complete };
+  const chat = vi.fn();
+  responses.forEach((r) => chat.mockResolvedValueOnce(r));
+  return { model: "test-model", chat };
 }
 
 test("assembles characteristics + abilities + provenance", async () => {
@@ -45,7 +45,7 @@ test("retries once on invalid JSON then succeeds", async () => {
   const llm = provider(["garbage", '{"abilities":[]}']);
   const tags = await extractCardTags("oid-2", card, llm);
   expect(tags.abilities).toEqual([]);
-  expect((llm.complete as ReturnType<typeof vi.fn>)).toHaveBeenCalledTimes(2);
+  expect((llm.chat as ReturnType<typeof vi.fn>)).toHaveBeenCalledTimes(2);
 });
 
 test("throws if still invalid after retry", async () => {

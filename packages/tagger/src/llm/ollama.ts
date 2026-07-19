@@ -1,4 +1,4 @@
-import type { LlmProvider } from "./provider.js";
+import type { ChatMessage, LlmProvider } from "./provider.js";
 
 export interface OllamaOptions {
   model?: string;
@@ -20,16 +20,18 @@ export class OllamaProvider implements LlmProvider {
     this.fetchImpl = opts.fetchImpl ?? fetch;
   }
 
-  async complete(prompt: string): Promise<string> {
-    const res = await this.fetchImpl(`${this.host}/api/generate`, {
+  async chat(messages: ChatMessage[]): Promise<string> {
+    // /api/chat keeps the static system + few-shot turns as a stable prefix, so Ollama's
+    // slot KV cache can reuse them across cards instead of re-prefilling every call.
+    const res = await this.fetchImpl(`${this.host}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: this.model, prompt, stream: false, format: "json" }),
+      body: JSON.stringify({ model: this.model, messages, stream: false, format: "json" }),
     });
     if (!res.ok) {
       throw new Error(`Ollama request failed: ${res.status} ${await res.text()}`);
     }
-    const json = (await res.json()) as { response?: string };
-    return json.response ?? "";
+    const json = (await res.json()) as { message?: { content?: string } };
+    return json.message?.content ?? "";
   }
 }
