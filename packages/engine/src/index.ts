@@ -11,7 +11,15 @@ export {
   type SynergyEdge,
   type CardSynergy,
 } from "./analyze.js";
-export { type Cohesion } from "./weights.js";
+export {
+  type Cohesion,
+  type TagStats,
+  rankThemes,
+  themeWeights,
+  weightedEdge,
+  dampedScore,
+  computeCohesion,
+} from "./weights.js";
 export { suggestCards, type Suggestion } from "./suggest.js";
 export { FIXTURES } from "./fixtures.js";
 export {
