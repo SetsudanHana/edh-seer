@@ -1,0 +1,18 @@
+{
+  "wizard": ["creature"],
+  "human": ["creature"],
+  "goblin": ["creature"],
+  "zombie": ["creature"],
+  "faerie": ["creature"],
+  "treasure": ["artifact"],
+  "food": ["artifact"],
+  "clue": ["artifact"],
+  "blood": ["artifact"],
+  "aura": ["enchantment"],
+  "role": ["enchantment"],
+  "mountain": ["land"],
+  "island": ["land"],
+  "swamp": ["land"],
+  "forest": ["land"],
+  "plains": ["land"]
+}

@@ -37,7 +37,8 @@ export type Verb =
   | "sacrifice"
   | "create-token"
   | "counter-added"
-  | "land-play";
+  | "land-play"
+  | "untaps";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -57,6 +58,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "create-token",
   "counter-added",
   "land-play",
+  "untaps",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */
@@ -73,6 +75,8 @@ export const VERB_ALIASES: Readonly<Record<string, Verb>> = {
   "counter-add": "counter-added",
   "play-land": "land-play",
   "create-tokens": "create-token",
+  untap: "untaps",
+  untapped: "untaps",
 };
 
 /** An event an ability puts out for OTHER cards to trigger on. Subject is concrete. */
@@ -108,6 +112,9 @@ export const EFFECT_KINDS = [
   "ritual",
   "copy-spell",
   "speed-increase",
+  "flicker",
+  "animate",
+  "untap",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];
@@ -125,6 +132,9 @@ export const EFFECT_ALIASES: Readonly<Record<string, EffectKind>> = {
   anthem: "pump",
   scry: "top-manipulation",
   surveil: "top-manipulation",
+  blink: "flicker",
+  flickering: "flicker",
+  "exile-and-return": "flicker",
 };
 
 export interface Effect {

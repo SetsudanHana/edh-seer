@@ -1,0 +1,115 @@
+import { expect, test } from "vitest";
+import { analyzeDeckStructured } from "./analyze.js";
+import type { CardTags } from "@mtg/tagger";
+import type { DeckCard, Hierarchy } from "./types.js";
+
+const H: Hierarchy = { wizard: ["creature"] };
+
+const dc = (
+  name: string,
+  abilities: CardTags["abilities"],
+  subtypes: string[] = [],
+  typeLine = "Creature",
+): DeckCard => ({
+  card: { name, typeLine, oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+  tags: {
+    oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: [typeLine.toLowerCase()], subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+    abilities,
+  },
+});
+
+const inallaAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: false } },
+  effect: { kind: "token-generation", subject: { subtype: "wizard", control: "you", token: true } },
+  emits: [{ verb: "enters", subject: { subtype: "wizard", control: "you", token: true } }],
+}];
+
+const kindredDiscoveryAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+  effect: { kind: "draw-card" },
+}];
+
+test("produces a DeckReport with a synergy edge between a maker and its payoff", () => {
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility);
+  const report = analyzeDeckStructured([maker, payoff], undefined, H);
+  expect(report.edges.length).toBeGreaterThan(0);
+  expect(report.edges[0].reasons.some((r) => r.tag === "enters:creature")).toBe(true);
+  expect(report.cards.map((c) => c.name).sort()).toEqual(["Inalla", "Kindred Discovery"]);
+  expect(report.cards.every((c) => c.score >= 0)).toBe(true);
+  // Both cards should show up as each other's top partner (only 2 cards in the deck).
+  const inallaCard = report.cards.find((c) => c.name === "Inalla")!;
+  const kindredCard = report.cards.find((c) => c.name === "Kindred Discovery")!;
+  expect(inallaCard.topPartners.map((p) => p.name)).toEqual(["Kindred Discovery"]);
+  expect(kindredCard.topPartners.map((p) => p.name)).toEqual(["Inalla"]);
+  expect(report.cohesion).not.toBeNull();
+});
+
+test("untagged cards contribute no edges but still appear in the report", () => {
+  const tagged = dc("A", []);
+  const untagged: DeckCard = { card: { name: "B", typeLine: "Land", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never, tags: null };
+  const report = analyzeDeckStructured([tagged, untagged], undefined, H);
+  expect(report.edges).toEqual([]);
+  expect(report.cards.map((c) => c.name).sort()).toEqual(["A", "B"]);
+});
+
+test("commander boost is applied to the commander's partners", () => {
+  const cmd = dc("Cmd", inallaAbility, ["wizard"]);
+  const payoff = dc("Payoff", kindredDiscoveryAbility);
+  const withoutBoost = analyzeDeckStructured([cmd, payoff], undefined, H);
+  const withBoost = analyzeDeckStructured([cmd, payoff], ["Cmd"], H);
+  const payoffNoBoost = withoutBoost.cards.find((c) => c.name === "Payoff")!;
+  const payoffBoosted = withBoost.cards.find((c) => c.name === "Payoff")!;
+  expect(payoffBoosted.score).toBeGreaterThan(0);
+  // The commander boost multiplies the payoff's contribution from Cmd, so its score
+  // with the boost must exceed its score without it.
+  expect(payoffBoosted.score).toBeGreaterThan(payoffNoBoost.score);
+  expect(withBoost.commanders).toEqual(["Cmd"]);
+  const cmdCard = withBoost.cards.find((c) => c.name === "Cmd")!;
+  expect(cmdCard.isCommander).toBe(true);
+});
+
+test("self-pairs are excluded: a lone card never synergizes with itself", () => {
+  // Death Baron-style static lord whose effect subject matches its OWN characteristics
+  // (a zombie lord that is itself a zombie). If self-pairs weren't excluded, this single
+  // card would produce an edge (and topPartners entry) referencing itself.
+  const selfLord = dc("Lone Lord", [{
+    kind: "static",
+    effect: { kind: "pump", subject: { subtype: "wizard", control: "you", token: null } },
+  }], ["wizard"]);
+  const report = analyzeDeckStructured([selfLord], undefined, H);
+  expect(report.edges).toEqual([]);
+  const card = report.cards.find((c) => c.name === "Lone Lord")!;
+  expect(card.partnerCount).toBe(0);
+  expect(card.topPartners).toEqual([]);
+  expect(card.score).toBe(0);
+});
+
+test("deck-aware chosen-type resolution lets a chosenType payoff match the deck's top subtype", () => {
+  const maker = dc("Zombie Maker", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { subtype: "zombie", control: "you", token: false } },
+    effect: { kind: "token-generation", subject: { subtype: "zombie", control: "you", token: true } },
+    emits: [{ verb: "enters", subject: { subtype: "zombie", control: "you", token: true } }],
+  }], ["zombie"]);
+  const chosenPayoff = dc("Chosen Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, chosenType: true } },
+    effect: { kind: "draw-card" },
+  }]);
+  const fillerZombie1 = dc("Filler Zombie 1", [], ["zombie"]);
+  const fillerZombie2 = dc("Filler Zombie 2", [], ["zombie"]);
+  const zombieHierarchy: Hierarchy = { zombie: ["creature"] };
+  const report = analyzeDeckStructured(
+    [maker, chosenPayoff, fillerZombie1, fillerZombie2],
+    undefined,
+    zombieHierarchy,
+  );
+  const edge = report.edges.find(
+    (e) => (e.a === "Zombie Maker" && e.b === "Chosen Payoff") || (e.a === "Chosen Payoff" && e.b === "Zombie Maker"),
+  );
+  expect(edge).toBeDefined();
+});
