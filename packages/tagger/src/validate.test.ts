@@ -152,6 +152,55 @@ test("keeps real card types in type, moves only the stray subtype", () => {
   expect(a.trigger!.subject.subtype).toBe("goblin");
 });
 
+test("accepts a flicker effect that emits an enters event", () => {
+  const raw = JSON.stringify({
+    abilities: [
+      {
+        kind: "triggered",
+        trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+        effect: { kind: "flicker", subject: { type: "creature", control: "you", token: null } },
+        emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: null } }],
+      },
+    ],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.effect.kind).toBe("flicker");
+  expect(a.emits).toEqual([{ verb: "enters", subject: { type: "creature", control: "you", token: null } }]);
+});
+
+test("aliases blink to flicker", () => {
+  const raw = JSON.stringify({
+    abilities: [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null } }, effect: { kind: "blink" } }],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.effect.kind).toBe("flicker");
+});
+
+test("accepts an untap effect and the untaps verb, aliasing untap -> untaps", () => {
+  const raw = JSON.stringify({
+    abilities: [
+      {
+        kind: "activated",
+        cost: "{T}",
+        effect: { kind: "untap", subject: { type: "permanent", control: "you", token: null } },
+        emits: [{ verb: "untap", subject: { type: "permanent", control: "you", token: null } }],
+      },
+    ],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.effect.kind).toBe("untap");
+  expect(a.emits).toEqual([{ verb: "untaps", subject: { type: "permanent", control: "you", token: null } }]);
+});
+
+test("accepts an animate effect with no emit", () => {
+  const raw = JSON.stringify({
+    abilities: [{ kind: "activated", cost: "{3}{W}{U}", effect: { kind: "animate", subject: { type: "land", control: "you", token: null } } }],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.effect.kind).toBe("animate");
+  expect(a.emits).toBeUndefined();
+});
+
 test("accepts array-valued type/subtype (OR)", () => {
   const raw = JSON.stringify({
     abilities: [

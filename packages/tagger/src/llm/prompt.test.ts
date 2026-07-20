@@ -17,8 +17,16 @@ function flat(): string {
     .join("\n");
 }
 
-test("prompt version is 17", () => {
-  expect(PROMPT_VERSION).toBe(17);
+test("prompt version is 18", () => {
+  expect(PROMPT_VERSION).toBe(18);
+});
+
+test("messages teach the flicker/untap/animate vocab with a few-shot each", () => {
+  const p = flat();
+  expect(p).toContain("flicker");
+  expect(p).toContain("untap");
+  expect(p).toContain("animate");
+  expect(p).toContain("Restoration Angel"); // flicker few-shot anchor
 });
 
 test("first message is the system instruction, last is the card under test", () => {

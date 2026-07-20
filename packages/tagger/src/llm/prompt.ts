@@ -2,7 +2,7 @@ import type { Card } from "@mtg/engine";
 import { EFFECT_KINDS, VERB_VOCAB } from "../schema.js";
 import type { ChatMessage } from "./provider.js";
 
-export const PROMPT_VERSION = 17;
+export const PROMPT_VERSION = 18;
 
 export { EFFECT_KINDS };
 
@@ -37,6 +37,9 @@ effect.kind should be one of: ${EFFECT_KINDS.join(", ")} (choose the closest; th
 "damage" = dealing damage; subject.control says who ("opp" for "each opponent"/a player, "any" for "any target"). Do not split into player- vs noncombat- variants.
 "drain" = one ability that BOTH drains life from a player AND you gain life (Blood Artist, Zulaport) — do not split it into two abilities.
 "mana-generation" = break-even mana (Signets); "fast-mana" = a source that nets MORE mana than it cost (Sol Ring, Ancient Tomb, Mana Crypt); "ritual" = a one-shot spell adding more mana than it cost (Dark Ritual, Jeska's Will). For any mana effect, set subject.colors to the mana produced — WUBRG letters, or "C" for colorless (Sol Ring → ["C"]) — so mana-color payoffs (Forsaken Monument, Cabal Coffers) can match.
+"flicker" = exile a permanent and return it to the battlefield (blink), e.g. Conjurer's Closet, Restoration Angel. The returned permanent RE-ENTERS, so the ability emits { verb: "enters" } with the flickered subject, feeding enter-the-battlefield payoffs.
+"animate" = a noncreature permanent (usually a land or artifact) becomes a creature, e.g. man-lands (Mutavault, Celestial Colonnade), Ensoul Artifact. subject describes what is animated. No emit — becoming a creature is not entering.
+"untap" = untapping a permanent (Seedborn Muse, Kiora's Follower, untap-lands combos). Emit { verb: "untaps" } with the untapped subject so untap-matters payoffs and untap/tap loops can match. A "whenever ~ becomes untapped" trigger uses verb "untaps".
 
 RULES:
 - kind: "triggered" is ONLY for "when/whenever/at" clauses. Continuous or replacement effects
@@ -52,7 +55,7 @@ RULES:
 
 INVARIANT — emits:
 - A "cast" ability emits BOTH { verb: "cast" } and { verb: "enters" }.
-- Every other way a permanent enters (token, reanimation, blink) emits { verb: "enters" } ONLY.
+- Every other way a permanent enters (token, reanimation, blink/flicker) emits { verb: "enters" } ONLY.
 - A token-maker emits { verb: "create-token", subject: {...token:true} } AND
   { verb: "enters", subject: {...token:true} } so downstream payoffs see the token entering.
   Include the token's subtype when it has one (e.g. subtype "treasure", "food", "clue",
@@ -132,6 +135,56 @@ const FEW_SHOT_TURNS: ChatMessage[] = [
     "trigger": { "verbs": ["enters", "attacks"], "subject": { "type": "creature", "control": "you", "token": null, "chosenType": true } },
     "effect": { "kind": "draw-card" },
     "emits": [ { "verb": "draw", "subject": { "control": "you", "token": null } } ] }
+] }`,
+  },
+  {
+    role: "user",
+    content: cardTurn(
+      "Restoration Angel",
+      "Creature — Angel",
+      "Flash, flying. When Restoration Angel enters, you may exile target non-Angel creature you control, then return that card to the battlefield under your control.",
+    ),
+  },
+  {
+    role: "assistant",
+    content: `{ "abilities": [
+  { "kind": "triggered",
+    "trigger": { "verbs": ["enters"], "subject": { "control": "you", "token": null } },
+    "effect": { "kind": "flicker", "subject": { "type": "creature", "control": "you", "token": null } },
+    "emits": [ { "verb": "enters", "subject": { "type": "creature", "control": "you", "token": null } } ] }
+] }`,
+  },
+  {
+    role: "user",
+    content: cardTurn(
+      "Kiora's Follower",
+      "Creature — Merfolk",
+      "{T}: Untap another target permanent.",
+    ),
+  },
+  {
+    role: "assistant",
+    content: `{ "abilities": [
+  { "kind": "activated",
+    "cost": "{T}",
+    "effect": { "kind": "untap", "subject": { "type": "permanent", "control": "you", "token": null } },
+    "emits": [ { "verb": "untaps", "subject": { "type": "permanent", "control": "you", "token": null } } ] }
+] }`,
+  },
+  {
+    role: "user",
+    content: cardTurn(
+      "Celestial Colonnade",
+      "Land",
+      "{3}{W}{U}: Until end of turn, Celestial Colonnade becomes a 4/4 white and blue Elemental creature with flying and vigilance. It's still a land.",
+    ),
+  },
+  {
+    role: "assistant",
+    content: `{ "abilities": [
+  { "kind": "activated",
+    "cost": "{3}{W}{U}",
+    "effect": { "kind": "animate", "subject": { "type": "land", "control": "you", "token": null } } }
 ] }`,
   },
   {
