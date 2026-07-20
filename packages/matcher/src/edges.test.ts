@@ -41,6 +41,9 @@ test("static edge: a zombie lord matches a zombie by characteristics", () => {
 });
 
 test("token gate excludes a nontoken-only payoff from token producers", () => {
+  // goblin:["creature"] must be present so the type clause passes (goblin implies creature);
+  // otherwise the type mismatch alone would exclude the edge and the token gate wouldn't be exercised.
+  const localH: Hierarchy = { ...H, goblin: ["creature"] };
   const maker = base("Krenko", [{
     kind: "activated",
     cost: "{T}",
@@ -52,7 +55,7 @@ test("token gate excludes a nontoken-only payoff from token producers", () => {
     trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: false } },
     effect: { kind: "draw-card" },
   }]);
-  expect(pairReasons(maker, blink, H)).toEqual([]);
+  expect(pairReasons(maker, blink, localH)).toEqual([]);
 });
 
 test("themeSubjectKey prefers subtype, then type, else any", () => {
