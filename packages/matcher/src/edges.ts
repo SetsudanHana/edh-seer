@@ -2,6 +2,7 @@ import type { Reason } from "@mtg/engine";
 import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches } from "./subject.js";
+import { impliedEvents } from "./implied.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -35,8 +36,17 @@ function characteristicsSubject(tags: CardTags): SubjectFilter {
   };
 }
 
-function allEmits(tags: CardTags): GameEvent[] {
-  return tags.abilities.flatMap((a) => a.emits ?? []);
+/** A producer card's events: its authored emits unioned with the events implied by its own
+ *  characteristics (being cast / entering the battlefield), de-duplicated. */
+function producerEvents(tags: CardTags): GameEvent[] {
+  const authored = tags.abilities.flatMap((a) => a.emits ?? []);
+  const seen = new Set(authored.map((e) => JSON.stringify(e)));
+  const out = [...authored];
+  for (const e of impliedEvents(tags.characteristics)) {
+    const k = JSON.stringify(e);
+    if (!seen.has(k)) { seen.add(k); out.push(e); }
+  }
+  return out;
 }
 
 /** Directional reasons from producer P to consumer C: event edges (P.emits ↔ C.triggers) and
@@ -45,7 +55,7 @@ function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
   if (!p.tags || !c.tags) return [];
   const reasons: Reason[] = [];
   // Event edges.
-  for (const e of allEmits(p.tags)) {
+  for (const e of producerEvents(p.tags)) {
     for (const a of c.tags.abilities) {
       if (!a.trigger) continue;
       if (!a.trigger.verbs.includes(e.verb)) continue;

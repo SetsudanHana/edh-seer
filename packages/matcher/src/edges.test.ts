@@ -43,19 +43,62 @@ test("static edge: a zombie lord matches a zombie by characteristics", () => {
 test("token gate excludes a nontoken-only payoff from token producers", () => {
   // goblin:["creature"] must be present so the type clause passes (goblin implies creature);
   // otherwise the type mismatch alone would exclude the edge and the token gate wouldn't be exercised.
+  // The producer is a SORCERY (not a creature via `base`): a creature token-maker would itself
+  // imply a nontoken self-`enters:creature` event (Stage 2.1 implied events), which would
+  // legitimately satisfy the nontoken payoff and mask the token gate this test targets. As a
+  // sorcery, the producer only implies `cast` (no self-`enters`), so the sole `enters`-family
+  // event reaching the payoff is the authored token emit (token:true) — isolating the gate.
   const localH: Hierarchy = { ...H, goblin: ["creature"] };
-  const maker = base("Krenko", [{
-    kind: "activated",
-    cost: "{T}",
-    effect: { kind: "token-generation", subject: { subtype: "goblin", control: "you", token: true } },
-    emits: [{ verb: "enters", subject: { subtype: "goblin", control: "you", token: true } }],
-  }]);
+  const maker = {
+    card: { name: "Krenko's Command", typeLine: "", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+    tags: {
+      oracleId: "Krenko's Command", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{
+        kind: "static",
+        effect: { kind: "token-generation", subject: { subtype: "goblin", control: "you", token: true } },
+        emits: [{ verb: "enters", subject: { subtype: "goblin", control: "you", token: true } }],
+      }],
+    } as CardTags,
+  };
   const blink = base("Blink Payoff", [{
     kind: "triggered",
     trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: false } },
     effect: { kind: "draw-card" },
   }]);
   expect(pairReasons(maker, blink, localH)).toEqual([]);
+});
+
+test("a cast Wizard's implied enters event feeds a chosen-type wizard payoff (regression: no edge before implied events)", () => {
+  // Producer: a plain Human Wizard creature with NO authored emits.
+  const wizard = base("Naban, Dean of Iteration", [], ["human", "wizard"]);
+  // Consumer: Kindred Discovery, already chosen-type-resolved to subtype "wizard".
+  const kindred = base("Kindred Discovery", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters", "attacks"], subject: { type: "creature", subtype: "wizard", control: "you", token: false } },
+    effect: { kind: "draw-card" },
+  }]);
+  const localH: Hierarchy = { ...H, human: ["creature"] };
+  const reasons = pairReasons(wizard, kindred, localH);
+  expect(reasons.some((r) => r.tag === "enters:wizard")).toBe(true);
+});
+
+test("an instant does not produce an implied enters edge", () => {
+  const bolt = {
+    card: { name: "Lightning Bolt", typeLine: "", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+    tags: {
+      oracleId: "Lightning Bolt", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["instant"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [],
+    } as CardTags,
+  };
+  const etbPayoff = base("Impact Tremors", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+  }]);
+  const reasons = pairReasons(bolt, etbPayoff, H);
+  expect(reasons.some((r) => r.tag.startsWith("enters:"))).toBe(false);
 });
 
 test("themeSubjectKey prefers subtype, then type, else any", () => {
