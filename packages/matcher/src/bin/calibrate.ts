@@ -38,7 +38,9 @@ async function main(): Promise<void> {
   const scoreDecks: ScoreDeck[] = [];
   const salts: number[][] = [];
 
+  let loaded = 0;
   for (const d of decks) {
+    process.stdout.write(`\rloading decks ${++loaded}/${decks.length} (${d.name})${" ".repeat(20)}`);
     // Load tagged deck.
     const inputs: DeckCard[] = [];
     for (const name of parseDecklistText(readFileSync(join(DECK_DIR, d.path), "utf8"))) {
@@ -73,11 +75,24 @@ async function main(): Promise<void> {
     });
   }
 
+  process.stdout.write(`\rloaded ${decks.length} decks${" ".repeat(30)}\n`);
+
   const prior = SEED_IMPACT_WEIGHTS;
   const baseline = meanSpearman(scoreDecks, salts, loadImpactWeights());
-  const { inSample, loo, fitted } = looCV(scoreDecks, salts, prior, {
-    restarts: 8, iterations: 60, lambda: 0.02, seed: 1,
-  });
+  const started = Date.now();
+  const { inSample, loo, fitted } = looCV(
+    scoreDecks, salts, prior,
+    { restarts: 8, iterations: 60, lambda: 0.02, seed: 1 },
+    (doneN, totalN) => {
+      const width = 30;
+      const filled = Math.round((width * doneN) / totalN);
+      const secs = ((Date.now() - started) / 1000).toFixed(0);
+      process.stdout.write(
+        `\rfitting [${"#".repeat(filled)}${"-".repeat(width - filled)}] ${doneN}/${totalN} restarts ${secs}s`,
+      );
+      if (doneN === totalN) process.stdout.write("\n");
+    },
+  );
 
   writeFileSync(ENGINE_JSON, JSON.stringify(fitted, null, 2) + "\n");
   console.log(`baseline (current impact-weights.json) mean Spearman: ${baseline.toFixed(3)}`);

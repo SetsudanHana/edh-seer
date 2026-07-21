@@ -63,3 +63,17 @@ test("looCV returns inSample and loo numbers over 2+ decks", () => {
   expect(typeof res.inSample).toBe("number");
   expect(typeof res.loo).toBe("number");
 });
+
+test("looCV reports progress once per restart across all (N+1) fits, ending at total", () => {
+  const prior: ImpactWeights = { kinds: { a: 0.5, b: 0.5 }, repeatability: { triggered: 1 }, damping: 0.5 };
+  const d0 = (w: ImpactWeights) => [w.kinds.a, w.kinds.b];
+  const d1 = (w: ImpactWeights) => [w.kinds.a, w.kinds.b];
+  const restarts = 3;
+  const calls: [number, number][] = [];
+  looCV([d0, d1], [[10, 1], [10, 1]], prior, { restarts, iterations: 5, lambda: 0.01, seed: 7 },
+    (done, total) => calls.push([done, total]));
+  const total = (2 + 1) * restarts; // (N decks + 1 in-sample) × restarts
+  expect(calls.length).toBe(total);
+  expect(calls[calls.length - 1]).toEqual([total, total]);
+  expect(calls.map(([d]) => d)).toEqual([...Array(total)].map((_, i) => i + 1)); // 1..total, monotonic
+});

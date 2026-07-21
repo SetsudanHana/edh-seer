@@ -120,7 +120,14 @@ function objAt(
   return o;
 }
 
-export interface FitOpts { restarts: number; iterations: number; lambda: number; seed: number }
+export interface FitOpts {
+  restarts: number;
+  iterations: number;
+  lambda: number;
+  seed: number;
+  /** Called once after each completed restart (for progress reporting). */
+  onRestart?: () => void;
+}
 
 /**
  * Random-restart coordinate ascent. Each restart jitters the prior, then repeatedly tries ±step on
@@ -155,6 +162,7 @@ export function fitWeights(
     }
     const o = objective(decks, salts, w, prior, opts.lambda);
     if (o > bestObj) { bestObj = o; best = clone(w); }
+    opts.onRestart?.();
   }
   return best;
 }
@@ -162,17 +170,22 @@ export function fitWeights(
 export interface LooResult { inSample: number; loo: number; fitted: ImpactWeights }
 
 /** Leave-one-deck-out CV: fit on N−1 decks, score the held-out; report mean held-out Spearman
- *  (loo) and the all-decks fit's in-sample mean Spearman + fitted weights. */
+ *  (loo) and the all-decks fit's in-sample mean Spearman + fitted weights.
+ *  `onProgress(done, total)` fires per completed restart across all (N+1) fits, for a progress bar. */
 export function looCV(
   decks: ScoreDeck[], salts: number[][], prior: ImpactWeights, opts: FitOpts,
+  onProgress?: (done: number, total: number) => void,
 ): LooResult {
-  const fitted = fitWeights(decks, salts, prior, opts);
+  const total = (decks.length + 1) * opts.restarts;
+  let done = 0;
+  const fitOpts: FitOpts = { ...opts, onRestart: () => { done += 1; onProgress?.(done, total); } };
+  const fitted = fitWeights(decks, salts, prior, fitOpts);
   const inSample = meanSpearman(decks, salts, fitted);
   let looSum = 0;
   for (let h = 0; h < decks.length; h++) {
     const trD = decks.filter((_, i) => i !== h);
     const trS = salts.filter((_, i) => i !== h);
-    const w = fitWeights(trD, trS, prior, opts);
+    const w = fitWeights(trD, trS, prior, fitOpts);
     looSum += spearman(decks[h](w), salts[h]);
   }
   return { inSample, loo: decks.length ? looSum / decks.length : 0, fitted };
