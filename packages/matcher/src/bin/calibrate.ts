@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard } from "@mtg/data";
-import { SEED_IMPACT_WEIGHTS, loadImpactWeights, type ImpactWeights } from "@mtg/engine";
+import { SEED_IMPACT_WEIGHTS, loadImpactWeights, impactEdgeWeight, dampByAlpha, type ImpactWeights } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import { analyzeDeckStructured } from "../analyze.js";
 import { saltCardScores, meanSpearman, looCV, type SaltPayload, type ScoreDeck } from "./calibrate-core.js";
@@ -52,11 +52,24 @@ async function main(): Promise<void> {
     const names = inputs.map((i) => i.card.name).filter((n) => saltScores.has(slug(n)));
     const salt = names.map((n) => saltScores.get(slug(n))!);
     salts.push(salt);
-    // A re-scorer that returns OUR score for those same cards under candidate weights.
+    // Edges/reasons are WEIGHT-INDEPENDENT — form them once here, not on every optimizer eval.
+    // (Re-running analyzeDeckStructured per candidate weight re-does O(n²) edge formation
+    //  ~1.7M times over a full LOO fit; precomputing collapses that to one analysis per deck.)
+    const edges = analyzeDeckStructured(inputs).edges;
+    const allNames = inputs.map((i) => i.card.name);
+    // Cheap re-scorer over the fixed edges: mirrors analyzeDeckStructured's aggregation
+    // (no commander boost — matches passing no commander names).
     scoreDecks.push((w: ImpactWeights) => {
-      const rep = analyzeDeckStructured(inputs, undefined, undefined, w);
-      const byName = new Map(rep.cards.map((c) => [c.name, c.score]));
-      return names.map((n) => byName.get(n) ?? 0);
+      const weighted = new Map<string, number>(allNames.map((n) => [n, 0]));
+      const partners = new Map<string, number>(allNames.map((n) => [n, 0]));
+      for (const e of edges) {
+        const ew = impactEdgeWeight(e.reasons, w);
+        weighted.set(e.a, (weighted.get(e.a) ?? 0) + ew);
+        weighted.set(e.b, (weighted.get(e.b) ?? 0) + ew);
+        partners.set(e.a, (partners.get(e.a) ?? 0) + 1);
+        partners.set(e.b, (partners.get(e.b) ?? 0) + 1);
+      }
+      return names.map((n) => dampByAlpha(weighted.get(n) ?? 0, partners.get(n) ?? 0, w.damping));
     });
   }
 
