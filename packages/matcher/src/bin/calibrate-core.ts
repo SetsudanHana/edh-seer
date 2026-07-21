@@ -1,14 +1,27 @@
 import type { ImpactWeights } from "@mtg/engine";
 
 export interface SaltPayload {
-  details: { synergy: { list: Record<string, { conditionScoring: { total: number }[] }> } };
+  details: { synergy: { list: Record<string, unknown> } };
+}
+
+/** Recursively sum every `conditionScoring.total` found anywhere under a node. CommanderSalt nests
+ *  scored conditions under per-card groups (replacements/triggers/statics/…), each with a single
+ *  `conditionScoring` object; `total` is the per-condition score. */
+function sumConditionScoring(node: unknown): number {
+  if (node === null || typeof node !== "object") return 0;
+  const obj = node as Record<string, unknown>;
+  let sum = 0;
+  const cs = obj.conditionScoring as { total?: unknown } | undefined;
+  if (cs && typeof cs.total === "number") sum += cs.total;
+  for (const v of Object.values(obj)) sum += sumConditionScoring(v);
+  return sum;
 }
 
 /** Per-slug reference score: Σ of all conditionScoring.total in that card's synergy list entry. */
 export function saltCardScores(payload: SaltPayload): Map<string, number> {
   const out = new Map<string, number>();
   for (const [slug, entry] of Object.entries(payload.details.synergy.list)) {
-    out.set(slug, entry.conditionScoring.reduce((s, c) => s + c.total, 0));
+    out.set(slug, sumConditionScoring(entry));
   }
   return out;
 }

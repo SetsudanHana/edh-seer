@@ -1,16 +1,26 @@
 import { expect, test } from "vitest";
 import { SEED_IMPACT_WEIGHTS, type ImpactWeights } from "@mtg/engine";
-import { saltCardScores, spearman, meanSpearman, fitWeights, looCV } from "./calibrate-core.js";
+import { saltCardScores, spearman, meanSpearman, fitWeights, looCV, type SaltPayload } from "./calibrate-core.js";
 
-test("saltCardScores sums conditionScoring totals per slug", () => {
+test("saltCardScores recursively sums every conditionScoring.total in a card's entry", () => {
+  // Real CommanderSalt shape: list[slug] = { <group>: { <id>: { conditionScoring: { total } } } },
+  // where group is replacements/triggers/statics/… and each conditionScoring is one object (not array).
   const scores = saltCardScores({
     details: { synergy: { list: {
-      kindred: { conditionScoring: [{ total: 40 }, { total: 38.5 }] },
-      tremors: { conditionScoring: [{ total: 5 }] },
+      kindred_discovery: {
+        replacements: { "7745": { conditionScoring: { total: 0.6, subTotals: { triggers: 0 } } } },
+        triggers: {
+          cd5e: { conditionScoring: { total: 78.5 } },
+          ab12: { conditionScoring: { total: 41.6 } },
+        },
+      },
+      impact_tremors: {
+        triggers: { z9: { conditionScoring: { total: 5 } } },
+      },
     } } },
-  });
-  expect(scores.get("kindred")).toBeCloseTo(78.5);
-  expect(scores.get("tremors")).toBeCloseTo(5);
+  } as SaltPayload);
+  expect(scores.get("kindred_discovery")).toBeCloseTo(120.7);
+  expect(scores.get("impact_tremors")).toBeCloseTo(5);
 });
 
 test("spearman is 1 for identical order, -1 for reversed", () => {

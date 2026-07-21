@@ -14,9 +14,10 @@ const CONFIG = JSON.parse(
 ) as { name: string; path: string; saltId: string }[];
 const ENGINE_JSON = fileURLToPath(new URL("../../../engine/src/impact-weights.json", import.meta.url));
 
-/** Slugify a card name to match CommanderSalt's synergy-list keys (lowercase, hyphenated). */
+/** Slugify a card name to match CommanderSalt's synergy-list keys (lowercase, underscored):
+ *  "Venser, Shaper Savant" -> "venser_shaper_savant". */
 function slug(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 }
 
 async function fetchSalt(saltId: string): Promise<SaltPayload> {
