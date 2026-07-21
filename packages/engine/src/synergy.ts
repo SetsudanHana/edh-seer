@@ -11,6 +11,8 @@ export interface Reason {
   effectKind?: string;
   /** Repeatability class: "triggered" | "activated" | "static" | "oneshot". Set by the structured matcher. */
   repeatability?: string;
+  /** Payoff scaling basis (tagger SCALING_BASES). Set by the structured matcher; unset → "fixed". */
+  scaling?: string;
 }
 
 export interface SynergyResult {

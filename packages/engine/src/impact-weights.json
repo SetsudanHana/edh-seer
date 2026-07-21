@@ -27,5 +27,15 @@
     "damage": 0.2
   },
   "repeatability": { "triggered": 1.0, "activated": 0.7, "static": 0.6, "oneshot": 0.3 },
+  "scaling": {
+    "fixed": 1.0,
+    "per-creature": 1.5,
+    "per-permanent": 1.5,
+    "per-graveyard": 1.5,
+    "per-cast-or-spell": 1.5,
+    "x-cost": 1.5,
+    "per-opponent": 1.2,
+    "unbounded": 2.5
+  },
   "damping": 0.5
 }
