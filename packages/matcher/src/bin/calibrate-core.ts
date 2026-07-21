@@ -69,11 +69,12 @@ export function meanSpearman(decks: ScoreDeck[], salts: number[][], w: ImpactWei
   return decks.length ? sum / decks.length : 0;
 }
 
-/** Σ (w − prior)² across all kind + repeatability + damping params. */
+/** Σ (w − prior)² across all kind + repeatability + scaling + damping params. */
 function l2FromPrior(w: ImpactWeights, prior: ImpactWeights): number {
   let s = 0;
   for (const k of Object.keys(prior.kinds)) s += (w.kinds[k] - prior.kinds[k]) ** 2;
   for (const k of Object.keys(prior.repeatability)) s += (w.repeatability[k] - prior.repeatability[k]) ** 2;
+  for (const k of Object.keys(prior.scaling)) s += (w.scaling[k] - prior.scaling[k]) ** 2;
   s += (w.damping - prior.damping) ** 2;
   return s;
 }
@@ -96,14 +97,16 @@ function rng(seed: number): () => number {
 }
 
 function clone(w: ImpactWeights): ImpactWeights {
-  return { kinds: { ...w.kinds }, repeatability: { ...w.repeatability }, damping: w.damping };
+  return { kinds: { ...w.kinds }, repeatability: { ...w.repeatability }, scaling: { ...w.scaling }, damping: w.damping };
 }
 
-/** Flat list of tunable param handles (get/set) over kinds, repeatability, and damping. */
+/** Flat list of tunable param handles (get/set) over kinds, repeatability, scaling, and damping.
+ *  `damping` must stay LAST — the fitter clamps the final param to [0,1] and all others to [0,2]. */
 function params(w: ImpactWeights): { get: () => number; set: (v: number) => void }[] {
   const out: { get: () => number; set: (v: number) => void }[] = [];
   for (const k of Object.keys(w.kinds)) out.push({ get: () => w.kinds[k], set: (v) => (w.kinds[k] = v) });
   for (const k of Object.keys(w.repeatability)) out.push({ get: () => w.repeatability[k], set: (v) => (w.repeatability[k] = v) });
+  for (const k of Object.keys(w.scaling)) out.push({ get: () => w.scaling[k], set: (v) => (w.scaling[k] = v) });
   out.push({ get: () => w.damping, set: (v) => (w.damping = v) });
   return out;
 }

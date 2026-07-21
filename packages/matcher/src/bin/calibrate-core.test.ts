@@ -35,6 +35,7 @@ test("fitWeights improves in-sample mean Spearman over the priors on a construct
   const flatPrior: ImpactWeights = {
     kinds: { "draw-card": 0.5, damage: 0.5 },
     repeatability: { triggered: 1 },
+    scaling: { fixed: 1 },
     damping: 0.5,
   };
   const scoreDeck = (w: ImpactWeights) => [w.kinds["draw-card"], w.kinds["damage"]];
@@ -47,7 +48,7 @@ test("fitWeights improves in-sample mean Spearman over the priors on a construct
 });
 
 test("fitWeights is deterministic for a fixed seed", () => {
-  const prior: ImpactWeights = { kinds: { a: 0.5, b: 0.5 }, repeatability: { triggered: 1 }, damping: 0.5 };
+  const prior: ImpactWeights = { kinds: { a: 0.5, b: 0.5 }, repeatability: { triggered: 1 }, scaling: { fixed: 1 }, damping: 0.5 };
   const scoreDeck = (w: ImpactWeights) => [w.kinds.a, w.kinds.b];
   const opts = { restarts: 3, iterations: 20, lambda: 0.01, seed: 42 };
   const f1 = fitWeights([scoreDeck], [[10, 1]], prior, opts);
@@ -56,7 +57,7 @@ test("fitWeights is deterministic for a fixed seed", () => {
 });
 
 test("looCV returns inSample and loo numbers over 2+ decks", () => {
-  const prior: ImpactWeights = { kinds: { a: 0.5, b: 0.5 }, repeatability: { triggered: 1 }, damping: 0.5 };
+  const prior: ImpactWeights = { kinds: { a: 0.5, b: 0.5 }, repeatability: { triggered: 1 }, scaling: { fixed: 1 }, damping: 0.5 };
   const d0 = (w: ImpactWeights) => [w.kinds.a, w.kinds.b];
   const d1 = (w: ImpactWeights) => [w.kinds.a, w.kinds.b];
   const res = looCV([d0, d1], [[10, 1], [10, 1]], prior, { restarts: 2, iterations: 15, lambda: 0.01, seed: 7 });
@@ -65,7 +66,7 @@ test("looCV returns inSample and loo numbers over 2+ decks", () => {
 });
 
 test("looCV reports progress once per restart across all (N+1) fits, ending at total", () => {
-  const prior: ImpactWeights = { kinds: { a: 0.5, b: 0.5 }, repeatability: { triggered: 1 }, damping: 0.5 };
+  const prior: ImpactWeights = { kinds: { a: 0.5, b: 0.5 }, repeatability: { triggered: 1 }, scaling: { fixed: 1 }, damping: 0.5 };
   const d0 = (w: ImpactWeights) => [w.kinds.a, w.kinds.b];
   const d1 = (w: ImpactWeights) => [w.kinds.a, w.kinds.b];
   const restarts = 3;
@@ -76,4 +77,15 @@ test("looCV reports progress once per restart across all (N+1) fits, ending at t
   expect(calls.length).toBe(total);
   expect(calls[calls.length - 1]).toEqual([total, total]);
   expect(calls.map(([d]) => d)).toEqual([...Array(total)].map((_, i) => i + 1)); // 1..total, monotonic
+});
+
+test("fitWeights tunes scaling params toward the salt order", () => {
+  // Card 0's score depends only on scaling.high, card 1 only on scaling.low. Salt ranks card 0 above.
+  const prior: ImpactWeights = {
+    kinds: { x: 1 }, repeatability: { triggered: 1 },
+    scaling: { high: 0.5, low: 0.5 }, damping: 0.5,
+  };
+  const scoreDeck = (w: ImpactWeights) => [w.scaling.high, w.scaling.low];
+  const fitted = fitWeights([scoreDeck], [[10, 1]], prior, { restarts: 4, iterations: 40, lambda: 0, seed: 1 });
+  expect(fitted.scaling.high).toBeGreaterThan(fitted.scaling.low);
 });
