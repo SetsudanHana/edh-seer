@@ -1,6 +1,8 @@
 import type { ImpactWeights } from "@mtg/engine";
 
 export interface SaltPayload {
+  /** Full commander card name(s), e.g. ["Inalla, Archmage Ritualist"]. */
+  commanders?: string[];
   details: { synergy: { list: Record<string, unknown> } };
 }
 

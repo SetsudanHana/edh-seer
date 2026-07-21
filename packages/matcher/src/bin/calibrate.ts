@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard } from "@mtg/data";
-import { SEED_IMPACT_WEIGHTS, loadImpactWeights, impactEdgeWeight, dampByAlpha, type ImpactWeights } from "@mtg/engine";
+import { SEED_IMPACT_WEIGHTS, loadImpactWeights, impactEdgeWeight, dampByAlpha, COMMANDER_BOOST, type ImpactWeights } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import { analyzeDeckStructured } from "../analyze.js";
 import { saltCardScores, meanSpearman, looCV, type SaltPayload, type ScoreDeck } from "./calibrate-core.js";
@@ -50,7 +50,9 @@ async function main(): Promise<void> {
       inputs.push({ card: docToCard(doc), tags });
     }
     // CommanderSalt reference, aligned to OUR card order (drop cards salt does not score).
-    const saltScores = saltCardScores(await fetchSalt(d.saltId));
+    const payload = await fetchSalt(d.saltId);
+    const saltScores = saltCardScores(payload);
+    const commanderSet = new Set(payload.commanders ?? []);
     const names = inputs.map((i) => i.card.name).filter((n) => saltScores.has(slug(n)));
     const salt = names.map((n) => saltScores.get(slug(n))!);
     salts.push(salt);
@@ -59,15 +61,17 @@ async function main(): Promise<void> {
     //  ~1.7M times over a full LOO fit; precomputing collapses that to one analysis per deck.)
     const edges = analyzeDeckStructured(inputs).edges;
     const allNames = inputs.map((i) => i.card.name);
-    // Cheap re-scorer over the fixed edges: mirrors analyzeDeckStructured's aggregation
-    // (no commander boost — matches passing no commander names).
+    // Cheap re-scorer over the fixed edges: mirrors analyzeDeckStructured's aggregation, including
+    // COMMANDER_BOOST (a card's edge to the commander is boosted — CS ranks the commander high).
     scoreDecks.push((w: ImpactWeights) => {
       const weighted = new Map<string, number>(allNames.map((n) => [n, 0]));
       const partners = new Map<string, number>(allNames.map((n) => [n, 0]));
       for (const e of edges) {
         const ew = impactEdgeWeight(e.reasons, w);
-        weighted.set(e.a, (weighted.get(e.a) ?? 0) + ew);
-        weighted.set(e.b, (weighted.get(e.b) ?? 0) + ew);
+        const boostA = commanderSet.has(e.b) ? COMMANDER_BOOST : 1;
+        const boostB = commanderSet.has(e.a) ? COMMANDER_BOOST : 1;
+        weighted.set(e.a, (weighted.get(e.a) ?? 0) + ew * boostA);
+        weighted.set(e.b, (weighted.get(e.b) ?? 0) + ew * boostB);
         partners.set(e.a, (partners.get(e.a) ?? 0) + 1);
         partners.set(e.b, (partners.get(e.b) ?? 0) + 1);
       }
