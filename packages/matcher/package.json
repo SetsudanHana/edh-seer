@@ -7,7 +7,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "gen:hierarchy": "tsx src/bin/gen-hierarchy.ts",
-    "compare": "tsx src/bin/compare.ts"
+    "compare": "tsx src/bin/compare.ts",
+    "calibrate": "tsx src/bin/calibrate.ts"
   },
   "dependencies": {
     "@mtg/data": "*",

@@ -10,6 +10,7 @@ import {
   type CardSynergy,
   type Reason,
   type TagStats,
+  type ImpactWeights,
 } from "@mtg/engine";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
@@ -39,6 +40,7 @@ export function analyzeDeckStructured(
   inputs: DeckCard[],
   commanderNames?: string[],
   hierarchy: Hierarchy = loadHierarchy(),
+  impactWeights: ImpactWeights = loadImpactWeights(),
 ): DeckReport {
   const commanderSet = new Set(commanderNames ?? []);
 
@@ -67,7 +69,6 @@ export function analyzeDeckStructured(
     if (!dc.tags) continue;
     for (const tag of cardThemeTags(dc.tags)) deckFreq.set(tag, (deckFreq.get(tag) ?? 0) + 1);
   }
-  const impactWeights = loadImpactWeights();
 
   // Aggregate per card (mirrors the flat engine's analyzeDeck).
   const agg = new Map<string, Agg>();
