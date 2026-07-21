@@ -1,6 +1,8 @@
 import {
   EFFECT_ALIASES,
   EFFECT_KINDS,
+  SCALING_ALIASES,
+  SCALING_BASES,
   VERB_ALIASES,
   VERB_VOCAB,
   type Ability,
@@ -17,6 +19,7 @@ const KINDS: readonly AbilityKind[] = ["triggered", "activated", "static"];
 const CONTROLS: readonly Control[] = ["you", "opp", "any"];
 const VERBS = new Set<string>(VERB_VOCAB);
 const EFFECTS = new Set<string>(EFFECT_KINDS);
+const SCALINGS = new Set<string>(SCALING_BASES);
 
 export function parseAbilities(raw: string): Ability[] {
   let root: unknown;
@@ -106,6 +109,7 @@ function validateEffect(e: unknown, i: number): Effect | null {
   const kind = normEffectKind(o.kind);
   if (kind === null) return null; // unknown label after aliasing → drop the ability
   const out: Effect = { kind };
+  if (o.scaling !== undefined) out.scaling = normScaling(o.scaling);
   if (o.subject !== undefined) out.subject = validateSubject(o.subject, i);
   return out;
 }
@@ -116,6 +120,15 @@ function normEffectKind(raw: string): EffectKind | null {
   const s = raw.trim().toLowerCase();
   if (EFFECTS.has(s)) return s as EffectKind;
   return EFFECT_ALIASES[s] ?? null;
+}
+
+/** Lowercase/trim, apply the scaling alias map, confirm membership in SCALING_BASES.
+ *  Unknown (neither a base nor an alias) degrades to "fixed" — never drops the ability. */
+function normScaling(raw: unknown): string {
+  if (typeof raw !== "string") return "fixed";
+  const s = raw.trim().toLowerCase();
+  if (SCALINGS.has(s)) return s;
+  return SCALING_ALIASES[s] ?? "fixed";
 }
 
 function validateEvent(e: unknown, i: number): GameEvent | null {

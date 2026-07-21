@@ -215,3 +215,26 @@ test("accepts array-valued type/subtype (OR)", () => {
   expect(a.trigger!.subject.type).toEqual(["instant", "sorcery"]);
   expect(a.effect.subject!.subtype).toEqual(["faerie", "wizard"]);
 });
+
+// parseAbilities is already imported at the top of validate.test.ts — do not re-import.
+// It takes a JSON STRING of shape { "abilities": [ ... ] } and returns Ability[].
+const parse = (abilities: unknown[]) => parseAbilities(JSON.stringify({ abilities }));
+
+test("effect.scaling: known base passes through", () => {
+  const out = parse([
+    { kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null } },
+      effect: { kind: "drain", scaling: "per-creature" } },
+  ]);
+  expect(out[0].effect.scaling).toBe("per-creature");
+});
+
+test("effect.scaling: alias normalizes; unknown falls back to fixed; absent stays unset", () => {
+  const aliased = parse([{ kind: "static", effect: { kind: "drain", scaling: "devotion" } }]);
+  expect(aliased[0].effect.scaling).toBe("per-permanent");
+
+  const unknown = parse([{ kind: "static", effect: { kind: "drain", scaling: "banana" } }]);
+  expect(unknown[0].effect.scaling).toBe("fixed");
+
+  const absent = parse([{ kind: "static", effect: { kind: "drain" } }]);
+  expect(absent[0].effect.scaling).toBeUndefined();
+});
