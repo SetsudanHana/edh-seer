@@ -101,7 +101,7 @@ function clone(w: ImpactWeights): ImpactWeights {
 }
 
 /** Flat list of tunable param handles (get/set) over kinds, repeatability, scaling, and damping.
- *  `damping` must stay LAST — the fitter clamps the final param to [0,1] and all others to [0,2]. */
+ *  `damping` must stay LAST — the fitter clamps the final param to [0,1] and all others to [0,3]. */
 function params(w: ImpactWeights): { get: () => number; set: (v: number) => void }[] {
   const out: { get: () => number; set: (v: number) => void }[] = [];
   for (const k of Object.keys(w.kinds)) out.push({ get: () => w.kinds[k], set: (v) => (w.kinds[k] = v) });
@@ -112,6 +112,10 @@ function params(w: ImpactWeights): { get: () => number; set: (v: number) => void
 }
 
 function clamp(v: number, hi: number): number { return Math.max(0, Math.min(hi, v)); }
+
+/** Upper bound for tunable weight params (damping is separately bounded to 1). Above the highest
+ *  seed prior (unbounded scaling = 2.5) so that prior is reachable, not floored by the clamp. */
+const PARAM_MAX = 3;
 
 // Helper: objective with param p temporarily set to `cur` (for baseline comparison).
 function objAt(
@@ -137,7 +141,7 @@ export interface FitOpts {
 /**
  * Random-restart coordinate ascent. Each restart jitters the prior, then repeatedly tries ±step on
  * each param, keeping any change that raises the (regularized) objective, shrinking step over
- * iterations. Params are clamped to [0, 2] (damping to [0, 1]). Best-of-restarts wins.
+ * iterations. Params are clamped to [0, 3] (damping to [0, 1]). Best-of-restarts wins.
  */
 export function fitWeights(
   decks: ScoreDeck[], salts: number[][], prior: ImpactWeights, opts: FitOpts,
@@ -148,12 +152,12 @@ export function fitWeights(
   for (let r = 0; r < opts.restarts; r++) {
     const w = clone(prior);
     const ps = params(w);
-    for (const p of ps) p.set(clamp(p.get() + (rand() - 0.5) * 0.4, p === ps[ps.length - 1] ? 1 : 2));
+    for (const p of ps) p.set(clamp(p.get() + (rand() - 0.5) * 0.4, p === ps[ps.length - 1] ? 1 : PARAM_MAX));
     let step = 0.25;
     for (let it = 0; it < opts.iterations; it++) {
       for (let pi = 0; pi < ps.length; pi++) {
         const p = ps[pi];
-        const hi = pi === ps.length - 1 ? 1 : 2;
+        const hi = pi === ps.length - 1 ? 1 : PARAM_MAX;
         const cur = p.get();
         const baseObj = objAt(w, decks, salts, prior, opts.lambda, cur, p);
         let accepted = false;

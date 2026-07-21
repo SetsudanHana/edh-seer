@@ -89,3 +89,19 @@ test("fitWeights tunes scaling params toward the salt order", () => {
   const fitted = fitWeights([scoreDeck], [[10, 1]], prior, { restarts: 4, iterations: 40, lambda: 0, seed: 1 });
   expect(fitted.scaling.high).toBeGreaterThan(fitted.scaling.low);
 });
+
+test("fitWeights can raise a param above 2.0 (unbounded-scaling prior is reachable)", () => {
+  // Regularization prior for scaling.big is 2.5 (mirrors SEED_IMPACT_WEIGHTS.scaling.unbounded).
+  // Ranking pressure is driven by kinds.x/kinds.y (wrong at the prior, forcing real optimization
+  // instead of the fitter trivially returning the untouched prior), fully decoupled from
+  // scaling.big/small, which aren't part of any deck score. l2FromPrior's pull on scaling.big is a
+  // smooth per-param parabola toward 2.5 that ascent's single-variable hill-climb can always
+  // discover and climb — so it should approach 2.5 from a restart-jittered start, not get stuck at
+  // 2.0. With the old [0,2] clamp, scaling.big was floored at exactly 2.0, unable to climb further.
+  const prior: ImpactWeights = {
+    kinds: { x: 0.1, y: 0.5 }, repeatability: { triggered: 1 }, scaling: { big: 2.5, small: 0.5 }, damping: 0.5,
+  };
+  const scoreDeck = (w: ImpactWeights) => [w.kinds.x, w.kinds.y];
+  const fitted = fitWeights([scoreDeck], [[10, 1]], prior, { restarts: 8, iterations: 150, lambda: 0.01, seed: 1 });
+  expect(fitted.scaling.big).toBeGreaterThan(2.0);
+});
