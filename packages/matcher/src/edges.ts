@@ -74,6 +74,7 @@ function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
         text: `${p.card.name} ${e.verb} feeds ${c.card.name}'s ${key} trigger`,
         effectKind: a.effect.kind,
         repeatability: triggerRepeatability(a.trigger.subject),
+        scaling: a.effect.scaling,
       });
     }
   }
@@ -86,6 +87,7 @@ function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
       text: `${p.card.name} ${a.effect.kind} applies to ${c.card.name}`,
       effectKind: a.effect.kind,
       repeatability: "static",
+      scaling: a.effect.scaling,
     });
   }
   return reasons;
