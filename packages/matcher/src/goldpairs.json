@@ -1,0 +1,146 @@
+[
+  {
+    "a": "Blood Artist",
+    "b": "Viscera Seer",
+    "category": "aristocrats",
+    "note": "sac outlet feeds death-trigger drain",
+    "source": "seed",
+    "verified": true
+  },
+  {
+    "a": "Purphoros, God of the Forge",
+    "b": "Krenko, Mob Boss",
+    "category": "tokens-go-wide",
+    "note": "token flood triggers per-token damage",
+    "source": "seed",
+    "verified": true
+  },
+  {
+    "a": "Guttersnipe",
+    "b": "Ponder",
+    "category": "spellslinger",
+    "note": "instant/sorcery cast pings each opponent",
+    "source": "seed",
+    "verified": true
+  },
+  {
+    "a": "Animate Dead",
+    "b": "Gray Merchant of Asphodel",
+    "category": "reanimator",
+    "note": "reanimate a high-devotion drain payoff",
+    "source": "seed",
+    "verified": true
+  },
+  {
+    "a": "Zulaport Cutthroat",
+    "b": "Cruel Celebrant",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Zulaport Cutthroat",
+    "b": "Blood Artist",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Zulaport Cutthroat",
+    "b": "Skullclamp",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Zulaport Cutthroat",
+    "b": "Elas il-Kor, Sadistic Pilgrim",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Zulaport Cutthroat",
+    "b": "Viscera Seer",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Cruel Celebrant",
+    "b": "Blood Artist",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Cruel Celebrant",
+    "b": "Skullclamp",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Cruel Celebrant",
+    "b": "Elas il-Kor, Sadistic Pilgrim",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Cruel Celebrant",
+    "b": "Viscera Seer",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Blood Artist",
+    "b": "Skullclamp",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Blood Artist",
+    "b": "Elas il-Kor, Sadistic Pilgrim",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Skullclamp",
+    "b": "Elas il-Kor, Sadistic Pilgrim",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Skullclamp",
+    "b": "Viscera Seer",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  },
+  {
+    "a": "Elas il-Kor, Sadistic Pilgrim",
+    "b": "Viscera Seer",
+    "category": "aristocrats",
+    "note": "co-high-synergy in EDHREC aristocrats",
+    "source": "llm-proposed",
+    "verified": false
+  }
+]

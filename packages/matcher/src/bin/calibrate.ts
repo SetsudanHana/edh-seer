@@ -1,3 +1,7 @@
+// DORMANT (2026-07-21): CommanderSalt rank-correlation calibration is no longer the validation
+// target — it plateaued at ~0.15 Spearman across every lever. Kept for reference only; it is NOT
+// part of the improvement loop and must not be re-fitted. The active harness is the pair-recall
+// compass (bin/eval-pairs.ts). See packages/matcher/VALIDATION.md.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
