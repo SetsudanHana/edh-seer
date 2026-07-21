@@ -1,8 +1,8 @@
 [
-  { "name": "inalla", "path": "inalla.txt", "saltId": "inalla" },
-  { "name": "chandra", "path": "chandra.txt", "saltId": "chandra" },
-  { "name": "gisa", "path": "gisa.txt", "saltId": "gisa" },
-  { "name": "gogo", "path": "gogo.txt", "saltId": "gogo" },
-  { "name": "hidetsugu", "path": "hidetsugu.txt", "saltId": "hidetsugu" },
-  { "name": "samut", "path": "samut.txt", "saltId": "samut" }
+  { "name": "inalla", "path": "inalla.txt", "saltId": "9bfe7bf615e0dd796c6e331bffa92da5" },
+  { "name": "chandra", "path": "chandra.txt", "saltId": "60deb22c372369d1f2b2032923f3af4c" },
+  { "name": "gisa", "path": "gisa.txt", "saltId": "50467cc6259156e8ceeb642eede51df5" },
+  { "name": "gogo", "path": "gogo.txt", "saltId": "8000fd63dd09fbea75d36bb175deed54" },
+  { "name": "hidetsugu", "path": "hidetsugu.txt", "saltId": "a64c19d268d93f7339765b033c0b473b" },
+  { "name": "samut", "path": "samut.txt", "saltId": "cebf3af25b4e2acbeca3613debe2e690" }
 ]
