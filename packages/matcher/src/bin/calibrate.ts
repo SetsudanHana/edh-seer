@@ -5,7 +5,7 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, doc
 import { SEED_IMPACT_WEIGHTS, loadImpactWeights, impactEdgeWeight, dampByAlpha, COMMANDER_BOOST, type ImpactWeights } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import { analyzeDeckStructured } from "../analyze.js";
-import { saltCardScores, meanSpearman, looCV, type SaltPayload, type ScoreDeck } from "./calibrate-core.js";
+import { saltCardScores, spearman, meanSpearman, looCV, type SaltPayload, type ScoreDeck } from "./calibrate-core.js";
 import type { DeckCard } from "../types.js";
 
 const DECK_DIR = join(process.cwd(), "..", "cli", "decks");
@@ -37,6 +37,7 @@ async function main(): Promise<void> {
 
   const scoreDecks: ScoreDeck[] = [];
   const salts: number[][] = [];
+  const deckNames: string[][] = [];
 
   let loaded = 0;
   for (const d of decks) {
@@ -56,6 +57,7 @@ async function main(): Promise<void> {
     const names = inputs.map((i) => i.card.name).filter((n) => saltScores.has(slug(n)));
     const salt = names.map((n) => saltScores.get(slug(n))!);
     salts.push(salt);
+    deckNames.push(names);
     // Edges/reasons are WEIGHT-INDEPENDENT — form them once here, not on every optimizer eval.
     // (Re-running analyzeDeckStructured per candidate weight re-does O(n²) edge formation
     //  ~1.7M times over a full LOO fit; precomputing collapses that to one analysis per deck.)
@@ -80,6 +82,41 @@ async function main(): Promise<void> {
   }
 
   process.stdout.write(`\rloaded ${decks.length} decks${" ".repeat(30)}\n`);
+
+  // Diagnostic: --report prints per-deck Spearman + where our order diverges from CommanderSalt,
+  // under the currently-committed weights. No fitting.
+  if (process.argv.includes("--report")) {
+    const w = loadImpactWeights();
+    const rankOf = (xs: number[]): Map<number, number> => {
+      const order = xs.map((v, i) => i).sort((a, b) => xs[b] - xs[a]);
+      const r = new Map<number, number>();
+      order.forEach((idx, pos) => r.set(idx, pos + 1));
+      return r;
+    };
+    for (let di = 0; di < decks.length; di++) {
+      const names = deckNames[di];
+      const ours = scoreDecks[di](w);
+      const cs = salts[di];
+      const rho = spearman(ours, cs);
+      console.log(`\n===== ${decks[di].name} — ${names.length} scored cards — Spearman ${rho.toFixed(3)} =====`);
+      const ourRank = rankOf(ours);
+      const csRank = rankOf(cs);
+      const rows = names
+        .map((n, i) => ({ n, us: ourRank.get(i)!, cs: csRank.get(i)!, uScore: ours[i], cScore: cs[i] }))
+        .sort((a, b) => a.cs - b.cs)
+        .slice(0, 20);
+      console.log("  CS# US#  Δ    ourScore   csScore  card");
+      for (const r of rows) {
+        const d = r.us - r.cs;
+        console.log(
+          `  ${String(r.cs).padStart(3)} ${String(r.us).padStart(3)} ${(d >= 0 ? "+" : "") + d}`.padEnd(14) +
+          `${r.uScore.toFixed(2).padStart(8)} ${r.cScore.toFixed(1).padStart(9)}  ${r.n}`,
+        );
+      }
+    }
+    await store.close();
+    return;
+  }
 
   const prior = SEED_IMPACT_WEIGHTS;
   const baseline = meanSpearman(scoreDecks, salts, loadImpactWeights());
