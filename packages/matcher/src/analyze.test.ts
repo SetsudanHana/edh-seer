@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { analyzeDeckStructured } from "./analyze.js";
+import { SEED_IMPACT_WEIGHTS, dampByAlpha } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
@@ -112,4 +113,40 @@ test("deck-aware chosen-type resolution lets a chosenType payoff match the deck'
     (e) => (e.a === "Zombie Maker" && e.b === "Chosen Payoff") || (e.a === "Chosen Payoff" && e.b === "Zombie Maker"),
   );
   expect(edge).toBeDefined();
+});
+
+test("high-impact repeatable payoff out-scores a broad low-impact one (2.1 mis-ranking inverted)", () => {
+  // Three vanilla wizard creatures: each implies a self enters:wizard (⊂ enters:creature) event.
+  const w1 = dc("W1", [], ["wizard"]);
+  const w2 = dc("W2", [], ["wizard"]);
+  const w3 = dc("W3", [], ["wizard"]);
+  // Kindred: draw-card, triggered on enters:creature (matches every wizard).
+  const kindred = dc("Kindred", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  // Tremors: damage, triggered on the SAME enters:creature event — same partners, lower-impact kind.
+  const tremors = dc("Tremors", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+  }]);
+  const report = analyzeDeckStructured([w1, w2, w3, kindred, tremors], undefined, H);
+  const kScore = report.cards.find((c) => c.name === "Kindred")!.score;
+  const tScore = report.cards.find((c) => c.name === "Tremors")!.score;
+  expect(kScore).toBeGreaterThan(tScore);
+  // Both also share a 4th edge with each other (Kindred and Tremors are themselves untyped
+  // creatures, so each's own "enters" satisfies the other's enters:creature trigger).
+  // impactEdgeWeight dedupes by reason TAG (not effectKind), and that shared Kindred-Tremors
+  // edge carries two same-tag reasons (draw-card, damage) that collapse to one — the first
+  // reason produced by pairReasons, damage's 0.2 — added identically to both totals:
+  //   kindredTotal = 3×draw-card(1.0) + damage(0.2) = 3.2
+  //   tremorsTotal = 3×damage(0.2)    + damage(0.2) = 0.8
+  // giving ratio 4, not the naive draw-card/damage = 5 (which would hold only if Kindred and
+  // Tremors didn't also synergize with each other).
+  const draw = SEED_IMPACT_WEIGHTS.kinds["draw-card"];
+  const dmg = SEED_IMPACT_WEIGHTS.kinds["damage"];
+  const expectedRatio = (3 * draw + dmg) / (3 * dmg + dmg);
+  expect(kScore / tScore).toBeCloseTo(expectedRatio, 5);
 });
