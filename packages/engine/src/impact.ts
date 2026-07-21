@@ -67,15 +67,18 @@ export function loadImpactWeights(): ImpactWeights {
   }
 }
 
-/** Sum impact over DISTINCT reason tags (mirrors weightedEdge's de-dup by tag). */
+/** Sum impact over DISTINCT reason tags, keeping the MAX-impact reason per tag: when a mutual
+ *  edge carries two reasons sharing one tag but differing in effectKind, the higher-impact kind
+ *  wins (order-independent — avoids silently keeping a lower-impact effectKind). */
 export function impactEdgeWeight(reasons: Reason[], w: ImpactWeights): number {
-  const seen = new Set<string>();
-  let sum = 0;
+  const best = new Map<string, number>();
   for (const r of reasons) {
-    if (seen.has(r.tag)) continue;
-    seen.add(r.tag);
-    sum += impactWeightOf(r, w);
+    const v = impactWeightOf(r, w);
+    const prev = best.get(r.tag);
+    if (prev === undefined || v > prev) best.set(r.tag, v);
   }
+  let sum = 0;
+  for (const v of best.values()) sum += v;
   return sum;
 }
 

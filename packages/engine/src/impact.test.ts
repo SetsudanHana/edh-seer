@@ -38,6 +38,18 @@ test("impactEdgeWeight sums over DISTINCT reason tags", () => {
   expect(impactEdgeWeight(reasons, SEED_IMPACT_WEIGHTS)).toBeCloseTo(1.0 + 0.5 * 0.6);
 });
 
+test("impactEdgeWeight keeps the MAX-impact reason per tag, regardless of order", () => {
+  // A mutual edge: two reasons sharing tag "enters:creature" but different effectKinds.
+  const lowFirst: Reason[] = [
+    { tag: "enters:creature", text: "", effectKind: "damage", repeatability: "triggered" }, // 0.2
+    { tag: "enters:creature", text: "", effectKind: "draw-card", repeatability: "triggered" }, // 1.0
+  ];
+  const highFirst: Reason[] = [lowFirst[1], lowFirst[0]];
+  // Higher-impact kind (draw-card) wins either way — order-independent.
+  expect(impactEdgeWeight(lowFirst, SEED_IMPACT_WEIGHTS)).toBeCloseTo(1.0);
+  expect(impactEdgeWeight(highFirst, SEED_IMPACT_WEIGHTS)).toBeCloseTo(1.0);
+});
+
 test("dampByAlpha divides by partnerCount^alpha; 0 partners → 0", () => {
   expect(dampByAlpha(10, 4, 0.5)).toBeCloseTo(5);   // /2
   expect(dampByAlpha(10, 4, 0)).toBeCloseTo(10);    // no damping
