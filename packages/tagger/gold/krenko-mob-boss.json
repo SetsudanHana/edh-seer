@@ -51,7 +51,8 @@
             "control": "you",
             "token": true,
             "subtype": "goblin"
-          }
+          },
+          "scaling": "per-creature"
         },
         "emits": [
           {

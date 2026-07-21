@@ -59,7 +59,8 @@
             "token": true,
             "type": "artifact",
             "subtype": "treasure"
-          }
+          },
+          "scaling": "per-permanent"
         },
         "emits": [
           {

@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
 import { loadGold } from "./gold.js";
 import { parseAbilities } from "./validate.js";
-import { SCHEMA_VERSION } from "./schema.js";
-import { EFFECT_KINDS } from "./llm/prompt.js";
+import { SCHEMA_VERSION, SCALING_BASES } from "./schema.js";
+import { EFFECT_KINDS, PROMPT_VERSION } from "./llm/prompt.js";
 
 test("every gold file has an oracleId, a card, and schema-valid expected abilities", () => {
   const gold = loadGold();
@@ -25,6 +25,20 @@ test("every gold effect.kind is in the prompt's recognized label set (no drift)"
       expect(allowed, `effect.kind "${a.effect.kind}" (${g.card.name}) not in EFFECT_KINDS`).toContain(
         a.effect.kind,
       );
+    }
+  }
+});
+
+test("PROMPT_VERSION is 19 (effect.scaling added)", () => {
+  expect(PROMPT_VERSION).toBe(19);
+});
+
+test("every gold effect.scaling is in SCALING_BASES (no drift)", () => {
+  const allowed = new Set<string>(SCALING_BASES);
+  for (const g of loadGold()) {
+    for (const a of g.expected.abilities) {
+      const s = a.effect.scaling ?? "fixed"; // absent = fixed
+      expect(allowed, `effect.scaling "${s}" (${g.card.name}) not in SCALING_BASES`).toContain(s);
     }
   }
 });

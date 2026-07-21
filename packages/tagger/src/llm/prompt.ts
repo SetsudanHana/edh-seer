@@ -1,10 +1,11 @@
 import type { Card } from "@mtg/engine";
-import { EFFECT_KINDS, VERB_VOCAB } from "../schema.js";
+import { EFFECT_KINDS, SCALING_BASES, VERB_VOCAB } from "../schema.js";
 import type { ChatMessage } from "./provider.js";
 
-export const PROMPT_VERSION = 18;
+export const PROMPT_VERSION = 19;
 
 export { EFFECT_KINDS };
+export { SCALING_BASES };
 
 const INSTRUCTIONS = `You decompose a Magic: The Gathering card's rules text into structured abilities.
 Return ONLY JSON of the form { "abilities": Ability[] }. Do not include characteristics.
@@ -32,6 +33,11 @@ An Event is { "verb": Verb, "subject": SubjectFilter } with a CONCRETE subject.
 
 Verb must be one of: ${VERB_VOCAB.join(", ")}.
 effect.kind should be one of: ${EFFECT_KINDS.join(", ")} (choose the closest; these are the recognized labels).
+effect.scaling: how the effect's AMOUNT scales — one of: ${SCALING_BASES.join(", ")}.
+Use "fixed" for a constant amount (draw a card, deal 1, make a token). Use per-creature /
+per-permanent / per-graveyard / per-cast-or-spell / per-opponent when the amount is "equal to
+the number of ..." those. Use x-cost when the amount is a variable X paid on cast/activation.
+Use unbounded for combo/loop payoffs with no fixed ceiling. Default to "fixed" when unsure.
 "top-manipulation" = looking at / reordering / putting cards on top of a library, or scry/surveil that stack the top (Brainstorm, Sensei's Divining Top). An ability with several effects becomes one ability per effect, sharing the trigger.
 "pump" gives +X/+X or +X/+0 to creatures (static or triggered); the subject says who — a subtype for a tribe ("wizard"), type:"creature" for your whole team. Use it for anthems/lords too.
 "damage" = dealing damage; subject.control says who ("opp" for "each opponent"/a player, "any" for "any target"). Do not split into player- vs noncombat- variants.
