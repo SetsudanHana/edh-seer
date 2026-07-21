@@ -36,7 +36,7 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   aristocrats: { effectKinds: ["drain", "player-life-loss", "forced-sacrifice", "damage"] },
   "tokens-go-wide": { effectKinds: ["token-generation", "token-doubling", "pump"] },
   spellslinger: {
-    tags: ["casts:instant", "casts:sorcery"],
+    tags: ["cast:instant", "cast:sorcery"],
     effectKinds: ["copy-spell", "damage", "draw-card"],
   },
   reanimator: { effectKinds: ["graveyard-recursion", "animate"] },

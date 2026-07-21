@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Reason } from "@mtg/engine";
-import { EFFECT_KINDS } from "@mtg/tagger";
+import { EFFECT_KINDS, VERB_VOCAB } from "@mtg/tagger";
 import {
   MECHANISM_CATEGORIES,
   CATEGORY_MATCH,
@@ -35,6 +35,17 @@ test("every effectKind referenced by CATEGORY_MATCH is a real EFFECT_KINDS membe
   for (const c of MECHANISM_CATEGORIES) {
     for (const k of CATEGORY_MATCH[c as MechanismCategory].effectKinds ?? []) {
       expect(kinds.has(k)).toBe(true);
+    }
+  }
+});
+
+test("every tag referenced by CATEGORY_MATCH has a valid verb prefix", () => {
+  const verbs = new Set<string>(VERB_VOCAB);
+  for (const c of MECHANISM_CATEGORIES) {
+    for (const t of CATEGORY_MATCH[c as MechanismCategory].tags ?? []) {
+      const prefix = t.split(":")[0];
+      if (prefix === "static") continue; // matcher static-edge convention, not a verb
+      expect(verbs.has(prefix)).toBe(true);
     }
   }
 });

@@ -25,12 +25,19 @@ async function main(): Promise<void> {
 
   for (const category of categories) {
     const slug = CATEGORY_EDHREC_TAG[category];
-    const res = await fetch(tagUrl(slug));
-    if (!res.ok) {
-      console.log(`${category} (${slug}): HTTP ${res.status} — skipped`);
+    let json: unknown;
+    try {
+      const res = await fetch(tagUrl(slug));
+      if (!res.ok) {
+        console.log(`${category} (${slug}): HTTP ${res.status} — skipped`);
+        continue;
+      }
+      json = await res.json();
+    } catch (err) {
+      console.log(`${category} (${slug}): fetch failed — skipped (${(err as Error).message})`);
       continue;
     }
-    const raw = pairsFromCards(parseHighSynergy(await res.json()), topK, category);
+    const raw = pairsFromCards(parseHighSynergy(json), topK, category);
 
     // Resolve each distinct card name once against Mongo.
     const resolved = new Map<string, string | null>();
