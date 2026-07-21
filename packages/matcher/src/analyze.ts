@@ -1,15 +1,16 @@
 import {
   COMMANDER_BOOST,
-  themeWeights,
-  weightedEdge,
-  dampedScore,
   rankThemes,
   computeCohesion,
+  loadImpactWeights,
+  impactEdgeWeight,
+  dampByAlpha,
   type DeckReport,
   type SynergyEdge,
   type CardSynergy,
   type Reason,
   type TagStats,
+  type ImpactWeights,
 } from "@mtg/engine";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
@@ -39,6 +40,7 @@ export function analyzeDeckStructured(
   inputs: DeckCard[],
   commanderNames?: string[],
   hierarchy: Hierarchy = loadHierarchy(),
+  impactWeights: ImpactWeights = loadImpactWeights(),
 ): DeckReport {
   const commanderSet = new Set(commanderNames ?? []);
 
@@ -67,8 +69,6 @@ export function analyzeDeckStructured(
     if (!dc.tags) continue;
     for (const tag of cardThemeTags(dc.tags)) deckFreq.set(tag, (deckFreq.get(tag) ?? 0) + 1);
   }
-  const tw = themeWeights(deckFreq, UNIFORM_STATS);
-  const weightOf = (t: string): number => tw.get(t) ?? 0;
 
   // Aggregate per card (mirrors the flat engine's analyzeDeck).
   const agg = new Map<string, Agg>();
@@ -76,7 +76,7 @@ export function analyzeDeckStructured(
     agg.set(dc.card.name, { name: dc.card.name, weighted: 0, partnerCount: 0, partners: [] });
   }
   for (const edge of edges) {
-    const w = weightedEdge(edge.reasons, weightOf);
+    const w = impactEdgeWeight(edge.reasons, impactWeights);
     const boostForA = commanderSet.has(edge.b) ? COMMANDER_BOOST : 1;
     const boostForB = commanderSet.has(edge.a) ? COMMANDER_BOOST : 1;
     const a = agg.get(edge.a);
@@ -97,7 +97,7 @@ export function analyzeDeckStructured(
     .map((v) => ({
       name: v.name,
       isCommander: commanderSet.has(v.name),
-      score: dampedScore(v.weighted, v.partnerCount),
+      score: dampByAlpha(v.weighted, v.partnerCount, impactWeights.damping),
       partnerCount: v.partnerCount,
       topPartners: v.partners
         .sort((x, y) => y.contribution - x.contribution)

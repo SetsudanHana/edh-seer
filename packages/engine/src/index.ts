@@ -20,6 +20,15 @@ export {
   dampedScore,
   computeCohesion,
 } from "./weights.js";
+export {
+  type ImpactWeights,
+  SEED_IMPACT_WEIGHTS,
+  UNKNOWN_KIND_WEIGHT,
+  loadImpactWeights,
+  impactWeightOf,
+  impactEdgeWeight,
+  dampByAlpha,
+} from "./impact.js";
 export { suggestCards, type Suggestion } from "./suggest.js";
 export { FIXTURES } from "./fixtures.js";
 export {

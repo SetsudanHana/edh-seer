@@ -49,6 +49,14 @@ function producerEvents(tags: CardTags): GameEvent[] {
   return out;
 }
 
+/** Repeatability of a triggered CONSUMER: a bare self-ETB (trigger names neither a type nor a
+ *  subtype — "when this enters") is only satisfied by its own single entry, so it is one-time; any
+ *  typed/subtyped trigger fires each time such a permanent recurs, so it is a repeatable engine. */
+function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
+  const bare = list(subject.type).length === 0 && list(subject.subtype).length === 0;
+  return bare ? "oneshot" : "triggered";
+}
+
 /** Directional reasons from producer P to consumer C: event edges (P.emits ↔ C.triggers) and
  *  static edges (P.static effect ↔ C.characteristics). */
 function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
@@ -61,14 +69,24 @@ function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
       if (!a.trigger.verbs.includes(e.verb)) continue;
       if (!subjectMatches(e.subject, a.trigger.subject, h)) continue;
       const key = `${e.verb}:${themeSubjectKey(a.trigger.subject)}`;
-      reasons.push({ tag: key, text: `${p.card.name} ${e.verb} feeds ${c.card.name}'s ${key} trigger` });
+      reasons.push({
+        tag: key,
+        text: `${p.card.name} ${e.verb} feeds ${c.card.name}'s ${key} trigger`,
+        effectKind: a.effect.kind,
+        repeatability: triggerRepeatability(a.trigger.subject),
+      });
     }
   }
   // Static edges: P is a lord whose effect subject C's characteristics satisfy.
   for (const a of p.tags.abilities) {
     if (a.kind !== "static" || !a.effect.subject) continue;
     if (!subjectMatches(characteristicsSubject(c.tags), a.effect.subject, h)) continue;
-    reasons.push({ tag: `static:${a.effect.kind}`, text: `${p.card.name} ${a.effect.kind} applies to ${c.card.name}` });
+    reasons.push({
+      tag: `static:${a.effect.kind}`,
+      text: `${p.card.name} ${a.effect.kind} applies to ${c.card.name}`,
+      effectKind: a.effect.kind,
+      repeatability: "static",
+    });
   }
   return reasons;
 }

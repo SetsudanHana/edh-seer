@@ -1,0 +1,8 @@
+[
+  { "name": "inalla", "path": "inalla.txt", "saltId": "inalla" },
+  { "name": "chandra", "path": "chandra.txt", "saltId": "chandra" },
+  { "name": "gisa", "path": "gisa.txt", "saltId": "gisa" },
+  { "name": "gogo", "path": "gogo.txt", "saltId": "gogo" },
+  { "name": "hidetsugu", "path": "hidetsugu.txt", "saltId": "hidetsugu" },
+  { "name": "samut", "path": "samut.txt", "saltId": "samut" }
+]

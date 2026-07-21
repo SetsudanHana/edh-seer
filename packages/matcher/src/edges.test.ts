@@ -115,3 +115,43 @@ test("cardThemeTags collects trigger, emit, and static keys", () => {
   }]).tags;
   expect([...cardThemeTags(t)]).toContain("dies:creature");
 });
+
+test("event-edge reason carries the consumer's effectKind and triggered repeatability", () => {
+  const maker = base("Inalla", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: false } },
+    effect: { kind: "token-generation", subject: { subtype: "wizard", control: "you", token: true } },
+    emits: [{ verb: "enters", subject: { subtype: "wizard", control: "you", token: true } }],
+  }]);
+  const payoff = base("Kindred Discovery", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const reason = pairReasons(maker, payoff, H).find((r) => r.tag === "enters:creature")!;
+  expect(reason.effectKind).toBe("draw-card");
+  expect(reason.repeatability).toBe("triggered");
+});
+
+test("a bare self-ETB trigger (no type, no subtype) is classified oneshot", () => {
+  const maker = base("SomeWizard", [], ["wizard"]); // implies self enters:wizard event
+  const dockside = base("Dockside", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: false } }, // "when this enters"
+    effect: { kind: "token-generation" },
+  }]);
+  const reason = pairReasons(maker, dockside, H).find((r) => r.repeatability !== undefined)!;
+  expect(reason.effectKind).toBe("token-generation");
+  expect(reason.repeatability).toBe("oneshot");
+});
+
+test("static-edge reason carries static effectKind and static repeatability", () => {
+  const lord = base("Death Baron", [{
+    kind: "static",
+    effect: { kind: "pump", subject: { subtype: "zombie", control: "you", token: null } },
+  }]);
+  const zombie = base("Gravecrawler", [], ["zombie"]);
+  const reason = pairReasons(lord, zombie, H).find((r) => r.tag === "static:pump")!;
+  expect(reason.effectKind).toBe("pump");
+  expect(reason.repeatability).toBe("static");
+});

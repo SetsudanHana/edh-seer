@@ -7,6 +7,10 @@ export interface Reason {
   tag: string;
   /** Human-readable explanation naming both cards. */
   text: string;
+  /** Payoff synergy type (tagger EFFECT_KIND). Set by the structured matcher; unset by the flat engine. */
+  effectKind?: string;
+  /** Repeatability class: "triggered" | "activated" | "static" | "oneshot". Set by the structured matcher. */
+  repeatability?: string;
 }
 
 export interface SynergyResult {
