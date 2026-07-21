@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import type { Reason } from "./synergy.js";
 
 export interface ImpactWeights {
@@ -55,4 +56,30 @@ export function impactWeightOf(reason: Reason, w: ImpactWeights): number {
   const k = reason.effectKind !== undefined ? (w.kinds[reason.effectKind] ?? UNKNOWN_KIND_WEIGHT) : UNKNOWN_KIND_WEIGHT;
   const r = reason.repeatability !== undefined ? (w.repeatability[reason.repeatability] ?? 1.0) : 1.0;
   return k * r;
+}
+
+/** Read the committed impact-weights.json; fall back to seed defaults if unreadable/absent. */
+export function loadImpactWeights(): ImpactWeights {
+  try {
+    return JSON.parse(readFileSync(new URL("./impact-weights.json", import.meta.url), "utf8")) as ImpactWeights;
+  } catch {
+    return SEED_IMPACT_WEIGHTS;
+  }
+}
+
+/** Sum impact over DISTINCT reason tags (mirrors weightedEdge's de-dup by tag). */
+export function impactEdgeWeight(reasons: Reason[], w: ImpactWeights): number {
+  const seen = new Set<string>();
+  let sum = 0;
+  for (const r of reasons) {
+    if (seen.has(r.tag)) continue;
+    seen.add(r.tag);
+    sum += impactWeightOf(r, w);
+  }
+  return sum;
+}
+
+/** Impact analogue of dampedScore with a calibrated exponent: total / partnerCount^alpha. */
+export function dampByAlpha(total: number, partnerCount: number, alpha: number): number {
+  return partnerCount > 0 ? total / Math.pow(partnerCount, alpha) : 0;
 }
