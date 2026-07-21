@@ -33,114 +33,282 @@
   },
   {
     "a": "Zulaport Cutthroat",
-    "b": "Cruel Celebrant",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Zulaport Cutthroat",
-    "b": "Blood Artist",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Zulaport Cutthroat",
-    "b": "Skullclamp",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Zulaport Cutthroat",
-    "b": "Elas il-Kor, Sadistic Pilgrim",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Zulaport Cutthroat",
     "b": "Viscera Seer",
     "category": "aristocrats",
     "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Cruel Celebrant",
-    "b": "Blood Artist",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Cruel Celebrant",
-    "b": "Skullclamp",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Cruel Celebrant",
-    "b": "Elas il-Kor, Sadistic Pilgrim",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
+    "source": "edhrec+human-verified",
+    "verified": true
   },
   {
     "a": "Cruel Celebrant",
     "b": "Viscera Seer",
     "category": "aristocrats",
     "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Blood Artist",
-    "b": "Skullclamp",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Blood Artist",
-    "b": "Elas il-Kor, Sadistic Pilgrim",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Skullclamp",
-    "b": "Elas il-Kor, Sadistic Pilgrim",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
-  },
-  {
-    "a": "Skullclamp",
-    "b": "Viscera Seer",
-    "category": "aristocrats",
-    "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
+    "source": "edhrec+human-verified",
+    "verified": true
   },
   {
     "a": "Elas il-Kor, Sadistic Pilgrim",
     "b": "Viscera Seer",
     "category": "aristocrats",
     "note": "co-high-synergy in EDHREC aristocrats",
-    "source": "llm-proposed",
-    "verified": false
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Impact Tremors",
+    "b": "Jetmir, Nexus of Revels // Jetmir, Nexus of Revels",
+    "category": "tokens-go-wide",
+    "note": "co-high-synergy in EDHREC tokens-go-wide",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Mirkwood Bats",
+    "b": "Jetmir, Nexus of Revels // Jetmir, Nexus of Revels",
+    "category": "tokens-go-wide",
+    "note": "co-high-synergy in EDHREC tokens-go-wide",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Storm-Kiln Artist // Storm-Kiln Artist",
+    "b": "Frantic Search",
+    "category": "spellslinger",
+    "note": "co-high-synergy in EDHREC spellslinger",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Storm-Kiln Artist // Storm-Kiln Artist",
+    "b": "Manamorphose",
+    "category": "spellslinger",
+    "note": "co-high-synergy in EDHREC spellslinger",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Whirlwind of Thought",
+    "b": "Frantic Search",
+    "category": "spellslinger",
+    "note": "co-high-synergy in EDHREC spellslinger",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Whirlwind of Thought",
+    "b": "Manamorphose",
+    "category": "spellslinger",
+    "note": "co-high-synergy in EDHREC spellslinger",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Archmage Emeritus",
+    "b": "Frantic Search",
+    "category": "spellslinger",
+    "note": "co-high-synergy in EDHREC spellslinger",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Archmage Emeritus",
+    "b": "Manamorphose",
+    "category": "spellslinger",
+    "note": "co-high-synergy in EDHREC spellslinger",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Frantic Search",
+    "b": "Guttersnipe",
+    "category": "spellslinger",
+    "note": "co-high-synergy in EDHREC spellslinger",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Manamorphose",
+    "b": "Guttersnipe",
+    "category": "spellslinger",
+    "note": "co-high-synergy in EDHREC spellslinger",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Grave Researcher // Reanimate",
+    "b": "Faithless Looting",
+    "category": "reanimator",
+    "note": "co-high-synergy in EDHREC reanimator",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Faithless Looting",
+    "b": "Muldrotha, the Gravetide",
+    "category": "reanimator",
+    "note": "co-high-synergy in EDHREC reanimator",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Faithless Looting",
+    "b": "Victimize",
+    "category": "reanimator",
+    "note": "co-high-synergy in EDHREC reanimator",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "All That Glitters",
+    "b": "Setessan Champion",
+    "category": "voltron-auras",
+    "note": "co-high-synergy in EDHREC voltron-auras",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Ethereal Armor",
+    "b": "Setessan Champion",
+    "category": "voltron-auras",
+    "note": "co-high-synergy in EDHREC voltron-auras",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Ancestral Mask",
+    "b": "Setessan Champion",
+    "category": "voltron-auras",
+    "note": "co-high-synergy in EDHREC voltron-auras",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Sage's Reverie",
+    "b": "Setessan Champion",
+    "category": "voltron-auras",
+    "note": "co-high-synergy in EDHREC voltron-auras",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Sanguine Bond",
+    "b": "Essence Warden",
+    "category": "lifegain-payoff",
+    "note": "co-high-synergy in EDHREC lifegain-payoff",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Sanguine Bond",
+    "b": "Soul Warden",
+    "category": "lifegain-payoff",
+    "note": "co-high-synergy in EDHREC lifegain-payoff",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Sanguine Bond",
+    "b": "Exquisite Blood",
+    "category": "lifegain-payoff",
+    "note": "co-high-synergy in EDHREC lifegain-payoff",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Vito, Thorn of the Dusk Rose",
+    "b": "Essence Warden",
+    "category": "lifegain-payoff",
+    "note": "co-high-synergy in EDHREC lifegain-payoff",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Vito, Thorn of the Dusk Rose",
+    "b": "Soul Warden",
+    "category": "lifegain-payoff",
+    "note": "co-high-synergy in EDHREC lifegain-payoff",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Karn's Bastion",
+    "b": "Tekuthal, Inquiry Dominus",
+    "category": "counters-plus1",
+    "note": "co-high-synergy in EDHREC counters-plus1",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Tekuthal, Inquiry Dominus",
+    "b": "Thrummingbird",
+    "category": "counters-plus1",
+    "note": "co-high-synergy in EDHREC counters-plus1",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Consuming Aberration // Consuming Aberration",
+    "b": "Syr Konrad, the Grim",
+    "category": "mill-self",
+    "note": "co-high-synergy in EDHREC mill-self",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Ruin Crab",
+    "b": "Syr Konrad, the Grim",
+    "category": "mill-self",
+    "note": "co-high-synergy in EDHREC mill-self",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Maddening Cacophony // Maddening Cacophony",
+    "b": "Syr Konrad, the Grim",
+    "category": "mill-self",
+    "note": "co-high-synergy in EDHREC mill-self",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Selvala, Explorer Returned",
+    "b": "Psychosis Crawler",
+    "category": "wheels-draw",
+    "note": "co-high-synergy in EDHREC wheels-draw",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Windfall",
+    "b": "Underworld Dreams",
+    "category": "wheels-draw",
+    "note": "co-high-synergy in EDHREC wheels-draw",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Windfall",
+    "b": "Psychosis Crawler",
+    "category": "wheels-draw",
+    "note": "co-high-synergy in EDHREC wheels-draw",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Underworld Dreams",
+    "b": "Magus of the Wheel",
+    "category": "wheels-draw",
+    "note": "co-high-synergy in EDHREC wheels-draw",
+    "source": "edhrec+human-verified",
+    "verified": true
+  },
+  {
+    "a": "Psychosis Crawler",
+    "b": "Magus of the Wheel",
+    "category": "wheels-draw",
+    "note": "co-high-synergy in EDHREC wheels-draw",
+    "source": "edhrec+human-verified",
+    "verified": true
   }
 ]

@@ -34,14 +34,14 @@ export interface CategoryMatchEntry {
  *  and engine internals — on a tag rename, only this table changes. */
 export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   aristocrats: { effectKinds: ["drain", "player-life-loss", "forced-sacrifice", "damage"] },
-  "tokens-go-wide": { effectKinds: ["token-generation", "token-doubling", "pump"] },
+  "tokens-go-wide": { tags: ["create-token:any"], effectKinds: ["token-generation", "token-doubling", "pump", "damage"] },
   spellslinger: {
     tags: ["cast:instant", "cast:sorcery"],
     effectKinds: ["copy-spell", "damage", "draw-card"],
   },
   reanimator: { effectKinds: ["graveyard-recursion", "animate"] },
   "voltron-auras": { effectKinds: ["pump", "counter-placement"] },
-  "lifegain-payoff": { effectKinds: ["drain", "draw-card", "counter-placement"] },
+  "lifegain-payoff": { tags: ["gain-life:any"], effectKinds: ["drain", "draw-card", "counter-placement"] },
   landfall: { tags: ["enters:land"], effectKinds: ["token-generation", "counter-placement", "pump"] },
   "counters-plus1": { effectKinds: ["counter-placement", "enters-with-counters", "trigger-doubling"] },
   "mana-ramp-payoff": { effectKinds: ["mana-generation", "fast-mana", "ritual", "cost-reduction", "tax"] },
@@ -49,7 +49,7 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   "attack-matters": { tags: ["attacks:creature"], effectKinds: ["pump", "speed-increase", "damage"] },
   "blink-etb": { effectKinds: ["flicker", "clone"] },
   "mill-self": { effectKinds: ["graveyard-recursion", "top-manipulation"] },
-  "wheels-draw": { effectKinds: ["draw-card"] },
+  "wheels-draw": { tags: ["draw:any"], effectKinds: ["draw-card"] },
 };
 
 /** True if the reason satisfies the category: its tag is accepted OR its effectKind is accepted. */
