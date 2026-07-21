@@ -137,10 +137,44 @@ export const EFFECT_ALIASES: Readonly<Record<string, EffectKind>> = {
   "exile-and-return": "flicker",
 };
 
+/** The closed set of recognized effect.scaling bases — how a payoff's amount scales. Extraction
+ *  output is normalized to this set (via SCALING_ALIASES); unknown → "fixed" (no scaling). */
+export const SCALING_BASES = [
+  "fixed",
+  "per-creature",
+  "per-permanent",
+  "per-graveyard",
+  "per-cast-or-spell",
+  "x-cost",
+  "per-opponent",
+  "unbounded",
+] as const;
+
+export type ScalingBasis = (typeof SCALING_BASES)[number];
+
+/** Near-miss scaling labels the LLM emits, mapped to a canonical SCALING_BASES member. */
+export const SCALING_ALIASES: Readonly<Record<string, ScalingBasis>> = {
+  "for-each-creature": "per-creature",
+  "per-creature-you-control": "per-creature",
+  "for-each-permanent": "per-permanent",
+  "for-each-artifact": "per-permanent",
+  devotion: "per-permanent",
+  "per-graveyard-creature": "per-graveyard",
+  "per-spell": "per-cast-or-spell",
+  storm: "per-cast-or-spell",
+  "for-each-opponent": "per-opponent",
+  "per-player": "per-opponent",
+  x: "x-cost",
+  combo: "unbounded",
+  infinite: "unbounded",
+};
+
 export interface Effect {
   /** Normalized to the closed EFFECT_KINDS set at validation time. */
   kind: string;
   subject?: SubjectFilter;
+  /** Normalized to the closed SCALING_BASES set at validation time; absent → "fixed". */
+  scaling?: string;
 }
 
 export type AbilityKind = "triggered" | "activated" | "static";

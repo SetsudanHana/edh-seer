@@ -155,3 +155,31 @@ test("static-edge reason carries static effectKind and static repeatability", ()
   expect(reason.effectKind).toBe("pump");
   expect(reason.repeatability).toBe("static");
 });
+
+test("event-edge reason carries the consumer effect's scaling; absent stays undefined", () => {
+  const maker = base("Maker", [], ["wizard"]); // implies self enters:wizard
+  const scaler = base("Scaler", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "drain", scaling: "per-creature" },
+  }]);
+  const flat = base("Flat", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" }, // no scaling
+  }]);
+  const sReason = pairReasons(maker, scaler, H).find((r) => r.effectKind === "drain")!;
+  expect(sReason.scaling).toBe("per-creature");
+  const fReason = pairReasons(maker, flat, H).find((r) => r.effectKind === "damage")!;
+  expect(fReason.scaling).toBeUndefined();
+});
+
+test("static-edge reason carries the static effect's scaling", () => {
+  const lord = base("Lord", [{
+    kind: "static",
+    effect: { kind: "pump", scaling: "per-permanent", subject: { subtype: "zombie", control: "you", token: null } },
+  }]);
+  const zombie = base("Zombie", [], ["zombie"]);
+  const reason = pairReasons(lord, zombie, H).find((r) => r.tag === "static:pump")!;
+  expect(reason.scaling).toBe("per-permanent");
+});

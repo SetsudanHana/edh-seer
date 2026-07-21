@@ -151,3 +151,19 @@ test("high-impact repeatable payoff out-scores a broad low-impact one (2.1 mis-r
   const expectedRatio = (3 * draw + shared) / (3 * dmg + shared);
   expect(kScore / tScore).toBeCloseTo(expectedRatio, 5);
 });
+
+test("a scaling payoff out-ranks an otherwise-identical fixed payoff", () => {
+  // Two drain payoffs with identical partners (3 wizards); one scales per-creature, one fixed.
+  const w1 = dc("W1", [], ["wizard"]);
+  const w2 = dc("W2", [], ["wizard"]);
+  const w3 = dc("W3", [], ["wizard"]);
+  const mk = (name: string, scaling?: string): DeckCard => dc(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: scaling ? { kind: "drain", scaling } : { kind: "drain" },
+  }]);
+  const report = analyzeDeckStructured([w1, w2, w3, mk("Scaler", "per-creature"), mk("Flat")], undefined, H);
+  const scaler = report.cards.find((c) => c.name === "Scaler")!.score;
+  const flat = report.cards.find((c) => c.name === "Flat")!.score;
+  expect(scaler).toBeGreaterThan(flat);
+});

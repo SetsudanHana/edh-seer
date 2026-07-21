@@ -4,6 +4,7 @@ import type { Reason } from "./synergy.js";
 export interface ImpactWeights {
   kinds: Record<string, number>;
   repeatability: Record<string, number>;
+  scaling: Record<string, number>;
   damping: number;
 }
 
@@ -44,18 +45,31 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     damage: 0.2,
   },
   repeatability: { triggered: 1.0, activated: 0.7, static: 0.6, oneshot: 0.3 },
+  scaling: {
+    fixed: 1.0,
+    "per-creature": 1.5,
+    "per-permanent": 1.5,
+    "per-graveyard": 1.5,
+    "per-cast-or-spell": 1.5,
+    "x-cost": 1.5,
+    "per-opponent": 1.2,
+    unbounded: 2.5,
+  },
   damping: 0.5,
 };
 
 /**
- * kindWeight[effectKind] × repeatMult[repeatability].
+ * kindWeight[effectKind] × repeatMult[repeatability] × scaleMult[scaling].
  * Missing/unknown effectKind → UNKNOWN_KIND_WEIGHT; missing/unknown repeatability → neutral 1.0
- * (so a bare flat-engine reason evaluates to its kind weight).
+ * (so a bare flat-engine reason evaluates to its kind weight); missing/unknown scaling → the
+ * "fixed" multiplier (1.0).
  */
 export function impactWeightOf(reason: Reason, w: ImpactWeights): number {
   const k = reason.effectKind !== undefined ? (w.kinds[reason.effectKind] ?? UNKNOWN_KIND_WEIGHT) : UNKNOWN_KIND_WEIGHT;
   const r = reason.repeatability !== undefined ? (w.repeatability[reason.repeatability] ?? 1.0) : 1.0;
-  return k * r;
+  const fixedMult = w.scaling?.fixed ?? 1.0;
+  const s = reason.scaling !== undefined ? (w.scaling?.[reason.scaling] ?? fixedMult) : fixedMult;
+  return k * r * s;
 }
 
 /** Read the committed impact-weights.json; fall back to seed defaults if unreadable/absent. */

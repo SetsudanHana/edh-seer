@@ -61,3 +61,29 @@ test("loadImpactWeights reads the committed JSON and has a numeric damping", () 
   expect(typeof w.damping).toBe("number");
   expect(Object.keys(w.kinds).length).toBe(25);
 });
+
+test("impactWeightOf folds in scaleMult: per-creature drain > fixed drain", () => {
+  const perCreature = impactWeightOf(
+    { tag: "t", text: "", effectKind: "drain", repeatability: "triggered", scaling: "per-creature" },
+    SEED_IMPACT_WEIGHTS);
+  const fixed = impactWeightOf(
+    { tag: "t", text: "", effectKind: "drain", repeatability: "triggered", scaling: "fixed" },
+    SEED_IMPACT_WEIGHTS);
+  expect(perCreature).toBeCloseTo(fixed * 1.5);
+});
+
+test("missing/unknown scaling → fixed multiplier (1.0)", () => {
+  const missing = impactWeightOf(
+    { tag: "t", text: "", effectKind: "draw-card", repeatability: "triggered" }, SEED_IMPACT_WEIGHTS);
+  const unknown = impactWeightOf(
+    { tag: "t", text: "", effectKind: "draw-card", repeatability: "triggered", scaling: "no-such" },
+    SEED_IMPACT_WEIGHTS);
+  expect(missing).toBeCloseTo(1.0);
+  expect(unknown).toBeCloseTo(1.0);
+});
+
+test("seed + committed config carry one scaling entry per SCALING_BASES member (8)", () => {
+  expect(Object.keys(SEED_IMPACT_WEIGHTS.scaling).sort()).toEqual(
+    ["fixed", "per-cast-or-spell", "per-creature", "per-graveyard", "per-opponent", "per-permanent", "unbounded", "x-cost"]);
+  expect(Object.keys(loadImpactWeights().scaling).length).toBe(8);
+});
