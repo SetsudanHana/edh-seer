@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+import type { GameEvent } from "@mtg/tagger";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 
 test("enters forces battlefield, overriding any tagged source zone", () => {
@@ -21,7 +22,7 @@ test("dies normalizes to leaves@battlefield", () => {
 });
 
 test("non-zone verbs are unchanged", () => {
-  const e = { verb: "mill" as const, subject: { control: "opp", token: null } };
+  const e: GameEvent = { verb: "mill", subject: { control: "opp", token: null } };
   expect(normalizeZoneEvent(e)).toEqual(e);
 });
 
