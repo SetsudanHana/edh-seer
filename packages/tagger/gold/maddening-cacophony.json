@@ -1,0 +1,69 @@
+{
+  "oracleId": "e0f0f290-c83f-4d97-9f5d-786c7136b0d1",
+  "card": {
+    "name": "Maddening Cacophony",
+    "typeLine": "Sorcery",
+    "oracleText": "Kicker {3}{U}\nEach opponent mills eight cards. If this spell was kicked, instead each opponent mills half their library, rounded up.",
+    "keywords": [
+      "Mill",
+      "Kicker"
+    ],
+    "colors": [
+      "U"
+    ],
+    "colorIdentity": [
+      "U"
+    ],
+    "power": null,
+    "toughness": null,
+    "manaValue": 2
+  },
+  "expected": {
+    "oracleId": "e0f0f290-c83f-4d97-9f5d-786c7136b0d1",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "sorcery"
+      ],
+      "subtypes": [],
+      "colors": [
+        "U"
+      ],
+      "identity": [
+        "U"
+      ],
+      "cmc": 2,
+      "power": null,
+      "toughness": null,
+      "token": false,
+      "keywords": [
+        "mill",
+        "kicker"
+      ]
+    },
+    "abilities": [
+      {
+        "kind": "on-cast",
+        "effect": {
+          "kind": "top-manipulation",
+          "subject": {
+            "control": "opp",
+            "token": null
+          },
+          "scaling": "fixed"
+        },
+        "emits": [
+          {
+            "verb": "mill",
+            "subject": {
+              "control": "opp",
+              "token": null
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -2,7 +2,7 @@ import type { Card } from "@mtg/engine";
 import { EFFECT_KINDS, SCALING_BASES, VERB_VOCAB } from "../schema.js";
 import type { ChatMessage } from "./provider.js";
 
-export const PROMPT_VERSION = 19;
+export const PROMPT_VERSION = 20;
 
 export { EFFECT_KINDS };
 export { SCALING_BASES };
@@ -12,7 +12,7 @@ Return ONLY JSON of the form { "abilities": Ability[] }. Do not include characte
 
 An Ability is:
 {
-  "kind": "triggered" | "activated" | "static",
+  "kind": "triggered" | "activated" | "static" | "on-cast",
   "trigger": { "verbs": Verb[], "subject": SubjectFilter },   // triggered only
   "cost": string,                                             // activated only; copy the cost text
   "effect": { "kind": string, "subject"?: SubjectFilter },
@@ -58,6 +58,13 @@ RULES:
   ward, "can't block"), reminder text in (parentheses), and mana costs. Tag ONLY abilities with
   a synergy-relevant effect; a card whose only text is keywords/vanilla has abilities: [].
 - Never output duplicate abilities.
+- kind:"on-cast" is an ability that fires on casting THIS card: an instant or sorcery's own
+  resolution effect ("Each opponent mills eight cards"), or a permanent's "When you cast this
+  spell, ..." (the big Eldrazi). It carries effect + emits and has NO trigger. It is a PRODUCER
+  only. Distinguish it from "Whenever you cast a spell / an instant or sorcery ..." (a GENERAL
+  cast-trigger about OTHER spells you cast → kind:"triggered", verbs:["cast"]) and from "When
+  this enters ..." (→ kind:"triggered", verbs:["enters"]). An ability the spell GRANTS to a
+  permanent keeps its own kind on the granted subject. Lands are played, not cast → never on-cast.
 
 INVARIANT — emits:
 - A "cast" ability emits BOTH { verb: "cast" } and { verb: "enters" }.
@@ -191,6 +198,38 @@ const FEW_SHOT_TURNS: ChatMessage[] = [
   { "kind": "activated",
     "cost": "{3}{W}{U}",
     "effect": { "kind": "animate", "subject": { "type": "land", "control": "you", "token": null } } }
+] }`,
+  },
+  {
+    role: "user",
+    content: cardTurn(
+      "Kozilek, Butcher of Truth",
+      "Legendary Creature — Eldrazi",
+      "When you cast this spell, draw four cards.\nAnnihilator 4 (Whenever this creature attacks, defending player sacrifices four permanents of their choice.)\nWhen Kozilek is put into a graveyard from anywhere, its owner shuffles their graveyard into their library.",
+    ),
+  },
+  {
+    role: "assistant",
+    content: `{ "abilities": [
+  { "kind": "on-cast",
+    "effect": { "kind": "draw-card", "subject": { "control": "you", "token": null } },
+    "emits": [ { "verb": "draw", "subject": { "control": "you", "token": null } } ] }
+] }`,
+  },
+  {
+    role: "user",
+    content: cardTurn(
+      "Maddening Cacophony",
+      "Sorcery",
+      "Kicker {3}{U}\nEach opponent mills eight cards. If this spell was kicked, instead each opponent mills half their library, rounded up.",
+    ),
+  },
+  {
+    role: "assistant",
+    content: `{ "abilities": [
+  { "kind": "on-cast",
+    "effect": { "kind": "top-manipulation", "subject": { "control": "opp", "token": null }, "scaling": "fixed" },
+    "emits": [ { "verb": "mill", "subject": { "control": "opp", "token": null } } ] }
 ] }`,
   },
   {

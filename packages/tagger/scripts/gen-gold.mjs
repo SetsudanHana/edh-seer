@@ -288,6 +288,7 @@ const CARDS = [
         effect: {
           kind: "enters-with-counters",
           subject: { subtype: "zombie", zone: "graveyard", control: "you", token: false },
+          scaling: "per-graveyard",
         },
         emits: [counterAdded("+1/+1")],
       },
@@ -347,7 +348,7 @@ const CARDS = [
       {
         kind: "activated",
         cost: "{T}",
-        effect: { kind: "token-generation", subject: tok({ subtype: "goblin" }) },
+        effect: { kind: "token-generation", subject: tok({ subtype: "goblin" }), scaling: "per-creature" },
         emits: tokenEmits(tok({ subtype: "goblin" })),
       },
     ],
@@ -428,7 +429,7 @@ const CARDS = [
       {
         kind: "triggered",
         trigger: { verbs: ["enters"], subject: subj({ token: false }) },
-        effect: { kind: "token-generation", subject: tok({ type: "artifact", subtype: "treasure" }) },
+        effect: { kind: "token-generation", subject: tok({ type: "artifact", subtype: "treasure" }), scaling: "per-permanent" },
         emits: tokenEmits(tok({ type: "artifact", subtype: "treasure" })),
       },
     ],
@@ -591,6 +592,34 @@ const CARDS = [
       "Skeletons you control and other Zombies you control get +1/+1 and have deathtouch. (Any amount of damage they deal to a creature is enough to destroy it.)",
     abilities: [
       { kind: "static", effect: { kind: "pump", subject: subj({ subtype: "zombie", token: null }) } },
+    ],
+  },
+  // ============ on-cast ============
+  {
+    oracleId: "7b8528b0-71eb-4c9e-bed9-aa2d2e84038f",
+    name: "Kozilek, Butcher of Truth",
+    typeLine: "Legendary Creature — Eldrazi",
+    colors: [], colorIdentity: [], power: "12", toughness: "12", manaValue: 10, keywords: ["Annihilator"],
+    oracleText: "When you cast this spell, draw four cards.\nAnnihilator 4 (Whenever this creature attacks, defending player sacrifices four permanents of their choice.)\nWhen Kozilek is put into a graveyard from anywhere, its owner shuffles their graveyard into their library.",
+    abilities: [
+      {
+        kind: "on-cast",
+        effect: { kind: "draw-card", subject: { control: "you", token: null } },
+      },
+    ],
+  },
+  {
+    oracleId: "e0f0f290-c83f-4d97-9f5d-786c7136b0d1",
+    name: "Maddening Cacophony",
+    typeLine: "Sorcery",
+    colors: ["U"], colorIdentity: ["U"], power: null, toughness: null, manaValue: 2, keywords: ["Mill", "Kicker"],
+    oracleText: "Kicker {3}{U}\nEach opponent mills eight cards. If this spell was kicked, instead each opponent mills half their library, rounded up.",
+    abilities: [
+      {
+        kind: "on-cast",
+        effect: { kind: "top-manipulation", subject: { control: "opp", token: null }, scaling: "fixed" },
+        emits: [ev("mill", { control: "opp", token: null })],
+      },
     ],
   },
 ];

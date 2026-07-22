@@ -15,7 +15,7 @@ import {
   type Verb,
 } from "./schema.js";
 
-const KINDS: readonly AbilityKind[] = ["triggered", "activated", "static"];
+const KINDS: readonly AbilityKind[] = ["triggered", "activated", "static", "on-cast"];
 const CONTROLS: readonly Control[] = ["you", "opp", "any"];
 const VERBS = new Set<string>(VERB_VOCAB);
 const EFFECTS = new Set<string>(EFFECT_KINDS);

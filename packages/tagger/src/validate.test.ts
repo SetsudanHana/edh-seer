@@ -238,3 +238,28 @@ test("effect.scaling: alias normalizes; unknown falls back to fixed; absent stay
   const absent = parse([{ kind: "static", effect: { kind: "drain" } }]);
   expect(absent[0].effect.scaling).toBeUndefined();
 });
+
+test("parses an on-cast ability (producer-only, effect + emits, no trigger)", () => {
+  const [a] = parseAbilities(JSON.stringify({
+    abilities: [{
+      kind: "on-cast",
+      effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+      emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
+    }],
+  }));
+  expect(a.kind).toBe("on-cast");
+  expect(a.trigger).toBeUndefined();
+  expect(a.emits).toHaveLength(1);
+});
+
+test("an on-cast ability drops a stray trigger (must be producer-only)", () => {
+  const [a] = parseAbilities(JSON.stringify({
+    abilities: [{
+      kind: "on-cast",
+      trigger: { verbs: ["cast"], subject: { control: "you" } },
+      effect: { kind: "draw-card" },
+    }],
+  }));
+  expect(a.kind).toBe("on-cast");
+  expect(a.trigger).toBeUndefined();
+});
