@@ -383,3 +383,31 @@ test("no-regression: a card that does NOT proliferate implies no counter-added",
   const reasons = pairReasons(plainCreature, counterPayoff, H);
   expect(reasons.some((r) => r.tag.startsWith("counter-added"))).toBe(false);
 });
+
+test("dedup: a producer with BOTH an authored counter-added emit AND a proliferate emit credits a shared counter payoff exactly once", () => {
+  // Two independent abilities on the same producer: one authors a +1/+1 counter-added event
+  // directly, the other emits proliferate (which independently implies an untyped counter-added
+  // event). Both are byte-distinct-shaped events that satisfy the same consumer trigger, so
+  // without dedup they'd produce two byte-identical Reason objects for one payoff.
+  const dualSource = base("Dual Source", [
+    {
+      kind: "triggered",
+      trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+      effect: { kind: "counter-placement" },
+      emits: [{ verb: "counter-added", subject: { control: "you", token: null, counter: "+1/+1" } }],
+    },
+    {
+      kind: "activated", cost: "{4}, {T}",
+      effect: { kind: "proliferate" },
+      emits: [{ verb: "proliferate", subject: { control: "you", token: null } }],
+    },
+  ]);
+  const counterPayoff = base("Counter Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "+1/+1" } },
+    effect: { kind: "draw-card" },
+  }]);
+  const reasons = pairReasons(dualSource, counterPayoff, H);
+  const counterReasons = reasons.filter((r) => r.tag.startsWith("counter-added"));
+  expect(counterReasons).toHaveLength(1);
+});
