@@ -57,7 +57,7 @@
   },
   {
     "a": "Impact Tremors",
-    "b": "Jetmir, Nexus of Revels // Jetmir, Nexus of Revels",
+    "b": "Jetmir, Nexus of Revels",
     "category": "tokens-go-wide",
     "note": "co-high-synergy in EDHREC tokens-go-wide",
     "source": "edhrec+human-verified",
@@ -65,14 +65,14 @@
   },
   {
     "a": "Mirkwood Bats",
-    "b": "Jetmir, Nexus of Revels // Jetmir, Nexus of Revels",
+    "b": "Jetmir, Nexus of Revels",
     "category": "tokens-go-wide",
     "note": "co-high-synergy in EDHREC tokens-go-wide",
     "source": "edhrec+human-verified",
     "verified": true
   },
   {
-    "a": "Storm-Kiln Artist // Storm-Kiln Artist",
+    "a": "Storm-Kiln Artist",
     "b": "Frantic Search",
     "category": "spellslinger",
     "note": "co-high-synergy in EDHREC spellslinger",
@@ -80,7 +80,7 @@
     "verified": true
   },
   {
-    "a": "Storm-Kiln Artist // Storm-Kiln Artist",
+    "a": "Storm-Kiln Artist",
     "b": "Manamorphose",
     "category": "spellslinger",
     "note": "co-high-synergy in EDHREC spellslinger",
@@ -248,7 +248,7 @@
     "verified": true
   },
   {
-    "a": "Consuming Aberration // Consuming Aberration",
+    "a": "Consuming Aberration",
     "b": "Syr Konrad, the Grim",
     "category": "mill-self",
     "note": "co-high-synergy in EDHREC mill-self",
@@ -264,7 +264,7 @@
     "verified": true
   },
   {
-    "a": "Maddening Cacophony // Maddening Cacophony",
+    "a": "Maddening Cacophony",
     "b": "Syr Konrad, the Grim",
     "category": "mill-self",
     "note": "co-high-synergy in EDHREC mill-self",
