@@ -29,8 +29,8 @@ test("every gold effect.kind is in the prompt's recognized label set (no drift)"
   }
 });
 
-test("PROMPT_VERSION is 19 (effect.scaling added)", () => {
-  expect(PROMPT_VERSION).toBe(19);
+test("PROMPT_VERSION is 20 (on-cast ability-kind added)", () => {
+  expect(PROMPT_VERSION).toBe(20);
 });
 
 test("every gold effect.scaling is in SCALING_BASES (no drift)", () => {
