@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { normalizeScryfallCard } from "./scryfall.js";
+import { normalizeScryfallCard, NON_GAMEPLAY_LAYOUTS } from "./scryfall.js";
 
 test("normalizes a standard card", () => {
   const n = normalizeScryfallCard({
@@ -81,4 +81,47 @@ test("normalize leaves power/toughness null for non-creatures", () => {
   expect(n!.card.power).toBeNull();
   expect(n!.card.toughness).toBeNull();
   expect(n!.card.colorIdentity).toEqual(["U"]);
+});
+
+test("rejects every non-gameplay layout", () => {
+  for (const layout of NON_GAMEPLAY_LAYOUTS) {
+    const n = normalizeScryfallCard({
+      oracle_id: "junk",
+      name: "Jetmir, Nexus of Revels // Jetmir, Nexus of Revels",
+      type_line: "Card // Card",
+      layout,
+    });
+    expect(n, `layout ${layout} should be rejected`).toBeNull();
+  }
+});
+
+test("keeps a real transform DFC (gameplay layout)", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "real-dfc",
+    name: "Front // Back",
+    type_line: "Creature — Werewolf // Creature — Werewolf",
+    layout: "transform",
+    card_faces: [
+      { oracle_text: "Front text", colors: ["R"] },
+      { oracle_text: "Back text", colors: ["G"] },
+    ],
+  });
+  expect(n).not.toBeNull();
+  expect(n!.card.oracleText).toBe("Front text\n//\nBack text");
+});
+
+test("keeps a card with no layout field (defaults to gameplay)", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "no-layout",
+    name: "Grizzly Bears",
+    type_line: "Creature — Bear",
+    oracle_text: "",
+  });
+  expect(n).not.toBeNull();
+});
+
+test("NON_GAMEPLAY_LAYOUTS contains exactly the five reject layouts", () => {
+  expect([...NON_GAMEPLAY_LAYOUTS].sort()).toEqual(
+    ["art_series", "double_faced_token", "emblem", "reversible_card", "token"],
+  );
 });
