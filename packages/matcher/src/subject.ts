@@ -41,3 +41,16 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   }
   return true;
 }
+
+/** Match a graveyard-fill producer event against a graveyard consumer (an enters@graveyard
+ *  trigger, or a graveyard-recursion effect subject). Like subjectMatches, but an UNTYPED fill
+ *  (a generic mill/discard with no type and no subtype) is a wildcard on type/subtype because the
+ *  filled cards' types are unknown; control/token/zone stay strict. */
+export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+  const untyped = arr(producer.type).length === 0 && arr(producer.subtype).length === 0;
+  if (!untyped) return subjectMatches(producer, consumer, h);
+  if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
+  if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) return false;
+  if (consumer.zone !== undefined && consumer.zone !== producer.zone) return false;
+  return true;
+}

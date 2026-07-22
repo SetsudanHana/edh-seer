@@ -214,3 +214,111 @@ test("on-cast is producer-only: two on-cast cards produce no cast:any consumer e
   // Neither on-cast ability is a consumer, so no spurious cast:* edge forms between them.
   expect(reasons.some((r) => r.tag.startsWith("cast:"))).toBe(false);
 });
+
+test("filler -> reanimator: a discard fills the graveyard, feeding a graveyard-recursion effect", () => {
+  const filler = base("Faithless Looting", [{
+    kind: "on-cast",
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    emits: [{ verb: "discard", subject: { control: "you", token: null } }],
+  }]);
+  const reanimator = base("Muldrotha", [{
+    kind: "static",
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
+  }]);
+  const reasons = pairReasons(filler, reanimator, H);
+  expect(reasons.some((r) => r.tag.startsWith("graveyard-recursion") && r.effectKind === "graveyard-recursion")).toBe(true);
+});
+
+test("mill -> Syr Konrad: a mill fills the graveyard, feeding an enters-graveyard:creature trigger", () => {
+  const miller = base("Ruin Crab", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } },
+    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
+  }]);
+  const konrad = base("Syr Konrad", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters-graveyard"], subject: { control: "any", token: null, type: "creature", zone: "graveyard" } },
+    effect: { kind: "damage", subject: { control: "opp", token: null } },
+  }]);
+  const reasons = pairReasons(miller, konrad, H);
+  expect(reasons.some((r) => r.tag === "enters-graveyard:creature")).toBe(true);
+});
+
+test("mill does NOT feed a Blood-Artist-style dies trigger", () => {
+  const miller = base("Ruin Crab", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } },
+    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
+  }]);
+  const bloodArtist = base("Blood Artist", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { control: "any", token: null, type: "creature" } },
+    effect: { kind: "drain", subject: { control: "opp", token: null } },
+  }]);
+  const reasons = pairReasons(miller, bloodArtist, H);
+  expect(reasons.some((r) => r.tag.startsWith("dies:"))).toBe(false);
+});
+
+test("ETB regression: a battlefield enters still feeds a wizard-ETB trigger; a graveyard fill does not", () => {
+  const maker = base("Wizard Maker", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+    effect: { kind: "token-generation", subject: { subtype: "wizard", control: "you", token: true } },
+    emits: [{ verb: "enters", subject: { subtype: "wizard", control: "you", token: true } }],
+  }], ["wizard"]);
+  const etbPayoff = base("Wizard ETB Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: null } },
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+  }], ["wizard"]);
+  const grave = base("Miller", [{
+    kind: "on-cast",
+    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
+  }]);
+  expect(pairReasons(maker, etbPayoff, H).some((r) => r.tag === "enters:wizard")).toBe(true);
+  expect(pairReasons(grave, etbPayoff, H).some((r) => r.tag === "enters:wizard")).toBe(false);
+  // Mirror: a battlefield enters producer event must NOT feed an enters-graveyard consumer trigger.
+  const graveyardPayoff = base("Graveyard ETB Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters-graveyard"], subject: { subtype: "wizard", control: "you", token: null, zone: "graveyard" } },
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+  }], ["wizard"]);
+  expect(pairReasons(maker, graveyardPayoff, H).some((r) => r.tag === "enters-graveyard:wizard")).toBe(false);
+});
+
+test("no double-count: a consumer with both an enters-graveyard trigger AND a graveyard-recursion effect on the same ability is credited exactly once", () => {
+  const filler = base("Faithless Looting", [{
+    kind: "on-cast",
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    emits: [{ verb: "discard", subject: { control: "you", token: null } }],
+  }]);
+  const reanimator = base("Gravecrawler-Style Reanimator", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters-graveyard"], subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
+  }]);
+  const reasons = pairReasons(filler, reanimator, H);
+  const recursionReasons = reasons.filter(
+    (r) => r.tag.startsWith("graveyard-recursion") || r.tag.startsWith("enters-graveyard"),
+  );
+  expect(recursionReasons).toHaveLength(1);
+});
+
+test("non-graveyard-trigger reanimator: a triggered graveyard-recursion ability whose trigger verb does NOT match the fill is still fed by the reanimator loop", () => {
+  const filler = base("Faithless Looting", [{
+    kind: "on-cast",
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    emits: [{ verb: "discard", subject: { control: "you", token: null } }],
+  }]);
+  // Trigger verb "attacks" normalizes to a non-graveyard-entry event, so the guard must NOT skip this ability.
+  const attackReanimator = base("Attack-Triggered Reanimator", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
+  }]);
+  const reasons = pairReasons(filler, attackReanimator, H);
+  expect(reasons.some((r) => r.tag.startsWith("graveyard-recursion") && r.effectKind === "graveyard-recursion")).toBe(true);
+});
