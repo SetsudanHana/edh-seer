@@ -54,3 +54,17 @@ export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectF
   if (consumer.zone !== undefined && consumer.zone !== producer.zone) return false;
   return true;
 }
+
+/** Match a counter-added producer event against a counter-matters consumer trigger. An UNTYPED
+ *  counter-added (no type, no subtype, no counter kind — the board-state-dependent counter a
+ *  proliferate adds) wildcards type/subtype/counter because the kind is unknown; control/token
+ *  stay strict. A counter-TYPED producer (a normal counter placer) delegates to subjectMatches so
+ *  its kind must match. */
+export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+  const untyped =
+    arr(producer.type).length === 0 && arr(producer.subtype).length === 0 && producer.counter === undefined;
+  if (!untyped) return subjectMatches(producer, consumer, h);
+  if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
+  if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) return false;
+  return true;
+}

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { graveyardFillMatches, subjectMatches } from "./subject.js";
+import { counterAddMatches, graveyardFillMatches, subjectMatches } from "./subject.js";
 import type { SubjectFilter } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
 
@@ -62,4 +62,24 @@ test("zone gate stays strict: a battlefield producer does not match a graveyard 
   const fill: SubjectFilter = { control: "you", token: null, zone: "battlefield" };
   const consumer: SubjectFilter = { control: "you", token: null, zone: "graveyard" };
   expect(graveyardFillMatches(fill, consumer, HH)).toBe(false);
+});
+
+test("untyped proliferate counter-added matches a typed +1/+1 counter payoff", () => {
+  const fill: SubjectFilter = { control: "you", token: null };
+  const consumer: SubjectFilter = { control: "you", token: null, counter: "+1/+1", type: "creature" };
+  expect(counterAddMatches(fill, consumer, HH)).toBe(true);
+});
+
+test("control gate stays strict: an opp untyped counter-added does not feed a you-only payoff", () => {
+  const fill: SubjectFilter = { control: "opp", token: null };
+  const consumer: SubjectFilter = { control: "you", token: null, counter: "+1/+1" };
+  expect(counterAddMatches(fill, consumer, HH)).toBe(false);
+});
+
+test("a typed counter producer delegates to subjectMatches (kind must match)", () => {
+  const plus: SubjectFilter = { control: "you", token: null, counter: "+1/+1" };
+  const minus: SubjectFilter = { control: "you", token: null, counter: "-1/-1" };
+  const consumerPlus: SubjectFilter = { control: "you", token: null, counter: "+1/+1" };
+  expect(counterAddMatches(plus, consumerPlus, HH)).toBe(true);
+  expect(counterAddMatches(minus, consumerPlus, HH)).toBe(false);
 });
