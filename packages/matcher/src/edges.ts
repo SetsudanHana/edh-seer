@@ -1,8 +1,9 @@
 import type { Reason } from "@mtg/engine";
 import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
-import { subjectMatches } from "./subject.js";
-import { impliedEvents } from "./implied.js";
+import { subjectMatches, graveyardFillMatches } from "./subject.js";
+import { impliedEvents, impliedGraveyardEvents } from "./implied.js";
+import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -36,13 +37,17 @@ function characteristicsSubject(tags: CardTags): SubjectFilter {
   };
 }
 
-/** A producer card's events: its authored emits unioned with the events implied by its own
- *  characteristics (being cast / entering the battlefield), de-duplicated. */
+/** A producer card's canonical events: authored emits + self-implied cast/enters, all zone-
+ *  normalized and deduped, then unioned with the graveyard-fill events those emits imply. */
 function producerEvents(tags: CardTags): GameEvent[] {
-  const authored = tags.abilities.flatMap((a) => a.emits ?? []);
-  const seen = new Set(authored.map((e) => JSON.stringify(e)));
-  const out = [...authored];
-  for (const e of impliedEvents(tags.characteristics)) {
+  const base = [
+    ...tags.abilities.flatMap((a) => a.emits ?? []),
+    ...impliedEvents(tags.characteristics),
+  ].map(normalizeZoneEvent);
+  const withGrave = [...base, ...impliedGraveyardEvents(base)];
+  const seen = new Set<string>();
+  const out: GameEvent[] = [];
+  for (const e of withGrave) {
     const k = JSON.stringify(e);
     if (!seen.has(k)) { seen.add(k); out.push(e); }
   }
@@ -62,23 +67,51 @@ function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
 function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
   if (!p.tags || !c.tags) return [];
   const reasons: Reason[] = [];
-  // Event edges.
-  for (const e of producerEvents(p.tags)) {
+  const pEvents = producerEvents(p.tags);
+
+  // Event edges: normalized producer event ↔ normalized consumer trigger.
+  for (const e of pEvents) {
     for (const a of c.tags.abilities) {
       if (!a.trigger) continue;
-      if (!a.trigger.verbs.includes(e.verb)) continue;
-      if (!subjectMatches(e.subject, a.trigger.subject, h)) continue;
-      const key = `${e.verb}:${themeSubjectKey(a.trigger.subject)}`;
+      for (const rawVerb of a.trigger.verbs) {
+        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
+        if (t.verb !== e.verb) continue;
+        const isGraveyardEntry = e.verb === "enters" && e.subject.zone === "graveyard";
+        const matched = isGraveyardEntry
+          ? graveyardFillMatches(e.subject, t.subject, h)
+          : subjectMatches(e.subject, t.subject, h);
+        if (!matched) continue;
+        const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
+        reasons.push({
+          tag: key,
+          text: `${p.card.name} ${key} feeds ${c.card.name}`,
+          effectKind: a.effect.kind,
+          repeatability: triggerRepeatability(t.subject),
+          scaling: a.effect.scaling,
+        });
+      }
+    }
+  }
+
+  // Reanimator-consumer edge: a producer graveyard fill enables C's graveyard-recursion effect.
+  for (const e of pEvents) {
+    if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
+    for (const a of c.tags.abilities) {
+      if (a.effect.kind !== "graveyard-recursion" || a.effect.subject?.zone !== "graveyard") continue;
+      if (!graveyardFillMatches(e.subject, a.effect.subject, h)) continue;
+      const repeatability =
+        a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
       reasons.push({
-        tag: key,
-        text: `${p.card.name} ${e.verb} feeds ${c.card.name}'s ${key} trigger`,
+        tag: `graveyard-recursion:${themeSubjectKey(a.effect.subject)}`,
+        text: `${p.card.name} fills the graveyard, enabling ${c.card.name}'s recursion`,
         effectKind: a.effect.kind,
-        repeatability: triggerRepeatability(a.trigger.subject),
+        repeatability,
         scaling: a.effect.scaling,
       });
     }
   }
-  // Static edges: P is a lord whose effect subject C's characteristics satisfy.
+
+  // Static edges: P is a lord whose effect subject C's characteristics satisfy. (UNCHANGED)
   for (const a of p.tags.abilities) {
     if (a.kind !== "static" || !a.effect.subject) continue;
     if (!subjectMatches(characteristicsSubject(c.tags), a.effect.subject, h)) continue;

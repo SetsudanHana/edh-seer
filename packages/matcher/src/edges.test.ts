@@ -214,3 +214,70 @@ test("on-cast is producer-only: two on-cast cards produce no cast:any consumer e
   // Neither on-cast ability is a consumer, so no spurious cast:* edge forms between them.
   expect(reasons.some((r) => r.tag.startsWith("cast:"))).toBe(false);
 });
+
+test("filler -> reanimator: a discard fills the graveyard, feeding a graveyard-recursion effect", () => {
+  const filler = base("Faithless Looting", [{
+    kind: "on-cast",
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    emits: [{ verb: "discard", subject: { control: "you", token: null } }],
+  }]);
+  const reanimator = base("Muldrotha", [{
+    kind: "static",
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
+  }]);
+  const reasons = pairReasons(filler, reanimator, H);
+  expect(reasons.some((r) => r.tag.startsWith("graveyard-recursion") && r.effectKind === "graveyard-recursion")).toBe(true);
+});
+
+test("mill -> Syr Konrad: a mill fills the graveyard, feeding an enters-graveyard:creature trigger", () => {
+  const miller = base("Ruin Crab", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } },
+    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
+  }]);
+  const konrad = base("Syr Konrad", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters-graveyard"], subject: { control: "any", token: null, type: "creature", zone: "graveyard" } },
+    effect: { kind: "damage", subject: { control: "opp", token: null } },
+  }]);
+  const reasons = pairReasons(miller, konrad, H);
+  expect(reasons.some((r) => r.tag === "enters-graveyard:creature")).toBe(true);
+});
+
+test("mill does NOT feed a Blood-Artist-style dies trigger", () => {
+  const miller = base("Ruin Crab", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } },
+    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
+  }]);
+  const bloodArtist = base("Blood Artist", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { control: "any", token: null, type: "creature" } },
+    effect: { kind: "drain", subject: { control: "opp", token: null } },
+  }]);
+  const reasons = pairReasons(miller, bloodArtist, H);
+  expect(reasons.some((r) => r.tag.startsWith("dies:"))).toBe(false);
+});
+
+test("ETB regression: a battlefield enters still feeds a wizard-ETB trigger; a graveyard fill does not", () => {
+  const maker = base("Wizard Maker", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+    effect: { kind: "token-generation", subject: { subtype: "wizard", control: "you", token: true } },
+    emits: [{ verb: "enters", subject: { subtype: "wizard", control: "you", token: true } }],
+  }], ["wizard"]);
+  const etbPayoff = base("Wizard ETB Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: null } },
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+  }], ["wizard"]);
+  const grave = base("Miller", [{
+    kind: "on-cast",
+    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
+  }]);
+  expect(pairReasons(maker, etbPayoff, H).some((r) => r.tag === "enters:wizard")).toBe(true);
+  expect(pairReasons(grave, etbPayoff, H).some((r) => r.tag === "enters:wizard")).toBe(false);
+});
