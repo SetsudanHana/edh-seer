@@ -4,6 +4,7 @@ export interface ScryfallCard {
   oracle_id?: string;
   name?: string;
   type_line?: string;
+  layout?: string;
   oracle_text?: string;
   keywords?: string[];
   colors?: string[];
@@ -20,8 +21,21 @@ export interface NormalizedCard {
   faceNames: string[];
 }
 
+/** Scryfall layouts that are not real gameplay cards (art cards, tokens, emblems,
+ *  reversible/art-series printings). These carry a valid oracle_id but no gameplay
+ *  text and must never enter the corpus. Reject-list, so any future gameplay layout
+ *  keeps flowing. */
+export const NON_GAMEPLAY_LAYOUTS: ReadonlySet<string> = new Set([
+  "art_series",
+  "double_faced_token",
+  "token",
+  "emblem",
+  "reversible_card",
+]);
+
 export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null {
   if (!raw.oracle_id || !raw.name || !raw.type_line) return null;
+  if (raw.layout !== undefined && NON_GAMEPLAY_LAYOUTS.has(raw.layout)) return null;
 
   const faces = raw.card_faces ?? [];
 
