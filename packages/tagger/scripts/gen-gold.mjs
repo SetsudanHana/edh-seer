@@ -622,6 +622,31 @@ const CARDS = [
       },
     ],
   },
+  // ============ Proliferate (gap #4) ============
+  {
+    oracleId: "9fb8cd81-403a-4988-8f1c-b8eccf8abd9c",
+    name: "Karn's Bastion",
+    typeLine: "Land",
+    colors: [], colorIdentity: [], power: null, toughness: null, manaValue: 0, keywords: ["Proliferate"],
+    oracleText:
+      "{T}: Add {C}.\n{4}, {T}: Proliferate. (Choose any number of permanents and/or players, then give each another counter of each kind already there.)",
+    abilities: [
+      { kind: "activated", cost: "{T}", effect: { kind: "mana-generation", subject: subj({ control: "you", token: null, colors: ["C"] }) }, emits: [] },
+      { kind: "activated", cost: "{4}, {T}", effect: { kind: "proliferate" }, emits: [ev("proliferate", { control: "you", token: null })] },
+    ],
+  },
+  {
+    oracleId: "4716ab91-30e6-4c63-8389-a9db8f9414d8",
+    name: "Tekuthal, Inquiry Dominus",
+    typeLine: "Legendary Creature — Phyrexian Horror",
+    colors: ["U"], colorIdentity: ["U"], power: "3", toughness: "5", manaValue: 4, keywords: ["Flying", "Proliferate"],
+    oracleText:
+      "Flying\nIf you would proliferate, proliferate twice instead.\n{1}{U/P}{U/P}, Remove three counters from among other artifacts, creatures, and planeswalkers you control: Put an indestructible counter on Tekuthal. ({U/P} can be paid with either {U} or 2 life.)",
+    abilities: [
+      { kind: "triggered", trigger: { verbs: ["proliferate"], subject: { control: "you", token: null } }, effect: { kind: "trigger-doubling" }, emits: [] },
+      { kind: "activated", cost: "{1}{U/P}{U/P}, Remove three counters from among other artifacts, creatures, and planeswalkers you control", effect: { kind: "counter-placement", subject: { control: "you", token: null, counter: "indestructible" } }, emits: [ev("counter-added", { control: "you", token: null, counter: "indestructible" })] },
+    ],
+  },
 ];
 
 // ---- emit files ----

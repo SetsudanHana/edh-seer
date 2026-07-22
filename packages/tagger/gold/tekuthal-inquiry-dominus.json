@@ -1,0 +1,91 @@
+{
+  "oracleId": "4716ab91-30e6-4c63-8389-a9db8f9414d8",
+  "card": {
+    "name": "Tekuthal, Inquiry Dominus",
+    "typeLine": "Legendary Creature — Phyrexian Horror",
+    "oracleText": "Flying\nIf you would proliferate, proliferate twice instead.\n{1}{U/P}{U/P}, Remove three counters from among other artifacts, creatures, and planeswalkers you control: Put an indestructible counter on Tekuthal. ({U/P} can be paid with either {U} or 2 life.)",
+    "keywords": [
+      "Flying",
+      "Proliferate"
+    ],
+    "colors": [
+      "U"
+    ],
+    "colorIdentity": [
+      "U"
+    ],
+    "power": "3",
+    "toughness": "5",
+    "manaValue": 4
+  },
+  "expected": {
+    "oracleId": "4716ab91-30e6-4c63-8389-a9db8f9414d8",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "legendary",
+        "creature"
+      ],
+      "subtypes": [
+        "phyrexian",
+        "horror"
+      ],
+      "colors": [
+        "U"
+      ],
+      "identity": [
+        "U"
+      ],
+      "cmc": 4,
+      "power": "3",
+      "toughness": "5",
+      "token": false,
+      "keywords": [
+        "flying",
+        "proliferate"
+      ]
+    },
+    "abilities": [
+      {
+        "kind": "triggered",
+        "trigger": {
+          "verbs": [
+            "proliferate"
+          ],
+          "subject": {
+            "control": "you",
+            "token": null
+          }
+        },
+        "effect": {
+          "kind": "trigger-doubling"
+        },
+        "emits": []
+      },
+      {
+        "kind": "activated",
+        "cost": "{1}{U/P}{U/P}, Remove three counters from among other artifacts, creatures, and planeswalkers you control",
+        "effect": {
+          "kind": "counter-placement",
+          "subject": {
+            "control": "you",
+            "token": null,
+            "counter": "indestructible"
+          }
+        },
+        "emits": [
+          {
+            "verb": "counter-added",
+            "subject": {
+              "control": "you",
+              "token": null,
+              "counter": "indestructible"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
