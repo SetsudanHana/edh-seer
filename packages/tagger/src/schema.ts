@@ -177,7 +177,7 @@ export interface Effect {
   scaling?: string;
 }
 
-export type AbilityKind = "triggered" | "activated" | "static";
+export type AbilityKind = "triggered" | "activated" | "static" | "on-cast";
 
 export interface Ability {
   kind: AbilityKind;
