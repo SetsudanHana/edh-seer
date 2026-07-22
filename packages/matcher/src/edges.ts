@@ -1,8 +1,8 @@
 import type { Reason } from "@mtg/engine";
 import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
-import { subjectMatches, graveyardFillMatches } from "./subject.js";
-import { impliedEvents, impliedGraveyardEvents } from "./implied.js";
+import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
+import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 
 const list = (v: string | string[] | undefined): string[] =>
@@ -44,10 +44,11 @@ function producerEvents(tags: CardTags): GameEvent[] {
     ...tags.abilities.flatMap((a) => a.emits ?? []),
     ...impliedEvents(tags.characteristics),
   ].map(normalizeZoneEvent);
-  const withGrave = [...base, ...impliedGraveyardEvents(base)];
+  const derived = [...impliedGraveyardEvents(base), ...impliedCounterEvents(base)];
+  const withDerived = [...base, ...derived];
   const seen = new Set<string>();
   const out: GameEvent[] = [];
-  for (const e of withGrave) {
+  for (const e of withDerived) {
     const k = JSON.stringify(e);
     if (!seen.has(k)) { seen.add(k); out.push(e); }
   }
@@ -79,7 +80,9 @@ function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
         const isGraveyardEntry = e.verb === "enters" && e.subject.zone === "graveyard";
         const matched = isGraveyardEntry
           ? graveyardFillMatches(e.subject, t.subject, h)
-          : subjectMatches(e.subject, t.subject, h);
+          : e.verb === "counter-added"
+            ? counterAddMatches(e.subject, t.subject, h)
+            : subjectMatches(e.subject, t.subject, h);
         if (!matched) continue;
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         reasons.push({
