@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import type { Characteristics, GameEvent } from "@mtg/tagger";
 import { impliedEvents, impliedGraveyardEvents } from "./implied.js";
+import { impliedCounterEvents } from "./implied.js";
 
 const chars = (types: string[], subtypes: string[] = []): Characteristics => ({
   types, subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [],
@@ -63,4 +64,18 @@ test("mill/discard do NOT imply a leaves (Blood Artist must stay unfed)", () => 
   const emits: GameEvent[] = [{ verb: "mill", subject: { control: "opp", token: null } }];
   const out = impliedGraveyardEvents(emits);
   expect(out.some((e) => e.verb === "leaves")).toBe(false);
+});
+
+test("a proliferate emit implies one untyped counter-added (control carried)", () => {
+  const out = impliedCounterEvents([{ verb: "proliferate", subject: { control: "you", token: null } }] as GameEvent[]);
+  expect(out).toHaveLength(1);
+  expect(out[0]).toEqual({ verb: "counter-added", subject: { control: "you", token: null } });
+});
+
+test("non-proliferate verbs imply no counter-added", () => {
+  const out = impliedCounterEvents([
+    { verb: "mill", subject: { control: "opp", token: null } },
+    { verb: "counter-added", subject: { control: "you", token: null, counter: "+1/+1" } },
+  ] as GameEvent[]);
+  expect(out).toHaveLength(0);
 });

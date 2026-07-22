@@ -51,3 +51,18 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
   }
   return out;
 }
+
+/** The counter-added event a proliferate implies: proliferate gives each chosen permanent another
+ *  counter of each kind already there, so it adds counters of an UNKNOWN, board-state-dependent kind
+ *  — an untyped counter-added (no `counter`, no type) that a permissive matcher wildcards onto any
+ *  counter-matters payoff. control:"you" (you choose what to proliferate). Only `proliferate` implies
+ *  it; all other verbs contribute nothing. */
+export function impliedCounterEvents(emits: GameEvent[]): GameEvent[] {
+  const out: GameEvent[] = [];
+  for (const e of emits) {
+    if (e.verb === "proliferate") {
+      out.push({ verb: "counter-added", subject: { control: e.subject.control, token: null } });
+    }
+  }
+  return out;
+}
