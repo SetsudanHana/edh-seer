@@ -183,3 +183,34 @@ test("static-edge reason carries the static effect's scaling", () => {
   const reason = pairReasons(lord, zombie, H).find((r) => r.tag === "static:pump")!;
   expect(reason.scaling).toBe("per-permanent");
 });
+
+test("on-cast producer: an on-cast mill emit feeds a mill-payoff trigger", () => {
+  const speller = base("Maddening Cacophony", [{
+    kind: "on-cast",
+    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
+  }]);
+  const payoff = base("Mill Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["mill"], subject: { control: "opp", token: null } },
+    effect: { kind: "drain", subject: { control: "opp", token: null } },
+  }]);
+  const reasons = pairReasons(speller, payoff, H);
+  expect(reasons.some((r) => r.tag.startsWith("mill:"))).toBe(true);
+});
+
+test("on-cast is producer-only: two on-cast cards produce no cast:any consumer edge", () => {
+  const a = base("Windfall", [{
+    kind: "on-cast",
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }]);
+  const b = base("Maddening Cacophony", [{
+    kind: "on-cast",
+    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
+  }]);
+  const reasons = pairReasons(a, b, H);
+  // Neither on-cast ability is a consumer, so no spurious cast:* edge forms between them.
+  expect(reasons.some((r) => r.tag.startsWith("cast:"))).toBe(false);
+});
