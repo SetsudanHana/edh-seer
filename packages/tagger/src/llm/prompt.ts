@@ -2,7 +2,7 @@ import type { Card } from "@mtg/engine";
 import { EFFECT_KINDS, SCALING_BASES, VERB_VOCAB } from "../schema.js";
 import type { ChatMessage } from "./provider.js";
 
-export const PROMPT_VERSION = 20;
+export const PROMPT_VERSION = 21;
 
 export { EFFECT_KINDS };
 export { SCALING_BASES };
@@ -100,7 +100,8 @@ INVARIANT — emits:
   also emits { verb: "lose-life" } (damage is life loss); damage to "any target" does not.
 - "speed-increase" is the "Start your engines!" speed mechanic; its speed rises when an
   opponent loses life, so model it as a trigger on { verb: "lose-life", control: "opp" }.
-- Effects whose verb no trigger consumes (pumps, cost reduction, taxes) need no emits.`;
+- Effects whose verb no trigger consumes (pumps, cost reduction, taxes) need no emits.
+- Proliferate: a card that proliferates is a SOURCE — use effect.kind "proliferate" and emit { "verb": "proliferate", "subject": { "control": "you", "token": null } }; do NOT emit counter-added for it. A card that cares about proliferating (e.g. "if you would proliferate, proliferate twice", "whenever you proliferate ...") is a PAYOFF — give it a trigger { "verbs": ["proliferate"], "subject": { "control": "you", "token": null } } and its own effect.`;
 
 /** One card presented to the model as the user turn. */
 function cardTurn(name: string, typeLine: string, text: string): string {
@@ -230,6 +231,36 @@ const FEW_SHOT_TURNS: ChatMessage[] = [
   { "kind": "on-cast",
     "effect": { "kind": "top-manipulation", "subject": { "control": "opp", "token": null }, "scaling": "fixed" },
     "emits": [ { "verb": "mill", "subject": { "control": "opp", "token": null } } ] }
+] }`,
+  },
+  {
+    role: "user",
+    content: cardTurn(
+      "Karn's Bastion",
+      "Land",
+      "{T}: Add {C}.\n{4}, {T}: Proliferate. (Choose any number of permanents and/or players, then give each another counter of each kind already there.)",
+    ),
+  },
+  {
+    role: "assistant",
+    content: `{ "abilities": [
+  { "kind": "activated", "cost": "{T}", "effect": { "kind": "mana-generation", "subject": { "control": "you", "token": null, "colors": ["C"] } }, "emits": [] },
+  { "kind": "activated", "cost": "{4}, {T}", "effect": { "kind": "proliferate" }, "emits": [ { "verb": "proliferate", "subject": { "control": "you", "token": null } } ] }
+] }`,
+  },
+  {
+    role: "user",
+    content: cardTurn(
+      "Tekuthal, Inquiry Dominus",
+      "Legendary Creature — Phyrexian Horror",
+      "Flying\nIf you would proliferate, proliferate twice instead.\n{1}{U/P}{U/P}, Remove three counters from among other artifacts, creatures, and planeswalkers you control: Put an indestructible counter on Tekuthal. ({U/P} can be paid with either {U} or 2 life.)",
+    ),
+  },
+  {
+    role: "assistant",
+    content: `{ "abilities": [
+  { "kind": "triggered", "trigger": { "verbs": ["proliferate"], "subject": { "control": "you", "token": null } }, "effect": { "kind": "trigger-doubling" }, "emits": [] },
+  { "kind": "activated", "cost": "{1}{U/P}{U/P}, Remove three counters from among other artifacts, creatures, and planeswalkers you control", "effect": { "kind": "counter-placement", "subject": { "control": "you", "token": null, "counter": "indestructible" } }, "emits": [ { "verb": "counter-added", "subject": { "control": "you", "token": null, "counter": "indestructible" } } ] }
 ] }`,
   },
   {

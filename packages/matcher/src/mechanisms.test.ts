@@ -58,3 +58,7 @@ test("no kindred/tribal category exists (dropped per design)", () => {
 test("mill-self accepts the enters-graveyard linking tag", () => {
   expect(categoryMatches({ tag: "enters-graveyard:creature", text: "" } as never, "mill-self")).toBe(true);
 });
+
+test("counters-plus1 accepts the proliferate linking tag", () => {
+  expect(categoryMatches({ tag: "proliferate:any", text: "" } as never, "counters-plus1")).toBe(true);
+});

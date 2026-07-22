@@ -1,8 +1,8 @@
 import type { Reason } from "@mtg/engine";
 import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
-import { subjectMatches, graveyardFillMatches } from "./subject.js";
-import { impliedEvents, impliedGraveyardEvents } from "./implied.js";
+import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
+import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 
 const list = (v: string | string[] | undefined): string[] =>
@@ -44,10 +44,11 @@ function producerEvents(tags: CardTags): GameEvent[] {
     ...tags.abilities.flatMap((a) => a.emits ?? []),
     ...impliedEvents(tags.characteristics),
   ].map(normalizeZoneEvent);
-  const withGrave = [...base, ...impliedGraveyardEvents(base)];
+  const derived = [...impliedGraveyardEvents(base), ...impliedCounterEvents(base)];
+  const withDerived = [...base, ...derived];
   const seen = new Set<string>();
   const out: GameEvent[] = [];
-  for (const e of withGrave) {
+  for (const e of withDerived) {
     const k = JSON.stringify(e);
     if (!seen.has(k)) { seen.add(k); out.push(e); }
   }
@@ -79,7 +80,9 @@ function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
         const isGraveyardEntry = e.verb === "enters" && e.subject.zone === "graveyard";
         const matched = isGraveyardEntry
           ? graveyardFillMatches(e.subject, t.subject, h)
-          : subjectMatches(e.subject, t.subject, h);
+          : e.verb === "counter-added"
+            ? counterAddMatches(e.subject, t.subject, h)
+            : subjectMatches(e.subject, t.subject, h);
         if (!matched) continue;
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         reasons.push({
@@ -131,7 +134,17 @@ function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
   return reasons;
 }
 
-/** All reasons for the unordered pair {a,b}: union of a→b and b→a directional reasons. */
+/** All reasons for the unordered pair {a,b}: union of a→b and b→a directional reasons, deduped
+ *  by byte-identical shape (e.g. an authored counter-added emit and a proliferate-derived
+ *  counter-added emit can independently satisfy the same consumer trigger, producing two
+ *  Reason objects with identical fields — collapse those since they carry no extra information). */
 export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
-  return [...directedReasons(a, b, h), ...directedReasons(b, a, h)];
+  const all = [...directedReasons(a, b, h), ...directedReasons(b, a, h)];
+  const seen = new Set<string>();
+  const out: Reason[] = [];
+  for (const r of all) {
+    const k = JSON.stringify(r);
+    if (!seen.has(k)) { seen.add(k); out.push(r); }
+  }
+  return out;
 }

@@ -322,3 +322,92 @@ test("non-graveyard-trigger reanimator: a triggered graveyard-recursion ability 
   const reasons = pairReasons(filler, attackReanimator, H);
   expect(reasons.some((r) => r.tag.startsWith("graveyard-recursion") && r.effectKind === "graveyard-recursion")).toBe(true);
 });
+
+test("proliferate source -> proliferate payoff: a source's proliferate feeds Tekuthal's doubler", () => {
+  const source = base("Karn's Bastion", [{
+    kind: "activated", cost: "{4}, {T}",
+    effect: { kind: "proliferate" },
+    emits: [{ verb: "proliferate", subject: { control: "you", token: null } }],
+  }]);
+  const tekuthal = base("Tekuthal", [{
+    kind: "triggered",
+    trigger: { verbs: ["proliferate"], subject: { control: "you", token: null } },
+    effect: { kind: "trigger-doubling" },
+  }]);
+  const reasons = pairReasons(source, tekuthal, H);
+  expect(reasons.some((r) => r.tag === "proliferate:any" && r.effectKind === "trigger-doubling")).toBe(true);
+});
+
+test("proliferate -> counter payoff: a proliferate implies a counter-added that feeds a +1/+1 payoff", () => {
+  const source = base("Karn's Bastion", [{
+    kind: "activated", cost: "{4}, {T}",
+    effect: { kind: "proliferate" },
+    emits: [{ verb: "proliferate", subject: { control: "you", token: null } }],
+  }]);
+  const counterPayoff = base("Counter Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "+1/+1" } },
+    effect: { kind: "draw-card" },
+  }]);
+  const reasons = pairReasons(source, counterPayoff, H);
+  expect(reasons.some((r) => r.tag.startsWith("counter-added") && r.effectKind === "draw-card")).toBe(true);
+});
+
+test("no-regression: a normal +1/+1 counter placer still feeds a +1/+1 payoff", () => {
+  const placer = base("Placer", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+    effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const counterPayoff = base("Counter Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "+1/+1" } },
+    effect: { kind: "draw-card" },
+  }]);
+  const reasons = pairReasons(placer, counterPayoff, H);
+  expect(reasons.some((r) => r.tag.startsWith("counter-added") && r.effectKind === "draw-card")).toBe(true);
+});
+
+test("no-regression: a card that does NOT proliferate implies no counter-added", () => {
+  const plainCreature = base("Bear", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "pump", subject: { control: "you", token: null } },
+  }]);
+  const counterPayoff = base("Counter Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "+1/+1" } },
+    effect: { kind: "draw-card" },
+  }]);
+  const reasons = pairReasons(plainCreature, counterPayoff, H);
+  expect(reasons.some((r) => r.tag.startsWith("counter-added"))).toBe(false);
+});
+
+test("dedup: a producer with BOTH an authored counter-added emit AND a proliferate emit credits a shared counter payoff exactly once", () => {
+  // Two independent abilities on the same producer: one authors a +1/+1 counter-added event
+  // directly, the other emits proliferate (which independently implies an untyped counter-added
+  // event). Both are byte-distinct-shaped events that satisfy the same consumer trigger, so
+  // without dedup they'd produce two byte-identical Reason objects for one payoff.
+  const dualSource = base("Dual Source", [
+    {
+      kind: "triggered",
+      trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+      effect: { kind: "counter-placement" },
+      emits: [{ verb: "counter-added", subject: { control: "you", token: null, counter: "+1/+1" } }],
+    },
+    {
+      kind: "activated", cost: "{4}, {T}",
+      effect: { kind: "proliferate" },
+      emits: [{ verb: "proliferate", subject: { control: "you", token: null } }],
+    },
+  ]);
+  const counterPayoff = base("Counter Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "+1/+1" } },
+    effect: { kind: "draw-card" },
+  }]);
+  const reasons = pairReasons(dualSource, counterPayoff, H);
+  const counterReasons = reasons.filter((r) => r.tag.startsWith("counter-added"));
+  expect(counterReasons).toHaveLength(1);
+});

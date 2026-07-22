@@ -1,0 +1,70 @@
+{
+  "oracleId": "9fb8cd81-403a-4988-8f1c-b8eccf8abd9c",
+  "card": {
+    "name": "Karn's Bastion",
+    "typeLine": "Land",
+    "oracleText": "{T}: Add {C}.\n{4}, {T}: Proliferate. (Choose any number of permanents and/or players, then give each another counter of each kind already there.)",
+    "keywords": [
+      "Proliferate"
+    ],
+    "colors": [],
+    "colorIdentity": [],
+    "power": null,
+    "toughness": null,
+    "manaValue": 0
+  },
+  "expected": {
+    "oracleId": "9fb8cd81-403a-4988-8f1c-b8eccf8abd9c",
+    "schemaVersion": 1,
+    "promptVersion": 1,
+    "model": "gold",
+    "characteristics": {
+      "types": [
+        "land"
+      ],
+      "subtypes": [],
+      "colors": [],
+      "identity": [],
+      "cmc": 0,
+      "power": null,
+      "toughness": null,
+      "token": false,
+      "keywords": [
+        "proliferate"
+      ]
+    },
+    "abilities": [
+      {
+        "kind": "activated",
+        "cost": "{T}",
+        "effect": {
+          "kind": "mana-generation",
+          "subject": {
+            "control": "you",
+            "token": null,
+            "colors": [
+              "C"
+            ]
+          }
+        },
+        "emits": []
+      },
+      {
+        "kind": "activated",
+        "cost": "{4}, {T}",
+        "effect": {
+          "kind": "proliferate"
+        },
+        "emits": [
+          {
+            "verb": "proliferate",
+            "subject": {
+              "control": "you",
+              "token": null
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

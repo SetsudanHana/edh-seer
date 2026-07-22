@@ -39,7 +39,8 @@ export type Verb =
   | "create-token"
   | "counter-added"
   | "land-play"
-  | "untaps";
+  | "untaps"
+  | "proliferate";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -61,6 +62,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "counter-added",
   "land-play",
   "untaps",
+  "proliferate",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */
@@ -117,6 +119,7 @@ export const EFFECT_KINDS = [
   "flicker",
   "animate",
   "untap",
+  "proliferate",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];

@@ -17,8 +17,8 @@ function flat(): string {
     .join("\n");
 }
 
-test("prompt version is 20", () => {
-  expect(PROMPT_VERSION).toBe(20);
+test("prompt version is 21", () => {
+  expect(PROMPT_VERSION).toBe(21);
 });
 
 test("messages teach the flicker/untap/animate vocab with a few-shot each", () => {
