@@ -98,6 +98,11 @@ function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
     if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
     for (const a of c.tags.abilities) {
       if (a.effect.kind !== "graveyard-recursion" || a.effect.subject?.zone !== "graveyard") continue;
+      // Skip if the event-edge loop already credited this fill via a graveyard-entry trigger on the same ability.
+      if (a.trigger && a.trigger.verbs.some((v) => {
+        const t = normalizeZoneEvent({ verb: v, subject: a.trigger!.subject });
+        return t.verb === "enters" && t.subject.zone === "graveyard" && graveyardFillMatches(e.subject, t.subject, h);
+      })) continue;
       if (!graveyardFillMatches(e.subject, a.effect.subject, h)) continue;
       const repeatability =
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
