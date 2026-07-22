@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { parseAbilities, extractJsonObject } from "./validate.js";
-import { VERB_VOCAB } from "./schema.js";
+import { VERB_VOCAB, EFFECT_KINDS } from "./schema.js";
 
 test("extracts the abilities object from think-wrapped, fenced, prose output", () => {
   const raw =
@@ -267,4 +267,9 @@ test("an on-cast ability drops a stray trigger (must be producer-only)", () => {
 
 test("VERB_VOCAB includes the leaves zone-transition verb", () => {
   expect(VERB_VOCAB).toContain("leaves");
+});
+
+test("proliferate is a verb and an effect kind", () => {
+  expect(VERB_VOCAB).toContain("proliferate");
+  expect(EFFECT_KINDS as readonly string[]).toContain("proliferate");
 });

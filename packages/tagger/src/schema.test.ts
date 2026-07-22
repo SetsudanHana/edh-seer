@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
 import { VERB_VOCAB, SCHEMA_VERSION, SCALING_BASES, SCALING_ALIASES } from "./schema.js";
 
-test("verb vocabulary is the closed 17-verb list", () => {
-  expect(VERB_VOCAB).toHaveLength(19);
+test("VERB_VOCAB is a closed, unique verb list", () => {
+  expect(VERB_VOCAB).toHaveLength(20);
   expect(VERB_VOCAB).toContain("enters");
   expect(VERB_VOCAB).toContain("create-token");
   expect(VERB_VOCAB).toContain("land-play");
