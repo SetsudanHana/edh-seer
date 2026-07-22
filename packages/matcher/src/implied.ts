@@ -36,3 +36,18 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
   if (isPermanent) out.push({ verb: "enters", subject });
   return out;
 }
+
+/** Graveyard-fill events implied by a producer's (already-normalized) emits: mill/discard put an
+ *  untyped card into a graveyard; a nontoken leaving the battlefield (a normalized `dies`) also
+ *  enters the graveyard carrying its type. Tokens cease to exist, so they add no graveyard card. */
+export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
+  const out: GameEvent[] = [];
+  for (const e of emits) {
+    if (e.verb === "mill" || e.verb === "discard") {
+      out.push({ verb: "enters", subject: { control: e.subject.control, token: null, zone: "graveyard" } });
+    } else if (e.verb === "leaves" && e.subject.zone === "battlefield" && e.subject.token !== true) {
+      out.push({ verb: "enters", subject: { ...e.subject, zone: "graveyard" } });
+    }
+  }
+  return out;
+}
