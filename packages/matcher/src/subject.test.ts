@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { subjectMatches } from "./subject.js";
+import { graveyardFillMatches, subjectMatches } from "./subject.js";
 import type { SubjectFilter } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
 
@@ -36,4 +36,30 @@ test("counter and zone gates require equality when the consumer names them", () 
   expect(subjectMatches(s({ counter: "+1/+1" }), s({ counter: "+1/+1" }), H)).toBe(true);
   expect(subjectMatches(s({}), s({ counter: "+1/+1" }), H)).toBe(false);
   expect(subjectMatches(s({ zone: "graveyard" }), s({ zone: "graveyard" }), H)).toBe(true);
+});
+
+const HH: Hierarchy = { zombie: ["creature"] };
+
+test("untyped fill satisfies a typed graveyard consumer", () => {
+  const fill: SubjectFilter = { control: "you", token: null, zone: "graveyard" };
+  const consumer: SubjectFilter = { control: "you", token: null, zone: "graveyard", type: "creature" };
+  expect(graveyardFillMatches(fill, consumer, HH)).toBe(true);
+});
+
+test("typed dies-fill matches a creature consumer via hierarchy", () => {
+  const fill: SubjectFilter = { control: "you", token: null, zone: "graveyard", subtype: "zombie" };
+  const consumer: SubjectFilter = { control: "you", token: null, zone: "graveyard", type: "creature" };
+  expect(graveyardFillMatches(fill, consumer, HH)).toBe(true);
+});
+
+test("control gate stays strict: opp fill does not feed a you-only consumer", () => {
+  const fill: SubjectFilter = { control: "opp", token: null, zone: "graveyard" };
+  const consumer: SubjectFilter = { control: "you", token: null, zone: "graveyard", type: "creature" };
+  expect(graveyardFillMatches(fill, consumer, HH)).toBe(false);
+});
+
+test("zone gate stays strict: a battlefield producer does not match a graveyard consumer", () => {
+  const fill: SubjectFilter = { control: "you", token: null, zone: "battlefield" };
+  const consumer: SubjectFilter = { control: "you", token: null, zone: "graveyard" };
+  expect(graveyardFillMatches(fill, consumer, HH)).toBe(false);
 });
