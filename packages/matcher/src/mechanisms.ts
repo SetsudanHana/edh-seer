@@ -48,7 +48,7 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   "graveyard-matters": { effectKinds: ["graveyard-recursion", "top-manipulation"] },
   "attack-matters": { tags: ["attacks:creature"], effectKinds: ["pump", "speed-increase", "damage"] },
   "blink-etb": { effectKinds: ["flicker", "clone"] },
-  "mill-self": { effectKinds: ["graveyard-recursion", "top-manipulation"] },
+  "mill-self": { tags: ["enters-graveyard:creature", "enters-graveyard:any"], effectKinds: ["graveyard-recursion", "top-manipulation"] },
   "wheels-draw": { tags: ["draw:any"], effectKinds: ["draw-card"] },
 };
 

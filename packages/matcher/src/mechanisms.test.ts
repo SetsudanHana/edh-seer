@@ -54,3 +54,7 @@ test("no kindred/tribal category exists (dropped per design)", () => {
   expect(MECHANISM_CATEGORIES).not.toContain("tribal");
   expect(MECHANISM_CATEGORIES).not.toContain("kindred");
 });
+
+test("mill-self accepts the enters-graveyard linking tag", () => {
+  expect(categoryMatches({ tag: "enters-graveyard:creature", text: "" } as never, "mill-self")).toBe(true);
+});
