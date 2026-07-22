@@ -24,6 +24,7 @@ export type Verb =
   | "enters"
   | "enters-graveyard"
   | "dies"
+  | "leaves"
   | "cast"
   | "attacks"
   | "taps"
@@ -44,6 +45,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "enters",
   "enters-graveyard",
   "dies",
+  "leaves",
   "cast",
   "attacks",
   "taps",
