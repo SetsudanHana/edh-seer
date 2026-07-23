@@ -125,3 +125,18 @@ test("NON_GAMEPLAY_LAYOUTS contains exactly the five reject layouts", () => {
     ["art_series", "double_faced_token", "emblem", "reversible_card", "token"],
   );
 });
+
+test("normalizeScryfallCard carries edhrec_rank through as edhrecRank", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "o1", name: "Sol Ring", type_line: "Artifact", oracle_text: "{T}: Add {C}{C}.",
+    edhrec_rank: 1,
+  });
+  expect(n?.edhrecRank).toBe(1);
+});
+
+test("normalizeScryfallCard leaves edhrecRank undefined when Scryfall omits it", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "o2", name: "Obscure Card", type_line: "Sorcery", oracle_text: "Draw a card.",
+  });
+  expect(n?.edhrecRank).toBeUndefined();
+});

@@ -15,6 +15,7 @@ export interface CardDoc {
   toughness: string | null;
   tags: { produces: string[]; cares: string[] };
   searchNames: string[];
+  edhrecRank?: number;
 }
 
 export interface ComboDoc {
@@ -41,6 +42,7 @@ export function toCardDoc(n: NormalizedCard): CardDoc {
     toughness: n.card.toughness ?? null,
     tags: { produces: [...produces], cares: [...cares] },
     searchNames,
+    ...(n.edhrecRank !== undefined ? { edhrecRank: n.edhrecRank } : {}),
   };
 }
 

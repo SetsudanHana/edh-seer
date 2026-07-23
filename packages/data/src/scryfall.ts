@@ -13,12 +13,14 @@ export interface ScryfallCard {
   color_identity?: string[];
   power?: string;
   toughness?: string;
+  edhrec_rank?: number;
 }
 
 export interface NormalizedCard {
   oracleId: string;
   card: Card;
   faceNames: string[];
+  edhrecRank?: number;
 }
 
 /** Scryfall layouts that are not real gameplay cards (art cards, tokens, emblems,
@@ -65,7 +67,7 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     toughness: raw.toughness ?? null,
   };
 
-  return { oracleId: raw.oracle_id, card, faceNames };
+  return { oracleId: raw.oracle_id, card, faceNames, edhrecRank: raw.edhrec_rank };
 }
 
 export type FetchFn = typeof fetch;
