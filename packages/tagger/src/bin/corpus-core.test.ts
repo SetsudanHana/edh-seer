@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { selectUntagged, renderPreamble, cardTagsFromRawAbilities } from "./corpus-core.js";
+import { selectUntagged, renderPreamble, cardTagsFromRawAbilities, missingOracleIds, coverageReport } from "./corpus-core.js";
 import type { CardDoc } from "@mtg/data";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";
@@ -50,4 +50,22 @@ test("cardTagsFromRawAbilities normalizes raw abilities and stamps versions + ch
 test("cardTagsFromRawAbilities yields empty abilities for an empty raw array", () => {
   const card = { name: "Grizzly Bears", typeLine: "Creature — Bear", oracleText: "", keywords: [], colors: ["G"], manaValue: 2, colorIdentity: ["G"], power: "2", toughness: "2" };
   expect(cardTagsFromRawAbilities("oid-gb", card, [], "m").abilities).toEqual([]);
+});
+
+test("missingOracleIds returns dispatched ids with no result, deduped", () => {
+  expect(missingOracleIds(["a", "b", "c", "b"], ["b"])).toEqual(["a", "c"]);
+});
+
+test("coverageReport counts totals, tagged, remaining under cutoff, and next rank", () => {
+  const cards = [
+    doc({ _id: "a", edhrecRank: 10 }),
+    doc({ _id: "b", edhrecRank: 100 }),
+    doc({ _id: "c", edhrecRank: 5000 }),
+    doc({ _id: "empty", edhrecRank: 1, oracleText: "" }), // ignored (no text)
+  ];
+  const r = coverageReport(cards, new Set(["a"]), 1000);
+  expect(r.total).toBe(3);                 // a,b,c (empty excluded)
+  expect(r.tagged).toBe(1);                // a
+  expect(r.remainingUnderCutoff).toBe(1);  // b (rank 100 <= 1000); c is 5000
+  expect(r.nextRank).toBe(100);            // smallest untagged rank
 });
