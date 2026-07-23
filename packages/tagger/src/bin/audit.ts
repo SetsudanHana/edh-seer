@@ -1,5 +1,5 @@
 import { connect, loadConfig } from "@mtg/data";
-import { needsRetag, type TagCollection } from "../store.js";
+import { needsRetag } from "../store.js";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";
 import { sample } from "./corpus-core.js";

@@ -18,8 +18,12 @@ async function main(): Promise<void> {
   for (const r of results) {
     const doc = await store.cards.findOne({ _id: r.oracleId });
     if (!doc) { failed.push(`${r.oracleId} (card doc missing)`); continue; }
+    // A genuinely omitted/non-array `abilities` is a subagent flake — leave it untagged so it
+    // re-queues, rather than persisting an empty tag that reads as a vanilla card forever. A real
+    // empty array (a vanilla card) is fine and still tags as [].
+    if (!Array.isArray(r.abilities)) { failed.push(`${doc.name} (no abilities array in output)`); continue; }
     try {
-      await upsertCardTags(cardTags, cardTagsFromRawAbilities(r.oracleId, docToCard(doc), r.abilities ?? [], MODEL));
+      await upsertCardTags(cardTags, cardTagsFromRawAbilities(r.oracleId, docToCard(doc), r.abilities, MODEL));
       ok++;
     } catch (e) { failed.push(`${doc.name}: ${(e as Error).message}`); }
   }

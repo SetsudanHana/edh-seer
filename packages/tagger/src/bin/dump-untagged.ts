@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig, type CardDoc } from "@mtg/data";
-import { needsRetag, type TagCollection } from "../store.js";
+import { needsRetag } from "../store.js";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";
 import { selectUntagged, renderPreamble } from "./corpus-core.js";
@@ -15,7 +15,6 @@ async function main(): Promise<void> {
   const outDir = args.get("out") ?? "/tmp/mtg-tag-batches";
 
   const store = await connect(loadConfig());
-  const cardTags = store.db.collection("cardTags") as unknown as TagCollection;
   const cards = (await store.db.collection("cards").find({}).toArray()) as unknown as CardDoc[];
 
   // Done set: current-version cardTags.
