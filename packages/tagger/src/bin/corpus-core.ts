@@ -58,6 +58,17 @@ export function missingOracleIds(dispatched: string[], resulted: string[]): stri
   return out;
 }
 
+/** Up to k distinct items via partial Fisher–Yates on a copy, using the injected RNG. */
+export function sample<T>(items: T[], k: number, rand: () => number): T[] {
+  const a = [...items];
+  const n = Math.min(k, a.length);
+  for (let i = 0; i < n; i++) {
+    const j = i + Math.floor(rand() * (a.length - i));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a.slice(0, n);
+}
+
 /** Corpus coverage snapshot for a fresh session to orient from. */
 export function coverageReport(
   cards: CardDoc[],

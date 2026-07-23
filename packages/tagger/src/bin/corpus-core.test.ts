@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { selectUntagged, renderPreamble, cardTagsFromRawAbilities, missingOracleIds, coverageReport } from "./corpus-core.js";
+import { selectUntagged, renderPreamble, cardTagsFromRawAbilities, missingOracleIds, coverageReport, sample } from "./corpus-core.js";
 import type { CardDoc } from "@mtg/data";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";
@@ -68,4 +68,19 @@ test("coverageReport counts totals, tagged, remaining under cutoff, and next ran
   expect(r.tagged).toBe(1);                // a
   expect(r.remainingUnderCutoff).toBe(1);  // b (rank 100 <= 1000); c is 5000
   expect(r.nextRank).toBe(100);            // smallest untagged rank
+});
+
+test("sample returns k distinct items and is deterministic under a fixed rng", () => {
+  const items = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  let s = 42;
+  const rng = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  const a = sample(items, 3, rng);
+  expect(a).toHaveLength(3);
+  expect(new Set(a).size).toBe(3);              // distinct
+  s = 42;
+  expect(sample(items, 3, rng)).toEqual(a);     // deterministic
+});
+
+test("sample caps at the array length", () => {
+  expect(sample([1, 2], 5, Math.random)).toHaveLength(2);
 });
