@@ -83,3 +83,33 @@ test("a typed counter producer delegates to subjectMatches (kind must match)", (
   expect(counterAddMatches(plus, consumerPlus, HH)).toBe(true);
   expect(counterAddMatches(minus, consumerPlus, HH)).toBe(false);
 });
+
+test("noncreature consumer matches an instant/sorcery producer (Whirlwind of Thought)", () => {
+  expect(subjectMatches(s({ type: "instant" }), s({ type: "noncreature" }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "sorcery" }), s({ type: "noncreature" }), H)).toBe(true);
+});
+
+test("noncreature rejects a creature producer, in both directions", () => {
+  expect(subjectMatches(s({ type: "creature" }), s({ type: "noncreature" }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "noncreature" }), s({ type: "creature" }), H)).toBe(false);
+});
+
+test("permanent umbrella matches its member types but not instants", () => {
+  expect(subjectMatches(s({ type: "creature" }), s({ type: "permanent" }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "artifact" }), s({ type: "permanent" }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "instant" }), s({ type: "permanent" }), H)).toBe(false);
+});
+
+test("spell umbrella matches castable types but not lands", () => {
+  expect(subjectMatches(s({ type: "instant" }), s({ type: "spell" }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature" }), s({ type: "spell" }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "land" }), s({ type: "spell" }), H)).toBe(false);
+});
+
+test("permanent pseudo-type works on the producer side too (symmetric)", () => {
+  expect(subjectMatches(s({ type: "permanent" }), s({ type: "creature" }), H)).toBe(true);
+});
+
+test("an untyped producer does not satisfy a noncreature consumer", () => {
+  expect(subjectMatches(s({}), s({ type: "noncreature" }), H)).toBe(false);
+});

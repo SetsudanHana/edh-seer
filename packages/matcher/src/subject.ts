@@ -1,6 +1,6 @@
 import type { SubjectFilter } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
-import { impliesType } from "./hierarchy.js";
+import { expandTypes } from "./hierarchy.js";
 
 const arr = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -19,15 +19,17 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // counter / zone: if the consumer names one, the producer must equal it.
   if (consumer.counter !== undefined && consumer.counter !== producer.counter) return false;
   if (consumer.zone !== undefined && consumer.zone !== producer.zone) return false;
-  // type: an array on the consumer means OR — at least one named type must be satisfied by
-  // a producer type OR a producer subtype that implies it via the hierarchy.
+  // type: expand both sides' type tokens (concrete, pseudo, or subtype-implied) to concrete
+  // card-type sets and require they intersect. Reduces to exact/subtype-implied matching for
+  // concrete types; lets pseudo-types (permanent/spell/noncreature/nonland) match their members.
   const consumerTypes = arr(consumer.type);
   if (consumerTypes.length > 0) {
-    const ok = consumerTypes.some(
-      (ct) =>
-        arr(producer.type).some((pt) => pt.toLowerCase() === ct.toLowerCase()) ||
-        arr(producer.subtype).some((ps) => impliesType(h, ps, ct)),
-    );
+    const consumerSet = expandTypes(consumerTypes, [], h);
+    const producerSet = expandTypes(arr(producer.type), arr(producer.subtype), h);
+    let ok = false;
+    for (const t of consumerSet) {
+      if (producerSet.has(t)) { ok = true; break; }
+    }
     if (!ok) return false;
   }
   // subtype: an array on the consumer means OR — at least one named subtype must be a

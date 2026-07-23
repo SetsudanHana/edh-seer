@@ -31,6 +31,38 @@ export function impliesType(h: Hierarchy, subtype: string, type: string): boolea
   return (h[subtype.toLowerCase()] ?? []).includes(type.toLowerCase());
 }
 
+/** The eight concrete card types a subject's `type` can denote. (tribal/kindred are supertypes,
+ *  never producer concrete types, so they are intentionally excluded.) */
+export const ALL_CARD_TYPES = [
+  "creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "land", "battle",
+] as const;
+
+/** Pseudo-type tokens the tagger emits, each expanded to the concrete card types it denotes.
+ *  Positive umbrellas (permanent/spell) list their members; negations (noncreature/nonland) are
+ *  every card type except the excluded one. */
+export const PSEUDO_TYPE_SETS: Record<string, string[]> = {
+  permanent: ["creature", "artifact", "enchantment", "planeswalker", "land", "battle"],
+  spell: ["creature", "artifact", "enchantment", "planeswalker", "instant", "sorcery", "battle"],
+  noncreature: ALL_CARD_TYPES.filter((t) => t !== "creature"),
+  nonland: ALL_CARD_TYPES.filter((t) => t !== "land"),
+};
+
+/** Expand a subject's type tokens (concrete or pseudo) plus its subtype-implied card types into
+ *  the set of concrete card types it can denote. A concrete type contributes itself, a pseudo-type
+ *  its member set, an unknown token nothing; each subtype contributes the types it implies. */
+export function expandTypes(tokens: string[], subtypes: string[], h: Hierarchy): Set<string> {
+  const out = new Set<string>();
+  for (const raw of tokens) {
+    const t = raw.toLowerCase();
+    if ((ALL_CARD_TYPES as readonly string[]).includes(t)) out.add(t);
+    else for (const m of PSEUDO_TYPE_SETS[t] ?? []) out.add(m);
+  }
+  for (const raw of subtypes) {
+    for (const t of h[raw.toLowerCase()] ?? []) out.add(t);
+  }
+  return out;
+}
+
 /** Load the bundled hierarchy.json produced by `gen-hierarchy`. */
 export function loadHierarchy(): Hierarchy {
   const path = join(dirname(fileURLToPath(import.meta.url)), "..", "hierarchy.json");
