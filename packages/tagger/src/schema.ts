@@ -97,6 +97,7 @@ export const EFFECT_KINDS = [
   "token-generation",
   "damage",
   "player-life-loss",
+  "lifegain",
   "drain",
   "draw-card",
   "forced-sacrifice",

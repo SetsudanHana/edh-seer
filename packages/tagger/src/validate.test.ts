@@ -36,6 +36,22 @@ test("empty abilities is valid", () => {
   expect(parseAbilities('{"abilities":[]}')).toEqual([]);
 });
 
+test("keeps a pure-lifegain effect.kind (Essence Warden: gain life on creature ETB)", () => {
+  const raw = JSON.stringify({
+    abilities: [
+      {
+        kind: "triggered",
+        trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+        effect: { kind: "lifegain", subject: { control: "you", token: null } },
+        emits: [{ verb: "gain-life", subject: { control: "you", token: null } }],
+      },
+    ],
+  });
+  const [a] = parseAbilities(raw);
+  expect(a.effect.kind).toBe("lifegain");
+  expect(a.emits).toContainEqual({ verb: "gain-life", subject: { control: "you", token: null } });
+});
+
 test("throws on non-JSON", () => {
   expect(() => parseAbilities("not json")).toThrow(/parse/i);
 });

@@ -2,7 +2,7 @@ import type { Card } from "@mtg/engine";
 import { EFFECT_KINDS, SCALING_BASES, VERB_VOCAB } from "../schema.js";
 import type { ChatMessage } from "./provider.js";
 
-export const PROMPT_VERSION = 21;
+export const PROMPT_VERSION = 22;
 
 export { EFFECT_KINDS };
 export { SCALING_BASES };
@@ -42,6 +42,7 @@ Use unbounded for combo/loop payoffs with no fixed ceiling. Default to "fixed" w
 "pump" gives +X/+X or +X/+0 to creatures (static or triggered); the subject says who — a subtype for a tribe ("wizard"), type:"creature" for your whole team. Use it for anthems/lords too.
 "damage" = dealing damage; subject.control says who ("opp" for "each opponent"/a player, "any" for "any target"). Do not split into player- vs noncombat- variants.
 "drain" = one ability that BOTH drains life from a player AND you gain life (Blood Artist, Zulaport) — do not split it into two abilities.
+"lifegain" = you gain life with NO life loss for anyone (Essence Warden, Soul Warden, Archangel of Thune, lifelink payoffs). Use this — not "drain" — when only you gain; it emits { verb: "gain-life" } so lifegain-matters payoffs (Sanguine Bond, Vito) can match.
 "mana-generation" = break-even mana (Signets); "fast-mana" = a source that nets MORE mana than it cost (Sol Ring, Ancient Tomb, Mana Crypt); "ritual" = a one-shot spell adding more mana than it cost (Dark Ritual, Jeska's Will). For any mana effect, set subject.colors to the mana produced — WUBRG letters, or "C" for colorless (Sol Ring → ["C"]) — so mana-color payoffs (Forsaken Monument, Cabal Coffers) can match.
 "flicker" = exile a permanent and return it to the battlefield (blink), e.g. Conjurer's Closet, Restoration Angel. The returned permanent RE-ENTERS, so the ability emits { verb: "enters" } with the flickered subject, feeding enter-the-battlefield payoffs.
 "animate" = a noncreature permanent (usually a land or artifact) becomes a creature, e.g. man-lands (Mutavault, Celestial Colonnade), Ensoul Artifact. subject describes what is animated. No emit — becoming a creature is not entering.

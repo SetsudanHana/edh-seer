@@ -29,8 +29,8 @@ test("every gold effect.kind is in the prompt's recognized label set (no drift)"
   }
 });
 
-test("PROMPT_VERSION is 21 (proliferate first-class event)", () => {
-  expect(PROMPT_VERSION).toBe(21);
+test("PROMPT_VERSION is 22 (lifegain effect.kind)", () => {
+  expect(PROMPT_VERSION).toBe(22);
 });
 
 test("every gold effect.scaling is in SCALING_BASES (no drift)", () => {
