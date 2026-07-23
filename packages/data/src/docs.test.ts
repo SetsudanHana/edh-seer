@@ -51,3 +51,13 @@ test("docToCard strips storage-only fields back to an engine Card", () => {
   expect(card).toEqual(treasureMaker.card);
   expect("searchNames" in card).toBe(false);
 });
+
+test("toCardDoc carries edhrecRank from the normalized card", () => {
+  const doc = toCardDoc({
+    oracleId: "o1",
+    card: { name: "Sol Ring", typeLine: "Artifact", oracleText: "{T}: Add {C}{C}.", keywords: [], colors: [], manaValue: 1, colorIdentity: [], power: null, toughness: null },
+    faceNames: [],
+    edhrecRank: 1,
+  });
+  expect(doc.edhrecRank).toBe(1);
+});
