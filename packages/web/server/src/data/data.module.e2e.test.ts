@@ -41,10 +41,13 @@ suite("POST /api/analyze against real Mongo", () => {
   test("returns structured-engine synergy reasons, not flat-engine tags", async () => {
     // Krenko, Mob Boss creates goblin tokens (an "enters" event); Impact Tremors triggers
     // on a creature entering the battlefield. That maker/payoff relationship only exists in
-    // the structured (oracle-text-tag-based) engine, whose reason tags are verb:subject-key
-    // strings (e.g. "enters:creature") — a format the flat engine's produces/cares vocabulary
-    // (e.g. "ramp", "card-draw") never produces. Asserting this tag shape proves the live
-    // /api/analyze path is actually running analyzeDeckStructured, not the retired flat engine.
+    // the structured (oracle-text-tag-based) engine, whose reason tags for this edge are
+    // built by cardThemeTags() (packages/matcher/src/edges.ts) from VERB_VOCAB
+    // (packages/tagger/src/schema.ts), e.g. "enters:creature". Note that colon-shaped tags
+    // alone are NOT structured-exclusive — the flat engine also emits colon tags like
+    // "tribe:goblin" (packages/engine/src/patterns.ts) — so we assert the exact expected
+    // tag rather than the generic verb:subject shape, which proves the live /api/analyze
+    // path is actually running analyzeDeckStructured, not the retired flat engine.
     const res = await app.inject({
       method: "POST",
       url: "/api/analyze",
@@ -54,10 +57,7 @@ suite("POST /api/analyze against real Mongo", () => {
     const body = res.json();
     const edges: Array<{ reasons: Array<{ tag: string }> }> = body.report.edges;
     expect(edges.length).toBeGreaterThan(0);
-    const structuredTagPattern = /^[a-z-]+:[a-z-]+$/;
-    const hasStructuredTag = edges.some((e) =>
-      e.reasons.some((r) => structuredTagPattern.test(r.tag)),
-    );
-    expect(hasStructuredTag).toBe(true);
+    const allTags = edges.flatMap((e) => e.reasons.map((r) => r.tag));
+    expect(allTags).toContain("enters:creature");
   });
 });
