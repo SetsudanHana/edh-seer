@@ -4,6 +4,7 @@ import { extractCharacteristics } from "./characteristics.js";
 import type { ChatMessage, LlmProvider } from "./llm/provider.js";
 import { buildAbilityMessages, PROMPT_VERSION } from "./llm/prompt.js";
 import { parseAbilities } from "./validate.js";
+import { augmentKeywordAbilities } from "./keyword-augment.js";
 
 const MAX_ATTEMPTS = 2;
 
@@ -21,7 +22,7 @@ export async function extractCardTags(
     promptVersion: PROMPT_VERSION,
     model: llm.model,
     characteristics,
-    abilities,
+    abilities: augmentKeywordAbilities(card.oracleText, abilities),
   };
 }
 

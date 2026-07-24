@@ -52,6 +52,16 @@ test("cardTagsFromRawAbilities yields empty abilities for an empty raw array", (
   expect(cardTagsFromRawAbilities("oid-gb", card, [], "m").abilities).toEqual([]);
 });
 
+test("cardTagsFromRawAbilities augments a connive card that dropped its discard clause", () => {
+  const card = { name: "Toluz", typeLine: "Creature — Human", oracleText: "When Toluz enters, it connives. (Draw a card, then discard a card.)", keywords: [], colors: ["U"], manaValue: 3, colorIdentity: ["U"], power: "2", toughness: "3" };
+  // Raw abilities captured only the draw — the discard clause was dropped, as Haiku does.
+  const raw = [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null } }, effect: { kind: "draw-card" }, emits: [{ verb: "draw", subject: { control: "you", token: null } }] }];
+  const t = cardTagsFromRawAbilities("oid-toluz", card, raw, "m");
+  const discardEmits = t.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "discard");
+  expect(discardEmits).toHaveLength(1);
+  expect(discardEmits[0].subject.control).toBe("you");
+});
+
 test("missingOracleIds returns dispatched ids with no result, deduped", () => {
   expect(missingOracleIds(["a", "b", "c", "b"], ["b"])).toEqual(["a", "c"]);
 });

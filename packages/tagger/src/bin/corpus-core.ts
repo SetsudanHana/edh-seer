@@ -6,6 +6,7 @@ import { SCHEMA_VERSION } from "../schema.js";
 import { buildAbilityMessages, PROMPT_VERSION } from "../llm/prompt.js";
 import { extractCharacteristics } from "../characteristics.js";
 import { parseAbilities } from "../validate.js";
+import { augmentKeywordAbilities } from "../keyword-augment.js";
 
 /** Untagged (id not in doneIds), non-empty-text cards, most-played first (edhrecRank asc,
  *  undefined last, tiebreak _id), capped at n. */
@@ -43,7 +44,7 @@ export function cardTagsFromRawAbilities(
     promptVersion: PROMPT_VERSION,
     model,
     characteristics: extractCharacteristics(card),
-    abilities: parseAbilities(JSON.stringify({ abilities: rawAbilities })),
+    abilities: augmentKeywordAbilities(card.oracleText, parseAbilities(JSON.stringify({ abilities: rawAbilities }))),
   };
 }
 
