@@ -167,3 +167,61 @@ test("a scaling payoff out-ranks an otherwise-identical fixed payoff", () => {
   const flat = report.cards.find((c) => c.name === "Flat")!.score;
   expect(scaler).toBeGreaterThan(flat);
 });
+
+import { ComboIndex } from "@mtg/engine";
+
+const rampAbility: CardTags["abilities"] = [{
+  kind: "static",
+  effect: { kind: "mana-generation", subject: { control: "you", token: null } },
+}];
+
+const drawAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+  effect: { kind: "draw-card" },
+}];
+
+const removalAbility: CardTags["abilities"] = [{
+  kind: "on-cast",
+  effect: { kind: "damage", subject: { control: "opp", token: null } },
+}];
+
+test("combos are found when a ComboIndex is provided and cards match", () => {
+  const a = dc("A", []);
+  const b = dc("B", []);
+  const combos = new ComboIndex([{ cards: ["A", "B"], result: "Win the game." }]);
+  const report = analyzeDeckStructured([a, b], undefined, H, undefined, combos);
+  expect(report.combos).toEqual([{ cards: ["A", "B"], result: "Win the game." }]);
+});
+
+test("combos default to empty when no ComboIndex is provided", () => {
+  const a = dc("A", []);
+  const report = analyzeDeckStructured([a], undefined, H);
+  expect(report.combos).toEqual([]);
+});
+
+test("combos are empty when the ComboIndex's cards aren't all present", () => {
+  const a = dc("A", []);
+  const combos = new ComboIndex([{ cards: ["A", "Missing Card"], result: "Win the game." }]);
+  const report = analyzeDeckStructured([a], undefined, H, undefined, combos);
+  expect(report.combos).toEqual([]);
+});
+
+test("roles counts distinct cards per structured effect-kind bucket", () => {
+  const ramp = dc("Sol Ring", rampAbility, [], "Artifact");
+  const draw = dc("Phyrexian Arena", drawAbility);
+  const removal = dc("Lightning Bolt", removalAbility, [], "Instant");
+  const vanilla = dc("Grizzly Bears", []);
+  const report = analyzeDeckStructured([ramp, draw, removal, vanilla], undefined, H);
+  expect(report.roles).toEqual({ ramp: 1, draw: 1, removal: 1 });
+});
+
+test("roles ignores damage/forced-sacrifice targeting your own side", () => {
+  const ownDamage: CardTags["abilities"] = [{
+    kind: "on-cast",
+    effect: { kind: "damage", subject: { control: "you", token: null } },
+  }];
+  const card = dc("Self Damage", ownDamage);
+  const report = analyzeDeckStructured([card], undefined, H);
+  expect(report.roles).toEqual({ ramp: 0, draw: 0, removal: 0 });
+});

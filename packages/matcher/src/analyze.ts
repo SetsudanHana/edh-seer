@@ -5,6 +5,8 @@ import {
   loadImpactWeights,
   impactEdgeWeight,
   dampByAlpha,
+  ComboIndex,
+  type Combo,
   type DeckReport,
   type SynergyEdge,
   type CardSynergy,
@@ -33,14 +35,42 @@ interface Agg {
  * but edges come from oracle-text-derived structured tags (producer emits / consumer
  * triggers, static-effect subjects) instead of the flat produces/cares tag vocabulary.
  *
- * `combos` is always `[]` (Stage 2 has no structured combo index) and theme ranking uses a
- * uniform TagStats (deck-frequency-only; no global IDF corpus yet).
+ * `combos` is populated from an optional `ComboIndex` (empty when none is supplied) and theme
+ * ranking uses a uniform TagStats (deck-frequency-only; no global IDF corpus yet).
  */
+const RAMP_EFFECT_KINDS = new Set(["mana-generation", "fast-mana", "ritual"]);
+const REMOVAL_EFFECT_KINDS = new Set(["damage", "forced-sacrifice"]);
+
+/** Best-effort structured proxy for the flat engine's ramp/draw/removal role counts. Counts
+ *  distinct cards, not abilities. Removal is approximated as damage/forced-sacrifice effects
+ *  targeting the opponent's side — the structured schema has no dedicated destroy/exile kind. */
+function computeRoles(cards: DeckCard[]): { ramp: number; draw: number; removal: number } {
+  let ramp = 0;
+  let draw = 0;
+  let removal = 0;
+  for (const dc of cards) {
+    if (!dc.tags) continue;
+    let hasRamp = false;
+    let hasDraw = false;
+    let hasRemoval = false;
+    for (const a of dc.tags.abilities) {
+      if (RAMP_EFFECT_KINDS.has(a.effect.kind)) hasRamp = true;
+      if (a.effect.kind === "draw-card") hasDraw = true;
+      if (REMOVAL_EFFECT_KINDS.has(a.effect.kind) && a.effect.subject?.control === "opp") hasRemoval = true;
+    }
+    if (hasRamp) ramp++;
+    if (hasDraw) draw++;
+    if (hasRemoval) removal++;
+  }
+  return { ramp, draw, removal };
+}
+
 export function analyzeDeckStructured(
   inputs: DeckCard[],
   commanderNames?: string[],
   hierarchy: Hierarchy = loadHierarchy(),
   impactWeights: ImpactWeights = loadImpactWeights(),
+  combos?: ComboIndex,
 ): DeckReport {
   const commanderSet = new Set(commanderNames ?? []);
 
@@ -113,14 +143,16 @@ export function analyzeDeckStructured(
   const nonlandCount = resolved.filter((dc) => !dc.card.typeLine.toLowerCase().includes("land")).length;
   const cohesion = computeCohesion(rankThemes(deckFreq, UNIFORM_STATS), deckFreq, nonlandCount);
   const presentCommanders = resolved.map((dc) => dc.card.name).filter((n) => commanderSet.has(n));
+  const deckNames = new Set(resolved.map((dc) => dc.card.name));
+  const foundCombos: Combo[] = combos?.combosContainedIn(deckNames) ?? [];
 
   return {
     commanders: presentCommanders,
     cards,
     edges,
-    combos: [],
+    combos: foundCombos,
     themes,
-    roles: { ramp: 0, draw: 0, removal: 0 },
+    roles: computeRoles(resolved),
     cohesion,
   };
 }
