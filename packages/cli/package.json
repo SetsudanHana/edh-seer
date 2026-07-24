@@ -10,7 +10,8 @@
   "dependencies": {
     "@mtg/engine": "*",
     "@mtg/data": "*",
-    "@mtg/matcher": "*"
+    "@mtg/matcher": "*",
+    "@mtg/tagger": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { analyzeDeck, ComboIndex, type Card, type Combo } from "@mtg/engine";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "@mtg/matcher";
+import type { CardTags } from "@mtg/tagger";
 import {
   loadConfig,
   connect,
@@ -48,8 +49,8 @@ async function reportFromDecklist(input: string): Promise<string> {
     }
     const cmdNorm = new Set(commanderNamesTyped.map(normalizeName));
     const commanderNames = cards.filter((c) => cmdNorm.has(normalizeName(c.name))).map((c) => c.name);
-    const cardTagsCol = store.db.collection("cardTags");
-    const tagsLookup: CardTagsLookup = { findOne: (oracleId) => cardTagsCol.findOne({ oracleId }) as never };
+    const cardTagsCol = store.db.collection<CardTags>("cardTags");
+    const tagsLookup: CardTagsLookup = { findOne: (oracleId) => cardTagsCol.findOne({ oracleId }) };
     const deckCards = await buildDeckCards(cards, lookup, tagsLookup);
     return formatReport(
       analyzeDeckStructured(deckCards, commanderNames, undefined, undefined, new ComboIndex(combos)),
