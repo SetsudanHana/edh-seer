@@ -11,6 +11,7 @@ const fakeReport: DeckReport = {
   combos: [],
   themes: [],
   roles: { ramp: 0, draw: 0, removal: 0 },
+  cohesion: null,
 };
 
 function fakeDeps(capture: { commanderNames?: string[] }): AnalyzeDeps {
@@ -31,7 +32,7 @@ function fakeDeps(capture: { commanderNames?: string[] }): AnalyzeDeps {
       missing: [],
       commanderResolved: commanderNames,
     }),
-    analyze: (_cards, _combos, commanderNames) => {
+    analyze: async (_cards, _combos, commanderNames) => {
       capture.commanderNames = commanderNames;
       return fakeReport;
     },

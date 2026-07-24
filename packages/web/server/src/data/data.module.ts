@@ -1,4 +1,7 @@
 import { Module, type OnModuleDestroy, Inject } from "@nestjs/common";
+import type { Db } from "mongodb";
+import type { CardTags } from "@mtg/tagger";
+import type { CardTagsLookup } from "@mtg/matcher";
 import { ANALYZE_DEPS, type AnalyzeDeps } from "../analyze/analyze.service.js";
 
 export const STORE = "MONGO_STORE";
@@ -15,9 +18,10 @@ export const STORE = "MONGO_STORE";
     {
       provide: ANALYZE_DEPS,
       inject: [STORE],
-      useFactory: async (store: { cards: unknown; combos: unknown }): Promise<AnalyzeDeps> => {
+      useFactory: async (store: { cards: unknown; combos: unknown; db: unknown }): Promise<AnalyzeDeps> => {
         const data = await import("@mtg/data");
         const engine = await import("@mtg/engine");
+        const matcher = await import("@mtg/matcher");
         return {
           parseDecklistSections: data.parseDecklistSections,
           parseLines: data.parseDecklistText,
@@ -31,8 +35,19 @@ export const STORE = "MONGO_STORE";
               .map((c) => c.name);
             return { cards, combos, missing, commanderResolved };
           },
-          analyze: (cards, combos, commanderNames) =>
-            engine.analyzeDeck(cards as never, new engine.ComboIndex(combos as never), commanderNames as string[]),
+          analyze: async (cards, combos, commanderNames) => {
+            const lookup = data.mongoLookup(store as never);
+            const cardTagsCol = (store.db as Db).collection<CardTags>("cardTags");
+            const tagsLookup: CardTagsLookup = { findOne: (oracleId) => cardTagsCol.findOne({ oracleId }) };
+            const deckCards = await matcher.buildDeckCards(cards as never, lookup, tagsLookup);
+            return matcher.analyzeDeckStructured(
+              deckCards,
+              commanderNames,
+              undefined,
+              undefined,
+              new engine.ComboIndex(combos as never),
+            );
+          },
         };
       },
     },

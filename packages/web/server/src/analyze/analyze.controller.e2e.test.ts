@@ -6,7 +6,7 @@ import { AnalyzeController } from "./analyze.controller.js";
 import { AnalyzeService, ANALYZE_DEPS, type AnalyzeDeps } from "./analyze.service.js";
 import type { DeckReport } from "@mtg/engine";
 
-const report: DeckReport = { commanders: [], cards: [], edges: [], combos: [], themes: [], roles: { ramp: 0, draw: 0, removal: 0 } };
+const report: DeckReport = { commanders: [], cards: [], edges: [], combos: [], themes: [], roles: { ramp: 0, draw: 0, removal: 0 }, cohesion: null };
 
 const deps: AnalyzeDeps = {
   parseDecklistSections: (t) => ({ commanders: [], deck: t.split("\n").map((s) => s.trim()).filter(Boolean) }),
@@ -18,7 +18,7 @@ const deps: AnalyzeDeps = {
     missing: [],
     commanderResolved: commanderNames,
   }),
-  analyze: () => report,
+  analyze: async () => report,
 };
 
 let app: NestFastifyApplication;

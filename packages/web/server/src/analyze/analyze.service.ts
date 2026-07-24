@@ -13,7 +13,7 @@ export interface AnalyzeDeps {
     deckNames: string[],
     lookup: unknown,
   ): Promise<{ cards: unknown[]; combos: unknown[]; missing: string[]; commanderResolved: string[] }>;
-  analyze(cards: unknown[], combos: unknown[], commanderNames: string[]): DeckReport;
+  analyze(cards: unknown[], combos: unknown[], commanderNames: string[]): Promise<DeckReport>;
 }
 
 @Injectable()
@@ -30,7 +30,7 @@ export class AnalyzeService {
       sections.deck,
       this.deps.makeLookup(),
     );
-    const report = this.deps.analyze(cards, combos, commanderResolved);
+    const report = await this.deps.analyze(cards, combos, commanderResolved);
     const totalCount = commanderNames.length + sections.deck.length;
     return { report, missing, resolvedCount: cards.length, totalCount };
   }
