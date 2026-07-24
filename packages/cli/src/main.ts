@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { analyzeDeck, ComboIndex, type Card, type Combo } from "@mtg/engine";
+import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "@mtg/matcher";
 import {
   loadConfig,
   connect,
@@ -40,13 +41,19 @@ async function reportFromDecklist(input: string): Promise<string> {
   const store = await connect(loadConfig());
   try {
     const names = [...commanderNamesTyped, ...deckNames];
-    const { cards, combos, missing } = await resolveNames(names, mongoLookup(store));
+    const lookup = mongoLookup(store);
+    const { cards, combos, missing } = await resolveNames(names, lookup);
     for (const name of missing) {
       console.error(`warning: card not found: ${name}`);
     }
     const cmdNorm = new Set(commanderNamesTyped.map(normalizeName));
     const commanderNames = cards.filter((c) => cmdNorm.has(normalizeName(c.name))).map((c) => c.name);
-    return formatReport(analyzeDeck(cards, new ComboIndex(combos), commanderNames));
+    const cardTagsCol = store.db.collection("cardTags");
+    const tagsLookup: CardTagsLookup = { findOne: (oracleId) => cardTagsCol.findOne({ oracleId }) as never };
+    const deckCards = await buildDeckCards(cards, lookup, tagsLookup);
+    return formatReport(
+      analyzeDeckStructured(deckCards, commanderNames, undefined, undefined, new ComboIndex(combos)),
+    );
   } finally {
     await store.close();
   }

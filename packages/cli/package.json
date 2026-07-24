@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@mtg/engine": "*",
-    "@mtg/data": "*"
+    "@mtg/data": "*",
+    "@mtg/matcher": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
