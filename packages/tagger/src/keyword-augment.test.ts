@@ -62,3 +62,24 @@ test("does not mutate the input array or its ability objects", () => {
   augmentKeywordAbilities(CONNIVE_TEXT, input);
   expect(input).toEqual(snapshot);
 });
+
+const DORAN_TEXT = "Each creature you control assigns combat damage equal to its toughness rather than its power.";
+
+test("damage-equal-to-toughness card gains a toughness≥power static marker", () => {
+  const out = augmentKeywordAbilities(DORAN_TEXT, [] as never);
+  const marker = out.find((a) => a.kind === "static" && a.effect.subject?.stats?.some((p) => p.metric === "toughness" && p.op === "gte" && p.vs === "power"));
+  expect(marker).toBeDefined();
+  expect(marker!.effect.subject!.type).toBe("creature");
+  expect(marker!.effect.subject!.control).toBe("you");
+});
+
+test("toughness-matters augment is idempotent", () => {
+  const once = augmentKeywordAbilities(DORAN_TEXT, [] as never);
+  const twice = augmentKeywordAbilities(DORAN_TEXT, once);
+  expect(twice).toEqual(once);
+});
+
+test("a non-toughness-matters card gets no toughness marker", () => {
+  const out = augmentKeywordAbilities("Draw a card.", [] as never);
+  expect(out.some((a) => a.effect.subject?.stats)).toBe(false);
+});
