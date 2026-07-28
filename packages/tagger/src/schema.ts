@@ -2,6 +2,20 @@ export const SCHEMA_VERSION = 1;
 
 export type Control = "you" | "opp" | "any";
 
+export const STAT_METRICS = ["power", "toughness", "mana-value"] as const;
+export const STAT_OPS = ["lte", "gte", "lt", "gt", "eq"] as const;
+export type StatMetric = (typeof STAT_METRICS)[number];
+export type StatOp = (typeof STAT_OPS)[number];
+
+/** A numeric condition on a subject's stat. Exactly one of `value` (constant rhs, e.g. power ≤ 2)
+ *  or `vs` (another metric rhs, e.g. toughness ≥ power) is set. */
+export interface StatPredicate {
+  metric: StatMetric;
+  op: StatOp;
+  value?: number;
+  vs?: "power" | "toughness";
+}
+
 /** A characteristic filter: what a trigger cares about, or what an effect targets/produces. */
 export interface SubjectFilter {
   /** A card type, or an array of types meaning OR (e.g. ["instant","sorcery"]). */
@@ -18,6 +32,13 @@ export interface SubjectFilter {
   counter?: string;
   /** Zone the subject lives in; omitted means battlefield. E.g. "graveyard", "hand", "exile". */
   zone?: string;
+  /** Authored numeric conditions; ALL must hold (ANDed with the rest of the subject). */
+  stats?: StatPredicate[];
+  /** Concrete stat values the MATCHER attaches to a producer subject (never authored by the LLM).
+   *  Non-numeric printed stats (*, X, null) are stored as 0. */
+  power?: number;
+  toughness?: number;
+  manaValue?: number;
 }
 
 export type Verb =

@@ -289,3 +289,27 @@ test("proliferate is a verb and an effect kind", () => {
   expect(VERB_VOCAB).toContain("proliferate");
   expect(EFFECT_KINDS as readonly string[]).toContain("proliferate");
 });
+
+test("validateSubject keeps a well-formed value StatPredicate", () => {
+  const raw = JSON.stringify({ abilities: [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "lte", value: 2 }] } }, effect: { kind: "draw-card" } }] });
+  const out = parseAbilities(raw);
+  expect(out[0].trigger!.subject.stats).toEqual([{ metric: "power", op: "lte", value: 2 }]);
+});
+
+test("validateSubject keeps a well-formed relational StatPredicate", () => {
+  const raw = JSON.stringify({ abilities: [{ kind: "static", effect: { kind: "damage-multiplier", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "toughness", op: "gte", vs: "power" }] } } }] });
+  const out = parseAbilities(raw);
+  expect(out[0].effect.subject!.stats).toEqual([{ metric: "toughness", op: "gte", vs: "power" }]);
+});
+
+test("validateSubject drops a StatPredicate with neither value nor vs, and unknown metric/op", () => {
+  const raw = JSON.stringify({ abilities: [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, stats: [{ metric: "power", op: "lte" }, { metric: "speed", op: "lte", value: 1 }, { metric: "power", op: "under", value: 1 }] } }, effect: { kind: "draw-card" } }] });
+  const out = parseAbilities(raw);
+  expect(out[0].trigger!.subject.stats).toBeUndefined(); // all three dropped → no stats field
+});
+
+test("validateSubject leaves stats absent when not provided (no regression)", () => {
+  const raw = JSON.stringify({ abilities: [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" } }] });
+  const out = parseAbilities(raw);
+  expect(out[0].trigger!.subject.stats).toBeUndefined();
+});

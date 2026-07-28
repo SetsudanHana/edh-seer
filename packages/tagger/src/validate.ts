@@ -3,6 +3,8 @@ import {
   EFFECT_KINDS,
   SCALING_ALIASES,
   SCALING_BASES,
+  STAT_METRICS,
+  STAT_OPS,
   VERB_ALIASES,
   VERB_VOCAB,
   type Ability,
@@ -11,6 +13,7 @@ import {
   type Effect,
   type EffectKind,
   type GameEvent,
+  type StatPredicate,
   type SubjectFilter,
   type Verb,
 } from "./schema.js";
@@ -20,6 +23,8 @@ const CONTROLS: readonly Control[] = ["you", "opp", "any"];
 const VERBS = new Set<string>(VERB_VOCAB);
 const EFFECTS = new Set<string>(EFFECT_KINDS);
 const SCALINGS = new Set<string>(SCALING_BASES);
+const METRICS = new Set<string>(STAT_METRICS);
+const OPS = new Set<string>(STAT_OPS);
 
 export function parseAbilities(raw: string): Ability[] {
   let root: unknown;
@@ -160,6 +165,10 @@ function validateSubject(s: unknown, i: number): SubjectFilter {
   if (o.chosenType === true) out.chosenType = true;
   if (typeof o.counter === "string") out.counter = o.counter;
   if (typeof o.zone === "string") out.zone = o.zone;
+  if (Array.isArray(o.stats)) {
+    const preds = o.stats.map(validateStatPredicate).filter((p): p is StatPredicate => p !== null);
+    if (preds.length > 0) out.stats = preds;
+  }
   return out;
 }
 
@@ -213,4 +222,20 @@ function normVerb(v: unknown): Verb | null {
   const s = v.trim().toLowerCase();
   if (VERBS.has(s)) return s as Verb;
   return VERB_ALIASES[s] ?? null;
+}
+
+/** Keep a StatPredicate only if metric+op are known and exactly one of value(number)/vs is set.
+ *  vs must be "power"/"toughness". Returns null to drop an ill-formed predicate. */
+function validateStatPredicate(p: unknown): StatPredicate | null {
+  if (typeof p !== "object" || p === null) return null;
+  const o = p as Record<string, unknown>;
+  const metric = typeof o.metric === "string" ? o.metric.trim().toLowerCase() : "";
+  const op = typeof o.op === "string" ? o.op.trim().toLowerCase() : "";
+  if (!METRICS.has(metric) || !OPS.has(op)) return null;
+  const hasValue = typeof o.value === "number" && Number.isFinite(o.value);
+  const hasVs = o.vs === "power" || o.vs === "toughness";
+  if (hasValue === hasVs) return null; // need exactly one
+  return hasValue
+    ? { metric: metric as StatPredicate["metric"], op: op as StatPredicate["op"], value: o.value as number }
+    : { metric: metric as StatPredicate["metric"], op: op as StatPredicate["op"], vs: o.vs as "power" | "toughness" };
 }
