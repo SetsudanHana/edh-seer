@@ -10,6 +10,11 @@ interface KeywordRule {
 
 const TOUGHNESS_MARKER_STATS: StatPredicate[] = [{ metric: "toughness", op: "gte", vs: "power" }];
 
+/** Keywords/phrases with a fixed rules-text expansion the LLM tends to drop. Table is built to
+ *  grow; connive is the one confirmed-broken keyword (its "then discard a card" clause is dropped
+ *  even by a fresh single-card call), so only its discard signal is populated via `ensureEmits`.
+ *  The toughness-matters phrase ("assigns combat damage equal to its toughness rather than its
+ *  power") instead needs a synthetic static ability carrying a stats marker, via `ensureStaticStats`. */
 const KEYWORD_RULES: KeywordRule[] = [
   { pattern: /\bconnives?\b/i, ensureEmits: [{ verb: "discard", control: "you" }] },
   {
@@ -31,9 +36,12 @@ function hasStaticStats(abilities: Ability[], want: StatPredicate[]): boolean {
   );
 }
 
-/** Keywords with a fixed rules-text expansion the LLM tends to drop. Table is built to grow;
- *  connive is the one confirmed-broken keyword (its "then discard a card" clause is dropped even
- *  by a fresh single-card call), so only its discard signal is populated. */
+/** Deterministically add keyword-implied signals the LLM tends to drop. For each rule in
+ *  `KEYWORD_RULES` whose pattern matches the oracle text, ensure its required effect is present
+ *  somewhere in the card's abilities — either an emit verb (`ensureEmits`) or a static ability
+ *  carrying a stats marker (`ensureStaticStats`) — adding one synthetic static ability per missing
+ *  effect. Idempotent and non-mutating: a card that already satisfies a rule's effect is returned
+ *  unchanged for that rule (safe to re-run, including by the `augment-existing.ts` migration script). */
 export function augmentKeywordAbilities(oracleText: string, abilities: Ability[]): Ability[] {
   const present = new Set<string>();
   for (const a of abilities) for (const e of a.emits ?? []) present.add(e.verb);
