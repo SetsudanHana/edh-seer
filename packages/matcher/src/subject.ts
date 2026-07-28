@@ -1,6 +1,7 @@
 import type { SubjectFilter } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
 import { expandTypes } from "./hierarchy.js";
+import { evalStatPredicate } from "./stats.js";
 
 const arr = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -40,6 +41,12 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
       arr(producer.subtype).some((ps) => ps.toLowerCase() === cs.toLowerCase()),
     );
     if (!ok) return false;
+  }
+  // stats: every predicate the consumer sets must hold against the producer's concrete stats
+  // (missing producer stat → 0, per the non-numeric rule).
+  if (consumer.stats && consumer.stats.length > 0) {
+    const s = { power: producer.power ?? 0, toughness: producer.toughness ?? 0, manaValue: producer.manaValue ?? 0 };
+    if (!consumer.stats.every((p) => evalStatPredicate(p, s))) return false;
   }
   return true;
 }

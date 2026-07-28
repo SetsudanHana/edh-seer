@@ -113,3 +113,35 @@ test("permanent pseudo-type works on the producer side too (symmetric)", () => {
 test("an untyped producer does not satisfy a noncreature consumer", () => {
   expect(subjectMatches(s({}), s({ type: "noncreature" }), H)).toBe(false);
 });
+
+// A — value predicate: small creature matches "power ≤ 2", big one does not.
+test("subjectMatches gates a value predicate on the producer's concrete power", () => {
+  const consumer = { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "lte", value: 2 }] } as const;
+  const small = { type: "creature", control: "you", token: false, power: 1, toughness: 1 };
+  const big = { type: "creature", control: "you", token: false, power: 5, toughness: 5 };
+  expect(subjectMatches(small as never, consumer as never, {})).toBe(true);
+  expect(subjectMatches(big as never, consumer as never, {})).toBe(false);
+});
+
+// B — relational predicate: wall (t≥p) matches, beater (p>t) does not.
+test("subjectMatches gates a relational predicate (toughness ≥ power)", () => {
+  const consumer = { type: "creature", control: "you", token: null, stats: [{ metric: "toughness", op: "gte", vs: "power" }] } as const;
+  const wall = { type: "creature", control: "you", token: false, power: 0, toughness: 6 };
+  const beater = { type: "creature", control: "you", token: false, power: 5, toughness: 2 };
+  expect(subjectMatches(wall as never, consumer as never, {})).toBe(true);
+  expect(subjectMatches(beater as never, consumer as never, {})).toBe(false);
+});
+
+// Missing producer stats default to 0.
+test("subjectMatches treats a missing producer stat as 0", () => {
+  const consumer = { control: "you", token: null, stats: [{ metric: "power", op: "lte", value: 2 }] } as const;
+  const noStats = { type: "creature", control: "you", token: false }; // power/toughness undefined
+  expect(subjectMatches(noStats as never, consumer as never, {})).toBe(true); // 0 ≤ 2
+});
+
+// No stats on consumer → unchanged behavior.
+test("subjectMatches ignores stats when the consumer sets none", () => {
+  const consumer = { type: "creature", control: "you", token: null } as const;
+  const big = { type: "creature", control: "you", token: false, power: 9, toughness: 9 };
+  expect(subjectMatches(big as never, consumer as never, {})).toBe(true);
+});
