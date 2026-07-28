@@ -29,7 +29,7 @@ test("every gold effect.kind is in the prompt's recognized label set (no drift)"
   }
 });
 
-test("PROMPT_VERSION is 23 (lifegain effect.kind)", () => {
+test("PROMPT_VERSION is 23 (StatPredicate support)", () => {
   expect(PROMPT_VERSION).toBe(23);
 });
 

@@ -48,6 +48,7 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
   const out: GameEvent[] = [];
   for (const e of emits) {
     if (e.verb === "mill" || e.verb === "discard") {
+      // Note: this (and authored token-generation emit subjects) carry no power/toughness/manaValue — a stats-conditioned consumer can't distinguish token/creature sizes here (Slice-1 limitation, not a bug).
       out.push({ verb: "enters", subject: { control: e.subject.control, token: null, zone: "graveyard" } });
     } else if (e.verb === "leaves" && e.subject.zone === "battlefield" && e.subject.token !== true) {
       out.push({ verb: "enters", subject: { ...e.subject, zone: "graveyard" } });
