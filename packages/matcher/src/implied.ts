@@ -1,4 +1,5 @@
 import type { Characteristics, GameEvent, SubjectFilter } from "@mtg/tagger";
+import { parseStat } from "./stats.js";
 
 const PERMANENT_TYPES = new Set(["creature", "artifact", "enchantment", "planeswalker", "battle", "land"]);
 
@@ -18,6 +19,9 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   const subtype = collapse(subtypes);
   if (type !== undefined) out.type = type;
   if (subtype !== undefined) out.subtype = subtype;
+  out.power = parseStat(chars.power);
+  out.toughness = parseStat(chars.toughness);
+  out.manaValue = chars.cmc;
   return out;
 }
 

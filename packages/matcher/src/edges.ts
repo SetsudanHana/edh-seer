@@ -4,6 +4,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import { parseStat } from "./stats.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -34,6 +35,9 @@ function characteristicsSubject(tags: CardTags): SubjectFilter {
     colors: c.colors.length ? c.colors : undefined,
     control: "you",
     token: c.token,
+    power: parseStat(c.power),
+    toughness: parseStat(c.toughness),
+    manaValue: c.cmc,
   };
 }
 
