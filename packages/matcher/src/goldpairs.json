@@ -310,5 +310,29 @@
     "note": "co-high-synergy in EDHREC wheels-draw",
     "source": "edhrec+human-verified",
     "verified": true
+  },
+  {
+    "a": "Welcoming Vampire",
+    "b": "Soul Warden",
+    "category": "power-matters",
+    "note": "Soul Warden is 1/1 (power <= 2); Welcoming Vampire draws off other small creatures entering",
+    "source": "human-verified",
+    "verified": true
+  },
+  {
+    "a": "Welcoming Vampire",
+    "b": "Blood Artist",
+    "category": "power-matters",
+    "note": "Blood Artist is 0/1 (power <= 2); Welcoming Vampire draws off other small creatures entering",
+    "source": "human-verified",
+    "verified": true
+  },
+  {
+    "a": "Doran, the Siege Tower",
+    "b": "Wall of Omens",
+    "category": "toughness-matters",
+    "note": "Wall of Omens is 0/4 (toughness >= power); Doran assigns combat damage using toughness for all creatures",
+    "source": "human-verified",
+    "verified": true
   }
 ]

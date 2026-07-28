@@ -20,6 +20,15 @@ const dc = (
   },
 });
 
+const dcWithPT = (name: string, power: number, toughness: number): DeckCard => ({
+  card: { name, typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+  tags: {
+    oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 0, power: String(power), toughness: String(toughness), token: false, keywords: [] },
+    abilities: [],
+  },
+});
+
 const inallaAbility: CardTags["abilities"] = [{
   kind: "triggered",
   trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: false } },
@@ -224,4 +233,24 @@ test("roles ignores damage/forced-sacrifice targeting your own side", () => {
   const card = dc("Self Damage", ownDamage);
   const report = analyzeDeckStructured([card], undefined, H);
   expect(report.roles).toEqual({ ramp: 0, draw: 0, removal: 0 });
+});
+
+test("power≤2 trigger edges with a small creature, NOT a big one", () => {
+  const vamp = dc("Welcoming Vampire", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "lte", value: 2 }] } },
+    effect: { kind: "draw-card" }, emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }], [], "Creature");
+  const small = dcWithPT("Small", 1, 1);
+  const big = dcWithPT("Big", 5, 5);
+  expect(analyzeDeckStructured([vamp, small]).edges.length).toBeGreaterThan(0);
+  expect(analyzeDeckStructured([vamp, big]).edges).toEqual([]);
+});
+
+test("toughness-matters static edges with a wall, NOT a beater", () => {
+  const doran = dc("Doran", [{ kind: "static", effect: { kind: "damage-multiplier", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "toughness", op: "gte", vs: "power" }] } } }], [], "Creature");
+  const wall = dcWithPT("Wall", 0, 6);
+  const beater = dcWithPT("Beater", 5, 2);
+  expect(analyzeDeckStructured([doran, wall]).edges.length).toBeGreaterThan(0);
+  expect(analyzeDeckStructured([doran, beater]).edges).toEqual([]);
 });

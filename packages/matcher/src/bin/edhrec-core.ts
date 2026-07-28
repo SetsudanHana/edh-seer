@@ -19,6 +19,9 @@ export const CATEGORY_EDHREC_TAG: Record<MechanismCategory, string> = {
   "blink-etb": "blink",
   "mill-self": "mill",
   "wheels-draw": "wheels",
+  // Confirmed live (200, "High Synergy Cards" present) on 2026-07-28.
+  "toughness-matters": "toughness-matters",
+  "power-matters": "power-matters",
 };
 
 export interface SynergyCard {

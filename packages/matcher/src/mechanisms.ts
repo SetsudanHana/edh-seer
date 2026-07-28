@@ -18,6 +18,8 @@ export const MECHANISM_CATEGORIES = [
   "blink-etb",
   "mill-self",
   "wheels-draw",
+  "toughness-matters",
+  "power-matters",
 ] as const;
 
 export type MechanismCategory = (typeof MECHANISM_CATEGORIES)[number];
@@ -50,6 +52,12 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   "blink-etb": { effectKinds: ["flicker", "clone"] },
   "mill-self": { tags: ["enters-graveyard:creature", "enters-graveyard:any"], effectKinds: ["graveyard-recursion", "top-manipulation"] },
   "wheels-draw": { tags: ["draw:any"], effectKinds: ["draw-card"] },
+  // Conditional stat edges (Slice 1): the predicate itself isn't in the reason tag — the tag is
+  // still `${verb}:${subjectKey}` / `static:${kind}` regardless of any `stats` predicate on the
+  // subject — so these categories match by the same linking event tag as any other producer of
+  // that event, same as every other category in this table.
+  "toughness-matters": { tags: ["static:damage-multiplier"] },
+  "power-matters": { tags: ["enters:creature"] },
 };
 
 /** True if the reason satisfies the category: its tag is accepted OR its effectKind is accepted. */
