@@ -17,8 +17,8 @@ function flat(): string {
     .join("\n");
 }
 
-test("prompt version is 22", () => {
-  expect(PROMPT_VERSION).toBe(22);
+test("prompt version is 23", () => {
+  expect(PROMPT_VERSION).toBe(23);
 });
 
 test("messages teach the flicker/untap/animate vocab with a few-shot each", () => {
@@ -51,4 +51,15 @@ test("messages include the emits invariant and a few-shot example", () => {
 
 test("messages include the closed effect.kind label set", () => {
   expect(flat()).toContain("player-life-loss");
+});
+
+test("PROMPT_VERSION is 23", () => {
+  expect(PROMPT_VERSION).toBe(23);
+});
+
+test("instructions teach the stats predicate", () => {
+  const text = buildAbilityMessages({ name: "X", typeLine: "Creature", oracleText: "" } as never)
+    .map((m) => m.content).join("\n");
+  expect(text.toLowerCase()).toContain("stats");
+  expect(text).toContain("power"); // predicate metric mentioned
 });

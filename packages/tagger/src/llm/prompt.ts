@@ -2,7 +2,7 @@ import type { Card } from "@mtg/engine";
 import { EFFECT_KINDS, SCALING_BASES, VERB_VOCAB } from "../schema.js";
 import type { ChatMessage } from "./provider.js";
 
-export const PROMPT_VERSION = 22;
+export const PROMPT_VERSION = 23;
 
 export { EFFECT_KINDS };
 export { SCALING_BASES };
@@ -27,7 +27,14 @@ A SubjectFilter is:
   "token": true | false | null,        // true=token only, false=nontoken only, null=any
   "chosenType"?: true,                 // only for "the chosen type" wording
   "counter"?: string,                  // counter kind for counter-added events, e.g. "+1/+1"
-  "zone"?: string }                    // subject's zone if not battlefield, e.g. "graveyard", "hand", "exile"
+  "zone"?: string,                     // subject's zone if not battlefield, e.g. "graveyard", "hand", "exile"
+  "stats"?: StatPredicate[] }          // numeric conditions on the subject; ALL must hold
+
+A StatPredicate is { "metric": "power"|"toughness"|"mana-value", "op": "lte"|"gte"|"lt"|"gt"|"eq",
+"value"?: number, "vs"?: "power"|"toughness" }. Use "value" for a constant ("power 2 or less" ->
+{metric:"power",op:"lte",value:2}); use "vs" for a stat-vs-stat comparison ("toughness greater
+than its power" -> {metric:"toughness",op:"gt",vs:"power"}). Only add stats when the card states a
+numeric power/toughness/mana-value condition; omit it otherwise.
 
 An Event is { "verb": Verb, "subject": SubjectFilter } with a CONCRETE subject.
 
@@ -262,6 +269,23 @@ const FEW_SHOT_TURNS: ChatMessage[] = [
     content: `{ "abilities": [
   { "kind": "triggered", "trigger": { "verbs": ["proliferate"], "subject": { "control": "you", "token": null } }, "effect": { "kind": "trigger-doubling" }, "emits": [] },
   { "kind": "activated", "cost": "{1}{U/P}{U/P}, Remove three counters from among other artifacts, creatures, and planeswalkers you control", "effect": { "kind": "counter-placement", "subject": { "control": "you", "token": null, "counter": "indestructible" } }, "emits": [ { "verb": "counter-added", "subject": { "control": "you", "token": null, "counter": "indestructible" } } ] }
+] }`,
+  },
+  {
+    role: "user",
+    content: cardTurn(
+      "Welcoming Vampire",
+      "Creature — Vampire",
+      "Flying\nWhenever another creature you control with power 2 or less enters, you may draw a card. If you do, discard a card. This ability triggers only once each turn.",
+    ),
+  },
+  {
+    role: "assistant",
+    content: `{ "abilities": [
+  { "kind": "triggered",
+    "trigger": { "verbs": ["enters"], "subject": { "type": "creature", "control": "you", "token": null, "stats": [ { "metric": "power", "op": "lte", "value": 2 } ] } },
+    "effect": { "kind": "draw-card" },
+    "emits": [ { "verb": "draw", "subject": { "control": "you", "token": null } } ] }
 ] }`,
   },
   {
