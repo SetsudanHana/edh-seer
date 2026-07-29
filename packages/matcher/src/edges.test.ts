@@ -384,6 +384,57 @@ test("no-regression: a card that does NOT proliferate implies no counter-added",
   expect(reasons.some((r) => r.tag.startsWith("counter-added"))).toBe(false);
 });
 
+test("event edge sets hasStatPredicate=true when the consumer trigger has a stats predicate", () => {
+  const producer = base("Soul Warden", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: false } },
+    effect: { kind: "lifegain" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: false } }],
+  }]);
+  const consumer = base("Welcoming Vampire", [{
+    kind: "triggered",
+    trigger: {
+      verbs: ["enters"],
+      subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "lte", value: 2 }] },
+    },
+    effect: { kind: "draw-card" },
+  }]);
+  const reasons = pairReasons(producer, consumer, H);
+  const matched = reasons.find((r) => r.tag === "enters:creature");
+  expect(matched?.hasStatPredicate).toBe(true);
+});
+
+test("event edge leaves hasStatPredicate unset when the consumer trigger has no stats predicate", () => {
+  const producer = base("Soul Warden", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: false } },
+    effect: { kind: "lifegain" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: false } }],
+  }]);
+  const consumer = base("Kindred Discovery", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const reasons = pairReasons(producer, consumer, H);
+  const matched = reasons.find((r) => r.tag === "enters:creature");
+  expect(matched?.hasStatPredicate).toBeUndefined();
+});
+
+test("static edge sets hasStatPredicate=true for a toughness-matters marker", () => {
+  const doran = base("Doran, the Siege Tower", [{
+    kind: "static",
+    effect: {
+      kind: "damage-multiplier",
+      subject: { type: "creature", control: "you", token: null, stats: [{ metric: "toughness", op: "gte", vs: "power" }] },
+    },
+  }]);
+  const wall = base("Wall of Omens", [], []);
+  const reasons = pairReasons(doran, wall, H);
+  const matched = reasons.find((r) => r.tag === "static:damage-multiplier");
+  expect(matched?.hasStatPredicate).toBe(true);
+});
+
 test("dedup: a producer with BOTH an authored counter-added emit AND a proliferate emit credits a shared counter payoff exactly once", () => {
   // Two independent abilities on the same producer: one authors a +1/+1 counter-added event
   // directly, the other emits proliferate (which independently implies an untyped counter-added

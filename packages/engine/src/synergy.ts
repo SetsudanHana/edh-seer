@@ -13,6 +13,10 @@ export interface Reason {
   repeatability?: string;
   /** Payoff scaling basis (tagger SCALING_BASES). Set by the structured matcher; unset → "fixed". */
   scaling?: string;
+  /** True iff the matched subject filter carried a non-empty `stats` predicate array. Lets
+   *  stat-gated categories (power-matters, toughness-matters) distinguish a genuinely
+   *  predicate-gated match from a coincidental unconditional match sharing the same tag. */
+  hasStatPredicate?: boolean;
 }
 
 export interface SynergyResult {

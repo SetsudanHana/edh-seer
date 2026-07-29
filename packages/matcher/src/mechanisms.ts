@@ -30,6 +30,11 @@ export type MechanismCategory = (typeof MECHANISM_CATEGORIES)[number];
 export interface CategoryMatchEntry {
   tags?: string[];
   effectKinds?: string[];
+  /** When true, a matching tag/effectKind is not enough — the Reason must also carry
+   *  hasStatPredicate:true. Used for categories whose whole point is a StatPredicate gate
+   *  (power-matters, toughness-matters), where the linking tag alone is shared with
+   *  unconditional producers of the same event. */
+  requireStatPredicate?: boolean;
 }
 
 /** Category -> accepted reason signatures. This table is the ONLY coupling between the gold set
@@ -56,14 +61,19 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   // still `${verb}:${subjectKey}` / `static:${kind}` regardless of any `stats` predicate on the
   // subject — so these categories match by the same linking event tag as any other producer of
   // that event, same as every other category in this table.
-  "toughness-matters": { tags: ["static:damage-multiplier"] },
-  "power-matters": { tags: ["enters:creature"] },
+  "toughness-matters": { tags: ["static:damage-multiplier"], requireStatPredicate: true },
+  "power-matters": { tags: ["enters:creature"], requireStatPredicate: true },
 };
 
-/** True if the reason satisfies the category: its tag is accepted OR its effectKind is accepted. */
+/** True if the reason satisfies the category: its tag is accepted OR its effectKind is accepted.
+ *  When the category's entry sets requireStatPredicate, a tag/effectKind match alone is not
+ *  enough — the reason must also carry hasStatPredicate:true. */
 export function categoryMatches(reason: Reason, category: MechanismCategory): boolean {
   const entry = CATEGORY_MATCH[category];
-  if (reason.tag && entry.tags?.includes(reason.tag)) return true;
-  if (reason.effectKind && entry.effectKinds?.includes(reason.effectKind)) return true;
-  return false;
+  const tagOrKindMatches =
+    (reason.tag !== undefined && entry.tags?.includes(reason.tag)) ||
+    (reason.effectKind !== undefined && entry.effectKinds?.includes(reason.effectKind));
+  if (!tagOrKindMatches) return false;
+  if (entry.requireStatPredicate && !reason.hasStatPredicate) return false;
+  return true;
 }

@@ -95,6 +95,7 @@ function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
           effectKind: a.effect.kind,
           repeatability: triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
+          hasStatPredicate: (t.subject.stats?.length ?? 0) > 0 || undefined,
         });
       }
     }
@@ -133,6 +134,7 @@ function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
       effectKind: a.effect.kind,
       repeatability: "static",
       scaling: a.effect.scaling,
+      hasStatPredicate: (a.effect.subject?.stats?.length ?? 0) > 0 || undefined,
     });
   }
   return reasons;

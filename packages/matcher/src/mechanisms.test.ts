@@ -62,3 +62,18 @@ test("mill-self accepts the enters-graveyard linking tag", () => {
 test("counters-plus1 accepts the proliferate linking tag", () => {
   expect(categoryMatches({ tag: "proliferate:any", text: "" } as never, "counters-plus1")).toBe(true);
 });
+
+test("categoryMatches requires hasStatPredicate for power-matters even when the tag matches", () => {
+  expect(categoryMatches(reason({ tag: "enters:creature", hasStatPredicate: true }), "power-matters")).toBe(true);
+  expect(categoryMatches(reason({ tag: "enters:creature", hasStatPredicate: false }), "power-matters")).toBe(false);
+  expect(categoryMatches(reason({ tag: "enters:creature" }), "power-matters")).toBe(false);
+});
+
+test("categoryMatches requires hasStatPredicate for toughness-matters even when the tag matches", () => {
+  expect(categoryMatches(reason({ tag: "static:damage-multiplier", hasStatPredicate: true }), "toughness-matters")).toBe(true);
+  expect(categoryMatches(reason({ tag: "static:damage-multiplier" }), "toughness-matters")).toBe(false);
+});
+
+test("categoryMatches does not require hasStatPredicate for categories without the flag", () => {
+  expect(categoryMatches(reason({ effectKind: "drain" }), "aristocrats")).toBe(true);
+});
