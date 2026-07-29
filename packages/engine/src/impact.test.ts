@@ -24,7 +24,7 @@ test("missing repeatability is neutral (×1.0)", () => {
 });
 
 test("seed config has one kind per EFFECT_KIND and all four repeatability classes", () => {
-  expect(Object.keys(SEED_IMPACT_WEIGHTS.kinds).length).toBe(26);
+  expect(Object.keys(SEED_IMPACT_WEIGHTS.kinds).length).toBe(27);
   expect(Object.keys(SEED_IMPACT_WEIGHTS.repeatability).sort())
     .toEqual(["activated", "oneshot", "static", "triggered"]);
 });
@@ -59,7 +59,7 @@ test("dampByAlpha divides by partnerCount^alpha; 0 partners → 0", () => {
 test("loadImpactWeights reads the committed JSON and has a numeric damping", () => {
   const w = loadImpactWeights();
   expect(typeof w.damping).toBe("number");
-  expect(Object.keys(w.kinds).length).toBe(26);
+  expect(Object.keys(w.kinds).length).toBe(27);
 });
 
 test("impactWeightOf folds in scaleMult: per-creature drain > fixed drain", () => {

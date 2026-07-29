@@ -39,6 +39,7 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     "enters-with-counters": 0.4,
     animate: 0.4,
     untap: 0.4,
+    proliferate: 0.4,
     "player-life-loss": 0.3,
     lifegain: 0.3,
     "top-manipulation": 0.3,
