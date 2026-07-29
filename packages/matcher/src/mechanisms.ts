@@ -59,8 +59,10 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   "wheels-draw": { tags: ["draw:any"], effectKinds: ["draw-card"] },
   // Conditional stat edges (Slice 1): the predicate itself isn't in the reason tag — the tag is
   // still `${verb}:${subjectKey}` / `static:${kind}` regardless of any `stats` predicate on the
-  // subject — so these categories match by the same linking event tag as any other producer of
-  // that event, same as every other category in this table.
+  // subject, and that linking tag is shared with any unconditional producer of the same event.
+  // Unlike every other category in this table, a tag match alone is NOT sufficient here — these
+  // two are the exception: requireStatPredicate additionally demands reason.hasStatPredicate,
+  // so only a genuinely predicate-gated match (not a coincidental unconditional one) counts.
   "toughness-matters": { tags: ["static:damage-multiplier"], requireStatPredicate: true },
   "power-matters": { tags: ["enters:creature"], requireStatPredicate: true },
 };
