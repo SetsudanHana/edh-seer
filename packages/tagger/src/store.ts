@@ -20,5 +20,6 @@ export function needsRetag(
   promptVersion: number,
 ): boolean {
   if (!existing) return true;
+  if (existing.pinned) return false;
   return existing.schemaVersion !== schemaVersion || existing.promptVersion !== promptVersion;
 }

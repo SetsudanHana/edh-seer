@@ -237,4 +237,9 @@ export interface CardTags {
   model: string;
   characteristics: Characteristics;
   abilities: Ability[];
+  /** True for a hand-verified tag that must survive automated re-tagging (e.g. a prompt-version
+   *  bump). needsRetag short-circuits to false for a pinned tag regardless of version drift —
+   *  set this only for cards where the LLM has demonstrably gotten the shape wrong and a human
+   *  fixed it directly (see docs/superpowers/plans/2026-07-28-strategy-gap-fixes.md Task 2). */
+  pinned?: boolean;
 }

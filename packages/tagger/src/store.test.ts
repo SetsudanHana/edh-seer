@@ -37,3 +37,13 @@ test("needsRetag true on version mismatch", () => {
 test("needsRetag false when versions match", () => {
   expect(needsRetag(sample, SCHEMA_VERSION, PROMPT_VERSION)).toBe(false);
 });
+
+test("needsRetag false when pinned, even on version mismatch", () => {
+  const pinned = { ...sample, pinned: true, schemaVersion: 0, promptVersion: 0 };
+  expect(needsRetag(pinned, SCHEMA_VERSION, PROMPT_VERSION)).toBe(false);
+});
+
+test("needsRetag still true on version mismatch when pinned is false or absent", () => {
+  expect(needsRetag({ ...sample, pinned: false, schemaVersion: 0 }, SCHEMA_VERSION, PROMPT_VERSION)).toBe(true);
+  expect(needsRetag({ ...sample, schemaVersion: 0 }, SCHEMA_VERSION, PROMPT_VERSION)).toBe(true);
+});
