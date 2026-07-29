@@ -49,10 +49,12 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   reanimator: { effectKinds: ["graveyard-recursion", "animate"] },
   "voltron-auras": { effectKinds: ["pump", "counter-placement"] },
   "lifegain-payoff": { tags: ["gain-life:any"], effectKinds: ["drain", "draw-card", "counter-placement"] },
+  // 0 clean EDHREC pairs as of 2026-07-28, sourcer limitation
   landfall: { tags: ["enters:land"], effectKinds: ["token-generation", "counter-placement", "pump"] },
   "counters-plus1": { tags: ["proliferate:any"], effectKinds: ["counter-placement", "enters-with-counters", "trigger-doubling"] },
   "mana-ramp-payoff": { effectKinds: ["mana-generation", "fast-mana", "ritual", "cost-reduction", "tax"] },
   "graveyard-matters": { effectKinds: ["graveyard-recursion", "top-manipulation"] },
+  // 0 clean EDHREC pairs as of 2026-07-28, sourcer limitation
   "attack-matters": { tags: ["attacks:creature"], effectKinds: ["pump", "speed-increase", "damage"] },
   "blink-etb": { effectKinds: ["flicker", "clone"] },
   "mill-self": { tags: ["enters-graveyard:creature", "enters-graveyard:any"], effectKinds: ["graveyard-recursion", "top-manipulation"] },
