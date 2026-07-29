@@ -334,5 +334,109 @@
     "note": "Wall of Omens is 0/4 (toughness >= power); Doran assigns combat damage using toughness for all creatures",
     "source": "human-verified",
     "verified": true
+  },
+  {
+    "a": "Yavimaya, Cradle of Growth",
+    "b": "Lotus Cobra",
+    "category": "mana-ramp-payoff",
+    "note": "co-high-synergy in EDHREC mana-ramp-payoff",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Faithless Looting",
+    "b": "Life from the Loam",
+    "category": "graveyard-matters",
+    "note": "co-high-synergy in EDHREC graveyard-matters",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Life from the Loam",
+    "b": "Ark of Hunger",
+    "category": "graveyard-matters",
+    "note": "co-high-synergy in EDHREC graveyard-matters",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Ark of Hunger",
+    "b": "Muldrotha, the Gravetide",
+    "category": "graveyard-matters",
+    "note": "co-high-synergy in EDHREC graveyard-matters",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Ephemerate",
+    "b": "Soulherder",
+    "category": "blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Ephemerate",
+    "b": "Teleportation Circle",
+    "category": "blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Soulherder",
+    "b": "Cloudshift",
+    "category": "blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Soulherder",
+    "b": "Ghostly Flicker",
+    "category": "blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Soulherder",
+    "b": "Teleportation Circle",
+    "category": "blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Soulherder",
+    "b": "Eerie Interlude",
+    "category": "blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Cloudshift",
+    "b": "Teleportation Circle",
+    "category": "blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Ghostly Flicker",
+    "b": "Teleportation Circle",
+    "category": "blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb",
+    "source": "llm-proposed",
+    "verified": true
+  },
+  {
+    "a": "Teleportation Circle",
+    "b": "Eerie Interlude",
+    "category": "blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb",
+    "source": "llm-proposed",
+    "verified": true
   }
 ]
