@@ -18,6 +18,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
 import { pairReasons, cardThemeTags } from "./edges.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
+import { computeCardBuckets } from "./buckets.js";
 
 /** Uniform IDF: every theme has equal corpus weight, so rankThemes/themeWeights degrade to a
  *  pure deck-frequency ranking. Stage 3 replaces this with a real structured-corpus TagStats. */
@@ -123,17 +124,51 @@ export function analyzeDeckStructured(
     }
   }
 
+  const presentCommanders = resolved.map((dc) => dc.card.name).filter((n) => commanderSet.has(n));
+  const deckNames = new Set(resolved.map((dc) => dc.card.name));
+  const foundCombos: Combo[] = combos?.combosContainedIn(deckNames) ?? [];
+  const comboCardNames = new Set(foundCombos.flatMap((c) => c.cards));
+  const tagsByName = new Map(resolved.map((dc) => [dc.card.name, dc.tags] as const));
+
+  const VERSATILITY_STEP = 0.15;
+  const COMBO_BONUS = 1.5;
+
   const cards: CardSynergy[] = [...agg.values()]
-    .map((v) => ({
-      name: v.name,
-      isCommander: commanderSet.has(v.name),
-      score: dampByAlpha(v.weighted, v.partnerCount, impactWeights.damping),
-      partnerCount: v.partnerCount,
-      topPartners: v.partners
-        .sort((x, y) => y.contribution - x.contribution)
-        .slice(0, 5)
-        .map(({ name, score, reasons }) => ({ name, score, reasons })),
-    }))
+    .map((v) => {
+      const score = dampByAlpha(v.weighted, v.partnerCount, impactWeights.damping);
+      const tags = tagsByName.get(v.name);
+      const raw = tags
+        ? computeCardBuckets(tags, impactWeights)
+        : { consistency: 0, efficiency: 0, "win-condition": 0 };
+      const winCondition = raw["win-condition"] + (comboCardNames.has(v.name) ? COMBO_BONUS : 0);
+      const bucketCount =
+        (score > 0 ? 1 : 0) +
+        (raw.consistency > 0 ? 1 : 0) +
+        (raw.efficiency > 0 ? 1 : 0) +
+        (winCondition > 0 ? 1 : 0);
+      const versatilityMult = 1 + VERSATILITY_STEP * Math.max(0, bucketCount - 1);
+      const base = {
+        name: v.name,
+        isCommander: commanderSet.has(v.name),
+        score,
+        partnerCount: v.partnerCount,
+        topPartners: v.partners
+          .sort((x, y) => y.contribution - x.contribution)
+          .slice(0, 5)
+          .map(({ name, score, reasons }) => ({ name, score, reasons })),
+      };
+      return bucketCount > 0
+        ? {
+            ...base,
+            bucketScores: {
+              consistency: raw.consistency * versatilityMult,
+              efficiency: raw.efficiency * versatilityMult,
+              "win-condition": winCondition * versatilityMult,
+            },
+            bucketCount,
+          }
+        : base;
+    })
     .sort((x, y) => y.score - x.score || y.partnerCount - x.partnerCount || x.name.localeCompare(y.name));
 
   const themes = [...deckFreq.entries()]
@@ -142,9 +177,6 @@ export function analyzeDeckStructured(
 
   const nonlandCount = resolved.filter((dc) => !dc.card.typeLine.toLowerCase().includes("land")).length;
   const cohesion = computeCohesion(rankThemes(deckFreq, UNIFORM_STATS), deckFreq, nonlandCount);
-  const presentCommanders = resolved.map((dc) => dc.card.name).filter((n) => commanderSet.has(n));
-  const deckNames = new Set(resolved.map((dc) => dc.card.name));
-  const foundCombos: Combo[] = combos?.combosContainedIn(deckNames) ?? [];
 
   return {
     commanders: presentCommanders,

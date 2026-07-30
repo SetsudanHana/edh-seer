@@ -24,6 +24,14 @@ export interface CardSynergy {
   score: number;
   partnerCount: number;
   topPartners: { name: string; score: number; reasons: Reason[] }[];
+  /** Per-card classification into non-synergy "job" buckets (consistency/efficiency/
+   *  win-condition), computed from the card's own abilities by @mtg/matcher's
+   *  analyzeDeckStructured. Absent when the card qualifies for none of the three, or when
+   *  produced by the flat (retired-from-web/CLI) analyzeDeck below. */
+  bucketScores?: { consistency: number; efficiency: number; "win-condition": number };
+  /** 1-4: how many of the 4 UI buckets (the 3 above + Synergy via score>0) this card
+   *  qualifies for. Absent (not 0) when the card qualifies for none. */
+  bucketCount?: number;
 }
 
 export interface DeckReport {

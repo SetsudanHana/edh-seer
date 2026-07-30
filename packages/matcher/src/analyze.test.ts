@@ -254,3 +254,52 @@ test("toughness-matters static edges with a wall, NOT a beater", () => {
   expect(analyzeDeckStructured([doran, wall]).edges.length).toBeGreaterThan(0);
   expect(analyzeDeckStructured([doran, beater]).edges).toEqual([]);
 });
+
+test("bucketScores reflect own-ability classification; unrelated buckets stay 0", () => {
+  const drawer = dc("Drawer", drawAbility);
+  const ramper = dc("Ramper", rampAbility);
+  const report = analyzeDeckStructured([drawer, ramper], undefined, H);
+  const drawerCard = report.cards.find((c) => c.name === "Drawer")!;
+  const ramperCard = report.cards.find((c) => c.name === "Ramper")!;
+  expect(drawerCard.bucketScores?.consistency).toBeGreaterThan(0);
+  expect(drawerCard.bucketScores?.efficiency).toBe(0);
+  expect(ramperCard.bucketScores?.efficiency).toBeGreaterThan(0);
+  expect(ramperCard.bucketScores?.consistency).toBe(0);
+});
+
+test("a card with no qualifying abilities and no synergy has no bucketScores/bucketCount", () => {
+  const vanilla = dc("Vanilla", []);
+  const report = analyzeDeckStructured([vanilla], undefined, H);
+  const card = report.cards.find((c) => c.name === "Vanilla")!;
+  expect(card.bucketScores).toBeUndefined();
+  expect(card.bucketCount).toBeUndefined();
+});
+
+test("combo-piece cards get a win-condition bonus even with no win-condition abilities of their own", () => {
+  const a = dc("A", []);
+  const b = dc("B", []);
+  const combos = new ComboIndex([{ cards: ["A", "B"], result: "Win the game." }]);
+  const report = analyzeDeckStructured([a, b], undefined, H, undefined, combos);
+  const cardA = report.cards.find((c) => c.name === "A")!;
+  expect(cardA.bucketScores?.["win-condition"]).toBeGreaterThan(0);
+  expect(cardA.bucketCount).toBe(1);
+});
+
+test("versatility multiplier scales the 3 new bucket scores with qualifying-bucket count, never touching score", () => {
+  const single = dc("Single", drawAbility);
+  const versatile = dc("Versatile", [...drawAbility, ...rampAbility]);
+  const singleReport = analyzeDeckStructured([single], undefined, H);
+  const versatileReport = analyzeDeckStructured([versatile], undefined, H);
+  const s = singleReport.cards.find((c) => c.name === "Single")!;
+  const v = versatileReport.cards.find((c) => c.name === "Versatile")!;
+  // Each card is alone in its own deck, so neither forms any synergy edge (see the existing
+  // "self-pairs are excluded" test above) — score stays 0 for both, deterministically.
+  expect(s.score).toBe(0);
+  expect(v.score).toBe(0);
+  expect(s.bucketCount).toBe(1); // consistency only
+  expect(v.bucketCount).toBe(2); // consistency + efficiency
+  // Identical drawAbility in both, so the raw consistency contribution is identical — the
+  // ratio between their consistency scores must equal exactly the versatility-multiplier
+  // ratio for bucketCount 2 (1 + 0.15*1 = 1.15) vs bucketCount 1 (1 + 0.15*0 = 1.0).
+  expect(v.bucketScores!.consistency / s.bucketScores!.consistency).toBeCloseTo(1.15, 5);
+});
