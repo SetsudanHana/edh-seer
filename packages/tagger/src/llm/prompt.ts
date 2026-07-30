@@ -73,6 +73,15 @@ RULES:
   cast-trigger about OTHER spells you cast → kind:"triggered", verbs:["cast"]) and from "When
   this enters ..." (→ kind:"triggered", verbs:["enters"]). An ability the spell GRANTS to a
   permanent keeps its own kind on the granted subject. Lands are played, not cast → never on-cast.
+- Direct reanimation / graveyard-recursion effects follow the SAME on-cast/static split as
+  everything else — don't invent a fake trigger for them. A spell's own "put target creature
+  card from a graveyard onto the battlefield" is its on-cast effect (kind:"on-cast", NO
+  trigger); model the graveyard card being pulled as effect.subject with zone:"graveyard" (not
+  as a trigger.subject). A permanent's standing "you may cast/play a card from your graveyard"
+  is a kind:"static" permission (again NO trigger — nothing triggers a standing permission);
+  same effect.subject.zone:"graveyard" convention. Reserve trigger.verbs:["cast"] + a
+  graveyard-zoned subject for the rare case of a genuine payoff that reacts to OTHER cards
+  being cast from a graveyard.
 
 INVARIANT — emits:
 - A "cast" ability emits BOTH { verb: "cast" } and { verb: "enters" }.
