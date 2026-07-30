@@ -12,6 +12,8 @@ export const SAMPLE: AnalyzeResponse = {
         topPartners: [
           { name: "Impact Tremors", score: 2, reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }] },
         ],
+        bucketScores: { consistency: 0, efficiency: 0, "win-condition": 1.38 },
+        bucketCount: 2,
       },
       {
         name: "Impact Tremors",
@@ -21,6 +23,8 @@ export const SAMPLE: AnalyzeResponse = {
         topPartners: [
           { name: "Krenko, Mob Boss", score: 2, reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }] },
         ],
+        bucketScores: { consistency: 1.0, efficiency: 0, "win-condition": 0.23 },
+        bucketCount: 3,
       },
     ],
     edges: [],
