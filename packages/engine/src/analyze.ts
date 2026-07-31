@@ -33,6 +33,9 @@ export interface CardSynergy {
   /** 1-4: how many of the 4 UI buckets (the 3 above + Synergy via score>0) this card
    *  qualifies for. Absent (not 0) when the card qualifies for none. */
   bucketCount?: number;
+  /** 0–5 deck-relative, axis-weighted synergy rating. Set only by @mtg/matcher's
+   *  analyzeDeckStructured (needs structured theme tags); undefined on the flat engine. */
+  synergyRating?: number;
 }
 
 /** Populated only by @mtg/matcher's analyzeDeckStructured (see that package's
@@ -60,6 +63,8 @@ export interface DeckReport {
   roles: { ramp: number; draw: number; removal: number };
   cohesion: Cohesion | null;
   archetypes?: ArchetypeGroup[];
+  /** 0–5 deck positive-coherence: mean nonland synergyRating. Matcher-only (see above). */
+  positiveCoherence?: number;
 }
 
 interface Agg {
