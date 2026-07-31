@@ -42,6 +42,49 @@ const kindredDiscoveryAbility: CardTags["abilities"] = [{
   effect: { kind: "draw-card" },
 }];
 
+// Fixtures for the axis-discrimination test below.
+//
+// The commander's trigger seeds the axis with tag "enters:wizard" but requires control:"opp",
+// which nothing in this deck ever emits (all authored emits below are control:"you") — so it
+// never forms a real edge to the commander itself. This also means the commander must NOT be a
+// permanent type: every permanent implicitly "enters the battlefield" as its own producer event
+// (see implied.ts impliedEvents), and that implied event is always control:"you" regardless of
+// the card's own trigger — so a permanent commander with subtype "wizard" would silently pick up
+// edges with Wizard Maker/Wizard Payoff via its own self-ETB, contaminating the comparison with
+// COMMANDER_BOOST (x3, applied only to edges touching the commander). Making the commander an
+// instant sidesteps this: impliedEvents only gives non-permanents a "cast" event, never "enters".
+const commanderAxisAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "opp", token: null } },
+  effect: { kind: "draw-card" },
+}];
+
+// On-axis payoff: matches Wizard Maker's wizard-token emit (subtype "wizard", same as the
+// commander's axis tag) directly on subtype, no hierarchy widening needed.
+const wizardPayoffAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: null } },
+  effect: { kind: "draw-card" },
+}];
+
+// Off-axis maker/payoff pair: structurally identical to the wizard pair (same effect kinds ->
+// identical impactEdgeWeight) but on "attacks"/"goblin" instead of "enters"/"wizard", so its
+// edge's reason tag ("attacks:goblin") is off the commander's axis. "attacks" is never an
+// implied event (implied.ts only implies "cast"/"enters"), so this pair can't pick up stray
+// edges from anyone's own self-ETB the way an "enters"-based off-axis pair could.
+const goblinMakerAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["attacks"], subject: { subtype: "goblin", control: "you", token: false } },
+  effect: { kind: "token-generation", subject: { subtype: "goblin", control: "you", token: true } },
+  emits: [{ verb: "attacks", subject: { subtype: "goblin", control: "you", token: true } }],
+}];
+
+const goblinPayoffAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["attacks"], subject: { subtype: "goblin", control: "you", token: null } },
+  effect: { kind: "draw-card" },
+}];
+
 test("produces a DeckReport with a synergy edge between a maker and its payoff", () => {
   const maker = dc("Inalla", inallaAbility, ["wizard"]);
   const payoff = dc("Kindred Discovery", kindredDiscoveryAbility);
@@ -352,12 +395,31 @@ test("populates synergyRating (0-5) on every card and positiveCoherence on the d
   expect(report.positiveCoherence).toBeLessThanOrEqual(5);
 });
 
-test("an on-axis edge outrates an equal-strength off-axis edge (commander anchors the axis)", () => {
-  // Commander cares about wizards entering (enters:creature via the wizard hierarchy). A wizard
-  // maker/payoff pair is on-axis; a structurally-similar pair on an unrelated tag is off-axis.
-  const commander = dc("Cmd", kindredDiscoveryAbility, ["wizard"]); // triggers on creature ETB
-  const onAxisMaker = dc("Wizard Maker", inallaAbility, ["wizard"]); // emits wizard ETBs
-  const report = analyzeDeckStructured([commander, onAxisMaker], ["Cmd"], H);
-  const maker = report.cards.find((c) => c.name === "Wizard Maker")!;
-  expect(maker.synergyRating).toBeGreaterThan(0);
+test("an on-axis edge outscores an equal-strength off-axis edge (commander anchors the axis)", () => {
+  // Two structurally-identical maker/payoff pairs (same effect kinds, so identical base
+  // impactEdgeWeight): one on the commander's "enters:wizard" axis (Wizard Maker <->
+  // Wizard Payoff), one off it (Goblin Maker <-> Goblin Payoff, "attacks:goblin"). The
+  // commander itself never edges with anyone (control:"opp" trigger matches nothing here, and
+  // its own type — instant — never implies an "enters" event), so COMMANDER_BOOST can't be the
+  // thing driving the difference — only axisFactor can.
+  const commander = dc("Cmd", commanderAxisAbility, [], "Instant");
+  const wizardMaker = dc("Wizard Maker", inallaAbility, ["wizard"]);
+  const wizardPayoff = dc("Wizard Payoff", wizardPayoffAbility);
+  const goblinMaker = dc("Goblin Maker", goblinMakerAbility, ["goblin"]);
+  const goblinPayoff = dc("Goblin Payoff", goblinPayoffAbility);
+  const report = analyzeDeckStructured(
+    [commander, wizardMaker, wizardPayoff, goblinMaker, goblinPayoff],
+    ["Cmd"],
+    H,
+  );
+
+  // Sanity: the commander itself picked up no edges (isolates the comparison from COMMANDER_BOOST).
+  expect(report.cards.find((c) => c.name === "Cmd")?.partnerCount).toBe(0);
+
+  const onAxis = report.cards.find((c) => c.name === "Wizard Maker")!;
+  const offAxis = report.cards.find((c) => c.name === "Goblin Maker")!;
+  expect(onAxis.partnerCount).toBe(1);
+  expect(offAxis.partnerCount).toBe(1);
+  expect(onAxis.score).toBeGreaterThan(offAxis.score);
+  expect(onAxis.synergyRating!).toBeGreaterThan(offAxis.synergyRating!);
 });
