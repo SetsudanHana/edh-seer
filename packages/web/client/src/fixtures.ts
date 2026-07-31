@@ -52,6 +52,20 @@ export const SAMPLE: AnalyzeResponse = {
       score: 0.65,
       label: "highly focused",
     },
+    archetypes: [
+      {
+        category: "tokens-go-wide",
+        label: "Tokens Go Wide",
+        cards: ["Impact Tremors", "Krenko, Mob Boss"],
+        pairs: [
+          {
+            a: "Krenko, Mob Boss",
+            b: "Impact Tremors",
+            reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }],
+          },
+        ],
+      },
+    ],
   },
   missing: ["Beholder's Death Ray"],
   resolvedCount: 99,

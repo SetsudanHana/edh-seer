@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { CardSynergyList } from "./CardSynergyList.js";
 import { ComboList } from "./ComboList.js";
@@ -10,6 +11,7 @@ import { StatTiles } from "./StatTiles.js";
 import { OverviewTab } from "./OverviewTab.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
 import { LandMathChart } from "./LandMathChart.js";
+import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { SAMPLE } from "../fixtures.js";
 
 test("DeckIdentity shows the primary and secondary theme", () => {
@@ -110,4 +112,25 @@ test("LandMathChart shows 8 bars (0-7 lands), labels the peak percentage, and ca
   // Peak at k=3 with ~29.57% → rounds to 30%
   expect(screen.getByText("30%")).toBeInTheDocument(); // peak bar's direct cap label
   expect(screen.getByTitle("30% chance of exactly 3 lands")).toBeInTheDocument(); // tooltip on peak bar
+});
+
+test("ArchetypeBoard shows a bar per group and expands to reveal pairs on click", async () => {
+  render(<ArchetypeBoard archetypes={SAMPLE.report.archetypes} />);
+  expect(screen.getByText("Tokens Go Wide")).toBeInTheDocument();
+  expect(screen.getByText("2 cards")).toBeInTheDocument();
+  // Pair detail is collapsed by default.
+  expect(screen.queryByText(/Krenko, Mob Boss \+ Impact Tremors/)).not.toBeInTheDocument();
+  await userEvent.click(screen.getByText("Tokens Go Wide"));
+  expect(screen.getByText(/Krenko, Mob Boss \+ Impact Tremors/)).toBeInTheDocument();
+  expect(screen.getByText(/pays off tokens/)).toBeInTheDocument();
+});
+
+test("ArchetypeBoard shows an empty-state message when there are no groups", () => {
+  render(<ArchetypeBoard archetypes={[]} />);
+  expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();
+});
+
+test("ArchetypeBoard shows the empty-state message when archetypes is undefined", () => {
+  render(<ArchetypeBoard archetypes={undefined} />);
+  expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();
 });
