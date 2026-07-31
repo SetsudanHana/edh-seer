@@ -6,7 +6,7 @@ export function MissingCards({ missing }: { missing: string[] }) {
         <span className="pip" style={{ ["--pip-color" as string]: "var(--danger)" }}>
           {missing.length}
         </span>
-        <h2 className="text-2xl leading-none text-danger">Unresolved</h2>
+        <h2 className="text-xl leading-none text-danger">Unresolved</h2>
       </div>
       <p className="text-xs text-(--muted) -mt-2">
         Not found in the card database — check spelling or set-specific names

@@ -56,23 +56,39 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
       {visible.length === 0 ? (
         <p className="text-(--muted) text-sm">No cards match this filter.</p>
       ) : (
-        <ul className="flex flex-col">
-          {visible.map((c) => (
-            <li key={c.name} className="flex items-center gap-3 py-2 border-b border-(--separator)">
-              <span className="flex-1 min-w-0 truncate">{c.name}</span>
-              <span className="flex gap-1 shrink-0">
-                {BUCKETS.filter((b) => scoreFor(c, b) > 0).map((b) => (
-                  <span
-                    key={b}
-                    title={`${BUCKET_LABELS[b]}: ${scoreFor(c, b).toFixed(2)}`}
-                    className="w-2.5 h-2.5 rounded-full"
-                    style={{ backgroundColor: `var(--bucket-${b})` }}
-                  />
-                ))}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b border-(--border)">
+              <th className="eyebrow text-left font-normal py-2 pr-2 w-10">#</th>
+              <th className="eyebrow text-left font-normal py-2 pr-2">Card</th>
+              <th className="eyebrow text-left font-normal py-2 pr-2 w-32">Roles</th>
+              <th className="eyebrow text-right font-normal py-2 w-16">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visible.map((c, i) => (
+              <tr key={c.name} className="border-b border-(--separator)">
+                <td className="py-2 pr-2 font-mono tabular-nums text-(--muted)">{String(i + 1).padStart(2, "0")}</td>
+                <td className="py-2 pr-2 min-w-0 truncate">{c.name}</td>
+                <td className="py-2 pr-2">
+                  <span className="flex gap-1">
+                    {BUCKETS.filter((b) => scoreFor(c, b) > 0).map((b) => (
+                      <span
+                        key={b}
+                        title={`${BUCKET_LABELS[b]}: ${scoreFor(c, b).toFixed(2)}`}
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: `var(--bucket-${b})` }}
+                      />
+                    ))}
+                  </span>
+                </td>
+                <td className="py-2 text-right font-mono tabular-nums text-(--foreground)">
+                  {maxScore(c).toFixed(1)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );

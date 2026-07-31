@@ -3,6 +3,8 @@ import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
 import { ReportView } from "./components/ReportView.js";
+import { ColorIdentityPicker } from "./components/ColorIdentityPicker.js";
+import { useAccentIdentity } from "./lib/use-accent-identity.js";
 
 export default function App() {
   const [commanders, setCommanders] = useState("");
@@ -10,6 +12,7 @@ export default function App() {
   const [data, setData] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { manualPick, setManualPick } = useAccentIdentity(data?.commanderColorIdentity);
 
   async function onAnalyze() {
     setLoading(true);
@@ -26,10 +29,33 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-background text-foreground p-8 max-w-5xl mx-auto flex flex-col gap-8">
-      <header className="flex flex-col gap-2">
-        <span className="eyebrow">Oracle-level deck reading</span>
-        <h1 className="text-4xl leading-none">MTG Synergy</h1>
-        <div className="hairline-fade w-full" />
+      {
+        /*
+        THESIS: The category standard, taken on purpose — a plain dark analytics
+        dashboard, not an illustrated MTG-card pastiche or a cross-domain metaphor.
+        OWN-WORLD: near-black graphite, off-white text, one identity-driven accent
+        (client/src/lib/color-identity.ts); Inter throughout, JetBrains Mono for
+        every number/label; flat, border-driven surfaces; ranked data reads as tables.
+        STORY: paste a decklist, get a dense report that reads like the reference
+        tools this player already trusts daily.
+        FIRST VIEWPORT: wordmark + color-identity picker, input panel, then (post-
+        analysis) tabbed report — stat tiles, a ranked card table, archetypes, combos.
+        FORM: canon, chosen over two rolled alternates (seed-catalog, tournament-
+        standings) at the user's decision; craft bar = Scryfall, Archidekt/Moxfield.
+        Seed chain: 508515db -> 913b3f8c -> canon.
+        FINISH: unreviewed and undocumented is unfinished; this build ends with the
+        finish review, the verdict, and DESIGN.md.
+        */
+      }
+      <header className="flex flex-col gap-3">
+        <div className="flex items-end justify-between gap-4 flex-wrap">
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-2xl font-bold tracking-tight">MTG Synergy</h1>
+            <span className="text-sm text-(--muted)">Oracle-level deck reading</span>
+          </div>
+          <ColorIdentityPicker value={manualPick} onChange={setManualPick} />
+        </div>
+        <div className="border-b border-(--border)" />
       </header>
       <DeckInput
         commanders={commanders}

@@ -110,7 +110,8 @@ test("ArchetypeBoard shows the empty-state message when archetypes is undefined"
 
 test("CardList sorts by the max of any bucket/synergy score, descending", () => {
   render(<CardList cards={SAMPLE.report.cards} />);
-  const rows = screen.getAllByRole("listitem").map((el) => el.textContent ?? "");
+  // Row 0 is the header; data rows start at index 1.
+  const rows = screen.getAllByRole("row").slice(1).map((el) => el.textContent ?? "");
   // Krenko: max(bucketScores.win-condition=1.38, score=6) = 6.
   // Impact Tremors: max(bucketScores.consistency=1.0, .win-condition=0.23, score=2) = 2.
   expect(rows[0]).toContain("Krenko, Mob Boss");
@@ -121,7 +122,7 @@ test("CardList shows one role-badge dot per bucket the card qualifies for", () =
   render(<CardList cards={SAMPLE.report.cards} />);
   // Scope to Krenko's own row — both cards render at once, and Impact Tremors DOES
   // have a Consistency dot, so an unscoped query would false-positive on it.
-  const rows = screen.getAllByRole("listitem");
+  const rows = screen.getAllByRole("row");
   const krenkoRow = rows.find((r) => r.textContent?.includes("Krenko, Mob Boss"))!;
   expect(within(krenkoRow).getByTitle(/Win Condition: 1.38/)).toBeInTheDocument();
   expect(within(krenkoRow).getByTitle(/Synergy: 6.00/)).toBeInTheDocument();
