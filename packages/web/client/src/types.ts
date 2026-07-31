@@ -7,4 +7,5 @@ export interface AnalyzeResponse {
   missing: string[];
   resolvedCount: number;
   totalCount: number;
+  commanderColorIdentity: string[];
 }

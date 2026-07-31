@@ -30,10 +30,14 @@ export const STORE = "MONGO_STORE";
             const names = [...commanderNames, ...deckNames];
             const { cards, combos, missing } = await data.resolveNames(names, lookup as never);
             const cmdNorm = new Set(commanderNames.map(data.normalizeName));
-            const commanderResolved = (cards as Array<{ name: string }>)
-              .filter((c) => cmdNorm.has(data.normalizeName(c.name)))
-              .map((c) => c.name);
-            return { cards, combos, missing, commanderResolved };
+            const commanderCards = (cards as Array<{ name: string; colorIdentity?: string[] }>).filter((c) =>
+              cmdNorm.has(data.normalizeName(c.name)),
+            );
+            const commanderResolved = commanderCards.map((c) => c.name);
+            // Deck color identity comes from the commander(s) only, per MTG rules — never a
+            // union of every card's colors, which would drift from what a player calls "on-color".
+            const commanderColorIdentity = [...new Set(commanderCards.flatMap((c) => c.colorIdentity ?? []))];
+            return { cards, combos, missing, commanderResolved, commanderColorIdentity };
           },
           analyze: async (cards, combos, commanderNames) => {
             const lookup = data.mongoLookup(store as never);

@@ -12,7 +12,13 @@ export interface AnalyzeDeps {
     commanderNames: string[],
     deckNames: string[],
     lookup: unknown,
-  ): Promise<{ cards: unknown[]; combos: unknown[]; missing: string[]; commanderResolved: string[] }>;
+  ): Promise<{
+    cards: unknown[];
+    combos: unknown[];
+    missing: string[];
+    commanderResolved: string[];
+    commanderColorIdentity: string[];
+  }>;
   analyze(cards: unknown[], combos: unknown[], commanderNames: string[]): Promise<DeckReport>;
 }
 
@@ -25,13 +31,13 @@ export class AnalyzeService {
     const commanderNames =
       commanders && commanders.trim() !== "" ? this.deps.parseLines(commanders) : sections.commanders;
 
-    const { cards, combos, missing, commanderResolved } = await this.deps.resolveDeck(
+    const { cards, combos, missing, commanderResolved, commanderColorIdentity } = await this.deps.resolveDeck(
       commanderNames,
       sections.deck,
       this.deps.makeLookup(),
     );
     const report = await this.deps.analyze(cards, combos, commanderResolved);
     const totalCount = commanderNames.length + sections.deck.length;
-    return { report, missing, resolvedCount: cards.length, totalCount };
+    return { report, missing, resolvedCount: cards.length, totalCount, commanderColorIdentity };
   }
 }

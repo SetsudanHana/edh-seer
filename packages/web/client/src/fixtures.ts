@@ -70,4 +70,5 @@ export const SAMPLE: AnalyzeResponse = {
   missing: ["Beholder's Death Ray"],
   resolvedCount: 99,
   totalCount: 100,
+  commanderColorIdentity: ["R"],
 };

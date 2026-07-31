@@ -44,6 +44,7 @@ function fakeDeps(capture: { commanderNames?: string[] }): AnalyzeDeps {
       combos: [],
       missing: [],
       commanderResolved: commanderNames,
+      commanderColorIdentity: ["R"],
     }),
     analyze: async (_cards, _combos, commanderNames) => {
       capture.commanderNames = commanderNames;
@@ -59,6 +60,7 @@ test("explicit commanders field wins over the parsed section", async () => {
   expect(capture.commanderNames).toEqual(["Field Cmdr"]);
   expect(out.report).toBe(fakeReport);
   expect(out.totalCount).toBe(2); // 1 field commander + 1 deck card
+  expect(out.commanderColorIdentity).toEqual(["R"]);
 });
 
 test("falls back to the parsed Commander section when the field is empty", async () => {

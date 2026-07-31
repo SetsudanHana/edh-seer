@@ -38,6 +38,7 @@ const deps: AnalyzeDeps = {
     combos: [],
     missing: [],
     commanderResolved: commanderNames,
+    commanderColorIdentity: [],
   }),
   analyze: async () => report,
 };

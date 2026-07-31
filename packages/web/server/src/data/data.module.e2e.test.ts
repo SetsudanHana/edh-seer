@@ -36,6 +36,7 @@ suite("POST /api/analyze against real Mongo", () => {
     expect(Array.isArray(body.report.commanders)).toBe(true);
     expect(Array.isArray(body.report.cards)).toBe(true);
     expect(Array.isArray(body.missing)).toBe(true);
+    expect(body.commanderColorIdentity).toEqual(["R"]); // Krenko, Mob Boss is mono-red
   });
 
   test("returns structured-engine synergy reasons, not flat-engine tags", async () => {
