@@ -303,3 +303,25 @@ test("versatility multiplier scales the 3 new bucket scores with qualifying-buck
   // ratio for bucketCount 2 (1 + 0.15*1 = 1.15) vs bucketCount 1 (1 + 0.15*0 = 1.0).
   expect(v.bucketScores!.consistency / s.bucketScores!.consistency).toBeCloseTo(1.15, 5);
 });
+
+test("deck stats: mana curve / land count / avg & median manaValue", () => {
+  const land: DeckCard = {
+    card: { name: "Forest", typeLine: "Basic Land — Forest", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+    tags: null,
+  };
+  const two: DeckCard = {
+    card: { name: "Two", typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 2 } as never,
+    tags: null,
+  };
+  const four: DeckCard = {
+    card: { name: "Four", typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 4 } as never,
+    tags: null,
+  };
+  const report = analyzeDeckStructured([land, two, four], undefined, H);
+  expect(report.landCount).toBe(1);
+  expect(report.avgManaValue).toBe(3);
+  expect(report.medianManaValue).toBe(3);
+  expect(report.manaCurve[2].count).toBe(1);
+  expect(report.manaCurve[4].count).toBe(1);
+  expect(report.manaCurve.reduce((s, b) => s + b.count, 0)).toBe(2);
+});

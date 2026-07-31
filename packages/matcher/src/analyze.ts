@@ -5,6 +5,7 @@ import {
   loadImpactWeights,
   impactEdgeWeight,
   dampByAlpha,
+  computeDeckStats,
   ComboIndex,
   type Combo,
   type DeckReport,
@@ -178,12 +179,18 @@ export function analyzeDeckStructured(
   const nonlandCount = resolved.filter((dc) => !dc.card.typeLine.toLowerCase().includes("land")).length;
   const cohesion = computeCohesion(rankThemes(deckFreq, UNIFORM_STATS), deckFreq, nonlandCount);
 
+  const deckStats = computeDeckStats(resolved.map((dc) => dc.card));
+
   return {
     commanders: presentCommanders,
     cards,
     edges,
     combos: foundCombos,
     themes,
+    manaCurve: deckStats.manaCurve,
+    landCount: deckStats.landCount,
+    avgManaValue: deckStats.avgManaValue,
+    medianManaValue: deckStats.medianManaValue,
     roles: computeRoles(resolved),
     cohesion,
   };
