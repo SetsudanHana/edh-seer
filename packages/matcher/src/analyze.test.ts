@@ -423,3 +423,16 @@ test("an on-axis edge outscores an equal-strength off-axis edge (commander ancho
   expect(onAxis.score).toBeGreaterThan(offAxis.score);
   expect(onAxis.synergyRating!).toBeGreaterThan(offAxis.synergyRating!);
 });
+
+test("populates report.strategies with a ranked layer-1 archetype", () => {
+  // Inalla makes wizard tokens; Kindred Discovery is a wizard-ETB payoff. The token
+  // mechanism should surface "tokens" as a strategy (or another real archetype), never
+  // an empty list.
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility);
+  const report = analyzeDeckStructured([maker, payoff], undefined, H);
+  expect(Array.isArray(report.strategies)).toBe(true);
+  expect(report.strategies!.length).toBeGreaterThan(0);
+  expect(typeof report.strategies![0].name).toBe("string");
+  expect(typeof report.strategies![0].label).toBe("string");
+});
