@@ -1,6 +1,7 @@
 import type { AnalyzeResponse } from "../types.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { StatTiles } from "./StatTiles.js";
+import { ManaCurveChart } from "./ManaCurveChart.js";
 
 export function OverviewTab({ data }: { data: AnalyzeResponse }) {
   return (
@@ -11,6 +12,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         avgManaValue={data.report.avgManaValue}
         landCount={data.report.landCount}
       />
+      <ManaCurveChart curve={data.report.manaCurve} />
     </div>
   );
 }

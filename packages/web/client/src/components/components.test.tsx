@@ -8,6 +8,7 @@ import { MissingCards } from "./MissingCards.js";
 import { CardBucketBoard } from "./CardBucketBoard.js";
 import { StatTiles } from "./StatTiles.js";
 import { OverviewTab } from "./OverviewTab.js";
+import { ManaCurveChart } from "./ManaCurveChart.js";
 import { SAMPLE } from "../fixtures.js";
 
 test("DeckIdentity shows the primary and secondary theme", () => {
@@ -80,4 +81,21 @@ test("OverviewTab renders deck identity and stat tiles from the full response", 
   render(<OverviewTab data={SAMPLE} />);
   expect(screen.getByText("Tokens")).toBeInTheDocument(); // DeckIdentity theme
   expect(screen.getByText("38")).toBeInTheDocument(); // landCount stat tile
+});
+
+test("ManaCurveChart labels the 7+ bucket and shows the peak count", () => {
+  const curve = [
+    { value: 0, count: 0 },
+    { value: 1, count: 0 },
+    { value: 2, count: 8 },
+    { value: 3, count: 2 },
+    { value: 4, count: 0 },
+    { value: 5, count: 0 },
+    { value: 6, count: 0 },
+    { value: 7, count: 1 },
+  ];
+  render(<ManaCurveChart curve={curve} />);
+  expect(screen.getByText("7+")).toBeInTheDocument();
+  expect(screen.getByText("8")).toBeInTheDocument(); // peak bar's direct cap label
+  expect(screen.getByTitle("8 cards at mana value 2")).toBeInTheDocument();
 });
