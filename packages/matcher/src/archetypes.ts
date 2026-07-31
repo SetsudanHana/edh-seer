@@ -1,8 +1,13 @@
 /** Layer-1 archetype taxonomy (the strategy layer) for Stage A1 of the deck-quality
- *  spec. Detects a deck's ranked strategy from the already-computed synergy-mechanism
- *  groups. This is deliberately the subset of the canonical 15 archetypes that existing
- *  mechanism signals cover; the heuristic ones (tribal, enchantress, artifacts, group
- *  slug/hug) and Control (needs BUILD signals) land in follow-on plans. */
+ *  spec. Detects a deck's ranked strategy from each nonland card's OWN tight,
+ *  mostly-disjoint defining-mechanism signal (see ARCHETYPE_SIGNATURE below) — NOT from
+ *  mechanism-category edge groups. Edge groups (groupEdgesByArchetype/CATEGORY_MATCH)
+ *  intentionally spread a card into every category any of its synergy edges touch and
+ *  include broad shared effect-kinds (damage, draw-card, pump), so on real decks nearly
+ *  every card lands in nearly every group and confidences inflate toward 1.0 without
+ *  discriminating. This is deliberately the subset of the canonical 15 archetypes that
+ *  existing tag/effect signals cover; the heuristic ones (tribal, enchantress, artifacts,
+ *  group slug/hug) and Control (needs BUILD signals) land in follow-on plans. */
 
 export type Archetype =
   | "tokens"
@@ -29,22 +34,6 @@ export const ARCHETYPE_LABELS: Record<Archetype, string> = {
   goodstuff: "Goodstuff / Midrange",
 };
 
-/** Which layer-1 archetype each existing mechanism category feeds. Categories absent
- *  here are sub-mechanisms/functional (wheels-draw, blink-etb, mana-ramp-payoff,
- *  attack-matters, power/toughness-matters) and do NOT elevate to an archetype. */
-export const MECHANISM_TO_ARCHETYPE: Partial<Record<string, Archetype>> = {
-  "tokens-go-wide": "tokens",
-  aristocrats: "aristocrats",
-  "lifegain-payoff": "lifegain",
-  landfall: "landfall",
-  spellslinger: "spellslinger",
-  reanimator: "reanimator",
-  "graveyard-matters": "reanimator",
-  "mill-self": "reanimator",
-  "counters-plus1": "counters",
-  "voltron-auras": "voltron",
-};
-
 export interface ArchetypeRanking {
   name: Archetype;
   label: string;
@@ -61,25 +50,54 @@ const ARCHETYPE_FLOOR = 0.08;
 
 const GOODSTUFF: ArchetypeRanking = { name: "goodstuff", label: ARCHETYPE_LABELS.goodstuff, confidence: 0 };
 
+export interface CardSignal {
+  name: string;
+  /** The card's own theme tags (from cardThemeTags): "${verb}:${subjectKey}" / "static:${kind}". */
+  themeTags: string[];
+  /** The card's own ability effect kinds (ability.effect.kind). */
+  effectKinds: string[];
+}
+
+/** Each archetype's DEFINING own-card mechanism. Deliberately tight and mostly disjoint:
+ *  it EXCLUDES broad shared kinds (damage, draw-card, pump) that would make every card
+ *  match every archetype (the bug this replaces). Tag strings mirror the validated ones
+ *  already used in mechanisms.ts CATEGORY_MATCH. Voltron is intentionally omitted — it
+ *  needs equipment/aura + single-target detection, deferred to the heuristic-archetype
+ *  plan. Tunable. */
+export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, { tags?: string[]; effectKinds?: string[] }>> = {
+  tokens: { tags: ["create-token:any"], effectKinds: ["token-generation", "token-doubling"] },
+  aristocrats: { effectKinds: ["forced-sacrifice", "drain"] },
+  lifegain: { tags: ["gain-life:any"], effectKinds: ["lifegain"] },
+  landfall: { tags: ["enters:land"] },
+  spellslinger: { tags: ["cast:instant", "cast:sorcery"], effectKinds: ["copy-spell"] },
+  reanimator: { effectKinds: ["graveyard-recursion", "animate"] },
+  counters: { tags: ["proliferate:any"], effectKinds: ["counter-placement", "enters-with-counters", "proliferate"] },
+};
+
+function matchesSignature(signal: CardSignal, sig: { tags?: string[]; effectKinds?: string[] }): boolean {
+  const tagHit = sig.tags?.some((t) => signal.themeTags.includes(t)) ?? false;
+  const kindHit = sig.effectKinds?.some((k) => signal.effectKinds.includes(k)) ?? false;
+  return tagHit || kindHit;
+}
+
 export function detectArchetypes(
-  mechanismGroups: { category: string; cards: string[] }[],
+  cardSignals: CardSignal[],
   comboCards: string[],
   nonlandCount: number,
 ): ArchetypeRanking[] {
   const cardsByArchetype = new Map<Archetype, Set<string>>();
-  const add = (a: Archetype, cards: Iterable<string>): void => {
-    const set = cardsByArchetype.get(a) ?? new Set<string>();
-    for (const c of cards) set.add(c);
-    cardsByArchetype.set(a, set);
-  };
-
-  for (const group of mechanismGroups) {
-    const archetype = MECHANISM_TO_ARCHETYPE[group.category];
-    if (archetype) add(archetype, group.cards);
+  for (const signal of cardSignals) {
+    for (const [archetype, sig] of Object.entries(ARCHETYPE_SIGNATURE) as [Archetype, { tags?: string[]; effectKinds?: string[] }][]) {
+      if (matchesSignature(signal, sig)) {
+        const set = cardsByArchetype.get(archetype) ?? new Set<string>();
+        set.add(signal.name);
+        cardsByArchetype.set(archetype, set);
+      }
+    }
   }
 
-  // Mechanism-derived archetypes must independently clear ARCHETYPE_FLOOR to be listed.
-  const ranked: ArchetypeRanking[] = [...cardsByArchetype.entries()]
+  // Signal-derived archetypes must independently clear ARCHETYPE_FLOOR to be listed.
+  const ranked = [...cardsByArchetype.entries()]
     .map(([name, set]) => ({
       name,
       label: ARCHETYPE_LABELS[name],
@@ -87,18 +105,15 @@ export function detectArchetypes(
     }))
     .filter((r) => r.confidence >= ARCHETYPE_FLOOR);
 
-  // `combo` bypasses ARCHETYPE_FLOOR entirely — a 2+ card combo can win the game on its
-  // own, so it's always included once present, with a real confidence value for ranking.
+  // combo is floor-exempt: a 2+ card combo is real regardless of deck size.
   if (comboCards.length >= 2) {
-    const comboSet = new Set(comboCards);
     ranked.push({
       name: "combo",
       label: ARCHETYPE_LABELS.combo,
-      confidence: nonlandCount > 0 ? comboSet.size / nonlandCount : 0,
+      confidence: nonlandCount > 0 ? new Set(comboCards).size / nonlandCount : 0,
     });
   }
 
   ranked.sort((a, b) => b.confidence - a.confidence || a.name.localeCompare(b.name));
-
   return ranked.length > 0 ? ranked : [GOODSTUFF];
 }

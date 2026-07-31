@@ -207,12 +207,15 @@ export function analyzeDeckStructured(
 
   const archetypes = groupEdgesByArchetype(edges);
 
+  const cardSignals = resolved
+    .filter((dc) => dc.tags && !isLand(dc))
+    .map((dc) => ({
+      name: dc.card.name,
+      themeTags: [...cardThemeTags(dc.tags!)],
+      effectKinds: dc.tags!.abilities.map((a) => a.effect.kind),
+    }));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
-  const strategies = detectArchetypes(
-    archetypes.map((g) => ({ category: g.category, cards: g.cards })),
-    comboCards,
-    nonlandCount,
-  );
+  const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
 
   return {
     commanders: presentCommanders,
