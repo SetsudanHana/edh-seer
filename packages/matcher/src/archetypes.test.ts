@@ -12,7 +12,7 @@ test("maps a dominant mechanism group to its archetype as the primary", () => {
 test("ranks multiple archetypes by participating-card share, descending", () => {
   const groups = [
     { category: "aristocrats", cards: ["A", "B", "C", "D", "E", "F"] },
-    { category: "lifegain-payoff", cards: ["A", "B"] },
+    { category: "lifegain-payoff", cards: ["A", "B", "C", "D", "E"] },
   ];
   const out = detectArchetypes(groups, [], 50);
   expect(out.map((r) => r.name)).toEqual(["aristocrats", "lifegain"]);

@@ -51,13 +51,12 @@ export interface ArchetypeRanking {
   confidence: number;
 }
 
-/** Share of the deck's nonland cards below which the deck is treated as having no
- *  identifiable mechanism-driven strategy (noise rather than a real archetype signal).
- *  This gates the mechanism-derived archetype *group* as a whole: once at least one
- *  mechanism archetype clears the floor, all detected mechanism archetypes are surfaced
- *  (even weak ones) since the deck's structure is already established. `combo` is
- *  exempt from this floor (see below) — its significance doesn't scale with deck share.
- *  Tunable. */
+/** Share of the deck's nonland cards below which a MECHANISM-derived archetype is
+ *  treated as noise rather than a real strategy (e.g. a 2-card minor theme shouldn't
+ *  be reported as "the deck's archetype"). Applied independently per mechanism
+ *  archetype — clearing it is not contingent on any other archetype's confidence.
+ *  `combo` is exempt from this floor (see below): combos are binary, not
+ *  density-based — a 2-card combo is a real plan regardless of deck size. Tunable. */
 const ARCHETYPE_FLOOR = 0.08;
 
 const GOODSTUFF: ArchetypeRanking = { name: "goodstuff", label: ARCHETYPE_LABELS.goodstuff, confidence: 0 };
@@ -79,20 +78,17 @@ export function detectArchetypes(
     if (archetype) add(archetype, group.cards);
   }
 
-  const mechanismEntries: ArchetypeRanking[] = [...cardsByArchetype.entries()].map(([name, set]) => ({
-    name,
-    label: ARCHETYPE_LABELS[name],
-    confidence: nonlandCount > 0 ? set.size / nonlandCount : 0,
-  }));
+  // Mechanism-derived archetypes must independently clear ARCHETYPE_FLOOR to be listed.
+  const ranked: ArchetypeRanking[] = [...cardsByArchetype.entries()]
+    .map(([name, set]) => ({
+      name,
+      label: ARCHETYPE_LABELS[name],
+      confidence: nonlandCount > 0 ? set.size / nonlandCount : 0,
+    }))
+    .filter((r) => r.confidence >= ARCHETYPE_FLOOR);
 
-  // Does any mechanism archetype clear the noise floor? If so, the deck has an
-  // identifiable strategy and all detected mechanism archetypes ride along as ranked
-  // signals; if not, none of them are meaningful enough to report.
-  const hasMechanismSignal = mechanismEntries.some((r) => r.confidence >= ARCHETYPE_FLOOR);
-  const ranked: ArchetypeRanking[] = hasMechanismSignal ? mechanismEntries : [];
-
-  // A 2+ card combo is a real strategy regardless of what fraction of the deck it is —
-  // it can win the game on its own, so it bypasses ARCHETYPE_FLOOR entirely.
+  // `combo` bypasses ARCHETYPE_FLOOR entirely — a 2+ card combo can win the game on its
+  // own, so it's always included once present, with a real confidence value for ranking.
   if (comboCards.length >= 2) {
     const comboSet = new Set(comboCards);
     ranked.push({
