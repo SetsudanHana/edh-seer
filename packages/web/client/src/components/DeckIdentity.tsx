@@ -14,7 +14,11 @@ export function DeckIdentity({
       <div className="flex items-baseline gap-3 flex-wrap">
         <span className="eyebrow shrink-0">Deck identity</span>
         <h2 className="text-2xl font-bold leading-none text-(--accent) capitalize">{cohesion.theme}</h2>
-        {colorIdentity ? (
+        {colorIdentity && colorIdentity.length > 0 ? (
+          // Only shown when the deck actually has a color identity (a resolved
+          // commander). A deck with no commander reports [] here — showing a
+          // "Colorless" swatch for a deck full of colored cards is misleading, so
+          // suppress it rather than claim the deck is colorless.
           <span className="flex items-center gap-1.5 ml-auto">
             <span
               aria-hidden="true"

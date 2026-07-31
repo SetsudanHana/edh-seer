@@ -14,10 +14,13 @@ function readStoredIdentity(): string[] {
 }
 
 /** Resolves the page's accent color and keeps `--accent` applied to the document root.
- *  Precedence: the analyzed deck's own color identity wins whenever a report is present
- *  (even an empty/colorless one, which falls back to the neutral old-gold via
- *  identityColor); the player's pinned preference is the resting default before or
- *  between analyses. */
+ *  Precedence: the analyzed deck's own color identity wins whenever it actually has
+ *  colors; otherwise the player's pinned preference is used. An analyzed deck with an
+ *  EMPTY identity (no commander entered, so `commanderColorIdentity` is `[]`, or a
+ *  genuinely colorless commander) is NOT a signal to override — forcing the whole page
+ *  to neutral blue on top of a deliberate manual pick reads as broken. Empty analyzed
+ *  identity and no report at all both fall through to the manual pick (which itself
+ *  falls back to the neutral accent when empty, inside identityColor/identityGradient). */
 export function useAccentIdentity(analyzedIdentity: string[] | undefined) {
   const [manualPick, setManualPick] = useState<string[]>(() => readStoredIdentity());
 
@@ -30,7 +33,7 @@ export function useAccentIdentity(analyzedIdentity: string[] | undefined) {
     }
   }, [manualPick]);
 
-  const active = analyzedIdentity ?? manualPick;
+  const active = analyzedIdentity && analyzedIdentity.length > 0 ? analyzedIdentity : manualPick;
 
   useEffect(() => {
     // --accent: solid, for text/icons (gradient text stays off the table).

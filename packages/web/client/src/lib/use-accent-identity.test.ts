@@ -30,11 +30,22 @@ test("an analyzed deck's identity wins over a manual pick", () => {
   expect(document.documentElement.style.getPropertyValue("--accent")).toBe(identityColor(["W", "B"]));
 });
 
-test("an analyzed colorless commander falls back to the neutral accent, not the manual pick", () => {
+test("an analyzed deck with an empty identity does NOT override the manual pick", () => {
+  // No commander entered → commanderColorIdentity is []. That is not a signal to
+  // force the whole page to neutral blue on top of a deliberate manual pick — the
+  // manual pick should survive an empty analyzed identity.
   const { result, rerender } = renderHook(({ analyzed }) => useAccentIdentity(analyzed), {
     initialProps: { analyzed: undefined as string[] | undefined },
   });
   act(() => result.current.setManualPick(["G"]));
+  rerender({ analyzed: [] });
+  expect(document.documentElement.style.getPropertyValue("--accent")).toBe(identityColor(["G"]));
+});
+
+test("an empty analyzed identity with no manual pick still resolves to the neutral accent", () => {
+  const { rerender } = renderHook(({ analyzed }) => useAccentIdentity(analyzed), {
+    initialProps: { analyzed: undefined as string[] | undefined },
+  });
   rerender({ analyzed: [] });
   expect(document.documentElement.style.getPropertyValue("--accent")).toBe(NEUTRAL_ACCENT);
 });
