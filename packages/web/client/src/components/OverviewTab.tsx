@@ -8,7 +8,7 @@ import { HighSynergyCards } from "./HighSynergyCards.js";
 export function OverviewTab({ data }: { data: AnalyzeResponse }) {
   return (
     <div className="flex flex-col gap-6">
-      <DeckIdentity cohesion={data.report.cohesion} colorIdentity={data.commanderColorIdentity} />
+      <DeckIdentity cohesion={data.report.cohesion} colorIdentity={data.commanderColorIdentity} strategies={data.report.strategies} />
       <HighSynergyCards cards={data.report.cards} />
       <StatTiles
         roles={data.report.roles}

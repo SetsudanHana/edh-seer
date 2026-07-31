@@ -55,6 +55,10 @@ export const SAMPLE: AnalyzeResponse = {
       score: 0.65,
       label: "highly focused",
     },
+    strategies: [
+      { name: "tokens", label: "Tokens", confidence: 0.42 },
+      { name: "aristocrats", label: "Aristocrats", confidence: 0.18 },
+    ],
     archetypes: [
       {
         category: "tokens-go-wide",

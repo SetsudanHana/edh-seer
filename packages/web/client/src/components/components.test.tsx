@@ -27,6 +27,28 @@ test("DeckIdentity renders nothing when there's no cohesion", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
+const cohesionDraw = {
+  theme: "Draw", // a functional role, deliberately NOT an archetype
+  tag: "draw",
+  secondary: null,
+  secondaryTag: null,
+  score: 0.4,
+  label: "focused",
+} as NonNullable<typeof SAMPLE.report.cohesion>;
+
+test("DeckIdentity headlines the primary archetype, not the cohesion theme", () => {
+  render(
+    <DeckIdentity cohesion={cohesionDraw} strategies={[{ name: "tokens", label: "Tokens", confidence: 0.4 }]} />,
+  );
+  expect(screen.getByText("Tokens")).toBeInTheDocument(); // archetype headline
+  expect(screen.queryByText("Draw")).not.toBeInTheDocument(); // functional role is NOT the headline
+});
+
+test("DeckIdentity falls back to the cohesion theme when there are no strategies", () => {
+  render(<DeckIdentity cohesion={cohesionDraw} strategies={undefined} />);
+  expect(screen.getByText("Draw")).toBeInTheDocument(); // fallback headline
+});
+
 test("ComboList shows the combo result", () => {
   render(<ComboList combos={SAMPLE.report.combos} />);
   expect(screen.getByText(/Infinite loop/)).toBeInTheDocument();

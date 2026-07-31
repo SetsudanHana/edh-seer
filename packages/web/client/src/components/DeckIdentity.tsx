@@ -4,16 +4,20 @@ import { identityGradient, identityLabel } from "../lib/color-identity.js";
 export function DeckIdentity({
   cohesion,
   colorIdentity,
+  strategies,
 }: {
   cohesion: DeckReport["cohesion"];
   colorIdentity?: string[];
+  strategies?: DeckReport["strategies"];
 }) {
   if (!cohesion) return null;
+  const primary = strategies && strategies.length > 0 ? strategies[0].label : null;
+  const headline = primary ?? cohesion.theme;
   return (
     <div className="border border-(--border) rounded-(--radius) p-5 bg-(--surface) flex flex-col gap-2">
       <div className="flex items-baseline gap-3 flex-wrap">
         <span className="eyebrow shrink-0">Deck identity</span>
-        <h2 className="text-2xl font-bold leading-none text-(--accent) capitalize">{cohesion.theme}</h2>
+        <h2 className="text-2xl font-bold leading-none text-(--accent) capitalize">{headline}</h2>
         {colorIdentity && colorIdentity.length > 0 ? (
           // Only shown when the deck actually has a color identity (a resolved
           // commander). A deck with no commander reports [] here — showing a
