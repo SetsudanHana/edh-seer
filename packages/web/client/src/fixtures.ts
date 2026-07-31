@@ -8,6 +8,7 @@ export const SAMPLE: AnalyzeResponse = {
         name: "Krenko, Mob Boss",
         isCommander: true,
         score: 6,
+        synergyRating: 5,
         partnerCount: 2,
         topPartners: [
           { name: "Impact Tremors", score: 2, reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }] },
@@ -19,6 +20,7 @@ export const SAMPLE: AnalyzeResponse = {
         name: "Impact Tremors",
         isCommander: false,
         score: 2,
+        synergyRating: 3.3,
         partnerCount: 1,
         topPartners: [
           { name: "Krenko, Mob Boss", score: 2, reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }] },
@@ -43,6 +45,7 @@ export const SAMPLE: AnalyzeResponse = {
     landCount: 38,
     avgManaValue: 2.7,
     medianManaValue: 3,
+    positiveCoherence: 4.2,
     roles: { ramp: 4, draw: 10, removal: 6 },
     cohesion: {
       theme: "Tokens",

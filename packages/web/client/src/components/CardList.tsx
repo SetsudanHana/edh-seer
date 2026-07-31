@@ -76,6 +76,7 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
               <th className="eyebrow text-left font-normal py-2 pr-2 w-10">#</th>
               <th className="eyebrow text-left font-normal py-2 pr-2">Card</th>
               <th className="eyebrow text-left font-normal py-2 pr-2 w-32">Roles</th>
+              <th className="eyebrow text-right font-normal py-2 w-20">Synergy</th>
               <th className="eyebrow text-right font-normal py-2 w-16">Score</th>
             </tr>
           </thead>
@@ -95,6 +96,9 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
                       />
                     ))}
                   </span>
+                </td>
+                <td className="py-2 pr-2 text-right font-mono tabular-nums text-(--accent)">
+                  {c.synergyRating !== undefined ? c.synergyRating.toFixed(1) : "—"}
                 </td>
                 <td className="py-2 text-right font-mono tabular-nums text-(--foreground)">
                   {maxScore(c).toFixed(1)}

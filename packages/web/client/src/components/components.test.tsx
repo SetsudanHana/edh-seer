@@ -11,6 +11,7 @@ import { LandMathChart } from "./LandMathChart.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CardList } from "./CardList.js";
 import { ReportTabs } from "./ReportTabs.js";
+import { HighSynergyCards } from "./HighSynergyCards.js";
 import { SAMPLE } from "../fixtures.js";
 
 test("DeckIdentity shows the primary and secondary theme", () => {
@@ -159,4 +160,20 @@ test("ReportTabs hides the unresolved banner when nothing is missing", () => {
   const noMissing = { ...SAMPLE, missing: [] };
   render(<ReportTabs data={noMissing} />);
   expect(screen.queryByText(/Unresolved/)).not.toBeInTheDocument();
+});
+
+test("CardList shows the per-card synergy rating", () => {
+  render(<CardList cards={SAMPLE.report.cards} />);
+  expect(screen.getByText("5.0")).toBeInTheDocument(); // Krenko's rating, one-decimal formatted
+});
+
+test("HighSynergyCards lists the top cards by rating, highest first", () => {
+  render(<HighSynergyCards cards={SAMPLE.report.cards} />);
+  const rows = screen.getAllByRole("listitem").map((el) => el.textContent ?? "");
+  expect(rows[0]).toContain("Krenko, Mob Boss");
+});
+
+test("HighSynergyCards renders nothing when no card has a rating", () => {
+  const { container } = render(<HighSynergyCards cards={[{ name: "X", isCommander: false, score: 0, partnerCount: 0, topPartners: [] }]} />);
+  expect(container).toBeEmptyDOMElement();
 });
