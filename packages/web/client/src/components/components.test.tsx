@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { expect, test } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { DeckIdentity } from "./DeckIdentity.js";
@@ -12,6 +12,7 @@ import { OverviewTab } from "./OverviewTab.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
+import { CardList } from "./CardList.js";
 import { SAMPLE } from "../fixtures.js";
 
 test("DeckIdentity shows the primary and secondary theme", () => {
@@ -133,4 +134,32 @@ test("ArchetypeBoard shows an empty-state message when there are no groups", () 
 test("ArchetypeBoard shows the empty-state message when archetypes is undefined", () => {
   render(<ArchetypeBoard archetypes={undefined} />);
   expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();
+});
+
+test("CardList sorts by the max of any bucket/synergy score, descending", () => {
+  render(<CardList cards={SAMPLE.report.cards} />);
+  const rows = screen.getAllByRole("listitem").map((el) => el.textContent ?? "");
+  // Krenko: max(bucketScores.win-condition=1.38, score=6) = 6.
+  // Impact Tremors: max(bucketScores.consistency=1.0, .win-condition=0.23, score=2) = 2.
+  expect(rows[0]).toContain("Krenko, Mob Boss");
+  expect(rows[1]).toContain("Impact Tremors");
+});
+
+test("CardList shows one role-badge dot per bucket the card qualifies for", () => {
+  render(<CardList cards={SAMPLE.report.cards} />);
+  // Scope to Krenko's own row — both cards render at once, and Impact Tremors DOES
+  // have a Consistency dot, so an unscoped query would false-positive on it.
+  const rows = screen.getAllByRole("listitem");
+  const krenkoRow = rows.find((r) => r.textContent?.includes("Krenko, Mob Boss"))!;
+  expect(within(krenkoRow).getByTitle(/Win Condition: 1.38/)).toBeInTheDocument();
+  expect(within(krenkoRow).getByTitle(/Synergy: 6.00/)).toBeInTheDocument();
+  expect(within(krenkoRow).queryByTitle(/Consistency/)).not.toBeInTheDocument(); // Krenko's consistency is 0
+});
+
+test("CardList filter narrows to cards qualifying for the selected bucket", async () => {
+  render(<CardList cards={SAMPLE.report.cards} />);
+  await userEvent.click(screen.getByText("Consistency"));
+  // Only Impact Tremors has consistency > 0; Krenko's consistency is 0.
+  expect(screen.getByText("Impact Tremors")).toBeInTheDocument();
+  expect(screen.queryByText("Krenko, Mob Boss")).not.toBeInTheDocument();
 });
