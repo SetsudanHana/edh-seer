@@ -6,7 +6,28 @@ import { AnalyzeController } from "./analyze.controller.js";
 import { AnalyzeService, ANALYZE_DEPS, type AnalyzeDeps } from "./analyze.service.js";
 import type { DeckReport } from "@mtg/engine";
 
-const report: DeckReport = { commanders: [], cards: [], edges: [], combos: [], themes: [], roles: { ramp: 0, draw: 0, removal: 0 }, cohesion: null };
+const report: DeckReport = {
+  commanders: [],
+  cards: [],
+  edges: [],
+  combos: [],
+  themes: [],
+  roles: { ramp: 0, draw: 0, removal: 0 },
+  cohesion: null,
+  manaCurve: [
+    { value: 0, count: 0 },
+    { value: 1, count: 0 },
+    { value: 2, count: 0 },
+    { value: 3, count: 0 },
+    { value: 4, count: 0 },
+    { value: 5, count: 0 },
+    { value: 6, count: 0 },
+    { value: 7, count: 0 },
+  ],
+  landCount: 0,
+  avgManaValue: 0,
+  medianManaValue: 0,
+};
 
 const deps: AnalyzeDeps = {
   parseDecklistSections: (t) => ({ commanders: [], deck: t.split("\n").map((s) => s.trim()).filter(Boolean) }),
