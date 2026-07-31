@@ -1,4 +1,4 @@
-import type { Reason } from "@mtg/engine";
+import type { Reason, ArchetypeGroup } from "@mtg/engine";
 
 /** Closed set of synergy mechanism categories, derived from EDHREC's most popular themes with
  *  kindred/tribal dropped (kindred is a "same creature type" axis, not a synergy mechanism this
@@ -80,4 +80,64 @@ export function categoryMatches(reason: Reason, category: MechanismCategory): bo
   if (!tagOrKindMatches) return false;
   if (entry.requireStatPredicate && !reason.hasStatPredicate) return false;
   return true;
+}
+
+export const MECHANISM_LABELS: Record<MechanismCategory, string> = {
+  aristocrats: "Aristocrats",
+  "tokens-go-wide": "Tokens Go Wide",
+  spellslinger: "Spellslinger",
+  reanimator: "Reanimator",
+  "voltron-auras": "Voltron & Auras",
+  "lifegain-payoff": "Lifegain Payoff",
+  landfall: "Landfall",
+  "counters-plus1": "+1/+1 Counters",
+  "mana-ramp-payoff": "Ramp Payoff",
+  "graveyard-matters": "Graveyard Matters",
+  "attack-matters": "Attack Triggers",
+  "blink-etb": "Blink / ETB",
+  "mill-self": "Self-Mill",
+  "wheels-draw": "Draw Engine",
+  "toughness-matters": "Toughness Matters",
+  "power-matters": "Power Matters",
+};
+
+/** Groups synergy edges by mechanism category. An edge can land in more than one
+ *  group (a pair can be both Aristocrats and Tokens); edges matching zero categories
+ *  collect into a synthetic "other" group so nothing silently disappears. Categories
+ *  with zero matching edges are omitted entirely. Sorted by member-card count
+ *  descending (ties: label ascending), except "other" which always sorts last. */
+export function groupEdgesByArchetype(
+  edges: { a: string; b: string; reasons: Reason[] }[],
+): ArchetypeGroup[] {
+  const groups = new Map<
+    MechanismCategory | "other",
+    { cards: Set<string>; pairs: { a: string; b: string; reasons: Reason[] }[] }
+  >();
+
+  for (const edge of edges) {
+    const matched = MECHANISM_CATEGORIES.filter((cat) => edge.reasons.some((r) => categoryMatches(r, cat)));
+    const categories: (MechanismCategory | "other")[] = matched.length > 0 ? matched : ["other"];
+    for (const category of categories) {
+      if (!groups.has(category)) groups.set(category, { cards: new Set(), pairs: [] });
+      const g = groups.get(category)!;
+      g.cards.add(edge.a);
+      g.cards.add(edge.b);
+      g.pairs.push({ a: edge.a, b: edge.b, reasons: edge.reasons });
+    }
+  }
+
+  const result: ArchetypeGroup[] = [...groups.entries()].map(([category, g]) => ({
+    category,
+    label: category === "other" ? "Other synergies" : MECHANISM_LABELS[category],
+    cards: [...g.cards].sort(),
+    pairs: g.pairs,
+  }));
+
+  result.sort((x, y) => {
+    if (x.category === "other") return 1;
+    if (y.category === "other") return -1;
+    return y.cards.length - x.cards.length || x.label.localeCompare(y.label);
+  });
+
+  return result;
 }

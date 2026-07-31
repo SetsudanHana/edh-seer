@@ -5,6 +5,8 @@ import {
   MECHANISM_CATEGORIES,
   CATEGORY_MATCH,
   categoryMatches,
+  groupEdgesByArchetype,
+  MECHANISM_LABELS,
   type MechanismCategory,
 } from "./mechanisms.js";
 
@@ -76,4 +78,48 @@ test("categoryMatches requires hasStatPredicate for toughness-matters even when 
 
 test("categoryMatches does not require hasStatPredicate for categories without the flag", () => {
   expect(categoryMatches(reason({ effectKind: "drain" }), "aristocrats")).toBe(true);
+});
+
+test("groupEdgesByArchetype: an edge matching one category lands in exactly that group", () => {
+  const edges = [{ a: "Blood Artist", b: "Fling", reasons: [reason({ effectKind: "forced-sacrifice" })] }];
+  const groups = groupEdgesByArchetype(edges);
+  expect(groups).toHaveLength(1);
+  expect(groups[0].category).toBe("aristocrats");
+  expect(groups[0].label).toBe("Aristocrats");
+  expect(groups[0].cards).toEqual(["Blood Artist", "Fling"]);
+  expect(groups[0].pairs).toEqual([{ a: "Blood Artist", b: "Fling", reasons: edges[0].reasons }]);
+});
+
+test("groupEdgesByArchetype: an edge matching two categories appears in both groups", () => {
+  const edges = [{ a: "A", b: "B", reasons: [reason({ tag: "create-token:any" }), reason({ effectKind: "forced-sacrifice" })] }];
+  const groups = groupEdgesByArchetype(edges);
+  const categories = groups.map((g) => g.category).sort();
+  expect(categories).toEqual(["aristocrats", "tokens-go-wide"]);
+});
+
+test("groupEdgesByArchetype: an edge matching no category lands in 'other', sorted last", () => {
+  const bigGroup = { a: "X", b: "Y", reasons: [reason({ effectKind: "drain" })] };
+  const noMatch = { a: "P", b: "Q", reasons: [reason({ tag: "enters:artifact" })] };
+  const groups = groupEdgesByArchetype([bigGroup, noMatch]);
+  expect(groups[groups.length - 1].category).toBe("other");
+  expect(groups[groups.length - 1].label).toBe("Other synergies");
+  expect(groups[groups.length - 1].cards).toEqual(["P", "Q"]);
+});
+
+test("groupEdgesByArchetype: groups sort by member card count descending", () => {
+  const edges = [
+    { a: "A", b: "B", reasons: [reason({ effectKind: "drain" })] },
+    { a: "C", b: "D", reasons: [reason({ tag: "create-token:any" })] },
+    { a: "E", b: "F", reasons: [reason({ effectKind: "drain" })] },
+  ];
+  const groups = groupEdgesByArchetype(edges);
+  expect(groups[0].category).toBe("aristocrats");
+  expect(groups[0].cards).toHaveLength(4);
+});
+
+test("every MechanismCategory has a MECHANISM_LABELS entry", () => {
+  for (const c of MECHANISM_CATEGORIES) {
+    expect(typeof MECHANISM_LABELS[c as MechanismCategory]).toBe("string");
+    expect(MECHANISM_LABELS[c as MechanismCategory].length).toBeGreaterThan(0);
+  }
 });

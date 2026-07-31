@@ -20,6 +20,7 @@ import { loadHierarchy } from "./hierarchy.js";
 import { pairReasons, cardThemeTags } from "./edges.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
+import { groupEdgesByArchetype } from "./mechanisms.js";
 
 /** Uniform IDF: every theme has equal corpus weight, so rankThemes/themeWeights degrade to a
  *  pure deck-frequency ranking. Stage 3 replaces this with a real structured-corpus TagStats. */
@@ -181,6 +182,8 @@ export function analyzeDeckStructured(
 
   const deckStats = computeDeckStats(resolved.map((dc) => dc.card));
 
+  const archetypes = groupEdgesByArchetype(edges);
+
   return {
     commanders: presentCommanders,
     cards,
@@ -193,5 +196,6 @@ export function analyzeDeckStructured(
     medianManaValue: deckStats.medianManaValue,
     roles: computeRoles(resolved),
     cohesion,
+    archetypes,
   };
 }

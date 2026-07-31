@@ -325,3 +325,11 @@ test("deck stats: mana curve / land count / avg & median manaValue", () => {
   expect(report.manaCurve[4].count).toBe(1);
   expect(report.manaCurve.reduce((s, b) => s + b.count, 0)).toBe(2);
 });
+
+test("archetypes are attached to the report", () => {
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility);
+  const report = analyzeDeckStructured([maker, payoff], undefined, H);
+  expect(report.archetypes).toBeDefined();
+  expect(Array.isArray(report.archetypes)).toBe(true);
+});
