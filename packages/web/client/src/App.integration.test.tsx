@@ -11,12 +11,12 @@ test("typing commander + decklist and clicking Analyze renders the ranked report
   await userEvent.type(screen.getByRole("textbox", { name: /commander/i }), "1 Krenko, Mob Boss");
   await userEvent.type(screen.getByRole("textbox", { name: /decklist/i }), "1 Impact Tremors");
   await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
-  await waitFor(() => expect(screen.getByText(/Card synergies/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getAllByText(/Synergy/).length).toBeGreaterThan(0));
   // "Krenko, Mob Boss" appears in the commander textarea value and in the
   // rendered report (heading + card list); assert it shows up in the report,
   // not just the input, via getAllByText rather than a single-match query.
   expect(screen.getAllByText(/Krenko, Mob Boss/).length).toBeGreaterThan(1);
-  expect(screen.getByText(/Unresolved cards/)).toBeInTheDocument();
+  expect(screen.getAllByText(/Unresolved/).length).toBeGreaterThan(0);
   // commanders passed as the 2nd arg
   expect(spy).toHaveBeenCalledWith("1 Impact Tremors", "1 Krenko, Mob Boss");
 });

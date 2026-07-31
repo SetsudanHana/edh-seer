@@ -25,8 +25,12 @@ export default function App() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground p-8 max-w-4xl mx-auto flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">MTG Synergy — Deck Analyzer</h1>
+    <main className="min-h-screen bg-background text-foreground p-8 max-w-5xl mx-auto flex flex-col gap-8">
+      <header className="flex flex-col gap-2">
+        <span className="eyebrow">Oracle-level deck reading</span>
+        <h1 className="text-4xl leading-none">MTG Synergy</h1>
+        <div className="hairline-fade w-full" />
+      </header>
       <DeckInput
         commanders={commanders}
         onCommandersChange={setCommanders}
@@ -35,8 +39,14 @@ export default function App() {
         onAnalyze={onAnalyze}
         loading={loading}
       />
-      {error && <div className="text-danger border border-danger rounded p-3 text-sm">{error}</div>}
-      {data && <ReportView data={data} />}
+      {error && (
+        <div className="text-danger border border-danger rounded-(--radius) p-3 text-sm font-mono">{error}</div>
+      )}
+      {data && (
+        <div className="reveal">
+          <ReportView data={data} />
+        </div>
+      )}
     </main>
   );
 }

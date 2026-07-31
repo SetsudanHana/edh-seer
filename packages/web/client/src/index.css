@@ -1,2 +1,129 @@
 @import "tailwindcss";
 @import "@heroui/styles";
+@import url("https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+/*
+  Oracle-sheet theme: card names & rules text read like a real card frame
+  (serif body, condensed display titles), scores render as mana-pip circles.
+  One deliberate ink theme rather than following OS light/dark — this is a
+  repeated-session tool, not a marketing page, and MTG reference tools
+  (Scryfall, Gatherer rulings) are conventionally dark, dense, and stable.
+*/
+:root,
+.light,
+.default {
+  --background: #14171c;
+  --foreground: #e9e5d8;
+
+  --surface: #1b1f27;
+  --surface-foreground: var(--foreground);
+  --surface-secondary: #20242e;
+  --surface-tertiary: #262b36;
+
+  --overlay: #1b1f27;
+  --overlay-foreground: var(--foreground);
+
+  --muted: #8b8fa3;
+
+  --default: #20242e;
+  --default-foreground: var(--foreground);
+
+  --accent: #c9a24b;
+  --accent-foreground: #14171c;
+
+  --field-background: #181c23;
+  --field-foreground: var(--foreground);
+  --field-placeholder: var(--muted);
+  --field-border: #2b303b;
+
+  --warning: #b5793f;
+  --warning-foreground: #14171c;
+  --danger: #c24356;
+  --danger-foreground: #f5eee2;
+  --success: #6e9a6b;
+  --success-foreground: #14171c;
+
+  --border: #2b303b;
+  --separator: #262b36;
+  --focus: var(--accent);
+
+  --radius: 0.375rem;
+  --field-radius: 0.375rem;
+
+  /* Bucket accents — restrained jewel hues, not literal WUBRG */
+  --bucket-consistency: #6e8fb5;
+  --bucket-efficiency: #b5793f;
+  --bucket-synergy: #8b6ba6;
+  --bucket-win-condition: #a6394a;
+
+  --font-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+body {
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Mana-pip: the page's one recurring signature — every numeric score,
+   count, or tally renders inside this circle, echoing a card's mana cost. */
+.pip {
+  --pip-color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--pip-color);
+  color: var(--pip-color);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.hairline-fade {
+  height: 1px;
+  background: linear-gradient(to right, var(--accent), transparent 60%);
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  animation: reveal-up 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+  }
+}

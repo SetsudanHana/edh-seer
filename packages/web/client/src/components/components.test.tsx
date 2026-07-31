@@ -1,11 +1,25 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
+import { DeckIdentity } from "./DeckIdentity.js";
 import { CardSynergyList } from "./CardSynergyList.js";
 import { ComboList } from "./ComboList.js";
 import { ThemeBars } from "./ThemeBars.js";
 import { MissingCards } from "./MissingCards.js";
 import { CardBucketBoard } from "./CardBucketBoard.js";
 import { SAMPLE } from "../fixtures.js";
+
+test("DeckIdentity shows the primary and secondary theme", () => {
+  render(<DeckIdentity cohesion={SAMPLE.report.cohesion} />);
+  expect(screen.getByText("Tokens")).toBeInTheDocument();
+  expect(screen.getByText("Goblins")).toBeInTheDocument();
+  expect(screen.getByText(/highly focused/)).toBeInTheDocument();
+  expect(screen.getByText("65%")).toBeInTheDocument();
+});
+
+test("DeckIdentity renders nothing when there's no cohesion", () => {
+  const { container } = render(<DeckIdentity cohesion={null} />);
+  expect(container).toBeEmptyDOMElement();
+});
 
 test("CardSynergyList ranks cards, badges the commander, and shows partner reasons", () => {
   render(<CardSynergyList cards={SAMPLE.report.cards} commanders={SAMPLE.report.commanders} />);
@@ -42,9 +56,9 @@ test("CardBucketBoard renders 4 sections and shows an N/4 badge for multi-bucket
   expect(screen.getByText(/Consistency/)).toBeInTheDocument();
   expect(screen.getByText(/Efficiency/)).toBeInTheDocument();
   expect(screen.getByText(/Win Condition/)).toBeInTheDocument();
-  expect(screen.getAllByText(/Card synergies/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Synergy/).length).toBeGreaterThan(0);
   // Impact Tremors qualifies for 3 buckets (consistency, synergy, win-condition).
-  expect(screen.getByText("3/4")).toBeInTheDocument();
+  expect(screen.getByText("3/4 roles")).toBeInTheDocument();
   // Krenko qualifies for 2 buckets (synergy, win-condition).
-  expect(screen.getByText("2/4")).toBeInTheDocument();
+  expect(screen.getByText("2/4 roles")).toBeInTheDocument();
 });
