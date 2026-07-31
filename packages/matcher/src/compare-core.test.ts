@@ -10,6 +10,19 @@ const report = (order: string[]): DeckReport => ({
   themes: [],
   roles: { ramp: 0, draw: 0, removal: 0 },
   cohesion: null,
+  manaCurve: [
+    { value: 0, count: 0 },
+    { value: 1, count: 0 },
+    { value: 2, count: 0 },
+    { value: 3, count: 0 },
+    { value: 4, count: 0 },
+    { value: 5, count: 0 },
+    { value: 6, count: 0 },
+    { value: 7, count: 0 },
+  ],
+  landCount: 0,
+  avgManaValue: 0,
+  medianManaValue: 0,
 });
 
 test("rankTable lists both engines' top-N in a two-column layout", () => {
