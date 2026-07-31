@@ -1,5 +1,5 @@
 import type { ColorLetter } from "../lib/color-identity.js";
-import { identityColor, identityLabel } from "../lib/color-identity.js";
+import { identityColor, identityGradient, identityLabel } from "../lib/color-identity.js";
 
 const LETTERS: ColorLetter[] = ["W", "U", "B", "R", "G"];
 
@@ -42,7 +42,14 @@ export function ColorIdentityPicker({
         })}
       </div>
       {value.length > 0 ? (
-        <span className="text-xs text-(--muted) font-mono">{identityLabel(value)}</span>
+        <span className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="w-4 h-2.5 rounded-[3px]"
+            style={{ background: identityGradient(value) }}
+          />
+          <span className="text-xs text-(--muted) font-mono">{identityLabel(value)}</span>
+        </span>
       ) : null}
     </div>
   );

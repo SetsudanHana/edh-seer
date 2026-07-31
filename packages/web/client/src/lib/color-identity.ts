@@ -7,7 +7,7 @@ const WUBRG_ORDER: ColorLetter[] = ["W", "U", "B", "R", "G"];
 const ANCHOR_HUE: Record<ColorLetter, number> = { W: 45, U: 205, B: 275, R: 8, G: 132 };
 
 /** The neutral/no-identity accent's own HSL — the S/L every identity color
- *  holds constant (only hue rotates). */
+ *  holds constant (only hue varies). */
 const ACCENT_SATURATION = 0.7;
 const ACCENT_LIGHTNESS = 0.62;
 const NEUTRAL_ACCENT = "#5b8dee";
@@ -71,20 +71,39 @@ function hslToHex(h: number, s: number, l: number): string {
   return `#${toHex(r1)}${toHex(g1)}${toHex(b1)}`;
 }
 
-/** Circular mean of the constituent colors' anchor hues — multicolor identities
- *  land between their component hues rather than needing 32 hand-picked values. */
+function anchorHex(c: ColorLetter): string {
+  return hslToHex(ANCHOR_HUE[c], ACCENT_SATURATION, ACCENT_LIGHTNESS);
+}
+
+/** The single solid accent color (text, borders, focus rings — anywhere a gradient
+ *  can't go). Colorless resolves to the neutral default; a single color resolves to
+ *  its own anchor hue.
+ *
+ *  Multicolor identities do NOT blend hues: an earlier circular-mean-of-anchors
+ *  approach produced colors that could land on a completely unrelated third color
+ *  by coincidence (WU's midpoint sat 7° from Green's own anchor; UR sat 12° from
+ *  Blue's; BG sat 2° from Blue's — Izzet and Golgari were reading as "basically
+ *  Blue" or "basically Green," colors they don't even contain). Instead, the solid
+ *  accent for a multicolor identity is deterministically its first color in WUBRG
+ *  order — always one of the identity's real colors, never a blended stranger.
+ *  `identityGradient()` below is what actually shows every constituent color. */
 export function identityColor(colors: readonly string[]): string {
   const present = WUBRG_ORDER.filter((c) => colors.includes(c));
   if (present.length === 0) return NEUTRAL_ACCENT;
-  let x = 0;
-  let y = 0;
-  for (const c of present) {
-    const rad = (ANCHOR_HUE[c] * Math.PI) / 180;
-    x += Math.cos(rad);
-    y += Math.sin(rad);
-  }
-  const hue = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-  return hslToHex(hue, ACCENT_SATURATION, ACCENT_LIGHTNESS);
+  return anchorHex(present[0]);
+}
+
+/** A CSS `background` value that visually shows every color in the identity — a
+ *  solid hex for 0-1 colors, a left-to-right gradient across each constituent
+ *  color's own hue for 2+ (so WU genuinely reads as white-into-blue, not a single
+ *  guessed color). Use for swatches/backgrounds only, never for text: gradient
+ *  text is off the table (see DESIGN.md's Do's and Don'ts). */
+export function identityGradient(colors: readonly string[]): string {
+  const present = WUBRG_ORDER.filter((c) => colors.includes(c));
+  if (present.length === 0) return NEUTRAL_ACCENT;
+  if (present.length === 1) return anchorHex(present[0]);
+  const stops = present.map((c, i) => `${anchorHex(c)} ${Math.round((i / (present.length - 1)) * 100)}%`);
+  return `linear-gradient(90deg, ${stops.join(", ")})`;
 }
 
 export { WUBRG_ORDER, NEUTRAL_ACCENT };

@@ -7,7 +7,7 @@ import { LandMathChart } from "./LandMathChart.js";
 export function OverviewTab({ data }: { data: AnalyzeResponse }) {
   return (
     <div className="flex flex-col gap-6">
-      <DeckIdentity cohesion={data.report.cohesion} />
+      <DeckIdentity cohesion={data.report.cohesion} colorIdentity={data.commanderColorIdentity} />
       <StatTiles
         roles={data.report.roles}
         avgManaValue={data.report.avgManaValue}
