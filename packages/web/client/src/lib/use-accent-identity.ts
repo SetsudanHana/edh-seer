@@ -36,5 +36,5 @@ export function useAccentIdentity(analyzedIdentity: string[] | undefined) {
     document.documentElement.style.setProperty("--accent", identityColor(active));
   }, [active]);
 
-  return { manualPick, setManualPick };
+  return { manualPick, setManualPick, active };
 }

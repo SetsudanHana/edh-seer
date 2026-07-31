@@ -18,7 +18,7 @@ export function DeckIdentity({
           <span className="flex items-center gap-1.5 ml-auto">
             <span
               aria-hidden="true"
-              className="w-5 h-3 rounded-[3px]"
+              className="w-10 h-5 rounded-[4px] border border-(--border)"
               style={{ background: identityGradient(colorIdentity) }}
             />
             <span className="text-xs text-(--muted) font-mono">{identityLabel(colorIdentity)}</span>

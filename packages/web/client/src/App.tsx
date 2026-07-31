@@ -5,6 +5,7 @@ import { DeckInput } from "./components/DeckInput.js";
 import { ReportView } from "./components/ReportView.js";
 import { ColorIdentityPicker } from "./components/ColorIdentityPicker.js";
 import { useAccentIdentity } from "./lib/use-accent-identity.js";
+import { identityGradient } from "./lib/color-identity.js";
 
 export default function App() {
   const [commanders, setCommanders] = useState("");
@@ -12,7 +13,7 @@ export default function App() {
   const [data, setData] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { manualPick, setManualPick } = useAccentIdentity(data?.commanderColorIdentity);
+  const { manualPick, setManualPick, active } = useAccentIdentity(data?.commanderColorIdentity);
 
   async function onAnalyze() {
     setLoading(true);
@@ -55,7 +56,7 @@ export default function App() {
           </div>
           <ColorIdentityPicker value={manualPick} onChange={setManualPick} />
         </div>
-        <div className="border-b border-(--border)" />
+        <div className="h-[3px] rounded-full" style={{ background: identityGradient(active) }} />
       </header>
       <DeckInput
         commanders={commanders}

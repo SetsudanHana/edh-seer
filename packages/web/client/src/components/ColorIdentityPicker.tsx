@@ -45,7 +45,7 @@ export function ColorIdentityPicker({
         <span className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
-            className="w-4 h-2.5 rounded-[3px]"
+            className="w-8 h-4 rounded-[4px] border border-(--border)"
             style={{ background: identityGradient(value) }}
           />
           <span className="text-xs text-(--muted) font-mono">{identityLabel(value)}</span>
