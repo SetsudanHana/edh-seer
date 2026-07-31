@@ -10,7 +10,9 @@ export {
   type DeckReport,
   type SynergyEdge,
   type CardSynergy,
+  type ArchetypeGroup,
 } from "./analyze.js";
+export { computeDeckStats, type ManaCurveBucket, type DeckStats } from "./deck-stats.js";
 export {
   type Cohesion,
   type TagStats,

@@ -4,6 +4,7 @@ import { synergyScore, type Reason } from "./synergy.js";
 import { extractTags, type Tag } from "./tags.js";
 import type { Combo, ComboIndex } from "./combos.js";
 import { themeWeights, rankThemes, weightedEdge, dampedScore, computeCohesion, type TagStats, type Cohesion } from "./weights.js";
+import { computeDeckStats, type ManaCurveBucket } from "./deck-stats.js";
 
 const TAG_STATS: TagStats = JSON.parse(
   readFileSync(new URL("./tag-weights.json", import.meta.url), "utf8"),
@@ -34,14 +35,31 @@ export interface CardSynergy {
   bucketCount?: number;
 }
 
+/** Populated only by @mtg/matcher's analyzeDeckStructured (see that package's
+ *  mechanisms.ts) — stays undefined on this flat engine's analyzeDeck, same
+ *  convention as CardSynergy.bucketScores/bucketCount. `category` is a plain string
+ *  here (not the matcher-only MechanismCategory union) because this package must not
+ *  depend on @mtg/matcher. */
+export interface ArchetypeGroup {
+  category: string;
+  label: string;
+  cards: string[];
+  pairs: { a: string; b: string; reasons: Reason[] }[];
+}
+
 export interface DeckReport {
   commanders: string[];
   cards: CardSynergy[];
   edges: SynergyEdge[];
   combos: Combo[];
   themes: { tag: string; count: number }[];
+  manaCurve: ManaCurveBucket[];
+  landCount: number;
+  avgManaValue: number;
+  medianManaValue: number;
   roles: { ramp: number; draw: number; removal: number };
   cohesion: Cohesion | null;
+  archetypes?: ArchetypeGroup[];
 }
 
 interface Agg {
@@ -138,5 +156,19 @@ export function analyzeDeck(
   const nonlandCount = cards.filter((c) => !c.typeLine.toLowerCase().includes("land")).length;
   const cohesion = computeCohesion(rankThemes(deckFreq, TAG_STATS), deckFreq, nonlandCount);
 
-  return { commanders: presentCommanders, cards: cardSynergies, edges, combos: foundCombos, themes, roles, cohesion };
+  const deckStats = computeDeckStats(cards);
+
+  return {
+    commanders: presentCommanders,
+    cards: cardSynergies,
+    edges,
+    combos: foundCombos,
+    themes,
+    manaCurve: deckStats.manaCurve,
+    landCount: deckStats.landCount,
+    avgManaValue: deckStats.avgManaValue,
+    medianManaValue: deckStats.medianManaValue,
+    roles,
+    cohesion,
+  };
 }

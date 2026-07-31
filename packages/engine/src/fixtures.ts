@@ -17,6 +17,7 @@ export const FIXTURES: Record<string, Card> = {
     "Whenever an artifact enters the battlefield under your control, Reckless Fireweaver deals 1 damage to each opponent.",
     { colors: ["R"], manaValue: 2 },
   ),
+  forest: card("Forest", "Basic Land — Forest", "({T}: Add {G}.)", { manaValue: 0 }),
   krenko: card(
     "Krenko, Mob Boss",
     "Legendary Creature — Goblin Warrior",

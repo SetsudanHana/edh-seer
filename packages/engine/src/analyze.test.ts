@@ -125,3 +125,12 @@ test("cohesion is null for a deck with no tagged cards", () => {
   const report = analyzeDeck([blank("L1"), blank("L2")]);
   expect(report.cohesion).toBeNull();
 });
+
+test("deck stats: curve, land count, avg/median manaValue", () => {
+  const report = analyzeDeck(deck, combos);
+  expect(report.landCount).toBe(0);
+  expect(report.avgManaValue).toBeCloseTo(20 / 9, 10);
+  expect(report.medianManaValue).toBe(2);
+  expect(report.manaCurve).toHaveLength(8);
+  expect(report.manaCurve[4].count).toBe(1); // Krenko
+});
