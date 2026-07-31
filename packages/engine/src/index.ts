@@ -11,6 +11,7 @@ export {
   type SynergyEdge,
   type CardSynergy,
   type ArchetypeGroup,
+  type ArchetypeRanking,
 } from "./analyze.js";
 export { computeDeckStats, type ManaCurveBucket, type DeckStats } from "./deck-stats.js";
 export { computeSynergyRatings, type RatedInput, type SynergyRatings } from "./synergy-rating.js";

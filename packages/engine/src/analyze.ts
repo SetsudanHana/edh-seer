@@ -50,6 +50,16 @@ export interface ArchetypeGroup {
   pairs: { a: string; b: string; reasons: Reason[] }[];
 }
 
+/** Layer-1 archetype (strategy) ranking. Populated only by @mtg/matcher's
+ *  analyzeDeckStructured (see that package's archetypes.ts). `name` is a plain string
+ *  here (not the matcher-only Archetype union) because this package must not depend on
+ *  @mtg/matcher — same convention as ArchetypeGroup.category. */
+export interface ArchetypeRanking {
+  name: string;
+  label: string;
+  confidence: number;
+}
+
 export interface DeckReport {
   commanders: string[];
   cards: CardSynergy[];
@@ -65,6 +75,11 @@ export interface DeckReport {
   archetypes?: ArchetypeGroup[];
   /** 0–5 deck positive-coherence: mean nonland synergyRating. Matcher-only (see above). */
   positiveCoherence?: number;
+  /** Ranked layer-1 archetypes (strategies), most-confident first. Matcher-only. The
+   *  deck's identity headline uses strategies[0]. Distinct from `archetypes` above,
+   *  which are synergy-mechanism groups (a future rename to `mechanismGroups` will
+   *  disambiguate these). */
+  strategies?: ArchetypeRanking[];
 }
 
 interface Agg {
