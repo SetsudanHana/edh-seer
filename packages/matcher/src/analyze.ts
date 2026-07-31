@@ -6,6 +6,7 @@ import {
   impactEdgeWeight,
   dampByAlpha,
   computeDeckStats,
+  computeSynergyRatings,
   ComboIndex,
   type Combo,
   type DeckReport,
@@ -21,6 +22,7 @@ import { pairReasons, cardThemeTags } from "./edges.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
+import { buildAxis, axisFactor } from "./axis.js";
 
 /** Uniform IDF: every theme has equal corpus weight, so rankThemes/themeWeights degrade to a
  *  pure deck-frequency ranking. Stage 3 replaces this with a real structured-corpus TagStats. */
@@ -103,13 +105,23 @@ export function analyzeDeckStructured(
     for (const tag of cardThemeTags(dc.tags)) deckFreq.set(tag, (deckFreq.get(tag) ?? 0) + 1);
   }
 
+  // The deck's strategy axis — commander theme tags (anchor) widened by dominant deck themes.
+  const commanderThemeTags = new Set<string>();
+  for (const dc of resolved) {
+    if (dc.tags && commanderSet.has(dc.card.name)) {
+      for (const tag of cardThemeTags(dc.tags)) commanderThemeTags.add(tag);
+    }
+  }
+  const axis = buildAxis(commanderThemeTags, deckFreq);
+  const AXIS_BOOST = 1.5; // tunable: a fully on-axis edge counts 2.5x an off-axis one.
+
   // Aggregate per card (mirrors the flat engine's analyzeDeck).
   const agg = new Map<string, Agg>();
   for (const dc of resolved) {
     agg.set(dc.card.name, { name: dc.card.name, weighted: 0, partnerCount: 0, partners: [] });
   }
   for (const edge of edges) {
-    const w = impactEdgeWeight(edge.reasons, impactWeights);
+    const w = impactEdgeWeight(edge.reasons, impactWeights) * axisFactor(edge.reasons, axis, AXIS_BOOST);
     const boostForA = commanderSet.has(edge.b) ? COMMANDER_BOOST : 1;
     const boostForB = commanderSet.has(edge.a) ? COMMANDER_BOOST : 1;
     const a = agg.get(edge.a);
@@ -173,6 +185,14 @@ export function analyzeDeckStructured(
     })
     .sort((x, y) => y.score - x.score || y.partnerCount - x.partnerCount || x.name.localeCompare(y.name));
 
+  const nonlandByName = new Map(
+    resolved.map((dc) => [dc.card.name, !dc.card.typeLine.toLowerCase().includes("land")] as const),
+  );
+  const { ratingByName, positiveCoherence } = computeSynergyRatings(
+    cards.map((c) => ({ name: c.name, score: c.score, isNonland: nonlandByName.get(c.name) ?? true })),
+  );
+  const ratedCards: CardSynergy[] = cards.map((c) => ({ ...c, synergyRating: ratingByName.get(c.name) ?? 0 }));
+
   const themes = [...deckFreq.entries()]
     .map(([tag, count]) => ({ tag, count }))
     .sort((x, y) => y.count - x.count || x.tag.localeCompare(y.tag));
@@ -186,7 +206,7 @@ export function analyzeDeckStructured(
 
   return {
     commanders: presentCommanders,
-    cards,
+    cards: ratedCards,
     edges,
     combos: foundCombos,
     themes,
@@ -194,6 +214,7 @@ export function analyzeDeckStructured(
     landCount: deckStats.landCount,
     avgManaValue: deckStats.avgManaValue,
     medianManaValue: deckStats.medianManaValue,
+    positiveCoherence,
     roles: computeRoles(resolved),
     cohesion,
     archetypes,

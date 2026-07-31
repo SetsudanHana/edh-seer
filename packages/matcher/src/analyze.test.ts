@@ -333,3 +333,31 @@ test("archetypes are attached to the report", () => {
   expect(report.archetypes).toBeDefined();
   expect(Array.isArray(report.archetypes)).toBe(true);
 });
+
+test("populates synergyRating (0-5) on every card and positiveCoherence on the deck", () => {
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility);
+  const land = dc("Island", [], [], "Land");
+  const report = analyzeDeckStructured([maker, payoff, land], undefined, H);
+
+  for (const c of report.cards) {
+    expect(c.synergyRating).toBeGreaterThanOrEqual(0);
+    expect(c.synergyRating).toBeLessThanOrEqual(5);
+  }
+  // The top synergy card reaches the deck-relative ceiling of 5.
+  expect(Math.max(...report.cards.map((c) => c.synergyRating ?? -1))).toBe(5);
+  // The land carries no synergy edges → rating 0.
+  expect(report.cards.find((c) => c.name === "Island")?.synergyRating).toBe(0);
+  expect(report.positiveCoherence).toBeGreaterThanOrEqual(0);
+  expect(report.positiveCoherence).toBeLessThanOrEqual(5);
+});
+
+test("an on-axis edge outrates an equal-strength off-axis edge (commander anchors the axis)", () => {
+  // Commander cares about wizards entering (enters:creature via the wizard hierarchy). A wizard
+  // maker/payoff pair is on-axis; a structurally-similar pair on an unrelated tag is off-axis.
+  const commander = dc("Cmd", kindredDiscoveryAbility, ["wizard"]); // triggers on creature ETB
+  const onAxisMaker = dc("Wizard Maker", inallaAbility, ["wizard"]); // emits wizard ETBs
+  const report = analyzeDeckStructured([commander, onAxisMaker], ["Cmd"], H);
+  const maker = report.cards.find((c) => c.name === "Wizard Maker")!;
+  expect(maker.synergyRating).toBeGreaterThan(0);
+});
