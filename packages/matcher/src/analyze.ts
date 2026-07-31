@@ -46,6 +46,10 @@ interface Agg {
 const RAMP_EFFECT_KINDS = new Set(["mana-generation", "fast-mana", "ritual"]);
 const REMOVAL_EFFECT_KINDS = new Set(["damage", "forced-sacrifice"]);
 
+/** Type-line land detection, shared by the nonland-card map and the nonland count so both stay
+ *  in sync. */
+const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
+
 /** Best-effort structured proxy for the flat engine's ramp/draw/removal role counts. Counts
  *  distinct cards, not abilities. Removal is approximated as damage/forced-sacrifice effects
  *  targeting the opponent's side — the structured schema has no dedicated destroy/exile kind. */
@@ -185,9 +189,7 @@ export function analyzeDeckStructured(
     })
     .sort((x, y) => y.score - x.score || y.partnerCount - x.partnerCount || x.name.localeCompare(y.name));
 
-  const nonlandByName = new Map(
-    resolved.map((dc) => [dc.card.name, !dc.card.typeLine.toLowerCase().includes("land")] as const),
-  );
+  const nonlandByName = new Map(resolved.map((dc) => [dc.card.name, !isLand(dc)] as const));
   const { ratingByName, positiveCoherence } = computeSynergyRatings(
     cards.map((c) => ({ name: c.name, score: c.score, isNonland: nonlandByName.get(c.name) ?? true })),
   );
@@ -197,7 +199,7 @@ export function analyzeDeckStructured(
     .map(([tag, count]) => ({ tag, count }))
     .sort((x, y) => y.count - x.count || x.tag.localeCompare(y.tag));
 
-  const nonlandCount = resolved.filter((dc) => !dc.card.typeLine.toLowerCase().includes("land")).length;
+  const nonlandCount = resolved.filter((dc) => !isLand(dc)).length;
   const cohesion = computeCohesion(rankThemes(deckFreq, UNIFORM_STATS), deckFreq, nonlandCount);
 
   const deckStats = computeDeckStats(resolved.map((dc) => dc.card));

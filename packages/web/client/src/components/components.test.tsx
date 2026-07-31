@@ -173,6 +173,20 @@ test("HighSynergyCards lists the top cards by rating, highest first", () => {
   expect(rows[0]).toContain("Krenko, Mob Boss");
 });
 
+test("HighSynergyCards shows the card's top reason text", () => {
+  render(<HighSynergyCards cards={SAMPLE.report.cards} />);
+  expect(screen.getAllByText("Krenko makes tokens; Impact Tremors pays off tokens.").length).toBeGreaterThan(0);
+});
+
+test("HighSynergyCards renders no reason line when the card has none", () => {
+  render(
+    <HighSynergyCards
+      cards={[{ name: "Solo Card", isCommander: false, score: 1, synergyRating: 4, partnerCount: 0, topPartners: [] }]}
+    />,
+  );
+  expect(screen.getByText("Solo Card")).toBeInTheDocument();
+});
+
 test("HighSynergyCards renders nothing when no card has a rating", () => {
   const { container } = render(<HighSynergyCards cards={[{ name: "X", isCommander: false, score: 0, partnerCount: 0, topPartners: [] }]} />);
   expect(container).toBeEmptyDOMElement();

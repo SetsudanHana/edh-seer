@@ -22,6 +22,9 @@ export interface SynergyRatings {
 
 export function computeSynergyRatings(inputs: RatedInput[]): SynergyRatings {
   const ratingByName = new Map<string, number>();
+  // deckMax includes the commander's own COMMANDER_BOOST-inflated score (the commander is
+  // usually every other card's highest-weighted partner), so the commander typically anchors
+  // this 5-ceiling. Worth revisiting alongside future AXIS_BOOST / commander-weight tuning.
   const deckMax = inputs.reduce((m, i) => Math.max(m, i.score), 0);
 
   for (const input of inputs) {
