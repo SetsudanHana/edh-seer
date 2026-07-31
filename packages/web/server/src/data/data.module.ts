@@ -29,10 +29,16 @@ export const STORE = "MONGO_STORE";
           resolveDeck: async (commanderNames: string[], deckNames: string[], lookup: unknown) => {
             const names = [...commanderNames, ...deckNames];
             const { cards, combos, missing } = await data.resolveNames(names, lookup as never);
+            const allCards = cards as Array<Parameters<typeof data.detectCommanders>[0][number]>;
             const cmdNorm = new Set(commanderNames.map(data.normalizeName));
-            const commanderCards = (cards as Array<{ name: string; colorIdentity?: string[] }>).filter((c) =>
-              cmdNorm.has(data.normalizeName(c.name)),
-            );
+            let commanderCards = allCards.filter((c) => cmdNorm.has(data.normalizeName(c.name)));
+            // No explicit commander (no Commander section, no commander field, or it didn't
+            // resolve): a Commander deck still has one, and exports that omit the section list
+            // it first — detect it from the head of the decklist. `cards` preserves paste order,
+            // and with no explicit commander names it is exactly the decklist in order.
+            if (commanderCards.length === 0) {
+              commanderCards = data.detectCommanders(allCards);
+            }
             const commanderResolved = commanderCards.map((c) => c.name);
             // Deck color identity comes from the commander(s) only, per MTG rules — never a
             // union of every card's colors, which would drift from what a player calls "on-color".
