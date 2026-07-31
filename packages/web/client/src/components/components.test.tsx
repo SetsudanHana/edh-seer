@@ -6,6 +6,8 @@ import { ComboList } from "./ComboList.js";
 import { ThemeBars } from "./ThemeBars.js";
 import { MissingCards } from "./MissingCards.js";
 import { CardBucketBoard } from "./CardBucketBoard.js";
+import { StatTiles } from "./StatTiles.js";
+import { OverviewTab } from "./OverviewTab.js";
 import { SAMPLE } from "../fixtures.js";
 
 test("DeckIdentity shows the primary and secondary theme", () => {
@@ -61,4 +63,21 @@ test("CardBucketBoard renders 4 sections and shows an N/4 badge for multi-bucket
   expect(screen.getByText("3/4 roles")).toBeInTheDocument();
   // Krenko qualifies for 2 buckets (synergy, win-condition).
   expect(screen.getByText("2/4 roles")).toBeInTheDocument();
+});
+
+test("StatTiles shows ramp, draw, removal, avg CMC, and land count", () => {
+  render(<StatTiles roles={{ ramp: 4, draw: 10, removal: 6 }} avgManaValue={2.7} landCount={38} />);
+  expect(screen.getByText("4")).toBeInTheDocument();
+  expect(screen.getByText("10")).toBeInTheDocument();
+  expect(screen.getByText("6")).toBeInTheDocument();
+  expect(screen.getByText("2.7")).toBeInTheDocument();
+  expect(screen.getByText("38")).toBeInTheDocument();
+  expect(screen.getByText("Ramp")).toBeInTheDocument();
+  expect(screen.getByText("Lands")).toBeInTheDocument();
+});
+
+test("OverviewTab renders deck identity and stat tiles from the full response", () => {
+  render(<OverviewTab data={SAMPLE} />);
+  expect(screen.getByText("Tokens")).toBeInTheDocument(); // DeckIdentity theme
+  expect(screen.getByText("38")).toBeInTheDocument(); // landCount stat tile
 });
