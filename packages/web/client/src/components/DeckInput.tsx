@@ -44,7 +44,12 @@ export function DeckInput({
           className="font-mono"
         />
       </div>
-      <Button variant="primary" isDisabled={loading || value.trim() === ""} onPress={onAnalyze}>
+      <Button
+        variant="primary"
+        isDisabled={loading || value.trim() === ""}
+        onPress={onAnalyze}
+        style={{ backgroundImage: "var(--accent-gradient)" }}
+      >
         {loading ? "Analyzing…" : "Analyze deck"}
       </Button>
     </div>

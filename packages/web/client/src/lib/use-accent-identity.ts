@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { identityColor } from "./color-identity.js";
+import { identityColor, identityGradient } from "./color-identity.js";
 
 const STORAGE_KEY = "mtg-synergy:preferred-identity";
 
@@ -33,7 +33,14 @@ export function useAccentIdentity(analyzedIdentity: string[] | undefined) {
   const active = analyzedIdentity ?? manualPick;
 
   useEffect(() => {
+    // --accent: solid, for text/icons (gradient text stays off the table).
+    // --accent-gradient / --accent-gradient-y: the full identity, for anything
+    // that's a fillable shape — buttons, bars, borders — via
+    // background-image: var(--accent-gradient) (horizontal) or the -y variant
+    // for a bar whose dominant dimension is height (mana curve, land math).
     document.documentElement.style.setProperty("--accent", identityColor(active));
+    document.documentElement.style.setProperty("--accent-gradient", identityGradient(active));
+    document.documentElement.style.setProperty("--accent-gradient-y", identityGradient(active, "180deg"));
   }, [active]);
 
   return { manualPick, setManualPick, active };

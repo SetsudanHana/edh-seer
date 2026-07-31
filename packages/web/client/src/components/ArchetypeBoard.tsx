@@ -16,7 +16,10 @@ function ArchetypeGroupRow({ group, max }: { group: Group; max: number }) {
       >
         <span className="w-40 shrink-0 truncate">{group.label}</span>
         <div className="flex-1 h-2 bg-(--separator) rounded-full overflow-hidden">
-          <div className="h-full rounded-full bg-(--accent)" style={{ width: `${widthPct}%` }} />
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${widthPct}%`, backgroundImage: "var(--accent-gradient)" }}
+          />
         </div>
         <span className="font-mono text-xs text-(--muted) w-20 text-right shrink-0">
           {group.cards.length} card{group.cards.length === 1 ? "" : "s"}

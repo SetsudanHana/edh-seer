@@ -23,7 +23,8 @@ function ArrowIcon() {
 export function ComboList({ combos }: { combos: DeckReport["combos"] }) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="border-t-2 border-(--accent) pt-2">
+      <div>
+        <div className="h-[2px] mb-2" style={{ backgroundImage: "var(--accent-gradient)" }} />
         <h2 className="text-xl font-bold leading-none">Combos</h2>
       </div>
       {combos.length === 0 ? (

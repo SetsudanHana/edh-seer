@@ -28,11 +28,16 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
             role="tab"
             aria-selected={active === t.id}
             onClick={() => setActive(t.id)}
-            className={`eyebrow pb-2 -mb-px border-b-2 ${
-              active === t.id ? "border-(--accent) text-(--accent)" : "border-transparent"
-            }`}
+            className={`eyebrow relative pb-2 -mb-px ${active === t.id ? "text-(--accent)" : ""}`}
           >
             {t.label}
+            {active === t.id ? (
+              <span
+                aria-hidden="true"
+                className="absolute left-0 right-0 bottom-0 h-[2px]"
+                style={{ backgroundImage: "var(--accent-gradient)" }}
+              />
+            ) : null}
           </button>
         ))}
       </div>

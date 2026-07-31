@@ -93,17 +93,22 @@ export function identityColor(colors: readonly string[]): string {
   return anchorHex(present[0]);
 }
 
-/** A CSS `background` value that visually shows every color in the identity — a
- *  solid hex for 0-1 colors, a left-to-right gradient across each constituent
- *  color's own hue for 2+ (so WU genuinely reads as white-into-blue, not a single
- *  guessed color). Use for swatches/backgrounds only, never for text: gradient
- *  text is off the table (see DESIGN.md's Do's and Don'ts). */
-export function identityGradient(colors: readonly string[]): string {
+/** A CSS `background`/`background-image` value that visually shows every color in
+ *  the identity — a gradient across each constituent color's own hue (left-to-right
+ *  by default, `direction` for vertical bars), so WU genuinely reads as white-into-
+ *  blue instead of a single guessed color. Always a `linear-gradient(...)`, even for
+ *  0-1 colors (both stops the same color), so it's a drop-in `background-image` value
+ *  anywhere — no bare-hex special case for callers to handle. This is the accent's
+ *  primary surface: borders, bars, fills, buttons — anywhere a flat rectangle or line
+ *  can carry color. The one place it can't go is text (gradient text is off the
+ *  table, see DESIGN.md's Do's and Don'ts); text and small icons use `identityColor()`
+ *  instead. */
+export function identityGradient(colors: readonly string[], direction: "90deg" | "180deg" = "90deg"): string {
   const present = WUBRG_ORDER.filter((c) => colors.includes(c));
-  if (present.length === 0) return NEUTRAL_ACCENT;
-  if (present.length === 1) return anchorHex(present[0]);
+  if (present.length === 0) return `linear-gradient(${direction}, ${NEUTRAL_ACCENT}, ${NEUTRAL_ACCENT})`;
+  if (present.length === 1) return `linear-gradient(${direction}, ${anchorHex(present[0])}, ${anchorHex(present[0])})`;
   const stops = present.map((c, i) => `${anchorHex(c)} ${Math.round((i / (present.length - 1)) * 100)}%`);
-  return `linear-gradient(90deg, ${stops.join(", ")})`;
+  return `linear-gradient(${direction}, ${stops.join(", ")})`;
 }
 
 export { WUBRG_ORDER, NEUTRAL_ACCENT };

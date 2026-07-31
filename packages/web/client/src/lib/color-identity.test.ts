@@ -46,11 +46,15 @@ test("identityColor for a multicolor identity is always one of its real constitu
   expect(identityColor(["B", "G"])).toBe(identityColor(["B"])); // Golgari -> Black, not "basically Blue"
 });
 
-test("identityGradient returns a solid color for 0-1 colors, a gradient for 2+", () => {
-  expect(identityGradient([])).toBe(NEUTRAL_ACCENT);
-  expect(identityGradient(["G"])).toBe(identityColor(["G"]));
+test("identityGradient always returns a linear-gradient, even for 0-1 colors", () => {
+  // Always a valid background-image value — no bare-hex special case for callers.
+  const hexPattern = /^linear-gradient\(90deg, .+\)$/;
+  expect(identityGradient([])).toMatch(hexPattern);
+  expect(identityGradient([])).toContain(NEUTRAL_ACCENT);
+  expect(identityGradient(["G"])).toMatch(hexPattern);
+  expect(identityGradient(["G"])).toContain(identityColor(["G"]));
   const gradient = identityGradient(["W", "U"]);
-  expect(gradient).toMatch(/^linear-gradient\(90deg, .+\)$/);
+  expect(gradient).toMatch(hexPattern);
   expect(gradient).toContain(identityColor(["W"]));
   expect(gradient).toContain(identityColor(["U"]));
 });

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { CSSProperties } from "react";
 import type { DeckReport } from "../types.js";
 
 type Bucket = "consistency" | "efficiency" | "synergy" | "win-condition";
@@ -21,6 +22,17 @@ function maxScore(card: DeckReport["cards"][number]): number {
   return Math.max(...BUCKETS.map((b) => scoreFor(card, b)));
 }
 
+// Paints the identity gradient into a 1px border by layering two backgrounds: the
+// inner rectangle (padding-box) matches the page so it reads as empty, the outer
+// rectangle (border-box) carries the gradient — a plain `border` can't take a
+// gradient directly.
+const selectedChipStyle: CSSProperties = {
+  border: "1px solid transparent",
+  backgroundImage: "linear-gradient(var(--background), var(--background)), var(--accent-gradient)",
+  backgroundOrigin: "border-box",
+  backgroundClip: "padding-box, border-box",
+};
+
 export function CardList({ cards }: { cards: DeckReport["cards"] }) {
   const [filter, setFilter] = useState<Bucket | "all">("all");
   const visible = cards
@@ -35,8 +47,9 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
           type="button"
           onClick={() => setFilter("all")}
           className={`eyebrow px-2 py-1 rounded-(--radius) border ${
-            filter === "all" ? "border-(--accent) text-(--accent)" : "border-(--separator)"
+            filter === "all" ? "text-(--accent)" : "border-(--separator)"
           }`}
+          style={filter === "all" ? selectedChipStyle : undefined}
         >
           All
         </button>
@@ -46,8 +59,9 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
             type="button"
             onClick={() => setFilter(b)}
             className={`eyebrow px-2 py-1 rounded-(--radius) border ${
-              filter === b ? "border-(--accent) text-(--accent)" : "border-(--separator)"
+              filter === b ? "text-(--accent)" : "border-(--separator)"
             }`}
+            style={filter === b ? selectedChipStyle : undefined}
           >
             {BUCKET_LABELS[b]}
           </button>

@@ -22,7 +22,10 @@ export function ManaCurveChart({ curve }: { curve: DeckReport["manaCurve"] }) {
               {i === peakIndex && b.count > 0 ? (
                 <span className="font-mono text-xs text-(--foreground)">{b.count}</span>
               ) : null}
-              <div className="w-full max-w-6 bg-(--accent) rounded-t-[4px]" style={{ height: `${heightPx}px` }} />
+              <div
+                className="w-full max-w-6 rounded-t-[4px]"
+                style={{ height: `${heightPx}px`, backgroundImage: "var(--accent-gradient-y)" }}
+              />
               <span className="font-mono text-[10px] text-(--muted)">{label}</span>
             </div>
           );
