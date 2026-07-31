@@ -2,6 +2,7 @@ import type { AnalyzeResponse } from "../types.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { StatTiles } from "./StatTiles.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
+import { LandMathChart } from "./LandMathChart.js";
 
 export function OverviewTab({ data }: { data: AnalyzeResponse }) {
   return (
@@ -13,6 +14,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         landCount={data.report.landCount}
       />
       <ManaCurveChart curve={data.report.manaCurve} />
+      <LandMathChart landCount={data.report.landCount} deckSize={data.resolvedCount} />
     </div>
   );
 }

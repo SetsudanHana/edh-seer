@@ -9,6 +9,7 @@ import { CardBucketBoard } from "./CardBucketBoard.js";
 import { StatTiles } from "./StatTiles.js";
 import { OverviewTab } from "./OverviewTab.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
+import { LandMathChart } from "./LandMathChart.js";
 import { SAMPLE } from "../fixtures.js";
 
 test("DeckIdentity shows the primary and secondary theme", () => {
@@ -98,4 +99,15 @@ test("ManaCurveChart labels the 7+ bucket and shows the peak count", () => {
   expect(screen.getByText("7+")).toBeInTheDocument();
   expect(screen.getByText("8")).toBeInTheDocument(); // peak bar's direct cap label
   expect(screen.getByTitle("8 cards at mana value 2")).toBeInTheDocument();
+});
+
+test("LandMathChart shows 8 bars (0-7 lands), labels the peak percentage, and calculates hypergeometric odds correctly", () => {
+  render(<LandMathChart landCount={38} deckSize={99} />);
+  // x-axis ticks 0..7 are each rendered exactly once
+  for (let k = 0; k <= 7; k++) {
+    expect(screen.getByText(String(k))).toBeInTheDocument();
+  }
+  // Peak at k=3 with ~29.57% → rounds to 30%
+  expect(screen.getByText("30%")).toBeInTheDocument(); // peak bar's direct cap label
+  expect(screen.getByTitle("30% chance of exactly 3 lands")).toBeInTheDocument(); // tooltip on peak bar
 });
