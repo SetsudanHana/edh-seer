@@ -168,3 +168,24 @@ function buildSuggestions(
   }
   return gaps.sort((a, b) => b.gap - a.gap).slice(0, 4).map((g) => g.text);
 }
+
+/** Small flat premium to a double-duty card's synergyRating. Mirrors the versatilityMult shape
+ *  (analyze.ts VERSATILITY_STEP = 0.15). Tunable. Double-duty is boolean, so this applies once —
+ *  never stacked per role — and doubleDutyRating caps at 5 so it can't dwarf the deck-relative scale. */
+export const DOUBLE_DUTY_MULT = 1.15;
+
+export const doubleDutyRating = (base: number): number => Math.min(5, base * DOUBLE_DUTY_MULT);
+
+/** Invert category membership into the functional role(s) each card fills, by card name. A card in
+ *  several categories lists several roles. Feeds the double-duty check and the UI role marker. */
+export function rolesByCard(members: Map<BuildCategory, Set<string>>): Map<string, BuildCategory[]> {
+  const out = new Map<string, BuildCategory[]>();
+  for (const [category, names] of members) {
+    for (const name of names) {
+      const roles = out.get(name);
+      if (roles) roles.push(category);
+      else out.set(name, [category]);
+    }
+  }
+  return out;
+}

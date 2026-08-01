@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { detectBuildCategories, computeBuild } from "./build.js";
+import { detectBuildCategories, computeBuild, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT } from "./build.js";
 import type { DeckCard } from "./types.js";
 import type { CardTags } from "@mtg/tagger";
 
@@ -111,4 +111,21 @@ test("lands counts copies, not distinct names (basics don't collapse to 1)", () 
   const lands = buildCategories.find((c) => c.category === "lands")!;
   expect(lands.count).toBe(24);
   expect(suggestions.some((s) => /Lands 1 —/.test(s))).toBe(false);
+});
+
+test("rolesByCard inverts category membership into per-card role lists", () => {
+  const members = new Map<import("./build.js").BuildCategory, Set<string>>([
+    ["ramp", new Set(["Sol Ring", "Llanowar Elves"])],
+    ["draw", new Set(["Sol Ring"])], // a card in two categories
+  ]);
+  const roles = rolesByCard(members);
+  expect(new Set(roles.get("Sol Ring"))).toEqual(new Set(["ramp", "draw"]));
+  expect(roles.get("Llanowar Elves")).toEqual(["ramp"]);
+  expect(roles.get("Nonexistent")).toBeUndefined();
+});
+
+test("doubleDutyRating applies a bounded premium capped at 5", () => {
+  expect(doubleDutyRating(3)).toBeCloseTo(3 * DOUBLE_DUTY_MULT);
+  expect(doubleDutyRating(4.5)).toBe(5); // capped, never dwarfs the scale
+  expect(doubleDutyRating(0)).toBe(0);
 });
