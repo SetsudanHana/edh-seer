@@ -541,3 +541,47 @@ test("directional scoring: a payoff fed by many makers outranks each maker (anch
   expect(report.cards[0].name).toBe("Impact Tremors"); // #1 in the deck
   expect(m1.score).toBeGreaterThan(0);                 // feeders still get a lift
 });
+
+test("a well-fed anchor's win-condition bucket is boosted by its authority", () => {
+  const payoff = dc("Impact Tremors", impactTremorsAbility);
+  const makers = [1, 2, 3, 4, 5].map((i) => dc(`Maker ${i}`, tokenMakerAbility, ["goblin"]));
+  const report = analyzeDeckStructured([payoff, ...makers], undefined, H);
+  const pf = report.cards.find((c) => c.name === "Impact Tremors")!;
+  // Impact Tremors' own damage ability is minor; its win-condition standing comes from being fed.
+  expect(pf.bucketScores?.["win-condition"]).toBeGreaterThan(0);
+});
+
+test("deck exposes anchoring and a composite synergyOverall, both 0-5", () => {
+  const payoff = dc("Impact Tremors", impactTremorsAbility);
+  const makers = [1, 2, 3, 4, 5].map((i) => dc(`Maker ${i}`, tokenMakerAbility, ["goblin"]));
+  const report = analyzeDeckStructured([payoff, ...makers], undefined, H);
+  expect(report.anchoring).toBeGreaterThan(0);
+  expect(report.anchoring).toBeLessThanOrEqual(5);
+  expect(report.synergyOverall).toBeGreaterThanOrEqual(0);
+  expect(report.synergyOverall).toBeLessThanOrEqual(5);
+});
+
+test("a mutual pair (each feeds and is fed by the same partner) appears once in topPartners; partnerCount counts distinct partners", () => {
+  // Kindred and Tremors are both Creatures whose trigger is "enters:creature" (draw / damage) —
+  // each card's own implied self-ETB event satisfies the OTHER card's trigger (see the mutual-feed
+  // note in the "high-impact repeatable payoff" test above), so they feed each other. Without the
+  // dedupe fix, each would list the other TWICE in topPartners (once per direction) and count
+  // partnerCount as 2 instead of the 1 distinct partner it actually has.
+  const kindred = dc("Kindred", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const tremors = dc("Tremors", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+  }]);
+  const report = analyzeDeckStructured([kindred, tremors], undefined, H);
+  const k = report.cards.find((c) => c.name === "Kindred")!;
+  const t = report.cards.find((c) => c.name === "Tremors")!;
+  expect(k.topPartners.map((p) => p.name)).toEqual(["Tremors"]);
+  expect(k.partnerCount).toBe(1);
+  expect(t.topPartners.map((p) => p.name)).toEqual(["Kindred"]);
+  expect(t.partnerCount).toBe(1);
+});

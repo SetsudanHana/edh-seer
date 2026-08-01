@@ -166,6 +166,8 @@ export function analyzeDeckStructured(
 
   const VERSATILITY_STEP = 0.15;
   const COMBO_BONUS = 1.5;
+  const WIN_CON_AUTHORITY_WEIGHT = 1.0; // tunable: how much a well-fed anchor's authority reads as win-con.
+  const maxAuthority = Math.max(0, ...authorityByName.values());
 
   const cards: CardSynergy[] = [...dir.entries()]
     .map(([name, v]) => {
@@ -174,17 +176,27 @@ export function analyzeDeckStructured(
       const score = authority + feederLift;
       const tags = tagsByName.get(name);
       const raw = tags ? computeCardBuckets(tags, impactWeights) : { consistency: 0, efficiency: 0, "win-condition": 0 };
-      const winCondition = raw["win-condition"] + (comboCardNames.has(name) ? COMBO_BONUS : 0);
+      const authorityNorm = maxAuthority > 0 ? authority / maxAuthority : 0;
+      const winCondition = raw["win-condition"] + (comboCardNames.has(name) ? COMBO_BONUS : 0) + WIN_CON_AUTHORITY_WEIGHT * authorityNorm;
       const bucketCount =
         (score > 0 ? 1 : 0) + (raw.consistency > 0 ? 1 : 0) + (raw.efficiency > 0 ? 1 : 0) + (winCondition > 0 ? 1 : 0);
       const versatilityMult = 1 + VERSATILITY_STEP * Math.max(0, bucketCount - 1);
+      // Dedupe partners by name (a mutual pair — each feeds AND is fed by the other — otherwise
+      // appears twice, once per direction), keeping the max-contribution entry. Display-only: score
+      // and authority above are computed from v.support/v.feederSum directly, unaffected by this.
+      const dedupedPartners = new Map<string, { name: string; contribution: number; reasons: Reason[] }>();
+      for (const partner of v.partners) {
+        const existing = dedupedPartners.get(partner.name);
+        if (!existing || partner.contribution > existing.contribution) dedupedPartners.set(partner.name, partner);
+      }
+      const distinctPartners = [...dedupedPartners.values()];
       const base = {
         name,
         isCommander: commanderSet.has(name),
         score,
         authority,
-        partnerCount: v.partnerCount,
-        topPartners: v.partners
+        partnerCount: distinctPartners.length,
+        topPartners: distinctPartners
           .sort((x, y) => y.contribution - x.contribution)
           .slice(0, 5)
           .map(({ name, reasons }) => ({ name, score: reasons.length, reasons })),
@@ -203,6 +215,19 @@ export function analyzeDeckStructured(
       isNonland: nonlandByName.get(c.name) ?? true,
       axisWeight: bestAxisWeight.get(c.name) ?? 0,
     })),
+  );
+
+  // Deck-level Anchoring facet (how strongly the deck's best-fed anchor is supported) and a
+  // composite SYNERGY blending Breadth (positiveCoherence) with Anchoring.
+  const ANCHOR_TARGET = 3; // tunable: absolute authority at which Anchoring saturates to 5.
+  const SYNERGY_BREADTH_WEIGHT = 1; // tunable blend weights
+  const SYNERGY_ANCHOR_WEIGHT = 1;
+  const round1 = (x: number): number => Math.round(x * 10) / 10;
+  const topAuthority = Math.max(0, ...authorityByName.values());
+  const anchoring = round1(5 * Math.min(topAuthority / ANCHOR_TARGET, 1));
+  const breadth = positiveCoherence ?? 0;
+  const synergyOverall = round1(
+    (SYNERGY_BREADTH_WEIGHT * breadth + SYNERGY_ANCHOR_WEIGHT * anchoring) / (SYNERGY_BREADTH_WEIGHT + SYNERGY_ANCHOR_WEIGHT),
   );
   // Double-duty: a card that fills a functional BUILD role AND sits on the deck's synergy axis is
   // efficient — one card, two jobs — so it gets a small capped rating premium and a marker.
@@ -251,6 +276,8 @@ export function analyzeDeckStructured(
     avgManaValue: deckStats.avgManaValue,
     medianManaValue: deckStats.medianManaValue,
     positiveCoherence,
+    anchoring,
+    synergyOverall,
     roles: computeRoles(resolved),
     cohesion,
     archetypes,
