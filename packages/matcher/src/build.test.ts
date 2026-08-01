@@ -304,3 +304,18 @@ test("target-creature-then--1/-1-counter order is removal", () => {
   ]);
   expect(m.get("targetedRemoval")).toContain("Reverse Counter");
 });
+
+test("counters with a comma-separated type list are stack interaction", () => {
+  const m = detectBuildCategories([
+    mk("Swan Song", "Counter target enchantment, instant, or sorcery spell. Its controller creates a 2/2 blue Bird creature token with flying.", "Instant"),
+    mk("Strix Serenade", "Counter target artifact, creature, or planeswalker spell. Its controller creates a 2/2 blue Bird creature token with flying.", "Instant"),
+  ]);
+  expect(m.get("stackInteraction")).toEqual(new Set(["Swan Song", "Strix Serenade"]));
+});
+
+test("a +1/+1 counter placer is not a counterspell (counter clause needs 'counter target ... spell/ability')", () => {
+  const m = detectBuildCategories([
+    mk("Counter Placer", "Put a +1/+1 counter on target creature. Whenever you cast a noncreature spell, draw a card.", "Enchantment"),
+  ]);
+  expect(m.get("stackInteraction") ?? new Set()).not.toContain("Counter Placer");
+});
