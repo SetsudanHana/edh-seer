@@ -29,7 +29,9 @@ const isBasicLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().in
 // (e.g. "destroy target" on an Aura you control) are acceptable noise for a first pass; precision
 // is a tuning knob, revisited in verification. All tested case-insensitively.
 const BOARD_WIPE_RE = /destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all/i;
-const TARGETED_REMOVAL_RE = /(destroy|exile) target|counter target spell|return target .*? to .*? hand|target creature gets -|target player sacrifices|target permanent shuffles it into/i;
+const TARGETED_REMOVAL_RE = /(destroy|exile) target|return target .*? to .*? hand|target creature gets -|target player sacrifices|target permanent shuffles it into/i;
+// Stack interaction: hard counters (incl. typed), redirection, and stack-bounce.
+const STACK_RE = /counter target (?:\w+ )*(?:spell|ability)|change the target of|return target (?:\w+ )*spell(?:\W+\w+)*? to (?:its owner's|their|the owner's|owner's) hand/i;
 const PROTECTION_RE = /hexproof|indestructible|protection from|can't be countered|shroud|phases? out/i;
 const TUTOR_RE = /search your library for/i;
 // A search that only fetches lands is ramp/fixing, not a tutor (spec).
@@ -82,6 +84,7 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
     if (LAND_FETCH_RE.test(text) && ONTO_BATTLEFIELD_RE.test(text)) add("ramp", name);
     if (MANA_TOKEN_RE.test(text)) add("ramp", name);
     if (SELECTION_RE.test(text)) add("cardSelection", name);
+    if (STACK_RE.test(text)) add("stackInteraction", name);
     // Wipe takes precedence over targeted removal so a mass effect isn't counted in both.
     if (BOARD_WIPE_RE.test(text)) add("boardWipe", name);
     else if (TARGETED_REMOVAL_RE.test(text)) add("targetedRemoval", name);

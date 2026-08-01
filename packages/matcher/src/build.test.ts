@@ -50,7 +50,24 @@ test("targeted removal is detected from oracle text (Swords/Counterspell gap)", 
     mk("Counterspell", "Counter target spell.", "Instant"),
     mk("Beast Within", "Destroy target permanent. Its controller creates a 3/3 green Beast creature token.", "Instant"),
   ]);
-  expect(m.get("targetedRemoval")).toEqual(new Set(["Swords to Plowshares", "Counterspell", "Beast Within"]));
+  expect(m.get("targetedRemoval")).toEqual(new Set(["Swords to Plowshares", "Beast Within"]));
+  expect(m.get("stackInteraction")).toEqual(new Set(["Counterspell"]));
+});
+
+test("stack interaction: counters (typed), redirection, and stack-bounce; not plain removal", () => {
+  const m = detectBuildCategories([
+    mk("Counterspell", "Counter target spell.", "Instant"),
+    mk("Essence Scatter", "Counter target creature spell.", "Instant"),
+    mk("Deflecting Swat", "You may change the target of target spell or ability.", "Instant"),
+    mk("Narset Reversal", "Return target instant or sorcery spell to its owner's hand. You may copy that spell.", "Instant"),
+    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power.", "Instant"),
+  ]);
+  expect(m.get("stackInteraction")).toEqual(new Set(["Counterspell", "Essence Scatter", "Deflecting Swat", "Narset Reversal"]));
+});
+
+test("counters are no longer counted as targeted removal", () => {
+  const m = detectBuildCategories([mk("Counterspell", "Counter target spell.", "Instant")]);
+  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Counterspell");
 });
 
 test("board wipe is distinguished from targeted removal (wipe wins, not double-counted)", () => {
