@@ -219,7 +219,11 @@ export function analyzeDeckStructured(
 
   // Deck-level Anchoring facet (how strongly the deck's best-fed anchor is supported) and a
   // composite SYNERGY blending Breadth (positiveCoherence) with Anchoring.
-  const ANCHOR_TARGET = 3; // tunable: absolute authority at which Anchoring saturates to 5.
+  // tunable: absolute authority at which Anchoring saturates to 5. Calibrated on 11 real decks —
+  // top-anchor authority ran ~6 (combo/tribal) to ~11 (heavily-fed engines), so 10 spreads them
+  // ~3-5 instead of saturating everything. Basis is the single best anchor (max authority); if that
+  // proves noisy on other decks, a mean-of-top-K basis is the upgrade.
+  const ANCHOR_TARGET = 10;
   const SYNERGY_BREADTH_WEIGHT = 1; // tunable blend weights
   const SYNERGY_ANCHOR_WEIGHT = 1;
   const round1 = (x: number): number => Math.round(x * 10) / 10;
