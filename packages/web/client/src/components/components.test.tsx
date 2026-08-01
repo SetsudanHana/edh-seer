@@ -71,18 +71,22 @@ test("MissingCards renders nothing when empty", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
-test("StatTiles shows avg CMC and land count", () => {
-  render(<StatTiles avgManaValue={2.7} landCount={38} />);
+test("StatTiles shows avg CMC", () => {
+  render(<StatTiles avgManaValue={2.7} />);
   expect(screen.getByText("2.7")).toBeInTheDocument();
-  expect(screen.getByText("38")).toBeInTheDocument();
   expect(screen.getByText("Avg CMC")).toBeInTheDocument();
-  expect(screen.getByText("Lands")).toBeInTheDocument();
+});
+
+test("Overview shows Avg CMC but not a standalone Lands stat tile", () => {
+  render(<StatTiles avgManaValue={2.7} />);
+  expect(screen.getByText("Avg CMC")).toBeInTheDocument();
+  expect(screen.queryByText("Lands")).not.toBeInTheDocument();
 });
 
 test("OverviewTab renders deck identity and stat tiles from the full response", () => {
   render(<OverviewTab data={SAMPLE} />);
   expect(screen.getByText("Tokens")).toBeInTheDocument(); // DeckIdentity theme
-  expect(screen.getByText("38")).toBeInTheDocument(); // landCount stat tile
+  expect(screen.getByText("2.7")).toBeInTheDocument(); // avgManaValue stat tile
 });
 
 test("ManaCurveChart labels the 7+ bucket and shows the peak count", () => {

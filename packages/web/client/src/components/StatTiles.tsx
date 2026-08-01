@@ -1,23 +1,10 @@
-function Tile({ label, value }: { label: string; value: string | number }) {
+export function StatTiles({ avgManaValue }: { avgManaValue: number }) {
   return (
-    <div className="flex flex-col gap-1 border border-(--separator) rounded-(--radius) p-3">
-      <span className="eyebrow">{label}</span>
-      <span className="font-mono text-2xl text-(--foreground)">{value}</span>
-    </div>
-  );
-}
-
-export function StatTiles({
-  avgManaValue,
-  landCount,
-}: {
-  avgManaValue: number;
-  landCount: number;
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      <Tile label="Avg CMC" value={avgManaValue.toFixed(1)} />
-      <Tile label="Lands" value={landCount} />
+    <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5 rounded-lg border border-(--separator) p-4">
+        <span className="eyebrow">Avg CMC</span>
+        <span className="text-3xl font-semibold tabular-nums">{avgManaValue.toFixed(1)}</span>
+      </div>
     </div>
   );
 }

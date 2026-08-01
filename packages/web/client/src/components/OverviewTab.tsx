@@ -16,10 +16,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
       <BuildBenchmarks categories={data.report.buildCategories} />
       <SuggestionsList suggestions={data.report.suggestions} />
       <HighSynergyCards cards={data.report.cards} />
-      <StatTiles
-        avgManaValue={data.report.avgManaValue}
-        landCount={data.report.landCount}
-      />
+      <StatTiles avgManaValue={data.report.avgManaValue} />
       <ManaCurveChart curve={data.report.manaCurve} />
       <LandMathChart landCount={data.report.landCount} deckSize={data.resolvedCount} />
     </div>
