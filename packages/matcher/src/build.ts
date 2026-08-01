@@ -24,7 +24,7 @@ const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().include
 // (e.g. "destroy target" on an Aura you control) are acceptable noise for a first pass; precision
 // is a tuning knob, revisited in verification. All tested case-insensitively.
 const BOARD_WIPE_RE = /destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all/i;
-const TARGETED_REMOVAL_RE = /(destroy|exile) target|counter target spell|return target .*? to .*? hand|target creature gets -|target player sacrifices/i;
+const TARGETED_REMOVAL_RE = /(destroy|exile) target|counter target spell|return target .*? to .*? hand|target creature gets -|target player sacrifices|target permanent shuffles it into/i;
 const PROTECTION_RE = /hexproof|indestructible|protection from|can't be countered|shroud|phases? out/i;
 const TUTOR_RE = /search your library for/i;
 // A search that only fetches lands is ramp/fixing, not a tutor (spec).
