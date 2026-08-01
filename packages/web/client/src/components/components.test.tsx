@@ -13,6 +13,7 @@ import { CardList } from "./CardList.js";
 import { ReportTabs } from "./ReportTabs.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { HeadlineScores } from "./HeadlineScores.js";
+import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { SAMPLE } from "../fixtures.js";
 
 test("DeckIdentity shows the primary and secondary theme", () => {
@@ -223,4 +224,14 @@ test("HeadlineScores shows SYNERGY and BUILD with band labels and sub-facets", (
   expect(screen.getByText("3.7")).toBeInTheDocument();      // buildScore
   expect(screen.getAllByText(/Tuned|Focused/).length).toBeGreaterThan(0); // band labels (both tiles have one)
   expect(screen.getByText(/breadth/i)).toBeInTheDocument(); // sub-facet
+});
+
+test("BuildBenchmarks renders a bar per category, flags under-target, omits zero-target", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+  expect(screen.getByText("Ramp")).toBeInTheDocument();
+  expect(screen.getByText("6/10")).toBeInTheDocument();      // under target
+  expect(screen.getByText("14/10")).toBeInTheDocument();     // over target (draw)
+  expect(screen.queryByText("Tutors")).not.toBeInTheDocument(); // tutor target 0 → omitted
+  // under-target rows expose an accessible flag
+  expect(screen.getByLabelText(/Ramp 6 of 10, under target/i)).toBeInTheDocument();
 });
