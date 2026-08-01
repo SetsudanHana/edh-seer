@@ -24,6 +24,7 @@ import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
 import { buildAxis, axisFactor } from "./axis.js";
 import { detectArchetypes } from "./archetypes.js";
+import { computeBuild } from "./build.js";
 
 /** Uniform IDF: every theme has equal corpus weight, so rankThemes/themeWeights degrade to a
  *  pure deck-frequency ranking. Stage 3 replaces this with a real structured-corpus TagStats. */
@@ -227,6 +228,7 @@ export function analyzeDeckStructured(
     }));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
+  const { buildScore, buildCategories, suggestions } = computeBuild(resolved, strategies[0]?.name);
 
   return {
     commanders: presentCommanders,
@@ -243,5 +245,8 @@ export function analyzeDeckStructured(
     cohesion,
     archetypes,
     strategies,
+    buildScore,
+    buildCategories,
+    suggestions,
   };
 }

@@ -444,3 +444,15 @@ test("populates report.strategies with a ranked layer-1 archetype", () => {
   expect(typeof report.strategies![0].name).toBe("string");
   expect(typeof report.strategies![0].label).toBe("string");
 });
+
+test("report carries a BUILD score, categories, and suggestions", () => {
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility);
+  // A thin deck: expect a low-ish BUILD and at least one concrete gap suggestion.
+  const report = analyzeDeckStructured([maker, payoff], ["Inalla"], H);
+  expect(typeof report.buildScore).toBe("number");
+  expect(report.buildScore).toBeGreaterThanOrEqual(0);
+  expect(report.buildScore).toBeLessThanOrEqual(5);
+  expect(report.buildCategories?.some((c) => c.category === "ramp")).toBe(true);
+  expect(report.suggestions?.length).toBeGreaterThan(0);
+});
