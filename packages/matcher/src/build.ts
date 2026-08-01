@@ -35,8 +35,11 @@ const BURN_EFFECT_KINDS = new Set(["non-combat-damage", "noncombat-damage", "pla
 const BURN_RE = /deals? \d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\d+|x) life/i;
 // Damage aimed at a creature is removal, not burn.
 const DAMAGE_REMOVAL_RE = /deals? \d+ damage to target creature(?: or planeswalker)?/i;
-// Graveyard hate ("exile target … from a graveyard") is not creature/permanent removal.
-const GRAVEYARD_HATE_RE = /exile[\s\S]*?target[\s\S]*?from (?:a |their |your |)graveyards?/i;
+// Graveyard hate: an EXILE aimed at a graveyard, within the same sentence ([^.]* can't cross a
+// period into an unrelated clause). Catches "exile target opponent's graveyard" (Release to Memory)
+// and "exile ... from a graveyard", without suppressing real removal whose flashback/embalm/later
+// -chapter text merely mentions a graveyard in a DIFFERENT sentence.
+const GRAVEYARD_HATE_RE = /\bexile[^.]*graveyard/i;
 // Stack interaction: hard counters (incl. typed), redirection, and stack-bounce.
 const STACK_RE = /counter target (?:\w+ )*(?:spell|ability)|change the target of|return target (?:\w+ )*spell(?:\W+\w+)*? to (?:its owner's|their|the owner's|owner's) hand/i;
 const PROTECTION_RE = /hexproof|indestructible|protection from|can't be countered|shroud|phases? out/i;

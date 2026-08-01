@@ -221,8 +221,17 @@ test("burn & drain: damage/life-loss to players (not creatures, not self)", () =
 test("damage-to-creature is targeted removal; graveyard-hate exile is not removal", () => {
   const m = detectBuildCategories([
     mk("Flame Slash", "Flame Slash deals 4 damage to target creature.", "Sorcery"),
-    mk("Release to Memory", "Exile up to two target cards from graveyards.", "Instant"),
+    mk("Release to Memory", "Exile target opponent's graveyard. For each creature card exiled this way, create a 1/1 colorless Spirit creature token.", "Instant"),
   ]);
   expect(m.get("targetedRemoval")).toContain("Flame Slash");
   expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Release to Memory");
+});
+
+test("removal with unrelated later graveyard text is still removal (no over-suppression)", () => {
+  const m = detectBuildCategories([
+    mk("Gaze of Justice", "Exile target creature. Flashback {W}{W} (You may cast this card from your graveyard for its flashback cost. Then exile it.)", "Sorcery"),
+    mk("Elspeth Conquers Death", "Exile target permanent an opponent controls with mana value 3 or greater. Return target creature or planeswalker card from your graveyard to the battlefield.", "Enchantment"),
+  ]);
+  expect(m.get("targetedRemoval")).toContain("Gaze of Justice");
+  expect(m.get("targetedRemoval")).toContain("Elspeth Conquers Death");
 });
