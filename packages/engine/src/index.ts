@@ -20,6 +20,7 @@ export {
   type TagStats,
   rankThemes,
   themeWeights,
+  globalIDF,
   weightedEdge,
   dampedScore,
   computeCohesion,

@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { analyzeDeckStructured } from "./analyze.js";
 import { SEED_IMPACT_WEIGHTS, dampByAlpha } from "@mtg/engine";
+import type { TagStats } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
@@ -459,12 +460,28 @@ test("report carries a BUILD score, categories, and suggestions", () => {
 
 test("a card filling a functional role AND on-axis is flagged double-duty and boosted", () => {
   const maker = dc("Inalla", inallaAbility, ["wizard"]);
-  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility); // draws (role) + on-axis edge
+  // wizardPayoffAbility triggers on subtype:wizard directly (same subject key as Inalla's own
+  // emit/commander tag "enters:wizard"), so under real-corpus TF-IDF this edge lands squarely
+  // on-axis regardless of corpus specifics — unlike kindredDiscoveryAbility's generic
+  // "enters:creature" (hierarchy-widened, and common enough in the real corpus to fall below
+  // AXIS_ON_THRESHOLD). Still carries the draw-card role for the double-duty check.
+  const payoff = dc("Kindred Discovery", wizardPayoffAbility); // draws (role) + on-axis edge
   const report = analyzeDeckStructured([maker, payoff], ["Inalla"], H);
   const kd = report.cards.find((c) => c.name === "Kindred Discovery")!;
   expect(kd.doubleDuty).toBe(true);
   expect(kd.doubleDutyRoles).toContain("draw");
   expect(kd.synergyRating).toBeGreaterThan(0);
+});
+
+test("on-axis is thresholded by IDF weight; positiveCoherence stays a valid 0-5", () => {
+  // Corpus where 'enters:wizard' is distinctive (rare) and 'draw:any' is universal.
+  const stats: TagStats = { N: 1000, counts: { "enters:wizard": 20, "draw:any": 995 } };
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);          // emits enters:wizard (distinctive)
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility); // draw-card theme (generic)
+  const report = analyzeDeckStructured([maker, payoff], ["Inalla"], H, undefined, undefined, stats);
+  expect(typeof report.positiveCoherence).toBe("number");
+  expect(report.positiveCoherence).toBeGreaterThanOrEqual(0);
+  expect(report.positiveCoherence).toBeLessThanOrEqual(5);
 });
 
 test("a card filling a functional role but OFF-axis is NOT double-duty (needs both)", () => {

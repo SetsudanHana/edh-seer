@@ -22,13 +22,10 @@ import { pairReasons, cardThemeTags } from "./edges.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
-import { buildAxis, axisFactor } from "./axis.js";
+import { buildAxis, maxAxisWeight } from "./axis.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
-
-/** Uniform IDF: every theme has equal corpus weight, so rankThemes/themeWeights degrade to a
- *  pure deck-frequency ranking. Stage 3 replaces this with a real structured-corpus TagStats. */
-const UNIFORM_STATS: TagStats = { N: 1, counts: {} };
+import { loadThemeStats, UNIFORM_STATS } from "./theme-stats.js";
 
 interface Agg {
   name: string;
@@ -82,6 +79,7 @@ export function analyzeDeckStructured(
   hierarchy: Hierarchy = loadHierarchy(),
   impactWeights: ImpactWeights = loadImpactWeights(),
   combos?: ComboIndex,
+  themeStats: TagStats = loadThemeStats(),
 ): DeckReport {
   const commanderSet = new Set(commanderNames ?? []);
 
@@ -118,8 +116,9 @@ export function analyzeDeckStructured(
       for (const tag of cardThemeTags(dc.tags)) commanderThemeTags.add(tag);
     }
   }
-  const axis = buildAxis(commanderThemeTags, deckFreq);
+  const axis = buildAxis(commanderThemeTags, deckFreq, themeStats);
   const AXIS_BOOST = 1.5; // tunable: a fully on-axis edge counts 2.5x an off-axis one.
+  const AXIS_ON_THRESHOLD = 0.25; // tunable: min axis weight for an edge to count on-axis (calibrated).
 
   // Aggregate per card (mirrors the flat engine's analyzeDeck).
   const agg = new Map<string, Agg>();
@@ -128,9 +127,9 @@ export function analyzeDeckStructured(
   }
   const onAxisCards = new Set<string>();
   for (const edge of edges) {
-    const af = axisFactor(edge.reasons, axis, AXIS_BOOST);
-    const w = impactEdgeWeight(edge.reasons, impactWeights) * af;
-    if (af > 1) {
+    const maxW = maxAxisWeight(edge.reasons, axis);
+    const w = impactEdgeWeight(edge.reasons, impactWeights) * (1 + AXIS_BOOST * maxW);
+    if (maxW >= AXIS_ON_THRESHOLD) {
       onAxisCards.add(edge.a);
       onAxisCards.add(edge.b);
     }

@@ -1,46 +1,41 @@
 import { expect, test } from "vitest";
-import type { Reason } from "@mtg/engine";
-import { buildAxis, axisFactor } from "./axis.js";
+import { buildAxis, maxAxisWeight, axisFactor } from "./axis.js";
+import type { TagStats } from "@mtg/engine";
 
-const reason = (tag: string): Reason => ({ tag, text: `${tag} reason` });
+// 'draw:any' is universal (on ~all N cards → idf≈0); 'dies:creature' is distinctive (rare).
+const stats: TagStats = { N: 1000, counts: { "draw:any": 990, "dies:creature": 40 } };
 
-test("commander theme tags always weigh 1", () => {
-  const axis = buildAxis(new Set(["cast:noncreature"]), new Map());
-  expect(axis.get("cast:noncreature")).toBe(1);
+test("a universal tag (idf≈0) drops out; a distinctive tag dominates the axis", () => {
+  const deckFreq = new Map([["draw:any", 12], ["dies:creature", 8]]);
+  const axis = buildAxis(new Set(), deckFreq, stats);
+  expect(axis.get("dies:creature")).toBe(1); // strongest tf-idf → normalized to 1
+  expect(axis.get("draw:any") ?? 0).toBeLessThan(0.1); // near-zero, effectively de-noised
 });
 
-test("non-commander tags weigh by deck frequency, normalized to the most common", () => {
-  const deckFreq = new Map([
-    ["enters:creature", 10],
-    ["gain-life", 5],
-  ]);
-  const axis = buildAxis(new Set(), deckFreq);
-  expect(axis.get("enters:creature")).toBe(1); // 10/10
-  expect(axis.get("gain-life")).toBe(0.5); // 5/10
+test("commander tags get a TF boost anchor, still gated by idf", () => {
+  const deckFreq = new Map([["dies:creature", 8], ["draw:any", 12]]);
+  const boosted = buildAxis(new Set(["dies:creature"]), deckFreq, stats);
+  const plain = buildAxis(new Set(), deckFreq, stats);
+  expect(boosted.get("dies:creature")! >= plain.get("dies:creature")!).toBe(true);
+  // a generic commander tag can't take over: draw:any stays low even if commander-flagged.
+  const genericCmd = buildAxis(new Set(["draw:any"]), deckFreq, stats);
+  expect(genericCmd.get("draw:any") ?? 0).toBeLessThan(0.5);
 });
 
-test("a tag both on the commander and frequent takes the max (1)", () => {
-  const axis = buildAxis(new Set(["gain-life"]), new Map([["gain-life", 2], ["enters:creature", 10]]));
-  expect(axis.get("gain-life")).toBe(1); // max(commander 1, theme 0.2)
+test("empty/degenerate input yields an empty axis (no divide-by-zero)", () => {
+  expect(buildAxis(new Set(), new Map(), stats).size).toBe(0);
+  const allUniversal: TagStats = { N: 10, counts: { "draw:any": 10 } }; // idf(draw:any)=log(11/11)=0
+  expect(buildAxis(new Set(), new Map([["draw:any", 5]]), allUniversal).size).toBe(0);
 });
 
-test("a generic commander (no theme tags) cedes the axis to deck themes", () => {
-  const axis = buildAxis(new Set(), new Map([["proliferate", 4], ["draw", 2]]));
-  expect(axis.get("proliferate")).toBe(1);
-  expect(axis.get("draw")).toBe(0.5);
+test("maxAxisWeight returns the strongest reason weight, 0 when none on-axis", () => {
+  const axis = new Map([["dies:creature", 1], ["sacrifice:creature", 0.4]]);
+  expect(maxAxisWeight([{ tag: "dies:creature" }, { tag: "x" }] as never, axis)).toBe(1);
+  expect(maxAxisWeight([{ tag: "unknown" }] as never, axis)).toBe(0);
 });
 
-test("axisFactor is 1 for an edge with no on-axis reason", () => {
-  const axis = buildAxis(new Set(["cast:noncreature"]), new Map());
-  expect(axisFactor([reason("enters:creature")], axis, 1.5)).toBe(1);
-});
-
-test("axisFactor amplifies an on-axis edge by 1 + boost*weight", () => {
-  const axis = buildAxis(new Set(["cast:noncreature"]), new Map());
-  expect(axisFactor([reason("cast:noncreature")], axis, 1.5)).toBe(2.5); // 1 + 1.5*1
-});
-
-test("axisFactor uses the strongest on-axis reason in a multi-reason edge", () => {
-  const axis = buildAxis(new Set(), new Map([["a", 10], ["b", 2]])); // a=1.0, b=0.2
-  expect(axisFactor([reason("a"), reason("b")], axis, 1.5)).toBe(2.5); // uses a
+test("axisFactor rides the new weights (1 + boost*maxWeight)", () => {
+  const axis = new Map([["dies:creature", 1]]);
+  expect(axisFactor([{ tag: "dies:creature" }] as never, axis, 1.5)).toBeCloseTo(2.5);
+  expect(axisFactor([{ tag: "x" }] as never, axis, 1.5)).toBe(1);
 });
