@@ -80,6 +80,15 @@ export interface DeckReport {
    *  which are synergy-mechanism groups (a future rename to `mechanismGroups` will
    *  disambiguate these). */
   strategies?: ArchetypeRanking[];
+  /** BUILD /5: archetype-adjusted functional-template completeness. Matcher-only (see above);
+   *  stays undefined on the flat analyzeDeck. */
+  buildScore?: number;
+  /** Per functional-category count vs adjusted target (Ramp 6/10, …), for readouts + suggestions.
+   *  Matcher-only. `category` is a plain string (not the matcher-only BuildCategory union) because
+   *  this package must not depend on @mtg/matcher — same convention as ArchetypeGroup.category. */
+  buildCategories?: { category: string; count: number; target: number }[];
+  /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
+  suggestions?: string[];
 }
 
 interface Agg {
