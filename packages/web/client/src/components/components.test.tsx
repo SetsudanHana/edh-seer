@@ -134,6 +134,23 @@ test("ArchetypeBoard shows the empty-state message when archetypes is undefined"
   expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();
 });
 
+test("Archetypes tab leads with ranked strategies", () => {
+  render(<ArchetypeBoard
+    strategies={[{ name: "tokens", label: "Tokens", confidence: 0.74 }] as any}
+    archetypes={[]}
+  />);
+  expect(screen.getByText("Strategies")).toBeInTheDocument();
+  expect(screen.getByText("Tokens")).toBeInTheDocument();
+  expect(screen.getByText("74%")).toBeInTheDocument();
+});
+
+test("an expanded synergy group caps its pair list", () => {
+  const pairs = Array.from({ length: 12 }, (_, i) => ({ a: `A${i}`, b: `B${i}`, reasons: [{ text: "r" }] }));
+  render(<ArchetypeBoard strategies={[]} archetypes={[{ category: "x", label: "Group X", cards: Array(12).fill("c"), pairs } as any]} />);
+  fireEvent.click(screen.getByText("Group X"));
+  expect(screen.getByText(/\+4 more/)).toBeInTheDocument();
+});
+
 test("CardList sorts by synergyRating descending, then name", () => {
   render(<CardList cards={SAMPLE.report.cards} />);
   // Row 0 is the header; data rows start at index 1.
