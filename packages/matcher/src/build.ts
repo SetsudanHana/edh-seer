@@ -30,6 +30,16 @@ const PROTECTION_RE = /hexproof|indestructible|protection from|can't be countere
 const TUTOR_RE = /search your library for/i;
 // A search that only fetches lands is ramp/fixing, not a tutor (spec).
 const LAND_FETCH_RE = /search your library for (a |an |up to \w+ )?(basic )?(land|forest|island|swamp|mountain|plains)/i;
+// A nonland spell that puts a fetched land ONTO THE BATTLEFIELD nets +1 land = ramp (Cultivate,
+// Farseek, Rampant Growth). Fetch-to-hand only (no battlefield) is card advantage/fixing, not ramp.
+const ONTO_BATTLEFIELD_RE = /onto the battlefield/i;
+// A land that sacrifices itself to fetch TWO+ lands onto the battlefield nets +1 mana = ramp
+// (Myriad Landscape, Krosan Verge). A fetchland sacrifices for ONE land (net 0) — fixing/landfall,
+// not ramp — so the two-land requirement ("two" / "a X and a Y") is what excludes it.
+const RAMP_LAND_RE = /sacrifice\b[\s\S]*?search your library for (?:up to two|two|a \w+ and an? \w+)[\s\S]*?onto the battlefield/i;
+// Makers of sacrifice-for-mana tokens are acceleration = ramp: Treasure/Gold and the Eldrazi
+// Spawn/Scion mana tokens (Big Score, Unexpected Windfall, Glimpse the Impossible).
+const MANA_TOKEN_RE = /create\b[\s\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?/i;
 
 /** For each card, the set of functional categories it fills. A card may fill several (that's how
  *  double-duty in Stage D is found). Counts derive from set sizes. */
@@ -43,11 +53,14 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
 
   for (const dc of cards) {
     const name = dc.card.name;
+    const text = dc.card.oracleText;
     if (isLand(dc)) {
       // Only utility (nonbasic) lands fill a notable land ROLE, so a basic never reads as
       // "double duty". The BUILD lands COUNT is unaffected — computeBuild counts every land copy
       // via its own landCount reduce, not this set.
       if (!isBasicLand(dc)) add("lands", name);
+      // A ramp-land (sac for 2+ lands) also fills the ramp role — net +1 mana, unlike a fetchland.
+      if (RAMP_LAND_RE.test(text)) add("ramp", name);
       continue;
     }
 
@@ -58,7 +71,10 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
       }
     }
 
-    const text = dc.card.oracleText;
+    // Land-ramp spells (fetch a land onto the battlefield) and Treasure makers are ramp too —
+    // the structured effect kinds above miss both.
+    if (LAND_FETCH_RE.test(text) && ONTO_BATTLEFIELD_RE.test(text)) add("ramp", name);
+    if (MANA_TOKEN_RE.test(text)) add("ramp", name);
     // Wipe takes precedence over targeted removal so a mass effect isn't counted in both.
     if (BOARD_WIPE_RE.test(text)) add("boardWipe", name);
     else if (TARGETED_REMOVAL_RE.test(text)) add("targetedRemoval", name);

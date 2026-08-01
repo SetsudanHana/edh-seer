@@ -4,9 +4,11 @@ export function parseDecklistText(text: string): string[] {
     const line = raw.trim();
     if (!line || line.startsWith("#") || line.startsWith("//")) continue;
 
+    const qtyMatch = line.match(/^(\d+)\s*x?\s+/i);
+    const qty = qtyMatch ? Math.min(100, Math.max(1, parseInt(qtyMatch[1], 10))) : 1;
     const withoutQty = line.replace(/^\d+\s*x?\s+/i, "");
     const clean = withoutQty.replace(/\s*[([].*$/, "").trim();
-    if (clean) names.push(clean);
+    if (clean) for (let i = 0; i < qty; i++) names.push(clean);
   }
   return names;
 }

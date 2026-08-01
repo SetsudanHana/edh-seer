@@ -5,6 +5,12 @@ function cleanCardLine(line: string): string {
   return withoutQty.replace(/\s*[([].*$/, "").trim();
 }
 
+/** Leading copy count on a card line ("5 Forest" → 5), clamped to [1, 100]; 1 when absent. */
+function cardQty(line: string): number {
+  const m = line.match(/^(\d+)\s*x?\s+/i);
+  return m ? Math.min(100, Math.max(1, parseInt(m[1], 10))) : 1;
+}
+
 /**
  * Split a pasted decklist into commander card names and deck card names.
  * Recognizes section headers as emitted by Moxfield / Archidekt text exports:
@@ -55,7 +61,8 @@ export function parseDecklistSections(text: string): { commanders: string[]; dec
     if (section === "ignore") continue;
     const name = cleanCardLine(line);
     if (!name) continue;
-    (section === "commander" ? commanders : deck).push(name);
+    const target = section === "commander" ? commanders : deck;
+    for (let i = 0; i < cardQty(line); i++) target.push(name);
   }
 
   return { commanders, deck };
