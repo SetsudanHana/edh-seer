@@ -141,3 +141,37 @@ test("doubleDutyRating applies a bounded premium capped at 5", () => {
   expect(doubleDutyRating(4.5)).toBe(5); // capped, never dwarfs the scale
   expect(doubleDutyRating(0)).toBe(0);
 });
+
+test("land-ramp spells (search a land onto the battlefield) count as ramp", () => {
+  const m = detectBuildCategories([
+    mk("Cultivate", "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", "Sorcery"),
+    mk("Farseek", "Search your library for a Plains, Island, Swamp, or Mountain card, put it onto the battlefield tapped, then shuffle.", "Sorcery"),
+    mk("Rampant Growth", "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.", "Sorcery"),
+  ]);
+  expect(m.get("ramp")).toEqual(new Set(["Cultivate", "Farseek", "Rampant Growth"]));
+});
+
+test("ramp-lands that sacrifice for two lands are ramp; fetchlands are not", () => {
+  const m = detectBuildCategories([
+    mk("Myriad Landscape", "Myriad Landscape enters tapped. {T}: Add {C}. {2}, {T}, Sacrifice Myriad Landscape: Search your library for up to two basic land cards with the same name, put them onto the battlefield tapped, then shuffle.", "Land"),
+    mk("Krosan Verge", "Krosan Verge enters tapped. {T}, Sacrifice Krosan Verge: Search your library for a Forest and a Plains card, put them onto the battlefield tapped, then shuffle.", "Land"),
+    mk("Arid Mesa", "{T}, Pay 1 life, Sacrifice Arid Mesa: Search your library for a Mountain or Plains card, put it onto the battlefield, then shuffle.", "Land"),
+  ]);
+  expect(m.get("ramp")).toEqual(new Set(["Myriad Landscape", "Krosan Verge"]));
+});
+
+test("treasure makers count as ramp", () => {
+  const m = detectBuildCategories([
+    mk("Big Score", "Create three Treasure tokens. Draw two cards.", "Instant"),
+    mk("Unexpected Windfall", "Draw two cards, then discard a card. Create two Treasure tokens.", "Instant"),
+  ]);
+  expect(m.get("ramp")).toEqual(new Set(["Big Score", "Unexpected Windfall"]));
+});
+
+test("mana-sac token makers (Eldrazi Spawn/Scion, Gold) count as ramp, like Treasure", () => {
+  const m = detectBuildCategories([
+    mk("Glimpse the Impossible", "Exile the top three cards of your library. You may play those cards this turn. At the beginning of the next end step, if any of those cards remain exiled, put them into your graveyard, then create a 0/1 colorless Eldrazi Spawn creature token for each of them.", "Sorcery"),
+    mk("Sacrifice the Wastes", "As an additional cost to cast this spell, sacrifice a creature. Create three Gold tokens.", "Sorcery"),
+  ]);
+  expect(m.get("ramp")).toEqual(new Set(["Glimpse the Impossible", "Sacrifice the Wastes"]));
+});

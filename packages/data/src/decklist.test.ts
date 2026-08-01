@@ -15,3 +15,8 @@ test("strips trailing set/collector annotations", () => {
   const names = parseDecklistText("1 Sol Ring (C21) 263\n1 Arcane Signet [LTC]");
   expect(names).toEqual(["Sol Ring", "Arcane Signet"]);
 });
+
+test("expands leading quantities into repeated names", () => {
+  const names = parseDecklistText("5 Forest\n1 Sol Ring\n2x Mountain");
+  expect(names).toEqual(["Forest", "Forest", "Forest", "Forest", "Forest", "Sol Ring", "Mountain", "Mountain"]);
+});

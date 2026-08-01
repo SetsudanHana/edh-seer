@@ -39,3 +39,8 @@ test("no Commander header → everything is deck, commanders empty", () => {
     deck: ["Sol Ring", "Krenko, Mob Boss"],
   });
 });
+
+test("expands quantities in the deck section (basics counted by copy)", () => {
+  const { deck } = parseDecklistSections("2 Forest\n1 Sol Ring");
+  expect(deck).toEqual(["Forest", "Forest", "Sol Ring"]);
+});
