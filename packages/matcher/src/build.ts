@@ -29,7 +29,7 @@ const isBasicLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().in
 // (e.g. "destroy target" on an Aura you control) are acceptable noise for a first pass; precision
 // is a tuning knob, revisited in verification. All tested case-insensitively.
 const BOARD_WIPE_RE = /destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all/i;
-const TARGETED_REMOVAL_RE = /(destroy|exile)[^.]{0,30}?target|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1\/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1\/-1 counter|target player sacrifices|target permanent shuffles it into/i;
+const TARGETED_REMOVAL_RE = /(destroy|exile)[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1\/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1\/-1 counter|target player sacrifices|target permanent shuffles it into/i;
 // Burn & drain — noncombat life reduction of OPPONENTS/players (damage or life-loss), not creatures.
 const BURN_EFFECT_KINDS = new Set(["non-combat-damage", "noncombat-damage", "player-damage", "drain"]);
 const BURN_RE = /deals? \d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\d+|x) life/i;

@@ -289,9 +289,18 @@ test("land-based removal is detected (channel/activated); graveyard-exile land i
   expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Bojuka Land");
 });
 
-test("loosening does not cross a period into an unrelated clause", () => {
+test("verb->target does not bridge a period or an unrelated same-sentence clause", () => {
   const m = detectBuildCategories([
-    mk("Not Removal", "Create a Food token. When you gain life, target player draws a card.", "Enchantment"),
+    mk("Cross-period", "Exile this creature. Draw a card, then target player loses 1 life.", "Instant"),
+    mk("Same-sentence food", "Destroy a Food you control, then target opponent loses 2 life.", "Sorcery"),
   ]);
-  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Not Removal");
+  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Cross-period");
+  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Same-sentence food");
+});
+
+test("target-creature-then--1/-1-counter order is removal", () => {
+  const m = detectBuildCategories([
+    mk("Reverse Counter", "Put target creature you don't control gets a -1/-1 counter.", "Instant"),
+  ]);
+  expect(m.get("targetedRemoval")).toContain("Reverse Counter");
 });
