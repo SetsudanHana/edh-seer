@@ -30,6 +30,13 @@ const isBasicLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().in
 // is a tuning knob, revisited in verification. All tested case-insensitively.
 const BOARD_WIPE_RE = /destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all/i;
 const TARGETED_REMOVAL_RE = /(destroy|exile) target|return target .*? to .*? hand|target creature gets -|target player sacrifices|target permanent shuffles it into/i;
+// Burn & drain — noncombat life reduction of OPPONENTS/players (damage or life-loss), not creatures.
+const BURN_EFFECT_KINDS = new Set(["non-combat-damage", "noncombat-damage", "player-damage", "drain"]);
+const BURN_RE = /deals? \d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\d+|x) life/i;
+// Damage aimed at a creature is removal, not burn.
+const DAMAGE_REMOVAL_RE = /deals? \d+ damage to target creature(?: or planeswalker)?/i;
+// Graveyard hate ("exile target … from a graveyard") is not creature/permanent removal.
+const GRAVEYARD_HATE_RE = /exile[\s\S]*?target[\s\S]*?from (?:a |their |your |)graveyards?/i;
 // Stack interaction: hard counters (incl. typed), redirection, and stack-bounce.
 const STACK_RE = /counter target (?:\w+ )*(?:spell|ability)|change the target of|return target (?:\w+ )*spell(?:\W+\w+)*? to (?:its owner's|their|the owner's|owner's) hand/i;
 const PROTECTION_RE = /hexproof|indestructible|protection from|can't be countered|shroud|phases? out/i;
@@ -76,6 +83,7 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
       for (const a of dc.tags.abilities) {
         if (RAMP_EFFECT_KINDS.has(a.effect.kind)) add("ramp", name);
         if (a.effect.kind === "draw-card") add("draw", name);
+        if (BURN_EFFECT_KINDS.has(a.effect.kind)) add("burn", name);
       }
     }
 
@@ -85,9 +93,10 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
     if (MANA_TOKEN_RE.test(text)) add("ramp", name);
     if (SELECTION_RE.test(text)) add("cardSelection", name);
     if (STACK_RE.test(text)) add("stackInteraction", name);
+    if (BURN_RE.test(text)) add("burn", name);
     // Wipe takes precedence over targeted removal so a mass effect isn't counted in both.
     if (BOARD_WIPE_RE.test(text)) add("boardWipe", name);
-    else if (TARGETED_REMOVAL_RE.test(text)) add("targetedRemoval", name);
+    else if ((TARGETED_REMOVAL_RE.test(text) || DAMAGE_REMOVAL_RE.test(text)) && !GRAVEYARD_HATE_RE.test(text)) add("targetedRemoval", name);
     if (PROTECTION_RE.test(text)) add("protection", name);
     if (TUTOR_RE.test(text) && !LAND_FETCH_RE.test(text)) add("tutor", name);
   }

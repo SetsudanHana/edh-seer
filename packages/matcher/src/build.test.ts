@@ -203,3 +203,26 @@ test("card selection (scry/surveil/impulse) is detected; plain draw is not selec
   ]);
   expect(m.get("cardSelection")).toEqual(new Set(["Preordain", "Sink Below", "Light Up the Stage"]));
 });
+
+test("burn & drain: damage/life-loss to players (not creatures, not self)", () => {
+  const m = detectBuildCategories([
+    mk("Lightning Helix", "Lightning Helix deals 3 damage to any target and you gain 3 life.", "Instant"),
+    mk("Exsanguinate", "Each opponent loses X life. You gain life equal to the life lost this way.", "Sorcery"),
+    mk("Lightning Bolt", "Lightning Bolt deals 3 damage to any target.", "Instant"),
+    mk("Flame Slash", "Flame Slash deals 4 damage to target creature.", "Sorcery"),
+    mk("Sign in Blood", "Target player draws two cards and loses 2 life.", "Sorcery"),
+  ]);
+  // Lightning Bolt/Helix hit "any target"; Exsanguinate is opponent life-loss.
+  expect(m.get("burn")).toEqual(new Set(["Lightning Helix", "Exsanguinate", "Lightning Bolt"]));
+  // Flame Slash is creature-only damage → removal, not burn.
+  expect(m.get("burn") ?? new Set()).not.toContain("Flame Slash");
+});
+
+test("damage-to-creature is targeted removal; graveyard-hate exile is not removal", () => {
+  const m = detectBuildCategories([
+    mk("Flame Slash", "Flame Slash deals 4 damage to target creature.", "Sorcery"),
+    mk("Release to Memory", "Exile up to two target cards from graveyards.", "Instant"),
+  ]);
+  expect(m.get("targetedRemoval")).toContain("Flame Slash");
+  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Release to Memory");
+});
