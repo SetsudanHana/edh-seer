@@ -9,6 +9,7 @@ export const SAMPLE: AnalyzeResponse = {
         isCommander: true,
         score: 6,
         synergyRating: 5,
+        authority: 4.5,
         partnerCount: 2,
         topPartners: [
           { name: "Impact Tremors", score: 2, reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }] },
@@ -21,6 +22,9 @@ export const SAMPLE: AnalyzeResponse = {
         isCommander: false,
         score: 2,
         synergyRating: 3.3,
+        authority: 3.7,
+        doubleDuty: true,
+        doubleDutyRoles: ["draw"],
         partnerCount: 1,
         topPartners: [
           { name: "Krenko, Mob Boss", score: 2, reasons: [{ tag: "token", text: "Krenko makes tokens; Impact Tremors pays off tokens." }] },
@@ -46,6 +50,19 @@ export const SAMPLE: AnalyzeResponse = {
     avgManaValue: 2.7,
     medianManaValue: 3,
     positiveCoherence: 4.2,
+    synergyOverall: 4.0,
+    anchoring: 4.0,
+    buildScore: 3.7,
+    buildCategories: [
+      { category: "ramp", count: 6, target: 10 },
+      { category: "draw", count: 14, target: 10 },
+      { category: "targetedRemoval", count: 7, target: 10 },
+      { category: "boardWipe", count: 0, target: 3 },
+      { category: "protection", count: 2, target: 0 },
+      { category: "tutor", count: 0, target: 0 },
+      { category: "lands", count: 37, target: 36 },
+    ],
+    suggestions: ["No board wipe (target 3)", "Ramp 6/10 — add ~4", "Removal 7/10 — add ~3"],
     roles: { ramp: 4, draw: 10, removal: 6 },
     cohesion: {
       theme: "Tokens",

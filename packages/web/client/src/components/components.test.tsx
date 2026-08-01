@@ -12,6 +12,7 @@ import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CardList } from "./CardList.js";
 import { ReportTabs } from "./ReportTabs.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
+import { HeadlineScores } from "./HeadlineScores.js";
 import { SAMPLE } from "../fixtures.js";
 
 test("DeckIdentity shows the primary and secondary theme", () => {
@@ -212,4 +213,14 @@ test("HighSynergyCards renders no reason line when the card has none", () => {
 test("HighSynergyCards renders nothing when no card has a rating", () => {
   const { container } = render(<HighSynergyCards cards={[{ name: "X", isCommander: false, score: 0, partnerCount: 0, topPartners: [] }]} />);
   expect(container).toBeEmptyDOMElement();
+});
+
+test("HeadlineScores shows SYNERGY and BUILD with band labels and sub-facets", () => {
+  render(<HeadlineScores report={SAMPLE.report} />);
+  expect(screen.getByText(/SYNERGY/i)).toBeInTheDocument();
+  expect(screen.getByText("4.0")).toBeInTheDocument();      // synergyOverall
+  expect(screen.getByText(/BUILD/i)).toBeInTheDocument();
+  expect(screen.getByText("3.7")).toBeInTheDocument();      // buildScore
+  expect(screen.getAllByText(/Tuned|Focused/).length).toBeGreaterThan(0); // band labels (both tiles have one)
+  expect(screen.getByText(/breadth/i)).toBeInTheDocument(); // sub-facet
 });
