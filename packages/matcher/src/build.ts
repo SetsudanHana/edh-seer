@@ -117,7 +117,11 @@ export interface BuildResult {
 export function computeBuild(cards: DeckCard[], primary: Archetype | undefined): BuildResult {
   const members = detectBuildCategories(cards);
   const targets = adjustedTargets(primary);
-  const countOf = (c: BuildCategory): number => members.get(c)?.size ?? 0;
+  // Lands are the one multi-copy category: count land CARDS (copies), not distinct names, so a
+  // deck's ~24 basics register as ~24, not 1. Every other category is singleton in Commander, so
+  // distinct-name membership size already equals the copy count.
+  const landCount = cards.reduce((n, dc) => n + (isLand(dc) ? 1 : 0), 0);
+  const countOf = (c: BuildCategory): number => (c === "lands" ? landCount : members.get(c)?.size ?? 0);
 
   const buildCategories = BUILD_CATEGORIES.map((c) => ({ category: c, count: countOf(c), target: targets[c] }));
 
@@ -136,19 +140,19 @@ export function computeBuild(cards: DeckCard[], primary: Archetype | undefined):
   }
   const buildScore = weightSum > 0 ? (attainSum / weightSum) * 5 : 0;
 
-  return { buildScore, buildCategories, suggestions: buildSuggestions(members, targets) };
+  return { buildScore, buildCategories, suggestions: buildSuggestions(countOf, targets) };
 }
 
 /** Concrete, few, actionable — ranked by gap size, top 4. Never scolding. */
 function buildSuggestions(
-  members: Map<BuildCategory, Set<string>>,
+  countOf: (c: BuildCategory) => number,
   targets: Record<BuildCategory, number>,
 ): string[] {
   const gaps: { gap: number; text: string }[] = [];
   for (const c of BUILD_CATEGORIES) {
     const target = targets[c];
     if (target <= 0) continue;
-    const count = members.get(c)?.size ?? 0;
+    const count = countOf(c);
     if (c === "lands") {
       if (count < target - LAND_BAND) gaps.push({ gap: target - count, text: `Lands ${count} — aim for ~${target}` });
       else if (count > target + LAND_BAND) gaps.push({ gap: count - target, text: `Lands ${count} — high, aim for ~${target}` });

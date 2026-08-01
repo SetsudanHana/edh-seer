@@ -103,3 +103,12 @@ test("land count is two-sided: heavy flood is flagged, not rewarded", () => {
   const { suggestions } = computeBuild(flood, "goodstuff"); // 48 lands
   expect(suggestions.some((s) => /Lands 48/.test(s))).toBe(true);
 });
+
+test("lands counts copies, not distinct names (basics don't collapse to 1)", () => {
+  const deck = Array.from({ length: 24 }, () => mk("Swamp", "", "Basic Land — Swamp"))
+    .concat([mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility)]);
+  const { buildCategories, suggestions } = computeBuild(deck, "goodstuff");
+  const lands = buildCategories.find((c) => c.category === "lands")!;
+  expect(lands.count).toBe(24);
+  expect(suggestions.some((s) => /Lands 1 —/.test(s))).toBe(false);
+});
