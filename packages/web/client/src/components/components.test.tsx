@@ -184,6 +184,22 @@ test("Cards tab filters by functional category matching the Overview vocabulary"
   expect(screen.getByText("Chaos Warp")).toBeInTheDocument();
 });
 
+test("Cards tab renders the new functional roles as readable chips", () => {
+  const cards = [
+    { name: "Preordain", roles: ["cardSelection"], synergyRating: 0.5, topPartners: [] },
+    { name: "Counterspell", roles: ["stackInteraction"], synergyRating: 0, topPartners: [] },
+    { name: "Lightning Bolt", roles: ["burn"], synergyRating: 0, topPartners: [] },
+    { name: "Winter Orb", roles: ["stax"], synergyRating: 0, topPartners: [] },
+  ] as any;
+  render(<CardList cards={cards} />);
+  // Each role is the only card in its category, so it renders both as the filter
+  // chip and the row chip (see the single-category note above) — assert presence.
+  expect(screen.getAllByText("Card selection").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Stack interaction").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Burn & drain").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Stax").length).toBeGreaterThan(0);
+});
+
 test("Cards tab shows the top-partner reason under the card name", () => {
   const cards = [{ name: "Impact Tremors", roles: [], synergyRating: 3.0,
     topPartners: [{ name: "Krenko", reasons: [{ text: "Impact Tremors triggers on a creature entering; Krenko supplies it" }] }] }] as any;

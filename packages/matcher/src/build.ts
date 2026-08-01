@@ -5,14 +5,18 @@ import type { Archetype } from "./archetypes.js";
 export type BuildCategory =
   | "ramp"
   | "draw"
+  | "cardSelection"
   | "targetedRemoval"
+  | "stackInteraction"
   | "boardWipe"
+  | "burn"
+  | "stax"
   | "protection"
   | "tutor"
   | "lands";
 
 export const BUILD_CATEGORIES: BuildCategory[] = [
-  "ramp", "draw", "targetedRemoval", "boardWipe", "protection", "tutor", "lands",
+  "ramp", "draw", "cardSelection", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "lands",
 ];
 
 /** Structured effect kinds that count as ramp (mirrors analyze.ts's RAMP_EFFECT_KINDS). Tunable. */
@@ -25,7 +29,19 @@ const isBasicLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().in
 // (e.g. "destroy target" on an Aura you control) are acceptable noise for a first pass; precision
 // is a tuning knob, revisited in verification. All tested case-insensitively.
 const BOARD_WIPE_RE = /destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all/i;
-const TARGETED_REMOVAL_RE = /(destroy|exile) target|counter target spell|return target .*? to .*? hand|target creature gets -|target player sacrifices|target permanent shuffles it into/i;
+const TARGETED_REMOVAL_RE = /(destroy|exile) target|return target .*? to .*? hand|target creature gets -|target player sacrifices|target permanent shuffles it into/i;
+// Burn & drain — noncombat life reduction of OPPONENTS/players (damage or life-loss), not creatures.
+const BURN_EFFECT_KINDS = new Set(["non-combat-damage", "noncombat-damage", "player-damage", "drain"]);
+const BURN_RE = /deals? \d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\d+|x) life/i;
+// Damage aimed at a creature is removal, not burn.
+const DAMAGE_REMOVAL_RE = /deals? \d+ damage to target creature(?: or planeswalker)?/i;
+// Graveyard hate: an EXILE aimed at a graveyard, within the same sentence ([^.]* can't cross a
+// period into an unrelated clause). Catches "exile target opponent's graveyard" (Release to Memory)
+// and "exile ... from a graveyard", without suppressing real removal whose flashback/embalm/later
+// -chapter text merely mentions a graveyard in a DIFFERENT sentence.
+const GRAVEYARD_HATE_RE = /\bexile[^.]*graveyard/i;
+// Stack interaction: hard counters (incl. typed), redirection, and stack-bounce.
+const STACK_RE = /counter target (?:\w+ )*(?:spell|ability)|change the target of|choose new targets? for|return target (?:\w+ )*spell(?:\W+\w+)*? to (?:its owner's|their|the owner's|owner's) hand/i;
 const PROTECTION_RE = /hexproof|indestructible|protection from|can't be countered|shroud|phases? out/i;
 const TUTOR_RE = /search your library for/i;
 // A search that only fetches lands is ramp/fixing, not a tutor (spec).
@@ -40,6 +56,13 @@ const RAMP_LAND_RE = /sacrifice\b[\s\S]*?search your library for (?:up to two|tw
 // Makers of sacrifice-for-mana tokens are acceleration = ramp: Treasure/Gold and the Eldrazi
 // Spawn/Scion mana tokens (Big Score, Unexpected Windfall, Glimpse the Impossible).
 const MANA_TOKEN_RE = /create\b[\s\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?/i;
+// Card selection / filtering — distinct from raw draw (scry/surveil/impulse "look at/exile top N").
+const SELECTION_RE = /\bscry\b|\bsurveil\b|look at the top \w+ cards?|exile the top \w+ cards? of your library[\s\S]*?you may play/i;
+// Stax / taxes — resource denial (untap denial, cost taxes). "forced-sacrifice" is excluded:
+// the tagger labels "destroy target permanent" (edict/destroy removal) with this kind too, so
+// including it wrongly flags removal spells (Generous Gift, Stroke of Midnight) as stax.
+const STAX_EFFECT_KINDS = new Set(["tax"]);
+const STAX_RE = /(?:don't|doesn't|can't) untap|spells? cost \{?\d+\}?(?: generic)? (?:more|additional)|players? can't/i;
 
 /** For each card, the set of functional categories it fills. A card may fill several (that's how
  *  double-duty in Stage D is found). Counts derive from set sizes. */
@@ -68,6 +91,8 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
       for (const a of dc.tags.abilities) {
         if (RAMP_EFFECT_KINDS.has(a.effect.kind)) add("ramp", name);
         if (a.effect.kind === "draw-card") add("draw", name);
+        if (BURN_EFFECT_KINDS.has(a.effect.kind)) add("burn", name);
+        if (STAX_EFFECT_KINDS.has(a.effect.kind)) add("stax", name);
       }
     }
 
@@ -75,11 +100,15 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
     // the structured effect kinds above miss both.
     if (LAND_FETCH_RE.test(text) && ONTO_BATTLEFIELD_RE.test(text)) add("ramp", name);
     if (MANA_TOKEN_RE.test(text)) add("ramp", name);
+    if (SELECTION_RE.test(text)) add("cardSelection", name);
+    if (STACK_RE.test(text)) add("stackInteraction", name);
+    if (BURN_RE.test(text)) add("burn", name);
     // Wipe takes precedence over targeted removal so a mass effect isn't counted in both.
     if (BOARD_WIPE_RE.test(text)) add("boardWipe", name);
-    else if (TARGETED_REMOVAL_RE.test(text)) add("targetedRemoval", name);
+    else if ((TARGETED_REMOVAL_RE.test(text) || DAMAGE_REMOVAL_RE.test(text)) && !GRAVEYARD_HATE_RE.test(text)) add("targetedRemoval", name);
     if (PROTECTION_RE.test(text)) add("protection", name);
     if (TUTOR_RE.test(text) && !LAND_FETCH_RE.test(text)) add("tutor", name);
+    if (STAX_RE.test(text)) add("stax", name);
   }
 
   return m;
@@ -87,7 +116,8 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
 
 /** Command-Zone base targets (floors, except lands which is a two-sided band). Tunable. */
 export const BASE_TARGETS: Record<BuildCategory, number> = {
-  ramp: 10, draw: 10, targetedRemoval: 10, boardWipe: 3, protection: 0, tutor: 0, lands: 36,
+  ramp: 10, draw: 10, cardSelection: 4, targetedRemoval: 10, stackInteraction: 0, boardWipe: 3,
+  burn: 0, stax: 0, protection: 0, tutor: 0, lands: 36,
 };
 
 /** Per-archetype target shifts (added to the base, floored at 0). Starting points, tunable. */
@@ -104,12 +134,14 @@ export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<B
 /** Category importance in the weighted average. Interaction/engine categories weigh full; the
  *  situational ones (wipes/protection/tutors) weigh half. Tunable. */
 const CATEGORY_WEIGHT: Record<BuildCategory, number> = {
-  ramp: 1, draw: 1, targetedRemoval: 1, boardWipe: 0.5, protection: 0.5, tutor: 0.5, lands: 1,
+  ramp: 1, draw: 1, cardSelection: 0.5, targetedRemoval: 1, stackInteraction: 0.5, boardWipe: 0.5,
+  burn: 0.5, stax: 0.5, protection: 0.5, tutor: 0.5, lands: 1,
 };
 
 const LABELS: Record<BuildCategory, string> = {
-  ramp: "Ramp", draw: "Draw", targetedRemoval: "Removal", boardWipe: "Board wipes",
-  protection: "Protection", tutor: "Tutors", lands: "Lands",
+  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
+  stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain",
+  stax: "Stax", protection: "Protection", tutor: "Tutors", lands: "Lands",
 };
 
 /** Full credit within ±3 of the land target, linear falloff to 0 at ±12 (24 or 48 lands). */

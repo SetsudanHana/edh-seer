@@ -2,13 +2,19 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { DeckReport } from "../types.js";
 
-type Category = "ramp" | "draw" | "targetedRemoval" | "boardWipe" | "protection" | "tutor" | "lands";
+type Category =
+  | "ramp" | "draw" | "cardSelection" | "targetedRemoval" | "stackInteraction"
+  | "boardWipe" | "burn" | "stax" | "protection" | "tutor" | "lands";
 
 const CATEGORY_LABELS: Record<Category, string> = {
-  ramp: "Ramp", draw: "Draw", targetedRemoval: "Removal", boardWipe: "Board wipes",
+  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
+  stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
   protection: "Protection", tutor: "Tutors", lands: "Lands",
 };
-const CATEGORY_ORDER: Category[] = ["ramp", "draw", "targetedRemoval", "boardWipe", "protection", "tutor", "lands"];
+const CATEGORY_ORDER: Category[] = [
+  "ramp", "draw", "cardSelection", "targetedRemoval", "stackInteraction",
+  "boardWipe", "burn", "stax", "protection", "tutor", "lands",
+];
 
 // Paints the identity gradient into a 1px border by layering two backgrounds: the
 // inner rectangle (padding-box) matches the page so it reads as empty, the outer

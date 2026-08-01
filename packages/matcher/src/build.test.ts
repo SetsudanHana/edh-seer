@@ -50,7 +50,24 @@ test("targeted removal is detected from oracle text (Swords/Counterspell gap)", 
     mk("Counterspell", "Counter target spell.", "Instant"),
     mk("Beast Within", "Destroy target permanent. Its controller creates a 3/3 green Beast creature token.", "Instant"),
   ]);
-  expect(m.get("targetedRemoval")).toEqual(new Set(["Swords to Plowshares", "Counterspell", "Beast Within"]));
+  expect(m.get("targetedRemoval")).toEqual(new Set(["Swords to Plowshares", "Beast Within"]));
+  expect(m.get("stackInteraction")).toEqual(new Set(["Counterspell"]));
+});
+
+test("stack interaction: counters (typed), redirection, and stack-bounce; not plain removal", () => {
+  const m = detectBuildCategories([
+    mk("Counterspell", "Counter target spell.", "Instant"),
+    mk("Essence Scatter", "Counter target creature spell.", "Instant"),
+    mk("Deflecting Swat", "You may change the target of target spell or ability.", "Instant"),
+    mk("Narset Reversal", "Return target instant or sorcery spell to its owner's hand. You may copy that spell.", "Instant"),
+    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power.", "Instant"),
+  ]);
+  expect(m.get("stackInteraction")).toEqual(new Set(["Counterspell", "Essence Scatter", "Deflecting Swat", "Narset Reversal"]));
+});
+
+test("counters are no longer counted as targeted removal", () => {
+  const m = detectBuildCategories([mk("Counterspell", "Counter target spell.", "Instant")]);
+  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Counterspell");
 });
 
 test("board wipe is distinguished from targeted removal (wipe wins, not double-counted)", () => {
@@ -77,6 +94,7 @@ const completeShell = (): DeckCard[] => {
   const cards: DeckCard[] = [];
   for (let i = 0; i < 10; i++) cards.push(mk(`Rock ${i}`, "Add {C}.", "Artifact", rampAbility));
   for (let i = 0; i < 10; i++) cards.push(mk(`Draw ${i}`, "Draw a card.", "Sorcery", drawAbility));
+  for (let i = 0; i < 4; i++) cards.push(mk(`Scry ${i}`, "Scry 2.", "Sorcery"));
   for (let i = 0; i < 10; i++) cards.push(mk(`Kill ${i}`, "Destroy target creature.", "Instant"));
   for (let i = 0; i < 3; i++) cards.push(mk(`Wipe ${i}`, "Destroy all creatures.", "Sorcery"));
   for (let i = 0; i < 36; i++) cards.push(mk(`Land ${i}`, "", "Basic Land — Forest"));
@@ -174,4 +192,72 @@ test("mana-sac token makers (Eldrazi Spawn/Scion, Gold) count as ramp, like Trea
     mk("Sacrifice the Wastes", "As an additional cost to cast this spell, sacrifice a creature. Create three Gold tokens.", "Sorcery"),
   ]);
   expect(m.get("ramp")).toEqual(new Set(["Glimpse the Impossible", "Sacrifice the Wastes"]));
+});
+
+test("card selection (scry/surveil/impulse) is detected; plain draw is not selection", () => {
+  const m = detectBuildCategories([
+    mk("Preordain", "Scry 2, then draw a card.", "Sorcery"),
+    mk("Sink Below", "Surveil 2. Draw a card.", "Instant"),
+    mk("Light Up the Stage", "Exile the top two cards of your library. Until the end of your next turn, you may play those cards.", "Sorcery"),
+    mk("Divination", "Draw two cards.", "Sorcery"),
+  ]);
+  expect(m.get("cardSelection")).toEqual(new Set(["Preordain", "Sink Below", "Light Up the Stage"]));
+});
+
+test("burn & drain: damage/life-loss to players (not creatures, not self)", () => {
+  const m = detectBuildCategories([
+    mk("Lightning Helix", "Lightning Helix deals 3 damage to any target and you gain 3 life.", "Instant"),
+    mk("Exsanguinate", "Each opponent loses X life. You gain life equal to the life lost this way.", "Sorcery"),
+    mk("Lightning Bolt", "Lightning Bolt deals 3 damage to any target.", "Instant"),
+    mk("Flame Slash", "Flame Slash deals 4 damage to target creature.", "Sorcery"),
+    mk("Sign in Blood", "Target player draws two cards and loses 2 life.", "Sorcery"),
+  ]);
+  // Lightning Bolt/Helix hit "any target"; Exsanguinate is opponent life-loss.
+  expect(m.get("burn")).toEqual(new Set(["Lightning Helix", "Exsanguinate", "Lightning Bolt"]));
+  // Flame Slash is creature-only damage → removal, not burn.
+  expect(m.get("burn") ?? new Set()).not.toContain("Flame Slash");
+});
+
+test("damage-to-creature is targeted removal; graveyard-hate exile is not removal", () => {
+  const m = detectBuildCategories([
+    mk("Flame Slash", "Flame Slash deals 4 damage to target creature.", "Sorcery"),
+    mk("Release to Memory", "Exile target opponent's graveyard. For each creature card exiled this way, create a 1/1 colorless Spirit creature token.", "Instant"),
+  ]);
+  expect(m.get("targetedRemoval")).toContain("Flame Slash");
+  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Release to Memory");
+});
+
+test("removal with unrelated later graveyard text is still removal (no over-suppression)", () => {
+  const m = detectBuildCategories([
+    mk("Gaze of Justice", "Exile target creature. Flashback {W}{W} (You may cast this card from your graveyard for its flashback cost. Then exile it.)", "Sorcery"),
+    mk("Elspeth Conquers Death", "Exile target permanent an opponent controls with mana value 3 or greater. Return target creature or planeswalker card from your graveyard to the battlefield.", "Enchantment"),
+  ]);
+  expect(m.get("targetedRemoval")).toContain("Gaze of Justice");
+  expect(m.get("targetedRemoval")).toContain("Elspeth Conquers Death");
+});
+
+test("stax: untap denial and tax effects are detected", () => {
+  const m = detectBuildCategories([
+    mk("Winter Orb", "Lands don't untap during their controllers' untap steps.", "Artifact"),
+    mk("Thalia, Guardian of Thraben", "First strike. Noncreature spells cost {1} more to cast.", "Creature"),
+    mk("Divination", "Draw two cards.", "Sorcery"),
+  ]);
+  expect(m.get("stax")).toEqual(new Set(["Winter Orb", "Thalia, Guardian of Thraben"]));
+});
+
+test("edict/destroy (forced-sacrifice effect kind) is NOT stax", () => {
+  const m = detectBuildCategories([
+    mk("Generous Gift", "Destroy target permanent. Its controller creates a 3/3 green Elephant creature token.", "Instant",
+       [{ kind: "triggered", effect: { kind: "forced-sacrifice" } } as any]),
+    mk("Winter Orb", "Lands don't untap during their controllers' untap steps.", "Artifact"),
+  ]);
+  expect(m.get("stax") ?? new Set()).not.toContain("Generous Gift"); // forced-sacrifice no longer a stax signal
+  expect(m.get("stax")).toContain("Winter Orb"); // real stax still detected
+});
+
+test("redirection via 'choose new targets for' is stack interaction (Deflecting Swat)", () => {
+  const m = detectBuildCategories([
+    mk("Deflecting Swat", "If you control a commander, you may cast this spell without paying its mana cost. You may choose new targets for target spell or ability.", "Instant"),
+  ]);
+  expect(m.get("stackInteraction")).toContain("Deflecting Swat");
 });
