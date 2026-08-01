@@ -2,10 +2,10 @@ import type { DeckReport } from "../types.js";
 import { scoreBand, type ScoreTone } from "../lib/score-band.js";
 
 const TONE_CLASS: Record<ScoreTone, string> = {
-  low: "text-red-500",
-  mid: "text-amber-500",
-  good: "text-emerald-500",
-  high: "text-emerald-400",
+  low: "text-(--danger)",
+  mid: "text-(--warning)",
+  good: "text-(--success)",
+  high: "text-(--success)",
 };
 
 function ScoreTile({ label, score, sub }: { label: string; score: number; sub?: string }) {

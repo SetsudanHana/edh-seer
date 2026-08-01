@@ -23,9 +23,9 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
               <span className="flex-1 min-w-0">
                 <span className="block truncate">
                   {c.name}
-                  {isAnchor ? <span className="ml-2 text-xs text-amber-500">⚡ anchor</span> : null}
+                  {isAnchor ? <span className="ml-2 text-xs text-(--warning)">⚡ anchor</span> : null}
                   {c.doubleDuty ? (
-                    <span className="ml-2 text-xs text-emerald-500">
+                    <span className="ml-2 text-xs text-(--success)">
                       pulls double duty{c.doubleDutyRoles?.length ? ` (${c.doubleDutyRoles.join(", ")})` : ""}
                     </span>
                   ) : null}

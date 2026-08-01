@@ -245,6 +245,11 @@ test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)
   expect(screen.getByText("Ramp")).toBeInTheDocument(); // BuildBenchmarks category
 });
 
+test("HeadlineScores uses semantic tokens, not raw Tailwind palette classes", () => {
+  const { container } = render(<HeadlineScores report={{ synergyOverall: 1.2, buildScore: 1.0 } as any} />);
+  expect(container.innerHTML).not.toMatch(/text-(red|amber|emerald)-\d{3}/);
+});
+
 test("SuggestionsList renders each suggestion; hidden when empty", () => {
   const { rerender } = render(<SuggestionsList suggestions={SAMPLE.report.suggestions} />);
   expect(screen.getByText("No board wipe (target 3)")).toBeInTheDocument();
