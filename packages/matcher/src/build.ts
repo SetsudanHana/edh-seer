@@ -58,6 +58,9 @@ const RAMP_LAND_RE = /sacrifice\b[\s\S]*?search your library for (?:up to two|tw
 const MANA_TOKEN_RE = /create\b[\s\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?/i;
 // Card selection / filtering — distinct from raw draw (scry/surveil/impulse "look at/exile top N").
 const SELECTION_RE = /\bscry\b|\bsurveil\b|look at the top \w+ cards?|exile the top \w+ cards? of your library[\s\S]*?you may play/i;
+// Stax / taxes — resource denial (untap denial, cost taxes, forced sacrifice).
+const STAX_EFFECT_KINDS = new Set(["tax", "forced-sacrifice"]);
+const STAX_RE = /(?:don't|doesn't|can't) untap|spells? cost \{?\d+\}?(?: generic)? (?:more|additional)|players? can't/i;
 
 /** For each card, the set of functional categories it fills. A card may fill several (that's how
  *  double-duty in Stage D is found). Counts derive from set sizes. */
@@ -87,6 +90,7 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
         if (RAMP_EFFECT_KINDS.has(a.effect.kind)) add("ramp", name);
         if (a.effect.kind === "draw-card") add("draw", name);
         if (BURN_EFFECT_KINDS.has(a.effect.kind)) add("burn", name);
+        if (STAX_EFFECT_KINDS.has(a.effect.kind)) add("stax", name);
       }
     }
 
@@ -102,6 +106,7 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
     else if ((TARGETED_REMOVAL_RE.test(text) || DAMAGE_REMOVAL_RE.test(text)) && !GRAVEYARD_HATE_RE.test(text)) add("targetedRemoval", name);
     if (PROTECTION_RE.test(text)) add("protection", name);
     if (TUTOR_RE.test(text) && !LAND_FETCH_RE.test(text)) add("tutor", name);
+    if (STAX_RE.test(text)) add("stax", name);
   }
 
   return m;

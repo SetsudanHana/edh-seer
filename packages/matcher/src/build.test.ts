@@ -235,3 +235,12 @@ test("removal with unrelated later graveyard text is still removal (no over-supp
   expect(m.get("targetedRemoval")).toContain("Gaze of Justice");
   expect(m.get("targetedRemoval")).toContain("Elspeth Conquers Death");
 });
+
+test("stax: untap denial and tax effects are detected", () => {
+  const m = detectBuildCategories([
+    mk("Winter Orb", "Lands don't untap during their controllers' untap steps.", "Artifact"),
+    mk("Thalia, Guardian of Thraben", "First strike. Noncreature spells cost {1} more to cast.", "Creature"),
+    mk("Divination", "Draw two cards.", "Sorcery"),
+  ]);
+  expect(m.get("stax")).toEqual(new Set(["Winter Orb", "Thalia, Guardian of Thraben"]));
+});
