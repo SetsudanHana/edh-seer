@@ -66,7 +66,9 @@ export interface CardSignal {
  *  plan. Tunable. */
 export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, { tags?: string[]; effectKinds?: string[] }>> = {
   tokens: { tags: ["create-token:any"], effectKinds: ["token-generation", "token-doubling"] },
-  aristocrats: { effectKinds: ["forced-sacrifice", "drain"] },
+  // death/sacrifice events define aristocrats; forced-sacrifice dropped — edict engines land
+  // via their dies:/sacrifice: emits, and dropping it sheds the destroy→forced-sacrifice mislabel.
+  aristocrats: { tags: ["dies:", "sacrifice:"], effectKinds: ["drain"] },
   lifegain: { tags: ["gain-life:any"], effectKinds: ["lifegain"] },
   landfall: { tags: ["enters:land"] },
   spellslinger: { tags: ["cast:instant", "cast:sorcery"], effectKinds: ["copy-spell"] },
@@ -75,7 +77,10 @@ export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, { tags?: string[]; e
 };
 
 function matchesSignature(signal: CardSignal, sig: { tags?: string[]; effectKinds?: string[] }): boolean {
-  const tagHit = sig.tags?.some((t) => signal.themeTags.includes(t)) ?? false;
+  const tagHit =
+    sig.tags?.some((t) =>
+      t.endsWith(":") ? signal.themeTags.some((tt) => tt.startsWith(t)) : signal.themeTags.includes(t),
+    ) ?? false;
   const kindHit = sig.effectKinds?.some((k) => signal.effectKinds.includes(k)) ?? false;
   return tagHit || kindHit;
 }

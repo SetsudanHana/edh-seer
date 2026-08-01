@@ -24,14 +24,32 @@ test("a card whose only effect kind is the broad, excluded 'damage' kind contrib
   expect(out).toEqual([{ name: "goodstuff", label: "Goodstuff / Midrange", confidence: 0 }]);
 });
 
+test("aristocrats keys on dies:/sacrifice: events and drain; unrelated cards do not", () => {
+  const signals = [
+    sig("Death payoff", { themeTags: ["dies:creature"] }),        // Grim Haruspex shape
+    sig("Sac-token payoff", { themeTags: ["sacrifice:token"] }),  // Mirkwood Bats shape
+    sig("Sac-any payoff", { themeTags: ["sacrifice:permanent"] }),// Mayhem Devil shape
+    sig("Drainer", { effectKinds: ["drain"] }),                   // non-death drain
+    sig("Unrelated", { themeTags: ["enters:creature"], effectKinds: ["draw-card"] }),
+  ];
+  const out = detectArchetypes(signals, [], 12);
+  const aristo = out.find((r) => r.name === "aristocrats");
+  expect(aristo?.confidence).toBeCloseTo(4 / 12, 5); // 4 of 5 match; "Unrelated" does not
+});
+
+test("prefix signature tag matches by prefix, not exact", () => {
+  expect(detectArchetypes([sig("A", { themeTags: ["dies:creature"] })], [], 12).some((r) => r.name === "aristocrats")).toBe(true);
+  expect(detectArchetypes([sig("B", { themeTags: ["enters:creature"] })], [], 12).some((r) => r.name === "aristocrats")).toBe(false);
+});
+
 test("ranks two archetypes above the floor by distinct-card count, descending", () => {
   const signals = [
-    sig("A", { effectKinds: ["forced-sacrifice"] }),
-    sig("B", { effectKinds: ["forced-sacrifice"] }),
-    sig("C", { effectKinds: ["forced-sacrifice"] }),
-    sig("D", { effectKinds: ["forced-sacrifice"] }),
-    sig("E", { effectKinds: ["forced-sacrifice"] }),
-    sig("F", { effectKinds: ["forced-sacrifice"] }), // 6 aristocrats cards
+    sig("A", { themeTags: ["dies:creature"] }),
+    sig("B", { themeTags: ["dies:creature"] }),
+    sig("C", { themeTags: ["dies:creature"] }),
+    sig("D", { themeTags: ["dies:creature"] }),
+    sig("E", { themeTags: ["dies:creature"] }),
+    sig("F", { themeTags: ["dies:creature"] }), // 6 aristocrats cards
     sig("G", { themeTags: ["gain-life:any"] }),
     sig("H", { themeTags: ["gain-life:any"] }),
     sig("I", { themeTags: ["gain-life:any"] }),
