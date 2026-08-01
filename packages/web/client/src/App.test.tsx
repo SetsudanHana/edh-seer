@@ -9,3 +9,8 @@ test("renders a styled HeroUI Analyze button", () => {
   // HeroUI Buttons carry generated utility classes; unstyled plain buttons would not.
   expect(btn.className.length).toBeGreaterThan(0);
 });
+
+test("empty state offers a one-click example deck", async () => {
+  render(<App />);
+  expect(screen.getByRole("button", { name: /example deck/i })).toBeInTheDocument();
+});
