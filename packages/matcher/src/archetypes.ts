@@ -56,15 +56,16 @@ export interface CardSignal {
   themeTags: string[];
   /** The card's own ability effect kinds (ability.effect.kind). */
   effectKinds: string[];
+  /** Voltron-relevant card subtypes: "equipment" always; "aura" only when it enchants a creature. */
+  subtypes: string[];
 }
 
 /** Each archetype's DEFINING own-card mechanism. Deliberately tight and mostly disjoint:
  *  it EXCLUDES broad shared kinds (damage, draw-card, pump) that would make every card
  *  match every archetype (the bug this replaces). Tag strings mirror the validated ones
- *  already used in mechanisms.ts CATEGORY_MATCH. Voltron is intentionally omitted — it
- *  needs equipment/aura + single-target detection, deferred to the heuristic-archetype
- *  plan. Tunable. */
-export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, { tags?: string[]; effectKinds?: string[] }>> = {
+ *  already used in mechanisms.ts CATEGORY_MATCH. Voltron keys on subtypes (equipment,
+ *  creature-enchanting auras) rather than tags/effect-kinds. Tunable. */
+export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, { tags?: string[]; effectKinds?: string[]; subtypes?: string[] }>> = {
   tokens: { tags: ["create-token:any"], effectKinds: ["token-generation", "token-doubling"] },
   // death/sacrifice events define aristocrats; forced-sacrifice dropped — edict engines land
   // via their dies:/sacrifice: emits, and dropping it sheds the destroy→forced-sacrifice mislabel.
@@ -74,15 +75,17 @@ export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, { tags?: string[]; e
   spellslinger: { tags: ["cast:instant", "cast:sorcery"], effectKinds: ["copy-spell"] },
   reanimator: { effectKinds: ["graveyard-recursion", "animate"] },
   counters: { tags: ["proliferate:any"], effectKinds: ["counter-placement", "enters-with-counters", "proliferate"] },
+  voltron: { subtypes: ["equipment", "aura"] },
 };
 
-function matchesSignature(signal: CardSignal, sig: { tags?: string[]; effectKinds?: string[] }): boolean {
+function matchesSignature(signal: CardSignal, sig: { tags?: string[]; effectKinds?: string[]; subtypes?: string[] }): boolean {
   const tagHit =
     sig.tags?.some((t) =>
       t.endsWith(":") ? signal.themeTags.some((tt) => tt.startsWith(t)) : signal.themeTags.includes(t),
     ) ?? false;
   const kindHit = sig.effectKinds?.some((k) => signal.effectKinds.includes(k)) ?? false;
-  return tagHit || kindHit;
+  const subtypeHit = sig.subtypes?.some((s) => signal.subtypes.includes(s)) ?? false;
+  return tagHit || kindHit || subtypeHit;
 }
 
 export function detectArchetypes(
@@ -92,7 +95,7 @@ export function detectArchetypes(
 ): ArchetypeRanking[] {
   const cardsByArchetype = new Map<Archetype, Set<string>>();
   for (const signal of cardSignals) {
-    for (const [archetype, sig] of Object.entries(ARCHETYPE_SIGNATURE) as [Archetype, { tags?: string[]; effectKinds?: string[] }][]) {
+    for (const [archetype, sig] of Object.entries(ARCHETYPE_SIGNATURE) as [Archetype, { tags?: string[]; effectKinds?: string[]; subtypes?: string[] }][]) {
       if (matchesSignature(signal, sig)) {
         const set = cardsByArchetype.get(archetype) ?? new Set<string>();
         set.add(signal.name);

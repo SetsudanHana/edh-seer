@@ -264,6 +264,9 @@ export function analyzeDeckStructured(
       name: dc.card.name,
       themeTags: [...cardThemeTags(dc.tags!)],
       effectKinds: dc.tags!.abilities.map((a) => a.effect.kind),
+      subtypes: (dc.tags!.characteristics?.subtypes ?? []).filter(
+        (s) => s === "equipment" || (s === "aura" && /enchant creature/i.test(dc.card.oracleText)),
+      ),
     }));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);

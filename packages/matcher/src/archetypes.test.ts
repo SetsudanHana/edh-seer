@@ -1,10 +1,11 @@
 import { expect, test } from "vitest";
 import { detectArchetypes, type CardSignal } from "./archetypes.js";
 
-const sig = (name: string, opts: { themeTags?: string[]; effectKinds?: string[] }): CardSignal => ({
+const sig = (name: string, opts: { themeTags?: string[]; effectKinds?: string[]; subtypes?: string[] }): CardSignal => ({
   name,
   themeTags: opts.themeTags ?? [],
   effectKinds: opts.effectKinds ?? [],
+  subtypes: opts.subtypes ?? [],
 });
 
 test("a card with its own token-generation effect kind maps to tokens as primary", () => {
@@ -96,4 +97,20 @@ test("a spellslinger card matches via the cast:instant theme TAG, not an effect 
   const out = detectArchetypes(signals, [], 12);
   expect(out[0].name).toBe("spellslinger");
   expect(out[0].confidence).toBeCloseTo(1 / 12, 5);
+});
+
+test("voltron: equipment and creature-auras map to voltron; unrelated does not", () => {
+  const signals = [
+    sig("Sword", { subtypes: ["equipment"] }),
+    sig("Ethereal Armor", { subtypes: ["aura"] }),
+    sig("Some Creature", { effectKinds: ["draw-card"] }),
+  ];
+  const out = detectArchetypes(signals, [], 12);
+  const v = out.find((r) => r.name === "voltron");
+  expect(v?.confidence).toBeCloseTo(2 / 12, 5); // Sword + Ethereal Armor, not Some Creature
+});
+
+test("a card with no voltron subtype is not voltron", () => {
+  const out = detectArchetypes([sig("X", { themeTags: ["enters:creature"] })], [], 12);
+  expect(out.some((r) => r.name === "voltron")).toBe(false);
 });
