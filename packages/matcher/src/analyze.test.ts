@@ -456,3 +456,24 @@ test("report carries a BUILD score, categories, and suggestions", () => {
   expect(report.buildCategories?.some((c) => c.category === "ramp")).toBe(true);
   expect(report.suggestions?.length).toBeGreaterThan(0);
 });
+
+test("a card filling a functional role AND on-axis is flagged double-duty and boosted", () => {
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility); // draws (role) + on-axis edge
+  const report = analyzeDeckStructured([maker, payoff], ["Inalla"], H);
+  const kd = report.cards.find((c) => c.name === "Kindred Discovery")!;
+  expect(kd.doubleDuty).toBe(true);
+  expect(kd.doubleDutyRoles).toContain("draw");
+  expect(kd.synergyRating).toBeGreaterThan(0);
+});
+
+test("a card filling a functional role but OFF-axis is NOT double-duty (needs both)", () => {
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility); // on-axis draw → double-duty
+  // A plain mana rock: has the ramp role but no theme tags, so it forms no on-axis edge.
+  const rock = dc("Mana Rock", [{ kind: "static", effect: { kind: "mana-generation" } }], [], "Artifact");
+  const report = analyzeDeckStructured([maker, payoff, rock], ["Inalla"], H);
+  const mr = report.cards.find((c) => c.name === "Mana Rock")!;
+  expect(mr.doubleDuty).toBeFalsy();       // has a role, but off-axis
+  expect(mr.doubleDutyRoles).toBeUndefined();
+});

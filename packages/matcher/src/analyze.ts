@@ -24,7 +24,7 @@ import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
 import { buildAxis, axisFactor } from "./axis.js";
 import { detectArchetypes } from "./archetypes.js";
-import { computeBuild } from "./build.js";
+import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
 
 /** Uniform IDF: every theme has equal corpus weight, so rankThemes/themeWeights degrade to a
  *  pure deck-frequency ranking. Stage 3 replaces this with a real structured-corpus TagStats. */
@@ -206,7 +206,19 @@ export function analyzeDeckStructured(
       onAxis: onAxisCards.has(c.name),
     })),
   );
-  const ratedCards: CardSynergy[] = cards.map((c) => ({ ...c, synergyRating: ratingByName.get(c.name) ?? 0 }));
+  // Double-duty: a card that fills a functional BUILD role AND sits on the deck's synergy axis is
+  // efficient — one card, two jobs — so it gets a small capped rating premium and a marker.
+  // ponytail: detectBuildCategories also runs inside computeBuild below; the second linear scan is
+  // negligible and keeps computeBuild's signature untouched.
+  const buildRoles = rolesByCard(detectBuildCategories(resolved));
+  const ratedCards: CardSynergy[] = cards.map((c) => {
+    const roles = buildRoles.get(c.name);
+    const base = ratingByName.get(c.name) ?? 0;
+    const doubleDuty = !!roles && roles.length > 0 && onAxisCards.has(c.name);
+    return doubleDuty
+      ? { ...c, synergyRating: doubleDutyRating(base), doubleDuty: true, doubleDutyRoles: roles }
+      : { ...c, synergyRating: base };
+  });
 
   const themes = [...deckFreq.entries()]
     .map(([tag, count]) => ({ tag, count }))
