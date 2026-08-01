@@ -1,7 +1,7 @@
 import { landHandProbabilities } from "../lib/land-math.js";
 
 const CHART_HEIGHT = 120;
-const LABEL_ALLOWANCE = 20;
+const LABEL_ALLOWANCE = 28;
 
 export function LandMathChart({ landCount, deckSize }: { landCount: number; deckSize: number }) {
   const probs = landHandProbabilities(landCount, deckSize);
@@ -10,7 +10,7 @@ export function LandMathChart({ landCount, deckSize }: { landCount: number; deck
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">Lands in your opening 7</h3>
-      <div className="flex items-end gap-0.5" style={{ height: CHART_HEIGHT }}>
+      <div className="flex items-end gap-0.5 mt-1" style={{ height: CHART_HEIGHT }}>
         {probs.map((p, k) => {
           const heightPx = Math.round((p / max) * (CHART_HEIGHT - LABEL_ALLOWANCE));
           const pct = Math.round(p * 100);
@@ -27,7 +27,7 @@ export function LandMathChart({ landCount, deckSize }: { landCount: number; deck
                 className="w-full max-w-6 rounded-t-[4px]"
                 style={{ height: `${heightPx}px`, backgroundImage: "var(--accent-gradient-y)" }}
               />
-              <span className="font-mono text-[10px] text-(--muted)">{k}</span>
+              <span className="font-mono text-(--text-2xs) text-(--muted)">{k}</span>
             </div>
           );
         })}
