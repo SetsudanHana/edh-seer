@@ -36,6 +36,9 @@ export interface CardSynergy {
   /** 0–5 deck-relative, axis-weighted synergy rating. Set only by @mtg/matcher's
    *  analyzeDeckStructured (needs structured theme tags); undefined on the flat engine. */
   synergyRating?: number;
+  /** Directional authority: the card's payoff support (√ of the summed weight of edges that FEED
+   *  it). A well-fed anchor scores high; a pure feeder ~0. Set only by analyzeDeckStructured. */
+  authority?: number;
   /** True when the card fills a functional BUILD role AND has an on-axis synergy edge — one card,
    *  two jobs. Set only by @mtg/matcher's analyzeDeckStructured; the card also carries a small
    *  capped synergyRating premium. Undefined on the flat engine. */
@@ -96,6 +99,12 @@ export interface DeckReport {
   buildCategories?: { category: string; count: number; target: number }[];
   /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
   suggestions?: string[];
+  /** 0–5 Anchoring facet: does the deck have strong, well-supported payoffs? From absolute
+   *  authority. Matcher-only. */
+  anchoring?: number;
+  /** 0–5 composite headline SYNERGY = blend of breadth (positiveCoherence) and anchoring.
+   *  Matcher-only. */
+  synergyOverall?: number;
 }
 
 interface Agg {
