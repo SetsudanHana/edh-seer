@@ -30,6 +30,27 @@ test("event edge: a token-maker's emit matches a wizard-ETB payoff trigger", () 
   expect(reasons.some((r) => r.text.includes("Inalla") && r.text.includes("Kindred Discovery"))).toBe(true);
 });
 
+test("reason text is human-readable — no raw tag tokens leak", () => {
+  const maker = base("Inalla", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: false } },
+    effect: { kind: "token-generation", subject: { subtype: "wizard", control: "you", token: true } },
+    emits: [{ verb: "enters", subject: { subtype: "wizard", control: "you", token: true } }],
+  }]);
+  const etbPayoff = base("Kindred Discovery", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const reasons = pairReasons(maker, etbPayoff, H);
+  const etb = reasons.find((r) => r.tag === "enters:creature")!;
+  expect(etb.text).not.toMatch(/:/); // no "enters:creature" style token
+  expect(etb.text).toContain("a creature entering");
+  // both card names still present (CLI + engine rely on this)
+  expect(etb.text).toContain(maker.card.name);
+  expect(etb.text).toContain(etbPayoff.card.name);
+});
+
 test("static edge: a zombie lord matches a zombie by characteristics", () => {
   const lord = base("Death Baron", [{
     kind: "static",

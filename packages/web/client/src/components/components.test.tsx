@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { expect, test } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { DeckIdentity } from "./DeckIdentity.js";
@@ -55,6 +55,12 @@ test("ComboList shows the combo result", () => {
   expect(screen.getByText(/Phyrexian Altar/)).toBeInTheDocument();
 });
 
+test("ComboList section title uses the eyebrow convention, not a bold heading", () => {
+  const { container } = render(<ComboList combos={[{ cards: ["A", "B"], results: ["X"] } as any]} />);
+  const title = [...container.querySelectorAll("*")].find((el) => el.textContent === "Combos");
+  expect(title?.className).toContain("eyebrow");
+});
+
 test("MissingCards lists unresolved names", () => {
   render(<MissingCards missing={SAMPLE.missing} />);
   expect(screen.getByText(/Beholder's Death Ray/)).toBeInTheDocument();
@@ -65,18 +71,22 @@ test("MissingCards renders nothing when empty", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
-test("StatTiles shows avg CMC and land count", () => {
-  render(<StatTiles avgManaValue={2.7} landCount={38} />);
+test("StatTiles shows avg CMC", () => {
+  render(<StatTiles avgManaValue={2.7} />);
   expect(screen.getByText("2.7")).toBeInTheDocument();
-  expect(screen.getByText("38")).toBeInTheDocument();
   expect(screen.getByText("Avg CMC")).toBeInTheDocument();
-  expect(screen.getByText("Lands")).toBeInTheDocument();
+});
+
+test("Overview shows Avg CMC but not a standalone Lands stat tile", () => {
+  render(<StatTiles avgManaValue={2.7} />);
+  expect(screen.getByText("Avg CMC")).toBeInTheDocument();
+  expect(screen.queryByText("Lands")).not.toBeInTheDocument();
 });
 
 test("OverviewTab renders deck identity and stat tiles from the full response", () => {
   render(<OverviewTab data={SAMPLE} />);
   expect(screen.getByText("Tokens")).toBeInTheDocument(); // DeckIdentity theme
-  expect(screen.getByText("38")).toBeInTheDocument(); // landCount stat tile
+  expect(screen.getByText("2.7")).toBeInTheDocument(); // avgManaValue stat tile
 });
 
 test("ManaCurveChart labels the 7+ bucket and shows the peak count", () => {
@@ -128,33 +138,57 @@ test("ArchetypeBoard shows the empty-state message when archetypes is undefined"
   expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();
 });
 
-test("CardList sorts by the max of any bucket/synergy score, descending", () => {
+test("Archetypes tab leads with ranked strategies", () => {
+  render(<ArchetypeBoard
+    strategies={[{ name: "tokens", label: "Tokens", confidence: 0.74 }] as any}
+    archetypes={[]}
+  />);
+  expect(screen.getByText("Strategies")).toBeInTheDocument();
+  expect(screen.getByText("Tokens")).toBeInTheDocument();
+  expect(screen.getByText("74%")).toBeInTheDocument();
+});
+
+test("an expanded synergy group caps its pair list", () => {
+  const pairs = Array.from({ length: 12 }, (_, i) => ({ a: `A${i}`, b: `B${i}`, reasons: [{ text: "r" }] }));
+  render(<ArchetypeBoard strategies={[]} archetypes={[{ category: "x", label: "Group X", cards: Array(12).fill("c"), pairs } as any]} />);
+  fireEvent.click(screen.getByText("Group X"));
+  expect(screen.getByText(/\+4 more/)).toBeInTheDocument();
+});
+
+test("CardList sorts by synergyRating descending, then name", () => {
   render(<CardList cards={SAMPLE.report.cards} />);
   // Row 0 is the header; data rows start at index 1.
   const rows = screen.getAllByRole("row").slice(1).map((el) => el.textContent ?? "");
-  // Krenko: max(bucketScores.win-condition=1.38, score=6) = 6.
-  // Impact Tremors: max(bucketScores.consistency=1.0, .win-condition=0.23, score=2) = 2.
+  // Krenko: synergyRating 5. Impact Tremors: synergyRating 3.3.
   expect(rows[0]).toContain("Krenko, Mob Boss");
   expect(rows[1]).toContain("Impact Tremors");
 });
 
-test("CardList shows one role-badge dot per bucket the card qualifies for", () => {
-  render(<CardList cards={SAMPLE.report.cards} />);
-  // Scope to Krenko's own row — both cards render at once, and Impact Tremors DOES
-  // have a Consistency dot, so an unscoped query would false-positive on it.
-  const rows = screen.getAllByRole("row");
-  const krenkoRow = rows.find((r) => r.textContent?.includes("Krenko, Mob Boss"))!;
-  expect(within(krenkoRow).getByTitle(/Win Condition: 1.38/)).toBeInTheDocument();
-  expect(within(krenkoRow).getByTitle(/Synergy: 6.00/)).toBeInTheDocument();
-  expect(within(krenkoRow).queryByTitle(/Consistency/)).not.toBeInTheDocument(); // Krenko's consistency is 0
+test("Cards tab shows a card's functional role as a readable chip", () => {
+  const cards = [{ name: "Sol Ring", roles: ["ramp"], synergyRating: 1.3, topPartners: [] }] as any;
+  render(<CardList cards={cards} />);
+  // Scope to the data row — with only one category present, "Ramp" also renders as
+  // the filter chip, so an unscoped query would find two matches.
+  const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Sol Ring"))!;
+  expect(within(row).getByText("Ramp")).toBeInTheDocument();
 });
 
-test("CardList filter narrows to cards qualifying for the selected bucket", async () => {
-  render(<CardList cards={SAMPLE.report.cards} />);
-  await userEvent.click(screen.getByText("Consistency"));
-  // Only Impact Tremors has consistency > 0; Krenko's consistency is 0.
-  expect(screen.getByText("Impact Tremors")).toBeInTheDocument();
-  expect(screen.queryByText("Krenko, Mob Boss")).not.toBeInTheDocument();
+test("Cards tab filters by functional category matching the Overview vocabulary", () => {
+  const cards = [
+    { name: "Sol Ring", roles: ["ramp"], synergyRating: 1.3, topPartners: [] },
+    { name: "Chaos Warp", roles: ["targetedRemoval"], synergyRating: 0.6, topPartners: [] },
+  ] as any;
+  render(<CardList cards={cards} />);
+  fireEvent.click(screen.getByRole("button", { name: "Removal" }));
+  expect(screen.queryByText("Sol Ring")).not.toBeInTheDocument();
+  expect(screen.getByText("Chaos Warp")).toBeInTheDocument();
+});
+
+test("Cards tab shows the top-partner reason under the card name", () => {
+  const cards = [{ name: "Impact Tremors", roles: [], synergyRating: 3.0,
+    topPartners: [{ name: "Krenko", reasons: [{ text: "Impact Tremors triggers on a creature entering; Krenko supplies it" }] }] }] as any;
+  render(<CardList cards={cards} />);
+  expect(screen.getByText(/triggers on a creature entering/)).toBeInTheDocument();
 });
 
 test("ReportTabs defaults to the Overview tab and switches on click", async () => {
@@ -243,6 +277,11 @@ test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)
   expect(screen.getByText(/Build benchmarks/i)).toBeInTheDocument();
   expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
   expect(screen.getByText("Ramp")).toBeInTheDocument(); // BuildBenchmarks category
+});
+
+test("HeadlineScores uses semantic tokens, not raw Tailwind palette classes", () => {
+  const { container } = render(<HeadlineScores report={{ synergyOverall: 1.2, buildScore: 1.0 } as any} />);
+  expect(container.innerHTML).not.toMatch(/text-(red|amber|emerald)-\d{3}/);
 });
 
 test("SuggestionsList renders each suggestion; hidden when empty", () => {

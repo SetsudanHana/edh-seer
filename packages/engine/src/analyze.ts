@@ -46,6 +46,10 @@ export interface CardSynergy {
   /** The functional role name(s) the double-duty card fills (BuildCategory values like "ramp"),
    *  for the UI marker. Plain string[] — this package must not depend on @mtg/matcher. Matcher-only. */
   doubleDutyRoles?: string[];
+  /** Every functional BUILD role this card fills (BuildCategory values like "ramp", "draw").
+   *  Superset of doubleDutyRoles — present on all cards with a role, not only double-duty ones.
+   *  Matcher-only; undefined on the flat engine and on cards that fill no functional role. */
+  roles?: string[];
 }
 
 /** Populated only by @mtg/matcher's analyzeDeckStructured (see that package's

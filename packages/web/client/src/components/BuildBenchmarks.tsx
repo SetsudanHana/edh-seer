@@ -26,12 +26,12 @@ export function BuildBenchmarks({ categories }: { categories: DeckReport["buildC
               <span className="w-24 shrink-0 text-sm">{name}</span>
               <span className="flex-1 h-2 rounded-full bg-(--separator) overflow-hidden">
                 <span
-                  className={`block h-full rounded-full ${flagged ? "bg-amber-500" : "bg-emerald-500"}`}
+                  className={`block h-full rounded-full ${flagged ? "bg-(--warning)" : "bg-(--success)"}`}
                   style={{ width: `${fill * 100}%` }}
                 />
               </span>
               <span className="w-14 shrink-0 text-right text-sm tabular-nums">{c.count}/{c.target}</span>
-              <span className="w-4 shrink-0 text-sm" aria-hidden>{flagged ? "▲" : "✓"}</span>
+              <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
             </li>
           );
         })}

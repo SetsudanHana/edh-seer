@@ -520,6 +520,17 @@ test("a card filling a functional role but OFF-axis is NOT double-duty (needs bo
   expect(mr.doubleDutyRoles).toBeUndefined();
 });
 
+test("every card carries its functional roles, not just double-duty cards", () => {
+  const ramp = dc("Sol Ring", rampAbility, [], "Artifact");
+  const draw = dc("Phyrexian Arena", drawAbility);
+  const removal = dc("Lightning Bolt", removalAbility, [], "Instant");
+  const vanilla = dc("Grizzly Bears", []);
+  const report = analyzeDeckStructured([ramp, draw, removal, vanilla], undefined, H);
+  const sol = report.cards.find((c) => c.name === "Sol Ring")!; // ramp, not necessarily double-duty
+  expect(sol.roles).toContain("ramp");
+  expect(report.cards.find((c) => c.name === "Grizzly Bears")!.roles).toBeUndefined();
+});
+
 test("directedReasons is a pure one-way feed: maker -> payoff only, not payoff -> maker", () => {
   const payoff = dc("Impact Tremors", impactTremorsAbility);
   const maker = dc("Maker 1", tokenMakerAbility, ["goblin"]);

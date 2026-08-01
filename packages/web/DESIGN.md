@@ -76,7 +76,7 @@ components:
 
 This is deliberately not a novel visual world. Two rolled directions — a seed-catalog world (cards as nursery packets) and a tournament-standings-board world — were reviewed and set aside on purpose, in favor of the plain thing done right: a conventional dark analytics dashboard, held to the actual craft bar this product competes against — **Scryfall** and **Archidekt/Moxfield** — not a generic SaaS template and not an illustrated MTG-card pastiche.
 
-The system is sans throughout (Inter for every heading and body word, JetBrains Mono for every number and label), flat and border-driven (no shadows), with one identity-driven accent instead of a fixed brand color: the accent resolves to the analyzed deck's own MTG color identity, or the player's own pinned pick before any deck is analyzed (`client/src/lib/color-identity.ts`, `use-accent-identity.ts`). Ranked data reads as real tables, not decorative lists — the Cards tab is a rank/name/roles/score table, not a bullet list with dots.
+The system is sans throughout (Inter for every heading and body word, JetBrains Mono for every number and label), flat and border-driven (no shadows), with one identity-driven accent instead of a fixed brand color: the accent resolves to the analyzed deck's own MTG color identity, or the player's own pinned pick before any deck is analyzed (`client/src/lib/color-identity.ts`, `use-accent-identity.ts`). Ranked data reads as real tables, not decorative lists — the Cards tab is a rank/name/roles/synergy table, not a bullet list.
 
 **Key Characteristics:**
 - One typeface family per register (Inter for words, JetBrains Mono for numbers/labels) — no display face, no serif
@@ -107,8 +107,8 @@ Near-monochrome dark graphite with one accent and a small set of semantic/catego
 - **Danger** (`#e5484d`): clean red — unresolved-card state.
 - **Success** (`#34c77b`): dashboard-standard green.
 
-### Category Markers
-Four jewel hues mark the card-role buckets (Consistency / Efficiency / Synergy / Win Condition) as small dots in the Cards table's Roles column:
+### Category Markers (legacy tokens, unused by the Cards table)
+Four jewel hues were reserved for card-role buckets (Consistency / Efficiency / Synergy / Win Condition) as colored dots. The shipped Cards tab instead renders each card's functional categories (Ramp / Draw / Removal / Board wipes / Protection / Tutors / Lands) as readable text chips in the Roles column, so these tokens no longer back that column:
 - **Consistency** — dusty blue (`#6e8fb5`)
 - **Efficiency** — amber (`#d99a3d`, shared with Warning)
 - **Synergy** — violet (`#9b7fd4`)
@@ -117,7 +117,12 @@ Four jewel hues mark the card-role buckets (Consistency / Efficiency / Synergy /
 ### Named Rules
 **The Identity-Driven Accent Rule.** `--accent` is computed, not fixed. It is never hand-set to a literal hex in a component; it resolves from `identityColor()` (analyzed deck) or the player's `localStorage` pick, falling back to the neutral blue. Any new UI referencing "the accent" reads the CSS variable, never a literal color.
 
-**The No-Kicker Rule.** No page or section heading gets a small label stacked directly above it. A label pairs inline with its value (`DECK IDENTITY  Tokens`, `# / CARD / ROLES / SCORE` as table headers) or is the heading itself (small-caps section titles like "Mana curve"), never a two-line kicker-then-title stack.
+**The No-Kicker Rule.** No page or section heading gets a small label stacked directly above it. A label pairs inline with its value (`DECK IDENTITY  Tokens`, `# / CARD / ROLES / SYNERGY` as table headers) or is the heading itself (small-caps section titles like "Mana curve"), never a two-line kicker-then-title stack.
+
+**The Semantic-vs-Accent Rule.** State and quality use the semantic tokens
+(`--danger`, `--warning`, `--success`); identity and structure use `--accent`
+(deck identity, active tab, focus ring, combo connector). Components never use a
+raw Tailwind palette color class (`text-red-500`, `bg-amber-500`, …).
 
 ## Typography
 
@@ -130,16 +135,17 @@ Four jewel hues mark the card-role buckets (Consistency / Efficiency / Synergy /
 - **Heading** (700, `-0.01em` tracking, sizes from `text-xl` to `text-2xl` by context): page title, section titles (Combos, Unresolved), deck-identity theme name.
 - **Body** (400, base size, Inter): card names, archetype pair descriptions, prose copy.
 - **Label** (500, `0.6875rem`, `0.1em` tracking, uppercase, mono — the `.eyebrow` class): field labels, tab labels, table column headers, stat-tile labels, inline value labels ("DECK IDENTITY", "YOUR COLORS").
-- **Data** (mono, `tabular-nums` where numeric): every score, rank, count, percentage — table Score column, stat-tile values, chart peak labels, pip contents, resolved-count.
+- **Data** (mono, `tabular-nums` where numeric): every score, rank, count, percentage — table Synergy column, stat-tile values, chart peak labels, pip contents, resolved-count.
+- **Micro-label** (`--text-2xs`, 10px, mono): chart axis tick labels only (mana curve, land math). The one step below `label`.
 
 ### Named Rules
-**The Tabular-Data Rule.** Any ranked or numeric column (table Score, rank number, stat-tile value) uses `.tabular-nums` so figures align at a fixed width — a table that jitters column widths as values change has failed this rule.
+**The Tabular-Data Rule.** Any ranked or numeric column (table Synergy, rank number, stat-tile value) uses `.tabular-nums` so figures align at a fixed width — a table that jitters column widths as values change has failed this rule.
 
 ## Layout
 
 Single-column, centered reading column: `max-w-5xl` container, `mx-auto`, `p-8`, vertical rhythm via `flex flex-col gap-8` at the page level and `gap-6` within the report body. The report is a tab strip (underline-style active indicator in the accent color) gating four panels (Overview / Archetypes / Cards / Combos); an unresolved-cards warning panel renders above the tabs when present.
 
-Stat tiles use a responsive grid (`grid-cols-2` narrow, `sm:grid-cols-5` wide). The Cards tab renders a real `<table>` — header row in label typography, data rows separated by 1px separators, the rank column zero-padded and tabular, the Score column right-aligned. Bar charts (mana curve, land-math) are fixed-height (120px) horizontal bar rows in the accent color.
+Stat tiles use a responsive grid (`grid-cols-2` narrow, `sm:grid-cols-5` wide). The Cards tab renders a real `<table>` — header row in label typography, data rows separated by 1px separators, the rank column zero-padded and tabular, the Synergy column right-aligned. Bar charts (mana curve, land-math) are fixed-height (120px) horizontal bar rows in the accent color.
 
 ## Elevation & Depth
 
@@ -162,14 +168,15 @@ One consistent corner radius (`--radius: 0.5rem` / 8px) on every rectangular con
 Every score, count, or tally that needs emphasis renders inside a small circular outline — `min-width 1.75rem`, `height 1.75rem`, 1px border in `--pip-color` (defaults to the accent, swappable per-instance — e.g. danger-red for the unresolved-cards count), mono type inside.
 
 ### Data Table (Cards tab)
-- **Header row:** label typography (`.eyebrow`), left-aligned except the numeric Score column, which is right-aligned; a bottom border in `--border` (heavier than row separators).
-- **Rows:** 1px `--separator` bottom border; rank column zero-padded and tabular (`01`, `02`…); the name column truncates rather than wrapping or breaking layout; the Roles column holds up to four small colored dots (the bucket/category markers); the Score column is right-aligned tabular mono.
+- **Columns:** `#` / Card / Roles / Synergy — no separate Score column.
+- **Header row:** label typography (`.eyebrow`), left-aligned except the numeric Synergy column, which is right-aligned; a bottom border in `--border` (heavier than row separators).
+- **Rows:** 1px `--separator` bottom border; rank column zero-padded and tabular (`01`, `02`…); the name column truncates rather than wrapping or breaking layout, and shows a "why it's here" subline underneath (the card's top synergy-partner reason); the Roles column renders each of the card's functional categories (Ramp / Draw / Removal / Board wipes / Protection / Tutors / Lands) as a small bordered text chip, not a colored dot; the Synergy column is right-aligned tabular mono.
 
 ### Tabs
 - **Style:** underline indicator only — 2px bottom border, transparent when inactive, accent-colored when active. Labels are label-style (uppercase mono). No pill or filled-background tab treatment.
 
-### Filter Chips (Cards tab bucket filter)
-- **Style:** bordered button (`--radius`), `--separator` border at rest, accent border + text when selected. Same visual grammar as tabs.
+### Filter Chips (Cards tab functional-category filter)
+- **Style:** bordered button (`--radius`), `--separator` border at rest, accent border + text when selected. Same visual grammar as tabs. Chips are the functional categories actually present in the analyzed deck (Ramp/Draw/Removal/Board wipes/Protection/Tutors/Lands), plus an "All" chip — not the old abstract Consistency/Efficiency/Synergy/Win Condition buckets.
 
 ### Archetype Rows
 - **Style:** expandable row, click-to-toggle, a horizontal proportion bar (`--separator` track, accent fill, `999px` radius) shows relative group size; expanded state reveals nested synergy-pair reasons indented with a left border rule.

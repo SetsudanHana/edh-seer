@@ -6,6 +6,7 @@ import { ReportView } from "./components/ReportView.js";
 import { ColorIdentityPicker } from "./components/ColorIdentityPicker.js";
 import { useAccentIdentity } from "./lib/use-accent-identity.js";
 import { identityGradient } from "./lib/color-identity.js";
+import { EXAMPLE_DECK } from "./lib/example-deck.js";
 
 export default function App() {
   const [commanders, setCommanders] = useState("");
@@ -13,6 +14,7 @@ export default function App() {
   const [data, setData] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState(true);
   const { manualPick, setManualPick, active } = useAccentIdentity(data?.commanderColorIdentity);
 
   async function onAnalyze() {
@@ -20,6 +22,7 @@ export default function App() {
     setError(null);
     try {
       setData(await analyzeDeck(decklist, commanders));
+      setEditing(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
       setData(null);
@@ -65,7 +68,21 @@ export default function App() {
         onChange={setDecklist}
         onAnalyze={onAnalyze}
         loading={loading}
+        collapsed={!editing && !!data}
+        onEdit={() => setEditing(true)}
       />
+      {!data && !loading && decklist.trim() === "" && (
+        <div className="flex flex-col gap-2 text-sm text-(--muted)">
+          <p>Paste a decklist to get an oracle-text synergy read — mana curve, land math, build benchmarks, per-card roles, and combos. No account needed.</p>
+          <button
+            type="button"
+            className="self-start eyebrow px-3 py-1 rounded-(--radius) border border-(--separator) text-(--accent)"
+            onClick={() => { setCommanders(EXAMPLE_DECK.commanders); setDecklist(EXAMPLE_DECK.decklist); }}
+          >
+            Load example deck
+          </button>
+        </div>
+      )}
       {error && (
         <div className="text-danger border border-danger rounded-(--radius) p-3 text-sm font-mono">{error}</div>
       )}

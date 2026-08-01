@@ -43,7 +43,7 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
       </div>
       <div role="tabpanel">
         {active === "overview" && <OverviewTab data={data} />}
-        {active === "archetypes" && <ArchetypeBoard archetypes={data.report.archetypes} />}
+        {active === "archetypes" && <ArchetypeBoard strategies={data.report.strategies} archetypes={data.report.archetypes} />}
         {active === "cards" && <CardList cards={data.report.cards} />}
         {active === "combos" && <ComboList combos={data.report.combos} />}
       </div>

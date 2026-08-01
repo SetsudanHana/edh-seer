@@ -243,8 +243,8 @@ export function analyzeDeckStructured(
     const base = ratingByName.get(c.name) ?? 0;
     const doubleDuty = !!roles && roles.length > 0 && onAxisCards.has(c.name);
     return doubleDuty
-      ? { ...c, synergyRating: doubleDutyRating(base), doubleDuty: true, doubleDutyRoles: roles }
-      : { ...c, synergyRating: base };
+      ? { ...c, synergyRating: doubleDutyRating(base), doubleDuty: true, doubleDutyRoles: roles, roles }
+      : { ...c, synergyRating: base, roles };
   });
 
   const themes = [...deckFreq.entries()]

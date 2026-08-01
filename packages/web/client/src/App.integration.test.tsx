@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import App from "./App.js";
@@ -26,4 +26,14 @@ test("shows an error banner when the api throws", async () => {
   await userEvent.type(screen.getByRole("textbox", { name: /decklist/i }), "1 Sol Ring");
   await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
   await waitFor(() => expect(screen.getByText(/Cannot reach MongoDB/)).toBeInTheDocument());
+});
+
+test("input collapses to a summary after a successful analysis", async () => {
+  vi.spyOn(api, "analyzeDeck").mockResolvedValue(SAMPLE);
+  render(<App />);
+  fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: "1 Sol Ring" } });
+  fireEvent.click(screen.getByRole("button", { name: /analyze/i }));
+  expect(await screen.findByRole("button", { name: /edit/i })).toBeInTheDocument();
+  // the large textarea is no longer visible
+  expect(screen.queryByLabelText("Decklist")).not.toBeInTheDocument();
 });
