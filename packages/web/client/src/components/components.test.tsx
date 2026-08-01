@@ -217,6 +217,12 @@ test("HighSynergyCards renders nothing when no card has a rating", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
+test("HighSynergyCards marks the top-authority anchor and double-duty cards", () => {
+  render(<HighSynergyCards cards={SAMPLE.report.cards} />);
+  expect(screen.getAllByText(/anchor/i).length).toBeGreaterThan(0); // ⚡ anchor marker
+  expect(screen.getByText(/pulls double duty/i)).toBeInTheDocument(); // double-duty badge (Impact Tremors)
+});
+
 test("HeadlineScores shows SYNERGY and BUILD with band labels and sub-facets", () => {
   render(<HeadlineScores report={SAMPLE.report} />);
   expect(screen.getByText(/SYNERGY/i)).toBeInTheDocument();
