@@ -1,7 +1,8 @@
 import type { DeckReport } from "../types.js";
 
 const LABEL: Record<string, string> = {
-  ramp: "Ramp", draw: "Draw", targetedRemoval: "Removal", boardWipe: "Board wipes",
+  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
+  stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
   protection: "Protection", tutor: "Tutors", lands: "Lands",
 };
 const LAND_BAND = 3; // lands are two-sided: satisfied within ±3 of target.
