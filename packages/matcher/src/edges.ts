@@ -67,6 +67,32 @@ function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
   return bare ? "oneshot" : "triggered";
 }
 
+/** Turn an internal zone-event key ("enters:creature", "cast:instant") into a reader-facing
+ *  noun phrase. Fallback de-slugifies anything unmapped so no ":"/"-" token ever reaches the UI. */
+function humanizeEvent(key: string): string {
+  const [verb, subjRaw = ""] = key.split(":");
+  const subj = subjRaw.replace(/-/g, " ");
+  const art = (w: string) => (/^[aeiou]/i.test(w) ? "an" : "a");
+  switch (verb) {
+    case "enters":
+      return subj === "any" ? "a permanent entering" : `${art(subj)} ${subj} entering`;
+    case "enters-graveyard":
+      return subj === "any" ? "a card hitting the graveyard" : `${art(subj)} ${subj} hitting the graveyard`;
+    case "cast":
+      return `${art(subj)} ${subj} being cast`;
+    case "attacks":
+      return "an attack";
+    case "dies":
+      return "a creature dying";
+    case "counter-added":
+      return "a counter being added";
+    case "proliferate":
+      return "proliferate";
+    default:
+      return key.replace(/[:-]/g, " ");
+  }
+}
+
 /** Directional reasons from producer P to consumer C: event edges (P.emits ↔ C.triggers) and
  *  static edges (P.static effect ↔ C.characteristics). */
 export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
@@ -91,7 +117,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         reasons.push({
           tag: key,
-          text: `${p.card.name} ${key} feeds ${c.card.name}`,
+          text: `${c.card.name} triggers on ${humanizeEvent(key)}; ${p.card.name} supplies it`,
           effectKind: a.effect.kind,
           repeatability: triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
@@ -130,7 +156,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     if (!subjectMatches(characteristicsSubject(c.tags), a.effect.subject, h)) continue;
     reasons.push({
       tag: `static:${a.effect.kind}`,
-      text: `${p.card.name} ${a.effect.kind} applies to ${c.card.name}`,
+      text: `${p.card.name}'s ${a.effect.kind.replace(/-/g, " ")} applies to ${c.card.name}`,
       effectKind: a.effect.kind,
       repeatability: "static",
       scaling: a.effect.scaling,
