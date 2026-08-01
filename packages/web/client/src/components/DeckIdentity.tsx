@@ -33,17 +33,6 @@ export function DeckIdentity({
           </span>
         ) : null}
       </div>
-      <p className="text-sm text-(--muted)">
-        {cohesion.label} —{" "}
-        <span className="font-mono tabular-nums text-(--foreground)">{Math.round(cohesion.score * 100)}%</span> of
-        nonland cards
-        {cohesion.secondary ? (
-          <>
-            {" "}
-            · secondary theme: <span className="text-(--foreground) capitalize">{cohesion.secondary}</span>
-          </>
-        ) : null}
-      </p>
     </div>
   );
 }

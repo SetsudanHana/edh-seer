@@ -17,12 +17,9 @@ import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { SuggestionsList } from "./SuggestionsList.js";
 import { SAMPLE } from "../fixtures.js";
 
-test("DeckIdentity shows the primary and secondary theme", () => {
+test("DeckIdentity shows the headline theme", () => {
   render(<DeckIdentity cohesion={SAMPLE.report.cohesion} />);
   expect(screen.getByText("Tokens")).toBeInTheDocument();
-  expect(screen.getByText("Goblins")).toBeInTheDocument();
-  expect(screen.getByText(/highly focused/)).toBeInTheDocument();
-  expect(screen.getByText("65%")).toBeInTheDocument();
 });
 
 test("DeckIdentity renders nothing when there's no cohesion", () => {
@@ -68,14 +65,11 @@ test("MissingCards renders nothing when empty", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
-test("StatTiles shows ramp, draw, removal, avg CMC, and land count", () => {
-  render(<StatTiles roles={{ ramp: 4, draw: 10, removal: 6 }} avgManaValue={2.7} landCount={38} />);
-  expect(screen.getByText("4")).toBeInTheDocument();
-  expect(screen.getByText("10")).toBeInTheDocument();
-  expect(screen.getByText("6")).toBeInTheDocument();
+test("StatTiles shows avg CMC and land count", () => {
+  render(<StatTiles avgManaValue={2.7} landCount={38} />);
   expect(screen.getByText("2.7")).toBeInTheDocument();
   expect(screen.getByText("38")).toBeInTheDocument();
-  expect(screen.getByText("Ramp")).toBeInTheDocument();
+  expect(screen.getByText("Avg CMC")).toBeInTheDocument();
   expect(screen.getByText("Lands")).toBeInTheDocument();
 });
 
@@ -248,7 +242,7 @@ test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)
   expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
   expect(screen.getByText(/Build benchmarks/i)).toBeInTheDocument();
   expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
-  expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0); // BuildBenchmarks category + StatTiles role, both render "Ramp"
+  expect(screen.getByText("Ramp")).toBeInTheDocument(); // BuildBenchmarks category
 });
 
 test("SuggestionsList renders each suggestion; hidden when empty", () => {

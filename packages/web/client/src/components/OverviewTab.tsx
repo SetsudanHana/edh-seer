@@ -17,7 +17,6 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
       <SuggestionsList suggestions={data.report.suggestions} />
       <HighSynergyCards cards={data.report.cards} />
       <StatTiles
-        roles={data.report.roles}
         avgManaValue={data.report.avgManaValue}
         landCount={data.report.landCount}
       />
