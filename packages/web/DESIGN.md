@@ -119,6 +119,11 @@ Four jewel hues mark the card-role buckets (Consistency / Efficiency / Synergy /
 
 **The No-Kicker Rule.** No page or section heading gets a small label stacked directly above it. A label pairs inline with its value (`DECK IDENTITY  Tokens`, `# / CARD / ROLES / SCORE` as table headers) or is the heading itself (small-caps section titles like "Mana curve"), never a two-line kicker-then-title stack.
 
+**The Semantic-vs-Accent Rule.** State and quality use the semantic tokens
+(`--danger`, `--warning`, `--success`); identity and structure use `--accent`
+(deck identity, active tab, focus ring, combo connector). Components never use a
+raw Tailwind palette color class (`text-red-500`, `bg-amber-500`, …).
+
 ## Typography
 
 **UI Font:** Inter (with ui-sans-serif, system-ui fallback) — every heading and every word of body copy.
@@ -131,6 +136,7 @@ Four jewel hues mark the card-role buckets (Consistency / Efficiency / Synergy /
 - **Body** (400, base size, Inter): card names, archetype pair descriptions, prose copy.
 - **Label** (500, `0.6875rem`, `0.1em` tracking, uppercase, mono — the `.eyebrow` class): field labels, tab labels, table column headers, stat-tile labels, inline value labels ("DECK IDENTITY", "YOUR COLORS").
 - **Data** (mono, `tabular-nums` where numeric): every score, rank, count, percentage — table Score column, stat-tile values, chart peak labels, pip contents, resolved-count.
+- **Micro-label** (`--text-2xs`, 10px, mono): chart axis tick labels only (mana curve, land math). The one step below `label`.
 
 ### Named Rules
 **The Tabular-Data Rule.** Any ranked or numeric column (table Score, rank number, stat-tile value) uses `.tabular-nums` so figures align at a fixed width — a table that jitters column widths as values change has failed this rule.

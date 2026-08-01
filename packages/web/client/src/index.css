@@ -59,6 +59,7 @@
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --text-2xs: 0.625rem; /* 10px — chart axis labels only; documented micro step */
 }
 
 body {
