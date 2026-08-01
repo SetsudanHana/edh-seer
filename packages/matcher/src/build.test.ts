@@ -261,3 +261,37 @@ test("redirection via 'choose new targets for' is stack interaction (Deflecting 
   ]);
   expect(m.get("stackInteraction")).toContain("Deflecting Swat");
 });
+
+test("removal regex tolerates words between verb and target", () => {
+  const m = detectBuildCategories([
+    mk("Solitude", "When this creature enters, exile up to one other target creature. That creature's controller gains life equal to its power.", "Creature"),
+    mk("Shambling Ghast", "When this creature dies, choose one — Target creature an opponent controls gets -1/-1 until end of turn.", "Creature"),
+    mk("Yawgmoth", "Pay 1 life, Sacrifice another creature: Put a -1/-1 counter on up to one target creature and draw a card.", "Creature"),
+  ]);
+  expect(m.get("targetedRemoval")).toEqual(new Set(["Solitude", "Shambling Ghast", "Yawgmoth"]));
+});
+
+test("loosened damage removal catches qualified creature targets; any-target stays out", () => {
+  const m = detectBuildCategories([
+    mk("Eiganjo Bolt", "It deals 4 damage to target attacking or blocking creature.", "Instant"),
+    mk("Pinger", "This creature deals 1 damage to any target.", "Creature"),
+  ]);
+  expect(m.get("targetedRemoval")).toContain("Eiganjo Bolt");
+  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Pinger");
+});
+
+test("land-based removal is detected (channel/activated); graveyard-exile land is not", () => {
+  const m = detectBuildCategories([
+    mk("Eiganjo, Seat of the Empire", "{T}: Add {W}. Channel — {2}{W}, Discard this card: It deals 4 damage to target attacking or blocking creature.", "Legendary Land"),
+    mk("Bojuka Land", "{T}: Add {B}. {1}, {T}, Sacrifice this land: Exile target player's graveyard.", "Land"),
+  ]);
+  expect(m.get("targetedRemoval")).toContain("Eiganjo, Seat of the Empire");
+  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Bojuka Land");
+});
+
+test("loosening does not cross a period into an unrelated clause", () => {
+  const m = detectBuildCategories([
+    mk("Not Removal", "Create a Food token. When you gain life, target player draws a card.", "Enchantment"),
+  ]);
+  expect(m.get("targetedRemoval") ?? new Set()).not.toContain("Not Removal");
+});

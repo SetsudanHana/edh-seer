@@ -29,12 +29,12 @@ const isBasicLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().in
 // (e.g. "destroy target" on an Aura you control) are acceptable noise for a first pass; precision
 // is a tuning knob, revisited in verification. All tested case-insensitively.
 const BOARD_WIPE_RE = /destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all/i;
-const TARGETED_REMOVAL_RE = /(destroy|exile) target|return target .*? to .*? hand|target creature gets -|target player sacrifices|target permanent shuffles it into/i;
+const TARGETED_REMOVAL_RE = /(destroy|exile)[^.]{0,30}?target|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1\/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1\/-1 counter|target player sacrifices|target permanent shuffles it into/i;
 // Burn & drain — noncombat life reduction of OPPONENTS/players (damage or life-loss), not creatures.
 const BURN_EFFECT_KINDS = new Set(["non-combat-damage", "noncombat-damage", "player-damage", "drain"]);
 const BURN_RE = /deals? \d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\d+|x) life/i;
 // Damage aimed at a creature is removal, not burn.
-const DAMAGE_REMOVAL_RE = /deals? \d+ damage to target creature(?: or planeswalker)?/i;
+const DAMAGE_REMOVAL_RE = /deals? \d+ damage to target[^.]{0,25}?creature(?: or planeswalker)?/i;
 // Graveyard hate: an EXILE aimed at a graveyard, within the same sentence ([^.]* can't cross a
 // period into an unrelated clause). Catches "exile target opponent's graveyard" (Release to Memory)
 // and "exile ... from a graveyard", without suppressing real removal whose flashback/embalm/later
@@ -84,6 +84,9 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
       if (!isBasicLand(dc)) add("lands", name);
       // A ramp-land (sac for 2+ lands) also fills the ramp role — net +1 mana, unlike a fetchland.
       if (RAMP_LAND_RE.test(text)) add("ramp", name);
+      // Lands with activated/channel removal (Eiganjo) still fill the removal role; graveyard-exile
+      // lands stay excluded via GRAVEYARD_HATE_RE.
+      if ((TARGETED_REMOVAL_RE.test(text) || DAMAGE_REMOVAL_RE.test(text)) && !GRAVEYARD_HATE_RE.test(text)) add("targetedRemoval", name);
       continue;
     }
 
