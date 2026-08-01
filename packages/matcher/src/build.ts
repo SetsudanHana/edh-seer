@@ -41,7 +41,7 @@ const DAMAGE_REMOVAL_RE = /deals? \d+ damage to target[^.]{0,25}?creature(?: or 
 // -chapter text merely mentions a graveyard in a DIFFERENT sentence.
 const GRAVEYARD_HATE_RE = /\bexile[^.]*graveyard/i;
 // Stack interaction: hard counters (incl. typed), redirection, and stack-bounce.
-const STACK_RE = /counter target[^.]*?(?:spell|ability)|change the target of|choose new targets? for|return target (?:\w+ )*spell(?:\W+\w+)*? to (?:its owner's|their|the owner's|owner's) hand/i;
+const STACK_RE = /(?:counter|exile) target[^.]*?(?:spell|ability)|change the target of|choose new targets? for|return target (?:\w+ )*spell(?:\W+\w+)*? to (?:its owner's|their|the owner's|owner's) hand/i;
 const PROTECTION_RE = /hexproof|indestructible|protection from|can't be countered|shroud|phases? out/i;
 const TUTOR_RE = /search your library for/i;
 // A search that only fetches lands is ramp/fixing, not a tutor (spec).
