@@ -41,7 +41,7 @@ const DAMAGE_REMOVAL_RE = /deals? \d+ damage to target creature(?: or planeswalk
 // -chapter text merely mentions a graveyard in a DIFFERENT sentence.
 const GRAVEYARD_HATE_RE = /\bexile[^.]*graveyard/i;
 // Stack interaction: hard counters (incl. typed), redirection, and stack-bounce.
-const STACK_RE = /counter target (?:\w+ )*(?:spell|ability)|change the target of|return target (?:\w+ )*spell(?:\W+\w+)*? to (?:its owner's|their|the owner's|owner's) hand/i;
+const STACK_RE = /counter target (?:\w+ )*(?:spell|ability)|change the target of|choose new targets? for|return target (?:\w+ )*spell(?:\W+\w+)*? to (?:its owner's|their|the owner's|owner's) hand/i;
 const PROTECTION_RE = /hexproof|indestructible|protection from|can't be countered|shroud|phases? out/i;
 const TUTOR_RE = /search your library for/i;
 // A search that only fetches lands is ramp/fixing, not a tutor (spec).
@@ -58,8 +58,10 @@ const RAMP_LAND_RE = /sacrifice\b[\s\S]*?search your library for (?:up to two|tw
 const MANA_TOKEN_RE = /create\b[\s\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?/i;
 // Card selection / filtering — distinct from raw draw (scry/surveil/impulse "look at/exile top N").
 const SELECTION_RE = /\bscry\b|\bsurveil\b|look at the top \w+ cards?|exile the top \w+ cards? of your library[\s\S]*?you may play/i;
-// Stax / taxes — resource denial (untap denial, cost taxes, forced sacrifice).
-const STAX_EFFECT_KINDS = new Set(["tax", "forced-sacrifice"]);
+// Stax / taxes — resource denial (untap denial, cost taxes). "forced-sacrifice" is excluded:
+// the tagger labels "destroy target permanent" (edict/destroy removal) with this kind too, so
+// including it wrongly flags removal spells (Generous Gift, Stroke of Midnight) as stax.
+const STAX_EFFECT_KINDS = new Set(["tax"]);
 const STAX_RE = /(?:don't|doesn't|can't) untap|spells? cost \{?\d+\}?(?: generic)? (?:more|additional)|players? can't/i;
 
 /** For each card, the set of functional categories it fills. A card may fill several (that's how

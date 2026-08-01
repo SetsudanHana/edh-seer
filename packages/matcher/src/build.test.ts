@@ -244,3 +244,20 @@ test("stax: untap denial and tax effects are detected", () => {
   ]);
   expect(m.get("stax")).toEqual(new Set(["Winter Orb", "Thalia, Guardian of Thraben"]));
 });
+
+test("edict/destroy (forced-sacrifice effect kind) is NOT stax", () => {
+  const m = detectBuildCategories([
+    mk("Generous Gift", "Destroy target permanent. Its controller creates a 3/3 green Elephant creature token.", "Instant",
+       [{ kind: "triggered", effect: { kind: "forced-sacrifice" } } as any]),
+    mk("Winter Orb", "Lands don't untap during their controllers' untap steps.", "Artifact"),
+  ]);
+  expect(m.get("stax") ?? new Set()).not.toContain("Generous Gift"); // forced-sacrifice no longer a stax signal
+  expect(m.get("stax")).toContain("Winter Orb"); // real stax still detected
+});
+
+test("redirection via 'choose new targets for' is stack interaction (Deflecting Swat)", () => {
+  const m = detectBuildCategories([
+    mk("Deflecting Swat", "If you control a commander, you may cast this spell without paying its mana cost. You may choose new targets for target spell or ability.", "Instant"),
+  ]);
+  expect(m.get("stackInteraction")).toContain("Deflecting Swat");
+});
