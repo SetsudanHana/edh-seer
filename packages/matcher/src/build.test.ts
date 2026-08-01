@@ -319,3 +319,12 @@ test("a +1/+1 counter placer is not a counterspell (counter clause needs 'counte
   ]);
   expect(m.get("stackInteraction") ?? new Set()).not.toContain("Counter Placer");
 });
+
+test("exile-a-spell pseudo-counters are stack interaction; exile-a-creature (removal) is not", () => {
+  const m = detectBuildCategories([
+    mk("Aven Interrupter", "Flash Flying When this creature enters, exile target spell. It becomes plotted.", "Creature"),
+    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power.", "Instant"),
+  ]);
+  expect(m.get("stackInteraction")).toContain("Aven Interrupter");
+  expect(m.get("stackInteraction") ?? new Set()).not.toContain("Swords to Plowshares");
+});
