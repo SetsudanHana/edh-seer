@@ -55,6 +55,12 @@ test("ComboList shows the combo result", () => {
   expect(screen.getByText(/Phyrexian Altar/)).toBeInTheDocument();
 });
 
+test("ComboList section title uses the eyebrow convention, not a bold heading", () => {
+  const { container } = render(<ComboList combos={[{ cards: ["A", "B"], results: ["X"] } as any]} />);
+  const title = [...container.querySelectorAll("*")].find((el) => el.textContent === "Combos");
+  expect(title?.className).toContain("eyebrow");
+});
+
 test("MissingCards lists unresolved names", () => {
   render(<MissingCards missing={SAMPLE.missing} />);
   expect(screen.getByText(/Beholder's Death Ray/)).toBeInTheDocument();

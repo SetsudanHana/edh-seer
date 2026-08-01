@@ -42,6 +42,7 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
 
   return (
     <div className="flex flex-col gap-3">
+      <h3 className="eyebrow">Cards</h3>
       <div className="flex gap-2 flex-wrap">
         <button
           type="button"
