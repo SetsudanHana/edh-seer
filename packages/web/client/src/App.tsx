@@ -14,6 +14,7 @@ export default function App() {
   const [data, setData] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState(true);
   const { manualPick, setManualPick, active } = useAccentIdentity(data?.commanderColorIdentity);
 
   async function onAnalyze() {
@@ -21,6 +22,7 @@ export default function App() {
     setError(null);
     try {
       setData(await analyzeDeck(decklist, commanders));
+      setEditing(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
       setData(null);
@@ -66,6 +68,8 @@ export default function App() {
         onChange={setDecklist}
         onAnalyze={onAnalyze}
         loading={loading}
+        collapsed={!editing && !!data}
+        onEdit={() => setEditing(true)}
       />
       {!data && !loading && decklist.trim() === "" && (
         <div className="flex flex-col gap-2 text-sm text-(--muted)">
