@@ -36,6 +36,13 @@ export interface CardSynergy {
   /** 0–5 deck-relative, axis-weighted synergy rating. Set only by @mtg/matcher's
    *  analyzeDeckStructured (needs structured theme tags); undefined on the flat engine. */
   synergyRating?: number;
+  /** True when the card fills a functional BUILD role AND has an on-axis synergy edge — one card,
+   *  two jobs. Set only by @mtg/matcher's analyzeDeckStructured; the card also carries a small
+   *  capped synergyRating premium. Undefined on the flat engine. */
+  doubleDuty?: boolean;
+  /** The functional role name(s) the double-duty card fills (BuildCategory values like "ramp"),
+   *  for the UI marker. Plain string[] — this package must not depend on @mtg/matcher. Matcher-only. */
+  doubleDutyRoles?: string[];
 }
 
 /** Populated only by @mtg/matcher's analyzeDeckStructured (see that package's
