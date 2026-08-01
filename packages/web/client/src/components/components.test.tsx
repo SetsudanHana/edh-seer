@@ -243,6 +243,14 @@ test("BuildBenchmarks renders a bar per category, flags under-target, omits zero
   expect(screen.getByLabelText(/Ramp 6 of 10, under target/i)).toBeInTheDocument();
 });
 
+test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)", () => {
+  render(<OverviewTab data={SAMPLE} />);
+  expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
+  expect(screen.getByText(/Build benchmarks/i)).toBeInTheDocument();
+  expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
+  expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0); // BuildBenchmarks category + StatTiles role, both render "Ramp"
+});
+
 test("SuggestionsList renders each suggestion; hidden when empty", () => {
   const { rerender } = render(<SuggestionsList suggestions={SAMPLE.report.suggestions} />);
   expect(screen.getByText("No board wipe (target 3)")).toBeInTheDocument();
