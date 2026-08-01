@@ -1,6 +1,6 @@
 /** Stage 1 of the signed-synergy-verdict plan: normalize the raw, unbounded per-card
  *  synergy score into a deck-relative 0–5 rating, and compute axis COVERAGE — the
- *  share of the deck that carries an on-axis synergy edge — into a 0–5 deck
+ *  average on-axis edge strength across the deck — into a 0–5 deck
  *  positive-coherence number. Deck-relative on purpose — a 5 means "top engine piece
  *  OF THIS DECK" for the per-card rating, and "the whole deck serves the plan" for
  *  coverage. Axis-weighting happens upstream in the matcher; this helper only
@@ -15,8 +15,9 @@ export interface RatedInput {
   score: number;
   /** Lands are infrastructure — excluded from coverage UNLESS the land itself has an on-axis edge. */
   isNonland: boolean;
-  /** True iff the card has ≥1 on-axis synergy edge (an edge whose reasons touch the deck axis). */
-  onAxis: boolean;
+  /** Best on-axis edge weight for this card, in [0,1] (0 = off-axis). The strongest normalized
+   *  axis weight among the card's synergy edges. Graded coverage averages these. */
+  axisWeight: number;
 }
 
 export interface SynergyRatings {
@@ -36,15 +37,14 @@ export function computeSynergyRatings(inputs: RatedInput[]): SynergyRatings {
     ratingByName.set(input.name, rating);
   }
 
-  // Coverage (breadth): how much of the deck serves the plan. Denominator = nonland cards
-  // plus any LAND that itself has an on-axis edge (a utility land like Gaea's Cradle that
-  // serves the plan counts; a basic land is infrastructure, excluded). Numerator = of those,
-  // the cards with an on-axis edge. A nonland with no on-axis edge stays in the denominator
-  // and drags coverage down (dead weight), by design. Replaces the old mean-of-ratings, which
-  // was structurally capped near ~1.5 and could never reach 5.
-  const denom = inputs.filter((i) => i.isNonland || i.onAxis);
-  const numer = inputs.filter((i) => i.onAxis);
-  const positiveCoherence = denom.length === 0 ? 0 : round1((5 * numer.length) / denom.length);
+  // Graded coverage (breadth × strength): each counted card contributes its best on-axis edge
+  // weight. Denominator = nonland cards plus any LAND that itself has an on-axis edge (a utility
+  // land like Gaea's Cradle; a basic land is infrastructure, excluded). A nonland with weight 0
+  // stays in the denominator and drags coverage down (dead weight), by design. Replaces the old
+  // BINARY count-based coverage, which was brittle (threshold cliffs) on real decks.
+  const counted = inputs.filter((i) => i.isNonland || i.axisWeight > 0);
+  const sum = counted.reduce((s, i) => s + i.axisWeight, 0);
+  const positiveCoherence = counted.length === 0 ? 0 : round1((5 * sum) / counted.length);
 
   return { ratingByName, positiveCoherence };
 }

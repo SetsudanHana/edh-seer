@@ -126,6 +126,7 @@ export function analyzeDeckStructured(
     agg.set(dc.card.name, { name: dc.card.name, weighted: 0, partnerCount: 0, partners: [] });
   }
   const onAxisCards = new Set<string>();
+  const bestAxisWeight = new Map<string, number>();
   for (const edge of edges) {
     const maxW = maxAxisWeight(edge.reasons, axis);
     const w = impactEdgeWeight(edge.reasons, impactWeights) * (1 + AXIS_BOOST * maxW);
@@ -133,6 +134,8 @@ export function analyzeDeckStructured(
       onAxisCards.add(edge.a);
       onAxisCards.add(edge.b);
     }
+    bestAxisWeight.set(edge.a, Math.max(bestAxisWeight.get(edge.a) ?? 0, maxW));
+    bestAxisWeight.set(edge.b, Math.max(bestAxisWeight.get(edge.b) ?? 0, maxW));
     const boostForA = commanderSet.has(edge.b) ? COMMANDER_BOOST : 1;
     const boostForB = commanderSet.has(edge.a) ? COMMANDER_BOOST : 1;
     const a = agg.get(edge.a);
@@ -202,7 +205,7 @@ export function analyzeDeckStructured(
       name: c.name,
       score: c.score,
       isNonland: nonlandByName.get(c.name) ?? true,
-      onAxis: onAxisCards.has(c.name),
+      axisWeight: bestAxisWeight.get(c.name) ?? 0,
     })),
   );
   // Double-duty: a card that fills a functional BUILD role AND sits on the deck's synergy axis is
