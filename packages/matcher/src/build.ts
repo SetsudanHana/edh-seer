@@ -5,14 +5,18 @@ import type { Archetype } from "./archetypes.js";
 export type BuildCategory =
   | "ramp"
   | "draw"
+  | "cardSelection"
   | "targetedRemoval"
+  | "stackInteraction"
   | "boardWipe"
+  | "burn"
+  | "stax"
   | "protection"
   | "tutor"
   | "lands";
 
 export const BUILD_CATEGORIES: BuildCategory[] = [
-  "ramp", "draw", "targetedRemoval", "boardWipe", "protection", "tutor", "lands",
+  "ramp", "draw", "cardSelection", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "lands",
 ];
 
 /** Structured effect kinds that count as ramp (mirrors analyze.ts's RAMP_EFFECT_KINDS). Tunable. */
@@ -40,6 +44,8 @@ const RAMP_LAND_RE = /sacrifice\b[\s\S]*?search your library for (?:up to two|tw
 // Makers of sacrifice-for-mana tokens are acceleration = ramp: Treasure/Gold and the Eldrazi
 // Spawn/Scion mana tokens (Big Score, Unexpected Windfall, Glimpse the Impossible).
 const MANA_TOKEN_RE = /create\b[\s\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?/i;
+// Card selection / filtering — distinct from raw draw (scry/surveil/impulse "look at/exile top N").
+const SELECTION_RE = /\bscry\b|\bsurveil\b|look at the top \w+ cards?|exile the top \w+ cards? of your library[\s\S]*?you may play/i;
 
 /** For each card, the set of functional categories it fills. A card may fill several (that's how
  *  double-duty in Stage D is found). Counts derive from set sizes. */
@@ -75,6 +81,7 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
     // the structured effect kinds above miss both.
     if (LAND_FETCH_RE.test(text) && ONTO_BATTLEFIELD_RE.test(text)) add("ramp", name);
     if (MANA_TOKEN_RE.test(text)) add("ramp", name);
+    if (SELECTION_RE.test(text)) add("cardSelection", name);
     // Wipe takes precedence over targeted removal so a mass effect isn't counted in both.
     if (BOARD_WIPE_RE.test(text)) add("boardWipe", name);
     else if (TARGETED_REMOVAL_RE.test(text)) add("targetedRemoval", name);
@@ -87,7 +94,8 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
 
 /** Command-Zone base targets (floors, except lands which is a two-sided band). Tunable. */
 export const BASE_TARGETS: Record<BuildCategory, number> = {
-  ramp: 10, draw: 10, targetedRemoval: 10, boardWipe: 3, protection: 0, tutor: 0, lands: 36,
+  ramp: 10, draw: 10, cardSelection: 4, targetedRemoval: 10, stackInteraction: 0, boardWipe: 3,
+  burn: 0, stax: 0, protection: 0, tutor: 0, lands: 36,
 };
 
 /** Per-archetype target shifts (added to the base, floored at 0). Starting points, tunable. */
@@ -104,12 +112,14 @@ export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<B
 /** Category importance in the weighted average. Interaction/engine categories weigh full; the
  *  situational ones (wipes/protection/tutors) weigh half. Tunable. */
 const CATEGORY_WEIGHT: Record<BuildCategory, number> = {
-  ramp: 1, draw: 1, targetedRemoval: 1, boardWipe: 0.5, protection: 0.5, tutor: 0.5, lands: 1,
+  ramp: 1, draw: 1, cardSelection: 0.5, targetedRemoval: 1, stackInteraction: 0.5, boardWipe: 0.5,
+  burn: 0.5, stax: 0.5, protection: 0.5, tutor: 0.5, lands: 1,
 };
 
 const LABELS: Record<BuildCategory, string> = {
-  ramp: "Ramp", draw: "Draw", targetedRemoval: "Removal", boardWipe: "Board wipes",
-  protection: "Protection", tutor: "Tutors", lands: "Lands",
+  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
+  stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain",
+  stax: "Stax", protection: "Protection", tutor: "Tutors", lands: "Lands",
 };
 
 /** Full credit within ±3 of the land target, linear falloff to 0 at ±12 (24 or 48 lands). */

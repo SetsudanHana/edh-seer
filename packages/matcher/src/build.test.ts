@@ -77,6 +77,7 @@ const completeShell = (): DeckCard[] => {
   const cards: DeckCard[] = [];
   for (let i = 0; i < 10; i++) cards.push(mk(`Rock ${i}`, "Add {C}.", "Artifact", rampAbility));
   for (let i = 0; i < 10; i++) cards.push(mk(`Draw ${i}`, "Draw a card.", "Sorcery", drawAbility));
+  for (let i = 0; i < 4; i++) cards.push(mk(`Scry ${i}`, "Scry 2.", "Sorcery"));
   for (let i = 0; i < 10; i++) cards.push(mk(`Kill ${i}`, "Destroy target creature.", "Instant"));
   for (let i = 0; i < 3; i++) cards.push(mk(`Wipe ${i}`, "Destroy all creatures.", "Sorcery"));
   for (let i = 0; i < 36; i++) cards.push(mk(`Land ${i}`, "", "Basic Land — Forest"));
@@ -174,4 +175,14 @@ test("mana-sac token makers (Eldrazi Spawn/Scion, Gold) count as ramp, like Trea
     mk("Sacrifice the Wastes", "As an additional cost to cast this spell, sacrifice a creature. Create three Gold tokens.", "Sorcery"),
   ]);
   expect(m.get("ramp")).toEqual(new Set(["Glimpse the Impossible", "Sacrifice the Wastes"]));
+});
+
+test("card selection (scry/surveil/impulse) is detected; plain draw is not selection", () => {
+  const m = detectBuildCategories([
+    mk("Preordain", "Scry 2, then draw a card.", "Sorcery"),
+    mk("Sink Below", "Surveil 2. Draw a card.", "Instant"),
+    mk("Light Up the Stage", "Exile the top two cards of your library. Until the end of your next turn, you may play those cards.", "Sorcery"),
+    mk("Divination", "Draw two cards.", "Sorcery"),
+  ]);
+  expect(m.get("cardSelection")).toEqual(new Set(["Preordain", "Sink Below", "Light Up the Stage"]));
 });
