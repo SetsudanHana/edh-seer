@@ -125,8 +125,14 @@ export function analyzeDeckStructured(
   for (const dc of resolved) {
     agg.set(dc.card.name, { name: dc.card.name, weighted: 0, partnerCount: 0, partners: [] });
   }
+  const onAxisCards = new Set<string>();
   for (const edge of edges) {
-    const w = impactEdgeWeight(edge.reasons, impactWeights) * axisFactor(edge.reasons, axis, AXIS_BOOST);
+    const af = axisFactor(edge.reasons, axis, AXIS_BOOST);
+    const w = impactEdgeWeight(edge.reasons, impactWeights) * af;
+    if (af > 1) {
+      onAxisCards.add(edge.a);
+      onAxisCards.add(edge.b);
+    }
     const boostForA = commanderSet.has(edge.b) ? COMMANDER_BOOST : 1;
     const boostForB = commanderSet.has(edge.a) ? COMMANDER_BOOST : 1;
     const a = agg.get(edge.a);
@@ -192,7 +198,12 @@ export function analyzeDeckStructured(
 
   const nonlandByName = new Map(resolved.map((dc) => [dc.card.name, !isLand(dc)] as const));
   const { ratingByName, positiveCoherence } = computeSynergyRatings(
-    cards.map((c) => ({ name: c.name, score: c.score, isNonland: nonlandByName.get(c.name) ?? true })),
+    cards.map((c) => ({
+      name: c.name,
+      score: c.score,
+      isNonland: nonlandByName.get(c.name) ?? true,
+      onAxis: onAxisCards.has(c.name),
+    })),
   );
   const ratedCards: CardSynergy[] = cards.map((c) => ({ ...c, synergyRating: ratingByName.get(c.name) ?? 0 }));
 

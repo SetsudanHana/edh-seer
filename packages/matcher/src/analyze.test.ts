@@ -395,6 +395,14 @@ test("populates synergyRating (0-5) on every card and positiveCoherence on the d
   expect(report.positiveCoherence).toBeLessThanOrEqual(5);
 });
 
+test("positiveCoherence reflects on-axis coverage (0-5)", () => {
+  const commander = dc("Cmd", kindredDiscoveryAbility, ["wizard"]); // creature-ETB payoff anchors the axis
+  const maker = dc("Wizard Maker", inallaAbility, ["wizard"]); // on-axis wizard-token maker
+  const report = analyzeDeckStructured([commander, maker], ["Cmd"], H);
+  expect(report.positiveCoherence).toBeGreaterThan(0);
+  expect(report.positiveCoherence).toBeLessThanOrEqual(5);
+});
+
 test("an on-axis edge outscores an equal-strength off-axis edge (commander anchors the axis)", () => {
   // Two structurally-identical maker/payoff pairs (same effect kinds, so identical base
   // impactEdgeWeight): one on the commander's "enters:wizard" axis (Wizard Maker <->
