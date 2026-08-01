@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { detectBuildCategories } from "./build.js";
+import { detectBuildCategories, computeBuild } from "./build.js";
 import type { DeckCard } from "./types.js";
 import type { CardTags } from "@mtg/tagger";
 
@@ -58,4 +58,48 @@ test("protection is detected; a land-fetch is ramp not a tutor", () => {
   expect(m.get("protection")).toEqual(new Set(["Heroic Intervention"]));
   expect(m.get("tutor")).toEqual(new Set(["Demonic Tutor"]));
   expect(m.get("tutor")?.has("Rampant Growth")).toBeFalsy();
+});
+
+// 10 ramp + 10 draw + 10 removal + 3 wipes + 36 lands = a "complete" goodstuff shell.
+const completeShell = (): DeckCard[] => {
+  const cards: DeckCard[] = [];
+  for (let i = 0; i < 10; i++) cards.push(mk(`Rock ${i}`, "Add {C}.", "Artifact", rampAbility));
+  for (let i = 0; i < 10; i++) cards.push(mk(`Draw ${i}`, "Draw a card.", "Sorcery", drawAbility));
+  for (let i = 0; i < 10; i++) cards.push(mk(`Kill ${i}`, "Destroy target creature.", "Instant"));
+  for (let i = 0; i < 3; i++) cards.push(mk(`Wipe ${i}`, "Destroy all creatures.", "Sorcery"));
+  for (let i = 0; i < 36; i++) cards.push(mk(`Land ${i}`, "", "Basic Land — Forest"));
+  return cards;
+};
+
+test("a complete goodstuff shell scores near 5", () => {
+  const { buildScore } = computeBuild(completeShell(), "goodstuff");
+  expect(buildScore).toBeGreaterThan(4.5);
+});
+
+test("an empty pile scores near 0 and suggests the big gaps", () => {
+  const { buildScore, suggestions } = computeBuild([mk("Lonely", "Vanilla.", "Creature")], "goodstuff");
+  expect(buildScore).toBeLessThan(1);
+  expect(suggestions.length).toBeGreaterThan(0);
+  expect(suggestions.some((s) => /Ramp 0\/10/.test(s))).toBe(true);
+});
+
+test("archetype deltas shift targets: Voltron wants fewer wipes, more protection", () => {
+  const cards = [mk("Shield", "Permanents you control gain indestructible.", "Instant")];
+  const voltron = computeBuild(cards, "voltron").buildCategories;
+  const goodstuff = computeBuild(cards, "goodstuff").buildCategories;
+  const t = (c: { category: string; target: number }[], k: string) => c.find((x) => x.category === k)!.target;
+  expect(t(voltron, "boardWipe")).toBeLessThan(t(goodstuff, "boardWipe"));
+  expect(t(voltron, "protection")).toBeGreaterThan(t(goodstuff, "protection"));
+});
+
+test("a zero-target category is neutral: it neither scores nor appears as a gap", () => {
+  // goodstuff protection/tutor targets are 0 → a deck with none of them isn't penalized for it.
+  const { suggestions } = computeBuild(completeShell(), "goodstuff");
+  expect(suggestions.some((s) => /Protection|Tutor/i.test(s))).toBe(false);
+});
+
+test("land count is two-sided: heavy flood is flagged, not rewarded", () => {
+  const flood = completeShell().concat(Array.from({ length: 12 }, (_, i) => mk(`Extra Land ${i}`, "", "Land")));
+  const { suggestions } = computeBuild(flood, "goodstuff"); // 48 lands
+  expect(suggestions.some((s) => /Lands 48/.test(s))).toBe(true);
 });

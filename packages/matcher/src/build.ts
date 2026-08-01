@@ -1,4 +1,5 @@
 import type { DeckCard } from "./types.js";
+import type { Archetype } from "./archetypes.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
 export type BuildCategory =
@@ -59,4 +60,107 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
   }
 
   return m;
+}
+
+/** Command-Zone base targets (floors, except lands which is a two-sided band). Tunable. */
+export const BASE_TARGETS: Record<BuildCategory, number> = {
+  ramp: 10, draw: 10, targetedRemoval: 10, boardWipe: 3, protection: 0, tutor: 0, lands: 36,
+};
+
+/** Per-archetype target shifts (added to the base, floored at 0). Starting points, tunable. */
+export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<BuildCategory, number>>>> = {
+  tokens: { boardWipe: -2 },          // don't wipe your own board
+  aristocrats: { boardWipe: -1 },
+  voltron: { boardWipe: -2, protection: 3 }, // one threat → protect it
+  combo: { tutor: 4, protection: 2, boardWipe: -1 }, // assemble + defend the line
+  reanimator: { tutor: 2 },
+  landfall: { lands: 4 },
+  counters: { boardWipe: -1 },
+};
+
+/** Category importance in the weighted average. Interaction/engine categories weigh full; the
+ *  situational ones (wipes/protection/tutors) weigh half. Tunable. */
+const CATEGORY_WEIGHT: Record<BuildCategory, number> = {
+  ramp: 1, draw: 1, targetedRemoval: 1, boardWipe: 0.5, protection: 0.5, tutor: 0.5, lands: 1,
+};
+
+const LABELS: Record<BuildCategory, string> = {
+  ramp: "Ramp", draw: "Draw", targetedRemoval: "Removal", boardWipe: "Board wipes",
+  protection: "Protection", tutor: "Tutors", lands: "Lands",
+};
+
+/** Full credit within ±3 of the land target, linear falloff to 0 at ±12 (24 or 48 lands). */
+const LAND_BAND = 3;
+const LAND_FALLOFF = 9;
+
+const clamp01 = (x: number): number => Math.max(0, Math.min(1, x));
+
+export function adjustedTargets(primary: Archetype | undefined): Record<BuildCategory, number> {
+  const t = { ...BASE_TARGETS };
+  const deltas = primary ? ARCHETYPE_TARGET_DELTAS[primary] : undefined;
+  if (deltas) {
+    for (const [k, v] of Object.entries(deltas)) {
+      const key = k as BuildCategory;
+      t[key] = Math.max(0, t[key] + (v ?? 0));
+    }
+  }
+  return t;
+}
+
+export interface BuildResult {
+  /** 0–5: weighted mean of per-category attainment (categories with target 0 are excluded). */
+  buildScore: number;
+  buildCategories: { category: string; count: number; target: number }[];
+  suggestions: string[];
+}
+
+export function computeBuild(cards: DeckCard[], primary: Archetype | undefined): BuildResult {
+  const members = detectBuildCategories(cards);
+  const targets = adjustedTargets(primary);
+  const countOf = (c: BuildCategory): number => members.get(c)?.size ?? 0;
+
+  const buildCategories = BUILD_CATEGORIES.map((c) => ({ category: c, count: countOf(c), target: targets[c] }));
+
+  let weightSum = 0;
+  let attainSum = 0;
+  for (const c of BUILD_CATEGORIES) {
+    const target = targets[c];
+    if (target <= 0) continue; // zero-target category is neutral — excluded from the score
+    const count = countOf(c);
+    const attainment =
+      c === "lands"
+        ? clamp01(1 - Math.max(0, Math.abs(count - target) - LAND_BAND) / LAND_FALLOFF)
+        : Math.min(count / target, 1); // exceeding a floor never penalizes
+    weightSum += CATEGORY_WEIGHT[c];
+    attainSum += CATEGORY_WEIGHT[c] * attainment;
+  }
+  const buildScore = weightSum > 0 ? (attainSum / weightSum) * 5 : 0;
+
+  return { buildScore, buildCategories, suggestions: buildSuggestions(members, targets) };
+}
+
+/** Concrete, few, actionable — ranked by gap size, top 4. Never scolding. */
+function buildSuggestions(
+  members: Map<BuildCategory, Set<string>>,
+  targets: Record<BuildCategory, number>,
+): string[] {
+  const gaps: { gap: number; text: string }[] = [];
+  for (const c of BUILD_CATEGORIES) {
+    const target = targets[c];
+    if (target <= 0) continue;
+    const count = members.get(c)?.size ?? 0;
+    if (c === "lands") {
+      if (count < target - LAND_BAND) gaps.push({ gap: target - count, text: `Lands ${count} — aim for ~${target}` });
+      else if (count > target + LAND_BAND) gaps.push({ gap: count - target, text: `Lands ${count} — high, aim for ~${target}` });
+      continue;
+    }
+    if (count < target) {
+      const text =
+        count === 0 && c === "boardWipe"
+          ? `No board wipe (target ${target})`
+          : `${LABELS[c]} ${count}/${target} — add ~${target - count}`;
+      gaps.push({ gap: target - count, text });
+    }
+  }
+  return gaps.sort((a, b) => b.gap - a.gap).slice(0, 4).map((g) => g.text);
 }
