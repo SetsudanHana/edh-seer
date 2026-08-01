@@ -14,6 +14,7 @@ import { ReportTabs } from "./ReportTabs.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { HeadlineScores } from "./HeadlineScores.js";
 import { BuildBenchmarks } from "./BuildBenchmarks.js";
+import { SuggestionsList } from "./SuggestionsList.js";
 import { SAMPLE } from "../fixtures.js";
 
 test("DeckIdentity shows the primary and secondary theme", () => {
@@ -234,4 +235,11 @@ test("BuildBenchmarks renders a bar per category, flags under-target, omits zero
   expect(screen.queryByText("Tutors")).not.toBeInTheDocument(); // tutor target 0 → omitted
   // under-target rows expose an accessible flag
   expect(screen.getByLabelText(/Ramp 6 of 10, under target/i)).toBeInTheDocument();
+});
+
+test("SuggestionsList renders each suggestion; hidden when empty", () => {
+  const { rerender } = render(<SuggestionsList suggestions={SAMPLE.report.suggestions} />);
+  expect(screen.getByText("No board wipe (target 3)")).toBeInTheDocument();
+  rerender(<SuggestionsList suggestions={[]} />);
+  expect(screen.queryByText(/board wipe/)).not.toBeInTheDocument();
 });
