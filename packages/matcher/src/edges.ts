@@ -69,7 +69,7 @@ function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
 
 /** Directional reasons from producer P to consumer C: event edges (P.emits ↔ C.triggers) and
  *  static edges (P.static effect ↔ C.characteristics). */
-function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
+export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
   if (!p.tags || !c.tags) return [];
   const reasons: Reason[] = [];
   const pEvents = producerEvents(p.tags);

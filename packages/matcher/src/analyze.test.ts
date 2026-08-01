@@ -1,9 +1,10 @@
 import { expect, test } from "vitest";
 import { analyzeDeckStructured } from "./analyze.js";
-import { SEED_IMPACT_WEIGHTS, dampByAlpha } from "@mtg/engine";
+import { SEED_IMPACT_WEIGHTS } from "@mtg/engine";
 import type { TagStats } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
+import { directedReasons } from "./edges.js";
 
 const H: Hierarchy = { wizard: ["creature"] };
 
@@ -84,6 +85,22 @@ const goblinPayoffAbility: CardTags["abilities"] = [{
   kind: "triggered",
   trigger: { verbs: ["attacks"], subject: { subtype: "goblin", control: "you", token: null } },
   effect: { kind: "draw-card" },
+}];
+
+// Fixtures for the directional-scoring test below.
+const impactTremorsAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+  effect: { kind: "damage", subject: { control: "opp", token: null } },
+}];
+// PURE producer: triggers on ATTACKS (not creature-ETB), so it feeds the payoff but does NOT itself
+// consume the creature-ETB resource — otherwise makers become mutual payoffs and inflate past the
+// anchor. It emits creature-enters (that's what feeds Impact Tremors).
+const tokenMakerAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
+  effect: { kind: "token-generation", subject: { type: "creature", control: "you", token: true } },
+  emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }],
 }];
 
 test("produces a DeckReport with a synergy edge between a maker and its payoff", () => {
@@ -189,20 +206,28 @@ test("high-impact repeatable payoff out-scores a broad low-impact one (2.1 mis-r
   const kScore = report.cards.find((c) => c.name === "Kindred")!.score;
   const tScore = report.cards.find((c) => c.name === "Tremors")!.score;
   expect(kScore).toBeGreaterThan(tScore);
-  // Both also share a 4th edge with each other (Kindred and Tremors are themselves untyped
-  // creatures, so each's own "enters" satisfies the other's enters:creature trigger).
-  // impactEdgeWeight dedupes by reason TAG keeping the MAX-impact reason, and that shared
-  // Kindred-Tremors edge carries two same-tag reasons (draw-card 1.0, damage 0.2) that collapse
-  // to the higher one — draw-card's 1.0 — added identically to both totals:
-  //   kindredTotal = 3×draw-card(1.0) + draw-card(1.0) = 4.0
-  //   tremorsTotal = 3×damage(0.2)    + draw-card(1.0) = 1.6
-  // giving ratio 2.5, not the naive draw-card/damage = 5 (which would hold only if Kindred and
-  // Tremors didn't also synergize with each other).
+  // Recomputed for the directional model (was: symmetric weighted/partnerCount ratio 2.5).
+  // W1-3 are pure feeders (no abilities, so they never trigger back): each feeds BOTH Kindred
+  // (draw-card) and Tremors (damage) one-way. Kindred and Tremors also feed EACH OTHER (each's
+  // own implied "enters:creature" satisfies the other's trigger) — but directionally, not merged
+  // into one shared max-tag reason like the old undirected edge: Kindred→Tremors carries only
+  // Tremors' effectKind (damage), and Tremors→Kindred carries only Kindred's (draw-card).
+  //   support(Kindred)   = 3×draw (from W1-3) + draw (from Tremors)   = 4×draw × axisFactor
+  //   support(Tremors)   = 3×dmg  (from W1-3) + dmg  (from Kindred)   = 4×dmg  × axisFactor
+  //   feederSum(Kindred) = FEEDER_SHARE × dmg  (Kindred feeds Tremors) × axisFactor
+  //   feederSum(Tremors) = FEEDER_SHARE × draw (Tremors feeds Kindred) × axisFactor
+  // score = √support + √feederSum. Every reason here shares one tag ("enters:creature" — the
+  // consumer-side trigger subject is untyped/unsubtyped "creature" for both Kindred and Tremors),
+  // so axisFactor is a single common multiplier k across every term: score = √k × (√4×draw|dmg +
+  // √(FEEDER_SHARE×dmg|draw)). It cancels in the ratio, so (unlike an absolute value) the ratio
+  // stays exact regardless of the corpus-derived axis weight — same reasoning the old test used to
+  // stay damping-invariant. FEEDER_SHARE mirrors analyze.ts's tunable (0.25).
   const draw = SEED_IMPACT_WEIGHTS.kinds["draw-card"];
   const dmg = SEED_IMPACT_WEIGHTS.kinds["damage"];
-  const shared = Math.max(draw, dmg);
-  const expectedRatio = (3 * draw + shared) / (3 * dmg + shared);
-  expect(kScore / tScore).toBeCloseTo(expectedRatio, 5);
+  const FEEDER_SHARE = 0.25;
+  const expectedK = Math.sqrt(4 * draw) + Math.sqrt(FEEDER_SHARE * dmg);
+  const expectedT = Math.sqrt(4 * dmg) + Math.sqrt(FEEDER_SHARE * draw);
+  expect(kScore / tScore).toBeCloseTo(expectedK / expectedT, 5);
 });
 
 test("a scaling payoff out-ranks an otherwise-identical fixed payoff", () => {
@@ -493,4 +518,26 @@ test("a card filling a functional role but OFF-axis is NOT double-duty (needs bo
   const mr = report.cards.find((c) => c.name === "Mana Rock")!;
   expect(mr.doubleDuty).toBeFalsy();       // has a role, but off-axis
   expect(mr.doubleDutyRoles).toBeUndefined();
+});
+
+test("directedReasons is a pure one-way feed: maker -> payoff only, not payoff -> maker", () => {
+  const payoff = dc("Impact Tremors", impactTremorsAbility);
+  const maker = dc("Maker 1", tokenMakerAbility, ["goblin"]);
+  expect(directedReasons(maker, payoff, H).length).toBeGreaterThanOrEqual(1);
+  expect(directedReasons(payoff, maker, H).length).toBe(0);
+});
+
+test("directional scoring: a payoff fed by many makers outranks each maker (anchor rises)", () => {
+  // One payoff + several makers that all feed it. The payoff should be the top synergy card;
+  // each maker should sit clearly below (slight lift), not tie the payoff (the old flattening).
+  const payoff = dc("Impact Tremors", impactTremorsAbility);      // triggers on a creature ETB → damage
+  const makers = [1, 2, 3, 4, 5].map((i) => dc(`Maker ${i}`, tokenMakerAbility, ["goblin"]));
+  const report = analyzeDeckStructured([payoff, ...makers], undefined, H);
+  const byName = new Map(report.cards.map((c) => [c.name, c] as const));
+  const pf = byName.get("Impact Tremors")!;
+  const m1 = byName.get("Maker 1")!;
+  expect(pf.score).toBeGreaterThan(m1.score);          // anchor tops its feeders
+  expect(pf.authority).toBeGreaterThan(0);             // it has payoff support
+  expect(report.cards[0].name).toBe("Impact Tremors"); // #1 in the deck
+  expect(m1.score).toBeGreaterThan(0);                 // feeders still get a lift
 });

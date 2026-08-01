@@ -4,7 +4,6 @@ import {
   computeCohesion,
   loadImpactWeights,
   impactEdgeWeight,
-  dampByAlpha,
   computeDeckStats,
   computeSynergyRatings,
   ComboIndex,
@@ -18,7 +17,7 @@ import {
 } from "@mtg/engine";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
-import { pairReasons, cardThemeTags } from "./edges.js";
+import { pairReasons, cardThemeTags, directedReasons } from "./edges.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
@@ -26,13 +25,6 @@ import { buildAxis, maxAxisWeight } from "./axis.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
 import { loadThemeStats, UNIFORM_STATS } from "./theme-stats.js";
-
-interface Agg {
-  name: string;
-  weighted: number;
-  partnerCount: number;
-  partners: { name: string; score: number; reasons: Reason[]; contribution: number }[];
-}
 
 /**
  * Structured-engine counterpart of `@mtg/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -119,38 +111,52 @@ export function analyzeDeckStructured(
   const axis = buildAxis(commanderThemeTags, deckFreq, themeStats);
   const AXIS_BOOST = 1.5; // tunable: a fully on-axis edge counts 2.5x an off-axis one.
   const AXIS_ON_THRESHOLD = 0.25; // tunable: min axis weight for an edge to count on-axis (calibrated).
+  const FEEDER_SHARE = 0.25; // tunable: a feeder gets this share of a payoff-edge's weight (√-damped).
 
-  // Aggregate per card (mirrors the flat engine's analyzeDeck).
-  const agg = new Map<string, Agg>();
-  for (const dc of resolved) {
-    agg.set(dc.card.name, { name: dc.card.name, weighted: 0, partnerCount: 0, partners: [] });
-  }
+  // Axis / coverage pass (undirected — unchanged semantics).
   const onAxisCards = new Set<string>();
   const bestAxisWeight = new Map<string, number>();
   for (const edge of edges) {
     const maxW = maxAxisWeight(edge.reasons, axis);
-    const w = impactEdgeWeight(edge.reasons, impactWeights) * (1 + AXIS_BOOST * maxW);
-    if (maxW >= AXIS_ON_THRESHOLD) {
-      onAxisCards.add(edge.a);
-      onAxisCards.add(edge.b);
-    }
+    if (maxW >= AXIS_ON_THRESHOLD) { onAxisCards.add(edge.a); onAxisCards.add(edge.b); }
     bestAxisWeight.set(edge.a, Math.max(bestAxisWeight.get(edge.a) ?? 0, maxW));
     bestAxisWeight.set(edge.b, Math.max(bestAxisWeight.get(edge.b) ?? 0, maxW));
-    const boostForA = commanderSet.has(edge.b) ? COMMANDER_BOOST : 1;
-    const boostForB = commanderSet.has(edge.a) ? COMMANDER_BOOST : 1;
-    const a = agg.get(edge.a);
-    const b = agg.get(edge.b);
-    if (a) {
-      a.weighted += w * boostForA;
-      a.partnerCount += 1;
-      a.partners.push({ name: edge.b, score: edge.score, reasons: edge.reasons, contribution: w * boostForA });
-    }
-    if (b) {
-      b.weighted += w * boostForB;
-      b.partnerCount += 1;
-      b.partners.push({ name: edge.a, score: edge.score, reasons: edge.reasons, contribution: w * boostForB });
+  }
+
+  // Directional aggregation: for each directed edge p→c (p FEEDS payoff c), the payoff accrues the
+  // full edge weight (it is the sink); the feeder accrues a β share. Both are √-damped (concave):
+  // an anchor rises with its support instead of being flattened toward the mean of its feeders (the
+  // old dampByAlpha ÷partnerCount behavior). A card that both feeds and is fed earns both terms.
+  // ponytail: directedReasons(p,c) re-runs the O(n²) reason computation vs. the undirected `edges`
+  // build above — acceptable at deck scale (~100 cards); a future pass could build directed and
+  // undirected reasons together in one O(n²) sweep instead of two.
+  interface Dir { support: number; feederSum: number; partnerCount: number; partners: { name: string; contribution: number; reasons: Reason[] }[] }
+  const dir = new Map<string, Dir>();
+  for (const dc of resolved) dir.set(dc.card.name, { support: 0, feederSum: 0, partnerCount: 0, partners: [] });
+  for (let i = 0; i < resolved.length; i++) {
+    for (let j = 0; j < resolved.length; j++) {
+      if (i === j) continue;
+      const p = resolved[i], c = resolved[j];
+      const reasons = directedReasons(p, c, hierarchy); // p feeds c
+      if (reasons.length === 0) continue;
+      const maxW = maxAxisWeight(reasons, axis);
+      const w = impactEdgeWeight(reasons, impactWeights) * (1 + AXIS_BOOST * maxW);
+      // Commander boost: credit is amplified when the OTHER endpoint is the commander (mirrors the
+      // old boostForA/boostForB semantics).
+      const payoffBoost = commanderSet.has(p.card.name) ? COMMANDER_BOOST : 1;
+      const feederBoost = commanderSet.has(c.card.name) ? COMMANDER_BOOST : 1;
+      const cAgg = dir.get(c.card.name)!;
+      const pAgg = dir.get(p.card.name)!;
+      cAgg.support += w * payoffBoost;
+      cAgg.partnerCount += 1;
+      cAgg.partners.push({ name: p.card.name, contribution: w * payoffBoost, reasons });
+      pAgg.feederSum += FEEDER_SHARE * w * feederBoost;
+      pAgg.partnerCount += 1;
+      pAgg.partners.push({ name: c.card.name, contribution: FEEDER_SHARE * w * feederBoost, reasons });
     }
   }
+  const authorityByName = new Map<string, number>();
+  for (const [name, d] of dir) authorityByName.set(name, Math.sqrt(d.support));
 
   const presentCommanders = resolved.map((dc) => dc.card.name).filter((n) => commanderSet.has(n));
   const deckNames = new Set(resolved.map((dc) => dc.card.name));
@@ -161,40 +167,30 @@ export function analyzeDeckStructured(
   const VERSATILITY_STEP = 0.15;
   const COMBO_BONUS = 1.5;
 
-  const cards: CardSynergy[] = [...agg.values()]
-    .map((v) => {
-      const score = dampByAlpha(v.weighted, v.partnerCount, impactWeights.damping);
-      const tags = tagsByName.get(v.name);
-      const raw = tags
-        ? computeCardBuckets(tags, impactWeights)
-        : { consistency: 0, efficiency: 0, "win-condition": 0 };
-      const winCondition = raw["win-condition"] + (comboCardNames.has(v.name) ? COMBO_BONUS : 0);
+  const cards: CardSynergy[] = [...dir.entries()]
+    .map(([name, v]) => {
+      const authority = authorityByName.get(name) ?? 0;
+      const feederLift = Math.sqrt(v.feederSum);
+      const score = authority + feederLift;
+      const tags = tagsByName.get(name);
+      const raw = tags ? computeCardBuckets(tags, impactWeights) : { consistency: 0, efficiency: 0, "win-condition": 0 };
+      const winCondition = raw["win-condition"] + (comboCardNames.has(name) ? COMBO_BONUS : 0);
       const bucketCount =
-        (score > 0 ? 1 : 0) +
-        (raw.consistency > 0 ? 1 : 0) +
-        (raw.efficiency > 0 ? 1 : 0) +
-        (winCondition > 0 ? 1 : 0);
+        (score > 0 ? 1 : 0) + (raw.consistency > 0 ? 1 : 0) + (raw.efficiency > 0 ? 1 : 0) + (winCondition > 0 ? 1 : 0);
       const versatilityMult = 1 + VERSATILITY_STEP * Math.max(0, bucketCount - 1);
       const base = {
-        name: v.name,
-        isCommander: commanderSet.has(v.name),
+        name,
+        isCommander: commanderSet.has(name),
         score,
+        authority,
         partnerCount: v.partnerCount,
         topPartners: v.partners
           .sort((x, y) => y.contribution - x.contribution)
           .slice(0, 5)
-          .map(({ name, score, reasons }) => ({ name, score, reasons })),
+          .map(({ name, reasons }) => ({ name, score: reasons.length, reasons })),
       };
       return bucketCount > 0
-        ? {
-            ...base,
-            bucketScores: {
-              consistency: raw.consistency * versatilityMult,
-              efficiency: raw.efficiency * versatilityMult,
-              "win-condition": winCondition * versatilityMult,
-            },
-            bucketCount,
-          }
+        ? { ...base, bucketScores: { consistency: raw.consistency * versatilityMult, efficiency: raw.efficiency * versatilityMult, "win-condition": winCondition * versatilityMult }, bucketCount }
         : base;
     })
     .sort((x, y) => y.score - x.score || y.partnerCount - x.partnerCount || x.name.localeCompare(y.name));
