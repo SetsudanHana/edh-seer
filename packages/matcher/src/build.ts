@@ -19,6 +19,7 @@ export const BUILD_CATEGORIES: BuildCategory[] = [
 const RAMP_EFFECT_KINDS = new Set(["mana-generation", "fast-mana", "ritual"]);
 
 const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
+const isBasicLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("basic");
 
 // Oracle-text keyword heuristics (NEW this stage). Documented starting points — false positives
 // (e.g. "destroy target" on an Aura you control) are acceptable noise for a first pass; precision
@@ -42,7 +43,13 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
 
   for (const dc of cards) {
     const name = dc.card.name;
-    if (isLand(dc)) { add("lands", name); continue; } // a land counts only toward lands
+    if (isLand(dc)) {
+      // Only utility (nonbasic) lands fill a notable land ROLE, so a basic never reads as
+      // "double duty". The BUILD lands COUNT is unaffected — computeBuild counts every land copy
+      // via its own landCount reduce, not this set.
+      if (!isBasicLand(dc)) add("lands", name);
+      continue;
+    }
 
     if (dc.tags) {
       for (const a of dc.tags.abilities) {

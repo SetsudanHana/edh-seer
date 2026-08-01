@@ -21,15 +21,27 @@ const mk = (
 const rampAbility: CardTags["abilities"] = [{ kind: "static", effect: { kind: "mana-generation" } }];
 const drawAbility: CardTags["abilities"] = [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" } }];
 
-test("ramp/draw come from structured effect kinds; lands from typeline", () => {
+test("ramp/draw come from structured effect kinds; lands (utility only) from typeline", () => {
   const m = detectBuildCategories([
     mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility),
     mk("Divination", "Draw two cards.", "Sorcery", drawAbility),
     mk("Forest", "", "Basic Land — Forest"),
+    mk("Bojuka Bog", "", "Land"),
   ]);
   expect(m.get("ramp")).toEqual(new Set(["Sol Ring"]));
   expect(m.get("draw")).toEqual(new Set(["Divination"]));
-  expect(m.get("lands")).toEqual(new Set(["Forest"]));
+  // A basic never fills the lands ROLE (it's pure infrastructure, never double-duty); a nonbasic
+  // utility land does.
+  expect(m.get("lands")).toEqual(new Set(["Bojuka Bog"]));
+});
+
+test("basic lands do not fill the lands role (only utility lands do)", () => {
+  const m = detectBuildCategories([
+    mk("Forest", "", "Basic Land — Forest"),
+    mk("Snow-Covered Island", "", "Basic Snow Land — Island"),
+    mk("Bojuka Bog", "When Bojuka Bog enters, exile target player's graveyard.", "Land"),
+  ]);
+  expect(m.get("lands")).toEqual(new Set(["Bojuka Bog"]));
 });
 
 test("targeted removal is detected from oracle text (Swords/Counterspell gap)", () => {
