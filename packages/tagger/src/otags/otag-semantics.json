@@ -2647,7 +2647,8 @@
   },
   "extra-combat-phase": {
     "events": [],
-    "effectKind": "speed-increase",
+    "effectKind": null,
+    "needsEffectKind": "extra-combat-phase",
     "uses": [
       "classifier",
       "weight"
@@ -2655,7 +2656,8 @@
   },
   "extra-turn": {
     "events": [],
-    "effectKind": "speed-increase",
+    "effectKind": null,
+    "needsEffectKind": "extra-turn",
     "uses": [
       "classifier",
       "weight"
