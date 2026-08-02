@@ -34,6 +34,12 @@
   "misc": ["tutor-to-hand", "discard", "alternate-win-condition", "utility-land"],
   "effect": ["removal-creature", "spot-removal", "multi-removal", "repeatable-removal", "board-wipe", "ramp", "pure-draw"],
 
+  "typal": ["noncreature-typal", "typal-coupling", "typal-choose", "typal-share", "typal-dragon", "typal-elf", "typal-spirit", "typal-zombie", "typal-sliver", "typal-goblin", "typal-human", "typal-vampire", "typal-ally", "typal-merfolk", "typal-wizard", "typal-army", "typal-dinosaur", "typal-warrior", "typal-soldier", "typal-knight", "typal-elemental", "typal-pirate", "typal-hero", "typal-bird", "typal-rat", "typal-mount", "typal-villain", "typal-assassin", "typal-giant", "typal-cleric", "typal-faerie", "typal-demon", "typal-spider", "typal-non-human", "typal-squirrel", "typal-kithkin", "typal-lupine", "typal-beast", "typal-dwarf", "typal-treefolk"],
+  "voltron": ["synergy-equipment", "synergy-aura", "quick-equip", "auto-equip", "auraify"],
+  "pump": ["combat-trick", "shade-pump"],
+  "steal": ["threaten", "donate", "donate-token"],
+  "altCounters": ["poisonous", "energy-generator", "counter-fuel-energy", "counter-fuel-charge"],
+
   "_descriptor_abilityKind": ["triggered-ability", "activated-ability", "passive-ability", "self-replacement-effect", "delayed-replacement-effect", "delayed-trigger", "reflexive-trigger", "state-trigger", "intervening-if-clause"],
   "_descriptor_triggerShape": ["leaves-trigger-self", "leaves-battlefield-trigger", "leaves-graveyard-trigger", "enters-and-leaves-trigger-self", "turn-face-up-trigger-self", "combat-neutral-damage-trigger", "unblocked-trigger", "titan-trigger"],
   "_descriptor_manaAbility": ["non-mana-ability-mana", "gives-mana-ability", "mana-ability-with-extra-effect", "gives-tap-ability", "offcolor-ability"],
