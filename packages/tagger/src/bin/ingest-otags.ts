@@ -22,14 +22,20 @@ async function fetchTagOracleIds(slug: string): Promise<string[]> {
     for (let a = 0; a < 4 && !ok; a++) {
       try {
         const res = await fetch(url);
-        if (res.status === 404) return ids; // "no cards match" -> empty tag
+        if (res.status === 404) return ids; // "no cards match" -> genuine empty tag
+        if (!res.ok) {
+          // 429 / 5xx -> transient, retry (respect Retry-After if present)
+          const ra = Number(res.headers.get("retry-after")) * 1000;
+          await sleep(Number.isFinite(ra) && ra > 0 ? ra : 500);
+          continue;
+        }
         const j = (await res.json()) as {
           data?: { oracle_id: string }[];
           has_more?: boolean;
           next_page?: string;
           object?: string;
         };
-        if (j.object === "error") return ids;
+        if (j.object === "error") return ids; // rare: 200 with an error body
         for (const c of j.data ?? []) ids.push(c.oracle_id);
         url = j.has_more && j.next_page ? j.next_page : "";
         ok = true;
