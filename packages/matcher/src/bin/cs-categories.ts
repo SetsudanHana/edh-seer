@@ -89,12 +89,33 @@ export const CS_CATEGORY_TO_OTAGS: Record<string, string[]> = {
     "free-sacrifice-outlet", "repeatable-sacrifice-outlet", "drain-life", "opponent-loses-life",
     "blood-artist-ability",
   ],
+  // Measured recall (2026-08-02, all 6 calibration decks): only 20/83 (24%) of CS-tagged `tokens`
+  // cards carry one of these 4 slugs. The mapped slugs all require REPEATABLE token generation,
+  // but CS also labels one-shot token spells (Secure the Wastes, Empty the Warrens, March of the
+  // Multitudes, Chatterstorm, Arachnogenesis, Grand Crescendo) that the otag vocabulary has no
+  // classifier for -- only repeatable-* variants exist (a known, previously-documented gap). The
+  // engine's own `tokens` ARCHETYPE_SIGNATURE (create-token:any, no repeatable requirement) is
+  // strictly broader than this mapping, so a low otag recall on `tokens` in the three-way
+  // comparison is this vocabulary ceiling, not a classification failure -- do not read it as
+  // "otags under-cover tokens relative to the engine" without this caveat.
   tokens: ["repeatable-token-generator", "repeatable-creature-tokens", "synergy-token", "token-doubler"],
   // Full "typal" group from functional-otags.json -- all 40 slugs.
   kindred: [...TYPAL_SLUGS],
+  // `mass-reanimation` is ~15% contaminated (7/56 sampled cards, e.g. Splendid Reclamation,
+  // World Shaper, Planar Birth, Summon: Titan): those return only land cards from the graveyard,
+  // no creature reanimation -- arguably `landsmatter`, not `reanimator`. Left mapped as-is: the
+  // slug is still overwhelmingly mass creature-reanimation, and all CS-sampled `reanimator` cards
+  // hit cleanly against it; this is a note for whoever reads the recall numbers next, not a
+  // reason to remap.
   reanimator: ["reanimate-creature", "mass-reanimation"],
   recursion: ["recursion", "recursion-any", "regrowth", "regrowth-any", "flashback", "gives-flashback", "cast-from-graveyard"],
   blink: ["flicker-creature", "flicker-slow", "flicker-self"],
+  // Measured recall (2026-08-02, all 6 calibration decks): only 4/15 (27%) of CS-tagged
+  // `landsmatter` cards carry `landfall`. The misses (Crucible of Worlds, The Reality Chip,
+  // Kelpie Guide, Terrain Generator, ...) are land-recursion and extra-land-play cards, not
+  // Landfall triggers -- there is no other land-related classifier slug in the otag vocabulary
+  // to cover them. Same vocabulary-ceiling shape as `tokens` above: a low recall here reflects a
+  // gap in what the otag vocabulary can express, not a mismapping.
   landsmatter: ["landfall"],
   plusOnePlusOneCounters: ["gives-pp-counters", "gains-pp-counters", "counters-matter", "pp-counters-matter"],
   anthem: ["anthem", "keyword-anthem", "power-boost-to-all", "toughness-boost-to-all"],
