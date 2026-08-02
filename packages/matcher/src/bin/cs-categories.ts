@@ -150,6 +150,58 @@ export const CS_CATEGORY_TO_ARCHETYPE: Record<string, Archetype> = {
   plusOnePlusOneCounters: "counters",
 };
 
+/** Shape of details.archetypes.archetypes.<MAJOR>.subArchetypes.<SUB>, observed live on every
+ *   2026-08-02 cached payload in .cs-cache/: `list` is CS slugs (same format as csSlug/
+ *  csCardCategories keys -- e.g. "heralds_horn"), `total` is a synergy-graph weight emitted as a
+ *  STRING ("72.3", not 72.3). Not declared on SaltPayload in calibrate-core.ts (out of scope
+ *  here), so read via a local cast. Majors themselves carry a `list` field too but it was empty
+ *  ([]) on all 18 major blocks observed (6 decks x 3 majors) -- card membership lives only at
+ *  the sub-archetype level, so majors' own lists are not read. */
+interface CsSubArchetypeNode {
+  list?: string[];
+  total?: string;
+}
+type CsArchetypesTree = Record<string, { subArchetypes?: Record<string, CsSubArchetypeNode> }>;
+
+/** Sub-archetype name (as CS emits it, e.g. "KINDRED") -> the set of CS slugs in its `list`.
+ *  This is CS's synergy-graph deck-theme membership -- a structurally different signal from
+ *  csCardCategories' per-card `categories.stats` booleans above (confirmed on the `inalla` deck:
+ *  KINDRED sub-archetype lists 46 cards while `kindred` category labels only 3). Returns an
+ *  empty map when the payload carries no archetypes.archetypes block. */
+export function csSubArchetypeCards(payload: SaltPayload): Map<string, Set<string>> {
+  const tree = (payload.details.archetypes as { archetypes?: CsArchetypesTree } | undefined)?.archetypes;
+  const out = new Map<string, Set<string>>();
+  if (!tree) return out;
+  for (const major of Object.values(tree)) {
+    for (const [subName, sub] of Object.entries(major.subArchetypes ?? {})) {
+      const set = out.get(subName) ?? new Set<string>();
+      for (const slug of sub.list ?? []) set.add(slug);
+      out.set(subName, set);
+    }
+  }
+  return out;
+}
+
+/** CS category -> the matching sub-archetype name, for categories where one exists. CS's
+ *  sub-archetype keys are the category name uppercased with no separator (verified against the
+ *  union of every sub-archetype name observed across all 6 calibration decks' cached payloads,
+ *  2026-08-02: TOKENS, GROUPSLUG, STOMPY, REANIMATOR, COMBAT, PLUSONEPLUSONECOUNTERS,
+ *  SPOTREMOVAL, BOARDWIPES, STAX, ARISTOCRATS, MILL, ANTHEM, COUNTERS, SUPERFRIENDS, WHEELS,
+ *  COMBO, TAXES, THEFT, PILLOWFORT, TURNS, KINDRED, BLINK, STORM). Only 7 of our categories have
+ *  a match in that set: the six from the task brief plus `anthem` (ANTHEM was observed twice).
+ *  `recursion`, `landsmatter`, `clone`, `graveyard`, `multipliers` and `burn` have no matching
+ *  sub-archetype in the observed data and are simply absent here -- not a bug, CS's synergy
+ *  graph groups them under other names (or not at all) in these 6 decks. */
+export const CS_CATEGORY_TO_SUBARCHETYPE: Record<string, string> = {
+  kindred: "KINDRED",
+  tokens: "TOKENS",
+  aristocrats: "ARISTOCRATS",
+  blink: "BLINK",
+  reanimator: "REANIMATOR",
+  plusOnePlusOneCounters: "PLUSONEPLUSONECOUNTERS",
+  anthem: "ANTHEM",
+};
+
 export type Bucket = "A" | "B" | "C";
 
 /** A = all three sources speak it; B = otags and CS only; C = neither we nor otags speak it. */

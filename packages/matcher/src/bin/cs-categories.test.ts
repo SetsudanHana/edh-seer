@@ -3,11 +3,13 @@ import {
   CS_CATEGORIES,
   CS_CATEGORY_TO_ARCHETYPE,
   CS_CATEGORY_TO_OTAGS,
+  CS_CATEGORY_TO_SUBARCHETYPE,
   CS_UNMAPPED,
   bucketFor,
   csCardCategories,
   csDeckArchetype,
   csSlug,
+  csSubArchetypeCards,
   scoreCategory,
 } from "./cs-categories.js";
 import type { SaltPayload } from "./calibrate-core.js";
@@ -164,4 +166,66 @@ test("scoreCategory handles an empty universe without dividing by zero", () => {
   const s = scoreCategory(new Set(), new Set(), 0);
   expect(s.prevalence).toBe(0);
   expect(Number.isNaN(s.precision)).toBe(false);
+});
+
+// Second CS reference: details.archetypes.archetypes.<MAJOR>.subArchetypes.<SUB>.list, a
+// synergy-graph deck-theme membership list -- structurally separate from categories.stats
+// (payload above has no archetypes.archetypes block at all, only percentages).
+const archPayload: SaltPayload = {
+  details: {
+    synergy: { list: {} },
+    archetypes: {
+      dominantArchetype: "MIDRANGE",
+      dominantSubArchetype: "KINDRED",
+      // @ts-expect-error -- archetypes.archetypes isn't declared on SaltPayload (see cs-categories.ts)
+      archetypes: {
+        MIDRANGE: {
+          list: [],
+          total: "109.3",
+          subArchetypes: {
+            KINDRED: { list: ["heralds_horn", "grim_haruspex", "urzas_incubator"], total: "72.3" },
+            TOKENS: { list: ["master_of_waves"], total: "13.0" },
+          },
+        },
+        COMBO: {
+          list: [],
+          total: "55.7",
+          subArchetypes: {
+            ARISTOCRATS: { list: ["grim_haruspex"], total: "9.7" },
+          },
+        },
+      },
+    },
+  },
+  cards: {},
+};
+
+test("csSubArchetypeCards maps sub-archetype name to its list of CS slugs", () => {
+  const m = csSubArchetypeCards(archPayload);
+  expect(m.get("KINDRED")).toEqual(new Set(["heralds_horn", "grim_haruspex", "urzas_incubator"]));
+  expect(m.get("TOKENS")).toEqual(new Set(["master_of_waves"]));
+});
+
+test("csSubArchetypeCards unions a sub-archetype name across majors", () => {
+  // grim_haruspex appears in both MIDRANGE.KINDRED and COMBO.ARISTOCRATS in the fixture; a
+  // hypothetical repeated sub-archetype name across majors should union, not overwrite.
+  const m = csSubArchetypeCards(archPayload);
+  expect(m.get("ARISTOCRATS")).toEqual(new Set(["grim_haruspex"]));
+});
+
+test("csSubArchetypeCards returns an empty map when the payload has no archetypes.archetypes block", () => {
+  expect(csSubArchetypeCards(payload).size).toBe(0); // top-level `payload` has archetypes.percentages but no .archetypes
+  expect(csSubArchetypeCards({ details: { synergy: { list: {} } } }).size).toBe(0);
+});
+
+test("every CS_CATEGORY_TO_SUBARCHETYPE entry names a real category and an UPPERCASE sub-archetype", () => {
+  for (const [cat, sub] of Object.entries(CS_CATEGORY_TO_SUBARCHETYPE)) {
+    expect(CS_CATEGORIES, `${cat} is not a CS category`).toContain(cat);
+    expect(sub).toBe(sub.toUpperCase());
+    expect(sub).toBe(cat.toUpperCase());
+  }
+});
+
+test("kindred's sub-archetype is KINDRED", () => {
+  expect(CS_CATEGORY_TO_SUBARCHETYPE["kindred"]).toBe("KINDRED");
 });
