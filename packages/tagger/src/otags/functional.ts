@@ -8,3 +8,18 @@ const groups = JSON.parse(
 export function loadFunctionalOtags(): string[] {
   return [...new Set(Object.values(groups).flat())];
 }
+
+/**
+ * Descriptor slugs — `_descriptor_`-prefixed groups. These qualify a card (ability kind,
+ * timing, targeting, rate) rather than naming a synergy event, and several sit on a quarter
+ * of the corpus, so counting them would inflate coverage without adding pairing signal.
+ */
+export function loadDescriptorOtags(): string[] {
+  return [
+    ...new Set(
+      Object.entries(groups)
+        .filter(([name]) => name.startsWith("_descriptor_"))
+        .flatMap(([, slugs]) => slugs),
+    ),
+  ];
+}
