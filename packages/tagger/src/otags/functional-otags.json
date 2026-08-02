@@ -1,0 +1,11 @@
+{
+  "enters": ["creaturefall", "tokenfall", "landfall", "landfall-other", "artifactfall", "enchantmentfall", "permanentfall", "planeswalkerfall", "legendfall", "thingfall"],
+  "dies": ["death-trigger", "death-trigger-self", "death-trigger-opponent"],
+  "sacrifice": ["sacrifice-matters", "your-sacrifice-matters", "opponent-sacrifice-matters", "sacrifice-outlet-creature", "sacrifice-outlet-artifact", "sacrifice-outlet-token", "sacrifice-outlet-land", "free-sacrifice-outlet", "repeatable-sacrifice-outlet"],
+  "discard": ["discard-matters", "opponent-discard-matters", "self-discard-matters", "discard-outlet"],
+  "produce": ["repeatable-creature-tokens", "token-generator", "free-token-generator", "create-token", "mill", "mill-self", "mill-opponent", "reanimate-creature", "mass-reanimation", "pinger"],
+  "cast": ["cast-trigger", "cast-trigger-you", "cast-trigger-self", "cast-trigger-other"],
+  "attack": ["attack-trigger", "block-trigger", "attacking-matters", "attacking-matters-self"],
+  "counters": ["proliferate", "counter-placement"],
+  "effect": ["removal-creature", "spot-removal", "multi-removal", "repeatable-removal", "board-wipe", "ramp", "pure-draw"]
+}

@@ -7,6 +7,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "tag-decks": "tsx src/bin/tag-decks.ts",
+    "ingest-otags": "tsx src/bin/ingest-otags.ts",
     "score-gold": "tsx src/bin/score-gold.ts"
   },
   "dependencies": {
