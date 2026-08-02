@@ -1,6 +1,17 @@
 import { expect, test } from "vitest";
-import { CS_CATEGORIES, csCardCategories, csDeckArchetype, csSlug } from "./cs-categories.js";
+import {
+  CS_CATEGORIES,
+  CS_CATEGORY_TO_ARCHETYPE,
+  CS_CATEGORY_TO_OTAGS,
+  CS_UNMAPPED,
+  bucketFor,
+  csCardCategories,
+  csDeckArchetype,
+  csSlug,
+} from "./cs-categories.js";
 import type { SaltPayload } from "./calibrate-core.js";
+import { loadOtagSemantics } from "@mtg/tagger";
+import { ARCHETYPE_SIGNATURE } from "../archetypes.js";
 
 const payload: SaltPayload = {
   commanders: ["Inalla, Archmage Ritualist"],
@@ -73,4 +84,51 @@ test("CS_CATEGORIES lists all 30 known categories", () => {
   for (const c of ["kindred", "aristocrats", "tokens", "blink", "counterspell"]) {
     expect(CS_CATEGORIES).toContain(c);
   }
+});
+
+test("every CS category is either mapped or explicitly unmapped, exactly once", () => {
+  const mapped = new Set(Object.keys(CS_CATEGORY_TO_OTAGS));
+  const unmapped = new Set(CS_UNMAPPED);
+  for (const c of CS_CATEGORIES) {
+    const inMapped = mapped.has(c);
+    const inUnmapped = unmapped.has(c);
+    expect(inMapped !== inUnmapped, `${c} must be in exactly one of mapped/unmapped`).toBe(true);
+  }
+  for (const c of [...mapped, ...unmapped]) {
+    expect(CS_CATEGORIES, `${c} is not a real CS category`).toContain(c);
+  }
+});
+
+test("every mapped otag slug exists and is a classifier", () => {
+  const sem = loadOtagSemantics();
+  for (const [cat, slugs] of Object.entries(CS_CATEGORY_TO_OTAGS)) {
+    expect(slugs.length, `${cat} maps to no slugs`).toBeGreaterThan(0);
+    for (const s of slugs) {
+      const entry = sem.get(s);
+      expect(entry, `${cat} -> ${s} is not a known slug`).toBeDefined();
+      expect(entry!.uses, `${cat} -> ${s} is not a classifier`).toContain("classifier");
+    }
+  }
+});
+
+test("every CS->Archetype pairing names a real archetype with a signature", () => {
+  for (const [cat, arch] of Object.entries(CS_CATEGORY_TO_ARCHETYPE)) {
+    expect(CS_CATEGORIES, `${cat} is not a CS category`).toContain(cat);
+    expect(ARCHETYPE_SIGNATURE[arch], `${arch} has no signature`).toBeDefined();
+  }
+});
+
+test("bucketFor derives A/B/C from the map and the signature table", () => {
+  for (const c of CS_CATEGORIES) {
+    const b = bucketFor(c);
+    if (!(c in CS_CATEGORY_TO_OTAGS)) expect(b, `${c}`).toBe("C");
+    else if (c in CS_CATEGORY_TO_ARCHETYPE) expect(b, `${c}`).toBe("A");
+    else expect(b, `${c}`).toBe("B");
+  }
+});
+
+test("kindred is mapped to typal slugs and has no engine archetype", () => {
+  expect(CS_CATEGORY_TO_OTAGS["kindred"]?.some((s) => s.startsWith("typal-"))).toBe(true);
+  expect(CS_CATEGORY_TO_ARCHETYPE["kindred"]).toBeUndefined();
+  expect(bucketFor("kindred")).toBe("B");
 });
