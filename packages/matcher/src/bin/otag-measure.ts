@@ -2,8 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, docToCard, parseDecklistText } from "@mtg/data";
 import { loadOtagSemantics } from "@mtg/tagger";
-import type { CardTags } from "@mtg/tagger";
+import type { CardTags, Verb } from "@mtg/tagger";
 import { loadHierarchy, pairReasons } from "../index.js";
+import { producerEvents } from "../edges.js";
+import { normalizeZoneEvent } from "../zones.js";
 import type { DeckCard } from "../types.js";
 import { buildOtagEdges, pairKey, undirectedPairs } from "../otag-edges.js";
 import type { GoldPair } from "./eval-pairs-core.js";
@@ -24,11 +26,20 @@ interface Loaded {
   otagsByCard: Map<string, string[]>;
 }
 
-/** True when both cards carry verb V in their structured tags -- producer emits it, consumer
- *  triggers on it. If the engine still rejected the pair, subject matching is what rejected it. */
+/** True when both cards carry verb V in their structured tags -- producer emits it (mirroring the
+ *  engine's own producer-event derivation, including structurally implied cast/enters events, so
+ *  this is apples-to-apples with pairReasons), consumer triggers on it. If the engine still
+ *  rejected the pair, subject matching is what rejected it.
+ *
+ *  The otag verb (e.g. "dies") is normalized the same way producerEvents normalizes emits (e.g.
+ *  to "leaves") before comparing -- producerEvents runs every emit through normalizeZoneEvent, so
+ *  a raw string match against the un-normalized otag verb would silently go blind on every verb
+ *  normalizeZoneEvent rewrites (dies -> leaves is the only one reachable from OTAG_EVENT_TO_VERB's
+ *  range today). Subject is a throwaway stub: only .verb of the normalized result is used. */
 function verbPresentInTags(p: DeckCard, c: DeckCard, verb: string): boolean {
   if (!p.tags || !c.tags) return false;
-  const emits = p.tags.abilities.some((a) => (a.emits ?? []).some((e) => e.verb === verb));
+  const producerVerb = normalizeZoneEvent({ verb: verb as Verb, subject: { control: "you", token: null } }).verb;
+  const emits = producerEvents(p.tags).some((e) => e.verb === producerVerb);
   const triggers = c.tags.abilities.some((a) =>
     ((a.trigger?.verbs ?? []) as readonly string[]).includes(verb),
   );
@@ -146,7 +157,7 @@ async function main(): Promise<void> {
     console.log(`    ${verb.padEnd(20)} ${String(r.both).padStart(6)}/${String(r.otag).padEnd(6)} ${((100 * r.both) / r.otag).toFixed(0).padStart(3)}%`);
   }
 
-  console.log(`\n  why the engine rejected otag edges (${rejected} rejected):`);
+  console.log(`\n  why the engine rejected otag edges (${rejected} rejected edges):`);
   const pct = (n: number) => (rejected ? ((100 * n) / rejected).toFixed(0) : "0");
   console.log(`    subject mismatch only:  ${rejectedSubjectOnly} (${pct(rejectedSubjectOnly)}%) -- same verb both sides, engine rejected on subject`);
   console.log(`    a side was untagged:    ${rejectedUntagged} (${pct(rejectedUntagged)}%)`);
