@@ -434,10 +434,15 @@
       {
         "role": "producer",
         "event": "return-to-battlefield"
+      },
+      {
+        "role": "producer",
+        "event": "cast-from-graveyard"
       }
     ],
     "effectKind": "graveyard-recursion",
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -450,6 +455,7 @@
     ],
     "effectKind": "graveyard-recursion",
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -677,6 +683,7 @@
     ],
     "effectKind": "graveyard-recursion",
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -693,6 +700,7 @@
     ],
     "effectKind": "graveyard-recursion",
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -729,6 +737,7 @@
     ],
     "effectKind": null,
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -741,6 +750,7 @@
     ],
     "effectKind": null,
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -753,6 +763,7 @@
     ],
     "effectKind": null,
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -868,6 +879,7 @@
     ],
     "effectKind": null,
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -892,6 +904,7 @@
     ],
     "effectKind": null,
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -916,6 +929,7 @@
     ],
     "effectKind": null,
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -928,6 +942,7 @@
     ],
     "effectKind": "graveyard-recursion",
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -971,6 +986,7 @@
     ],
     "effectKind": "flicker",
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -983,6 +999,7 @@
     ],
     "effectKind": "flicker",
     "uses": [
+      "edge",
       "classifier"
     ]
   },
@@ -995,6 +1012,7 @@
     ],
     "effectKind": "flicker",
     "uses": [
+      "edge",
       "classifier"
     ]
   },

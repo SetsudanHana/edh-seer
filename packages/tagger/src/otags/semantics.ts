@@ -3,8 +3,8 @@ import { EFFECT_KINDS, type Verb } from "../schema.js";
 import { loadDescriptorOtags, loadFunctionalOtags } from "./functional.js";
 
 /** oTag-native event vocabulary. Deliberately NOT the engine's Verb set: otag events are
- *  coarser, and several (regrowth, flashback) have no honest Verb equivalent. The mapping
- *  to Verb is explicit in OTAG_EVENT_TO_VERB so the lossy step is visible and diffable. */
+ *  coarser, and several (regrowth, return-to-hand) have no honest Verb equivalent. The
+ *  mapping to Verb is explicit in OTAG_EVENT_TO_VERB so the lossy step is visible and diffable. */
 export const OTAG_EVENTS = [
   "enters", "dies", "leaves", "sacrifice", "cast", "attacks", "blocks",
   "combat-damage", "non-combat-damage", "draw", "discard", "mill",
@@ -40,10 +40,10 @@ export const OTAG_EVENT_TO_VERB: Readonly<Record<OtagEvent, Verb | null>> = {
   untaps: "untaps",
   taps: "taps",
   "return-to-hand": null,
-  "return-to-battlefield": null,
-  "cast-from-graveyard": null,
+  "return-to-battlefield": "enters",
+  "cast-from-graveyard": "cast",
   "cast-from-exile": null,
-  flicker: null,
+  flicker: "enters",
   copy: null,
   "gain-control": null,
   "search-library": null,
