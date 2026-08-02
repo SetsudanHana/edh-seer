@@ -1,11 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, docToCard, parseDecklistText } from "@mtg/data";
 import { loadOtagSemantics } from "@mtg/tagger";
 import type { CardTags } from "@mtg/tagger";
 import { loadHierarchy, pairReasons } from "../index.js";
 import type { DeckCard } from "../types.js";
-import { buildOtagEdges, pairKey, undirectedPairs, type OtagEdge } from "../otag-edges.js";
+import { buildOtagEdges, pairKey, undirectedPairs } from "../otag-edges.js";
 import type { GoldPair } from "./eval-pairs-core.js";
 
 const DECK_DIR = new URL("../../../cli/decks/", import.meta.url).pathname;
@@ -84,13 +84,20 @@ async function main(): Promise<void> {
 
   const perVerb = new Map<string, { otag: number; both: number }>();
   for (const l of loaded) {
-    const names = l.cards.map((c) => c.card.name);
+    // Dedupe: decklists repeat basic lands (and, e.g., samut has two entries that resolve to the
+    // same card name). buildOtagEdges iterates the raw names array with no index-uniqueness, so a
+    // repeated name would multiply that card's edges in the per-verb counts below.
+    const names = [...new Set(l.cards.map((c) => c.card.name))];
     const otagEdges = buildOtagEdges(names, l.otagsByCard, semantics);
     const otagSet = undirectedPairs(otagEdges);
 
     const engineSet = new Set<string>();
     for (let i = 0; i < l.cards.length; i++) {
       for (let j = i + 1; j < l.cards.length; j++) {
+        // Same guard as buildOtagEdges's a===b skip: two decklist slots that resolved to the same
+        // card name must not be compared to themselves, or a self-referential ability (e.g. a
+        // static effect matching its own card) creates a spurious "X|X" self-loop in engineSet.
+        if (l.cards[i].card.name === l.cards[j].card.name) continue;
         if (pairReasons(l.cards[i], l.cards[j], hierarchy).length) {
           engineSet.add(pairKey(l.cards[i].card.name, l.cards[j].card.name));
         }
