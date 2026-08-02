@@ -32,5 +32,15 @@
   "spellsling": ["magecraft", "storm-count-matters"],
   "rateEngine": ["per-player", "rhystic", "cast-tax", "life-for-cards", "upkeep-cost", "exponential", "draw-hate"],
   "misc": ["tutor-to-hand", "discard", "alternate-win-condition", "utility-land"],
-  "effect": ["removal-creature", "spot-removal", "multi-removal", "repeatable-removal", "board-wipe", "ramp", "pure-draw"]
+  "effect": ["removal-creature", "spot-removal", "multi-removal", "repeatable-removal", "board-wipe", "ramp", "pure-draw"],
+
+  "_descriptor_abilityKind": ["triggered-ability", "activated-ability", "passive-ability", "self-replacement-effect", "delayed-replacement-effect", "delayed-trigger", "reflexive-trigger", "state-trigger", "intervening-if-clause"],
+  "_descriptor_triggerShape": ["leaves-trigger-self", "leaves-battlefield-trigger", "leaves-graveyard-trigger", "enters-and-leaves-trigger-self", "turn-face-up-trigger-self", "combat-neutral-damage-trigger", "unblocked-trigger", "titan-trigger"],
+  "_descriptor_manaAbility": ["non-mana-ability-mana", "gives-mana-ability", "mana-ability-with-extra-effect", "gives-tap-ability", "offcolor-ability"],
+  "_descriptor_timing": ["gives-flash", "gains-flash", "hate-flash", "cast-on-resolution", "exile-on-resolution"],
+  "_descriptor_zone": ["exile-self", "enters-in-company"],
+  "_descriptor_targeting": ["single-target-instant-sorcery", "multiple-targets", "symmetrical"],
+  "_descriptor_cardAdvantage": ["hand-neutral", "hand-positive", "mini-refund", "manaless-value", "drawback"],
+  "_descriptor_rate": ["cheaper-than-mv", "more-expensive-than-mv", "scales-with-multiple"],
+  "_descriptor_textless": ["virtual-vanilla", "french-vanilla", "virtual-french-vanilla"]
 }

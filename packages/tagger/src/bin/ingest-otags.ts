@@ -1,6 +1,6 @@
 import type { AnyBulkWriteOperation } from "mongodb";
 import { connect, loadConfig } from "@mtg/data";
-import { loadFunctionalOtags } from "../otags/functional.js";
+import { loadDescriptorOtags, loadFunctionalOtags } from "../otags/functional.js";
 import { buildCardOtags } from "../otags/build.js";
 
 interface CardOtagDoc {
@@ -112,7 +112,13 @@ async function main(): Promise<void> {
   console.log(`\n=== otag ingest coverage ===`);
   console.log(`  corpus cards: ${corpusIds.size}`);
   const withOtag = await col.countDocuments({ "otags.0": { $exists: true } });
-  console.log(`  cards with >=1 otag: ${withOtag} (${((100 * withOtag) / corpusIds.size).toFixed(0)}%)`);
+  // Headline is signal-bearing coverage; descriptors sit on a quarter of the corpus and
+  // would mask whether we actually gained pairing vocabulary.
+  const descriptors = loadDescriptorOtags();
+  const withSignal = await col.countDocuments({ otags: { $elemMatch: { $nin: descriptors } } });
+  const pct = (n: number) => `${((100 * n) / corpusIds.size).toFixed(0)}%`;
+  console.log(`  cards with >=1 non-descriptor otag: ${withSignal} (${pct(withSignal)})`);
+  console.log(`  cards with >=1 otag of any kind:    ${withOtag} (${pct(withOtag)})`);
   console.log(`  empty tags (prune candidates): ${emptyTags.length ? emptyTags.join(", ") : "none"}`);
   for (const n of ["Blood Artist", "Viscera Seer", "Impact Tremors"]) {
     const doc = await col.findOne({ name: n });
