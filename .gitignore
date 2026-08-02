@@ -8,6 +8,7 @@ dist/
 packages/tagger/score-debug*.json
 packages/tagger/_*.mts
 .gstack/
+.edhrec-cache/
 
 # Playwright
 /test-results/

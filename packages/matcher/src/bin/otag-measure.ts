@@ -9,6 +9,7 @@ import { normalizeZoneEvent } from "../zones.js";
 import type { DeckCard } from "../types.js";
 import { buildOtagEdges, pairKey, undirectedPairs } from "../otag-edges.js";
 import type { GoldPair } from "./eval-pairs-core.js";
+import { edhrecPairSet, seededRandom } from "./edhrec-pairs.js";
 
 const DECK_DIR = new URL("../../../cli/decks/", import.meta.url).pathname;
 
@@ -105,6 +106,7 @@ async function main(): Promise<void> {
   console.log(`  ${"deck".padEnd(12)} ${"engine".padStart(7)} ${"otag".padStart(7)} ${"both".padStart(7)} ${"recall".padStart(8)} ${"agree".padStart(8)}`);
 
   const perVerb = new Map<string, { otag: number; both: number }>();
+  const m3 = { otagOnly: [] as string[], confirmed: [] as string[], random: [] as string[] };
   let rejected = 0;
   let rejectedSubjectOnly = 0;
   let rejectedUntagged = 0;
@@ -150,6 +152,23 @@ async function main(): Promise<void> {
         else if (verbPresentInTags(p, c, e.verb)) rejectedSubjectOnly++;
       }
     }
+
+    const otagOnly = [...otagSet].filter((k) => !engineSet.has(k));
+    const confirmed = [...otagSet].filter((k) => engineSet.has(k));
+    m3.otagOnly.push(...otagOnly);
+    m3.confirmed.push(...confirmed);
+    // Null: same count as otagOnly, drawn from pairs in neither measured set, fixed seed.
+    const rnd = seededRandom(42);
+    const candidates: string[] = [];
+    for (let i = 0; i < names.length; i++) {
+      for (let j = i + 1; j < names.length; j++) {
+        const k = pairKey(names[i], names[j]);
+        if (!otagSet.has(k) && !engineSet.has(k)) candidates.push(k);
+      }
+    }
+    for (let n = 0; n < otagOnly.length && candidates.length; n++) {
+      m3.random.push(candidates[Math.floor(rnd() * candidates.length)]);
+    }
   }
 
   console.log(`\n  per-verb agreement (otag edges the engine confirms):`);
@@ -162,6 +181,27 @@ async function main(): Promise<void> {
   console.log(`    subject mismatch only:  ${rejectedSubjectOnly} (${pct(rejectedSubjectOnly)}%) -- same verb both sides, engine rejected on subject`);
   console.log(`    a side was untagged:    ${rejectedUntagged} (${pct(rejectedUntagged)}%)`);
   console.log(`    verb absent from tags:  ${rejected - rejectedSubjectOnly - rejectedUntagged} (${pct(rejected - rejectedSubjectOnly - rejectedUntagged)}%) -- candidate NEW edges, measured in M3`);
+
+  console.log(`\n=== M3: EDHREC agreement (otag-only edges are the deliverable) ===`);
+  const edh = await edhrecPairSet();
+  if (!edh) {
+    console.log(`  M3 unavailable -- EDHREC could not be reached. M1 and M2 above are unaffected.`);
+  } else {
+    const rate = (keys: string[]) => {
+      if (!keys.length) return "n/a";
+      const hits = keys.filter((k) => {
+        const [a, b] = k.split("|");
+        return edh.has(pairKey(normalizeName(a), normalizeName(b)));
+      }).length;
+      return `${hits}/${keys.length} (${((100 * hits) / keys.length).toFixed(0)}%)`;
+    };
+    console.log(`  otag-only edges (under test):   ${rate(m3.otagOnly)}`);
+    console.log(`  otag∩engine edges (positive):   ${rate(m3.confirmed)}`);
+    console.log(`  random deck pairs (null):       ${rate(m3.random)}`);
+    console.log(`\n  Read the COMPARISON, not the absolute numbers. EDHREC co-occurrence means both`);
+    console.log(`  cards suit an archetype, not that they synergize with each other, so the rate is`);
+    console.log(`  only meaningful against the positive control and the null.`);
+  }
 
   await store.close();
 }
