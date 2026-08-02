@@ -37,6 +37,22 @@ test("ingestCards batches upserts via bulkWrite and reports progress (no Mongo)"
   expect(progress.at(-1)).toEqual([2, 2]);
 });
 
+test("ingestCards excludes digital-only oracle ids", async () => {
+  const bulkWrite = vi.fn(async () => ({}));
+  const cards = { bulkWrite } as unknown as Collection<CardDoc>;
+  const raws: ScryfallCard[] = [
+    { oracle_id: "paper", name: "Sol Ring", type_line: "Artifact", oracle_text: "", colors: [], cmc: 1 },
+    { oracle_id: "arena", name: "A-Sol Ring", type_line: "Artifact", oracle_text: "", colors: [], cmc: 1 },
+  ];
+  const counts = await ingestCards(raws, cards, undefined, new Set(["arena"]));
+
+  expect(counts).toEqual({ processed: 1, skipped: 1 });
+  const ops = (bulkWrite as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0] as Array<{
+    replaceOne: { filter: { _id: string } };
+  }>;
+  expect(ops.map((o) => o.replaceOne.filter._id)).toEqual(["paper"]);
+});
+
 suite("ingest idempotency", () => {
   let store: Store;
 

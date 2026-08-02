@@ -1,6 +1,7 @@
 import type { AnyBulkWriteOperation, Collection } from "mongodb";
 import {
   normalizeScryfallCard,
+  fetchDigitalOnlyOracleIds,
   fetchOracleCards,
   type ScryfallCard,
 } from "./scryfall.js";
@@ -26,6 +27,10 @@ export async function ingestCards(
   raws: ScryfallCard[],
   cards: Collection<CardDoc>,
   onProgress?: (done: number, total: number) => void,
+  /** Oracle IDs with no paper printing; excluded so digital-only cards never enter the
+   *  corpus. They are unplayable in paper and unreachable by ingest-otags, which filters
+   *  -is:alchemy, so they would sit permanently untagged. */
+  digitalOnly: ReadonlySet<string> = new Set(),
 ): Promise<IngestCounts> {
   const total = raws.length;
   let processed = 0;
@@ -42,7 +47,7 @@ export async function ingestCards(
   for (const raw of raws) {
     done++;
     const n = normalizeScryfallCard(raw);
-    if (!n) {
+    if (!n || digitalOnly.has(n.oracleId)) {
       skipped++;
     } else {
       const doc = toCardDoc(n);
@@ -119,7 +124,9 @@ export async function runIngest(): Promise<void> {
   try {
     console.log("Downloading Scryfall oracle cards...");
     const cardRaws = await fetchOracleCards();
-    const c = await ingestCards(cardRaws, store.cards, barReporter("Cards:"));
+    const digitalOnly = await fetchDigitalOnlyOracleIds();
+    console.log(`Excluding ${digitalOnly.size} digital-only (non-paper) cards`);
+    const c = await ingestCards(cardRaws, store.cards, barReporter("Cards:"), digitalOnly);
     console.log(`Cards: ${c.processed} processed, ${c.skipped} skipped`);
 
     console.log("Downloading flavor names...");

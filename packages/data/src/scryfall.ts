@@ -77,6 +77,54 @@ const SCRYFALL_HEADERS = {
   Accept: "application/json",
 };
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Oracle IDs of cards with no paper printing (Alchemy rebalances, Arena-only cards).
+ *
+ * Uses `-in:paper`, which is CARD-level. The printing-level predicates `is:alchemy` and
+ * `-game:paper` match a card when a SINGLE printing matches, so they sweep in paper
+ * staples that merely have an Arena rebalance (Kindred Discovery, Blur) -- never use
+ * those to decide what to exclude or delete.
+ *
+ * We ask Scryfall rather than reading `games`/`digital` off the oracle_cards bulk entry:
+ * that entry is one representative printing per card, and which printing Scryfall picks
+ * is not a documented guarantee, so a card with both paper and Arena printings could be
+ * represented by the Arena one and wrongly dropped.
+ */
+export async function fetchDigitalOnlyOracleIds(
+  fetchImpl: FetchFn = fetch,
+): Promise<Set<string>> {
+  const out = new Set<string>();
+  let url = `https://api.scryfall.com/cards/search?unique=cards&q=${encodeURIComponent("-in:paper")}`;
+  while (url) {
+    let ok = false;
+    for (let attempt = 0; attempt < 10 && !ok; attempt++) {
+      const res = await fetchImpl(url, { headers: SCRYFALL_HEADERS });
+      if (res.status === 404) return out; // no matches
+      if (!res.ok) {
+        const ra = Number(res.headers.get("retry-after")) * 1000;
+        await sleep(Number.isFinite(ra) && ra > 0 ? ra : 2500);
+        continue;
+      }
+      const j = (await res.json()) as {
+        data?: Array<{ oracle_id?: string }>;
+        has_more?: boolean;
+        next_page?: string;
+        object?: string;
+      };
+      if (j.object === "error") return out;
+      for (const c of j.data ?? []) if (c.oracle_id) out.add(c.oracle_id);
+      url = j.has_more && j.next_page ? j.next_page : "";
+      ok = true;
+    }
+    // Truncation would silently readmit digital cards, so fail instead of half-filtering.
+    if (!ok) throw new Error("digital-only oracle_id fetch gave up after retries");
+    await sleep(130);
+  }
+  return out;
+}
+
 export async function fetchOracleCards(
   fetchImpl: FetchFn = fetch,
 ): Promise<ScryfallCard[]> {
