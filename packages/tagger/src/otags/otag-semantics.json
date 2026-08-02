@@ -84,7 +84,7 @@
     "events": [
       {
         "role": "consumer",
-        "event": "land-play"
+        "event": "enters"
       }
     ],
     "effectKind": null,
@@ -97,7 +97,7 @@
     "events": [
       {
         "role": "consumer",
-        "event": "land-play"
+        "event": "enters"
       }
     ],
     "effectKind": null,
@@ -781,16 +781,11 @@
     ]
   },
   "token-doubler": {
-    "events": [
-      {
-        "role": "producer",
-        "event": "create-token"
-      }
-    ],
+    "events": [],
     "effectKind": "token-doubling",
     "uses": [
-      "edge",
-      "classifier"
+      "classifier",
+      "weight"
     ]
   },
   "affinity-for-tokens": {
@@ -809,7 +804,7 @@
     "events": [
       {
         "role": "consumer",
-        "event": "create-token"
+        "event": "enters"
       }
     ],
     "effectKind": null,
@@ -921,15 +916,9 @@
     ]
   },
   "activate-from-graveyard": {
-    "events": [
-      {
-        "role": "producer",
-        "event": "cast-from-graveyard"
-      }
-    ],
+    "events": [],
     "effectKind": null,
     "uses": [
-      "edge",
       "classifier"
     ]
   },
@@ -1330,7 +1319,7 @@
     "events": [
       {
         "role": "producer",
-        "event": "land-play"
+        "event": "enters"
       }
     ],
     "effectKind": "mana-generation",
@@ -2706,15 +2695,9 @@
     ]
   },
   "rhystic": {
-    "events": [
-      {
-        "role": "consumer",
-        "event": "cast"
-      }
-    ],
-    "effectKind": "tax",
+    "events": [],
+    "effectKind": null,
     "uses": [
-      "edge",
       "weight"
     ]
   },
