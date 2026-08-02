@@ -48,7 +48,7 @@ async function fetchTagOracleIds(slug: string): Promise<string[]> {
         await sleep(500);
       }
     }
-    if (!ok) break;
+    if (!ok) throw new Error(`otag fetch for "${slug}" gave up after retries — aborting to avoid committing partial/mislabelled tag data`);
     await sleep(120);
   }
   return ids;
