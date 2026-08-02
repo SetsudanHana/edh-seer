@@ -54,9 +54,12 @@ async function fetchTagOracleIds(slug: string): Promise<string[]> {
   return ids;
 }
 
-// Usage: ingest-otags [--limit N]   (dev: first N functional otags only)
+// Usage: ingest-otags [--full] [--limit N]
+//   default (incremental): fetch only slugs not yet in the collection, append with $addToSet.
+//   --full: refetch every slug and overwrite each card's otags ($set rebuild).
 async function main(): Promise<void> {
   const store = await connect(loadConfig());
+  const full = process.argv.includes("--full");
   const limitIdx = process.argv.indexOf("--limit");
   let slugs = loadFunctionalOtags();
   if (limitIdx >= 0) slugs = slugs.slice(0, Number(process.argv[limitIdx + 1]));
@@ -64,30 +67,52 @@ async function main(): Promise<void> {
   const cards = await store.cards.find({}).toArray();
   const corpusIds = new Set(cards.map((c) => c._id));
   const nameById = new Map(cards.map((c) => [c._id, c.name]));
+  const col = store.db.collection<CardOtagDoc>("cardOtags");
+
+  // Skip slugs already ingested (present on any card) unless doing a full rebuild.
+  const existing = new Set<string>(full ? [] : ((await col.distinct("otags")) as string[]));
+  const toFetch = slugs.filter((s) => !existing.has(s));
+  if (!toFetch.length) {
+    console.log("no new otags to ingest (use --full to rebuild).");
+    await store.close();
+    return;
+  }
+  console.log(`${full ? "full rebuild" : "incremental"}: fetching ${toFetch.length}/${slugs.length} slugs`);
+
+  async function write(tagToIds: Map<string, string[]>): Promise<void> {
+    const cardOtags = buildCardOtags(tagToIds, corpusIds);
+    const ops: AnyBulkWriteOperation<CardOtagDoc>[] = [...cardOtags].map(([id, otags]) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: full
+          ? { $set: { name: nameById.get(id) ?? null, otags } }
+          : { $set: { name: nameById.get(id) ?? null }, $addToSet: { otags: { $each: otags } } },
+        upsert: true,
+      },
+    }));
+    if (ops.length) await col.bulkWrite(ops, { ordered: false });
+  }
 
   const tagToIds = new Map<string, string[]>();
   const emptyTags: string[] = [];
-  for (const slug of slugs) {
+  for (const slug of toFetch) {
+    // fetchTagOracleIds either returns a fully paginated tag or throws — never a partial list,
+    // so persisting here can't commit truncated tag data.
     const ids = await fetchTagOracleIds(slug);
-    tagToIds.set(slug, ids);
     if (ids.length === 0) emptyTags.push(slug);
     process.stdout.write(`  ${slug}: ${ids.length}\n`);
+    // Incremental appends per slug, so an interrupted run keeps finished slugs and the
+    // next run's `distinct` skips them. --full rebuilds whole otag arrays, so it can only
+    // write once every slug is in hand.
+    if (full) tagToIds.set(slug, ids);
+    else await write(new Map([[slug, ids]]));
   }
-
-  const cardOtags = buildCardOtags(tagToIds, corpusIds);
-  const col = store.db.collection<CardOtagDoc>("cardOtags");
-  const ops: AnyBulkWriteOperation<CardOtagDoc>[] = [...cardOtags].map(([id, otags]) => ({
-    updateOne: {
-      filter: { _id: id },
-      update: { $set: { name: nameById.get(id) ?? null, otags } },
-      upsert: true,
-    },
-  }));
-  if (ops.length) await col.bulkWrite(ops, { ordered: false });
+  if (full) await write(tagToIds);
 
   console.log(`\n=== otag ingest coverage ===`);
   console.log(`  corpus cards: ${corpusIds.size}`);
-  console.log(`  cards with >=1 otag: ${cardOtags.size} (${((100 * cardOtags.size) / corpusIds.size).toFixed(0)}%)`);
+  const withOtag = await col.countDocuments({ "otags.0": { $exists: true } });
+  console.log(`  cards with >=1 otag: ${withOtag} (${((100 * withOtag) / corpusIds.size).toFixed(0)}%)`);
   console.log(`  empty tags (prune candidates): ${emptyTags.length ? emptyTags.join(", ") : "none"}`);
   for (const n of ["Blood Artist", "Viscera Seer", "Impact Tremors"]) {
     const doc = await col.findOne({ name: n });
