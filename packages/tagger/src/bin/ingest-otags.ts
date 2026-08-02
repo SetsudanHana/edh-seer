@@ -21,7 +21,12 @@ async function fetchTagOracleIds(slug: string): Promise<string[]> {
     let ok = false;
     for (let a = 0; a < 4 && !ok; a++) {
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, {
+          headers: {
+            "User-Agent": "mtg-synergy-engine/1.0 (otag ingest)",
+            "Accept": "application/json",
+          },
+        });
         if (res.status === 404) return ids; // "no cards match" -> genuine empty tag
         if (!res.ok) {
           // 429 / 5xx -> transient, retry (respect Retry-After if present)
