@@ -1194,6 +1194,7 @@
       }
     ],
     "effectKind": null,
+    "needsEffectKind": "bounce",
     "uses": [
       "classifier"
     ]
@@ -1471,9 +1472,8 @@
         "event": "gain-life"
       }
     ],
-    "effectKind": "lifegain",
+    "effectKind": null,
     "uses": [
-      "edge",
       "classifier"
     ]
   },
@@ -1855,6 +1855,7 @@
       }
     ],
     "effectKind": null,
+    "needsEffectKind": "gain-control",
     "uses": [
       "classifier"
     ]
@@ -1867,6 +1868,7 @@
       }
     ],
     "effectKind": null,
+    "needsEffectKind": "gain-control",
     "uses": [
       "classifier"
     ]
@@ -1922,6 +1924,7 @@
       }
     ],
     "effectKind": null,
+    "needsEffectKind": "sacrifice",
     "uses": [
       "edge"
     ]
@@ -1934,6 +1937,7 @@
       }
     ],
     "effectKind": null,
+    "needsEffectKind": "sacrifice",
     "uses": [
       "edge",
       "classifier"
@@ -2041,6 +2045,7 @@
       }
     ],
     "effectKind": null,
+    "needsEffectKind": "search-library",
     "uses": [
       "classifier"
     ]

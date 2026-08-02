@@ -3,7 +3,7 @@ import { EFFECT_KINDS, type Verb } from "../schema.js";
 import { loadDescriptorOtags, loadFunctionalOtags } from "./functional.js";
 
 /** oTag-native event vocabulary. Deliberately NOT the engine's Verb set: otag events are
- *  coarser, and several (regrowth, return-to-hand) have no honest Verb equivalent. The
+ *  coarser, and several (return-to-hand, gain-control) have no honest Verb equivalent. The
  *  mapping to Verb is explicit in OTAG_EVENT_TO_VERB so the lossy step is visible and diffable. */
 export const OTAG_EVENTS = [
   "enters", "dies", "leaves", "sacrifice", "cast", "attacks", "blocks",
@@ -63,6 +63,11 @@ export interface SlugSemantics {
    *  Must NOT name a kind that already exists; effectKind must be null alongside it. */
   needsEffectKind?: string;
 }
+
+/** Known alias pairs: verified in Mongo to tag byte-identical card sets (board-wipe/sweeper
+ *  920/920, flashback/castable-from-graveyard 389/389). Classified identically here, so a
+ *  consumer counting matching slugs on a card will double-count. Deduping belongs upstream
+ *  in functional-otags.json; not fixed here. */
 
 const raw = JSON.parse(
   readFileSync(new URL("./otag-semantics.json", import.meta.url), "utf8"),
