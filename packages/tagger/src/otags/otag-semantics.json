@@ -1113,5 +1113,975 @@
     "uses": [
       "classifier"
     ]
+  },
+  "removal-creature": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "spot-removal": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "multi-removal": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "repeatable-removal": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "board-wipe": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "dies"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "destroy",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "ramp": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "add-mana"
+      }
+    ],
+    "effectKind": "mana-generation",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "pure-draw": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "draw"
+      }
+    ],
+    "effectKind": "draw-card",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "removal-destroy": {
+    "events": [],
+    "effectKind": null,
+    "needsEffectKind": "destroy",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "removal-exile": {
+    "events": [],
+    "effectKind": null,
+    "needsEffectKind": "exile",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "removal-bounce": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "return-to-hand"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "removal-nonland": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "removal-sacrifice": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "sacrifice"
+      },
+      {
+        "role": "producer",
+        "event": "dies"
+      }
+    ],
+    "effectKind": "forced-sacrifice",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "removal-toughness": {
+    "events": [],
+    "effectKind": "pump",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "sweeper": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "dies"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "destroy",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "draw-engine": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "draw"
+      }
+    ],
+    "effectKind": "draw-card",
+    "uses": [
+      "edge",
+      "classifier",
+      "weight"
+    ]
+  },
+  "repeatable-pure-draw": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "draw"
+      }
+    ],
+    "effectKind": "draw-card",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "cantrip": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "draw"
+      }
+    ],
+    "effectKind": "draw-card",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "burst-draw": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "draw"
+      }
+    ],
+    "effectKind": "draw-card",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "scry": {
+    "events": [],
+    "effectKind": "top-manipulation",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "mana-dork": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "add-mana"
+      }
+    ],
+    "effectKind": "mana-generation",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "land-ramp": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "land-play"
+      }
+    ],
+    "effectKind": "mana-generation",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "mana-sink": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "bottomless-mana-sink": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "adds-multiple-mana": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "add-mana"
+      }
+    ],
+    "effectKind": "mana-generation",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "utility-mana-rock": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "add-mana"
+      }
+    ],
+    "effectKind": "mana-generation",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "mana-filter": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "add-mana"
+      }
+    ],
+    "effectKind": "mana-generation",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "restricted-mana": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "add-mana"
+      }
+    ],
+    "effectKind": "mana-generation",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "mana-value-matters": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "low-mana-value-matters": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "scales-with-mana-value": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "repeatable-lifegain": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "gain-life"
+      }
+    ],
+    "effectKind": "lifegain",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "lifegain": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "gain-life"
+      }
+    ],
+    "effectKind": "lifegain",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "lifegain-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "gain-life"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "gives-lifelink": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "gains-lifelink": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "opponent-lifegain": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "gain-life"
+      }
+    ],
+    "effectKind": "lifegain",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "lifegain-to-damage": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "gain-life"
+      },
+      {
+        "role": "producer",
+        "event": "lose-life"
+      }
+    ],
+    "effectKind": "drain",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "opponent-loses-life": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "lose-life"
+      }
+    ],
+    "effectKind": "player-life-loss",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "drain-creature": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "non-combat-damage"
+      },
+      {
+        "role": "producer",
+        "event": "gain-life"
+      }
+    ],
+    "effectKind": "drain",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "life-loss-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "lose-life"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "self-life-loss-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "lose-life"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "blood-artist-ability": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "dies"
+      },
+      {
+        "role": "producer",
+        "event": "lose-life"
+      },
+      {
+        "role": "producer",
+        "event": "gain-life"
+      }
+    ],
+    "effectKind": "drain",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "gains-pp-counters": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "repeatable-pp-counters": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "pp-counters-matter": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "gives-pp-counters-to-all": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "burn-creature": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "non-combat-damage"
+      }
+    ],
+    "effectKind": "damage",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "burn-player": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "non-combat-damage"
+      }
+    ],
+    "effectKind": "damage",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "burn-any": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "non-combat-damage"
+      }
+    ],
+    "effectKind": "damage",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "burn-planeswalker": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "non-combat-damage"
+      }
+    ],
+    "effectKind": "damage",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "damage-increaser": {
+    "events": [],
+    "effectKind": "damage-multiplier",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "power-doubler": {
+    "events": [],
+    "effectKind": "pump",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "copy-creature": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "copy"
+      }
+    ],
+    "effectKind": "clone",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "copy-self": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "copy"
+      }
+    ],
+    "effectKind": "clone",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "copy-spell": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "copy"
+      }
+    ],
+    "effectKind": "copy-spell",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "copy-instant": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "copy"
+      }
+    ],
+    "effectKind": "copy-spell",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "copy-sorcery": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "copy"
+      }
+    ],
+    "effectKind": "copy-spell",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "copy-artifact": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "copy"
+      }
+    ],
+    "effectKind": "clone",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "clone": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "copy"
+      }
+    ],
+    "effectKind": "clone",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "multi-copy": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "copy"
+      }
+    ],
+    "effectKind": "clone",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "cost-reducer": {
+    "events": [],
+    "effectKind": "cost-reduction",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "cost-reducer-creature": {
+    "events": [],
+    "effectKind": "cost-reduction",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "cost-ignorer": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "discount-self": {
+    "events": [],
+    "effectKind": "cost-reduction",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "cost-increaser": {
+    "events": [],
+    "effectKind": "tax",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "trigger-doubler": {
+    "events": [],
+    "effectKind": "trigger-doubling",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "counter-doubler": {
+    "events": [],
+    "effectKind": null,
+    "needsEffectKind": "counter-doubling",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "mana-increaser": {
+    "events": [],
+    "effectKind": null,
+    "needsEffectKind": "mana-doubling",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "threaten": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "gain-control"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "donate": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "gain-control"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "donate-token": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "token-generation",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "multiple-bodies": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "token-generation",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "leaves-body-behind": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "dies"
+      },
+      {
+        "role": "producer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "token-generation",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "sacrifice-self": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "sacrifice"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "martyr": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "sacrifice"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "combat-trick": {
+    "events": [],
+    "effectKind": "pump",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "shade-pump": {
+    "events": [],
+    "effectKind": "pump",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "magecraft": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "cast"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "storm-count-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "cast"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "poisonous": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "energy-generator": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "counter-fuel-energy": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "counter-fuel-charge": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "tutor-to-hand": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "search-library"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "discard": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "discard"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "discard",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "alternate-win-condition": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "utility-land": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
   }
 }
