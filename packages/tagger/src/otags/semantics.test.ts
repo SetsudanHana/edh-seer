@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { EFFECT_KINDS } from "../schema.js";
 import { loadDescriptorOtags } from "./functional.js";
-import { OTAG_EVENTS, OTAG_EVENT_TO_VERB, loadOtagSemantics } from "./semantics.js";
+import { OTAG_EVENTS, OTAG_EVENT_TO_VERB, loadOtagSemantics, unclassifiedSlugs } from "./semantics.js";
 
 test("every otag event maps to a Verb or an explicit null", () => {
   for (const e of OTAG_EVENTS) {
@@ -46,4 +46,8 @@ test("descriptor slugs are synthesised as weight without a JSON entry", () => {
   for (const d of loadDescriptorOtags()) {
     expect(sem.get(d), `${d} missing`).toEqual({ events: [], effectKind: null, uses: ["weight"] });
   }
+});
+
+test("every signal slug is classified", () => {
+  expect(unclassifiedSlugs()).toEqual([]);
 });

@@ -2083,5 +2083,695 @@
     "uses": [
       "classifier"
     ]
+  },
+  "noncreature-typal": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-coupling": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-choose": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-share": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-dragon": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-spirit": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-zombie": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-sliver": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-goblin": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-human": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-vampire": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-ally": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-merfolk": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-wizard": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-army": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-dinosaur": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-warrior": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-soldier": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-knight": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-elemental": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-pirate": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-hero": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-bird": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-rat": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-mount": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-villain": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-assassin": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-giant": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-cleric": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-faerie": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-demon": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-spider": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-non-human": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-squirrel": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-kithkin": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-lupine": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-beast": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-dwarf": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "typal-treefolk": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "synergy-equipment": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "synergy-aura": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "quick-equip": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "auto-equip": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "auraify": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "protects-creature": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "protects-all": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "gives-indestructible": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "gives-hexproof": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "gives-protection": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "ward": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "gives-ward": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "damage-prevention": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "anthem": {
+    "events": [],
+    "effectKind": "pump",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "keyword-anthem": {
+    "events": [],
+    "effectKind": "pump",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "power-boost-to-all": {
+    "events": [],
+    "effectKind": "pump",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "toughness-boost-to-all": {
+    "events": [],
+    "effectKind": "pump",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "overrun": {
+    "events": [],
+    "effectKind": "pump",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "creature-count-matters": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "hate-attacker": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "hate-blocker": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "hate-graveyard": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "hate-artifact": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "hate-lifegain": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "hate-counterspell": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "prevent-activation": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "unblockable": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "gives-unblockable": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "prevent-blocker": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "saboteur": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "combat-damage"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "gives-haste": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "gains-haste": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "gives-flying": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "gives-trample": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "gives-double-strike": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "gives-vigilance": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "extra-combat-phase": {
+    "events": [],
+    "effectKind": "speed-increase",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "extra-turn": {
+    "events": [],
+    "effectKind": "speed-increase",
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "scales-with-power": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "power-matters": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "power-matters-self": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "land-count-matters": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "scales-with-damage-dealt": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "per-player": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "rhystic": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "cast"
+      }
+    ],
+    "effectKind": "tax",
+    "uses": [
+      "edge",
+      "weight"
+    ]
+  },
+  "cast-tax": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "cast"
+      }
+    ],
+    "effectKind": "tax",
+    "uses": [
+      "edge",
+      "weight"
+    ]
+  },
+  "life-for-cards": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "draw"
+      },
+      {
+        "role": "producer",
+        "event": "lose-life"
+      }
+    ],
+    "effectKind": "draw-card",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "upkeep-cost": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "exponential": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier",
+      "weight"
+    ]
+  },
+  "draw-hate": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "draw"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
   }
 }
