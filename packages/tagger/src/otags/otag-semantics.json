@@ -1,28 +1,1099 @@
 {
   "death-trigger": {
-    "events": [{ "role": "consumer", "event": "dies" }],
+    "events": [
+      {
+        "role": "consumer",
+        "event": "dies"
+      }
+    ],
     "effectKind": null,
-    "uses": ["edge"]
+    "uses": [
+      "edge"
+    ]
   },
   "sacrifice-outlet-creature": {
     "events": [
-      { "role": "producer", "event": "sacrifice" },
-      { "role": "producer", "event": "dies" }
+      {
+        "role": "producer",
+        "event": "sacrifice"
+      },
+      {
+        "role": "producer",
+        "event": "dies"
+      }
     ],
     "effectKind": null,
     "needsEffectKind": "sacrifice",
-    "uses": ["edge", "classifier"]
+    "uses": [
+      "edge",
+      "classifier"
+    ]
   },
   "drain-life": {
-    "events": [{ "role": "producer", "event": "lose-life" }],
+    "events": [
+      {
+        "role": "producer",
+        "event": "lose-life"
+      }
+    ],
     "effectKind": "drain",
-    "uses": ["edge", "classifier"]
+    "uses": [
+      "edge",
+      "classifier"
+    ]
   },
   "creaturefall": {
-    "events": [{ "role": "consumer", "event": "enters" }],
+    "events": [
+      {
+        "role": "consumer",
+        "event": "enters"
+      }
+    ],
     "effectKind": null,
-    "uses": ["edge"]
+    "uses": [
+      "edge"
+    ]
   },
-  "typal-elf": { "events": [], "effectKind": null, "uses": ["classifier"] },
-  "evasion": { "events": [], "effectKind": null, "uses": ["weight"] }
+  "typal-elf": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "evasion": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "weight"
+    ]
+  },
+  "tokenfall": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "enters"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "landfall": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "land-play"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "landfall-other": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "land-play"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "artifactfall": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "enters"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "enchantmentfall": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "enters"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "permanentfall": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "enters"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "planeswalkerfall": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "enters"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "legendfall": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "enters"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "thingfall": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "enters"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "death-trigger-self": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "dies"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "death-trigger-opponent": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "dies"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "sacrifice-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "sacrifice"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "your-sacrifice-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "sacrifice"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "opponent-sacrifice-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "sacrifice"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "sacrifice-outlet-artifact": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "sacrifice"
+      },
+      {
+        "role": "producer",
+        "event": "dies"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "sacrifice",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "sacrifice-outlet-token": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "sacrifice"
+      },
+      {
+        "role": "producer",
+        "event": "dies"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "sacrifice",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "sacrifice-outlet-land": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "sacrifice"
+      },
+      {
+        "role": "producer",
+        "event": "dies"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "sacrifice",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "free-sacrifice-outlet": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "sacrifice"
+      },
+      {
+        "role": "producer",
+        "event": "dies"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "sacrifice",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "repeatable-sacrifice-outlet": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "sacrifice"
+      },
+      {
+        "role": "producer",
+        "event": "dies"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "sacrifice",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "discard-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "discard"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "opponent-discard-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "discard"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "self-discard-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "discard"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "discard-outlet": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "discard"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "discard",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "repeatable-creature-tokens": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "token-generation",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "mill": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "mill"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "mill-self": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "mill"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "mill-opponent": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "mill"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "reanimate-creature": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "return-to-battlefield"
+      }
+    ],
+    "effectKind": "graveyard-recursion",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "mass-reanimation": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "return-to-battlefield"
+      }
+    ],
+    "effectKind": "graveyard-recursion",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "pinger": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "non-combat-damage"
+      }
+    ],
+    "effectKind": "damage",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "cast-trigger": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "cast"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "cast-trigger-you": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "cast"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "cast-trigger-self": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "cast"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "cast-trigger-other": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "cast"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "attack-trigger": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "attacks"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "block-trigger": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "blocks"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "attacking-matters": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "attacks"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "attacking-matters-self": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "attacks"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge"
+    ]
+  },
+  "counters-matter": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "gives-pp-counters": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "gives-mm-counters": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "mm-counters-matter": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "keyword-counter": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "unique-counter": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge"
+    ]
+  },
+  "counter-preservation": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "temporary-counter": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "counter-added"
+      }
+    ],
+    "effectKind": "counter-placement",
+    "uses": [
+      "edge"
+    ]
+  },
+  "recursion": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "return-to-hand"
+      },
+      {
+        "role": "producer",
+        "event": "return-to-battlefield"
+      }
+    ],
+    "effectKind": "graveyard-recursion",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "recursion-any": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "return-to-hand"
+      },
+      {
+        "role": "producer",
+        "event": "return-to-battlefield"
+      }
+    ],
+    "effectKind": "graveyard-recursion",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "regrowth": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "return-to-hand"
+      }
+    ],
+    "effectKind": "graveyard-recursion",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "regrowth-any": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "return-to-hand"
+      }
+    ],
+    "effectKind": "graveyard-recursion",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "flashback": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "cast-from-graveyard"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "gives-flashback": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "cast-from-graveyard"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "cast-from-graveyard": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "cast-from-graveyard"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "repeatable-token-generator": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "token-generation",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "token-doubler": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "token-doubling",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "affinity-for-tokens": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "cost-reduction",
+    "uses": [
+      "edge"
+    ]
+  },
+  "synergy-token": {
+    "events": [
+      {
+        "role": "consumer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "repeatable-treasures": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "token-generation",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "repeatable-clues": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "token-generation",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "repeatable-food": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "token-generation",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "repeatable-blood": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "create-token"
+      }
+    ],
+    "effectKind": "token-generation",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "castable-from-graveyard": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "cast-from-graveyard"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "castable-from-exile": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "cast-from-exile"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "gives-castable-from-graveyard": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "cast-from-graveyard"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "gives-castable-from-exile": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "cast-from-exile"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "activate-from-graveyard": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "cast-from-graveyard"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "trigger-from-graveyard": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "return-to-battlefield"
+      }
+    ],
+    "effectKind": "graveyard-recursion",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "trigger-from-exile": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "cast-from-exile"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "activate-from-hand": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "free-cast-another": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "cast-from-exile"
+      }
+    ],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  },
+  "flicker-creature": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "flicker"
+      }
+    ],
+    "effectKind": "flicker",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "flicker-slow": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "flicker"
+      }
+    ],
+    "effectKind": "flicker",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "flicker-self": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "flicker"
+      }
+    ],
+    "effectKind": "flicker",
+    "uses": [
+      "classifier"
+    ]
+  },
+  "tapper-creature": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "taps"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "tap",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "untapper-creature": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "untaps"
+      }
+    ],
+    "effectKind": "untap",
+    "uses": [
+      "edge"
+    ]
+  },
+  "untaps-self": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "untaps"
+      }
+    ],
+    "effectKind": "untap",
+    "uses": [
+      "edge"
+    ]
+  },
+  "extra-untap": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "untaps"
+      }
+    ],
+    "effectKind": "untap",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "untapper-land": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "untaps"
+      }
+    ],
+    "effectKind": "untap",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "untapper-permanent": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "untaps"
+      }
+    ],
+    "effectKind": "untap",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "tapper-artifact": {
+    "events": [
+      {
+        "role": "producer",
+        "event": "taps"
+      }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "tap",
+    "uses": [
+      "edge",
+      "classifier"
+    ]
+  },
+  "tap-fuel-creature": {
+    "events": [],
+    "effectKind": null,
+    "uses": [
+      "classifier"
+    ]
+  }
 }
