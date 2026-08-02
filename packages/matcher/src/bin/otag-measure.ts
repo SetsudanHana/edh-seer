@@ -24,6 +24,17 @@ interface Loaded {
   otagsByCard: Map<string, string[]>;
 }
 
+/** True when both cards carry verb V in their structured tags -- producer emits it, consumer
+ *  triggers on it. If the engine still rejected the pair, subject matching is what rejected it. */
+function verbPresentInTags(p: DeckCard, c: DeckCard, verb: string): boolean {
+  if (!p.tags || !c.tags) return false;
+  const emits = p.tags.abilities.some((a) => (a.emits ?? []).some((e) => e.verb === verb));
+  const triggers = c.tags.abilities.some((a) =>
+    ((a.trigger?.verbs ?? []) as readonly string[]).includes(verb),
+  );
+  return emits && triggers;
+}
+
 async function main(): Promise<void> {
   const store = await connect(loadConfig());
   const lookup = mongoLookup(store);
@@ -83,6 +94,9 @@ async function main(): Promise<void> {
   console.log(`  ${"deck".padEnd(12)} ${"engine".padStart(7)} ${"otag".padStart(7)} ${"both".padStart(7)} ${"recall".padStart(8)} ${"agree".padStart(8)}`);
 
   const perVerb = new Map<string, { otag: number; both: number }>();
+  let rejected = 0;
+  let rejectedSubjectOnly = 0;
+  let rejectedUntagged = 0;
   for (const l of loaded) {
     // Dedupe: decklists repeat basic lands (and, e.g., samut has two entries that resolve to the
     // same card name). buildOtagEdges iterates the raw names array with no index-uniqueness, so a
@@ -116,6 +130,14 @@ async function main(): Promise<void> {
       r.otag++;
       if (engineSet.has(pairKey(e.a, e.b))) r.both++;
       perVerb.set(e.verb, r);
+
+      if (!engineSet.has(pairKey(e.a, e.b))) {
+        rejected++;
+        const p = l.cards.find((c) => c.card.name === e.a);
+        const c = l.cards.find((x) => x.card.name === e.b);
+        if (!p?.tags || !c?.tags) rejectedUntagged++;
+        else if (verbPresentInTags(p, c, e.verb)) rejectedSubjectOnly++;
+      }
     }
   }
 
@@ -123,6 +145,12 @@ async function main(): Promise<void> {
   for (const [verb, r] of [...perVerb].sort((a, b) => b[1].otag - a[1].otag)) {
     console.log(`    ${verb.padEnd(20)} ${String(r.both).padStart(6)}/${String(r.otag).padEnd(6)} ${((100 * r.both) / r.otag).toFixed(0).padStart(3)}%`);
   }
+
+  console.log(`\n  why the engine rejected otag edges (${rejected} rejected):`);
+  const pct = (n: number) => (rejected ? ((100 * n) / rejected).toFixed(0) : "0");
+  console.log(`    subject mismatch only:  ${rejectedSubjectOnly} (${pct(rejectedSubjectOnly)}%) -- same verb both sides, engine rejected on subject`);
+  console.log(`    a side was untagged:    ${rejectedUntagged} (${pct(rejectedUntagged)}%)`);
+  console.log(`    verb absent from tags:  ${rejected - rejectedSubjectOnly - rejectedUntagged} (${pct(rejected - rejectedSubjectOnly - rejectedUntagged)}%) -- candidate NEW edges, measured in M3`);
 
   await store.close();
 }
