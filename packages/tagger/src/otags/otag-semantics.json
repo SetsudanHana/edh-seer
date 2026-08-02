@@ -1,0 +1,28 @@
+{
+  "death-trigger": {
+    "events": [{ "role": "consumer", "event": "dies" }],
+    "effectKind": null,
+    "uses": ["edge"]
+  },
+  "sacrifice-outlet-creature": {
+    "events": [
+      { "role": "producer", "event": "sacrifice" },
+      { "role": "producer", "event": "dies" }
+    ],
+    "effectKind": null,
+    "needsEffectKind": "sacrifice",
+    "uses": ["edge", "classifier"]
+  },
+  "drain-life": {
+    "events": [{ "role": "producer", "event": "lose-life" }],
+    "effectKind": "drain",
+    "uses": ["edge", "classifier"]
+  },
+  "creaturefall": {
+    "events": [{ "role": "consumer", "event": "enters" }],
+    "effectKind": null,
+    "uses": ["edge"]
+  },
+  "typal-elf": { "events": [], "effectKind": null, "uses": ["classifier"] },
+  "evasion": { "events": [], "effectKind": null, "uses": ["weight"] }
+}
