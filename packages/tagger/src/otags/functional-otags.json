@@ -3,9 +3,11 @@
   "dies": ["death-trigger", "death-trigger-self", "death-trigger-opponent"],
   "sacrifice": ["sacrifice-matters", "your-sacrifice-matters", "opponent-sacrifice-matters", "sacrifice-outlet-creature", "sacrifice-outlet-artifact", "sacrifice-outlet-token", "sacrifice-outlet-land", "free-sacrifice-outlet", "repeatable-sacrifice-outlet"],
   "discard": ["discard-matters", "opponent-discard-matters", "self-discard-matters", "discard-outlet"],
-  "produce": ["repeatable-creature-tokens", "token-generator", "free-token-generator", "create-token", "mill", "mill-self", "mill-opponent", "reanimate-creature", "mass-reanimation", "pinger"],
+  "produce": ["repeatable-creature-tokens", "mill", "mill-self", "mill-opponent", "reanimate-creature", "mass-reanimation", "pinger"],
   "cast": ["cast-trigger", "cast-trigger-you", "cast-trigger-self", "cast-trigger-other"],
   "attack": ["attack-trigger", "block-trigger", "attacking-matters", "attacking-matters-self"],
-  "counters": ["proliferate", "counter-placement"],
+  "counters": ["counters-matter", "gives-pp-counters", "gives-mm-counters", "mm-counters-matter", "keyword-counter", "unique-counter", "counter-preservation", "temporary-counter"],
+  "tokens": ["repeatable-token-generator", "token-doubler", "affinity-for-tokens", "synergy-token"],
+  "utilityTokens": ["repeatable-treasures", "repeatable-clues", "repeatable-food", "repeatable-blood"],
   "effect": ["removal-creature", "spot-removal", "multi-removal", "repeatable-removal", "board-wipe", "ramp", "pure-draw"]
 }
