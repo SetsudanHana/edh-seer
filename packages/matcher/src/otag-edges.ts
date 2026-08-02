@@ -13,7 +13,11 @@ export function pairKey(a: string, b: string): string {
 }
 
 /** Verbs a card produces and consumes, from its slugs. Only edge-bearing slugs count, and
- *  only events with a real engine Verb -- a null-Verb event can never pair with anything. */
+ *  only events with a real engine Verb -- a null-Verb event can never pair with anything.
+ *  Returns Sets, so this is per-verb PRESENCE, not per-slug multiplicity: if two edge-bearing
+ *  slugs on the same card both produce "dies", that's one Set entry, and buildOtagEdges emits
+ *  exactly one (a, b, "dies") edge regardless. A future task counting raw edges per verb needs
+ *  a different data structure here -- this one collapses that count away by design. */
 function verbsFor(
   slugs: string[],
   semantics: Map<string, SlugSemantics>,

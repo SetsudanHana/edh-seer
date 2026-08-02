@@ -9,8 +9,21 @@ const sem = new Map<string, SlugSemantics>([
   ["death-payoff", { events: [{ role: "consumer", event: "dies" }], effectKind: null, uses: ["edge"] }],
   // producer of dies but NOT edge-bearing
   ["dies-classifier", { events: [{ role: "producer", event: "dies" }], effectKind: null, uses: ["classifier"] }],
-  // event whose Verb is null -> can never pair
-  ["bouncer", { events: [{ role: "producer", event: "return-to-hand" }], effectKind: null, uses: ["classifier"] }],
+  // event whose Verb is null -> can never pair, even when the slug claims "edge".
+  // loadOtagSemantics() would REJECT this exact shape at load time (it throws when a slug
+  // claims "edge" but no event maps to a non-null Verb -- see semantics.ts). This fixture
+  // bypasses the loader deliberately, since buildOtagEdges takes a Map directly and never
+  // calls it. So this proves buildOtagEdges' own null-Verb guard holds as defense-in-depth,
+  // independent of (and even if we lost) that upstream loader invariant.
+  ["bouncer", { events: [{ role: "producer", event: "return-to-hand" }], effectKind: null, uses: ["edge"] }],
+  // consumer of a DIFFERENT null-mapped event ("copy"), same deliberate loader-invalid shape as
+  // bouncer above. Exists so the null-guard test below has something to actually collide with:
+  // pairing bouncer's producer side against ONLY death-payoff (a real "dies" consumer) can never
+  // falsify the guard, because null !== "dies" whether or not the guard runs. Two DIFFERENT
+  // null-mapped events (return-to-hand, copy) both degenerate to the same JS `null` if the guard
+  // is removed, so a producer of one and a consumer of the other would wrongly pair -- that
+  // collision is exactly what the guard exists to prevent, and what makes the test meaningful.
+  ["copy-watcher", { events: [{ role: "consumer", event: "copy" }], effectKind: null, uses: ["edge"] }],
   // two events on one slug
   ["outlet-multi", {
     events: [{ role: "producer", event: "dies" }, { role: "producer", event: "sacrifice" }],
@@ -47,9 +60,13 @@ test("no edge when the slug's uses omits edge", () => {
 });
 
 test("no edge when the event maps to a null Verb", () => {
+  // Both sides map to null via DIFFERENT otag events (return-to-hand, copy). Without the
+  // `if (!verb) continue` guard in verbsFor, both degenerate to the same JS `null` and would
+  // wrongly pair as a "null" edge. With the guard, both sides are skipped and produces/consumes
+  // stay empty, so no edge forms.
   const edges = buildOtagEdges(
-    ["Boomerang", "Artist"],
-    new Map([["Boomerang", ["bouncer"]], ["Artist", ["death-payoff"]]]),
+    ["Boomerang", "CopyCat"],
+    new Map([["Boomerang", ["bouncer"]], ["CopyCat", ["copy-watcher"]]]),
     sem,
   );
   expect(edges).toEqual([]);
