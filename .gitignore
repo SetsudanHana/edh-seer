@@ -9,6 +9,7 @@ packages/tagger/score-debug*.json
 packages/tagger/_*.mts
 .gstack/
 .edhrec-cache/
+.cs-cache/
 
 # Playwright
 /test-results/
