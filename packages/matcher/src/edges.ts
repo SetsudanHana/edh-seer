@@ -43,7 +43,7 @@ function characteristicsSubject(tags: CardTags): SubjectFilter {
 
 /** A producer card's canonical events: authored emits + self-implied cast/enters, all zone-
  *  normalized and deduped, then unioned with the graveyard-fill events those emits imply. */
-function producerEvents(tags: CardTags): GameEvent[] {
+export function producerEvents(tags: CardTags): GameEvent[] {
   const base = [
     ...tags.abilities.flatMap((a) => a.emits ?? []),
     ...impliedEvents(tags.characteristics),
