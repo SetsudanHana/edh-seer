@@ -8,6 +8,7 @@ import {
   csCardCategories,
   csDeckArchetype,
   csSlug,
+  scoreCategory,
 } from "./cs-categories.js";
 import type { SaltPayload } from "./calibrate-core.js";
 import { loadOtagSemantics } from "@mtg/tagger";
@@ -131,4 +132,36 @@ test("kindred is mapped to typal slugs and has no engine archetype", () => {
   expect(CS_CATEGORY_TO_OTAGS["kindred"]?.some((s) => s.startsWith("typal-"))).toBe(true);
   expect(CS_CATEGORY_TO_ARCHETYPE["kindred"]).toBeUndefined();
   expect(bucketFor("kindred")).toBe("B");
+});
+
+test("scoreCategory computes precision, recall and prevalence", () => {
+  // universe of 100 cards; CS labelled 20; we predicted 10; 8 of ours are correct
+  const s = scoreCategory(new Set(["a", "b", "c", "d", "e", "f", "g", "h", "x", "y"]),
+                          new Set(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+                                   "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]), 100);
+  expect(s.predicted).toBe(10);
+  expect(s.labelled).toBe(20);
+  expect(s.hit).toBe(8);
+  expect(s.precision).toBeCloseTo(0.8);
+  expect(s.recall).toBeCloseTo(0.4);
+  expect(s.prevalence).toBeCloseTo(0.2);
+});
+
+test("scoreCategory returns zero precision when nothing was predicted", () => {
+  const s = scoreCategory(new Set(), new Set(["a"]), 10);
+  expect(s.precision).toBe(0);
+  expect(s.recall).toBe(0);
+});
+
+test("scoreCategory returns zero recall when nothing was labelled", () => {
+  const s = scoreCategory(new Set(["a"]), new Set(), 10);
+  expect(s.precision).toBe(0);
+  expect(s.recall).toBe(0);
+  expect(s.prevalence).toBe(0);
+});
+
+test("scoreCategory handles an empty universe without dividing by zero", () => {
+  const s = scoreCategory(new Set(), new Set(), 0);
+  expect(s.prevalence).toBe(0);
+  expect(Number.isNaN(s.precision)).toBe(false);
 });

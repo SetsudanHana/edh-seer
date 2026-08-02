@@ -161,3 +161,27 @@ export function bucketFor(category: string): Bucket {
 /** Engine archetypes with NO CS category: lifegain, spellslinger, voltron. Recorded so the
  *  findings document reports the asymmetry rather than quietly omitting three of eight. */
 export const ENGINE_ARCHETYPES_WITHOUT_CS: readonly Archetype[] = ["lifegain", "spellslinger", "voltron"];
+
+export interface CategoryScore {
+  predicted: number;
+  labelled: number;
+  hit: number;
+  precision: number;
+  recall: number;
+  /** Share of the universe CS labelled with this category — the null a precision figure must
+   *  be read against. Predicting at random scores precision ≈ prevalence. */
+  prevalence: number;
+}
+
+export function scoreCategory(predicted: Set<string>, labelled: Set<string>, universe: number): CategoryScore {
+  let hit = 0;
+  for (const k of predicted) if (labelled.has(k)) hit++;
+  return {
+    predicted: predicted.size,
+    labelled: labelled.size,
+    hit,
+    precision: predicted.size ? hit / predicted.size : 0,
+    recall: labelled.size ? hit / labelled.size : 0,
+    prevalence: universe ? labelled.size / universe : 0,
+  };
+}
