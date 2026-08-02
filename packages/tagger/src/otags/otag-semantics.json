@@ -1106,30 +1106,22 @@
   "removal-creature": {
     "events": [],
     "effectKind": null,
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "spot-removal": {
     "events": [],
     "effectKind": null,
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "multi-removal": {
     "events": [],
     "effectKind": null,
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "repeatable-removal": {
     "events": [],
     "effectKind": null,
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "board-wipe": {
     "events": [
@@ -1141,8 +1133,7 @@
     "effectKind": null,
     "needsEffectKind": "destroy",
     "uses": [
-      "edge",
-      "classifier"
+      "edge"
     ]
   },
   "ramp": {
@@ -1153,9 +1144,7 @@
       }
     ],
     "effectKind": "mana-generation",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "pure-draw": {
     "events": [
@@ -1166,25 +1155,20 @@
     ],
     "effectKind": "draw-card",
     "uses": [
-      "edge",
-      "classifier"
+      "edge"
     ]
   },
   "removal-destroy": {
     "events": [],
     "effectKind": null,
     "needsEffectKind": "destroy",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "removal-exile": {
     "events": [],
     "effectKind": null,
     "needsEffectKind": "exile",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "removal-bounce": {
     "events": [
@@ -1195,16 +1179,12 @@
     ],
     "effectKind": null,
     "needsEffectKind": "bounce",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "removal-nonland": {
     "events": [],
     "effectKind": null,
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "removal-sacrifice": {
     "events": [
@@ -1226,9 +1206,7 @@
   "removal-toughness": {
     "events": [],
     "effectKind": "pump",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "sweeper": {
     "events": [
@@ -1240,8 +1218,7 @@
     "effectKind": null,
     "needsEffectKind": "destroy",
     "uses": [
-      "edge",
-      "classifier"
+      "edge"
     ]
   },
   "draw-engine": {
@@ -1254,7 +1231,6 @@
     "effectKind": "draw-card",
     "uses": [
       "edge",
-      "classifier",
       "weight"
     ]
   },
@@ -1268,7 +1244,7 @@
     "effectKind": "draw-card",
     "uses": [
       "edge",
-      "classifier"
+      "weight"
     ]
   },
   "cantrip": {
@@ -1280,7 +1256,6 @@
     ],
     "effectKind": "draw-card",
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -1293,16 +1268,13 @@
     ],
     "effectKind": "draw-card",
     "uses": [
-      "edge",
-      "classifier"
+      "edge"
     ]
   },
   "scry": {
     "events": [],
     "effectKind": "top-manipulation",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "mana-dork": {
     "events": [
@@ -1312,9 +1284,7 @@
       }
     ],
     "effectKind": "mana-generation",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "land-ramp": {
     "events": [
@@ -1325,23 +1295,18 @@
     ],
     "effectKind": "mana-generation",
     "uses": [
-      "edge",
-      "classifier"
+      "edge"
     ]
   },
   "mana-sink": {
     "events": [],
     "effectKind": null,
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "bottomless-mana-sink": {
     "events": [],
     "effectKind": null,
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "adds-multiple-mana": {
     "events": [
@@ -1351,9 +1316,7 @@
       }
     ],
     "effectKind": "mana-generation",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "utility-mana-rock": {
     "events": [
@@ -1363,9 +1326,7 @@
       }
     ],
     "effectKind": "mana-generation",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "mana-filter": {
     "events": [
@@ -1375,9 +1336,7 @@
       }
     ],
     "effectKind": "mana-generation",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "restricted-mana": {
     "events": [
@@ -1387,29 +1346,27 @@
       }
     ],
     "effectKind": "mana-generation",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "mana-value-matters": {
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier"
+      "weight"
     ]
   },
   "low-mana-value-matters": {
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier"
+      "weight"
     ]
   },
   "scales-with-mana-value": {
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier"
+      "weight"
     ]
   },
   "repeatable-lifegain": {
@@ -1630,8 +1587,7 @@
     ],
     "effectKind": "damage",
     "uses": [
-      "edge",
-      "classifier"
+      "edge"
     ]
   },
   "burn-player": {
@@ -1656,8 +1612,7 @@
     ],
     "effectKind": "damage",
     "uses": [
-      "edge",
-      "classifier"
+      "edge"
     ]
   },
   "burn-planeswalker": {
@@ -1669,8 +1624,7 @@
     ],
     "effectKind": "damage",
     "uses": [
-      "edge",
-      "classifier"
+      "edge"
     ]
   },
   "damage-increaser": {
@@ -1787,7 +1741,6 @@
     "events": [],
     "effectKind": "cost-reduction",
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -1795,7 +1748,6 @@
     "events": [],
     "effectKind": "cost-reduction",
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -1803,14 +1755,13 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier"
+      "weight"
     ]
   },
   "discount-self": {
     "events": [],
     "effectKind": "cost-reduction",
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -1818,7 +1769,7 @@
     "events": [],
     "effectKind": "tax",
     "uses": [
-      "classifier"
+      "weight"
     ]
   },
   "trigger-doubler": {
@@ -1947,7 +1898,6 @@
     "events": [],
     "effectKind": "pump",
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -1955,7 +1905,6 @@
     "events": [],
     "effectKind": "pump",
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2046,9 +1995,7 @@
     ],
     "effectKind": null,
     "needsEffectKind": "search-library",
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "discard": {
     "events": [
@@ -2060,8 +2007,7 @@
     "effectKind": null,
     "needsEffectKind": "discard",
     "uses": [
-      "edge",
-      "classifier"
+      "edge"
     ]
   },
   "alternate-win-condition": {
@@ -2074,9 +2020,7 @@
   "utility-land": {
     "events": [],
     "effectKind": null,
-    "uses": [
-      "classifier"
-    ]
+    "uses": []
   },
   "noncreature-typal": {
     "events": [],
@@ -2393,7 +2337,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2401,7 +2344,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2409,7 +2351,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2417,7 +2358,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2425,7 +2365,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2440,7 +2379,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2448,7 +2386,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2589,14 +2526,14 @@
     "effectKind": null,
     "uses": [
       "edge",
-      "classifier"
+      "classifier",
+      "weight"
     ]
   },
   "gives-haste": {
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2611,7 +2548,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2619,7 +2555,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2627,7 +2562,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },
@@ -2635,7 +2569,6 @@
     "events": [],
     "effectKind": null,
     "uses": [
-      "classifier",
       "weight"
     ]
   },

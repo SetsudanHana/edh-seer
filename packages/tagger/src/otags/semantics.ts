@@ -52,6 +52,30 @@ export const OTAG_EVENT_TO_VERB: Readonly<Record<OtagEvent, Verb | null>> = {
 };
 
 export type OtagRole = "producer" | "consumer";
+/**
+ * What a slug is good for. A slug can carry more than one; each has its own test, and the
+ * three answer different questions. Apply the tests literally — these were written after the
+ * first pass drifted, with `classifier` landing on 82% of slugs and becoming a near-no-op.
+ *
+ * - **edge** — drives producer/consumer pairing. Test: does the slug name a game event another
+ *   card can trigger on? Enforced below: requires an event mapping to a non-null `Verb`.
+ *
+ * - **classifier** — feeds deck-archetype detection. Test: *if a deck ran eight cards with this
+ *   slug, would you know what it is trying to do?* Only DISTINCTIVE evidence qualifies. Cards
+ *   every EDH deck plays — removal, ramp, card draw, tutors, protection, keyword grants — carry
+ *   no information about strategy, so they are NOT classifiers no matter how functional they
+ *   are. `sacrifice-outlet-creature` yes; `removal-creature` (5359 cards) no.
+ *
+ * - **weight** — archetype-conditional value. Test: *would you score this card differently in
+ *   aristocrats than in voltron?* Applies when the same card is worth materially more in one
+ *   deck than another: evasion and keyword grants (need a board to matter), the `scales-with-*`
+ *   family (scale off a deck-wide quantity), cost reduction, rate engines. A card that is
+ *   simply good everywhere — ramp, removal — is not weight either.
+ *
+ * classifier and weight are independent: `typal-elf` is pure classifier (tells you the deck,
+ * but every elf deck values it the same), `evasion` is pure weight (says nothing about the
+ * strategy, but swings hard on it), `anthem` is both.
+ */
 export type OtagUse = "edge" | "classifier" | "weight";
 
 export interface SlugSemantics {
@@ -107,7 +131,10 @@ export function loadOtagSemantics(): Map<string, SlugSemantics> {
         throw new Error(`otag-semantics: "${slug}" sets both effectKind and needsEffectKind`);
       }
     }
-    if (!s.uses.length) throw new Error(`otag-semantics: "${slug}" has no uses`);
+    // An empty `uses` is legal and meaningful: a recognised functional card that none of the
+    // three consumers reads. Universal staples land here -- removal, ramp, tutors, mana rocks
+    // carry no archetype signal (so not classifier) and are good in every deck (so not weight),
+    // yet still earn their place in the corpus via effectKind and coverage.
     for (const u of s.uses) {
       if (!USES.has(u)) throw new Error(`otag-semantics: "${slug}" has unknown use "${u}"`);
     }
