@@ -18,11 +18,14 @@ export interface EdhrecOpts {
   fetchImpl?: typeof fetch;
   /** Injected for tests; defaults to the on-disk cache dir. Pass null to disable caching. */
   cacheDir?: string | null;
+  /** Rate-limit delay between live fetches, ms. Defaults to 250; tests pass 0. */
+  sleepMs?: number;
 }
 
 export async function edhrecPairSet(opts: EdhrecOpts = {}): Promise<Set<string> | null> {
   const fetchImpl = opts.fetchImpl ?? fetch;
   const cacheDir = opts.cacheDir === undefined ? CACHE_DIR : opts.cacheDir;
+  const sleepMs = opts.sleepMs ?? 250;
   if (cacheDir) mkdirSync(cacheDir, { recursive: true });
   const pairs = new Set<string>();
   let anyOk = false;
@@ -39,7 +42,7 @@ export async function edhrecPairSet(opts: EdhrecOpts = {}): Promise<Set<string> 
         if (!res.ok) { console.error(`  EDHREC ${slug}: HTTP ${res.status}`); continue; }
         payload = await res.json();
         if (cacheFile) writeFileSync(cacheFile, JSON.stringify(payload));
-        await new Promise((r) => setTimeout(r, 250));
+        await new Promise((r) => setTimeout(r, sleepMs));
       }
       const cards = parseHighSynergy(payload).slice(0, TOP_K);
       for (let i = 0; i < cards.length; i++) {

@@ -1,5 +1,7 @@
 import { expect, test } from "vitest";
+import { normalizeName } from "@mtg/data";
 import { edhrecPairSet, seededRandom } from "./edhrec-pairs.js";
+import { pairKey } from "../otag-edges.js";
 
 test("returns null when every theme fetch fails", async () => {
   const failing: typeof fetch = async () => { throw new Error("network down"); };
@@ -30,9 +32,10 @@ test("builds pairs from a theme payload and normalizes names", async () => {
     },
   };
   const ok: typeof fetch = async () => new Response(JSON.stringify(payload), { status: 200 });
-  const result = await edhrecPairSet({ fetchImpl: ok, cacheDir: null });
+  const result = await edhrecPairSet({ fetchImpl: ok, cacheDir: null, sleepMs: 0 });
   expect(result).not.toBeNull();
   expect(result!.size).toBeGreaterThan(0);
+  expect(result!.has(pairKey(normalizeName("Blood Artist"), normalizeName("Viscera Seer")))).toBe(true);
 });
 
 test("seededRandom is deterministic for a given seed", () => {
