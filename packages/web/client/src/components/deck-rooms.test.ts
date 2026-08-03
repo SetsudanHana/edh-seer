@@ -30,39 +30,37 @@ describe("roomsForCard", () => {
   const none = new Set<string>();
 
   it("maps a role to its room", () => {
-    expect(roomsForCard(["draw"], "Rhystic Study", none, none)).toEqual(["cardAdvantage"]);
-    expect(roomsForCard(["targetedRemoval"], "Swords", none, none)).toEqual(["interaction"]);
-    expect(roomsForCard(["stax"], "Winter Orb", none, none)).toEqual(["interaction"]);
-    expect(roomsForCard(["burn"], "Bolt", none, none)).toEqual(["wincons"]);
-    expect(roomsForCard(["tutor"], "Demonic Tutor", none, none)).toEqual(["wincons"]);
+    expect(roomsForCard(["draw"], "Rhystic Study", none)).toEqual(["cardAdvantage"]);
+    expect(roomsForCard(["targetedRemoval"], "Swords", none)).toEqual(["interaction"]);
+    expect(roomsForCard(["stax"], "Winter Orb", none)).toEqual(["interaction"]);
+    expect(roomsForCard(["burn"], "Bolt", none)).toEqual(["wincons"]);
+    expect(roomsForCard(["tutor"], "Demonic Tutor", none)).toEqual(["wincons"]);
   });
 
   it("returns every room a multi-role card belongs to, in ROOMS order", () => {
-    expect(roomsForCard(["targetedRemoval", "draw"], "Fire Covenant", none, none))
+    expect(roomsForCard(["targetedRemoval", "draw"], "Fire Covenant", none))
       .toEqual(["cardAdvantage", "interaction"]);
   });
 
-  it("puts a combo piece in wincons even with no roles", () => {
-    expect(roomsForCard([], "Thassa's Oracle", new Set(["Thassa's Oracle"]), none))
-      .toEqual(["wincons"]);
-  });
-
-  it("puts an archetype-group member in strategy", () => {
-    expect(roomsForCard([], "Inalla", none, new Set(["Inalla"]))).toEqual(["strategy"]);
-  });
-
   it("falls back to strategy for a card nothing else claims", () => {
-    expect(roomsForCard([], "Some Wizard", none, none)).toEqual(["strategy"]);
-    expect(roomsForCard(undefined, "Some Wizard", none, none)).toEqual(["strategy"]);
+    expect(roomsForCard([], "Some Wizard", none)).toEqual(["strategy"]);
+    expect(roomsForCard(undefined, "Some Wizard", none)).toEqual(["strategy"]);
   });
 
   it("does not add the strategy fallback when another room already claimed the card", () => {
-    expect(roomsForCard(["ramp"], "Sol Ring", none, none)).toEqual(["ramp"]);
+    expect(roomsForCard(["ramp"], "Sol Ring", none)).toEqual(["ramp"]);
   });
 
-  it("still adds strategy when the card is BOTH categorised and an archetype member", () => {
-    expect(roomsForCard(["ramp"], "Sol Ring", none, new Set(["Sol Ring"])))
-      .toEqual(["strategy", "ramp"]);
+  it("does not put a categorised card in strategy just because an archetype names it", () => {
+    expect(roomsForCard(["ramp"], "Sol Ring", new Set())).toEqual(["ramp"]);
+  });
+
+  it("puts a card no room claims in strategy", () => {
+    expect(roomsForCard([], "Archmage of Echoes", new Set())).toEqual(["strategy"]);
+  });
+
+  it("puts a combo piece in wincons even with no roles", () => {
+    expect(roomsForCard([], "Thassa's Oracle", new Set(["Thassa's Oracle"]))).toEqual(["wincons"]);
   });
 });
 

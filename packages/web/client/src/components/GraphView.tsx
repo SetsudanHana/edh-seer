@@ -215,11 +215,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
    *  the report changes -- it is pure over both. */
   const roomsByNode = useMemo(() => {
     const comboCards = new Set((report.combos ?? []).flatMap((c) => c.cards));
-    const strategyCards = new Set((report.archetypes ?? []).flatMap((a) => a.cards));
     const out = new Map<string, RoomId[]>();
     for (const n of graph.nodes) {
       if (n.kind !== "card") continue;
-      out.set(n.id, roomsForCard(n.roles, n.label, comboCards, strategyCards));
+      out.set(n.id, roomsForCard(n.roles, n.label, comboCards));
     }
     return out;
   }, [graph, report]);

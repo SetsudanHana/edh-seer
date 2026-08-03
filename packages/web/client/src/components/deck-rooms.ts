@@ -74,15 +74,22 @@ export function subcategoryLabel(category: string): string {
   return PLAIN[category] ?? category;
 }
 
-/** Every room a card belongs to, in ROOMS order. `comboCards` and `strategyCards` are name sets
- *  built from report.combos[].cards and report.archetypes[].cards respectively. A card nothing
- *  else claims falls back to strategy -- the creatures and payoffs that are neither ramp nor
- *  answers ARE the strategy, which is what makes strategy the board's largest room. */
+/** Every room a card belongs to, in ROOMS order. `comboCards` is a name set built from
+ *  report.combos[].cards.
+ *
+ *  Strategy is the fallback and ONLY the fallback: a card it holds is in no other room. It used to
+ *  also be added for any card named by report.archetypes[].cards, matching the original design
+ *  doc's "archetype groups, plus every card no other room claims" -- but the engine's archetypes
+ *  are near-universal (94 of 94 cards on the reference deck), so that made Strategy a set
+ *  containing everything, which distinguishes nothing and dragged every card toward a second
+ *  anchor. See 2026-08-04-circle-rooms-design.md.
+ *
+ *  This exclusivity is load-bearing downstream: it is why a card's rim can never need more than six
+ *  arcs. */
 export function roomsForCard(
   roles: string[] | undefined,
   name: string,
   comboCards: Set<string>,
-  strategyCards: Set<string>,
 ): RoomId[] {
   const hit = new Set<RoomId>();
   for (const role of roles ?? []) {
@@ -90,7 +97,6 @@ export function roomsForCard(
     if (room) hit.add(room);
   }
   if (comboCards.has(name)) hit.add("wincons");
-  if (strategyCards.has(name)) hit.add("strategy");
   if (hit.size === 0) hit.add("strategy");
   return ROOMS.filter((r) => hit.has(r.id)).map((r) => r.id);
 }
