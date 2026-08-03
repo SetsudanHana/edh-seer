@@ -353,16 +353,60 @@ test("matches case-insensitively on a substring", async () => {
 // colour (ctx.strokeStyle) and the dimming (ctx.globalAlpha) are invisible to it -- see the doc
 // comment on makeContextSpy. What IS reachable is the ring's own arc: it is the only arc drawn at
 // radius ART_RADIUS + 3 (17) anywhere in draw(), so its presence proves the ring was drawn without
-// needing to see the stroke colour. This waits on a real animation frame after typing (the layout
-// effect's rAF loop, not a synchronous re-render) rather than asserting on the DOM synchronously,
-// because the ring is redrawn on the next frame -- see matchesRef's doc comment in GraphView.tsx.
-test("draws a ring around a card that matches the search", async () => {
+// needing to see the stroke colour.
+//
+// Fix round 1: this used to synchronise with the redraw via a bare `setTimeout(50ms)` real-timer
+// sleep, hoping the layout effect's own requestAnimationFrame loop would tick during that window.
+// That is a race by construction -- nothing bounds how many (if any) real frames land in 50ms
+// under load, and "passed 5/5 on an idle machine" does not rule out flaking in CI. Fixed by
+// stubbing requestAnimationFrame to hand back its callback instead of auto-scheduling it, so the
+// test drives the exact frame it needs by calling that callback directly: no real time passes, no
+// timer race, and the number of redraws is exactly one, not however many happened to fire.
+test("draws a ring around a card that matches the search", () => {
+  let nextFrame: FrameRequestCallback | null = null;
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+    nextFrame = cb;
+    return 0;
+  });
+  vi.stubGlobal("cancelAnimationFrame", () => {});
   const calls = makeContextSpy();
-  const user = userEvent.setup();
   render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
   const name = SAMPLE.graph.nodes.find((n) => n.kind === "card")!.label;
-  await user.type(screen.getByRole("searchbox", { name: /find a card/i }), name);
-  await new Promise((resolve) => setTimeout(resolve, 50));
+  // A synchronous DOM event, not userEvent.type: this test is about the draw pass picking up a
+  // changed `matches`, not about simulating realistic keystroke-by-keystroke typing (already
+  // covered by the userEvent-based tests above).
+  fireEvent.change(screen.getByRole("searchbox", { name: /find a card/i }), { target: { value: name } });
+  // The mount-time render already ran one frame with no search active (no radius-17 arc possible
+  // yet); invoking the callback requestAnimationFrame handed us drives exactly the next frame,
+  // which reads the now-updated matchesRef and must draw the ring.
+  nextFrame!(0);
   const ringArcs = calls.filter((c) => c.startsWith("arc:") && c.split(",")[2] === "17");
   expect(ringArcs.length).toBeGreaterThan(0);
+});
+
+// Fix round 1: this hover-subcategory case was previously left untested, on the claim that hit
+// testing a specific node needed its simulated (Math.random()-jittered) position predicted in
+// advance. That claim doesn't hold: __graphProbe already exposes each node's exact settled x/y
+// (see the probe tests above), and jsdom's getBoundingClientRect always returns an all-zero rect --
+// which, worked through `pick()`'s own math (`(clientX - rect.left - dim.w/2 - cam.x) / cam.z`
+// with rect and dim both zero and cam at its identity), means a pointermove's clientX/clientY
+// *is* the world coordinate. Dispatching at the probed node's exact (x, y) lands on it with no
+// prediction required. Neither SAMPLE card carries `roles`, so this uses a local one-node graph.
+test("hover shows a card's build role translated to plain language", () => {
+  makeContextSpy();
+  const graph = {
+    nodes: [{ id: "card:sr", kind: "card", label: "Sol Ring", roles: ["ramp"] }],
+    edges: [],
+  } as unknown as typeof SAMPLE.graph;
+  const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+  const { container } = render(<GraphView graph={graph} report={report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; x: number; y: number }>;
+  };
+  const node = canvas.__graphProbe!().find((n) => n.id === "card:sr")!;
+  fireEvent(canvas, new MouseEvent("pointermove", { clientX: node.x, clientY: node.y, bubbles: true }));
+  // "ramp" is PLAIN's raw category key; subcategoryLabel("ramp") is "extra mana" -- asserting the
+  // translated text is what proves the tooltip went through subcategoryLabel rather than just
+  // echoing the role verbatim.
+  expect(screen.getByText(/extra mana/)).toBeInTheDocument();
 });
