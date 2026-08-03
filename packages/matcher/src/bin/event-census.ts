@@ -20,8 +20,10 @@ const table = (title: string, rows: CensusRow[], selfLabel: string, otherLabel: 
     console.log("  (none)");
     return;
   }
-  console.log(`  ${"event key".padEnd(34)} ${selfLabel.padStart(7)} ${otherLabel.padStart(9)}`);
-  for (const r of rows) console.log(`  ${r.key.padEnd(34)} ${String(r.cards).padStart(7)} ${String(r.counterpart).padStart(9)}`);
+  console.log(`  ${"event key".padEnd(44)} ${selfLabel.padStart(9)} ${otherLabel.padStart(9)} ${"shapes".padStart(6)}`);
+  for (const r of rows) {
+    console.log(`  ${r.key.padEnd(44)} ${String(r.cards).padStart(9)} ${String(r.counterpart).padStart(9)} ${String(r.shapes).padStart(6)}`);
+  }
 };
 
 async function main(): Promise<void> {
@@ -32,13 +34,17 @@ async function main(): Promise<void> {
 
   const census = buildCensus(cards, loadHierarchy());
   const keys = new Set([...census.consumers, ...census.producers].map((r) => r.key));
-  const holes = census.consumers.filter((r) => r.counterpart === 0);
-  const dead = census.producers.filter((r) => r.counterpart === 0);
+  const holes = census.consumers.filter((r) => r.counterpart === 0 && !r.selfSupplied);
+  const selfSupplied = census.consumers.filter((r) => r.selfSupplied);
+  // Only authored emits can indicate an extraction problem; a derived event with no listener is a
+  // fact about Magic (nothing pays off Spirits attacking) rather than a pipeline bug.
+  const dead = census.producers.filter((r) => r.counterpart === 0 && r.authored);
+  const derivedUnused = census.producers.filter((r) => r.counterpart === 0 && !r.authored);
 
   console.log(`=== corpus event census (${census.cards} tagged cards, ${keys.size} distinct event keys) ===`);
   console.log(`counterpart counts respect subsumption: a specific producer supplies a general consumer.`);
-  console.log(`\n  consumer keys: ${census.consumers.length}  (${holes.length} with ZERO supply)`);
-  console.log(`  producer keys: ${census.producers.length}  (${dead.length} matched by NO trigger)`);
+  console.log(`\n  consumer keys: ${census.consumers.length}  (${holes.length} with ZERO supply, ${selfSupplied.length} self-supplied by design)`);
+  console.log(`  producer keys: ${census.producers.length}  (${dead.length} authored emits matched by NO trigger; ${derivedUnused.length} derived keys unused, expected)`);
 
   // Per-verb rollup: a whole verb family can be starved while every individual key looks like a
   // small tail row (attacks:dragon, attacks:samurai, ... each a handful of listeners). Ratio, not
@@ -62,8 +68,12 @@ async function main(): Promise<void> {
     holes.slice(0, TOP), "listeners", "suppliers",
   );
   table(
-    `DEAD EMISSIONS -- we extract this event, no trigger in the corpus matches it (top ${TOP} by emitters):`,
+    `DEAD EMISSIONS -- the tagger AUTHORED this emit, no trigger in the corpus matches it (top ${TOP} by emitters):`,
     dead.slice(0, TOP), "emitters", "listeners",
+  );
+  table(
+    `SELF-SUPPLIED -- normal game actions, no card needs to provide them, so 0 suppliers is correct (top ${TOP}):`,
+    selfSupplied.slice(0, TOP), "listeners", "suppliers",
   );
   table(
     `SATURATED -- both sides dense, so the edge carries little information (top ${TOP} by listeners):`,

@@ -54,6 +54,59 @@ test("a card is counted once per key however many abilities carry it", () => {
   expect(row(buildCensus([twice], H).consumers, "enters:creature")!.cards).toBe(1);
 });
 
+/** Rolling up on the first type alone merged 16 differently-broad consumer shapes onto
+ *  `cast:instant` and unioned their supplier sets, inflating that row to 19277. Breadth must be
+ *  part of the key. */
+test("consumer shapes of different breadth get different keys", () => {
+  const narrow = card("narrow", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: ["instant", "sorcery"], control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const broad = card("broad", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: ["instant", "sorcery", "artifact"], control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const c = buildCensus([narrow, broad], H);
+  expect(row(c.consumers, "cast:instant+sorcery")).toMatchObject({ cards: 1, shapes: 1 });
+  expect(row(c.consumers, "cast:artifact+instant+sorcery")).toMatchObject({ cards: 1, shapes: 1 });
+});
+
+test("member order does not split a row", () => {
+  const a = card("a", [{ kind: "triggered", trigger: { verbs: ["cast"], subject: { type: ["instant", "sorcery"], control: "you", token: null } }, effect: { kind: "draw-card" } }]);
+  const b = card("b", [{ kind: "triggered", trigger: { verbs: ["cast"], subject: { type: ["sorcery", "instant"], control: "you", token: null } }, effect: { kind: "draw-card" } }]);
+  expect(row(buildCensus([a, b], H).consumers, "cast:instant+sorcery")).toMatchObject({ cards: 2, shapes: 2 });
+});
+
+/** Attacking is a normal game action. A typal attack payoff gets real edges from the creatures
+ *  that satisfy it; a generic "whenever a creature you control attacks" must NOT be supplied from
+ *  every creature in the corpus, or the graph gains a mesh with no information in it. */
+test("implied combat supplies a typal attack payoff but not a generic one", () => {
+  const samurai = card("samurai", [], ["creature"], ["samurai"]);
+  const typalPayoff = card("typal", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { subtype: ["samurai"], control: "you", token: null } },
+    effect: { kind: "pump" },
+  }]);
+  const genericPayoff = card("generic", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "pump" },
+  }]);
+  const vacuousPayoff = card("vacuous", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "pump" },
+  }]);
+
+  const c = buildCensus([samurai, typalPayoff, genericPayoff, vacuousPayoff], { ...H, samurai: ["creature"] });
+  expect(row(c.consumers, "attacks:samurai")).toMatchObject({ counterpart: 1, selfSupplied: false });
+  // `type: creature` narrows nothing on an attack trigger — only creatures attack.
+  expect(row(c.consumers, "attacks:any")).toMatchObject({ counterpart: 0, selfSupplied: true });
+  expect(row(c.consumers, "attacks:creature")).toMatchObject({ counterpart: 0, selfSupplied: true });
+});
+
 test("producer rows report dead emissions — an emit no trigger in the corpus matches", () => {
   const emitter = card("emitter", [{
     kind: "triggered",
@@ -62,7 +115,17 @@ test("producer rows report dead emissions — an emit no trigger in the corpus m
     emits: [{ verb: "mill", subject: { type: "creature", control: "opp", token: null } }],
   }]);
   const mill = row(buildCensus([emitter], H).producers, "mill:creature")!;
-  expect(mill).toMatchObject({ cards: 1, counterpart: 0 });
+  expect(mill).toMatchObject({ cards: 1, counterpart: 0, authored: true });
+});
+
+/** Every creature implies an attack, so most `attacks:<subtype>` keys have emitters and no
+ *  listener. Reporting those as dead extraction buries the authored emits that actually indicate
+ *  a problem — 572 derived rows against 1 real one on the live corpus. */
+test("derived events are not reported as authored emissions", () => {
+  const bear = card("bear", [], ["creature"], ["spirit"]);
+  const rows = buildCensus([bear], { ...H, spirit: ["creature"] }).producers;
+  expect(row(rows, "attacks:spirit")).toMatchObject({ cards: 1, counterpart: 0, authored: false });
+  expect(row(rows, "cast:spirit")).toMatchObject({ authored: false });
 });
 
 /** `dies` and `enters-graveyard` are legacy spellings that `normalizeZoneEvent` rewrites. Both

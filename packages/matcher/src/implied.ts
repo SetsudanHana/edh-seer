@@ -38,6 +38,13 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
   const out: GameEvent[] = [];
   if (!isLand) out.push({ verb: "cast", subject });
   if (isPermanent) out.push({ verb: "enters", subject });
+  // A creature on the battlefield can attack and connect, exactly as a nonland card can be cast.
+  // These only ever reach a consumer that filters on WHICH creature attacks -- see
+  // `combatSelfSupplied` in edges.ts for why the generic case forms no edge.
+  if (types.includes("creature")) {
+    out.push({ verb: "attacks", subject });
+    out.push({ verb: "combat-damage", subject });
+  }
   return out;
 }
 

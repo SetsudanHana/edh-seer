@@ -1,7 +1,28 @@
-import type { CardTags, GameEvent } from "@mtg/tagger";
+import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
-import { eventMatches, producerEvents, themeSubjectKey } from "./edges.js";
+import { combatSelfSupplied, eventMatches, producerEvents } from "./edges.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+
+const list = (v: string | string[] | undefined): string[] =>
+  v === undefined ? [] : Array.isArray(v) ? v : [v];
+
+/** The census groups by the subject's FULL breadth, unlike `themeSubjectKey`, which takes only
+ *  the first type because a reason tag wants one short noun.
+ *
+ *  Rolling up on the first type merges shapes of wildly different breadth into one row and unions
+ *  their counterpart sets: 16 distinct consumer shapes key to `cast:instant` under
+ *  `themeSubjectKey`, one of them `[instant, sorcery, artifact, enchantment, planeswalker]`
+ *  matching 10096 cards, which inflated that row to 19277 suppliers. Sorted so member order
+ *  cannot split a row. */
+function censusSubjectKey(s: SubjectFilter): string {
+  const subtypes = list(s.subtype);
+  if (subtypes.length > 0) return [...subtypes].sort().join("+");
+  const types = list(s.type);
+  if (types.length > 0) return [...types].sort().join("+");
+  return "any";
+}
+
+const censusKey = (e: GameEvent): string => zoneEventKey(e.verb, e.subject.zone, censusSubjectKey(e.subject));
 
 /** One side of the corpus event census.
  *
@@ -22,6 +43,22 @@ export interface CensusRow {
   key: string;
   cards: number;
   counterpart: number;
+  /** How many distinct event shapes rolled up into this row. Rows above 1 still merge shapes that
+   *  differ in control/token/zone/stats, so a high count is a hint to look at the shapes before
+   *  trusting the row. */
+  shapes: number;
+  /** Consumer rows only: the game itself satisfies this trigger, so zero suppliers is by design,
+   *  not a gap. See `combatSelfSupplied`. */
+  selfSupplied: boolean;
+  /** Producer rows only: at least one card reaches this key through an emit the tagger actually
+   *  authored, rather than only through an event `producerEvents` derives (implied cast/enters/
+   *  combat, graveyard fills, proliferate counters).
+   *
+   *  Only authored rows can indicate an extraction problem. A derived row with no listener just
+   *  means no card in the corpus happens to care -- `attacks:spirit` has 158 emitters and no
+   *  listener because every Spirit creature implies an attack and no card pays off Spirits
+   *  attacking specifically. That is a fact about Magic, not a bug in the pipeline. */
+  authored: boolean;
 }
 
 export interface Census {
@@ -37,12 +74,14 @@ export interface Census {
 interface Shape {
   event: GameEvent;
   cards: Set<number>;
+  authored: boolean;
 }
 
-function collect(shapes: Map<string, Shape>, event: GameEvent, cardIndex: number): void {
+function collect(shapes: Map<string, Shape>, event: GameEvent, cardIndex: number, authored = false): void {
   const k = JSON.stringify(event);
-  const s = shapes.get(k) ?? { event, cards: new Set<number>() };
+  const s = shapes.get(k) ?? { event, cards: new Set<number>(), authored: false };
   s.cards.add(cardIndex);
+  s.authored ||= authored;
   shapes.set(k, s);
 }
 
@@ -60,16 +99,23 @@ function byVerb(shapes: Map<string, Shape>): Map<string, Shape[]> {
 /** Roll distinct shapes up into rows keyed by `zoneEventKey`, unioning both the card sets and
  *  the matched counterpart sets. Several shapes can share one reader-facing key (e.g. two
  *  differently-stat-predicated `enters:creature` triggers), and they must not be double counted. */
-function rollUp(rows: Array<{ key: string; cards: Set<number>; counterpart: Set<number> }>): CensusRow[] {
-  const merged = new Map<string, { cards: Set<number>; counterpart: Set<number> }>();
+type RawRow = { key: string; cards: Set<number>; counterpart: Set<number>; selfSupplied: boolean; authored: boolean };
+
+function rollUp(rows: RawRow[]): CensusRow[] {
+  const merged = new Map<string, { cards: Set<number>; counterpart: Set<number>; shapes: number; selfSupplied: boolean; authored: boolean }>();
   for (const r of rows) {
-    const m = merged.get(r.key) ?? { cards: new Set<number>(), counterpart: new Set<number>() };
+    const m = merged.get(r.key) ?? { cards: new Set<number>(), counterpart: new Set<number>(), shapes: 0, selfSupplied: r.selfSupplied, authored: false };
     for (const c of r.cards) m.cards.add(c);
     for (const c of r.counterpart) m.counterpart.add(c);
+    m.shapes++;
+    // A row is only by-design unsupplied if EVERY shape in it is; a mixed row is a real gap.
+    m.selfSupplied &&= r.selfSupplied;
+    // ...but one authored shape is enough to make the row worth reading as extraction output.
+    m.authored ||= r.authored;
     merged.set(r.key, m);
   }
   return [...merged]
-    .map(([key, m]) => ({ key, cards: m.cards.size, counterpart: m.counterpart.size }))
+    .map(([key, m]) => ({ key, cards: m.cards.size, counterpart: m.counterpart.size, shapes: m.shapes, selfSupplied: m.selfSupplied, authored: m.authored }))
     .sort((a, b) => b.cards - a.cards || a.key.localeCompare(b.key));
 }
 
@@ -84,7 +130,10 @@ export function buildCensus(cards: Iterable<CardTags>, h: Hierarchy): Census {
     const i = n++;
     // Dedupe per card: a card emitting the same event from two abilities is one supplier, and a
     // card with two triggers on the same event is one consumer.
-    for (const e of producerEvents(tags)) collect(prodShapes, e, i);
+    const authored = new Set(
+      (tags.abilities ?? []).flatMap((a) => a.emits ?? []).map((e) => JSON.stringify(normalizeZoneEvent(e))),
+    );
+    for (const e of producerEvents(tags)) collect(prodShapes, e, i, authored.has(JSON.stringify(e)));
     for (const a of tags.abilities ?? []) {
       if (!a.trigger) continue;
       for (const v of a.trigger.verbs) collect(consShapes, normalizeZoneEvent({ verb: v, subject: a.trigger.subject }), i);
@@ -99,7 +148,7 @@ export function buildCensus(cards: Iterable<CardTags>, h: Hierarchy): Census {
     for (const p of prodByVerb.get(c.event.verb) ?? []) {
       if (eventMatches(p.event, c.event, h)) for (const card of p.cards) counterpart.add(card);
     }
-    return { key: zoneEventKey(c.event.verb, c.event.subject.zone, themeSubjectKey(c.event.subject)), cards: c.cards, counterpart };
+    return { key: censusKey(c.event), cards: c.cards, counterpart, selfSupplied: combatSelfSupplied(c.event), authored: true };
   });
 
   const producerRows = [...prodShapes.values()].map((p) => {
@@ -107,7 +156,7 @@ export function buildCensus(cards: Iterable<CardTags>, h: Hierarchy): Census {
     for (const c of consByVerb.get(p.event.verb) ?? []) {
       if (eventMatches(p.event, c.event, h)) for (const card of c.cards) counterpart.add(card);
     }
-    return { key: zoneEventKey(p.event.verb, p.event.subject.zone, themeSubjectKey(p.event.subject)), cards: p.cards, counterpart };
+    return { key: censusKey(p.event), cards: p.cards, counterpart, selfSupplied: false, authored: p.authored };
   });
 
   return { cards: n, consumers: rollUp(consumerRows), producers: rollUp(producerRows) };

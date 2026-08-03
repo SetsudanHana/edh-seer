@@ -59,6 +59,29 @@ export function producerEvents(tags: CardTags): GameEvent[] {
   return out;
 }
 
+/** Is this combat consumer satisfied by the game itself rather than by any card?
+ *
+ *  Attacking and dealing combat damage are normal game actions -- every creature does them, for
+ *  free, in any deck that runs creatures. "Whenever a creature you control attacks" therefore
+ *  needs no supplier: it is a deck-level state condition, not an event some other card provides.
+ *  Supplying those 1651 consumers from every creature in the corpus would be a ~14M-edge mesh
+ *  carrying no information -- the same failure `bea8dcd` removed for `cast:any`.
+ *
+ *  A consumer that filters on WHICH creature attacks is a different thing: "whenever a Samurai or
+ *  Warrior you control attacks" is a real typal payoff, and the creatures satisfying it are a real
+ *  edge. Note `type: creature` does NOT count as a filter here -- only creatures attack, so on a
+ *  combat trigger it narrows nothing.
+ *
+ *  ponytail: also gates the handful of cards with AUTHORED attacks/combat-damage emits (goad and
+ *  similar), which arguably should feed a generic consumer. Distinguish implied from authored
+ *  events if that ever matters. */
+export function combatSelfSupplied(consumer: GameEvent): boolean {
+  if (consumer.verb !== "attacks" && consumer.verb !== "combat-damage") return false;
+  if (list(consumer.subject.subtype).length > 0) return false;
+  const types = list(consumer.subject.type);
+  return types.length === 0 || types.every((t) => t === "creature");
+}
+
 /** Does a normalized producer event satisfy a normalized consumer trigger event? Verb equality
  *  plus the subject test the verb calls for -- graveyard fills and counter adds have their own
  *  matchers, everything else is plain subsumption. Shared by `directedReasons` and the event
@@ -66,6 +89,7 @@ export function producerEvents(tags: CardTags): GameEvent[] {
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
   if (producer.verb !== consumer.verb) return false;
+  if (combatSelfSupplied(consumer)) return false;
   if (producer.verb === "enters" && producer.subject.zone === "graveyard") {
     return graveyardFillMatches(producer.subject, consumer.subject, h);
   }
