@@ -3,12 +3,17 @@ import { parseTypeLine } from "./typeline.js";
 
 export type NodeKind =
   | "card" | "face" | "color" | "supertype" | "type" | "subtype"
-  | "keyword" | "mana" | "layout" | "token" | "related" | "power" | "toughness" | "cmc";
+  | "keyword" | "mana" | "layout" | "token" | "related" | "power" | "toughness" | "cmc"
+  /** Stage 2: a reified event key (`enters:creature`, `dies:creature`, `static:pump`). Cards attach
+   *  to it by role, so card-to-card synergy is a two-hop walk rather than a stored n*m mesh. */
+  | "event";
 
 export type EdgeKind =
   | "FACE" | "TYPE" | "SUPERTYPE" | "SUBTYPE" | "COLOR" | "IDENTITY" | "KEYWORD"
   | "MANA_SYMBOL" | "PRODUCES" | "LAYOUT" | "POWER" | "TOUGHNESS" | "CMC"
-  | "CREATES" | "COMBO_PIECE" | "MELD_PART" | "MELD_RESULT";
+  | "CREATES" | "COMBO_PIECE" | "MELD_PART" | "MELD_RESULT"
+  /** Stage 2 roles on an `event` node: the producer supplies it, the consumer triggers on it. */
+  | "EMITS" | "TRIGGERS";
 
 export interface GraphNode {
   id: string;
@@ -70,14 +75,18 @@ function manaSymbols(cost: string | undefined): string[] {
  *  beyond `all_parts`. See docs/superpowers/specs/2026-08-03-card-graph-design.md. */
 export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
   const nodes = new Map<string, GraphNode>();
-  const edges: GraphEdge[] = [];
+  // Keyed, not a list: a shared target can be reached from several cards and re-emit the same edge.
+  // Seven Wizard-token makers each re-emitted `token:wizard -SUBTYPE-> subtype:wizard`, which double
+  // counts degree in any viewer and inflates every edge total computed off this graph.
+  const edges = new Map<string, GraphEdge>();
 
   const node = (id: string, kind: NodeKind, label: string, props?: Record<string, unknown>): string => {
     if (!nodes.has(id)) nodes.set(id, props ? { id, kind, label, props } : { id, kind, label });
     return id;
   };
   const edge = (from: string, to: string, kind: EdgeKind, index?: number): void => {
-    edges.push(index === undefined ? { from, to, kind } : { from, to, kind, index });
+    const k = `${from}|${to}|${kind}`;
+    if (!edges.has(k)) edges.set(k, index === undefined ? { from, to, kind } : { from, to, kind, index });
   };
 
   for (const c of cards) {
@@ -156,5 +165,5 @@ export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
     });
   }
 
-  return { nodes: [...nodes.values()], edges };
+  return { nodes: [...nodes.values()], edges: [...edges.values()] };
 }

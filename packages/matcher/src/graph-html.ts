@@ -6,6 +6,7 @@ import type { CardGraph, NodeKind } from "./graph.js";
 const PALETTE: Record<NodeKind, string> = {
   card: "#e8e8ea",
   face: "#8b8b93",
+  event: "#ff4d6d",
   subtype: "#ff8a3d",
   keyword: "#4ec9b0",
   token: "#ffd23f",

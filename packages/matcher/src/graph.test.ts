@@ -203,3 +203,17 @@ test("colors wins over colorIndicator when both are present", () => {
   });
   expect(edgesFrom(buildGraph([both]), "face:both:0", "COLOR")).toEqual(["color:R"]);
 });
+
+/** A shared target can be reached from several cards, and each was re-emitting the same edge: seven
+ *  Wizard-token makers in one deck produced seven copies of
+ *  `token:wizard -SUBTYPE-> subtype:wizard`, double-counting degree in any viewer. */
+test("an edge reached from several cards is stored once", () => {
+  const part = { component: "token", name: "Wizard", typeLine: "Token Creature — Wizard" };
+  const a = doc({ _id: "a", name: "A", typeLine: "Creature — Human", allParts: [part] });
+  const b = doc({ _id: "b", name: "B", typeLine: "Creature — Human", allParts: [part] });
+  const g = buildGraph([a, b]);
+  const subtypeEdges = g.edges.filter((e) => e.from === "token:wizard" && e.to === "subtype:wizard");
+  expect(subtypeEdges).toHaveLength(1);
+  // Both cards still get their own CREATES edge to the shared token node.
+  expect(g.edges.filter((e) => e.kind === "CREATES").map((e) => e.from).sort()).toEqual(["card:a", "card:b"]);
+});
