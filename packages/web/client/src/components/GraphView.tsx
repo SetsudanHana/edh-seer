@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, GraphNode, NodeKind } from "../types.js";
 import { CATEGORY_LABELS, CATEGORY_ORDER } from "./CardList.js";
+import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { glyphFor } from "./graph-glyphs.js";
 
 /** Node kinds hidden on first paint. Each connects nearly every card in a deck -- `layout:normal`
@@ -40,6 +41,11 @@ const COLLISION_PAD = 4;
 const EDGE_GAP = 28;
 const ZONE_SPRING = 0.004;
 const CENTER_PULL = 0.0004;
+/** Onscreen diameter (px) a card must draw at before its art is worth requesting -- below this it
+ *  would render as mud anyway. The old gate used the fixed ART_RADIUS and 8px, which zeroed out at
+ *  zoom < 0.29 -- exactly the zoom used to see a whole deck. See art-loader.ts for the throttling
+ *  that makes a low floor here safe. */
+const ART_MIN_SCREEN_PX = 4;
 
 interface Sim extends GraphNode { x: number; y: number; vx: number; vy: number; deg: number }
 type Point = { x: number; y: number };
@@ -105,12 +111,18 @@ export function GraphView({ graph }: { graph: CardGraph }) {
   // Path2D has no jsdom polyfill, see graph-glyphs.ts's doc comment.
   const pathCacheRef = useRef<Map<string, Path2D>>(undefined);
   pathCacheRef.current ??= new Map();
-  // Art-crop image cache + a small concurrency-capped load queue (Step 3). "loading" is a
-  // dispatched-but-not-yet-resolved sentinel -- see the load-queue comment in the effect below.
-  const imgCacheRef = useRef<Map<string, HTMLImageElement | "loading" | "error">>(undefined);
-  imgCacheRef.current ??= new Map();
-  const loadQueueRef = useRef<{ active: number; queue: string[] }>(undefined);
-  loadQueueRef.current ??= { active: 0, queue: [] };
+  // Concurrency-capped, spaced, retrying art loader (Step 3 / see art-loader.ts), created once
+  // per mount so state (and in-flight requests) survive a graph/filter change re-running the effect.
+  const artLoaderRef = useRef<ArtLoader>(undefined);
+  artLoaderRef.current ??= createArtLoader({
+    load: (url) =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`art load failed: ${url}`));
+        img.src = url;
+      }),
+  });
 
   const counts = useMemo(() => {
     const c = new Map<NodeKind, number>();
@@ -279,31 +291,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
       alpha = Math.max(alpha * 0.995, 0.02);
     };
 
-    // Art loading (Step 3): lazy, capped concurrency, offline-first. `imgCache` holds a resolved
-    // `HTMLImageElement`, or one of two sentinels: "loading" (dispatched, awaiting onload/onerror --
-    // set the instant `pump` starts the request, specifically so a URL that's mid-flight reads as
-    // already-known and `requestImage` skips it) or "error" (failed for good). Only an actual
-    // `HTMLImageElement` is ever drawn; both sentinels fall through to today's dot, same as an
-    // unstarted load.
-    const imgCache = imgCacheRef.current!;
-    const loadQueue = loadQueueRef.current!;
-    const pump = () => {
-      while (loadQueue.active < 8 && loadQueue.queue.length > 0) {
-        const url = loadQueue.queue.shift()!;
-        if (imgCache.has(url)) continue;
-        imgCache.set(url, "loading");
-        loadQueue.active++;
-        const img = new Image();
-        img.onload = () => { imgCache.set(url, img); loadQueue.active--; pump(); };
-        img.onerror = () => { imgCache.set(url, "error"); loadQueue.active--; pump(); };
-        img.src = url;
-      }
-    };
-    const requestImage = (url: string) => {
-      if (imgCache.has(url) || loadQueue.queue.includes(url)) return;
-      loadQueue.queue.push(url);
-      pump();
-    };
+    const artLoader = artLoaderRef.current!;
 
     const pathFor = (glyph: string): Path2D => {
       const cache = pathCacheRef.current!;
@@ -353,7 +341,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
         if (!visible(n)) continue;
 
         if (n.kind === "card") {
-          const img = n.artCrop ? imgCache.get(n.artCrop) : undefined;
+          const img = n.artCrop ? artLoader.get(n.artCrop) : undefined;
           // Scryfall's art_crop is landscape (~626x457, ~1.37:1); the 5-arg drawImage would
           // squash it into this square node. Cover-fit instead: crop a centred square out of the
           // source (the shorter side) and draw that square into the node -- same trick as CSS
@@ -372,10 +360,11 @@ export function GraphView({ graph }: { graph: CardGraph }) {
             ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.stroke();
             continue;
           }
-          // Onscreen diameter the art would render AT (ART_RADIUS), not today's placeholder dot --
-          // the dot alone is already under 8px at rest zoom, which would starve every load. Below
-          // ~8px zoomed out, the art would be mud anyway, so don't even start the request.
-          if (n.artCrop && ART_RADIUS * cam.z * 2 >= 8) requestImage(n.artCrop);
+          // Whole-deck zoom is exactly the view you use to read the graph, and the old 8px floor
+          // stopped every load below zoom ~0.29 -- so zooming out to see the deck guaranteed no art.
+          // With the loader now throttled and retrying, this gate is politeness, not the defence it
+          // was being asked to be.
+          if (n.artCrop && nodeRadius(n) * cam.z * 2 >= ART_MIN_SCREEN_PX) artLoader.request(n.artCrop);
           ctx.fillStyle = colorOf(n.kind);
           ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
           continue;
