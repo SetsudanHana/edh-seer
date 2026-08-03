@@ -63,14 +63,23 @@ test("no more than `concurrency` loads are in flight at once", async () => {
   releases.forEach((r) => r());
 });
 
-test("dispatches are spaced by the configured interval", async () => {
-  const waits: number[] = [];
+test("a dispatch does not fire until the spacing delay for the previous one resolves", async () => {
+  // A controllable delay -- not a spy that just records the ms argument -- because the property
+  // that matters is *gating*: does the next load wait for this one to resolve, not merely "was
+  // delay(75) called somewhere". A spy-only test can't tell "spaced before every dispatch" apart
+  // from "called once at the wrong point" (e.g. only before the first, or only after the last) --
+  // both would still record a 75 without ever gating a dispatch.
+  let calls = 0;
+  let releaseDelay: (() => void) | undefined;
   const loader = createArtLoader({
     concurrency: 4, spacingMs: 75,
-    delay: async (ms) => { waits.push(ms); },
-    load: async () => fakeImage(),
+    delay: () => new Promise<void>((res) => { releaseDelay = res; }),
+    load: async () => { calls++; return fakeImage(); },
   });
   loader.request("a"); loader.request("b");
   await new Promise((r) => setTimeout(r, 0));
-  expect(waits).toContain(75);
+  expect(calls).toBe(1); // "b" must not dispatch while "a"'s spacing delay is still pending
+  releaseDelay!();
+  await new Promise((r) => setTimeout(r, 0));
+  expect(calls).toBe(2); // resolving it releases exactly the next dispatch
 });

@@ -64,7 +64,9 @@ export function createArtLoader(options: ArtLoaderOptions): ArtLoader {
       // wait on remaining queue length means back-to-back requests never actually get spaced. The
       // `pumping` guard above means only one of these loops is ever actually advancing at a time,
       // so this wait is the real inter-dispatch gap regardless of which call happened to start it.
-      await delay(spacingMs);
+      // try/catch: a `delay` that rejects must not escape and skip `pumping = false` below --
+      // that would wedge the queue open (`pumping` stuck true) for the life of the loader.
+      try { await delay(spacingMs); } catch { /* fall through to pumping = false */ }
     }
     pumping = false;
   };
@@ -73,7 +75,10 @@ export function createArtLoader(options: ArtLoaderOptions): ArtLoader {
     get: (url) => state.get(url),
     request: (url) => {
       // Idempotent by construction: `draw()` calls this every frame for every unresolved node.
-      if (state.has(url) || queue.includes(url)) return;
+      // `state.set(url, "loading")` below happens in this same synchronous call, before the url
+      // could ever be queued again, so `state.has(url)` alone already covers a queued-but-not-yet-
+      // dispatched url -- no separate `queue.includes` check needed.
+      if (state.has(url)) return;
       state.set(url, "loading");
       queue.push(url);
       void pump();
