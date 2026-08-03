@@ -3,7 +3,7 @@ import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
-import { roomCenter, roomLayout, roomsForCard, roomTallies, type RoomId } from "./deck-rooms.js";
+import { ROOM_HUE, ROOMS, roomCenter, roomLayout, roomsForCard, roomTallies, type RoomId } from "./deck-rooms.js";
 
 /** Node kinds hidden on first paint. Each connects nearly every card in a deck -- `layout:normal`
  *  alone reaches 87 of Inalla's 94, `power:2` ties together every 2-power creature, `type:creature`
@@ -230,6 +230,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       sep: css.getPropertyValue("--separator").trim() || "#1d2126",
       border: css.getPropertyValue("--border").trim() || "#262b31",
       surface: css.getPropertyValue("--surface").trim() || "#14171b",
+      warning: css.getPropertyValue("--warning").trim() || "#d99a3d",
     };
     /** Near-monochrome with one accent, matching the system's Restrained strategy: the event nodes
      *  are the point of this view and take the accent; cards read as foreground; everything a card
@@ -386,10 +387,34 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       ctx.setTransform(cam.z * dim.dpr, 0, 0, cam.z * dim.dpr,
         (dim.w / 2 + cam.x) * dim.dpr, (dim.h / 2 + cam.y) * dim.dpr);
 
-      // Room chrome (the rectangle outlines/labels/tallies) is Task 5's job -- this task only
-      // changes which anchors the force sim pulls cards toward (see `rooms`/`roomsByNode` above).
-      // The old per-role ring hulls that drew here are gone along with the ring anchors they
-      // illustrated; nothing draws in their place until Task 5 lands.
+      // The board: seven fixed rooms, drawn behind everything and drawn even when empty --
+      // "BOARD WIPES 0/3" is the finding, so the room has to hold its place to show the hole.
+      // Hue rides the outline and the label, never the fill: a translucent fill over this surface
+      // collapses toward gray (measured -- see the plan's constraints), so it cannot be what tells
+      // two rooms apart. Position and the always-visible label do that; the wash only gives the
+      // region a body, and doubles where a straddling card sits between two rooms.
+      ctx.textAlign = "center";
+      for (const room of ROOMS) {
+        const rect = rooms.get(room.id);
+        if (!rect) continue;
+        const tally = tallies.get(room.id);
+        const hue = ROOM_HUE[room.id];
+
+        ctx.globalAlpha = 0.10;
+        ctx.fillStyle = hue;
+        ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+        ctx.globalAlpha = 1;
+
+        ctx.lineWidth = 1.5 / cam.z;
+        ctx.strokeStyle = hue;
+        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+
+        ctx.font = `500 ${12 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
+        ctx.fillStyle = tally?.under ? paint.warning : hue;
+        const count = tally ? (tally.target > 0 ? `${tally.count}/${tally.target}` : `${tally.count}`) : "";
+        ctx.fillText(`${room.label.toUpperCase()} ${count}`.trim(), rect.x + rect.w / 2, rect.y + 16 / cam.z);
+      }
+
       ctx.lineWidth = 0.7 / cam.z;
       ctx.strokeStyle = paint.sep;
       ctx.beginPath();

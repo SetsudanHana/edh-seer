@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, seedPosition, separation } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
-import type { RoomTally } from "./deck-rooms.js";
+import { ROOMS, type RoomTally } from "./deck-rooms.js";
 
 /** Records the 2D-context calls made during a render, and -- more importantly -- lets the
  *  layout effect get past its `if (!ctx) return;` guard at all, which is what attaches
@@ -199,6 +199,22 @@ test("puts an uncategorised card in strategy", () => {
 // test below installs its own mock on the prototype. Saved and restored per-test rather than
 // left mutated -- this file has many other tests, and a leaked mock/deleted property on
 // Element.prototype would bleed into whichever of them runs next.
+test("labels every room, including ones holding no cards", () => {
+  const calls = makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const drawn = calls.filter((c) => c.startsWith("fillText:")).join(" ");
+  expect(drawn).toContain("BOARD WIPES 0/3");
+  for (const room of ROOMS) {
+    expect(drawn).toContain(room.label.toUpperCase());
+  }
+});
+
+test("draws a room outline for all seven rooms", () => {
+  const calls = makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  expect(calls.filter((c) => c.startsWith("strokeRect:")).length).toBeGreaterThanOrEqual(ROOMS.length);
+});
+
 describe("fullscreen toggle", () => {
   let original: typeof Element.prototype.requestFullscreen;
 
