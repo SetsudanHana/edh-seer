@@ -52,8 +52,10 @@ async function main(): Promise<void> {
       if (d) docs.push(d as CardDoc);
     }
   } else if (subtype) {
-    // Match the subtype as a whole word after the em dash, on either face.
-    const re = new RegExp(`—[^/]*\\b${subtype}\\b`, "i");
+    // Match the subtype as a whole word after the em dash, on either face. The argument is escaped
+    // before it reaches the pattern: a metacharacter would otherwise either throw (unbalanced
+    // paren) or, worse, silently widen the query -- `--subtype "wiz.rd"` matching more than asked.
+    const re = new RegExp(`—[^/]*\\b${subtype.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
     docs = await cards.find({ typeLine: { $regex: re } }).limit(limit).toArray();
   } else {
     docs = await cards

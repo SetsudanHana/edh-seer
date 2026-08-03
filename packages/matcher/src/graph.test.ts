@@ -178,3 +178,28 @@ test("all_parts component kinds map to distinct node kinds and id prefixes", () 
   expect(byId("related:meld-part").kind).toBe("related");
   expect(byId("related:meld-result").kind).toBe("related");
 });
+
+/** A face with no mana cost (a transform back, an adventure's creature half) carries its colour in
+ *  `colorIndicator` — the printed dot — rather than in `colors`. Without the fallback such a face
+ *  gets no COLOR edges at all, silently. Rare (one card in the live corpus) but wrong. */
+test("a face with empty colors falls back to its colorIndicator", () => {
+  const indicated = doc({
+    _id: "ind", name: "Front // Back", typeLine: "Creature — Human // Creature — Horror",
+    colors: ["U"], colorIdentity: ["U"], manaValue: 2, layout: "transform",
+    faces: [
+      { name: "Front", typeLine: "Creature — Human", oracleText: "", colors: ["U"], manaCost: "{1}{U}" },
+      { name: "Back", typeLine: "Creature — Horror", oracleText: "", colors: [], colorIndicator: ["B"] },
+    ],
+  });
+  const g = buildGraph([indicated]);
+  expect(edgesFrom(g, "face:ind:0", "COLOR")).toEqual(["color:U"]);
+  expect(edgesFrom(g, "face:ind:1", "COLOR")).toEqual(["color:B"]);
+});
+
+test("colors wins over colorIndicator when both are present", () => {
+  const both = doc({
+    _id: "both", name: "Both", typeLine: "Creature — Human",
+    faces: [{ name: "Both", typeLine: "Creature — Human", oracleText: "", colors: ["R"], colorIndicator: ["G"] }],
+  });
+  expect(edgesFrom(buildGraph([both]), "face:both:0", "COLOR")).toEqual(["color:R"]);
+});

@@ -142,7 +142,11 @@ export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
       for (const s of pt.supertypes) edge(faceId, node("supertype:" + s, "supertype", s), "SUPERTYPE");
       for (const t of pt.types) edge(faceId, node("type:" + t, "type", t), "TYPE");
       for (const st of pt.subtypes) edge(faceId, node("subtype:" + st, "subtype", st), "SUBTYPE");
-      for (const col of f.colors) edge(faceId, node("color:" + col, "color", col), "COLOR");
+      // A face with no mana cost carries its colour in `colorIndicator` instead of `colors` -- the
+      // printed indicator dot. Falling back only when `colors` is empty keeps the normal path
+      // untouched; without it such a face silently gets no COLOR edges at all.
+      const faceColors = f.colors.length > 0 ? f.colors : f.colorIndicator ?? [];
+      for (const col of faceColors) edge(faceId, node("color:" + col, "color", col), "COLOR");
       for (const sym of manaSymbols(f.manaCost)) edge(faceId, node("mana:" + sym, "mana", sym), "MANA_SYMBOL");
 
       const p = numericStat(f.power);
