@@ -1,7 +1,26 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { GraphView, nodeRadius, seedPosition, zoneCentroids } from "./GraphView.js";
+import { GraphView, nodeRadius, seedPosition, separation, zoneCentroids } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
+
+test("no correction when two discs are clear of each other", () => {
+  expect(separation(100, 0, 14, 14, 4)).toBeNull();
+});
+
+test("overlapping discs are pushed apart along their centre line", () => {
+  const s = separation(10, 0, 14, 14, 4)!;
+  expect(s).not.toBeNull();
+  // gap needed: 14 + 14 + 4 = 32; currently 10 apart, so 22 to close, split half each.
+  expect(s.x).toBeCloseTo(11, 5);
+  expect(s.y).toBeCloseTo(0, 5);
+});
+
+test("coincident discs are separated deterministically rather than dividing by zero", () => {
+  const s = separation(0, 0, 14, 14, 4)!;
+  expect(Number.isFinite(s.x)).toBe(true);
+  expect(Number.isFinite(s.y)).toBe(true);
+  expect(Math.hypot(s.x, s.y)).toBeGreaterThan(0);
+});
 
 test("a card node's radius is the radius its art is drawn at", () => {
   expect(nodeRadius({ kind: "card", deg: 3 })).toBe(14);
