@@ -4,10 +4,13 @@ import { CATEGORY_LABELS, CATEGORY_ORDER } from "./CardList.js";
 import { glyphFor } from "./graph-glyphs.js";
 
 /** Node kinds hidden on first paint. Each connects nearly every card in a deck -- `layout:normal`
- *  alone reaches 87 of Inalla's 94 -- so leaving them on makes the first thing anyone sees a
- *  starburst around a fact that distinguishes nothing. The same reason the engine IDF-weights
- *  common events: the hubs are where the information isn't. */
-const DIM_BY_DEFAULT: NodeKind[] = ["layout", "cmc", "mana", "color"];
+ *  alone reaches 87 of Inalla's 94, `power:2` ties together every 2-power creature, `type:creature`
+ *  nearly all of them -- so leaving them on makes the first thing anyone sees a starburst around a
+ *  fact that distinguishes nothing. The same reason the engine IDF-weights common events: the hubs
+ *  are where the information isn't. Nothing is removed; the filter chips turn any kind back on. */
+export const DIM_BY_DEFAULT: NodeKind[] = [
+  "layout", "cmc", "mana", "color", "type", "supertype", "power", "toughness",
+];
 
 /** Kinds ordered for the filter row: the ones worth looking at first. */
 const KIND_ORDER: NodeKind[] = [

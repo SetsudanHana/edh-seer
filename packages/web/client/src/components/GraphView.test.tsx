@@ -1,7 +1,19 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { GraphView, nodeRadius, seedPosition, separation, zoneCentroids } from "./GraphView.js";
+import { DIM_BY_DEFAULT, GraphView, nodeRadius, seedPosition, separation, zoneCentroids } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
+
+test("structural mesh hubs are hidden on first paint", () => {
+  expect(new Set(DIM_BY_DEFAULT)).toEqual(
+    new Set(["layout", "cmc", "mana", "color", "type", "supertype", "power", "toughness"]),
+  );
+});
+
+test("the kinds that carry synergy signal are visible on first paint", () => {
+  for (const kind of ["card", "event", "subtype", "keyword", "token", "related", "face"]) {
+    expect(DIM_BY_DEFAULT).not.toContain(kind);
+  }
+});
 
 test("no correction when two discs are clear of each other", () => {
   expect(separation(100, 0, 14, 14, 4)).toBeNull();
