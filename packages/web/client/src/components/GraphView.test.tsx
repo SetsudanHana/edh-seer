@@ -2,9 +2,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, seedPosition, separation } from "./GraphView.js";
-import { roomTallies } from "./deck-rooms.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
+import type { RoomTally } from "./deck-rooms.js";
 
 /** Records the 2D-context calls made during a render, and -- more importantly -- lets the
  *  layout effect get past its `if (!ctx) return;` guard at all, which is what attaches
@@ -110,15 +110,21 @@ test("copiesByNameOf keys a card's copy count by name, defaulting an absent coun
   expect(m.has("goblin")).toBe(false);
 });
 
-// Guards the exact bug class carried into this task: roomTallies' copiesByName parameter is
-// optional, so a caller that builds cardRooms correctly but forgets to pass copy counts still
-// runs -- just wrong, tallying a 24-Mountain deck's Lands room as 1 instead of 24. This pins
-// copiesByNameOf as the thing that has to feed that parameter, not just that it exists in isolation.
-test("feeding copiesByNameOf's result to roomTallies counts a multi-copy card by its copies, not once", () => {
-  const nodes = [{ id: "card:mtn", kind: "card", label: "Mountain", copies: 24 }] as GraphNode[];
-  const cardRooms = new Map([["Mountain", ["lands"] as const]]);
-  const t = roomTallies(cardRooms, [{ category: "lands", count: 24, target: 36 }], copiesByNameOf(nodes));
-  expect(t.get("lands")!.count).toBe(24);
+// Fix round 1: the previous version of this test called roomTallies/copiesByNameOf directly with
+// inline arguments, so it never went through GraphView's own `tallies` useMemo -- dropping the
+// third argument at the REAL call site (GraphView.tsx) would not have failed it. Routing through
+// a render + the probe (which now carries `tallies` -- see below) closes that gap: this fails if
+// GraphView's tallies memo ever regresses to `roomTallies(cardRooms, report.buildCategories)`
+// with copiesByNameOf's result dropped.
+test("a multi-copy card counts by its copies in the room tallies reachable from a real render, not once", () => {
+  makeContextSpy();
+  const graph = { nodes: [{ id: "card:mtn", kind: "card", label: "Mountain", roles: ["lands"], copies: 24 }], edges: [] } as unknown as typeof SAMPLE.graph;
+  const report = { ...SAMPLE.report, buildCategories: [{ category: "lands", count: 24, target: 36 }], combos: [], archetypes: [] };
+  const { container } = render(<GraphView graph={graph} report={report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => { tallies: Map<string, RoomTally> };
+  };
+  expect(canvas.__graphProbe!().tallies.get("lands")!.count).toBe(24);
 });
 
 // Canvas painting (zone chrome, art fills, glyph strokes) isn't exercised here -- jsdom has no
@@ -171,10 +177,16 @@ test("gives a non-card node no rooms", () => {
 });
 
 test("puts an uncategorised card in strategy", () => {
-  // Neither SAMPLE card carries a `roles` entry, so both are the "nothing claims this card"
-  // case roomsForCard falls back on -- no need for a bespoke fixture to exercise it.
   makeContextSpy();
-  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  // Fix round 1: neither SAMPLE card carries a `roles` entry, but BOTH are named in
+  // report.archetypes[0].cards -- so without this override they reach strategy through the
+  // explicit `strategyCards.has(name)` branch in roomsForCard, never through the true fallback
+  // (`hit.size === 0`) this test claims to cover. Zeroing out combos/archetypes here (a local
+  // override, not a change to the shared SAMPLE fixture -- this report is scoped to this one
+  // test) removes both explicit branches, so a roleless card can only land in strategy via the
+  // real fallback.
+  const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={report} />);
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => Array<{ id: string; kind: string; roles: string[] | null; rooms: string[] | null }>;
   };

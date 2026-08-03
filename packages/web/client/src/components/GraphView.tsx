@@ -281,12 +281,21 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     // the live simulation state, which is otherwise sealed inside this closure. Read-only snapshot,
     // rebuilt per call. Not dev-gated -- it is a few bytes, it ships no behaviour, and a metric you
     // can only collect in a special build is a metric nobody collects.
+    //
+    // `tallies` rides along as a property on the returned array (not a change to the array's own
+    // shape) rather than wrapping the return value in `{ nodes, tallies }`: Task 8's plan already
+    // documents `__graphProbe()` returning the node array directly
+    // (`const cards = nodes.filter(...)`), and this is otherwise a dead value with no test able to
+    // reach the real `tallies` useMemo at all -- reachable now without breaking that contract.
     (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe = () =>
-      nodes.filter(visible).map((n) => ({
-        id: n.id, kind: n.kind, x: n.x, y: n.y, r: nodeRadius(n),
-        roles: n.roles ?? null, artCrop: n.artCrop ?? null,
-        rooms: n.kind === "card" ? (roomsByNode.get(n.id) ?? []) : null,
-      }));
+      Object.assign(
+        nodes.filter(visible).map((n) => ({
+          id: n.id, kind: n.kind, x: n.x, y: n.y, r: nodeRadius(n),
+          roles: n.roles ?? null, artCrop: n.artCrop ?? null,
+          rooms: n.kind === "card" ? (roomsByNode.get(n.id) ?? []) : null,
+        })),
+        { tallies },
+      );
 
     // A from-scratch graph gets full energy to organize; a graph that already has settled
     // positions (a filter toggle, or -- once deckbuilding lands -- a card added/removed) only
@@ -543,7 +552,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       canvas.removeEventListener("wheel", onWheel);
       delete (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe;
     };
-  }, [graph, hidden, roomsByNode]);
+  }, [graph, hidden, roomsByNode, tallies]);
 
   const toggle = (k: NodeKind) =>
     setHidden((prev) => {
