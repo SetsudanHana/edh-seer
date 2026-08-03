@@ -58,6 +58,10 @@ export function GraphView({ graph }: { graph: CardGraph }) {
   // Layout continuity (Step 0): positions of every node as of the last time this effect tore
   // down, keyed by id. Persists across `graph`/`hidden` changes for the life of this component so
   // a re-render moves only what actually changed instead of re-throwing the whole layout.
+  // ponytail: never pruned of ids that drop out of the graph, so it grows unbounded for the life
+  // of a mounted GraphView. Fine at one deck's worth of nodes per mount; add pruning on teardown
+  // (drop ids not in the latest `graph.nodes`) if this component ever stays mounted across many
+  // distinct decks in one session.
   const prevPositionsRef = useRef<Map<string, Sim>>(undefined);
   prevPositionsRef.current ??= new Map();
   // Lazily-built Path2D cache for glyphs (Step 4). Built at stroke time, never at module load --
@@ -139,8 +143,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
     // Every card's roles, present-in-this-deck only, in the Cards tab's own order -- the ring
     // zones lay out on. Sized off the canvas' own footprint so the ring fits what's on screen.
     const presentRoles = CATEGORY_ORDER.filter((r) => graph.nodes.some((n) => n.roles?.includes(r)));
-    const zoneRadius = Math.min(dim.w, dim.h) * 0.42;
-    const zoneCentroid = zoneCentroids(presentRoles, zoneRadius);
+    let zoneCentroid = zoneCentroids(presentRoles, Math.min(dim.w, dim.h) * 0.42);
 
     // Neighbour lookup built from the raw edge list, before Sim objects exist -- only needed to
     // seed a brand-new node near what it connects to (Step 0).
@@ -266,6 +269,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
       ctx.strokeStyle = paint.sep;
       ctx.fillStyle = paint.muted;
       ctx.font = `500 ${11 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
+      ctx.textAlign = "center";
       for (const role of presentRoles) {
         const members = cardsWithRoles.filter((n) => n.roles!.includes(role));
         if (members.length === 0) continue;
@@ -292,10 +296,18 @@ export function GraphView({ graph }: { graph: CardGraph }) {
 
         if (n.kind === "card") {
           const img = n.artCrop ? imgCache.get(n.artCrop) : undefined;
-          if (img instanceof HTMLImageElement) {
+          // Scryfall's art_crop is landscape (~626x457, ~1.37:1); the 5-arg drawImage would
+          // squash it into this square node. Cover-fit instead: crop a centred square out of the
+          // source (the shorter side) and draw that square into the node -- same trick as CSS
+          // `object-fit: cover`. Guard the source dims: a truthy naturalWidth/Height of 0 (or NaN)
+          // would make Math.min pick that and hand drawImage a zero-size source rect, which throws
+          // and would otherwise kill the whole animation loop.
+          if (img instanceof HTMLImageElement && img.naturalWidth > 0 && img.naturalHeight > 0) {
+            const sw = img.naturalWidth, sh = img.naturalHeight, s = Math.min(sw, sh);
             ctx.save();
             ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.clip();
-            ctx.drawImage(img, n.x - ART_RADIUS, n.y - ART_RADIUS, ART_RADIUS * 2, ART_RADIUS * 2);
+            ctx.drawImage(img, (sw - s) / 2, (sh - s) / 2, s, s,
+              n.x - ART_RADIUS, n.y - ART_RADIUS, ART_RADIUS * 2, ART_RADIUS * 2);
             ctx.restore();
             ctx.lineWidth = 1 / cam.z;
             ctx.strokeStyle = paint.border;
@@ -334,6 +346,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
       // with one already drawn. Without this the centre of a dense deck stacks four event names on
       // top of each other and none of them are readable.
       ctx.fillStyle = paint.fg;
+      ctx.textAlign = "start"; // the hub labels' collision boxes below assume left alignment
       const fontPx = 11 / cam.z;
       ctx.font = `${fontPx}px ui-monospace, monospace`;
       const placed: Array<{ x: number; y: number; w: number; h: number }> = [];
@@ -356,7 +369,13 @@ export function GraphView({ graph }: { graph: CardGraph }) {
     const loop = () => { tick(); draw(); raf = requestAnimationFrame(loop); };
     loop();
 
-    const onResize = () => { dim = size(); };
+    // Zone geometry is sized off the viewport (Math.min(dim.w, dim.h)), so a resize/rotate has to
+    // recompute it too -- otherwise the ring anchors stay sized to whatever viewport was live at
+    // mount and a rotated phone gets a layout built for the wrong aspect ratio.
+    const onResize = () => {
+      dim = size();
+      zoneCentroid = zoneCentroids(presentRoles, Math.min(dim.w, dim.h) * 0.42);
+    };
     addEventListener("resize", onResize);
 
     const pick = (ev: PointerEvent): Sim | null => {
