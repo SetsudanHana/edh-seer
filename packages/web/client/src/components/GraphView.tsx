@@ -56,13 +56,36 @@ export function nodeRadius(n: { kind: string; deg: number }): number {
  *  trials (0.438-0.497) but widened out over 10 (spread 0.132 vs. a margin of only 0.121 to the
  *  gate) -- still not a safe margin. 0.1/0.0012 (~83x) is what's settled: 10 trials landed
  *  0.430-0.477, a spread of 0.047 against a gate margin of 0.222 -- comfortably tighter than the
- *  headroom, not just narrower than one lucky pair of samples. */
-const COLLISION_PAD = 4;
+ *  headroom, not just narrower than one lucky pair of samples.
+ *
+ *  Task 8 re-tuned COLLISION_PAD/ZONE_SPRING/REPULSION against the room board (concept nodes
+ *  hidden by default, so these springs are now the whole simulation for a card). ZONE_SPRING 0.1 /
+ *  REPULSION 1400 (Task 7's ring-anchor values) held overlaps at 0 only if left to settle ~9s;
+ *  under a shorter settle window overlaps ran 53-61/10 trials. 0.05 / 2200 (with COLLISION_PAD 5)
+ *  converged to 0 overlaps in all 20 fresh-load trials measured (two independent 10-trial batches,
+ *  see task-8-report.md) with the same ~9s settle. A third candidate, 0.25 / 1800, made overlaps
+ *  *worse* (17-27/10) -- a stronger zone spring re-compresses cards faster than collision can
+ *  resolve them, it does not help convergence.
+ *
+ *  The room-*membership* gate ("cards outside every room they belong to" = 0) could NOT be reached
+ *  by any combination of these constants, and is not a tuning problem: see task-8-report.md's
+ *  "Plan defect" section. In short, a card belonging to N rooms feels N equal-weight springs
+ *  (`n.vx += (c.x - n.x) * ZONE_SPRING` once per room, unconditionally), whose equilibrium is the
+ *  unweighted average of those rooms' centres -- a fact independent of ZONE_SPRING's magnitude
+ *  (`k*(c1-x) + k*(c2-x) = 0` gives `x = (c1+c2)/2` for any nonzero `k`). Every card in this
+ *  reference deck (inalla.txt) that has a build role also belongs to Strategy (deck-rooms.ts's
+ *  `strategyCards` adds Strategy independent of the fallback, matching the design doc's "archetype
+ *  groups, plus every card no other room claims"), and Strategy's row is not adjacent to Ramp's,
+ *  Lands', or Board wipes' row on the fixed GRID -- so that average provably lands in the row
+ *  between them, outside every rect involved, for any constant value. Reordering GRID or splitting
+ *  the zone force by room weight would fix it but is a structural change outside this task's
+ *  remit (constants only); flagged instead of worked around. */
+const COLLISION_PAD = 5;
 const EDGE_GAP = 28;
-const ZONE_SPRING = 0.1;
+const ZONE_SPRING = 0.05;
 const CENTER_PULL = 0.0004;
 /** Repulsion numerator (world-units^3/tick) for the all-pairs inverse-square push. */
-const REPULSION = 1400;
+const REPULSION = 2200;
 /** Link-spring stiffness pulling an edge toward its rest length. Softened from 0.008 alongside the
  *  ZONE_SPRING increase above -- see the comment on this block. */
 const LINK_STIFFNESS = 0.0012;
