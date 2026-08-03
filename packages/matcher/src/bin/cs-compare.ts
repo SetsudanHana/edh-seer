@@ -8,7 +8,7 @@ import { ARCHETYPE_SIGNATURE, type Archetype } from "../archetypes.js";
 import type { SaltPayload } from "./calibrate-core.js";
 import {
   CS_CATEGORIES, CS_CATEGORY_TO_ARCHETYPE, CS_CATEGORY_TO_OTAGS, CS_CATEGORY_TO_SUBARCHETYPE, CS_UNMAPPED,
-  ENGINE_ARCHETYPES_WITHOUT_CS, bucketFor, csCardCategories, csDeckArchetype, csSlug, csSubArchetypeCards,
+  ENGINE_ARCHETYPES_WITHOUT_CS, bucketFor, csCardCategories, csDeckArchetype, csKeysFor, csSubArchetypeCards,
   scoreCategory,
 } from "./cs-categories.js";
 
@@ -93,10 +93,20 @@ async function main(): Promise<void> {
       const doc = await lookup.findByName(normalizeName(name));
       if (!doc) continue;
       const card = docToCard(doc as never);
-      const key = csSlug(card.name);
-      if (!cats.has(key)) continue; // CS never saw this card -- excluded from the universe
-      csLabels.set(key, cats.get(key)!);
-      subArchLabels.set(key, subArchByCard.get(key) ?? new Set());
+      // csKeysFor handles CS's front/back DFC key-splitting (see its doc comment) -- `sources`
+      // is 1 key normally, 2 for a matched DFC (front + `<front>_<back>_back`), unioned below.
+      const { key, sources } = csKeysFor(card.name, name);
+      if (!sources.some((s) => cats.has(s))) continue; // CS never saw this card -- excluded from the universe
+      // Union with any entry already set (FIX 3): the universe is built once across 6 decks, and
+      // a card appearing in two of them must not have its labels silently overwritten by
+      // whichever deck is processed last. CS labels are deck-specific, so the union reads
+      // "labelled X if ANY deck labels it X" -- applied to both references, symmetrically.
+      const labelled = new Set<string>(csLabels.get(key) ?? []);
+      for (const s of sources) for (const c of cats.get(s) ?? []) labelled.add(c);
+      csLabels.set(key, labelled);
+      const subs = new Set<string>(subArchLabels.get(key) ?? []);
+      for (const s of sources) for (const sub of subArchByCard.get(s) ?? []) subs.add(sub);
+      subArchLabels.set(key, subs);
       const od = (await cardOtags.findOne({ _id: doc._id } as never)) as { otags?: string[] } | null;
       otagSlugs.set(key, od?.otags ?? []);
       // analyze.ts:262 excludes lands from CardSignal construction (isLand filter) -- match that

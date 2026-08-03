@@ -7,24 +7,74 @@ import { ARCHETYPE_SIGNATURE, type Archetype } from "../archetypes.js";
  *  Apostrophes are STRIPPED, not replaced: CS emits "an_offer_you_cant_refuse" and
  *  "vivis_persistence", verified against a live payload 2026-08-02. calibrate.ts's local
  *  `slug()` replaces them instead, producing "an_offer_you_can_t_refuse" -- so it silently
- *  drops every apostrophe card from its CS correlation. Do not copy that helper. */
+ *  drops every apostrophe card from its CS correlation. Do not copy that helper.
+ *
+ *  Diacritics are FOLDED, not dropped-with-the-letter: "Lórien Revealed" -> "lorien_revealed"
+ *  (verified live). NFD-decompose then strip combining marks before the rest of the pipeline,
+ *  so the base letter survives.
+ *
+ *  Trailing punctuation keeps its underscore: "Forth Eorlingas!" -> "forth_eorlingas_" (verified
+ *  live) -- CS's own slugify never trims the underscore the trailing "!" produced. Only leading
+ *  underscores are stripped here (no observed CS key has one; trailing ones are load-bearing). */
 export function csSlug(name: string): string {
   return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/['’]/g, "")
     .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+    .replace(/^_+/, "");
 }
 
-/** The 30 card categories CommanderSalt emits under cards.<slug>.categories.stats,
- *  observed live on 2026-08-02. Kept explicit so a new upstream category surfaces as an
- *  unmapped-list failure rather than being silently ignored. */
+/** Split a resolved card's name into DFC faces, Scryfall-style ("Front // Back"). Returns null
+ *  for a single-faced card. */
+function dfcFaces(cardName: string): [front: string, back: string] | null {
+  const parts = cardName.split(" // ");
+  return parts.length === 2 ? [parts[0], parts[1]] : null;
+}
+
+/** Resolve the CS key(s) that represent a decklist entry, handling CS's DFC key-splitting: CS
+ *  emits a DFC's front face under its own slug and the back face under
+ *  `<front-slug>_<back-slug>_back` -- never a single combined slug for "Front // Back". Returns
+ *  the canonical key to store this card's universe entry under, plus every underlying CS key
+ *  whose labels should be unioned onto it (two for a matched DFC, one otherwise).
+ *
+ *  Gated on comparing the DECKLIST's own name against the resolved card's front face -- not
+ *  merely "is this card a DFC" -- to dodge a known corpus bug: `findByName("Reanimate")` and
+ *  `findByName("Rampant Growth")`, both bare single-faced names, incorrectly resolve to the MDFC
+ *  cards "Grave Researcher // Reanimate" / "Studious First-Year // Rampant Growth" because their
+ *  BACK face happens to share the queried name. Naive front-face slugging would then silently
+ *  admit "grave_researcher" / "studious_first_year" into the universe carrying the WRONG card's
+ *  CS labels. Requiring the decklist name's own front part to equal the resolved card's real
+ *  front face means a bare "Reanimate" (declared front "Reanimate" != real front "Grave
+ *  Researcher") is rejected and falls through to the plain full-name slug below, which -- as
+ *  before this fix -- matches no CS key and is harmlessly dropped. */
+export function csKeysFor(cardName: string, declaredName: string): { key: string; sources: string[] } {
+  const faces = dfcFaces(cardName);
+  if (faces) {
+    const [front, back] = faces;
+    const declaredFront = declaredName.split(/\s*\/\/?\s*/)[0];
+    if (csSlug(declaredFront) === csSlug(front)) {
+      const frontKey = csSlug(front);
+      return { key: frontKey, sources: [frontKey, `${frontKey}_${csSlug(back)}_back`] };
+    }
+  }
+  const key = csSlug(cardName);
+  return { key, sources: [key] };
+}
+
+/** The 44 card categories CommanderSalt emits under cards.<slug>.categories.stats, derived from
+ *  every cached payload in .cs-cache/ (all 6 calibration decks) on 2026-08-03 -- see the
+ *  "CS_CATEGORIES lists every category observed in the cached payloads" test, which re-derives
+ *  this set from the cache on every run so a future upstream addition fails loudly instead of
+ *  being silently ignored. */
 export const CS_CATEGORIES: readonly string[] = [
-  "anthem", "aristocrats", "blink", "boardWipes", "burn", "cantrip", "cheat", "clone",
-  "combat", "costReduction", "counterspell", "discard", "enchantress", "fastmana",
-  "graveyard", "groupslug", "kindred", "landsmatter", "manafixing", "multipliers",
-  "otherControl", "plusOnePlusOneCounters", "ramp", "reanimator", "recursion", "slow",
-  "spotRemoval", "tokens", "topdeck", "tutor",
+  "animate", "anthem", "aristocrats", "blink", "boardWipes", "burn", "cantrip", "cheat", "clone",
+  "combat", "costReduction", "counterspell", "discard", "enchantress", "evasion", "extraTurns",
+  "fastmana", "graveyard", "groupslug", "kindred", "landsmatter", "manafixing", "mill",
+  "multipliers", "otherControl", "overrun", "pillowfort", "plusOnePlusOneCounters", "pregame",
+  "ramp", "reanimator", "recursion", "slow", "spotRemoval", "stax", "stompy", "superfriends",
+  "taxes", "theft", "tokens", "topdeck", "tutor", "wheel", "wincon",
 ];
 
 /** CS slug -> the set of categories CS labelled that card with. Cards present but unlabelled
@@ -42,21 +92,13 @@ export function csCardCategories(payload: SaltPayload): Map<string, Set<string>>
 export interface CsDeckArchetype {
   major: string;
   minor: string;
-  /** Sub-archetype name -> percentage, flattened across majors. */
-  subPercentages: Map<string, number>;
 }
 
 /** Deck-level archetype labels, or null when the payload has no archetype block. */
 export function csDeckArchetype(payload: SaltPayload): CsDeckArchetype | null {
   const a = payload.details.archetypes;
   if (!a) return null;
-  const subPercentages = new Map<string, number>();
-  for (const major of Object.values(a.percentages ?? {})) {
-    for (const [name, sub] of Object.entries(major.subArchetypes ?? {})) {
-      if (typeof sub.percentage === "number") subPercentages.set(name, sub.percentage);
-    }
-  }
-  return { major: a.dominantArchetype ?? "", minor: a.dominantSubArchetype ?? "", subPercentages };
+  return { major: a.dominantArchetype ?? "", minor: a.dominantSubArchetype ?? "" };
 }
 
 /** The "typal" group from functional-otags.json, copied verbatim (all 40 slugs, all
@@ -123,6 +165,27 @@ export const CS_CATEGORY_TO_OTAGS: Record<string, string[]> = {
   graveyard: ["hate-graveyard"],
   multipliers: ["trigger-doubler", "mana-increaser", "counter-doubler"],
   burn: ["burn-player", "damage-increaser", "power-doubler"],
+  // Measured recall (2026-08-03, all 6 calibration decks): 8/8 CS-tagged `mill` cards (Syr
+  // Konrad, Altar of Dementia, Jace Wielder of Mysteries, Hedron Crab, Riverchurn Monument, The
+  // Water Crystal, Ruin Crab, Breach the Multiverse) carry `mill`. The slug is broad (1200
+  // cards): it also fires on surveil/explore effects that only optionally put cards in a
+  // graveyard, so precision will read low -- that is vocabulary breadth, not a mismapping; every
+  // CS-labelled mill card sampled hit cleanly.
+  mill: ["mill", "mill-self", "mill-opponent"],
+  // Measured recall (2026-08-03): the lone CS-tagged `overrun` card in the 6 decks (Gisa, the
+  // Hellraiser -- a typal anthem, not a team pump-and-trample effect) does NOT carry `overrun`.
+  // n=1, so this is not strong evidence of a mismapping, just a documented miss: `overrun`'s
+  // otag-semantics definition (effectKind "pump") is narrower than whatever CS's classifier
+  // used for this one card.
+  overrun: ["overrun"],
+  extraTurns: ["extra-turn"],
+  // Measured recall (2026-08-03): 0/2 CS-tagged `theft` cards in the 6 decks (Archmage's Charm,
+  // Dream Harvest) carry `threaten` or `donate`. Both are exile-and-cast-from-exile "steal a
+  // spell", not gain-control-of-a-permanent effects -- CS's `theft` bucket reads broader than
+  // this mapping covers. n=2, kept as the best available classifier pair per the otag vocabulary
+  // (no exile-and-cast classifier slug exists); flagged here rather than silently reported as a
+  // clean mapping.
+  theft: ["threaten", "donate"],
 };
 
 /** CS categories with no otag counterpart. These are OUR vocabulary gaps, reported as bucket C.
@@ -138,6 +201,14 @@ export const CS_UNMAPPED: readonly string[] = [
   "counterspell", "fastmana", "slow", "cheat", "enchantress",
   "boardWipes", "cantrip", "combat", "costReduction", "discard", "groupslug", "manafixing",
   "otherControl", "ramp", "spotRemoval", "topdeck", "tutor",
+  // Added with the FIX 1 category-count correction (2026-08-03): sampled and found either (a)
+  // no coherent single otag mechanism underneath (animate, evasion, pillowfort, pregame, stax,
+  // stompy, superfriends, taxes, wincon -- each a heterogeneous CS bucket the same way cheat/
+  // combat/otherControl/groupslug/discard/topdeck above are), or (b) a deck-format/turn-order
+  // signal rather than a card mechanism (wheel is close to `mill`/`extraTurns` in spirit but CS
+  // groups "make everyone draw a new hand" separately and there is no otag classifier for it).
+  "animate", "evasion", "pillowfort", "pregame", "stax", "stompy", "superfriends", "taxes",
+  "wheel", "wincon",
 ];
 
 /** CS category -> the engine archetype whose ARCHETYPE_SIGNATURE covers the same ground.
@@ -185,13 +256,19 @@ export function csSubArchetypeCards(payload: SaltPayload): Map<string, Set<strin
 /** CS category -> the matching sub-archetype name, for categories where one exists. CS's
  *  sub-archetype keys are the category name uppercased with no separator (verified against the
  *  union of every sub-archetype name observed across all 6 calibration decks' cached payloads,
- *  2026-08-02: TOKENS, GROUPSLUG, STOMPY, REANIMATOR, COMBAT, PLUSONEPLUSONECOUNTERS,
- *  SPOTREMOVAL, BOARDWIPES, STAX, ARISTOCRATS, MILL, ANTHEM, COUNTERS, SUPERFRIENDS, WHEELS,
- *  COMBO, TAXES, THEFT, PILLOWFORT, TURNS, KINDRED, BLINK, STORM). Only 7 of our categories have
- *  a match in that set: the six from the task brief plus `anthem` (ANTHEM was observed twice).
- *  `recursion`, `landsmatter`, `clone`, `graveyard`, `multipliers` and `burn` have no matching
- *  sub-archetype in the observed data and are simply absent here -- not a bug, CS's synergy
- *  graph groups them under other names (or not at all) in these 6 decks. */
+ *  2026-08-03: ANTHEM, ARISTOCRATS, BLINK, BOARDWIPES, COMBAT, COMBO, COUNTERS, GROUPSLUG,
+ *  KINDRED, MILL, PILLOWFORT, PLUSONEPLUSONECOUNTERS, REANIMATOR, SPOTREMOVAL, STAX, STOMPY,
+ *  STORM, SUPERFRIENDS, TAXES, THEFT, TOKENS, TURNS, WHEELS). Only 9 of our categories have an
+ *  EXACT match (cat.toUpperCase() === sub, enforced by test below): the six from the original
+ *  task brief plus `anthem`, and -- added with the FIX 1 category-count correction -- `mill`
+ *  (-> MILL) and `theft` (-> THEFT). `extraTurns` and `overrun` were also newly mapped to otags
+ *  in FIX 1 but have NO exact match here: the observed sub-archetype is "TURNS", not
+ *  "EXTRATURNS", and "OVERRUN" was not observed as a sub-archetype at all in these 6 decks, so
+ *  neither is added (the mismatch would violate the cat.toUpperCase()===sub invariant the tests
+ *  enforce, and a fuzzy TURNS<->extraTurns mapping isn't verified here). `recursion`,
+ *  `landsmatter`, `clone`, `graveyard`, `multipliers` and `burn` have no matching sub-archetype
+ *  in the observed data either and are simply absent here -- not a bug, CS's synergy graph
+ *  groups them under other names (or not at all) in these 6 decks. */
 export const CS_CATEGORY_TO_SUBARCHETYPE: Record<string, string> = {
   kindred: "KINDRED",
   tokens: "TOKENS",
@@ -200,6 +277,8 @@ export const CS_CATEGORY_TO_SUBARCHETYPE: Record<string, string> = {
   reanimator: "REANIMATOR",
   plusOnePlusOneCounters: "PLUSONEPLUSONECOUNTERS",
   anthem: "ANTHEM",
+  mill: "MILL",
+  theft: "THEFT",
 };
 
 export type Bucket = "A" | "B" | "C";

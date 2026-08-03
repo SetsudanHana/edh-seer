@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import {
   CS_CATEGORIES,
@@ -8,6 +9,7 @@ import {
   bucketFor,
   csCardCategories,
   csDeckArchetype,
+  csKeysFor,
   csSlug,
   csSubArchetypeCards,
   scoreCategory,
@@ -15,6 +17,8 @@ import {
 import type { SaltPayload } from "./calibrate-core.js";
 import { loadOtagSemantics } from "@mtg/tagger";
 import { ARCHETYPE_SIGNATURE } from "../archetypes.js";
+
+const CACHE_DIR = new URL("../../.cs-cache/", import.meta.url);
 
 const payload: SaltPayload = {
   commanders: ["Inalla, Archmage Ritualist"],
@@ -50,6 +54,18 @@ test("csSlug strips apostrophes instead of underscoring them", () => {
   expect(csSlug("Urza’s Incubator")).toBe("urzas_incubator");
 });
 
+// CS folds diacritics onto their base letter rather than dropping the letter entirely.
+// Verified against a live payload: "Lórien Revealed" -> "lorien_revealed", not "lrien_revealed".
+test("csSlug folds diacritics instead of dropping the letter", () => {
+  expect(csSlug("Lórien Revealed")).toBe("lorien_revealed");
+});
+
+// CS's own slugify never trims the underscore a trailing punctuation mark produces.
+// Verified against a live payload: "Forth Eorlingas!" -> "forth_eorlingas_" (trailing "_" kept).
+test("csSlug keeps the underscore produced by trailing punctuation", () => {
+  expect(csSlug("Forth Eorlingas!")).toBe("forth_eorlingas_");
+});
+
 test("csCardCategories extracts the label set per card slug", () => {
   const m = csCardCategories(payload);
   expect(m.get("grim_haruspex")).toEqual(new Set(["cantrip", "aristocrats"]));
@@ -70,23 +86,32 @@ test("csCardCategories ignores false-valued flags", () => {
   expect(m.get("x")).toEqual(new Set(["tokens"]));
 });
 
-test("csDeckArchetype reads the dominant labels and flattens sub-percentages", () => {
+test("csDeckArchetype reads the dominant major/minor labels", () => {
   const a = csDeckArchetype(payload)!;
   expect(a.major).toBe("MIDRANGE");
   expect(a.minor).toBe("KINDRED");
-  expect(a.subPercentages.get("KINDRED")).toBe(66.1);
-  expect(a.subPercentages.get("ARISTOCRATS")).toBe(17.4);
 });
 
 test("csDeckArchetype returns null when the payload carries no archetype block", () => {
   expect(csDeckArchetype({ details: { synergy: { list: {} } } })).toBeNull();
 });
 
-test("CS_CATEGORIES lists all 30 known categories", () => {
-  expect(CS_CATEGORIES).toHaveLength(30);
-  for (const c of ["kindred", "aristocrats", "tokens", "blink", "counterspell"]) {
-    expect(CS_CATEGORIES).toContain(c);
+// Re-derives the true category set from every cached payload on each run, so a future upstream
+// addition (or a stale cache with fewer categories than CS_CATEGORIES now expects) fails loudly
+// instead of the constant silently drifting out of sync with reality, the exact failure mode
+// that let CS_CATEGORIES sit at 30 while the payloads emitted 44.
+test("CS_CATEGORIES lists every category observed in the cached payloads", () => {
+  const files = readdirSync(CACHE_DIR).filter((f) => f.endsWith(".json"));
+  expect(files.length, "no cached CS payloads found -- run cs-compare.ts once to populate .cs-cache/").toBeGreaterThan(0);
+  const observed = new Set<string>();
+  for (const f of files) {
+    const p = JSON.parse(readFileSync(new URL(f, CACHE_DIR), "utf8")) as SaltPayload;
+    for (const cats of csCardCategories(p).values()) {
+      for (const c of cats) observed.add(c);
+    }
   }
+  for (const c of observed) expect(CS_CATEGORIES, `${c} observed in cache but missing from CS_CATEGORIES`).toContain(c);
+  for (const c of CS_CATEGORIES) expect(observed, `${c} in CS_CATEGORIES but not observed in any cached payload`).toContain(c);
 });
 
 test("every CS category is either mapped or explicitly unmapped, exactly once", () => {
