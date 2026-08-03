@@ -5,14 +5,16 @@ import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CardList } from "./CardList.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
+import { GraphView } from "./GraphView.js";
 
-type TabId = "overview" | "archetypes" | "cards" | "combos";
+type TabId = "overview" | "archetypes" | "cards" | "combos" | "graph";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "archetypes", label: "Archetypes" },
   { id: "cards", label: "Cards" },
   { id: "combos", label: "Combos" },
+  { id: "graph", label: "Graph" },
 ];
 
 export function ReportTabs({ data }: { data: AnalyzeResponse }) {
@@ -46,6 +48,7 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
         {active === "archetypes" && <ArchetypeBoard strategies={data.report.strategies} archetypes={data.report.archetypes} />}
         {active === "cards" && <CardList cards={data.report.cards} />}
         {active === "combos" && <ComboList combos={data.report.combos} />}
+        {active === "graph" && <GraphView graph={data.graph} />}
       </div>
     </div>
   );

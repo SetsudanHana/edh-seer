@@ -95,4 +95,17 @@ export const SAMPLE: AnalyzeResponse = {
   resolvedCount: 99,
   totalCount: 100,
   commanderColorIdentity: ["R"],
+  graph: {
+    nodes: [
+      { id: "card:krenko", kind: "card", label: "Krenko, Mob Boss" },
+      { id: "card:tremors", kind: "card", label: "Impact Tremors" },
+      { id: "subtype:goblin", kind: "subtype", label: "goblin" },
+      { id: "event:enters:creature", kind: "event", label: "enters:creature" },
+    ],
+    edges: [
+      { from: "card:krenko", to: "subtype:goblin", kind: "SUBTYPE" },
+      { from: "card:krenko", to: "event:enters:creature", kind: "EMITS" },
+      { from: "event:enters:creature", to: "card:tremors", kind: "TRIGGERS" },
+    ],
+  },
 };

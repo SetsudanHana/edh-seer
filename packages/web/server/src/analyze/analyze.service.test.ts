@@ -46,6 +46,7 @@ function fakeDeps(capture: { commanderNames?: string[] }): AnalyzeDeps {
       commanderResolved: commanderNames,
       commanderColorIdentity: ["R"],
     }),
+    graph: async () => ({ nodes: [], edges: [] }),
     analyze: async (_cards, _combos, commanderNames) => {
       capture.commanderNames = commanderNames;
       return fakeReport;

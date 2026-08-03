@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { DeckReport } from "@mtg/engine";
+import type { CardGraph } from "@mtg/matcher";
 import type { AnalyzeResponse } from "./analyze.types.js";
 
 export const ANALYZE_DEPS = "ANALYZE_DEPS";
@@ -20,6 +21,7 @@ export interface AnalyzeDeps {
     commanderColorIdentity: string[];
   }>;
   analyze(cards: unknown[], combos: unknown[], commanderNames: string[]): Promise<DeckReport>;
+  graph(cardNames: string[]): Promise<CardGraph>;
 }
 
 @Injectable()
@@ -37,7 +39,8 @@ export class AnalyzeService {
       this.deps.makeLookup(),
     );
     const report = await this.deps.analyze(cards, combos, commanderResolved);
+    const graph = await this.deps.graph((cards as Array<{ name: string }>).map((c) => c.name));
     const totalCount = commanderNames.length + sections.deck.length;
-    return { report, missing, resolvedCount: cards.length, totalCount, commanderColorIdentity };
+    return { report, missing, resolvedCount: cards.length, totalCount, commanderColorIdentity, graph };
   }
 }

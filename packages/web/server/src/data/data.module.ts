@@ -45,6 +45,26 @@ export const STORE = "MONGO_STORE";
             const commanderColorIdentity = [...new Set(commanderCards.flatMap((c) => c.colorIdentity ?? []))];
             return { cards, combos, missing, commanderResolved, commanderColorIdentity };
           },
+          graph: async (cardNames: string[]) => {
+            // Re-reads the card DOCUMENTS: resolveDeck hands back engine `Card`s, and buildGraph
+            // needs the full CardDoc (faces, all_parts, legalities) that only the corpus row carries.
+            const lookup = data.mongoLookup(store as never);
+            const cardTagsCol = (store.db as Db).collection<CardTags>("cardTags");
+            const docs = [];
+            const deckCards = [];
+            for (const name of new Set(cardNames)) {
+              const doc = await lookup.findByName(data.normalizeName(name));
+              if (!doc) continue;
+              docs.push(doc);
+              deckCards.push({ card: data.docToCard(doc as never), tags: await cardTagsCol.findOne({ oracleId: doc._id }) });
+            }
+            // Same card list feeds both halves -- addEventEdges throws if they ever diverge.
+            const graph = matcher.addEventEdges(matcher.buildGraph(docs as never), deckCards as never, matcher.loadHierarchy());
+            // Node props are dropped on the wire: the browser view reads id/kind/label only, while
+            // `legalities` alone (24 formats on every card node) is 81KB of the 269KB graph. Send
+            // them again when something actually renders them.
+            return { nodes: graph.nodes.map(({ id, kind, label }) => ({ id, kind, label })), edges: graph.edges };
+          },
           analyze: async (cards, combos, commanderNames) => {
             const lookup = data.mongoLookup(store as never);
             const cardTagsCol = (store.db as Db).collection<CardTags>("cardTags");

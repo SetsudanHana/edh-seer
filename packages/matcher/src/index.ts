@@ -6,3 +6,5 @@ export { loadHierarchy, buildHierarchy, impliesType } from "./hierarchy.js";
 export { resolveChosenTypes, deckSubtypeCounts } from "./chosen-type.js";
 export { buildDeckCards, type CardTagsLookup } from "./deck-cards.js";
 export { parseStat, evalStatPredicate } from "./stats.js";
+export { buildGraph, type CardGraph, type GraphNode, type GraphEdge, type NodeKind, type EdgeKind } from "./graph.js";
+export { addEventEdges, orphanCards } from "./graph-events.js";
