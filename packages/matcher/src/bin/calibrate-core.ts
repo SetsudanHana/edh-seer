@@ -3,7 +3,17 @@ import type { ImpactWeights } from "@mtg/engine";
 export interface SaltPayload {
   /** Full commander card name(s), e.g. ["Inalla, Archmage Ritualist"]. */
   commanders?: string[];
-  details: { synergy: { list: Record<string, unknown> } };
+  details: {
+    synergy: { list: Record<string, unknown> };
+    /** Deck-level archetype breakdown. Present on live payloads; optional so fixtures need not carry it. */
+    archetypes?: {
+      dominantArchetype?: string;
+      dominantSubArchetype?: string;
+      percentages?: Record<string, { percentage?: number; subArchetypes?: Record<string, { percentage?: number }> }>;
+    };
+  };
+  /** Per-card data keyed by CommanderSalt's slug. `categories.stats` is the boolean label set. */
+  cards?: Record<string, { categories?: { stats?: Record<string, boolean> } }>;
 }
 
 /** Recursively sum every `conditionScoring.total` found anywhere under a node. CommanderSalt nests
