@@ -139,9 +139,14 @@ describe("fullscreen toggle", () => {
   test("the fullscreen button asks the graph container to go fullscreen", async () => {
     const requestFullscreen = vi.fn().mockResolvedValue(undefined);
     Element.prototype.requestFullscreen = requestFullscreen;
-    const { getByRole } = render(<GraphView graph={SAMPLE.graph} />);
+    const { getByRole, getByTestId } = render(<GraphView graph={SAMPLE.graph} />);
     await userEvent.click(getByRole("button", { name: /fullscreen/i }));
     expect(requestFullscreen).toHaveBeenCalledTimes(1);
+    // requestFullscreen is mocked on Element.prototype, so toHaveBeenCalledTimes(1) alone passes
+    // regardless of which element it was called on -- this is the exact defect ff53076 fixed
+    // (ref moved to the inner canvas container instead of the shell that also wraps the exit
+    // button). Assert the receiver too so that regression can't come back silently.
+    expect(requestFullscreen.mock.instances[0]).toBe(getByTestId("graph-fullscreen-shell"));
   });
 
   test("the fullscreen button is absent when the platform does not support it", () => {

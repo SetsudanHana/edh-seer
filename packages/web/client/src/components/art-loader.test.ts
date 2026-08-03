@@ -19,10 +19,13 @@ test("a url is marked loading while in flight and resolves to the image", async 
   });
   loader.request("a");
   expect(loader.get("a")).toBe("loading");
-  release!(fakeImage());
+  const img = fakeImage();
+  release!(img);
   await new Promise((r) => setTimeout(r, 0));
   expect(loader.get("a")).not.toBe("loading");
-  expect(loader.get("a")).not.toBe("error");
+  // Not just "not error": `undefined` also satisfies `not.toBe("error")`, so this passed even if
+  // the resolved image was never stored. Assert the actual image landed.
+  expect(loader.get("a")).toBe(img);
 });
 
 test("a failing url is retried once before it is marked dead", async () => {
@@ -38,13 +41,16 @@ test("a failing url is retried once before it is marked dead", async () => {
 
 test("a url that succeeds on retry is not marked dead", async () => {
   let calls = 0;
+  const img = fakeImage();
   const loader = createArtLoader({
-    load: async () => { if (++calls === 1) throw new Error("429"); return fakeImage(); },
+    load: async () => { if (++calls === 1) throw new Error("429"); return img; },
     delay: immediate, retries: 1,
   });
   loader.request("a");
   await new Promise((r) => setTimeout(r, 0));
-  expect(loader.get("a")).not.toBe("error");
+  // `not.toBe("error")` is satisfied by `undefined` too -- this passed even if the retry's
+  // successful result was never stored. Assert the actual image landed.
+  expect(loader.get("a")).toBe(img);
 });
 
 test("no more than `concurrency` loads are in flight at once", async () => {
@@ -59,7 +65,9 @@ test("no more than `concurrency` loads are in flight at once", async () => {
   });
   for (const u of ["a", "b", "c", "d", "e", "f", "g"]) loader.request(u);
   await new Promise((r) => setTimeout(r, 0));
-  expect(peak).toBeLessThanOrEqual(4);
+  // `toBeLessThanOrEqual(4)` passes at peak === 1 too -- a loader that serialised every load
+  // instead of running 4 concurrently would read green. Assert the cap is actually reached.
+  expect(peak).toBe(4);
   releases.forEach((r) => r());
 });
 

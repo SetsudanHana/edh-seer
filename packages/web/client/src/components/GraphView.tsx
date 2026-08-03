@@ -65,11 +65,6 @@ const REPULSION = 1400;
 const LINK_STIFFNESS = 0.0012;
 /** Per-tick velocity damping (0..1, higher = less friction). */
 const VELOCITY_DAMPING = 0.86;
-/** Onscreen diameter (px) a card must draw at before its art is worth requesting -- below this it
- *  would render as mud anyway. The old gate used the fixed ART_RADIUS and 8px, which zeroed out at
- *  zoom < 0.29 -- exactly the zoom used to see a whole deck. See art-loader.ts for the throttling
- *  that makes a low floor here safe. */
-const ART_MIN_SCREEN_PX = 4;
 
 interface Sim extends GraphNode { x: number; y: number; vx: number; vy: number; deg: number }
 type Point = { x: number; y: number };
@@ -279,7 +274,14 @@ export function GraphView({ graph }: { graph: CardGraph }) {
         for (let j = i + 1; j < live.length; j++) {
           const a = live[i], b = live[j];
           let dx = a.x - b.x, dy = a.y - b.y;
-          const d2 = dx * dx + dy * dy || 1;
+          // Floored at 64 (d=8), not just the exact-zero case: at d2=0.25 REPULSION/d2 is 5600,
+          // which flings a node straight past the d2>220000 cutoff below where nothing pushes back.
+          // Safe to floor this high -- separation() (see below) already keeps any settled pair at
+          // least ra+rb+pad apart, and the smallest two node kinds that can be adjacent (two deg-0
+          // non-card nodes, radius 3 each) settle no closer than 3+3+COLLISION_PAD(4) = 10, which is
+          // already outside this floor. It only engages on freshly-seeded/coincident nodes before
+          // separation has had a tick to act, not on anything Task 7 measured.
+          const d2 = Math.max(dx * dx + dy * dy, 64);
           if (d2 > 220000) continue;
           const d = Math.sqrt(d2), f = REPULSION / d2;
           a.vx += (dx / d) * f; a.vy += (dy / d) * f;
@@ -394,11 +396,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
             ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.stroke();
             continue;
           }
-          // Whole-deck zoom is exactly the view you use to read the graph, and the old 8px floor
-          // stopped every load below zoom ~0.29 -- so zooming out to see the deck guaranteed no art.
-          // With the loader now throttled and retrying, this gate is politeness, not the defence it
-          // was being asked to be.
-          if (n.artCrop && nodeRadius(n) * cam.z * 2 >= ART_MIN_SCREEN_PX) artLoader.request(n.artCrop);
+          if (n.artCrop) artLoader.request(n.artCrop);
           ctx.fillStyle = colorOf(n.kind);
           ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
           continue;

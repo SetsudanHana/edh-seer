@@ -7,6 +7,11 @@
  *
  *  `fetchImpl` and `cacheStorage` are injected so tests need neither a network nor a real
  *  CacheStorage. */
+// ponytail: no eviction and no version-bump cleanup -- entries accumulate in origin storage for
+// the life of the browser profile, and once quota eviction kicks in it can take the whole
+// `mtg-art-v1` bucket rather than just the oldest entries. Add an eviction policy (LRU count/size
+// cap, or a `caches.delete()` of old-versioned names on startup once this bumps to `mtg-art-v2`)
+// if unbounded growth or quota eviction turns out to matter in practice.
 const CACHE_NAME = "mtg-art-v1";
 
 export function cachedImageLoad(

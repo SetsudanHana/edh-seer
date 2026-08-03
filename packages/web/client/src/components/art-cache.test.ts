@@ -74,6 +74,32 @@ test("an absent Cache API degrades to a plain network load rather than throwing"
   }
 });
 
+test("a rejecting cache open on the read side still resolves via the network, fetched once", async () => {
+  // Quota exhaustion / private-mode: `caches.open()` throws instead of the store simply being
+  // absent. The plan's own Risks section calls this "the common case on someone's machine" -- the
+  // existing absent-Cache-API test only covers `caches` being deleted from the global, not this.
+  let fetched = 0;
+  const caches = { open: async () => { throw new Error("quota exceeded"); } } as unknown as CacheStorage;
+  const load = cachedImageLoad(async () => { fetched++; return new Response(blob()); }, caches);
+  await expect(load("u")).resolves.toBeDefined();
+  expect(fetched).toBe(1);
+});
+
+test("a rejecting cache write still resolves the load that produced it, fetched once", async () => {
+  // Same degradation, on the write side: the read succeeds (a miss) but storing the fetched
+  // response back into the cache fails. That must not fail -- or double -- a load that otherwise
+  // succeeded.
+  let fetched = 0;
+  const cache = {
+    match: async () => undefined,
+    put: async () => { throw new Error("quota exceeded"); },
+  };
+  const caches = { open: async () => cache } as unknown as CacheStorage;
+  const load = cachedImageLoad(async () => { fetched++; return new Response(blob()); }, caches);
+  await expect(load("u")).resolves.toBeDefined();
+  expect(fetched).toBe(1);
+});
+
 test("a decode failure rejects, and still revokes the object URL", async () => {
   // The one failure mode intrinsic to this file: art-loader.test.ts fakes `load` wholesale and
   // never touches a real `Image`, so it structurally cannot exercise `onerror` -> reject. Without

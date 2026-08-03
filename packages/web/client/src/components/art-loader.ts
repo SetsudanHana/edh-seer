@@ -58,7 +58,11 @@ export function createArtLoader(options: ArtLoaderOptions): ArtLoader {
     while (queue.length > 0 && active < concurrency) {
       const url = queue.shift()!;
       active++;
-      void attempt(url).finally(() => { active--; void pump(); });
+      // .catch: the retry backoff's `await delay(...)` inside `attempt` is unguarded, so a
+      // rejecting `delay` (never happens with the shipped `sleep`, but is injectable in tests)
+      // would otherwise escape this void-fired call as an unhandled rejection. `pump`'s own delay
+      // three lines below is already guarded the same way.
+      void attempt(url).finally(() => { active--; void pump(); }).catch(() => {});
       // Unconditional, not `if (queue.length > 0)`: two `request()` calls in the same tick each
       // start their own `pump()`, and each sees a queue of length 1 at dispatch time -- gating the
       // wait on remaining queue length means back-to-back requests never actually get spaced. The
