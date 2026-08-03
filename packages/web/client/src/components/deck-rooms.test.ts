@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ROOMS, ROOM_HUE, roomsForCard, subcategoryLabel } from "./deck-rooms.js";
+import { ROOMS, ROOM_HUE, roomsForCard, roomTallies, subcategoryLabel } from "./deck-rooms.js";
 
 describe("ROOMS", () => {
   it("declares exactly the seven rooms, strategy first", () => {
@@ -73,6 +73,56 @@ describe("subcategoryLabel", () => {
   });
 
   it("falls back to the raw key for anything unmapped", () => {
-    expect(subcategoryLabel("protection")).toBe("protection");
+    expect(subcategoryLabel("someUnknownCategory")).toBe("someUnknownCategory");
+  });
+});
+
+describe("roomTallies", () => {
+  const build = [
+    { category: "draw", count: 7, target: 10 },
+    { category: "cardSelection", count: 3, target: 4 },
+    { category: "boardWipe", count: 0, target: 3 },
+    { category: "burn", count: 5, target: 0 },
+    { category: "tutor", count: 2, target: 0 },
+  ];
+
+  it("counts distinct cards per room, not summed category counts", () => {
+    // one card in BOTH draw and cardSelection must count once
+    const cardRooms = new Map([
+      ["Ponder", ["cardAdvantage"] as const],
+      ["Rhystic Study", ["cardAdvantage"] as const],
+    ]);
+    const t = roomTallies(cardRooms, build);
+    expect(t.get("cardAdvantage")!.count).toBe(2);
+  });
+
+  it("sums the archetype-adjusted targets of a room's subcategories", () => {
+    const t = roomTallies(new Map(), build);
+    expect(t.get("cardAdvantage")!.target).toBe(14); // draw 10 + cardSelection 4
+    expect(t.get("boardWipes")!.target).toBe(3);
+  });
+
+  it("reports target 0 for a room whose subcategories all have target 0", () => {
+    const t = roomTallies(new Map(), build);
+    expect(t.get("wincons")!.target).toBe(0); // burn 0 + tutor 0
+    expect(t.get("wincons")!.under).toBe(false);
+  });
+
+  it("flags a room under its target", () => {
+    const t = roomTallies(new Map(), build);
+    expect(t.get("boardWipes")).toEqual({ count: 0, target: 3, under: true });
+  });
+
+  it("does not flag a room at or over its target", () => {
+    const cardRooms = new Map(
+      Array.from({ length: 14 }, (_, i) => [`c${i}`, ["cardAdvantage"] as const]),
+    );
+    expect(roomTallies(cardRooms, build).get("cardAdvantage")!.under).toBe(false);
+  });
+
+  it("returns an entry for every room even with no data at all", () => {
+    const t = roomTallies(new Map(), undefined);
+    expect(t.size).toBe(7);
+    expect(t.get("strategy")).toEqual({ count: 0, target: 0, under: false });
   });
 });

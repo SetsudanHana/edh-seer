@@ -85,3 +85,39 @@ export function roomsForCard(
   if (hit.size === 0) hit.add("strategy");
   return ROOMS.filter((r) => hit.has(r.id)).map((r) => r.id);
 }
+
+export interface RoomTally {
+  count: number;
+  target: number;
+  /** True only when the room has a target at all and holds fewer cards than it. A room with no
+   *  target (strategy, win conditions) is never under -- it has nothing to be under. */
+  under: boolean;
+}
+
+/** `cardRooms` maps a card's name to the rooms it landed in (from roomsForCard). `buildCategories`
+ *  is report.buildCategories as sent -- already archetype-adjusted -- or undefined on a report
+ *  that has none, in which case every room reports a bare count.
+ *
+ *  A room's count is the number of DISTINCT CARDS in it (what a player can count on screen), but
+ *  its target is the SUM of its subcategories' targets. These come from different levels on
+ *  purpose: a card in both draw and cardSelection counts once toward cardAdvantage's count, but
+ *  contributes both categories' targets to cardAdvantage's target. That asymmetry is intentional
+ *  per the task spec, not a bug -- implemented as specified even though it means the target isn't
+ *  strictly "how many distinct cards you need" in the same units as count. */
+export function roomTallies(
+  cardRooms: Map<string, readonly RoomId[]>,
+  buildCategories: { category: string; count: number; target: number }[] | undefined,
+): Map<RoomId, RoomTally> {
+  const targetOf = new Map((buildCategories ?? []).map((c) => [c.category, c.target]));
+  const counts = new Map<RoomId, number>();
+  for (const rooms of cardRooms.values()) {
+    for (const id of rooms) counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  const out = new Map<RoomId, RoomTally>();
+  for (const room of ROOMS) {
+    const target = room.categories.reduce((sum, c) => sum + (targetOf.get(c) ?? 0), 0);
+    const count = counts.get(room.id) ?? 0;
+    out.set(room.id, { count, target, under: target > 0 && count < target });
+  }
+  return out;
+}
