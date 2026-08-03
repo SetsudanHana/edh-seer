@@ -7,47 +7,59 @@ import type { WireGraph } from "../analyze/analyze.types.js";
 
 export const STORE = "MONGO_STORE";
 
+/** Joins a per-name map onto the graph's own key (oracleId) through `oracleIdByName` -- the one
+ *  lookup both `rolesByName` and `copiesByName` need, since the wire node is keyed by oracleId but
+ *  both maps arrive keyed by the report/decklist's card name. Shared rather than copy-pasted so a
+ *  join-logic fix can't happen to only one of them again; `label` keeps a miss diagnosable as "no
+ *  roles for X" vs "no copy count for X" -- different bugs -- since the two are otherwise
+ *  identical loops. A miss here is a data gap (stale report, name drift), not a caller bug worth
+ *  failing the whole request over, so it's logged rather than thrown -- contrast `addEventEdges`'s
+ *  own throw, where a mismatch means the caller built two card lists that disagree with each
+ *  other, which IS always a caller bug. */
+function joinByOracleId<T>(
+  byName: Map<string, T>,
+  oracleIdByName: Map<string, string>,
+  normalize: (name: string) => string,
+  label: string,
+): Map<string, T> {
+  const byOracleId = new Map<string, T>();
+  let unjoined = 0;
+  for (const [name, value] of byName) {
+    const oracleId = oracleIdByName.get(normalize(name));
+    if (oracleId) byOracleId.set(oracleId, value);
+    else unjoined++;
+  }
+  if (unjoined > 0) {
+    console.warn(`graph: ${unjoined} card(s) with report ${label} did not join to a graph node`);
+  }
+  return byOracleId;
+}
+
 /** The report keys cards by name; the graph keys nodes by oracleId (`card:<oracleId>`). Join
  *  through `docs` -- the same array `buildGraph` read -- rather than re-resolving names again,
  *  so the mapping cannot drift from what's actually in the graph. `normalize` is injected rather
  *  than imported so this stays a plain, deterministic function of its arguments, testable without
  *  touching `@mtg/data` -- it does `console.warn` on an unjoined count, so not literally pure.
  *
- *  Also strips node props down to `roles`/`artCrop` for the wire: the browser view otherwise
- *  reads id/kind/label only, while `legalities` alone (24 formats on every card node) is 81KB of
- *  the 269KB graph.
+ *  Also strips node props down to `roles`/`artCrop`/`copies` for the wire: the browser view
+ *  otherwise reads id/kind/label only, while `legalities` alone (24 formats on every card node) is
+ *  81KB of the 269KB graph.
  *
- *  A card the report gave roles to should always resolve to a node here (same corpus, same
- *  names) -- when it doesn't, that's a data gap (stale report, name drift), not a caller bug
- *  worth failing the whole request over, so it's logged rather than thrown. Contrast
- *  `addEventEdges`'s own throw: that mismatch would mean the caller built two card lists that
- *  disagree with each other, which is always a bug in the caller. */
+ *  `copiesByName` is required, not optional: an optional param here is exactly the shape of bug
+ *  this function exists to avoid -- a call site that quietly stops passing it would render every
+ *  multi-copy card as a single copy with no signal anywhere (see the fix-round-1 report). The one
+ *  production caller (the `graph` dep below) always has the value in hand from the same place
+ *  `rolesByName` comes from, so there's no real caller for whom this is a burden. */
 export function attachRolesAndArt(
   graph: CardGraph,
   docs: Array<{ _id: string; name: string }>,
   rolesByName: Map<string, string[]>,
   normalize: (name: string) => string,
-  // Optional, unlike rolesByName: data.module.test.ts predates copy-counting and calls this
-  // function directly without it, so a required param would break every one of those calls over
-  // a value none of them care about. The graph dep below always passes it.
-  copiesByName?: Map<string, number>,
+  copiesByName: Map<string, number>,
 ): WireGraph {
   const oracleIdByName = new Map(docs.map((d) => [normalize(d.name), d._id]));
-  const rolesByOracleId = new Map<string, string[]>();
-  const copiesByOracleId = new Map<string, number>();
-  let unjoined = 0;
-  for (const [name, roles] of rolesByName) {
-    const oracleId = oracleIdByName.get(normalize(name));
-    if (oracleId) rolesByOracleId.set(oracleId, roles);
-    else unjoined++;
-  }
-  if (unjoined > 0) {
-    console.warn(`graph: ${unjoined} card(s) with report roles did not join to a graph node`);
-  }
-  for (const [name, copies] of copiesByName ?? []) {
-    const oracleId = oracleIdByName.get(normalize(name));
-    if (oracleId) copiesByOracleId.set(oracleId, copies);
-  }
+  const rolesByOracleId = joinByOracleId(rolesByName, oracleIdByName, normalize, "roles");
+  const copiesByOracleId = joinByOracleId(copiesByName, oracleIdByName, normalize, "copy counts");
 
   const nodes = graph.nodes.map(({ id, kind, label, props }) => {
     const roles = kind === "card" ? rolesByOracleId.get(id.slice("card:".length)) : undefined;
