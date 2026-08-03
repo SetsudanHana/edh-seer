@@ -53,6 +53,7 @@ async function main(): Promise<void> {
   const store = await connect(loadConfig());
   const cards = store.db.collection<CardDoc>("cards");
   let docs: CardDoc[];
+  let subtypeRe: RegExp | undefined;
 
   if (deck) {
     const lookup = mongoLookup(store);
@@ -65,13 +66,33 @@ async function main(): Promise<void> {
     // Match the subtype as a whole word after the em dash, on either face. The argument is escaped
     // before it reaches the pattern: a metacharacter would otherwise either throw (unbalanced
     // paren) or, worse, silently widen the query -- `--subtype "wiz.rd"` matching more than asked.
-    const re = new RegExp(`—[^/]*\\b${subtype.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
-    docs = await cards.find({ typeLine: { $regex: re } }).limit(limit).toArray();
+    subtypeRe = new RegExp(`—[^/]*\\b${subtype.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+    docs = await cards.find({ typeLine: { $regex: subtypeRe } }).limit(limit).toArray();
   } else {
     docs = await cards
       .find({ colorIdentity: { $not: { $elemMatch: { $nin: [...identity!.toUpperCase()] } } } })
       .limit(limit)
       .toArray();
+  }
+
+  // MUST run before buildGraph: reassigning docs afterwards would leave the stage-1 nodes and the
+  // event layer describing two different card sets, which silently reports every non-overlapping
+  // card as connected.
+  if (events) {
+    // A corpus slice is ~60% tagged, so a plain --limit spends 40% of the budget on cards that can
+    // form no event edge at all. Over-fetch and keep the tagged ones, so --events actually fills the
+    // graph it was asked for. Untagged cards are still reported, never silently treated as isolated.
+    if (!deck && docs.length > 0) {
+      const wide = subtype
+        ? await cards.find({ typeLine: { $regex: subtypeRe! } }).limit(limit * 4).toArray()
+        : await cards.find({ colorIdentity: { $not: { $elemMatch: { $nin: [...identity!.toUpperCase()] } } } }).limit(limit * 4).toArray();
+      const tagged = new Set(
+        (await store.db.collection("cardTags").find({ oracleId: { $in: wide.map((d) => d._id) } }).project({ oracleId: 1 }).toArray())
+          .map((t) => t.oracleId as string),
+      );
+      const preferred = wide.filter((d) => tagged.has(d._id));
+      if (preferred.length > 0) docs = preferred.slice(0, limit);
+    }
   }
 
   let g = buildGraph(docs);
@@ -82,11 +103,11 @@ async function main(): Promise<void> {
     if (docs.length > 300) console.warn(`--events on ${docs.length} cards: ~${docs.length ** 2} pair evaluations, this will take a moment`);
     const tagsFor = async (d: CardDoc): Promise<CardTags | null> =>
       (await store.db.collection("cardTags").findOne({ oracleId: d._id })) as CardTags | null;
-    const deck: DeckCard[] = [];
-    for (const d of docs) deck.push({ card: docToCard(d), tags: await tagsFor(d) });
-    g = addEventEdges(g, deck, loadHierarchy());
-    const orphans = orphanCards(g, deck);
-    const untagged = deck.filter((d) => !d.tags).length;
+    const deckCards: DeckCard[] = [];
+    for (const d of docs) deckCards.push({ card: docToCard(d), tags: await tagsFor(d) });
+    g = addEventEdges(g, deckCards, loadHierarchy());
+    const orphans = orphanCards(g, deckCards);
+    const untagged = deckCards.filter((d) => !d.tags).length;
     console.log(`  event nodes: ${g.nodes.filter((n) => n.kind === "event").length}`);
     console.log(`  cards forming no event edge: ${orphans.length}${untagged ? ` (plus ${untagged} untagged, i.e. unknown rather than unconnected)` : ""}`);
   }

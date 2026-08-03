@@ -24,11 +24,18 @@ export function addEventEdges(g: CardGraph, deck: DeckCard[], h: Hierarchy): Car
   const edges = new Map(g.edges.map((e) => [edgeKey(e), e]));
 
   /** A card is only addressable here if it is already a node in the stage-1 graph, which keys on
-   *  oracle id -- an untagged card has no reasons to contribute anyway. */
+   *  oracle id. An untagged card has no reasons to contribute and is skipped quietly.
+   *
+   *  A TAGGED card missing from the graph is a caller bug, and a loud one on purpose: it means the
+   *  graph and the deck describe different card sets, which does not fail — it silently produces a
+   *  graph where the non-overlapping cards look perfectly connected because nothing ever asked about
+   *  them. That shipped once already, from a `buildGraph` call sitting one statement too early. */
+  const missing: string[] = [];
   const idOf = (d: DeckCard): string | null => {
     if (!d.tags) return null;
     const id = "card:" + d.tags.oracleId;
-    return nodes.has(id) ? id : null;
+    if (!nodes.has(id)) { missing.push(d.card.name); return null; }
+    return id;
   };
 
   const addEvent = (tag: string): string => {
@@ -57,6 +64,14 @@ export function addEventEdges(g: CardGraph, deck: DeckCard[], h: Hierarchy): Car
     }
   }
 
+  if (missing.length > 0) {
+    const shown = [...new Set(missing)].slice(0, 3).join(", ");
+    throw new Error(
+      `addEventEdges: ${new Set(missing).size} tagged deck cards are not nodes in the graph (${shown}...). ` +
+        "The graph and the deck must be built from the same card list -- otherwise the cards present " +
+        "in only one of them are reported as connected without ever being examined.",
+    );
+  }
   return { nodes: [...nodes.values()], edges: [...edges.values()] };
 }
 

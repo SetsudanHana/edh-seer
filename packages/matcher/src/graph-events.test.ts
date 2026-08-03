@@ -82,3 +82,25 @@ test("orphanCards reports unconnected cards but not untagged ones", () => {
   // Untagged is unknown, not unconnected — it must never be reported as an orphan.
   expect(orphans).not.toContain("card:nt");
 });
+
+/** A tagged card missing from the graph means the graph and the deck describe different card sets.
+ *  That does not fail on its own — it quietly yields a graph where the non-overlapping cards look
+ *  connected because nothing ever asked about them. It shipped once, from a `buildGraph` call one
+ *  statement too early, and the CLI cheerfully reported "0 orphans" over 80 disconnected cards. */
+test("a tagged deck card missing from the graph is a loud error, not a silent skip", () => {
+  const g = buildGraph([doc("m1", "M", "Creature — Wizard")]);
+  const deck: DeckCard[] = [
+    { card: { name: "M", typeLine: "Creature — Wizard", oracleText: "", keywords: [], colors: [], manaValue: 0 }, tags: makerTags("m1") },
+    { card: { name: "Ghost", typeLine: "Creature — Human", oracleText: "", keywords: [], colors: [], manaValue: 0 }, tags: payoffTags("absent") },
+  ];
+  expect(() => addEventEdges(g, deck, H)).toThrow(/not nodes in the graph/);
+});
+
+test("an untagged deck card is skipped quietly, not treated as a mismatch", () => {
+  const g = buildGraph([doc("m1", "M", "Creature — Wizard")]);
+  const deck: DeckCard[] = [
+    { card: { name: "M", typeLine: "Creature — Wizard", oracleText: "", keywords: [], colors: [], manaValue: 0 }, tags: makerTags("m1") },
+    { card: { name: "Unknown", typeLine: "Artifact", oracleText: "", keywords: [], colors: [], manaValue: 0 }, tags: null },
+  ];
+  expect(() => addEventEdges(g, deck, H)).not.toThrow();
+});
