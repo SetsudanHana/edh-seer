@@ -108,6 +108,11 @@ export const VERB_ALIASES: Readonly<Record<string, Verb>> = {
 export interface GameEvent {
   verb: Verb;
   subject: SubjectFilter;
+  /** Marks an event `impliedEvents` synthesized (e.g. "any creature can attack"), rather than one
+   *  the tagger authored from oracle text. Never set by the LLM/extraction pipeline -- matcher-only,
+   *  written solely by `packages/matcher/src/implied.ts`. Used to scope `combatSelfSupplied` to
+   *  implied combat only, so authored combat emits (goad, Mage Slayer, Saskia) still form edges. */
+  implied?: true;
 }
 
 /** The closed set of recognized effect.kind labels. Extraction output is normalized to this

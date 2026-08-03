@@ -140,3 +140,79 @@ test("normalizeScryfallCard leaves edhrecRank undefined when Scryfall omits it",
   });
   expect(n?.edhrecRank).toBeUndefined();
 });
+
+test("captures the widened gameplay fields", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "krenko",
+    id: "printing-krenko",
+    name: "Krenko, Mob Boss",
+    type_line: "Legendary Creature — Goblin Warrior",
+    oracle_text: "{T}: Create X 1/1 red Goblin creature tokens.",
+    keywords: [],
+    colors: ["R"],
+    cmc: 4,
+    mana_cost: "{2}{R}{R}",
+    layout: "normal",
+    legalities: { commander: "legal", modern: "legal" },
+    released_at: "2024-11-15",
+    game_changer: false,
+    reserved: false,
+    all_parts: [
+      { id: "tok-goblin", component: "token", name: "Goblin", type_line: "Token Creature — Goblin" },
+      { id: "printing-krenko", component: "combo_piece", name: "Krenko, Mob Boss", type_line: "Legendary Creature — Goblin Warrior" },
+    ],
+  })!;
+  expect(n.manaCost).toBe("{2}{R}{R}");
+  expect(n.layout).toBe("normal");
+  expect(n.legalities).toEqual({ commander: "legal", modern: "legal" });
+  expect(n.releasedAt).toBe("2024-11-15");
+  expect(n.gameChanger).toBe(false);
+  expect(n.reserved).toBe(false);
+  // The self-reference Scryfall includes is dropped; the token survives.
+  expect(n.allParts).toEqual([
+    { component: "token", name: "Goblin", typeLine: "Token Creature — Goblin" },
+  ]);
+});
+
+test("captures produced_mana only when present", () => {
+  const birds = normalizeScryfallCard({
+    oracle_id: "birds", name: "Birds of Paradise", type_line: "Creature — Bird",
+    keywords: [], colors: ["G"], cmc: 1, produced_mana: ["B", "G", "R", "U", "W"],
+  })!;
+  expect(birds.producedMana).toEqual(["B", "G", "R", "U", "W"]);
+
+  const bear = normalizeScryfallCard({
+    oracle_id: "bear", name: "Grizzly Bears", type_line: "Creature — Bear",
+    keywords: [], colors: ["G"], cmc: 2,
+  })!;
+  // Absent, NOT []. "Produces no mana" and "we don't know" must stay distinguishable.
+  expect(bear.producedMana).toBeUndefined();
+  expect("producedMana" in bear).toBe(false);
+});
+
+test("captures per-face data for a double-faced card", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "delver",
+    name: "Delver of Secrets // Insectile Aberration",
+    type_line: "Creature — Human Wizard // Creature — Human Insect",
+    layout: "transform",
+    keywords: [],
+    card_faces: [
+      { name: "Delver of Secrets", type_line: "Creature — Human Wizard", oracle_text: "front", mana_cost: "{U}", power: "1", toughness: "1", colors: ["U"] },
+      { name: "Insectile Aberration", type_line: "Creature — Human Insect", oracle_text: "back", mana_cost: "", power: "3", toughness: "2", colors: ["U"], color_indicator: ["U"] },
+    ],
+  })!;
+  expect(n.faces).toHaveLength(2);
+  expect(n.faces![0]).toMatchObject({ name: "Delver of Secrets", typeLine: "Creature — Human Wizard", power: "1" });
+  expect(n.faces![1]).toMatchObject({ name: "Insectile Aberration", typeLine: "Creature — Human Insect", power: "3", colorIndicator: ["U"] });
+});
+
+test("a bulk entry carrying none of the new fields still normalizes", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "plain", name: "Plain Card", type_line: "Artifact", keywords: [], colors: [], cmc: 1,
+  })!;
+  expect(n.oracleId).toBe("plain");
+  for (const k of ["manaCost", "producedMana", "layout", "legalities", "releasedAt", "gameChanger", "reserved", "allParts", "faces"]) {
+    expect(k in n).toBe(false);
+  }
+});
