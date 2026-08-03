@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { ROOMS, ROOM_HUE, roomsForCard, roomTallies, subcategoryLabel } from "./deck-rooms.js";
+import {
+  ROOMS, ROOM_HUE, roomsForCard, roomTallies, subcategoryLabel,
+  roomLayout, roomCenter, type RoomId,
+} from "./deck-rooms.js";
 
 describe("ROOMS", () => {
   it("declares exactly the seven rooms, strategy first", () => {
@@ -155,5 +158,59 @@ describe("roomTallies", () => {
     expect(t.get("cardAdvantage")!.target).toBe(9);
     expect(t.get("boardWipes")!.target).toBe(1);
     expect(t.get("wincons")!.target).toBe(0);
+  });
+});
+
+describe("roomLayout", () => {
+  it("places all seven rooms", () => {
+    const l = roomLayout(900, 600);
+    expect(l.size).toBe(7);
+    for (const r of ROOMS) expect(l.get(r.id)).toBeDefined();
+  });
+
+  it("centres the board on the origin", () => {
+    const l = roomLayout(900, 600);
+    const xs = [...l.values()].flatMap((r) => [r.x, r.x + r.w]);
+    const ys = [...l.values()].flatMap((r) => [r.y, r.y + r.h]);
+    expect(Math.min(...xs) + Math.max(...xs)).toBeCloseTo(0, 6);
+    expect(Math.min(...ys) + Math.max(...ys)).toBeCloseTo(0, 6);
+  });
+
+  it("spans strategy and lands across two columns", () => {
+    const l = roomLayout(900, 600);
+    expect(l.get("strategy")!.w).toBeCloseTo(l.get("wincons")!.w * 2, 6);
+    expect(l.get("lands")!.w).toBeCloseTo(l.get("ramp")!.w * 2, 6);
+  });
+
+  it("gives every row the same height and fills the width", () => {
+    const l = roomLayout(900, 600);
+    const heights = [...l.values()].map((r) => r.h);
+    expect(new Set(heights.map((h) => h.toFixed(6))).size).toBe(1);
+    const row1 = ["cardAdvantage", "interaction", "boardWipes"].map((id) => l.get(id as RoomId)!);
+    const total = row1.reduce((sum, r) => sum + r.w, 0);
+    expect(total).toBeCloseTo(l.get("strategy")!.w + l.get("wincons")!.w, 6);
+  });
+
+  it("never overlaps two rooms", () => {
+    const rects = [...roomLayout(900, 600).values()];
+    for (let i = 0; i < rects.length; i++)
+      for (let j = i + 1; j < rects.length; j++) {
+        const a = rects[i], b = rects[j];
+        const overlap = a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+        expect(overlap).toBe(false);
+      }
+  });
+
+  it("scales with the viewport it is given", () => {
+    const small = roomLayout(400, 300).get("ramp")!;
+    const big = roomLayout(800, 600).get("ramp")!;
+    expect(big.w).toBeGreaterThan(small.w);
+    expect(big.h).toBeGreaterThan(small.h);
+  });
+});
+
+describe("roomCenter", () => {
+  it("returns the rect's midpoint", () => {
+    expect(roomCenter({ x: -10, y: -20, w: 20, h: 40 })).toEqual({ x: 0, y: 0 });
   });
 });

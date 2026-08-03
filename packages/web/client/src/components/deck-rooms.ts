@@ -25,15 +25,24 @@ export const ROOMS: Room[] = [
 
 /** Validated dark-surface categorical hues (see the plan's Global Constraints for the check
  *  that produced them). Used on a room's outline and label, never as the identifying fill:
- *  a translucent fill over this surface collapses toward gray and stops separating. */
+ *  a translucent fill over this surface collapses toward gray and stops separating.
+ *
+ *  Assignment is NOT arbitrary: it is the one permutation of these 7 hues, found by
+ *  brute-force search over all 5040 room<->hue assignments, whose worst CVD deltaE among the
+ *  10 grid-adjacency (touching-on-screen) room pairs still clears the "pass" target (>= 8.0,
+ *  not just the 6.0 floor). The naive assignment (hues in ROOMS declaration order) put
+ *  strategy next to cardAdvantage at deltaE 1.9 and wincons next to boardWipes at 2.7 --
+ *  both far below the floor -- because grid adjacency and declaration order are unrelated.
+ *  Do not reassign without rerunning that search; see task-3-report.md for the touching-pair
+ *  list and validator output. */
 export const ROOM_HUE: Record<RoomId, string> = {
   strategy: "#9085e9",
   wincons: "#d95926",
-  cardAdvantage: "#3987e5",
-  ramp: "#199e70",
-  lands: "#c98500",
-  interaction: "#d55181",
-  boardWipes: "#008300",
+  cardAdvantage: "#d55181",
+  ramp: "#008300",
+  lands: "#3987e5",
+  interaction: "#c98500",
+  boardWipes: "#199e70",
 };
 
 const ROOM_OF_CATEGORY = new Map<string, RoomId>(
@@ -127,4 +136,47 @@ export function roomTallies(
     out.set(room.id, { count, target, under: target > 0 && count < target });
   }
   return out;
+}
+
+export interface Rect { x: number; y: number; w: number; h: number }
+
+/** Fixed 3-column grid, one entry per row. Strategy and Lands span two columns -- strategy
+ *  because it is the fallback and holds the most cards, lands because 36 cards need the floor.
+ *  Row order puts likely multi-room pairs adjacent (card advantage beside interaction, ramp
+ *  under card advantage) so a card in two rooms straddles a shared border. Row order is
+ *  load-bearing, not decorative -- do not reorder for aesthetics; see the task brief. */
+const GRID: { id: RoomId; span: number }[][] = [
+  [{ id: "strategy", span: 2 }, { id: "wincons", span: 1 }],
+  [{ id: "cardAdvantage", span: 1 }, { id: "interaction", span: 1 }, { id: "boardWipes", span: 1 }],
+  [{ id: "ramp", span: 1 }, { id: "lands", span: 2 }],
+];
+
+const COLUMNS = 3;
+/** Fraction of the viewport the board occupies. Under 1 so the outermost room outlines are not
+ *  flush with the canvas edge, where a label would be clipped. */
+const BOARD_FILL = 0.92;
+
+export function roomLayout(width: number, height: number): Map<RoomId, Rect> {
+  const boardW = width * BOARD_FILL;
+  const boardH = height * BOARD_FILL;
+  const colW = boardW / COLUMNS;
+  const rowH = boardH / GRID.length;
+  const out = new Map<RoomId, Rect>();
+  GRID.forEach((row, rowIndex) => {
+    let col = 0;
+    for (const cell of row) {
+      out.set(cell.id, {
+        x: -boardW / 2 + col * colW,
+        y: -boardH / 2 + rowIndex * rowH,
+        w: colW * cell.span,
+        h: rowH,
+      });
+      col += cell.span;
+    }
+  });
+  return out;
+}
+
+export function roomCenter(rect: Rect): { x: number; y: number } {
+  return { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 };
 }
