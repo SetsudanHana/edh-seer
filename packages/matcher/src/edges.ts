@@ -59,6 +59,20 @@ export function producerEvents(tags: CardTags): GameEvent[] {
   return out;
 }
 
+/** Does a normalized producer event satisfy a normalized consumer trigger event? Verb equality
+ *  plus the subject test the verb calls for -- graveyard fills and counter adds have their own
+ *  matchers, everything else is plain subsumption. Shared by `directedReasons` and the event
+ *  census so the two cannot drift: a census that counted supply differently from the matcher
+ *  would report holes the engine does not actually have. */
+export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
+  if (producer.verb !== consumer.verb) return false;
+  if (producer.verb === "enters" && producer.subject.zone === "graveyard") {
+    return graveyardFillMatches(producer.subject, consumer.subject, h);
+  }
+  if (producer.verb === "counter-added") return counterAddMatches(producer.subject, consumer.subject, h);
+  return subjectMatches(producer.subject, consumer.subject, h);
+}
+
 /** Repeatability of a triggered CONSUMER: a bare self-ETB (trigger names neither a type nor a
  *  subtype — "when this enters") is only satisfied by its own single entry, so it is one-time; any
  *  typed/subtyped trigger fires each time such a permanent recurs, so it is a repeatable engine. */
@@ -106,14 +120,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       if (!a.trigger) continue;
       for (const rawVerb of a.trigger.verbs) {
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
-        if (t.verb !== e.verb) continue;
-        const isGraveyardEntry = e.verb === "enters" && e.subject.zone === "graveyard";
-        const matched = isGraveyardEntry
-          ? graveyardFillMatches(e.subject, t.subject, h)
-          : e.verb === "counter-added"
-            ? counterAddMatches(e.subject, t.subject, h)
-            : subjectMatches(e.subject, t.subject, h);
-        if (!matched) continue;
+        if (!eventMatches(e, t, h)) continue;
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         reasons.push({
           tag: key,
