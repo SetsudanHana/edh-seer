@@ -67,9 +67,12 @@ describe("subcategoryLabel", () => {
   it("uses plain language for the jargon categories", () => {
     expect(subcategoryLabel("cardSelection")).toBe("digging");
     expect(subcategoryLabel("stackInteraction")).toBe("counterspells");
+    expect(subcategoryLabel("stax")).toBe("taxes & locks");
+    expect(subcategoryLabel("tutor")).toBe("deck search");
+    expect(subcategoryLabel("ramp")).toBe("extra mana");
   });
 
   it("falls back to the raw key for anything unmapped", () => {
-    expect(subcategoryLabel("ramp")).toBe("ramp");
+    expect(subcategoryLabel("protection")).toBe("protection");
   });
 });

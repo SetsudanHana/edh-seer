@@ -42,13 +42,23 @@ const ROOM_OF_CATEGORY = new Map<string, RoomId>(
 
 /** Plain-language names for the categories whose engine key is jargon. "Card selection" means
  *  scry/surveil/look-at-the-top-N/impulse-draw -- digging without drawing -- and "stack
- *  interaction" is one letter from "stax" while meaning something unrelated. Shown on hover. */
+ *  interaction" is one letter from "stax" while meaning something unrelated. Shown on hover.
+ *  "Stax", "tutor", and "ramp" are Magic slang, not English words, so they get entries too:
+ *  stax (STAX_RE in build.ts) matches "can't untap"/"spells cost more"/"players can't" -- tax
+ *  and lock effects; tutor (TUTOR_RE) matches "search your library for" -- finding a specific
+ *  card from the deck; ramp covers mana-generation/fast-mana/ritual effect kinds plus land-fetch
+ *  and treasure/gold tokens -- getting more mana than a land drop gives. "Protection", "draw",
+ *  and "lands" are left untranslated: they are already plain English words that describe
+ *  themselves correctly to a non-Magic player. */
 const PLAIN: Record<string, string> = {
   cardSelection: "digging",
   stackInteraction: "counterspells",
   targetedRemoval: "removal",
   boardWipe: "board wipe",
   burn: "burn & drain",
+  stax: "taxes & locks",
+  tutor: "deck search",
+  ramp: "extra mana",
 };
 
 export function subcategoryLabel(category: string): string {
