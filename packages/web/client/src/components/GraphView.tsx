@@ -3,7 +3,7 @@ import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
-import { ROOM_HUE, ROOMS, roomCenter, roomLayout, roomsForCard, roomTallies, type RoomId } from "./deck-rooms.js";
+import { ROOM_HUE, ROOMS, roomCenter, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type RoomId } from "./deck-rooms.js";
 
 /** Kinds ordered for the filter row: the ones worth looking at first. */
 const KIND_ORDER: NodeKind[] = [
@@ -122,8 +122,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState<Set<NodeKind>>(() => new Set(DIM_BY_DEFAULT));
-  const [hover, setHover] = useState<{ label: string; kind: string; deg: number; x: number; y: number } | null>(null);
+  const [hover, setHover] = useState<
+    { label: string; kind: string; deg: number; detail: string; x: number; y: number } | null
+  >(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [query, setQuery] = useState("");
   // Capability check rather than a user-agent sniff: iOS Safari on iPhone has no element
   // fullscreen, and a button that silently does nothing is worse than no button.
   const canFullscreen = typeof Element !== "undefined" && "requestFullscreen" in Element.prototype;
@@ -164,6 +167,26 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     for (const n of graph.nodes) c.set(n.kind, (c.get(n.kind) ?? 0) + 1);
     return c;
   }, [graph]);
+
+  /** Card node ids matching the current search, or null when the box is empty. Null and "the
+   *  empty set" mean different things to the draw pass: null dims nothing, an empty set (a query
+   *  that hits zero cards) dims everything. */
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    const hit = new Set<string>();
+    for (const n of graph.nodes) {
+      if (n.kind === "card" && n.label.toLowerCase().includes(q)) hit.add(n.id);
+    }
+    return hit;
+  }, [graph, query]);
+
+  // The layout effect's draw() reads this through a ref rather than closing over `matches`
+  // directly, and `matches` is deliberately absent from that effect's dependency array below --
+  // the effect owns the force simulation, and adding `matches` there would reheat and re-seed the
+  // whole layout on every keystroke, moving the board under the user while they type.
+  const matchesRef = useRef<Set<string> | null>(null);
+  matchesRef.current = matches;
 
   /** Which rooms each card node belongs to, keyed by node id. Recomputed only when the graph or
    *  the report changes -- it is pure over both. */
@@ -427,8 +450,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       }
       ctx.stroke();
 
+      // A search dims what does not match rather than hiding it, so the deck keeps its shape and
+      // you can see WHERE the match sits. `matchIds` null means no active search: dim nothing.
+      // Read through the ref (see matchesRef above), never `matches` directly -- this closure is
+      // rebuilt only when the effect re-runs, and the effect must not re-run on every keystroke.
+      const matchIds = matchesRef.current;
       for (const n of nodes) {
         if (!visible(n)) continue;
+        ctx.globalAlpha = matchIds && n.kind === "card" && !matchIds.has(n.id) ? 0.15 : 1;
 
         if (n.kind === "card") {
           const img = n.artCrop ? artLoader.get(n.artCrop) : undefined;
@@ -468,6 +497,12 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
           }
 
+          if (matchIds?.has(n.id)) {
+            ctx.lineWidth = 2.5 / cam.z;
+            ctx.strokeStyle = paint.accent;
+            ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS + 3, 0, TAU); ctx.stroke();
+          }
+
           if (copies > 1) {
             ctx.font = `500 ${10 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
             ctx.textAlign = "center";
@@ -495,6 +530,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         ctx.stroke(pathFor(glyphFor(n)));
         ctx.restore();
       }
+      // Restored on every path out of the loop above (each branch either falls through to here or
+      // `continue`s back to the top, where it is set again next iteration) -- canvas state is
+      // global and persistent, so a search left dimming on would leak into the hub labels below.
+      ctx.globalAlpha = 1;
 
       // Only hubs get labels, highest degree first, and a label is dropped when it would collide
       // with one already drawn. Without this the centre of a dense deck stacks four event names on
@@ -557,7 +596,12 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       }
       const n = pick(e);
       const r = canvas.getBoundingClientRect();
-      setHover(n ? { label: n.label, kind: n.kind, deg: n.deg, x: e.clientX - r.left, y: e.clientY - r.top } : null);
+      // The canvas shows only room labels now (Task 5+), so the detailed build-category
+      // vocabulary lives here instead -- a card's roles, translated to plain language.
+      const detail = n && n.kind === "card" ? (n.roles ?? []).map(subcategoryLabel).join(" · ") : "";
+      setHover(n
+        ? { label: n.label, kind: n.kind, deg: n.deg, detail, x: e.clientX - r.left, y: e.clientY - r.top }
+        : null);
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -631,6 +675,23 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           ) : null}
         </div>
 
+        <div className="flex items-center gap-3">
+          <input
+            type="search"
+            role="searchbox"
+            aria-label="Find a card"
+            placeholder="Find a card…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="rounded-(--radius) border border-(--separator) bg-transparent px-2.5 py-1 text-sm"
+          />
+          {matches ? (
+            <span data-testid="graph-search-count" className="eyebrow text-(--muted)">
+              {matches.size > 0 ? `${matches.size} match${matches.size === 1 ? "" : "es"}` : "no matches"}
+            </span>
+          ) : null}
+        </div>
+
         <div
           className={`relative rounded-(--radius) border border-(--border) overflow-hidden ${
             isFullscreen ? "flex-1 min-h-0" : "h-[380px] sm:h-[520px]"
@@ -650,6 +711,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
               <span className="text-(--muted) font-mono tabular-nums">
                 {hover.kind} · {hover.deg}
               </span>
+              {hover.detail ? <span className="text-(--muted)"> · {hover.detail}</span> : null}
             </div>
           ) : null}
         </div>

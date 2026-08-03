@@ -317,3 +317,52 @@ test("shows only card nodes in the probe by default", () => {
   };
   expect(canvas.__graphProbe!().every((n) => n.kind === "card")).toBe(true);
 });
+
+// Task 7: find a card by name. The fixture (SAMPLE, not the brief's imagined SAMPLE_REPORT) has
+// two card nodes -- "Krenko, Mob Boss" and "Impact Tremors" -- with no shared substring, so a
+// 3-letter prefix of one is never an accidental hit on the other.
+test("renders a search box", () => {
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  expect(screen.getByRole("searchbox", { name: /find a card/i })).toBeInTheDocument();
+});
+
+test("reports how many cards match what was typed", async () => {
+  const user = userEvent.setup();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const box = screen.getByRole("searchbox", { name: /find a card/i });
+  await user.type(box, SAMPLE.graph.nodes.find((n) => n.kind === "card")!.label.slice(0, 3));
+  expect(screen.getByTestId("graph-search-count")).toHaveTextContent(/[1-9]/);
+});
+
+test("reports no matches for a name that is not in the deck", async () => {
+  const user = userEvent.setup();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  await user.type(screen.getByRole("searchbox", { name: /find a card/i }), "zzzzz");
+  expect(screen.getByTestId("graph-search-count")).toHaveTextContent(/no match/i);
+});
+
+test("matches case-insensitively on a substring", async () => {
+  const user = userEvent.setup();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const name = SAMPLE.graph.nodes.find((n) => n.kind === "card")!.label;
+  await user.type(screen.getByRole("searchbox", { name: /find a card/i }), name.toUpperCase());
+  expect(screen.getByTestId("graph-search-count")).toHaveTextContent("1");
+});
+
+// The context stub (makeContextSpy) records method CALLS, not property assignments, so the ring's
+// colour (ctx.strokeStyle) and the dimming (ctx.globalAlpha) are invisible to it -- see the doc
+// comment on makeContextSpy. What IS reachable is the ring's own arc: it is the only arc drawn at
+// radius ART_RADIUS + 3 (17) anywhere in draw(), so its presence proves the ring was drawn without
+// needing to see the stroke colour. This waits on a real animation frame after typing (the layout
+// effect's rAF loop, not a synchronous re-render) rather than asserting on the DOM synchronously,
+// because the ring is redrawn on the next frame -- see matchesRef's doc comment in GraphView.tsx.
+test("draws a ring around a card that matches the search", async () => {
+  const calls = makeContextSpy();
+  const user = userEvent.setup();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const name = SAMPLE.graph.nodes.find((n) => n.kind === "card")!.label;
+  await user.type(screen.getByRole("searchbox", { name: /find a card/i }), name);
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  const ringArcs = calls.filter((c) => c.startsWith("arc:") && c.split(",")[2] === "17");
+  expect(ringArcs.length).toBeGreaterThan(0);
+});
