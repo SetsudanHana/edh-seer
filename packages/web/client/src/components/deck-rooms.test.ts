@@ -75,19 +75,28 @@ describe("subcategoryLabel", () => {
   it("falls back to the raw key for anything unmapped", () => {
     expect(subcategoryLabel("someUnknownCategory")).toBe("someUnknownCategory");
   });
+
+  it("leaves protection untranslated -- it's already plain English (Task 1 decision, not a gap)", () => {
+    expect(subcategoryLabel("protection")).toBe("protection");
+  });
 });
 
 describe("roomTallies", () => {
+  // Targets deliberately differ from BASE_TARGETS (draw 10, cardSelection 4, boardWipe 3 in
+  // build.ts) so a regression that hardcodes base targets instead of summing what was passed
+  // in fails loudly, rather than passing by coincidence.
   const build = [
-    { category: "draw", count: 7, target: 10 },
-    { category: "cardSelection", count: 3, target: 4 },
-    { category: "boardWipe", count: 0, target: 3 },
+    { category: "draw", count: 7, target: 7 },
+    { category: "cardSelection", count: 3, target: 2 },
+    { category: "boardWipe", count: 0, target: 1 },
     { category: "burn", count: 5, target: 0 },
     { category: "tutor", count: 2, target: 0 },
   ];
 
-  it("counts distinct cards per room, not summed category counts", () => {
-    // one card in BOTH draw and cardSelection must count once
+  it("counts distinct cards per room from cardRooms, not by summing buildCategories[].count", () => {
+    // guards summing draw.count(7) + cardSelection.count(3) = 10 instead of counting cardRooms'
+    // 2 entries. Note: cardRooms arrives already room-resolved and deduped by roomsForCard, so
+    // this cannot (and does not attempt to) test a single card double-counted within one room.
     const cardRooms = new Map([
       ["Ponder", ["cardAdvantage"] as const],
       ["Rhystic Study", ["cardAdvantage"] as const],
@@ -98,8 +107,10 @@ describe("roomTallies", () => {
 
   it("sums the archetype-adjusted targets of a room's subcategories", () => {
     const t = roomTallies(new Map(), build);
-    expect(t.get("cardAdvantage")!.target).toBe(14); // draw 10 + cardSelection 4
-    expect(t.get("boardWipes")!.target).toBe(3);
+    expect(t.get("cardAdvantage")!.target).toBe(9); // draw 7 + cardSelection 2, the SUM
+    expect(t.get("cardAdvantage")!.target).not.toBe(7); // not just one operand
+    expect(t.get("cardAdvantage")!.target).not.toBe(2); // not just the other
+    expect(t.get("boardWipes")!.target).toBe(1);
   });
 
   it("reports target 0 for a room whose subcategories all have target 0", () => {
@@ -110,12 +121,12 @@ describe("roomTallies", () => {
 
   it("flags a room under its target", () => {
     const t = roomTallies(new Map(), build);
-    expect(t.get("boardWipes")).toEqual({ count: 0, target: 3, under: true });
+    expect(t.get("boardWipes")).toEqual({ count: 0, target: 1, under: true });
   });
 
   it("does not flag a room at or over its target", () => {
     const cardRooms = new Map(
-      Array.from({ length: 14 }, (_, i) => [`c${i}`, ["cardAdvantage"] as const]),
+      Array.from({ length: 9 }, (_, i) => [`c${i}`, ["cardAdvantage"] as const]),
     );
     expect(roomTallies(cardRooms, build).get("cardAdvantage")!.under).toBe(false);
   });
@@ -124,5 +135,14 @@ describe("roomTallies", () => {
     const t = roomTallies(new Map(), undefined);
     expect(t.size).toBe(7);
     expect(t.get("strategy")).toEqual({ count: 0, target: 0, under: false });
+  });
+
+  it("ignores a buildCategories entry no room claims, without throwing or perturbing tallies", () => {
+    const withOrphan = [...build, { category: "notARoomCategory", count: 99, target: 99 }];
+    expect(() => roomTallies(new Map(), withOrphan)).not.toThrow();
+    const t = roomTallies(new Map(), withOrphan);
+    expect(t.get("cardAdvantage")!.target).toBe(9);
+    expect(t.get("boardWipes")!.target).toBe(1);
+    expect(t.get("wincons")!.target).toBe(0);
   });
 });
