@@ -1,3 +1,4 @@
+import { gunzipSync } from "node:zlib";
 import type { Card } from "@mtg/engine";
 
 export interface RelatedPart {
@@ -211,14 +212,22 @@ export async function fetchOracleCards(
   });
   if (!meta.ok) throw new Error(`Scryfall bulk-data request failed: ${meta.status}`);
   const metaJson = (await meta.json()) as {
-    data: Array<{ type: string; download_uri: string }>;
+    data: Array<{ type: string; jsonl_download_uri?: string }>;
   };
   if (!Array.isArray(metaJson.data)) {
     throw new Error("Scryfall bulk-data request failed: unexpected response");
   }
   const entry = metaJson.data.find((d) => d.type === "oracle_cards");
-  if (!entry) throw new Error("Scryfall oracle_cards bulk entry not found");
-  const res = await fetchImpl(entry.download_uri, { headers: SCRYFALL_HEADERS });
+  if (!entry?.jsonl_download_uri) {
+    throw new Error("Scryfall oracle_cards bulk entry not found");
+  }
+  const res = await fetchImpl(entry.jsonl_download_uri, { headers: SCRYFALL_HEADERS });
   if (!res.ok) throw new Error(`Scryfall bulk download failed: ${res.status}`);
-  return (await res.json()) as ScryfallCard[];
+  // ponytail: whole file in memory (~24MB gzipped). Stream through createGunzip + readline if it OOMs.
+  const buf = Buffer.from(await res.arrayBuffer());
+  const text = gunzipSync(buf).toString("utf8");
+  return text
+    .split("\n")
+    .filter((line) => line.trim().length > 0)
+    .map((line) => JSON.parse(line) as ScryfallCard);
 }
