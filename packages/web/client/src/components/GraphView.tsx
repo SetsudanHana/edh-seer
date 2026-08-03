@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, GraphNode, NodeKind } from "../types.js";
 import { CATEGORY_LABELS, CATEGORY_ORDER } from "./CardList.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
+import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
 
 /** Node kinds hidden on first paint. Each connects nearly every card in a deck -- `layout:normal`
@@ -113,16 +114,10 @@ export function GraphView({ graph }: { graph: CardGraph }) {
   pathCacheRef.current ??= new Map();
   // Concurrency-capped, spaced, retrying art loader (Step 3 / see art-loader.ts), created once
   // per mount so state (and in-flight requests) survive a graph/filter change re-running the effect.
+  // `load` reads through the Cache API first (see art-cache.ts) so art already seen renders with
+  // the network gone -- offline survival, not a speed change (HTTP caching already covered reload).
   const artLoaderRef = useRef<ArtLoader>(undefined);
-  artLoaderRef.current ??= createArtLoader({
-    load: (url) =>
-      new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error(`art load failed: ${url}`));
-        img.src = url;
-      }),
-  });
+  artLoaderRef.current ??= createArtLoader({ load: cachedImageLoad() });
 
   const counts = useMemo(() => {
     const c = new Map<NodeKind, number>();
