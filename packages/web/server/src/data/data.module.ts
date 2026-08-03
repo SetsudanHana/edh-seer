@@ -10,7 +10,8 @@ export const STORE = "MONGO_STORE";
 /** The report keys cards by name; the graph keys nodes by oracleId (`card:<oracleId>`). Join
  *  through `docs` -- the same array `buildGraph` read -- rather than re-resolving names again,
  *  so the mapping cannot drift from what's actually in the graph. `normalize` is injected rather
- *  than imported so this stays a pure function, testable without touching `@mtg/data`.
+ *  than imported so this stays a plain, deterministic function of its arguments, testable without
+ *  touching `@mtg/data` -- it does `console.warn` on an unjoined count, so not literally pure.
  *
  *  Also strips node props down to `roles`/`artCrop` for the wire: the browser view otherwise
  *  reads id/kind/label only, while `legalities` alone (24 formats on every card node) is 81KB of
@@ -46,7 +47,7 @@ export function attachRolesAndArt(
       id,
       kind,
       label,
-      ...(roles ? { roles } : {}),
+      ...(roles && roles.length > 0 ? { roles } : {}),
       ...(artCrop !== undefined ? { artCrop } : {}),
     };
   });

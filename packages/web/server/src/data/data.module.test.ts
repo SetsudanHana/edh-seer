@@ -1,6 +1,10 @@
-import { expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import type { CardGraph } from "@mtg/matcher";
 import { attachRolesAndArt } from "./data.module.js";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const normalize = (s: string) => s.toLowerCase();
 
@@ -51,9 +55,24 @@ test("non-card node kinds never get roles even if a name collides", () => {
   expect(out.nodes[0].roles).toBeUndefined();
 });
 
-test("a report role that cannot be joined to any doc is logged, not thrown", () => {
+test("a report role that cannot be joined to any doc is logged with its count, not thrown", () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   const graph: CardGraph = { nodes: [{ id: "card:a", kind: "card", label: "A" }], edges: [] };
   const docs = [{ _id: "a", name: "A" }];
   const rolesByName = new Map([["nonexistent card", ["ramp"]]]);
+
   expect(() => attachRolesAndArt(graph, docs, rolesByName, normalize)).not.toThrow();
+
+  expect(warn).toHaveBeenCalledTimes(1);
+  expect(warn).toHaveBeenCalledWith(expect.stringContaining("1 card"));
+});
+
+test("an empty-array roles entry never becomes an empty `roles` key on the wire", () => {
+  const graph: CardGraph = { nodes: [{ id: "card:a", kind: "card", label: "A" }], edges: [] };
+  const docs = [{ _id: "a", name: "A" }];
+  const rolesByName = new Map([["a", []]]);
+
+  const out = attachRolesAndArt(graph, docs, rolesByName, normalize);
+
+  expect(out.nodes[0]).not.toHaveProperty("roles");
 });
