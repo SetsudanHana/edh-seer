@@ -64,8 +64,9 @@ export function GraphView({ graph }: { graph: CardGraph }) {
   // Path2D has no jsdom polyfill, see graph-glyphs.ts's doc comment.
   const pathCacheRef = useRef<Map<string, Path2D>>(undefined);
   pathCacheRef.current ??= new Map();
-  // Art-crop image cache + a small concurrency-capped load queue (Step 3).
-  const imgCacheRef = useRef<Map<string, HTMLImageElement | "error">>(undefined);
+  // Art-crop image cache + a small concurrency-capped load queue (Step 3). "loading" is a
+  // dispatched-but-not-yet-resolved sentinel -- see the load-queue comment in the effect below.
+  const imgCacheRef = useRef<Map<string, HTMLImageElement | "loading" | "error">>(undefined);
   imgCacheRef.current ??= new Map();
   const loadQueueRef = useRef<{ active: number; queue: string[] }>(undefined);
   loadQueueRef.current ??= { active: 0, queue: [] };
@@ -217,15 +218,19 @@ export function GraphView({ graph }: { graph: CardGraph }) {
 
     const radius = (n: Sim) => (n.kind === "card" ? 3.5 : Math.min(3 + Math.sqrt(n.deg) * 1.5, 15));
 
-    // Art loading (Step 3): lazy, capped concurrency, offline-first. `imgCache` only ever holds a
-    // resolved `HTMLImageElement` or the literal "error" -- there is no third state that blocks
-    // drawing, so a failed or unstarted load always falls through to today's dot.
+    // Art loading (Step 3): lazy, capped concurrency, offline-first. `imgCache` holds a resolved
+    // `HTMLImageElement`, or one of two sentinels: "loading" (dispatched, awaiting onload/onerror --
+    // set the instant `pump` starts the request, specifically so a URL that's mid-flight reads as
+    // already-known and `requestImage` skips it) or "error" (failed for good). Only an actual
+    // `HTMLImageElement` is ever drawn; both sentinels fall through to today's dot, same as an
+    // unstarted load.
     const imgCache = imgCacheRef.current!;
     const loadQueue = loadQueueRef.current!;
     const pump = () => {
       while (loadQueue.active < 8 && loadQueue.queue.length > 0) {
         const url = loadQueue.queue.shift()!;
         if (imgCache.has(url)) continue;
+        imgCache.set(url, "loading");
         loadQueue.active++;
         const img = new Image();
         img.onload = () => { imgCache.set(url, img); loadQueue.active--; pump(); };
@@ -287,7 +292,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
 
         if (n.kind === "card") {
           const img = n.artCrop ? imgCache.get(n.artCrop) : undefined;
-          if (img && img !== "error") {
+          if (img instanceof HTMLImageElement) {
             ctx.save();
             ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.clip();
             ctx.drawImage(img, n.x - ART_RADIUS, n.y - ART_RADIUS, ART_RADIUS * 2, ART_RADIUS * 2);
