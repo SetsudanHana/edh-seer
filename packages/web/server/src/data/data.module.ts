@@ -27,9 +27,14 @@ export function attachRolesAndArt(
   docs: Array<{ _id: string; name: string }>,
   rolesByName: Map<string, string[]>,
   normalize: (name: string) => string,
+  // Optional, unlike rolesByName: data.module.test.ts predates copy-counting and calls this
+  // function directly without it, so a required param would break every one of those calls over
+  // a value none of them care about. The graph dep below always passes it.
+  copiesByName?: Map<string, number>,
 ): WireGraph {
   const oracleIdByName = new Map(docs.map((d) => [normalize(d.name), d._id]));
   const rolesByOracleId = new Map<string, string[]>();
+  const copiesByOracleId = new Map<string, number>();
   let unjoined = 0;
   for (const [name, roles] of rolesByName) {
     const oracleId = oracleIdByName.get(normalize(name));
@@ -39,16 +44,22 @@ export function attachRolesAndArt(
   if (unjoined > 0) {
     console.warn(`graph: ${unjoined} card(s) with report roles did not join to a graph node`);
   }
+  for (const [name, copies] of copiesByName ?? []) {
+    const oracleId = oracleIdByName.get(normalize(name));
+    if (oracleId) copiesByOracleId.set(oracleId, copies);
+  }
 
   const nodes = graph.nodes.map(({ id, kind, label, props }) => {
     const roles = kind === "card" ? rolesByOracleId.get(id.slice("card:".length)) : undefined;
     const artCrop = props?.artCrop as string | undefined;
+    const copies = kind === "card" ? copiesByOracleId.get(id.slice("card:".length)) : undefined;
     return {
       id,
       kind,
       label,
       ...(roles && roles.length > 0 ? { roles } : {}),
       ...(artCrop !== undefined ? { artCrop } : {}),
+      ...(copies !== undefined && copies > 1 ? { copies } : {}),
     };
   });
   return { nodes, edges: graph.edges };
@@ -93,7 +104,11 @@ export function attachRolesAndArt(
             const commanderColorIdentity = [...new Set(commanderCards.flatMap((c) => c.colorIdentity ?? []))];
             return { cards, combos, missing, commanderResolved, commanderColorIdentity };
           },
-          graph: async (cardNames: string[], rolesByName: Map<string, string[]>) => {
+          graph: async (
+            cardNames: string[],
+            rolesByName: Map<string, string[]>,
+            copiesByName: Map<string, number>,
+          ) => {
             // Re-reads the card DOCUMENTS: resolveDeck hands back engine `Card`s, and buildGraph
             // needs the full CardDoc (faces, all_parts, legalities) that only the corpus row carries.
             const lookup = data.mongoLookup(store as never);
@@ -108,7 +123,7 @@ export function attachRolesAndArt(
             }
             // Same card list feeds both halves -- addEventEdges throws if they ever diverge.
             const graph = matcher.addEventEdges(matcher.buildGraph(docs as never), deckCards as never, matcher.loadHierarchy());
-            return attachRolesAndArt(graph, docs, rolesByName, data.normalizeName);
+            return attachRolesAndArt(graph, docs, rolesByName, data.normalizeName, copiesByName);
           },
           analyze: async (cards, combos, commanderNames) => {
             const lookup = data.mongoLookup(store as never);

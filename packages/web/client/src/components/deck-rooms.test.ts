@@ -137,6 +137,17 @@ describe("roomTallies", () => {
     expect(t.get("strategy")).toEqual({ count: 0, target: 0, under: false });
   });
 
+  it("counts copies, not distinct names", () => {
+    const cardRooms = new Map([["Mountain", ["lands"] as const], ["Island", ["lands"] as const]]);
+    const copies = new Map([["Mountain", 24]]);
+    const t = roomTallies(cardRooms, [{ category: "lands", count: 25, target: 36 }], copies);
+    expect(t.get("lands")!.count).toBe(25); // 24 Mountains + 1 Island
+  });
+
+  it("treats a card with no copies entry as a single copy", () => {
+    expect(roomTallies(new Map([["Sol Ring", ["ramp"] as const]]), undefined, new Map()).get("ramp")!.count).toBe(1);
+  });
+
   it("ignores a buildCategories entry no room claims, without throwing or perturbing tallies", () => {
     const withOrphan = [...build, { category: "notARoomCategory", count: 99, target: 99 }];
     expect(() => roomTallies(new Map(), withOrphan)).not.toThrow();

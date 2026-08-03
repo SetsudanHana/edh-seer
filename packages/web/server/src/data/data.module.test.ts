@@ -67,6 +67,26 @@ test("a report role that cannot be joined to any doc is logged with its count, n
   expect(warn).toHaveBeenCalledWith(expect.stringContaining("1 card"));
 });
 
+test("copies join through oracleId the same way roles do, and a single copy stays absent", () => {
+  const graph: CardGraph = {
+    nodes: [
+      { id: "card:mountain-id", kind: "card", label: "Mountain", props: {} },
+      { id: "card:sol-ring-id", kind: "card", label: "Sol Ring", props: {} },
+    ],
+    edges: [],
+  };
+  const docs = [
+    { _id: "mountain-id", name: "Mountain" },
+    { _id: "sol-ring-id", name: "Sol Ring" },
+  ];
+  const copiesByName = new Map([["Mountain", 24], ["Sol Ring", 1]]);
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize, copiesByName);
+
+  expect(out.nodes.find((n) => n.id === "card:mountain-id")?.copies).toBe(24);
+  expect(out.nodes.find((n) => n.id === "card:sol-ring-id")).not.toHaveProperty("copies");
+});
+
 test("an empty-array roles entry never becomes an empty `roles` key on the wire", () => {
   const graph: CardGraph = { nodes: [{ id: "card:a", kind: "card", label: "A" }], edges: [] };
   const docs = [{ _id: "a", name: "A" }];

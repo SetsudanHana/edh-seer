@@ -98,20 +98,27 @@ export interface RoomTally {
  *  is report.buildCategories as sent -- already archetype-adjusted -- or undefined on a report
  *  that has none, in which case every room reports a bare count.
  *
- *  A room's count is the number of DISTINCT CARDS in it (what a player can count on screen), but
- *  its target is the SUM of its subcategories' targets. These come from different levels on
- *  purpose: a card in both draw and cardSelection counts once toward cardAdvantage's count, but
- *  contributes both categories' targets to cardAdvantage's target. That asymmetry is intentional
- *  per the task spec, not a bug -- implemented as specified even though it means the target isn't
- *  strictly "how many distinct cards you need" in the same units as count. */
+ *  A room's count is the number of COPIES in it, not distinct names: the engine's own build
+ *  targets (computeBuild) count land copies, so a 36-target Lands room has to count the same way
+ *  or it reads `14/36` on a deck with 24 basics that's actually fine. `copiesByName` supplies that
+ *  -- absent (or missing an entry) means one copy, since a card not driven by a multi-name-legal
+ *  deck (Relentless Rats, basics, etc.) really does have exactly one.
+ *
+ *  A room's target, meanwhile, is the SUM of its subcategories' targets. These come from different
+ *  levels on purpose: a card in both draw and cardSelection counts once (or once per copy) toward
+ *  cardAdvantage's count, but contributes both categories' targets to cardAdvantage's target. That
+ *  asymmetry is intentional per the task spec, not a bug -- implemented as specified even though it
+ *  means the target isn't strictly "how many copies you need" in the same units as count. */
 export function roomTallies(
   cardRooms: Map<string, readonly RoomId[]>,
   buildCategories: { category: string; count: number; target: number }[] | undefined,
+  copiesByName?: Map<string, number>,
 ): Map<RoomId, RoomTally> {
   const targetOf = new Map((buildCategories ?? []).map((c) => [c.category, c.target]));
   const counts = new Map<RoomId, number>();
-  for (const rooms of cardRooms.values()) {
-    for (const id of rooms) counts.set(id, (counts.get(id) ?? 0) + 1);
+  for (const [name, rooms] of cardRooms) {
+    const copies = copiesByName?.get(name) ?? 1;
+    for (const id of rooms) counts.set(id, (counts.get(id) ?? 0) + copies);
   }
   const out = new Map<RoomId, RoomTally>();
   for (const room of ROOMS) {

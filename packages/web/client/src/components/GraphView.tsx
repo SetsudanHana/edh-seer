@@ -384,6 +384,20 @@ export function GraphView({ graph }: { graph: CardGraph }) {
           // `object-fit: cover`. Guard the source dims: a truthy naturalWidth/Height of 0 (or NaN)
           // would make Math.min pick that and hand drawImage a zero-size source rect, which throws
           // and would otherwise kill the whole animation loop.
+          // A node stands for every copy of its card. Draw the stack behind the art so nine
+          // Relentless Rats do not read as one Rat, and badge the count -- the room tallies are
+          // in copies, so the number on the node is what makes the room's number add up.
+          const copies = n.copies ?? 1;
+          if (copies > 1) {
+            ctx.strokeStyle = paint.border;
+            ctx.lineWidth = 1 / cam.z;
+            for (const offset of [4, 2]) {
+              ctx.beginPath();
+              ctx.arc(n.x + offset, n.y - offset, ART_RADIUS, 0, TAU);
+              ctx.stroke();
+            }
+          }
+
           if (img instanceof HTMLImageElement && img.naturalWidth > 0 && img.naturalHeight > 0) {
             const sw = img.naturalWidth, sh = img.naturalHeight, s = Math.min(sw, sh);
             ctx.save();
@@ -394,11 +408,18 @@ export function GraphView({ graph }: { graph: CardGraph }) {
             ctx.lineWidth = 1 / cam.z;
             ctx.strokeStyle = paint.border;
             ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.stroke();
-            continue;
+          } else {
+            if (n.artCrop) artLoader.request(n.artCrop);
+            ctx.fillStyle = colorOf(n.kind);
+            ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
           }
-          if (n.artCrop) artLoader.request(n.artCrop);
-          ctx.fillStyle = colorOf(n.kind);
-          ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
+
+          if (copies > 1) {
+            ctx.font = `500 ${10 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
+            ctx.textAlign = "center";
+            ctx.fillStyle = paint.fg;
+            ctx.fillText(`×${copies}`, n.x, n.y + ART_RADIUS + 11 / cam.z);
+          }
           continue;
         }
 
