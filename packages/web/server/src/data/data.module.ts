@@ -52,7 +52,7 @@ function joinByOracleId<T>(
  *  `rolesByName` comes from, so there's no real caller for whom this is a burden. */
 export function attachRolesAndArt(
   graph: CardGraph,
-  docs: Array<{ _id: string; name: string }>,
+  docs: Array<{ _id: string; name: string; typeLine?: string }>,
   rolesByName: Map<string, string[]>,
   normalize: (name: string) => string,
   copiesByName: Map<string, number>,
@@ -60,11 +60,24 @@ export function attachRolesAndArt(
   const oracleIdByName = new Map(docs.map((d) => [normalize(d.name), d._id]));
   const rolesByOracleId = joinByOracleId(rolesByName, oracleIdByName, normalize, "roles");
   const copiesByOracleId = joinByOracleId(copiesByName, oracleIdByName, normalize, "copy counts");
+  // Lands is a TYPE room, not a role room: a card is in it because it IS a land. The engine's
+  // role field deliberately excludes basics (build.ts's !isBasicLand guard) because it answers
+  // "does this pull double duty?", where "Island fills the lands role" is noise -- and that same
+  // field drives doubleDutyRating's 1.15x synergy multiplier, so it must not be widened there.
+  // The board asks a different question, and answers it here, where the full doc is in hand.
+  const isLandByOracleId = new Map(
+    docs.map((d) => [d._id, (d.typeLine ?? "").toLowerCase().includes("land")] as const),
+  );
 
   const nodes = graph.nodes.map(({ id, kind, label, props }) => {
-    const roles = kind === "card" ? rolesByOracleId.get(id.slice("card:".length)) : undefined;
+    const oracleId = id.slice("card:".length);
+    const base = kind === "card" ? rolesByOracleId.get(oracleId) : undefined;
+    const roles =
+      kind === "card" && isLandByOracleId.get(oracleId) && !(base ?? []).includes("lands")
+        ? [...(base ?? []), "lands"]
+        : base;
     const artCrop = props?.artCrop as string | undefined;
-    const copies = kind === "card" ? copiesByOracleId.get(id.slice("card:".length)) : undefined;
+    const copies = kind === "card" ? copiesByOracleId.get(oracleId) : undefined;
     return {
       id,
       kind,
@@ -125,7 +138,7 @@ export function attachRolesAndArt(
             // needs the full CardDoc (faces, all_parts, legalities) that only the corpus row carries.
             const lookup = data.mongoLookup(store as never);
             const cardTagsCol = (store.db as Db).collection<CardTags>("cardTags");
-            const docs: Array<{ _id: string; name: string }> = [];
+            const docs: Array<{ _id: string; name: string; typeLine?: string }> = [];
             const deckCards = [];
             for (const name of new Set(cardNames)) {
               const doc = await lookup.findByName(data.normalizeName(name));

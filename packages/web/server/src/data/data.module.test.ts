@@ -110,3 +110,63 @@ test("an empty-array roles entry never becomes an empty `roles` key on the wire"
 
   expect(out.nodes[0]).not.toHaveProperty("roles");
 });
+
+test("a basic land carries the lands role even though the engine gives it none", () => {
+  const graph: CardGraph = {
+    nodes: [{ id: "card:o-island", kind: "card", label: "Island" }],
+    edges: [],
+  };
+  const out = attachRolesAndArt(
+    graph,
+    [{ _id: "o-island", name: "Island", typeLine: "Basic Land — Island" }],
+    new Map(),
+    normalize,
+    new Map([["Island", 3]]),
+  );
+  expect(out.nodes[0].roles).toEqual(["lands"]);
+});
+
+test("a utility land keeps its functional roles and gains lands", () => {
+  const graph: CardGraph = {
+    nodes: [{ id: "card:o-otawara", kind: "card", label: "Otawara, Soaring City" }],
+    edges: [],
+  };
+  const out = attachRolesAndArt(
+    graph,
+    [{ _id: "o-otawara", name: "Otawara, Soaring City", typeLine: "Legendary Land" }],
+    new Map([["Otawara, Soaring City", ["targetedRemoval"]]]),
+    normalize,
+    new Map(),
+  );
+  expect(out.nodes[0].roles).toEqual(["targetedRemoval", "lands"]);
+});
+
+test("does not duplicate lands when the engine already assigned it", () => {
+  const graph: CardGraph = {
+    nodes: [{ id: "card:o-tower", kind: "card", label: "Command Tower" }],
+    edges: [],
+  };
+  const out = attachRolesAndArt(
+    graph,
+    [{ _id: "o-tower", name: "Command Tower", typeLine: "Land" }],
+    new Map([["Command Tower", ["lands"]]]),
+    normalize,
+    new Map(),
+  );
+  expect(out.nodes[0].roles).toEqual(["lands"]);
+});
+
+test("a nonland is untouched", () => {
+  const graph: CardGraph = {
+    nodes: [{ id: "card:o-solring", kind: "card", label: "Sol Ring" }],
+    edges: [],
+  };
+  const out = attachRolesAndArt(
+    graph,
+    [{ _id: "o-solring", name: "Sol Ring", typeLine: "Artifact" }],
+    new Map([["Sol Ring", ["ramp"]]]),
+    normalize,
+    new Map(),
+  );
+  expect(out.nodes[0].roles).toEqual(["ramp"]);
+});
