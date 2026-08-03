@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { pairReasons, cardThemeTags, themeSubjectKey } from "./edges.js";
+import { pairReasons, directedReasons, cardThemeTags, themeSubjectKey } from "./edges.js";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
@@ -482,4 +482,69 @@ test("dedup: a producer with BOTH an authored counter-added emit AND a prolifera
   const reasons = pairReasons(dualSource, counterPayoff, H);
   const counterReasons = reasons.filter((r) => r.tag.startsWith("counter-added"));
   expect(counterReasons).toHaveLength(1);
+});
+
+// --- combatSelfSupplied gate (Item 2): implied-only, and only when the consumer doesn't narrow ---
+
+test("directedReasons: a bare 'creature attacks' consumer still gets no edge from a plain creature's implied attack", () => {
+  const attacker = base("Attacker", []); // implies a bare attacks event (no supplier needed)
+  const genericTrigger = base("Generic Trigger", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "pump" },
+  }]);
+  const reasons = directedReasons(attacker, genericTrigger, H);
+  expect(reasons.some((r) => r.tag.startsWith("attacks"))).toBe(false);
+});
+
+/** Fix 2a: `stats` narrows a combat trigger just as much as `subtype` does -- "power 4 or greater"
+ *  (Garruk's Uprising) is not free, so a real supplying creature must produce a real edge. */
+test("directedReasons: a stats-narrowed attack trigger (power 4+) DOES receive an edge from a matching creature", () => {
+  const bigCreature = {
+    card: { name: "Big Creature", typeLine: "", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+    tags: {
+      oracleId: "Big Creature", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 0, power: "4", toughness: "4", token: false, keywords: [] },
+      abilities: [],
+    } as CardTags,
+  };
+  const statsTrigger = base("Garruk's Uprising", [{
+    kind: "triggered",
+    trigger: {
+      verbs: ["attacks"],
+      subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: 4 }] },
+    },
+    effect: { kind: "pump" },
+  }]);
+  const reasons = directedReasons(bigCreature, statsTrigger, H);
+  expect(reasons.some((r) => r.tag.startsWith("attacks"))).toBe(true);
+});
+
+/** Fix 2b: the gate only ever suppresses IMPLIED combat producers. An AUTHORED attacks emit (goad,
+ *  Mage Slayer, Saskia and similar) is real information and must still feed a generic combat
+ *  consumer, even though a plain creature's implied attack would not. */
+test("directedReasons: an authored attacks emit matches a generic combat consumer even though an implied one would not", () => {
+  const goader = {
+    card: { name: "Goader", typeLine: "", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+    tags: {
+      oracleId: "Goader", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{
+        kind: "on-cast",
+        effect: { kind: "forced-sacrifice", subject: { control: "opp", token: null } },
+        emits: [{ verb: "attacks", subject: { control: "opp", token: null } }],
+      }],
+    } as CardTags,
+  };
+  const genericTrigger = base("Generic Trigger", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "any", token: null } },
+    effect: { kind: "pump" },
+  }]);
+  const reasons = directedReasons(goader, genericTrigger, H);
+  expect(reasons.some((r) => r.tag.startsWith("attacks"))).toBe(true);
+
+  // Contrast: a plain creature's implied attack does NOT satisfy that same bare consumer.
+  const plainCreature = base("Plain Creature", []);
+  expect(directedReasons(plainCreature, genericTrigger, H).some((r) => r.tag.startsWith("attacks"))).toBe(false);
 });

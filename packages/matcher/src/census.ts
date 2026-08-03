@@ -1,4 +1,4 @@
-import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
+import type { CardTags, GameEvent, SubjectFilter, Verb } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
 import { combatSelfSupplied, eventMatches, producerEvents } from "./edges.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
@@ -13,16 +13,30 @@ const list = (v: string | string[] | undefined): string[] =>
  *  their counterpart sets: 16 distinct consumer shapes key to `cast:instant` under
  *  `themeSubjectKey`, one of them `[instant, sorcery, artifact, enchantment, planeswalker]`
  *  matching 10096 cards, which inflated that row to 19277 suppliers. Sorted so member order
- *  cannot split a row. */
+ *  cannot split a row.
+ *
+ *  Prefixed with `subtype:`/`type:`/`any` so the two dimensions can never collide: a subject with
+ *  `subtype: "creature"` (a tagger mis-extraction) and one with `type: "creature"` are different
+ *  shapes and must not roll up into the same row -- one bad subtype-keyed shape merging into 17
+ *  correctly self-supplied `type:creature` shapes previously dragged 287 correct listeners into
+ *  the SATURATED table. */
 function censusSubjectKey(s: SubjectFilter): string {
   const subtypes = list(s.subtype);
-  if (subtypes.length > 0) return [...subtypes].sort().join("+");
+  if (subtypes.length > 0) return "subtype:" + [...subtypes].sort().join("+");
   const types = list(s.type);
-  if (types.length > 0) return [...types].sort().join("+");
+  if (types.length > 0) return "type:" + [...types].sort().join("+");
   return "any";
 }
 
 const censusKey = (e: GameEvent): string => zoneEventKey(e.verb, e.subject.zone, censusSubjectKey(e.subject));
+
+/** A stand-in for the implied combat event `impliedEvents` would synthesize for this verb, so the
+ *  census can ask `combatSelfSupplied` the same question the matcher asks: "would a synthetic
+ *  implied producer be this consumer's only possible supplier?" The subject content doesn't matter
+ *  to that answer -- only `implied: true` and the verb do. */
+function impliedCombatProducer(verb: Verb): GameEvent {
+  return { verb, subject: { control: "any", token: null }, implied: true };
+}
 
 /** One side of the corpus event census.
  *
@@ -47,8 +61,9 @@ export interface CensusRow {
    *  differ in control/token/zone/stats, so a high count is a hint to look at the shapes before
    *  trusting the row. */
   shapes: number;
-  /** Consumer rows only: the game itself satisfies this trigger, so zero suppliers is by design,
-   *  not a gap. See `combatSelfSupplied`. */
+  /** Consumer rows only: an implied combat event (every creature can attack) would be this
+   *  trigger's only possible supplier, so zero suppliers is by design, not a gap. See
+   *  `combatSelfSupplied`. */
   selfSupplied: boolean;
   /** Producer rows only: at least one card reaches this key through an emit the tagger actually
    *  authored, rather than only through an event `producerEvents` derives (implied cast/enters/
@@ -148,7 +163,8 @@ export function buildCensus(cards: Iterable<CardTags>, h: Hierarchy): Census {
     for (const p of prodByVerb.get(c.event.verb) ?? []) {
       if (eventMatches(p.event, c.event, h)) for (const card of p.cards) counterpart.add(card);
     }
-    return { key: censusKey(c.event), cards: c.cards, counterpart, selfSupplied: combatSelfSupplied(c.event), authored: true };
+    const selfSupplied = combatSelfSupplied(impliedCombatProducer(c.event.verb), c.event);
+    return { key: censusKey(c.event), cards: c.cards, counterpart, selfSupplied, authored: true };
   });
 
   const producerRows = [...prodShapes.values()].map((p) => {
