@@ -79,14 +79,21 @@ export function combatNarrowsByType(subject: SubjectFilter): boolean {
 }
 
 /** Does it narrow via a dimension OUTSIDE the type line -- a stats predicate ("power 4 or greater"),
- *  a counter, a chosenType, a colors filter, or a non-wildcarded token filter? These are invisible
- *  to a type/subtype key, so two shapes can share a key and disagree about being self-supplied. */
+ *  a counter, a chosenType, a colors filter, or a token filter? These are invisible to a
+ *  type/subtype key, so two shapes can share a key and disagree about being self-supplied.
+ *
+ *  `token` narrows only when it demands a TOKEN. `token: false` means "nontoken", which nearly every
+ *  creature already is -- treating it as a real condition let 14 triggers draw implied edges from the
+ *  whole creature pool, a small copy of the mesh this gate exists to prevent. `token: true` is a
+ *  genuine condition (Neyali, Temmet): a deck with no token makers never triggers it, and since
+ *  `selfSubject` stamps `token: false` on every implied event, such a consumer correctly ends up with
+ *  zero implied supply and surfaces in the census as a real hole -- we do not model a token attacking. */
 function combatNarrowsOffType(subject: SubjectFilter): boolean {
   if ((subject.stats?.length ?? 0) > 0) return true;
   if (subject.counter) return true;
   if (subject.chosenType) return true;
   if ((subject.colors?.length ?? 0) > 0) return true;
-  return subject.token !== null;
+  return subject.token === true;
 }
 
 /** Is this combat producer/consumer pair satisfied by the game itself rather than by any card?

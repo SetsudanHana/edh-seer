@@ -259,3 +259,27 @@ test("non-combat consumer keys carry no narrowed marker", () => {
   expect(keys).toContain("enters:type:creature");
   expect(keys.some((k) => k.includes("narrowed"))).toBe(false);
 });
+
+/** `token: false` means "nontoken", which nearly every creature already is — so it is not a real
+ *  condition and must not pull implied edges from the whole creature pool. `token: true` is real:
+ *  every implied event carries `token: false` (selfSubject stamps it), so a token-demanding consumer
+ *  correctly gets no implied supply and shows up as a genuine hole. */
+test("token:false is not a narrowing condition, token:true is", () => {
+  const attacker = card("attacker", [], ["creature"], [], "2");
+  const nontokenPayoff = card("nontokenPayoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: false } },
+    effect: { kind: "pump" },
+  }]);
+  const tokenPayoff = card("tokenPayoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: true } },
+    effect: { kind: "pump" },
+  }]);
+
+  const c = buildCensus([attacker, nontokenPayoff, tokenPayoff], H);
+  // Nontoken: the game supplies it, so it merges into the bare row and draws no implied edges.
+  expect(row(c.consumers, "attacks:type:creature")).toMatchObject({ selfSupplied: true, counterpart: 0 });
+  // Token-demanding: a real condition, own row, and unsupplied because we don't model tokens attacking.
+  expect(row(c.consumers, "attacks:type:creature (narrowed)")).toMatchObject({ selfSupplied: false, counterpart: 0 });
+});
