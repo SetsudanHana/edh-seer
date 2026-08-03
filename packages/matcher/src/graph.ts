@@ -3,12 +3,12 @@ import { parseTypeLine } from "./typeline.js";
 
 export type NodeKind =
   | "card" | "face" | "color" | "supertype" | "type" | "subtype"
-  | "keyword" | "mana" | "layout" | "token" | "power" | "toughness" | "cmc";
+  | "keyword" | "mana" | "layout" | "token" | "related" | "power" | "toughness" | "cmc";
 
 export type EdgeKind =
   | "FACE" | "TYPE" | "SUPERTYPE" | "SUBTYPE" | "COLOR" | "IDENTITY" | "KEYWORD"
   | "MANA_SYMBOL" | "PRODUCES" | "LAYOUT" | "POWER" | "TOUGHNESS" | "CMC"
-  | "CREATES" | "COMBO_PIECE" | "MELD_PART";
+  | "CREATES" | "COMBO_PIECE" | "MELD_PART" | "MELD_RESULT";
 
 export interface GraphNode {
   id: string;
@@ -30,11 +30,14 @@ export interface CardGraph {
   edges: GraphEdge[];
 }
 
-/** `all_parts` component -> the edge it becomes. Anything else is ignored. */
-const PART_EDGE: Record<string, EdgeKind> = {
-  token: "CREATES",
-  combo_piece: "COMBO_PIECE",
-  meld_part: "MELD_PART",
+/** `all_parts` component -> the edge it becomes and the node kind of its target. Only `token`
+ *  entries are real game tokens; combo_piece/meld_part/meld_result point at other real cards,
+ *  which stage 2 resolves by name (the printing-level id Scryfall gives is not joinable here). */
+const PART_EDGE: Record<string, { edge: EdgeKind; kind: NodeKind }> = {
+  token: { edge: "CREATES", kind: "token" },
+  combo_piece: { edge: "COMBO_PIECE", kind: "related" },
+  meld_part: { edge: "MELD_PART", kind: "related" },
+  meld_result: { edge: "MELD_RESULT", kind: "related" },
 };
 
 const slug = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -97,11 +100,11 @@ export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
     for (const kw of c.keywords) edge(cardId, node("keyword:" + slug(kw), "keyword", kw), "KEYWORD");
 
     for (const p of c.allParts ?? []) {
-      const kind = PART_EDGE[p.component];
-      if (!kind) continue;
-      const partId = node("token:" + slug(p.name), "token", p.name, { typeLine: p.typeLine });
-      edge(cardId, partId, kind);
-      // A token carries its own printed types, so it feeds the same typal nodes real cards do.
+      const mapping = PART_EDGE[p.component];
+      if (!mapping) continue;
+      const partId = node(mapping.kind + ":" + slug(p.name), mapping.kind, p.name, { typeLine: p.typeLine });
+      edge(cardId, partId, mapping.edge);
+      // A part carries its own printed types, so it feeds the same typal nodes real cards do.
       const pt = parseTypeLine(p.typeLine);
       for (const st of pt.subtypes) edge(partId, node("subtype:" + st, "subtype", st), "SUBTYPE");
       for (const t of pt.types) edge(partId, node("type:" + t, "type", t), "TYPE");

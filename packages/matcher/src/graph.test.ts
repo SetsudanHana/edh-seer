@@ -97,3 +97,44 @@ test("non-numeric printed power gets no value node", () => {
   expect(edgesFrom(g, "face:goyf:0", "POWER")).toEqual([]);
   expect(edgesFrom(g, "face:goyf:0", "TOUGHNESS")).toEqual([]);
 });
+
+test("two cards sharing a keyword reach the same keyword node", () => {
+  const a = doc({ _id: "a", name: "A", typeLine: "Creature — Human", keywords: ["Haste", "Flying"] });
+  const b = doc({ _id: "b", name: "B", typeLine: "Creature — Human", keywords: ["Flying"] });
+  const g = buildGraph([a, b]);
+  expect(edgesFrom(g, "card:a", "KEYWORD").sort()).toEqual(["keyword:flying", "keyword:haste"]);
+  expect(edgesFrom(g, "card:b", "KEYWORD")).toEqual(["keyword:flying"]);
+  expect(g.nodes.filter((n) => n.id === "keyword:flying")).toHaveLength(1);
+});
+
+test("producedMana and manaCost reach the same mana node", () => {
+  const land = doc({ _id: "land", name: "Land", typeLine: "Land", producedMana: ["G", "U"] });
+  const spell = doc({ _id: "spell", name: "Spell", typeLine: "Instant", manaCost: "{G}" });
+  const g = buildGraph([land, spell]);
+  expect(edgesFrom(g, "card:land", "PRODUCES").sort()).toEqual(["mana:G", "mana:U"]);
+  expect(edgesFrom(g, "card:spell", "MANA_SYMBOL")).toEqual(["mana:G"]);
+  expect(g.nodes.filter((n) => n.id === "mana:G")).toHaveLength(1);
+});
+
+test("all_parts component kinds map to distinct node kinds and id prefixes", () => {
+  const card = doc({
+    _id: "multi", name: "Multi", typeLine: "Creature — Human",
+    allParts: [
+      { component: "token", name: "Goblin", typeLine: "Token Creature — Goblin" },
+      { component: "combo_piece", name: "Combo Card", typeLine: "Creature — Human" },
+      { component: "meld_part", name: "Meld Part", typeLine: "Creature — Human" },
+      { component: "meld_result", name: "Meld Result", typeLine: "Creature — Human" },
+    ],
+  });
+  const g = buildGraph([card]);
+  expect(edgesFrom(g, "card:multi", "CREATES")).toEqual(["token:goblin"]);
+  expect(edgesFrom(g, "card:multi", "COMBO_PIECE")).toEqual(["related:combo-card"]);
+  expect(edgesFrom(g, "card:multi", "MELD_PART")).toEqual(["related:meld-part"]);
+  expect(edgesFrom(g, "card:multi", "MELD_RESULT")).toEqual(["related:meld-result"]);
+
+  const byId = (id: string) => g.nodes.find((n) => n.id === id)!;
+  expect(byId("token:goblin").kind).toBe("token");
+  expect(byId("related:combo-card").kind).toBe("related");
+  expect(byId("related:meld-part").kind).toBe("related");
+  expect(byId("related:meld-result").kind).toBe("related");
+});
