@@ -157,8 +157,12 @@ const COLUMNS = 3;
 const BOARD_FILL = 0.92;
 
 export function roomLayout(width: number, height: number): Map<RoomId, Rect> {
-  const boardW = width * BOARD_FILL;
-  const boardH = height * BOARD_FILL;
+  // A canvas legitimately reports 0 (or, transiently through a subtraction, a negative number)
+  // during layout -- clamp here, once, so every caller (the sim's anchors, the resize handler,
+  // Task 5's chrome) gets a degenerate-but-sane zero-size board instead of a mirrored one where
+  // width or height inverted every rect's x/y.
+  const boardW = Math.max(0, width) * BOARD_FILL;
+  const boardH = Math.max(0, height) * BOARD_FILL;
   const colW = boardW / COLUMNS;
   const rowH = boardH / GRID.length;
   const out = new Map<RoomId, Rect>();

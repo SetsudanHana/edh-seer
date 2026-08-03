@@ -207,6 +207,23 @@ describe("roomLayout", () => {
     expect(big.w).toBeGreaterThan(small.w);
     expect(big.h).toBeGreaterThan(small.h);
   });
+
+  // A canvas legitimately reports 0x0 mid-layout (before the first resize measurement lands),
+  // and GraphView now calls roomLayout with that live size every tick. Negative width/height
+  // (e.g. a caller subtracting a border) must not invert every rect's direction; clamp to 0
+  // instead so the board degenerates to nothing-visible rather than a mirrored layout.
+  it("clamps negative width/height to zero instead of inverting the grid", () => {
+    expect(roomLayout(-900, -600)).toEqual(roomLayout(0, 0));
+  });
+
+  it("does not throw or produce negative-size rects on a zero-size canvas", () => {
+    const l = roomLayout(0, 0);
+    expect(l.size).toBe(7);
+    for (const r of l.values()) {
+      expect(r.w).toBeGreaterThanOrEqual(0);
+      expect(r.h).toBeGreaterThanOrEqual(0);
+    }
+  });
 });
 
 describe("roomCenter", () => {

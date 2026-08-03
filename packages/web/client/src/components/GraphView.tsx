@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CardGraph, GraphNode, NodeKind } from "../types.js";
-import { CATEGORY_LABELS, CATEGORY_ORDER } from "./CardList.js";
+import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
+import { roomCenter, roomLayout, roomsForCard, roomTallies, type RoomId } from "./deck-rooms.js";
 
 /** Node kinds hidden on first paint. Each connects nearly every card in a deck -- `layout:normal`
  *  alone reaches 87 of Inalla's 94, `power:2` ties together every 2-power creature, `type:creature`
@@ -86,16 +86,19 @@ export function separation(
   return { x: (dx / d) * push, y: (dy / d) * push };
 }
 
-/** Lay `roles` evenly around a ring of the given radius, centred on the origin. Pure and
- *  deterministic so it's testable without a canvas: each present functional role gets one anchor
- *  point that card nodes with that role spring weakly toward (Step 1). */
-export function zoneCentroids(roles: string[], radius: number): Map<string, Point> {
-  const centroids = new Map<string, Point>();
-  roles.forEach((role, i) => {
-    const angle = (i / roles.length) * TAU - Math.PI / 2;
-    centroids.set(role, { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius });
-  });
-  return centroids;
+/** Card name -> copy count, built from the graph's own card nodes (each copy of a card already
+ *  collapses into one node, keyed by id, with the count riding on `copies`). Absent `copies`
+ *  means one copy. Exists as its own pure, testable function rather than inlined at its one call
+ *  site because roomTallies' copiesByName is *optional* -- the easy mistake is a caller that
+ *  builds `cardRooms` correctly but forgets this map entirely, which roomTallies accepts
+ *  silently and tallies wrong (see the doc comment at this function's call site). */
+export function copiesByNameOf(nodes: readonly GraphNode[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const n of nodes) {
+    if (n.kind !== "card") continue;
+    out.set(n.label, n.copies ?? 1);
+  }
+  return out;
 }
 
 /** Where a node that's new since the last render should start: the centroid of whichever of its
@@ -112,7 +115,7 @@ export function seedPosition(neighborIds: string[], prevPositions: Map<string, P
   return count > 0 ? { x: sx / count, y: sy / count } : fallback;
 }
 
-export function GraphView({ graph }: { graph: CardGraph }) {
+export function GraphView({ graph, report }: { graph: CardGraph; report: DeckReport }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState<Set<NodeKind>>(() => new Set(DIM_BY_DEFAULT));
@@ -158,6 +161,32 @@ export function GraphView({ graph }: { graph: CardGraph }) {
     for (const n of graph.nodes) c.set(n.kind, (c.get(n.kind) ?? 0) + 1);
     return c;
   }, [graph]);
+
+  /** Which rooms each card node belongs to, keyed by node id. Recomputed only when the graph or
+   *  the report changes -- it is pure over both. */
+  const roomsByNode = useMemo(() => {
+    const comboCards = new Set((report.combos ?? []).flatMap((c) => c.cards));
+    const strategyCards = new Set((report.archetypes ?? []).flatMap((a) => a.cards));
+    const out = new Map<string, RoomId[]>();
+    for (const n of graph.nodes) {
+      if (n.kind !== "card") continue;
+      out.set(n.id, roomsForCard(n.roles, n.label, comboCards, strategyCards));
+    }
+    return out;
+  }, [graph, report]);
+
+  /** Room counts/targets for Task 5's board chrome. Passing `copiesByNameOf(graph.nodes)` is
+   *  load-bearing, not optional decoration: roomTallies' copiesByName parameter is optional with
+   *  a `?? 1` fallback precisely so a caller that forgets to pass it still runs -- just wrong,
+   *  tallying a 36-Mountain deck's Lands room as 1/36. */
+  const tallies = useMemo(() => {
+    const cardRooms = new Map<string, readonly RoomId[]>();
+    for (const n of graph.nodes) {
+      if (n.kind !== "card") continue;
+      cardRooms.set(n.label, roomsByNode.get(n.id) ?? []);
+    }
+    return roomTallies(cardRooms, report.buildCategories, copiesByNameOf(graph.nodes));
+  }, [graph, report, roomsByNode]);
 
   /** Event rows for the table: emitters in, payoffs out. */
   const events = useMemo(() => {
@@ -218,10 +247,10 @@ export function GraphView({ graph }: { graph: CardGraph }) {
 
     const prevPositions = prevPositionsRef.current!;
     const isFirstLayout = prevPositions.size === 0;
-    // Every card's roles, present-in-this-deck only, in the Cards tab's own order -- the ring
-    // zones lay out on. Sized off the canvas' own footprint so the ring fits what's on screen.
-    const presentRoles = CATEGORY_ORDER.filter((r) => graph.nodes.some((n) => n.roles?.includes(r)));
-    let zoneCentroid = zoneCentroids(presentRoles, Math.min(dim.w, dim.h) * 0.42);
+    // Rooms are fixed: every deck gets all seven, in the same places, whether or not cards land
+    // in them. Replaces the old ring of present-roles-only anchors -- an empty room is a finding
+    // ("BOARD WIPES 0/3"), so it has to hold its place on the board rather than vanish.
+    let rooms = roomLayout(dim.w, dim.h);
 
     // Neighbour lookup built from the raw edge list, before Sim objects exist -- only needed to
     // seed a brand-new node near what it connects to (Step 0).
@@ -256,6 +285,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
       nodes.filter(visible).map((n) => ({
         id: n.id, kind: n.kind, x: n.x, y: n.y, r: nodeRadius(n),
         roles: n.roles ?? null, artCrop: n.artCrop ?? null,
+        rooms: n.kind === "card" ? (roomsByNode.get(n.id) ?? []) : null,
       }));
 
     // A from-scratch graph gets full energy to organize; a graph that already has settled
@@ -303,14 +333,16 @@ export function GraphView({ graph }: { graph: CardGraph }) {
         l.s.vx += (dx / d) * f; l.s.vy += (dy / d) * f;
         l.t.vx -= (dx / d) * f; l.t.vy -= (dy / d) * f;
       }
-      // Zones bias the layout, they don't replace it: a weak spring per role toward that role's
-      // ring anchor, added on top of the repulsion/edge springs above. A card with two roles feels
-      // both and settles between them; a roleless card feels no zone force at all.
+      // Zones bias the layout, they don't replace it: a weak spring per room toward that room's
+      // rectangle centre, added on top of the repulsion/edge springs above. A card in two rooms
+      // (a combo piece that's also a build role, say) feels both and settles between them; every
+      // card is in at least one room (strategy is the fallback), so this always applies to cards.
       for (const n of live) {
-        if (n.kind !== "card" || !n.roles) continue;
-        for (const role of n.roles) {
-          const c = zoneCentroid.get(role);
-          if (!c) continue;
+        if (n.kind !== "card") continue;
+        for (const id of roomsByNode.get(n.id) ?? []) {
+          const rect = rooms.get(id);
+          if (!rect) continue;
+          const c = roomCenter(rect);
           n.vx += (c.x - n.x) * ZONE_SPRING;
           n.vy += (c.y - n.y) * ZONE_SPRING;
         }
@@ -318,8 +350,10 @@ export function GraphView({ graph }: { graph: CardGraph }) {
       for (const n of live) {
         // Centering applies only where no zone claims the node. It used to apply to everything at
         // 0.0011 while the zone spring was 0.0009 -- the pull to the origin was stronger than the
-        // pull to the zone, so roles could never separate however hard the zones pulled.
-        const zoned = n.kind === "card" && n.roles && n.roles.length > 0;
+        // pull to the zone, so roles could never separate however hard the zones pulled. Now that
+        // every card lands in a room (strategy is the universal fallback), this only still fires
+        // for non-card nodes (events/keywords/etc.), which have no room of their own.
+        const zoned = n.kind === "card" && (roomsByNode.get(n.id)?.length ?? 0) > 0;
         if (!zoned) { n.vx -= n.x * CENTER_PULL; n.vy -= n.y * CENTER_PULL; }
         n.vx *= VELOCITY_DAMPING; n.vy *= VELOCITY_DAMPING;
         n.x += n.vx * alpha; n.y += n.vy * alpha;
@@ -343,27 +377,10 @@ export function GraphView({ graph }: { graph: CardGraph }) {
       ctx.setTransform(cam.z * dim.dpr, 0, 0, cam.z * dim.dpr,
         (dim.w / 2 + cam.x) * dim.dpr, (dim.h / 2 + cam.y) * dim.dpr);
 
-      // Zone chrome (Step 2): behind everything else -- a label and a radius-fitted hull per
-      // present role, centred on that role's actual (live) member positions, not the fixed ring
-      // anchor, so the hull tracks the cluster as it settles.
-      const cardsWithRoles = nodes.filter((n) => visible(n) && n.kind === "card" && n.roles?.length);
-      ctx.lineWidth = 1 / cam.z;
-      ctx.strokeStyle = paint.sep;
-      ctx.fillStyle = paint.muted;
-      ctx.font = `500 ${11 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
-      ctx.textAlign = "center";
-      for (const role of presentRoles) {
-        const members = cardsWithRoles.filter((n) => n.roles!.includes(role));
-        if (members.length === 0) continue;
-        let cx = 0, cy = 0;
-        for (const m of members) { cx += m.x; cy += m.y; }
-        cx /= members.length; cy /= members.length;
-        let r = 40;
-        for (const m of members) r = Math.max(r, Math.hypot(m.x - cx, m.y - cy) + 16);
-        ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
-        ctx.fillText((CATEGORY_LABELS[role] ?? role).toUpperCase(), cx, cy - r - 6);
-      }
-
+      // Room chrome (the rectangle outlines/labels/tallies) is Task 5's job -- this task only
+      // changes which anchors the force sim pulls cards toward (see `rooms`/`roomsByNode` above).
+      // The old per-role ring hulls that drew here are gone along with the ring anchors they
+      // illustrated; nothing draws in their place until Task 5 lands.
       ctx.lineWidth = 0.7 / cam.z;
       ctx.strokeStyle = paint.sep;
       ctx.beginPath();
@@ -469,12 +486,12 @@ export function GraphView({ graph }: { graph: CardGraph }) {
     const loop = () => { tick(); draw(); raf = requestAnimationFrame(loop); };
     loop();
 
-    // Zone geometry is sized off the viewport (Math.min(dim.w, dim.h)), so a resize/rotate has to
-    // recompute it too -- otherwise the ring anchors stay sized to whatever viewport was live at
-    // mount and a rotated phone gets a layout built for the wrong aspect ratio.
+    // Room geometry is sized off the viewport, so a resize/rotate has to recompute it too --
+    // otherwise the rooms stay sized to whatever viewport was live at mount and a rotated phone
+    // gets a board built for the wrong aspect ratio.
     const onResize = () => {
       dim = size();
-      zoneCentroid = zoneCentroids(presentRoles, Math.min(dim.w, dim.h) * 0.42);
+      rooms = roomLayout(dim.w, dim.h);
     };
     addEventListener("resize", onResize);
 
@@ -526,7 +543,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
       canvas.removeEventListener("wheel", onWheel);
       delete (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe;
     };
-  }, [graph, hidden]);
+  }, [graph, hidden, roomsByNode]);
 
   const toggle = (k: NodeKind) =>
     setHidden((prev) => {

@@ -1,8 +1,38 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { DIM_BY_DEFAULT, GraphView, nodeRadius, seedPosition, separation, zoneCentroids } from "./GraphView.js";
+import { copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, seedPosition, separation } from "./GraphView.js";
+import { roomTallies } from "./deck-rooms.js";
 import { SAMPLE } from "../fixtures.js";
+import type { GraphNode } from "../types.js";
+
+/** Records the 2D-context calls made during a render, and -- more importantly -- lets the
+ *  layout effect get past its `if (!ctx) return;` guard at all, which is what attaches
+ *  `__graphProbe`. jsdom has no canvas, so without this stub every probe-reading test below
+ *  fails for the wrong reason (the probe never existing) rather than the reason it's testing.
+ *
+ *  jsdom also has no `Path2D` global at all (see graph-glyphs.ts's doc comment) -- unreachable
+ *  before this task because `draw()`'s glyph branch only ran once `ctx` was real, which it never
+ *  was under jsdom. Making `ctx` real here makes that branch reachable too, so it needs its own
+ *  stub: a no-op constructor is enough since `ctx.stroke(path)` itself is already swallowed by
+ *  the proxy below, which doesn't care what the argument is.
+ *
+ *  Both stubs are restored per-test by the top-level afterEach so neither leaks into a test that
+ *  asserts the no-context baseline (see the "probe is absent" test further down). */
+function makeContextSpy(calls: string[] = []) {
+  const ctx = new Proxy({} as CanvasRenderingContext2D, {
+    get(_t, prop: string) {
+      if (prop === "measureText") return () => ({ width: 40 });
+      return (...args: unknown[]) => { calls.push(`${prop}:${args.join(",")}`); };
+    },
+    set() { return true; },
+  });
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(ctx as never);
+  vi.stubGlobal("Path2D", class { constructor(_d?: string) {} });
+  return calls;
+}
+
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 test("structural mesh hubs are hidden on first paint", () => {
   expect(new Set(DIM_BY_DEFAULT)).toEqual(
@@ -49,22 +79,6 @@ test("a non-card node's radius scales with degree and is capped", () => {
   expect(nodeRadius({ kind: "event", deg: 10000 })).toBe(15);
 });
 
-test("zoneCentroids places each role evenly around the ring at the given radius", () => {
-  const c = zoneCentroids(["ramp", "draw", "tutor", "lands"], 100);
-  expect(c.size).toBe(4);
-  for (const p of c.values()) {
-    expect(Math.hypot(p.x, p.y)).toBeCloseTo(100, 5);
-  }
-  // Opposite ring positions (index 0 and 2 of 4) should be antipodal.
-  const ramp = c.get("ramp")!, tutor = c.get("tutor")!;
-  expect(ramp.x).toBeCloseTo(-tutor.x, 5);
-  expect(ramp.y).toBeCloseTo(-tutor.y, 5);
-});
-
-test("zoneCentroids on an empty role list returns an empty map (no divide-by-zero)", () => {
-  expect(zoneCentroids([], 100).size).toBe(0);
-});
-
 test("seedPosition centres a new node on the previous positions of its known neighbours", () => {
   const prev = new Map([
     ["a", { x: 0, y: 0 }],
@@ -84,12 +98,35 @@ test("seedPosition ignores unknown neighbours and averages only the ones it can 
   expect(seedPosition(["a", "ghost"], prev, { x: 0, y: 0 })).toEqual({ x: 4, y: 8 });
 });
 
+test("copiesByNameOf keys a card's copy count by name, defaulting an absent count to one", () => {
+  const nodes = [
+    { id: "card:a", kind: "card", label: "Relentless Rats", copies: 9 },
+    { id: "card:b", kind: "card", label: "Sol Ring" },
+    { id: "subtype:goblin", kind: "subtype", label: "goblin" },
+  ] as GraphNode[];
+  const m = copiesByNameOf(nodes);
+  expect(m.get("Relentless Rats")).toBe(9);
+  expect(m.get("Sol Ring")).toBe(1);
+  expect(m.has("goblin")).toBe(false);
+});
+
+// Guards the exact bug class carried into this task: roomTallies' copiesByName parameter is
+// optional, so a caller that builds cardRooms correctly but forgets to pass copy counts still
+// runs -- just wrong, tallying a 24-Mountain deck's Lands room as 1 instead of 24. This pins
+// copiesByNameOf as the thing that has to feed that parameter, not just that it exists in isolation.
+test("feeding copiesByNameOf's result to roomTallies counts a multi-copy card by its copies, not once", () => {
+  const nodes = [{ id: "card:mtn", kind: "card", label: "Mountain", copies: 24 }] as GraphNode[];
+  const cardRooms = new Map([["Mountain", ["lands"] as const]]);
+  const t = roomTallies(cardRooms, [{ category: "lands", count: 24, target: 36 }], copiesByNameOf(nodes));
+  expect(t.get("lands")!.count).toBe(24);
+});
+
 // Canvas painting (zone chrome, art fills, glyph strokes) isn't exercised here -- jsdom has no
 // canvas 2D context, so GraphView's draw effect no-ops (`ctx` is null) the same way it already did
 // before this task. This only exercises the plain-React parts: the kind filter row and the glyph
 // legend built from the fixture graph's one event node.
 test("renders the kind filter row and a legend entry for the graph's event tag", () => {
-  render(<GraphView graph={SAMPLE.graph} />);
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
   expect(screen.getByLabelText(/Deck graph:/)).toBeInTheDocument();
   expect(screen.getByText("card")).toBeInTheDocument();
   expect(screen.getByText("enters")).toBeInTheDocument();
@@ -97,16 +134,53 @@ test("renders the kind filter row and a legend entry for the graph's event tag",
 
 test("renders no legend row when the graph has no event nodes", () => {
   const noEvents = { nodes: SAMPLE.graph.nodes.filter((n) => n.kind !== "event"), edges: [] };
-  render(<GraphView graph={noEvents} />);
+  render(<GraphView graph={noEvents} report={SAMPLE.report} />);
   expect(screen.queryByText("enters")).not.toBeInTheDocument();
 });
 
+// No context spy here, deliberately: this documents the no-canvas baseline (very old browser, or
+// -- in this suite -- every OTHER test in this file) still no-ops safely rather than throwing.
 test("the canvas exposes a probe describing every visible node's drawn geometry", () => {
-  const { container } = render(<GraphView graph={SAMPLE.graph} />);
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & { __graphProbe?: () => Array<{ r: number; kind: string }> };
   // jsdom has no 2d context, so the effect returns before the probe is attached. Assert the
   // contract we can assert here: the property is absent rather than holding a stale value.
   expect(canvas.__graphProbe).toBeUndefined();
+});
+
+test("exposes each card's rooms on the measurement probe", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; kind: string; rooms: string[] | null }>;
+  };
+  const nodes = canvas.__graphProbe!();
+  const card = nodes.find((n) => n.kind === "card")!;
+  expect(Array.isArray(card.rooms)).toBe(true);
+  expect(card.rooms!.length).toBeGreaterThan(0);
+});
+
+test("gives a non-card node no rooms", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ kind: string; rooms: string[] | null }>;
+  };
+  const other = canvas.__graphProbe!().find((n) => n.kind !== "card");
+  expect(other?.rooms).toBeNull();
+});
+
+test("puts an uncategorised card in strategy", () => {
+  // Neither SAMPLE card carries a `roles` entry, so both are the "nothing claims this card"
+  // case roomsForCard falls back on -- no need for a bespoke fixture to exercise it.
+  makeContextSpy();
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; kind: string; roles: string[] | null; rooms: string[] | null }>;
+  };
+  const roleless = canvas.__graphProbe!().find((n) => n.kind === "card" && !n.roles?.length);
+  expect(roleless).toBeDefined();
+  expect(roleless!.rooms).toEqual(["strategy"]);
 });
 
 // requestFullscreen has no jsdom implementation at all (not even a stub that throws), so each
@@ -139,7 +213,7 @@ describe("fullscreen toggle", () => {
   test("the fullscreen button asks the graph container to go fullscreen", async () => {
     const requestFullscreen = vi.fn().mockResolvedValue(undefined);
     Element.prototype.requestFullscreen = requestFullscreen;
-    const { getByRole, getByTestId } = render(<GraphView graph={SAMPLE.graph} />);
+    const { getByRole, getByTestId } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
     await userEvent.click(getByRole("button", { name: /fullscreen/i }));
     expect(requestFullscreen).toHaveBeenCalledTimes(1);
     // requestFullscreen is mocked on Element.prototype, so toHaveBeenCalledTimes(1) alone passes
@@ -152,13 +226,13 @@ describe("fullscreen toggle", () => {
   test("the fullscreen button is absent when the platform does not support it", () => {
     // @ts-expect-error -- deliberately removing the API to test the capability check
     delete Element.prototype.requestFullscreen;
-    const { queryByRole } = render(<GraphView graph={SAMPLE.graph} />);
+    const { queryByRole } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
     expect(queryByRole("button", { name: /fullscreen/i })).toBeNull();
   });
 
   test("the button label and aria-pressed follow fullscreenchange events in both directions", () => {
     Element.prototype.requestFullscreen = vi.fn().mockResolvedValue(undefined);
-    const { getByRole, getByTestId } = render(<GraphView graph={SAMPLE.graph} />);
+    const { getByRole, getByTestId } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
     const shell = getByTestId("graph-fullscreen-shell");
 
     // Entering: the browser (not this component) sets document.fullscreenElement and fires the
