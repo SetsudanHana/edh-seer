@@ -1,6 +1,6 @@
 import type { CardTags, GameEvent, SubjectFilter, Verb } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
-import { combatSelfSupplied, eventMatches, producerEvents } from "./edges.js";
+import { COMBAT_VERBS, combatNarrowsByType, combatSelfSupplied, eventMatches, producerEvents } from "./edges.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 
 const list = (v: string | string[] | undefined): string[] =>
@@ -29,6 +29,26 @@ function censusSubjectKey(s: SubjectFilter): string {
 }
 
 const censusKey = (e: GameEvent): string => zoneEventKey(e.verb, e.subject.zone, censusSubjectKey(e.subject));
+
+/** A consumer row's key, marked when a combat trigger NARROWS on something the subject key does not
+ *  carry.
+ *
+ *  `censusSubjectKey` encodes only type and subtype, but `combatSelfSupplied` also reads `stats`,
+ *  `counter`, `chosenType`, `colors` and `token`. So two shapes could share a key while disagreeing
+ *  on the very property the tables partition on -- and `rollUp` AND-merges `selfSupplied`, so one
+ *  narrowed shape flipped the whole row. On the live corpus that emptied the SELF-SUPPLIED table
+ *  outright: all four non-narrowing combat keys had at least one narrowed shape hiding in them, so
+ *  `attacks:any` reported 1463 correctly self-supplied listeners as a dense low-information edge
+ *  class instead.
+ *
+ *  Marking the key splits them into two homogeneous rows -- `attacks:any` (the game supplies it) and
+ *  `attacks:any (narrowed)` (Garruk's Uprising and friends, which need real creatures). Applied to
+ *  consumer rows only: producers are never self-supplied, so their keys never split. */
+function consumerKey(e: GameEvent, selfSupplied: boolean): string {
+  const marked =
+    COMBAT_VERBS.has(e.verb) && !selfSupplied && !combatNarrowsByType(e.subject);
+  return censusKey(e) + (marked ? " (narrowed)" : "");
+}
 
 /** A stand-in for the implied combat event `impliedEvents` would synthesize for this verb, so the
  *  census can ask `combatSelfSupplied` the same question the matcher asks: "would a synthetic
@@ -164,7 +184,7 @@ export function buildCensus(cards: Iterable<CardTags>, h: Hierarchy): Census {
       if (eventMatches(p.event, c.event, h)) for (const card of p.cards) counterpart.add(card);
     }
     const selfSupplied = combatSelfSupplied(impliedCombatProducer(c.event.verb), c.event);
-    return { key: censusKey(c.event), cards: c.cards, counterpart, selfSupplied, authored: true };
+    return { key: consumerKey(c.event, selfSupplied), cards: c.cards, counterpart, selfSupplied, authored: true };
   });
 
   const producerRows = [...prodShapes.values()].map((p) => {

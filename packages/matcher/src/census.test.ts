@@ -5,9 +5,15 @@ import { buildCensus } from "./census.js";
 
 const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"] };
 
-const card = (id: string, abilities: CardTags["abilities"], types = ["creature"], subtypes: string[] = []): CardTags => ({
+const card = (
+  id: string,
+  abilities: CardTags["abilities"],
+  types = ["creature"],
+  subtypes: string[] = [],
+  power: string | null = null,
+): CardTags => ({
   oracleId: id, schemaVersion: 1, promptVersion: 1, model: "t",
-  characteristics: { types, subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+  characteristics: { types, subtypes, colors: [], identity: [], cmc: 0, power, toughness: power, token: false, keywords: [] },
   abilities,
 });
 
@@ -130,7 +136,10 @@ test("implied combat supplies a typal attack payoff but not a generic one", () =
  *  wildcarded token filter is a real typal/statistical payoff and must receive supply — it was
  *  wrongly treated as self-supplied before because only `subtype` counted as narrowing. */
 test("a stats-narrowed combat trigger (power 4+) receives supply, unlike the bare case", () => {
-  const bigAttacker = card("bigAttacker", [], ["creature"]);
+  // Power matters: `parseStat` maps a null printed power to 0, so a vanilla fixture would fail
+  // `power >= 4` and the row would read as unsupplied for the wrong reason.
+  const bigAttacker = card("bigAttacker", [], ["creature"], [], "5");
+  const smallAttacker = card("smallAttacker", [], ["creature"], [], "1");
   const statsPayoff = card("statsPayoff", [{
     kind: "triggered",
     trigger: {
@@ -139,8 +148,12 @@ test("a stats-narrowed combat trigger (power 4+) receives supply, unlike the bar
     },
     effect: { kind: "pump" },
   }]);
-  const c = buildCensus([bigAttacker, statsPayoff], H);
-  expect(row(c.consumers, "attacks:type:creature")).toMatchObject({ selfSupplied: false });
+  const c = buildCensus([bigAttacker, smallAttacker, statsPayoff], H);
+  // Narrowed off the type line, so it gets its own row rather than merging with bare combat rows.
+  const r = row(c.consumers, "attacks:type:creature (narrowed)")!;
+  expect(r).toMatchObject({ selfSupplied: false });
+  // Exactly the 5-power creature supplies it; the 1-power one does not.
+  expect(r.counterpart).toBe(1);
 });
 
 /** Fix 2b: an AUTHORED attacks emit (goad, Mage Slayer, Saskia) is real information for a generic
@@ -199,4 +212,50 @@ test("zone-transition aliases are normalized on both sides", () => {
   }]);
   const c = buildCensus([sacOutlet, payoff], H);
   expect(row(c.consumers, "dies:type:creature")).toMatchObject({ cards: 1, counterpart: 1 });
+});
+
+/** `censusSubjectKey` encodes only type/subtype, but `combatSelfSupplied` also reads stats, counter,
+ *  chosenType, colors and token. Two shapes sharing a key while disagreeing on selfSupplied get
+ *  AND-merged by rollUp, so ONE narrowed shape flipped the whole row -- which on the live corpus
+ *  emptied the SELF-SUPPLIED table, reporting 1463 correctly self-supplied `attacks:any` listeners
+ *  as a dense low-information edge class. The narrowed shape must get its own row. */
+test("a narrowed combat trigger does not drag its bare siblings out of SELF-SUPPLIED", () => {
+  const bare = card("bare", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "pump" },
+  }]);
+  const alsoBare = card("alsoBare", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  // Garruk's Uprising: same type/subtype shape as the bare ones, but power 4+ is a real condition.
+  const narrowed = card("narrowed", [{
+    kind: "triggered",
+    trigger: {
+      verbs: ["attacks"],
+      subject: { control: "you", token: null, stats: [{ metric: "power", op: "gte", value: 4 }] },
+    },
+    effect: { kind: "draw-card" },
+  }]);
+  const attacker = card("attacker", [], ["creature"], [], "5");
+
+  const c = buildCensus([bare, alsoBare, narrowed, attacker], H);
+  expect(row(c.consumers, "attacks:any")).toMatchObject({ cards: 2, selfSupplied: true, counterpart: 0 });
+  const narrowedRow = row(c.consumers, "attacks:any (narrowed)")!;
+  expect(narrowedRow).toMatchObject({ cards: 1, selfSupplied: false });
+  expect(narrowedRow.counterpart).toBeGreaterThan(0);
+});
+
+/** Only combat rows split; every other verb's key must be untouched by the marker. */
+test("non-combat consumer keys carry no narrowed marker", () => {
+  const etb = card("etb", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: 4 }] } },
+    effect: { kind: "draw-card" },
+  }]);
+  const keys = buildCensus([etb], H).consumers.map((r) => r.key);
+  expect(keys).toContain("enters:type:creature");
+  expect(keys.some((k) => k.includes("narrowed"))).toBe(false);
 });

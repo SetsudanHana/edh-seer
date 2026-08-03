@@ -71,9 +71,12 @@ async function main(): Promise<void> {
     `DEAD EMISSIONS -- the tagger AUTHORED this emit, no trigger in the corpus matches it (top ${TOP} by emitters):`,
     dead.slice(0, TOP), "emitters", "listeners",
   );
+  // Suppliers here are NOT zero and should not be: the implied "any creature attacks" event forms no
+  // edge, but a card that AUTHORS the event (goad, Mage Slayer) genuinely supplies it. A row marked
+  // `(narrowed)` is the opposite case -- it filters on which creature, so implied events do reach it.
   table(
-    `SELF-SUPPLIED -- normal game actions, no card needs to provide them, so 0 suppliers is correct (top ${TOP}):`,
-    selfSupplied.slice(0, TOP), "listeners", "suppliers",
+    `SELF-SUPPLIED -- normal game actions; the implied event forms no edge, so any suppliers shown are cards that AUTHOR it (top ${TOP}):`,
+    selfSupplied.slice(0, TOP), "listeners", "authored suppliers",
   );
   table(
     `SATURATED -- both sides dense, so the edge carries little information (top ${TOP} by listeners):`,

@@ -66,15 +66,27 @@ export function producerEvents(tags: CardTags): GameEvent[] {
  *  chosenType, or a colors filter, or a token filter that isn't wildcarded -- is a real typal or
  *  statistical condition and narrows. */
 function combatConsumerNarrows(subject: SubjectFilter): boolean {
+  return combatNarrowsByType(subject) || combatNarrowsOffType(subject);
+}
+
+/** Does this combat consumer narrow via its type line -- a non-creature type, or any subtype?
+ *  Exported because the census keys rows on type and subtype, so a shape narrowing THIS way already
+ *  lands in its own row and needs no further marking. */
+export function combatNarrowsByType(subject: SubjectFilter): boolean {
   const types = list(subject.type);
   if (types.length > 0 && !types.every((t) => t === "creature")) return true;
-  if (list(subject.subtype).length > 0) return true;
+  return list(subject.subtype).length > 0;
+}
+
+/** Does it narrow via a dimension OUTSIDE the type line -- a stats predicate ("power 4 or greater"),
+ *  a counter, a chosenType, a colors filter, or a non-wildcarded token filter? These are invisible
+ *  to a type/subtype key, so two shapes can share a key and disagree about being self-supplied. */
+function combatNarrowsOffType(subject: SubjectFilter): boolean {
   if ((subject.stats?.length ?? 0) > 0) return true;
   if (subject.counter) return true;
   if (subject.chosenType) return true;
   if ((subject.colors?.length ?? 0) > 0) return true;
-  if (subject.token !== null) return true;
-  return false;
+  return subject.token !== null;
 }
 
 /** Is this combat producer/consumer pair satisfied by the game itself rather than by any card?
@@ -97,10 +109,14 @@ function combatConsumerNarrows(subject: SubjectFilter): boolean {
  *  `type: creature` does NOT count as a filter here -- only creatures attack, so on a combat
  *  trigger it narrows nothing. */
 export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
-  if (consumer.verb !== "attacks" && consumer.verb !== "combat-damage") return false;
+  if (!COMBAT_VERBS.has(consumer.verb)) return false;
   if (!producer.implied) return false;
   return !combatConsumerNarrows(consumer.subject);
 }
+
+/** The verbs `combatSelfSupplied` governs -- the ones a creature performs for free. Exported so the
+ *  census can ask "is this row one of the ones that gate applies to" without restating the list. */
+export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-damage"]);
 
 /** Does a normalized producer event satisfy a normalized consumer trigger event? Verb equality
  *  plus the subject test the verb calls for -- graveyard fills and counter adds have their own
