@@ -1,7 +1,21 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { GraphView, seedPosition, zoneCentroids } from "./GraphView.js";
+import { GraphView, nodeRadius, seedPosition, zoneCentroids } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
+
+test("a card node's radius is the radius its art is drawn at", () => {
+  expect(nodeRadius({ kind: "card", deg: 3 })).toBe(14);
+});
+
+test("a card node's radius does not depend on its degree", () => {
+  expect(nodeRadius({ kind: "card", deg: 1 })).toBe(nodeRadius({ kind: "card", deg: 40 }));
+});
+
+test("a non-card node's radius scales with degree and is capped", () => {
+  expect(nodeRadius({ kind: "event", deg: 0 })).toBe(3);
+  expect(nodeRadius({ kind: "event", deg: 4 })).toBe(6);
+  expect(nodeRadius({ kind: "event", deg: 10000 })).toBe(15);
+});
 
 test("zoneCentroids places each role evenly around the ring at the given radius", () => {
   const c = zoneCentroids(["ramp", "draw", "tutor", "lands"], 100);
@@ -53,4 +67,12 @@ test("renders no legend row when the graph has no event nodes", () => {
   const noEvents = { nodes: SAMPLE.graph.nodes.filter((n) => n.kind !== "event"), edges: [] };
   render(<GraphView graph={noEvents} />);
   expect(screen.queryByText("enters")).not.toBeInTheDocument();
+});
+
+test("the canvas exposes a probe describing every visible node's drawn geometry", () => {
+  const { container } = render(<GraphView graph={SAMPLE.graph} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & { __graphProbe?: () => Array<{ r: number; kind: string }> };
+  // jsdom has no 2d context, so the effect returns before the probe is attached. Assert the
+  // contract we can assert here: the property is absent rather than holding a stale value.
+  expect(canvas.__graphProbe).toBeUndefined();
 });

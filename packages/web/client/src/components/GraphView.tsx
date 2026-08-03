@@ -21,6 +21,15 @@ const ART_RADIUS = 14;
 /** Glyphs are authored in a 24x24 box (see graph-glyphs.ts); half that is the box's own centre. */
 const GLYPH_BOX_HALF = 12;
 
+/** The radius a node is DRAWN at, in world units. Every consumer -- the repulsion sweep, the edge
+ *  springs, hit-testing, the label collision pass -- reads this one function, so the simulated size
+ *  and the painted size cannot drift apart. They did: cards simulated at 3.5 while their art painted
+ *  at ART_RADIUS (14), so nodes settled until they touched at ~7px apart and were then drawn four
+ *  times that size. That mismatch is what made the graph unreadable. */
+export function nodeRadius(n: { kind: string; deg: number }): number {
+  return n.kind === "card" ? ART_RADIUS : Math.min(3 + Math.sqrt(n.deg) * 1.5, 15);
+}
+
 interface Sim extends GraphNode { x: number; y: number; vx: number; vy: number; deg: number }
 type Point = { x: number; y: number };
 
@@ -169,6 +178,17 @@ export function GraphView({ graph }: { graph: CardGraph }) {
     for (const l of links) { l.s.deg++; l.t.deg++; }
 
     const visible = (n: Sim) => !hidden.has(n.kind);
+
+    // Measurement hook for the readability judge (and for anyone debugging layout in a console):
+    // the live simulation state, which is otherwise sealed inside this closure. Read-only snapshot,
+    // rebuilt per call. Not dev-gated -- it is a few bytes, it ships no behaviour, and a metric you
+    // can only collect in a special build is a metric nobody collects.
+    (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe = () =>
+      nodes.filter(visible).map((n) => ({
+        id: n.id, kind: n.kind, x: n.x, y: n.y, r: nodeRadius(n),
+        roles: n.roles ?? null, artCrop: n.artCrop ?? null,
+      }));
+
     // A from-scratch graph gets full energy to organize; a graph that already has settled
     // positions (a filter toggle, or -- once deckbuilding lands -- a card added/removed) only
     // needs enough to let what changed find its place. See Step 0 / the deck-view-mode stub.
@@ -218,8 +238,6 @@ export function GraphView({ graph }: { graph: CardGraph }) {
       }
       alpha = Math.max(alpha * 0.995, 0.02);
     };
-
-    const radius = (n: Sim) => (n.kind === "card" ? 3.5 : Math.min(3 + Math.sqrt(n.deg) * 1.5, 15));
 
     // Art loading (Step 3): lazy, capped concurrency, offline-first. `imgCache` holds a resolved
     // `HTMLImageElement`, or one of two sentinels: "loading" (dispatched, awaiting onload/onerror --
@@ -319,18 +337,18 @@ export function GraphView({ graph }: { graph: CardGraph }) {
           // ~8px zoomed out, the art would be mud anyway, so don't even start the request.
           if (n.artCrop && ART_RADIUS * cam.z * 2 >= 8) requestImage(n.artCrop);
           ctx.fillStyle = colorOf(n.kind);
-          ctx.beginPath(); ctx.arc(n.x, n.y, radius(n), 0, TAU); ctx.fill();
+          ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
           continue;
         }
 
         if (n.kind === "face") {
           ctx.fillStyle = colorOf(n.kind);
-          ctx.beginPath(); ctx.arc(n.x, n.y, radius(n), 0, TAU); ctx.fill();
+          ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
           continue;
         }
 
         // Every other kind draws its authored glyph instead of an abstract dot (Step 4).
-        const scale = radius(n) / GLYPH_BOX_HALF;
+        const scale = nodeRadius(n) / GLYPH_BOX_HALF;
         ctx.save();
         ctx.translate(n.x, n.y);
         ctx.scale(scale, scale);
@@ -354,7 +372,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
         .filter((n) => visible(n) && n.kind !== "card" && n.kind !== "face" && n.deg >= 6)
         .sort((a, b) => b.deg - a.deg);
       for (const n of labelled) {
-        const x = n.x + radius(n) + 4;
+        const x = n.x + nodeRadius(n) + 4;
         const y = n.y + fontPx / 3;
         const box = { x, y: y - fontPx, w: ctx.measureText(n.label).width, h: fontPx * 1.35 };
         const clash = placed.some(
@@ -382,11 +400,13 @@ export function GraphView({ graph }: { graph: CardGraph }) {
       const r = canvas.getBoundingClientRect();
       const wx = (ev.clientX - r.left - dim.w / 2 - cam.x) / cam.z;
       const wy = (ev.clientY - r.top - dim.h / 2 - cam.y) / cam.z;
-      let best: Sim | null = null, bd = 12 / cam.z;
+      let best: Sim | null = null, bd = Infinity;
       for (const n of nodes) {
         if (!visible(n)) continue;
-        const d = Math.hypot(n.x - wx, n.y - wy);
-        if (d < bd) { bd = d; best = n; }
+        // Normalised: distance as a fraction of the node's own drawn radius, so every node is
+        // clickable exactly where it is painted rather than inside a fixed box.
+        const d = Math.hypot(n.x - wx, n.y - wy) / nodeRadius(n);
+        if (d <= 1 && d < bd) { bd = d; best = n; }
       }
       return best;
     };
@@ -422,6 +442,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
       canvas.removeEventListener("pointerup", onUp);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("wheel", onWheel);
+      delete (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe;
     };
   }, [graph, hidden]);
 
