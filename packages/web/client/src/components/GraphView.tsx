@@ -35,13 +35,27 @@ export function nodeRadius(n: { kind: string; deg: number }): number {
   return n.kind === "card" ? ART_RADIUS : Math.min(3 + Math.sqrt(n.deg) * 1.5, 15);
 }
 
-/** Layout tuning. These are STARTING POINTS, not settled values -- they are tuned against a real
- *  deck in a browser during Task 7, measured rather than eyeballed. Keep them together: a constant
- *  that lives next to its use is a constant nobody re-tunes as a set. */
+/** Layout tuning. Settled during Task 7 against a real deck (inalla.txt) in a browser, measured
+ *  with the __graphProbe metrics rather than eyeballed. Keep them together: a constant that lives
+ *  next to its use is a constant nobody re-tunes as a set.
+ *
+ *  ZONE_SPRING vs LINK_STIFFNESS is the load-bearing ratio here: every card links to several
+ *  concept nodes (keyword/event/subtype/...) that are shared across cards of every role, and those
+ *  links pull toward the same hub regardless of role. At the original 0.004/0.008 (link twice as
+ *  stiff as the zone pull), that hub-pull dominated and same-role cards ended up statistically
+ *  *farther* apart than different-role cards (separationRatio 1.147, round 1). Raising the zone
+ *  spring and softening the link spring lets role identity win that tug-of-war. */
 const COLLISION_PAD = 4;
 const EDGE_GAP = 28;
-const ZONE_SPRING = 0.004;
+const ZONE_SPRING = 0.024;
 const CENTER_PULL = 0.0004;
+/** Repulsion numerator (world-units^3/tick) for the all-pairs inverse-square push. */
+const REPULSION = 1400;
+/** Link-spring stiffness pulling an edge toward its rest length. Softened from 0.008 alongside the
+ *  ZONE_SPRING increase above -- see the comment on this block. */
+const LINK_STIFFNESS = 0.004;
+/** Per-tick velocity damping (0..1, higher = less friction). */
+const VELOCITY_DAMPING = 0.86;
 /** Onscreen diameter (px) a card must draw at before its art is worth requesting -- below this it
  *  would render as mud anyway. The old gate used the fixed ART_RADIUS and 8px, which zeroed out at
  *  zoom < 0.29 -- exactly the zoom used to see a whole deck. See art-loader.ts for the throttling
@@ -258,7 +272,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
           let dx = a.x - b.x, dy = a.y - b.y;
           const d2 = dx * dx + dy * dy || 1;
           if (d2 > 220000) continue;
-          const d = Math.sqrt(d2), f = 1400 / d2;
+          const d = Math.sqrt(d2), f = REPULSION / d2;
           a.vx += (dx / d) * f; a.vy += (dy / d) * f;
           b.vx -= (dx / d) * f; b.vy -= (dy / d) * f;
 
@@ -274,7 +288,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
         // Rest length scales with what it joins: a spring between two 14px discs and one between two
         // 3px dots should not want the same length.
         const rest = nodeRadius(l.s) + nodeRadius(l.t) + EDGE_GAP;
-        const f = (d - rest) * 0.008;
+        const f = (d - rest) * LINK_STIFFNESS;
         l.s.vx += (dx / d) * f; l.s.vy += (dy / d) * f;
         l.t.vx -= (dx / d) * f; l.t.vy -= (dy / d) * f;
       }
@@ -296,7 +310,7 @@ export function GraphView({ graph }: { graph: CardGraph }) {
         // pull to the zone, so roles could never separate however hard the zones pulled.
         const zoned = n.kind === "card" && n.roles && n.roles.length > 0;
         if (!zoned) { n.vx -= n.x * CENTER_PULL; n.vy -= n.y * CENTER_PULL; }
-        n.vx *= 0.86; n.vy *= 0.86;
+        n.vx *= VELOCITY_DAMPING; n.vy *= VELOCITY_DAMPING;
         n.x += n.vx * alpha; n.y += n.vy * alpha;
       }
       alpha = Math.max(alpha * 0.995, 0.02);
