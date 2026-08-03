@@ -98,6 +98,13 @@ export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
       ...(c.gameChanger !== undefined ? { gameChanger: c.gameChanger } : {}),
       ...(c.reserved !== undefined ? { reserved: c.reserved } : {}),
       ...(c.edhrecRank !== undefined ? { edhrecRank: c.edhrecRank } : {}),
+      // Scryfall never puts image_uris at the top level for a transform/modal_dfc card -- only
+      // per-face. Falling back to the front face's artCrop is still printed card data (stage-1
+      // legal); without it every DFC (a Commander staple appearing several times in a typical
+      // deck) silently renders as a dot instead of its art.
+      ...((c.artCrop ?? c.faces?.[0]?.artCrop) !== undefined
+        ? { artCrop: (c.artCrop ?? c.faces![0].artCrop)! }
+        : {}),
     });
 
     // --- card-level edges ---

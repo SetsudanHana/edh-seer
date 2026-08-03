@@ -27,7 +27,7 @@ const fakeReport: DeckReport = {
   medianManaValue: 0,
 };
 
-function fakeDeps(capture: { commanderNames?: string[] }): AnalyzeDeps {
+function fakeDeps(capture: { commanderNames?: string[]; rolesByName?: Map<string, string[]> }): AnalyzeDeps {
   return {
     parseDecklistSections: (text) => {
       // "Commander\n1 X\n\n1 Y" -> { commanders:["X"], deck:["Y"] }; else all deck.
@@ -46,7 +46,10 @@ function fakeDeps(capture: { commanderNames?: string[] }): AnalyzeDeps {
       commanderResolved: commanderNames,
       commanderColorIdentity: ["R"],
     }),
-    graph: async () => ({ nodes: [], edges: [] }),
+    graph: async (_cardNames, rolesByName) => {
+      capture.rolesByName = rolesByName;
+      return { nodes: [], edges: [] };
+    },
     analyze: async (_cards, _combos, commanderNames) => {
       capture.commanderNames = commanderNames;
       return fakeReport;
@@ -69,4 +72,20 @@ test("falls back to the parsed Commander section when the field is empty", async
   const svc = new AnalyzeService(fakeDeps(capture));
   await svc.analyze("Commander\n1 Section Cmdr\n\n1 Sol Ring", "");
   expect(capture.commanderNames).toEqual(["Section Cmdr"]);
+});
+
+test("passes the graph dep a rolesByName map built from the report's cards, roleless cards excluded", async () => {
+  const capture: { rolesByName?: Map<string, string[]> } = {};
+  const deps = fakeDeps(capture);
+  deps.analyze = async () => ({
+    ...fakeReport,
+    cards: [
+      { name: "Sol Ring", isCommander: false, score: 0, partnerCount: 0, topPartners: [], roles: ["ramp"] },
+      { name: "Krenko, Mob Boss", isCommander: true, score: 0, partnerCount: 0, topPartners: [] }, // no roles
+      { name: "Forest", isCommander: false, score: 0, partnerCount: 0, topPartners: [], roles: [] }, // empty roles
+    ],
+  });
+  const svc = new AnalyzeService(deps);
+  await svc.analyze("1 Sol Ring\n1 Forest", "1 Krenko, Mob Boss");
+  expect(capture.rolesByName).toEqual(new Map([["Sol Ring", ["ramp"]]]));
 });

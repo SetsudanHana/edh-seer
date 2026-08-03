@@ -212,7 +212,39 @@ test("a bulk entry carrying none of the new fields still normalizes", () => {
     oracle_id: "plain", name: "Plain Card", type_line: "Artifact", keywords: [], colors: [], cmc: 1,
   })!;
   expect(n.oracleId).toBe("plain");
-  for (const k of ["manaCost", "producedMana", "layout", "legalities", "releasedAt", "gameChanger", "reserved", "allParts", "faces"]) {
+  for (const k of ["manaCost", "producedMana", "layout", "legalities", "releasedAt", "gameChanger", "reserved", "allParts", "faces", "artCrop"]) {
     expect(k in n).toBe(false);
   }
+});
+
+test("captures art_crop when present", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "art1", name: "Sol Ring", type_line: "Artifact", keywords: [], colors: [], cmc: 1,
+    image_uris: { art_crop: "https://cards.scryfall.io/art_crop/sol-ring.jpg" },
+  })!;
+  expect(n.artCrop).toBe("https://cards.scryfall.io/art_crop/sol-ring.jpg");
+});
+
+test("leaves artCrop absent when Scryfall omits image_uris", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "no-art", name: "Grizzly Bears", type_line: "Creature — Bear", keywords: [], colors: ["G"], cmc: 2,
+  })!;
+  expect(n.artCrop).toBeUndefined();
+  expect("artCrop" in n).toBe(false);
+});
+
+test("captures per-face art_crop for a double-faced card", () => {
+  const n = normalizeScryfallCard({
+    oracle_id: "delver-art",
+    name: "Delver of Secrets // Insectile Aberration",
+    type_line: "Creature — Human Wizard // Creature — Human Insect",
+    layout: "transform",
+    keywords: [],
+    card_faces: [
+      { name: "Delver of Secrets", type_line: "Creature — Human Wizard", oracle_text: "front", colors: ["U"], image_uris: { art_crop: "https://cards.scryfall.io/art_crop/delver.jpg" } },
+      { name: "Insectile Aberration", type_line: "Creature — Human Insect", oracle_text: "back", colors: ["U"], image_uris: { art_crop: "https://cards.scryfall.io/art_crop/aberration.jpg" } },
+    ],
+  })!;
+  expect(n.faces![0].artCrop).toBe("https://cards.scryfall.io/art_crop/delver.jpg");
+  expect(n.faces![1].artCrop).toBe("https://cards.scryfall.io/art_crop/aberration.jpg");
 });

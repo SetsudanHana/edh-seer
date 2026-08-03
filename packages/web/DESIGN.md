@@ -194,6 +194,23 @@ Every score, count, or tally that needs emphasis renders inside a small circular
 ### Missing/Unresolved Panel
 - **Style:** danger-colored variant of the standard panel — `border-danger`, a danger-tinted pip carrying the unresolved count, danger-colored section title. Reuses every other panel convention.
 
+### Graph Card Art (deliberate override)
+The deck-graph view (`GraphView.tsx`) fills each card node's circle with that card's Scryfall
+`art_crop` image, clipped to the circle at a fixed 14px radius with a 1px `--border` ring. This is
+a **deliberate, scoped override** of the anti-card-chrome rule below (illustrated/skeuomorphic MTG
+chrome is banned everywhere else in the system) — chosen because a card's own art is the fastest
+way to recognize it in a dense node graph, where a text label can't scale to every node at once.
+The override does not reopen the door to card-chrome generally:
+- **Bound:** art crops inside plain node circles only. No card frame, no mana-cost pips, no set
+  symbol, no foil/holo treatment, no parchment texture — the circle stays the one shape language
+  the graph already uses for every other node kind.
+- Art is lazy-loaded, capped concurrency, and **always optional**: until an image resolves, and
+  forever if it fails or is never requested (small/zoomed-out nodes skip the request entirely),
+  the node draws as the plain filled dot every other kind uses. The graph must never depend on a
+  successful image fetch — offline-first holds here same as everywhere else.
+- Non-card nodes never get art; they get an authored SVG glyph (`graph-glyphs.ts`) instead, stroked
+  in `--accent` (event kinds) or `--muted` (everything else), never a bitmap.
+
 ### Color-Identity Picker (signature component)
 Five toggleable pips (W/U/B/R/G) in the header, each showing its own resolved hue when active. Selecting a combination sets the player's pinned accent (persisted to `localStorage`) and shows the resolved identity name (e.g. "Izzet") beside the row. Sits inline beside the wordmark, never as a modal or settings page.
 
@@ -211,4 +228,4 @@ Five toggleable pips (W/U/B/R/G) in the header, each showing its own resolved hu
 - **Don't** stack an eyebrow/kicker directly above any page or section heading.
 - **Don't** use a Unicode glyph or emoji as an icon — draw a small SVG in one consistent stroke (see `ComboList`'s arrow) instead.
 - **Don't** introduce a serif or display face — Inter carries every word, JetBrains Mono every number/label.
-- **Don't** reach for illustrated/skeuomorphic MTG-card chrome (fake foil, parchment texture, oversized card frame) — this system was chosen specifically to avoid that register.
+- **Don't** reach for illustrated/skeuomorphic MTG-card chrome (fake foil, parchment texture, oversized card frame) — this system was chosen specifically to avoid that register. The one deliberate, bounded exception is the deck graph's card-art node fills — see "Graph Card Art" under Components.

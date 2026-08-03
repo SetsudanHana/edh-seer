@@ -40,7 +40,7 @@ const deps: AnalyzeDeps = {
     commanderResolved: commanderNames,
     commanderColorIdentity: [],
   }),
-  graph: async () => ({ nodes: [], edges: [] }),
+  graph: async (_cardNames, _rolesByName) => ({ nodes: [], edges: [] }),
   analyze: async () => report,
 };
 
