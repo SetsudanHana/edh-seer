@@ -98,6 +98,7 @@ export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
       ...(c.gameChanger !== undefined ? { gameChanger: c.gameChanger } : {}),
       ...(c.reserved !== undefined ? { reserved: c.reserved } : {}),
       ...(c.edhrecRank !== undefined ? { edhrecRank: c.edhrecRank } : {}),
+      ...(c.artCrop !== undefined ? { artCrop: c.artCrop } : {}),
     });
 
     // --- card-level edges ---

@@ -50,6 +50,13 @@ test("card-level facts hang off the card, not the face", () => {
   expect(edgesFrom(g, "card:krenko", "LAYOUT")).toEqual(["layout:normal"]);
 });
 
+test("artCrop lands in the card node's props when the doc has one, and is absent when it doesn't", () => {
+  const withArt = doc({ ...krenko, artCrop: "https://example.com/krenko.jpg" });
+  const g = buildGraph([withArt, chieftain]);
+  expect(g.nodes.find((n) => n.id === "card:krenko")?.props?.artCrop).toBe("https://example.com/krenko.jpg");
+  expect(g.nodes.find((n) => n.id === "card:chieftain")?.props?.artCrop).toBeUndefined();
+});
+
 test("a double-faced card yields two face nodes whose subtypes differ", () => {
   const delver = doc({
     _id: "delver", name: "Delver of Secrets // Insectile Aberration",
