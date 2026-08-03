@@ -15,6 +15,10 @@ export function cachedImageLoad(
 ): (url: string) => Promise<HTMLImageElement> {
   return async (url: string): Promise<HTMLImageElement> => {
     let blob: Blob | undefined;
+    // Held across the read and write phases below so a successful `open()` is reused instead of
+    // repeated -- the two phases still fail independently (a read failure must not skip the
+    // write attempt), this just avoids asking the Cache API to open the same store twice.
+    let cache: Cache | undefined;
 
     // Cache read is best-effort and isolated from the network fetch below: the Cache API is
     // absent in some real contexts (private browsing, non-secure origins) and can fail even when
@@ -22,11 +26,11 @@ export function cachedImageLoad(
     // rather than take the whole card down -- a cache failure must never be fatal.
     if (cacheStorage) {
       try {
-        const cache = await cacheStorage.open(CACHE_NAME);
+        cache = await cacheStorage.open(CACHE_NAME);
         const hit = await cache.match(url);
         if (hit) blob = await hit.blob();
       } catch {
-        // Fall through to the network fetch below.
+        cache = undefined; // Fall through to the network fetch below.
       }
     }
 
@@ -42,7 +46,7 @@ export function cachedImageLoad(
       blob = await res.blob();
       if (cacheStorage && toCache) {
         try {
-          const cache = await cacheStorage.open(CACHE_NAME);
+          (cache ??= await cacheStorage.open(CACHE_NAME));
           await cache.put(url, toCache);
         } catch {
           // Storing is best-effort too: a write failure (quota, private mode) must not fail a
