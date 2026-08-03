@@ -6,12 +6,14 @@ type Category =
   | "ramp" | "draw" | "cardSelection" | "targetedRemoval" | "stackInteraction"
   | "boardWipe" | "burn" | "stax" | "protection" | "tutor" | "lands";
 
-const CATEGORY_LABELS: Record<Category, string> = {
+// Exported: GraphView reuses these for zone labels and the glyph legend, so the graph's
+// functional-role names/order stay the same one place as the Cards tab's own filter chips.
+export const CATEGORY_LABELS: Record<Category, string> = {
   ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
   stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
   protection: "Protection", tutor: "Tutors", lands: "Lands",
 };
-const CATEGORY_ORDER: Category[] = [
+export const CATEGORY_ORDER: Category[] = [
   "ramp", "draw", "cardSelection", "targetedRemoval", "stackInteraction",
   "boardWipe", "burn", "stax", "protection", "tutor", "lands",
 ];
