@@ -1,4 +1,4 @@
-import type { CardDoc } from "@mtg/data";
+import type { CardDoc, CardFace } from "@mtg/data";
 import { parseTypeLine } from "./typeline.js";
 
 export type NodeKind =
@@ -94,7 +94,13 @@ export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
     // --- card-level edges ---
     for (const ci of c.colorIdentity) edge(cardId, node("color:" + ci, "color", ci), "IDENTITY");
     edge(cardId, node("cmc:" + c.manaValue, "cmc", String(c.manaValue)), "CMC");
-    for (const sym of manaSymbols(c.manaCost)) edge(cardId, node("mana:" + sym, "mana", sym), "MANA_SYMBOL");
+    // Card-level manaCost fallback: only meaningful for cards whose faces carry no cost of their
+    // own (or that have no faces at all). Faces with a cost emit MANA_SYMBOL from the face loop
+    // below instead -- see the spec's face-level mana cost.
+    const anyFaceHasCost = (c.faces ?? []).some((f) => f.manaCost);
+    if (!anyFaceHasCost) {
+      for (const sym of manaSymbols(c.manaCost)) edge(cardId, node("mana:" + sym, "mana", sym), "MANA_SYMBOL");
+    }
     if (c.layout) edge(cardId, node("layout:" + c.layout, "layout", c.layout), "LAYOUT");
     for (const m of c.producedMana ?? []) edge(cardId, node("mana:" + m, "mana", m), "PRODUCES");
     for (const kw of c.keywords) edge(cardId, node("keyword:" + slug(kw), "keyword", kw), "KEYWORD");
@@ -111,10 +117,22 @@ export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
     }
 
     // --- face-level edges ---
-    // A single-faced card is one face built from the card's own printed fields.
-    const faces = c.faces?.length
+    // A single-faced card is one face built from the card's own printed fields. When `faces` is
+    // absent we don't know whether the card is single-faced; `typeLine` may be a COMBINED line
+    // ("A — B // C — D") for a multi-faced card that was never refreshed. Splitting on " // "
+    // first (a no-op for a genuinely single-faced line) keeps a combined line from ever reaching
+    // `parseTypeLine` whole, which would otherwise parse it as one face with "//" and "—" tokens
+    // baked into its subtypes.
+    const faces: CardFace[] = c.faces?.length
       ? c.faces
-      : [{ name: c.name, typeLine: c.typeLine, oracleText: c.oracleText, colors: c.colors, power: c.power ?? undefined, toughness: c.toughness ?? undefined }];
+      : c.typeLine.split(" // ").map((typeLine, i) => ({
+          name: c.name.split(" // ")[i] ?? c.name,
+          typeLine,
+          oracleText: c.oracleText,
+          colors: c.colors,
+          power: c.power ?? undefined,
+          toughness: c.toughness ?? undefined,
+        }));
 
     faces.forEach((f, i) => {
       const faceId = node(`face:${c._id}:${i}`, "face", f.name || c.name, { oracleText: f.oracleText });
@@ -125,6 +143,7 @@ export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
       for (const t of pt.types) edge(faceId, node("type:" + t, "type", t), "TYPE");
       for (const st of pt.subtypes) edge(faceId, node("subtype:" + st, "subtype", st), "SUBTYPE");
       for (const col of f.colors) edge(faceId, node("color:" + col, "color", col), "COLOR");
+      for (const sym of manaSymbols(f.manaCost)) edge(faceId, node("mana:" + sym, "mana", sym), "MANA_SYMBOL");
 
       const p = numericStat(f.power);
       if (p !== null) edge(faceId, node("power:" + p, "power", String(p)), "POWER");

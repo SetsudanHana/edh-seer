@@ -116,6 +116,46 @@ test("producedMana and manaCost reach the same mana node", () => {
   expect(g.nodes.filter((n) => n.id === "mana:G")).toHaveLength(1);
 });
 
+/** Item 1: face-level manaCost. A card-level manaCost is often absent or stale on multi-faced
+ *  cards (Scryfall puts the real cost on each face); MANA_SYMBOL must come from the face's own
+ *  cost, hung off that face's node, not the card's card-level (often missing) manaCost. */
+test("a two-faced card with different mana costs emits MANA_SYMBOL from each face's own cost", () => {
+  const mdfc = doc({
+    _id: "mdfc", name: "Ulvenwald Captive // Ulvenwald Abomination",
+    typeLine: "Creature — Wolf // Creature — Wolf",
+    colors: ["G"], colorIdentity: ["G"], manaValue: 2, layout: "transform",
+    faces: [
+      { name: "Ulvenwald Captive", typeLine: "Creature — Wolf", oracleText: "", colors: ["G"], power: "2", toughness: "2", manaCost: "{1}{G}" },
+      { name: "Ulvenwald Abomination", typeLine: "Creature — Wolf", oracleText: "", colors: ["G"], power: "5", toughness: "5" },
+    ],
+  });
+  const g = buildGraph([mdfc]);
+  expect(edgesFrom(g, "face:mdfc:0", "MANA_SYMBOL").sort()).toEqual(["mana:1", "mana:G"]);
+  expect(edgesFrom(g, "face:mdfc:1", "MANA_SYMBOL")).toEqual([]);
+  // No stale/absent card-level fallback double-emits from the card node.
+  expect(edgesFrom(g, "card:mdfc", "MANA_SYMBOL")).toEqual([]);
+});
+
+/** Item 4: `faces` absent does not mean single-faced -- it means unrefreshed. A combined typeLine
+ *  ("A — B // C — D") must be split before it ever reaches `parseTypeLine`, or the parser bakes
+ *  "//" and the em dash into junk shared nodes. */
+test("a card with no faces but a combined typeLine splits into per-face nodes with no junk tokens", () => {
+  const stale = doc({
+    _id: "stale", name: "Stale Front // Stale Back",
+    typeLine: "Legendary Creature — Human Wizard // Land — Gate",
+  });
+  const g = buildGraph([stale]);
+  expect(edgesFrom(g, "card:stale", "FACE")).toEqual(["face:stale:0", "face:stale:1"]);
+  for (const n of g.nodes) {
+    expect(n.id).not.toContain("//");
+    expect(n.id).not.toContain("—");
+  }
+  expect(edgesFrom(g, "face:stale:0", "TYPE")).toEqual(["type:creature"]);
+  expect(edgesFrom(g, "face:stale:0", "SUBTYPE").sort()).toEqual(["subtype:human", "subtype:wizard"]);
+  expect(edgesFrom(g, "face:stale:1", "TYPE")).toEqual(["type:land"]);
+  expect(edgesFrom(g, "face:stale:1", "SUBTYPE")).toEqual(["subtype:gate"]);
+});
+
 test("all_parts component kinds map to distinct node kinds and id prefixes", () => {
   const card = doc({
     _id: "multi", name: "Multi", typeLine: "Creature — Human",
