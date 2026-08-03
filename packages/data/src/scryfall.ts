@@ -1,7 +1,28 @@
 import type { Card } from "@mtg/engine";
 
+export interface RelatedPart {
+  /** "token" | "combo_piece" | "meld_part". */
+  component: string;
+  name: string;
+  typeLine: string;
+}
+
+export interface CardFace {
+  name: string;
+  typeLine: string;
+  oracleText: string;
+  manaCost?: string;
+  power?: string;
+  toughness?: string;
+  colors: string[];
+  /** Present on faces with no mana cost, where colour cannot be read off the cost. */
+  colorIndicator?: string[];
+}
+
 export interface ScryfallCard {
   oracle_id?: string;
+  /** PRINTING id, not an oracle id. Used only to drop the self-reference from all_parts. */
+  id?: string;
   name?: string;
   type_line?: string;
   layout?: string;
@@ -9,7 +30,23 @@ export interface ScryfallCard {
   keywords?: string[];
   colors?: string[];
   cmc?: number;
-  card_faces?: Array<{ oracle_text?: string; colors?: string[] }>;
+  mana_cost?: string;
+  produced_mana?: string[];
+  legalities?: Record<string, string>;
+  released_at?: string;
+  game_changer?: boolean;
+  reserved?: boolean;
+  all_parts?: Array<{ id?: string; component?: string; name?: string; type_line?: string }>;
+  card_faces?: Array<{
+    name?: string;
+    type_line?: string;
+    oracle_text?: string;
+    mana_cost?: string;
+    power?: string;
+    toughness?: string;
+    colors?: string[];
+    color_indicator?: string[];
+  }>;
   color_identity?: string[];
   power?: string;
   toughness?: string;
@@ -21,6 +58,15 @@ export interface NormalizedCard {
   card: Card;
   faceNames: string[];
   edhrecRank?: number;
+  manaCost?: string;
+  producedMana?: string[];
+  layout?: string;
+  legalities?: Record<string, string>;
+  releasedAt?: string;
+  gameChanger?: boolean;
+  reserved?: boolean;
+  allParts?: RelatedPart[];
+  faces?: CardFace[];
 }
 
 /** Scryfall layouts that are not real gameplay cards (art cards, tokens, emblems,
@@ -67,7 +113,39 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     toughness: raw.toughness ?? null,
   };
 
-  return { oracleId: raw.oracle_id, card, faceNames, edhrecRank: raw.edhrec_rank };
+  /** Scryfall lists the card itself among its own related parts; drop it. `all_parts[].id` is a
+   *  PRINTING id and cannot be joined against the corpus, which keys on oracle_id, so it is not
+   *  stored -- stage 2 resolves combo_piece targets by name. */
+  const allParts: RelatedPart[] | undefined = raw.all_parts
+    ?.filter((p) => p.id !== raw.id && p.component && p.name && p.type_line)
+    .map((p) => ({ component: p.component!, name: p.name!, typeLine: p.type_line! }));
+
+  const cardFaces: CardFace[] | undefined = raw.card_faces?.map((f) => ({
+    name: f.name ?? "",
+    typeLine: f.type_line ?? "",
+    oracleText: f.oracle_text ?? "",
+    colors: f.colors ?? [],
+    ...(f.mana_cost !== undefined ? { manaCost: f.mana_cost } : {}),
+    ...(f.power !== undefined ? { power: f.power } : {}),
+    ...(f.toughness !== undefined ? { toughness: f.toughness } : {}),
+    ...(f.color_indicator !== undefined ? { colorIndicator: f.color_indicator } : {}),
+  }));
+
+  return {
+    oracleId: raw.oracle_id,
+    card,
+    faceNames,
+    edhrecRank: raw.edhrec_rank,
+    ...(raw.mana_cost !== undefined ? { manaCost: raw.mana_cost } : {}),
+    ...(raw.produced_mana !== undefined ? { producedMana: raw.produced_mana } : {}),
+    ...(raw.layout !== undefined ? { layout: raw.layout } : {}),
+    ...(raw.legalities !== undefined ? { legalities: raw.legalities } : {}),
+    ...(raw.released_at !== undefined ? { releasedAt: raw.released_at } : {}),
+    ...(raw.game_changer !== undefined ? { gameChanger: raw.game_changer } : {}),
+    ...(raw.reserved !== undefined ? { reserved: raw.reserved } : {}),
+    ...(allParts !== undefined && allParts.length > 0 ? { allParts } : {}),
+    ...(cardFaces !== undefined && cardFaces.length > 0 ? { faces: cardFaces } : {}),
+  };
 }
 
 export type FetchFn = typeof fetch;

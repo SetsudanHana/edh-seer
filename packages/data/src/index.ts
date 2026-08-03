@@ -11,6 +11,7 @@ export { detectCommanders } from "./commander.js";
 export { parseMoxfieldId, fetchMoxfieldDeck } from "./moxfield.js";
 export { normalizeName } from "./names.js";
 export { toCardDoc, docToCard, type CardDoc, type ComboDoc } from "./docs.js";
+export { type CardFace, type RelatedPart } from "./scryfall.js";
 export { ingestCards, ingestCombos, runIngest, type IngestCounts } from "./ingest.js";
 export {
   fetchFlavorNames,

@@ -1,6 +1,6 @@
 import { extractTags, type Card } from "@mtg/engine";
 import { normalizeName } from "./names.js";
-import type { NormalizedCard } from "./scryfall.js";
+import type { CardFace, NormalizedCard, RelatedPart } from "./scryfall.js";
 
 export interface CardDoc {
   _id: string;
@@ -16,6 +16,16 @@ export interface CardDoc {
   tags: { produces: string[]; cares: string[] };
   searchNames: string[];
   edhrecRank?: number;
+  manaCost?: string;
+  producedMana?: string[];
+  layout?: string;
+  /** Kept as a property, not edges: 24 formats across ~35k cards is ~835k edges for one fact. */
+  legalities?: Record<string, string>;
+  releasedAt?: string;
+  gameChanger?: boolean;
+  reserved?: boolean;
+  allParts?: RelatedPart[];
+  faces?: CardFace[];
 }
 
 export interface ComboDoc {
@@ -43,6 +53,15 @@ export function toCardDoc(n: NormalizedCard): CardDoc {
     tags: { produces: [...produces], cares: [...cares] },
     searchNames,
     ...(n.edhrecRank !== undefined ? { edhrecRank: n.edhrecRank } : {}),
+    ...(n.manaCost !== undefined ? { manaCost: n.manaCost } : {}),
+    ...(n.producedMana !== undefined ? { producedMana: n.producedMana } : {}),
+    ...(n.layout !== undefined ? { layout: n.layout } : {}),
+    ...(n.legalities !== undefined ? { legalities: n.legalities } : {}),
+    ...(n.releasedAt !== undefined ? { releasedAt: n.releasedAt } : {}),
+    ...(n.gameChanger !== undefined ? { gameChanger: n.gameChanger } : {}),
+    ...(n.reserved !== undefined ? { reserved: n.reserved } : {}),
+    ...(n.allParts !== undefined ? { allParts: n.allParts } : {}),
+    ...(n.faces !== undefined ? { faces: n.faces } : {}),
   };
 }
 

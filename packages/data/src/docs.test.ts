@@ -61,3 +61,21 @@ test("toCardDoc carries edhrecRank from the normalized card", () => {
   });
   expect(doc.edhrecRank).toBe(1);
 });
+
+test("toCardDoc carries the widened fields through, omitting absent ones", () => {
+  const doc = toCardDoc({
+    oracleId: "krenko",
+    card: { name: "Krenko, Mob Boss", typeLine: "Legendary Creature — Goblin Warrior", oracleText: "", keywords: [], colors: ["R"], manaValue: 4, colorIdentity: ["R"], power: "3", toughness: "3" },
+    faceNames: [],
+    manaCost: "{2}{R}{R}",
+    layout: "normal",
+    legalities: { commander: "legal" },
+    allParts: [{ component: "token", name: "Goblin", typeLine: "Token Creature — Goblin" }],
+  });
+  expect(doc.manaCost).toBe("{2}{R}{R}");
+  expect(doc.layout).toBe("normal");
+  expect(doc.legalities).toEqual({ commander: "legal" });
+  expect(doc.allParts).toHaveLength(1);
+  expect("producedMana" in doc).toBe(false);
+  expect("faces" in doc).toBe(false);
+});
