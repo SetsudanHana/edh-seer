@@ -18,6 +18,7 @@ export interface CardFace {
   colors: string[];
   /** Present on faces with no mana cost, where colour cannot be read off the cost. */
   colorIndicator?: string[];
+  artCrop?: string;
 }
 
 export interface ScryfallCard {
@@ -47,11 +48,13 @@ export interface ScryfallCard {
     toughness?: string;
     colors?: string[];
     color_indicator?: string[];
+    image_uris?: { art_crop?: string };
   }>;
   color_identity?: string[];
   power?: string;
   toughness?: string;
   edhrec_rank?: number;
+  image_uris?: { art_crop?: string };
 }
 
 export interface NormalizedCard {
@@ -68,6 +71,7 @@ export interface NormalizedCard {
   reserved?: boolean;
   allParts?: RelatedPart[];
   faces?: CardFace[];
+  artCrop?: string;
 }
 
 /** Scryfall layouts that are not real gameplay cards (art cards, tokens, emblems,
@@ -130,6 +134,7 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     ...(f.power !== undefined ? { power: f.power } : {}),
     ...(f.toughness !== undefined ? { toughness: f.toughness } : {}),
     ...(f.color_indicator !== undefined ? { colorIndicator: f.color_indicator } : {}),
+    ...(f.image_uris?.art_crop !== undefined ? { artCrop: f.image_uris.art_crop } : {}),
   }));
 
   return {
@@ -146,6 +151,7 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     ...(raw.reserved !== undefined ? { reserved: raw.reserved } : {}),
     ...(allParts !== undefined && allParts.length > 0 ? { allParts } : {}),
     ...(cardFaces !== undefined && cardFaces.length > 0 ? { faces: cardFaces } : {}),
+    ...(raw.image_uris?.art_crop !== undefined ? { artCrop: raw.image_uris.art_crop } : {}),
   };
 }
 

@@ -26,6 +26,7 @@ export interface CardDoc {
   reserved?: boolean;
   allParts?: RelatedPart[];
   faces?: CardFace[];
+  artCrop?: string;
 }
 
 export interface ComboDoc {
@@ -62,6 +63,7 @@ export function toCardDoc(n: NormalizedCard): CardDoc {
     ...(n.reserved !== undefined ? { reserved: n.reserved } : {}),
     ...(n.allParts !== undefined ? { allParts: n.allParts } : {}),
     ...(n.faces !== undefined ? { faces: n.faces } : {}),
+    ...(n.artCrop !== undefined ? { artCrop: n.artCrop } : {}),
   };
 }
 
