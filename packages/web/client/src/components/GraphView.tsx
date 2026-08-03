@@ -96,8 +96,24 @@ export function seedPosition(neighborIds: string[], prevPositions: Map<string, P
 
 export function GraphView({ graph }: { graph: CardGraph }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState<Set<NodeKind>>(() => new Set(DIM_BY_DEFAULT));
   const [hover, setHover] = useState<{ label: string; kind: string; deg: number; x: number; y: number } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  // Capability check rather than a user-agent sniff: iOS Safari on iPhone has no element
+  // fullscreen, and a button that silently does nothing is worse than no button.
+  const canFullscreen = typeof Element !== "undefined" && "requestFullscreen" in Element.prototype;
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(document.fullscreenElement === shellRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void shellRef.current?.requestFullscreen();
+  };
 
   // Layout continuity (Step 0): positions of every node as of the last time this effect tore
   // down, keyed by id. Persists across `graph`/`hidden` changes for the life of this component so
@@ -498,12 +514,24 @@ export function GraphView({ graph }: { graph: CardGraph }) {
             </button>
           );
         })}
+        {canFullscreen ? (
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            aria-pressed={isFullscreen}
+            className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-1 ml-auto"
+          >
+            {isFullscreen ? "exit fullscreen" : "fullscreen"}
+          </button>
+        ) : null}
       </div>
 
-      <div className="relative rounded-(--radius) border border-(--border) overflow-hidden">
+      <div ref={shellRef} className="relative rounded-(--radius) border border-(--border) overflow-hidden">
         <canvas
           ref={canvasRef}
-          className="block w-full h-[380px] sm:h-[520px] cursor-grab touch-none"
+          className={`block w-full cursor-grab touch-none ${
+            isFullscreen ? "h-screen" : "h-[380px] sm:h-[520px]"
+          }`}
           aria-label={`Deck graph: ${graph.nodes.length} nodes, ${graph.edges.length} edges`}
         />
         {hover ? (

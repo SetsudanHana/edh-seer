@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { expect, test } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DIM_BY_DEFAULT, GraphView, nodeRadius, seedPosition, separation, zoneCentroids } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 
@@ -106,4 +107,35 @@ test("the canvas exposes a probe describing every visible node's drawn geometry"
   // jsdom has no 2d context, so the effect returns before the probe is attached. Assert the
   // contract we can assert here: the property is absent rather than holding a stale value.
   expect(canvas.__graphProbe).toBeUndefined();
+});
+
+// requestFullscreen has no jsdom implementation at all (not even a stub that throws), so each
+// test below installs its own mock on the prototype. Saved and restored per-test rather than
+// left mutated -- this file has many other tests, and a leaked mock/deleted property on
+// Element.prototype would bleed into whichever of them runs next.
+describe("fullscreen toggle", () => {
+  let original: typeof Element.prototype.requestFullscreen;
+
+  beforeEach(() => {
+    original = Element.prototype.requestFullscreen;
+  });
+
+  afterEach(() => {
+    Element.prototype.requestFullscreen = original;
+  });
+
+  test("the fullscreen button asks the graph container to go fullscreen", async () => {
+    const requestFullscreen = vi.fn().mockResolvedValue(undefined);
+    Element.prototype.requestFullscreen = requestFullscreen;
+    const { getByRole } = render(<GraphView graph={SAMPLE.graph} />);
+    await userEvent.click(getByRole("button", { name: /fullscreen/i }));
+    expect(requestFullscreen).toHaveBeenCalledTimes(1);
+  });
+
+  test("the fullscreen button is absent when the platform does not support it", () => {
+    // @ts-expect-error -- deliberately removing the API to test the capability check
+    delete Element.prototype.requestFullscreen;
+    const { queryByRole } = render(<GraphView graph={SAMPLE.graph} />);
+    expect(queryByRole("button", { name: /fullscreen/i })).toBeNull();
+  });
 });
