@@ -5,20 +5,23 @@ import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
 import { ROOM_HUE, ROOMS, roomCenter, roomLayout, roomsForCard, roomTallies, type RoomId } from "./deck-rooms.js";
 
-/** Node kinds hidden on first paint. Each connects nearly every card in a deck -- `layout:normal`
- *  alone reaches 87 of Inalla's 94, `power:2` ties together every 2-power creature, `type:creature`
- *  nearly all of them -- so leaving them on makes the first thing anyone sees a starburst around a
- *  fact that distinguishes nothing. The same reason the engine IDF-weights common events: the hubs
- *  are where the information isn't. Nothing is removed; the filter chips turn any kind back on. */
-export const DIM_BY_DEFAULT: NodeKind[] = [
-  "layout", "cmc", "mana", "color", "type", "supertype", "power", "toughness",
-];
-
 /** Kinds ordered for the filter row: the ones worth looking at first. */
 const KIND_ORDER: NodeKind[] = [
   "event", "card", "subtype", "keyword", "token", "related",
   "type", "supertype", "power", "toughness", "face", "color", "mana", "cmc", "layout",
 ];
+
+/** Every kind but "card" is hidden on first paint. Phase 1 of the deck board is about reading the
+ *  deck: two independent blind judges, given no checklist, both named the blue event glyphs as the
+ *  first thing that draws the eye, and neither the concept mesh nor the edges answered "which of
+ *  these is my removal". The old narrower default (just the eight characteristic kinds: layout,
+ *  cmc, mana, color, type, supertype, power, toughness) still left ~200 event/subtype/keyword/etc.
+ *  nodes on by default, competing with the ~94 cards for attention -- this widens it to all of
+ *  them. Nothing is removed: every kind keeps its filter chip and is one click from coming back;
+ *  phase 2 is the separate question of how relationships get drawn on a board rather than in a
+ *  free layout. Derived from KIND_ORDER (every kind but "card") rather than hand-listed, so a kind
+ *  added there later can't be silently forgotten here. */
+export const DIM_BY_DEFAULT: NodeKind[] = KIND_ORDER.filter((k) => k !== "card");
 
 const TAU = Math.PI * 2;
 /** Radius (world units) an art-filled card node draws at -- see Step 3 of the task brief. */

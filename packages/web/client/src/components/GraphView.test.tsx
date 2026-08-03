@@ -34,17 +34,25 @@ function makeContextSpy(calls: string[] = []) {
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-test("structural mesh hubs are hidden on first paint", () => {
+// Was "structural mesh hubs are hidden on first paint", asserting the pre-Task-6 default (only
+// the eight characteristic kinds dimmed). Task 6 widens DIM_BY_DEFAULT to every non-card kind --
+// updated to the new complete set rather than deleted, so a kind silently dropped from the
+// default still fails this.
+test("every non-card kind is hidden on first paint", () => {
   expect(new Set(DIM_BY_DEFAULT)).toEqual(
-    new Set(["layout", "cmc", "mana", "color", "type", "supertype", "power", "toughness"]),
+    new Set([
+      "event", "subtype", "keyword", "token", "related", "face",
+      "layout", "cmc", "mana", "color", "type", "supertype", "power", "toughness",
+    ]),
   );
 });
 
-test("the kinds that carry synergy signal are visible on first paint", () => {
-  for (const kind of ["card", "event", "subtype", "keyword", "token", "related", "face"]) {
-    expect(DIM_BY_DEFAULT).not.toContain(kind);
-  }
-});
+// The old companion test ("the kinds that carry synergy signal are visible on first paint")
+// asserted event/subtype/keyword/token/related/face were NOT dimmed by default -- exactly the
+// behaviour Task 6 inverts. Deleted rather than flipped in place: a flipped version would only
+// re-assert "card is the sole exception", which the test above (as a full-set equality) and the
+// new "hides every non-card kind" test below already cover -- keeping both would be the same
+// assertion three times.
 
 test("no correction when two discs are clear of each other", () => {
   expect(separation(100, 0, 14, 14, 4)).toBeNull();
@@ -166,9 +174,14 @@ test("exposes each card's rooms on the measurement probe", () => {
   expect(card.rooms!.length).toBeGreaterThan(0);
 });
 
-test("gives a non-card node no rooms", () => {
+// Since Task 6, non-card kinds start hidden -- and hidden nodes are filtered out of the probe
+// (see `visible`/`__graphProbe` in GraphView.tsx) -- so a bare render's probe now holds only card
+// nodes and `.find((n) => n.kind !== "card")` would find nothing. Click the subtype chip on first,
+// same as a user would, to bring a non-card node back into the probe.
+test("gives a non-card node no rooms", async () => {
   makeContextSpy();
-  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const { container, getByRole } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  await userEvent.click(getByRole("button", { name: /^subtype/ }));
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => Array<{ kind: string; rooms: string[] | null }>;
   };
@@ -279,4 +292,28 @@ describe("fullscreen toggle", () => {
     const enterButton = getByRole("button", { name: /^fullscreen$/i });
     expect(enterButton).toHaveAttribute("aria-pressed", "false");
   });
+});
+
+test("hides every non-card kind on first paint", () => {
+  expect(DIM_BY_DEFAULT).toContain("event");
+  expect(DIM_BY_DEFAULT).toContain("subtype");
+  expect(DIM_BY_DEFAULT).toContain("keyword");
+  expect(DIM_BY_DEFAULT).not.toContain("card");
+});
+
+test("renders the event chip unpressed so the mesh is one click away", () => {
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  expect(screen.getByRole("button", { name: /^event/ })).toHaveAttribute("aria-pressed", "false");
+});
+
+// makeContextSpy() is required here (the brief's sketch omitted it): without a real 2D context
+// jsdom's guard bails before `__graphProbe` is ever attached, and this would fail on
+// `canvas.__graphProbe!()` being undefined rather than on the assertion this test is about.
+test("shows only card nodes in the probe by default", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ kind: string }>;
+  };
+  expect(canvas.__graphProbe!().every((n) => n.kind === "card")).toBe(true);
 });
