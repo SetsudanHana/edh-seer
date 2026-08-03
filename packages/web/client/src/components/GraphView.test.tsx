@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DIM_BY_DEFAULT, GraphView, nodeRadius, seedPosition, separation, zoneCentroids } from "./GraphView.js";
@@ -121,7 +121,19 @@ describe("fullscreen toggle", () => {
   });
 
   afterEach(() => {
-    Element.prototype.requestFullscreen = original;
+    // jsdom has no requestFullscreen at all, so the real baseline is "no such property" --
+    // `original` reads as `undefined` in that case. Assigning `undefined` back would not restore
+    // that baseline: it creates an OWN property on the prototype holding `undefined`, and
+    // `"requestFullscreen" in Element.prototype` (the exact capability check the feature uses)
+    // is true for an own property regardless of its value. Delete when there was nothing to
+    // restore; only reassign when a real value was captured.
+    if (original === undefined) {
+      // @ts-expect-error -- restoring jsdom's default (no such property), not merely undefined
+      delete Element.prototype.requestFullscreen;
+    } else {
+      Element.prototype.requestFullscreen = original;
+    }
+    delete (document as { fullscreenElement?: unknown }).fullscreenElement;
   });
 
   test("the fullscreen button asks the graph container to go fullscreen", async () => {
@@ -137,5 +149,27 @@ describe("fullscreen toggle", () => {
     delete Element.prototype.requestFullscreen;
     const { queryByRole } = render(<GraphView graph={SAMPLE.graph} />);
     expect(queryByRole("button", { name: /fullscreen/i })).toBeNull();
+  });
+
+  test("the button label and aria-pressed follow fullscreenchange events in both directions", () => {
+    Element.prototype.requestFullscreen = vi.fn().mockResolvedValue(undefined);
+    const { getByRole, getByTestId } = render(<GraphView graph={SAMPLE.graph} />);
+    const shell = getByTestId("graph-fullscreen-shell");
+
+    // Entering: the browser (not this component) sets document.fullscreenElement and fires the
+    // event; simulate that rather than clicking, since click only calls requestFullscreen -- it
+    // is the browser granting the request that actually flips fullscreen state. fireEvent (not a
+    // raw dispatchEvent) wraps this in `act` so the resulting setState is flushed before assert.
+    Object.defineProperty(document, "fullscreenElement", { value: shell, configurable: true });
+    fireEvent(document, new Event("fullscreenchange"));
+    const exitButton = getByRole("button", { name: /exit fullscreen/i });
+    expect(exitButton).toHaveAttribute("aria-pressed", "true");
+
+    // Exiting (Escape, or the button's own click handler calling exitFullscreen): the browser
+    // clears fullscreenElement and fires the same event again.
+    Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true });
+    fireEvent(document, new Event("fullscreenchange"));
+    const enterButton = getByRole("button", { name: /^fullscreen$/i });
+    expect(enterButton).toHaveAttribute("aria-pressed", "false");
   });
 });

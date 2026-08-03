@@ -111,8 +111,8 @@ export function GraphView({ graph }: { graph: CardGraph }) {
   }, []);
 
   const toggleFullscreen = () => {
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void shellRef.current?.requestFullscreen();
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    else void shellRef.current?.requestFullscreen().catch(() => {});
   };
 
   // Layout continuity (Step 0): positions of every node as of the last time this effect tore
@@ -497,54 +497,66 @@ export function GraphView({ graph }: { graph: CardGraph }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap gap-2">
-        {kinds.map((k) => {
-          const on = !hidden.has(k);
-          return (
+      {/* The fullscreen element (and its opaque ::backdrop) obscure every sibling in the
+       *  document while active -- Escape would otherwise be the only way out, since the exit
+       *  button would render behind the backdrop. shellRef therefore wraps the button row AND
+       *  the canvas, not just the canvas, so "exit fullscreen" stays reachable the whole time. */}
+      <div
+        ref={shellRef}
+        data-testid="graph-fullscreen-shell"
+        className={`flex flex-col gap-6 ${isFullscreen ? "h-screen bg-(--background)" : ""}`}
+      >
+        <div className="flex flex-wrap gap-2">
+          {kinds.map((k) => {
+            const on = !hidden.has(k);
+            return (
+              <button
+                key={k}
+                type="button"
+                aria-pressed={on}
+                onClick={() => toggle(k)}
+                className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                  on ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                }`}
+              >
+                {k} <span className="tabular-nums">{counts.get(k)}</span>
+              </button>
+            );
+          })}
+          {canFullscreen ? (
             <button
-              key={k}
               type="button"
-              aria-pressed={on}
-              onClick={() => toggle(k)}
-              className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
-                on ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
-              }`}
+              onClick={toggleFullscreen}
+              aria-pressed={isFullscreen}
+              className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-1 ml-auto"
             >
-              {k} <span className="tabular-nums">{counts.get(k)}</span>
+              {isFullscreen ? "exit fullscreen" : "fullscreen"}
             </button>
-          );
-        })}
-        {canFullscreen ? (
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            aria-pressed={isFullscreen}
-            className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-1 ml-auto"
-          >
-            {isFullscreen ? "exit fullscreen" : "fullscreen"}
-          </button>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
 
-      <div ref={shellRef} className="relative rounded-(--radius) border border-(--border) overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          className={`block w-full cursor-grab touch-none ${
-            isFullscreen ? "h-screen" : "h-[380px] sm:h-[520px]"
+        <div
+          className={`relative rounded-(--radius) border border-(--border) overflow-hidden ${
+            isFullscreen ? "flex-1 min-h-0" : "h-[380px] sm:h-[520px]"
           }`}
-          aria-label={`Deck graph: ${graph.nodes.length} nodes, ${graph.edges.length} edges`}
-        />
-        {hover ? (
-          <div
-            className="pointer-events-none absolute rounded-(--radius) border border-(--border) bg-(--background) px-2 py-1 text-xs whitespace-nowrap"
-            style={{ left: hover.x + 12, top: hover.y + 12 }}
-          >
-            {hover.label}{" "}
-            <span className="text-(--muted) font-mono tabular-nums">
-              {hover.kind} · {hover.deg}
-            </span>
-          </div>
-        ) : null}
+        >
+          <canvas
+            ref={canvasRef}
+            className="block w-full h-full cursor-grab touch-none"
+            aria-label={`Deck graph: ${graph.nodes.length} nodes, ${graph.edges.length} edges`}
+          />
+          {hover ? (
+            <div
+              className="pointer-events-none absolute rounded-(--radius) border border-(--border) bg-(--background) px-2 py-1 text-xs whitespace-nowrap"
+              style={{ left: hover.x + 12, top: hover.y + 12 }}
+            >
+              {hover.label}{" "}
+              <span className="text-(--muted) font-mono tabular-nums">
+                {hover.kind} · {hover.deg}
+              </span>
+            </div>
+          ) : null}
+        </div>
       </div>
       <p className="text-(--muted) text-sm">
         Drag to pan, scroll to zoom. Accent nodes are events — a card emits into one and another
