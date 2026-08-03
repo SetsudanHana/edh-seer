@@ -1,15 +1,17 @@
 import { writeFileSync, readFileSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, type CardDoc } from "@mtg/data";
 import { buildGraph, type CardGraph } from "../graph.js";
+import { toHtml } from "../graph-html.js";
 
-/** Export a FILTERED card subgraph as Cytoscape JSON, readable by Cytoscape Desktop and Gephi.
+/** Export a FILTERED card subgraph, as a self-contained HTML viewer (`--out x.html`) or as
+ *  Cytoscape JSON for Cytoscape Desktop and Gephi (any other extension).
  *
  *  There is deliberately no --all: the corpus is ~35k card nodes and ~350k edges, which renders
  *  as an unreadable hairball in every tool. Offering the flag would make the first thing anyone
  *  tries the thing that convinces them the graph is useless.
  *
  *  Usage:
- *    npx tsx packages/matcher/src/bin/graph-export.ts --subtype wizard [--limit 500] [--out f.cyjs]
+ *    npx tsx packages/matcher/src/bin/graph-export.ts --subtype wizard [--limit 500] [--out f.html]
  *    npx tsx packages/matcher/src/bin/graph-export.ts --deck packages/cli/decks/inalla.txt
  *    npx tsx packages/matcher/src/bin/graph-export.ts --identity R --limit 300 */
 const arg = (name: string): string | undefined => {
@@ -65,7 +67,8 @@ async function main(): Promise<void> {
   }
 
   const g = buildGraph(docs);
-  writeFileSync(out, JSON.stringify(toCytoscape(g), null, 1));
+  const label = deck ?? (subtype ? `subtype: ${subtype}` : `identity: ${identity}`);
+  writeFileSync(out, out.endsWith(".html") ? toHtml(g, label) : JSON.stringify(toCytoscape(g), null, 1));
   console.log(`${docs.length} cards -> ${g.nodes.length} nodes, ${g.edges.length} edges -> ${out}`);
   await store.close();
 }
