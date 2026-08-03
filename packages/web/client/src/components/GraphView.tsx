@@ -36,24 +36,33 @@ export function nodeRadius(n: { kind: string; deg: number }): number {
 }
 
 /** Layout tuning. Settled during Task 7 against a real deck (inalla.txt) in a browser, measured
- *  with the __graphProbe metrics rather than eyeballed. Keep them together: a constant that lives
- *  next to its use is a constant nobody re-tunes as a set.
+ *  with the __graphProbe metrics rather than eyeballed -- across at least 10 independent
+ *  fresh-load trials per candidate, not a single run, because initial positions carry
+ *  Math.random() jitter (see seedPosition/the sim setup) and separationRatio has real run-to-run
+ *  spread. Keep them together: a constant that lives next to its use is a constant nobody
+ *  re-tunes as a set.
  *
  *  ZONE_SPRING vs LINK_STIFFNESS is the load-bearing ratio here: every card links to several
  *  concept nodes (keyword/event/subtype/...) that are shared across cards of every role, and those
  *  links pull toward the same hub regardless of role. At the original 0.004/0.008 (link twice as
  *  stiff as the zone pull), that hub-pull dominated and same-role cards ended up statistically
- *  *farther* apart than different-role cards (separationRatio 1.147, round 1). Raising the zone
- *  spring and softening the link spring lets role identity win that tug-of-war. */
+ *  *farther* apart than different-role cards (separationRatio 1.147, round 1). Each retune needed
+ *  a real multi-trial noise check, not 1-2 samples, to be trusted -- see task-7-report.md's full
+ *  measurement history: 0.024/0.004 (6x ratio) looked fine on 2 trials (~0.57-0.62) but a 5-trial
+ *  check found mean 0.706 with one trial at 1.008 -- a false pass. 0.06/0.002 (30x) held for 5
+ *  trials (0.438-0.497) but widened out over 10 (spread 0.132 vs. a margin of only 0.121 to the
+ *  gate) -- still not a safe margin. 0.1/0.0012 (~83x) is what's settled: 10 trials landed
+ *  0.430-0.477, a spread of 0.047 against a gate margin of 0.222 -- comfortably tighter than the
+ *  headroom, not just narrower than one lucky pair of samples. */
 const COLLISION_PAD = 4;
 const EDGE_GAP = 28;
-const ZONE_SPRING = 0.024;
+const ZONE_SPRING = 0.1;
 const CENTER_PULL = 0.0004;
 /** Repulsion numerator (world-units^3/tick) for the all-pairs inverse-square push. */
 const REPULSION = 1400;
 /** Link-spring stiffness pulling an edge toward its rest length. Softened from 0.008 alongside the
  *  ZONE_SPRING increase above -- see the comment on this block. */
-const LINK_STIFFNESS = 0.004;
+const LINK_STIFFNESS = 0.0012;
 /** Per-tick velocity damping (0..1, higher = less friction). */
 const VELOCITY_DAMPING = 0.86;
 /** Onscreen diameter (px) a card must draw at before its art is worth requesting -- below this it
