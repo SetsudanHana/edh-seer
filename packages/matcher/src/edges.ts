@@ -243,6 +243,34 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       producer: p.card.name,
     });
   }
+  // Counter-presence edges: C has an ability whose effect subject is filtered on a counter kind
+  // ("creatures you control WITH a +1/+1 counter"), which is a cares-signal with no emit behind
+  // it — the card benefits from a board state rather than reacting to an event. P supplies that
+  // state. Tagged into the existing counter-added family on purpose, so these cards join the
+  // counters theme instead of forming a parallel one.
+  for (const pa of p.tags.abilities) {
+    for (const emit of pa.emits ?? []) {
+      if (emit.verb !== "counter-added" || !emit.subject.counter) continue;
+      for (const ca of c.tags.abilities) {
+        const want = ca.effect.subject;
+        if (!want?.counter || want.counter !== emit.subject.counter) continue;
+        // an ability that emits the same event is already covered by the event-edge pass above
+        if ((ca.emits ?? []).some((e) => e.verb === "counter-added")) continue;
+        if (ca.trigger?.verbs.includes("counter-added")) continue;
+        if (!subjectMatches(emit.subject, want, h)) continue;
+        reasons.push({
+          tag: `counter-added:${themeSubjectKey(want)}`,
+          text: `${c.card.name} benefits from ${want.counter} counters being on the board; ${p.card.name} puts them there`,
+          effectKind: ca.effect.kind,
+          repeatability: ca.kind === "static" ? "static" : ca.kind === "activated" ? "activated" : ca.kind === "on-cast" ? "oneshot" : "triggered",
+          scaling: ca.effect.scaling,
+          consumer: c.card.name,
+          producer: p.card.name,
+        });
+      }
+    }
+  }
+
   return reasons;
 }
 

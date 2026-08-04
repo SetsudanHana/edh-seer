@@ -603,3 +603,92 @@ test("a static reason records which card supplies the effect and which is affect
   expect(stat!.consumer).toBe("Gravecrawler");
   expect(stat!.producer).toBe("Death Baron");
 });
+
+// Fixture shapes below are lifted verbatim from the real corpus (mtg.cardTags in Mongo, checked
+// 2026-08-04), not guessed from memory:
+//   Hardened Scales   a1f3da21-af6d-450e-bf0b-985d158418e6
+//   Inspiring Call    9b9a10ff-5a5d-4df8-88aa-18d84ff9117c
+//   Fathom Mage       93d0e129-e3b5-4aff-9e50-f34771ed00ff
+//   Primordial Hydra  1c36ed3a-c806-47e5-83f9-e44999c67fe5
+
+test("a card that benefits from creatures carrying counters links to the card adding them", () => {
+  // Hardened Scales: static counter-placement that emits counter-added.
+  const adder = base("Hardened Scales", [{
+    kind: "static",
+    effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  // Inspiring Call: cares that creatures HAVE +1/+1 counters; emits nothing.
+  const carer = base("Inspiring Call", [{
+    kind: "on-cast",
+    effect: { kind: "pump", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [],
+  }]);
+  const reasons = pairReasons(adder, carer, H);
+  const r = reasons.find((x) => x.tag.startsWith("counter-added"));
+  expect(r, "no counter reason was produced").toBeDefined();
+  expect(r!.consumer).toBe("Inspiring Call");
+  expect(r!.producer).toBe("Hardened Scales");
+});
+
+test("a mismatched counter kind produces no edge", () => {
+  const adder = base("Hardened Scales", [{
+    kind: "static",
+    effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const loyalty = base("Loyalty Carer", [{
+    kind: "on-cast",
+    effect: { kind: "pump", subject: { type: "creature", control: "you", token: null, counter: "loyalty" } },
+    emits: [],
+  }]);
+  expect(pairReasons(adder, loyalty, H).some((x) => x.tag.startsWith("counter-added"))).toBe(false);
+});
+
+// Guard 1: an ability whose OWN emits already include counter-added is a producer of that state,
+// not a carer of it -- its effect.subject.counter describes what it places, not a condition it
+// benefits from. Shape lifted from Fathom Mage's real first ability (evolve: put a +1/+1 counter
+// on this creature on a bigger creature entering) rather than invented, per the corpus IDs above.
+// Without the guard this pair would gain one counter-added reason from the new pass; with it,
+// zero -- neither ability here triggers on counter-added, so the pre-existing event-edge pass
+// contributes nothing either.
+test("an ability that itself places counters is not also counted as caring about them", () => {
+  const adder = base("Hardened Scales", [{
+    kind: "static",
+    effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const selfPlacer = base("Evolving Engine", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: false } },
+    effect: { kind: "counter-placement", subject: { control: "you", token: null, counter: "+1/+1" } },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const counterReasons = pairReasons(adder, selfPlacer, H).filter((x) => x.tag.startsWith("counter-added"));
+  expect(counterReasons.length).toBe(0);
+});
+
+// Guard 2: an ability that already TRIGGERS on counter-added is covered by the existing event-edge
+// pass; the new pass must not also match its effect.subject if that happens to carry the same
+// counter kind. Shape lifted from Primordial Hydra's real tagged ability (trigger: counter-added
+// +1/+1, effect: token-doubling on a +1/+1-counter subject) -- a real case where both the trigger
+// and the effect subject name the same counter kind, so the double-count guard is actually live.
+test("an ability that already triggers on counter-added does not gain a duplicate reason", () => {
+  const adder = base("Hardened Scales", [{
+    kind: "static",
+    effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const doubler = base("Counter Doubler", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "+1/+1" } },
+    effect: { kind: "token-doubling", subject: { control: "you", token: null, counter: "+1/+1" } },
+    emits: [],
+  }]);
+  const counterReasons = pairReasons(adder, doubler, H).filter((x) => x.tag.startsWith("counter-added"));
+  // exactly the one reason the pre-existing event-edge pass (trigger.verbs includes counter-added)
+  // already produces; the new pass must recognize its own would-be match is the same edge and skip.
+  expect(counterReasons.length).toBe(1);
+  expect(counterReasons[0].consumer).toBe("Counter Doubler");
+  expect(counterReasons[0].producer).toBe("Hardened Scales");
+});
