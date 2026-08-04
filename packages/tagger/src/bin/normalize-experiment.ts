@@ -73,13 +73,7 @@ Rules:
 - fromZone/toZone are set ONLY when the clause MOVES an object between zones. Getting this right
   matters more than anything else: "search your library ... put it onto the battlefield" is
   library->battlefield, but "... put it into your hand" is library->hand. They are different cards.
-- A clause of kind "keyword", "reminder" or "level" gets abilityType "none" and exactly
-  actions [{verb:"none"}]. A "Level 2" line is a DIVIDER announcing a Class level, not an ability
-  — its cost is already extracted and the ability it introduces is the clause after it. Never give
-  it add-counter, level-up or any other verb.
-- "none" and "other" are not interchangeable. "none" means the clause states no game action at all
-  (a keyword line, a reminder, a level divider). "other" means the clause DOES something that no
-  verb above covers. Never use "other" for a clause that does nothing.
+- Every clause you are shown states a game action; inert clauses are not sent to you.
 - OMIT the trigger field entirely when the clause is not triggered. Do not send trigger:null and
   do not send event:"none" — one fact must have exactly one encoding, or two runs disagree over
   nothing. (This ambiguity alone accounted for every residual disagreement in the first run.)
@@ -151,7 +145,15 @@ for (const name of cardNames) {
 for (const run of ["run1", "run2"]) {
   const results: { name: string; clauses: Clause[]; output: unknown }[] = [];
   for (const p of prepared) {
-    const listed = p.clauses.map((c) =>
+    // keyword / reminder / level clauses state no game action. Asking the model about them
+    // produced pure drift (a "Level 2" divider came back add-counter on one run and level-up on
+    // the next), so they are answered here and never sent. Their slots are still filled, so the
+    // completeness invariant holds.
+    const INERT = new Set(["keyword", "reminder", "level"]);
+    const askable = p.clauses.filter((c) => !INERT.has(c.kind));
+    const synthesized = p.clauses.filter((c) => INERT.has(c.kind))
+      .map((c) => ({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text }] }));
+    const listed = askable.map((c) =>
       `${c.id}. [${c.kind}${c.marker ? ` ${c.marker}` : ""}]` +
       `${c.abilityType ? ` type=${c.abilityType}` : ""}${c.cost ? ` cost="${c.cost}"` : ""}` +
       `${c.costActions ? ` costActions=[${c.costActions.join(",")}]` : ""} ${c.text}`).join("\n");
@@ -161,7 +163,8 @@ for (const run of ["run1", "run2"]) {
         { role: "system", content: SYSTEM },
         { role: "user", content: `Card: ${p.name}\nClauses:\n${listed}` },
       ]);
-      parsed = JSON.parse(raw);
+      const got = JSON.parse(raw) as { clauses?: unknown[] };
+      parsed = { clauses: [...(got.clauses ?? []), ...synthesized].sort((a, b) => (a as { id: number }).id - (b as { id: number }).id) };
     } catch (e) { parsed = { ERROR: (e as Error).message.slice(0, 200) }; }
     results.push({ name: p.name, clauses: p.clauses, output: parsed });
     process.stdout.write(".");
