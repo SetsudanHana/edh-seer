@@ -110,3 +110,19 @@ test("expectsAbilities: real rules text means an empty tag is a hole, not a vani
   // Keyword PLUS real text still expects abilities.
   expect(expectsAbilities({ oracleText: "Flying\nWhenever this creature attacks, draw a card.", keywords: ["Flying"] } as never)).toBe(true);
 });
+
+test("expectsAbilities: keywords that take arguments are still keyword-only", () => {
+  // Baneslayer Angel is french-vanilla; requiring the part to EQUAL the keyword mis-read it as a
+  // hole, and this predicate gates upsert-batch.
+  expect(expectsAbilities({
+    oracleText: "Flying, first strike, lifelink, protection from Demons and from Dragons",
+    keywords: ["Flying", "First strike", "Lifelink", "Protection"],
+  } as never)).toBe(false);
+  expect(expectsAbilities({ oracleText: "Ward {2}", keywords: ["Ward"] } as never)).toBe(false);
+  expect(expectsAbilities({ oracleText: "Hexproof from black", keywords: ["Hexproof"] } as never)).toBe(false);
+  // Still true when a real ability rides along with the keywords.
+  expect(expectsAbilities({
+    oracleText: "Flying, protection from red\nWhenever this creature attacks, draw a card.",
+    keywords: ["Flying", "Protection"],
+  } as never)).toBe(true);
+});

@@ -26,10 +26,16 @@ export function expectsAbilities(card: { oracleText?: string; keywords?: string[
   const keywords = (card.keywords ?? []).map((k) => k.toLowerCase());
   return text.split("\n").some((line) => {
     // Drop reminder text in parentheses, then treat "Flying, vigilance" as a keyword line only if
-    // every comma-separated part is a printed keyword of this card.
+    // every comma-separated part is a printed keyword of this card. Keywords take arguments —
+    // "protection from Demons", "ward {2}", "hexproof from black", "landwalk" variants — so match
+    // on the part STARTING WITH a keyword, not equalling it. Requiring equality mis-read
+    // french-vanilla cards like Baneslayer Angel as holes, and this predicate gates upsert-batch:
+    // over-firing there rejects a legitimately empty tagging instead of persisting it.
     const bare = line.replace(/\s*\([^)]*\)\s*/g, "").trim().toLowerCase();
     if (bare === "") return false;
-    return !bare.split(/,\s*/).every((part) => keywords.includes(part.trim()));
+    return !bare
+      .split(/,\s*/)
+      .every((part) => keywords.some((k) => part.trim() === k || part.trim().startsWith(`${k} `)));
   });
 }
 
