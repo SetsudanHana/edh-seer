@@ -51,6 +51,12 @@ const find = (card: string, pred: (c: Rec) => boolean): string => {
   return (row.output.clauses ?? []).some(pred) ? "PASS" : "FAIL";
 };
 const act = (c: Rec, f: (a: NonNullable<Rec["actions"]>[number]) => boolean): boolean => (c.actions ?? []).some(f);
+const curatedPresent = r1.some((x) => x.name.startsWith("Kura") || x.name.startsWith("Cultivate"));
+if (!curatedPresent) {
+  console.log(`\n(held-out sample — the known-wrong card list does not apply; determinism and`);
+  console.log(` completeness are the gates that generalise, plus a hand read of the output.)`);
+  process.exit(0);
+}
 console.log(`\nKNOWN-WRONG CARDS`);
 console.log(`  Kura searches to HAND, not battlefield : ${find("Kura", (c) => act(c, (a) => a.verb === "put" && a.toZone === "hand"))}`);
 console.log(`  Cultivate puts one onto the BATTLEFIELD: ${find("Cultivate", (c) => act(c, (a) => a.verb === "put" && a.toZone === "battlefield"))}`);

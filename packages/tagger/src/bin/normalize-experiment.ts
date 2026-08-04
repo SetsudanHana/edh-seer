@@ -18,6 +18,12 @@ import { createProvider } from "../llm/factory.js";
 import { segment, type Clause } from "../segment.js";
 
 const OUT = process.argv[2] ?? "/tmp/normalize-exp";
+/** `--random N seed` draws a HELD-OUT sample instead of the curated list below. The curated cards
+ *  were chosen because they were broken and the prompt was then tuned against them, so they cannot
+ *  demonstrate generalisation — only a fresh draw can. The curated 20 are excluded from it. */
+const randIdx = process.argv.indexOf("--random");
+const RANDOM_N = randIdx > 0 ? Number(process.argv[randIdx + 1] ?? 20) : 0;
+const RANDOM_SEED = randIdx > 0 ? Number(process.argv[randIdx + 2] ?? 11) : 11;
 
 const CARDS = [
   "Bitterblossom", "Kura, the Boundless Sky", "Cultivate", "Path to Exile", "Swiftfoot Boots",
@@ -80,8 +86,23 @@ const cfg = loadTaggerConfig();
 const provider = createProvider({ ...cfg, maxTokens: 3000 });
 mkdirSync(OUT, { recursive: true });
 
+let cardNames: string[] = CARDS;
+if (RANDOM_N > 0) {
+  const pool = (await s.db.collection("cards")
+    .find({ oracleText: { $exists: true, $ne: "" }, edhrecRank: { $lte: 15000 } },
+      { projection: { name: 1 } }).toArray()) as unknown as { name: string }[];
+  const curated = new Set(CARDS);
+  const eligible = pool.map((p) => p.name).filter((n) => !curated.has(n)).sort();
+  let x = RANDOM_SEED;
+  const rnd = (): number => { x = (x * 1103515245 + 12345) & 0x7fffffff; return x / 0x7fffffff; };
+  for (let i = eligible.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [eligible[i], eligible[j]] = [eligible[j], eligible[i]]; }
+  cardNames = eligible.slice(0, RANDOM_N);
+  console.log(`HELD-OUT sample of ${cardNames.length} (seed ${RANDOM_SEED}), curated cards excluded:`);
+  console.log("  " + cardNames.join(", ") + "\n");
+}
+
 const prepared: { name: string; clauses: Clause[] }[] = [];
-for (const name of CARDS) {
+for (const name of cardNames) {
   const c = (await s.db.collection("cards").findOne({ name })) as
     { name: string; oracleText?: string; keywords?: string[]; typeLine?: string } | null;
   if (!c) { console.log(`  (missing: ${name})`); continue; }
