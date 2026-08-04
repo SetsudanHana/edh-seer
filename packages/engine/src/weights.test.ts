@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import {
   globalIDF, rankThemes, themeWeights, weightedEdge, dampedScore,
-  computeCohesion, cohesionLabel, COMBO_EDGE_WEIGHT, THEME_DECAY, type TagStats,
+  computeCohesion, cohesionLabel, COMBO_EDGE_WEIGHT, THEME_DECAY, tagFamily, type TagStats,
 } from "./weights.js";
 
 const stats: TagStats = { N: 100, counts: { "cast:sorcery": 80, "tribe:wizard": 5, "treasure": 2 } };
@@ -62,4 +62,37 @@ test("cohesion caps at 1 and is null when there are no themes or no nonland card
   expect(computeCohesion(rankThemes(deckFreq, stats), deckFreq, 20)!.score).toBe(1);
   expect(computeCohesion([], new Map(), 10)).toBeNull();
   expect(computeCohesion(["tribe:wizard"], new Map([["tribe:wizard", 5]]), 0)).toBeNull();
+});
+
+test("tagFamily strips the subject, leaving the mechanism", () => {
+  expect(tagFamily("counter-added:creature")).toBe("counter-added");
+  expect(tagFamily("counter-added:any")).toBe("counter-added");
+  expect(tagFamily("draw:any")).toBe("draw");
+  expect(tagFamily("combo")).toBe("combo");
+});
+
+test("a theme split across two subjects outranks a single denser tag", () => {
+  // counter-added is 17 + 16 = 33 across two subjects; draw:any is 18 in one.
+  const deckFreq = new Map([
+    ["counter-added:creature", 17],
+    ["counter-added:any", 16],
+    ["draw:any", 18],
+  ]);
+  // equal rarity, so only the frequencies decide
+  const stats = { N: 1000, counts: { "counter-added:creature": 100, "counter-added:any": 100, "draw:any": 100 } };
+  const ranked = rankThemes(deckFreq, stats);
+  expect(tagFamily(ranked[0])).toBe("counter-added");
+});
+
+test("ranking returns the strongest tag within a family, not the family name", () => {
+  const deckFreq = new Map([["counter-added:creature", 17], ["counter-added:any", 16]]);
+  const stats = { N: 1000, counts: { "counter-added:creature": 100, "counter-added:any": 100 } };
+  expect(rankThemes(deckFreq, stats)[0]).toBe("counter-added:creature");
+});
+
+test("every input tag still appears in the ranking exactly once", () => {
+  const deckFreq = new Map([["counter-added:creature", 17], ["counter-added:any", 16], ["draw:any", 18]]);
+  const stats = { N: 1000, counts: { "counter-added:creature": 100, "counter-added:any": 100, "draw:any": 100 } };
+  const ranked = rankThemes(deckFreq, stats);
+  expect([...ranked].sort()).toEqual([...deckFreq.keys()].sort());
 });

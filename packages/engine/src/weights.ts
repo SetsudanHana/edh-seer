@@ -27,15 +27,39 @@ export function globalIDF(stats: TagStats, tag: Tag): number {
   return Math.log((stats.N + 1) / (count + 1));
 }
 
+/** The mechanism half of a tag: everything before the first ":". Tags are `<verb>:<subject>`
+ *  (`counter-added:creature`), and the same mechanism at two subject granularities is one theme,
+ *  not two — a deck whose counters split 17/16 across `:creature` and `:any` was ranking below a
+ *  single `draw:any` of 18, which is how a +1/+1 deck came to report "primary = draw". */
+export function tagFamily(tag: string): string {
+  const i = tag.indexOf(":");
+  return i === -1 ? tag : tag.slice(0, i);
+}
+
 /**
  * Order a deck's tags into themes: descending by deckFreq × globalIDF, so a tag that
  * is both dense in the deck AND rare in the corpus (a real theme) outranks a dense-but-
  * common staple (mana) or a rare-but-incidental one-off. Deterministic lexical tie-break.
  */
 export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats): Tag[] {
-  return [...deckFreq.entries()]
-    .map(([tag, freq]) => ({ tag, key: freq * globalIDF(stats, tag) }))
-    .sort((a, b) => b.key - a.key || a.tag.localeCompare(b.tag))
+  const scored = [...deckFreq.entries()]
+    .map(([tag, freq]) => ({ tag, key: freq * globalIDF(stats, tag) }));
+
+  // Rank by the family's combined weight so one mechanism counts once, but keep returning real
+  // tags: callers (themeWeights, weightedEdge) look tags up directly and would miss a family name.
+  const familyKey = new Map<string, number>();
+  for (const s of scored) {
+    const f = tagFamily(s.tag);
+    familyKey.set(f, (familyKey.get(f) ?? 0) + s.key);
+  }
+
+  return scored
+    .sort((a, b) => {
+      const fa = familyKey.get(tagFamily(a.tag)) ?? 0;
+      const fb = familyKey.get(tagFamily(b.tag)) ?? 0;
+      // family strength first, then the member's own strength, then lexical for determinism
+      return fb - fa || b.key - a.key || a.tag.localeCompare(b.tag);
+    })
     .map((r) => r.tag);
 }
 
