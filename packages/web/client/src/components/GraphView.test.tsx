@@ -253,6 +253,29 @@ test("labels every room, including one holding no cards", () => {
   }
 });
 
+test("labels a room above its circle's rim, not at its centre", () => {
+  const calls = makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  // draw()'s room loop emits, per room and in this exact order: beginPath+arc+fill (the wash),
+  // beginPath+arc+stroke (the outline), fillText (the label) -- with nothing else recorded in
+  // between, since property assignments (fillStyle, font, lineWidth, strokeStyle) go through the
+  // spy's `set` trap, not `get`, and are never pushed onto `calls`. So for every fillText, the call
+  // two slots back is always the arc that drew THAT SAME room's outline -- letting the label's y be
+  // checked against its own circle's real x/y/r instead of a bare constant.
+  let matched = 0;
+  for (let i = 2; i < calls.length; i++) {
+    if (calls[i - 1] !== "stroke:" || !calls[i - 2].startsWith("arc:") || !calls[i].startsWith("fillText:")) continue;
+    const [, labelY] = calls[i].slice("fillText:".length).split(",").slice(-2);
+    const [, cy, r] = calls[i - 2].slice("arc:".length).split(",");
+    matched++;
+    // Above the rim, not just above the centre: a label at the centre (the old, wrong behaviour --
+    // see GraphView.tsx's "lands under the cards it describes" comment) would fail this, since
+    // centre y is never less than rim y (cy - r) for a circle with r > 0.
+    expect(Number(labelY)).toBeLessThan(Number(cy) - Number(r));
+  }
+  expect(matched).toBeGreaterThanOrEqual(ROOMS.length);
+});
+
 describe("fullscreen toggle", () => {
   let original: typeof Element.prototype.requestFullscreen;
 
