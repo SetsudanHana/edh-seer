@@ -29,8 +29,8 @@ test("every gold effect.kind is in the prompt's recognized label set (no drift)"
   }
 });
 
-test("PROMPT_VERSION is 23 (StatPredicate support)", () => {
-  expect(PROMPT_VERSION).toBe(23);
+test("PROMPT_VERSION is 24 (phase-step trigger verbs + false-emit rules)", () => {
+  expect(PROMPT_VERSION).toBe(24);
 });
 
 test("every gold effect.scaling is in SCALING_BASES (no drift)", () => {

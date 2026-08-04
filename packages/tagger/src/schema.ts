@@ -61,7 +61,10 @@ export type Verb =
   | "counter-added"
   | "land-play"
   | "untaps"
-  | "proliferate";
+  | "proliferate"
+  | "upkeep"
+  | "begin-combat"
+  | "end-step";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -84,6 +87,15 @@ export const VERB_VOCAB: readonly Verb[] = [
   "land-play",
   "untaps",
   "proliferate",
+  // Phase/step triggers. Without these the vocabulary had nowhere to put "at the beginning of your
+  // upkeep", so those abilities were tagged with the nearest available verb — a 46-card audit found
+  // Nut Collector, Sen Triplets and Crystalline Giant all recorded as `enters`, which does not just
+  // lose the timing, it forms FALSE edges with every ETB payoff in the deck. Nothing ever EMITS
+  // these (no card supplies your upkeep), so they correctly form no edges; their value is that the
+  // ability's own emits survive with honest timing, and a phase trigger marks a repeatable engine.
+  "upkeep",
+  "begin-combat",
+  "end-step",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */
@@ -98,6 +110,13 @@ export const VERB_ALIASES: Readonly<Record<string, Verb>> = {
   tap: "taps",
   "add-counter": "counter-added",
   "counter-add": "counter-added",
+  "beginning-of-upkeep": "upkeep",
+  "your-upkeep": "upkeep",
+  "upkeep-step": "upkeep",
+  "beginning-of-combat": "begin-combat",
+  "combat-begins": "begin-combat",
+  "beginning-of-end-step": "end-step",
+  "end-of-turn": "end-step",
   "play-land": "land-play",
   "create-tokens": "create-token",
   untap: "untaps",

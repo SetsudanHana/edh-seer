@@ -17,8 +17,8 @@ function flat(): string {
     .join("\n");
 }
 
-test("prompt version is 23", () => {
-  expect(PROMPT_VERSION).toBe(23);
+test("prompt version is 24", () => {
+  expect(PROMPT_VERSION).toBe(24);
 });
 
 test("messages teach the flicker/untap/animate vocab with a few-shot each", () => {
@@ -53,8 +53,8 @@ test("messages include the closed effect.kind label set", () => {
   expect(flat()).toContain("player-life-loss");
 });
 
-test("PROMPT_VERSION is 23", () => {
-  expect(PROMPT_VERSION).toBe(23);
+test("PROMPT_VERSION is 24", () => {
+  expect(PROMPT_VERSION).toBe(24);
 });
 
 test("instructions teach the stats predicate", () => {
