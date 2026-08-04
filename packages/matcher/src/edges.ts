@@ -198,6 +198,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           hasStatPredicate: (t.subject.stats?.length ?? 0) > 0 || undefined,
           consumer: c.card.name,
           producer: p.card.name,
+          impliedProducer: e.implied || undefined,
         });
       }
     }
