@@ -35,6 +35,8 @@ export interface Clause {
    *  choose between recording a sacrifice cost as prose or as an action — Phyrexian Tower's
    *  "{T}, Sacrifice a creature:" is what an aristocrats deck needs to see. */
   cost?: string;
+  /** Actions the cost performs that another card can trigger on, derived from `cost`. */
+  costActions?: string[];
 }
 
 /** True when the card itself is an instant or sorcery — its text is a spell ability by default. */
@@ -42,8 +44,40 @@ function isSpellCard(typeLine: string): boolean {
   return /\b(instant|sorcery)\b/i.test(typeLine);
 }
 
-/** Leading "{cost}: effect" or "Cost, Cost: effect" — an activated ability (CR 602). */
-const ACTIVATED = /^((?:\{[^}]*\}|[^:{}]{1,40}?)(?:\s*,\s*(?:\{[^}]*\}|[^:{}]{1,40}?))*)\s*:\s+/;
+/** Leading "{cost}: effect" or "Cost, Cost: effect" — an activated ability (CR 602). A cost part is
+ *  a RUN of mana symbols ({U/R}{U/R}{U/R}) or a short phrase; Izzet Locket's four adjacent hybrid
+ *  symbols defeated an earlier version that allowed only one brace group per part, so its cost was
+ *  never split off and it was misfiled as a static ability. */
+const ACTIVATED = /^((?:(?:\{[^}]*\})+|[^:{}]{1,40}?)(?:\s*,\s*(?:(?:\{[^}]*\})+|[^:{}]{1,40}?))*)\s*:\s+/;
+
+/** Actions a cost performs that another card can trigger on. Extracted here rather than left to
+ *  the model, which recorded a sacrifice cost on one run and dropped it the next. Paying mana and
+ *  tapping the source are deliberately absent: nothing triggers on them. */
+const COST_ACTIONS: [RegExp, string][] = [
+  [/\bsacrific\w*\b/i, "sacrifice"],
+  [/\bdiscard\w*\b/i, "discard"],
+  [/\bexile\w*\b/i, "exile"],
+  [/\bpay \d+ life\b/i, "pay-life"],
+  [/\bremove\b.*\bcounter/i, "remove-counter"],
+  [/\breturn\w*\b/i, "return"],
+];
+
+/** The verbs whose zones are NOT implied by the verb itself. A draw is always library->hand and a
+ *  mill always library->graveyard, so recording those invites two runs to disagree over a fact
+ *  neither of them chose. Only these five genuinely vary. */
+export const ZONED_VERBS = ["put", "return", "exile", "search", "cast"] as const;
+
+/** Cost actions implied by an activation cost string, in the order written. */
+export function costActions(cost: string): string[] {
+  return COST_ACTIONS.filter(([re]) => re.test(cost)).map(([, verb]) => verb);
+}
+
+/** A sentence starting a new trigger inside another clause ("Add {U}. When you spend this mana,
+ *  ... ") is its own ability; leaving it inline let one run record it and the next ignore it. */
+function splitEmbeddedTriggers(text: string): string[] {
+  const parts = text.split(/(?<=\.)\s+(?=(?:When|Whenever|At)\b)/);
+  return parts.map((p) => p.trim()).filter((p) => p !== "");
+}
 
 function classify(text: string, kind: ClauseKind, typeLine: string): { abilityType?: Clause["abilityType"]; cost?: string; body: string } {
   if (kind === "keyword" || kind === "reminder") return { body: text };
@@ -84,7 +118,12 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
   let id = 0;
   const next = (c: Omit<Clause, "id">): Clause => {
     const { abilityType, cost, body } = classify(c.text, c.kind, typeLine);
-    const clause: Clause = { id: ++id, ...c, text: body, ...(abilityType ? { abilityType } : {}), ...(cost ? { cost } : {}) };
+    const ca = cost ? costActions(cost) : [];
+    const clause: Clause = {
+      id: ++id, ...c, text: body,
+      ...(abilityType ? { abilityType } : {}), ...(cost ? { cost } : {}),
+      ...(ca.length ? { costActions: ca } : {}),
+    };
     out.push(clause);
     return clause;
   };
@@ -127,7 +166,8 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
     }
 
     if (isKeywordLine(body, keywords)) { next({ kind: "keyword", text: body, marker }); continue; }
-    next({ kind: chapter ? "chapter" : "ability", text: body, marker });
+    const pieces = splitEmbeddedTriggers(body);
+    pieces.forEach((piece, i) => next({ kind: chapter ? "chapter" : "ability", text: piece, ...(i === 0 ? { marker } : {}) }));
   }
   return out;
 }

@@ -107,3 +107,29 @@ test("segmentation is deterministic — the property the model could not provide
   const text = "When Kura dies, choose one —\n• Search your library.\n• Create a token.";
   expect(segment(text)).toEqual(segment(text));
 });
+
+test("a run of adjacent mana symbols is still an activated cost", () => {
+  // Izzet Locket was misfiled as a static ability because the cost regex allowed only one brace
+  // group per comma-separated part, so its sacrifice was never split off.
+  const c = segment("{U/R}{U/R}{U/R}{U/R}, {T}, Sacrifice this artifact: Draw two cards.");
+  expect(c[0].abilityType).toBe("activated");
+  expect(c[0].cost).toBe("{U/R}{U/R}{U/R}{U/R}, {T}, Sacrifice this artifact");
+  expect(c[0].costActions).toEqual(["sacrifice"]);
+});
+
+test("cost actions are derived, and mana and tapping are never among them", () => {
+  expect(segment("{T}, Sacrifice a creature: Add {B}{B}.")[0].costActions).toEqual(["sacrifice"]);
+  expect(segment("{2}, Discard a card: Draw a card.")[0].costActions).toEqual(["discard"]);
+  // Nothing triggers on paying mana or tapping the source, so neither becomes an action.
+  expect(segment("{3}{R}: Create a 1/1 red Goblin creature token.")[0].costActions).toBeUndefined();
+  expect(segment("{T}: Add {C}.")[0].costActions).toBeUndefined();
+});
+
+test("a trigger embedded after a sentence becomes its own clause", () => {
+  // Lapis Orb: one run recorded the delayed trigger, the next ignored it.
+  const c = segment("Add {U}. When you spend this mana to cast a Dragon creature spell, scry 2.");
+  expect(c).toHaveLength(2);
+  expect(c[0].text).toBe("Add {U}.");
+  expect(c[1].abilityType).toBe("triggered");
+  expect(c[1].text.startsWith("When you spend")).toBe(true);
+});

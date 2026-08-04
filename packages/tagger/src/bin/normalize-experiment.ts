@@ -74,14 +74,16 @@ Rules:
   do not send event:"none" — one fact must have exactly one encoding, or two runs disagree over
   nothing. (This ambiguity alone accounted for every residual disagreement in the first run.)
 - "trigger-again" is for effects that make a triggered ability trigger an additional time.
-- COSTS. From a cost="..." record ONLY these as actions, because only these are things another
-  card can trigger on: sacrifice, discard, exile, return, remove-counter, pay-life.
-  NEVER record paying mana, tapping the source ({T}), or an unpaid alternative ("if you don't")
-  as an action. cost="{T}, Sacrifice a creature" yields exactly one action: sacrifice.
-- ZONES. Set fromZone/toZone ONLY for these verbs, which are defined by the move:
-    put, return, mill, discard, draw, search, exile, cast (when cast from outside the hand)
-  NEVER set zones for: sacrifice, destroy, tap, untap, create, add-mana, add-counter, deal-damage,
-  gain-life, lose-life, grant-ability, modify-pt, counter-spell, copy, shuffle, reveal, cant.
+- COSTS are already decided for you. A clause showing costActions=[...] contributes exactly those
+  actions FIRST, verbatim, then the actions of its effect. A clause with a cost= but no
+  costActions contributes none from the cost — paying mana and tapping the source are not things
+  any card triggers on. Never infer a cost action yourself.
+- ZONES. Set fromZone/toZone for EXACTLY these five verbs and no others: put, return, exile,
+  search, cast. Their zones genuinely vary — "put onto the battlefield" and "put into your hand"
+  are different cards. Every other verb already fixes its own zones: a draw is always
+  library->hand, a mill always library->graveyard, a discard always hand->graveyard, a sacrifice
+  always battlefield->graveyard. Recording those makes two runs disagree over a fact neither
+  chose. Leave them null.
   Those verbs already imply where they happen; recording it twice makes two runs disagree over
   nothing. "create" is the one exception you may be tempted by — a token entering is implied by
   the verb, so leave its zones null.
@@ -124,7 +126,8 @@ for (const run of ["run1", "run2"]) {
   for (const p of prepared) {
     const listed = p.clauses.map((c) =>
       `${c.id}. [${c.kind}${c.marker ? ` ${c.marker}` : ""}]` +
-      `${c.abilityType ? ` type=${c.abilityType}` : ""}${c.cost ? ` cost="${c.cost}"` : ""} ${c.text}`).join("\n");
+      `${c.abilityType ? ` type=${c.abilityType}` : ""}${c.cost ? ` cost="${c.cost}"` : ""}` +
+      `${c.costActions ? ` costActions=[${c.costActions.join(",")}]` : ""} ${c.text}`).join("\n");
     let parsed: unknown;
     try {
       const raw = await provider.chat([
