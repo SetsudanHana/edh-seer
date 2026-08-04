@@ -39,6 +39,29 @@ test("a single subtype collapses to a bare string (matches SubjectFilter convent
   expect(enters.subject.subtype).toBe("equipment");
 });
 
+test("every synthesised baseline event is marked implied", () => {
+  const chars = {
+    types: ["creature"], subtypes: ["wizard"], colors: [], identity: [],
+    cmc: 2, power: "2", toughness: "2", token: false, keywords: [],
+  };
+  const events = impliedEvents(chars);
+  // cast + enters + attacks + combat-damage
+  expect(events).toHaveLength(4);
+  for (const e of events) {
+    expect(e.implied, `${e.verb} must be marked implied`).toBe(true);
+  }
+});
+
+test("a land implies only a marked enters", () => {
+  const chars = {
+    types: ["land"], subtypes: [], colors: [], identity: [],
+    cmc: 0, power: null, toughness: null, token: false, keywords: [],
+  };
+  const events = impliedEvents(chars);
+  expect(events.map((e) => e.verb)).toEqual(["enters"]);
+  expect(events[0].implied).toBe(true);
+});
+
 test("mill and discard imply an untyped enters@graveyard", () => {
   const emits: GameEvent[] = [
     { verb: "mill", subject: { control: "opp", token: null } },

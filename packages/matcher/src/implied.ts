@@ -29,15 +29,18 @@ function selfSubject(chars: Characteristics): SubjectFilter {
  *  - any nonland card is CAST (instants/sorceries/permanents) -> emits { verb: "cast" };
  *  - any permanent (incl. lands) ENTERS the battlefield -> emits { verb: "enters" }.
  *  So a nonland permanent implies both; instant/sorcery implies cast only; a land implies
- *  enters only (landfall). Every subject carries the card's full types + subtypes. */
+ *  enters only (landfall). Every subject carries the card's full types + subtypes.
+ *  Every event this function returns carries `implied: true` — the marker that separates
+ *  baseline supply (a card merely existing) from authored surplus. `combatSelfSupplied` in
+ *  edges.ts reads it, but only for combat verbs; see the comment below. */
 export function impliedEvents(chars: Characteristics): GameEvent[] {
   const types = chars.types.map((t) => t.toLowerCase());
   const isLand = types.includes("land");
   const isPermanent = types.some((t) => PERMANENT_TYPES.has(t));
   const subject = selfSubject(chars);
   const out: GameEvent[] = [];
-  if (!isLand) out.push({ verb: "cast", subject });
-  if (isPermanent) out.push({ verb: "enters", subject });
+  if (!isLand) out.push({ verb: "cast", subject, implied: true });
+  if (isPermanent) out.push({ verb: "enters", subject, implied: true });
   // A creature on the battlefield can attack and connect, exactly as a nonland card can be cast.
   // These only ever reach a consumer that filters on WHICH creature attacks -- see
   // `combatSelfSupplied` in edges.ts for why the generic case forms no edge. `implied: true`
