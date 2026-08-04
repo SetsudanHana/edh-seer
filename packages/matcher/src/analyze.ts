@@ -247,12 +247,13 @@ export function analyzeDeckStructured(
       : { ...c, synergyRating: base, roles };
   });
 
-  const themes = [...deckFreq.entries()]
-    .map(([tag, count]) => ({ tag, count }))
-    .sort((x, y) => y.count - x.count || x.tag.localeCompare(y.tag));
+  // themes and cohesion must agree on which tag leads, so both come from this one
+  // rankThemes(deckFreq, ...) call instead of themes using its own raw-count sort.
+  const rankedThemes = rankThemes(deckFreq, UNIFORM_STATS);
+  const themes = rankedThemes.map((tag) => ({ tag, count: deckFreq.get(tag)! }));
 
   const nonlandCount = resolved.filter((dc) => !isLand(dc)).length;
-  const cohesion = computeCohesion(rankThemes(deckFreq, UNIFORM_STATS), deckFreq, nonlandCount);
+  const cohesion = computeCohesion(rankedThemes, deckFreq, nonlandCount);
 
   const deckStats = computeDeckStats(resolved.map((dc) => dc.card));
 

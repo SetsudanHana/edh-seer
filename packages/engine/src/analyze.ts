@@ -198,9 +198,13 @@ export function analyzeDeck(
     if (produces.has("card-draw")) roles.draw++;
     if (produces.has("removal")) roles.removal++;
   }
-  const themes = [...themeCounts.entries()]
-    .map(([tag, count]) => ({ tag, count }))
-    .sort((x, y) => y.count - x.count);
+  // Same ordering rule cohesion uses (rankThemes) instead of a separate raw-count sort — the
+  // list and the cohesion headline must not tell different stories about which theme leads.
+  // themeCounts (produces only) and deckFreq (produces ∪ cares, below) are different tag
+  // universes, so this can't fully unify with cohesion the way matcher's analyzeDeckStructured
+  // does (same map, same call) — but ranking each by the same method keeps this list's
+  // {tag,count} shape and values untouched while removing the raw-count-vs-weighted mismatch.
+  const themes = rankThemes(themeCounts, TAG_STATS).map((tag) => ({ tag, count: themeCounts.get(tag)! }));
 
   const nonlandCount = cards.filter((c) => !c.typeLine.toLowerCase().includes("land")).length;
   const cohesion = computeCohesion(rankThemes(deckFreq, TAG_STATS), deckFreq, nonlandCount);
