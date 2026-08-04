@@ -23,6 +23,10 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     "token-doubling": 1.0,
     "trigger-doubling": 1.0,
     drain: 0.9,
+    // Re-triggers every attack trigger and doubles a turn's combat damage — a surplus producer
+    // of attack events, the same shape as the 1.0 doublers above, but it costs a whole card and
+    // is usually once per turn, so 0.9 rather than 1.0.
+    "extra-combat": 0.9,
     "graveyard-recursion": 0.8,
     flicker: 0.8,
     "copy-spell": 0.8,
@@ -42,6 +46,10 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     proliferate: 0.4,
     "player-life-loss": 0.3,
     lifegain: 0.3,
+    // Denies an opponent's resources rather than advancing your own board — low-impact
+    // interaction, same band as player-life-loss/lifegain. NOT graveyard-recursion (0.8) despite
+    // the similar name: these two kinds are opposites (deny vs. reuse a graveyard).
+    "graveyard-hate": 0.3,
     "top-manipulation": 0.3,
     "speed-increase": 0.3,
     damage: 0.2,
