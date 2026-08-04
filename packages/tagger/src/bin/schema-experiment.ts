@@ -1,31 +1,40 @@
-/** Measures whether extraction accuracy falls as schema richness rises.
+/** Multi-arm extraction experiment. Same 20 adversarial cards through every arm, output written
+ *  for a hand audit against oracle text. Nothing touches the database.
  *
- *  Runs the SAME cards through two competing normalizations — a clause-level rules-primitive
- *  schema and a richer CR-flavoured AST — and writes both outputs for a hand audit against oracle
- *  text. The card list is deliberately adversarial: every card the 50-card quality audit found
- *  broken, plus the structural shapes that break schemas (Class, Saga, MDFC, replacement effect).
+ *  The arms answer four separate questions that all bear on "rewrite the tagger vocabulary?":
+ *    1. SCHEMA RICHNESS  A-clause vs B-ast     — does accuracy fall as the schema gets richer?
+ *    2. BATCHING         prod-single vs prod-batch — production tags 40 cards per call, and the
+ *                        13%-wrong audit was measured on that output. If batching is the cause,
+ *                        the vocabulary is not the problem.
+ *    3. MODEL TIER       A-clause on haiku vs sonnet — changes the cost calculus for 20k cards.
+ *    4. DETERMINISM      A-clause run twice — quantifies how much of the 14% re-tag churn is
+ *                        model nondeterminism rather than the prompt change.
  *
- *  Usage: tsx src/bin/schema-experiment.ts [outDir]      (needs ANTHROPIC_API_KEY) */
+ *  Usage: tsx src/bin/schema-experiment.ts [outDir] [arms]   (needs ANTHROPIC_API_KEY)
+ *    arms defaults to all; pass a comma list to run a subset, e.g. "A-single,B-single".
+ *    Estimated cost for all arms on haiku plus one sonnet arm: well under $2. */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig } from "@mtg/data";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
+import { buildAbilityMessages } from "../llm/prompt.js";
+import type { ChatMessage } from "../llm/provider.js";
+import { docToCard } from "@mtg/data";
 
 const OUT = process.argv[2] ?? "/tmp/schema-exp";
+const ONLY = process.argv[3] ? new Set(process.argv[3].split(",")) : null;
 
 const CARDS = [
-  // Cards the quality audit found wrong or partial.
+  // Wrong or partial in the 50-card quality audit.
   "Balan, Wandering Knight", "Path to Exile", "Kura, the Boundless Sky", "Feeling of Dread",
   "Heritage Reclamation", "Contaminated Drink", "Nervous Gardener", "Swiftfoot Boots",
   "Cultivate", "The Elderspell", "Crystalline Giant",
-  // Cards that were empty despite real text.
+  // Empty despite real rules text.
   "Bitterblossom", "Counterspell", "Supreme Verdict", "Phyrexian Tower", "Sen Triplets",
   // Structural shapes that break schemas.
-  "Innkeeper's Talent",          // Class, leveled
-  "Urza's Saga",                 // Saga, chapter abilities, land
-  "Riverglide Pathway // Lavaglide Pathway", // MDFC
-  "Yarok, the Desecrated",       // replacement effect on triggers
+  "Innkeeper's Talent", "Urza's Saga", "Riverglide Pathway // Lavaglide Pathway",
+  "Yarok, the Desecrated",
 ];
 
 const SCHEMA_A = `You NORMALIZE a Magic card's rules text. You do NOT classify or interpret it.
@@ -81,26 +90,69 @@ Rules:
 - Characteristic-defining abilities are continuous with layer 7 and duration "always".
 Return ONLY { "abilities": [ ... ] }.`;
 
+const HAIKU = "claude-haiku-4-5";
+const SONNET = "claude-sonnet-5";
+
+interface Arm { name: string; schema: string | "PROD"; model: string; batch: number }
+const ARMS: Arm[] = [
+  { name: "A-single", schema: SCHEMA_A, model: HAIKU, batch: 1 },
+  { name: "A-single-rerun", schema: SCHEMA_A, model: HAIKU, batch: 1 },   // determinism
+  { name: "A-batch10", schema: SCHEMA_A, model: HAIKU, batch: 10 },        // batching effect
+  { name: "A-single-sonnet", schema: SCHEMA_A, model: SONNET, batch: 1 },  // model tier
+  { name: "B-single", schema: SCHEMA_B, model: HAIKU, batch: 1 },          // schema richness
+  { name: "B-single-sonnet", schema: SCHEMA_B, model: SONNET, batch: 1 },  // richness x tier
+  { name: "prod-single", schema: "PROD", model: HAIKU, batch: 1 },         // current prompt, unbatched
+];
+
 const s = await connect(loadConfig());
 const cfg = loadTaggerConfig();
-const provider = createProvider({ ...cfg, maxTokens: 8000 });
 mkdirSync(OUT, { recursive: true });
 
-for (const [label, schema] of [["A-clause", SCHEMA_A], ["B-ast", SCHEMA_B]] as const) {
-  const results: { name: string; oracleText: string; output: unknown }[] = [];
-  for (const name of CARDS) {
-    const c = (await s.db.collection("cards").findOne({ name })) as { name: string; oracleText?: string; typeLine?: string } | null;
-    if (!c) { console.log(`  (missing card: ${name})`); continue; }
-    const raw = await provider.chat([
-      { role: "system", content: schema },
-      { role: "user", content: `Card: ${c.name}\nType: ${c.typeLine ?? ""}\nText:\n${c.oracleText ?? ""}` },
-    ]);
-    let output: unknown;
-    try { output = JSON.parse(raw); } catch { output = { PARSE_FAILED: raw.slice(0, 400) }; }
-    results.push({ name: c.name, oracleText: c.oracleText ?? "", output });
-    console.log(`${label}: ${c.name}`);
-  }
-  writeFileSync(join(OUT, `${label}.json`), JSON.stringify(results, null, 1));
+const docs: { name: string; oracleText: string; typeLine: string; doc: unknown }[] = [];
+for (const name of CARDS) {
+  const c = (await s.db.collection("cards").findOne({ name })) as
+    { name: string; oracleText?: string; typeLine?: string } | null;
+  if (!c) { console.log(`  (missing card: ${name})`); continue; }
+  docs.push({ name: c.name, oracleText: c.oracleText ?? "", typeLine: c.typeLine ?? "", doc: c });
 }
-console.log(`\nwrote ${OUT}/A-clause.json and ${OUT}/B-ast.json`);
+
+for (const arm of ARMS) {
+  if (ONLY && !ONLY.has(arm.name)) continue;
+  const provider = createProvider({ ...cfg, model: arm.model, maxTokens: arm.batch > 1 ? 8000 : 2000 });
+  const results: { name: string; oracleText: string; output: unknown }[] = [];
+
+  for (let i = 0; i < docs.length; i += arm.batch) {
+    const slice = docs.slice(i, i + arm.batch);
+    let messages: ChatMessage[];
+    if (arm.schema === "PROD") {
+      messages = buildAbilityMessages(docToCard(slice[0].doc as never));
+    } else if (arm.batch === 1) {
+      messages = [
+        { role: "system", content: arm.schema },
+        { role: "user", content: `Card: ${slice[0].name}\nType: ${slice[0].typeLine}\nText:\n${slice[0].oracleText}` },
+      ];
+    } else {
+      messages = [
+        { role: "system", content: arm.schema },
+        { role: "user", content:
+          `Return { "results": [ { "name": string, "abilities": [...] } ] } — one entry per card.\n\n` +
+          slice.map((d) => `Card: ${d.name}\nType: ${d.typeLine}\nText:\n${d.oracleText}`).join("\n\n") },
+      ];
+    }
+    let raw = "";
+    try { raw = await provider.chat(messages); } catch (e) { raw = `ERROR: ${(e as Error).message}`; }
+    let parsed: unknown;
+    try { parsed = JSON.parse(raw); } catch { parsed = { PARSE_FAILED: raw.slice(0, 400) }; }
+
+    if (arm.batch === 1) results.push({ name: slice[0].name, oracleText: slice[0].oracleText, output: parsed });
+    else {
+      const byName = new Map(((parsed as { results?: { name: string }[] }).results ?? []).map((r) => [r.name, r]));
+      for (const d of slice) results.push({ name: d.name, oracleText: d.oracleText, output: byName.get(d.name) ?? { MISSING_FROM_BATCH: true } });
+    }
+    process.stdout.write(".");
+  }
+  writeFileSync(join(OUT, `${arm.name}.json`), JSON.stringify(results, null, 1));
+  console.log(` ${arm.name} (${arm.model}, batch ${arm.batch}) -> ${results.length} cards`);
+}
+console.log(`\nwrote arms to ${OUT}`);
 await s.close();
