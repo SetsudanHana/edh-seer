@@ -95,22 +95,3 @@ test("a static tag never nominates a theme", () => {
   expect(themeCandidates(["enters:wizard", "static:pump", "static:cost-reduction", "enters:land"]))
     .toEqual(["enters:wizard", "enters:land"]);
 });
-
-test("a replacement effect supplies surplus rather than consuming", () => {
-  const doubler = card("Token Doubler", [{
-    kind: "static",
-    effect: { kind: "token-doubling", subject: { type: "creature", control: "you", token: true } },
-  }]);
-  const payoff = card("Payoff", [{
-    kind: "triggered",
-    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
-    effect: { kind: "draw-card" },
-  }]);
-  const reasons: Reason[] = [{
-    tag: "enters:creature", text: "x", producer: "Payoff", consumer: "Token Doubler",
-    effectKind: "token-doubling",
-  }];
-  const [t] = themeMembership([doubler, payoff], reasons, ["enters:creature"]);
-  expect(t.surplus, "a doubler multiplies the event stream, so it produces").toContain("Token Doubler");
-  expect(t.payoffs).not.toContain("Token Doubler");
-});

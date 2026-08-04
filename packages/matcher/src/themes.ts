@@ -1,6 +1,5 @@
 import type { Reason } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
-import { classifyEffect } from "./effect-class.js";
 import { themeSubjectKey } from "./edges.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import type { DeckCard } from "./types.js";
@@ -65,13 +64,7 @@ export function themeMembership(
 
     for (const r of reasons) {
       if (r.tag !== tag) continue;
-      const cls = r.effectKind
-        ? classifyEffect(r.effectKind, r.hasStatPredicate === true)
-        : "unclassified";
-      // A replacement effect multiplies occurrences of this event, so its card supplies the
-      // theme however the edge is oriented — a token doubler is not "paid off" by tokens.
-      if (cls === "replacement" && r.consumer) surplus.add(r.consumer);
-      else if (r.consumer) payoffs.add(r.consumer);
+      if (r.consumer) payoffs.add(r.consumer);
       if (!r.producer) continue;
       if (r.impliedProducer) baseline.add(r.producer);
       else surplus.add(r.producer);
