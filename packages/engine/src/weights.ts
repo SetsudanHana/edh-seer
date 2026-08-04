@@ -37,9 +37,12 @@ export function tagFamily(tag: string): string {
 }
 
 /**
- * Order a deck's tags into themes: descending by deckFreq × globalIDF, so a tag that
- * is both dense in the deck AND rare in the corpus (a real theme) outranks a dense-but-
- * common staple (mana) or a rare-but-incidental one-off. Deterministic lexical tie-break.
+ * Order a deck's tags into themes. Primary key is the tag's family (the mechanism before
+ * ":"), summed across every subject that family appears at, so `counter-added:creature`
+ * and `counter-added:any` rank as one combined theme instead of splitting and losing to a
+ * single-subject tag like `draw:any`. Within a family, individual deckFreq × globalIDF
+ * breaks the tie — dense AND rare wins over a dense-but-common staple (mana) or a
+ * rare-but-incidental one-off — then lexical order for determinism.
  */
 export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats): Tag[] {
   const scored = [...deckFreq.entries()]
@@ -109,7 +112,11 @@ export function computeCohesion(
   const themes = ranked.filter((t) => !t.startsWith("tribe-nontoken:"));
   if (themes.length === 0 || nonlandCount === 0) return null;
   const primary = themes[0];
-  const secondary = themes[1] ?? null;
+  // Secondary must be a different mechanism, not just the next tag: rankThemes' family
+  // collapse now puts same-family tags adjacent (e.g. counter-added:creature next to
+  // counter-added:any), and describeTag has no per-family case for most families, so a
+  // same-family secondary would render the identical label as the primary.
+  const secondary = themes.slice(1).find((t) => tagFamily(t) !== tagFamily(primary)) ?? null;
   const score = Math.min(1, (deckFreq.get(primary) ?? 0) / nonlandCount);
   return {
     theme: describeTag(primary),

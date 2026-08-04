@@ -57,6 +57,26 @@ test("cohesion skips tribe-nontoken shadows when naming the theme", () => {
   expect(c.secondaryTag).toBe("cast:instant");
 });
 
+test("cohesion secondary skips same-family tags to find a true second theme", () => {
+  // Mirrors what rankThemes now produces on the Bant counters deck: the counter-added
+  // family occupies the top two ranked slots (17 creature, 16 any), so secondary must
+  // skip past the same-family tag to draw:any rather than repeat "counter added" as
+  // both primary and secondary (describeTag has no counter-added case, so both tags
+  // would otherwise render the identical label).
+  const ranked = ["counter-added:creature", "counter-added:any", "draw:any"];
+  const deckFreq = new Map([["counter-added:creature", 17], ["counter-added:any", 16], ["draw:any", 18]]);
+  const c = computeCohesion(ranked, deckFreq, 20)!;
+  expect(c.tag).toBe("counter-added:creature");
+  expect(c.secondaryTag).toBe("draw:any");
+});
+
+test("cohesion secondary is null when every ranked tag shares the primary's family", () => {
+  const ranked = ["counter-added:creature", "counter-added:any"];
+  const deckFreq = new Map([["counter-added:creature", 17], ["counter-added:any", 16]]);
+  const c = computeCohesion(ranked, deckFreq, 20)!;
+  expect(c.secondaryTag).toBeNull();
+});
+
 test("cohesion caps at 1 and is null when there are no themes or no nonland cards", () => {
   const deckFreq = new Map<string, number>([["tribe:wizard", 40]]);
   expect(computeCohesion(rankThemes(deckFreq, stats), deckFreq, 20)!.score).toBe(1);
