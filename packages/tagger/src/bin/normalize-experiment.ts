@@ -73,7 +73,13 @@ Rules:
 - fromZone/toZone are set ONLY when the clause MOVES an object between zones. Getting this right
   matters more than anything else: "search your library ... put it onto the battlefield" is
   library->battlefield, but "... put it into your hand" is library->hand. They are different cards.
-- A clause of kind "keyword" or "reminder" gets abilityType "none" and actions [{verb:"none"}].
+- A clause of kind "keyword", "reminder" or "level" gets abilityType "none" and exactly
+  actions [{verb:"none"}]. A "Level 2" line is a DIVIDER announcing a Class level, not an ability
+  — its cost is already extracted and the ability it introduces is the clause after it. Never give
+  it add-counter, level-up or any other verb.
+- "none" and "other" are not interchangeable. "none" means the clause states no game action at all
+  (a keyword line, a reminder, a level divider). "other" means the clause DOES something that no
+  verb above covers. Never use "other" for a clause that does nothing.
 - OMIT the trigger field entirely when the clause is not triggered. Do not send trigger:null and
   do not send event:"none" — one fact must have exactly one encoding, or two runs disagree over
   nothing. (This ambiguity alone accounted for every residual disagreement in the first run.)
