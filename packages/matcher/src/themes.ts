@@ -29,8 +29,10 @@ function authoredSurplusTags(tags: CardTags): Set<string> {
 }
 
 /** Share of the deck that may supply a tag by baseline alone before the tag stops being a theme
- *  and becomes deck arithmetic. Calibrated on packages/cli/decks/calibration (71 decks) — see
- *  bin/theme-cal.ts, which re-derives it and prints the plateau. */
+ *  and becomes deck arithmetic. Re-derived on the 71-deck corpus (bin/theme-cal.ts) and NO PLATEAU
+ *  WAS FOUND — every step 0.35→0.70 changes at least one deck's answer, so 0.55 is retained as the
+ *  incumbent, not as a measured value. Treat it as unvalidated until a per-card ground truth exists
+ *  to score it against. */
 export const BASELINE_CAP = 0.55;
 
 export interface ThemeMembership {

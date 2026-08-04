@@ -132,6 +132,14 @@ test("report exposes per-theme surplus/payoff/baseline counts", () => {
     expect(typeof t.baseline).toBe("number");
     expect(typeof t.selective).toBe("boolean");
   }
+  // A gutted themeMembership returning all-zero counts would still pass the shape assertions
+  // above. Pin real values on the Inalla fixture: Inalla's authored token emit makes her a
+  // surplus producer of enters:wizard, and the nontoken-wizard trigger filter keeps the tag
+  // selective in this 2-card deck.
+  const entersWizard = tm.find((t) => t.tag === "enters:wizard")!;
+  expect(entersWizard).toBeDefined();
+  expect(entersWizard.surplus).toBeGreaterThanOrEqual(1);
+  expect(entersWizard.selective).toBe(true);
 });
 
 test("untagged cards contribute no edges but still appear in the report", () => {
