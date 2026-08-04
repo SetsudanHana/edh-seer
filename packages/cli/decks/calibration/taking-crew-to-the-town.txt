@@ -1,0 +1,99 @@
+1 The Wandering Minstrel
+
+1 Island
+1 Mountain
+2 Plains
+2 Forest
+1 Swamp
+1 Command Tower
+1 Exotic Orchard
+1 Path of Ancestry
+1 Eiganjo Castle
+1 Minamo, School at Water's Edge
+1 Shinka, the Bloodsoaked Keep
+1 Plaza of Heroes
+1 Optimus Prime, Hero // Optimus Prime, Autobot Leader
+1 Goldbug, Humanity's Ally // Goldbug, Scrappy Scout
+1 Flamewar, Brash Veteran // Flamewar, Streetwise Operative
+1 Starscream, Power Hungry // Starscream, Seeker Leader
+1 Soundwave, Sonic Spy // Soundwave, Superior Captain
+1 Slicer, Hired Muscle // Slicer, High-Speed Antagonist
+1 Megatron, Tyrant // Megatron, Destructive Force
+1 Ultra Magnus, Tactician // Ultra Magnus, Armored Carrier
+1 Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter
+1 Jetfire, Ingenious Scientist // Jetfire, Air Guardian
+1 Prowl, Stoic Strategist // Prowl, Pursuit Vehicle
+1 Ratchet, Field Medic // Ratchet, Rescue Racer
+1 Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant
+1 Blaster, Combat DJ // Blaster, Morale Booster
+1 Mount Doom
+1 Frodo Baggins
+1 Gandalf the White
+1 Boromir, Warden of the Tower
+1 Aragorn, the Uniter
+1 Pippin, Guard of the Citadel
+1 Merry, Esquire of Rohan
+1 Samwise Gamgee
+1 Great Hall of the Citadel
+1 Mithril Coat
+1 The Grey Havens
+1 Legolas Greenleaf
+1 Gimli of the Glittering Caves
+1 K-9, Mark I
+1 Ellie and Alan, Paleontologists
+1 Lara Croft, Tomb Raider
+1 Abstergo Entertainment
+1 Basim Ibn Ishaq
+1 Crystal Skull, Isu Spyglass
+1 Mjölnir, Storm Hammer
+1 Arbaaz Mir
+1 Excalibur, Sword of Eden
+1 Iron Man, Titan of Innovation
+1 Captain America, First Avenger
+1 Wolverine, Best There Is
+1 Black Panther, Wakandan King
+1 Deadpool, Trading Card
+1 Yuna, Grand Summoner
+1 Adventurer's Inn
+1 Zanarkand, Ancient Metropolis // Lasting Fayth
+1 Jidoor, Aristocratic Capital // Overture
+1 Starting Town
+1 Ishgard, the Holy See // Faith & Grief
+1 Rabanastre, Royal City
+1 Capital City
+1 Serah Farron // Crystallized Serah
+1 Lindblum, Industrial Regency // Mage Siege
+1 Torgal, A Fine Hound
+1 Treno, Dark City
+1 Vector, Imperial Capital
+1 Windurst, Federation Center
+1 Insomnia, Crown City
+1 Sharlayan, Nation of Scholars
+1 Baron, Airship Kingdom
+1 Guadosalam, Farplane Gateway
+1 Gongaga, Reactor Town
+1 Gohn, Town of Ruin
+1 The Gold Saucer
+1 The Regalia
+1 Clive's Hideaway
+1 Midgar, City of Mako // Reactor Raid
+1 Crossroads Village
+1 Eden, Seat of the Sanctum
+1 Sonic the Hedgehog
+1 Shadow the Hedgehog
+1 Knuckles the Echidna
+1 Amy Rose
+1 Super State
+1 Dr. Eggman
+1 Miles "Tails" Prower
+1 Spectacular Spider-Man
+1 Joel, Resolute Survivor
+1 Ellie, Brick Master
+1 Nathan Drake, Treasure Hunter
+1 Kratos, God of War
+1 Jin Sakai, Ghost of Tsushima
+1 Aloy, Savior of Meridian
+1 Jaws, Relentless Predator
+1 Raphael, the Muscle
+1 Leonardo, the Balance
+1 Aang, Swift Savior // Aang and La, Ocean's Fury

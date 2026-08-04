@@ -1,0 +1,98 @@
+1 Dr. Eggman
+
+2 Island
+2 Mountain
+2 Swamp
+1 Arcane Signet
+1 Command Tower
+1 Waste Not
+1 Arcane Denial
+1 Baleful Strix
+1 Chaos Warp
+1 Foundry Inspector
+1 Reliquary Tower
+1 Sol Ring
+1 Thought Vessel
+1 Fellwar Stone
+1 Steel Overseer
+1 Blasphemous Act
+1 Dimir Signet
+1 Exotic Orchard
+1 Myr Battlesphere
+1 Path of Ancestry
+1 Myriad Landscape
+1 Bloodstained Mire
+1 Watery Grave
+1 Thopter Spy Network
+1 Choked Estuary
+1 Foreboding Ruins
+1 Rakdos Signet
+1 Blood Crypt
+1 Izzet Signet
+1 Steam Vents
+1 Combustible Gearhulk
+1 Chief of the Foundry
+1 Inventors' Fair
+1 Metalwork Colossus
+1 Noxious Gearhulk
+1 Torrential Gearhulk
+1 Scrap Trawler
+1 Scalding Tarn
+1 Sunken Ruins
+1 Polluted Delta
+1 Drowned Catacomb
+1 Dragonskull Summit
+1 Fabricate
+1 Geth's Grimoire
+1 Narset's Reversal
+1 Canyon Slough
+1 Fetid Pools
+1 Sulfur Falls
+1 Weatherlight
+1 Training Center
+1 Frostboil Snarl
+1 Ruin Grinder
+1 Cursed Mirror
+1 Thought Monitor
+1 Haunted Ridge
+1 Shipwreck Marsh
+1 Stormcarved Coast
+1 Otawara, Soaring City
+1 Mechtitan Core
+1 Takenuma, Abandoned Mire
+1 Imposter Mech
+1 Xander's Lounge
+1 An Offer You Can't Refuse
+1 Nautiloid Ship
+1 Cryptothrall
+1 Reaver Titan
+1 Flamewar, Brash Veteran // Flamewar, Streetwise Operative
+1 Starscream, Power Hungry // Starscream, Seeker Leader
+1 Slicer, Hired Muscle // Slicer, High-Speed Antagonist
+1 Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter
+1 Jetfire, Ingenious Scientist // Jetfire, Air Guardian
+1 Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant
+1 Scavenged Brawler
+1 Barbed Servitor
+1 Foreboding Steamboat
+1 Rose, Cutthroat Raider
+1 Curie, Emergent Intelligence
+1 Sink into Stupor // Soporific Springs
+1 Sundering Eruption // Volcanic Fissure
+1 Fell the Profane // Fell Mire
+1 Exterminator Magmarch
+1 Desynchronization
+1 Untimely Malfunction
+1 Scrawling Crawler
+1 Blasphemous Edict
+1 Hulldrifter
+1 Oildeep Gearhulk
+1 Demonic Junker
+1 Coalstoke Gearhulk
+1 PuPu UFO
+1 Rook Turret
+1 Golbez, Crystal Collector
+1 Uthros Research Craft
+1 Interceptor Mechan
+1 Entropic Battlecruiser
+1 The Fire Nation Drill

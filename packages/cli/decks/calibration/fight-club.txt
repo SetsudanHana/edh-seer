@@ -1,0 +1,92 @@
+1 Wayta, Trainer Prodigy
+
+3 Mountain
+4 Plains
+5 Forest
+1 Command Tower
+1 The Great Henge
+1 Beast Within
+1 Birds of Paradise
+1 Boros Reckoner
+1 Chaos Warp
+1 Farseek
+1 Frilled Deathspitter
+1 Hornet Nest
+1 Nature's Lore
+1 Path to Exile
+1 Rampant Growth
+1 Sun-Crowned Hunters
+1 Swords to Plowshares
+1 Brash Taunter
+1 Garruk's Uprising
+1 Heroic Intervention
+1 Sporeweb Weaver
+1 Ranging Raptors
+1 Ripjaw Raptor
+1 Marauding Raptor
+1 Blasphemous Act
+1 Cinder Glade
+1 Elemental Bond
+1 Brushland
+1 Karplusan Forest
+1 Pariah
+1 Boros Charm
+1 Sacred Foundry
+1 Stomping Ground
+1 Elvish Mystic
+1 Pyrohemia
+1 Guardian Project
+1 Unbreakable Formation
+1 Temple Garden
+1 Arid Mesa
+1 Fire-Lit Thicket
+1 Rugged Prairie
+1 Wooded Foothills
+1 Battlefield Forge
+1 Rootbound Crag
+1 Gideon's Sacrifice
+1 Generous Gift
+1 Flawless Maneuver
+1 Hungering Hydra
+1 Three Visits
+1 Stuffy Doll
+1 Make a Stand
+1 Silverclad Ferocidons
+1 Trapjaw Tyrant
+1 Cacophodon
+1 Needletooth Raptor
+1 Bellowing Aegisaur
+1 Growing Rites of Itlimoc // Itlimoc, Cradle of the Sun
+1 Ravenous Daggertooth
+1 Spectator Seating
+1 Branchloft Pathway // Boulderloft Pathway
+1 Cragcrown Pathway // Timbercrown Pathway
+1 Needleverge Pathway // Pillarverge Pathway
+1 Khalni Ambush // Khalni Territory
+1 Toski, Bearer of Secrets
+1 Yavimaya, Cradle of Growth
+1 Zalto, Fire Giant Duke
+1 Vrondiss, Rage of Ancients
+1 Overgrown Farmland
+1 Rockfall Vale
+1 Sundown Pass
+1 Ill-Tempered Loner // Howlpack Avenger
+1 Wrathful Red Dragon
+1 Your Temple Is Under Attack
+1 Metropolis Reformer
+1 Mithril Coat
+1 Stroke of Midnight
+1 Donna Noble
+1 Wrathful Raptors
+1 Commercial District
+1 Lush Portico
+1 Collective Resistance
+1 Bridgeworks Battle // Tanglespan Bridgeworks
+1 Screaming Nemesis
+1 Dawn's Truce
+1 Divine Resilience
+1 Ultimate Magic: Holy
+1 Professor Hojo
+1 Pain for All
+1 Reroute Systems
+1 Shared Roots

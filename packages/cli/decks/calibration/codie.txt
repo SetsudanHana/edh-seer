@@ -1,0 +1,101 @@
+1 Codie, Vociferous Codex
+
+1 Island
+1 Mountain
+1 Plains
+1 Forest
+1 Swamp
+1 Command Tower
+1 Approach of the Second Sun
+1 Arcane Denial
+1 Beast Within
+1 Chaos Warp
+1 Explore
+1 Farseek
+1 Manamorphose
+1 Mizzix's Mastery
+1 Nature's Lore
+1 Rampant Growth
+1 Reliquary Tower
+1 Temple of the False God
+1 Field of the Dead
+1 Blasphemous Act
+1 Exotic Orchard
+1 Leadership Vacuum
+1 Reanimate
+1 Bloodstained Mire
+1 Flooded Strand
+1 Breeding Pool
+1 Godless Shrine
+1 Sacred Foundry
+1 Stomping Ground
+1 Watery Grave
+1 Blood Crypt
+1 Growth Spiral
+1 Hallowed Fountain
+1 Assassin's Trophy
+1 Overgrown Tomb
+1 Steam Vents
+1 Temple Garden
+1 Arid Mesa
+1 Marsh Flats
+1 Misty Rainforest
+1 Scalding Tarn
+1 Verdant Catacombs
+1 Polluted Delta
+1 Windswept Heath
+1 Wooded Foothills
+1 Bribery
+1 Narset's Reversal
+1 Generous Gift
+1 Deflecting Swat
+1 Deadly Rollick
+1 Fierce Guardianship
+1 Flawless Maneuver
+1 Obscuring Haze
+1 Ancestral Vision
+1 Rakdos Charm
+1 Noxious Revival
+1 Three Visits
+1 Szat's Will
+1 Kamahl's Will
+1 Jeska's Will
+1 Sakashima's Will
+1 Akroma's Will
+1 Silverquill Command
+1 Prismari Command
+1 Lorehold Command
+1 Witherbloom Command
+1 Quandrix Command
+1 Theoretical Duplication
+1 Yavimaya, Cradle of Growth
+1 Inevitable Betrayal
+1 An Offer You Can't Refuse
+1 Delayed Blast Fireball
+1 Breach the Multiverse
+1 Stroke of Midnight
+1 Sink into Stupor // Soporific Springs
+1 Sundering Eruption // Volcanic Fissure
+1 Fell the Profane // Fell Mire
+1 Razorgrass Ambush // Razorgrass Field
+1 Bridgeworks Battle // Tanglespan Bridgeworks
+1 Planar Genesis
+1 Talon Gates of Madara
+1 Blasphemous Edict
+1 Will of the Jeskai
+1 Will of the Mardu
+1 Will of the Sultai
+1 Will of the Temur
+1 Will of the Abzan
+1 Espers to Magicite
+1 Transpose
+1 Circle of Power
+1 Cornered by Black Mages
+1 Vivi's Persistence
+1 Shared Roots
+1 Silverquill Charm
+1 Lorehold Charm
+1 Prismari Charm
+1 Quandrix Charm
+1 Witherbloom Charm
+1 Endless Ranks of HYDRA

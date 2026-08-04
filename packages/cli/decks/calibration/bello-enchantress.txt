@@ -1,0 +1,85 @@
+1 Bello, Bard of the Brambles
+
+8 Mountain
+10 Forest
+1 Arcane Signet
+1 Command Tower
+1 Escape to the Wilds
+1 Beast Within
+1 Chaos Warp
+1 Cultivate
+1 Eternal Witness
+1 Explore
+1 Farseek
+1 Harmonize
+1 Llanowar Elves
+1 Rage Reflection
+1 Rampant Growth
+1 Regrowth
+1 Sakura-Tribe Elder
+1 Sol Ring
+1 Fiery Emancipation
+1 Garruk's Uprising
+1 Heroic Intervention
+1 Leyline of Abundance
+1 Leyline of Combustion
+1 Blasphemous Act
+1 Exotic Orchard
+1 Warstorm Surge
+1 Path of Ancestry
+1 Cinder Glade
+1 Garruk's Packleader
+1 Gruul Turf
+1 Karplusan Forest
+1 Kodama's Reach
+1 Stomping Ground
+1 Krosan Grip
+1 Greater Good
+1 Game Trail
+1 Street Riot
+1 Gruul War Chant
+1 Copperline Gorge
+1 Genesis Wave
+1 Rootbound Crag
+1 Domri, Anarch of Bolas
+1 Mossfire Valley
+1 Molten Echoes
+1 Outpost Siege
+1 Sheltered Thicket
+1 Bedlam
+1 Primeval Bounty
+1 Gratuitous Violence
+1 Flameshadow Conjuring
+1 Berserkers' Onslaught
+1 Path of Discovery
+1 Goreclaw, Terror of Qal Sisma
+1 Sunbird's Invocation
+1 Leyline of Lightning
+1 Cragcrown Pathway // Timbercrown Pathway
+1 Khalni Ambush // Khalni Territory
+1 Kodama of the East Tree
+1 Court of Bounty
+1 Court of Ire
+1 Goblin Anarchomancer
+1 Rockfall Vale
+1 Unnatural Growth
+1 Weaver of Harmony
+1 Big Score
+1 Rain of Riches
+1 Loot Dispute
+1 Llanowar Loamspeaker
+1 Wooded Ridgeline
+1 City on Fire
+1 Uncivil Unrest
+1 Delighted Halfling
+1 Court of Embereth
+1 Gimli's Reckless Might
+1 Disciple of Freyalise // Garden of Freyalise
+1 Stump Stomp // Burnwillow Clearing
+1 Bridgeworks Battle // Tanglespan Bridgeworks
+1 Twitching Doll
+1 Wildsear, Scouring Maw
+1 Trailtracker Scout
+1 Alchemist's Talent
+1 Thickest in the Thicket
+1 Echoing Assault
