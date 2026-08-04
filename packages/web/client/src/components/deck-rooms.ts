@@ -119,10 +119,21 @@ export const ROOM_HUE: Record<RoomId, string> = {
  *  for a text-contrast fix. ROOM_HUE_TEXT instead lightens the SAME three hues (same H, same C,
  *  higher L) but keeps them out of the rim/lens/outline system entirely, so the CVD-validated
  *  ROOM_HUE set is untouched. All seven values individually clear >=4.5:1 against #14171b; pairwise
- *  CVD separation between label colors is not required here the way it is for ROOM_HUE, because a
- *  label's room name is printed in the text itself -- hue only has to trace a displaced label back
- *  to its own circle's (ROOM_HUE) outline, a same-hue-family match, not distinguish one label's hue
- *  from a different room's label the way two overlapping rim arcs must. */
+ *  CVD separation between label colors was not re-checked here the way it was for ROOM_HUE, on the
+ *  reasoning that a label's room name is printed in the text itself -- hue only has to trace a
+ *  displaced label back to its own circle's (ROOM_HUE) outline, a same-hue-family match, not
+ *  distinguish one label's hue from a different room's label.
+ *
+ *  That reasoning holds for 5 of 7 rooms but NOT ramp. CIE76 deltaE (Lab, D65) across all 21 pairs
+ *  of the shipped values above: ramp #3687b9 is deltaE 7.70 from strategy's ROOM_HUE outline
+ *  #1c8db7 -- closer than ramp is to its OWN ROOM_HUE outline #146d9e (deltaE 10.14). Every other
+ *  pair is >=26.3, so this is a one-off, not a pattern; a displaced ramp label traced by hue alone
+ *  points at strategy's circle first. Left as-is, not renudged: ramp clears the text floor at only
+ *  4.56:1 against the 4.5 minimum this map exists to hit, and any further hue shift risks pushing
+ *  it back under -- the same failure this file was written to close. What actually disambiguates a
+ *  displaced ramp label is the room name baked into the text itself (`RAMP 8/10`, see
+ *  GraphView.tsx's `roomFontPx` draw) -- hue is a secondary cue here, not the identifying one,
+ *  consistent with ROOM_HUE's own doc comment that hue never IDs a room by itself. */
 export const ROOM_HUE_TEXT: Record<RoomId, string> = {
   ...ROOM_HUE,
   cardAdvantage: "#786bff",
