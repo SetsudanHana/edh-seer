@@ -39,6 +39,10 @@ export interface CardSynergy {
   /** Directional authority: the card's payoff support (√ of the summed weight of edges that FEED
    *  it). A well-fed anchor scores high; a pure feeder ~0. Set only by analyzeDeckStructured. */
   authority?: number;
+  /** 0–1: how strongly this card's best synergy edge sits on the deck's strategy axis (the max
+   *  axis weight over its edges' reason tags). The continuous value behind `doubleDuty`, which
+   *  hard-cuts it at a threshold and so fires on ~half a deck. Set only by analyzeDeckStructured. */
+  axisWeight?: number;
   /** True when the card fills a functional BUILD role AND has an on-axis synergy edge — one card,
    *  two jobs. Set only by @mtg/matcher's analyzeDeckStructured; the card also carries a small
    *  capped synergyRating premium. Undefined on the flat engine. */
@@ -109,6 +113,10 @@ export interface DeckReport {
   /** 0–5 composite headline SYNERGY = blend of breadth (positiveCoherence) and anchoring.
    *  Matcher-only. */
   synergyOverall?: number;
+  /** The deck's strategy axis: every theme tag with TF-IDF weight > 0, normalized so the strongest
+   *  is 1.0, strongest first. Pairs with CardSynergy.axisWeight — this names the themes, that says
+   *  how strongly a card sits on them. Matcher-only. */
+  axis?: { tag: string; weight: number }[];
 }
 
 interface Agg {
