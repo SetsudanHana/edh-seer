@@ -196,6 +196,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           repeatability: triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
           hasStatPredicate: (t.subject.stats?.length ?? 0) > 0 || undefined,
+          consumer: c.card.name,
+          producer: p.card.name,
         });
       }
     }
@@ -220,6 +222,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         effectKind: a.effect.kind,
         repeatability,
         scaling: a.effect.scaling,
+        consumer: c.card.name,
+        producer: p.card.name,
       });
     }
   }
@@ -235,6 +239,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       repeatability: "static",
       scaling: a.effect.scaling,
       hasStatPredicate: (a.effect.subject?.stats?.length ?? 0) > 0 || undefined,
+      consumer: c.card.name,
+      producer: p.card.name,
     });
   }
   return reasons;

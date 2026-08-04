@@ -17,6 +17,14 @@ export interface Reason {
    *  stat-gated categories (power-matters, toughness-matters) distinguish a genuinely
    *  predicate-gated match from a coincidental unconditional match sharing the same tag. */
   hasStatPredicate?: boolean;
+  /** Card name on the consuming side: the card that triggers on, benefits from, or is enabled
+   *  by this reason's event. Set by the structured matcher; unset by the flat engine.
+   *  Before this existed, direction was only recoverable by parsing `text`, which failed on
+   *  ~10% of reasons — the produces/cares direction is the core of the model and belongs in a
+   *  field, not in prose. */
+  consumer?: string;
+  /** Card name on the supplying side. See `consumer`. */
+  producer?: string;
 }
 
 export interface SynergyResult {

@@ -548,3 +548,44 @@ test("directedReasons: an authored attacks emit matches a generic combat consume
   const plainCreature = base("Plain Creature", []);
   expect(directedReasons(plainCreature, genericTrigger, H).some((r) => r.tag.startsWith("attacks"))).toBe(false);
 });
+
+test("an event reason records which card consumes it and which supplies it", () => {
+  const maker = base("Fathom Mage", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: null } }],
+  }]);
+  const payoff = base("Warden of the Grove", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "counter-placement" },
+  }]);
+  const reasons = pairReasons(maker, payoff, H);
+  const ev = reasons.find((r) => r.tag === "enters:creature");
+  expect(ev).toBeDefined();
+  expect(ev!.consumer).toBe("Warden of the Grove");
+  expect(ev!.producer).toBe("Fathom Mage");
+});
+
+test("every reason carries a direction, and it agrees with the reason text", () => {
+  const maker = base("Fathom Mage", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: null } }],
+  }]);
+  const payoff = base("Warden of the Grove", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "counter-placement" },
+  }]);
+  for (const r of pairReasons(maker, payoff, H)) {
+    expect(r.consumer, `reason "${r.text}" has no consumer`).toBeDefined();
+    expect(r.producer, `reason "${r.text}" has no producer`).toBeDefined();
+    expect(r.consumer).not.toBe(r.producer);
+    // both names appear in the text, so a wrong direction is a real mismatch not a typo
+    expect(r.text).toContain(r.consumer!);
+    expect(r.text).toContain(r.producer!);
+  }
+});
