@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, seedPosition, separation } from "./GraphView.js";
+import { copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, roomAttraction, seedPosition, separation } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOMS, type RoomTally } from "./deck-rooms.js";
@@ -191,14 +191,13 @@ test("gives a non-card node no rooms", async () => {
 
 test("puts an uncategorised card in strategy", () => {
   makeContextSpy();
-  // Fix round 1: neither SAMPLE card carries a `roles` entry, but BOTH are named in
-  // report.archetypes[0].cards -- so without this override they reach strategy through the
-  // explicit `strategyCards.has(name)` branch in roomsForCard, never through the true fallback
-  // (`hit.size === 0`) this test claims to cover. Zeroing out combos/archetypes here (a local
-  // override, not a change to the shared SAMPLE fixture -- this report is scoped to this one
-  // test) removes both explicit branches, so a roleless card can only land in strategy via the
-  // real fallback.
-  const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+  // Neither SAMPLE card carries a `roles` entry, and neither is named in report.combos -- so
+  // roomsForCard's only two explicit routes to a room (a role, or membership in a combo) both
+  // miss, and a roleless card can only land in strategy via the real fallback (`hit.size === 0`).
+  // Zeroing combos here (a local override, not a change to the shared SAMPLE fixture -- this
+  // report is scoped to this one test) keeps that true even if SAMPLE's own combos list ever
+  // grows to include one of these two cards.
+  const report = { ...SAMPLE.report, combos: [] };
   const { container } = render(<GraphView graph={SAMPLE.graph} report={report} />);
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => Array<{ id: string; kind: string; roles: string[] | null; rooms: string[] | null }>;
@@ -411,4 +410,21 @@ test("hover shows a card's build role translated to plain language", () => {
   // translated text is what proves the tooltip went through subcategoryLabel rather than just
   // echoing the role verbatim.
   expect(screen.getByText(/extra mana/)).toBeInTheDocument();
+});
+
+test("roomAttraction pulls two cards together in proportion to rooms they share", () => {
+  const one = roomAttraction(10, 0, 1, 0.01);
+  const two = roomAttraction(10, 0, 2, 0.01);
+  expect(one.x).toBeLessThan(0); // pulls the first node back toward the second
+  expect(Math.abs(two.x)).toBeGreaterThan(Math.abs(one.x));
+});
+
+test("roomAttraction is zero for cards sharing no room", () => {
+  expect(roomAttraction(10, 0, 0, 0.01)).toEqual({ x: 0, y: 0 });
+});
+
+test("roomAttraction does not divide by zero for coincident cards", () => {
+  const f = roomAttraction(0, 0, 2, 0.01);
+  expect(Number.isFinite(f.x)).toBe(true);
+  expect(Number.isFinite(f.y)).toBe(true);
 });

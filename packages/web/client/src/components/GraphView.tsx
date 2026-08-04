@@ -38,56 +38,23 @@ export function nodeRadius(n: { kind: string; deg: number }): number {
   return n.kind === "card" ? ART_RADIUS : Math.min(3 + Math.sqrt(n.deg) * 1.5, 15);
 }
 
-/** Layout tuning. Settled during Task 7 against a real deck (inalla.txt) in a browser, measured
- *  with the __graphProbe metrics rather than eyeballed -- across at least 10 independent
- *  fresh-load trials per candidate, not a single run, because initial positions carry
- *  Math.random() jitter (see seedPosition/the sim setup) and separationRatio has real run-to-run
- *  spread. Keep them together: a constant that lives next to its use is a constant nobody
- *  re-tunes as a set.
+/** Layout tuning. REPULSION, COLLISION_PAD, EDGE_GAP, LINK_STIFFNESS, CENTER_PULL and
+ *  VELOCITY_DAMPING carry Task 7/8's measured values -- see task-7-report.md and task-8-report.md
+ *  for the multi-trial histories behind them. ROOM_ATTRACTION is new and has no measured value yet;
+ *  Task 9 settles it.
  *
- *  ZONE_SPRING vs LINK_STIFFNESS is the load-bearing ratio here: every card links to several
- *  concept nodes (keyword/event/subtype/...) that are shared across cards of every role, and those
- *  links pull toward the same hub regardless of role. At the original 0.004/0.008 (link twice as
- *  stiff as the zone pull), that hub-pull dominated and same-role cards ended up statistically
- *  *farther* apart than different-role cards (separationRatio 1.147, round 1). Each retune needed
- *  a real multi-trial noise check, not 1-2 samples, to be trusted -- see task-7-report.md's full
- *  measurement history: 0.024/0.004 (6x ratio) looked fine on 2 trials (~0.57-0.62) but a 5-trial
- *  check found mean 0.706 with one trial at 1.008 -- a false pass. 0.06/0.002 (30x) held for 5
- *  trials (0.438-0.497) but widened out over 10 (spread 0.132 vs. a margin of only 0.121 to the
- *  gate) -- still not a safe margin. 0.1/0.0012 (~83x) is what's settled: 10 trials landed
- *  0.430-0.477, a spread of 0.047 against a gate margin of 0.222 -- comfortably tighter than the
- *  headroom, not just narrower than one lucky pair of samples.
- *
- *  Task 8 re-tuned COLLISION_PAD/ZONE_SPRING/REPULSION against the room board (concept nodes
- *  hidden by default, so these springs are now the whole simulation for a card). ZONE_SPRING 0.1 /
- *  REPULSION 1400 (Task 7's ring-anchor values) held overlaps at 0 only if left to settle ~9s;
- *  under a shorter settle window overlaps ran 53-61/10 trials. 0.05 / 2200 (with COLLISION_PAD 5)
- *  converged to 0 overlaps in all 20 fresh-load trials measured (two independent 10-trial batches,
- *  see task-8-report.md) with the same ~9s settle. A third candidate, 0.25 / 1800, made overlaps
- *  *worse* (17-27/10) -- a stronger zone spring re-compresses cards faster than collision can
- *  resolve them, it does not help convergence.
- *
- *  The room-*membership* gate ("cards outside every room they belong to" = 0) could NOT be reached
- *  by any combination of these constants, and is not a tuning problem: see task-8-report.md's
- *  "Plan defect" section. In short, a card belonging to N rooms feels N equal-weight springs
- *  (`n.vx += (c.x - n.x) * ZONE_SPRING` once per room, unconditionally), whose equilibrium is the
- *  unweighted average of those rooms' centres -- a fact independent of ZONE_SPRING's magnitude
- *  (`k*(c1-x) + k*(c2-x) = 0` gives `x = (c1+c2)/2` for any nonzero `k`). Every card in this
- *  reference deck (inalla.txt) that has a build role also belongs to Strategy (deck-rooms.ts's
- *  `strategyCards` adds Strategy independent of the fallback, matching the design doc's "archetype
- *  groups, plus every card no other room claims"), and Strategy's row is not adjacent to Ramp's,
- *  Lands', or Board wipes' row on the fixed GRID -- so that average provably lands in the row
- *  between them, outside every rect involved, for any constant value. Reordering GRID or splitting
- *  the zone force by room weight would fix it but is a structural change outside this task's
- *  remit (constants only); flagged instead of worked around. */
+ *  ZONE_SPRING is gone with the rectangle grid. Rooms are no longer places cards are pulled toward;
+ *  a room is now the circle drawn around whatever cards are in it (deck-rooms.ts's roomLayout), so
+ *  the only force that has to do real work is between CARDS: those sharing a room attract, and the
+ *  all-pairs repulsion already present pushes everything else apart. See
+ *  2026-08-04-circle-rooms-design.md. */
 const COLLISION_PAD = 5;
 const EDGE_GAP = 28;
-const ZONE_SPRING = 0.05;
 const CENTER_PULL = 0.0004;
 /** Repulsion numerator (world-units^3/tick) for the all-pairs inverse-square push. */
 const REPULSION = 2200;
-/** Link-spring stiffness pulling an edge toward its rest length. Softened from 0.008 alongside the
- *  ZONE_SPRING increase above -- see the comment on this block. */
+/** Pull between two cards per room they share. Unmeasured -- Task 9 tunes it. */
+const ROOM_ATTRACTION = 0.006;
 const LINK_STIFFNESS = 0.0012;
 /** Per-tick velocity damping (0..1, higher = less friction). */
 const VELOCITY_DAMPING = 0.86;
@@ -110,6 +77,23 @@ export function separation(
   if (d === 0) return { x: want / 2, y: 0 };
   const push = (want - d) / 2;
   return { x: (dx / d) * push, y: (dy / d) * push };
+}
+
+/** Velocity delta pulling one card toward another they share rooms with. Returned value applies to
+ *  the first node; the second gets its negation. Linear in distance and in how many rooms the pair
+ *  shares, so a card sharing two rooms with a neighbour sits nearer than one sharing one.
+ *
+ *  Zero for a pair sharing nothing -- those are handled by the repulsion that already exists, and
+ *  adding a second repulsion term here would double-count it. */
+export function roomAttraction(
+  dx: number, dy: number, shared: number, stiffness: number,
+): { x: number; y: number } {
+  if (shared <= 0) return { x: 0, y: 0 };
+  const d = Math.hypot(dx, dy);
+  // Coincident cards have no direction to pull along, and separation() will part them next tick.
+  if (d === 0) return { x: 0, y: 0 };
+  const f = d * stiffness * shared;
+  return { x: -(dx / d) * f, y: -(dy / d) * f };
 }
 
 /** Card name -> copy count, built from the graph's own card nodes (each copy of a card already
@@ -385,6 +369,17 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // Hard separation: discs must not overlap. Applied to position, not velocity.
           const s = separation(dx, dy, nodeRadius(a), nodeRadius(b), COLLISION_PAD);
           if (s) { a.x += s.x; a.y += s.y; b.x -= s.x; b.y -= s.y; }
+
+          // Cards sharing a room pull together; the room's circle is then drawn around the cluster
+          // they form. This is the only force that reads membership.
+          if (a.kind === "card" && b.kind === "card") {
+            const ra = roomsByNode.get(a.id), rb = roomsByNode.get(b.id);
+            let shared = 0;
+            if (ra && rb) for (const id of ra) if (rb.includes(id)) shared++;
+            const t = roomAttraction(dx, dy, shared, ROOM_ATTRACTION);
+            a.vx += t.x; a.vy += t.y;
+            b.vx -= t.x; b.vy -= t.y;
+          }
         }
       }
       for (const l of links) {
@@ -398,26 +393,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         l.s.vx += (dx / d) * f; l.s.vy += (dy / d) * f;
         l.t.vx -= (dx / d) * f; l.t.vy -= (dy / d) * f;
       }
-      // Zones bias the layout, they don't replace it: a weak spring per room toward that room's
-      // rectangle centre, added on top of the repulsion/edge springs above. A card in two rooms
-      // (a combo piece that's also a build role, say) feels both and settles between them; every
-      // card is in at least one room (strategy is the fallback), so this always applies to cards.
       for (const n of live) {
-        if (n.kind !== "card") continue;
-        const rooms = roomsNow();
-        for (const id of roomsByNode.get(n.id) ?? []) {
-          const c = rooms.get(id);
-          if (!c) continue;
-          n.vx += (c.x - n.x) * ZONE_SPRING;
-          n.vy += (c.y - n.y) * ZONE_SPRING;
-        }
-      }
-      for (const n of live) {
-        // Centering applies only where no zone claims the node. It used to apply to everything at
-        // 0.0011 while the zone spring was 0.0009 -- the pull to the origin was stronger than the
-        // pull to the zone, so roles could never separate however hard the zones pulled. Now that
-        // every card lands in a room (strategy is the universal fallback), this only still fires
-        // for non-card nodes (events/keywords/etc.), which have no room of their own.
+        // Centering applies only to nodes no room claims -- i.e. non-card nodes (events, keywords),
+        // which have no membership. Every card is in at least one room (strategy is the fallback),
+        // so cards are positioned by repulsion, collision and the shared-room attraction alone.
         const zoned = n.kind === "card" && (roomsByNode.get(n.id)?.length ?? 0) > 0;
         if (!zoned) { n.vx -= n.x * CENTER_PULL; n.vy -= n.y * CENTER_PULL; }
         n.vx *= VELOCITY_DAMPING; n.vy *= VELOCITY_DAMPING;
