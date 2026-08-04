@@ -23,18 +23,46 @@ export const ROOMS: Room[] = [
   { id: "boardWipes", label: "Board wipes", categories: ["boardWipe"] },
 ];
 
-/** Validated dark-surface categorical hues (see the plan's Global Constraints for the check
- *  that produced them). Used on a room's outline and label, never as the identifying fill:
- *  a translucent fill over this surface collapses toward gray and stops separating.
+/** Dark-surface categorical hues, used on a room's outline, label, and rim arc, never as the
+ *  identifying fill: a translucent fill over this surface collapses toward gray and stops
+ *  separating (see the plan's Global Constraints).
  *
- *  Assignment is NOT arbitrary: it is the one permutation of these 7 hues, found by
- *  brute-force search over all 5040 room<->hue assignments, whose worst CVD deltaE among the
- *  10 grid-adjacency (touching-on-screen) room pairs still clears the "pass" target (>= 8.0,
- *  not just the 6.0 floor). The naive assignment (hues in ROOMS declaration order) put
- *  strategy next to cardAdvantage at deltaE 1.9 and wincons next to boardWipes at 2.7 --
- *  both far below the floor -- because grid adjacency and declaration order are unrelated.
- *  Do not reassign without rerunning that search; see task-3-report.md for the touching-pair
- *  list and validator output. */
+ *  UNVALIDATED for this board -- kept only because no better assignment exists, not because
+ *  this one passed. Grid adjacency (the relation the previous assignment WAS validated
+ *  against -- the 10 pairs of rooms that touched on the old 3x3 rectangle grid) no longer
+ *  exists; rooms are now circles derived from member cards (Tasks 1-7 of
+ *  2026-08-04-circle-rooms). The two relations that replaced it -- rim adjacency (which hues
+ *  end up neighbouring arcs on one card's rim, from rimArcs) and lens adjacency (which room
+ *  circles visibly overlap, from roomLayout) -- both reduce to the same thing: two rooms that
+ *  share a member card. rimArcs places a 2-room card's two arcs adjacent by construction (only
+ *  one pair exists to place), and roomLayout draws each room's circle around exactly its
+ *  members, so two rooms sharing a card have circles that structurally overlap at that card's
+ *  position. Strategy never enters either relation: it is the exclusive fallback (roomsForCard),
+ *  so a card in strategy is in no other room and never shares a card with one.
+ *
+ *  Because ROOMS' categories are independent per-card flags (build.ts runs each category's
+ *  regex against the same oracle text, not mutually exclusive), any two of the six non-strategy
+ *  rooms can end up as a card's only two roles in some deck, even where the reference deck
+ *  (packages/cli/decks/inalla.txt) doesn't produce that pair itself -- so the required set is
+ *  all 15 pairs among {wincons, cardAdvantage, ramp, lands, interaction, boardWipes} (K6), not
+ *  just the 4 pairs inalla.txt measures (interaction+lands, cardAdvantage+interaction,
+ *  cardAdvantage+wincons, ramp+wincons).
+ *
+ *  Checked (2026-08-04, task-8-report.md): this assignment FAILS that 15-pair set -- worst pair
+ *  cardAdvantage<->boardWipes, CVD deltaE 1.6, deutan (validate_palette.js, --mode dark). A full
+ *  brute-force re-search over the same 5040 permutations of these 7 hues found NO assignment
+ *  clearing the 6.0 floor on all 15 pairs -- the best possible worst-pair score is 1.9
+ *  (wincons<->lands), confirmed against the real validator. Even the narrower 4-pair,
+ *  deck-only scope already fails on this assignment (ramp<->wincons, deltaE 2.7) -- this is
+ *  not just a K6-vs-4-pairs scoping question, the grid-tuned hues do not transfer at all.
+ *  Restricted to just those 4 deck-measured pairs, these same 7 hues CAN be arranged to clear
+ *  the target easily (worst pair 26.8) -- so the failure is the K6 requirement itself: 7
+ *  categorical hues cannot be made pairwise-CVD-separated across all 15 combinations of 6 rooms
+ *  simultaneously. This is Step 3's escalation case, not a bug to fix here: reported as an open
+ *  design question (fewer rooms, or hue carrying less of the identity signal -- it already
+ *  isn't the only signal, see the fill-collapse note above) rather than resolved by lowering
+ *  the 6.0 floor or narrowing the pair list to force a pass. Do not treat this assignment as
+ *  validated until that question is resolved. */
 export const ROOM_HUE: Record<RoomId, string> = {
   strategy: "#9085e9",
   wincons: "#d95926",
