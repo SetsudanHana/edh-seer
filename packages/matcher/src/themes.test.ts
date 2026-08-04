@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { themeMembership } from "./themes.js";
+import { themeCandidates, themeMembership } from "./themes.js";
 import type { Reason } from "@mtg/engine";
 import type { DeckCard } from "./types.js";
 
@@ -87,4 +87,30 @@ test("a selective tag admits its baseline; an unselective one does not", () => {
   const [narrow] = themeMembership([payoff, ...fuel], few, ["enters:wizard"], 0.55);
   expect(narrow.selective).toBe(true);
   expect(narrow.members).toContain("Bear 0");
+});
+
+test("a static tag never nominates a theme", () => {
+  // static:pump claimed 90 of 92 cards on nashi-sole-survivor; an anthem is a payoff of whatever
+  // theme supplies its subject, not a theme.
+  expect(themeCandidates(["enters:wizard", "static:pump", "static:cost-reduction", "enters:land"]))
+    .toEqual(["enters:wizard", "enters:land"]);
+});
+
+test("a replacement effect supplies surplus rather than consuming", () => {
+  const doubler = card("Token Doubler", [{
+    kind: "static",
+    effect: { kind: "token-doubling", subject: { type: "creature", control: "you", token: true } },
+  }]);
+  const payoff = card("Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const reasons: Reason[] = [{
+    tag: "enters:creature", text: "x", producer: "Token Doubler", consumer: "Payoff",
+    effectKind: "token-doubling",
+  }];
+  const [t] = themeMembership([doubler, payoff], reasons, ["enters:creature"]);
+  expect(t.surplus, "a doubler multiplies the event stream, so it produces").toContain("Token Doubler");
+  expect(t.payoffs).not.toContain("Token Doubler");
 });

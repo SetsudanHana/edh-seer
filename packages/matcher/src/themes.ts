@@ -1,8 +1,17 @@
 import type { Reason } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
+import { classifyEffect } from "./effect-class.js";
 import { themeSubjectKey } from "./edges.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import type { DeckCard } from "./types.js";
+
+/** A static effect is never a theme of its own. A continuous modifier is a PAYOFF of whatever
+ *  theme supplies its subject — an anthem belongs beside the token makers feeding it, not at the
+ *  head of a `static:pump` zone holding all 90 creatures. A replacement effect is a SURPLUS
+ *  PRODUCER of the event it replaces. Either way the theme is named by the event, not the static. */
+export function themeCandidates(tags: string[]): string[] {
+  return tags.filter((t) => !t.startsWith("static:"));
+}
 
 /** A card's own authored emits, keyed identically to reason tags (normalizeZoneEvent +
  *  zoneEventKey), so string equality against `tag` actually matches. Emits only -- never
@@ -56,7 +65,13 @@ export function themeMembership(
 
     for (const r of reasons) {
       if (r.tag !== tag) continue;
-      if (r.consumer) payoffs.add(r.consumer);
+      const cls = r.effectKind
+        ? classifyEffect(r.effectKind, r.hasStatPredicate === true)
+        : "unclassified";
+      // A replacement effect multiplies occurrences of this event, so its card supplies the
+      // theme however the edge is oriented — a token doubler is not "paid off" by tokens.
+      if (cls === "replacement" && r.consumer) surplus.add(r.consumer);
+      else if (r.consumer) payoffs.add(r.consumer);
       if (!r.producer) continue;
       if (r.impliedProducer) baseline.add(r.producer);
       else surplus.add(r.producer);
