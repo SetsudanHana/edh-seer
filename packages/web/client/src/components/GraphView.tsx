@@ -53,8 +53,17 @@ const EDGE_GAP = 28;
 const CENTER_PULL = 0.0004;
 /** Repulsion numerator (world-units^3/tick) for the all-pairs inverse-square push. */
 const REPULSION = 2200;
-/** Pull between two cards per room they share. Unmeasured -- Task 9 tunes it. */
-const ROOM_ATTRACTION = 0.006;
+/** Pull between two cards per room they share. Measured against inalla.txt (Task 9,
+ *  task-9-report.md): 0.006 (the prior default) held overlaps at 0/10 trials but left false
+ *  lenses nonzero in 2/10; 0.01 cut false lenses to 1/10 but pushed overlaps to 8/10 (cards pile
+ *  up faster than collision can separate them); 0.008 is the best of the three tested -- 19/20
+ *  clean on each metric across two 10-trial batches -- but a same-constants recheck showed the
+ *  first batch's 0/0 was a lucky draw, not a settled equilibrium: 1/20 trials still produced 2
+ *  overlaps, and 1/20 produced a false lens (`ramp+strategy`, the one pair that also failed at
+ *  0.006). Neither tested value hits a deterministic 0 on every trial; see task-9-report.md for
+ *  the full round-by-round numbers and why this was capped at 4 rounds rather than tuned
+ *  further. */
+const ROOM_ATTRACTION = 0.008;
 const LINK_STIFFNESS = 0.0012;
 /** Per-tick velocity damping (0..1, higher = less friction). */
 const VELOCITY_DAMPING = 0.86;
