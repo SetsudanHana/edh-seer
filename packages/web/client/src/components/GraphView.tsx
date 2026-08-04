@@ -144,8 +144,14 @@ function boxOverlapsCircle(box: LabelBox, c: Circle): boolean {
  *
  *  `placed` accumulates across a frame's rooms; the caller passes the same array through in ROOMS
  *  declaration order (fixed, independent of geometry), so which label "wins" an already-taken
- *  spot is stable frame to frame -- no flicker as cards move, the simulation settles, or the user
- *  pans/zooms. Runs once per room per frame, and each call is O(placed so far + circles): with
+ *  spot at a GIVEN zoom is deterministic, not a race between whichever room happened to draw
+ *  first. That does not make placement itself stable under zoom: `roomFontPx = 12 / cam.z` scales
+ *  the label's measured box with zoom while `circle.r` does not, so which labels collide -- and
+ *  therefore where this function pushes them -- is zoom-dependent, and a label's y can jump
+ *  discontinuously as the user zooms in or out. Cards moving or the simulation settling do not
+ *  retrigger this on their own; a draw only reruns it because the frame redraws anyway, at
+ *  whatever positions and zoom that frame has. Runs once per room per frame, and each call is
+ *  O(placed so far + circles): with
  *  seven rooms that's at most 42 comparisons total, immaterial next to the O(n^2) physics tick it
  *  shares a frame with.
  *
