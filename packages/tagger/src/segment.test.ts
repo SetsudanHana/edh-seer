@@ -51,10 +51,28 @@ test("ability words are stripped to a marker so the clause text is the rule itse
   expect(c[0].text).toBe("Whenever a land you control enters, mill a card.");
 });
 
-test("an activated cost is not mistaken for an ability word", () => {
+test("an activated cost is split off, not mistaken for an ability word", () => {
   const c = segment("{2}, {T}: Create a 0/0 colorless Construct artifact creature token.");
   expect(c[0].marker).toBeUndefined();
-  expect(c[0].text.startsWith("{2}")).toBe(true);
+  expect(c[0].abilityType).toBe("activated");
+  expect(c[0].cost).toBe("{2}, {T}");
+  expect(c[0].text).toBe("Create a 0/0 colorless Construct artifact creature token.");
+});
+
+test("a sacrifice COST is captured, not left as prose the model may or may not record", () => {
+  // Phyrexian Tower failed the known-wrong gate because the model sometimes put the sacrifice in
+  // the cost string and sometimes in actions. An aristocrats deck needs to see it either way.
+  const c = segment("{T}: Add {C}.\n{T}, Sacrifice a creature: Add {B}{B}.");
+  expect(c[1].cost).toBe("{T}, Sacrifice a creature");
+  expect(c[1].abilityType).toBe("activated");
+});
+
+test("abilityType is derived, not asked — the model disagreed with itself on it", () => {
+  expect(segment("Counter target spell.", [], "Instant")[0].abilityType).toBe("spell");
+  expect(segment("Exile target creature.", [], "Sorcery")[0].abilityType).toBe("spell");
+  expect(segment("Whenever a land you control enters, mill a card.", [], "Creature")[0].abilityType).toBe("triggered");
+  expect(segment("Creatures you control get +1/+1.", [], "Enchantment")[0].abilityType).toBe("static");
+  expect(segment("At the beginning of your upkeep, draw a card.", [], "Artifact")[0].abilityType).toBe("triggered");
 });
 
 test("Urza's Saga: chapters are their own clauses, each carrying its numeral", () => {

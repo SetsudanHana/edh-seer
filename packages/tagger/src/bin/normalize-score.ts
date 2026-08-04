@@ -18,11 +18,22 @@ const skeleton = (o: Row["output"]): string =>
     (c.actions ?? []).map((a) => [a.verb, a.fromZone ?? null, a.toZone ?? null]),
   ]));
 
-let identical = 0, complete = 0, errored = 0;
+/** What the DERIVATION layer actually consumes: which verbs and zone transitions a clause
+ *  contains, not whether "reveal" was recorded as its own action or folded into the search. Both
+ *  numbers are reported — the exact one is stricter than the model needs to be, the semantic one
+ *  is the honest requirement. Stating both so the metric cannot be quietly moved after the fact. */
+const semantic = (o: Row["output"]): string =>
+  JSON.stringify((o.clauses ?? []).map((c) => [
+    c.id, c.abilityType, c.trigger?.event ?? null,
+    [...new Set((c.actions ?? []).map((a) => `${a.verb}|${a.fromZone ?? ""}|${a.toZone ?? ""}`))].sort(),
+  ]));
+
+let identical = 0, complete = 0, errored = 0, semanticSame = 0;
 for (const a of r1) {
   const b = r2.find((x) => x.name === a.name);
   if (a.output.ERROR || b?.output.ERROR) { errored++; continue; }
   if (b && skeleton(a.output) === skeleton(b.output)) identical++;
+  if (b && semantic(a.output) === semantic(b.output)) semanticSame++;
   const want = a.clauses.map((c) => c.id).sort((x, y) => x - y);
   const got = (a.output.clauses ?? []).map((c) => c.id).sort((x, y) => x - y);
   if (JSON.stringify(want) === JSON.stringify(got)) complete++;
@@ -30,6 +41,7 @@ for (const a of r1) {
 const n = r1.length;
 console.log(`cards: ${n}   errors: ${errored}`);
 console.log(`GATE determinism  : ${identical}/${n} (${((identical / n) * 100).toFixed(0)}%)   target >=90%, today's tagger 55%`);
+console.log(`GATE determinism* : ${semanticSame}/${n} (${((semanticSame / n) * 100).toFixed(0)}%)   *verb+zone SET per clause — what derivation consumes`);
 console.log(`GATE completeness : ${complete}/${n} (${((complete / n) * 100).toFixed(0)}%)   target 100% — every clause id answered, none invented`);
 
 // The four cards today's tagger demonstrably gets wrong.

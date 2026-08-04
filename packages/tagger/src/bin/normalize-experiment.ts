@@ -43,10 +43,12 @@ const SYSTEM = `You NORMALIZE Magic: The Gathering rules text. You do not classi
 You are given a card's clauses, already numbered. Answer EVERY clause id exactly once, in order.
 Never merge clauses, never split one, never invent an id.
 
+The clause list already carries type= and cost= where they apply. Do NOT re-decide them; copy
+type= into abilityType verbatim.
+
 For each clause return:
 { "id": number,
-  "abilityType": "spell" | "activated" | "triggered" | "static" | "none",
-  "cost": string | null,
+  "abilityType": copied from type=, or "none" for keyword/reminder clauses,
   "trigger": { "event": TriggerEvent, "subject": string, "control": "you"|"opponent"|"any" } | null,
   "actions": [ { "verb": Verb, "object": string, "fromZone": Zone|null, "toZone": Zone|null,
                  "amount": string|null, "optional": boolean } ] }
@@ -64,6 +66,10 @@ Rules:
 - A clause of kind "keyword" or "reminder" gets abilityType "none" and actions [{verb:"none"}].
 - Use trigger.event "none" for anything that is not triggered.
 - "trigger-again" is for effects that make a triggered ability trigger an additional time.
+- A cost shown as cost="..." is ALSO recorded in actions when it does something a payoff could
+  care about: cost="{T}, Sacrifice a creature" yields a sacrifice action as well as the effect.
+  A sacrifice hidden in a cost string is invisible to every payoff that triggers on sacrificing.
+- List one action per game action the clause states, in the order written.
 - "cant" is for restrictions ("can't attack", "can't be countered"); put the restriction in object.
 Return ONLY { "clauses": [ ... ] }.`;
 
@@ -77,13 +83,15 @@ for (const name of CARDS) {
   const c = (await s.db.collection("cards").findOne({ name })) as
     { name: string; oracleText?: string; keywords?: string[]; typeLine?: string } | null;
   if (!c) { console.log(`  (missing: ${name})`); continue; }
-  prepared.push({ name: c.name, clauses: segment(c.oracleText ?? "", c.keywords ?? []) });
+  prepared.push({ name: c.name, clauses: segment(c.oracleText ?? "", c.keywords ?? [], c.typeLine ?? "") });
 }
 
 for (const run of ["run1", "run2"]) {
   const results: { name: string; clauses: Clause[]; output: unknown }[] = [];
   for (const p of prepared) {
-    const listed = p.clauses.map((c) => `${c.id}. [${c.kind}${c.marker ? ` ${c.marker}` : ""}] ${c.text}`).join("\n");
+    const listed = p.clauses.map((c) =>
+      `${c.id}. [${c.kind}${c.marker ? ` ${c.marker}` : ""}]` +
+      `${c.abilityType ? ` type=${c.abilityType}` : ""}${c.cost ? ` cost="${c.cost}"` : ""} ${c.text}`).join("\n");
     let parsed: unknown;
     try {
       const raw = await provider.chat([

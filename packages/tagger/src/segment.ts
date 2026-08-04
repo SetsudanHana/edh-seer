@@ -28,6 +28,33 @@ export interface Clause {
   marker?: string;
   /** For a mode, the id of the clause introducing "choose one —". */
   parentId?: number;
+  /** Derived here, not asked of the model: it disagreed with itself on 3 of 20 cards over a
+   *  question with a mechanical answer (is Path to Exile's text a spell ability?). */
+  abilityType?: "spell" | "activated" | "triggered" | "static";
+  /** The activation cost, when the clause is "{cost}: effect". Split off so the model cannot
+   *  choose between recording a sacrifice cost as prose or as an action — Phyrexian Tower's
+   *  "{T}, Sacrifice a creature:" is what an aristocrats deck needs to see. */
+  cost?: string;
+}
+
+/** True when the card itself is an instant or sorcery — its text is a spell ability by default. */
+function isSpellCard(typeLine: string): boolean {
+  return /\b(instant|sorcery)\b/i.test(typeLine);
+}
+
+/** Leading "{cost}: effect" or "Cost, Cost: effect" — an activated ability (CR 602). */
+const ACTIVATED = /^((?:\{[^}]*\}|[^:{}]{1,40}?)(?:\s*,\s*(?:\{[^}]*\}|[^:{}]{1,40}?))*)\s*:\s+/;
+
+function classify(text: string, kind: ClauseKind, typeLine: string): { abilityType?: Clause["abilityType"]; cost?: string; body: string } {
+  if (kind === "keyword" || kind === "reminder") return { body: text };
+  const act = text.match(ACTIVATED);
+  // Require the prefix to look like a cost: it must contain a mana symbol, {T}, or a cost word.
+  if (act && /\{|sacrifice|discard|pay|remove|exile|tap\b/i.test(act[1])) {
+    return { abilityType: "activated", cost: act[1].trim(), body: text.slice(act[0].length) };
+  }
+  if (/^(when|whenever|at the beginning|at end)/i.test(text)) return { abilityType: "triggered", body: text };
+  if (kind === "chapter" || kind === "level") return { abilityType: "triggered", body: text };
+  return { abilityType: isSpellCard(typeLine) ? "spell" : "static", body: text };
 }
 
 const CHAPTER = /^([IVX]+(?:\s*,\s*[IVX]+)*)\s*[—-]\s*/;
@@ -52,11 +79,12 @@ function isKeywordLine(line: string, keywords: string[]): boolean {
 
 /** Split a card's oracle text into numbered clauses. Deterministic: the same text always yields
  *  the same clause list, which is the property the LLM could not provide. */
-export function segment(oracleText: string, keywords: string[] = []): Clause[] {
+export function segment(oracleText: string, keywords: string[] = [], typeLine = ""): Clause[] {
   const out: Clause[] = [];
   let id = 0;
   const next = (c: Omit<Clause, "id">): Clause => {
-    const clause = { id: ++id, ...c };
+    const { abilityType, cost, body } = classify(c.text, c.kind, typeLine);
+    const clause: Clause = { id: ++id, ...c, text: body, ...(abilityType ? { abilityType } : {}), ...(cost ? { cost } : {}) };
     out.push(clause);
     return clause;
   };
