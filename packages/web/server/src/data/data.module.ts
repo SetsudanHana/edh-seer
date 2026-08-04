@@ -7,48 +7,84 @@ import type { WireGraph } from "../analyze/analyze.types.js";
 
 export const STORE = "MONGO_STORE";
 
+/** Joins a per-name map onto the graph's own key (oracleId) through `oracleIdByName` -- the one
+ *  lookup both `rolesByName` and `copiesByName` need, since the wire node is keyed by oracleId but
+ *  both maps arrive keyed by the report/decklist's card name. Shared rather than copy-pasted so a
+ *  join-logic fix can't happen to only one of them again; `label` keeps a miss diagnosable as "no
+ *  roles for X" vs "no copy count for X" -- different bugs -- since the two are otherwise
+ *  identical loops. A miss here is a data gap (stale report, name drift), not a caller bug worth
+ *  failing the whole request over, so it's logged rather than thrown -- contrast `addEventEdges`'s
+ *  own throw, where a mismatch means the caller built two card lists that disagree with each
+ *  other, which IS always a caller bug. */
+function joinByOracleId<T>(
+  byName: Map<string, T>,
+  oracleIdByName: Map<string, string>,
+  normalize: (name: string) => string,
+  label: string,
+): Map<string, T> {
+  const byOracleId = new Map<string, T>();
+  let unjoined = 0;
+  for (const [name, value] of byName) {
+    const oracleId = oracleIdByName.get(normalize(name));
+    if (oracleId) byOracleId.set(oracleId, value);
+    else unjoined++;
+  }
+  if (unjoined > 0) {
+    console.warn(`graph: ${unjoined} card(s) with report ${label} did not join to a graph node`);
+  }
+  return byOracleId;
+}
+
 /** The report keys cards by name; the graph keys nodes by oracleId (`card:<oracleId>`). Join
  *  through `docs` -- the same array `buildGraph` read -- rather than re-resolving names again,
  *  so the mapping cannot drift from what's actually in the graph. `normalize` is injected rather
  *  than imported so this stays a plain, deterministic function of its arguments, testable without
  *  touching `@mtg/data` -- it does `console.warn` on an unjoined count, so not literally pure.
  *
- *  Also strips node props down to `roles`/`artCrop` for the wire: the browser view otherwise
- *  reads id/kind/label only, while `legalities` alone (24 formats on every card node) is 81KB of
- *  the 269KB graph.
+ *  Also strips node props down to `roles`/`artCrop`/`copies` for the wire: the browser view
+ *  otherwise reads id/kind/label only, while `legalities` alone (24 formats on every card node) is
+ *  81KB of the 269KB graph.
  *
- *  A card the report gave roles to should always resolve to a node here (same corpus, same
- *  names) -- when it doesn't, that's a data gap (stale report, name drift), not a caller bug
- *  worth failing the whole request over, so it's logged rather than thrown. Contrast
- *  `addEventEdges`'s own throw: that mismatch would mean the caller built two card lists that
- *  disagree with each other, which is always a bug in the caller. */
+ *  `copiesByName` is required, not optional: an optional param here is exactly the shape of bug
+ *  this function exists to avoid -- a call site that quietly stops passing it would render every
+ *  multi-copy card as a single copy with no signal anywhere (see the fix-round-1 report). The one
+ *  production caller (the `graph` dep below) always has the value in hand from the same place
+ *  `rolesByName` comes from, so there's no real caller for whom this is a burden. */
 export function attachRolesAndArt(
   graph: CardGraph,
-  docs: Array<{ _id: string; name: string }>,
+  docs: Array<{ _id: string; name: string; typeLine?: string }>,
   rolesByName: Map<string, string[]>,
   normalize: (name: string) => string,
+  copiesByName: Map<string, number>,
 ): WireGraph {
   const oracleIdByName = new Map(docs.map((d) => [normalize(d.name), d._id]));
-  const rolesByOracleId = new Map<string, string[]>();
-  let unjoined = 0;
-  for (const [name, roles] of rolesByName) {
-    const oracleId = oracleIdByName.get(normalize(name));
-    if (oracleId) rolesByOracleId.set(oracleId, roles);
-    else unjoined++;
-  }
-  if (unjoined > 0) {
-    console.warn(`graph: ${unjoined} card(s) with report roles did not join to a graph node`);
-  }
+  const rolesByOracleId = joinByOracleId(rolesByName, oracleIdByName, normalize, "roles");
+  const copiesByOracleId = joinByOracleId(copiesByName, oracleIdByName, normalize, "copy counts");
+  // Lands is a TYPE room, not a role room: a card is in it because it IS a land. The engine's
+  // role field deliberately excludes basics (build.ts's !isBasicLand guard) because it answers
+  // "does this pull double duty?", where "Island fills the lands role" is noise -- and that same
+  // field drives doubleDutyRating's 1.15x synergy multiplier, so it must not be widened there.
+  // The board asks a different question, and answers it here, where the full doc is in hand.
+  const isLandByOracleId = new Map(
+    docs.map((d) => [d._id, (d.typeLine ?? "").toLowerCase().includes("land")] as const),
+  );
 
   const nodes = graph.nodes.map(({ id, kind, label, props }) => {
-    const roles = kind === "card" ? rolesByOracleId.get(id.slice("card:".length)) : undefined;
+    const oracleId = id.slice("card:".length);
+    const base = kind === "card" ? rolesByOracleId.get(oracleId) : undefined;
+    const roles =
+      kind === "card" && isLandByOracleId.get(oracleId) && !(base ?? []).includes("lands")
+        ? [...(base ?? []), "lands"]
+        : base;
     const artCrop = props?.artCrop as string | undefined;
+    const copies = kind === "card" ? copiesByOracleId.get(oracleId) : undefined;
     return {
       id,
       kind,
       label,
       ...(roles && roles.length > 0 ? { roles } : {}),
       ...(artCrop !== undefined ? { artCrop } : {}),
+      ...(copies !== undefined && copies > 1 ? { copies } : {}),
     };
   });
   return { nodes, edges: graph.edges };
@@ -93,12 +129,16 @@ export function attachRolesAndArt(
             const commanderColorIdentity = [...new Set(commanderCards.flatMap((c) => c.colorIdentity ?? []))];
             return { cards, combos, missing, commanderResolved, commanderColorIdentity };
           },
-          graph: async (cardNames: string[], rolesByName: Map<string, string[]>) => {
+          graph: async (
+            cardNames: string[],
+            rolesByName: Map<string, string[]>,
+            copiesByName: Map<string, number>,
+          ) => {
             // Re-reads the card DOCUMENTS: resolveDeck hands back engine `Card`s, and buildGraph
             // needs the full CardDoc (faces, all_parts, legalities) that only the corpus row carries.
             const lookup = data.mongoLookup(store as never);
             const cardTagsCol = (store.db as Db).collection<CardTags>("cardTags");
-            const docs: Array<{ _id: string; name: string }> = [];
+            const docs: Array<{ _id: string; name: string; typeLine?: string }> = [];
             const deckCards = [];
             for (const name of new Set(cardNames)) {
               const doc = await lookup.findByName(data.normalizeName(name));
@@ -108,7 +148,7 @@ export function attachRolesAndArt(
             }
             // Same card list feeds both halves -- addEventEdges throws if they ever diverge.
             const graph = matcher.addEventEdges(matcher.buildGraph(docs as never), deckCards as never, matcher.loadHierarchy());
-            return attachRolesAndArt(graph, docs, rolesByName, data.normalizeName);
+            return attachRolesAndArt(graph, docs, rolesByName, data.normalizeName, copiesByName);
           },
           analyze: async (cards, combos, commanderNames) => {
             const lookup = data.mongoLookup(store as never);

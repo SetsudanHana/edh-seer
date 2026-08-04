@@ -13,6 +13,11 @@ export interface WireGraphNode {
    *  when the report had none for it -- not the same as an empty array. */
   roles?: string[];
   artCrop?: string;
+  /** How many copies of this card the deck holds. The graph keys card nodes by card id, so every
+   *  copy collapses into one node -- a deck's 24 basic Mountains are one disc, and a hand of nine
+   *  Relentless Rats is one disc too, though both are legally true multiples. This is where that
+   *  count survives so the node can say so. Absent on non-card nodes and on a single copy. */
+  copies?: number;
 }
 
 export interface WireGraph {

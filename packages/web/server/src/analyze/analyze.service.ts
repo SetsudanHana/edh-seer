@@ -20,7 +20,11 @@ export interface AnalyzeDeps {
     commanderColorIdentity: string[];
   }>;
   analyze(cards: unknown[], combos: unknown[], commanderNames: string[]): Promise<DeckReport>;
-  graph(cardNames: string[], rolesByName: Map<string, string[]>): Promise<WireGraph>;
+  graph(
+    cardNames: string[],
+    rolesByName: Map<string, string[]>,
+    copiesByName: Map<string, number>,
+  ): Promise<WireGraph>;
 }
 
 @Injectable()
@@ -42,7 +46,12 @@ export class AnalyzeService {
     // this join off its own `docs` array (the ESM `@mtg/data` it dynamically imports), so doing
     // it again here would just be a second, easy-to-drift copy of the same normalization.
     const rolesByName = new Map(report.cards.filter((c) => c.roles && c.roles.length > 0).map((c) => [c.name, c.roles!] as const));
-    const graph = await this.deps.graph((cards as Array<{ name: string }>).map((c) => c.name), rolesByName);
+    // resolveDeck returns one entry per COPY, so this is where multiplicity still exists -- the
+    // graph builder keys nodes by card id and collapses it. Count before it is lost.
+    const names = (cards as Array<{ name: string }>).map((c) => c.name);
+    const copiesByName = new Map<string, number>();
+    for (const n of names) copiesByName.set(n, (copiesByName.get(n) ?? 0) + 1);
+    const graph = await this.deps.graph(names, rolesByName, copiesByName);
     const totalCount = commanderNames.length + sections.deck.length;
     return { report, missing, resolvedCount: cards.length, totalCount, commanderColorIdentity, graph };
   }

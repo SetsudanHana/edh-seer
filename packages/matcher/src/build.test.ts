@@ -328,3 +328,58 @@ test("exile-a-spell pseudo-counters are stack interaction; exile-a-creature (rem
   expect(m.get("stackInteraction")).toContain("Aven Interrupter");
   expect(m.get("stackInteraction") ?? new Set()).not.toContain("Swords to Plowshares");
 });
+
+test("a land producing two mana from one tap fills the ramp role", () => {
+  const members = detectBuildCategories([
+    mk("Ancient Tomb", "{T}: Add {C}{C}. Ancient Tomb deals 2 damage to you.", "Land"),
+  ]);
+  expect(members.get("ramp")).toEqual(new Set(["Ancient Tomb"]));
+});
+
+test("a land that enters tapped is not ramp, even producing three mana of one color (Lotus Field)", () => {
+  const members = detectBuildCategories([
+    mk("Lotus Field", "Lotus Field enters tapped. {T}: Add three mana of any one color.", "Land"),
+  ]);
+  expect(members.get("ramp")).toBeUndefined();
+});
+
+test("a basic land does not fill the ramp role", () => {
+  const members = detectBuildCategories([mk("Island", "({T}: Add {U}.)", "Basic Land — Island")]);
+  expect(members.get("ramp")).toBeUndefined();
+});
+
+test("a filter land does not fill the ramp role -- it costs mana to use", () => {
+  const members = detectBuildCategories([
+    mk("Cascade Bluffs", "{T}: Add {C}. {U/R}, {T}: Add {U}{U}, {U}{R}, or {R}{R}.", "Land"),
+  ]);
+  expect(members.get("ramp")).toBeUndefined();
+});
+
+test("the Karoo/bounce-land cycle is not ramp -- it enters tapped, unusable the turn it lands", () => {
+  const members = detectBuildCategories([
+    mk(
+      "Boros Garrison",
+      "Boros Garrison enters tapped. When Boros Garrison enters, return a land you control to its owner's hand. {T}: Add {R}{W}.",
+      "Land",
+    ),
+  ]);
+  expect(members.get("ramp")).toBeUndefined();
+});
+
+test("Temple of the False God (untapped, taps for two) is still ramp", () => {
+  const members = detectBuildCategories([
+    mk("Temple of the False God", "{T}: Add {C}{C}. Activate only if you control five or more lands.", "Land"),
+  ]);
+  expect(members.get("ramp")).toEqual(new Set(["Temple of the False God"]));
+});
+
+test("the sacrifice-to-fetch-two ramp land still fills the ramp role", () => {
+  const members = detectBuildCategories([
+    mk(
+      "Myriad Landscape",
+      "Myriad Landscape enters tapped. {T}: Add {C}. {2}, {T}, Sacrifice Myriad Landscape: Search your library for up to two basic land cards with the same name, put them onto the battlefield tapped, then shuffle.",
+      "Land",
+    ),
+  ]);
+  expect(members.get("ramp")).toEqual(new Set(["Myriad Landscape"]));
+});

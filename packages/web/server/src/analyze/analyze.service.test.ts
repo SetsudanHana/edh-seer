@@ -27,7 +27,11 @@ const fakeReport: DeckReport = {
   medianManaValue: 0,
 };
 
-function fakeDeps(capture: { commanderNames?: string[]; rolesByName?: Map<string, string[]> }): AnalyzeDeps {
+function fakeDeps(capture: {
+  commanderNames?: string[];
+  rolesByName?: Map<string, string[]>;
+  copies?: Map<string, number>;
+}): AnalyzeDeps {
   return {
     parseDecklistSections: (text) => {
       // "Commander\n1 X\n\n1 Y" -> { commanders:["X"], deck:["Y"] }; else all deck.
@@ -46,8 +50,9 @@ function fakeDeps(capture: { commanderNames?: string[]; rolesByName?: Map<string
       commanderResolved: commanderNames,
       commanderColorIdentity: ["R"],
     }),
-    graph: async (_cardNames, rolesByName) => {
+    graph: async (_cardNames, rolesByName, copiesByName) => {
       capture.rolesByName = rolesByName;
+      capture.copies = copiesByName;
       return { nodes: [], edges: [] };
     },
     analyze: async (_cards, _combos, commanderNames) => {
@@ -88,4 +93,16 @@ test("passes the graph dep a rolesByName map built from the report's cards, role
   const svc = new AnalyzeService(deps);
   await svc.analyze("1 Sol Ring\n1 Forest", "1 Krenko, Mob Boss");
   expect(capture.rolesByName).toEqual(new Map([["Sol Ring", ["ramp"]]]));
+});
+
+test("tells the graph dep how many copies of each card the deck holds", async () => {
+  const capture: { copies?: Map<string, number> } = {};
+  const deps = fakeDeps(capture);
+  // resolveDeck returns one entry per copy -- 3 Mountains is three entries, one name
+  deps.resolveDeck = async () => ({
+    cards: [{ name: "Mountain" }, { name: "Mountain" }, { name: "Mountain" }, { name: "Sol Ring" }],
+    combos: [], missing: [], commanderResolved: [], commanderColorIdentity: [],
+  }) as never;
+  await new AnalyzeService(deps).analyze("3 Mountain\n1 Sol Ring");
+  expect(capture.copies).toEqual(new Map([["Mountain", 3], ["Sol Ring", 1]]));
 });

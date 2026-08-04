@@ -6,8 +6,9 @@ type Category =
   | "ramp" | "draw" | "cardSelection" | "targetedRemoval" | "stackInteraction"
   | "boardWipe" | "burn" | "stax" | "protection" | "tutor" | "lands";
 
-// Exported: GraphView reuses these for its zone labels, so the graph's functional-role
-// names/order stay the same one place as the Cards tab's own filter chips. (The glyph legend
+// Exported for this file's own filter chips below. GraphView used to reuse these for its
+// role-ring zone labels, but Task 4 moved the graph to fixed rooms (see deck-rooms.ts, which
+// owns its own room labels now) -- these are plain internal exports again. (The glyph legend
 // is unrelated -- it derives its own verb keys straight from event node ids.)
 export const CATEGORY_LABELS: Record<Category, string> = {
   ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
