@@ -93,6 +93,11 @@ function splitEmbeddedTriggers(text: string): string[] {
 
 function classify(text: string, kind: ClauseKind, typeLine: string): { abilityType?: Clause["abilityType"]; cost?: string; body: string } {
   if (kind === "keyword" || kind === "reminder") return { body: text };
+  // A planeswalker loyalty ability is activated (CR 606); its cost is the loyalty symbol. Without
+  // this, Aminatou's "+1: Draw a card" was typed static — the loyalty cost is not a mana symbol,
+  // so the general cost pattern never matched it.
+  const loyalty = text.match(LOYALTY);
+  if (loyalty) return { abilityType: "activated", cost: loyalty[1].trim(), body: text.slice(loyalty[0].length) };
   const act = text.match(ACTIVATED);
   // Require the prefix to look like a cost: it must contain a mana symbol, {T}, or a cost word.
   if (act && /\{|sacrifice|discard|pay|remove|exile|tap\b/i.test(act[1])) {
@@ -106,6 +111,8 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
 const CHAPTER = /^([IVX]+(?:\s*,\s*[IVX]+)*)\s*[—-]\s*/;
 const ABILITY_WORD = /^([A-Z][A-Za-z' ]{2,24})\s*—\s*/;
 const LEVEL = /^\{[^}]*\}(?:\s*\{[^}]*\})*\s*:\s*Level\s+\d+/i;
+/** A planeswalker loyalty cost: "+1:", "-3:", "0:", "+X:", using either hyphen or minus sign. */
+const LOYALTY = /^([+\u2212-]?(?:\d+|X))\s*:\s+/;
 
 /** Strip reminder text but remember whether anything else remained. */
 function stripReminder(line: string): string {
@@ -170,9 +177,15 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
       } else {
         parentId = next({ kind: chapter ? "chapter" : "ability", text: head.trim(), marker }).id;
       }
+      // A mode belongs to its parent's ability: Bow of Nylea's modes are part of an activated
+      // ability, and typing them static made the mode read as a permanent's standing effect.
+      const parentType = out.find((c) => c.id === parentId)?.abilityType;
       for (const m of modes) {
         const t = m.trim();
-        if (t) next({ kind: "mode", text: t, parentId });
+        if (t) {
+          const mode = next({ kind: "mode", text: t, parentId });
+          if (parentType) mode.abilityType = parentType;
+        }
       }
       continue;
     }

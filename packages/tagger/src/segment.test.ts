@@ -150,3 +150,26 @@ test("quoted flavour or a name is not mistaken for a granted ability", () => {
   expect(c).toHaveLength(1);
   expect(c.filter((x) => x.kind === "granted")).toHaveLength(0);
 });
+
+test("planeswalker loyalty abilities are activated, with the loyalty symbol as the cost", () => {
+  // Aminatou's "+1: Draw a card" was typed static: a loyalty cost is not a mana symbol, so the
+  // general cost pattern never matched it.
+  const plus = segment("+1: Draw a card, then put a card from your hand on top of your library.", [], "Legendary Planeswalker — Aminatou");
+  expect(plus[0].abilityType).toBe("activated");
+  expect(plus[0].cost).toBe("+1");
+  expect(plus[0].text.startsWith("Draw a card")).toBe(true);
+  // Both hyphen and the real minus sign appear in printed oracle text.
+  expect(segment("-3: Exile target permanent.", [], "Legendary Planeswalker")[0].abilityType).toBe("activated");
+  expect(segment("−8: You get an emblem.", [], "Legendary Planeswalker")[0].cost).toBe("−8");
+  expect(segment("0: Draw a card.", [], "Legendary Planeswalker")[0].cost).toBe("0");
+});
+
+test("a mode inherits its parent's ability type", () => {
+  // Bow of Nylea's modes were typed static, reading as a permanent's standing effect rather than
+  // as part of an activated ability.
+  const c = segment("{1}{G}, {T}: Choose one —\n• Put a +1/+1 counter on each of up to two target creatures.\n• Bow of Nylea deals 2 damage to target creature with flying.", [], "Legendary Artifact");
+  expect(c[0].abilityType).toBe("activated");
+  const modes = c.filter((x) => x.kind === "mode");
+  expect(modes).toHaveLength(2);
+  expect(modes.every((m) => m.abilityType === "activated")).toBe(true);
+});
