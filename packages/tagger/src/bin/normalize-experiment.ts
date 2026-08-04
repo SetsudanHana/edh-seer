@@ -74,9 +74,19 @@ Rules:
   do not send event:"none" — one fact must have exactly one encoding, or two runs disagree over
   nothing. (This ambiguity alone accounted for every residual disagreement in the first run.)
 - "trigger-again" is for effects that make a triggered ability trigger an additional time.
-- A cost shown as cost="..." is ALSO recorded in actions when it does something a payoff could
-  care about: cost="{T}, Sacrifice a creature" yields a sacrifice action as well as the effect.
-  A sacrifice hidden in a cost string is invisible to every payoff that triggers on sacrificing.
+- COSTS. From a cost="..." record ONLY these as actions, because only these are things another
+  card can trigger on: sacrifice, discard, exile, return, remove-counter, pay-life.
+  NEVER record paying mana, tapping the source ({T}), or an unpaid alternative ("if you don't")
+  as an action. cost="{T}, Sacrifice a creature" yields exactly one action: sacrifice.
+- ZONES. Set fromZone/toZone ONLY for these verbs, which are defined by the move:
+    put, return, mill, discard, draw, search, exile, cast (when cast from outside the hand)
+  NEVER set zones for: sacrifice, destroy, tap, untap, create, add-mana, add-counter, deal-damage,
+  gain-life, lose-life, grant-ability, modify-pt, counter-spell, copy, shuffle, reveal, cant.
+  Those verbs already imply where they happen; recording it twice makes two runs disagree over
+  nothing. "create" is the one exception you may be tempted by — a token entering is implied by
+  the verb, so leave its zones null.
+- "Enters tapped" is a property of entering, not an action: record it as verb "tap" with object
+  "this", so the fact survives without inventing a second entry event.
 - List one action per game action the clause states, in the order written.
 - "cant" is for restrictions ("can't attack", "can't be countered"); put the restriction in object.
 Return ONLY { "clauses": [ ... ] }.`;
