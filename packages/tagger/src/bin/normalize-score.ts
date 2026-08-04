@@ -14,7 +14,7 @@ const r1 = load("run1.json"), r2 = load("run2.json");
 /** Structured fields only — the free-text object is deliberately excluded. */
 const skeleton = (o: Row["output"]): string =>
   JSON.stringify((o.clauses ?? []).map((c) => [
-    c.id, c.abilityType, c.trigger?.event ?? null,
+    c.id, c.abilityType, c.trigger?.event === "none" ? null : c.trigger?.event ?? null,
     (c.actions ?? []).map((a) => [a.verb, a.fromZone ?? null, a.toZone ?? null]),
   ]));
 
@@ -24,7 +24,7 @@ const skeleton = (o: Row["output"]): string =>
  *  is the honest requirement. Stating both so the metric cannot be quietly moved after the fact. */
 const semantic = (o: Row["output"]): string =>
   JSON.stringify((o.clauses ?? []).map((c) => [
-    c.id, c.abilityType, c.trigger?.event ?? null,
+    c.id, c.abilityType, c.trigger?.event === "none" ? null : c.trigger?.event ?? null,
     [...new Set((c.actions ?? []).map((a) => `${a.verb}|${a.fromZone ?? ""}|${a.toZone ?? ""}`))].sort(),
   ]));
 

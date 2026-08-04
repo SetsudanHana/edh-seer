@@ -49,13 +49,13 @@ type= into abilityType verbatim.
 For each clause return:
 { "id": number,
   "abilityType": copied from type=, or "none" for keyword/reminder clauses,
-  "trigger": { "event": TriggerEvent, "subject": string, "control": "you"|"opponent"|"any" } | null,
+  "trigger": { "event": TriggerEvent, "subject": string, "control": "you"|"opponent"|"any" },  // omit if not triggered
   "actions": [ { "verb": Verb, "object": string, "fromZone": Zone|null, "toZone": Zone|null,
                  "amount": string|null, "optional": boolean } ] }
 
 Verb is EXACTLY one of: ${VERBS.join(", ")}
 Zone is EXACTLY one of: ${ZONES.join(", ")}
-TriggerEvent is EXACTLY one of: ${TRIGGERS.join(", ")}
+TriggerEvent is EXACTLY one of: ${TRIGGERS.filter((t) => t !== "none").join(", ")}
 
 Rules:
 - Record what the clause SAYS. "Destroy target creature" is verb "destroy" — never a category
@@ -64,7 +64,9 @@ Rules:
   matters more than anything else: "search your library ... put it onto the battlefield" is
   library->battlefield, but "... put it into your hand" is library->hand. They are different cards.
 - A clause of kind "keyword" or "reminder" gets abilityType "none" and actions [{verb:"none"}].
-- Use trigger.event "none" for anything that is not triggered.
+- OMIT the trigger field entirely when the clause is not triggered. Do not send trigger:null and
+  do not send event:"none" — one fact must have exactly one encoding, or two runs disagree over
+  nothing. (This ambiguity alone accounted for every residual disagreement in the first run.)
 - "trigger-again" is for effects that make a triggered ability trigger an additional time.
 - A cost shown as cost="..." is ALSO recorded in actions when it does something a payoff could
   care about: cost="{T}, Sacrifice a creature" yields a sacrifice action as well as the effect.
