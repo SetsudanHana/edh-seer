@@ -16,6 +16,7 @@ export type ClauseKind =
   | "mode"           // one bullet of a modal ability
   | "chapter"        // Saga chapter ("I —", "II, III —")
   | "level"          // Class level marker ("{3}{W}: Level 2")
+  | "granted"        // an ability granted in quotes ("... has \"{T}: Add {C}.\"")
   | "reminder";      // parenthetical reminder text only
 
 export interface Clause {
@@ -70,6 +71,17 @@ export const ZONED_VERBS = ["put", "return", "exile", "search", "cast"] as const
 /** Cost actions implied by an activation cost string, in the order written. */
 export function costActions(cost: string): string[] {
   return COST_ACTIONS.filter(([re]) => re.test(cost)).map(([, verb]) => verb);
+}
+
+/** An ability granted inside quotes is a second ability living in one clause — Progenitor Mimic
+ *  grants a triggered ability, Urza's Saga grants an activated one. The model tried to split these
+ *  itself and invented clause ids to do it, breaking the completeness invariant, so split here. */
+const GRANTED = /"([^"]{12,})"/g;
+function extractGranted(text: string): { body: string; granted: string[] } {
+  const granted: string[] = [];
+  const body = text.replace(GRANTED, (m, inner: string) =>
+    /^(When|Whenever|At\b)|^\{[^}]*\}[^:]*:/.test(inner.trim()) ? (granted.push(inner.trim()), "that ability") : m);
+  return { body, granted };
 }
 
 /** A sentence starting a new trigger inside another clause ("Add {U}. When you spend this mana,
@@ -167,7 +179,11 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
 
     if (isKeywordLine(body, keywords)) { next({ kind: "keyword", text: body, marker }); continue; }
     const pieces = splitEmbeddedTriggers(body);
-    pieces.forEach((piece, i) => next({ kind: chapter ? "chapter" : "ability", text: piece, ...(i === 0 ? { marker } : {}) }));
+    pieces.forEach((piece, i) => {
+      const { body: outer, granted } = extractGranted(piece);
+      const parent = next({ kind: chapter ? "chapter" : "ability", text: outer, ...(i === 0 ? { marker } : {}) });
+      for (const g of granted) next({ kind: "granted", text: g, parentId: parent.id });
+    });
   }
   return out;
 }

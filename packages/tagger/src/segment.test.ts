@@ -133,3 +133,20 @@ test("a trigger embedded after a sentence becomes its own clause", () => {
   expect(c[1].abilityType).toBe("triggered");
   expect(c[1].text.startsWith("When you spend")).toBe(true);
 });
+
+test("an ability granted in quotes becomes its own clause", () => {
+  // Progenitor Mimic broke the completeness invariant: clause 1 held two abilities, so the model
+  // invented id 1.1 in one run and 2 in the other trying to split it itself.
+  const c = segment('You may have this creature enter as a copy of any creature on the battlefield, except it has "At the beginning of your upkeep, create a token that\'s a copy of this creature."');
+  expect(c).toHaveLength(2);
+  expect(c[1].kind).toBe("granted");
+  expect(c[1].parentId).toBe(1);
+  expect(c[1].abilityType).toBe("triggered");
+  expect(c[0].text).toContain("that ability");
+});
+
+test("quoted flavour or a name is not mistaken for a granted ability", () => {
+  const c = segment('As this enchantment enters, choose a nonland card name.');
+  expect(c).toHaveLength(1);
+  expect(c.filter((x) => x.kind === "granted")).toHaveLength(0);
+});
