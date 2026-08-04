@@ -147,6 +147,8 @@ export const EFFECT_KINDS = [
   "animate",
   "untap",
   "proliferate",
+  "graveyard-hate",
+  "extra-combat",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];

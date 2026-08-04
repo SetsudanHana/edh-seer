@@ -7,11 +7,11 @@ import type { GameEvent } from "@mtg/tagger";
 export function normalizeZoneEvent(e: GameEvent): GameEvent {
   switch (e.verb) {
     case "enters":
-      return { verb: "enters", subject: { ...e.subject, zone: "battlefield" } };
+      return { ...e, verb: "enters", subject: { ...e.subject, zone: "battlefield" } };
     case "enters-graveyard":
-      return { verb: "enters", subject: { ...e.subject, zone: "graveyard" } };
+      return { ...e, verb: "enters", subject: { ...e.subject, zone: "graveyard" } };
     case "dies":
-      return { verb: "leaves", subject: { ...e.subject, zone: "battlefield" } };
+      return { ...e, verb: "leaves", subject: { ...e.subject, zone: "battlefield" } };
     default:
       return e;
   }

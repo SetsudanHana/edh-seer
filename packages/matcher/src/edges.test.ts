@@ -721,3 +721,46 @@ test("two abilities emitting the identical counter-added event credit a cares-on
   const counterReasons = directedReasons(dualAdder, carer, H).filter((r) => r.tag.startsWith("counter-added"));
   expect(counterReasons.length).toBe(1);
 });
+
+test("reasons record whether the producer side was baseline or authored", () => {
+  const payoff = base("ETB Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const vanilla = base("Vanilla Bear", []);
+  const maker = base("Token Maker", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "token-generation", subject: { type: "creature", control: "you", token: true } },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }],
+  }]);
+
+  const fromVanilla = directedReasons(vanilla, payoff, H);
+  expect(fromVanilla.length).toBeGreaterThan(0);
+  expect(fromVanilla.every((r) => r.impliedProducer === true)).toBe(true);
+
+  const fromMaker = directedReasons(maker, payoff, H);
+  const authored = fromMaker.filter((r) => r.impliedProducer !== true);
+  expect(authored.length, "the authored token emit is surplus, not baseline").toBeGreaterThan(0);
+});
+
+// Regression: a creature that satisfies a "whenever a creature enters" payoff BOTH by baseline
+// (it is a creature) AND by an authored token-generation emit must not double-count. Without
+// excluding impliedProducer from pairReasons' dedup key, this pair scores 2 -- a plain creature
+// token-maker against a ubiquitous ETB payoff scoring higher than it should purely because it
+// also happens to be a creature. See edges.ts pairReasons.
+test("pairReasons does not double-count a producer that satisfies one trigger by both baseline and authored emit", () => {
+  const maker = base("Token Maker", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "token-generation", subject: { type: "creature", control: "you", token: true } },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }],
+  }]);
+  const payoff = base("ETB Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(pairReasons(maker, payoff, H).length).toBe(1);
+});

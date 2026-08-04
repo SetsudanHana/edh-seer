@@ -25,6 +25,12 @@ export interface Reason {
   consumer?: string;
   /** Card name on the supplying side. See `consumer`. */
   producer?: string;
+  /** True when the producer side of this reason was a SYNTHESISED baseline event — the card
+   *  supplying it does so merely by existing (any nonland is cast; any permanent enters), not by
+   *  an authored effect. Absent when the supply was authored, i.e. surplus. Theme membership
+   *  reads this to tell a deck's 35 lands apart from the fetchlands that actually feed landfall.
+   *  Set by the structured matcher; unset by the flat engine. */
+  impliedProducer?: boolean;
 }
 
 export interface SynergyResult {

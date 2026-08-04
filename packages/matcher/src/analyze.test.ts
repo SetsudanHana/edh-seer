@@ -119,6 +119,29 @@ test("produces a DeckReport with a synergy edge between a maker and its payoff",
   expect(report.cohesion).not.toBeNull();
 });
 
+test("report exposes per-theme surplus/payoff/baseline counts", () => {
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", wizardPayoffAbility);
+  const report = analyzeDeckStructured([maker, payoff], ["Inalla"], H);
+
+  const tm = report.themeMembership!;
+  expect(tm.length).toBeGreaterThan(0);
+  for (const t of tm) {
+    expect(t.tag.startsWith("static:"), "statics never head a theme").toBe(false);
+    expect(typeof t.surplus).toBe("number");
+    expect(typeof t.baseline).toBe("number");
+    expect(typeof t.selective).toBe("boolean");
+  }
+  // A gutted themeMembership returning all-zero counts would still pass the shape assertions
+  // above. Pin real values on the Inalla fixture: Inalla's authored token emit makes her a
+  // surplus producer of enters:wizard, and the nontoken-wizard trigger filter keeps the tag
+  // selective in this 2-card deck.
+  const entersWizard = tm.find((t) => t.tag === "enters:wizard")!;
+  expect(entersWizard).toBeDefined();
+  expect(entersWizard.surplus).toBeGreaterThanOrEqual(1);
+  expect(entersWizard.selective).toBe(true);
+});
+
 test("untagged cards contribute no edges but still appear in the report", () => {
   const tagged = dc("A", []);
   const untagged: DeckCard = { card: { name: "B", typeLine: "Land", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never, tags: null };

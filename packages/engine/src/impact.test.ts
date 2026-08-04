@@ -24,7 +24,7 @@ test("missing repeatability is neutral (×1.0)", () => {
 });
 
 test("seed config has one kind per EFFECT_KIND and all four repeatability classes", () => {
-  expect(Object.keys(SEED_IMPACT_WEIGHTS.kinds).length).toBe(27);
+  expect(Object.keys(SEED_IMPACT_WEIGHTS.kinds).length).toBe(29);
   expect(Object.keys(SEED_IMPACT_WEIGHTS.repeatability).sort())
     .toEqual(["activated", "oneshot", "static", "triggered"]);
 });

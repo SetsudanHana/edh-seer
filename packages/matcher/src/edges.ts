@@ -198,6 +198,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           hasStatPredicate: (t.subject.stats?.length ?? 0) > 0 || undefined,
           consumer: c.card.name,
           producer: p.card.name,
+          impliedProducer: e.implied || undefined,
         });
       }
     }
@@ -280,15 +281,21 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
 }
 
 /** All reasons for the unordered pair {a,b}: union of a→b and b→a directional reasons, deduped
- *  by byte-identical shape (e.g. an authored counter-added emit and a proliferate-derived
- *  counter-added emit can independently satisfy the same consumer trigger, producing two
- *  Reason objects with identical fields — collapse those since they carry no extra information). */
+ *  by byte-identical shape modulo `impliedProducer` (e.g. an authored counter-added emit and a
+ *  proliferate-derived counter-added emit can independently satisfy the same consumer trigger,
+ *  producing two Reason objects that differ only in provenance — collapse those since dedup must
+ *  not change edge score). `impliedProducer` is excluded from the key so a baseline-supplied match
+ *  of the same tag/producer/consumer collapses into its authored counterpart instead of doubling
+ *  the score. This relies on `producerEvents` (edges.ts) ordering authored emits before implied
+ *  ones: keep-first here means the surviving copy has `impliedProducer: undefined`, which is also
+ *  the copy `themeMembership` (themes.ts) wants for surplus credit. If that ordering ever changes,
+ *  this dedup silently starts keeping the implied copy instead. */
 export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
   const all = [...directedReasons(a, b, h), ...directedReasons(b, a, h)];
   const seen = new Set<string>();
   const out: Reason[] = [];
   for (const r of all) {
-    const k = JSON.stringify(r);
+    const k = JSON.stringify({ ...r, impliedProducer: undefined });
     if (!seen.has(k)) { seen.add(k); out.push(r); }
   }
   return out;

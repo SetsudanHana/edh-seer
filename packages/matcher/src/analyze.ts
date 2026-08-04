@@ -25,6 +25,7 @@ import { buildAxis, maxAxisWeight } from "./axis.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
 import { loadThemeStats, UNIFORM_STATS } from "./theme-stats.js";
+import { themeMembership, themeCandidates } from "./themes.js";
 
 /**
  * Structured-engine counterpart of `@mtg/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -274,6 +275,18 @@ export function analyzeDeckStructured(
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
   const { buildScore, buildCategories, suggestions } = computeBuild(resolved, strategies[0]?.name);
 
+  // Theme membership: same axis ordering the zones will read, with statics dropped (an anthem is a
+  // payoff of the theme supplying its subject, never a theme itself).
+  const candidateTags = themeCandidates([...axis.keys()]);
+  const allReasons = edges.flatMap((e) => e.reasons);
+  const membership = themeMembership(resolved, allReasons, candidateTags).map((t) => ({
+    tag: t.tag,
+    surplus: t.surplus.length,
+    payoffs: t.payoffs.length,
+    baseline: t.baseline.length,
+    selective: t.selective,
+  }));
+
   return {
     commanders: presentCommanders,
     cards: ratedCards,
@@ -295,5 +308,6 @@ export function analyzeDeckStructured(
     buildScore,
     buildCategories,
     suggestions,
+    themeMembership: membership,
   };
 }

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { VERB_VOCAB, SCHEMA_VERSION, SCALING_BASES, SCALING_ALIASES } from "./schema.js";
+import { VERB_VOCAB, SCHEMA_VERSION, SCALING_BASES, SCALING_ALIASES, EFFECT_KINDS } from "./schema.js";
 
 test("VERB_VOCAB is a closed, unique verb list", () => {
   expect(VERB_VOCAB).toHaveLength(20);
@@ -26,4 +26,14 @@ test("every SCALING_ALIASES target is a canonical SCALING_BASES member", () => {
     expect(bases, `alias "${alias}" -> "${target}" not a base`).toContain(target);
     expect(bases.has(alias), `alias "${alias}" collides with a base`).toBe(false);
   }
+});
+
+test("graveyard hate and extra combat are expressible", () => {
+  // Kalitas and Stone of Erech exile an opponent's dying creatures — they deny a graveyard, they
+  // do not recur from one. Filed as graveyard-recursion today, which inverts them into the
+  // graveyard theme they exist to attack.
+  expect(EFFECT_KINDS).toContain("graveyard-hate");
+  // Karlach grants an additional combat phase: surplus attack events, the same shape as a
+  // fetchland's surplus land-ETB.
+  expect(EFFECT_KINDS).toContain("extra-combat");
 });
