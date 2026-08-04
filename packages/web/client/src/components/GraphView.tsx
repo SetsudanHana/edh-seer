@@ -3,7 +3,7 @@ import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
-import { rimArcs, ROOM_HUE, ROOMS, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
+import { rimArcs, ROOM_HUE, ROOM_HUE_TEXT, ROOMS, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
 
 /** Kinds ordered for the filter row: the ones worth looking at first. */
 const KIND_ORDER: NodeKind[] = [
@@ -540,8 +540,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         // comment), which put two labels' default top-centre spots on top of each other at
         // 1440x900 whole-deck zoom (Task 10); placeRoomLabel pushes the later one up until its
         // measured box clears every label already placed this frame.
+        // Text, not a graphic object: needs WCAG's 4.5:1 floor, not the 3:1 the outline/rim hue
+        // was validated against -- ROOM_HUE_TEXT is the same hue family lightened to clear it
+        // (see deck-rooms.ts's ROOM_HUE / ROOM_HUE_TEXT doc comments).
         ctx.font = `500 ${roomFontPx}px "JetBrains Mono", ui-monospace, monospace`;
-        ctx.fillStyle = tally?.under ? paint.warning : hue;
+        ctx.fillStyle = tally?.under ? paint.warning : ROOM_HUE_TEXT[room.id];
         const count = tally ? (tally.target > 0 ? `${tally.count}/${tally.target}` : `${tally.count}`) : "";
         const text = `${room.label.toUpperCase()} ${count}`.trim();
         const w = ctx.measureText(text).width;

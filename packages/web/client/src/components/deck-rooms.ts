@@ -23,9 +23,16 @@ export const ROOMS: Room[] = [
   { id: "boardWipes", label: "Board wipes", categories: ["boardWipe"] },
 ];
 
-/** Dark-surface categorical hues, used on a room's outline, label, and rim arc, never as the
- *  identifying fill: a translucent fill over this surface collapses toward gray and stops
- *  separating (see the plan's Global Constraints).
+/** Dark-surface categorical hues, used on a room's outline and rim arc, never as the identifying
+ *  fill: a translucent fill over this surface collapses toward gray and stops separating (see the
+ *  plan's Global Constraints).
+ *
+ *  These are graphic objects (a 1.5px outline stroke, a 2.5px rim arc), so the search below
+ *  targeted WCAG's graphic-object floor, contrast >=3:1 against the surface -- NOT the >=4.5:1
+ *  floor body text needs. The room LABEL is text and does need 4.5:1; three of these seven hues
+ *  (cardAdvantage, interaction, ramp) clear 3:1 but land at 3.00-3.18, short of 4.5:1. The label
+ *  paints from ROOM_HUE_TEXT instead (below), not this map -- see its doc comment for why raising
+ *  these three hues' lightness in place was tried and rejected.
  *
  *  Validated against rim and lens adjacency, the two relations that replaced grid adjacency
  *  when rooms became circles derived from member cards (Tasks 1-7 of 2026-08-04-circle-rooms).
@@ -85,6 +92,42 @@ export const ROOM_HUE: Record<RoomId, string> = {
   lands: "#21a28f",
   interaction: "#277310",
   boardWipes: "#6b89f9",
+};
+
+/** Text-safe variant of ROOM_HUE, used ONLY for the room label (GraphView.tsx's `roomFontPx`
+ *  fillText) -- never for the outline stroke, the fill wash, or a card's rim arcs, all of which
+ *  stay on ROOM_HUE. The two draw contexts have different floors and ROOM_HUE was validated
+ *  against the wrong one for text: the outline (1.5px stroke) and rim (2.5px arc) are graphic
+ *  objects, WCAG's >=3:1 floor, which is what ROOM_HUE's search targeted. The label is body text
+ *  at 12/cam.z px, normal weight, which needs WCAG's >=4.5:1 -- three of ROOM_HUE's seven hues
+ *  (cardAdvantage 3.00, interaction 3.04, ramp 3.18 against surface #14171b) clear the graphic
+ *  floor but fail the text one.
+ *
+ *  Fallback route, not the preferred one: raising those three hues' OKLCH lightness to clear
+ *  4.5:1 (keeping hue and chroma fixed) was tried first and REJECTED -- it breaks the CVD
+ *  separation ROOM_HUE's doc comment records. Re-validated with the same three orderings used to
+ *  originally clear the palette:
+ *    lightened set (cardAdvantage #786bff, ramp #3687b9, interaction #469134, others unchanged):
+ *    Run 1 (wincons,cardAdvantage,ramp,lands,interaction,boardWipes): FAIL -- normal-vision floor,
+ *      interaction<->lands (then #469134<->#21a28f) deltaE 11.0, below the hard 15.0 floor
+ *    Run 3 (ramp,boardWipes,cardAdvantage,interaction,wincons,lands): FAIL -- CVD separation,
+ *      wincons<->interaction (#b08e1d<->#469134) deltaE 3.4 protan, below the 6.0 floor; also
+ *      normal-vision floor, cardAdvantage<->boardWipes deltaE 7.2
+ *  The pool was already near its ceiling (worst validated pair 12.4, see ROOM_HUE's comment) --
+ *  bumping three lightnesses at once shoves them into other pairs' territory. Lightness alone
+ *  cannot buy 4.5:1 on those three without a full hue+lightness re-search, which is out of scope
+ *  for a text-contrast fix. ROOM_HUE_TEXT instead lightens the SAME three hues (same H, same C,
+ *  higher L) but keeps them out of the rim/lens/outline system entirely, so the CVD-validated
+ *  ROOM_HUE set is untouched. All seven values individually clear >=4.5:1 against #14171b; pairwise
+ *  CVD separation between label colors is not required here the way it is for ROOM_HUE, because a
+ *  label's room name is printed in the text itself -- hue only has to trace a displaced label back
+ *  to its own circle's (ROOM_HUE) outline, a same-hue-family match, not distinguish one label's hue
+ *  from a different room's label the way two overlapping rim arcs must. */
+export const ROOM_HUE_TEXT: Record<RoomId, string> = {
+  ...ROOM_HUE,
+  cardAdvantage: "#786bff",
+  ramp: "#3687b9",
+  interaction: "#469134",
 };
 
 const ROOM_OF_CATEGORY = new Map<string, RoomId>(
