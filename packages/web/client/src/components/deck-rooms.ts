@@ -27,50 +27,64 @@ export const ROOMS: Room[] = [
  *  identifying fill: a translucent fill over this surface collapses toward gray and stops
  *  separating (see the plan's Global Constraints).
  *
- *  UNVALIDATED for this board -- kept only because no better assignment exists, not because
- *  this one passed. Grid adjacency (the relation the previous assignment WAS validated
- *  against -- the 10 pairs of rooms that touched on the old 3x3 rectangle grid) no longer
- *  exists; rooms are now circles derived from member cards (Tasks 1-7 of
- *  2026-08-04-circle-rooms). The two relations that replaced it -- rim adjacency (which hues
- *  end up neighbouring arcs on one card's rim, from rimArcs) and lens adjacency (which room
- *  circles visibly overlap, from roomLayout) -- both reduce to the same thing: two rooms that
- *  share a member card. rimArcs places a 2-room card's two arcs adjacent by construction (only
- *  one pair exists to place), and roomLayout draws each room's circle around exactly its
- *  members, so two rooms sharing a card have circles that structurally overlap at that card's
- *  position. Strategy never enters either relation: it is the exclusive fallback (roomsForCard),
- *  so a card in strategy is in no other room and never shares a card with one.
+ *  Validated against rim and lens adjacency, the two relations that replaced grid adjacency
+ *  when rooms became circles derived from member cards (Tasks 1-7 of 2026-08-04-circle-rooms).
+ *  Both reduce to the same thing: two rooms that share a member card. rimArcs places a 2-room
+ *  card's two arcs adjacent by construction (only one pair exists to place), and roomLayout
+ *  draws each room's circle around exactly its members, so two rooms sharing a card have
+ *  circles that structurally overlap at that card's position. Strategy never enters either
+ *  relation: it is the exclusive fallback (roomsForCard), so a card in strategy is in no other
+ *  room and never shares a card with one.
  *
  *  Because ROOMS' categories are independent per-card flags (build.ts runs each category's
  *  regex against the same oracle text, not mutually exclusive), any two of the six non-strategy
  *  rooms can end up as a card's only two roles in some deck, even where the reference deck
- *  (packages/cli/decks/inalla.txt) doesn't produce that pair itself -- so the required set is
+ *  (packages/cli/decks/inalla.txt) doesn't produce that pair itself -- so the validated set is
  *  all 15 pairs among {wincons, cardAdvantage, ramp, lands, interaction, boardWipes} (K6), not
- *  just the 4 pairs inalla.txt measures (interaction+lands, cardAdvantage+interaction,
- *  cardAdvantage+wincons, ramp+wincons).
+ *  just the 4 pairs inalla.txt measures.
  *
- *  Checked (2026-08-04, task-8-report.md): this assignment FAILS that 15-pair set -- worst pair
- *  cardAdvantage<->boardWipes, CVD deltaE 1.6, deutan (validate_palette.js, --mode dark). A full
- *  brute-force re-search over the same 5040 permutations of these 7 hues found NO assignment
- *  clearing the 6.0 floor on all 15 pairs -- the best possible worst-pair score is 1.9
- *  (wincons<->lands), confirmed against the real validator. Even the narrower 4-pair,
- *  deck-only scope already fails on this assignment (ramp<->wincons, deltaE 2.7) -- this is
- *  not just a K6-vs-4-pairs scoping question, the grid-tuned hues do not transfer at all.
- *  Restricted to just those 4 deck-measured pairs, these same 7 hues CAN be arranged to clear
- *  the target easily (worst pair 26.8) -- so the failure is the K6 requirement itself: 7
- *  categorical hues cannot be made pairwise-CVD-separated across all 15 combinations of 6 rooms
- *  simultaneously. This is Step 3's escalation case, not a bug to fix here: reported as an open
- *  design question (fewer rooms, or hue carrying less of the identity signal -- it already
- *  isn't the only signal, see the fill-collapse note above) rather than resolved by lowering
- *  the 6.0 floor or narrowing the pair list to force a pass. Do not treat this assignment as
- *  validated until that question is resolved. */
+ *  History (see task-8-report.md, 2026-08-04): the assignment inherited from the grid-adjacency
+ *  era failed this 15-pair set outright (worst pair deltaE 1.6), and a brute-force search over
+ *  its same 7 hues found NO reassignment clearing the floor (best possible: 1.9) -- permuting a
+ *  fixed hue pool can't help against an all-pairs requirement, since every permutation scores
+ *  the same 15 pairwise distances; only which single hue lands on Strategy (excluded from every
+ *  pair) changes. That escalated to a human ruling: unfreeze the pool and search NEW hues,
+ *  varying lightness as well as hue -- protan/deutan collapse red-green separation, so lightness
+ *  is the axis that still carries information for a dichromat, and the grid-tuned pool barely
+ *  used it. This is the result: a farthest-point + local-search over an OKLCH grid (dark band
+ *  L 0.48-0.67, chroma pushed near the in-gamut max, every candidate individually clearing
+ *  chroma floor and >=3:1 contrast against the real #14171b surface), scored by worst CVD
+ *  deltaE across all 15 K6 pairs subject to the validator's hard 15.0 normal-vision floor on
+ *  every one of those pairs too (not CVD alone -- a first pass optimizing CVD only found a set
+ *  that missed the normal-vision floor by <1.0 on 3 pairs).
+ *
+ *  Validator output (validate_palette.js, --mode dark --surface "#14171b", 3 runs whose
+ *  consecutive pairs union to the 15 K6 edges -- --pairs adjacent only checks consecutive
+ *  entries, so one 7-hue list can't cover them):
+ *    Run 1 (wincons,cardAdvantage,ramp,lands,interaction,boardWipes): ALL CHECKS PASS,
+ *      worst adjacent #146d9e<->#5b40f6 deltaE 13.9 (deutan)
+ *    Run 2 (cardAdvantage,lands,boardWipes,wincons,ramp,interaction): ALL CHECKS PASS,
+ *      worst adjacent #6b89f9<->#21a28f deltaE 17.0 (deutan)
+ *    Run 3 (ramp,boardWipes,cardAdvantage,interaction,wincons,lands): ALL CHECKS PASS,
+ *      worst adjacent #5b40f6<->#6b89f9 deltaE 12.4 (deutan)
+ *  Worst pair over the full 15-edge set: cardAdvantage<->boardWipes at 12.4 (Run 3) -- clears the
+ *  8.0 target on every pair, clears the hard 15.0 normal-vision floor on every pair (worst 16.2), and
+ *  strategy's `#1c8db7` independently clears lightness/chroma/contrast (it carries no pairwise
+ *  requirement -- excluded from every K6 pair by its own exclusivity). Room<->hue pairing below
+ *  is exactly what was validated above -- relabeling which room gets which of these same six
+ *  hex values would still score the same 15 pairwise distances (the check is per-hue-pair, not
+ *  per-room-name), but would invalidate the verbatim Run 1-3 room-name lists above, so don't
+ *  without re-running and re-quoting. Do not reassign without rerunning the search; the search
+ *  script lived in scratch, not the repo -- see task-8-report.md for the full method if this
+ *  needs redoing. */
 export const ROOM_HUE: Record<RoomId, string> = {
-  strategy: "#9085e9",
-  wincons: "#d95926",
-  cardAdvantage: "#d55181",
-  ramp: "#008300",
-  lands: "#3987e5",
-  interaction: "#c98500",
-  boardWipes: "#199e70",
+  strategy: "#1c8db7",
+  wincons: "#b08e1d",
+  cardAdvantage: "#5b40f6",
+  ramp: "#146d9e",
+  lands: "#21a28f",
+  interaction: "#277310",
+  boardWipes: "#6b89f9",
 };
 
 const ROOM_OF_CATEGORY = new Map<string, RoomId>(
