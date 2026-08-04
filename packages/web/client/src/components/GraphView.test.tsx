@@ -221,12 +221,36 @@ test("labels every room, including ones holding no cards", () => {
   }
 });
 
-test("draws a room outline for all seven rooms", () => {
+test("draws a stroked circle for every one of the seven rooms", () => {
   const calls = makeContextSpy();
   render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
-  // Rooms are circles now (Task 4): an outline is an arc immediately followed by a bare stroke().
-  const outlines = calls.filter((c, i) => c === "stroke:" && calls[i - 1]?.startsWith("arc:"));
-  expect(outlines.length).toBeGreaterThanOrEqual(ROOMS.length);
+  // Room outlines are arcs far larger than a card disc (ART_RADIUS 14) or the search-match ring
+  // (17), so a bare stroke() immediately after a large arc can only be a room -- the >20 filter is
+  // what the old, pre-Task-6 version of this test (any arc-then-stroke pair, no size check) lacked,
+  // which also matched card-disc/copy-stack/art-border strokes. 20 rather than 30: an empty room
+  // with no target at all still has to be visible ("BOARD WIPES 0/3" is the finding), so it draws
+  // at deck-rooms.ts's EMPTY_BASE_R (26) -- comfortably past the card sizes above, but a 30 cutoff
+  // would exclude that legitimate case.
+  //
+  // Counted rather than deduplicated by radius (as an earlier draft of this test did): SAMPLE's
+  // buildCategories gives draw, ramp, and targetedRemoval the same target (10), so cardAdvantage,
+  // ramp, and interaction -- all empty here -- legitimately draw at the SAME radius (an empty
+  // room's size is a pure function of its target, by design; see deck-rooms.ts). Requiring seven
+  // *distinct* radii would fail on that coincidence even though all seven rooms are drawn
+  // correctly, so distinctness is the wrong thing to assert -- count is.
+  const roomOutlines = calls.filter(
+    (c, i) => c === "stroke:" && calls[i - 1]?.startsWith("arc:") && Number(calls[i - 1].split(",")[2]) > 20,
+  );
+  expect(roomOutlines.length).toBeGreaterThanOrEqual(ROOMS.length);
+});
+
+test("labels every room, including one holding no cards", () => {
+  const calls = makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const texts = calls.filter((c) => c.startsWith("fillText:")).map((c) => c.slice("fillText:".length));
+  for (const room of ROOMS) {
+    expect(texts.some((t) => t.startsWith(room.label.toUpperCase()))).toBe(true);
+  }
 });
 
 describe("fullscreen toggle", () => {

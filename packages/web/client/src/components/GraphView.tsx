@@ -427,12 +427,15 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       ctx.setTransform(cam.z * dim.dpr, 0, 0, cam.z * dim.dpr,
         (dim.w / 2 + cam.x) * dim.dpr, (dim.h / 2 + cam.y) * dim.dpr);
 
-      // The board: seven fixed rooms, drawn behind everything and drawn even when empty --
-      // "BOARD WIPES 0/3" is the finding, so the room has to hold its place to show the hole.
+      // The board: seven rooms, drawn behind everything and drawn even when empty -- "BOARD WIPES
+      // 0/3" is the finding, so the room holds its place to show the hole. Each circle is drawn
+      // around the cards inside it (see roomLayout), so where two rooms overlap, a card genuinely
+      // belongs to both.
+      //
       // Hue rides the outline and the label, never the fill: a translucent fill over this surface
-      // collapses toward gray (measured -- see the plan's constraints), so it cannot be what tells
-      // two rooms apart. Position and the always-visible label do that; the wash only gives the
-      // region a body, and doubles where a straddling card sits between two rooms.
+      // collapses toward gray (measured), so it cannot be what tells two rooms apart. The label
+      // does that; the wash only gives the region a body, and doubles in the lens where two rooms
+      // meet -- which is exactly where the cards in both of them sit.
       ctx.textAlign = "center";
       for (const room of ROOMS) {
         const circle = rooms.get(room.id);
@@ -449,10 +452,16 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         ctx.strokeStyle = hue;
         ctx.beginPath(); ctx.arc(circle.x, circle.y, circle.r, 0, TAU); ctx.stroke();
 
+        // Label sits above the circle's top edge rather than inside it: a circle has no straight
+        // top edge to hang text off, and inside it the label lands under the cards it describes.
         ctx.font = `500 ${12 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
         ctx.fillStyle = tally?.under ? paint.warning : hue;
         const count = tally ? (tally.target > 0 ? `${tally.count}/${tally.target}` : `${tally.count}`) : "";
-        ctx.fillText(`${room.label.toUpperCase()} ${count}`.trim(), circle.x, circle.y);
+        ctx.fillText(
+          `${room.label.toUpperCase()} ${count}`.trim(),
+          circle.x,
+          circle.y - circle.r - 6 / cam.z,
+        );
       }
 
       ctx.lineWidth = 0.7 / cam.z;
