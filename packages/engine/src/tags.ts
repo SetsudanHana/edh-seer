@@ -29,10 +29,23 @@ function capitalize(s: string): string {
   return s.length === 0 ? s : s[0].toUpperCase() + s.slice(1);
 }
 
+/** The mechanism half of a tag: everything before the first ":". Tags are `<verb>:<subject>`.
+ *  For most verbs the segment after the colon is a KIND axis (`tribe:wizard` vs `tribe:goblin`,
+ *  `static:pump` vs `static:cost-reduction`) — different subjects there are different themes and
+ *  must never be summed together. `:any` is the one subject value that is a GRANULARITY, not a
+ *  kind: it names the general form of the same mechanism, so `counter-added:any` subsumes
+ *  `counter-added:creature` rather than a different counter theme. Use this to ask "same
+ *  mechanism?" (as describeTag does below); it is not a safe grouping key for summing deck
+ *  frequency across subjects — see rankThemes in weights.ts, which only folds the literal
+ *  `:any` sibling, not the whole family. */
+export function tagFamily(tag: Tag): string {
+  const i = tag.indexOf(":");
+  return i === -1 ? tag : tag.slice(0, i);
+}
+
 export function describeTag(t: Tag): string {
-  const sep = t.indexOf(":");
-  const family = sep === -1 ? t : t.slice(0, sep);
-  const value = sep === -1 ? undefined : t.slice(sep + 1);
+  const family = tagFamily(t);
+  const value = family === t ? undefined : t.slice(family.length + 1);
   switch (family) {
     case "tribe":
       return `${capitalize(value ?? "")}s`;

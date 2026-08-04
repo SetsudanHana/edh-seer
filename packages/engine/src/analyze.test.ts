@@ -126,6 +126,39 @@ test("cohesion is null for a deck with no tagged cards", () => {
   expect(report.cohesion).toBeNull();
 });
 
+// Deck-level regression (SDD 2026-08-04 engine-truth, findings 1/2/6): a full analyzeDeck run,
+// not a direct rankThemes/weights.ts call, so it also exercises the analyze.ts wiring that
+// unit tests on weights.ts alone can't catch.
+//
+// Two tags in one family (tribe:wizard + tribe:goblin) plus a third, distinct-family theme
+// (cast:instant). Before this fix, rankThemes grouped by the WHOLE "tribe" family: the two
+// tribes pooled their weight (2 wizards @ idf(wizard)=~3.34 + 1 goblin @ idf(goblin)=~4.11 =
+// ~10.79) and that pooled total beat cast:instant's own weight alone (4 @ idf(instant)=~2.12 =
+// ~8.48) -- so cohesion named "tribe:wizard" primary even though wizard's OWN weight (~6.68)
+// never individually beat cast:instant. It also disagreed with report.themes, whose raw-count
+// sort put cast:instant (4 cards) on top regardless. Verified against the pre-fix code: primary
+// was "tribe:wizard", themes[0].tag was "cast:instant" -- the exact split findings 1 and 2
+// describe. After the fix (subsumption-only grouping, themes built from the same rankThemes
+// call as cohesion), both agree and cast:instant -- the tag with the real (non-pooled) lead --
+// wins.
+test("cohesion and themes agree, and a real theme is not out-ranked by two pooled tribes", () => {
+  const wizard = (n: string): Card => ({
+    name: n, typeLine: "Creature — Wizard", oracleText: "", keywords: [], colors: ["U"], manaValue: 2,
+  });
+  const goblin = (n: string): Card => ({
+    name: n, typeLine: "Creature — Goblin", oracleText: "", keywords: [], colors: ["R"], manaValue: 2,
+  });
+  const instant = (n: string): Card => ({
+    name: n, typeLine: "Instant", oracleText: "", keywords: [], colors: ["R"], manaValue: 1,
+  });
+  const report = analyzeDeck([
+    wizard("W1"), wizard("W2"), goblin("G1"),
+    instant("I1"), instant("I2"), instant("I3"), instant("I4"),
+  ]);
+  expect(report.cohesion!.tag).toBe("cast:instant");
+  expect(report.themes[0].tag).toBe(report.cohesion!.tag);
+});
+
 test("deck stats: curve, land count, avg/median manaValue", () => {
   const report = analyzeDeck(deck, combos);
   expect(report.landCount).toBe(0);

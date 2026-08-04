@@ -196,6 +196,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           repeatability: triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
           hasStatPredicate: (t.subject.stats?.length ?? 0) > 0 || undefined,
+          consumer: c.card.name,
+          producer: p.card.name,
         });
       }
     }
@@ -220,6 +222,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         effectKind: a.effect.kind,
         repeatability,
         scaling: a.effect.scaling,
+        consumer: c.card.name,
+        producer: p.card.name,
       });
     }
   }
@@ -235,8 +239,43 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       repeatability: "static",
       scaling: a.effect.scaling,
       hasStatPredicate: (a.effect.subject?.stats?.length ?? 0) > 0 || undefined,
+      consumer: c.card.name,
+      producer: p.card.name,
     });
   }
+  // Counter-presence edges: C has an ability whose effect subject is filtered on a counter kind
+  // ("creatures you control WITH a +1/+1 counter"), which is a cares-signal with no emit behind
+  // it — the card benefits from a board state rather than reacting to an event. P supplies that
+  // state. Tagged into the existing counter-added family so the tag pays off where it's actually
+  // read: buildAxis/maxAxisWeight (axis.ts) do exact-tag lookup against the deck's axis, so a
+  // `counter-added:*` Reason here counts on-axis alongside the event-edge ones. It does NOT
+  // change deckFreq/themes/rankThemes/cohesion — those come from cardThemeTags (analyze.ts),
+  // which reads triggers/emits/static kinds and never sees a Reason tag.
+  //
+  // Walks producerEvents(p.tags), not raw pa.emits: producerEvents adds proliferate-derived
+  // counter events on top of authored ones, and its dedup means two abilities that emit the
+  // identical event don't each spawn their own (byte-identical) Reason here.
+  for (const emit of pEvents) {
+    if (emit.verb !== "counter-added" || !emit.subject.counter) continue;
+    for (const ca of c.tags.abilities) {
+      const want = ca.effect.subject;
+      if (!want?.counter || want.counter !== emit.subject.counter) continue;
+      // an ability that emits the same event is already covered by the event-edge pass above
+      if ((ca.emits ?? []).some((e) => e.verb === "counter-added")) continue;
+      if (ca.trigger?.verbs.includes("counter-added")) continue;
+      if (!subjectMatches(emit.subject, want, h)) continue;
+      reasons.push({
+        tag: `counter-added:${themeSubjectKey(want)}`,
+        text: `${c.card.name} benefits from ${want.counter} counters being on the board; ${p.card.name} puts them there`,
+        effectKind: ca.effect.kind,
+        repeatability: ca.kind === "static" ? "static" : ca.kind === "activated" ? "activated" : ca.kind === "on-cast" ? "oneshot" : "triggered",
+        scaling: ca.effect.scaling,
+        consumer: c.card.name,
+        producer: p.card.name,
+      });
+    }
+  }
+
   return reasons;
 }
 

@@ -548,3 +548,176 @@ test("directedReasons: an authored attacks emit matches a generic combat consume
   const plainCreature = base("Plain Creature", []);
   expect(directedReasons(plainCreature, genericTrigger, H).some((r) => r.tag.startsWith("attacks"))).toBe(false);
 });
+
+test("an event reason records which card consumes it and which supplies it", () => {
+  const maker = base("Fathom Mage", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: null } }],
+  }]);
+  const payoff = base("Warden of the Grove", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "counter-placement" },
+  }]);
+  const reasons = pairReasons(maker, payoff, H);
+  const ev = reasons.find((r) => r.tag === "enters:creature");
+  expect(ev).toBeDefined();
+  expect(ev!.consumer).toBe("Warden of the Grove");
+  expect(ev!.producer).toBe("Fathom Mage");
+});
+
+// Reuses the fixture from "filler -> reanimator: a discard fills the graveyard, feeding a
+// graveyard-recursion effect" (known to hit edges.ts's reanimator-consumer site, not the
+// event-edges site: Faithless Looting's discard normalizes to enters:graveyard, and Muldrotha's
+// graveyard-recursion effect has no trigger of its own for the event-edges loop to match).
+test("a reanimator-consumer reason records which card fills the graveyard and which recurs from it", () => {
+  const filler = base("Faithless Looting", [{
+    kind: "on-cast",
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    emits: [{ verb: "discard", subject: { control: "you", token: null } }],
+  }]);
+  const reanimator = base("Muldrotha", [{
+    kind: "static",
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
+  }]);
+  const reasons = pairReasons(filler, reanimator, H);
+  const rec = reasons.find((r) => r.tag.startsWith("graveyard-recursion"));
+  expect(rec).toBeDefined();
+  expect(rec!.consumer).toBe("Muldrotha");
+  expect(rec!.producer).toBe("Faithless Looting");
+});
+
+// Reuses the fixture from "static edge: a zombie lord matches a zombie by characteristics"
+// (known to hit edges.ts's static-edges site).
+test("a static reason records which card supplies the effect and which is affected", () => {
+  const lord = base("Death Baron", [{
+    kind: "static",
+    effect: { kind: "pump", subject: { subtype: "zombie", control: "you", token: null } },
+  }]);
+  const zombie = base("Gravecrawler", [], ["zombie"]);
+  const reasons = pairReasons(lord, zombie, H);
+  const stat = reasons.find((r) => r.tag === "static:pump");
+  expect(stat).toBeDefined();
+  expect(stat!.consumer).toBe("Gravecrawler");
+  expect(stat!.producer).toBe("Death Baron");
+});
+
+// Fixture shapes below are lifted verbatim from the real corpus (mtg.cardTags in Mongo, checked
+// 2026-08-04), not guessed from memory:
+//   Hardened Scales   a1f3da21-af6d-450e-bf0b-985d158418e6
+//   Inspiring Call    9b9a10ff-5a5d-4df8-88aa-18d84ff9117c
+//   Fathom Mage       93d0e129-e3b5-4aff-9e50-f34771ed00ff
+//   Primordial Hydra  1c36ed3a-c806-47e5-83f9-e44999c67fe5
+
+test("a card that benefits from creatures carrying counters links to the card adding them", () => {
+  // Hardened Scales: static counter-placement that emits counter-added.
+  const adder = base("Hardened Scales", [{
+    kind: "static",
+    effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  // Inspiring Call: cares that creatures HAVE +1/+1 counters; emits nothing.
+  const carer = base("Inspiring Call", [{
+    kind: "on-cast",
+    effect: { kind: "pump", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [],
+  }]);
+  const reasons = pairReasons(adder, carer, H);
+  const r = reasons.find((x) => x.tag.startsWith("counter-added"));
+  expect(r, "no counter reason was produced").toBeDefined();
+  expect(r!.consumer).toBe("Inspiring Call");
+  expect(r!.producer).toBe("Hardened Scales");
+});
+
+test("a mismatched counter kind produces no edge", () => {
+  const adder = base("Hardened Scales", [{
+    kind: "static",
+    effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const loyalty = base("Loyalty Carer", [{
+    kind: "on-cast",
+    effect: { kind: "pump", subject: { type: "creature", control: "you", token: null, counter: "loyalty" } },
+    emits: [],
+  }]);
+  expect(pairReasons(adder, loyalty, H).some((x) => x.tag.startsWith("counter-added"))).toBe(false);
+});
+
+// Guard 1: an ability whose OWN emits already include counter-added is a producer of that state,
+// not a carer of it -- its effect.subject.counter describes what it places, not a condition it
+// benefits from. Shape lifted from Fathom Mage's real first ability (evolve: put a +1/+1 counter
+// on this creature on a bigger creature entering) rather than invented, per the corpus IDs above.
+// Without the guard this pair would gain one counter-added reason from the new pass; with it,
+// zero -- neither ability here triggers on counter-added, so the pre-existing event-edge pass
+// contributes nothing either.
+test("an ability that itself places counters is not also counted as caring about them", () => {
+  const adder = base("Hardened Scales", [{
+    kind: "static",
+    effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const selfPlacer = base("Evolving Engine", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: false } },
+    effect: { kind: "counter-placement", subject: { control: "you", token: null, counter: "+1/+1" } },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const counterReasons = pairReasons(adder, selfPlacer, H).filter((x) => x.tag.startsWith("counter-added"));
+  expect(counterReasons.length).toBe(0);
+});
+
+// Guard 2: an ability that already TRIGGERS on counter-added is covered by the existing event-edge
+// pass; the new pass must not also match its effect.subject if that happens to carry the same
+// counter kind. Shape lifted from Primordial Hydra's real tagged ability (trigger: counter-added
+// +1/+1, effect: token-doubling on a +1/+1-counter subject) -- a real case where both the trigger
+// and the effect subject name the same counter kind, so the double-count guard is actually live.
+test("an ability that already triggers on counter-added does not gain a duplicate reason", () => {
+  const adder = base("Hardened Scales", [{
+    kind: "static",
+    effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const doubler = base("Counter Doubler", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "+1/+1" } },
+    effect: { kind: "token-doubling", subject: { control: "you", token: null, counter: "+1/+1" } },
+    emits: [],
+  }]);
+  const counterReasons = pairReasons(adder, doubler, H).filter((x) => x.tag.startsWith("counter-added"));
+  // exactly the one reason the pre-existing event-edge pass (trigger.verbs includes counter-added)
+  // already produces; the new pass must recognize its own would-be match is the same edge and skip.
+  expect(counterReasons.length).toBe(1);
+  expect(counterReasons[0].consumer).toBe("Counter Doubler");
+  expect(counterReasons[0].producer).toBe("Hardened Scales");
+});
+
+// Regression: the counter-presence pass must walk producerEvents(p.tags), not raw per-ability
+// emits -- two abilities on the same producer that each independently emit the identical
+// counter-added event should credit a cares-only consumer exactly once, even measured via
+// directedReasons directly (not pairReasons, whose own JSON dedup would mask this: analyze.ts
+// calls directedReasons undeduped, so a double credit here inflates topPartners' score and
+// duplicates the rendered sentence). producerEvents' JSON-based collapse is what prevents it.
+test("two abilities emitting the identical counter-added event credit a cares-only consumer exactly once", () => {
+  const dualAdder = base("Twin Counter Source", [
+    {
+      kind: "triggered",
+      trigger: { verbs: ["enters"], subject: { control: "you", token: false } },
+      effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+      emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+    },
+    {
+      kind: "activated", cost: "{2}",
+      effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+      emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+    },
+  ]);
+  const carer = base("Inspiring Call", [{
+    kind: "on-cast",
+    effect: { kind: "pump", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [],
+  }]);
+  const counterReasons = directedReasons(dualAdder, carer, H).filter((r) => r.tag.startsWith("counter-added"));
+  expect(counterReasons.length).toBe(1);
+});

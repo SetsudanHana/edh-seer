@@ -1,4 +1,9 @@
-import { describeTag, type Tag } from "./tags.js";
+import { describeTag, tagFamily, type Tag } from "./tags.js";
+
+// Re-exported for callers that historically imported it from here (e.g. this file's own test)
+// and for parity with globalIDF/rankThemes/etc. below — tagFamily itself now lives in tags.js,
+// next to describeTag, the other tag-string-splitter.
+export { tagFamily };
 
 export interface TagStats {
   N: number;
@@ -28,14 +33,38 @@ export function globalIDF(stats: TagStats, tag: Tag): number {
 }
 
 /**
- * Order a deck's tags into themes: descending by deckFreq × globalIDF, so a tag that
- * is both dense in the deck AND rare in the corpus (a real theme) outranks a dense-but-
- * common staple (mana) or a rare-but-incidental one-off. Deterministic lexical tie-break.
+ * Order a deck's tags into themes. A tag's ranking strength is its own deckFreq × globalIDF,
+ * plus its `:any` sibling's strength when the deck also has one — subsumption of a specific
+ * subject by the general form of the same mechanism (`counter-added:creature` picks up
+ * `counter-added:any`), so a deck whose counters split 17/16 across `:creature` and `:any`
+ * still outranks a single `draw:any` of 18. `:any` never folds a second copy of itself. Two
+ * DIFFERENT subjects of the same verb — `tribe:wizard` vs `tribe:goblin`, `static:pump` vs
+ * `static:cost-reduction` — are different themes and are NEVER summed; only the literal `:any`
+ * tag folds. Within that, individual deckFreq × globalIDF breaks the tie — dense AND rare wins
+ * over a dense-but-common staple (mana) or a rare-but-incidental one-off — then lexical order
+ * for determinism.
  */
 export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats): Tag[] {
-  return [...deckFreq.entries()]
-    .map(([tag, freq]) => ({ tag, key: freq * globalIDF(stats, tag) }))
-    .sort((a, b) => b.key - a.key || a.tag.localeCompare(b.tag))
+  const scored = [...deckFreq.entries()]
+    .map(([tag, freq]) => ({ tag, key: freq * globalIDF(stats, tag) }));
+  const keyByTag = new Map(scored.map((s) => [s.tag, s.key]));
+
+  // Subsumption key: a tag's own strength, plus its ":any" sibling's strength if the deck has
+  // one. NOT the whole family's sum — `tribe:goblin` gets no credit from `tribe:wizard`, and
+  // `:any` doesn't add a second copy of itself.
+  const subsumedKey = (tag: string): number => {
+    const anyTag = `${tagFamily(tag)}:any`;
+    const own = keyByTag.get(tag) ?? 0;
+    return anyTag === tag ? own : own + (keyByTag.get(anyTag) ?? 0);
+  };
+
+  return scored
+    .sort((a, b) => {
+      const fa = subsumedKey(a.tag);
+      const fb = subsumedKey(b.tag);
+      // subsumed strength first, then the tag's own strength, then lexical for determinism
+      return fb - fa || b.key - a.key || a.tag.localeCompare(b.tag);
+    })
     .map((r) => r.tag);
 }
 
@@ -85,7 +114,13 @@ export function computeCohesion(
   const themes = ranked.filter((t) => !t.startsWith("tribe-nontoken:"));
   if (themes.length === 0 || nonlandCount === 0) return null;
   const primary = themes[0];
-  const secondary = themes[1] ?? null;
+  // Secondary must be a different mechanism, not just the next tag: rankThemes only folds a
+  // tag's own weight with its literal ":any" sibling (subsumption), so a same-family pair like
+  // counter-added:creature / counter-added:any is not guaranteed to be adjacent in `ranked` —
+  // but describeTag has no per-family case for most families, so a same-family secondary would
+  // still render the identical label as the primary. Comparing family, not position, catches
+  // that wherever in the ranking it falls.
+  const secondary = themes.slice(1).find((t) => tagFamily(t) !== tagFamily(primary)) ?? null;
   const score = Math.min(1, (deckFreq.get(primary) ?? 0) / nonlandCount);
   return {
     theme: describeTag(primary),
