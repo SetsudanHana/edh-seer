@@ -692,3 +692,32 @@ test("an ability that already triggers on counter-added does not gain a duplicat
   expect(counterReasons[0].consumer).toBe("Counter Doubler");
   expect(counterReasons[0].producer).toBe("Hardened Scales");
 });
+
+// Regression: the counter-presence pass must walk producerEvents(p.tags), not raw per-ability
+// emits -- two abilities on the same producer that each independently emit the identical
+// counter-added event should credit a cares-only consumer exactly once, even measured via
+// directedReasons directly (not pairReasons, whose own JSON dedup would mask this: analyze.ts
+// calls directedReasons undeduped, so a double credit here inflates topPartners' score and
+// duplicates the rendered sentence). producerEvents' JSON-based collapse is what prevents it.
+test("two abilities emitting the identical counter-added event credit a cares-only consumer exactly once", () => {
+  const dualAdder = base("Twin Counter Source", [
+    {
+      kind: "triggered",
+      trigger: { verbs: ["enters"], subject: { control: "you", token: false } },
+      effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+      emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+    },
+    {
+      kind: "activated", cost: "{2}",
+      effect: { kind: "counter-placement", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+      emits: [{ verb: "counter-added", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } }],
+    },
+  ]);
+  const carer = base("Inspiring Call", [{
+    kind: "on-cast",
+    effect: { kind: "pump", subject: { type: "creature", control: "you", token: null, counter: "+1/+1" } },
+    emits: [],
+  }]);
+  const counterReasons = directedReasons(dualAdder, carer, H).filter((r) => r.tag.startsWith("counter-added"));
+  expect(counterReasons.length).toBe(1);
+});
