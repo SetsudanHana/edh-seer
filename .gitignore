@@ -17,3 +17,7 @@ packages/tagger/_*.mts
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+/.playwright-mcp/
+
+# impeccable skill scratch
+packages/web/.impeccable/critique/
