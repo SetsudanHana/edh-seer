@@ -37,7 +37,7 @@ const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
   "add-mana", "add-counter", "remove-counter", "grant-ability", "modify-pt", "prevent", "cast",
   "play", "shuffle", "reveal", "attach", "transform", "trigger-again", "extra-turn", "extra-combat",
-  "cant", "none"];
+  "animate", "cant", "other", "none"];
 const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
 const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps", "untaps", "cast",
   "upkeep", "begin-combat", "end-step", "draw-step", "damage-dealt", "life-gained", "life-lost",
@@ -91,6 +91,15 @@ Rules:
   "this", so the fact survives without inventing a second entry event.
 - List one action per game action the clause states, in the order written.
 - "cant" is for restrictions ("can't attack", "can't be countered"); put the restriction in object.
+- "animate" is a permanent BECOMING a creature ("becomes a 0/0 Elemental creature", man-lands,
+  Ensoul Artifact). Do not reach for transform, modify-pt or grant-ability for this — transform is
+  only for a double-faced card turning over.
+- "put a counter on" is ALWAYS add-counter, never put. The verb "put" is exclusively for moving an
+  object between zones ("put it onto the battlefield", "put it into your hand").
+- "other" is the deliberate escape hatch: when a clause does something no verb above covers
+  (changing maximum hand size, an unusual rules modification), use verb "other" and put the effect
+  verbatim in object. Use it rather than forcing a near-miss verb — a wrong verb is consumed as if
+  it were true, while "other" is honestly inert.
 Return ONLY { "clauses": [ ... ] }.`;
 
 const s = await connect(loadConfig());
