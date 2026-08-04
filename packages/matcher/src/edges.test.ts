@@ -744,3 +744,23 @@ test("reasons record whether the producer side was baseline or authored", () => 
   const authored = fromMaker.filter((r) => r.impliedProducer !== true);
   expect(authored.length, "the authored token emit is surplus, not baseline").toBeGreaterThan(0);
 });
+
+// Regression: a creature that satisfies a "whenever a creature enters" payoff BOTH by baseline
+// (it is a creature) AND by an authored token-generation emit must not double-count. Without
+// excluding impliedProducer from pairReasons' dedup key, this pair scores 2 -- a plain creature
+// token-maker against a ubiquitous ETB payoff scoring higher than it should purely because it
+// also happens to be a creature. See edges.ts pairReasons.
+test("pairReasons does not double-count a producer that satisfies one trigger by both baseline and authored emit", () => {
+  const maker = base("Token Maker", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "token-generation", subject: { type: "creature", control: "you", token: true } },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }],
+  }]);
+  const payoff = base("ETB Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(pairReasons(maker, payoff, H).length).toBe(1);
+});
