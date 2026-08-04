@@ -107,7 +107,7 @@ test("a replacement effect supplies surplus rather than consuming", () => {
     effect: { kind: "draw-card" },
   }]);
   const reasons: Reason[] = [{
-    tag: "enters:creature", text: "x", producer: "Token Doubler", consumer: "Payoff",
+    tag: "enters:creature", text: "x", producer: "Payoff", consumer: "Token Doubler",
     effectKind: "token-doubling",
   }];
   const [t] = themeMembership([doubler, payoff], reasons, ["enters:creature"]);
