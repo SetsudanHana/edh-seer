@@ -40,7 +40,7 @@ const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard
   "animate", "cant", "other", "none"];
 const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
 const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps", "untaps", "cast",
-  "upkeep", "begin-combat", "end-step", "draw-step", "damage-dealt", "life-gained", "life-lost",
+  "upkeep", "begin-combat", "end-step", "draw-step", "main-phase", "combat-damage-step", "damage-dealt", "life-gained", "life-lost",
   "counter-added", "sacrificed", "discarded", "milled", "turned-face-up", "level-up", "chapter",
   "none"];
 
@@ -96,6 +96,12 @@ Rules:
   only for a double-faced card turning over.
 - "put a counter on" is ALWAYS add-counter, never put. The verb "put" is exclusively for moving an
   object between zones ("put it onto the battlefield", "put it into your hand").
+- Three pairs that have been observed swapping; the rule for each:
+  * A COUNTER of any kind (+1/+1, loyalty, lore, indestructible, stun) is always add-counter with
+    the kind in object — never "other", even for an unusual counter.
+  * "becomes a creature" is animate. "transform" is ONLY a double-faced card turning over.
+  * An effect that makes an ability trigger an extra time is trigger-again; an effect that makes a
+    TOKEN is create. Copying a permanent is copy. These are three different things.
 - "other" is the deliberate escape hatch: when a clause does something no verb above covers
   (changing maximum hand size, an unusual rules modification), use verb "other" and put the effect
   verbatim in object. Use it rather than forcing a near-miss verb — a wrong verb is consumed as if
