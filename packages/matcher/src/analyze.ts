@@ -242,9 +242,10 @@ export function analyzeDeckStructured(
     const roles = buildRoles.get(c.name);
     const base = ratingByName.get(c.name) ?? 0;
     const doubleDuty = !!roles && roles.length > 0 && onAxisCards.has(c.name);
+    const axisWeight = bestAxisWeight.get(c.name) ?? 0;
     return doubleDuty
-      ? { ...c, synergyRating: doubleDutyRating(base), doubleDuty: true, doubleDutyRoles: roles, roles }
-      : { ...c, synergyRating: base, roles };
+      ? { ...c, synergyRating: doubleDutyRating(base), axisWeight, doubleDuty: true, doubleDutyRoles: roles, roles }
+      : { ...c, synergyRating: base, axisWeight, roles };
   });
 
   // themes and cohesion must agree on which tag leads, so both come from this one
@@ -286,6 +287,7 @@ export function analyzeDeckStructured(
     positiveCoherence,
     anchoring,
     synergyOverall,
+    axis: [...axis].map(([tag, weight]) => ({ tag, weight })).sort((x, y) => y.weight - x.weight || x.tag.localeCompare(y.tag)),
     roles: computeRoles(resolved),
     cohesion,
     archetypes,

@@ -509,6 +509,28 @@ test("on-axis is thresholded by IDF weight; positiveCoherence stays a valid 0-5"
   expect(report.positiveCoherence).toBeLessThanOrEqual(5);
 });
 
+test("exposes the continuous axisWeight per card and the deck axis, ranked", () => {
+  // Same fixtures as the double-duty test: the payoff sits on the commander's "enters:wizard"
+  // axis, the rock has no theme tags at all. doubleDuty is a hard cut at AXIS_ON_THRESHOLD and
+  // fires on ~half a real deck; the underlying weight is what the board needs.
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", wizardPayoffAbility);
+  const rock = dc("Mana Rock", [{ kind: "static", effect: { kind: "mana-generation" } }], [], "Artifact");
+  const report = analyzeDeckStructured([maker, payoff, rock], ["Inalla"], H);
+
+  const kd = report.cards.find((c) => c.name === "Kindred Discovery")!;
+  const mr = report.cards.find((c) => c.name === "Mana Rock")!;
+  expect(kd.axisWeight).toBeGreaterThan(0);
+  expect(kd.axisWeight).toBeLessThanOrEqual(1);
+  expect(mr.axisWeight).toBe(0); // no theme tags, so no on-axis edge
+
+  const axis = report.axis!;
+  expect(axis.length).toBeGreaterThan(0);
+  expect(axis[0].weight).toBe(1); // normalized: the deck's strongest theme is 1.0
+  expect(axis.map((e) => e.weight)).toEqual([...axis.map((e) => e.weight)].sort((x, y) => y - x));
+  expect(axis.map((e) => e.tag)).toContain("enters:wizard"); // the commander's anchor tag
+});
+
 test("a card filling a functional role but OFF-axis is NOT double-duty (needs both)", () => {
   const maker = dc("Inalla", inallaAbility, ["wizard"]);
   const payoff = dc("Kindred Discovery", kindredDiscoveryAbility); // on-axis draw → double-duty
