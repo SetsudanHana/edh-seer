@@ -1,6 +1,24 @@
 import type { Reason } from "@mtg/engine";
-import { cardThemeTags } from "./edges.js";
+import type { CardTags } from "@mtg/tagger";
+import { themeSubjectKey } from "./edges.js";
+import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import type { DeckCard } from "./types.js";
+
+/** A card's own authored emits, keyed identically to reason tags (normalizeZoneEvent +
+ *  zoneEventKey), so string equality against `tag` actually matches. Emits only -- never
+ *  triggers -- because a trigger is the cares side of an ability: it names what the card wants
+ *  fed to it, not what it supplies. `cardThemeTags` (edges.ts) mixes both for deck-frequency
+ *  ranking, which is exactly wrong here. */
+function authoredSurplusTags(tags: CardTags): Set<string> {
+  const out = new Set<string>();
+  for (const a of tags.abilities) {
+    for (const emit of a.emits ?? []) {
+      const e = normalizeZoneEvent(emit);
+      out.add(zoneEventKey(e.verb, e.subject.zone, themeSubjectKey(e.subject)));
+    }
+  }
+  return out;
+}
 
 /** Share of the deck that may supply a tag by baseline alone before the tag stops being a theme
  *  and becomes deck arithmetic. Calibrated on packages/cli/decks/calibration (71 decks) — see
@@ -43,11 +61,12 @@ export function themeMembership(
       if (r.impliedProducer) baseline.add(r.producer);
       else surplus.add(r.producer);
     }
-    // A card's own theme tags are authored by construction: cardThemeTags reads trigger verbs,
-    // authored emits and static effects, never a card's implied self-event. So a card carrying
-    // the tag with no edge to show for it is still a real participant, not baseline.
+    // A card whose own authored emit produces this tag is a surplus supplier even when the deck
+    // holds no matching payoff to draw a Reason edge for it (a token maker with no token payoffs
+    // in the deck). Only emits count: a trigger is the cares side and belongs in payoffs, not
+    // surplus -- see authoredSurplusTags.
     for (const dc of deckCards) {
-      if (dc.tags && cardThemeTags(dc.tags).has(tag)) surplus.add(dc.card.name);
+      if (dc.tags && authoredSurplusTags(dc.tags).has(tag)) surplus.add(dc.card.name);
     }
     // A card that both produces surplus and supplies baseline is a surplus producer.
     for (const n of surplus) baseline.delete(n);

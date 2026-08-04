@@ -43,6 +43,30 @@ test("baseline suppliers are separated from surplus producers and payoffs", () =
   expect(t.surplus).not.toContain("Vanilla Wizard");
 });
 
+test("a trigger-only payoff is not credited as a surplus supplier", () => {
+  // Payoff's ability has a trigger naming "enters:wizard" but no emits -- it consumes the tag,
+  // it does not supply it. cardThemeTags would fold the trigger verb in and wrongly mark it
+  // surplus; authoredSurplusTags must not.
+  const payoff = card("Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: false } },
+    effect: { kind: "draw-card" },
+  }]);
+  const maker = card("Token Maker", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "token-generation", subject: { subtype: "wizard", control: "you", token: true } },
+    emits: [{ verb: "enters", subject: { subtype: "wizard", control: "you", token: true } }],
+  }]);
+
+  const reasons = [reason("enters:wizard", "Token Maker", "Payoff")];
+  const [t] = themeMembership([payoff, maker], reasons, ["enters:wizard"]);
+
+  expect(t.surplus).not.toContain("Payoff");
+  expect(t.payoffs).toContain("Payoff");
+  expect(t.surplus).toContain("Token Maker");
+});
+
 test("a selective tag admits its baseline; an unselective one does not", () => {
   // One payoff, and 9 cards that supply the tag purely by existing: 9/10 of the deck.
   const payoff = card("Payoff", [{
