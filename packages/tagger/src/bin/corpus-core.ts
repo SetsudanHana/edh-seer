@@ -8,6 +8,31 @@ import { extractCharacteristics } from "../characteristics.js";
 import { parseAbilities } from "../validate.js";
 import { augmentKeywordAbilities } from "../keyword-augment.js";
 
+/** Does this card's oracle text describe abilities the tagger is expected to record?
+ *
+ *  False only when the text is empty or consists entirely of printed keywords and their reminder
+ *  text — a vanilla or near-vanilla card, for which `abilities: []` is the correct tagging.
+ *
+ *  This is the discriminator that was missing. `upsert-batch` already refused a non-array
+ *  `abilities` as a model flake, but an empty ARRAY passed straight through and persisted as a
+ *  vanilla card forever — and `selectUntagged` treats any card with a current-version tag doc as
+ *  done, so those cards were never re-queued by the grind. That combination silently produced 1003
+ *  cards with real rules text and zero recorded abilities, including Supreme Verdict, Hero's
+ *  Downfall, Chaos Warp, Counterbalance and Bitterblossom — all invisible to the structured
+ *  matcher, which reads abilities and nothing else. */
+export function expectsAbilities(card: { oracleText?: string; keywords?: string[] }): boolean {
+  const text = (card.oracleText ?? "").trim();
+  if (text === "") return false;
+  const keywords = (card.keywords ?? []).map((k) => k.toLowerCase());
+  return text.split("\n").some((line) => {
+    // Drop reminder text in parentheses, then treat "Flying, vigilance" as a keyword line only if
+    // every comma-separated part is a printed keyword of this card.
+    const bare = line.replace(/\s*\([^)]*\)\s*/g, "").trim().toLowerCase();
+    if (bare === "") return false;
+    return !bare.split(/,\s*/).every((part) => keywords.includes(part.trim()));
+  });
+}
+
 /** Untagged (id not in doneIds), non-empty-text cards, most-played first (edhrecRank asc,
  *  undefined last, tiebreak _id), capped at n. */
 export function selectUntagged(cards: CardDoc[], doneIds: Set<string>, n: number): CardDoc[] {
