@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ROOMS, ROOM_HUE, roomsForCard, roomTallies, subcategoryLabel,
-  roomLayout, type Circle, type RoomId, type RoomMember, type RoomTally,
+  roomLayout, rimArcs, type Circle, type RoomId, type RoomMember, type RoomTally,
 } from "./deck-rooms.js";
 
 describe("ROOMS", () => {
@@ -237,5 +237,44 @@ describe("roomLayout", () => {
   it("handles no members at all without throwing", () => {
     expect(() => roomLayout([], noTallies)).not.toThrow();
     expect(roomLayout([], noTallies).size).toBe(ROOMS.length);
+  });
+});
+
+describe("rimArcs", () => {
+  const TAU = Math.PI * 2;
+
+  it("gives a one-room card a single full-circle arc", () => {
+    const arcs = rimArcs(["ramp"]);
+    expect(arcs).toHaveLength(1);
+    expect(arcs[0].to - arcs[0].from).toBeCloseTo(TAU);
+    expect(arcs[0].hue).toBe(ROOM_HUE.ramp);
+  });
+
+  it("splits a two-room card in half", () => {
+    const arcs = rimArcs(["lands", "ramp"]);
+    expect(arcs).toHaveLength(2);
+    expect(arcs[0].to - arcs[0].from).toBeCloseTo(Math.PI);
+    expect(arcs[1].to - arcs[1].from).toBeCloseTo(Math.PI);
+  });
+
+  it("covers the full circle with no gap and no overlap", () => {
+    const arcs = rimArcs(["lands", "ramp", "interaction"]);
+    expect(arcs[0].from).toBeCloseTo(-Math.PI / 2);
+    for (let i = 1; i < arcs.length; i++) expect(arcs[i].from).toBeCloseTo(arcs[i - 1].to);
+    expect(arcs[arcs.length - 1].to).toBeCloseTo(-Math.PI / 2 + TAU);
+  });
+
+  it("handles the six-room maximum -- sixty degrees each", () => {
+    const arcs = rimArcs(["wincons", "cardAdvantage", "ramp", "lands", "interaction", "boardWipes"]);
+    expect(arcs).toHaveLength(6);
+    for (const a of arcs) expect(a.to - a.from).toBeCloseTo(TAU / 6);
+  });
+
+  it("returns nothing for a card in no room, rather than dividing by zero", () => {
+    expect(rimArcs([])).toEqual([]);
+  });
+
+  it("uses each room's own hue", () => {
+    expect(rimArcs(["lands", "ramp"]).map((a) => a.hue)).toEqual([ROOM_HUE.lands, ROOM_HUE.ramp]);
   });
 });

@@ -3,7 +3,7 @@ import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
-import { ROOM_HUE, ROOMS, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
+import { rimArcs, ROOM_HUE, ROOMS, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
 
 /** Kinds ordered for the filter row: the ones worth looking at first. */
 const KIND_ORDER: NodeKind[] = [
@@ -25,7 +25,7 @@ export const DIM_BY_DEFAULT: NodeKind[] = KIND_ORDER.filter((k) => k !== "card")
 
 const TAU = Math.PI * 2;
 /** Radius (world units) an art-filled card node draws at -- see Step 3 of the task brief. */
-const ART_RADIUS = 14;
+export const ART_RADIUS = 14;
 /** Glyphs are authored in a 24x24 box (see graph-glyphs.ts); half that is the box's own centre. */
 const GLYPH_BOX_HALF = 12;
 
@@ -511,13 +511,27 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             ctx.drawImage(img, (sw - s) / 2, (sh - s) / 2, s, s,
               n.x - ART_RADIUS, n.y - ART_RADIUS, ART_RADIUS * 2, ART_RADIUS * 2);
             ctx.restore();
-            ctx.lineWidth = 1 / cam.z;
-            ctx.strokeStyle = paint.border;
-            ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.stroke();
           } else {
             if (n.artCrop) artLoader.request(n.artCrop);
             ctx.fillStyle = colorOf(n.kind);
             ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
+          }
+
+          // The rim carries which rooms this card is in -- one arc per room, in that room's hue.
+          // Drawn for both the art and the fallback branch: a card whose art failed to load must
+          // not lose its membership signal along with its picture.
+          const arcs = rimArcs(roomsByNode.get(n.id) ?? []);
+          ctx.lineWidth = 2.5 / cam.z;
+          for (const arc of arcs) {
+            ctx.strokeStyle = arc.hue;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, ART_RADIUS, arc.from, arc.to);
+            ctx.stroke();
+          }
+          if (arcs.length === 0) {
+            ctx.lineWidth = 1 / cam.z;
+            ctx.strokeStyle = paint.border;
+            ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.stroke();
           }
 
           if (matchIds?.has(n.id)) {

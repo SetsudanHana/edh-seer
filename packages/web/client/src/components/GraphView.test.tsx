@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, roomAttraction, seedPosition, separation } from "./GraphView.js";
+import { ART_RADIUS, copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, roomAttraction, seedPosition, separation } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
-import { ROOMS, type RoomTally } from "./deck-rooms.js";
+import { ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
 
 /** Records the 2D-context calls made during a render, and -- more importantly -- lets the
  *  layout effect get past its `if (!ctx) return;` guard at all, which is what attaches
@@ -25,7 +25,10 @@ function makeContextSpy(calls: string[] = []) {
       if (prop === "measureText") return () => ({ width: 40 });
       return (...args: unknown[]) => { calls.push(`${prop}:${args.join(",")}`); };
     },
-    set() { return true; },
+    set(_t, prop: string, value: unknown) {
+      calls.push(`set:${prop}=${String(value)}`);
+      return true;
+    },
   });
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(ctx as never);
   vi.stubGlobal("Path2D", class { constructor(_d?: string) {} });
@@ -256,17 +259,29 @@ test("labels every room, including one holding no cards", () => {
 test("labels a room above its circle's rim, not at its centre", () => {
   const calls = makeContextSpy();
   render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
-  // draw()'s room loop emits, per room and in this exact order: beginPath+arc+fill (the wash),
-  // beginPath+arc+stroke (the outline), fillText (the label) -- with nothing else recorded in
-  // between, since property assignments (fillStyle, font, lineWidth, strokeStyle) go through the
-  // spy's `set` trap, not `get`, and are never pushed onto `calls`. So for every fillText, the call
-  // two slots back is always the arc that drew THAT SAME room's outline -- letting the label's y be
-  // checked against its own circle's real x/y/r instead of a bare constant.
+  // draw()'s room loop emits, per room: beginPath+arc+fill (the wash), beginPath+arc+stroke (the
+  // outline), fillText (the label) -- with only property writes (font, fillStyle, etc, now
+  // recorded as `set:` entries by makeContextSpy) between the outline's stroke and its label.
+  // Walking back from a fillText, skipping `set:` entries, lands on that same room's stroke and
+  // then its arc.
+  //
+  // That pattern alone isn't unique to rooms, though: a card's rim also ends in stroke:-after-arc:,
+  // and the last thing drawn before the hub-label loop is whatever card came last, so the same
+  // skip-only-sets walk backward from a HUB label would otherwise land on a card's rim arc too.
+  // The >20 radius check (same threshold as "draws a stroked circle for every one of the seven
+  // rooms" above) is what disambiguates: card rims are ART_RADIUS (14), room outlines are not.
   let matched = 0;
-  for (let i = 2; i < calls.length; i++) {
-    if (calls[i - 1] !== "stroke:" || !calls[i - 2].startsWith("arc:") || !calls[i].startsWith("fillText:")) continue;
+  for (let i = 0; i < calls.length; i++) {
+    if (!calls[i].startsWith("fillText:")) continue;
+    let j = i - 1;
+    while (j >= 0 && calls[j].startsWith("set:")) j--;
+    if (calls[j] !== "stroke:") continue;
+    let k = j - 1;
+    while (k >= 0 && calls[k].startsWith("set:")) k--;
+    if (!calls[k]?.startsWith("arc:")) continue;
+    const [, cy, r] = calls[k].slice("arc:".length).split(",");
+    if (Number(r) <= 20) continue;
     const [, labelY] = calls[i].slice("fillText:".length).split(",").slice(-2);
-    const [, cy, r] = calls[i - 2].slice("arc:".length).split(",");
     matched++;
     // Above the rim, not just above the centre: a label at the centre (the old, wrong behaviour --
     // see GraphView.tsx's "lands under the cards it describes" comment) would fail this, since
@@ -274,6 +289,32 @@ test("labels a room above its circle's rim, not at its centre", () => {
     expect(Number(labelY)).toBeLessThan(Number(cy) - Number(r));
   }
   expect(matched).toBeGreaterThanOrEqual(ROOMS.length);
+});
+
+test("a card in two rooms draws one rim arc per room, each in that room's hue", () => {
+  const calls = makeContextSpy();
+  // Bojuka Bog is a land with removal: lands + interaction, so two arcs.
+  const graph = {
+    nodes: [{ id: "card:bog", kind: "card", label: "Bojuka Bog", roles: ["lands", "targetedRemoval"] }],
+    edges: [],
+  } as unknown as typeof SAMPLE.graph;
+  const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+  render(<GraphView graph={graph} report={report} />);
+
+  // Each rim arc is preceded by the strokeStyle write that colours it. Walk the call list in
+  // order and pair them, rather than asserting the two sets independently -- which would pass
+  // if both arcs were drawn in one hue.
+  const hues: string[] = [];
+  let pending: string | null = null;
+  for (const c of calls) {
+    if (c.startsWith("set:strokeStyle=")) pending = c.slice("set:strokeStyle=".length);
+    else if (c.startsWith("arc:")) {
+      const [, , r, from, to] = c.split(",");
+      const isRim = Number(r) === ART_RADIUS && Number(to) - Number(from) < Math.PI * 1.99;
+      if (isRim && pending) hues.push(pending);
+    }
+  }
+  expect(hues).toEqual([ROOM_HUE.lands, ROOM_HUE.interaction]);
 });
 
 describe("fullscreen toggle", () => {

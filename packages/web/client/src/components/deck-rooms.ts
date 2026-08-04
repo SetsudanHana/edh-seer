@@ -144,6 +144,28 @@ export function roomTallies(
   return out;
 }
 
+/** The card disc's rim, split into one equal arc per room the card is in, each in that room's hue.
+ *  Angles are radians from 12 o'clock, clockwise, covering the full circle.
+ *
+ *  This is the AUTHORITATIVE membership signal, and the lens a card sits in is the bonus. Position
+ *  cannot be complete: circles cannot realise an arbitrary Euler diagram past three sets, and a
+ *  tightly packed cluster can hide a lens entirely. The rim reads either way.
+ *
+ *  Six arcs is the hard maximum, not a truncation: Strategy is the fallback, so a card in Strategy
+ *  is in no other room, leaving the six type-and-role rooms as the ceiling. Six is also where
+ *  legibility runs out (60 degrees is ~10px of stroke at a 14px disc), and the two coinciding is
+ *  luck -- if Strategy ever stops being exclusive, the rim breaks before the geometry does. */
+export function rimArcs(rooms: readonly RoomId[]): Array<{ hue: string; from: number; to: number }> {
+  if (rooms.length === 0) return [];
+  const step = (Math.PI * 2) / rooms.length;
+  const start = -Math.PI / 2;
+  return rooms.map((id, i) => ({
+    hue: ROOM_HUE[id],
+    from: start + i * step,
+    to: start + (i + 1) * step,
+  }));
+}
+
 export interface Circle { x: number; y: number; r: number }
 
 /** A card as the layout sees it: where it is, how big it draws, and which rooms it is in. */
