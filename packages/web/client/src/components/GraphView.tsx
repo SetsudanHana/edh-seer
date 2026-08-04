@@ -361,17 +361,13 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // already outside this floor. It only engages on freshly-seeded/coincident nodes before
           // separation has had a tick to act, not on anything Task 7 measured.
           const d2 = Math.max(dx * dx + dy * dy, 64);
-          if (d2 > 220000) continue;
-          const d = Math.sqrt(d2), f = REPULSION / d2;
-          a.vx += (dx / d) * f; a.vy += (dy / d) * f;
-          b.vx -= (dx / d) * f; b.vy -= (dy / d) * f;
-
-          // Hard separation: discs must not overlap. Applied to position, not velocity.
-          const s = separation(dx, dy, nodeRadius(a), nodeRadius(b), COLLISION_PAD);
-          if (s) { a.x += s.x; a.y += s.y; b.x -= s.x; b.y -= s.y; }
 
           // Cards sharing a room pull together; the room's circle is then drawn around the cluster
-          // they form. This is the only force that reads membership.
+          // they form. This is the only force that reads membership. Deliberately ABOVE the
+          // d2>220000 cutoff below: that cutoff is tuned for inverse-square repulsion (genuinely
+          // negligible at long range), but roomAttraction is linear in distance -- it's strongest
+          // exactly where the cutoff would kill it -- so it has to run at any distance or same-room
+          // pairs seeded on opposite sides of the initial layout circle never converge.
           if (a.kind === "card" && b.kind === "card") {
             const ra = roomsByNode.get(a.id), rb = roomsByNode.get(b.id);
             let shared = 0;
@@ -380,6 +376,15 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             a.vx += t.x; a.vy += t.y;
             b.vx -= t.x; b.vy -= t.y;
           }
+
+          if (d2 > 220000) continue; // repulsion + collision only past here
+          const d = Math.sqrt(d2), f = REPULSION / d2;
+          a.vx += (dx / d) * f; a.vy += (dy / d) * f;
+          b.vx -= (dx / d) * f; b.vy -= (dy / d) * f;
+
+          // Hard separation: discs must not overlap. Applied to position, not velocity.
+          const s = separation(dx, dy, nodeRadius(a), nodeRadius(b), COLLISION_PAD);
+          if (s) { a.x += s.x; a.y += s.y; b.x -= s.x; b.y -= s.y; }
         }
       }
       for (const l of links) {
