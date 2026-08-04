@@ -3,7 +3,7 @@ import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
-import { ROOM_HUE, ROOMS, roomCenter, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type RoomId } from "./deck-rooms.js";
+import { ROOM_HUE, ROOMS, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
 
 /** Kinds ordered for the filter row: the ones worth looking at first. */
 const KIND_ORDER: NodeKind[] = [
@@ -296,10 +296,6 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
     const prevPositions = prevPositionsRef.current!;
     const isFirstLayout = prevPositions.size === 0;
-    // Rooms are fixed: every deck gets all seven, in the same places, whether or not cards land
-    // in them. Replaces the old ring of present-roles-only anchors -- an empty room is a finding
-    // ("BOARD WIPES 0/3"), so it has to hold its place on the board rather than vanish.
-    let rooms = roomLayout(dim.w, dim.h);
 
     // Neighbour lookup built from the raw edge list, before Sim objects exist -- only needed to
     // seed a brand-new node near what it connects to (Step 0).
@@ -325,6 +321,17 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     for (const l of links) { l.s.deg++; l.t.deg++; }
 
     const visible = (n: Sim) => !hidden.has(n.kind);
+
+    // Rooms are drawn around their cards, so they are a function of the current layout and are
+    // recomputed every frame rather than fixed at setup. All seven always come back: an empty room
+    // is a finding ("BOARD WIPES 0/3") and roomLayout parks it outside the occupied cluster.
+    const roomsNow = (): Map<RoomId, Circle> =>
+      roomLayout(
+        nodes
+          .filter((n) => n.kind === "card" && visible(n))
+          .map((n) => ({ x: n.x, y: n.y, r: nodeRadius(n), rooms: roomsByNode.get(n.id) ?? [] })),
+        tallies,
+      );
 
     // Measurement hook for the readability judge (and for anyone debugging layout in a console):
     // the live simulation state, which is otherwise sealed inside this closure. Read-only snapshot,
@@ -397,10 +404,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       // card is in at least one room (strategy is the fallback), so this always applies to cards.
       for (const n of live) {
         if (n.kind !== "card") continue;
+        const rooms = roomsNow();
         for (const id of roomsByNode.get(n.id) ?? []) {
-          const rect = rooms.get(id);
-          if (!rect) continue;
-          const c = roomCenter(rect);
+          const c = rooms.get(id);
+          if (!c) continue;
           n.vx += (c.x - n.x) * ZONE_SPRING;
           n.vy += (c.y - n.y) * ZONE_SPRING;
         }
@@ -429,6 +436,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     };
 
     const draw = () => {
+      const rooms = roomsNow();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = paint.surface;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -443,24 +451,24 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       // region a body, and doubles where a straddling card sits between two rooms.
       ctx.textAlign = "center";
       for (const room of ROOMS) {
-        const rect = rooms.get(room.id);
-        if (!rect) continue;
+        const circle = rooms.get(room.id);
+        if (!circle) continue;
         const tally = tallies.get(room.id);
         const hue = ROOM_HUE[room.id];
 
         ctx.globalAlpha = 0.10;
         ctx.fillStyle = hue;
-        ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+        ctx.beginPath(); ctx.arc(circle.x, circle.y, circle.r, 0, TAU); ctx.fill();
         ctx.globalAlpha = 1;
 
         ctx.lineWidth = 1.5 / cam.z;
         ctx.strokeStyle = hue;
-        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+        ctx.beginPath(); ctx.arc(circle.x, circle.y, circle.r, 0, TAU); ctx.stroke();
 
         ctx.font = `500 ${12 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
         ctx.fillStyle = tally?.under ? paint.warning : hue;
         const count = tally ? (tally.target > 0 ? `${tally.count}/${tally.target}` : `${tally.count}`) : "";
-        ctx.fillText(`${room.label.toUpperCase()} ${count}`.trim(), rect.x + rect.w / 2, rect.y + 16 / cam.z);
+        ctx.fillText(`${room.label.toUpperCase()} ${count}`.trim(), circle.x, circle.y);
       }
 
       ctx.lineWidth = 0.7 / cam.z;
@@ -584,13 +592,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const loop = () => { tick(); draw(); raf = requestAnimationFrame(loop); };
     loop();
 
-    // Room geometry is sized off the viewport, so a resize/rotate has to recompute it too --
-    // otherwise the rooms stay sized to whatever viewport was live at mount and a rotated phone
-    // gets a board built for the wrong aspect ratio.
-    const onResize = () => {
-      dim = size();
-      rooms = roomLayout(dim.w, dim.h);
-    };
+    // Room geometry is now derived from card positions (roomsNow(), recomputed every draw), not
+    // the viewport -- a resize only needs the canvas's own backing-store size updated.
+    const onResize = () => { dim = size(); };
     addEventListener("resize", onResize);
 
     const pick = (ev: PointerEvent): Sim | null => {

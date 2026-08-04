@@ -225,7 +225,9 @@ test("labels every room, including ones holding no cards", () => {
 test("draws a room outline for all seven rooms", () => {
   const calls = makeContextSpy();
   render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
-  expect(calls.filter((c) => c.startsWith("strokeRect:")).length).toBeGreaterThanOrEqual(ROOMS.length);
+  // Rooms are circles now (Task 4): an outline is an arc immediately followed by a bare stroke().
+  const outlines = calls.filter((c, i) => c === "stroke:" && calls[i - 1]?.startsWith("arc:"));
+  expect(outlines.length).toBeGreaterThanOrEqual(ROOMS.length);
 });
 
 describe("fullscreen toggle", () => {

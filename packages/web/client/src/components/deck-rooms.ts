@@ -144,49 +144,79 @@ export function roomTallies(
   return out;
 }
 
-export interface Rect { x: number; y: number; w: number; h: number }
+export interface Circle { x: number; y: number; r: number }
 
-/** Fixed 3-column grid, one entry per row. Strategy and Lands span two columns -- strategy
- *  because it is the fallback and holds the most cards, lands because 36 cards need the floor.
- *  Row order puts likely multi-room pairs adjacent (card advantage beside interaction, ramp
- *  under card advantage) so a card in two rooms straddles a shared border. Row order is
- *  load-bearing, not decorative -- do not reorder for aesthetics; see the task brief. */
-const GRID: { id: RoomId; span: number }[][] = [
-  [{ id: "strategy", span: 2 }, { id: "wincons", span: 1 }],
-  [{ id: "cardAdvantage", span: 1 }, { id: "interaction", span: 1 }, { id: "boardWipes", span: 1 }],
-  [{ id: "ramp", span: 1 }, { id: "lands", span: 2 }],
-];
+/** A card as the layout sees it: where it is, how big it draws, and which rooms it is in. */
+export interface RoomMember { x: number; y: number; r: number; rooms: readonly RoomId[] }
 
-const COLUMNS = 3;
-/** Fraction of the viewport the board occupies. Under 1 so the outermost room outlines are not
- *  flush with the canvas edge, where a label would be clipped. */
-const BOARD_FILL = 0.92;
+/** Radius an empty room draws at, in world units. Empty rooms have no members to measure, and the
+ *  alternative is a zero-radius circle -- but an empty room being VISIBLE is the entire point
+ *  ("BOARD WIPES 0/3" is the finding). Scaled by target so a 3-wipe hole reads bigger than a
+ *  1-wipe one; the additive base keeps a room with no target at all from vanishing. */
+const EMPTY_BASE_R = 26;
+const EMPTY_R_PER_TARGET = 6;
+/** How far outside the occupied cluster empty rooms are parked, as a multiple of the cluster's own
+ *  radius. Above 1 so an empty room never sits on top of an occupied one. */
+const EMPTY_ORBIT = 1.45;
 
-export function roomLayout(width: number, height: number): Map<RoomId, Rect> {
-  // A canvas legitimately reports 0 (or, transiently through a subtraction, a negative number)
-  // during layout -- clamp here, once, so every caller (the sim's anchors, the resize handler,
-  // Task 5's chrome) gets a degenerate-but-sane zero-size board instead of a mirrored one where
-  // width or height inverted every rect's x/y.
-  const boardW = Math.max(0, width) * BOARD_FILL;
-  const boardH = Math.max(0, height) * BOARD_FILL;
-  const colW = boardW / COLUMNS;
-  const rowH = boardH / GRID.length;
-  const out = new Map<RoomId, Rect>();
-  GRID.forEach((row, rowIndex) => {
-    let col = 0;
-    for (const cell of row) {
-      out.set(cell.id, {
-        x: -boardW / 2 + col * colW,
-        y: -boardH / 2 + rowIndex * rowH,
-        w: colW * cell.span,
-        h: rowH,
-      });
-      col += cell.span;
+/** Each room is the circle enclosing its member cards: centre at their centroid, radius out to the
+ *  furthest member's FAR rim (not its centre, or the member would hang half outside).
+ *
+ *  This is the inversion the board rests on. A card in two rooms is inside both circles because
+ *  both circles are DEFINED to enclose it -- so "cards outside every room they belong to" is zero
+ *  by construction, not by tuning, and it stays zero for a card in three or six rooms with no extra
+ *  case. See 2026-08-04-circle-rooms-design.md.
+ *
+ *  Centroid-and-max-distance, deliberately NOT the minimal enclosing circle: this is O(n),
+ *  deterministic, and trivially testable, and the tighter version is not worth Welzl's algorithm.
+ *
+ *  There is no target floor on an occupied room. Size means "how much is in here", which is true
+ *  without reconciling units -- a target counts COPIES while a radius packs NODES, and flooring
+ *  Lands at its 36 target draws slack on a deck running 37 lands. The label states underfill
+ *  exactly; the circle does not try to. */
+export function roomLayout(
+  members: readonly RoomMember[],
+  tallies: Map<RoomId, RoomTally>,
+): Map<RoomId, Circle> {
+  const byRoom = new Map<RoomId, RoomMember[]>();
+  for (const m of members) {
+    for (const id of m.rooms) {
+      const list = byRoom.get(id);
+      if (list) list.push(m);
+      else byRoom.set(id, [m]);
     }
-  });
-  return out;
-}
+  }
 
-export function roomCenter(rect: Rect): { x: number; y: number } {
-  return { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 };
+  const out = new Map<RoomId, Circle>();
+  for (const room of ROOMS) {
+    const held = byRoom.get(room.id);
+    if (!held || held.length === 0) continue;
+    let sx = 0, sy = 0;
+    for (const m of held) { sx += m.x; sy += m.y; }
+    const x = sx / held.length, y = sy / held.length;
+    let r = 0;
+    for (const m of held) r = Math.max(r, Math.hypot(m.x - x, m.y - y) + m.r);
+    out.set(room.id, { x, y, r });
+  }
+
+  // Empty rooms have no centroid. Park them in a ring outside everything occupied, in ROOMS order,
+  // so they are visible and cannot overlap a room that holds cards.
+  const empties = ROOMS.filter((room) => !out.has(room.id));
+  if (empties.length > 0) {
+    let cx = 0, cy = 0, spread = 0;
+    const occupied = [...out.values()];
+    for (const c of occupied) { cx += c.x; cy += c.y; }
+    if (occupied.length > 0) {
+      cx /= occupied.length; cy /= occupied.length;
+      for (const c of occupied) spread = Math.max(spread, Math.hypot(c.x - cx, c.y - cy) + c.r);
+    }
+    empties.forEach((room, i) => {
+      const target = tallies.get(room.id)?.target ?? 0;
+      const r = EMPTY_BASE_R + target * EMPTY_R_PER_TARGET;
+      const angle = (i / empties.length) * Math.PI * 2;
+      const orbit = spread * EMPTY_ORBIT + r;
+      out.set(room.id, { x: cx + Math.cos(angle) * orbit, y: cy + Math.sin(angle) * orbit, r });
+    });
+  }
+  return out;
 }

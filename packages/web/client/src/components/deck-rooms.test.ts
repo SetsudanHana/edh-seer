@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ROOMS, ROOM_HUE, roomsForCard, roomTallies, subcategoryLabel,
-  roomLayout, roomCenter, type RoomId,
+  roomLayout, type Circle, type RoomId, type RoomMember, type RoomTally,
 } from "./deck-rooms.js";
 
 describe("ROOMS", () => {
@@ -160,72 +160,82 @@ describe("roomTallies", () => {
 });
 
 describe("roomLayout", () => {
-  it("places all seven rooms", () => {
-    const l = roomLayout(900, 600);
-    expect(l.size).toBe(7);
-    for (const r of ROOMS) expect(l.get(r.id)).toBeDefined();
+  const noTallies = new Map<RoomId, RoomTally>();
+  const tallyOf = (target: number): RoomTally => ({ count: 0, target, under: target > 0 });
+
+  it("draws a room around its one member", () => {
+    const rooms = roomLayout([{ x: 10, y: 20, r: 5, rooms: ["ramp"] }], noTallies);
+    expect(rooms.get("ramp")).toEqual({ x: 10, y: 20, r: 5 });
   });
 
-  it("centres the board on the origin", () => {
-    const l = roomLayout(900, 600);
-    const xs = [...l.values()].flatMap((r) => [r.x, r.x + r.w]);
-    const ys = [...l.values()].flatMap((r) => [r.y, r.y + r.h]);
-    expect(Math.min(...xs) + Math.max(...xs)).toBeCloseTo(0, 6);
-    expect(Math.min(...ys) + Math.max(...ys)).toBeCloseTo(0, 6);
+  it("centres a room on the centroid of its members", () => {
+    const rooms = roomLayout(
+      [
+        { x: 0, y: 0, r: 2, rooms: ["ramp"] },
+        { x: 10, y: 0, r: 2, rooms: ["ramp"] },
+      ],
+      noTallies,
+    );
+    expect(rooms.get("ramp")!.x).toBe(5);
+    expect(rooms.get("ramp")!.y).toBe(0);
   });
 
-  it("spans strategy and lands across two columns", () => {
-    const l = roomLayout(900, 600);
-    expect(l.get("strategy")!.w).toBeCloseTo(l.get("wincons")!.w * 2, 6);
-    expect(l.get("lands")!.w).toBeCloseTo(l.get("ramp")!.w * 2, 6);
+  it("reaches the far rim of the furthest member, not its centre", () => {
+    const rooms = roomLayout(
+      [
+        { x: 0, y: 0, r: 2, rooms: ["ramp"] },
+        { x: 10, y: 0, r: 3, rooms: ["ramp"] },
+      ],
+      noTallies,
+    );
+    // centroid x=5; furthest member centre is 5 away, its far rim another 3.
+    expect(rooms.get("ramp")!.r).toBe(8);
   });
 
-  it("gives every row the same height and fills the width", () => {
-    const l = roomLayout(900, 600);
-    const heights = [...l.values()].map((r) => r.h);
-    expect(new Set(heights.map((h) => h.toFixed(6))).size).toBe(1);
-    const row1 = ["cardAdvantage", "interaction", "boardWipes"].map((id) => l.get(id as RoomId)!);
-    const total = row1.reduce((sum, r) => sum + r.w, 0);
-    expect(total).toBeCloseTo(l.get("strategy")!.w + l.get("wincons")!.w, 6);
+  it("encloses a card that is in two rooms in BOTH rooms", () => {
+    const shared = { x: 50, y: 0, r: 4, rooms: ["lands", "ramp"] as const };
+    const rooms = roomLayout(
+      [{ x: 0, y: 0, r: 4, rooms: ["lands"] }, shared, { x: 100, y: 0, r: 4, rooms: ["ramp"] }],
+      noTallies,
+    );
+    const inside = (c: { x: number; y: number; r: number }) =>
+      Math.hypot(shared.x - c.x, shared.y - c.y) + shared.r <= c.r + 1e-9;
+    expect(inside(rooms.get("lands")!)).toBe(true);
+    expect(inside(rooms.get("ramp")!)).toBe(true);
   });
 
-  it("never overlaps two rooms", () => {
-    const rects = [...roomLayout(900, 600).values()];
-    for (let i = 0; i < rects.length; i++)
-      for (let j = i + 1; j < rects.length; j++) {
-        const a = rects[i], b = rects[j];
-        const overlap = a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-        expect(overlap).toBe(false);
-      }
+  it("returns a circle for every room, including empty ones", () => {
+    const rooms = roomLayout([{ x: 0, y: 0, r: 4, rooms: ["ramp"] }], noTallies);
+    expect([...rooms.keys()].sort()).toEqual(ROOMS.map((r) => r.id).sort());
   });
 
-  it("scales with the viewport it is given", () => {
-    const small = roomLayout(400, 300).get("ramp")!;
-    const big = roomLayout(800, 600).get("ramp")!;
-    expect(big.w).toBeGreaterThan(small.w);
-    expect(big.h).toBeGreaterThan(small.h);
+  it("sizes an empty room from its target, since it has no members to measure", () => {
+    const member = [{ x: 0, y: 0, r: 4, rooms: ["ramp"] as const }];
+    const withTarget = roomLayout(member, new Map([["boardWipes", tallyOf(3)]]));
+    const without = roomLayout(member, noTallies);
+    // A bigger hole draws bigger. Compared against the no-target case, not against zero -- an
+    // assertion of "> 0" passes on the base radius alone and would not notice target being ignored.
+    expect(withTarget.get("boardWipes")!.r).toBeGreaterThan(without.get("boardWipes")!.r);
   });
 
-  // A canvas legitimately reports 0x0 mid-layout (before the first resize measurement lands),
-  // and GraphView now calls roomLayout with that live size every tick. Negative width/height
-  // (e.g. a caller subtracting a border) must not invert every rect's direction; clamp to 0
-  // instead so the board degenerates to nothing-visible rather than a mirrored layout.
-  it("clamps negative width/height to zero instead of inverting the grid", () => {
-    expect(roomLayout(-900, -600)).toEqual(roomLayout(0, 0));
+  it("gives an empty room with no target a visible circle rather than a point", () => {
+    const rooms = roomLayout([{ x: 0, y: 0, r: 4, rooms: ["ramp"] }], noTallies);
+    expect(rooms.get("boardWipes")!.r).toBeGreaterThan(0);
   });
 
-  it("does not throw or produce negative-size rects on a zero-size canvas", () => {
-    const l = roomLayout(0, 0);
-    expect(l.size).toBe(7);
-    for (const r of l.values()) {
-      expect(r.w).toBeGreaterThanOrEqual(0);
-      expect(r.h).toBeGreaterThanOrEqual(0);
-    }
+  it("does not put an empty room on top of an occupied one", () => {
+    const rooms = roomLayout([{ x: 0, y: 0, r: 40, rooms: ["ramp"] }], noTallies);
+    const ramp = rooms.get("ramp")!, wipes = rooms.get("boardWipes")!;
+    expect(Math.hypot(ramp.x - wipes.x, ramp.y - wipes.y)).toBeGreaterThan(ramp.r);
   });
-});
 
-describe("roomCenter", () => {
-  it("returns the rect's midpoint", () => {
-    expect(roomCenter({ x: -10, y: -20, w: 20, h: 40 })).toEqual({ x: 0, y: 0 });
+  it("is a pure function of its arguments -- same input, same output", () => {
+    const members = [{ x: 3, y: 7, r: 4, rooms: ["ramp"] as const }];
+    expect(roomLayout(members, noTallies)).toEqual(roomLayout(members, noTallies));
+  });
+
+  it("handles no members at all without throwing", () => {
+    expect(() => roomLayout([], noTallies)).not.toThrow();
+    expect(roomLayout([], noTallies).size).toBe(ROOMS.length);
   });
 });
