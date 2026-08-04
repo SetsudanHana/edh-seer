@@ -1,4 +1,9 @@
-import { describeTag, type Tag } from "./tags.js";
+import { describeTag, tagFamily, type Tag } from "./tags.js";
+
+// Re-exported for callers that historically imported it from here (e.g. this file's own test)
+// and for parity with globalIDF/rankThemes/etc. below — tagFamily itself now lives in tags.js,
+// next to describeTag, the other tag-string-splitter.
+export { tagFamily };
 
 export interface TagStats {
   N: number;
@@ -27,40 +32,37 @@ export function globalIDF(stats: TagStats, tag: Tag): number {
   return Math.log((stats.N + 1) / (count + 1));
 }
 
-/** The mechanism half of a tag: everything before the first ":". Tags are `<verb>:<subject>`
- *  (`counter-added:creature`), and the same mechanism at two subject granularities is one theme,
- *  not two — a deck whose counters split 17/16 across `:creature` and `:any` was ranking below a
- *  single `draw:any` of 18, which is how a +1/+1 deck came to report "primary = draw". */
-export function tagFamily(tag: string): string {
-  const i = tag.indexOf(":");
-  return i === -1 ? tag : tag.slice(0, i);
-}
-
 /**
- * Order a deck's tags into themes. Primary key is the tag's family (the mechanism before
- * ":"), summed across every subject that family appears at, so `counter-added:creature`
- * and `counter-added:any` rank as one combined theme instead of splitting and losing to a
- * single-subject tag like `draw:any`. Within a family, individual deckFreq × globalIDF
- * breaks the tie — dense AND rare wins over a dense-but-common staple (mana) or a
- * rare-but-incidental one-off — then lexical order for determinism.
+ * Order a deck's tags into themes. A tag's ranking strength is its own deckFreq × globalIDF,
+ * plus its `:any` sibling's strength when the deck also has one — subsumption of a specific
+ * subject by the general form of the same mechanism (`counter-added:creature` picks up
+ * `counter-added:any`), so a deck whose counters split 17/16 across `:creature` and `:any`
+ * still outranks a single `draw:any` of 18. `:any` never folds a second copy of itself. Two
+ * DIFFERENT subjects of the same verb — `tribe:wizard` vs `tribe:goblin`, `static:pump` vs
+ * `static:cost-reduction` — are different themes and are NEVER summed; only the literal `:any`
+ * tag folds. Within that, individual deckFreq × globalIDF breaks the tie — dense AND rare wins
+ * over a dense-but-common staple (mana) or a rare-but-incidental one-off — then lexical order
+ * for determinism.
  */
 export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats): Tag[] {
   const scored = [...deckFreq.entries()]
     .map(([tag, freq]) => ({ tag, key: freq * globalIDF(stats, tag) }));
+  const keyByTag = new Map(scored.map((s) => [s.tag, s.key]));
 
-  // Rank by the family's combined weight so one mechanism counts once, but keep returning real
-  // tags: callers (themeWeights, weightedEdge) look tags up directly and would miss a family name.
-  const familyKey = new Map<string, number>();
-  for (const s of scored) {
-    const f = tagFamily(s.tag);
-    familyKey.set(f, (familyKey.get(f) ?? 0) + s.key);
-  }
+  // Subsumption key: a tag's own strength, plus its ":any" sibling's strength if the deck has
+  // one. NOT the whole family's sum — `tribe:goblin` gets no credit from `tribe:wizard`, and
+  // `:any` doesn't add a second copy of itself.
+  const subsumedKey = (tag: string): number => {
+    const anyTag = `${tagFamily(tag)}:any`;
+    const own = keyByTag.get(tag) ?? 0;
+    return anyTag === tag ? own : own + (keyByTag.get(anyTag) ?? 0);
+  };
 
   return scored
     .sort((a, b) => {
-      const fa = familyKey.get(tagFamily(a.tag)) ?? 0;
-      const fb = familyKey.get(tagFamily(b.tag)) ?? 0;
-      // family strength first, then the member's own strength, then lexical for determinism
+      const fa = subsumedKey(a.tag);
+      const fb = subsumedKey(b.tag);
+      // subsumed strength first, then the tag's own strength, then lexical for determinism
       return fb - fa || b.key - a.key || a.tag.localeCompare(b.tag);
     })
     .map((r) => r.tag);
@@ -112,10 +114,12 @@ export function computeCohesion(
   const themes = ranked.filter((t) => !t.startsWith("tribe-nontoken:"));
   if (themes.length === 0 || nonlandCount === 0) return null;
   const primary = themes[0];
-  // Secondary must be a different mechanism, not just the next tag: rankThemes' family
-  // collapse now puts same-family tags adjacent (e.g. counter-added:creature next to
-  // counter-added:any), and describeTag has no per-family case for most families, so a
-  // same-family secondary would render the identical label as the primary.
+  // Secondary must be a different mechanism, not just the next tag: rankThemes only folds a
+  // tag's own weight with its literal ":any" sibling (subsumption), so a same-family pair like
+  // counter-added:creature / counter-added:any is not guaranteed to be adjacent in `ranked` —
+  // but describeTag has no per-family case for most families, so a same-family secondary would
+  // still render the identical label as the primary. Comparing family, not position, catches
+  // that wherever in the ranking it falls.
   const secondary = themes.slice(1).find((t) => tagFamily(t) !== tagFamily(primary)) ?? null;
   const score = Math.min(1, (deckFreq.get(primary) ?? 0) / nonlandCount);
   return {

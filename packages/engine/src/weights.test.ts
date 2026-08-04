@@ -116,3 +116,47 @@ test("every input tag still appears in the ranking exactly once", () => {
   const ranked = rankThemes(deckFreq, stats);
   expect([...ranked].sort()).toEqual([...deckFreq.keys()].sort());
 });
+
+// --- Regression: only the literal ":any" sibling folds, never the whole family. ---
+
+const UNIFORM: TagStats = { N: 1000, counts: {} }; // no tag has a corpus count, so every idf is
+// the same constant and only deckFreq decides order -- isolates the family-grouping rule itself.
+
+test("two different subjects of the same verb do not pool their weight (tribe:wizard vs tribe:goblin)", () => {
+  // Whole-family-sum bug: tribe:wizard (weak alone) must not outrank a stronger unrelated tag
+  // just because its sibling tribe:goblin is strong -- these are different tribes, not one
+  // theme split across subject granularities like counter-added:creature/:any is.
+  const deckFreq = new Map([["tribe:wizard", 3], ["tribe:goblin", 10], ["cast:instant", 5]]);
+  expect(rankThemes(deckFreq, UNIFORM)).toEqual(["tribe:goblin", "cast:instant", "tribe:wizard"]);
+});
+
+test("a spread of static effect kinds does not outrank a real single-mechanism theme", () => {
+  // cardThemeTags (matcher/edges.ts) puts the effect kind after "static:", so every static
+  // effect in a deck used to sum into one family strong enough to beat a genuine theme even
+  // though no individual static:* tag came close on its own.
+  const deckFreq = new Map([
+    ["counter-added:creature", 14],
+    ["enters:creature", 8],
+    ["enters:land", 7],
+    ["static:pump", 5],
+    ["static:mana-generation", 4],
+    ["static:cost-reduction", 3],
+    ["static:damage-multiplier", 2],
+  ]);
+  expect(rankThemes(deckFreq, UNIFORM)).toEqual([
+    "counter-added:creature", "enters:creature", "enters:land",
+    "static:pump", "static:mana-generation", "static:cost-reduction", "static:damage-multiplier",
+  ]);
+});
+
+test("a real theme is not pushed to a fractional rank by many small same-family tags pooling", () => {
+  // Before the fix, eight tribe:X tags at 3 each pooled to a "tribe" family weight of 24,
+  // dropping cast:instant (12, no siblings) from rank 1 (weight 1.0) to rank 9
+  // (weight (2/3)^8 ~= 0.039) in weightedEdge's real-theme accounting.
+  const deckFreq = new Map<string, number>([["cast:instant", 12]]);
+  for (const t of ["goblin", "wizard", "zombie", "elf", "human", "merfolk", "soldier", "spirit"]) {
+    deckFreq.set(`tribe:${t}`, 3);
+  }
+  const w = themeWeights(deckFreq, UNIFORM);
+  expect(w.get("cast:instant")).toBeCloseTo(1); // rank 1, not rank 9
+});
