@@ -37,6 +37,23 @@ export class AnthropicProvider implements LlmProvider {
   }
 
   async chat(messages: ChatMessage[]): Promise<string> {
+    // Newer models reject a prefilled assistant turn ("This model does not support assistant
+    // message prefill"), so fall back to asking for the object outright. Detected once per
+    // instance rather than per call.
+    try {
+      return await this.request(messages, this.prefillSupported);
+    } catch (e) {
+      if (this.prefillSupported && /does not support assistant message prefill/i.test((e as Error).message)) {
+        this.prefillSupported = false;
+        return await this.request(messages, false);
+      }
+      throw e;
+    }
+  }
+
+  private prefillSupported = true;
+
+  private async request(messages: ChatMessage[], prefill: boolean): Promise<string> {
     const systemText = messages
       .filter((m) => m.role === "system")
       .map((m) => m.content)
@@ -45,7 +62,11 @@ export class AnthropicProvider implements LlmProvider {
       .filter((m) => m.role !== "system")
       .map((m) => ({ role: m.role, content: m.content }));
     // Prefill the assistant turn with "{" so the model must emit a JSON object; we re-add it below.
-    convo.push({ role: "assistant", content: "{" });
+    if (prefill) convo.push({ role: "assistant", content: "{" });
+    else convo[convo.length - 1] = {
+      ...convo[convo.length - 1],
+      content: `${convo[convo.length - 1].content}\n\nReturn ONLY the JSON object, starting with {.`,
+    };
 
     const res = await this.fetchImpl(`${this.baseUrl}/v1/messages`, {
       method: "POST",
@@ -77,7 +98,9 @@ export class AnthropicProvider implements LlmProvider {
       .filter((b) => b.type === "text")
       .map((b) => b.text ?? "")
       .join("");
-    // Re-attach the prefilled "{" the API omits from its continuation.
+    // Re-attach the prefilled "{" the API omits from its continuation. Without prefill the model
+    // emits the whole object itself, so return it as-is (trimming any stray prose fence).
+    if (!prefill) return text.trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
     return `{${text}`;
   }
 }
