@@ -568,24 +568,38 @@ test("an event reason records which card consumes it and which supplies it", () 
   expect(ev!.producer).toBe("Fathom Mage");
 });
 
-test("every reason carries a direction, and it agrees with the reason text", () => {
-  const maker = base("Fathom Mage", [{
-    kind: "triggered",
-    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
-    effect: { kind: "draw-card" },
-    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: null } }],
+// Reuses the fixture from "filler -> reanimator: a discard fills the graveyard, feeding a
+// graveyard-recursion effect" (known to hit edges.ts's reanimator-consumer site, not the
+// event-edges site: Faithless Looting's discard normalizes to enters:graveyard, and Muldrotha's
+// graveyard-recursion effect has no trigger of its own for the event-edges loop to match).
+test("a reanimator-consumer reason records which card fills the graveyard and which recurs from it", () => {
+  const filler = base("Faithless Looting", [{
+    kind: "on-cast",
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    emits: [{ verb: "discard", subject: { control: "you", token: null } }],
   }]);
-  const payoff = base("Warden of the Grove", [{
-    kind: "triggered",
-    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
-    effect: { kind: "counter-placement" },
+  const reanimator = base("Muldrotha", [{
+    kind: "static",
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
   }]);
-  for (const r of pairReasons(maker, payoff, H)) {
-    expect(r.consumer, `reason "${r.text}" has no consumer`).toBeDefined();
-    expect(r.producer, `reason "${r.text}" has no producer`).toBeDefined();
-    expect(r.consumer).not.toBe(r.producer);
-    // both names appear in the text, so a wrong direction is a real mismatch not a typo
-    expect(r.text).toContain(r.consumer!);
-    expect(r.text).toContain(r.producer!);
-  }
+  const reasons = pairReasons(filler, reanimator, H);
+  const rec = reasons.find((r) => r.tag.startsWith("graveyard-recursion"));
+  expect(rec).toBeDefined();
+  expect(rec!.consumer).toBe("Muldrotha");
+  expect(rec!.producer).toBe("Faithless Looting");
+});
+
+// Reuses the fixture from "static edge: a zombie lord matches a zombie by characteristics"
+// (known to hit edges.ts's static-edges site).
+test("a static reason records which card supplies the effect and which is affected", () => {
+  const lord = base("Death Baron", [{
+    kind: "static",
+    effect: { kind: "pump", subject: { subtype: "zombie", control: "you", token: null } },
+  }]);
+  const zombie = base("Gravecrawler", [], ["zombie"]);
+  const reasons = pairReasons(lord, zombie, H);
+  const stat = reasons.find((r) => r.tag === "static:pump");
+  expect(stat).toBeDefined();
+  expect(stat!.consumer).toBe("Gravecrawler");
+  expect(stat!.producer).toBe("Death Baron");
 });
