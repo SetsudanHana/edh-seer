@@ -117,6 +117,13 @@ export interface DeckReport {
    *  is 1.0, strongest first. Pairs with CardSynergy.axisWeight — this names the themes, that says
    *  how strongly a card sits on them. Matcher-only. */
   axis?: { tag: string; weight: number }[];
+  /** Per candidate theme, how the deck relates to it: cards producing SURPLUS of the event beyond
+   *  their own existence, cards PAID OFF by it, and cards supplying only its BASELINE. `selective`
+   *  says whether the baseline was admitted as membership — a tag satisfied by most of the deck by
+   *  existence alone is deck arithmetic, not a theme. Matcher-only. */
+  themeMembership?: {
+    tag: string; surplus: number; payoffs: number; baseline: number; selective: boolean;
+  }[];
 }
 
 interface Agg {
