@@ -64,7 +64,15 @@ export class AnthropicProvider implements LlmProvider {
     if (!res.ok) {
       throw new Error(`Anthropic request failed: ${res.status} ${await res.text()}`);
     }
-    const json = (await res.json()) as { content?: AnthropicContentBlock[] };
+    const json = (await res.json()) as { content?: AnthropicContentBlock[]; stop_reason?: string };
+    // Truncation surfaces downstream as "Unterminated string in JSON", which reads like a model
+    // fault and sends you looking in the wrong place. It is a budget fault, so say so here.
+    if (json.stop_reason === "max_tokens") {
+      throw new Error(
+        `Anthropic response hit max_tokens (${this.maxTokens}) and is truncated — the JSON cannot ` +
+          `parse. Raise ANTHROPIC_MAX_TOKENS, or send fewer cards per batch.`,
+      );
+    }
     const text = (json.content ?? [])
       .filter((b) => b.type === "text")
       .map((b) => b.text ?? "")

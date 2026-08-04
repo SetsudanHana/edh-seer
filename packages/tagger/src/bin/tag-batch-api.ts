@@ -8,6 +8,9 @@ import type { ChatMessage } from "../llm/provider.js";
 interface BatchCard { oracleId: string; name: string; oracleText: string }
 interface BatchResult { oracleId: string; abilities: unknown[] }
 
+/** Output-token headroom per card in a batch. */
+const PER_CARD_TOKENS = 400;
+
 /** Shared system + few-shot turns (card-agnostic), taken from a throwaway card. */
 function sharedPrefix(): ChatMessage[] {
   return buildAbilityMessages({ name: "", typeLine: "", oracleText: "" } as never).slice(0, -1);
@@ -22,14 +25,26 @@ being the array you would put in {"abilities":[...]}. No other text. Cards:\n\n`
 async function tagBatch(batchFile: string, outFile: string): Promise<void> {
   const cards = JSON.parse(readFileSync(batchFile, "utf8")) as BatchCard[];
   const cfg = loadTaggerConfig();
-  const provider = createProvider(cfg);
+  // ANTHROPIC_MAX_TOKENS defaults to a SINGLE card's extraction (1500). This path asks for a whole
+  // batch in one response, so the default truncates every call at ~4k characters and the only
+  // symptom is "Unterminated string in JSON". Scale the budget to the batch unless the operator
+  // asked for more. ~400 output tokens per card is measured headroom for the largest real cards.
+  const provider = createProvider({ ...cfg, maxTokens: Math.max(cfg.maxTokens, cards.length * PER_CARD_TOKENS) });
 
   const messages: ChatMessage[] = [
     ...sharedPrefix(),
     { role: "user", content: BATCH_INSTRUCTION + JSON.stringify(cards, null, 1) },
   ];
   const raw = await provider.chat(messages);
-  const parsed = JSON.parse(raw) as { results: BatchResult[] };
+  let parsed: { results: BatchResult[] };
+  try {
+    parsed = JSON.parse(raw) as { results: BatchResult[] };
+  } catch (e) {
+    // Keep the response that failed to parse — otherwise the only evidence is a character offset.
+    const dump = `${outFile}.raw.txt`;
+    writeFileSync(dump, raw);
+    throw new Error(`${batchFile}: could not parse model output (${(e as Error).message}). Raw response written to ${dump}`);
+  }
   const results = parsed.results;
   writeFileSync(outFile, JSON.stringify(results, null, 1));
   console.log(`${batchFile}: tagged ${results.length}/${cards.length} -> ${outFile}`);
