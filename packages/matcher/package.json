@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "gen:hierarchy": "tsx src/bin/gen-hierarchy.ts",
     "compare": "tsx src/bin/compare.ts",
-    "calibrate": "tsx src/bin/calibrate.ts"
+    "calibrate": "tsx src/bin/calibrate.ts",
+    "theme-cal": "tsx src/bin/theme-cal.ts"
   },
   "dependencies": {
     "@mtg/data": "*",

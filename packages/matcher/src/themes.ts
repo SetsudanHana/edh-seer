@@ -59,6 +59,13 @@ export function themeMembership(
   baselineCap: number = BASELINE_CAP,
 ): ThemeMembership[] {
   const total = deckCards.length || 1;
+  // Computed once per card, not once per (card, tag) pair -- authoredSurplusTags walks every
+  // ability on the card, and re-running that inside the tags.map loop below would redo it once
+  // per candidate tag.
+  const surplusTagsByCard = new Map<string, Set<string>>();
+  for (const dc of deckCards) {
+    if (dc.tags) surplusTagsByCard.set(dc.card.name, authoredSurplusTags(dc.tags));
+  }
   return tags.map((tag) => {
     const surplus = new Set<string>();
     const baseline = new Set<string>();
@@ -76,7 +83,7 @@ export function themeMembership(
     // in the deck). Only emits count: a trigger is the cares side and belongs in payoffs, not
     // surplus -- see authoredSurplusTags.
     for (const dc of deckCards) {
-      if (dc.tags && authoredSurplusTags(dc.tags).has(tag)) surplus.add(dc.card.name);
+      if (surplusTagsByCard.get(dc.card.name)?.has(tag)) surplus.add(dc.card.name);
     }
     // A card that both produces surplus and supplies baseline is a surplus producer.
     for (const n of surplus) baseline.delete(n);

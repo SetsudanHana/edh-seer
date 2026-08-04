@@ -31,8 +31,9 @@ function selfSubject(chars: Characteristics): SubjectFilter {
  *  So a nonland permanent implies both; instant/sorcery implies cast only; a land implies
  *  enters only (landfall). Every subject carries the card's full types + subtypes.
  *  Every event this function returns carries `implied: true` — the marker that separates
- *  baseline supply (a card merely existing) from authored surplus. `combatSelfSupplied` in
- *  edges.ts reads it, but only for combat verbs; see the comment below. */
+ *  baseline supply (a card merely existing) from authored surplus. `directedReasons` (edges.ts)
+ *  reads it on every reason it produces; `combatSelfSupplied` in edges.ts also reads it, but only
+ *  for combat verbs; see the comment below. */
 export function impliedEvents(chars: Characteristics): GameEvent[] {
   const types = chars.types.map((t) => t.toLowerCase());
   const isLand = types.includes("land");
