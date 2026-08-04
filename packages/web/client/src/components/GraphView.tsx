@@ -105,6 +105,69 @@ export function roomAttraction(
   return { x: -(dx / d) * f, y: -(dy / d) * f };
 }
 
+export interface LabelBox { x: number; y: number; w: number; h: number }
+
+function boxesOverlap(a: LabelBox, b: LabelBox): boolean {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+/** Whether a box touches a circle's DISC (the filled area, not just the stroked ring) -- a label
+ *  sitting over the wash is exactly as unreadable as one sitting over the stroke. Closest-point
+ *  distance, not a bounding-box approximation: a text box is wide and short, so treating the
+ *  circle as its own bounding square would falsely flag a box that passes near a corner of that
+ *  square but nowhere near the disc itself. */
+function boxOverlapsCircle(box: LabelBox, c: Circle): boolean {
+  const nearX = Math.max(box.x, Math.min(c.x, box.x + box.w));
+  const nearY = Math.max(box.y, Math.min(c.y, box.y + box.h));
+  const dx = c.x - nearX, dy = c.y - nearY;
+  return dx * dx + dy * dy < c.r * c.r;
+}
+
+/** Nudges a room label straight up, off its own circle's rim, until its bounding box clears every
+ *  label already placed this frame AND every room's circle (own included, though that one can
+ *  never actually clash -- baseY already starts outside it) -- resolving both defects Task 10
+ *  found at 1440x900 whole-deck zoom: LANDS's label stamped directly over INTERACTION's (two
+ *  labels colliding), and separately CARD ADVANTAGE's label partly painted over by LANDS's own
+ *  wash+stroke (a label sitting inside a THIRD room's circle, drawn after it in `ROOMS` order).
+ *  Neither room's circle moves: room geometry (centroid + max-member-distance, see deck-rooms.ts's
+ *  roomLayout) is load-bearing and validated, this is a label-placement problem only.
+ *
+ *  Vertical only, and always straight up (baseY is already above the rim -- see the call site):
+ *  horizontal position stays pinned to the room's own circle.x, so a label never drifts sideways
+ *  toward a room it doesn't belong to. The outline's hue is what still ties a floated label back
+ *  to its circle -- see deck-rooms.ts's ROOM_HUE doc comment on why hue, not fill, carries that.
+ *
+ *  A circle clash jumps straight to just above that circle's own top (rather than the small
+ *  per-attempt step a label clash takes) -- a big room's circle can dwarf the fixed step, and
+ *  incrementing by `h` alone could exhaust every attempt while still inside it. A label clash still
+ *  takes the small step: two labels are never more than a few line-heights apart to begin with.
+ *
+ *  `placed` accumulates across a frame's rooms; the caller passes the same array through in ROOMS
+ *  declaration order (fixed, independent of geometry), so which label "wins" an already-taken
+ *  spot is stable frame to frame -- no flicker as cards move, the simulation settles, or the user
+ *  pans/zooms. Runs once per room per frame, and each call is O(placed so far + circles): with
+ *  seven rooms that's at most 42 comparisons total, immaterial next to the O(n^2) physics tick it
+ *  shares a frame with.
+ *
+ *  Bounded retries (ROOMS.length -- six other rooms is the true ceiling any one label could be
+ *  contending with, whether via their labels or their circles) rather than an unbounded search: if
+ *  every step is somehow still blocked, the label lands at its last tried spot rather than looping
+ *  forever. Seven rooms in an otherwise-open canvas never reaches that ceiling in practice. */
+export function placeRoomLabel(
+  x: number, baseY: number, w: number, h: number, placed: LabelBox[], circles: readonly Circle[] = [],
+): number {
+  let y = baseY;
+  for (let attempt = 0; attempt < ROOMS.length; attempt++) {
+    const box = { x: x - w / 2, y: y - h, w, h };
+    const blockingCircle = circles.find((c) => boxOverlapsCircle(box, c));
+    if (blockingCircle) { y = blockingCircle.y - blockingCircle.r - h * 0.3; continue; }
+    if (!placed.some((p) => boxesOverlap(box, p))) { placed.push(box); return y; }
+    y -= h;
+  }
+  placed.push({ x: x - w / 2, y: y - h, w, h });
+  return y;
+}
+
 /** Card name -> copy count, built from the graph's own card nodes (each copy of a card already
  *  collapses into one node, keyed by id, with the count riding on `copies`). Absent `copies`
  *  means one copy. Exists as its own pure, testable function rather than inlined at its one call
@@ -446,6 +509,16 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       // does that; the wash only gives the region a body, and doubles in the lens where two rooms
       // meet -- which is exactly where the cards in both of them sit.
       ctx.textAlign = "center";
+      // Accumulates this frame's placed label boxes so placeRoomLabel (see its doc comment) can
+      // push a colliding label up and off whatever already claimed its spot -- reset every draw()
+      // call since rooms (and therefore labels) are recomputed every frame, not just once.
+      const placedLabels: LabelBox[] = [];
+      // Every occupied room's circle, computed once for the whole pass rather than re-derived per
+      // label: placeRoomLabel checks a candidate label against ALL of these (not just its own), so
+      // a label can never end up painted over by a DIFFERENT room's later-drawn wash+stroke, no
+      // matter where in `ROOMS` order that room falls.
+      const roomCircles = [...rooms.values()];
+      const roomFontPx = 12 / cam.z;
       for (const room of ROOMS) {
         const circle = rooms.get(room.id);
         if (!circle) continue;
@@ -463,14 +536,19 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
         // Label sits above the circle's top edge rather than inside it: a circle has no straight
         // top edge to hang text off, and inside it the label lands under the cards it describes.
-        ctx.font = `500 ${12 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
+        // Derived room circles overlap by design (two rooms sharing a card -- see roomLayout's doc
+        // comment), which put two labels' default top-centre spots on top of each other at
+        // 1440x900 whole-deck zoom (Task 10); placeRoomLabel pushes the later one up until its
+        // measured box clears every label already placed this frame.
+        ctx.font = `500 ${roomFontPx}px "JetBrains Mono", ui-monospace, monospace`;
         ctx.fillStyle = tally?.under ? paint.warning : hue;
         const count = tally ? (tally.target > 0 ? `${tally.count}/${tally.target}` : `${tally.count}`) : "";
-        ctx.fillText(
-          `${room.label.toUpperCase()} ${count}`.trim(),
-          circle.x,
-          circle.y - circle.r - 6 / cam.z,
-        );
+        const text = `${room.label.toUpperCase()} ${count}`.trim();
+        const w = ctx.measureText(text).width;
+        const h = roomFontPx * 1.35;
+        const baseY = circle.y - circle.r - 6 / cam.z;
+        const y = placeRoomLabel(circle.x, baseY, w, h, placedLabels, roomCircles);
+        ctx.fillText(text, circle.x, y);
       }
 
       ctx.lineWidth = 0.7 / cam.z;

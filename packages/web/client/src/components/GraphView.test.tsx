@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ART_RADIUS, copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, roomAttraction, seedPosition, separation } from "./GraphView.js";
+import { ART_RADIUS, copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, placeRoomLabel, roomAttraction, seedPosition, separation } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
@@ -315,6 +315,114 @@ test("a card in two rooms draws one rim arc per room, each in that room's hue", 
     }
   }
   expect(hues).toEqual([ROOM_HUE.lands, ROOM_HUE.interaction]);
+});
+
+test("placeRoomLabel leaves a label alone when nothing is already there", () => {
+  const placed: Array<{ x: number; y: number; w: number; h: number }> = [];
+  const y = placeRoomLabel(100, -50, 40, 16, placed);
+  expect(y).toBe(-50);
+  expect(placed).toEqual([{ x: 80, y: -66, w: 40, h: 16 }]);
+});
+
+test("placeRoomLabel pushes a colliding label up until its box clears the one already placed", () => {
+  const placed = [{ x: 80, y: -66, w: 40, h: 16 }]; // occupies x:[80,120] y:[-66,-50]
+  // A second label centred at the same x, same baseY -- its default box is identical to the one
+  // above, so it collides on the first attempt and must move.
+  const y = placeRoomLabel(100, -50, 40, 16, placed);
+  expect(y).not.toBe(-50);
+  expect(y).toBeLessThan(-50); // pushed up (more negative), never sideways or down
+  const box = { x: 80, y: y - 16, w: 40, h: 16 };
+  const clash = box.y < placed[0].y + placed[0].h && box.y + box.h > placed[0].y;
+  expect(clash).toBe(false);
+});
+
+test("placeRoomLabel does not move a label that would not collide, even with others already placed", () => {
+  const placed = [{ x: 500, y: -66, w: 40, h: 16 }]; // far away in x
+  const y = placeRoomLabel(100, -50, 40, 16, placed);
+  expect(y).toBe(-50);
+});
+
+// A DIFFERENT defect than two labels colliding with each other: a label's default spot can sit
+// inside a THIRD room's circle -- CARD ADVANTAGE's label found partly painted over by LANDS's own
+// wash+stroke at 1440x900 whole-deck zoom (LANDS drawn later in ROOMS order, so its fill lands on
+// top of CARD ADVANTAGE's already-drawn text). placeRoomLabel takes every occupied room's circle
+// as an optional fifth argument and must clear all of them too, not just other labels.
+test("placeRoomLabel jumps clear of a room circle its default spot would land inside", () => {
+  const placed: Array<{ x: number; y: number; w: number; h: number }> = [];
+  // A big circle centred near the label's default spot -- the label (40x16 box at baseY=-50,
+  // centred x=100) starts squarely inside it.
+  const bigCircle = { x: 90, y: 0, r: 80 };
+  const y = placeRoomLabel(100, -50, 40, 16, placed, [bigCircle]);
+  const box = { x: 80, y: y - 16, w: 40, h: 16 };
+  const nearX = Math.max(box.x, Math.min(bigCircle.x, box.x + box.w));
+  const nearY = Math.max(box.y, Math.min(bigCircle.y, box.y + box.h));
+  const dx = bigCircle.x - nearX, dy = bigCircle.y - nearY;
+  expect(dx * dx + dy * dy).toBeGreaterThanOrEqual(bigCircle.r * bigCircle.r);
+});
+
+test("placeRoomLabel leaves a label that already clears every circle untouched", () => {
+  const farCircle = { x: 900, y: 900, r: 10 };
+  const y = placeRoomLabel(100, -50, 40, 16, [], [farCircle]);
+  expect(y).toBe(-50);
+});
+
+// Reproduces Task 10's defect at the level draw() actually operates: two single-card rooms whose
+// circles are forced to the exact same starting point, so their DEFAULT top-centre label boxes
+// are identical and would stamp one over the other under the old (baseY-only) code -- exactly
+// what the 1440x900 whole-deck screenshot showed for LANDS over INTERACTION.
+//
+// The forcing trick: render once with a lone "anchor" card so its settled position lands in
+// prevPositionsRef (GraphView.tsx's layout-continuity map, keyed by node id and populated on
+// effect cleanup). Then rerender with a DIFFERENT graph -- the anchor node gone, but two new
+// cards (different rooms: lands, interaction) each carrying an edge that names the anchor's id as
+// a neighbour. seedPosition (GraphView.tsx) averages a new node over its neighbours' *previous*
+// positions, and there is exactly one such neighbour for each -- so both seed to the identical
+// point regardless of whatever the anchor's own (Math.random-jittered) position happened to be.
+// From there the physics is a clean two-body case: same room membership would pull them back
+// together (not the case here -- lands vs interaction share nothing) and repulsion between
+// perfectly coincident points is exactly zero (dx=dy=0 cancels the 1/d direction term), so the
+// only thing that moves them is separation()'s deterministic coincident-point branch, which parts
+// them exactly (14+14+5)=33 units apart along a fixed axis. Two 14-radius circles 33 apart, each
+// labelled with a 40px-wide (measureText's constant stub) box centred on its own circle.x: 33 <
+// 40, so the boxes collide under the old code by construction, not by chance -- and the test
+// would need editing (not flake) if COLLISION_PAD, ART_RADIUS or the stub width ever changed.
+test("keeps two rooms' labels apart when their circles are forced together", () => {
+  const calls = makeContextSpy();
+  const anchor = { id: "card:anchor", kind: "card", label: "Anchor Card", roles: ["boardWipe"] };
+  const graph1 = { nodes: [anchor], edges: [] } as unknown as typeof SAMPLE.graph;
+  const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+  const { rerender } = render(<GraphView graph={graph1} report={report} />);
+
+  const cardA = { id: "card:a", kind: "card", label: "Land Card", roles: ["lands"] };
+  const cardB = { id: "card:b", kind: "card", label: "Removal Card", roles: ["targetedRemoval"] };
+  const graph2 = {
+    nodes: [cardA, cardB],
+    edges: [
+      { from: cardA.id, to: anchor.id, kind: "RELATED" },
+      { from: cardB.id, to: anchor.id, kind: "RELATED" },
+    ],
+  } as unknown as typeof SAMPLE.graph;
+  calls.length = 0; // only the second render's trace matters
+  rerender(<GraphView graph={graph2} report={report} />);
+
+  const fillTexts = calls.filter((c) => c.startsWith("fillText:"));
+  const boxOf = (prefix: string) => {
+    const call = fillTexts.find((c) => c.slice("fillText:".length).startsWith(prefix));
+    expect(call).toBeDefined();
+    const parts = call!.slice("fillText:".length).split(",");
+    const [x, y] = parts.slice(-2).map(Number);
+    // Matches draw()'s own formula: fontPx = 12/cam.z (cam.z is 1 here, no zoom applied), box
+    // width is measureText's constant stub (40), height fontPx*1.35 -- same maths the production
+    // code uses to decide whether two labels clash, not a value invented for this test.
+    const w = 40, h = 12 * 1.35;
+    return { x: x - w / 2, y: y - h, w, h };
+  };
+  const lands = boxOf("LANDS");
+  const interaction = boxOf("INTERACTION");
+  const overlap =
+    lands.x < interaction.x + interaction.w && lands.x + lands.w > interaction.x &&
+    lands.y < interaction.y + interaction.h && lands.y + lands.h > interaction.y;
+  expect(overlap).toBe(false);
 });
 
 describe("fullscreen toggle", () => {
