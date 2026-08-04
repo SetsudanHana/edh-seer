@@ -53,13 +53,18 @@ const ONTO_BATTLEFIELD_RE = /onto the battlefield/i;
 // (Myriad Landscape, Krosan Verge). A fetchland sacrifices for ONE land (net 0) — fixing/landfall,
 // not ramp — so the two-land requirement ("two" / "a X and a Y") is what excludes it.
 const RAMP_LAND_RE = /sacrifice\b[\s\S]*?search your library for (?:up to two|two|a \w+ and an? \w+)[\s\S]*?onto the battlefield/i;
-/** A land that produces 2+ mana from a bare {T} -- Ancient Tomb, Temple of the False God, Crystal
- *  Vein, Lotus Field. Net extra mana per land drop, which is what ramp means, so these fill the
- *  ramp role alongside lands. Anchored on a line/sentence start so the activation cost is ONLY the
- *  tap: a filter land ("{U/R}, {T}: Add {U}{U}") pays mana for its two and is not ramp, and the
- *  leading [^.;\n]* would otherwise let the cost symbols in. A basic adds one symbol and cannot
- *  match {2,}. */
+/** A land that produces 2+ mana from a bare {T} -- Ancient Tomb, Temple of the False God. Net
+ *  extra mana per land drop, which is what ramp means, so these fill the ramp role alongside
+ *  lands. Anchored on a line/sentence start so the activation cost is ONLY the tap: a filter land
+ *  ("{U/R}, {T}: Add {U}{U}") pays mana for its two and is not ramp, and the leading [^.;\n]*
+ *  would otherwise let the cost symbols in. A basic adds one symbol and cannot match {2,}. Gated
+ *  below on NOT entering tapped: you can't use the mana the turn the land lands, so a land that
+ *  enters tapped (the Karoo/bounce cycle, Lotus Field) isn't ramp even if it taps for a lot once
+ *  untapped. */
 const BIG_MANA_LAND_RE = /(?:^|[.;\n(])\s*\{t\}\s*:\s*add\s+(?:(?:\{[wubrgcs\d/]+\}\s*){2,}|two|three|four)/i;
+// Covers both templatings: modern "Boros Garrison enters tapped" and older "enters the
+// battlefield tapped".
+const ENTERS_TAPPED_RE = /enters(?: the battlefield)? tapped/i;
 // Makers of sacrifice-for-mana tokens are acceleration = ramp: Treasure/Gold and the Eldrazi
 // Spawn/Scion mana tokens (Big Score, Unexpected Windfall, Glimpse the Impossible).
 const MANA_TOKEN_RE = /create\b[\s\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?/i;
@@ -90,8 +95,9 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
       // via its own landCount reduce, not this set.
       if (!isBasicLand(dc)) add("lands", name);
       // A ramp-land (sac for 2+ lands) also fills the ramp role -- net +1 mana, unlike a fetchland.
-      // So does a land that taps for 2+ mana outright, which is the format's most common land ramp.
-      if (RAMP_LAND_RE.test(text) || BIG_MANA_LAND_RE.test(text)) add("ramp", name);
+      // So does a land that taps for 2+ mana outright, which is the format's most common land ramp
+      // -- unless it enters tapped, which makes it unusable the turn it lands and so not ramp.
+      if (RAMP_LAND_RE.test(text) || (BIG_MANA_LAND_RE.test(text) && !ENTERS_TAPPED_RE.test(text))) add("ramp", name);
       // Lands with activated/channel removal (Eiganjo) still fill the removal role; graveyard-exile
       // lands stay excluded via GRAVEYARD_HATE_RE.
       if ((TARGETED_REMOVAL_RE.test(text) || DAMAGE_REMOVAL_RE.test(text)) && !GRAVEYARD_HATE_RE.test(text)) add("targetedRemoval", name);
