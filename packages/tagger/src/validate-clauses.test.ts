@@ -149,3 +149,46 @@ test("a stray trigger warns on a spell clause but rejects on a static one", () =
   const staticRec: ClauseRecord[] = [{ id: 1, abilityType: "static", trigger: { event: "end-step" }, actions: [{ verb: "modify-pt" }] }];
   expect(rejections(validateClauses(staticSeg, staticRec))).toHaveLength(1);
 });
+
+test("a modal clause carries no trigger of its own -- the parent has it", () => {
+  // Pip-Boy 3000: "Whenever equipped creature attacks, choose one —" then three modes. Modes
+  // inherit abilityType "triggered" from the parent, so demanding a trigger on each one refused the
+  // whole card. The model is right to omit it; the trigger genuinely lives on the parent clause.
+  const seg: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", text: "Whenever equipped creature attacks, choose one —" },
+    { id: 2, kind: "mode", abilityType: "triggered", parentId: 1, text: "Draw a card, then discard a card." },
+  ];
+  const rec: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "equipped creature" }, actions: [{ verb: "none" }] },
+    { id: 2, abilityType: "triggered", actions: [{ verb: "draw" }, { verb: "discard" }] },
+  ];
+  expect(validateClauses(seg, rec)).toEqual([]);
+});
+
+test("a Saga chapter carries no trigger of its own -- the lore counter is it", () => {
+  // Summon: Fenrir. classify() types a chapter "triggered" because it is, but what fires it is the
+  // lore counter, not an event in TRIGGERS.
+  const seg: Clause[] = [
+    { id: 1, kind: "chapter", abilityType: "triggered", marker: "I", text: "Search your library for a basic land card." },
+  ];
+  const rec: ClauseRecord[] = [{ id: 1, abilityType: "triggered", actions: [{ verb: "search", object: "your library" }] }];
+  expect(validateClauses(seg, rec)).toEqual([]);
+});
+
+test("`shuffle` carries zones -- it moves cards between two of them", () => {
+  // Perpetual Timepiece: "Shuffle your graveyard into your library." Both zones are the card.
+  const seg: Clause[] = [{ id: 1, kind: "ability", abilityType: "activated", text: "Shuffle your graveyard into your library." }];
+  const rec: ClauseRecord[] = [{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "shuffle", object: "your graveyard", fromZone: "graveyard", toZone: "library" }],
+  }];
+  expect(validateClauses(seg, rec)).toEqual([]);
+});
+
+test("an ordinary triggered clause still must carry its trigger", () => {
+  // The exemptions above are for clauses whose trigger lives elsewhere -- they must not become a
+  // blanket hole, or a real triggered ability could silently lose its event.
+  const seg: Clause[] = [{ id: 1, kind: "ability", abilityType: "triggered", text: "When this creature enters, draw a card." }];
+  const rec: ClauseRecord[] = [{ id: 1, abilityType: "triggered", actions: [{ verb: "draw" }] }];
+  expect(kinds(validateClauses(seg, rec))).toContain("missing-trigger");
+});

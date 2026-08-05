@@ -49,11 +49,14 @@ const VERB_SET = new Set<string>(VERBS);
 const ZONE_SET = new Set<string>(ZONES);
 const TRIGGER_SET = new Set<string>(TRIGGERS);
 
-/** Verbs allowed to carry zones. `ZONED_VERBS` is the set the PROMPT names; `play` is absent there
- *  but `effect-kind.ts:24` consumes `{ verb: "play", from: "graveyard" }` as graveyard-recursion,
- *  which is the whole of Muldrotha. The gate must accept what derivation can consume, or it rejects
- *  a card forever over a disagreement between two of our own tables. */
-const ZONED = new Set<string>([...ZONED_VERBS, "play"]);
+/** Verbs allowed to carry zones. `ZONED_VERBS` is the set the PROMPT names; two more are added
+ *  because the gate must accept what derivation can consume, or it rejects a card forever over a
+ *  disagreement between two of our own tables:
+ *    - `play`, because `effect-kind.ts:24` consumes `{ verb: "play", from: "graveyard" }` as
+ *      graveyard-recursion, which is the whole of Muldrotha;
+ *    - `shuffle`, because "shuffle your graveyard into your library" (Perpetual Timepiece) moves
+ *      cards between two named zones and both of them are the card. */
+const ZONED = new Set<string>([...ZONED_VERBS, "play", "shuffle"]);
 
 /** The subset that refuses the card. Everything else is recorded and persisted. */
 export function rejections(violations: ClauseViolation[]): ClauseViolation[] {
@@ -111,8 +114,19 @@ function validateOne(clause: Clause, rec: ClauseRecord): ClauseViolation[] {
     at("ability-type-mismatch", `expected "${clause.abilityType}", got "${rec.abilityType}"`);
   }
 
+  // Two clause kinds are typed "triggered" but carry no trigger of their OWN, so demanding one
+  // refuses the whole card. Both were measured on the calibration run, where `missing-trigger` was
+  // the single largest refusal cause:
+  //   - a MODE inherits its abilityType from the parent, and the parent holds the trigger
+  //     (Pip-Boy 3000: "Whenever equipped creature attacks, choose one —" plus three modes);
+  //   - a CHAPTER is fired by the Saga's lore counter, which is not an event in TRIGGERS.
+  // Narrow on purpose: an ordinary triggered clause missing its event is still fatal, or a real
+  // trigger could be silently dropped.
+  const triggerLivesElsewhere = clause.kind === "mode" || clause.kind === "chapter";
   const triggered = clause.abilityType === "triggered";
-  if (triggered && !hasTrigger(rec)) at("missing-trigger", "triggered clause carries no trigger event");
+  if (triggered && !triggerLivesElsewhere && !hasTrigger(rec)) {
+    at("missing-trigger", "triggered clause carries no trigger event");
+  }
   if (!triggered && hasTrigger(rec)) {
     // A stray trigger on a SPELL clause is usually a DELAYED trigger the vocabulary cannot express:
     // Eerie Interlude is an instant that returns the exiled creatures "at the beginning of the next
