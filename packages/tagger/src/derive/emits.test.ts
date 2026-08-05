@@ -46,3 +46,20 @@ test("a move's events come from where it lands, not from the verb alone", () => 
   expect(actionEmits({ verb: "return", object: "target creature", toZone: "hand" })).toEqual([]);
 });
 
+
+test("entering tapped is not a tap EVENT", () => {
+  // 192 of the 295 corpus cards with a tap action record object "this" -- Bojuka Bog and every
+  // other land that enters tapped -- plus "it"/"that land"/"the token" for Farseek and Evolving
+  // Wilds. A permanent arriving in a tapped state causes no tap event by the rules: nothing
+  // triggers on it. Emitting one made `taps:any` a 12%-of-deck pseudo-event that won the theme axis
+  // in decks with nothing to do with tapping.
+  expect(actionEmits({ verb: "tap", object: "this" })).toEqual([]);
+  expect(actionEmits({ verb: "tap", object: "it" })).toEqual([]);
+  expect(actionEmits({ verb: "tap", object: "that land" })).toEqual([]);
+  expect(actionEmits({ verb: "tap", object: "the token" })).toEqual([]);
+
+  // A tap aimed at permanents already on the battlefield IS an event, and the vocabulary marks
+  // those with a scope.
+  expect(actionEmits({ verb: "tap", object: "target creature" }).map((e) => e.verb)).toEqual(["taps"]);
+  expect(actionEmits({ verb: "tap", object: "all creatures your opponents control" }).map((e) => e.verb)).toEqual(["taps"]);
+});

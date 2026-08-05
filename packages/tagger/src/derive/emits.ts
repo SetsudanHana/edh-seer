@@ -19,7 +19,6 @@ const EMITS: Record<string, Verb[]> = {
   "deal-damage": ["non-combat-damage"],
   "add-counter": ["counter-added"],
   untap: ["untaps"],
-  tap: ["taps"],
   proliferate: ["proliferate"],
   cast: ["cast"],
   fight: ["non-combat-damage"],
@@ -35,6 +34,21 @@ function landPlayVerbs(subject: SubjectFilter): Verb[] | undefined {
   return isLand ? ["land-play"] : undefined;
 }
 
+/** A permanent that ENTERS tapped causes no tap event — by the rules nothing triggers on it, and
+ *  the prompt records that state as `verb: "tap"` on the thing arriving ("Enters tapped" -> object
+ *  "this"). 192 of the 295 corpus cards carrying a tap action are exactly that shape, with "it",
+ *  "that land" and "the token" covering Farseek and Evolving Wilds on top. Emitting a taps event for
+ *  them made `taps:any` a pseudo-event on 12% of derived docs against 0.1% of flat, and because the
+ *  theme axis ranks by volume it won the top slot in decks with nothing to do with tapping.
+ *
+ *  A tap aimed at permanents already on the battlefield IS an event, and the vocabulary marks those
+ *  with a SCOPE — "target creature", "all creatures your opponents control". An entry-state tap
+ *  names the single thing arriving and has none. That is the whole discriminator, and it separates
+ *  all fourteen object shapes the corpus actually contains. */
+function tapVerbs(subject: SubjectFilter): Verb[] | undefined {
+  return subject.scope ? ["taps"] : undefined;
+}
+
 /** Zone-conditioned emits, checked before EMITS. A move's events depend on where it lands, not on
  *  the verb: `return` is a flicker to the battlefield and a bounce to hand, `put` is reanimation to
  *  the battlefield and self-mill to a graveyard. Only the destination is read, because a card
@@ -48,7 +62,10 @@ const ZONE_EMITS: { verb: string; to: string; verbs: Verb[] }[] = [
 export function actionEmits(action: Action): GameEvent[] {
   const zoned = ZONE_EMITS.find((r) => r.verb === action.verb && r.to === (action.toZone ?? null));
   const subject = parseSubject(action.object ?? "");
-  const verbs = zoned?.verbs ?? (action.verb === "play" ? landPlayVerbs(subject) : EMITS[action.verb ?? ""]);
+  const verbs = zoned?.verbs
+    ?? (action.verb === "play" ? landPlayVerbs(subject)
+      : action.verb === "tap" ? tapVerbs(subject)
+      : EMITS[action.verb ?? ""]);
   if (!verbs) return [];
   return verbs.map((verb) => ({ verb, subject: { ...subject } }));
 }
