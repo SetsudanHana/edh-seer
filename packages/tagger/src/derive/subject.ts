@@ -11,13 +11,15 @@ const TYPES = [
 ] as const;
 
 function parseControl(t: string): Control {
+  // Negation first: "you don't control" must not fall through to the "you control" branch below.
+  if (/\byou (?:don'?t|do not|don’t) control\b/.test(t)) return "opp";
   if (/\byour opponents?\b|\bopponent'?s?\b|\beach opponent\b|\btarget opponent\b/.test(t)) return "opp";
   if (/\byou control\b|\byour\b|^you$/.test(t)) return "you";
   return "any";
 }
 
 function parseToken(t: string): boolean | null {
-  if (/\bnontoken\b/.test(t)) return false;
+  if (/\bnontoken\b|\b(?:isn'?t|is not|isn’t) a token\b/.test(t)) return false;
   if (/\btokens?\b/.test(t)) return true;
   return null;
 }

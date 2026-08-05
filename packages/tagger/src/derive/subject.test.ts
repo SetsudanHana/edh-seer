@@ -26,3 +26,17 @@ test("token is tri-state and always explicit", () => {
   expect(parseSubject("a nontoken creature you control").token).toBe(false);
   expect(parseSubject("target creature").token).toBeNull();
 });
+
+test("negated control flips you-control to opp, not any", () => {
+  expect(parseSubject("target creature you don't control").control).toBe("opp");
+  expect(parseSubject("target creature you don’t control").control).toBe("opp");
+  // guard: the positive case must still work once negation is checked first.
+  expect(parseSubject("creatures you control").control).toBe("you");
+});
+
+test("negated token phrasing is recognised alongside nontoken", () => {
+  expect(parseSubject("target creature that isn't a token").token).toBe(false);
+  expect(parseSubject("target creature that is not a token").token).toBe(false);
+  // guard: the positive case must still work.
+  expect(parseSubject("a creature token you control").token).toBe(true);
+});
