@@ -133,6 +133,33 @@ export function score(
   return out;
 }
 
+/** Tags that appear in only ONE arm of the sample, and so tell the judge which population a row
+ *  came from however carefully the row was stripped. Blinding is good, not perfect; the spec
+ *  requires the residual leak be measured and precision recomputed without these rows. If dropping
+ *  them changes the verdict, the measurement is not trustworthy and the report must say so. */
+export function leakyTags(
+  key: ReadonlyMap<number, Source>,
+  tags: ReadonlyMap<number, string>,
+): Set<string> {
+  const seen = new Map<string, Set<Source>>();
+  for (const [id, tag] of tags) {
+    const source = key.get(id);
+    if (!source) continue;
+    if (!seen.has(tag)) seen.set(tag, new Set());
+    seen.get(tag)!.add(source);
+  }
+  return new Set([...seen].filter(([, arms]) => arms.size === 1).map(([tag]) => tag));
+}
+
+/** The same judgments with `generic` falses re-tallied as real. The generic rule is a STRATEGY call
+ *  (spec §5.1) and couples precision to the mesh metric, so the report shows the number both ways
+ *  and the reader can see how much of any gap the rule is doing on its own. A re-tally, never a
+ *  re-judgement: no other verdict moves, and the underlying judgment file is untouched. */
+export function countingGenericAsReal(judgments: readonly Judgment[]): Judgment[] {
+  return judgments.map((j) =>
+    j.verdict === "false" && j.cause === "generic" ? { ...j, verdict: "real" as const } : j);
+}
+
 /** The pre-registered decision rule (spec §2): switch only when derived's interval clears flat's
  *  entirely. Returns null when either side has nothing decided, so "no data" never reads as a win. */
 export function beatsBeyondNoise(scores: Record<Source, SourceScore>): boolean | null {

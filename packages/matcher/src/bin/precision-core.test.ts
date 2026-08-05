@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import {
-  blind, sample, score, seededRng, wilson,
+  beatsBeyondNoise, blind, countingGenericAsReal, leakyTags, sample, score, seededRng, wilson,
   type Judgment, type SampledReason,
 } from "./precision-core.js";
 
@@ -85,4 +85,51 @@ test("wilson bounds bracket the point estimate and stay inside [0,1]", () => {
 test("an empty denominator reports no precision rather than NaN", () => {
   const out = score([{ id: 0, verdict: "uncertain", note: "" }], new Map([[0, "derived"]]));
   expect(out.derived.precision).toBeNull();
+});
+
+test("a tag only one population can produce is flagged as a blinding leak", () => {
+  // Blinding is good, not perfect: if a tag appears only in derived rows, seeing that tag tells the
+  // judge which arm the row came from. The spec requires this be MEASURED, not asserted away --
+  // and precision recomputed without the leak-prone rows. If dropping them changes the verdict,
+  // the measurement is not trustworthy.
+  const key = new Map<number, "flat" | "derived">([[0, "flat"], [1, "derived"], [2, "flat"], [3, "derived"]]);
+  const tags = new Map<number, string>([[0, "dies:creature"], [1, "dies:creature"], [2, "static:pump"], [3, "static:top-manipulation"]]);
+  const leaked = leakyTags(key, tags);
+  // dies:creature appears in both arms, so it reveals nothing.
+  expect(leaked.has("dies:creature")).toBe(false);
+  // These appear in one arm only.
+  expect(leaked.has("static:pump")).toBe(true);
+  expect(leaked.has("static:top-manipulation")).toBe(true);
+});
+
+test("counting generic rows as real is a re-tally, not a re-judgement", () => {
+  // The generic rule is the user's strategy call and couples precision to the mesh metric, so the
+  // report must show precision with and without it. Flipping generic rows must move ONLY those.
+  const judgments: Judgment[] = [
+    { id: 0, verdict: "real", note: "" },
+    { id: 1, verdict: "false", cause: "generic", note: "" },
+    { id: 2, verdict: "false", cause: "false-emit", note: "" },
+  ];
+  const key = new Map<number, "flat" | "derived">([[0, "flat"], [1, "flat"], [2, "flat"]]);
+  expect(score(judgments, key).flat.precision).toBeCloseTo(1 / 3, 6);
+  expect(score(countingGenericAsReal(judgments), key).flat.precision).toBeCloseTo(2 / 3, 6);
+});
+
+test("the decision rule needs a clear gap, not merely a higher number", () => {
+  // The pre-registered rule (spec §2). A higher point estimate with overlapping intervals is not
+  // evidence, and this is the function that has to refuse to call it one.
+  const s = (real: number, wrong: number) =>
+    score(
+      [...Array.from({ length: real }, (_, i) => ({ id: i, verdict: "real" as const, note: "" })),
+       ...Array.from({ length: wrong }, (_, i) => ({ id: 1000 + i, verdict: "false" as const, note: "" }))],
+      new Map([...Array.from({ length: real }, (_, i) => [i, "derived" as const] as const),
+               ...Array.from({ length: wrong }, (_, i) => [1000 + i, "derived" as const] as const)]),
+    ).derived;
+
+  // Clear gap: 100/100 against 50/100.
+  expect(beatsBeyondNoise({ flat: s(50, 50), derived: s(100, 0) })).toBe(true);
+  // Derived ahead on the point estimate, but the intervals overlap -- not evidence.
+  expect(beatsBeyondNoise({ flat: s(28, 12), derived: s(32, 8) })).toBe(false);
+  // Nothing decided on one side: "no data" must never read as a win.
+  expect(beatsBeyondNoise({ flat: s(0, 0), derived: s(30, 0) })).toBeNull();
 });
