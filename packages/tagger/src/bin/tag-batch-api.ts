@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
@@ -51,7 +52,43 @@ async function tagBatch(batchFile: string, outFile: string): Promise<void> {
 }
 
 // Usage: tag-batch-api [--dir DIR] [--batches N]
+/** This script is the only place the deprecated flat extractor spends money, so the guard lives
+ *  here rather than in `dump-untagged` (which is free) or `grind.sh` (which just loops over this).
+ *
+ *  Why it exists: a 46-card hand audit measured this extractor at 43% correct / 43% partial / 13%
+ *  wrong, and two identical runs agreed on only 30% of cards — so re-grinding rewrites most of the
+ *  corpus regardless of the prompt. PROMPT_VERSION is 24, which marks all ~20,400 existing tag docs
+ *  stale, so `dump-untagged` will happily re-queue the entire corpus and this script will spend
+ *  roughly $70 reproducing those numbers. The replacement (mechanical segmentation, slot-filled
+ *  extraction, derivation in code) is merged and measured; what it lacks is a persistence path.
+ *
+ *  The guard is an env var rather than a flag so it cannot be satisfied by muscle memory. */
+export function deprecatedGrindAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.ALLOW_DEPRECATED_GRIND === "1";
+}
+
+function assertDeprecatedGrindAllowed(): void {
+  if (deprecatedGrindAllowed()) return;
+  console.error(`
+tag-batch-api is the DEPRECATED flat extractor. Refusing to spend money.
+
+  Measured quality : 43% correct / 43% partial / 13% wrong (46-card hand audit)
+  Reproducibility  : 30% of cards identical across two runs
+  Cost if you run  : ~$70, because PROMPT_VERSION 24 marks all ~20,400 tag docs stale
+
+The replacement is merged: segment.ts -> normalize-prompt.ts -> derive/. It has no
+persistence path yet, which is the actual work item — see
+docs/superpowers/specs/2026-08-05-derivation-layer-design.md.
+
+If you genuinely mean to re-grind with the old extractor:
+
+  ALLOW_DEPRECATED_GRIND=1 npx tsx src/bin/tag-batch-api.ts ...
+`);
+  process.exit(1);
+}
+
 async function main(): Promise<void> {
+  assertDeprecatedGrindAllowed();
   const args = new Map<string, string>();
   for (let i = 2; i < process.argv.length; i += 2) args.set(process.argv[i].replace(/^--/, ""), process.argv[i + 1]);
   const dir = args.get("dir") ?? "/tmp/mtg-tag-batches";
@@ -67,4 +104,8 @@ async function main(): Promise<void> {
   if (failed.length) process.exitCode = 1;
 }
 
-main().catch((e) => { console.error("tag-batch-api failed:", e); process.exit(1); });
+// Only run when executed directly. Importing this module (the guard's test does) must not fire the
+// guard and exit the process — the same idiom matcher's eval-pairs.ts uses.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((e) => { console.error("tag-batch-api failed:", e); process.exit(1); });
+}
