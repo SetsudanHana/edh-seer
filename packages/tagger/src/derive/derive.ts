@@ -46,6 +46,20 @@ function normalizeTriggerVerb(event: string): Verb | null {
   return LEGAL_VERBS.has(normalized) ? (normalized as Verb) : null;
 }
 
+/** A clause that takes life from an opponent AND gives it to you is a drain, which is its own kind
+ *  in the engine's vocabulary and what aristocrats payoffs match on. Added ALONGSIDE the per-action
+ *  abilities, not instead of them, so the card still registers on the lifeloss and lifegain axes.
+ *  Without this, Zulaport Cutthroat and Blood Artist lose the kind their live tags carry today. */
+function drainAbility(clause: ClauseRecord, kind: AbilityKind, trigger: Ability["trigger"]): Ability | null {
+  const actions = clause.actions ?? [];
+  const loss = actions.find((a) => a.verb === "lose-life" && parseSubject(a.object ?? "").control !== "you");
+  const gain = actions.find((a) => a.verb === "gain-life" && parseSubject(a.object ?? "").control === "you");
+  if (!loss || !gain) return null;
+  const ability: Ability = { kind, effect: { kind: "drain", subject: parseSubject(loss.object ?? "") } };
+  if (trigger) ability.trigger = trigger;
+  return ability;
+}
+
 export function deriveAbilities(
   clauses: ClauseRecord[],
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
@@ -86,6 +100,9 @@ export function deriveAbilities(
       if (emits.length) ability.emits = emits;
       abilities.push(ability);
     }
+
+    const drain = drainAbility(clause, kind, trigger);
+    if (drain) abilities.push(drain);
   }
   return { abilities, unclaimed, unknownTriggers };
 }

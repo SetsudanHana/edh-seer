@@ -11,10 +11,14 @@ test("one ability per action, sharing the clause kind and trigger", () => {
       { verb: "gain-life", object: "you", amount: "2" },
     ],
   }]);
-  expect(abilities).toHaveLength(2);
+  // Also a drain: opponent life loss + your matching gain, pushed alongside the two per-action
+  // abilities rather than instead of them (Task 7).
+  expect(abilities).toHaveLength(3);
   expect(abilities[0].kind).toBe("activated");
   expect(abilities[0].effect.kind).toBe("player-life-loss");
   expect(abilities[1].effect.kind).toBe("lifegain");
+  expect(abilities[2].effect.kind).toBe("drain");
+  expect(abilities[2].kind).toBe("activated");
 });
 
 test("a triggered clause puts its trigger on every ability it produces", () => {
@@ -24,12 +28,15 @@ test("a triggered clause puts its trigger on every ability it produces", () => {
     trigger: { event: "dies", subject: "a creature you control" },
     actions: [{ verb: "lose-life", object: "each opponent" }, { verb: "gain-life", object: "you" }],
   }]);
-  expect(abilities).toHaveLength(2);
+  // Also a drain (Task 7): opponent life loss + your matching gain. Every ability, including the
+  // drain, carries the clause's shared trigger.
+  expect(abilities).toHaveLength(3);
   for (const a of abilities) {
     expect(a.kind).toBe("triggered");
     expect(a.trigger?.verbs).toEqual(["dies"]);
     expect(a.trigger?.subject).toEqual({ control: "you", token: null, type: "creature" });
   }
+  expect(abilities.map((a) => a.effect.kind).sort()).toEqual(["drain", "lifegain", "player-life-loss"]);
 });
 
 test("removal produces an ability with no effect kind but a usable emit", () => {
@@ -92,4 +99,30 @@ test("inert clauses contribute nothing and are not unclaimed", () => {
   const { abilities, unclaimed } = deriveAbilities([{ id: 1, actions: [{ verb: "none" }] }]);
   expect(abilities).toHaveLength(0);
   expect(unclaimed).toHaveLength(0);
+});
+
+test("a clause that drains and gains also yields a drain ability", () => {
+  // Zulaport Cutthroat: "Whenever this creature or another creature you control dies,
+  // each opponent loses 1 life and you gain 1 life." Live tags record this as `drain`.
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "dies", subject: "a creature you control" },
+    actions: [
+      { verb: "lose-life", object: "each opponent" },
+      { verb: "gain-life", object: "you" },
+    ],
+  }]);
+  const kinds = abilities.map((a) => a.effect.kind).sort();
+  expect(kinds).toEqual(["drain", "lifegain", "player-life-loss"]);
+  const drain = abilities.find((a) => a.effect.kind === "drain");
+  expect(drain?.trigger?.verbs).toEqual(["dies"]);
+  expect(drain?.effect.subject).toEqual({ control: "opp", token: null, scope: "each" });
+});
+
+test("gaining life alone is not a drain", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "static", actions: [{ verb: "gain-life", object: "you" }],
+  }]);
+  expect(abilities.map((a) => a.effect.kind)).toEqual(["lifegain"]);
 });
