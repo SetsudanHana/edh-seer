@@ -173,3 +173,40 @@ test("a mode inherits its parent's ability type", () => {
   expect(modes).toHaveLength(2);
   expect(modes.every((m) => m.abilityType === "activated")).toBe(true);
 });
+
+test("a bare modal intro keeps its own clause instead of vanishing", () => {
+  // Cryptic Command prints "Choose two —" on its own line. The ability-word pattern ate the whole
+  // line, leaving an empty body that produced NO clause, and the first bullet then invented an
+  // empty unlabelled parent to hang off. The intro states no action of its own, so it is inert:
+  // the modes carry the actions.
+  const c = segment("Choose two —\n• Counter target spell.\n• Return target permanent to its owner's hand.\n• Tap all creatures your opponents control.\n• Draw a card.", [], "Instant");
+  expect(c[0].kind).toBe("modal");
+  expect(c[0].marker).toBe("Choose two");
+  const modes = c.filter((x) => x.kind === "mode");
+  expect(modes).toHaveLength(4);
+  expect(modes.every((m) => m.parentId === c[0].id)).toBe(true);
+  expect(c.filter((x) => x.text === "" && x.kind === "ability")).toHaveLength(0);
+});
+
+test("a keyword with a non-mana cost is still a keyword", () => {
+  // Alpharael prints "Ward—Discard a card at random." The ability-word pattern stripped "Ward"
+  // before the keyword check could see it, so the line was typed as a static ability while the
+  // bracket form ("Ward {2}") was correctly inert — the same keyword split by cost notation.
+  const c = segment("Ward—Discard a card at random.\nVoid — Whenever Alpharael attacks, defending player loses half their life, rounded up.", ["Ward", "Void"], "Legendary Creature — Human Warrior");
+  expect(c[0].kind).toBe("keyword");
+  expect(c[0].abilityType).toBeUndefined();
+  // "Void" is an ability word, not a printed keyword of this card's rules text — it still labels.
+  expect(c[1].kind).toBe("ability");
+  expect(c[1].marker).toBe("Void");
+  expect(c[1].abilityType).toBe("triggered");
+});
+
+test("a level divider carries its marker and cost, not a meaningless body", () => {
+  // "{1}{G}: Level 2" always matched the activated-cost pattern first, so the branch written for
+  // levels never ran and the clause text was the literal divider label.
+  const c = segment("{1}{G}: Level 2\nWhenever you attack, put a +1/+1 counter on target attacking creature.", [], "Enchantment — Class");
+  expect(c[0].kind).toBe("level");
+  expect(c[0].marker).toBe("Level 2");
+  expect(c[0].cost).toBe("{1}{G}");
+  expect(c[0].text).toBe("");
+});

@@ -149,7 +149,7 @@ for (const run of ["run1", "run2"]) {
     // produced pure drift (a "Level 2" divider came back add-counter on one run and level-up on
     // the next), so they are answered here and never sent. Their slots are still filled, so the
     // completeness invariant holds.
-    const INERT = new Set(["keyword", "reminder", "level"]);
+    const INERT = new Set(["keyword", "reminder", "level", "modal"]);
     const askable = p.clauses.filter((c) => !INERT.has(c.kind));
     const synthesized = p.clauses.filter((c) => INERT.has(c.kind))
       .map((c) => ({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text }] }));

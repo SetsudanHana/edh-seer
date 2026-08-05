@@ -16,6 +16,7 @@ export type ClauseKind =
   | "mode"           // one bullet of a modal ability
   | "chapter"        // Saga chapter ("I —", "II, III —")
   | "level"          // Class level marker ("{3}{W}: Level 2")
+  | "modal"          // the line introducing modes ("Choose two —")
   | "granted"        // an ability granted in quotes ("... has \"{T}: Add {C}.\"")
   | "reminder";      // parenthetical reminder text only
 
@@ -92,7 +93,10 @@ function splitEmbeddedTriggers(text: string): string[] {
 }
 
 function classify(text: string, kind: ClauseKind, typeLine: string): { abilityType?: Clause["abilityType"]; cost?: string; body: string } {
-  if (kind === "keyword" || kind === "reminder") return { body: text };
+  // Inert clauses state no game action: a printed keyword, reminder text, a Class level divider,
+  // and the "Choose two —" line that introduces modes. The modes and the levelled-up abilities
+  // carry the actions. Typing these as abilities invited the model to invent one.
+  if (kind === "keyword" || kind === "reminder" || kind === "level" || kind === "modal") return { body: text };
   // A planeswalker loyalty ability is activated (CR 606); its cost is the loyalty symbol. Without
   // this, Aminatou's "+1: Draw a card" was typed static — the loyalty cost is not a mana symbol,
   // so the general cost pattern never matched it.
@@ -104,13 +108,20 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
     return { abilityType: "activated", cost: act[1].trim(), body: text.slice(act[0].length) };
   }
   if (/^(when|whenever|at the beginning|at end)/i.test(text)) return { abilityType: "triggered", body: text };
-  if (kind === "chapter" || kind === "level") return { abilityType: "triggered", body: text };
+  if (kind === "chapter") return { abilityType: "triggered", body: text };
   return { abilityType: isSpellCard(typeLine) ? "spell" : "static", body: text };
 }
 
 const CHAPTER = /^([IVX]+(?:\s*,\s*[IVX]+)*)\s*[—-]\s*/;
 const ABILITY_WORD = /^([A-Z][A-Za-z' ]{2,24})\s*—\s*/;
-const LEVEL = /^\{[^}]*\}(?:\s*\{[^}]*\})*\s*:\s*Level\s+\d+/i;
+/** A keyword ability whose cost follows an em dash with NO space: "Ward—Discard a card at random."
+ *  Scryfall lists ability words in `keywords` too (Landfall, Threshold, Delirium), so membership
+ *  alone cannot tell the two apart — but the SPACING can, and the corpus is unanimous: unspaced and
+ *  in `keywords` is only ever a real keyword (Ward 50, Escape 32, Cumulative upkeep 20, Kicker,
+ *  Flashback, Equip, Morph, Buyback, Echo), while every ability word takes a spaced dash. The label
+ *  must end in a letter so "Void — Whenever ..." cannot match by absorbing the space. */
+const KEYWORD_COST = /^([A-Z][A-Za-z' ]{1,23}[A-Za-z])—/;
+const LEVEL = /^(\{[^}]*\}(?:\s*\{[^}]*\})*)\s*:\s*(Level\s+\d+)/i;
 /** A planeswalker loyalty cost: "+1:", "-3:", "0:", "+X:", using either hyphen or minus sign. */
 const LOYALTY = /^([+\u2212-]?(?:\d+|X))\s*:\s+/;
 
@@ -137,7 +148,10 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
   let id = 0;
   const next = (c: Omit<Clause, "id">): Clause => {
     const { abilityType, cost, body } = classify(c.text, c.kind, typeLine);
-    const ca = cost ? costActions(cost) : [];
+    // An inert clause is classified as-is, so a cost supplied by the caller (a level divider's
+    // level-up cost) is the only one there is.
+    const effectiveCost = cost ?? c.cost;
+    const ca = effectiveCost ? costActions(effectiveCost) : [];
     const clause: Clause = {
       id: ++id, ...c, text: body,
       ...(abilityType ? { abilityType } : {}), ...(cost ? { cost } : {}),
@@ -157,13 +171,28 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
     let marker: string | undefined;
     let body = line;
     const chapter = body.match(CHAPTER);
+    const level = LEVEL.exec(body);
     if (chapter) { marker = chapter[1]; body = body.slice(chapter[0].length); }
-    else if (LEVEL.test(body)) { next({ kind: "level", text: body }); continue; }
+    // The divider carries the level it unlocks and what it costs to get there; the abilities that
+    // come with the level are the lines after it. Previously the whole line was handed on as text
+    // and always matched the activated-cost pattern first, so the branch written for levels never
+    // ran and the clause read "Level 2" with no marker.
+    else if (level) { next({ kind: "level", text: "", marker: level[2], cost: level[1].trim() }); continue; }
     else {
+      const kw = body.match(KEYWORD_COST);
+      if (kw && keywords.some((k) => k.toLowerCase() === kw[1].toLowerCase())) {
+        next({ kind: "keyword", text: body, marker: kw[1] });
+        continue;
+      }
       const word = body.match(ABILITY_WORD);
       // An ability word ("Landfall —") is a label, not a cost; a "{T}: ..." activated cost is not.
       if (word && !body.startsWith("{")) { marker = word[1].trim(); body = body.slice(word[0].length); }
     }
+
+    // "Choose two —" prints on its own line, so stripping the label left an empty body that
+    // produced NO clause at all — and the first bullet then invented an empty unlabelled parent to
+    // hang off. Keep the intro as its own inert clause and let the modes attach to it.
+    if (body === "" && marker) { next({ kind: "modal", text: "", marker }); continue; }
 
     // Modal text: "choose one —" then • bullets, which may share the line or be on their own.
     // A bullet-only line attaches to the most recent non-mode clause, so every mode of one modal
