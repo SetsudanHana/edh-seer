@@ -28,21 +28,33 @@ const semantic = (o: Row["output"]): string =>
     [...new Set((c.actions ?? []).map((a) => `${a.verb}|${a.fromZone ?? ""}|${a.toZone ?? ""}`))].sort(),
   ]));
 
-/** Semantic, plus the canonicalisation the pipeline can apply IN CODE after extraction. Every rule
- *  here is a fact the model was never entitled to choose, so normalising it is not leniency:
+/** Semantic, plus the canonicalisation the pipeline can apply IN CODE after extraction. A rule
+ *  belongs here only when it settles a fact the model was never entitled to choose:
  *    - a clause with no actions and one recorded as [none] are the same clause;
- *    - "reveal" is bookkeeping inside a search or a look, never a game action on its own;
- *    - a zone the verb already fixes is not the model's to state — search comes FROM the library,
- *      a cast goes TO the stack, and put/exile carry their meaning in toZone (Kura vs Cultivate).
- *      `return` keeps its fromZone: reanimation from the graveyard is a different card.
+ *    - a cast always goes to the stack, so stating it adds nothing;
+ *    - the DEFAULT origin of a move is implied by the verb, so recording it is optional
+ *      bookkeeping: an unstated fromZone and an explicit `library` are the same fact.
+ *    - "reveal" is dropped, but not because it is never a game action — Duress and Thoughtseize
+ *      reveal a hand with no search anywhere. It is dropped because exactly one card in the game
+ *      (Priority Boarding) triggers off revealing, so no payoff consumes it as its own event,
+ *      while the discard or draw beside it carries the edge.
+ *  A NON-DEFAULT origin is NOT normalised, because it is the whole card: `exile target card from a
+ *  GRAVEYARD` is Scavenging Ooze and Bojuka Bog, `put target creature card from a GRAVEYARD onto
+ *  the battlefield` is Reanimate and Necromancy, and `search your GRAVEYARD, hand, and/or library`
+ *  is Boonweaver Giant. An earlier version of this function forced search to `library` and dropped
+ *  fromZone for put and exile outright. That split reanimation on templating alone — `return`
+ *  (Animate Dead) kept its graveyard, `put` (Reanimate) lost it — and silently erased the
+ *  graveyard-hate kind the vocabulary had just gained. Two runs that disagree about a graveyard
+ *  origin disagree about the card, and must score as drift.
  *  Reported ALONGSIDE the strict numbers, never instead of them — this is the projected effect of
  *  a code fix on data already collected, not a gate that moved. */
+const IMPLIED_ORIGIN = new Set(["put", "exile", "search", "return"]);
 const canonical = (o: Row["output"]): string =>
   JSON.stringify((o.clauses ?? []).map((c) => {
     const acts = (c.actions ?? []).filter((a) => a.verb !== "reveal").map((a) => {
-      const from = a.verb === "search" ? "library" : ["put", "exile", "reveal"].includes(a.verb ?? "") ? "" : a.fromZone ?? "";
-      const to = a.verb === "cast" ? "" : a.toZone ?? "";
-      return `${a.verb}|${from}|${to}`;
+      const zone = a.fromZone ?? "";
+      const implied = IMPLIED_ORIGIN.has(a.verb ?? "") && (zone === "" || zone === "library");
+      return `${a.verb}|${implied ? "" : zone}|${a.verb === "cast" ? "" : a.toZone ?? ""}`;
     });
     const set = [...new Set(acts.length ? acts : ["none||"])].sort();
     return [c.id, c.abilityType, c.trigger?.event === "none" ? null : c.trigger?.event ?? null, set];
