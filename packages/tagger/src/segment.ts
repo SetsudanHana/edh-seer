@@ -215,11 +215,24 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
   if (act && /\{|sacrifice|discard|pay|remove|exile|tap\b/i.test(act[1])) {
     return { abilityType: "activated", cost: act[1].trim(), body: text.slice(act[0].length) };
   }
-  if (/^(when|whenever|at the beginning|at end)/i.test(text)) return { abilityType: "triggered", body: text };
+  // Test the cue behind a flavour label as well as at the front. ABILITY_WORD strips labels for the
+  // marker, but only pure-letter ones of at most 24 characters, and the ones that slip past it are
+  // exactly the ones that were being typed static while carrying a real trigger: "Allons-y! —"
+  // (punctuation), "Lord of the Pyrrhian Legions —" (28 chars), "∞ —" (not a letter). The label is
+  // never evidence on its own — only the cue behind it is — so a labelled static stays static.
+  if (TRIGGER_CUE.test(text) || TRIGGER_CUE.test(text.replace(LABEL, ""))) {
+    return { abilityType: "triggered", body: text };
+  }
   if (kind === "chapter") return { abilityType: "triggered", body: text };
   return { abilityType: isSpellCard(typeLine) ? "spell" : "static", body: text };
 }
 
+const TRIGGER_CUE = /^(when|whenever|at the beginning|at end)/i;
+/** Any leading label ending in a spaced em dash, however it is spelled. Deliberately wider than
+ *  ABILITY_WORD: this one only decides whether to LOOK for a trigger cue behind it, so admitting a
+ *  label that is not really one costs nothing unless a cue follows. Bounded so it cannot swallow a
+ *  sentence, and dash-free so it stops at the first label. */
+const LABEL = /^[^—]{1,40}—\s*/;
 const CHAPTER = /^([IVX]+(?:\s*,\s*[IVX]+)*)\s*[—-]\s*/;
 const ABILITY_WORD = /^([A-Z][A-Za-z' ]{2,24})\s*—\s*/;
 /** A keyword ability whose cost follows an em dash with NO space: "Ward—Discard a card at random."

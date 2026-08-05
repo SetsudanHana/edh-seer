@@ -301,3 +301,31 @@ test("abilityType is decided per FACE, not from the joined type line", () => {
   expect(spellFace?.abilityType).toBe("spell");
   expect(landFace?.abilityType).toBe("static");
 });
+
+test("a trigger behind an ability-word label is still a trigger", () => {
+  // 18 of the 83 refusals on the --refresh-other run were `unexpected-trigger`, and most were this:
+  // the trigger cue is real but sits behind a flavour label, so `classify` -- which tests the RAW
+  // text -- typed the ability static and the gate then refused the model for answering correctly.
+  // ABILITY_WORD strips the label for the marker, but only for pure-letter labels of <=24 chars,
+  // and none of these qualify: "Allons-y!" carries punctuation, "Lord of the Pyrrhian Legions" is
+  // 28 characters, "∞" is not a letter at all.
+  const tenth = segment("Allons-y! — Whenever you attack, exile cards from the top of your library.", [], "Legendary Creature");
+  expect(tenth[0].abilityType).toBe("triggered");
+
+  const anrakyr = segment("Lord of the Pyrrhian Legions — Whenever Anrakyr the Traveller attacks, you may cast an artifact spell from your hand.", [], "Legendary Artifact Creature");
+  expect(anrakyr[0].abilityType).toBe("triggered");
+
+  const mindStone = segment("∞ — At the beginning of your end step, exile up to one other target nonland permanent you control.", [], "Legendary Artifact");
+  expect(mindStone[0].abilityType).toBe("triggered");
+});
+
+test("a label before a non-trigger does not turn the ability into one", () => {
+  // The label is not evidence of anything by itself; only the cue behind it is. Murkfiend Liege's
+  // "Untap all green and/or blue creatures you control during each other player's untap step" is a
+  // genuine static ability, and the model answering `untaps` there is a real refusal to keep.
+  const liege = segment("Untap all green and/or blue creatures you control during each other player's untap step.", [], "Creature");
+  expect(liege[0].abilityType).toBe("static");
+
+  const landfall = segment("Landfall — Creatures you control get +1/+1.", [], "Enchantment");
+  expect(landfall[0].abilityType).toBe("static");
+});

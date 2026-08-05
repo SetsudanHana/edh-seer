@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 4;
+export const NORMALIZE_VERSION = 5;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -37,6 +37,14 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   "upkeep", "begin-combat", "end-step", "draw", "draw-step", "main-phase", "combat-damage-step", "damage-dealt", "life-gained", "life-lost",
   "counter-added", "sacrificed", "discarded", "milled", "turned-face-up", "level-up", "chapter",
   "proliferate",
+  // Named because the corpus named them: an opponent searching (Archivist of Oghma), becoming a
+  // target (Unsettled Mariner), scry or surveil (Matoya), a Room unlocking (Mirror Room). None has
+  // an engine verb, so they form no edges and surface in `unknownTriggers` — the point is that one
+  // unnameable clause no longer throws away the whole card.
+  "search", "becomes-target", "scry", "surveil", "unlocked",
+  // The same escape hatch VERBS has always had. Its absence was pure asymmetry: the model, told to
+  // pick EXACTLY one member, invented "other" anyway on 9 cards and lost all of them.
+  "other",
   "none"];
 
 export const SYSTEM = `You NORMALIZE Magic: The Gathering rules text. You do not classify, rate, or interpret it.
@@ -106,6 +114,9 @@ Rules:
 - "fight" is two creatures dealing damage equal to their power to each other.
 - "set-life" is a life total being SET to a number ("target opponent's life total becomes 10").
   It is not lose-life or gain-life: how much changes depends on the total it started from.
+- A TriggerEvent of "other" is the same escape hatch for a trigger no event above names ("whenever
+  you choose a Ring-bearer"): use it and put the event verbatim in the trigger's subject. Never
+  force a near-miss event — a wrong event forms false edges with every payoff for the real one.
 - "other" is the deliberate escape hatch: when a clause does something no verb above covers
   (changing maximum hand size, an unusual rules modification), use verb "other" and put the effect
   verbatim in object. Use it rather than forcing a near-miss verb — a wrong verb is consumed as if

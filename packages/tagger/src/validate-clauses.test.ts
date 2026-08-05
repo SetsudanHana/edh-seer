@@ -192,3 +192,30 @@ test("an ordinary triggered clause still must carry its trigger", () => {
   const rec: ClauseRecord[] = [{ id: 1, abilityType: "triggered", actions: [{ verb: "draw" }] }];
   expect(kinds(validateClauses(seg, rec))).toContain("missing-trigger");
 });
+
+test("a trigger event the vocabulary cannot name is answered honestly, not refused", () => {
+  // 16 of 83 refusals on the --refresh-other run were `unknown-trigger-event`, and 9 of those were
+  // the model reaching for "other" -- which VERBS offers and TRIGGERS did not. The asymmetry threw
+  // away the WHOLE card (Sauron, the Dark Lord, Call of the Ring, Magda) over one clause the closed
+  // set genuinely cannot name. `other` forms no edges: it is not in the engine's VERB_VOCAB, so
+  // derivation drops it into unknownTriggers rather than picking a near-miss.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", text: "Whenever you choose a creature as your Ring-bearer, you may pay 2 life." },
+  ];
+  const got: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "other", subject: "Ring-bearer chosen", control: "you" }, actions: [{ verb: "lose-life", amount: "2" }] },
+  ];
+  expect(rejections(validateClauses(segmented, got))).toEqual([]);
+});
+
+test("the real events the corpus named are members, not escapes", () => {
+  // Each was a refusal with a card behind it: Archivist of Oghma (an opponent searching), Unsettled
+  // Mariner (becoming a target), Matoya (scry or surveil), Mirror Room (a Room unlocking). They are
+  // real, repeatable events -- `other` would record them as unnameable, which is a lie the next
+  // vocabulary pass would have to undo.
+  for (const event of ["search", "becomes-target", "scry", "surveil", "unlocked"]) {
+    const segmented: Clause[] = [{ id: 1, kind: "ability", abilityType: "triggered", text: "Whenever ..." }];
+    const got: ClauseRecord[] = [{ id: 1, abilityType: "triggered", trigger: { event, subject: "x", control: "you" }, actions: [{ verb: "draw" }] }];
+    expect(rejections(validateClauses(segmented, got)), event).toEqual([]);
+  }
+});

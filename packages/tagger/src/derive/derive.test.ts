@@ -305,3 +305,16 @@ test("a static clause never proliferates -- it modifies someone else's", () => {
   }]);
   expect(active.abilities[0].effect.kind).toBe("proliferate");
 });
+
+test("the escape-hatch trigger forms no edges", () => {
+  // A guard, not new behaviour: `other` reaches derivation only because TRIGGERS now offers it, and
+  // the whole safety of that addition is that the engine's VERB_VOCAB does not contain it. Adding
+  // "other" there later would silently mesh every card that ever used the hatch with every other.
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "other", subject: "you choose a Ring-bearer" },
+    actions: [{ verb: "draw", object: "you" }],
+  }]);
+  expect(abilities[0].trigger).toBeUndefined();
+  expect(unknownTriggers).toEqual(["other"]);
+});

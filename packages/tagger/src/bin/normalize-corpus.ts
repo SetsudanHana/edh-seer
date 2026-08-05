@@ -51,7 +51,13 @@ const CONCURRENCY = Number(arg("--concurrency") ?? 6);
  *  unchanged by such a change, so nothing re-queues on its own — deliberately. The cards that can
  *  answer differently under a wider vocabulary are exactly those whose stored answer used the
  *  `other` escape hatch, plus the ones that have no doc at all. 340 + 88 of 2,453 is ~$1.50 against
- *  ~$8.50, and whatever still says `other` afterwards is the next punch list. */
+ *  ~$8.50, and whatever still says `other` afterwards is the next punch list.
+ *
+ *  A SEGMENTER fix needs no equivalent selector, which was measured rather than assumed: the cards
+ *  the label-trigger fix reclassifies are precisely the ones the gate had been refusing, so they
+ *  carry no doc and `needsNormalize` already queues them. 0 persisted docs in the calibration corpus
+ *  disagree with the fixed segmenter. If one ever does, it is invisible here — `segmentHash` covers
+ *  the card's inputs, not our code — and a stored-vs-fresh abilityType comparison is the fix. */
 const REFRESH_OTHER = process.argv.includes("--refresh-other");
 
 /** The calibration corpus: 2,544 distinct cards over 71 labelled decks. */
