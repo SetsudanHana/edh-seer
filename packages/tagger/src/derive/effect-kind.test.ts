@@ -34,6 +34,11 @@ test("an action with no home in the closed 29 produces null, never a near miss",
   expect(actionEffectKind({ verb: "destroy" })).toBeNull();
   expect(actionEffectKind({ verb: "fight" })).toBeNull();
   expect(actionEffectKind({ verb: "other", object: "flip a coin" })).toBeNull();
+  // The closed 29 has no counterspell kind. `tax` means a cost increase (Thalia-style), a
+  // different game action from countering a spell outright -- mapping the two together would
+  // falsely mesh counterspells with stax payoffs. Returns null and surfaces via the unclaimed
+  // list instead of a near-miss kind.
+  expect(actionEffectKind({ verb: "counter-spell" })).toBeNull();
 });
 
 test("every kind the table can return is a member of the closed set", async () => {

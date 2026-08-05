@@ -32,7 +32,6 @@ const SIMPLE: Record<string, EffectKind> = {
   "extra-combat": "extra-combat",
   "trigger-again": "trigger-doubling",
   "copy-spell": "copy-spell",
-  "counter-spell": "tax",
   mill: "top-manipulation",
   emblem: "token-generation",
 };
