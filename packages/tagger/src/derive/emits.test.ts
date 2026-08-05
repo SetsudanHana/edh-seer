@@ -22,3 +22,10 @@ test("an action with no event contributes nothing rather than a guess", () => {
   expect(actionEmits({ verb: "other", object: "flip a coin" })).toEqual([]);
   expect(actionEmits({ verb: "none", object: "" })).toEqual([]);
 });
+
+// "life total becomes N" only loses life if the current total is above N — direction depends on
+// state derivation cannot see (17 corpus cards set it upward, e.g. Captive Audience to 4; only
+// Sorin Markov sets an opponent's down). A guessed lose-life here wires the wrong direction.
+test("set-life emits nothing because the direction depends on the current life total", () => {
+  expect(actionEmits({ verb: "set-life", object: "target opponent" })).toEqual([]);
+});

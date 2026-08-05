@@ -16,7 +16,6 @@ const EMITS: Record<string, Verb[]> = {
   mill: ["mill"],
   "gain-life": ["gain-life"],
   "lose-life": ["lose-life"],
-  "set-life": ["lose-life"],
   "deal-damage": ["non-combat-damage"],
   "add-counter": ["counter-added"],
   untap: ["untaps"],
@@ -31,5 +30,5 @@ export function actionEmits(action: Action): GameEvent[] {
   const verbs = EMITS[action.verb ?? ""];
   if (!verbs) return [];
   const subject = parseSubject(action.object ?? "");
-  return verbs.map((verb) => ({ verb, subject }));
+  return verbs.map((verb) => ({ verb, subject: { ...subject } }));
 }
