@@ -33,6 +33,14 @@ async function main(): Promise<void> {
     written++;
   }
   console.log(`dumped ${picked.length} cards into ${written} batch file(s) at ${outDir} (preamble.txt written).`);
+  // Free to dump; the spend happens in tag-batch-api, which refuses without ALLOW_DEPRECATED_GRIND.
+  // Say so here, because this is where the stale count first looks alarming and invites a re-grind.
+  if (picked.length) {
+    console.log(
+      `NOTE: these batches feed the DEPRECATED flat extractor (43/43/13 correct/partial/wrong, ` +
+      `30% reproducible). tag-batch-api will refuse to spend without ALLOW_DEPRECATED_GRIND=1.`,
+    );
+  }
   if (picked.length) console.log(`next edhrecRank window starts at ${picked[0].edhrecRank ?? "unranked"}.`);
   await store.close();
 }
