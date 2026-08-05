@@ -15,6 +15,7 @@ import { join } from "node:path";
 import { connect, loadConfig } from "@mtg/data";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
+import { canonicalize, type ClauseRecord } from "../canonicalize.js";
 import { segment, type Clause } from "../segment.js";
 
 const OUT = process.argv[2] ?? "/tmp/normalize-exp";
@@ -174,7 +175,12 @@ for (const run of ["run1", "run2"]) {
         { role: "user", content: `Card: ${p.name}\nClauses:\n${listed}` },
       ]);
       const got = JSON.parse(raw) as { clauses?: unknown[] };
-      parsed = { clauses: [...(got.clauses ?? []), ...synthesized].sort((a, b) => (a as { id: number }).id - (b as { id: number }).id) };
+      const clauses = [...(got.clauses ?? []), ...synthesized]
+        .sort((a, b) => (a as { id: number }).id - (b as { id: number }).id) as ClauseRecord[];
+      // Both forms are written: `clauses` is what the model said, so scoring stays honest and
+      // comparable with earlier runs, and `canonical` is what the derivation layer consumes — one
+      // encoding per fact, settled in code rather than argued over by two runs.
+      parsed = { clauses, canonical: canonicalize(clauses) };
     } catch (e) { parsed = { ERROR: (e as Error).message.slice(0, 200) }; }
     results.push({ name: p.name, clauses: p.clauses, output: parsed });
     process.stdout.write(".");
