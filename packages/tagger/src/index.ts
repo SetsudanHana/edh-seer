@@ -10,3 +10,5 @@ export {
   type SlugSemantics,
 } from "./otags/semantics.js";
 export { loadFunctionalOtags, loadDescriptorOtags } from "./otags/functional.js";
+export { deriveAbilities, deriveCardTags, type DeriveInput } from "./derive/derive.js";
+export { canonicalize, canonicalClause, type Action, type ClauseRecord } from "./canonicalize.js";

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { selectUntagged, renderPreamble, cardTagsFromRawAbilities, missingOracleIds, coverageReport, sample } from "./corpus-core.js";
+import { selectUntagged, renderPreamble, cardTagsFromRawAbilities, missingOracleIds, coverageReport, sample, expectsAbilities } from "./corpus-core.js";
 import type { CardDoc } from "@mtg/data";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";
@@ -93,4 +93,36 @@ test("sample returns k distinct items and is deterministic under a fixed rng", (
 
 test("sample caps at the array length", () => {
   expect(sample([1, 2], 5, Math.random)).toHaveLength(2);
+});
+
+test("expectsAbilities: a card whose text is only keywords legitimately tags as []", () => {
+  expect(expectsAbilities({ oracleText: "Flying, vigilance", keywords: ["Flying", "Vigilance"] } as never)).toBe(false);
+  expect(expectsAbilities({ oracleText: "", keywords: [] } as never)).toBe(false);
+  // Reminder text in parentheses is not an ability either.
+  expect(expectsAbilities({ oracleText: "Trample (This creature can deal excess damage.)", keywords: ["Trample"] } as never)).toBe(false);
+});
+
+test("expectsAbilities: real rules text means an empty tag is a hole, not a vanilla card", () => {
+  // These four all shipped with zero abilities and were invisible to the whole structured engine.
+  expect(expectsAbilities({ oracleText: "This spell can't be countered.\nDestroy all creatures.", keywords: [] } as never)).toBe(true);
+  expect(expectsAbilities({ oracleText: "Destroy target creature or planeswalker.", keywords: [] } as never)).toBe(true);
+  expect(expectsAbilities({ oracleText: "At the beginning of your upkeep, you lose 1 life and create a 1/1 black Faerie Rogue creature token with flying.", keywords: [] } as never)).toBe(true);
+  // Keyword PLUS real text still expects abilities.
+  expect(expectsAbilities({ oracleText: "Flying\nWhenever this creature attacks, draw a card.", keywords: ["Flying"] } as never)).toBe(true);
+});
+
+test("expectsAbilities: keywords that take arguments are still keyword-only", () => {
+  // Baneslayer Angel is french-vanilla; requiring the part to EQUAL the keyword mis-read it as a
+  // hole, and this predicate gates upsert-batch.
+  expect(expectsAbilities({
+    oracleText: "Flying, first strike, lifelink, protection from Demons and from Dragons",
+    keywords: ["Flying", "First strike", "Lifelink", "Protection"],
+  } as never)).toBe(false);
+  expect(expectsAbilities({ oracleText: "Ward {2}", keywords: ["Ward"] } as never)).toBe(false);
+  expect(expectsAbilities({ oracleText: "Hexproof from black", keywords: ["Hexproof"] } as never)).toBe(false);
+  // Still true when a real ability rides along with the keywords.
+  expect(expectsAbilities({
+    oracleText: "Flying, protection from red\nWhenever this creature attacks, draw a card.",
+    keywords: ["Flying", "Protection"],
+  } as never)).toBe(true);
 });

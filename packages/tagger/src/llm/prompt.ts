@@ -2,7 +2,7 @@ import type { Card } from "@mtg/engine";
 import { EFFECT_KINDS, SCALING_BASES, VERB_VOCAB } from "../schema.js";
 import type { ChatMessage } from "./provider.js";
 
-export const PROMPT_VERSION = 23;
+export const PROMPT_VERSION = 24;
 
 export { EFFECT_KINDS };
 export { SCALING_BASES };
@@ -62,6 +62,19 @@ RULES:
   kind:"activated".
 - For a trigger about the card ITSELF ("When ~ enters", "When ~ dies"), leave the subject's
   type/subtype UNSET (just control:"you"); do NOT fill in the card's own printed types.
+- TIMING TRIGGERS have their own verbs — never substitute "enters" or "attacks" for them:
+  "at the beginning of your upkeep" -> verbs:["upkeep"];
+  "at the beginning of combat on your turn" -> verbs:["begin-combat"];
+  "at the beginning of your/the end step", "at end of turn" -> verbs:["end-step"].
+  These fire on a PHASE, not on a permanent entering or attacking. Tagging Bitterblossom's or
+  Nut Collector's upkeep trigger as "enters" makes it read as a one-shot enter-the-battlefield
+  effect and wrongly links it to every ETB payoff in the deck. A phase trigger has
+  subject { control: "you" } unless the card names someone else ("at the beginning of EACH
+  upkeep" -> control:"any"). The ability's emits are unaffected — an upkeep token-maker still
+  emits create-token AND enters, which is what token payoffs consume.
+- Any other timing wording that is not one of those three, and not a real game event ("when this
+  is turned face up", "when you cycle this card"), is still kind:"triggered"; pick the closest
+  verb only if it genuinely describes the event, otherwise model just the effect and emits.
 - Ignore evergreen keywords (flying, trample, vigilance, haste, first strike, indestructible,
   ward, "can't block"), reminder text in (parentheses), and mana costs. Tag ONLY abilities with
   a synergy-relevant effect; a card whose only text is keywords/vanilla has abilities: [].
@@ -118,6 +131,21 @@ INVARIANT — emits:
 - "speed-increase" is the "Start your engines!" speed mechanic; its speed rises when an
   opponent loses life, so model it as a trigger on { verb: "lose-life", control: "opp" }.
 - Effects whose verb no trigger consumes (pumps, cost reduction, taxes) need no emits.
+- NEVER emit an event the card does not actually cause. An emit is consumed by other cards as if
+  it really happened, so a wrong one invents synergy that does not exist. Three that recur:
+  * WHERE the card goes decides "enters". Searching a library and putting a card into your HAND
+    (tutors, "search your library for a land card ... put it into your hand") emits NOTHING —
+    no permanent entered. Only "put it onto the battlefield" (Cultivate's second land, fetchlands,
+    Nature's Lore) emits { verb: "enters" }. Kura, the Boundless Sky searches lands to HAND and
+    must not emit "enters"; a fetchland must.
+  * DESTROYING or EXILING a permanent is not sacrificing it. "Destroy target creature", "exile
+    target permanent", a board wipe — these emit "dies" for a destroyed CREATURE and nothing else.
+    Emit "sacrifice" ONLY when the card says sacrifice, because sacrifice-matters payoffs
+    (aristocrats) trigger on it and a destroy effect never triggers them.
+  * "counter-added" is for counters a counter-matters payoff cares about — +1/+1, -1/-1, charge,
+    and the like — with subject.counter set. Loyalty counters on a planeswalker, rad counters, and
+    a Class's level counters are NOT those: set subject.counter to the actual counter name, and if
+    the card is only putting loyalty on a planeswalker, emit nothing.
 - Proliferate: a card that proliferates is a SOURCE — use effect.kind "proliferate" and emit { "verb": "proliferate", "subject": { "control": "you", "token": null } }; do NOT emit counter-added for it. A card that cares about proliferating (e.g. "if you would proliferate, proliferate twice", "whenever you proliferate ...") is a PAYOFF — give it a trigger { "verbs": ["proliferate"], "subject": { "control": "you", "token": null } } and its own effect.`;
 
 /** One card presented to the model as the user turn. */

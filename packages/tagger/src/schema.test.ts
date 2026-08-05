@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
-import { VERB_VOCAB, SCHEMA_VERSION, SCALING_BASES, SCALING_ALIASES, EFFECT_KINDS } from "./schema.js";
+import { VERB_VOCAB, VERB_ALIASES, SCHEMA_VERSION, SCALING_BASES, SCALING_ALIASES, EFFECT_KINDS } from "./schema.js";
 
 test("VERB_VOCAB is a closed, unique verb list", () => {
-  expect(VERB_VOCAB).toHaveLength(20);
+  expect(VERB_VOCAB).toHaveLength(23);
   expect(VERB_VOCAB).toContain("enters");
   expect(VERB_VOCAB).toContain("create-token");
   expect(VERB_VOCAB).toContain("land-play");
@@ -36,4 +36,19 @@ test("graveyard hate and extra combat are expressible", () => {
   // Karlach grants an additional combat phase: surplus attack events, the same shape as a
   // fetchland's surplus land-ETB.
   expect(EFFECT_KINDS).toContain("extra-combat");
+});
+
+test("phase/step triggers have their own verbs", () => {
+  // Without these the vocabulary had nowhere to put "at the beginning of your upkeep", so a
+  // 46-card audit found Nut Collector, Sen Triplets and Crystalline Giant all tagged `enters` —
+  // which forms false edges with every ETB payoff in the deck.
+  expect(VERB_VOCAB).toContain("upkeep");
+  expect(VERB_VOCAB).toContain("begin-combat");
+  expect(VERB_VOCAB).toContain("end-step");
+});
+
+test("common phase-trigger spellings alias onto the canonical verbs", () => {
+  expect(VERB_ALIASES["beginning-of-upkeep"]).toBe("upkeep");
+  expect(VERB_ALIASES["beginning-of-combat"]).toBe("begin-combat");
+  expect(VERB_ALIASES["end-of-turn"]).toBe("end-step");
 });
