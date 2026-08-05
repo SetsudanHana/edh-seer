@@ -59,6 +59,41 @@ test("umbrella nouns (spell, permanent) yield to a concrete type once one is nam
   expect(parseSubject("target spell").type).toBe("spell");
 });
 
+test("a subtype is recovered from the object text, singular and plural", () => {
+  // Without this a kindred anthem names nothing edges.ts can match: `namesItsTargets` requires a
+  // type OR a subtype, so "Zombies you control get +1/+1" derived a subjectless static effect and
+  // formed no edge at all.
+  expect(parseSubject("Zombies you control").subtype).toBe("zombie");
+  expect(parseSubject("target Goblin").subtype).toBe("goblin");
+  // Irregular plurals the vocabulary spells differently from the text.
+  expect(parseSubject("Elves you control").subtype).toBe("elf");
+  expect(parseSubject("Allies you control").subtype).toBe("ally");
+  // A subtype narrows a type; both survive.
+  const both = parseSubject("other Zombie creatures you control");
+  expect(both.type).toBe("creature");
+  expect(both.subtype).toBe("zombie");
+  // Two subtypes are an OR, the same encoding `type` already uses.
+  expect(parseSubject("Sliver and Zombie creatures you control").subtype).toEqual(["sliver", "zombie"]);
+});
+
+test("a plural subtype alone makes the effect a mass one, so a kindred anthem is an anthem", () => {
+  // parseScope only saw plural CARD TYPES, so "Zombies you control" left scope unset and
+  // namesItsTargets rejected it even once the subtype was recovered.
+  expect(parseSubject("Zombies you control").scope).toBe("all");
+  // A bare singular subtype still says nothing about scope.
+  expect(parseSubject("target Goblin").scope).toBe("target");
+  expect(parseSubject("a Goblin").scope).toBeUndefined();
+});
+
+test("ordinary nouns in object text are not mistaken for subtypes", () => {
+  // The vocabulary is closed, so the guard is that nothing outside it matches -- these are the
+  // words that actually appear in object text.
+  for (const t of ["three counters from among artifacts you control", "cards in your hand",
+    "target creature", "each opponent", "a token you control", "all nonland permanents"]) {
+    expect(parseSubject(t).subtype, t).toBeUndefined();
+  }
+});
+
 test("numeric conditions written in the object text survive as StatPredicates", () => {
   // Without this the compass's power-matters category cannot tell Welcoming Vampire's gated
   // trigger from any unconditional ETB payoff -- the linking tag is identical.

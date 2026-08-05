@@ -259,6 +259,17 @@ test("the four vocabulary gaps the planeswalker audit found are now derived", ()
     .toEqual(["draw=7"]);
 });
 
+test("proliferate is a verb, not free text in `object`", () => {
+  // Thrummingbird's only real clause came back as verb "other", object "proliferate", which
+  // actionEffectKind and actionEmits both ignore — so the card derived ZERO abilities and read as a
+  // vanilla bear, the exact failure this layer exists to prevent.
+  expect(effectActions("Whenever this creature deals damage to a player, proliferate."))
+    .toEqual(["proliferate"]);
+  // A REPLACEMENT effect states no proliferate of its own. Tekuthal doubles someone else's, and
+  // claiming the verb here would emit a `proliferate` event the card never produces.
+  expect(effectActions("If you would proliferate, proliferate twice instead.")).toEqual([]);
+});
+
 test("amounts survive as digits however the card spells them", () => {
   expect(effectActions("Draw a card.")).toEqual(["draw=1"]);
   expect(effectActions("Sarkhan deals 3 damage to any target.")).toEqual(["deal-damage=3"]);
