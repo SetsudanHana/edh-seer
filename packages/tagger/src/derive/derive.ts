@@ -15,7 +15,7 @@ import { parseSubject } from "./subject.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 5;
+export const DERIVE_VERSION = 6;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -99,6 +99,26 @@ function drainAbility(clause: ClauseRecord, kind: AbilityKind, trigger: Ability[
   return ability;
 }
 
+/** Does this TRIGGER subject name the card itself? "When THIS creature enters" watches one
+ *  permanent -- its own -- while "whenever another creature you control enters" watches the deck,
+ *  and `parseSubject` reduces both to {type: creature}. The clause text is the only place the
+ *  difference survives, so it is recovered here.
+ *
+ *  A subject mentioning "another" or "other" is NOT self even when it opens with a self-reference:
+ *  Zulaport Cutthroat's "this creature or another creature you control" is a real aristocrats
+ *  payoff, and marking it self would delete the edge this engine most wants to find. */
+function isSelfSubject(text: string, cardName?: string): boolean {
+  const t = text.trim().toLowerCase();
+  if (t === "") return false;
+  if (/\banother\b|\bother\b/.test(t)) return false;
+  if (SELF_REFERENCE.test(t)) return true;
+  if (!cardName) return false;
+  const name = cardName.toLowerCase();
+  // The model names the card either in full ("Urza, Lord High Artificer") or by the short name a
+  // card's own text uses ("Urza"), which is everything before the first comma or face divider.
+  return t === name || t === name.split(/[,/]/)[0].trim();
+}
+
 /** The card talking about itself. Anchored at the start, because a self-reference anywhere else is
  *  part of a larger subject ("creatures other than this one"), and confined to the noun so the rest
  *  of the sentence cannot leak in. */
@@ -153,6 +173,7 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
 
 export function deriveAbilities(
   clauses: ClauseRecord[],
+  cardName?: string,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -167,6 +188,7 @@ export function deriveAbilities(
         const subject = parseSubject(clause.trigger.subject ?? "");
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
+        if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
         trigger = { verbs: [verb], subject };
       } else {
         unknownTriggers.push(clause.trigger.event);
@@ -207,6 +229,9 @@ export function deriveAbilities(
 
 export interface DeriveInput {
   oracleId: string;
+  /** The card's own name, so a trigger naming itself ("Urza, Lord High Artificer") is recognised
+   *  as self-referential rather than read as a subject the deck can supply. */
+  name?: string;
   clauses: ClauseRecord[];
   characteristics: Characteristics;
 }
@@ -214,7 +239,7 @@ export interface DeriveInput {
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
  *  from the card document -- derivation never asks a model for what the database already knows. */
 export function deriveCardTags(input: DeriveInput): CardTags {
-  const { abilities } = deriveAbilities(input.clauses);
+  const { abilities } = deriveAbilities(input.clauses, input.name);
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,

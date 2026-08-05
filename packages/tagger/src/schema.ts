@@ -23,6 +23,12 @@ export interface SubjectFilter {
   /** A subtype, or an array meaning OR (e.g. ["faerie","wizard"]). */
   subtype?: string | string[];
   colors?: string[];
+  /** The subject IS the card whose ability this is ("when THIS creature enters", or the card named
+   *  by its own name). Set by derivation from the clause text, which is the only layer that can see
+   *  it: parseSubject reduces "this creature" and "another creature you control" to the same
+   *  {type: creature}, so without this the matcher cannot tell a self-ETB from a real payoff -- the
+   *  defect behind 74% of the false edges in the 2026-08-05 precision measurement. */
+  self?: true;
   control: Control;
   /** false = nontoken only, true = token only, null = any. */
   token: boolean | null;

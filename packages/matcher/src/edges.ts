@@ -127,6 +127,26 @@ export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): bo
   return !combatConsumerNarrows(consumer.subject);
 }
 
+/** A consumer trigger that watches the card ITSELF entering, against a producer event that is only
+ *  the producer being a permanent that entered. Sol Ring entering does not trigger "when Urza
+ *  enters", and before this gate every land, rock and creature in the deck was credited with
+ *  supplying every self-ETB in it -- 74% of all false edges in the 2026-08-05 precision
+ *  measurement, in both tag populations.
+ *
+ *  Scoped to IMPLIED producer events, exactly like `combatSelfSupplied`, and for the same reason:
+ *  an AUTHORED enters emit is a card that actually puts something onto the battlefield, and a blink
+ *  or a reanimation genuinely does make the consumer re-enter and fire its own ETB. Dropping
+ *  self-triggers outright would delete those real edges along with the false ones. */
+export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
+  if (consumer.verb !== "enters") return false;
+  // Only the GRAVEYARD variant is excluded (it has its own matcher). `normalizeZoneEvent` stamps
+  // zone "battlefield" on every enters event, so testing for an unset zone here would exclude
+  // everything and make the gate dead code.
+  if (consumer.subject.zone === "graveyard") return false;
+  if (!producer.implied) return false;
+  return consumer.subject.self === true;
+}
+
 /** The verbs `combatSelfSupplied` governs -- the ones a creature performs for free. Exported so the
  *  census can ask "is this row one of the ones that gate applies to" without restating the list. */
 export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-damage"]);
@@ -139,6 +159,7 @@ export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-dam
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
   if (producer.verb !== consumer.verb) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
+  if (selfEtbSelfSupplied(producer, consumer)) return false;
   if (producer.verb === "enters" && producer.subject.zone === "graveyard") {
     return graveyardFillMatches(producer.subject, consumer.subject, h);
   }

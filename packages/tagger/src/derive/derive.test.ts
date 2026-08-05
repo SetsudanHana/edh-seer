@@ -347,3 +347,43 @@ test("a real lord still names its targets", () => {
   // deck where every card is yours -- noted rather than fixed under a mesh change.
   expect(abilities[0].effect.subject).toMatchObject({ type: "artifact" });
 });
+
+test("a trigger that watches the card ITSELF is marked, and one that watches others is not", () => {
+  // The defect behind 74% of all false edges in the 2026-08-05 precision measurement. At the clause
+  // layer the distinction is plain -- Gray Merchant says "this creature", Agate Instigator says
+  // "another creature you control" -- but parseSubject reduced BOTH to {type: creature}, so the
+  // matcher could not tell a self-ETB from a real other-creature payoff and credited every land and
+  // rock in the deck with supplying it.
+  const selfEtb = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "this creature", control: "you" },
+    actions: [{ verb: "lose-life", object: "each opponent" }],
+  }]);
+  expect(selfEtb.abilities[0].trigger?.subject.self).toBe(true);
+
+  const others = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "another creature you control", control: "you" },
+    actions: [{ verb: "deal-damage", object: "each opponent" }],
+  }]);
+  expect(others.abilities[0].trigger?.subject.self).toBeUndefined();
+
+  // "a creature" watches any creature, including other players'. Not self.
+  const any = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "a creature", control: "any" },
+    actions: [{ verb: "lose-life", object: "you" }],
+  }]);
+  expect(any.abilities[0].trigger?.subject.self).toBeUndefined();
+});
+
+test("a trigger naming the card by its own name is self too", () => {
+  // Urza's clause says subject "Urza, Lord High Artificer" -- the model names the card rather than
+  // saying "this creature", and that is just as self-referential.
+  const byName = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "Urza, Lord High Artificer", control: "you" },
+    actions: [{ verb: "create", object: "a Construct token" }],
+  }], "Urza, Lord High Artificer");
+  expect(byName.abilities[0].trigger?.subject.self).toBe(true);
+});

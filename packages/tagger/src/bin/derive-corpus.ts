@@ -37,6 +37,7 @@ for (const doc of clauseDocs) {
   // which is the opposite of what a free rebuild is for.
   const tags = deriveCardTags({
     oracleId: doc.oracleId,
+    name: doc.name,
     clauses: doc.canonical,
     characteristics: charsFrom(cards as never),
   });

@@ -782,3 +782,49 @@ test("a static effect is a theme tag even when we cannot say WHO it applies to",
   };
   expect(cardThemeTags(tags as never).has("static:speed-increase")).toBe(true);
 });
+
+test("a bare self-ETB payoff is not supplied by another permanent merely entering", () => {
+  // 74% of all false edges in the 2026-08-05 precision measurement were this: "When Urza enters,
+  // create a Construct" watches ITSELF entering, and every land, rock and creature in the deck was
+  // credited with supplying it. Sol Ring entering does not trigger Urza.
+  //
+  // The gate is the same shape as combatSelfSupplied: it fires only on IMPLIED producer events --
+  // the card merely being a permanent that enters -- so an authored emit still forms edges.
+  const rock = base("Sol Ring", []);
+  const selfEtb = base("Urza", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature", self: true } },
+    effect: { kind: "token-generation" },
+  }]);
+  expect(directedReasons(rock, selfEtb, H).filter((r) => r.tag.startsWith("enters"))).toEqual([]);
+});
+
+test("a blink effect DOES supply a bare self-ETB payoff", () => {
+  // The other half, and why the gate must not simply drop self-ETB triggers: Blur exiles and
+  // returns a creature, so it genuinely makes that permanent re-enter and fire its own ETB. The
+  // emit is authored rather than implied, so the edge survives.
+  const blink = base("Blur", [{
+    kind: "on-cast",
+    effect: { kind: "blink" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: false } }],
+  }]);
+  const selfEtb = base("Watcher for Tomorrow", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature", self: true } },
+    effect: { kind: "tutor" },
+  }]);
+  expect(directedReasons(blink, selfEtb, H).some((r) => r.tag.startsWith("enters"))).toBe(true);
+});
+
+test("a TYPED enters trigger is untouched by the gate", () => {
+  // "Whenever another creature you control enters" genuinely watches other permanents, so an
+  // implied entry is real supply. The gate must not widen to these or it deletes the engine's
+  // best edges.
+  const creature = base("Llanowar Elves", []);
+  const typedPayoff = base("Agate Instigator", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "non-combat-damage" },
+  }]);
+  expect(directedReasons(creature, typedPayoff, H).some((r) => r.tag.startsWith("enters"))).toBe(true);
+});
