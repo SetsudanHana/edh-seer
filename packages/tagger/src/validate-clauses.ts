@@ -69,8 +69,10 @@ function hasTrigger(r: ClauseRecord): boolean {
   return Boolean(r.trigger && r.trigger.event && r.trigger.event !== "none");
 }
 
-const violation = (clauseId: number, kind: ViolationKind, detail: string): ClauseViolation => ({
-  clauseId, kind, severity: WARN_ONLY.has(kind) ? "warn" : "reject", detail,
+const violation = (
+  clauseId: number, kind: ViolationKind, detail: string, severity?: ClauseViolation["severity"],
+): ClauseViolation => ({
+  clauseId, kind, severity: severity ?? (WARN_ONLY.has(kind) ? "warn" : "reject"), detail,
 });
 
 export function validateClauses(segmented: Clause[], got: ClauseRecord[]): ClauseViolation[] {
@@ -99,8 +101,8 @@ export function validateClauses(segmented: Clause[], got: ClauseRecord[]): Claus
 
 function validateOne(clause: Clause, rec: ClauseRecord): ClauseViolation[] {
   const out: ClauseViolation[] = [];
-  const at = (kind: ViolationKind, detail: string): void => {
-    out.push(violation(clause.id, kind, detail));
+  const at = (kind: ViolationKind, detail: string, severity?: ClauseViolation["severity"]): void => {
+    out.push(violation(clause.id, kind, detail, severity));
   };
 
   // `abilityType` is copied, never re-decided (normalize-prompt.ts). Only checked where the
@@ -112,7 +114,20 @@ function validateOne(clause: Clause, rec: ClauseRecord): ClauseViolation[] {
   const triggered = clause.abilityType === "triggered";
   if (triggered && !hasTrigger(rec)) at("missing-trigger", "triggered clause carries no trigger event");
   if (!triggered && hasTrigger(rec)) {
-    at("unexpected-trigger", `trigger "${rec.trigger!.event}" on a ${clause.abilityType ?? "non-triggered"} clause`);
+    // A stray trigger on a SPELL clause is usually a DELAYED trigger the vocabulary cannot express:
+    // Eerie Interlude is an instant that returns the exiled creatures "at the beginning of the next
+    // end step", and the model keeps recording that timing because it is real. `end-step` is a legal
+    // verb, so nothing false is asserted -- the card genuinely acts then. Refusing it cost two paid
+    // retries and blocked the fixture, so it warns.
+    //
+    // On a STATIC clause it stays a reject: that is the wildcard-mesh shape this layer keeps
+    // finding, where an ability acquires an event it does not actually watch.
+    const delayed = clause.abilityType === "spell";
+    at(
+      "unexpected-trigger",
+      `trigger "${rec.trigger!.event}" on a ${clause.abilityType ?? "non-triggered"} clause`,
+      delayed ? "warn" : "reject",
+    );
   }
   if (rec.trigger?.event && !TRIGGER_SET.has(rec.trigger.event)) {
     at("unknown-trigger-event", `"${rec.trigger.event}" is not in TRIGGERS`);

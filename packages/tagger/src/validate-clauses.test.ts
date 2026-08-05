@@ -133,3 +133,19 @@ test("violations name the clause they came from, so a reject is debuggable", () 
   expect(v[0].clauseId).toBe(2);
   expect(v[0].detail).toContain("nonsense");
 });
+
+test("a stray trigger warns on a spell clause but rejects on a static one", () => {
+  // Eerie Interlude: an instant whose creatures return "at the beginning of the next end step".
+  // That delayed timing is real and `end-step` is a legal verb, so refusing it just burned two paid
+  // retries and blocked a fixture build.
+  const spellSeg: Clause[] = [{ id: 1, kind: "ability", abilityType: "spell", text: "Exile any number of target creatures you control." }];
+  const spellRec: ClauseRecord[] = [{ id: 1, abilityType: "spell", trigger: { event: "end-step" }, actions: [{ verb: "exile" }] }];
+  const v = validateClauses(spellSeg, spellRec);
+  expect(kinds(v)).toContain("unexpected-trigger");
+  expect(rejections(v)).toEqual([]);
+
+  // On a static clause the same shape is the wildcard mesh, and stays fatal.
+  const staticSeg: Clause[] = [{ id: 1, kind: "ability", abilityType: "static", text: "Creatures you control get +1/+1." }];
+  const staticRec: ClauseRecord[] = [{ id: 1, abilityType: "static", trigger: { event: "end-step" }, actions: [{ verb: "modify-pt" }] }];
+  expect(rejections(validateClauses(staticSeg, staticRec))).toHaveLength(1);
+});
