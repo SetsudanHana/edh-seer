@@ -4,11 +4,12 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
   "add-mana", "add-counter", "remove-counter", "grant-ability", "modify-pt", "prevent", "cast",
   "play", "shuffle", "reveal", "attach", "transform", "trigger-again", "extra-turn", "extra-combat",
-  "animate", "cant", "emblem", "fight", "set-life", "other", "none"];
+  "animate", "cant", "emblem", "fight", "set-life", "proliferate", "other", "none"];
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
 export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps", "untaps", "cast",
   "upkeep", "begin-combat", "end-step", "draw-step", "main-phase", "combat-damage-step", "damage-dealt", "life-gained", "life-lost",
   "counter-added", "sacrificed", "discarded", "milled", "turned-face-up", "level-up", "chapter",
+  "proliferate",
   "none"];
 
 export const SYSTEM = `You NORMALIZE Magic: The Gathering rules text. You do not classify, rate, or interpret it.

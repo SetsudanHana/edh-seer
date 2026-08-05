@@ -230,3 +230,62 @@ test("the trigger's own control field wins over whatever the object text repeats
   }]).abilities;
   expect(opp[0]?.trigger?.subject.control).toBe("opp");
 });
+
+test("proliferate derives on both sides of the vocabulary bridge", () => {
+  // Source: Thrummingbird. `proliferate` had no clause verb, so this arrived as verb "other" and
+  // the card derived nothing at all. effect-kind.ts and emits.ts both already carried a
+  // proliferate row that could never fire.
+  const source = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "damage-dealt", subject: "this creature", control: "you" },
+    actions: [{ verb: "proliferate", object: "" }],
+  }]);
+  expect(source.abilities).toHaveLength(1);
+  expect(source.abilities[0].effect.kind).toBe("proliferate");
+  expect(source.abilities[0].emits?.map((e) => e.verb)).toEqual(["proliferate"]);
+  expect(source.unclaimed).toEqual([]);
+
+  // Payoff: "whenever you proliferate". TRIGGERS had no member for it either, so the payoff side
+  // could not name the event its own source side now emits.
+  const payoff = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "proliferate", subject: "you", control: "you" },
+    actions: [{ verb: "draw", object: "a card" }],
+  }]);
+  expect(payoff.unknownTriggers).toEqual([]);
+  expect(payoff.abilities[0].trigger?.verbs).toEqual(["proliferate"]);
+});
+
+test("a kindred anthem names its targets, so it survives the static-subject guard", () => {
+  // "Zombies you control get +1/+1": namesItsTargets checks subject.subtype, which parseSubject
+  // never set, so the whole subject was dropped and no edge formed against any Zombie.
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "static",
+    actions: [{ verb: "modify-pt", object: "Zombies you control" }],
+  }]);
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0].effect.kind).toBe("pump");
+  expect(abilities[0].effect.subject).toEqual({
+    control: "you", token: null, subtype: "zombie", scope: "all",
+  });
+});
+
+test("a static clause never proliferates -- it modifies someone else's", () => {
+  // Tekuthal: "If you would proliferate, proliferate twice instead." Giving `proliferate` a clause
+  // verb made the normalizer reach for it here too, and emitting the event would claim Tekuthal
+  // proliferates when it only doubles what another card does. Unclaimed rather than dropped, so the
+  // action stays visible.
+  const { abilities, unclaimed } = deriveAbilities([{
+    id: 1, abilityType: "static", actions: [{ verb: "proliferate", object: "any" }],
+  }]);
+  expect(abilities).toEqual([]);
+  expect(unclaimed).toHaveLength(1);
+  // The guard is about the clause kind, not the verb: an activated or triggered proliferate stands.
+  const active = deriveAbilities([{
+    id: 1, abilityType: "activated", actions: [{ verb: "proliferate", object: "" }],
+  }]);
+  expect(active.abilities[0].effect.kind).toBe("proliferate");
+});

@@ -108,6 +108,11 @@ const EFFECT_ACTIONS: [RegExp, string, number?][] = [
   // "Target opponent's life total becomes 10" (Sorin Markov) is not lose-life — the amount lost
   // depends on their current total — but it is not `other` either.
   [new RegExp(`\\blife total becomes\\s+(${COUNT})\\b`, "i"), "set-life", 1],
+  // Proliferate is a keyword action with no other verb in it, so without a row of its own it came
+  // back as `other` and the card derived nothing — Thrummingbird read as a vanilla bear. The
+  // lookahead keeps a REPLACEMENT effect out: Tekuthal's "if you would proliferate, proliferate
+  // twice instead" doubles someone else's proliferate and produces none of its own.
+  [/\bproliferate\b(?![^.]*\binstead\b)/i, "proliferate"],
   [new RegExp(`\\bcreates?\\s+(${COUNT})\\b`, "i"), "create", 1],
   [/\bshuffles?\b/i, "shuffle"],
   [/\btakes? an extra turn\b/i, "extra-turn"],

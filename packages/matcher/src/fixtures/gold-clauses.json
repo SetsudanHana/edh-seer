@@ -75,10 +75,10 @@
      {
       "verb": "modify-pt",
       "object": "enchanted creature",
-      "fromZone": null,
-      "toZone": null,
       "amount": "+2/+2 for each other enchantment on the battlefield",
-      "optional": false
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
      }
     ]
    }
@@ -140,7 +140,7 @@
      },
      {
       "verb": "attach",
-      "object": "this Aura",
+      "object": "this Aura to returned creature",
       "fromZone": null,
       "toZone": null,
       "amount": null,
@@ -159,7 +159,7 @@
     "actions": [
      {
       "verb": "sacrifice",
-      "object": "that creature",
+      "object": "enchanted creature",
       "fromZone": null,
       "toZone": null,
       "amount": null,
@@ -260,7 +260,7 @@
     "abilityType": "triggered",
     "trigger": {
      "event": "leaves",
-     "subject": "one or more cards",
+     "subject": "cards",
      "control": "you"
     },
     "actions": [
@@ -447,7 +447,7 @@
     "abilityType": "triggered",
     "trigger": {
      "event": "cast",
-     "subject": "a spell",
+     "subject": "you cast a spell",
      "control": "you"
     },
     "actions": [
@@ -493,7 +493,7 @@
     "abilityType": "triggered",
     "trigger": {
      "event": "dies",
-     "subject": "this creature or another creature or planeswalker you control",
+     "subject": "creature or planeswalker you control",
      "control": "you"
     },
     "actions": [
@@ -588,15 +588,10 @@
    {
     "id": 1,
     "abilityType": "spell",
-    "trigger": {
-     "event": "end-step",
-     "subject": "next end step",
-     "control": "you"
-    },
     "actions": [
      {
       "verb": "exile",
-      "object": "any number of target creatures you control",
+      "object": "target creatures you control",
       "fromZone": "battlefield",
       "toZone": "exile",
       "amount": null,
@@ -840,17 +835,18 @@
      {
       "verb": "modify-pt",
       "object": "enchanted creature",
-      "amount": "+1/+1 for each enchantment you control",
-      "optional": false,
       "fromZone": null,
-      "toZone": null
+      "toZone": null,
+      "amount": "+1/+1 for each enchantment you control",
+      "optional": false
      },
      {
       "verb": "grant-ability",
-      "object": "enchanted creature",
-      "optional": false,
+      "object": "enchanted creature, first strike",
       "fromZone": null,
-      "toZone": null
+      "toZone": null,
+      "amount": null,
+      "optional": false
      }
     ]
    }
@@ -930,18 +926,18 @@
      {
       "verb": "draw",
       "object": "card",
-      "fromZone": null,
-      "toZone": null,
       "amount": "2",
-      "optional": false
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
      },
      {
       "verb": "discard",
       "object": "card",
-      "fromZone": null,
-      "toZone": null,
       "amount": "2",
-      "optional": false
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
      }
     ]
    },
@@ -988,7 +984,7 @@
     "actions": [
      {
       "verb": "draw",
-      "object": "cards",
+      "object": "card",
       "amount": "2",
       "optional": false,
       "fromZone": null,
@@ -996,7 +992,7 @@
      },
      {
       "verb": "discard",
-      "object": "cards",
+      "object": "card",
       "amount": "2",
       "optional": false,
       "fromZone": null,
@@ -1084,7 +1080,7 @@
     "abilityType": "triggered",
     "trigger": {
      "event": "upkeep",
-     "subject": "you",
+     "subject": "your",
      "control": "you"
     },
     "actions": [
@@ -1098,7 +1094,7 @@
      },
      {
       "verb": "other",
-      "object": "if there are three or more creature cards in your graveyard, this creature becomes prepared",
+      "object": "this creature becomes prepared",
       "fromZone": null,
       "toZone": null,
       "amount": null,
@@ -1190,7 +1186,7 @@
       "object": "you",
       "fromZone": null,
       "toZone": null,
-      "amount": "X",
+      "amount": "life lost this way",
       "optional": false
      }
     ]
@@ -1225,7 +1221,7 @@
     "abilityType": "triggered",
     "trigger": {
      "event": "cast",
-     "subject": "you",
+     "subject": "you cast an instant or sorcery spell",
      "control": "you"
     },
     "actions": [
@@ -1313,18 +1309,19 @@
     "actions": [
      {
       "verb": "modify-pt",
-      "object": "creatures you control",
-      "amount": "+1/+0",
-      "optional": false,
+      "object": "Creatures you control",
       "fromZone": null,
-      "toZone": null
+      "toZone": null,
+      "amount": "+1/+0",
+      "optional": false
      },
      {
       "verb": "grant-ability",
-      "object": "vigilance",
-      "optional": false,
+      "object": "vigilance to creatures you control",
       "fromZone": null,
-      "toZone": null
+      "toZone": null,
+      "amount": null,
+      "optional": false
      }
     ]
    },
@@ -1334,18 +1331,19 @@
     "actions": [
      {
       "verb": "modify-pt",
-      "object": "creatures you control",
-      "amount": "+1/+0",
-      "optional": false,
+      "object": "Creatures you control",
       "fromZone": null,
-      "toZone": null
+      "toZone": null,
+      "amount": "+1/+0",
+      "optional": false
      },
      {
       "verb": "grant-ability",
-      "object": "trample",
-      "optional": false,
+      "object": "trample to creatures you control",
       "fromZone": null,
-      "toZone": null
+      "toZone": null,
+      "amount": null,
+      "optional": false
      }
     ]
    },
@@ -1355,18 +1353,19 @@
     "actions": [
      {
       "verb": "modify-pt",
-      "object": "creatures you control",
-      "amount": "+1/+0",
-      "optional": false,
+      "object": "Creatures you control",
       "fromZone": null,
-      "toZone": null
+      "toZone": null,
+      "amount": "+1/+0",
+      "optional": false
      },
      {
       "verb": "grant-ability",
-      "object": "double strike",
-      "optional": false,
+      "object": "double strike to creatures you control",
       "fromZone": null,
-      "toZone": null
+      "toZone": null,
+      "amount": null,
+      "optional": false
      }
     ]
    }
@@ -1420,8 +1419,8 @@
     "abilityType": "activated",
     "actions": [
      {
-      "verb": "add-counter",
-      "object": "proliferate",
+      "verb": "proliferate",
+      "object": "",
       "fromZone": null,
       "toZone": null,
       "amount": null,
@@ -1663,7 +1662,7 @@
      },
      {
       "verb": "discard",
-      "object": "their hand",
+      "object": "each player's hand",
       "fromZone": null,
       "toZone": null,
       "amount": null,
@@ -1671,7 +1670,7 @@
      },
      {
       "verb": "draw",
-      "object": "seven cards",
+      "object": "card",
       "fromZone": null,
       "toZone": null,
       "amount": "7",
@@ -1788,25 +1787,6 @@
       "optional": false
      }
     ]
-   },
-   {
-    "id": 2,
-    "abilityType": "triggered",
-    "trigger": {
-     "event": "enters",
-     "subject": "a token",
-     "control": "you"
-    },
-    "actions": [
-     {
-      "verb": "lose-life",
-      "object": "each opponent",
-      "fromZone": null,
-      "toZone": null,
-      "amount": "1",
-      "optional": false
-     }
-    ]
    }
   ],
   "characteristics": {
@@ -1894,7 +1874,7 @@
     "actions": [
      {
       "verb": "put",
-      "object": "those cards",
+      "object": "top three cards of your library",
       "fromZone": null,
       "toZone": "library",
       "amount": null,
@@ -1953,11 +1933,11 @@
     "actions": [
      {
       "verb": "modify-pt",
-      "object": "Psychosis Crawler's power and toughness are each equal to the number of cards in your hand",
+      "object": "Psychosis Crawler",
+      "amount": "number of cards in your hand",
+      "optional": false,
       "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
+      "toZone": null
      }
     ]
    },
@@ -1973,10 +1953,10 @@
      {
       "verb": "lose-life",
       "object": "each opponent",
-      "fromZone": null,
-      "toZone": null,
       "amount": "1",
-      "optional": false
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
      }
     ]
    }
@@ -2022,10 +2002,9 @@
      {
       "verb": "cant",
       "object": "be a creature",
+      "optional": false,
       "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
+      "toZone": null
      }
     ]
    },
@@ -2041,10 +2020,10 @@
      {
       "verb": "deal-damage",
       "object": "each opponent",
-      "fromZone": null,
-      "toZone": null,
       "amount": "2",
-      "optional": false
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
      }
     ]
    },
@@ -2055,10 +2034,10 @@
      {
       "verb": "modify-pt",
       "object": "creatures you control",
-      "fromZone": null,
-      "toZone": null,
       "amount": "+1/+0",
-      "optional": false
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
      }
     ]
    }
@@ -2096,7 +2075,7 @@
     "abilityType": "triggered",
     "trigger": {
      "event": "enters",
-     "subject": "a land you control",
+     "subject": "land you control",
      "control": "you"
     },
     "actions": [
@@ -2274,7 +2253,7 @@
      },
      {
       "verb": "draw",
-      "object": "a card",
+      "object": "each player",
       "fromZone": null,
       "toZone": null,
       "amount": "1",
@@ -2325,18 +2304,17 @@
      {
       "verb": "add-counter",
       "object": "+1/+1",
+      "optional": false,
       "fromZone": null,
-      "toZone": null,
-      "amount": "1",
-      "optional": false
+      "toZone": null
      },
      {
       "verb": "draw",
       "object": "card",
-      "fromZone": null,
-      "toZone": null,
       "amount": "1",
-      "optional": false
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
      }
     ]
    }
@@ -2427,7 +2405,7 @@
       "object": "+1/+1",
       "fromZone": null,
       "toZone": null,
-      "amount": "1",
+      "amount": null,
       "optional": false
      }
     ]
@@ -2437,7 +2415,7 @@
     "abilityType": "triggered",
     "trigger": {
      "event": "end-step",
-     "subject": "you",
+     "subject": "your end step",
      "control": "you"
     },
     "actions": [
@@ -2505,7 +2483,7 @@
     "abilityType": "triggered",
     "trigger": {
      "event": "cast",
-     "subject": "you cast or copy an instant or sorcery spell",
+     "subject": "instant or sorcery spell",
      "control": "you"
     },
     "actions": [
@@ -2627,12 +2605,11 @@
     "abilityType": "static",
     "actions": [
      {
-      "verb": "other",
-      "object": "If you would proliferate, proliferate twice instead",
+      "verb": "proliferate",
+      "object": "any",
+      "optional": false,
       "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
+      "toZone": null
      }
     ]
    },
@@ -2643,18 +2620,16 @@
      {
       "verb": "remove-counter",
       "object": "three counters from among other artifacts, creatures, and planeswalkers you control",
+      "optional": false,
       "fromZone": null,
-      "toZone": null,
-      "amount": "three",
-      "optional": false
+      "toZone": null
      },
      {
       "verb": "add-counter",
-      "object": "indestructible counter on Tekuthal",
+      "object": "indestructible",
+      "optional": false,
       "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
+      "toZone": null
      }
     ]
    }
@@ -2760,8 +2735,8 @@
     },
     "actions": [
      {
-      "verb": "other",
-      "object": "proliferate",
+      "verb": "proliferate",
+      "object": "",
       "fromZone": null,
       "toZone": null,
       "amount": null,
@@ -2803,7 +2778,7 @@
     "id": 1,
     "abilityType": "triggered",
     "trigger": {
-     "event": "draw-step",
+     "event": "draw",
      "subject": "opponent",
      "control": "opponent"
     },
@@ -2847,7 +2822,7 @@
     "actions": [
      {
       "verb": "sacrifice",
-      "object": "creature",
+      "object": "a creature",
       "fromZone": null,
       "toZone": null,
       "amount": null,
@@ -2855,7 +2830,7 @@
      },
      {
       "verb": "return",
-      "object": "chosen creature cards",
+      "object": "the chosen cards",
       "fromZone": "graveyard",
       "toZone": "battlefield",
       "amount": null,
@@ -2863,7 +2838,7 @@
      },
      {
       "verb": "tap",
-      "object": "returned creatures",
+      "object": "the chosen cards",
       "fromZone": null,
       "toZone": null,
       "amount": null,
@@ -2969,7 +2944,7 @@
     "actions": [
      {
       "verb": "grant-ability",
-      "object": "Creatures you control lifelink until end of turn",
+      "object": "Creatures you control",
       "fromZone": null,
       "toZone": null,
       "amount": null,
@@ -3180,10 +3155,10 @@
      },
      {
       "verb": "draw",
-      "object": "cards",
+      "object": "cards equal to the greatest number of cards a player discarded this way",
       "fromZone": null,
       "toZone": null,
-      "amount": "equal to the greatest number of cards a player discarded this way",
+      "amount": "greatest number of cards a player discarded this way",
       "optional": false
      }
     ]
@@ -3217,11 +3192,10 @@
     "actions": [
      {
       "verb": "other",
-      "object": "Each land is a Forest in addition to its other land types",
+      "object": "each land is a Forest in addition to its other land types",
+      "optional": false,
       "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
+      "toZone": null
      }
     ]
    }

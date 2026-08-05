@@ -3,6 +3,7 @@
  *  This is the load-bearing part of derivation: if `control` and `type` cannot be recovered, no
  *  edge forms and the compass suite goes red for reasons unrelated to the rest of the layer. */
 import type { Control, StatPredicate, SubjectFilter } from "../schema.js";
+import { SUBTYPES } from "./subtypes.js";
 
 /** Card types the engine reasons about, plus the pseudo-types the matcher expands set-wise. */
 const TYPES = [
@@ -43,6 +44,38 @@ function parseTypes(t: string): { type?: string | string[]; plural: boolean } {
   return { type: kept.length === 1 ? kept[0] : kept, plural };
 }
 
+/** The singular forms to try for a word as written. The vocabulary is closed, so the first hit is
+ *  the answer and no ambiguity survives: "elves" reaches "elf" only via the -ves rule, "zombies"
+ *  reaches "zombie" by dropping the s before -ies is ever tried, and "merfolk" is its own plural. */
+function singulars(w: string): string[] {
+  const out = [w];
+  if (w.endsWith("s")) out.push(w.slice(0, -1));
+  if (w.endsWith("ies")) out.push(`${w.slice(0, -3)}y`);
+  if (w.endsWith("ves")) out.push(`${w.slice(0, -3)}f`, `${w.slice(0, -3)}fe`);
+  if (w.endsWith("es")) out.push(w.slice(0, -2));
+  return out;
+}
+
+/** Subtypes named in the object text. `namesItsTargets` (derive.ts) accepts a static effect only
+ *  when it names a type OR a subtype, and this half was dead — a kindred anthem ("Zombies you
+ *  control get +1/+1") named neither, so its subject was dropped and it formed no edge with any
+ *  Zombie in the deck. Matching is against the closed SUBTYPES list rather than a head-noun guess,
+ *  because edges.ts matches this value against another card's real type line: a wrong subtype does
+ *  not widen the edge, it deletes it. */
+function parseSubtypes(t: string): { subtype?: string | string[]; plural: boolean } {
+  const found: string[] = [];
+  let plural = false;
+  for (const w of t.match(/[a-z'-]+/g) ?? []) {
+    for (const s of singulars(w)) {
+      if (!SUBTYPES.has(s)) continue;
+      if (!found.includes(s)) found.push(s);
+      if (s !== w) plural = true;
+      break;
+    }
+  }
+  return { subtype: found.length === 1 ? found[0] : found.length ? found : undefined, plural };
+}
+
 /** The quantifier the text used. An explicit word wins; otherwise a plural noun is a mass effect
  *  ("creatures you control" is an anthem) and a bare singular says nothing, so it stays unset. */
 function parseScope(t: string, pluralType: boolean): SubjectFilter["scope"] {
@@ -75,10 +108,12 @@ function parseStats(t: string): StatPredicate[] {
 export function parseSubject(text: string): SubjectFilter {
   const t = text.toLowerCase().trim();
   const { type, plural } = parseTypes(t);
-  const scope = parseScope(t, plural);
+  const { subtype, plural: subtypePlural } = parseSubtypes(t);
+  const scope = parseScope(t, plural || subtypePlural);
   const stats = parseStats(t);
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
   if (type) out.type = type;
+  if (subtype) out.subtype = subtype;
   if (scope) out.scope = scope;
   if (stats.length) out.stats = stats;
   return out;

@@ -15,6 +15,16 @@ import { parseSubject } from "./subject.js";
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
 
+/** Proliferate is a keyword ACTION -- a discrete thing a player does -- so a STATIC clause naming
+ *  it is modifying somebody else's proliferate, never performing one. Tekuthal ("if you would
+ *  proliferate, proliferate twice instead") is the case: the segmenter's EFFECT_ACTIONS row already
+ *  refuses the replacement templating, but the verb is in the clause vocabulary now and the model
+ *  reaches for it anyway. Emitting the event here would make Tekuthal a proliferate SOURCE and mesh
+ *  it with every proliferate payoff, which is the false-emit class of defect, not a missing edge. */
+function keywordActionOnStaticClause(kind: AbilityKind, verb: string | undefined): boolean {
+  return kind === "static" && verb === "proliferate";
+}
+
 /** segment.ts's clause-side vocabulary ("spell" | "activated" | "triggered" | "static") to the
  *  engine's AbilityKind. "spell" is the clause-side name for what the engine calls "on-cast" --
  *  every instant/sorcery clause is tagged "spell" (see segment.ts's `classify`), so mapping it to
@@ -142,6 +152,7 @@ export function deriveAbilities(
 
     for (const action of clause.actions ?? []) {
       if (INERT_VERBS.has(action.verb ?? "")) continue;
+      if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
       const effectKind = actionEffectKind(action);
       const emits = actionEmits(action);
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
