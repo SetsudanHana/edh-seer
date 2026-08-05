@@ -77,16 +77,35 @@ const COST_ACTIONS: [RegExp, string][] = [
  *  Only cues that survived a precision check against 180 cards of stored model output are listed;
  *  a wrong verb is consumed as if it were true, so a false positive costs more than the `other` it
  *  replaces. `bin/effect-precision.ts` re-runs that check for free. */
-const EFFECT_ACTIONS: [RegExp, string][] = [
-  [/\bdeals?\s+(?:\d+|X)\s+damage\b/i, "deal-damage"],
+/** Number words as printed on cards, so "Draw seven cards" keeps its seven. Jace, Wielder of
+ *  Mysteries came back as `draw(you)` with the amount dropped, and the seven is the whole card. */
+const WORD_NUMBER: Record<string, string> = {
+  a: "1", an: "1", one: "1", two: "2", three: "3", four: "4", five: "5",
+  six: "6", seven: "7", eight: "8", nine: "9", ten: "10", x: "X",
+};
+const COUNT = "a|an|one|two|three|four|five|six|seven|eight|nine|ten|\\d+|X";
+
+/** `[cue, verb, amountGroup?]` — the third element names the capture holding the amount. */
+const EFFECT_ACTIONS: [RegExp, string, number?][] = [
+  [new RegExp(`\\bdeals?\\s+(${COUNT})\\s+damage\\b`, "i"), "deal-damage", 1],
   [/\bgets?\s+[+\-−][\dX]+\/[+\-−][\dX]+/i, "modify-pt"],
   [/\bdestroy\b/i, "destroy"],
   [/\bcounters?\s+target\s+(?:spell|ability)/i, "counter-spell"],
-  [/\bdraws?\s+(?:a|\d+|X)\s+cards?\b/i, "draw"],
-  [/\bgains?\s+(?:\d+|X)\s+life\b/i, "gain-life"],
-  [/\bloses?\s+(?:\d+|X)\s+life\b/i, "lose-life"],
-  [/\bmills?\s+(?:\d+|X|a)\b/i, "mill"],
-  [/\bcreates?\s+(?:a|\d+|X|one|two)\b/i, "create"],
+  [new RegExp(`\\bdraws?\\s+(${COUNT})\\s+cards?\\b`, "i"), "draw", 1],
+  [new RegExp(`\\bgains?\\s+(${COUNT})\\s+life\\b`, "i"), "gain-life", 1],
+  [new RegExp(`\\bloses?\\s+(${COUNT})\\s+life\\b`, "i"), "lose-life", 1],
+  [new RegExp(`\\bmills?\\s+(${COUNT})\\b`, "i"), "mill", 1],
+  // An emblem is not a token, so it is not `create` — the vocabulary had no verb for it and the
+  // model split between `create` and `other` across runs, which was the single largest source of
+  // residual planeswalker drift once the rest of the table landed.
+  [/\byou get an emblem\b/i, "emblem"],
+  // Fight is mutual damage between two creatures. Without a verb it came back as `other`, so an
+  // aristocrats or damage payoff could not see it at all.
+  [/\bfights?\b/i, "fight"],
+  // "Target opponent's life total becomes 10" (Sorin Markov) is not lose-life — the amount lost
+  // depends on their current total — but it is not `other` either.
+  [new RegExp(`\\blife total becomes\\s+(${COUNT})\\b`, "i"), "set-life", 1],
+  [new RegExp(`\\bcreates?\\s+(${COUNT})\\b`, "i"), "create", 1],
   [/\bshuffles?\b/i, "shuffle"],
   [/\btakes? an extra turn\b/i, "extra-turn"],
   [/\badditional combat phase\b/i, "extra-combat"],
@@ -124,9 +143,9 @@ export function effectBody(text: string): string {
   return comma === -1 ? unquoted : unquoted.slice(comma + 2);
 }
 
-/** Actions stated by a clause's effect, in table order. Empty for an inert clause, which states no
- *  action at all — running the table over Saga reminder text derived a sacrifice from
- *  "(As this Saga enters ... sacrifice it)". */
+/** Actions stated by a clause's effect, in table order, as `verb` or `verb=amount`. Empty for an
+ *  inert clause, which states no action at all — running the table over Saga reminder text derived
+ *  a sacrifice from "(As this Saga enters ... sacrifice it)". */
 export function effectActions(text: string, kind: ClauseKind = "ability"): string[] {
   if (kind === "keyword" || kind === "reminder" || kind === "level" || kind === "modal") return [];
   const body = effectBody(text);
@@ -134,7 +153,15 @@ export function effectActions(text: string, kind: ClauseKind = "ability"): strin
   // control can't cause you to sacrifice permanents or discard cards" is neither a sacrifice nor a
   // discard; the only verb it states is `cant`.
   if (/\b(?:can't|cannot)\b/i.test(body)) return [];
-  return EFFECT_ACTIONS.filter(([re]) => re.test(body)).map(([, verb]) => verb);
+  const out: string[] = [];
+  for (const [re, verb, group] of EFFECT_ACTIONS) {
+    const m = re.exec(body);
+    if (!m) continue;
+    const raw = group ? m[group]?.toLowerCase() : undefined;
+    const amount = raw ? WORD_NUMBER[raw] ?? (/^\d+$/.test(raw) ? raw : undefined) : undefined;
+    out.push(amount ? `${verb}=${amount}` : verb);
+  }
+  return out;
 }
 
 /** The verbs whose zones are NOT implied by the verb itself. A draw is always library->hand and a

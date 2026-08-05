@@ -20,6 +20,7 @@ if (dirs.length === 0) { console.error("usage: effect-precision.ts <runDir>...")
 
 let agreed = 0, predicted = 0, hit = 0;
 const misses = new Map<string, string[]>();
+const missCount = new Map<string, number>();
 const rescued: string[] = [];
 /** The case the table actually exists for: the two runs DISAGREED, so reconciliation has to pick a
  *  side or flag the clause. A verb the table can derive is a verb neither run had to choose. */
@@ -55,11 +56,12 @@ for (const dir of dirs) {
       const pred = effectActions(clause.text, clause.kind);
       for (const p of pred) {
         predicted++;
-        if (v1.includes(p)) hit++;
+        if (v1.includes(p.split("=")[0])) hit++;
         else {
           const list = misses.get(p) ?? [];
           if (list.length < 4) list.push(`${a.name} [${clause.id}] got ${v1.join(",")} — "${clause.text.slice(0, 62)}"`);
-          misses.set(p, list);
+          misses.set(p.split("=")[0], list);
+          missCount.set(p.split("=")[0], (missCount.get(p.split("=")[0]) ?? 0) + 1);
         }
       }
       // The case the table exists for: both runs settled on the escape hatch, but the text states
@@ -78,7 +80,7 @@ console.log(`  absent  (false positives)    : ${predicted - hit}`);
 if (misses.size) {
   console.log(`\nFALSE POSITIVES BY VERB — each one would hand the model a wrong fact`);
   for (const [verb, ex] of [...misses].sort((a, b) => b[1].length - a[1].length)) {
-    console.log(`  ${verb}`);
+    console.log(`  ${verb}  (${missCount.get(verb) ?? 0} false positives)`);
     for (const e of ex) console.log(`    ${e}`);
   }
 }

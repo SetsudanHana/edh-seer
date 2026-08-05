@@ -216,7 +216,7 @@ test("effect actions are derived from the effect, not the condition or a quoted 
   expect(effectActions("Whenever you draw a card, this creature gets +1/+1 until end of turn."))
     .toEqual(["modify-pt"]);                       // the draw is the condition, not the effect
   expect(effectActions('You get an emblem with "Creatures you control get +1/+1."'))
-    .toEqual([]);                                  // the +1/+1 belongs to the emblem, not this clause
+    .toEqual(["emblem"]);                          // the +1/+1 belongs to the emblem, not this clause
   expect(effectActions("Spells and abilities your opponents control can't cause you to sacrifice permanents or discard cards."))
     .toEqual([]);                                  // a restriction states what does NOT happen
   expect(effectActions("Add {R}{R}{R}. Spend this mana only to cast instant or sorcery spells."))
@@ -228,10 +228,33 @@ test("effect actions are derived from the effect, not the condition or a quoted 
 test("the clauses that drifted into `other` now carry their verbs", () => {
   // Plasma Caster came back "exile,deal-damage" on one run and a lone "other" on the next.
   const c = segment("{4}, {T}: Choose target creature. Exile it, then it deals 3 damage to you.", [], "Artifact");
-  expect(c[0].effectActions).toContain("deal-damage");
+  expect(c[0].effectActions).toContain("deal-damage=3");
   expect(c[0].effectActions).toContain("exile");
   // "put a +1/+1 counter" is add-counter, never put — put is exclusively zone movement.
   const h = segment("Each creature you control gets +1/+1. Put a +1/+1 counter on target creature.", [], "Legendary Planeswalker");
   expect(h[0].effectActions).toContain("add-counter");
   expect(h[0].effectActions).not.toContain("put");
+});
+
+test("the four vocabulary gaps the planeswalker audit found are now derived", () => {
+  // An emblem is not a token, so it is not `create` — the model split between create and other
+  // across runs, which was the largest source of residual planeswalker drift.
+  expect(effectActions('You get an emblem with "Creatures you control get +1/+1."'))
+    .toEqual(["emblem"]);
+  // Kiora's emblem: fight is mutual damage, and without a verb it came back as `other`.
+  expect(effectActions("Whenever a creature you control enters, you may have it fight target creature."))
+    .toEqual(["fight"]);
+  // Sorin Markov: a life total being SET is not lose-life — how much is lost depends on the total.
+  expect(effectActions("Target opponent's life total becomes 10."))
+    .toEqual(["set-life=10"]);
+  // Jace, Wielder of Mysteries came back as draw(you) — the seven is the whole card.
+  expect(effectActions("Draw seven cards. Then if your library has no cards in it, you win the game."))
+    .toEqual(["draw=7"]);
+});
+
+test("amounts survive as digits however the card spells them", () => {
+  expect(effectActions("Draw a card.")).toEqual(["draw=1"]);
+  expect(effectActions("Sarkhan deals 3 damage to any target.")).toEqual(["deal-damage=3"]);
+  expect(effectActions("Each opponent loses two life.")).toEqual(["lose-life=2"]);
+  expect(effectActions("Create X 1/1 white Soldier creature tokens.")).toEqual(["create=X"]);
 });

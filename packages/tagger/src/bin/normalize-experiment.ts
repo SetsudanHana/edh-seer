@@ -41,7 +41,7 @@ const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
   "add-mana", "add-counter", "remove-counter", "grant-ability", "modify-pt", "prevent", "cast",
   "play", "shuffle", "reveal", "attach", "transform", "trigger-again", "extra-turn", "extra-combat",
-  "animate", "cant", "other", "none"];
+  "animate", "cant", "emblem", "fight", "set-life", "other", "none"];
 const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
 const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps", "untaps", "cast",
   "upkeep", "begin-combat", "end-step", "draw-step", "main-phase", "combat-damage-step", "damage-dealt", "life-gained", "life-lost",
@@ -109,6 +109,12 @@ Rules:
 - EFFECT ACTIONS are already decided for you too. A clause showing effectActions=[...] states
   those actions; include every one of them, then add any other action the clause states. They were
   read off the text mechanically, so do not drop one, rename one, or replace one with "other".
+  An entry written verb=N carries the amount: copy N into that action's "amount" field.
+- "emblem" is getting an emblem. It is NOT "create" — create is for tokens, and an emblem is
+  neither a permanent nor a card. The ability the emblem grants is a separate clause of its own.
+- "fight" is two creatures dealing damage equal to their power to each other.
+- "set-life" is a life total being SET to a number ("target opponent's life total becomes 10").
+  It is not lose-life or gain-life: how much changes depends on the total it started from.
 - "other" is the deliberate escape hatch: when a clause does something no verb above covers
   (changing maximum hand size, an unusual rules modification), use verb "other" and put the effect
   verbatim in object. Use it rather than forcing a near-miss verb — a wrong verb is consumed as if
