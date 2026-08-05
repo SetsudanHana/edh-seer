@@ -32,6 +32,13 @@ export interface SubjectFilter {
   counter?: string;
   /** Zone the subject lives in; omitted means battlefield. E.g. "graveyard", "hand", "exile". */
   zone?: string;
+  /** Quantifier the text used for this subject. "target creature" is spot removal, "each creature
+   *  your opponents control" is a board wipe, and "creatures you control" is an anthem rather than
+   *  a pump — a distinction `SubjectFilter` could not previously express at all. Optional and
+   *  additive: no consumer reads it yet (the wipe-vs-spot call still happens in matcher's
+   *  `build.ts` via BOARD_WIPE_RE against raw oracle text). Derived now because the clause text is
+   *  in hand, so asking the question later costs a re-derive rather than a re-grind. */
+  scope?: "target" | "each" | "all";
   /** Authored numeric conditions; ALL must hold (ANDed with the rest of the subject). */
   stats?: StatPredicate[];
   /** Concrete stat values the MATCHER attaches to a producer subject (never authored by the LLM).
