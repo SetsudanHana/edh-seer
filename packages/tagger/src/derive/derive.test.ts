@@ -149,3 +149,46 @@ test("a graveyard-recursion effect keeps the zone its subject lives in", () => {
   expect(abilities[0]?.effect).toMatchObject({ kind: "graveyard-recursion" });
   expect(abilities[0]?.effect.subject?.zone).toBe("graveyard");
 });
+
+test("a static ability that does not name WHICH permanents it applies to gets no subject", () => {
+  // Psychosis Crawler: "its power and toughness are each equal to the number of cards in your hand"
+  // is a self-referential P/T definition, not an anthem. edges.ts matches a static effect subject
+  // against every other card's characteristics and treats each unset field as a wildcard, so a
+  // typeless subject here is a `static:pump` lord over the entire deck.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "modify-pt", object: "Psychosis Crawler's power and toughness are each equal to the number of cards in your hand" }],
+  }]);
+  expect(abilities[0]?.effect.kind).toBe("pump");
+  expect(abilities[0]?.effect.subject).toBeUndefined();
+
+  // A real anthem names its targets and keeps the subject it needs.
+  const anthem = deriveAbilities([{
+    id: 1, abilityType: "static", actions: [{ verb: "modify-pt", object: "creatures you control" }],
+  }]).abilities;
+  expect(anthem[0]?.effect.subject).toMatchObject({ type: "creature", control: "you" });
+
+  // The guard is for static edges only — a triggered/on-cast pump still carries its subject.
+  const pumpSpell = deriveAbilities([{
+    id: 1, abilityType: "spell", actions: [{ verb: "modify-pt", object: "it" }],
+  }]).abilities;
+  expect(pumpSpell[0]?.effect.subject).toBeDefined();
+});
+
+test("the trigger's own control field wins over whatever the object text repeats", () => {
+  // "Whenever you cast a spell" normalizes to subject "a spell" + control "you"; reading only the
+  // text widened Consuming Aberration to every spell anyone casts.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "cast", subject: "a spell", control: "you" },
+    actions: [{ verb: "put", object: "those cards", toZone: "graveyard" }],
+  }]);
+  expect(abilities[0]?.trigger?.subject.control).toBe("you");
+
+  const opp = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "draw-step", subject: "a player", control: "opponent" },
+    actions: [{ verb: "deal-damage", object: "that player" }],
+  }]).abilities;
+  expect(opp[0]?.trigger?.subject.control).toBe("opp");
+});

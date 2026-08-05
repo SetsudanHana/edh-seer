@@ -9,8 +9,11 @@ import type { Action } from "../canonicalize.js";
 import type { EffectKind } from "../schema.js";
 import { parseSubject } from "./subject.js";
 
-/** Zone-sensitive rules, checked before the plain lookup. Order matters within this list. */
-const ZONE_RULES: { verb: string; from?: string; to?: string; kind: EffectKind }[] = [
+/** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
+ *  `from`/`to` omitted means "don't care"; `from: null` means the origin must be the verb's DEFAULT
+ *  (canonicalAction nulls an unstated or `library` origin), which is how a self-mill is told apart
+ *  from a card moved into a graveyard out of some other zone. */
+const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: EffectKind }[] = [
   { verb: "exile", from: "graveyard", kind: "graveyard-hate" },
   { verb: "put", from: "graveyard", to: "battlefield", kind: "graveyard-recursion" },
   { verb: "return", from: "graveyard", to: "battlefield", kind: "graveyard-recursion" },
@@ -24,9 +27,11 @@ const ZONE_RULES: { verb: string; from?: string; to?: string; kind: EffectKind }
   // payoff of its own. Matched on the RETURN so one Ability carries the kind, as the live tags do.
   { verb: "return", from: "exile", to: "battlefield", kind: "flicker" },
   { verb: "put", from: "exile", to: "battlefield", kind: "flicker" },
-  // Anything put into a graveyard from the library is self-mill, the same payoff `mill` names.
-  // Listed last so the from:"graveyard" rules above win when both could apply.
-  { verb: "put", to: "graveyard", kind: "top-manipulation" },
+  // Cards put into a graveyard from the LIBRARY are self-mill, the same payoff `mill` names.
+  // `from: null` is load-bearing: "put target creature into its owner's graveyard" moves it off the
+  // battlefield, which is removal, and calling that a top-manipulation payoff would mesh removal
+  // with every mill deck. Listed last so the from:"graveyard" rules above win when both apply.
+  { verb: "put", from: null, to: "graveyard", kind: "top-manipulation" },
 ];
 
 /** Kinds whose whole meaning is the zone the subject sits in: `edges.ts` will not draw a
@@ -56,7 +61,7 @@ export function actionEffectKind(action: Action): EffectKind | null {
   const verb = action.verb ?? "";
   for (const r of ZONE_RULES) {
     if (r.verb !== verb) continue;
-    if (r.from && (action.fromZone ?? null) !== r.from) continue;
+    if (r.from !== undefined && (action.fromZone ?? null) !== r.from) continue;
     if (r.to && (action.toZone ?? null) !== r.to) continue;
     return r.kind;
   }

@@ -6,7 +6,7 @@
  *  silence is indistinguishable from a card that does nothing, which is exactly how Bitterblossom
  *  sat in the corpus as a vanilla bear. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
-import type { Ability, AbilityKind, CardTags, Characteristics, Verb } from "../schema.js";
+import type { Ability, AbilityKind, CardTags, Characteristics, Control, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
@@ -87,6 +87,23 @@ function effectSubject(action: Action, kind: string): ReturnType<typeof parseSub
   return subject;
 }
 
+/** Does this subject name WHICH permanents it applies to? edges.ts turns a static ability's effect
+ *  subject into an edge against the whole deck (`subjectMatches(otherCard.characteristics, subject)`),
+ *  and every field a subject leaves unset is a wildcard — so a static subject with no type and no
+ *  subtype matches EVERY card. Psychosis Crawler is the case: "its power and toughness are each
+ *  equal to the number of cards in your hand" is a self-referential P/T definition, not an anthem,
+ *  and it was deriving a `static:pump` lord over the entire deck. Same defect class as the
+ *  `spell -> static` bug: an unconstrained static subject is a mesh, not a synergy. */
+function namesItsTargets(subject: ReturnType<typeof parseSubject>): boolean {
+  return subject.type !== undefined || subject.subtype !== undefined;
+}
+
+/** The clause's own `control` field, which states whose permanents/players the trigger watches. The
+ *  object text often does not repeat it ("whenever you cast a spell" normalizes to subject "a
+ *  spell", control "you"), so reading only the text widened Consuming Aberration to every spell
+ *  anyone casts. The clause vocabulary spells the opponent side "opponent"; the engine says "opp". */
+const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", any: "any" };
+
 export function deriveAbilities(
   clauses: ClauseRecord[],
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
@@ -100,7 +117,10 @@ export function deriveAbilities(
     if (clause.trigger?.event) {
       const verb = normalizeTriggerVerb(clause.trigger.event);
       if (verb) {
-        trigger = { verbs: [verb], subject: parseSubject(clause.trigger.subject ?? "") };
+        const subject = parseSubject(clause.trigger.subject ?? "");
+        const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
+        if (control) subject.control = control;
+        trigger = { verbs: [verb], subject };
       } else {
         unknownTriggers.push(clause.trigger.event);
       }
@@ -115,11 +135,14 @@ export function deriveAbilities(
       // A subject is attached ONLY when there is a kind. matcher's edges.ts emits a
       // `static:${effect.kind}` tag for any static ability that has a subject, so an empty kind
       // with a subject produces a junk `static:` tag that can match another card's junk tag and
-      // form an edge that is not real.
+      // form an edge that is not real. A STATIC ability additionally has to name its targets --
+      // see namesItsTargets -- or the very same edge forms against the whole deck.
+      const subject = effectKind ? effectSubject(action, effectKind) : undefined;
+      const keepSubject = subject && (kind !== "static" || namesItsTargets(subject));
       const ability: Ability = {
         kind,
         effect: effectKind
-          ? { kind: effectKind, subject: effectSubject(action, effectKind) }
+          ? keepSubject ? { kind: effectKind, subject } : { kind: effectKind }
           : { kind: "" },
       };
       if (trigger) ability.trigger = trigger;

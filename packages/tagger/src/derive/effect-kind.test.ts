@@ -73,3 +73,13 @@ test("putting cards into a graveyard is the payoff mill already names", () => {
   expect(actionEffectKind({ verb: "put", object: "target creature card", fromZone: "graveyard", toZone: "battlefield" }))
     .toBe("graveyard-recursion");
 });
+
+test("self-mill is a graveyard entry from the LIBRARY, not any move into a graveyard", () => {
+  // canonicalAction nulls an unstated/library origin, so from:null IS the self-mill case.
+  expect(actionEffectKind({ verb: "put", object: "those cards", fromZone: null, toZone: "graveyard" }))
+    .toBe("top-manipulation");
+  // Moving a permanent off the battlefield into a graveyard is removal; calling it a
+  // top-manipulation payoff would mesh removal with every mill deck.
+  expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "graveyard" }))
+    .toBeNull();
+});
