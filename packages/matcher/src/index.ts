@@ -11,3 +11,7 @@ export { addEventEdges, orphanCards } from "./graph-events.js";
 export { themeMembership, themeCandidates, BASELINE_CAP, type ThemeMembership } from "./themes.js";
 export { classifyEffect, type EffectClass } from "./effect-class.js";
 export { meshReport, MESH_CAP, type MeshReport, type MeshGroup } from "./mesh.js";
+export {
+  buildTagIndex, candidateFromTagIndex, mergeFixtures, pairKey, pickStratum, randomPair, upsertPair,
+  type ClauseFixture, type PairRecord, type Stratum, type TagDefect, type Verdict,
+} from "./bin/pair-calibrate-core.js";

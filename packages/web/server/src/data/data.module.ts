@@ -2,6 +2,8 @@ import { Module, type OnModuleDestroy, Inject } from "@nestjs/common";
 import type { Db } from "mongodb";
 import type { CardGraph, CardTagsLookup } from "@mtg/matcher";
 import { ANALYZE_DEPS, type AnalyzeDeps } from "../analyze/analyze.service.js";
+import { CALIBRATE_DEPS, type CalibrateDeps } from "../calibrate/calibrate.service.js";
+import { makeCalibrateDeps } from "../calibrate/calibrate.deps.js";
 import type { WireGraph } from "../analyze/analyze.types.js";
 
 export const STORE = "MONGO_STORE";
@@ -99,6 +101,15 @@ export function attachRolesAndArt(
       },
     },
     {
+      provide: CALIBRATE_DEPS,
+      inject: [STORE],
+      // The calibration tool WRITES to the repository, so it needs the repo root. `process.cwd()`
+      // is where the dev server is started from, which is the package or the root; both resolve
+      // because the paths are anchored at `packages/`.
+      useFactory: async (store: { db: unknown }): Promise<CalibrateDeps> =>
+        makeCalibrateDeps(store as never, process.cwd().replace(/\/packages\/.*$/, "")),
+    },
+    {
       provide: ANALYZE_DEPS,
       inject: [STORE],
       useFactory: async (store: { cards: unknown; combos: unknown; db: unknown }): Promise<AnalyzeDeps> => {
@@ -169,7 +180,7 @@ export function attachRolesAndArt(
       },
     },
   ],
-  exports: [ANALYZE_DEPS],
+  exports: [ANALYZE_DEPS, CALIBRATE_DEPS],
 })
 export class DataModule implements OnModuleDestroy {
   constructor(@Inject(STORE) private readonly store: { close(): Promise<void> }) {}
