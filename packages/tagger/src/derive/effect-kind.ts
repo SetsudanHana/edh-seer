@@ -16,7 +16,23 @@ const ZONE_RULES: { verb: string; from?: string; to?: string; kind: EffectKind }
   { verb: "return", from: "graveyard", to: "battlefield", kind: "graveyard-recursion" },
   { verb: "put", from: "graveyard", to: "hand", kind: "graveyard-recursion" },
   { verb: "return", from: "graveyard", to: "hand", kind: "graveyard-recursion" },
+  // Muldrotha templates recursion as permission to PLAY/CAST out of the graveyard rather than to
+  // move a card, so keying only on put/return lost the whole card.
+  { verb: "play", from: "graveyard", kind: "graveyard-recursion" },
+  { verb: "cast", from: "graveyard", kind: "graveyard-recursion" },
+  // Exile-and-return-to-the-battlefield is the blink half of a flicker; the exile half states no
+  // payoff of its own. Matched on the RETURN so one Ability carries the kind, as the live tags do.
+  { verb: "return", from: "exile", to: "battlefield", kind: "flicker" },
+  { verb: "put", from: "exile", to: "battlefield", kind: "flicker" },
+  // Anything put into a graveyard from the library is self-mill, the same payoff `mill` names.
+  // Listed last so the from:"graveyard" rules above win when both could apply.
+  { verb: "put", to: "graveyard", kind: "top-manipulation" },
 ];
+
+/** Kinds whose whole meaning is the zone the subject sits in: `edges.ts` will not draw a
+ *  reanimator edge unless `effect.subject.zone === "graveyard"`, so a recursion effect that loses
+ *  the zone is a recursion no graveyard-filler can ever feed. */
+export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recursion", "graveyard-hate"]);
 
 const SIMPLE: Record<string, EffectKind> = {
   create: "token-generation",

@@ -50,3 +50,13 @@ test("scope separates spot removal from a wipe, and a pump from an anthem", () =
   // A bare singular says nothing about scope; leave it unset rather than guessing.
   expect(parseSubject("a creature").scope).toBeUndefined();
 });
+
+test("numeric conditions written in the object text survive as StatPredicates", () => {
+  // Without this the compass's power-matters category cannot tell Welcoming Vampire's gated
+  // trigger from any unconditional ETB payoff -- the linking tag is identical.
+  expect(parseSubject("other creatures you control with power 2 or less").stats)
+    .toEqual([{ metric: "power", op: "lte", value: 2 }]);
+  expect(parseSubject("a creature with toughness 4 or greater").stats)
+    .toEqual([{ metric: "toughness", op: "gte", value: 4 }]);
+  expect(parseSubject("target creature").stats).toBeUndefined();
+});

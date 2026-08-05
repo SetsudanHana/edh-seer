@@ -26,8 +26,19 @@ const EMITS: Record<string, Verb[]> = {
   fight: ["non-combat-damage"],
 };
 
+/** Zone-conditioned emits, checked before EMITS. A move's events depend on where it lands, not on
+ *  the verb: `return` is a flicker to the battlefield and a bounce to hand, `put` is reanimation to
+ *  the battlefield and self-mill to a graveyard. Only the destination is read, because a card
+ *  arriving somewhere is what other cards trigger on. */
+const ZONE_EMITS: { verb: string; to: string; verbs: Verb[] }[] = [
+  { verb: "put", to: "graveyard", verbs: ["enters-graveyard"] },
+  { verb: "return", to: "battlefield", verbs: ["enters"] },
+  { verb: "put", to: "battlefield", verbs: ["enters"] },
+];
+
 export function actionEmits(action: Action): GameEvent[] {
-  const verbs = EMITS[action.verb ?? ""];
+  const zoned = ZONE_EMITS.find((r) => r.verb === action.verb && r.to === (action.toZone ?? null));
+  const verbs = zoned?.verbs ?? EMITS[action.verb ?? ""];
   if (!verbs) return [];
   const subject = parseSubject(action.object ?? "");
   return verbs.map((verb) => ({ verb, subject: { ...subject } }));

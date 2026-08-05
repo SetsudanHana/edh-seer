@@ -2,7 +2,7 @@
  *
  *  This is the load-bearing part of derivation: if `control` and `type` cannot be recovered, no
  *  edge forms and the compass suite goes red for reasons unrelated to the rest of the layer. */
-import type { Control, SubjectFilter } from "../schema.js";
+import type { Control, StatPredicate, SubjectFilter } from "../schema.js";
 
 /** Card types the engine reasons about, plus the pseudo-types the matcher expands set-wise. */
 const TYPES = [
@@ -46,12 +46,34 @@ function parseScope(t: string, pluralType: boolean): SubjectFilter["scope"] {
   return pluralType ? "all" : undefined;
 }
 
+/** Numeric conditions written in the object text ("creatures you control with power 2 or less").
+ *  These are what separates a conditional payoff from an unconditional one — the compass's
+ *  power-matters and toughness-matters categories accept a reason ONLY when the subject carries a
+ *  StatPredicate, because the linking tag alone is shared with every unconditional producer of the
+ *  same event. */
+const STAT_RE = /\b(power|toughness|mana value)\s+(\d+)\s+or\s+(less|greater|more|fewer|higher|lower|greater than or equal to)\b/g;
+const STAT_METRIC: Record<string, StatPredicate["metric"]> = {
+  power: "power", toughness: "toughness", "mana value": "mana-value",
+};
+
+function parseStats(t: string): StatPredicate[] {
+  const out: StatPredicate[] = [];
+  for (const m of t.matchAll(STAT_RE)) {
+    const metric = STAT_METRIC[m[1]];
+    const op = /less|fewer|lower/.test(m[3]) ? "lte" : "gte";
+    out.push({ metric, op, value: Number(m[2]) });
+  }
+  return out;
+}
+
 export function parseSubject(text: string): SubjectFilter {
   const t = text.toLowerCase().trim();
   const { type, plural } = parseTypes(t);
   const scope = parseScope(t, plural);
+  const stats = parseStats(t);
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
   if (type) out.type = type;
   if (scope) out.scope = scope;
+  if (stats.length) out.stats = stats;
   return out;
 }

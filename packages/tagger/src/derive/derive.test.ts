@@ -126,3 +126,26 @@ test("gaining life alone is not a drain", () => {
   }]);
   expect(abilities.map((a) => a.effect.kind)).toEqual(["lifegain"]);
 });
+
+test("the clause vocabulary's trigger names are translated into engine verbs", () => {
+  // normalize-prompt.ts's TRIGGERS names the EVENT ("life-gained"); the engine names the ACTION
+  // ("gain-life"). Untranslated, Sanguine Bond is a payoff that consumes nothing.
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "life-gained", subject: "you", control: "you" },
+    actions: [{ verb: "lose-life", object: "target opponent" }],
+  }]);
+  expect(abilities[0]?.trigger?.verbs).toEqual(["gain-life"]);
+  expect(unknownTriggers).toEqual([]);
+});
+
+test("a graveyard-recursion effect keeps the zone its subject lives in", () => {
+  // edges.ts draws the reanimator edge only when effect.subject.zone === "graveyard"; the clause
+  // states that zone on the ACTION, so parseSubject alone can never recover it.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "spell",
+    actions: [{ verb: "return", object: "chosen creature cards", fromZone: "graveyard", toZone: "battlefield" }],
+  }]);
+  expect(abilities[0]?.effect).toMatchObject({ kind: "graveyard-recursion" });
+  expect(abilities[0]?.effect.subject?.zone).toBe("graveyard");
+});

@@ -8,7 +8,7 @@
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, AbilityKind, CardTags, Characteristics, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
-import { actionEffectKind } from "./effect-kind.js";
+import { ZONE_SCOPED_KINDS, actionEffectKind } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
 import { parseSubject } from "./subject.js";
 
@@ -36,13 +36,29 @@ function abilityKind(clause: ClauseRecord): AbilityKind {
 /** VOCAB set for a fast legality check after alias normalization. */
 const LEGAL_VERBS = new Set<string>(VERB_VOCAB);
 
+/** normalize-prompt.ts's TRIGGERS vocabulary to the engine's Verb vocabulary. These are two
+ *  independently closed sets, and where they name the same event they spell it differently: the
+ *  clause side names the EVENT ("life-gained"), the engine side names the ACTION ("gain-life").
+ *  Only exact identities belong here — `draw-step` is the clause vocabulary's ONLY way to say
+ *  "whenever you draw a card" (it has no `draw` member), so it is that and not the draw step.
+ *  `damage-dealt`, `blocks`, `main-phase`, `chapter` and friends have no engine verb at all and
+ *  are deliberately absent: they surface in `unknownTriggers` rather than pick a near-miss. */
+const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
+  "life-gained": "gain-life",
+  "life-lost": "lose-life",
+  "draw-step": "draw",
+  sacrificed: "sacrifice",
+  discarded: "discard",
+  milled: "mill",
+};
+
 /** Normalize a trigger event through VERB_ALIASES, then check it against the closed VERB_VOCAB.
  *  A near-miss spelling that survives uncorrected (e.g. "die" instead of "dies") means the trigger
  *  silently never matches any producer event -- dead with no error, since triggers have no
  *  `unclaimed`-style safety net of their own. Returns null for anything illegal so the caller can
  *  omit the trigger rather than assert a verb the vocabulary doesn't recognise. */
 function normalizeTriggerVerb(event: string): Verb | null {
-  const normalized = VERB_ALIASES[event] ?? event;
+  const normalized = CLAUSE_TRIGGER_TO_VERB[event] ?? VERB_ALIASES[event] ?? event;
   return LEGAL_VERBS.has(normalized) ? (normalized as Verb) : null;
 }
 
@@ -58,6 +74,17 @@ function drainAbility(clause: ClauseRecord, kind: AbilityKind, trigger: Ability[
   const ability: Ability = { kind, effect: { kind: "drain", subject: parseSubject(loss.object ?? "") } };
   if (trigger) ability.trigger = trigger;
   return ability;
+}
+
+/** The effect's subject, with the origin zone restored for the kinds that are defined by it. The
+ *  clause states the zone on the ACTION (`fromZone: "graveyard"`), never inside the object text, so
+ *  `parseSubject` alone cannot recover it — and a graveyard-recursion whose subject has no zone is
+ *  invisible to the reanimator edge in edges.ts, which tests `effect.subject.zone === "graveyard"`.
+ */
+function effectSubject(action: Action, kind: string): ReturnType<typeof parseSubject> {
+  const subject = parseSubject(action.object ?? "");
+  if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) subject.zone = action.fromZone;
+  return subject;
 }
 
 export function deriveAbilities(
@@ -92,7 +119,7 @@ export function deriveAbilities(
       const ability: Ability = {
         kind,
         effect: effectKind
-          ? { kind: effectKind, subject: parseSubject(action.object ?? "") }
+          ? { kind: effectKind, subject: effectSubject(action, effectKind) }
           : { kind: "" },
       };
       if (trigger) ability.trigger = trigger;

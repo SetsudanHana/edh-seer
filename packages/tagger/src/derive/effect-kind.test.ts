@@ -50,3 +50,26 @@ test("every kind the table can return is a member of the closed set", async () =
     if (kind) expect(EFFECT_KINDS).toContain(kind);
   }
 });
+
+test("recursion is keyed on the graveyard origin, not on one templating of the move", () => {
+  // Muldrotha says PLAY/CAST from the graveyard rather than moving a card; keying only on
+  // put/return lost the whole card.
+  expect(actionEffectKind({ verb: "play", object: "a land from your graveyard", fromZone: "graveyard", toZone: "battlefield" }))
+    .toBe("graveyard-recursion");
+  expect(actionEffectKind({ verb: "cast", object: "a permanent spell from your graveyard", fromZone: "graveyard" }))
+    .toBe("graveyard-recursion");
+});
+
+test("exile-and-return-to-the-battlefield is a flicker; the return carries the kind", () => {
+  expect(actionEffectKind({ verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" })).toBe("flicker");
+  // The exile half states no payoff of its own -- one Ability per action, and this one is inert.
+  expect(actionEffectKind({ verb: "exile", object: "target creature you control", fromZone: "battlefield", toZone: "exile" }))
+    .toBeNull();
+});
+
+test("putting cards into a graveyard is the payoff mill already names", () => {
+  expect(actionEffectKind({ verb: "put", object: "those cards", toZone: "graveyard" })).toBe("top-manipulation");
+  // ...but a graveyard ORIGIN still wins: that is recursion, not a fill.
+  expect(actionEffectKind({ verb: "put", object: "target creature card", fromZone: "graveyard", toZone: "battlefield" }))
+    .toBe("graveyard-recursion");
+});

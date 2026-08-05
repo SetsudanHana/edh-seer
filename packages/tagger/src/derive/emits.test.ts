@@ -29,3 +29,12 @@ test("an action with no event contributes nothing rather than a guess", () => {
 test("set-life emits nothing because the direction depends on the current life total", () => {
   expect(actionEmits({ verb: "set-life", object: "target opponent" })).toEqual([]);
 });
+
+test("a move's events come from where it lands, not from the verb alone", () => {
+  expect(actionEmits({ verb: "put", object: "those cards", toZone: "graveyard" }).map((e) => e.verb))
+    .toEqual(["enters-graveyard"]);
+  expect(actionEmits({ verb: "return", object: "chosen creature cards", fromZone: "graveyard", toZone: "battlefield" }).map((e) => e.verb))
+    .toEqual(["enters"]);
+  // A bounce to hand lands nowhere anything triggers on, so it emits nothing rather than guessing.
+  expect(actionEmits({ verb: "return", object: "target creature", toZone: "hand" })).toEqual([]);
+});
