@@ -145,3 +145,33 @@ test("subjectMatches ignores stats when the consumer sets none", () => {
   const big = { type: "creature", control: "you", token: false, power: 9, toughness: 9 };
   expect(subjectMatches(big as never, consumer as never, {})).toBe(true);
 });
+
+// A colour on the FILTER side must exclude cards outside it. SubjectFilter has carried `colors`
+// since the graph work and edges.ts counts it as naming-its-targets, but nothing enforced it —
+// so a filter reading "blue permanent spells" matched every permanent of any colour.
+test("subjectMatches enforces a colour the filter names", () => {
+  const filter = { type: "permanent", control: "you", token: null, colors: ["U"] } as const;
+  const blueCard = { type: ["creature"], control: "you", token: false, colors: ["U"] };
+  const blackCard = { type: ["creature"], control: "you", token: false, colors: ["B"] };
+  expect(subjectMatches(blueCard as never, filter as never, {})).toBe(true);
+  expect(subjectMatches(blackCard as never, filter as never, {})).toBe(false);
+});
+
+// Multicolour is an OR on both sides: a Dimir card satisfies "blue spells", and a filter naming
+// two colours accepts a card in either.
+test("subjectMatches treats colours as an intersection, not an equality", () => {
+  const blueFilter = { control: "you", token: null, colors: ["U"] } as const;
+  const dimir = { type: ["creature"], control: "you", token: false, colors: ["U", "B"] };
+  expect(subjectMatches(dimir as never, blueFilter as never, {})).toBe(true);
+
+  const twoColourFilter = { control: "you", token: null, colors: ["B", "R"] } as const;
+  const mono = { type: ["creature"], control: "you", token: false, colors: ["R"] };
+  expect(subjectMatches(mono as never, twoColourFilter as never, {})).toBe(true);
+});
+
+// A filter that says nothing about colour must not start rejecting colourless cards.
+test("subjectMatches ignores colour when the filter names none", () => {
+  const filter = { type: "artifact", control: "you", token: null } as const;
+  const colourless = { type: ["artifact"], control: "you", token: false, colors: [] };
+  expect(subjectMatches(colourless as never, filter as never, {})).toBe(true);
+});

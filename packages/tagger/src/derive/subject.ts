@@ -105,13 +105,31 @@ function parseStats(t: string): StatPredicate[] {
   return out;
 }
 
+/** Colour words to the letters `characteristics.colors` carries (Scryfall's own encoding).
+ *  "colorless" is a constraint in its own right — C is not a colour, but a subject that says
+ *  "colorless artifacts" excludes every coloured card and must not read as unconstrained. */
+const COLORS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\bwhite\b/, "W"], [/\bblue\b/, "U"], [/\bblack\b/, "B"],
+  [/\bred\b/, "R"], [/\bgreen\b/, "G"], [/\bcolorless\b|\bcolourless\b/, "C"],
+];
+
+/** Colours named in the object text, in WUBRG order. Unset when the text names none: an absent
+ *  filter means "any colour", and claiming all five instead would make every subject a constraint
+ *  that nothing outside those colours satisfies. */
+function parseColors(t: string): string[] | undefined {
+  const found = COLORS.filter(([re]) => re.test(t)).map(([, c]) => c);
+  return found.length ? found : undefined;
+}
+
 export function parseSubject(text: string): SubjectFilter {
   const t = text.toLowerCase().trim();
   const { type, plural } = parseTypes(t);
   const { subtype, plural: subtypePlural } = parseSubtypes(t);
   const scope = parseScope(t, plural || subtypePlural);
   const stats = parseStats(t);
+  const colors = parseColors(t);
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
+  if (colors) out.colors = colors;
   if (type) out.type = type;
   if (subtype) out.subtype = subtype;
   if (scope) out.scope = scope;

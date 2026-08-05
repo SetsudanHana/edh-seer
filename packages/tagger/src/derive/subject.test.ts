@@ -103,3 +103,21 @@ test("numeric conditions written in the object text survive as StatPredicates", 
     .toEqual([{ metric: "toughness", op: "gte", value: 4 }]);
   expect(parseSubject("target creature").stats).toBeUndefined();
 });
+
+test("a colour named in the text is a real constraint, not decoration", () => {
+  // parseSubject reads type, subtype, control, token and stats -- and dropped colour entirely, so
+  // Defiler of Dreams' "blue permanent spells" derived as ALL permanents/spells and fanned out to
+  // 89 consumers in a mono-blue deck. SubjectFilter has carried a `colors` field all along and
+  // edges.ts already counts it as naming-its-targets; nothing ever filled it in.
+  expect(parseSubject("blue permanent spells")).toMatchObject({ colors: ["U"] });
+  expect(parseSubject("white creatures you control")).toMatchObject({ colors: ["W"] });
+  expect(parseSubject("black and red spells")).toMatchObject({ colors: ["B", "R"] });
+  expect(parseSubject("green creature cards in your graveyard")).toMatchObject({ colors: ["G"] });
+});
+
+test("a colourless subject is not the same as an unstated one", () => {
+  // "colorless" is a real constraint that must not be read as "no constraint", and a subject that
+  // says nothing about colour must stay unset rather than claim every colour.
+  expect(parseSubject("colorless creatures")).toMatchObject({ colors: ["C"] });
+  expect(parseSubject("creatures you control").colors).toBeUndefined();
+});

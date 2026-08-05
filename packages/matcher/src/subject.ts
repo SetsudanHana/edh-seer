@@ -20,6 +20,16 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // counter / zone: if the consumer names one, the producer must equal it.
   if (consumer.counter !== undefined && consumer.counter !== producer.counter) return false;
   if (consumer.zone !== undefined && consumer.zone !== producer.zone) return false;
+  // colours: an INTERSECTION, not an equality, because both sides are OR-lists — a Dimir card
+  // satisfies "blue spells", and a filter naming two colours accepts a card in either. Unset on
+  // the consumer means the filter says nothing about colour and every card passes; a producer with
+  // no colours at all (a land, a colourless artifact) satisfies no coloured filter, which is the
+  // correct reading of "blue permanent spells".
+  const wanted = consumer.colors ?? [];
+  if (wanted.length > 0) {
+    const has = new Set(producer.colors ?? []);
+    if (!wanted.some((c) => has.has(c))) return false;
+  }
   // type: expand both sides' type tokens (concrete, pseudo, or subtype-implied) to concrete
   // card-type sets and require they intersect. Reduces to exact/subtype-implied matching for
   // concrete types; lets pseudo-types (permanent/spell/noncreature/nonland) match their members.
