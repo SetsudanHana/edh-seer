@@ -97,7 +97,19 @@ export function validateClauses(segmented: Clause[], got: ClauseRecord[]): Claus
       continue;
     }
     if (seen.has(rec.id)) {
-      out.push(violation(rec.id, "duplicate-id", `clause ${rec.id} answered more than once`));
+      // A two-condition clause is allowed a second record, and WHICH id that record carries is
+      // bookkeeping: the prompt asks for the next unused one, but Kefka, Brinelin and Titans'
+      // Vanguard all repeated the parent's id instead, and both records are equally true.
+      // canonicalize and derive consume records id-agnostically, so accept it and validate the
+      // content against the parent. Without multiTrigger this stays the defect it always was.
+      const parent = expected.get(rec.id);
+      const idx = parent ? overflowParents.indexOf(parent) : -1;
+      if (idx >= 0) {
+        overflowParents.splice(idx, 1);
+        out.push(...validateOne(parent!, rec));
+      } else {
+        out.push(violation(rec.id, "duplicate-id", `clause ${rec.id} answered more than once`));
+      }
       continue;
     }
     seen.add(rec.id);
@@ -144,7 +156,11 @@ function validateOne(clause: Clause, rec: ClauseRecord): ClauseViolation[] {
     //
     // On a STATIC clause it stays a reject: that is the wildcard-mesh shape this layer keeps
     // finding, where an ability acquires an event it does not actually watch.
-    const delayed = clause.abilityType === "spell";
+    // ...and the same is true inside an ACTIVATED ability: Chandra, the Firebrand's "+1: When you
+    // next cast an instant or sorcery spell this turn, copy that spell" states a real delayed
+    // trigger, as does Jace, Cunning Castaway. Both were refused on every run over a timing the
+    // card genuinely has. STATIC stays fatal -- that is where the wildcard mesh lives.
+    const delayed = clause.abilityType === "spell" || clause.abilityType === "activated";
     at(
       "unexpected-trigger",
       `trigger "${rec.trigger!.event}" on a ${clause.abilityType ?? "non-triggered"} clause`,

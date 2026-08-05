@@ -51,6 +51,14 @@ const SIMPLE: Record<string, EffectKind> = {
   animate: "animate",
   copy: "clone",
   "extra-combat": "extra-combat",
+  // Named because the persist gate refused whole cards over their absence: Orcish Bowmasters
+  // (amass), Cyclonus (extra-phase), Cyber Conversion and Ugin's Mastery (turn-face-up). amass puts
+  // +1/+1 counters on an Army, creating one first if you have none; counter-placement is the half
+  // every payoff in the engine actually reads. turn-face-up flips a manifested or morphed permanent
+  // -- a state change of an existing permanent, which is what `animate` already names.
+  amass: "counter-placement",
+  "extra-phase": "extra-combat",
+  "turn-face-up": "animate",
   "trigger-again": "trigger-doubling",
   // No "copy-spell" row: VERBS (normalize-prompt.ts) has only "copy", never "copy-spell", so this
   // row could never fire -- the clause vocabulary cannot distinguish copying a spell from copying a

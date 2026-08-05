@@ -146,3 +146,15 @@ test("cost-modify splits on direction: cheaper is cost-reduction, dearer is tax"
   // and a wrong one is consumed as if it were true.
   expect(actionEffectKind({ verb: "cost-modify", object: "" })).toBeNull();
 });
+
+test("the verbs the undocced cards needed derive real kinds", () => {
+  // Five of the 24 cards with no clause doc were refused on vocabulary alone: Orcish Bowmasters
+  // (amass), Cyber Conversion and Ugin's Mastery (turn-face-up), Cyclonus (extra-phase).
+  // amass puts +1/+1 counters on an Army, creating one first if you have none -- both halves are
+  // kinds the engine already consumes, and counter-placement is the one every payoff reads.
+  expect(actionEffectKind({ verb: "amass", object: "Orcs 1" })).toBe("counter-placement");
+  expect(actionEffectKind({ verb: "extra-phase", object: "an additional combat phase" })).toBe("extra-combat");
+  // turn-face-up flips a manifested or morphed permanent; it is an animate-class state change,
+  // not a token and not a pump.
+  expect(actionEffectKind({ verb: "turn-face-up", object: "target face-down creature" })).toBe("animate");
+});

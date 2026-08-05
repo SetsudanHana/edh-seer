@@ -265,3 +265,56 @@ test("an accepted overflow record is still checked for what it says", () => {
   ];
   expect(kinds(validateClauses(segmented, bad))).toContain("unknown-verb");
 });
+
+test("a two-condition clause may reuse its own id for the second record", () => {
+  // Kefka, Brinelin and Titans' Vanguard all answered the two-condition clause TWICE under the SAME
+  // id rather than taking the next unused one, and the gate called that a duplicate and threw the
+  // card away. The prompt asks for a new id, but which id the overflow carries is bookkeeping: both
+  // records are true, and canonicalize/derive consume them id-agnostically.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", multiTrigger: true, text: "Whenever Kefka enters or attacks, each player discards a card." },
+  ];
+  const reused: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "Kefka", control: "you" }, actions: [{ verb: "discard" }] },
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "Kefka", control: "you" }, actions: [{ verb: "discard" }] },
+  ];
+  expect(rejections(validateClauses(segmented, reused))).toEqual([]);
+});
+
+test("a repeated id on an ORDINARY clause is still a duplicate", () => {
+  // The bound: without multiTrigger, answering the same clause twice is the defect it always was.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", text: "When this creature enters, draw a card." },
+  ];
+  const twice: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this", control: "you" }, actions: [{ verb: "draw" }] },
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this", control: "you" }, actions: [{ verb: "draw" }] },
+  ];
+  expect(kinds(validateClauses(segmented, twice))).toContain("duplicate-id");
+});
+
+test("a delayed trigger inside an ACTIVATED ability warns rather than refusing the card", () => {
+  // Chandra, the Firebrand's +1 reads "When you next cast an instant or sorcery spell this turn,
+  // copy that spell" -- a delayed trigger living inside a loyalty ability. The same shape was
+  // already forgiven on SPELL clauses (Eerie Interlude); on an activated clause it was still fatal,
+  // and it kept Chandra and Jace, Cunning Castaway out of the corpus on every run.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "activated", cost: "+1", text: "When you next cast an instant or sorcery spell this turn, copy that spell." },
+  ];
+  const got: ClauseRecord[] = [
+    { id: 1, abilityType: "activated", trigger: { event: "cast", subject: "instant or sorcery", control: "you" }, actions: [{ verb: "copy", object: "that spell" }] },
+  ];
+  expect(rejections(validateClauses(segmented, got))).toEqual([]);
+  expect(kinds(validateClauses(segmented, got))).toContain("unexpected-trigger");
+});
+
+test("a stray trigger on a STATIC clause is still fatal", () => {
+  // The bound: static is where the wildcard-mesh shape lives, and it stays a reject.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "static", text: "Untap this artifact during each other player's untap step." },
+  ];
+  const got: ClauseRecord[] = [
+    { id: 1, abilityType: "static", trigger: { event: "untaps", subject: "this", control: "any" }, actions: [{ verb: "untap", object: "this" }] },
+  ];
+  expect(kinds(rejections(validateClauses(segmented, got)))).toContain("unexpected-trigger");
+});

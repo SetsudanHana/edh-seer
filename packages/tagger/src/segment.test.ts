@@ -370,3 +370,22 @@ test("an ordinary trigger, and an `or` in the EFFECT, are not two conditions", (
   const targets = segment("When this creature enters, destroy target artifact or enchantment.", [], "Creature");
   expect(targets[0].multiTrigger).toBeUndefined();
 });
+
+test("a Station threshold does not hide the trigger behind it", () => {
+  // Spacecraft print their threshold abilities as "3+ | Whenever ...". The pipe prefix is a label
+  // like an ability word, but LABEL only knew the em-dash form, so Uthros Research Craft and
+  // Entropic Battlecruiser typed a printed trigger as static and the gate refused both on every run.
+  const uthros = segment("Station\n3+ | Whenever you cast an artifact spell, draw a card.\n12+ | Flying", [], "Artifact — Spacecraft");
+  const trig = uthros.find((c) => c.text.includes("Whenever you cast"));
+  expect(trig?.abilityType).toBe("triggered");
+  // The keyword-only threshold line stays what it was.
+  expect(uthros.find((c) => c.text.includes("Flying"))?.abilityType).toBe("static");
+});
+
+test("two conditions joined through a second subject still count as two", () => {
+  // Scrap Trawler: "Whenever this creature dies or another artifact you control is put into a
+  // graveyard from the battlefield". The second limb names its own subject before the verb, so the
+  // verb-anchored TWO_CONDITIONS missed it and the model's split read as an invented id.
+  const trawler = segment("Whenever this creature dies or another artifact you control is put into a graveyard from the battlefield, return to your hand target artifact card in your graveyard with lesser mana value.", [], "Artifact Creature");
+  expect(trawler[0].multiTrigger).toBe(true);
+});

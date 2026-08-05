@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 6;
+export const NORMALIZE_VERSION = 7;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -31,6 +31,10 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   "add-mana", "add-counter", "remove-counter", "grant-ability", "modify-pt", "prevent", "cast",
   "play", "shuffle", "reveal", "attach", "transform", "trigger-again", "extra-turn", "extra-combat",
   "animate", "cant", "emblem", "fight", "set-life", "proliferate", "scry", "surveil", "cost-modify",
+  // Each of these had a card stuck behind it: amass (Orcish Bowmasters), turn-face-up (Cyber
+  // Conversion, Ugin's Mastery), extra-phase (Cyclonus). The gate refused the whole card rather
+  // than one clause, so a missing verb cost 100% of the card.
+  "amass", "turn-face-up", "extra-phase",
   "other", "none"];
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
 export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps", "untaps", "cast",
@@ -41,7 +45,7 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // target (Unsettled Mariner), scry or surveil (Matoya), a Room unlocking (Mirror Room). None has
   // an engine verb, so they form no edges and surface in `unknownTriggers` — the point is that one
   // unnameable clause no longer throws away the whole card.
-  "search", "becomes-target", "scry", "surveil", "unlocked",
+  "search", "becomes-target", "scry", "surveil", "unlocked", "transform",
   // The same escape hatch VERBS has always had. Its absence was pure asymmetry: the model, told to
   // pick EXACTLY one member, invented "other" anyway on 9 cards and lost all of them.
   "other",
@@ -115,10 +119,19 @@ Rules:
 - "fight" is two creatures dealing damage equal to their power to each other.
 - "set-life" is a life total being SET to a number ("target opponent's life total becomes 10").
   It is not lose-life or gain-life: how much changes depends on the total it started from.
+- A REPLACEMENT effect is STATIC and has NO trigger. "If a creature would die, instead exile it",
+  "this permanent enters with a counter on it", "if you would draw, draw two instead", and "untap
+  this during each other player's untap step" all modify how something happens rather than reacting
+  to it. Do not record "dies", "enters" or "untaps" for these — a replacement effect that acquires
+  an event becomes a payoff for every card that causes it, which is false.
+- A permanent PUT INTO A GRAVEYARD from the battlefield is the event "dies", whatever the wording.
+  "Whenever an enchantment you control is put into a graveyard from the battlefield" is "dies".
 - A clause marked twoConditions fires on TWO different events ("When this enters OR is put into a
   graveyard", "When this enters AND whenever you fully unlock a Room"). One record holds one
   trigger, so answer that clause with TWO records: the first keeps the clause's id, the second takes
-  the next unused id, and both repeat the same actions. Only a clause marked twoConditions may be
+  an id LARGER THAN EVERY id in the list you were shown, and both repeat the same actions. Do not
+  reuse the number of another clause — Brinelin and Titans' Vanguard both numbered the overflow as
+  the next sequential id, which was already a printed keyword, and the whole card was refused. Only a clause marked twoConditions may be
   answered this way, and only with one extra record.
 - A TriggerEvent of "other" is the same escape hatch for a trigger no event above names ("whenever
   you choose a Ring-bearer"): use it and put the event verbatim in the trigger's subject. Never

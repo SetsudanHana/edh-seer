@@ -237,14 +237,20 @@ const TRIGGER_CUE = /^(when|whenever|at the beginning|at end)/i;
  *  card") or between two objects ("target artifact or enchantment") must not count, because every
  *  clause wrongly marked buys the model one unchallenged extra clause on that card. Either a second
  *  full cue ("... and whenever you fully unlock a Room") or an "or" joining two event verbs
- *  ("enters or attacks", "dies or is put into a graveyard"). */
+ *  ("enters or attacks", "dies or is put into a graveyard"). The second limb may name its own
+ *  subject first — Scrap Trawler's "dies or another artifact you control is put into a graveyard" —
+ *  so a short noun phrase is allowed between the "or" and its verb. */
 const TWO_CONDITIONS =
-  /^(?:when|whenever|at the beginning)[^,]*?\b(?:and (?:when|whenever|at the beginning)\b|or (?:is put|is turned|attacks|blocks|becomes blocked|dies|enters|leaves|is dealt)\b)/i;
+  /^(?:when|whenever|at the beginning)[^,]*?\b(?:and (?:when|whenever|at the beginning)\b|or (?:[a-z' ]{1,40}\s)?(?:is put|is turned|attacks|blocks|becomes blocked|dies|enters|leaves|is dealt)\b)/i;
 /** Any leading label ending in a spaced em dash, however it is spelled. Deliberately wider than
  *  ABILITY_WORD: this one only decides whether to LOOK for a trigger cue behind it, so admitting a
  *  label that is not really one costs nothing unless a cue follows. Bounded so it cannot swallow a
- *  sentence, and dash-free so it stops at the first label. */
-const LABEL = /^[^—]{1,40}—\s*/;
+ *  sentence, and dash-free so it stops at the first label.
+ *
+ *  Spacecraft print their threshold abilities as "3+ | Whenever ...", which is the same shape with a
+ *  different separator — without it Uthros Research Craft and Entropic Battlecruiser type a printed
+ *  trigger as static, and the persist gate refuses the whole card. */
+const LABEL = /^(?:[^—]{1,40}—|\d+\+\s*\|)\s*/;
 const CHAPTER = /^([IVX]+(?:\s*,\s*[IVX]+)*)\s*[—-]\s*/;
 const ABILITY_WORD = /^([A-Z][A-Za-z' ]{2,24})\s*—\s*/;
 /** A keyword ability whose cost follows an em dash with NO space: "Ward—Discard a card at random."
