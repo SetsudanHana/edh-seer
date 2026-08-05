@@ -50,3 +50,24 @@ test("keywords lowercased from card keywords", () => {
   const c = extractCharacteristics({ ...inalla, keywords: ["Flying", "Changeling"] });
   expect(c.keywords).toEqual(["flying", "changeling"]);
 });
+
+test("a multi-face type line contributes BOTH faces, with no separator junk", () => {
+  // The corpus joins faces: "Creature — Dog Warlock // Instant". Splitting on the first em dash
+  // alone swallowed face 2 into face 1's SUBTYPES, so Defacing Duskmage came out
+  // subtypes ["dog","warlock","//","instant"] and was not typed as an instant at all -- a missing
+  // type on 116 of the 2,544 calibration cards (4.6%), every one of them.
+  const c = extractCharacteristics({ ...inalla, typeLine: "Creature — Dog Warlock // Instant" });
+  expect(c.types).toEqual(["creature", "instant"]);
+  expect(c.subtypes).toEqual(["dog", "warlock"]);
+});
+
+test("both faces' subtypes survive, and duplicates collapse", () => {
+  const adv = extractCharacteristics({ ...inalla, typeLine: "Creature — Human Wizard // Instant — Adventure" });
+  expect(adv.types).toEqual(["creature", "instant"]);
+  expect(adv.subtypes).toEqual(["human", "wizard", "adventure"]);
+
+  // Wear // Tear: identical faces must not double up.
+  const split = extractCharacteristics({ ...inalla, typeLine: "Instant // Instant" });
+  expect(split.types).toEqual(["instant"]);
+  expect(split.subtypes).toEqual([]);
+});

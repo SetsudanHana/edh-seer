@@ -276,3 +276,28 @@ test("amounts survive as digits however the card spells them", () => {
   expect(effectActions("Each opponent loses two life.")).toEqual(["lose-life=2"]);
   expect(effectActions("Create X 1/1 white Soldier creature tokens.")).toEqual(["create=X"]);
 });
+
+test("the multi-face separator line is not a clause", () => {
+  // The corpus joins faces with a bare "//" line. It used to get its own slot on every one of the
+  // 116 multi-face cards in the calibration scope, so the model was asked about a printed
+  // separator and the answer was paid for.
+  const c = segment("Destroy target artifact.\n//\nDestroy target enchantment.", [], "Instant // Instant");
+  expect(c).toHaveLength(2);
+  expect(c.map((x) => x.text)).toEqual(["Destroy target artifact.", "Destroy target enchantment."]);
+  // Ids stay contiguous, so the completeness invariant still holds.
+  expect(c.map((x) => x.id)).toEqual([1, 2]);
+});
+
+test("abilityType is decided per FACE, not from the joined type line", () => {
+  // Malakir Rebirth // Malakir Mire is Instant // Land. The joined line contains "Instant", so the
+  // LAND face's lines used to default to "spell" -- which derive maps to "on-cast", the
+  // spellslinger mesh this layer already had to fix once. 27 clauses in the calibration scope.
+  const c = segment(
+    "Until end of turn, target creature you control gains \"When this creature dies, return it to the battlefield tapped under its owner's control.\"\n//\nThis land enters tapped.\n{T}: Add {B}.",
+    [], "Instant // Land",
+  );
+  const spellFace = c.find((x) => x.text.startsWith("Until end of turn"));
+  const landFace = c.find((x) => x.text.startsWith("This land enters tapped"));
+  expect(spellFace?.abilityType).toBe("spell");
+  expect(landFace?.abilityType).toBe("static");
+});

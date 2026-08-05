@@ -254,8 +254,15 @@ function isKeywordLine(line: string, keywords: string[]): boolean {
 export function segment(oracleText: string, keywords: string[] = [], typeLine = ""): Clause[] {
   const out: Clause[] = [];
   let id = 0;
+  // Classification is PER FACE. The corpus joins faces into one type line, so a card whose back is
+  // an instant made `isSpellCard` true for the FRONT face too, and every unclassified line there
+  // defaulted to "spell" -- which derive maps to "on-cast". That produced on-cast abilities for 27
+  // clauses in the calibration scope, including land faces ("This land enters tapped"), and an
+  // unwarranted on-cast is the spellslinger mesh this layer already had to fix once.
+  const faceTypes = typeLine.split(" // ");
+  let face = 0;
   const next = (c: Omit<Clause, "id">): Clause => {
-    const { abilityType, cost, body } = classify(c.text, c.kind, typeLine);
+    const { abilityType, cost, body } = classify(c.text, c.kind, faceTypes[face] ?? typeLine);
     // An inert clause is classified as-is, so a cost supplied by the caller (a level divider's
     // level-up cost) is the only one there is.
     const effectiveCost = cost ?? c.cost;
@@ -276,6 +283,11 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
   for (const rawLine of (oracleText ?? "").split("\n")) {
     const raw = rawLine.trim();
     if (raw === "") continue;
+    // The corpus joins a multi-face card's faces with a bare "//" line. It is a printed separator,
+    // not rules text: it states no action, and giving it a slot meant asking the model about it --
+    // and paying for the answer -- on all 116 multi-face cards in the calibration scope. It is also
+    // the only marker of where one face ends and the next begins.
+    if (raw === "//") { face++; continue; }
     const line = stripReminder(raw);
     // A line that was ONLY reminder text still gets a slot, so clause ids account for every line.
     if (line === "") { next({ kind: "reminder", text: raw }); continue; }

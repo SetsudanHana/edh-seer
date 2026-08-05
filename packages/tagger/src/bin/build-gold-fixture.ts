@@ -4,6 +4,7 @@
  *  Usage: TAGGER_PROVIDER=anthropic tsx src/bin/build-gold-fixture.ts */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { connect, loadConfig } from "@mtg/data";
+import { splitTypeLine } from "../characteristics.js";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { normalizeCard } from "../normalize-card.js";
@@ -65,15 +66,6 @@ if (refusedCards.length > 0) {
   for (const r of refusedCards) console.log(`  ${r}`);
   await store.close();
   process.exit(1);
-}
-
-/** "Legendary Creature — Human Warrior" -> [["legendary","creature"], ["human","warrior"]] */
-function splitTypeLine(line: string): [string[], string[]] {
-  const [left, right] = line.toLowerCase().split("—");
-  return [
-    (left ?? "").trim().split(/\s+/).filter(Boolean),
-    (right ?? "").trim().split(/\s+/).filter(Boolean),
-  ];
 }
 
 mkdirSync(new URL(".", OUT), { recursive: true });

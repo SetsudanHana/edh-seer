@@ -1,11 +1,17 @@
 import type { Clause } from "./segment.js";
 
-/** Bump when SYSTEM, VERBS, TRIGGERS or ZONES change — anything that could make the model answer
- *  the same clause differently. A bump invalidates every persisted `cardClauses` doc and re-pays
- *  for the whole corpus, which is the same failure mode PROMPT_VERSION 24 created for the flat
- *  tagger. That is a real, unsolved cost: this version guards a COMPOUND artifact, so adding one
- *  verb for one narrow case re-buys all 2,544 cards. Treat a bump as a spending decision. */
-export const NORMALIZE_VERSION = 2;
+/** Bump when ANYTHING that determines the request changes: SYSTEM, VERBS, TRIGGERS, ZONES — and
+ *  `segment.ts`, because the segmenter decides which clauses exist and what ids they carry.
+ *
+ *  That last one is not obvious and is easy to get wrong: `segmentHash` covers the card's INPUTS
+ *  (oracle text, type line, keywords), not the segmenter's behaviour. So a segmenter change alters
+ *  the clause list while the hash stays identical, and without a version bump every persisted doc
+ *  would look fresh forever and never re-queue. Multi-face handling changed exactly that way.
+ *
+ *  A bump invalidates every persisted `cardClauses` doc and re-pays for the whole corpus — the same
+ *  failure mode PROMPT_VERSION 24 created for the flat tagger. This version guards a COMPOUND
+ *  artifact, so one narrow change re-buys all 2,544 cards. Treat a bump as a spending decision. */
+export const NORMALIZE_VERSION = 3;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",

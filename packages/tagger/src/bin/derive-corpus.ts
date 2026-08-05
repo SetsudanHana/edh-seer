@@ -6,6 +6,7 @@
  *
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { connect, loadConfig } from "@mtg/data";
+import { splitTypeLine } from "../characteristics.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
 import {
@@ -62,17 +63,17 @@ console.log(`derived ${written}, up-to-date ${skipped}, wrote ${empty} card(s) w
 await store.close();
 
 /** Printed characteristics, read from the card document — derivation never asks a model for what
- *  the database already knows. */
+ *  the database already knows. Uses the shared `splitTypeLine` so multi-face cards contribute both
+ *  faces' types; a local copy of that split is what put "//" into 116 cards' subtypes. */
 function charsFrom(doc: {
   typeLine?: string; colors?: string[]; colorIdentity?: string[]; manaValue?: number;
   power?: string | null; toughness?: string | null; keywords?: string[];
 }): DerivedTagsDoc["characteristics"] {
-  const [left, right] = (doc.typeLine ?? "").toLowerCase().split("—");
-  const words = (s: string): string[] => s.trim().split(/\s+/).filter(Boolean);
+  const [types, subtypes] = splitTypeLine(doc.typeLine ?? "");
   return {
-    types: words(left ?? ""), subtypes: words(right ?? ""),
+    types, subtypes,
     colors: doc.colors ?? [], identity: doc.colorIdentity ?? [],
     cmc: doc.manaValue ?? 0, power: doc.power ?? null, toughness: doc.toughness ?? null,
-    token: false, keywords: doc.keywords ?? [],
+    token: false, keywords: (doc.keywords ?? []).map((k) => k.toLowerCase()),
   };
 }
