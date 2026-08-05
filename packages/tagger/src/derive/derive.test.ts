@@ -223,12 +223,28 @@ test("the trigger's own control field wins over whatever the object text repeats
   }]);
   expect(abilities[0]?.trigger?.subject.control).toBe("you");
 
+  // Underworld Dreams: "Whenever an opponent draws a card, ... deals 1 damage to that player."
+  // `draw` rather than `draw-step` -- the vocabulary gained a real draw event once the persist gate
+  // refused this exact card for answering one, and `draw-step` no longer bridges to a verb.
   const opp = deriveAbilities([{
     id: 1, abilityType: "triggered",
-    trigger: { event: "draw-step", subject: "a player", control: "opponent" },
+    trigger: { event: "draw", subject: "a player", control: "opponent" },
     actions: [{ verb: "deal-damage", object: "that player" }],
   }]).abilities;
+  expect(opp[0]?.trigger?.verbs).toEqual(["draw"]);
   expect(opp[0]?.trigger?.subject.control).toBe("opp");
+});
+
+test("the retired `draw-step` bridge no longer fakes a draw event", () => {
+  // It used to map to `draw`, so "at the beginning of your draw step" meshed with every draw
+  // payoff. Now it has no engine verb and surfaces as an unknown trigger instead of a false edge.
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "draw-step", subject: "you", control: "you" },
+    actions: [{ verb: "draw", object: "a card" }],
+  }]);
+  expect(unknownTriggers).toEqual(["draw-step"]);
+  expect(abilities[0]?.trigger).toBeUndefined();
 });
 
 test("proliferate derives on both sides of the vocabulary bridge", () => {

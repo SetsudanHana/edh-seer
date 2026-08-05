@@ -94,6 +94,17 @@ const KNOWN_BASELINE_DEFECTS: Record<string, string> = {
   // Tekuthal's proliferate-doubling, which is `verb: "other"` like Doran's.
   "Karn's Bastion / Tekuthal, Inquiry Dominus": "Tekuthal's proliferate-doubling is `verb: \"other\"`, inert by the normalizer's contract",
   "Tekuthal, Inquiry Dominus / Thrummingbird": "Tekuthal's proliferate-doubling is `verb: \"other\"`, inert by the normalizer's contract",
+
+  // --- reanimator (1): this one passed on a reason that contradicts the card, and stopped when the
+  // reason got MORE correct. Animate Dead's ETB trigger used to normalize with subject "this",
+  // which parsed to no type at all -- `enters:any` -- so the pair matched via "Animate Dead
+  // triggers on Gray Merchant entering". It does not; it triggers on the Aura's own entry. The
+  // fixture regeneration under NORMALIZE_VERSION 2 records "this Aura", and subtype parsing now
+  // resolves that to `subtype: aura`, so the false event edge is gone. The SYNERGY is real -- you
+  // reanimate the Gray Merchant -- but it is a targeting relationship (a graveyard-recursion effect
+  // and a creature card in a graveyard), not an event one, and `pairReasons` has no rule for it.
+  // Deleting this entry needs that rule, not a looser trigger subject.
+  "Animate Dead / Gray Merchant of Asphodel": "passed via a false `enters:any` edge; Animate Dead triggers on its OWN entry",
 };
 
 test("derived tags pass every gold pair except the documented baseline defects", () => {
