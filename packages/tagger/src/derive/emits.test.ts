@@ -30,6 +30,13 @@ test("set-life emits nothing because the direction depends on the current life t
   expect(actionEmits({ verb: "set-life", object: "target opponent" })).toEqual([]);
 });
 
+test("play only emits land-play for an actual land -- 'play that card' is not a land drop", () => {
+  expect(actionEmits({ verb: "play", object: "a land card" }).map((e) => e.verb)).toEqual(["land-play"]);
+  // Ark of Hunger: "play that card" plays whatever was exiled, not necessarily a land -- an
+  // unconditional land-play emit here would wire a false landfall edge.
+  expect(actionEmits({ verb: "play", object: "that card" })).toEqual([]);
+});
+
 test("a move's events come from where it lands, not from the verb alone", () => {
   expect(actionEmits({ verb: "put", object: "those cards", toZone: "graveyard" }).map((e) => e.verb))
     .toEqual(["enters-graveyard"]);

@@ -62,7 +62,10 @@ const COST_ACTIONS: [RegExp, string][] = [
   [/\bsacrific\w*\b/i, "sacrifice"],
   [/\bdiscard\w*\b/i, "discard"],
   [/\bexile\w*\b/i, "exile"],
-  [/\bpay \d+ life\b/i, "pay-life"],
+  // "pay-life" is not a VERBS member (normalize-prompt.ts); paying life IS losing life, and
+  // "lose-life" already exists and reaches life-loss payoffs, so alias it there instead of handing
+  // the model a cost verb outside its closed vocabulary.
+  [/\bpay \d+ life\b/i, "lose-life"],
   [/\bremove\b.*\bcounter/i, "remove-counter"],
   [/\breturn\w*\b/i, "return"],
 ];

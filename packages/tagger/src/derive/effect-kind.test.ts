@@ -30,6 +30,10 @@ test("life change splits by who it happens to", () => {
   expect(actionEffectKind({ verb: "lose-life", object: "each opponent" })).toBe("player-life-loss");
 });
 
+test("copy-spell is not a reachable row -- VERBS (normalize-prompt.ts) only ever emits copy", () => {
+  expect(actionEffectKind({ verb: "copy-spell" })).toBeNull();
+});
+
 test("an action with no home in the closed 29 produces null, never a near miss", () => {
   expect(actionEffectKind({ verb: "destroy" })).toBeNull();
   expect(actionEffectKind({ verb: "fight" })).toBeNull();

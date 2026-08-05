@@ -51,6 +51,14 @@ test("scope separates spot removal from a wipe, and a pump from an anthem", () =
   expect(parseSubject("a creature").scope).toBeUndefined();
 });
 
+test("umbrella nouns (spell, permanent) yield to a concrete type once one is named", () => {
+  // matcher's PSEUDO_TYPE_SETS.spell is every card type except land, so collecting "spell" alongside
+  // "instant"/"sorcery" made pairReasons claim any nonland card supplies an instant/sorcery cast.
+  expect(parseSubject("instant or sorcery spell").type).toEqual(["instant", "sorcery"]);
+  // With no concrete type present, "spell" is all there is, and must still stand for it.
+  expect(parseSubject("target spell").type).toBe("spell");
+});
+
 test("numeric conditions written in the object text survive as StatPredicates", () => {
   // Without this the compass's power-matters category cannot tell Welcoming Vampire's gated
   // trigger from any unconditional ETB payoff -- the linking tag is identical.

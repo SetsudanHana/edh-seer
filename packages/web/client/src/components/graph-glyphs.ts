@@ -99,17 +99,26 @@ const TAX = "M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 17V9m-3 3 3-3 3 3";
 /** A coin with a down arrow -- the mirror of TAX, a cost going down. */
 const COST_REDUCTION = "M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 7v8m-3-3 3 3 3-3";
 
+/** A sun rising over a horizon -- the beginning of a turn's upkeep step. */
+const UPKEEP = "M12 3v4m-7 5h14M6 21a6 6 0 0 1 12 0";
+
+/** Two crossed blades -- the beginning of combat, distinct from ATTACKS' single directed thrust. */
+const BEGIN_COMBAT = "M4 4l16 16M20 4 4 20";
+
+/** A crescent moon -- the end step, the mirror of UPKEEP's sunrise. */
+const END_STEP = "M15 3a9 9 0 1 0 0 18 7 7 0 0 1 0-18z";
+
 /** A generic ring: the fallback for any tag prefix this module doesn't recognize. Deliberately
  *  a plain circle with no interior mark, so it can never be confused with COUNTER (circle+plus)
  *  or any other authored glyph. */
 export const FALLBACK = "M12 3a9 9 0 1 0 .01 0z";
 
-/** All 32 required glyphs: the 20 `VERB_VOCAB` members (`@mtg/tagger`) plus the top-12 effect
+/** All 35 required glyphs: the 23 `VERB_VOCAB` members (`@mtg/tagger`) plus the top-12 effect
  *  kinds by corpus occurrence. Keyed by the string that appears as the tag prefix on an `event:`
  *  node id (see `glyphFor`), not by any display name. Values are SVG path-data strings -- pass
  *  one to `new Path2D(...)` at the canvas call site to get something `ctx.stroke()` can draw. */
 export const GLYPH: Record<string, string> = {
-  // VERB_VOCAB (20)
+  // VERB_VOCAB (23)
   enters: ENTERS,
   "enters-graveyard": GRAVEYARD,
   dies: GRAVEYARD,
@@ -130,6 +139,9 @@ export const GLYPH: Record<string, string> = {
   "land-play": LAND_PLAY,
   untaps: UNTAPS,
   proliferate: PROLIFERATE,
+  upkeep: UPKEEP,
+  "begin-combat": BEGIN_COMBAT,
+  "end-step": END_STEP,
 
   // top-12 effect kinds by corpus occurrence
   pump: PUMP,

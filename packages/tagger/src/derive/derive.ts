@@ -71,7 +71,12 @@ function drainAbility(clause: ClauseRecord, kind: AbilityKind, trigger: Ability[
   const loss = actions.find((a) => a.verb === "lose-life" && parseSubject(a.object ?? "").control !== "you");
   const gain = actions.find((a) => a.verb === "gain-life" && parseSubject(a.object ?? "").control === "you");
   if (!loss || !gain) return null;
-  const ability: Ability = { kind, effect: { kind: "drain", subject: parseSubject(loss.object ?? "") } };
+  // Same wildcard-mesh guard as the per-action loop above: a static-typed drain clause with an
+  // unconstrained subject would otherwise reproduce the whole-deck lord edge namesItsTargets exists
+  // to prevent.
+  const subject = parseSubject(loss.object ?? "");
+  const keepSubject = kind !== "static" || namesItsTargets(subject);
+  const ability: Ability = { kind, effect: keepSubject ? { kind: "drain", subject } : { kind: "drain" } };
   if (trigger) ability.trigger = trigger;
   return ability;
 }
@@ -93,9 +98,18 @@ function effectSubject(action: Action, kind: string): ReturnType<typeof parseSub
  *  subtype matches EVERY card. Psychosis Crawler is the case: "its power and toughness are each
  *  equal to the number of cards in your hand" is a self-referential P/T definition, not an anthem,
  *  and it was deriving a `static:pump` lord over the entire deck. Same defect class as the
- *  `spell -> static` bug: an unconstrained static subject is a mesh, not a synergy. */
+ *  `spell -> static` bug: an unconstrained static subject is a mesh, not a synergy.
+ *
+ *  Naming a type/subtype is not enough on its own: "enchanted creature" and "this creature" both
+ *  name a type but pick out exactly one permanent, not the deck. `parseScope` already tells target
+ *  singular apart from a mass effect ("creatures you control" -> scope "all"; a bare singular ->
+ *  scope undefined), so require that too -- Animate Dead, All That Glitters and Storm-Kiln Artist
+ *  ("this creature") were each meshing a single-target pump into an anthem over every creature. */
 function namesItsTargets(subject: ReturnType<typeof parseSubject>): boolean {
-  return subject.type !== undefined || subject.subtype !== undefined;
+  return (
+    (subject.type !== undefined || subject.subtype !== undefined) &&
+    (subject.scope === "all" || subject.scope === "each")
+  );
 }
 
 /** The clause's own `control` field, which states whose permanents/players the trigger watches. The
@@ -170,6 +184,10 @@ export function deriveCardTags(input: DeriveInput): CardTags {
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,
+    // WARNING: 0 will never equal PROMPT_VERSION (llm/prompt.ts), so `needsRetag`/`selectUntagged`
+    // will see any persisted derived doc as permanently stale and re-queue it for LLM tagging
+    // forever. Fine while derivation is not yet wired into the persistence path -- revisit this
+    // the moment it is.
     promptVersion: 0,
     model: "derived",
     characteristics: input.characteristics,

@@ -52,7 +52,9 @@ const SIMPLE: Record<string, EffectKind> = {
   copy: "clone",
   "extra-combat": "extra-combat",
   "trigger-again": "trigger-doubling",
-  "copy-spell": "copy-spell",
+  // No "copy-spell" row: VERBS (normalize-prompt.ts) has only "copy", never "copy-spell", so this
+  // row could never fire -- the clause vocabulary cannot distinguish copying a spell from copying a
+  // permanent, and every copy effect derives "clone" via the row above.
   mill: "top-manipulation",
   emblem: "token-generation",
 };

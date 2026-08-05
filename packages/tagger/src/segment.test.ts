@@ -125,6 +125,13 @@ test("cost actions are derived, and mana and tapping are never among them", () =
   expect(segment("{T}: Add {C}.")[0].costActions).toBeUndefined();
 });
 
+test("paying life is a cost action spelled with the legal verb lose-life, not pay-life", () => {
+  // pay-life is not a VERBS member (normalize-prompt.ts); the model would have to invent an illegal
+  // verb or substitute one, which is the drift this pipeline exists to remove. lose-life is legal,
+  // correct by the rules, and already reaches life-loss payoffs.
+  expect(segment("Pay 2 life: Draw a card.")[0].costActions).toEqual(["lose-life"]);
+});
+
 test("a trigger embedded after a sentence becomes its own clause", () => {
   // Lapis Orb: one run recorded the delayed trigger, the next ignored it.
   const c = segment("Add {U}. When you spend this mana to cast a Dragon creature spell, scry 2.");

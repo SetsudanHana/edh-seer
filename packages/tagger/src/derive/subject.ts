@@ -34,7 +34,13 @@ function parseTypes(t: string): { type?: string | string[]; plural: boolean } {
     else if (new RegExp(`\\b${ty}\\b`).test(t)) found.push(ty);
   }
   if (found.length === 0) return { plural: /\bopponents\b|\bplayers\b/.test(t) };
-  return { type: found.length === 1 ? found[0] : found, plural };
+  // "spell" and "permanent" are umbrella nouns, not constraints -- matcher's PSEUDO_TYPE_SETS
+  // expands "spell" to every non-land type, so "instant or sorcery spell" collecting all three
+  // words made every nonland card match. Drop the umbrella word once a concrete type narrows it,
+  // the same move already made for "token"/"card" above; keep it only when it's all there is.
+  const concrete = found.filter((f) => f !== "spell" && f !== "permanent");
+  const kept = concrete.length > 0 ? concrete : found;
+  return { type: kept.length === 1 ? kept[0] : kept, plural };
 }
 
 /** The quantifier the text used. An explicit word wins; otherwise a plural noun is a mass effect

@@ -175,6 +175,44 @@ test("a static ability that does not name WHICH permanents it applies to gets no
   expect(pumpSpell[0]?.effect.subject).toBeDefined();
 });
 
+test("a static pump naming a type but no scope (a single permanent) is not an anthem", () => {
+  // Animate Dead, All That Glitters, Ethereal Armor, Ancestral Mask, Sage's Reverie: "enchanted
+  // creature" names a type (creature) but picks out exactly one permanent, not the deck. Naming a
+  // type alone is not enough -- before the scope guard this drew a lord edge to every creature in
+  // the pool.
+  const enchanted = deriveAbilities([{
+    id: 1, abilityType: "static", actions: [{ verb: "modify-pt", object: "enchanted creature" }],
+  }]).abilities;
+  expect(enchanted[0]?.effect.subject).toBeUndefined();
+
+  // Storm-Kiln Artist: "this creature" is the same single-permanent case, spelled differently.
+  const thisCreature = deriveAbilities([{
+    id: 1, abilityType: "static", actions: [{ verb: "modify-pt", object: "this creature" }],
+  }]).abilities;
+  expect(thisCreature[0]?.effect.subject).toBeUndefined();
+
+  // A real mass anthem (scope "all") still keeps its subject.
+  const anthem = deriveAbilities([{
+    id: 1, abilityType: "static", actions: [{ verb: "modify-pt", object: "creatures you control" }],
+  }]).abilities;
+  expect(anthem[0]?.effect.subject).toMatchObject({ type: "creature", scope: "all" });
+});
+
+test("a static drain is guarded the same way -- naming a type with no scope drops the subject", () => {
+  // Same wildcard-mesh risk as the pump case above: a static-typed drain clause built its subject
+  // without routing through namesItsTargets, so it could reproduce the whole-deck mesh too.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [
+      { verb: "lose-life", object: "enchanted creature's controller" },
+      { verb: "gain-life", object: "you" },
+    ],
+  }]);
+  const drain = abilities.find((a) => a.effect.kind === "drain");
+  expect(drain).toBeDefined();
+  expect(drain?.effect.subject).toBeUndefined();
+});
+
 test("the trigger's own control field wins over whatever the object text repeats", () => {
   // "Whenever you cast a spell" normalizes to subject "a spell" + control "you"; reading only the
   // text widened Consuming Aberration to every spell anyone casts.
