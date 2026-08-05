@@ -13,8 +13,12 @@ const tag = (model: string): CardTags => ({
 
 const src = (doc: CardTags | null) => ({ findOne: async () => doc });
 
-test("TAGS_SOURCE defaults to flat, so shipping this changes nothing", () => {
-  expect(resolveTagsSource({})).toBe("flat");
+test("TAGS_SOURCE defaults to derived", () => {
+  // Flipped 2026-08-06 on the edge-precision measurement: derived 69.0% [58.5, 77.9] against flat
+  // 18.0% [12.7, 24.9], non-overlapping on every view. `derived` and not `derived-first` because
+  // this project treats a silent wrong answer as worse than a missing one, and the flat fallback
+  // would serve an 18%-precision population for any card outside the purchased corpus.
+  expect(resolveTagsSource({})).toBe("derived");
   expect(resolveTagsSource({ TAGS_SOURCE: "derived-first" })).toBe("derived-first");
   expect(resolveTagsSource({ TAGS_SOURCE: "derived" })).toBe("derived");
 });
