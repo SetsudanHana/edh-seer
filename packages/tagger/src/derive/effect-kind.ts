@@ -57,10 +57,34 @@ const SIMPLE: Record<string, EffectKind> = {
   // permanent, and every copy effect derives "clone" via the row above.
   mill: "top-manipulation",
   emblem: "token-generation",
+  // A tutor rearranges what you draw, which is the same payoff `mill` names. Demonic Tutor's live
+  // flat tag is exactly this, so the kind is one the engine already consumes.
+  search: "top-manipulation",
 };
+
+/** A restriction is a TAX only when it can be paid through. Propaganda and Ghostly Prison both
+ *  carry a live flat tag of `tax`; Bedlam ("Creatures can't block") carries nothing, because no
+ *  amount of mana lets you block. The difference is a price, and it is stated in the object. */
+const PAYABLE = /\bunless\b[^.]*\bpay/i;
+
+/** Keywords whose grant the engine has a kind for. `speed-increase` is what the FLAT tagger already
+ *  assigns to Berserkers' Onslaught's double strike, and `mechanisms.ts` consumes it for
+ *  attack-matters, so this feeds a rule that exists rather than inventing one.
+ *
+ *  Nothing else granted gets a kind, and that is deliberate. hexproof / indestructible / shroud /
+ *  ward are the `protection` deck ROLE, which `build.ts:126` already derives from oracle text with
+ *  no help from tags; flying, trample and menace are evasion, which has no kind at all. Giving them
+ *  a near-miss would be worse than silence — it is consumed as if it were true. */
+const SPEED_KEYWORDS = /\b(haste|double strike)\b/i;
 
 export function actionEffectKind(action: Action): EffectKind | null {
   const verb = action.verb ?? "";
+  // 342 corpus cards carry a grant-ability action and the verb had no row here at all, so Lightning
+  // Greaves and Swiftfoot Boots derived nothing whatsoever.
+  if (verb === "grant-ability") {
+    return SPEED_KEYWORDS.test(action.object ?? "") ? "speed-increase" : null;
+  }
+  if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
   for (const r of ZONE_RULES) {
     if (r.verb !== verb) continue;
     if (r.from !== undefined && (action.fromZone ?? null) !== r.from) continue;

@@ -45,3 +45,4 @@ test("a move's events come from where it lands, not from the verb alone", () => 
   // A bounce to hand lands nowhere anything triggers on, so it emits nothing rather than guessing.
   expect(actionEmits({ verb: "return", object: "target creature", toZone: "hand" })).toEqual([]);
 });
+

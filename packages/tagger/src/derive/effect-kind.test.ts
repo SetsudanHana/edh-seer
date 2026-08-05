@@ -87,3 +87,37 @@ test("self-mill is a graveyard entry from the LIBRARY, not any move into a grave
   expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "graveyard" }))
     .toBeNull();
 });
+
+test("granting haste or double strike is a speed increase; other grants stay silent", () => {
+  // 342 corpus cards carry a grant-ability action and `grant-ability` had no row at all, so
+  // Lightning Greaves, Swiftfoot Boots and Rage Reflection derived nothing. `speed-increase` is the
+  // kind the FLAT tagger already assigns to Berserkers' Onslaught's double strike, and
+  // mechanisms.ts consumes it for attack-matters, so this feeds a rule that exists.
+  expect(actionEffectKind({ verb: "grant-ability", object: "haste" })).toBe("speed-increase");
+  expect(actionEffectKind({ verb: "grant-ability", object: "haste until end of turn" })).toBe("speed-increase");
+  expect(actionEffectKind({ verb: "grant-ability", object: "double strike" })).toBe("speed-increase");
+  expect(actionEffectKind({ verb: "grant-ability", object: "hexproof and haste" })).toBe("speed-increase");
+
+  // The rest have no kind in the closed vocabulary and must NOT be given a near-miss: hexproof,
+  // indestructible, shroud and ward are the `protection` deck ROLE, which build.ts:126 already
+  // derives from oracle text independently of tags. Evasion keywords have no kind at all.
+  // effect-kind.ts's own rule: a near-miss kind is worse than null, because it is consumed as true.
+  expect(actionEffectKind({ verb: "grant-ability", object: "hexproof and indestructible" })).toBeNull();
+  expect(actionEffectKind({ verb: "grant-ability", object: "flying" })).toBeNull();
+  expect(actionEffectKind({ verb: "grant-ability", object: "deathtouch" })).toBeNull();
+  expect(actionEffectKind({ verb: "grant-ability", object: "" })).toBeNull();
+});
+
+test("a tutor is top-manipulation, matching what the flat tagger already assigns", () => {
+  // Demonic Tutor's live flat tag is exactly { kind: "top-manipulation" }. `search` had no row, so
+  // Demonic Tutor, Fabricate and Spellseeker all derived nothing.
+  expect(actionEffectKind({ verb: "search", object: "your library" })).toBe("top-manipulation");
+});
+
+test("`cant` is a tax only when it can be paid through", () => {
+  // Propaganda and Ghostly Prison both carry a live flat tag of { kind: "tax" }; Bedlam
+  // ("Creatures can't block") carries []. The difference is whether the restriction has a price.
+  expect(actionEffectKind({ verb: "cant", object: "attack you unless their controller pays {2}" })).toBe("tax");
+  expect(actionEffectKind({ verb: "cant", object: "block" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "" })).toBeNull();
+});
