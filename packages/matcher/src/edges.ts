@@ -127,11 +127,11 @@ export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): bo
   return !combatConsumerNarrows(consumer.subject);
 }
 
-/** A consumer trigger that watches the card ITSELF entering, against a producer event that is only
- *  the producer being a permanent that entered. Sol Ring entering does not trigger "when Urza
- *  enters", and before this gate every land, rock and creature in the deck was credited with
- *  supplying every self-ETB in it -- 74% of all false edges in the 2026-08-05 precision
- *  measurement, in both tag populations.
+/** A consumer trigger that watches the card ITSELF, against a producer event that is only the
+ *  producer existing. Sol Ring entering does not trigger "when Urza enters"; Lightning Bolt being
+ *  cast does not trigger Nulldrifter's "when you cast THIS spell". Before this gate every permanent
+ *  in the deck supplied every self-ETB and every spell supplied every self-cast -- 74% of all false
+ *  edges in the 2026-08-05 precision measurement, in both tag populations.
  *
  *  Two producer events can never be the consumer entering:
  *    - an IMPLIED one — the producer merely being a permanent that entered. Same scoping as
@@ -143,7 +143,7 @@ export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): bo
  *      implied rule alone left 25 of these standing in the measured sample.
  *  Tokens remain real supply for every OTHER consumer: go-wide is the point of them. */
 export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
-  if (consumer.verb !== "enters") return false;
+  if (consumer.verb !== "enters" && consumer.verb !== "cast") return false;
   // Only the GRAVEYARD variant is excluded (it has its own matcher). `normalizeZoneEvent` stamps
   // zone "battlefield" on every enters event, so testing for an unset zone here would exclude
   // everything and make the gate dead code.

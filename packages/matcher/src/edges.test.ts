@@ -862,3 +862,45 @@ test("a token entering still satisfies a payoff watching OTHER creatures enter",
   }]);
   expect(directedReasons(tokenMaker, payoff, H).some((r) => r.tag.startsWith("enters"))).toBe(true);
 });
+
+test("a self-CAST trigger is not supplied by another spell being cast", () => {
+  // The same defect one verb over: Nulldrifter's "When you cast this spell, draw two cards" watches
+  // ITSELF being cast, and every spell in the deck was credited with supplying it. Skull Storm,
+  // Artisan of Kozilek and Warped Tusker are the same shape.
+  const otherSpell = base("Lightning Bolt", []);
+  const selfCast = base("Nulldrifter", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { control: "you", token: null, self: true } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(directedReasons(otherSpell, selfCast, H).filter((r) => r.tag.startsWith("cast"))).toEqual([]);
+});
+
+test("a card that casts OTHER cards does supply a self-cast trigger", () => {
+  // The bound, and the reason this cannot just drop self-cast triggers: Bolas's Citadel casting
+  // Nulldrifter off the top genuinely triggers Nulldrifter's own cast ability. An authored cast
+  // emit is a card that casts something else; an implied one is only the producer being castable.
+  const enabler = base("Bolas's Citadel", [{
+    kind: "static",
+    effect: { kind: "" },
+    emits: [{ verb: "cast", subject: { control: "you", token: null } }],
+  }]);
+  const selfCast = base("Nulldrifter", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { control: "you", token: null, self: true } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(directedReasons(enabler, selfCast, H).some((r) => r.tag.startsWith("cast"))).toBe(true);
+});
+
+test("a payoff watching OTHER casts is untouched", () => {
+  // The bound in the other direction. `base` gives every fixture card types: ["creature"], so the
+  // payoff here watches creature casts -- Bontu's Monument's shape rather than Talrand's.
+  const spell = base("Grave Titan", []);
+  const payoff = base("Bontu's Monument", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "drain" },
+  }]);
+  expect(directedReasons(spell, payoff, H).some((r) => r.tag.startsWith("cast"))).toBe(true);
+});
