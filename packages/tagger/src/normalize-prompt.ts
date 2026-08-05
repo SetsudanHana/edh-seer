@@ -5,7 +5,7 @@ import type { Clause } from "./segment.js";
  *  for the whole corpus, which is the same failure mode PROMPT_VERSION 24 created for the flat
  *  tagger. That is a real, unsolved cost: this version guards a COMPOUND artifact, so adding one
  *  verb for one narrow case re-buys all 2,544 cards. Treat a bump as a spending decision. */
-export const NORMALIZE_VERSION = 1;
+export const NORMALIZE_VERSION = 2;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -14,7 +14,7 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   "animate", "cant", "emblem", "fight", "set-life", "proliferate", "other", "none"];
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
 export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps", "untaps", "cast",
-  "upkeep", "begin-combat", "end-step", "draw-step", "main-phase", "combat-damage-step", "damage-dealt", "life-gained", "life-lost",
+  "upkeep", "begin-combat", "end-step", "draw", "draw-step", "main-phase", "combat-damage-step", "damage-dealt", "life-gained", "life-lost",
   "counter-added", "sacrificed", "discarded", "milled", "turned-face-up", "level-up", "chapter",
   "proliferate",
   "none"];

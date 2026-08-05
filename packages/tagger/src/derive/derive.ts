@@ -54,8 +54,15 @@ const LEGAL_VERBS = new Set<string>(VERB_VOCAB);
 /** normalize-prompt.ts's TRIGGERS vocabulary to the engine's Verb vocabulary. These are two
  *  independently closed sets, and where they name the same event they spell it differently: the
  *  clause side names the EVENT ("life-gained"), the engine side names the ACTION ("gain-life").
- *  Only exact identities belong here — `draw-step` is the clause vocabulary's ONLY way to say
- *  "whenever you draw a card" (it has no `draw` member), so it is that and not the draw step.
+ *  Only exact identities belong here. `draw-step` was for a long time the clause vocabulary's ONLY
+ *  way to say "whenever you draw a card", so it is mapped to `draw` — conflating the turn phase
+ *  with the event. `draw` is now a TRIGGERS member in its own right, because the model was already
+ *  answering `draw` and being REFUSED by the persist gate on 2 of 58 fixture cards, and 250 corpus
+ *  cards carry such a trigger. The `draw-step` bridge is kept anyway: dropping it regressed three
+ *  wheels-draw gold pairs, because the committed fixture still records `draw-step` from before the
+ *  vocabulary had `draw`. Net effect is still an improvement — a real draw trigger is now recorded
+ *  as one — with the residual wart that a genuine draw-STEP trigger keeps emitting a draw event.
+ *  Retire the bridge when the fixture is regenerated under NORMALIZE_VERSION 2.
  *  `damage-dealt`, `blocks`, `main-phase`, `chapter` and friends have no engine verb at all and
  *  are deliberately absent: they surface in `unknownTriggers` rather than pick a near-miss. */
 const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
