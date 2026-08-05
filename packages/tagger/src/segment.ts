@@ -350,7 +350,10 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
         const t = m.trim();
         if (t) {
           const mode = next({ kind: "mode", text: t, parentId });
-          if (parentType) mode.abilityType = parentType;
+          // ...unless the mode states a trigger of its OWN. Outpost Siege and Mirrodin Besieged hang
+          // two full triggered abilities off a static "As this enters, choose X" parent, and
+          // inheriting there types a printed trigger static.
+          if (parentType && mode.abilityType !== "triggered") mode.abilityType = parentType;
         }
       }
       continue;

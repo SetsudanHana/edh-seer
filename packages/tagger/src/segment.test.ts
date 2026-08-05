@@ -329,3 +329,18 @@ test("a label before a non-trigger does not turn the ability into one", () => {
   const landfall = segment("Landfall — Creatures you control get +1/+1.", [], "Enchantment");
   expect(landfall[0].abilityType).toBe("static");
 });
+
+test("a mode carrying its OWN trigger keeps it, rather than inheriting the parent's type", () => {
+  // Outpost Siege and Mirrodin Besieged: the parent is "As this enchantment enters, choose X" --
+  // genuinely static -- and each mode is a full triggered ability in its own right. Inheriting the
+  // parent's type unconditionally typed both modes static, and the gate then refused the card for
+  // answering the trigger that is plainly printed on it.
+  const c = segment(
+    "As this enchantment enters, choose Khans or Dragons.\n• Khans — At the beginning of your upkeep, exile the top card of your library.\n• Dragons — Whenever a creature you control leaves the battlefield, this enchantment deals 1 damage to any target.",
+    [], "Enchantment",
+  );
+  const modes = c.filter((x) => x.kind === "mode");
+  expect(modes).toHaveLength(2);
+  expect(modes.map((m) => m.abilityType)).toEqual(["triggered", "triggered"]);
+  expect(c.find((x) => x.kind === "ability")?.abilityType).toBe("static");
+});
