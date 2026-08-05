@@ -28,8 +28,8 @@ import { buildRequest, normalizeCard } from "../normalize-card.js";
 import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE } from "../normalize-prompt.js";
 import { segment } from "../segment.js";
 import {
-  CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, carriesOther, segmentHash,
-  type CardClausesDoc,
+  CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, carriesOther, missesASplit,
+  segmentHash, type CardClausesDoc,
 } from "../clause-store.js";
 
 const CALIBRATION = new URL("../../../cli/decks/calibration/", import.meta.url);
@@ -53,11 +53,12 @@ const CONCURRENCY = Number(arg("--concurrency") ?? 6);
  *  `other` escape hatch, plus the ones that have no doc at all. 340 + 88 of 2,453 is ~$1.50 against
  *  ~$8.50, and whatever still says `other` afterwards is the next punch list.
  *
- *  A SEGMENTER fix needs no equivalent selector, which was measured rather than assumed: the cards
- *  the label-trigger fix reclassifies are precisely the ones the gate had been refusing, so they
- *  carry no doc and `needsNormalize` already queues them. 0 persisted docs in the calibration corpus
- *  disagree with the fixed segmenter. If one ever does, it is invisible here — `segmentHash` covers
- *  the card's inputs, not our code — and a stored-vs-fresh abilityType comparison is the fix. */
+ *  Whether a change needs its OWN selector is a measurement, not a guess. The two segmenter fixes
+ *  needed none: 0 persisted docs disagreed with the fixed segmenter, because the cards they
+ *  reclassify are exactly the ones the gate had been refusing, so they carry no doc at all and
+ *  `needsNormalize` already queues them. The two-condition split DID need one — 27 of the 46 such
+ *  cards are persisted with one of the clause's two events silently dropped, and none of them
+ *  carries `other` — hence `missesASplit`. */
 const REFRESH_OTHER = process.argv.includes("--refresh-other");
 
 /** The calibration corpus: 2,544 distinct cards over 71 labelled decks. */
@@ -92,7 +93,10 @@ for (const name of calibrationNames()) {
   if (!doc) { unresolved.push(name); continue; }
   const hash = segmentHash(doc.oracleText ?? "", doc.typeLine ?? "", doc.keywords ?? []);
   const existing = await clausesCol.findOne({ oracleId: doc._id });
-  if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !(REFRESH_OTHER && carriesOther(existing))) continue;
+  const segmented = segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "");
+  const refreshable = REFRESH_OTHER
+    && (carriesOther(existing) || missesASplit(existing, segmented));
+  if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable) continue;
   jobs.push({ oracleId: doc._id, name: doc.name, oracleText: doc.oracleText, keywords: doc.keywords, typeLine: doc.typeLine, hash });
 }
 

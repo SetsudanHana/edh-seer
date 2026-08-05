@@ -12,6 +12,7 @@
  *  hundred bytes per card protects the one artifact this pipeline promises never to re-buy. */
 import { createHash } from "node:crypto";
 import type { Db } from "mongodb";
+import type { Clause } from "./segment.js";
 import type { CardTags } from "./schema.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import type { ClauseViolation } from "./validate-clauses.js";
@@ -85,6 +86,22 @@ export function needsNormalize(
  *  somewhere canonicalisation resolved is not stuck. */
 export function carriesOther(doc: CardClausesDoc | null): boolean {
   return (doc?.canonical ?? []).some((c) => (c.actions ?? []).some((a) => a.verb === "other"));
+}
+
+/** Was this card answered before the prompt asked for a record per trigger condition? Such a doc
+ *  recorded ONE of the clause's two events and silently dropped the other — Ichor Wellspring
+ *  remembered as an ETB payoff and not as a death payoff, which is half the card.
+ *
+ *  `segmentHash` cannot see this: it covers the card's inputs, not the prompt, so these docs look
+ *  fresh forever. 27 of the 46 two-condition cards in the calibration corpus are in that state and
+ *  none of them carries `other`, so `carriesOther` does not reach them either.
+ *
+ *  Counts records against clauses rather than matching each overflow to its parent: a card with two
+ *  two-condition clauses and only one split reads as answered. That undercounts, never overcounts,
+ *  and the finer check costs more code than the remaining cards are worth. */
+export function missesASplit(doc: CardClausesDoc | null, segmented: Clause[]): boolean {
+  if (!doc) return false; // no doc at all is `needsNormalize`'s business
+  return segmented.some((c) => c.multiTrigger) && doc.clauses.length <= segmented.length;
 }
 
 /** FREE, so it re-runs on any drift: newer derivation code, a re-normalized clause doc, or a

@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
+import type { Clause } from "./segment.js";
+import type { ClauseRecord } from "./canonicalize.js";
 import {
-  segmentHash, needsNormalize, needsDerive, carriesOther,
+  segmentHash, needsNormalize, needsDerive, carriesOther, missesASplit,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "./clause-store.js";
 
@@ -113,4 +115,24 @@ test("--refresh-other selects exactly the cards whose stored answer used the esc
       actions: [{ verb: "draw", object: "a card" }, { verb: "other", object: "you have no maximum hand size" }],
     }],
   }))).toBe(true);
+});
+
+test("a two-condition clause answered without its split is stale", () => {
+  // The prompt now asks for one record per condition, so a doc persisted before that rule recorded
+  // ONE of the two events and dropped the other. 27 of the 46 such cards in the calibration corpus
+  // are in that state, and none of them carries `other`, so nothing re-queues them: `segmentHash`
+  // covers the card's inputs, not the prompt. Measured, not assumed -- the two earlier segmenter
+  // fixes needed no selector because their cards had all been refused and carried no doc at all.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", multiTrigger: true, text: "When this artifact enters or is put into a graveyard, draw a card." },
+  ];
+  const rec = (id: number, event: string): ClauseRecord =>
+    ({ id, abilityType: "triggered", trigger: { event, subject: "this", control: "you" }, actions: [{ verb: "draw" }] });
+
+  expect(missesASplit(clauseDoc({ clauses: [rec(1, "enters")] }), segmented)).toBe(true);
+  expect(missesASplit(clauseDoc({ clauses: [rec(1, "enters"), rec(2, "dies")] }), segmented)).toBe(false);
+  // A card with no two-condition clause has nothing to split.
+  expect(missesASplit(clauseDoc({ clauses: [rec(1, "enters")] }),
+    [{ id: 1, kind: "ability", abilityType: "triggered", text: "When this enters, draw a card." }])).toBe(false);
+  expect(missesASplit(null, segmented)).toBe(false);
 });

@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 5;
+export const NORMALIZE_VERSION = 6;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -50,7 +50,8 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
 export const SYSTEM = `You NORMALIZE Magic: The Gathering rules text. You do not classify, rate, or interpret it.
 
 You are given a card's clauses, already numbered. Answer EVERY clause id exactly once, in order.
-Never merge clauses, never split one, never invent an id.
+Never merge clauses, never split one, never invent an id — with one stated exception, a clause
+marked twoConditions, described in the rules below.
 
 The clause list already carries type= and cost= where they apply. Do NOT re-decide them; copy
 type= into abilityType verbatim.
@@ -114,6 +115,11 @@ Rules:
 - "fight" is two creatures dealing damage equal to their power to each other.
 - "set-life" is a life total being SET to a number ("target opponent's life total becomes 10").
   It is not lose-life or gain-life: how much changes depends on the total it started from.
+- A clause marked twoConditions fires on TWO different events ("When this enters OR is put into a
+  graveyard", "When this enters AND whenever you fully unlock a Room"). One record holds one
+  trigger, so answer that clause with TWO records: the first keeps the clause's id, the second takes
+  the next unused id, and both repeat the same actions. Only a clause marked twoConditions may be
+  answered this way, and only with one extra record.
 - A TriggerEvent of "other" is the same escape hatch for a trigger no event above names ("whenever
   you choose a Ring-bearer"): use it and put the event verbatim in the trigger's subject. Never
   force a near-miss event — a wrong event forms false edges with every payoff for the real one.
@@ -127,7 +133,8 @@ Return ONLY { "clauses": [ ... ] }.`;
 export function listClauses(clauses: Clause[]): string {
   return clauses.map((c) =>
     `${c.id}. [${c.kind}${c.marker ? ` ${c.marker}` : ""}]` +
-    `${c.abilityType ? ` type=${c.abilityType}` : ""}${c.cost ? ` cost="${c.cost}"` : ""}` +
+    `${c.abilityType ? ` type=${c.abilityType}` : ""}${c.multiTrigger ? " twoConditions" : ""}` +
+    `${c.cost ? ` cost="${c.cost}"` : ""}` +
     `${c.costActions ? ` costActions=[${c.costActions.join(",")}]` : ""}` +
     `${c.effectActions ? ` effectActions=[${c.effectActions.join(",")}]` : ""} ${c.text}`).join("\n");
 }

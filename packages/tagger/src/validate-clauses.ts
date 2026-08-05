@@ -82,10 +82,18 @@ export function validateClauses(segmented: Clause[], got: ClauseRecord[]): Claus
   const out: ClauseViolation[] = [];
   const expected = new Map(segmented.map((c) => [c.id, c]));
   const seen = new Set<number>();
+  // A clause stating two trigger conditions is legitimately answered with one record per condition:
+  // the schema holds a single `trigger`, so the second event has nowhere else to go, and the model
+  // numbers the overflow itself. Each such clause buys exactly ONE extra record and no more —
+  // beyond that there is no clause left for the record to belong to and it is a hallucination
+  // again. The overflow is validated against its parent clause, so it is checked for what it says.
+  const overflowParents = segmented.filter((c) => c.multiTrigger);
 
   for (const rec of got) {
     if (!expected.has(rec.id)) {
-      out.push(violation(rec.id, "invented-id", `no clause ${rec.id} was sent`));
+      const parent = overflowParents.shift();
+      if (parent) out.push(...validateOne(parent, rec));
+      else out.push(violation(rec.id, "invented-id", `no clause ${rec.id} was sent`));
       continue;
     }
     if (seen.has(rec.id)) {

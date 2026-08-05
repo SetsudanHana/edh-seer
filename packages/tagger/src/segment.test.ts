@@ -344,3 +344,29 @@ test("a mode carrying its OWN trigger keeps it, rather than inheriting the paren
   expect(modes.map((m) => m.abilityType)).toEqual(["triggered", "triggered"]);
   expect(c.find((x) => x.kind === "ability")?.abilityType).toBe("static");
 });
+
+test("a clause stating two trigger conditions is marked as such", () => {
+  // Ichor Wellspring fires on entering AND on dying, but the schema's `trigger` holds ONE event, so
+  // the model answers such a clause with two records and numbers the second one itself. That was
+  // 16 refusals across the two refresh runs, and 429 cards carry the shape corpus-wide. The gate
+  // cannot tell a legitimate overflow from a hallucinated clause without knowing which clauses
+  // genuinely state two conditions, so the segmenter -- which already owns what a clause IS -- says.
+  const wellspring = segment("When this artifact enters or is put into a graveyard from the battlefield, draw a card.", [], "Artifact");
+  expect(wellspring[0].multiTrigger).toBe(true);
+
+  const conscription = segment("When this enchantment enters and whenever you draw your third card each turn, amass Zombies 3.", [], "Enchantment");
+  expect(conscription[0].multiTrigger).toBe(true);
+
+  const sovereign = segment("Whenever this creature enters or attacks, create a 1/1 green Elemental creature token.", [], "Creature");
+  expect(sovereign[0].multiTrigger).toBe(true);
+});
+
+test("an ordinary trigger, and an `or` in the EFFECT, are not two conditions", () => {
+  // The bound only holds if this stays tight: every clause wrongly marked here buys the model one
+  // free unchallenged clause on that card.
+  const plain = segment("Whenever this creature attacks, draw a card or discard a card.", [], "Creature");
+  expect(plain[0].multiTrigger).toBeUndefined();
+
+  const targets = segment("When this creature enters, destroy target artifact or enchantment.", [], "Creature");
+  expect(targets[0].multiTrigger).toBeUndefined();
+});

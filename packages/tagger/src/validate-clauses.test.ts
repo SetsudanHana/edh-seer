@@ -219,3 +219,49 @@ test("the real events the corpus named are members, not escapes", () => {
     expect(rejections(validateClauses(segmented, got)), event).toEqual([]);
   }
 });
+
+test("a two-condition clause may be answered with one record per condition", () => {
+  // Ichor Wellspring: "When this artifact enters OR is put into a graveyard from the battlefield,
+  // draw a card." One clause, two events, and one `trigger` field to put them in. The model splits
+  // it and numbers the overflow itself, which the gate read as a hallucinated clause and refused --
+  // 16 refusals over two runs. Both records are true, and derivation consumes them id-agnostically,
+  // so the card is better recorded WITH the split than without it.
+  const segmented: Clause[] = [
+    {
+      id: 1, kind: "ability", abilityType: "triggered", multiTrigger: true,
+      text: "When this artifact enters or is put into a graveyard from the battlefield, draw a card.",
+    },
+  ];
+  const split: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this artifact", control: "you" }, actions: [{ verb: "draw", amount: "1" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "this artifact", control: "you" }, actions: [{ verb: "draw", amount: "1" }] },
+  ];
+  expect(rejections(validateClauses(segmented, split))).toEqual([]);
+});
+
+test("the overflow allowance is bounded by the number of two-condition clauses", () => {
+  // Without a bound this is a hole rather than a fix: a card with one two-condition clause buys one
+  // extra record, not a licence to invent. The THIRD record has no clause left to belong to.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", multiTrigger: true, text: "When this enters or attacks, draw a card." },
+  ];
+  const tooMany: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this", control: "you" }, actions: [{ verb: "draw" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "this", control: "you" }, actions: [{ verb: "draw" }] },
+    { id: 3, abilityType: "triggered", trigger: { event: "dies", subject: "this", control: "you" }, actions: [{ verb: "draw" }] },
+  ];
+  expect(kinds(validateClauses(segmented, tooMany))).toContain("invented-id");
+});
+
+test("an accepted overflow record is still checked for what it says", () => {
+  // Accepting the id must not stop the content check: the extra record is persisted and derived
+  // like any other, so an illegal verb in it would be banked as fact.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", multiTrigger: true, text: "When this enters or attacks, draw a card." },
+  ];
+  const bad: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this", control: "you" }, actions: [{ verb: "draw" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "this", control: "you" }, actions: [{ verb: "teleport" }] },
+  ];
+  expect(kinds(validateClauses(segmented, bad))).toContain("unknown-verb");
+});

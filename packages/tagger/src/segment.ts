@@ -33,6 +33,10 @@ export interface Clause {
   /** Derived here, not asked of the model: it disagreed with itself on 3 of 20 cards over a
    *  question with a mechanical answer (is Path to Exile's text a spell ability?). */
   abilityType?: "spell" | "activated" | "triggered" | "static";
+  /** The clause fires on TWO different events ("enters or is put into a graveyard"). The schema
+   *  holds one `trigger` per record, so such a clause is legitimately answered with two records —
+   *  see `validate-clauses.ts`, which uses this to bound how many extra ids it will accept. */
+  multiTrigger?: true;
   /** The activation cost, when the clause is "{cost}: effect". Split off so the model cannot
    *  choose between recording a sacrifice cost as prose or as an action — Phyrexian Tower's
    *  "{T}, Sacrifice a creature:" is what an aristocrats deck needs to see. */
@@ -228,6 +232,14 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
 }
 
 const TRIGGER_CUE = /^(when|whenever|at the beginning|at end)/i;
+/** Two trigger conditions in one clause. Anchored at the cue and confined to the text BEFORE the
+ *  first comma, which is the trigger phrase: an "or" in the effect ("draw a card or discard a
+ *  card") or between two objects ("target artifact or enchantment") must not count, because every
+ *  clause wrongly marked buys the model one unchallenged extra clause on that card. Either a second
+ *  full cue ("... and whenever you fully unlock a Room") or an "or" joining two event verbs
+ *  ("enters or attacks", "dies or is put into a graveyard"). */
+const TWO_CONDITIONS =
+  /^(?:when|whenever|at the beginning)[^,]*?\b(?:and (?:when|whenever|at the beginning)\b|or (?:is put|is turned|attacks|blocks|becomes blocked|dies|enters|leaves|is dealt)\b)/i;
 /** Any leading label ending in a spaced em dash, however it is spelled. Deliberately wider than
  *  ABILITY_WORD: this one only decides whether to LOOK for a trigger cue behind it, so admitting a
  *  label that is not really one costs nothing unless a cue follows. Bounded so it cannot swallow a
@@ -286,6 +298,7 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
     const clause: Clause = {
       id: ++id, ...c, text: body,
       ...(abilityType ? { abilityType } : {}), ...(cost ? { cost } : {}),
+      ...(TWO_CONDITIONS.test(body) ? { multiTrigger: true as const } : {}),
       ...(ca.length ? { costActions: ca } : {}),
       ...(ea.length ? { effectActions: ea } : {}),
     };
