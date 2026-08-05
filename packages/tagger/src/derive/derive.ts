@@ -15,7 +15,7 @@ import { parseSubject } from "./subject.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 6;
+export const DERIVE_VERSION = 7;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -111,6 +111,10 @@ function isSelfSubject(text: string, cardName?: string): boolean {
   const t = text.trim().toLowerCase();
   if (t === "") return false;
   if (/\banother\b|\bother\b/.test(t)) return false;
+  // Bare "this" with no noun after it — how Bojuka Bog and Zhalfirin Void record their own entry.
+  // Checked HERE rather than by widening SELF_REFERENCE, which effect subjects also use: a trigger
+  // subject of "this" is unambiguous, while an effect object beginning "this turn ..." is not.
+  if (/^this\b/.test(t)) return true;
   if (SELF_REFERENCE.test(t)) return true;
   if (!cardName) return false;
   const name = cardName.toLowerCase();

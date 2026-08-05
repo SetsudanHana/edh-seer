@@ -387,3 +387,22 @@ test("a trigger naming the card by its own name is self too", () => {
   }], "Urza, Lord High Artificer");
   expect(byName.abilities[0].trigger?.subject.self).toBe(true);
 });
+
+test("a bare \"this\" subject is self too", () => {
+  // Bojuka Bog and Zhalfirin Void both record trigger subject "this" with no noun after it, which
+  // the noun-anchored SELF_REFERENCE missed. 22 self-ETB rows survived the first gate on this alone.
+  const bare = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "this", control: "you" },
+    actions: [{ verb: "exile", object: "target player's graveyard", fromZone: "graveyard" }],
+  }]);
+  expect(bare.abilities[0].trigger?.subject.self).toBe(true);
+
+  // Still not self when it names others alongside itself.
+  const withOthers = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "this creature or another creature you control", control: "you" },
+    actions: [{ verb: "lose-life", object: "each opponent" }],
+  }]);
+  expect(withOthers.abilities[0].trigger?.subject.self).toBeUndefined();
+});

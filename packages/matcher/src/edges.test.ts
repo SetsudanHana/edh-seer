@@ -828,3 +828,37 @@ test("a TYPED enters trigger is untouched by the gate", () => {
   }]);
   expect(directedReasons(creature, typedPayoff, H).some((r) => r.tag.startsWith("enters"))).toBe(true);
 });
+
+test("a token entering does not satisfy a payoff watching ITSELF enter", () => {
+  // The residual after the self-ETB gate: `create` emits an `enters` event, but the thing that
+  // entered is the TOKEN -- a new object. It can never be the card whose trigger watches its own
+  // entry, however many tokens are made. The emit is authored rather than implied, so the
+  // implied-only gate did not reach it.
+  const tokenMaker = base("Tempt with Vengeance", [{
+    kind: "on-cast",
+    effect: { kind: "token-generation" },
+    emits: [{ verb: "enters", subject: { type: "creature", subtype: "elemental", control: "any", token: true } }],
+  }]);
+  const selfEtb = base("Gray Merchant of Asphodel", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature", self: true } },
+    effect: { kind: "drain" },
+  }]);
+  expect(directedReasons(tokenMaker, selfEtb, H).filter((r) => r.tag.startsWith("enters"))).toEqual([]);
+});
+
+test("a token entering still satisfies a payoff watching OTHER creatures enter", () => {
+  // The bound: tokens are real permanents and this is the whole of go-wide. Only the self case is
+  // impossible.
+  const tokenMaker = base("Tempt with Vengeance", [{
+    kind: "on-cast",
+    effect: { kind: "token-generation" },
+    emits: [{ verb: "enters", subject: { type: "creature", subtype: "elemental", control: "any", token: true } }],
+  }]);
+  const payoff = base("Agate Instigator", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "non-combat-damage" },
+  }]);
+  expect(directedReasons(tokenMaker, payoff, H).some((r) => r.tag.startsWith("enters"))).toBe(true);
+});

@@ -133,18 +133,23 @@ export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): bo
  *  supplying every self-ETB in it -- 74% of all false edges in the 2026-08-05 precision
  *  measurement, in both tag populations.
  *
- *  Scoped to IMPLIED producer events, exactly like `combatSelfSupplied`, and for the same reason:
- *  an AUTHORED enters emit is a card that actually puts something onto the battlefield, and a blink
- *  or a reanimation genuinely does make the consumer re-enter and fire its own ETB. Dropping
- *  self-triggers outright would delete those real edges along with the false ones. */
+ *  Two producer events can never be the consumer entering:
+ *    - an IMPLIED one — the producer merely being a permanent that entered. Same scoping as
+ *      `combatSelfSupplied`, and for the same reason: an AUTHORED emit is a card that actually puts
+ *      something onto the battlefield, and a blink or a reanimation genuinely does make the consumer
+ *      re-enter and fire its own ETB, so dropping self-triggers outright would delete real edges.
+ *    - a TOKEN one — `create` emits `enters`, but the thing that entered is a new object. However
+ *      many tokens are made, none of them is the card watching its own entry. Authored, so the
+ *      implied rule alone left 25 of these standing in the measured sample.
+ *  Tokens remain real supply for every OTHER consumer: go-wide is the point of them. */
 export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
   if (consumer.verb !== "enters") return false;
   // Only the GRAVEYARD variant is excluded (it has its own matcher). `normalizeZoneEvent` stamps
   // zone "battlefield" on every enters event, so testing for an unset zone here would exclude
   // everything and make the gate dead code.
   if (consumer.subject.zone === "graveyard") return false;
-  if (!producer.implied) return false;
-  return consumer.subject.self === true;
+  if (consumer.subject.self !== true) return false;
+  return producer.implied === true || producer.subject.token === true;
 }
 
 /** The verbs `combatSelfSupplied` governs -- the ones a creature performs for free. Exported so the
