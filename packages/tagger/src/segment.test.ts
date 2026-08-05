@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { segment } from "./segment.js";
+import { effectActions, segment } from "./segment.js";
 
 // Every card here is one the extraction experiment or the quality audit got wrong.
 
@@ -209,4 +209,29 @@ test("a level divider carries its marker and cost, not a meaningless body", () =
   expect(c[0].marker).toBe("Level 2");
   expect(c[0].cost).toBe("{1}{G}");
   expect(c[0].text).toBe("");
+});
+
+test("effect actions are derived from the effect, not the condition or a quoted grant", () => {
+  // Each of these was a false positive in the precision check against stored model output.
+  expect(effectActions("Whenever you draw a card, this creature gets +1/+1 until end of turn."))
+    .toEqual(["modify-pt"]);                       // the draw is the condition, not the effect
+  expect(effectActions('You get an emblem with "Creatures you control get +1/+1."'))
+    .toEqual([]);                                  // the +1/+1 belongs to the emblem, not this clause
+  expect(effectActions("Spells and abilities your opponents control can't cause you to sacrifice permanents or discard cards."))
+    .toEqual([]);                                  // a restriction states what does NOT happen
+  expect(effectActions("Add {R}{R}{R}. Spend this mana only to cast instant or sorcery spells."))
+    .toEqual(["add-mana"]);                        // "to cast" restricts the mana; it casts nothing
+  expect(effectActions("(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)", "reminder"))
+    .toEqual([]);                                  // an inert clause states no action at all
+});
+
+test("the clauses that drifted into `other` now carry their verbs", () => {
+  // Plasma Caster came back "exile,deal-damage" on one run and a lone "other" on the next.
+  const c = segment("{4}, {T}: Choose target creature. Exile it, then it deals 3 damage to you.", [], "Artifact");
+  expect(c[0].effectActions).toContain("deal-damage");
+  expect(c[0].effectActions).toContain("exile");
+  // "put a +1/+1 counter" is add-counter, never put — put is exclusively zone movement.
+  const h = segment("Each creature you control gets +1/+1. Put a +1/+1 counter on target creature.", [], "Legendary Planeswalker");
+  expect(h[0].effectActions).toContain("add-counter");
+  expect(h[0].effectActions).not.toContain("put");
 });

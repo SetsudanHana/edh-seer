@@ -39,6 +39,9 @@ export interface Clause {
   cost?: string;
   /** Actions the cost performs that another card can trigger on, derived from `cost`. */
   costActions?: string[];
+  /** Actions the EFFECT states, derived mechanically from the text. Handed to the model so it
+   *  cannot answer a clause with the `other` escape hatch that the vocabulary does cover. */
+  effectActions?: string[];
 }
 
 /** True when the card itself is an instant or sorcery — its text is a spell ability by default. */
@@ -63,6 +66,76 @@ const COST_ACTIONS: [RegExp, string][] = [
   [/\bremove\b.*\bcounter/i, "remove-counter"],
   [/\breturn\w*\b/i, "return"],
 ];
+
+/** Actions the EFFECT states, derived here rather than left to the model. `other` is the deliberate
+ *  escape hatch for effects no verb covers, but measurement showed it leaking: it appears in 5 of 8
+ *  planeswalker verb disagreements and swallows whole clauses (Plasma Caster came back
+ *  `exile,deal-damage` on one run and a lone `other` on the next). Double-run reconciliation cannot
+ *  catch that, because a clause the vocabulary genuinely cannot express returns `other` on BOTH
+ *  runs and agrees with itself.
+ *
+ *  Only cues that survived a precision check against 180 cards of stored model output are listed;
+ *  a wrong verb is consumed as if it were true, so a false positive costs more than the `other` it
+ *  replaces. `bin/effect-precision.ts` re-runs that check for free. */
+const EFFECT_ACTIONS: [RegExp, string][] = [
+  [/\bdeals?\s+(?:\d+|X)\s+damage\b/i, "deal-damage"],
+  [/\bgets?\s+[+\-−][\dX]+\/[+\-−][\dX]+/i, "modify-pt"],
+  [/\bdestroy\b/i, "destroy"],
+  [/\bcounters?\s+target\s+(?:spell|ability)/i, "counter-spell"],
+  [/\bdraws?\s+(?:a|\d+|X)\s+cards?\b/i, "draw"],
+  [/\bgains?\s+(?:\d+|X)\s+life\b/i, "gain-life"],
+  [/\bloses?\s+(?:\d+|X)\s+life\b/i, "lose-life"],
+  [/\bmills?\s+(?:\d+|X|a)\b/i, "mill"],
+  [/\bcreates?\s+(?:a|\d+|X|one|two)\b/i, "create"],
+  [/\bshuffles?\b/i, "shuffle"],
+  [/\btakes? an extra turn\b/i, "extra-turn"],
+  [/\badditional combat phase\b/i, "extra-combat"],
+  [/\bexiles?\b/i, "exile"],
+  [/\bsacrifices?\b/i, "sacrifice"],
+  [/\bdiscards?\b/i, "discard"],
+  [/\bsearch(?:es)?\s+(?:your|their|that player's)\b/i, "search"],
+  [/\bunta(?:p|ps)\b/i, "untap"],
+  [/\btaps?\b(?!\s*,)/i, "tap"],
+  [/\badds?\s+\{/i, "add-mana"],
+  [/\breturns?\b/i, "return"],
+  // "put a +1/+1 counter on" is add-counter, never put; put is exclusively zone movement, so it
+  // must see a destination zone before it fires.
+  [/\bputs?\b[^.]{0,40}?\b(?:onto|into|on top of|on the bottom of)\b/i, "put"],
+  [/\bputs?\b[^.]{0,40}?\bcounters?\s+on\b/i, "add-counter"],
+  // Only an actual cast. "Spend this mana only to cast instant spells" is a restriction on the
+  // mana and "whenever you cast" is a condition; neither casts anything.
+  [/\b(?:you may cast|casts?\s+(?:it|that card|them|those cards))\b/i, "cast"],
+];
+
+/** The effect half of a clause: what the card DOES, with the parts that merely describe when it
+ *  does it removed. Both exclusions were measured, not guessed — each was a false positive in the
+ *  precision check:
+ *    - a leading condition. "Whenever you draw a card" is not a draw, and "If you would draw a card
+ *      while your library has no cards in it, you win the game instead" (Jace, Wielder of
+ *      Mysteries) is a replacement effect whose only action is winning.
+ *    - quoted text. An ability granted in quotes belongs to whatever receives it, not to this
+ *      clause: Gideon, Ally of Zendikar's emblem says "Creatures you control get +1/+1", but the
+ *      clause's own action is getting an emblem. (Quoted abilities that are themselves triggered or
+ *      activated are already split into `granted` clauses of their own.) */
+export function effectBody(text: string): string {
+  const unquoted = text.replace(/"[^"]*"/g, " ");
+  if (!/^(when|whenever|at\b|if\b)/i.test(unquoted.trim())) return unquoted;
+  const comma = unquoted.indexOf(", ");
+  return comma === -1 ? unquoted : unquoted.slice(comma + 2);
+}
+
+/** Actions stated by a clause's effect, in table order. Empty for an inert clause, which states no
+ *  action at all — running the table over Saga reminder text derived a sacrifice from
+ *  "(As this Saga enters ... sacrifice it)". */
+export function effectActions(text: string, kind: ClauseKind = "ability"): string[] {
+  if (kind === "keyword" || kind === "reminder" || kind === "level" || kind === "modal") return [];
+  const body = effectBody(text);
+  // A restriction states what does NOT happen. Tamiyo's "Spells and abilities your opponents
+  // control can't cause you to sacrifice permanents or discard cards" is neither a sacrifice nor a
+  // discard; the only verb it states is `cant`.
+  if (/\b(?:can't|cannot)\b/i.test(body)) return [];
+  return EFFECT_ACTIONS.filter(([re]) => re.test(body)).map(([, verb]) => verb);
+}
 
 /** The verbs whose zones are NOT implied by the verb itself. A draw is always library->hand and a
  *  mill always library->graveyard, so recording those invites two runs to disagree over a fact
@@ -152,10 +225,14 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
     // level-up cost) is the only one there is.
     const effectiveCost = cost ?? c.cost;
     const ca = effectiveCost ? costActions(effectiveCost) : [];
+    // Derived from the effect only — the cost was split off above, so a sacrifice cost is not
+    // counted twice.
+    const ea = effectActions(body, c.kind);
     const clause: Clause = {
       id: ++id, ...c, text: body,
       ...(abilityType ? { abilityType } : {}), ...(cost ? { cost } : {}),
       ...(ca.length ? { costActions: ca } : {}),
+      ...(ea.length ? { effectActions: ea } : {}),
     };
     out.push(clause);
     return clause;

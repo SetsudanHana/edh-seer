@@ -106,6 +106,9 @@ Rules:
   * "becomes a creature" is animate. "transform" is ONLY a double-faced card turning over.
   * An effect that makes an ability trigger an extra time is trigger-again; an effect that makes a
     TOKEN is create. Copying a permanent is copy. These are three different things.
+- EFFECT ACTIONS are already decided for you too. A clause showing effectActions=[...] states
+  those actions; include every one of them, then add any other action the clause states. They were
+  read off the text mechanically, so do not drop one, rename one, or replace one with "other".
 - "other" is the deliberate escape hatch: when a clause does something no verb above covers
   (changing maximum hand size, an unusual rules modification), use verb "other" and put the effect
   verbatim in object. Use it rather than forcing a near-miss verb — a wrong verb is consumed as if
@@ -156,7 +159,8 @@ for (const run of ["run1", "run2"]) {
     const listed = askable.map((c) =>
       `${c.id}. [${c.kind}${c.marker ? ` ${c.marker}` : ""}]` +
       `${c.abilityType ? ` type=${c.abilityType}` : ""}${c.cost ? ` cost="${c.cost}"` : ""}` +
-      `${c.costActions ? ` costActions=[${c.costActions.join(",")}]` : ""} ${c.text}`).join("\n");
+      `${c.costActions ? ` costActions=[${c.costActions.join(",")}]` : ""}` +
+      `${c.effectActions ? ` effectActions=[${c.effectActions.join(",")}]` : ""} ${c.text}`).join("\n");
     let parsed: unknown;
     try {
       const raw = await provider.chat([
