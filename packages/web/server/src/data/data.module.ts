@@ -1,6 +1,5 @@
 import { Module, type OnModuleDestroy, Inject } from "@nestjs/common";
 import type { Db } from "mongodb";
-import type { CardTags } from "@mtg/tagger";
 import type { CardGraph, CardTagsLookup } from "@mtg/matcher";
 import { ANALYZE_DEPS, type AnalyzeDeps } from "../analyze/analyze.service.js";
 import type { WireGraph } from "../analyze/analyze.types.js";
@@ -106,6 +105,7 @@ export function attachRolesAndArt(
         const data = await import("@mtg/data");
         const engine = await import("@mtg/engine");
         const matcher = await import("@mtg/matcher");
+        const tagger = await import("@mtg/tagger");
         return {
           parseDecklistSections: data.parseDecklistSections,
           parseLines: data.parseDecklistText,
@@ -137,14 +137,17 @@ export function attachRolesAndArt(
             // Re-reads the card DOCUMENTS: resolveDeck hands back engine `Card`s, and buildGraph
             // needs the full CardDoc (faces, all_parts, legalities) that only the corpus row carries.
             const lookup = data.mongoLookup(store as never);
-            const cardTagsCol = (store.db as Db).collection<CardTags>("cardTags");
+            // Goes through the SAME composed lookup as `analyze` below. It used to query cardTags
+            // directly, which meant TAGS_SOURCE could not reach it -- the graph view and the
+            // analysis would have rendered different edges for the same deck.
+            const tagsLookup = tagger.createTagsLookup(store.db as Db);
             const docs: Array<{ _id: string; name: string; typeLine?: string }> = [];
             const deckCards = [];
             for (const name of new Set(cardNames)) {
               const doc = await lookup.findByName(data.normalizeName(name));
               if (!doc) continue;
               docs.push(doc);
-              deckCards.push({ card: data.docToCard(doc as never), tags: await cardTagsCol.findOne({ oracleId: doc._id }) });
+              deckCards.push({ card: data.docToCard(doc as never), tags: await tagsLookup.findOne(doc._id) });
             }
             // Same card list feeds both halves -- addEventEdges throws if they ever diverge.
             const graph = matcher.addEventEdges(matcher.buildGraph(docs as never), deckCards as never, matcher.loadHierarchy());
@@ -152,8 +155,7 @@ export function attachRolesAndArt(
           },
           analyze: async (cards, combos, commanderNames) => {
             const lookup = data.mongoLookup(store as never);
-            const cardTagsCol = (store.db as Db).collection<CardTags>("cardTags");
-            const tagsLookup: CardTagsLookup = { findOne: (oracleId) => cardTagsCol.findOne({ oracleId }) };
+            const tagsLookup: CardTagsLookup = tagger.createTagsLookup(store.db as Db);
             const deckCards = await matcher.buildDeckCards(cards as never, lookup, tagsLookup);
             return matcher.analyzeDeckStructured(
               deckCards,

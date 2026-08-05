@@ -21,3 +21,7 @@ export {
   CLAUSES_COLLECTION, DERIVED_COLLECTION,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "./clause-store.js";
+export {
+  createTagsLookup, composeTagsLookup, resolveTagsSource,
+  type TagsSource, type TagsReader,
+} from "./tags-lookup.js";
