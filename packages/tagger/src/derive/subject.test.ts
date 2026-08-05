@@ -10,7 +10,7 @@ test("control comes from the possessive phrase, defaulting to any", () => {
 
 test("a subject with no card type is a player — the absence of type IS the encoding", () => {
   // Zulaport Cutthroat's drain subject is {control:"opp", token:null} with no type at all.
-  expect(parseSubject("each opponent")).toMatchObject({ control: "opp", token: null });
+  expect(parseSubject("each opponent")).toEqual({ control: "opp", token: null, scope: "each" });
   expect(parseSubject("you")).toEqual({ control: "you", token: null });
 });
 
@@ -39,4 +39,14 @@ test("negated token phrasing is recognised alongside nontoken", () => {
   expect(parseSubject("target creature that is not a token").token).toBe(false);
   // guard: the positive case must still work.
   expect(parseSubject("a creature token you control").token).toBe(true);
+});
+
+test("scope separates spot removal from a wipe, and a pump from an anthem", () => {
+  expect(parseSubject("target creature").scope).toBe("target");
+  expect(parseSubject("each creature your opponents control").scope).toBe("each");
+  expect(parseSubject("all creatures").scope).toBe("all");
+  // A bare plural is a mass effect even with no explicit quantifier: this is the anthem case.
+  expect(parseSubject("creatures you control").scope).toBe("all");
+  // A bare singular says nothing about scope; leave it unset rather than guessing.
+  expect(parseSubject("a creature").scope).toBeUndefined();
 });

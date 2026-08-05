@@ -24,21 +24,34 @@ function parseToken(t: string): boolean | null {
   return null;
 }
 
-function parseTypes(t: string): string | string[] | undefined {
+function parseTypes(t: string): { type?: string | string[]; plural: boolean } {
   const found: string[] = [];
+  let plural = false;
   for (const ty of TYPES) {
     // "token" and "card" are not card types on their own; they only qualify another noun.
     if (ty === "token" || ty === "card") continue;
-    if (new RegExp(`\\b${ty}s?\\b`).test(t)) found.push(ty);
+    if (new RegExp(`\\b${ty}s\\b`).test(t)) { found.push(ty); plural = true; }
+    else if (new RegExp(`\\b${ty}\\b`).test(t)) found.push(ty);
   }
-  if (found.length === 0) return undefined;
-  return found.length === 1 ? found[0] : found;
+  if (found.length === 0) return { plural: /\bopponents\b|\bplayers\b/.test(t) };
+  return { type: found.length === 1 ? found[0] : found, plural };
+}
+
+/** The quantifier the text used. An explicit word wins; otherwise a plural noun is a mass effect
+ *  ("creatures you control" is an anthem) and a bare singular says nothing, so it stays unset. */
+function parseScope(t: string, pluralType: boolean): SubjectFilter["scope"] {
+  if (/\btarget\b/.test(t)) return "target";
+  if (/\beach\b|\bevery\b/.test(t)) return "each";
+  if (/\ball\b/.test(t)) return "all";
+  return pluralType ? "all" : undefined;
 }
 
 export function parseSubject(text: string): SubjectFilter {
   const t = text.toLowerCase().trim();
-  const type = parseTypes(t);
+  const { type, plural } = parseTypes(t);
+  const scope = parseScope(t, plural);
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
   if (type) out.type = type;
+  if (scope) out.scope = scope;
   return out;
 }
