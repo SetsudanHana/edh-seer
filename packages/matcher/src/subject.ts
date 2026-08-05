@@ -13,7 +13,17 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) {
     return false;
   }
-  // token tri-state: null = any; otherwise must equal.
+  // token tri-state, ASYMMETRIC on purpose.
+  //
+  // A consumer demanding token:true is a token-matters payoff, and `null` on the producer means
+  // UNSPECIFIED, not "yes". Imskir Iron-Eater's "Sacrifice an artifact" emits token:null, and
+  // reading that as a wildcard made sacrificing a Sol Ring satisfy Nadier's Nightblade's "whenever
+  // a TOKEN you control leaves the battlefield". Demand a real token.
+  //
+  // The other direction stays a wildcard: token:false means "nontoken", which nearly every
+  // permanent already is, and treating it as a condition once let 14 triggers draw edges from the
+  // whole creature pool.
+  if (consumer.token === true && producer.token !== true) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) {
     return false;
   }

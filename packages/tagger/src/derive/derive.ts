@@ -11,11 +11,12 @@ import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
 import { parseSubject } from "./subject.js";
+import { SUBTYPES } from "./subtypes.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 7;
+export const DERIVE_VERSION = 8;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -120,7 +121,13 @@ function isSelfSubject(text: string, cardName?: string): boolean {
   const name = cardName.toLowerCase();
   // The model names the card either in full ("Urza, Lord High Artificer") or by the short name a
   // card's own text uses ("Urza"), which is everything before the first comma or face divider.
-  return t === name || t === name.split(/[,/]/)[0].trim();
+  if (t === name || t === name.split(/[,/]/)[0].trim()) return true;
+  // A card with no comma in its name still shortens itself: Imskir Iron-Eater's own text says
+  // "Imskir". Accept the FIRST WORD — but never when that word is a creature type, because
+  // "whenever a Goblin enters" on a card named Goblin Bombardment is a real typal payoff and
+  // marking it self would delete the edges a Goblin deck is made of.
+  const first = name.split(/\s+/)[0];
+  return t === first && !SUBTYPES.has(first);
 }
 
 /** The card talking about itself. Anchored at the start, because a self-reference anywhere else is

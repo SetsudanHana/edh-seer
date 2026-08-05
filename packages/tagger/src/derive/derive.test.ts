@@ -406,3 +406,27 @@ test("a bare \"this\" subject is self too", () => {
   }]);
   expect(withOthers.abilities[0].trigger?.subject.self).toBeUndefined();
 });
+
+test("a card referring to itself by its FIRST word is self", () => {
+  // Imskir Iron-Eater's clause says trigger subject "Imskir" -- the short name its own rules text
+  // uses. The short-name rule only split on a comma ("Urza, Lord High Artificer" -> "Urza"), so a
+  // legendary without one slipped through and its ETB was credited to every permanent in the deck.
+  const byShortName = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "Imskir", control: "you" },
+    actions: [{ verb: "draw", object: "card", amount: "X" }],
+  }], "Imskir Iron-Eater");
+  expect(byShortName.abilities[0].trigger?.subject.self).toBe(true);
+});
+
+test("a first word that is a creature type is NOT a self-reference", () => {
+  // The bound. Goblin Bombardment's first word is a real subtype, and "whenever a Goblin enters" is
+  // a genuine typal payoff -- marking it self would delete exactly the edges a Goblin deck is made
+  // of. Checked against the subtype vocabulary rather than guessed.
+  const typal = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "Goblin", control: "you" },
+    actions: [{ verb: "deal-damage", object: "any target" }],
+  }], "Goblin Bombardment");
+  expect(typal.abilities[0].trigger?.subject.self).toBeUndefined();
+});

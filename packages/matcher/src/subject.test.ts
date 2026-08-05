@@ -175,3 +175,24 @@ test("subjectMatches ignores colour when the filter names none", () => {
   const colourless = { type: ["artifact"], control: "you", token: false, colors: [] };
   expect(subjectMatches(colourless as never, filter as never, {})).toBe(true);
 });
+
+// A consumer that demands a TOKEN is not satisfied by a producer whose token-ness is unknown.
+// Nadier's Nightblade triggers on "a token you control leaves the battlefield"; Imskir Iron-Eater's
+// "Sacrifice an artifact" emits token: null, meaning UNSPECIFIED, and null was read as a wildcard --
+// so sacrificing a Sol Ring counted as sacrificing a token.
+test("subjectMatches requires a real token when the consumer demands one", () => {
+  const wantsToken = { control: "you", token: true } as const;
+  const unknown = { type: "artifact", control: "any", token: null };
+  const realToken = { type: "artifact", control: "you", token: true };
+  expect(subjectMatches(unknown as never, wantsToken as never, {})).toBe(false);
+  expect(subjectMatches(realToken as never, wantsToken as never, {})).toBe(true);
+});
+
+// The reverse stays a wildcard. `token: false` means "nontoken", which nearly every permanent
+// already is, and treating it as a real condition once let 14 triggers draw edges from the whole
+// creature pool -- the mesh this file's existing comment warns about.
+test("subjectMatches keeps null as a wildcard against a NONTOKEN consumer", () => {
+  const wantsNontoken = { control: "you", token: false } as const;
+  const unknown = { type: "creature", control: "you", token: null };
+  expect(subjectMatches(unknown as never, wantsNontoken as never, {})).toBe(true);
+});
