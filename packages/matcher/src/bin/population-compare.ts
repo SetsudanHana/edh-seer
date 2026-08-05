@@ -18,6 +18,7 @@ import {
 import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
+import { meshReport, type MeshGroup } from "../mesh.js";
 
 const DIR = process.argv[2]?.startsWith("--") ? "packages/cli/decks/calibration" : (process.argv[2] ?? "packages/cli/decks/calibration");
 const VERBOSE = process.argv.includes("--verbose");
@@ -27,8 +28,15 @@ const lookup = mongoLookup(store);
 const flat: CardTagsLookup = createTagsLookup(store.db, "flat");
 const derived: CardTagsLookup = createTagsLookup(store.db, "derived-first");
 
-interface Row { deck: string; edges: [number, number]; reasons: [number, number]; theme: [string, string]; covered: number; total: number }
+interface Row {
+  deck: string; edges: [number, number]; reasons: [number, number]; theme: [string, string];
+  covered: number; total: number;
+  /** Reason counts split by mesh.ts, so the comparison is not decided by whichever population
+   *  produces the widest whole-deck fans. */
+  clean: [number, number]; meshed: [number, number];
+}
 const rows: Row[] = [];
+const meshGroups: [MeshGroup[], MeshGroup[]] = [[], []];
 
 for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
   const sections = parseDecklistSections(readFileSync(`${DIR}/${file}`, "utf8"));
@@ -55,13 +63,19 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
 
   const themeOf = (r: ReturnType<typeof analyzeDeckStructured>): string =>
     (r.axis ?? []).slice(0, 1).map((x: { tag: string }) => x.tag).join(",") || "(none)";
-  const reasons = (r: ReturnType<typeof analyzeDeckStructured>): number =>
-    r.edges.reduce((n: number, e: { reasons: unknown[] }) => n + e.reasons.length, 0);
+  const allReasons = (r: ReturnType<typeof analyzeDeckStructured>) => r.edges.flatMap((e) => e.reasons);
+  const mesh = ([a.report, b.report] as const).map((r, i) => {
+    const m = meshReport(allReasons(r), cards.length);
+    meshGroups[i as 0 | 1].push(...m.groups);
+    return m;
+  });
 
   rows.push({
     deck: file.replace(/\.txt$/, ""),
     edges: [a.report.edges.length, b.report.edges.length],
-    reasons: [reasons(a.report), reasons(b.report)],
+    reasons: [allReasons(a.report).length, allReasons(b.report).length],
+    clean: [mesh[0].clean, mesh[1].clean],
+    meshed: [mesh[0].meshed, mesh[1].meshed],
     theme: [themeOf(a.report), themeOf(b.report)],
     covered, total: b.deckCards.length,
   });
@@ -77,6 +91,16 @@ console.log(`\n\n${rows.length} decks\n`);
 console.log(`  coverage by the derived corpus: ${(100 * sum((r) => r.covered) / sum((r) => r.total)).toFixed(1)}%`);
 console.log(`  edges    flat ${sum((r) => r.edges[0])}  ->  derived ${sum((r) => r.edges[1])}`);
 console.log(`  reasons  flat ${sum((r) => r.reasons[0])}  ->  derived ${sum((r) => r.reasons[1])}`);
+// Volume alone cannot judge this: a mesh is the cheapest reason there is, so the population that
+// meshes hardest wins on the raw count. See mesh.ts.
+console.log(`    of which MESHED  flat ${sum((r) => r.meshed[0])}  ->  derived ${sum((r) => r.meshed[1])}`);
+console.log(`    CLEAN            flat ${sum((r) => r.clean[0])}  ->  derived ${sum((r) => r.clean[1])}`);
+const cleanLoss = rows.filter((r) => r.clean[1] < r.clean[0]);
+console.log(`  decks losing CLEAN reasons: ${cleanLoss.length}/${rows.length}`);
+for (const [i, label] of [[0, "flat"], [1, "derived"]] as const) {
+  const worst = [...meshGroups[i]].sort((x, y) => y.fanOut - x.fanOut).slice(0, 5);
+  console.log(`  widest ${label} meshes: ${worst.map((g) => `${g.producer} ${g.tag} x${g.fanOut}`).join(", ") || "(none)"}`);
+}
 console.log(`  decks where derived finds FEWER reasons: ${lostReasons.length}/${rows.length}`);
 console.log(`  decks whose top theme CHANGED: ${flips.length}/${rows.length}`);
 for (const f of flips.slice(0, 15)) console.log(`      ${f.deck.padEnd(38)} ${f.theme[0]} -> ${f.theme[1]}`);
