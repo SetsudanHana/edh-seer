@@ -966,3 +966,23 @@ test("directedReasons does not repeat a reason it has already made", () => {
   const keys = reasons.map((r) => JSON.stringify(r));
   expect(new Set(keys).size).toBe(keys.length);
 });
+
+test("every reason tag the engine emits humanizes into prose, never a raw tag", () => {
+  // "Nadier's Nightblade triggers on leaves any" reached the web UI verbatim: humanizeEvent had no
+  // `leaves` case, so it fell through to the de-slugify default and shipped the tag as English.
+  // zoneEventKey turns leaves@battlefield into `dies`, so a bare `leaves` is a permanent going
+  // somewhere OTHER than the graveyard -- exile, hand, library.
+  const producer = base("Imskir Iron-Eater", [{
+    kind: "activated", effect: { kind: "" },
+    emits: [{ verb: "leaves", subject: { control: "you", token: null } }],
+  }]);
+  const consumer = base("Nadier's Nightblade", [{
+    kind: "triggered",
+    trigger: { verbs: ["leaves"], subject: { control: "you", token: null } },
+    effect: { kind: "drain" },
+  }]);
+  const texts = directedReasons(producer, consumer, H).map((r) => r.text);
+  expect(texts.length).toBeGreaterThan(0);
+  for (const t of texts) expect(t).not.toMatch(/leaves any|:/);
+  expect(texts[0]).toContain("leaving the battlefield");
+});

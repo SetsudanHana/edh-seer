@@ -201,6 +201,13 @@ function humanizeEvent(key: string): string {
     // Scrap Trawler's dies:creature and dies:artifact -- as identical lines.
     case "dies":
       return subj === "any" ? "a permanent dying" : `${art(subj)} ${subj} dying`;
+    // zoneEventKey turns leaves@battlefield into `dies`, so a bare `leaves` is a permanent going
+    // somewhere the graveyard is not — exile, hand, library. Without a case it fell through to the
+    // de-slugify default and shipped "triggers on leaves any" to the web UI as English.
+    case "leaves":
+      return subj === "any"
+        ? "a permanent leaving the battlefield"
+        : `${art(subj)} ${subj} leaving the battlefield`;
     case "counter-added":
       return "a counter being added";
     case "proliferate":
