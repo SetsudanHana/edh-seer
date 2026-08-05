@@ -272,3 +272,20 @@ test("a kindred anthem names its targets, so it survives the static-subject guar
     control: "you", token: null, subtype: "zombie", scope: "all",
   });
 });
+
+test("a static clause never proliferates -- it modifies someone else's", () => {
+  // Tekuthal: "If you would proliferate, proliferate twice instead." Giving `proliferate` a clause
+  // verb made the normalizer reach for it here too, and emitting the event would claim Tekuthal
+  // proliferates when it only doubles what another card does. Unclaimed rather than dropped, so the
+  // action stays visible.
+  const { abilities, unclaimed } = deriveAbilities([{
+    id: 1, abilityType: "static", actions: [{ verb: "proliferate", object: "any" }],
+  }]);
+  expect(abilities).toEqual([]);
+  expect(unclaimed).toHaveLength(1);
+  // The guard is about the clause kind, not the verb: an activated or triggered proliferate stands.
+  const active = deriveAbilities([{
+    id: 1, abilityType: "activated", actions: [{ verb: "proliferate", object: "" }],
+  }]);
+  expect(active.abilities[0].effect.kind).toBe("proliferate");
+});
