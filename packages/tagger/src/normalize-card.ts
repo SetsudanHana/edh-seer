@@ -44,6 +44,16 @@ export async function normalizeCard(
   card: { name: string; oracleText?: string; keywords?: string[]; typeLine?: string },
 ): Promise<NormalizedCard> {
   const segmented = segment(card.oracleText ?? "", card.keywords ?? [], card.typeLine ?? "");
+
+  // A card whose every clause is inert — a vanilla creature with only "Flying, trample" — has
+  // nothing to ask about. Answering it in code is both cheaper and more correct than sending an
+  // empty clause list and paying for whatever comes back. 19 such cards in the calibration scope,
+  // and a far larger share of the full corpus, which is mostly vanillas and keyword-only cards.
+  if (!segmented.some((c) => !INERT.has(c.kind))) {
+    const clauses = synthesize(segmented);
+    return { clauses, canonical: canonicalize(clauses), violations: [], rejected: [] };
+  }
+
   const { system, user } = buildRequest(card.name, segmented);
 
   const raw = await provider.chat([

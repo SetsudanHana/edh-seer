@@ -86,16 +86,23 @@ for (const name of calibrationNames()) {
 // Price the ACTUAL prompts rather than a remembered average, so the bill cannot drift from the
 // request. ~4 chars per token is the usual rough conversion; this is an estimate, not a promise.
 let inputTokens = 0;
+let freeCards = 0;
+const INERT_KINDS = new Set(["keyword", "reminder", "level", "modal"]);
 for (const j of jobs) {
-  const { system, user } = buildRequest(j.name, segment(j.oracleText ?? "", j.keywords ?? [], j.typeLine ?? ""));
+  const segmented = segment(j.oracleText ?? "", j.keywords ?? [], j.typeLine ?? "");
+  // All-inert cards are answered in code and never reach the model, so they must not be billed.
+  if (!segmented.some((c) => !INERT_KINDS.has(c.kind))) { freeCards++; continue; }
+  const { system, user } = buildRequest(j.name, segmented);
   inputTokens += Math.ceil((system.length + user.length) / 4);
 }
-const outputTokens = jobs.length * EST_OUTPUT_TOKENS;
+const billable = jobs.length - freeCards;
+const outputTokens = billable * EST_OUTPUT_TOKENS;
 const usd = (inputTokens / 1e6) * USD_PER_M_INPUT + (outputTokens / 1e6) * USD_PER_M_OUTPUT;
 
 const cfg = loadTaggerConfig();
 console.log(`scope: calibration corpus`);
 console.log(`  cards needing normalization: ${jobs.length}${LIMIT ? ` (limited to ${LIMIT})` : ""}`);
+console.log(`  of those, answered in code (no model call): ${freeCards}`);
 if (unresolved.length) console.log(`  unresolved names: ${unresolved.length} (${unresolved.slice(0, 3).join(", ")}...)`);
 console.log(`  model: ${cfg.model} | provider: ${cfg.provider}`);
 console.log(`  est. input ${inputTokens.toLocaleString()} tok, output ~${outputTokens.toLocaleString()} tok`);
