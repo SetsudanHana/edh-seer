@@ -37,6 +37,7 @@ test("removal produces an ability with no effect kind but a usable emit", () => 
     id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "target creature" }],
   }]);
   expect(abilities).toHaveLength(1);
+  expect(abilities[0].kind).toBe("on-cast");
   expect(abilities[0].effect.kind).toBe("");
   expect(abilities[0].emits?.[0].verb).toBe("dies");
   expect(unclaimed).toHaveLength(0);
@@ -44,6 +45,39 @@ test("removal produces an ability with no effect kind but a usable emit", () => 
   // static ability that HAS a subject, so an empty kind plus a subject emits a junk `static:` tag
   // that can match another card's junk tag and form an edge that is not real.
   expect(abilities[0].effect.subject).toBeUndefined();
+});
+
+test("a spell clause maps to on-cast, not static -- segment.ts assigns abilityType 'spell' to every instant/sorcery clause", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "any target" }],
+  }]);
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0].kind).toBe("on-cast");
+  expect(abilities[0].effect.kind).toBe("damage");
+});
+
+test("a known near-miss trigger verb normalizes through VERB_ALIASES", () => {
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "die", subject: "a creature you control" },
+    actions: [{ verb: "draw", object: "you" }],
+  }]);
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0].trigger?.verbs).toEqual(["dies"]);
+  expect(unknownTriggers).toHaveLength(0);
+});
+
+test("an unrecognized trigger verb is dropped from the ability, not asserted as a lie, and reported", () => {
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "nonsense-verb", subject: "a creature you control" },
+    actions: [{ verb: "draw", object: "you" }],
+  }]);
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0].trigger).toBeUndefined();
+  expect(unknownTriggers).toEqual(["nonsense-verb"]);
 });
 
 test("an action no rule claims is reported, never silently dropped", () => {

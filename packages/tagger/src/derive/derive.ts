@@ -7,6 +7,7 @@
  *  sat in the corpus as a vanilla bear. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, AbilityKind, CardTags, Characteristics, Verb } from "../schema.js";
+import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { actionEffectKind } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
 import { parseSubject } from "./subject.js";
@@ -14,22 +15,55 @@ import { parseSubject } from "./subject.js";
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
 
-const ABILITY_KINDS = new Set<AbilityKind>(["triggered", "activated", "static", "on-cast"]);
+/** segment.ts's clause-side vocabulary ("spell" | "activated" | "triggered" | "static") to the
+ *  engine's AbilityKind. "spell" is the clause-side name for what the engine calls "on-cast" --
+ *  every instant/sorcery clause is tagged "spell" (see segment.ts's `classify`), so mapping it to
+ *  "static" instead makes every burn spell a static lord that matches every card in the deck via
+ *  edges.ts's wildcard subjectMatches. Anything unrecognised defensively falls back to "static".
+ */
+const CLAUSE_TO_ABILITY_KIND: Record<string, AbilityKind> = {
+  spell: "on-cast",
+  activated: "activated",
+  triggered: "triggered",
+  static: "static",
+  "on-cast": "on-cast",
+};
 
 function abilityKind(clause: ClauseRecord): AbilityKind {
-  const k = clause.abilityType as AbilityKind | undefined;
-  return k && ABILITY_KINDS.has(k) ? k : "static";
+  return CLAUSE_TO_ABILITY_KIND[clause.abilityType ?? ""] ?? "static";
 }
 
-export function deriveAbilities(clauses: ClauseRecord[]): { abilities: Ability[]; unclaimed: Action[] } {
+/** VOCAB set for a fast legality check after alias normalization. */
+const LEGAL_VERBS = new Set<string>(VERB_VOCAB);
+
+/** Normalize a trigger event through VERB_ALIASES, then check it against the closed VERB_VOCAB.
+ *  A near-miss spelling that survives uncorrected (e.g. "die" instead of "dies") means the trigger
+ *  silently never matches any producer event -- dead with no error, since triggers have no
+ *  `unclaimed`-style safety net of their own. Returns null for anything illegal so the caller can
+ *  omit the trigger rather than assert a verb the vocabulary doesn't recognise. */
+function normalizeTriggerVerb(event: string): Verb | null {
+  const normalized = VERB_ALIASES[event] ?? event;
+  return LEGAL_VERBS.has(normalized) ? (normalized as Verb) : null;
+}
+
+export function deriveAbilities(
+  clauses: ClauseRecord[],
+): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
+  const unknownTriggers: string[] = [];
 
   for (const clause of clauses) {
     const kind = abilityKind(clause);
-    const trigger = clause.trigger?.event
-      ? { verbs: [clause.trigger.event as Verb], subject: parseSubject(clause.trigger.subject ?? "") }
-      : undefined;
+    let trigger: { verbs: Verb[]; subject: ReturnType<typeof parseSubject> } | undefined;
+    if (clause.trigger?.event) {
+      const verb = normalizeTriggerVerb(clause.trigger.event);
+      if (verb) {
+        trigger = { verbs: [verb], subject: parseSubject(clause.trigger.subject ?? "") };
+      } else {
+        unknownTriggers.push(clause.trigger.event);
+      }
+    }
 
     for (const action of clause.actions ?? []) {
       if (INERT_VERBS.has(action.verb ?? "")) continue;
@@ -53,7 +87,7 @@ export function deriveAbilities(clauses: ClauseRecord[]): { abilities: Ability[]
       abilities.push(ability);
     }
   }
-  return { abilities, unclaimed };
+  return { abilities, unclaimed, unknownTriggers };
 }
 
 export interface DeriveInput {
