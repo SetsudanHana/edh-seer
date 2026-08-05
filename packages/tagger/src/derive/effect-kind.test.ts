@@ -121,3 +121,28 @@ test("`cant` is a tax only when it can be paid through", () => {
   expect(actionEffectKind({ verb: "cant", object: "block" })).toBeNull();
   expect(actionEffectKind({ verb: "cant", object: "" })).toBeNull();
 });
+
+test("scry and surveil are top-manipulation, the payoff mill and search already name", () => {
+  // Barrier of Bones' live flat tag for its surveil is exactly { kind: "top-manipulation" }, and
+  // both verbs rearrange what you draw next, which is what the kind means.
+  expect(actionEffectKind({ verb: "scry", object: "2" })).toBe("top-manipulation");
+  expect(actionEffectKind({ verb: "surveil", object: "1" })).toBe("top-manipulation");
+});
+
+test("cost-modify splits on direction: cheaper is cost-reduction, dearer is tax", () => {
+  // Foundry Inspector and Urza's Incubator carry live flat tags of cost-reduction; Thalia carries
+  // tax. One verb, because the clause states one action -- the direction is in the object.
+  expect(actionEffectKind({ verb: "cost-modify", object: "Artifact spells you cast cost {1} less to cast" }))
+    .toBe("cost-reduction");
+  expect(actionEffectKind({ verb: "cost-modify", object: "creature spells you cast cost {2} less" }))
+    .toBe("cost-reduction");
+  expect(actionEffectKind({ verb: "cost-modify", object: "Noncreature spells cost {1} more to cast" }))
+    .toBe("tax");
+  // "more" said of an OPPONENT's spells is the same tax even when the wording puts the direction
+  // elsewhere; naming opponents at all is enough, since nobody taxes themselves on purpose.
+  expect(actionEffectKind({ verb: "cost-modify", object: "spells your opponents cast cost {1} more" }))
+    .toBe("tax");
+  // Direction unstated: no kind rather than a guess, because cost-reduction and tax are opposites
+  // and a wrong one is consumed as if it were true.
+  expect(actionEffectKind({ verb: "cost-modify", object: "" })).toBeNull();
+});

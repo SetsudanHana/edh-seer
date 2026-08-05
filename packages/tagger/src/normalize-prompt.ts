@@ -8,16 +8,30 @@ import type { Clause } from "./segment.js";
  *  the clause list while the hash stays identical, and without a version bump every persisted doc
  *  would look fresh forever and never re-queue. Multi-face handling changed exactly that way.
  *
- *  A bump invalidates every persisted `cardClauses` doc and re-pays for the whole corpus — the same
- *  failure mode PROMPT_VERSION 24 created for the flat tagger. This version guards a COMPOUND
- *  artifact, so one narrow change re-buys all 2,544 cards. Treat a bump as a spending decision. */
-export const NORMALIZE_VERSION = 3;
+ *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
+ *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
+ *  exactly which prompt produced it. */
+export const NORMALIZE_VERSION = 4;
+
+/** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
+ *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
+ *  accident.
+ *
+ *  Raise this ONLY for a BREAKING change — prompt prose, a changed rule, a segmenter change that
+ *  moves clause ids — because raising it re-buys the whole corpus (~$8.50 at 2,453 cards). An
+ *  ADDITIVE change (a new verb, a new trigger member) leaves it alone: a new verb only widens what
+ *  the model MAY say, so an answer given without the option is still correct. Pick up the addition
+ *  cheaply with `normalize-corpus.ts --refresh-other` instead of re-buying everything.
+ *
+ *  3 is the version the calibration corpus was bought at. */
+export const NORMALIZE_MIN_COMPATIBLE = 3;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
   "add-mana", "add-counter", "remove-counter", "grant-ability", "modify-pt", "prevent", "cast",
   "play", "shuffle", "reveal", "attach", "transform", "trigger-again", "extra-turn", "extra-combat",
-  "animate", "cant", "emblem", "fight", "set-life", "proliferate", "other", "none"];
+  "animate", "cant", "emblem", "fight", "set-life", "proliferate", "scry", "surveil", "cost-modify",
+  "other", "none"];
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
 export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps", "untaps", "cast",
   "upkeep", "begin-combat", "end-step", "draw", "draw-step", "main-phase", "combat-damage-step", "damage-dealt", "life-gained", "life-lost",

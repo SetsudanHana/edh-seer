@@ -9,7 +9,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig, normalizeName, parseDecklistText } from "@mtg/data";
 import { CLAUSES_COLLECTION, type CardClausesDoc } from "../clause-store.js";
-import { NORMALIZE_VERSION } from "../normalize-prompt.js";
+import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE } from "../normalize-prompt.js";
 
 const CAL = new URL("../../../cli/decks/calibration/", import.meta.url).pathname;
 const watchIdx = process.argv.indexOf("--watch");
@@ -35,8 +35,12 @@ const bar = (pct: number): string => {
 };
 
 async function snapshot(): Promise<boolean> {
-  const done = await col.countDocuments({ normalizeVersion: NORMALIZE_VERSION });
-  const stale = await col.countDocuments({ normalizeVersion: { $ne: NORMALIZE_VERSION } });
+  // "done" is anything the current prompt would not re-ask, not just docs written by it: after an
+  // ADDITIVE bump the whole corpus sits one version behind and is still valid. Counting equality
+  // here would report a finished corpus as 0% and invite a re-buy nothing needs.
+  const done = await col.countDocuments({ normalizeVersion: { $gte: NORMALIZE_MIN_COMPATIBLE } });
+  const stale = await col.countDocuments({ normalizeVersion: { $lt: NORMALIZE_MIN_COMPATIBLE } });
+  const behind = await col.countDocuments({ normalizeVersion: { $lt: NORMALIZE_VERSION, $gte: NORMALIZE_MIN_COMPATIBLE } });
   const pct = (100 * done) / TOTAL;
 
   // Rate from the last 200 writes rather than since-start, so a restart at a different concurrency
@@ -62,7 +66,8 @@ async function snapshot(): Promise<boolean> {
   console.log(`  last write ${idleSec === Infinity ? "never" : `${idleSec}s ago`}${idleSec > 120 ? "   <-- STALLED?" : ""}`);
   console.log(`  warnings: ${warnedCards} card(s) = ${((100 * warnedCards) / (done || 1)).toFixed(1)}%` +
     (warnKinds.length ? `  [${warnKinds.map((k) => `${k._id} ${k.n}`).join(", ")}]` : ""));
-  if (stale) console.log(`  docs on an OLDER NORMALIZE_VERSION (will re-queue): ${stale}`);
+  if (stale) console.log(`  docs BELOW NORMALIZE_MIN_COMPATIBLE ${NORMALIZE_MIN_COMPATIBLE} (will re-queue): ${stale}`);
+  if (behind) console.log(`  docs on an older but still-valid prompt (will NOT re-queue): ${behind}`);
   console.log(`  latest: ${recent.slice(0, 3).map((d) => d.name).join(", ")}`);
   // Refused and failed cards are never persisted, so they are absent by construction rather than
   // countable here -- that gap is the run's stdout, which is why the log path matters.

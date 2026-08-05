@@ -59,14 +59,32 @@ export function segmentHash(oracleText: string, typeLine: string, keywords: stri
   return createHash("sha256").update(parts.join(SEP)).digest("hex");
 }
 
-/** COSTS MONEY. Only skipped when the card and the closed vocabularies are both unchanged. */
+/** COSTS MONEY. Only skipped when the card and the closed vocabularies are both unchanged.
+ *
+ *  The version argument is NORMALIZE_MIN_COMPATIBLE — the oldest prompt whose answers are still
+ *  valid — and the comparison is an ORDERING, deliberately. An equality check against
+ *  NORMALIZE_VERSION re-buys all 2,453 cards on any bump at all, so a one-line vocabulary addition
+ *  costs $8.50 and the fixes queue up behind the toll gate instead of shipping. An ADDITIVE change
+ *  cannot invalidate an old answer: the new verb only widens what the model MAY say, and the old
+ *  answer never had the option. A BREAKING change (prompt prose, a changed rule, a segmenter change
+ *  that moves clause ids) raises min-compatible as well, and pays for the corpus visibly. */
 export function needsNormalize(
   existing: CardClausesDoc | null,
   hash: string,
-  normalizeVersion: number,
+  minCompatibleVersion: number,
 ): boolean {
   if (!existing) return true;
-  return existing.segmentHash !== hash || existing.normalizeVersion !== normalizeVersion;
+  return existing.segmentHash !== hash || existing.normalizeVersion < minCompatibleVersion;
+}
+
+/** Did this card's stored answer reach for the escape hatch? Those are exactly the cards an
+ *  ADDITIVE vocabulary change can improve — a card that named every action with a real verb will
+ *  answer the same way under a wider vocabulary, so re-asking it buys nothing.
+ *
+ *  Reads `canonical`, which is what derivation consumes; a card whose raw answer said `other`
+ *  somewhere canonicalisation resolved is not stuck. */
+export function carriesOther(doc: CardClausesDoc | null): boolean {
+  return (doc?.canonical ?? []).some((c) => (c.actions ?? []).some((a) => a.verb === "other"));
 }
 
 /** FREE, so it re-runs on any drift: newer derivation code, a re-normalized clause doc, or a

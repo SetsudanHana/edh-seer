@@ -15,6 +15,7 @@
  *    tsx src/bin/normalize-corpus.ts                    # dry run, prints the bill
  *    tsx src/bin/normalize-corpus.ts --run              # spends
  *    tsx src/bin/normalize-corpus.ts --run --limit 3    # smallest useful end-to-end check
+ *    tsx src/bin/normalize-corpus.ts --refresh-other    # re-ask only the cards stuck on `other`
  *
  *  Needs `set -a && source .env && set +a` and TAGGER_PROVIDER=anthropic, or it silently falls back
  *  to Ollama and every card returns `ERROR: fetch failed`. */
@@ -24,10 +25,10 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText } fr
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { buildRequest, normalizeCard } from "../normalize-card.js";
-import { NORMALIZE_VERSION } from "../normalize-prompt.js";
+import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE } from "../normalize-prompt.js";
 import { segment } from "../segment.js";
 import {
-  CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, segmentHash,
+  CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, carriesOther, segmentHash,
   type CardClausesDoc,
 } from "../clause-store.js";
 
@@ -46,6 +47,12 @@ const arg = (flag: string): string | undefined => {
 const RUN = process.argv.includes("--run");
 const LIMIT = Number(arg("--limit") ?? 0);
 const CONCURRENCY = Number(arg("--concurrency") ?? 6);
+/** Pick up an ADDITIVE vocabulary change without re-buying the corpus. NORMALIZE_MIN_COMPATIBLE is
+ *  unchanged by such a change, so nothing re-queues on its own — deliberately. The cards that can
+ *  answer differently under a wider vocabulary are exactly those whose stored answer used the
+ *  `other` escape hatch, plus the ones that have no doc at all. 340 + 88 of 2,453 is ~$1.50 against
+ *  ~$8.50, and whatever still says `other` afterwards is the next punch list. */
+const REFRESH_OTHER = process.argv.includes("--refresh-other");
 
 /** The calibration corpus: 2,544 distinct cards over 71 labelled decks. */
 function calibrationNames(): string[] {
@@ -79,7 +86,7 @@ for (const name of calibrationNames()) {
   if (!doc) { unresolved.push(name); continue; }
   const hash = segmentHash(doc.oracleText ?? "", doc.typeLine ?? "", doc.keywords ?? []);
   const existing = await clausesCol.findOne({ oracleId: doc._id });
-  if (!needsNormalize(existing, hash, NORMALIZE_VERSION)) continue;
+  if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !(REFRESH_OTHER && carriesOther(existing))) continue;
   jobs.push({ oracleId: doc._id, name: doc.name, oracleText: doc.oracleText, keywords: doc.keywords, typeLine: doc.typeLine, hash });
 }
 

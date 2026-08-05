@@ -60,6 +60,12 @@ const SIMPLE: Record<string, EffectKind> = {
   // A tutor rearranges what you draw, which is the same payoff `mill` names. Demonic Tutor's live
   // flat tag is exactly this, so the kind is one the engine already consumes.
   search: "top-manipulation",
+  // Same payoff again, from the other end of the library. Barrier of Bones' live flat tag for its
+  // surveil is exactly this. Neither verb gets an EMIT: surveil does fill a graveyard, but flat
+  // gives Barrier of Bones no emit either, and an invented emit is the change reverted from the
+  // bounce/`leaves` work — a starving consumer count is not evidence.
+  scry: "top-manipulation",
+  surveil: "top-manipulation",
 };
 
 /** A restriction is a TAX only when it can be paid through. Propaganda and Ghostly Prison both
@@ -77,6 +83,22 @@ const PAYABLE = /\bunless\b[^.]*\bpay/i;
  *  a near-miss would be worse than silence — it is consumed as if it were true. */
 const SPEED_KEYWORDS = /\b(haste|double strike)\b/i;
 
+/** `cost-modify` is one verb because the clause states one action; the direction is in the object,
+ *  and the two directions are OPPOSITE kinds the engine already consumes heavily (cost-reduction on
+ *  610 cards, tax on 615). Foundry Inspector and Urza's Incubator carry live flat cost-reduction
+ *  tags; Thalia carries tax.
+ *
+ *  Naming opponents is enough on its own to read `tax`: nobody writes a card that makes their own
+ *  spells worse, so an opponent-scoped cost change is a tax however the direction is worded. With
+ *  neither signal the answer is null — guessing between two opposites is the near-miss class this
+ *  file exists to refuse. */
+function costDirection(object: string): EffectKind | null {
+  const t = object.toLowerCase();
+  if (/\bmore\b/.test(t) || /\bopponents?\b/.test(t)) return "tax";
+  if (/\bless\b|\bcosts? \{?\d/.test(t)) return "cost-reduction";
+  return null;
+}
+
 export function actionEffectKind(action: Action): EffectKind | null {
   const verb = action.verb ?? "";
   // 342 corpus cards carry a grant-ability action and the verb had no row here at all, so Lightning
@@ -85,6 +107,7 @@ export function actionEffectKind(action: Action): EffectKind | null {
     return SPEED_KEYWORDS.test(action.object ?? "") ? "speed-increase" : null;
   }
   if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
+  if (verb === "cost-modify") return costDirection(action.object ?? "");
   for (const r of ZONE_RULES) {
     if (r.verb !== verb) continue;
     if (r.from !== undefined && (action.fromZone ?? null) !== r.from) continue;
