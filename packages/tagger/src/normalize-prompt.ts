@@ -1,5 +1,12 @@
 import type { Clause } from "./segment.js";
 
+/** Bump when SYSTEM, VERBS, TRIGGERS or ZONES change — anything that could make the model answer
+ *  the same clause differently. A bump invalidates every persisted `cardClauses` doc and re-pays
+ *  for the whole corpus, which is the same failure mode PROMPT_VERSION 24 created for the flat
+ *  tagger. That is a real, unsolved cost: this version guards a COMPOUND artifact, so adding one
+ *  verb for one narrow case re-buys all 2,544 cards. Treat a bump as a spending decision. */
+export const NORMALIZE_VERSION = 1;
+
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
   "add-mana", "add-counter", "remove-counter", "grant-ability", "modify-pt", "prevent", "cast",

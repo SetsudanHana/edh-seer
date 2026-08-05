@@ -16,3 +16,8 @@ export {
   validateClauses, rejections,
   type ClauseViolation, type ViolationKind,
 } from "./validate-clauses.js";
+export {
+  segmentHash, needsNormalize, needsDerive, ensureClauseIndexes,
+  CLAUSES_COLLECTION, DERIVED_COLLECTION,
+  type CardClausesDoc, type DerivedTagsDoc,
+} from "./clause-store.js";
