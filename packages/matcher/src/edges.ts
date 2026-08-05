@@ -21,7 +21,13 @@ export function cardThemeTags(tags: CardTags): Set<string> {
   for (const a of tags.abilities) {
     if (a.trigger) for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
     for (const e of a.emits ?? []) out.add(`${e.verb}:${themeSubjectKey(e.subject)}`);
-    if (a.kind === "static" && a.effect.subject) out.add(`static:${a.effect.kind}`);
+    // No subject requirement here, unlike the static EDGE below. Membership asks "is this card a
+    // <kind> card?", which does not depend on knowing WHICH permanents it applies to. Requiring a
+    // subject silenced every static whose recipient is unrecoverable -- Rage Reflection's
+    // grant-ability records "double strike", the thing granted, not who receives it -- and across
+    // the 71 calibration decks that stripped derived decks of their static themes, letting whatever
+    // tag had the most raw volume win the axis instead.
+    if (a.kind === "static" && a.effect.kind) out.add(`static:${a.effect.kind}`);
   }
   return out;
 }

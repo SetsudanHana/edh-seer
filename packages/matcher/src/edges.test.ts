@@ -764,3 +764,21 @@ test("pairReasons does not double-count a producer that satisfies one trigger by
   }]);
   expect(pairReasons(maker, payoff, H).length).toBe(1);
 });
+
+test("a static effect is a theme tag even when we cannot say WHO it applies to", () => {
+  // Rage Reflection: "Attacking creatures you control have double strike." The clause records
+  // grant-ability with object "double strike" -- WHAT is granted, not who receives it -- so the
+  // recipient is unrecoverable and derive drops the subject. That is correct for pairwise EDGES:
+  // without a subject there is nothing to match against, and inventing one is the mesh this layer
+  // keeps fighting.
+  //
+  // It is wrong for THEME membership. The card is a speed-increase card whether or not we know its
+  // targets, and dropping it from cardThemeTags is why derived decks lost their static themes and
+  // drifted onto whatever tag had the most volume.
+  const tags = {
+    oracleId: "x", schemaVersion: 1, promptVersion: 0, model: "derived",
+    characteristics: { types: ["enchantment"], subtypes: [], colors: ["R"], identity: ["R"], cmc: 5, power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "static" as const, effect: { kind: "speed-increase" as const } }],
+  };
+  expect(cardThemeTags(tags as never).has("static:speed-increase")).toBe(true);
+});
