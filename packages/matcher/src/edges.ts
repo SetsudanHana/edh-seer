@@ -194,9 +194,13 @@ function humanizeEvent(key: string): string {
     case "cast":
       return `${art(subj)} ${subj} being cast`;
     case "attacks":
-      return "an attack";
+      return subj === "any" ? "an attack" : `${art(subj)} ${subj} attacking`;
+    // Subject-aware for the same reason `enters` is. A `dies` event is any permanent LEAVING THE
+    // BATTLEFIELD (see zoneEventKey), not only a creature, and hardcoding "a creature dying" both
+    // told the reader an artifact was a creature and rendered two genuinely different reasons --
+    // Scrap Trawler's dies:creature and dies:artifact -- as identical lines.
     case "dies":
-      return "a creature dying";
+      return subj === "any" ? "a permanent dying" : `${art(subj)} ${subj} dying`;
     case "counter-added":
       return "a counter being added";
     case "proliferate":
@@ -204,6 +208,24 @@ function humanizeEvent(key: string): string {
     default:
       return key.replace(/[:-]/g, " ");
   }
+}
+
+/** Drop reasons identical in every field a reader or a score can see. `impliedProducer` is excluded
+ *  from the key because it is provenance rather than content — two reasons that say the same thing
+ *  are one reason whether or not one of them came from an implied event.
+ *
+ *  Needed in BOTH entry points, not just `pairReasons`: the card-synergy view calls
+ *  `directedReasons` directly, so a producer with two graveyard-fill events feeding a consumer with
+ *  two recursion abilities printed the same line four times. It also stops those repeats inflating
+ *  `reasons.length`, which is the edge score. */
+export function dedupeReasons(reasons: Reason[]): Reason[] {
+  const seen = new Set<string>();
+  const out: Reason[] = [];
+  for (const r of reasons) {
+    const k = JSON.stringify({ ...r, impliedProducer: undefined });
+    if (!seen.has(k)) { seen.add(k); out.push(r); }
+  }
+  return out;
 }
 
 /** Directional reasons from producer P to consumer C: event edges (P.emits ↔ C.triggers) and
@@ -309,7 +331,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     }
   }
 
-  return reasons;
+  return dedupeReasons(reasons);
 }
 
 /** All reasons for the unordered pair {a,b}: union of a→b and b→a directional reasons, deduped
@@ -323,12 +345,5 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
  *  the copy `themeMembership` (themes.ts) wants for surplus credit. If that ordering ever changes,
  *  this dedup silently starts keeping the implied copy instead. */
 export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
-  const all = [...directedReasons(a, b, h), ...directedReasons(b, a, h)];
-  const seen = new Set<string>();
-  const out: Reason[] = [];
-  for (const r of all) {
-    const k = JSON.stringify({ ...r, impliedProducer: undefined });
-    if (!seen.has(k)) { seen.add(k); out.push(r); }
-  }
-  return out;
+  return dedupeReasons([...directedReasons(a, b, h), ...directedReasons(b, a, h)]);
 }

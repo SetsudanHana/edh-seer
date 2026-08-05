@@ -904,3 +904,65 @@ test("a payoff watching OTHER casts is untouched", () => {
   }]);
   expect(directedReasons(spell, payoff, H).some((r) => r.tag.startsWith("cast"))).toBe(true);
 });
+
+test("a dying artifact is not described as a dying creature", () => {
+  // Scrap Trawler watches its own death AND another artifact hitting the graveyard, so a sac outlet
+  // supplies both `dies:creature` and `dies:artifact`. humanizeEvent hardcoded "a creature dying"
+  // for every dies event, so the two reasons rendered as identical lines -- which read as a
+  // duplicate bug, but is really the reader being told an artifact is a creature.
+  const outlet = base("Executioner's Capsule", [{
+    kind: "activated",
+    effect: { kind: "" },
+    emits: [
+      { verb: "dies", subject: { type: "creature", control: "you", token: null } },
+      { verb: "dies", subject: { type: "artifact", control: "you", token: null } },
+    ],
+  }]);
+  const trawler = base("Scrap Trawler", [
+    {
+      kind: "triggered",
+      trigger: { verbs: ["dies"], subject: { type: "creature", control: "you", token: null } },
+      effect: { kind: "graveyard-recursion" },
+    },
+    {
+      kind: "triggered",
+      trigger: { verbs: ["dies"], subject: { type: "artifact", control: "you", token: null } },
+      effect: { kind: "graveyard-recursion" },
+    },
+  ]);
+  const texts = directedReasons(outlet, trawler, H)
+    .filter((r) => r.tag.startsWith("dies")).map((r) => r.text);
+  expect(new Set(texts).size).toBe(texts.length);
+  expect(texts.some((t) => t.includes("an artifact dying"))).toBe(true);
+  expect(texts.some((t) => t.includes("a creature dying"))).toBe(true);
+});
+
+test("directedReasons does not repeat a reason it has already made", () => {
+  // The card-synergy view calls directedReasons directly (analyze.ts), and only pairReasons deduped
+  // -- so a producer with two graveyard-fill events and a consumer with two recursion abilities
+  // printed the SAME line four times. Scrap Trawler grew its second recursion ability from the
+  // two-condition split, which is what made this visible.
+  const filler = base("Trading Post", [{
+    kind: "activated",
+    effect: { kind: "" },
+    emits: [
+      { verb: "enters-graveyard", subject: { type: "artifact", control: "you", token: null } },
+      { verb: "enters-graveyard", subject: { type: "creature", control: "you", token: null } },
+    ],
+  }]);
+  const recursion = base("Scrap Trawler", [
+    {
+      kind: "triggered",
+      trigger: { verbs: ["dies"], subject: { type: "artifact", control: "you", token: null } },
+      effect: { kind: "graveyard-recursion", subject: { type: "artifact", control: "you", token: null, zone: "graveyard" } },
+    },
+    {
+      kind: "triggered",
+      trigger: { verbs: ["dies"], subject: { type: "creature", control: "you", token: null } },
+      effect: { kind: "graveyard-recursion", subject: { type: "artifact", control: "you", token: null, zone: "graveyard" } },
+    },
+  ]);
+  const reasons = directedReasons(filler, recursion, H);
+  const keys = reasons.map((r) => JSON.stringify(r));
+  expect(new Set(keys).size).toBe(keys.length);
+});
