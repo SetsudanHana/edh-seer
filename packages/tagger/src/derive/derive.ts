@@ -15,7 +15,7 @@ import { parseSubject } from "./subject.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 3;
+export const DERIVE_VERSION = 4;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -99,13 +99,28 @@ function drainAbility(clause: ClauseRecord, kind: AbilityKind, trigger: Ability[
   return ability;
 }
 
+/** The card talking about itself. Anchored at the start, because a self-reference anywhere else is
+ *  part of a larger subject ("creatures other than this one"), and confined to the noun so the rest
+ *  of the sentence cannot leak in. */
+const SELF_REFERENCE =
+  /^this (?:spell|card|creature|artifact|enchantment|permanent|land|planeswalker|equipment|vehicle|token)\b/i;
+
 /** The effect's subject, with the origin zone restored for the kinds that are defined by it. The
  *  clause states the zone on the ACTION (`fromZone: "graveyard"`), never inside the object text, so
  *  `parseSubject` alone cannot recover it — and a graveyard-recursion whose subject has no zone is
  *  invisible to the reanimator edge in edges.ts, which tests `effect.subject.zone === "graveyard"`.
  */
 function effectSubject(action: Action, kind: string): ReturnType<typeof parseSubject> {
-  const subject = parseSubject(action.object ?? "");
+  const object = action.object ?? "";
+  // A self-referential effect applies to the card itself, and everything after the self-reference is
+  // a CONDITION rather than a subject. Excalibur, Sword of Eden reads "This spell costs {X} less to
+  // cast, where X is the total mana value of historic permanents you control": parsing the whole
+  // string found permanents/spell/you-control, `namesItsTargets` passed on words the effect does not
+  // apply to, and edges.ts fanned that one card out to 97 consumers -- the widest mesh in the
+  // derived population. Parse only the self-reference, which names a bare singular and so keeps no
+  // subject at all: the card holds its `static:cost-reduction` theme tag and forms no edges.
+  const self = object.match(SELF_REFERENCE);
+  const subject = parseSubject(self ? self[0] : object);
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) subject.zone = action.fromZone;
   return subject;
 }

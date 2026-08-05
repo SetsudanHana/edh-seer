@@ -318,3 +318,32 @@ test("the escape-hatch trigger forms no edges", () => {
   expect(abilities[0].trigger).toBeUndefined();
   expect(unknownTriggers).toEqual(["other"]);
 });
+
+test("a self-referential effect names ITSELF, not whatever else the sentence mentions", () => {
+  // Excalibur, Sword of Eden: "This spell costs {X} less to cast, where X is the total mana value
+  // of historic permanents you control." The subject is THIS SPELL; "historic permanents you
+  // control" is the X-counting condition. parseSubject scanned the whole string, found
+  // permanents/spell/you control, and namesItsTargets passed on words the effect does not apply to
+  // -- so edges.ts fanned one card out to 97 consumers, the widest mesh in the derived population.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "cost-modify", object: "this spell costs {X} less to cast, where X is the total mana value of historic permanents you control" }],
+  }]);
+  expect(abilities[0].effect.kind).toBe("cost-reduction");
+  // The kind survives, so the card keeps its theme tag; the subject does not, so it forms no edges.
+  expect(abilities[0].effect.subject).toBeUndefined();
+});
+
+test("a real lord still names its targets", () => {
+  // The bound in the other direction: Foundry Inspector reduces OTHER cards' costs and must keep
+  // the subject that earns it those edges.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "cost-modify", object: "artifact spells you cast cost {1} less to cast" }],
+  }]);
+  expect(abilities[0].effect.kind).toBe("cost-reduction");
+  // Only the type is asserted: `control` reads "any" here, because parseControl matches
+  // "you control"/"your" and this card says "you CAST". Real, separate, and harmless in a singleton
+  // deck where every card is yours -- noted rather than fixed under a mesh change.
+  expect(abilities[0].effect.subject).toMatchObject({ type: "artifact" });
+});
