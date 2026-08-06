@@ -56,11 +56,25 @@ for (const p of pairs) {
   }
 }
 
-const s = scorePanel(current, cache);
+// One claim, one verdict, one count. `pairReasons` can return the same (producer, consumer, tag)
+// twice -- two reasons differing only by effectKind, the known display-layer duplicate -- and the
+// panel keys verdicts by claim, so counting both would weight that claim double for no reason.
+// (The sampling instrument counted reasons, duplicates included; the panel counts claims. The two
+// measures are therefore not identical, which is one more reason not to compare their levels.)
+const seenClaim = new Set<string>();
+const distinct = current.filter((c) => {
+  const k = `${c.producer}|${c.consumer}|${c.tag}`;
+  if (seenClaim.has(k)) return false;
+  seenClaim.add(k);
+  return true;
+});
+console.log(`  (${current.length - distinct.length} duplicate claims collapsed)`);
+
+const s = scorePanel(distinct, cache);
 const [lo, hi] = wilsonPanel(s.real, s.real + s.false);
 console.log(`frozen panel — ${pairs.length} pairs, ${cache.length} cached verdicts`);
 if (unresolved) console.log(`  UNRESOLVED pairs (card missing from the corpus): ${unresolved}`);
-console.log(`  claims the engine makes on the panel today: ${current.length}`);
+console.log(`  claims the engine makes on the panel today: ${distinct.length}`);
 console.log(`  real ${s.real} | false ${s.false} | uncertain ${s.uncertain}`);
 console.log(`  PRECISION ${s.precision === null ? "n/a" : `${(s.precision * 100).toFixed(1)}% [${lo.toFixed(1)}, ${hi.toFixed(1)}]`}`);
 console.log(`  judging DEBT (claims with no verdict): ${s.unjudged.length}`);
