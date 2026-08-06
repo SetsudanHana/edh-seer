@@ -3,6 +3,7 @@ import type { Clause } from "./segment.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import {
   segmentHash, needsNormalize, needsDerive, carriesOther, missesASplit, disagreesOnType,
+  dropsOriginZone, worthReasking,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "./clause-store.js";
 
@@ -155,4 +156,56 @@ test("a doc answered under a stale ability type is refreshable", () => {
     [{ id: 1, kind: "keyword", text: "Flying" }],
   )).toBe(false);
   expect(disagreesOnType(null, segmented)).toBe(false);
+});
+
+test("dropsOriginZone finds a card whose trigger origin the model threw away", () => {
+  // River Kelpie: "Whenever this creature or another permanent enters FROM A GRAVEYARD, draw a card."
+  // The persisted trigger subject is "this creature or another permanent" -- the origin, which is the
+  // entire card, is gone. `segmentHash` cannot see this (it covers the card's inputs, not the prompt)
+  // and neither `carriesOther` nor `missesASplit` reaches it, so the doc looks fresh forever.
+  const kelpie = "Whenever this creature or another permanent enters from a graveyard, draw a card.";
+  expect(dropsOriginZone(clauseDoc({
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature or another permanent" }, actions: [] }],
+  }), kelpie)).toBe(true);
+  // Kept: nothing to re-ask.
+  expect(dropsOriginZone(clauseDoc({
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "another permanent from a graveyard" }, actions: [] }],
+  }), kelpie)).toBe(false);
+});
+
+test("dropsOriginZone leaves alone the origins the VERB already encodes", () => {
+  // "Put into a graveyard from the battlefield" IS `dies`, on all 20 corpus cards that say it, and
+  // "from your library" IS `milled`. Re-asking those spends money to be told what the event already
+  // says. "From anywhere" widens rather than narrows and needs nothing recorded at all.
+  for (const oracle of [
+    "Whenever an artifact is put into a graveyard from the battlefield, each opponent loses 1 life.",
+    "Whenever one or more creature cards are put into your graveyard from your library, investigate.",
+    "Whenever a card is put into an opponent's graveyard from anywhere, that player loses 2 life.",
+  ]) {
+    expect(dropsOriginZone(clauseDoc({
+      canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "an artifact" }, actions: [] }],
+    }), oracle), oracle).toBe(false);
+  }
+});
+
+test("dropsOriginZone ignores an origin that belongs to the EFFECT, not the trigger", () => {
+  // "When this enchantment enters, return target creature card FROM YOUR GRAVEYARD to your hand"
+  // (Omen of the Dead). That origin is already recorded as the action's `fromZone`; the trigger has
+  // none. 50 of the corpus's 119 origin mentions are this shape, and re-asking them buys nothing.
+  expect(dropsOriginZone(clauseDoc({
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this enchantment" }, actions: [] }],
+  }), "When this enchantment enters, return target creature card from your graveyard to your hand.")).toBe(false);
+});
+
+test("a doc already answered by the CURRENT prompt is not worth re-asking", () => {
+  // `--refresh-other` was a treadmill: of the 157 cards it selected on the second run, 147 had been
+  // bought minutes earlier and came back flagged, because `other` is a LEGITIMATE answer for them
+  // and `carriesOther` cannot tell "stuck" from "correctly answered". Re-asking the same prompt for
+  // the same card gets the same answer, so the only thing that changes is the bill.
+  //
+  // A doc refused by the persist gate keeps its OLD version and so stays selectable, which is the
+  // whole point: those are the ones a prompt or segmenter fix is meant to reach.
+  expect(worthReasking(clauseDoc({ normalizeVersion: 8 }), 8)).toBe(false);
+  expect(worthReasking(clauseDoc({ normalizeVersion: 7 }), 8)).toBe(true);
+  expect(worthReasking(null, 8)).toBe(false); // no doc at all is `needsNormalize`'s business
 });

@@ -67,5 +67,14 @@ export function actionEmits(action: Action): GameEvent[] {
       : action.verb === "tap" ? tapVerbs(subject)
       : EMITS[action.verb ?? ""]);
   if (!verbs) return [];
-  return verbs.map((verb) => ({ verb, subject: { ...subject } }));
+  // The ORIGIN zone, for the consumers that demand one (River Kelpie's "enters from a graveyard",
+  // Rivaz's "casts a Dragon spell from your graveyard"). Taken from the action rather than the object
+  // text because the text usually does not repeat it -- "return it to the battlefield" states the
+  // origin only in `fromZone`. Harmless where nothing asks: an unset trigger `fromZone` matches any
+  // origin, so this adds a fact without narrowing a single existing edge.
+  const from = action.fromZone ?? subject.fromZone;
+  return verbs.map((verb) => ({
+    verb,
+    subject: { ...subject, ...(from ? { fromZone: from } : {}) },
+  }));
 }

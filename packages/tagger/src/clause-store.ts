@@ -128,6 +128,52 @@ export function disagreesOnType(doc: CardClausesDoc | null, segmented: Clause[])
   });
 }
 
+/** The ORIGIN zone a trigger names, when the verb does not already carry it. "Whenever a player casts
+ *  a spell FROM A GRAVEYARD" (River Kelpie), "whenever you cast a legendary spell FROM YOUR HAND"
+ *  (Jodah) — the origin is the whole card, and the prompt never asked for it, so the model dropped it
+ *  and the trigger matched every cast in the deck.
+ *
+ *  `battlefield` and `library` are deliberately absent. "Is put into a graveyard from the battlefield"
+ *  already normalizes to `dies` on all 20 corpus cards that say it, and "from your library" to
+ *  `milled`; re-asking those spends money to be told what the event already says. "From anywhere"
+ *  widens rather than narrows, and an unset origin already means any. */
+const TRIGGER_ORIGIN = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|hand)\b/i;
+
+/** The head of a trigger line: everything up to the comma that ends it. An origin AFTER that comma
+ *  belongs to the effect ("return target creature card from your graveyard to your hand") and is
+ *  already recorded as the action's `fromZone` — 50 of the corpus's 119 origin mentions are that
+ *  shape, and re-asking them buys nothing. */
+const TRIGGER_LINE = /^(?:whenever|when|at)\b.*/gim;
+
+/** Did the model throw away an origin zone this card's trigger states? Neither `segmentHash` (which
+ *  covers the card's inputs, not the prompt) nor `carriesOther` nor `missesASplit` can see it, so
+ *  these docs look fresh forever. The selector for `--refresh-other` after the prompt learned to keep
+ *  the phrase. */
+export function dropsOriginZone(doc: CardClausesDoc | null, oracleText: string): boolean {
+  if (!doc) return false; // no doc at all is `needsNormalize`'s business
+  const wanted = (oracleText.match(TRIGGER_LINE) ?? [])
+    .filter((line) => TRIGGER_ORIGIN.test(line.slice(0, line.includes(", ") ? line.indexOf(", ") : line.length)));
+  if (wanted.length === 0) return false;
+  const kept = doc.canonical.filter((c) => TRIGGER_ORIGIN.test(c.trigger?.subject ?? "")).length;
+  return kept < wanted.length;
+}
+
+/** Can re-asking this card's clauses actually change the answer? Only if the doc was answered by an
+ *  OLDER prompt than the one that would be sent now.
+ *
+ *  Without this `--refresh-other` is a treadmill. `carriesOther` cannot tell a card STUCK on the
+ *  escape hatch from one for which `other` is the right answer, so on the second run of 2026-08-06 it
+ *  selected 157 cards of which 147 had been bought minutes earlier and came back flagged identically.
+ *  Re-asking the same prompt for the same card buys the same answer; the only thing that changes is
+ *  the bill.
+ *
+ *  A doc REFUSED by the persist gate keeps its old version and stays selectable, which is exactly
+ *  what a prompt or segmenter fix needs in order to reach it. */
+export function worthReasking(doc: CardClausesDoc | null, currentVersion: number): boolean {
+  if (!doc) return false; // no doc at all is `needsNormalize`'s business
+  return doc.normalizeVersion !== currentVersion;
+}
+
 /** FREE, so it re-runs on any drift: newer derivation code, a re-normalized clause doc, or a
  *  rebuilt clause doc for a card whose text changed. */
 export function needsDerive(

@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 7;
+export const NORMALIZE_VERSION = 8;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -95,6 +95,11 @@ Rules:
   Those verbs already imply where they happen; recording it twice makes two runs disagree over
   nothing. "create" is the one exception you may be tempted by — a token entering is implied by
   the verb, so leave its zones null.
+- ORIGIN ZONES IN A TRIGGER. When the trigger says WHERE the event came from, keep that phrase in
+  the subject verbatim: "another permanent enters from a graveyard", "a spell from your hand",
+  "a Dragon creature spell from your graveyard". It is the whole card — River Kelpie without it
+  triggers on every permanent that enters, not on reanimation. Do NOT add an origin the text does
+  not state, and do not keep "from anywhere": it means the same as saying nothing.
 - "Enters tapped" is a property of entering, not an action: record it as verb "tap" with object
   "this", so the fact survives without inventing a second entry event.
 - List one action per game action the clause states, in the order written.

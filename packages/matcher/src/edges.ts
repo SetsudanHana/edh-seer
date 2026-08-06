@@ -156,6 +156,23 @@ export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): b
  *  census can ask "is this row one of the ones that gate applies to" without restating the list. */
 export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-damage"]);
 
+/** Does the producer's event come from where the consumer's trigger demands?
+ *
+ *  ONE-DIRECTIONAL on purpose. A trigger that names no origin means "however it got there" and must
+ *  keep matching everything it matches today — that is most triggers, so stamping origins onto
+ *  producer emits costs nothing. A trigger that DOES name one ("enters from a graveyard",
+ *  "casts a spell from your hand") is only satisfied by a producer that states the same origin: a
+ *  producer that states none is not proof of anything, and admitting it is how River Kelpie ended up
+ *  claiming Phantasmal Image and Omni-Changeling, which enter from hand, plus Trade Routes, which
+ *  puts nothing onto the battlefield at all. Three of the frozen panel's false claims, one card.
+ *
+ *  The cost of the strictness is real and accepted: a genuine reanimation whose clause never recorded
+ *  a `fromZone` loses its edge to these consumers. A missing answer beats a wrong one. */
+function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolean {
+  if (consumer.fromZone === undefined) return true;
+  return producer.fromZone === consumer.fromZone;
+}
+
 /** Does a normalized producer event satisfy a normalized consumer trigger event? Verb equality
  *  plus the subject test the verb calls for -- graveyard fills and counter adds have their own
  *  matchers, everything else is plain subsumption. Shared by `directedReasons` and the event
@@ -163,6 +180,7 @@ export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-dam
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
   if (producer.verb !== consumer.verb) return false;
+  if (!originMatches(producer.subject, consumer.subject)) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
   if (selfEtbSelfSupplied(producer, consumer)) return false;
   if (producer.verb === "enters" && producer.subject.zone === "graveyard") {

@@ -184,3 +184,27 @@ test("\"of the chosen type\" is recorded, not dropped", () => {
   expect(parseSubject("other Merfolk creatures you control").chosenType).toBeUndefined();
   expect(parseSubject("target creature").chosenType).toBeUndefined();
 });
+
+test("an ORIGIN zone named in the text is a real constraint", () => {
+  // "Whenever a player casts a spell FROM A GRAVEYARD" (River Kelpie), "whenever you cast a
+  // legendary spell FROM YOUR HAND" (Jodah), "whenever you cast a Dragon creature spell from your
+  // graveyard" (Rivaz). The origin is the whole point of these cards, and `zone` cannot carry it:
+  // `zone` means the zone the subject LIVES in, and normalizeZoneEvent forces "battlefield" onto
+  // every enters event, so an origin stored there would be overwritten or, worse, read by
+  // graveyardFillMatches as a graveyard FILL.
+  expect(parseSubject("a spell from a graveyard").fromZone).toBe("graveyard");
+  expect(parseSubject("a Dragon creature spell from your graveyard").fromZone).toBe("graveyard");
+  expect(parseSubject("spell from your hand").fromZone).toBe("hand");
+  expect(parseSubject("a card from exile").fromZone).toBe("exile");
+  // "from anywhere" WIDENS rather than narrows (Bloodchief Ascension, Syr Konrad). An unset
+  // fromZone already means "any origin", so recording it would be noise.
+  expect(parseSubject("a card is put into an opponent's graveyard from anywhere").fromZone).toBeUndefined();
+  expect(parseSubject("a spell").fromZone).toBeUndefined();
+});
+
+test("an origin zone does not disturb the rest of the subject", () => {
+  // The zone words are also ordinary nouns. "graveyard" must not leak into type or subtype, and the
+  // control/type the text states must survive alongside the origin.
+  expect(parseSubject("a Dragon creature spell from your graveyard"))
+    .toMatchObject({ type: "creature", subtype: "dragon", fromZone: "graveyard" });
+});

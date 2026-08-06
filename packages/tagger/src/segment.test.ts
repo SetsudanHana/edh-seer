@@ -417,3 +417,27 @@ test("two conditions joined through a second subject still count as two", () => 
   const trawler = segment("Whenever this creature dies or another artifact you control is put into a graveyard from the battlefield, return to your hand target artifact card in your graveyard with lesser mana value.", [], "Artifact Creature");
   expect(trawler[0].multiTrigger).toBe(true);
 });
+
+test("an `or` joining two SUBJECTS of ONE verb is one condition, not two", () => {
+  // "Whenever this creature or another permanent enters from a graveyard" (River Kelpie) states one
+  // event with two subjects, not two events. Marking it multiTrigger told the model to answer the
+  // clause twice, and the overflow record landed on the id of the trailing keyword clause -- so the
+  // gate saw a trigger on a non-triggered clause AND a duplicate id, and refused the whole card.
+  //
+  // Eight of the fifteen refusals in the 2026-08-06 refresh are this exact shape: River Kelpie,
+  // Hammer of Nazahn, Possibility Technician, Dowsing Device, Titans' Vanguard, Wand of Orcus,
+  // Tarrian's Soulcleaver, Lumbering Worldwagon. Every one has a two-subject trigger followed by a
+  // printed keyword.
+  //
+  // The discriminator is whether the FIRST limb has an event verb of its own before the "or":
+  // Scrap Trawler's "dies or ... is put" does, River Kelpie's "this creature or another permanent
+  // enters" does not -- the two nouns share one verb.
+  const kelpie = segment("Whenever this creature or another permanent enters from a graveyard, draw a card.\nPersist", [], "Creature");
+  expect(kelpie[0].multiTrigger).toBeUndefined();
+
+  const hammer = segment("Whenever Hammer of Nazahn or another Equipment you control enters, you may attach that Equipment to target creature you control.", [], "Legendary Artifact — Equipment");
+  expect(hammer[0].multiTrigger).toBeUndefined();
+
+  const kavu = segment("Whenever this creature or another Kavu you control enters, exile the top card of your library.", [], "Creature — Kavu");
+  expect(kavu[0].multiTrigger).toBeUndefined();
+});

@@ -1110,3 +1110,44 @@ test("a card re-entering itself does not satisfy another card's own ETB", () => 
   }]);
   expect(directedReasons(skeleton, payoff, H).some((r) => r.tag.startsWith("enters"))).toBe(true);
 });
+
+test("a trigger that names an ORIGIN zone is not satisfied by an event from anywhere else", () => {
+  // River Kelpie: "whenever this creature or another permanent enters FROM A GRAVEYARD". The origin
+  // was dropped, so every permanent entering matched -- Phantasmal Image and Omni-Changeling, which
+  // enter from hand, and Trade Routes, which does not put anything into play at all. Three of the
+  // frozen panel's false claims are exactly this card.
+  const fromHand = base("Phantasmal Image", [{
+    kind: "static",
+    effect: { kind: "clone" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: null } }],
+  }]);
+  const reanimator = base("Persist", [{
+    kind: "on-cast",
+    effect: { kind: "graveyard-recursion" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: null, fromZone: "graveyard" } }],
+  }]);
+  const kelpie = base("River Kelpie", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "permanent", control: "you", token: null, fromZone: "graveyard" } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(pairReasons(fromHand, kelpie, H).some((r) => r.tag.startsWith("enters:"))).toBe(false);
+  // ...and the reanimation it actually wants still forms.
+  expect(pairReasons(reanimator, kelpie, H).some((r) => r.tag.startsWith("enters:"))).toBe(true);
+});
+
+test("a trigger with no origin is still satisfied by an event that has one", () => {
+  // The constraint is opt-in in ONE direction only. An unset trigger `fromZone` means "any origin",
+  // so stamping origins onto producer emits must not cost a single edge that exists today.
+  const reanimator = base("Persist", [{
+    kind: "on-cast",
+    effect: { kind: "graveyard-recursion" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: null, fromZone: "graveyard" } }],
+  }]);
+  const anyEtb = base("Kindred Discovery", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(pairReasons(reanimator, anyEtb, H).some((r) => r.tag === "enters:creature")).toBe(true);
+});

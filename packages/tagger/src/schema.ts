@@ -38,6 +38,15 @@ export interface SubjectFilter {
   counter?: string;
   /** Zone the subject lives in; omitted means battlefield. E.g. "graveyard", "hand", "exile". */
   zone?: string;
+  /** Zone the subject came FROM, when the text names one: "casts a spell from a graveyard" (River
+   *  Kelpie), "casts a legendary spell from your hand" (Jodah), "enters from a graveyard".
+   *
+   *  Separate from `zone`, which says where the subject LIVES. The two cannot share a field:
+   *  `normalizeZoneEvent` stamps zone "battlefield" onto every `enters` event, so an origin stored
+   *  there would be overwritten — and on the producer side `zone: "graveyard"` on an `enters` means
+   *  a graveyard FILL, which `graveyardFillMatches` reads. Unset means any origin, so the constraint
+   *  is opt-in and a producer that never records one keeps every edge it has today. */
+  fromZone?: string;
   /** Quantifier the text used for this subject. "target creature" is spot removal, "each creature
    *  your opponents control" is a board wipe, and "creatures you control" is an anthem rather than
    *  a pump — a distinction `SubjectFilter` could not previously express at all. Optional and

@@ -251,9 +251,21 @@ const TRIGGER_CUE = /^(when|whenever|at the beginning|at end)/i;
  *  full cue ("... and whenever you fully unlock a Room") or an "or" joining two event verbs
  *  ("enters or attacks", "dies or is put into a graveyard"). The second limb may name its own
  *  subject first — Scrap Trawler's "dies or another artifact you control is put into a graveyard" —
- *  so a short noun phrase is allowed between the "or" and its verb. */
-const TWO_CONDITIONS =
-  /^(?:when|whenever|at the beginning)[^,]*?\b(?:and (?:when|whenever|at the beginning)\b|or (?:[a-z' ]{1,40}\s)?(?:is put|is turned|attacks|blocks|becomes blocked|dies|enters|leaves|is dealt)\b)/i;
+ *  so a short noun phrase is allowed between the "or" and its verb.
+ *
+ *  The "or" branch requires an event verb on BOTH sides, which is what separates two EVENTS from one
+ *  event with two SUBJECTS. "Whenever this creature or another permanent enters" (River Kelpie) names
+ *  one event the two nouns share; "whenever this creature dies or another artifact is put into a
+ *  graveyard" (Scrap Trawler) names two. Without the left-hand verb, eight cards with a two-subject
+ *  trigger followed by a printed keyword were told to answer the clause twice, the overflow record
+ *  landed on the keyword's id, and the gate refused the whole card for a duplicate id and a trigger
+ *  on a non-triggered clause. */
+const EVENT_VERB = String.raw`(?:is put|is turned|attacks|blocks|becomes blocked|dies|enters|leaves|is dealt)`;
+const TWO_CONDITIONS = new RegExp(
+  String.raw`^(?:when|whenever|at the beginning)[^,]*?\b(?:and (?:when|whenever|at the beginning)\b`
+  + String.raw`|${EVENT_VERB}[^,]*?\bor (?:[a-z' ]{1,40}\s)?${EVENT_VERB}\b)`,
+  "i",
+);
 /** Any leading label ending in a spaced em dash, however it is spelled. Deliberately wider than
  *  ABILITY_WORD: this one only decides whether to LOOK for a trigger cue behind it, so admitting a
  *  label that is not really one costs nothing unless a cue follows. Bounded so it cannot swallow a

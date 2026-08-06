@@ -63,3 +63,27 @@ test("entering tapped is not a tap EVENT", () => {
   expect(actionEmits({ verb: "tap", object: "target creature" }).map((e) => e.verb)).toEqual(["taps"]);
   expect(actionEmits({ verb: "tap", object: "all creatures your opponents control" }).map((e) => e.verb)).toEqual(["taps"]);
 });
+
+test("a move records the zone it came FROM, so origin-constrained triggers can be satisfied", () => {
+  // "Return target creature card from your graveyard to the battlefield" is what River Kelpie's
+  // "enters from a graveyard" is waiting for. The clause states the origin on the ACTION, and the
+  // object text usually does not repeat it ("return it to the battlefield"), so the emit has to take
+  // it from `fromZone` rather than from `parseSubject` alone.
+  const [enters] = actionEmits({
+    verb: "return", object: "it", fromZone: "graveyard", toZone: "battlefield",
+  });
+  expect(enters.verb).toBe("enters");
+  expect(enters.subject.fromZone).toBe("graveyard");
+
+  const [fromExile] = actionEmits({
+    verb: "put", object: "target creature card", fromZone: "exile", toZone: "battlefield",
+  });
+  expect(fromExile.subject.fromZone).toBe("exile");
+});
+
+test("an emit with no stated origin keeps none", () => {
+  // Unset means "any origin" on the consumer side, and a guessed origin here would be the wrong kind
+  // of answer: a token being created comes from nowhere at all.
+  const emits = actionEmits({ verb: "create", object: "a 1/1 white Soldier creature token" });
+  for (const e of emits) expect(e.subject.fromZone).toBeUndefined();
+});
