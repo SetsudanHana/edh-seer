@@ -268,8 +268,16 @@ const COUNTER_KINDS = [
   "shell", "shred", "silver", "sleep", "slime", "slumber", "soot", "soul", "spark", "spite",
   "storage", "strife", "study", "task", "theft", "tide", "training", "trap", "treasure", "valor",
   "velocity", "vitality", "vortex", "vow", "voyage", "wage", "wind", "wish",
-  "indestructible", "flying", "lifelink", "deathtouch", "menace", "trample", "vigilance", "reach",
-  "hexproof", "ward", "haste", "first strike", "double strike", "defense",
+  // KEYWORD counters, verbatim from Comprehensive Rules 122.1b — "flying, first strike, double
+  // strike, deathtouch, decayed, exalted, haste, hexproof, indestructible, lifelink, menace, reach,
+  // shadow, trample, and vigilance". The hand-written version of this list invented a `ward` counter,
+  // which does not exist, and omitted decayed, exalted and shadow.
+  "flying", "first strike", "double strike", "deathtouch", "decayed", "exalted", "haste",
+  "hexproof", "indestructible", "lifelink", "menace", "reach", "shadow", "trample", "vigilance",
+  // ...and the counters with rules of their own: 122.1c shield, 122.1d stun, 122.1e loyalty,
+  // 122.1f poison, 122.1g defense. The rest of this dictionary is NAMED counters, which the rules
+  // do not enumerate because a card may name any counter it likes — those come from the corpus.
+  "defense",
 ] as const;
 
 /** The counter kind a subject names, or undefined. Anchored on the word "counter" so a subject that

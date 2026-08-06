@@ -306,3 +306,24 @@ test("a subject naming no counter claims none", () => {
   // unknowable, and an invented one would be consumed as if it were true.
   expect(parseSubject("those counters").counter).toBeUndefined();
 });
+
+// Comprehensive Rules 122.1b is the authority on which keywords a KEYWORD COUNTER can be:
+// "flying, first strike, double strike, deathtouch, decayed, exalted, haste, hexproof,
+// indestructible, lifelink, menace, reach, shadow, trample, and vigilance". The hand-written
+// dictionary invented a `ward` counter (no such thing) and omitted decayed, exalted and shadow.
+test("every keyword counter named by rule 122.1b is in the dictionary", () => {
+  const rules122_1b = [
+    "flying", "first strike", "double strike", "deathtouch", "decayed", "exalted", "haste",
+    "hexproof", "indestructible", "lifelink", "menace", "reach", "shadow", "trample", "vigilance",
+  ];
+  for (const k of rules122_1b) {
+    expect(parseSubject(`a creature with a ${k} counter on it`).counter).toBe(k);
+  }
+});
+
+// 122.1c-g: the counters with rules text of their own.
+test("the counters with their own rules are in the dictionary", () => {
+  for (const k of ["shield", "stun", "loyalty", "poison", "defense"]) {
+    expect(parseSubject(`a permanent with a ${k} counter on it`).counter).toBe(k);
+  }
+});
