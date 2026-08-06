@@ -601,3 +601,47 @@ test("a flicker's pronoun return inherits the thing it exiled", () => {
   expect(enters?.subject.type).toBe("creature");
   expect(enters?.subject.control).toBe("you");
 });
+
+test("a card that returns ITSELF emits an entry marked self", () => {
+  // Reassembling Skeleton, Drownyard Temple, Leyline of Resonance: "return THIS card from your
+  // graveyard to the battlefield". The emit was untyped, and an untyped subject is a wildcard that
+  // satisfies every consumer filter -- including another card's own ETB, which its own re-entry can
+  // never be. The emit is KEPT (a Skeleton returning is a real creature entering for anyone watching
+  // creatures); it is only marked as being the card itself.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "return", object: "this card", fromZone: "graveyard", toZone: "battlefield" }],
+  }]);
+  const enters = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
+  expect(enters).toBeDefined();
+  expect(enters?.subject.self).toBe(true);
+});
+
+test("a pronoun with no earlier action falls back to the trigger's subject", () => {
+  // Kaya's Ghostform: "When ENCHANTED PERMANENT dies or is put into exile, return THAT CARD to the
+  // battlefield." The antecedent is in the trigger, not in an earlier action, so the action-scan
+  // found nothing and the emit stayed untyped.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "enchanted creature you control", control: "you" },
+    actions: [{ verb: "return", object: "that card", toZone: "battlefield" }],
+  }]);
+  const enters = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
+  expect(enters?.subject.type).toBe("creature");
+});
+
+test("the pronouns the corpus actually uses are all recognised", () => {
+  // Measured off the 107 untyped enters emits: "searched card" (Verdant Catacombs), "the exiled
+  // card" (Identity Thief), "the chosen card" (Daretti), "one of those cards" (Cultivate).
+  for (const pronoun of ["searched card", "the searched card", "the exiled card", "the chosen card", "one of those cards", "those cards", "them"]) {
+    const { abilities } = deriveAbilities([{
+      id: 1, abilityType: "activated",
+      actions: [
+        { verb: "search", object: "your library for a basic land card" },
+        { verb: "put", object: pronoun, toZone: "battlefield" },
+      ],
+    }]);
+    const enters = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
+    expect(enters?.subject.type, `pronoun: ${pronoun}`).toBe("land");
+  }
+});

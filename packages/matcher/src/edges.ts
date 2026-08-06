@@ -269,6 +269,10 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         // characteristics sit in no zone.
         if (t.subject.self === true) {
           const { zone: _eventZone, ...identity } = e.subject;
+          // The producer re-entering ITSELF (Reassembling Skeleton, Drownyard Temple) is a real
+          // entry for anything watching creatures, but it is never the CONSUMER entering, which is
+          // the only event a self trigger watches.
+          if (identity.self === true) continue;
           // An UNTYPED producer subject is left alone deliberately, and it is the residual this gate
           // cannot close. Refusing it looks right -- "something entered" is not evidence that THIS
           // card entered -- but the suite already holds the counterexample: Bolas's Citadel's

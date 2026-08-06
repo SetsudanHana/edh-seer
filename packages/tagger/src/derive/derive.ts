@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 13;
+export const DERIVE_VERSION = 14;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -142,9 +142,11 @@ const SELF_REFERENCE =
  *  actually searched for, which is the subject the pronoun that follows refers to. */
 const PRONOUN_SOURCE = /^(?:your |their |a |an )?librar(?:y|ies)(?: for)?\s*/i;
 
-/** Objects that name no thing of their own and inherit one from earlier in the clause. Deliberately
- *  a closed list of bare pronouns: "that creature" names a type and must keep parsing as itself. */
-const PRONOUN_OBJECT = /^(?:that card|those cards|it|them|the card|the cards)$/i;
+/** Objects that name no thing of their own and inherit one from earlier in the clause. A closed list,
+ *  read off the 107 untyped `enters` emits in the corpus rather than guessed: "that creature" names a
+ *  type and must keep parsing as itself, so only bare back-references belong here. */
+const PRONOUN_OBJECT =
+  /^(?:(?:the |that |those )?(?:searched|exiled|chosen) cards?|that cards?|those cards|it|them|the cards?|one|one of those cards)$/i;
 
 /** The effect's subject, with the origin zone restored for the kinds that are defined by it. The
  *  clause states the zone on the ACTION (`fromZone: "graveyard"`), never inside the object text, so
@@ -247,10 +249,13 @@ export function deriveAbilities(
     const antecedentFor = (idx: number): string | undefined => {
       for (let i = idx - 1; i >= 0; i--) {
         const o = ((clause.actions ?? [])[i]?.object ?? "").trim();
-        if (o === "" || PRONOUN_OBJECT.test(o)) continue;
+        if (o === "" || PRONOUN_OBJECT.test(o) || SELF_REFERENCE.test(o)) continue;
         return o.replace(PRONOUN_SOURCE, "");
       }
-      return undefined;
+      // Kaya's Ghostform: "When ENCHANTED PERMANENT dies, return THAT CARD to the battlefield." The
+      // antecedent is the trigger's subject, not an earlier action -- there is no earlier action.
+      const t = (clause.trigger?.subject ?? "").trim();
+      return t === "" || PRONOUN_OBJECT.test(t) ? undefined : t;
     };
     let trigger: { verbs: Verb[]; subject: ReturnType<typeof parseSubject> } | undefined;
     if (clause.trigger?.event) {
@@ -275,10 +280,18 @@ export function deriveAbilities(
       const antecedent = PRONOUN_OBJECT.test((action.object ?? "").trim())
         ? antecedentFor((clause.actions ?? []).indexOf(action))
         : undefined;
+      // "Return THIS card to the battlefield" (Reassembling Skeleton, Drownyard Temple) emits an
+      // entry of the card ITSELF. The emit is kept -- a Skeleton returning is a real creature
+      // entering for anything watching creatures -- but it is marked, because a card's own re-entry
+      // can never be some OTHER card's ETB, and an untyped subject would satisfy every one of them.
+      const emitsSelf = SELF_REFERENCE.test((action.object ?? "").trim())
+        || /^this$/i.test((action.object ?? "").trim())
+        || isSelfSubject(action.object ?? "", cardName);
       const effectKind = actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
       const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action)
         .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)));
+      if (emitsSelf) for (const e of emits) e.subject.self = true;
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
       // A subject is attached ONLY when there is a kind. matcher's edges.ts emits a

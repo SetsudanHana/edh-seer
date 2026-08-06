@@ -1087,3 +1087,26 @@ test("a self-ETB is only supplied by an event that could be that card entering",
   // The Grey Havens is a Legendary Land with no basic types. No fetch can find it.
   expect(directedReasons(fetch, selfEtbLand("The Grey Havens", []), H)).toEqual([]);
 });
+
+test("a card re-entering itself does not satisfy another card's own ETB", () => {
+  // Reassembling Skeleton returning itself is a real creature entering -- Purphoros should see it --
+  // but it can never be the event Boggart Trawler's "when THIS creature enters" watches.
+  const skeleton = base("Reassembling Skeleton", [{
+    kind: "activated", effect: { kind: "" },
+    emits: [{ verb: "enters", subject: { control: "you", token: null, self: true } }],
+  }]);
+  const selfEtb = base("Boggart Trawler", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
+    effect: { kind: "graveyard-hate" },
+  }]);
+  expect(directedReasons(skeleton, selfEtb, H).filter((r) => r.tag.startsWith("enters"))).toEqual([]);
+
+  // ...but a payoff watching OTHER creatures enter is untouched.
+  const payoff = base("Purphoros, God of the Forge", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+  }]);
+  expect(directedReasons(skeleton, payoff, H).some((r) => r.tag.startsWith("enters"))).toBe(true);
+});
