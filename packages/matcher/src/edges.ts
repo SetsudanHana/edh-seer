@@ -412,14 +412,34 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
   }
 
   // Static edges: P is a lord whose effect subject C's characteristics satisfy. (UNCHANGED)
+  //
+  // Plus one non-static kind. A `clone` states WHICH permanent becomes the copy — "target
+  // Shapeshifter becomes a copy of target creature" — and derive keeps that subject only when it
+  // names a SUBTYPE, so the shape is typal by construction and cannot mesh the way an untyped lord
+  // does. Shapesharer is an ACTIVATED ability, so this pass never saw it and Universal Automaton, a
+  // Shapeshifter in the same deck, got no edge. Nothing else is widened: `token-generation` and the
+  // other 500-odd non-static subjects with a subtype name what the card MAKES, not what it applies
+  // to, and they are already carried by their emit.
+  //
+  // The subtype test lives HERE and not only in derive because both tag sources reach this pass:
+  // measured, admitting every clone subject added 7,622 derived edges, a `clone:any` mesh 99 cards
+  // wide on Mizzix's Mastery and Lithoform Engine. "Copy target instant" names no permanent it
+  // applies to, and an untyped subject matches the whole deck.
   for (const a of p.tags.abilities) {
-    if (a.kind !== "static" || !a.effect.subject) continue;
+    const appliesTo = a.kind === "static"
+      || (a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined);
+    if (!appliesTo || !a.effect.subject) continue;
     if (!subjectMatches(characteristicsSubject(c.tags), a.effect.subject, h)) continue;
     reasons.push({
-      tag: `static:${a.effect.kind}`,
+      // A non-static ability keeps the `${kind}:${subject}` shape the graveyard-recursion and
+      // counter-presence passes use; `static:` stays reserved for what cardThemeTags calls static.
+      tag: a.kind === "static"
+        ? `static:${a.effect.kind}`
+        : `${a.effect.kind}:${themeSubjectKey(a.effect.subject)}`,
       text: `${p.card.name}'s ${a.effect.kind.replace(/-/g, " ")} applies to ${c.card.name}`,
       effectKind: a.effect.kind,
-      repeatability: "static",
+      repeatability:
+        a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
       scaling: a.effect.scaling,
       hasStatPredicate: (a.effect.subject?.stats?.length ?? 0) > 0 || undefined,
       consumer: c.card.name,

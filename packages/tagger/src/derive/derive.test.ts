@@ -888,3 +888,54 @@ test("a granted keyword recovers WHO receives it, and only forms an edge when it
   const g2 = generic.abilities.find((a) => a.effect.kind === "keyword-grant");
   expect(g2?.effect.subject).toBeUndefined();
 });
+
+test("a recipient is the last SENTENCE before the verb, and a comma-separated typal list survives", () => {
+  // The setup before a grant is not who receives it. Incandescent Soulstoke's "You may put an
+  // ELEMENTAL creature card onto the battlefield. That creature gains haste" was reading the
+  // Elemental out of the setup sentence, and Anger's "As long as ... you control a MOUNTAIN,
+  // creatures you control have haste" was reading the condition — both handed the grant a subtype
+  // the card never grants to.
+  const soulstoke = deriveAbilities([{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "grant-ability", object: "haste" }],
+  }], "Incandescent Soulstoke", {
+    1: "You may put an Elemental creature card from your hand onto the battlefield. That creature gains haste until end of turn.",
+  });
+  expect(soulstoke.abilities.find((a) => a.effect.kind === "keyword-grant")?.effect.subject).toBeUndefined();
+
+  const anger = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "grant-ability", object: "haste" }],
+  }], "Anger", { 1: "As long as this card is in your graveyard and you control a Mountain, creatures you control have haste." });
+  expect(anger.abilities.find((a) => a.effect.kind === "keyword-grant")?.effect.subject).toBeUndefined();
+
+  // But a recipient may LIST its types, and those commas are part of the recipient. Raphael grants
+  // lifelink to four tribes; splitting on every comma left only the last one.
+  const raphael = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "grant-ability", object: "lifelink" }],
+  }], "Raphael, Fiendish Savior", { 1: "Other Demons, Devils, Imps, and Tieflings you control get +1/+1 and have lifelink." });
+  expect(raphael.abilities.find((a) => a.effect.kind === "keyword-grant")?.effect.subject)
+    .toMatchObject({ subtype: ["demon", "devil", "imp", "tiefling"] });
+});
+
+test("a copy recovers WHO becomes the copy, and only forms an edge when it is typal", () => {
+  // The same defect one verb over. Shapesharer: "Target SHAPESHIFTER becomes a copy of target
+  // creature" records `copy` with the copy SOURCE as its object -- "target creature" -- so the
+  // RECIPIENT, the thing that names a subtype, is lost exactly as a grant's was. 124 corpus clauses
+  // carry a `copy` action. Universal Automaton, a Shapeshifter in the same deck, got no edge.
+  const shapesharer = deriveAbilities([{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "copy", object: "target creature" }],
+  }], "Shapesharer", { 1: "{2}{U}: Target Shapeshifter becomes a copy of target creature until your next turn." });
+  const clone = shapesharer.abilities.find((a) => a.effect.kind === "clone");
+  expect(clone?.effect.subject).toMatchObject({ subtype: "shapeshifter" });
+
+  // Same guard as the grant: a copy whose recipient names no subtype reaches the whole board, so it
+  // keeps its theme tag and forms no edge. The setup sentence before it is not the recipient either.
+  const mass = deriveAbilities([{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "copy", object: "that creature" }],
+  }], "Mirror Sheen", { 1: "Choose a creature you control. Each other creature you control becomes a copy of that creature until end of turn." });
+  expect(mass.abilities.find((a) => a.effect.kind === "clone")?.effect.subject).toBeUndefined();
+});

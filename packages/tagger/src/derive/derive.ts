@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 26;
+export const DERIVE_VERSION = 27;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -230,12 +230,36 @@ function countTruncated(object: string): string {
  *  trigger or cost is stripped first, so "{T}: Creatures you control gain haste" does not read the
  *  cost as the recipient. */
 const GRANTED_TO = /^(.*?)\s+\b(?:have|has|gain|gains)\b/i;
+/** The same defect one verb over. `copy` records the copy SOURCE as its object -- Shapesharer's
+ *  "Target Shapeshifter becomes a copy of TARGET CREATURE" -- so the recipient, the half that names
+ *  the subtype, is lost the way a grant's was. 122 corpus clauses carry a `copy` action. */
+const COPIED_INTO = /^(.*?)\s+\bbecomes?\s+(?:a\s+copy|copies)\s+of\b/i;
 const CLAUSE_PREAMBLE = /^(?:when|whenever|at)\b[^,]*,\s*|^[^:.]{1,60}:\s*/i;
 
-function grantRecipient(clauseText: string): string | undefined {
+/** A leading SUBORDINATE clause, which states a condition or a setup and never the recipient.
+ *  Anger's "As long as this card is in your graveyard and you control a MOUNTAIN, creatures you
+ *  control have haste" was granting haste to Mountains. Wider than `CLAUSE_PREAMBLE`, which only
+ *  knows trigger words, because the recipient search reads further into the sentence than a trigger
+ *  strip does. */
+const SUBORDINATE = /^(?:as long as|if|unless|while|during|whenever|when|at|for each|until)\b[^,]*,\s*/i;
+
+/** The recipient stated to the LEFT of the verb that hands the ability over. A leading trigger or
+ *  cost is stripped first, so "{T}: Creatures you control gain haste" does not read the cost as the
+ *  recipient — then only the last SENTENCE is kept, because a clause may set something up first
+ *  ("You may put an Elemental creature card onto the battlefield. That creature gains haste") and
+ *  the setup is not who receives it.
+ *
+ *  Sentences, not commas: a recipient is allowed to LIST its types. Raphael, Fiendish Savior grants
+ *  lifelink to "Other Demons, Devils, Imps, and Tieflings you control", and splitting on every comma
+ *  left three of the four tribes without their lord. */
+function recipientBefore(clauseText: string, re: RegExp): string | undefined {
   const body = clauseText.replace(CLAUSE_PREAMBLE, "");
-  const m = body.match(GRANTED_TO);
-  return m?.[1]?.trim() || undefined;
+  const left = body.match(re)?.[1];
+  return left?.split(/[.;]/).pop()?.replace(SUBORDINATE, "").trim() || undefined;
+}
+
+function grantRecipient(clauseText: string): string | undefined {
+  return recipientBefore(clauseText, GRANTED_TO);
 }
 
 /** Creatures that "can't attack you" are, by construction, an OPPONENT's — in a single-deck analysis
@@ -250,8 +274,14 @@ function effectSubject(
   // A GRANT's object is the ability handed over, never the thing receiving it, so the subject has to
   // come from the clause text. Falls back to the object when the text states no recipient, which
   // leaves the behaviour it had before.
-  if (action.verb === "grant-ability") {
-    const who = grantRecipient(clauseText);
+  // A COPY's object is the thing copied FROM, never the thing that becomes it, so the same recovery
+  // and the same typal guard apply: "target Shapeshifter becomes a copy of target creature" is a
+  // synergy with the deck's Shapeshifters, while "each other creature you control becomes a copy"
+  // reaches the whole board and is an ordinary card doing an ordinary thing.
+  if (action.verb === "grant-ability" || action.verb === "copy") {
+    const who = action.verb === "copy"
+      ? recipientBefore(clauseText, COPIED_INTO)
+      : grantRecipient(clauseText);
     if (who) {
       const s = parseSubject(who);
       // A grant EARNS an edge only when it is typal. "Creatures you control gain haste until end of
@@ -447,7 +477,13 @@ export function deriveAbilities(
           if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = "opp";
         }
       }
-      const keepSubject = subject && (kind !== "static" || namesItsTargets(subject));
+      // A `clone` reaches edges.ts's applies-to pass whatever its ability kind, so it answers to the
+      // same discipline a static does: name WHO becomes the copy, or form no edge. "Each other
+      // creature you control becomes a copy of that creature" is the whole board, and a subject that
+      // names nothing is a wildcard that matches every card in the deck.
+      const keepSubject = subject
+        && (kind !== "static" || namesItsTargets(subject))
+        && (effectKind !== "clone" || subject.subtype !== undefined);
       // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;
       // derivation had simply never set it, so the channel was dark under TAGS_SOURCE=derived.
       const scaling = actionScaling(action);

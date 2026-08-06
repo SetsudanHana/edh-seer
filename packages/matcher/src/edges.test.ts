@@ -61,6 +61,26 @@ test("static edge: a zombie lord matches a zombie by characteristics", () => {
   expect(reasons.some((r) => r.tag === "static:pump")).toBe(true);
 });
 
+test("clone edge: an activated copy that names a subtype applies to a card of that subtype", () => {
+  // Shapesharer: "{2}{U}: Target Shapeshifter becomes a copy of target creature." The applies-to
+  // pass only ever considered STATIC abilities, so a copy that names WHO becomes the copy formed no
+  // edge with Universal Automaton, a Shapeshifter in the same deck — a miss the recall measurement
+  // found. A clone that names a subtype is typal by construction; one that does not names no
+  // subject at all (derive drops it), so widening the pass cannot mesh.
+  const H2: Hierarchy = { ...H, shapeshifter: ["creature"] };
+  const shapesharer = base("Shapesharer", [{
+    kind: "activated",
+    cost: "",
+    effect: { kind: "clone", subject: { subtype: "shapeshifter", scope: "target", control: "any", token: null } },
+  }], ["shapeshifter"]);
+  const automaton = base("Universal Automaton", [], ["shapeshifter"]);
+  const reasons = pairReasons(shapesharer, automaton, H2);
+  const clone = reasons.find((r) => r.tag === "clone:shapeshifter");
+  expect(clone).toBeDefined();
+  // An activated ability is not a static one, whatever pass it travels through.
+  expect(clone?.repeatability).toBe("activated");
+});
+
 test("token gate excludes a nontoken-only payoff from token producers", () => {
   // goblin:["creature"] must be present so the type clause passes (goblin implies creature);
   // otherwise the type mismatch alone would exclude the edge and the token gate wouldn't be exercised.
