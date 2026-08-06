@@ -485,6 +485,17 @@ const ARRIVES_TAPPED = /\b(?:battlefield|enters?|play)\b[^.]{0,30}?\btapped\b|\b
  *  triggers on it. So NO producer can legitimately satisfy this trigger, and every match it forms is
  *  false: Drowner of Hope's "Tap target creature" is not a mana tap. Recorded as an unknown trigger
  *  rather than silently deleted, which is where every other unmatched event goes. */
+/** "When the chosen player LOSES THE GAME, you win the game" (Shinryu, Transcendent Rival). The
+ *  clause layer normalizes that into the `life-lost` event, but losing the game is not losing life:
+ *  the trigger is simply wrong, and every life-loss card in the deck falsely feeds it. Surfaced by a
+ *  judged-false panel claim, Disciple of the Vault -> Shinryu.
+ *
+ *  REFUSED rather than reinterpreted. The engine has no "loses the game" event, so the honest answer
+ *  is an unknown trigger — a near-miss is consumed as if it were true. One corpus card has this
+ *  shape, of the four life-lost triggers that exist. A prompt fix would cost money to re-normalize;
+ *  this is free and reads the clause text the model already left behind. */
+const LOSES_THE_GAME = /\blos(?:es|e|ing) the game\b/i;
+
 const TAPPED_FOR_MANA = /\btapp?(?:ed|s|ing)?\b[^.]{0,30}?\bfor\s+(?:mana|\{)/i;
 
 export function deriveAbilities(
@@ -542,6 +553,8 @@ export function deriveAbilities(
       const verb = normalizeTriggerVerb(clause.trigger.event);
       if (verb === "taps" && TAPPED_FOR_MANA.test(text)) {
         unknownTriggers.push("taps-for-mana");
+      } else if (verb === "lose-life" && LOSES_THE_GAME.test(text)) {
+        unknownTriggers.push("loses-the-game");
       } else if (verb) {
         const subject = subjectFrom(clause.trigger.subject ?? "", cardName);
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];

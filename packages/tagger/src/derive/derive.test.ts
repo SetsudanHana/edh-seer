@@ -1111,3 +1111,40 @@ test("an unrecognised trigger event still produces no ability", () => {
   expect(abilities).toHaveLength(0);
   expect(unknownTriggers).toContain("damage-dealt");
 });
+
+// "When the chosen player LOSES THE GAME, you win the game" (Shinryu) is normalized by the clause
+// layer into the `life-lost` event. Losing the game is not losing life, so the trigger is simply
+// wrong, and every life-loss card in the deck falsely feeds it — which is how a judged-false panel
+// claim (Disciple of the Vault -> Shinryu) surfaced it.
+//
+// Refused rather than reinterpreted: the engine has no "loses the game" event, so the honest answer
+// is an unknown trigger, not a near-miss. One corpus card has this shape, of four life-lost triggers.
+test("a life-lost trigger on a loses-the-game clause is refused", () => {
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [{
+      id: 1,
+      abilityType: "triggered",
+      trigger: { event: "life-lost", subject: "the chosen player", control: "opponent" },
+      actions: [{ verb: "other", object: "you win the game" }],
+    }],
+    "Shinryu, Transcendent Rival",
+    { 1: "When the chosen player loses the game, you win the game." },
+  );
+  expect(abilities).toHaveLength(0);
+  expect(unknownTriggers).toContain("loses-the-game");
+});
+
+// A real life-loss trigger on a card that ALSO mentions winning the game must survive.
+test("a genuine life-loss trigger is untouched", () => {
+  const { abilities } = deriveAbilities(
+    [{
+      id: 1,
+      abilityType: "triggered",
+      trigger: { event: "life-lost", subject: "an opponent", control: "opp" },
+      actions: [{ verb: "draw", object: "you", amount: "1" }],
+    }],
+    "Some Drain Payoff",
+    { 1: "Whenever an opponent loses life, draw a card." },
+  );
+  expect(abilities[0].trigger?.verbs).toEqual(["lose-life"]);
+});
