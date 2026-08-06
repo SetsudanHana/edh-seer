@@ -9,6 +9,15 @@ const arr = (v: string | string[] | undefined): string[] =>
 /** Does the concrete producer subject satisfy the consumer filter? Every field the consumer
  *  leaves unset is a wildcard; a field it sets must be satisfied by the producer. */
 export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+  // A DISJUNCTION: satisfied by any branch, with the shared fields outside still binding. Checked
+  // first so the outer subject is tested without its branches, then each branch on its own.
+  if (consumer.anyOf !== undefined && consumer.anyOf.length > 0) {
+    const { anyOf, ...shared } = consumer;
+    // Shared fields are merged INTO each branch rather than checked separately: a branch carries
+    // only its type/subtype, and an absent `control` is not a wildcard here — it would fail the
+    // equality check below against a producer that states one.
+    return anyOf.some((b) => subjectMatches(producer, { ...shared, ...b }, h));
+  }
   // "Historic" is artifact, legendary or Saga -- a printed fact the matcher stamps on the producer
   // from its type line. Opt-in like every other field: a consumer that does not ask is unaffected,
   // and a consumer that DOES ask is satisfied only by a card that is one.

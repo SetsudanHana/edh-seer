@@ -212,9 +212,37 @@ function subjectFrom(text: string, cardName?: string): ReturnType<typeof parseSu
   const stripped = stripCardName(text.replace(SELF_DISJUNCT, ""), cardName);
   const subject = parseSubject(stripped);
   if (subject.type !== undefined && subject.subtype !== undefined && dropsCrossSlotOr(stripped)) {
-    delete subject.subtype;
+    const branches = orBranches(stripped);
+    if (branches.length >= 2) {
+      // The AND was never asserted by the text. Both halves move into the disjunction and the outer
+      // subject keeps only what is shared, which is what "you control" governs.
+      delete subject.type;
+      delete subject.subtype;
+      subject.anyOf = branches;
+    } else {
+      // Fallback to the older, lossy behaviour: a missing branch is a missing edge, an invented AND
+      // is a wrong one.
+      delete subject.subtype;
+    }
   }
   return subject;
+}
+
+/** The type/subtype alternatives of a cross-slot OR, in text order.
+ *
+ *  Only the differing halves are kept — a branch carrying neither a type nor a subtype says nothing
+ *  and is dropped, and everything else (control, scope, colours) belongs on the outer subject where
+ *  it binds every alternative. */
+function orBranches(text: string): ReturnType<typeof parseSubject>[] {
+  const out: ReturnType<typeof parseSubject>[] = [];
+  for (const part of text.split(/\bor\b/i)) {
+    const p = parseSubject(part.trim());
+    const branch: Record<string, unknown> = {};
+    if (p.type !== undefined) branch.type = p.type;
+    if (p.subtype !== undefined) branch.subtype = p.subtype;
+    if (Object.keys(branch).length > 0) out.push(branch as ReturnType<typeof parseSubject>);
+  }
+  return out;
 }
 
 /** The card talking about itself. Anchored at the start, because a self-reference anywhere else is

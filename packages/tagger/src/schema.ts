@@ -61,6 +61,14 @@ export interface SubjectFilter {
    *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:
    *  matched against the card's printed characteristics, which already carry supertypes. */
   legendary?: true;
+  /** A real DISJUNCTION: the subject is satisfied by ANY of these branches.
+   *
+   *  `type` is an OR-list and `subtype` is an OR-list, but the two are ANDed with each other, so
+   *  "another creature or Vehicle you control" (Prowl) and "an artifact or Dragon card" (Magda)
+   *  could not be said at all — they cross the slot boundary. Branches hold only the DIFFERING
+   *  type/subtype; everything shared ("you control") stays on the outer subject and binds all of
+   *  them. Match = the outer subject matches AND some branch matches. */
+  anyOf?: SubjectFilter[];
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** Zone the subject lives in; omitted means battlefield. E.g. "graveyard", "hand", "exile". */

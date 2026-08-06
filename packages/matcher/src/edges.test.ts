@@ -1575,3 +1575,20 @@ test("a stat-gated tutor forms an edge", () => {
   (small.tags.characteristics as { power: string | null }).power = "1";
   expect(pairReasons(recruiter, small, H).some((r) => r.tag.startsWith("tutor"))).toBe(true);
 });
+
+// A disjunctive tutor must key on the branch that MATCHED, not on the first one. Magda searches for
+// "an artifact or Dragon card": keying every hit `tutor:artifact` reports a Dragon as an artifact,
+// which is the exact defect themeSubjectKey's own comment describes for negated subjects.
+test("a disjunctive tutor keys on the branch that matched", () => {
+  const magda = base("Magda, Brazen Outlaw", [{
+    kind: "activated",
+    effect: {
+      kind: "top-manipulation",
+      subject: { control: "you", token: null, anyOf: [{ type: "artifact" }, { subtype: "dragon" }] },
+    },
+  }]);
+  const dragon = base("Lathliss, Dragon Queen", [], ["dragon"]);
+  const tags = pairReasons(magda, dragon, H).filter((r) => r.tag.startsWith("tutor")).map((r) => r.tag);
+  expect(tags).toContain("tutor:dragon");
+  expect(tags).not.toContain("tutor:artifact");
+});

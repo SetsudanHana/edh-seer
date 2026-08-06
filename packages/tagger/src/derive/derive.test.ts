@@ -980,21 +980,10 @@ test("stripping the name leaves a genuine typal subject alone", () => {
   expect(abilities[0].trigger?.subject.subtype).toBe("dragon");
 });
 
-// "another creature or Vehicle you control" (Prowl, Pursuit Vehicle) is a DISJUNCTION, but `type`
-// and `subtype` are separate fields the matcher ANDs, so it derived "creature AND Vehicle" and a
-// plain creature entering -- which the oracle plainly triggers on -- matched nothing. The schema
-// cannot express the OR, so the subtype half is dropped: a missing branch is a missing edge, while
-// an invented AND is a wrong answer, and the invariant prefers the former.
-test("an OR across the type and subtype slots keeps the type and drops the subtype", () => {
-  const { abilities } = deriveAbilities([{
-    id: 1,
-    abilityType: "triggered",
-    trigger: { event: "enters", subject: "another creature or Vehicle you control" },
-    actions: [{ verb: "add-counter", object: "+1/+1" }],
-  }], "Prowl, Pursuit Vehicle");
-  expect(abilities[0].trigger?.subject.type).toBe("creature");
-  expect(abilities[0].trigger?.subject.subtype).toBeUndefined();
-});
+// SUPERSEDED by the disjunction test below. This originally asserted that the subtype branch was
+// DROPPED, which was the honest stopgap while SubjectFilter could not express an OR across the
+// type/subtype boundary — missing rather than wrong. `anyOf` now carries it properly, and the cost
+// of the stopgap was recall miss #183 (Magda losing her Dragons).
 
 // The compound "Dragon creature" is a genuine AND and must not be caught by the OR rule.
 test("a compound type and subtype with no OR is untouched", () => {
@@ -1042,4 +1031,37 @@ test("a pronoun object whose antecedent is the card itself emits self, not a wil
   const emits = abilities.flatMap((a) => a.emits ?? []);
   expect(emits.length).toBeGreaterThan(0);
   for (const e of emits) expect(e.subject.self).toBe(true);
+});
+
+// A cross-slot OR is a real DISJUNCTION. "another creature or Vehicle you control" (Prowl) and
+// "an artifact or Dragon card" (Magda) name two alternatives, and `type` and `subtype` are separate
+// fields the matcher ANDs. The first fix dropped the subtype branch — missing rather than wrong,
+// but it cost Magda her Dragons and left recall miss #183 open. SubjectFilter now carries `anyOf`.
+test("a cross-slot OR becomes a disjunction, not a dropped branch", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "another creature or Vehicle you control" },
+    actions: [{ verb: "add-counter", object: "+1/+1" }],
+  }], "Prowl, Pursuit Vehicle");
+  const s = abilities[0].trigger!.subject;
+  expect(s.anyOf).toEqual([{ type: "creature" }, { subtype: "vehicle" }]);
+  // The AND is gone: neither branch is asserted on the outer subject.
+  expect(s.type).toBeUndefined();
+  expect(s.subtype).toBeUndefined();
+  // Shared fields stay OUTSIDE the branches — "you control" governs both alternatives.
+  expect(s.control).toBe("you");
+});
+
+test("a compound with no OR is still a plain AND", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "another Dragon creature you control" },
+    actions: [{ verb: "draw", object: "you", amount: "1" }],
+  }], "Scalelord Reckoner");
+  const s = abilities[0].trigger!.subject;
+  expect(s.anyOf).toBeUndefined();
+  expect(s.type).toBe("creature");
+  expect(s.subtype).toBe("dragon");
 });

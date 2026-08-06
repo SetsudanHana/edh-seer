@@ -196,3 +196,27 @@ test("subjectMatches keeps null as a wildcard against a NONTOKEN consumer", () =
   const unknown = { type: "creature", control: "you", token: null };
   expect(subjectMatches(unknown as never, wantsNontoken as never, {})).toBe(true);
 });
+
+// A disjunctive subject is satisfied by EITHER branch, with the shared fields applying to both.
+test("anyOf matches a producer satisfying either branch", () => {
+  const consumer = {
+    control: "you" as const, token: null,
+    anyOf: [{ type: "creature" }, { subtype: "vehicle" }],
+  };
+  const creature = { control: "you" as const, token: null, type: "creature" };
+  const vehicle = { control: "you" as const, token: null, type: "artifact", subtype: "vehicle" };
+  const neither = { control: "you" as const, token: null, type: "enchantment" };
+  expect(subjectMatches(creature, consumer, {})).toBe(true);
+  expect(subjectMatches(vehicle, consumer, {})).toBe(true);
+  expect(subjectMatches(neither, consumer, {})).toBe(false);
+});
+
+// The shared fields outside the branches still bind: "another creature or Vehicle YOU CONTROL" does
+// not accept an opponent's creature.
+test("anyOf still enforces the fields outside the branches", () => {
+  const consumer = {
+    control: "you" as const, token: null,
+    anyOf: [{ type: "creature" }, { subtype: "vehicle" }],
+  };
+  expect(subjectMatches({ control: "opp" as const, token: null, type: "creature" }, consumer, {})).toBe(false);
+});

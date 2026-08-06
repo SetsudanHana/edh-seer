@@ -18,6 +18,11 @@ export function themeSubjectKey(s: SubjectFilter): string {
   // which cardThemeTags grouped with artifact-cast decks. A subtype is more specific still, so it
   // keeps priority over both.
   const negated = s.notType ?? [];
+  // A DISJUNCTION holds its type/subtype in the branches, so a subject with `anyOf` has neither on
+  // the outside and would key as "any" — turning Prowl's `enters:creature` into `enters:any` and
+  // regrouping it with every untyped trigger. The first branch is the one the text names first.
+  const first = s.anyOf?.[0];
+  if (first !== undefined) return themeSubjectKey(first);
   return list(s.subtype)[0] ?? (negated.length ? `-${negated[0]}` : undefined) ?? list(s.type)[0] ?? "any";
 }
 
@@ -509,13 +514,24 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     // A SUBTYPE or a STAT PREDICATE narrows; a bare type does not. `combatNarrowsOffType` has said
     // the same about stats all along — Imperial Recruiter's "power 2 or less" and Spellseeker's
     // "mana value 2 or less" pick out particular cards, not a whole type.
-    const subs = list(a.effect.subject.subtype);
+    // A disjunction keeps its subtypes in the branches: Magda's "an artifact or Dragon card" is
+    // `anyOf: [{type: artifact}, {subtype: dragon}]`, and reading only the outer subject would miss
+    // the Dragon half that makes her a typal tutor at all.
+    const subs = [
+      ...list(a.effect.subject.subtype),
+      ...(a.effect.subject.anyOf ?? []).flatMap((b) => list(b.subtype)),
+    ];
     const narrows = subs.length > 0 || (a.effect.subject.stats?.length ?? 0) > 0;
     if (!narrows) continue;
     if (subs.length > 0 && subs.every((s) => LAND_SUBTYPES.has(s))) continue;
-    if (!subjectMatches(characteristicsSubject(c.tags), a.effect.subject, h)) continue;
+    const found = characteristicsSubject(c.tags);
+    if (!subjectMatches(found, a.effect.subject, h)) continue;
+    // Key on the branch that MATCHED. "An artifact or Dragon card" keyed as `tutor:artifact` would
+    // report a Dragon as an artifact — the same defect themeSubjectKey documents for negations.
+    const { anyOf, ...shared } = a.effect.subject;
+    const matched = anyOf?.find((b) => subjectMatches(found, { ...shared, ...b }, h));
     reasons.push({
-      tag: `tutor:${themeSubjectKey(a.effect.subject)}`,
+      tag: `tutor:${themeSubjectKey(matched ?? a.effect.subject)}`,
       text: `${p.card.name} can search up ${c.card.name}`,
       effectKind: a.effect.kind,
       repeatability:
