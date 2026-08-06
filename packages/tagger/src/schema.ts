@@ -67,8 +67,11 @@ export interface SubjectFilter {
    *  "another creature or Vehicle you control" (Prowl) and "an artifact or Dragon card" (Magda)
    *  could not be said at all — they cross the slot boundary. Branches hold only the DIFFERING
    *  type/subtype; everything shared ("you control") stays on the outer subject and binds all of
-   *  them. Match = the outer subject matches AND some branch matches. */
-  anyOf?: SubjectFilter[];
+   *  them. Match = the outer subject matches AND some branch matches.
+   *
+   *  PARTIAL by construction: a branch carries only what DIFFERS. The matcher merges the outer
+   *  subject into each branch before testing, so `control` and `token` arrive from there. */
+  anyOf?: Partial<SubjectFilter>[];
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** Zone the subject lives in; omitted means battlefield. E.g. "graveyard", "hand", "exile". */

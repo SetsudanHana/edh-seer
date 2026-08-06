@@ -11,7 +11,7 @@ const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
 
 /** A short human/grouping key for a subject: its subtype, else its type, else "any". */
-export function themeSubjectKey(s: SubjectFilter): string {
+export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // A NEGATION outranks the list it resolves to. `type` holds the six types "noncreature spell"
   // leaves, and taking the first of them keyed Valley Floodcaller as `cast:artifact` -- which
   // humanizeEvent then rendered, to the user, as "an artifact being cast" about an instant, and

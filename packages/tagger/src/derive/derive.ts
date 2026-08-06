@@ -6,7 +6,7 @@
  *  silence is indistinguishable from a card that does nothing, which is exactly how Bitterblossom
  *  sat in the corpus as a vanilla bear. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
-import type { Ability, AbilityKind, CardTags, Characteristics, Control, Verb } from "../schema.js";
+import type { Ability, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
@@ -233,14 +233,15 @@ function subjectFrom(text: string, cardName?: string): ReturnType<typeof parseSu
  *  Only the differing halves are kept — a branch carrying neither a type nor a subtype says nothing
  *  and is dropped, and everything else (control, scope, colours) belongs on the outer subject where
  *  it binds every alternative. */
-function orBranches(text: string): ReturnType<typeof parseSubject>[] {
-  const out: ReturnType<typeof parseSubject>[] = [];
+function orBranches(text: string): Partial<SubjectFilter>[] {
+  const out: Partial<SubjectFilter>[] = [];
   for (const part of text.split(/\bor\b/i)) {
     const p = parseSubject(part.trim());
-    const branch: Record<string, unknown> = {};
-    if (p.type !== undefined) branch.type = p.type;
-    if (p.subtype !== undefined) branch.subtype = p.subtype;
-    if (Object.keys(branch).length > 0) out.push(branch as ReturnType<typeof parseSubject>);
+    const branch: Partial<SubjectFilter> = {
+      ...(p.type !== undefined ? { type: p.type } : {}),
+      ...(p.subtype !== undefined ? { subtype: p.subtype } : {}),
+    };
+    if (Object.keys(branch).length > 0) out.push(branch);
   }
   return out;
 }
