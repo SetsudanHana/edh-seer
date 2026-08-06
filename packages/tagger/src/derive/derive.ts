@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 15;
+export const DERIVE_VERSION = 16;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -210,6 +210,21 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
  *
  *  The clause text is the only place the distinction survives, so it is read here rather than in
  *  emits.ts, which sees one action and no context. */
+/** Verbs that REMOVE a permanent someone else controls. A targeted one that states no controller
+ *  ("destroy target creature with power 4 or greater") parses to `any`, and `any` matches `you` on
+ *  either side — so Big Game Hunter and Bitter Triumph supplied The Meathook Massacre's payoff for
+ *  creatures YOU control dying. Six rows of the 2026-08-07 sample.
+ *
+ *  This is a DECISION and not a reading (user, 2026-08-06): the card genuinely does not say whose
+ *  creature dies. It is called `opp` because that is where removal gets pointed, on the same grounds
+ *  as "its controller -> opp" and with the same property — being wrong only ever removes an edge.
+ *  The stated cost is that a value line aimed at your own board (Saw in Half) loses its edge too.
+ *
+ *  Scoped tightly. MASS removal hits your board as well and stays `any`. A stated controller is never
+ *  overridden. `sacrifice` is absent on purpose: a sacrifice outlet eats YOUR creatures, and that is
+ *  the aristocrats edge this engine most wants to find. */
+const REMOVAL_VERBS = new Set(["destroy", "exile"]);
+
 const ARRIVES_TAPPED = /\b(?:battlefield|enters?|play)\b[^.]{0,30}?\btapped\b|\btapped\b[^.]{0,20}?\bunder\b/i;
 
 /** "Whenever you tap a permanent for {C}" (Forsaken Monument), "whenever enchanted land is tapped for
@@ -304,6 +319,11 @@ export function deriveAbilities(
       if (actor) {
         for (const e of emits) e.subject.control = actor;
         if (subject) subject.control = actor;
+      } else if (REMOVAL_VERBS.has(action.verb ?? "")) {
+        // See REMOVAL_VERBS. Only a TARGETED removal with no stated controller.
+        for (const e of emits) {
+          if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = "opp";
+        }
       }
       const keepSubject = subject && (kind !== "static" || namesItsTargets(subject));
       // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;

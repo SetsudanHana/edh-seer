@@ -451,9 +451,11 @@ test("an action whose actor the clause names emits for that actor, not for you",
   expect(create?.emits?.every((e) => e.subject.control === "opp")).toBe(true);
   expect(create?.effect.subject?.control).toBe("opp");
 
-  // The destroy in the same clause is untouched: its object names its own subject.
+  // The destroy in the same clause does not inherit the CREATE's actor. It reads `opp` for its own
+  // reason -- targeted removal with no stated controller, decided 2026-08-06 -- not because the
+  // recipient override leaked onto it.
   const destroy = abilities.find((a) => a.emits?.some((e) => e.verb === "dies"));
-  expect(destroy?.emits?.[0].subject.control).toBe("any");
+  expect(destroy?.emits?.[0].subject.control).toBe("opp");
 
   // Without the text nothing changes -- the map is optional and absent means "say nothing".
   const before = deriveAbilities([clause]).abilities
@@ -652,3 +654,36 @@ test("the pronouns the corpus actually uses are all recognised", () => {
 // is not adjacent to the verb and the adjacency rule that prevents cross-action bleed cannot see it.
 // Loosening that rule to reach it is the cross-action bleed recipient.ts exists to avoid. A missing
 // answer beats a wrong one; the draw-control sub-family stays open.
+
+test("targeted removal that names no controller is opponent-facing", () => {
+  // The largest remaining sub-family in the 2026-08-07 draw: Big Game Hunter and Bitter Triumph
+  // "supplied" The Meathook Massacre's payoff for creatures YOU control dying, because "destroy
+  // target creature" states no controller, parses to `any`, and `any` matches `you` on either side.
+  //
+  // A DECISION, not a reading (user, 2026-08-06): the card genuinely does not say whose creature
+  // dies. It is called `opp` because that is where removal gets pointed, and like "its controller ->
+  // opp" it only ever removes edges.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "target creature with power 4 or greater" }],
+  }]);
+  expect(abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies")?.subject.control).toBe("opp");
+
+  // MASS removal hits your board too and stays `any`.
+  const wrath = deriveAbilities([{
+    id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "all creatures" }],
+  }]);
+  expect(wrath.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies")?.subject.control).toBe("any");
+
+  // A stated controller is never overridden.
+  const yours = deriveAbilities([{
+    id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "target creature you control" }],
+  }]);
+  expect(yours.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies")?.subject.control).toBe("you");
+
+  // A SACRIFICE outlet is your own board and is untouched -- this is the aristocrats edge the engine
+  // most wants to find.
+  const outlet = deriveAbilities([{
+    id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "another creature" }],
+  }]);
+  expect(outlet.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies")?.subject.control).toBe("any");
+});
