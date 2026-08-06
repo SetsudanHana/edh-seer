@@ -553,6 +553,7 @@ export function deriveAbilities(
       }
     }
 
+    const before = abilities.length;
     for (const action of clause.actions ?? []) {
       if (INERT_VERBS.has(action.verb ?? "")) continue;
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
@@ -621,6 +622,19 @@ export function deriveAbilities(
 
     const drain = drainAbility(clause, kind, trigger);
     if (drain) abilities.push(drain);
+
+    // A TRIGGER is a consumer signal in its own right, independent of what the effect does. Geode
+    // Rager's "Landfall — whenever a land you control enters, GOAD each creature target player
+    // controls" maps `goad` to no kind and no emit, so every action was unclaimed, the clause pushed
+    // nothing, and the landfall trigger went with it: every land in the deck stopped feeding it.
+    // 83 corpus clauses lose a legal `enters` trigger this way, plus cast 23, sacrificed 22,
+    // attacks 18 and dies 12.
+    //
+    // The effect stays honestly EMPTY — we know when it triggers, not what it does — and the actions
+    // remain in `unclaimed`, so the derivation gap is still visible rather than papered over.
+    if (trigger && abilities.length === before) {
+      abilities.push({ kind, effect: { kind: "" as const }, trigger });
+    }
   }
   return { abilities, unclaimed, unknownTriggers };
 }

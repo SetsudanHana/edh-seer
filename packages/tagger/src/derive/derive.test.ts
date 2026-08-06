@@ -1065,3 +1065,49 @@ test("a compound with no OR is still a plain AND", () => {
   expect(s.type).toBe("creature");
   expect(s.subtype).toBe("dragon");
 });
+
+// A TRIGGER is a consumer signal in its own right, independent of what the effect does. Geode Rager
+// reads "Landfall — Whenever a land you control enters, goad each creature target player controls":
+// `goad` maps to no effect kind and no emit, so the action was unclaimed, the clause pushed no
+// ability at all, and the LANDFALL TRIGGER went with it. Every land in the deck stopped feeding it.
+// 83 corpus clauses lose a legal `enters` trigger this way, plus cast 23, sacrificed 22, attacks 18,
+// dies 12.
+test("a triggered clause keeps its trigger even when no action is claimable", () => {
+  const { abilities, unclaimed } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "a land you control", control: "you" },
+    actions: [{ verb: "other", object: "goad each creature target player controls" }],
+  }], "Geode Rager");
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0].trigger?.verbs).toEqual(["enters"]);
+  expect(abilities[0].trigger?.subject.type).toBe("land");
+  // The effect is still honestly empty — we know WHEN it triggers, not what it does.
+  expect(abilities[0].effect.kind).toBe("");
+  // ...and the action is still reported as unclaimed, so the gap stays visible.
+  expect(unclaimed).toHaveLength(1);
+});
+
+// A clause that DID produce an ability must not gain a second, empty one.
+test("a claimable action does not also produce a bare trigger ability", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "a land you control", control: "you" },
+    actions: [{ verb: "gain-life", object: "you", amount: "1" }],
+  }], "Courser of Kruphix");
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0].effect.kind).toBe("lifegain");
+});
+
+// An UNKNOWN trigger event has no verb to record, so there is nothing to keep.
+test("an unrecognised trigger event still produces no ability", () => {
+  const { abilities, unknownTriggers } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "damage-dealt", subject: "this creature", control: "you" },
+    actions: [{ verb: "other", object: "something" }],
+  }], "Flumph");
+  expect(abilities).toHaveLength(0);
+  expect(unknownTriggers).toContain("damage-dealt");
+});
