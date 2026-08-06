@@ -496,6 +496,19 @@ export function deriveAbilities(
       const t = (clause.trigger?.subject ?? "").trim();
       return t === "" || PRONOUN_OBJECT.test(t) ? undefined : t;
     };
+    /** ...and the case `antecedentFor` deliberately walks PAST: the nearest earlier action names the
+     *  CARD, not a class. Necromancy reads `cast "this spell"` then `sacrifice "it"`, so the hunt for
+     *  a class found nothing and the pronoun stayed untyped — a wildcard emit that satisfies every
+     *  consumer filter, which is how a REANIMATION spell came to "fill the graveyard" for anything
+     *  recursive. The antecedent is not missing here, it is the card. */
+    const antecedentIsSelf = (idx: number): boolean => {
+      for (let i = idx - 1; i >= 0; i--) {
+        const o = ((clause.actions ?? [])[i]?.object ?? "").trim();
+        if (o === "" || PRONOUN_OBJECT.test(o)) continue;
+        return SELF_REFERENCE.test(o) || isSelfSubject(o, cardName);
+      }
+      return false;
+    };
     let trigger: { verbs: Verb[]; subject: ReturnType<typeof parseSubject> } | undefined;
     if (clause.trigger?.event) {
       const verb = normalizeTriggerVerb(clause.trigger.event);
@@ -525,7 +538,11 @@ export function deriveAbilities(
       // can never be some OTHER card's ETB, and an untyped subject would satisfy every one of them.
       const emitsSelf = SELF_REFERENCE.test((action.object ?? "").trim())
         || /^this$/i.test((action.object ?? "").trim())
-        || isSelfSubject(action.object ?? "", cardName);
+        || isSelfSubject(action.object ?? "", cardName)
+        // A pronoun standing in for the card itself. Tested on the RESOLVED antecedent, because the
+        // raw object is "it" and matches none of the spellings above.
+        || (PRONOUN_OBJECT.test((action.object ?? "").trim())
+          && antecedentIsSelf((clause.actions ?? []).indexOf(action)));
       const effectKind = actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
       const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action)

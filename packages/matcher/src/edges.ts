@@ -394,6 +394,12 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       // `zone` is dropped from the fill before the test: a card's printed characteristics sit in no
       // zone, so keeping it would fail every card and silently delete the whole family.
       if (a.effect.subject.self === true) {
+        // A fill that is ITSELF self-scoped puts the PRODUCER into the graveyard, and the producer is
+        // never the consumer in a pair. `self` rode along in fillIdentity below, where subjectMatches
+        // does not read it, so the fill looked untyped and wildcarded through the very check that
+        // exists to demand proof: Necromancy sacrificing itself "enabled" Eye of Nidhogg returning
+        // itself.
+        if (e.subject.self === true) continue;
         const { zone: _fillZone, ...fillIdentity } = e.subject;
         if (!subjectMatches(characteristicsSubject(c.tags), fillIdentity, h)) continue;
       }

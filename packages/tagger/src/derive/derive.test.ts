@@ -1024,3 +1024,22 @@ test("an effect object naming the card itself is marked self", () => {
   const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion");
   expect(rec?.effect.subject?.self).toBe(true);
 });
+
+// Necromancy clause 1: `cast "this spell"` then `sacrifice "it"`. The pronoun's antecedent is the
+// card itself, but antecedentFor SKIPS a self-referencing earlier action while hunting for a class,
+// so "it" fell through untyped -- and an untyped emit is a wildcard that satisfies every consumer
+// filter. Necromancy, a REANIMATION spell, thereby "filled the graveyard" for anything recursive.
+// Same family as every other self-reference loss: the card is talking about itself.
+test("a pronoun object whose antecedent is the card itself emits self, not a wildcard", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "static",
+    actions: [
+      { verb: "cast", object: "this spell", optional: true },
+      { verb: "sacrifice", object: "it" },
+    ],
+  }], "Necromancy");
+  const emits = abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.length).toBeGreaterThan(0);
+  for (const e of emits) expect(e.subject.self).toBe(true);
+});

@@ -1325,3 +1325,26 @@ test("an artifact that is not a creature does not satisfy an artifact-CREATURE a
   expect(pairReasons(withTypes("Llanowar Elves", ["creature"]), master, H)
     .some((r) => r.tag.startsWith("static:"))).toBe(false);
 });
+
+// A fill marked SELF means the producer card itself goes to the graveyard. It can satisfy another
+// card's self-recursion only if the two are the same card, which a pair never is. The gate stripped
+// `zone` but let `self` ride along in fillIdentity, and subjectMatches ignores it -- so the fill read
+// as untyped and wildcarded through the very check that exists to demand proof. Necromancy, whose
+// own sacrifice clause is self, thereby "enabled" Eye of Nidhogg returning ITSELF.
+test("a self fill does not enable a different card's self-recursion", () => {
+  const filler = base("Necromancy", [{
+    kind: "triggered",
+    effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "any", token: null, self: true } }],
+  }]);
+  const recurser = base("Eye of Nidhogg", [{
+    kind: "triggered",
+    trigger: { verbs: ["leaves"], subject: { control: "you", token: null, self: true } },
+    effect: {
+      kind: "graveyard-recursion",
+      subject: { control: "any", token: null, self: true, zone: "graveyard" },
+    },
+  }]);
+  const reasons = pairReasons(filler, recurser, H);
+  expect(reasons.some((r) => r.tag.startsWith("graveyard-recursion"))).toBe(false);
+});
