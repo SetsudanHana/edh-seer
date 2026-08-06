@@ -1468,3 +1468,34 @@ test("a static whose subject wants a counter still applies to a card that can ca
   const creature = base("Laboratory Maniac", []);
   expect(pairReasons(anthem, creature, H).some((r) => r.tag === "static:pump")).toBe(true);
 });
+
+// MELD is the relation the engine had no shape for: Mishra, Claimed by Gix names "a creature named
+// Phyrexian Dragon Engine" outright, and the engine matches producer EVENTS to consumer TRIGGERS.
+// The recall measurement filed that exact pair `miss-inexpressible`; Commander Salt models it as a
+// `named` qualifier, MTGJSON as `cardParts`, and the corpus now carries `meldPartner`. A gap, not a
+// ceiling.
+test("two meld partners form an edge", () => {
+  const a = { ...base("Mishra, Claimed by Gix", []) };
+  (a.card as { meldPartner?: string }).meldPartner = "Phyrexian Dragon Engine";
+  const b = { ...base("Phyrexian Dragon Engine", []) };
+  (b.card as { meldPartner?: string }).meldPartner = "Mishra, Claimed by Gix";
+  const reasons = pairReasons(a, b, H);
+  expect(reasons.some((r) => r.tag === "meld")).toBe(true);
+  expect(reasons.find((r) => r.tag === "meld")?.text).toContain("meld");
+});
+
+// The relation is symmetric and the pair is ONE fact. Emitting it from both directions would double
+// every meld pair in the report.
+test("a meld pair states its edge once, not once per direction", () => {
+  const a = { ...base("Bruna, the Fading Light", []) };
+  (a.card as { meldPartner?: string }).meldPartner = "Gisela, the Broken Blade";
+  const b = { ...base("Gisela, the Broken Blade", []) };
+  (b.card as { meldPartner?: string }).meldPartner = "Bruna, the Fading Light";
+  expect(pairReasons(a, b, H).filter((r) => r.tag === "meld")).toHaveLength(1);
+});
+
+test("a meld card forms no edge with a card that is not its partner", () => {
+  const a = { ...base("Mishra, Claimed by Gix", []) };
+  (a.card as { meldPartner?: string }).meldPartner = "Phyrexian Dragon Engine";
+  expect(pairReasons(a, base("Sol Ring", []), H).some((r) => r.tag === "meld")).toBe(false);
+});

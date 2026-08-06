@@ -533,6 +533,36 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
  *  ones: keep-first here means the surviving copy has `impliedProducer: undefined`, which is also
  *  the copy `themeMembership` (themes.ts) wants for surplus credit. If that ordering ever changes,
  *  this dedup silently starts keeping the implied copy instead. */
+/** MELD: the one relation here that is card NAME to card NAME.
+ *
+ *  Mishra, Claimed by Gix names "a creature named Phyrexian Dragon Engine" outright. Everything else
+ *  in this file matches a producer EVENT to a consumer TRIGGER, so that shape had nowhere to land —
+ *  the recall measurement filed the pair `miss-inexpressible`, which was wrong: Commander Salt
+ *  models it as a `named` qualifier, MTGJSON as `cardParts`, and `ingest-meld.ts` now puts
+ *  `meldPartner` on the card as a printed characteristic.
+ *
+ *  Emitted from `pairReasons` rather than `directedReasons` because the relation is SYMMETRIC and the
+ *  pair is one fact: both halves must be on the battlefield, so neither is the producer. Emitting it
+ *  per direction would double every meld pair in the report.
+ *
+ *  There is no `effectKind`: the closed 30 are payoff kinds, and melding is not one of them. The
+ *  field is optional for exactly this sort of case. */
+function meldReason(a: DeckCard, b: DeckCard): Reason[] {
+  const partnered = a.card.meldPartner === b.card.name || b.card.meldPartner === a.card.name;
+  if (!partnered) return [];
+  return [{
+    tag: "meld",
+    text: `${a.card.name} and ${b.card.name} meld together`,
+    repeatability: "oneshot",
+    producer: a.card.name,
+    consumer: b.card.name,
+  }];
+}
+
 export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
-  return dedupeReasons([...directedReasons(a, b, h), ...directedReasons(b, a, h)]);
+  return dedupeReasons([
+    ...directedReasons(a, b, h),
+    ...directedReasons(b, a, h),
+    ...meldReason(a, b),
+  ]);
 }

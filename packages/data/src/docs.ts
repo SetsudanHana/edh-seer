@@ -27,6 +27,10 @@ export interface CardDoc {
   allParts?: RelatedPart[];
   faces?: CardFace[];
   artCrop?: string;
+  /** Written by `ingest-meld.ts`, not by `toCardDoc` — re-run that bin after a full re-ingest. */
+  meldPartner?: string;
+  meldResult?: string;
+  meldParts?: string[];
 }
 
 export interface ComboDoc {
@@ -78,5 +82,6 @@ export function docToCard(d: CardDoc): Card {
     colorIdentity: d.colorIdentity,
     power: d.power,
     toughness: d.toughness,
+    ...(d.meldPartner !== undefined ? { meldPartner: d.meldPartner } : {}),
   };
 }
