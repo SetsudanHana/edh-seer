@@ -262,3 +262,25 @@ test("a compound type is an AND, not an OR", () => {
   // A single type is not a conjunction.
   expect(parseSubject("creatures you control").allTypes).toBeUndefined();
 });
+
+// "LEGENDARY creatures you control get +2/+2" (Serah Farron) and "+X/+X where X is the number of
+// legendary creatures" (Jodah, the Unifier) derived a subject of EVERY creature, because legendary
+// is a SUPERTYPE and SubjectFilter had no filter for it. Those two anthems were the widest meshes in
+// the derived population at x53 and x51. 45 corpus cards name legendary in a subject.
+// `historic` is the precedent: a boolean, matched against the card's printed characteristics.
+test("a legendary subject records the supertype", () => {
+  expect(parseSubject("legendary creatures you control").legendary).toBe(true);
+  expect(parseSubject("each legendary creature you control").legendary).toBe(true);
+});
+
+test("a subject with no supertype does not claim one", () => {
+  expect(parseSubject("creatures you control").legendary).toBeUndefined();
+});
+
+// Helm of the Host, Quantum Misalignment and Vesuvan Duplimancy all make a copy "except it isn't
+// legendary". Reading that as a legendary constraint inverts the card.
+test("a negated legendary is not a legendary constraint", () => {
+  expect(parseSubject("a token that's a copy of equipped creature, except the token isn't legendary").legendary)
+    .toBeUndefined();
+  expect(parseSubject("nonlegendary creatures you control").legendary).toBeUndefined();
+});

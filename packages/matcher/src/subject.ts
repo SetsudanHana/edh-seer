@@ -13,6 +13,8 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // from its type line. Opt-in like every other field: a consumer that does not ask is unaffected,
   // and a consumer that DOES ask is satisfied only by a card that is one.
   if (consumer.historic === true && producer.historic !== true) return false;
+  // Same shape as historic: a legendary-matters anthem reaches only legendary permanents.
+  if (consumer.legendary === true && producer.legendary !== true) return false;
   // control: equal, or `any` on either side.
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) {
     return false;

@@ -234,6 +234,12 @@ const CHOSEN = /\bof the chosen\b|\bthe chosen (?:type|color|colour)\b/i;
  *  ("each nonland permanent that's NOT historic", Desynchronization) is not the constraint, and the
  *  engine cannot express the inverse — better unset than inverted. */
 const HISTORIC = /\bhistoric\b/i;
+
+/** The LEGENDARY supertype, and its negation. Helm of the Host, Quantum Misalignment and Vesuvan
+ *  Duplimancy all copy something "except it isn't legendary" — reading that as a legendary
+ *  constraint inverts the card, the same trap `nontoken` and `notType` exist for. */
+const LEGENDARY = /\blegendary\b/i;
+const NOT_LEGENDARY = /\b(?:isn'?t|is not|isn’t|non-?)\s*legendary\b/i;
 const NOT_HISTORIC = /\b(?:not|non-?)\s*historic\b/i;
 
 const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|hand)\b/i;
@@ -248,6 +254,7 @@ export function parseSubject(text: string): SubjectFilter {
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
   if (CHOSEN.test(t)) out.chosenType = true;
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;
+  if (LEGENDARY.test(t) && !NOT_LEGENDARY.test(t)) out.legendary = true;
   const origin = t.match(ORIGIN_ZONE);
   if (origin) out.fromZone = origin[1].toLowerCase();
   if (colors) out.colors = colors;

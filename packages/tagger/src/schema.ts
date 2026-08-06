@@ -56,6 +56,11 @@ export interface SubjectFilter {
    *  satisfies it. Set on a CONSUMER by `parseSubject`, and on a PRODUCER by the matcher, which reads
    *  it off the printed type line. */
   historic?: true;
+  /** The subject demands the LEGENDARY supertype. "Legendary creatures you control get +2/+2"
+   *  (Serah Farron) and Jodah's +X/+X derived a subject of EVERY creature without it, which were the
+   *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:
+   *  matched against the card's printed characteristics, which already carry supertypes. */
+  legendary?: true;
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** Zone the subject lives in; omitted means battlefield. E.g. "graveyard", "hand", "exile". */

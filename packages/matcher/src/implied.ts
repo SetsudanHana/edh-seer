@@ -27,6 +27,10 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   if (type !== undefined) out.type = type;
   if (subtype !== undefined) out.subtype = subtype;
   if (isHistoric(types, subtypes)) out.historic = true;
+  // A legendary card entering IS "another legendary creature you control enters" (Legolas, Gimli,
+  // Tinybones Joins Up). Without this the supertype filter cut five real edges: the consumer demanded
+  // legendary and the producer's own entry never advertised it, so a legend failed to be a legend.
+  if (types.includes("legendary")) out.legendary = true;
   out.power = parseStat(chars.power);
   out.toughness = parseStat(chars.toughness);
   out.manaValue = chars.cmc;

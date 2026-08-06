@@ -45,6 +45,9 @@ function characteristicsSubject(tags: CardTags): SubjectFilter {
   const subtypes = c.subtypes.map((t) => t.toLowerCase());
   return {
     ...(isHistoric(types, subtypes) ? { historic: true as const } : {}),
+    // The supertype is already in `types`, but `type` is an OR list on a consumer subject, so a
+    // legendary demand cannot be expressed there. Lifted to its own flag, as historic is.
+    ...(types.includes("legendary") ? { legendary: true as const } : {}),
     type: c.types.length ? c.types.map((t) => t.toLowerCase()) : undefined,
     subtype: c.subtypes.length ? c.subtypes.map((t) => t.toLowerCase()) : undefined,
     colors: c.colors.length ? c.colors : undefined,

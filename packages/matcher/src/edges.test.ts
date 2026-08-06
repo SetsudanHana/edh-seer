@@ -1379,3 +1379,43 @@ test("a tax forms no edge either", () => {
   const spell = base("Some Spell", []);
   expect(pairReasons(grid, spell, H).some((r) => r.tag === "static:tax")).toBe(false);
 });
+
+// Serah Farron and Jodah, the Unifier are legendary-matters anthems that reached EVERY creature,
+// which made them the two widest meshes in the derived population (x53, x51).
+test("a legendary anthem does not reach a nonlegendary creature", () => {
+  const anthem = base("Serah Farron", [{
+    kind: "static",
+    effect: {
+      kind: "pump",
+      subject: { type: "creature", control: "you", token: null, scope: "all", legendary: true },
+    },
+  }]);
+  const plain = base("Grizzly Bears", []);
+  expect(pairReasons(anthem, plain, H).some((r) => r.tag === "static:pump")).toBe(false);
+});
+
+// The other half of the legendary filter, and the one that cost five real edges when it was missing:
+// a LEGENDARY card's own entry must advertise the supertype, or "another legendary creature you
+// control enters" (Legolas, Gimli, Tinybones Joins Up) is satisfied by nothing at all. A legend has
+// to be able to be a legend.
+test("a legendary card's own entry satisfies a legendary-only trigger", () => {
+  const legend = {
+    ...base("Ellie, Brick Master", []),
+    tags: {
+      ...base("Ellie, Brick Master", []).tags,
+      characteristics: {
+        ...base("Ellie, Brick Master", []).tags.characteristics,
+        types: ["legendary", "creature"],
+      },
+    },
+  };
+  const payoff = base("Legolas Greenleaf", [{
+    kind: "triggered",
+    trigger: {
+      verbs: ["enters"],
+      subject: { type: "creature", control: "you", token: null, legendary: true },
+    },
+    effect: { kind: "counter-placement" },
+  }]);
+  expect(pairReasons(legend, payoff, H).some((r) => r.tag.startsWith("enters"))).toBe(true);
+});
