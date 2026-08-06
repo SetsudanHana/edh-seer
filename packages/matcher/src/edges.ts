@@ -154,6 +154,12 @@ export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): bo
  *      many tokens are made, none of them is the card watching its own entry. Authored, so the
  *      implied rule alone left 25 of these standing in the measured sample.
  *  Tokens remain real supply for every OTHER consumer: go-wide is the point of them. */
+/** Effect kinds that describe what the DECK does rather than how two cards relate. A pairwise edge
+ *  makes the same claim in every deck, which is exactly wrong for these: Sapphire Medallion in
+ *  mono-red does nothing, and Ghostly Prison protects you the same however the other 99 are chosen.
+ *  See the applies-to pass for the measured cost of leaving them in. */
+const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set(["cost-reduction", "tax"]);
+
 export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
   if (consumer.verb !== "enters" && consumer.verb !== "cast") return false;
   // Only the GRAVEYARD variant is excluded (it has its own matcher). `normalizeZoneEvent` stamps
@@ -435,18 +441,22 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     const appliesTo = a.kind === "static"
       || (a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined);
     if (!appliesTo || !a.effect.subject) continue;
-    // COST REDUCTION IS RAMP, NOT SYNERGY (user ruling, 2026-08-06). A Medallion's value is "how
-    // many blue spells do I run" — a property of deck CONSTRUCTION, not a relationship with any
-    // particular blue card. Sapphire Medallion in a mono-red deck does nothing, and a pairwise edge
-    // has no way to say so: it claims the same thing in both decks.
+    // DECK ROLES ARE NOT PAIRWISE SYNERGIES (user rulings, 2026-08-06).
     //
-    // Measured at the moment of the ruling: recovering 16 blank cost reducers added 3,600 edges and
-    // took the mesh from 411 to 2,408, with single reducers fanning to 68 cards — the same weight a
-    // two-card combo gets. The claims are each defensible and collectively worthless.
+    // `cost-reduction` is RAMP. A Medallion's value is "how many blue spells do I run" — a property
+    // of deck CONSTRUCTION, not a relationship with any particular blue card. Sapphire Medallion in
+    // a mono-red deck does nothing, and a pairwise edge has no way to say so: it makes the identical
+    // claim in both decks. Measured at the ruling: recovering 16 blank cost reducers added 3,600
+    // edges and took the mesh from 411 to 2,408, single reducers fanning to 68 cards — the weight a
+    // two-card combo gets. Each claim defensible, all of them together worthless.
     //
-    // `tax` is deliberately NOT included. It is aimed at opponents and is a real board effect, not a
-    // property of what you chose to run.
-    if (a.effect.kind === "cost-reduction") continue;
+    // `tax` is INTERACTION / PROTECTION. Propaganda and Ghostly Prison make opponents attack you
+    // less. That is a role the deck plays against the table, not a relation to a card you chose to
+    // run — Ghostly Prison protects you exactly as much whatever else is in the 99.
+    //
+    // Both still DERIVE: the kinds remain on the card and stay available as role signals for
+    // `build.ts`. They simply stop claiming an edge.
+    if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
     if (!subjectMatches(characteristicsSubject(c.tags), a.effect.subject, h)) continue;
     reasons.push({
       // A non-static ability keeps the `${kind}:${subject}` shape the graveyard-recursion and

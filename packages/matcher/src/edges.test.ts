@@ -1365,9 +1365,10 @@ test("a cost reducer forms no edge with a card it happens to discount", () => {
   expect(pairReasons(medallion, spell, H).some((r) => r.tag === "static:cost-reduction")).toBe(false);
 });
 
-// The mirror case is NOT covered by that ruling and must keep working: a tax is aimed at opponents
-// and is a real board effect, not a deck-construction property.
-test("a tax still forms its edge", () => {
+// A TAX IS INTERACTION / PROTECTION, NOT SYNERGY (user ruling, 2026-08-06). Propaganda and Ghostly
+// Prison make opponents attack you less - that is a deck ROLE, the same way cost reduction is ramp.
+// It slows opponents down; it does not relate to any particular card you chose to run.
+test("a tax forms no edge either", () => {
   const grid = base("Defense Grid", [{
     kind: "static",
     effect: {
@@ -1376,5 +1377,5 @@ test("a tax still forms its edge", () => {
     },
   }]);
   const spell = base("Some Spell", []);
-  expect(pairReasons(grid, spell, H).some((r) => r.tag === "static:tax")).toBe(true);
+  expect(pairReasons(grid, spell, H).some((r) => r.tag === "static:tax")).toBe(false);
 });
