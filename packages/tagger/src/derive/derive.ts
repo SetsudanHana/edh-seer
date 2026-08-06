@@ -239,7 +239,7 @@ export function deriveAbilities(
     for (const action of clause.actions ?? []) {
       if (INERT_VERBS.has(action.verb ?? "")) continue;
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
-      const effectKind = actionEffectKind(action);
+      const effectKind = actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
       const emits = actionEmits(action)
         .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)));

@@ -107,7 +107,24 @@ function costDirection(object: string): EffectKind | null {
   return null;
 }
 
-export function actionEffectKind(action: Action): EffectKind | null {
+/** Whose graveyard an exile empties. Exiling YOUR OWN graveyard is a cost paid in your own
+ *  resources — escape, delve, Mizzix's Mastery copying the spell it exiles — and is the opposite of
+ *  hating someone else's. 25 of the 58 graveyard-hate actions in the corpus are that shape, so
+ *  nearly half of every self-fuel card was reading as a graveyard-hate payoff.
+ *
+ *  The object is asked first because it is the action's own text; the clause is a fallback for the
+ *  cards whose object is just "that card" or "it" (Necropotence, Cavalier of Thorns). A clause
+ *  naming BOTH graveyards refuses to answer rather than guess, which leaves today's kind. */
+const YOUR_YARD = /\byour graveyard\b/i;
+const OTHER_YARD = /\b(?:target player'?s?|opponents?'?s?|each player'?s?|their)\s+graveyards?\b/i;
+
+function exilesOwnGraveyard(object: string, clauseText: string): boolean {
+  if (YOUR_YARD.test(object)) return true;
+  if (OTHER_YARD.test(object)) return false;
+  return YOUR_YARD.test(clauseText) && !OTHER_YARD.test(clauseText);
+}
+
+export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
   const verb = action.verb ?? "";
   // 342 corpus cards carry a grant-ability action and the verb had no row here at all, so Lightning
   // Greaves and Swiftfoot Boots derived nothing whatsoever.
@@ -120,6 +137,10 @@ export function actionEffectKind(action: Action): EffectKind | null {
     if (r.verb !== verb) continue;
     if (r.from !== undefined && (action.fromZone ?? null) !== r.from) continue;
     if (r.to && (action.toZone ?? null) !== r.to) continue;
+    // See exilesOwnGraveyard. Null rather than a kind of its own: the payoff this card actually has
+    // is carried by the OTHER actions in the same clause, and a near-miss kind is consumed as if it
+    // were true while null is honestly inert.
+    if (r.kind === "graveyard-hate" && exilesOwnGraveyard(action.object ?? "", clauseText)) return null;
     return r.kind;
   }
   // Life change is one verb per direction, but which kind depends on whose life it is.

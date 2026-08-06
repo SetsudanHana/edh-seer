@@ -158,3 +158,34 @@ test("the verbs the undocced cards needed derive real kinds", () => {
   // not a token and not a pump.
   expect(actionEffectKind({ verb: "turn-face-up", object: "target face-down creature" })).toBe("animate");
 });
+
+test("exiling your OWN graveyard is fuel, not graveyard hate", () => {
+  // 25 of the 58 graveyard-hate actions in the corpus exile the controller's own graveyard --
+  // Mizzix's Mastery, Aphemia, Lazotep Quarry, Necropotence. That is a COST paid in your own
+  // resources (escape, delve, flashback-style exile), the opposite of hating someone else's yard,
+  // and tagging it `graveyard-hate` made every self-fuel card a graveyard-hate payoff.
+  //
+  // The answer is null, not a new kind: the actions that carry the real payoff are elsewhere in the
+  // same clause (Mizzix's Mastery copies the exiled spell, Greenwarden returns a card), and a
+  // near-miss kind is consumed as if it were true while null is honestly inert.
+  const exile = (object: string) => ({ verb: "exile", object, fromZone: "graveyard", toZone: null });
+  expect(actionEffectKind(exile("target instant or sorcery card from your graveyard"))).toBeNull();
+  // Someone else's graveyard is the real thing, and stays.
+  expect(actionEffectKind(exile("target player's graveyard"))).toBe("graveyard-hate");
+  expect(actionEffectKind(exile("each opponent's graveyard"))).toBe("graveyard-hate");
+  // An unqualified graveyard says nothing about whose, so it keeps the kind it has today.
+  expect(actionEffectKind(exile("up to X target cards from graveyards"))).toBe("graveyard-hate");
+});
+
+test("the clause text decides whose graveyard when the object does not say", () => {
+  // "Whenever you discard a card, exile that card from your graveyard" (Necropotence): the object is
+  // just "that card" and only the clause carries the owner.
+  const a = { verb: "exile", object: "that card", fromZone: "graveyard", toZone: null };
+  expect(actionEffectKind(a, "Whenever you discard a card, exile that card from your graveyard.")).toBeNull();
+  // A clause that exiles an OPPONENT's yard and happens to mention yours elsewhere is still hate --
+  // the object is checked first, and the clause-text fallback refuses to answer when both appear.
+  expect(actionEffectKind(a, "Exile target opponent's graveyard, then return a card from your graveyard to your hand."))
+    .toBe("graveyard-hate");
+  // No text at all leaves today's answer, so every other caller is unaffected.
+  expect(actionEffectKind(a)).toBe("graveyard-hate");
+});
