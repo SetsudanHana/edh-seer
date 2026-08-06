@@ -7,7 +7,7 @@
  *  region of the population this project actually knows something about.
  *
  *  Usage: tsx src/bin/panel-build.ts */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { mergeVerdicts, type PanelVerdict } from "./panel-core.js";
 
@@ -18,7 +18,7 @@ const readJsonl = <T>(path: string): T[] =>
   readFileSync(path, "utf8").split("\n").filter((l) => l.trim() !== "").map((l) => JSON.parse(l) as T);
 
 let verdicts: PanelVerdict[] = [];
-const pairs = new Map<string, { producer: string; consumer: string }>();
+const pairs = new Map<string, { producer: string; consumer: string; deck: string }>();
 
 for (const draw of DRAWS) {
   const dir = `docs/measurements/${draw}-edge-precision`;
@@ -29,6 +29,11 @@ for (const draw of DRAWS) {
   const judged = readJsonl<{ id: number; verdict: PanelVerdict["verdict"]; cause?: string; note: string }>(
     join(dir, "judgments.jsonl"),
   );
+    // The DECK each row was sampled from. chosenType resolution is deck-dependent
+  // (matcher/src/chosen-type.ts picks the deck's dominant subtype), so a claim only means what it
+  // meant when judged if it is re-scored in the same deck. A panel that dropped this would be
+  // measuring something adjacent to the engine rather than the engine.
+  const byDeck = (JSON.parse(readFileSync(join(dir, "key.json"), "utf8")) as { byDeck: Record<string, string> }).byDeck;
   const incoming: PanelVerdict[] = [];
   for (const j of judged) {
     const w = worksheet.get(j.id);
@@ -37,7 +42,7 @@ for (const draw of DRAWS) {
       producer: w.producer, consumer: w.consumer, tag: w.tag,
       verdict: j.verdict, cause: j.cause ?? "", note: j.note,
     });
-    pairs.set(`${w.producer}|${w.consumer}`, { producer: w.producer, consumer: w.consumer });
+    pairs.set(`${w.producer}|${w.consumer}`, { producer: w.producer, consumer: w.consumer, deck: byDeck[String(j.id)] ?? "" });
   }
   verdicts = mergeVerdicts(verdicts, incoming);
   console.log(`  ${draw}: ${incoming.length} verdicts`);
@@ -59,6 +64,15 @@ verdicts = mergeVerdicts(verdicts, rj.flatMap((j) => {
   return w ? [{ producer: w.producer, consumer: w.consumer, tag: w.tag, verdict: j.verdict, cause: j.cause ?? "", note: j.note }] : [];
 }));
 console.log(`  2026-08-07 re-judge: ${rj.length} verdicts folded in`);
+
+// Verdicts paid against a DEBT worksheet rather than a sampled draw. Kept as their own files so a
+// rebuild cannot silently drop them -- which it did once, on the first rebuild after the debt was
+// paid, because the build only knew about the three draws.
+for (const f of readdirSync(OUT).filter((n) => n.startsWith("verdicts-debt-") && n.endsWith(".jsonl"))) {
+  const paid = readJsonl<PanelVerdict>(join(OUT, f));
+  verdicts = mergeVerdicts(verdicts, paid);
+  console.log(`  ${f}: ${paid.length} verdicts folded in`);
+}
 
 mkdirSync(OUT, { recursive: true });
 writeFileSync(join(OUT, "pairs.json"), `${JSON.stringify({

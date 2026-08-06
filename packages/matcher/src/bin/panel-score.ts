@@ -12,21 +12,25 @@
  *  on the debt being small.
  *
  *  Usage: tsx src/bin/panel-score.ts [--worksheet out.jsonl] */
-import { readFileSync, writeFileSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, resolveNames } from "@mtg/data";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
+} from "@mtg/data";
+import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
-import { buildDeckCards, loadHierarchy, pairReasons, type CardTagsLookup } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
 import { claimFor } from "./precision-core.js";
 import { scorePanel, wilsonPanel, type PanelClaim, type PanelVerdict } from "./panel-core.js";
 
 const PANEL = "docs/measurements/panel";
+const DECKS = "packages/cli/decks/calibration";
 const arg = (flag: string): string | undefined => {
   const i = process.argv.indexOf(flag);
   return i > 0 ? process.argv[i + 1] : undefined;
 };
 
 const pairs = (JSON.parse(readFileSync(`${PANEL}/pairs.json`, "utf8")) as {
-  pairs: { producer: string; consumer: string }[];
+  pairs: { producer: string; consumer: string; deck: string }[];
 }).pairs;
 const cache = readFileSync(`${PANEL}/verdicts.jsonl`, "utf8").split("\n")
   .filter((l) => l.trim() !== "").map((l) => JSON.parse(l) as PanelVerdict);
@@ -34,24 +38,38 @@ const cache = readFileSync(`${PANEL}/verdicts.jsonl`, "utf8").split("\n")
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
 const tags: CardTagsLookup = createTagsLookup(store.db, "derived");
-const h = loadHierarchy();
 
-// Every card the panel names, resolved once. A pair is scored only if both its cards resolve, and
-// any that do not are reported rather than skipped silently.
-const wanted = new Set(pairs.flatMap((p) => [p.producer, p.consumer]));
-const { cards } = await resolveNames([...wanted], lookup);
-const byName = new Map((await buildDeckCards(cards, lookup, tags)).map((d) => [d.card.name, d]));
+// Scored DECK BY DECK through `analyzeDeckStructured`, the same entry point the sampling instrument
+// used and the same one the product uses. Calling `pairReasons` directly skips the deck-level passes
+// -- chosenType resolution above all, which picks the deck's dominant subtype -- and a panel that
+// skips them measures something adjacent to the engine rather than the engine. Found the hard way:
+// the chosenType fix moved nothing until this was corrected.
+const wantedByDeck = new Map<string, Set<string>>();
+for (const p of pairs) {
+  if (!wantedByDeck.has(p.deck)) wantedByDeck.set(p.deck, new Set());
+  wantedByDeck.get(p.deck)!.add(`${p.producer}|${p.consumer}`);
+}
 
 const current: PanelClaim[] = [];
-let unresolved = 0;
-for (const p of pairs) {
-  const a = byName.get(p.producer), b = byName.get(p.consumer);
-  if (!a || !b) { unresolved++; continue; }
-  // Directed, matching how the claims were judged: only reasons where THIS producer supplies THIS
-  // consumer belong to this pair's entry.
-  for (const r of pairReasons(a, b, h)) {
-    if (r.producer === p.producer && r.consumer === p.consumer) {
-      current.push({ producer: p.producer, consumer: p.consumer, tag: r.tag });
+const oracle = new Map<string, string>();
+let missingDecks = 0;
+for (const [deck, want] of wantedByDeck) {
+  const file = `${DECKS}/${deck}.txt`;
+  if (!existsSync(file)) { missingDecks++; continue; }
+  const sections = parseDecklistSections(readFileSync(file, "utf8"));
+  const { cards, combos } = await resolveNames([...sections.commanders, ...sections.deck], lookup);
+  for (const c of cards) oracle.set(c.name, (c as { oracleText?: string }).oracleText ?? "");
+  const cmd = new Set(sections.commanders.map(normalizeName));
+  const deckCards = await buildDeckCards(cards, lookup, tags);
+  const report = analyzeDeckStructured(
+    deckCards, cards.filter((c) => cmd.has(normalizeName(c.name))).map((c) => c.name),
+    undefined, undefined, new ComboIndex(combos),
+  );
+  for (const e of report.edges) {
+    for (const r of e.reasons) {
+      if (!r.producer || !r.consumer) continue;
+      if (!want.has(`${r.producer}|${r.consumer}`)) continue;
+      current.push({ producer: r.producer, consumer: r.consumer, tag: r.tag });
     }
   }
 }
@@ -73,7 +91,7 @@ console.log(`  (${current.length - distinct.length} duplicate claims collapsed)`
 const s = scorePanel(distinct, cache);
 const [lo, hi] = wilsonPanel(s.real, s.real + s.false);
 console.log(`frozen panel — ${pairs.length} pairs, ${cache.length} cached verdicts`);
-if (unresolved) console.log(`  UNRESOLVED pairs (card missing from the corpus): ${unresolved}`);
+if (missingDecks) console.log(`  decks not found: ${missingDecks}`);
 console.log(`  claims the engine makes on the panel today: ${distinct.length}`);
 console.log(`  real ${s.real} | false ${s.false} | uncertain ${s.uncertain}`);
 console.log(`  PRECISION ${s.precision === null ? "n/a" : `${(s.precision * 100).toFixed(1)}% [${lo.toFixed(1)}, ${hi.toFixed(1)}]`}`);
@@ -89,7 +107,6 @@ console.log(`  cached verdicts the engine no longer claims: ${s.dropped}`);
 
 const out = arg("--worksheet");
 if (out && s.unjudged.length) {
-  const oracle = new Map(cards.map((c) => [c.name, (c as { oracleText?: string }).oracleText ?? ""]));
   writeFileSync(out, `${s.unjudged.map((c, id) => JSON.stringify({
     id, producer: c.producer, consumer: c.consumer, tag: c.tag,
     claim: claimFor(c.tag, c.producer, c.consumer),

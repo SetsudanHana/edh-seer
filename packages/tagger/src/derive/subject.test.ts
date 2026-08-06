@@ -164,3 +164,23 @@ test("a negated subject keeps the scope its plural states", () => {
   expect(parseSubject("ten nonland permanents").scope).toBe("all");
   expect(parseSubject("target noncreature spell").scope).toBe("target");
 });
+
+test("\"of the chosen type\" is recorded, not dropped", () => {
+  // Chronicle of Victory, Morophon, Dawn-Blessed Pennant, Herald's Horn, Kindred Discovery: an
+  // as-enters choice the subject then refers back to. `chosenType` has existed in the schema since
+  // the flat tagger -- matcher/src/chosen-type.ts resolves it against the deck's dominant subtype,
+  // and edges.ts already counts it as a real narrowing filter -- but parseSubject never set it, so
+  // the derived path dropped the constraint entirely and the subject matched every spell.
+  //
+  // 10 of the panel's ~65 subject-mismatch rows are this: Chronicle of Victory "triggering" on
+  // Stroke of Midnight, Fellwar Stone, Banner of Kinship -- none of which has a creature type at all.
+  expect(parseSubject("spell of the chosen type")).toMatchObject({ type: "spell", chosenType: true });
+  expect(parseSubject("a creature you control of the chosen type"))
+    .toMatchObject({ type: "creature", control: "you", chosenType: true });
+  // The wording varies; the meaning does not.
+  expect(parseSubject("creatures of the chosen type").chosenType).toBe(true);
+  expect(parseSubject("Creature spells of the chosen type").chosenType).toBe(true);
+  // A subject that names a real subtype is NOT a chooser and must keep parsing as itself.
+  expect(parseSubject("other Merfolk creatures you control").chosenType).toBeUndefined();
+  expect(parseSubject("target creature").chosenType).toBeUndefined();
+});

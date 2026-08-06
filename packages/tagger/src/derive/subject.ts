@@ -169,6 +169,17 @@ function parseColors(t: string): string[] | undefined {
   return found.length ? found : undefined;
 }
 
+/** "of the chosen type", "of the chosen colour" — a subject referring back to a choice made as the
+ *  permanent entered (Chronicle of Victory, Morophon, Herald's Horn, Kindred Discovery,
+ *  Dawn-Blessed Pennant).
+ *
+ *  `chosenType` has been in the schema since the flat tagger: `matcher/src/chosen-type.ts` resolves
+ *  it against the deck's dominant subtype and `edges.ts` counts it as a real narrowing filter.
+ *  parseSubject never set it, so the derived path dropped the constraint and the subject matched
+ *  every spell — Chronicle of Victory "triggered" on Stroke of Midnight, Fellwar Stone and Banner of
+ *  Kinship, none of which has a creature type at all. */
+const CHOSEN = /\bof the chosen\b|\bthe chosen (?:type|color|colour)\b/i;
+
 export function parseSubject(text: string): SubjectFilter {
   const t = text.toLowerCase().trim();
   const { type, plural } = parseTypes(t);
@@ -177,6 +188,7 @@ export function parseSubject(text: string): SubjectFilter {
   const stats = parseStats(t);
   const colors = parseColors(t);
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
+  if (CHOSEN.test(t)) out.chosenType = true;
   if (colors) out.colors = colors;
   if (type) out.type = type;
   if (subtype) out.subtype = subtype;
