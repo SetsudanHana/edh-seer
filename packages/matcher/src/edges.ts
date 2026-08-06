@@ -2,7 +2,7 @@ import type { Reason } from "@mtg/engine";
 import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents } from "./implied.js";
+import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 
@@ -35,7 +35,10 @@ export function cardThemeTags(tags: CardTags): Set<string> {
 /** The card's characteristics expressed as a concrete subject, for static-edge matching. */
 function characteristicsSubject(tags: CardTags): SubjectFilter {
   const c = tags.characteristics;
+  const types = c.types.map((t) => t.toLowerCase());
+  const subtypes = c.subtypes.map((t) => t.toLowerCase());
   return {
+    ...(isHistoric(types, subtypes) ? { historic: true as const } : {}),
     type: c.types.length ? c.types.map((t) => t.toLowerCase()) : undefined,
     subtype: c.subtypes.length ? c.subtypes.map((t) => t.toLowerCase()) : undefined,
     colors: c.colors.length ? c.colors : undefined,
@@ -152,6 +155,45 @@ export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): b
   return producer.implied === true || producer.subject.token === true;
 }
 
+/** Does a cast consumer filter on WHICH spell, or does every card in the deck satisfy it?
+ *
+ *  Only the bare umbrella counts as unconstrained. `spell` expands (PSEUDO_TYPE_SETS) to every
+ *  nonland type, so it narrows nothing — but `permanent` excludes instants and sorceries, a named
+ *  type excludes the rest, and a subtype/colour/stat/counter/token filter all narrow for real. */
+function castConsumerNarrows(subject: SubjectFilter): boolean {
+  if (subject.subtype !== undefined || subject.colors !== undefined) return true;
+  if (subject.stats !== undefined || subject.chosenType === true) return true;
+  if (subject.historic === true) return true;
+  if (subject.token !== null && subject.token !== undefined) return true;
+  const types = Array.isArray(subject.type) ? subject.type : subject.type ? [subject.type] : [];
+  return types.length > 0 && !(types.length === 1 && types[0] === "spell");
+}
+
+/** Is this cast pair satisfied by playing Magic rather than by any card?
+ *
+ *  Casting spells is what a deck does. "Whenever you cast a spell" (Aetherflux Reservoir, Birgi,
+ *  Arjun, Managorger Hydra, Liberator) and "whenever you cast your SECOND spell each turn" (Ledger
+ *  Shredder, Taigam, Tomb of Horrors Adventurer, Dreamtide Whale, Rammas Echor) are deck-level state
+ *  conditions, not events another card supplies — every nonland card in the deck answers them, so
+ *  the claim excludes nothing and carries no information. It is the registered rubric rule ("a claim
+ *  that applies to a card merely for being an ordinary card is false") and 27 of the frozen panel's
+ *  33 `generic` false claims are this one shape.
+ *
+ *  The same rule `combatSelfSupplied` applies to attacking, and keyed the same way: on the PRODUCER's
+ *  `implied` flag. An AUTHORED cast emit is a card genuinely putting spells on the stack — Bolas's
+ *  Citadel, Abstract Performance, Impulsivity — and that is real supply a spell-count payoff should
+ *  receive.
+ *
+ *  A consumer that names WHICH spell keeps every supplier it has: magecraft, storm, a creature-spell
+ *  or artifact-spell watcher. Note this also gates Glóin's "historic spell" — the engine cannot
+ *  express historic, so its subject really is unconstrained today, and forming an edge with every
+ *  spell in the deck was a wrong answer rather than a partial one. */
+export function castSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
+  if (consumer.verb !== "cast") return false;
+  if (!producer.implied) return false;
+  return !castConsumerNarrows(consumer.subject);
+}
+
 /** The verbs `combatSelfSupplied` governs -- the ones a creature performs for free. Exported so the
  *  census can ask "is this row one of the ones that gate applies to" without restating the list. */
 export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-damage"]);
@@ -182,6 +224,7 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   if (producer.verb !== consumer.verb) return false;
   if (!originMatches(producer.subject, consumer.subject)) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
+  if (castSelfSupplied(producer, consumer)) return false;
   if (selfEtbSelfSupplied(producer, consumer)) return false;
   if (producer.verb === "enters" && producer.subject.zone === "graveyard") {
     return graveyardFillMatches(producer.subject, consumer.subject, h);

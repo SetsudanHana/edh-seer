@@ -208,3 +208,18 @@ test("an origin zone does not disturb the rest of the subject", () => {
   expect(parseSubject("a Dragon creature spell from your graveyard"))
     .toMatchObject({ type: "creature", subtype: "dragon", fromZone: "graveyard" });
 });
+
+test("\"historic\" is recorded as the constraint it is", () => {
+  // Jhoira, Basim Ibn Ishaq, Glóin, Rona, The Sixth Doctor: "whenever you cast a HISTORIC spell".
+  // The engine had no way to say it, so the subject read as the bare umbrella `spell` and every card
+  // in the deck satisfied it. That cost 11 real claims the moment `castSelfSupplied` started gating
+  // unconstrained cast watchers -- the trigger really does narrow, we just could not hear it.
+  //
+  // Historic is a printed fact, not a judgment: artifact, legendary, or Saga (18 corpus clauses).
+  expect(parseSubject("historic spell")).toMatchObject({ type: "spell", historic: true });
+  expect(parseSubject("Historic spells you cast").historic).toBe(true);
+  expect(parseSubject("another nontoken historic permanent you control").historic).toBe(true);
+  // A NEGATED mention is not the constraint (Desynchronization). Better unset than inverted.
+  expect(parseSubject("each nonland permanent that's not historic").historic).toBeUndefined();
+  expect(parseSubject("a spell").historic).toBeUndefined();
+});

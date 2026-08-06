@@ -191,6 +191,12 @@ const CHOSEN = /\bof the chosen\b|\bthe chosen (?:type|color|colour)\b/i;
  *  battlefield" ALREADY normalizes to the `dies` event on all 20 corpus cards that say it, so the
  *  phrase carries no information the verb has not got — and recording it would demand a matching
  *  origin from every `dies` producer, none of which states one, deleting real edges to buy nothing. */
+/** "Historic spell", "another nontoken historic permanent you control". A NEGATED mention
+ *  ("each nonland permanent that's NOT historic", Desynchronization) is not the constraint, and the
+ *  engine cannot express the inverse — better unset than inverted. */
+const HISTORIC = /\bhistoric\b/i;
+const NOT_HISTORIC = /\b(?:not|non-?)\s*historic\b/i;
+
 const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|hand)\b/i;
 
 export function parseSubject(text: string): SubjectFilter {
@@ -202,6 +208,7 @@ export function parseSubject(text: string): SubjectFilter {
   const colors = parseColors(t);
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
   if (CHOSEN.test(t)) out.chosenType = true;
+  if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;
   const origin = t.match(ORIGIN_ZONE);
   if (origin) out.fromZone = origin[1].toLowerCase();
   if (colors) out.colors = colors;

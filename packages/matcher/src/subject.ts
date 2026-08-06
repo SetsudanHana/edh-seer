@@ -9,6 +9,10 @@ const arr = (v: string | string[] | undefined): string[] =>
 /** Does the concrete producer subject satisfy the consumer filter? Every field the consumer
  *  leaves unset is a wildcard; a field it sets must be satisfied by the producer. */
 export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+  // "Historic" is artifact, legendary or Saga -- a printed fact the matcher stamps on the producer
+  // from its type line. Opt-in like every other field: a consumer that does not ask is unaffected,
+  // and a consumer that DOES ask is satisfied only by a card that is one.
+  if (consumer.historic === true && producer.historic !== true) return false;
   // control: equal, or `any` on either side.
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) {
     return false;

@@ -34,6 +34,12 @@ export interface SubjectFilter {
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */
   chosenType?: boolean;
+  /** "Historic" — artifact, legendary, or Saga. A printed fact, not a judgment, and the only way the
+   *  engine can hear Jhoira, Basim Ibn Ishaq, Glóin, Rona and The Sixth Doctor narrow their cast
+   *  trigger. Without it their subject is the bare umbrella `spell` and every card in the deck
+   *  satisfies it. Set on a CONSUMER by `parseSubject`, and on a PRODUCER by the matcher, which reads
+   *  it off the printed type line. */
+  historic?: true;
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** Zone the subject lives in; omitted means battlefield. E.g. "graveyard", "hand", "exile". */

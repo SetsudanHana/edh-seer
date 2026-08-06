@@ -1151,3 +1151,74 @@ test("a trigger with no origin is still satisfied by an event that has one", () 
   }]);
   expect(pairReasons(reanimator, anyEtb, H).some((r) => r.tag === "enters:creature")).toBe(true);
 });
+
+test("an unconstrained cast watcher is not supplied by a card merely being castable", () => {
+  // Aetherflux Reservoir, Birgi, Arjun, Managorger Hydra, Liberator, and every "whenever you cast
+  // your SECOND spell each turn" card (Ledger Shredder, Taigam, Tomb of Horrors Adventurer,
+  // Dreamtide Whale, Rammas Echor). Casting spells is what a deck does; "whenever you cast a spell"
+  // is a deck-level state condition, not an event another card supplies. 27 of the frozen panel's
+  // 33 `generic` false claims are this one shape.
+  //
+  // Exactly the rule `combatSelfSupplied` already applies to attacking: keyed on the PRODUCER's
+  // `implied` flag, so a card that genuinely CASTS other cards still supplies it.
+  const anySpell = base("Frantic Search", []);
+  const reservoir = base("Aetherflux Reservoir", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "spell", control: "you", token: null } },
+    effect: { kind: "lifegain" },
+  }]);
+  expect(pairReasons(anySpell, reservoir, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
+
+  // A consumer that narrows WHICH spell is a real payoff and keeps its IMPLIED suppliers. (`base`
+  // types every fixture as a creature, so a creature-spell watcher is the narrowing case here.)
+  const creatureSpells = base("Beast Whisperer", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(pairReasons(anySpell, creatureSpells, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
+});
+
+test("a card that CASTS other cards still supplies an unconstrained cast watcher", () => {
+  // Bolas's Citadel, Abstract Performance, Impulsivity: an AUTHORED cast emit is a card genuinely
+  // putting spells on the stack, which is real supply for a spell-count payoff. The gate is keyed on
+  // `implied`, not on the consumer's shape alone, for exactly this reason.
+  const citadel = base("Bolas's Citadel", [{
+    kind: "static",
+    effect: { kind: "" },
+    emits: [{ verb: "cast", subject: { type: "creature", control: "you", token: null } }],
+  }]);
+  const reservoir = base("Aetherflux Reservoir", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "spell", control: "you", token: null } },
+    effect: { kind: "lifegain" },
+  }]);
+  expect(directedReasons(citadel, reservoir, H).some((r) => r.tag.startsWith("cast"))).toBe(true);
+});
+
+test("a historic cast watcher narrows, and only historic cards satisfy it", () => {
+  // Jhoira, Basim Ibn Ishaq, Glóin, Rona, The Sixth Doctor. Their trigger DOES narrow -- historic is
+  // artifact, legendary or Saga -- so `castSelfSupplied` must not gate it, and the cards that
+  // satisfy it are exactly the historic ones. 11 of the 20 real claims the cast gate cost were this.
+  const legendary = {
+    ...base("Aragorn, the Uniter", []),
+    tags: { ...base("Aragorn, the Uniter", []).tags,
+      characteristics: { ...base("Aragorn, the Uniter", []).tags.characteristics, types: ["legendary", "creature"] } },
+  };
+  const artifact = {
+    ...base("Arcane Signet", []),
+    tags: { ...base("Arcane Signet", []).tags,
+      characteristics: { ...base("Arcane Signet", []).tags.characteristics, types: ["artifact"] } },
+  };
+  const plain = base("Llanowar Elves", []);
+  const jhoira = base("Jhoira, Weatherlight Captain", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "spell", control: "you", token: null, historic: true } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(pairReasons(legendary, jhoira, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
+  expect(pairReasons(artifact, jhoira, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
+  // An ordinary creature is not historic, so it does not satisfy the trigger -- the narrowing is
+  // real, which is the whole reason the gate must not fire here.
+  expect(pairReasons(plain, jhoira, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
+});

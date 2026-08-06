@@ -11,6 +11,13 @@ function collapse(a: string[]): string | string[] | undefined {
 
 /** The concrete subject for the card entering/being cast: its own characteristics. token:false
  *  because a printed card entering is never a token; control:"you" because it is yours. */
+/** Historic is a printed fact: artifact, legendary, or Saga. `splitTypeLine` keeps supertypes in
+ *  `types`, so "Legendary Creature — Human Noble" arrives as ["legendary","creature"] and the
+ *  supertype needs no separate field. */
+export function isHistoric(types: string[], subtypes: string[]): boolean {
+  return types.includes("legendary") || types.includes("artifact") || subtypes.includes("saga");
+}
+
 function selfSubject(chars: Characteristics): SubjectFilter {
   const types = chars.types.map((t) => t.toLowerCase());
   const subtypes = chars.subtypes.map((t) => t.toLowerCase());
@@ -19,6 +26,7 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   const subtype = collapse(subtypes);
   if (type !== undefined) out.type = type;
   if (subtype !== undefined) out.subtype = subtype;
+  if (isHistoric(types, subtypes)) out.historic = true;
   out.power = parseStat(chars.power);
   out.toughness = parseStat(chars.toughness);
   out.manaValue = chars.cmc;
