@@ -29,6 +29,13 @@ export interface SubjectFilter {
    *  instant, and grouping noncreature-spell payoffs under `cast:artifact` puts them on the wrong
    *  theme axis. Set only when the negation actually narrowed something. */
   notType?: string[];
+  /** Card types the subject demands ALL of — a compound noun, "artifact creature".
+   *
+   *  `type` cannot carry this: an array there means OR, which is what "target artifact or
+   *  enchantment" needs. Without a separate field "other artifact creatures you control" derived
+   *  `["creature","artifact"]` and Sol Ring satisfied Master of Etherium's anthem. The mirror of
+   *  `notType`: `type` says what MAY satisfy the subject, `allTypes` and `notType` refine it. */
+  allTypes?: string[];
   /** A subtype, or an array meaning OR (e.g. ["faerie","wizard"]). */
   subtype?: string | string[];
   colors?: string[];

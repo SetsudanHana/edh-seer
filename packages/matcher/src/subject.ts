@@ -67,6 +67,15 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // not know whether the thing cast was a creature, and rejecting on a guess would delete real edges
   // (Bolas's Citadel casts "a spell"). Supertypes in a type line are not umbrellas -- "Legendary
   // Artifact Creature" is fully known -- so they must not trigger the abstention.
+  // A CONJUNCTION the type array cannot express: "artifact creature" demands both, while
+  // `type: ["creature","artifact"]` means either. Strict rather than abstaining, unlike `notType`
+  // below: the producer side of a static edge is `characteristicsSubject`, built from a printed type
+  // line and therefore always concrete, so there is no unknowable case to protect.
+  const all = consumer.allTypes ?? [];
+  if (all.length > 0) {
+    const has = expandTypes(arr(producer.type), arr(producer.subtype), h);
+    if (!all.every((t) => has.has(t.toLowerCase()))) return false;
+  }
   const negated = consumer.notType ?? [];
   if (negated.length > 0) {
     const producerTokens = arr(producer.type);

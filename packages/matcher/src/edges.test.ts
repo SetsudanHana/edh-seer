@@ -1280,3 +1280,28 @@ test("an artifact CREATURE spell does not satisfy a noncreature trigger", () => 
   expect(pairReasons(withTypes("Rakdos Charm", ["instant"]), floodcaller, H)
     .some((r) => r.tag.startsWith("cast:"))).toBe(true);
 });
+
+test("an artifact that is not a creature does not satisfy an artifact-CREATURE anthem", () => {
+  // Master of Etherium: "Other ARTIFACT CREATURES you control get +1/+1". Sol Ring is an artifact and
+  // not a creature; Goreclaw is a creature and not an enchantment. Both satisfied their anthems
+  // because a `type` array means OR. `allTypes` is the conjunction the array cannot express.
+  const withTypes = (name: string, types: string[]) => {
+    const b = base(name, []);
+    return { ...b, tags: { ...b.tags, characteristics: { ...b.tags.characteristics, types } } };
+  };
+  const master = base("Master of Etherium", [{
+    kind: "static",
+    effect: { kind: "pump", subject: {
+      type: ["creature", "artifact"], allTypes: ["artifact", "creature"],
+      control: "you", token: null, scope: "all",
+    } },
+  }]);
+  expect(pairReasons(withTypes("Sol Ring", ["artifact"]), master, H)
+    .some((r) => r.tag.startsWith("static:"))).toBe(false);
+  // An artifact creature is both, and keeps its edge.
+  expect(pairReasons(withTypes("Solemn Simulacrum", ["artifact", "creature"]), master, H)
+    .some((r) => r.tag.startsWith("static:"))).toBe(true);
+  // A plain creature is not an artifact creature.
+  expect(pairReasons(withTypes("Llanowar Elves", ["creature"]), master, H)
+    .some((r) => r.tag.startsWith("static:"))).toBe(false);
+});

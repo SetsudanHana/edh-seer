@@ -50,6 +50,30 @@ function negatedTypes(t: string): { negated: string[]; plural: boolean } {
   return { negated, plural };
 }
 
+/** Two real card types written as a COMPOUND NOUN — "artifact creature", "enchantment creature",
+ *  "artifact land". The card must be BOTH.
+ *
+ *  `type` cannot say this: an array there means OR, because that is what "target artifact or
+ *  enchantment" needs. So "other artifact creatures you control" derived `["creature","artifact"]`
+ *  and Sol Ring satisfied Master of Etherium's anthem, while Goreclaw — a plain Bear — satisfied
+ *  Weaver of Harmony's ENCHANTMENT-creature anthem. Exactly the gap `notType` fills for negation,
+ *  seen from the other side.
+ *
+ *  Only the eight real card types take part. The umbrellas are excluded deliberately: "creature
+ *  spell" is a creature, and requiring a card to be both a creature AND a `spell` would fail every
+ *  producer, since a creature's expanded type set contains `creature` and not `spell`. */
+const COMPOUND_TYPE = new RegExp(
+  `\\b(${CARD_TYPES.join("|")})\\s+(${CARD_TYPES.join("|")})s?\\b`,
+  "i",
+);
+
+function compoundTypes(t: string): string[] | undefined {
+  const m = t.match(COMPOUND_TYPE);
+  if (!m) return undefined;
+  const pair = [m[1].toLowerCase(), m[2].toLowerCase()];
+  return pair[0] === pair[1] ? undefined : pair;
+}
+
 function parseTypes(t: string): { type?: string | string[]; notType?: string[]; plural: boolean } {
   const found: string[] = [];
   let plural = false;
@@ -223,6 +247,8 @@ export function parseSubject(text: string): SubjectFilter {
   if (colors) out.colors = colors;
   if (type) out.type = type;
   if (notType?.length) out.notType = notType;
+  const all = compoundTypes(t);
+  if (all) out.allTypes = all;
   if (subtype) out.subtype = subtype;
   if (scope) out.scope = scope;
   if (stats.length) out.stats = stats;

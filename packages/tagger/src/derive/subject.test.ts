@@ -244,3 +244,21 @@ test("a negation is RECORDED as itself, not only as the types it leaves", () => 
   expect(parseSubject("target nonartifact creature").notType).toBeUndefined();
   expect(parseSubject("target creature").notType).toBeUndefined();
 });
+
+test("a compound type is an AND, not an OR", () => {
+  // "Other ARTIFACT CREATURES you control get +1/+1" (Master of Etherium, Unctus) derives
+  // type: ["creature","artifact"] -- and in this schema a type ARRAY means OR, because that is what
+  // "target artifact or enchantment" needs. So Sol Ring satisfied Master of Etherium's anthem, and
+  // Goreclaw (a plain Bear) satisfied Weaver of Harmony's ENCHANTMENT-creature anthem.
+  //
+  // The same structural gap as `notType` in the negation case, seen from the other side: the type
+  // array cannot express a conjunction, so the conjunction needs its own field.
+  expect(parseSubject("other artifact creatures you control"))
+    .toMatchObject({ allTypes: ["artifact", "creature"], control: "you" });
+  expect(parseSubject("other enchantment creatures you control").allTypes).toEqual(["enchantment", "creature"]);
+  // A genuine OR must stay an OR.
+  expect(parseSubject("target artifact or enchantment").allTypes).toBeUndefined();
+  expect(parseSubject("target artifact or enchantment").type).toEqual(["artifact", "enchantment"]);
+  // A single type is not a conjunction.
+  expect(parseSubject("creatures you control").allTypes).toBeUndefined();
+});
