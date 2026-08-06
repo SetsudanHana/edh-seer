@@ -87,3 +87,21 @@ test("an emit with no stated origin keeps none", () => {
   const emits = actionEmits({ verb: "create", object: "a 1/1 white Soldier creature token" });
   for (const e of emits) expect(e.subject.fromZone).toBeUndefined();
 });
+
+// An add-counter action's OBJECT is the counter kind itself - Omo's is "everything", Prowl's is
+// "+1/+1" - so the emit can state which counter it adds. Without it every counter placer emitted an
+// untyped counter-added that wildcarded onto any counter payoff. 297 of the corpus's 350
+// add-counter actions name a kind in the closed dictionary.
+test("a counter-added emit carries the kind of counter it adds", () => {
+  expect(actionEmits({ verb: "add-counter", object: "+1/+1" })[0].subject.counter).toBe("+1/+1");
+  expect(actionEmits({ verb: "add-counter", object: "everything" })[0].subject.counter).toBe("everything");
+  // The model writes the noun both ways.
+  expect(actionEmits({ verb: "add-counter", object: "charge counter" })[0].subject.counter).toBe("charge");
+});
+
+// Proliferate and "put those counters on" name no kind at all. Inventing one would be consumed as
+// if it were true, and an untyped counter-added is already wildcarded on purpose.
+test("an add-counter naming no known kind states none", () => {
+  expect(actionEmits({ verb: "add-counter", object: "those counters" })[0].subject.counter).toBeUndefined();
+  expect(actionEmits({ verb: "add-counter", object: "target creature" })[0].subject.counter).toBeUndefined();
+});

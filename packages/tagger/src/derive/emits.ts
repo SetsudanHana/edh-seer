@@ -3,7 +3,7 @@
  *  vocabulary, but without its `dies` emit no aristocrats edge ever forms. */
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
-import { parseSubject } from "./subject.js";
+import { counterKindOf, parseSubject } from "./subject.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
  *  nothing; a guessed event is worse than silence because it forms edges that are not real. */
@@ -73,8 +73,16 @@ export function actionEmits(action: Action): GameEvent[] {
   // origin only in `fromZone`. Harmless where nothing asks: an unset trigger `fromZone` matches any
   // origin, so this adds a fact without narrowing a single existing edge.
   const from = action.fromZone ?? subject.fromZone;
+  // An add-counter's object IS the counter kind, not a permanent, so the emit can say WHICH counter
+  // it adds. Without it every counter placer emitted an untyped counter-added that wildcarded onto
+  // any counter payoff -- a +1/+1 producer "feeding" a poison or time consumer.
+  const counter = action.verb === "add-counter" ? counterKindOf(action.object ?? "") : undefined;
   return verbs.map((verb) => ({
     verb,
-    subject: { ...subject, ...(from ? { fromZone: from } : {}) },
+    subject: {
+      ...subject,
+      ...(from ? { fromZone: from } : {}),
+      ...(counter ? { counter } : {}),
+    },
   }));
 }

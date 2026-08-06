@@ -124,8 +124,15 @@ export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectF
  *  stay strict. A counter-TYPED producer (a normal counter placer) delegates to subjectMatches so
  *  its kind must match. */
 export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
-  const untyped =
-    arr(producer.type).length === 0 && arr(producer.subtype).length === 0 && producer.counter === undefined;
+  // A kind MISMATCH is real information on either path: a +1/+1 placer is not a poison enabler.
+  if (consumer.counter !== undefined && producer.counter !== undefined
+    && consumer.counter !== producer.counter) return false;
+  // `counter` is deliberately NOT part of this test. An add-counter's subject is parsed from its
+  // object -- "+1/+1" -- which describes the COUNTER, never the permanent receiving it, so knowing
+  // the kind tells us nothing about the recipient's type. Including it flipped every counter placer
+  // into the strict path it cannot satisfy, and The Great Henge stopped feeding its own +1/+1
+  // payoffs the moment the kind was recorded.
+  const untyped = arr(producer.type).length === 0 && arr(producer.subtype).length === 0;
   if (!untyped) return subjectMatches(producer, consumer, h);
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) return false;

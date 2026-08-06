@@ -284,3 +284,25 @@ test("a negated legendary is not a legendary constraint", () => {
     .toBeUndefined();
   expect(parseSubject("nonlegendary creatures you control").legendary).toBeUndefined();
 });
+
+// COUNTER KINDS ARE A CLOSED DICTIONARY, and cards either PRODUCE them or CARE about them - the same
+// shape as tokens. `SubjectFilter.counter` has been in the schema all along and the matcher's
+// counter-presence pass reads it, but the derive layer never wrote it, so it was a dead channel:
+// a +1/+1 producer wildcarded onto a poison or time consumer. Commander Salt carries the same thing
+// as a `counter_type` qualifier, 17 uses in one deck.
+test("a subject filtered on counter presence records the kind", () => {
+  expect(parseSubject("a creature you control with a +1/+1 counter on it").counter).toBe("+1/+1");
+  expect(parseSubject("exiled card an opponent owns with a void counter on it").counter).toBe("void");
+});
+
+test("a counter-added trigger subject records the kind it names", () => {
+  expect(parseSubject("one or more +1/+1 counters").counter).toBe("+1/+1");
+  expect(parseSubject("+1/+1 counters on a creature you control").counter).toBe("+1/+1");
+});
+
+test("a subject naming no counter claims none", () => {
+  expect(parseSubject("a creature you control").counter).toBeUndefined();
+  // "counters" with no kind is the proliferate shape: the kind is board-state dependent and
+  // unknowable, and an invented one would be consumed as if it were true.
+  expect(parseSubject("those counters").counter).toBeUndefined();
+});

@@ -1419,3 +1419,52 @@ test("a legendary card's own entry satisfies a legendary-only trigger", () => {
   }]);
   expect(pairReasons(legend, payoff, H).some((r) => r.tag.startsWith("enters"))).toBe(true);
 });
+
+// Typing the counter must not flip a counter placer out of the permissive path. An add-counter's
+// subject is parsed from its object -- "+1/+1" -- which describes the COUNTER, not the permanent
+// receiving it, so it names no type and cannot satisfy strict matching. The Great Henge and
+// Forgotten Ancient stopped feeding their +1/+1 payoffs the moment the kind was recorded.
+test("a counter placer still feeds a counter payoff once the kind is known", () => {
+  const henge = base("The Great Henge", [{
+    kind: "triggered",
+    effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const payoff = base("Dusk Legion Duelist", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(pairReasons(henge, payoff, H).some((r) => r.tag.startsWith("counter-added"))).toBe(true);
+});
+
+// ...but a kind MISMATCH is now real information: a +1/+1 producer is not a poison enabler.
+test("a counter placer does not feed a payoff for a different counter kind", () => {
+  const henge = base("The Great Henge", [{
+    kind: "triggered",
+    effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null, counter: "+1/+1" } }],
+  }]);
+  const poison = base("Poison Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "poison" } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(pairReasons(henge, poison, H).some((r) => r.tag.startsWith("counter-added"))).toBe(false);
+});
+
+// A counter-presence condition is a BOARD STATE, not a printed characteristic. The static applies-to
+// pass matches against the card's type line, which never carries counters, so demanding one there
+// deletes the edge outright - Sludge Monster's anthem stopped reaching anything. The dedicated
+// counter-presence pass is what supplies that state.
+test("a static whose subject wants a counter still applies to a card that can carry one", () => {
+  const anthem = base("Sludge Monster", [{
+    kind: "static",
+    effect: {
+      kind: "pump",
+      subject: { type: "creature", control: "you", token: null, scope: "all", counter: "-1/-1" },
+    },
+  }]);
+  const creature = base("Laboratory Maniac", []);
+  expect(pairReasons(anthem, creature, H).some((r) => r.tag === "static:pump")).toBe(true);
+});

@@ -362,7 +362,12 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           // authored cast emit names nothing and genuinely does cast Nulldrifter off the top. The
           // same argument holds for enters. An untyped emit is a DERIVATION gap to fix upstream
           // (see the pronoun antecedent in tagger's derive.ts), not something to paper over here.
-          if (!subjectMatches(characteristicsSubject(c.tags), identity, h)) continue;
+          // `counter` is dropped for the same reason `zone` is dropped in the self-recursion gate
+          // below: this compares against a card's PRINTED characteristics, and a counter is a board
+          // state no type line carries. Keeping it made The Great Henge unable to put a +1/+1
+          // counter on Dusk Legion Duelist, whose trigger watches exactly that.
+          const { counter: _stateOnly, ...printedMatchable } = identity;
+          if (!subjectMatches(characteristicsSubject(c.tags), printedMatchable, h)) continue;
         }
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         reasons.push({
@@ -460,7 +465,12 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     // Both still DERIVE: the kinds remain on the card and stay available as role signals for
     // `build.ts`. They simply stop claiming an edge.
     if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
-    if (!subjectMatches(characteristicsSubject(c.tags), a.effect.subject, h)) continue;
+    // A counter-presence condition ("creatures you control WITH a +1/+1 counter") is a BOARD STATE,
+    // not a printed characteristic, and this pass matches against the type line. Demanding it here
+    // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated
+    // counter-presence pass below is what supplies that state.
+    const { counter: _stateOnly, ...printedMatchable } = a.effect.subject;
+    if (!subjectMatches(characteristicsSubject(c.tags), printedMatchable, h)) continue;
     reasons.push({
       // A non-static ability keeps the `${kind}:${subject}` shape the graveyard-recursion and
       // counter-presence passes use; `static:` stays reserved for what cardThemeTags calls static.

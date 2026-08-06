@@ -242,6 +242,61 @@ const LEGENDARY = /\blegendary\b/i;
 const NOT_LEGENDARY = /\b(?:isn'?t|is not|isn’t|non-?)\s*legendary\b/i;
 const NOT_HISTORIC = /\b(?:not|non-?)\s*historic\b/i;
 
+/** Counter kinds, a CLOSED dictionary — the printed keyword counters plus the two power/toughness
+ *  ones. Cards either PRODUCE a counter or CARE about one, exactly as they do with tokens, and the
+ *  matcher has read `SubjectFilter.counter` since the flat tagger while the derived path never wrote
+ *  it: a +1/+1 producer wildcarded onto a poison or time payoff. Commander Salt models the same
+ *  thing as a `counter_type` qualifier.
+ *
+ *  Matched against the closed list rather than "the word before 'counter'", because that phrasing
+ *  also catches "those counters" and "twice that many of each of those kinds of counters" — the
+ *  proliferate shape, whose kind is board-state dependent and genuinely unknowable. Unset is the
+ *  right answer there: an invented kind is consumed as if it were true. */
+const COUNTER_KINDS = [
+  "+1/+1", "-1/-1", "-0/-1", "-1/-0", "+1/+0", "+0/+1",
+  "charge", "loyalty", "poison", "stun", "time", "oil", "experience", "everything", "void",
+  "discovery", "lore", "finality", "shield", "energy", "quest", "rad", "blood", "ki", "verse",
+  "fade", "age", "spore", "level", "gold", "muster", "page", "brick", "chorus", "incubation",
+  "bounty", "corruption", "credit", "death", "delay", "depletion", "despair", "devotion", "divinity",
+  "doom", "echo", "egg", "eon", "fate", "feather", "filibuster", "flood", "fungus", "fuse", "gem",
+  "glyph", "growth", "hatchling", "healing", "hit", "hoofprint", "hone", "hour", "hourglass",
+  "hunger", "ice", "infection", "intervention", "isolation", "javelin", "journey", "judgment",
+  "knowledge", "landmark", "lantern", "leaf", "lightning", "luck", "magnet", "manifestation",
+  "mannequin", "mask", "matrix", "memory", "mine", "mining", "mire", "music", "nest", "net", "night",
+  "omen", "ore", "pain", "petal", "phylactery", "pin", "plague", "plot", "point", "polyp",
+  "pressure", "prey", "pupa", "rally", "ribbon", "ritual", "rope", "rust", "scream", "scroll",
+  "shell", "shred", "silver", "sleep", "slime", "slumber", "soot", "soul", "spark", "spite",
+  "storage", "strife", "study", "task", "theft", "tide", "training", "trap", "treasure", "valor",
+  "velocity", "vitality", "vortex", "vow", "voyage", "wage", "wind", "wish",
+  "indestructible", "flying", "lifelink", "deathtouch", "menace", "trample", "vigilance", "reach",
+  "hexproof", "ward", "haste", "first strike", "double strike", "defense",
+] as const;
+
+/** The counter kind a subject names, or undefined. Anchored on the word "counter" so a subject that
+ *  merely mentions flying or a Blood token is not read as a counter filter. */
+function parseCounter(t: string): string | undefined {
+  if (!/\bcounters?\b/.test(t)) return undefined;
+  for (const k of COUNTER_KINDS) {
+    // The kinds contain regex metacharacters (+, /), so match on plain text against the words that
+    // precede "counter".
+    const i = t.indexOf(k);
+    if (i < 0) continue;
+    const after = t.slice(i + k.length);
+    if (/^\s+counters?\b/.test(after)) return k;
+  }
+  return undefined;
+}
+
+/** The counter kind an `add-counter` action names in its OBJECT, where the object IS the kind
+ *  ("everything" on Omo, "+1/+1" on Prowl) rather than a subject describing a permanent. The model
+ *  writes the noun both ways, so a trailing "counter"/"counters" is stripped first. Unknown text
+ *  ("those counters", "target creature") yields undefined, leaving the untyped counter-added the
+ *  matcher already wildcards on purpose. */
+export function counterKindOf(object: string): string | undefined {
+  const t = object.trim().toLowerCase().replace(/\s+counters?$/, "").trim();
+  return (COUNTER_KINDS as readonly string[]).includes(t) ? t : undefined;
+}
+
 const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|hand)\b/i;
 
 export function parseSubject(text: string): SubjectFilter {
@@ -253,6 +308,8 @@ export function parseSubject(text: string): SubjectFilter {
   const colors = parseColors(t);
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
   if (CHOSEN.test(t)) out.chosenType = true;
+  const counter = parseCounter(t);
+  if (counter) out.counter = counter;
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;
   if (LEGENDARY.test(t) && !NOT_LEGENDARY.test(t)) out.legendary = true;
   const origin = t.match(ORIGIN_ZONE);
