@@ -25,11 +25,11 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText } fr
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { buildRequest, normalizeCard } from "../normalize-card.js";
-import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE } from "../normalize-prompt.js";
+import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE, VOCAB_VERSION } from "../normalize-prompt.js";
 import { segment } from "../segment.js";
 import {
   CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, carriesOther, missesASplit,
-  disagreesOnType, dropsOriginZone, worthReasking, segmentHash, type CardClausesDoc,
+  disagreesOnType, dropsOriginZone, dropsTriggerObject, worthReasking, segmentHash, type CardClausesDoc,
 } from "../clause-store.js";
 
 const CALIBRATION = new URL("../../../cli/decks/calibration/", import.meta.url);
@@ -98,8 +98,9 @@ for (const name of calibrationNames()) {
   const segmented = segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "");
   const refreshable = REFRESH_OTHER
     && worthReasking(existing, NORMALIZE_VERSION)
-    && (carriesOther(existing) || missesASplit(existing, segmented) || disagreesOnType(existing, segmented)
-      || dropsOriginZone(existing, doc.oracleText ?? ""));
+    && (carriesOther(existing, VOCAB_VERSION) || missesASplit(existing, segmented) || disagreesOnType(existing, segmented)
+      || dropsOriginZone(existing, doc.oracleText ?? "")
+      || dropsTriggerObject(existing, doc.oracleText ?? ""));
   if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable) continue;
   jobs.push({ oracleId: doc._id, name: doc.name, oracleText: doc.oracleText, keywords: doc.keywords, typeLine: doc.typeLine, hash });
 }

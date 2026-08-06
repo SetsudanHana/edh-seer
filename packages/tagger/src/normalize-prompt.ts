@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 8;
+export const NORMALIZE_VERSION = 9;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -25,6 +25,17 @@ export const NORMALIZE_VERSION = 8;
  *
  *  3 is the version the calibration corpus was bought at. */
 export const NORMALIZE_MIN_COMPATIBLE = 3;
+
+/** The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed.
+ *  **Bump this ONLY when one of those lists changes** — never for a prose rule.
+ *
+ *  `carriesOther` exists because an ADDITIVE vocabulary change can improve a card stuck on the escape
+ *  hatch. A change to the prompt's PROSE cannot: the card said `other` because no verb covered its
+ *  action, and it will say `other` again. Keying the refresh on NORMALIZE_VERSION alone made every
+ *  prose fix reopen the whole `carriesOther` set — on 2026-08-06 a one-line rule about trigger
+ *  subjects selected 158 cards, of which 148 had been bought hours earlier at v8 and would come back
+ *  identical. Priced at $0.69 to fix 9 cards. With this the same run selects 10 and costs $0.02. */
+export const VOCAB_VERSION = 8;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -95,6 +106,11 @@ Rules:
   Those verbs already imply where they happen; recording it twice makes two runs disagree over
   nothing. "create" is the one exception you may be tempted by — a token entering is implied by
   the verb, so leave its zones null.
+- A TRIGGER'S SUBJECT IS WHAT THE EVENT HAPPENED TO, not who did it. "Whenever you cast a
+  noncreature spell" has subject "a noncreature spell" and control "you" — NOT subject "you". The
+  control field already records the player; putting them in the subject too loses the only part
+  another card can match on. When the trigger names no thing beyond the bare umbrella ("whenever you
+  cast a spell", "whenever you draw a card", "whenever you attack"), a player subject is right.
 - ORIGIN ZONES IN A TRIGGER. When the trigger says WHERE the event came from, keep that phrase in
   the subject verbatim: "another permanent enters from a graveyard", "a spell from your hand",
   "a Dragon creature spell from your graveyard". It is the whole card — River Kelpie without it

@@ -84,7 +84,11 @@ export function needsNormalize(
  *
  *  Reads `canonical`, which is what derivation consumes; a card whose raw answer said `other`
  *  somewhere canonicalisation resolved is not stuck. */
-export function carriesOther(doc: CardClausesDoc | null): boolean {
+export function carriesOther(doc: CardClausesDoc | null, vocabVersion?: number): boolean {
+  // A doc answered under the CURRENT vocabulary already had every verb available; re-asking it under
+  // a prompt whose only change is prose gets the same `other` back. See VOCAB_VERSION. Omitting the
+  // argument asks the plain question -- does this doc carry the escape hatch -- with no gate.
+  if (doc && vocabVersion !== undefined && doc.normalizeVersion >= vocabVersion) return false;
   return (doc?.canonical ?? []).some((c) => (c.actions ?? []).some((a) => a.verb === "other"));
 }
 
@@ -156,6 +160,45 @@ export function dropsOriginZone(doc: CardClausesDoc | null, oracleText: string):
   if (wanted.length === 0) return false;
   const kept = doc.canonical.filter((c) => TRIGGER_ORIGIN.test(c.trigger?.subject ?? "")).length;
   return kept < wanted.length;
+}
+
+/** A trigger subject that names only a PLAYER. Legitimate for most triggers — "whenever you cast a
+ *  spell", "whenever you draw a card", "whenever you attack" name no thing beyond the bare umbrella,
+ *  and 62 of the corpus's 72 player-only trigger subjects are exactly that. */
+const PLAYER_ONLY =
+  /^(?:you|a player|each player|an opponent|target opponent|your opponents?|players?|opponents?)$/i;
+
+/** Events whose subject SHOULD be a thing, not a person. A phase trigger ("at the beginning of your
+ *  upkeep") names a player and is right to. */
+const THING_EVENTS: ReadonlySet<string> = new Set([
+  "cast", "enters", "dies", "draw", "mill", "discard", "sacrifice", "attacks", "leaves",
+  "counter-added", "create-token", "land-play", "untaps", "taps",
+]);
+
+/** A word in a trigger clause that says WHAT, beyond the bare umbrella. */
+const NAMES_A_FILTER =
+  /\b(?:non-?creature|non-?land|non-?artifact|non-?enchantment|creature|artifact|enchantment|instant|sorcery|land|planeswalker|battle|permanent|historic|legendary|token|colorless|multicolored|equipment|aura|saga)\b/i;
+
+/** Did the model record WHO performed a trigger's event instead of WHAT it happened to?
+ *
+ *  The prompt never said what a trigger `subject` is, so "Whenever you cast a NONCREATURE spell"
+ *  (Valley Floodcaller, The Destined Black Mage) came back as subject `"you"` and the filter never
+ *  reached the matcher. Their triggers then matched every spell in the deck — and once
+ *  `castSelfSupplied` began gating unconstrained cast watchers, that cost them 7 real claims on the
+ *  frozen panel, because the engine could not hear them narrow.
+ *
+ *  Card-level and deliberately loose: it asks whether the card has a player-only subject on a
+ *  thing-event AND any trigger head that names a filter, without matching each clause to its line.
+ *  Pairing them exactly needs a line-to-clause map the doc does not carry, and over-selecting costs
+ *  pennies while a missed card stays wrong. Only the trigger HEAD counts — a filter after the comma
+ *  belongs to the effect, which records its own subject. */
+export function dropsTriggerObject(doc: CardClausesDoc | null, oracleText: string): boolean {
+  if (!doc) return false; // no doc at all is `needsNormalize`'s business
+  const playerOnly = doc.canonical.some((c) =>
+    THING_EVENTS.has(c.trigger?.event ?? "") && PLAYER_ONLY.test((c.trigger?.subject ?? "").trim()));
+  if (!playerOnly) return false;
+  return (oracleText.match(TRIGGER_LINE) ?? []).some((line) =>
+    NAMES_A_FILTER.test(line.slice(0, line.includes(", ") ? line.indexOf(", ") : line.length)));
 }
 
 /** Can re-asking this card's clauses actually change the answer? Only if the doc was answered by an

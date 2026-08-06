@@ -3,7 +3,7 @@ import type { Clause } from "./segment.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import {
   segmentHash, needsNormalize, needsDerive, carriesOther, missesASplit, disagreesOnType,
-  dropsOriginZone, worthReasking,
+  dropsOriginZone, worthReasking, dropsTriggerObject,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "./clause-store.js";
 
@@ -208,4 +208,47 @@ test("a doc already answered by the CURRENT prompt is not worth re-asking", () =
   expect(worthReasking(clauseDoc({ normalizeVersion: 8 }), 8)).toBe(false);
   expect(worthReasking(clauseDoc({ normalizeVersion: 7 }), 8)).toBe(true);
   expect(worthReasking(null, 8)).toBe(false); // no doc at all is `needsNormalize`'s business
+});
+
+test("carriesOther only earns a re-ask when the VOCABULARY moved, not the prose", () => {
+  // A doc answered under the current vocabulary already had every verb available; it said `other`
+  // because no verb covers its action, and it will say `other` again. Keying the refresh on
+  // NORMALIZE_VERSION alone made a one-line prose rule reopen 148 cards bought hours earlier.
+  const stuck = clauseDoc({
+    normalizeVersion: 8,
+    canonical: [{ id: 1, abilityType: "static", actions: [{ verb: "other", object: "something odd" }] }],
+  });
+  expect(carriesOther(stuck, 8)).toBe(false);
+  // Answered under an OLDER vocabulary: a verb it needed may exist now.
+  expect(carriesOther({ ...stuck, normalizeVersion: 3 }, 8)).toBe(true);
+});
+
+test("dropsTriggerObject finds a trigger that recorded WHO instead of WHAT", () => {
+  // Valley Floodcaller and The Destined Black Mage: "Whenever you cast a NONCREATURE spell". The
+  // prompt never said what a trigger `subject` is, so the model recorded the player -- "you" -- and
+  // the noncreature filter never reached the matcher. Their triggers then matched every spell in the
+  // deck, and when `castSelfSupplied` started gating unconstrained cast watchers they lost 7 real
+  // claims between them, because the engine could not hear them narrow.
+  const floodcaller = "Flash\nYou may cast noncreature spells as though they had flash.\nWhenever you cast a noncreature spell, Birds you control get +1/+1 until end of turn.";
+  expect(dropsTriggerObject(clauseDoc({
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "you" }, actions: [] }],
+  }), floodcaller)).toBe(true);
+
+  // Recorded properly: nothing to re-ask.
+  expect(dropsTriggerObject(clauseDoc({
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a noncreature spell" }, actions: [] }],
+  }), floodcaller)).toBe(false);
+});
+
+test("dropsTriggerObject leaves alone a trigger whose subject really is a player", () => {
+  // "Whenever you cast a spell" (Aetherflux Reservoir, Birgi, Managorger Hydra) names no thing beyond
+  // the bare umbrella, so "you" is the honest answer and re-asking buys nothing. 62 of the corpus's
+  // 72 player-only trigger subjects are this, and spending on them would be the treadmill again.
+  expect(dropsTriggerObject(clauseDoc({
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "you" }, actions: [] }],
+  }), "Whenever you cast a spell, you gain 1 life for each spell you've cast this turn.")).toBe(false);
+  // A filter that sits in the EFFECT, after the comma, is not the trigger's.
+  expect(dropsTriggerObject(clauseDoc({
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "draw", subject: "you" }, actions: [] }],
+  }), "Whenever you draw a card, put a +1/+1 counter on target creature you control.")).toBe(false);
 });
