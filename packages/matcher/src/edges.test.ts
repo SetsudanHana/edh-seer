@@ -1222,3 +1222,61 @@ test("a historic cast watcher narrows, and only historic cards satisfy it", () =
   // real, which is the whole reason the gate must not fire here.
   expect(pairReasons(plain, jhoira, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
 });
+
+test("a negated subject keys and reads as the negation, not as one arbitrary member", () => {
+  // `cast:artifact` for a noncreature trigger is not a cosmetic wart: humanizeEvent renders the key
+  // into the reason the user reads, so an INSTANT supplying Valley Floodcaller produced "triggers on
+  // an artifact being cast". cardThemeTags uses the same key, so those payoffs were grouped with
+  // artifact-cast decks on the theme axis.
+  const floodcaller = base("Valley Floodcaller", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: {
+      type: ["artifact", "enchantment", "planeswalker", "instant", "sorcery", "battle"],
+      notType: ["creature"], control: "you", token: null,
+    } },
+    effect: { kind: "pump" },
+  }]);
+  expect(themeSubjectKey(floodcaller.tags.abilities[0].trigger!.subject)).toBe("-creature");
+  // `base` types every fixture as a creature, and a creature is exactly what this subject excludes.
+  const instant = {
+    ...base("Rakdos Charm", []),
+    tags: { ...base("Rakdos Charm", []).tags,
+      characteristics: { ...base("Rakdos Charm", []).tags.characteristics, types: ["instant"] } },
+  };
+  const reasons = pairReasons(instant, floodcaller, H);
+  expect(reasons.some((r) => r.tag === "cast:-creature")).toBe(true);
+  expect(reasons.find((r) => r.tag === "cast:-creature")!.text).toContain("a noncreature spell being cast");
+});
+
+test("an artifact CREATURE spell does not satisfy a noncreature trigger", () => {
+  // The resolved list cannot carry the exclusion. "Noncreature spell" leaves six types INCLUDING
+  // artifact, and an artifact creature spell has both types, so the intersection matched a card the
+  // text plainly excludes: Valley Floodcaller does not trigger on casting Solemn Simulacrum.
+  //
+  // So `notType` is load-bearing in MATCHING, not only in the label -- the positive list says what
+  // may satisfy the subject, the negation says what may not, and both have to be tested.
+  const floodcaller = base("Valley Floodcaller", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: {
+      type: ["artifact", "enchantment", "planeswalker", "instant", "sorcery", "battle"],
+      notType: ["creature"], control: "you", token: null,
+    } },
+    effect: { kind: "pump" },
+  }]);
+  const withTypes = (name: string, types: string[]) => {
+    const b = base(name, []);
+    return { ...b, tags: { ...b.tags, characteristics: { ...b.tags.characteristics, types } } };
+  };
+  // `base` fixtures are creatures; an ARTIFACT creature is the case that used to slip through.
+  expect(pairReasons(withTypes("Solemn Simulacrum", ["artifact", "creature"]), floodcaller, H)
+    .some((r) => r.tag.startsWith("cast:"))).toBe(false);
+  // A legendary artifact creature must be excluded too -- the supertype in the type line must not
+  // make the producer look unknowable.
+  expect(pairReasons(withTypes("Sydri", ["legendary", "artifact", "creature"]), floodcaller, H)
+    .some((r) => r.tag.startsWith("cast:"))).toBe(false);
+  // A plain artifact is a noncreature spell and still satisfies it.
+  expect(pairReasons(withTypes("Sol Ring", ["artifact"]), floodcaller, H)
+    .some((r) => r.tag.startsWith("cast:"))).toBe(true);
+  expect(pairReasons(withTypes("Rakdos Charm", ["instant"]), floodcaller, H)
+    .some((r) => r.tag.startsWith("cast:"))).toBe(true);
+});

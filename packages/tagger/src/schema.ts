@@ -20,6 +20,15 @@ export interface StatPredicate {
 export interface SubjectFilter {
   /** A card type, or an array of types meaning OR (e.g. ["instant","sorcery"]). */
   type?: string | string[];
+  /** Card types the text NEGATED ("noncreature spell", "nonland permanent"), as the card says it.
+   *
+   *  `type` carries the RESOLVED list this negation leaves, and that is what the matcher tests —
+   *  `expandTypes` unions a subject's type tokens, so a `noncreature` token living in `type` would
+   *  read wider than either word. This field is the authored fact alongside it: the tag key and the
+   *  reason prose come from here, because "an artifact being cast" is a false sentence about an
+   *  instant, and grouping noncreature-spell payoffs under `cast:artifact` puts them on the wrong
+   *  theme axis. Set only when the negation actually narrowed something. */
+  notType?: string[];
   /** A subtype, or an array meaning OR (e.g. ["faerie","wizard"]). */
   subtype?: string | string[];
   colors?: string[];

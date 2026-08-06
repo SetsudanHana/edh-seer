@@ -11,7 +11,13 @@ const list = (v: string | string[] | undefined): string[] =>
 
 /** A short human/grouping key for a subject: its subtype, else its type, else "any". */
 export function themeSubjectKey(s: SubjectFilter): string {
-  return list(s.subtype)[0] ?? list(s.type)[0] ?? "any";
+  // A NEGATION outranks the list it resolves to. `type` holds the six types "noncreature spell"
+  // leaves, and taking the first of them keyed Valley Floodcaller as `cast:artifact` -- which
+  // humanizeEvent then rendered, to the user, as "an artifact being cast" about an instant, and
+  // which cardThemeTags grouped with artifact-cast decks. A subtype is more specific still, so it
+  // keeps priority over both.
+  const negated = s.notType ?? [];
+  return list(s.subtype)[0] ?? (negated.length ? `-${negated[0]}` : undefined) ?? list(s.type)[0] ?? "any";
 }
 
 /** A card's set of theme tags (for deck-frequency ranking): one per trigger verb, emit, and
@@ -245,7 +251,11 @@ function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
  *  noun phrase. Fallback de-slugifies anything unmapped so no ":"/"-" token ever reaches the UI. */
 function humanizeEvent(key: string): string {
   const [verb, subjRaw = ""] = key.split(":");
-  const subj = subjRaw.replace(/-/g, " ");
+  // A leading "-" is a NEGATED type (`cast:-creature`), which reads as the card writes it. Stripped
+  // before the general dash-to-space rule, which would otherwise turn "-creature" into " creature"
+  // and say the opposite of what the subject means.
+  const negated = subjRaw.startsWith("-");
+  const subj = negated ? `non${subjRaw.slice(1)} spell` : subjRaw.replace(/-/g, " ");
   const art = (w: string) => (/^[aeiou]/i.test(w) ? "an" : "a");
   switch (verb) {
     case "enters":

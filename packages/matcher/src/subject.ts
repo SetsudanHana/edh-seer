@@ -1,6 +1,6 @@
 import type { SubjectFilter } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
-import { expandTypes } from "./hierarchy.js";
+import { expandTypes, PSEUDO_TYPE_SETS } from "./hierarchy.js";
 import { evalStatPredicate } from "./stats.js";
 
 const arr = (v: string | string[] | undefined): string[] =>
@@ -56,6 +56,25 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
       if (producerSet.has(t)) { ok = true; break; }
     }
     if (!ok) return false;
+  }
+  // ...and then the EXCLUSION, which the positive list cannot express. "Noncreature spell" resolves
+  // to six types INCLUDING artifact, and an artifact creature spell carries both, so intersection
+  // alone matched a card the text plainly excludes -- Valley Floodcaller does not trigger on casting
+  // Solemn Simulacrum. The positive list says what MAY satisfy the subject; `notType` says what may
+  // not, and both have to be tested.
+  //
+  // Abstains when the producer's own type is an UMBRELLA ("a spell", "a permanent"): we genuinely do
+  // not know whether the thing cast was a creature, and rejecting on a guess would delete real edges
+  // (Bolas's Citadel casts "a spell"). Supertypes in a type line are not umbrellas -- "Legendary
+  // Artifact Creature" is fully known -- so they must not trigger the abstention.
+  const negated = consumer.notType ?? [];
+  if (negated.length > 0) {
+    const producerTokens = arr(producer.type);
+    const unknowable = producerTokens.some((t) => PSEUDO_TYPE_SETS[t.toLowerCase()] !== undefined);
+    if (!unknowable) {
+      const has = expandTypes(producerTokens, arr(producer.subtype), h);
+      if (negated.some((t) => has.has(t.toLowerCase()))) return false;
+    }
   }
   // subtype: an array on the consumer means OR — at least one named subtype must be a
   // producer subtype (exact, case-insensitive).

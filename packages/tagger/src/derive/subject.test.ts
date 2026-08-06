@@ -223,3 +223,24 @@ test("\"historic\" is recorded as the constraint it is", () => {
   expect(parseSubject("each nonland permanent that's not historic").historic).toBeUndefined();
   expect(parseSubject("a spell").historic).toBeUndefined();
 });
+
+test("a negation is RECORDED as itself, not only as the types it leaves", () => {
+  // The resolved list is what the matcher needs (see the test above: expandTypes UNIONS type tokens,
+  // so a `noncreature` token in that array would read wider than either word). But it is not what the
+  // card SAYS, and the difference reaches the user: `themeSubjectKey` takes the first element of the
+  // list, so Valley Floodcaller's noncreature trigger keyed as `cast:artifact` and the reason text
+  // read "Valley Floodcaller triggers on an artifact being cast; Rakdos Charm supplies it" -- of an
+  // INSTANT. It also grouped noncreature-spell payoffs with artifact-cast payoffs on the theme axis.
+  //
+  // So both are kept: `type` for matching, `notType` for saying what it is. 144 such subjects across
+  // 132 corpus cards.
+  expect(parseSubject("target noncreature spell")).toMatchObject({
+    type: ["artifact", "enchantment", "planeswalker", "instant", "sorcery", "battle"],
+    notType: ["creature"],
+  });
+  expect(parseSubject("target nonland permanent").notType).toEqual(["land"]);
+  // A negation that narrows nothing ("nonartifact creature" is still a creature) leaves the subject
+  // alone, and must not claim a constraint the matcher is not applying.
+  expect(parseSubject("target nonartifact creature").notType).toBeUndefined();
+  expect(parseSubject("target creature").notType).toBeUndefined();
+});

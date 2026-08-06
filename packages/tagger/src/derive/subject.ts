@@ -50,7 +50,7 @@ function negatedTypes(t: string): { negated: string[]; plural: boolean } {
   return { negated, plural };
 }
 
-function parseTypes(t: string): { type?: string | string[]; plural: boolean } {
+function parseTypes(t: string): { type?: string | string[]; notType?: string[]; plural: boolean } {
   const found: string[] = [];
   let plural = false;
   for (const ty of TYPES) {
@@ -78,7 +78,16 @@ function parseTypes(t: string): { type?: string | string[]; plural: boolean } {
     // leaves the subject exactly as it was: the engine cannot say "and not an artifact", and
     // inventing a narrower filter would be a wrong answer rather than a missing one.
     if (kept.length > 0) {
-      return { type: kept.length === 1 ? kept[0] : kept, plural: plural || negPlural };
+      // Record the negation only when it actually REMOVED something. "Nonartifact creature" is still
+      // exactly a creature, so claiming a `notType` there would advertise a constraint the matcher is
+      // not applying -- and the tag would read "a nonartifact ..." about a subject that admits every
+      // creature, artifact ones included.
+      const narrowed = kept.length !== base.length;
+      return {
+        type: kept.length === 1 ? kept[0] : kept,
+        ...(narrowed ? { notType: negated } : {}),
+        plural: plural || negPlural,
+      };
     }
   }
 
@@ -201,7 +210,7 @@ const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|
 
 export function parseSubject(text: string): SubjectFilter {
   const t = text.toLowerCase().trim();
-  const { type, plural } = parseTypes(t);
+  const { type, notType, plural } = parseTypes(t);
   const { subtype, plural: subtypePlural } = parseSubtypes(t);
   const scope = parseScope(t, plural || subtypePlural);
   const stats = parseStats(t);
@@ -213,6 +222,7 @@ export function parseSubject(text: string): SubjectFilter {
   if (origin) out.fromZone = origin[1].toLowerCase();
   if (colors) out.colors = colors;
   if (type) out.type = type;
+  if (notType?.length) out.notType = notType;
   if (subtype) out.subtype = subtype;
   if (scope) out.scope = scope;
   if (stats.length) out.stats = stats;
