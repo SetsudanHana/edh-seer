@@ -88,6 +88,14 @@ const distinct = current.filter((c) => {
 });
 console.log(`  (${current.length - distinct.length} duplicate claims collapsed)`);
 
+// Every claim, judged or not, one per line. The headline moves for two different reasons — the
+// engine claiming something new, or an old claim disappearing — and the number alone cannot tell
+// them apart. Diffing this file across a change says exactly which claims arrived and which left.
+const claimsOut = arg("--claims");
+if (claimsOut) {
+  writeFileSync(claimsOut, `${distinct.map((c) => `${c.producer}|${c.consumer}|${c.tag}`).sort().join("\n")}\n`);
+}
+
 const s = scorePanel(distinct, cache);
 const [lo, hi] = wilsonPanel(s.real, s.real + s.false);
 console.log(`frozen panel — ${pairs.length} pairs, ${cache.length} cached verdicts`);
