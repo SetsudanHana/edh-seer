@@ -56,8 +56,14 @@ function isSpellCard(typeLine: string): boolean {
 /** Leading "{cost}: effect" or "Cost, Cost: effect" — an activated ability (CR 602). A cost part is
  *  a RUN of mana symbols ({U/R}{U/R}{U/R}) or a short phrase; Izzet Locket's four adjacent hybrid
  *  symbols defeated an earlier version that allowed only one brace group per part, so its cost was
- *  never split off and it was misfiled as a static ability. */
-const ACTIVATED = /^((?:(?:\{[^}]*\})+|[^:{}]{1,40}?)(?:\s*,\s*(?:(?:\{[^}]*\})+|[^:{}]{1,40}?))*)\s*:\s+/;
+ *  never split off and it was misfiled as a static ability.
+ *
+ *  A part is bounded by the SENTENCE, not by a character count. The old 40-character cap typed 583
+ *  corpus cards static — Master Transmuter's "Return an artifact you control to its owner's hand" is
+ *  49 — which lost the cost (the aristocrats signal) and gave each card the wildcard-lord shape that
+ *  false-edge meshes are made of. The cap was also the only thing keeping a whole sentence out:
+ *  excluding the period is a tighter bound than any number, because no cost part ever spans one. */
+const ACTIVATED = /^((?:(?:\{[^}]*\})+|[^:{}.]{1,80}?)(?:\s*,\s*(?:(?:\{[^}]*\})+|[^:{}.]{1,80}?))*)\s*:\s+/;
 
 /** Actions a cost performs that another card can trigger on. Extracted here rather than left to
  *  the model, which recorded a sacrifice cost on one run and dropped it the next. Paying mana and
@@ -214,11 +220,12 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
   // so the general cost pattern never matched it.
   const loyalty = text.match(LOYALTY);
   if (loyalty) return { abilityType: "activated", cost: loyalty[1].trim(), body: text.slice(loyalty[0].length) };
-  const act = text.match(ACTIVATED);
-  // Require the prefix to look like a cost: it must contain a mana symbol, {T}, or a cost word.
-  if (act && /\{|sacrifice|discard|pay|remove|exile|tap\b/i.test(act[1])) {
-    return { abilityType: "activated", cost: act[1].trim(), body: text.slice(act[0].length) };
-  }
+  // The trigger cue is tested BEFORE the cost, because no activated ability's cost begins
+  // "Whenever" — but a triggered ability can carry a colon further along, in an ability it grants in
+  // quotes. Glaring Fleshraker's token gets "Sacrifice this token: Add {C}.", whose cost is not a
+  // mana symbol, so `extractGranted` leaves it inline and that colon offered itself as this clause's
+  // cost. Order settles it for nothing.
+  //
   // Test the cue behind a flavour label as well as at the front. ABILITY_WORD strips labels for the
   // marker, but only pure-letter ones of at most 24 characters, and the ones that slip past it are
   // exactly the ones that were being typed static while carrying a real trigger: "Allons-y! —"
@@ -226,6 +233,11 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
   // never evidence on its own — only the cue behind it is — so a labelled static stays static.
   if (TRIGGER_CUE.test(text) || TRIGGER_CUE.test(text.replace(LABEL, ""))) {
     return { abilityType: "triggered", body: text };
+  }
+  const act = text.match(ACTIVATED);
+  // Require the prefix to look like a cost: it must contain a mana symbol, {T}, or a cost word.
+  if (act && /\{|sacrifice|discard|pay|remove|exile|tap\b/i.test(act[1])) {
+    return { abilityType: "activated", cost: act[1].trim(), body: text.slice(act[0].length) };
   }
   if (kind === "chapter") return { abilityType: "triggered", body: text };
   return { abilityType: isSpellCard(typeLine) ? "spell" : "static", body: text };

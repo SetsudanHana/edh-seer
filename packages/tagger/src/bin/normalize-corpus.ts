@@ -29,7 +29,7 @@ import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE } from "../normalize-prompt
 import { segment } from "../segment.js";
 import {
   CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, carriesOther, missesASplit,
-  segmentHash, type CardClausesDoc,
+  disagreesOnType, segmentHash, type CardClausesDoc,
 } from "../clause-store.js";
 
 const CALIBRATION = new URL("../../../cli/decks/calibration/", import.meta.url);
@@ -58,7 +58,9 @@ const CONCURRENCY = Number(arg("--concurrency") ?? 6);
  *  reclassify are exactly the ones the gate had been refusing, so they carry no doc at all and
  *  `needsNormalize` already queues them. The two-condition split DID need one — 27 of the 46 such
  *  cards are persisted with one of the clause's two events silently dropped, and none of them
- *  carries `other` — hence `missesASplit`. */
+ *  carries `other` — hence `missesASplit`. The ACTIVATED-cap fix needed one too: it retypes 459
+ *  clauses corpus-wide without moving a single clause id, so 34 persisted docs carry an answer given
+ *  under the wrong typing — hence `disagreesOnType`. */
 const REFRESH_OTHER = process.argv.includes("--refresh-other");
 
 /** The calibration corpus: 2,544 distinct cards over 71 labelled decks. */
@@ -95,7 +97,7 @@ for (const name of calibrationNames()) {
   const existing = await clausesCol.findOne({ oracleId: doc._id });
   const segmented = segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "");
   const refreshable = REFRESH_OTHER
-    && (carriesOther(existing) || missesASplit(existing, segmented));
+    && (carriesOther(existing) || missesASplit(existing, segmented) || disagreesOnType(existing, segmented));
   if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable) continue;
   jobs.push({ oracleId: doc._id, name: doc.name, oracleText: doc.oracleText, keywords: doc.keywords, typeLine: doc.typeLine, hash });
 }

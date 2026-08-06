@@ -117,6 +117,34 @@ test("a run of adjacent mana symbols is still an activated cost", () => {
   expect(c[0].costActions).toEqual(["sacrifice"]);
 });
 
+test("a long cost part is still an activated cost", () => {
+  // Master Transmuter's third cost part is 49 characters, over the 40-character cap the pattern
+  // allowed per part, so the whole ability fell through to `static` — losing the return cost AND
+  // giving the card the wildcard-lord shape that false-edge meshes are made of. 583 corpus cards
+  // were typed static this way.
+  const c = segment("{U}, {T}, Return an artifact you control to its owner's hand: You may put an artifact card from your hand onto the battlefield.");
+  expect(c[0].abilityType).toBe("activated");
+  expect(c[0].cost).toBe("{U}, {T}, Return an artifact you control to its owner's hand");
+  expect(c[0].costActions).toEqual(["return"]);
+});
+
+test("a sentence that merely mentions a cost word is not an activated cost", () => {
+  // The cap was the only thing stopping a long prefix from being read as a cost. A cost part never
+  // spans a sentence, so the period is what bounds it now.
+  const c = segment("Whenever you sacrifice a permanent, you may exile it. If you do: draw a card.");
+  expect(c[0].abilityType).toBe("triggered");
+  expect(c[0].cost).toBeUndefined();
+});
+
+test("a trigger cue beats a colon later in the clause", () => {
+  // Glaring Fleshraker grants a token an activated ability whose cost is not a mana symbol, so
+  // `extractGranted` leaves it inline — and its colon then offered itself as this clause's cost.
+  // No activated ability's cost begins "Whenever", so the cue decides first.
+  const c = segment('Whenever you cast a colorless spell, create a 0/1 colorless Eldrazi Spawn creature token with "Sacrifice this token: Add {C}."');
+  expect(c[0].abilityType).toBe("triggered");
+  expect(c[0].cost).toBeUndefined();
+});
+
 test("cost actions are derived, and mana and tapping are never among them", () => {
   expect(segment("{T}, Sacrifice a creature: Add {B}{B}.")[0].costActions).toEqual(["sacrifice"]);
   expect(segment("{2}, Discard a card: Draw a card.")[0].costActions).toEqual(["discard"]);

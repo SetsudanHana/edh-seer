@@ -104,6 +104,30 @@ export function missesASplit(doc: CardClausesDoc | null, segmented: Clause[]): b
   return segmented.some((c) => c.multiTrigger) && doc.clauses.length <= segmented.length;
 }
 
+/** Does the persisted answer disagree with the CURRENT segmenter about what kind of ability a clause
+ *  is? The segmenter decides this mechanically, from a cost prefix or a trigger cue, and the model is
+ *  handed the answer — so a disagreement means the model was handed a different one than it would be
+ *  handed today, on a card whose clause ids never moved. `segmentHash` cannot see that: it covers the
+ *  card's inputs, not the segmenter.
+ *
+ *  It matters because the type travels with the TEXT. A clause retyped from static to activated has
+ *  its cost split off, so the model that answered under the old typing saw "{1}, Exile two creature
+ *  cards from your graveyard: ..." as one undivided sentence and recorded the exile as an effect, or
+ *  as nothing at all. That is the aristocrats signal, silently absent.
+ *
+ *  Measured before it was written: across all 2,538 persisted docs the ONLY disagreements are the 34
+ *  the ACTIVATED-cap fix creates. So the general check costs no more cards than a check aimed at
+ *  `activated` alone, and it will catch the next segmenter fix without being rewritten. Clauses the
+ *  segmenter leaves untyped are inert and answered in code; they are not evidence of anything. */
+export function disagreesOnType(doc: CardClausesDoc | null, segmented: Clause[]): boolean {
+  if (!doc) return false; // no doc at all is `needsNormalize`'s business
+  return segmented.some((c) => {
+    if (!c.abilityType) return false;
+    const rec = doc.canonical.find((r) => r.id === c.id);
+    return rec !== undefined && rec.abilityType !== undefined && rec.abilityType !== c.abilityType;
+  });
+}
+
 /** FREE, so it re-runs on any drift: newer derivation code, a re-normalized clause doc, or a
  *  rebuilt clause doc for a card whose text changed. */
 export function needsDerive(

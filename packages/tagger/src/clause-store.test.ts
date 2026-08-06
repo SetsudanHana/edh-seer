@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { Clause } from "./segment.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import {
-  segmentHash, needsNormalize, needsDerive, carriesOther, missesASplit,
+  segmentHash, needsNormalize, needsDerive, carriesOther, missesASplit, disagreesOnType,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "./clause-store.js";
 
@@ -135,4 +135,24 @@ test("a two-condition clause answered without its split is stale", () => {
   expect(missesASplit(clauseDoc({ clauses: [rec(1, "enters")] }),
     [{ id: 1, kind: "ability", abilityType: "triggered", text: "When this enters, draw a card." }])).toBe(false);
   expect(missesASplit(null, segmented)).toBe(false);
+});
+
+test("a doc answered under a stale ability type is refreshable", () => {
+  // The ACTIVATED cap fix retypes 459 clauses corpus-wide, 34 of them already persisted. Their ids
+  // do not move, so `segmentHash` and `missesASplit` both keep serving the stale answer -- and the
+  // answer is stale in the way that matters: the model was handed `type=static` with the cost still
+  // inline, so the sacrifice or return it pays is recorded as an effect or not at all.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "activated", cost: "{1}, Exile two creature cards from your graveyard", text: "Draw a card." },
+  ];
+  const rec = (abilityType: string): ClauseRecord => ({ id: 1, abilityType, actions: [{ verb: "draw" }] });
+
+  expect(disagreesOnType(clauseDoc({ canonical: [rec("static")] }), segmented)).toBe(true);
+  expect(disagreesOnType(clauseDoc({ canonical: [rec("activated")] }), segmented)).toBe(false);
+  // Inert clauses are answered in code as "none" against a segmenter that types them not at all.
+  expect(disagreesOnType(
+    clauseDoc({ canonical: [{ id: 1, abilityType: "none", actions: [{ verb: "none" }] }] }),
+    [{ id: 1, kind: "keyword", text: "Flying" }],
+  )).toBe(false);
+  expect(disagreesOnType(null, segmented)).toBe(false);
 });
