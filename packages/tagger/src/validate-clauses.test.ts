@@ -318,3 +318,46 @@ test("a stray trigger on a STATIC clause is still fatal", () => {
   ];
   expect(kinds(rejections(validateClauses(segmented, got)))).toContain("unexpected-trigger");
 });
+
+test("an overflow numbered onto a NEIGHBOURING clause is attributed to its real parent", () => {
+  // Brinelin, Wand of Orcus, Lumbering Worldwagon, Threefold Thunderhulk, Titans' Vanguard: the
+  // two-condition clause is followed by a printed keyword, and the model numbers its overflow as the
+  // next sequential id — which is that keyword's. The gate then saw a trigger on a non-triggered
+  // clause AND a duplicate id, and refused the whole card.
+  //
+  // The prompt has asked for "an id LARGER THAN EVERY id in the list" for two versions now, naming
+  // Brinelin and Titans' Vanguard explicitly, and they still do it. WHICH id the overflow carries is
+  // bookkeeping the harness can do itself: there is exactly one unconsumed two-condition parent, the
+  // record's content is validated against it, and derivation consumes records id-agnostically.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", multiTrigger: true, text: "When Brinelin enters and whenever you cast a spell with mana value 6 or greater, you may return target creature to its owner's hand." },
+    { id: 2, kind: "keyword", text: "Partner" },
+  ];
+  const misnumbered: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "Brinelin", control: "you" }, actions: [{ verb: "return", object: "target creature", toZone: "hand" }] },
+    { id: 2, abilityType: "none", actions: [{ verb: "none", object: "Partner" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "cast", subject: "a spell with mana value 6 or greater", control: "you" }, actions: [{ verb: "return", object: "target creature", toZone: "hand" }] },
+  ];
+  expect(rejections(validateClauses(segmented, misnumbered))).toEqual([]);
+
+  // ...and in the order the model actually used on the re-run: the overflow FIRST, so the record
+  // that grabs the slot is the wrong one. Assignment cannot be positional; it has to pick, out of
+  // the records claiming an id, the one that FITS the clause, and overflow the rest.
+  const overflowFirst: ClauseRecord[] = [misnumbered[0], misnumbered[2], misnumbered[1]];
+  expect(rejections(validateClauses(segmented, overflowFirst))).toEqual([]);
+});
+
+test("a duplicate id is still a defect when no two-condition clause is owed a record", () => {
+  // The repair must not become a licence. With nothing marked twoConditions there is no parent to
+  // attribute a second record to, and answering a clause twice is the defect it always was.
+  const segmented: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", text: "Whenever this creature attacks, draw a card." },
+    { id: 2, kind: "keyword", text: "Flying" },
+  ];
+  const doubled: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [{ verb: "draw" }] },
+    { id: 2, abilityType: "none", actions: [{ verb: "none", object: "Flying" }] },
+    { id: 2, abilityType: "none", actions: [{ verb: "none", object: "Flying" }] },
+  ];
+  expect(kinds(validateClauses(segmented, doubled))).toContain("duplicate-id");
+});

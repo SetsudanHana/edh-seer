@@ -78,6 +78,20 @@ const violation = (
   clauseId, kind, severity: severity ?? (WARN_ONLY.has(kind) ? "warn" : "reject"), detail,
 });
 
+/** How well does a record answer a given clause? Used only to choose, among the records claiming one
+ *  id, which one the clause actually meant — the rest are overflow.
+ *
+ *  Positional choice is not good enough: on the 2026-08-06 re-run the model emitted Brinelin's
+ *  overflow BEFORE the "Partner" record, both numbered 2, so first-wins handed the slot to the
+ *  triggered record and left the keyword record to be validated against a triggered clause. Both
+ *  orders occur, so the tie has to be broken on CONTENT. */
+function fitScore(clause: Clause, rec: ClauseRecord): number {
+  let score = 0;
+  if ((clause.abilityType ?? "none") === (rec.abilityType ?? "none")) score += 2;
+  if ((clause.abilityType === "triggered") === Boolean(rec.trigger?.event)) score += 1;
+  return score;
+}
+
 export function validateClauses(segmented: Clause[], got: ClauseRecord[]): ClauseViolation[] {
   const out: ClauseViolation[] = [];
   const expected = new Map(segmented.map((c) => [c.id, c]));
@@ -87,33 +101,41 @@ export function validateClauses(segmented: Clause[], got: ClauseRecord[]): Claus
   // numbers the overflow itself. Each such clause buys exactly ONE extra record and no more —
   // beyond that there is no clause left for the record to belong to and it is a hallucination
   // again. The overflow is validated against its parent clause, so it is checked for what it says.
+  //
+  // WHICH id the overflow carries is bookkeeping the harness does itself. The prompt has asked for
+  // "an id larger than every id in the list" for two versions, naming Brinelin and Titans' Vanguard
+  // in the text, and Brinelin, Wand of Orcus, Lumbering Worldwagon and Titans' Vanguard all still
+  // put it on the next sequential id — which on every one of them is a printed keyword clause, so
+  // the gate saw a trigger on a non-triggered clause and refused the card. Asking a third time is
+  // not a fix.
   const overflowParents = segmented.filter((c) => c.multiTrigger);
 
+  // Grouped by id first, because a group of records claiming one id has to be resolved as a group:
+  // the best-fitting record answers the clause and the others overflow. See `fitScore`.
+  const byId = new Map<number, ClauseRecord[]>();
   for (const rec of got) {
-    if (!expected.has(rec.id)) {
-      const parent = overflowParents.shift();
-      if (parent) out.push(...validateOne(parent, rec));
-      else out.push(violation(rec.id, "invented-id", `no clause ${rec.id} was sent`));
-      continue;
+    if (!byId.has(rec.id)) byId.set(rec.id, []);
+    byId.get(rec.id)!.push(rec);
+  }
+
+  const overflow = (rec: ClauseRecord): void => {
+    const parent = overflowParents.shift();
+    if (parent) out.push(...validateOne(parent, rec));
+    else if (expected.has(rec.id)) {
+      out.push(violation(rec.id, "duplicate-id", `clause ${rec.id} answered more than once`));
+    } else out.push(violation(rec.id, "invented-id", `no clause ${rec.id} was sent`));
+  };
+
+  for (const [id, group] of byId) {
+    const clause = expected.get(id);
+    if (!clause) { for (const rec of group) overflow(rec); continue; }
+    let best = 0;
+    for (let i = 1; i < group.length; i++) {
+      if (fitScore(clause, group[i]) > fitScore(clause, group[best])) best = i;
     }
-    if (seen.has(rec.id)) {
-      // A two-condition clause is allowed a second record, and WHICH id that record carries is
-      // bookkeeping: the prompt asks for the next unused one, but Kefka, Brinelin and Titans'
-      // Vanguard all repeated the parent's id instead, and both records are equally true.
-      // canonicalize and derive consume records id-agnostically, so accept it and validate the
-      // content against the parent. Without multiTrigger this stays the defect it always was.
-      const parent = expected.get(rec.id);
-      const idx = parent ? overflowParents.indexOf(parent) : -1;
-      if (idx >= 0) {
-        overflowParents.splice(idx, 1);
-        out.push(...validateOne(parent!, rec));
-      } else {
-        out.push(violation(rec.id, "duplicate-id", `clause ${rec.id} answered more than once`));
-      }
-      continue;
-    }
-    seen.add(rec.id);
-    out.push(...validateOne(expected.get(rec.id)!, rec));
+    seen.add(id);
+    out.push(...validateOne(clause, group[best]));
+    for (let i = 0; i < group.length; i++) if (i !== best) overflow(group[i]);
   }
 
   for (const c of segmented) {
