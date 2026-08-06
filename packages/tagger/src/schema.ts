@@ -219,6 +219,7 @@ export const EFFECT_KINDS = [
   // "other Merfolk you control have ward" is a typal payoff and "creatures you control gain haste"
   // stays the ordinary-card claim it is.
   "keyword-grant",
+  "type-grant",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];

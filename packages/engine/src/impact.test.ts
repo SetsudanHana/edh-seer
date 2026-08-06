@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import { SEED_IMPACT_WEIGHTS, UNKNOWN_KIND_WEIGHT, impactWeightOf } from "./impact.js";
 import { loadImpactWeights, impactEdgeWeight, dampByAlpha } from "./impact.js";
 import type { Reason } from "./synergy.js";
+import { EFFECT_KINDS } from "@mtg/tagger";
 
 const r = (over: Partial<Reason>): Reason => ({ tag: "t", text: "", ...over });
 
@@ -24,7 +25,9 @@ test("missing repeatability is neutral (×1.0)", () => {
 });
 
 test("seed config has one kind per EFFECT_KIND and all four repeatability classes", () => {
-  expect(Object.keys(SEED_IMPACT_WEIGHTS.kinds).length).toBe(30);
+  // Derived from EFFECT_KINDS rather than hardcoded: this guard exists to catch a kind added
+  // without a weight, and a magic number turns that into "the count moved, bump the literal".
+  expect(Object.keys(SEED_IMPACT_WEIGHTS.kinds).sort()).toEqual([...EFFECT_KINDS].sort());
   expect(Object.keys(SEED_IMPACT_WEIGHTS.repeatability).sort())
     .toEqual(["activated", "oneshot", "static", "triggered"]);
 });

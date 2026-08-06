@@ -91,6 +91,12 @@ const PAYABLE = /\bunless\b[^.]*\bpay/i;
  *  a near-miss would be worse than silence — it is consumed as if it were true. */
 const SPEED_KEYWORDS = /\b(haste|double strike)\b/i;
 
+/** Text that confers a TYPE rather than an ability. "in addition to its other types" is the
+ *  templating for a one-off (Mockingbird, Tyrite Sanctum); "is every creature type" / "every land
+ *  type" is the changeling-wide form (Maskwood Nexus, Omo, Planar Nexus). */
+const TYPE_GRANT =
+  /\bin addition to its other types\b|\bis every\b|\bevery (?:creature|land|artifact|nonbasic land) type\b/i;
+
 /** `cost-modify` is one verb because the clause states one action; the direction is in the object,
  *  and the two directions are OPPOSITE kinds the engine already consumes heavily (cost-reduction on
  *  610 cards, tax on 615). Foundry Inspector and Urza's Incubator carry live flat cost-reduction
@@ -142,7 +148,13 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // 342 corpus cards carry a grant-ability action and the verb had no row here at all, so Lightning
   // Greaves and Swiftfoot Boots derived nothing whatsoever.
   if (verb === "grant-ability") {
-    return SPEED_KEYWORDS.test(action.object ?? "") ? "speed-increase" : "keyword-grant";
+    const o = action.object ?? "";
+    if (SPEED_KEYWORDS.test(o)) return "speed-increase";
+    // Granting a TYPE is not granting a keyword. Omo, Queen of Vesuva says each nonland creature
+    // with an everything counter on it "is every creature type", and Maskwood Nexus says it of your
+    // whole board -- a typal ENABLER that turns on every kindred payoff at once. Bucketing it with
+    // Lightning Greaves' haste lost that entirely. 14 corpus grant-ability actions read this way.
+    return TYPE_GRANT.test(o) ? "type-grant" : "keyword-grant";
   }
   if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);

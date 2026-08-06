@@ -57,6 +57,9 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     // count it is a real payoff for a tribe -- but it grants an ability rather than making a
     // resource, so it sits with the other low-band modifiers rather than with the doublers.
     "keyword-grant": 0.3,
+    // Granting TYPES turns on every typal payoff in the deck at once (Maskwood Nexus), which is a
+    // bigger deal than handing out a keyword - but it is still an enabler, not a payoff.
+    "type-grant": 0.45,
     damage: 0.2,
   },
   repeatability: { triggered: 1.0, activated: 0.7, static: 0.6, oneshot: 0.3 },

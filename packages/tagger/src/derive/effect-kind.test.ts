@@ -236,3 +236,28 @@ test("a clause naming both directions refuses to answer rather than guess", () =
     "Spells you cast cost {1} less to cast. Spells your opponents cast cost {1} more to cast.",
   )).toBeNull();
 });
+
+// Omo, Queen of Vesuva does NOT grant a keyword. She puts an everything counter on a permanent, and
+// her static abilities say each land with that counter "is every land type" and each nonland creature
+// with it "is every creature type". Granting TYPES is a typal enabler - Maskwood Nexus is the pure
+// case - and calling it keyword-grant put it in the same bucket as Lightning Greaves' haste.
+// 14 corpus grant-ability actions read as type grants.
+test("granting a creature type is a type-grant, not a keyword-grant", () => {
+  expect(actionEffectKind({ verb: "grant-ability", object: "is every creature type" }))
+    .toBe("type-grant");
+});
+
+test("granting a type in addition to its other types is a type-grant", () => {
+  expect(actionEffectKind({ verb: "grant-ability", object: "target creature becomes a Vampire in addition to its other types" }))
+    .toBe("type-grant");
+});
+
+test("a plain keyword grant is untouched", () => {
+  expect(actionEffectKind({ verb: "grant-ability", object: "creatures you control have ward {1}" }))
+    .toBe("keyword-grant");
+});
+
+test("a speed keyword still outranks the type test", () => {
+  expect(actionEffectKind({ verb: "grant-ability", object: "creatures you control gain haste until end of turn" }))
+    .toBe("speed-increase");
+});
