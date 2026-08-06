@@ -1006,3 +1006,44 @@ test("a becomes-tapped reason humanizes into prose, never a raw tag", () => {
   for (const t of texts) expect(t).not.toMatch(/taps creature|taps any|:/);
   expect(texts[0]).toContain("becoming tapped");
 });
+
+test("a self-recursion is only enabled by a fill that could contain the card itself", () => {
+  // Metalwork Colossus returns ITSELF from the graveyard. Buried Ruin sacrifices ITSELF -- a land --
+  // which can never put the Colossus there, yet the reanimator-consumer edge fired because the
+  // recursion subject carried no self marker and `graveyardFillMatches` wildcards an untyped fill.
+  // A sacrifice outlet that CAN eat the Colossus is a real enabler and must survive.
+  const colossus: DeckCard = {
+    card: { name: "Metalwork Colossus", typeLine: "Artifact Creature", oracleText: "", keywords: [], colors: [], manaValue: 11, colorIdentity: [], power: "10", toughness: "10" },
+    tags: {
+      oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "derived",
+      characteristics: { types: ["artifact", "creature"], subtypes: [], colors: [], identity: [], cmc: 11, power: "10", toughness: "10", token: false, keywords: [] },
+      abilities: [{
+        kind: "activated",
+        effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, self: true, zone: "graveyard" } },
+      }],
+    },
+  };
+  const filler = (name: string, type: string): DeckCard => ({
+    card: { name, typeLine: type, oracleText: "", keywords: [], colors: [], manaValue: 2, colorIdentity: [], power: null, toughness: null },
+    tags: {
+      oracleId: name, schemaVersion: 1, promptVersion: 0, model: "derived",
+      characteristics: { types: [type.toLowerCase()], subtypes: [], colors: [], identity: [], cmc: 2, power: null, toughness: null, token: false, keywords: [] },
+      // A graveyard fill is expressed as a permanent LEAVING the battlefield; impliedGraveyardEvents
+      // turns that into the enters@graveyard event the reanimator edge reads.
+      abilities: [{
+        kind: "activated", effect: { kind: "" },
+        emits: [{ verb: "leaves", subject: { control: "you", token: null, zone: "battlefield", type: type.toLowerCase() } }],
+      }],
+    },
+  });
+
+  // A land hitting the graveyard cannot be the Colossus.
+  const land = directedReasons(filler("Buried Ruin", "Land"), colossus, H)
+    .filter((r) => r.tag.startsWith("graveyard-recursion"));
+  expect(land).toEqual([]);
+
+  // An artifact hitting the graveyard could be.
+  const artifact = directedReasons(filler("Krark-Clan Ironworks", "Artifact"), colossus, H)
+    .filter((r) => r.tag.startsWith("graveyard-recursion"));
+  expect(artifact.length).toBeGreaterThan(0);
+});

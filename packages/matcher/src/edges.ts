@@ -284,6 +284,21 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         return t.verb === "enters" && t.subject.zone === "graveyard" && graveyardFillMatches(e.subject, t.subject, h);
       })) continue;
       if (!graveyardFillMatches(e.subject, a.effect.subject, h)) continue;
+      // A SELF-scoped recursion returns the card ITSELF ("return this card from your graveyard"), so
+      // a fill enables it only if that fill could contain THAT card. Reassembling Skeleton is a real
+      // payoff for a sacrifice outlet that can eat it; Metalwork Colossus is not a payoff for Buried
+      // Ruin sacrificing itself, because a land in the graveyard is not the Colossus.
+      //
+      // Without this, every one of the 160 graveyard-recursion effects in the corpus was enabled by
+      // every graveyard fill in the deck: the recursion subject of a self-recursion names no type,
+      // and `graveyardFillMatches` wildcards an untyped subject on purpose.
+      //
+      // `zone` is dropped from the fill before the test: a card's printed characteristics sit in no
+      // zone, so keeping it would fail every card and silently delete the whole family.
+      if (a.effect.subject.self === true) {
+        const { zone: _fillZone, ...fillIdentity } = e.subject;
+        if (!subjectMatches(characteristicsSubject(c.tags), fillIdentity, h)) continue;
+      }
       const repeatability =
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
       reasons.push({

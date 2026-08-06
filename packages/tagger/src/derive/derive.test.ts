@@ -533,3 +533,26 @@ test("a trigger on tapping for mana is not a tap event any card can supply", () 
   );
   expect(plain.abilities[0].trigger?.verbs).toEqual(["taps"]);
 });
+
+test("a self-referential effect subject is marked self, not left as a bare type", () => {
+  // Reassembling Skeleton, Enduring Innocence, Metalwork Colossus: "return THIS card from your
+  // graveyard". All 160 graveyard-recursion effects in the corpus carried NO self marker, so
+  // edges.ts read every one as recursion of a generic creature card and let any graveyard fill
+  // enable it -- Buried Ruin sacrificing itself (a land) "enabled" Metalwork Colossus returning
+  // itself. effectSubject already DETECTS the self-reference to avoid parsing the condition after
+  // it; it just threw the fact away.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "return", object: "this card", fromZone: "graveyard", toZone: "hand" }],
+  }]);
+  expect(abilities[0].effect.subject?.self).toBe(true);
+  expect(abilities[0].effect.subject?.zone).toBe("graveyard");
+
+  // A recursion naming a CLASS is not self, and must keep working as it does today.
+  const other = deriveAbilities([{
+    id: 1, abilityType: "on-cast",
+    actions: [{ verb: "return", object: "target creature card", fromZone: "graveyard", toZone: "battlefield" }],
+  }]);
+  expect(other.abilities[0].effect.subject?.self).toBeUndefined();
+  expect(other.abilities[0].effect.subject?.type).toBe("creature");
+});

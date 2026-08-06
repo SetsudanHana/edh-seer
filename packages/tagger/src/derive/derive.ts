@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 10;
+export const DERIVE_VERSION = 11;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -154,6 +154,13 @@ function effectSubject(action: Action, kind: string): ReturnType<typeof parseSub
   // subject at all: the card holds its `static:cost-reduction` theme tag and forms no edges.
   const self = object.match(SELF_REFERENCE);
   const subject = parseSubject(self ? self[0] : object);
+  // ...and RECORD that it was self-referential. The match was already being used to avoid parsing
+  // the condition after it, then discarded, so all 160 graveyard-recursion effects in the corpus
+  // looked like recursion of a generic card. edges.ts then let any graveyard fill enable any of
+  // them: Buried Ruin sacrificing ITSELF (a land) "enabled" Metalwork Colossus returning ITSELF.
+  // Self-reference is the biggest defect family this engine has had, and the trigger side has
+  // carried this marker since the self-ETB work; the effect side never did.
+  if (self) subject.self = true;
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) subject.zone = action.fromZone;
   return subject;
 }
