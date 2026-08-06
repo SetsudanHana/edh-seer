@@ -49,6 +49,27 @@ test("expandTypes: a subtype contributes its implied card types via the hierarch
   expect(expandTypes([], ["wizard"], h).has("creature")).toBe(true);
 });
 
+test("expandTypes: a STATED type list is authoritative — subtypes do not widen it", () => {
+  // A subtype implication is a fact about the OTHER cards that share the subtype, not about this
+  // one. Theros printed "Enchantment Creature — Human Warrior", so the real corpus records
+  // human -> [creature, enchantment]; Setessan Champion is a plain "Creature — Human Warrior" and
+  // must not satisfy a filter demanding an enchantment. Same shape sent Metalwork Colossus
+  // ("Artifact Creature — Construct") into a LAND filter, because some card is a Land — Construct.
+  const h = { human: ["creature", "enchantment"], construct: ["artifact", "creature", "land"] };
+  const champion = expandTypes(["creature"], ["human"], h);
+  expect(champion.has("creature")).toBe(true);
+  expect(champion.has("enchantment")).toBe(false);
+  expect(expandTypes(["artifact", "creature"], ["construct"], h).has("land")).toBe(false);
+});
+
+test("expandTypes: subtypes still carry a subject whose type tokens expand to nothing", () => {
+  // "wizard" with no type stated, and an unrecognised token that contributes no card type — both
+  // leave the subtype as the only signal there is, and dropping it would delete real edges.
+  const h = { wizard: ["creature"] };
+  expect(expandTypes([], ["wizard"], h).has("creature")).toBe(true);
+  expect(expandTypes(["kindred"], ["wizard"], h).has("creature")).toBe(true);
+});
+
 test("expandTypes: an unknown token contributes nothing", () => {
   expect(expandTypes(["banana", "tribal"], [], {}).size).toBe(0);
 });

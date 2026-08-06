@@ -49,7 +49,19 @@ export const PSEUDO_TYPE_SETS: Record<string, string[]> = {
 
 /** Expand a subject's type tokens (concrete or pseudo) plus its subtype-implied card types into
  *  the set of concrete card types it can denote. A concrete type contributes itself, a pseudo-type
- *  its member set, an unknown token nothing; each subtype contributes the types it implies. */
+ *  its member set, an unknown token nothing.
+ *
+ *  Subtypes are a FALLBACK, not an addition. `h[subtype]` records every card type that subtype has
+ *  ever been printed on, which is a fact about the OTHER cards sharing it: `human` reaches
+ *  `enchantment` because Theros printed "Enchantment Creature — Human Warrior", and `construct`
+ *  reaches `land`. When the subject already states its types — `characteristicsSubject` reads them
+ *  off a printed type line, so they are complete — adding those is not a widening but an error:
+ *  it put plain "Creature — Human Warrior" Setessan Champion inside Weaver of Harmony's
+ *  enchantment-creature anthem, and "Artifact Creature — Construct" Metalwork Colossus inside a
+ *  LAND graveyard fill. Both were false claims on the panel.
+ *
+ *  The test is the expanded SET rather than the token list, so a subject whose tokens are real but
+ *  unrecognisable here ("kindred") still falls back to its subtypes instead of matching nothing. */
 export function expandTypes(tokens: string[], subtypes: string[], h: Hierarchy): Set<string> {
   const out = new Set<string>();
   for (const raw of tokens) {
@@ -57,6 +69,7 @@ export function expandTypes(tokens: string[], subtypes: string[], h: Hierarchy):
     if ((ALL_CARD_TYPES as readonly string[]).includes(t)) out.add(t);
     else for (const m of PSEUDO_TYPE_SETS[t] ?? []) out.add(m);
   }
+  if (out.size > 0) return out;
   for (const raw of subtypes) {
     for (const t of h[raw.toLowerCase()] ?? []) out.add(t);
   }
