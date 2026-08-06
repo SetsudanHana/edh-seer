@@ -65,10 +65,12 @@ verdicts = mergeVerdicts(verdicts, rj.flatMap((j) => {
 }));
 console.log(`  2026-08-07 re-judge: ${rj.length} verdicts folded in`);
 
-// Verdicts paid against a DEBT worksheet rather than a sampled draw. Kept as their own files so a
-// rebuild cannot silently drop them -- which it did once, on the first rebuild after the debt was
-// paid, because the build only knew about the three draws.
-for (const f of readdirSync(OUT).filter((n) => n.startsWith("verdicts-debt-") && n.endsWith(".jsonl"))) {
+// Every verdict file that is NOT the generated cache: debt paid against a worksheet, and
+// corrections to earlier judging. Kept as their own files so a rebuild cannot silently drop them --
+// which it did twice, once for the debt and once for the corrections, each time because the build
+// only knew about the three sampled draws. Matching on the prefix rather than an allow-list is the
+// point: a new file of verdicts is picked up without editing this.
+for (const f of readdirSync(OUT).filter((n) => n.startsWith("verdicts-") && n.endsWith(".jsonl") && n !== "verdicts.jsonl")) {
   const paid = readJsonl<PanelVerdict>(join(OUT, f));
   verdicts = mergeVerdicts(verdicts, paid);
   console.log(`  ${f}: ${paid.length} verdicts folded in`);
