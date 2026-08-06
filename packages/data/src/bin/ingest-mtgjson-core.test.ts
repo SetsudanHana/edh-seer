@@ -29,9 +29,9 @@ test("a face with no oracle id is skipped rather than keyed on undefined", () =>
 // "no subtypes" and "not yet ingested" must stay distinguishable, or a later coverage check cannot
 // tell whether the merge ran.
 test("empty arrays are dropped rather than written", () => {
-  const f = fieldsFrom({ subtypes: [], types: ["Artifact"], relatedCards: { tokens: [] } });
+  const f = fieldsFrom({ subtypes: [], types: ["Artifact"], relatedCards: { spellbook: [] } });
   expect(f.subtypes).toBeUndefined();
-  expect(f.relatedTokens).toBeUndefined();
+  expect(f.spellbook).toBeUndefined();
   expect(f.types).toEqual(["Artifact"]);
 });
 
@@ -84,4 +84,12 @@ test("merging faces does not duplicate a shared value", () => {
   });
   expect(m.get("s")?.types).toEqual(["Creature"]);
   expect(m.get("s")?.supertypes).toEqual(["Legendary"]);
+});
+
+// `relatedCards.tokens` holds MTGJSON UUIDs, not names, and resolves against nothing we store. It
+// was written once and then removed - a field that looks like data and resolves to nothing is worse
+// than an absent one. Tokens arrive with the printings ingest.
+test("token uuids are not stored", () => {
+  const f = fieldsFrom({ types: ["Creature"], relatedCards: { tokens: ["fb8bf330-86de-566c-ae38-09bbc290c33a"] } });
+  expect(f).not.toHaveProperty("relatedTokens");
 });

@@ -40,9 +40,13 @@ export interface MtgjsonFields {
   defense?: string;
   isFunny?: boolean;
   isOnlineOnly?: boolean;
-  relatedTokens?: string[];
   spellbook?: string[];
 }
+
+/** NOT stored: `relatedCards.tokens`. It holds MTGJSON UUIDs, not names — 1,395 distinct ids that
+ *  resolve against nothing we keep, because we store no tokens and key on Scryfall oracle ids. It
+ *  was written once and removed: a field that looks like data and resolves to nothing is worse than
+ *  an absent one. Tokens arrive with the printings ingest (see docs/superpowers/specs). */
 
 /** Empty arrays are dropped rather than written. `subtypes: []` on a Sol Ring is not information,
  *  and writing it would make "has no subtypes" indistinguishable from "not yet ingested". */
@@ -68,7 +72,6 @@ export function fieldsFrom(face: AtomicFace): MtgjsonFields {
   // 34,000 documents buys nothing.
   set("isFunny", face.isFunny === true ? true : undefined);
   set("isOnlineOnly", face.isOnlineOnly === true ? true : undefined);
-  set("relatedTokens", nonEmpty(face.relatedCards?.tokens));
   set("spellbook", nonEmpty(face.relatedCards?.spellbook));
   return out;
 }

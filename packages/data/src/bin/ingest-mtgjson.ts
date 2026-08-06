@@ -9,7 +9,6 @@
  *  What it brings that we had no way to know:
  *    types/supertypes/subtypes  as ARRAYS, where we regex-split a type line
  *    producedMana               which mana a card makes, for ramp and fixing roles
- *    relatedTokens              which tokens a card creates, where we parse it out of text
  *    rulings                    official disambiguation of the semantics we infer
  *    edhrecSaltiness, leadershipSkills, loyalty, defense, isFunny, isOnlineOnly
  *
