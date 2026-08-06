@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 17;
+export const DERIVE_VERSION = 18;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -131,6 +131,22 @@ function isSelfSubject(text: string, cardName?: string): boolean {
   const first = name.split(/\s+/)[0];
   return t === first && !SUBTYPES.has(first);
 }
+
+/** "this creature or another artifact you control" — a trigger that watches the card's OWN entry and,
+ *  separately, a class the deck supplies. `isSelfSubject` already declines to call this self (the
+ *  Zulaport case), but `parseSubject` then UNIONS the type tokens on both sides, so Kappa Cannoneer's
+ *  artifact-entering trigger read as "creature OR artifact" and Arcane Signet, a mana rock,
+ *  "supplied" a creature entering.
+ *
+ *  The self half is dropped because nothing but the card itself can supply it — that is what
+ *  `subject.self` and the self-supplied gates exist for. What is left is the only half a deck can
+ *  feed, and it is the half the edge should be matched on.
+ *
+ *  26 trigger subjects in the corpus have this shape; 14 name different types on the two sides, seven
+ *  of those being the constellation template ("this creature or another enchantment you control"),
+ *  where the union made every creature entering trigger Eidolon of Blossoms. */
+const SELF_DISJUNCT =
+  /^this (?:spell|card|creature|artifact|enchantment|permanent|land|planeswalker|equipment|vehicle|token)\b[^,]*?\bor (?=another\b|other\b)/i;
 
 /** The card talking about itself. Anchored at the start, because a self-reference anywhere else is
  *  part of a larger subject ("creatures other than this one"), and confined to the noun so the rest
@@ -278,7 +294,7 @@ export function deriveAbilities(
       if (verb === "taps" && TAPPED_FOR_MANA.test(text)) {
         unknownTriggers.push("taps-for-mana");
       } else if (verb) {
-        const subject = parseSubject(clause.trigger.subject ?? "");
+        const subject = parseSubject((clause.trigger.subject ?? "").replace(SELF_DISJUNCT, ""));
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;

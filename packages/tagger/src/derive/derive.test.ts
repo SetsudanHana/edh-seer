@@ -687,3 +687,49 @@ test("targeted removal that names no controller is opponent-facing", () => {
   }]);
   expect(outlet.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies")?.subject.control).toBe("any");
 });
+
+test("\"this X or another Y\" watches Y, not the union of X and Y", () => {
+  // Kappa Cannoneer: "Whenever this creature or another artifact you control enters". The self half
+  // and the class half name DIFFERENT types, and parseSubject UNIONS a subject's type tokens, so the
+  // trigger read as "creature OR artifact" -- and Arcane Signet, a mana rock, "supplied" a creature
+  // entering. The class half is the only part the deck can supply; the self half is the card's own
+  // entry, which nothing else provides.
+  //
+  // 26 trigger subjects in the corpus have this shape and 14 name different types on the two sides.
+  // Seven are the constellation template ("this creature or another enchantment you control"), where
+  // the union made every creature entering trigger Eidolon of Blossoms.
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "this creature or another artifact you control", control: "you" },
+    actions: [{ verb: "add-counter", object: "+1/+1", amount: "1" }],
+  }]);
+  expect(abilities[0].trigger?.subject.type).toBe("artifact");
+  // Still not a self-trigger: the deck genuinely supplies the other half.
+  expect(abilities[0].trigger?.subject.self).toBeUndefined();
+});
+
+test("a self-or-class subject naming the SAME type is unchanged", () => {
+  // Zulaport Cutthroat's "this creature or another creature you control" is the aristocrats payoff
+  // this engine most wants to find. Stripping the self half must leave it exactly as it was.
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "dies", subject: "this creature or another creature you control", control: "you" },
+    actions: [{ verb: "lose-life", object: "each opponent" }],
+  }]);
+  expect(abilities[0].trigger?.subject).toEqual({ control: "you", token: null, type: "creature" });
+});
+
+test("a subtype on the class half survives the strip", () => {
+  // Risen Reef: "this creature or another Elemental you control". The class half names a subtype and
+  // no card type, which is a narrower and more honest filter than {creature + elemental}.
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "this creature or another Elemental you control", control: "you" },
+    actions: [{ verb: "draw", object: "a card" }],
+  }]);
+  expect(abilities[0].trigger?.subject.subtype).toBe("elemental");
+  expect(abilities[0].trigger?.subject.type).toBeUndefined();
+});
