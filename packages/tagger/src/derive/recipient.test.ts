@@ -55,3 +55,15 @@ test("life loss follows its actor too", () => {
   // Symmetric life loss stays "any", which is what it is.
   expect(actionRecipients("Each player loses 3 life.")).toEqual({});
 });
+
+test("a sacrifice the OPPONENT makes is the opponent's creature dying", () => {
+  // Dictate of Erebos: "whenever a creature you control dies, EACH OPPONENT sacrifices a creature of
+  // their choice." The object is "creature of their choice", which parses to control `any`, and
+  // `any` matches `you` on either side -- so Dictate "supplied" Zulaport Cutthroat's payoff for YOUR
+  // creatures dying. The actor is named right there in the clause.
+  expect(actionRecipients("Whenever a creature you control dies, each opponent sacrifices a creature of their choice."))
+    .toEqual({ sacrifice: "opp" });
+  expect(actionRecipients("Each opponent discards a card.")).toEqual({ discard: "opp" });
+  // Your own sacrifice outlet is untouched.
+  expect(actionRecipients("Sacrifice another creature: draw a card.")).toEqual({});
+});

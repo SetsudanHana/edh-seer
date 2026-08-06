@@ -645,3 +645,10 @@ test("the pronouns the corpus actually uses are all recognised", () => {
     expect(enters?.subject.type, `pronoun: ${pronoun}`).toBe("land");
   }
 });
+
+// DROPPED: "an unstated actor on a player-facing verb is YOU". It fixed 2 sampled rows (Mind's Eye
+// wanting an OPPONENT to draw, fed by a card that draws for you) and broke a gold pair twice --
+// Magus of the Wheel reads "each player discards their hand, THEN draws seven cards", so its actor
+// is not adjacent to the verb and the adjacency rule that prevents cross-action bleed cannot see it.
+// Loosening that rule to reach it is the cross-action bleed recipient.ts exists to avoid. A missing
+// answer beats a wrong one; the draw-control sub-family stays open.

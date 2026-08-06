@@ -34,6 +34,11 @@ const CUES: [string, RegExp][] = [
   ["lose-life", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?loses?\\s+\\S+\\s+life\\b`, "i")],
   ["gain-life", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?gains?\\s+\\S+\\s+life\\b`, "i")],
   ["add-counter", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?puts?\\b[^.]{0,40}?counters?\\s+on\\b`, "i")],
+  // Dictate of Erebos, Szat's Will: "each opponent SACRIFICES a creature of their choice". The
+  // object is the opponent's creature, but it parses to `any` -- "of their choice" names no
+  // controller the vocabulary knows -- and `any` matched every payoff for YOUR creatures dying.
+  ["sacrifice", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?sacrifices?\\b`, "i")],
+  ["discard", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?discards?\\b`, "i")],
 ];
 
 /** An actor phrase to the control it states, or undefined when it states nothing sharper than "any".
@@ -64,3 +69,4 @@ export function actionRecipients(clauseText: string): Record<string, Control> {
   }
   return out;
 }
+
