@@ -11,13 +11,14 @@ import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
 import { actionRecipients } from "./recipient.js";
+import { actionScaling } from "./scaling.js";
 import { parseSubject } from "./subject.js";
 import { SUBTYPES } from "./subtypes.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 9;
+export const DERIVE_VERSION = 10;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -257,11 +258,15 @@ export function deriveAbilities(
         if (subject) subject.control = actor;
       }
       const keepSubject = subject && (kind !== "static" || namesItsTargets(subject));
+      // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;
+      // derivation had simply never set it, so the channel was dark under TAGS_SOURCE=derived.
+      const scaling = actionScaling(action);
+      const effect = effectKind
+        ? keepSubject ? { kind: effectKind, subject } : { kind: effectKind }
+        : { kind: "" as const };
       const ability: Ability = {
         kind,
-        effect: effectKind
-          ? keepSubject ? { kind: effectKind, subject } : { kind: effectKind }
-          : { kind: "" },
+        effect: scaling ? { ...effect, scaling } : effect,
       };
       if (trigger) ability.trigger = trigger;
       if (clause.abilityType === "activated") ability.cost = "";
