@@ -1348,3 +1348,33 @@ test("a self fill does not enable a different card's self-recursion", () => {
   const reasons = pairReasons(filler, recurser, H);
   expect(reasons.some((r) => r.tag.startsWith("graveyard-recursion"))).toBe(false);
 });
+
+// COST REDUCTION IS RAMP, NOT SYNERGY (user ruling, 2026-08-06). A Medallion's value is "how many
+// blue spells do I run" - a property of deck CONSTRUCTION, not a relationship with any particular
+// blue card. Sapphire Medallion in a mono-red deck does nothing, and no pairwise edge can say that.
+// Left in, one cost reducer fans out to 60-68 cards at the same weight as a two-card combo.
+test("a cost reducer forms no edge with a card it happens to discount", () => {
+  const medallion = base("Sapphire Medallion", [{
+    kind: "static",
+    effect: {
+      kind: "cost-reduction",
+      subject: { type: "creature", control: "you", token: null, scope: "all" },
+    },
+  }]);
+  const spell = base("An Offer You Can't Refuse", []);
+  expect(pairReasons(medallion, spell, H).some((r) => r.tag === "static:cost-reduction")).toBe(false);
+});
+
+// The mirror case is NOT covered by that ruling and must keep working: a tax is aimed at opponents
+// and is a real board effect, not a deck-construction property.
+test("a tax still forms its edge", () => {
+  const grid = base("Defense Grid", [{
+    kind: "static",
+    effect: {
+      kind: "tax",
+      subject: { type: "creature", control: "any", token: null, scope: "all" },
+    },
+  }]);
+  const spell = base("Some Spell", []);
+  expect(pairReasons(grid, spell, H).some((r) => r.tag === "static:tax")).toBe(true);
+});

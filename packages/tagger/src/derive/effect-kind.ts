@@ -100,11 +100,24 @@ const SPEED_KEYWORDS = /\b(haste|double strike)\b/i;
  *  spells worse, so an opponent-scoped cost change is a tax however the direction is worded. With
  *  neither signal the answer is null — guessing between two opposites is the near-miss class this
  *  file exists to refuse. */
-function costDirection(object: string): EffectKind | null {
-  const t = object.toLowerCase();
-  if (/\bmore\b/.test(t) || /\bopponents?\b/.test(t)) return "tax";
-  if (/\bless\b|\bcosts? \{?\d/.test(t)) return "cost-reduction";
-  return null;
+function costDirection(object: string, clauseText = ""): EffectKind | null {
+  const read = (t: string): EffectKind | null => {
+    // Only the DIRECTION WORDS can conflict. The "cost {1}" proxy below matches "{1} more" and
+    // "{1} less" alike, so testing it here would call every card ambiguous.
+    const more = /\bmore\b/.test(t);
+    const less = /\bless\b/.test(t);
+    if (more && less) return null;
+    if (more || /\bopponents?\b/.test(t)) return "tax";
+    if (less || /\bcosts? \{?\d/.test(t)) return "cost-reduction";
+    return null;
+  };
+  // The object is the action's OWN text and stays authoritative. The clause is the fallback for the
+  // cards whose object carries only the SUBJECT: Sapphire Medallion's object is "Blue spells you
+  // cast", with "cost {1} less to cast" left behind in the clause, so the direction never arrived
+  // and the entire ability was dropped. 16 corpus cards derived NOTHING for this reason -- among
+  // them Foundry Inspector and Etherium Sculptor, which this file's own comment above claims carry
+  // live cost-reduction tags. Same shape, and same precedence, as exilesOwnGraveyard below.
+  return read(object.toLowerCase()) ?? read(clauseText.toLowerCase());
 }
 
 /** Whose graveyard an exile empties. Exiling YOUR OWN graveyard is a cost paid in your own
@@ -132,7 +145,7 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     return SPEED_KEYWORDS.test(action.object ?? "") ? "speed-increase" : "keyword-grant";
   }
   if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
-  if (verb === "cost-modify") return costDirection(action.object ?? "");
+  if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
   for (const r of ZONE_RULES) {
     if (r.verb !== verb) continue;
     if (r.from !== undefined && (action.fromZone ?? null) !== r.from) continue;

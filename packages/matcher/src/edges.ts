@@ -435,6 +435,18 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     const appliesTo = a.kind === "static"
       || (a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined);
     if (!appliesTo || !a.effect.subject) continue;
+    // COST REDUCTION IS RAMP, NOT SYNERGY (user ruling, 2026-08-06). A Medallion's value is "how
+    // many blue spells do I run" — a property of deck CONSTRUCTION, not a relationship with any
+    // particular blue card. Sapphire Medallion in a mono-red deck does nothing, and a pairwise edge
+    // has no way to say so: it claims the same thing in both decks.
+    //
+    // Measured at the moment of the ruling: recovering 16 blank cost reducers added 3,600 edges and
+    // took the mesh from 411 to 2,408, with single reducers fanning to 68 cards — the same weight a
+    // two-card combo gets. The claims are each defensible and collectively worthless.
+    //
+    // `tax` is deliberately NOT included. It is aimed at opponents and is a real board effect, not a
+    // property of what you chose to run.
+    if (a.effect.kind === "cost-reduction") continue;
     if (!subjectMatches(characteristicsSubject(c.tags), a.effect.subject, h)) continue;
     reasons.push({
       // A non-static ability keeps the `${kind}:${subject}` shape the graveyard-recursion and

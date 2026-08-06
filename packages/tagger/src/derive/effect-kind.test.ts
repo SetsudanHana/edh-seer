@@ -200,3 +200,39 @@ test("the clause text decides whose graveyard when the object does not say", () 
   // No text at all leaves today's answer, so every other caller is unaffected.
   expect(actionEffectKind(a)).toBe("graveyard-hate");
 });
+
+// Sapphire Medallion reads "Blue spells you cast cost {1} less to cast", but the model puts only the
+// SUBJECT in the object field — "Blue spells you cast" — so the direction word never reaches
+// costDirection and the whole ability was dropped. 16 corpus cards derive NOTHING for this reason,
+// including Foundry Inspector and Etherium Sculptor, which this file's own comment claims carry live
+// cost-reduction tags. The clause text is the fallback, exactly as exilesOwnGraveyard uses it.
+test("cost direction falls back to the clause text when the object carries only the subject", () => {
+  expect(actionEffectKind(
+    { verb: "cost-modify", object: "Blue spells you cast" },
+    "Blue spells you cast cost {1} less to cast.",
+  )).toBe("cost-reduction");
+});
+
+test("a tax is still a tax when only the clause text says so", () => {
+  expect(actionEffectKind(
+    { verb: "cost-modify", object: "Creature spells" },
+    "Creature spells cost {1} more to cast.",
+  )).toBe("tax");
+});
+
+// The object is the action's OWN text and stays authoritative: a clause mentioning both directions
+// must not let the fallback overrule it.
+test("the object wins over the clause text when it states a direction itself", () => {
+  expect(actionEffectKind(
+    { verb: "cost-modify", object: "spells your opponents cast cost {1} more" },
+    "Spells you cast cost {1} less to cast and spells your opponents cast cost {1} more.",
+  )).toBe("tax");
+});
+
+// Guessing between two opposites is the near-miss class this file exists to refuse.
+test("a clause naming both directions refuses to answer rather than guess", () => {
+  expect(actionEffectKind(
+    { verb: "cost-modify", object: "spells" },
+    "Spells you cast cost {1} less to cast. Spells your opponents cast cost {1} more to cast.",
+  )).toBeNull();
+});
