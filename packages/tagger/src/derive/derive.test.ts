@@ -806,3 +806,58 @@ test("a recursion records WHOSE graveyard it reads", () => {
   }], undefined, { 1: "Put target creature card from a graveyard onto the battlefield under your control." });
   expect(any.abilities[0].effect.subject?.control).toBe("any");
 });
+
+test("a COUNT phrase supplies a magnitude, not a subject", () => {
+  // "This Spacecraft gets +1/+0 for each ARTIFACT you control" (Uthros Research Craft) pumps ITSELF;
+  // the artifacts are the count. The noun was being installed as the effect's subject, so Uthros
+  // derived a `static:pump` anthem over every artifact in the deck -- 8 of the 25 false claims in the
+  // `static` slice, which at 52% precision is the engine's worst family.
+  //
+  // Same rule the self-reference truncation already applies: everything from the count cue onward is
+  // a MAGNITUDE, not a subject. A real anthem states its subject BEFORE the cue and keeps it.
+  const uthros = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "modify-pt", object: "+1/+0 for each artifact you control" }],
+  }]);
+  expect(uthros.abilities[0]?.effect.subject).toBeUndefined();
+
+  const filigree = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "modify-pt", object: "Filigree Attendant's power is equal to the number of artifacts you control" }],
+  }]);
+  expect(filigree.abilities[0]?.effect.subject).toBeUndefined();
+
+  const elturel = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "modify-pt", object: "+X/+0 where X is the number of lands defending player controls" }],
+  }]);
+  expect(elturel.abilities[0]?.effect.subject).toBeUndefined();
+
+  // A genuine anthem names its subject BEFORE the count and must keep it.
+  const anthem = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "modify-pt", object: "creatures you control get +1/+1 for each Zombie you control" }],
+  }]);
+  expect(anthem.abilities[0]?.effect.subject).toMatchObject({ type: "creature", control: "you" });
+});
+
+test("creatures that can't attack YOU are the opponent's", () => {
+  // Propaganda and Sphere of Safety tax the ATTACKER, which in a single-deck analysis is never a card
+  // in this deck. Sphere derived control "you" (the possessive leaked out of "planeswalkers you
+  // control") and Propaganda derived "any", so both taxed the deck's own creatures.
+  const sphere = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "cant", object: "creatures attack you or planeswalkers you control unless their controller pays {X} for each of those creatures" }],
+  }]);
+  expect(sphere.abilities[0]?.effect.subject?.control).toBe("opp");
+
+  // Propaganda's object names its creatures only INSIDE the count phrase ("for each creature they
+  // control"), so the count truncation leaves no type at all and `namesItsTargets` drops the subject
+  // outright. That is the stronger outcome -- no static edge rather than an opponent-scoped one --
+  // and the two rules reinforce each other here.
+  const propaganda = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "cant", object: "attack you unless their controller pays {2} for each creature they control that's attacking you" }],
+  }]);
+  expect(propaganda.abilities[0]?.effect.subject).toBeUndefined();
+});

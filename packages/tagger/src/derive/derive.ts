@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 23;
+export const DERIVE_VERSION = 24;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -201,6 +201,31 @@ function zoneOwner(clauseText: string, zone: string | null | undefined): Control
   return undefined;
 }
 
+/** Where a COUNT begins. Everything after it is a magnitude, not a subject.
+ *
+ *  "This Spacecraft gets +1/+0 FOR EACH artifact you control" (Uthros Research Craft) pumps itself;
+ *  the artifacts are the tally. The noun was being installed as the effect's subject, so Uthros
+ *  derived a `static:pump` anthem over every artifact in the deck. Eight of the 25 false claims in
+ *  the `static` slice are this shape — Uthros, Filigree Attendant, Elturel Survivors — and `static`
+ *  is the engine's worst family at 52% precision.
+ *
+ *  Exactly the move `SELF_REFERENCE` already makes above: what follows the cue qualifies the effect,
+ *  it is not the thing the effect applies to. A real anthem states its subject BEFORE the cue
+ *  ("creatures you control get +1/+1 for each Zombie you control") and keeps it. */
+const COUNT_CUE =
+  /\bfor each\b|\bequal to the (?:number|total)\b|\bwhere [XYZ] is the (?:number|total)\b|\btimes the (?:number|total)\b/i;
+
+function countTruncated(object: string): string {
+  const m = object.match(COUNT_CUE);
+  return m?.index === undefined ? object : object.slice(0, m.index);
+}
+
+/** Creatures that "can't attack you" are, by construction, an OPPONENT's — in a single-deck analysis
+ *  no card in the deck can be the subject. Propaganda derived `control: "any"` and Sphere of Safety
+ *  derived `"you"` (the possessive leaked out of "planeswalkers you control"), so both taxed the
+ *  deck's own creatures. */
+const ATTACKS_YOU = /\battacks? you\b/i;
+
 function effectSubject(
   action: Action, kind: string, triggerIsSelf = false, clauseText = "",
 ): ReturnType<typeof parseSubject> {
@@ -213,7 +238,7 @@ function effectSubject(
   // derived population. Parse only the self-reference, which names a bare singular and so keeps no
   // subject at all: the card holds its `static:cost-reduction` theme tag and forms no edges.
   const self = object.match(SELF_REFERENCE);
-  const subject = parseSubject(self ? self[0] : object);
+  const subject = parseSubject(self ? self[0] : countTruncated(object));
   // ...and RECORD that it was self-referential. The match was already being used to avoid parsing
   // the condition after it, then discarded, so all 160 graveyard-recursion effects in the corpus
   // looked like recursion of a generic card. edges.ts then let any graveyard fill enable any of
@@ -227,6 +252,7 @@ function effectSubject(
   // inheritance follows the antecedent rather than assuming the card.
   else if (SELF_BARE.test(object.trim())) subject.self = true;
   else if (triggerIsSelf && PRONOUN_OBJECT.test(object.trim())) subject.self = true;
+  if (ATTACKS_YOU.test(object)) subject.control = "opp";
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) {
     subject.zone = action.fromZone;
     // Only when the object text stated no owner of its own -- an explicit one is more specific.
