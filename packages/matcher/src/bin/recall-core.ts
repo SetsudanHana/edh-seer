@@ -11,26 +11,52 @@
  *
  *  Pure, so the sampling frame and the arithmetic can be tested without a database. */
 
-/** A pair the DERIVED engine says nothing about, in either direction. */
+/** A pair the DERIVED engine says nothing about, in either direction.
+ *
+ *  The first frame (§25) carried `flatClaims` and `sharedThemes` and stratified on them. Both
+ *  failed (§26.1): `cardThemeTags` keys on a card's OWN verbs and subjects, so a producer and its
+ *  consumer routinely carry different tags — which is exactly what an edge IS — and flat's extra
+ *  claims are mostly mesh. They are gone rather than kept alongside, because a stratifier that does
+ *  not separate is not neutral: it splits the budget and buys nothing. */
 export interface SilentPair {
   deck: string;
   a: string;
   b: string;
-  /** Does the FLAT engine claim this pair? Flat is ~4x the volume of derived, so this marks the
-   *  region today's gates emptied — where a real loss would hide. */
-  flatClaims: boolean;
-  /** Theme tags both cards carry (`cardThemeTags`). Cards in one theme are where a missed synergy is
-   *  likely, which is what makes this stratum worth over-sampling. */
-  sharedThemes: string[];
+  /** Derived EMIT verbs per card name. */
+  emits: Record<string, readonly string[]>;
+  /** Derived TRIGGER verbs per card name. */
+  triggers: Record<string, readonly string[]>;
+  /** Did the card derive any ability at all? */
+  hasAbilities: Record<string, boolean>;
+  /** Does the card have real oracle text? Separates a cost-reducer that derives nothing from a basic
+   *  land that has nothing to derive. */
+  hasText: Record<string, boolean>;
 }
 
-export type Stratum = "lost" | "plausible" | "base";
+export type Stratum = "verb-match" | "derive-empty" | "base";
 
-/** Which stratum a silent pair belongs to. LOST outranks PLAUSIBLE: a pair can be both, and
- *  "did the gates cut real signal" is the question this measurement exists to answer. */
+/** Which stratum a silent pair belongs to.
+ *
+ *  Spec: `2026-08-06-recall-frame-rebuild-design.md` §3. Assignment is ordered, so the strata are
+ *  disjoint and their measured populations (11,715 / 34,002 / 204,058) sum to the silent population.
+ *
+ *  VERB-MATCH first: one card emits verb V and the other triggers on V, which is the relation an
+ *  edge is MADE of. Silence there means something else killed it — a subject filter, a control
+ *  mismatch, a gate — so every miss arrives with its mechanism attached.
+ *
+ *  DERIVE-EMPTY second: a card with real text and no derived abilities cannot form an edge at all.
+ *  Its silence has a known mechanical cause, which makes the stratum a quantification of how much
+ *  the derivation layer drops wholesale rather than a test.
+ *
+ *  A card with no abilities AND no real text — a basic land — is BASE. Counting it as derive-empty
+ *  would flood that stratum with pairs whose silence is correct by construction, which is how 143k
+ *  trivially silent pairs ended up diluting the old BASE. */
 export function stratumOf(p: SilentPair): Stratum {
-  if (p.flatClaims) return "lost";
-  return p.sharedThemes.length > 0 ? "plausible" : "base";
+  const matches = (x: string, y: string): boolean =>
+    (p.emits[x] ?? []).some((v) => (p.triggers[y] ?? []).includes(v));
+  if (matches(p.a, p.b) || matches(p.b, p.a)) return "verb-match";
+  const empty = (x: string): boolean => p.hasAbilities[x] === false && p.hasText[x] === true;
+  return empty(p.a) || empty(p.b) ? "derive-empty" : "base";
 }
 
 /** A worksheet row. Carries no stratum, no flat claim, no shared themes — see `blindRecall`. */
@@ -98,4 +124,28 @@ export function scoreRecall(judgments: readonly RecallJudgment[]): RecallScore {
   out.decided = out.missExpressible + out.missInexpressible + out.correctSilence;
   if (out.decided > 0) out.recall = 1 - out.missExpressible / out.decided;
   return out;
+}
+
+/** Recall pooled across strata, REWEIGHTED to the populations they were drawn from.
+ *
+ *  §26.2 reported 92.5% by pooling 120 judgments drawn at equal n from populations of 62,795 /
+ *  15,591 / 172,570. That number is a property of the sampling weights, not of a deck: tripling the
+ *  draw from the smallest stratum would have moved it without anything about the engine changing.
+ *  Equal allocation is deliberate (it buys per-stratum resolution), so the reweighting has to happen
+ *  here instead.
+ *
+ *  A stratum that decided nothing contributes no weight rather than a flattering 100% — the same
+ *  reason `scoreRecall` returns null instead of 1. */
+export function pooledRecall(
+  strata: readonly { population: number; judgments: readonly RecallJudgment[] }[],
+): number | null {
+  let weight = 0;
+  let acc = 0;
+  for (const s of strata) {
+    const score = scoreRecall(s.judgments);
+    if (score.recall === null) continue;
+    weight += s.population;
+    acc += s.population * score.recall;
+  }
+  return weight === 0 ? null : acc / weight;
 }
