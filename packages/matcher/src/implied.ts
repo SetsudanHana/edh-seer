@@ -27,6 +27,12 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   if (type !== undefined) out.type = type;
   if (subtype !== undefined) out.subtype = subtype;
   if (isHistoric(types, subtypes)) out.historic = true;
+  // A card's own cast/enters event must advertise its COLOURS, or every colour-narrowed trigger
+  // matches nothing: Aragorn, the Uniter watches white, blue, red and green spells and found none of
+  // its own deck. Written even when EMPTY, because "colorless" is a real answer and an absent field
+  // would be indistinguishable from "not recorded". 53 cast triggers across 44 corpus cards filter
+  // on colour.
+  out.colors = chars.colors;
   // A legendary card entering IS "another legendary creature you control enters" (Legolas, Gimli,
   // Tinybones Joins Up). Without this the supertype filter cut five real edges: the consumer demanded
   // legendary and the producer's own entry never advertised it, so a legend failed to be a legend.

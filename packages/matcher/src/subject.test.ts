@@ -220,3 +220,37 @@ test("anyOf still enforces the fields outside the branches", () => {
   };
   expect(subjectMatches({ control: "opp" as const, token: null, type: "creature" }, consumer, {})).toBe(false);
 });
+
+// COLORLESS is a constraint in its own right, and the two sides spell it differently: a colourless
+// card carries `colors: []` (Scryfall gives it no colours), while a filter saying "colorless spell"
+// parses to ["C"]. An intersection of [] and ["C"] is empty, so Echoes of Eternity's "whenever you
+// cast a colorless spell" matched nothing at all. 83 corpus subjects demand C.
+test("a colourless producer satisfies a colorless filter", () => {
+  const consumer = { control: "you" as const, token: null, colors: ["C"] };
+  const colourless = { control: "you" as const, token: null, colors: [] };
+  const noneAtAll = { control: "you" as const, token: null };
+  const blue = { control: "you" as const, token: null, colors: ["U"] };
+  expect(subjectMatches(colourless, consumer, {})).toBe(true);
+  expect(subjectMatches(noneAtAll, consumer, {})).toBe(true);
+  expect(subjectMatches(blue, consumer, {})).toBe(false);
+});
+
+// ...and a coloured filter is not satisfied by a colourless card, which is the existing behaviour
+// and must stay.
+test("a colourless producer does not satisfy a coloured filter", () => {
+  expect(subjectMatches(
+    { control: "you" as const, token: null, colors: [] },
+    { control: "you" as const, token: null, colors: ["W"] },
+    {},
+  )).toBe(false);
+});
+
+// The colorless branch satisfies the COLOUR test only — it must not short-circuit the rest of the
+// filter. A colourless ARTIFACT does not satisfy "colorless CREATURE spell".
+test("a colorless match still has to pass every other field", () => {
+  expect(subjectMatches(
+    { control: "you" as const, token: null, colors: [], type: "artifact" },
+    { control: "you" as const, token: null, colors: ["C"], type: "creature" },
+    {},
+  )).toBe(false);
+});

@@ -123,3 +123,23 @@ test("a graveyard fill of the card ITSELF carries the card's own types", () => {
   );
   expect(other[0].subject.type).toBeUndefined();
 });
+
+// A card's own cast event must advertise its COLOURS, or every colour-narrowed cast trigger matches
+// nothing: Aragorn, the Uniter watches white, blue, red and green spells and found none of the deck.
+// 53 cast triggers across 44 corpus cards filter on colour.
+test("an implied cast event carries the card's colours", () => {
+  const ev = impliedEvents({
+    types: ["Creature"], subtypes: [], colors: ["U", "W"], identity: ["U", "W"],
+    cmc: 3, power: "2", toughness: "2", token: false, keywords: [],
+  } as never);
+  const cast = ev.find((e) => e.verb === "cast");
+  expect(cast?.subject.colors).toEqual(["U", "W"]);
+});
+
+test("a colourless card's implied cast event says so rather than omitting colour", () => {
+  const ev = impliedEvents({
+    types: ["Artifact"], subtypes: [], colors: [], identity: [],
+    cmc: 2, power: null, toughness: null, token: false, keywords: [],
+  } as never);
+  expect(ev.find((e) => e.verb === "cast")?.subject.colors).toEqual([]);
+});

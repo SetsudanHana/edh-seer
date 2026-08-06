@@ -53,7 +53,14 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   const wanted = consumer.colors ?? [];
   if (wanted.length > 0) {
     const has = new Set(producer.colors ?? []);
-    if (!wanted.some((c) => has.has(c))) return false;
+    // COLORLESS is spelled differently on the two sides: a colourless card carries `colors: []`
+    // (Scryfall gives it none), while a filter saying "colorless spell" parses to ["C"]. An
+    // intersection of those is empty, so Echoes of Eternity's "whenever you cast a colorless spell"
+    // matched nothing at all. C is satisfied by having NO colour, and by nothing else. 83 corpus
+    // subjects demand it.
+    const satisfied = (wanted.includes("C") && has.size === 0)
+      || wanted.some((c) => c !== "C" && has.has(c));
+    if (!satisfied) return false;
   }
   // type: expand both sides' type tokens (concrete, pseudo, or subtype-implied) to concrete
   // card-type sets and require they intersect. Reduces to exact/subtype-implied matching for
