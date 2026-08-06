@@ -775,3 +775,34 @@ test("a pronoun whose trigger names something ELSE is not self", () => {
   const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion");
   expect(rec?.effect.subject?.self).toBeUndefined();
 });
+
+test("a recursion records WHOSE graveyard it reads", () => {
+  // Persist, Takenuma, Grave Endeavor, Luminous Broodmoth all read "from YOUR graveyard", but the
+  // possessive lives in the ZONE PHRASE -- which the normalizer moves into `fromZone: "graveyard"`
+  // and drops the owner of. Every recursion therefore derived control "any", and
+  // `graveyardFillMatches` wildcards that: Noxious Gearhulk, Pongify and Sheoldred's Edict all fill an
+  // OPPONENT's graveyard (control "opp", which targeted-removal modelling gets right), and every one
+  // of them "enabled" every reanimation in the deck. ~12 of the panel's graveyard-recursion false
+  // claims are this one axis.
+  //
+  // The clause TEXT still has the word, and derivation already receives it.
+  const yours = deriveAbilities([{
+    id: 1, abilityType: "spell",
+    actions: [{ verb: "return", object: "target creature card", fromZone: "graveyard", toZone: "battlefield" }],
+  }], undefined, { 1: "Return target creature card from your graveyard to the battlefield." });
+  expect(yours.abilities[0].effect.subject?.control).toBe("you");
+
+  const theirs = deriveAbilities([{
+    id: 1, abilityType: "spell",
+    actions: [{ verb: "return", object: "target creature card", fromZone: "graveyard", toZone: "battlefield" }],
+  }], undefined, { 1: "Return target creature card from an opponent's graveyard to the battlefield." });
+  expect(theirs.abilities[0].effect.subject?.control).toBe("opp");
+
+  // "A graveyard" is genuinely either — Reanimate and Necromancy really do reach an opponent's, and
+  // that is how Feed the Swarm feeds Grave Researcher. It must stay a wildcard.
+  const any = deriveAbilities([{
+    id: 1, abilityType: "spell",
+    actions: [{ verb: "return", object: "target creature card", fromZone: "graveyard", toZone: "battlefield" }],
+  }], undefined, { 1: "Put target creature card from a graveyard onto the battlefield under your control." });
+  expect(any.abilities[0].effect.subject?.control).toBe("any");
+});

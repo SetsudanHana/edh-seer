@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 22;
+export const DERIVE_VERSION = 23;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -176,8 +176,33 @@ const PRONOUN_OBJECT =
  *  for them: every graveyard fill in the deck "enabled" a card that only ever returns itself. */
 const SELF_BARE = /^this$/i;
 
+/** Whose zone the effect reads, when the ZONE PHRASE says. "Return target creature card from YOUR
+ *  graveyard" states the owner in the phrase the normalizer collapses into `fromZone: "graveyard"`,
+ *  so the possessive was dropped and every recursion derived control "any" — which
+ *  `graveyardFillMatches` wildcards. Noxious Gearhulk, Pongify and Sheoldred's Edict all fill an
+ *  OPPONENT's graveyard, and every one of them then "enabled" every reanimation in the deck.
+ *
+ *  "A graveyard" stays a wildcard on purpose: Reanimate and Necromancy really do reach an opponent's,
+ *  which is how Feed the Swarm feeds Grave Researcher. Only a stated owner narrows. */
+const ZONE_OWNER: ReadonlyArray<readonly [RegExp, Control]> = [
+  [/\bfrom (?:your|their) own\b/i, "you"],
+  [/\bfrom your\b/i, "you"],
+  [/\bfrom (?:an |each |target )?opponent'?s?\b/i, "opp"],
+];
+
+function zoneOwner(clauseText: string, zone: string | null | undefined): Control | undefined {
+  if (!zone || clauseText === "") return undefined;
+  for (const [re, control] of ZONE_OWNER) {
+    // Anchored on the ZONE the action names, so "return it to your hand" cannot be read as a claim
+    // about whose graveyard was searched.
+    const m = clauseText.match(new RegExp(`${re.source}\\s+${zone}`, "i"));
+    if (m) return control;
+  }
+  return undefined;
+}
+
 function effectSubject(
-  action: Action, kind: string, triggerIsSelf = false,
+  action: Action, kind: string, triggerIsSelf = false, clauseText = "",
 ): ReturnType<typeof parseSubject> {
   const object = action.object ?? "";
   // A self-referential effect applies to the card itself, and everything after the self-reference is
@@ -202,7 +227,12 @@ function effectSubject(
   // inheritance follows the antecedent rather than assuming the card.
   else if (SELF_BARE.test(object.trim())) subject.self = true;
   else if (triggerIsSelf && PRONOUN_OBJECT.test(object.trim())) subject.self = true;
-  if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) subject.zone = action.fromZone;
+  if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) {
+    subject.zone = action.fromZone;
+    // Only when the object text stated no owner of its own -- an explicit one is more specific.
+    const owner = zoneOwner(clauseText, action.fromZone);
+    if (owner && subject.control === "any") subject.control = owner;
+  }
   return subject;
 }
 
@@ -346,7 +376,7 @@ export function deriveAbilities(
       // form an edge that is not real. A STATIC ability additionally has to name its targets --
       // see namesItsTargets -- or the very same edge forms against the whole deck.
       const subject = effectKind
-        ? effectSubject(action, effectKind, trigger?.subject.self === true)
+        ? effectSubject(action, effectKind, trigger?.subject.self === true, text)
         : undefined;
       const actor = actorFor(action.verb);
       if (actor) {
