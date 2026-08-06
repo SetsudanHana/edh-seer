@@ -183,6 +183,25 @@ function namesItsTargets(subject: ReturnType<typeof parseSubject>): boolean {
  *  anyone casts. The clause vocabulary spells the opponent side "opponent"; the engine says "opp". */
 const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", any: "any" };
 
+/** A permanent ARRIVING tapped never becomes tapped, so nothing triggers on it (CR 614 — it is a
+ *  replacement on the entry, not an event). `emits.ts` already refuses the entry-state tap the
+ *  segmenter records as object "this", using SCOPE as the discriminator; that holds for the singular
+ *  wordings and misses the mass ones, because "all land cards from your graveyard" has scope "all"
+ *  and looks exactly like a real mass tap. Will of the Sultai, Mechtitan Core and The Darkness
+ *  Crystal are the corpus cases, and the last of them was supplying a false becomes-tapped edge.
+ *
+ *  The clause text is the only place the distinction survives, so it is read here rather than in
+ *  emits.ts, which sees one action and no context. */
+const ARRIVES_TAPPED = /\b(?:battlefield|enters?|play)\b[^.]{0,30}?\btapped\b|\btapped\b[^.]{0,20}?\bunder\b/i;
+
+/** "Whenever you tap a permanent for {C}" (Forsaken Monument), "whenever enchanted land is tapped for
+ *  mana" (Wild Growth). Tapping something for mana is an act of playing the game, and the engine
+ *  deliberately emits nothing for it — `costActions` drops tapping the source because nothing
+ *  triggers on it. So NO producer can legitimately satisfy this trigger, and every match it forms is
+ *  false: Drowner of Hope's "Tap target creature" is not a mana tap. Recorded as an unknown trigger
+ *  rather than silently deleted, which is where every other unmatched event goes. */
+const TAPPED_FOR_MANA = /\btapp?(?:ed|s|ing)?\b[^.]{0,30}?\bfor\s+(?:mana|\{)/i;
+
 export function deriveAbilities(
   clauses: ClauseRecord[],
   cardName?: string,
@@ -200,10 +219,13 @@ export function deriveAbilities(
     const actors = clauseTexts?.[clause.id] ? actionRecipients(clauseTexts[clause.id]) : {};
     const actorFor = (verb?: string): Control | undefined =>
       (clause.actions ?? []).filter((a) => a.verb === verb).length === 1 ? actors[verb ?? ""] : undefined;
+    const text = clauseTexts?.[clause.id] ?? "";
     let trigger: { verbs: Verb[]; subject: ReturnType<typeof parseSubject> } | undefined;
     if (clause.trigger?.event) {
       const verb = normalizeTriggerVerb(clause.trigger.event);
-      if (verb) {
+      if (verb === "taps" && TAPPED_FOR_MANA.test(text)) {
+        unknownTriggers.push("taps-for-mana");
+      } else if (verb) {
         const subject = parseSubject(clause.trigger.subject ?? "");
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
@@ -218,7 +240,9 @@ export function deriveAbilities(
       if (INERT_VERBS.has(action.verb ?? "")) continue;
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
       const effectKind = actionEffectKind(action);
-      const emits = actionEmits(action);
+      // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
+      const emits = actionEmits(action)
+        .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)));
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
       // A subject is attached ONLY when there is a kind. matcher's edges.ts emits a

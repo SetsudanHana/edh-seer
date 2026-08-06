@@ -481,3 +481,55 @@ test("a named actor is ignored when the clause has two actions of that verb", ()
   );
   expect(one.abilities[0].emits?.[0].subject.control).toBe("opp");
 });
+
+test("a permanent arriving tapped emits no tap event", () => {
+  // Will of the Sultai ("Return all land cards from your graveyard to the battlefield tapped"),
+  // Mechtitan Core, The Darkness Crystal. Nothing triggers on a permanent ENTERING tapped -- by the
+  // rules it never becomes tapped, it arrives that way. emits.ts already gates this on the subject
+  // having a SCOPE, which "all land cards" satisfies, so the guard missed exactly the mass-return
+  // wording. The clause text is the only place the entry state survives.
+  const clause = {
+    id: 1,
+    abilityType: "spell",
+    actions: [
+      { verb: "return", object: "all land cards from your graveyard", toZone: "battlefield" },
+      { verb: "tap", object: "all land cards" },
+    ],
+  };
+  const texts = { 1: "Return all land cards from your graveyard to the battlefield tapped." };
+  const { abilities } = deriveAbilities([clause], undefined, texts);
+  expect(abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "taps")).toEqual([]);
+  // The return still enters the battlefield -- only the tap event is dropped.
+  expect(abilities.flatMap((a) => a.emits ?? []).some((e) => e.verb === "enters")).toBe(true);
+
+  // A tap aimed at something already on the battlefield is a real event and is untouched.
+  const real = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "tap", object: "target creature" }] }],
+    undefined,
+    { 1: "Sacrifice an Eldrazi Scion: Tap target creature." },
+  );
+  expect(real.abilities.flatMap((a) => a.emits ?? []).some((e) => e.verb === "taps")).toBe(true);
+});
+
+test("a trigger on tapping for mana is not a tap event any card can supply", () => {
+  // Forsaken Monument ("Whenever you tap a permanent for {C}") and Wild Growth ("Whenever enchanted
+  // land is tapped for mana"). Tapping a permanent FOR MANA is something the player does, and the
+  // engine deliberately emits nothing for it -- costActions drops tapping the source, because
+  // nothing triggers on it. So no producer can ever legitimately satisfy such a trigger, and every
+  // match it forms is false: Drowner of Hope's "Tap target creature" is not a mana tap.
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "taps", subject: "a permanent", control: "you" }, actions: [{ verb: "add-mana", object: "{C}" }] }],
+    undefined,
+    { 1: "Whenever you tap a permanent for {C}, add an additional {C}." },
+  );
+  expect(abilities.every((a) => a.trigger === undefined)).toBe(true);
+  expect(unknownTriggers).toContain("taps-for-mana");
+
+  // A plain becomes-tapped trigger is untouched -- Unctus is a real payoff for Merrow Reejerey.
+  const plain = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "taps", subject: "this creature", control: "you" }, actions: [{ verb: "draw", object: "a card" }] }],
+    undefined,
+    { 1: "Whenever this creature becomes tapped, draw a card, then discard a card." },
+  );
+  expect(plain.abilities[0].trigger?.verbs).toEqual(["taps"]);
+});

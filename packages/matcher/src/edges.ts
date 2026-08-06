@@ -208,6 +208,14 @@ function humanizeEvent(key: string): string {
       return subj === "any"
         ? "a permanent leaving the battlefield"
         : `${art(subj)} ${subj} leaving the battlefield`;
+    // Same defect as `leaves`: no case, so the de-slugify default shipped "triggers on taps
+    // creature" to the web UI as English. "Becoming tapped" rather than "being tapped", because the
+    // event is the state change — a permanent that ARRIVES tapped never becomes tapped and emits
+    // nothing (see ARRIVES_TAPPED in tagger's derive.ts).
+    case "taps":
+      return subj === "any" ? "a permanent becoming tapped" : `${art(subj)} ${subj} becoming tapped`;
+    case "untaps":
+      return subj === "any" ? "a permanent untapping" : `${art(subj)} ${subj} untapping`;
     case "counter-added":
       return "a counter being added";
     case "proliferate":

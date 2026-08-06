@@ -986,3 +986,23 @@ test("every reason tag the engine emits humanizes into prose, never a raw tag", 
   for (const t of texts) expect(t).not.toMatch(/leaves any|:/);
   expect(texts[0]).toContain("leaving the battlefield");
 });
+
+test("a becomes-tapped reason humanizes into prose, never a raw tag", () => {
+  // "Unctus, Grand Metatect triggers on taps creature" reached the web UI verbatim -- same defect
+  // as the `leaves` case above, in a different verb. Merrow Reejerey ("you may tap or untap target
+  // permanent") really does supply Unctus's granted "whenever this creature becomes tapped", so
+  // this is a TRUE edge that was merely being described in slug.
+  const producer = base("Merrow Reejerey", [{
+    kind: "triggered", effect: { kind: "" },
+    emits: [{ verb: "taps", subject: { control: "any", token: null, type: "creature" } }],
+  }]);
+  const consumer = base("Unctus, Grand Metatect", [{
+    kind: "triggered",
+    trigger: { verbs: ["taps"], subject: { control: "you", token: null, type: "creature" } },
+    effect: { kind: "card-draw" },
+  }]);
+  const texts = directedReasons(producer, consumer, H).map((r) => r.text);
+  expect(texts.length).toBeGreaterThan(0);
+  for (const t of texts) expect(t).not.toMatch(/taps creature|taps any|:/);
+  expect(texts[0]).toContain("becoming tapped");
+});
