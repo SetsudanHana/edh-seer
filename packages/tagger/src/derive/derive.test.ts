@@ -733,3 +733,45 @@ test("a subtype on the class half survives the strip", () => {
   expect(abilities[0].trigger?.subject.subtype).toBe("elemental");
   expect(abilities[0].trigger?.subject.type).toBeUndefined();
 });
+
+test("a bare \"this\" effect object is the card itself", () => {
+  // Reassembling Skeleton records "Return this card from your graveyard" as object "this", and
+  // SELF_REFERENCE demands a noun after it -- so the recursion was NOT marked self, and edges.ts's
+  // self-recursion gate never fired. Every graveyard fill in the deck "enabled" a Skeleton that only
+  // ever returns itself. Optimus Prime is the same shape.
+  //
+  // The trigger side has always accepted bare "this" (Bojuka Bog); the effect side could not, because
+  // an object beginning "this turn ..." is a different thing. Matching the object EXACTLY removes
+  // that ambiguity -- "this turn" is not "this".
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "return", object: "this", fromZone: "graveyard", toZone: "battlefield" }],
+  }]);
+  expect(abilities[0].effect.subject?.self).toBe(true);
+  expect(abilities[0].effect.subject?.zone).toBe("graveyard");
+});
+
+test("a PRONOUN effect object inherits self from a self-referential trigger", () => {
+  // Enduring Curiosity: "When Enduring Curiosity dies, ... return IT to the battlefield". The object
+  // is a bare pronoun and the trigger names the card, so "it" is the card. Without this the recursion
+  // reads as returning a generic creature and any fill enables it.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "Enduring Curiosity", control: "you" },
+    actions: [{ verb: "return", object: "it", fromZone: "graveyard", toZone: "battlefield" }],
+  }], "Enduring Curiosity");
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion");
+  expect(rec?.effect.subject?.self).toBe(true);
+});
+
+test("a pronoun whose trigger names something ELSE is not self", () => {
+  // Kaya's Ghostform returns "that card" — the enchanted permanent, which is another card. The
+  // inheritance must follow the antecedent, not assume the card itself.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "enchanted permanent", control: "you" },
+    actions: [{ verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield" }],
+  }], "Kaya's Ghostform");
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion");
+  expect(rec?.effect.subject?.self).toBeUndefined();
+});

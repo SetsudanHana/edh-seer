@@ -9,7 +9,10 @@ import { createTagsLookup } from "@mtg/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
 import type { PanelVerdict } from "./panel-core.js";
 
+// Filter by CAUSE, or by TAG family with "tag:<verb>" -- the false set is now concentrated by tag
+// (graveyard-recursion is 33 claims spread across two causes) rather than by cause alone.
 const WANT = process.argv[2] ?? "false-care";
+const TAG = WANT.startsWith("tag:") ? WANT.slice(4) : undefined;
 const FROM = Number(process.argv[3] ?? 0);
 const N = Number(process.argv[4] ?? 12);
 const PANEL = "docs/measurements/panel";
@@ -47,12 +50,13 @@ for (const [deck, want] of byDeck) {
     if (seen.has(k)) continue;
     seen.add(k);
     const v = cache.get(k);
-    if (v?.verdict === "false" && v.cause === WANT) hits.push(v);
+    if (v?.verdict !== "false") continue;
+    if (TAG ? r.tag.split(":")[0] === TAG : v.cause === WANT) hits.push(v);
   }
 }
 console.log(`${WANT}: ${hits.length} live; showing ${FROM}..${FROM + N}\n`);
 for (const v of hits.slice(FROM, FROM + N)) {
-  console.log(`### [${v.tag}] ${v.producer}  ->  ${v.consumer}`);
+  console.log(`### [${v.tag}] ${v.producer}  ->  ${v.consumer}   (${v.cause})`);
   console.log(`  NOTE: ${v.note}`);
   console.log(`  P: ${(oracle.get(v.producer) ?? "").replace(/\n/g, " / ")}`);
   console.log(`  C: ${(oracle.get(v.consumer) ?? "").replace(/\n/g, " / ")}\n`);

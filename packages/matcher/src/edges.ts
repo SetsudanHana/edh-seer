@@ -2,7 +2,7 @@ import type { Reason } from "@mtg/engine";
 import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric } from "./implied.js";
+import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, selfFillTypes } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 
@@ -63,7 +63,10 @@ export function producerEvents(tags: CardTags): GameEvent[] {
     ...tags.abilities.flatMap((a) => a.emits ?? []),
     ...impliedEvents(tags.characteristics),
   ].map(normalizeZoneEvent);
-  const derived = [...impliedGraveyardEvents(base), ...impliedCounterEvents(base)];
+  const derived = [
+    ...selfFillTypes(impliedGraveyardEvents(base), tags.characteristics),
+    ...impliedCounterEvents(base),
+  ];
   const withDerived = [...base, ...derived];
   const seen = new Set<string>();
   const out: GameEvent[] = [];

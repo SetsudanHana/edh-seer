@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import type { Characteristics, GameEvent } from "@mtg/tagger";
 import { impliedEvents, impliedGraveyardEvents } from "./implied.js";
-import { impliedCounterEvents } from "./implied.js";
+import { impliedCounterEvents, selfFillTypes } from "./implied.js";
 
 const chars = (types: string[], subtypes: string[] = []): Characteristics => ({
   types, subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [],
@@ -101,4 +101,25 @@ test("non-proliferate verbs imply no counter-added", () => {
     { verb: "counter-added", subject: { control: "you", token: null, counter: "+1/+1" } },
   ] as GameEvent[]);
   expect(out).toHaveLength(0);
+});
+
+test("a graveyard fill of the card ITSELF carries the card's own types", () => {
+  // Myriad Landscape, Buried Ruin and Inventors' Fair all sacrifice themselves, and the clause records
+  // the object as a bare "this" — so the fill was UNTYPED, and `graveyardFillMatches` wildcards an
+  // untyped fill onto any typed recursion consumer on purpose (a milled card's type is genuinely
+  // unknown). A LAND sacrificing itself then "supplied" Bloodline Necromancer's Vampire recursion and
+  // Archaeomancer's instant recursion.
+  //
+  // The type is not unknown here: the card that hit the graveyard is this card, and `self` says so.
+  const land = chars(["Land"]);
+  const fills = selfFillTypes(
+    [{ verb: "enters", subject: { control: "any", token: null, self: true, zone: "graveyard" } }],
+    land,
+  );
+  expect(fills[0].subject.type).toEqual(["land"]);
+  // A fill that is NOT self-referential stays untyped: a milled card really could be anything.
+  const other = selfFillTypes(
+    [{ verb: "enters", subject: { control: "any", token: null, zone: "graveyard" } }], land,
+  );
+  expect(other[0].subject.type).toBeUndefined();
 });

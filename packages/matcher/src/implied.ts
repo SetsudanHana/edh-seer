@@ -78,6 +78,29 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
   return out;
 }
 
+/** Stamp the card's OWN printed types onto a graveyard fill that is the card itself.
+ *
+ *  `graveyardFillMatches` wildcards an UNTYPED fill onto any typed recursion consumer, and that is
+ *  deliberate: a milled card's type is genuinely unknown. But a card sacrificing ITSELF is not
+ *  unknown — Myriad Landscape, Buried Ruin and Inventors' Fair all record the object as a bare
+ *  "this", so the fill arrived untyped and a LAND hitting the graveyard "supplied" Bloodline
+ *  Necromancer's Vampire recursion and Archaeomancer's instant recursion.
+ *
+ *  Only fills already marked `self` are touched, and only where the fill states no type of its own. */
+export function selfFillTypes(events: GameEvent[], chars: Characteristics): GameEvent[] {
+  return events.map((e) => {
+    if (!(e.verb === "enters" && e.subject.zone === "graveyard" && e.subject.self === true)) return e;
+    if (e.subject.type !== undefined || e.subject.subtype !== undefined) return e;
+    const types = chars.types.map((t) => t.toLowerCase());
+    const subtypes = chars.subtypes.map((t) => t.toLowerCase());
+    return { ...e, subject: {
+      ...e.subject,
+      ...(types.length ? { type: types } : {}),
+      ...(subtypes.length ? { subtype: subtypes } : {}),
+    } };
+  });
+}
+
 /** The counter-added event a proliferate implies: proliferate gives each chosen permanent another
  *  counter of each kind already there, so it adds counters of an UNKNOWN, board-state-dependent kind
  *  — an untyped counter-added (no `counter`, no type) that a permissive matcher wildcards onto any

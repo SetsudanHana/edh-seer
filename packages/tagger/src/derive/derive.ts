@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 21;
+export const DERIVE_VERSION = 22;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -169,7 +169,16 @@ const PRONOUN_OBJECT =
  *  `parseSubject` alone cannot recover it — and a graveyard-recursion whose subject has no zone is
  *  invisible to the reanimator edge in edges.ts, which tests `effect.subject.zone === "graveyard"`.
  */
-function effectSubject(action: Action, kind: string): ReturnType<typeof parseSubject> {
+/** An effect object that is EXACTLY "this" — the card, with no noun after it. `SELF_REFERENCE`
+ *  demands the noun because an object beginning "this turn ..." is a condition, not a subject; an
+ *  object that is the bare word has no such ambiguity. Reassembling Skeleton and Optimus Prime both
+ *  record their own return this way, and without it the self-recursion gate in edges.ts never fired
+ *  for them: every graveyard fill in the deck "enabled" a card that only ever returns itself. */
+const SELF_BARE = /^this$/i;
+
+function effectSubject(
+  action: Action, kind: string, triggerIsSelf = false,
+): ReturnType<typeof parseSubject> {
   const object = action.object ?? "";
   // A self-referential effect applies to the card itself, and everything after the self-reference is
   // a CONDITION rather than a subject. Excalibur, Sword of Eden reads "This spell costs {X} less to
@@ -187,6 +196,12 @@ function effectSubject(action: Action, kind: string): ReturnType<typeof parseSub
   // Self-reference is the biggest defect family this engine has had, and the trigger side has
   // carried this marker since the self-ETB work; the effect side never did.
   if (self) subject.self = true;
+  // A bare "this", and a bare PRONOUN whose trigger named the card itself. Enduring Curiosity's
+  // "When Enduring Curiosity dies, ... return IT" means the card; Kaya's Ghostform's "that card"
+  // follows a trigger that named the ENCHANTED permanent and must not be read this way, so the
+  // inheritance follows the antecedent rather than assuming the card.
+  else if (SELF_BARE.test(object.trim())) subject.self = true;
+  else if (triggerIsSelf && PRONOUN_OBJECT.test(object.trim())) subject.self = true;
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) subject.zone = action.fromZone;
   return subject;
 }
@@ -330,7 +345,9 @@ export function deriveAbilities(
       // with a subject produces a junk `static:` tag that can match another card's junk tag and
       // form an edge that is not real. A STATIC ability additionally has to name its targets --
       // see namesItsTargets -- or the very same edge forms against the whole deck.
-      const subject = effectKind ? effectSubject(action, effectKind) : undefined;
+      const subject = effectKind
+        ? effectSubject(action, effectKind, trigger?.subject.self === true)
+        : undefined;
       const actor = actorFor(action.verb);
       if (actor) {
         for (const e of emits) e.subject.control = actor;
