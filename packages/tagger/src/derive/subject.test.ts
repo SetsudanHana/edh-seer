@@ -18,7 +18,11 @@ test("card types are recognised singular and plural", () => {
   expect(parseSubject("target creature").type).toBe("creature");
   expect(parseSubject("creatures you control").type).toBe("creature");
   expect(parseSubject("target artifact or enchantment").type).toEqual(["artifact", "enchantment"]);
-  expect(parseSubject("target nonland permanent").type).toBe("permanent");
+  // Was asserted as bare "permanent", which is the defect this line used to bless: `permanent`
+  // expands to include land, so "nonland permanent" matched exactly the thing it excludes. See
+  // "a negated type is resolved to the types it actually leaves" below.
+  expect(parseSubject("target nonland permanent").type)
+    .toEqual(["creature", "artifact", "enchantment", "planeswalker", "battle"]);
 });
 
 test("token is tri-state and always explicit", () => {
@@ -120,4 +124,43 @@ test("a colourless subject is not the same as an unstated one", () => {
   // says nothing about colour must stay unset rather than claim every colour.
   expect(parseSubject("colorless creatures")).toMatchObject({ colors: ["C"] });
   expect(parseSubject("creatures you control").colors).toBeUndefined();
+});
+
+test("a negated type is resolved to the types it actually leaves", () => {
+  // "noncreature spell" collapsed to the bare umbrella `spell`, which matcher's PSEUDO_TYPE_SETS
+  // expands to every nonland type INCLUDING creature -- so Mystic Remora, Saruman and The Mechanist
+  // drew an edge from every creature spell in the deck, the exact opposite of what they say.
+  // 197 such mentions across 185 corpus cards.
+  //
+  // Resolved to concrete types here rather than emitted as a `noncreature` token, because
+  // expandTypes UNIONS a subject's type tokens: ["permanent","nonland"] would union to everything
+  // and read wider than either word alone.
+  expect(parseSubject("target noncreature spell").type)
+    .toEqual(["artifact", "enchantment", "planeswalker", "instant", "sorcery", "battle"]);
+  // "nonland permanent" is the intersection, not either set: no lands, and no instants or sorceries
+  // either, because it is still a permanent. 85 mentions, the commonest of the family.
+  expect(parseSubject("target nonland permanent").type)
+    .toEqual(["creature", "artifact", "enchantment", "planeswalker", "battle"]);
+  // A negation with no umbrella to narrow leaves every other card type.
+  expect(parseSubject("target noncreature").type)
+    .toEqual(["artifact", "enchantment", "instant", "sorcery", "planeswalker", "land", "battle"]);
+});
+
+test("a negation that narrows nothing leaves the subject alone", () => {
+  // "nonartifact creature" is still a creature; the engine has no way to say "and not an artifact",
+  // and inventing one would be a wrong answer rather than a missing one. Unchanged from today.
+  expect(parseSubject("target nonartifact creature").type).toBe("creature");
+  // "nontoken" is a token state, not a card type -- parseToken already carries it, and it must not
+  // be mistaken for a type negation.
+  expect(parseSubject("a nontoken black creature")).toMatchObject({ type: "creature", token: false });
+  // Supertypes are not card types. Neither of these may reach the type filter.
+  expect(parseSubject("target nonlegendary creature card").type).toBe("creature");
+  expect(parseSubject("target nonbasic land").type).toBe("land");
+});
+
+test("a negated subject keeps the scope its plural states", () => {
+  // parseScope reads mass effects off the plural, and the negation path must not lose it:
+  // "ten nonland permanents" is an all-scope subject.
+  expect(parseSubject("ten nonland permanents").scope).toBe("all");
+  expect(parseSubject("target noncreature spell").scope).toBe("target");
 });

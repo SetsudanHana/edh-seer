@@ -25,6 +25,31 @@ function parseToken(t: string): boolean | null {
   return null;
 }
 
+/** The eight real card types, and what the two umbrella nouns denote. These MIRROR matcher's
+ *  `ALL_CARD_TYPES` and `PSEUDO_TYPE_SETS`; they are restated rather than imported because matcher
+ *  depends on tagger and not the other way round. `hierarchy.test.ts` asserts the two agree, so the
+ *  copy cannot rot silently. */
+export const CARD_TYPES = [
+  "creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "land", "battle",
+] as const;
+export const UMBRELLA_TYPES: Record<string, readonly string[]> = {
+  permanent: ["creature", "artifact", "enchantment", "planeswalker", "land", "battle"],
+  spell: ["creature", "artifact", "enchantment", "planeswalker", "instant", "sorcery", "battle"],
+};
+
+/** Card types the text NEGATES ("noncreature spell", "nonland permanent"). Only real card types
+ *  count: "nontoken" is a token state that `parseToken` already carries, and "nonbasic"/"nonlegendary"
+ *  are supertypes the engine has no filter for. */
+function negatedTypes(t: string): { negated: string[]; plural: boolean } {
+  const negated: string[] = [];
+  let plural = false;
+  for (const ty of CARD_TYPES) {
+    if (new RegExp(`\\bnon-?${ty}s\\b`).test(t)) { negated.push(ty); plural = true; }
+    else if (new RegExp(`\\bnon-?${ty}\\b`).test(t)) negated.push(ty);
+  }
+  return { negated, plural };
+}
+
 function parseTypes(t: string): { type?: string | string[]; plural: boolean } {
   const found: string[] = [];
   let plural = false;
@@ -34,6 +59,29 @@ function parseTypes(t: string): { type?: string | string[]; plural: boolean } {
     if (new RegExp(`\\b${ty}s\\b`).test(t)) { found.push(ty); plural = true; }
     else if (new RegExp(`\\b${ty}\\b`).test(t)) found.push(ty);
   }
+
+  // A negation is resolved to the concrete types it LEAVES, rather than emitted as a `noncreature`
+  // token, because matcher's `expandTypes` UNIONS a subject's type tokens: ["permanent","nonland"]
+  // would union to every card type and read wider than either word alone. Subtraction here gives the
+  // intersection the text actually states.
+  //
+  // Without it "noncreature spell" collapsed to the bare umbrella `spell`, which expands to every
+  // nonland type INCLUDING creature -- so Mystic Remora and Saruman drew an edge from every creature
+  // spell in the deck, the exact opposite of what they say. 197 mentions across 185 corpus cards.
+  const { negated, plural: negPlural } = negatedTypes(t);
+  if (negated.length > 0) {
+    const umbrella = found.find((f) => UMBRELLA_TYPES[f]);
+    const concrete = found.filter((f) => !UMBRELLA_TYPES[f]);
+    const base = concrete.length > 0 ? concrete : [...(UMBRELLA_TYPES[umbrella ?? ""] ?? CARD_TYPES)];
+    const kept = base.filter((ty) => !negated.includes(ty));
+    // A negation that removes nothing from the base ("nonartifact creature" is still a creature)
+    // leaves the subject exactly as it was: the engine cannot say "and not an artifact", and
+    // inventing a narrower filter would be a wrong answer rather than a missing one.
+    if (kept.length > 0) {
+      return { type: kept.length === 1 ? kept[0] : kept, plural: plural || negPlural };
+    }
+  }
+
   if (found.length === 0) return { plural: /\bopponents\b|\bplayers\b/.test(t) };
   // "spell" and "permanent" are umbrella nouns, not constraints -- matcher's PSEUDO_TYPE_SETS
   // expands "spell" to every non-land type, so "instant or sorcery spell" collecting all three

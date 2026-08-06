@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { buildHierarchy, impliesType, expandTypes, PSEUDO_TYPE_SETS, ALL_CARD_TYPES } from "./hierarchy.js";
+import { CARD_TYPES, UMBRELLA_TYPES } from "@mtg/tagger";
 
 test("buildHierarchy maps each subtype after the dash to its card types", () => {
   const h = buildHierarchy([
@@ -55,4 +56,14 @@ test("expandTypes: an unknown token contributes nothing", () => {
 test("PSEUDO_TYPE_SETS covers the four pseudo-types; ALL_CARD_TYPES has eight", () => {
   expect(Object.keys(PSEUDO_TYPE_SETS).sort()).toEqual(["noncreature", "nonland", "permanent", "spell"]);
   expect(ALL_CARD_TYPES.length).toBe(8);
+});
+
+test("the card-type sets tagger derives against are the same ones matcher expands", () => {
+  // tagger's subject.ts restates these to resolve a negated type ("noncreature spell") into the
+  // concrete types it leaves. It cannot import them -- matcher depends on tagger, not the reverse --
+  // so this is the guard that stops the copy rotting. If it fails, the two packages disagree about
+  // what a card type IS, and every negated subject silently derives against the wrong set.
+  expect([...CARD_TYPES]).toEqual([...ALL_CARD_TYPES]);
+  expect(UMBRELLA_TYPES.permanent).toEqual(PSEUDO_TYPE_SETS.permanent);
+  expect(UMBRELLA_TYPES.spell).toEqual(PSEUDO_TYPE_SETS.spell);
 });
