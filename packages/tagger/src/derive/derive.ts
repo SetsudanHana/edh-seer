@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 27;
+export const DERIVE_VERSION = 28;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -148,6 +148,75 @@ function isSelfSubject(text: string, cardName?: string): boolean {
 const SELF_DISJUNCT =
   /^this (?:spell|card|creature|artifact|enchantment|permanent|land|planeswalker|equipment|vehicle|token)\b[^,]*?\bor (?=another\b|other\b)/i;
 
+/** A card's NAME is not a type line. `parseSubtypes` tokenises the subject against the closed
+ *  SUBTYPES list, so a proper noun that happens to contain a type word invents a subtype the card
+ *  does not have: "Expedition Map" derived `map`, "Mount Doom" derived `mount`, "Stone of Erech"
+ *  derived `stone`, and Donna Noble — a Legendary Creature — Human — derived `noble`. 14 subjects
+ *  across 11 corpus cards.
+ *
+ *  A wrong subtype does not widen an edge, it DELETES it (see subject.ts), so every one of these was
+ *  a card quietly unable to match anything. Printed characteristics come from Scryfall's type line;
+ *  the text parser must never manufacture them out of a name.
+ *
+ *  The name is REMOVED rather than the subtype suppressed, so the rest of the subject still parses:
+ *  "Donna Noble or a creature it's paired with" keeps the creature half a deck can actually supply.
+ *  Longest form first — the full name before the short one, or "Omnath" would strip out of
+ *  "Omnath, Locus of the Roil" and leave ", Locus of the Roil" still carrying `locus`. */
+function stripCardName(text: string, cardName?: string): string {
+  if (!cardName || text === "") return text;
+  const forms = new Set<string>();
+  for (const face of cardName.split(" // ")) {
+    forms.add(face);
+    forms.add(face.split(/[,/]/)[0].trim());
+    // A card with no comma still shortens itself ("Imskir Iron-Eater" says "Imskir"), but never when
+    // that first word is a real creature type: Goblin Bombardment watching Goblins is a typal payoff,
+    // and stripping the word would delete the deck it is built for.
+    const first = face.split(/\s+/)[0];
+    if (!SUBTYPES.has(first.toLowerCase())) forms.add(first);
+  }
+  let out = text;
+  for (const f of [...forms].filter((f) => f !== "").sort((a, b) => b.length - a.length)) {
+    out = out.replace(new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), " ");
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
+
+/** "another creature or Vehicle you control" (Prowl, Pursuit Vehicle) is a DISJUNCTION, but `type`
+ *  and `subtype` are separate SubjectFilter fields the matcher ANDs, so it derived "a creature that
+ *  is also a Vehicle" and the plain creature entering that the oracle plainly triggers on matched
+ *  nothing. Three clauses on two corpus cards.
+ *
+ *  The schema has no way to say OR across the two slots — an array means OR only WITHIN one — so the
+ *  subtype branch is dropped rather than invented as an AND. That loses the Vehicles that are not
+ *  creatures, which is a MISSING edge; keeping the AND is a WRONG one, and a silent wrong answer is
+ *  worse than a missing one.
+ *
+ *  Only fires when the OR genuinely separates the slots: one side naming a type and no subtype, the
+ *  other a subtype and no type. "A Faerie or Wizard permanent spell" is an OR inside the subtype
+ *  array and keeps both; "an Eldrazi creature spell with mana value 7 or greater" is not a subject
+ *  OR at all; "another Dragon creature you control" is a genuine compound AND. */
+function dropsCrossSlotOr(text: string): boolean {
+  const parts = text.split(/\bor\b/i).map((p) => p.trim()).filter((p) => p !== "");
+  if (parts.length < 2) return false;
+  const slots = parts.map((p) => {
+    const s = parseSubject(p);
+    return { type: s.type !== undefined, subtype: s.subtype !== undefined };
+  });
+  const typeOnly = slots.some((s) => s.type && !s.subtype);
+  const subtypeOnly = slots.some((s) => s.subtype && !s.type);
+  return typeOnly && subtypeOnly;
+}
+
+/** Both corrections above, at the one place a subject becomes structured. */
+function subjectFrom(text: string, cardName?: string): ReturnType<typeof parseSubject> {
+  const stripped = stripCardName(text.replace(SELF_DISJUNCT, ""), cardName);
+  const subject = parseSubject(stripped);
+  if (subject.type !== undefined && subject.subtype !== undefined && dropsCrossSlotOr(stripped)) {
+    delete subject.subtype;
+  }
+  return subject;
+}
+
 /** The card talking about itself. Anchored at the start, because a self-reference anywhere else is
  *  part of a larger subject ("creatures other than this one"), and confined to the noun so the rest
  *  of the sentence cannot leak in. */
@@ -269,7 +338,7 @@ function grantRecipient(clauseText: string): string | undefined {
 const ATTACKS_YOU = /\battacks? you\b/i;
 
 function effectSubject(
-  action: Action, kind: string, triggerIsSelf = false, clauseText = "",
+  action: Action, kind: string, triggerIsSelf = false, clauseText = "", cardName?: string,
 ): ReturnType<typeof parseSubject> {
   // A GRANT's object is the ability handed over, never the thing receiving it, so the subject has to
   // come from the clause text. Falls back to the object when the text states no recipient, which
@@ -301,7 +370,7 @@ function effectSubject(
   // derived population. Parse only the self-reference, which names a bare singular and so keeps no
   // subject at all: the card holds its `static:cost-reduction` theme tag and forms no edges.
   const self = object.match(SELF_REFERENCE);
-  const subject = parseSubject(self ? self[0] : countTruncated(object));
+  const subject = subjectFrom(self ? self[0] : countTruncated(object), cardName);
   // ...and RECORD that it was self-referential. The match was already being used to avoid parsing
   // the condition after it, then discarded, so all 160 graveyard-recursion effects in the corpus
   // looked like recursion of a generic card. edges.ts then let any graveyard fill enable any of
@@ -315,6 +384,11 @@ function effectSubject(
   // inheritance follows the antecedent rather than assuming the card.
   else if (SELF_BARE.test(object.trim())) subject.self = true;
   else if (triggerIsSelf && PRONOUN_OBJECT.test(object.trim())) subject.self = true;
+  // ...and the model writing the card's own NAME where the oracle said "it". Eye of Nidhogg returns
+  // ITSELF from the graveyard; without this the effect looked like generic recursion and any
+  // graveyard fill "enabled" it. The trigger side has carried this since the self-ETB work — the
+  // effect side recognised every other spelling of self except the plain name.
+  else if (isSelfSubject(object, cardName)) subject.self = true;
   if (ATTACKS_YOU.test(object)) subject.control = "opp";
   if (ZONE_SCOPED_KINDS.has(kind) && action.fromZone) {
     subject.zone = action.fromZone;
@@ -428,7 +502,7 @@ export function deriveAbilities(
       if (verb === "taps" && TAPPED_FOR_MANA.test(text)) {
         unknownTriggers.push("taps-for-mana");
       } else if (verb) {
-        const subject = parseSubject((clause.trigger.subject ?? "").replace(SELF_DISJUNCT, ""));
+        const subject = subjectFrom(clause.trigger.subject ?? "", cardName);
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
@@ -465,7 +539,7 @@ export function deriveAbilities(
       // form an edge that is not real. A STATIC ability additionally has to name its targets --
       // see namesItsTargets -- or the very same edge forms against the whole deck.
       const subject = effectKind
-        ? effectSubject(action, effectKind, trigger?.subject.self === true, text)
+        ? effectSubject(action, effectKind, trigger?.subject.self === true, text, cardName)
         : undefined;
       const actor = actorFor(action.verb);
       if (actor) {

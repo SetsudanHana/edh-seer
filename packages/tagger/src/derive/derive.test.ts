@@ -939,3 +939,88 @@ test("a copy recovers WHO becomes the copy, and only forms an edge when it is ty
   }], "Mirror Sheen", { 1: "Choose a creature you control. Each other creature you control becomes a copy of that creature until end of turn." });
   expect(mass.abilities.find((a) => a.effect.kind === "clone")?.effect.subject).toBeUndefined();
 });
+
+// A card's own NAME is not a type line. `parseSubtypes` tokenises against the closed SUBTYPES list,
+// so "Expedition Map" yielded subtype `map`, "Mount Doom" yielded `mount`, and Donna Noble -- a
+// Legendary Creature -- Human -- yielded `noble`. 14 subjects across 11 corpus cards. A wrong
+// subtype does not widen an edge, it DELETES it (subject.ts:145), so each one was a card silently
+// unable to match anything. Printed characteristics come from Scryfall; text parsing must never
+// invent them out of a proper noun.
+test("a subject that is the card's own name contributes no subtype", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "Expedition Map" },
+    actions: [{ verb: "draw", object: "you", amount: "1" }],
+  }], "Expedition Map");
+  expect(abilities[0].trigger?.subject.subtype).toBeUndefined();
+});
+
+test("the card's name is stripped before parsing, leaving the half a deck can supply", () => {
+  // Donna Noble is a Legendary Creature -- Human. "Noble" is her surname, not her type.
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "attacks", subject: "Donna Noble or a creature it's paired with" },
+    actions: [{ verb: "draw", object: "you", amount: "1" }],
+  }], "Donna Noble");
+  expect(abilities[0].trigger?.subject.subtype).toBeUndefined();
+  expect(abilities[0].trigger?.subject.type).toBe("creature");
+});
+
+// A real typal payoff whose subtype happens to sit in the card's name must SURVIVE the strip:
+// Lathliss watches other Dragons, and deleting that subtype would delete the deck it is built for.
+test("stripping the name leaves a genuine typal subject alone", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "another nontoken Dragon you control" },
+    actions: [{ verb: "draw", object: "you", amount: "1" }],
+  }], "Lathliss, Dragon Queen");
+  expect(abilities[0].trigger?.subject.subtype).toBe("dragon");
+});
+
+// "another creature or Vehicle you control" (Prowl, Pursuit Vehicle) is a DISJUNCTION, but `type`
+// and `subtype` are separate fields the matcher ANDs, so it derived "creature AND Vehicle" and a
+// plain creature entering -- which the oracle plainly triggers on -- matched nothing. The schema
+// cannot express the OR, so the subtype half is dropped: a missing branch is a missing edge, while
+// an invented AND is a wrong answer, and the invariant prefers the former.
+test("an OR across the type and subtype slots keeps the type and drops the subtype", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "another creature or Vehicle you control" },
+    actions: [{ verb: "add-counter", object: "+1/+1" }],
+  }], "Prowl, Pursuit Vehicle");
+  expect(abilities[0].trigger?.subject.type).toBe("creature");
+  expect(abilities[0].trigger?.subject.subtype).toBeUndefined();
+});
+
+// The compound "Dragon creature" is a genuine AND and must not be caught by the OR rule.
+test("a compound type and subtype with no OR is untouched", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "another Dragon creature you control" },
+    actions: [{ verb: "draw", object: "you", amount: "1" }],
+  }], "Scalelord Reckoner");
+  expect(abilities[0].trigger?.subject.type).toBe("creature");
+  expect(abilities[0].trigger?.subject.subtype).toBe("dragon");
+});
+
+// "When Eye of Nidhogg is put into a graveyard from the battlefield, return IT to its owner's hand"
+// returns the card ITSELF. The trigger side has been marked self since the self-ETB work, but the
+// EFFECT side only recognised "this creature", a bare pronoun, or an inherited antecedent -- never
+// the model writing the card's own NAME as the object. The false subtype that stripCardName removes
+// was accidentally masking this: with it gone, Necromancy "enabled" Eye of Nidhogg's recursion of
+// itself. Self-reference is the biggest defect family this engine has had.
+test("an effect object naming the card itself is marked self", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "leaves", subject: "Eye of Nidhogg" },
+    actions: [{ verb: "return", object: "Eye of Nidhogg", fromZone: "graveyard", toZone: "hand" }],
+  }], "Eye of Nidhogg");
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion");
+  expect(rec?.effect.subject?.self).toBe(true);
+});
