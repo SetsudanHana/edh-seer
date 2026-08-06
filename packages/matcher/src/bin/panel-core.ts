@@ -34,6 +34,10 @@ export interface PanelClaim {
   producer: string;
   consumer: string;
   tag: string;
+  /** The producer supplies this event merely BY BEING ITSELF — a creature entering, an instant being
+   *  cast — rather than through an authored ability. Carried so a worksheet can SAY so: three of the
+   *  four claims Claude wrongly judged false in the agreement draw were this shape. */
+  implied?: boolean;
 }
 
 export interface PanelScore {

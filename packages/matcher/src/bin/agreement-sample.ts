@@ -56,7 +56,7 @@ const tags: CardTagsLookup = createTagsLookup(store.db, "derived");
 const oracle = new Map<string, string>();
 
 /** Every claim the engine makes on the panel today, deduped, with its cached verdict attached. */
-const claims = new Map<string, { producer: string; consumer: string; tag: string; verdict: string }>();
+const claims = new Map<string, { producer: string; consumer: string; tag: string; verdict: string; implied: boolean }>();
 const byDeck = new Map<string, { producer: string; consumer: string }[]>();
 for (const p of pairs) {
   if (!byDeck.has(p.deck)) byDeck.set(p.deck, []);
@@ -80,7 +80,7 @@ for (const [deck, wanted] of byDeck) {
       const key = `${r.producer}|${r.consumer}|${r.tag}`;
       const v = verdictOf.get(key);
       if (!v || (v.verdict !== "real" && v.verdict !== "false")) continue;
-      claims.set(key, { producer: r.producer, consumer: r.consumer, tag: r.tag, verdict: v.verdict });
+      claims.set(key, { producer: r.producer, consumer: r.consumer, tag: r.tag, verdict: v.verdict, implied: r.impliedProducer === true });
     }
   }
 }
@@ -103,7 +103,7 @@ for (let i = drawn.length - 1; i > 0; i--) {
 mkdirSync(OUT, { recursive: true });
 writeFileSync(join(OUT, "worksheet.jsonl"), `${drawn.map((c, id) => JSON.stringify({
   id, producer: c.producer, consumer: c.consumer, tag: c.tag,
-  claim: claimFor(c.tag, c.producer, c.consumer),
+  claim: claimFor(c.tag, c.producer, c.consumer, c.implied),
   producerOracle: oracle.get(c.producer) ?? "",
   consumerOracle: oracle.get(c.consumer) ?? "",
 })).join("\n")}\n`);

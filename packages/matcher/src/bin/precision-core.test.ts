@@ -151,3 +151,26 @@ test("every row states WHICH WAY the claim runs", () => {
   expect(claimFor("enters:creature", "Malakir Rebirth", "Massacre Wurm"))
     .toBe("Malakir Rebirth causes enters:creature; Massacre Wurm triggers on it");
 });
+
+// A claim built on the producer's OWN implied entry/cast reads identically to one built on an
+// authored emit — "Warren Soultrader causes enters:creature" does not say WHICH creature enters.
+// Measured cost: three of the four claims Claude wrongly judged FALSE in the blind agreement draw
+// were this shape (Warren Soultrader IS a creature, Dauthi Voidwalker IS a creature, Arcane Denial
+// IS an instant), and it also caused the user's one retracted error, #17. Both judges read the
+// card's headline ability and missed its type line.
+test("a claim on the producer's own event says so", () => {
+  expect(claimFor("enters:creature", "Warren Soultrader", "Witty Roastmaster", true))
+    .toBe("Warren Soultrader ITSELF supplies enters:creature by being one; Witty Roastmaster triggers on it");
+});
+
+test("a claim on an authored emit is unchanged", () => {
+  expect(claimFor("enters:creature", "Aragorn, the Uniter", "Witty Roastmaster"))
+    .toBe("Aragorn, the Uniter causes enters:creature; Witty Roastmaster triggers on it");
+  expect(claimFor("enters:creature", "Aragorn, the Uniter", "Witty Roastmaster", false))
+    .toBe("Aragorn, the Uniter causes enters:creature; Witty Roastmaster triggers on it");
+});
+
+// The other families keep their own phrasing; only the event claim gains the marker.
+test("the marker does not disturb the other claim shapes", () => {
+  expect(claimFor("static:pump", "Anthem", "Bear", true)).toContain("applies to");
+});

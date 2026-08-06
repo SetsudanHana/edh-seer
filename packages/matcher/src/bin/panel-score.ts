@@ -69,7 +69,7 @@ for (const [deck, want] of wantedByDeck) {
     for (const r of e.reasons) {
       if (!r.producer || !r.consumer) continue;
       if (!want.has(`${r.producer}|${r.consumer}`)) continue;
-      current.push({ producer: r.producer, consumer: r.consumer, tag: r.tag });
+      current.push({ producer: r.producer, consumer: r.consumer, tag: r.tag, implied: r.impliedProducer === true });
     }
   }
 }
@@ -117,7 +117,7 @@ const out = arg("--worksheet");
 if (out && s.unjudged.length) {
   writeFileSync(out, `${s.unjudged.map((c, id) => JSON.stringify({
     id, producer: c.producer, consumer: c.consumer, tag: c.tag,
-    claim: claimFor(c.tag, c.producer, c.consumer),
+    claim: claimFor(c.tag, c.producer, c.consumer, c.implied === true),
     producerOracle: oracle.get(c.producer) ?? "", consumerOracle: oracle.get(c.consumer) ?? "",
   })).join("\n")}\n`);
   console.log(`\n  wrote the debt as a worksheet -> ${out}`);

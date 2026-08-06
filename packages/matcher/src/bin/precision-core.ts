@@ -100,7 +100,15 @@ export function blind(reasons: readonly SampledReason[], rng: () => number): Wor
  *
  *  Derived from the tag, never from the reason, so it adds direction without adding a leak: both
  *  populations produce the same sentence for the same tag. */
-export function claimFor(tag: string, producer: string, consumer: string): string {
+/** `implied` marks a producer event the card supplies merely BY BEING ITSELF — a creature entering,
+ *  an instant being cast — rather than by an authored ability. Without it the claim reads the same
+ *  either way, and a judge naturally reads the card's headline ability instead of its type line.
+ *
+ *  Measured: three of the four claims Claude wrongly judged FALSE in the blind agreement draw were
+ *  this shape (Warren Soultrader and Dauthi Voidwalker are creatures; Arcane Denial is an instant),
+ *  and the user's one retracted error was the same confusion from the other side. The engine has
+ *  always known — `Reason.impliedProducer` — the worksheet simply never showed it. */
+export function claimFor(tag: string, producer: string, consumer: string, implied = false): string {
   const [family, subject = "any"] = tag.split(":");
   if (family === "graveyard-recursion") {
     return `${producer} puts ${subject} cards into a graveyard; ${consumer} returns them from it`;
@@ -111,6 +119,7 @@ export function claimFor(tag: string, producer: string, consumer: string): strin
   if (family === "static") {
     return `${producer}'s ${subject.replace(/-/g, " ")} applies to ${consumer}`;
   }
+  if (implied) return `${producer} ITSELF supplies ${tag} by being one; ${consumer} triggers on it`;
   return `${producer} causes ${tag}; ${consumer} triggers on it`;
 }
 
