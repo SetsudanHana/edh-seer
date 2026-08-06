@@ -88,6 +88,32 @@ export function blind(reasons: readonly SampledReason[], rng: () => number): Wor
   }));
 }
 
+/** A direction-neutral statement of what a reason CLAIMS, built from the tag alone.
+ *
+ *  The 2026-08-06 pass misjudged 15 of 300 rows for want of this. Section 4 strips the reason's
+ *  `text` because it is templated per code path and is the likeliest leak of which population
+ *  produced a row — but the `tag` alone does not state direction consistently. For every family it
+ *  names the EVENT, which belongs to the producer; for `graveyard-recursion` it names the EFFECT
+ *  KIND, which belongs to the CONSUMER. A judge reading `graveyard-recursion:creature` on
+ *  "Withering Torment -> Necromancy" concluded the engine credited Withering Torment with
+ *  reanimation, when the claim is that it FILLS the graveyard Necromancy reanimates from.
+ *
+ *  Derived from the tag, never from the reason, so it adds direction without adding a leak: both
+ *  populations produce the same sentence for the same tag. */
+export function claimFor(tag: string, producer: string, consumer: string): string {
+  const [family, subject = "any"] = tag.split(":");
+  if (family === "graveyard-recursion") {
+    return `${producer} puts ${subject} cards into a graveyard; ${consumer} returns them from it`;
+  }
+  if (family === "counter-added") {
+    return `${producer} puts counters on ${subject}; ${consumer} benefits from them being there`;
+  }
+  if (family === "static") {
+    return `${producer}'s ${subject.replace(/-/g, " ")} applies to ${consumer}`;
+  }
+  return `${producer} causes ${tag}; ${consumer} triggers on it`;
+}
+
 /** Wilson score interval at 95%. Correct at the tails, where the normal approximation produces
  *  bounds outside [0,1] — which is exactly where a high-precision population sits. */
 export function wilson(successes: number, total: number): [number, number] {

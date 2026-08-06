@@ -20,7 +20,7 @@ import {
 import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
-import { blind, sample, seededRng, type SampledReason, type Source } from "./precision-core.js";
+import { blind, claimFor, sample, seededRng, type SampledReason, type Source } from "./precision-core.js";
 
 const DIR = "packages/cli/decks/calibration";
 const arg = (flag: string, fallback: string): string => {
@@ -99,6 +99,10 @@ writeFileSync(
     producer: row.producer,
     consumer: row.consumer,
     tag: row.tag,
+    // What the reason CLAIMS, in words, built from the tag alone (precision-core.claimFor). Not
+    // from the reason's prose, which would leak the code path -- but without it the tag alone does
+    // not state direction, and the 2026-08-06 pass misjudged 15 rows for want of it.
+    claim: claimFor(row.tag, row.producer, row.consumer),
     producerOracle: oracle.get(row.producer) ?? "",
     consumerOracle: oracle.get(row.consumer) ?? "",
     // Both cards' derived-doc status, so fallback contamination is measurable (spec §6.3).

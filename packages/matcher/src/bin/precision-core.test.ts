@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   beatsBeyondNoise, blind, countingGenericAsReal, leakyTags, sample, score, seededRng, wilson,
+  claimFor,
   type Judgment, type SampledReason,
 } from "./precision-core.js";
 
@@ -132,4 +133,21 @@ test("the decision rule needs a clear gap, not merely a higher number", () => {
   expect(beatsBeyondNoise({ flat: s(28, 12), derived: s(32, 8) })).toBe(false);
   // Nothing decided on one side: "no data" must never read as a win.
   expect(beatsBeyondNoise({ flat: s(0, 0), derived: s(30, 0) })).toBeNull();
+});
+
+test("every row states WHICH WAY the claim runs", () => {
+  // The 2026-08-06 pass misjudged 15 of 300 rows because the worksheet carries the tag and not the
+  // reason's prose (section 4 strips it as the likeliest source leak). For every family the tag
+  // names the EVENT, which is the producer's; for `graveyard-recursion` it names the EFFECT KIND,
+  // which is the CONSUMER's. The judge read "P has recursion" where the engine claims "P fills the
+  // graveyard for C". Built from the TAG alone, so it adds direction without adding a leak.
+  expect(claimFor("graveyard-recursion:creature", "Withering Torment", "Necromancy"))
+    .toBe("Withering Torment puts creature cards into a graveyard; Necromancy returns them from it");
+  expect(claimFor("counter-added:creature", "Shelinda", "Simic Ascendancy"))
+    .toBe("Shelinda puts counters on creature; Simic Ascendancy benefits from them being there");
+  expect(claimFor("static:pump", "Coat of Arms", "Lord of the Unreal"))
+    .toBe("Coat of Arms's pump applies to Lord of the Unreal");
+  // The default, and the shape of the great majority: an event the producer causes.
+  expect(claimFor("enters:creature", "Malakir Rebirth", "Massacre Wurm"))
+    .toBe("Malakir Rebirth causes enters:creature; Massacre Wurm triggers on it");
 });
