@@ -212,6 +212,13 @@ export const EFFECT_KINDS = [
   "proliferate",
   "graveyard-hate",
   "extra-combat",
+  // A keyword handed to OTHER permanents. Deliberately not attempted for a long time -- see
+  // effect-kind.ts -- because hexproof/indestructible/ward are the `protection` deck ROLE and
+  // flying/trample are evasion, and a near-miss kind is worse than silence. This is not a near-miss:
+  // it says exactly what the card does. It earns edges only when the recipient names a SUBTYPE, so
+  // "other Merfolk you control have ward" is a typal payoff and "creatures you control gain haste"
+  // stays the ordinary-card claim it is.
+  "keyword-grant",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];

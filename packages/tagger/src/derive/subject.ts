@@ -163,6 +163,12 @@ function parseScope(t: string, pluralType: boolean): SubjectFilter["scope"] {
   if (/\btarget\b/.test(t)) return "target";
   if (/\beach\b|\bevery\b/.test(t)) return "each";
   if (/\ball\b/.test(t)) return "all";
+  // "OTHER Merfolk you control", "other artifact creatures you control" -- a class minus this card,
+  // which is a mass effect however the noun pluralises. Needed because several creature types are
+  // their own plural ("Merfolk"), so the plural test below cannot see them and Svyelun's ward grant
+  // was dropped by `namesItsTargets` for want of a scope. Checked AFTER `target`, so "another target
+  // creature" stays spot-scoped.
+  if (/\bother\b/.test(t)) return "all";
   return pluralType ? "all" : undefined;
 }
 

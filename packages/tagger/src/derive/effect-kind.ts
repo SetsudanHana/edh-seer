@@ -129,7 +129,7 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // 342 corpus cards carry a grant-ability action and the verb had no row here at all, so Lightning
   // Greaves and Swiftfoot Boots derived nothing whatsoever.
   if (verb === "grant-ability") {
-    return SPEED_KEYWORDS.test(action.object ?? "") ? "speed-increase" : null;
+    return SPEED_KEYWORDS.test(action.object ?? "") ? "speed-increase" : "keyword-grant";
   }
   if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
   if (verb === "cost-modify") return costDirection(action.object ?? "");

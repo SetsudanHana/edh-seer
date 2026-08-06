@@ -98,14 +98,25 @@ test("granting haste or double strike is a speed increase; other grants stay sil
   expect(actionEffectKind({ verb: "grant-ability", object: "double strike" })).toBe("speed-increase");
   expect(actionEffectKind({ verb: "grant-ability", object: "hexproof and haste" })).toBe("speed-increase");
 
-  // The rest have no kind in the closed vocabulary and must NOT be given a near-miss: hexproof,
-  // indestructible, shroud and ward are the `protection` deck ROLE, which build.ts:126 already
-  // derives from oracle text independently of tags. Evasion keywords have no kind at all.
-  // effect-kind.ts's own rule: a near-miss kind is worse than null, because it is consumed as true.
-  expect(actionEffectKind({ verb: "grant-ability", object: "hexproof and indestructible" })).toBeNull();
-  expect(actionEffectKind({ verb: "grant-ability", object: "flying" })).toBeNull();
-  expect(actionEffectKind({ verb: "grant-ability", object: "deathtouch" })).toBeNull();
-  expect(actionEffectKind({ verb: "grant-ability", object: "" })).toBeNull();
+  // Everything else is now `keyword-grant`, REVERSING the original decision here. That decision was
+  // "a near-miss kind is worse than null", and it was right about the near-miss: hexproof and
+  // indestructible are the `protection` deck ROLE (build.ts:126 derives it from oracle text), and
+  // flying/trample are evasion, so labelling either of those `pump` or `protection` would be
+  // consumed as something it is not.
+  //
+  // `keyword-grant` is not a near-miss — it says exactly what the card does, and nothing consumes it
+  // as anything else. The cost of the silence was measured: the recall draw (spec §26) found
+  // Svyelun's "other Merfolk you control have ward {1}" reaching Master of Waves, a Merfolk, and the
+  // card derived NO ability at all. 467 corpus clauses carry a grant-ability action.
+  //
+  // The mesh the old rule was really protecting against is handled where it belongs, in derive: a
+  // grant earns an edge only when its recipient names a SUBTYPE, so "creatures you control gain
+  // haste" still forms nothing.
+  expect(actionEffectKind({ verb: "grant-ability", object: "hexproof and indestructible" })).toBe("keyword-grant");
+  expect(actionEffectKind({ verb: "grant-ability", object: "flying" })).toBe("keyword-grant");
+  expect(actionEffectKind({ verb: "grant-ability", object: "deathtouch" })).toBe("keyword-grant");
+  // An EMPTY object grants nothing nameable and still gets no kind: there is no fact to record.
+  expect(actionEffectKind({ verb: "grant-ability", object: "" })).toBe("keyword-grant");
 });
 
 test("a tutor is top-manipulation, matching what the flat tagger already assigns", () => {

@@ -861,3 +861,30 @@ test("creatures that can't attack YOU are the opponent's", () => {
   }]);
   expect(propaganda.abilities[0]?.effect.subject).toBeUndefined();
 });
+
+test("a granted keyword recovers WHO receives it, and only forms an edge when it is typal", () => {
+  // Svyelun: "Other MERFOLK you control have ward {1}". The clause records `grant-ability` with the
+  // thing GRANTED as its object -- "ward {1}" -- and the recipient is nowhere in the action, so the
+  // card derived no ability at all and Master of Waves (a Merfolk) got no edge. 467 corpus clauses
+  // carry a grant-ability action. This was the largest single defect the recall measurement found.
+  //
+  // The recipient is recovered from the clause text, which still has it. But a grant is only allowed
+  // to form edges when it is TYPAL: "creatures you control gain haste until end of turn" applies to
+  // every creature in the deck, which is the ordinary-card claim the rubric calls false and the mesh
+  // that made `static` the worst family in the engine. Naming a subtype is what makes it a synergy.
+  const svyelun = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "grant-ability", object: "ward {1}" }],
+  }], "Svyelun of Sea and Sky", { 1: "Other Merfolk you control have ward {1}." });
+  const grant = svyelun.abilities.find((a) => a.effect.kind === "keyword-grant");
+  expect(grant?.effect.subject).toMatchObject({ subtype: "merfolk", control: "you" });
+
+  // A grant to every creature keeps its theme tag and forms no static edge: the recipient names no
+  // subtype, so nothing typal survives and `namesItsTargets` drops the subject outright.
+  const generic = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "grant-ability", object: "trample" }],
+  }], "Spidersilk Armor", { 1: "Creatures you control get +0/+1 and have reach." });
+  const g2 = generic.abilities.find((a) => a.effect.kind === "keyword-grant");
+  expect(g2?.effect.subject).toBeUndefined();
+});

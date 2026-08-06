@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 25;
+export const DERIVE_VERSION = 26;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -220,6 +220,24 @@ function countTruncated(object: string): string {
   return m?.index === undefined ? object : object.slice(0, m.index);
 }
 
+/** Who RECEIVES a granted keyword. The clause records `grant-ability` with the thing GRANTED as its
+ *  object ("ward {1}"), so the recipient is nowhere in the action — Svyelun of Sea and Sky derived no
+ *  ability at all and Master of Waves, a Merfolk it grants ward to, got no edge. 467 corpus clauses
+ *  carry a grant-ability action; this was the largest single defect the recall measurement (§26)
+ *  found.
+ *
+ *  The clause text still has it, on the left of the verb that hands the ability over. A leading
+ *  trigger or cost is stripped first, so "{T}: Creatures you control gain haste" does not read the
+ *  cost as the recipient. */
+const GRANTED_TO = /^(.*?)\s+\b(?:have|has|gain|gains)\b/i;
+const CLAUSE_PREAMBLE = /^(?:when|whenever|at)\b[^,]*,\s*|^[^:.]{1,60}:\s*/i;
+
+function grantRecipient(clauseText: string): string | undefined {
+  const body = clauseText.replace(CLAUSE_PREAMBLE, "");
+  const m = body.match(GRANTED_TO);
+  return m?.[1]?.trim() || undefined;
+}
+
 /** Creatures that "can't attack you" are, by construction, an OPPONENT's — in a single-deck analysis
  *  no card in the deck can be the subject. Propaganda derived `control: "any"` and Sphere of Safety
  *  derived `"you"` (the possessive leaked out of "planeswalkers you control"), so both taxed the
@@ -229,6 +247,21 @@ const ATTACKS_YOU = /\battacks? you\b/i;
 function effectSubject(
   action: Action, kind: string, triggerIsSelf = false, clauseText = "",
 ): ReturnType<typeof parseSubject> {
+  // A GRANT's object is the ability handed over, never the thing receiving it, so the subject has to
+  // come from the clause text. Falls back to the object when the text states no recipient, which
+  // leaves the behaviour it had before.
+  if (action.verb === "grant-ability") {
+    const who = grantRecipient(clauseText);
+    if (who) {
+      const s = parseSubject(who);
+      // A grant EARNS an edge only when it is typal. "Creatures you control gain haste until end of
+      // turn" reaches every creature in the deck -- the ordinary-card claim the rubric calls false,
+      // and the mesh that made `static` the engine's worst family. Naming a SUBTYPE is what makes it
+      // a synergy: "other Merfolk you control have ward {1}" picks out particular cards.
+      if (s.subtype === undefined) return parseSubject("");
+      return s;
+    }
+  }
   const object = action.object ?? "";
   // A self-referential effect applies to the card itself, and everything after the self-reference is
   // a CONDITION rather than a subject. Excalibur, Sword of Eden reads "This spell costs {X} less to

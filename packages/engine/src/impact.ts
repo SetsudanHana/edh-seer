@@ -52,6 +52,11 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     "graveyard-hate": 0.3,
     "top-manipulation": 0.3,
     "speed-increase": 0.3,
+    // A keyword handed to a class of permanents you already control. Only ever typal (a grant to
+    // "creatures you control" reaches every creature and forms no edge at all), so when it does
+    // count it is a real payoff for a tribe -- but it grants an ability rather than making a
+    // resource, so it sits with the other low-band modifiers rather than with the doublers.
+    "keyword-grant": 0.3,
     damage: 0.2,
   },
   repeatability: { triggered: 1.0, activated: 0.7, static: 0.6, oneshot: 0.3 },
