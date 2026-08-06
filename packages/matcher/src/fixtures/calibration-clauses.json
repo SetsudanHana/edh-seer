@@ -96,6 +96,11 @@
    "keywords": [
     "mill"
    ]
+  },
+  "clauseTexts": {
+   "1": "Choose one. If you control a commander as you cast this spell, you may choose both instead.",
+   "2": "Target player mills three cards. Return all land cards from your graveyard to the battlefield tapped.",
+   "3": "Put X +1/+1 counters on target creature, where X is the number of lands you control. It gains trample until end of turn."
   }
  },
  {
@@ -148,6 +153,10 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Add one mana of any color.",
+   "2": "Whenever you tap this land for mana, target opponent creates a 1/1 colorless Spirit creature token."
   }
  },
  {
@@ -214,6 +223,10 @@
    "keywords": [
     "flying"
    ]
+  },
+  "clauseTexts": {
+   "1": "Flying",
+   "2": "Whenever you cast a noncreature spell, create an X/X red Dragon Illusion creature token with flying and haste, where X is the amount of mana spent to cast that spell. Exile that token at the beginning of the next end step."
   }
  },
  {
@@ -265,6 +278,10 @@
    "keywords": [
     "storm"
    ]
+  },
+  "clauseTexts": {
+   "1": "Create a 4/4 red Dragon Elemental creature token with flying and prowess.",
+   "2": "Storm"
   }
  },
  {
@@ -312,6 +329,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Prevent all combat damage that would be dealt to you this turn. For each 1 damage prevented this way, create a 2/1 white and black Inkling creature token with flying."
   }
  },
  {
@@ -363,6 +383,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Create a 2/1 white and black Inkling creature token with flying, a 3/2 red and white Spirit creature token, and a 4/4 blue and red Elemental creature token."
   }
  },
  {
@@ -432,6 +455,10 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "When this enchantment enters, you become the monarch.",
+   "2": "At the beginning of your upkeep, create a 3/1 red Knight creature token. Then if you're the monarch, this enchantment deals X damage to each opponent, where X is the number of creatures you control."
   }
  },
  {
@@ -616,6 +643,15 @@
     "flying",
     "transform"
    ]
+  },
+  "clauseTexts": {
+   "1": "During your turn, Dion and other Knights you control have flying.",
+   "2": "When Dion enters, create a 2/2 white Knight creature token.",
+   "3": "Exile Dion, then return it to the battlefield transformed under its owner's control. Activate only as a sorcery.",
+   "4": "(As this Saga enters and after your draw step, add a lore counter.)",
+   "5": "Wings of Light — Put a +1/+1 counter on each other creature you control. Those creatures gain flying until end of turn.",
+   "6": "Gigaflare — Destroy target permanent. Exile Bahamut, then return it to the battlefield .",
+   "7": "Flying"
   }
  },
  {
@@ -674,6 +710,10 @@
    "toughness": "1",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever an enchantment you control is put into a graveyard from the battlefield, create a 1/1 black Rat creature token with \"This token can't block.\"",
+   "2": "This creature gains deathtouch until end of turn."
   }
  },
  {
@@ -737,6 +777,10 @@
    "toughness": "3",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "All Rats have fear.",
+   "2": "Create X 1/1 black Rat creature tokens, where X is the number of Rats you control."
   }
  },
  {
@@ -798,6 +842,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Roll two d10 and choose one result. Return a creature card from your graveyard to the battlefield with a number of +1/+1 counters on it equal to that result. Then each opponent loses X life and you gain X life, where X is the other result."
   }
  },
  {
@@ -881,6 +928,11 @@
     "crew",
     "hideaway"
    ]
+  },
+  "clauseTexts": {
+   "1": "Hideaway 4",
+   "2": "Whenever this Vehicle deals combat damage to a player, you may cast the exiled card without paying its mana cost. If you do, return this Vehicle to its owner's hand.",
+   "3": "Crew 2"
   }
  },
  {
@@ -940,6 +992,10 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "You may look at an additional two cards each time you surveil.",
+   "2": "Shuffle your graveyard into your library."
   }
  },
  {
@@ -989,6 +1045,9 @@
    "toughness": "2",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "You may put an artifact card from your hand onto the battlefield."
   }
  },
  {
@@ -1059,6 +1118,11 @@
     "affirmative",
     "doctor's companion"
    ]
+  },
+  "clauseTexts": {
+   "1": "As long as K-9 is untapped, other legendary creatures you control have ward {1}.",
+   "2": "Target legendary creature can't be blocked this turn.",
+   "3": "Doctor's companion"
   }
  },
  {
@@ -1114,6 +1178,9 @@
    "keywords": [
     "discover"
    ]
+  },
+  "clauseTexts": {
+   "1": "Discover X, where X is the mana value of the exiled card. Activate only as a sorcery."
   }
  }
 ]

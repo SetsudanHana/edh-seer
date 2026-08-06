@@ -5,6 +5,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { connect, loadConfig } from "@mtg/data";
 import { splitTypeLine } from "../characteristics.js";
+import { segment } from "../segment.js";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { normalizeCard } from "../normalize-card.js";
@@ -55,7 +56,12 @@ for (const name of names) {
     cmc: doc.manaValue ?? 0, power: doc.power ?? null, toughness: doc.toughness ?? null,
     token: false, keywords: doc.keywords ?? [],
   };
-  out.push({ name, oracleId: doc._id, clauses: res.canonical, characteristics });
+  // Clause id -> text, so the offline gate derives exactly what production derives. Derivation reads
+  // it to recover who performs an action when the clause names an actor the object does not carry
+  // ("its controller creates a 3/3 Ape"); a database-free gate has no oracle text to segment.
+  const clauseTexts: Record<number, string> = {};
+  for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) clauseTexts[c.id] = c.text;
+  out.push({ name, oracleId: doc._id, clauses: res.canonical, characteristics, clauseTexts });
   process.stdout.write(".");
 }
 

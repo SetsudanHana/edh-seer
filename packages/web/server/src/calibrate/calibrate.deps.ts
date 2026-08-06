@@ -125,11 +125,27 @@ export async function makeCalibrateDeps(store: { db: Db }, repoRoot: string): Pr
       // `characteristics` comes off the DERIVED doc rather than being recomputed from the card:
       // that is the exact object the matcher reads today, so the fixture cannot drift from what the
       // live engine sees.
+      // Clause id -> text, snapshotted alongside. Derivation reads it to recover who performs an
+      // action when the clause names an actor the object does not carry ("its controller creates a
+      // 3/3 Ape"). The gate has no database and so no oracle text to segment; without this the
+      // fixture would derive different tags from the ones the judge was shown.
+      const tagger = await import("@mtg/tagger");
+      const cardDocs = await store.db.collection("cards")
+        .find({ name: { $in: [v.a, v.b] } }).toArray();
+      const textsFor = (name: string): Record<number, string> => {
+        const d = cardDocs.find((c) => c.name === name);
+        const out: Record<number, string> = {};
+        for (const c of tagger.segment(d?.oracleText ?? "", d?.keywords ?? [], d?.typeLine ?? "")) {
+          out[c.id] = c.text;
+        }
+        return out;
+      };
       const snapshot = clauses.map((c) => ({
         name: c.name as string,
         oracleId: c.oracleId as string,
         clauses: c.canonical as never,
         characteristics: (tagsByName.get(c.name as string) as { characteristics: never }).characteristics,
+        clauseTexts: textsFor(c.name as string),
       }));
 
       const engineLinks = reasonsFor(v.a, v.b).length > 0;

@@ -10,13 +10,14 @@ import type { Ability, AbilityKind, CardTags, Characteristics, Control, Verb } f
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
+import { actionRecipients } from "./recipient.js";
 import { parseSubject } from "./subject.js";
 import { SUBTYPES } from "./subtypes.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 8;
+export const DERIVE_VERSION = 9;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -185,6 +186,7 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
 export function deriveAbilities(
   clauses: ClauseRecord[],
   cardName?: string,
+  clauseTexts?: Record<number, string>,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -192,6 +194,12 @@ export function deriveAbilities(
 
   for (const clause of clauses) {
     const kind = abilityKind(clause);
+    // Who performs each action, when the clause names someone the object text does not carry. The
+    // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
+    // is ambiguous and is left alone -- a missing answer beats a wrong one.
+    const actors = clauseTexts?.[clause.id] ? actionRecipients(clauseTexts[clause.id]) : {};
+    const actorFor = (verb?: string): Control | undefined =>
+      (clause.actions ?? []).filter((a) => a.verb === verb).length === 1 ? actors[verb ?? ""] : undefined;
     let trigger: { verbs: Verb[]; subject: ReturnType<typeof parseSubject> } | undefined;
     if (clause.trigger?.event) {
       const verb = normalizeTriggerVerb(clause.trigger.event);
@@ -219,6 +227,11 @@ export function deriveAbilities(
       // form an edge that is not real. A STATIC ability additionally has to name its targets --
       // see namesItsTargets -- or the very same edge forms against the whole deck.
       const subject = effectKind ? effectSubject(action, effectKind) : undefined;
+      const actor = actorFor(action.verb);
+      if (actor) {
+        for (const e of emits) e.subject.control = actor;
+        if (subject) subject.control = actor;
+      }
       const keepSubject = subject && (kind !== "static" || namesItsTargets(subject));
       const ability: Ability = {
         kind,
@@ -245,12 +258,16 @@ export interface DeriveInput {
   name?: string;
   clauses: ClauseRecord[];
   characteristics: Characteristics;
+  /** Clause id -> the clause's text, straight from `segment()`. Optional and free: segmentation is
+   *  deterministic, so this is recomputed rather than stored, and an absent map only means the
+   *  actor-recovery in `recipient.ts` says nothing. */
+  clauseTexts?: Record<number, string>;
 }
 
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
  *  from the card document -- derivation never asks a model for what the database already knows. */
 export function deriveCardTags(input: DeriveInput): CardTags {
-  const { abilities } = deriveAbilities(input.clauses, input.name);
+  const { abilities } = deriveAbilities(input.clauses, input.name, input.clauseTexts);
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,

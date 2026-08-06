@@ -42,6 +42,7 @@ function deckCard(name: string): DeckCard {
     },
     tags: deriveCardTags({
       oracleId: f.oracleId, name: f.name, clauses: f.clauses, characteristics: f.characteristics,
+      clauseTexts: f.clauseTexts,
     }),
   };
 }

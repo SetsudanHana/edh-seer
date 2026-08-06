@@ -12,12 +12,13 @@ export {
 export { loadFunctionalOtags, loadDescriptorOtags } from "./otags/functional.js";
 export { deriveAbilities, deriveCardTags, type DeriveInput } from "./derive/derive.js";
 export { canonicalize, canonicalClause, type Action, type ClauseRecord } from "./canonicalize.js";
+export { segment, type Clause } from "./segment.js";
 export {
   validateClauses, rejections,
   type ClauseViolation, type ViolationKind,
 } from "./validate-clauses.js";
 export {
-  segmentHash, needsNormalize, needsDerive, carriesOther, ensureClauseIndexes,
+  segmentHash, needsNormalize, needsDerive, carriesOther, disagreesOnType, ensureClauseIndexes,
   CLAUSES_COLLECTION, DERIVED_COLLECTION,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "./clause-store.js";

@@ -7,6 +7,7 @@
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { connect, loadConfig } from "@mtg/data";
 import { splitTypeLine } from "../characteristics.js";
+import { segment } from "../segment.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
 import {
@@ -40,6 +41,7 @@ for (const doc of clauseDocs) {
     name: doc.name,
     clauses: doc.canonical,
     characteristics: charsFrom(cards as never),
+    clauseTexts: clauseTexts(cards as never),
   });
   // A card with real rules text deriving zero abilities is the Bitterblossom shape -- worth
   // counting out loud rather than silently writing a doc that reads as a vanilla bear.
@@ -62,6 +64,16 @@ for (const doc of clauseDocs) {
 
 console.log(`derived ${written}, up-to-date ${skipped}, wrote ${empty} card(s) with clauses but zero abilities`);
 await store.close();
+
+/** Clause id -> clause text, recomputed rather than stored. `segment()` is deterministic over the
+ *  same three inputs the clause doc was built from, so this reproduces exactly the clauses the model
+ *  was asked about — and it stays free, which is the whole reason the actor recovery in
+ *  `recipient.ts` lives on this side of the money line rather than in the prompt. */
+function clauseTexts(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, string> {
+  const out: Record<number, string> = {};
+  for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) out[c.id] = c.text;
+  return out;
+}
 
 /** Printed characteristics, read from the card document — derivation never asks a model for what
  *  the database already knows. Uses the shared `splitTypeLine` so multi-face cards contribute both

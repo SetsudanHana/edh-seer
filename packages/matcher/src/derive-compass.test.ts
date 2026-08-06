@@ -12,6 +12,8 @@ interface Fixture {
   oracleId: string;
   clauses: ClauseRecord[];
   characteristics: Characteristics;
+  /** Clause id -> text, so the offline gate derives what production derives. See ClauseFixture. */
+  clauseTexts?: Record<number, string>;
 }
 
 const FIXTURE = JSON.parse(
@@ -40,6 +42,7 @@ function deckCard(name: string): DeckCard {
     },
     tags: deriveCardTags({
       oracleId: f.oracleId, clauses: f.clauses, characteristics: f.characteristics,
+      clauseTexts: f.clauseTexts,
     }),
   };
 }

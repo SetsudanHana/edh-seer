@@ -50,6 +50,10 @@
    "keywords": [
     "Enchant"
    ]
+  },
+  "clauseTexts": {
+   "1": "Enchant creature",
+   "2": "Enchanted creature gets +1/+1 for each artifact and/or enchantment you control."
   }
  },
  {
@@ -103,6 +107,10 @@
    "keywords": [
     "Enchant"
    ]
+  },
+  "clauseTexts": {
+   "1": "Enchant creature",
+   "2": "Enchanted creature gets +2/+2 for each other enchantment on the battlefield."
   }
  },
  {
@@ -202,6 +210,12 @@
    "keywords": [
     "Enchant"
    ]
+  },
+  "clauseTexts": {
+   "1": "Enchant creature card in a graveyard",
+   "2": "When this Aura enters, if it's on the battlefield, it loses \"enchant creature card in a graveyard\" and gains \"enchant creature put onto the battlefield with this Aura.\" Return enchanted creature card to the battlefield under your control and attach this Aura to it.",
+   "3": "When this Aura leaves the battlefield, that creature's controller sacrifices it.",
+   "4": "Enchanted creature gets -1/-0."
   }
  },
  {
@@ -249,6 +263,9 @@
    "keywords": [
     "Magecraft"
    ]
+  },
+  "clauseTexts": {
+   "1": "Whenever you cast or copy an instant or sorcery spell, draw a card."
   }
  },
  {
@@ -325,6 +342,10 @@
    "keywords": [
     "Mill"
    ]
+  },
+  "clauseTexts": {
+   "1": "Whenever one or more cards leave your graveyard, this artifact deals 1 damage to each opponent and you gain 1 life.",
+   "2": "Mill a card. You may play that card this turn."
   }
  },
  {
@@ -377,6 +398,9 @@
    "toughness": "1",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever this creature or another creature dies, target player loses 1 life and you gain 1 life."
   }
  },
  {
@@ -422,6 +446,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Exile target creature you control, then return that card to the battlefield under your control."
   }
  },
  {
@@ -478,6 +505,10 @@
    "toughness": "*",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Consuming Aberration's power and toughness are each equal to the number of cards in your opponents' graveyards.",
+   "2": "Whenever you cast a spell, each opponent reveals cards from the top of their library until they reveal a land card, then puts those cards into their graveyard."
   }
  },
  {
@@ -532,6 +563,9 @@
    "toughness": "2",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever this creature or another creature or planeswalker you control dies, each opponent loses 1 life and you gain 1 life."
   }
  },
  {
@@ -577,6 +611,9 @@
    "toughness": "5",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Each creature assigns combat damage equal to its toughness rather than its power."
   }
  },
  {
@@ -627,6 +664,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Exile any number of target creatures you control. Return those cards to the battlefield under their owner's control at the beginning of the next end step."
   }
  },
  {
@@ -709,6 +749,11 @@
    "keywords": [
     "Deathtouch"
    ]
+  },
+  "clauseTexts": {
+   "1": "Deathtouch",
+   "2": "Whenever another creature you control enters, you gain 1 life.",
+   "3": "Whenever another creature you control dies, each opponent loses 1 life."
   }
  },
  {
@@ -768,6 +813,10 @@
    "keywords": [
     "Rebound"
    ]
+  },
+  "clauseTexts": {
+   "1": "Exile target creature you control, then return it to the battlefield under its owner's control.",
+   "2": "Rebound"
   }
  },
  {
@@ -813,6 +862,9 @@
    "toughness": "1",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever another creature enters, you gain 1 life."
   }
  },
  {
@@ -874,6 +926,10 @@
    "keywords": [
     "Enchant"
    ]
+  },
+  "clauseTexts": {
+   "1": "Enchant creature",
+   "2": "Enchanted creature gets +1/+1 for each enchantment you control and has first strike."
   }
  },
  {
@@ -916,6 +972,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever an opponent loses life, you gain that much life."
   }
  },
  {
@@ -975,6 +1034,10 @@
    "keywords": [
     "Flashback"
    ]
+  },
+  "clauseTexts": {
+   "1": "Draw two cards, then discard two cards.",
+   "2": "Flashback {2}{R}"
   }
  },
  {
@@ -1028,6 +1091,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Draw two cards, then discard two cards. Untap up to three lands."
   }
  },
  {
@@ -1073,6 +1139,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Exile two target artifacts, creatures, and/or lands you control, then return those cards to the battlefield under your control."
   }
  },
  {
@@ -1152,6 +1221,10 @@
     "Surveil",
     "Prepared"
    ]
+  },
+  "clauseTexts": {
+   "1": "At the beginning of your upkeep, surveil 1. Then if there are three or more creature cards in your graveyard, this creature becomes prepared.",
+   "2": "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to that card's mana value."
   }
  },
  {
@@ -1204,6 +1277,9 @@
    "toughness": "4",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "When this creature enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way."
   }
  },
  {
@@ -1249,6 +1325,9 @@
    "toughness": "2",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever you cast an instant or sorcery spell, this creature deals 2 damage to each opponent."
   }
  },
  {
@@ -1291,6 +1370,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever a creature you control enters, this enchantment deals 1 damage to each opponent."
   }
  },
  {
@@ -1385,6 +1467,11 @@
    "toughness": "4",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Creatures you control get +1/+0 and have vigilance as long as you control three or more creatures.",
+   "2": "Creatures you control also get +1/+0 and have trample as long as you control six or more creatures.",
+   "3": "Creatures you control also get +1/+0 and have double strike as long as you control nine or more creatures."
   }
  },
  {
@@ -1434,6 +1521,10 @@
    "keywords": [
     "Proliferate"
    ]
+  },
+  "clauseTexts": {
+   "1": "Add {C}.",
+   "2": "Proliferate."
   }
  },
  {
@@ -1475,6 +1566,9 @@
    "toughness": "3",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control."
   }
  },
  {
@@ -1527,6 +1621,10 @@
     "Dredge",
     "Mill"
    ]
+  },
+  "clauseTexts": {
+   "1": "Return up to three target land cards from your graveyard to your hand.",
+   "2": "Dredge 3"
   }
  },
  {
@@ -1573,6 +1671,9 @@
    "keywords": [
     "Landfall"
    ]
+  },
+  "clauseTexts": {
+   "1": "Whenever a land you control enters, add one mana of any color."
   }
  },
  {
@@ -1633,6 +1734,10 @@
     "Mill",
     "Kicker"
    ]
+  },
+  "clauseTexts": {
+   "1": "Kicker {3}{U}",
+   "2": "Each opponent mills eight cards. If this spell was kicked, instead each opponent mills half their library, rounded up."
   }
  },
  {
@@ -1689,6 +1794,9 @@
    "toughness": "3",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Each player discards their hand, then draws seven cards."
   }
  },
  {
@@ -1742,6 +1850,10 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Add two mana in any combination of colors.",
+   "2": "Draw a card."
   }
  },
  {
@@ -1800,6 +1912,10 @@
    "keywords": [
     "Flying"
    ]
+  },
+  "clauseTexts": {
+   "1": "Flying",
+   "2": "Whenever you create or sacrifice a token, each opponent loses 1 life."
   }
  },
  {
@@ -1853,6 +1969,9 @@
    "toughness": "6",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "During each of your turns, you may play a land and cast a permanent spell of each permanent type from your graveyard."
   }
  },
  {
@@ -1912,6 +2031,10 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Look at the top three cards of your library, then put them back in any order. You may shuffle.",
+   "2": "Draw a card."
   }
  },
  {
@@ -1968,6 +2091,10 @@
    "toughness": "*",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Psychosis Crawler's power and toughness are each equal to the number of cards in your hand.",
+   "2": "Whenever you draw a card, each opponent loses 1 life."
   }
  },
  {
@@ -2056,6 +2183,12 @@
    "keywords": [
     "Indestructible"
    ]
+  },
+  "clauseTexts": {
+   "1": "Indestructible",
+   "2": "As long as your devotion to red is less than five, Purphoros isn't a creature.",
+   "3": "Whenever another creature you control enters, Purphoros deals 2 damage to each opponent.",
+   "4": "Creatures you control get +1/+0 until end of turn."
   }
  },
  {
@@ -2103,6 +2236,9 @@
     "Mill",
     "Landfall"
    ]
+  },
+  "clauseTexts": {
+   "1": "Whenever a land you control enters, each opponent mills three cards."
   }
  },
  {
@@ -2175,6 +2311,11 @@
    "keywords": [
     "Enchant"
    ]
+  },
+  "clauseTexts": {
+   "1": "Enchant creature",
+   "2": "When this Aura enters, draw a card for each Aura you control that's attached to a creature.",
+   "3": "Enchanted creature gets +1/+1 for each Aura you control that's attached to a creature."
   }
  },
  {
@@ -2217,6 +2358,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever you gain life, target opponent loses that much life."
   }
  },
  {
@@ -2278,6 +2422,9 @@
    "keywords": [
     "Parley"
    ]
+  },
+  "clauseTexts": {
+   "1": "Each player reveals the top card of their library. For each nonland card revealed this way, add {G} and you gain 1 life. Then each player draws a card."
   }
  },
  {
@@ -2333,6 +2480,9 @@
    "keywords": [
     "Constellation"
    ]
+  },
+  "clauseTexts": {
+   "1": "Whenever an enchantment you control enters, put a +1/+1 counter on this creature and draw a card."
   }
  },
  {
@@ -2378,6 +2528,9 @@
    "toughness": "1",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever another creature enters, you gain 1 life."
   }
  },
  {
@@ -2451,6 +2604,10 @@
    "toughness": "1",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever a creature is exiled from the battlefield, put a +1/+1 counter on this creature.",
+   "2": "At the beginning of your end step, you may exile another target creature you control, then return that card to the battlefield under its owner's control."
   }
  },
  {
@@ -2513,6 +2670,10 @@
     "Treasure",
     "Magecraft"
    ]
+  },
+  "clauseTexts": {
+   "1": "This creature gets +1/+0 for each artifact you control.",
+   "2": "Whenever you cast or copy an instant or sorcery spell, create a Treasure token."
   }
  },
  {
@@ -2575,6 +2736,10 @@
    "keywords": [
     "Mill"
    ]
+  },
+  "clauseTexts": {
+   "1": "Whenever another creature dies, or a creature card is put into a graveyard from anywhere other than the battlefield, or a creature card leaves your graveyard, Syr Konrad deals 1 damage to each opponent.",
+   "2": "Each player mills a card."
   }
  },
  {
@@ -2653,6 +2818,11 @@
     "Flying",
     "Proliferate"
    ]
+  },
+  "clauseTexts": {
+   "1": "Flying",
+   "2": "If you would proliferate, proliferate twice instead.",
+   "3": "Put an indestructible counter on Tekuthal."
   }
  },
  {
@@ -2703,6 +2873,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "At the beginning of your end step, exile up to one target artifact or creature you control, then return that card to the battlefield under its owner's control."
   }
  },
  {
@@ -2764,6 +2937,10 @@
     "Flying",
     "Proliferate"
    ]
+  },
+  "clauseTexts": {
+   "1": "Flying",
+   "2": "Whenever this creature deals combat damage to a player, proliferate."
   }
  },
  {
@@ -2806,6 +2983,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever an opponent draws a card, this enchantment deals 1 damage to that player."
   }
  },
  {
@@ -2859,6 +3039,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Choose two target creature cards in your graveyard. Sacrifice a creature. If you do, return the chosen cards to the battlefield tapped."
   }
  },
  {
@@ -2909,6 +3092,9 @@
    "keywords": [
     "Scry"
    ]
+  },
+  "clauseTexts": {
+   "1": "Scry 1."
   }
  },
  {
@@ -2969,6 +3155,10 @@
    "toughness": "3",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever you gain life, target opponent loses that much life.",
+   "2": "Creatures you control gain lifelink until end of turn."
   }
  },
  {
@@ -3027,6 +3217,10 @@
    "keywords": [
     "Defender"
    ]
+  },
+  "clauseTexts": {
+   "1": "Defender",
+   "2": "When this creature enters, draw a card."
   }
  },
  {
@@ -3085,6 +3279,10 @@
    "keywords": [
     "Flying"
    ]
+  },
+  "clauseTexts": {
+   "1": "Flying",
+   "2": "Whenever one or more other creatures you control with power 2 or less enter, draw a card. This ability triggers only once each turn."
   }
  },
  {
@@ -3131,6 +3329,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever you cast a noncreature spell, draw a card."
   }
  },
  {
@@ -3176,6 +3377,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Each player discards their hand, then draws cards equal to the greatest number of cards a player discarded this way."
   }
  },
  {
@@ -3210,6 +3414,9 @@
    "toughness": null,
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Each land is a Forest in addition to its other land types."
   }
  },
  {
@@ -3264,6 +3471,9 @@
    "toughness": "1",
    "token": false,
    "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever this creature or another creature you control dies, each opponent loses 1 life and you gain 1 life."
   }
  }
 ]

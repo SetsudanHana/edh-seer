@@ -430,3 +430,54 @@ test("a first word that is a creature type is NOT a self-reference", () => {
   }], "Goblin Bombardment");
   expect(typal.abilities[0].trigger?.subject.self).toBeUndefined();
 });
+
+test("an action whose actor the clause names emits for that actor, not for you", () => {
+  // Pongify. Without the clause text the Ape is control "any", and "any" matches "you" on either
+  // side (matcher/src/subject.ts), so a removal spell formed a token-producer edge with every token
+  // payoff in the deck. The clause text is free -- segment() is deterministic -- so this costs no
+  // re-buy of the corpus.
+  const clause = {
+    id: 1,
+    abilityType: "spell",
+    actions: [
+      { verb: "destroy", object: "target creature" },
+      { verb: "create", object: "a 3/3 green Ape creature token" },
+    ],
+  };
+  const texts = { 1: "Destroy target creature. It can't be regenerated. Its controller creates a 3/3 green Ape creature token." };
+
+  const { abilities } = deriveAbilities([clause], undefined, texts);
+  const create = abilities.find((a) => a.emits?.some((e) => e.verb === "create-token"));
+  expect(create?.emits?.every((e) => e.subject.control === "opp")).toBe(true);
+  expect(create?.effect.subject?.control).toBe("opp");
+
+  // The destroy in the same clause is untouched: its object names its own subject.
+  const destroy = abilities.find((a) => a.emits?.some((e) => e.verb === "dies"));
+  expect(destroy?.emits?.[0].subject.control).toBe("any");
+
+  // Without the text nothing changes -- the map is optional and absent means "say nothing".
+  const before = deriveAbilities([clause]).abilities
+    .find((a) => a.emits?.some((e) => e.verb === "create-token"));
+  expect(before?.emits?.[0].subject.control).toBe("any");
+});
+
+test("a named actor is ignored when the clause has two actions of that verb", () => {
+  // The cue localises the actor to one verb, not to one ACTION. "Target opponent draws a card, then
+  // you draw a card" would otherwise hand the first draw's actor to both. A missing answer beats a
+  // wrong one, so an ambiguous clause is left exactly as the object text parsed it.
+  const actions = [{ verb: "draw", object: "a card" }, { verb: "draw", object: "two cards" }];
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "spell", actions }],
+    undefined,
+    { 1: "Target opponent draws a card. You draw two cards." },
+  );
+  expect(abilities.map((a) => a.emits?.[0].subject.control)).toEqual(["any", "any"]);
+
+  // One action of that verb is unambiguous, so the actor IS applied.
+  const one = deriveAbilities(
+    [{ id: 1, abilityType: "spell", actions: [actions[0]] }],
+    undefined,
+    { 1: "Target opponent draws a card." },
+  );
+  expect(one.abilities[0].emits?.[0].subject.control).toBe("opp");
+});
