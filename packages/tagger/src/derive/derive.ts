@@ -18,7 +18,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 11;
+export const DERIVE_VERSION = 13;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -138,6 +138,14 @@ function isSelfSubject(text: string, cardName?: string): boolean {
 const SELF_REFERENCE =
   /^this (?:spell|card|creature|artifact|enchantment|permanent|land|planeswalker|equipment|vehicle|token)\b/i;
 
+/** The "your library for ..." preamble a search object always carries; stripping it leaves the thing
+ *  actually searched for, which is the subject the pronoun that follows refers to. */
+const PRONOUN_SOURCE = /^(?:your |their |a |an )?librar(?:y|ies)(?: for)?\s*/i;
+
+/** Objects that name no thing of their own and inherit one from earlier in the clause. Deliberately
+ *  a closed list of bare pronouns: "that creature" names a type and must keep parsing as itself. */
+const PRONOUN_OBJECT = /^(?:that card|those cards|it|them|the card|the cards)$/i;
+
 /** The effect's subject, with the origin zone restored for the kinds that are defined by it. The
  *  clause states the zone on the ACTION (`fromZone: "graveyard"`), never inside the object text, so
  *  `parseSubject` alone cannot recover it — and a graveyard-recursion whose subject has no zone is
@@ -228,6 +236,22 @@ export function deriveAbilities(
     const actorFor = (verb?: string): Control | undefined =>
       (clause.actions ?? []).filter((a) => a.verb === verb).length === 1 ? actors[verb ?? ""] : undefined;
     const text = clauseTexts?.[clause.id] ?? "";
+    // A fetch is two actions: `search "your library for a Swamp or Mountain card"`, then
+    // `put "that card" onto the battlefield`. The EMIT comes from the put, whose object is a
+    // pronoun, so the enters event carried no type at all -- and an untyped producer subject is a
+    // wildcard that satisfies every consumer filter in the matcher. Windswept Heath "supplied" every
+    // enters trigger in its deck. The type is not missing, it is just on the other action.
+    // Generalised past the fetch: "exile target creature you control, then return IT to the
+    // battlefield" is the same shape, and a flicker whose emit is untyped is the same wildcard.
+    // The antecedent is the nearest EARLIER action in the clause that names a thing of its own.
+    const antecedentFor = (idx: number): string | undefined => {
+      for (let i = idx - 1; i >= 0; i--) {
+        const o = ((clause.actions ?? [])[i]?.object ?? "").trim();
+        if (o === "" || PRONOUN_OBJECT.test(o)) continue;
+        return o.replace(PRONOUN_SOURCE, "");
+      }
+      return undefined;
+    };
     let trigger: { verbs: Verb[]; subject: ReturnType<typeof parseSubject> } | undefined;
     if (clause.trigger?.event) {
       const verb = normalizeTriggerVerb(clause.trigger.event);
@@ -247,9 +271,13 @@ export function deriveAbilities(
     for (const action of clause.actions ?? []) {
       if (INERT_VERBS.has(action.verb ?? "")) continue;
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
+      // See antecedentFor: a pronoun object inherits the thing named earlier in the same clause.
+      const antecedent = PRONOUN_OBJECT.test((action.object ?? "").trim())
+        ? antecedentFor((clause.actions ?? []).indexOf(action))
+        : undefined;
       const effectKind = actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
-      const emits = actionEmits(action)
+      const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action)
         .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)));
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 

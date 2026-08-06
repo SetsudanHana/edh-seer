@@ -257,6 +257,26 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       for (const rawVerb of a.trigger.verbs) {
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
         if (!eventMatches(e, t, h)) continue;
+        // A SELF trigger watches ONE permanent — its own. `selfEtbSelfSupplied` excludes implied and
+        // token producers, but an AUTHORED emit that puts some OTHER object onto the battlefield
+        // survived it, because a self subject names no type and so checks nothing: Windswept Heath
+        // fetching a Forest "triggered" The Grey Havens' own ETB.
+        //
+        // The test is whether the producer's event could BE this card, not whether it was authored —
+        // Bloodstained Mire really does fetch Raucous Theater (Land — Swamp Mountain) and fire its
+        // ETB, and a rule that deleted that would be the mistake the taps work already caught once.
+        // `zone` is dropped for the same reason as in the reanimator gate below: printed
+        // characteristics sit in no zone.
+        if (t.subject.self === true) {
+          const { zone: _eventZone, ...identity } = e.subject;
+          // An UNTYPED producer subject is left alone deliberately, and it is the residual this gate
+          // cannot close. Refusing it looks right -- "something entered" is not evidence that THIS
+          // card entered -- but the suite already holds the counterexample: Bolas's Citadel's
+          // authored cast emit names nothing and genuinely does cast Nulldrifter off the top. The
+          // same argument holds for enters. An untyped emit is a DERIVATION gap to fix upstream
+          // (see the pronoun antecedent in tagger's derive.ts), not something to paper over here.
+          if (!subjectMatches(characteristicsSubject(c.tags), identity, h)) continue;
+        }
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         reasons.push({
           tag: key,

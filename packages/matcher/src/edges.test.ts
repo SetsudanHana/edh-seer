@@ -1047,3 +1047,43 @@ test("a self-recursion is only enabled by a fill that could contain the card its
     .filter((r) => r.tag.startsWith("graveyard-recursion"));
   expect(artifact.length).toBeGreaterThan(0);
 });
+
+test("a self-ETB is only supplied by an event that could be that card entering", () => {
+  // The gate `selfEtbSelfSupplied` excludes IMPLIED and TOKEN producers only, so an AUTHORED emit
+  // that puts some OTHER object onto the battlefield still satisfied a consumer's own ETB: Windswept
+  // Heath fetching a Forest "triggered" The Grey Havens' self-ETB, and Death Tyrant's Zombie token
+  // "triggered" Bastion of Remembrance. The consumer's self subject names no type, so nothing was
+  // left to check it against.
+  //
+  // The rule has to keep the TRUE ones: Bloodstained Mire really does fetch Raucous Theater (Land -
+  // Swamp Mountain) and fire its own ETB. So the test is whether the producer's subject could BE the
+  // consumer, not whether the producer is authored.
+  const selfEtbLand = (name: string, subtypes: string[]): DeckCard => ({
+    card: { name, typeLine: `Land ${subtypes.join(" ")}`, oracleText: "", keywords: [], colors: [], manaValue: 0, colorIdentity: [], power: null, toughness: null },
+    tags: {
+      oracleId: name, schemaVersion: 1, promptVersion: 0, model: "derived",
+      characteristics: { types: ["land"], subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{
+        kind: "triggered",
+        trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
+        effect: { kind: "top-manipulation" },
+      }],
+    },
+  });
+  const fetch: DeckCard = {
+    card: { name: "Bloodstained Mire", typeLine: "Land", oracleText: "", keywords: [], colors: [], manaValue: 0, colorIdentity: [], power: null, toughness: null },
+    tags: {
+      oracleId: "f", schemaVersion: 1, promptVersion: 0, model: "derived",
+      characteristics: { types: ["land"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{
+        kind: "activated", effect: { kind: "" },
+        emits: [{ verb: "enters", subject: { control: "you", token: null, type: "land", subtype: ["swamp", "mountain"] } }],
+      }],
+    },
+  };
+
+  // Raucous Theater IS a Swamp Mountain, so the fetch can put it onto the battlefield. Keep.
+  expect(directedReasons(fetch, selfEtbLand("Raucous Theater", ["swamp", "mountain"]), H).length).toBeGreaterThan(0);
+  // The Grey Havens is a Legendary Land with no basic types. No fetch can find it.
+  expect(directedReasons(fetch, selfEtbLand("The Grey Havens", []), H)).toEqual([]);
+});

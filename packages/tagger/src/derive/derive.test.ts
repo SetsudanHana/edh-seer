@@ -556,3 +556,48 @@ test("a self-referential effect subject is marked self, not left as a bare type"
   expect(other.abilities[0].effect.subject?.self).toBeUndefined();
   expect(other.abilities[0].effect.subject?.type).toBe("creature");
 });
+
+test("a pronoun object inherits the subject from the search that found it", () => {
+  // Every fetchland is two actions: search "your library for a Swamp or Mountain card", then put
+  // "that card" onto the battlefield. The EMIT comes from the put, whose object is a pronoun, so the
+  // enters event was untyped -- and an untyped producer subject wildcards past every consumer filter
+  // in the matcher. Windswept Heath's fetch therefore "supplied" every enters trigger in the deck.
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "activated",
+    actions: [
+      { verb: "search", object: "your library for a Swamp or Mountain card" },
+      { verb: "put", object: "that card", toZone: "battlefield" },
+    ],
+  }]);
+  const enters = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
+  expect(enters?.subject.subtype).toEqual(["swamp", "mountain"]);
+
+  // A real object is never overwritten by an earlier search.
+  const typed = deriveAbilities([{
+    id: 1,
+    abilityType: "activated",
+    actions: [
+      { verb: "search", object: "your library for a Swamp or Mountain card" },
+      { verb: "put", object: "target creature card", toZone: "battlefield" },
+    ],
+  }]);
+  expect(typed.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters")?.subject.type).toBe("creature");
+});
+
+test("a flicker's pronoun return inherits the thing it exiled", () => {
+  // Y'shtola Rhul: "exile target creature you control, then return IT to the battlefield". Same
+  // shape as the fetch, different verbs -- and an untyped enters emit is a wildcard that satisfies
+  // every self-ETB in the deck.
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    actions: [
+      { verb: "exile", object: "target creature you control", fromZone: "battlefield", toZone: "exile" },
+      { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" },
+    ],
+  }]);
+  const enters = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
+  expect(enters?.subject.type).toBe("creature");
+  expect(enters?.subject.control).toBe("you");
+});
