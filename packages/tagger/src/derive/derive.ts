@@ -549,6 +549,8 @@ export function deriveAbilities(
       return false;
     };
     let trigger: { verbs: Verb[]; subject: ReturnType<typeof parseSubject> } | undefined;
+    /** Does this clause fire on the card's own LEAVING? See the sacrifice filter below. */
+    let selfLeavesTrigger = false;
     if (clause.trigger?.event) {
       const verb = normalizeTriggerVerb(clause.trigger.event);
       if (verb === "taps" && TAPPED_FOR_MANA.test(text)) {
@@ -560,6 +562,7 @@ export function deriveAbilities(
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
+        selfLeavesTrigger = subject.self === true && verb === "leaves";
         trigger = { verbs: [verb], subject };
       } else {
         unknownTriggers.push(clause.trigger.event);
@@ -588,7 +591,20 @@ export function deriveAbilities(
       const effectKind = actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
       const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action)
-        .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)));
+        .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)))
+        // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
+        // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
+        // Animate Dead) is the price of a reanimation aura: the permanent that would be the outlet is
+        // the thing departing, and it only happens because an opponent removed it. Emitting
+        // sacrifice/dies there made Necromancy a sac outlet feeding Zulaport Cutthroat and Gixian
+        // Puppeteer, both judged FALSE in the blind agreement draw.
+        //
+        // Keyed on `leaves`, NOT on the subject being self. Butcher of Malakir reads "whenever THIS
+        // CREATURE or another creature you control dies" — it includes its own death, so self-vs-other
+        // does not separate them. The EVENT does: a permanent leaving and undoing what it did is the
+        // aura-drawback shape, while `dies` is the aristocrats shape. Only the sacrifice's own emits
+        // are dropped; a leaves-trigger that makes tokens still supplies them.
+        .filter((e) => !(action.verb === "sacrifice" && selfLeavesTrigger));
       if (emitsSelf) for (const e of emits) e.subject.self = true;
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 

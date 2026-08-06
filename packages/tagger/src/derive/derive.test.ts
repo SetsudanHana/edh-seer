@@ -1148,3 +1148,46 @@ test("a genuine life-loss trigger is untouched", () => {
   );
   expect(abilities[0].trigger?.verbs).toEqual(["lose-life"]);
 });
+
+// "When this enchantment leaves the battlefield, that creature's controller sacrifices it"
+// (Necromancy, Animate Dead) is DRAWBACK text on a reanimation spell, not a sacrifice outlet: the
+// permanent that would be the outlet is the thing leaving, and you would only ever do it because an
+// opponent destroyed it. Its sacrifice/dies emits made Necromancy a sac outlet feeding Zulaport
+// Cutthroat and Gixian Puppeteer — two claims the user judged FALSE in the blind agreement draw,
+// hours after the untyped half of this same defect was fixed in 8ab9e1d.
+test("a sacrifice triggered by the card's own departure supplies nothing", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "leaves", subject: "this enchantment", control: "you" },
+    actions: [{ verb: "sacrifice", object: "that creature" }],
+  }], "Necromancy");
+  const emits = abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.filter((e) => e.verb === "sacrifice" || e.verb === "dies")).toHaveLength(0);
+});
+
+// Butcher of Malakir is the counter-case and must keep working: "whenever THIS CREATURE or another
+// creature you control dies, each opponent sacrifices a creature" is a real aristocrats payoff — and
+// note it DOES include the card's own death, so self-vs-other is not the distinction. The event is:
+// `leaves` is a permanent departing and undoing what it did, `dies` is the aristocrats shape.
+test("a death trigger watching the whole board still supplies its sacrifice", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "dies", subject: "this creature or another creature you control", control: "you" },
+    actions: [{ verb: "sacrifice", object: "a creature of their choice" }],
+  }], "Butcher of Malakir");
+  const emits = abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.some((e) => e.verb === "dies")).toBe(true);
+});
+
+// A self-death trigger with a REAL payoff keeps it — only the sacrifice is suppressed, not the clause.
+test("a self-death trigger still supplies its other emits", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "dies", subject: "this creature", control: "you" },
+    actions: [{ verb: "create", object: "two 1/1 white Soldier creature tokens" }],
+  }], "Some Death Payoff");
+  expect(abilities.flatMap((a) => a.emits ?? []).some((e) => e.verb === "enters")).toBe(true);
+});
