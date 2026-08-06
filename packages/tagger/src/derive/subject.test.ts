@@ -327,3 +327,24 @@ test("the counters with their own rules are in the dictionary", () => {
     expect(parseSubject(`a permanent with a ${k} counter on it`).counter).toBe(k);
   }
 });
+
+// Urza's Saga reads "artifact card with mana cost {0} or {1}" — an ENUMERATION, not a comparison, so
+// STAT_RE ("mana value N or less") never saw it. It derived as a bare artifact tutor, which is
+// indistinguishable from Fabricate, so the tutor gate correctly refused it and recall miss #189
+// (Urza's Saga / Stonecoil Serpent) stayed open.
+test("an enumerated mana cost becomes a mana-value predicate", () => {
+  const s = parseSubject("artifact card with mana cost {0} or {1}");
+  expect(s.stats).toEqual([{ metric: "mana-value", op: "lte", value: 1 }]);
+});
+
+// {0} or {1} is exactly "1 or less" because the run starts at zero. {1} or {2} is NOT "2 or less" —
+// that would admit a 0-cost card the text excludes. Refuse rather than widen: a silent wrong answer
+// is worse than a missing one.
+test("an enumeration not starting at zero is refused rather than widened", () => {
+  expect(parseSubject("artifact card with mana cost {1} or {2}").stats).toBeUndefined();
+});
+
+test("the existing comparison form still parses", () => {
+  expect(parseSubject("a creature card with mana value 2 or less").stats)
+    .toEqual([{ metric: "mana-value", op: "lte", value: 2 }]);
+});

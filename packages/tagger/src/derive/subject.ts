@@ -182,8 +182,29 @@ const STAT_METRIC: Record<string, StatPredicate["metric"]> = {
   power: "power", toughness: "toughness", "mana value": "mana-value",
 };
 
+/** An ENUMERATED mana cost — Urza's Saga's "artifact card with mana cost {0} or {1}". Not a
+ *  comparison, so STAT_RE never saw it, and the card derived as a bare artifact tutor
+ *  indistinguishable from Fabricate.
+ *
+ *  Read as `mana value <= max` ONLY when the run starts at zero, where the two are exactly equal.
+ *  "{1} or {2}" is NOT "2 or less" — that would admit a 0-cost card the text excludes — so it is
+ *  refused instead of widened. A silent wrong answer is worse than a missing one. */
+const ENUMERATED_COST = /\bmana cost\s*(\{(?:\d)\}(?:\s*or\s*\{(?:\d)\})+)/i;
+
+function enumeratedCost(t: string): StatPredicate | undefined {
+  const m = t.match(ENUMERATED_COST);
+  if (!m) return undefined;
+  const values = [...m[1].matchAll(/\{(\d)\}/g)].map((x) => Number(x[1])).sort((a, b) => a - b);
+  if (values.length === 0 || values[0] !== 0) return undefined;
+  // A gap would also widen: "{0} or {2}" is not "2 or less".
+  if (values.some((v, i) => v !== i)) return undefined;
+  return { metric: "mana-value", op: "lte", value: values[values.length - 1] };
+}
+
 function parseStats(t: string): StatPredicate[] {
   const out: StatPredicate[] = [];
+  const enumerated = enumeratedCost(t);
+  if (enumerated) out.push(enumerated);
   for (const m of t.matchAll(STAT_RE)) {
     const metric = STAT_METRIC[m[1]];
     const op = /less|fewer|lower/.test(m[3]) ? "lte" : "gte";
