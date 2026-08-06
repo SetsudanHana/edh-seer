@@ -16,7 +16,11 @@
  *    <out>/worksheet.jsonl   what gets judged — two cards, full oracle text, and NO verdict
  *    <out>/key.json          the cached verdict per id, sealed until judgments are on disk
  *
- *  Usage: tsx src/bin/agreement-sample.ts [--real 25] [--false 15] [--seed 20260806] [--out DIR]
+ *  Usage: tsx src/bin/agreement-sample.ts [--real 25] [--false 15] [--seed N] [--out DIR]
+ *                                         [--exclude prior/worksheet.jsonl]
+ *
+ *  `--exclude` drops rows already judged in an earlier draw. Re-showing a claim the judge has seen
+ *  measures their memory, not their rubric.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -40,6 +44,14 @@ const N_REAL = Number(arg("--real", "25"));
 const N_FALSE = Number(arg("--false", "15"));
 const SEED = Number(arg("--seed", "20260806"));
 const OUT = arg("--out", "/tmp/agreement");
+const EXCLUDE = arg("--exclude", "");
+
+/** Claims already judged in an earlier draw. Re-showing one measures memory, not rubric. */
+const seenBefore = new Set<string>(
+  EXCLUDE === "" ? [] : readFileSync(EXCLUDE, "utf8").split("\n").filter((l) => l.trim() !== "")
+    .map((l) => JSON.parse(l) as { producer: string; consumer: string; tag: string })
+    .map((r) => `${r.producer}|${r.consumer}|${r.tag}`),
+);
 
 const pairs = (JSON.parse(readFileSync(`${PANEL}/pairs.json`, "utf8")) as {
   pairs: { producer: string; consumer: string; deck: string }[];
@@ -80,6 +92,7 @@ for (const [deck, wanted] of byDeck) {
       const key = `${r.producer}|${r.consumer}|${r.tag}`;
       const v = verdictOf.get(key);
       if (!v || (v.verdict !== "real" && v.verdict !== "false")) continue;
+      if (seenBefore.has(key)) continue;
       claims.set(key, { producer: r.producer, consumer: r.consumer, tag: r.tag, verdict: v.verdict, implied: r.impliedProducer === true });
     }
   }
@@ -90,7 +103,7 @@ const pool = {
   real: all.filter((c) => c.verdict === "real"),
   false: all.filter((c) => c.verdict === "false"),
 };
-console.log(`judged claims the engine still makes: real ${pool.real.length} | false ${pool.false.length}`);
+console.log(`judged claims the engine still makes: real ${pool.real.length} | false ${pool.false.length}` + (EXCLUDE ? ` (excluding ${seenBefore.size} already judged)` : ""));
 
 const rng = seededRng(SEED);
 const drawn = [...sample(pool.real, N_REAL, rng), ...sample(pool.false, N_FALSE, rng)];
