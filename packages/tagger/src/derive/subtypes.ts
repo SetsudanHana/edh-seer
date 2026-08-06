@@ -63,3 +63,9 @@ export const SUBTYPES: ReadonlySet<string> = new Set([
   "warrior", "weasel", "weird", "werewolf", "whale", "wizard", "wolf", "wolverine",
   "wombat", "worm", "wraith", "wurm", "yeti", "zombie", "zubera",
 ]);
+
+/** The LAND subtypes among them. A land subtype means MANA BASE, not typal: a fetchland naming Swamp
+ *  is ramp, and a tutor that finds one is a land-fixing card rather than a Swamp-tribal payoff. */
+export const LAND_SUBTYPES: ReadonlySet<string> = new Set([
+"cave", "cloud", "desert", "forest", "gate", "island", "lair", "locus", "mine", "mountain", "plains", "planet", "power-plant", "sphere", "swamp", "tower", "town", "urza's",
+]);

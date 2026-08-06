@@ -585,6 +585,26 @@
   "zendikar",
   "zhalfir"
  ],
+ "landSubtypes": [
+  "cave",
+  "cloud",
+  "desert",
+  "forest",
+  "gate",
+  "island",
+  "lair",
+  "locus",
+  "mine",
+  "mountain",
+  "plains",
+  "planet",
+  "power-plant",
+  "sphere",
+  "swamp",
+  "tower",
+  "town",
+  "urza's"
+ ],
  "supertypes": [
   "basic",
   "host",

@@ -1499,3 +1499,79 @@ test("a meld card forms no edge with a card that is not its partner", () => {
   (a.card as { meldPartner?: string }).meldPartner = "Phyrexian Dragon Engine";
   expect(pairReasons(a, base("Sol Ring", []), H).some((r) => r.tag === "meld")).toBe(false);
 });
+
+// TUTOR: "my search can find you". Flamekin Harbinger searches for an Elemental card, and every
+// Elemental in the deck is a real thing it finds. The recall measurement filed this family
+// `miss-inexpressible`; it is a gap, and Commander Salt models it.
+//
+// GATED ON A SUBTYPE, for the reason the clone gate exists. Of 115 corpus search actions, "a card"
+// (Demonic Tutor, Grim Tutor, Gamble) reaches all 99 other cards, "a creature card" (Worldly Tutor)
+// reaches the whole creature base, and "an artifact card" (Fabricate) the whole artifact base. A
+// bare TYPE is not a relation to any particular card; a SUBTYPE is.
+test("a typal tutor forms an edge with what it can find", () => {
+  const harbinger = base("Flamekin Harbinger", [{
+    kind: "triggered",
+    effect: { kind: "top-manipulation", subject: { control: "you", token: null, subtype: "elemental" } },
+  }]);
+  const elemental = base("Omnath", [], ["elemental"]);
+  const reasons = pairReasons(harbinger, elemental, H);
+  expect(reasons.some((r) => r.tag === "tutor:elemental")).toBe(true);
+});
+
+test("a bare-type tutor forms no edge, because it reaches the whole deck", () => {
+  const worldly = base("Worldly Tutor", [{
+    kind: "on-cast",
+    effect: { kind: "top-manipulation", subject: { control: "you", token: null, type: "creature" } },
+  }]);
+  expect(pairReasons(worldly, base("Any Creature", []), H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
+});
+
+test("an untyped tutor forms no edge at all", () => {
+  const demonic = base("Demonic Tutor", [{
+    kind: "on-cast",
+    effect: { kind: "top-manipulation", subject: { control: "any", token: null } },
+  }]);
+  expect(pairReasons(demonic, base("Anything", []), H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
+});
+
+// A fetchland naming Swamp is the MANA BASE, which the cost-reduction and tax rulings already
+// established is a deck property rather than a pairwise synergy. 60 of the 115 search actions are
+// land fetches; left in, every fetchland would edge to every dual.
+test("a land tutor forms no edge — that is the mana base, not a synergy", () => {
+  const fetch = base("Bloodstained Mire", [{
+    kind: "activated",
+    effect: { kind: "top-manipulation", subject: { control: "you", token: null, subtype: ["swamp", "mountain"] } },
+  }]);
+  const dual = base("Blood Crypt", [], ["swamp", "mountain"]);
+  expect(pairReasons(fetch, dual, H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
+});
+
+// scry and surveil derive `top-manipulation` too, with no subject to narrow them. They must not be
+// mistaken for tutors.
+test("a surveil is not a tutor", () => {
+  const bones = base("Barrier of Bones", [{
+    kind: "triggered",
+    effect: { kind: "top-manipulation", subject: { control: "any", token: null } },
+  }]);
+  expect(pairReasons(bones, base("Whatever", []), H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
+});
+
+// A STAT predicate narrows just as a subtype does — `combatNarrowsOffType` has said so all along.
+// Imperial Recruiter finds a creature with power 2 or less and Spellseeker an instant or sorcery
+// with mana value 2 or less: both are real relations to particular cards, not to a whole type.
+test("a stat-gated tutor forms an edge", () => {
+  const recruiter = base("Imperial Recruiter", [{
+    kind: "triggered",
+    effect: {
+      kind: "top-manipulation",
+      subject: {
+        control: "you", token: null, type: "creature",
+        stats: [{ metric: "power", op: "lte", value: 2 }],
+      },
+    },
+  }]);
+  // base() builds a creature with no power, which parseStat reads as unknown; give it one.
+  const small = base("Weak Creature", []);
+  (small.tags.characteristics as { power: string | null }).power = "1";
+  expect(pairReasons(recruiter, small, H).some((r) => r.tag.startsWith("tutor"))).toBe(true);
+});

@@ -57,3 +57,16 @@ test("the rendered module is valid TypeScript exporting a Set of every permanent
   // GENERATED, so nobody hand-edits it back into rot.
   expect(src).toContain("GENERATED");
 });
+
+// A land subtype is the one kind that means MANA BASE rather than typal — a fetchland naming Swamp
+// is ramp, not a Swamp-tribal payoff — so callers need to tell them apart without a hardcoded list.
+test("land subtypes are emitted separately as well as pooled", () => {
+  const v = buildVocabulary(types, enums);
+  expect(v.landSubtypes).toEqual(["cave", "gate"]);
+  expect(v.permanentSubtypes).toContain("cave");
+});
+
+test("the rendered module exports the land subtypes too", () => {
+  const src = renderSubtypesModule(buildVocabulary(types, enums));
+  expect(src).toContain("export const LAND_SUBTYPES: ReadonlySet<string> = new Set([");
+});

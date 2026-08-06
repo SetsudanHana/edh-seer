@@ -27,3 +27,5 @@ export {
   createTagsLookup, composeTagsLookup, resolveTagsSource,
   type TagsSource, type TagsReader,
 } from "./tags-lookup.js";
+
+export { SUBTYPES, LAND_SUBTYPES } from "./derive/subtypes.js";

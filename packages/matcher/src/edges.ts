@@ -1,5 +1,6 @@
 import type { Reason } from "@mtg/engine";
 import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
+import { LAND_SUBTYPES } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, selfFillTypes } from "./implied.js";
@@ -487,6 +488,43 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       producer: p.card.name,
     });
   }
+  // TUTOR edges: P can SEARCH UP C. "My search can find you" is not a producer-event to
+  // consumer-trigger relation, which is why the recall measurement filed the family as
+  // `miss-inexpressible` — wrongly, Commander Salt models it. Flamekin Harbinger searching for an
+  // Elemental card genuinely relates to every Elemental in the deck.
+  //
+  // GATED ON A SUBTYPE, for exactly the reason the clone gate is. Of 115 corpus search actions,
+  // "a card" (Demonic Tutor, Grim Tutor, Gamble) reaches all 99 others, "a creature card" (Worldly
+  // Tutor) reaches the whole creature base, "an artifact card" (Fabricate) the whole artifact base.
+  // A bare TYPE is not a relation to any particular card. A SUBTYPE is.
+  //
+  // LAND subtypes are excluded on top of that: a fetchland naming Swamp is the MANA BASE, and the
+  // cost-reduction and tax rulings already settled that a deck property is not a pairwise synergy.
+  // 60 of the 115 search actions are land fetches, and every one would edge to every dual.
+  //
+  // `top-manipulation` is shared with scry, surveil and mill — none of which carry a narrowing
+  // subject, so the same gate keeps them out without needing to know the verb.
+  for (const a of p.tags.abilities) {
+    if (a.effect.kind !== "top-manipulation" || !a.effect.subject) continue;
+    // A SUBTYPE or a STAT PREDICATE narrows; a bare type does not. `combatNarrowsOffType` has said
+    // the same about stats all along — Imperial Recruiter's "power 2 or less" and Spellseeker's
+    // "mana value 2 or less" pick out particular cards, not a whole type.
+    const subs = list(a.effect.subject.subtype);
+    const narrows = subs.length > 0 || (a.effect.subject.stats?.length ?? 0) > 0;
+    if (!narrows) continue;
+    if (subs.length > 0 && subs.every((s) => LAND_SUBTYPES.has(s))) continue;
+    if (!subjectMatches(characteristicsSubject(c.tags), a.effect.subject, h)) continue;
+    reasons.push({
+      tag: `tutor:${themeSubjectKey(a.effect.subject)}`,
+      text: `${p.card.name} can search up ${c.card.name}`,
+      effectKind: a.effect.kind,
+      repeatability:
+        a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+  }
+
   // Counter-presence edges: C has an ability whose effect subject is filtered on a counter kind
   // ("creatures you control WITH a +1/+1 counter"), which is a cares-signal with no emit behind
   // it — the card benefits from a board state rather than reacting to an event. P supplies that

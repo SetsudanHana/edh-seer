@@ -38,6 +38,10 @@ export interface Vocabulary {
   spellSubtypes: string[];
   /** Plane/phenomenon subtypes. Planechase only; emitted for completeness. */
   planeSubtypes: string[];
+  /** LAND subtypes alone. A subset of `permanentSubtypes`, emitted separately because a land
+   *  subtype is the one kind that means "mana base" rather than "typal" — a fetchland naming Swamp
+   *  is ramp, not a Swamp-tribal payoff. */
+  landSubtypes: string[];
   /** The closed six: Basic, Host, Legendary, Ongoing, Snow, World. */
   supertypes: string[];
   keywordActions: string[];
@@ -59,6 +63,7 @@ export function buildVocabulary(types: CardTypesPayload, enums: EnumValuesPayloa
     planeswalkerSubtypes: lower(sub("planeswalker")),
     spellSubtypes: lower([...sub("instant"), ...sub("sorcery")]),
     planeSubtypes: lower([...sub("plane"), ...sub("phenomenon")]),
+    landSubtypes: lower(sub("land")),
     supertypes: lower(enums.data.card.supertypes),
     keywordActions: lower(enums.data.keywords.keywordActions),
     keywordAbilities: lower(enums.data.keywords.keywordAbilities),
@@ -90,6 +95,12 @@ export function renderSubtypesModule(v: Vocabulary): string {
  */
 export const SUBTYPES: ReadonlySet<string> = new Set([
 ${lines.join("\n")}
+]);
+
+/** The LAND subtypes among them. A land subtype means MANA BASE, not typal: a fetchland naming Swamp
+ *  is ramp, and a tutor that finds one is a land-fixing card rather than a Swamp-tribal payoff. */
+export const LAND_SUBTYPES: ReadonlySet<string> = new Set([
+${v.landSubtypes.map((s) => JSON.stringify(s)).join(", ")},
 ]);
 `;
 }
