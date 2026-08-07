@@ -769,6 +769,13 @@ describe("foreignPush", () => {
     expect(f.x).toBe(0);
     expect(f.y).toBeGreaterThan(0);
   });
+
+  // The two forces' firing conditions overlap in a band of width 2*cardR straddling the rim --
+  // asserted so the doc comment's claim is checked rather than believed.
+  it("overlaps containment's firing range near the rim", () => {
+    expect(containment(100, 0, 100, 14, 0.01).x).not.toBe(0);
+    expect(foreignPush(100, 0, 100, 14, 0.004).x).not.toBe(0);
+  });
 });
 
 // `cam` used to be rebuilt at the origin every time the layout effect re-ran, and `hidden` (the

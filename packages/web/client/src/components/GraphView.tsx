@@ -142,9 +142,10 @@ export function containment(
  *  SHARE, so nothing in the tick loop has ever read "this card is not in this room" and a
  *  non-member drifting into a circle was completely unopposed.
  *
- *  "Inside" is read off the card's NEAR rim (d - cardR < roomR) -- the complementary rim to
- *  containment's, so there is a band where neither force fires rather than an overlap where both
- *  do.
+ *  "Inside" is read off the card's NEAR rim (d - cardR < roomR), while containment reads the FAR
+ *  rim (d + cardR > roomR). Those conditions OVERLAP in a band of width 2*cardR straddling the
+ *  rim, where both would fire -- which never happens, because a card is a member XOR a non-member
+ *  of any given room and exactly one of the two applies per card-room pair.
  *
  *  Its stiffness MUST stay below containment's: the reverse expels cards from every room at once
  *  and the board falls apart. */
