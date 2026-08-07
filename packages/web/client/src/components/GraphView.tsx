@@ -3,6 +3,7 @@ import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
+import { CARD_MODE_Z, cardImageUrl, renderModeFor } from "./card-node.js";
 import { rimArcs, ROOM_HUE, ROOM_HUE_TEXT, ROOMS, roomHueOf, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
 
 /** Kinds ordered for the filter row: the ones worth looking at first. */
@@ -246,6 +247,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   // the network gone -- offline survival, not a speed change (HTTP caching already covered reload).
   const artLoaderRef = useRef<ArtLoader>(undefined);
   artLoaderRef.current ??= createArtLoader({ load: cachedImageLoad() });
+  // Effect-local until now, which is why toggling a chip reset the view: `hidden` is a dep, so the
+  // effect re-ran and rebuilt the camera at the origin. A ref survives that, and the mode control
+  // below needs to write z from outside the effect anyway.
+  const camRef = useRef({ x: 0, y: 0, z: 1 });
 
   const counts = useMemo(() => {
     const c = new Map<NodeKind, number>();
@@ -413,14 +418,17 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           roles: n.roles ?? null, artCrop: n.artCrop ?? null,
           rooms: n.kind === "card" ? (roomsByNode.get(n.id) ?? []) : null,
         })),
-        { tallies },
+        // camRef.current, read directly rather than through `cam` below: the mode buttons write
+        // camRef.current.z from outside this effect, and this closure must see that write on its
+        // next call rather than a value frozen when the probe was first built.
+        { tallies, camZ: camRef.current.z },
       );
 
     // A from-scratch graph gets full energy to organize; a graph that already has settled
     // positions (a filter toggle, or -- once deckbuilding lands -- a card added/removed) only
     // needs enough to let what changed find its place. See Step 0 / the deck-view-mode stub.
     let alpha = isFirstLayout ? 1 : 0.3;
-    const cam = { x: 0, y: 0, z: 1 };
+    const cam = camRef.current;
     let raf = 0;
     let dragging: { x: number; y: number } | null = null;
 
@@ -580,7 +588,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         ctx.globalAlpha = matchIds && n.kind === "card" && !matchIds.has(n.id) ? 0.15 : 1;
 
         if (n.kind === "card") {
-          const img = n.artCrop ? artLoader.get(n.artCrop) : undefined;
+          // Render is a function of the camera, not a stored mode (card-node.ts's doc comment) --
+          // reading cam.z here means the scroll wheel and the mode buttons can never disagree
+          // about what's on screen. Card mode's source is a DIFFERENT cache key (cardImageUrl
+          // rewrites the path segment to a bigger size), so switching modes cold is a real fetch,
+          // not just a bigger draw of what miniature mode already had loaded.
+          const mode = renderModeFor(cam.z);
+          const src = mode === "card" && n.artCrop ? cardImageUrl(n.artCrop) : n.artCrop;
+          const img = src ? artLoader.get(src) : undefined;
           // Scryfall's art_crop is landscape (~626x457, ~1.37:1); the 5-arg drawImage would
           // squash it into this square node. Cover-fit instead: crop a centred square out of the
           // source (the shorter side) and draw that square into the node -- same trick as CSS
@@ -601,7 +616,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             }
           }
 
-          if (img instanceof HTMLImageElement && img.naturalWidth > 0 && img.naturalHeight > 0) {
+          if (mode === "card" && img instanceof HTMLImageElement && img.naturalWidth > 0) {
+            // The full card, not a cover-fit crop: a 5:7 box centred on the node. 40% taller than
+            // the miniature's disc (28 * 1.4 = 39.2 world units) -- fine, and deliberately NOT
+            // re-laid-out for: card mode only happens zoomed in, where neighbours are hundreds of
+            // screen px apart (see card-node.ts's CARD_MODE_Z doc comment for the threshold math).
+            const w = ART_RADIUS * 2, h = w * 1.4;
+            ctx.drawImage(img, n.x - w / 2, n.y - h / 2, w, h);
+          } else if (img instanceof HTMLImageElement && img.naturalWidth > 0 && img.naturalHeight > 0) {
             const sw = img.naturalWidth, sh = img.naturalHeight, s = Math.min(sw, sh);
             ctx.save();
             ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.clip();
@@ -609,7 +631,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
               n.x - ART_RADIUS, n.y - ART_RADIUS, ART_RADIUS * 2, ART_RADIUS * 2);
             ctx.restore();
           } else {
-            if (n.artCrop) artLoader.request(n.artCrop);
+            // Covers both "no art at all" and "card mode wants an image that hasn't loaded yet" --
+            // a blank node is worse than a small one, so this always requests `src` (whichever size
+            // the current mode wants) and draws the miniature disc rather than nothing.
+            if (src) artLoader.request(src);
             ctx.fillStyle = colorOf(n.kind);
             ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
           }
@@ -793,6 +818,24 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
               </button>
             );
           })}
+          {/* Sets cam.z directly on the ref (see camRef above) rather than through React state --
+           *  the paint loop reads cam.z every frame, so there is nothing for a re-render to do
+           *  here. No easing/tween: cam.z is one number, and an eased transition can be layered
+           *  on top later without anything else in this component changing. */}
+          <button
+            type="button"
+            className="eyebrow"
+            onClick={() => { camRef.current.z = CARD_MODE_Z; }}
+          >
+            Card
+          </button>
+          <button
+            type="button"
+            className="eyebrow"
+            onClick={() => { camRef.current.z = 1; }}
+          >
+            Miniature
+          </button>
           {canFullscreen ? (
             <button
               type="button"

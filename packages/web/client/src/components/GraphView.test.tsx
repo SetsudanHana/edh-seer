@@ -624,3 +624,33 @@ test("roomAttraction does not divide by zero for coincident cards", () => {
   expect(Number.isFinite(f.x)).toBe(true);
   expect(Number.isFinite(f.y)).toBe(true);
 });
+
+// `cam` used to be rebuilt at the origin every time the layout effect re-ran, and `hidden` (the
+// filter-chip state) is one of that effect's deps -- so toggling a chip silently reset pan and
+// zoom out from under the user. Hoisting `cam` onto a ref (camRef) fixes that as a side effect:
+// the ref survives the effect tearing down and being rebuilt. Needs makeContextSpy() -- the probe
+// this reads is only attached once `ctx` is real, same as every other probe-reading test above.
+test("keeps pan and zoom when a filter chip is toggled", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => { camZ: number };
+  };
+  fireEvent.wheel(canvas, { deltaY: -240 });
+  const before = canvas.__graphProbe!().camZ;
+  fireEvent.click(screen.getByRole("button", { name: /event/i }));
+  expect(canvas.__graphProbe!().camZ).toBe(before);
+});
+
+// The kind-filter row already has a "card" chip (accessible name "card <count>"), so an unanchored
+// /card/i would match two buttons and getByRole would throw on ambiguity. Anchored to the mode
+// button's exact label ("Card") rather than the filter chip's "card N".
+test("switching to card mode raises the zoom past the card threshold", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => { camZ: number };
+  };
+  expect(canvas.__graphProbe!().camZ).toBeGreaterThanOrEqual(6);
+});
