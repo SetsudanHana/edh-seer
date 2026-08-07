@@ -237,6 +237,18 @@ export function copiesByNameOf(nodes: readonly GraphNode[]): Map<string, number>
   return out;
 }
 
+/** Which room circles a world-space point falls inside. Plural on purpose: overlapping circles are
+ *  the normal case, and a card in two rooms sits in the lens where both contain it. */
+export function roomsUnder(
+  wx: number, wy: number, circles: ReadonlyMap<string, Circle>,
+): string[] {
+  const out: string[] = [];
+  for (const [id, c] of circles) {
+    if (Math.hypot(wx - c.x, wy - c.y) <= c.r) out.push(id);
+  }
+  return out;
+}
+
 /** Where a node that's new since the last render should start: the centroid of whichever of its
  *  neighbours already had a position (from the previous layout), so it visibly joins the cluster
  *  it connects to rather than dropping in at an arbitrary spot. Falls back to `fallback` when none
@@ -258,6 +270,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   const [hover, setHover] = useState<
     { label: string; kind: string; deg: number; detail: string; x: number; y: number } | null
   >(null);
+  // Which rooms the pointer is inside, highlighted in the legend. Written on pointermove like
+  // `hover` already is, and deliberately absent from the layout effect's dependency array for the
+  // same reason -- it must not reheat the simulation.
+  const [hoveredRooms, setHoveredRooms] = useState<readonly string[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [query, setQuery] = useState("");
   // Sticky per-card flip state (picture only -- see card-node.ts's faceArtOf doc comment). A card
@@ -628,6 +644,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
     const artLoader = artLoaderRef.current!;
 
+    // draw() computes the room circles every frame anyway. Stash the last frame's map so the
+    // pointer handler can read it instead of recomputing the geometry on every pointermove.
+    let lastCircles: Map<RoomId, Circle> = new Map();
+
     const pathFor = (glyph: string): Path2D => {
       const cache = pathCacheRef.current!;
       let p = cache.get(glyph);
@@ -637,6 +657,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
     const draw = () => {
       const circles = roomCirclesNow();
+      lastCircles = circles;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = paint.surface;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -884,10 +905,16 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const onResize = () => { dim = size(); };
     addEventListener("resize", onResize);
 
-    const pick = (ev: { clientX: number; clientY: number }): Sim | null => {
+    const toWorld = (ev: { clientX: number; clientY: number }): Point => {
       const r = canvas.getBoundingClientRect();
-      const wx = (ev.clientX - r.left - dim.w / 2 - cam.x) / cam.z;
-      const wy = (ev.clientY - r.top - dim.h / 2 - cam.y) / cam.z;
+      return {
+        x: (ev.clientX - r.left - dim.w / 2 - cam.x) / cam.z,
+        y: (ev.clientY - r.top - dim.h / 2 - cam.y) / cam.z,
+      };
+    };
+
+    const pick = (ev: { clientX: number; clientY: number }): Sim | null => {
+      const { x: wx, y: wy } = toWorld(ev);
       // Card mode paints a 5:7 RECTANGLE (ART_RADIUS*2 wide, *1.4 tall -- see draw()'s
       // `mode === "card"` branch), not the disc nodeRadius() reports for the sim/miniature paint.
       // Hit-testing the inscribed circle there left the top/bottom bands and all four corners --
@@ -946,6 +973,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       if (dragging) {
         cam.x += e.clientX - dragging.x; cam.y += e.clientY - dragging.y;
         dragging = { x: e.clientX, y: e.clientY };
+        setHoveredRooms((prev) => (prev.length === 0 ? prev : []));
         return;
       }
       const n = pick(e);
@@ -956,6 +984,15 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       setHover(n
         ? { label: n.label, kind: n.kind, deg: n.deg, detail, x: e.clientX - r.left, y: e.clientY - r.top }
         : null);
+      // Additive to the node tooltip, not a replacement: hovering a card inside two rooms shows
+      // the card's own tooltip AND lights both legend rows.
+      const w = toWorld(e);
+      const under = roomsUnder(w.x, w.y, lastCircles);
+      // Only write when the set actually changed -- pointermove fires far more often than the
+      // answer changes, and every write is a React render.
+      setHoveredRooms((prev) =>
+        prev.length === under.length && prev.every((id, i) => id === under[i]) ? prev : under,
+      );
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -1157,8 +1194,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
                     data-testid="room-legend-row"
                     data-room={room.id}
                     data-under={under ? "true" : "false"}
+                    data-hovered={hoveredRooms.includes(room.id) ? "true" : "false"}
                     style={{ height: "var(--legend-row-h)" }}
-                    className={`flex items-center gap-1.5 ${under ? "text-(--warning)" : ""}`}
+                    className={`flex items-center gap-1.5 ${under ? "text-(--warning)" : ""} ${
+                      hoveredRooms.includes(room.id) ? "bg-(--separator)" : ""
+                    }`}
                   >
                     {/* The room's OWN hue -- a graphic object next to text, so it carries the 3:1
                      *  floor ROOM_HUE was validated against. The text beside it is the page's

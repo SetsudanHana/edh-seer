@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ART_RADIUS, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, seedPosition, separation, traveledAsDrag, universalRooms } from "./GraphView.js";
+import { ART_RADIUS, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, separation, traveledAsDrag, universalRooms } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
@@ -1162,4 +1162,28 @@ test("an underfilled room's legend row carries the warning colour, a filled one 
   expect(under.className).toMatch(/text-\(--warning\)/);
   const filled = legend.querySelector('[data-room="lands"]')!;
   expect(filled.className).not.toMatch(/text-\(--warning\)/);
+});
+
+describe("roomsUnder", () => {
+  const circles = new Map([
+    ["a", { x: 0, y: 0, r: 50 }],
+    ["b", { x: 40, y: 0, r: 50 }],
+    ["c", { x: 500, y: 500, r: 10 }],
+  ]);
+
+  it("names every circle the point falls inside -- overlapping circles are the normal case", () => {
+    expect(roomsUnder(20, 0, circles).sort()).toEqual(["a", "b"]);
+  });
+
+  it("names one circle when only one contains the point", () => {
+    expect(roomsUnder(-40, 0, circles)).toEqual(["a"]);
+  });
+
+  it("names nothing on empty board space", () => {
+    expect(roomsUnder(-900, -900, circles)).toEqual([]);
+  });
+
+  it("counts a point exactly on the rim as inside", () => {
+    expect(roomsUnder(0, 50, new Map([["a", { x: 0, y: 0, r: 50 }]]))).toEqual(["a"]);
+  });
 });
