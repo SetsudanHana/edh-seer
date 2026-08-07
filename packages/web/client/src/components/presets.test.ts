@@ -67,12 +67,25 @@ describe("cardFacts", () => {
     expect(shaman.roles).toEqual([]);
     expect(shaman.copies).toBe(1);
   });
+
+  // Fix round 1 (task-8-report.md): comboCardNames is the second, optional argument -- every
+  // existing call above (all `cardFacts(graph)`, one argument) must keep defaulting to `false`.
+  it("defaults comboCard to false when no combo names are given", () => {
+    expect(cardFacts(graph).every((f) => f.comboCard === false)).toBe(true);
+  });
+
+  it("marks only the card named in comboCardNames, by name not id", () => {
+    const [rebirth, shaman] = cardFacts(graph, new Set(["Deathrite Shaman"]));
+    expect(rebirth.comboCard).toBe(false);
+    expect(shaman.comboCard).toBe(true);
+  });
 });
 
 import { PRESETS, roomsForFacts, type CardFacts, type Room } from "./presets.js";
 
 const facts = (over: Partial<CardFacts>): CardFacts => ({
   id: "card:x", name: "X", roles: [], types: [], subtypes: [], colors: [], manaValue: 0, copies: 1,
+  comboCard: false,
   ...over,
 });
 const preset = (id: string) => PRESETS.find((p) => p.id === id)!;

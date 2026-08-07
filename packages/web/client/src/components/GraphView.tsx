@@ -301,9 +301,16 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   const flippedRef = useRef<Set<string>>(new Set());
   flippedRef.current = flipped;
 
-  /** One fact record per card, independent of preset -- memoised on `graph` identity alone so
-   *  switching the "Group by" control never re-walks the edge list. */
-  const facts = useMemo(() => cardFacts(graph), [graph]);
+  /** One fact record per card. Combo membership (report.combos[].cards) is folded in here rather
+   *  than left for the role preset to rediscover -- this is the same set the pre-Task-8 code built
+   *  inline before calling roomsForCard directly; cardFacts just carries it as a fact now instead
+   *  of it living only in a closure. Memoised on `graph` AND `report` -- switching the "Group by"
+   *  control alone still skips this (React bails when neither dep changed), but a report refresh
+   *  (a new combos list on the same graph) must not be missed. */
+  const facts = useMemo(() => {
+    const comboCards = new Set((report.combos ?? []).flatMap((c) => c.cards));
+    return cardFacts(graph, comboCards);
+  }, [graph, report]);
   // PRESETS is a fixed module-level array, so `.find` returns the SAME object reference for a
   // given id across renders -- `rooms` below can memoise on `preset` itself, not presetId.
   const preset = PRESETS.find((p) => p.id === presetId) ?? PRESETS[0];

@@ -15,11 +15,18 @@ export interface CardFacts {
   colors: readonly string[];
   manaValue: number;
   copies: number;
+  /** True if this card's name is one of report.combos[].cards -- the only thing anyone downstream
+   *  needs to know about combo membership. See the role preset's `test` below. */
+  comboCard: boolean;
 }
 
 /** One pass over the graph. Cheap enough to run per render, but callers should memoise on `graph`
- *  identity because the paint loop must not allocate. */
-export function cardFacts(graph: CardGraph): CardFacts[] {
+ *  identity because the paint loop must not allocate. `comboCardNames` defaults to empty so every
+ *  existing call site keeps compiling untouched. */
+export function cardFacts(
+  graph: CardGraph,
+  comboCardNames: ReadonlySet<string> = new Set(),
+): CardFacts[] {
   const byId = new Map<string, GraphNode>(graph.nodes.map((n) => [n.id, n]));
   const out: CardFacts[] = [];
 
@@ -48,6 +55,7 @@ export function cardFacts(graph: CardGraph): CardFacts[] {
       colors: labelsOf(n.id, "IDENTITY"),
       manaValue: cmc === undefined ? 0 : Number(cmc),
       copies: n.copies ?? 1,
+      comboCard: comboCardNames.has(n.label),
     });
   }
   return out;
@@ -130,8 +138,11 @@ export const PRESETS: Preset[] = [
         categories: r.categories,
         fallback: r.id === "strategy",
         // Delegates to the shipped implementation rather than restating it: roomsForCard also
-        // folds in combo membership, and two copies of that rule would drift.
-        test: (c: CardFacts) => roomsForCard([...c.roles], c.name, new Set<string>()).includes(r.id),
+        // folds in combo membership, and two copies of that rule would drift. `c.comboCard` is
+        // per-card, but roomsForCard's third argument is a set of NAMES (it was designed to check
+        // deck-wide combo membership in one call per card) -- reconstructing a one-or-zero-element
+        // set here is the smallest way to hand it what it wants without changing its signature.
+        test: (c: CardFacts) => roomsForCard([...c.roles], c.name, new Set(c.comboCard ? [c.name] : [])).includes(r.id),
       })),
   },
   derived("type", "Type", (c) => c.types),

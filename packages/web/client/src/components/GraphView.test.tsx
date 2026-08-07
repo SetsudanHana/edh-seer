@@ -210,6 +210,27 @@ test("puts an uncategorised card in strategy", () => {
   expect(roleless!.rooms).toEqual(["strategy"]);
 });
 
+// Fix round 1: combo membership was silently dropped by Task 8's wiring -- the old, pre-Task-8
+// code built `comboCards` from report.combos and passed it into roomsForCard directly; the
+// preset-based replacement called roomsForCard with a hardcoded EMPTY set (presets.ts), so a card
+// named only in report.combos (no matching role of its own) used to land in "wincons" and silently
+// stopped. This is the regression's only coverage anywhere: SAMPLE.report.combos names cards that
+// are not nodes in SAMPLE.graph, and every other report literal in this file zeroes combos, so
+// nothing before this test exercised a combo card actually present in its own render graph.
+// Krenko, Mob Boss carries no `roles` in SAMPLE.graph -- roomsForCard's only OTHER route to
+// "wincons" (a role of burn/tutor) is closed, so landing there proves the combo route specifically.
+test("a card named only in report.combos lands in Win conditions", () => {
+  makeContextSpy();
+  const report = { ...SAMPLE.report, combos: [{ cards: ["Krenko, Mob Boss"], result: "test combo" }] };
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; kind: string; rooms: string[] | null }>;
+  };
+  const krenko = canvas.__graphProbe!().find((n) => n.id === "card:krenko");
+  expect(krenko).toBeDefined();
+  expect(krenko!.rooms).toEqual(["wincons"]);
+});
+
 // requestFullscreen has no jsdom implementation at all (not even a stub that throws), so each
 // test below installs its own mock on the prototype. Saved and restored per-test rather than
 // left mutated -- this file has many other tests, and a leaked mock/deleted property on
