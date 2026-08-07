@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ROOMS, ROOM_HUE, OVERFLOW_HUE, roomsForCard, roomTallies, subcategoryLabel,
-  roomLayout, rimArcs, roomHueOf, CARD_FOOTPRINT_R, PACK, roomRadius,
+  roomLayout, rimArcs, rimHues, roomHueOf, CARD_FOOTPRINT_R, PACK, roomRadius,
   type Circle, type RoomId, type RoomMember, type RoomTally,
 } from "./deck-rooms.js";
 
@@ -348,6 +348,29 @@ describe("rimArcs takes hues and caps at six", () => {
   it("still covers the full circle when capped", () => {
     const arcs = rimArcs(["#1", "#2", "#3", "#4", "#5", "#6", "#7"]);
     expect(arcs[5].to - arcs[0].from).toBeCloseTo(Math.PI * 2);
+  });
+});
+
+describe("rimHues", () => {
+  const hues = (n: number) => Array.from({ length: n }, (_, i) => `#00000${i}`);
+
+  it("passes six or fewer hues through untouched", () => {
+    expect(rimHues(hues(6))).toEqual(hues(6));
+    expect(rimHues(hues(1))).toEqual(hues(1));
+    expect(rimHues([])).toEqual([]);
+  });
+
+  it("caps at six, with the sixth standing for the rest", () => {
+    const out = rimHues(hues(9));
+    expect(out).toHaveLength(6);
+    expect(out.slice(0, 5)).toEqual(hues(5));
+    expect(out[5]).toBe(OVERFLOW_HUE);
+  });
+
+  it("does not mutate its argument", () => {
+    const input = hues(9);
+    rimHues(input);
+    expect(input).toHaveLength(9);
   });
 });
 

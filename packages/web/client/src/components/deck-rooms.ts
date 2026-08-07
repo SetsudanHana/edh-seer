@@ -263,6 +263,19 @@ export function roomTallies(
   return out;
 }
 
+/** Which hues a card's rim actually shows, capped at six. Six is where legibility runs out (60
+ *  degrees is ~10px of stroke at a 14px disc) and predicates removed the guarantee that nothing
+ *  exceeds it: a WUBRG card is in five colour rooms before any other preset is considered. Past
+ *  five explicit hues the sixth is painted in OVERFLOW_HUE ("and more") rather than dropping hues
+ *  silently or squeezing seven in.
+ *
+ *  Its own function, not a line inside rimArcs, because two painters consume the rule now: rimArcs
+ *  converts these to angles for miniature mode, and GraphView.tsx's card mode converts them to
+ *  equal-width bars along the card's bottom edge. One cap, one place. */
+export function rimHues(hues: readonly string[]): string[] {
+  return hues.length > 6 ? [...hues.slice(0, 5), OVERFLOW_HUE] : [...hues];
+}
+
 /** The card disc's rim, split into one equal arc per hue given -- one per room the card is in.
  *  Takes hues, not room objects: this is pure geometry with no business knowing what a room is,
  *  and it is the caller's job to resolve a card's rooms to their hues (ROOM_HUE[id]) first.
@@ -270,17 +283,10 @@ export function roomTallies(
  *
  *  This is the AUTHORITATIVE membership signal, and the lens a card sits in is the bonus. Position
  *  cannot be complete: circles cannot realise an arbitrary Euler diagram past three sets, and a
- *  tightly packed cluster can hide a lens entirely. The rim reads either way.
- *
- *  Six arcs is an explicit cap, not a truncation that happens to never trigger: it used to hold
- *  because Strategy is exclusive (a card in Strategy is in no other ROOMS room, capping the default
- *  preset at six by construction), but predicates remove that guarantee -- a card can be in five
- *  colour rooms and several type rooms at once. Six is where legibility runs out (60 degrees is
- *  ~10px of stroke at a 14px disc), so past five explicit hues the sixth arc is painted in
- *  OVERFLOW_HUE ("and more") rather than dropping arcs silently or squeezing seven in. */
+ *  tightly packed cluster can hide a lens entirely. The rim reads either way. */
 export function rimArcs(hues: readonly string[]): Array<{ hue: string; from: number; to: number }> {
-  if (hues.length === 0) return [];
-  const shown = hues.length > 6 ? [...hues.slice(0, 5), OVERFLOW_HUE] : [...hues];
+  const shown = rimHues(hues);
+  if (shown.length === 0) return [];
   const step = (Math.PI * 2) / shown.length;
   const start = -Math.PI / 2;
   return shown.map((hue, i) => ({
