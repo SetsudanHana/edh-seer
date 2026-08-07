@@ -1,5 +1,9 @@
-import { ART_RADIUS } from "./deck-rooms.js";
-import type { Circle, RoomId } from "./deck-rooms.js";
+import {
+  forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY,
+  type Simulation,
+} from "d3-force";
+import { ART_RADIUS, COLLISION_PAD, roomLayout } from "./deck-rooms.js";
+import type { Circle, RoomId, RoomTally } from "./deck-rooms.js";
 import type { GraphNode } from "../types.js";
 
 /** A graph node as the force simulation sees it. `index` is written by d3-force itself when the
@@ -219,4 +223,137 @@ export function forceRoomContainment(opts: {
   }) as CustomForce;
   force.initialize = (nodes: Sim[]) => { cards = nodes.filter((n) => n.kind === "card"); };
   return force;
+}
+
+/** Rest-length padding on an edge spring, on top of the two nodes' own radii. */
+export const EDGE_GAP = 28;
+/** Repulsion strength -- 2200 in the hand-rolled loop, 25 here, and the change is a UNIT change,
+ *  not a retune. forceManyBody's law is inverse-LINEAR (k*alpha/d), not the loop's inverse-square
+ *  (k/d^2); see the design doc's 3.1. At the ~33-unit spacing collision settles cards to, 1/d is
+ *  ~33x stronger than 1/d^2 for the same k, and alpha scales the FORCE here rather than the
+ *  integration step, so the loop's number could not carry across.
+ *
+ *  Bracketed on the ten-trial harness below (full table in
+ *  `docs/superpowers/specs/2026-08-08-d3-migration-measurements.md`). Totals across ten trials:
+ *
+ *    2200 -> escapes.one 731, intrusions   0  -- board blown apart, every card outside its rooms
+ *     220 -> escapes.one 260, intrusions   0
+ *      70 -> escapes.one  14, intrusions   0
+ *      40 -> escapes.one   1, intrusions   0  -- still fails the hard condition
+ *      30 -> escapes.one   0, intrusions   5  -- PASSES
+ *      25 -> escapes.one   0, intrusions  14  -- PASSES, chosen
+ *      22 -> escapes.one   0, intrusions  26  -- PASSES
+ *      10 -> escapes.one   0, intrusions 138  -- fails the intrusion cap
+ *
+ *  The trade is monotone and is the same one PACK already documents: weaker repulsion packs the
+ *  board tighter, so escapes fall and intrusions rise. 25 is the midpoint of the measured failing
+ *  bracket (40 above, 10 below) rather than the first passing value found, so it carries margin on
+ *  both sides. Overlaps were 0/10 at EVERY value tried, including 2200. */
+export const REPULSION = 25;
+/** Pull between two cards per room they share. NOT retuned: repulsion alone bought both hard
+ *  conditions, and the protocol's stopping rule is to stop there. Carries the loop's measured
+ *  value (Task 9 / Task 12 arm A3, which found 0 collapses the board). */
+export const ROOM_ATTRACTION = 0.008;
+/** How hard a room pulls a member back inside it, and how hard it pushes a non-member out. Both
+ *  carried over unchanged from the loop (Task 12 arm A2b) and both left alone here for the same
+ *  reason ROOM_ATTRACTION was. FOREIGN_PUSH < CONTAINMENT is a HARD CONSTRAINT, not a preference:
+ *  the reverse expels cards from every room at once and the board falls apart. */
+export const CONTAINMENT = 0.02;
+export const FOREIGN_PUSH = 0.008;
+export const LINK_STIFFNESS = 0.0012;
+export const CENTER_PULL = 0.0004;
+/** d3's setter stores `1 - _`, so this yields the 0.86 retention the old VELOCITY_DAMPING had. */
+export const VELOCITY_DECAY = 0.14;
+export const ALPHA_DECAY = 0.005;
+/** Today's loop FLOORS alpha and keeps ticking forever; it never stops. alphaTarget reproduces
+ *  that, alphaMin would stop the simulation instead. See the design doc's 3. */
+export const ALPHA_FLOOR = 0.02;
+/** forceCollide is velocity-based where the positional separation() it replaces was not, so it
+ *  converges on overlaps rather than guaranteeing they are gone -- the risk design 3.2 names, and
+ *  the reason its ladder puts overlaps first in the tuning order.
+ *
+ *  It did not materialise. Zero overlapping card discs in 10/10 trials at EVERY REPULSION value
+ *  tried, from 10 to 2200, with iterations at d3's default 1. So the ladder never left its first
+ *  rung: iterations was never raised and the §3.2 positional-separation() fallback was never
+ *  reached. Why it holds: integration is `x += vx *= 0.86` immediately after the force pass, so
+ *  ~86% of the needed correction lands the same tick, and 800 ticks is thousands of chances to
+ *  converge on a board whose alpha never actually reaches zero. */
+export const COLLIDE_ITERATIONS = 1;
+
+/** The whole board layout as one d3 simulation: repulsion, edge springs, disc collision, a centre
+ *  pull for anything no room claims, and the two custom room forces above.
+ *
+ *  Returned STOPPED. GraphView's own requestAnimationFrame paint loop calls `tick()`; d3's internal
+ *  d3-timer stepper would be a second loop running on a schedule independent of paint.
+ *
+ *  `visible` gates the ROOM CIRCLES only -- which cards a room is drawn around. Every node in
+ *  `nodes` takes part in charge/collide/link whether or not it is visible, because that is the
+ *  array d3 binds its forces to. The hand-rolled loop this replaces filtered to visible nodes
+ *  inside the tick instead, so a hidden node contributed nothing. REPULSION was measured under
+ *  THIS behaviour, with all 346 fixture nodes live and the 252 non-card ones held near the origin
+ *  by CENTER_PULL; if Task 5 makes visibility filter the forces, the bracket must be re-measured.
+ *  See `2026-08-08-d3-migration-measurements.md`. */
+export function createBoardSimulation(opts: {
+  nodes: Sim[];
+  links: { source: Sim; target: Sim }[];
+  roomsByNode: ReadonlyMap<string, readonly RoomId[]>;
+  rooms: readonly { id: RoomId }[];
+  tallies: Map<RoomId, RoomTally>;
+  universal: ReadonlySet<string>;
+  visible: (n: Sim) => boolean;
+}): { simulation: Simulation<Sim, undefined>; roomCircles: () => Map<RoomId, Circle> } {
+  const roomCircles = () =>
+    roomLayout(
+      opts.nodes
+        .filter((n) => n.kind === "card" && opts.visible(n))
+        .map((n) => ({ x: n.x, y: n.y, r: nodeRadius(n), rooms: opts.roomsByNode.get(n.id) ?? [] })),
+      opts.rooms,
+      opts.tallies,
+    );
+
+  /** Only "role" has a fallback room, so a card on a derived preset (Colour, Subtype, Type,
+   *  Mana value) whose rooms all miss it is genuinely unzoned -- CENTER_PULL is what holds it
+   *  near the board instead of it drifting. Non-card nodes are centred for the same reason. */
+  const zoned = (n: Sim) =>
+    n.kind === "card" && (opts.roomsByNode.get(n.id)?.length ?? 0) > 0;
+
+  const simulation = forceSimulation<Sim>(opts.nodes)
+    .force("charge", forceManyBody<Sim>()
+      .strength(-REPULSION)
+      // Ports the old `max(d2, 64)` floor and `d2 > 220000` cutoff. d3 squares these
+      // internally; distanceMin is a geometric mean rather than a hard clamp.
+      .distanceMin(8)
+      .distanceMax(469))
+    .force("link", forceLink<Sim, { source: Sim; target: Sim }>(opts.links)
+      .id((n) => n.id)
+      // A spring between two 14px discs and one between two 3px dots should not want the same
+      // length, so rest scales with what it joins.
+      .distance((l) => nodeRadius(l.source) + nodeRadius(l.target) + EDGE_GAP)
+      // Explicit strength overrides d3's degree-normalized default.
+      .strength(LINK_STIFFNESS))
+    // Replaces separation(). COLLISION_PAD is the gap between two settled discs, so each disc
+    // carries half of it. See the design doc's 3.2 -- this is velocity-based where separation()
+    // was positional, which is why the overlap assertion is the one at risk.
+    .force("collide", forceCollide<Sim>()
+      .radius((n) => nodeRadius(n) + COLLISION_PAD / 2)
+      .iterations(COLLIDE_ITERATIONS))
+    .force("x", forceX<Sim>(0).strength((n) => (zoned(n) ? 0 : CENTER_PULL)))
+    .force("y", forceY<Sim>(0).strength((n) => (zoned(n) ? 0 : CENTER_PULL)))
+    .force("rooms", forceRoomAttraction({
+      roomsByNode: opts.roomsByNode,
+      universal: opts.universal,
+      stiffness: ROOM_ATTRACTION,
+    }))
+    .force("containment", forceRoomContainment({
+      roomsByNode: opts.roomsByNode,
+      circles: roomCircles,
+      containmentStiffness: CONTAINMENT,
+      foreignStiffness: FOREIGN_PUSH,
+    }))
+    .velocityDecay(VELOCITY_DECAY)
+    .alphaDecay(ALPHA_DECAY)
+    .alphaTarget(ALPHA_FLOOR)
+    .stop();
+
+  return { simulation, roomCircles };
 }

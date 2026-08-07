@@ -1,13 +1,20 @@
 import { describe, expect, test } from "vitest";
 import {
+  boardMetrics,
   containment,
+  createBoardSimulation,
   forceRoomAttraction,
   forceRoomContainment,
   foreignPush,
   nodeRadius,
+  universalRooms,
   type Sim,
 } from "./board-force.js";
+import { ART_RADIUS, roomTallies } from "./deck-rooms.js";
 import type { Circle, RoomId } from "./deck-rooms.js";
+import { PRESETS, cardFacts, roomsForFacts } from "./presets.js";
+import inalla from "../fixtures/inalla-graph.json" with { type: "json" };
+import type { CardGraph } from "../types.js";
 
 function card(id: string, x: number, y: number): Sim {
   return { id, kind: "card", label: id, x, y, vx: 0, vy: 0, deg: 0 };
@@ -242,5 +249,116 @@ describe("forceRoomContainment", () => {
       return a.vx;
     };
     expect(build(0.5)).toBeCloseTo(build(1) / 2, 10);
+  });
+});
+
+/** A seeded LCG, so a trial is reproducible from its seed. d3-force is itself deterministic
+ *  (it seeds its own fixed LCG), so ALL trial-to-trial variance has to come from the initial
+ *  seeding -- which is exactly where it comes from in the browser today, via Math.random() in
+ *  seedPosition's fallback. */
+function lcg(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => ((s = (1664525 * s + 1013904223) >>> 0) / 4294967296);
+}
+
+/** One settled layout of the inalla fixture on the role preset. */
+function runTrial(seed: number) {
+  const graph = inalla.graph as unknown as CardGraph;
+  const random = lcg(seed);
+  const comboCards = new Set(inalla.combos.flatMap((c) => c.cards));
+  const facts = cardFacts(graph, comboCards);
+  // The role preset's rooms, not deck-rooms.ts's bare ROOMS: roomsForFacts needs each room's
+  // `test` predicate, which only the preset builds. Same seven rooms, same order.
+  const rooms = PRESETS[0].rooms(facts);
+  const roomsByNode = new Map<string, readonly RoomId[]>(
+    facts.map((f) => [f.id, roomsForFacts(rooms, f)]),
+  );
+
+  const cardRooms = new Map<string, readonly RoomId[]>();
+  const copies = new Map<string, number>();
+  for (const n of graph.nodes) {
+    if (n.kind !== "card") continue;
+    cardRooms.set(n.label, roomsByNode.get(n.id) ?? []);
+    copies.set(n.label, n.copies ?? 1);
+  }
+  const tallies = roomTallies(
+    cardRooms,
+    rooms.map((r) => ({ id: r.id, categories: r.categories ?? [] })),
+    inalla.buildCategories,
+    copies,
+  );
+
+  // Only card nodes are visible on first paint (DIM_BY_DEFAULT hides every other kind), which
+  // is the state the acceptance condition is about.
+  const nodes: Sim[] = graph.nodes.map((n, i) => ({
+    ...n,
+    x: Math.cos(i) * 260 + random() * 30,
+    y: Math.sin(i) * 260 + random() * 30,
+    vx: 0, vy: 0, deg: 0,
+  }));
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const links = graph.edges
+    .map((e) => ({ source: byId.get(e.from)!, target: byId.get(e.to)! }))
+    .filter((l) => l.source && l.target);
+  for (const l of links) { l.source.deg++; l.target.deg++; }
+
+  const visible = (n: Sim) => n.kind === "card";
+  const universal = universalRooms(
+    rooms.map((r) => r.id),
+    nodes.filter(visible).map((n) => roomsByNode.get(n.id) ?? []),
+  );
+
+  const { simulation, roomCircles } = createBoardSimulation({
+    nodes, links, roomsByNode, rooms, tallies, universal, visible,
+  });
+
+  // 800 ticks: alpha 1 decaying at 0.995/tick reaches the 0.02 floor at ~781.
+  for (let i = 0; i < 800; i++) simulation.tick();
+
+  const cards = nodes.filter(visible);
+  const circles = [...roomCircles().entries()].map(([id, c]) => ({ id, ...c }));
+  const metrics = boardMetrics(
+    cards.map((n) => ({ x: n.x, y: n.y, rooms: roomsByNode.get(n.id) ?? [] })),
+    circles,
+  );
+
+  // The Task-9 no-overlap gate: two card discs closer than 2 * ART_RADIUS visibly overlap.
+  let overlaps = 0;
+  for (let i = 0; i < cards.length; i++) {
+    for (let j = i + 1; j < cards.length; j++) {
+      if (Math.hypot(cards[i].x - cards[j].x, cards[i].y - cards[j].y) < 2 * ART_RADIUS) overlaps++;
+    }
+  }
+  return { ...metrics, overlaps };
+}
+
+describe("the settled board, ten trials on inalla.txt", () => {
+  const trials = Array.from({ length: 10 }, (_, i) => runTrial(i + 1));
+
+  // Hard condition. A single-room card outside its own room is the board failing at the one
+  // thing it claims to show.
+  test("no single-room card escapes its room, in any trial", () => {
+    expect(trials.map((t) => t.escapes.one)).toEqual(new Array(10).fill(0));
+  });
+
+  // Hard condition, and the one design 3.2 puts at risk: forceCollide adjusts velocity where
+  // the separation() it replaces adjusted position.
+  test("no two card discs overlap, in any trial", () => {
+    expect(trials.map((t) => t.overlaps)).toEqual(new Array(10).fill(0));
+  });
+
+  /** A RATCHET, not a pin. PACK 0.5 already traded intrusions away to buy escapes.one
+   *  (measured: escapes 13 -> 5 -> 2 against intrusions 1 -> 8 -> 26 at PACK 0.7/0.6/0.5), so
+   *  pinning d3 to the old ~26 would re-fight a battle deliberately lost. The cap is loose
+   *  enough to let the axis float and tight enough that a collapse still fails.
+   *
+   *  Same idiom as pair-calibration.test.ts's KNOWN_DEFECT_CAP: raise it only with a written
+   *  reason, LOWER it the moment a change improves the number. A cap nobody lowers is
+   *  decoration. */
+  const INTRUSION_CAP = 60;
+  test("intrusions stay under the cap", () => {
+    const total = trials.reduce((sum, t) => sum + t.intrusions, 0);
+    console.log("intrusions across ten trials:", trials.map((t) => t.intrusions), "total", total);
+    expect(total).toBeLessThanOrEqual(INTRUSION_CAP);
   });
 });
