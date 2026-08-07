@@ -82,14 +82,23 @@ const REPULSION = 2200;
  *  overlaps, and 1/20 produced a false lens (`ramp+strategy`, the one pair that also failed at
  *  0.006). Neither tested value hits a deterministic 0 on every trial; see task-9-report.md for
  *  the full round-by-round numbers and why this was capped at 4 rounds rather than tuned
- *  further. */
+ *  further.
+ *
+ *  Not redundant with CONTAINMENT: Task 12's arm A3 tried it at 0 (against the winning PACK/
+ *  CONTAINMENT/FOREIGN_PUSH) and the board collapsed -- medians of 79 single-room escapes out of
+ *  94 cards and 40.5 intrusions, ten trials on inalla.txt. A room's circle is placed on its
+ *  members' centroid, so this is what makes a room a place before containment has anything to
+ *  hold cards inside; see `2026-08-07-room-size-measurement-report.md`. */
 const ROOM_ATTRACTION = 0.008;
 /** How hard a room pulls a member back inside it, and how hard it pushes a non-member out.
  *  FOREIGN_PUSH < CONTAINMENT is a HARD CONSTRAINT, not a preference: the reverse expels cards
- *  from every room at once and the board falls apart. Starting values pending the trial in this
- *  work's Task 12 -- see the spec's section 7. */
-const CONTAINMENT = 0.01;
-const FOREIGN_PUSH = 0.004;
+ *  from every room at once and the board falls apart. Measured (Task 12, arm A2b, ten trials on
+ *  inalla.txt against `2026-08-07-room-size-measurement-report.md`): doubling both from the
+ *  starting 0.01/0.004 to 0.02/0.008 took `escapes.one` from 2 to 0 across the ten trials and
+ *  dropped the trial with overlapping card discs to 0/10, at identical intrusion totals (26 vs
+ *  26) -- the extra stiffness bought the plan's escape target for free. */
+const CONTAINMENT = 0.02;
+const FOREIGN_PUSH = 0.008;
 const LINK_STIFFNESS = 0.0012;
 /** Per-tick velocity damping (0..1, higher = less friction). */
 const VELOCITY_DAMPING = 0.86;

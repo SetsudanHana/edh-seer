@@ -192,10 +192,12 @@ describe("roomRadius", () => {
     }
   });
 
+  // Recomputed for PACK 0.5 (Task 12's measured value, was 0.6 when these numbers were 37/128/208
+  // -- see PACK's doc comment and 2026-08-07-room-size-measurement-report.md).
   it("produces the sizes the spec records", () => {
-    expect(Math.round(roomRadius(3, 0))).toBe(37);
-    expect(Math.round(roomRadius(36, 0))).toBe(128);
-    expect(Math.round(roomRadius(95, 0))).toBe(208);
+    expect(Math.round(roomRadius(3, 0))).toBe(40);
+    expect(Math.round(roomRadius(36, 0))).toBe(140);
+    expect(Math.round(roomRadius(95, 0))).toBe(227);
   });
 });
 

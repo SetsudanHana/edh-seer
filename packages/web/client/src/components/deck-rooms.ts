@@ -263,11 +263,14 @@ export const ART_RADIUS = 14;
 export const COLLISION_PAD = 5;
 /** A card's footprint including its share of the gap collision leaves between two discs. */
 export const CARD_FOOTPRINT_R = ART_RADIUS + COLLISION_PAD / 2;
-/** Occupancy a damped force layout actually reaches, NOT hexagonal packing's 0.9069. A first
- *  guess pending measurement (see the plan's Task 12): cards in several rooms are counted by each
- *  of them and their area is shared between overlapping circles, so true occupancy is tighter
- *  than this single-room arithmetic assumes. */
-export const PACK = 0.6;
+/** Occupancy a damped force layout actually reaches, NOT hexagonal packing's 0.9069. Measured
+ *  (Task 12, arm A1a/A2b, ten trials each on inalla.txt against `2026-08-07-room-size-measurement-
+ *  report.md`): PACK trades escapes against intrusions, monotonically -- a smaller PACK makes a
+ *  bigger circle for the same card count, so single-room escapes fall (13 -> 5 -> 2 totalled
+ *  across ten trials, at PACK 0.7 / 0.6 / 0.5) but the bigger circles overlap more, so intrusions
+ *  rise the same direction (1 -> 8 -> 26). The plan's priority is the 1-room bucket reaching 0, so
+ *  0.5 wins even though it costs the most intrusions of the three tried. */
+export const PACK = 0.5;
 /** The floor, per the user's ruling: a one-card room still draws big enough to read as a room. */
 const MIN_ROOM_CARDS = 3;
 
@@ -284,7 +287,8 @@ const MIN_ROOM_CARDS = 3;
  *  in COPIES; taking the max of two different units is deliberate and approximate, and is the
  *  same asymmetry roomTallies already documents.
  *
- *  Sizes: 3 -> 37 - 10 -> 67 - 36 -> 128 - 95 -> 208 world units. For scale, 99 discs at the
+ *  Sizes at the measured PACK 0.5 (was 0.6; see PACK's doc comment): 3 -> 40 - 10 -> 74 -
+ *  36 -> 140 - 95 -> 227 world units. For scale, 99 discs at the
  *  33-unit spacing collision settles them to occupy a disc of radius ~165, so a room holding the
  *  whole deck is roomier than the deck's natural spread and containment barely engages on it. */
 export function roomRadius(count: number, target: number): number {

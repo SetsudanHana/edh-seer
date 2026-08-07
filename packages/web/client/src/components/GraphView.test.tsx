@@ -1271,6 +1271,78 @@ describe("boardMetrics", () => {
   });
 });
 
+// A ratchet, not an exact number: the 1-room escape bucket must be 0, and intrusions must not be
+// worse than the measured pre-change baseline. Frames are driven by hand rather than by real time
+// -- requestAnimationFrame is stubbed to hand back its callback, so this settles a deterministic
+// number of ticks with no timer race.
+//
+// A0 median (task-12-brief.md / 2026-08-07-room-size-measurement-report.md), CONTAINMENT 0 /
+// FOREIGN_PUSH 0, ten trials on inalla.txt, intrusions 0-2: **1**.
+const INTRUSION_BASELINE = 1;
+
+// DEVIATES from the brief's literal `<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />`:
+// SAMPLE's two cards both carry no `roles`, so both fall through to the "strategy" fallback room
+// (roomsForCard) -- the ONLY room either card is ever in, holding 100% of the visible deck. That
+// trips `universalRooms`' 80%-of-the-deck exemption (UNIVERSAL_ROOM_FRACTION), which switches
+// ROOM_ATTRACTION off between them -- the same force arm A3 of the measurement report found is
+// load-bearing (75-80/94 cards escape with it off). Confirmed by hand: SAMPLE settles to a bit-
+// identical fixed point by tick ~100 and stays there through 500,000 ticks, both cards permanently
+// just outside the room's rim (escapes.one 2, unaffected by CONTAINMENT/FOREIGN_PUSH, since neither
+// force does anything once ROOM_ATTRACTION itself is the one switched off). No frame count fixes
+// this -- it isn't a settling-time problem, it is SAMPLE being a fixture the ratchet cannot use.
+//
+// This fixture instead spreads cards across three of the role preset's real rooms (ramp / draw /
+// targetedRemoval, each under the 80% exemption) plus a few two-room cards, so ROOM_ATTRACTION
+// stays active and the scenario resembles a real deck's room-forming rather than one room holding
+// the entire board.
+function overlapFixture() {
+  const nodes: { id: string; kind: string; label: string; roles: string[] }[] = [];
+  for (let i = 0; i < 4; i++) nodes.push({ id: `card:ramp${i}`, kind: "card", label: `Ramp ${i}`, roles: ["ramp"] });
+  for (let i = 0; i < 4; i++) nodes.push({ id: `card:draw${i}`, kind: "card", label: `Draw ${i}`, roles: ["draw"] });
+  for (let i = 0; i < 4; i++) nodes.push({ id: `card:rem${i}`, kind: "card", label: `Removal ${i}`, roles: ["targetedRemoval"] });
+  for (let i = 0; i < 2; i++) nodes.push({ id: `card:rampdraw${i}`, kind: "card", label: `RampDraw ${i}`, roles: ["ramp", "draw"] });
+  for (let i = 0; i < 2; i++) nodes.push({ id: `card:drawrem${i}`, kind: "card", label: `DrawRem ${i}`, roles: ["draw", "targetedRemoval"] });
+  const graph = { nodes, edges: [] } as unknown as typeof SAMPLE.graph;
+  const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+  return { graph, report };
+}
+
+test("a settled board keeps single-room cards inside their room", () => {
+  let nextFrame: FrameRequestCallback | null = null;
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+  makeContextSpy();
+  const { graph, report } = overlapFixture();
+  const { container } = render(<GraphView graph={graph} report={report} />);
+  // 600 (the brief's number) is 20-30x this fixture's own settling point -- checkpointed by hand at
+  // 10/20/30/50/75/100/150/200/300/400/600 ticks, the metrics stop moving by tick ~30 and hold
+  // through 600 (and, separately, through 1200) unchanged, so it is left as the brief specified
+  // rather than padded further.
+  for (let i = 0; i < 600; i++) nextFrame!(0);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ kind: string; x: number; y: number; rooms: string[] | null }> & {
+      circles: Array<{ id: string; x: number; y: number; r: number }>;
+    };
+  };
+  const probe = canvas.__graphProbe!();
+  const m = boardMetrics(probe.filter((n) => n.kind === "card"), probe.circles);
+  expect(m.escapes.one).toBe(0);
+  expect(m.intrusions).toBeLessThanOrEqual(INTRUSION_BASELINE);
+});
+
+// This fixture is small enough that room radii are dominated by report.buildCategories' TARGETS
+// (10 for ramp/draw/targetedRemoval, inherited from SAMPLE.report), not by its own handful of
+// members -- so the rooms are generously oversized for 16 cards and both metrics settle at 0
+// whether or not CONTAINMENT/FOREIGN_PUSH do any work. Recorded, not hidden, per the brief: with
+// CONTAINMENT and FOREIGN_PUSH both temporarily set to 0 in GraphView.tsx, this exact test still
+// PASSES (escapes.one 0, intrusions 0 at 600 ticks) -- this fixture does not discriminate that
+// pair of constants. What it does catch is a regression in ROOM_ATTRACTION, PACK, or the room-
+// membership wiring itself (roomsByNode/universalRooms): setting ROOM_ATTRACTION to 0 against this
+// same fixture reproduces the measurement report's arm-A3 failure shape (single-room escapes
+// appear immediately). CONTAINMENT/FOREIGN_PUSH's measured effect (arm A2b: 2 escapes -> 0 across
+// ten TEN-TRIAL, 94-card runs) is a small aggregate correction on top of ROOM_ATTRACTION, not a
+// deterministic per-scenario one -- not reproducible in one small, deterministic unit fixture.
+
 // Fix round 1: the suite above only exercises the pure `roomsUnder` helper with hand-built Maps.
 // Deleting the onMove wiring that calls it (or the lastCircles stash, or the data-hovered attribute)
 // leaves that suite green -- none of it can observe the canvas-to-legend wire-up a user actually
