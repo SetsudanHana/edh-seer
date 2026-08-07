@@ -638,6 +638,10 @@ test("keeps pan and zoom when a filter chip is toggled", () => {
   };
   fireEvent.wheel(canvas, { deltaY: -240 });
   const before = canvas.__graphProbe!().camZ;
+  // Without this, `before` and the post-toggle read are both `undefined` on a build that dropped
+  // `camZ` off the probe entirely (e.g. a revert of the camRef change), and `undefined === undefined`
+  // passes -- the test would catch nothing. Pin the value as a real number first.
+  expect(Number.isFinite(before)).toBe(true);
   fireEvent.click(screen.getByRole("button", { name: /event/i }));
   expect(canvas.__graphProbe!().camZ).toBe(before);
 });
@@ -652,5 +656,21 @@ test("switching to card mode raises the zoom past the card threshold", () => {
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => { camZ: number };
   };
+  expect(canvas.__graphProbe!().camZ).toBeGreaterThanOrEqual(6);
+});
+
+// The wheel handler's own ceiling used to be a bare 5, below CARD_MODE_Z (6) -- so card mode was
+// unreachable by scrolling at all, and clicking "Card" then touching the wheel even once (in
+// either direction) snapped cam.z straight back under the threshold. Scrolling in enough ticks
+// must be able to reach card mode on its own, with no button involved.
+test("scrolling in far enough reaches card mode on its own", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => { camZ: number };
+  };
+  // Each tick multiplies cam.z by 1.1 from a start of 1; 30 ticks (1.1^30 ~= 17.4) clears any
+  // reasonable ceiling above CARD_MODE_Z (6) with room to spare.
+  for (let i = 0; i < 30; i++) fireEvent.wheel(canvas, { deltaY: -240 });
   expect(canvas.__graphProbe!().camZ).toBeGreaterThanOrEqual(6);
 });

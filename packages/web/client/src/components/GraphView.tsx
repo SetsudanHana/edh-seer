@@ -760,7 +760,12 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      cam.z = Math.min(5, Math.max(0.15, cam.z * (e.deltaY < 0 ? 1.1 : 0.9)));
+      // Ceiling expressed off CARD_MODE_Z, not a bare number: the old flat 5 sat BELOW the
+      // threshold (6), so card mode was unreachable by scrolling at all, and touching the wheel
+      // even once while in card mode (via the button) clamped cam.z straight back under it. +2
+      // gives room to zoom further once past the threshold, and ties the two together so they
+      // can't drift apart again.
+      cam.z = Math.min(CARD_MODE_Z + 2, Math.max(0.15, cam.z * (e.deltaY < 0 ? 1.1 : 0.9)));
     };
 
     canvas.addEventListener("pointerdown", onDown);
