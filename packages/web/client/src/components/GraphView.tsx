@@ -1102,6 +1102,45 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             className="block w-full h-full cursor-grab touch-none"
             aria-label={`Deck graph: ${graph.nodes.length} nodes, ${graph.edges.length} edges`}
           />
+          {/* The room labels, in the DOM rather than on the canvas -- see draw()'s room loop for
+           *  why placement on the canvas could not be made stable under zoom. Absolutely
+           *  positioned inside the existing `relative` wrapper, same treatment as the hover
+           *  tooltip below. Ordering is the preset's own room order (declaration order for role,
+           *  member count descending for the derived presets), already stable.
+           *
+           *  Twelve rows then scroll: the subtype preset produces 40-80 rooms for one deck. The
+           *  cap is on DISPLAY only -- every room still draws, still tallies, still contains. */}
+          <div
+            data-testid="room-legend"
+            className="absolute left-2 top-2 max-h-[19.5rem] overflow-y-auto rounded-(--radius) border border-(--border) bg-(--background)/90 px-2 py-1 text-xs"
+          >
+            {rooms.map((room) => {
+              const tally = tallies.get(room.id);
+              const count = tally ? (tally.target > 0 ? `${tally.count}/${tally.target}` : `${tally.count}`) : "";
+              return (
+                <div
+                  key={room.id}
+                  data-testid="room-legend-row"
+                  data-room={room.id}
+                  data-under={tally?.under ? "true" : "false"}
+                  className={`flex h-[1.625rem] items-center gap-1.5 ${
+                    tally?.under ? "text-(--warning)" : ""
+                  }`}
+                >
+                  {/* The room's OWN hue -- a graphic object next to text, so it carries the 3:1
+                   *  floor ROOM_HUE was validated against. The text beside it is the page's normal
+                   *  foreground, which is why ROOM_HUE_TEXT could be deleted. */}
+                  <span
+                    aria-hidden="true"
+                    style={{ background: room.hue }}
+                    className="inline-block size-2.5 shrink-0 rounded-full"
+                  />
+                  <span className="whitespace-nowrap">{room.label}</span>
+                  <span className="font-mono tabular-nums text-(--muted)">{count}</span>
+                </div>
+              );
+            })}
+          </div>
           {hover ? (
             <div
               className="pointer-events-none absolute rounded-(--radius) border border-(--border) bg-(--background) px-2 py-1 text-xs whitespace-nowrap"

@@ -1026,3 +1026,48 @@ test("the search-match ring in card mode is a rectangle around the card box", ()
   // Never the old circular ring at ART_RADIUS + 3.
   expect(calls.filter((c) => c.startsWith("arc:") && c.split(",")[2] === "17")).toEqual([]);
 });
+
+// Task 9: the room labels the previous task deleted from the canvas move into the DOM as a legend
+// -- name, count/target, --warning when under. The canvas label used to carry "BOARD WIPES 0/3";
+// this is that finding surviving in a different place.
+test("the legend names every room with its count and target", () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const legend = screen.getByTestId("room-legend");
+  for (const room of ROOMS) {
+    expect(legend).toHaveTextContent(room.label);
+  }
+  // The finding the canvas label used to carry.
+  expect(legend).toHaveTextContent("0/3");
+});
+
+test("a room with no target shows a bare count", () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const row = screen.getByTestId("room-legend").querySelector('[data-room="wincons"]')!;
+  // Win conditions has no build target -- it must not read "n/0".
+  expect(row.textContent).not.toMatch(/\/0\b/);
+});
+
+test("an underfilled room's legend row is marked", () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const row = screen.getByTestId("room-legend").querySelector('[data-room="boardWipes"]')!;
+  expect(row).toHaveAttribute("data-under", "true");
+});
+
+test("the legend has a row per room in the preset's own order", () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const ids = [...screen.getByTestId("room-legend").querySelectorAll("[data-room]")]
+    .map((el) => el.getAttribute("data-room"));
+  expect(ids).toEqual(ROOMS.map((r) => r.id));
+});
+
+test("the legend scrolls past twelve rows rather than growing without bound", () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  // The cap is on DISPLAY only -- every room still exists, draws and attracts, so this asserts the
+  // container is scrollable rather than that rows were dropped.
+  expect(screen.getByTestId("room-legend").className).toMatch(/overflow-y-auto/);
+});
