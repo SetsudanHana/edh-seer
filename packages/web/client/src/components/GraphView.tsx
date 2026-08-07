@@ -114,6 +114,51 @@ export function roomAttraction(
   return { x: -(dx / d) * f, y: -(dy / d) * f };
 }
 
+/** Velocity delta pulling a card back toward a room it BELONGS to but has drifted outside of.
+ *  Zero while the card is inside. `dx`/`dy` run from the room's centre to the card.
+ *
+ *  Velocity, not a positional snap like separation(): a card in five rooms gets five of these in
+ *  one tick and has to settle to a compromise rather than vibrate between irreconcilable demands.
+ *
+ *  "Outside" is read off the card's FAR rim (d + cardR > roomR), the same conservative reading the
+ *  enclosing-circle construction used before roomRadius replaced it. */
+export function containment(
+  dx: number, dy: number, roomR: number, cardR: number, stiffness: number,
+): { x: number; y: number } {
+  const d = Math.hypot(dx, dy);
+  // A card exactly on the centre has no direction to act along -- same case roomAttraction
+  // already handles for coincident cards.
+  if (d === 0) return { x: 0, y: 0 };
+  const depth = d + cardR - roomR;
+  if (depth <= 0) return { x: 0, y: 0 };
+  const f = depth * stiffness;
+  // `+ 0` normalizes -0 to 0 (IEEE 754: -0 + 0 === 0): a zero dx or dy component would otherwise
+  // negate to -0, which reads as equal to 0 by value but fails Object.is-based assertions.
+  return { x: -(dx / d) * f + 0, y: -(dy / d) * f + 0 };
+}
+
+/** Velocity delta pushing a card OUT of a room it does not belong to. Zero while it is outside.
+ *  The term that has never existed: roomAttraction is card-to-card and fires on rooms two cards
+ *  SHARE, so nothing in the tick loop has ever read "this card is not in this room" and a
+ *  non-member drifting into a circle was completely unopposed.
+ *
+ *  "Inside" is read off the card's NEAR rim (d - cardR < roomR) -- the complementary rim to
+ *  containment's, so there is a band where neither force fires rather than an overlap where both
+ *  do.
+ *
+ *  Its stiffness MUST stay below containment's: the reverse expels cards from every room at once
+ *  and the board falls apart. */
+export function foreignPush(
+  dx: number, dy: number, roomR: number, cardR: number, stiffness: number,
+): { x: number; y: number } {
+  const d = Math.hypot(dx, dy);
+  if (d === 0) return { x: 0, y: 0 };
+  const depth = roomR - (d - cardR);
+  if (depth <= 0) return { x: 0, y: 0 };
+  const f = depth * stiffness;
+  return { x: (dx / d) * f, y: (dy / d) * f };
+}
+
 /** Device pixels of pointer travel, between a pointerdown and the click the DOM fires after its
  *  matching pointerup, below which the gesture still counts as a click rather than a pan. Not
  *  zero: real hardware never reports an intended click as exactly stationary. */

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ART_RADIUS, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, GraphView, nodeRadius, placeRoomLabel, roomAttraction, seedPosition, separation, traveledAsDrag } from "./GraphView.js";
+import { ART_RADIUS, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, placeRoomLabel, roomAttraction, seedPosition, separation, traveledAsDrag } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type Circle, type RoomTally } from "./deck-rooms.js";
@@ -696,6 +696,79 @@ test("roomAttraction does not divide by zero for coincident cards", () => {
   const f = roomAttraction(0, 0, 2, 0.01);
   expect(Number.isFinite(f.x)).toBe(true);
   expect(Number.isFinite(f.y)).toBe(true);
+});
+
+describe("containment", () => {
+  // dx/dy point from the room's centre to the card. A card is "out" once its FAR rim pokes past
+  // the room's rim -- the same conservative reading the old enclosing-circle construction had.
+  it("does nothing to a card sitting fully inside its room", () => {
+    expect(containment(10, 0, 100, 14, 0.01)).toEqual({ x: 0, y: 0 });
+  });
+
+  it("does nothing to a card exactly touching the rim from inside", () => {
+    expect(containment(86, 0, 100, 14, 0.01)).toEqual({ x: 0, y: 0 });
+  });
+
+  it("pulls a card that has drifted out back toward the centre", () => {
+    const f = containment(120, 0, 100, 14, 0.01);
+    expect(f.x).toBeLessThan(0); // toward the centre, which is in -x from the card
+    expect(f.y).toBe(0);
+  });
+
+  it("is linear in how far out the card is", () => {
+    const near = containment(96, 0, 100, 14, 0.01);   // depth 10
+    const far = containment(106, 0, 100, 14, 0.01);   // depth 20
+    expect(Math.abs(far.x)).toBeCloseTo(Math.abs(near.x) * 2, 10);
+  });
+
+  it("scales with stiffness", () => {
+    expect(Math.abs(containment(120, 0, 100, 14, 0.02).x))
+      .toBeCloseTo(Math.abs(containment(120, 0, 100, 14, 0.01).x) * 2, 10);
+  });
+
+  it("returns nothing for a card exactly on the room's centre -- no direction to act along", () => {
+    expect(containment(0, 0, 5, 14, 0.01)).toEqual({ x: 0, y: 0 });
+  });
+
+  it("acts along the centre line in both axes", () => {
+    const f = containment(0, 120, 100, 14, 0.01);
+    expect(f.x).toBe(0);
+    expect(f.y).toBeLessThan(0);
+  });
+});
+
+describe("foreignPush", () => {
+  // A card is "in" a foreign room once its NEAR rim is inside -- the complementary rim to
+  // containment's, so neither force fires in the band between the two readings.
+  it("does nothing to a card outside the room", () => {
+    expect(foreignPush(200, 0, 100, 14, 0.004)).toEqual({ x: 0, y: 0 });
+  });
+
+  it("does nothing to a card exactly touching the rim from outside", () => {
+    expect(foreignPush(114, 0, 100, 14, 0.004)).toEqual({ x: 0, y: 0 });
+  });
+
+  it("pushes a card sitting inside a room it does not belong to outward", () => {
+    const f = foreignPush(50, 0, 100, 14, 0.004);
+    expect(f.x).toBeGreaterThan(0); // away from the centre
+    expect(f.y).toBe(0);
+  });
+
+  it("is linear in how deep inside the card is", () => {
+    const shallow = foreignPush(100, 0, 100, 14, 0.004); // depth 14
+    const deep = foreignPush(86, 0, 100, 14, 0.004);     // depth 28
+    expect(Math.abs(deep.x)).toBeCloseTo(Math.abs(shallow.x) * 2, 10);
+  });
+
+  it("returns nothing for a card exactly on the room's centre", () => {
+    expect(foreignPush(0, 0, 100, 14, 0.004)).toEqual({ x: 0, y: 0 });
+  });
+
+  it("acts along the centre line in both axes", () => {
+    const f = foreignPush(0, 50, 100, 14, 0.004);
+    expect(f.x).toBe(0);
+    expect(f.y).toBeGreaterThan(0);
+  });
 });
 
 // `cam` used to be rebuilt at the origin every time the layout effect re-ran, and `hidden` (the
