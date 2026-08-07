@@ -302,8 +302,10 @@ export const COLLIDE_ITERATIONS = 1;
  *  (CENTER_PULL does not hold those nodes anywhere -- at 0.0004*alpha it is ~1e-5 per tick. An
  *  earlier version of this comment credited it and was wrong.)
  *
- *  So REPULSION 25 is measured with all 346 nodes live. If Task 5 filters, the constants must be
- *  re-tuned against the filtered board, not merely re-checked.
+ *  So REPULSION 25 is measured with all 346 nodes live, and binding every node regardless of
+ *  visibility is now the project owner's RULING (7585fca) rather than an accident of this code --
+ *  taken on exactly those numbers. Do not add a visibility filter to the forces without re-tuning
+ *  against the filtered board first; `visible` is for the room circles and nothing else.
  *  See `2026-08-08-d3-migration-measurements.md`. */
 export function createBoardSimulation(opts: {
   nodes: Sim[];
