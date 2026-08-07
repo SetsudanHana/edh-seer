@@ -674,3 +674,59 @@ test("scrolling in far enough reaches card mode on its own", () => {
   for (let i = 0; i < 30; i++) fireEvent.wheel(canvas, { deltaY: -240 });
   expect(canvas.__graphProbe!().camZ).toBeGreaterThanOrEqual(6);
 });
+
+// Task 1's presets.test.ts fixture (Malakir Rebirth // Malakir Mire, an Instant whose back face is
+// a Land) with artCrop added to card:1 and to face:1:1 -- Task 4 puts each face's own art on its
+// face node, and this is what proves the flip actually swaps which art loads rather than just
+// flipping a flag nothing reads. Declared here rather than imported across test files.
+const dfcGraph = {
+  nodes: [
+    {
+      id: "card:1", kind: "card", label: "Malakir Rebirth // Malakir Mire", roles: ["protection"],
+      copies: 1, artCrop: "https://x/front.jpg",
+    },
+    { id: "face:1:0", kind: "face", label: "Malakir Rebirth" },
+    { id: "face:1:1", kind: "face", label: "Malakir Mire", artCrop: "https://x/back.jpg" },
+    { id: "type:Instant", kind: "type", label: "Instant" },
+    { id: "type:Land", kind: "type", label: "Land" },
+    { id: "color:B", kind: "color", label: "B" },
+    { id: "cmc:2", kind: "cmc", label: "2" },
+  ],
+  edges: [
+    { from: "card:1", to: "face:1:0", kind: "FACE", index: 0 },
+    { from: "card:1", to: "face:1:1", kind: "FACE", index: 1 },
+    { from: "face:1:0", to: "type:Instant", kind: "TYPE" },
+    { from: "face:1:1", to: "type:Land", kind: "TYPE" },
+    { from: "card:1", to: "color:B", kind: "IDENTITY" },
+    { from: "card:1", to: "cmc:2", kind: "CMC" },
+  ],
+} as unknown as typeof SAMPLE.graph;
+
+// The literal test in the task-7 brief dispatches its clicks at a fixed (100, 100) and selects the
+// "Card" mode button with an unanchored /card/i, which also matches the kind-filter row's own
+// "card 2" chip (two nodes of kind "card" in this fixture) -- ambiguous, per the anchoring already
+// used above for the same button (see "switching to card mode..."). And a hardcoded click point
+// assumes the DFC node settles exactly there, which is exactly the prediction the "hover shows a
+// card's build role" test above found didn't hold for the simulated layout -- __graphProbe's exact
+// x/y is the only thing to click through, same as that test does. `pick()`'s hit test divides
+// screen coordinates by `cam.z` (jsdom's canvas has a zero bounding rect, so no other term in that
+// division is nonzero here), so the click point is the probed world position scaled by the camera
+// zoom the "Card" button just set -- multiplying by anything else lands off the node's disc.
+it("flips a double-faced card to its back art and back again", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; x: number; y: number }> & {
+      camZ: number;
+      flipped: string[];
+    };
+  };
+  fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+  const probe = canvas.__graphProbe!();
+  const node = probe.find((n) => n.id === "card:1")!;
+  const at = { clientX: node.x * probe.camZ, clientY: node.y * probe.camZ };
+  fireEvent.click(canvas, at); // the DFC's node
+  expect(canvas.__graphProbe!().flipped).toEqual(["card:1"]);
+  fireEvent.click(canvas, at);
+  expect(canvas.__graphProbe!().flipped).toEqual([]);
+});

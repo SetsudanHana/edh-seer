@@ -3,7 +3,7 @@ import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
-import { CARD_MODE_Z, cardImageUrl, renderModeFor } from "./card-node.js";
+import { CARD_MODE_Z, cardImageUrl, faceArtOf, renderModeFor } from "./card-node.js";
 import { rimArcs, ROOM_HUE, ROOM_HUE_TEXT, ROOMS, roomHueOf, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
 
 /** Kinds ordered for the filter row: the ones worth looking at first. */
@@ -213,6 +213,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   >(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [query, setQuery] = useState("");
+  // Sticky per-card flip state (picture only -- see card-node.ts's faceArtOf doc comment). A card
+  // id in this set draws its back face's art instead of its front.
+  const [flipped, setFlipped] = useState<Set<string>>(() => new Set());
   // Capability check rather than a user-agent sniff: iOS Safari on iPhone has no element
   // fullscreen, and a button that silently does nothing is worse than no button.
   const canFullscreen = typeof Element !== "undefined" && "requestFullscreen" in Element.prototype;
@@ -256,6 +259,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const c = new Map<NodeKind, number>();
     for (const n of graph.nodes) c.set(n.kind, (c.get(n.kind) ?? 0) + 1);
     return c;
+  }, [graph]);
+
+  // Face node id -> its art (Task 4 put artCrop on each face). Built once per graph rather than
+  // scanned in the paint loop, which runs every frame.
+  const faceArt = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of graph.nodes) if (n.kind === "face" && n.artCrop) m.set(n.id, n.artCrop);
+    return m;
   }, [graph]);
 
   /** Card node ids matching the current search, or null when the box is empty. Null and "the
@@ -421,7 +432,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         // camRef.current, read directly rather than through `cam` below: the mode buttons write
         // camRef.current.z from outside this effect, and this closure must see that write on its
         // next call rather than a value frozen when the probe was first built.
-        { tallies, camZ: camRef.current.z },
+        { tallies, camZ: camRef.current.z, flipped: [...flipped] },
       );
 
     // A from-scratch graph gets full energy to organize; a graph that already has settled
@@ -594,7 +605,8 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // rewrites the path segment to a bigger size), so switching modes cold is a real fetch,
           // not just a bigger draw of what miniature mode already had loaded.
           const mode = renderModeFor(cam.z);
-          const src = mode === "card" && n.artCrop ? cardImageUrl(n.artCrop) : n.artCrop;
+          const base = faceArtOf(n.id, n.artCrop, flipped.has(n.id), faceArt);
+          const src = mode === "card" && base ? cardImageUrl(base) : base;
           const img = src ? artLoader.get(src) : undefined;
           // Scryfall's art_crop is landscape (~626x457, ~1.37:1); the 5-arg drawImage would
           // squash it into this square node. Cover-fit instead: crop a centred square out of the
@@ -637,6 +649,17 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             if (src) artLoader.request(src);
             ctx.fillStyle = colorOf(n.kind);
             ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
+          }
+
+          // The flip affordance: only when a back face exists (a single-faced card has no
+          // `face:<id>:1` entry) and only at card scale, where there is room for a legible glyph --
+          // a 14-world-unit miniature disc has none. Picture only, drawn over the art itself.
+          const flippable = faceArt.has(`${n.id.replace(/^card:/, "face:")}:1`);
+          if (flippable && mode === "card") {
+            ctx.fillStyle = paint.fg;
+            ctx.font = `500 ${9 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
+            ctx.textAlign = "right";
+            ctx.fillText("⤢", n.x + ART_RADIUS, n.y + ART_RADIUS * 1.4);
           }
 
           // The rim carries which rooms this card is in -- one arc per room, in that room's hue.
@@ -726,7 +749,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const onResize = () => { dim = size(); };
     addEventListener("resize", onResize);
 
-    const pick = (ev: PointerEvent): Sim | null => {
+    const pick = (ev: { clientX: number; clientY: number }): Sim | null => {
       const r = canvas.getBoundingClientRect();
       const wx = (ev.clientX - r.left - dim.w / 2 - cam.x) / cam.z;
       const wy = (ev.clientY - r.top - dim.h / 2 - cam.y) / cam.z;
@@ -743,6 +766,23 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
     const onDown = (e: PointerEvent) => { dragging = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); };
     const onUp = () => { dragging = null; };
+    // A card only flips when clicked at card scale AND it has a back face to flip to -- anything
+    // else (a non-flippable card, any card in miniature mode, empty space) must fall through with
+    // no change to existing click behaviour, which is why this checks `renderModeFor(cam.z)` and
+    // `faceArt` itself rather than relying on what mode the paint loop happened to draw last frame.
+    const onClick = (e: MouseEvent) => {
+      const hit = pick(e);
+      if (
+        hit && hit.kind === "card" && renderModeFor(cam.z) === "card"
+        && faceArt.has(`${hit.id.replace(/^card:/, "face:")}:1`)
+      ) {
+        setFlipped((prev) => {
+          const next = new Set(prev);
+          if (!next.delete(hit.id)) next.add(hit.id);
+          return next;
+        });
+      }
+    };
     const onMove = (e: PointerEvent) => {
       if (dragging) {
         cam.x += e.clientX - dragging.x; cam.y += e.clientY - dragging.y;
@@ -771,6 +811,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointerup", onUp);
     canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("click", onClick);
     canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       // Snapshot final positions so the next effect run (a graph or filter change) can reuse them
@@ -781,10 +822,16 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointerup", onUp);
       canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("click", onClick);
       canvas.removeEventListener("wheel", onWheel);
       delete (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe;
     };
-  }, [graph, hidden, roomsByNode, tallies]);
+    // `flipped` is a dep (not read through a ref like `matches`) so a toggle's re-render rebuilds
+    // this closure with the fresh set -- draw()'s reads of it, and the probe's, would otherwise
+    // stay pinned to whatever `flipped` was when the effect first ran. Cheap here: flipping is a
+    // rare, deliberate click, not a per-keystroke event like the search box `matches` avoids
+    // reheating for.
+  }, [graph, hidden, roomsByNode, tallies, flipped, faceArt]);
 
   const toggle = (k: NodeKind) =>
     setHidden((prev) => {
