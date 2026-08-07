@@ -2,7 +2,9 @@ import { describe, expect, test } from "vitest";
 import {
   boardMetrics,
   containment,
+  CONTAINMENT,
   createBoardSimulation,
+  FOREIGN_PUSH,
   forceRoomAttraction,
   forceRoomContainment,
   foreignPush,
@@ -252,6 +254,42 @@ describe("forceRoomContainment", () => {
   });
 });
 
+describe("createBoardSimulation's stated invariants", () => {
+  // Stated as a HARD CONSTRAINT in three doc comments (foreignPush, forceRoomContainment,
+  // CONTAINMENT) and asserted nowhere until now. The reverse expels cards from every room at once
+  // and the board falls apart -- a whole-board failure that no unit test would localise.
+  test("FOREIGN_PUSH stays below CONTAINMENT", () => {
+    expect(FOREIGN_PUSH).toBeLessThan(CONTAINMENT);
+  });
+
+  // The simulation must come back STOPPED: GraphView's requestAnimationFrame paint loop is what
+  // calls tick(), and d3's own d3-timer stepper would be a SECOND loop on a schedule independent
+  // of paint. That failure is invisible -- the board just settles faster -- so it needs an
+  // assertion rather than a code reading.
+  //
+  // Reads alpha rather than node positions because alpha is precisely what the internal stepper
+  // mutates and tick() alone would not: a stray .restart() decays it, a stopped timer never
+  // touches it. No flake risk in the passing direction -- a stopped timer cannot fire late.
+  test("comes back stopped, so nothing ticks it but the caller", async () => {
+    const a: Sim = { id: "card:a", kind: "card", label: "a", x: 10, y: 0, vx: 0, vy: 0, deg: 0 };
+    const b: Sim = { id: "card:b", kind: "card", label: "b", x: -10, y: 0, vx: 0, vy: 0, deg: 0 };
+    const { simulation } = createBoardSimulation({
+      nodes: [a, b],
+      links: [],
+      roomsByNode: new Map([["card:a", ["ramp"]], ["card:b", ["ramp"]]]),
+      rooms: [{ id: "ramp" }],
+      tallies: new Map([["ramp", { count: 2, target: 0, under: false }]]),
+      universal: new Set(),
+      visible: () => true,
+    });
+    expect(simulation.alpha()).toBe(1);
+    // Long enough for d3-timer to have fired several times (it steps on rAF, or setTimeout ~17ms
+    // without one) had the simulation been left running.
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    expect(simulation.alpha()).toBe(1);
+  });
+});
+
 /** A seeded LCG, so a trial is reproducible from its seed. d3-force is itself deterministic
  *  (it seeds its own fixed LCG), so ALL trial-to-trial variance has to come from the initial
  *  seeding -- which is exactly where it comes from in the browser today, via Math.random() in
@@ -263,7 +301,7 @@ function lcg(seed: number): () => number {
 
 /** One settled layout of the inalla fixture on the role preset. */
 function runTrial(seed: number) {
-  const graph = inalla.graph as unknown as CardGraph;
+  const graph = inalla.graph as CardGraph;
   const random = lcg(seed);
   const comboCards = new Set(inalla.combos.flatMap((c) => c.cards));
   const facts = cardFacts(graph, comboCards);
@@ -312,7 +350,19 @@ function runTrial(seed: number) {
     nodes, links, roomsByNode, rooms, tallies, universal, visible,
   });
 
-  // 800 ticks: alpha 1 decaying at 0.995/tick reaches the 0.02 floor at ~781.
+  // 800 ticks. NOT because alpha has reached its floor -- it has not, and the arithmetic that
+  // once claimed so here was wrong. d3's update is `alpha += (alphaTarget - alpha) * alphaDecay`,
+  // so with alphaTarget 0.02 the trajectory is `alpha_n = 0.02 + 0.98 * 0.995^n`, an exponential
+  // approach to the floor rather than a decay to zero that crosses it. At n=800 alpha is 0.0378,
+  // still ~1.9x the floor; within 5% of it takes ~1375 ticks. (The old "~781" was the
+  // decay-to-ZERO crossing, which ignores the alphaTarget term -- i.e. exactly the thing
+  // alphaTarget was chosen over alphaMin to provide.)
+  //
+  // 800 is nonetheless enough, for a reason that has nothing to do with the floor: every force
+  // here except collide scales linearly in alpha, so alpha sets how FAST the board converges and
+  // not where it converges TO. The equilibrium is alpha-independent. Measured, ten trials each:
+  // at 1600 / 3000 / 6000 ticks escapes.one stays 0 and overlaps stay 0/10, intrusions settle
+  // 14 -> 11 and escapes.two drifts 55 -> 60. See 2026-08-08-d3-migration-measurements.md.
   for (let i = 0; i < 800; i++) simulation.tick();
 
   const cards = nodes.filter(visible);

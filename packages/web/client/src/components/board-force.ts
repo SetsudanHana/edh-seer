@@ -286,12 +286,24 @@ export const COLLIDE_ITERATIONS = 1;
  *  Returned STOPPED. GraphView's own requestAnimationFrame paint loop calls `tick()`; d3's internal
  *  d3-timer stepper would be a second loop running on a schedule independent of paint.
  *
- *  `visible` gates the ROOM CIRCLES only -- which cards a room is drawn around. Every node in
- *  `nodes` takes part in charge/collide/link whether or not it is visible, because that is the
- *  array d3 binds its forces to. The hand-rolled loop this replaces filtered to visible nodes
- *  inside the tick instead, so a hidden node contributed nothing. REPULSION was measured under
- *  THIS behaviour, with all 346 fixture nodes live and the 252 non-card ones held near the origin
- *  by CENTER_PULL; if Task 5 makes visibility filter the forces, the bracket must be re-measured.
+ *  READ THIS BEFORE FILTERING BY VISIBILITY. `visible` gates the ROOM CIRCLES only -- which cards
+ *  a room is drawn around. Every node in `nodes` takes part in charge/collide/link whether or not
+ *  it is visible, because that is the array d3 binds its forces to. The hand-rolled loop this
+ *  replaces filtered to visible nodes inside its tick instead, so a hidden node contributed
+ *  nothing.
+ *
+ *  The hidden nodes are NOT inert scenery. On the inalla fixture, 252 of the 346 nodes are
+ *  non-card, and they carry roughly 1,300 card<->non-card LINK SPRINGS -- most of the board's
+ *  cohesion. Binding only cards (and only card<->card links, as GraphView's own loop does) is a
+ *  measured ACCEPTANCE FAILURE at these constants, not a nicety: escapes.one 0 -> 3 across ten
+ *  trials at 800 ticks, still 1 at 6000, and escapes.two 55 -> 168. Cards ESCAPE rather than pack
+ *  tighter, because what is removed is cohesion, not repulsion.
+ *
+ *  (CENTER_PULL does not hold those nodes anywhere -- at 0.0004*alpha it is ~1e-5 per tick. An
+ *  earlier version of this comment credited it and was wrong.)
+ *
+ *  So REPULSION 25 is measured with all 346 nodes live. If Task 5 filters, the constants must be
+ *  re-tuned against the filtered board, not merely re-checked.
  *  See `2026-08-08-d3-migration-measurements.md`. */
 export function createBoardSimulation(opts: {
   nodes: Sim[];
