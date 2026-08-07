@@ -4,7 +4,7 @@ import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
 import { CARD_MODE_Z, MAX_Z, cardImageUrl, faceArtOf, renderModeFor } from "./card-node.js";
-import { ART_RADIUS, COLLISION_PAD, rimArcs, rimHues, OVERFLOW_HUE, ROOM_HUE_TEXT, ROOMS, roomLayout, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
+import { ART_RADIUS, COLLISION_PAD, rimArcs, rimHues, OVERFLOW_HUE, ROOMS, roomLayout, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
 // uses, while deck-rooms.ts owns the value -- see its doc comment for why it moved.
 export { ART_RADIUS };
@@ -213,79 +213,6 @@ const CLICK_DRAG_PX = 4;
  *  simulated gesture. */
 export function traveledAsDrag(dx: number, dy: number, threshold = CLICK_DRAG_PX): boolean {
   return Math.hypot(dx, dy) > threshold;
-}
-
-export interface LabelBox { x: number; y: number; w: number; h: number }
-
-function boxesOverlap(a: LabelBox, b: LabelBox): boolean {
-  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-}
-
-/** Whether a box touches a circle's DISC (the filled area, not just the stroked ring) -- a label
- *  sitting over the wash is exactly as unreadable as one sitting over the stroke. Closest-point
- *  distance, not a bounding-box approximation: a text box is wide and short, so treating the
- *  circle as its own bounding square would falsely flag a box that passes near a corner of that
- *  square but nowhere near the disc itself. */
-function boxOverlapsCircle(box: LabelBox, c: Circle): boolean {
-  const nearX = Math.max(box.x, Math.min(c.x, box.x + box.w));
-  const nearY = Math.max(box.y, Math.min(c.y, box.y + box.h));
-  const dx = c.x - nearX, dy = c.y - nearY;
-  return dx * dx + dy * dy < c.r * c.r;
-}
-
-/** Nudges a room label straight up, off its own circle's rim, until its bounding box clears every
- *  label already placed this frame AND every room's circle (own included, though that one can
- *  never actually clash -- baseY already starts outside it) -- resolving both defects Task 10
- *  found at 1440x900 whole-deck zoom: LANDS's label stamped directly over INTERACTION's (two
- *  labels colliding), and separately CARD ADVANTAGE's label partly painted over by LANDS's own
- *  wash+stroke (a label sitting inside a THIRD room's circle, drawn after it in `ROOMS` order).
- *  Neither room's circle moves: room geometry (centroid + max-member-distance, see deck-rooms.ts's
- *  roomLayout) is load-bearing and validated, this is a label-placement problem only.
- *
- *  Vertical only, and always straight up (baseY is already above the rim -- see the call site):
- *  horizontal position stays pinned to the room's own circle.x, so a label never drifts sideways
- *  toward a room it doesn't belong to. The outline's hue is what still ties a floated label back
- *  to its circle -- see deck-rooms.ts's ROOM_HUE doc comment on why hue, not fill, carries that.
- *
- *  A circle clash jumps straight to just above that circle's own top (rather than the small
- *  per-attempt step a label clash takes) -- a big room's circle can dwarf the fixed step, and
- *  incrementing by `h` alone could exhaust every attempt while still inside it. A label clash still
- *  takes the small step: two labels are never more than a few line-heights apart to begin with.
- *
- *  `placed` accumulates across a frame's rooms; the caller passes the same array through in ROOMS
- *  declaration order (fixed, independent of geometry), so which label "wins" an already-taken
- *  spot at a GIVEN zoom is deterministic, not a race between whichever room happened to draw
- *  first. That does not make placement itself stable under zoom: `roomFontPx = 12 / cam.z` scales
- *  the label's measured box with zoom while `circle.r` does not, so which labels collide -- and
- *  therefore where this function pushes them -- is zoom-dependent, and a label's y can jump
- *  discontinuously as the user zooms in or out. Cards moving or the simulation settling do not
- *  retrigger this on their own; a draw only reruns it because the frame redraws anyway, at
- *  whatever positions and zoom that frame has. Runs once per room per frame, and each call is
- *  O(placed so far + circles): with the role preset's seven rooms that's at most 42 comparisons
- *  total, immaterial next to the O(n^2) physics tick it shares a frame with. A derived preset
- *  (subtype, on a real EDH deck) can put 40-80 rooms on screen at once; this scales the same way
- *  everything else per-frame does and stays cheap next to the physics tick.
- *
- *  Bounded retries (`Math.max(ROOMS.length, circles.length)`) rather than an unbounded search: if
- *  every step is somehow still blocked, the label lands at its last tried spot rather than looping
- *  forever. This used to be a bare `ROOMS.length` on the reasoning that "six other rooms is the
- *  true ceiling any one label could be contending with" -- true only of the role preset's fixed
- *  seven. A derived preset (subtype) can produce 40-80 rooms for one deck, so the ceiling has to
- *  track whichever room list is actually on screen this frame (`circles`, already a parameter),
- *  not the one preset that happens to have a constant. */
-export function placeRoomLabel(
-  x: number, baseY: number, w: number, h: number, placed: LabelBox[], circles: readonly Circle[] = [],
-): number {
-  let y = baseY;
-  for (let attempt = 0; attempt < Math.max(ROOMS.length, circles.length); attempt++) {
-    const box = { x: x - w / 2, y: y - h, w, h };
-    const blockingCircle = circles.find((c) => boxOverlapsCircle(box, c));
-    if (blockingCircle) { y = blockingCircle.y - blockingCircle.r - h * 0.3; continue; }
-    if (!placed.some((p) => boxesOverlap(box, p))) { placed.push(box); return y; }
-    y -= h;
-  }
-  placed.push({ x: x - w / 2, y: y - h, w, h });
-  return y;
 }
 
 /** Card name -> copy count, built from the graph's own card nodes (each copy of a card already
@@ -714,25 +641,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       // around the cards inside it (see roomLayout), so where two rooms overlap, a card genuinely
       // belongs to both.
       //
-      // Hue rides the outline and the label, never the fill: a translucent fill over this surface
-      // collapses toward gray (measured), so it cannot be what tells two rooms apart. The label
-      // does that; the wash only gives the region a body, and doubles in the lens where two rooms
-      // meet -- which is exactly where the cards in both of them sit.
-      ctx.textAlign = "center";
-      // Accumulates this frame's placed label boxes so placeRoomLabel (see its doc comment) can
-      // push a colliding label up and off whatever already claimed its spot -- reset every draw()
-      // call since rooms (and therefore labels) are recomputed every frame, not just once.
-      const placedLabels: LabelBox[] = [];
-      // Every occupied room's circle, computed once for the whole pass rather than re-derived per
-      // label: placeRoomLabel checks a candidate label against ALL of these (not just its own), so
-      // a label can never end up painted over by a DIFFERENT room's later-drawn wash+stroke, no
-      // matter which order the current preset's rooms fall in.
-      const roomCircles = [...circles.values()];
-      const roomFontPx = 12 / cam.z;
+      // Hue rides the outline, never the fill: a translucent fill over this surface collapses
+      // toward gray (measured), so it cannot be what tells two rooms apart -- the DOM legend
+      // (below the canvas) and the rim arcs on each card do that. The wash only gives the region a
+      // body, and doubles in the lens where two rooms meet -- which is exactly where the cards in
+      // both of them sit.
       for (const room of rooms) {
         const circle = circles.get(room.id);
         if (!circle) continue;
-        const tally = tallies.get(room.id);
         // The room's OWN hue, off the current preset -- not deck-rooms.ts's ROOM_HUE, which only
         // has entries for the seven role ids (see hueOf's doc comment above). `room` here IS one
         // of that preset's own room objects, so there is nothing to look up: its hue rides along.
@@ -747,27 +663,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         ctx.strokeStyle = hue;
         ctx.beginPath(); ctx.arc(circle.x, circle.y, circle.r, 0, TAU); ctx.stroke();
 
-        // Label sits above the circle's top edge rather than inside it: a circle has no straight
-        // top edge to hang text off, and inside it the label lands under the cards it describes.
-        // Derived room circles overlap by design (two rooms sharing a card -- see roomLayout's doc
-        // comment), which put two labels' default top-centre spots on top of each other at
-        // 1440x900 whole-deck zoom (Task 10); placeRoomLabel pushes the later one up until its
-        // measured box clears every label already placed this frame.
-        // Text, not a graphic object: needs WCAG's 4.5:1 floor, not the 3:1 the outline/rim hue
-        // was validated against -- ROOM_HUE_TEXT is the same hue family lightened to clear it
-        // (see deck-rooms.ts's ROOM_HUE / ROOM_HUE_TEXT doc comments).
-        ctx.font = `500 ${roomFontPx}px "JetBrains Mono", ui-monospace, monospace`;
-        // ROOM_HUE_TEXT only has WCAG-relightened entries for the seven role ids; any other
-        // preset's room falls back to its own (non-relightened) hue rather than `undefined` --
-        // same defect, same fix as the outline/fill hue above.
-        ctx.fillStyle = tally?.under ? paint.warning : (ROOM_HUE_TEXT[room.id] ?? room.hue);
-        const count = tally ? (tally.target > 0 ? `${tally.count}/${tally.target}` : `${tally.count}`) : "";
-        const text = `${room.label.toUpperCase()} ${count}`.trim();
-        const w = ctx.measureText(text).width;
-        const h = roomFontPx * 1.35;
-        const baseY = circle.y - circle.r - 6 / cam.z;
-        const y = placeRoomLabel(circle.x, baseY, w, h, placedLabels, roomCircles);
-        ctx.fillText(text, circle.x, y);
+        // No label on the canvas. `roomFontPx = 12 / cam.z` scaled a label's measured box with zoom
+        // while `circle.r` did not, so which labels collided -- and therefore where they got pushed
+        // -- was zoom-dependent and a label's y jumped discontinuously as the user zoomed. No
+        // placement heuristic fixes that, and the subtype preset puts 40-80 rooms on screen for one
+        // deck, where 80 labels are hopeless regardless. The DOM legend below the canvas names them.
       }
 
       ctx.lineWidth = 0.7 / cam.z;

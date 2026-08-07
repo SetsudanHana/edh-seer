@@ -32,10 +32,9 @@ export const ROOMS: Room[] = [
  *
  *  These are graphic objects (a 1.5px outline stroke, a 2.5px rim arc), so the search below
  *  targeted WCAG's graphic-object floor, contrast >=3:1 against the surface -- NOT the >=4.5:1
- *  floor body text needs. The room LABEL is text and does need 4.5:1; three of these seven hues
- *  (cardAdvantage, interaction, ramp) clear 3:1 but land at 3.00-3.18, short of 4.5:1. The label
- *  paints from ROOM_HUE_TEXT instead (below), not this map -- see its doc comment for why raising
- *  these three hues' lightness in place was tried and rejected.
+ *  floor body text needs. A room's name used to be painted as a canvas label held to that higher
+ *  floor; it now lives in the DOM legend instead, where it is ordinary page foreground text and
+ *  carries no hue of its own at all (see 2026-08-07-room-size-and-board-chrome's Task 8).
  *
  *  Validated against rim and lens adjacency, the two relations that replaced grid adjacency
  *  when rooms became circles derived from member cards (Tasks 1-7 of 2026-08-04-circle-rooms).
@@ -113,53 +112,6 @@ export const OVERFLOW_HUE = "#6b7280";
 export function roomHueOf(id: RoomId): string {
   return ROOM_HUE[id] ?? OVERFLOW_HUE;
 }
-
-/** Text-safe variant of ROOM_HUE, used ONLY for the room label (GraphView.tsx's `roomFontPx`
- *  fillText) -- never for the outline stroke, the fill wash, or a card's rim arcs, all of which
- *  stay on ROOM_HUE. The two draw contexts have different floors and ROOM_HUE was validated
- *  against the wrong one for text: the outline (1.5px stroke) and rim (2.5px arc) are graphic
- *  objects, WCAG's >=3:1 floor, which is what ROOM_HUE's search targeted. The label is body text
- *  at 12/cam.z px, normal weight, which needs WCAG's >=4.5:1 -- three of ROOM_HUE's seven hues
- *  (cardAdvantage 3.00, interaction 3.04, ramp 3.18 against surface #14171b) clear the graphic
- *  floor but fail the text one.
- *
- *  Fallback route, not the preferred one: raising those three hues' OKLCH lightness to clear
- *  4.5:1 (keeping hue and chroma fixed) was tried first and REJECTED -- it breaks the CVD
- *  separation ROOM_HUE's doc comment records. Re-validated with the same three orderings used to
- *  originally clear the palette:
- *    lightened set (cardAdvantage #786bff, ramp #3687b9, interaction #469134, others unchanged):
- *    Run 1 (wincons,cardAdvantage,ramp,lands,interaction,boardWipes): FAIL -- normal-vision floor,
- *      interaction<->lands (then #469134<->#21a28f) deltaE 11.0, below the hard 15.0 floor
- *    Run 3 (ramp,boardWipes,cardAdvantage,interaction,wincons,lands): FAIL -- CVD separation,
- *      wincons<->interaction (#b08e1d<->#469134) deltaE 3.4 protan, below the 6.0 floor; also
- *      normal-vision floor, cardAdvantage<->boardWipes deltaE 7.2
- *  The pool was already near its ceiling (worst validated pair 12.4, see ROOM_HUE's comment) --
- *  bumping three lightnesses at once shoves them into other pairs' territory. Lightness alone
- *  cannot buy 4.5:1 on those three without a full hue+lightness re-search, which is out of scope
- *  for a text-contrast fix. ROOM_HUE_TEXT instead lightens the SAME three hues (same H, same C,
- *  higher L) but keeps them out of the rim/lens/outline system entirely, so the CVD-validated
- *  ROOM_HUE set is untouched. All seven values individually clear >=4.5:1 against #14171b; pairwise
- *  CVD separation between label colors was not re-checked here the way it was for ROOM_HUE, on the
- *  reasoning that a label's room name is printed in the text itself -- hue only has to trace a
- *  displaced label back to its own circle's (ROOM_HUE) outline, a same-hue-family match, not
- *  distinguish one label's hue from a different room's label.
- *
- *  That reasoning holds for 5 of 7 rooms but NOT ramp. CIE76 deltaE (Lab, D65) across all 21 pairs
- *  of the shipped values above: ramp #3687b9 is deltaE 7.70 from strategy's ROOM_HUE outline
- *  #1c8db7 -- closer than ramp is to its OWN ROOM_HUE outline #146d9e (deltaE 10.14). Every other
- *  pair is >=26.3, so this is a one-off, not a pattern; a displaced ramp label traced by hue alone
- *  points at strategy's circle first. Left as-is, not renudged: ramp clears the text floor at only
- *  4.56:1 against the 4.5 minimum this map exists to hit, and any further hue shift risks pushing
- *  it back under -- the same failure this file was written to close. What actually disambiguates a
- *  displaced ramp label is the room name baked into the text itself (`RAMP 8/10`, see
- *  GraphView.tsx's `roomFontPx` draw) -- hue is a secondary cue here, not the identifying one,
- *  consistent with ROOM_HUE's own doc comment that hue never IDs a room by itself. */
-export const ROOM_HUE_TEXT: Record<RoomId, string> = {
-  ...ROOM_HUE,
-  cardAdvantage: "#786bff",
-  ramp: "#3687b9",
-  interaction: "#469134",
-};
 
 const ROOM_OF_CATEGORY = new Map<string, RoomId>(
   ROOMS.flatMap((r) => r.categories.map((c) => [c, r.id] as const)),
