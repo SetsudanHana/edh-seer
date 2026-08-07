@@ -286,6 +286,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   // Capability check rather than a user-agent sniff: iOS Safari on iPhone has no element
   // fullscreen, and a button that silently does nothing is worse than no button.
   const canFullscreen = typeof Element !== "undefined" && "requestFullscreen" in Element.prototype;
+  // Developer instruments (the 16 node-kind filter chips, the render-mode buttons) behind one
+  // toggle. Local state on purpose -- it does not persist across mounts, per the spec.
+  const [debug, setDebug] = useState(false);
 
   useEffect(() => {
     const onChange = () => setIsFullscreen(document.fullscreenElement === shellRef.current);
@@ -1066,56 +1069,67 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         className={`flex flex-col gap-6 ${isFullscreen ? "h-screen bg-(--background)" : ""}`}
       >
         <div className="flex flex-wrap gap-2">
-          {kinds.map((k) => {
-            const on = !hidden.has(k);
-            return (
-              <button
-                key={k}
-                type="button"
-                aria-pressed={on}
-                onClick={() => toggle(k)}
-                className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
-                  on ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
-                }`}
-              >
-                {k} <span className="tabular-nums">{counts.get(k)}</span>
-              </button>
-            );
-          })}
-          {/* Which predicate groups the board (Task 8). Plain state, not a ref like `cam` below --
-           *  switching this genuinely changes which room every card is in, so a real re-render
-           *  (and the layout effect re-running -- see its dependency-array comment) is correct
-           *  here, unlike the camera. */}
-          <label className="eyebrow flex items-center gap-1.5">
-            Group by
-            <select
-              value={presetId}
-              onChange={(e) => setPresetId(e.target.value)}
-              className="rounded-(--radius) border border-(--separator) bg-transparent px-1.5 py-0.5 text-(--foreground)"
+          {/* Which predicate groups the board. Chips, not a <select>: this is the primary control
+           *  on this view and the one thing a reader changes on purpose. Plain state, not a ref
+           *  like `cam` -- switching it genuinely changes which room every card is in, so a real
+           *  re-render (and the layout effect re-running) is correct here. */}
+          {PRESETS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              aria-pressed={p.id === presetId}
+              onClick={() => setPresetId(p.id)}
+              className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                p.id === presetId ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+              }`}
             >
-              {PRESETS.map((p) => (
-                <option key={p.id} value={p.id}>{p.label}</option>
-              ))}
-            </select>
-          </label>
-          {/* Sets cam.z directly on the ref (see camRef above) rather than through React state --
-           *  the paint loop reads cam.z every frame, so there is nothing for a re-render to do
-           *  here. No easing/tween: cam.z is one number, and an eased transition can be layered
-           *  on top later without anything else in this component changing. */}
+              {p.label}
+            </button>
+          ))}
+
+          {debug
+            ? kinds.map((k) => {
+                const on = !hidden.has(k);
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggle(k)}
+                    className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                      on ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                    }`}
+                  >
+                    {k} <span className="tabular-nums">{counts.get(k)}</span>
+                  </button>
+                );
+              })
+            : null}
+
+          {/* Sets cam.z directly on the ref rather than through React state -- the paint loop reads
+           *  cam.z every frame, so there is nothing for a re-render to do here. */}
+          {debug ? (
+            <>
+              <button type="button" className="eyebrow" onClick={() => { camRef.current.z = CARD_MODE_Z; }}>
+                Card
+              </button>
+              <button type="button" className="eyebrow" onClick={() => { camRef.current.z = 1; }}>
+                Miniature
+              </button>
+            </>
+          ) : null}
+
           <button
             type="button"
-            className="eyebrow"
-            onClick={() => { camRef.current.z = CARD_MODE_Z; }}
+            aria-pressed={debug}
+            onClick={() => setDebug((d) => !d)}
+            className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+              debug ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+            }`}
           >
-            Card
+            debug
           </button>
-          <button
-            type="button"
-            className="eyebrow"
-            onClick={() => { camRef.current.z = 1; }}
-          >
-            Miniature
-          </button>
+
           {canFullscreen ? (
             <button
               type="button"

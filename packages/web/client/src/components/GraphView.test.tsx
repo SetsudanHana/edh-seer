@@ -6,6 +6,7 @@ import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
 import { CARD_MODE_Z } from "./card-node.js";
+import { PRESETS } from "./presets.js";
 
 /** Records the 2D-context calls made during a render, and -- more importantly -- lets the
  *  layout effect get past its `if (!ctx) return;` guard at all, which is what attaches
@@ -167,6 +168,8 @@ test("a multi-copy card counts by its copies in the room tallies reachable from 
 test("renders the kind filter row and a legend entry for the graph's event tag", () => {
   render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
   expect(screen.getByLabelText(/Deck graph:/)).toBeInTheDocument();
+  // The kind filter row is a debug instrument (Task 11) -- one click in.
+  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
   expect(screen.getByText("card")).toBeInTheDocument();
   expect(screen.getByText("enters")).toBeInTheDocument();
 });
@@ -206,6 +209,7 @@ test("exposes each card's rooms on the measurement probe", () => {
 test("gives a non-card node no rooms", async () => {
   makeContextSpy();
   const { container, getByRole } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  await userEvent.click(getByRole("button", { name: /^debug$/i }));
   await userEvent.click(getByRole("button", { name: /^subtype/ }));
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => Array<{ kind: string; rooms: string[] | null }>;
@@ -381,6 +385,7 @@ test("hides every non-card kind on first paint", () => {
 
 test("renders the event chip unpressed so the mesh is one click away", () => {
   render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
   expect(screen.getByRole("button", { name: /^event/ })).toHaveAttribute("aria-pressed", "false");
 });
 
@@ -632,6 +637,7 @@ test("keeps pan and zoom when a filter chip is toggled", () => {
   // `camZ` off the probe entirely (e.g. a revert of the camRef change), and `undefined === undefined`
   // passes -- the test would catch nothing. Pin the value as a real number first.
   expect(Number.isFinite(before)).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
   fireEvent.click(screen.getByRole("button", { name: /event/i }));
   expect(canvas.__graphProbe!().camZ).toBe(before);
 });
@@ -642,6 +648,7 @@ test("keeps pan and zoom when a filter chip is toggled", () => {
 test("switching to card mode raises the zoom past the card threshold", () => {
   makeContextSpy();
   const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
   fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => { camZ: number };
@@ -735,6 +742,7 @@ it("flips a double-faced card to its back art and back again", () => {
       flipped: string[];
     };
   };
+  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
   fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
   const probe = canvas.__graphProbe!();
   const node = probe.find((n) => n.id === "card:1")!;
@@ -754,9 +762,55 @@ it("flips a double-faced card to its back art and back again", () => {
 // "flip moved the board" means. Asserts every node's x/y, not just the flipped card's, since a
 // reheat disturbs the whole simulation (room attraction, repulsion, link springs all read every
 // node), not only the one that got clicked.
+// Task 11: the preset control was a <select>, and the developer instruments (the 16 node-kind
+// filter chips, the render-mode buttons) sat in the primary row alongside it. Inverted: presets
+// are chips in the primary row, the instruments hide behind one "debug" toggle.
+test("the presets are chips, not a dropdown", () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  expect(screen.queryByRole("combobox")).toBeNull();
+  for (const p of PRESETS) {
+    expect(screen.getByRole("button", { name: p.label })).toBeInTheDocument();
+  }
+  expect(screen.getByRole("button", { name: "Role" })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("clicking a preset chip changes which rooms the board has", () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const before = [...screen.getByTestId("room-legend").querySelectorAll("[data-room]")]
+    .map((el) => el.getAttribute("data-room"));
+  expect(before).toEqual(ROOMS.map((r) => r.id));
+  fireEvent.click(screen.getByRole("button", { name: "Colour" }));
+  const after = [...screen.getByTestId("room-legend").querySelectorAll("[data-room]")]
+    .map((el) => el.getAttribute("data-room"));
+  expect(after).not.toEqual(before);
+  expect(screen.getByRole("button", { name: "Colour" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Role" })).toHaveAttribute("aria-pressed", "false");
+});
+
+test("the developer controls are hidden until debug is on", () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  // The 16 node-kind chips and the two render-mode buttons are instruments, not primary controls.
+  expect(screen.queryByRole("button", { name: /^event/ })).toBeNull();
+  expect(screen.queryByRole("button", { name: /^card$/i })).toBeNull();
+  expect(screen.queryByRole("button", { name: /^miniature$/i })).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
+  expect(screen.getByRole("button", { name: /^event/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^card$/i })).toBeInTheDocument();
+});
+
+test("the primary row keeps search and fullscreen", () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  expect(screen.getByRole("searchbox", { name: /find a card/i })).toBeInTheDocument();
+});
+
 test("defaults to the role preset", () => {
   render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
-  expect(screen.getByRole("combobox", { name: /group by/i })).toHaveValue("role");
+  expect(screen.getByRole("button", { name: "Role" })).toHaveAttribute("aria-pressed", "true");
 });
 
 // dfcGraph carries TWO cards (see its own doc comment above): Malakir Rebirth // Malakir Mire
@@ -771,7 +825,7 @@ test("defaults to the role preset", () => {
 it("regroups the board when the preset changes", () => {
   makeContextSpy();
   const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
-  fireEvent.change(screen.getByRole("combobox", { name: /group by/i }), { target: { value: "colour" } });
+  fireEvent.click(screen.getByRole("button", { name: "Colour" }));
   expect((container.querySelector("canvas") as any).__graphProbe!().rooms).toEqual(["B", "G"]);
 });
 
@@ -787,7 +841,7 @@ it("regroups the board when the preset changes", () => {
 it("groups a double-faced card by its FRONT face", () => {
   makeContextSpy();
   const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
-  fireEvent.change(screen.getByRole("combobox", { name: /group by/i }), { target: { value: "type" } });
+  fireEvent.click(screen.getByRole("button", { name: "Type" }));
   expect((container.querySelector("canvas") as any).__graphProbe!().rooms).toEqual(["Creature", "Instant"]);
 });
 
@@ -810,6 +864,7 @@ it("flips the card when clicked on the flip glyph itself, not the node centre", 
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => Array<{ id: string; x: number; y: number }> & { camZ: number; flipped: string[] };
   };
+  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
   fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
   const probe = canvas.__graphProbe!();
   const node = probe.find((n) => n.id === "card:1")!;
@@ -832,6 +887,7 @@ it("does not move any node when a card is flipped", () => {
       flipped: string[];
     };
   };
+  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
   fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
   const before = canvas.__graphProbe!();
   const node = before.find((n) => n.id === "card:1")!;
@@ -944,6 +1000,9 @@ function cardModeFrame(graph: typeof SAMPLE.graph, report: typeof SAMPLE.report)
   vi.stubGlobal("cancelAnimationFrame", () => {});
   const calls = makeContextSpy();
   render(<GraphView graph={graph} report={report} />);
+  // The debug click causes a re-render, so it must land before the `calls.length = 0` reset below
+  // -- otherwise that re-render's own paint would be swept into the frame this helper returns.
+  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
   fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
   calls.length = 0;          // discard the mount frame, drawn in miniature mode
   nextFrame!(0);
@@ -1013,6 +1072,7 @@ test("the search-match ring in card mode is a rectangle around the card box", ()
   vi.stubGlobal("cancelAnimationFrame", () => {});
   const calls = makeContextSpy();
   render(<GraphView graph={graph} report={{ ...SAMPLE.report, combos: [], archetypes: [] }} />);
+  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
   fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
   fireEvent.change(screen.getByRole("searchbox", { name: /find a card/i }), { target: { value: "Bojuka" } });
   calls.length = 0;
@@ -1126,7 +1186,7 @@ test("the legend scroller becomes interactive once the room list exceeds the dis
   makeContextSpy();
   const user = userEvent.setup();
   render(<GraphView graph={manySubtypeGraph(13)} report={{ ...SAMPLE.report, combos: [], archetypes: [] }} />);
-  await user.selectOptions(screen.getByRole("combobox", { name: /group by/i }), "subtype");
+  await user.click(screen.getByRole("button", { name: "Subtype" }));
   const rows = screen.getAllByTestId("room-legend-row");
   expect(rows.length).toBeGreaterThan(12);
   expect(screen.getByTestId("room-legend-scroll").className).toMatch(/pointer-events-auto/);
