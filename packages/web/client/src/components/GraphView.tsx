@@ -4,7 +4,8 @@ import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
 import { CARD_MODE_Z, cardImageUrl, faceArtOf, renderModeFor } from "./card-node.js";
-import { rimArcs, ROOM_HUE, ROOM_HUE_TEXT, ROOMS, roomHueOf, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
+import { rimArcs, OVERFLOW_HUE, ROOM_HUE_TEXT, ROOMS, roomLayout, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
+import { cardFacts, PRESETS, roomsForFacts } from "./presets.js";
 
 /** Kinds ordered for the filter row: the ones worth looking at first. */
 const KIND_ORDER: NodeKind[] = [
@@ -216,6 +217,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   // Sticky per-card flip state (picture only -- see card-node.ts's faceArtOf doc comment). A card
   // id in this set draws its back face's art instead of its front.
   const [flipped, setFlipped] = useState<Set<string>>(() => new Set());
+  // Which predicate groups the board (Task 8). Defaults to "role" so an unmodified board looks
+  // exactly like it always has -- the other four (type, colour, mana value, subtype) are derived
+  // from the deck itself, see presets.ts.
+  const [presetId, setPresetId] = useState("role");
   // Capability check rather than a user-agent sniff: iOS Safari on iPhone has no element
   // fullscreen, and a button that silently does nothing is worse than no button.
   const canFullscreen = typeof Element !== "undefined" && "requestFullscreen" in Element.prototype;
@@ -296,17 +301,27 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   const flippedRef = useRef<Set<string>>(new Set());
   flippedRef.current = flipped;
 
-  /** Which rooms each card node belongs to, keyed by node id. Recomputed only when the graph or
-   *  the report changes -- it is pure over both. */
-  const roomsByNode = useMemo(() => {
-    const comboCards = new Set((report.combos ?? []).flatMap((c) => c.cards));
-    const out = new Map<string, RoomId[]>();
-    for (const n of graph.nodes) {
-      if (n.kind !== "card") continue;
-      out.set(n.id, roomsForCard(n.roles, n.label, comboCards));
-    }
-    return out;
-  }, [graph, report]);
+  /** One fact record per card, independent of preset -- memoised on `graph` identity alone so
+   *  switching the "Group by" control never re-walks the edge list. */
+  const facts = useMemo(() => cardFacts(graph), [graph]);
+  // PRESETS is a fixed module-level array, so `.find` returns the SAME object reference for a
+  // given id across renders -- `rooms` below can memoise on `preset` itself, not presetId.
+  const preset = PRESETS.find((p) => p.id === presetId) ?? PRESETS[0];
+  /** The current preset's room list: fixed for "role" (today's seven), derived and ordered by
+   *  member count for the other four -- see presets.ts. */
+  const rooms = useMemo(() => preset.rooms(facts), [preset, facts]);
+  /** Which rooms each card node belongs to, keyed by node id. For the role preset this
+   *  reproduces the same map the old `roomsForCard` call built (it delegates to that same
+   *  function -- see presets.ts), which is what keeps every pre-Task-8 test green untouched. */
+  const roomsByNode = useMemo(
+    () => new Map(facts.map((f) => [f.id, roomsForFacts(rooms, f)])),
+    [rooms, facts],
+  );
+  /** Room id -> hue, off the CURRENT preset rather than deck-rooms.ts's ROOM_HUE (which only
+   *  knows the seven role ids and would silently paint `undefined` for a colour/type/mana-value/
+   *  subtype id -- the defect Task 2 carried forward). Every hue lookup in the draw pass below
+   *  reads this map, falling back to OVERFLOW_HUE. */
+  const hueOf = useMemo(() => new Map(rooms.map((r) => [r.id, r.hue])), [rooms]);
 
   /** Room counts/targets for Task 5's board chrome. Passing `copiesByNameOf(graph.nodes)` is
    *  load-bearing, not optional decoration: roomTallies' copiesByName parameter is optional with
@@ -318,8 +333,13 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       if (n.kind !== "card") continue;
       cardRooms.set(n.label, roomsByNode.get(n.id) ?? []);
     }
-    return roomTallies(cardRooms, ROOMS, report.buildCategories, copiesByNameOf(graph.nodes));
-  }, [graph, report, roomsByNode]);
+    return roomTallies(
+      cardRooms,
+      rooms.map((r) => ({ id: r.id, categories: r.categories ?? [] })),
+      report.buildCategories,
+      copiesByNameOf(graph.nodes),
+    );
+  }, [graph, report, roomsByNode, rooms]);
 
   /** Event rows for the table: emitters in, payoffs out. */
   const events = useMemo(() => {
@@ -408,14 +428,15 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const visible = (n: Sim) => !hidden.has(n.kind);
 
     // Rooms are drawn around their cards, so they are a function of the current layout and are
-    // recomputed every frame rather than fixed at setup. All seven always come back: an empty room
-    // is a finding ("BOARD WIPES 0/3") and roomLayout parks it outside the occupied cluster.
-    const roomsNow = (): Map<RoomId, Circle> =>
+    // recomputed every frame rather than fixed at setup. Every room in the CURRENT preset's list
+    // always comes back, occupied or not: an empty room is a finding ("BOARD WIPES 0/3" on the
+    // role preset) and roomLayout parks it outside the occupied cluster.
+    const roomCirclesNow = (): Map<RoomId, Circle> =>
       roomLayout(
         nodes
           .filter((n) => n.kind === "card" && visible(n))
           .map((n) => ({ x: n.x, y: n.y, r: nodeRadius(n), rooms: roomsByNode.get(n.id) ?? [] })),
-        ROOMS,
+        rooms,
         tallies,
       );
 
@@ -439,7 +460,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         // camRef.current, read directly rather than through `cam` below: the mode buttons write
         // camRef.current.z from outside this effect, and this closure must see that write on its
         // next call rather than a value frozen when the probe was first built.
-        { tallies, camZ: camRef.current.z, flipped: [...flippedRef.current] },
+        //
+        // `rooms` here is the CURRENT preset's own room-id list (Task 8), not a per-node value --
+        // sibling to `tallies`/`camZ`/`flipped` above, not to the per-node `rooms` field each
+        // element of the mapped array already carries.
+        { tallies, camZ: camRef.current.z, flipped: [...flippedRef.current], rooms: rooms.map((r) => r.id) },
       );
 
     // A from-scratch graph gets full energy to organize; a graph that already has settled
@@ -525,7 +550,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     };
 
     const draw = () => {
-      const rooms = roomsNow();
+      const circles = roomCirclesNow();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = paint.surface;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -549,14 +574,17 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       // Every occupied room's circle, computed once for the whole pass rather than re-derived per
       // label: placeRoomLabel checks a candidate label against ALL of these (not just its own), so
       // a label can never end up painted over by a DIFFERENT room's later-drawn wash+stroke, no
-      // matter where in `ROOMS` order that room falls.
-      const roomCircles = [...rooms.values()];
+      // matter which order the current preset's rooms fall in.
+      const roomCircles = [...circles.values()];
       const roomFontPx = 12 / cam.z;
-      for (const room of ROOMS) {
-        const circle = rooms.get(room.id);
+      for (const room of rooms) {
+        const circle = circles.get(room.id);
         if (!circle) continue;
         const tally = tallies.get(room.id);
-        const hue = ROOM_HUE[room.id];
+        // The room's OWN hue, off the current preset -- not deck-rooms.ts's ROOM_HUE, which only
+        // has entries for the seven role ids (see hueOf's doc comment above). `room` here IS one
+        // of that preset's own room objects, so there is nothing to look up: its hue rides along.
+        const hue = room.hue;
 
         ctx.globalAlpha = 0.10;
         ctx.fillStyle = hue;
@@ -577,7 +605,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         // was validated against -- ROOM_HUE_TEXT is the same hue family lightened to clear it
         // (see deck-rooms.ts's ROOM_HUE / ROOM_HUE_TEXT doc comments).
         ctx.font = `500 ${roomFontPx}px "JetBrains Mono", ui-monospace, monospace`;
-        ctx.fillStyle = tally?.under ? paint.warning : ROOM_HUE_TEXT[room.id];
+        // ROOM_HUE_TEXT only has WCAG-relightened entries for the seven role ids; any other
+        // preset's room falls back to its own (non-relightened) hue rather than `undefined` --
+        // same defect, same fix as the outline/fill hue above.
+        ctx.fillStyle = tally?.under ? paint.warning : (ROOM_HUE_TEXT[room.id] ?? room.hue);
         const count = tally ? (tally.target > 0 ? `${tally.count}/${tally.target}` : `${tally.count}`) : "";
         const text = `${room.label.toUpperCase()} ${count}`.trim();
         const w = ctx.measureText(text).width;
@@ -672,8 +703,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
           // The rim carries which rooms this card is in -- one arc per room, in that room's hue.
           // Drawn for both the art and the fallback branch: a card whose art failed to load must
-          // not lose its membership signal along with its picture.
-          const arcs = rimArcs((roomsByNode.get(n.id) ?? []).map(roomHueOf));
+          // not lose its membership signal along with its picture. `hueOf` is the CURRENT preset's
+          // own id->hue map (see its doc comment above), not deck-rooms.ts's ROOM_HUE -- a colour
+          // or type id would silently look up `undefined` there.
+          const arcs = rimArcs((roomsByNode.get(n.id) ?? []).map((id) => hueOf.get(id) ?? OVERFLOW_HUE));
           ctx.lineWidth = 2.5 / cam.z;
           for (const arc of arcs) {
             ctx.strokeStyle = arc.hue;
@@ -752,8 +785,8 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const loop = () => { tick(); draw(); raf = requestAnimationFrame(loop); };
     loop();
 
-    // Room geometry is now derived from card positions (roomsNow(), recomputed every draw), not
-    // the viewport -- a resize only needs the canvas's own backing-store size updated.
+    // Room geometry is now derived from card positions (roomCirclesNow(), recomputed every
+    // draw), not the viewport -- a resize only needs the canvas's own backing-store size updated.
     const onResize = () => { dim = size(); };
     addEventListener("resize", onResize);
 
@@ -837,7 +870,19 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     // `flipped` and `faceArt` are deliberately absent here -- see flippedRef's doc comment above.
     // `faceArt` is memoised on `graph`, which is already a dep, so it buys nothing as a dep of its
     // own and would only invite the same reheat mistake later.
-  }, [graph, hidden, roomsByNode, tallies]);
+    //
+    // `rooms` and `hueOf` ARE deps, deliberately, unlike `flipped`/`matches` above: switching the
+    // "Group by" preset changes which room each card is in, and room membership is read inside
+    // this effect's own tick() (the room-attraction force) and draw() (the room circles, labels,
+    // and rim hues) -- there is no way to repaint that without the effect re-running. This is the
+    // SAME class of re-run `hidden` (the kind-filter chips) already causes, not a new one: the
+    // effect's own teardown snapshots positions into `prevPositions` first, so remounting finds
+    // `isFirstLayout` false and reheats at the partial alpha (0.3), never the full-energy reset
+    // (alpha 1) a first mount gets. `roomsByNode` and `tallies` are both already deps and are
+    // themselves derived from `rooms`, so listing `rooms`/`hueOf` too does not add a NEW class of
+    // re-run, just names the dependency that was already implicitly driving the two that were
+    // already here.
+  }, [graph, hidden, roomsByNode, tallies, rooms, hueOf]);
 
   const toggle = (k: NodeKind) =>
     setHidden((prev) => {
@@ -876,6 +921,22 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
               </button>
             );
           })}
+          {/* Which predicate groups the board (Task 8). Plain state, not a ref like `cam` below --
+           *  switching this genuinely changes which room every card is in, so a real re-render
+           *  (and the layout effect re-running -- see its dependency-array comment) is correct
+           *  here, unlike the camera. */}
+          <label className="eyebrow flex items-center gap-1.5">
+            Group by
+            <select
+              value={presetId}
+              onChange={(e) => setPresetId(e.target.value)}
+              className="rounded-(--radius) border border-(--separator) bg-transparent px-1.5 py-0.5 text-(--foreground)"
+            >
+              {PRESETS.map((p) => (
+                <option key={p.id} value={p.id}>{p.label}</option>
+              ))}
+            </select>
+          </label>
           {/* Sets cam.z directly on the ref (see camRef above) rather than through React state --
            *  the paint loop reads cam.z every frame, so there is nothing for a re-render to do
            *  here. No easing/tween: cam.z is one number, and an eased transition can be layered

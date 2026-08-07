@@ -758,6 +758,43 @@ it("flips a double-faced card to its back art and back again", () => {
 // "flip moved the board" means. Asserts every node's x/y, not just the flipped card's, since a
 // reheat disturbs the whole simulation (room attraction, repulsion, link springs all read every
 // node), not only the one that got clicked.
+test("defaults to the role preset", () => {
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  expect(screen.getByRole("combobox", { name: /group by/i })).toHaveValue("role");
+});
+
+// dfcGraph carries TWO cards (see its own doc comment above): Malakir Rebirth // Malakir Mire
+// (B, front face Instant) and Deathrite Shaman (B/G, Creature). Both are real, so the derived
+// "colour" preset genuinely produces two rooms here (B from both cards, G from Deathrite Shaman
+// alone) -- not the single-room result a smaller fixture might suggest. Ordered by member count,
+// descending (presets.ts's `byCount`): B has two members, G has one, so B sorts first regardless.
+// makeContextSpy() is required (the brief's sketch omitted it, same as every other probe-reading
+// test in this file) -- without a real 2D context the layout effect bails before `__graphProbe`
+// is ever attached, and `.rooms` would fail on "not a function" rather than on the assertion this
+// test is actually about.
+it("regroups the board when the preset changes", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
+  fireEvent.change(screen.getByRole("combobox", { name: /group by/i }), { target: { value: "colour" } });
+  expect((container.querySelector("canvas") as any).__graphProbe!().rooms).toEqual(["B", "G"]);
+});
+
+// The central test for this task: proves the "type" preset reads a face's TYPE off the FRONT
+// face only, end to end through the real component (Task 1's cardFacts already unit-tests this
+// in isolation -- presets.test.ts -- but nothing before this task exercised it through GraphView's
+// actual wiring). Deathrite Shaman (card:2, Creature) is also in this graph, so the derived room
+// list is genuinely two rooms wide; a wiring bug that fed a DFC's BACK face's type in too (Land,
+// from face:1:1) would show up as a THIRD room here, and one that dropped the front-face
+// restriction entirely and read every face's types unfiltered would too. "Creature" sorts before
+// "Instant" on the count tie-break (presets.ts's `byCount`, alphabetical), so this is the order a
+// correct implementation actually produces, not an arbitrary pick.
+it("groups a double-faced card by its FRONT face", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
+  fireEvent.change(screen.getByRole("combobox", { name: /group by/i }), { target: { value: "type" } });
+  expect((container.querySelector("canvas") as any).__graphProbe!().rooms).toEqual(["Creature", "Instant"]);
+});
+
 it("does not move any node when a card is flipped", () => {
   makeContextSpy();
   const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
