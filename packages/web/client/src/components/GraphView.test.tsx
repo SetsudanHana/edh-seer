@@ -5,6 +5,7 @@ import { ART_RADIUS, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INS
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type Circle, type RoomTally } from "./deck-rooms.js";
+import { CARD_MODE_Z } from "./card-node.js";
 
 /** Records the 2D-context calls made during a render, and -- more importantly -- lets the
  *  layout effect get past its `if (!ctx) return;` guard at all, which is what attaches
@@ -838,11 +839,11 @@ test("switching to card mode raises the zoom past the card threshold", () => {
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => { camZ: number };
   };
-  expect(canvas.__graphProbe!().camZ).toBeGreaterThanOrEqual(6);
+  expect(canvas.__graphProbe!().camZ).toBeGreaterThanOrEqual(CARD_MODE_Z);
 });
 
-// The wheel handler's own ceiling used to be a bare 5, below CARD_MODE_Z (6) -- so card mode was
-// unreachable by scrolling at all, and clicking "Card" then touching the wheel even once (in
+// The wheel handler's own ceiling used to be a bare 5, below CARD_MODE_Z (then 6) -- so card mode
+// was unreachable by scrolling at all, and clicking "Card" then touching the wheel even once (in
 // either direction) snapped cam.z straight back under the threshold. Scrolling in enough ticks
 // must be able to reach card mode on its own, with no button involved.
 test("scrolling in far enough reaches card mode on its own", () => {
@@ -852,9 +853,9 @@ test("scrolling in far enough reaches card mode on its own", () => {
     __graphProbe?: () => { camZ: number };
   };
   // Each tick multiplies cam.z by 1.1 from a start of 1; 30 ticks (1.1^30 ~= 17.4) clears any
-  // reasonable ceiling above CARD_MODE_Z (6) with room to spare.
+  // reasonable ceiling above CARD_MODE_Z with room to spare.
   for (let i = 0; i < 30; i++) fireEvent.wheel(canvas, { deltaY: -240 });
-  expect(canvas.__graphProbe!().camZ).toBeGreaterThanOrEqual(6);
+  expect(canvas.__graphProbe!().camZ).toBeGreaterThanOrEqual(CARD_MODE_Z);
 });
 
 // Task 1's presets.test.ts fixture (Malakir Rebirth // Malakir Mire, an Instant whose back face is

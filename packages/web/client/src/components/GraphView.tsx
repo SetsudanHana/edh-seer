@@ -3,7 +3,7 @@ import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
-import { CARD_MODE_Z, cardImageUrl, faceArtOf, renderModeFor } from "./card-node.js";
+import { CARD_MODE_Z, MAX_Z, cardImageUrl, faceArtOf, renderModeFor } from "./card-node.js";
 import { ART_RADIUS, COLLISION_PAD, rimArcs, OVERFLOW_HUE, ROOM_HUE_TEXT, ROOMS, roomLayout, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
 // uses, while deck-rooms.ts owns the value -- see its doc comment for why it moved.
@@ -1013,12 +1013,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      // Ceiling expressed off CARD_MODE_Z, not a bare number: the old flat 5 sat BELOW the
-      // threshold (6), so card mode was unreachable by scrolling at all, and touching the wheel
-      // even once while in card mode (via the button) clamped cam.z straight back under it. +2
-      // gives room to zoom further once past the threshold, and ties the two together so they
-      // can't drift apart again.
-      cam.z = Math.min(CARD_MODE_Z + 2, Math.max(0.15, cam.z * (e.deltaY < 0 ? 1.1 : 0.9)));
+      // Ceiling is its own constant -- see MAX_Z's doc comment in card-node.ts for why it must
+      // stay above CARD_MODE_Z rather than being derived from it.
+      cam.z = Math.min(MAX_Z, Math.max(0.15, cam.z * (e.deltaY < 0 ? 1.1 : 0.9)));
     };
 
     canvas.addEventListener("pointerdown", onDown);

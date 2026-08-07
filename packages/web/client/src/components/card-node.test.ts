@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CARD_MODE_Z, cardImageUrl, faceArtOf, renderModeFor } from "./card-node.js";
+import { CARD_MODE_Z, MAX_Z, cardImageUrl, faceArtOf, renderModeFor } from "./card-node.js";
 
 describe("renderModeFor", () => {
   it("is miniature below the threshold and card at or above it", () => {
@@ -39,5 +39,19 @@ describe("faceArtOf", () => {
 
   it("falls back to the front art when flipped with no second face", () => {
     expect(faceArtOf("card:2", "https://x/front.jpg", true, faces)).toBe("https://x/front.jpg");
+  });
+});
+
+describe("zoom bounds", () => {
+  it("puts card mode within reach and leaves headroom above it", () => {
+    // The constraint is MAX_Z > CARD_MODE_Z, not a fixed offset: a flat ceiling of 5 once sat
+    // BELOW the threshold (6) and made card mode unreachable by scrolling at all.
+    expect(MAX_Z).toBeGreaterThan(CARD_MODE_Z);
+  });
+
+  it("switches to card mode at 4, where a card paints ~157px tall", () => {
+    expect(CARD_MODE_Z).toBe(4);
+    expect(renderModeFor(4)).toBe("card");
+    expect(renderModeFor(3.99)).toBe("miniature");
   });
 });

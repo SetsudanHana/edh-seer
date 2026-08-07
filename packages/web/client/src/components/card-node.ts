@@ -1,7 +1,15 @@
-/** Zoom at which a card's printed text becomes readable: the node's world footprint is 28 units
- *  across (2 * ART_RADIUS), so a 5:7 card is ~39 units tall, and 39 * 6 is ~235 screen px. Below
- *  this the image is smaller than the disc it replaces and buys nothing. */
-export const CARD_MODE_Z = 6;
+/** Zoom at which a card's printed text becomes recognisable: the node's world footprint is 28
+ *  units across (2 * ART_RADIUS), so a 5:7 card is ~39 units tall, and 39 * 4 is ~157 screen px.
+ *  Recognisable, not readable -- the previous 6 (~235px) made card mode arrive too late when
+ *  scrolling. Below this the image is smaller than the disc it replaces and buys nothing. */
+export const CARD_MODE_Z = 4;
+
+/** The wheel's zoom ceiling. MUST stay above CARD_MODE_Z: it used to be written as
+ *  `CARD_MODE_Z + 2` at the call site, which silently tied the two together -- and before that it
+ *  was a flat 5, BELOW the then-threshold of 6, which made card mode unreachable by scrolling and
+ *  clamped cam.z straight back under the threshold the moment the wheel moved. The constraint is
+ *  MAX_Z > CARD_MODE_Z; the offset is not load-bearing. */
+export const MAX_Z = 8;
 
 export type RenderMode = "miniature" | "card";
 
