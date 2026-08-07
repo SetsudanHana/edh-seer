@@ -1000,3 +1000,23 @@ it("does not move any node when a card is flipped", () => {
   expect(after.flipped).toEqual(["card:1"]);
   expect(after.map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(positionsBefore);
 });
+
+// The escape/intrusion metrics (and the ratchet in the last task of this plan) are computed from
+// the probe, which reports every node's position and rooms but NOT the room circles -- so it
+// cannot say whether a card is inside a circle it belongs to. This is that missing half.
+test("the probe reports the current room circles", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => { circles: Array<{ id: string; x: number; y: number; r: number }>; rooms: string[] };
+  };
+  const probe = canvas.__graphProbe!();
+  // One circle per room in the current preset -- occupied or not, since an empty room is the
+  // finding and roomLayout parks it in the orbit ring rather than dropping it.
+  expect(probe.circles.map((c) => c.id).sort()).toEqual([...probe.rooms].sort());
+  for (const c of probe.circles) {
+    expect(Number.isFinite(c.x)).toBe(true);
+    expect(Number.isFinite(c.y)).toBe(true);
+    expect(c.r).toBeGreaterThan(0);
+  }
+});

@@ -73,6 +73,12 @@ const REPULSION = 2200;
  *  the full round-by-round numbers and why this was capped at 4 rounds rather than tuned
  *  further. */
 const ROOM_ATTRACTION = 0.008;
+/** How hard a room pulls a member back inside it, and how hard it pushes a non-member out.
+ *  FOREIGN_PUSH < CONTAINMENT is a HARD CONSTRAINT, not a preference: the reverse expels cards
+ *  from every room at once and the board falls apart. Starting values pending the trial in this
+ *  work's Task 12 -- see the spec's section 7. */
+const CONTAINMENT = 0.01;
+const FOREIGN_PUSH = 0.004;
 const LINK_STIFFNESS = 0.0012;
 /** Per-tick velocity damping (0..1, higher = less friction). */
 const VELOCITY_DAMPING = 0.86;
@@ -542,7 +548,16 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         // `rooms` here is the CURRENT preset's own room-id list (Task 8), not a per-node value --
         // sibling to `tallies`/`camZ`/`flipped` above, not to the per-node `rooms` field each
         // element of the mapped array already carries.
-        { tallies, camZ: camRef.current.z, flipped: [...flippedRef.current], rooms: rooms.map((r) => r.id) },
+        //
+        // `circles` rides along the same way `tallies` does -- a property on the returned array,
+        // not a change to its shape. Without it the escape and intrusion metrics cannot be
+        // computed at all: the probe knows where every card is and which rooms it is in, but not
+        // where the rooms are.
+        {
+          tallies, camZ: camRef.current.z, flipped: [...flippedRef.current],
+          rooms: rooms.map((r) => r.id),
+          circles: [...roomCirclesNow().entries()].map(([id, c]) => ({ id, x: c.x, y: c.y, r: c.r })),
+        },
       );
 
     // A from-scratch graph gets full energy to organize; a graph that already has settled
@@ -605,6 +620,23 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         const f = (d - rest) * LINK_STIFFNESS;
         l.s.vx += (dx / d) * f; l.s.vy += (dy / d) * f;
         l.t.vx -= (dx / d) * f; l.t.vy -= (dy / d) * f;
+      }
+      // Rooms hold their cards. cards x rooms per tick: 693 on the role preset, ~7,900 on
+      // subtype's 40-80 rooms -- immaterial beside the ~60,000-pair repulsion above. Empty rooms
+      // take part in foreignPush only (they have no members), which usefully keeps cards out of
+      // the orbit ring.
+      const circles = roomCirclesNow();
+      for (const n of live) {
+        if (n.kind !== "card") continue;
+        const mine = roomsByNode.get(n.id);
+        const cardR = nodeRadius(n);
+        for (const [id, c] of circles) {
+          const dx = n.x - c.x, dy = n.y - c.y;
+          const t = mine?.includes(id)
+            ? containment(dx, dy, c.r, cardR, CONTAINMENT)
+            : foreignPush(dx, dy, c.r, cardR, FOREIGN_PUSH);
+          n.vx += t.x; n.vy += t.y;
+        }
       }
       for (const n of live) {
         // Centering applies only to nodes no room claims -- i.e. non-card nodes (events, keywords),
