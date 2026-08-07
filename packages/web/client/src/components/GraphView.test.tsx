@@ -1064,10 +1064,55 @@ test("the legend has a row per room in the preset's own order", () => {
   expect(ids).toEqual(ROOMS.map((r) => r.id));
 });
 
-test("the legend scrolls past twelve rows rather than growing without bound", () => {
+// Fix round 1: the twelve-row cap and the row's own height used to be two independent literals
+// (max-h-[19.5rem], h-[1.625rem]) with nothing tying them together -- change one and every test
+// above still passes while the cap silently becomes some other number. Now both read the same
+// `--legend-row-h` custom property, so this test asserts the SOURCE is shared, not that a
+// thirteenth row is visually clipped: jsdom has no layout engine, so no test here can see that.
+test("the legend's scroll cap is derived from the same row height the rows use", () => {
   makeContextSpy();
   render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const legend = screen.getByTestId("room-legend");
+  const rowH = legend.style.getPropertyValue("--legend-row-h");
+  expect(rowH).toBeTruthy();
+  const scroller = screen.getByTestId("room-legend-scroll");
   // The cap is on DISPLAY only -- every room still exists, draws and attracts, so this asserts the
   // container is scrollable rather than that rows were dropped.
-  expect(screen.getByTestId("room-legend").className).toMatch(/overflow-y-auto/);
+  expect(scroller.className).toMatch(/overflow-y-auto/);
+  expect(scroller.style.maxHeight).toBe("calc(12 * var(--legend-row-h))");
+  const row = screen.getAllByTestId("room-legend-row")[0]!;
+  expect(row.style.height).toBe("var(--legend-row-h)");
+});
+
+// Fix round 1, Finding 1: the canvas binds pointerdown/up/move/click/wheel on itself, not
+// delegated from the wrapper, so an absolutely-positioned sibling that captured pointer events
+// would put a dead zone over the board wherever it sits -- exactly why the hover tooltip below it
+// already has pointer-events-none.
+test("the legend does not intercept pointer events meant for the canvas", () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  expect(screen.getByTestId("room-legend").className).toMatch(/pointer-events-none/);
+});
+
+// Fix round 1, Minor B: data-under proves the STATE is tracked, not that the amber colour is
+// actually applied -- it could vanish while every existing test stayed green. A custom graph/report
+// (same pattern as the multi-copy test above), rather than the default SAMPLE, because under
+// SAMPLE's own fixture neither graph card lands in any target-bearing room, so every tallied room
+// except "strategy"/"wincons" reads 0-of-target -- there is no genuinely FILLED room to contrast
+// against without supplying one.
+test("an underfilled room's legend row carries the warning colour, a filled one doesn't", () => {
+  makeContextSpy();
+  const graph = { nodes: [{ id: "card:mtn", kind: "card", label: "Mountain", roles: ["lands"], copies: 36 }], edges: [] } as unknown as typeof SAMPLE.graph;
+  const report = {
+    ...SAMPLE.report,
+    buildCategories: [{ category: "lands", count: 36, target: 36 }, { category: "boardWipe", count: 0, target: 3 }],
+    combos: [],
+    archetypes: [],
+  };
+  render(<GraphView graph={graph} report={report} />);
+  const legend = screen.getByTestId("room-legend");
+  const under = legend.querySelector('[data-room="boardWipes"]')!;
+  expect(under.className).toMatch(/text-\(--warning\)/);
+  const filled = legend.querySelector('[data-room="lands"]')!;
+  expect(filled.className).not.toMatch(/text-\(--warning\)/);
 });

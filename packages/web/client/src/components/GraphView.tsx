@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
@@ -1105,41 +1106,63 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           {/* The room labels, in the DOM rather than on the canvas -- see draw()'s room loop for
            *  why placement on the canvas could not be made stable under zoom. Absolutely
            *  positioned inside the existing `relative` wrapper, same treatment as the hover
-           *  tooltip below. Ordering is the preset's own room order (declaration order for role,
-           *  member count descending for the derived presets), already stable.
+           *  tooltip below -- and `pointer-events-none` for the same reason that tooltip has it:
+           *  the canvas binds pointerdown/up/move/click/wheel directly on itself (not delegated
+           *  from the wrapper), so a sibling that captured pointer events would put a dead zone
+           *  over the board wherever it sits.
+           *
+           *  Ordering is the preset's own room order (declaration order for role, member count
+           *  descending for the derived presets), already stable.
            *
            *  Twelve rows then scroll: the subtype preset produces 40-80 rooms for one deck. The
-           *  cap is on DISPLAY only -- every room still draws, still tallies, still contains. */}
+           *  cap is on DISPLAY only -- every room still draws, still tallies, still contains.
+           *  `--legend-row-h` is the ONE source of truth for the row height, read by both the row
+           *  itself and the scroll cap's `calc(12 * ...)` -- so the two numbers can't drift apart
+           *  the way two independent literals could. The cap and `overflow-y-auto` live on an
+           *  INNER element with no padding/border, so Preflight's border-box sizing can't eat into
+           *  the budget the way it would if the cap sat on the padded/bordered outer container. */}
           <div
             data-testid="room-legend"
-            className="absolute left-2 top-2 max-h-[19.5rem] overflow-y-auto rounded-(--radius) border border-(--border) bg-(--background)/90 px-2 py-1 text-xs"
+            aria-label="Room legend"
+            className="pointer-events-none absolute left-2 top-2 rounded-(--radius) border border-(--border) bg-(--background)/90 px-2 py-1 text-xs"
+            style={{ "--legend-row-h": "1.625rem" } as CSSProperties}
           >
-            {rooms.map((room) => {
-              const tally = tallies.get(room.id);
-              const count = tally ? (tally.target > 0 ? `${tally.count}/${tally.target}` : `${tally.count}`) : "";
-              return (
-                <div
-                  key={room.id}
-                  data-testid="room-legend-row"
-                  data-room={room.id}
-                  data-under={tally?.under ? "true" : "false"}
-                  className={`flex h-[1.625rem] items-center gap-1.5 ${
-                    tally?.under ? "text-(--warning)" : ""
-                  }`}
-                >
-                  {/* The room's OWN hue -- a graphic object next to text, so it carries the 3:1
-                   *  floor ROOM_HUE was validated against. The text beside it is the page's normal
-                   *  foreground, which is why ROOM_HUE_TEXT could be deleted. */}
-                  <span
-                    aria-hidden="true"
-                    style={{ background: room.hue }}
-                    className="inline-block size-2.5 shrink-0 rounded-full"
-                  />
-                  <span className="whitespace-nowrap">{room.label}</span>
-                  <span className="font-mono tabular-nums text-(--muted)">{count}</span>
-                </div>
-              );
-            })}
+            <div
+              data-testid="room-legend-scroll"
+              className="overflow-y-auto"
+              style={{ maxHeight: "calc(12 * var(--legend-row-h))" }}
+            >
+              {rooms.map((room) => {
+                const tally = tallies.get(room.id);
+                const count = tally ? (tally.target > 0 ? `${tally.count}/${tally.target}` : `${tally.count}`) : "";
+                const under = tally?.under ?? false;
+                return (
+                  <div
+                    key={room.id}
+                    data-testid="room-legend-row"
+                    data-room={room.id}
+                    data-under={under ? "true" : "false"}
+                    style={{ height: "var(--legend-row-h)" }}
+                    className={`flex items-center gap-1.5 ${under ? "text-(--warning)" : ""}`}
+                  >
+                    {/* The room's OWN hue -- a graphic object next to text, so it carries the 3:1
+                     *  floor ROOM_HUE was validated against. The text beside it is the page's
+                     *  normal foreground, which is why ROOM_HUE_TEXT could be deleted. */}
+                    <span
+                      aria-hidden="true"
+                      style={{ background: room.hue }}
+                      className="inline-block size-2.5 shrink-0 rounded-full"
+                    />
+                    <span className="whitespace-nowrap">{room.label}</span>
+                    {/* No `text-(--muted)` when under -- the amber has to reach the number itself
+                     *  (BOARD WIPES 0/3), not just the room name beside it. */}
+                    <span className={`font-mono tabular-nums ${under ? "" : "text-(--muted)"}`}>
+                      {count}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
           {hover ? (
             <div
