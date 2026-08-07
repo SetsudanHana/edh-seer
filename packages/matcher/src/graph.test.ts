@@ -254,5 +254,5 @@ test("puts each face's art on its face node so a DFC can be flipped", () => {
 
 test("omits artCrop on a face that has none", () => {
   const g = buildGraph([doc({ _id: "2", name: "Sol Ring", typeLine: "Artifact" })]);
-  expect(g.nodes.find((n) => n.id === "face:2:0")?.props?.artCrop).toBeUndefined();
+  expect(g.nodes.find((n) => n.id === "face:2:0")?.props).not.toHaveProperty("artCrop");
 });
