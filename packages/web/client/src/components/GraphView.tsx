@@ -107,6 +107,20 @@ export function roomAttraction(
   return { x: -(dx / d) * f, y: -(dy / d) * f };
 }
 
+/** Device pixels of pointer travel, between a pointerdown and the click the DOM fires after its
+ *  matching pointerup, below which the gesture still counts as a click rather than a pan. Not
+ *  zero: real hardware never reports an intended click as exactly stationary. */
+const CLICK_DRAG_PX = 4;
+
+/** Whether a pointerdown -> up round trip travelled far enough to be a pan rather than a click.
+ *  Pulled out as its own pure function so the decision is unit-testable on its own -- the DOM
+ *  event plumbing around it (pointer capture, `MouseEvent.clientX/Y`) doesn't behave usefully
+ *  under jsdom's `fireEvent.pointerMove`, so a click-vs-drag test has to exercise this, not a
+ *  simulated gesture. */
+export function traveledAsDrag(dx: number, dy: number, threshold = CLICK_DRAG_PX): boolean {
+  return Math.hypot(dx, dy) > threshold;
+}
+
 export interface LabelBox { x: number; y: number; w: number; h: number }
 
 function boxesOverlap(a: LabelBox, b: LabelBox): boolean {
@@ -153,19 +167,23 @@ function boxOverlapsCircle(box: LabelBox, c: Circle): boolean {
  *  discontinuously as the user zooms in or out. Cards moving or the simulation settling do not
  *  retrigger this on their own; a draw only reruns it because the frame redraws anyway, at
  *  whatever positions and zoom that frame has. Runs once per room per frame, and each call is
- *  O(placed so far + circles): with
- *  seven rooms that's at most 42 comparisons total, immaterial next to the O(n^2) physics tick it
- *  shares a frame with.
+ *  O(placed so far + circles): with the role preset's seven rooms that's at most 42 comparisons
+ *  total, immaterial next to the O(n^2) physics tick it shares a frame with. A derived preset
+ *  (subtype, on a real EDH deck) can put 40-80 rooms on screen at once; this scales the same way
+ *  everything else per-frame does and stays cheap next to the physics tick.
  *
- *  Bounded retries (ROOMS.length -- six other rooms is the true ceiling any one label could be
- *  contending with, whether via their labels or their circles) rather than an unbounded search: if
+ *  Bounded retries (`Math.max(ROOMS.length, circles.length)`) rather than an unbounded search: if
  *  every step is somehow still blocked, the label lands at its last tried spot rather than looping
- *  forever. Seven rooms in an otherwise-open canvas never reaches that ceiling in practice. */
+ *  forever. This used to be a bare `ROOMS.length` on the reasoning that "six other rooms is the
+ *  true ceiling any one label could be contending with" -- true only of the role preset's fixed
+ *  seven. A derived preset (subtype) can produce 40-80 rooms for one deck, so the ceiling has to
+ *  track whichever room list is actually on screen this frame (`circles`, already a parameter),
+ *  not the one preset that happens to have a constant. */
 export function placeRoomLabel(
   x: number, baseY: number, w: number, h: number, placed: LabelBox[], circles: readonly Circle[] = [],
 ): number {
   let y = baseY;
-  for (let attempt = 0; attempt < ROOMS.length; attempt++) {
+  for (let attempt = 0; attempt < Math.max(ROOMS.length, circles.length); attempt++) {
     const box = { x: x - w / 2, y: y - h, w, h };
     const blockingCircle = circles.find((c) => boxOverlapsCircle(box, c));
     if (blockingCircle) { y = blockingCircle.y - blockingCircle.r - h * 0.3; continue; }
@@ -801,24 +819,48 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       const r = canvas.getBoundingClientRect();
       const wx = (ev.clientX - r.left - dim.w / 2 - cam.x) / cam.z;
       const wy = (ev.clientY - r.top - dim.h / 2 - cam.y) / cam.z;
+      // Card mode paints a 5:7 RECTANGLE (ART_RADIUS*2 wide, *1.4 tall -- see draw()'s
+      // `mode === "card"` branch), not the disc nodeRadius() reports for the sim/miniature paint.
+      // Hit-testing the inscribed circle there left the top/bottom bands and all four corners --
+      // including the flip glyph itself, painted in a corner -- dead to the pointer. Computed once
+      // per pick rather than per node: it depends only on cam.z, not on which node is being tested.
+      const cardMode = renderModeFor(cam.z) === "card";
       let best: Sim | null = null, bd = Infinity;
       for (const n of nodes) {
         if (!visible(n)) continue;
-        // Normalised: distance as a fraction of the node's own drawn radius, so every node is
-        // clickable exactly where it is painted rather than inside a fixed box.
-        const d = Math.hypot(n.x - wx, n.y - wy) / nodeRadius(n);
-        if (d <= 1 && d < bd) { bd = d; best = n; }
+        const dx = n.x - wx, dy = n.y - wy;
+        const inside = cardMode && n.kind === "card"
+          ? Math.abs(dx) <= ART_RADIUS && Math.abs(dy) <= ART_RADIUS * 1.4
+          // Normalised: distance as a fraction of the node's own drawn radius, so every other
+          // node is clickable exactly where it is painted rather than inside a fixed box.
+          : Math.hypot(dx, dy) / nodeRadius(n) <= 1;
+        if (!inside) continue;
+        const d = Math.hypot(dx, dy) / nodeRadius(n);
+        if (d < bd) { bd = d; best = n; }
       }
       return best;
     };
 
-    const onDown = (e: PointerEvent) => { dragging = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); };
+    // Pointer travel since the last pointerdown, tracked separately from `dragging` (which is
+    // overwritten every pointermove to compute pan deltas and so cannot answer "how far has this
+    // gesture travelled in total"). Only onDown writes it and only onClick reads it.
+    let downAt: { x: number; y: number } | null = null;
+    const onDown = (e: PointerEvent) => {
+      dragging = { x: e.clientX, y: e.clientY };
+      downAt = { x: e.clientX, y: e.clientY };
+      canvas.setPointerCapture(e.pointerId);
+    };
     const onUp = () => { dragging = null; };
     // A card only flips when clicked at card scale AND it has a back face to flip to -- anything
     // else (a non-flippable card, any card in miniature mode, empty space) must fall through with
     // no change to existing click behaviour, which is why this checks `renderModeFor(cam.z)` and
     // `faceArt` itself rather than relying on what mode the paint loop happened to draw last frame.
     const onClick = (e: MouseEvent) => {
+      // The DOM fires `click` after pointerdown -> move -> up regardless of how far the pointer
+      // travelled -- setPointerCapture (onDown, above) pins both the moves and the trailing click
+      // to this canvas. Panning is the primary gesture at exactly the zoom where flipping is
+      // enabled, so an untethered click handler flips whatever a pan happens to be released over.
+      if (downAt && traveledAsDrag(e.clientX - downAt.x, e.clientY - downAt.y)) return;
       const hit = pick(e);
       if (
         hit && hit.kind === "card" && renderModeFor(cam.z) === "card"

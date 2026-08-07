@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ART_RADIUS, copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, placeRoomLabel, roomAttraction, seedPosition, separation } from "./GraphView.js";
+import { ART_RADIUS, copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, placeRoomLabel, roomAttraction, seedPosition, separation, traveledAsDrag } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
-import { ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
+import { ROOM_HUE, ROOMS, type Circle, type RoomTally } from "./deck-rooms.js";
 
 /** Records the 2D-context calls made during a render, and -- more importantly -- lets the
  *  layout effect get past its `if (!ctx) return;` guard at all, which is what attaches
@@ -88,6 +88,27 @@ test("a non-card node's radius scales with degree and is capped", () => {
   expect(nodeRadius({ kind: "event", deg: 0 })).toBe(3);
   expect(nodeRadius({ kind: "event", deg: 4 })).toBe(6);
   expect(nodeRadius({ kind: "event", deg: 10000 })).toBe(15);
+});
+
+// Finding 2 (final review): a pan released over a double-faced card in card mode used to flip it,
+// because onClick had no movement threshold and the DOM fires `click` after pointerdown -> move ->
+// up regardless of distance travelled. The reviewer couldn't reproduce the DOM-level bug in jsdom
+// (fireEvent.pointerMove doesn't deliver a usable clientX through this handler and poisons cam.x
+// with NaN), so the decision itself -- "did the pointer travel far enough to count as a drag" --
+// is pulled out as traveledAsDrag and tested directly here instead.
+test("traveledAsDrag treats a near-stationary pointer as a click", () => {
+  expect(traveledAsDrag(0, 0)).toBe(false);
+  expect(traveledAsDrag(1, 1)).toBe(false); // sub-pixel jitter, still a click
+});
+
+test("traveledAsDrag treats real travel as a pan, past the default threshold", () => {
+  expect(traveledAsDrag(10, 0)).toBe(true);
+  expect(traveledAsDrag(0, -10)).toBe(true);
+});
+
+test("traveledAsDrag's threshold is a parameter, not a hidden constant", () => {
+  expect(traveledAsDrag(2, 0, 1)).toBe(true); // past a threshold of 1
+  expect(traveledAsDrag(2, 0, 5)).toBe(false); // under a threshold of 5
 });
 
 test("seedPosition centres a new node on the previous positions of its known neighbours", () => {
@@ -385,6 +406,37 @@ test("placeRoomLabel leaves a label that already clears every circle untouched",
   const farCircle = { x: 900, y: 900, r: 10 };
   const y = placeRoomLabel(100, -50, 40, 16, [], [farCircle]);
   expect(y).toBe(-50);
+});
+
+// Finding 3 (final review): the retry bound used to be a bare `ROOMS.length` (7, the role preset's
+// fixed room count) on the reasoning that six other rooms is the true ceiling any one label could
+// contend with -- true only of the role preset. A derived preset (subtype) on a real EDH deck can
+// put 40-80 rooms on screen, so this builds a chain of circles LONGER than ROOMS.length, each one
+// blocking exactly where the previous jump lands (mirroring placeRoomLabel's own jump formula:
+// `y = blockingCircle.y - blockingCircle.r - h * 0.3`), and asserts the final landing spot clears
+// every circle in the chain. Before the fix this returned early -- stuck inside one of the last two
+// circles -- because the old bound ran out of attempts two circles short of the full chain.
+test("placeRoomLabel escapes a chain of blocking circles longer than ROOMS.length", () => {
+  const w = 40, h = 16, cx = 100, baseY = -50;
+  const chainLength = ROOMS.length + 2; // more rooms than the fixed role preset has
+  const circles: Circle[] = [];
+  let y = baseY;
+  for (let i = 0; i < chainLength; i++) {
+    // Centred in x on the label so it always overlaps the box currently blocking that box's
+    // y-range -- placed at the box's vertical midpoint, well inside [y - h, y].
+    const cy = y - h / 2;
+    const r = 5;
+    circles.push({ x: cx, y: cy, r });
+    y = cy - r - h * 0.3; // the jump placeRoomLabel itself takes when blocked
+  }
+  const result = placeRoomLabel(cx, baseY, w, h, [], circles);
+  const box = { x: cx - w / 2, y: result - h, w, h };
+  for (const c of circles) {
+    const nearX = Math.max(box.x, Math.min(c.x, box.x + box.w));
+    const nearY = Math.max(box.y, Math.min(c.y, box.y + box.h));
+    const dx = c.x - nearX, dy = c.y - nearY;
+    expect(dx * dx + dy * dy).toBeGreaterThanOrEqual(c.r * c.r);
+  }
 });
 
 // Reproduces Task 10's defect at the level draw() actually operates: two single-card rooms whose
@@ -814,6 +866,31 @@ it("groups a double-faced card by its FRONT face", () => {
   const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
   fireEvent.change(screen.getByRole("combobox", { name: /group by/i }), { target: { value: "type" } });
   expect((container.querySelector("canvas") as any).__graphProbe!().rooms).toEqual(["Creature", "Instant"]);
+});
+
+// Finding 1 (final review): the flip glyph paints at (n.x + ART_RADIUS, n.y + ART_RADIUS * 1.4) --
+// the card box's bottom-right corner, drawn in GraphView.tsx's `mode === "card"` branch -- but
+// pick() used to hit-test a CIRCLE of radius ART_RADIUS centred on the node. That corner sits
+// ~24 world units from centre, outside a 14-unit circle, so a click on the glyph itself never
+// flipped anything; only a click near the card's middle did, where there is no affordance drawn at
+// all. Clicking exactly where the glyph is painted must flip the card.
+it("flips the card when clicked on the flip glyph itself, not the node centre", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; x: number; y: number }> & { camZ: number; flipped: string[] };
+  };
+  fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+  const probe = canvas.__graphProbe!();
+  const node = probe.find((n) => n.id === "card:1")!;
+  // Same coordinate-recovery trick as the other click-based flip tests: jsdom's canvas has a zero
+  // bounding rect, so the click point is the probed world position scaled by cam.z alone.
+  const glyphAt = {
+    clientX: (node.x + ART_RADIUS) * probe.camZ,
+    clientY: (node.y + ART_RADIUS * 1.4) * probe.camZ,
+  };
+  fireEvent.click(canvas, glyphAt);
+  expect(canvas.__graphProbe!().flipped).toEqual(["card:1"]);
 });
 
 it("does not move any node when a card is flipped", () => {
