@@ -1,4 +1,5 @@
 import { ART_RADIUS } from "./deck-rooms.js";
+import type { Circle, RoomId } from "./deck-rooms.js";
 import type { GraphNode } from "../types.js";
 
 /** A graph node as the force simulation sees it. `index` is written by d3-force itself when the
@@ -140,4 +141,82 @@ export function boardMetrics(
     }
   }
   return { escapes, intrusions };
+}
+
+/** A d3-force custom force: a function of the current alpha, plus the `initialize` hook
+ *  `simulation.force(name, f)` calls to hand it the node array. */
+export type CustomForce = ((alpha: number) => void) & { initialize(nodes: Sim[]): void };
+
+/** Cards sharing a room pull together; the room's circle is then drawn around the cluster they
+ *  form. The only force that reads membership pairwise.
+ *
+ *  Deliberately not expressed as a forceLink over same-room pairs: forceLink splits its
+ *  correction by a degree bias (`count[source] / (count[source] + count[target])`, see the
+ *  design doc's 3.3), which would make a card in five rooms move differently from one in one
+ *  room for reasons that have nothing to do with the rooms they share.
+ *
+ *  O(cards^2) per tick and left that way: 94 cards is 4,371 pairs, immaterial beside the
+ *  quadtree repulsion running alongside it. */
+export function forceRoomAttraction(opts: {
+  roomsByNode: ReadonlyMap<string, readonly RoomId[]>;
+  universal: ReadonlySet<string>;
+  stiffness: number;
+}): CustomForce {
+  let cards: Sim[] = [];
+  const force = ((alpha: number) => {
+    for (let i = 0; i < cards.length; i++) {
+      for (let j = i + 1; j < cards.length; j++) {
+        const a = cards[i], b = cards[j];
+        const ra = opts.roomsByNode.get(a.id), rb = opts.roomsByNode.get(b.id);
+        if (!ra || !rb) continue;
+        let shared = 0;
+        for (const id of ra) if (!opts.universal.has(id) && rb.includes(id)) shared++;
+        if (shared === 0) continue;
+        // alpha scales the force, not the integration step -- that is d3's convention and the
+        // one difference from the loop this replaces (design doc 3).
+        const t = roomAttraction(a.x - b.x, a.y - b.y, shared, opts.stiffness * alpha);
+        a.vx += t.x; a.vy += t.y;
+        b.vx -= t.x; b.vy -= t.y;
+      }
+    }
+  }) as CustomForce;
+  force.initialize = (nodes: Sim[]) => { cards = nodes.filter((n) => n.kind === "card"); };
+  return force;
+}
+
+/** Rooms hold their members in and push non-members out.
+ *
+ *  `circles` is a thunk, not a value: the circles are placed on their members' centroids, so
+ *  they move as the layout settles and must be recomputed every tick.
+ *
+ *  `foreignStiffness` MUST stay below `containmentStiffness`. The reverse expels cards from
+ *  every room at once and the board falls apart. */
+export function forceRoomContainment(opts: {
+  roomsByNode: ReadonlyMap<string, readonly RoomId[]>;
+  circles: () => ReadonlyMap<RoomId, Circle>;
+  containmentStiffness: number;
+  foreignStiffness: number;
+}): CustomForce {
+  let cards: Sim[] = [];
+  const force = ((alpha: number) => {
+    const circles = opts.circles();
+    for (const n of cards) {
+      const mine = opts.roomsByNode.get(n.id);
+      // A card in NO room makes no claim about where it should NOT be either. Skip the circle
+      // loop entirely rather than special-casing foreignPush -- without this it takes
+      // foreignPush from ALL circles at once and is flung off the board (measured: 14/94 cards,
+      // 275-371 units past the nearest rim, on inalla.txt's Colour preset).
+      if (!mine || mine.length === 0) continue;
+      const cardR = nodeRadius(n);
+      for (const [id, c] of circles) {
+        const dx = n.x - c.x, dy = n.y - c.y;
+        const t = mine.includes(id)
+          ? containment(dx, dy, c.r, cardR, opts.containmentStiffness * alpha)
+          : foreignPush(dx, dy, c.r, cardR, opts.foreignStiffness * alpha);
+        n.vx += t.x; n.vy += t.y;
+      }
+    }
+  }) as CustomForce;
+  force.initialize = (nodes: Sim[]) => { cards = nodes.filter((n) => n.kind === "card"); };
+  return force;
 }
