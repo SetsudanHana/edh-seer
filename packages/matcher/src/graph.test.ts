@@ -238,3 +238,21 @@ test("an edge reached from several cards is stored once", () => {
   // Both cards still get their own CREATES edge to the shared token node.
   expect(g.edges.filter((e) => e.kind === "CREATES").map((e) => e.from).sort()).toEqual(["card:a", "card:b"]);
 });
+
+test("puts each face's art on its face node so a DFC can be flipped", () => {
+  const g = buildGraph([doc({
+    _id: "1", name: "Malakir Rebirth // Malakir Mire", typeLine: "Instant // Land",
+    colors: ["B"], colorIdentity: ["B"], manaValue: 2,
+    faces: [
+      { name: "Malakir Rebirth", typeLine: "Instant", oracleText: "", colors: ["B"], artCrop: "https://x/front.jpg" },
+      { name: "Malakir Mire", typeLine: "Land", oracleText: "", colors: [], artCrop: "https://x/back.jpg" },
+    ],
+  })]);
+  expect(g.nodes.find((n) => n.id === "face:1:0")?.props?.artCrop).toBe("https://x/front.jpg");
+  expect(g.nodes.find((n) => n.id === "face:1:1")?.props?.artCrop).toBe("https://x/back.jpg");
+});
+
+test("omits artCrop on a face that has none", () => {
+  const g = buildGraph([doc({ _id: "2", name: "Sol Ring", typeLine: "Artifact" })]);
+  expect(g.nodes.find((n) => n.id === "face:2:0")?.props?.artCrop).toBeUndefined();
+});

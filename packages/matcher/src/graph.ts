@@ -151,7 +151,14 @@ export function buildGraph(cards: Iterable<CardDoc>): CardGraph {
         }));
 
     faces.forEach((f, i) => {
-      const faceId = node(`face:${c._id}:${i}`, "face", f.name || c.name, { oracleText: f.oracleText });
+      // The face's own art, not the card's. Without it a modal DFC's back face exists as a node with no
+      // picture, and the board can render a flip that shows the front face twice. `data.module.ts`
+      // forwards `props.artCrop` for a node of any kind, so this is the whole cost of putting the back
+      // face on the wire.
+      const faceId = node(`face:${c._id}:${i}`, "face", f.name || c.name, {
+        oracleText: f.oracleText,
+        ...(f.artCrop !== undefined ? { artCrop: f.artCrop } : {}),
+      });
       edge(cardId, faceId, "FACE", i);
 
       const pt = parseTypeLine(f.typeLine);
