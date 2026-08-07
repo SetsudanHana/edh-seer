@@ -913,8 +913,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       };
     };
 
-    const pick = (ev: { clientX: number; clientY: number }): Sim | null => {
-      const { x: wx, y: wy } = toWorld(ev);
+    // Split from `pick` so `onMove` can compute the world point once (via `toWorld`) and hand it to
+    // both this and `roomsUnder`, rather than re-deriving it (and re-reading
+    // `getBoundingClientRect`) a second time -- see `onMove` below.
+    const pickAt = (wx: number, wy: number): Sim | null => {
       // Card mode paints a 5:7 RECTANGLE (ART_RADIUS*2 wide, *1.4 tall -- see draw()'s
       // `mode === "card"` branch), not the disc nodeRadius() reports for the sim/miniature paint.
       // Hit-testing the inscribed circle there left the top/bottom bands and all four corners --
@@ -935,6 +937,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         if (d < bd) { bd = d; best = n; }
       }
       return best;
+    };
+
+    const pick = (ev: { clientX: number; clientY: number }): Sim | null => {
+      const { x: wx, y: wy } = toWorld(ev);
+      return pickAt(wx, wy);
     };
 
     // Pointer travel since the last pointerdown, tracked separately from `dragging` (which is
@@ -976,7 +983,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         setHoveredRooms((prev) => (prev.length === 0 ? prev : []));
         return;
       }
-      const n = pick(e);
+      // Computed once and handed to both the node hit-test and the room lookup below -- each used
+      // to call toWorld (and its own getBoundingClientRect) separately.
+      const w = toWorld(e);
+      const n = pickAt(w.x, w.y);
       const r = canvas.getBoundingClientRect();
       // The canvas shows only room labels now (Task 5+), so the detailed build-category
       // vocabulary lives here instead -- a card's roles, translated to plain language.
@@ -986,7 +996,6 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         : null);
       // Additive to the node tooltip, not a replacement: hovering a card inside two rooms shows
       // the card's own tooltip AND lights both legend rows.
-      const w = toWorld(e);
       const under = roomsUnder(w.x, w.y, lastCircles);
       // Only write when the set actually changed -- pointermove fires far more often than the
       // answer changes, and every write is a React render.

@@ -1187,3 +1187,87 @@ describe("roomsUnder", () => {
     expect(roomsUnder(0, 50, new Map([["a", { x: 0, y: 0, r: 50 }]]))).toEqual(["a"]);
   });
 });
+
+// Fix round 1: the suite above only exercises the pure `roomsUnder` helper with hand-built Maps.
+// Deleting the onMove wiring that calls it (or the lastCircles stash, or the data-hovered attribute)
+// leaves that suite green -- none of it can observe the canvas-to-legend wire-up a user actually
+// sees. This block drives the real component instead, using the same technique the pre-existing
+// "hover shows a card's build role" test above documents: jsdom's getBoundingClientRect is all-zero
+// and the camera starts at its identity, so pick()/toWorld's own math collapses to clientX/clientY
+// == world coordinates, and a pointermove fired at a probed node's exact (x, y) lands on it with no
+// prediction required.
+function settleFrames(graph: typeof SAMPLE.graph, report: typeof SAMPLE.report, ticks = 5) {
+  let nextFrame: FrameRequestCallback | null = null;
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+  makeContextSpy();
+  const { container } = render(<GraphView graph={graph} report={report} />);
+  // Past the mount-time frame, so lastCircles reflects a settled layout rather than just the seed --
+  // same rAF-stub technique as "containment moves a member card toward its room" above.
+  for (let i = 0; i < ticks; i++) nextFrame!(0);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; x: number; y: number }> & {
+      circles: Array<{ id: string; x: number; y: number; r: number }>;
+    };
+  };
+  return { container, canvas };
+}
+
+describe("hovering the canvas lights the legend (integration)", () => {
+  it("lights the legend row for a room the pointer's circle contains, and not one it doesn't", () => {
+    const graph = {
+      nodes: [{ id: "card:a", kind: "card", label: "Card A", roles: ["ramp"] }],
+      edges: [],
+    } as unknown as typeof SAMPLE.graph;
+    const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+    const { container, canvas } = settleFrames(graph, report);
+    const probe = canvas.__graphProbe!();
+    const card = probe.find((n) => n.id === "card:a")!;
+    fireEvent(canvas, new MouseEvent("pointermove", { clientX: card.x, clientY: card.y, bubbles: true }));
+    expect(container.querySelector('[data-room="ramp"]')!.getAttribute("data-hovered")).toBe("true");
+    // "lands" holds no members here, so roomLayout parks it in the empty-room orbit, well clear of
+    // the occupied "ramp" circle -- a real room the pointer's point does NOT fall inside.
+    expect(container.querySelector('[data-room="lands"]')!.getAttribute("data-hovered")).toBe("false");
+  });
+
+  // The whole reason roomsUnder returns an array: overlapping circles are the normal case, and a
+  // card in two rooms sits in the lens where both contain it.
+  it("a point inside two overlapping room circles lights both legend rows", () => {
+    const graph = {
+      nodes: [{ id: "card:a", kind: "card", label: "Card A", roles: ["ramp", "targetedRemoval"] }],
+      edges: [],
+    } as unknown as typeof SAMPLE.graph;
+    const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+    const { container, canvas } = settleFrames(graph, report);
+    const probe = canvas.__graphProbe!();
+    const card = probe.find((n) => n.id === "card:a")!;
+    // Card A is the ONLY member of both "ramp" and "interaction" (roomsForCard maps
+    // targetedRemoval -> interaction), so roomLayout centres both circles on this card's own
+    // settled position -- they fully coincide, which is the simplest reachable overlap.
+    fireEvent(canvas, new MouseEvent("pointermove", { clientX: card.x, clientY: card.y, bubbles: true }));
+    expect(container.querySelector('[data-room="ramp"]')!.getAttribute("data-hovered")).toBe("true");
+    expect(container.querySelector('[data-room="interaction"]')!.getAttribute("data-hovered")).toBe("true");
+  });
+
+  it("a pointer drag clears the highlight rather than leaving rows lit", () => {
+    const graph = {
+      nodes: [{ id: "card:a", kind: "card", label: "Card A", roles: ["ramp"] }],
+      edges: [],
+    } as unknown as typeof SAMPLE.graph;
+    const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+    const { container, canvas } = settleFrames(graph, report);
+    // jsdom implements neither PointerEvent nor Element.setPointerCapture -- onDown calls the
+    // latter unconditionally, so it needs a stub here the same way makeContextSpy stubs the 2D
+    // context jsdom doesn't have either. clientX/clientY still arrive through a plain MouseEvent,
+    // same as every other pointer-event fire in this file (see the doc comment above).
+    (canvas as unknown as { setPointerCapture: (id: number) => void }).setPointerCapture = () => {};
+    const probe = canvas.__graphProbe!();
+    const card = probe.find((n) => n.id === "card:a")!;
+    fireEvent(canvas, new MouseEvent("pointermove", { clientX: card.x, clientY: card.y, bubbles: true }));
+    const row = () => container.querySelector('[data-room="ramp"]')!;
+    expect(row().getAttribute("data-hovered")).toBe("true");
+    fireEvent(canvas, new MouseEvent("pointerdown", { clientX: card.x, clientY: card.y, bubbles: true }));
+    fireEvent(canvas, new MouseEvent("pointermove", { clientX: card.x + 30, clientY: card.y, bubbles: true }));
+    expect(row().getAttribute("data-hovered")).toBe("false");
+  });
+});
