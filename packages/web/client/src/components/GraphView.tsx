@@ -841,17 +841,18 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           } else {
             // Covers both "no art at all" and "card mode wants an image that hasn't loaded yet" --
             // a blank node is worse than a small one, so this always requests `src` (whichever size
-            // the current mode wants) and draws a placeholder rather than nothing. Card mode's
-            // placeholder is an outline of the same cardW/cardH rectangle everything else in this
-            // branch draws -- a circular placeholder here would be exactly the defect the rest of
-            // this task fixes, just relocated to the moment art hasn't finished loading yet.
+            // the current mode wants) and draws a placeholder rather than nothing. The shape follows
+            // the mode -- the miniature's filled disc, or a filled cardW/cardH rect in card mode --
+            // and the FILL is the point, not incidental: this is the only thing on screen at the
+            // moment the user is zoomed in and looking at nothing else, so it has to read as a solid
+            // loading signal, the same fill the image itself will occupy once it lands. Do not
+            // "tidy" this back to a stroke to make a test's fillRect count smaller -- that was tried
+            // (fix round 1) and rejected: rendering follows the mode, not the test's bookkeeping.
             if (src) artLoader.request(src);
+            ctx.fillStyle = colorOf(n.kind);
             if (mode === "card") {
-              ctx.strokeStyle = colorOf(n.kind);
-              ctx.lineWidth = 1 / cam.z;
-              ctx.strokeRect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
+              ctx.fillRect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
             } else {
-              ctx.fillStyle = colorOf(n.kind);
               ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
             }
           }

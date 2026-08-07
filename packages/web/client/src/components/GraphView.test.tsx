@@ -1161,11 +1161,18 @@ test("a card in card mode shows its rooms as bars, not rim arcs", () => {
     edges: [],
   } as unknown as typeof SAMPLE.graph;
   const calls = cardModeFrame(graph, { ...SAMPLE.report, combos: [], archetypes: [] });
-  // draw() always opens with a canvas-wide background wipe (fillStyle = paint.surface;
-  // fillRect(0, 0, canvas.width, canvas.height)) before painting anything, unrelated to card
-  // chrome. jsdom gives the canvas no real size, so that call is always exactly this literal
-  // string -- excluded here rather than counted as a third "bar".
-  const bars = calls.filter((c) => c.startsWith("fillRect:") && c !== "fillRect:0,0,0,0");
+  // Structural, not a literal-string match against draw()'s canvas-wide background wipe (fix
+  // round 1): a room bar is the only fillRect whose height is BAR_H (3) -- GraphView.tsx's own
+  // module-private constant, not importable here, so its value is repeated. The background wipe
+  // (0,0,canvas.width,canvas.height) and the card-mode art-loading placeholder (a full cardH-tall
+  // fillRect, added in the same round) both have some other height and fall out on their own; a
+  // literal match on "fillRect:0,0,0,0" would also stop working the moment jsdom ever reports a
+  // real canvas size.
+  const bars = calls.filter((c) => {
+    if (!c.startsWith("fillRect:")) return false;
+    const h = Number(c.slice("fillRect:".length).split(",")[3]);
+    return h === 3;
+  });
   // One bar per room, each BAR_H (3) tall and each an equal share of the 28-unit card width.
   expect(bars).toHaveLength(2);
   for (const bar of bars) {
@@ -1176,6 +1183,17 @@ test("a card in card mode shows its rooms as bars, not rim arcs", () => {
   // And no arcs at the rim radius -- the circular chrome is gone, not merely joined by bars.
   expect(calls.filter((c) => c.startsWith("arc:") && c.split(",")[2] === String(ART_RADIUS)))
     .toEqual([]);
+  // Fix round 1: Bojuka Bog carries no artCrop, so the art-not-loaded placeholder fires and
+  // fills the whole card box (cardW x cardH, not BAR_H tall) -- proves the placeholder is a
+  // filled rect matching the card's own geometry, and that the structural bars filter above
+  // (height === BAR_H) correctly does not count it as a third bar.
+  const placeholder = calls.find((c) => {
+    if (!c.startsWith("fillRect:")) return false;
+    const [, , w, h] = c.slice("fillRect:".length).split(",").map(Number);
+    return w === ART_RADIUS * 2 && Math.abs(h - ART_RADIUS * 2 * 1.4) < 1e-6;
+  });
+  expect(placeholder).toBeDefined();
+  expect(bars).not.toContain(placeholder);
 });
 
 test("the search-match ring in card mode is a rectangle around the card box", () => {
