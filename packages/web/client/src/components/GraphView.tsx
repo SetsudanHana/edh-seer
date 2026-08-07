@@ -295,7 +295,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       if (n.kind !== "card") continue;
       cardRooms.set(n.label, roomsByNode.get(n.id) ?? []);
     }
-    return roomTallies(cardRooms, report.buildCategories, copiesByNameOf(graph.nodes));
+    return roomTallies(cardRooms, ROOMS, report.buildCategories, copiesByNameOf(graph.nodes));
   }, [graph, report, roomsByNode]);
 
   /** Event rows for the table: emitters in, payoffs out. */
@@ -392,6 +392,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         nodes
           .filter((n) => n.kind === "card" && visible(n))
           .map((n) => ({ x: n.x, y: n.y, r: nodeRadius(n), rooms: roomsByNode.get(n.id) ?? [] })),
+        ROOMS,
         tallies,
       );
 
@@ -616,7 +617,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // The rim carries which rooms this card is in -- one arc per room, in that room's hue.
           // Drawn for both the art and the fallback branch: a card whose art failed to load must
           // not lose its membership signal along with its picture.
-          const arcs = rimArcs(roomsByNode.get(n.id) ?? []);
+          const arcs = rimArcs((roomsByNode.get(n.id) ?? []).map((id) => ROOM_HUE[id]));
           ctx.lineWidth = 2.5 / cam.z;
           for (const arc of arcs) {
             ctx.strokeStyle = arc.hue;

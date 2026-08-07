@@ -1,7 +1,7 @@
-/** The seven rooms of the deck board. Fixed for every deck: an empty room is the finding
- *  ("BOARD WIPES 0/3"), so rooms are drawn whether or not any card lands in them. */
-export type RoomId =
-  | "strategy" | "wincons" | "cardAdvantage" | "ramp" | "lands" | "interaction" | "boardWipes";
+/** Was a seven-value union. A room is now anything a preset declares -- a type, a colour, a
+ *  subtype -- so the id is an opaque string and the ROOMS constant below is just the role preset's
+ *  room list. */
+export type RoomId = string;
 
 export interface Room {
   id: RoomId;
@@ -11,7 +11,10 @@ export interface Room {
   categories: string[];
 }
 
-/** Order is the declaration order used everywhere a room list is iterated, so a card's rooms
+/** The seven rooms of the default role preset. Fixed for every deck: an empty room is the finding
+ *  ("BOARD WIPES 0/3"), so rooms are drawn whether or not any card lands in them.
+ *
+ *  Order is the declaration order used everywhere a room list is iterated, so a card's rooms
  *  come out in a stable order regardless of the order its roles arrived in. */
 export const ROOMS: Room[] = [
   { id: "strategy", label: "Strategy", categories: [] },
@@ -93,6 +96,12 @@ export const ROOM_HUE: Record<RoomId, string> = {
   interaction: "#277310",
   boardWipes: "#6b89f9",
 };
+
+/** The sixth arc when a card is in more than six rooms. Six is rimArcs' legibility floor (60 deg is
+ *  ~10px of stroke at a 14px disc) and predicates removed the guarantee that nothing exceeds it: a
+ *  WUBRG card is in five colour rooms before any other preset is considered. Neutral on purpose --
+ *  it means "and more", not a room. */
+export const OVERFLOW_HUE = "#6b7280";
 
 /** Text-safe variant of ROOM_HUE, used ONLY for the room label (GraphView.tsx's `roomFontPx`
  *  fillText) -- never for the outline stroke, the fill wash, or a card's rim arcs, all of which
@@ -180,8 +189,10 @@ export function subcategoryLabel(category: string): string {
  *  containing everything, which distinguishes nothing and dragged every card toward a second
  *  anchor. See 2026-08-04-circle-rooms-design.md.
  *
- *  This exclusivity is load-bearing downstream: it is why a card's rim can never need more than six
- *  arcs. */
+ *  This exclusivity is why a card in THIS room list can never need more than six arcs -- true of
+ *  ROOMS specifically, not of every room list rimArcs might be given. Other presets (colours,
+ *  types) have no such exclusive fallback, so rimArcs enforces its own six-arc cap explicitly
+ *  rather than relying on a guarantee only this function's caller happens to provide. */
 export function roomsForCard(
   roles: string[] | undefined,
   name: string,
@@ -222,17 +233,18 @@ export interface RoomTally {
  *  means the target isn't strictly "how many copies you need" in the same units as count. */
 export function roomTallies(
   cardRooms: Map<string, readonly RoomId[]>,
+  rooms: readonly { id: RoomId; categories: string[] }[],
   buildCategories: { category: string; count: number; target: number }[] | undefined,
   copiesByName?: Map<string, number>,
 ): Map<RoomId, RoomTally> {
   const targetOf = new Map((buildCategories ?? []).map((c) => [c.category, c.target]));
   const counts = new Map<RoomId, number>();
-  for (const [name, rooms] of cardRooms) {
+  for (const [name, cardsRooms] of cardRooms) {
     const copies = copiesByName?.get(name) ?? 1;
-    for (const id of rooms) counts.set(id, (counts.get(id) ?? 0) + copies);
+    for (const id of cardsRooms) counts.set(id, (counts.get(id) ?? 0) + copies);
   }
   const out = new Map<RoomId, RoomTally>();
-  for (const room of ROOMS) {
+  for (const room of rooms) {
     const target = room.categories.reduce((sum, c) => sum + (targetOf.get(c) ?? 0), 0);
     const count = counts.get(room.id) ?? 0;
     out.set(room.id, { count, target, under: target > 0 && count < target });
@@ -240,23 +252,28 @@ export function roomTallies(
   return out;
 }
 
-/** The card disc's rim, split into one equal arc per room the card is in, each in that room's hue.
+/** The card disc's rim, split into one equal arc per hue given -- one per room the card is in.
+ *  Takes hues, not room objects: this is pure geometry with no business knowing what a room is,
+ *  and it is the caller's job to resolve a card's rooms to their hues (ROOM_HUE[id]) first.
  *  Angles are radians from 12 o'clock, clockwise, covering the full circle.
  *
  *  This is the AUTHORITATIVE membership signal, and the lens a card sits in is the bonus. Position
  *  cannot be complete: circles cannot realise an arbitrary Euler diagram past three sets, and a
  *  tightly packed cluster can hide a lens entirely. The rim reads either way.
  *
- *  Six arcs is the hard maximum, not a truncation: Strategy is the fallback, so a card in Strategy
- *  is in no other room, leaving the six type-and-role rooms as the ceiling. Six is also where
- *  legibility runs out (60 degrees is ~10px of stroke at a 14px disc), and the two coinciding is
- *  luck -- if Strategy ever stops being exclusive, the rim breaks before the geometry does. */
-export function rimArcs(rooms: readonly RoomId[]): Array<{ hue: string; from: number; to: number }> {
-  if (rooms.length === 0) return [];
-  const step = (Math.PI * 2) / rooms.length;
+ *  Six arcs is an explicit cap, not a truncation that happens to never trigger: it used to hold
+ *  because Strategy is exclusive (a card in Strategy is in no other ROOMS room, capping the default
+ *  preset at six by construction), but predicates remove that guarantee -- a card can be in five
+ *  colour rooms and several type rooms at once. Six is where legibility runs out (60 degrees is
+ *  ~10px of stroke at a 14px disc), so past five explicit hues the sixth arc is painted in
+ *  OVERFLOW_HUE ("and more") rather than dropping arcs silently or squeezing seven in. */
+export function rimArcs(hues: readonly string[]): Array<{ hue: string; from: number; to: number }> {
+  if (hues.length === 0) return [];
+  const shown = hues.length > 6 ? [...hues.slice(0, 5), OVERFLOW_HUE] : [...hues];
+  const step = (Math.PI * 2) / shown.length;
   const start = -Math.PI / 2;
-  return rooms.map((id, i) => ({
-    hue: ROOM_HUE[id],
+  return shown.map((hue, i) => ({
+    hue,
     from: start + i * step,
     to: start + (i + 1) * step,
   }));
@@ -294,6 +311,7 @@ const EMPTY_ORBIT = 1.45;
  *  exactly; the circle does not try to. */
 export function roomLayout(
   members: readonly RoomMember[],
+  rooms: readonly { id: RoomId }[],
   tallies: Map<RoomId, RoomTally>,
 ): Map<RoomId, Circle> {
   const byRoom = new Map<RoomId, RoomMember[]>();
@@ -306,7 +324,7 @@ export function roomLayout(
   }
 
   const out = new Map<RoomId, Circle>();
-  for (const room of ROOMS) {
+  for (const room of rooms) {
     const held = byRoom.get(room.id);
     if (!held || held.length === 0) continue;
     let sx = 0, sy = 0;
@@ -317,9 +335,11 @@ export function roomLayout(
     out.set(room.id, { x, y, r });
   }
 
-  // Empty rooms have no centroid. Park them in a ring outside everything occupied, in ROOMS order,
-  // so they are visible and cannot overlap a room that holds cards.
-  const empties = ROOMS.filter((room) => !out.has(room.id));
+  // Empty rooms have no centroid. Park them in a ring outside everything occupied, in the given
+  // rooms' order, so they are visible and cannot overlap a room that holds cards. A room a member
+  // claims but that is absent from `rooms` never appears here -- a stale membership must not
+  // resurrect a room the caller didn't ask for.
+  const empties = rooms.filter((room) => !out.has(room.id));
   if (empties.length > 0) {
     let cx = 0, cy = 0, spread = 0;
     const occupied = [...out.values()];

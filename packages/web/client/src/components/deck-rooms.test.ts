@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ROOMS, ROOM_HUE, roomsForCard, roomTallies, subcategoryLabel,
+  ROOMS, ROOM_HUE, OVERFLOW_HUE, roomsForCard, roomTallies, subcategoryLabel,
   roomLayout, rimArcs, type Circle, type RoomId, type RoomMember, type RoomTally,
 } from "./deck-rooms.js";
 
@@ -102,12 +102,12 @@ describe("roomTallies", () => {
       ["Ponder", ["cardAdvantage"] as const],
       ["Rhystic Study", ["cardAdvantage"] as const],
     ]);
-    const t = roomTallies(cardRooms, build);
+    const t = roomTallies(cardRooms, ROOMS, build);
     expect(t.get("cardAdvantage")!.count).toBe(2);
   });
 
   it("sums the archetype-adjusted targets of a room's subcategories", () => {
-    const t = roomTallies(new Map(), build);
+    const t = roomTallies(new Map(), ROOMS, build);
     expect(t.get("cardAdvantage")!.target).toBe(9); // draw 7 + cardSelection 2, the SUM
     expect(t.get("cardAdvantage")!.target).not.toBe(7); // not just one operand
     expect(t.get("cardAdvantage")!.target).not.toBe(2); // not just the other
@@ -115,13 +115,13 @@ describe("roomTallies", () => {
   });
 
   it("reports target 0 for a room whose subcategories all have target 0", () => {
-    const t = roomTallies(new Map(), build);
+    const t = roomTallies(new Map(), ROOMS, build);
     expect(t.get("wincons")!.target).toBe(0); // burn 0 + tutor 0
     expect(t.get("wincons")!.under).toBe(false);
   });
 
   it("flags a room under its target", () => {
-    const t = roomTallies(new Map(), build);
+    const t = roomTallies(new Map(), ROOMS, build);
     expect(t.get("boardWipes")).toEqual({ count: 0, target: 1, under: true });
   });
 
@@ -129,11 +129,11 @@ describe("roomTallies", () => {
     const cardRooms = new Map(
       Array.from({ length: 9 }, (_, i) => [`c${i}`, ["cardAdvantage"] as const]),
     );
-    expect(roomTallies(cardRooms, build).get("cardAdvantage")!.under).toBe(false);
+    expect(roomTallies(cardRooms, ROOMS, build).get("cardAdvantage")!.under).toBe(false);
   });
 
   it("returns an entry for every room even with no data at all", () => {
-    const t = roomTallies(new Map(), undefined);
+    const t = roomTallies(new Map(), ROOMS, undefined);
     expect(t.size).toBe(7);
     expect(t.get("strategy")).toEqual({ count: 0, target: 0, under: false });
   });
@@ -141,18 +141,18 @@ describe("roomTallies", () => {
   it("counts copies, not distinct names", () => {
     const cardRooms = new Map([["Mountain", ["lands"] as const], ["Island", ["lands"] as const]]);
     const copies = new Map([["Mountain", 24]]);
-    const t = roomTallies(cardRooms, [{ category: "lands", count: 25, target: 36 }], copies);
+    const t = roomTallies(cardRooms, ROOMS, [{ category: "lands", count: 25, target: 36 }], copies);
     expect(t.get("lands")!.count).toBe(25); // 24 Mountains + 1 Island
   });
 
   it("treats a card with no copies entry as a single copy", () => {
-    expect(roomTallies(new Map([["Sol Ring", ["ramp"] as const]]), undefined, new Map()).get("ramp")!.count).toBe(1);
+    expect(roomTallies(new Map([["Sol Ring", ["ramp"] as const]]), ROOMS, undefined, new Map()).get("ramp")!.count).toBe(1);
   });
 
   it("ignores a buildCategories entry no room claims, without throwing or perturbing tallies", () => {
     const withOrphan = [...build, { category: "notARoomCategory", count: 99, target: 99 }];
-    expect(() => roomTallies(new Map(), withOrphan)).not.toThrow();
-    const t = roomTallies(new Map(), withOrphan);
+    expect(() => roomTallies(new Map(), ROOMS, withOrphan)).not.toThrow();
+    const t = roomTallies(new Map(), ROOMS, withOrphan);
     expect(t.get("cardAdvantage")!.target).toBe(9);
     expect(t.get("boardWipes")!.target).toBe(1);
     expect(t.get("wincons")!.target).toBe(0);
@@ -164,7 +164,7 @@ describe("roomLayout", () => {
   const tallyOf = (target: number): RoomTally => ({ count: 0, target, under: target > 0 });
 
   it("draws a room around its one member", () => {
-    const rooms = roomLayout([{ x: 10, y: 20, r: 5, rooms: ["ramp"] }], noTallies);
+    const rooms = roomLayout([{ x: 10, y: 20, r: 5, rooms: ["ramp"] }], ROOMS, noTallies);
     expect(rooms.get("ramp")).toEqual({ x: 10, y: 20, r: 5 });
   });
 
@@ -174,6 +174,7 @@ describe("roomLayout", () => {
         { x: 0, y: 0, r: 2, rooms: ["ramp"] },
         { x: 10, y: 0, r: 2, rooms: ["ramp"] },
       ],
+      ROOMS,
       noTallies,
     );
     expect(rooms.get("ramp")!.x).toBe(5);
@@ -186,6 +187,7 @@ describe("roomLayout", () => {
         { x: 0, y: 0, r: 2, rooms: ["ramp"] },
         { x: 10, y: 0, r: 3, rooms: ["ramp"] },
       ],
+      ROOMS,
       noTallies,
     );
     // centroid x=5; furthest member centre is 5 away, its far rim another 3.
@@ -196,6 +198,7 @@ describe("roomLayout", () => {
     const shared = { x: 50, y: 0, r: 4, rooms: ["lands", "ramp"] as const };
     const rooms = roomLayout(
       [{ x: 0, y: 0, r: 4, rooms: ["lands"] }, shared, { x: 100, y: 0, r: 4, rooms: ["ramp"] }],
+      ROOMS,
       noTallies,
     );
     const inside = (c: { x: number; y: number; r: number }) =>
@@ -205,67 +208,70 @@ describe("roomLayout", () => {
   });
 
   it("returns a circle for every room, including empty ones", () => {
-    const rooms = roomLayout([{ x: 0, y: 0, r: 4, rooms: ["ramp"] }], noTallies);
+    const rooms = roomLayout([{ x: 0, y: 0, r: 4, rooms: ["ramp"] }], ROOMS, noTallies);
     expect([...rooms.keys()].sort()).toEqual(ROOMS.map((r) => r.id).sort());
   });
 
   it("sizes an empty room from its target, since it has no members to measure", () => {
     const member = [{ x: 0, y: 0, r: 4, rooms: ["ramp"] as const }];
-    const withTarget = roomLayout(member, new Map([["boardWipes", tallyOf(3)]]));
-    const without = roomLayout(member, noTallies);
+    const withTarget = roomLayout(member, ROOMS, new Map([["boardWipes", tallyOf(3)]]));
+    const without = roomLayout(member, ROOMS, noTallies);
     // A bigger hole draws bigger. Compared against the no-target case, not against zero -- an
     // assertion of "> 0" passes on the base radius alone and would not notice target being ignored.
     expect(withTarget.get("boardWipes")!.r).toBeGreaterThan(without.get("boardWipes")!.r);
   });
 
   it("gives an empty room with no target a visible circle rather than a point", () => {
-    const rooms = roomLayout([{ x: 0, y: 0, r: 4, rooms: ["ramp"] }], noTallies);
+    const rooms = roomLayout([{ x: 0, y: 0, r: 4, rooms: ["ramp"] }], ROOMS, noTallies);
     expect(rooms.get("boardWipes")!.r).toBeGreaterThan(0);
   });
 
   it("does not put an empty room on top of an occupied one", () => {
-    const rooms = roomLayout([{ x: 0, y: 0, r: 40, rooms: ["ramp"] }], noTallies);
+    const rooms = roomLayout([{ x: 0, y: 0, r: 40, rooms: ["ramp"] }], ROOMS, noTallies);
     const ramp = rooms.get("ramp")!, wipes = rooms.get("boardWipes")!;
     expect(Math.hypot(ramp.x - wipes.x, ramp.y - wipes.y)).toBeGreaterThan(ramp.r);
   });
 
   it("is a pure function of its arguments -- same input, same output", () => {
     const members = [{ x: 3, y: 7, r: 4, rooms: ["ramp"] as const }];
-    expect(roomLayout(members, noTallies)).toEqual(roomLayout(members, noTallies));
+    expect(roomLayout(members, ROOMS, noTallies)).toEqual(roomLayout(members, ROOMS, noTallies));
   });
 
   it("handles no members at all without throwing", () => {
-    expect(() => roomLayout([], noTallies)).not.toThrow();
-    expect(roomLayout([], noTallies).size).toBe(ROOMS.length);
+    expect(() => roomLayout([], ROOMS, noTallies)).not.toThrow();
+    expect(roomLayout([], ROOMS, noTallies).size).toBe(ROOMS.length);
   });
 });
 
 describe("rimArcs", () => {
   const TAU = Math.PI * 2;
 
-  it("gives a one-room card a single full-circle arc", () => {
-    const arcs = rimArcs(["ramp"]);
+  it("gives a card with one hue a single full-circle arc", () => {
+    const arcs = rimArcs([ROOM_HUE.ramp]);
     expect(arcs).toHaveLength(1);
     expect(arcs[0].to - arcs[0].from).toBeCloseTo(TAU);
     expect(arcs[0].hue).toBe(ROOM_HUE.ramp);
   });
 
-  it("splits a two-room card in half", () => {
-    const arcs = rimArcs(["lands", "ramp"]);
+  it("splits a two-hue card in half", () => {
+    const arcs = rimArcs([ROOM_HUE.lands, ROOM_HUE.ramp]);
     expect(arcs).toHaveLength(2);
     expect(arcs[0].to - arcs[0].from).toBeCloseTo(Math.PI);
     expect(arcs[1].to - arcs[1].from).toBeCloseTo(Math.PI);
   });
 
   it("covers the full circle with no gap and no overlap", () => {
-    const arcs = rimArcs(["lands", "ramp", "interaction"]);
+    const arcs = rimArcs([ROOM_HUE.lands, ROOM_HUE.ramp, ROOM_HUE.interaction]);
     expect(arcs[0].from).toBeCloseTo(-Math.PI / 2);
     for (let i = 1; i < arcs.length; i++) expect(arcs[i].from).toBeCloseTo(arcs[i - 1].to);
     expect(arcs[arcs.length - 1].to).toBeCloseTo(-Math.PI / 2 + TAU);
   });
 
-  it("handles the six-room maximum -- sixty degrees each", () => {
-    const arcs = rimArcs(["wincons", "cardAdvantage", "ramp", "lands", "interaction", "boardWipes"]);
+  it("handles the six-hue maximum -- sixty degrees each", () => {
+    const arcs = rimArcs([
+      ROOM_HUE.wincons, ROOM_HUE.cardAdvantage, ROOM_HUE.ramp,
+      ROOM_HUE.lands, ROOM_HUE.interaction, ROOM_HUE.boardWipes,
+    ]);
     expect(arcs).toHaveLength(6);
     for (const a of arcs) expect(a.to - a.from).toBeCloseTo(TAU / 6);
   });
@@ -274,7 +280,43 @@ describe("rimArcs", () => {
     expect(rimArcs([])).toEqual([]);
   });
 
-  it("uses each room's own hue", () => {
-    expect(rimArcs(["lands", "ramp"]).map((a) => a.hue)).toEqual([ROOM_HUE.lands, ROOM_HUE.ramp]);
+  it("uses each hue given, in order", () => {
+    expect(rimArcs([ROOM_HUE.lands, ROOM_HUE.ramp]).map((a) => a.hue)).toEqual([ROOM_HUE.lands, ROOM_HUE.ramp]);
+  });
+});
+
+describe("rimArcs takes hues and caps at six", () => {
+  it("splits the circle evenly among the hues given", () => {
+    const arcs = rimArcs(["#111111", "#222222"]);
+    expect(arcs.map((a) => a.hue)).toEqual(["#111111", "#222222"]);
+    expect(arcs[1].to - arcs[0].from).toBeCloseTo(Math.PI * 2);
+  });
+
+  it("caps at six arcs and paints the sixth in the overflow hue", () => {
+    const arcs = rimArcs(["#1", "#2", "#3", "#4", "#5", "#6", "#7", "#8"]);
+    expect(arcs).toHaveLength(6);
+    expect(arcs[5].hue).toBe(OVERFLOW_HUE);
+    expect(arcs.slice(0, 5).map((a) => a.hue)).toEqual(["#1", "#2", "#3", "#4", "#5"]);
+  });
+
+  it("still covers the full circle when capped", () => {
+    const arcs = rimArcs(["#1", "#2", "#3", "#4", "#5", "#6", "#7"]);
+    expect(arcs[5].to - arcs[0].from).toBeCloseTo(Math.PI * 2);
+  });
+});
+
+describe("roomLayout takes its room list", () => {
+  it("parks a room with no members even when it is not one of the seven", () => {
+    const members: RoomMember[] = [{ x: 0, y: 0, r: 14, rooms: ["alpha"] }];
+    const rooms = [{ id: "alpha" }, { id: "beta" }];
+    const out = roomLayout(members, rooms, new Map());
+    expect(out.get("alpha")).toEqual({ x: 0, y: 0, r: 14 });
+    expect(out.has("beta")).toBe(true);
+    expect(out.get("beta")!.r).toBeGreaterThan(0);
+  });
+
+  it("ignores rooms absent from the list even if a member claims them", () => {
+    const members: RoomMember[] = [{ x: 0, y: 0, r: 14, rooms: ["ghost"] }];
+    expect(roomLayout(members, [{ id: "alpha" }], new Map()).has("ghost")).toBe(false);
   });
 });
