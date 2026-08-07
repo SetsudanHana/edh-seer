@@ -113,6 +113,23 @@ if (s.unjudged.length) {
 }
 console.log(`  cached verdicts the engine no longer claims: ${s.dropped}`);
 
+// `--rejudge` dumps EVERY live claim, judged or not, in the same worksheet shape. The 608 cached
+// verdicts the engine no longer claims are excluded on purpose: re-judging a claim nothing makes
+// changes no reported number. Rows already carrying a USER verdict are excluded too -- the user is
+// the authority, so re-judging them would be overwriting the answer with the thing being tested.
+const rejudge = arg("--rejudge");
+if (rejudge) {
+  const userJudged = new Set(cache.filter((v) => v.note.startsWith("USER VERDICT"))
+    .map((v) => `${v.producer}|${v.consumer}|${v.tag}`));
+  const rows = distinct.filter((c) => !userJudged.has(`${c.producer}|${c.consumer}|${c.tag}`));
+  writeFileSync(rejudge, `${rows.map((c, id) => JSON.stringify({
+    id, producer: c.producer, consumer: c.consumer, tag: c.tag,
+    claim: claimFor(c.tag, c.producer, c.consumer, c.implied === true),
+    producerOracle: oracle.get(c.producer) ?? "", consumerOracle: oracle.get(c.consumer) ?? "",
+  })).join("\n")}\n`);
+  console.log(`  wrote ${rows.length} live claims to re-judge (${distinct.length - rows.length} are the user's) -> ${rejudge}`);
+}
+
 const out = arg("--worksheet");
 if (out && s.unjudged.length) {
   writeFileSync(out, `${s.unjudged.map((c, id) => JSON.stringify({
