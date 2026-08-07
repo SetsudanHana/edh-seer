@@ -68,3 +68,81 @@ describe("cardFacts", () => {
     expect(shaman.copies).toBe(1);
   });
 });
+
+import { PRESETS, roomsForFacts, type CardFacts, type Room } from "./presets.js";
+
+const facts = (over: Partial<CardFacts>): CardFacts => ({
+  id: "card:x", name: "X", roles: [], types: [], subtypes: [], colors: [], manaValue: 0, copies: 1,
+  ...over,
+});
+const preset = (id: string) => PRESETS.find((p) => p.id === id)!;
+
+describe("PRESETS", () => {
+  it("ships five presets with role first", () => {
+    expect(PRESETS.map((p) => p.id)).toEqual(["role", "type", "colour", "manaValue", "subtype"]);
+  });
+});
+
+describe("the colour preset", () => {
+  const deck = [
+    facts({ id: "a", colors: ["B", "G"] }),
+    facts({ id: "b", colors: ["B"] }),
+    facts({ id: "c", colors: [] }),
+  ];
+
+  it("puts a Golgari card in BOTH colour rooms", () => {
+    const rooms = preset("colour").rooms(deck);
+    expect(roomsForFacts(rooms, deck[0]).sort()).toEqual(["B", "G"]);
+  });
+
+  it("orders rooms by member count, descending", () => {
+    expect(preset("colour").rooms(deck).map((r) => r.id)).toEqual(["B", "G"]);
+  });
+
+  it("makes no room for a colour the deck does not run", () => {
+    expect(preset("colour").rooms(deck).map((r) => r.id)).not.toContain("W");
+  });
+
+  it("leaves a colourless card in no room at all", () => {
+    expect(roomsForFacts(preset("colour").rooms(deck), deck[2])).toEqual([]);
+  });
+});
+
+describe("the type preset", () => {
+  it("puts an Artifact Creature in two rooms", () => {
+    const deck = [facts({ id: "a", types: ["Artifact", "Creature"] })];
+    expect(roomsForFacts(preset("type").rooms(deck), deck[0]).sort()).toEqual(["Artifact", "Creature"]);
+  });
+});
+
+describe("the mana value preset", () => {
+  it("buckets everything from seven upward into 7+", () => {
+    const deck = [facts({ id: "a", manaValue: 9 }), facts({ id: "b", manaValue: 7 })];
+    const rooms = preset("manaValue").rooms(deck);
+    expect(rooms.map((r) => r.id)).toEqual(["7+"]);
+    expect(roomsForFacts(rooms, deck[0])).toEqual(["7+"]);
+  });
+
+  it("gives each card exactly one room", () => {
+    const deck = [facts({ id: "a", manaValue: 3 })];
+    expect(roomsForFacts(preset("manaValue").rooms(deck), deck[0])).toHaveLength(1);
+  });
+});
+
+describe("the role preset", () => {
+  it("keeps the seven rooms and their order", () => {
+    expect(preset("role").rooms([]).map((r) => r.id)).toEqual([
+      "strategy", "wincons", "cardAdvantage", "ramp", "lands", "interaction", "boardWipes",
+    ]);
+  });
+
+  it("sends a card no other room claims to the fallback", () => {
+    const rooms = preset("role").rooms([]);
+    expect(roomsForFacts(rooms, facts({ roles: [] }))).toEqual(["strategy"]);
+  });
+
+  it("does not use the fallback when another room claims the card", () => {
+    const rooms = preset("role").rooms([]);
+    expect(roomsForFacts(rooms, facts({ roles: ["ramp"] }))).toEqual(["ramp"]);
+  });
+});
