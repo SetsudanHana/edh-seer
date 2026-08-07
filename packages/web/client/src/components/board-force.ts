@@ -246,9 +246,16 @@ export const EDGE_GAP = 28;
  *      10 -> escapes.one   0, intrusions 138  -- fails the intrusion cap
  *
  *  The trade is monotone and is the same one PACK already documents: weaker repulsion packs the
- *  board tighter, so escapes fall and intrusions rise. 25 is the midpoint of the measured failing
- *  bracket (40 above, 10 below) rather than the first passing value found, so it carries margin on
- *  both sides. Overlaps were 0/10 at EVERY value tried, including 2200. */
+ *  board tighter, so escapes fall and intrusions rise. Overlaps were 0/10 at EVERY value tried,
+ *  including 2200.
+ *
+ *  25 sits inside the measured failing bracket (40 above, 10 below) rather than being the first
+ *  passing value the bisect landed on -- but do NOT read it as best-centred. The bisect was
+ *  log-scaled, so the log-centre of [10, 40] is 20 and 25 is nearly twice as close to the failing
+ *  side, which is also the steeper one (30 -> 0 escapes, 40 -> 1); and the lower bound is poorly
+ *  localised, since nothing between 10 and 22 was tried. The claim this value carries is only that
+ *  the passing band spans at least 10->30, a factor of three, so it is robust rather than fragile.
+ *  The measurements doc has the full reasoning. */
 export const REPULSION = 25;
 /** Pull between two cards per room they share. NOT retuned: repulsion alone bought both hard
  *  conditions, and the protocol's stopping rule is to stop there. Carries the loop's measured

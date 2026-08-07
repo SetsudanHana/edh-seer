@@ -267,9 +267,12 @@ describe("createBoardSimulation's stated invariants", () => {
   // of paint. That failure is invisible -- the board just settles faster -- so it needs an
   // assertion rather than a code reading.
   //
-  // Reads alpha rather than node positions because alpha is precisely what the internal stepper
-  // mutates and tick() alone would not: a stray .restart() decays it, a stopped timer never
-  // touches it. No flake risk in the passing direction -- a stopped timer cannot fire late.
+  // Reads alpha rather than node positions because this test makes NO manual tick() calls between
+  // its two assertions, so any alpha movement can only have come from an automatic second loop.
+  // (An explicit tick() moves alpha too -- d3's manual tick runs the same
+  // `alpha += (alphaTarget - alpha) * alphaDecay` step -- which is why the absence of tick() calls
+  // is what makes alpha a clean signal here, not some property of alpha itself.) No flake risk in
+  // the passing direction: a stopped timer cannot fire late.
   test("comes back stopped, so nothing ticks it but the caller", async () => {
     const a: Sim = { id: "card:a", kind: "card", label: "a", x: 10, y: 0, vx: 0, vy: 0, deg: 0 };
     const b: Sim = { id: "card:b", kind: "card", label: "b", x: -10, y: 0, vx: 0, vy: 0, deg: 0 };
