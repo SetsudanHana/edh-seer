@@ -79,14 +79,43 @@ test("the known-defect quarantine never grows, and cannot rot", () => {
   //  - the COUNT is capped, so a new disagreement cannot be waved through by marking it known;
   //  - a quarantined pair that now AGREES fails, so banked improvements must be un-marked.
   const known = PAIRS.filter((p) => p.knownDefect);
-  expect(known.length).toBeLessThanOrEqual(KNOWN_DEFECT_CAP);
 
+  // ROT IS CHECKED FIRST, and deliberately. When the count assertion led, going over the cap
+  // aborted the test before the rot check ever ran -- so a quarantine that was over its cap could
+  // not tell you that one of its entries had since been FIXED. That is exactly what happened
+  // between 2026-08-06 and 2026-08-07: the gate sat red on the count while silently sitting on a
+  // banked improvement (Forbidden Orchard / Will of the Sultai). A ratchet that stops reporting
+  // the moment it fails is not a ratchet.
   const fixed = known
     .filter((p) => (p.verdict === "synergy") === links(p))
     .map((p) => `${p.a} / ${p.b}`);
   expect(fixed, "these now agree with the engine — drop knownDefect to bank it").toEqual([]);
+
+  expect(known.length).toBeLessThanOrEqual(KNOWN_DEFECT_CAP);
 });
 
-/** Raise ONLY with a reason, and lower it whenever a defect is fixed. Starts at 0: nothing has been
- *  judged yet, so any quarantine at all is a deliberate act. */
-const KNOWN_DEFECT_CAP = 0;
+/** Raise ONLY with a reason, and lower it whenever a defect is fixed. Started at 0: nothing had been
+ *  judged yet, so any quarantine at all is a deliberate act.
+ *
+ *  **2 as of 2026-08-07**, after re-measuring all three quarantined pairs against the engine of the
+ *  day. It sat at 0 with three pairs quarantined, so this gate had been RED since 2026-08-06 —
+ *  which is worse than a wrong cap, because a red ratchet stops ratcheting: no new defect could be
+ *  detected while the assertion was already failing for an unrelated reason.
+ *
+ *  One of the three was banked rather than counted:
+ *  - **Forbidden Orchard / Will of the Sultai** — quarantined as a false edge, and the engine no
+ *    longer links them. `knownDefect` dropped, which is the gate's own instruction for an
+ *    improvement.
+ *
+ *  The two that remain are real MISSED edges, both judged `synergy` and both producing no reason:
+ *  - **Court of Embereth / Dion, Bahamut's Dominant** — Court's second chapter deals damage scaled
+ *    by how many creatures you control, so a token maker feeds it. The engine has no relation for
+ *    "an effect whose SIZE scales with a board count", which is the magnitude work
+ *    (`2026-08-06-count-matters-design.md`), not a matcher gate.
+ *  - **K-9, Mark I / Ellie and Alan, Paleontologists** — the record carries `tagDefects` on BOTH
+ *    cards: K-9's legends-matter ward/unblockable grant and Ellie and Alan's exile-recursion are
+ *    mis-tagged at the CLAUSE layer. Fixing it means re-normalising those two cards, which costs
+ *    model spend, not a code change.
+ *
+ *  Lower this the moment either lands. */
+const KNOWN_DEFECT_CAP = 2;
