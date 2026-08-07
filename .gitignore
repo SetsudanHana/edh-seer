@@ -24,3 +24,6 @@ packages/web/.impeccable/critique/
 
 # MTGJSON bulk download cache (50MB), re-fetched on demand by ingest-mtgjson.ts
 packages/data/.mtgjson-cache/
+
+# Claude Code worktrees and session state (git worktrees live under .claude/worktrees/)
+.claude/
