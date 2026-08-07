@@ -12,8 +12,11 @@ test("the inalla fixture carries a real deck's worth of card nodes", () => {
 test("the inalla fixture carries the build categories the room tallies need", () => {
   const categories = inalla.buildCategories.map((c) => c.category);
   // roomTallies sums a room's target from its categories; lands is the one with a large
-  // target (36), which is what makes the Lands room's radius differ from a bare count.
+  // target, which is what makes the Lands room's radius differ from a bare count. Pinned to
+  // the captured value, not just checked for presence: a re-capture that silently zeroed it
+  // would otherwise pass this guard, which is the rot this test exists to catch.
   expect(categories).toContain("lands");
+  expect(inalla.buildCategories.find((c) => c.category === "lands")?.target).toBe(36);
   expect(inalla.buildCategories.every((c) => typeof c.target === "number")).toBe(true);
 });
 
