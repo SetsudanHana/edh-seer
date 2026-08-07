@@ -848,9 +848,10 @@ it("groups a double-faced card by its FRONT face", () => {
   expect((container.querySelector("canvas") as any).__graphProbe!().rooms).toEqual(["Creature", "Instant"]);
 });
 
-// Finding 1 (final review): the flip glyph paints at (n.x + ART_RADIUS, n.y + ART_RADIUS * 1.4) --
-// the card box's bottom-right corner, drawn in GraphView.tsx's `mode === "card"` branch -- but
-// pick() used to hit-test a CIRCLE of radius ART_RADIUS centred on the node. That corner sits
+// Finding 1 (final review -- flip glyph hit test): the flip glyph paints at
+// (n.x + ART_RADIUS, n.y + ART_RADIUS * 1.4) -- the card box's bottom-right corner, drawn in
+// GraphView.tsx's `mode === "card"` branch -- but pick() used to hit-test a CIRCLE of radius
+// ART_RADIUS centred on the node. That corner sits
 // ~24 world units from centre, outside a 14-unit circle, so a click on the glyph itself never
 // flipped anything; only a click near the card's middle did, where there is no affordance drawn at
 // all. Clicking exactly where the glyph is painted must flip the card.
@@ -994,10 +995,11 @@ test("containment moves a member card toward its room", () => {
   expect(pastRim()).toBeLessThan(before);
 });
 
-// Finding 1 (final review): roomsForFacts (presets.ts) returns [] when every room in a DERIVED
-// preset misses a card -- a colourless card on Colour, a card with no subtype on Subtype. Only
-// "role" has a fallback ("strategy") that always claims one, so this can't happen there; it needs
-// one of the other four presets. Before the fix, the tick loop read `mine?.includes(id)` per
+// Finding 1 (final review -- roomless card expulsion): roomsForFacts (presets.ts) returns [] when
+// every room in a DERIVED preset misses a card -- a colourless card on Colour, a card with no
+// subtype on Subtype. Only "role" has a fallback ("strategy") that always claims one, so this
+// can't happen there; it needs one of the other four presets. Before the fix, the tick loop read
+// `mine?.includes(id)` per
 // circle, which is false for EVERY circle when `mine` is `[]` -- so a roomless card took
 // foreignPush from every room in the preset at once and was flung off the board. Measured in the
 // real app on inalla.txt's Colour preset: 14/94 cards, settling 275-371 units past the nearest rim
@@ -1042,6 +1044,13 @@ test("containment moves a member card toward its room", () => {
 // smaller in absolute scale only because this fixture has a few dozen cards, not 94. FILLER nodes
 // (inert, hidden "event" kind, no edges) occupy every other index purely to hold the array
 // positions the search assumed; they carry no meaning of their own.
+//
+// FRAGILE ON PURPOSE, READ BEFORE RETUNING: this placement discriminates because it was searched
+// against the CURRENT PACK/CONTAINMENT/FOREIGN_PUSH/seedPosition constants. Retuning any of them
+// does not fail this test loud -- it decays SILENTLY, the assertion below just keeps passing
+// whether or not the guard is present, the same way the very first (single-room) draft of this
+// fixture did. If those constants move, re-run the search (script in the final report) rather than
+// hand-patching indices.
 const POOL_SIZE = 113;
 const CARDX_IDX = 90;
 const ROOM_MEMBER_IDX = [
@@ -1089,8 +1098,17 @@ test("a card in no room is not expelled from the whole board", () => {
   const { container } = render(<GraphView graph={roomlessColourGraph} report={report} />);
   fireEvent.click(screen.getByRole("button", { name: "Colour" }));
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
-    __graphProbe?: () => Array<{ id: string; x: number; y: number; rooms: string[] | null }>;
+    __graphProbe?: () => Array<{ id: string; x: number; y: number; rooms: string[] | null }> & {
+      circles: Array<{ id: string; x: number; y: number; r: number }>;
+    };
   };
+  // Precondition, not the thing under test: fails loud (rather than the fixture silently ceasing
+  // to discriminate, see the comment above) if a future constants change moves the roomless card
+  // out of every circle's foreignPush reach before the loop below even runs.
+  const x0 = canvas.__graphProbe!().find((n) => n.id === "card:x")!;
+  const withinReach = canvas.__graphProbe!().circles
+    .some((c) => Math.hypot(x0.x - c.x, x0.y - c.y) - ART_RADIUS < c.r);
+  expect(withinReach).toBe(true);
   for (let i = 0; i < 200; i++) nextFrame!(0); // clears the transient the same way the
   // containment test's 200 ticks does.
   const probe = canvas.__graphProbe!();

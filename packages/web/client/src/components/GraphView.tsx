@@ -682,9 +682,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         }
       }
       for (const n of live) {
-        // Centering applies only to nodes no room claims -- i.e. non-card nodes (events, keywords),
-        // which have no membership. Every card is in at least one room (strategy is the fallback),
-        // so cards are positioned by repulsion, collision and the shared-room attraction alone.
+        // Centering applies to non-card nodes (events, keywords) AND to a card no room claims --
+        // only "role" has a fallback (strategy), so a card on a derived preset (Colour, Subtype,
+        // Type, Mana value) whose rooms all miss it is genuinely unzoned. That's what CENTER_PULL
+        // now holds near the board instead of the guard above letting foreignPush expel it.
         const zoned = n.kind === "card" && (roomsByNode.get(n.id)?.length ?? 0) > 0;
         if (!zoned) { n.vx -= n.x * CENTER_PULL; n.vy -= n.y * CENTER_PULL; }
         n.vx *= VELOCITY_DAMPING; n.vy *= VELOCITY_DAMPING;
