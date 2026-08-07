@@ -367,10 +367,20 @@ describe("rimHues", () => {
     expect(out[5]).toBe(OVERFLOW_HUE);
   });
 
-  it("does not mutate its argument", () => {
+  it("does not mutate its argument, over the cap", () => {
     const input = hues(9);
-    rimHues(input);
-    expect(input).toHaveLength(9);
+    const before = [...input];
+    const out = rimHues(input);
+    expect(input).toEqual(before);
+    expect(out).not.toBe(input);
+  });
+
+  it("does not mutate its argument, at or under the cap", () => {
+    const input = hues(6);
+    const before = [...input];
+    const out = rimHues(input);
+    expect(input).toEqual(before);
+    expect(out).not.toBe(input);
   });
 });
 
