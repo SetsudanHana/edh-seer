@@ -120,6 +120,37 @@ export function roomAttraction(
   return { x: -(dx / d) * f, y: -(dy / d) * f };
 }
 
+/** Above this share of the visible card nodes, a room stops contributing to roomAttraction. */
+export const UNIVERSAL_ROOM_FRACTION = 0.8;
+
+/** Rooms holding so much of the deck that pairwise attraction through them says nothing.
+ *  ROOM_ATTRACTION applies per shared room per card pair, so a room holding the whole deck makes
+ *  all 4,851 pairs attract with only separation() pushing back -- the pile-up a mono-black deck
+ *  grouped by Colour shows.
+ *
+ *  Strictly "exceeds", not "reaches": a room on exactly the fraction still attracts.
+ *
+ *  Exemption is from the FORCE only. The room still draws, still gets a legend row, still paints
+ *  rim arcs, and still takes part in containment and foreignPush.
+ *
+ *  This mirrors a ruling already made once: Strategy claimed 94 of 94 cards via archetypes and was
+ *  cut back for the same reason -- "a set containing everything, which distinguishes nothing"
+ *  (deck-rooms.ts's roomsForCard). */
+export function universalRooms(
+  roomIds: readonly string[],
+  memberships: readonly (readonly string[])[],
+  fraction: number = UNIVERSAL_ROOM_FRACTION,
+): Set<string> {
+  const out = new Set<string>();
+  if (memberships.length === 0) return out;
+  const held = new Map<string, number>();
+  for (const rooms of memberships) for (const id of rooms) held.set(id, (held.get(id) ?? 0) + 1);
+  for (const id of roomIds) {
+    if ((held.get(id) ?? 0) > memberships.length * fraction) out.add(id);
+  }
+  return out;
+}
+
 /** Velocity delta pulling a card back toward a room it BELONGS to but has drifted outside of.
  *  Zero while the card is inside. `dx`/`dy` run from the room's centre to the card.
  *
@@ -524,6 +555,13 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         tallies,
       );
 
+    // Computed once per effect run, not per tick: `hidden` is already a dependency of this effect,
+    // so a visibility change re-runs it and this set is rebuilt with it.
+    const universal = universalRooms(
+      rooms.map((r) => r.id),
+      nodes.filter((n) => n.kind === "card" && visible(n)).map((n) => roomsByNode.get(n.id) ?? []),
+    );
+
     // Measurement hook for the readability judge (and for anyone debugging layout in a console):
     // the live simulation state, which is otherwise sealed inside this closure. Read-only snapshot,
     // rebuilt per call. Not dev-gated -- it is a few bytes, it ships no behaviour, and a metric you
@@ -594,7 +632,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           if (a.kind === "card" && b.kind === "card") {
             const ra = roomsByNode.get(a.id), rb = roomsByNode.get(b.id);
             let shared = 0;
-            if (ra && rb) for (const id of ra) if (rb.includes(id)) shared++;
+            if (ra && rb) for (const id of ra) if (!universal.has(id) && rb.includes(id)) shared++;
             const t = roomAttraction(dx, dy, shared, ROOM_ATTRACTION);
             a.vx += t.x; a.vy += t.y;
             b.vx -= t.x; b.vy -= t.y;

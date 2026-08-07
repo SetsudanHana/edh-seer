@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ART_RADIUS, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, placeRoomLabel, roomAttraction, seedPosition, separation, traveledAsDrag } from "./GraphView.js";
+import { ART_RADIUS, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, placeRoomLabel, roomAttraction, seedPosition, separation, traveledAsDrag, universalRooms } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type Circle, type RoomTally } from "./deck-rooms.js";
@@ -778,6 +778,35 @@ describe("foreignPush", () => {
   });
 });
 
+describe("universalRooms", () => {
+  // Ten cards, so the fraction lands on clean counts.
+  const cards = (inRoom: number, id: string) =>
+    Array.from({ length: 10 }, (_, i) => (i < inRoom ? [id] : []));
+
+  it("does not exempt a room at 79% of the visible cards", () => {
+    expect(universalRooms(["big"], cards(7, "big"))).toEqual(new Set());
+  });
+
+  it("exempts a room past the fraction", () => {
+    expect(universalRooms(["big"], cards(9, "big"))).toEqual(new Set(["big"]));
+  });
+
+  it("does not exempt a room sitting exactly on the fraction", () => {
+    // 8/10 is 0.8 exactly -- the rule is "exceeds", so this one still attracts.
+    expect(universalRooms(["big"], cards(8, "big"))).toEqual(new Set());
+  });
+
+  it("exempts only the rooms that qualify", () => {
+    const memberships = Array.from({ length: 10 }, (_, i) => (i < 9 ? ["big", "small"] : ["big"]))
+      .map((r, i) => (i < 2 ? r : r.filter((x) => x !== "small")));
+    expect(universalRooms(["big", "small"], memberships)).toEqual(new Set(["big"]));
+  });
+
+  it("exempts nothing when there are no cards", () => {
+    expect(universalRooms(["big"], [])).toEqual(new Set());
+  });
+});
+
 // `cam` used to be rebuilt at the origin every time the layout effect re-ran, and `hidden` (the
 // filter-chip state) is one of that effect's deps -- so toggling a chip silently reset pan and
 // zoom out from under the user. Hoisting `cam` onto a ref (camRef) fixes that as a side effect:
@@ -1026,16 +1055,31 @@ test("the probe reports the current room circles", () => {
 // foreignPush wiring) leaves that test green, so it proves the SHAPE of the probe, not that the
 // forces do anything. This test drives the actual simulation and checks a card MOVES.
 //
-// Two cards, both "ramp", nothing else -- roomsForFacts puts them both in "ramp" and nowhere else,
-// so roomAttraction (the pre-existing card-to-card force) also pulls them together and cannot be
-// fully separated from containment's own pull. What DOES separate the two is speed: measured with
-// the real tick loop (see task-3-report.md's fix-round section for the numbers), the two starting
-// ~249 world units apart cross their room's rim (d + cardR <= roomR) by frame 10 WITH this block
-// wired in, and are still 6-14 units outside it at that same frame WITHOUT it, across five
-// unmocked (real-jitter) trials each -- a clean, non-overlapping margin. By frame ~20 the two
-// configurations converge (roomAttraction alone gets there eventually, just slower), which is why
-// frame 10 and not a larger, seemingly-safer count: this is the window where containment's own
-// contribution, not roomAttraction's, decides which side of the rim the card is on.
+// Two cards, both "ramp", nothing else -- roomsForFacts puts them both in "ramp" and nowhere else.
+// That makes "ramp" 100% of the visible cards, so Task 4's universalRooms() exempts it from
+// roomAttraction (see that function's doc comment) -- the pre-existing card-to-card force that
+// used to pull this pair together regardless of whether THIS block existed, which is exactly what
+// the original fix-round review flagged as an unisolated confound. With roomAttraction exempt,
+// containment is the ONLY attractive force left on this fixture: links don't apply (no edges),
+// CENTER_PULL doesn't apply (both cards are zoned, in a room), and repulsion/separation only push
+// apart. That isolates the force block cleanly -- but it also means containment is now fighting
+// repulsion ALONE, with nothing to help it close the last stretch.
+//
+// Measured (see task-4-report.md's addendum): with the block wired in, the two starting ~249 world
+// units apart have pastRim() fall from ~69 to a MINIMUM of ~10.3 around frame 39, then reverse and
+// climb back to a stable positive equilibrium of ~12.63 by frame ~200 (frame 200 and 300 agree to
+// five decimals -- a real fixed point, not slow convergence). It never crosses the rim: containment
+// (stiffness 0.01) loses to repulsion at this room's floor size (MIN_ROOM_CARDS = 3, see
+// deck-rooms.ts's roomRadius) and settles the card OUTSIDE it. So this asserts DECREASE, not
+// crossing -- `pastRim() < 0` is unsatisfiable for this fixture at these constants, and asserting it
+// would just be wrong, not stricter. Do not "strengthen" this back to a crossing without re-deriving
+// the equilibrium; the trajectory is non-monotonic early (a minimum at frame 39, then it rises), so
+// picking a frame short of the settled region reads as progress that later reverses.
+//
+// 200 ticks, past the settled equilibrium (not frame 39, the transient minimum): both directions
+// are re-verified in task-4-report.md by disabling the containment/foreignPush block -- with it
+// present pastRim falls (~69 -> ~12.6), and with it absent pastRim only GROWS (repulsion
+// unopposed), which is the clean, opposite-direction separation this test relies on.
 //
 // Math.random is pinned so the test is not at the mercy of seedPosition's own jitter (GraphView.tsx
 // adds up to 30 world units per axis) -- verified against five unmocked runs first; pinning removes
@@ -1070,7 +1114,9 @@ test("containment moves a member card toward its room", () => {
   // The mount-time render already ran one frame (see the search-ring test's doc comment above),
   // so this already reflects one tick of containment -- still comfortably outside at ~249 units
   // apart against a rim a few dozen units out.
-  expect(pastRim()).toBeGreaterThan(0);
-  for (let i = 0; i < 10; i++) nextFrame!(0); // 10 more: 11 ticks total since mount
-  expect(pastRim()).toBeLessThan(0);
+  const before = pastRim();
+  expect(before).toBeGreaterThan(0);
+  for (let i = 0; i < 199; i++) nextFrame!(0); // 199 more: 200 ticks total since mount, past the
+  // settled equilibrium measured above.
+  expect(pastRim()).toBeLessThan(before);
 });
