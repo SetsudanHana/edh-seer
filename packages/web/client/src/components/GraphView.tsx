@@ -31,6 +31,13 @@ export const ART_RADIUS = 14;
 /** Glyphs are authored in a 24x24 box (see graph-glyphs.ts); half that is the box's own centre. */
 const GLYPH_BOX_HALF = 12;
 
+/** World units the flip glyph is pulled in from the card box's bottom-right corner. It used to be
+ *  painted AT the corner (n.x + ART_RADIUS, n.y + ART_RADIUS * 1.4) -- exactly the boundary
+ *  pick()'s rectangular hit test accepts, so a genuine click on the glyph's own anchor point was a
+ *  coin flip against float rounding in the screen<->world round-trip. Inset it so the anchor sits
+ *  strictly inside the hit box; the glyph still reads as "corner of the card" at card zoom. */
+export const FLIP_GLYPH_INSET = 4;
+
 /** The radius a node is DRAWN at, in world units. Every consumer -- the repulsion sweep, the edge
  *  springs, hit-testing, the label collision pass -- reads this one function, so the simulated size
  *  and the painted size cannot drift apart. They did: cards simulated at 3.5 while their art painted
@@ -723,7 +730,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             ctx.fillStyle = paint.fg;
             ctx.font = `500 ${9 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
             ctx.textAlign = "right";
-            ctx.fillText("⤢", n.x + ART_RADIUS, n.y + ART_RADIUS * 1.4);
+            ctx.fillText("⤢", n.x + ART_RADIUS - FLIP_GLYPH_INSET, n.y + ART_RADIUS * 1.4 - FLIP_GLYPH_INSET);
           }
 
           // The rim carries which rooms this card is in -- one arc per room, in that room's hue.

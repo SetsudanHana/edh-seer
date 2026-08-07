@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ART_RADIUS, copiesByNameOf, DIM_BY_DEFAULT, GraphView, nodeRadius, placeRoomLabel, roomAttraction, seedPosition, separation, traveledAsDrag } from "./GraphView.js";
+import { ART_RADIUS, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, GraphView, nodeRadius, placeRoomLabel, roomAttraction, seedPosition, separation, traveledAsDrag } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type Circle, type RoomTally } from "./deck-rooms.js";
@@ -874,6 +874,13 @@ it("groups a double-faced card by its FRONT face", () => {
 // ~24 world units from centre, outside a 14-unit circle, so a click on the glyph itself never
 // flipped anything; only a click near the card's middle did, where there is no affordance drawn at
 // all. Clicking exactly where the glyph is painted must flip the card.
+//
+// Follow-up (flake fix): once pick() grew the rectangular hit box, the glyph's anchor sat exactly
+// ON that box's boundary -- |dx| == ART_RADIUS, |dy| == ART_RADIUS * 1.4 -- so this test flipped a
+// coin against float rounding in the click coordinate's round-trip, failing ~1 run in 7. The glyph
+// is now painted FLIP_GLYPH_INSET world units in from the corner (GraphView.tsx), so it sits
+// strictly inside the hit box; this test clicks that same inset position, imported from the
+// component so paint and probe can never drift apart again.
 it("flips the card when clicked on the flip glyph itself, not the node centre", () => {
   makeContextSpy();
   const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
@@ -886,8 +893,8 @@ it("flips the card when clicked on the flip glyph itself, not the node centre", 
   // Same coordinate-recovery trick as the other click-based flip tests: jsdom's canvas has a zero
   // bounding rect, so the click point is the probed world position scaled by cam.z alone.
   const glyphAt = {
-    clientX: (node.x + ART_RADIUS) * probe.camZ,
-    clientY: (node.y + ART_RADIUS * 1.4) * probe.camZ,
+    clientX: (node.x + ART_RADIUS - FLIP_GLYPH_INSET) * probe.camZ,
+    clientY: (node.y + ART_RADIUS * 1.4 - FLIP_GLYPH_INSET) * probe.camZ,
   };
   fireEvent.click(canvas, glyphAt);
   expect(canvas.__graphProbe!().flipped).toEqual(["card:1"]);
