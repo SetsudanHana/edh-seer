@@ -3,7 +3,7 @@ import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
-import { rimArcs, ROOM_HUE, ROOM_HUE_TEXT, ROOMS, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
+import { rimArcs, ROOM_HUE, ROOM_HUE_TEXT, ROOMS, roomHueOf, roomLayout, roomsForCard, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
 
 /** Kinds ordered for the filter row: the ones worth looking at first. */
 const KIND_ORDER: NodeKind[] = [
@@ -617,7 +617,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // The rim carries which rooms this card is in -- one arc per room, in that room's hue.
           // Drawn for both the art and the fallback branch: a card whose art failed to load must
           // not lose its membership signal along with its picture.
-          const arcs = rimArcs((roomsByNode.get(n.id) ?? []).map((id) => ROOM_HUE[id]));
+          const arcs = rimArcs((roomsByNode.get(n.id) ?? []).map(roomHueOf));
           ctx.lineWidth = 2.5 / cam.z;
           for (const arc of arcs) {
             ctx.strokeStyle = arc.hue;

@@ -103,6 +103,14 @@ export const ROOM_HUE: Record<RoomId, string> = {
  *  it means "and more", not a room. */
 export const OVERFLOW_HUE = "#6b7280";
 
+/** `ROOM_HUE[id]`, but safe now that `RoomId` is `string`: the compiler can no longer prove every
+ *  id is a key, and an id from a preset ROOM_HUE has never heard of (a colour, a type, a subtype)
+ *  would otherwise paint `strokeStyle = undefined` -- silently, with nothing to catch it. Falls
+ *  back to OVERFLOW_HUE, which already means "and more" rather than a specific room. */
+export function roomHueOf(id: RoomId): string {
+  return ROOM_HUE[id] ?? OVERFLOW_HUE;
+}
+
 /** Text-safe variant of ROOM_HUE, used ONLY for the room label (GraphView.tsx's `roomFontPx`
  *  fillText) -- never for the outline stroke, the fill wash, or a card's rim arcs, all of which
  *  stay on ROOM_HUE. The two draw contexts have different floors and ROOM_HUE was validated

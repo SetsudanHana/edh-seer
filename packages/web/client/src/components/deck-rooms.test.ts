@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ROOMS, ROOM_HUE, OVERFLOW_HUE, roomsForCard, roomTallies, subcategoryLabel,
-  roomLayout, rimArcs, type Circle, type RoomId, type RoomMember, type RoomTally,
+  roomLayout, rimArcs, roomHueOf, type Circle, type RoomId, type RoomMember, type RoomTally,
 } from "./deck-rooms.js";
 
 describe("ROOMS", () => {
@@ -282,6 +282,17 @@ describe("rimArcs", () => {
 
   it("uses each hue given, in order", () => {
     expect(rimArcs([ROOM_HUE.lands, ROOM_HUE.ramp]).map((a) => a.hue)).toEqual([ROOM_HUE.lands, ROOM_HUE.ramp]);
+  });
+});
+
+describe("roomHueOf", () => {
+  it("looks up a known room's hue", () => {
+    expect(roomHueOf("ramp")).toBe(ROOM_HUE.ramp);
+  });
+
+  it("falls back to OVERFLOW_HUE for an id ROOM_HUE has no entry for", () => {
+    expect(roomHueOf("mystery-preset-room")).toBe(OVERFLOW_HUE);
+    expect(roomHueOf("mystery-preset-room")).not.toBeUndefined();
   });
 });
 
