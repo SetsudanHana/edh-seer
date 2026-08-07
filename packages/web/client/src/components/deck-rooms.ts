@@ -40,9 +40,12 @@ export const ROOMS: Room[] = [
  *  Validated against rim and lens adjacency, the two relations that replaced grid adjacency
  *  when rooms became circles derived from member cards (Tasks 1-7 of 2026-08-04-circle-rooms).
  *  Both reduce to the same thing: two rooms that share a member card. rimArcs places a 2-room
- *  card's two arcs adjacent by construction (only one pair exists to place), and roomLayout
- *  draws each room's circle around exactly its members, so two rooms sharing a card have
- *  circles that structurally overlap at that card's position. Strategy never enters either
+ *  card's two arcs adjacent by construction (only one pair exists to place),
+ *  and two rooms sharing a card have circles that overlap in practice (empirically, not
+ *  structurally -- roomLayout sizes a circle by member COUNT now, so overlap is a consequence of
+ *  where the layout puts things rather than a guarantee of how the circle is built). The
+ *  all-pairs (K6) requirement the search actually solved was never specific to WHICH pairs
+ *  overlap, so the validated palette below stands unchanged. Strategy never enters either
  *  relation: it is the exclusive fallback (roomsForCard), so a card in strategy is in no other
  *  room and never shares a card with one.
  *
@@ -292,31 +295,67 @@ export interface Circle { x: number; y: number; r: number }
 /** A card as the layout sees it: where it is, how big it draws, and which rooms it is in. */
 export interface RoomMember { x: number; y: number; r: number; rooms: readonly RoomId[] }
 
-/** Radius an empty room draws at, in world units. Empty rooms have no members to measure, and the
- *  alternative is a zero-radius circle -- but an empty room being VISIBLE is the entire point
- *  ("BOARD WIPES 0/3" is the finding). Scaled by target so a 3-wipe hole reads bigger than a
- *  1-wipe one; the additive base keeps a room with no target at all from vanishing. */
-const EMPTY_BASE_R = 26;
-const EMPTY_R_PER_TARGET = 6;
+/** Radius (world units) a card node draws at. Lives HERE, not in GraphView.tsx, because
+ *  roomRadius below sizes a room from its members' own footprints and deck-rooms.ts must not
+ *  import from GraphView.tsx (that direction is one-way). GraphView.tsx re-exports it, so every
+ *  existing import site keeps working. */
+export const ART_RADIUS = 14;
+/** The gap separation() leaves between two settled discs (GraphView.tsx's collision pass). Moved
+ *  here alongside ART_RADIUS for the same reason: it is half of a card's real footprint. */
+export const COLLISION_PAD = 5;
+/** A card's footprint including its share of the gap collision leaves between two discs. */
+export const CARD_FOOTPRINT_R = ART_RADIUS + COLLISION_PAD / 2;
+/** Occupancy a damped force layout actually reaches, NOT hexagonal packing's 0.9069. A first
+ *  guess pending measurement (see the plan's Task 12): cards in several rooms are counted by each
+ *  of them and their area is shared between overlapping circles, so true occupancy is tighter
+ *  than this single-room arithmetic assumes. */
+export const PACK = 0.6;
+/** The floor, per the user's ruling: a one-card room still draws big enough to read as a room. */
+const MIN_ROOM_CARDS = 3;
+
+/** How big a room's circle is: an AREA argument, not a picked number. `n` discs of footprint
+ *  radius CARD_FOOTPRINT_R need `n * pi * CARD_FOOTPRINT_R^2` of area; divide by PACK occupancy
+ *  and solve for R.
+ *
+ *  It has to be area-derived because the circle is a CONTAINER now (see GraphView.tsx's
+ *  containment force), not a hull drawn around wherever the layout left things: a radius too
+ *  small for its own members is a permanent fight between containment and collision.
+ *
+ *  `target` inside the max is what preserves the role preset's finding -- an empty `BOARD WIPES
+ *  0/3` draws at the 3-card size, an empty `0/10` draws bigger. Count is in NODES and target is
+ *  in COPIES; taking the max of two different units is deliberate and approximate, and is the
+ *  same asymmetry roomTallies already documents.
+ *
+ *  Sizes: 3 -> 37 - 10 -> 67 - 36 -> 128 - 95 -> 208 world units. For scale, 99 discs at the
+ *  33-unit spacing collision settles them to occupy a disc of radius ~165, so a room holding the
+ *  whole deck is roomier than the deck's natural spread and containment barely engages on it. */
+export function roomRadius(count: number, target: number): number {
+  return CARD_FOOTPRINT_R * Math.sqrt(Math.max(count, target, MIN_ROOM_CARDS) / PACK);
+}
+
 /** How far outside the occupied cluster empty rooms are parked, as a multiple of the cluster's own
  *  radius. Above 1 so an empty room never sits on top of an occupied one. */
 const EMPTY_ORBIT = 1.45;
 
-/** Each room is the circle enclosing its member cards: centre at their centroid, radius out to the
- *  furthest member's FAR rim (not its centre, or the member would hang half outside).
+/** Each room is a circle centred on its members' centroid, sized by HOW MANY members it has
+ *  (roomRadius above) rather than by how far apart the force layout happened to leave them.
  *
- *  This is the inversion the board rests on. A card in two rooms is inside both circles because
- *  both circles are DEFINED to enclose it -- so "cards outside every room they belong to" is zero
- *  by construction, not by tuning, and it stays zero for a card in three or six rooms with no extra
- *  case. See 2026-08-04-circle-rooms-design.md.
+ *  This used to be the enclosing circle -- radius out to the furthest member's far rim -- which
+ *  made membership true by construction: a card in two rooms was inside both because both were
+ *  DEFINED to enclose it. That is gone. Enclosure is now a strong tendency with a measured escape
+ *  count, produced by GraphView.tsx's containment force, not a guarantee. It is the best
+ *  available: circles cannot realise an arbitrary Euler diagram past three sets, so no radius rule
+ *  and no force can put a WUBRG card inside all five of its colour rooms at once.
  *
- *  Centroid-and-max-distance, deliberately NOT the minimal enclosing circle: this is O(n),
- *  deterministic, and trivially testable, and the tighter version is not worth Welzl's algorithm.
+ *  The fallback for that was already built and already documented -- rimArcs' own comment calls
+ *  the rim "the AUTHORITATIVE membership signal, and the lens a card sits in is the bonus".
  *
- *  There is no target floor on an occupied room. Size means "how much is in here", which is true
- *  without reconciling units -- a target counts COPIES while a radius packs NODES, and flooring
- *  Lands at its 36 target draws slack on a deck running 37 lands. The label states underfill
- *  exactly; the circle does not try to. */
+ *  Centroid stays: a centroid always lies inside its own circle, so pulling members inward moves
+ *  the centroid toward where they already are and the feedback loop converges rather than chasing
+ *  itself.
+ *
+ *  There is no target floor on an occupied room beyond roomRadius' own max(). The label states
+ *  underfill exactly; the circle does not try to. */
 export function roomLayout(
   members: readonly RoomMember[],
   rooms: readonly { id: RoomId }[],
@@ -337,10 +376,13 @@ export function roomLayout(
     if (!held || held.length === 0) continue;
     let sx = 0, sy = 0;
     for (const m of held) { sx += m.x; sy += m.y; }
-    const x = sx / held.length, y = sy / held.length;
-    let r = 0;
-    for (const m of held) r = Math.max(r, Math.hypot(m.x - x, m.y - y) + m.r);
-    out.set(room.id, { x, y, r });
+    // held.length is the number of NODES drawn for this room, which is what a radius has to pack.
+    // tallies' own `count` is over COPIES, from a different pass, and is not interchangeable.
+    out.set(room.id, {
+      x: sx / held.length,
+      y: sy / held.length,
+      r: roomRadius(held.length, tallies.get(room.id)?.target ?? 0),
+    });
   }
 
   // Empty rooms have no centroid. Park them in a ring outside everything occupied, in the given
@@ -357,8 +399,7 @@ export function roomLayout(
       for (const c of occupied) spread = Math.max(spread, Math.hypot(c.x - cx, c.y - cy) + c.r);
     }
     empties.forEach((room, i) => {
-      const target = tallies.get(room.id)?.target ?? 0;
-      const r = EMPTY_BASE_R + target * EMPTY_R_PER_TARGET;
+      const r = roomRadius(0, tallies.get(room.id)?.target ?? 0);
       const angle = (i / empties.length) * Math.PI * 2;
       const orbit = spread * EMPTY_ORBIT + r;
       out.set(room.id, { x: cx + Math.cos(angle) * orbit, y: cy + Math.sin(angle) * orbit, r });

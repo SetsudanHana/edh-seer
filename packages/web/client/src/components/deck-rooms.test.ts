@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   ROOMS, ROOM_HUE, OVERFLOW_HUE, roomsForCard, roomTallies, subcategoryLabel,
-  roomLayout, rimArcs, roomHueOf, type Circle, type RoomId, type RoomMember, type RoomTally,
+  roomLayout, rimArcs, roomHueOf, CARD_FOOTPRINT_R, PACK, roomRadius,
+  type Circle, type RoomId, type RoomMember, type RoomTally,
 } from "./deck-rooms.js";
 
 describe("ROOMS", () => {
@@ -159,14 +160,48 @@ describe("roomTallies", () => {
   });
 });
 
+describe("roomRadius", () => {
+  it("grows with the number of cards in the room", () => {
+    expect(roomRadius(10, 0)).toBeGreaterThan(roomRadius(4, 0));
+    expect(roomRadius(95, 0)).toBeGreaterThan(roomRadius(36, 0));
+  });
+
+  it("floors a room below three cards at the three-card size", () => {
+    expect(roomRadius(1, 0)).toBe(roomRadius(3, 0));
+    expect(roomRadius(0, 0)).toBe(roomRadius(3, 0));
+  });
+
+  it("sizes an empty room from its target", () => {
+    expect(roomRadius(0, 10)).toBeGreaterThan(roomRadius(0, 3));
+  });
+
+  it("takes the larger of count and target, never their sum", () => {
+    expect(roomRadius(10, 3)).toBe(roomRadius(10, 0));
+    expect(roomRadius(3, 10)).toBe(roomRadius(0, 10));
+  });
+
+  // The area argument the formula is DERIVED from (spec section 1): n discs of footprint radius
+  // CARD_FOOTPRINT_R need n*pi*R_f^2 of area, and that must fit inside the circle at PACK
+  // occupancy. Asserted rather than assumed because section 7 makes the circle a container --
+  // a radius too small for its own members is a permanent fight between containment and collision.
+  it("leaves room for its own members' footprints at PACK occupancy", () => {
+    for (const n of [3, 10, 36, 95]) {
+      const r = roomRadius(n, 0);
+      const needed = n * Math.PI * CARD_FOOTPRINT_R * CARD_FOOTPRINT_R;
+      expect(Math.PI * r * r * PACK).toBeGreaterThanOrEqual(needed - 1e-6);
+    }
+  });
+
+  it("produces the sizes the spec records", () => {
+    expect(Math.round(roomRadius(3, 0))).toBe(37);
+    expect(Math.round(roomRadius(36, 0))).toBe(128);
+    expect(Math.round(roomRadius(95, 0))).toBe(208);
+  });
+});
+
 describe("roomLayout", () => {
   const noTallies = new Map<RoomId, RoomTally>();
   const tallyOf = (target: number): RoomTally => ({ count: 0, target, under: target > 0 });
-
-  it("draws a room around its one member", () => {
-    const rooms = roomLayout([{ x: 10, y: 20, r: 5, rooms: ["ramp"] }], ROOMS, noTallies);
-    expect(rooms.get("ramp")).toEqual({ x: 10, y: 20, r: 5 });
-  });
 
   it("centres a room on the centroid of its members", () => {
     const rooms = roomLayout(
@@ -181,44 +216,44 @@ describe("roomLayout", () => {
     expect(rooms.get("ramp")!.y).toBe(0);
   });
 
-  it("reaches the far rim of the furthest member, not its centre", () => {
-    const rooms = roomLayout(
-      [
-        { x: 0, y: 0, r: 2, rooms: ["ramp"] },
-        { x: 10, y: 0, r: 3, rooms: ["ramp"] },
-      ],
-      ROOMS,
-      noTallies,
-    );
-    // centroid x=5; furthest member centre is 5 away, its far rim another 3.
-    expect(rooms.get("ramp")!.r).toBe(8);
-  });
-
-  it("encloses a card that is in two rooms in BOTH rooms", () => {
-    const shared = { x: 50, y: 0, r: 4, rooms: ["lands", "ramp"] as const };
-    const rooms = roomLayout(
-      [{ x: 0, y: 0, r: 4, rooms: ["lands"] }, shared, { x: 100, y: 0, r: 4, rooms: ["ramp"] }],
-      ROOMS,
-      noTallies,
-    );
-    const inside = (c: { x: number; y: number; r: number }) =>
-      Math.hypot(shared.x - c.x, shared.y - c.y) + shared.r <= c.r + 1e-9;
-    expect(inside(rooms.get("lands")!)).toBe(true);
-    expect(inside(rooms.get("ramp")!)).toBe(true);
-  });
-
   it("returns a circle for every room, including empty ones", () => {
     const rooms = roomLayout([{ x: 0, y: 0, r: 4, rooms: ["ramp"] }], ROOMS, noTallies);
     expect([...rooms.keys()].sort()).toEqual(ROOMS.map((r) => r.id).sort());
   });
 
-  it("sizes an empty room from its target, since it has no members to measure", () => {
+  it("sizes an empty room from roomRadius, using its target", () => {
     const member = [{ x: 0, y: 0, r: 4, rooms: ["ramp"] as const }];
-    const withTarget = roomLayout(member, ROOMS, new Map([["boardWipes", tallyOf(3)]]));
+    const withTarget = roomLayout(member, ROOMS, new Map([["boardWipes", tallyOf(10)]]));
+    expect(withTarget.get("boardWipes")!.r).toBe(roomRadius(0, 10));
     const without = roomLayout(member, ROOMS, noTallies);
-    // A bigger hole draws bigger. Compared against the no-target case, not against zero -- an
-    // assertion of "> 0" passes on the base radius alone and would not notice target being ignored.
+    expect(without.get("boardWipes")!.r).toBe(roomRadius(0, 0));
     expect(withTarget.get("boardWipes")!.r).toBeGreaterThan(without.get("boardWipes")!.r);
+  });
+
+  it("sizes an occupied room from its member COUNT, not their scatter", () => {
+    const tight = roomLayout(
+      [{ x: 0, y: 0, r: 4, rooms: ["ramp"] }, { x: 1, y: 0, r: 4, rooms: ["ramp"] }],
+      ROOMS, noTallies,
+    );
+    const spread = roomLayout(
+      [{ x: 0, y: 0, r: 4, rooms: ["ramp"] }, { x: 900, y: 0, r: 4, rooms: ["ramp"] }],
+      ROOMS, noTallies,
+    );
+    // Same count, wildly different spread, same radius. This is the whole point of the change.
+    expect(tight.get("ramp")!.r).toBe(spread.get("ramp")!.r);
+    expect(tight.get("ramp")!.r).toBe(roomRadius(2, 0));
+  });
+
+  it("grows an occupied room as it gains members", () => {
+    const four = roomLayout(
+      [0, 1, 2, 3].map((i) => ({ x: i * 10, y: 0, r: 4, rooms: ["ramp"] as const })),
+      ROOMS, noTallies,
+    );
+    const ten = roomLayout(
+      [0,1,2,3,4,5,6,7,8,9].map((i) => ({ x: i * 10, y: 0, r: 4, rooms: ["ramp"] as const })),
+      ROOMS, noTallies,
+    );
+    expect(ten.get("ramp")!.r).toBeGreaterThan(four.get("ramp")!.r);
   });
 
   it("gives an empty room with no target a visible circle rather than a point", () => {
@@ -321,7 +356,9 @@ describe("roomLayout takes its room list", () => {
     const members: RoomMember[] = [{ x: 0, y: 0, r: 14, rooms: ["alpha"] }];
     const rooms = [{ id: "alpha" }, { id: "beta" }];
     const out = roomLayout(members, rooms, new Map());
-    expect(out.get("alpha")).toEqual({ x: 0, y: 0, r: 14 });
+    // r comes from roomRadius(1, 0) now, not the member's own r -- see the roomRadius describe
+    // block above and roomLayout's doc comment for why enclosure is gone.
+    expect(out.get("alpha")).toEqual({ x: 0, y: 0, r: roomRadius(1, 0) });
     expect(out.has("beta")).toBe(true);
     expect(out.get("beta")!.r).toBeGreaterThan(0);
   });

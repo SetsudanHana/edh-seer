@@ -4,7 +4,10 @@ import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
 import { CARD_MODE_Z, cardImageUrl, faceArtOf, renderModeFor } from "./card-node.js";
-import { rimArcs, OVERFLOW_HUE, ROOM_HUE_TEXT, ROOMS, roomLayout, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
+import { ART_RADIUS, COLLISION_PAD, rimArcs, OVERFLOW_HUE, ROOM_HUE_TEXT, ROOMS, roomLayout, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
+// Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
+// uses, while deck-rooms.ts owns the value -- see its doc comment for why it moved.
+export { ART_RADIUS };
 import { cardFacts, PRESETS, roomsForFacts } from "./presets.js";
 
 /** Kinds ordered for the filter row: the ones worth looking at first. */
@@ -26,8 +29,6 @@ const KIND_ORDER: NodeKind[] = [
 export const DIM_BY_DEFAULT: NodeKind[] = KIND_ORDER.filter((k) => k !== "card");
 
 const TAU = Math.PI * 2;
-/** Radius (world units) an art-filled card node draws at -- see Step 3 of the task brief. */
-export const ART_RADIUS = 14;
 /** Glyphs are authored in a 24x24 box (see graph-glyphs.ts); half that is the box's own centre. */
 const GLYPH_BOX_HALF = 12;
 
@@ -47,7 +48,7 @@ export function nodeRadius(n: { kind: string; deg: number }): number {
   return n.kind === "card" ? ART_RADIUS : Math.min(3 + Math.sqrt(n.deg) * 1.5, 15);
 }
 
-/** Layout tuning. REPULSION, COLLISION_PAD, EDGE_GAP, LINK_STIFFNESS, CENTER_PULL and
+/** Layout tuning. REPULSION, EDGE_GAP, LINK_STIFFNESS, CENTER_PULL and
  *  VELOCITY_DAMPING carry Task 7/8's measured values -- see task-7-report.md and task-8-report.md
  *  for the multi-trial histories behind them. ROOM_ATTRACTION is new and has no measured value yet;
  *  Task 9 settles it.
@@ -57,7 +58,6 @@ export function nodeRadius(n: { kind: string; deg: number }): number {
  *  the only force that has to do real work is between CARDS: those sharing a room attract, and the
  *  all-pairs repulsion already present pushes everything else apart. See
  *  2026-08-04-circle-rooms-design.md. */
-const COLLISION_PAD = 5;
 const EDGE_GAP = 28;
 const CENTER_PULL = 0.0004;
 /** Repulsion numerator (world-units^3/tick) for the all-pairs inverse-square push. */

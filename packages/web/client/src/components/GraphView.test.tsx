@@ -274,8 +274,8 @@ test("draws a stroked circle for every one of the seven rooms", () => {
   // what the old, pre-Task-6 version of this test (any arc-then-stroke pair, no size check) lacked,
   // which also matched card-disc/copy-stack/art-border strokes. 20 rather than 30: an empty room
   // with no target at all still has to be visible ("BOARD WIPES 0/3" is the finding), so it draws
-  // at deck-rooms.ts's EMPTY_BASE_R (26) -- comfortably past the card sizes above, but a 30 cutoff
-  // would exclude that legitimate case.
+  // at deck-rooms.ts's roomRadius(0, 0) (37) -- comfortably past the card sizes above, but a 30
+  // cutoff would exclude that legitimate case.
   //
   // Counted rather than deduplicated by radius (as an earlier draft of this test did): SAMPLE's
   // buildCategories gives draw, ramp, and targetedRemoval the same target (10), so cardAdvantage,
