@@ -44,6 +44,12 @@ export const FLIP_GLYPH_INSET = 4;
  *  answer to a rim arc: a 5:7 rectangle has no rim to stroke arcs onto. */
 const BAR_H = 3;
 
+/** Rows visible in the DOM room legend before it scrolls -- the ONE literal both the CSS
+ *  `calc(${LEGEND_VISIBLE_ROWS} * var(--legend-row-h))` cap and the pointer-events threshold below
+ *  it read, so they can't drift into two different row counts the way `max-h-[19.5rem]` and
+ *  `h-[1.625rem]` once did. */
+const LEGEND_VISIBLE_ROWS = 12;
+
 /** The radius a node is DRAWN at, in world units. Every consumer -- the repulsion sweep, the edge
  *  springs, hit-testing, the label collision pass -- reads this one function, so the simulated size
  *  and the painted size cannot drift apart. They did: cards simulated at 3.5 while their art painted
@@ -1106,10 +1112,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           {/* The room labels, in the DOM rather than on the canvas -- see draw()'s room loop for
            *  why placement on the canvas could not be made stable under zoom. Absolutely
            *  positioned inside the existing `relative` wrapper, same treatment as the hover
-           *  tooltip below -- and `pointer-events-none` for the same reason that tooltip has it:
-           *  the canvas binds pointerdown/up/move/click/wheel directly on itself (not delegated
-           *  from the wrapper), so a sibling that captured pointer events would put a dead zone
-           *  over the board wherever it sits.
+           *  tooltip below -- and the OUTER container is `pointer-events-none` for the same reason
+           *  that tooltip has it: the canvas binds pointerdown/up/move/click/wheel directly on
+           *  itself (not delegated from the wrapper), so a sibling that captured pointer events
+           *  would put a dead zone over the board wherever it sits.
            *
            *  Ordering is the preset's own room order (declaration order for role, member count
            *  descending for the derived presets), already stable.
@@ -1117,10 +1123,19 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
            *  Twelve rows then scroll: the subtype preset produces 40-80 rooms for one deck. The
            *  cap is on DISPLAY only -- every room still draws, still tallies, still contains.
            *  `--legend-row-h` is the ONE source of truth for the row height, read by both the row
-           *  itself and the scroll cap's `calc(12 * ...)` -- so the two numbers can't drift apart
-           *  the way two independent literals could. The cap and `overflow-y-auto` live on an
-           *  INNER element with no padding/border, so Preflight's border-box sizing can't eat into
-           *  the budget the way it would if the cap sat on the padded/bordered outer container. */}
+           *  itself and the scroll cap's `calc(${LEGEND_VISIBLE_ROWS} * ...)` -- so the two numbers
+           *  can't drift apart the way two independent literals could. The cap and `overflow-y-auto`
+           *  live on an INNER element with no padding/border, so Preflight's border-box sizing can't
+           *  eat into the budget the way it would if the cap sat on the padded/bordered outer
+           *  container.
+           *
+           *  `pointer-events-none` is inherited, so putting it on the outer container also disabled
+           *  the scroller underneath it -- fix round 1 introduced that regression by fixing the
+           *  canvas dead-zone and the scroll cap in the same pass without reconciling them. The
+           *  scroller only re-enables pointer events (`pointer-events-auto`) when there is
+           *  something to scroll TO -- more rooms than fit -- since that's the only case where
+           *  paying a dead zone over the canvas buys anything; at or under the cap every room is
+           *  already visible and the canvas keeps its whole surface. */}
           <div
             data-testid="room-legend"
             aria-label="Room legend"
@@ -1129,8 +1144,8 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           >
             <div
               data-testid="room-legend-scroll"
-              className="overflow-y-auto"
-              style={{ maxHeight: "calc(12 * var(--legend-row-h))" }}
+              className={`overflow-y-auto ${rooms.length > LEGEND_VISIBLE_ROWS ? "pointer-events-auto" : ""}`}
+              style={{ maxHeight: `calc(${LEGEND_VISIBLE_ROWS} * var(--legend-row-h))` }}
             >
               {rooms.map((room) => {
                 const tally = tallies.get(room.id);

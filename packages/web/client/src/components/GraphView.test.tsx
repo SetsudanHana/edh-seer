@@ -1094,6 +1094,53 @@ test("the legend does not intercept pointer events meant for the canvas", () => 
   expect(screen.getByTestId("room-legend").className).toMatch(/pointer-events-none/);
 });
 
+// Fix round 2: `pointer-events-none` is inherited, so putting it on the outer container (round 1's
+// fix for the canvas dead-zone) also disabled the round-1 scroll cap sitting inside it -- on the
+// subtype preset (40-80 rooms), a user could never reach rooms past the twelfth, and a wheel event
+// over that corner fell through to the canvas and zoomed the board instead of scrolling the list.
+// The scroller now re-enables pointer events for itself ONLY when the room list exceeds the display
+// cap -- otherwise every room is already visible and there's nothing to scroll to, so the canvas
+// keeps its whole surface. 13 distinct single-subtype cards (one subtype node per card, so `byCount`
+// -- ties broken alphabetically -- produces exactly 13 one-card rooms) exceeds LEGEND_VISIBLE_ROWS
+// (12); switching "Group by" to Subtype is what makes rooms.length read off that fixture rather
+// than the 7-room role preset.
+//
+// What this proves and what it doesn't: jsdom has no hit-testing, so this reads the `pointer-events`
+// CLASS the browser would act on, not that a real wheel/click event actually routes to the scroller
+// versus falling through to the canvas underneath it.
+function manySubtypeGraph(n: number): typeof SAMPLE.graph {
+  return {
+    nodes: [
+      ...Array.from({ length: n }, (_, i) => ({ id: `card:${i}`, kind: "card", label: `Card ${i}`, copies: 1 })),
+      ...Array.from({ length: n }, (_, i) => ({ id: `face:${i}:0`, kind: "face", label: `Card ${i}` })),
+      ...Array.from({ length: n }, (_, i) => ({ id: `subtype:${i}`, kind: "subtype", label: `Sub${i}` })),
+    ],
+    edges: [
+      ...Array.from({ length: n }, (_, i) => ({ from: `card:${i}`, to: `face:${i}:0`, kind: "FACE", index: 0 })),
+      ...Array.from({ length: n }, (_, i) => ({ from: `face:${i}:0`, to: `subtype:${i}`, kind: "SUBTYPE" })),
+    ],
+  } as unknown as typeof SAMPLE.graph;
+}
+
+test("the legend scroller becomes interactive once the room list exceeds the display cap", async () => {
+  makeContextSpy();
+  const user = userEvent.setup();
+  render(<GraphView graph={manySubtypeGraph(13)} report={{ ...SAMPLE.report, combos: [], archetypes: [] }} />);
+  await user.selectOptions(screen.getByRole("combobox", { name: /group by/i }), "subtype");
+  const rows = screen.getAllByTestId("room-legend-row");
+  expect(rows.length).toBeGreaterThan(12);
+  expect(screen.getByTestId("room-legend-scroll").className).toMatch(/pointer-events-auto/);
+});
+
+test("the legend scroller stays inert at or under the display cap", () => {
+  makeContextSpy();
+  // Default role preset, 7 rooms -- well under the cap.
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const rows = screen.getAllByTestId("room-legend-row");
+  expect(rows.length).toBeLessThanOrEqual(12);
+  expect(screen.getByTestId("room-legend-scroll").className).not.toMatch(/pointer-events-auto/);
+});
+
 // Fix round 1, Minor B: data-under proves the STATE is tracked, not that the amber colour is
 // actually applied -- it could vanish while every existing test stayed green. A custom graph/report
 // (same pattern as the multi-copy test above), rather than the default SAMPLE, because under
