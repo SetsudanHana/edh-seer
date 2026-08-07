@@ -1127,3 +1127,77 @@ test("containment moves a member card toward its room", () => {
   // settled equilibrium measured above.
   expect(pastRim()).toBeLessThan(before);
 });
+
+// Card mode paints a 5:7 RECTANGLE (ART_RADIUS*2 wide, *1.4 tall) but three things still stroked
+// circles at ART_RADIUS over it. Each test drives one frame in card mode via the mode button, the
+// same way the flip tests already do.
+function cardModeFrame(graph: typeof SAMPLE.graph, report: typeof SAMPLE.report) {
+  let nextFrame: FrameRequestCallback | null = null;
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+  const calls = makeContextSpy();
+  render(<GraphView graph={graph} report={report} />);
+  fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+  calls.length = 0;          // discard the mount frame, drawn in miniature mode
+  nextFrame!(0);
+  return calls;
+}
+
+test("a multi-copy card in card mode stacks rectangles, not circles", () => {
+  const graph = {
+    nodes: [{ id: "card:rats", kind: "card", label: "Relentless Rats", roles: ["wincons"], copies: 9 }],
+    edges: [],
+  } as unknown as typeof SAMPLE.graph;
+  const calls = cardModeFrame(graph, { ...SAMPLE.report, combos: [], archetypes: [] });
+  // Two offset copies behind the art, and nothing stroked at the card disc's own radius.
+  expect(calls.filter((c) => c.startsWith("strokeRect:")).length).toBeGreaterThanOrEqual(2);
+  expect(calls.filter((c) => c.startsWith("arc:") && c.split(",")[2] === String(ART_RADIUS)))
+    .toEqual([]);
+});
+
+test("a card in card mode shows its rooms as bars, not rim arcs", () => {
+  const graph = {
+    nodes: [{ id: "card:bog", kind: "card", label: "Bojuka Bog", roles: ["lands", "targetedRemoval"] }],
+    edges: [],
+  } as unknown as typeof SAMPLE.graph;
+  const calls = cardModeFrame(graph, { ...SAMPLE.report, combos: [], archetypes: [] });
+  // draw() always opens with a canvas-wide background wipe (fillStyle = paint.surface;
+  // fillRect(0, 0, canvas.width, canvas.height)) before painting anything, unrelated to card
+  // chrome. jsdom gives the canvas no real size, so that call is always exactly this literal
+  // string -- excluded here rather than counted as a third "bar".
+  const bars = calls.filter((c) => c.startsWith("fillRect:") && c !== "fillRect:0,0,0,0");
+  // One bar per room, each BAR_H (3) tall and each an equal share of the 28-unit card width.
+  expect(bars).toHaveLength(2);
+  for (const bar of bars) {
+    const [, , w, h] = bar.slice("fillRect:".length).split(",").map(Number);
+    expect(w).toBeCloseTo(ART_RADIUS, 6); // 28 / 2 rooms
+    expect(h).toBe(3);
+  }
+  // And no arcs at the rim radius -- the circular chrome is gone, not merely joined by bars.
+  expect(calls.filter((c) => c.startsWith("arc:") && c.split(",")[2] === String(ART_RADIUS)))
+    .toEqual([]);
+});
+
+test("the search-match ring in card mode is a rectangle around the card box", () => {
+  const graph = {
+    nodes: [{ id: "card:bog", kind: "card", label: "Bojuka Bog", roles: ["lands"] }],
+    edges: [],
+  } as unknown as typeof SAMPLE.graph;
+  let nextFrame: FrameRequestCallback | null = null;
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+  const calls = makeContextSpy();
+  render(<GraphView graph={graph} report={{ ...SAMPLE.report, combos: [], archetypes: [] }} />);
+  fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+  fireEvent.change(screen.getByRole("searchbox", { name: /find a card/i }), { target: { value: "Bojuka" } });
+  calls.length = 0;
+  nextFrame!(0);
+  // Outset 3 on every side of the 28x39.2 box.
+  const ring = calls.find((c) => {
+    const [, , w, h] = c.startsWith("strokeRect:") ? c.slice("strokeRect:".length).split(",").map(Number) : [];
+    return w === ART_RADIUS * 2 + 6 && Math.abs(h - (ART_RADIUS * 2 * 1.4 + 6)) < 1e-6;
+  });
+  expect(ring).toBeDefined();
+  // Never the old circular ring at ART_RADIUS + 3.
+  expect(calls.filter((c) => c.startsWith("arc:") && c.split(",")[2] === "17")).toEqual([]);
+});

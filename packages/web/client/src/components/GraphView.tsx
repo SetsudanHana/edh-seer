@@ -4,7 +4,7 @@ import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
 import { CARD_MODE_Z, MAX_Z, cardImageUrl, faceArtOf, renderModeFor } from "./card-node.js";
-import { ART_RADIUS, COLLISION_PAD, rimArcs, OVERFLOW_HUE, ROOM_HUE_TEXT, ROOMS, roomLayout, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
+import { ART_RADIUS, COLLISION_PAD, rimArcs, rimHues, OVERFLOW_HUE, ROOM_HUE_TEXT, ROOMS, roomLayout, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
 // uses, while deck-rooms.ts owns the value -- see its doc comment for why it moved.
 export { ART_RADIUS };
@@ -38,6 +38,10 @@ const GLYPH_BOX_HALF = 12;
  *  coin flip against float rounding in the screen<->world round-trip. Inset it so the anchor sits
  *  strictly inside the hit box; the glyph still reads as "corner of the card" at card zoom. */
 export const FLIP_GLYPH_INSET = 4;
+
+/** Height, in world units, of a room-hue bar along a card-mode card's bottom edge. The card-mode
+ *  answer to a rim arc: a 5:7 rectangle has no rim to stroke arcs onto. */
+const BAR_H = 3;
 
 /** The radius a node is DRAWN at, in world units. Every consumer -- the repulsion sweep, the edge
  *  springs, hit-testing, the label collision pass -- reads this one function, so the simulated size
@@ -791,6 +795,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // rewrites the path segment to a bigger size), so switching modes cold is a real fetch,
           // not just a bigger draw of what miniature mode already had loaded.
           const mode = renderModeFor(cam.z);
+          // The card-mode box, computed here rather than inside the drawImage branch: the copies
+          // stack, the room bars and the search ring all key off the same rectangle.
+          const cardW = ART_RADIUS * 2, cardH = cardW * 1.4;
           const base = faceArtOf(n.id, n.artCrop, flippedRef.current.has(n.id), faceArt);
           const src = mode === "card" && base ? cardImageUrl(base) : base;
           const img = src ? artLoader.get(src) : undefined;
@@ -808,9 +815,13 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             ctx.strokeStyle = paint.border;
             ctx.lineWidth = 1 / cam.z;
             for (const offset of [4, 2]) {
-              ctx.beginPath();
-              ctx.arc(n.x + offset, n.y - offset, ART_RADIUS, 0, TAU);
-              ctx.stroke();
+              if (mode === "card") {
+                ctx.strokeRect(n.x - cardW / 2 + offset, n.y - cardH / 2 - offset, cardW, cardH);
+              } else {
+                ctx.beginPath();
+                ctx.arc(n.x + offset, n.y - offset, ART_RADIUS, 0, TAU);
+                ctx.stroke();
+              }
             }
           }
 
@@ -819,8 +830,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             // the miniature's disc (28 * 1.4 = 39.2 world units) -- fine, and deliberately NOT
             // re-laid-out for: card mode only happens zoomed in, where neighbours are hundreds of
             // screen px apart (see card-node.ts's CARD_MODE_Z doc comment for the threshold math).
-            const w = ART_RADIUS * 2, h = w * 1.4;
-            ctx.drawImage(img, n.x - w / 2, n.y - h / 2, w, h);
+            ctx.drawImage(img, n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
           } else if (img instanceof HTMLImageElement && img.naturalWidth > 0 && img.naturalHeight > 0) {
             const sw = img.naturalWidth, sh = img.naturalHeight, s = Math.min(sw, sh);
             ctx.save();
@@ -831,10 +841,19 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           } else {
             // Covers both "no art at all" and "card mode wants an image that hasn't loaded yet" --
             // a blank node is worse than a small one, so this always requests `src` (whichever size
-            // the current mode wants) and draws the miniature disc rather than nothing.
+            // the current mode wants) and draws a placeholder rather than nothing. Card mode's
+            // placeholder is an outline of the same cardW/cardH rectangle everything else in this
+            // branch draws -- a circular placeholder here would be exactly the defect the rest of
+            // this task fixes, just relocated to the moment art hasn't finished loading yet.
             if (src) artLoader.request(src);
-            ctx.fillStyle = colorOf(n.kind);
-            ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
+            if (mode === "card") {
+              ctx.strokeStyle = colorOf(n.kind);
+              ctx.lineWidth = 1 / cam.z;
+              ctx.strokeRect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
+            } else {
+              ctx.fillStyle = colorOf(n.kind);
+              ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
+            }
           }
 
           // The flip affordance: only at card scale, where there is room for a legible glyph -- a
@@ -849,29 +868,48 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             ctx.fillText("⤢", n.x + ART_RADIUS - FLIP_GLYPH_INSET, n.y + ART_RADIUS * 1.4 - FLIP_GLYPH_INSET);
           }
 
-          // The rim carries which rooms this card is in -- one arc per room, in that room's hue.
-          // Drawn for both the art and the fallback branch: a card whose art failed to load must
-          // not lose its membership signal along with its picture. `hueOf` is the CURRENT preset's
-          // own id->hue map (see its doc comment above), not deck-rooms.ts's ROOM_HUE -- a colour
-          // or type id would silently look up `undefined` there.
-          const arcs = rimArcs((roomsByNode.get(n.id) ?? []).map((id) => hueOf.get(id) ?? OVERFLOW_HUE));
-          ctx.lineWidth = 2.5 / cam.z;
-          for (const arc of arcs) {
-            ctx.strokeStyle = arc.hue;
-            ctx.beginPath();
-            ctx.arc(n.x, n.y, ART_RADIUS, arc.from, arc.to);
-            ctx.stroke();
-          }
-          if (arcs.length === 0) {
-            ctx.lineWidth = 1 / cam.z;
-            ctx.strokeStyle = paint.border;
-            ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.stroke();
+          // Which rooms this card is in. `hueOf` is the CURRENT preset's own id->hue map (see its
+          // doc comment above), not deck-rooms.ts's ROOM_HUE -- a colour or type id would silently
+          // look up `undefined` there. Drawn for both the art and the fallback branch: a card whose
+          // art failed to load must not lose its membership signal along with its picture.
+          const hues = rimHues((roomsByNode.get(n.id) ?? []).map((id) => hueOf.get(id) ?? OVERFLOW_HUE));
+          if (mode === "card") {
+            // Equal-width bars along the card's bottom edge. Card mode paints a rectangle, so
+            // there is no rim to stroke arcs onto -- the arcs used to be stroked over the picture
+            // at ART_RADIUS regardless, which is the defect.
+            const barW = cardW / Math.max(hues.length, 1);
+            hues.forEach((hue, i) => {
+              ctx.fillStyle = hue;
+              ctx.fillRect(n.x - cardW / 2 + i * barW, n.y + cardH / 2 - BAR_H, barW, BAR_H);
+            });
+            if (hues.length === 0) {
+              ctx.lineWidth = 1 / cam.z;
+              ctx.strokeStyle = paint.border;
+              ctx.strokeRect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
+            }
+          } else {
+            ctx.lineWidth = 2.5 / cam.z;
+            for (const arc of rimArcs(hues)) {
+              ctx.strokeStyle = arc.hue;
+              ctx.beginPath();
+              ctx.arc(n.x, n.y, ART_RADIUS, arc.from, arc.to);
+              ctx.stroke();
+            }
+            if (hues.length === 0) {
+              ctx.lineWidth = 1 / cam.z;
+              ctx.strokeStyle = paint.border;
+              ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.stroke();
+            }
           }
 
           if (matchIds?.has(n.id)) {
             ctx.lineWidth = 2.5 / cam.z;
             ctx.strokeStyle = paint.accent;
-            ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS + 3, 0, TAU); ctx.stroke();
+            if (mode === "card") {
+              ctx.strokeRect(n.x - cardW / 2 - 3, n.y - cardH / 2 - 3, cardW + 6, cardH + 6);
+            } else {
+              ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS + 3, 0, TAU); ctx.stroke();
+            }
           }
 
           if (copies > 1) {
