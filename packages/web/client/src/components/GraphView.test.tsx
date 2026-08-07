@@ -839,7 +839,13 @@ test("switching to card mode raises the zoom past the card threshold", () => {
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => { camZ: number };
   };
-  expect(canvas.__graphProbe!().camZ).toBeGreaterThanOrEqual(CARD_MODE_Z);
+  // Deliberately a literal, not `CARD_MODE_Z`: the button handler is `camRef.current.z =
+  // CARD_MODE_Z`, so comparing the result back against that same constant is true for whatever
+  // value the constant holds -- it can only ever catch the button not firing at all. This test's
+  // actual job is to catch the button and the constant DIVERGING (e.g. someone hardcodes the
+  // button to a stale number), which a reference to the constant can't see happen. Update this
+  // literal by hand if CARD_MODE_Z ever changes again.
+  expect(canvas.__graphProbe!().camZ).toBe(4);
 });
 
 // The wheel handler's own ceiling used to be a bare 5, below CARD_MODE_Z (then 6) -- so card mode
