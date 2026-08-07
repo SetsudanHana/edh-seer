@@ -249,6 +249,38 @@ export function roomsUnder(
   return out;
 }
 
+/** Escapes and intrusions on a settled layout, from what __graphProbe() reports.
+ *
+ *  An ESCAPE is a card outside a room it belongs to, bucketed by how many rooms the card is in:
+ *  the 1-room bucket should reach 0, while the 3+ bucket is where geometry runs out (circles
+ *  cannot realise an arbitrary Euler diagram past three sets) and a nonzero number there is the
+ *  expected result, not a failure. An INTRUSION is a card inside a room it does not belong to --
+ *  unopposed until foreignPush existed.
+ *
+ *  Both read a card's CENTRE against the circle, not its rim: this is a scoring rule for how well
+ *  the layout settled, deliberately looser than the rim readings containment and foreignPush act
+ *  on, so a card one pixel proud of a rim does not count as having escaped. */
+export function boardMetrics(
+  cards: readonly { x: number; y: number; rooms: readonly string[] | null }[],
+  circles: readonly { id: string; x: number; y: number; r: number }[],
+): { escapes: { one: number; two: number; threePlus: number }; intrusions: number } {
+  const escapes = { one: 0, two: 0, threePlus: 0 };
+  let intrusions = 0;
+  for (const card of cards) {
+    const mine = card.rooms ?? [];
+    for (const c of circles) {
+      const inside = Math.hypot(card.x - c.x, card.y - c.y) <= c.r;
+      if (mine.includes(c.id)) {
+        if (inside) continue;
+        if (mine.length === 1) escapes.one++;
+        else if (mine.length === 2) escapes.two++;
+        else escapes.threePlus++;
+      } else if (inside) intrusions++;
+    }
+  }
+  return { escapes, intrusions };
+}
+
 /** Where a node that's new since the last render should start: the centroid of whichever of its
  *  neighbours already had a position (from the previous layout), so it visibly joins the cluster
  *  it connects to rather than dropping in at an arbitrary spot. Falls back to `fallback` when none

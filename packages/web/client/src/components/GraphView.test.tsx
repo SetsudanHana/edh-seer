@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ART_RADIUS, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, separation, traveledAsDrag, universalRooms } from "./GraphView.js";
+import { ART_RADIUS, boardMetrics, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, separation, traveledAsDrag, universalRooms } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
@@ -1245,6 +1245,29 @@ describe("roomsUnder", () => {
 
   it("counts a point exactly on the rim as inside", () => {
     expect(roomsUnder(0, 50, new Map([["a", { x: 0, y: 0, r: 50 }]]))).toEqual(["a"]);
+  });
+});
+
+describe("boardMetrics", () => {
+  const circles = [{ id: "a", x: 0, y: 0, r: 50 }, { id: "b", x: 300, y: 0, r: 50 }];
+
+  it("counts nothing on a clean board", () => {
+    const m = boardMetrics([{ x: 10, y: 0, rooms: ["a"] }], circles);
+    expect(m).toEqual({ escapes: { one: 0, two: 0, threePlus: 0 }, intrusions: 0 });
+  });
+
+  it("buckets an escape by how many rooms the card is in", () => {
+    expect(boardMetrics([{ x: 900, y: 0, rooms: ["a"] }], circles).escapes.one).toBe(1);
+    expect(boardMetrics([{ x: 900, y: 0, rooms: ["a", "b"] }], circles).escapes.two).toBe(2);
+    expect(boardMetrics([{ x: 900, y: 0, rooms: ["a", "b", "c"] }], circles).escapes.threePlus).toBe(2);
+  });
+
+  it("counts a card sitting in a room it does not belong to", () => {
+    expect(boardMetrics([{ x: 300, y: 0, rooms: ["a"] }], circles).intrusions).toBe(1);
+  });
+
+  it("ignores a non-card node with no rooms at all", () => {
+    expect(boardMetrics([{ x: 900, y: 0, rooms: null }], circles).intrusions).toBe(0);
   });
 });
 
