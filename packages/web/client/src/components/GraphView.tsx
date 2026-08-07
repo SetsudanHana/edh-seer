@@ -86,7 +86,7 @@ const REPULSION = 2200;
  *
  *  Not redundant with CONTAINMENT: Task 12's arm A3 tried it at 0 (against the winning PACK/
  *  CONTAINMENT/FOREIGN_PUSH) and the board collapsed -- medians of 79 single-room escapes out of
- *  94 cards and 40.5 intrusions, ten trials on inalla.txt. A room's circle is placed on its
+ *  94 cards and 41 intrusions, ten trials on inalla.txt. A room's circle is placed on its
  *  members' centroid, so this is what makes a room a place before containment has anything to
  *  hold cards inside; see `2026-08-07-room-size-measurement-report.md`. */
 const ROOM_ATTRACTION = 0.008;
