@@ -61,8 +61,7 @@ export function nodeRadius(n: { kind: string; deg: number }): number {
 
 /** Layout tuning. REPULSION, EDGE_GAP, LINK_STIFFNESS, CENTER_PULL and
  *  VELOCITY_DAMPING carry Task 7/8's measured values -- see task-7-report.md and task-8-report.md
- *  for the multi-trial histories behind them. ROOM_ATTRACTION is new and has no measured value yet;
- *  Task 9 settles it.
+ *  for the multi-trial histories behind them.
  *
  *  ZONE_SPRING is gone with the rectangle grid. Rooms are no longer places cards are pulled toward;
  *  a room is now the circle drawn around whatever cards are in it (deck-rooms.ts's roomLayout), so
@@ -410,8 +409,8 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   /** One fact record per card. Combo membership (report.combos[].cards) is folded in here rather
    *  than left for the role preset to rediscover -- this is the same set the pre-Task-8 code built
    *  inline before calling roomsForCard directly; cardFacts just carries it as a fact now instead
-   *  of it living only in a closure. Memoised on `graph` AND `report` -- switching the "Group by"
-   *  control alone still skips this (React bails when neither dep changed), but a report refresh
+   *  of it living only in a closure. Memoised on `graph` AND `report` -- switching the preset chip
+   *  alone still skips this (React bails when neither dep changed), but a report refresh
    *  (a new combos list on the same graph) must not be missed. */
   const facts = useMemo(() => {
     const comboCards = new Set((report.combos ?? []).flatMap((c) => c.cards));
@@ -665,10 +664,18 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       for (const n of live) {
         if (n.kind !== "card") continue;
         const mine = roomsByNode.get(n.id);
+        // A card in NO room (a derived preset's rooms can all miss it -- e.g. colourless on
+        // Colour, no subtype on Subtype; only "role" has a fallback that always claims one) makes
+        // no claim about where it should NOT be either. Without this, `mine?.includes(id)` is
+        // false for every circle, so it took foreignPush from ALL of them at once and was flung
+        // off the board -- measured on inalla.txt's Colour preset: 14/94 cards, 275-371 units
+        // past the nearest rim. Skip the circle loop entirely rather than special-casing
+        // foreignPush itself.
+        if (!mine || mine.length === 0) continue;
         const cardR = nodeRadius(n);
         for (const [id, c] of circles) {
           const dx = n.x - c.x, dy = n.y - c.y;
-          const t = mine?.includes(id)
+          const t = mine.includes(id)
             ? containment(dx, dy, c.r, cardR, CONTAINMENT)
             : foreignPush(dx, dy, c.r, cardR, FOREIGN_PUSH);
           n.vx += t.x; n.vy += t.y;
@@ -1077,7 +1084,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     // own and would only invite the same reheat mistake later.
     //
     // `rooms` and `hueOf` ARE deps, deliberately, unlike `flipped`/`matches` above: switching the
-    // "Group by" preset changes which room each card is in, and room membership is read inside
+    // preset chip changes which room each card is in, and room membership is read inside
     // this effect's own tick() (the room-attraction force) and draw() (the room circles, labels,
     // and rim hues) -- there is no way to repaint that without the effect re-running. This is the
     // SAME class of re-run `hidden` (the kind-filter chips) already causes, not a new one: the
@@ -1239,6 +1246,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
            *  already visible and the canvas keeps its whole surface. */}
           <div
             data-testid="room-legend"
+            role="group"
             aria-label="Room legend"
             className="pointer-events-none absolute left-2 top-2 rounded-(--radius) border border-(--border) bg-(--background)/90 px-2 py-1 text-xs"
             style={{ "--legend-row-h": "1.625rem" } as CSSProperties}

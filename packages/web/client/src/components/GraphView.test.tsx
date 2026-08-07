@@ -269,7 +269,7 @@ test("draws a stroked circle for every one of the seven rooms", () => {
   // what the old, pre-Task-6 version of this test (any arc-then-stroke pair, no size check) lacked,
   // which also matched card-disc/copy-stack/art-border strokes. 20 rather than 30: an empty room
   // with no target at all still has to be visible ("BOARD WIPES 0/3" is the finding), so it draws
-  // at deck-rooms.ts's roomRadius(0, 0) (37) -- comfortably past the card sizes above, but a 30
+  // at deck-rooms.ts's roomRadius(0, 0) (40) -- comfortably past the card sizes above, but a 30
   // cutoff would exclude that legitimate case.
   //
   // Counted rather than deduplicated by radius (as an earlier draft of this test did): SAMPLE's
@@ -802,7 +802,10 @@ test("the developer controls are hidden until debug is on", () => {
   expect(screen.getByRole("button", { name: /^card$/i })).toBeInTheDocument();
 });
 
-test("the primary row keeps search and fullscreen", () => {
+// Fullscreen is deliberately NOT asserted here: the button is gated on `canFullscreen`, which
+// jsdom always fails (no Fullscreen API), so it never renders under this harness -- there is
+// nothing this test could check about it without faking browser support it doesn't have.
+test("the primary row keeps search", () => {
   makeContextSpy();
   render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
   expect(screen.getByRole("searchbox", { name: /find a card/i })).toBeInTheDocument();
@@ -937,9 +940,9 @@ test("the probe reports the current room circles", () => {
 //
 // Measured (see task-4-report.md's addendum): with the block wired in, the two starting ~249 world
 // units apart have pastRim() fall from ~69 to a MINIMUM of ~10.3 around frame 39, then reverse and
-// climb back to a stable positive equilibrium of ~12.63 by frame ~200 (frame 200 and 300 agree to
+// climb back to a stable positive equilibrium of ~15.6 by frame ~200 (frame 200 and 300 agree to
 // five decimals -- a real fixed point, not slow convergence). It never crosses the rim: containment
-// (stiffness 0.01) loses to repulsion at this room's floor size (MIN_ROOM_CARDS = 3, see
+// (stiffness 0.02) loses to repulsion at this room's floor size (MIN_ROOM_CARDS = 3, see
 // deck-rooms.ts's roomRadius) and settles the card OUTSIDE it. So this asserts DECREASE, not
 // crossing -- `pastRim() < 0` is unsatisfiable for this fixture at these constants, and asserting it
 // would just be wrong, not stricter. Do not "strengthen" this back to a crossing without re-deriving
@@ -948,7 +951,7 @@ test("the probe reports the current room circles", () => {
 //
 // 200 ticks, past the settled equilibrium (not frame 39, the transient minimum): both directions
 // are re-verified in task-4-report.md by disabling the containment/foreignPush block -- with it
-// present pastRim falls (~69 -> ~12.6), and with it absent pastRim only GROWS (repulsion
+// present pastRim falls (~69 -> ~15.6), and with it absent pastRim only GROWS (repulsion
 // unopposed), which is the clean, opposite-direction separation this test relies on.
 //
 // Math.random is pinned so the test is not at the mercy of seedPosition's own jitter (GraphView.tsx
@@ -989,6 +992,118 @@ test("containment moves a member card toward its room", () => {
   for (let i = 0; i < 199; i++) nextFrame!(0); // 199 more: 200 ticks total since mount, past the
   // settled equilibrium measured above.
   expect(pastRim()).toBeLessThan(before);
+});
+
+// Finding 1 (final review): roomsForFacts (presets.ts) returns [] when every room in a DERIVED
+// preset misses a card -- a colourless card on Colour, a card with no subtype on Subtype. Only
+// "role" has a fallback ("strategy") that always claims one, so this can't happen there; it needs
+// one of the other four presets. Before the fix, the tick loop read `mine?.includes(id)` per
+// circle, which is false for EVERY circle when `mine` is `[]` -- so a roomless card took
+// foreignPush from every room in the preset at once and was flung off the board. Measured in the
+// real app on inalla.txt's Colour preset: 14/94 cards, settling 275-371 units past the nearest rim
+// (distance from origin 428-541, vs 16-212 for cards that DO belong to a room).
+//
+// Math.random is pinned to 0, same as the containment test above -- seedPosition's fallback
+// (`cos(i)*260 + Math.random()*30` per node index i) is otherwise a fresh random draw every run,
+// which this needs to not be: the assertion compares final positions against a threshold, and an
+// unpinned draw would make that threshold flaky rather than a real discriminator.
+//
+// Seeding (see seedPosition/GraphView.tsx line ~529) places a brand-new node's row at
+// `cos(i)*260, sin(i)*260` where `i` is its plain ARRAY INDEX in `graph.nodes` -- unrelated to room
+// membership. That makes the room-circle geometry hard to place by hand: a member and a roomless
+// card at NEIGHBOURING indices land ~250 apart (the existing containment test's own "~249 units
+// apart"), and even a single member placed close enough to matter is dominated by plain,
+// unconditional card-card REPULSION -- verified empirically, not assumed: a lone member 39 units
+// from card:x (chosen because `Math.cos`/`Math.sin` are 2*pi-periodic, so indices 19 apart
+// coincide) produced the SAME final position with the fix in and out, because repulsion at that
+// range (~1.4) swamps foreignPush's contribution (~0.1) from the first tick on.
+//
+// A single room's foreignPush, even carefully aimed (centroid within reach, individual members far
+// enough that their own repulsion stays weak), turned out to be swamped within ~60 ticks by
+// ordinary card-card repulsion regardless of the guard -- tried and measured, not assumed (a
+// standalone re-implementation of tick()'s force math is in the final report). The real bug's
+// severity comes from MANY rooms pushing at once, not one: this fixture reproduces that with 8
+// distinct 3-card colour rooms (24 members total) simultaneously in reach of one colourless,
+// roomless card.
+//
+// The mount-time render already runs one tick under the DEFAULT "role" preset before this test
+// clicks "Colour" -- every card here has no `roles`, so all 25 (24 members + card:x) fall into
+// "role"'s universal "strategy" fallback and get ONE synchronous containment pull toward their
+// shared centroid before Colour's per-room physics ever starts. That pull is not negligible at
+// this card count and reshuffles positions enough to break an index placement searched against raw
+// `cos(i)/sin(i)` seeds alone -- an earlier draft of this fixture (single room, hand-searched
+// indices) matched a standalone force simulator that ignored this pre-tick, and diverged sharply
+// from what the real component actually produced. The indices below were found by random search
+// against a simulator that models BOTH ticks (also in the final report), for a placement where the
+// fix and the bug diverge and the gap keeps growing rather than closing back up.
+//
+// Measured on this exact fixture at tick 200 (below): 224 units from the board's origin with the
+// fix, 407 with the bug -- the same "flung toward the edge" shape as the real 14-of-94-card repro,
+// smaller in absolute scale only because this fixture has a few dozen cards, not 94. FILLER nodes
+// (inert, hidden "event" kind, no edges) occupy every other index purely to hold the array
+// positions the search assumed; they carry no meaning of their own.
+const POOL_SIZE = 113;
+const CARDX_IDX = 90;
+const ROOM_MEMBER_IDX = [
+  [103, 16, 74],
+  [0, 41, 44],
+  [9, 53, 33],
+  [62, 31, 24],
+  [82, 92, 49],
+  [36, 11, 93],
+  [112, 60, 107],
+  [77, 84, 109],
+];
+const roomlessColourGraph = {
+  // Colour nodes are appended PAST POOL_SIZE, at indices the search never assigned to a card --
+  // seedPosition's `cos(i)/sin(i)` only matters for the cards whose separations were searched, and
+  // colour nodes are hidden by default (kind "color" is in DIM_BY_DEFAULT), so they take no part in
+  // tick()'s physics regardless of which index they land on. Putting one at a MEMBER's own index
+  // would silently drop that member from the room instead (an earlier draft of this fixture did
+  // exactly that, turning each 3-member searched room into 2 real members without changing
+  // ROOM_MEMBER_IDX to say so).
+  nodes: (() => {
+    const nodes: { id: string; kind: string; label: string; copies?: number }[] =
+      Array.from({ length: POOL_SIZE }, (_, i) => ({ id: `filler:${i}`, kind: "event", label: `F${i}` }));
+    ROOM_MEMBER_IDX.forEach((members, room) => {
+      members.forEach((idx, i) => {
+        nodes[idx] = { id: `card:r${room}c${i}`, kind: "card", label: `Card R${room}C${i}`, copies: 1 };
+      });
+    });
+    nodes[CARDX_IDX] = { id: "card:x", kind: "card", label: "Card X", copies: 1 }; // colourless
+    ROOM_MEMBER_IDX.forEach((_, room) => nodes.push({ id: `color:C${room}`, kind: "color", label: `C${room}` }));
+    return nodes;
+  })(),
+  edges: ROOM_MEMBER_IDX.flatMap((members, room) =>
+    members.map((_, i) => ({ from: `card:r${room}c${i}`, to: `color:C${room}`, kind: "IDENTITY" })),
+  ),
+} as unknown as typeof SAMPLE.graph;
+
+test("a card in no room is not expelled from the whole board", () => {
+  vi.spyOn(Math, "random").mockReturnValue(0);
+  let nextFrame: FrameRequestCallback | null = null;
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+  makeContextSpy();
+  const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+  const { container } = render(<GraphView graph={roomlessColourGraph} report={report} />);
+  fireEvent.click(screen.getByRole("button", { name: "Colour" }));
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; x: number; y: number; rooms: string[] | null }>;
+  };
+  for (let i = 0; i < 200; i++) nextFrame!(0); // clears the transient the same way the
+  // containment test's 200 ticks does.
+  const probe = canvas.__graphProbe!();
+  const x = probe.find((n) => n.id === "card:x")!;
+  expect(x.rooms).toEqual([]); // sanity: this IS the roomless case, not a fixture mistake.
+  const distFromOrigin = Math.hypot(x.x, x.y);
+  // A member-based yardstick doesn't work here: the roomless card's OWN position feeds back into
+  // ordinary repulsion on the members too (25 cards, all pairwise), so "how far the members ended
+  // up" is itself different with the bug in and out, not a stable reference. A fixed threshold,
+  // calibrated against this exact fixture instead: measured (see the final report) 224 units from
+  // the origin at this tick with the fix, 407 with the bug -- 300 sits with comfortable margin on
+  // both sides (76 above the fixed value, 107 below the buggy one).
+  expect(distFromOrigin).toBeLessThan(300);
 });
 
 // Card mode paints a 5:7 RECTANGLE (ART_RADIUS*2 wide, *1.4 tall) but three things still stroked
@@ -1162,7 +1277,7 @@ test("the legend does not intercept pointer events meant for the canvas", () => 
 // cap -- otherwise every room is already visible and there's nothing to scroll to, so the canvas
 // keeps its whole surface. 13 distinct single-subtype cards (one subtype node per card, so `byCount`
 // -- ties broken alphabetically -- produces exactly 13 one-card rooms) exceeds LEGEND_VISIBLE_ROWS
-// (12); switching "Group by" to Subtype is what makes rooms.length read off that fixture rather
+// (12); switching the preset chip to Subtype is what makes rooms.length read off that fixture rather
 // than the 7-room role preset.
 //
 // What this proves and what it doesn't: jsdom has no hit-testing, so this reads the `pointer-events`
