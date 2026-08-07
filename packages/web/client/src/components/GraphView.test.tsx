@@ -676,9 +676,13 @@ test("scrolling in far enough reaches card mode on its own", () => {
 });
 
 // Task 1's presets.test.ts fixture (Malakir Rebirth // Malakir Mire, an Instant whose back face is
-// a Land) with artCrop added to card:1 and to face:1:1 -- Task 4 puts each face's own art on its
-// face node, and this is what proves the flip actually swaps which art loads rather than just
-// flipping a flag nothing reads. Declared here rather than imported across test files.
+// a Land, plus Deathrite Shaman as a second card) with artCrop added to card:1 and to face:1:1 --
+// Task 4 puts each face's own art on its face node, and this is what proves the flip actually
+// swaps which art loads rather than just flipping a flag nothing reads. Declared here rather than
+// imported across test files. Deathrite Shaman (card:2) matters for the layout-stability test
+// below even though it plays no other part in this file: with only one visible card, the
+// all-pairs repulsion/room-attraction loop in `tick()` has no second node to act on and a reheat
+// is silently a no-op regardless of whether the dependency bug it's meant to catch is present.
 const dfcGraph = {
   nodes: [
     {
@@ -691,6 +695,13 @@ const dfcGraph = {
     { id: "type:Land", kind: "type", label: "Land" },
     { id: "color:B", kind: "color", label: "B" },
     { id: "cmc:2", kind: "cmc", label: "2" },
+    { id: "card:2", kind: "card", label: "Deathrite Shaman", copies: 1 },
+    { id: "face:2:0", kind: "face", label: "Deathrite Shaman" },
+    { id: "type:Creature", kind: "type", label: "Creature" },
+    { id: "subtype:Elf", kind: "subtype", label: "Elf" },
+    { id: "subtype:Shaman", kind: "subtype", label: "Shaman" },
+    { id: "color:G", kind: "color", label: "G" },
+    { id: "cmc:1", kind: "cmc", label: "1" },
   ],
   edges: [
     { from: "card:1", to: "face:1:0", kind: "FACE", index: 0 },
@@ -699,6 +710,13 @@ const dfcGraph = {
     { from: "face:1:1", to: "type:Land", kind: "TYPE" },
     { from: "card:1", to: "color:B", kind: "IDENTITY" },
     { from: "card:1", to: "cmc:2", kind: "CMC" },
+    { from: "card:2", to: "face:2:0", kind: "FACE", index: 0 },
+    { from: "face:2:0", to: "type:Creature", kind: "TYPE" },
+    { from: "face:2:0", to: "subtype:Elf", kind: "SUBTYPE" },
+    { from: "face:2:0", to: "subtype:Shaman", kind: "SUBTYPE" },
+    { from: "card:2", to: "color:B", kind: "IDENTITY" },
+    { from: "card:2", to: "color:G", kind: "IDENTITY" },
+    { from: "card:2", to: "cmc:1", kind: "CMC" },
   ],
 } as unknown as typeof SAMPLE.graph;
 
@@ -729,4 +747,34 @@ it("flips a double-faced card to its back art and back again", () => {
   expect(canvas.__graphProbe!().flipped).toEqual(["card:1"]);
   fireEvent.click(canvas, at);
   expect(canvas.__graphProbe!().flipped).toEqual([]);
+});
+
+// Flip is PICTURE ONLY (the task's one hard rule): it must not move a single node. `flipped` used
+// to sit in the layout effect's own dependency array, so a flip click tore the whole effect down
+// and rebuilt it -- cancelling and restarting the RAF loop, tearing down and re-adding every
+// pointer/wheel/click listener, and re-running one simulation tick at a partial reheat (alpha 0.3)
+// against forces computed from the current positions. Positions survive via `prevPositions`, but
+// that one extra tick still nudges them by a nonzero (if small) amount -- which is exactly what
+// "flip moved the board" means. Asserts every node's x/y, not just the flipped card's, since a
+// reheat disturbs the whole simulation (room attraction, repulsion, link springs all read every
+// node), not only the one that got clicked.
+it("does not move any node when a card is flipped", () => {
+  makeContextSpy();
+  const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; x: number; y: number }> & {
+      camZ: number;
+      flipped: string[];
+    };
+  };
+  fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+  const before = canvas.__graphProbe!();
+  const node = before.find((n) => n.id === "card:1")!;
+  const positionsBefore = before.map((n) => ({ id: n.id, x: n.x, y: n.y }));
+  fireEvent.click(canvas, { clientX: node.x * before.camZ, clientY: node.y * before.camZ });
+  const after = canvas.__graphProbe!();
+  // Sanity check the click actually flipped something -- otherwise "positions unchanged" would be
+  // true for the trivial reason that nothing happened at all.
+  expect(after.flipped).toEqual(["card:1"]);
+  expect(after.map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(positionsBefore);
 });

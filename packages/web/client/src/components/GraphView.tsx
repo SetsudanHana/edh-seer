@@ -289,6 +289,13 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   const matchesRef = useRef<Set<string> | null>(null);
   matchesRef.current = matches;
 
+  // Same reasoning as matchesRef, for the same reason: `flipped` is deliberately absent from the
+  // layout effect's deps below. Flip is PICTURE ONLY -- adding it there would tear down and rebuild
+  // the whole force simulation (RAF loop, listeners, `nodes`) on every flip click, a partial reheat
+  // that visibly resettles the board. draw() and the probe read this ref instead.
+  const flippedRef = useRef<Set<string>>(new Set());
+  flippedRef.current = flipped;
+
   /** Which rooms each card node belongs to, keyed by node id. Recomputed only when the graph or
    *  the report changes -- it is pure over both. */
   const roomsByNode = useMemo(() => {
@@ -432,7 +439,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         // camRef.current, read directly rather than through `cam` below: the mode buttons write
         // camRef.current.z from outside this effect, and this closure must see that write on its
         // next call rather than a value frozen when the probe was first built.
-        { tallies, camZ: camRef.current.z, flipped: [...flipped] },
+        { tallies, camZ: camRef.current.z, flipped: [...flippedRef.current] },
       );
 
     // A from-scratch graph gets full energy to organize; a graph that already has settled
@@ -605,7 +612,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // rewrites the path segment to a bigger size), so switching modes cold is a real fetch,
           // not just a bigger draw of what miniature mode already had loaded.
           const mode = renderModeFor(cam.z);
-          const base = faceArtOf(n.id, n.artCrop, flipped.has(n.id), faceArt);
+          const base = faceArtOf(n.id, n.artCrop, flippedRef.current.has(n.id), faceArt);
           const src = mode === "card" && base ? cardImageUrl(base) : base;
           const img = src ? artLoader.get(src) : undefined;
           // Scryfall's art_crop is landscape (~626x457, ~1.37:1); the 5-arg drawImage would
@@ -651,11 +658,12 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(n), 0, TAU); ctx.fill();
           }
 
-          // The flip affordance: only when a back face exists (a single-faced card has no
-          // `face:<id>:1` entry) and only at card scale, where there is room for a legible glyph --
-          // a 14-world-unit miniature disc has none. Picture only, drawn over the art itself.
-          const flippable = faceArt.has(`${n.id.replace(/^card:/, "face:")}:1`);
-          if (flippable && mode === "card") {
+          // The flip affordance: only at card scale, where there is room for a legible glyph -- a
+          // 14-world-unit miniature disc has none -- and only when a back face exists (a
+          // single-faced card has no `face:<id>:1` entry). `mode === "card"` gated FIRST so a
+          // miniature-mode card never pays the replace+lookup below at all. Picture only, drawn
+          // over the art itself.
+          if (mode === "card" && faceArt.has(`${n.id.replace(/^card:/, "face:")}:1`)) {
             ctx.fillStyle = paint.fg;
             ctx.font = `500 ${9 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
             ctx.textAlign = "right";
@@ -826,12 +834,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       canvas.removeEventListener("wheel", onWheel);
       delete (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe;
     };
-    // `flipped` is a dep (not read through a ref like `matches`) so a toggle's re-render rebuilds
-    // this closure with the fresh set -- draw()'s reads of it, and the probe's, would otherwise
-    // stay pinned to whatever `flipped` was when the effect first ran. Cheap here: flipping is a
-    // rare, deliberate click, not a per-keystroke event like the search box `matches` avoids
-    // reheating for.
-  }, [graph, hidden, roomsByNode, tallies, flipped, faceArt]);
+    // `flipped` and `faceArt` are deliberately absent here -- see flippedRef's doc comment above.
+    // `faceArt` is memoised on `graph`, which is already a dep, so it buys nothing as a dep of its
+    // own and would only invite the same reheat mistake later.
+  }, [graph, hidden, roomsByNode, tallies]);
 
   const toggle = (k: NodeKind) =>
     setHidden((prev) => {
