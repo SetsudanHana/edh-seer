@@ -1020,3 +1020,57 @@ test("the probe reports the current room circles", () => {
     expect(c.r).toBeGreaterThan(0);
   }
 });
+
+// Fix round 1: the probe test above only reads roomCirclesNow() through the probe's own call to
+// it -- entirely independent of tick()'s new force block. Deleting that whole block (containment/
+// foreignPush wiring) leaves that test green, so it proves the SHAPE of the probe, not that the
+// forces do anything. This test drives the actual simulation and checks a card MOVES.
+//
+// Two cards, both "ramp", nothing else -- roomsForFacts puts them both in "ramp" and nowhere else,
+// so roomAttraction (the pre-existing card-to-card force) also pulls them together and cannot be
+// fully separated from containment's own pull. What DOES separate the two is speed: measured with
+// the real tick loop (see task-3-report.md's fix-round section for the numbers), the two starting
+// ~249 world units apart cross their room's rim (d + cardR <= roomR) by frame 10 WITH this block
+// wired in, and are still 6-14 units outside it at that same frame WITHOUT it, across five
+// unmocked (real-jitter) trials each -- a clean, non-overlapping margin. By frame ~20 the two
+// configurations converge (roomAttraction alone gets there eventually, just slower), which is why
+// frame 10 and not a larger, seemingly-safer count: this is the window where containment's own
+// contribution, not roomAttraction's, decides which side of the rim the card is on.
+//
+// Math.random is pinned so the test is not at the mercy of seedPosition's own jitter (GraphView.tsx
+// adds up to 30 world units per axis) -- verified against five unmocked runs first; pinning removes
+// that residual variance rather than papering over a scenario that only works by chance.
+test("containment moves a member card toward its room", () => {
+  vi.spyOn(Math, "random").mockReturnValue(0);
+  let nextFrame: FrameRequestCallback | null = null;
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+  makeContextSpy();
+  const graph = {
+    nodes: [
+      { id: "card:a", kind: "card", label: "Card A", roles: ["ramp"] },
+      { id: "card:b", kind: "card", label: "Card B", roles: ["ramp"] },
+    ],
+    edges: [],
+  } as unknown as typeof SAMPLE.graph;
+  const report = { ...SAMPLE.report, combos: [], archetypes: [] };
+  const { container } = render(<GraphView graph={graph} report={report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; x: number; y: number }> & {
+      circles: Array<{ id: string; x: number; y: number; r: number }>;
+    };
+  };
+  // Positive: outside the rim (d + cardR > roomR). Negative: inside. Zero at the rim itself.
+  const pastRim = () => {
+    const probe = canvas.__graphProbe!();
+    const a = probe.find((n) => n.id === "card:a")!;
+    const circle = probe.circles.find((c) => c.id === "ramp")!;
+    return Math.hypot(a.x - circle.x, a.y - circle.y) - (circle.r - ART_RADIUS);
+  };
+  // The mount-time render already ran one frame (see the search-ring test's doc comment above),
+  // so this already reflects one tick of containment -- still comfortably outside at ~249 units
+  // apart against a rim a few dozen units out.
+  expect(pastRim()).toBeGreaterThan(0);
+  for (let i = 0; i < 10; i++) nextFrame!(0); // 10 more: 11 ticks total since mount
+  expect(pastRim()).toBeLessThan(0);
+});
