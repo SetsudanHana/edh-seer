@@ -10,13 +10,14 @@ const bars = [
 
 test("renders one bar per datum, labelled", () => {
   render(<BarChart heading="Mana curve" bars={bars} formatTick={String} peakLabel={(b) => String(b.value)} />);
-  expect(screen.getByText("0")).toBeInTheDocument();
-  expect(screen.getByText("2")).toBeInTheDocument();
+  const labels = screen.getAllByTestId("bar-label").map((el) => el.textContent);
+  expect(labels).toContain("0");
+  expect(labels).toContain("2");
 });
 
 test("names the peak", () => {
   render(<BarChart heading="Mana curve" bars={bars} formatTick={String} peakLabel={(b) => String(b.value)} />);
-  expect(screen.getByText("5")).toBeInTheDocument();
+  expect(screen.getByTestId("peak-label")).toHaveTextContent("5");
 });
 
 // The gain over the flexbox version being replaced: these charts had no axis at all, so a bar's

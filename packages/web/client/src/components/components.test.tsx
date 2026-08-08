@@ -102,8 +102,29 @@ test("ManaCurveChart labels the 7+ bucket and shows the peak count", () => {
   ];
   render(<ManaCurveChart curve={curve} />);
   expect(screen.getByText("7+")).toBeInTheDocument();
-  expect(screen.getByText("8")).toBeInTheDocument(); // peak bar's direct cap label
+  expect(screen.getByTestId("peak-label")).toHaveTextContent("8"); // peak bar's direct cap label
   expect(screen.getByTitle("8 cards at mana value 2")).toBeInTheDocument();
+});
+
+// Regression pin for the tick-suppression defect: every y-axis tick must carry real text, not be
+// blanked out because it happens to duplicate a bar label or the peak's own callout number.
+test("ManaCurveChart renders a non-empty label on every y-axis tick", () => {
+  const curve = [
+    { value: 0, count: 0 },
+    { value: 1, count: 0 },
+    { value: 2, count: 8 },
+    { value: 3, count: 2 },
+    { value: 4, count: 0 },
+    { value: 5, count: 0 },
+    { value: 6, count: 0 },
+    { value: 7, count: 1 },
+  ];
+  const { container } = render(<ManaCurveChart curve={curve} />);
+  const ticks = container.querySelectorAll("[data-testid='y-tick']");
+  expect(ticks.length).toBeGreaterThan(0);
+  ticks.forEach((tick) => {
+    expect(tick.querySelector("text")?.textContent).not.toBe("");
+  });
 });
 
 test("LandMathChart shows 8 bars (0-7 lands), labels the peak percentage, and calculates hypergeometric odds correctly", () => {
@@ -113,7 +134,7 @@ test("LandMathChart shows 8 bars (0-7 lands), labels the peak percentage, and ca
     expect(screen.getByText(String(k))).toBeInTheDocument();
   }
   // Peak at k=3 with ~29.57% → rounds to 30%
-  expect(screen.getByText("30%")).toBeInTheDocument(); // peak bar's direct cap label
+  expect(screen.getByTestId("peak-label")).toHaveTextContent("30%"); // peak bar's direct cap label
   expect(screen.getByTitle("30% chance of exactly 3 lands")).toBeInTheDocument(); // tooltip on peak bar
 });
 
