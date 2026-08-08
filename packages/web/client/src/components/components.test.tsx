@@ -127,6 +127,33 @@ test("ManaCurveChart renders a non-empty label on every y-axis tick", () => {
   });
 });
 
+// Regression pin: the peak (count 8) sits exactly at the domain max on this 0-7 axis, which is
+// the tightest case -- pre-fix, the y range ran to 0 so the peak callout's baseline landed AT the
+// viewBox edge (y <= 0) and its ascenders were clipped off entirely, invisible in the browser even
+// though the text node existed. TOP_PAD gives it room.
+test("ManaCurveChart's peak callout and topmost y-tick clear the top edge of the viewBox", () => {
+  const curve = [
+    { value: 0, count: 0 },
+    { value: 1, count: 0 },
+    { value: 2, count: 8 },
+    { value: 3, count: 2 },
+    { value: 4, count: 0 },
+    { value: 5, count: 0 },
+    { value: 6, count: 0 },
+    { value: 7, count: 1 },
+  ];
+  const { container } = render(<ManaCurveChart curve={curve} />);
+  const peakY = Number(screen.getByTestId("peak-label").getAttribute("y"));
+  expect(peakY).toBeGreaterThan(0);
+
+  const tickYs = Array.from(container.querySelectorAll("[data-testid='y-tick'] text"))
+    .map((el) => Number(el.getAttribute("y")));
+  const topmostTickY = Math.min(...tickYs);
+  // dominantBaseline="middle" centers the text on its y; half of the 7px font is the minimum gap
+  // that keeps its top edge on-canvas.
+  expect(topmostTickY).toBeGreaterThanOrEqual(3.5);
+});
+
 test("LandMathChart shows 8 bars (0-7 lands), labels the peak percentage, and calculates hypergeometric odds correctly", () => {
   render(<LandMathChart landCount={38} deckSize={99} />);
   // x-axis ticks 0..7 are each rendered exactly once

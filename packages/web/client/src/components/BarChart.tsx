@@ -6,6 +6,10 @@ const HEIGHT = 120;
 // a different viewBox width.
 const AXIS_W = 32;
 const LABEL_H = 16;
+// Room above the tallest bar for the peak callout and the topmost y-tick's text. Without it the
+// range top is 0, so a peak (or a tick) sitting at the domain max renders its baseline flush with
+// the viewBox edge and clips the ascenders -- invisible, not just tight.
+const TOP_PAD = 12;
 
 export interface Bar { label: string; value: number; title: string }
 
@@ -33,7 +37,7 @@ export function BarChart({
     .padding(0.15);
   // `|| 1` guards an all-zero dataset: a zero-width domain makes every bar NaN-high.
   const max = Math.max(...bars.map((b) => b.value)) || 1;
-  const y = scaleLinear().domain([0, max]).range([plotH, 0]).nice();
+  const y = scaleLinear().domain([0, max]).range([plotH, TOP_PAD]).nice();
   // `bars[0]` is undefined for an empty array; reduce then returns that initial value untouched
   // (the callback never runs on an empty array), so `peak` stays undefined rather than throwing.
   const peak = bars.length > 0
