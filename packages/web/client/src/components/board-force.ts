@@ -147,6 +147,26 @@ export function boardMetrics(
   return { escapes, intrusions };
 }
 
+/** Pairs of card discs that visibly overlap -- centres closer than two art radii. One of the two
+ *  HARD acceptance conditions for a settled board (the other is escapes.one), and the same rule the
+ *  ten-trial harness used, so a number read off the tuning panel is comparable with the table in
+ *  2026-08-08-d3-migration-measurements.md.
+ *
+ *  Takes CARDS only. Non-card nodes are drawn at a radius that varies with degree and are allowed
+ *  to sit anywhere; feeding them in would count crowding that is not a defect.
+ *
+ *  O(n^2) over ~94 cards, called four times a second by the panel -- immaterial, and far cheaper
+ *  than the quadtree repulsion running every frame beside it. */
+export function countOverlaps(cards: readonly { x: number; y: number }[]): number {
+  let overlaps = 0;
+  for (let i = 0; i < cards.length; i++) {
+    for (let j = i + 1; j < cards.length; j++) {
+      if (Math.hypot(cards[i].x - cards[j].x, cards[i].y - cards[j].y) < 2 * ART_RADIUS) overlaps++;
+    }
+  }
+  return overlaps;
+}
+
 /** A d3-force custom force: a function of the current alpha, plus the `initialize` hook
  *  `simulation.force(name, f)` calls to hand it the node array. */
 export type CustomForce = ((alpha: number) => void) & { initialize(nodes: Sim[]): void };

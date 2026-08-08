@@ -6,6 +6,7 @@ import {
   boardMetrics,
   containment,
   CONTAINMENT,
+  countOverlaps,
   createBoardSimulation,
   DEFAULT_PARAMS,
   FOREIGN_PUSH,
@@ -301,6 +302,30 @@ describe("createBoardSimulation's stated invariants", () => {
   });
 });
 
+describe("countOverlaps", () => {
+  test("counts a pair once, not twice", () => {
+    expect(countOverlaps([{ x: 0, y: 0 }, { x: 10, y: 0 }])).toBe(1);
+  });
+
+  test("exactly 2 * ART_RADIUS apart is not an overlap", () => {
+    expect(countOverlaps([{ x: 0, y: 0 }, { x: 2 * ART_RADIUS, y: 0 }])).toBe(0);
+  });
+
+  test("a hair closer than 2 * ART_RADIUS is", () => {
+    expect(countOverlaps([{ x: 0, y: 0 }, { x: 2 * ART_RADIUS - 0.01, y: 0 }])).toBe(1);
+  });
+
+  test("counts every overlapping pair, not every overlapping card", () => {
+    // Three mutually overlapping cards are three pairs.
+    expect(countOverlaps([{ x: 0, y: 0 }, { x: 5, y: 0 }, { x: 10, y: 0 }])).toBe(3);
+  });
+
+  test("is zero for fewer than two cards", () => {
+    expect(countOverlaps([])).toBe(0);
+    expect(countOverlaps([{ x: 0, y: 0 }])).toBe(0);
+  });
+});
+
 /** A seeded LCG, so a trial is reproducible from its seed. d3-force is itself deterministic
  *  (it seeds its own fixed LCG), so ALL trial-to-trial variance has to come from the initial
  *  seeding -- which is exactly where it comes from in the browser today, via Math.random() in
@@ -384,12 +409,7 @@ function runTrial(seed: number) {
   );
 
   // The Task-9 no-overlap gate: two card discs closer than 2 * ART_RADIUS visibly overlap.
-  let overlaps = 0;
-  for (let i = 0; i < cards.length; i++) {
-    for (let j = i + 1; j < cards.length; j++) {
-      if (Math.hypot(cards[i].x - cards[j].x, cards[i].y - cards[j].y) < 2 * ART_RADIUS) overlaps++;
-    }
-  }
+  const overlaps = countOverlaps(cards);
   return { ...metrics, overlaps };
 }
 
