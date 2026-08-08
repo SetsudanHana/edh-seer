@@ -638,6 +638,34 @@ test("scrolling in far enough reaches card mode on its own", () => {
   expect(canvas.__graphProbe!().camZ).toBeGreaterThanOrEqual(CARD_MODE_Z);
 });
 
+// Fix round 1 (task review) shipped d3-zoom with a real defect: draw() applied the camera
+// transform with the origin at the canvas's CENTRE (`dim.w/2 + cam.x`), while d3-zoom itself
+// anchors every wheel/drag at the canvas's TOP-LEFT (`pointer(event)` = clientX - rect.left, no
+// centring term). The two disagreed by half the canvas, so a zoom recentred the board a
+// quarter-viewport away from the cursor instead of holding it still -- invisible to every prior
+// test because jsdom's DEFAULT zero bounding rect makes dim.w/2 and dim.h/2 zero too, so the bug
+// only shows up once the rect (and therefore the canvas) has real, non-zero dimensions.
+// Deliberately off-centre: at the exact canvas centre the two conventions happen to agree (the
+// centring term and d3-zoom's own anchor land on the same point), so a test anchored there would
+// have shipped green with the defect still present -- this is exactly what "task review passed
+// with the defect present" meant.
+test("wheel-zoom anchors the world point under the cursor, not the canvas centre", () => {
+  vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+    left: 0, top: 0, width: 800, height: 600, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}),
+  } as DOMRect);
+  makeContextSpy();
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => { toWorld: (ev: { clientX: number; clientY: number }) => { x: number; y: number } };
+  };
+  const at = { clientX: 700, clientY: 100 };
+  const before = canvas.__graphProbe!().toWorld(at);
+  fireEvent.wheel(canvas, { deltaY: -300, ...at });
+  const after = canvas.__graphProbe!().toWorld(at);
+  expect(after.x).toBeCloseTo(before.x, 5);
+  expect(after.y).toBeCloseTo(before.y, 5);
+});
+
 // Task 1's presets.test.ts fixture (Malakir Rebirth // Malakir Mire, an Instant whose back face is
 // a Land, plus Deathrite Shaman as a second card) with artCrop added to card:1 and to face:1:1 --
 // Task 4 puts each face's own art on its face node, and this is what proves the flip actually

@@ -407,6 +407,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           tallies, camZ: camRef.current.z, flipped: [...flippedRef.current],
           rooms: rooms.map((r) => r.id),
           circles: [...roomCirclesNow().entries()].map(([id, c]) => ({ id, x: c.x, y: c.y, r: c.r })),
+          // Exposes the REAL `toWorld` closure (declared further down this effect -- fine, this
+          // outer function isn't invoked until well after the whole effect body has run) rather
+          // than a reimplementation, so a test exercises the exact screen<->world math the pointer
+          // handlers use, not a copy that could drift from it. Round-1 fix verification needs this:
+          // the defect (draw()'s canvas-centre origin vs d3-zoom's top-left one) was invisible to
+          // every prior test because nothing could ask "what world point is under this client
+          // point" without either reading real canvas pixels or reaching this function directly.
+          toWorld,
         },
       );
 
@@ -432,8 +440,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = paint.surface;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.setTransform(cam.z * dim.dpr, 0, 0, cam.z * dim.dpr,
-        (dim.w / 2 + cam.x) * dim.dpr, (dim.h / 2 + cam.y) * dim.dpr);
+      // cam.x/y are d3-zoom's own translate, top-left-anchored -- the SAME convention
+      // `pointer(event)` (and therefore every anchor computation d3-zoom does internally) uses.
+      // This used to add dim.w/2 + dim.h/2 here to draw a centre-anchored board, which put the
+      // renderer's origin at the canvas CENTRE while d3-zoom kept anchoring wheel/drag at the
+      // TOP-LEFT -- the two disagreed by exactly half the canvas, so every zoom recentred a
+      // quarter-viewport away from the cursor. Centring now happens once, at the initial seed
+      // transform below, by baking dim.w/2 + dim.h/2 into cam.x/y themselves.
+      ctx.setTransform(cam.z * dim.dpr, 0, 0, cam.z * dim.dpr, cam.x * dim.dpr, cam.y * dim.dpr);
 
       // The board: seven rooms, drawn behind everything and drawn even when empty -- "BOARD WIPES
       // 0/3" is the finding, so the room holds its place to show the hole. Each circle is drawn
@@ -673,15 +687,22 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
     // Room geometry is now derived from card positions (roomCirclesNow(), recomputed every
     // draw), not the viewport -- a resize only needs the canvas's own backing-store size updated.
+    // cam.x/y (the zoom translate) is deliberately left untouched: it is now an absolute,
+    // top-left-anchored offset, not a centre-relative one, so there is no dim-dependent term in it
+    // to recompute. A resize keeps the current pan/zoom exactly where it was on screen -- the same
+    // "don't yank the view out from under the user" choice `hidden`/preset changes already make via
+    // camRef -- rather than re-centring the board, which would fight a user who has already panned.
     const onResize = () => { dim = size(); };
     addEventListener("resize", onResize);
 
+    // cam.x/y are top-left-anchored (see draw()'s doc comment above), the same convention
+    // `pointer(event)` uses, so this is a plain, unshifted inverse of that same transform.
     const toWorld = (ev: { clientX: number; clientY: number }): Point => {
       const r = canvas.getBoundingClientRect();
       const [x, y] = zoomIdentity
         .translate(cam.x, cam.y)
         .scale(cam.z)
-        .invert([ev.clientX - r.left - dim.w / 2, ev.clientY - r.top - dim.h / 2]);
+        .invert([ev.clientX - r.left, ev.clientY - r.top]);
       return { x, y };
     };
 
@@ -735,8 +756,18 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const selection = select(canvas);
     selection.call(zoomBehavior);
     // Seed the behaviour with the camera the ref already holds, so a re-run of this effect (a
-    // filter toggle, a preset change) does not snap the view back to the origin.
-    selection.call(zoomBehavior.transform, zoomIdentity.translate(cam.x, cam.y).scale(cam.z));
+    // filter toggle, a preset change) does not snap the view back to the origin -- cam.x/y is
+    // already an absolute, top-left-anchored translate by then (the "zoom" handler above writes
+    // it straight out of d3-zoom's own transform), so re-seeding with it verbatim is a no-op.
+    // Only the very FIRST layout (camRef still at its useRef default of {x:0,y:0,z:1}) needs the
+    // dim.w/2 + dim.h/2 term baked in, so an unmodified board still opens centred under the new
+    // top-left convention -- adding it on every re-run instead would double the offset each time.
+    selection.call(
+      zoomBehavior.transform,
+      isFirstLayout
+        ? zoomIdentity.translate(dim.w / 2 + cam.x, dim.h / 2 + cam.y).scale(cam.z)
+        : zoomIdentity.translate(cam.x, cam.y).scale(cam.z),
+    );
     // The Card/Miniature debug buttons (outside this effect, see jumpZoomRef's doc comment) jump
     // straight to a zoom level with no pointer gesture behind it. Routed through
     // zoomBehavior.transform rather than a raw `cam.z` write so the canvas's own `__zoom` stays
