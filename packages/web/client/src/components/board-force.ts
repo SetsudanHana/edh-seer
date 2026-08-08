@@ -287,6 +287,37 @@ export const ALPHA_FLOOR = 0.02;
  *  converge on a board whose alpha never actually reaches zero. */
 export const COLLIDE_ITERATIONS = 1;
 
+/** The ten constants above, as one object a caller can override. The constants themselves stay the
+ *  source of truth -- this references them rather than restating their numbers, so the measurement
+ *  comments above remain the only place a value is written down.
+ *
+ *  Exists for the dev tuning panel (BoardTuner). Nothing in the product passes `params`. */
+export interface BoardParams {
+  repulsion: number;
+  roomAttraction: number;
+  containment: number;
+  foreignPush: number;
+  linkStiffness: number;
+  centerPull: number;
+  velocityDecay: number;
+  alphaDecay: number;
+  alphaFloor: number;
+  collideIterations: number;
+}
+
+export const DEFAULT_PARAMS: BoardParams = {
+  repulsion: REPULSION,
+  roomAttraction: ROOM_ATTRACTION,
+  containment: CONTAINMENT,
+  foreignPush: FOREIGN_PUSH,
+  linkStiffness: LINK_STIFFNESS,
+  centerPull: CENTER_PULL,
+  velocityDecay: VELOCITY_DECAY,
+  alphaDecay: ALPHA_DECAY,
+  alphaFloor: ALPHA_FLOOR,
+  collideIterations: COLLIDE_ITERATIONS,
+};
+
 /** The whole board layout as one d3 simulation: repulsion, edge springs, disc collision, a centre
  *  pull for anything no room claims, and the two custom room forces above.
  *
@@ -322,7 +353,9 @@ export function createBoardSimulation(opts: {
   tallies: Map<RoomId, RoomTally>;
   universal: ReadonlySet<string>;
   visible: (n: Sim) => boolean;
+  params?: Partial<BoardParams>;
 }): { simulation: Simulation<Sim, undefined>; roomCircles: () => Map<RoomId, Circle> } {
+  const p = { ...DEFAULT_PARAMS, ...opts.params };
   const roomCircles = () =>
     roomLayout(
       opts.nodes
@@ -340,7 +373,7 @@ export function createBoardSimulation(opts: {
 
   const simulation = forceSimulation<Sim>(opts.nodes)
     .force("charge", forceManyBody<Sim>()
-      .strength(-REPULSION)
+      .strength(-p.repulsion)
       // Ports the old `max(d2, 64)` floor and `d2 > 220000` cutoff. d3 squares these
       // internally; distanceMin is a geometric mean rather than a hard clamp.
       .distanceMin(8)
@@ -351,29 +384,29 @@ export function createBoardSimulation(opts: {
       // length, so rest scales with what it joins.
       .distance((l) => nodeRadius(l.source) + nodeRadius(l.target) + EDGE_GAP)
       // Explicit strength overrides d3's degree-normalized default.
-      .strength(LINK_STIFFNESS))
+      .strength(p.linkStiffness))
     // Replaces separation(). COLLISION_PAD is the gap between two settled discs, so each disc
     // carries half of it. See the design doc's 3.2 -- this is velocity-based where separation()
     // was positional, which is why the overlap assertion is the one at risk.
     .force("collide", forceCollide<Sim>()
       .radius((n) => nodeRadius(n) + COLLISION_PAD / 2)
-      .iterations(COLLIDE_ITERATIONS))
-    .force("x", forceX<Sim>(0).strength((n) => (zoned(n) ? 0 : CENTER_PULL)))
-    .force("y", forceY<Sim>(0).strength((n) => (zoned(n) ? 0 : CENTER_PULL)))
+      .iterations(p.collideIterations))
+    .force("x", forceX<Sim>(0).strength((n) => (zoned(n) ? 0 : p.centerPull)))
+    .force("y", forceY<Sim>(0).strength((n) => (zoned(n) ? 0 : p.centerPull)))
     .force("rooms", forceRoomAttraction({
       roomsByNode: opts.roomsByNode,
       universal: opts.universal,
-      stiffness: ROOM_ATTRACTION,
+      stiffness: p.roomAttraction,
     }))
     .force("containment", forceRoomContainment({
       roomsByNode: opts.roomsByNode,
       circles: roomCircles,
-      containmentStiffness: CONTAINMENT,
-      foreignStiffness: FOREIGN_PUSH,
+      containmentStiffness: p.containment,
+      foreignStiffness: p.foreignPush,
     }))
-    .velocityDecay(VELOCITY_DECAY)
-    .alphaDecay(ALPHA_DECAY)
-    .alphaTarget(ALPHA_FLOOR)
+    .velocityDecay(p.velocityDecay)
+    .alphaDecay(p.alphaDecay)
+    .alphaTarget(p.alphaFloor)
     .stop();
 
   return { simulation, roomCircles };

@@ -1,15 +1,22 @@
 import { describe, expect, test } from "vitest";
+import { forceManyBody } from "d3-force";
 import {
+  ALPHA_DECAY,
+  ALPHA_FLOOR,
   boardMetrics,
   containment,
   CONTAINMENT,
   createBoardSimulation,
+  DEFAULT_PARAMS,
   FOREIGN_PUSH,
   forceRoomAttraction,
   forceRoomContainment,
   foreignPush,
   nodeRadius,
+  REPULSION,
   universalRooms,
+  VELOCITY_DECAY,
+  type BoardParams,
   type Sim,
 } from "./board-force.js";
 import { ART_RADIUS, roomTallies } from "./deck-rooms.js";
@@ -413,5 +420,53 @@ describe("the settled board, ten trials on inalla.txt", () => {
     const total = trials.reduce((sum, t) => sum + t.intrusions, 0);
     console.log("intrusions across ten trials:", trials.map((t) => t.intrusions), "total", total);
     expect(total).toBeLessThanOrEqual(INTRUSION_CAP);
+  });
+});
+
+describe("BoardParams", () => {
+  // A simulation over two unroomed cards -- enough to build every force. roomsByNode empty means
+  // both are unzoned, which is also what exercises CENTER_PULL.
+  function sim(params?: Partial<BoardParams>) {
+    const nodes = [card("card:a", -50, 0), card("card:b", 50, 0)];
+    return createBoardSimulation({
+      nodes,
+      links: [],
+      roomsByNode: new Map(),
+      rooms: [],
+      tallies: new Map(),
+      universal: new Set(),
+      visible: () => true,
+      params,
+    }).simulation;
+  }
+
+  test("DEFAULT_PARAMS carries the exported constants", () => {
+    expect(DEFAULT_PARAMS.repulsion).toBe(REPULSION);
+    expect(DEFAULT_PARAMS.containment).toBe(CONTAINMENT);
+    expect(DEFAULT_PARAMS.foreignPush).toBe(FOREIGN_PUSH);
+  });
+
+  test("an override reaches the force it names", () => {
+    const charge = sim({ repulsion: 999 }).force("charge") as ReturnType<typeof forceManyBody>;
+    // forceManyBody stores strength as a per-node accessor, so read it back through the accessor.
+    expect((charge.strength() as (n: Sim, i: number, ns: Sim[]) => number)(
+      card("card:a", 0, 0), 0, [],
+    )).toBe(-999);
+  });
+
+  test("an absent key falls back to the exported constant", () => {
+    const s = sim({ repulsion: 999 });
+    expect(s.velocityDecay()).toBeCloseTo(VELOCITY_DECAY, 10);
+    expect(s.alphaDecay()).toBeCloseTo(ALPHA_DECAY, 10);
+    expect(s.alphaTarget()).toBeCloseTo(ALPHA_FLOOR, 10);
+  });
+
+  test("no params at all is the same simulation as before", () => {
+    const s = sim();
+    expect(s.velocityDecay()).toBeCloseTo(VELOCITY_DECAY, 10);
+    const charge = s.force("charge") as ReturnType<typeof forceManyBody>;
+    expect((charge.strength() as (n: Sim, i: number, ns: Sim[]) => number)(
+      card("card:a", 0, 0), 0, [],
+    )).toBe(-REPULSION);
   });
 });
