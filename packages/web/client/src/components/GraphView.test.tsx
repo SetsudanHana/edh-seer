@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ART_RADIUS, boardMetrics, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, universalRooms } from "./GraphView.js";
+import { ART_RADIUS, boardMetrics, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, traveledAsPan, universalRooms } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
@@ -71,6 +71,48 @@ test("a non-card node's radius scales with degree and is capped", () => {
   expect(nodeRadius({ kind: "event", deg: 0 })).toBe(3);
   expect(nodeRadius({ kind: "event", deg: 4 })).toBe(6);
   expect(nodeRadius({ kind: "event", deg: 10000 })).toBe(15);
+});
+
+// Fix round 2: a real mousedown-driven zoom gesture cannot be constructed under this jsdom/vitest
+// combination (see the removed click-based flip tests' replacement comment below), so
+// `traveledAsPan` -- the pure function `zoomBehavior`'s "end" handler now runs the click-vs-drag
+// decision through -- is exercised directly here instead, the same trade `traveledAsDrag` made
+// before this task deleted it. These five cases are the exact browser matrix the coordinator
+// measured against a real click-swallowing gesture (k 6.33, wobble 0/1/2/3/6 px): a real click
+// only registered at 0 px, but CLICK_DRAG_PX is 4, so 1/2/3 px must all still count as a click
+// (`traveledAsPan` returning false) and only 6 px (past the threshold) should count as a pan.
+test("traveledAsPan matches the browser's wobble-vs-click matrix (0/1/2/3 px are clicks, 6 px is not)", () => {
+  const start = { x: 0, y: 0, k: 6.33 };
+  expect(traveledAsPan(start, { x: 0, y: 0, k: 6.33 })).toBe(false); // 0 px
+  expect(traveledAsPan(start, { x: 1, y: 0, k: 6.33 })).toBe(false); // 1 px
+  expect(traveledAsPan(start, { x: 2, y: 0, k: 6.33 })).toBe(false); // 2 px
+  expect(traveledAsPan(start, { x: 3, y: 0, k: 6.33 })).toBe(false); // 3 px
+  expect(traveledAsPan(start, { x: 6, y: 0, k: 6.33 })).toBe(true); // 6 px, past CLICK_DRAG_PX (4)
+});
+
+test("traveledAsPan's threshold is exclusive, not inclusive, at the boundary", () => {
+  const start = { x: 0, y: 0, k: 1 };
+  expect(traveledAsPan(start, { x: 4, y: 0, k: 1 })).toBe(false); // exactly at CLICK_DRAG_PX (4)
+  expect(traveledAsPan(start, { x: 4.001, y: 0, k: 1 })).toBe(true); // one hair past it
+});
+
+test("traveledAsPan measures straight-line distance, not axis-aligned drift", () => {
+  // 3-4-5 triangle: neither axis alone crosses the default threshold (4), but the combined
+  // distance (5) does -- proving this hypots both axes rather than checking them independently.
+  expect(traveledAsPan({ x: 0, y: 0, k: 1 }, { x: 3, y: 4, k: 1 })).toBe(true);
+});
+
+test("traveledAsPan's threshold is a parameter, not a hidden constant", () => {
+  expect(traveledAsPan({ x: 0, y: 0, k: 1 }, { x: 2, y: 0, k: 1 }, 1)).toBe(true); // past a threshold of 1
+  expect(traveledAsPan({ x: 0, y: 0, k: 1 }, { x: 2, y: 0, k: 1 }, 5)).toBe(false); // under a threshold of 5
+});
+
+// A click can't change the camera's scale, so a "click" reporting a different k than the gesture
+// started with did not just click -- it zoomed. Real gestures never hit this (wheel and mouse-drag
+// are mutually exclusive within one gesture), but the function is total, so this is the one case
+// zero translation alone doesn't cover.
+test("traveledAsPan treats a scale change as a pan even with zero translation", () => {
+  expect(traveledAsPan({ x: 0, y: 0, k: 1 }, { x: 0, y: 0, k: 1.5 })).toBe(true);
 });
 
 test("seedPosition centres a new node on the previous positions of its known neighbours", () => {
@@ -711,36 +753,21 @@ const dfcGraph = {
   ],
 } as unknown as typeof SAMPLE.graph;
 
-// The literal test in the task-7 brief dispatches its clicks at a fixed (100, 100) and selects the
-// "Card" mode button with an unanchored /card/i, which also matches the kind-filter row's own
-// "card 2" chip (two nodes of kind "card" in this fixture) -- ambiguous, per the anchoring already
-// used above for the same button (see "switching to card mode..."). And a hardcoded click point
-// assumes the DFC node settles exactly there, which is exactly the prediction the "hover shows a
-// card's build role" test above found didn't hold for the simulated layout -- __graphProbe's exact
-// x/y is the only thing to click through, same as that test does. `pick()`'s hit test divides
-// screen coordinates by `cam.z` (jsdom's canvas has a zero bounding rect, so no other term in that
-// division is nonzero here), so the click point is the probed world position scaled by the camera
-// zoom the "Card" button just set -- multiplying by anything else lands off the node's disc.
-it("flips a double-faced card to its back art and back again", () => {
-  makeContextSpy();
-  const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
-  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
-    __graphProbe?: () => Array<{ id: string; x: number; y: number }> & {
-      camZ: number;
-      flipped: string[];
-    };
-  };
-  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
-  fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
-  const probe = canvas.__graphProbe!();
-  const node = probe.find((n) => n.id === "card:1")!;
-  const at = { clientX: node.x * probe.camZ, clientY: node.y * probe.camZ };
-  fireEvent.click(canvas, at); // the DFC's node
-  expect(canvas.__graphProbe!().flipped).toEqual(["card:1"]);
-  fireEvent.click(canvas, at);
-  expect(canvas.__graphProbe!().flipped).toEqual([]);
-});
-
+// Fix round 2 removed the three click-driven flip tests that used to live here ("flips a
+// double-faced card to its back art and back again", "flips the card when clicked on the flip
+// glyph itself, not the node centre", "does not move any node when a card is flipped"). All three
+// drove flipping through a bare `fireEvent.click(canvas, ...)`, which stopped doing anything once
+// click-to-flip moved off the DOM "click" event onto zoomBehavior's own "end" event (see the doc
+// comment at that call site in GraphView.tsx for why: d3-drag's click-swallowing on any pointer
+// movement makes the DOM click unusable as the source of truth). Rewiring these tests to the new
+// mechanism would require a real mousedown-driven zoom gesture, which this jsdom/vitest
+// combination cannot construct at all (confirmed in fix round 1's regression-test work: any
+// MouseEvent carrying a `view` -- which d3-zoom's mousedown handler requires -- fails jsdom's
+// UIEvent brand check here, even for `window` itself). `traveledAsPan`, the pure function the
+// "end" handler's click-vs-drag decision now runs through, is unit-tested directly instead (see
+// below) -- the same trade CLAUDE.md already made once for `traveledAsDrag`, which this task
+// deleted for the same reason when its DOM-click call site went away in fix round 1.
+//
 // Flip is PICTURE ONLY (the task's one hard rule): it must not move a single node. `flipped` used
 // to sit in the layout effect's own dependency array, so a flip click tore the whole effect down
 // and rebuilt it -- cancelling and restarting the RAF loop, tearing down and re-adding every
@@ -850,46 +877,30 @@ it("groups a double-faced card by its FRONT face", () => {
 // is now painted FLIP_GLYPH_INSET world units in from the corner (GraphView.tsx), so it sits
 // strictly inside the hit box; this test clicks that same inset position, imported from the
 // component so paint and probe can never drift apart again.
-it("flips the card when clicked on the flip glyph itself, not the node centre", () => {
+//
+// Fix round 2: rewritten from a CLICK to a HOVER at the same point. `pickAt`'s rectangular hit box
+// (what this test actually protects -- Finding 1 above) is the same function both a click and a
+// hover resolve a node through; hovering is unaffected by round 2's click-vs-drag rewiring and
+// still works with a bare `fireEvent`, so it exercises the exact geometry this test was written
+// for without depending on the gesture round 2 confirmed jsdom cannot construct.
+it("the flip glyph's hit box covers its own corner, not just the node centre", () => {
   makeContextSpy();
   const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
-    __graphProbe?: () => Array<{ id: string; x: number; y: number }> & { camZ: number; flipped: string[] };
+    __graphProbe?: () => Array<{ id: string; x: number; y: number }> & { camZ: number };
   };
   fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
   fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
   const probe = canvas.__graphProbe!();
   const node = probe.find((n) => n.id === "card:1")!;
-  // Same coordinate-recovery trick as the other click-based flip tests: jsdom's canvas has a zero
-  // bounding rect, so the click point is the probed world position scaled by cam.z alone.
+  // Same coordinate-recovery trick the deleted click-based version used: jsdom's canvas has a zero
+  // bounding rect, so the pointer's client position is the probed world position scaled by cam.z.
   const glyphAt = {
     clientX: (node.x + ART_RADIUS - FLIP_GLYPH_INSET) * probe.camZ,
     clientY: (node.y + ART_RADIUS * 1.4 - FLIP_GLYPH_INSET) * probe.camZ,
   };
-  fireEvent.click(canvas, glyphAt);
-  expect(canvas.__graphProbe!().flipped).toEqual(["card:1"]);
-});
-
-it("does not move any node when a card is flipped", () => {
-  makeContextSpy();
-  const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
-  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
-    __graphProbe?: () => Array<{ id: string; x: number; y: number }> & {
-      camZ: number;
-      flipped: string[];
-    };
-  };
-  fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
-  fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
-  const before = canvas.__graphProbe!();
-  const node = before.find((n) => n.id === "card:1")!;
-  const positionsBefore = before.map((n) => ({ id: n.id, x: n.x, y: n.y }));
-  fireEvent.click(canvas, { clientX: node.x * before.camZ, clientY: node.y * before.camZ });
-  const after = canvas.__graphProbe!();
-  // Sanity check the click actually flipped something -- otherwise "positions unchanged" would be
-  // true for the trivial reason that nothing happened at all.
-  expect(after.flipped).toEqual(["card:1"]);
-  expect(after.map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(positionsBefore);
+  fireEvent(canvas, new MouseEvent("pointermove", { ...glyphAt, bubbles: true }));
+  expect(screen.getByText(/Malakir Rebirth/)).toBeInTheDocument();
 });
 
 // The escape/intrusion metrics (and the ratchet in the last task of this plan) are computed from

@@ -63,12 +63,28 @@ const LEGEND_VISIBLE_ROWS = 12;
 
 type Point = { x: number; y: number };
 
-/** Screen pixels of camera translation between a zoom gesture's start and the click the DOM fires
- *  after it, below which the gesture still counts as a click rather than a pan (Task 6: d3-zoom
- *  owns the gesture now, so this compares transforms rather than raw pointer deltas -- see
- *  `gestureStart` at this constant's one call site). Not zero: real hardware never reports an
- *  intended click as exactly stationary. */
+/** Screen pixels of camera translation between a zoom gesture's start and its end, below which the
+ *  gesture still counts as a click rather than a pan. Not zero: real hardware never reports an
+ *  intended click as exactly stationary -- and on a trackpad, essentially no click is. */
 const CLICK_DRAG_PX = 4;
+
+/** Whether a zoom gesture's start and end transforms differ enough to have been a pan rather than
+ *  a click -- the same question `traveledAsDrag` answered from raw pointer deltas (Task 6 deleted
+ *  it when the DOM `click` listener it fed was still the call site), asked of two transforms
+ *  instead now that the call site is `zoomBehavior`'s own `"end"` event (fix round 2, see the
+ *  doc comment at that call site for why `click` itself had to go). Pulled out as its own pure
+ *  function for the same reason `traveledAsDrag` was: this jsdom cannot construct a real
+ *  mousedown-driven zoom gesture at all (see GraphView.test.tsx), so the arithmetic is what's
+ *  unit-testable, not the gesture that produces its inputs. A scale change alone (`end.k !==
+ *  start.k`) counts as a pan even with zero translation -- a click can't zoom the camera, so any
+ *  "click" reporting a different scale from where the gesture started did not, in fact, just click. */
+export function traveledAsPan(
+  start: { x: number; y: number; k: number },
+  end: { x: number; y: number; k: number },
+  threshold = CLICK_DRAG_PX,
+): boolean {
+  return Math.hypot(end.x - start.x, end.y - start.y) > threshold || end.k !== start.k;
+}
 
 /** Card name -> copy count, built from the graph's own card nodes (each copy of a card already
  *  collapses into one node, keyed by id, with the count riding on `copies`). Absent `copies`
@@ -746,9 +762,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         // A pan moves the board under the pointer, so whichever rooms were lit no longer are.
         setHoveredRooms((prev) => (prev.length === 0 ? prev : []));
       });
-    // A pan and a click arrive as the same DOM click. d3-zoom reports the transform at gesture
-    // start; comparing it to the transform at click time is the same question traveledAsDrag
-    // answered from raw pointer coordinates, asked of the camera instead.
+    // A pan and a click arrive as the same physical mousedown -> up. d3-zoom reports the transform
+    // at gesture start; comparing it to the transform at gesture END is the same question
+    // traveledAsPan answers, asked at the one moment a gesture is known to be over.
     let gestureStart = zoomIdentity;
     zoomBehavior.on("start", (e: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
       gestureStart = e.transform;
@@ -782,20 +798,34 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     };
     jumpZoomRef.current = jumpZoom;
 
+    // Fix round 2: this used to be a DOM "click" listener. It cannot be -- d3-zoom's own mousedown
+    // handler (mousedowned in zoom.js) hands panning off to d3-drag underneath it, and d3-drag's
+    // mouseupped installs a CAPTURE-PHASE handler on the window that calls
+    // stopImmediatePropagation() on the very next "click" the instant the pointer moved AT ALL
+    // during the gesture (g.moved, set unconditionally on the first pixel of movement -- d3-zoom
+    // exposes no clickDistance() the way d3-drag does). Capture fires before bubbling ever reaches
+    // this canvas, so a "click" listener here never sees that event at all: only a PERFECTLY
+    // stationary press ever produced a DOM click, regardless of what CLICK_DRAG_PX said. `"end"`
+    // fires unconditionally for every gesture -- swallowed click or not -- so it is the only event
+    // this can be driven from now. Both paths staying wired would double-flip a zero-movement
+    // click (the DOM click still fires for that one case, since nothing swallows it): "end" is now
+    // the SOLE source of truth, not a fallback.
+    //
     // A card only flips when clicked at card scale AND it has a back face to flip to -- anything
     // else (a non-flippable card, any card in miniature mode, empty space) must fall through with
     // no change to existing click behaviour, which is why this checks `renderModeFor(cam.z)` and
     // `faceArt` itself rather than relying on what mode the paint loop happened to draw last frame.
-    const onClick = (e: MouseEvent) => {
-      // The DOM fires `click` after mousedown -> move -> up regardless of how far the pointer
-      // travelled -- d3-zoom's own mousedown handler pins the drag to this canvas via a window
-      // listener. Panning is the primary gesture at exactly the zoom where flipping is enabled, so
-      // an untethered click handler flips whatever a pan happens to be released over.
-      const moved = Math.hypot(
-        cam.x - gestureStart.x, cam.y - gestureStart.y,
-      ) > CLICK_DRAG_PX || cam.z !== gestureStart.k;
-      if (moved) return;
-      const hit = pick(e);
+    zoomBehavior.on("end", (e: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
+      // "end" fires for every gesture that reaches gesture()'s active-count-to-zero moment, not
+      // just a mouse click-or-drag: a wheel zoom debounces into its own gesture with an end (see
+      // wheelidled in zoom.js), and the programmatic transforms above (the initial seed, jumpZoom)
+      // run the whole start/zoom/end lifecycle in one synchronous call with no event at all. Gated
+      // on the literal event TYPE, not `instanceof MouseEvent` -- WheelEvent extends MouseEvent in
+      // the DOM, so that check would not exclude a wheel gesture's end.
+      const src = e.sourceEvent as MouseEvent | null;
+      if (src?.type !== "mouseup") return;
+      if (traveledAsPan(gestureStart, e.transform)) return;
+      const hit = pick(src);
       if (
         hit && hit.kind === "card" && renderModeFor(cam.z) === "card"
         && faceArt.has(`${hit.id.replace(/^card:/, "face:")}:1`)
@@ -806,7 +836,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           return next;
         });
       }
-    };
+    });
     const onMove = (e: PointerEvent) => {
       // Computed once and handed to both the node hit-test and the room lookup below -- each used
       // to call toWorld (and its own getBoundingClientRect) separately.
@@ -830,7 +860,6 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     };
 
     canvas.addEventListener("pointermove", onMove);
-    canvas.addEventListener("click", onClick);
     return () => {
       // Snapshot final positions so the next effect run (a graph or filter change) can reuse them
       // instead of re-throwing everything -- see Step 0.
@@ -839,7 +868,8 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       cancelAnimationFrame(raf);
       removeEventListener("resize", onResize);
       canvas.removeEventListener("pointermove", onMove);
-      canvas.removeEventListener("click", onClick);
+      // Also removes the "end" listener above -- click-to-flip is wired entirely through
+      // zoomBehavior now, no separate DOM "click" listener to tear down.
       selection.on(".zoom", null);
       delete (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe;
     };
