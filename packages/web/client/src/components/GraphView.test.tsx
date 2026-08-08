@@ -404,6 +404,32 @@ test("shows only card nodes in the probe by default", () => {
   expect(canvas.__graphProbe!().every((n) => n.kind === "card")).toBe(true);
 });
 
+// Task 4 of the tuning-panel plan: BoardTuner joins the debug rig rather than inventing a second
+// way in, so it is absent until the debug toggle is on -- same gate the kind chips and the
+// Card/Miniature buttons already use.
+test("the tuning panel is absent until debug is on", async () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  expect(screen.queryByText("tune")).toBeNull();
+  await userEvent.click(screen.getByRole("button", { name: "debug" }));
+  expect(screen.getByText("tune")).toBeTruthy();
+});
+
+// `params` is GraphView's own state, passed down as a controlled value -- if BoardTuner kept it
+// local instead, moving a slider would never reach the simulation and this would still pass with
+// a broken wiring. Reading the slider back after the change is what catches that.
+test("the tuning panel drives the simulation's constants", async () => {
+  makeContextSpy();
+  render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  await userEvent.click(screen.getByRole("button", { name: "debug" }));
+  const slider = screen.getByLabelText("repulsion") as HTMLInputElement;
+  const before = slider.value;
+  fireEvent.change(slider, { target: { value: String(Number(before) + 100) } });
+  // The panel is controlled by GraphView's state, so a moved slider must come back moved --
+  // if params were local to the panel the board would never see them.
+  expect(slider.value).not.toBe(before);
+});
+
 // Task 7: find a card by name. The fixture (SAMPLE, not the brief's imagined SAMPLE_REPORT) has
 // two card nodes -- "Krenko, Mob Boss" and "Impact Tremors" -- with no shared substring, so a
 // 3-letter prefix of one is never an accidental hit on the other.

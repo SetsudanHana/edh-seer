@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { select } from "d3-selection";
 import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
@@ -12,7 +12,10 @@ import { ART_RADIUS, rimArcs, rimHues, OVERFLOW_HUE, ROOMS, roomLayout, roomTall
 // uses, while deck-rooms.ts owns the value -- see its doc comment for why it moved.
 export { ART_RADIUS };
 import { cardFacts, PRESETS, roomsForFacts } from "./presets.js";
-import { createBoardSimulation, nodeRadius, universalRooms, type Sim } from "./board-force.js";
+import {
+  createBoardSimulation, DEFAULT_PARAMS, nodeRadius, universalRooms, type BoardParams, type Sim,
+} from "./board-force.js";
+import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx)
 // already uses, while board-force.ts owns the simulation-side values -- same arrangement
 // deck-rooms.ts already has for ART_RADIUS above.
@@ -153,6 +156,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   // Developer instruments (the 16 node-kind filter chips, the render-mode buttons) behind one
   // toggle. Local state on purpose -- it does not persist across mounts, per the spec.
   const [debug, setDebug] = useState(false);
+  // Dev tuning rig (BoardTuner). DEFAULT_PARAMS is the shipped board -- nothing but the panel
+  // ever changes these, and the panel only exists under import.meta.env.DEV.
+  const [params, setParams] = useState<BoardParams>(DEFAULT_PARAMS);
 
   useEffect(() => {
     const onChange = () => setIsFullscreen(document.fullscreenElement === shellRef.current);
@@ -383,7 +389,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     // see createBoardSimulation's doc comment for the measurements. `visible` is a paint,
     // hit-test and room-circle concern only.
     const { simulation, roomCircles: roomCirclesNow } = createBoardSimulation({
-      nodes, links, roomsByNode, rooms, tallies, universal, visible,
+      nodes, links, roomsByNode, rooms, tallies, universal, visible, params,
     });
     // A from-scratch graph gets full energy to organize; a graph that already has settled
     // positions (a filter toggle, or -- once deckbuilding lands -- a card added/removed) only
@@ -925,7 +931,28 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     // themselves derived from `rooms`, so listing `rooms`/`hueOf` too does not add a NEW class of
     // re-run, just names the dependency that was already implicitly driving the two that were
     // already here.
-  }, [graph, hidden, roomsByNode, tallies, rooms, hueOf]);
+    //
+    // `params` joins the deps for the dev tuning panel: moving a slider re-runs this effect, which
+    // resumes every node from prevPositionsRef and reheats to alpha 0.3 -- the board re-settles at
+    // the new constant rather than jumping. Outside dev it is DEFAULT_PARAMS and never changes
+    // identity, so this costs a production render nothing.
+  }, [graph, hidden, roomsByNode, tallies, rooms, hueOf, params]);
+
+  /** Reshapes __graphProbe()'s node array (with its `circles` property riding along, see the probe's
+   *  own comment) into what BoardTuner reads. Returns null before the first layout effect has run,
+   *  or under a test with no canvas context. */
+  const probeSnapshot = useCallback((): ProbeSnapshot | null => {
+    const probe = (canvasRef.current as unknown as { __graphProbe?: () => unknown })?.__graphProbe;
+    if (!probe) return null;
+    const nodes = probe() as (
+      { kind: string; x: number; y: number; rooms: readonly string[] | null }[]
+      & { circles?: readonly { id: string; x: number; y: number; r: number }[] }
+    );
+    return {
+      cards: nodes.filter((n) => n.kind === "card"),
+      circles: nodes.circles ?? [],
+    };
+  }, []);
 
   const toggle = (k: NodeKind) =>
     setHidden((prev) => {
@@ -1010,6 +1037,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           >
             debug
           </button>
+
+          {/* import.meta.env.DEV is a compile-time constant, so Vite drops this branch and the
+           *  BoardTuner import entirely from a production build. `debug` is the toggle that
+           *  already reveals the kind chips and the Card/Miniature buttons -- the panel joins
+           *  them rather than inventing a second way in. */}
+          {import.meta.env.DEV && debug ? (
+            <BoardTuner params={params} onChange={setParams} probe={probeSnapshot} />
+          ) : null}
 
           {canFullscreen ? (
             <button
