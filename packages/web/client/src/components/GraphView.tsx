@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { select } from "d3-selection";
+import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
 import type { CardGraph, DeckReport, GraphNode, NodeKind } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
@@ -61,19 +63,12 @@ const LEGEND_VISIBLE_ROWS = 12;
 
 type Point = { x: number; y: number };
 
-/** Device pixels of pointer travel, between a pointerdown and the click the DOM fires after its
- *  matching pointerup, below which the gesture still counts as a click rather than a pan. Not
- *  zero: real hardware never reports an intended click as exactly stationary. */
+/** Screen pixels of camera translation between a zoom gesture's start and the click the DOM fires
+ *  after it, below which the gesture still counts as a click rather than a pan (Task 6: d3-zoom
+ *  owns the gesture now, so this compares transforms rather than raw pointer deltas -- see
+ *  `gestureStart` at this constant's one call site). Not zero: real hardware never reports an
+ *  intended click as exactly stationary. */
 const CLICK_DRAG_PX = 4;
-
-/** Whether a pointerdown -> up round trip travelled far enough to be a pan rather than a click.
- *  Pulled out as its own pure function so the decision is unit-testable on its own -- the DOM
- *  event plumbing around it (pointer capture, `MouseEvent.clientX/Y`) doesn't behave usefully
- *  under jsdom's `fireEvent.pointerMove`, so a click-vs-drag test has to exercise this, not a
- *  simulated gesture. */
-export function traveledAsDrag(dx: number, dy: number, threshold = CLICK_DRAG_PX): boolean {
-  return Math.hypot(dx, dy) > threshold;
-}
 
 /** Card name -> copy count, built from the graph's own card nodes (each copy of a card already
  *  collapses into one node, keyed by id, with the count riding on `copies`). Absent `copies`
@@ -177,6 +172,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   // effect re-ran and rebuilt the camera at the origin. A ref survives that, and the mode control
   // below needs to write z from outside the effect anyway.
   const camRef = useRef({ x: 0, y: 0, z: 1 });
+  // The Card/Miniature debug buttons jump the zoom level with no real pointer gesture behind it.
+  // They used to write camRef.current.z directly, which left d3-zoom's own bookkeeping (the
+  // canvas's `__zoom`) stale -- the FIRST real click afterward reads that stale transform as the
+  // baseline a genuine mousedown snapshots, sees it disagree with the jumped `cam.z`, and the click
+  // guard below (Task 6) swallows it as a false drag. Written by the layout effect once its
+  // zoomBehavior exists; the buttons render before that effect runs and must survive it re-running
+  // (a filter or preset change) without going stale, hence a ref rather than a plain closure.
+  const jumpZoomRef = useRef<(z: number) => void>(() => {});
 
   const counts = useMemo(() => {
     const c = new Map<NodeKind, number>();
@@ -409,7 +412,6 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
     const cam = camRef.current;
     let raf = 0;
-    let dragging: { x: number; y: number } | null = null;
 
     const artLoader = artLoaderRef.current!;
 
@@ -676,10 +678,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
     const toWorld = (ev: { clientX: number; clientY: number }): Point => {
       const r = canvas.getBoundingClientRect();
-      return {
-        x: (ev.clientX - r.left - dim.w / 2 - cam.x) / cam.z,
-        y: (ev.clientY - r.top - dim.h / 2 - cam.y) / cam.z,
-      };
+      const [x, y] = zoomIdentity
+        .translate(cam.x, cam.y)
+        .scale(cam.z)
+        .invert([ev.clientX - r.left - dim.w / 2, ev.clientY - r.top - dim.h / 2]);
+      return { x, y };
     };
 
     // Split from `pick` so `onMove` can compute the world point once (via `toWorld`) and hand it to
@@ -713,26 +716,54 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       return pickAt(wx, wy);
     };
 
-    // Pointer travel since the last pointerdown, tracked separately from `dragging` (which is
-    // overwritten every pointermove to compute pan deltas and so cannot answer "how far has this
-    // gesture travelled in total"). Only onDown writes it and only onClick reads it.
-    let downAt: { x: number; y: number } | null = null;
-    const onDown = (e: PointerEvent) => {
-      dragging = { x: e.clientX, y: e.clientY };
-      downAt = { x: e.clientX, y: e.clientY };
-      canvas.setPointerCapture(e.pointerId);
+    // d3-selection appears here and NOWHERE else: binding a zoom behaviour to the canvas, which is
+    // already an imperative escape hatch outside React's tree. It must never drive React's DOM.
+    const zoomBehavior = d3zoom<HTMLCanvasElement, unknown>()
+      .scaleExtent([0.15, MAX_Z])
+      .on("zoom", (e: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
+        cam.x = e.transform.x; cam.y = e.transform.y; cam.z = e.transform.k;
+        // A pan moves the board under the pointer, so whichever rooms were lit no longer are.
+        setHoveredRooms((prev) => (prev.length === 0 ? prev : []));
+      });
+    // A pan and a click arrive as the same DOM click. d3-zoom reports the transform at gesture
+    // start; comparing it to the transform at click time is the same question traveledAsDrag
+    // answered from raw pointer coordinates, asked of the camera instead.
+    let gestureStart = zoomIdentity;
+    zoomBehavior.on("start", (e: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
+      gestureStart = e.transform;
+    });
+    const selection = select(canvas);
+    selection.call(zoomBehavior);
+    // Seed the behaviour with the camera the ref already holds, so a re-run of this effect (a
+    // filter toggle, a preset change) does not snap the view back to the origin.
+    selection.call(zoomBehavior.transform, zoomIdentity.translate(cam.x, cam.y).scale(cam.z));
+    // The Card/Miniature debug buttons (outside this effect, see jumpZoomRef's doc comment) jump
+    // straight to a zoom level with no pointer gesture behind it. Routed through
+    // zoomBehavior.transform rather than a raw `cam.z` write so the canvas's own `__zoom` stays
+    // truthful for the next real gesture. `.transform()`'s own "start" event still fires with the
+    // OLD transform (there is no drag here for gestureStart to protect), so it is set again here,
+    // by hand, to the value this jump actually lands on -- otherwise a click right after the jump
+    // would read a one-step-stale baseline and the guard above would swallow it as a false drag.
+    const jumpZoom = (z: number) => {
+      const t = zoomIdentity.translate(cam.x, cam.y).scale(z);
+      selection.call(zoomBehavior.transform, t);
+      gestureStart = t;
     };
-    const onUp = () => { dragging = null; };
+    jumpZoomRef.current = jumpZoom;
+
     // A card only flips when clicked at card scale AND it has a back face to flip to -- anything
     // else (a non-flippable card, any card in miniature mode, empty space) must fall through with
     // no change to existing click behaviour, which is why this checks `renderModeFor(cam.z)` and
     // `faceArt` itself rather than relying on what mode the paint loop happened to draw last frame.
     const onClick = (e: MouseEvent) => {
-      // The DOM fires `click` after pointerdown -> move -> up regardless of how far the pointer
-      // travelled -- setPointerCapture (onDown, above) pins both the moves and the trailing click
-      // to this canvas. Panning is the primary gesture at exactly the zoom where flipping is
-      // enabled, so an untethered click handler flips whatever a pan happens to be released over.
-      if (downAt && traveledAsDrag(e.clientX - downAt.x, e.clientY - downAt.y)) return;
+      // The DOM fires `click` after mousedown -> move -> up regardless of how far the pointer
+      // travelled -- d3-zoom's own mousedown handler pins the drag to this canvas via a window
+      // listener. Panning is the primary gesture at exactly the zoom where flipping is enabled, so
+      // an untethered click handler flips whatever a pan happens to be released over.
+      const moved = Math.hypot(
+        cam.x - gestureStart.x, cam.y - gestureStart.y,
+      ) > CLICK_DRAG_PX || cam.z !== gestureStart.k;
+      if (moved) return;
       const hit = pick(e);
       if (
         hit && hit.kind === "card" && renderModeFor(cam.z) === "card"
@@ -746,12 +777,6 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       }
     };
     const onMove = (e: PointerEvent) => {
-      if (dragging) {
-        cam.x += e.clientX - dragging.x; cam.y += e.clientY - dragging.y;
-        dragging = { x: e.clientX, y: e.clientY };
-        setHoveredRooms((prev) => (prev.length === 0 ? prev : []));
-        return;
-      }
       // Computed once and handed to both the node hit-test and the room lookup below -- each used
       // to call toWorld (and its own getBoundingClientRect) separately.
       const w = toWorld(e);
@@ -772,18 +797,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         prev.length === under.length && prev.every((id, i) => id === under[i]) ? prev : under,
       );
     };
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      // Ceiling is its own constant -- see MAX_Z's doc comment in card-node.ts for why it must
-      // stay above CARD_MODE_Z rather than being derived from it.
-      cam.z = Math.min(MAX_Z, Math.max(0.15, cam.z * (e.deltaY < 0 ? 1.1 : 0.9)));
-    };
 
-    canvas.addEventListener("pointerdown", onDown);
-    canvas.addEventListener("pointerup", onUp);
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("click", onClick);
-    canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       // Snapshot final positions so the next effect run (a graph or filter change) can reuse them
       // instead of re-throwing everything -- see Step 0.
@@ -791,11 +807,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       simulation.stop();
       cancelAnimationFrame(raf);
       removeEventListener("resize", onResize);
-      canvas.removeEventListener("pointerdown", onDown);
-      canvas.removeEventListener("pointerup", onUp);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("click", onClick);
-      canvas.removeEventListener("wheel", onWheel);
+      selection.on(".zoom", null);
       delete (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe;
     };
     // `flipped` and `faceArt` are deliberately absent here -- see flippedRef's doc comment above.
@@ -873,14 +887,16 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
               })
             : null}
 
-          {/* Sets cam.z directly on the ref rather than through React state -- the paint loop reads
-           *  cam.z every frame, so there is nothing for a re-render to do here. */}
+          {/* Jumps the camera through zoomBehavior (jumpZoomRef, set by the layout effect) rather
+           *  than through React state -- the paint loop reads cam.z every frame, so there is
+           *  nothing for a re-render to do here, and going through zoomBehavior keeps its own
+           *  bookkeeping in sync with cam (see jumpZoomRef's doc comment above). */}
           {debug ? (
             <>
-              <button type="button" className="eyebrow" onClick={() => { camRef.current.z = CARD_MODE_Z; }}>
+              <button type="button" className="eyebrow" onClick={() => jumpZoomRef.current(CARD_MODE_Z)}>
                 Card
               </button>
-              <button type="button" className="eyebrow" onClick={() => { camRef.current.z = 1; }}>
+              <button type="button" className="eyebrow" onClick={() => jumpZoomRef.current(1)}>
                 Miniature
               </button>
             </>

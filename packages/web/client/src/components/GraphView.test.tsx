@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ART_RADIUS, boardMetrics, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, traveledAsDrag, universalRooms } from "./GraphView.js";
+import { ART_RADIUS, boardMetrics, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, universalRooms } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
@@ -71,27 +71,6 @@ test("a non-card node's radius scales with degree and is capped", () => {
   expect(nodeRadius({ kind: "event", deg: 0 })).toBe(3);
   expect(nodeRadius({ kind: "event", deg: 4 })).toBe(6);
   expect(nodeRadius({ kind: "event", deg: 10000 })).toBe(15);
-});
-
-// Finding 2 (final review): a pan released over a double-faced card in card mode used to flip it,
-// because onClick had no movement threshold and the DOM fires `click` after pointerdown -> move ->
-// up regardless of distance travelled. The reviewer couldn't reproduce the DOM-level bug in jsdom
-// (fireEvent.pointerMove doesn't deliver a usable clientX through this handler and poisons cam.x
-// with NaN), so the decision itself -- "did the pointer travel far enough to count as a drag" --
-// is pulled out as traveledAsDrag and tested directly here instead.
-test("traveledAsDrag treats a near-stationary pointer as a click", () => {
-  expect(traveledAsDrag(0, 0)).toBe(false);
-  expect(traveledAsDrag(1, 1)).toBe(false); // sub-pixel jitter, still a click
-});
-
-test("traveledAsDrag treats real travel as a pan, past the default threshold", () => {
-  expect(traveledAsDrag(10, 0)).toBe(true);
-  expect(traveledAsDrag(0, -10)).toBe(true);
-});
-
-test("traveledAsDrag's threshold is a parameter, not a hidden constant", () => {
-  expect(traveledAsDrag(2, 0, 1)).toBe(true); // past a threshold of 1
-  expect(traveledAsDrag(2, 0, 5)).toBe(false); // under a threshold of 5
 });
 
 test("seedPosition centres a new node on the previous positions of its known neighbours", () => {
@@ -1423,25 +1402,30 @@ describe("hovering the canvas lights the legend (integration)", () => {
     expect(container.querySelector('[data-room="interaction"]')!.getAttribute("data-hovered")).toBe("true");
   });
 
-  it("a pointer drag clears the highlight rather than leaving rows lit", () => {
+  // Was "a pointer drag clears the highlight...", driven by the hand-rolled pointerdown/pointermove
+  // pair Task 6 removed. Panning is d3-zoom's own gesture now (a real mousedown on the canvas, then
+  // mousemove on the window -- see mousedowned/mousemoved in d3-zoom's zoom.js), which needs a real
+  // `Window` for `event.view` to pass jsdom's UIEvent brand check -- and this vitest/jsdom
+  // combination fails that check even for `window` itself (confirmed directly: `new
+  // MouseEvent("x", { view: window })` throws "member view is not of type Window" here), so a real
+  // drag gesture cannot be constructed in this suite at all. A wheel event reaches the exact same
+  // code this test is actually about -- zoomBehavior's own "zoom" listener in GraphView.tsx, which
+  // drops hoveredRooms unconditionally on every camera move, drag or wheel alike, since either one
+  // carries the board out from under wherever the pointer was -- and wheel events carry no `view`,
+  // so they sidestep the jsdom limitation entirely.
+  it("any camera movement clears the highlight rather than leaving rows lit", () => {
     const graph = {
       nodes: [{ id: "card:a", kind: "card", label: "Card A", roles: ["ramp"] }],
       edges: [],
     } as unknown as typeof SAMPLE.graph;
     const report = { ...SAMPLE.report, combos: [], archetypes: [] };
     const { container, canvas } = settleFrames(graph, report);
-    // jsdom implements neither PointerEvent nor Element.setPointerCapture -- onDown calls the
-    // latter unconditionally, so it needs a stub here the same way makeContextSpy stubs the 2D
-    // context jsdom doesn't have either. clientX/clientY still arrive through a plain MouseEvent,
-    // same as every other pointer-event fire in this file (see the doc comment above).
-    (canvas as unknown as { setPointerCapture: (id: number) => void }).setPointerCapture = () => {};
     const probe = canvas.__graphProbe!();
     const card = probe.find((n) => n.id === "card:a")!;
     fireEvent(canvas, new MouseEvent("pointermove", { clientX: card.x, clientY: card.y, bubbles: true }));
     const row = () => container.querySelector('[data-room="ramp"]')!;
     expect(row().getAttribute("data-hovered")).toBe("true");
-    fireEvent(canvas, new MouseEvent("pointerdown", { clientX: card.x, clientY: card.y, bubbles: true }));
-    fireEvent(canvas, new MouseEvent("pointermove", { clientX: card.x + 30, clientY: card.y, bubbles: true }));
+    fireEvent.wheel(canvas, { deltaY: -240 });
     expect(row().getAttribute("data-hovered")).toBe("false");
   });
 });
