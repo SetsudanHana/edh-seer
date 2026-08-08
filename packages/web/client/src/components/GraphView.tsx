@@ -5,12 +5,12 @@ import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
 import { glyphFor } from "./graph-glyphs.js";
 import { CARD_MODE_Z, MAX_Z, cardImageUrl, faceArtOf, renderModeFor } from "./card-node.js";
-import { ART_RADIUS, COLLISION_PAD, rimArcs, rimHues, OVERFLOW_HUE, ROOMS, roomLayout, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
+import { ART_RADIUS, rimArcs, rimHues, OVERFLOW_HUE, ROOMS, roomLayout, roomTallies, subcategoryLabel, type Circle, type RoomId } from "./deck-rooms.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
 // uses, while deck-rooms.ts owns the value -- see its doc comment for why it moved.
 export { ART_RADIUS };
 import { cardFacts, PRESETS, roomsForFacts } from "./presets.js";
-import { boardMetrics, containment, foreignPush, nodeRadius, roomAttraction, universalRooms, type Sim } from "./board-force.js";
+import { createBoardSimulation, nodeRadius, universalRooms, type Sim } from "./board-force.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx)
 // already uses, while board-force.ts owns the simulation-side values -- same arrangement
 // deck-rooms.ts already has for ART_RADIUS above.
@@ -59,67 +59,7 @@ const BAR_H = 3;
  *  `h-[1.625rem]` once did. */
 const LEGEND_VISIBLE_ROWS = 12;
 
-/** Layout tuning. REPULSION, EDGE_GAP, LINK_STIFFNESS, CENTER_PULL and
- *  VELOCITY_DAMPING carry Task 7/8's measured values -- see task-7-report.md and task-8-report.md
- *  for the multi-trial histories behind them.
- *
- *  ZONE_SPRING is gone with the rectangle grid. Rooms are no longer places cards are pulled toward;
- *  a room is now the circle drawn around whatever cards are in it (deck-rooms.ts's roomLayout), so
- *  the only force that has to do real work is between CARDS: those sharing a room attract, and the
- *  all-pairs repulsion already present pushes everything else apart. See
- *  2026-08-04-circle-rooms-design.md. */
-const EDGE_GAP = 28;
-const CENTER_PULL = 0.0004;
-/** Repulsion numerator (world-units^3/tick) for the all-pairs inverse-square push. */
-const REPULSION = 2200;
-/** Pull between two cards per room they share. Measured against inalla.txt (Task 9,
- *  task-9-report.md): 0.006 (the prior default) held overlaps at 0/10 trials but left false
- *  lenses nonzero in 2/10; 0.01 cut false lenses to 1/10 but pushed overlaps to 8/10 (cards pile
- *  up faster than collision can separate them); 0.008 is the best of the three tested -- 19/20
- *  clean on each metric across two 10-trial batches -- but a same-constants recheck showed the
- *  first batch's 0/0 was a lucky draw, not a settled equilibrium: 1/20 trials still produced 2
- *  overlaps, and 1/20 produced a false lens (`ramp+strategy`, the one pair that also failed at
- *  0.006). Neither tested value hits a deterministic 0 on every trial; see task-9-report.md for
- *  the full round-by-round numbers and why this was capped at 4 rounds rather than tuned
- *  further.
- *
- *  Not redundant with CONTAINMENT: Task 12's arm A3 tried it at 0 (against the winning PACK/
- *  CONTAINMENT/FOREIGN_PUSH) and the board collapsed -- medians of 79 single-room escapes out of
- *  94 cards and 41 intrusions, ten trials on inalla.txt. A room's circle is placed on its
- *  members' centroid, so this is what makes a room a place before containment has anything to
- *  hold cards inside; see `2026-08-07-room-size-measurement-report.md`. */
-const ROOM_ATTRACTION = 0.008;
-/** How hard a room pulls a member back inside it, and how hard it pushes a non-member out.
- *  FOREIGN_PUSH < CONTAINMENT is a HARD CONSTRAINT, not a preference: the reverse expels cards
- *  from every room at once and the board falls apart. Measured (Task 12, arm A2b, ten trials on
- *  inalla.txt against `2026-08-07-room-size-measurement-report.md`): doubling both from the
- *  starting 0.01/0.004 to 0.02/0.008 took `escapes.one` from 2 to 0 across the ten trials and
- *  dropped the trial with overlapping card discs to 0/10, at identical intrusion totals (26 vs
- *  26) -- the extra stiffness bought the plan's escape target for free. */
-const CONTAINMENT = 0.02;
-const FOREIGN_PUSH = 0.008;
-const LINK_STIFFNESS = 0.0012;
-/** Per-tick velocity damping (0..1, higher = less friction). */
-const VELOCITY_DAMPING = 0.86;
-
 type Point = { x: number; y: number };
-
-/** Positional correction for an overlapping pair of discs, or null when they are already clear.
- *  Returned value applies to the first node; the second gets its negation. Positional rather than
- *  velocity-only because a velocity nudge lets discs pass through each other for several frames,
- *  and "no two card discs visibly overlap" is this work's acceptance condition, not a target. */
-export function separation(
-  dx: number, dy: number, ra: number, rb: number, pad: number,
-): { x: number; y: number } | null {
-  const want = ra + rb + pad;
-  const d = Math.hypot(dx, dy);
-  if (d >= want) return null;
-  // Coincident nodes have no centre line to push along; pick a fixed direction so the result is
-  // deterministic (a random jitter here makes layouts irreproducible and the judge's metrics noisy).
-  if (d === 0) return { x: want / 2, y: 0 };
-  const push = (want - d) / 2;
-  return { x: (dx / d) * push, y: (dy / d) * push };
-}
 
 /** Device pixels of pointer travel, between a pointerdown and the click the DOM fires after its
  *  matching pointerup, below which the gesture still counts as a click rather than a pan. Not
@@ -405,25 +345,13 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       return { ...n, x: seed.x, y: seed.y, vx: 0, vy: 0, deg: 0 };
     });
     const byId = new Map(nodes.map((n) => [n.id, n]));
+    // `{ source, target }` is what forceLink requires, so it is what the whole effect uses.
     const links = graph.edges
-      .map((e) => ({ s: byId.get(e.from), t: byId.get(e.to) }))
-      .filter((l): l is { s: Sim; t: Sim } => Boolean(l.s && l.t));
-    for (const l of links) { l.s.deg++; l.t.deg++; }
+      .map((e) => ({ source: byId.get(e.from), target: byId.get(e.to) }))
+      .filter((l): l is { source: Sim; target: Sim } => Boolean(l.source && l.target));
+    for (const l of links) { l.source.deg++; l.target.deg++; }
 
     const visible = (n: Sim) => !hidden.has(n.kind);
-
-    // Rooms are drawn around their cards, so they are a function of the current layout and are
-    // recomputed every frame rather than fixed at setup. Every room in the CURRENT preset's list
-    // always comes back, occupied or not: an empty room is a finding ("BOARD WIPES 0/3" on the
-    // role preset) and roomLayout parks it outside the occupied cluster.
-    const roomCirclesNow = (): Map<RoomId, Circle> =>
-      roomLayout(
-        nodes
-          .filter((n) => n.kind === "card" && visible(n))
-          .map((n) => ({ x: n.x, y: n.y, r: nodeRadius(n), rooms: roomsByNode.get(n.id) ?? [] })),
-        rooms,
-        tallies,
-      );
 
     // Computed once per effect run, not per tick: `hidden` is already a dependency of this effect,
     // so a visibility change re-runs it and this set is rebuilt with it.
@@ -431,6 +359,17 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       rooms.map((r) => r.id),
       nodes.filter((n) => n.kind === "card" && visible(n)).map((n) => roomsByNode.get(n.id) ?? []),
     );
+
+    // Every node is bound to the simulation, visible or not (project owner's ruling, 7585fca) --
+    // see createBoardSimulation's doc comment for the measurements. `visible` is a paint,
+    // hit-test and room-circle concern only.
+    const { simulation, roomCircles: roomCirclesNow } = createBoardSimulation({
+      nodes, links, roomsByNode, rooms, tallies, universal, visible,
+    });
+    // A from-scratch graph gets full energy to organize; a graph that already has settled
+    // positions (a filter toggle, or -- once deckbuilding lands -- a card added/removed) only
+    // needs enough to let what changed find its place. See Step 0 / the deck-view-mode stub.
+    simulation.alpha(isFirstLayout ? 1 : 0.3);
 
     // Measurement hook for the readability judge (and for anyone debugging layout in a console):
     // the live simulation state, which is otherwise sealed inside this closure. Read-only snapshot,
@@ -468,104 +407,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         },
       );
 
-    // A from-scratch graph gets full energy to organize; a graph that already has settled
-    // positions (a filter toggle, or -- once deckbuilding lands -- a card added/removed) only
-    // needs enough to let what changed find its place. See Step 0 / the deck-view-mode stub.
-    let alpha = isFirstLayout ? 1 : 0.3;
     const cam = camRef.current;
     let raf = 0;
     let dragging: { x: number; y: number } | null = null;
-
-    // ponytail: O(n^2) repulsion per tick, fine at the few-hundred nodes a deck produces
-    // (~350 = 60k pairs). Barnes-Hut if a corpus-scale selection ever renders here.
-    const tick = () => {
-      const live = nodes.filter(visible);
-      for (let i = 0; i < live.length; i++) {
-        for (let j = i + 1; j < live.length; j++) {
-          const a = live[i], b = live[j];
-          let dx = a.x - b.x, dy = a.y - b.y;
-          // Floored at 64 (d=8), not just the exact-zero case: at d2=0.25 REPULSION/d2 is 5600,
-          // which flings a node straight past the d2>220000 cutoff below where nothing pushes back.
-          // Safe to floor this high -- separation() (see below) already keeps any settled pair at
-          // least ra+rb+pad apart, and the smallest two node kinds that can be adjacent (two deg-0
-          // non-card nodes, radius 3 each) settle no closer than 3+3+COLLISION_PAD(4) = 10, which is
-          // already outside this floor. It only engages on freshly-seeded/coincident nodes before
-          // separation has had a tick to act, not on anything Task 7 measured.
-          const d2 = Math.max(dx * dx + dy * dy, 64);
-
-          // Cards sharing a room pull together; the room's circle is then drawn around the cluster
-          // they form. This is the only force that reads membership. Deliberately ABOVE the
-          // d2>220000 cutoff below: that cutoff is tuned for inverse-square repulsion (genuinely
-          // negligible at long range), but roomAttraction is linear in distance -- it's strongest
-          // exactly where the cutoff would kill it -- so it has to run at any distance or same-room
-          // pairs seeded on opposite sides of the initial layout circle never converge.
-          if (a.kind === "card" && b.kind === "card") {
-            const ra = roomsByNode.get(a.id), rb = roomsByNode.get(b.id);
-            let shared = 0;
-            if (ra && rb) for (const id of ra) if (!universal.has(id) && rb.includes(id)) shared++;
-            const t = roomAttraction(dx, dy, shared, ROOM_ATTRACTION);
-            a.vx += t.x; a.vy += t.y;
-            b.vx -= t.x; b.vy -= t.y;
-          }
-
-          if (d2 > 220000) continue; // repulsion + collision only past here
-          const d = Math.sqrt(d2), f = REPULSION / d2;
-          a.vx += (dx / d) * f; a.vy += (dy / d) * f;
-          b.vx -= (dx / d) * f; b.vy -= (dy / d) * f;
-
-          // Hard separation: discs must not overlap. Applied to position, not velocity.
-          const s = separation(dx, dy, nodeRadius(a), nodeRadius(b), COLLISION_PAD);
-          if (s) { a.x += s.x; a.y += s.y; b.x -= s.x; b.y -= s.y; }
-        }
-      }
-      for (const l of links) {
-        if (!visible(l.s) || !visible(l.t)) continue;
-        const dx = l.t.x - l.s.x, dy = l.t.y - l.s.y;
-        const d = Math.hypot(dx, dy) || 1;
-        // Rest length scales with what it joins: a spring between two 14px discs and one between two
-        // 3px dots should not want the same length.
-        const rest = nodeRadius(l.s) + nodeRadius(l.t) + EDGE_GAP;
-        const f = (d - rest) * LINK_STIFFNESS;
-        l.s.vx += (dx / d) * f; l.s.vy += (dy / d) * f;
-        l.t.vx -= (dx / d) * f; l.t.vy -= (dy / d) * f;
-      }
-      // Rooms hold their cards. cards x rooms per tick: 693 on the role preset, ~7,900 on
-      // subtype's 40-80 rooms -- immaterial beside the ~60,000-pair repulsion above. Empty rooms
-      // take part in foreignPush only (they have no members), which usefully keeps cards out of
-      // the orbit ring.
-      const circles = roomCirclesNow();
-      for (const n of live) {
-        if (n.kind !== "card") continue;
-        const mine = roomsByNode.get(n.id);
-        // A card in NO room (a derived preset's rooms can all miss it -- e.g. colourless on
-        // Colour, no subtype on Subtype; only "role" has a fallback that always claims one) makes
-        // no claim about where it should NOT be either. Without this, `mine?.includes(id)` is
-        // false for every circle, so it took foreignPush from ALL of them at once and was flung
-        // off the board -- measured on inalla.txt's Colour preset: 14/94 cards, 275-371 units
-        // past the nearest rim. Skip the circle loop entirely rather than special-casing
-        // foreignPush itself.
-        if (!mine || mine.length === 0) continue;
-        const cardR = nodeRadius(n);
-        for (const [id, c] of circles) {
-          const dx = n.x - c.x, dy = n.y - c.y;
-          const t = mine.includes(id)
-            ? containment(dx, dy, c.r, cardR, CONTAINMENT)
-            : foreignPush(dx, dy, c.r, cardR, FOREIGN_PUSH);
-          n.vx += t.x; n.vy += t.y;
-        }
-      }
-      for (const n of live) {
-        // Centering applies to non-card nodes (events, keywords) AND to a card no room claims --
-        // only "role" has a fallback (strategy), so a card on a derived preset (Colour, Subtype,
-        // Type, Mana value) whose rooms all miss it is genuinely unzoned. That's what CENTER_PULL
-        // now holds near the board instead of the guard above letting foreignPush expel it.
-        const zoned = n.kind === "card" && (roomsByNode.get(n.id)?.length ?? 0) > 0;
-        if (!zoned) { n.vx -= n.x * CENTER_PULL; n.vy -= n.y * CENTER_PULL; }
-        n.vx *= VELOCITY_DAMPING; n.vy *= VELOCITY_DAMPING;
-        n.x += n.vx * alpha; n.y += n.vy * alpha;
-      }
-      alpha = Math.max(alpha * 0.995, 0.02);
-    };
 
     const artLoader = artLoaderRef.current!;
 
@@ -627,8 +471,8 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       ctx.strokeStyle = paint.sep;
       ctx.beginPath();
       for (const l of links) {
-        if (!visible(l.s) || !visible(l.t)) continue;
-        ctx.moveTo(l.s.x, l.s.y); ctx.lineTo(l.t.x, l.t.y);
+        if (!visible(l.source) || !visible(l.target)) continue;
+        ctx.moveTo(l.source.x, l.source.y); ctx.lineTo(l.target.x, l.target.y);
       }
       ctx.stroke();
 
@@ -822,7 +666,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       }
     };
 
-    const loop = () => { tick(); draw(); raf = requestAnimationFrame(loop); };
+    const loop = () => { simulation.tick(); draw(); raf = requestAnimationFrame(loop); };
     loop();
 
     // Room geometry is now derived from card positions (roomCirclesNow(), recomputed every
@@ -944,6 +788,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       // Snapshot final positions so the next effect run (a graph or filter change) can reuse them
       // instead of re-throwing everything -- see Step 0.
       for (const n of nodes) prevPositions.set(n.id, n);
+      simulation.stop();
       cancelAnimationFrame(raf);
       removeEventListener("resize", onResize);
       canvas.removeEventListener("pointerdown", onDown);
