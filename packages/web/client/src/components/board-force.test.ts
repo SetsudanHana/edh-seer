@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { forceManyBody } from "d3-force";
+import { forceCollide, forceLink, forceManyBody, forceX, forceY } from "d3-force";
 import {
   ALPHA_DECAY,
   ALPHA_FLOOR,
@@ -17,6 +17,7 @@ import {
   universalRooms,
   VELOCITY_DECAY,
   type BoardParams,
+  type CustomForce,
   type Sim,
 } from "./board-force.js";
 import { ART_RADIUS, roomTallies } from "./deck-rooms.js";
@@ -468,5 +469,134 @@ describe("BoardParams", () => {
     expect((charge.strength() as (n: Sim, i: number, ns: Sim[]) => number)(
       card("card:a", 0, 0), 0, [],
     )).toBe(-REPULSION);
+  });
+
+  // Fix round 1: the four tests above only round-trip `repulsion` through a real force, plus check
+  // velocityDecay/alphaDecay/alphaFloor in their FALLBACK (unset) form. Reverting any of the other
+  // seven `p.x` references in createBoardSimulation back to a bare constant left every test above
+  // green. Each test below pins one of the remaining nine keys through the actual force it wires.
+
+  test("linkStiffness override reaches the link force", () => {
+    const link = sim({ linkStiffness: 0.5 }).force("link") as ReturnType<typeof forceLink>;
+    // forceLink stores strength as a per-link accessor, same idiom as charge's -- the accessor is
+    // a constant function here (a bare number was passed to .strength()), so any link datum reads
+    // the same value back.
+    const dummyLink = { source: card("card:a", 0, 0), target: card("card:b", 0, 0) };
+    expect((link.strength() as (l: typeof dummyLink, i: number, ls: unknown[]) => number)(
+      dummyLink, 0, [],
+    )).toBe(0.5);
+  });
+
+  test("centerPull override reaches the x and y centering forces", () => {
+    // roomsByNode is empty in sim(), so both cards are unzoned and centerPull is what strength()
+    // returns for either of them.
+    const s = sim({ centerPull: 0.5 });
+    const x = s.force("x") as ReturnType<typeof forceX>;
+    const y = s.force("y") as ReturnType<typeof forceY>;
+    expect((x.strength() as (n: Sim, i: number, ns: Sim[]) => number)(
+      card("card:a", 0, 0), 0, [],
+    )).toBe(0.5);
+    expect((y.strength() as (n: Sim, i: number, ns: Sim[]) => number)(
+      card("card:a", 0, 0), 0, [],
+    )).toBe(0.5);
+  });
+
+  test("collideIterations override reaches the collide force", () => {
+    const collide = sim({ collideIterations: 7 }).force("collide") as ReturnType<typeof forceCollide>;
+    expect(collide.iterations()).toBe(7);
+  });
+
+  test("velocityDecay, alphaDecay and alphaFloor overrides reach the simulation", () => {
+    // The existing "absent key falls back" test only exercises these three at their DEFAULT
+    // value (repulsion was the only key overridden there). This pins the override itself.
+    const s = sim({ velocityDecay: 0.5, alphaDecay: 0.1, alphaFloor: 0.3 });
+    expect(s.velocityDecay()).toBeCloseTo(0.5, 10);
+    expect(s.alphaDecay()).toBeCloseTo(0.1, 10);
+    expect(s.alphaTarget()).toBeCloseTo(0.3, 10);
+  });
+
+  // roomAttraction, containment and foreignPush are custom closures (forceRoomAttraction /
+  // forceRoomContainment) with no d3 accessor to read back, so each is pinned behaviourally: build
+  // a two-card room, invoke the bound force directly (already initialize()d by createBoardSimulation
+  // via simulation.force(name, force)), and check the imparted velocity scales linearly with the
+  // override -- exactly the relationship roomAttraction()/containment()/foreignPush() themselves
+  // implement (force = depth-or-distance * stiffness). A 10x stiffness must give a 10x velocity.
+
+  test("roomAttraction override scales the pull between two cards sharing a room", () => {
+    const pull = (roomAttraction: number) => {
+      const a = card("card:a", -50, 0);
+      const b = card("card:b", 50, 0);
+      const { simulation } = createBoardSimulation({
+        nodes: [a, b],
+        links: [],
+        roomsByNode: new Map([["card:a", ["ramp"]], ["card:b", ["ramp"]]]),
+        rooms: [{ id: "ramp" }],
+        tallies: new Map(),
+        universal: new Set(),
+        visible: () => true,
+        params: { roomAttraction },
+      });
+      simulation.force<CustomForce>("rooms")!(1);
+      return a.vx;
+    };
+    const weak = pull(0.008);
+    const strong = pull(0.08);
+    expect(weak).toBeGreaterThan(0); // a sits left, pulled right toward b
+    expect(strong).toBeCloseTo(weak * 10, 6);
+  });
+
+  test("containment override scales the pull back into a room a card has drifted outside of", () => {
+    // card:a sits far outside the "ramp" circle its own membership implies; card:b anchors the
+    // room's centroid away from a so containment has real depth to correct.
+    const push = (containmentStiffness: number) => {
+      const a = card("card:a", -200, 0);
+      const b = card("card:b", 50, 0);
+      const { simulation } = createBoardSimulation({
+        nodes: [a, b],
+        links: [],
+        roomsByNode: new Map([["card:a", ["ramp"]], ["card:b", ["ramp"]]]),
+        rooms: [{ id: "ramp" }],
+        tallies: new Map(),
+        universal: new Set(),
+        visible: () => true,
+        params: { containment: containmentStiffness },
+      });
+      simulation.force<CustomForce>("containment")!(1);
+      return a.vx;
+    };
+    const weak = push(0.02);
+    const strong = push(0.2);
+    expect(weak).toBeGreaterThan(0); // pulled right, back toward the room's centroid
+    expect(strong).toBeCloseTo(weak * 10, 6);
+  });
+
+  test("foreignPush override scales the push out of a room a card does not belong to", () => {
+    // card:c is not a "ramp" member but sits well inside the circle a and b's membership draws.
+    // It must belong to SOME room, though -- forceRoomContainment skips a card with no membership
+    // at all ("makes no claim about where it should NOT be either"), so a bare non-member is
+    // silently exempt and foreignPush would never fire on it.
+    const push = (foreignStiffness: number) => {
+      const a = card("card:a", -50, 0);
+      const b = card("card:b", 50, 0);
+      const outsider = card("card:c", 10, 0);
+      const { simulation } = createBoardSimulation({
+        nodes: [a, b, outsider],
+        links: [],
+        roomsByNode: new Map([
+          ["card:a", ["ramp"]], ["card:b", ["ramp"]], ["card:c", ["other"]],
+        ]),
+        rooms: [{ id: "ramp" }],
+        tallies: new Map(),
+        universal: new Set(),
+        visible: () => true,
+        params: { foreignPush: foreignStiffness },
+      });
+      simulation.force<CustomForce>("containment")!(1);
+      return outsider.vx;
+    };
+    const weak = push(0.008);
+    const strong = push(0.08);
+    expect(weak).toBeGreaterThan(0); // pushed right, away from the room's centroid
+    expect(strong).toBeCloseTo(weak * 10, 6);
   });
 });
