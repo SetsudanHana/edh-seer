@@ -431,6 +431,29 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // every prior test because nothing could ask "what world point is under this client
           // point" without either reading real canvas pixels or reaching this function directly.
           toWorld,
+          // Test-only entry into the ACTUAL gesture wiring behind zoomBehavior's "end" handler
+          // below (traveledAsPan -> pick -> setFlipped) -- not a reimplementation, the exact same
+          // `zoomBehavior.transform` call `jumpZoom` already makes in production, just with a 4th
+          // `event` argument. d3-zoom's own `zoom.transform` attaches whatever it's given as
+          // `sourceEvent` via `Gesture.prototype.event(event)` -- a plain property write, no WebIDL
+          // Event construction involved -- so a literal object like `{type: "mouseup", clientX,
+          // clientY}` sidesteps the jsdom `view` brand check that blocks a real mousedown-driven
+          // gesture entirely (see GraphView.test.tsx). `transform` defaults to the camera's own
+          // current value -- a no-op move, i.e. "this gesture did not pan" -- so a caller only has
+          // to say where the pointer was and what kind of event ended the gesture.
+          endGesture: (
+            event: { type: string; clientX?: number; clientY?: number; changedTouches?: Array<{ clientX: number; clientY: number }> },
+            transform = zoomIdentity.translate(cam.x, cam.y).scale(cam.z),
+          ) => {
+            // @types/d3-zoom's `.transform()` only declares 3 parameters; the real d3-zoom
+            // (zoom.js) takes a 4th `event` and both `selection.call`'s generic inference and a
+            // direct call reject the extra argument at the type level. Cast is for that types gap
+            // only -- the runtime call is exactly `zoom.transform(collection, transform, point,
+            // event)` as documented in zoom.js.
+            (zoomBehavior.transform as unknown as (
+              sel: typeof selection, t: typeof transform, p: null, e: unknown,
+            ) => void)(selection, transform, null, event);
+          },
         },
       );
 
@@ -822,10 +845,24 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       // run the whole start/zoom/end lifecycle in one synchronous call with no event at all. Gated
       // on the literal event TYPE, not `instanceof MouseEvent` -- WheelEvent extends MouseEvent in
       // the DOM, so that check would not exclude a wheel gesture's end.
-      const src = e.sourceEvent as MouseEvent | null;
-      if (src?.type !== "mouseup") return;
+      //
+      // Fix round 3: a touch tap reaches "end" too (touchended in zoom.js), carrying a real
+      // TouchEvent as sourceEvent -- before round 2 this flipped via the DOM "click" a browser
+      // synthesizes after a tap, since d3-drag's capture-phase click-swallowing (round 2's finding)
+      // lives only in mousedowned/mouseupped, never in the touch path. Once "click" stopped being
+      // the source of truth, touch needed its own admission here. `pick()` reads clientX/clientY,
+      // which a TouchEvent doesn't carry directly -- they live on changedTouches[0] instead. d3
+      // binds touchended to BOTH "touchend" and "touchcancel" in one `.on()` string, so a cancel is
+      // deliberately NOT admitted; and changedTouches can in principle be empty, so `point` falls
+      // through to `null` rather than reading index 0 of nothing.
+      const src = e.sourceEvent as (MouseEvent | TouchEvent) | null;
+      const point =
+        src?.type === "mouseup" ? (src as MouseEvent)
+        : src?.type === "touchend" ? ((src as TouchEvent).changedTouches[0] ?? null)
+        : null;
+      if (!point) return;
       if (traveledAsPan(gestureStart, e.transform)) return;
-      const hit = pick(src);
+      const hit = pick(point);
       if (
         hit && hit.kind === "card" && renderModeFor(cam.z) === "card"
         && faceArt.has(`${hit.id.replace(/^card:/, "face:")}:1`)

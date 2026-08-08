@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { zoomIdentity, type ZoomTransform } from "d3-zoom";
 import { ART_RADIUS, boardMetrics, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, traveledAsPan, universalRooms } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
@@ -768,6 +769,14 @@ const dfcGraph = {
 // below) -- the same trade CLAUDE.md already made once for `traveledAsDrag`, which this task
 // deleted for the same reason when its DOM-click call site went away in fix round 1.
 //
+// Fix round 3 closed the remaining gap -- neither the pure-function tests above nor the
+// hover-based geometry test below exercise `traveledAsPan -> pick -> setFlipped` TOGETHER, and
+// both round 2's click-swallowing defect and round 3's own touch defect lived exactly in that
+// wiring. `endGesture` (on the probe, below) drives it for real: it calls the SAME
+// `zoomBehavior.transform` API `jumpZoom` already uses in production, with a literal event object
+// as a 4th argument rather than a constructed DOM Event, which is what sidesteps the `view` brand
+// check above -- see `describe("the real gesture wiring, driven through endGesture", ...)`.
+//
 // Flip is PICTURE ONLY (the task's one hard rule): it must not move a single node. `flipped` used
 // to sit in the layout effect's own dependency array, so a flip click tore the whole effect down
 // and rebuilt it -- cancelling and restarting the RAF loop, tearing down and re-adding every
@@ -777,6 +786,113 @@ const dfcGraph = {
 // "flip moved the board" means. Asserts every node's x/y, not just the flipped card's, since a
 // reheat disturbs the whole simulation (room attraction, repulsion, link springs all read every
 // node), not only the one that got clicked.
+
+/** Shape of the probe's `endGesture` test hook -- see its doc comment in GraphView.tsx. `at` is in
+ *  CLIENT coordinates, same coordinate-recovery trick every other click-based test in this file
+ *  uses (jsdom's zero bounding rect makes the probed WORLD position, scaled by `camZ`, equal to
+ *  the client position a real pointer at that spot would report). */
+type EndGestureEvent = {
+  type: string; clientX?: number; clientY?: number;
+  changedTouches?: Array<{ clientX: number; clientY: number }>;
+};
+function probeOf(canvas: HTMLCanvasElement) {
+  return (canvas as HTMLCanvasElement & {
+    __graphProbe?: () => Array<{ id: string; x: number; y: number }> & {
+      camZ: number; flipped: string[];
+      endGesture: (ev: EndGestureEvent, transform?: ZoomTransform) => void;
+    };
+  }).__graphProbe!();
+}
+
+// Fix round 3: neither `traveledAsPan`'s own unit tests above nor the hover-based hit-box test
+// below drive the ACTUAL wiring behind `zoomBehavior.on("end", ...)` -- traveledAsPan, pick, and
+// setFlipped running together, off a real "end" event. That wiring is exactly where both round 2's
+// click-swallowing defect and round 3's own touch defect lived, and both reached the coordinator
+// instead of a test. `endGesture` closes that gap by calling the same `zoomBehavior.transform`
+// `jumpZoom` already uses in production, with a literal event object standing in for a real DOM
+// event -- see its doc comment in GraphView.tsx for why that sidesteps the jsdom limitation
+// entirely rather than faking it. `act(...)` is required around each call: unlike `fireEvent`
+// (which wraps every dispatch in `act` itself), calling `endGesture` directly on the probe is a
+// plain function call React knows nothing about, so the `setFlipped` it triggers needs `act` to
+// flush before the next `__graphProbe()` read can see it.
+describe("the real gesture wiring, driven through endGesture", () => {
+  test("a mouse gesture that did not move flips the card", () => {
+    makeContextSpy();
+    const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+    const probe = probeOf(canvas);
+    const node = probe.find((n) => n.id === "card:1")!;
+    const at = { clientX: node.x * probe.camZ, clientY: node.y * probe.camZ };
+    act(() => { probe.endGesture({ type: "mouseup", ...at }); });
+    expect(probeOf(canvas).flipped).toEqual(["card:1"]);
+  });
+
+  // `endGesture`'s optional 2nd argument overrides the transform the gesture "ends" at -- a huge,
+  // deliberately-arbitrary translate, since real pan distance doesn't matter here, only that it is
+  // well past CLICK_DRAG_PX from wherever the gesture actually started.
+  test("a mouse gesture that moved past CLICK_DRAG_PX does not flip", () => {
+    makeContextSpy();
+    const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+    const probe = probeOf(canvas);
+    const node = probe.find((n) => n.id === "card:1")!;
+    const at = { clientX: node.x * probe.camZ, clientY: node.y * probe.camZ };
+    act(() => {
+      probe.endGesture({ type: "mouseup", ...at }, zoomIdentity.translate(1000, 1000).scale(probe.camZ));
+    });
+    expect(probeOf(canvas).flipped).toEqual([]);
+  });
+
+  // The touch defect fix round 3 exists for: before this task, `touchended`'s "end" carried a real
+  // TouchEvent as `sourceEvent`, which the gate rejected unconditionally (no `clientX`/`clientY` on
+  // a TouchEvent itself -- they live on `changedTouches[0]`).
+  test("a touchend that did not move flips the card", () => {
+    makeContextSpy();
+    const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+    const probe = probeOf(canvas);
+    const node = probe.find((n) => n.id === "card:1")!;
+    const at = { clientX: node.x * probe.camZ, clientY: node.y * probe.camZ };
+    act(() => { probe.endGesture({ type: "touchend", changedTouches: [at] }); });
+    expect(probeOf(canvas).flipped).toEqual(["card:1"]);
+  });
+
+  // d3 binds `touchended` to BOTH "touchend" and "touchcancel" in one `.on()` string (zoom.js) --
+  // a cancel must never flip, stationary or not.
+  test("a touchcancel never flips, even perfectly stationary", () => {
+    makeContextSpy();
+    const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+    const probe = probeOf(canvas);
+    const node = probe.find((n) => n.id === "card:1")!;
+    const at = { clientX: node.x * probe.camZ, clientY: node.y * probe.camZ };
+    act(() => { probe.endGesture({ type: "touchcancel", changedTouches: [at] }); });
+    expect(probeOf(canvas).flipped).toEqual([]);
+  });
+
+  // `changedTouches` can in principle be empty; this must fall through, not throw.
+  test("a touchend with no changed touches falls through without throwing", () => {
+    makeContextSpy();
+    const { container } = render(<GraphView graph={dfcGraph} report={SAMPLE.report} />);
+    const canvas = container.querySelector("canvas")!;
+    fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
+    const probe = probeOf(canvas);
+    expect(() => {
+      act(() => { probe.endGesture({ type: "touchend", changedTouches: [] }); });
+    }).not.toThrow();
+    expect(probeOf(canvas).flipped).toEqual([]);
+  });
+});
+
 // Task 11: the preset control was a <select>, and the developer instruments (the 16 node-kind
 // filter chips, the render-mode buttons) sat in the primary row alongside it. Inverted: presets
 // are chips in the primary row, the instruments hide behind one "debug" toggle.
