@@ -1038,14 +1038,6 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             debug
           </button>
 
-          {/* import.meta.env.DEV is a compile-time constant, so Vite drops this branch and the
-           *  BoardTuner import entirely from a production build. `debug` is the toggle that
-           *  already reveals the kind chips and the Card/Miniature buttons -- the panel joins
-           *  them rather than inventing a second way in. */}
-          {import.meta.env.DEV && debug ? (
-            <BoardTuner params={params} onChange={setParams} probe={probeSnapshot} />
-          ) : null}
-
           {canFullscreen ? (
             <button
               type="button"
@@ -1170,6 +1162,17 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
               </span>
               {hover.detail ? <span className="text-(--muted)"> · {hover.detail}</span> : null}
             </div>
+          ) : null}
+
+          {/* import.meta.env.DEV is a compile-time constant, so Vite drops this branch and the
+           *  BoardTuner import entirely from a production build. `debug` is the toggle that
+           *  already reveals the kind chips and the Card/Miniature buttons -- the panel joins
+           *  them rather than inventing a second way in. Rendered INSIDE this `relative` wrapper
+           *  (not the toolbar row above) so BoardTuner's own `absolute top-2 right-2` resolves
+           *  against the canvas, not the page -- design doc §5: "positioned over a corner of the
+           *  canvas". */}
+          {import.meta.env.DEV && debug ? (
+            <BoardTuner params={params} onChange={setParams} probe={probeSnapshot} />
           ) : null}
         </div>
       </div>

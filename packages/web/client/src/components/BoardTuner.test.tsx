@@ -2,7 +2,6 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, test, vi, afterEach } from "vitest";
 import { BoardTuner, KNOBS, fromSlider, toSlider } from "./BoardTuner.js";
 import { DEFAULT_PARAMS, REPULSION } from "./board-force.js";
-import { ART_RADIUS } from "./deck-rooms.js";
 
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
@@ -26,7 +25,11 @@ describe("slider scale", () => {
   test("a log knob's midpoint is its geometric mean, not its arithmetic one", () => {
     const k = KNOBS.find((k) => k.key === "repulsion")!;
     const mid = fromSlider(k, (toSlider(k, k.min) + toSlider(k, k.max)) / 2);
-    expect(mid).toBeCloseTo(Math.sqrt(k.min * k.max), 4);
+    // toBeCloseTo(_, 1) not the round-trip tests' 6: fromSlider now rounds to 3 significant
+    // digits (see its doc comment in BoardTuner.tsx), so a shape assertion like this one is only
+    // exact to that many digits -- 46.9 vs the unrounded 46.90415... -- while a round-tripped
+    // DEFAULT_PARAMS value stays exact because every default already IS a 3-sig-fig number.
+    expect(mid).toBeCloseTo(Math.sqrt(k.min * k.max), 1);
   });
 });
 
@@ -84,6 +87,33 @@ describe("BoardTuner", () => {
     // Both hard conditions are broken, so both read as warnings.
     expect(screen.getByTestId("metric-escapes-one").className).toContain("warning");
     expect(screen.getByTestId("metric-overlaps").className).toContain("warning");
+  });
+
+  test("shows a cards count, so an empty or destroyed board reads as empty rather than perfect", () => {
+    const probe = () => ({
+      cards: [{ x: 0, y: 0, rooms: [] }, { x: 1, y: 0, rooms: [] }],
+      circles: [],
+    });
+    render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
+    expect(screen.getByTestId("metric-cards")).toHaveTextContent("2");
+  });
+
+  test("re-polls on the interval, not just once at mount", () => {
+    vi.useFakeTimers();
+    // read() also runs synchronously on mount (`read(); const id = setInterval(read, ...)`), so a
+    // test that only checks the FIRST reading passes even with setInterval deleted outright -- the
+    // panel would freeze on its first reading and display it forever. A second, different reading
+    // from the same probe is what actually exercises the poll.
+    const probe = vi.fn()
+      .mockReturnValueOnce({ cards: [{ x: 0, y: 0, rooms: [] }], circles: [] })
+      .mockReturnValue({
+        cards: [{ x: 0, y: 0, rooms: [] }, { x: 1, y: 0, rooms: [] }],
+        circles: [],
+      });
+    render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
+    expect(screen.getByTestId("metric-cards")).toHaveTextContent("1");
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(screen.getByTestId("metric-cards")).toHaveTextContent("2");
   });
 
   test("copies a constant block, marking only what changed", async () => {

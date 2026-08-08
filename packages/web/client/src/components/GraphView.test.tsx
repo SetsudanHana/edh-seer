@@ -8,6 +8,18 @@ import type { GraphNode } from "../types.js";
 import { ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
 import { CARD_MODE_Z } from "./card-node.js";
 import { PRESETS } from "./presets.js";
+import { createBoardSimulation, DEFAULT_PARAMS } from "./board-force.js";
+
+// Spies the real createBoardSimulation (importOriginal, not a stub) so every existing test still
+// gets a real simulation -- only the "drives the simulation's constants" test below reads the
+// spy. Needed to catch two mutations neither `expect(slider.value)...` nor an `__graphProbe`
+// identity check would catch on their own: `params` silently dropped from the constructor call,
+// or BoardTuner holding `params` in its own state and never calling `onChange` -- both left the
+// whole suite green before this spy existed.
+vi.mock("./board-force.js", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("./board-force.js")>();
+  return { ...mod, createBoardSimulation: vi.fn(mod.createBoardSimulation) };
+});
 
 /** Records the 2D-context calls made during a render, and -- more importantly -- lets the
  *  layout effect get past its `if (!ctx) return;` guard at all, which is what attaches
@@ -417,7 +429,12 @@ test("the tuning panel is absent until debug is on", async () => {
 
 // `params` is GraphView's own state, passed down as a controlled value -- if BoardTuner kept it
 // local instead, moving a slider would never reach the simulation and this would still pass with
-// a broken wiring. Reading the slider back after the change is what catches that.
+// a broken wiring. `expect(slider.value).not.toBe(before)` alone does NOT catch that: it's
+// satisfied by any state holder, including one inside BoardTuner itself that never calls
+// onChange. Reading the CONSTRUCTOR call back (via the spy declared at the top of this file) is
+// what actually proves params reached the simulation -- it also catches `params` silently
+// dropped from the createBoardSimulation call, which a change in the slider's own displayed
+// value cannot.
 test("the tuning panel drives the simulation's constants", async () => {
   makeContextSpy();
   render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
@@ -425,9 +442,9 @@ test("the tuning panel drives the simulation's constants", async () => {
   const slider = screen.getByLabelText("repulsion") as HTMLInputElement;
   const before = slider.value;
   fireEvent.change(slider, { target: { value: String(Number(before) + 100) } });
-  // The panel is controlled by GraphView's state, so a moved slider must come back moved --
-  // if params were local to the panel the board would never see them.
   expect(slider.value).not.toBe(before);
+  const last = vi.mocked(createBoardSimulation).mock.lastCall![0];
+  expect(last.params!.repulsion).not.toBe(DEFAULT_PARAMS.repulsion);
 });
 
 // Task 7: find a card by name. The fixture (SAMPLE, not the brief's imagined SAMPLE_REPORT) has

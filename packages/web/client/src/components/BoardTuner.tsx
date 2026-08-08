@@ -37,12 +37,20 @@ export function toSlider(k: Knob, value: number): number {
   return t * 1000;
 }
 
+/** Rounded here, not at the copy button: the value that reaches the simulation must be the value
+ *  the metrics were measured against, so rounding inside copy() would commit a constant that was
+ *  never actually run. Three significant digits -- the log knobs move ~0.77% per slider position
+ *  at 1000 positions, so 3 digits keeps neighbouring positions distinct while making a measured
+ *  constant like 25 recoverable by hand (toSlider(25) -> 418 -> raw 24.953569628510607 ->
+ *  toPrecision(3) -> 25). `toPrecision` rather than a hand-rolled log10/round: it sidesteps the
+ *  floating-point boundary cases a manual magnitude calc hits at exact powers of ten (this file's
+ *  own 1e-4 and 1e-5 endpoints). */
 export function fromSlider(k: Knob, position: number): number {
   const t = position / 1000;
   const v = k.log
     ? Math.exp(Math.log(k.min) + t * (Math.log(k.max) - Math.log(k.min)))
     : k.min + t * (k.max - k.min);
-  return k.step ? Math.round(v / k.step) * k.step : v;
+  return k.step ? Math.round(v / k.step) * k.step : Number(v.toPrecision(3));
 }
 
 export interface ProbeSnapshot {
@@ -79,7 +87,8 @@ export function BoardTuner({
   probe: () => ProbeSnapshot | null;
 }) {
   const [metrics, setMetrics] = useState<
-    { escapes: { one: number; two: number; threePlus: number }; intrusions: number; overlaps: number }
+    { cards: number; escapes: { one: number; two: number; threePlus: number }; intrusions: number;
+      overlaps: number }
   | null>(null);
 
   useEffect(() => {
@@ -87,7 +96,7 @@ export function BoardTuner({
       const snap = probe();
       if (!snap) return setMetrics(null);
       const { escapes, intrusions } = boardMetrics(snap.cards, snap.circles);
-      setMetrics({ escapes, intrusions, overlaps: countOverlaps(snap.cards) });
+      setMetrics({ cards: snap.cards.length, escapes, intrusions, overlaps: countOverlaps(snap.cards) });
     };
     read();
     const id = setInterval(read, POLL_MS);
@@ -158,6 +167,14 @@ export function BoardTuner({
       <div className="border-t border-(--separator) mt-2 pt-2">
         {metrics ? (
           <>
+            {/* A destroyed board reads identically to a settled one on every metric below: room
+             *  circles are DERIVED from their member cards' own positions (roomLayout in
+             *  board-force.ts), so an empty card set (the `card` kind chip toggled off) or every
+             *  card expelled off-screen (foreignPush misconfigured above containment) both leave
+             *  escapes/intrusions/overlaps at a clean zero -- the circles just follow the cards
+             *  wherever they went. This row is what makes that case legible instead of a false
+             *  pass. */}
+            {metric("metric-cards", "cards", metrics.cards, false)}
             {metric("metric-escapes-one", "escapes 1-room", metrics.escapes.one, true)}
             {metric("metric-overlaps", "overlaps", metrics.overlaps, true)}
             {metric("metric-escapes-two", "escapes 2-room", metrics.escapes.two, false)}
