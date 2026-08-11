@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -21,6 +21,7 @@
     "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?(?<class>creature(?: or planeswalker)?)",
     "burn": "deals? \\d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\\d+|x) life",
     "graveyardHate": "\\bexile[^.]*graveyard",
+    "graveyardHateRecurring": "if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead|cards? in [^.]{0,40}graveyards?[^.]{0,30}can'?t|players can'?t cast[^.]{0,40}from[^.]{0,30}graveyards?|\\{[^}]{1,12}\\}[^.:]{0,40}:[^.]{0,80}?exile[^.]{0,60}?from (?:a|an opponent's|that|their)\\s+graveyard",
     "graveyardHatePositive": "exile[^.]{0,80}?(?:each |all |any number of |target )?(?:player|opponent)s?'s? graveyards?|exile all graveyards|exile[^.]{0,60}?cards?[^.]{0,40}?from (?:a|an opponent's|that) graveyard|exile[^.]{0,60}?target cards? from graveyards|opponent[^.]{0,90}?exiles?[^.]{0,60}?from their graveyard|if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead",
     "stack": "(?:counter|exile) target[^.]*?(?:spell|ability)|change the target of|choose new targets? for|return target (?:\\w+ )*spell(?:\\W+\\w+)*? to (?:its owner's|their|the owner's|owner's) hand",
     "protection": "hexproof|indestructible|protection from|can't be countered|shroud|phases? out",
@@ -269,6 +270,13 @@
       "match": [{ "op": "oracle", "pattern": "exileRemoval" }],
       "not": [{ "op": "oracle", "pattern": "graveyardHate" }],
       "why": "`typedRemoval` is `(?:destroy|exile)` -- one alternation, so nothing downstream can tell a recursion-proof answer from one a reanimator undoes. This rule ADDS to `answers.typed` rather than replacing it: every exile removal matches both, once for the class and once for the mode, so no card changes class. The `not` is the same veto `answers.typed` carries, and it is load-bearing here: 'Exile target creature card from a graveyard' names a creature and answers nothing on the battlefield."
+    },
+    {
+      "id": "answers.graveyard.recurring",
+      "answerClass": "graveyard",
+      "mode": "recurring",
+      "match": [{ "op": "oracle", "pattern": "graveyardHateRecurring" }],
+      "why": "Graveyard hate is the one answer class §12.3 says does not score on count: one Bojuka Bog answers a recursion engine not at all, Rest in Peace answers it forever. Deliberately carries NO `category`, so the `graveyardHate` build category keeps its own rule and its own count and cannot move. Read off oracle text rather than off `Ability.repeats`, which is the right data on the wrong subject -- answer detection matches the CARD, so nothing links a repeatable label to the ability that does the answering. The activated-ability alternation's determiner is narrowed to `(?:a|an opponent's|that|their)` -- the same allow-list `graveyardHatePositive` already uses -- because an unrestricted 'exile ... graveyard' after a `{cost}:` caught Lazotep Quarry, whose activated ability exiles from ITS OWN graveyard to reanimate a copy. Self-reference is the largest defect family this engine has had (74% of all false edges, project history); widening this determiner back out re-admits it."
     }
   ]
 }

@@ -213,3 +213,67 @@ test("one exile clause naming two types marks both", () => {
   expect(marks.get("artifact")?.exile).toBe(true);
   expect(marks.get("enchantment")?.exile).toBe(true);
 });
+
+/** §12.3's whole reason for this axis: one Bojuka Bog answers a recursion engine not at all, and
+ *  Rest in Peace answers it forever. A count cannot tell them apart. */
+test("recurring graveyard hate is the replacement effect, the prohibition and the activated ability", () => {
+  const classes = detectAnswerClasses([
+    mk("Rest in Peace", "When this enchantment enters, exile all graveyards.\nIf a card or token would be put into a graveyard from anywhere, exile it instead.", "Enchantment"),
+    mk("Leyline of the Void", "If this card is in your opening hand, you may begin the game with it on the battlefield.\nIf a card would be put into an opponent's graveyard from anywhere, exile it instead.", "Enchantment"),
+    mk("Grafdigger's Cage", "Creature cards in graveyards and libraries can't enter the battlefield.\nPlayers can't cast spells from graveyards or libraries.", "Artifact"),
+    mk("Scavenging Ooze", "{G}: Exile target card from a graveyard. If it was a creature card, put a +1/+1 counter on this creature and you gain 1 life.", "Creature — Ooze"),
+    mk("Relic of Progenitus", "{T}: Target player exiles a card from their graveyard.\n{1}, Exile this artifact: Exile all graveyards. Draw a card.", "Artifact"),
+  ]);
+  expect([...(classes.get("graveyard")?.recurring ?? [])].sort()).toEqual([
+    "Grafdigger's Cage", "Leyline of the Void", "Relic of Progenitus", "Rest in Peace", "Scavenging Ooze",
+  ]);
+});
+
+/** The card the axis was written for. It IS graveyard hate and it is NOT recurring -- its trigger
+ *  fires once, so it answers a card and not an engine. */
+test("Bojuka Bog is graveyard hate and is not recurring", () => {
+  const classes = detectAnswerClasses([
+    mk("Bojuka Bog", "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.", "Land"),
+  ]);
+  expect(classes.get("graveyard")?.cards.has("Bojuka Bog")).toBe(true);
+  expect(classes.get("graveyard")?.recurring.has("Bojuka Bog") ?? false).toBe(false);
+});
+
+/** Deathrite Shaman is the double case: a repeatable activated hate ability that ALSO names card
+ *  types inside a graveyard. It must be recurring hate and must contribute no battlefield answer. */
+test("a repeatable graveyard exile is recurring hate, not a land or creature answer", () => {
+  const classes = detectAnswerClasses([
+    mk("Deathrite Shaman", "{T}: Exile target land card from a graveyard. Add one mana of any color.\n{B}, {T}: Exile target instant or sorcery card from a graveyard. Each opponent loses 2 life.\n{G}, {T}: Exile target creature card from a graveyard. You gain 2 life.", "Creature — Elf Shaman"),
+  ]);
+  expect(classes.get("graveyard")?.recurring.has("Deathrite Shaman")).toBe(true);
+  expect(classes.get("land")?.cards.has("Deathrite Shaman") ?? false).toBe(false);
+  expect(classes.get("creature")?.cards.has("Deathrite Shaman") ?? false).toBe(false);
+});
+
+/** Lazotep Quarry's activated ability exiles from ITS OWN graveyard to reanimate a copy -- that is
+ *  self-recursion, not hate, and it is the reason alternation 4's determiner is narrowed to the same
+ *  allow-list `graveyardHatePositive` already uses. Caught by the population gate on the 71
+ *  calibration decks before this narrowing shipped; pinned here so it cannot silently return. */
+test("Lazotep Quarry recurs from its own graveyard, which is not hate", () => {
+  const classes = detectAnswerClasses([
+    mk(
+      "Lazotep Quarry",
+      "{T}: Add {C}.\n{T}, Sacrifice a creature: Add one mana of any color.\n{X}{2}, {T}, Sacrifice a Desert: Exile target creature card with mana value X from your graveyard. Create a token that's a copy of it, except it's a 4/4 black Zombie. Activate only as a sorcery.",
+      "Land — Desert",
+    ),
+  ]);
+  expect(classes.get("graveyard")?.cards.has("Lazotep Quarry") ?? false).toBe(false);
+  expect(classes.get("graveyard")?.recurring.has("Lazotep Quarry") ?? false).toBe(false);
+});
+
+/** The five type classes have no recurring rule at all, so they are empty by construction rather
+ *  than by a special case -- if this ever fails, a mode leaked out of the graveyard rule. */
+test("only graveyard carries a recurring mark", () => {
+  const classes = detectAnswerClasses([
+    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power."),
+    mk("Vindicate", "Destroy target permanent.", "Sorcery"),
+  ]);
+  for (const cls of ["creature", "artifact", "enchantment", "planeswalker", "land"]) {
+    expect([...(classes.get(cls)?.recurring ?? [])], cls).toEqual([]);
+  }
+});
