@@ -310,12 +310,27 @@ export interface Effect {
 
 export type AbilityKind = "triggered" | "activated" | "static" | "on-cast";
 
+/** How often an ability fires, per turn CYCLE — a full round of the pod. `per-turn` fires on every
+ *  player's turn and so up to pod-size times a round; `per-cycle` fires only on yours. */
+export type Repeats = "once" | "per-cycle" | "per-turn" | "repeatable" | "continuous";
+
 export interface Ability {
   kind: AbilityKind;
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: { verbs: Verb[]; subject: SubjectFilter };
   /** Activated abilities: informational cost text, not parsed in Stage 1. */
   cost?: string;
+  /** How often this ability can fire — see
+   *  `docs/superpowers/specs/2026-08-11-repeatability-taxonomy-design.md`.
+   *
+   *  A DIFFERENT axis from the `repeatability` that `edges.ts` and `buckets.ts` derive from
+   *  `kind`: that says what kind of ability this is, this says how often it fires. Gogo's
+   *  `{X}{X}, {T}:` and a free sacrifice outlet are both "activated" and a round apart.
+   *
+   *  UNSET means the rules could not tell, which is a real outcome. Unlabelled beats mislabelled:
+   *  a consumer can see an absent label and decline to weight it, but cannot see through a wrong
+   *  one. */
+  repeats?: Repeats;
   effect: Effect;
   /** Events this ability emits for others to trigger on. */
   emits?: GameEvent[];
