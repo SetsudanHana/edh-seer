@@ -139,6 +139,11 @@ export interface AnswerMarks {
   recurring: boolean;
 }
 
+/** Which answer classes a card covers, per `answerClass` / `answerClassFrom`.
+ *
+ *  `permanent` is expanded through `answerClassAliases`: a card that destroys any permanent answers
+ *  every class, and treating it as its own sixth class would report a Vindicate deck as having no
+ *  enchantment removal. */
 export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<string, AnswerMarks> {
   const out = new Map<string, AnswerMarks>();
   // A class can be reached by several rules -- every exile removal matches both `answers.typed` and
