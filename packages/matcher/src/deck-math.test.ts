@@ -19,6 +19,11 @@ const spell = (name: string): DeckCard => ({
 const fillTo = (n: number, deck: DeckCard[]) =>
   [...deck, ...Array.from({ length: n - deck.length }, (_, i) => spell(`filler-${i}`))];
 
+const answer = (name: string, oracleText: string, typeLine = "Instant"): DeckCard => ({
+  card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue: 3 } as Card,
+  tags: null,
+});
+
 /** The payoff design §12.8 promised for the clock: every target turn in this layer was a Tier C
  *  guess, and a fixed turn 5 applied to every deck alike. */
 test("the deck's own clock sets the turn everything is priced against", () => {
@@ -103,4 +108,27 @@ test("pricing later raises availability for the same cards", () => {
   const artifact = (m: ReturnType<typeof computeDeckMath>) =>
     m.answers.find((a) => a.class === "artifact")!.available;
   expect(artifact(late)).toBeGreaterThan(artifact(early));
+});
+
+test("an answer row says how many of its answers exile, and how many recur", () => {
+  const deck = fillTo(100, [
+    answer("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power."),
+    answer("Murder", "Destroy target creature."),
+    answer("Bojuka Bog", "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.", "Land"),
+    answer("Rest in Peace", "When this enchantment enters, exile all graveyards.\nIf a card or token would be put into a graveyard from anywhere, exile it instead.", "Enchantment"),
+  ]);
+  const dm = computeDeckMath(deck, H);
+  const creature = dm.answers.find((a) => a.class === "creature")!;
+  expect(creature.count).toBe(2);
+  expect(creature.exiling).toBe(1);
+  expect(creature.recurring).toBe(0);
+
+  const graveyard = dm.answers.find((a) => a.class === "graveyard")!;
+  expect(graveyard.count).toBe(2);
+  expect(graveyard.recurring).toBe(1);
+
+  // The modes are MEASURED, not scored (design §2.3): the two numbers that drive the panel's
+  // shortfall and its bar must be untouched by this step.
+  expect(creature.required).toBeGreaterThan(0);
+  expect(creature.available).toBeGreaterThan(0);
 });

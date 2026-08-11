@@ -102,6 +102,13 @@ export interface DeckMath {
   answers: {
     class: string;
     count: number;
+    /** How many of them EXILE -- the only answers a recursive commander or a reanimator cannot
+     *  undo (design §2.1). A sub-count of `count`, never a separate class. */
+    exiling: number;
+    /** How many of them keep answering. Graveyard hate only: one Bojuka Bog answers a recursion
+     *  engine not at all, so this is the number that class is really judged on, and it is 0 on
+     *  every other class by construction. */
+    recurring: number;
     /** A commander answers this class, so it is available in every game. */
     fromCommandZone: boolean;
     available: number;

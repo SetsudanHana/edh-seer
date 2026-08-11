@@ -100,12 +100,18 @@ export function computeDeckMath(
     turnOverride !== undefined ? "override" : clockTurn !== undefined ? "clock" : "corpus-median";
 
   const answers = ANSWER_CLASSES.map((cls) => {
-    const members = classes.get(cls)?.cards ?? new Set<string>();
+    const found = classes.get(cls);
+    const members = found?.cards ?? new Set<string>();
     const fromCommandZone = [...members].some((n) => commanders.has(n));
     const inLibrary = [...members].filter((n) => !commanders.has(n)).length;
     return {
       class: cls,
       count: members.size,
+      // Counted over the same membership as `count`, commanders included -- a commander that
+      // exiles is still an exiling answer, and the pair only reads correctly if both sides of it
+      // count the same cards.
+      exiling: found?.exiling.size ?? 0,
+      recurring: found?.recurring.size ?? 0,
       fromCommandZone,
       available: fromCommandZone ? 1 : pAtLeast(1, inLibrary, seen(turn), library),
       // The doctrine states a confidence and the maths derives the count -- the inversion of the
