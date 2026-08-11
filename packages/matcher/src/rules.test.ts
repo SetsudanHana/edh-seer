@@ -119,17 +119,17 @@ test("answer classes come from the type the removal actually names", () => {
     mk("Disenchant", "Destroy target artifact or enchantment."),
     mk("Vindicate", "Destroy target permanent.", "Sorcery"),
   ]);
-  expect([...(classes.get("creature") ?? [])].sort()).toEqual(["Murder", "Vindicate"]);
-  expect([...(classes.get("enchantment") ?? [])].sort()).toEqual(["Disenchant", "Vindicate"]);
+  expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Murder", "Vindicate"]);
+  expect([...(classes.get("enchantment")?.cards ?? [])].sort()).toEqual(["Disenchant", "Vindicate"]);
   // `permanent` is not its own class: a card that answers any permanent answers all of them, and
   // treating it as a sixth class would report a Vindicate deck as having no enchantment removal.
   expect(classes.has("permanent")).toBe(false);
-  expect([...(classes.get("land") ?? [])]).toEqual(["Vindicate"]);
+  expect([...(classes.get("land")?.cards ?? [])]).toEqual(["Vindicate"]);
 });
 
 test("a card covering two classes in two sentences gets both", () => {
   // One `test()` keeps only the first match; the sweep is global for exactly this shape.
-  expect([...answerClassesOf(mk("Charm", "Choose one — Destroy target artifact. Or destroy target creature."))].sort())
+  expect([...answerClassesOf(mk("Charm", "Choose one — Destroy target artifact. Or destroy target creature.")).keys()].sort())
     .toEqual(["artifact", "creature"]);
 });
 
@@ -143,11 +143,11 @@ test("damage and bounce answer what they aim at", () => {
     mk("Bedevil", "Bedevil deals 3 damage to target creature or planeswalker."),
     mk("Boomerang", "Return target permanent to its owner's hand."),
   ]);
-  expect([...(classes.get("creature") ?? [])].sort()).toEqual(["Bedevil", "Boomerang", "Fire Bolt"]);
-  expect(classes.get("planeswalker")?.has("Bedevil")).toBe(true);
+  expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Bedevil", "Boomerang", "Fire Bolt"]);
+  expect(classes.get("planeswalker")?.cards.has("Bedevil")).toBe(true);
   // "any target" is burn aimed at a player, not removal, and it names no class.
-  expect(classes.get("creature")?.has("Lightning Bolt")).toBe(false);
-  expect([...(classes.get("enchantment") ?? [])]).toEqual(["Boomerang"]);
+  expect(classes.get("creature")?.cards.has("Lightning Bolt")).toBe(false);
+  expect([...(classes.get("enchantment")?.cards ?? [])]).toEqual(["Boomerang"]);
 });
 
 test("a blink is not an answer, however much it reads like removal", () => {
@@ -155,14 +155,14 @@ test("a blink is not an answer, however much it reads like removal", () => {
     mk("Essence Flux", "Exile target creature you control, then return it to the battlefield under its owner's control."),
     mk("Beast Within", "Destroy target permanent you don't control. Its controller creates a 3/3 token.", "Instant"),
   ]);
-  expect(classes.get("creature")?.has("Essence Flux")).toBe(false);
+  expect(classes.get("creature")?.cards.has("Essence Flux")).toBe(false);
   // ...and the negation still reads as an answer, since "you don't control" is not "you control".
-  expect(classes.get("creature")?.has("Beast Within")).toBe(true);
+  expect(classes.get("creature")?.cards.has("Beast Within")).toBe(true);
 });
 
 test("graveyard is an answer class too, and it comes from the hate rule", () => {
   const classes = detectAnswerClasses([
     mk("Bojuka Bog", "When this land enters, exile target player's graveyard.", "Land"),
   ]);
-  expect([...(classes.get("graveyard") ?? [])]).toEqual(["Bojuka Bog"]);
+  expect([...(classes.get("graveyard")?.cards ?? [])]).toEqual(["Bojuka Bog"]);
 });

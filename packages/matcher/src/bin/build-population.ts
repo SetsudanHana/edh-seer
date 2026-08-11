@@ -111,7 +111,7 @@ async function main(): Promise<void> {
     // Answer classes ride in the same snapshot under an `answer:` prefix, so the coverage axis is
     // under the same gate as the categories. They are a different axis, not finer categories: a
     // card is in both.
-    for (const [cls, names] of detectAnswerClasses(inputs)) deck[`answer:${cls}`] = [...names].sort();
+    for (const [cls, m] of detectAnswerClasses(inputs)) deck[`answer:${cls}`] = [...m.cards].sort();
     // Wincon classes ride along too, under their own prefix: same gate, same reason.
     // Through winconReport, not detectWincons: the deck-level gates (a token maker is only a win
     // plan when something pays it off) are the part most likely to regress.

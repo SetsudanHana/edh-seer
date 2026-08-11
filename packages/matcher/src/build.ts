@@ -51,6 +51,18 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
   return m;
 }
 
+/** The cards covering one answer class, split by mode. Name SETS rather than counters: a set is
+ *  what lets a later panel say which card, and it makes double-matching harmless -- every exile
+ *  removal matches both the class rule and the exile rule (design §3.2). */
+export interface AnswerClassMembers {
+  cards: Set<string>;
+  /** Those that EXILE. The only recursion-proof answers (design §2.1). */
+  exiling: Set<string>;
+  /** Those that keep answering. Graveyard hate only, by construction -- no other rule carries
+   *  `mode: "recurring"`, so the other five classes come out empty without a special case. */
+  recurring: Set<string>;
+}
+
 /** Answer coverage: which classes of threat this deck can actually answer, and with how many
  *  cards (design §12.3).
  *
@@ -61,13 +73,15 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
  *  Overlap is the point, not a caveat -- Vindicate covers four classes on one card, so the union is
  *  far below the sum. Pair this with `deckAvailability`'s hypergeometric to turn a count into
  *  "P(an answer for this class by turn T)". */
-export function detectAnswerClasses(cards: DeckCard[]): Map<string, Set<string>> {
-  const m = new Map<string, Set<string>>();
+export function detectAnswerClasses(cards: DeckCard[]): Map<string, AnswerClassMembers> {
+  const m = new Map<string, AnswerClassMembers>();
   for (const dc of cards) {
-    for (const cls of answerClassesOf(dc)) {
-      let s = m.get(cls);
-      if (!s) { s = new Set(); m.set(cls, s); }
-      s.add(dc.card.name);
+    for (const [cls, marks] of answerClassesOf(dc)) {
+      let e = m.get(cls);
+      if (!e) { e = { cards: new Set(), exiling: new Set(), recurring: new Set() }; m.set(cls, e); }
+      e.cards.add(dc.card.name);
+      if (marks.exile) e.exiling.add(dc.card.name);
+      if (marks.recurring) e.recurring.add(dc.card.name);
     }
   }
   return m;

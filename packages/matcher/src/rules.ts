@@ -31,6 +31,9 @@ export interface Rule {
   /** A pattern name whose `class` capture group names the answer class -- one rule covering the
    *  six types the removal regex already enumerates, rather than six near-identical rules. */
   answerClassFrom?: string;
+  /** What KIND of answer this rule contributes, where the kind changes whether it answers at all
+   *  (design §3.1). Absent = an ordinary one-shot answer, which is most of them. */
+  mode?: "exile" | "recurring";
   /** ALL must hold. */
   match: RuleClause[];
   /** NONE may hold. */
@@ -122,16 +125,33 @@ const KNOWN_CLASSES: Record<string, true> = {
   creature: true, permanent: true, artifact: true, enchantment: true, planeswalker: true, land: true,
 };
 
-/** Which answer classes a card covers, per `answerClass` / `answerClassFrom`.
+/** What a matched rule says about the KIND of answer it contributes, per class.
  *
- *  `permanent` is expanded through `answerClassAliases`: a card that destroys any permanent answers
- *  every class, and treating it as its own sixth class would report a Vindicate deck as having no
- *  enchantment removal. */
-export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Set<string> {
-  const out = new Set<string>();
+ *  Both default to false, which is the ordinary case: a destroy is an answer that is not
+ *  recursion-proof, and a one-shot graveyard exile answers a card rather than an engine. */
+export interface AnswerMarks {
+  /** The threat is EXILED. The owner's ruling (design §2.1): a tuck can be drawn or tutored again
+   *  and a destroyed permanent can be reanimated, so exile is the only recursion-proof answer. */
+  exile: boolean;
+  /** The answer keeps answering -- a replacement effect, a static prohibition, or an activated
+   *  ability that can be used again. Only graveyard hate carries this today, because it is the one
+   *  class §12.3 says does not score on count at all. */
+  recurring: boolean;
+}
+
+export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<string, AnswerMarks> {
+  const out = new Map<string, AnswerMarks>();
+  // A class can be reached by several rules -- every exile removal matches both `answers.typed` and
+  // `answers.typed.exile` -- so marks are OR-ed onto the existing entry, never overwritten.
+  const mark = (cls: string, mode: Rule["mode"]): void => {
+    const m = out.get(cls) ?? { exile: false, recurring: false };
+    if (mode === "exile") m.exile = true;
+    if (mode === "recurring") m.recurring = true;
+    out.set(cls, m);
+  };
   for (const rule of set.rules) {
     if (!ruleMatches(rule, dc, set)) continue;
-    if (rule.answerClass) out.add(rule.answerClass);
+    if (rule.answerClass) mark(rule.answerClass, rule.mode);
     if (rule.answerClassFrom) {
       // Global sweep, not a single test: "destroy target artifact or enchantment" and cards with
       // two removal sentences each cover several classes, and one match would keep only the first.
@@ -154,7 +174,7 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Set<s
             // "nonland permanent" answers everything except a land, and `permanent` alone expands
             // to all five. Without this a Pongify reads as land interaction.
             if (cls === "land" && /\bnonland\b/.test(phrase)) continue;
-            out.add(cls);
+            mark(cls, rule.mode);
           }
         }
       }

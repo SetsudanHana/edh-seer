@@ -100,7 +100,7 @@ export function computeDeckMath(
     turnOverride !== undefined ? "override" : clockTurn !== undefined ? "clock" : "corpus-median";
 
   const answers = ANSWER_CLASSES.map((cls) => {
-    const members = classes.get(cls) ?? new Set<string>();
+    const members = classes.get(cls)?.cards ?? new Set<string>();
     const fromCommandZone = [...members].some((n) => commanders.has(n));
     const inLibrary = [...members].filter((n) => !commanders.has(n)).length;
     return {

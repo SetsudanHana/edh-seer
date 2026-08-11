@@ -15,6 +15,7 @@ export {
 } from "./availability.js";
 export {
   detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, type BuildCategory,
+  type AnswerClassMembers,
 } from "./build.js";
 export {
   manaAudit, pipsByColor, COLORS, SOURCE_CONFIDENCE,
@@ -29,7 +30,7 @@ export {
   expectedPower, measuredClock, pressureCurve, STARTING_LIFE, type PressurePoint,
 } from "./pressure.js";
 export {
-  answerClassesOf, loadRules, ruleMatches, RULES_VERSION,
+  answerClassesOf, loadRules, ruleMatches, RULES_VERSION, type AnswerMarks,
   type Rule, type RuleClause, type RuleSet,
 } from "./rules.js";
 export { meshReport, MESH_CAP, type MeshReport, type MeshGroup } from "./mesh.js";
