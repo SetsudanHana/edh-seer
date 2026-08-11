@@ -37,6 +37,17 @@ const SACRIFICES_ITSELF = /\bsacrifice (?:this|it|~)\b/i;
  *  "{X}{R}, {T}, Sacrifice this creature". */
 const TAP_COST = /\{[TQ]\}/;
 const ONCE_EACH_TURN = /\bonce each turn\b/i;
+/** "Whenever an opponent draws their second card each turn" (Faerie Mastermind) is bounded to once
+ *  per that player's turn by the ORDINAL, not by a "once each turn" cost clause and not by the verb
+ *  -- "draw" is not a phase verb. Measured against the corpus (609 cards carry "each turn"): every
+ *  "first/second/third/.../each turn" line is either this shape (Rashmi, Lat-Nam Adept, Defacing
+ *  Duskmage, 30+ more) or a static already caught by the `kind === "static"` check above it in the
+ *  precedence order (Eluge's cost reduction, Fires of Invention's "no more than two spells each
+ *  turn" -- "two" isn't ordinal so that one doesn't even match). A bare "each turn" with no ordinal
+ *  (Spirit of the Labyrinth's "one card each turn") is deliberately NOT matched -- that is a
+ *  continuous restriction, not a per-turn trigger, and would already be routed to `continuous` by
+ *  the static check regardless. */
+const ORDINAL_EACH_TURN = /\b(?:first|second|third|fourth|fifth)\b(?:(?!\.).){0,60}\beach turn\b/i;
 
 /** Phases that happen on somebody's turn, so `control` says whose. "draw-step" was in the original
  *  brief but is not a member of the `Verb` union in `schema.ts` -- a draw-step trigger normalizes to
@@ -63,8 +74,10 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = ""): Rep
   const trigger = ability.trigger;
   if (trigger) {
     const verbs = trigger.verbs as readonly string[];
-    // 6-7: a phase trigger fires once per turn; `control` says whose turns count.
-    if (verbs.some((v) => PHASE_VERBS.has(v))) {
+    // 6-7: a phase trigger fires once per turn; `control` says whose turns count. An ordinal
+    // "first/second/... each turn" trigger is bounded the same way even when the verb isn't a
+    // phase verb -- Faerie Mastermind's "opponent draws their second card each turn" is `draw`.
+    if (verbs.some((v) => PHASE_VERBS.has(v)) || ORDINAL_EACH_TURN.test(text)) {
       return trigger.subject.control === "you" ? "per-cycle" : "per-turn";
     }
     // 8: the card's OWN arrival happens once. "When this creature enters" against "whenever a

@@ -22,8 +22,13 @@ import { repeatsFor } from "./repeats.js";
  *      Ratchet Field Medic // Ratchet Rescue Racer (twice, one per face). */
 const FIXTURE = join(__dirname, "repeats-refused.json");
 
-/** Raise ONLY with a written reason. Lower it whenever a rule is added. */
-const REFUSED_CAP = 595;
+/** Raise ONLY with a written reason. Lower it whenever a rule is added.
+ *
+ *  Dropped 595 -> 579 (task 4, 2026-08-11): `ORDINAL_EACH_TURN` in `repeats.ts` resolved 16 refused
+ *  abilities, including Faerie Mastermind's own trigger -- the card the taxonomy was built around
+ *  was itself in the refused set until this rule existed. Verified: population 27380/35037/231 and
+ *  panel 82.8% both held after the fix, because nothing reads `repeats` yet. */
+const REFUSED_CAP = 579;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the
