@@ -109,13 +109,13 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                 {/* A zero row's BAR is zero-width, so colouring the bar cannot flag it -- the one
                   *  row that most needs to be visible would be the one row with nothing painted.
                   *  The numbers carry the warning instead. */}
-                <span className="w-20 shrink-0 text-right tabular-nums flex items-baseline justify-end gap-1.5">
+                <span className="w-16 shrink-0 text-right tabular-nums flex items-baseline justify-end gap-1.5">
                   <span className={none ? "text-(--warning)" : "text-(--muted)"}>{a.count}</span>
                   <span className={`text-xs ${mode.startsWith("0") ? "text-(--warning)" : "text-(--muted)"}`}>{mode}</span>
                 </span>
                 {/* The shortfall, where there is one. A percentage says how likely; only this says
                   *  what to do about it, which is the difference between a readout and advice. */}
-                <span className="w-14 shrink-0 text-right tabular-nums text-xs text-(--muted)">
+                <span className="w-12 shrink-0 text-right tabular-nums text-xs text-(--muted)">
                   {short > 0 ? `−${short}` : ""}
                 </span>
                 <span className={`w-16 shrink-0 text-right tabular-nums ${none ? "text-(--warning)" : ""}`}>
