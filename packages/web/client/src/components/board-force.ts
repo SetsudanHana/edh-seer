@@ -125,21 +125,34 @@ export function foreignPush(
  *  resolved. Stop at the ceiling, count what is left, and spend another 64 next frame. */
 export const PROJECTION_PASSES = 64;
 
-/** Moves every card out of every room circle it does NOT belong to, and reports what it could not
- *  free.
+/** Enforces room membership positionally: no card sits inside a room it does not belong to, and a
+ *  card belonging to EXACTLY ONE room sits inside that one. Reports what it could not satisfy.
  *
  *  A POSITIONAL pass, deliberately: d3 runs forces before integration (`force(alpha)` writes vx,
- *  then `x += vx`), so a force can only ask. foreignPush asks; this enforces. It is the same
- *  technique the pre-d3 separation() used for disc overlap and for the same stated reason -- a
- *  velocity nudge lets things pass through each other for several frames, which is fine for a
+ *  then `x += vx`), so a force can only ask. foreignPush and containment ask; this enforces. It is
+ *  the same technique the pre-d3 separation() used for disc overlap and for the same stated reason
+ *  -- a velocity nudge lets things pass through each other for several frames, which is fine for a
  *  preference and useless for a guarantee.
  *
  *  Runs AFTER simulation.tick(), from GraphView's own rAF loop, which is the only place that is
  *  after integration.
  *
- *  MUTATES x/y and vx/vy on the cards it moves. The inward velocity component is removed or the
- *  next tick drives the card straight back in and it buzzes on the rim at frame rate; the
- *  tangential component survives, so a card can still slide around a rim it is pressed against.
+ *  BOTH DIRECTIONS, and the measurement is why. Ejecting non-members alone drags single-room cards
+ *  out of their OWN rooms as it goes: escapes.one went 0 -> 54 across ten trials, at every arm of
+ *  the FOREIGN_PUSH sweep (0.008 down to 0.0005) and at 8x the pass ceiling, while intrusions only
+ *  reached 3. Pulling a single-room card back in is the other half of the same constraint, and
+ *  with both halves every hard condition holds at once: escapes.one 0, overlaps 0, intrusions 0,
+ *  escapes.two 55 -> 41. See 2026-08-08-d3-migration-measurements.md.
+ *
+ *  ONLY single-room cards are pulled back. A card in two rooms whose circles do not overlap has no
+ *  legal position at all, and hard-projecting it would make it oscillate between irreconcilable
+ *  demands -- which is exactly what escapes.two being a SOFT metric already concedes. Those cards
+ *  keep the containment force and nothing more.
+ *
+ *  MUTATES x/y and vx/vy on the cards it moves. The velocity component pointing back into the
+ *  violation is removed or the next tick undoes the move and the card buzzes on the rim at frame
+ *  rate; the tangential component survives, so a card can still slide around a rim it is pressed
+ *  against.
  *
  *  Rooms are recomputed from member positions every tick (roomLayout), so a circle can sweep over
  *  a card that never moved -- "cannot enter" is not enforceable by the intruder alone, which is
@@ -152,7 +165,7 @@ export const PROJECTION_PASSES = 64;
  *  member positions, so the symmetry is gone as soon as anything else on the board moves.
  *
  *  Returns 0 when it converged, else the number of cards still illegal at the ceiling. */
-export function projectOutOfForeignRooms(
+export function projectRoomMembership(
   cards: readonly Sim[],
   circles: ReadonlyMap<RoomId, Circle>,
   roomsByNode: ReadonlyMap<string, readonly RoomId[]>,
@@ -166,6 +179,7 @@ export function projectOutOfForeignRooms(
       // it should NOT be either.
       if (!mine || mine.length === 0) continue;
       const cardR = nodeRadius(n);
+
       for (const [id, c] of circles) {
         if (mine.includes(id)) continue;
         const dx = n.x - c.x, dy = n.y - c.y;
@@ -174,6 +188,7 @@ export function projectOutOfForeignRooms(
         // deterministic; skipping would leave an intrusion standing, which is the one outcome
         // this function exists to prevent.
         const [ux, uy] = d === 0 ? [1, 0] : [dx / d, dy / d];
+        // NEAR rim, matching foreignPush, so the soft force and the hard pass agree about "inside".
         const depth = c.r - (d - cardR);
         if (depth <= 0) continue;
         n.x += ux * depth;
@@ -181,6 +196,27 @@ export function projectOutOfForeignRooms(
         const vn = n.vx * ux + n.vy * uy;
         if (vn < 0) { n.vx -= vn * ux; n.vy -= vn * uy; }
         moved = true;
+      }
+
+      if (mine.length === 1) {
+        const c = circles.get(mine[0]);
+        // FAR rim, matching containment, for the same reason the ejection matches foreignPush.
+        const out = c ? Math.hypot(n.x - c.x, n.y - c.y) + cardR - c.r : 0;
+        if (c && out > 0) {
+          const dx = n.x - c.x, dy = n.y - c.y;
+          const d = Math.hypot(dx, dy);
+          // d is never 0 here: out > 0 with d == 0 would need cardR > c.r, a card bigger than the
+          // room drawn around it, and roomRadius is area-derived from a member count of at least
+          // one. Guarded anyway rather than dividing by zero on a future radius rule.
+          if (d > 0) {
+            const ux = dx / d, uy = dy / d;
+            n.x -= ux * out;
+            n.y -= uy * out;
+            const vn = n.vx * ux + n.vy * uy;
+            if (vn > 0) { n.vx -= vn * ux; n.vy -= vn * uy; }
+            moved = true;
+          }
+        }
       }
     }
     if (!moved) return 0;
@@ -191,10 +227,19 @@ export function projectOutOfForeignRooms(
     const mine = roomsByNode.get(n.id);
     if (!mine || mine.length === 0) continue;
     const cardR = nodeRadius(n);
+    // Counts CARDS, not violations: one card in three foreign circles is one card the pass could
+    // not place, and the panel row reads as "how many cards are wrong".
+    let illegal = false;
     for (const [id, c] of circles) {
       if (mine.includes(id)) continue;
-      if (c.r - (Math.hypot(n.x - c.x, n.y - c.y) - cardR) > 0) { unresolved++; break; }
+      if (c.r - (Math.hypot(n.x - c.x, n.y - c.y) - cardR) > 0) { illegal = true; break; }
     }
+    if (!illegal && mine.length === 1) {
+      const c = circles.get(mine[0]);
+      // The pass promises both halves, so it has to own both halves in what it reports.
+      if (c && Math.hypot(n.x - c.x, n.y - c.y) + cardR - c.r > 0) illegal = true;
+    }
+    if (illegal) unresolved++;
   }
   return unresolved;
 }

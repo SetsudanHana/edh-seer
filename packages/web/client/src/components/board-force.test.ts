@@ -14,7 +14,7 @@ import {
   forceRoomContainment,
   foreignPush,
   nodeRadius,
-  projectOutOfForeignRooms,
+  projectRoomMembership,
   REPULSION,
   universalRooms,
   VELOCITY_DECAY,
@@ -327,13 +327,13 @@ describe("countOverlaps", () => {
   });
 });
 
-describe("projectOutOfForeignRooms", () => {
+describe("projectRoomMembership", () => {
   const circles = (...cs: [string, number, number, number][]) =>
     new Map<RoomId, Circle>(cs.map(([id, x, y, r]) => [id, { x, y, r }]));
 
   test("moves a non-member until its NEAR rim clears the room's rim, and no further", () => {
     const n = card("card:a", 10, 0); // deep inside a circle centred on the origin
-    const unresolved = projectOutOfForeignRooms(
+    const unresolved = projectRoomMembership(
       [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]),
     );
     expect(unresolved).toBe(0);
@@ -344,22 +344,64 @@ describe("projectOutOfForeignRooms", () => {
 
   test("leaves a member alone however deep inside its own room it sits", () => {
     const n = card("card:a", 1, 0);
-    projectOutOfForeignRooms(
+    projectRoomMembership(
       [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["ramp"]]]),
     );
     expect(n.x).toBe(1);
     expect(n.y).toBe(0);
   });
 
+  test("pulls a single-room card back inside its own room, to the FAR rim", () => {
+    // The other half of the same constraint. Ejecting non-members alone dragged single-room cards
+    // out of their own rooms: escapes.one 0 -> 54 across ten trials, at every FOREIGN_PUSH arm.
+    const n = card("card:a", 300, 0);
+    const unresolved = projectRoomMembership(
+      [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["ramp"]]]),
+    );
+    expect(unresolved).toBe(0);
+    // containment's reading, not foreignPush's: the whole disc is inside, so d + cardR === roomR.
+    expect(Math.hypot(n.x, n.y) + ART_RADIUS).toBeCloseTo(100, 6);
+    expect(n.y).toBeCloseTo(0, 6);
+  });
+
+  test("zeroes the outward velocity of a card it pulls back in", () => {
+    const n = card("card:a", 300, 0);
+    n.vx = 5; // still heading out
+    n.vy = 3; // tangential
+    projectRoomMembership(
+      [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["ramp"]]]),
+    );
+    expect(n.vx).toBeCloseTo(0, 10);
+    expect(n.vy).toBeCloseTo(3, 10);
+  });
+
+  test("leaves a card in TWO rooms outside both of them, rather than oscillating", () => {
+    // Two rooms whose circles do not overlap give a two-room card no legal position at all, and
+    // hard-projecting it would make it vibrate between irreconcilable demands. That is exactly
+    // what escapes.two being a SOFT metric concedes -- those cards keep the containment force and
+    // nothing more, so this pass must not touch them.
+    const n = card("card:a", 0, 0);
+    const unresolved = projectRoomMembership(
+      [n],
+      circles(["a", -500, 0, 100], ["b", 500, 0, 100]),
+      new Map([["card:a", ["a", "b"]]]),
+    );
+    expect(n.x).toBe(0);
+    expect(n.y).toBe(0);
+    // Outside both of its own rooms, but it is not a card the pass failed to place -- it never
+    // claimed to place it.
+    expect(unresolved).toBe(0);
+  });
+
   test("leaves a card in NO room alone", () => {
     const n = card("card:a", 1, 0);
-    projectOutOfForeignRooms([n], circles(["ramp", 0, 0, 100]), new Map());
+    projectRoomMembership([n], circles(["ramp", 0, 0, 100]), new Map());
     expect(n.x).toBe(1);
   });
 
   test("leaves a card already outside alone", () => {
     const n = card("card:a", 500, 0);
-    projectOutOfForeignRooms(
+    projectRoomMembership(
       [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]),
     );
     expect(n.x).toBe(500);
@@ -369,7 +411,7 @@ describe("projectOutOfForeignRooms", () => {
     const n = card("card:a", 10, 0);
     n.vx = -5; // straight at the centre
     n.vy = 3;  // tangential
-    projectOutOfForeignRooms(
+    projectRoomMembership(
       [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]),
     );
     expect(n.vx).toBeCloseTo(0, 10);
@@ -379,7 +421,7 @@ describe("projectOutOfForeignRooms", () => {
   test("does not touch an OUTWARD velocity", () => {
     const n = card("card:a", 10, 0);
     n.vx = 5; // already leaving
-    projectOutOfForeignRooms(
+    projectRoomMembership(
       [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]),
     );
     expect(n.vx).toBeCloseTo(5, 10);
@@ -391,7 +433,7 @@ describe("projectOutOfForeignRooms", () => {
     // different case rather than a harder version of this one. Takes two passes: the first pass's
     // ejection from B puts the card back inside A.
     const n = card("card:a", 0, 5);
-    const unresolved = projectOutOfForeignRooms(
+    const unresolved = projectRoomMembership(
       [n],
       circles(["a", -60, 0, 100], ["b", 60, 0, 100]),
       new Map([["card:a", ["lands"]]]),
@@ -407,7 +449,7 @@ describe("projectOutOfForeignRooms", () => {
     // still illegal and says so instead of pretending otherwise -- this is about WORK, not
     // impossibility.
     const n = card("card:a", 0, 5);
-    const unresolved = projectOutOfForeignRooms(
+    const unresolved = projectRoomMembership(
       [n],
       circles(["a", -60, 0, 100], ["b", 60, 0, 100]),
       new Map([["card:a", ["lands"]]]),
@@ -427,7 +469,7 @@ describe("projectOutOfForeignRooms", () => {
     // recourse is the next frame: the circles are recomputed from member positions every tick, so
     // the symmetry that traps the card is gone as soon as anything else moves.
     const n = card("card:a", 0, 0);
-    const unresolved = projectOutOfForeignRooms(
+    const unresolved = projectRoomMembership(
       [n],
       circles(["a", -60, 0, 100], ["b", 60, 0, 100]),
       new Map([["card:a", ["lands"]]]),
@@ -439,7 +481,7 @@ describe("projectOutOfForeignRooms", () => {
     // The caller passes circles; universality is not a property this function can see, and that
     // is the point. A room holding every card still bars a non-member.
     const n = card("card:a", 0, 0);
-    projectOutOfForeignRooms(
+    projectRoomMembership(
       [n], circles(["colour:black", 0, 0, 400]), new Map([["card:a", ["colour:red"]]]),
     );
     expect(Math.hypot(n.x, n.y) - ART_RADIUS).toBeCloseTo(400, 6);
@@ -447,7 +489,7 @@ describe("projectOutOfForeignRooms", () => {
 
   test("pushes a card sitting exactly on the centre along +x rather than skipping it", () => {
     const n = card("card:a", 0, 0);
-    projectOutOfForeignRooms(
+    projectRoomMembership(
       [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]),
     );
     expect(n.x).toBeCloseTo(100 + ART_RADIUS, 6);
@@ -528,7 +570,20 @@ function runTrial(seed: number) {
   // not where it converges TO. The equilibrium is alpha-independent. Measured, ten trials each:
   // at 1600 / 3000 / 6000 ticks escapes.one stays 0 and overlaps stay 0/10, intrusions settle
   // 14 -> 11 and escapes.two drifts 55 -> 60. See 2026-08-08-d3-migration-measurements.md.
-  for (let i = 0; i < 800; i++) simulation.tick();
+  const cardsForProjection = nodes.filter(visible);
+  let unresolved = 0;
+  for (let i = 0; i < 800; i++) {
+    simulation.tick();
+    // The projection is part of the board's definition, not a paint-time nicety -- GraphView runs
+    // it in the same position, right after tick(). Measuring without it would measure a board
+    // that does not exist.
+    //
+    // The LAST tick's count, not the worst over the run: the first few ticks start from a ring of
+    // cards whose room circles are enormous and mutually overlapping, so a max is dominated by
+    // chaos the settled board has nothing to do with. Measured: worst-over-run 77 per trial with
+    // the projection disabled entirely, against 1-3 intrusions on the same settled boards.
+    unresolved = projectRoomMembership(cardsForProjection, roomCircles(), roomsByNode);
+  }
 
   const cards = nodes.filter(visible);
   const circles = [...roomCircles().entries()].map(([id, c]) => ({ id, ...c }));
@@ -539,7 +594,7 @@ function runTrial(seed: number) {
 
   // The Task-9 no-overlap gate: two card discs closer than 2 * ART_RADIUS visibly overlap.
   const overlaps = countOverlaps(cards);
-  return { ...metrics, overlaps };
+  return { ...metrics, overlaps, unresolved };
 }
 
 describe("the settled board, ten trials on inalla.txt", () => {
@@ -557,19 +612,43 @@ describe("the settled board, ten trials on inalla.txt", () => {
     expect(trials.map((t) => t.overlaps)).toEqual(new Array(10).fill(0));
   });
 
-  /** A RATCHET, not a pin. PACK 0.5 already traded intrusions away to buy escapes.one
-   *  (measured: escapes 13 -> 5 -> 2 against intrusions 1 -> 8 -> 26 at PACK 0.7/0.6/0.5), so
-   *  pinning d3 to the old ~26 would re-fight a battle deliberately lost. The cap is loose
-   *  enough to let the axis float and tight enough that a collapse still fails.
+  /** The INTRUSION_CAP ratchet is gone, LOWERED to an exact zero per trial by
+   *  projectRoomMembership -- which is what the ratchet's own comment demanded be done the moment
+   *  a change improved the number. It stood at 60 across ten trials and the soft force settled at
+   *  14; the projection makes it a post-condition instead of a budget.
    *
-   *  Same idiom as pair-calibration.test.ts's KNOWN_DEFECT_CAP: raise it only with a written
-   *  reason, LOWER it the moment a change improves the number. A cap nobody lowers is
-   *  decoration. */
-  const INTRUSION_CAP = 60;
-  test("intrusions stay under the cap", () => {
-    const total = trials.reduce((sum, t) => sum + t.intrusions, 0);
-    console.log("intrusions across ten trials:", trials.map((t) => t.intrusions), "total", total);
-    expect(total).toBeLessThanOrEqual(INTRUSION_CAP);
+   *  Printed rather than only asserted: these five numbers are the arms in
+   *  2026-08-08-d3-migration-measurements.md, and a run of this file is how the next arm gets
+   *  measured. */
+  test("prints the five acceptance numbers, so a tuning arm is one run away", () => {
+    process.stdout.write(`MEASURE ${JSON.stringify({
+      escapesOne: trials.map((t) => t.escapes.one),
+      escapesTwo: trials.map((t) => t.escapes.two),
+      intrusions: trials.map((t) => t.intrusions),
+      overlaps: trials.map((t) => t.overlaps),
+      unresolved: trials.map((t) => t.unresolved),
+    })}\n`);
+    expect(trials).toHaveLength(10);
+  });
+
+  // The rule this work exists for: a card inside a circle belongs to that room. Not a budget.
+  test("no card sits inside a room it does not belong to, in any trial", () => {
+    expect(trials.map((t) => t.intrusions)).toEqual(new Array(10).fill(0));
+  });
+
+  /** A RATCHET on what the projection could not place, in the same idiom the intrusion cap used
+   *  and pair-calibration.test.ts's KNOWN_DEFECT_CAP still does: raise it only with a written
+   *  reason, LOWER it the moment a change improves the number.
+   *
+   *  Not pinned to zero because zero is not reachable: 0-2 cards per board are genuine geometric
+   *  conflicts, and quadrupling the pass ceiling to 256 does not clear them (measured 2 -> 4 on
+   *  the ejection half alone) -- so this is not a work bound that more passes would buy off. The
+   *  cap is exactly the measured total, and it is what separates the few cards the geometry
+   *  defeated from twenty the projection gave up on. */
+  const UNRESOLVED_CAP = 4;
+  test("the projection places every card but a capped few", () => {
+    const total = trials.reduce((sum, t) => sum + t.unresolved, 0);
+    expect(total).toBeLessThanOrEqual(UNRESOLVED_CAP);
   });
 });
 
