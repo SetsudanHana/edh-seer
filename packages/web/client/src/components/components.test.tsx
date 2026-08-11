@@ -13,7 +13,7 @@ import { CardList } from "./CardList.js";
 import { ReportTabs } from "./ReportTabs.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { HeadlineScores } from "./HeadlineScores.js";
-import { BuildBenchmarks } from "./BuildBenchmarks.js";
+import { BuildBenchmarks, demandSentence } from "./BuildBenchmarks.js";
 import { SuggestionsList } from "./SuggestionsList.js";
 import { SAMPLE } from "../fixtures.js";
 
@@ -335,6 +335,23 @@ test("BuildBenchmarks renders a bar per category, flags under-target, omits zero
   expect(screen.getByLabelText(/Ramp 6 of 10, under target/i)).toBeInTheDocument();
 });
 
+test("a benchmark bar is read against a fixed target mark, so over-target does not paint as full", () => {
+  const { container } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+  // The FILL specifically — a two-sided category also paints a satisfied band, and matching on
+  // "any span with a width" would silently read that instead.
+  const width = (label: RegExp): string =>
+    (screen.getByLabelText(label).querySelector('[class*="bg-(--success)"], [class*="bg-(--warning)"]') as HTMLElement)
+      .style.width;
+  // The target sits at 70% of every track. 6/10 stops short of it, 14/10 runs past it -- the old
+  // `min(1, count/target)` clamp painted BOTH at the same width as 4/4 and 1/1.
+  expect(width(/Ramp 6 of 10/i)).toBe("42%");
+  expect(width(/Draw 14 of 10/i)).toBe("98%");
+  // And the mark itself is on screen, once per row, or the widths above compare against nothing.
+  expect(container.querySelectorAll('span[style*="left: 70%"]').length).toBe(
+    container.querySelectorAll("li[aria-label]").length,
+  );
+});
+
 const DECK_MATH = {
   turn: 5,
   seen: 12,
@@ -374,12 +391,55 @@ const DECK_MATH = {
   ],
 };
 
+test("deck-math blocks are grouped under the question they answer, worst section first", () => {
+  const headings = (): string[] =>
+    [...document.querySelectorAll("h4")].map((h) => h.textContent ?? "");
+
+  // Both sections carry a flag on this fixture (colour B is short, artifact has no answers), so the
+  // fixed order stands and "cast" leads.
+  const { unmount } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(headings()).toEqual([
+    "Can you cast your cards",
+    "Can you deal with theirs",
+    "How you win",
+    "What your cards are waiting for",
+  ]);
+  unmount();
+
+  // Take the mana problems away and the answers section leads instead: the section order is the
+  // panel's answer to "what is wrong with THIS deck", while the headings themselves never change.
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={{
+        ...DECK_MATH,
+        colors: [{ color: "U", supplied: 30 }],
+        lands: { ...DECK_MATH.lands, target: 36 },
+      }}
+    />,
+  );
+  expect(headings()[0]).toBe("Can you deal with theirs");
+});
+
+test("a section whose blocks are all absent renders no heading at all", () => {
+  // A mill deck can have no win plans and no clock -- an empty section heading is a promise the
+  // panel does not keep.
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={{ ...DECK_MATH, clock: undefined as never, wincons: { classes: [], focus: 0 } }}
+    />,
+  );
+  expect(screen.queryByText("How you win")).not.toBeInTheDocument();
+  expect(screen.getByText("Can you deal with theirs")).toBeInTheDocument();
+});
+
 test("BuildBenchmarks shows answer coverage, including the classes the deck cannot answer", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   expect(screen.getByText(/answers by turn 5/i)).toBeInTheDocument();
   // A class with zero answers is the finding, so it must be a visible row rather than an omission.
   expect(screen.getByLabelText(/artifact, no answers/i)).toBeInTheDocument();
-  expect(screen.getByLabelText(/creature, 4 cards, 1 of them exile, 41% by turn 5/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/creature, 4 cards, 1 of them exile/i)).toBeInTheDocument();
   // A commander answer is available every game, and says why rather than just reading 100%.
   expect(screen.getByLabelText(/graveyard, 1 card, none recurring, always \(commander\)/i)).toBeInTheDocument();
 });
@@ -392,13 +452,21 @@ test("an answer row says how many of its answers exile, and flags a graveyard ro
   expect(screen.getByLabelText(/graveyard.*none recurring/i)).toBeInTheDocument();
   // A class with nothing to say says nothing -- no "0 of them exile" noise on an empty row.
   expect(screen.queryByLabelText(/artifact, no answers.*exile/i)).not.toBeInTheDocument();
+  // Spelled out on screen, not abbreviated: `0 ex` / `0 rec` were the two most-misread strings on
+  // this panel, including by a reader who guessed "exile" correctly and still called it broken.
+  expect(screen.getByText("none recurring")).toBeInTheDocument();
+  expect(screen.getByText("1 exile")).toBeInTheDocument();
+  expect(screen.queryByText(/\bex\b/)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks says how many answers short a class is, not just how likely it is", () => {
   // Step C. "41% by turn 5" tells you the odds and not what to do about them; the derived count
   // does. It is derived, not a template -- it moves with the deck's own clock.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByLabelText(/creature, 4 cards, 1 of them exile, 41% by turn 5, 2 short of 6/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/creature, 4 cards, 1 of them exile, 2 short of 6/i)).toBeInTheDocument();
+  // The probability it was derived from is NOT printed beside it: `available` is a pure function
+  // of the count at a fixed library and turn, so the row would be saying one thing three times.
+  expect(screen.queryByText("41%")).not.toBeInTheDocument();
   expect(screen.getByLabelText(/artifact, no answers, 6 short of 6/i)).toBeInTheDocument();
   // A commander answers every game, so a draw-probability shortfall would be a lie.
   expect(screen.getByLabelText(/graveyard, 1 card, none recurring, always \(commander\)/i)).toBeInTheDocument();
@@ -407,10 +475,29 @@ test("BuildBenchmarks says how many answers short a class is, not just how likel
 
 test("BuildBenchmarks shows demand against supply, and refuses a number where none applies", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByLabelText(/dies:any, 2 cards want it, 2 supply it, 23% by turn 5/i)).toBeInTheDocument();
+  // The census key is engine vocabulary; the row says what the key MEANS and keeps the key on
+  // `title` for anyone matching a report against `bin/deck-availability.ts`.
+  expect(screen.getByLabelText(/anything dying, 2 cards want it, 2 supply it/i)).toBeInTheDocument();
+  // No availability column: it is derived from the two counts beside it and reads 100% on every
+  // row that has a supplier, which is a column with no variance.
+  expect(screen.queryByText("23%")).not.toBeInTheDocument();
+  expect(screen.getByTitle("dies:any")).toBeInTheDocument();
   // The game supplies a combat trigger: 0% would invent a hole, 100% would claim a board state
-  // this layer does not model.
-  expect(screen.getByLabelText(/attacks:any, 3 cards want it, the game supplies it/i)).toBeInTheDocument();
+  // this layer does not model. And the VISIBLE row must not say "0 supply" either -- a zero next
+  // to a dash reads as a hole in the deck.
+  expect(screen.getByLabelText(/anything attacking, 3 cards want it, the game supplies it/i)).toBeInTheDocument();
+  expect(screen.getByText(/3 want · the game supplies it/i)).toBeInTheDocument();
+});
+
+test("demandSentence says the true ugly thing rather than a plausible wrong one", () => {
+  expect(demandSentence("enters:type:creature")).toBe("a creature entering the battlefield");
+  expect(demandSentence("enters:subtype:wizard")).toBe("a Wizard entering the battlefield");
+  expect(demandSentence("cast:type:artifact+enchantment+instant")).toBe(
+    "an artifact, enchantment or instant being cast",
+  );
+  expect(demandSentence("end-step:any")).toBe("an end step");
+  // An unknown verb is NOT dressed up in a phrase it never earned: the key survives verbatim.
+  expect(demandSentence("bushido:type:creature")).toBe("bushido:type:creature");
 });
 
 test("BuildBenchmarks shows the measured clock, and calls it what it is", () => {
@@ -441,8 +528,11 @@ test("BuildBenchmarks shows the land count the deck's own curve asks for", () =>
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // Deck-derived, unlike the flat 36 the benchmark above scores against -- and it shows the inputs,
   // because "34" with no working is a number to argue with rather than act on.
-  expect(screen.getByLabelText(/37 lands, Karsten wants 34/i)).toBeInTheDocument();
-  expect(screen.getByText(/avg mv 2\.7/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/37 lands in the deck, this curve wants 34/i)).toBeInTheDocument();
+  // The regression's author is implementation, not a label: the reader is asking how many lands
+  // to run, not whose formula answered.
+  expect(screen.queryByText(/karsten/i)).not.toBeInTheDocument();
+  expect(screen.getByText(/avg mana value 2\.7/i)).toBeInTheDocument();
   expect(screen.getByText(/12 cheap ramp/i)).toBeInTheDocument();
   expect(screen.getByText(/2 fast mana/i)).toBeInTheDocument();
 });
@@ -466,6 +556,10 @@ test("BuildBenchmarks shows the hardest casts on two axes, never one blended num
   // The refusals are a count, not a silence: a card the model will not price must not read as a
   // card it priced at zero.
   expect(screen.getByText(/3 cards refused/i)).toBeInTheDocument();
+  // THE DEADLINE IS ON SCREEN, not only in the aria-label. Four cards of equal mana value tie at
+  // the same percentage by construction, and a bare "3% mana" repeated down the block was read as
+  // a broken readout by three of four player reviews.
+  expect(screen.getByText(/3% to have 10 mana by turn 10/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks says where its turn came from, because it varies per deck", () => {
