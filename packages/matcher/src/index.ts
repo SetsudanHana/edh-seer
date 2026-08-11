@@ -10,6 +10,9 @@ export { buildGraph, type CardGraph, type GraphNode, type GraphEdge, type NodeKi
 export { addEventEdges, orphanCards } from "./graph-events.js";
 export { themeMembership, themeCandidates, BASELINE_CAP, type ThemeMembership } from "./themes.js";
 export { classifyEffect, type EffectClass } from "./effect-class.js";
+export {
+  deckAvailability, type AvailabilityRow, type AvailabilityOptions,
+} from "./availability.js";
 export { meshReport, MESH_CAP, type MeshReport, type MeshGroup } from "./mesh.js";
 export {
   buildTagIndex, candidateFromTagIndex, mergeFixtures, pairKey, pickStratum, randomPair, upsertPair,

@@ -94,6 +94,14 @@ export interface CensusRow {
    *  listener because every Spirit creature implies an attack and no card pays off Spirits
    *  attacking specifically. That is a fact about Magic, not a bug in the pipeline. */
   authored: boolean;
+  /** Only when `buildCensus` is called with `{ members: true }`: which input cards, by their
+   *  ordinal in the iteration, are counted in `cards` and `counterpart`.
+   *
+   *  Off by default because the corpus census runs over ~34k cards and would retain an index array
+   *  per row for a caller that only ever prints the counts. Deck-scoped callers need identity --
+   *  "is the supplier the COMMANDER" is not a question a count can answer. */
+  cardIndices?: readonly number[];
+  counterpartIndices?: readonly number[];
 }
 
 export interface Census {
@@ -136,7 +144,7 @@ function byVerb(shapes: Map<string, Shape>): Map<string, Shape[]> {
  *  differently-stat-predicated `enters:creature` triggers), and they must not be double counted. */
 type RawRow = { key: string; cards: Set<number>; counterpart: Set<number>; selfSupplied: boolean; authored: boolean };
 
-function rollUp(rows: RawRow[]): CensusRow[] {
+function rollUp(rows: RawRow[], members = false): CensusRow[] {
   const merged = new Map<string, { cards: Set<number>; counterpart: Set<number>; shapes: number; selfSupplied: boolean; authored: boolean }>();
   for (const r of rows) {
     const m = merged.get(r.key) ?? { cards: new Set<number>(), counterpart: new Set<number>(), shapes: 0, selfSupplied: r.selfSupplied, authored: false };
@@ -150,13 +158,21 @@ function rollUp(rows: RawRow[]): CensusRow[] {
     merged.set(r.key, m);
   }
   return [...merged]
-    .map(([key, m]) => ({ key, cards: m.cards.size, counterpart: m.counterpart.size, shapes: m.shapes, selfSupplied: m.selfSupplied, authored: m.authored }))
+    .map(([key, m]) => ({
+      key, cards: m.cards.size, counterpart: m.counterpart.size, shapes: m.shapes,
+      selfSupplied: m.selfSupplied, authored: m.authored,
+      ...(members ? { cardIndices: [...m.cards], counterpartIndices: [...m.counterpart] } : {}),
+    }))
     .sort((a, b) => b.cards - a.cards || a.key.localeCompare(b.key));
 }
 
 /** Census the whole corpus: for every event key, how many cards are on each side of it and how
  *  much of the other side actually matches under the engine's own matching rules. */
-export function buildCensus(cards: Iterable<CardTags>, h: Hierarchy): Census {
+export function buildCensus(
+  cards: Iterable<CardTags>,
+  h: Hierarchy,
+  opts: { members?: boolean } = {},
+): Census {
   const prodShapes = new Map<string, Shape>();
   const consShapes = new Map<string, Shape>();
   let n = 0;
@@ -195,5 +211,9 @@ export function buildCensus(cards: Iterable<CardTags>, h: Hierarchy): Census {
     return { key: censusKey(p.event), cards: p.cards, counterpart, selfSupplied: false, authored: p.authored };
   });
 
-  return { cards: n, consumers: rollUp(consumerRows), producers: rollUp(producerRows) };
+  return {
+    cards: n,
+    consumers: rollUp(consumerRows, opts.members),
+    producers: rollUp(producerRows, opts.members),
+  };
 }
