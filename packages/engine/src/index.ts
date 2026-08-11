@@ -44,3 +44,6 @@ export {
   type MechanicSource,
   type MechanicCoverageSummary,
 } from "./mechanics.js";
+export {
+  comb, jointAvailability, LIBRARY, minCopies, pAtLeast, seen,
+} from "./hypergeometric.js";
