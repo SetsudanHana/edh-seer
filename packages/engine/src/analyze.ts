@@ -85,7 +85,14 @@ export interface ArchetypeRanking {
  *  `available: null` means the question does not apply -- a combat trigger the game itself supplies
  *  has no card to draw, and reporting 0% there would invent a hole the deck does not have. */
 export interface DeckMath {
+  /** The turn everything here is priced against: the deck's own measured clock when it has one.
+   *
+   *  It replaces a fixed turn 5 that applied to every deck alike, which design §10.8 calls out as
+   *  the defect -- target turns are Tier C guesses because nothing anchors them. */
   turn: number;
+  /** Where `turn` came from. `corpus-median` means the deck has no combat clock (a mill or alt-win
+   *  deck) and is priced at the median of the 71 calibration decks instead. */
+  turnSource: "clock" | "corpus-median" | "override";
   /** Cards seen by `turn`, i.e. `7 + turn`. Carried so a readout can show its own assumption. */
   seen: number;
   /** Deck size minus the commanders, who are never drawn from it. */

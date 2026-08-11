@@ -243,9 +243,17 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
 
       {/* Not a footnote to look up later. Without these a reader takes 41% as a fact about their
         *  deck rather than about a hypergeometric draw with three stated biases in it. */}
+      {/* The horizon is per-deck now, so a reader comparing two reports has to be told it moved.
+        *  "By turn 5" used to mean the same thing everywhere and no longer does. */}
       <p className="text-xs text-(--muted)">
-        {seen} cards seen by turn {turn}. Supply is unweighted — a repeatable outlet counts the same
-        as a one-shot. No mulligans and no opponent, and card draw is ignored, so each figure is
+        Priced at turn {turn} —{" "}
+        {deckMath.turnSource === "corpus-median"
+          ? "the median of the calibration decks, because this deck has no combat clock"
+          : deckMath.turnSource === "override"
+            ? "a fixed horizon"
+            : "this deck's own clock"}
+        , {seen} cards seen. Supply is unweighted — a repeatable outlet counts the same as a
+        one-shot. No mulligans and no opponent, and card draw is ignored, so each figure is
         conservative for a deck that draws.
       </p>
     </div>

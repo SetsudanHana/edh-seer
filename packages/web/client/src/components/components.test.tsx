@@ -344,6 +344,7 @@ const DECK_MATH = {
     { class: "artifact", count: 0, fromCommandZone: false, available: 0 },
     { class: "graveyard", count: 1, fromCommandZone: true, available: 1 },
   ],
+  turnSource: "clock" as const,
   clock: { turn: 8, powerAtFive: 6.4 },
   wincons: {
     classes: [
@@ -425,6 +426,19 @@ test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () =
   // A colour that pays for itself says so rather than being dropped -- an absent row would read as
   // "not checked".
   expect(screen.getByLabelText(/U, 30 sources, enough/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks says where its turn came from, because it varies per deck", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  // "By turn 5" used to mean the same thing for every deck. Now it is this deck's own clock, and a
+  // reader comparing two reports needs to know the horizon moved.
+  expect(screen.getByText(/this deck's own clock/i)).toBeInTheDocument();
+});
+
+test("a deck with no clock says its turn is the corpus median", () => {
+  const noClock = { ...DECK_MATH, turnSource: "corpus-median" as const, turn: 9, seen: 16, clock: { powerAtFive: 0.4 } };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={noClock} />);
+  expect(screen.getByText(/median of the calibration decks/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks carries the caveat that makes the numbers readable", () => {

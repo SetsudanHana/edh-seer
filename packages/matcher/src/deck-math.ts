@@ -22,6 +22,15 @@ export const ANSWER_CLASSES = [
  *  the panel is a summary, and `bin/deck-availability.ts` prints all of them. */
 const DEMAND_ROWS = 6;
 
+/** The turn a deck with NO combat clock is priced at: the median measured clock across the 71
+ *  calibration decks, which is 9.5, taken DOWN to 9.
+ *
+ *  Measured rather than chosen -- the fixed turn 5 this replaces was a placeholder nothing
+ *  anchored, and design §10.8's whole complaint is that target turns are Tier C guesses. Rounded
+ *  down because a shorter horizon sees fewer cards and so understates availability: if this default
+ *  is wrong, it should be wrong in the direction that does not flatter the deck. */
+export const CORPUS_MEDIAN_CLOCK = 9;
+
 /** The deck-math block of a report: what the deck demands of itself, and what it can answer.
  *
  *  Every number here is a probability of having DRAWN something by a turn, so all of
@@ -35,12 +44,35 @@ export function computeDeckMath(
   deck: readonly DeckCard[],
   hierarchy: Hierarchy,
   commanderNames: readonly string[] = [],
-  turn = 5,
+  turnOverride?: number,
   opts: { comboCards?: readonly string[] } = {},
 ): DeckMath {
   const commanders = new Set(commanderNames);
   const library = deck.length - deck.filter((dc) => commanders.has(dc.card.name)).length;
   const classes = detectAnswerClasses([...deck]);
+
+  // THE DECK'S OWN CLOCK SETS THE HORIZON everything else is priced against (project owner's call,
+  // and the payoff design §12.8 promised for this step). "Do I have an artifact answer in time"
+  // needs a deadline, and a fixed turn 5 was a placeholder for every deck alike.
+  //
+  // THE ASSUMPTION, stated because it is doing real work: your clock stands in for the GAME's
+  // length. The threat you are answering is an opponent's, and no opponent is modelled anywhere in
+  // this layer -- pod analysis is blocked on a data layer that holds one deck. A deck that kills on
+  // turn 6 is priced as though the game ends on turn 6, which is right if the table is racing it and
+  // wrong if it is being ignored.
+  //
+  // The clock is optimistic (nobody blocks), so it lands EARLY, which prices fewer cards seen and
+  // understates availability. The bias runs against flattering the deck, which is the direction to
+  // be wrong in.
+  const curve = pressureCurve(deck, { commanderNames });
+  const clockTurn = curve.find((p) => p.cumulative >= STARTING_LIFE)?.turn;
+  const clock = {
+    ...(clockTurn !== undefined ? { turn: clockTurn } : {}),
+    powerAtFive: Math.round(curve[4].power * 10) / 10,
+  };
+  const turn = turnOverride ?? clockTurn ?? CORPUS_MEDIAN_CLOCK;
+  const turnSource: DeckMath["turnSource"] =
+    turnOverride !== undefined ? "override" : clockTurn !== undefined ? "clock" : "corpus-median";
 
   const answers = ANSWER_CLASSES.map((cls) => {
     const members = classes.get(cls) ?? new Set<string>();
@@ -75,13 +107,6 @@ export function computeDeckMath(
 
   const wincons = winconReport(deck, { comboCards: opts.comboCards });
 
-  const curve = pressureCurve(deck, { commanderNames });
-  const clockTurn = curve.find((p) => p.cumulative >= STARTING_LIFE)?.turn;
-  const clock = {
-    ...(clockTurn !== undefined ? { turn: clockTurn } : {}),
-    powerAtFive: Math.round(curve[4].power * 10) / 10,
-  };
-
   const rec = recommendedLands(deck, { commanderNames });
   const lands = {
     actual: rec.actual,
@@ -91,5 +116,5 @@ export function computeDeckMath(
     fastMana: rec.fastMana,
   };
 
-  return { turn, seen: seen(turn), library, answers, clock, wincons, lands, colors, demand };
+  return { turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors, demand };
 }
