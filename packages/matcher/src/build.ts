@@ -1,5 +1,6 @@
 import type { DeckCard } from "./types.js";
 import type { Archetype } from "./archetypes.js";
+import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
 export type BuildCategory =
@@ -13,121 +14,62 @@ export type BuildCategory =
   | "stax"
   | "protection"
   | "tutor"
+  | "graveyardHate"
   | "lands";
 
 export const BUILD_CATEGORIES: BuildCategory[] = [
-  "ramp", "draw", "cardSelection", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "lands",
+  "ramp", "draw", "cardSelection", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "graveyardHate", "lands",
 ];
 
-/** Structured effect kinds that count as ramp (mirrors analyze.ts's RAMP_EFFECT_KINDS). Tunable. */
-const RAMP_EFFECT_KINDS = new Set(["mana-generation", "fast-mana", "ritual"]);
-
 const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
-const isBasicLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("basic");
-
-// Oracle-text keyword heuristics (NEW this stage). Documented starting points — false positives
-// (e.g. "destroy target" on an Aura you control) are acceptable noise for a first pass; precision
-// is a tuning knob, revisited in verification. All tested case-insensitively.
-const BOARD_WIPE_RE = /destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all/i;
-const TARGETED_REMOVAL_RE = /(destroy|exile)[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1\/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1\/-1 counter|target player sacrifices|target permanent shuffles it into/i;
-// Burn & drain — noncombat life reduction of OPPONENTS/players (damage or life-loss), not creatures.
-const BURN_EFFECT_KINDS = new Set(["non-combat-damage", "noncombat-damage", "player-damage", "drain"]);
-const BURN_RE = /deals? \d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\d+|x) life/i;
-// Damage aimed at a creature is removal, not burn.
-const DAMAGE_REMOVAL_RE = /deals? \d+ damage to target[^.]{0,25}?creature(?: or planeswalker)?/i;
-// Graveyard hate: an EXILE aimed at a graveyard, within the same sentence ([^.]* can't cross a
-// period into an unrelated clause). Catches "exile target opponent's graveyard" (Release to Memory)
-// and "exile ... from a graveyard", without suppressing real removal whose flashback/embalm/later
-// -chapter text merely mentions a graveyard in a DIFFERENT sentence.
-const GRAVEYARD_HATE_RE = /\bexile[^.]*graveyard/i;
-// Stack interaction: hard counters (incl. typed), redirection, and stack-bounce.
-const STACK_RE = /(?:counter|exile) target[^.]*?(?:spell|ability)|change the target of|choose new targets? for|return target (?:\w+ )*spell(?:\W+\w+)*? to (?:its owner's|their|the owner's|owner's) hand/i;
-const PROTECTION_RE = /hexproof|indestructible|protection from|can't be countered|shroud|phases? out/i;
-const TUTOR_RE = /search your library for/i;
-// A search that only fetches lands is ramp/fixing, not a tutor (spec).
-const LAND_FETCH_RE = /search your library for (a |an |up to \w+ )?(basic )?(land|forest|island|swamp|mountain|plains)/i;
-// A nonland spell that puts a fetched land ONTO THE BATTLEFIELD nets +1 land = ramp (Cultivate,
-// Farseek, Rampant Growth). Fetch-to-hand only (no battlefield) is card advantage/fixing, not ramp.
-const ONTO_BATTLEFIELD_RE = /onto the battlefield/i;
-// A land that sacrifices itself to fetch TWO+ lands onto the battlefield nets +1 mana = ramp
-// (Myriad Landscape, Krosan Verge). A fetchland sacrifices for ONE land (net 0) — fixing/landfall,
-// not ramp — so the two-land requirement ("two" / "a X and a Y") is what excludes it.
-const RAMP_LAND_RE = /sacrifice\b[\s\S]*?search your library for (?:up to two|two|a \w+ and an? \w+)[\s\S]*?onto the battlefield/i;
-/** A land that produces 2+ mana from a bare {T} -- Ancient Tomb, Temple of the False God. Net
- *  extra mana per land drop, which is what ramp means, so these fill the ramp role alongside
- *  lands. Anchored on a line/sentence start so the activation cost is ONLY the tap: a filter land
- *  ("{U/R}, {T}: Add {U}{U}") pays mana for its two and is not ramp, and the leading [^.;\n]*
- *  would otherwise let the cost symbols in. A basic adds one symbol and cannot match {2,}. Gated
- *  below on NOT entering tapped: you can't use the mana the turn the land lands, so a land that
- *  enters tapped (the Karoo/bounce cycle, Lotus Field) isn't ramp even if it taps for a lot once
- *  untapped. */
-const BIG_MANA_LAND_RE = /(?:^|[.;\n(])\s*\{t\}\s*:\s*add\s+(?:(?:\{[wubrgcs\d/]+\}\s*){2,}|two|three|four)/i;
-// Covers both templatings: modern "Boros Garrison enters tapped" and older "enters the
-// battlefield tapped".
-const ENTERS_TAPPED_RE = /enters(?: the battlefield)? tapped/i;
-// Makers of sacrifice-for-mana tokens are acceleration = ramp: Treasure/Gold and the Eldrazi
-// Spawn/Scion mana tokens (Big Score, Unexpected Windfall, Glimpse the Impossible).
-const MANA_TOKEN_RE = /create\b[\s\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?/i;
-// Card selection / filtering — distinct from raw draw (scry/surveil/impulse "look at/exile top N").
-const SELECTION_RE = /\bscry\b|\bsurveil\b|look at the top \w+ cards?|exile the top \w+ cards? of your library[\s\S]*?you may play/i;
-// Stax / taxes — resource denial (untap denial, cost taxes). "forced-sacrifice" is excluded:
-// the tagger labels "destroy target permanent" (edict/destroy removal) with this kind too, so
-// including it wrongly flags removal spells (Generous Gift, Stroke of Midnight) as stax.
-const STAX_EFFECT_KINDS = new Set(["tax"]);
-const STAX_RE = /(?:don't|doesn't|can't) untap|spells? cost \{?\d+\}?(?: generic)? (?:more|additional)|players? can't/i;
 
 /** For each card, the set of functional categories it fills. A card may fill several (that's how
- *  double-duty in Stage D is found). Counts derive from set sizes. */
+ *  double-duty in Stage D is found). Counts derive from set sizes.
+ *
+ *  The detectors themselves live in `rules.json` (design §13.7): same amount of code as hardcoding
+ *  them, and it removes the migration a panel would otherwise need. Everything that used to be an
+ *  `if` here is a rule row; the wipe-beats-targeted-removal `else if` is a `not` clause, and the
+ *  land branch's `continue` is a `not typeLine: land` on every nonland rule.
+ *
+ *  The gate for editing them is `bin/build-population.ts` over the 71 calibration decks. Nothing
+ *  else in the repo can see build categories: `population-compare.ts` watches edges and
+ *  `panel-score.ts` watches edge precision, and a detector edit moves neither. */
 export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set<string>> {
   const m = new Map<BuildCategory, Set<string>>();
-  const add = (cat: BuildCategory, name: string): void => {
-    let s = m.get(cat);
-    if (!s) { s = new Set(); m.set(cat, s); }
-    s.add(name);
-  };
+  const set = loadRules();
 
   for (const dc of cards) {
-    const name = dc.card.name;
-    const text = dc.card.oracleText;
-    if (isLand(dc)) {
-      // Only utility (nonbasic) lands fill a notable land ROLE, so a basic never reads as
-      // "double duty". The BUILD lands COUNT is unaffected — computeBuild counts every land copy
-      // via its own landCount reduce, not this set.
-      if (!isBasicLand(dc)) add("lands", name);
-      // A ramp-land (sac for 2+ lands) also fills the ramp role -- net +1 mana, unlike a fetchland.
-      // So does a land that taps for 2+ mana outright, which is the format's most common land ramp
-      // -- unless it enters tapped, which makes it unusable the turn it lands and so not ramp.
-      if (RAMP_LAND_RE.test(text) || (BIG_MANA_LAND_RE.test(text) && !ENTERS_TAPPED_RE.test(text))) add("ramp", name);
-      // Lands with activated/channel removal (Eiganjo) still fill the removal role; graveyard-exile
-      // lands stay excluded via GRAVEYARD_HATE_RE.
-      if ((TARGETED_REMOVAL_RE.test(text) || DAMAGE_REMOVAL_RE.test(text)) && !GRAVEYARD_HATE_RE.test(text)) add("targetedRemoval", name);
-      continue;
+    for (const rule of set.rules) {
+      if (!rule.category || !ruleMatches(rule, dc, set)) continue;
+      const cat = rule.category as BuildCategory;
+      let s = m.get(cat);
+      if (!s) { s = new Set(); m.set(cat, s); }
+      s.add(dc.card.name);
     }
-
-    if (dc.tags) {
-      for (const a of dc.tags.abilities) {
-        if (RAMP_EFFECT_KINDS.has(a.effect.kind)) add("ramp", name);
-        if (a.effect.kind === "draw-card") add("draw", name);
-        if (BURN_EFFECT_KINDS.has(a.effect.kind)) add("burn", name);
-        if (STAX_EFFECT_KINDS.has(a.effect.kind)) add("stax", name);
-      }
-    }
-
-    // Land-ramp spells (fetch a land onto the battlefield) and Treasure makers are ramp too —
-    // the structured effect kinds above miss both.
-    if (LAND_FETCH_RE.test(text) && ONTO_BATTLEFIELD_RE.test(text)) add("ramp", name);
-    if (MANA_TOKEN_RE.test(text)) add("ramp", name);
-    if (SELECTION_RE.test(text)) add("cardSelection", name);
-    if (STACK_RE.test(text)) add("stackInteraction", name);
-    if (BURN_RE.test(text)) add("burn", name);
-    // Wipe takes precedence over targeted removal so a mass effect isn't counted in both.
-    if (BOARD_WIPE_RE.test(text)) add("boardWipe", name);
-    else if ((TARGETED_REMOVAL_RE.test(text) || DAMAGE_REMOVAL_RE.test(text)) && !GRAVEYARD_HATE_RE.test(text)) add("targetedRemoval", name);
-    if (PROTECTION_RE.test(text)) add("protection", name);
-    if (TUTOR_RE.test(text) && !LAND_FETCH_RE.test(text)) add("tutor", name);
-    if (STAX_RE.test(text)) add("stax", name);
   }
 
+  return m;
+}
+
+/** Answer coverage: which classes of threat this deck can actually answer, and with how many
+ *  cards (design §12.3).
+ *
+ *  Separate from `detectBuildCategories` because it is a different axis, not a finer version of the
+ *  same one: `targetedRemoval` collapsed six enumerated types into one boolean, so a deck with
+ *  eleven creature-removal spells and no enchantment answer looked identical to a balanced one.
+ *
+ *  Overlap is the point, not a caveat -- Vindicate covers four classes on one card, so the union is
+ *  far below the sum. Pair this with `deckAvailability`'s hypergeometric to turn a count into
+ *  "P(an answer for this class by turn T)". */
+export function detectAnswerClasses(cards: DeckCard[]): Map<string, Set<string>> {
+  const m = new Map<string, Set<string>>();
+  for (const dc of cards) {
+    for (const cls of answerClassesOf(dc)) {
+      let s = m.get(cls);
+      if (!s) { s = new Set(); m.set(cls, s); }
+      s.add(dc.card.name);
+    }
+  }
   return m;
 }
 
@@ -135,6 +77,12 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
 export const BASE_TARGETS: Record<BuildCategory, number> = {
   ramp: 10, draw: 10, cardSelection: 4, targetedRemoval: 10, stackInteraction: 0, boardWipe: 3,
   burn: 0, stax: 0, protection: 0, tutor: 0, lands: 36,
+  // Target 0 = reported, never scored. The doctrine says every deck should carry graveyard hate
+  // (design 12.3), but it is the one answer class that does NOT scale with count -- one Bojuka Bog
+  // answers a recursion engine not at all -- so a count target would be a Tier C guess dressed as
+  // a number. The honest target comes from required_k plus the static/repeatable axis, both later
+  // steps. Until then a nonzero target here would silently re-tune buildScore for every deck.
+  graveyardHate: 0,
 };
 
 /** Per-archetype target shifts (added to the base, floored at 0). Starting points, tunable. */
@@ -152,13 +100,14 @@ export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<B
  *  situational ones (wipes/protection/tutors) weigh half. Tunable. */
 const CATEGORY_WEIGHT: Record<BuildCategory, number> = {
   ramp: 1, draw: 1, cardSelection: 0.5, targetedRemoval: 1, stackInteraction: 0.5, boardWipe: 0.5,
-  burn: 0.5, stax: 0.5, protection: 0.5, tutor: 0.5, lands: 1,
+  burn: 0.5, stax: 0.5, protection: 0.5, tutor: 0.5, graveyardHate: 0.5, lands: 1,
 };
 
 const LABELS: Record<BuildCategory, string> = {
   ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
   stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain",
-  stax: "Stax", protection: "Protection", tutor: "Tutors", lands: "Lands",
+  stax: "Stax", protection: "Protection", tutor: "Tutors", graveyardHate: "Graveyard hate",
+  lands: "Lands",
 };
 
 /** Full credit within ±3 of the land target, linear falloff to 0 at ±12 (24 or 48 lands). */

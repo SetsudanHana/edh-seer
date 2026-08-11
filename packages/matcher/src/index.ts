@@ -13,6 +13,13 @@ export { classifyEffect, type EffectClass } from "./effect-class.js";
 export {
   deckAvailability, type AvailabilityRow, type AvailabilityOptions,
 } from "./availability.js";
+export {
+  detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, type BuildCategory,
+} from "./build.js";
+export {
+  answerClassesOf, loadRules, ruleMatches, RULES_VERSION,
+  type Rule, type RuleClause, type RuleSet,
+} from "./rules.js";
 export { meshReport, MESH_CAP, type MeshReport, type MeshGroup } from "./mesh.js";
 export {
   buildTagIndex, candidateFromTagIndex, mergeFixtures, pairKey, pickStratum, randomPair, upsertPair,

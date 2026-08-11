@@ -1,0 +1,204 @@
+{
+  "version": 1,
+  "_comment": [
+    "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
+    "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
+    "values already live here behind an evaluator (design 13.7).",
+    "",
+    "SCOPE OF THIS FILE, and the boundary is blast radius, not technical possibility (design 13.3):",
+    "build classifiers ONLY. Each has exactly one consumer -- its own category count. The derive",
+    "parsers stay code (they emit typed schema fields that many gates read), and segment.ts is",
+    "frozen forever because it runs above the paid layer and decides what was bought.",
+    "",
+    "Every pattern is matched case-insensitively against oracle text. Editing one moves every deck,",
+    "so the gate is build-population.ts over the 71 calibration decks -- nothing else in the repo",
+    "can see build categories at all."
+  ],
+
+  "patterns": {
+    "boardWipe": "destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all",
+    "targetedRemoval": "(destroy|exile)[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
+    "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?creature(?: or planeswalker)?",
+    "burn": "deals? \\d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\\d+|x) life",
+    "graveyardHate": "\\bexile[^.]*graveyard",
+    "graveyardHatePositive": "exile[^.]{0,80}?(?:each |all |any number of |target )?(?:player|opponent)s?'s? graveyards?|exile all graveyards|exile[^.]{0,60}?cards?[^.]{0,40}?from (?:a|an opponent's|that) graveyard|exile[^.]{0,60}?target cards? from graveyards|opponent[^.]{0,90}?exiles?[^.]{0,60}?from their graveyard|if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead",
+    "stack": "(?:counter|exile) target[^.]*?(?:spell|ability)|change the target of|choose new targets? for|return target (?:\\w+ )*spell(?:\\W+\\w+)*? to (?:its owner's|their|the owner's|owner's) hand",
+    "protection": "hexproof|indestructible|protection from|can't be countered|shroud|phases? out",
+    "tutor": "search your library for",
+    "landFetch": "search your library for (a |an |up to \\w+ )?(basic )?(land|forest|island|swamp|mountain|plains)",
+    "ontoBattlefield": "onto the battlefield",
+    "rampLand": "sacrifice\\b[\\s\\S]*?search your library for (?:up to two|two|a \\w+ and an? \\w+)[\\s\\S]*?onto the battlefield",
+    "bigManaLand": "(?:^|[.;\\n(])\\s*\\{t\\}\\s*:\\s*add\\s+(?:(?:\\{[wubrgcs\\d/]+\\}\\s*){2,}|two|three|four)",
+    "entersTapped": "enters(?: the battlefield)? tapped",
+    "manaToken": "create\\b[\\s\\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?",
+    "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?|exile the top \\w+ cards? of your library[\\s\\S]*?you may play",
+    "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
+    "typedRemoval": "(?:destroy|exile)[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})"
+  },
+
+  "_answerClasses": [
+    "The doctrine (design 12.3): every deck should carry creature, artifact and enchantment removal,",
+    "graveyard hate, and some land interaction. `permanent` is not a class -- a card that answers",
+    "any permanent answers all of them, so it expands."
+  ],
+  "answerClassAliases": {
+    "permanent": ["creature", "artifact", "enchantment", "planeswalker", "land"]
+  },
+
+  "rules": [
+    {
+      "id": "lands.nonbasic",
+      "category": "lands",
+      "match": [{ "op": "typeLine", "contains": "land" }],
+      "not": [{ "op": "typeLine", "contains": "basic" }],
+      "why": "Only utility lands fill a land ROLE, so a basic never reads as double duty. The build LAND COUNT is separate -- computeBuild counts every land copy itself."
+    },
+    {
+      "id": "ramp.land.fetchesTwo",
+      "category": "ramp",
+      "match": [{ "op": "typeLine", "contains": "land" }, { "op": "oracle", "pattern": "rampLand" }],
+      "why": "A land that sacrifices itself for TWO+ lands nets +1 mana. A fetchland gets one (net 0), which is fixing, not ramp."
+    },
+    {
+      "id": "ramp.land.bigMana",
+      "category": "ramp",
+      "match": [{ "op": "typeLine", "contains": "land" }, { "op": "oracle", "pattern": "bigManaLand" }],
+      "not": [{ "op": "oracle", "pattern": "entersTapped" }],
+      "why": "2+ mana from a bare {T} is a net extra mana per land drop -- unless it enters tapped, which makes it unusable the turn it lands."
+    },
+    {
+      "id": "removal.land",
+      "category": "targetedRemoval",
+      "match": [
+        { "op": "typeLine", "contains": "land" },
+        { "op": "anyOf", "clauses": [
+          { "op": "oracle", "pattern": "targetedRemoval" },
+          { "op": "oracle", "pattern": "damageRemoval" }
+        ] }
+      ],
+      "not": [{ "op": "oracle", "pattern": "graveyardHate" }],
+      "why": "Lands with activated/channel removal (Eiganjo) fill the removal role; graveyard-exile lands do not."
+    },
+
+    {
+      "id": "ramp.effect",
+      "category": "ramp",
+      "match": [{ "op": "effectKind", "in": ["mana-generation", "fast-mana", "ritual"] }],
+      "not": [{ "op": "typeLine", "contains": "land" }]
+    },
+    {
+      "id": "draw.effect",
+      "category": "draw",
+      "match": [{ "op": "effectKind", "in": ["draw-card"] }],
+      "not": [{ "op": "typeLine", "contains": "land" }]
+    },
+    {
+      "id": "burn.effect",
+      "category": "burn",
+      "match": [{ "op": "effectKind", "in": ["non-combat-damage", "noncombat-damage", "player-damage", "drain"] }],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "Noncombat life reduction of PLAYERS. Damage aimed at a creature is removal, and has its own rule."
+    },
+    {
+      "id": "stax.effect",
+      "category": "stax",
+      "match": [{ "op": "effectKind", "in": ["tax"] }],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "`forced-sacrifice` is deliberately excluded: the tagger labels edict removal with that kind too, so including it flags Generous Gift as stax."
+    },
+    {
+      "id": "ramp.landFetchSpell",
+      "category": "ramp",
+      "match": [
+        { "op": "oracle", "pattern": "landFetch" },
+        { "op": "oracle", "pattern": "ontoBattlefield" }
+      ],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "Cultivate/Farseek net +1 land. Fetch-to-hand only is card advantage, not ramp."
+    },
+    {
+      "id": "ramp.manaToken",
+      "category": "ramp",
+      "match": [{ "op": "oracle", "pattern": "manaToken" }],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "Treasure/Gold and Eldrazi Spawn/Scion are acceleration."
+    },
+    {
+      "id": "cardSelection.text",
+      "category": "cardSelection",
+      "match": [{ "op": "oracle", "pattern": "selection" }],
+      "not": [{ "op": "typeLine", "contains": "land" }]
+    },
+    {
+      "id": "stackInteraction.text",
+      "category": "stackInteraction",
+      "match": [{ "op": "oracle", "pattern": "stack" }],
+      "not": [{ "op": "typeLine", "contains": "land" }]
+    },
+    {
+      "id": "burn.text",
+      "category": "burn",
+      "match": [{ "op": "oracle", "pattern": "burn" }],
+      "not": [{ "op": "typeLine", "contains": "land" }]
+    },
+    {
+      "id": "boardWipe.text",
+      "category": "boardWipe",
+      "match": [{ "op": "oracle", "pattern": "boardWipe" }],
+      "not": [{ "op": "typeLine", "contains": "land" }]
+    },
+    {
+      "id": "removal.targeted",
+      "category": "targetedRemoval",
+      "match": [
+        { "op": "anyOf", "clauses": [
+          { "op": "oracle", "pattern": "targetedRemoval" },
+          { "op": "oracle", "pattern": "damageRemoval" }
+        ] }
+      ],
+      "not": [
+        { "op": "typeLine", "contains": "land" },
+        { "op": "oracle", "pattern": "graveyardHate" },
+        { "op": "oracle", "pattern": "boardWipe" }
+      ],
+      "why": "A wipe takes precedence, so a mass effect is not counted in both. That was an else-if in code and is a `not` clause here."
+    },
+    {
+      "id": "protection.text",
+      "category": "protection",
+      "match": [{ "op": "oracle", "pattern": "protection" }],
+      "not": [{ "op": "typeLine", "contains": "land" }]
+    },
+    {
+      "id": "tutor.text",
+      "category": "tutor",
+      "match": [{ "op": "oracle", "pattern": "tutor" }],
+      "not": [
+        { "op": "typeLine", "contains": "land" },
+        { "op": "oracle", "pattern": "landFetch" }
+      ],
+      "why": "A search that only fetches lands is fixing, not a tutor."
+    },
+    {
+      "id": "stax.text",
+      "category": "stax",
+      "match": [{ "op": "oracle", "pattern": "stax" }],
+      "not": [{ "op": "typeLine", "contains": "land" }]
+    },
+
+    {
+      "id": "graveyardHate",
+      "category": "graveyardHate",
+      "answerClass": "graveyard",
+      "match": [{ "op": "oracle", "pattern": "graveyardHatePositive" }],
+      "why": "Promoted from a negative filter on removal to a category of its own (design 12.3), but NOT with the same pattern. `graveyardHate` (exile...graveyard, still used to veto removal) is deliberately broad: as a negative filter an over-match costs one missed removal count. As a positive category it was wrong on two thirds of what it caught -- delve, encore/escape/craft costs, self-recursion and counter-replacement clauses all say 'exile ... graveyard' about YOUR OWN yard. Measured on the 71 calibration decks: 81 cards, of which Necropotence, Dig Through Time and Mizzix's Mastery are not graveyard hate by any reading. This pattern demands an opponent's or an unowned graveyard, and it adds the STATIC hate the old one could not see at all -- Rest in Peace and Leyline of the Void say 'graveyard' before 'exile', so an exile-first pattern misses the two most important cards in the class."
+    },
+    {
+      "id": "answers.typed",
+      "answerClassFrom": "typedRemoval",
+      "match": [{ "op": "oracle", "pattern": "typedRemoval" }],
+      "not": [{ "op": "oracle", "pattern": "graveyardHate" }],
+      "why": "The same enumeration `targetedRemoval` already carries, captured instead of collapsed to a boolean. Answer classes are a SEPARATE axis from build categories: a card is in both, and this rule deliberately does not exclude board wipes, because a wipe does answer creatures."
+    }
+  ]
+}
