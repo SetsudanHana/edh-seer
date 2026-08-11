@@ -13,7 +13,8 @@ import { ART_RADIUS, rimArcs, rimHues, OVERFLOW_HUE, ROOMS, roomLayout, roomTall
 export { ART_RADIUS };
 import { cardFacts, PRESETS, roomsForFacts } from "./presets.js";
 import {
-  createBoardSimulation, DEFAULT_PARAMS, nodeRadius, universalRooms, type BoardParams, type Sim,
+  createBoardSimulation, DEFAULT_PARAMS, nodeRadius, projectRoomMembership, universalRooms,
+  type BoardParams, type Sim,
 } from "./board-force.js";
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx)
@@ -396,6 +397,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     // needs enough to let what changed find its place. See Step 0 / the deck-view-mode stub.
     simulation.alpha(isFirstLayout ? 1 : 0.3);
 
+    // Written by the rAF loop below, read by __graphProbe. A plain `let` rather than a ref: it is
+    // scoped to one run of this effect, so a re-run (preset change, filter toggle) starts from a
+    // fresh 0 instead of reporting the previous board's leftovers until the first tick lands.
+    let unresolved = 0;
+
     // Measurement hook for the readability judge (and for anyone debugging layout in a console):
     // the live simulation state, which is otherwise sealed inside this closure. Read-only snapshot,
     // rebuilt per call. Not dev-gated -- it is a few bytes, it ships no behaviour, and a metric you
@@ -429,6 +435,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           tallies, camZ: camRef.current.z, flipped: [...flippedRef.current],
           rooms: rooms.map((r) => r.id),
           circles: [...roomCirclesNow().entries()].map(([id, c]) => ({ id, x: c.x, y: c.y, r: c.r })),
+          // `unresolved` rides along the same way `circles` and `tallies` do. Zero intrusions or
+          // the board says so -- without this the panel cannot tell a genuinely legal board from
+          // one the projection gave up on, and both look identical in every other metric.
+          unresolved,
           // Exposes the REAL `toWorld` closure (declared further down this effect -- fine, this
           // outer function isn't invoked until well after the whole effect body has run) rather
           // than a reimplementation, so a test exercises the exact screen<->world math the pointer
@@ -727,7 +737,19 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       }
     };
 
-    const loop = () => { simulation.tick(); draw(); raf = requestAnimationFrame(loop); };
+    // The projection runs between tick() and draw() because that is the only point which is after
+    // d3's integration and before anything is painted: a frame must never show a card inside a
+    // room it does not belong to, not even for one frame. See board-force.ts's doc comment.
+    //
+    // simCards is hoisted out of the loop -- the filter would otherwise rebuild a 94-element array
+    // every frame for a membership set that cannot change without this effect re-running.
+    const simCards = nodes.filter((n) => n.kind === "card");
+    const loop = () => {
+      simulation.tick();
+      unresolved = projectRoomMembership(simCards, roomCirclesNow(), roomsByNode);
+      draw();
+      raf = requestAnimationFrame(loop);
+    };
     loop();
 
     // Room geometry is now derived from card positions (roomCirclesNow(), recomputed every
@@ -947,10 +969,12 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const nodes = probe() as (
       { kind: string; x: number; y: number; rooms: readonly string[] | null }[]
       & { circles?: readonly { id: string; x: number; y: number; r: number }[] }
+      & { unresolved?: number }
     );
     return {
       cards: nodes.filter((n) => n.kind === "card"),
       circles: nodes.circles ?? [],
+      unresolved: nodes.unresolved ?? 0,
     };
   }, []);
 

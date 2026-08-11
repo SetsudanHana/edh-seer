@@ -217,6 +217,28 @@ test("exposes each card's rooms on the measurement probe", () => {
   expect(card.rooms!.length).toBeGreaterThan(0);
 });
 
+test("the probe reports how many cards the projection could not place", () => {
+  // Seeding reads Math.random (seedPosition's fallback), so without this the initial layout --
+  // and therefore whether the projection has any conflict left after settling -- differs run to
+  // run. Same pin the containment test below uses.
+  vi.spyOn(Math, "random").mockReturnValue(0);
+  let nextFrame: FrameRequestCallback | null = null;
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+  makeContextSpy();
+  const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+    __graphProbe?: () => { unresolved?: number };
+  };
+  // Driven to a settled board first, and that is the whole point of the field. On the MOUNT frame
+  // this reads 1: the pass is handed a circle snapshot taken before it moved anything, and every
+  // circle is derived from its own members' positions (roomLayout), so the count it returns is
+  // against geometry the pass itself has just invalidated. One frame later the circles have caught
+  // up. `toBe(0)` rather than a truthiness check, so a missing field fails instead of passing.
+  for (let i = 0; i < 200; i++) nextFrame!(0);
+  expect(canvas.__graphProbe!().unresolved).toBe(0);
+});
+
 // Since Task 6, non-card kinds start hidden -- and hidden nodes are filtered out of the probe
 // (see `visible`/`__graphProbe` in GraphView.tsx) -- so a bare render's probe now holds only card
 // nodes and `.find((n) => n.kind !== "card")` would find nothing. Click the subtype chip on first,
@@ -1143,14 +1165,16 @@ test("containment moves a member card toward its room", () => {
     const circle = probe.circles.find((c) => c.id === "ramp")!;
     return Math.hypot(a.x - circle.x, a.y - circle.y) - (circle.r - ART_RADIUS);
   };
-  // The mount-time render already ran one frame (see the search-ring test's doc comment above),
-  // so this already reflects one tick of containment -- still comfortably outside at ~249 units
-  // apart against a rim a few dozen units out.
-  const before = pastRim();
-  expect(before).toBeGreaterThan(0);
-  for (let i = 0; i < 199; i++) nextFrame!(0); // 199 more: 200 ticks total since mount, past the
-  // settled equilibrium measured above.
-  expect(pastRim()).toBeLessThan(before);
+  // Was: "starts outside the rim (~249 units out), and 200 ticks of containment pull it closer".
+  // projectRoomMembership makes that unobservable -- a SINGLE-room card is inside its own room by
+  // the end of the mount frame, positionally, not over 200 ticks of a soft force. So the assertion
+  // is now the post-condition rather than the trend: inside on the first frame, and still inside
+  // once the board has settled. containment itself is unit-tested at the force that owns it
+  // (board-force.test.ts), and it still does the real work for cards in TWO OR MORE rooms, which
+  // the projection deliberately leaves alone.
+  expect(pastRim()).toBeLessThanOrEqual(0);
+  for (let i = 0; i < 199; i++) nextFrame!(0);
+  expect(pastRim()).toBeLessThanOrEqual(0);
 });
 
 // The whole-component repro of the roomless-card guard (Finding 1, final review) lived here and

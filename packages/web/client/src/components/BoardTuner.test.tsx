@@ -5,7 +5,7 @@ import { DEFAULT_PARAMS, REPULSION } from "./board-force.js";
 
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
-const emptyProbe = () => ({ cards: [], circles: [] });
+const emptyProbe = () => ({ cards: [], circles: [], unresolved: 0 });
 
 describe("slider scale", () => {
   test("every knob round-trips its own default", () => {
@@ -37,6 +37,36 @@ describe("BoardTuner", () => {
   test("renders one slider per knob", () => {
     render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={emptyProbe} />);
     expect(screen.getAllByRole("slider")).toHaveLength(KNOBS.length);
+  });
+
+  test("reports unresolved cards as a hard condition", () => {
+    vi.useFakeTimers();
+    const probe = () => ({ cards: [], circles: [], unresolved: 2 });
+    render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(screen.getByTestId("metric-unresolved")).toHaveTextContent("2");
+    expect(screen.getByTestId("metric-unresolved").className).toContain("warning");
+  });
+
+  test("does not warn when every card was placed", () => {
+    vi.useFakeTimers();
+    const probe = () => ({ cards: [], circles: [], unresolved: 0 });
+    render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(screen.getByTestId("metric-unresolved").className).not.toContain("warning");
+  });
+
+  test("every knob explains what it controls, alongside its constant name", () => {
+    render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={emptyProbe} />);
+    for (const k of KNOBS) {
+      expect(k.what.length).toBeGreaterThan(0);
+      expect(screen.getByText(k.what)).toBeTruthy();
+      // The constant name survives: it is what the copy button emits.
+      expect(screen.getByText(k.key)).toBeTruthy();
+    }
+    // The slider's accessible name stays the constant name, so the copy workflow and the tests
+    // address knobs by the same identifier the source uses.
+    expect(screen.getByLabelText("foreignPush")).toBeTruthy();
   });
 
   test("moving a slider reports the mapped value, not the slider position", () => {
@@ -79,6 +109,7 @@ describe("BoardTuner", () => {
         { x: 1, y: 0, rooms: [] },
       ],
       circles: [{ id: "ramp", x: 0, y: 0, r: 100 }],
+      unresolved: 0,
     });
     render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
     act(() => { vi.advanceTimersByTime(300); });
@@ -93,6 +124,7 @@ describe("BoardTuner", () => {
     const probe = () => ({
       cards: [{ x: 0, y: 0, rooms: [] }, { x: 1, y: 0, rooms: [] }],
       circles: [],
+      unresolved: 0,
     });
     render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
     expect(screen.getByTestId("metric-cards")).toHaveTextContent("2");
@@ -105,10 +137,11 @@ describe("BoardTuner", () => {
     // panel would freeze on its first reading and display it forever. A second, different reading
     // from the same probe is what actually exercises the poll.
     const probe = vi.fn()
-      .mockReturnValueOnce({ cards: [{ x: 0, y: 0, rooms: [] }], circles: [] })
+      .mockReturnValueOnce({ cards: [{ x: 0, y: 0, rooms: [] }], circles: [], unresolved: 0 })
       .mockReturnValue({
         cards: [{ x: 0, y: 0, rooms: [] }, { x: 1, y: 0, rooms: [] }],
         circles: [],
+        unresolved: 0,
       });
     render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
     expect(screen.getByTestId("metric-cards")).toHaveTextContent("1");

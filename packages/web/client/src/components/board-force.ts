@@ -125,6 +125,16 @@ export function foreignPush(
  *  resolved. Stop at the ceiling, count what is left, and spend another 64 next frame. */
 export const PROJECTION_PASSES = 64;
 
+/** How far past a rim counts as past it, in world units. A card is moved to LAND on the rim, and
+ *  `d + cardR` recomputed from the moved position lands a few ulps either side of the radius -- so
+ *  without slack a satisfied card reads as violating by ~1e-14, gets moved again, and reports
+ *  `moved` on every one of the 64 passes. Measured: it burned the whole ceiling and reported both
+ *  cards of a settled two-card board unresolved.
+ *
+ *  1e-6 world units is ~1e-8 of a card radius: far below a pixel at any zoom this board reaches,
+ *  and many orders of magnitude above the residue it exists to absorb. */
+const RIM_SLACK = 1e-6;
+
 /** Enforces room membership positionally: no card sits inside a room it does not belong to, and a
  *  card belonging to EXACTLY ONE room sits inside that one. Reports what it could not satisfy.
  *
@@ -158,6 +168,12 @@ export const PROJECTION_PASSES = 64;
  *  a card that never moved -- "cannot enter" is not enforceable by the intruder alone, which is
  *  why this exists at all rather than a stronger foreignPush.
  *
+ *  `circles` is a SNAPSHOT and stays fixed for the whole call, which also means a card this pass
+ *  moves drags its own room's circle with it on the NEXT frame, not this one. Recomputing the
+ *  layout between passes would chase its own tail -- moving a member moves the circle, which
+ *  re-violates the member -- so the count returned on a chaotic frame can be against geometry the
+ *  pass has already invalidated. It converges as the board settles; read it there.
+ *
  *  ONE GEOMETRY IT CANNOT SOLVE, by construction rather than by budget: a card exactly on the line
  *  joining two overlapping centres. Both pushes are along that line, so it is thrown from A to B
  *  and back at the same two positions forever, while every legal position is off the line. It is
@@ -190,7 +206,7 @@ export function projectRoomMembership(
         const [ux, uy] = d === 0 ? [1, 0] : [dx / d, dy / d];
         // NEAR rim, matching foreignPush, so the soft force and the hard pass agree about "inside".
         const depth = c.r - (d - cardR);
-        if (depth <= 0) continue;
+        if (depth <= RIM_SLACK) continue;
         n.x += ux * depth;
         n.y += uy * depth;
         const vn = n.vx * ux + n.vy * uy;
@@ -202,7 +218,7 @@ export function projectRoomMembership(
         const c = circles.get(mine[0]);
         // FAR rim, matching containment, for the same reason the ejection matches foreignPush.
         const out = c ? Math.hypot(n.x - c.x, n.y - c.y) + cardR - c.r : 0;
-        if (c && out > 0) {
+        if (c && out > RIM_SLACK) {
           const dx = n.x - c.x, dy = n.y - c.y;
           const d = Math.hypot(dx, dy);
           // d is never 0 here: out > 0 with d == 0 would need cardR > c.r, a card bigger than the
@@ -232,12 +248,12 @@ export function projectRoomMembership(
     let illegal = false;
     for (const [id, c] of circles) {
       if (mine.includes(id)) continue;
-      if (c.r - (Math.hypot(n.x - c.x, n.y - c.y) - cardR) > 0) { illegal = true; break; }
+      if (c.r - (Math.hypot(n.x - c.x, n.y - c.y) - cardR) > RIM_SLACK) { illegal = true; break; }
     }
     if (!illegal && mine.length === 1) {
       const c = circles.get(mine[0]);
       // The pass promises both halves, so it has to own both halves in what it reports.
-      if (c && Math.hypot(n.x - c.x, n.y - c.y) + cardR - c.r > 0) illegal = true;
+      if (c && Math.hypot(n.x - c.x, n.y - c.y) + cardR - c.r > RIM_SLACK) illegal = true;
     }
     if (illegal) unresolved++;
   }

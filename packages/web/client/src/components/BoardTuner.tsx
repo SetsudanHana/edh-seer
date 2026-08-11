@@ -5,6 +5,10 @@ import { boardMetrics, countOverlaps, DEFAULT_PARAMS, type BoardParams } from ".
  *  spends 90% of its travel in a range that visibly does nothing. */
 export interface Knob {
   key: keyof BoardParams;
+  /** One line of plain English for what the knob does to the board. The constant NAME stays on the
+   *  row beside it -- it is what the copy button emits and what gets pasted into board-force.ts,
+   *  so a friendly label replacing it would break the one workflow this panel exists for. */
+  what: string;
   min: number;
   max: number;
   log: boolean;
@@ -15,16 +19,16 @@ export interface Knob {
 /** Ranges bracket every value the migration's ten-trial table tried (REPULSION 10..2200), so the
  *  panel can reproduce any published arm. See the design doc's 3. */
 export const KNOBS: readonly Knob[] = [
-  { key: "repulsion", min: 1, max: 2200, log: true },
-  { key: "roomAttraction", min: 1e-4, max: 1e-1, log: true },
-  { key: "containment", min: 1e-4, max: 1e-1, log: true },
-  { key: "foreignPush", min: 1e-4, max: 1e-1, log: true },
-  { key: "linkStiffness", min: 1e-4, max: 1e-1, log: true },
-  { key: "centerPull", min: 1e-5, max: 1e-2, log: true },
-  { key: "velocityDecay", min: 0.01, max: 0.9, log: false },
-  { key: "alphaDecay", min: 0.001, max: 0.1, log: false },
-  { key: "alphaFloor", min: 0, max: 0.2, log: false },
-  { key: "collideIterations", min: 1, max: 4, log: false, step: 1 },
+  { key: "repulsion", what: "how hard every node pushes every other apart", min: 1, max: 2200, log: true },
+  { key: "roomAttraction", what: "pull between two cards per room they share", min: 1e-4, max: 1e-1, log: true },
+  { key: "containment", what: "how hard a room pulls a stray member back inside", min: 1e-4, max: 1e-1, log: true },
+  { key: "foreignPush", what: "how hard a room pushes a non-member out (must stay below containment)", min: 1e-4, max: 1e-1, log: true },
+  { key: "linkStiffness", what: "spring strength along an edge", min: 1e-4, max: 1e-1, log: true },
+  { key: "centerPull", what: "pull toward the origin, for nodes no room claims", min: 1e-5, max: 1e-2, log: true },
+  { key: "velocityDecay", what: "friction -- how much speed is kept between ticks", min: 0.01, max: 0.9, log: false },
+  { key: "alphaDecay", what: "how fast the layout cools toward its resting energy", min: 0.001, max: 0.1, log: false },
+  { key: "alphaFloor", what: "the energy it never cools below, so the board keeps settling", min: 0, max: 0.2, log: false },
+  { key: "collideIterations", what: "passes of disc-overlap resolution per tick", min: 1, max: 4, log: false, step: 1 },
 ];
 
 /** Every slider runs 0..1000 in its own units; these two map that to the knob's real range. A log
@@ -56,6 +60,10 @@ export function fromSlider(k: Knob, position: number): number {
 export interface ProbeSnapshot {
   cards: readonly { x: number; y: number; rooms: readonly string[] | null }[];
   circles: readonly { id: string; x: number; y: number; r: number }[];
+  /** Cards projectRoomMembership could not place within its pass ceiling. Unlike everything else
+   *  here it cannot be recomputed from a snapshot -- it is a fact about the last tick's work, not
+   *  about the resulting geometry, so the board has to hand it over. */
+  unresolved: number;
 }
 
 /** The source constant a param key writes back to, for the copy button. */
@@ -88,7 +96,7 @@ export function BoardTuner({
 }) {
   const [metrics, setMetrics] = useState<
     { cards: number; escapes: { one: number; two: number; threePlus: number }; intrusions: number;
-      overlaps: number }
+      overlaps: number; unresolved: number }
   | null>(null);
 
   useEffect(() => {
@@ -96,7 +104,10 @@ export function BoardTuner({
       const snap = probe();
       if (!snap) return setMetrics(null);
       const { escapes, intrusions } = boardMetrics(snap.cards, snap.circles);
-      setMetrics({ cards: snap.cards.length, escapes, intrusions, overlaps: countOverlaps(snap.cards) });
+      setMetrics({
+        cards: snap.cards.length, escapes, intrusions,
+        overlaps: countOverlaps(snap.cards), unresolved: snap.unresolved,
+      });
     };
     read();
     const id = setInterval(read, POLL_MS);
@@ -146,6 +157,7 @@ export function BoardTuner({
             {k.key}
             <output className="tabular-nums">{formatValue(params[k.key])}</output>
           </span>
+          <span className="text-(--muted) leading-tight" style={{ fontSize: 10 }}>{k.what}</span>
           <input
             type="range"
             aria-label={k.key}
@@ -177,6 +189,11 @@ export function BoardTuner({
             {metric("metric-cards", "cards", metrics.cards, false)}
             {metric("metric-escapes-one", "escapes 1-room", metrics.escapes.one, true)}
             {metric("metric-overlaps", "overlaps", metrics.overlaps, true)}
+            {/* The third hard condition, and the only one that is not a property of the geometry
+              *  in front of you: intrusions and escapes both read zero on a board the projection
+              *  gave up on, because it leaves the cards it could not place exactly where they
+              *  were and they are then counted like any other. */}
+            {metric("metric-unresolved", "unresolved", metrics.unresolved, true)}
             {metric("metric-escapes-two", "escapes 2-room", metrics.escapes.two, false)}
             {metric("metric-escapes-three", "escapes 3+", metrics.escapes.threePlus, false)}
             {metric("metric-intrusions", "intrusions", metrics.intrusions, false)}

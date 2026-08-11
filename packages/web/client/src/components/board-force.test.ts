@@ -28,6 +28,11 @@ import { PRESETS, cardFacts, roomsForFacts } from "./presets.js";
 import inalla from "../fixtures/inalla-graph.json" with { type: "json" };
 import type { CardGraph } from "../types.js";
 
+/** vitest swallows console.log from this file, and the client tsconfig has no node types -- so the
+ *  measurement line below writes to stdout directly with a local declaration rather than pulling
+ *  @types/node into a browser build's typecheck for one line of test output. */
+declare const process: { stdout: { write(s: string): void } };
+
 function card(id: string, x: number, y: number): Sim {
   return { id, kind: "card", label: id, x, y, vx: 0, vy: 0, deg: 0 };
 }
@@ -636,19 +641,15 @@ describe("the settled board, ten trials on inalla.txt", () => {
     expect(trials.map((t) => t.intrusions)).toEqual(new Array(10).fill(0));
   });
 
-  /** A RATCHET on what the projection could not place, in the same idiom the intrusion cap used
-   *  and pair-calibration.test.ts's KNOWN_DEFECT_CAP still does: raise it only with a written
-   *  reason, LOWER it the moment a change improves the number.
+  /** Zero, not a ratchet. A cap of 4 was written here first, on a measured residual that turned
+   *  out to be a defect and not geometry: the pass moves a card to LAND on a rim, and the recheck
+   *  recomputing `d + cardR` from the moved position saw a violation of ~1e-14, moved it again,
+   *  and burned all 64 passes reporting failure on a board that was already legal. RIM_SLACK
+   *  absorbs the residue and the whole residual goes with it.
    *
-   *  Not pinned to zero because zero is not reachable: 0-2 cards per board are genuine geometric
-   *  conflicts, and quadrupling the pass ceiling to 256 does not clear them (measured 2 -> 4 on
-   *  the ejection half alone) -- so this is not a work bound that more passes would buy off. The
-   *  cap is exactly the measured total, and it is what separates the few cards the geometry
-   *  defeated from twenty the projection gave up on. */
-  const UNRESOLVED_CAP = 4;
-  test("the projection places every card but a capped few", () => {
-    const total = trials.reduce((sum, t) => sum + t.unresolved, 0);
-    expect(total).toBeLessThanOrEqual(UNRESOLVED_CAP);
+   *  Pinned per trial rather than as a total, because after the fix there is nothing to trade. */
+  test("the projection places every card, in any trial", () => {
+    expect(trials.map((t) => t.unresolved)).toEqual(new Array(10).fill(0));
   });
 });
 
