@@ -266,6 +266,55 @@ test("Lazotep Quarry recurs from its own graveyard, which is not hate", () => {
   expect(classes.get("graveyard")?.recurring.has("Lazotep Quarry") ?? false).toBe(false);
 });
 
+/** Ground Seal, fetched from the corpus: "Cards in graveyards can't be the targets of spells or
+ *  abilities." A prohibition must name WHAT it prohibits -- "can't be the targets of" is graveyard
+ *  PROTECTION, the thing a graveyard deck runs AGAINST hate, not hate itself. The unnarrowed
+ *  `cards? in [^.]{0,40}graveyards?[^.]{0,30}can'?t` (no verb) read this as hate with its sign
+ *  inverted; corpus-wide it also caught Underworld Cerberus and Dennick the same way, plus three
+ *  cards with no graveyard interaction at all (Demoralize, Exquisite Firecraft, Gilded Cerodon --
+ *  a threshold/spell-mastery/desert template). None of the 8 cards the narrowed pattern drops
+ *  appears in the 71 calibration decks. */
+test("graveyard protection is not graveyard hate, however it phrases the prohibition", () => {
+  const classes = detectAnswerClasses([
+    mk("Ground Seal", "When this enchantment enters, draw a card.\nCards in graveyards can't be the targets of spells or abilities.", "Enchantment"),
+  ]);
+  expect(classes.get("graveyard")?.cards.has("Ground Seal") ?? false).toBe(false);
+  expect(classes.get("graveyard")?.recurring.has("Ground Seal") ?? false).toBe(false);
+});
+
+/** Long Road Home, fetched from the corpus: "Exile target creature. At the beginning of the next
+ *  end step, return that card to the battlefield under its owner's control with a +1/+1 counter on
+ *  it." A blink is the LEAST recursion-proof answer there is -- the threat comes straight back, on a
+ *  timer the opponent doesn't even have to work for -- so an exile mark on one is worse than the
+ *  count claim it rides on. It targets any creature (no "you control"), so it stays in `count` via
+ *  `typedRemoval` exactly as before; only the NEW rule's `not` clause touches it, and only the mode.
+ *  Paired with a real exile removal in the same test: either half alone passes with a broken guard. */
+test("a blink exiles a creature but is not a recursion-proof answer, and a real exile still is", () => {
+  const classes = detectAnswerClasses([
+    mk("Long Road Home", "Exile target creature. At the beginning of the next end step, return that card to the battlefield under its owner's control with a +1/+1 counter on it.", "Instant"),
+    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power."),
+  ]);
+  expect(classes.get("creature")?.cards.has("Long Road Home")).toBe(true);
+  expect(classes.get("creature")?.exiling.has("Long Road Home") ?? false).toBe(false);
+  expect(classes.get("creature")?.cards.has("Swords to Plowshares")).toBe(true);
+  expect(classes.get("creature")?.exiling.has("Swords to Plowshares")).toBe(true);
+});
+
+/** Staff of Compleation, fetched from the corpus: "{T}, Pay 1 life: Destroy target permanent you
+ *  own." It is a genuine (self-targeted) destroy with no return clause -- not a blink -- and it was
+ *  a count member before this branch touched anything. The "you own" exile guard added for Venser
+ *  and Slip On the Ring is scoped to the exile-mode rule only, exactly to avoid excluding this card
+ *  from `count`: population-gated, this card left all five answer classes the first time the guard
+ *  was written generically, which is the regression this test pins against. */
+test("a self-destroy with no return clause keeps its count, even though it says 'you own'", () => {
+  const classes = detectAnswerClasses([
+    mk("Staff of Compleation", "{T}, Pay 1 life: Destroy target permanent you own.\n{T}, Pay 2 life: Add one mana of any color.\n{T}, Pay 3 life: Proliferate.\n{T}, Pay 4 life: Draw a card.\n{5}: Untap this artifact.", "Artifact"),
+  ]);
+  for (const cls of ["creature", "artifact", "enchantment", "planeswalker", "land"]) {
+    expect(classes.get(cls)?.cards.has("Staff of Compleation"), cls).toBe(true);
+  }
+});
+
 /** The five type classes have no recurring rule at all, so they are empty by construction rather
  *  than by a special case -- if this ever fails, a mode leaked out of the graveyard rule. */
 test("only graveyard carries a recurring mark", () => {

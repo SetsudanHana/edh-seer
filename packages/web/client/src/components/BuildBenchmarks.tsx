@@ -98,8 +98,15 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                 ? `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}${modeLabel}, always (commander)`
                 : `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}${modeLabel}, ${pct(a.available)} by turn ${turn}${shortfall}`;
             return (
-              <li key={a.class} className="flex items-center gap-3 text-sm" aria-label={label}>
-                <span className="w-24 shrink-0 capitalize">{a.class}</span>
+              // Fixed columns (label/count/shortfall/pct) plus their gaps ran to 320px at a 390px
+              // viewport, leaving the bar this row is built about ~6px wide -- not overflowing (the
+              // bar is a flex child, not text with a min-content floor) but effectively gone, which
+              // is not legible even though nothing spills. `gap-2` and a narrower label buy the bar
+              // back to ~38px there without moving anything on desktop, where the bar already has
+              // hundreds of spare pixels: measured at 390px, before 326px row / 6px bar, after
+              // 326px row / 38px bar, zero overflow either way.
+              <li key={a.class} className="flex items-center gap-2 text-sm" aria-label={label}>
+                <span className="w-20 shrink-0 capitalize">{a.class}</span>
                 <span className="flex-1 h-1.5 rounded-full bg-(--separator) overflow-hidden">
                   <span
                     className={`block h-full rounded-full ${none ? "bg-(--warning)" : "bg-(--success)"}`}

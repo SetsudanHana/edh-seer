@@ -173,6 +173,14 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // answers from 3 to 4. "you don't control" does not contain "you control", so the negation
         // survives this check without needing its own clause.
         if (/\byou control\b/.test(phrase)) continue;
+        // "You own" is the same claim in different words -- a permanent can be controlled by
+        // someone else while still owned by you, and a planeswalker's own-permanent blink says it
+        // that way (Venser, the Sojourner's +2; Slip On the Ring). Scoped to the EXILE mode only,
+        // not to every rule sharing this sweep: `answers.typed`'s count must not move (measured --
+        // "target permanent you own" also reaches Staff of Compleation, a plain self-destroy with no
+        // return clause, which is real removal and a pre-existing count member; excluding it here
+        // would drop a card the gate says can never leave a class).
+        if (rule.mode === "exile" && /\byou own\b/.test(phrase)) continue;
         for (const word of Object.keys(KNOWN_CLASSES)) {
           if (!new RegExp(`\\b${word}\\b`).test(phrase)) continue;
           for (const cls of set.answerClassAliases[word] ?? [word]) {
