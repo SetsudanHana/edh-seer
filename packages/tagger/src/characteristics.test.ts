@@ -61,7 +61,7 @@ test("a multi-face type line contributes BOTH faces, with no separator junk", ()
   expect(c.subtypes).toEqual(["dog", "warlock"]);
 });
 
-test("a TRANSFORM card records its front face separately", () => {
+test("a TRANSFORM card's only PLAYABLE face is its front", () => {
   // Dowsing Device // Geode Grotto, layout "transform". The union is right for what the permanent
   // can BE on the battlefield -- it really does become a Land once transformed -- and wrong for
   // what enters or is cast, because only the front face is ever played. Judged twice: "transform
@@ -71,31 +71,36 @@ test("a TRANSFORM card records its front face separately", () => {
     ...inalla, typeLine: "Artifact // Land — Cave", layout: "transform",
   });
   expect(c.types).toEqual(["artifact", "land"]);
-  expect(c.front).toEqual({ types: ["artifact"], subtypes: [] });
+  expect(c.faces).toEqual([{ types: ["artifact"], subtypes: [] }]);
 });
 
-test("a FLIP card records its front face too -- the back is reached in play, never cast", () => {
+test("a FLIP card's only playable face is its front too -- the back is reached in play", () => {
   const c = extractCharacteristics({
     ...inalla,
     typeLine: "Creature — Rat Rogue // Legendary Creature — Rat Wizard",
     layout: "flip",
   });
-  expect(c.front).toEqual({ types: ["creature"], subtypes: ["rat", "rogue"] });
+  expect(c.faces).toEqual([{ types: ["creature"], subtypes: ["rat", "rogue"] }]);
 });
 
-test("layouts whose every face is castable record NO front face", () => {
-  // A modal DFC, an adventure and a split card are all played from either half, so the union is
-  // the honest answer and `front` must stay unset rather than narrow them to face one.
-  for (const layout of ["modal_dfc", "adventure", "split", "prepare", "normal"]) {
+test("a modal DFC, adventure, split and prepare card have EVERY face playable", () => {
+  // Each is really played from either half, one at a time. Kept as separate faces rather than
+  // unioned, because "Instant // Land" is a land that enters OR an instant that is cast -- never a
+  // land that is cast, which is what reading the union as one subject claims.
+  for (const layout of ["modal_dfc", "adventure", "split", "prepare"]) {
     const c = extractCharacteristics({ ...inalla, typeLine: "Instant // Land", layout });
-    expect(c.front, layout).toBeUndefined();
+    expect(c.faces, layout).toEqual([
+      { types: ["instant"], subtypes: [] },
+      { types: ["land"], subtypes: [] },
+    ]);
   }
 });
 
-test("a transform card with one face records no front face", () => {
-  // Nothing to narrow: a single-face type line's front IS the union.
-  const c = extractCharacteristics({ ...inalla, typeLine: "Enchantment — Saga", layout: "transform" });
-  expect(c.front).toBeUndefined();
+test("a single-face card records no faces at all", () => {
+  // Nothing to split: the card IS its one face, and `faces` stays unset so the union is read.
+  expect(extractCharacteristics(inalla).faces).toBeUndefined();
+  expect(extractCharacteristics({ ...inalla, typeLine: "Enchantment — Saga", layout: "transform" }).faces)
+    .toBeUndefined();
 });
 
 test("both faces' subtypes survive, and duplicates collapse", () => {

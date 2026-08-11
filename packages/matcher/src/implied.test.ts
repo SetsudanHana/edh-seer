@@ -39,7 +39,7 @@ test("a transform card's implied events come from its FRONT face only", () => {
   // entirely, though Dowsing Device is an artifact you cast for {2}.
   const ev = impliedEvents({
     ...chars(["artifact", "land"], ["cave"]),
-    front: { types: ["artifact"], subtypes: [] },
+    faces: [{ types: ["artifact"], subtypes: [] }],
   });
   const enters = ev.find((e) => e.verb === "enters")!;
   expect(enters.subject.type).toBe("artifact");
@@ -52,19 +52,73 @@ test("a transform card whose BACK face is the creature implies no attacks", () =
   // typed it a creature, so it supplied attacks and combat-damage it can never make on arrival.
   const ev = impliedEvents({
     ...chars(["enchantment", "creature"], ["saga", "human", "monk"]),
-    front: { types: ["enchantment"], subtypes: ["saga"] },
+    faces: [{ types: ["enchantment"], subtypes: ["saga"] }],
   });
   expect(ev.map((e) => e.verb).sort()).toEqual(["cast", "enters"]);
   expect(ev.find((e) => e.verb === "enters")!.subject.subtype).toBe("saga");
 });
 
-test("without a front face the union still drives the implied events", () => {
-  // A modal DFC really is castable on either half, so nothing narrows and the union is what is
-  // read. PRE-EXISTING and untouched here: `isLand` is checked against that union, so an
-  // Instant // Land MDFC implies enters and NOT cast, though you may cast the instant half. That is
-  // a separate gap in the same family; narrowing it needs a "castable faces" list, not a front face.
-  const ev = impliedEvents(chars(["instant", "land"]));
-  expect(ev.map((e) => e.verb)).toEqual(["enters"]);
+test("a modal DFC casts its spell half AND plays its land half", () => {
+  // Fell the Profane // Fell Mire. Read as one union subject the card was a LAND, so it implied no
+  // cast at all -- 98 corpus MDFCs supplying nothing to any spellcasting payoff -- and the enters
+  // it did imply claimed an INSTANT arrives on the battlefield. Per face, each half is exactly one
+  // of those and never both.
+  const ev = impliedEvents({
+    ...chars(["instant", "land"]),
+    faces: [{ types: ["instant"], subtypes: [] }, { types: ["land"], subtypes: [] }],
+  });
+  expect(ev.filter((e) => e.verb === "cast").map((e) => e.subject.type)).toEqual(["instant"]);
+  expect(ev.filter((e) => e.verb === "enters").map((e) => e.subject.type)).toEqual(["land"]);
+});
+
+test("an adventure creature enters as the CREATURE, never as the sorcery", () => {
+  // Faerie Guidemother // Gift of the Fae. Both halves are cast, so both contribute a cast -- but
+  // only the creature half ever hits the battlefield or attacks.
+  const ev = impliedEvents({
+    ...chars(["creature", "sorcery"], ["faerie", "adventure"]),
+    faces: [
+      { types: ["creature"], subtypes: ["faerie"] },
+      { types: ["sorcery"], subtypes: ["adventure"] },
+    ],
+  });
+  expect(ev.filter((e) => e.verb === "cast").map((e) => e.subject.type).sort()).toEqual(["creature", "sorcery"]);
+  expect(ev.filter((e) => e.verb === "enters").map((e) => e.subject.type)).toEqual(["creature"]);
+  expect(ev.filter((e) => e.verb === "attacks").map((e) => e.subject.type)).toEqual(["creature"]);
+});
+
+test("only the creature face carries power and toughness", () => {
+  // Marang River Regent // Coil and Catch is a 4/4 Dragon and an Instant — Omen. The instant is not
+  // a 4/4, and a stats-conditioned consumer must not be told it is.
+  const ev = impliedEvents({
+    ...chars(["creature", "instant"], ["dragon", "omen"]),
+    power: "4", toughness: "4",
+    faces: [
+      { types: ["creature"], subtypes: ["dragon"] },
+      { types: ["instant"], subtypes: ["omen"] },
+    ],
+  });
+  const creature = ev.find((e) => e.verb === "cast" && e.subject.type === "creature")!;
+  const instant = ev.find((e) => e.verb === "cast" && e.subject.type === "instant")!;
+  expect(creature.subject.power).toBe(4);
+  // 0 is how `parseStat` reports "no printed power", and is exactly what a single-face instant
+  // reads -- so the spell half is now indistinguishable from any other instant, which is the point.
+  expect(instant.subject.power).toBe(0);
+  expect(instant.subject.toughness).toBe(0);
+  expect(impliedEvents(chars(["instant"]))[0].subject.power).toBe(0);
+});
+
+test("identical faces collapse rather than emitting the same event twice", () => {
+  // Wear // Tear is Instant // Instant.
+  const ev = impliedEvents({
+    ...chars(["instant"]),
+    faces: [{ types: ["instant"], subtypes: [] }, { types: ["instant"], subtypes: [] }],
+  });
+  expect(ev.map((e) => e.verb)).toEqual(["cast"]);
+});
+
+test("without faces the union still drives the implied events", () => {
+  const ev = impliedEvents(chars(["creature"], ["wizard"]));
+  expect(ev.map((e) => e.verb).sort()).toEqual(["attacks", "cast", "combat-damage", "enters"]);
 });
 
 test("a single subtype collapses to a bare string (matches SubjectFilter convention)", () => {

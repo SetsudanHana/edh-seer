@@ -8,29 +8,37 @@ const FACE_SEP = " // ";
 
 /** Layouts where only the FRONT face is ever cast or played. The back is reached by transforming
  *  or flipping a permanent already on the battlefield, which is not a zone change: no card enters,
- *  and no spell is cast. Everything else that carries two faces really is playable from either —
- *  a modal DFC, an adventure, a split card, a `prepare` card's copied spell — so the union of both
- *  faces is the honest answer there and this list must stay a short allow-list, not a reject one. */
+ *  and no spell is cast. This must stay a short ALLOW-list rather than a reject one — everything
+ *  else that carries two faces really is playable from either side (a modal DFC, an adventure, a
+ *  split card, a `prepare` card's copied spell), and a reject-list would silently narrow whatever
+ *  layout gets printed next. */
 const FRONT_FACE_ONLY = new Set(["transform", "flip"]);
 
-/** The front face's types and subtypes, when they are narrower than the union of every face.
- *  `undefined` means "the union already is the front face" — a single-face card, or a layout whose
- *  back face is castable in its own right. */
-export function frontFace(typeLine: string, layout?: string): Characteristics["front"] {
-  if (!layout || !FRONT_FACE_ONLY.has(layout)) return undefined;
-  const [first, ...rest] = typeLine.split(FACE_SEP);
-  if (rest.length === 0) return undefined;
-  const [types, subtypes] = splitTypeLine(first);
-  return { types, subtypes };
+/** The faces this card can actually be PLAYED as, one at a time — each with its own types and
+ *  subtypes, never merged. `undefined` for a single-face card, where the card is its one face and
+ *  the union already says everything.
+ *
+ *  Merging is what the union does, and it is right for what a permanent can BE on the battlefield
+ *  and wrong for what enters or is cast. Read as one subject, "Instant // Land" is a land that gets
+ *  cast and an instant that enters the battlefield — neither of which happens. Per face it is a
+ *  land that enters OR an instant that is cast, which is exactly the card. */
+export function playableFaces(typeLine: string, layout?: string): Characteristics["faces"] {
+  const parts = typeLine.split(FACE_SEP);
+  if (parts.length < 2) return undefined;
+  const playable = layout && FRONT_FACE_ONLY.has(layout) ? parts.slice(0, 1) : parts;
+  return playable.map((face) => {
+    const [types, subtypes] = splitTypeLine(face);
+    return { types, subtypes };
+  });
 }
 
 export function extractCharacteristics(card: Card): Characteristics {
   const [left, right] = splitTypeLine(card.typeLine);
-  const front = frontFace(card.typeLine, card.layout);
+  const faces = playableFaces(card.typeLine, card.layout);
   return {
     types: left,
     subtypes: right,
-    ...(front ? { front } : {}),
+    ...(faces ? { faces } : {}),
     colors: card.colors,
     identity: card.colorIdentity ?? [],
     cmc: card.manaValue,

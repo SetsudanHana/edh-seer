@@ -6,7 +6,7 @@
  *
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { connect, loadConfig } from "@mtg/data";
-import { frontFace, splitTypeLine } from "../characteristics.js";
+import { playableFaces, splitTypeLine } from "../characteristics.js";
 import { segment } from "../segment.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
@@ -83,10 +83,10 @@ function charsFrom(doc: {
   power?: string | null; toughness?: string | null; keywords?: string[]; layout?: string;
 }): DerivedTagsDoc["characteristics"] {
   const [types, subtypes] = splitTypeLine(doc.typeLine ?? "");
-  const front = frontFace(doc.typeLine ?? "", doc.layout);
+  const faces = playableFaces(doc.typeLine ?? "", doc.layout);
   return {
     types, subtypes,
-    ...(front ? { front } : {}),
+    ...(faces ? { faces } : {}),
     colors: doc.colors ?? [], identity: doc.colorIdentity ?? [],
     cmc: doc.manaValue ?? 0, power: doc.power ?? null, toughness: doc.toughness ?? null,
     token: false, keywords: (doc.keywords ?? []).map((k) => k.toLowerCase()),

@@ -314,12 +314,16 @@ export interface Ability {
 export interface Characteristics {
   types: string[];
   subtypes: string[];
-  /** The FRONT face's types, present only on a card whose back face is unreachable except by
-   *  transforming or flipping a permanent already in play. `types`/`subtypes` stay the union of
-   *  every face — a transformed Westvale Abbey really is a Demon on the battlefield, and any
-   *  consumer asking what this permanent can BE should still see that. What the union cannot say
-   *  is what ENTERS or is CAST, which is only ever the front face; `impliedEvents` reads this. */
-  front?: { types: string[]; subtypes: string[] };
+  /** The faces this card can be PLAYED as, one at a time, each unmerged. Absent on a single-face
+   *  card. A transform or flip card lists only its front — its back is reached by transforming a
+   *  permanent already in play, which is not a zone change — while a modal DFC, adventure, split or
+   *  `prepare` card lists every face, because each really is castable or playable in its own right.
+   *
+   *  `types`/`subtypes` stay the UNION of every face and are still what a consumer asking what this
+   *  permanent can BE should read: a transformed Westvale Abbey really is a Demon. What the union
+   *  cannot express is what ENTERS or is CAST, since those happen one face at a time.
+   *  `impliedEvents` is its only reader. */
+  faces?: { types: string[]; subtypes: string[] }[];
   colors: string[];
   identity: string[];
   cmc: number;
