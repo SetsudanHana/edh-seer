@@ -120,6 +120,24 @@ test("a self-supplied trigger reports no probability at all, rather than a misle
   expect(row.available).toBeNull();
 });
 
+/** Found on the running app: three Inalla cards want `end-step:any` against zero suppliers, which
+ *  read as 0% -- "your deck cannot reach its own end step". No card ever emits a phase, as the
+ *  tagger's vocabulary note says, so the turn structure supplies it exactly as the game supplies
+ *  combat. */
+test("a phase trigger reports no probability -- the turn supplies it, not a card", () => {
+  const endStep = deckCard("end-step-payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["end-step"], subject: { control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const rows = deckAvailability(fillTo(100, [endStep]), H, { turn: 5 });
+  const row = rows.find((r) => r.key.startsWith("end-step"))!;
+  expect(row.consumers).toBe(1);
+  expect(row.suppliers).toBe(0);
+  expect(row.selfSupplied).toBe(true);
+  expect(row.available).toBeNull();
+});
+
 test("availability rises with the turn, because you have seen more cards", () => {
   const deck = fillTo(100, deckOf(
     [payoff("payoff")],

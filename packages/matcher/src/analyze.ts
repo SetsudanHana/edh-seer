@@ -24,6 +24,7 @@ import { groupEdgesByArchetype } from "./mechanisms.js";
 import { buildAxis, maxAxisWeight } from "./axis.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
+import { computeDeckMath } from "./deck-math.js";
 import { loadThemeStats, UNIFORM_STATS } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
 
@@ -308,6 +309,7 @@ export function analyzeDeckStructured(
     buildScore,
     buildCategories,
     suggestions,
+    deckMath: computeDeckMath(resolved, hierarchy, [...commanderSet]),
     themeMembership: membership,
   };
 }

@@ -130,6 +130,23 @@ test("a card covering two classes in two sentences gets both", () => {
     .toEqual(["artifact", "creature"]);
 });
 
+/** Counting only destroy/exile made a real deck read as 14 removal spells with 3 creature answers.
+ *  A burn spell and a bounce spell both answer a creature, and `targetedRemoval` has always counted
+ *  them -- the two axes disagreeing about the same card is worse than either reading alone. */
+test("damage and bounce answer what they aim at", () => {
+  const classes = detectAnswerClasses([
+    mk("Lightning Bolt", "Lightning Bolt deals 3 damage to any target."),
+    mk("Fire Bolt", "Fire Bolt deals 2 damage to target creature."),
+    mk("Bedevil", "Bedevil deals 3 damage to target creature or planeswalker."),
+    mk("Boomerang", "Return target permanent to its owner's hand."),
+  ]);
+  expect([...(classes.get("creature") ?? [])].sort()).toEqual(["Bedevil", "Boomerang", "Fire Bolt"]);
+  expect(classes.get("planeswalker")?.has("Bedevil")).toBe(true);
+  // "any target" is burn aimed at a player, not removal, and it names no class.
+  expect(classes.get("creature")?.has("Lightning Bolt")).toBe(false);
+  expect([...(classes.get("enchantment") ?? [])]).toEqual(["Boomerang"]);
+});
+
 test("a blink is not an answer, however much it reads like removal", () => {
   const classes = detectAnswerClasses([
     mk("Essence Flux", "Exile target creature you control, then return it to the battlefield under its owner's control."),

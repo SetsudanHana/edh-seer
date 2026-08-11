@@ -78,6 +78,38 @@ export interface ArchetypeRanking {
   confidence: number;
 }
 
+/** Deck-math readouts. Every `available` is P(you have drawn at least one by `turn`), so all of
+ *  `hypergeometric.ts`'s caveats apply: no mulligans, no opponent, and `seen(T) = 7 + T` ignores
+ *  card draw, which makes each figure CONSERVATIVE for a deck that draws.
+ *
+ *  `available: null` means the question does not apply -- a combat trigger the game itself supplies
+ *  has no card to draw, and reporting 0% there would invent a hole the deck does not have. */
+export interface DeckMath {
+  turn: number;
+  /** Cards seen by `turn`, i.e. `7 + turn`. Carried so a readout can show its own assumption. */
+  seen: number;
+  /** Deck size minus the commanders, who are never drawn from it. */
+  library: number;
+  /** One row per answer class in the doctrine's order, INCLUDING classes the deck cannot answer at
+   *  all -- the zero row is the finding. */
+  answers: {
+    class: string;
+    count: number;
+    /** A commander answers this class, so it is available in every game. */
+    fromCommandZone: boolean;
+    available: number;
+  }[];
+  /** The deck's biggest demand shapes: how many cards want the event, how many supply it, and
+   *  whether you will have a supplier. */
+  demand: {
+    key: string;
+    consumers: number;
+    suppliers: number;
+    available: number | null;
+    fromCommandZone: boolean;
+  }[];
+}
+
 export interface DeckReport {
   commanders: string[];
   cards: CardSynergy[];
@@ -107,6 +139,10 @@ export interface DeckReport {
   buildCategories?: { category: string; count: number; target: number }[];
   /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
   suggestions?: string[];
+  /** Deck math: what the deck demands of itself and what it can answer, priced by when you draw
+   *  it. Matcher-only, and structural here for the same reason `buildCategories` is -- this package
+   *  must not depend on @mtg/matcher. */
+  deckMath?: DeckMath;
   /** 0–5 Anchoring facet: does the deck have strong, well-supported payoffs? From absolute
    *  authority. Matcher-only. */
   anchoring?: number;

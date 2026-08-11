@@ -64,6 +64,14 @@ export interface AvailabilityOptions {
  *    rows and this function will not tell you they are the same engine.
  *  - **`seen(T) = 7 + T` ignores draw**, so every figure is conservative for a deck that draws, and
  *    there are no mulligans and no opponent. See `hypergeometric.ts`. */
+/** Verbs the TURN STRUCTURE supplies, not a card. The tagger's own vocabulary note says it: "no
+ *  card supplies your upkeep", which is why these correctly form no edges.
+ *
+ *  Without this they read as the worst holes on the board -- three cards wanting `end-step:any`
+ *  against zero suppliers is 0%, i.e. "your deck cannot reach its own end step". Caught on the
+ *  running app, not by a test, because the fixtures have no phase triggers. */
+const PHASE_VERBS = new Set(["upkeep", "begin-combat", "end-step"]);
+
 export function deckAvailability(
   deck: readonly DeckCard[],
   hierarchy: Hierarchy,
@@ -90,14 +98,17 @@ export function deckAvailability(
     const supplierIdx = row.counterpartIndices ?? [];
     const fromCommandZone = supplierIdx.some((i) => isCommander[i]);
     const librarySuppliers = supplierIdx.filter((i) => !isCommander[i]).length;
+    // Combat is self-supplied because every creature can attack; a phase is self-supplied because
+    // every turn has one. Different reasons, same answer: there is no card to draw.
+    const selfSupplied = row.selfSupplied || PHASE_VERBS.has(row.key.split(":")[0]);
     return {
       key: row.key,
       consumers: row.cards,
       suppliers: supplierIdx.length,
       librarySuppliers,
       fromCommandZone,
-      selfSupplied: row.selfSupplied,
-      available: row.selfSupplied
+      selfSupplied,
+      available: selfSupplied
         ? null
         : fromCommandZone
           ? 1

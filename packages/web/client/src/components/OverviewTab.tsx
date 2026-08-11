@@ -13,7 +13,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
     <div className="flex flex-col gap-6">
       <DeckIdentity cohesion={data.report.cohesion} colorIdentity={data.commanderColorIdentity} strategies={data.report.strategies} />
       <HeadlineScores report={data.report} />
-      <BuildBenchmarks categories={data.report.buildCategories} />
+      <BuildBenchmarks categories={data.report.buildCategories} deckMath={data.report.deckMath} />
       <SuggestionsList suggestions={data.report.suggestions} />
       <HighSynergyCards cards={data.report.cards} />
       <StatTiles avgManaValue={data.report.avgManaValue} />

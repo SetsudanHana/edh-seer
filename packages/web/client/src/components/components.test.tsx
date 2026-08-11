@@ -335,6 +335,54 @@ test("BuildBenchmarks renders a bar per category, flags under-target, omits zero
   expect(screen.getByLabelText(/Ramp 6 of 10, under target/i)).toBeInTheDocument();
 });
 
+const DECK_MATH = {
+  turn: 5,
+  seen: 12,
+  library: 99,
+  answers: [
+    { class: "creature", count: 4, fromCommandZone: false, available: 0.409 },
+    { class: "artifact", count: 0, fromCommandZone: false, available: 0 },
+    { class: "graveyard", count: 1, fromCommandZone: true, available: 1 },
+  ],
+  demand: [
+    { key: "enters:any", consumers: 20, suppliers: 84, available: 1, fromCommandZone: false },
+    { key: "dies:any", consumers: 2, suppliers: 2, available: 0.227, fromCommandZone: false },
+    { key: "attacks:any", consumers: 3, suppliers: 0, available: null, fromCommandZone: false },
+  ],
+};
+
+test("BuildBenchmarks shows answer coverage, including the classes the deck cannot answer", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.getByText(/answers by turn 5/i)).toBeInTheDocument();
+  // A class with zero answers is the finding, so it must be a visible row rather than an omission.
+  expect(screen.getByLabelText(/artifact, no answers/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/creature, 4 cards, 41% by turn 5/i)).toBeInTheDocument();
+  // A commander answer is available every game, and says why rather than just reading 100%.
+  expect(screen.getByLabelText(/graveyard, 1 card, always \(commander\)/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks shows demand against supply, and refuses a number where none applies", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.getByLabelText(/dies:any, 2 cards want it, 2 supply it, 23% by turn 5/i)).toBeInTheDocument();
+  // The game supplies a combat trigger: 0% would invent a hole, 100% would claim a board state
+  // this layer does not model.
+  expect(screen.getByLabelText(/attacks:any, 3 cards want it, the game supplies it/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks carries the caveat that makes the numbers readable", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  // Unweighted supply and no-opponent are not footnotes to look up later: without them a reader
+  // takes 41% as a fact about their deck rather than about a hypergeometric draw.
+  expect(screen.getByText(/unweighted/i)).toBeInTheDocument();
+  expect(screen.getByText(/12 cards seen/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks renders without deck math at all", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+  expect(screen.getByText("Ramp")).toBeInTheDocument();
+  expect(screen.queryByText(/answers by turn/i)).not.toBeInTheDocument();
+});
+
 test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)", () => {
   render(<OverviewTab data={SAMPLE} />);
   expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")

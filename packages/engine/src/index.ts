@@ -8,6 +8,7 @@ export {
   analyzeDeck,
   COMMANDER_BOOST,
   type DeckReport,
+  type DeckMath,
   type SynergyEdge,
   type CardSynergy,
   type ArchetypeGroup,

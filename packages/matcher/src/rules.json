@@ -18,7 +18,7 @@
   "patterns": {
     "boardWipe": "destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all",
     "targetedRemoval": "(destroy|exile)[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
-    "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?creature(?: or planeswalker)?",
+    "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?(?<class>creature(?: or planeswalker)?)",
     "burn": "deals? \\d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\\d+|x) life",
     "graveyardHate": "\\bexile[^.]*graveyard",
     "graveyardHatePositive": "exile[^.]{0,80}?(?:each |all |any number of |target )?(?:player|opponent)s?'s? graveyards?|exile all graveyards|exile[^.]{0,60}?cards?[^.]{0,40}?from (?:a|an opponent's|that) graveyard|exile[^.]{0,60}?target cards? from graveyards|opponent[^.]{0,90}?exiles?[^.]{0,60}?from their graveyard|if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead",
@@ -33,7 +33,8 @@
     "manaToken": "create\\b[\\s\\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?",
     "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?|exile the top \\w+ cards? of your library[\\s\\S]*?you may play",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
-    "typedRemoval": "(?:destroy|exile)[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})"
+    "typedRemoval": "(?:destroy|exile)[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
+    "bounceRemoval": "return target\\s+(?<class>[^.;:]{0,60}?)\\s+to (?:its owner's|their|the owner's|owner's) hand"
   },
 
   "_answerClasses": [
@@ -192,6 +193,18 @@
       "answerClass": "graveyard",
       "match": [{ "op": "oracle", "pattern": "graveyardHatePositive" }],
       "why": "Promoted from a negative filter on removal to a category of its own (design 12.3), but NOT with the same pattern. `graveyardHate` (exile...graveyard, still used to veto removal) is deliberately broad: as a negative filter an over-match costs one missed removal count. As a positive category it was wrong on two thirds of what it caught -- delve, encore/escape/craft costs, self-recursion and counter-replacement clauses all say 'exile ... graveyard' about YOUR OWN yard. Measured on the 71 calibration decks: 81 cards, of which Necropotence, Dig Through Time and Mizzix's Mastery are not graveyard hate by any reading. This pattern demands an opponent's or an unowned graveyard, and it adds the STATIC hate the old one could not see at all -- Rest in Peace and Leyline of the Void say 'graveyard' before 'exile', so an exile-first pattern misses the two most important cards in the class."
+    },
+    {
+      "id": "answers.damage",
+      "answerClassFrom": "damageRemoval",
+      "match": [{ "op": "oracle", "pattern": "damageRemoval" }],
+      "why": "Lightning Bolt answers a creature. Counting only destroy/exile made a deck with 14 removal spells read as having 3 creature answers, which is the kind of gap that makes a reader stop believing the panel."
+    },
+    {
+      "id": "answers.bounce",
+      "answerClassFrom": "bounceRemoval",
+      "match": [{ "op": "oracle", "pattern": "bounceRemoval" }],
+      "why": "A bounce is a weaker answer than a kill -- it answers the board, not the card -- but it is an answer, and `targetedRemoval` has always counted it. The two axes disagreeing on the same card is worse than either reading."
     },
     {
       "id": "answers.typed",
