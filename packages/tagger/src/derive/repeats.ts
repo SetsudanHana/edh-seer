@@ -8,40 +8,52 @@
  *  size of the pod. */
 import type { Ability, Repeats } from "../schema.js";
 
+/** Rules 1-2 read `cost`, not `clauseText`. `segment.ts`'s `classify()` already split an activated
+ *  ability's cost out of the body -- Gogo, Master of Mimicry's clause is `text="Copy target
+ *  activated or triggered ability you control X times."`, `cost="{X}{X}, {T}"` -- so a `clauseText`
+ *  never carries the cost. The extracted cost has no trailing colon either (`act[1].trim()` in
+ *  `classify()` captures everything BEFORE the colon), so neither pattern below anchors on one.
+ *  `Ability.cost` is NOT the channel: `derive.ts` sets it to `""` for every activated ability
+ *  corpus-wide, so it is always empty. The caller must thread the real per-clause cost string in. */
+
 /** Sacrificing the card ITSELF is a one-shot; sacrificing A card of some type is a repeatable
  *  outlet, and conflating them would invert the answer on the commonest sacrifice shape there is.
  *
- *  Checked against real corpus text (segmented `cards.oracleText`, not `cardClauses` -- that
- *  collection stores structured actions, not text). "Sacrifice this token/creature/artifact/
- *  enchantment/land/permanent:" is self, every time it appears (Incubator Drone, Era of Innovation,
- *  Blitzball, ...). "Sacrifice a creature:", "Sacrifice a Food.", "Sacrifice a Blood:" are
- *  repeatable outlets and are correctly left unmatched by this pattern -- they start with the
- *  indefinite article, not "this"/"it"/"~". A card that sacrifices itself by its own printed NAME
- *  instead of "this" (The Filigree Sylex: "...sacrifice The Filigree Sylex:") is not caught here --
- *  this function has no card name to compare against, and that is out of scope for this rule. */
-const SACRIFICES_ITSELF = /sacrifice (?:this|it|~)\b[^:]{0,20}:/i;
-/** Verified against real corpus shapes, including odd labels before the tap (Loopy Lobster:
- *  "Stage 4 — Vigilance. {T}: Draw 2 cards.", Susur Secundi: "12+ | {1}{B}, {T}, Pay 2 life,
- *  Sacrifice a creature: ..."). In every real match found, the {T}/{Q} genuinely belongs to THAT
- *  ability's own cost -- segmentation leaves a label's punctuation (em dash, pipe, "!") in front of
- *  the cost rather than stripping it, it never welds two unrelated abilities' text together on one
- *  clause. No false positive turned up, so the anchor is left as given rather than narrowed on a
- *  hypothetical. */
-const TAP_COST = /^[^:]{0,40}\{[TQ]\}[^:]{0,40}:/;
+ *  Checked against ~60 real `clause.cost` strings (segmented `cards.oracleText`, filtered on a
+ *  `sacrifice` cost). Self, every time: "Sacrifice this land", "Sacrifice this creature",
+ *  "Sacrifice this artifact", "Sacrifice this Aura", "{T}, Sacrifice this land" (Escape Tunnel),
+ *  "...and sacrifice it" (Goblin Bomb). NOT self, correctly left unmatched: "Sacrifice a Food",
+ *  "Sacrifice a creature", "Sacrifice three Treasures", "Sacrifice another creature or artifact",
+ *  "Sacrifice a creature of the chosen type", "Sacrifice a Goblin" -- all indefinite-article
+ *  repeatable outlets. One compound shape found and deliberately NOT special-cased (a single card,
+ *  Urborg Panther: "Sacrifice a creature named Feral Shadow, a creature named Breathstealer, and
+ *  this creature" -- "this" appears but not directly after "sacrifice", so this stays unmatched and
+ *  falls through to `repeatable`; narrowing the pattern for one card isn't worth it). A card
+ *  sacrificing itself by its own printed NAME instead of "this"/"it" (The Filigree Sylex) is out of
+ *  scope -- this function has no card name to compare against. */
+const SACRIFICES_ITSELF = /\bsacrifice (?:this|it|~)\b/i;
+/** Cost is already isolated to the pre-colon segment, so a bare presence check is enough --
+ *  verified against real costs like "{T}, Sacrifice this land", "{1}, {T}, Sacrifice this creature",
+ *  "{X}{R}, {T}, Sacrifice this creature". */
+const TAP_COST = /\{[TQ]\}/;
 const ONCE_EACH_TURN = /\bonce each turn\b/i;
 
-/** Phases that happen on somebody's turn, so `control` says whose. */
-const PHASE_VERBS = new Set(["upkeep", "end-step", "begin-combat", "draw-step", "attacks"]);
+/** Phases that happen on somebody's turn, so `control` says whose. "draw-step" was in the original
+ *  brief but is not a member of the `Verb` union in `schema.ts` -- a draw-step trigger normalizes to
+ *  `unknownTriggers` upstream and never reaches here as that verb, so it was dead. Dropped. */
+const PHASE_VERBS = new Set(["upkeep", "end-step", "begin-combat", "attacks"]);
 
 /** Trigger events that name the card's own arrival or departure -- they happen once. */
 const SELF_EVENTS = new Set(["enters", "dies", "leaves"]);
 
-export function repeatsFor(ability: Ability, clauseText: string): Repeats | undefined {
+export function repeatsFor(ability: Ability, clauseText: string, cost = ""): Repeats | undefined {
   const text = clauseText ?? "";
 
-  // 1-3: cost and explicit limits, most restrictive first.
-  if (SACRIFICES_ITSELF.test(text)) return "once";
-  if (TAP_COST.test(text)) return "per-cycle";
+  // 1-2: the cost, most restrictive first.
+  if (SACRIFICES_ITSELF.test(cost)) return "once";
+  if (TAP_COST.test(cost)) return "per-cycle";
+  // 3: an explicit text limit. Faerie Mastermind's "each turn" and "Activate only once each turn"
+  // both live in the body after the colon, not in the cost.
   if (ONCE_EACH_TURN.test(text)) return "per-turn";
 
   // 4-5: what the ability KIND settles on its own.

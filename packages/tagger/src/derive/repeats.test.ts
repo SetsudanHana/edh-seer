@@ -9,21 +9,34 @@ const triggered = (verbs: string[], subject: Record<string, unknown> = {}): Abil
   trigger: { verbs: verbs as never, subject: { control: "any", token: null, ...subject } as never },
 });
 
+test("rule 1: sacrificing the card ITSELF fires once", () => {
+  // Escape Tunnel: clause.cost="{T}, Sacrifice this land", clause.text="Search your library for a
+  // basic land card...". The self-sacrifice check reads the COST argument, not the body.
+  expect(repeatsFor(activated(), "Exile target card from a graveyard.", "Sacrifice this creature")).toBe("once");
+});
+
+test("rule 1 does NOT fire for a repeatable sacrifice outlet -- indefinite article, not self", () => {
+  // Viscera Seer: clause.cost="Sacrifice a creature", clause.text="Scry 1." Same verb as rule 1,
+  // opposite answer -- conflating "this" with "a" inverts the commonest sacrifice shape there is.
+  expect(repeatsFor(activated(), "Scry 1.", "Sacrifice a creature")).toBe("repeatable");
+});
+
 test("rule 2: a tap cost fires once per ROUND", () => {
-  // Gogo, Master of Mimicry: "{X}{X}, {T}: Copy target activated or triggered ability you control
-  // X times." The tap needs your untap step.
-  expect(repeatsFor(activated(), "{X}{X}, {T}: Copy target activated or triggered ability you control X times.")).toBe("per-cycle");
-  expect(repeatsFor(activated(), "{Q}: Untap target artifact.")).toBe("per-cycle");
+  // Gogo, Master of Mimicry: clause.cost="{X}{X}, {T}", clause.text="Copy target activated or
+  // triggered ability you control X times." The cost is stripped out of the body by segment.ts's
+  // classify() before it ever reaches this function, so the tap has to be read from `cost`.
+  expect(repeatsFor(activated(), "Copy target activated or triggered ability you control X times.", "{X}{X}, {T}")).toBe("per-cycle");
+  expect(repeatsFor(activated(), "Untap target artifact.", "{Q}")).toBe("per-cycle");
 });
 
 test("rule 2 BEATS rule 3 -- the tap is the harder cap", () => {
   // "once each turn" is once per TURN (up to pod-size a round); {T} is once per ROUND. Taking the
   // text rule first would overstate this by the pod size.
-  expect(repeatsFor(activated(), "{T}: Draw a card. Activate only once each turn.")).toBe("per-cycle");
+  expect(repeatsFor(activated(), "Draw a card. Activate only once each turn.", "{T}")).toBe("per-cycle");
 });
 
 test("rule 3: an explicit once-each-turn limit fires once per TURN", () => {
-  expect(repeatsFor(activated(), "{1}: Scry 1. Activate only once each turn.")).toBe("per-turn");
+  expect(repeatsFor(activated(), "Scry 1. Activate only once each turn.", "{1}")).toBe("per-turn");
 });
 
 test("rule 4: a static ability never fires at all", () => {
@@ -55,8 +68,9 @@ test("rule 8: the card's OWN enters/dies fires once; a class-watching trigger do
 });
 
 test("rule 9: an unlimited activated ability is repeatable", () => {
-  // Faerie Mastermind's second ability: "{3}{U}: Each player draws a card." No tap, no limit.
-  expect(repeatsFor(activated(), "{3}{U}: Each player draws a card.")).toBe("repeatable");
+  // Faerie Mastermind's second ability: clause.cost="{3}{U}", clause.text="Each player draws a
+  // card." No tap, no limit.
+  expect(repeatsFor(activated(), "Each player draws a card.", "{3}{U}")).toBe("repeatable");
 });
 
 test("rule 10: what the rules cannot name stays UNSET, never guessed", () => {
