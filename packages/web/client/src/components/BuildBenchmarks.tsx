@@ -64,6 +64,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
   const lands = deckMath.lands;
   const wincons = deckMath.wincons;
   const clock = deckMath.clock;
+  const castability = deckMath.castability;
   return (
     <div className="flex flex-col gap-3 mt-2 pt-3 border-t border-(--separator)">
       <div className="flex flex-col gap-1.5">
@@ -99,6 +100,42 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
           })}
         </ul>
       </div>
+
+      {castability && castability.cards.length > 0 ? (
+        <div className="flex flex-col gap-1.5">
+          <h4 className="eyebrow">Hardest casts</h4>
+          <ul className="flex flex-col gap-1">
+            {castability.cards.map((c) => {
+              const colourPart = c.colors
+                .map((x) => `${pct(x.p)} for ${x.pips} ${x.color}`)
+                .join(", ");
+              return (
+                <li
+                  key={c.name}
+                  className="flex items-center gap-3 text-sm"
+                  aria-label={
+                    `${c.name}, ${pct(c.mana)} to have ${c.turn} mana by turn ${c.turn}`
+                    + (colourPart ? `, ${colourPart}` : "")
+                  }
+                >
+                  <span className="flex-1 truncate">{c.name}</span>
+                  {/* Two columns, never one. Multiplying them would read cleaner and be wrong:
+                    *  both are driven by the same lands, so the correlation is positive -- and it
+                    *  would hide whether the deck's problem is mana or colour. */}
+                  <span className="w-20 shrink-0 text-right tabular-nums">{pct(c.mana)} mana</span>
+                  <span className="w-28 shrink-0 text-right tabular-nums text-(--muted)">
+                    {colourPart || "—"}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="text-xs text-(--muted)">
+            {castability.refused > 0 ? `${castability.refused} cards refused — X costs, delve, convoke and free casts are not priced rather than guessed. ` : ""}
+            {castability.biases}
+          </p>
+        </div>
+      ) : null}
 
       {clock ? (
         <div className="flex flex-col gap-1">

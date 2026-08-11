@@ -6,6 +6,7 @@ import { manaAudit } from "./mana-audit.js";
 import { recommendedLands } from "./land-count.js";
 import { winconReport } from "./wincon.js";
 import { pressureCurve, STARTING_LIFE } from "./pressure.js";
+import { deckCastability } from "./castability.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 /** The classes the doctrine says every deck should be able to answer (design §12.3), in the order
@@ -21,6 +22,9 @@ export const ANSWER_CLASSES = [
 /** How many demand shapes reach the report. The tail is long and mostly single-consumer noise;
  *  the panel is a summary, and `bin/deck-availability.ts` prints all of them. */
 const DEMAND_ROWS = 6;
+
+/** How many of the hardest casts reach the report. */
+const CASTABILITY_ROWS = 4;
 
 /** The turn a deck with NO combat clock is priced at: the median measured clock across the 71
  *  calibration decks, which is 9.5, taken DOWN to 9.
@@ -107,6 +111,18 @@ export function computeDeckMath(
 
   const wincons = winconReport(deck, { comboCards: opts.comboCards });
 
+  const cast = deckCastability(deck, { commanderNames });
+  const castability = {
+    // The hardest few only: a per-card list of 99 rows is a spreadsheet, not a readout, and the
+    // cards a reader can act on are the ones at the bottom.
+    cards: cast.cards.slice(0, CASTABILITY_ROWS).map((c) => ({
+      name: c.name, turn: c.turn, mana: c.mana!,
+      colors: c.colors.map((x) => ({ color: x.color, pips: x.pips, p: x.p })),
+    })),
+    refused: cast.refused,
+    biases: cast.biases,
+  };
+
   const rec = recommendedLands(deck, { commanderNames });
   const lands = {
     actual: rec.actual,
@@ -116,5 +132,8 @@ export function computeDeckMath(
     fastMana: rec.fastMana,
   };
 
-  return { turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors, demand };
+  return {
+    turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,
+    castability, demand,
+  };
 }

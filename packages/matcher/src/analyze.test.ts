@@ -641,3 +641,18 @@ test("a mutual pair (each feeds and is fed by the same partner) appears once in 
   expect(t.topPartners.map((p) => p.name)).toEqual(["Kindred"]);
   expect(t.partnerCount).toBe(1);
 });
+
+/** The turn every deck-math figure is priced against comes from the deck's own clock. The wiring
+ *  that carries it is one argument in this file, and it was passed a hardcoded 5 for a whole
+ *  change: every unit test passed, because they call computeDeckMath directly, and only a live
+ *  deck showed `turnSource: "override"`. This asserts the pipeline, not the maths. */
+test("the report prices deck math at the deck's own clock, not at a fixed turn", () => {
+  const beater = (name: string): DeckCard => ({
+    card: { name, typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 1, power: "5" } as never,
+    tags: null,
+  });
+  const deck = Array.from({ length: 40 }, (_, i) => beater(`Bear-${i}`));
+  const report = analyzeDeckStructured(deck, undefined, H);
+  expect(report.deckMath!.turnSource).not.toBe("override");
+  expect(report.deckMath!.turn).toBe(report.deckMath!.clock.turn);
+});

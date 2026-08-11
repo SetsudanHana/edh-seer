@@ -143,6 +143,23 @@ export interface DeckMath {
     /** Zero-cost repeatable mana, worth a whole land each. */
     fastMana: number;
   };
+  /** The deck's hardest casts, on TWO axes that are never multiplied together: can you have the
+   *  mana, and can you have the colours. The product would read as one clean number and be wrong --
+   *  both axes are driven by the same lands, so their correlation is positive.
+   *
+   *  Wrong in two directions at once, which is why `biases` ships with it: ignores ramp (understates)
+   *  and ignores tapped lands (overstates). Cards whose cost the model cannot represent are REFUSED
+   *  rather than guessed, and counted. */
+  castability: {
+    cards: {
+      name: string;
+      turn: number;
+      mana: number;
+      colors: { color: string; pips: number; p: number }[];
+    }[];
+    refused: number;
+    biases: string;
+  };
   /** Per-colour feasibility: what the deck's own pips demand by each card's own mana value,
    *  against how many sources it runs. Absent colours are colours nothing in the deck costs.
    *

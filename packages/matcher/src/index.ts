@@ -21,6 +21,9 @@ export {
   type Color, type ColorDemand, type ManaAuditRow,
 } from "./mana-audit.js";
 export { landInputs, recommendedLands, type LandRecommendation } from "./land-count.js";
+export {
+  cardCastability, deckCastability, type CardCastability, type DeckCastability,
+} from "./castability.js";
 export { detectWincons, focusIndex, winconReport, type WinconReport } from "./wincon.js";
 export {
   expectedPower, measuredClock, pressureCurve, STARTING_LIFE, type PressurePoint,
