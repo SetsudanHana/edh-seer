@@ -33,6 +33,40 @@ test("a land implies enters only (landfall), never cast", () => {
   expect(ev[0].subject.token).toBe(false);
 });
 
+test("a transform card's implied events come from its FRONT face only", () => {
+  // Dowsing Device // Geode Grotto. The union says land, so the card claimed to supply LANDFALL --
+  // "transform is not an enters event", judged twice -- and being a land suppressed its cast
+  // entirely, though Dowsing Device is an artifact you cast for {2}.
+  const ev = impliedEvents({
+    ...chars(["artifact", "land"], ["cave"]),
+    front: { types: ["artifact"], subtypes: [] },
+  });
+  const enters = ev.find((e) => e.verb === "enters")!;
+  expect(enters.subject.type).toBe("artifact");
+  expect(enters.subject.subtype).toBeUndefined();
+  expect(ev.find((e) => e.verb === "cast")).toBeDefined();
+});
+
+test("a transform card whose BACK face is the creature implies no attacks", () => {
+  // Azusa's Many Journeys // Likeness of the Seeker: Enchantment — Saga on the front. The union
+  // typed it a creature, so it supplied attacks and combat-damage it can never make on arrival.
+  const ev = impliedEvents({
+    ...chars(["enchantment", "creature"], ["saga", "human", "monk"]),
+    front: { types: ["enchantment"], subtypes: ["saga"] },
+  });
+  expect(ev.map((e) => e.verb).sort()).toEqual(["cast", "enters"]);
+  expect(ev.find((e) => e.verb === "enters")!.subject.subtype).toBe("saga");
+});
+
+test("without a front face the union still drives the implied events", () => {
+  // A modal DFC really is castable on either half, so nothing narrows and the union is what is
+  // read. PRE-EXISTING and untouched here: `isLand` is checked against that union, so an
+  // Instant // Land MDFC implies enters and NOT cast, though you may cast the instant half. That is
+  // a separate gap in the same family; narrowing it needs a "castable faces" list, not a front face.
+  const ev = impliedEvents(chars(["instant", "land"]));
+  expect(ev.map((e) => e.verb)).toEqual(["enters"]);
+});
+
 test("a single subtype collapses to a bare string (matches SubjectFilter convention)", () => {
   const ev = impliedEvents(chars(["artifact"], ["equipment"]));
   const enters = ev.find((e) => e.verb === "enters")!;

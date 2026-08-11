@@ -53,10 +53,15 @@ function selfSubject(chars: Characteristics): SubjectFilter {
  *  reads it on every reason it produces; `combatSelfSupplied` in edges.ts also reads it, but only
  *  for combat verbs; see the comment below. */
 export function impliedEvents(chars: Characteristics): GameEvent[] {
-  const types = chars.types.map((t) => t.toLowerCase());
+  // Only the FRONT face is ever cast or played. Transforming or flipping a permanent already on
+  // the battlefield changes no zone, so `Dowsing Device // Geode Grotto` supplies no landfall and
+  // `Dion // Bahamut` is never an enchantment being cast. The union stays on `chars` for everything
+  // asking what the permanent can BE; it is only these baseline events that must narrow.
+  const faced = chars.front ? { ...chars, ...chars.front } : chars;
+  const types = faced.types.map((t) => t.toLowerCase());
   const isLand = types.includes("land");
   const isPermanent = types.some((t) => PERMANENT_TYPES.has(t));
-  const subject = selfSubject(chars);
+  const subject = selfSubject(faced);
   const out: GameEvent[] = [];
   if (!isLand) out.push({ verb: "cast", subject, implied: true });
   if (isPermanent) out.push({ verb: "enters", subject, implied: true });

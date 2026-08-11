@@ -314,6 +314,12 @@ export interface Ability {
 export interface Characteristics {
   types: string[];
   subtypes: string[];
+  /** The FRONT face's types, present only on a card whose back face is unreachable except by
+   *  transforming or flipping a permanent already in play. `types`/`subtypes` stay the union of
+   *  every face — a transformed Westvale Abbey really is a Demon on the battlefield, and any
+   *  consumer asking what this permanent can BE should still see that. What the union cannot say
+   *  is what ENTERS or is CAST, which is only ever the front face; `impliedEvents` reads this. */
+  front?: { types: string[]; subtypes: string[] };
   colors: string[];
   identity: string[];
   cmc: number;

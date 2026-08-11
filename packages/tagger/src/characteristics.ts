@@ -6,11 +6,31 @@ const TYPE_SUBTYPE_SEP = " — ";
 /** The corpus joins a multi-face card's faces into one line: "Creature — Dog Warlock // Instant". */
 const FACE_SEP = " // ";
 
+/** Layouts where only the FRONT face is ever cast or played. The back is reached by transforming
+ *  or flipping a permanent already on the battlefield, which is not a zone change: no card enters,
+ *  and no spell is cast. Everything else that carries two faces really is playable from either —
+ *  a modal DFC, an adventure, a split card, a `prepare` card's copied spell — so the union of both
+ *  faces is the honest answer there and this list must stay a short allow-list, not a reject one. */
+const FRONT_FACE_ONLY = new Set(["transform", "flip"]);
+
+/** The front face's types and subtypes, when they are narrower than the union of every face.
+ *  `undefined` means "the union already is the front face" — a single-face card, or a layout whose
+ *  back face is castable in its own right. */
+export function frontFace(typeLine: string, layout?: string): Characteristics["front"] {
+  if (!layout || !FRONT_FACE_ONLY.has(layout)) return undefined;
+  const [first, ...rest] = typeLine.split(FACE_SEP);
+  if (rest.length === 0) return undefined;
+  const [types, subtypes] = splitTypeLine(first);
+  return { types, subtypes };
+}
+
 export function extractCharacteristics(card: Card): Characteristics {
   const [left, right] = splitTypeLine(card.typeLine);
+  const front = frontFace(card.typeLine, card.layout);
   return {
     types: left,
     subtypes: right,
+    ...(front ? { front } : {}),
     colors: card.colors,
     identity: card.colorIdentity ?? [],
     cmc: card.manaValue,

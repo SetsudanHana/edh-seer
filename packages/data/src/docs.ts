@@ -83,6 +83,10 @@ export function docToCard(d: CardDoc): Card {
     power: d.power,
     toughness: d.toughness,
     ...(d.meldPartner !== undefined ? { meldPartner: d.meldPartner } : {}),
+    // Needed to tell a card castable from either face from one whose back face is only reached in
+    // play. Without it `extractCharacteristics` sees "Artifact // Land — Cave" and cannot know that
+    // no land ever enters.
+    ...(d.layout !== undefined ? { layout: d.layout } : {}),
     // Both were on the documents and dropped here, which is why CLAUDE.md could list producedMana
     // as an available win with nothing consuming it: 2,641 corpus cards carry it and it never
     // reached `Card`. The mana audit is its first consumer.

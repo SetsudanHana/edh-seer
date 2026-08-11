@@ -6,7 +6,7 @@
  *
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { connect, loadConfig } from "@mtg/data";
-import { splitTypeLine } from "../characteristics.js";
+import { frontFace, splitTypeLine } from "../characteristics.js";
 import { segment } from "../segment.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
@@ -80,11 +80,13 @@ function clauseTexts(doc: { oracleText?: string; keywords?: string[]; typeLine?:
  *  faces' types; a local copy of that split is what put "//" into 116 cards' subtypes. */
 function charsFrom(doc: {
   typeLine?: string; colors?: string[]; colorIdentity?: string[]; manaValue?: number;
-  power?: string | null; toughness?: string | null; keywords?: string[];
+  power?: string | null; toughness?: string | null; keywords?: string[]; layout?: string;
 }): DerivedTagsDoc["characteristics"] {
   const [types, subtypes] = splitTypeLine(doc.typeLine ?? "");
+  const front = frontFace(doc.typeLine ?? "", doc.layout);
   return {
     types, subtypes,
+    ...(front ? { front } : {}),
     colors: doc.colors ?? [], identity: doc.colorIdentity ?? [],
     cmc: doc.manaValue ?? 0, power: doc.power ?? null, toughness: doc.toughness ?? null,
     token: false, keywords: (doc.keywords ?? []).map((k) => k.toLowerCase()),

@@ -1,8 +1,13 @@
 export interface Card {
   /** Card name, e.g. "Krenko, Mob Boss". */
   name: string;
-  /** Scryfall type_line, e.g. "Legendary Creature — Goblin Warrior". */
+  /** Scryfall type_line, e.g. "Legendary Creature — Goblin Warrior". Multi-face cards join their
+   *  faces with " // ". */
   typeLine: string;
+  /** Scryfall layout: "normal", "transform", "modal_dfc", "split", "adventure", "flip", … It is
+   *  what separates a two-faced card you may cast from either side from one whose back face is only
+   *  reached by transforming a permanent already in play — the type line alone cannot say. */
+  layout?: string;
   /** Scryfall oracle_text; empty string when the card has none. */
   oracleText: string;
   /** Scryfall keywords, e.g. ["Flying"]. */

@@ -61,6 +61,43 @@ test("a multi-face type line contributes BOTH faces, with no separator junk", ()
   expect(c.subtypes).toEqual(["dog", "warlock"]);
 });
 
+test("a TRANSFORM card records its front face separately", () => {
+  // Dowsing Device // Geode Grotto, layout "transform". The union is right for what the permanent
+  // can BE on the battlefield -- it really does become a Land once transformed -- and wrong for
+  // what enters or is cast, because only the front face is ever played. Judged twice: "transform
+  // is not an enters event" (Geode Grotto, Lost Vale) and a back face leaking into a CAST event
+  // (Dion // Bahamut, keyed cast:enchantment when you cast a Legendary Creature).
+  const c = extractCharacteristics({
+    ...inalla, typeLine: "Artifact // Land — Cave", layout: "transform",
+  });
+  expect(c.types).toEqual(["artifact", "land"]);
+  expect(c.front).toEqual({ types: ["artifact"], subtypes: [] });
+});
+
+test("a FLIP card records its front face too -- the back is reached in play, never cast", () => {
+  const c = extractCharacteristics({
+    ...inalla,
+    typeLine: "Creature — Rat Rogue // Legendary Creature — Rat Wizard",
+    layout: "flip",
+  });
+  expect(c.front).toEqual({ types: ["creature"], subtypes: ["rat", "rogue"] });
+});
+
+test("layouts whose every face is castable record NO front face", () => {
+  // A modal DFC, an adventure and a split card are all played from either half, so the union is
+  // the honest answer and `front` must stay unset rather than narrow them to face one.
+  for (const layout of ["modal_dfc", "adventure", "split", "prepare", "normal"]) {
+    const c = extractCharacteristics({ ...inalla, typeLine: "Instant // Land", layout });
+    expect(c.front, layout).toBeUndefined();
+  }
+});
+
+test("a transform card with one face records no front face", () => {
+  // Nothing to narrow: a single-face type line's front IS the union.
+  const c = extractCharacteristics({ ...inalla, typeLine: "Enchantment — Saga", layout: "transform" });
+  expect(c.front).toBeUndefined();
+});
+
 test("both faces' subtypes survive, and duplicates collapse", () => {
   const adv = extractCharacteristics({ ...inalla, typeLine: "Creature — Human Wizard // Instant — Adventure" });
   expect(adv.types).toEqual(["creature", "instant"]);
