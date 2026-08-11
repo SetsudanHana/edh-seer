@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
-import { deriveAbilities } from "./derive.js";
+import { deriveAbilities, deriveCardTags } from "./derive.js";
+import type { Characteristics } from "../schema.js";
 
 test("one ability per action, sharing the clause kind and trigger", () => {
   // Kaya, Ghost Assassin -2: "Each opponent loses 2 life and you gain 2 life."
@@ -1190,4 +1191,41 @@ test("a self-death trigger still supplies its other emits", () => {
     actions: [{ verb: "create", object: "two 1/1 white Soldier creature tokens" }],
   }], "Some Death Payoff");
   expect(abilities.flatMap((a) => a.emits ?? []).some((e) => e.verb === "enters")).toBe(true);
+});
+
+// Finding 1 (2026-08-11 review): the labelling loop in deriveAbilities and the clauseCosts arg it
+// reads were pinned by NOTHING — `repeats.test.ts` calls `repeatsFor` directly, so `i < abilities
+// .length && false` on the labelling loop, or dropping `clauseCosts` from the deriveCardTags ->
+// deriveAbilities call, both left all 413 tagger tests green. This goes through the real wiring: a
+// {T} cost supplied only via the clauseCosts channel (never clauseTexts) must reach repeatsFor and
+// produce "per-cycle". Verified by hand: disabling the labelling loop fails with
+// "expected undefined to be 'per-cycle'"; dropping the clauseCosts threading in deriveCardTags fails
+// with "expected 'repeatable' to be 'per-cycle'" (an activated ability with no cost falls through to
+// rule 9, repeatable, rather than going unlabelled — still a failure, just a different wrong value).
+const MINIMAL_CHARACTERISTICS: Characteristics = {
+  types: [], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null,
+  token: false, keywords: [],
+};
+
+test("deriveAbilities threads clauseCosts through to repeatsFor's labelling loop", () => {
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "you" }] }],
+    undefined,
+    { 1: "Draw a card." },
+    { 1: "{T}" },
+  );
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0].repeats).toBe("per-cycle");
+});
+
+test("deriveCardTags threads clauseCosts all the way from DeriveInput to the labelled ability", () => {
+  const tags = deriveCardTags({
+    oracleId: "test-oracle-id",
+    clauses: [{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "you" }] }],
+    characteristics: MINIMAL_CHARACTERISTICS,
+    clauseTexts: { 1: "Draw a card." },
+    clauseCosts: { 1: "{T}" },
+  });
+  expect(tags.abilities).toHaveLength(1);
+  expect(tags.abilities[0].repeats).toBe("per-cycle");
 });

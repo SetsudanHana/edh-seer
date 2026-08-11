@@ -51,7 +51,25 @@ test("rule 5: a spell's own cast happens once", () => {
 
 test("rule 6: a phase trigger on YOUR turn is once per round", () => {
   expect(repeatsFor(triggered(["upkeep"], { control: "you" }), "At the beginning of your upkeep, draw a card.")).toBe("per-cycle");
-  expect(repeatsFor(triggered(["attacks"], { control: "you" }), "Whenever this creature attacks, draw a card.")).toBe("per-cycle");
+  // "attacks" is phase-shaped ONLY when self -- see the rule 6/9 attacks tests below.
+  expect(repeatsFor(triggered(["attacks"], { control: "you", self: true }), "Whenever this creature attacks, draw a card.")).toBe("per-cycle");
+});
+
+test("rule 6/9: 'attacks' is once per cycle when SELF, but once per ATTACKER when the subject is a class (finding 3, 2026-08-11 review)", () => {
+  // Weathered Sentinels (real corpus card): "Whenever this creature attacks, it gets +3/+3 and
+  // gains indestructible until end of turn." One creature, one attack trigger per round -- self,
+  // per-cycle is correct.
+  expect(
+    repeatsFor(triggered(["attacks"], { control: "you", self: true, type: "creature" }), "Whenever this creature attacks, it gets +3/+3 and gains indestructible until end of turn."),
+  ).toBe("per-cycle");
+  // Doran, Besieged by Time (real corpus card): "Whenever a creature you control attacks or
+  // blocks, it gets +X/+X until end of turn, where X is the difference between its power and
+  // toughness." Every attacker triggers it separately -- a wide board fires this many times a
+  // round, not once, so `attacks` in PHASE_VERBS was overstating it before the fix (202 abilities
+  // on `attacks:you`, the largest rule-6 group per the design spec's §5 measurement).
+  expect(
+    repeatsFor(triggered(["attacks"], { control: "you", type: "creature" }), "Whenever a creature you control attacks or blocks, it gets +X/+X until end of turn, where X is the difference between its power and toughness."),
+  ).toBe("repeatable");
 });
 
 test("rule 7: a phase trigger on EVERY turn fires up to pod-size times a round", () => {

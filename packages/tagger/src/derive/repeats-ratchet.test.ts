@@ -1,6 +1,5 @@
 import { expect, test } from "vitest";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import type { Ability } from "../schema.js";
 import { repeatsFor } from "./repeats.js";
 
@@ -19,16 +18,40 @@ import { repeatsFor } from "./repeats.js";
  *      return "once";") resolved 8 fixture rows -> "a refused ability that now resolves must be
  *      banked, not silently absorbed" FAILED, naming them: Wall of Limbs, Exemplar of Light, Vito
  *      Thorn of the Dusk Rose, Marauding Blight-Priest, Starscape Cleric, Heliod Sun-Crowned, and
- *      Ratchet Field Medic // Ratchet Rescue Racer (twice, one per face). */
-const FIXTURE = join(__dirname, "repeats-refused.json");
+ *      Ratchet Field Medic // Ratchet Rescue Racer (twice, one per face).
+ *
+ *  THE TWO ARMS ARE NOT EQUIVALENT (2026-08-11 review, finding 2). Arm 2 ("a refused ability that
+ *  now resolves...") is LIVE on every run -- it calls `repeatsFor` fresh against the checked-in
+ *  fixture, so any rule change that newly resolves one of these 579 rows fails immediately. Arm 1
+ *  ("the refused set has not grown") only bounds the CHECKED-IN FIXTURE'S row count; it says nothing
+ *  about the live corpus until a human regenerates `repeats-refused.json` and re-derives, unlike
+ *  `KNOWN_DEFECT_CAP`, which is checked against a live count every run. A code change that makes
+ *  MORE abilities refuse today will not fail this test -- it will only show up once someone reruns:
+ *
+ *    npx tsx --env-file=packages/tagger/.env packages/tagger/src/bin/repeats-report.ts --refused packages/tagger/src/derive/repeats-refused.json
+ *
+ *  and notices the row count moved past REFUSED_CAP. Also note: every row in this fixture carries
+ *  `cost: ""` structurally -- rules 1-2 (`repeats.ts`) run against `cost` BEFORE the trigger branch,
+ *  so any ability with a real, non-empty cost resolves via rule 1 or 2 and can never reach refusal.
+ *  The ratchet reads `cost` correctly; this fixture simply cannot exercise that arm. */
+const FIXTURE = new URL("repeats-refused.json", import.meta.url);
 
 /** Raise ONLY with a written reason. Lower it whenever a rule is added.
  *
  *  Dropped 595 -> 579 (task 4, 2026-08-11): `ORDINAL_EACH_TURN` in `repeats.ts` resolved 16 refused
  *  abilities, including Faerie Mastermind's own trigger -- the card the taxonomy was built around
  *  was itself in the refused set until this rule existed. Verified: population 27380/35037/231 and
- *  panel 82.8% both held after the fix, because nothing reads `repeats` yet. */
-const REFUSED_CAP = 579;
+ *  panel 82.8% both held after the fix, because nothing reads `repeats` yet.
+ *
+ *  Raised 579 -> 621 (finding 3, 2026-08-11 review): `attacks` was pulled out of `PHASE_VERBS` and
+ *  is now phase-shaped only when `subject.self === true` (`repeats.ts`). The 202 `attacks:you`
+ *  abilities that were wrongly resolving to `per-cycle` for a CLASS subject ("whenever a creature
+ *  you control attacks") mostly re-resolve to `repeatable` via rule 9, but some carry no type/
+ *  subtype at all and correctly fall all the way through to refusal -- that is the source of the
+ *  +42 rows. This is a CORRECTNESS fix, not a new gap: a confidently wrong label is worse than an
+ *  honest refusal. Verified after re-deriving: population 27380/35037/231 and panel 82.8% both held,
+ *  because nothing reads `repeats` yet. */
+const REFUSED_CAP = 621;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the

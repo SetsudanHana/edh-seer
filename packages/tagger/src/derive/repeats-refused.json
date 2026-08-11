@@ -1127,6 +1127,30 @@
   }
  },
  {
+  "name": "Chocobo Knights",
+  "clauseText": "Whenever you attack, creatures you control with counters on them gain double strike until end of turn.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "speed-increase",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
+  }
+ },
+ {
   "name": "Sphere Grid",
   "clauseText": "Whenever a creature you control deals combat damage to a player, put a +1/+1 counter on that creature.",
   "cost": "",
@@ -1287,6 +1311,49 @@
  },
  {
   "name": "Loot Dispute",
+  "clauseText": "Whenever you attack the player who has the initiative, create a Treasure token.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "token-generation",
+    "subject": {
+     "control": "any",
+     "token": true,
+     "subtype": "treasure"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "create-token",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "subtype": "treasure"
+     }
+    },
+    {
+     "verb": "enters",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "subtype": "treasure"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Loot Dispute",
   "clauseText": "Whenever you complete a dungeon, create a 5/5 red Dragon creature token with flying.",
   "cost": "",
   "ability": {
@@ -1326,6 +1393,119 @@
       ],
       "type": "creature",
       "subtype": "dragon"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Gimli's Reckless Might",
+  "clauseText": "Whenever you attack, if creatures you control have total power 8 or greater, target attacking creature you control fights up to one target creature you don't control.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "non-combat-damage",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Echoing Assault",
+  "clauseText": "Whenever you attack a player, choose target nontoken creature that's attacking that player. Create a token that's a copy of that creature, except it's 1/1. The token enters tapped and attacking that player. Sacrifice it at the beginning of the next end step.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "token-generation",
+    "subject": {
+     "control": "any",
+     "token": false,
+     "type": "creature",
+     "scope": "target"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "create-token",
+     "subject": {
+      "control": "any",
+      "token": false,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    {
+     "verb": "enters",
+     "subject": {
+      "control": "any",
+      "token": false,
+      "type": "creature",
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Echoing Assault",
+  "clauseText": "Whenever you attack a player, choose target nontoken creature that's attacking that player. Create a token that's a copy of that creature, except it's 1/1. The token enters tapped and attacking that player. Sacrifice it at the beginning of the next end step.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "sacrifice",
+     "subject": {
+      "control": "any",
+      "token": true
+     }
+    },
+    {
+     "verb": "dies",
+     "subject": {
+      "control": "any",
+      "token": true
      }
     }
    ]
@@ -1527,6 +1707,36 @@
      "token": null
     }
    }
+  }
+ },
+ {
+  "name": "Cunning Rhetoric",
+  "clauseText": "Whenever an opponent attacks you and/or one or more planeswalkers you control, exile the top card of that player's library. You may play that card for as long as it remains exiled, and you may spend mana as though it were mana of any color to cast it.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "opp",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "cast",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "fromZone": "exile"
+     }
+    }
+   ]
   }
  },
  {
@@ -2040,6 +2250,32 @@
    "trigger": {
     "verbs": [
      "enters"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
+  }
+ },
+ {
+  "name": "Vivi's Persistence",
+  "clauseText": "",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "graveyard-recursion",
+    "subject": {
+     "control": "any",
+     "token": null,
+     "self": true,
+     "zone": "graveyard"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
     ],
     "subject": {
      "control": "you",
@@ -2759,6 +2995,164 @@
   }
  },
  {
+  "name": "Karlach, Fury of Avernus",
+  "clauseText": "Whenever you attack, if it's the first combat phase of the turn, untap all attacking creatures. They gain first strike until end of turn. After this phase, there is an additional combat phase.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "untap",
+    "subject": {
+     "control": "any",
+     "token": null,
+     "type": "creature",
+     "scope": "all"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "untaps",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Karlach, Fury of Avernus",
+  "clauseText": "Whenever you attack, if it's the first combat phase of the turn, untap all attacking creatures. They gain first strike until end of turn. After this phase, there is an additional combat phase.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "keyword-grant",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
+  }
+ },
+ {
+  "name": "Karlach, Fury of Avernus",
+  "clauseText": "Whenever you attack, if it's the first combat phase of the turn, untap all attacking creatures. They gain first strike until end of turn. After this phase, there is an additional combat phase.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "extra-combat",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
+  }
+ },
+ {
+  "name": "Shaun, Father of Synths",
+  "clauseText": "Whenever you attack, you may create a tapped and attacking token that's a copy of target attacking legendary creature you control other than Shaun, except it's not legendary and it's a Synth artifact creature in addition to its other types.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "token-generation",
+    "subject": {
+     "control": "you",
+     "token": true,
+     "legendary": true,
+     "type": [
+      "creature",
+      "artifact"
+     ],
+     "allTypes": [
+      "artifact",
+      "creature"
+     ],
+     "subtype": "synth",
+     "scope": "target"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "create-token",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "legendary": true,
+      "type": [
+       "creature",
+       "artifact"
+      ],
+      "allTypes": [
+       "artifact",
+       "creature"
+      ],
+      "subtype": "synth",
+      "scope": "target"
+     }
+    },
+    {
+     "verb": "enters",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "legendary": true,
+      "type": [
+       "creature",
+       "artifact"
+      ],
+      "allTypes": [
+       "artifact",
+       "creature"
+      ],
+      "subtype": "synth",
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Font of Mythos",
   "clauseText": "At the beginning of each player's draw step, that player draws two additional cards.",
   "cost": "",
@@ -3035,6 +3429,189 @@
    "emits": [
     {
      "verb": "non-combat-damage",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Karazikar, the Eye Tyrant",
+  "clauseText": "Whenever you attack a player, tap target creature that player controls and goad it.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "taps",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Karazikar, the Eye Tyrant",
+  "clauseText": "Whenever you attack a player, tap target creature that player controls and goad it.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "keyword-grant",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
+  }
+ },
+ {
+  "name": "Karazikar, the Eye Tyrant",
+  "clauseText": "Whenever an opponent attacks another one of your opponents, you and the attacking player each draw a card and lose 1 life.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "draw-card",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "opp",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "draw",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Karazikar, the Eye Tyrant",
+  "clauseText": "Whenever an opponent attacks another one of your opponents, you and the attacking player each draw a card and lose 1 life.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "opp",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "lose-life",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Karazikar, the Eye Tyrant",
+  "clauseText": "Whenever an opponent attacks another one of your opponents, you and the attacking player each draw a card and lose 1 life.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "draw-card",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "opp",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "draw",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Karazikar, the Eye Tyrant",
+  "clauseText": "Whenever an opponent attacks another one of your opponents, you and the attacking player each draw a card and lose 1 life.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "player-life-loss",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "opp",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "lose-life",
      "subject": {
       "control": "any",
       "token": null
@@ -3593,6 +4170,46 @@
  },
  {
   "name": "Swashbuckler Extraordinaire",
+  "clauseText": "Whenever you attack, you may sacrifice one or more Treasures.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "sacrifice",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "treasure",
+      "scope": "all"
+     }
+    },
+    {
+     "verb": "dies",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "treasure",
+      "scope": "all"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Swashbuckler Extraordinaire",
   "clauseText": "When you do, up to that many target creatures gain double strike until end of turn.",
   "cost": "",
   "ability": {
@@ -3867,6 +4484,92 @@
      "subject": {
       "control": "any",
       "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Curse of Opulence",
+  "clauseText": "Whenever enchanted player is attacked, create a Gold token. Each opponent attacking that player does the same.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "token-generation",
+    "subject": {
+     "control": "any",
+     "token": true,
+     "subtype": "gold"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "create-token",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "subtype": "gold"
+     }
+    },
+    {
+     "verb": "enters",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "subtype": "gold"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Curse of Opulence",
+  "clauseText": "Whenever enchanted player is attacked, create a Gold token. Each opponent attacking that player does the same.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "token-generation",
+    "subject": {
+     "control": "any",
+     "token": true,
+     "subtype": "gold"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "create-token",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "subtype": "gold"
+     }
+    },
+    {
+     "verb": "enters",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "subtype": "gold"
      }
     }
    ]
@@ -4821,6 +5524,30 @@
      }
     }
    ]
+  }
+ },
+ {
+  "name": "Stensian Sanguinist // Exsanguinate",
+  "clauseText": "Whenever you attack, target creature gains deathtouch until end of turn.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "keyword-grant",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
   }
  },
  {
@@ -6379,6 +7106,184 @@
   }
  },
  {
+  "name": "Curse of Disturbance",
+  "clauseText": "Whenever enchanted player is attacked, create a 2/2 black Zombie creature token. Each opponent attacking that player does the same.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "token-generation",
+    "subject": {
+     "control": "any",
+     "token": true,
+     "colors": [
+      "B"
+     ],
+     "type": "creature",
+     "subtype": "zombie"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "opp",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "create-token",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "colors": [
+       "B"
+      ],
+      "type": "creature",
+      "subtype": "zombie"
+     }
+    },
+    {
+     "verb": "enters",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "colors": [
+       "B"
+      ],
+      "type": "creature",
+      "subtype": "zombie"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Curse of Disturbance",
+  "clauseText": "Whenever enchanted player is attacked, create a 2/2 black Zombie creature token. Each opponent attacking that player does the same.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "token-generation",
+    "subject": {
+     "control": "any",
+     "token": true,
+     "colors": [
+      "B"
+     ],
+     "type": "creature",
+     "subtype": "zombie"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "opp",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "create-token",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "colors": [
+       "B"
+      ],
+      "type": "creature",
+      "subtype": "zombie"
+     }
+    },
+    {
+     "verb": "enters",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "colors": [
+       "B"
+      ],
+      "type": "creature",
+      "subtype": "zombie"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Curse of Verbosity",
+  "clauseText": "Whenever enchanted player is attacked, you draw a card. Each opponent attacking that player does the same.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "draw-card",
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "draw",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Curse of Verbosity",
+  "clauseText": "Whenever enchanted player is attacked, you draw a card. Each opponent attacking that player does the same.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "draw-card",
+    "subject": {
+     "control": "opp",
+     "token": null,
+     "scope": "each"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "draw",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "each"
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Curse of Fool's Wisdom",
   "clauseText": "Whenever enchanted player draws a card, they lose 2 life and you gain 2 life.",
   "cost": "",
@@ -7449,6 +8354,135 @@
      }
     }
    ]
+  }
+ },
+ {
+  "name": "Mishra, Claimed by Gix",
+  "clauseText": "Whenever you attack, each opponent loses X life and you gain X life, where X is the number of attacking creatures. If Mishra, Claimed by Gix and a creature named Phyrexian Dragon Engine are attacking, and you both own and control them, exile them, then meld them into Mishra, Lost to Phyrexia. It enters tapped and attacking.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "player-life-loss",
+    "subject": {
+     "control": "opp",
+     "token": null,
+     "scope": "each"
+    },
+    "scaling": "x-cost"
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "lose-life",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "each"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Mishra, Claimed by Gix",
+  "clauseText": "Whenever you attack, each opponent loses X life and you gain X life, where X is the number of attacking creatures. If Mishra, Claimed by Gix and a creature named Phyrexian Dragon Engine are attacking, and you both own and control them, exile them, then meld them into Mishra, Lost to Phyrexia. It enters tapped and attacking.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "lifegain",
+    "subject": {
+     "control": "you",
+     "token": null
+    },
+    "scaling": "x-cost"
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "gain-life",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Mishra, Claimed by Gix",
+  "clauseText": "Whenever you attack, each opponent loses X life and you gain X life, where X is the number of attacking creatures. If Mishra, Claimed by Gix and a creature named Phyrexian Dragon Engine are attacking, and you both own and control them, exile them, then meld them into Mishra, Lost to Phyrexia. It enters tapped and attacking.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "flicker",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "enters",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "fromZone": "exile"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Mishra, Claimed by Gix",
+  "clauseText": "Whenever you attack, each opponent loses X life and you gain X life, where X is the number of attacking creatures. If Mishra, Claimed by Gix and a creature named Phyrexian Dragon Engine are attacking, and you both own and control them, exile them, then meld them into Mishra, Lost to Phyrexia. It enters tapped and attacking.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "drain",
+    "subject": {
+     "control": "opp",
+     "token": null,
+     "scope": "each"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
   }
  },
  {
@@ -8772,6 +9806,63 @@
   }
  },
  {
+  "name": "Optimus Prime, Hero // Optimus Prime, Autobot Leader",
+  "clauseText": "Whenever you attack, bolster 2. The chosen creature gains trample until end of turn.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "counter-placement",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "counter-added",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Optimus Prime, Hero // Optimus Prime, Autobot Leader",
+  "clauseText": "Whenever you attack, bolster 2. The chosen creature gains trample until end of turn.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "keyword-grant",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
+  }
+ },
+ {
   "name": "Soundwave, Sonic Spy // Soundwave, Superior Captain",
   "clauseText": "Whenever one or more creature tokens you control deal combat damage to a player, exile target instant or sorcery card with mana value equal to the damage dealt from their graveyard. Copy it. You may cast the copy without paying its mana cost. If you do, convert Soundwave.",
   "cost": "",
@@ -9076,6 +10167,70 @@
   }
  },
  {
+  "name": "Ellie, Brick Master",
+  "clauseText": "Whenever a player attacks one of your opponents, that attacking player creates a tapped 1/1 black Fungus Zombie creature token named Cordyceps Infected that's attacking that opponent.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "token-generation",
+    "subject": {
+     "control": "any",
+     "token": true,
+     "colors": [
+      "B"
+     ],
+     "type": "creature",
+     "subtype": [
+      "fungus",
+      "zombie"
+     ]
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "create-token",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "colors": [
+       "B"
+      ],
+      "type": "creature",
+      "subtype": [
+       "fungus",
+       "zombie"
+      ]
+     }
+    },
+    {
+     "verb": "enters",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "colors": [
+       "B"
+      ],
+      "type": "creature",
+      "subtype": [
+       "fungus",
+       "zombie"
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Jin Sakai, Ghost of Tsushima",
   "clauseText": "Whenever Jin Sakai deals combat damage to a player, draw a card.",
   "cost": "",
@@ -9128,6 +10283,40 @@
       "control": "any",
       "token": true,
       "subtype": "blood"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Aang, Swift Savior // Aang and La, Ocean's Fury",
+  "clauseText": "Whenever Aang and La attack, put a +1/+1 counter on each tapped creature you control.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "counter-placement",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "counter-added",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "counter": "+1/+1"
      }
     }
    ]
@@ -9759,6 +10948,41 @@
      "token": null
     }
    }
+  }
+ },
+ {
+  "name": "Lulu, Stern Guardian",
+  "clauseText": "Whenever an opponent attacks you, choose target creature attacking you. Put a stun counter on that creature.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "counter-placement",
+    "subject": {
+     "control": "any",
+     "token": null,
+     "counter": "stun"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "opp",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "counter-added",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "counter": "stun"
+     }
+    }
+   ]
   }
  },
  {
@@ -11576,6 +12800,115 @@
       "token": null,
       "fromZone": "exile",
       "self": true
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Soaring Lightbringer",
+  "clauseText": "Whenever you attack a player, create a 1/1 white Glimmer enchantment creature token that's tapped and attacking that player.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "token-generation",
+    "subject": {
+     "control": "any",
+     "token": true,
+     "colors": [
+      "W"
+     ],
+     "type": [
+      "creature",
+      "enchantment"
+     ],
+     "allTypes": [
+      "enchantment",
+      "creature"
+     ],
+     "subtype": "glimmer"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "create-token",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "colors": [
+       "W"
+      ],
+      "type": [
+       "creature",
+       "enchantment"
+      ],
+      "allTypes": [
+       "enchantment",
+       "creature"
+      ],
+      "subtype": "glimmer"
+     }
+    },
+    {
+     "verb": "enters",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "colors": [
+       "W"
+      ],
+      "type": [
+       "creature",
+       "enchantment"
+      ],
+      "allTypes": [
+       "enchantment",
+       "creature"
+      ],
+      "subtype": "glimmer"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Eiganjo Dynastorian // Replenish",
+  "clauseText": "Whenever you attack with two or more creatures, this creature becomes prepared.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "counter-placement",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "counter-added",
+     "subject": {
+      "control": "any",
+      "token": null
      }
     }
    ]
@@ -13580,6 +14913,26 @@
   }
  },
  {
+  "name": "Invasion of Fiora // Marchesa, Resolute Monarch",
+  "clauseText": "Whenever Marchesa attacks, remove all counters from up to one target permanent.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
+  }
+ },
+ {
   "name": "Bilbo, Retired Burglar",
   "clauseText": "Whenever Bilbo deals combat damage to a player, create a Treasure token.",
   "cost": "",
@@ -14923,6 +16276,64 @@
   }
  },
  {
+  "name": "The Tenth Doctor",
+  "clauseText": "Allons-y! — Whenever you attack, exile cards from the top of your library until you exile a nonland card. Put three time counters on it. If it doesn't have suspend, it gains suspend.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "counter-placement",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "counter-added",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "counter": "time"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "The Tenth Doctor",
+  "clauseText": "Allons-y! — Whenever you attack, exile cards from the top of your library until you exile a nonland card. Put three time counters on it. If it doesn't have suspend, it gains suspend.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "keyword-grant",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
+  }
+ },
+ {
   "name": "The Fourth Doctor",
   "clauseText": "When you do, create a Food token.",
   "cost": "",
@@ -15371,6 +16782,32 @@
   }
  },
  {
+  "name": "Endless Ranks of HYDRA",
+  "clauseText": "",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "graveyard-recursion",
+    "subject": {
+     "control": "any",
+     "token": null,
+     "self": true,
+     "zone": "graveyard"
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
+  }
+ },
+ {
   "name": "Entity Tracker",
   "clauseText": "",
   "cost": "",
@@ -15392,6 +16829,66 @@
      }
     }
    ]
+  }
+ },
+ {
+  "name": "Obsessive Pursuit",
+  "clauseText": "",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "counter-placement",
+    "subject": {
+     "control": "any",
+     "token": null,
+     "counter": "+1/+1"
+    },
+    "scaling": "x-cost"
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   },
+   "emits": [
+    {
+     "verb": "counter-added",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "counter": "+1/+1"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Obsessive Pursuit",
+  "clauseText": "",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": "keyword-grant",
+    "subject": {
+     "control": "any",
+     "token": null
+    }
+   },
+   "trigger": {
+    "verbs": [
+     "attacks"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null
+    }
+   }
   }
  },
  {

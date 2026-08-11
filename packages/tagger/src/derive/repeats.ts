@@ -51,8 +51,17 @@ const ORDINAL_EACH_TURN = /\b(?:first|second|third|fourth|fifth)\b(?:(?!\.).){0,
 
 /** Phases that happen on somebody's turn, so `control` says whose. "draw-step" was in the original
  *  brief but is not a member of the `Verb` union in `schema.ts` -- a draw-step trigger normalizes to
- *  `unknownTriggers` upstream and never reaches here as that verb, so it was dead. Dropped. */
-const PHASE_VERBS = new Set(["upkeep", "end-step", "begin-combat", "attacks"]);
+ *  `unknownTriggers` upstream and never reaches here as that verb, so it was dead. Dropped.
+ *
+ *  `attacks` is NOT a member here (2026-08-11 review, finding 3). Unlike upkeep/end-step/
+ *  begin-combat, which happen once no matter how many permanents are on the battlefield, "attacks"
+ *  fires once per ATTACKING CREATURE -- "whenever a creature you control attacks" is not once a
+ *  round, it is once per attacker, the same repeatable shape as "whenever a creature you control
+ *  dies". It is handled separately below, gated on `subject.self`: "whenever THIS creature attacks"
+ *  really is once per cycle (there is exactly one of it), but a class-watching attacks trigger falls
+ *  through to rule 9. 202 `attacks:you` abilities were mislabelled `per-cycle` by this before the
+ *  fix -- the largest rule-6 group, per the design spec's §5 measurement. */
+const PHASE_VERBS = new Set(["upkeep", "end-step", "begin-combat"]);
 
 /** Trigger events that name the card's own arrival or departure -- they happen once. */
 const SELF_EVENTS = new Set(["enters", "dies", "leaves"]);
@@ -77,7 +86,11 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = ""): Rep
     // 6-7: a phase trigger fires once per turn; `control` says whose turns count. An ordinal
     // "first/second/... each turn" trigger is bounded the same way even when the verb isn't a
     // phase verb -- Faerie Mastermind's "opponent draws their second card each turn" is `draw`.
-    if (verbs.some((v) => PHASE_VERBS.has(v)) || ORDINAL_EACH_TURN.test(text)) {
+    // `attacks` only counts as phase-shaped when it watches THIS creature (`self`) -- see
+    // PHASE_VERBS's comment. A class-scoped attacks trigger (Doran, Besieged by Time: "whenever a
+    // creature you control attacks ... it gets +X/+X") skips this branch and falls to rule 9.
+    const selfAttacks = verbs.includes("attacks") && trigger.subject.self === true;
+    if (verbs.some((v) => PHASE_VERBS.has(v)) || selfAttacks || ORDINAL_EACH_TURN.test(text)) {
       return trigger.subject.control === "you" ? "per-cycle" : "per-turn";
     }
     // 8: the card's OWN arrival happens once. "When this creature enters" against "whenever a
