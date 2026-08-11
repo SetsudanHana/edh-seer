@@ -115,6 +115,90 @@ export function foreignPush(
   return { x: (dx / d) * f, y: (dy / d) * f };
 }
 
+/** How many times the projection pass may sweep the board in one tick before giving up.
+ *
+ *  NOT a tuning knob and not a compromise on the rule -- a bound on work per frame. A legal
+ *  position always exists (finitely many discs never cover the plane), but reaching one can take
+ *  many passes: a card in a large overlap is pushed out of A into B and back, moving only its
+ *  penetration depth each time, and every pass is O(cards x circles) inside a frame that also has
+ *  to paint. The circles move between frames too, so a board can be re-disturbed as fast as it is
+ *  resolved. Stop at the ceiling, count what is left, and spend another 64 next frame. */
+export const PROJECTION_PASSES = 64;
+
+/** Moves every card out of every room circle it does NOT belong to, and reports what it could not
+ *  free.
+ *
+ *  A POSITIONAL pass, deliberately: d3 runs forces before integration (`force(alpha)` writes vx,
+ *  then `x += vx`), so a force can only ask. foreignPush asks; this enforces. It is the same
+ *  technique the pre-d3 separation() used for disc overlap and for the same stated reason -- a
+ *  velocity nudge lets things pass through each other for several frames, which is fine for a
+ *  preference and useless for a guarantee.
+ *
+ *  Runs AFTER simulation.tick(), from GraphView's own rAF loop, which is the only place that is
+ *  after integration.
+ *
+ *  MUTATES x/y and vx/vy on the cards it moves. The inward velocity component is removed or the
+ *  next tick drives the card straight back in and it buzzes on the rim at frame rate; the
+ *  tangential component survives, so a card can still slide around a rim it is pressed against.
+ *
+ *  Rooms are recomputed from member positions every tick (roomLayout), so a circle can sweep over
+ *  a card that never moved -- "cannot enter" is not enforceable by the intruder alone, which is
+ *  why this exists at all rather than a stronger foreignPush.
+ *
+ *  ONE GEOMETRY IT CANNOT SOLVE, by construction rather than by budget: a card exactly on the line
+ *  joining two overlapping centres. Both pushes are along that line, so it is thrown from A to B
+ *  and back at the same two positions forever, while every legal position is off the line. It is
+ *  reported unresolved rather than special-cased -- the next frame's circles are recomputed from
+ *  member positions, so the symmetry is gone as soon as anything else on the board moves.
+ *
+ *  Returns 0 when it converged, else the number of cards still illegal at the ceiling. */
+export function projectOutOfForeignRooms(
+  cards: readonly Sim[],
+  circles: ReadonlyMap<RoomId, Circle>,
+  roomsByNode: ReadonlyMap<string, readonly RoomId[]>,
+  maxPasses: number = PROJECTION_PASSES,
+): number {
+  for (let pass = 0; pass < maxPasses; pass++) {
+    let moved = false;
+    for (const n of cards) {
+      const mine = roomsByNode.get(n.id);
+      // Same skip forceRoomContainment makes: a card claiming no room makes no claim about where
+      // it should NOT be either.
+      if (!mine || mine.length === 0) continue;
+      const cardR = nodeRadius(n);
+      for (const [id, c] of circles) {
+        if (mine.includes(id)) continue;
+        const dx = n.x - c.x, dy = n.y - c.y;
+        const d = Math.hypot(dx, dy);
+        // A card exactly on the centre has no direction to leave along. +x is arbitrary but
+        // deterministic; skipping would leave an intrusion standing, which is the one outcome
+        // this function exists to prevent.
+        const [ux, uy] = d === 0 ? [1, 0] : [dx / d, dy / d];
+        const depth = c.r - (d - cardR);
+        if (depth <= 0) continue;
+        n.x += ux * depth;
+        n.y += uy * depth;
+        const vn = n.vx * ux + n.vy * uy;
+        if (vn < 0) { n.vx -= vn * ux; n.vy -= vn * uy; }
+        moved = true;
+      }
+    }
+    if (!moved) return 0;
+  }
+
+  let unresolved = 0;
+  for (const n of cards) {
+    const mine = roomsByNode.get(n.id);
+    if (!mine || mine.length === 0) continue;
+    const cardR = nodeRadius(n);
+    for (const [id, c] of circles) {
+      if (mine.includes(id)) continue;
+      if (c.r - (Math.hypot(n.x - c.x, n.y - c.y) - cardR) > 0) { unresolved++; break; }
+    }
+  }
+  return unresolved;
+}
+
 /** Escapes and intrusions on a settled layout, from what __graphProbe() reports.
  *
  *  An ESCAPE is a card outside a room it belongs to, bucketed by how many rooms the card is in:

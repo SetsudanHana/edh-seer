@@ -14,6 +14,7 @@ import {
   forceRoomContainment,
   foreignPush,
   nodeRadius,
+  projectOutOfForeignRooms,
   REPULSION,
   universalRooms,
   VELOCITY_DECAY,
@@ -323,6 +324,134 @@ describe("countOverlaps", () => {
   test("is zero for fewer than two cards", () => {
     expect(countOverlaps([])).toBe(0);
     expect(countOverlaps([{ x: 0, y: 0 }])).toBe(0);
+  });
+});
+
+describe("projectOutOfForeignRooms", () => {
+  const circles = (...cs: [string, number, number, number][]) =>
+    new Map<RoomId, Circle>(cs.map(([id, x, y, r]) => [id, { x, y, r }]));
+
+  test("moves a non-member until its NEAR rim clears the room's rim, and no further", () => {
+    const n = card("card:a", 10, 0); // deep inside a circle centred on the origin
+    const unresolved = projectOutOfForeignRooms(
+      [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]),
+    );
+    expect(unresolved).toBe(0);
+    // near rim clears exactly: distance - cardR === roomR
+    expect(Math.hypot(n.x, n.y) - ART_RADIUS).toBeCloseTo(100, 6);
+    expect(n.y).toBeCloseTo(0, 6); // pushed straight out along the centre->card direction
+  });
+
+  test("leaves a member alone however deep inside its own room it sits", () => {
+    const n = card("card:a", 1, 0);
+    projectOutOfForeignRooms(
+      [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["ramp"]]]),
+    );
+    expect(n.x).toBe(1);
+    expect(n.y).toBe(0);
+  });
+
+  test("leaves a card in NO room alone", () => {
+    const n = card("card:a", 1, 0);
+    projectOutOfForeignRooms([n], circles(["ramp", 0, 0, 100]), new Map());
+    expect(n.x).toBe(1);
+  });
+
+  test("leaves a card already outside alone", () => {
+    const n = card("card:a", 500, 0);
+    projectOutOfForeignRooms(
+      [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]),
+    );
+    expect(n.x).toBe(500);
+  });
+
+  test("zeroes the inward velocity component and keeps the tangential one", () => {
+    const n = card("card:a", 10, 0);
+    n.vx = -5; // straight at the centre
+    n.vy = 3;  // tangential
+    projectOutOfForeignRooms(
+      [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]),
+    );
+    expect(n.vx).toBeCloseTo(0, 10);
+    expect(n.vy).toBeCloseTo(3, 10);
+  });
+
+  test("does not touch an OUTWARD velocity", () => {
+    const n = card("card:a", 10, 0);
+    n.vx = 5; // already leaving
+    projectOutOfForeignRooms(
+      [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]),
+    );
+    expect(n.vx).toBeCloseTo(5, 10);
+  });
+
+  test("resolves two overlapping circles by iterating", () => {
+    // Two circles 120 apart, radius 100 each: they overlap, and leaving A lands you in B. Started
+    // just OFF the axis joining the centres -- see the limit-cycle test below for why on-axis is a
+    // different case rather than a harder version of this one. Takes two passes: the first pass's
+    // ejection from B puts the card back inside A.
+    const n = card("card:a", 0, 5);
+    const unresolved = projectOutOfForeignRooms(
+      [n],
+      circles(["a", -60, 0, 100], ["b", 60, 0, 100]),
+      new Map([["card:a", ["lands"]]]),
+    );
+    expect(unresolved).toBe(0);
+    for (const c of [{ x: -60, y: 0 }, { x: 60, y: 0 }]) {
+      expect(Math.hypot(n.x - c.x, n.y - c.y) - ART_RADIUS).toBeGreaterThanOrEqual(100 - 1e-6);
+    }
+  });
+
+  test("counts a card it could not free within the pass ceiling", () => {
+    // Same geometry as the test above, which needs two passes. With the ceiling at 1 it stops
+    // still illegal and says so instead of pretending otherwise -- this is about WORK, not
+    // impossibility.
+    const n = card("card:a", 0, 5);
+    const unresolved = projectOutOfForeignRooms(
+      [n],
+      circles(["a", -60, 0, 100], ["b", 60, 0, 100]),
+      new Map([["card:a", ["lands"]]]),
+      1, // the shipped default is PROJECTION_PASSES
+    );
+    expect(unresolved).toBe(1);
+  });
+
+  test("counts, rather than loops on, a card trapped between two collinear circles", () => {
+    // A card exactly on the line joining two overlapping centres is a LIMIT CYCLE, not slow
+    // convergence: both pushes are along that line, so the card is thrown from A to B and back
+    // forever at the same two positions, and every legal position is off the line the projection
+    // can never leave. Legal positions do exist (finitely many discs never cover the plane) --
+    // this pass just cannot reach them from here.
+    //
+    // Reported as unresolved, which is the whole reason that return value exists. The board's
+    // recourse is the next frame: the circles are recomputed from member positions every tick, so
+    // the symmetry that traps the card is gone as soon as anything else moves.
+    const n = card("card:a", 0, 0);
+    const unresolved = projectOutOfForeignRooms(
+      [n],
+      circles(["a", -60, 0, 100], ["b", 60, 0, 100]),
+      new Map([["card:a", ["lands"]]]),
+    );
+    expect(unresolved).toBe(1);
+  });
+
+  test("enforces a universal room like any other -- there is no exemption branch", () => {
+    // The caller passes circles; universality is not a property this function can see, and that
+    // is the point. A room holding every card still bars a non-member.
+    const n = card("card:a", 0, 0);
+    projectOutOfForeignRooms(
+      [n], circles(["colour:black", 0, 0, 400]), new Map([["card:a", ["colour:red"]]]),
+    );
+    expect(Math.hypot(n.x, n.y) - ART_RADIUS).toBeCloseTo(400, 6);
+  });
+
+  test("pushes a card sitting exactly on the centre along +x rather than skipping it", () => {
+    const n = card("card:a", 0, 0);
+    projectOutOfForeignRooms(
+      [n], circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]),
+    );
+    expect(n.x).toBeCloseTo(100 + ART_RADIUS, 6);
+    expect(n.y).toBeCloseTo(0, 6);
   });
 });
 
