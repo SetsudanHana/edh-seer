@@ -71,14 +71,18 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
         <h4 className="eyebrow">Answers by turn {turn}</h4>
         <ul className="flex flex-col gap-1">
           {answers.map((a) => {
-            // Zero is flagged; nothing else is. A "low" threshold would be invented -- the
-            // doctrine says carry each class, and it does not say how many.
             const none = a.count === 0;
+            // How many short of the doctrine's confidence, DERIVED rather than a template: the
+            // count moves with the deck's own clock, so a fast deck is asked for more than a slow
+            // one. (This row used to flag only zero, on the reasoning that any other threshold
+            // would be invented. It no longer is -- that is what step C bought.)
+            const short = Math.max(0, a.required - a.count);
+            const shortfall = short > 0 ? `, ${short} short of ${a.required}` : "";
             const label = none
-              ? `${a.class}, no answers`
+              ? `${a.class}, no answers${shortfall}`
               : a.fromCommandZone
                 ? `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}, always (commander)`
-                : `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}, ${pct(a.available)} by turn ${turn}`;
+                : `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}, ${pct(a.available)} by turn ${turn}${shortfall}`;
             return (
               <li key={a.class} className="flex items-center gap-3 text-sm" aria-label={label}>
                 <span className="w-24 shrink-0 capitalize">{a.class}</span>
@@ -92,6 +96,11 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                   *  row that most needs to be visible would be the one row with nothing painted.
                   *  The numbers carry the warning instead. */}
                 <span className={`w-8 shrink-0 text-right tabular-nums ${none ? "text-(--warning)" : "text-(--muted)"}`}>{a.count}</span>
+                {/* The shortfall, where there is one. A percentage says how likely; only this says
+                  *  what to do about it, which is the difference between a readout and advice. */}
+                <span className="w-14 shrink-0 text-right tabular-nums text-xs text-(--muted)">
+                  {short > 0 ? `−${short}` : ""}
+                </span>
                 <span className={`w-16 shrink-0 text-right tabular-nums ${none ? "text-(--warning)" : ""}`}>
                   {a.fromCommandZone ? "always" : pct(a.available)}
                 </span>
@@ -99,6 +108,14 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             );
           })}
         </ul>
+        {/* The shortfall column is meaningless without the confidence it is measured against, and
+          *  that confidence is a stated doctrine rather than a fact about the deck. Say it out loud
+          *  next to the numbers it produces, the way the pricing turn is. */}
+        {answers.some((a) => a.required > a.count) ? (
+          <p className="text-xs text-(--muted)">
+            −n is how many more it takes for an answer to be in hand more often than not by turn {turn}.
+          </p>
+        ) : null}
       </div>
 
       {castability && castability.cards.length > 0 ? (

@@ -105,6 +105,14 @@ export interface DeckMath {
     /** A commander answers this class, so it is available in every game. */
     fromCommandZone: boolean;
     available: number;
+    /** How many answers of this class the deck would have to run to reach `REQUIRED_CONFIDENCE` by
+     *  `turn` — the doctrine's confidence inverted through the same hypergeometric that produced
+     *  `available`, not a per-class template. Identical across classes by construction: the maths
+     *  demands the same count of every class, and only what the deck HAS differs.
+     *
+     *  0 when a commander answers the class, since a card available in every game owes nothing to a
+     *  draw probability. */
+    required: number;
   }[];
   /** The deck's measured combat clock: expected attacking power per turn, and the turn that
    *  accumulates to one opponent's 40 life.

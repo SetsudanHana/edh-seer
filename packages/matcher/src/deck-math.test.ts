@@ -48,6 +48,44 @@ test("an explicit turn still wins, and says that is what happened", () => {
   expect(math.turnSource).toBe("override");
 });
 
+/** Step C: the doctrine states a CONFIDENCE, and the maths derives the count. The alternative --
+ *  "run 3 enchantment removal" -- is the fixed template this layer exists to replace. */
+test("required is the count that reaches the threshold, and it moves with the turn", () => {
+  const early = computeDeckMath(fillTo(100, []), H, [], 3);
+  const late = computeDeckMath(fillTo(100, []), H, [], 11);
+  const req = (m: ReturnType<typeof computeDeckMath>) =>
+    m.answers.find((a) => a.class === "artifact")!.required;
+  // A longer horizon sees more cards, so fewer copies reach the same confidence. This is the
+  // property that makes it a derived number rather than a template: it is not one target for all
+  // decks, it is the deck's own clock inverted.
+  expect(req(early)).toBeGreaterThan(req(late));
+  expect(req(late)).toBeGreaterThan(0);
+});
+
+test("required is the same for every class -- the doctrine sets confidence, not per-class counts", () => {
+  // Deliberately NOT "creature removal needs more than land removal". The classes differ in what a
+  // deck HAS, never in what the maths demands; a per-class target would smuggle the template back in.
+  const math = computeDeckMath(fillTo(100, []), H, [], 9);
+  const required = math.answers.map((a) => a.required);
+  expect(new Set(required).size).toBe(1);
+});
+
+test("a class answered from the command zone needs nothing drawn", () => {
+  // It is available in every game, so a shortfall against a draw-probability target is meaningless.
+  const commander: DeckCard = {
+    card: {
+      name: "Vindicator", typeLine: "Legendary Creature — Human", manaValue: 4, keywords: [], colors: [],
+      oracleText: "Destroy target artifact.",
+    } as Card,
+    tags: null,
+  };
+  const math = computeDeckMath(fillTo(100, [commander]), H, ["Vindicator"], 9);
+  const artifact = math.answers.find((a) => a.class === "artifact")!;
+  expect(artifact.fromCommandZone).toBe(true);
+  expect(artifact.available).toBe(1);
+  expect(artifact.required).toBe(0);
+});
+
 /** A longer horizon sees more cards, so the same deck reads as more available. That is the whole
  *  point -- and the reason the turn has to be visible next to the numbers it moves. */
 test("pricing later raises availability for the same cards", () => {

@@ -340,9 +340,9 @@ const DECK_MATH = {
   seen: 12,
   library: 99,
   answers: [
-    { class: "creature", count: 4, fromCommandZone: false, available: 0.409 },
-    { class: "artifact", count: 0, fromCommandZone: false, available: 0 },
-    { class: "graveyard", count: 1, fromCommandZone: true, available: 1 },
+    { class: "creature", count: 4, fromCommandZone: false, available: 0.409, required: 6 },
+    { class: "artifact", count: 0, fromCommandZone: false, available: 0, required: 6 },
+    { class: "graveyard", count: 1, fromCommandZone: true, available: 1, required: 0 },
   ],
   turnSource: "clock" as const,
   clock: { turn: 8, powerAtFive: 6.4 },
@@ -382,6 +382,17 @@ test("BuildBenchmarks shows answer coverage, including the classes the deck cann
   expect(screen.getByLabelText(/creature, 4 cards, 41% by turn 5/i)).toBeInTheDocument();
   // A commander answer is available every game, and says why rather than just reading 100%.
   expect(screen.getByLabelText(/graveyard, 1 card, always \(commander\)/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks says how many answers short a class is, not just how likely it is", () => {
+  // Step C. "41% by turn 5" tells you the odds and not what to do about them; the derived count
+  // does. It is derived, not a template -- it moves with the deck's own clock.
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.getByLabelText(/creature, 4 cards, 41% by turn 5, 2 short of 6/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/artifact, no answers, 6 short of 6/i)).toBeInTheDocument();
+  // A commander answers every game, so a draw-probability shortfall would be a lie.
+  expect(screen.getByLabelText(/graveyard, 1 card, always \(commander\)/i)).toBeInTheDocument();
+  expect(screen.queryByLabelText(/graveyard.*short/i)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows demand against supply, and refuses a number where none applies", () => {

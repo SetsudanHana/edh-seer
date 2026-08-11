@@ -178,3 +178,15 @@ describe("edges the spec's Python gets for free and TypeScript does not", () => 
     expect(() => jointAvailability([50, 50, 50], seen(5))).toThrow(/disjoint|exceed/i);
   });
 });
+
+test("drawing past the end of the library sees all of it, rather than reading as impossible", () => {
+  // `n > N` was rejected as out-of-domain and returned 0, which says P(drawing a card when you draw
+  // the entire library) = 0. `minCopies` reads that as unreachable and throws, so computeDeckMath
+  // blew up on any deck small enough that 7 + turn exceeded it -- 35 report tests at once.
+  expect(pAtLeast(1, 1, 16, 2)).toBe(1);
+  expect(pAtLeast(2, 2, 99, 2)).toBe(1);
+  expect(minCopies(1, 9, 0.5, 2)).toBe(1);
+  // The deliberate throw survives for a question that is genuinely unanswerable: 8 successes cannot
+  // come out of a 7-card opener at any deck composition.
+  expect(() => minCopies(8, 0, 0.5)).toThrow(/unreachable/);
+});

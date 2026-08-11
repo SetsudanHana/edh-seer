@@ -58,7 +58,14 @@ export function seen(turn: number): number {
  *  costs precision, while the tail itself is a handful of terms of the same magnitude as the
  *  answer. */
 export function pAtLeast(k: number, S: number, n: number, N: number = LIBRARY): number {
-  if (S < 0 || n < 0 || N <= 0 || S > N || n > N) return 0;
+  if (S < 0 || n < 0 || N <= 0 || S > N) return 0;
+  // Drawing more cards than the library holds is not an out-of-domain input, it is "you see the
+  // whole library" -- so clamp rather than returning 0. Returning 0 said P(finding a card you own
+  // every copy of) = 0, and `minCopies` reads that as "unreachable at any copy count" and THROWS.
+  // It could not fire on a 99-card deck (it needs turn > 92) but fires immediately on the small
+  // decks the report is also asked to analyse. No Tier A assertion has n > N, so nothing measured
+  // moves.
+  n = Math.min(n, N);
   let total = 0;
   const top = Math.min(S, n);
   for (let i = Math.max(k, 0); i <= top; i++) {
