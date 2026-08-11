@@ -78,11 +78,25 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             // would be invented. It no longer is -- that is what step C bought.)
             const short = Math.max(0, a.required - a.count);
             const shortfall = short > 0 ? `, ${short} short of ${a.required}` : "";
+            // The mode sub-counts (design §7). A zero is the finding on a row that HAS answers --
+            // 4 creature answers of which none exiles means a reanimator undoes all four -- so a
+            // zero is rendered in warning colour rather than omitted. On a row with no answers at
+            // all the count already says everything, and a mode suffix would be noise.
+            const mode = none
+              ? ""
+              : a.class === "graveyard"
+                ? a.recurring > 0 ? `${a.recurring} rec` : "0 rec"
+                : a.exiling > 0 ? `${a.exiling} ex` : "0 ex";
+            const modeLabel = none
+              ? ""
+              : a.class === "graveyard"
+                ? a.recurring > 0 ? `, ${a.recurring} recurring` : ", none recurring"
+                : a.exiling > 0 ? `, ${a.exiling} of them exile` : ", none of them exile";
             const label = none
               ? `${a.class}, no answers${shortfall}`
               : a.fromCommandZone
-                ? `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}, always (commander)`
-                : `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}, ${pct(a.available)} by turn ${turn}${shortfall}`;
+                ? `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}${modeLabel}, always (commander)`
+                : `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}${modeLabel}, ${pct(a.available)} by turn ${turn}${shortfall}`;
             return (
               <li key={a.class} className="flex items-center gap-3 text-sm" aria-label={label}>
                 <span className="w-24 shrink-0 capitalize">{a.class}</span>
@@ -95,7 +109,10 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                 {/* A zero row's BAR is zero-width, so colouring the bar cannot flag it -- the one
                   *  row that most needs to be visible would be the one row with nothing painted.
                   *  The numbers carry the warning instead. */}
-                <span className={`w-8 shrink-0 text-right tabular-nums ${none ? "text-(--warning)" : "text-(--muted)"}`}>{a.count}</span>
+                <span className="w-20 shrink-0 text-right tabular-nums flex items-baseline justify-end gap-1.5">
+                  <span className={none ? "text-(--warning)" : "text-(--muted)"}>{a.count}</span>
+                  <span className={`text-xs ${mode.startsWith("0") ? "text-(--warning)" : "text-(--muted)"}`}>{mode}</span>
+                </span>
                 {/* The shortfall, where there is one. A percentage says how likely; only this says
                   *  what to do about it, which is the difference between a readout and advice. */}
                 <span className="w-14 shrink-0 text-right tabular-nums text-xs text-(--muted)">

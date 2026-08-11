@@ -340,9 +340,9 @@ const DECK_MATH = {
   seen: 12,
   library: 99,
   answers: [
-    { class: "creature", count: 4, fromCommandZone: false, available: 0.409, required: 6 },
-    { class: "artifact", count: 0, fromCommandZone: false, available: 0, required: 6 },
-    { class: "graveyard", count: 1, fromCommandZone: true, available: 1, required: 0 },
+    { class: "creature", count: 4, exiling: 1, recurring: 0, fromCommandZone: false, available: 0.409, required: 6 },
+    { class: "artifact", count: 0, exiling: 0, recurring: 0, fromCommandZone: false, available: 0, required: 6 },
+    { class: "graveyard", count: 1, exiling: 1, recurring: 0, fromCommandZone: true, available: 1, required: 0 },
   ],
   turnSource: "clock" as const,
   clock: { turn: 8, powerAtFive: 6.4 },
@@ -379,19 +379,29 @@ test("BuildBenchmarks shows answer coverage, including the classes the deck cann
   expect(screen.getByText(/answers by turn 5/i)).toBeInTheDocument();
   // A class with zero answers is the finding, so it must be a visible row rather than an omission.
   expect(screen.getByLabelText(/artifact, no answers/i)).toBeInTheDocument();
-  expect(screen.getByLabelText(/creature, 4 cards, 41% by turn 5/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/creature, 4 cards, 1 of them exile, 41% by turn 5/i)).toBeInTheDocument();
   // A commander answer is available every game, and says why rather than just reading 100%.
-  expect(screen.getByLabelText(/graveyard, 1 card, always \(commander\)/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/graveyard, 1 card, none recurring, always \(commander\)/i)).toBeInTheDocument();
+});
+
+test("an answer row says how many of its answers exile, and flags a graveyard row that never recurs", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  // 4 creature answers, 1 of which exiles -- the other 3 are undone by a reanimator.
+  expect(screen.getByLabelText(/creature, 4 cards.*1 of them exile/i)).toBeInTheDocument();
+  // The graveyard row's finding is the ZERO: it has hate, and none of it answers an engine.
+  expect(screen.getByLabelText(/graveyard.*none recurring/i)).toBeInTheDocument();
+  // A class with nothing to say says nothing -- no "0 of them exile" noise on an empty row.
+  expect(screen.queryByLabelText(/artifact, no answers.*exile/i)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks says how many answers short a class is, not just how likely it is", () => {
   // Step C. "41% by turn 5" tells you the odds and not what to do about them; the derived count
   // does. It is derived, not a template -- it moves with the deck's own clock.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByLabelText(/creature, 4 cards, 41% by turn 5, 2 short of 6/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/creature, 4 cards, 1 of them exile, 41% by turn 5, 2 short of 6/i)).toBeInTheDocument();
   expect(screen.getByLabelText(/artifact, no answers, 6 short of 6/i)).toBeInTheDocument();
   // A commander answers every game, so a draw-probability shortfall would be a lie.
-  expect(screen.getByLabelText(/graveyard, 1 card, always \(commander\)/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/graveyard, 1 card, none recurring, always \(commander\)/i)).toBeInTheDocument();
   expect(screen.queryByLabelText(/graveyard.*short/i)).not.toBeInTheDocument();
 });
 
