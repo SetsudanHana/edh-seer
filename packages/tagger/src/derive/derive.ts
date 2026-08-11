@@ -13,12 +13,13 @@ import { actionEmits } from "./emits.js";
 import { actionRecipients } from "./recipient.js";
 import { actionScaling } from "./scaling.js";
 import { parseSubject } from "./subject.js";
+import { repeatsFor } from "./repeats.js";
 import { SUBTYPES } from "./subtypes.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 31;
+export const DERIVE_VERSION = 32;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -503,6 +504,7 @@ export function deriveAbilities(
   clauses: ClauseRecord[],
   cardName?: string,
   clauseTexts?: Record<number, string>,
+  clauseCosts?: Record<number, string>,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -517,6 +519,7 @@ export function deriveAbilities(
     const actorFor = (verb?: string): Control | undefined =>
       (clause.actions ?? []).filter((a) => a.verb === verb).length === 1 ? actors[verb ?? ""] : undefined;
     const text = clauseTexts?.[clause.id] ?? "";
+    const cost = clauseCosts?.[clause.id] ?? "";
     // A fetch is two actions: `search "your library for a Swamp or Mountain card"`, then
     // `put "that card" onto the battlefield`. The EMIT comes from the put, whose object is a
     // pronoun, so the enters event carried no type at all -- and an untyped producer subject is a
@@ -665,6 +668,14 @@ export function deriveAbilities(
     if (trigger && abilities.length === before) {
       abilities.push({ kind, effect: { kind: "" as const }, trigger });
     }
+
+    // Label everything this clause produced, in ONE place rather than at each of the three push
+    // sites above (the main action loop, `drainAbility`, and the trigger-only fallback). A fourth
+    // push site added later cannot silently skip labelling this way.
+    for (let i = before; i < abilities.length; i++) {
+      const repeats = repeatsFor(abilities[i], text, cost);
+      if (repeats) abilities[i] = { ...abilities[i], repeats };
+    }
   }
   return { abilities, unclaimed, unknownTriggers };
 }
@@ -680,12 +691,17 @@ export interface DeriveInput {
    *  deterministic, so this is recomputed rather than stored, and an absent map only means the
    *  actor-recovery in `recipient.ts` says nothing. */
   clauseTexts?: Record<number, string>;
+  /** Clause id -> the clause's activation cost, straight from `segment()`. Same shape and same
+   *  reason as `clauseTexts`: free to recompute, so nothing is stored. `repeatsFor` reads this, not
+   *  `clauseTexts`, for the self-sacrifice and tap-cost rules -- the cost is split OUT of the body
+   *  text by `segment.ts`'s `classify()`, so it never appears in `clauseTexts`. */
+  clauseCosts?: Record<number, string>;
 }
 
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
  *  from the card document -- derivation never asks a model for what the database already knows. */
 export function deriveCardTags(input: DeriveInput): CardTags {
-  const { abilities } = deriveAbilities(input.clauses, input.name, input.clauseTexts);
+  const { abilities } = deriveAbilities(input.clauses, input.name, input.clauseTexts, input.clauseCosts);
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,

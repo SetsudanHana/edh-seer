@@ -42,6 +42,7 @@ for (const doc of clauseDocs) {
     clauses: doc.canonical,
     characteristics: charsFrom(cards as never),
     clauseTexts: clauseTexts(cards as never),
+    clauseCosts: clauseCosts(cards as never),
   });
   // A card with real rules text deriving zero abilities is the Bitterblossom shape -- worth
   // counting out loud rather than silently writing a doc that reads as a vanilla bear.
@@ -72,6 +73,16 @@ await store.close();
 function clauseTexts(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, string> {
   const out: Record<number, string> = {};
   for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) out[c.id] = c.text;
+  return out;
+}
+
+/** Clause id -> the clause's activation cost, from the SAME `segment()` call `clauseTexts` uses --
+ *  `segment.ts`'s `classify()` splits an activated ability's cost out of the body text, so it never
+ *  rides along in `clauseTexts`. `repeatsFor` needs both: the cost for the self-sacrifice/tap rules,
+ *  the body text for the "once each turn" rule. */
+function clauseCosts(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, string> {
+  const out: Record<number, string> = {};
+  for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) if (c.cost) out[c.id] = c.cost;
   return out;
 }
 
