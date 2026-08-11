@@ -24,7 +24,10 @@ test("the rule set loads, is versioned, and every pattern a rule names exists", 
     for (const p of [...named(rule.match), ...named(rule.not ?? [])]) {
       expect(set.patterns[p], `rule ${rule.id} names pattern ${p}`).toBeDefined();
     }
-    expect(rule.category ?? rule.answerClass ?? rule.answerClassFrom, `rule ${rule.id} does something`).toBeDefined();
+    expect(
+      rule.category ?? rule.answerClass ?? rule.answerClassFrom ?? rule.winconClass,
+      `rule ${rule.id} does something`,
+    ).toBeDefined();
   }
 });
 

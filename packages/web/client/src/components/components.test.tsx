@@ -344,6 +344,14 @@ const DECK_MATH = {
     { class: "artifact", count: 0, fromCommandZone: false, available: 0 },
     { class: "graveyard", count: 1, fromCommandZone: true, available: 1 },
   ],
+  wincons: {
+    classes: [
+      { class: "go-wide", count: 12, share: 0.6 },
+      { class: "burn", count: 8, share: 0.4 },
+    ],
+    focus: 0.52,
+    primary: "go-wide",
+  },
   lands: { actual: 37, target: 34, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2 },
   colors: [
     { color: "B", supplied: 26, worst: { pips: 2, turn: 3, required: 33, cards: 12 } },
@@ -372,6 +380,16 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   // The game supplies a combat trigger: 0% would invent a hole, 100% would claim a board state
   // this layer does not model.
   expect(screen.getByLabelText(/attacks:any, 3 cards want it, the game supplies it/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks shows the win plans, scored on concentration not breadth", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.getByLabelText(/go-wide, 12 cards, 60% of the deck's win plan/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/burn, 8 cards, 40% of the deck's win plan/i)).toBeInTheDocument();
+  // The focus index has to say which DIRECTION is good, or a reader will assume more plans is
+  // better -- it is the one number here scored the opposite way to the coverage above it.
+  expect(screen.getByText(/focus 0\.52/i)).toBeInTheDocument();
+  expect(screen.getByText(/concentration/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows the land count the deck's own curve asks for", () => {

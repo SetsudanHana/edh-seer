@@ -21,6 +21,7 @@ export {
   type Color, type ColorDemand, type ManaAuditRow,
 } from "./mana-audit.js";
 export { landInputs, recommendedLands, type LandRecommendation } from "./land-count.js";
+export { detectWincons, focusIndex, winconReport, type WinconReport } from "./wincon.js";
 export {
   answerClassesOf, loadRules, ruleMatches, RULES_VERSION,
   type Rule, type RuleClause, type RuleSet,

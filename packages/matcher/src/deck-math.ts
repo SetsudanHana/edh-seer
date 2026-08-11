@@ -4,6 +4,7 @@ import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses } from "./build.js";
 import { manaAudit } from "./mana-audit.js";
 import { recommendedLands } from "./land-count.js";
+import { winconReport } from "./wincon.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 /** The classes the doctrine says every deck should be able to answer (design §12.3), in the order
@@ -34,6 +35,7 @@ export function computeDeckMath(
   hierarchy: Hierarchy,
   commanderNames: readonly string[] = [],
   turn = 5,
+  opts: { comboCards?: readonly string[] } = {},
 ): DeckMath {
   const commanders = new Set(commanderNames);
   const library = deck.length - deck.filter((dc) => commanders.has(dc.card.name)).length;
@@ -70,6 +72,8 @@ export function computeDeckMath(
       : {}),
   }));
 
+  const wincons = winconReport(deck, { comboCards: opts.comboCards });
+
   const rec = recommendedLands(deck, { commanderNames });
   const lands = {
     actual: rec.actual,
@@ -79,5 +83,5 @@ export function computeDeckMath(
     fastMana: rec.fastMana,
   };
 
-  return { turn, seen: seen(turn), library, answers, lands, colors, demand };
+  return { turn, seen: seen(turn), library, answers, wincons, lands, colors, demand };
 }

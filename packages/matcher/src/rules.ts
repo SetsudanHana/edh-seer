@@ -10,12 +10,22 @@ export type RuleClause =
   | { op: "oracle"; pattern: string }
   | { op: "effectKind"; in: string[] }
   | { op: "typeLine"; contains: string }
+  /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
+  | { op: "subtype"; in: string[] }
+  /** Printed power minus mana value, at least this much. The one stat predicate the taxonomy needs
+   *  (a creature bigger than it costs), written as a named comparison rather than an expression
+   *  language: the moment this file can express arithmetic it stops being config and starts being
+   *  a program nobody can gate. `*` power is not a number and never matches. */
+  | { op: "powerOverMv"; atLeast: number }
   | { op: "anyOf"; clauses: RuleClause[] };
 
 export interface Rule {
   id: string;
   /** The build category this rule fills, if any. */
   category?: string;
+  /** The wincon class this rule marks: how the card moves the game toward winning (design §12.5).
+   *  A separate axis again -- a Craterhoof is a wincon and not a build category. */
+  winconClass?: string;
   /** A fixed answer class this rule contributes (graveyard hate). */
   answerClass?: string;
   /** A pattern name whose `class` capture group names the answer class -- one rule covering the
@@ -83,6 +93,15 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       return (dc.card.typeLine ?? "").toLowerCase().includes(clause.contains);
     case "effectKind":
       return (dc.tags?.abilities ?? []).some((a) => clause.in.includes(a.effect.kind));
+    case "subtype":
+      return (dc.tags?.characteristics?.subtypes ?? []).some((s) => clause.in.includes(s.toLowerCase()));
+    case "powerOverMv": {
+      const power = Number(dc.card.power);
+      // `*`, `1+*` and a missing power are all NaN, and a comparison against NaN is false -- which
+      // is the answer we want: a creature whose power is defined by the board is not a beater whose
+      // size can be read off the card.
+      return power - dc.card.manaValue >= clause.atLeast;
+    }
     case "anyOf":
       return clause.clauses.some((c) => clauseHolds(c, dc, set));
   }

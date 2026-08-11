@@ -62,6 +62,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
   const { turn, seen, answers, demand } = deckMath;
   const colors = deckMath.colors ?? [];
   const lands = deckMath.lands;
+  const wincons = deckMath.wincons;
   return (
     <div className="flex flex-col gap-3 mt-2 pt-3 border-t border-(--separator)">
       <div className="flex flex-col gap-1.5">
@@ -97,6 +98,35 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
           })}
         </ul>
       </div>
+
+      {wincons && wincons.classes.length > 0 ? (
+        <div className="flex flex-col gap-1.5">
+          <h4 className="eyebrow">Win plans</h4>
+          <ul className="flex flex-col gap-1">
+            {wincons.classes.map((w) => (
+              <li
+                key={w.class}
+                className="flex items-center gap-3 text-sm"
+                aria-label={`${w.class}, ${w.count} cards, ${Math.round(w.share * 100)}% of the deck's win plan`}
+              >
+                <span className="w-24 shrink-0">{w.class}</span>
+                <span className="flex-1 h-1.5 rounded-full bg-(--separator) overflow-hidden">
+                  <span className="block h-full rounded-full bg-(--accent)" style={{ width: `${w.share * 100}%` }} />
+                </span>
+                <span className="w-8 shrink-0 text-right tabular-nums text-(--muted)">{w.count}</span>
+                <span className="w-16 shrink-0 text-right tabular-nums">{Math.round(w.share * 100)}%</span>
+              </li>
+            ))}
+          </ul>
+          {/* Says which direction is good, because this is the ONE number here scored the opposite
+            *  way to everything above it. Answers want breadth; a win plan wants concentration, and
+            *  a reader who assumes "more is better" reads a scattered deck as a versatile one. */}
+          <p className="text-xs text-(--muted)">
+            Focus {wincons.focus.toFixed(2)} — concentration, not coverage: one plan pursued hard
+            beats three half-plans, so higher is better here.
+          </p>
+        </div>
+      ) : null}
 
       {lands ? (
         <div className="flex flex-col gap-1.5">

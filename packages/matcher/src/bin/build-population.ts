@@ -7,6 +7,7 @@ import {
 import type { CardTags } from "@mtg/tagger";
 import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES } from "../build.js";
 import { recommendedLands } from "../land-count.js";
+import { winconReport } from "../wincon.js";
 import type { DeckCard } from "../types.js";
 
 /** Build-category membership across the calibration decks, as one number per category plus the
@@ -110,6 +111,10 @@ async function main(): Promise<void> {
     // under the same gate as the categories. They are a different axis, not finer categories: a
     // card is in both.
     for (const [cls, names] of detectAnswerClasses(inputs)) deck[`answer:${cls}`] = [...names].sort();
+    // Wincon classes ride along too, under their own prefix: same gate, same reason.
+    // Through winconReport, not detectWincons: the deck-level gates (a token maker is only a win
+    // plan when something pays it off) are the part most likely to regress.
+    for (const w of winconReport(inputs).classes) deck[`wincon:${w.class}`] = [String(w.count)];
     // Every known category, including empty ones: a category that stops matching anything is the
     // failure this gate exists to catch, and an absent key would read as "not measured".
     for (const cat of BUILD_CATEGORIES) deck[cat] = [...(members.get(cat) ?? [])].sort();

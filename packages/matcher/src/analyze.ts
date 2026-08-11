@@ -309,7 +309,7 @@ export function analyzeDeckStructured(
     buildScore,
     buildCategories,
     suggestions,
-    deckMath: computeDeckMath(resolved, hierarchy, [...commanderSet]),
+    deckMath: computeDeckMath(resolved, hierarchy, [...commanderSet], 5, { comboCards }),
     themeMembership: membership,
   };
 }

@@ -34,7 +34,11 @@
     "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?|exile the top \\w+ cards? of your library[\\s\\S]*?you may play",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
     "typedRemoval": "(?:destroy|exile)[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
-    "bounceRemoval": "return target\\s+(?<class>[^.;:]{0,60}?)\\s+to (?:its owner's|their|the owner's|owner's) hand"
+    "bounceRemoval": "return target\\s+(?<class>[^.;:]{0,60}?)\\s+to (?:its owner's|their|the owner's|owner's) hand",
+    "millOpponents": "(?:target opponent|each opponent|target player|each player)[^.]{0,40}?mills|mills? \\w+ cards?[^.]{0,40}?(?:target opponent|each opponent)",
+    "altWin": "you win the game|wins? the game|loses? the game|lose the game",
+    "enchantCreature": "enchant creature",
+    "commanderDamage": "commander damage|deals combat damage to a player[^.]{0,60}?(?:that player loses the game|wins the game)"
   },
 
   "_answerClasses": [
@@ -193,6 +197,50 @@
       "answerClass": "graveyard",
       "match": [{ "op": "oracle", "pattern": "graveyardHatePositive" }],
       "why": "Promoted from a negative filter on removal to a category of its own (design 12.3), but NOT with the same pattern. `graveyardHate` (exile...graveyard, still used to veto removal) is deliberately broad: as a negative filter an over-match costs one missed removal count. As a positive category it was wrong on two thirds of what it caught -- delve, encore/escape/craft costs, self-recursion and counter-replacement clauses all say 'exile ... graveyard' about YOUR OWN yard. Measured on the 71 calibration decks: 81 cards, of which Necropotence, Dig Through Time and Mizzix's Mastery are not graveyard hate by any reading. This pattern demands an opponent's or an unowned graveyard, and it adds the STATIC hate the old one could not see at all -- Rest in Peace and Leyline of the Void say 'graveyard' before 'exile', so an exile-first pattern misses the two most important cards in the class."
+    },
+    {
+      "id": "wincon.voltron",
+      "winconClass": "voltron",
+      "match": [
+        { "op": "anyOf", "clauses": [
+          { "op": "subtype", "in": ["equipment"] },
+          { "op": "oracle", "pattern": "enchantCreature" }
+        ] }
+      ],
+      "why": "Equipment and creature-enchanting auras, the same signature the archetype layer already uses. An aura that enchants a LAND is not voltron, which is why the subtype alone is not enough."
+    },
+    {
+      "id": "wincon.stompy",
+      "winconClass": "stompy",
+      "match": [
+        { "op": "typeLine", "contains": "creature" },
+        { "op": "powerOverMv", "atLeast": 1 }
+      ],
+      "not": [{ "op": "effectKind", "in": ["token-generation", "token-doubling"] }],
+      "why": "A creature bigger than it costs, with no token channel -- design 12.5's 'stat predicate on power vs MV, no token or anthem channel'. A token producer that happens to be a beater is go-wide first."
+    },
+    {
+      "id": "wincon.burn",
+      "winconClass": "burn",
+      "match": [
+        { "op": "anyOf", "clauses": [
+          { "op": "effectKind", "in": ["drain", "player-damage", "player-life-loss", "non-combat-damage", "noncombat-damage"] },
+          { "op": "oracle", "pattern": "burn" }
+        ] }
+      ],
+      "why": "Same signal the `burn` build category uses. Damage aimed at a creature is removal and has its own rules; this is the half aimed at players."
+    },
+    {
+      "id": "wincon.mill",
+      "winconClass": "mill",
+      "match": [{ "op": "oracle", "pattern": "millOpponents" }],
+      "why": "Mill aimed at OPPONENTS. Self-mill is fuel, not a wincon, and the same effect text serves both -- design 12.5 leaves the graph-decidable version open, so this asks who the mill points at."
+    },
+    {
+      "id": "wincon.altWin",
+      "winconClass": "alt-win",
+      "match": [{ "op": "oracle", "pattern": "altWin" }],
+      "why": "A stated win or loss condition: a small closed set, and the one class that says so in words."
     },
     {
       "id": "answers.damage",

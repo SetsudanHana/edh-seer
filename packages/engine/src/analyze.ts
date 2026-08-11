@@ -99,6 +99,16 @@ export interface DeckMath {
     fromCommandZone: boolean;
     available: number;
   }[];
+  /** How the deck plans to win, and how concentrated those plans are.
+   *
+   *  Scored the OPPOSITE way to `answers`: coverage wants breadth, focus wants concentration. A
+   *  deck all-in on one plan beats a deck with three half-plans, so a low focus is the finding. */
+  wincons: {
+    classes: { class: string; count: number; share: number }[];
+    /** Herfindahl over the class shares: 1 is single-minded, 1/n is n plans split evenly. */
+    focus: number;
+    primary?: string;
+  };
   /** Karsten's land-count regression against what the deck runs. Tier B -- published and
    *  independently confirmed, unlike the target the build benchmark scores against, which is a flat
    *  36 for every deck.
