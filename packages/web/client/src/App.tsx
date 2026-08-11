@@ -32,7 +32,17 @@ export default function App() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground p-8 max-w-5xl mx-auto flex flex-col gap-8">
+    // THE COLUMN USED TO STOP AT 1024px. On a 1920 screen that left 448px of empty gutter on each
+    // side -- 47% of the viewport -- while the report ran 3,092px tall, i.e. 2.9 screens of
+    // scrolling past dead space. The reference tools this product is measured against (Moxfield,
+    // Archidekt, Scryfall) all use the width.
+    //
+    // Above `xl` the cap comes off entirely -- a centred 1600px column on a 1920 screen still left
+    // 160px of dead margin each side, which is the same complaint one step smaller. The width is
+    // safe to give away because nothing here stretches with it: the report flows into columns
+    // (`OverviewTab`) and every run of prose carries its own measure cap, so growing the container
+    // adds columns rather than 200-character lines. Below `xl` the reading column is unchanged.
+    <main className="min-h-screen bg-background text-foreground p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
       {
         /*
         THESIS: The category standard, taken on purpose — a plain dark analytics

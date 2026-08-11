@@ -143,7 +143,9 @@ raw Tailwind palette color class (`text-red-500`, `bg-amber-500`, …).
 
 ## Layout
 
-Single-column, centered reading column: `max-w-5xl` container, `mx-auto`, `p-8`, vertical rhythm via `flex flex-col gap-8` at the page level and `gap-6` within the report body. The report is a tab strip (underline-style active indicator in the accent color) gating four panels (Overview / Archetypes / Cards / Combos); an unresolved-cards warning panel renders above the tabs when present.
+Centered reading column up to `xl`, full-bleed above it: `max-w-5xl xl:max-w-none` container, `mx-auto`, `p-8`, vertical rhythm via `flex flex-col gap-8` at the page level and `gap-6` within the report body. The report is a tab strip (underline-style active indicator in the accent color) gating five panels (Overview / Archetypes / Cards / Combos / Graph); the strip is **sticky to the top of the viewport** and scrolls horizontally at narrow widths, because the report runs ~3,000px and the only navigation between its sections used to scroll away after the first screen. An unresolved-cards warning panel renders above the tabs when present.
+
+**The Width-Buys-Columns Rule.** A wide viewport adds COLUMNS, never longer lines. The Overview's blocks are self-contained and unequal in height, so they flow through native CSS multi-column (`columns-1 xl:columns-2`, `break-inside-avoid` on each child) rather than a grid, and every run of prose carries its own measure cap (`max-w-[65ch]`). Two columns is the measured ceiling: at three, the deck-math panel is taller than everything else combined and cannot split, so it takes a whole column and the third renders empty. This replaces the previous fixed `max-w-5xl` page, which left 47% of a 1920 viewport as empty gutter while the report scrolled for 2.9 screens.
 
 Stat tiles use a responsive grid (`grid-cols-2` narrow, `sm:grid-cols-5` wide). The Cards tab renders a real `<table>` — header row in label typography, data rows separated by 1px separators, the rank column zero-padded and tabular, the Synergy column right-aligned. Bar charts (mana curve, land-math) are fixed-height (120px) horizontal bar rows in the accent color.
 

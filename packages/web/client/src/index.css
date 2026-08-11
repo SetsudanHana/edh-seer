@@ -108,6 +108,22 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
+/* DESIGN.md lists the focus ring among the accent's jobs, and nothing implemented it -- every
+   control was falling back to the user agent's blue, which is the one colour in the app that
+   belongs to no theme and does not follow the deck's identity. Keyboard-only (`:focus-visible`),
+   so a mouse click never paints a ring. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The report's tab strip scrolls horizontally at narrow widths, and `overflow-x` clips anything
+   drawn outside a child's box -- including its focus ring. Inside the strip the ring sits within
+   the tab instead, so keyboard focus stays visible at every width. */
+[role="tablist"] :focus-visible {
+  outline-offset: -2px;
+}
+
 @keyframes reveal-up {
   from {
     opacity: 0;

@@ -22,7 +22,23 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
   return (
     <div className="flex flex-col gap-6">
       {data.missing.length > 0 ? <MissingCards missing={data.missing} /> : null}
-      <div role="tablist" aria-label="Report sections" className="flex gap-4 border-b border-(--separator)">
+      {/* PINNED, because the report is ~3,000px tall and the only way between its five sections
+        *  used to scroll away after the first screen. Sticky rather than a fixed rail: it costs no
+        *  horizontal space, keeps the underline-tab grammar the design system documents, and needs
+        *  no collapsed state at 390px.
+        *
+        *  NO NEGATIVE MARGINS. Bleeding the bar into the page padding (`-mx-8 px-8`) made three
+        *  ancestors 32px wider than their own content box, which reads on a real screen as content
+        *  cropped off the right edge. The bar stays inside the box; the strip it would have covered
+        *  is page padding, which is the same colour anyway. */}
+      <div
+        role="tablist"
+        aria-label="Report sections"
+        // `overflow-x-auto`: at 390px the five tabs plus the bar's own padding run 32px past the
+        // row, and a clipped tab is a section of the report you cannot reach. Scrolling the strip
+        // keeps every tab reachable without shrinking the labels or wrapping to a second line.
+        className="sticky top-0 z-10 flex gap-4 border-b border-(--separator) bg-(--background) pt-2 overflow-x-auto"
+      >
         {TABS.map((t) => (
           <button
             key={t.id}

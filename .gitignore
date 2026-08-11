@@ -21,6 +21,8 @@ packages/tagger/_*.mts
 
 # impeccable skill scratch
 packages/web/.impeccable/critique/
+# critique snapshots resolve against the repo root when the target is given as a repo-relative path
+/.impeccable/
 
 # MTGJSON bulk download cache (50MB), re-fetched on demand by ingest-mtgjson.ts
 packages/data/.mtgjson-cache/
