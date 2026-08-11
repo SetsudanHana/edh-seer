@@ -59,6 +59,30 @@ test("rule 7: a phase trigger on EVERY turn fires up to pod-size times a round",
   expect(repeatsFor(triggered(["upkeep"], { control: "opp" }), "At the beginning of each opponent's upkeep, draw a card.")).toBe("per-turn");
 });
 
+test("rule 6/7 extension: an ordinal 'each turn' bounds a non-phase verb the same way", () => {
+  // Faerie Mastermind: "Whenever an opponent draws their second card each turn, you draw a card."
+  // `draw` is not a phase verb, so before ORDINAL_EACH_TURN existed this fell through every rule to
+  // REFUSED -- the card the whole taxonomy was designed around, sitting unlabelled. The ordinal
+  // "second ... each turn" bounds the trigger to that opponent's turn the same way a phase verb does.
+  expect(repeatsFor(triggered(["draw"], { control: "opp" }), "Whenever an opponent draws their second card each turn, you draw a card.")).toBe("per-turn");
+});
+
+test("rule 6/7 extension folds into the SAME control split as a phase trigger", () => {
+  // Rashmi, Eternities Crafter: "Whenever you cast your first spell each turn, reveal the top card
+  // of your library..." Same ordinal shape as Faerie Mastermind, but control:you -- bounded to your
+  // own turn, so per-cycle. Pins the fold into the existing branch rather than assuming it.
+  expect(repeatsFor(triggered(["cast"], { control: "you" }), "Whenever you cast your first spell each turn, reveal the top card of your library.")).toBe("per-cycle");
+});
+
+test("rule 6/7 extension does NOT over-match a bare 'each turn' with no ordinal", () => {
+  // Spirit of the Labyrinth: "Each player can't draw more than one card each turn." -- "one" is not
+  // an ordinal, and in the real corpus this line is a static (kind "static", caught by rule 4 before
+  // ever reaching the trigger branch). Wrapped as a trigger here to isolate the regex: without an
+  // ordinal word, the phase-bound branch must not fire, so an otherwise un-narrowed trigger (no
+  // type/subtype subject) is refused rather than mislabelled per-cycle or per-turn.
+  expect(repeatsFor(triggered(["draw"], { control: "you" }), "Each player can't draw more than one card each turn.")).toBeUndefined();
+});
+
 test("rule 8: the card's OWN enters/dies fires once; a class-watching trigger does not", () => {
   // Same verb, opposite buckets. `subject.self` is the discriminator, and self-reference is the
   // largest defect family this engine has had.
