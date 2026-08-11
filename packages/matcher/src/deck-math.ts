@@ -3,6 +3,7 @@ import type { DeckMath } from "@mtg/engine";
 import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses } from "./build.js";
 import { manaAudit } from "./mana-audit.js";
+import { recommendedLands } from "./land-count.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 /** The classes the doctrine says every deck should be able to answer (design §12.3), in the order
@@ -69,5 +70,14 @@ export function computeDeckMath(
       : {}),
   }));
 
-  return { turn, seen: seen(turn), library, answers, colors, demand };
+  const rec = recommendedLands(deck, { commanderNames });
+  const lands = {
+    actual: rec.actual,
+    target: rec.target,
+    avgManaValue: Math.round(rec.avgManaValue * 100) / 100,
+    rampPlusDraw: rec.rampPlusDraw,
+    fastMana: rec.fastMana,
+  };
+
+  return { turn, seen: seen(turn), library, answers, lands, colors, demand };
 }

@@ -61,6 +61,7 @@ export function BuildBenchmarks({
 function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath"]> }) {
   const { turn, seen, answers, demand } = deckMath;
   const colors = deckMath.colors ?? [];
+  const lands = deckMath.lands;
   return (
     <div className="flex flex-col gap-3 mt-2 pt-3 border-t border-(--separator)">
       <div className="flex flex-col gap-1.5">
@@ -96,6 +97,33 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
           })}
         </ul>
       </div>
+
+      {lands ? (
+        <div className="flex flex-col gap-1.5">
+          <h4 className="eyebrow">Lands, from this deck's curve</h4>
+          {/* The benchmark above scores against a flat 36 for every deck. This one is derived from
+            *  the deck's own average mana value and acceleration, so when the two disagree it is
+            *  the fixed target that is guessing. The inputs are shown because "34" with no working
+            *  is a number to argue with rather than act on. */}
+          <div
+            className="flex items-center gap-3 text-sm"
+            aria-label={`${lands.actual} lands, Karsten wants ${lands.target}`}
+          >
+            <span className="w-24 shrink-0">Karsten</span>
+            <span className="flex-1 text-xs text-(--muted)">
+              avg MV {lands.avgManaValue} · {lands.rampPlusDraw} cheap ramp/draw · {lands.fastMana} fast mana
+            </span>
+            <span className="shrink-0 tabular-nums text-(--muted)">{lands.actual} run</span>
+            <span
+              className={`w-16 shrink-0 text-right tabular-nums ${
+                Math.abs(lands.actual - lands.target) > 2 ? "text-(--warning)" : "text-(--success)"
+              }`}
+            >
+              wants {lands.target}
+            </span>
+          </div>
+        </div>
+      ) : null}
 
       {colors.length > 0 ? (
         <div className="flex flex-col gap-1.5">

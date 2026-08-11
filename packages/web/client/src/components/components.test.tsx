@@ -344,6 +344,7 @@ const DECK_MATH = {
     { class: "artifact", count: 0, fromCommandZone: false, available: 0 },
     { class: "graveyard", count: 1, fromCommandZone: true, available: 1 },
   ],
+  lands: { actual: 37, target: 34, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2 },
   colors: [
     { color: "B", supplied: 26, worst: { pips: 2, turn: 3, required: 33, cards: 12 } },
     { color: "U", supplied: 30 },
@@ -371,6 +372,16 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   // The game supplies a combat trigger: 0% would invent a hole, 100% would claim a board state
   // this layer does not model.
   expect(screen.getByLabelText(/attacks:any, 3 cards want it, the game supplies it/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks shows the land count the deck's own curve asks for", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  // Deck-derived, unlike the flat 36 the benchmark above scores against -- and it shows the inputs,
+  // because "34" with no working is a number to argue with rather than act on.
+  expect(screen.getByLabelText(/37 lands, Karsten wants 34/i)).toBeInTheDocument();
+  expect(screen.getByText(/avg mv 2\.7/i)).toBeInTheDocument();
+  expect(screen.getByText(/12 cheap ramp/i)).toBeInTheDocument();
+  expect(screen.getByText(/2 fast mana/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () => {

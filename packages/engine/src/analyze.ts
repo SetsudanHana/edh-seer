@@ -99,6 +99,21 @@ export interface DeckMath {
     fromCommandZone: boolean;
     available: number;
   }[];
+  /** Karsten's land-count regression against what the deck runs. Tier B -- published and
+   *  independently confirmed, unlike the target the build benchmark scores against, which is a flat
+   *  36 for every deck.
+   *
+   *  Reads AVERAGE mana value only, so a bimodal deck and a flat one get the same answer, and it has
+   *  no colour term at all: how many lands is a different question from which ones. */
+  lands: {
+    actual: number;
+    target: number;
+    avgManaValue: number;
+    /** Cheap ramp and draw, worth 0.28 of a land each. */
+    rampPlusDraw: number;
+    /** Zero-cost repeatable mana, worth a whole land each. */
+    fastMana: number;
+  };
   /** Per-colour feasibility: what the deck's own pips demand by each card's own mana value,
    *  against how many sources it runs. Absent colours are colours nothing in the deck costs.
    *

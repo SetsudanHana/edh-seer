@@ -6,6 +6,7 @@ import {
 } from "@mtg/data";
 import type { CardTags } from "@mtg/tagger";
 import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES } from "../build.js";
+import { recommendedLands } from "../land-count.js";
 import type { DeckCard } from "../types.js";
 
 /** Build-category membership across the calibration decks, as one number per category plus the
@@ -50,16 +51,41 @@ function diff(beforePath: string, afterPath: string): void {
   console.log(`\n${moved} distinct card-category memberships moved.`);
 }
 
+/** `--lands`: Karsten's target against what each deck actually runs.
+ *
+ *  The formula is Tier B and already verified; what this checks is the INPUT DERIVATION, which is
+ *  ours. A regression fitted on real decks should land near real decks -- a systematic bias across
+ *  71 of them means the ramp/fast-mana split is reading the wrong cards, not that 71 deckbuilders
+ *  are wrong. */
+function landReport(rows: { deck: string; actual: number; target: number; avg: number; ramp: number; fast: number }[]): void {
+  const deltas = rows.map((r) => r.actual - r.target).sort((a, b) => a - b);
+  const mean = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+  const median = deltas[Math.floor(deltas.length / 2)];
+  for (const r of rows.sort((a, b) => (a.actual - a.target) - (b.actual - b.target))) {
+    const d = r.actual - r.target;
+    console.log(
+      `  ${r.deck.padEnd(24)} runs ${String(r.actual).padStart(2)}  wants ${String(r.target).padStart(2)}  ` +
+      `${d >= 0 ? "+" : ""}${d}   avgMV ${r.avg.toFixed(2)}  ramp ${String(r.ramp).padStart(2)}  fast ${r.fast}`,
+    );
+  }
+  console.log(
+    `\n${rows.length} decks · mean actual-minus-target ${mean.toFixed(2)} · median ${median} · ` +
+    `within 2: ${deltas.filter((d) => Math.abs(d) <= 2).length}`,
+  );
+}
+
 async function main(): Promise<void> {
   if (process.argv[2] === "--diff") {
     diff(process.argv[3], process.argv[4]);
     return;
   }
+  const landsMode = process.argv[2] === "--lands";
 
   const store = await connect(loadConfig());
   const lookup = mongoLookup(store);
   const cardTags = store.db.collection("cardTags");
   const out: Snapshot = {};
+  const landRows: { deck: string; actual: number; target: number; avg: number; ramp: number; fast: number }[] = [];
 
   for (const file of readdirSync(DECK_DIR).filter((f) => f.endsWith(".txt")).sort()) {
     const sections = parseDecklistSections(readFileSync(join(DECK_DIR, file), "utf8"));
@@ -69,6 +95,14 @@ async function main(): Promise<void> {
       if (!doc) continue;
       const tags = (await cardTags.findOne({ oracleId: doc._id })) as CardTags | null;
       inputs.push({ card: docToCard(doc), tags });
+    }
+    if (landsMode) {
+      const rec = recommendedLands(inputs, { commanderNames: sections.commanders });
+      landRows.push({
+        deck: file.replace(/\.txt$/, ""), actual: rec.actual, target: rec.target,
+        avg: rec.avgManaValue, ramp: rec.rampPlusDraw, fast: rec.fastMana,
+      });
+      continue;
     }
     const members = detectBuildCategories(inputs);
     const deck: Record<string, string[]> = {};
@@ -83,7 +117,8 @@ async function main(): Promise<void> {
     out[file.replace(/\.txt$/, "")] = deck;
   }
 
-  console.log(JSON.stringify(out, null, 1));
+  if (landsMode) landReport(landRows);
+  else console.log(JSON.stringify(out, null, 1));
   await store.close();
 }
 
