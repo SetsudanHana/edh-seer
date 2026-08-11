@@ -99,6 +99,17 @@ export interface DeckMath {
     fromCommandZone: boolean;
     available: number;
   }[];
+  /** Per-colour feasibility: what the deck's own pips demand by each card's own mana value,
+   *  against how many sources it runs. Absent colours are colours nothing in the deck costs.
+   *
+   *  Composition only -- this says nothing about how many lands to run, and a land that enters
+   *  tapped counts as a full source. */
+  colors: {
+    color: string;
+    supplied: number;
+    /** The biggest shortfall, when one exists. */
+    worst?: { pips: number; turn: number; required: number; cards: number };
+  }[];
   /** The deck's biggest demand shapes: how many cards want the event, how many supply it, and
    *  whether you will have a supplier. */
   demand: {

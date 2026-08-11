@@ -83,5 +83,10 @@ export function docToCard(d: CardDoc): Card {
     power: d.power,
     toughness: d.toughness,
     ...(d.meldPartner !== undefined ? { meldPartner: d.meldPartner } : {}),
+    // Both were on the documents and dropped here, which is why CLAUDE.md could list producedMana
+    // as an available win with nothing consuming it: 2,641 corpus cards carry it and it never
+    // reached `Card`. The mana audit is its first consumer.
+    ...(d.manaCost !== undefined ? { manaCost: d.manaCost } : {}),
+    ...(d.producedMana !== undefined ? { producedMana: d.producedMana } : {}),
   };
 }

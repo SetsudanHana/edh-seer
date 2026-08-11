@@ -11,6 +11,17 @@ export interface Card {
   colors: string[];
   /** Scryfall cmc / mana value. */
   manaValue: number;
+  /** Scryfall mana_cost, e.g. "{2}{B}{B}". The PIPS are what the mana audit reads -- `manaValue`
+   *  says a card costs 4 and cannot say that two of those are black. Absent on lands and on the
+   *  back faces of split cards. */
+  manaCost?: string;
+  /** Scryfall produced_mana: the colours this card can add, e.g. ["B","G"]. Includes "C" for
+   *  colorless. Present only on cards that produce mana at all.
+   *
+   *  It is a claim about what the card CAN produce, not about what it produces reliably: a land
+   *  that enters tapped and a Sol Ring both count, and "add one mana of any color" lists all five.
+   *  Anything reading it owes the reader that caveat. */
+  producedMana?: string[];
   /** Scryfall color_identity, e.g. ["B","R","U"]. */
   colorIdentity?: string[];
   /** Scryfall power; null for non-creatures. May be "*". */

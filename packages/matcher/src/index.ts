@@ -17,6 +17,10 @@ export {
   detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, type BuildCategory,
 } from "./build.js";
 export {
+  manaAudit, pipsByColor, COLORS, SOURCE_CONFIDENCE,
+  type Color, type ColorDemand, type ManaAuditRow,
+} from "./mana-audit.js";
+export {
   answerClassesOf, loadRules, ruleMatches, RULES_VERSION,
   type Rule, type RuleClause, type RuleSet,
 } from "./rules.js";

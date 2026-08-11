@@ -60,6 +60,7 @@ export function BuildBenchmarks({
  *  A benchmark says "6 ramp, want 10". These say what that means in a game you actually play. */
 function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath"]> }) {
   const { turn, seen, answers, demand } = deckMath;
+  const colors = deckMath.colors ?? [];
   return (
     <div className="flex flex-col gap-3 mt-2 pt-3 border-t border-(--separator)">
       <div className="flex flex-col gap-1.5">
@@ -95,6 +96,37 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
           })}
         </ul>
       </div>
+
+      {colors.length > 0 ? (
+        <div className="flex flex-col gap-1.5">
+          <h4 className="eyebrow">Colours</h4>
+          <ul className="flex flex-col gap-1">
+            {colors.map((c) => {
+              // The deadline is the CARD's own mana value, not a chosen turn: a 3-drop wants its
+              // pips on turn 3. That is why this row can name a turn without guessing one.
+              const label = c.worst
+                ? `${c.color}, ${c.supplied} sources, ${c.worst.cards} card${c.worst.cards === 1 ? "" : "s"} want ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} by turn ${c.worst.turn}, which needs ${c.worst.required}`
+                : `${c.color}, ${c.supplied} sources, enough for every card that costs it`;
+              return (
+                <li key={c.color} className="flex items-center gap-3 text-sm" aria-label={label}>
+                  <span className="w-24 shrink-0 font-mono">{c.color}</span>
+                  <span className="flex-1 text-(--muted) text-xs">
+                    {c.worst
+                      ? `${c.worst.cards} card${c.worst.cards === 1 ? "" : "s"} want ${"{" + c.color + "}"}${c.worst.pips > 1 ? "{" + c.color + "}".repeat(c.worst.pips - 1) : ""} by T${c.worst.turn}`
+                      : "every cost covered"}
+                  </span>
+                  <span className="shrink-0 tabular-nums text-(--muted)">
+                    {c.supplied}{c.worst ? ` / ${c.worst.required}` : ""}
+                  </span>
+                  <span className={`w-16 shrink-0 text-right tabular-nums ${c.worst ? "text-(--warning)" : "text-(--success)"}`}>
+                    {c.worst ? `short ${c.worst.required - c.supplied}` : "ok"}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-1.5">
         <h4 className="eyebrow">Wants vs supplies</h4>

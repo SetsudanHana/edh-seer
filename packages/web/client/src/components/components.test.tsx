@@ -344,6 +344,10 @@ const DECK_MATH = {
     { class: "artifact", count: 0, fromCommandZone: false, available: 0 },
     { class: "graveyard", count: 1, fromCommandZone: true, available: 1 },
   ],
+  colors: [
+    { color: "B", supplied: 26, worst: { pips: 2, turn: 3, required: 33, cards: 12 } },
+    { color: "U", supplied: 30 },
+  ],
   demand: [
     { key: "enters:any", consumers: 20, suppliers: 84, available: 1, fromCommandZone: false },
     { key: "dies:any", consumers: 2, suppliers: 2, available: 0.227, fromCommandZone: false },
@@ -367,6 +371,16 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   // The game supplies a combat trigger: 0% would invent a hole, 100% would claim a board state
   // this layer does not model.
   expect(screen.getByLabelText(/attacks:any, 3 cards want it, the game supplies it/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  // The spec's own worked sentence: 12 cards want {B}{B} by T3, that needs 33 sources, you run 26.
+  expect(screen.getByLabelText(/B, 26 sources, 12 cards want 2 pips by turn 3, which needs 33/i))
+    .toBeInTheDocument();
+  // A colour that pays for itself says so rather than being dropped -- an absent row would read as
+  // "not checked".
+  expect(screen.getByLabelText(/U, 30 sources, enough/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks carries the caveat that makes the numbers readable", () => {

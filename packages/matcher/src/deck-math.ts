@@ -2,6 +2,7 @@ import { pAtLeast, seen } from "@mtg/engine";
 import type { DeckMath } from "@mtg/engine";
 import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses } from "./build.js";
+import { manaAudit } from "./mana-audit.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 /** The classes the doctrine says every deck should be able to answer (design §12.3), in the order
@@ -60,5 +61,13 @@ export function computeDeckMath(
       fromCommandZone: r.fromCommandZone,
     }));
 
-  return { turn, seen: seen(turn), library, answers, demand };
+  const colors = manaAudit(deck, { commanderNames }).map((r) => ({
+    color: r.color,
+    supplied: r.supplied,
+    ...(r.worst
+      ? { worst: { pips: r.worst.pips, turn: r.worst.turn, required: r.worst.required, cards: r.worst.cards } }
+      : {}),
+  }));
+
+  return { turn, seen: seen(turn), library, answers, colors, demand };
 }
