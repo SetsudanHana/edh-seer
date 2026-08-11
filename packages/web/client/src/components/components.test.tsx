@@ -344,6 +344,7 @@ const DECK_MATH = {
     { class: "artifact", count: 0, fromCommandZone: false, available: 0 },
     { class: "graveyard", count: 1, fromCommandZone: true, available: 1 },
   ],
+  clock: { turn: 8, powerAtFive: 6.4 },
   wincons: {
     classes: [
       { class: "go-wide", count: 12, share: 0.6 },
@@ -380,6 +381,20 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   // The game supplies a combat trigger: 0% would invent a hole, 100% would claim a board state
   // this layer does not model.
   expect(screen.getByLabelText(/attacks:any, 3 cards want it, the game supplies it/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks shows the measured clock, and calls it what it is", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.getByLabelText(/clock turn 8, 6.4 expected power at turn 5/i)).toBeInTheDocument();
+  // Optimistic by construction -- nobody blocks in this model -- and a turn number that does not
+  // say so reads as a prediction rather than a rate.
+  expect(screen.getByText(/nobody blocks/i)).toBeInTheDocument();
+});
+
+test("a deck with no combat clock says so rather than naming a turn", () => {
+  const noClock = { ...DECK_MATH, clock: { powerAtFive: 0.4 } };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={noClock} />);
+  expect(screen.getByLabelText(/no combat clock/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows the win plans, scored on concentration not breadth", () => {

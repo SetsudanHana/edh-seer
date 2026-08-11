@@ -23,6 +23,9 @@ export {
 export { landInputs, recommendedLands, type LandRecommendation } from "./land-count.js";
 export { detectWincons, focusIndex, winconReport, type WinconReport } from "./wincon.js";
 export {
+  expectedPower, measuredClock, pressureCurve, STARTING_LIFE, type PressurePoint,
+} from "./pressure.js";
+export {
   answerClassesOf, loadRules, ruleMatches, RULES_VERSION,
   type Rule, type RuleClause, type RuleSet,
 } from "./rules.js";

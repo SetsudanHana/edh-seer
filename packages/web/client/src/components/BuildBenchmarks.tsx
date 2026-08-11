@@ -63,6 +63,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
   const colors = deckMath.colors ?? [];
   const lands = deckMath.lands;
   const wincons = deckMath.wincons;
+  const clock = deckMath.clock;
   return (
     <div className="flex flex-col gap-3 mt-2 pt-3 border-t border-(--separator)">
       <div className="flex flex-col gap-1.5">
@@ -98,6 +99,35 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
           })}
         </ul>
       </div>
+
+      {clock ? (
+        <div className="flex flex-col gap-1">
+          <h4 className="eyebrow">Clock</h4>
+          <div
+            className="flex items-center gap-3 text-sm"
+            aria-label={
+              clock.turn === undefined
+                ? `no combat clock, ${clock.powerAtFive} expected power at turn 5`
+                : `clock turn ${clock.turn}, ${clock.powerAtFive} expected power at turn 5`
+            }
+          >
+            <span className="w-24 shrink-0">
+              {clock.turn === undefined ? "no clock" : `Turn ${clock.turn}`}
+            </span>
+            <span className="flex-1 text-xs text-(--muted)">
+              {clock.turn === undefined
+                ? "nothing here kills through combat — a mill or alt-win deck has no combat clock"
+                : `${clock.powerAtFive} expected power on board at turn 5`}
+            </span>
+          </div>
+          {/* A turn number that does not say how it was made reads as a prediction. It is a RATE:
+            *  useful for comparing two decks, useless as a date. */}
+          <p className="text-xs text-(--muted)">
+            Expected attacking power against one opponent's 40 life. Nobody blocks in this model and
+            nothing is removed, so it is optimistic — read it to compare decks, not to plan a game.
+          </p>
+        </div>
+      ) : null}
 
       {wincons && wincons.classes.length > 0 ? (
         <div className="flex flex-col gap-1.5">

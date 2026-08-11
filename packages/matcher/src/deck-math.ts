@@ -5,6 +5,7 @@ import { detectAnswerClasses } from "./build.js";
 import { manaAudit } from "./mana-audit.js";
 import { recommendedLands } from "./land-count.js";
 import { winconReport } from "./wincon.js";
+import { pressureCurve, STARTING_LIFE } from "./pressure.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 /** The classes the doctrine says every deck should be able to answer (design §12.3), in the order
@@ -74,6 +75,13 @@ export function computeDeckMath(
 
   const wincons = winconReport(deck, { comboCards: opts.comboCards });
 
+  const curve = pressureCurve(deck, { commanderNames });
+  const clockTurn = curve.find((p) => p.cumulative >= STARTING_LIFE)?.turn;
+  const clock = {
+    ...(clockTurn !== undefined ? { turn: clockTurn } : {}),
+    powerAtFive: Math.round(curve[4].power * 10) / 10,
+  };
+
   const rec = recommendedLands(deck, { commanderNames });
   const lands = {
     actual: rec.actual,
@@ -83,5 +91,5 @@ export function computeDeckMath(
     fastMana: rec.fastMana,
   };
 
-  return { turn, seen: seen(turn), library, answers, wincons, lands, colors, demand };
+  return { turn, seen: seen(turn), library, answers, clock, wincons, lands, colors, demand };
 }

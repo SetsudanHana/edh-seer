@@ -99,6 +99,18 @@ export interface DeckMath {
     fromCommandZone: boolean;
     available: number;
   }[];
+  /** The deck's measured combat clock: expected attacking power per turn, and the turn that
+   *  accumulates to one opponent's 40 life.
+   *
+   *  Optimistic by construction -- nobody blocks, nothing is removed, nothing has summoning
+   *  sickness -- so read it as a RATE for comparing decks, not as a date. `turn` is absent when the
+   *  deck has no combat clock at all, which is the honest answer for a mill or alt-win deck rather
+   *  than a made-up number. */
+  clock: {
+    turn?: number;
+    /** Expected attacking power on the board at turn 5. */
+    powerAtFive: number;
+  };
   /** How the deck plans to win, and how concentrated those plans are.
    *
    *  Scored the OPPOSITE way to `answers`: coverage wants breadth, focus wants concentration. A
