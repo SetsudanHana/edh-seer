@@ -656,3 +656,22 @@ test("the report prices deck math at the deck's own clock, not at a fixed turn",
   expect(report.deckMath!.turnSource).not.toBe("override");
   expect(report.deckMath!.turn).toBe(report.deckMath!.clock.turn);
 });
+
+/** The other shape of the same defect, and the one an emptiness check cannot see: a wired field
+ *  that is never empty, never null and perfectly plausible -- it just never MOVES. `turn` was a
+ *  hardcoded 5 on every deck alike, and nothing about the value itself looked wrong.
+ *
+ *  `bin/report-audit.ts` finds this class across the calibration decks by flagging any scalar
+ *  identical on all of them; this is the same idea small enough to live in CI. */
+test("the pricing turn moves between decks, rather than being one number everywhere", () => {
+  const body = (name: string, mv: number, power: string): DeckCard => ({
+    card: { name, typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: mv, power } as never,
+    tags: null,
+  });
+  const fast = Array.from({ length: 40 }, (_, i) => body(`Bear-${i}`, 1, "5"));
+  const slow = Array.from({ length: 40 }, (_, i) => body(`Ogre-${i}`, 6, "3"));
+
+  const fastTurn = analyzeDeckStructured(fast, undefined, H).deckMath!.turn;
+  const slowTurn = analyzeDeckStructured(slow, undefined, H).deckMath!.turn;
+  expect(fastTurn).toBeLessThan(slowTurn);
+});
