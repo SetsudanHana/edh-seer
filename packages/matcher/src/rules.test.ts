@@ -166,3 +166,50 @@ test("graveyard is an answer class too, and it comes from the hate rule", () => 
   ]);
   expect([...(classes.get("graveyard")?.cards ?? [])]).toEqual(["Bojuka Bog"]);
 });
+
+/** Exile is the only recursion-proof answer (design §2.1, owner's ruling): a tucked card can be
+ *  drawn or tutored again, and a destroyed one can be reanimated. The pair is the test -- either
+ *  card alone passes with a pattern that ignores the verb entirely. */
+test("an exile marks its class, a destroy does not", () => {
+  const classes = detectAnswerClasses([
+    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power."),
+    mk("Vindicate", "Destroy target permanent.", "Sorcery"),
+  ]);
+  expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Swords to Plowshares", "Vindicate"]);
+  expect([...(classes.get("creature")?.exiling ?? [])]).toEqual(["Swords to Plowshares"]);
+  // Vindicate reaches five classes and exiles none of them.
+  expect([...(classes.get("enchantment")?.exiling ?? [])]).toEqual([]);
+});
+
+/** The mode rides on the RULE that matched, not on the card (design §2.4). Treva's Charm destroys
+ *  an enchantment and exiles a creature; a card-level flag would report a recursion-proof
+ *  enchantment answer it does not have. */
+test("a card that exiles one type and destroys another marks only the type it exiled", () => {
+  const marks = answerClassesOf(mk(
+    "Treva's Charm",
+    "Choose one —\n• Destroy target enchantment.\n• Exile target attacking creature.\n• Draw a card, then discard a card.",
+  ));
+  expect(marks.get("creature")?.exile).toBe(true);
+  expect(marks.get("enchantment")?.exile).toBe(false);
+});
+
+/** `answers.typed` already vetoes graveyard exile, and the exile rule must carry the same veto:
+ *  "Exile target creature card from a graveyard" names a creature and answers no creature on the
+ *  battlefield. Without the `not` this is a recursion-proof creature answer that does not exist. */
+test("exiling a creature card OUT of a graveyard is not a creature answer", () => {
+  const classes = detectAnswerClasses([
+    mk("Shamble Back", "Exile target creature card from a graveyard. Create a 2/2 black Zombie creature token. You gain 2 life."),
+  ]);
+  expect(classes.get("creature")?.cards.has("Shamble Back") ?? false).toBe(false);
+  expect(classes.get("creature")?.exiling.has("Shamble Back") ?? false).toBe(false);
+});
+
+/** A multi-type exile marks every class it names, the same global sweep the class rule uses. */
+test("one exile clause naming two types marks both", () => {
+  const marks = answerClassesOf(mk(
+    "Return to Dust",
+    "Exile target artifact or enchantment. If you cast this spell during your main phase, you may exile up to one other target artifact or enchantment.",
+  ));
+  expect(marks.get("artifact")?.exile).toBe(true);
+  expect(marks.get("enchantment")?.exile).toBe(true);
+});

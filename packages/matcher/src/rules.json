@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -34,6 +34,7 @@
     "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?|exile the top \\w+ cards? of your library[\\s\\S]*?you may play",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
     "typedRemoval": "(?:destroy|exile)[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
+    "exileRemoval": "exile[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "bounceRemoval": "return target\\s+(?<class>[^.;:]{0,60}?)\\s+to (?:its owner's|their|the owner's|owner's) hand",
     "millOpponents": "(?:target opponent|each opponent|target player|each player)[^.]{0,40}?mills|mills? \\w+ cards?[^.]{0,40}?(?:target opponent|each opponent)",
     "altWin": "you win the game|wins? the game|loses? the game|lose the game",
@@ -260,6 +261,14 @@
       "match": [{ "op": "oracle", "pattern": "typedRemoval" }],
       "not": [{ "op": "oracle", "pattern": "graveyardHate" }],
       "why": "The same enumeration `targetedRemoval` already carries, captured instead of collapsed to a boolean. Answer classes are a SEPARATE axis from build categories: a card is in both, and this rule deliberately does not exclude board wipes, because a wipe does answer creatures."
+    },
+    {
+      "id": "answers.typed.exile",
+      "answerClassFrom": "exileRemoval",
+      "mode": "exile",
+      "match": [{ "op": "oracle", "pattern": "exileRemoval" }],
+      "not": [{ "op": "oracle", "pattern": "graveyardHate" }],
+      "why": "`typedRemoval` is `(?:destroy|exile)` -- one alternation, so nothing downstream can tell a recursion-proof answer from one a reanimator undoes. This rule ADDS to `answers.typed` rather than replacing it: every exile removal matches both, once for the class and once for the mode, so no card changes class. The `not` is the same veto `answers.typed` carries, and it is load-bearing here: 'Exile target creature card from a graveyard' names a creature and answers nothing on the battlefield."
     }
   ]
 }

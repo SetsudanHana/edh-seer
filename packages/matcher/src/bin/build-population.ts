@@ -111,7 +111,13 @@ async function main(): Promise<void> {
     // Answer classes ride in the same snapshot under an `answer:` prefix, so the coverage axis is
     // under the same gate as the categories. They are a different axis, not finer categories: a
     // card is in both.
-    for (const [cls, m] of detectAnswerClasses(inputs)) deck[`answer:${cls}`] = [...m.cards].sort();
+    for (const [cls, m] of detectAnswerClasses(inputs)) {
+      deck[`answer:${cls}`] = [...m.cards].sort();
+      // The mode sets ride in the same snapshot so the gate that proves the CLASS sets did not move
+      // is also the instrument that measures the modes (design §5). Emitted only when non-empty:
+      // an all-zero key on every deck is noise in a diff.
+      if (m.exiling.size) deck[`answer:${cls}:exile`] = [...m.exiling].sort();
+    }
     // Wincon classes ride along too, under their own prefix: same gate, same reason.
     // Through winconReport, not detectWincons: the deck-level gates (a token maker is only a win
     // plan when something pays it off) are the part most likely to regress.
