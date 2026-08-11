@@ -126,6 +126,49 @@ test("a colourless subject is not the same as an unstated one", () => {
   expect(parseSubject("creatures you control").colors).toBeUndefined();
 });
 
+test("two umbrella nouns together INTERSECT, they do not OR", () => {
+  // "Permanent spell" is a spell that is also a permanent. Both words are umbrellas, so neither
+  // narrowed the other and both survived as `["permanent","spell"]` -- which matcher's expandTypes
+  // UNIONS, reaching every card type including instant and sorcery. Defiler of Flesh's "whenever you
+  // cast a black permanent spell" was fed by every black spell in its deck, instants included.
+  // Same resolution as the negation case below and for the same reason: concrete types, because a
+  // token list is ORed downstream.
+  expect(parseSubject("a black permanent spell").type)
+    .toEqual(["creature", "artifact", "enchantment", "planeswalker", "battle"]);
+  expect(parseSubject("a permanent spell")).toMatchObject({
+    type: ["creature", "artifact", "enchantment", "planeswalker", "battle"],
+  });
+  // A LAND is a permanent but is never cast, which is exactly what the intersection removes.
+  expect(parseSubject("a permanent spell").type).not.toContain("land");
+});
+
+test("the umbrella the intersection came from is RECORDED, so the tag keeps its name", () => {
+  // Exactly the problem `notType` already solves one line down in themeSubjectKey: `type` now holds
+  // the five types "permanent spell" resolves to, and keying on the first of them reads the claim
+  // out as "cast:creature" -- rendered to a user as "a creature being cast" about Hylda's Crown of
+  // Winter, which is an Artifact. Recording the umbrella keeps the tag `cast:permanent`, which is
+  // both accurate and what the panel's cached verdicts are already keyed on.
+  expect(parseSubject("a black permanent spell").umbrella).toBe("permanent");
+  // Not set where nothing was intersected -- a lone umbrella is already its own name, and a
+  // concrete type outranks it.
+  expect(parseSubject("target spell").umbrella).toBeUndefined();
+  expect(parseSubject("a creature spell").umbrella).toBeUndefined();
+});
+
+test("a single umbrella noun still stands for itself", () => {
+  // Nothing to intersect with, so these must not change: "spell" is every nonland type and
+  // "permanent" is every permanent type, and both are the honest reading on their own.
+  expect(parseSubject("target spell").type).toBe("spell");
+  expect(parseSubject("target permanent").type).toBe("permanent");
+});
+
+test("a concrete type still beats both umbrellas", () => {
+  // "Creature spell" is a creature; the umbrella is noise once a real type is named, and the
+  // intersection must not fire ahead of that rule.
+  expect(parseSubject("a creature spell").type).toBe("creature");
+  expect(parseSubject("an artifact permanent spell").type).toBe("artifact");
+});
+
 test("a negated type is resolved to the types it actually leaves", () => {
   // "noncreature spell" collapsed to the bare umbrella `spell`, which matcher's PSEUDO_TYPE_SETS
   // expands to every nonland type INCLUDING creature -- so Mystic Remora, Saruman and The Mechanist

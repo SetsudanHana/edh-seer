@@ -23,7 +23,16 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // regrouping it with every untyped trigger. The first branch is the one the text names first.
   const first = s.anyOf?.[0];
   if (first !== undefined) return themeSubjectKey(first);
-  return list(s.subtype)[0] ?? (negated.length ? `-${negated[0]}` : undefined) ?? list(s.type)[0] ?? "any";
+  // An UMBRELLA outranks the list it resolves to, for the same reason a negation does: "permanent
+  // spell" resolves to five concrete types, and taking the first keyed Hylda's Crown of Winter --
+  // an Artifact -- as `cast:creature`, which humanizeEvent renders as "a creature being cast". It
+  // ranks BELOW the negation, because "nonland permanent" is more precisely named by what it
+  // excludes, and that is the key the panel's verdicts already carry.
+  return list(s.subtype)[0]
+    ?? (negated.length ? `-${negated[0]}` : undefined)
+    ?? s.umbrella
+    ?? list(s.type)[0]
+    ?? "any";
 }
 
 /** A card's set of theme tags (for deck-frequency ranking): one per trigger verb, emit, and

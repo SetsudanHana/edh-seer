@@ -74,7 +74,30 @@ function compoundTypes(t: string): string[] | undefined {
   return pair[0] === pair[1] ? undefined : pair;
 }
 
-function parseTypes(t: string): { type?: string | string[]; notType?: string[]; plural: boolean } {
+/** The concrete card types a group of umbrella nouns denotes TOGETHER — their intersection.
+ *
+ *  "Permanent spell" is a spell that is ALSO a permanent, so the two words narrow one another. They
+ *  did not: neither is concrete, so the umbrella-dropping rule below left both in place, and a
+ *  `type` array is an OR downstream. `expandTypes(["permanent","spell"])` is therefore the UNION of
+ *  the two member sets — every card type there is — and Defiler of Flesh's "whenever you cast a
+ *  black permanent spell" was fed by every black instant in its deck.
+ *
+ *  Resolved to concrete types for exactly the reason the negation path resolves to them: the tokens
+ *  are ORed downstream, so the intersection has to be computed here or not at all. Undefined when no
+ *  umbrella is present; a SINGLE umbrella is left to the caller, which keeps the word itself. */
+function umbrellaIntersection(found: string[]): string[] | undefined {
+  const [first, ...rest] = found.filter((f) => UMBRELLA_TYPES[f]);
+  if (first === undefined) return undefined;
+  // Filtered from the FIRST umbrella's own list rather than from CARD_TYPES, so a single umbrella
+  // returns its member set in exactly the order it already had. The types are a set and order means
+  // nothing to matching, but it means something to `themeSubjectKey`, which joins them into a tag —
+  // reordering would churn theme keys and panel claim identities for no gain.
+  return [...UMBRELLA_TYPES[first]!].filter((ty) => rest.every((u) => UMBRELLA_TYPES[u]!.includes(ty)));
+}
+
+function parseTypes(
+  t: string,
+): { type?: string | string[]; notType?: string[]; umbrella?: string; plural: boolean } {
   const found: string[] = [];
   let plural = false;
   for (const ty of TYPES) {
@@ -94,9 +117,10 @@ function parseTypes(t: string): { type?: string | string[]; notType?: string[]; 
   // spell in the deck, the exact opposite of what they say. 197 mentions across 185 corpus cards.
   const { negated, plural: negPlural } = negatedTypes(t);
   if (negated.length > 0) {
-    const umbrella = found.find((f) => UMBRELLA_TYPES[f]);
     const concrete = found.filter((f) => !UMBRELLA_TYPES[f]);
-    const base = concrete.length > 0 ? concrete : [...(UMBRELLA_TYPES[umbrella ?? ""] ?? CARD_TYPES)];
+    // Every umbrella present narrows the base, not just the first one found: "nonland permanent
+    // spell" is the permanents that are spells, minus lands.
+    const base = concrete.length > 0 ? concrete : [...(umbrellaIntersection(found) ?? CARD_TYPES)];
     const kept = base.filter((ty) => !negated.includes(ty));
     // A negation that removes nothing from the base ("nonartifact creature" is still a creature)
     // leaves the subject exactly as it was: the engine cannot say "and not an artifact", and
@@ -121,6 +145,16 @@ function parseTypes(t: string): { type?: string | string[]; notType?: string[]; 
   // words made every nonland card match. Drop the umbrella word once a concrete type narrows it,
   // the same move already made for "token"/"card" above; keep it only when it's all there is.
   const concrete = found.filter((f) => f !== "spell" && f !== "permanent");
+  if (concrete.length === 0 && found.length > 1) {
+    // Only umbrellas, and more than one of them: they narrow each other. Intersected here because
+    // the tokens are ORed downstream, and the umbrella recorded alongside so the tag keeps its name
+    // instead of reading as one arbitrary member of the resolved list.
+    const kept = umbrellaIntersection(found);
+    if (kept && kept.length > 0) {
+      return { type: kept.length === 1 ? kept[0] : kept, umbrella: found.find((f) => UMBRELLA_TYPES[f]), plural };
+    }
+  }
+  // A lone umbrella stands for itself: "target spell" really is every nonland type.
   const kept = concrete.length > 0 ? concrete : found;
   return { type: kept.length === 1 ? kept[0] : kept, plural };
 }
@@ -330,7 +364,7 @@ const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|
 
 export function parseSubject(text: string): SubjectFilter {
   const t = text.toLowerCase().trim();
-  const { type, notType, plural } = parseTypes(t);
+  const { type, notType, umbrella, plural } = parseTypes(t);
   const { subtype, plural: subtypePlural } = parseSubtypes(t);
   const scope = parseScope(t, plural || subtypePlural);
   const stats = parseStats(t);
@@ -346,6 +380,7 @@ export function parseSubject(text: string): SubjectFilter {
   if (colors) out.colors = colors;
   if (type) out.type = type;
   if (notType?.length) out.notType = notType;
+  if (umbrella) out.umbrella = umbrella;
   const all = compoundTypes(t);
   if (all) out.allTypes = all;
   if (subtype) out.subtype = subtype;

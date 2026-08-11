@@ -29,6 +29,16 @@ export interface SubjectFilter {
    *  instant, and grouping noncreature-spell payoffs under `cast:artifact` puts them on the wrong
    *  theme axis. Set only when the negation actually narrowed something. */
   notType?: string[];
+  /** The umbrella noun a multi-umbrella `type` list was resolved FROM — "permanent" for
+   *  "permanent spell".
+   *
+   *  The same fact `notType` records, for the same reason. Two umbrella nouns narrow one another
+   *  ("a permanent spell" is a spell that is also a permanent), so `type` carries their concrete
+   *  INTERSECTION — a token list would be ORed by `expandTypes` back into every card type. But then
+   *  keying on the first of those five types renders "cast:creature" to a user about Hylda's Crown
+   *  of Winter, an Artifact. This keeps the tag reading `cast:permanent`. Set only where an
+   *  intersection actually happened: a lone umbrella is already its own name. */
+  umbrella?: string;
   /** Card types the subject demands ALL of — a compound noun, "artifact creature".
    *
    *  `type` cannot carry this: an array there means OR, which is what "target artifact or
