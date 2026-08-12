@@ -18,7 +18,6 @@ import {
   nodeRadius,
   projectRoomMembership,
   REPULSION,
-  universalRooms,
   VELOCITY_DECAY,
   type BoardParams,
   type CustomForce,
@@ -44,7 +43,6 @@ describe("forceRoomAttraction", () => {
     const b = card("card:b", 50, 0);
     const force = forceRoomAttraction({
       roomsByNode: new Map([["card:a", ["ramp"]], ["card:b", ["ramp"]]]),
-      universal: new Set(),
       stiffness: 0.008,
     });
     force.initialize([a, b]);
@@ -59,7 +57,6 @@ describe("forceRoomAttraction", () => {
     const b = card("card:b", 50, 0);
     const force = forceRoomAttraction({
       roomsByNode: new Map([["card:a", ["ramp"]], ["card:b", ["lands"]]]),
-      universal: new Set(),
       stiffness: 0.008,
     });
     force.initialize([a, b]);
@@ -68,19 +65,6 @@ describe("forceRoomAttraction", () => {
     expect(b.vx).toBe(0);
   });
 
-  test("ignores a room listed as universal", () => {
-    const a = card("card:a", -50, 0);
-    const b = card("card:b", 50, 0);
-    const force = forceRoomAttraction({
-      roomsByNode: new Map([["card:a", ["strategy"]], ["card:b", ["strategy"]]]),
-      universal: new Set(["strategy"]),
-      stiffness: 0.008,
-    });
-    force.initialize([a, b]);
-    force(1);
-    expect(a.vx).toBe(0);
-    expect(b.vx).toBe(0);
-  });
 
   test("scales with alpha, the way every d3 force does", () => {
     const build = () => {
@@ -88,7 +72,6 @@ describe("forceRoomAttraction", () => {
       const b = card("card:b", 50, 0);
       const force = forceRoomAttraction({
         roomsByNode: new Map([["card:a", ["ramp"]], ["card:b", ["ramp"]]]),
-        universal: new Set(),
         stiffness: 0.008,
       });
       force.initialize([a, b]);
@@ -105,7 +88,6 @@ describe("forceRoomAttraction", () => {
       const b = card("card:b", 50, 0);
       const force = forceRoomAttraction({
         roomsByNode: new Map([["card:a", rooms], ["card:b", rooms]]),
-        universal: new Set(),
         stiffness: 0.008,
       });
       force.initialize([a, b]);
@@ -366,7 +348,7 @@ describe("createBoardSimulation's stated invariants", () => {
     });
     const { simulation } = createBoardSimulation({
       nodes, links: [], roomsByNode: new Map(), rooms: [],
-      tallies: new Map(), universal: new Set(), visible: () => true,
+      tallies: new Map(), visible: () => true,
     });
     const centroid = () => ({
       x: nodes.reduce((s, n) => s + n.x, 0) / nodes.length,
@@ -387,7 +369,7 @@ describe("createBoardSimulation's stated invariants", () => {
     });
     const { simulation } = createBoardSimulation({
       nodes, links: [], roomsByNode: new Map(), rooms: [],
-      tallies: new Map(), universal: new Set(), visible: () => true,
+      tallies: new Map(), visible: () => true,
     });
     for (let i = 0; i < 200; i++) {
       simulation.tick();
@@ -426,7 +408,6 @@ describe("createBoardSimulation's stated invariants", () => {
       roomsByNode: new Map([["card:a", ["ramp"]], ["card:b", ["ramp"]]]),
       rooms: [{ id: "ramp" }],
       tallies: new Map([["ramp", { count: 2, target: 0, under: false }]]),
-      universal: new Set(),
       visible: () => true,
     });
     expect(simulation.alpha()).toBe(1);
@@ -769,7 +750,6 @@ describe("BoardParams", () => {
       roomsByNode: new Map(),
       rooms: [],
       tallies: new Map(),
-      universal: new Set(),
       visible: () => true,
       params,
     }).simulation;
@@ -866,7 +846,6 @@ describe("BoardParams", () => {
         roomsByNode: new Map([["card:a", ["ramp"]], ["card:b", ["ramp"]]]),
         rooms: [{ id: "ramp" }],
         tallies: new Map(),
-        universal: new Set(),
         visible: () => true,
         params: { roomAttraction },
       });
@@ -891,7 +870,6 @@ describe("BoardParams", () => {
         roomsByNode: new Map([["card:a", ["ramp"]], ["card:b", ["ramp"]]]),
         rooms: [{ id: "ramp" }],
         tallies: new Map(),
-        universal: new Set(),
         visible: () => true,
         params: { containment: containmentStiffness },
       });
@@ -921,7 +899,6 @@ describe("BoardParams", () => {
         ]),
         rooms: [{ id: "ramp" }],
         tallies: new Map(),
-        universal: new Set(),
         visible: () => true,
         params: { foreignPush: foreignStiffness },
       });

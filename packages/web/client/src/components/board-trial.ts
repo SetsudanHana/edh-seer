@@ -7,7 +7,7 @@
  *  reason to have this file at all. Anything that changes it must change here, once. */
 import {
   boardMetrics, countOverlaps, createBoardSimulation, holdCardCentroid, projectRoomMembership,
-  universalRooms, type BoardParams, type Sim,
+  type BoardParams, type Sim,
 } from "./board-force.js";
 import { roomTallies, type RoomId } from "./deck-rooms.js";
 import { PRESETS, cardFacts, roomsForFacts } from "./presets.js";
@@ -101,13 +101,9 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
     for (const l of links) { l.source.deg++; l.target.deg++; }
 
     const visible = (n: Sim) => n.kind === "card";
-    const universal = universalRooms(
-      rooms.map((r) => r.id),
-      nodes.filter(visible).map((n) => roomsByNode.get(n.id) ?? []),
-    );
 
     const { simulation, roomCircles } = createBoardSimulation({
-      nodes, links, roomsByNode, rooms, tallies, universal, visible, params,
+      nodes, links, roomsByNode, rooms, tallies, visible, params,
     });
 
     const cards = nodes.filter(visible);

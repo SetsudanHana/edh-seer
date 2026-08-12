@@ -38,37 +38,6 @@ export function roomAttraction(
   return { x: -(dx / d) * f, y: -(dy / d) * f };
 }
 
-/** Above this share of the visible card nodes, a room stops contributing to roomAttraction. */
-export const UNIVERSAL_ROOM_FRACTION = 0.8;
-
-/** Rooms holding so much of the deck that pairwise attraction through them says nothing.
- *  ROOM_ATTRACTION applies per shared room per card pair, so a room holding the whole deck makes
- *  all 4,851 pairs attract with only separation() pushing back -- the pile-up a mono-black deck
- *  grouped by Colour shows.
- *
- *  Strictly "exceeds", not "reaches": a room on exactly the fraction still attracts.
- *
- *  Exemption is from the FORCE only. The room still draws, still gets a legend row, still paints
- *  rim arcs, and still takes part in containment and foreignPush.
- *
- *  This mirrors a ruling already made once: Strategy claimed 94 of 94 cards via archetypes and was
- *  cut back for the same reason -- "a set containing everything, which distinguishes nothing"
- *  (deck-rooms.ts's roomsForCard). */
-export function universalRooms(
-  roomIds: readonly string[],
-  memberships: readonly (readonly string[])[],
-  fraction: number = UNIVERSAL_ROOM_FRACTION,
-): Set<string> {
-  const out = new Set<string>();
-  if (memberships.length === 0) return out;
-  const held = new Map<string, number>();
-  for (const rooms of memberships) for (const id of rooms) held.set(id, (held.get(id) ?? 0) + 1);
-  for (const id of roomIds) {
-    if ((held.get(id) ?? 0) > memberships.length * fraction) out.add(id);
-  }
-  return out;
-}
-
 /** Velocity delta pulling a card back toward a room it BELONGS to but has drifted outside of.
  *  Zero while the card is inside. `dx`/`dy` run from the room's centre to the card.
  *
@@ -463,6 +432,24 @@ export type CustomForce = ((alpha: number) => void) & { initialize(nodes: Sim[])
 /** Cards sharing a room pull together; the room's circle is then drawn around the cluster they
  *  form. The only force that reads membership pairwise.
  *
+ *  EACH ROOM'S PULL IS NORMALISED BY ITS OWN SIZE, and that is what removed the universal-room
+ *  exemption this force used to carry. The pull is a linear spring per PAIR, so a card in an
+ *  n-member room felt n-1 of them and its total inward force scaled with n, while the repulsion
+ *  pushing back falls off with distance. Past some size attraction simply won, and a room holding
+ *  most of the deck collapsed into a pile -- which is what UNIVERSAL_ROOM_FRACTION was built to
+ *  dodge, by switching the room's attraction off entirely above 80% of the deck.
+ *
+ *  Switching it off has its own failure, and it is visible rather than measurable: with nothing
+ *  pulling inward, repulsion spreads the members until containment stops them at the rim, and a
+ *  mono-black deck's Colour board draws as a HOLLOW RING of 65 cards around an empty middle. Zero
+ *  overlaps, zero intrusions, and nobody would want it. Both the pile and the ring are the same
+ *  bug seen from either side: a force whose strength depends on how many cards happen to share a
+ *  room.
+ *
+ *  Weighting each shared room by 1/(members - 1) makes a card's total room pull roughly one
+ *  spring's worth whatever the room's size, so a 67-card room pulls about as hard as a 3-card one
+ *  and neither extreme arises. No threshold, no exemption, no second failure mode to guard.
+ *
  *  Deliberately not expressed as a forceLink over same-room pairs: forceLink splits its
  *  correction by a degree bias (`count[source] / (count[source] + count[target])`, see the
  *  design doc's 3.3), which would make a card in five rooms move differently from one in one
@@ -472,10 +459,12 @@ export type CustomForce = ((alpha: number) => void) & { initialize(nodes: Sim[])
  *  quadtree repulsion running alongside it. */
 export function forceRoomAttraction(opts: {
   roomsByNode: ReadonlyMap<string, readonly RoomId[]>;
-  universal: ReadonlySet<string>;
   stiffness: number;
 }): CustomForce {
   let cards: Sim[] = [];
+  /** 1 / members, per room. See the note above: this is what stops a room's pull scaling with its
+   *  own size, and it is why there is no universal-room exemption any more. */
+  let weight = new Map<RoomId, number>();
   const force = ((alpha: number) => {
     for (let i = 0; i < cards.length; i++) {
       for (let j = i + 1; j < cards.length; j++) {
@@ -483,7 +472,7 @@ export function forceRoomAttraction(opts: {
         const ra = opts.roomsByNode.get(a.id), rb = opts.roomsByNode.get(b.id);
         if (!ra || !rb) continue;
         let shared = 0;
-        for (const id of ra) if (!opts.universal.has(id) && rb.includes(id)) shared++;
+        for (const id of ra) if (rb.includes(id)) shared += weight.get(id) ?? 1;
         if (shared === 0) continue;
         // alpha scales the force, not the integration step -- that is d3's convention and the
         // one difference from the loop this replaces (design doc 3).
@@ -493,7 +482,14 @@ export function forceRoomAttraction(opts: {
       }
     }
   }) as CustomForce;
-  force.initialize = (nodes: Sim[]) => { cards = nodes.filter((n) => n.kind === "card"); };
+  force.initialize = (nodes: Sim[]) => {
+    cards = nodes.filter((n) => n.kind === "card");
+    const size = new Map<RoomId, number>();
+    for (const n of cards) {
+      for (const id of opts.roomsByNode.get(n.id) ?? []) size.set(id, (size.get(id) ?? 0) + 1);
+    }
+    weight = new Map([...size].map(([id, n]) => [id, 1 / Math.max(1, n - 1)]));
+  };
   return force;
 }
 
@@ -781,7 +777,6 @@ export function createBoardSimulation(opts: {
   roomsByNode: ReadonlyMap<string, readonly RoomId[]>;
   rooms: readonly { id: RoomId }[];
   tallies: Map<RoomId, RoomTally>;
-  universal: ReadonlySet<string>;
   visible: (n: Sim) => boolean;
   params?: Partial<BoardParams>;
 }): { simulation: Simulation<Sim, undefined>; roomCircles: () => Map<RoomId, Circle> } {
@@ -830,7 +825,6 @@ export function createBoardSimulation(opts: {
     .force("y", forceY<Sim>(0).strength((n) => (zoned(n) ? 0 : p.centerPull)))
     .force("rooms", forceRoomAttraction({
       roomsByNode: opts.roomsByNode,
-      universal: opts.universal,
       stiffness: p.roomAttraction,
     }))
     .force("containment", forceRoomContainment({

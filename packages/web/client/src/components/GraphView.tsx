@@ -14,7 +14,6 @@ export { ART_RADIUS };
 import { cardFacts, PRESETS, roomsForFacts } from "./presets.js";
 import {
   createBoardSimulation, DEFAULT_PARAMS, holdCardCentroid, nodeRadius, projectRoomMembership,
-  universalRooms,
   type BoardParams, type Sim,
 } from "./board-force.js";
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
@@ -23,7 +22,6 @@ import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
 // deck-rooms.ts already has for ART_RADIUS above.
 export {
   boardMetrics, containment, foreignPush, nodeRadius, roomAttraction,
-  UNIVERSAL_ROOM_FRACTION, universalRooms,
 } from "./board-force.js";
 export type { Sim } from "./board-force.js";
 
@@ -382,16 +380,12 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
     // Computed once per effect run, not per tick: `hidden` is already a dependency of this effect,
     // so a visibility change re-runs it and this set is rebuilt with it.
-    const universal = universalRooms(
-      rooms.map((r) => r.id),
-      nodes.filter((n) => n.kind === "card" && visible(n)).map((n) => roomsByNode.get(n.id) ?? []),
-    );
 
     // Every node is bound to the simulation, visible or not (project owner's ruling, 7585fca) --
     // see createBoardSimulation's doc comment for the measurements. `visible` is a paint,
     // hit-test and room-circle concern only.
     const { simulation, roomCircles: roomCirclesNow } = createBoardSimulation({
-      nodes, links, roomsByNode, rooms, tallies, universal, visible, params,
+      nodes, links, roomsByNode, rooms, tallies, visible, params,
     });
     // A from-scratch graph gets full energy to organize; a graph that already has settled
     // positions (a filter toggle, or -- once deckbuilding lands -- a card added/removed) only

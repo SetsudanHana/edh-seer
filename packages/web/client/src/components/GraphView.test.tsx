@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { zoomIdentity, type ZoomTransform } from "d3-zoom";
-import { ART_RADIUS, boardMetrics, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, traveledAsPan, universalRooms } from "./GraphView.js";
+import { ART_RADIUS, boardMetrics, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, traveledAsPan } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
 import { MIN_ROOM_CARDS, ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
@@ -659,34 +659,6 @@ describe("foreignPush", () => {
   });
 });
 
-describe("universalRooms", () => {
-  // Ten cards, so the fraction lands on clean counts.
-  const cards = (inRoom: number, id: string) =>
-    Array.from({ length: 10 }, (_, i) => (i < inRoom ? [id] : []));
-
-  it("does not exempt a room at 79% of the visible cards", () => {
-    expect(universalRooms(["big"], cards(7, "big"))).toEqual(new Set());
-  });
-
-  it("exempts a room past the fraction", () => {
-    expect(universalRooms(["big"], cards(9, "big"))).toEqual(new Set(["big"]));
-  });
-
-  it("does not exempt a room sitting exactly on the fraction", () => {
-    // 8/10 is 0.8 exactly -- the rule is "exceeds", so this one still attracts.
-    expect(universalRooms(["big"], cards(8, "big"))).toEqual(new Set());
-  });
-
-  it("exempts only the rooms that qualify", () => {
-    const memberships = Array.from({ length: 10 }, (_, i) => (i < 9 ? ["big", "small"] : ["big"]))
-      .map((r, i) => (i < 2 ? r : r.filter((x) => x !== "small")));
-    expect(universalRooms(["big", "small"], memberships)).toEqual(new Set(["big"]));
-  });
-
-  it("exempts nothing when there are no cards", () => {
-    expect(universalRooms(["big"], [])).toEqual(new Set());
-  });
-});
 
 // `cam` used to be rebuilt at the origin every time the layout effect re-ran, and `hidden` (the
 // filter-chip state) is one of that effect's deps -- so toggling a chip silently reset pan and
@@ -1110,11 +1082,13 @@ test("the probe reports the current room circles", () => {
 // forces do anything. This test drives the actual simulation and checks a card MOVES.
 //
 // Two cards, both "ramp", nothing else -- roomsForFacts puts them both in "ramp" and nowhere else.
-// That makes "ramp" 100% of the visible cards, so Task 4's universalRooms() exempts it from
-// roomAttraction (see that function's doc comment) -- the pre-existing card-to-card force that
-// used to pull this pair together regardless of whether THIS block existed, which is exactly what
-// the original fix-round review flagged as an unisolated confound. With roomAttraction exempt,
-// containment is the ONLY attractive force left on this fixture: links don't apply (no edges),
+// That used to make "ramp" 100% of the visible cards and trip universalRooms(), which switched
+// roomAttraction off between them and left containment as the only attractive force -- the clean
+// isolation the original fix-round review asked for. That exemption is GONE (roomAttraction is
+// normalised by room size instead), so roomAttraction now applies here at 1/(members-1) = 1 for a
+// two-card room. The test still passes because it asserts a card MOVES toward its room, which both
+// forces do; it is no longer a clean isolation of the containment block, and a future change to
+// either force can now break it. Links don't apply (no edges),
 // CENTER_PULL doesn't apply (both cards are zoned, in a room), and repulsion/separation only push
 // apart. That isolates the force block cleanly -- but it also means containment is now fighting
 // repulsion ALONE, with nothing to help it close the last stretch.
@@ -1487,9 +1461,10 @@ const INTRUSION_BASELINE = 1;
 // DEVIATES from the brief's literal `<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />`:
 // SAMPLE's two cards both carry no `roles`, so both fall through to the "strategy" fallback room
 // (roomsForCard) -- the ONLY room either card is ever in, holding 100% of the visible deck. That
-// trips `universalRooms`' 80%-of-the-deck exemption (UNIVERSAL_ROOM_FRACTION), which switches
-// ROOM_ATTRACTION off between them -- the same force arm A3 of the measurement report found is
-// load-bearing (75-80/94 cards escape with it off). Confirmed by hand: SAMPLE settles to a bit-
+// used to trip `universalRooms`' 80%-of-the-deck exemption, switching ROOM_ATTRACTION off between
+// them. That exemption is gone -- attraction is normalised by room size now -- so this pair does
+// attract, weakly. The settled numbers below were measured under the exemption and are kept as the
+// reasoning that produced this fixture, not as current values. Confirmed by hand at the time: SAMPLE settles to a bit-
 // identical fixed point by tick ~100 and stays there through 500,000 ticks, both cards permanently
 // just outside the room's rim (escapes.one 2). CONTAINMENT is not inert here -- zeroing it alongside
 // FOREIGN_PUSH lets the pair separate to 316 world units apart (repulsion's own d2>220000 cutoff is
