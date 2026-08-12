@@ -13,7 +13,8 @@ import { ART_RADIUS, rimArcs, rimHues, OVERFLOW_HUE, ROOMS, roomLayout, roomTall
 export { ART_RADIUS };
 import { cardFacts, PRESETS, roomsForFacts } from "./presets.js";
 import {
-  createBoardSimulation, DEFAULT_PARAMS, nodeRadius, projectRoomMembership, universalRooms,
+  createBoardSimulation, DEFAULT_PARAMS, holdCardCentroid, nodeRadius, projectRoomMembership,
+  universalRooms,
   type BoardParams, type Sim,
 } from "./board-force.js";
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
@@ -747,6 +748,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const loop = () => {
       simulation.tick();
       unresolved = projectRoomMembership(simCards, roomCirclesNow(), roomsByNode);
+      // AFTER the projection, which is the last thing that moves a card: it shoves cards by hand,
+      // outside any force's reach, and on a crowded preset that shove is most of the walk. Ordering
+      // it before would leave exactly that residue behind. Rigid translation, so it cannot disturb
+      // the membership the projection just enforced.
+      holdCardCentroid(nodes, simCards);
       draw();
       raf = requestAnimationFrame(loop);
     };

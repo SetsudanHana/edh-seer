@@ -260,6 +260,47 @@ export function projectRoomMembership(
   return unresolved;
 }
 
+/** Translates the whole board so the CARDS' centroid sits on the world origin. Called once a frame,
+ *  it holds the board still.
+ *
+ *  The board walks because nothing anchors the cards: `forceX`/`forceY` claim only UNZONED nodes --
+ *  which is every non-card node and no roomed card -- and every other force is pairwise or
+ *  room-relative, so a common-mode motion is invisible to all of them. Measured on Sorin's Colour
+ *  preset: 67 world units of card-centroid drift every 3 s across ten trials, ~1,300 a minute. The
+ *  board leaves the screen and does not come back, because the camera deliberately keeps the user's
+ *  pan across a preset change (GraphView).
+ *
+ *  POSITIONAL, and that is the entire point. A FORCE cannot fix this: d3 runs `force(alpha)` to
+ *  write vx, then integrates, so a velocity-based cancellation never sees projectRoomMembership,
+ *  which runs AFTER integration and moves cards by hand. That was measured, not reasoned: a force
+ *  subtracting the cards' mean velocity took Colour's drift 67 -> 25 and stalled there, while this
+ *  pass takes it to 0.00 on every preset. The force was then deleted -- with the pass in place it
+ *  moved nothing (Role 3->0 overlaps, Subtype 12->10 intrusions, both inside trial noise). Same
+ *  division of labour as containment/foreignPush (ask) versus projectRoomMembership (enforce).
+ *
+ *  The ORIGIN, not a remembered anchor, because that is where the camera already looks: the first
+ *  layout seeds d3-zoom with `translate(dim.w / 2, dim.h / 2)` (GraphView), which frames world
+ *  (0, 0). Pinning there needs no state and cannot drift itself.
+ *
+ *  Moves EVERY node, cards included. Translating cards alone would tear them off the ~234 non-card
+ *  nodes they hang from by roughly 1,300 link springs, and the springs would pull them back next
+ *  tick -- the board would fight itself once a frame.
+ *
+ *  A rigid translation changes no distance between any two nodes, so no room circle, no overlap, no
+ *  escape and no intrusion can change: room geometry is derived from member positions and moves with
+ *  them. It is invisible to every acceptance metric, which is what makes it free.
+ *
+ *  MUTATES x/y. Velocity is deliberately untouched -- the board's internal settling is not this
+ *  pass's business, and zeroing it here would fight the simulation. */
+export function holdCardCentroid(nodes: readonly Sim[], cards: readonly Sim[]): void {
+  if (cards.length === 0) return;
+  let sx = 0, sy = 0;
+  for (const n of cards) { sx += n.x; sy += n.y; }
+  const dx = sx / cards.length, dy = sy / cards.length;
+  if (dx === 0 && dy === 0) return;
+  for (const n of nodes) { n.x -= dx; n.y -= dy; }
+}
+
 /** Escapes and intrusions on a settled layout, from what __graphProbe() reports.
  *
  *  An ESCAPE is a card outside a room it belongs to, bucketed by how many rooms the card is in:

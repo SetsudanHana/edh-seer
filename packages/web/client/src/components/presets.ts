@@ -8,7 +8,15 @@ export interface CardFacts {
   id: string;
   name: string;
   roles: readonly string[];
-  /** FRONT face only. A modal DFC is what you cast, not what its back face happens to be. */
+  /** FRONT face only -- and so is `subtypes`, so the Type and Subtype presets narrow together.
+   *
+   *  This is right for a TRANSFORM or FLIP card, whose back is reached by transforming a permanent
+   *  already in play. It is NOT what the engine says for a modal DFC / adventure / split, where
+   *  every face is castable in its own right (DERIVE_VERSION 30, `FRONT_FACE_ONLY` is an
+   *  allow-list of the transform/flip layouts, not a blanket rule) -- so the board calls Malakir
+   *  Rebirth // Malakir Bereavement an Instant and never a Land, while the corpus counts both
+   *  halves. Open contract question, not a settled reading: the FACE edges for the other faces are
+   *  already in the graph if the board should match the engine. */
   types: readonly string[];
   subtypes: readonly string[];
   /** Colour IDENTITY, which is card-level -- the FACE-level COLOR edges are a different question. */

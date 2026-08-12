@@ -11,5 +11,9 @@
     "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
     "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // *.harness.ts are node scripts (node:fs, process.argv) that live under src/ only so they can
+  // import the components they measure by relative path. They are not part of the browser build
+  // and this config has no node types, so typechecking them here reports nothing but that.
+  "exclude": ["src/**/*.harness.ts"]
 }

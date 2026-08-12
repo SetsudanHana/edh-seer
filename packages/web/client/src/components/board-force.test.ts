@@ -13,6 +13,7 @@ import {
   forceRoomAttraction,
   forceRoomContainment,
   foreignPush,
+  holdCardCentroid,
   nodeRadius,
   projectRoomMembership,
   REPULSION,
@@ -22,11 +23,10 @@ import {
   type CustomForce,
   type Sim,
 } from "./board-force.js";
-import { ART_RADIUS, roomTallies } from "./deck-rooms.js";
+import { ART_RADIUS } from "./deck-rooms.js";
 import type { Circle, RoomId } from "./deck-rooms.js";
-import { PRESETS, cardFacts, roomsForFacts } from "./presets.js";
+import { boardTrial, type TrialFixture } from "./board-trial.js";
 import inalla from "../fixtures/inalla-graph.json" with { type: "json" };
-import type { CardGraph } from "../types.js";
 
 /** vitest swallows console.log from this file, and the client tsconfig has no node types -- so the
  *  measurement line below writes to stdout directly with a local declaration rather than pulling
@@ -270,6 +270,51 @@ describe("forceRoomContainment", () => {
 });
 
 describe("createBoardSimulation's stated invariants", () => {
+  /** The board WALKS on its own -- this is the defect holdCardCentroid exists for, pinned so that
+   *  a future anchor inside the simulation would be noticed rather than silently duplicating the
+   *  pass. A common-mode velocity survives every force here (none of them is absolute for a roomed
+   *  card) and integrates into net translation. Measured in the app at up to 67 units / 3 s. */
+  test("does not anchor the board itself: a common-mode velocity translates it", () => {
+    const nodes = Array.from({ length: 12 }, (_, i) => {
+      const n = card(`card:${i}`, Math.cos(i) * 60, Math.sin(i) * 60);
+      n.vx = 3; n.vy = -2;
+      return n;
+    });
+    const { simulation } = createBoardSimulation({
+      nodes, links: [], roomsByNode: new Map(), rooms: [],
+      tallies: new Map(), universal: new Set(), visible: () => true,
+    });
+    const centroid = () => ({
+      x: nodes.reduce((s, n) => s + n.x, 0) / nodes.length,
+      y: nodes.reduce((s, n) => s + n.y, 0) / nodes.length,
+    });
+    const before = centroid();
+    for (let i = 0; i < 200; i++) simulation.tick();
+    const after = centroid();
+    expect(Math.hypot(after.x - before.x, after.y - before.y)).toBeGreaterThan(1);
+  });
+
+  /** And the same board with the pass GraphView's paint loop runs, which is where the fix lives. */
+  test("holdCardCentroid in the loop holds it still", () => {
+    const nodes = Array.from({ length: 12 }, (_, i) => {
+      const n = card(`card:${i}`, Math.cos(i) * 60, Math.sin(i) * 60);
+      n.vx = 3; n.vy = -2;
+      return n;
+    });
+    const { simulation } = createBoardSimulation({
+      nodes, links: [], roomsByNode: new Map(), rooms: [],
+      tallies: new Map(), universal: new Set(), visible: () => true,
+    });
+    for (let i = 0; i < 200; i++) {
+      simulation.tick();
+      holdCardCentroid(nodes, nodes);
+    }
+    // Repulsion still spreads the ring, so individual nodes move a long way; the CENTROID must not.
+    const x = nodes.reduce((s, n) => s + n.x, 0) / nodes.length;
+    const y = nodes.reduce((s, n) => s + n.y, 0) / nodes.length;
+    expect(Math.hypot(x, y)).toBeLessThan(1e-9);
+  });
+
   // Stated as a HARD CONSTRAINT in three doc comments (foreignPush, forceRoomContainment,
   // CONTAINMENT) and asserted nowhere until now. The reverse expels cards from every room at once
   // and the board falls apart -- a whole-board failure that no unit test would localise.
@@ -305,6 +350,55 @@ describe("createBoardSimulation's stated invariants", () => {
     // without one) had the simulation been left running.
     await new Promise((resolve) => setTimeout(resolve, 60));
     expect(simulation.alpha()).toBe(1);
+  });
+});
+
+describe("holdCardCentroid", () => {
+  test("puts the cards' centroid on the origin", () => {
+    const a = card("card:a", 100, 40), b = card("card:b", 120, 60);
+    holdCardCentroid([a, b], [a, b]);
+    expect((a.x + b.x) / 2).toBeCloseTo(0, 10);
+    expect((a.y + b.y) / 2).toBeCloseTo(0, 10);
+  });
+
+  // The property that makes it free: a rigid translation changes no distance between any two
+  // nodes, so no room circle, overlap, escape or intrusion can move. Every acceptance metric is
+  // blind to it, which is why it needs no retune.
+  test("preserves every pairwise distance", () => {
+    const a = card("card:a", 100, 40), b = card("card:b", 120, 60);
+    const before = Math.hypot(a.x - b.x, a.y - b.y);
+    holdCardCentroid([a, b], [a, b]);
+    expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeCloseTo(before, 10);
+  });
+
+  // Moves every node, not just the cards: the non-card nodes are held to the cards by ~1,300 link
+  // springs, so translating cards alone would stretch every one of them and the springs would drag
+  // the board back next tick.
+  test("carries the non-card nodes along", () => {
+    const a = card("card:a", 10, 0);
+    const e: Sim = { id: "event:x", kind: "event", label: "x", x: 30, y: 0, vx: 0, vy: 0, deg: 0 };
+    holdCardCentroid([a, e], [a]);
+    expect(a.x).toBeCloseTo(0, 10);
+    expect(e.x).toBeCloseTo(20, 10);
+  });
+
+  // Velocity is the simulation's business, not this pass's. Zeroing it here would fight the
+  // settling the board is still doing.
+  test("leaves velocity alone", () => {
+    const a = card("card:a", 50, 50);
+    a.vx = 3; a.vy = -4;
+    holdCardCentroid([a], [a]);
+    expect([a.vx, a.vy]).toEqual([3, -4]);
+  });
+
+  // Same skip projectRoomMembership makes for a card claiming no room: no claim, no move.
+  // NOT reachable by toggling the card chip off -- GraphView's `simCards` filters on kind alone,
+  // with no visibility filter (owner's ruling: hidden cards still anchor the board). This is the
+  // degenerate no-card-nodes graph only. Do not "fix" GraphView to match it.
+  test("does nothing without cards", () => {
+    const e: Sim = { id: "event:x", kind: "event", label: "x", x: 30, y: 7, vx: 0, vy: 0, deg: 0 };
+    holdCardCentroid([e], []);
+    expect([e.x, e.y]).toEqual([30, 7]);
   });
 });
 
@@ -502,105 +596,10 @@ describe("projectRoomMembership", () => {
   });
 });
 
-/** A seeded LCG, so a trial is reproducible from its seed. d3-force is itself deterministic
- *  (it seeds its own fixed LCG), so ALL trial-to-trial variance has to come from the initial
- *  seeding -- which is exactly where it comes from in the browser today, via Math.random() in
- *  seedPosition's fallback. */
-function lcg(seed: number): () => number {
-  let s = seed >>> 0;
-  return () => ((s = (1664525 * s + 1013904223) >>> 0) / 4294967296);
-}
-
-/** One settled layout of the inalla fixture on the role preset. */
-function runTrial(seed: number) {
-  const graph = inalla.graph as CardGraph;
-  const random = lcg(seed);
-  const comboCards = new Set(inalla.combos.flatMap((c) => c.cards));
-  const facts = cardFacts(graph, comboCards);
-  // The role preset's rooms, not deck-rooms.ts's bare ROOMS: roomsForFacts needs each room's
-  // `test` predicate, which only the preset builds. Same seven rooms, same order.
-  const rooms = PRESETS[0].rooms(facts);
-  const roomsByNode = new Map<string, readonly RoomId[]>(
-    facts.map((f) => [f.id, roomsForFacts(rooms, f)]),
-  );
-
-  const cardRooms = new Map<string, readonly RoomId[]>();
-  const copies = new Map<string, number>();
-  for (const n of graph.nodes) {
-    if (n.kind !== "card") continue;
-    cardRooms.set(n.label, roomsByNode.get(n.id) ?? []);
-    copies.set(n.label, n.copies ?? 1);
-  }
-  const tallies = roomTallies(
-    cardRooms,
-    rooms.map((r) => ({ id: r.id, categories: r.categories ?? [] })),
-    inalla.buildCategories,
-    copies,
-  );
-
-  // Only card nodes are visible on first paint (DIM_BY_DEFAULT hides every other kind), which
-  // is the state the acceptance condition is about.
-  const nodes: Sim[] = graph.nodes.map((n, i) => ({
-    ...n,
-    x: Math.cos(i) * 260 + random() * 30,
-    y: Math.sin(i) * 260 + random() * 30,
-    vx: 0, vy: 0, deg: 0,
-  }));
-  const byId = new Map(nodes.map((n) => [n.id, n]));
-  const links = graph.edges
-    .map((e) => ({ source: byId.get(e.from)!, target: byId.get(e.to)! }))
-    .filter((l) => l.source && l.target);
-  for (const l of links) { l.source.deg++; l.target.deg++; }
-
-  const visible = (n: Sim) => n.kind === "card";
-  const universal = universalRooms(
-    rooms.map((r) => r.id),
-    nodes.filter(visible).map((n) => roomsByNode.get(n.id) ?? []),
-  );
-
-  const { simulation, roomCircles } = createBoardSimulation({
-    nodes, links, roomsByNode, rooms, tallies, universal, visible,
-  });
-
-  // 800 ticks. NOT because alpha has reached its floor -- it has not, and the arithmetic that
-  // once claimed so here was wrong. d3's update is `alpha += (alphaTarget - alpha) * alphaDecay`,
-  // so with alphaTarget 0.02 the trajectory is `alpha_n = 0.02 + 0.98 * 0.995^n`, an exponential
-  // approach to the floor rather than a decay to zero that crosses it. At n=800 alpha is 0.0378,
-  // still ~1.9x the floor; within 5% of it takes ~1375 ticks. (The old "~781" was the
-  // decay-to-ZERO crossing, which ignores the alphaTarget term -- i.e. exactly the thing
-  // alphaTarget was chosen over alphaMin to provide.)
-  //
-  // 800 is nonetheless enough, for a reason that has nothing to do with the floor: every force
-  // here except collide scales linearly in alpha, so alpha sets how FAST the board converges and
-  // not where it converges TO. The equilibrium is alpha-independent. Measured, ten trials each:
-  // at 1600 / 3000 / 6000 ticks escapes.one stays 0 and overlaps stay 0/10, intrusions settle
-  // 14 -> 11 and escapes.two drifts 55 -> 60. See 2026-08-08-d3-migration-measurements.md.
-  const cardsForProjection = nodes.filter(visible);
-  let unresolved = 0;
-  for (let i = 0; i < 800; i++) {
-    simulation.tick();
-    // The projection is part of the board's definition, not a paint-time nicety -- GraphView runs
-    // it in the same position, right after tick(). Measuring without it would measure a board
-    // that does not exist.
-    //
-    // The LAST tick's count, not the worst over the run: the first few ticks start from a ring of
-    // cards whose room circles are enormous and mutually overlapping, so a max is dominated by
-    // chaos the settled board has nothing to do with. Measured: worst-over-run 77 per trial with
-    // the projection disabled entirely, against 1-3 intrusions on the same settled boards.
-    unresolved = projectRoomMembership(cardsForProjection, roomCircles(), roomsByNode);
-  }
-
-  const cards = nodes.filter(visible);
-  const circles = [...roomCircles().entries()].map(([id, c]) => ({ id, ...c }));
-  const metrics = boardMetrics(
-    cards.map((n) => ({ x: n.x, y: n.y, rooms: roomsByNode.get(n.id) ?? [] })),
-    circles,
-  );
-
-  // The Task-9 no-overlap gate: two card discs closer than 2 * ART_RADIUS visibly overlap.
-  const overlaps = countOverlaps(cards);
-  return { ...metrics, overlaps, unresolved };
-}
+/** One settled layout of the inalla fixture on the role preset, with the acceptance defaults
+ *  (preset 0, 800 ticks, pin on). The trial body lives in board-trial.ts so the measurement
+ *  harness runs the SAME loop -- they had a copy each and the copies drifted. */
+const runTrial = boardTrial(inalla as TrialFixture);
 
 describe("the settled board, ten trials on inalla.txt", () => {
   const trials = Array.from({ length: 10 }, (_, i) => runTrial(i + 1));
