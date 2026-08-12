@@ -25,9 +25,7 @@ import { readFileSync } from "node:fs";
 import { boardTrial, type TrialFixture } from "./board-trial.js";
 import type { BoardParams } from "./board-force.js";
 import { PRESETS } from "./presets.js";
-
-/** Every fixture checked in beside this file. Add a deck here and it joins the gate. */
-const ALL = ["sorin", "inalla", "fairdrazi", "changelings", "braids"];
+import { ACCEPTANCE, FIXTURES, type Caps } from "./board-acceptance.js";
 
 function mean(xs: readonly number[]) { return xs.reduce((a, b) => a + b, 0) / (xs.length || 1); }
 function sum(xs: readonly number[]) { return xs.reduce((a, b) => a + b, 0); }
@@ -39,7 +37,7 @@ const ticks = tickArg === -1 ? 800 : Number(argv[tickArg + 1]);
 // tickArg is -1 and this drops argv[0] -- so `harness braids fairdrazi` silently ran fairdrazi
 // alone, which is the worst kind of bug in a measurement tool: a quietly smaller sample.
 const named = argv.filter((a, i) => !a.startsWith("--") && !(tickArg !== -1 && i === tickArg + 1));
-const fixtures = named.length > 0 ? named : ALL;
+const fixtures = named.length > 0 ? named : FIXTURES;
 
 /** Edit freely -- being able to add an arm in one line is this file's whole point. A second arm
  *  doubles the runtime across every fixture, so the default is one: the drift investigation that
@@ -49,11 +47,12 @@ const ARMS: { name: string; params: Partial<BoardParams> }[] = [
   { name: "shipped", params: {} },
 ];
 
-const HARD = ["escapes.one", "overlaps", "intrusions", "unresolved"] as const;
-
 const rows: string[] = [];
-/** Hard-condition totals per fixture, so the summary can name what failed rather than just fail. */
-const failures: string[] = [];
+/** Both directions are failures. Over a cap is a regression; under it has to be banked by lowering
+ *  the number, or the next regression hides in the slack. See board-acceptance.ts. */
+const over: string[] = [];
+const under: string[] = [];
+const missing: string[] = [];
 
 for (const name of fixtures) {
   const path = name.endsWith(".json") ? name : `../fixtures/${name}-graph.json`;
@@ -62,15 +61,27 @@ for (const name of fixtures) {
     for (let p = 0; p < PRESETS.length; p++) {
       const trial = boardTrial(fx, { presetIndex: p, params: arm.params, ticks, motionTicks: 180 });
       const t = Array.from({ length: 10 }, (_, i) => trial(i + 1));
-      const hard = {
-        "escapes.one": sum(t.map((x) => x.escapes.one)),
+      const key = `${name}/${PRESETS[p].label}`;
+      const got: Caps = {
+        escapesOne: sum(t.map((x) => x.escapes.one)),
         overlaps: sum(t.map((x) => x.overlaps)),
         intrusions: sum(t.map((x) => x.intrusions)),
         unresolved: sum(t.map((x) => x.unresolved)),
       };
-      for (const k of HARD) {
-        if (hard[k] > 0) failures.push(`${name}/${PRESETS[p].label} ${k} ${hard[k]}`);
+      const cap = ACCEPTANCE[key];
+      if (cap === undefined) missing.push(key);
+      else {
+        for (const k of ["escapesOne", "overlaps", "intrusions", "unresolved"] as const) {
+          if (got[k] > cap[k]) over.push(`${key} ${k} ${got[k]} > cap ${cap[k]}`);
+          else if (got[k] < cap[k]) under.push(`${key} ${k} ${got[k]} < cap ${cap[k]} -- lower it`);
+        }
       }
+      const hard = {
+        "escapes.one": got.escapesOne,
+        overlaps: got.overlaps,
+        intrusions: got.intrusions,
+        unresolved: got.unresolved,
+      };
       rows.push([
         name.padEnd(12),
         ARMS.length > 1 ? arm.name.padEnd(9) : "",
@@ -99,7 +110,13 @@ console.log([
 console.log(rows.join("\n"));
 
 console.log(`\nticks ${ticks} · 10 trials · motion over 180 further ticks`);
-// The four hard conditions are pass/fail per the design docs, not budgets -- so say which
-// fixture and preset broke one rather than leaving it to be spotted in the table.
-if (failures.length === 0) console.log(`HARD CONDITIONS CLEAN across ${fixtures.length} fixtures`);
-else console.log(`HARD CONDITIONS BROKEN (${failures.length}):\n  ${failures.join("\n  ")}`);
+// Name the case that moved rather than leaving it to be spotted in the table.
+if (missing.length > 0) console.log(`NO CAP RECORDED (${missing.length}):\n  ${missing.join("\n  ")}`);
+if (over.length > 0) console.log(`REGRESSED (${over.length}):\n  ${over.join("\n  ")}`);
+if (under.length > 0) console.log(`IMPROVED, BANK IT (${under.length}):\n  ${under.join("\n  ")}`);
+if (over.length + under.length + missing.length === 0) {
+  console.log(`ON THE RATCHET across ${fixtures.length} fixtures -- every case exactly at its cap`);
+} else {
+  // Non-zero exit so this is usable as a gate rather than something someone has to read.
+  process.exit(1);
+}
