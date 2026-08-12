@@ -176,6 +176,47 @@ describe("the subtype preset's density floor", () => {
   });
 });
 
+describe("the subtype preset's merging of near-identical rooms", () => {
+  // Sorin's plains/swamp shape: four dual lands carry both, one basic carries each alone. Two
+  // rooms of five sharing four land as near-coincident equal-radius circles, and the two singles
+  // then have no legal position -- inside one, outside the other, with nothing between them.
+  const shared = ["Plains", "Swamp"];
+  const nearIdentical = [
+    facts({ id: "d1", subtypes: shared }), facts({ id: "d2", subtypes: shared }),
+    facts({ id: "d3", subtypes: shared }), facts({ id: "d4", subtypes: shared }),
+    facts({ id: "p", subtypes: ["Plains"] }), facts({ id: "s", subtypes: ["Swamp"] }),
+  ];
+
+  it("draws two near-identical subtypes as ONE room", () => {
+    // jaccard 4/6 = 0.67, over the 0.6 threshold.
+    expect(preset("subtype").rooms(nearIdentical).map((r) => r.label)).toEqual(["Plains / Swamp"]);
+  });
+
+  it("claims a card carrying either of the merged subtypes", () => {
+    const rooms = preset("subtype").rooms(nearIdentical);
+    expect(roomsForFacts(rooms, nearIdentical[4])).toEqual(["Plains+Swamp"]);
+    expect(roomsForFacts(rooms, nearIdentical[5])).toEqual(["Plains+Swamp"]);
+  });
+
+  // The case merging must NOT touch: inalla's wizard(33) strictly CONTAINS faerie(3), so
+  // containment is 1.00 and merging would name a 33-card room after 3 of its members. Jaccard puts
+  // it at 0.09. Scaled down here, the shape is the same: every Faerie is a Wizard.
+  it("leaves a small room nested inside a big one alone", () => {
+    const nested = [
+      ...Array.from({ length: 7 }, (_, i) => facts({ id: `w${i}`, subtypes: ["Wizard"] })),
+      ...Array.from({ length: 3 }, (_, i) => facts({ id: `f${i}`, subtypes: ["Wizard", "Faerie"] })),
+    ];
+    // jaccard 3/10 = 0.3, under the threshold.
+    expect(preset("subtype").rooms(nested).map((r) => r.id).sort()).toEqual(["Faerie", "Wizard"]);
+  });
+
+  it("leaves an unmerged room's id exactly as it was", () => {
+    // Nothing downstream holds a room id across this change if a solo room keeps its bare value.
+    const solo = Array.from({ length: 3 }, (_, i) => facts({ id: `c${i}`, subtypes: ["Cleric"] }));
+    expect(preset("subtype").rooms(solo).map((r) => r.id)).toEqual(["Cleric"]);
+  });
+});
+
 describe("the role preset", () => {
   it("keeps the seven rooms and their order", () => {
     expect(preset("role").rooms([]).map((r) => r.id)).toEqual([

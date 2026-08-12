@@ -115,6 +115,69 @@ function byCount(
     .map(([v]) => v);
 }
 
+/** How alike two rooms' memberships must be to draw as one. Measured across both fixtures and all
+ *  five presets: the only pair at or above this is Sorin's plains/swamp at 0.67. The next candidate
+ *  anywhere is inalla's wizard/human at 0.48, which is a NESTING case and must not merge -- so the
+ *  gap either side of 0.6 is wide, and this is not a knife-edge. */
+const MERGE_JACCARD = 0.6;
+
+/** Values whose member sets nearly coincide, grouped so they draw as ONE room.
+ *
+ *  Two rooms holding almost the same cards get almost the same centroid, and roomRadius gives them
+ *  almost the same radius for almost the same count -- so they land as two near-coincident circles
+ *  of equal size. The few cards in one but not the other then have NO legal position: inside A,
+ *  outside B, with nothing between them. Measured on Sorin, where `plains`(5) and `swamp`(5) share
+ *  4 dual lands: the lone basic Plains and basic Swamp were unplaceable on 10 of 10 seeds, the only
+ *  deterministic failures on that board.
+ *
+ *  Merging is honest here because the rim already carries the truth the geometry cannot -- a card
+ *  in the merged room still draws one arc per subtype it actually has, so "Plains / Swamp" says
+ *  which of its members are which. rimArcs' own comment states that division.
+ *
+ *  Jaccard, NOT containment: `wizard`(33) strictly CONTAINS `faerie`(3) on inalla at containment
+ *  1.00, and merging those would produce a 33-card room named after 3 of its members. Jaccard puts
+ *  that pair at 0.09 and plains/swamp at 0.67. Nesting is a real problem too, and roomLayout
+ *  handles it by sizing the parent for the annulus instead.
+ *
+ *  ponytail: one greedy pass, each value merged at most once, so a chain A~B~C yields one pair and
+ *  a leftover rather than a growing blob. Transitive clustering is what a universal room is made
+ *  of; revisit only with a deck that actually produces a chain. */
+function mergeNearIdentical(
+  values: readonly string[], cards: readonly CardFacts[], valuesOf: (c: CardFacts) => readonly string[],
+  minJaccard: number,
+): string[][] {
+  if (minJaccard <= 0 || values.length < 2) return values.map((v) => [v]);
+  const holders = new Map(values.map((v) => [v, new Set(cards.filter((c) => valuesOf(c).includes(v)).map((c) => c.id))]));
+  const pairs: { a: string; b: string; j: number }[] = [];
+  for (let i = 0; i < values.length; i++) for (let k = i + 1; k < values.length; k++) {
+    const A = holders.get(values[i])!, B = holders.get(values[k])!;
+    const shared = [...A].filter((x) => B.has(x)).length;
+    if (!shared) continue;
+    const j = shared / (A.size + B.size - shared);
+    if (j >= minJaccard) pairs.push({ a: values[i], b: values[k], j });
+  }
+  // Closest first, so the tightest pair wins a value that two pairs both want. Ties break on the
+  // values themselves -- the room list has to be identical across renders of one deck.
+  pairs.sort((x, y) => y.j - x.j || x.a.localeCompare(y.a) || x.b.localeCompare(y.b));
+  const partner = new Map<string, string>();
+  for (const { a, b } of pairs) {
+    if (partner.has(a) || partner.has(b)) continue;
+    partner.set(a, b);
+    partner.set(b, a);
+  }
+  const done = new Set<string>();
+  const out: string[][] = [];
+  for (const v of values) {
+    if (done.has(v)) continue;
+    const p = partner.get(v);
+    if (p === undefined) { out.push([v]); done.add(v); continue; }
+    out.push([v, p]);
+    done.add(v);
+    done.add(p);
+  }
+  return out;
+}
+
 /** Derived rooms have no curated palette, so hues come off a fixed wheel by index. Deterministic
  *  for a given deck because the order above is. */
 const WHEEL = ["#1c8db7", "#b08e1d", "#5b40f6", "#146d9e", "#21a28f", "#277310", "#6b89f9", "#a3446e"];
@@ -129,16 +192,21 @@ const derived = (
    *  curve's tail, a 2-card enchantment count is the deck's composition. Only Subtype sets it,
    *  because only there does a rare value mean "not a theme" rather than "here is the number". */
   minRoom = 1,
+  /** Jaccard at or above which two values draw as one room. 0 is off. See mergeNearIdentical. */
+  minJaccard = 0,
 ): Preset => ({
   id,
   label,
   rooms: (cards) =>
-    byCount(cards, valuesOf, minRoom).map((v, i) => ({
-      id: v,
-      label: v,
-      hue: hueAt(i),
-      test: (c) => valuesOf(c).includes(v),
-    })),
+    mergeNearIdentical(byCount(cards, valuesOf, minRoom), cards, valuesOf, minJaccard)
+      .map((group, i) => ({
+        // A one-value group keeps its value as the id, so an unmerged room is byte-identical to
+        // what it was before merging existed -- no rekeying of anything holding a room id.
+        id: group.join("+"),
+        label: group.join(" / "),
+        hue: hueAt(i),
+        test: (c) => group.some((v) => valuesOf(c).includes(v)),
+      })),
 });
 
 /** 7+ is a bucket, not a value: a deck's 9-drop and its 12-drop are the same fact about the curve,
@@ -174,5 +242,5 @@ export const PRESETS: Preset[] = [
   // something the deck does not support. Measured before the floor: Sorin 19 rooms with ELEVEN
   // holding a single card, inalla 21 with eleven. Land subtypes are deliberately NOT excluded
   // (owner's call, against the tutor gate's precedent): Urza's Saga and Cave decks are real.
-  derived("subtype", "Subtype", (c) => c.subtypes, MIN_ROOM_CARDS),
+  derived("subtype", "Subtype", (c) => c.subtypes, MIN_ROOM_CARDS, MERGE_JACCARD),
 ];
