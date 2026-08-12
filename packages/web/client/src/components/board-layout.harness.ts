@@ -35,7 +35,10 @@ function sum(xs: readonly number[]) { return xs.reduce((a, b) => a + b, 0); }
 const argv = process.argv.slice(2);
 const tickArg = argv.indexOf("--ticks");
 const ticks = tickArg === -1 ? 800 : Number(argv[tickArg + 1]);
-const named = argv.filter((a, i) => !a.startsWith("--") && i !== tickArg + 1);
+// `tickArg + 1` is only a value to skip when --ticks was actually given. Without the guard,
+// tickArg is -1 and this drops argv[0] -- so `harness braids fairdrazi` silently ran fairdrazi
+// alone, which is the worst kind of bug in a measurement tool: a quietly smaller sample.
+const named = argv.filter((a, i) => !a.startsWith("--") && !(tickArg !== -1 && i === tickArg + 1));
 const fixtures = named.length > 0 ? named : ALL;
 
 /** Edit freely -- being able to add an arm in one line is this file's whole point. A second arm

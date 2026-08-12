@@ -27,6 +27,10 @@ export interface TrialOptions {
   ticks?: number;
   /** `false` reproduces the board as it was before holdCardCentroid shipped. */
   pin?: boolean;
+  /** `false` drops the membership projection, leaving the soft forces to place cards on their own.
+   *  An arm, not a mode: the projection is part of the board's definition, and this exists to
+   *  attribute a metric to it. */
+  project?: boolean;
   /** Further ticks to sample motion over once settled; 0 skips the sampling entirely. */
   motionTicks?: number;
 }
@@ -48,7 +52,7 @@ function centroid(cards: readonly { x: number; y: number }[]) {
 /** Everything derived from (fixture, preset) is hoisted out of the returned closure -- it is the
  *  same for every seed, and rebuilding it per trial is pure cost. */
 export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
-  const { presetIndex = 0, params, ticks = 800, pin = true, motionTicks = 0 } = opts;
+  const { presetIndex = 0, params, ticks = 800, pin = true, project = true, motionTicks = 0 } = opts;
   const graph = fx.graph;
   const comboCards = new Set(fx.combos.flatMap((c) => c.cards));
   const facts = cardFacts(graph, comboCards);
@@ -113,7 +117,7 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
       // max is dominated by chaos the settled board has nothing to do with. Measured:
       // worst-over-run 77 per trial with the projection disabled entirely, against 1-3 intrusions
       // on the same settled boards.
-      unresolved = projectRoomMembership(cards, roomCircles, roomsByNode);
+      if (project) unresolved = projectRoomMembership(cards, roomCircles, roomsByNode);
       if (pin) holdCardCentroid(nodes, cards);
     };
     for (let i = 0; i < ticks; i++) tick();
