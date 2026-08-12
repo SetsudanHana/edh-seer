@@ -327,6 +327,10 @@ export function roomLayout(
   members: readonly RoomMember[],
   rooms: readonly { id: RoomId }[],
   tallies: Map<RoomId, RoomTally>,
+  /** Per-room multiplier on the radius, from forceRoomBreathing. Defaults to 1, which is the
+   *  fixed-occupancy circle this function drew before breathing existed -- so a caller that does
+   *  not breathe (every test, every ad-hoc measurement) gets exactly the old geometry. */
+  slackOf: (id: RoomId) => number = () => 1,
 ): Map<RoomId, Circle> {
   const byRoom = new Map<RoomId, RoomMember[]>();
   for (const m of members) {
@@ -348,7 +352,7 @@ export function roomLayout(
     out.set(room.id, {
       x: sx / held.length,
       y: sy / held.length,
-      r: roomRadius(held.length, tallies.get(room.id)?.target ?? 0),
+      r: roomRadius(held.length, tallies.get(room.id)?.target ?? 0) * slackOf(room.id),
     });
   }
 

@@ -384,6 +384,78 @@ export function countOverlaps(cards: readonly { x: number; y: number }[]): numbe
   return overlaps;
 }
 
+/** How fast a crowded room grows, per tick, as a fraction of its base radius. */
+export const BREATHE_GROW = 0.004;
+/** How fast an uncrowded room returns toward its base radius. Slower than it grows, deliberately:
+ *  a room that has just stopped colliding stops because it is currently big enough, and shrinking
+ *  at the same rate it grew would put it straight back into collision. Asymmetry is what makes the
+ *  loop settle instead of hunting. */
+export const BREATHE_DECAY = 0.001;
+/** Ceiling on the multiplier. 1.5 is 2.25x the area, equivalent to PACK ~0.22, past the point where
+ *  the measured PACK sweep stopped buying anything on any fixture. A room that wants more than this
+ *  has a problem more area will not fix. */
+export const BREATHE_MAX = 1.5;
+/** Breathing is OFF above this alpha. Early in a run every room is colliding -- the board starts as
+ *  a ring of cards and sorts itself out -- so without this gate every room inflates during the
+ *  chaotic phase and then holds it, because decay is deliberately slower than growth. Measured
+ *  ungated: braids/Colour overlaps 253 -> 1, but three boards that were clean lost their zero and
+ *  fairdrazi/Colour intrusions went 44 -> 55. Crowding only means something once the layout has
+ *  stopped rearranging itself. */
+export const BREATHE_ALPHA = 0.1;
+
+/** Lets a room whose members are actually colliding GROW, and settle back when they stop.
+ *
+ *  roomRadius sizes a circle from its member COUNT alone, at a fixed 50% occupancy (PACK), so it
+ *  cannot tell a room whose cards have settled comfortably from one the projection is stacking
+ *  cards inside. Measured by sweeping PACK, ten trials: more area annihilates the worst case --
+ *  braids/Colour overlaps 253 -> 0 at PACK 0.35 -- but applied GLOBALLY it costs everywhere it was
+ *  not needed, because bigger circles overlap each other more: sorin/Colour 31 -> 50 overlaps,
+ *  fairdrazi/Colour intrusions 44 -> 74, and inalla/Role stops being clean at all. That is the
+ *  monotone trade PACK's own comment records.
+ *
+ *  So the area is spent per room, where the collisions actually are. This force moves nothing; it
+ *  is registered only because a d3 force runs exactly once per tick, which is the cadence the
+ *  update needs -- roomCircles() is called several times a frame and must stay a pure read.
+ *
+ *  ONE overlap sweep, attributed to rooms rather than one sweep per room: a colliding pair grows
+ *  every room both cards share, which is the set of rooms that could be holding them together. */
+export function forceRoomBreathing(opts: {
+  roomsByNode: ReadonlyMap<string, readonly RoomId[]>;
+  slack: Map<RoomId, number>;
+  grow: number;
+  decay: number;
+  max: number;
+  alpha: number;
+}): CustomForce {
+  let cards: Sim[] = [];
+  const force = ((alpha: number) => {
+    // Above this the board is still sorting itself out and every room looks crowded.
+    if (alpha > opts.alpha) return;
+    const crowded = new Set<RoomId>();
+    for (let i = 0; i < cards.length; i++) {
+      const a = cards[i];
+      const ra = opts.roomsByNode.get(a.id);
+      if (!ra || ra.length === 0) continue;
+      for (let j = i + 1; j < cards.length; j++) {
+        const b = cards[j];
+        const rb = opts.roomsByNode.get(b.id);
+        if (!rb || rb.length === 0) continue;
+        const want = nodeRadius(a) + nodeRadius(b);
+        if (Math.hypot(a.x - b.x, a.y - b.y) >= want) continue;
+        for (const id of ra) if (rb.includes(id)) crowded.add(id);
+      }
+    }
+    for (const [id, value] of opts.slack) {
+      if (!crowded.has(id)) opts.slack.set(id, Math.max(1, value - opts.decay));
+    }
+    for (const id of crowded) {
+      opts.slack.set(id, Math.min(opts.max, (opts.slack.get(id) ?? 1) + opts.grow));
+    }
+  }) as CustomForce;
+  force.initialize = (nodes: Sim[]) => { cards = nodes.filter((n) => n.kind === "card"); };
+  return force;
+}
+
 /** A d3-force custom force: a function of the current alpha, plus the `initialize` hook
  *  `simulation.force(name, f)` calls to hand it the node array. */
 export type CustomForce = ((alpha: number) => void) & { initialize(nodes: Sim[]): void };
@@ -652,6 +724,7 @@ export interface BoardParams {
   containment: number;
   foreignPush: number;
   nestedOffset: number;
+  breatheGrow: number;
   linkStiffness: number;
   centerPull: number;
   velocityDecay: number;
@@ -666,6 +739,7 @@ export const DEFAULT_PARAMS: BoardParams = {
   containment: CONTAINMENT,
   foreignPush: FOREIGN_PUSH,
   nestedOffset: NESTED_OFFSET,
+  breatheGrow: BREATHE_GROW,
   linkStiffness: LINK_STIFFNESS,
   centerPull: CENTER_PULL,
   velocityDecay: VELOCITY_DECAY,
@@ -712,6 +786,10 @@ export function createBoardSimulation(opts: {
   params?: Partial<BoardParams>;
 }): { simulation: Simulation<Sim, undefined>; roomCircles: () => Map<RoomId, Circle> } {
   const p = { ...DEFAULT_PARAMS, ...opts.params };
+  // Per-room radius multipliers, updated once a tick by forceRoomBreathing below. Lives here rather
+  // than inside roomLayout because roomLayout is a pure function of positions and must stay one --
+  // roomCircles() is called several times a frame.
+  const slack = new Map<RoomId, number>(opts.rooms.map((r) => [r.id, 1]));
   const roomCircles = () =>
     roomLayout(
       opts.nodes
@@ -719,6 +797,7 @@ export function createBoardSimulation(opts: {
         .map((n) => ({ x: n.x, y: n.y, r: nodeRadius(n), rooms: opts.roomsByNode.get(n.id) ?? [] })),
       opts.rooms,
       opts.tallies,
+      (id) => slack.get(id) ?? 1,
     );
 
   /** Only "role" has a fallback room, so a card on a derived preset (Colour, Subtype, Type,
@@ -759,6 +838,14 @@ export function createBoardSimulation(opts: {
       circles: roomCircles,
       containmentStiffness: p.containment,
       foreignStiffness: p.foreignPush,
+    }))
+    .force("breathing", forceRoomBreathing({
+      roomsByNode: opts.roomsByNode,
+      slack,
+      grow: p.breatheGrow,
+      decay: BREATHE_DECAY,
+      max: BREATHE_MAX,
+      alpha: BREATHE_ALPHA,
     }))
     .force("nested", forceNestedOffset({
       roomsByNode: opts.roomsByNode,

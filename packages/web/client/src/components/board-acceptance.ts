@@ -25,10 +25,23 @@
  *      on, and both directions there are proven to fire.
  *
  *  A CAP OF 0 IS THE HARD CONDITION, unchanged. Nothing currently clean is weakened by this table;
- *  it only writes down where the board already fails. 13 of the 25 cases are zero on
+ *  it only writes down where the board already fails. 15 of the 25 cases are zero on
  *  all four counts.
  *
  *  Raise a number only with a written reason. Lower it the moment something improves.
+ *
+ *  THE ONE TIME A NUMBER HAS BEEN RAISED, and the reason. forceRoomBreathing (2026-08-12) lets a
+ *  room whose members are actually colliding grow, and it is a TRADE, not a free win: 13 counts
+ *  fell and 6 rose. It was taken because the counts it fixes are the ones a viewer sees -- cards
+ *  drawn on top of each other -- while the ones it costs are `unresolved`, which counts cards the
+ *  projection could not place against geometry, the softest of the four. The inline comments below
+ *  carry every before -> after.
+ *
+ *  The wins are the two boards the five-fixture harness was added to expose: braids/Colour goes
+ *  253 overlaps to ZERO, and fairdrazi/Colour improves on overlaps AND intrusions at once
+ *  (108 -> 38, 44 -> 29), which no other attempt on this family managed in either direction.
+ *  sorin/Colour is the clearest cost: two rooms covering one deck, so growing both makes them
+ *  overlap each other far more, 31 -> 50.
  */
 
 /** Every fixture the gate covers, by the basename of its `<name>-graph.json`. Adding a deck here
@@ -52,31 +65,31 @@ export interface Caps {
  *  board-acceptance.test.ts fails if one is missing, so a newly captured deck cannot join the
  *  harness without someone looking at what it does. */
 export const ACCEPTANCE: Record<string, Caps> = {
-  "sorin/Role":              { escapesOne: 0, overlaps:   3, intrusions:  0, unresolved:   0 },
-  "sorin/Type":              { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "sorin/Colour":            { escapesOne: 0, overlaps:  31, intrusions:  0, unresolved:   0 },
-  "sorin/Mana value":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "sorin/Subtype":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "inalla/Role":             { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "inalla/Type":             { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "inalla/Colour":           { escapesOne: 0, overlaps:  11, intrusions:  0, unresolved:   2 },
-  "inalla/Mana value":       { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "inalla/Subtype":          { escapesOne: 0, overlaps:   1, intrusions:  0, unresolved:  31 },
-  "fairdrazi/Role":          { escapesOne: 0, overlaps:   3, intrusions:  6, unresolved:  28 },
-  "fairdrazi/Type":          { escapesOne: 0, overlaps:   2, intrusions:  0, unresolved:   0 },
-  "fairdrazi/Colour":        { escapesOne: 0, overlaps: 108, intrusions: 44, unresolved: 220 },
-  "fairdrazi/Mana value":    { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "fairdrazi/Subtype":       { escapesOne: 0, overlaps:   4, intrusions:  0, unresolved:   0 },
-  "changelings/Role":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "changelings/Type":        { escapesOne: 0, overlaps:   1, intrusions:  0, unresolved:   0 },
-  "changelings/Colour":      { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "changelings/Mana value":  { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "changelings/Subtype":     { escapesOne: 0, overlaps:   0, intrusions:  2, unresolved:  27 },
-  "braids/Role":             { escapesOne: 0, overlaps:  56, intrusions:  9, unresolved:  37 },
-  "braids/Type":             { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "braids/Colour":           { escapesOne: 0, overlaps: 253, intrusions:  0, unresolved:   0 },
-  "braids/Mana value":       { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "braids/Subtype":          { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "sorin/Role":            { escapesOne: 0, overlaps:   1, intrusions:  0, unresolved:   0 },  // overlaps 3->1
+  "sorin/Type":            { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "sorin/Colour":          { escapesOne: 0, overlaps:  50, intrusions:  0, unresolved:   0 },  // overlaps 31->50
+  "sorin/Mana value":      { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "sorin/Subtype":         { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "inalla/Role":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "inalla/Type":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "inalla/Colour":         { escapesOne: 0, overlaps:   6, intrusions:  0, unresolved:  26 },  // overlaps 11->6, unresolved 2->26
+  "inalla/Mana value":     { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "inalla/Subtype":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:  24 },  // overlaps 1->0, unresolved 31->24
+  "fairdrazi/Role":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:  30 },  // overlaps 3->0, intrusions 6->0, unresolved 28->30
+  "fairdrazi/Type":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },  // overlaps 2->0
+  "fairdrazi/Colour":      { escapesOne: 0, overlaps:  38, intrusions: 29, unresolved: 270 },  // overlaps 108->38, intrusions 44->29, unresolved 220->270
+  "fairdrazi/Mana value":  { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "fairdrazi/Subtype":     { escapesOne: 0, overlaps:   3, intrusions:  1, unresolved:   0 },  // overlaps 4->3, intrusions 0->1
+  "changelings/Role":      { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "changelings/Type":      { escapesOne: 0, overlaps:   1, intrusions:  0, unresolved:   0 },
+  "changelings/Colour":    { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "changelings/Mana value":{ escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "changelings/Subtype":   { escapesOne: 0, overlaps:   0, intrusions:  2, unresolved:  27 },
+  "braids/Role":           { escapesOne: 0, overlaps:   5, intrusions:  1, unresolved:  49 },  // overlaps 56->5, intrusions 9->1, unresolved 37->49
+  "braids/Type":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "braids/Colour":         { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },  // overlaps 253->0
+  "braids/Mana value":     { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "braids/Subtype":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
 };
 
 export const zero: Caps = { escapesOne: 0, overlaps: 0, intrusions: 0, unresolved: 0 };
