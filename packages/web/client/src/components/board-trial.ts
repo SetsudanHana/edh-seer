@@ -113,7 +113,7 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
       // max is dominated by chaos the settled board has nothing to do with. Measured:
       // worst-over-run 77 per trial with the projection disabled entirely, against 1-3 intrusions
       // on the same settled boards.
-      unresolved = projectRoomMembership(cards, roomCircles(), roomsByNode);
+      unresolved = projectRoomMembership(cards, roomCircles, roomsByNode);
       if (pin) holdCardCentroid(nodes, cards);
     };
     for (let i = 0; i < ticks; i++) tick();
@@ -133,6 +133,10 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
     );
     return {
       ...metrics,
+      // The settled board itself, for diagnosis: a metric says how many cards are wrong, and the
+      // next question is always WHICH. Callers that only want numbers ignore it.
+      nodes,
+      circles,
       // The Task-9 no-overlap gate: two card discs closer than 2 * ART_RADIUS visibly overlap.
       overlaps: countOverlaps(cards),
       unresolved,

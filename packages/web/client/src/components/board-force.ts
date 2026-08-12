@@ -168,11 +168,19 @@ const RIM_SLACK = 1e-6;
  *  a card that never moved -- "cannot enter" is not enforceable by the intruder alone, which is
  *  why this exists at all rather than a stronger foreignPush.
  *
- *  `circles` is a SNAPSHOT and stays fixed for the whole call, which also means a card this pass
- *  moves drags its own room's circle with it on the NEXT frame, not this one. Recomputing the
- *  layout between passes would chase its own tail -- moving a member moves the circle, which
- *  re-violates the member -- so the count returned on a chaotic frame can be against geometry the
- *  pass has already invalidated. It converges as the board settles; read it there.
+ *  The geometry the PASSES run against is a snapshot, taken once at entry and fixed for the whole
+ *  call. Recomputing between passes would chase its own tail -- moving a member moves its room's
+ *  circle, which re-violates the member -- so the passes need something that holds still.
+ *
+ *  The COUNT is not taken against that snapshot, and this is the whole reason `circlesOf` is a
+ *  function. Reporting against the entry snapshot describes a board nobody draws: the pass has
+ *  moved members by then, so their rooms have moved too. Measured on Sorin's Subtype preset,
+ *  ten trials at 800 and at 2400 ticks: the snapshot reading said 20 cards were unplaced while
+ *  the circles as actually drawn contained ZERO illegal cards, and the gap did not shrink with
+ *  settling because it was never about settling. Inalla said 12 against the same 0.
+ *
+ *  So: passes against the snapshot, count against a fresh recompute. One extra roomLayout per
+ *  call, on a function already doing up to 64 passes over every card.
  *
  *  ONE GEOMETRY IT CANNOT SOLVE, by construction rather than by budget: a card exactly on the line
  *  joining two overlapping centres. Both pushes are along that line, so it is thrown from A to B
@@ -183,10 +191,11 @@ const RIM_SLACK = 1e-6;
  *  Returns 0 when it converged, else the number of cards still illegal at the ceiling. */
 export function projectRoomMembership(
   cards: readonly Sim[],
-  circles: ReadonlyMap<RoomId, Circle>,
+  circlesOf: () => ReadonlyMap<RoomId, Circle>,
   roomsByNode: ReadonlyMap<string, readonly RoomId[]>,
   maxPasses: number = PROJECTION_PASSES,
 ): number {
+  const circles = circlesOf();
   for (let pass = 0; pass < maxPasses; pass++) {
     let moved = false;
     for (const n of cards) {
@@ -238,6 +247,8 @@ export function projectRoomMembership(
     if (!moved) return 0;
   }
 
+  // The circles as they will be DRAWN, recomputed from where the passes above left the members.
+  const drawn = circlesOf();
   let unresolved = 0;
   for (const n of cards) {
     const mine = roomsByNode.get(n.id);
@@ -246,12 +257,12 @@ export function projectRoomMembership(
     // Counts CARDS, not violations: one card in three foreign circles is one card the pass could
     // not place, and the panel row reads as "how many cards are wrong".
     let illegal = false;
-    for (const [id, c] of circles) {
+    for (const [id, c] of drawn) {
       if (mine.includes(id)) continue;
       if (c.r - (Math.hypot(n.x - c.x, n.y - c.y) - cardR) > RIM_SLACK) { illegal = true; break; }
     }
     if (!illegal && mine.length === 1) {
-      const c = circles.get(mine[0]);
+      const c = drawn.get(mine[0]);
       // The pass promises both halves, so it has to own both halves in what it reports.
       if (c && Math.hypot(n.x - c.x, n.y - c.y) + cardR - c.r > RIM_SLACK) illegal = true;
     }

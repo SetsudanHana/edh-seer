@@ -747,7 +747,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const simCards = nodes.filter((n) => n.kind === "card");
     const loop = () => {
       simulation.tick();
-      unresolved = projectRoomMembership(simCards, roomCirclesNow(), roomsByNode);
+      unresolved = projectRoomMembership(simCards, roomCirclesNow, roomsByNode);
       // AFTER the projection, which is the last thing that moves a card: it shoves cards by hand,
       // outside any force's reach, and on a crowded preset that shove is most of the walk. Ordering
       // it before would leave exactly that residue behind. Rigid translation, so it cannot disturb
