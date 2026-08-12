@@ -271,8 +271,13 @@ export const CARD_FOOTPRINT_R = ART_RADIUS + COLLISION_PAD / 2;
  *  rise the same direction (1 -> 8 -> 26). The plan's priority is the 1-room bucket reaching 0, so
  *  0.5 wins even though it costs the most intrusions of the three tried. */
 export const PACK = 0.5;
-/** The floor, per the user's ruling: a one-card room still draws big enough to read as a room. */
-const MIN_ROOM_CARDS = 3;
+/** The floor, per the user's ruling: a one-card room still draws big enough to read as a room.
+ *
+ *  Exported because presets.ts reads it as a DENSITY floor -- a subtype earns a room only once
+ *  this many distinct cards carry it. Same number, same claim: a room the radius rule has to
+ *  inflate to make drawable is a room that should not be drawn at all. See
+ *  2026-08-12-room-density-floor-design.md. */
+export const MIN_ROOM_CARDS = 3;
 
 /** How big a room's circle is: an AREA argument, not a picked number. `n` discs of footprint
  *  radius CARD_FOOTPRINT_R need `n * pi * CARD_FOOTPRINT_R^2` of area; divide by PACK occupancy

@@ -5,7 +5,7 @@ import { zoomIdentity, type ZoomTransform } from "d3-zoom";
 import { ART_RADIUS, boardMetrics, containment, copiesByNameOf, DIM_BY_DEFAULT, FLIP_GLYPH_INSET, foreignPush, GraphView, nodeRadius, roomAttraction, roomsUnder, seedPosition, traveledAsPan, universalRooms } from "./GraphView.js";
 import { SAMPLE } from "../fixtures.js";
 import type { GraphNode } from "../types.js";
-import { ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
+import { MIN_ROOM_CARDS, ROOM_HUE, ROOMS, type RoomTally } from "./deck-rooms.js";
 import { CARD_MODE_Z } from "./card-node.js";
 import { PRESETS } from "./presets.js";
 import { createBoardSimulation, DEFAULT_PARAMS } from "./board-force.js";
@@ -1354,24 +1354,32 @@ test("the legend does not intercept pointer events meant for the canvas", () => 
 // over that corner fell through to the canvas and zoomed the board instead of scrolling the list.
 // The scroller now re-enables pointer events for itself ONLY when the room list exceeds the display
 // cap -- otherwise every room is already visible and there's nothing to scroll to, so the canvas
-// keeps its whole surface. 13 distinct single-subtype cards (one subtype node per card, so `byCount`
-// -- ties broken alphabetically -- produces exactly 13 one-card rooms) exceeds LEGEND_VISIBLE_ROWS
-// (12); switching the preset chip to Subtype is what makes rooms.length read off that fixture rather
-// than the 7-room role preset.
+// keeps its whole surface. 13 subtypes carried by MIN_ROOM_CARDS cards each, so every one clears the
+// Subtype preset's density floor and `byCount` -- ties broken alphabetically -- produces exactly 13
+// rooms, one past LEGEND_VISIBLE_ROWS (12). Switching the preset chip to Subtype is what makes
+// rooms.length read off that fixture rather than the 7-room role preset.
+//
+// The cards-per-subtype used to be ONE, which made 13 singleton rooms. The density floor
+// (2026-08-12-room-density-floor-design.md) refuses those, so that fixture now yields ZERO rooms
+// and the test measured nothing. Scaling by the floor, rather than pinning a literal 3, keeps it
+// honest if the floor ever moves.
 //
 // What this proves and what it doesn't: jsdom has no hit-testing, so this reads the `pointer-events`
 // CLASS the browser would act on, not that a real wheel/click event actually routes to the scroller
 // versus falling through to the canvas underneath it.
 function manySubtypeGraph(n: number): typeof SAMPLE.graph {
+  // n subtypes, each carried by exactly MIN_ROOM_CARDS distinct cards -- the smallest deck that
+  // gives every one of them a room under the density floor.
+  const cards = Array.from({ length: n * MIN_ROOM_CARDS }, (_, i) => ({ i, sub: i % n }));
   return {
     nodes: [
-      ...Array.from({ length: n }, (_, i) => ({ id: `card:${i}`, kind: "card", label: `Card ${i}`, copies: 1 })),
-      ...Array.from({ length: n }, (_, i) => ({ id: `face:${i}:0`, kind: "face", label: `Card ${i}` })),
+      ...cards.map(({ i }) => ({ id: `card:${i}`, kind: "card", label: `Card ${i}`, copies: 1 })),
+      ...cards.map(({ i }) => ({ id: `face:${i}:0`, kind: "face", label: `Card ${i}` })),
       ...Array.from({ length: n }, (_, i) => ({ id: `subtype:${i}`, kind: "subtype", label: `Sub${i}` })),
     ],
     edges: [
-      ...Array.from({ length: n }, (_, i) => ({ from: `card:${i}`, to: `face:${i}:0`, kind: "FACE", index: 0 })),
-      ...Array.from({ length: n }, (_, i) => ({ from: `face:${i}:0`, to: `subtype:${i}`, kind: "SUBTYPE" })),
+      ...cards.map(({ i }) => ({ from: `card:${i}`, to: `face:${i}:0`, kind: "FACE", index: 0 })),
+      ...cards.map(({ i, sub }) => ({ from: `face:${i}:0`, to: `subtype:${sub}`, kind: "SUBTYPE" })),
     ],
   } as unknown as typeof SAMPLE.graph;
 }

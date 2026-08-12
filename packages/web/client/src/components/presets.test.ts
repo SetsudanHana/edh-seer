@@ -142,6 +142,40 @@ describe("the mana value preset", () => {
   });
 });
 
+describe("the subtype preset's density floor", () => {
+  // Three Vampires and two Wizards: one tribe, one coincidence. Measured motivation, on the two
+  // checked-in fixtures: without the floor Sorin drew 19 rooms with ELEVEN holding a single card,
+  // each inflated by roomRadius to the 3-card size and centred on its one member.
+  const deck = [
+    facts({ id: "a", subtypes: ["Vampire"] }),
+    facts({ id: "b", subtypes: ["Vampire"] }),
+    facts({ id: "c", subtypes: ["Vampire", "Wizard"] }),
+    facts({ id: "d", subtypes: ["Wizard"] }),
+  ];
+
+  it("gives a room to a subtype three cards carry", () => {
+    expect(preset("subtype").rooms(deck).map((r) => r.id)).toEqual(["Vampire"]);
+  });
+
+  it("leaves a card whose only subtype is below the floor in NO room", () => {
+    // Not a fallback -- derived presets have none, so `d` joins the unroomed and CENTER_PULL
+    // holds it. That is the existing path for the 60 of 84 Sorin cards already in that state.
+    expect(roomsForFacts(preset("subtype").rooms(deck), deck[3])).toEqual([]);
+  });
+
+  it("still claims a card for the subtype that DID clear the floor", () => {
+    expect(roomsForFacts(preset("subtype").rooms(deck), deck[2])).toEqual(["Vampire"]);
+  });
+
+  // The floor is Subtype-only, and this is the test that says so: on Mana value a 2-card 7+
+  // bucket is the curve's tail -- a finding, in the same way role's "BOARD WIPES 0/3" is one.
+  it("does not fire on the other derived presets", () => {
+    const thin = [facts({ id: "a", types: ["Enchantment"], manaValue: 9 })];
+    expect(preset("type").rooms(thin).map((r) => r.id)).toEqual(["Enchantment"]);
+    expect(preset("manaValue").rooms(thin).map((r) => r.id)).toEqual(["7+"]);
+  });
+});
+
 describe("the role preset", () => {
   it("keeps the seven rooms and their order", () => {
     expect(preset("role").rooms([]).map((r) => r.id)).toEqual([
