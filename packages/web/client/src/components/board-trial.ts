@@ -31,6 +31,10 @@ export interface TrialOptions {
    *  An arm, not a mode: the projection is part of the board's definition, and this exists to
    *  attribute a metric to it. */
   project?: boolean;
+  /** Where the projection sits relative to the tick. `"tick-first"` is what GraphView ships:
+   *  tick -> project -> hold, so the projection gets the last positional word and forceCollide
+   *  never sees what it did. `"project-first"` lets collide answer it within the same frame. */
+  order?: "tick-first" | "project-first";
   /** Further ticks to sample motion over once settled; 0 skips the sampling entirely. */
   motionTicks?: number;
 }
@@ -52,7 +56,10 @@ function centroid(cards: readonly { x: number; y: number }[]) {
 /** Everything derived from (fixture, preset) is hoisted out of the returned closure -- it is the
  *  same for every seed, and rebuilding it per trial is pure cost. */
 export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
-  const { presetIndex = 0, params, ticks = 800, pin = true, project = true, motionTicks = 0 } = opts;
+  const {
+    presetIndex = 0, params, ticks = 800, pin = true, project = true,
+    order = "tick-first", motionTicks = 0,
+  } = opts;
   const graph = fx.graph;
   const comboCards = new Set(fx.combos.flatMap((c) => c.cards));
   const facts = cardFacts(graph, comboCards);
@@ -104,8 +111,10 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
     });
 
     const cards = nodes.filter(visible);
-    let unresolved = 0;
     const tick = () => {
+      if (order === "project-first" && project) {
+        projectRoomMembership(cards, roomCircles, roomsByNode);
+      }
       simulation.tick();
       // Projection and hold are part of the board's DEFINITION, not paint-time niceties --
       // GraphView runs both here, in this order. Measuring without them would measure a board
@@ -117,7 +126,9 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
       // max is dominated by chaos the settled board has nothing to do with. Measured:
       // worst-over-run 77 per trial with the projection disabled entirely, against 1-3 intrusions
       // on the same settled boards.
-      if (project) unresolved = projectRoomMembership(cards, roomCircles, roomsByNode);
+      if (order === "tick-first" && project) {
+        projectRoomMembership(cards, roomCircles, roomsByNode);
+      }
       if (pin) holdCardCentroid(nodes, cards);
     };
     for (let i = 0; i < ticks; i++) tick();
@@ -129,6 +140,11 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
     for (let i = 0; i < motionTicks; i++) tick();
     const moved = cards.map((n, i) => Math.hypot(n.x - before[i].x, n.y - before[i].y));
     const cAfter = centroid(cards);
+
+    // Counted on the FINAL board with maxPasses 0 -- it counts without moving anything. Taking it
+    // from whichever projection call happened last would make the number mean different things in
+    // the two orders: under project-first the last call predates a tick that moved every card.
+    const unresolved = project ? projectRoomMembership(cards, roomCircles, roomsByNode, 0) : 0;
 
     const circles = [...roomCircles().entries()].map(([id, c]) => ({ id, ...c }));
     const metrics = boardMetrics(
