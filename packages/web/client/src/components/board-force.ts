@@ -462,6 +462,101 @@ export function forceRoomContainment(opts: {
   return force;
 }
 
+/** Slides a room that sits ENTIRELY inside another off its parent's centre.
+ *
+ *  When every member of B is also a member of A, both circles are centred on the centroid of
+ *  almost the same cards, so B lands on top of A's middle. A's own members then have to live in
+ *  the annulus around it — and A's centre, which is where roomAttraction is pulling them, is the
+ *  one place they are forbidden to be. Measured on inalla, where every Human, Faerie, Merfolk and
+ *  Otter is also a Wizard: `[wizard] in foreign human` was the single largest unresolved family.
+ *
+ *  Fixing it by RESIZING was tried first and is recorded because it failed: growing A so the
+ *  annulus is sized for A's own members took that family from 24 to 40 over ten seeds. More area
+ *  does not help when the trouble is WHERE the free area is.
+ *
+ *  So move B instead. Each nested child gets a deterministic angle off its parent's centre and is
+ *  pulled until its circle is internally tangent to the parent's rim (`A.r - B.r`), leaving A's
+ *  members one contiguous crescent rather than a thin ring. Several children of one parent are
+ *  spread evenly around it by index, so they do not stack on the same side.
+ *
+ *  The nudge is applied equally to every member of B, which TRANSLATES the cluster instead of
+ *  compressing it: pulling each member individually toward the target point would squeeze B
+ *  against its own roomAttraction. B's members are A's members too, so A's containment still holds
+ *  them in and this only decides where inside A they sit.
+ *
+ *  Nesting is membership-derived and membership does not change during a run, so the plan is built
+ *  once in `initialize` rather than every tick. */
+export function forceNestedOffset(opts: {
+  roomsByNode: ReadonlyMap<string, readonly RoomId[]>;
+  circles: () => ReadonlyMap<RoomId, Circle>;
+  stiffness: number;
+}): CustomForce {
+  let plan: { parent: RoomId; child: RoomId; angle: number; members: Sim[] }[] = [];
+  const force = ((alpha: number) => {
+    if (plan.length === 0) return;
+    const circles = opts.circles();
+    for (const p of plan) {
+      const a = circles.get(p.parent), b = circles.get(p.child);
+      if (!a || !b) continue;
+      // A child at least as big as its parent has nowhere to go. Cannot happen for a STRICT subset
+      // under an area-derived radius, but the radius rule is allowed to change.
+      const gap = a.r - b.r;
+      if (gap <= 0) continue;
+      const dx = a.x + Math.cos(p.angle) * gap - b.x;
+      const dy = a.y + Math.sin(p.angle) * gap - b.y;
+      const k = opts.stiffness * alpha;
+      for (const n of p.members) { n.vx += dx * k; n.vy += dy * k; }
+    }
+  }) as CustomForce;
+
+  force.initialize = (nodes: Sim[]) => {
+    const cards = nodes.filter((n) => n.kind === "card");
+    const membersOf = new Map<RoomId, Sim[]>();
+    for (const n of cards) {
+      for (const id of opts.roomsByNode.get(n.id) ?? []) {
+        const list = membersOf.get(id);
+        if (list) list.push(n);
+        else membersOf.set(id, [n]);
+      }
+    }
+    // Smallest containing room only. A Faerie nested in both `wizard` and some larger room should
+    // be placed relative to the tightest thing that contains it; being pulled toward two different
+    // rims at once is how a card ends up satisfying neither.
+    const parentOf = new Map<RoomId, RoomId>();
+    for (const [child, theirs] of membersOf) {
+      let best: RoomId | undefined, bestSize = Infinity;
+      for (const [parent, ours] of membersOf) {
+        // STRICTLY bigger, so two rooms with identical membership never adopt each other. Merging
+        // is what handles that pair; this handles containment with room to spare.
+        if (parent === child || ours.length <= theirs.length || ours.length >= bestSize) continue;
+        const holds = new Set(ours);
+        if (theirs.every((n) => holds.has(n))) { best = parent; bestSize = ours.length; }
+      }
+      if (best !== undefined) parentOf.set(child, best);
+    }
+    // Children of one parent spread evenly around it, ordered by id so the board is identical
+    // across renders of one deck.
+    const byParent = new Map<RoomId, RoomId[]>();
+    for (const [child, parent] of parentOf) {
+      const list = byParent.get(parent);
+      if (list) list.push(child);
+      else byParent.set(parent, [child]);
+    }
+    plan = [];
+    for (const [parent, children] of byParent) {
+      children.sort();
+      children.forEach((child, i) => {
+        plan.push({
+          parent, child,
+          angle: (i / children.length) * Math.PI * 2,
+          members: membersOf.get(child) ?? [],
+        });
+      });
+    }
+  };
+  return force;
+}
+
 /** Rest-length padding on an edge spring, on top of the two nodes' own radii. */
 export const EDGE_GAP = 28;
 /** Repulsion strength -- 2200 in the hand-rolled loop, 25 here, and the change is a UNIT change,
@@ -504,6 +599,28 @@ export const ROOM_ATTRACTION = 0.008;
  *  the reverse expels cards from every room at once and the board falls apart. */
 export const CONTAINMENT = 0.02;
 export const FOREIGN_PUSH = 0.008;
+/** How hard a nested room is slid off its parent's centre (forceNestedOffset). It trades against
+ *  containment, which holds the child's members inside the parent while this decides WHERE inside.
+ *
+ *  Swept on inalla's Subtype preset -- the only nesting either fixture has -- 20 seeds per arm,
+ *  totalled across them:
+ *
+ *      0     -> unresolved 95, intrusions 5, escapes.two 81, motionMean 39.6
+ *      0.05  -> unresolved 72, intrusions 0, escapes.two 61, motionMean 34.2
+ *      0.1   -> unresolved 50, intrusions 5, escapes.two 26, motionMean 26.9
+ *      0.15  -> unresolved 55, intrusions 0, escapes.two 17, motionMean 29.6  -- chosen
+ *      0.3   -> unresolved 84, intrusions 0, escapes.two 17, motionMean 24.0
+ *      0.6   -> unresolved 36, intrusions 2, escapes.two  7, motionMean 18.8
+ *
+ *  READ escapes.two, NOT unresolved. escapes.two falls monotonically across the whole sweep and
+ *  motionMean tracks it; unresolved swings 55 -> 84 -> 36 over three increasing values, which is
+ *  noise, not a curve. Tuning on it would be fitting the seed.
+ *
+ *  0.15 takes 79% of the escapes.two gain (81 -> 17) and is the largest value where intrusions is
+ *  still 0. The band above it was measured, not skipped: 0.6 does reach escapes.two 7, but buys it
+ *  back on intrusions and confirms nothing on unresolved. ponytail: if nesting ever matters on a
+ *  deck that is not inalla, re-sweep there before reaching for the higher band. */
+export const NESTED_OFFSET = 0.15;
 export const LINK_STIFFNESS = 0.0012;
 export const CENTER_PULL = 0.0004;
 /** d3's setter stores `1 - _`, so this yields the 0.86 retention the old VELOCITY_DAMPING had. */
@@ -534,6 +651,7 @@ export interface BoardParams {
   roomAttraction: number;
   containment: number;
   foreignPush: number;
+  nestedOffset: number;
   linkStiffness: number;
   centerPull: number;
   velocityDecay: number;
@@ -547,6 +665,7 @@ export const DEFAULT_PARAMS: BoardParams = {
   roomAttraction: ROOM_ATTRACTION,
   containment: CONTAINMENT,
   foreignPush: FOREIGN_PUSH,
+  nestedOffset: NESTED_OFFSET,
   linkStiffness: LINK_STIFFNESS,
   centerPull: CENTER_PULL,
   velocityDecay: VELOCITY_DECAY,
@@ -640,6 +759,11 @@ export function createBoardSimulation(opts: {
       circles: roomCircles,
       containmentStiffness: p.containment,
       foreignStiffness: p.foreignPush,
+    }))
+    .force("nested", forceNestedOffset({
+      roomsByNode: opts.roomsByNode,
+      circles: roomCircles,
+      stiffness: p.nestedOffset,
     }))
     .velocityDecay(p.velocityDecay)
     .alphaDecay(p.alphaDecay)

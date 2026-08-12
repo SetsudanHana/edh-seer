@@ -10,6 +10,7 @@ import {
   createBoardSimulation,
   DEFAULT_PARAMS,
   FOREIGN_PUSH,
+  forceNestedOffset,
   forceRoomAttraction,
   forceRoomContainment,
   foreignPush,
@@ -112,6 +113,89 @@ describe("forceRoomAttraction", () => {
       return a.vx;
     };
     expect(build(["ramp", "lands"])).toBeGreaterThan(build(["ramp"]));
+  });
+});
+
+describe("forceNestedOffset", () => {
+  // `child` holds a and b; `parent` holds all four. Both circles start on the origin, which is the
+  // situation the force exists for: two circles centred on the centroid of almost the same cards.
+  const nested = () => {
+    const nodes = [card("card:a", 0, 0), card("card:b", 0, 0), card("card:c", 0, 0), card("card:d", 0, 0)];
+    const roomsByNode = new Map<string, readonly RoomId[]>([
+      ["card:a", ["parent", "child"]], ["card:b", ["parent", "child"]],
+      ["card:c", ["parent"]], ["card:d", ["parent"]],
+    ]);
+    const circles = (): ReadonlyMap<RoomId, Circle> =>
+      new Map([["parent", { x: 0, y: 0, r: 100 }], ["child", { x: 0, y: 0, r: 40 }]]);
+    return { nodes, roomsByNode, circles };
+  };
+
+  test("slides the nested room's members toward internal tangency with the parent's rim", () => {
+    const { nodes, roomsByNode, circles } = nested();
+    const force = forceNestedOffset({ roomsByNode, circles, stiffness: 0.1 });
+    force.initialize(nodes);
+    force(1);
+    // One child, so angle 0: target is (parentR - childR, 0) = (60, 0), and the child's circle is
+    // on the origin, so the nudge is 60 * 0.1 * alpha.
+    expect(nodes[0].vx).toBeCloseTo(6, 10);
+    expect(nodes[0].vy).toBeCloseTo(0, 10);
+  });
+
+  test("moves every member of the nested room by the SAME amount, so the cluster translates", () => {
+    // Pulling each member toward the target point individually would compress the child against
+    // its own roomAttraction. It is a translation, not a gather.
+    const { nodes, roomsByNode, circles } = nested();
+    const force = forceNestedOffset({ roomsByNode, circles, stiffness: 0.1 });
+    force.initialize(nodes);
+    force(1);
+    expect([nodes[1].vx, nodes[1].vy]).toEqual([nodes[0].vx, nodes[0].vy]);
+  });
+
+  test("leaves the parent's own members alone", () => {
+    const { nodes, roomsByNode, circles } = nested();
+    const force = forceNestedOffset({ roomsByNode, circles, stiffness: 0.1 });
+    force.initialize(nodes);
+    force(1);
+    expect([nodes[2].vx, nodes[2].vy]).toEqual([0, 0]);
+    expect([nodes[3].vx, nodes[3].vy]).toEqual([0, 0]);
+  });
+
+  test("does nothing at all when no room is nested inside another", () => {
+    // Overlapping is not nesting. These two share a card and neither contains the other, so there
+    // is no parent to slide off -- and every preset but inalla's Subtype is this case.
+    const a = card("card:a", 0, 0), b = card("card:b", 0, 0), c = card("card:c", 0, 0);
+    const force = forceNestedOffset({
+      roomsByNode: new Map<string, readonly RoomId[]>([
+        ["card:a", ["x"]], ["card:b", ["x", "y"]], ["card:c", ["y"]],
+      ]),
+      circles: () => new Map([["x", { x: 0, y: 0, r: 50 }], ["y", { x: 10, y: 0, r: 50 }]]),
+      stiffness: 0.1,
+    });
+    force.initialize([a, b, c]);
+    force(1);
+    expect([a.vx, a.vy, b.vx, b.vy, c.vx, c.vy]).toEqual([0, 0, 0, 0, 0, 0]);
+  });
+
+  test("spreads two children of one parent to opposite sides", () => {
+    const nodes = [
+      card("card:a", 0, 0), card("card:b", 0, 0), card("card:c", 0, 0), card("card:d", 0, 0),
+    ];
+    const force = forceNestedOffset({
+      roomsByNode: new Map<string, readonly RoomId[]>([
+        ["card:a", ["parent", "one"]], ["card:b", ["parent", "two"]],
+        ["card:c", ["parent"]], ["card:d", ["parent"]],
+      ]),
+      circles: () => new Map([
+        ["parent", { x: 0, y: 0, r: 100 }],
+        ["one", { x: 0, y: 0, r: 40 }], ["two", { x: 0, y: 0, r: 40 }],
+      ]),
+      stiffness: 0.1,
+    });
+    force.initialize(nodes);
+    force(1);
+    // Angles 0 and pi: equal and opposite, so the two children cannot stack on the same side.
+    expect(nodes[0].vx).toBeCloseTo(-nodes[1].vx, 10);
+    expect(nodes[0].vx).not.toBeCloseTo(0, 6);
   });
 });
 
