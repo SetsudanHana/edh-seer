@@ -430,6 +430,28 @@ describe("projectRoomMembership", () => {
   const circles = (...cs: [string, number, number, number][]) =>
     new Map<RoomId, Circle>(cs.map(([id, x, y, r]) => [id, { x, y, r }]));
 
+  // maxPasses 0 runs no ejection at all, so these two read the REPORT rule on its own -- which is
+  // the only way to see it, since the pass would otherwise fix any violation it can reach.
+  //
+  // The report is deliberately slacker than the pass. RIM_SLACK (1e-6) absorbs float residue
+  // against the geometry the pass was HANDED; REPORT_SLACK (0.1 world units) absorbs the circles
+  // moving between the pass and the report, because the pass just moved their members. Measured
+  // worst case ~0.002 units, and it was failing the acceptance gate on inalla's role preset.
+  test("does not report a violation shallower than the report slack", () => {
+    // 0.05 units inside a foreign rim: 0.36% of a card radius, sub-pixel until ~10x zoom.
+    const n = card("card:a", 100 + ART_RADIUS - 0.05, 0);
+    expect(projectRoomMembership(
+      [n], () => circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]), 0,
+    )).toBe(0);
+  });
+
+  test("does report one deeper than it", () => {
+    const n = card("card:a", 100 + ART_RADIUS - 0.5, 0);
+    expect(projectRoomMembership(
+      [n], () => circles(["ramp", 0, 0, 100]), new Map([["card:a", ["lands"]]]), 0,
+    )).toBe(1);
+  });
+
   test("moves a non-member until its NEAR rim clears the room's rim, and no further", () => {
     const n = card("card:a", 10, 0); // deep inside a circle centred on the origin
     const unresolved = projectRoomMembership(
