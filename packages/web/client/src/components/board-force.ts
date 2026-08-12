@@ -657,6 +657,32 @@ export const EDGE_GAP = 28;
  *  the passing band spans at least 10->30, a factor of three, so it is robust rather than fragile.
  *  The measurements doc has the full reasoning. */
 export const REPULSION = 25;
+/** How far repulsion reaches, in world units. Ported from the old loop's `d2 > 220000` cutoff,
+ *  which is ~469 -- wider than any room on any fixture, so every card in a room repels every other
+ *  one. That is what makes a large room draw as a HOLLOW RING: mutual repulsion inside a hard
+ *  boundary concentrates at the edge, the way charge does on a conductor.
+ *
+ *  SHORTENING IT FILLS THE DISC AND BREAKS MEMBERSHIP. Measured by the share of a room's members
+ *  sitting in the outer fifth of its radius -- a uniform fill puts 36% there, so 0.36 is the target
+ *  and higher means ring:
+ *
+ *      range   braids/Colour   sorin/Colour   inalla/Role    what it costs
+ *      469        0.58            0.57           0.69        nothing; this is shipped
+ *      200        0.37            0.37           0.40        20 caps regressed vs 5 improved
+ *      120        0.05            0.20           0.24        intrusions 5x-17x on four fixtures
+ *       70        0.04            0.20           0.19        worse again
+ *
+ *  200 lands almost exactly on a uniform fill and is still rejected: at ten trials it regressed 20
+ *  of the 25 cases' caps and improved 5, with intrusions the casualty everywhere -- fairdrazi/Colour
+ *  28 -> 132, changelings/Colour 1 -> 22, sorin/Subtype 0 -> 17. Cards stop being pushed apart
+ *  before they drift into a foreign room. Below 200 the layout over-collapses: an outer share of
+ *  0.05 is not a filled disc, it is a clump in the middle of one.
+ *
+ *  So the ring is the price of membership under this force set, and it is a knob rather than a
+ *  fixed number so the next attempt starts from the sweep instead of repeating it. Anything that
+ *  makes shortening it affordable has to come from the membership side -- a foreignPush that
+ *  reaches further than repulsion, say -- not from this constant alone. */
+export const REPULSION_RANGE = 469;
 /** Pull between two cards per room they share. NOT retuned: repulsion alone bought both hard
  *  conditions, and the protocol's stopping rule is to stop there. Carries the loop's measured
  *  value (Task 9 / Task 12 arm A3, which found 0 collapses the board). */
@@ -716,6 +742,7 @@ export const COLLIDE_ITERATIONS = 1;
  *  Exists for the dev tuning panel (BoardTuner). Nothing in the product passes `params`. */
 export interface BoardParams {
   repulsion: number;
+  repulsionRange: number;
   roomAttraction: number;
   containment: number;
   foreignPush: number;
@@ -731,6 +758,7 @@ export interface BoardParams {
 
 export const DEFAULT_PARAMS: BoardParams = {
   repulsion: REPULSION,
+  repulsionRange: REPULSION_RANGE,
   roomAttraction: ROOM_ATTRACTION,
   containment: CONTAINMENT,
   foreignPush: FOREIGN_PUSH,
@@ -807,7 +835,7 @@ export function createBoardSimulation(opts: {
       // Ports the old `max(d2, 64)` floor and `d2 > 220000` cutoff. d3 squares these
       // internally; distanceMin is a geometric mean rather than a hard clamp.
       .distanceMin(8)
-      .distanceMax(469))
+      .distanceMax(p.repulsionRange))
     .force("link", forceLink<Sim, { source: Sim; target: Sim }>(opts.links)
       .id((n) => n.id)
       // A spring between two 14px discs and one between two 3px dots should not want the same

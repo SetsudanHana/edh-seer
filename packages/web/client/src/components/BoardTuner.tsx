@@ -20,6 +20,7 @@ export interface Knob {
  *  panel can reproduce any published arm. See the design doc's 3. */
 export const KNOBS: readonly Knob[] = [
   { key: "repulsion", what: "how hard every node pushes every other apart", min: 1, max: 2200, log: true },
+  { key: "repulsionRange", what: "how far that push reaches; below a room's width it only spaces neighbours", min: 40, max: 900, log: true },
   { key: "roomAttraction", what: "pull between two cards per room they share", min: 1e-4, max: 1e-1, log: true },
   { key: "containment", what: "how hard a room pulls a stray member back inside", min: 1e-4, max: 1e-1, log: true },
   { key: "foreignPush", what: "how hard a room pushes a non-member out (must stay below containment)", min: 1e-4, max: 1e-1, log: true },
@@ -71,6 +72,7 @@ export interface ProbeSnapshot {
 /** The source constant a param key writes back to, for the copy button. */
 const CONSTANT_NAME: Record<keyof BoardParams, string> = {
   repulsion: "REPULSION",
+  repulsionRange: "REPULSION_RANGE",
   roomAttraction: "ROOM_ATTRACTION",
   containment: "CONTAINMENT",
   nestedOffset: "NESTED_OFFSET",
