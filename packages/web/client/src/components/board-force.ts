@@ -75,12 +75,18 @@ export function containment(
  *  and the board falls apart. */
 export function foreignPush(
   dx: number, dy: number, roomR: number, cardR: number, stiffness: number,
+  /** How far PAST the rim the push still reaches, in world units. 0 is the original behaviour:
+   *  purely reactive, acting only once a card is already inside a room it does not belong to. A
+   *  margin makes it anticipatory, resisting the approach instead of only the trespass. */
+  margin: number = 0,
 ): { x: number; y: number } {
   const d = Math.hypot(dx, dy);
   if (d === 0) return { x: 0, y: 0 };
-  const depth = roomR - (d - cardR);
+  const depth = roomR + margin - (d - cardR);
   if (depth <= 0) return { x: 0, y: 0 };
-  const f = depth * stiffness;
+  // Ramped by how far in it actually is, so a card merely inside the margin is nudged and one deep
+  // inside the circle is shoved. Without this the margin would apply full strength at first touch.
+  const f = Math.min(depth, roomR + cardR) * stiffness;
   return { x: (dx / d) * f, y: (dy / d) * f };
 }
 
@@ -505,6 +511,8 @@ export function forceRoomContainment(opts: {
   circles: () => ReadonlyMap<RoomId, Circle>;
   containmentStiffness: number;
   foreignStiffness: number;
+  /** Optional, default 0 -- the original purely-reactive push. */
+  foreignMargin?: number;
 }): CustomForce {
   let cards: Sim[] = [];
   const force = ((alpha: number) => {
@@ -521,7 +529,7 @@ export function forceRoomContainment(opts: {
         const dx = n.x - c.x, dy = n.y - c.y;
         const t = mine.includes(id)
           ? containment(dx, dy, c.r, cardR, opts.containmentStiffness * alpha)
-          : foreignPush(dx, dy, c.r, cardR, opts.foreignStiffness * alpha);
+          : foreignPush(dx, dy, c.r, cardR, opts.foreignStiffness * alpha, opts.foreignMargin ?? 0);
         n.vx += t.x; n.vy += t.y;
       }
     }
@@ -693,6 +701,29 @@ export const ROOM_ATTRACTION = 0.008;
  *  the reverse expels cards from every room at once and the board falls apart. */
 export const CONTAINMENT = 0.02;
 export const FOREIGN_PUSH = 0.008;
+/** How far past a foreign room's rim its push still reaches, in world units.
+ *
+ *  0 was the original behaviour and it is purely REACTIVE: foreignPush did nothing at all until a
+ *  card was already inside a room it does not belong to, so the only thing keeping non-members out
+ *  at range was general repulsion. A margin makes it anticipatory -- it resists the approach rather
+ *  than only the trespass.
+ *
+ *  Swept across ten cases, ten trials each, totalled:
+ *
+ *      margin   overlaps   intrusions   unresolved
+ *        0         48          36           94
+ *       40         35          24           58     -- chosen
+ *       90         53          13           64
+ *
+ *  40 is taken because it beats the reactive behaviour on ALL THREE at once, where 90 trades
+ *  overlaps up to buy intrusions down. On the full 25-case gate it lowered 10 caps and raised 3,
+ *  every rise by 2 counts.
+ *
+ *  IT DOES NOT RESCUE SHORT-RANGE REPULSION, which is what it was tried for. At REPULSION_RANGE
+ *  200 the intrusions still blow up with a margin of 40 or 80 (fairdrazi/Colour 118, changelings
+ *  /Colour 18-27) -- because shortening the range contracts the whole board and overlaps the ROOMS,
+ *  which is not something a rim margin can reach. It shipped on its own merits instead. */
+export const FOREIGN_MARGIN = 40;
 /** How hard a nested room is slid off its parent's centre (forceNestedOffset). It trades against
  *  containment, which holds the child's members inside the parent while this decides WHERE inside.
  *
@@ -746,6 +777,7 @@ export interface BoardParams {
   roomAttraction: number;
   containment: number;
   foreignPush: number;
+  foreignMargin: number;
   nestedOffset: number;
   breatheGrow: number;
   linkStiffness: number;
@@ -762,6 +794,7 @@ export const DEFAULT_PARAMS: BoardParams = {
   roomAttraction: ROOM_ATTRACTION,
   containment: CONTAINMENT,
   foreignPush: FOREIGN_PUSH,
+  foreignMargin: FOREIGN_MARGIN,
   nestedOffset: NESTED_OFFSET,
   breatheGrow: BREATHE_GROW,
   linkStiffness: LINK_STIFFNESS,
@@ -860,6 +893,7 @@ export function createBoardSimulation(opts: {
       circles: roomCircles,
       containmentStiffness: p.containment,
       foreignStiffness: p.foreignPush,
+      foreignMargin: p.foreignMargin,
     }))
     .force("breathing", forceRoomBreathing({
       roomsByNode: opts.roomsByNode,

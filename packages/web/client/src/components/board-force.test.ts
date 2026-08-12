@@ -98,6 +98,37 @@ describe("forceRoomAttraction", () => {
   });
 });
 
+describe("foreignPush's reach past the rim", () => {
+  // The margin makes the push ANTICIPATORY. Without it the force is purely reactive: it does
+  // nothing until a card is already inside a room it does not belong to, so the only thing keeping
+  // non-members out at range is the general repulsion. Measured across ten cases at ten trials,
+  // a margin of 40 beat 0 on all three counts at once -- overlaps 48 -> 35, intrusions 36 -> 24,
+  // unresolved 94 -> 58.
+  const outside = (margin: number) => foreignPush(130, 0, 100, 14, 0.008, margin).x;
+
+  test("does nothing outside the rim when there is no margin", () => {
+    // Near rim at 130 - 14 = 116, clear of the 100 radius.
+    expect(outside(0)).toBe(0);
+  });
+
+  test("pushes a card that is outside the rim but inside the margin", () => {
+    expect(outside(40)).toBeGreaterThan(0);
+  });
+
+  test("still does nothing beyond the margin", () => {
+    expect(outside(10)).toBe(0);
+  });
+
+  test("pushes a card deep inside harder than one merely in the margin", () => {
+    const deep = foreignPush(20, 0, 100, 14, 0.008, 40).x;
+    expect(deep).toBeGreaterThan(outside(40));
+  });
+
+  test("leaves the inside-the-circle behaviour unchanged at margin 0", () => {
+    expect(foreignPush(20, 0, 100, 14, 0.008, 0)).toEqual(foreignPush(20, 0, 100, 14, 0.008));
+  });
+});
+
 describe("forceNestedOffset", () => {
   // `child` holds a and b; `parent` holds all four. Both circles start on the origin, which is the
   // situation the force exists for: two circles centred on the centroid of almost the same cards.
