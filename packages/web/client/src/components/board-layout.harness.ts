@@ -39,7 +39,7 @@ const fixtures = named.length > 0 ? named : FIXTURES;
  *  here turns every key into `fixture/arm` and the gate reports NO CAP RECORDED for all of them.
  *  Add arms to measure, then take them out again. The Task 6 A/B that set LINK_DEGREE_NORM and
  *  LINK_STRENGTH_K is written up on QUALITY_CAPS; it ran
- *    shipped · degnorm · k012 · degnorm-k1 · degnorm-k14 · degnorm-k2. */
+ *    shipped · degnorm · k012 · k0133 · degnorm-k1 · degnorm-k14 · degnorm-k2. */
 const ARMS: { name: string; params: Partial<BoardParams> }[] = [
   { name: "shipped", params: {} },
 ];
