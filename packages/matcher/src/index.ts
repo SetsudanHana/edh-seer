@@ -8,6 +8,13 @@ export { buildDeckCards, type CardTagsLookup } from "./deck-cards.js";
 export { parseStat, evalStatPredicate } from "./stats.js";
 export { buildGraph, type CardGraph, type GraphNode, type GraphEdge, type NodeKind, type EdgeKind } from "./graph.js";
 export { addEventEdges, orphanCards } from "./graph-events.js";
+export {
+  projectDeckGraph,
+  type ProjectedGraph,
+  type ProjectedNode,
+  type ProjectedEdge,
+  type ProjectOptions,
+} from "./graph-projection.js";
 export { themeMembership, themeCandidates, BASELINE_CAP, type ThemeMembership } from "./themes.js";
 export { classifyEffect, type EffectClass } from "./effect-class.js";
 export {
