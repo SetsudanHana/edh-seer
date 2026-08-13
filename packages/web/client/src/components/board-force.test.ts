@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { forceCollide, forceLink, forceManyBody, forceX, forceY } from "d3-force";
 import {
   ALPHA_DECAY, ALPHA_FLOOR, ART_RADIUS, CENTER_PULL, COLLIDE_ITERATIONS, DEFAULT_PARAMS,
-  LINK_DIST_MAX, LINK_DIST_MIN, LINK_STRENGTH_K, REPULSION, REPULSION_RANGE, VELOCITY_DECAY,
+  LINK_DEGREE_NORM, LINK_DIST_MAX, LINK_DIST_MIN, LINK_STRENGTH_K, REPULSION, REPULSION_RANGE, VELOCITY_DECAY,
   countOverlaps, createBoardSimulation, linkDistanceFor, linkStrengthFor, nodeRadius,
   type BoardParams, type Sim, type SimLink,
 } from "./board-force.js";
@@ -66,6 +66,17 @@ describe("linkStrengthFor", () => {
   // must not silently produce a stronger spring than the deck's own strongest pair.
   test("clamps a weight above the maximum rather than exceeding the constant", () => {
     expect(linkStrengthFor(80, 8)).toBeCloseTo(LINK_STRENGTH_K);
+  });
+
+  // The degree divisor is what settles the board (see QUALITY_CAPS). It is d3's own, restored as
+  // an option, and it only ever softens: a leaf's spring divides by 1.
+  test("divides by the degree it is given, and by nothing when it is not", () => {
+    expect(linkStrengthFor(8, 8, 1.4, 7)).toBeCloseTo(0.2);
+    expect(linkStrengthFor(8, 8, 1.4)).toBeCloseTo(1.4);
+  });
+
+  test("floors the divisor at one, so a degree-zero node cannot amplify a spring", () => {
+    expect(linkStrengthFor(8, 8, 1.4, 0)).toBeCloseTo(1.4);
   });
 });
 
@@ -182,6 +193,7 @@ describe("BoardParams", () => {
       repulsion: REPULSION,
       repulsionRange: REPULSION_RANGE,
       linkStrengthK: LINK_STRENGTH_K,
+      linkDegreeNorm: LINK_DEGREE_NORM,
       centerPull: CENTER_PULL,
       velocityDecay: VELOCITY_DECAY,
       alphaDecay: ALPHA_DECAY,

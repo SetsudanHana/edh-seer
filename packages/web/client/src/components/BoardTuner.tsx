@@ -2,10 +2,18 @@ import { useEffect, useState } from "react";
 import { countOverlaps, DEFAULT_PARAMS, type BoardParams } from "./board-force.js";
 import { edgeCrossings, linkDistError } from "./board-quality.js";
 
+/** The params a SLIDER can carry. `linkDegreeNorm` is a boolean and is deliberately not one: it
+ *  picks between two force laws rather than moving a value along a range, and it is chosen by
+ *  measurement (the harness's arms), not by dragging. Deriving the key set instead of listing it
+ *  means the next boolean param cannot silently become `NaN` in a slider. */
+type NumericParam = {
+  [K in keyof BoardParams]: BoardParams[K] extends number ? K : never
+}[keyof BoardParams];
+
 /** A slider descriptor. `log` knobs are d3 stiffnesses spanning decades, where a linear slider
  *  spends 90% of its travel in a range that visibly does nothing. */
 export interface Knob {
-  key: keyof BoardParams;
+  key: NumericParam;
   /** One line of plain English for what the knob does to the board. The constant NAME stays on the
    *  row beside it -- it is what the copy button emits and what gets pasted into board-force.ts,
    *  so a friendly label replacing it would break the one workflow this panel exists for. */
@@ -64,7 +72,7 @@ export interface ProbeSnapshot {
 }
 
 /** The source constant a param key writes back to, for the copy button. */
-const CONSTANT_NAME: Record<keyof BoardParams, string> = {
+const CONSTANT_NAME: Record<NumericParam, string> = {
   repulsion: "REPULSION",
   repulsionRange: "REPULSION_RANGE",
   linkStrengthK: "LINK_STRENGTH_K",

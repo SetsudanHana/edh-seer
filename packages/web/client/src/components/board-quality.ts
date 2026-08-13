@@ -67,7 +67,40 @@ export interface Caps {
   linkDistError: number;
 }
 
-/** Filled in Task 6 FROM MEASUREMENT. A cap chosen before anything was measured is a guess wearing
- *  a number. Ratchet rules, unchanged from the table this replaces: a beaten cap is lowered in the
- *  same commit; raising one needs a written reason on the line. */
-export const QUALITY_CAPS: Record<string, Caps> = {};
+/** MEASURED, not chosen: `board-layout.harness.ts`, five fixtures x ten seeded trials, 800 ticks
+ *  plus 180 motion ticks. Overlaps and crossings are summed over the ten trials, linkDistError is
+ *  the ceil of their mean. A cap picked before anything was measured is a guess wearing a number.
+ *
+ *  Ratchet rules, unchanged from the table this replaces: over a cap is a regression and fails;
+ *  UNDER one also fails, until the cap is lowered to the new number in the same commit, or an
+ *  improvement can be silently spent later. Raising one needs a written reason on the line.
+ *
+ *  THE ARM THESE NUMBERS COME FROM. The board is degree-normalised (LINK_DEGREE_NORM) at
+ *  LINK_STRENGTH_K 1.4. Six arms, same instrument, motionMean is world units a node moves over the
+ *  180 ticks after settling:
+ *
+ *    arm          crossings (5 fixtures)                 distErr           motionMean
+ *    shipped      53534 56197 69209  9623 27787          40 40 41 30 34    119.7 88.3 62.1 13.3 26.4
+ *    degnorm      39009 27318 27042  6641 16093          57 54 62 47 54     13.5 13.5 11.3  5.6  5.0
+ *    k012         48400 34095 43852  7001 22676          72 62 63 56 76     18.5  8.7  8.6  5.5  7.7
+ *    degnorm-k1   42289 30688 34310  6768 17772          49 46 53 40 48     19.4 18.1 12.9  4.6  8.0
+ *    degnorm-k14  43058 32740 35016  6736 19796          41 41 48 36 42     13.8 23.2  9.8  4.6  9.2
+ *    degnorm-k2   46001 35377 43863  8024 22522          37 38 45 31 37     18.3 26.1 18.2  5.9 12.3
+ *
+ *  `k012` is the control, and it is why the divisor is degree rather than a smaller k: softening
+ *  every spring uniformly by the same average factor settles the board too, but leaves crossings
+ *  and link-distance error WORSE than the undivided arm on every fixture. Degree is what matters,
+ *  not softness -- a leaf card's spring keeps full strength under the divisor, and only hubs pay.
+ *
+ *  Against `shipped`, the shipped arm buys crossings -20% to -49% and motion -65% to -89% (sorin
+ *  119.7 -> 13.8: it never settled at all before, it walked half a link length per node forever),
+ *  and the one node overlap goes. It PAYS up to 8 units of rms link-distance error on fairdrazi and
+ *  braids -- 1 unit on sorin and inalla, and it is 6 better on nothing. k2 buys that back and
+ *  spends it on crossings instead; 1.4 is the knee. */
+export const QUALITY_CAPS: Record<string, Caps> = {
+  sorin: { nodeOverlaps: 0, edgeCrossings: 43058, linkDistError: 41 },
+  inalla: { nodeOverlaps: 0, edgeCrossings: 32740, linkDistError: 41 },
+  fairdrazi: { nodeOverlaps: 0, edgeCrossings: 35016, linkDistError: 48 },
+  changelings: { nodeOverlaps: 0, edgeCrossings: 6736, linkDistError: 36 },
+  braids: { nodeOverlaps: 0, edgeCrossings: 19796, linkDistError: 42 },
+};

@@ -60,8 +60,14 @@ export function countOverlaps(cards: readonly { x: number; y: number }[]): numbe
 export const LINK_DIST_MIN = 60;
 /** Distance a zero-weight edge is drawn at. */
 export const LINK_DIST_MAX = 260;
-/** Scales link strength; d3 clamps strength into [0,1] internally. */
-export const LINK_STRENGTH_K = 0.7;
+/** Scales link strength. Set with LINK_DEGREE_NORM from the Task 6 A/B -- 0.7 was the pre-degree
+ *  value and is far too weak once every spring is divided by its endpoint degree. */
+export const LINK_STRENGTH_K = 1.4;
+/** Divide each spring by min(deg(source), deg(target)) -- d3's own stability divisor, measured back
+ *  in. Chosen over the undivided board on six arms x five fixtures x ten seeded trials; see the
+ *  table on QUALITY_CAPS. Without it nothing settles: sorin walked 119 world units over the 180
+ *  ticks after 800, which is half a link length per node, forever. */
+export const LINK_DEGREE_NORM = true;
 
 /** Weight -> target distance, descending: a strong pair sits closer. Normalised by the DECK's own
  *  maximum rather than an absolute scale, because impactEdgeWeight is unbounded and a deck of
@@ -74,10 +80,20 @@ export function linkDistanceFor(weight: number, maxWeight: number): number {
 
 /** How hard that distance is enforced -- also proportional to weight, so a strong pair is held at
  *  its short rest length while a weak one is a suggestion the rest of the board can overrule.
- *  `k` is the knob (BoardParams.linkStrengthK); the constant is its default. */
-export function linkStrengthFor(weight: number, maxWeight: number, k: number = LINK_STRENGTH_K): number {
+ *  `k` is the knob (BoardParams.linkStrengthK); the constant is its default.
+ *
+ *  `degree` is d3's own stability divisor, restored as an OPTION: min(deg(source), deg(target)).
+ *  d3 applies each link's correction in sequence within a tick, so a degree-70 hub takes 70 of them
+ *  per tick and can be displaced further than any single spring asked for -- the board then walks
+ *  instead of settling. Dividing by the smaller endpoint's degree bounds that, and leaves a leaf
+ *  card's spring at full strength (min-degree is the leaf's own), so it is not a global softening.
+ *  Measured both ways in Task 6; see the table on QUALITY_CAPS for which arm ships and what it
+ *  cost. */
+export function linkStrengthFor(
+  weight: number, maxWeight: number, k: number = LINK_STRENGTH_K, degree: number = 1,
+): number {
   if (maxWeight <= 0) return 0;
-  return k * Math.min(1, Math.max(0, weight / maxWeight));
+  return k * Math.min(1, Math.max(0, weight / maxWeight)) / Math.max(1, degree);
 }
 
 /** Repulsion strength -- 2200 in the hand-rolled loop, 25 here, and the change is a UNIT change,
@@ -120,6 +136,8 @@ export interface BoardParams {
   repulsion: number;
   repulsionRange: number;
   linkStrengthK: number;
+  /** Divide link strength by the smaller endpoint's degree -- see linkStrengthFor. */
+  linkDegreeNorm: boolean;
   centerPull: number;
   velocityDecay: number;
   alphaDecay: number;
@@ -131,6 +149,7 @@ export const DEFAULT_PARAMS: BoardParams = {
   repulsion: REPULSION,
   repulsionRange: REPULSION_RANGE,
   linkStrengthK: LINK_STRENGTH_K,
+  linkDegreeNorm: LINK_DEGREE_NORM,
   centerPull: CENTER_PULL,
   velocityDecay: VELOCITY_DECAY,
   alphaDecay: ALPHA_DECAY,
@@ -170,10 +189,12 @@ export function createBoardSimulation(opts: {
     .force("link", forceLink<Sim, SimLink>(opts.links)
       .id((n) => n.id)
       .distance((l) => linkDistanceFor(l.weight, maxWeight))
-      // Explicit strength overrides d3's degree-normalized default, which would make an edge
-      // weaker for being attached to a well-connected card -- the opposite of what a hub means
-      // here, where degree is how many partners a card actually has.
-      .strength((l) => linkStrengthFor(l.weight, maxWeight, p.linkStrengthK)))
+      // Strength is ours, not d3's default: it is proportional to the edge's WEIGHT, which d3
+      // knows nothing about. Whether d3's degree divisor is reapplied on top is the
+      // linkDegreeNorm knob -- it is a stability device, not a statement about what a hub means.
+      .strength((l) => linkStrengthFor(
+        l.weight, maxWeight, p.linkStrengthK,
+        p.linkDegreeNorm ? Math.min(l.source.deg, l.target.deg) : 1)))
     .force("collide", forceCollide<Sim>()
       .radius(() => nodeRadius() + COLLISION_PAD / 2)
       .iterations(p.collideIterations))
