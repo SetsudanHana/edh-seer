@@ -23,7 +23,7 @@ async function capture(name: string, deckPath: string): Promise<void> {
   });
   if (!res.ok) throw new Error(`${name}: ${res.status} ${await res.text()}`);
   const body = await res.json() as {
-    graph: { nodes: unknown[]; edges: unknown[] };
+    graph: { nodes: unknown[]; edges: unknown[]; undirectedReasons: number; offDeckReasons: number };
     report: { buildCategories?: unknown[]; combos?: unknown[] };
     missing?: string[];
     resolvedCount?: number;
@@ -40,11 +40,12 @@ async function capture(name: string, deckPath: string): Promise<void> {
   const out = new URL(`./${name}-graph.json`, import.meta.url).pathname;
   writeFileSync(out, JSON.stringify(fixture));
 
-  const cards = body.graph.nodes.filter((n) => (n as { kind: string }).kind === "card").length;
+  // Every node is a card in the projected shape -- there is no `kind` discriminant to filter on.
   const missing = body.missing ?? [];
   console.log(
-    `${name.padEnd(28)} ${String(cards).padStart(4)} card nodes · ` +
+    `${name.padEnd(28)} ${String(body.graph.nodes.length).padStart(4)} card nodes · ` +
     `${String(body.graph.edges.length).padStart(5)} edges · ` +
+    `undirected ${body.graph.undirectedReasons} · offDeck ${body.graph.offDeckReasons} · ` +
     `resolved ${body.resolvedCount}/${body.totalCount}` +
     (missing.length > 0 ? ` · MISSING ${missing.length}: ${missing.slice(0, 3).join(", ")}` : ""),
   );
