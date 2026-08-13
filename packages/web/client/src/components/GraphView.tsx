@@ -1010,16 +1010,12 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             />
           ) : null}
         </div>
-        {/* Inside shellRef, not a sibling of it: the Fullscreen API only keeps the target element
-         *  (and its descendants) visible, so a caption OUTSIDE this boundary is masked the instant
-         *  fullscreen activates -- the one mode where the board is largest and most likely to be
-         *  studied, and the one place the legend-vs-geometry confusion (task-9's judge, twice) most
-         *  needs correcting. */}
-        <p className="text-(--muted) text-sm">
-          Drag to pan, scroll to zoom. Two cards sit close because they do something for each other —
-          position is synergy, and colour is what the cards are.
-        </p>
       </div>
+      {/* MUTATION: sibling of shellRef, not inside it */}
+      <p className="text-(--muted) text-sm">
+        Drag to pan, scroll to zoom. Two cards sit close because they do something for each other —
+        position is synergy, and colour is what the cards are.
+      </p>
     </div>
   );
 }
