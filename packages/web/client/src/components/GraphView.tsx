@@ -13,6 +13,7 @@ import {
   type BoardParams, type Sim, type SimLink,
 } from "./board-force.js";
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
+import { CardInspector } from "./CardInspector.js";
 import { labelPriority, placeLabels } from "./labels.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
 // uses, while board-force.ts owns the values.
@@ -93,6 +94,12 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   >(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [query, setQuery] = useState("");
+  // Which card the provenance inspector is open on, or null when it's closed. Set by the click
+  // path (zoomBehavior's "end" handler, below) and by the panel's own close button. Not a ref --
+  // unlike hoveredIdRef/matchesRef this DOES need to drive a render (the panel is real DOM, not a
+  // canvas draw), and a click is a discrete event, not a per-frame or per-keystroke one, so there
+  // is no reheating-the-simulation cost to worry about here.
+  const [inspectingId, setInspectingId] = useState<string | null>(null);
   /** Which facet the board is PAINTED by. It moves no node: geometry is synergy and only synergy,
    *  so switching this is a restyle of a layout that never re-simulates. */
   const [paintId, setPaintId] = useState(PAINT_MODES[0].id);
@@ -492,10 +499,19 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           const sx = n.x * cam.z + cam.x, sy = n.y * cam.z + cam.y;
           return { id, x: sx - wScreen / 2, y: sy - nodeRadius() * cam.z - LABEL_PX, w: wScreen, h: LABEL_PX };
         });
+        // Same dimming rule the node pass uses a few lines up, and the same reason: a search keeps
+        // the deck's shape rather than hiding what doesn't match, so a matching card's NAME must
+        // read as clearly as its ring does. `matchIds` (not `matches`) -- see the node pass's own
+        // comment on why this reads the ref.
         for (const id of placeLabels(boxes)) {
           const n = byId.get(id)!;
+          ctx.globalAlpha = matchIds && !matchIds.has(id) ? 0.15 : 1;
           ctx.fillText(n.label, n.x, n.y - nodeRadius() - 4 / cam.z);
         }
+        // Canvas state is global and persistent (draw()'s own reset a few lines up already makes
+        // this mistake impossible for the node pass) -- a search left dimming on here would leak
+        // into next frame's background wipe.
+        ctx.globalAlpha = 1;
       }
     };
 
@@ -619,7 +635,12 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         : null;
       if (!point) return;
       if (traveledAsPan(gestureStart, e.transform)) return;
-      // Task 8 fills this: a click on a card opens the inspector.
+      // A genuine click (not a pan): open the inspector on whatever card is under it, or close an
+      // already-open one when the click landed on empty board space. `pickAt` is the exact same
+      // hit test `onMove` already uses for the hover tooltip -- one geometry, two consumers.
+      const w = toWorld(point);
+      const hit = pickAt(w.x, w.y);
+      setInspectingId(hit?.id ?? null);
     });
 
     const onMove = (e: PointerEvent) => {
@@ -660,6 +681,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     // the new constant rather than jumping. Outside dev it is DEFAULT_PARAMS and never changes
     // identity, so this costs a production render nothing.
   }, [graph, params]);
+
+  // The inspected card and its edges, looked up fresh from `graph` on every render rather than
+  // captured at click time -- `inspectingId` is the only state, so the panel always reflects the
+  // current props even if `graph` were to change while it's open.
+  const inspectingNode = inspectingId ? graph.nodes.find((n) => n.id === inspectingId) ?? null : null;
+  const inspectingEdges = inspectingId
+    ? graph.edges.filter((e) => e.from === inspectingId || e.to === inspectingId)
+    : [];
 
   /** Reshapes __graphProbe()'s node array (with its `edges` property riding along) into what
    *  BoardTuner reads. Returns null before the first layout effect has run, or under a test with
@@ -819,6 +848,18 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
            *  `absolute top-2 right-2` resolves against the canvas, not the page. */}
           {import.meta.env.DEV && debug ? (
             <BoardTuner params={params} onChange={setParams} probe={probeSnapshot} />
+          ) : null}
+
+          {/* Drill-down: what made this pair. See CardInspector.tsx's own doc comment for the
+           *  provenance limit (tag + text, no clause id). Opened by the click path wired into
+           *  zoomBehavior's "end" handler above; the hover tooltip stays alongside it rather than
+           *  being replaced -- hover answers "what is this", click answers "why is this here". */}
+          {inspectingNode ? (
+            <CardInspector
+              node={inspectingNode}
+              edges={inspectingEdges}
+              onClose={() => setInspectingId(null)}
+            />
           ) : null}
         </div>
       </div>

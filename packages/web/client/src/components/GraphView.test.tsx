@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ART_RADIUS, GraphView, edgeWidth, nodeRadius, seedPosition, traveledAsPan } from "./GraphView.js";
@@ -643,5 +643,93 @@ describe("labels", () => {
     fireEvent.wheel(canvas, { deltaY: -300 });
     tick(3); // runs draw() -- and therefore the label pass -- with the simulation frozen
     expect(canvas.__graphProbe!().map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(before);
+  });
+
+  // Owner's call, 2026-08-13: a search dims non-matching LABELS the same way it already dims
+  // non-matching NODES, rather than leaving names at full strength while their cards fade.
+  test("dims a non-matching card's label and leaves a matching one at full strength", () => {
+    const calls: string[] = [];
+    const { tick } = frames(graphOf([card({ id: "Sol Ring" }), card({ id: "Mind Stone" })]), calls);
+    fireEvent.change(screen.getByRole("searchbox", { name: /find a card/i }), { target: { value: "Sol Ring" } });
+    calls.length = 0; // discard the mount frame, drawn before the query took effect
+    tick();
+
+    // Every draw call the label pass makes is a `set:globalAlpha=` immediately followed by its
+    // `fillText:<label>,...` -- the alpha nearest before a given label's fillText is what it
+    // actually rendered at.
+    const trace = calls.filter((c) => c.startsWith("set:globalAlpha=") || c.startsWith("fillText:"));
+    const alphaBeforeLabel = (name: string) => {
+      const i = trace.findIndex((c) => c.startsWith(`fillText:${name}`));
+      expect(i).toBeGreaterThan(-1);
+      for (let j = i - 1; j >= 0; j--) if (trace[j].startsWith("set:globalAlpha=")) return trace[j];
+      return null;
+    };
+    expect(alphaBeforeLabel("Sol Ring")).toBe("set:globalAlpha=1");
+    expect(alphaBeforeLabel("Mind Stone")).toBe("set:globalAlpha=0.15");
+  });
+});
+
+// The click path's arithmetic (traveledAsPan) and its wiring (endGesture admitting all four
+// gesture shapes) are proven above; this is what Task 5's comment on that test predicted --
+// turning each shape into an assertion about the inspector, now that Task 8 gave the handler a
+// body. Driven through the same `endGesture` probe hook for the same reason: jsdom cannot
+// construct a real mousedown-driven zoom gesture (see the comment on `traveledAsPan`'s tests
+// above), and `endGesture` is the exact production `zoomBehavior.transform` call, not a
+// reimplementation. jsdom's all-zero getBoundingClientRect and the camera's identity start mean
+// `toWorld` collapses to clientX/clientY == world coordinates here (see the `hover` describe
+// block's own comment above), so `{ clientX: node.x, clientY: node.y }` lands exactly on it.
+describe("the inspector", () => {
+  test("a click that does not pan opens the inspector on the card underneath it", () => {
+    const { canvas } = frames(SAMPLE.graph);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "Krenko, Mob Boss")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    expect(screen.getByText("Krenko, Mob Boss")).toBeInTheDocument();
+    // Krenko is the PRODUCER on the fixture's one edge -- the row has to read card-first, and the
+    // reason text that justified the edge has to be reachable too.
+    expect(screen.getByText(/Krenko, Mob Boss → Impact Tremors/)).toBeInTheDocument();
+    expect(screen.getByText(/pays off tokens/)).toBeInTheDocument();
+  });
+
+  test("a click at the end of a pan does not open the inspector", () => {
+    const { canvas } = frames(SAMPLE.graph);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "Krenko, Mob Boss")!;
+    act(() => {
+      probe.endGesture(
+        { type: "mouseup", clientX: node.x, clientY: node.y },
+        zoomIdentity.translate(1000, 1000).scale(probe.camZ),
+      );
+    });
+    expect(screen.queryByText("Krenko, Mob Boss")).toBeNull();
+  });
+
+  test("the touch tap path opens the inspector too, and a cancelled touch does not", () => {
+    const { canvas } = frames(SAMPLE.graph);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "Impact Tremors")!;
+    const at = { clientX: node.x, clientY: node.y };
+    act(() => { probe.endGesture({ type: "touchcancel", changedTouches: [at] }); });
+    expect(screen.queryByText("Impact Tremors")).toBeNull();
+    act(() => { probe.endGesture({ type: "touchend", changedTouches: [at] }); });
+    expect(screen.getByText("Impact Tremors")).toBeInTheDocument();
+  });
+
+  test("the close button dismisses the panel, and so does clicking empty board space", () => {
+    const { canvas } = frames(SAMPLE.graph);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "Krenko, Mob Boss")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    expect(screen.getByText("Krenko, Mob Boss")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+    expect(screen.queryByText("Krenko, Mob Boss")).toBeNull();
+
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    expect(screen.getByText("Krenko, Mob Boss")).toBeInTheDocument();
+    act(() => {
+      probe.endGesture({ type: "mouseup", clientX: node.x + 9000, clientY: node.y });
+    });
+    expect(screen.queryByText("Krenko, Mob Boss")).toBeNull();
   });
 });

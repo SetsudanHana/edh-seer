@@ -1,0 +1,66 @@
+import { describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { CardInspector } from "./CardInspector.js";
+
+const node = {
+  id: "Bitterblossom", label: "Bitterblossom", copies: 1,
+  types: ["enchantment"], subtypes: ["faerie"], supertypes: [], colors: ["B"], cmc: 1,
+  roles: ["tokens"],
+};
+
+const edges = [
+  { from: "Bitterblossom", to: "Zulaport Cutthroat", weight: 2.5,
+    tags: ["tokens"], reasonTexts: ["Bitterblossom makes bodies for Zulaport Cutthroat"] },
+  { from: "Bitterblossom", to: "Intangible Virtue", weight: 0.4,
+    tags: ["anthem"], reasonTexts: ["Bitterblossom's tokens are pumped by Intangible Virtue"] },
+];
+
+describe("CardInspector", () => {
+  it("names the card", () => {
+    render(<CardInspector node={node} edges={edges} onClose={() => {}} />);
+    expect(screen.getByText("Bitterblossom")).toBeInTheDocument();
+  });
+
+  it("lists edges strongest first", () => {
+    render(<CardInspector node={node} edges={edges} onClose={() => {}} />);
+    const items = screen.getAllByRole("listitem").map((li) => li.textContent ?? "");
+    expect(items[0]).toContain("Zulaport Cutthroat");
+    expect(items[1]).toContain("Intangible Virtue");
+  });
+
+  it("shows the reason text that justified an edge", () => {
+    // The point of the panel: every visual claim one click from what produced it.
+    render(<CardInspector node={node} edges={edges} onClose={() => {}} />);
+    expect(screen.getByText(/makes bodies for Zulaport Cutthroat/)).toBeInTheDocument();
+  });
+
+  it("says so plainly when a card has no edges at all", () => {
+    render(<CardInspector node={node} edges={[]} onClose={() => {}} />);
+    expect(screen.getByText(/no synergy edges/i)).toBeInTheDocument();
+  });
+
+  // An edge is directed and this panel shows BOTH directions -- a card is the producer on some of
+  // its edges and the consumer on others, and `edges` is every edge naming it on either end. The
+  // four tests above only exercise the outgoing case (Bitterblossom is `from` on both fixture
+  // edges); this one makes the incoming direction's row text distinguishable rather than reading
+  // identically to an outgoing row that happens to name the same partner.
+  it("makes the incoming direction distinct from the outgoing one", () => {
+    const incoming = [
+      { from: "Zulaport Cutthroat", to: "Bitterblossom", weight: 2.5,
+        tags: ["tokens"], reasonTexts: ["Zulaport Cutthroat drains when Bitterblossom's faeries die"] },
+    ];
+    const { unmount } = render(<CardInspector node={node} edges={incoming} onClose={() => {}} />);
+    const incomingRow = screen.getAllByRole("listitem")[0].textContent ?? "";
+    unmount();
+
+    render(<CardInspector node={node} edges={edges} onClose={() => {}} />);
+    const outgoingRow = screen.getAllByRole("listitem")[0].textContent ?? "";
+
+    expect(incomingRow).toContain("Zulaport Cutthroat");
+    expect(outgoingRow).toContain("Zulaport Cutthroat");
+    // Same partner name appears on both rows -- direction has to be carried by ordering, not just
+    // which names show up.
+    expect(incomingRow.indexOf("Zulaport Cutthroat")).toBeLessThan(incomingRow.indexOf("Bitterblossom"));
+    expect(outgoingRow.indexOf("Bitterblossom")).toBeLessThan(outgoingRow.indexOf("Zulaport Cutthroat"));
+  });
+});
