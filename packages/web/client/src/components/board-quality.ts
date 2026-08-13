@@ -45,6 +45,19 @@ export function hubFreedom(nodes: readonly { id: string; kind?: string }[]): str
 
 export const FIXTURES = ["sorin", "inalla", "fairdrazi", "changelings", "braids"];
 
+/** One fixture's measured drawing quality. Wider than `Caps` on purpose: `hubFreedom` is measured
+ *  but never capped -- a facet value appearing as a node is not a budget to spend down, it is the
+ *  invariant the projection exists to hold, so it is asserted empty rather than given a number. */
+export interface QualityMetrics {
+  nodeOverlaps: number;
+  edgeCrossings: number;
+  linkDistError: number;
+  /** Ids of any node that is not a plain card. Must be empty. */
+  hubFreedom: string[];
+}
+
+/** The three metrics from `QualityMetrics` that get a numeric budget. `hubFreedom` has no cap --
+ *  see the comment on `QualityMetrics`. */
 export interface Caps {
   /** Two card discs closer than 2 * ART_RADIUS. */
   nodeOverlaps: number;
