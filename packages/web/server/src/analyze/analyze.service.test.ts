@@ -53,7 +53,7 @@ function fakeDeps(capture: {
     graph: async (_cardNames, rolesByName, copiesByName) => {
       capture.rolesByName = rolesByName;
       capture.copies = copiesByName;
-      return { nodes: [], edges: [] };
+      return { nodes: [], edges: [], undirectedReasons: 0, offDeckReasons: 0 };
     },
     analyze: async (_cards, _combos, commanderNames) => {
       capture.commanderNames = commanderNames;

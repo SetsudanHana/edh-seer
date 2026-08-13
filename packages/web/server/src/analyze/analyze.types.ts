@@ -1,28 +1,39 @@
 import type { DeckReport } from "@mtg/engine";
-import type { GraphEdge, NodeKind } from "@mtg/matcher";
 
-/** A `CardGraph` node as sent over the wire: most of `GraphNode.props` is stripped (`legalities`
- *  alone is 81KB across a graph), but `roles` (from the report, joined on by the `graph` dep) and
- *  `artCrop` (the one `props` entry worth its weight) ride along. */
+/** A deck card. Facet values are FIELDS, never nodes -- see
+ *  docs/superpowers/specs/2026-08-13-deck-graph-presentation-design.md §1. */
 export interface WireGraphNode {
+  /** Card name. */
   id: string;
-  kind: NodeKind;
   label: string;
-  /** Functional BUILD roles (`BuildCategory[]` in @mtg/matcher, kept as plain strings here so this
-   *  file doesn't need to depend on @mtg/matcher's build.ts) the report gave this card. Absent
-   *  when the report had none for it -- not the same as an empty array. */
+  /** How many copies the deck holds. Every copy collapses into one node, so a deck's 24 basic
+   *  Mountains are one disc; this is where the count survives so the node can say so. */
+  copies: number;
+  types: string[];
+  subtypes: string[];
+  supertypes: string[];
+  colors: string[];
+  cmc: number;
+  /** Functional BUILD roles the report gave this card. Absent when it had none -- not the same as
+   *  an empty array. Kept as plain strings so this file need not depend on @mtg/matcher. */
   roles?: string[];
   artCrop?: string;
-  /** How many copies of this card the deck holds. The graph keys card nodes by card id, so every
-   *  copy collapses into one node -- a deck's 24 basic Mountains are one disc, and a hand of nine
-   *  Relentless Rats is one disc too, though both are legally true multiples. This is where that
-   *  count survives so the node can say so. Absent on non-card nodes and on a single copy. */
-  copies?: number;
+}
+
+export interface WireGraphEdge {
+  from: string;
+  to: string;
+  weight: number;
+  tags: string[];
+  /** Reason texts, for the inspector. The full `Reason` objects stay server-side. */
+  reasonTexts: string[];
 }
 
 export interface WireGraph {
   nodes: WireGraphNode[];
-  edges: GraphEdge[];
+  edges: WireGraphEdge[];
+  undirectedReasons: number;
+  offDeckReasons: number;
 }
 
 export interface AnalyzeResponse {
@@ -31,8 +42,9 @@ export interface AnalyzeResponse {
   resolvedCount: number;
   totalCount: number;
   commanderColorIdentity: string[];
-  /** The deck as a graph: card and characteristic nodes, plus reified `event:` nodes carrying the
-   *  matcher's synergy edges. Computed alongside the report rather than behind a second endpoint,
-   *  because the expensive half -- resolving every card and its tags -- is already done here. */
+  /** The deck as a card-level graph: one node per distinct card, one edge per producer/consumer
+   *  pair carrying at least one synergy reason. Computed alongside the report rather than behind a
+   *  second endpoint, because the expensive half -- resolving every card and its tags -- is
+   *  already done here. */
   graph: WireGraph;
 }

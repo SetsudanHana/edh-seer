@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
-import type { CardGraph } from "@mtg/matcher";
+import type { ProjectedGraph } from "@mtg/matcher";
 import { attachRolesAndArt } from "./data.module.js";
 
 afterEach(() => {
@@ -8,165 +8,150 @@ afterEach(() => {
 
 const normalize = (s: string) => s.toLowerCase();
 
-test("a card node ends up with the roles its report card had", () => {
-  const graph: CardGraph = {
-    nodes: [
-      { id: "card:krenko-id", kind: "card", label: "Krenko, Mob Boss", props: { cmc: 4 } },
-      { id: "card:sol-ring-id", kind: "card", label: "Sol Ring", props: {} },
-      { id: "subtype:goblin", kind: "subtype", label: "Goblin" },
-    ],
-    edges: [],
-  };
+const node = (over: Partial<ProjectedGraph["nodes"][number]> = {}): ProjectedGraph["nodes"][number] => ({
+  id: "Sol Ring", label: "Sol Ring", copies: 1,
+  types: ["artifact"], subtypes: [], supertypes: [], colors: [], cmc: 1,
+  ...over,
+});
+
+const emptyGraph = (nodes: ProjectedGraph["nodes"]): ProjectedGraph => ({
+  nodes, edges: [], undirectedReasons: 0, offDeckReasons: 0,
+});
+
+test("joins roles and art onto a projected card node", () => {
+  const graph = emptyGraph([node({ id: "Sol Ring", label: "Sol Ring", copies: 1 })]);
+  const docs = [{ _id: "x", name: "Sol Ring", imageUris: { art_crop: "http://art/sol" } }];
+  const rolesByName = new Map([["sol ring", ["ramp"]]]);
+
+  const out = attachRolesAndArt(graph, docs, rolesByName, normalize);
+
+  expect(out.nodes[0]).toMatchObject({ roles: ["ramp"], artCrop: "http://art/sol" });
+});
+
+test("a card node ends up with the roles its report card had -- report keys by name, projection keys by name, normalize bridges casing", () => {
+  const graph = emptyGraph([
+    node({ id: "Krenko, Mob Boss", label: "Krenko, Mob Boss", cmc: 4 }),
+    node({ id: "Sol Ring", label: "Sol Ring" }),
+  ]);
   const docs = [
     { _id: "krenko-id", name: "Krenko, Mob Boss" },
     { _id: "sol-ring-id", name: "Sol Ring" },
   ];
-  // report keys by name (case differs from the doc name -- normalize must bridge it), graph keys
-  // by oracleId; only Sol Ring got a functional role from the report.
   const rolesByName = new Map([["sol ring", ["ramp"]]]);
 
-  const out = attachRolesAndArt(graph, docs, rolesByName, normalize, new Map());
+  const out = attachRolesAndArt(graph, docs, rolesByName, normalize);
 
-  const solRing = out.nodes.find((n) => n.id === "card:sol-ring-id");
-  const krenko = out.nodes.find((n) => n.id === "card:krenko-id");
+  const solRing = out.nodes.find((n) => n.id === "Sol Ring");
+  const krenko = out.nodes.find((n) => n.id === "Krenko, Mob Boss");
   expect(solRing?.roles).toEqual(["ramp"]);
   expect(krenko?.roles).toBeUndefined();
 });
 
-test("artCrop rides along from props, absent when the doc had none", () => {
-  const graph: CardGraph = {
-    nodes: [
-      { id: "card:a", kind: "card", label: "A", props: { artCrop: "https://example.com/a.jpg" } },
-      { id: "card:b", kind: "card", label: "B", props: {} },
-    ],
-    edges: [],
-  };
-  const out = attachRolesAndArt(graph, [], new Map(), normalize, new Map());
-  expect(out.nodes.find((n) => n.id === "card:a")?.artCrop).toBe("https://example.com/a.jpg");
-  expect(out.nodes.find((n) => n.id === "card:b")?.artCrop).toBeUndefined();
+test("artCrop rides along from the doc, absent when the doc had none", () => {
+  const graph = emptyGraph([node({ id: "A", label: "A" }), node({ id: "B", label: "B" })]);
+  const docs = [
+    { _id: "a", name: "A", artCrop: "https://example.com/a.jpg" },
+    { _id: "b", name: "B" },
+  ];
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize);
+
+  expect(out.nodes.find((n) => n.id === "A")?.artCrop).toBe("https://example.com/a.jpg");
+  expect(out.nodes.find((n) => n.id === "B")?.artCrop).toBeUndefined();
 });
 
-test("non-card node kinds never get roles even if a name collides", () => {
-  const graph: CardGraph = {
-    nodes: [{ id: "type:sol", kind: "type", label: "Sol" }],
-    edges: [],
-  };
-  const out = attachRolesAndArt(graph, [], new Map([["sol", ["ramp"]]]), normalize, new Map());
-  expect(out.nodes[0].roles).toBeUndefined();
-});
-
-test("a report role that cannot be joined to any doc is logged with its count, not thrown", () => {
+test("a report role that cannot be joined to any graph node is logged with its count, not thrown", () => {
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-  const graph: CardGraph = { nodes: [{ id: "card:a", kind: "card", label: "A" }], edges: [] };
+  const graph = emptyGraph([node({ id: "A", label: "A" })]);
   const docs = [{ _id: "a", name: "A" }];
   const rolesByName = new Map([["nonexistent card", ["ramp"]]]);
 
-  expect(() => attachRolesAndArt(graph, docs, rolesByName, normalize, new Map())).not.toThrow();
+  expect(() => attachRolesAndArt(graph, docs, rolesByName, normalize)).not.toThrow();
 
   expect(warn).toHaveBeenCalledTimes(1);
   expect(warn).toHaveBeenCalledWith(expect.stringContaining("1 card"));
-});
-
-test("a report copy count that cannot be joined to any doc is logged with its count, not thrown -- and distinguishably from a roles miss", () => {
-  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-  const graph: CardGraph = { nodes: [{ id: "card:a", kind: "card", label: "A" }], edges: [] };
-  const docs = [{ _id: "a", name: "A" }];
-  const copiesByName = new Map([["nonexistent card", 24]]);
-
-  expect(() => attachRolesAndArt(graph, docs, new Map(), normalize, copiesByName)).not.toThrow();
-
-  expect(warn).toHaveBeenCalledTimes(1);
-  expect(warn).toHaveBeenCalledWith(expect.stringContaining("1 card"));
-  expect(warn).toHaveBeenCalledWith(expect.stringContaining("copy counts"));
-  expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("roles"));
-});
-
-test("copies join through oracleId the same way roles do, and a single copy stays absent", () => {
-  const graph: CardGraph = {
-    nodes: [
-      { id: "card:mountain-id", kind: "card", label: "Mountain", props: {} },
-      { id: "card:sol-ring-id", kind: "card", label: "Sol Ring", props: {} },
-    ],
-    edges: [],
-  };
-  const docs = [
-    { _id: "mountain-id", name: "Mountain" },
-    { _id: "sol-ring-id", name: "Sol Ring" },
-  ];
-  const copiesByName = new Map([["Mountain", 24], ["Sol Ring", 1]]);
-
-  const out = attachRolesAndArt(graph, docs, new Map(), normalize, copiesByName);
-
-  expect(out.nodes.find((n) => n.id === "card:mountain-id")?.copies).toBe(24);
-  expect(out.nodes.find((n) => n.id === "card:sol-ring-id")).not.toHaveProperty("copies");
 });
 
 test("an empty-array roles entry never becomes an empty `roles` key on the wire", () => {
-  const graph: CardGraph = { nodes: [{ id: "card:a", kind: "card", label: "A" }], edges: [] };
+  const graph = emptyGraph([node({ id: "A", label: "A" })]);
   const docs = [{ _id: "a", name: "A" }];
   const rolesByName = new Map([["a", []]]);
 
-  const out = attachRolesAndArt(graph, docs, rolesByName, normalize, new Map());
+  const out = attachRolesAndArt(graph, docs, rolesByName, normalize);
 
   expect(out.nodes[0]).not.toHaveProperty("roles");
 });
 
+test("copies passes straight through from the projected node, untouched", () => {
+  const graph = emptyGraph([node({ id: "Mountain", label: "Mountain", copies: 24 })]);
+  const docs = [{ _id: "o-island", name: "Mountain" }];
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize);
+
+  expect(out.nodes[0].copies).toBe(24);
+});
+
 test("a basic land carries the lands role even though the engine gives it none", () => {
-  const graph: CardGraph = {
-    nodes: [{ id: "card:o-island", kind: "card", label: "Island" }],
-    edges: [],
-  };
+  const graph = emptyGraph([node({ id: "Island", label: "Island" })]);
   const out = attachRolesAndArt(
     graph,
     [{ _id: "o-island", name: "Island", typeLine: "Basic Land — Island" }],
     new Map(),
     normalize,
-    new Map([["Island", 3]]),
   );
   expect(out.nodes[0].roles).toEqual(["lands"]);
 });
 
 test("a utility land keeps its functional roles and gains lands", () => {
-  const graph: CardGraph = {
-    nodes: [{ id: "card:o-otawara", kind: "card", label: "Otawara, Soaring City" }],
-    edges: [],
-  };
+  const graph = emptyGraph([node({ id: "Otawara, Soaring City", label: "Otawara, Soaring City" })]);
   const out = attachRolesAndArt(
     graph,
     [{ _id: "o-otawara", name: "Otawara, Soaring City", typeLine: "Legendary Land" }],
     new Map([["Otawara, Soaring City", ["targetedRemoval"]]]),
     normalize,
-    new Map(),
   );
   expect(out.nodes[0].roles).toEqual(["targetedRemoval", "lands"]);
 });
 
 test("does not duplicate lands when the engine already assigned it", () => {
-  const graph: CardGraph = {
-    nodes: [{ id: "card:o-tower", kind: "card", label: "Command Tower" }],
-    edges: [],
-  };
+  const graph = emptyGraph([node({ id: "Command Tower", label: "Command Tower" })]);
   const out = attachRolesAndArt(
     graph,
     [{ _id: "o-tower", name: "Command Tower", typeLine: "Land" }],
     new Map([["Command Tower", ["lands"]]]),
     normalize,
-    new Map(),
   );
   expect(out.nodes[0].roles).toEqual(["lands"]);
 });
 
 test("a nonland is untouched", () => {
-  const graph: CardGraph = {
-    nodes: [{ id: "card:o-solring", kind: "card", label: "Sol Ring" }],
-    edges: [],
-  };
+  const graph = emptyGraph([node({ id: "Sol Ring", label: "Sol Ring" })]);
   const out = attachRolesAndArt(
     graph,
     [{ _id: "o-solring", name: "Sol Ring", typeLine: "Artifact" }],
     new Map([["Sol Ring", ["ramp"]]]),
     normalize,
-    new Map(),
   );
   expect(out.nodes[0].roles).toEqual(["ramp"]);
+});
+
+test("edges are serialized to the wire shape: reasons collapse to their text", () => {
+  const graph: ProjectedGraph = {
+    nodes: [node({ id: "A", label: "A" }), node({ id: "B", label: "B" })],
+    edges: [{
+      from: "A", to: "B", weight: 1.5, tags: ["ramp"],
+      reasons: [{ tag: "ramp", text: "A ramps into B" } as never],
+    }],
+    undirectedReasons: 0,
+    offDeckReasons: 0,
+  };
+  const out = attachRolesAndArt(graph, [], new Map(), normalize);
+  expect(out.edges).toEqual([{ from: "A", to: "B", weight: 1.5, tags: ["ramp"], reasonTexts: ["A ramps into B"] }]);
+});
+
+test("undirectedReasons and offDeckReasons pass straight through", () => {
+  const graph = { ...emptyGraph([]), undirectedReasons: 3, offDeckReasons: 2 };
+  const out = attachRolesAndArt(graph, [], new Map(), normalize);
+  expect(out.undirectedReasons).toBe(3);
+  expect(out.offDeckReasons).toBe(2);
 });
