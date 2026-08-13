@@ -34,6 +34,11 @@ export interface Vocabulary {
    *  Merging them into the free-text set trades a real edge for a silent false one, so they are
    *  emitted for a caller that knows it is looking at a planeswalker and can afford the collision. */
   planeswalkerSubtypes: string[];
+  /** CREATURE subtypes alone. A subset of `permanentSubtypes`, emitted separately because
+   *  CHANGELING is a characteristic-defining ability: a card with it has every creature type in
+   *  every zone, and "every creature type" needs the creature list specifically — the permanent set
+   *  would hand a changeling Equipment and Aura, which it is not. */
+  creatureSubtypes: string[];
   /** Instant/sorcery subtypes: arcane, lesson, trap, adventure, ... */
   spellSubtypes: string[];
   /** Plane/phenomenon subtypes. Planechase only; emitted for completeness. */
@@ -60,6 +65,7 @@ export function buildVocabulary(types: CardTypesPayload, enums: EnumValuesPayloa
   const sub = (k: string): string[] => types.data[k]?.subTypes ?? [];
   return {
     permanentSubtypes: lower(PERMANENT_TYPES.flatMap(sub)),
+    creatureSubtypes: lower(sub("creature")),
     planeswalkerSubtypes: lower(sub("planeswalker")),
     spellSubtypes: lower([...sub("instant"), ...sub("sorcery")]),
     planeSubtypes: lower([...sub("plane"), ...sub("phenomenon")]),
@@ -102,5 +108,12 @@ ${lines.join("\n")}
 export const LAND_SUBTYPES: ReadonlySet<string> = new Set([
 ${v.landSubtypes.map((s) => JSON.stringify(s)).join(", ")},
 ]);
+
+/** Every CREATURE subtype, for CHANGELING — a characteristic-defining ability, so a card with it has
+ *  every creature type in EVERY ZONE, not only on the battlefield. The permanent set is the wrong
+ *  list here: it would hand a changeling Equipment and Aura, which it is not. */
+export const CREATURE_SUBTYPES: readonly string[] = [
+${v.creatureSubtypes.map((s) => JSON.stringify(s)).join(", ")},
+];
 `;
 }

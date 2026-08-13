@@ -6,7 +6,7 @@
  *
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { connect, loadConfig } from "@mtg/data";
-import { playableFaces, splitTypeLine } from "../characteristics.js";
+import { extractCharacteristics } from "../characteristics.js";
 import { segment } from "../segment.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
@@ -87,19 +87,25 @@ function clauseCosts(doc: { oracleText?: string; keywords?: string[]; typeLine?:
 }
 
 /** Printed characteristics, read from the card document — derivation never asks a model for what
- *  the database already knows. Uses the shared `splitTypeLine` so multi-face cards contribute both
- *  faces' types; a local copy of that split is what put "//" into 116 cards' subtypes. */
+ *  the database already knows.
+ *
+ *  DELEGATES to `extractCharacteristics` rather than rebuilding the shape. This function used to own
+ *  a second copy of the logic, and the comment it carried already recorded what that costs: "a local
+ *  copy of that split is what put '//' into 116 cards' subtypes". It cost the same thing twice — the
+ *  changeling fix (2026-08-14) landed in `extractCharacteristics` and moved the population by
+ *  exactly zero, because the corpus never called it. One implementation, one place to fix. */
 function charsFrom(doc: {
   typeLine?: string; colors?: string[]; colorIdentity?: string[]; manaValue?: number;
   power?: string | null; toughness?: string | null; keywords?: string[]; layout?: string;
 }): DerivedTagsDoc["characteristics"] {
-  const [types, subtypes] = splitTypeLine(doc.typeLine ?? "");
-  const faces = playableFaces(doc.typeLine ?? "", doc.layout);
-  return {
-    types, subtypes,
-    ...(faces ? { faces } : {}),
-    colors: doc.colors ?? [], identity: doc.colorIdentity ?? [],
-    cmc: doc.manaValue ?? 0, power: doc.power ?? null, toughness: doc.toughness ?? null,
-    token: false, keywords: (doc.keywords ?? []).map((k) => k.toLowerCase()),
-  };
+  return extractCharacteristics({
+    typeLine: doc.typeLine ?? "",
+    layout: doc.layout,
+    colors: doc.colors ?? [],
+    colorIdentity: doc.colorIdentity ?? [],
+    manaValue: doc.manaValue ?? 0,
+    power: doc.power ?? null,
+    toughness: doc.toughness ?? null,
+    keywords: doc.keywords ?? [],
+  } as never) as DerivedTagsDoc["characteristics"];
 }

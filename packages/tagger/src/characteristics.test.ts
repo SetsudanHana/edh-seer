@@ -51,6 +51,39 @@ test("keywords lowercased from card keywords", () => {
   expect(c.keywords).toEqual(["flying", "changeling"]);
 });
 
+// CHANGELING IS A CHARACTERISTIC-DEFINING ABILITY: a card with it has EVERY creature type, in every
+// zone — not only on the battlefield. Scryfall prints the type line as "Creature — Shapeshifter", so
+// without this a changeling matched no typal payoff at all, and CLAUDE.md's chosenType rubric
+// ("every changeling is every creature type, so any choice works and all typal edges are real")
+// described behaviour the engine did not have. 66 corpus cards, 32 inside the normalized set.
+test("a changeling has every creature type", () => {
+  const c = extractCharacteristics({
+    ...inalla, typeLine: "Creature — Shapeshifter", keywords: ["Changeling"],
+  });
+  expect(c.subtypes).toContain("shapeshifter");
+  expect(c.subtypes).toContain("goblin");
+  expect(c.subtypes).toContain("wizard");
+  expect(c.subtypes).toContain("elf");
+  // Every CREATURE type and nothing else — not an Equipment, not an Aura.
+  expect(c.subtypes).not.toContain("equipment");
+  expect(c.subtypes).not.toContain("aura");
+});
+
+// "In all zones" is the part that matters: Crib Swap is a Kindred Instant that never becomes a
+// permanent, and it is still every creature type wherever it is.
+test("a changeling that is not a creature is still every creature type", () => {
+  const c = extractCharacteristics({
+    ...inalla, typeLine: "Kindred Instant — Shapeshifter", keywords: ["Changeling"],
+  });
+  expect(c.types).toContain("instant");
+  expect(c.subtypes).toContain("goblin");
+});
+
+test("a card without changeling keeps its printed subtypes", () => {
+  const c = extractCharacteristics({ ...inalla, typeLine: "Creature — Shapeshifter", keywords: [] });
+  expect(c.subtypes).toEqual(["shapeshifter"]);
+});
+
 test("a multi-face type line contributes BOTH faces, with no separator junk", () => {
   // The corpus joins faces: "Creature — Dog Warlock // Instant". Splitting on the first em dash
   // alone swallowed face 2 into face 1's SUBTYPES, so Defacing Duskmage came out

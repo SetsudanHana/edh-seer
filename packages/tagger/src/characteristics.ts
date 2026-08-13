@@ -1,5 +1,6 @@
 import type { Card } from "@mtg/engine";
 import type { Characteristics } from "./schema.js";
+import { CREATURE_SUBTYPES } from "./derive/subtypes.js";
 
 /** Scryfall type lines use an em dash (U+2014) between types and subtypes. */
 const TYPE_SUBTYPE_SEP = " — ";
@@ -35,9 +36,20 @@ export function playableFaces(typeLine: string, layout?: string): Characteristic
 export function extractCharacteristics(card: Card): Characteristics {
   const [left, right] = splitTypeLine(card.typeLine);
   const faces = playableFaces(card.typeLine, card.layout);
+  const keywords = card.keywords.map((k) => k.toLowerCase());
+  // CHANGELING IS A CHARACTERISTIC-DEFINING ABILITY: the card has EVERY creature type, in every
+  // zone — not only on the battlefield, which is why it belongs here and not in an implied event.
+  // Scryfall prints the type line as "Creature — Shapeshifter", so without this a changeling matched
+  // no typal payoff at all and CLAUDE.md's chosenType rubric ("every changeling is every creature
+  // type, so any choice works and all typal edges are real") described behaviour the engine did not
+  // have. Applies whatever the card's types: Crib Swap is a Kindred Instant and is still every
+  // creature type wherever it sits. 66 corpus cards, 32 inside the normalized set.
+  const subtypes = keywords.includes("changeling")
+    ? [...new Set([...right, ...CREATURE_SUBTYPES])]
+    : right;
   return {
     types: left,
-    subtypes: right,
+    subtypes,
     ...(faces ? { faces } : {}),
     colors: card.colors,
     identity: card.colorIdentity ?? [],
@@ -45,7 +57,7 @@ export function extractCharacteristics(card: Card): Characteristics {
     power: card.power ?? null,
     toughness: card.toughness ?? null,
     token: false,
-    keywords: card.keywords.map((k) => k.toLowerCase()),
+    keywords,
   };
 }
 
