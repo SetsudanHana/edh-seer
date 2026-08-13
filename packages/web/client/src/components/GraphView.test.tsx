@@ -1073,12 +1073,17 @@ describe("edgeless cards", () => {
     fireEvent.change(screen.getByRole("searchbox", { name: /find a card/i }), { target: { value: "Sol Ring" } });
     calls.length = 0;
     tick();
-    const alphas = calls
-      .filter((c) => c.startsWith("set:globalAlpha="))
-      .map((c) => Number(c.slice("set:globalAlpha=".length)));
-    // Sol Ring is edgeless AND matched -- search intent wins, so at least one node draws at full
-    // strength even though both cards on this fixture have zero edges.
-    expect(alphas).toContain(1);
+    // Asserting "some alpha in the frame is 1" is what this test used to do, and it could not fail:
+    // the LABEL pass writes alpha 1 for a matched card independently of the node pass, so dropping
+    // the search override from `demote` left it green. Assert on the node's own DISC instead --
+    // its radius is the one thing only the node pass writes.
+    const radii = calls
+      .filter((c) => c.startsWith("arc:"))
+      .map((c) => Number(c.slice("arc:".length).split(",")[2]));
+    // Sol Ring is edgeless AND matched: search intent wins, so its disc keeps FULL radius while
+    // Mind Stone -- edgeless and unmatched -- is drawn shrunken.
+    expect(radii).toContain(ART_RADIUS);
+    expect(radii.some((r) => r > 0 && r < ART_RADIUS)).toBe(true);
   });
 });
 

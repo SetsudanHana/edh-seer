@@ -416,6 +416,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         ctx.globalAlpha = searchDim ? 0.15 : demote ? EDGELESS_ALPHA : 1;
         // The draw-time radius for this node's circle/rim/clip -- ART_RADIUS everywhere except a
         // demoted edgeless card, which draws visibly smaller as well as fainter.
+        // pickAt still hit-tests at the FULL radius: board-force.ts's nodeRadius comment says every
+        // consumer reads one function so painted and simulated size cannot drift, and this is a
+        // knowing, one-way exception. A demoted card's click target stays the size of the card it
+        // is, which is a bigger target than its dot -- the failure mode that would matter (a dead
+        // zone under a visible card) cannot happen this way round.
         const r = demote ? ART_RADIUS * EDGELESS_RADIUS_SCALE : ART_RADIUS;
 
         // Render is a function of the camera, not a stored mode (card-node.ts's doc comment) --
@@ -570,7 +575,13 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         // comment on why this reads the ref.
         for (const id of placeLabels(boxes)) {
           const n = byId.get(id)!;
-          ctx.globalAlpha = matchIds && !matchIds.has(id) ? 0.15 : 1;
+          // An edgeless card's NAME is demoted with its disc. Without this the demotion half-lands:
+          // a faint, shrunken, colourless dot under a full-brightness label, which is a card
+          // ANNOUNCING itself while the drawing says it is not participating. `demote` from the node
+          // pass is recomputed rather than shared -- that pass runs per node, this one per SURVIVING
+          // label, so sharing it would mean threading a flag through placeLabels for no gain.
+          const labelDemote = n.deg === 0 && (!matchIds || !matchIds.has(id));
+          ctx.globalAlpha = matchIds && !matchIds.has(id) ? 0.15 : labelDemote ? EDGELESS_ALPHA : 1;
           ctx.fillText(n.label, n.x, n.y - nodeRadius() - 4 / cam.z);
         }
         // Canvas state is global and persistent (draw()'s own reset a few lines up already makes
