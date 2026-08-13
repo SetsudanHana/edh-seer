@@ -7,6 +7,21 @@ import * as matchers from "@testing-library/jest-dom/matchers";
 // jest-dom copy elsewhere in the monorepo binds to a different vitest major version.
 expect.extend(matchers);
 
+// jsdom implements no ResizeObserver at all (unlike most DOM globals it fakes), so any component
+// that observes its own element -- GraphView's canvas, since task-11 fix round 2 -- throws
+// `ResizeObserver is not defined` at mount under every test that renders it, not just the ones
+// about resizing. A harmless no-op default here, same pattern as the localStorage stub below;
+// tests that need to fire it themselves (GraphView.test.tsx) override this per-test with their own
+// `vi.stubGlobal("ResizeObserver", ...)`, which the shared `afterEach`'s `vi.unstubAllGlobals()`
+// reverts back to this default.
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+}
+
 // Node's own experimental global `localStorage` shadows jsdom's window.localStorage in
 // this environment and resolves to undefined, so components/hooks that read it at module
 // or effect time crash under test. Stub a minimal in-memory implementation.

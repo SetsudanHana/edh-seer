@@ -43,6 +43,37 @@ function makeContextSpy(calls: string[] = []) {
   return calls;
 }
 
+/** Overrides the harmless default ResizeObserver stub (test-setup.ts) with one that captures the
+ *  callback the component registers and the element it observed, so a test can fire it directly.
+ *  Must be called BEFORE the render that constructs the observer.
+ *
+ *  What this proves and what it cannot: jsdom has no ResizeObserver at all, so nothing here can
+ *  show that entering fullscreen ever calls this callback in a real browser -- that fact came from
+ *  a live measurement (task-11 fix round 2 brief), not from this stub, and this stub cannot
+ *  reproduce it. What this DOES prove: that once the callback fires, by whatever means, the
+ *  component reframes correctly and does not depend on a window "resize" event ALSO firing --
+ *  `fire()` below never dispatches one. */
+function stubResizeObserver() {
+  let callback: ResizeObserverCallback | null = null;
+  const observe = vi.fn();
+  const disconnect = vi.fn();
+  // A plain `function`, not an arrow: `new ResizeObserver(...)` in the component invokes this
+  // constructor-style, and an arrow function throws "is not a constructor" the instant `new`
+  // touches it.
+  vi.stubGlobal(
+    "ResizeObserver",
+    vi.fn().mockImplementation(function (cb: ResizeObserverCallback) {
+      callback = cb;
+      return { observe, unobserve: vi.fn(), disconnect };
+    }),
+  );
+  return {
+    fire: () => callback!([] as unknown as ResizeObserverEntry[], {} as ResizeObserver),
+    observe,
+    disconnect,
+  };
+}
+
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 /** A card as the wire sends it: facets are FIELDS, and `id` is the card's own name. */
@@ -723,21 +754,32 @@ describe("fit to view", () => {
   // resize where 1.053 was what actually fit. Reproduced here with a synthetic A-B pair rather than
   // the sorin fixture, so the shrink (300x200 -> 100x67, same aspect ratio, a third the size) is
   // large enough to be unmissable regardless of exactly where FIT_SETTLE_ALPHA lands the physics.
+  //
+  // FIX ROUND 2: driven through the captured ResizeObserver callback, not `window.dispatchEvent(new
+  // Event("resize"))`. That was the bug this round fixes -- entering ELEMENT fullscreen (the button
+  // on this board) resizes the canvas's own box without ever firing a window "resize" event in
+  // Chrome (measured live, task-11 fix round 2 brief), so a test that only ever dispatches that
+  // event cannot tell a working fix from one that still silently depends on it. Not dispatching a
+  // window resize here at all is the point.
   test("refits the camera when the canvas resizes while the fit still owns it", () => {
     const rectSpy = vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 0, width: 300, height: 200, right: 300, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
     } as DOMRect);
+    const ro = stubResizeObserver();
     const graph = graphOf(
       [card({ id: "A" }), card({ id: "B" }), card({ id: "C" })],
       [{ from: "A", to: "B", weight: 1, tags: [], reasonTexts: [] }],
     );
     const { canvas, tick } = frames(graph);
     tick(1000); // settle and let the initial fit fire at the ORIGINAL 300x200
+    // The observer really is watching the canvas, not e.g. its shell div or the window -- a wiring
+    // bug that a callback-only assertion would not catch.
+    expect(ro.observe).toHaveBeenCalledWith(canvas);
 
     rectSpy.mockReturnValue({
       left: 0, top: 0, width: 100, height: 67, right: 100, bottom: 67, x: 0, y: 0, toJSON: () => ({}),
     } as DOMRect);
-    act(() => { window.dispatchEvent(new Event("resize")); });
+    act(() => { ro.fire(); });
 
     const probe = canvas.__graphProbe!();
     const topLeft = probe.toWorld({ clientX: 0, clientY: 0 });
@@ -758,11 +800,13 @@ describe("fit to view", () => {
 
   // The other half of the same brief: a resize must NOT overwrite a camera the user has already
   // taken over -- the exact promise the pre-fix `onResize` comment made ("would fight a user who has
-  // already panned"), which this fix must not lose.
+  // already panned"), which this fix must not lose. Driven through the observer callback for the
+  // same reason as the test above.
   test("does not refit on resize once the user has moved the camera", () => {
     const rectSpy = vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 0, width: 300, height: 200, right: 300, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
     } as DOMRect);
+    const ro = stubResizeObserver();
     const { canvas, tick } = frames(SAMPLE.graph);
     tick(1000);
 
@@ -778,8 +822,24 @@ describe("fit to view", () => {
     rectSpy.mockReturnValue({
       left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
     } as DOMRect);
-    act(() => { window.dispatchEvent(new Event("resize")); });
+    act(() => { ro.fire(); });
     expect(canvas.__graphProbe!().camZ).toBe(afterUser);
+  });
+
+  // The leak this round's brief calls out by name: a ResizeObserver left connected after React has
+  // torn the canvas down holds a live reference to a detached element for the life of the page, and
+  // this effect re-runs on every deck (`graph` in the dependency array a few lines below), so a
+  // long session accumulates one per deck ever opened.
+  test("disconnects the resize observer on unmount", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 300, height: 200, right: 300, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    const ro = stubResizeObserver();
+    makeContextSpy();
+    const { unmount } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+    expect(ro.disconnect).not.toHaveBeenCalled();
+    unmount();
+    expect(ro.disconnect).toHaveBeenCalledTimes(1);
   });
 });
 

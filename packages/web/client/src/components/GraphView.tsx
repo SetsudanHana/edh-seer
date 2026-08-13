@@ -582,11 +582,21 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     // then go fullscreen. Measured in the browser (sorin fixture): zoom stayed 0.538 across an
     // in-tab-pane (1534x518) -> fullscreen (1598x894) resize, where 1.053 was what actually fit --
     // 0.538 is also below LABEL_ZOOM_FLOOR (0.6), so the stale camera cost card names too.
+    //
+    // FIX ROUND 2: watched via ResizeObserver on the canvas itself, not a window "resize" listener.
+    // Entering ELEMENT fullscreen -- the fullscreen button on this board, the one transition anyone
+    // actually takes to read an 84-node graph -- resizes the canvas's own box without ever firing a
+    // window resize event in Chrome (measured live, same session as the numbers above: zoom stuck
+    // at 0.570 through fullscreen entry, 1598x894 canvas, labels still off; a genuine window resize
+    // right after DID refit, to 0.709). ResizeObserver fires for any layout change that resizes the
+    // canvas's content box -- fullscreen, a window resize, a sidebar collapsing -- so it replaces
+    // the window listener rather than joining it as a second special case.
     const onResize = () => {
       dim = size();
       if (cameraOwnedByUserRef.current !== graph) fitToView();
     };
-    addEventListener("resize", onResize);
+    const resizeObserver = new ResizeObserver(onResize);
+    resizeObserver.observe(canvas);
 
     // cam.x/y are top-left-anchored (see draw()'s doc comment above), the same convention
     // `pointer(event)` uses, so this is a plain, unshifted inverse of that same transform.
@@ -776,7 +786,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       for (const n of nodes) prevPositions.set(n.id, n);
       simulation.stop();
       cancelAnimationFrame(raf);
-      removeEventListener("resize", onResize);
+      resizeObserver.disconnect();
       canvas.removeEventListener("pointermove", onMove);
       selection.on(".zoom", null);
       delete (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe;
