@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { StrictMode } from "react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ART_RADIUS, GraphView, edgeWidth, nodeRadius, seedPosition, traveledAsPan } from "./GraphView.js";
@@ -579,6 +580,33 @@ describe("fit to view", () => {
     expect(canvas.__graphProbe!().map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(before);
     // And the fit really ran -- not a vacuous pass because nothing happened at all.
     expect(canvas.__graphProbe!().camZ).not.toBe(zBefore);
+  });
+
+  // THE FIT MUST SURVIVE THE EFFECT BEING TORN DOWN AND RE-RUN FOR THE SAME DECK. React.StrictMode
+  // does exactly that on every dev mount (mount, cleanup, mount), and the fit needs ~696 ticks to
+  // fire, so the first run is always dead before it fits. The bookkeeping used to be "did an
+  // earlier run leave positions behind", which the second run reads as "already fitted" -- so the
+  // camera never moved in the real app while every test here passed, because they all drive alpha
+  // down by hand on a single mount. Measured in the browser at the time: 74 of 84 cards on screen
+  // at zoom 1, versus 84 of 84 at zoom 0.235 with StrictMode off.
+  test("still fits when the effect is torn down and re-run for the same deck", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    let nextFrame: FrameRequestCallback | null = null;
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    makeContextSpy();
+    const graph = sorinFixture.graph as CardGraph;
+    // The same graph OBJECT through a StrictMode double-mount -- identity is what the fit keys on.
+    const { container } = render(
+      <StrictMode><GraphView graph={graph} report={SAMPLE.report} /></StrictMode>,
+    );
+    const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
+      __graphProbe?: () => Array<{ id: string; x: number; y: number }> & { camZ: number };
+    };
+    for (let i = 0; i < 1000; i++) nextFrame!(0);
+    expect(canvas.__graphProbe!().camZ).not.toBe(1);
   });
 
   // The board takes ~696 ticks to reach FIT_SETTLE_ALPHA -- seconds of real time -- so a user can

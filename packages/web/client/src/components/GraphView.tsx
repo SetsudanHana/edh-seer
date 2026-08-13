@@ -156,6 +156,10 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   // Effect-local until the filter chips existed, which is why toggling one reset the view. A ref
   // survives the effect re-running, and the mode buttons below need to write z from outside it.
   const camRef = useRef({ x: 0, y: 0, z: 1 });
+  /** The graph object whose board has already been framed (or whose camera the user has taken over).
+   *  A ref, not effect-local state, because the fit has to survive the effect being torn down and
+   *  re-run for the same deck -- which is what StrictMode does on every dev mount. */
+  const fittedGraphRef = useRef<CardGraph | null>(null);
   // The Card/Miniature debug buttons jump the zoom level with no real pointer gesture behind it.
   // They used to write camRef.current.z directly, which left d3-zoom's own bookkeeping (the
   // canvas's `__zoom`) stale. Written by the layout effect once its zoomBehavior exists; the
@@ -536,12 +540,15 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       }
     };
 
-    // Fit once per deck, not once per mount: a `params` change (the tuning panel) re-runs this
-    // effect with isFirstLayout false, and re-fitting there would fight a camera the user has
-    // already moved. A brand-new graph on an existing GraphView instance re-seeds prevPositions to
-    // empty too (see `nodes` above), so isFirstLayout is exactly "a new deck (or a new graph)" --
-    // the brief's own words for when a refit is wanted.
-    let fitted = !isFirstLayout;
+    // Fit once per DECK, tracked by which graph object was framed rather than by whether this run
+    // inherited positions. `!isFirstLayout` looked equivalent and was not: it means "some earlier
+    // run of this effect left positions behind", which is also true of a run that was torn down
+    // BEFORE it ever fitted. React.StrictMode does exactly that in dev -- mount, cleanup, mount --
+    // and the fit takes ~696 ticks (about 12 s) to fire, so the first run always died first and the
+    // second started with fitted = true. Measured in the browser: the camera never moved, 74 of 84
+    // cards on screen at zoom 1; with StrictMode off, zoom 0.235 and 84 of 84. Every jsdom test
+    // passed throughout, because they drive alpha down by hand instead of letting it decay.
+    let fitted = fittedGraphRef.current === graph;
     const loop = () => {
       simulation.tick();
       // <=, not <: an exactly-0.05 alpha is settled enough, and floating-point decay can land on
@@ -549,6 +556,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       if (!fitted && simulation.alpha() <= FIT_SETTLE_ALPHA) {
         fitToView();
         fitted = true;
+        fittedGraphRef.current = graph;
       }
       draw();
       raf = requestAnimationFrame(loop);
@@ -604,7 +612,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
         // fired. `sourceEvent` is what separates the two: d3 leaves it null for a programmatic
         // `zoom.transform`, so the fit's own call -- and the initial camera seed -- cannot cancel
         // themselves here.
-        if (e.sourceEvent) fitted = true;
+        if (e.sourceEvent) { fitted = true; fittedGraphRef.current = graph; }
       });
     // A pan and a click arrive as the same physical mousedown -> up. d3-zoom reports the transform
     // at gesture start; comparing it to the transform at gesture END is the same question
