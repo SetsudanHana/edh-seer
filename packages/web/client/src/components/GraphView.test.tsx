@@ -1017,6 +1017,84 @@ describe("labels", () => {
 // reimplementation. jsdom's all-zero getBoundingClientRect and the camera's identity start mean
 // `toWorld` collapses to clientX/clientY == world coordinates here (see the `hover` describe
 // block's own comment above), so `{ clientX: node.x, clientY: node.y }` lands exactly on it.
+// Task 12: a blind judge, given only a screenshot of a correctly-fitted, labelled board, named two
+// EDGELESS lands as the deck's most strongly related pair -- reading their arbitrary
+// repulsion-and-centre-pull proximity, plus a matching paint-mode ring colour, as a relationship.
+// The fix is paint only: an edgeless card must not carry the same colour or visual weight as a
+// connected one, so proximity alone can no longer read as synergy.
+describe("edgeless cards", () => {
+  test("an edgeless card draws smaller, fainter, and without its paint hue, unlike a connected one", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "B" }), card({ id: "C" })],
+      [{ from: "A", to: "B", weight: 1, tags: [], reasonTexts: [] }],
+    );
+    const { tick } = frames(graph, calls);
+    calls.length = 0;
+    tick();
+
+    // No search is active, so the ONLY thing that can put a sub-1 globalAlpha on this frame is the
+    // edgeless demotion -- C has no edge, A and B do.
+    const alphas = calls
+      .filter((c) => c.startsWith("set:globalAlpha="))
+      .map((c) => Number(c.slice("set:globalAlpha=".length)));
+    expect(alphas.some((a) => a < 1)).toBe(true);
+    expect(alphas.some((a) => a === 1)).toBe(true);
+
+    // The edgeless card's circle (rim, cover-fit clip, or placeholder -- whichever branch its art
+    // takes) is drawn at a radius smaller than a connected card's, not just a fainter one.
+    const radii = calls
+      .filter((c) => c.startsWith("arc:"))
+      .map((c) => Number(c.split(",")[2]));
+    expect(radii.some((r) => r < ART_RADIUS)).toBe(true);
+    expect(radii.some((r) => r === ART_RADIUS)).toBe(true);
+
+    // The rim never carries a paint hue for an edgeless card -- suppressing the "matching ring
+    // colour" cue the judge actually used, not just dimming a still-coloured ring.
+    const rimStrokes: string[] = [];
+    let pendingStroke: string | null = null;
+    for (let i = 0; i < calls.length; i++) {
+      const c = calls[i];
+      if (c.startsWith("set:strokeStyle=")) pendingStroke = c.slice("set:strokeStyle=".length);
+      else if (c.startsWith("arc:") && calls[i + 1] === "stroke:" && pendingStroke) {
+        rimStrokes.push(pendingStroke);
+      }
+    }
+    // A and B (creatures, default fixture colour) get the Type-mode creature hue; C, edgeless,
+    // never does.
+    expect(rimStrokes).toContain(TYPE_HUE.creature);
+    expect(rimStrokes.filter((h) => h === TYPE_HUE.creature).length).toBeLessThan(3);
+  });
+
+  test("an edgeless card that matches an active search still shows at full strength", () => {
+    const calls: string[] = [];
+    const graph = graphOf([card({ id: "Sol Ring" }), card({ id: "Mind Stone" })]);
+    const { tick } = frames(graph, calls);
+    fireEvent.change(screen.getByRole("searchbox", { name: /find a card/i }), { target: { value: "Sol Ring" } });
+    calls.length = 0;
+    tick();
+    const alphas = calls
+      .filter((c) => c.startsWith("set:globalAlpha="))
+      .map((c) => Number(c.slice("set:globalAlpha=".length)));
+    // Sol Ring is edgeless AND matched -- search intent wins, so at least one node draws at full
+    // strength even though both cards on this fixture have zero edges.
+    expect(alphas).toContain(1);
+  });
+});
+
+describe("the caption", () => {
+  // The Fullscreen API only keeps the TARGET element (and its descendants) visible; a sibling
+  // outside it is masked the instant fullscreen activates. This asserts the actual mechanism that
+  // makes the caption survive the transition -- containment in the DOM tree -- rather than
+  // something jsdom's fullscreen stub could fake.
+  test("lives inside the fullscreen shell, not as a sibling fullscreen would hide", () => {
+    render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+    const shell = screen.getByTestId("graph-fullscreen-shell");
+    const caption = screen.getByText(/Drag to pan, scroll to zoom/);
+    expect(shell.contains(caption)).toBe(true);
+  });
+});
+
 describe("the inspector", () => {
   test("a click that does not pan opens the inspector on the card underneath it", () => {
     const { canvas } = frames(SAMPLE.graph);

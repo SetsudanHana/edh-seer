@@ -33,6 +33,17 @@ const BAR_H = 3;
 const EDGE_W_MIN = 0.4;
 const EDGE_W_MAX = 2.2;
 
+/** A card with `deg === 0` sits on the board by repulsion and centre-pull alone -- its POSITION
+ *  carries no synergy information. A blind judge, shown a correctly fitted and labelled board,
+ *  named two edgeless lands as the deck's most strongly related pair: their arbitrary proximity
+ *  plus a matching paint-mode ring colour read as a relationship (task-12 brief). These knock
+ *  every cue an edgeless card would otherwise share with a connected one -- size, opacity, AND
+ *  colour, not opacity alone -- so proximity by itself can no longer read as synergy. Paint only:
+ *  the node stays in the force simulation at its full-weight position; only how it is drawn here
+ *  changes. */
+const EDGELESS_ALPHA = 0.4;
+const EDGELESS_RADIUS_SCALE = 0.55;
+
 /** Screen px a card-name label renders at, held constant across zoom -- world-unit font size is
  *  `LABEL_PX / cam.z`, same trick as the ×copies badge a few lines below. The formula was never the
  *  defect (see labels.ts); what got labels deleted was letting the measured box feed back into
@@ -393,7 +404,19 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       const mode = renderModeFor(cam.z);
       const cardW = ART_RADIUS * 2, cardH = cardW * 1.4;
       for (const n of nodes) {
-        ctx.globalAlpha = matchIds && !matchIds.has(n.id) ? 0.15 : 1;
+        // See EDGELESS_ALPHA's comment. Two things narrow when the demotion actually applies:
+        // a search match wins over it (if the user went looking for this exact card, it must show
+        // at full strength even though it's edgeless), and CARD mode is left alone -- that view
+        // only happens zoomed in on one card at a time, where there is no neighbouring dot to
+        // mistake it for a relationship with; the proximity misread this exists to prevent is a
+        // miniature-mode phenomenon.
+        const searchDim = matchIds && !matchIds.has(n.id);
+        const searchHit = matchIds && matchIds.has(n.id);
+        const demote = n.deg === 0 && mode !== "card" && !searchHit;
+        ctx.globalAlpha = searchDim ? 0.15 : demote ? EDGELESS_ALPHA : 1;
+        // The draw-time radius for this node's circle/rim/clip -- ART_RADIUS everywhere except a
+        // demoted edgeless card, which draws visibly smaller as well as fainter.
+        const r = demote ? ART_RADIUS * EDGELESS_RADIUS_SCALE : ART_RADIUS;
 
         // Render is a function of the camera, not a stored mode (card-node.ts's doc comment) --
         // reading cam.z here means the scroll wheel and the mode buttons can never disagree
@@ -413,13 +436,18 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
               ctx.strokeRect(n.x - cardW / 2 + offset, n.y - cardH / 2 - offset, cardW, cardH);
             } else {
               ctx.beginPath();
-              ctx.arc(n.x + offset, n.y - offset, ART_RADIUS, 0, TAU);
+              ctx.arc(n.x + offset, n.y - offset, r, 0, TAU);
               ctx.stroke();
             }
           }
         }
 
-        const hues = huesRef.current.get(n.id) ?? [];
+        // An edgeless card never carries its paint-mode colour -- suppressing the hue is what
+        // kills the "matching ring colour" cue the judge actually used, not just fading it. This
+        // reuses the SAME fallback rendering the code below already has for a card with no value
+        // under the current facet (a plain muted-border ring/box, no fill), rather than inventing
+        // a second "nothing to show" path.
+        const hues = demote ? [] : (huesRef.current.get(n.id) ?? []);
 
         if (mode === "card" && img instanceof HTMLImageElement && img.naturalWidth > 0) {
           // The full card, not a cover-fit crop: a 5:7 box centred on the node. Card mode only
@@ -433,9 +461,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // a zero-size source rect, which throws and would kill the whole animation loop.
           const sw = img.naturalWidth, sh = img.naturalHeight, s = Math.min(sw, sh);
           ctx.save();
-          ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.clip();
+          ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, TAU); ctx.clip();
           ctx.drawImage(img, (sw - s) / 2, (sh - s) / 2, s, s,
-            n.x - ART_RADIUS, n.y - ART_RADIUS, ART_RADIUS * 2, ART_RADIUS * 2);
+            n.x - r, n.y - r, r * 2, r * 2);
           ctx.restore();
         } else {
           // Covers both "no art at all" and "card mode wants an image that hasn't loaded yet" -- a
@@ -449,7 +477,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           if (mode === "card") {
             ctx.fillRect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
           } else {
-            ctx.beginPath(); ctx.arc(n.x, n.y, nodeRadius(), 0, TAU); ctx.fill();
+            ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, TAU); ctx.fill();
           }
         }
 
@@ -475,13 +503,13 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           for (const arc of rimArcs(hues)) {
             ctx.strokeStyle = arc.hue;
             ctx.beginPath();
-            ctx.arc(n.x, n.y, ART_RADIUS, arc.from, arc.to);
+            ctx.arc(n.x, n.y, r, arc.from, arc.to);
             ctx.stroke();
           }
           if (hues.length === 0) {
             ctx.lineWidth = 1 / cam.z;
             ctx.strokeStyle = paintColors.border;
-            ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS, 0, TAU); ctx.stroke();
+            ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, TAU); ctx.stroke();
           }
         }
 
@@ -491,7 +519,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           if (mode === "card") {
             ctx.strokeRect(n.x - cardW / 2 - 3, n.y - cardH / 2 - 3, cardW + 6, cardH + 6);
           } else {
-            ctx.beginPath(); ctx.arc(n.x, n.y, ART_RADIUS + 3, 0, TAU); ctx.stroke();
+            ctx.beginPath(); ctx.arc(n.x, n.y, r + 3, 0, TAU); ctx.stroke();
           }
         }
 
@@ -982,11 +1010,16 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
             />
           ) : null}
         </div>
+        {/* Inside shellRef, not a sibling of it: the Fullscreen API only keeps the target element
+         *  (and its descendants) visible, so a caption OUTSIDE this boundary is masked the instant
+         *  fullscreen activates -- the one mode where the board is largest and most likely to be
+         *  studied, and the one place the legend-vs-geometry confusion (task-9's judge, twice) most
+         *  needs correcting. */}
+        <p className="text-(--muted) text-sm">
+          Drag to pan, scroll to zoom. Two cards sit close because they do something for each other —
+          position is synergy, and colour is what the cards are.
+        </p>
       </div>
-      <p className="text-(--muted) text-sm">
-        Drag to pan, scroll to zoom. Two cards sit close because they do something for each other —
-        position is synergy, and colour is what the cards are.
-      </p>
     </div>
   );
 }
