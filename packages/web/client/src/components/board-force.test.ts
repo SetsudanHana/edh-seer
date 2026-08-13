@@ -12,6 +12,7 @@ import {
   FOREIGN_PUSH,
   forceNestedOffset,
   forceRoomAttraction,
+  forceRoomSeparation,
   forceRoomContainment,
   foreignPush,
   holdCardCentroid,
@@ -126,6 +127,51 @@ describe("foreignPush's reach past the rim", () => {
 
   test("leaves the inside-the-circle behaviour unchanged at margin 0", () => {
     expect(foreignPush(20, 0, 100, 14, 0.008, 0)).toEqual(foreignPush(20, 0, 100, 14, 0.008));
+  });
+});
+
+describe("forceRoomSeparation", () => {
+  const sep = (roomsByNode: Map<string, string[]>, nodes: Sim[], circles: () => ReadonlyMap<RoomId, Circle>) => {
+    const f = forceRoomSeparation({ roomsByNode, circles, stiffness: 0.03 });
+    f.initialize(nodes);
+    f(1);
+  };
+  const two = () => new Map<RoomId, Circle>([
+    ["a", { x: -30, y: 0, r: 100 }], ["b", { x: 30, y: 0, r: 100 }],
+  ]);
+
+  test("pushes two overlapping rooms apart along the line joining them", () => {
+    const x = card("card:x", -30, 0), y = card("card:y", 30, 0);
+    sep(new Map([["card:x", ["a"]], ["card:y", ["b"]]]), [x, y], two);
+    expect(x.vx).toBeLessThan(0); // room a sits left, pushed further left
+    expect(y.vx).toBeGreaterThan(0);
+    expect(x.vx).toBeCloseTo(-y.vx, 10);
+  });
+
+  test("does nothing to rooms that do not overlap", () => {
+    const x = card("card:x", -300, 0), y = card("card:y", 300, 0);
+    sep(new Map([["card:x", ["a"]], ["card:y", ["b"]]]),
+      [x, y], () => new Map([["a", { x: -300, y: 0, r: 100 }], ["b", { x: 300, y: 0, r: 100 }]]));
+    expect([x.vx, y.vx]).toEqual([0, 0]);
+  });
+
+  // The property the whole design rests on: a card in BOTH rooms is in both member lists, so it
+  // takes -k from one and +k from the other and nets to exactly zero. It does not move, and since
+  // a circle is centred on its members, it anchors both -- which is what stops rooms that share
+  // cards from separating past what their shared membership allows. No threshold required.
+  test("leaves a card shared by both rooms exactly where it is", () => {
+    const shared = card("card:s", 0, 0);
+    const x = card("card:x", -30, 0), y = card("card:y", 30, 0);
+    sep(new Map([["card:s", ["a", "b"]], ["card:x", ["a"]], ["card:y", ["b"]]]), [shared, x, y], two);
+    expect([shared.vx, shared.vy]).toEqual([0, 0]);
+    expect(x.vx).toBeLessThan(0); // the unshared members still move
+  });
+
+  test("a room nested inside another cannot be moved by this force at all", () => {
+    // Every member of `b` is also in `a`, so every push cancels on every card.
+    const p = card("card:p", -10, 0), q = card("card:q", 10, 0);
+    sep(new Map([["card:p", ["a"]], ["card:q", ["a", "b"]]]), [p, q], two);
+    expect([q.vx, q.vy]).toEqual([0, 0]);
   });
 });
 

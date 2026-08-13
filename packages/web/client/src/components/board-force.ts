@@ -538,6 +538,103 @@ export function forceRoomContainment(opts: {
   return force;
 }
 
+/** How hard two rooms push each other apart.
+ *
+ *  Swept 0 / 0.01 / 0.02 / 0.03 across five fixtures x five presets x ten trials. Totals over the
+ *  eight cases that move at all (the other twelve are zero at every arm) --
+ *
+ *      arm      overlaps  intrusions  unresolved
+ *      0              35          24          66
+ *      0.01           24          35          44
+ *      0.02           11          17          24
+ *      0.03            1           8          12
+ *
+ *  0.03 is the better board and is NOT what ships. On the acceptance test's own shape -- 800 ticks
+ *  with no motion sampling after -- inalla/Role at 0.03 leaves 6 cards unplaced on seed 1 and zero
+ *  on the other nine; 0.02 is clean on all ten. The harness cannot see it, because its 180 further
+ *  motion ticks settle the residue. Raising the cap to take 0.03's board is a real option and the
+ *  numbers above are what it would buy; it was not taken here.
+ *
+ *  Note the intrusion trade the earlier sweep recorded does NOT appear: those 123 intrusions came
+ *  from REPULSION_RANGE 200, not from separation. At the shipped range, separation takes intrusions
+ *  DOWN, 24 -> 17. */
+export const ROOM_SEPARATION = 0.02;
+
+/** Pushes apart two rooms whose circles overlap but whose memberships do not.
+ *
+ *  Nothing has ever separated rooms directly. Long-range repulsion does it second-hand -- it holds
+ *  the whole board apart, so distinct clusters stay distinct -- which is why shortening the range
+ *  to fill the hollow ring made intrusions explode: the board contracted and the ROOMS ran into
+ *  each other. Measured at REPULSION_RANGE 200, fairdrazi/Colour intrusions went 28 -> 132, and a
+ *  wider foreignPush margin did not touch it, because a rim margin cannot reach a whole room.
+ *
+ *  EVERY PAIR, and the shared cards are what make that safe. This started as disjoint pairs only,
+ *  on the reasoning that two rooms sharing a card must be allowed to intersect. That restriction is
+ *  unnecessary (owner's observation): a card in both rooms appears in BOTH member lists, so the
+ *  push gives it -k from one and +k from the other and it nets to exactly zero. Shared cards do not
+ *  move, and because a circle is centred on its members, they anchor both circles.
+ *
+ *  So a pair separates only as far as its shared membership allows, and then stops. Two rooms
+ *  sharing nothing push apart until they no longer overlap; two rooms sharing half their cards
+ *  barely move; a room nested inside another cannot be moved by this force at all. No threshold
+ *  decides that -- the membership does.
+ *
+ *  It composes with the one-sided rules the board already has: a non-member may leave a room but
+ *  never enter (foreignPush), a member may enter but never leave (containment). Separation pushes
+ *  the rooms; those two decide what the cards are allowed to do about it.
+ *
+ *  Translates each room's members equally, like forceNestedOffset, rather than pulling each toward
+ *  a point: the cluster should move, not compress. */
+export function forceRoomSeparation(opts: {
+  roomsByNode: ReadonlyMap<string, readonly RoomId[]>;
+  circles: () => ReadonlyMap<RoomId, Circle>;
+  stiffness: number;
+}): CustomForce {
+  let pairs: { a: RoomId; b: RoomId; aMembers: Sim[]; bMembers: Sim[] }[] = [];
+  const force = ((alpha: number) => {
+    if (pairs.length === 0) return;
+    const circles = opts.circles();
+    for (const p of pairs) {
+      const ca = circles.get(p.a), cb = circles.get(p.b);
+      if (!ca || !cb) continue;
+      const dx = cb.x - ca.x, dy = cb.y - ca.y;
+      const d = Math.hypot(dx, dy);
+      const overlap = ca.r + cb.r - d;
+      if (overlap <= 0) continue;
+      // Coincident centres: an arbitrary but fixed axis, as everywhere else on this board.
+      const [ux, uy] = d === 0 ? [1, 0] : [dx / d, dy / d];
+      const k = overlap * opts.stiffness * alpha * 0.5;
+      for (const n of p.aMembers) { n.vx -= ux * k; n.vy -= uy * k; }
+      for (const n of p.bMembers) { n.vx += ux * k; n.vy += uy * k; }
+    }
+  }) as CustomForce;
+
+  force.initialize = (nodes: Sim[]) => {
+    const cards = nodes.filter((n) => n.kind === "card");
+    const membersOf = new Map<RoomId, Sim[]>();
+    for (const n of cards) {
+      for (const id of opts.roomsByNode.get(n.id) ?? []) {
+        const list = membersOf.get(id);
+        if (list) list.push(n);
+        else membersOf.set(id, [n]);
+      }
+    }
+    // Membership does not change during a run, so the pair list is fixed. Sorted so one deck draws
+    // identically across renders.
+    pairs = [];
+    const ids = [...membersOf.keys()].sort();
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        pairs.push({
+          a: ids[i], b: ids[j],
+          aMembers: membersOf.get(ids[i])!, bMembers: membersOf.get(ids[j])!,
+        });
+      }
+    }
+  };
+  return force;
+}
+
 /** Slides a room that sits ENTIRELY inside another off its parent's centre.
  *
  *  When every member of B is also a member of A, both circles are centred on the centroid of
@@ -779,6 +876,7 @@ export interface BoardParams {
   foreignPush: number;
   foreignMargin: number;
   nestedOffset: number;
+  roomSeparation: number;
   breatheGrow: number;
   linkStiffness: number;
   centerPull: number;
@@ -796,6 +894,7 @@ export const DEFAULT_PARAMS: BoardParams = {
   foreignPush: FOREIGN_PUSH,
   foreignMargin: FOREIGN_MARGIN,
   nestedOffset: NESTED_OFFSET,
+  roomSeparation: ROOM_SEPARATION,
   breatheGrow: BREATHE_GROW,
   linkStiffness: LINK_STIFFNESS,
   centerPull: CENTER_PULL,
@@ -902,6 +1001,11 @@ export function createBoardSimulation(opts: {
       decay: BREATHE_DECAY,
       max: BREATHE_MAX,
       alpha: BREATHE_ALPHA,
+    }))
+    .force("separation", forceRoomSeparation({
+      roomsByNode: opts.roomsByNode,
+      circles: roomCircles,
+      stiffness: p.roomSeparation,
     }))
     .force("nested", forceNestedOffset({
       roomsByNode: opts.roomsByNode,

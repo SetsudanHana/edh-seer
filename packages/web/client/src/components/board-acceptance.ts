@@ -32,6 +32,20 @@
  *
  *  RAISES SO FAR, each with its reason.
  *
+ *  4. ROOM_SEPARATION 0.02 (2026-08-13) -- the first force that pushes one ROOM off another
+ *  directly. ONE number rises, sorin/Subtype intrusions 0 -> 2, and it is a cap of 0 becoming
+ *  non-zero, which this file treats as the expensive kind of raise. Taken because the same change
+ *  takes eleven counts DOWN, three of them from non-zero to clean: inalla/Colour 4/6/3 -> 0/0/0,
+ *  fairdrazi/Role 1 overlap and 5 unresolved -> 0/0, fairdrazi/Colour 29/17/50 -> 10/14/22, and
+ *  inalla/Subtype unresolved 8 -> 2. Board-wide over the eight cases that move at all: overlaps
+ *  35 -> 11, intrusions 24 -> 17, unresolved 66 -> 24 -- all three down at once, which only
+ *  FOREIGN_MARGIN has managed before.
+ *
+ *  The 2 is measured, not a fluke: one intrusion each on trials 1 and 4 of ten, reproduced. It is
+ *  sorin's near-identical plains/swamp pair, the one shape where pushing two rooms apart has
+ *  nowhere to push to. See ROOM_SEPARATION in board-force.ts for the 0 / 0.01 / 0.02 / 0.03 sweep
+ *  and why 0.03 -- a better board on every total -- is not what ships.
+ *
  *  3. FOREIGN_MARGIN 40 (2026-08-12) -- foreignPush reaching past a room's rim instead of waiting
  *  for a card to be inside it: 10 counts fell, 3 rose, and all three rises are 2 counts. Chosen
  *  over margin 90 because across ten cases it beat the reactive behaviour on ALL THREE totals at
@@ -83,15 +97,15 @@ export const ACCEPTANCE: Record<string, Caps> = {
   "sorin/Type":            { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
   "sorin/Colour":          { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
   "sorin/Mana value":      { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "sorin/Subtype":         { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "sorin/Subtype":         { escapesOne: 0, overlaps:   0, intrusions:  2, unresolved:   0 },  // intrusions 0->2, raise 4
   "inalla/Role":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
   "inalla/Type":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "inalla/Colour":         { escapesOne: 0, overlaps:   4, intrusions:  6, unresolved:   3 },  // overlaps 12->4, intrusions 4->6, unresolved 8->3
+  "inalla/Colour":         { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },  // 4/6/3 -> clean on all three
   "inalla/Mana value":     { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "inalla/Subtype":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   8 },  // overlaps 1->0, unresolved 5->8
-  "fairdrazi/Role":        { escapesOne: 0, overlaps:   1, intrusions:  0, unresolved:   5 },  // overlaps 2->1, intrusions 1->0, unresolved 3->5
+  "inalla/Subtype":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   2 },  // unresolved 8->2
+  "fairdrazi/Role":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },  // overlaps 1->0, unresolved 5->0
   "fairdrazi/Type":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "fairdrazi/Colour":      { escapesOne: 0, overlaps:  29, intrusions: 17, unresolved:  50 },  // overlaps 33->29, intrusions 28->17, unresolved 75->50
+  "fairdrazi/Colour":      { escapesOne: 0, overlaps:  10, intrusions: 14, unresolved:  22 },  // overlaps 29->10, intrusions 17->14, unresolved 50->22
   "fairdrazi/Mana value":  { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
   "fairdrazi/Subtype":     { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
   "changelings/Role":      { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
