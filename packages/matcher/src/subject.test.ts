@@ -254,3 +254,14 @@ test("a colorless match still has to pass every other field", () => {
     {},
   )).toBe(false);
 });
+
+// BASIC is the second supertype, and it was inexpressible. A producer emitting "search your library
+// for a basic land card" said only {type: land}, so at the authored-emit identity check — where the
+// emit is the FILTER — every NONBASIC land satisfied it. Same asymmetric shape as legendary: a
+// consumer that does not ask is unaffected, one that does is satisfied only by a basic.
+test("a basic demand is satisfied only by a basic", () => {
+  expect(subjectMatches(s({ type: "land", basic: true }), s({ type: "land", basic: true }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "land" }), s({ type: "land", basic: true }), H)).toBe(false);
+  // Opt-in: a consumer that says nothing about basic still takes a basic land.
+  expect(subjectMatches(s({ type: "land", basic: true }), s({ type: "land" }), H)).toBe(true);
+});

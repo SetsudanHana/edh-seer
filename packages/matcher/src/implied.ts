@@ -37,6 +37,10 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   // Tinybones Joins Up). Without this the supertype filter cut five real edges: the consumer demanded
   // legendary and the producer's own entry never advertised it, so a legend failed to be a legend.
   if (types.includes("legendary")) out.legendary = true;
+  // Set on BOTH sides for the same reason legendary is: a producer that fetches "a basic land card"
+  // must be satisfiable by the basic it actually fetches, and a demand nothing can meet is a
+  // silently deleted edge rather than a refused one.
+  if (types.includes("basic")) out.basic = true;
   out.power = parseStat(chars.power);
   out.toughness = parseStat(chars.toughness);
   out.manaValue = chars.cmc;

@@ -71,6 +71,12 @@ export interface SubjectFilter {
    *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:
    *  matched against the card's printed characteristics, which already carry supertypes. */
   legendary?: true;
+  /** The subject demands the BASIC supertype. "Search your library for a basic land card" emitted
+   *  `{type: land}` and nothing else, so at the authored-emit identity check — the one place an emit
+   *  sits on the FILTER side — every NONBASIC land satisfied it, which was about half the false
+   *  edges the 2026-08-13 board fixtures showed on self-ETB lands. 65 actions across 50 corpus docs.
+   *  Same shape as `legendary`, and set on BOTH sides for the reason 09ce98d records. */
+  basic?: true;
   /** A real DISJUNCTION: the subject is satisfied by ANY of these branches.
    *
    *  `type` is an OR-list and `subtype` is an OR-list, but the two are ANDed with each other, so

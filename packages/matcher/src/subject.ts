@@ -24,6 +24,9 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   if (consumer.historic === true && producer.historic !== true) return false;
   // Same shape as historic: a legendary-matters anthem reaches only legendary permanents.
   if (consumer.legendary === true && producer.legendary !== true) return false;
+  // And the second supertype. This one matters most where the emit is the FILTER (the authored-emit
+  // identity check in edges.ts): "search for a basic land card" was satisfied by every nonbasic land.
+  if (consumer.basic === true && producer.basic !== true) return false;
   // control: equal, or `any` on either side.
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) {
     return false;

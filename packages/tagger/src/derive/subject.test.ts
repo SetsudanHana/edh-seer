@@ -391,3 +391,36 @@ test("the existing comparison form still parses", () => {
   expect(parseSubject("a creature card with mana value 2 or less").stats)
     .toEqual([{ metric: "mana-value", op: "lte", value: 2 }]);
 });
+
+// BASIC is the other supertype, and it was inexpressible. "Search your library for a basic land
+// card" emitted {type: land} and nothing more, so at the authored-emit identity check — the one
+// place an emit sits on the FILTER side — every NONBASIC land satisfied it. That is about half the
+// false edges the 2026-08-13 board fixtures showed on self-ETB lands: Wayfarer's Bauble, Fabled
+// Passage, Myriad Landscape and Terrain Generator all say basic and all reached Shadowy Backstreet.
+// 65 actions across 50 corpus docs. `legendary` is the precedent, four lines above.
+test("a basic subject records the supertype", () => {
+  expect(parseSubject("a basic land card").basic).toBe(true);
+  expect(parseSubject("up to two basic land cards").basic).toBe(true);
+  expect(parseSubject("basic Island, Swamp, or Mountain card").basic).toBe(true);
+});
+
+test("a subject with no basic supertype does not claim one", () => {
+  expect(parseSubject("a land card").basic).toBeUndefined();
+  expect(parseSubject("target creature").basic).toBeUndefined();
+});
+
+// "Nonbasic lands you control" (Blood Moon and its family) is the negation, and reading it as a
+// basic constraint inverts the card exactly as a negated legendary does.
+test("a negated basic is not a basic constraint", () => {
+  expect(parseSubject("nonbasic lands you control").basic).toBeUndefined();
+  expect(parseSubject("a land that isn't basic").basic).toBeUndefined();
+});
+
+// "Basic land TYPE" is the SUBTYPE sense — Forest, Island, Swamp, Mountain, Plains — and says
+// nothing about the supertype. Vesuva and Prismatic Omen have it; a bare /\bbasic\b/ would read
+// them as demanding basic lands, which is the opposite of what they do. 3 corpus actions.
+test("a basic land TYPE is the subtype sense, not the supertype", () => {
+  expect(parseSubject("lands you control have every basic land type in addition to their other types")
+    .basic).toBeUndefined();
+  expect(parseSubject("a basic land type").basic).toBeUndefined();
+});

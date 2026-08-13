@@ -231,3 +231,17 @@ test("a colourless card's implied cast event says so rather than omitting colour
   } as never);
   expect(ev.find((e) => e.verb === "cast")?.subject.colors).toEqual([]);
 });
+
+// A basic land's own entry must ADVERTISE the supertype, or a producer that fetches "a basic land
+// card" cannot be satisfied by the basic it actually fetches. This is the half that 09ce98d proved
+// load-bearing for legendary: setting the flag only on the demanding side silently cost five real
+// edges, because the producer's own entry never claimed what it was.
+test("a basic land's implied entry advertises the supertype", () => {
+  const ev = impliedEvents(chars(["basic", "land"], ["forest"]));
+  expect(ev.find((e) => e.verb === "enters")?.subject.basic).toBe(true);
+});
+
+test("a nonbasic land's implied entry claims no supertype", () => {
+  const ev = impliedEvents(chars(["land"], ["plains", "swamp"]));
+  expect(ev.find((e) => e.verb === "enters")?.subject.basic).toBeUndefined();
+});

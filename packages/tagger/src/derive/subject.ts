@@ -297,6 +297,19 @@ const LEGENDARY = /\blegendary\b/i;
 const NOT_LEGENDARY = /\b(?:isn'?t|is not|isn’t|non-?)\s*legendary\b/i;
 const NOT_HISTORIC = /\b(?:not|non-?)\s*historic\b/i;
 
+/** The BASIC supertype, and the two ways of not meaning it.
+ *
+ *  `NOT_BASIC` is the Blood Moon family — "nonbasic lands you control" — where reading it as a basic
+ *  constraint inverts the card, exactly as a negated legendary does.
+ *
+ *  `BASIC_LAND_TYPE` is the subtler one and has nothing to do with the supertype: a "basic land
+ *  TYPE" is Forest, Island, Swamp, Mountain or Plains, the SUBTYPE. Prismatic Omen's "lands you
+ *  control have every basic land type" would otherwise be read as demanding basic lands, which is
+ *  the opposite of what it does. 3 corpus actions against 65 in the supertype sense. */
+const BASIC = /\bbasic\b/i;
+const NOT_BASIC = /\b(?:isn'?t|is not|isn’t|non-?)\s*basic\b/i;
+const BASIC_LAND_TYPE = /\bbasic\s+land\s+types?\b/i;
+
 /** Counter kinds, a CLOSED dictionary — the printed keyword counters plus the two power/toughness
  *  ones. Cards either PRODUCE a counter or CARE about one, exactly as they do with tokens, and the
  *  matcher has read `SubjectFilter.counter` since the flat tagger while the derived path never wrote
@@ -375,6 +388,7 @@ export function parseSubject(text: string): SubjectFilter {
   if (counter) out.counter = counter;
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;
   if (LEGENDARY.test(t) && !NOT_LEGENDARY.test(t)) out.legendary = true;
+  if (BASIC.test(t) && !NOT_BASIC.test(t) && !BASIC_LAND_TYPE.test(t)) out.basic = true;
   const origin = t.match(ORIGIN_ZONE);
   if (origin) out.fromZone = origin[1].toLowerCase();
   if (colors) out.colors = colors;
