@@ -602,10 +602,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       gestureStart = t;
     };
 
-    // THE CLICK PATH, kept wired with nothing on the end of it. Task 8 (the inspector) is what
-    // gives it a body: `pickAt(...toWorld(point))` and open the panel on the hit. Its own body is
-    // the ONLY part of this that was coupled to a deleted feature (a card's back-face art, which
-    // the projection no longer carries), and the wiring around it cost three fix rounds:
+    // THE CLICK PATH. Its body opens the inspector on the card under the pointer:
+    // `pickAt(...toWorld(point))`, then the panel. That body is the ONLY part of this that was ever
+    // coupled to a deleted feature (a card's back-face art, which the projection no longer carries)
+    // -- it was emptied when rooms retired and refilled by the inspector. The wiring AROUND it is
+    // coupled to neither, and cost three fix rounds:
     //
     // It cannot be a DOM "click" listener. d3-zoom's own mousedown handler (mousedowned in zoom.js)
     // hands panning off to d3-drag underneath it, and d3-drag's mouseupped installs a CAPTURE-PHASE

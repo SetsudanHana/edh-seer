@@ -136,13 +136,14 @@ test("traveledAsPan treats a scale change as a pan even with zero translation", 
  *  `zoomBehavior.transform` call `jumpZoom` makes in production, with a literal event object as a
  *  4th argument, which is what sidesteps the jsdom limitation above rather than faking around it.
  *
- *  The handler's BODY is empty until Task 8 fills it, so there is no outcome to assert yet. What
- *  IS assertable, and what would break silently otherwise, is that the hook and the handler behind
- *  it still exist and still admit exactly the four gesture shapes fix rounds 2 and 3 established:
- *  a mouseup, a touchend, a touchcancel (never admitted), and a touchend with no changed touches
- *  (must fall through, not throw). Task 8 turns each of these into an assertion about the
- *  inspector. */
-test("the click path survives every gesture shape, with no body on the end of it yet", () => {
+ *  This one asserts the WIRING alone: that the hook and the handler behind it still exist and
+ *  still admit exactly the four gesture shapes fix rounds 2 and 3 established -- a mouseup, a
+ *  touchend, a touchcancel (never admitted), and a touchend with no changed touches (must fall
+ *  through, not throw). Task 8 gave the handler a body and turned each shape into an assertion
+ *  about the inspector; those live in the `the inspector` describe block below. This test stays
+ *  because the shapes are what three fix rounds bought, and an inspector assertion would go red
+ *  for either reason -- a lost gesture shape or a broken panel. */
+test("the click path admits every gesture shape it was fixed to admit", () => {
   const { canvas } = frames(SAMPLE.graph);
   const probe = canvas.__graphProbe!();
   const node = probe[0];
@@ -666,6 +667,25 @@ describe("labels", () => {
     };
     expect(alphaBeforeLabel("Sol Ring")).toBe("set:globalAlpha=1");
     expect(alphaBeforeLabel("Mind Stone")).toBe("set:globalAlpha=0.15");
+  });
+
+  // Canvas state is global and survives the frame that set it, so a search left dimming on leaks
+  // into the NEXT frame's background wipe. The label pass resets it; nothing proved the reset was
+  // there. Deleting that one line left all 273 tests green, which is how this test came to exist.
+  //
+  // The query deliberately matches NOTHING, so every label is dimmed and the last alpha the frame
+  // sets can only be the reset. A query that matched something would pass by luck whenever the
+  // priority order happened to draw a match last.
+  test("leaves globalAlpha reset after the label pass, so dimming cannot leak into the next frame", () => {
+    const calls: string[] = [];
+    const { tick } = frames(graphOf([card({ id: "Sol Ring" }), card({ id: "Mind Stone" })]), calls);
+    fireEvent.change(screen.getByRole("searchbox", { name: /find a card/i }), { target: { value: "zzz" } });
+    calls.length = 0;
+    tick();
+
+    const alphas = calls.filter((c) => c.startsWith("set:globalAlpha="));
+    expect(alphas).toContain("set:globalAlpha=0.15"); // the search really is dimming
+    expect(alphas.at(-1)).toBe("set:globalAlpha=1"); // and the frame does not end that way
   });
 });
 
