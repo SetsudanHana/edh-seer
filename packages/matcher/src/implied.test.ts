@@ -241,6 +241,78 @@ test("a basic land's implied entry advertises the supertype", () => {
   expect(ev.find((e) => e.verb === "enters")?.subject.basic).toBe(true);
 });
 
+// PRINTED KEYWORDS WERE A DEAD CHANNEL. `Characteristics.keywords` comes straight off the Scryfall
+// payload and MTGJSON's 220 keyword abilities are already generated into vocabulary.json, but the
+// only reader anywhere in the matcher was graph.ts, drawing keyword nodes for the graph view.
+// Nothing in edge formation looked at it. Measured on the normalized corpus: 23 cards have Lifelink
+// and never say "gain" in their own text, and NOT ONE emitted gain-life, against 7 corpus consumers
+// whose trigger watches exactly that. 13 of the 17 cards whose entire text is keyword lines derived
+// zero abilities.
+//
+// Every mapping below is justified by the keyword's PRINTED REMINDER TEXT, mined from the corpus —
+// printed text is data, the same discipline the oracle-text invariant demands.
+const kw = (keywords: string[], types = ["creature"]) => ({ ...chars(types), keywords });
+
+test("lifelink supplies a life-gain event", () => {
+  // "Damage dealt by this creature also causes you to gain that much life."
+  const ev = impliedEvents(kw(["lifelink"]));
+  const gain = ev.find((e) => e.verb === "gain-life");
+  expect(gain).toBeDefined();
+  expect(gain!.subject.control).toBe("you");
+  expect(gain!.implied).toBe(true);
+});
+
+test("extort supplies both halves of its drain", () => {
+  // "each opponent loses 1 life and you gain that much life."
+  const ev = impliedEvents(kw(["extort"]));
+  expect(ev.find((e) => e.verb === "gain-life")?.subject.control).toBe("you");
+  expect(ev.find((e) => e.verb === "lose-life")?.subject.control).toBe("opp");
+});
+
+test("annihilator makes the DEFENDING player sacrifice, not you", () => {
+  // "defending player sacrifices two permanents of their choice."
+  const ev = impliedEvents(kw(["annihilator"]));
+  expect(ev.find((e) => e.verb === "sacrifice")?.subject.control).toBe("opp");
+});
+
+test("counter keywords name the kind of counter they add", () => {
+  // modular/evolve/mentor/training/graft/riot/bloodthirst/undying all say +1/+1.
+  expect(impliedEvents(kw(["evolve"])).find((e) => e.verb === "counter-added")?.subject.counter)
+    .toBe("+1/+1");
+  // "return it to the battlefield ... with a -1/-1 counter on it."
+  expect(impliedEvents(kw(["persist"])).find((e) => e.verb === "counter-added")?.subject.counter)
+    .toBe("-1/-1");
+  // "Players dealt combat damage by this creature also get three poison counters."
+  expect(impliedEvents(kw(["toxic"])).find((e) => e.verb === "counter-added")?.subject.counter)
+    .toBe("poison");
+});
+
+test("amass both adds a counter and makes a token", () => {
+  // "Put a +1/+1 counter on an Army you control. ... create a 0/0 black Zombie Army creature token"
+  const ev = impliedEvents(kw(["amass"]));
+  expect(ev.find((e) => e.verb === "counter-added")?.subject.counter).toBe("+1/+1");
+  const token = ev.find((e) => e.verb === "create-token");
+  expect(token).toBeDefined();
+  expect(token!.subject.token).toBe(true);
+});
+
+// STORM IS DELIBERATELY EXCLUDED. Its reminder says "copy it for each spell cast before it" — a copy
+// put onto the stack is NOT cast, so a `cast` emit would be a wrong sentence, not a missing one.
+test("storm supplies no cast event, because a copy is not cast", () => {
+  const ev = impliedEvents(kw(["storm"], ["instant"]));
+  expect(ev.filter((e) => e.verb === "cast")).toHaveLength(1); // the card's own cast, nothing added
+});
+
+// Pump is an EFFECT kind, not an emitted event — a different channel entirely.
+test("prowess and exalted add no event", () => {
+  const before = impliedEvents(chars(["creature"])).length;
+  expect(impliedEvents(kw(["prowess", "exalted"]))).toHaveLength(before);
+});
+
+test("a card with no keywords is unchanged", () => {
+  expect(impliedEvents(kw([]))).toEqual(impliedEvents(chars(["creature"])));
+});
+
 test("a nonbasic land's implied entry claims no supertype", () => {
   const ev = impliedEvents(chars(["land"], ["plains", "swamp"]));
   expect(ev.find((e) => e.verb === "enters")?.subject.basic).toBeUndefined();

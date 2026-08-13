@@ -341,6 +341,17 @@ function humanizeEvent(key: string, self = false): string {
       return subj === "any" ? "a permanent untapping" : `${art(subj)} ${subj} untapping`;
     case "counter-added":
       return "a counter being added";
+    // These fell through to the de-slugify default and shipped "triggers on gain life any" to the
+    // UI as English. Latent before the keyword channel (2026-08-14) and unmissable after it, since
+    // lifelink and extort make gain-life a common event where it was nearly absent.
+    case "gain-life":
+      return "life being gained";
+    case "lose-life":
+      return "life being lost";
+    case "sacrifice":
+      return subj === "any" ? "a permanent being sacrificed" : `${art(subj)} ${subj} being sacrificed`;
+    case "create-token":
+      return subj === "any" ? "a token being created" : `${art(subj)} ${subj} token being created`;
     case "proliferate":
       return "proliferate";
     default:

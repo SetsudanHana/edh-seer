@@ -97,6 +97,97 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
       push("combat-damage");
     }
   }
+  // Printed keywords are supply too, and were a dead channel until 2026-08-14. Appended once for the
+  // whole card rather than per face: a keyword is printed on the card, not on a face.
+  out.push(...keywordEvents(chars));
+  return out;
+}
+
+/** What a PRINTED KEYWORD supplies, keyed by the keyword and justified by its printed reminder text.
+ *
+ *  `Characteristics.keywords` arrives free on the Scryfall payload and MTGJSON's 220 keyword
+ *  abilities are already generated into `vocabulary.json`, but until now the only reader anywhere in
+ *  the matcher was `graph.ts`, drawing keyword nodes for the graph view — nothing in edge formation
+ *  looked at it. Measured on the normalized corpus: 23 cards carry Lifelink and never say "gain" in
+ *  their own text, and NOT ONE emitted `gain-life`, against 7 corpus consumers watching exactly that.
+ *
+ *  Each mapping quotes the reminder it comes from. Reminder text is PRINTED DATA mined from the
+ *  corpus, which is the same discipline the "never state what a card does from memory" invariant
+ *  demands — nothing here is recalled.
+ *
+ *  DELIBERATE OMISSIONS, so the next reader does not "fix" them:
+ *  - **storm** — "copy it for each spell cast before it". A copy put onto the stack is NOT cast, so a
+ *    `cast` emit would be a wrong sentence rather than a missing one.
+ *  - **prowess, exalted** — "gets +1/+1 until end of turn" is a pump EFFECT, not an emitted event.
+ *  - **unearth, persist's and undying's RETURN half** — "return this card ... to the battlefield"
+ *    would be a second `enters` on top of the card's own implied one, and double-counting a card's
+ *    entry is worse than missing its recursion. Their counters are kept; the re-entry is deferred. */
+const KEYWORD_EMITS: Record<string, { verb: GameEvent["verb"]; counter?: string; control?: "you" | "opp"; token?: true }[]> = {
+  // "Damage dealt by this creature also causes you to gain that much life."
+  lifelink: [{ verb: "gain-life" }],
+  // "each opponent loses 1 life and you gain that much life."
+  extort: [{ verb: "gain-life" }, { verb: "lose-life", control: "opp" }],
+  // "Whenever this creature becomes blocked, defending player loses 4 life."
+  afflict: [{ verb: "lose-life", control: "opp" }],
+  // "defending player sacrifices two permanents of their choice."
+  annihilator: [{ verb: "sacrifice", control: "opp" }],
+  // "you may sacrifice any number of creatures. It enters with three times that many +1/+1 counters"
+  devour: [{ verb: "sacrifice" }, { verb: "counter-added", counter: "+1/+1" }],
+  // "exile a nonland card that costs less. You may cast it without paying its mana cost."
+  cascade: [{ verb: "cast" }],
+  // Every one of these says +1/+1 in its own reminder.
+  modular: [{ verb: "counter-added", counter: "+1/+1" }],
+  evolve: [{ verb: "counter-added", counter: "+1/+1" }],
+  mentor: [{ verb: "counter-added", counter: "+1/+1" }],
+  training: [{ verb: "counter-added", counter: "+1/+1" }],
+  graft: [{ verb: "counter-added", counter: "+1/+1" }],
+  riot: [{ verb: "counter-added", counter: "+1/+1" }],
+  bloodthirst: [{ verb: "counter-added", counter: "+1/+1" }],
+  undying: [{ verb: "counter-added", counter: "+1/+1" }],
+  // "return it to the battlefield ... with a -1/-1 counter on it."
+  persist: [{ verb: "counter-added", counter: "-1/-1" }],
+  // "damage to creatures in the form of -1/-1 counters and to players in the form of poison counters"
+  infect: [{ verb: "counter-added", counter: "-1/-1" }, { verb: "counter-added", counter: "poison" }],
+  // "Players dealt combat damage by this creature also get three poison counters."
+  toxic: [{ verb: "counter-added", counter: "poison" }],
+  // "Put a +1/+1 counter on an Army you control. ... create a 0/0 black Zombie Army creature token"
+  amass: [{ verb: "counter-added", counter: "+1/+1" }, { verb: "create-token", token: true },
+          { verb: "enters", token: true }],
+  // "put two +1/+1 counters on it OR create two 1/1 colorless Servo artifact creature tokens."
+  fabricate: [{ verb: "counter-added", counter: "+1/+1" }, { verb: "create-token", token: true },
+              { verb: "enters", token: true }],
+  // "Create a token that's a copy of it, except it's a white Zombie ... with no mana cost."
+  embalm: [{ verb: "create-token", token: true }, { verb: "enters", token: true }],
+  eternalize: [{ verb: "create-token", token: true }, { verb: "enters", token: true }],
+  // "To populate, create a token that's a copy of a creature token you control."
+  populate: [{ verb: "create-token", token: true }, { verb: "enters", token: true }],
+  // "you may create a token copy that's tapped and attacking that player"
+  myriad: [{ verb: "create-token", token: true }, { verb: "enters", token: true }],
+};
+
+/** The events a card's PRINTED KEYWORDS supply. Marked `implied: true` like every other synthetic
+ *  event, so the self-supply gates in edges.ts treat them as baseline rather than authored surplus. */
+export function keywordEvents(chars: Characteristics): GameEvent[] {
+  const out: GameEvent[] = [];
+  for (const raw of chars.keywords ?? []) {
+    // Keywords arrive with their argument attached ("Ward {2}", "Annihilator 2", "Protection from
+    // Demons"), so match on the FIRST word — the same shape `isKeywordLine` uses in the segmenter.
+    const k = String(raw).toLowerCase().split(/[\s{]/)[0];
+    for (const spec of KEYWORD_EMITS[k] ?? []) {
+      out.push({
+        verb: spec.verb,
+        subject: {
+          control: spec.control ?? "you",
+          token: spec.token ?? null,
+          ...(spec.counter ? { counter: spec.counter } : {}),
+          // A token this card makes is a creature it did not print on its own type line, so the
+          // subject says only what the reminder guarantees: it is a token, and it is a creature.
+          ...(spec.token ? { type: "creature" } : {}),
+        },
+        implied: true,
+      });
+    }
+  }
   return out;
 }
 
