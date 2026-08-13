@@ -532,7 +532,14 @@ describe("the camera", () => {
 // stand-in, because a handful of hand-placed nodes cannot reproduce a board wide enough to need a
 // real zoom-out.
 describe("fit to view", () => {
-  test("frames the whole settled board on screen after mount", () => {
+  // UPDATED for task-11's Defect 1: the fit now frames the CONNECTED cluster, not the whole node
+  // cloud, so an orphan (no synergy edge -- a land, on this fixture) is no longer guaranteed to be
+  // on screen after the initial fit. It used to be, by construction, when the bounding box was
+  // taken over every node; that was Defect 1 (the 36 orphan lands on this exact fixture set the
+  // frame and crushed the 48-card connected cluster into ~15% of it -- task-11 brief). This asserts
+  // the CONNECTED cards are framed, which is the same claim the old test made minus the orphans it
+  // was never supposed to be making a promise about.
+  test("frames the connected cluster on screen after mount", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
     } as DOMRect);
@@ -547,7 +554,9 @@ describe("fit to view", () => {
     const bottomRight = probe.toWorld({ clientX: 1598, clientY: 894 });
     const [xMin, xMax] = [topLeft.x, bottomRight.x].sort((a, b) => a - b);
     const [yMin, yMax] = [topLeft.y, bottomRight.y].sort((a, b) => a - b);
-    for (const n of probe) {
+    const connected = probe.filter((n) => n.deg > 0);
+    expect(connected.length).toBeGreaterThan(0); // sanity: this fixture does have synergy edges
+    for (const n of connected) {
       expect(n.x).toBeGreaterThanOrEqual(xMin);
       expect(n.x).toBeLessThanOrEqual(xMax);
       expect(n.y).toBeGreaterThanOrEqual(yMin);
@@ -607,6 +616,72 @@ describe("fit to view", () => {
     };
     for (let i = 0; i < 1000; i++) nextFrame!(0);
     expect(canvas.__graphProbe!().camZ).not.toBe(1);
+  });
+
+  // Task 11, Defect 1: fitToView took the bounding box over EVERY node, so 36 of 84 orphan lands on
+  // the sorin fixture set the frame and the connected cluster -- the entire point of the view -- was
+  // compressed into ~15% of it. The fix frames the CONNECTED nodes only (Sim.deg > 0, already
+  // computed above this describe block's `links` loop -- see GraphView.tsx).
+  test("frames the connected pair and leaves a far-flung orphan outside the viewport", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 300, height: 200, right: 300, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    // No edge touches C -- mutual repulsion (REPULSION_RANGE 469) pushes it away from the A-B pair
+    // over 1000 ticks while the link spring holds A and B together, the same physics the sorin
+    // fixture's 36 real orphans are subject to. Verified over 5 seeded trials before writing this
+    // test (script discarded, not committed): C lands 370-400 world units from the fitted pair's
+    // centre against a fitted half-viewport of 70-73 -- reliably outside, never by luck.
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "B" }), card({ id: "C" })],
+      [{ from: "A", to: "B", weight: 1, tags: [], reasonTexts: [] }],
+    );
+    const { canvas, tick } = frames(graph);
+    tick(1000);
+    const probe = canvas.__graphProbe!();
+    const topLeft = probe.toWorld({ clientX: 0, clientY: 0 });
+    const bottomRight = probe.toWorld({ clientX: 300, clientY: 200 });
+    const [xMin, xMax] = [topLeft.x, bottomRight.x].sort((a, b) => a - b);
+    const [yMin, yMax] = [topLeft.y, bottomRight.y].sort((a, b) => a - b);
+    const a = probe.find((n) => n.id === "A")!;
+    const b = probe.find((n) => n.id === "B")!;
+    const c = probe.find((n) => n.id === "C")!;
+    for (const n of [a, b]) {
+      expect(n.x).toBeGreaterThanOrEqual(xMin);
+      expect(n.x).toBeLessThanOrEqual(xMax);
+      expect(n.y).toBeGreaterThanOrEqual(yMin);
+      expect(n.y).toBeLessThanOrEqual(yMax);
+    }
+    // Fills a SANE FRACTION of the frame -- the pair's own span is a third or more of the
+    // viewport's tighter axis, not lost in a much wider frame built to also fit the orphan.
+    const viewSpan = Math.min(xMax - xMin, yMax - yMin);
+    const pairSpan = Math.max(Math.hypot(a.x - b.x, a.y - b.y), 1);
+    expect(pairSpan / viewSpan).toBeGreaterThan(0.3);
+    // The orphan is genuinely off camera, not merely far in world units.
+    const orphanOutside = c.x < xMin || c.x > xMax || c.y < yMin || c.y > yMax;
+    expect(orphanOutside).toBe(true);
+  });
+
+  // Defect 1's other half: a deck whose graph has zero edges (nothing to filter down to) must
+  // still be framed by ALL its nodes, not divided by an empty bounding box.
+  test("still frames every node when the graph has no edges at all", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 300, height: 200, right: 300, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    const graph = graphOf([card({ id: "A" }), card({ id: "B" }), card({ id: "C" })]);
+    const { canvas, tick } = frames(graph);
+    tick(1000);
+    const probe = canvas.__graphProbe!();
+    expect(Number.isFinite(probe.camZ)).toBe(true);
+    const topLeft = probe.toWorld({ clientX: 0, clientY: 0 });
+    const bottomRight = probe.toWorld({ clientX: 300, clientY: 200 });
+    const [xMin, xMax] = [topLeft.x, bottomRight.x].sort((a, b) => a - b);
+    const [yMin, yMax] = [topLeft.y, bottomRight.y].sort((a, b) => a - b);
+    for (const n of probe) {
+      expect(n.x).toBeGreaterThanOrEqual(xMin);
+      expect(n.x).toBeLessThanOrEqual(xMax);
+      expect(n.y).toBeGreaterThanOrEqual(yMin);
+      expect(n.y).toBeLessThanOrEqual(yMax);
+    }
   });
 
   // The board takes ~696 ticks to reach FIT_SETTLE_ALPHA -- seconds of real time -- so a user can

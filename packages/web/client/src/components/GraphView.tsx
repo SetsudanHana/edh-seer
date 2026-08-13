@@ -662,8 +662,15 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     // too, so the click that follows a fit is not misread as the tail end of a pan.
     fitToView = () => {
       if (nodes.length === 0) return;
+      // Frame the CONNECTED cluster, not the whole node cloud -- an orphan (no synergy edge at
+      // all, e.g. a land) sitting far from the deck's actual synergies used to set the bounding box
+      // and crush the cluster into a fraction of the frame (task-11 brief, Defect 1). Falls back to
+      // every node when nothing is connected (a zero-edge deck), so the box is never taken over an
+      // empty array -- that divides by nothing and leaves the camera at k = NaN.
+      const connected = nodes.filter((n) => n.deg > 0);
+      const framed = connected.length > 0 ? connected : nodes;
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-      for (const n of nodes) {
+      for (const n of framed) {
         minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x);
         minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y);
       }
