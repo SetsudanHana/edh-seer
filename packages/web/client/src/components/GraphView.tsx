@@ -48,11 +48,13 @@ const FIT_MARGIN = 0.9;
 /** How settled the board has to be before the one-time fit-to-view reads its bounding box. Close to
  *  ALPHA_FLOOR (0.02, board-force.ts) rather than a magic tick count: alpha decays toward the floor
  *  at a fixed per-TICK rate regardless of frame rate, so this lands at the same physical amount of
- *  settling on a slow device as a fast one, and it happens to fall almost exactly where this
- *  codebase's own "settled" convention already sits -- 800 ticks (board-layout.harness.ts's
- *  default) decays alpha from 1 to ~0.038 under the shipped ALPHA_DECAY (0.005), just past this
- *  threshold. A fit read from the unsettled seed cloud (tick 0) would frame where the cards
- *  temporarily are, not where they end up, and then go stale the moment the layout spreads. */
+ *  settling on a slow device as a fast one, and it sits just inside this codebase's own "settled"
+ *  convention: alpha (decaying toward ALPHA_FLOOR, NOT toward zero, at ALPHA_DECAY 0.005) crosses
+ *  0.05 at tick 696 and reaches 0.038 by tick 800 -- board-layout.harness.ts's default, and what
+ *  every cap was measured at. A fit read from the unsettled seed cloud (tick 0) would frame where
+ *  the cards temporarily are, not where they end up, and go stale the moment the layout spreads.
+ *  That window is seconds long, so a user CAN zoom inside it: the "zoom" handler cancels the
+ *  pending fit when it sees a real gesture, or the fit would overwrite their camera. */
 const FIT_SETTLE_ALPHA = 0.05;
 
 type Point = { x: number; y: number };
@@ -336,16 +338,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const cam = camRef.current;
     let raf = 0;
     // Reassigned once zoomBehavior/selection exist (below) -- same reason jumpZoomRef starts as a
-    // no-op and is filled in later: `loop`'s first call is synchronous, inside THIS effect, before
-    // those consts are declared, so a closure that captured them directly would hit their temporal
-    // dead zone the instant it ran. Effect-local rather than a ref: nothing outside this effect
-    // needs to call it. Kept as its own identity (not an inline `() => {}`) so the loop below can
-    // tell "not wired yet" apart from "wired, but the caller chose not to fit" -- alpha starts at
-    // 1 (or 0.3) on every real mount, well above FIT_SETTLE_ALPHA, so production never reaches the
-    // gap between this line and the real assignment; only a test forcing alpha low from tick one
-    // could, and the loop below must not silently mark that fit "done" against the placeholder.
-    const fitToViewPlaceholder = () => {};
-    let fitToView = fitToViewPlaceholder;
+    // no-op and is filled in later: it closes over consts declared further down, which a closure
+    // capturing them directly would hit in their temporal dead zone. Effect-local rather than a
+    // ref: nothing outside this effect needs to call it. The frame loop's first call is made AFTER
+    // the real assignment (see `loop()` below), so no tick ever runs against this stub.
+    let fitToView = () => {};
 
     const artLoader = artLoaderRef.current!;
 
@@ -548,16 +545,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     const loop = () => {
       simulation.tick();
       // <=, not <: an exactly-0.05 alpha is settled enough, and floating-point decay can land on
-      // it without ever going strictly below. `fitToView !== fitToViewPlaceholder` excludes this
-      // loop's own first, synchronous call -- see the comment on the placeholder above.
-      if (!fitted && fitToView !== fitToViewPlaceholder && simulation.alpha() <= FIT_SETTLE_ALPHA) {
+      // it without ever going strictly below.
+      if (!fitted && simulation.alpha() <= FIT_SETTLE_ALPHA) {
         fitToView();
         fitted = true;
       }
       draw();
       raf = requestAnimationFrame(loop);
     };
-    loop();
 
     // A resize only needs the canvas's own backing-store size updated. cam.x/y (the zoom translate)
     // is deliberately left untouched: it is an absolute, top-left-anchored offset, not a
@@ -603,6 +598,13 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       .scaleExtent([0.15, MAX_Z])
       .on("zoom", (e: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
         cam.x = e.transform.x; cam.y = e.transform.y; cam.z = e.transform.k;
+        // A camera the USER moved is never overwritten by the pending one-time fit. The board takes
+        // ~696 ticks to reach FIT_SETTLE_ALPHA (see its comment), which is seconds of real time, and
+        // anyone who zoomed inside that window had their move silently reverted the moment the fit
+        // fired. `sourceEvent` is what separates the two: d3 leaves it null for a programmatic
+        // `zoom.transform`, so the fit's own call -- and the initial camera seed -- cannot cancel
+        // themselves here.
+        if (e.sourceEvent) fitted = true;
       });
     // A pan and a click arrive as the same physical mousedown -> up. d3-zoom reports the transform
     // at gesture start; comparing it to the transform at gesture END is the same question
@@ -638,6 +640,12 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       selection.call(zoomBehavior.transform, t);
       gestureStart = t;
     };
+
+    // The frame loop starts HERE, after fitToView is real, rather than where it is defined. Its
+    // first call is synchronous, so starting it earlier would run ticks against the stub above --
+    // which an earlier revision guarded with a placeholder-identity check on every frame, forever,
+    // instead of moving one line.
+    loop();
 
     // CAMERA ONLY -- reads the settled node cloud's bounding box and moves the camera to frame it;
     // writes no node position (same rule as labels.ts). Routed through zoomBehavior.transform for

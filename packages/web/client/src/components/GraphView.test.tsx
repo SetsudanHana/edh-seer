@@ -580,6 +580,38 @@ describe("fit to view", () => {
     // And the fit really ran -- not a vacuous pass because nothing happened at all.
     expect(canvas.__graphProbe!().camZ).not.toBe(zBefore);
   });
+
+  // The board takes ~696 ticks to reach FIT_SETTLE_ALPHA -- seconds of real time -- so a user can
+  // easily zoom BEFORE the one-time fit fires. Until this guard, the pending fit then overwrote the
+  // camera they had just set. "Fit once per deck" was true and still let this through: the camera
+  // the user moved was not yet the "settled" one the bookkeeping was tracking.
+  test("a user's own zoom cancels the pending fit rather than being overwritten by it", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 300, height: 200, right: 300, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    let alpha = 1; // still settling, so the fit has NOT fired yet
+    const frozen = {
+      alpha: (v?: number) => { if (v !== undefined) alpha = v; return alpha; },
+      tick: () => frozen, stop: () => frozen,
+    } as unknown as ReturnType<typeof createBoardSimulation>;
+    vi.mocked(createBoardSimulation).mockReturnValueOnce(frozen);
+    const { canvas, tick } = frames(SAMPLE.graph);
+
+    // A real gesture, which is what `sourceEvent` distinguishes: endGesture passes the event
+    // through to d3-zoom exactly as production does.
+    act(() => {
+      canvas.__graphProbe!().endGesture(
+        { type: "mouseup", clientX: 10, clientY: 10 },
+        zoomIdentity.translate(5, 5).scale(3),
+      );
+    });
+    const zAfterUser = canvas.__graphProbe!().camZ;
+    expect(zAfterUser).toBe(3);
+
+    alpha = 0.01; // the board settles -- the fit would fire here if the gesture had not cancelled it
+    tick(2);
+    expect(canvas.__graphProbe!().camZ).toBe(zAfterUser);
+  });
 });
 
 // Card mode paints a 5:7 RECTANGLE (ART_RADIUS*2 wide, *1.4 tall); circular chrome stroked over it
