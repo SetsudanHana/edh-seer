@@ -127,6 +127,34 @@ export const ALPHA_FLOOR = 0.02;
  *  iteration, because integration is `x += vx *= 0.86` immediately after the force pass. */
 export const COLLIDE_ITERATIONS = 1;
 
+/** Cancels the board's COMMON-MODE velocity, every tick: subtracts the mean vx/vy over all nodes
+ *  from every node's own vx/vy. A node's velocity RELATIVE to every other node is untouched -- only
+ *  where the shape sits moves, never the shape itself -- so this cannot substitute for CENTER_PULL
+ *  (which still has to say WHERE that shape sits) and does not touch x/y directly, only the velocity
+ *  a force is for.
+ *
+ *  Why this is needed at all: alphaTarget is a FLOOR (ALPHA_FLOOR), so the simulation never stops,
+ *  and CENTER_PULL's restoring pull (0.0004) is too weak to hold the centroid against the drift the
+ *  rest of the board's asymmetric forces produce -- measured on sorin, centroid distance from the
+ *  origin went 27 -> 516 (800 ticks) -> 921 (40,000) and kept growing (task-10 brief). A d3 force is
+ *  any `function(alpha)`, optionally with `initialize(nodes)` -- the hook d3-force calls (once, when
+ *  the force is bound to a simulation) to hand a force the node array, since `force(alpha)` alone
+ *  carries no other way to reach it. This one needs that hook: averaging vx/vy across the whole
+ *  board has nothing to average over without the array. Registered LAST so it sees every other
+ *  force's contribution to vx/vy before d3 integrates. */
+function forceDeDrift() {
+  let nodes: Sim[] = [];
+  function force() {
+    if (nodes.length === 0) return;
+    let mvx = 0, mvy = 0;
+    for (const n of nodes) { mvx += n.vx; mvy += n.vy; }
+    mvx /= nodes.length; mvy /= nodes.length;
+    for (const n of nodes) { n.vx -= mvx; n.vy -= mvy; }
+  }
+  force.initialize = (ns: Sim[]) => { nodes = ns; };
+  return force;
+}
+
 /** The constants above, as one object a caller can override. The constants themselves stay the
  *  source of truth -- this references them rather than restating their numbers, so the measurement
  *  comments above remain the only place a value is written down.
@@ -200,6 +228,10 @@ export function createBoardSimulation(opts: {
       .iterations(p.collideIterations))
     .force("x", forceX<Sim>(0).strength(p.centerPull))
     .force("y", forceY<Sim>(0).strength(p.centerPull))
+    // LAST: d3 applies forces in insertion order and integrates afterwards, so this has to run
+    // after charge/link/collide/x/y have all written their contribution to vx/vy in order to
+    // cancel the BOARD's net translation rather than any one force's.
+    .force("deDrift", forceDeDrift())
     .velocityDecay(p.velocityDecay)
     .alphaDecay(p.alphaDecay)
     .alphaTarget(p.alphaFloor)

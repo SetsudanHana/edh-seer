@@ -42,6 +42,19 @@ const LABEL_PX = 11;
  *  commander or whatever's under the pointer still gets one. */
 const LABEL_ZOOM_FLOOR = 0.6;
 
+/** Fraction of the canvas the fitted board occupies on whichever axis is tighter -- a board that
+ *  touches the edges reads as cropped, not framed. */
+const FIT_MARGIN = 0.9;
+/** How settled the board has to be before the one-time fit-to-view reads its bounding box. Close to
+ *  ALPHA_FLOOR (0.02, board-force.ts) rather than a magic tick count: alpha decays toward the floor
+ *  at a fixed per-TICK rate regardless of frame rate, so this lands at the same physical amount of
+ *  settling on a slow device as a fast one, and it happens to fall almost exactly where this
+ *  codebase's own "settled" convention already sits -- 800 ticks (board-layout.harness.ts's
+ *  default) decays alpha from 1 to ~0.038 under the shipped ALPHA_DECAY (0.005), just past this
+ *  threshold. A fit read from the unsettled seed cloud (tick 0) would frame where the cards
+ *  temporarily are, not where they end up, and then go stale the moment the layout spreads. */
+const FIT_SETTLE_ALPHA = 0.05;
+
 type Point = { x: number; y: number };
 
 /** Screen pixels of camera translation between a zoom gesture's start and its end, below which the
@@ -322,6 +335,17 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
 
     const cam = camRef.current;
     let raf = 0;
+    // Reassigned once zoomBehavior/selection exist (below) -- same reason jumpZoomRef starts as a
+    // no-op and is filled in later: `loop`'s first call is synchronous, inside THIS effect, before
+    // those consts are declared, so a closure that captured them directly would hit their temporal
+    // dead zone the instant it ran. Effect-local rather than a ref: nothing outside this effect
+    // needs to call it. Kept as its own identity (not an inline `() => {}`) so the loop below can
+    // tell "not wired yet" apart from "wired, but the caller chose not to fit" -- alpha starts at
+    // 1 (or 0.3) on every real mount, well above FIT_SETTLE_ALPHA, so production never reaches the
+    // gap between this line and the real assignment; only a test forcing alpha low from tick one
+    // could, and the loop below must not silently mark that fit "done" against the placeholder.
+    const fitToViewPlaceholder = () => {};
+    let fitToView = fitToViewPlaceholder;
 
     const artLoader = artLoaderRef.current!;
 
@@ -515,8 +539,21 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       }
     };
 
+    // Fit once per deck, not once per mount: a `params` change (the tuning panel) re-runs this
+    // effect with isFirstLayout false, and re-fitting there would fight a camera the user has
+    // already moved. A brand-new graph on an existing GraphView instance re-seeds prevPositions to
+    // empty too (see `nodes` above), so isFirstLayout is exactly "a new deck (or a new graph)" --
+    // the brief's own words for when a refit is wanted.
+    let fitted = !isFirstLayout;
     const loop = () => {
       simulation.tick();
+      // <=, not <: an exactly-0.05 alpha is settled enough, and floating-point decay can land on
+      // it without ever going strictly below. `fitToView !== fitToViewPlaceholder` excludes this
+      // loop's own first, synchronous call -- see the comment on the placeholder above.
+      if (!fitted && fitToView !== fitToViewPlaceholder && simulation.alpha() <= FIT_SETTLE_ALPHA) {
+        fitToView();
+        fitted = true;
+      }
       draw();
       raf = requestAnimationFrame(loop);
     };
@@ -598,6 +635,32 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
     // it as a false drag.
     jumpZoomRef.current = (z: number) => {
       const t = zoomIdentity.translate(cam.x, cam.y).scale(z);
+      selection.call(zoomBehavior.transform, t);
+      gestureStart = t;
+    };
+
+    // CAMERA ONLY -- reads the settled node cloud's bounding box and moves the camera to frame it;
+    // writes no node position (same rule as labels.ts). Routed through zoomBehavior.transform for
+    // the same reason jumpZoomRef is, just above: a raw cam.x/y/z write would leave d3-zoom's own
+    // `__zoom` bookkeeping stale, and the next wheel event would jump. gestureStart is reset here
+    // too, so the click that follows a fit is not misread as the tail end of a pan.
+    fitToView = () => {
+      if (nodes.length === 0) return;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const n of nodes) {
+        minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x);
+        minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y);
+      }
+      // Pad by a card radius on every side -- the bbox above is CENTRES, and an unpadded fit would
+      // crop the outermost cards' own art in half.
+      const w = maxX - minX + ART_RADIUS * 2, h = maxY - minY + ART_RADIUS * 2;
+      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      const [zMin, zMax] = zoomBehavior.scaleExtent();
+      const k = Math.max(zMin, Math.min(zMax, FIT_MARGIN * Math.min(dim.w / w, dim.h / h)));
+      // Same translate-then-scale convention as the initial seed and jumpZoomRef above: the result
+      // transform's x/y/k land exactly on what's passed to .translate()/.scale(), so this centres
+      // (cx, cy) on the canvas at zoom k directly, with no separate re-derivation of cam.x/y.
+      const t = zoomIdentity.translate(dim.w / 2 - cx * k, dim.h / 2 - cy * k).scale(k);
       selection.call(zoomBehavior.transform, t);
       gestureStart = t;
     };

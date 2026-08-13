@@ -8,6 +8,7 @@ import {
 } from "./board-force.js";
 import { boardTrial, type TrialFixture } from "./board-trial.js";
 import inalla from "../fixtures/inalla-graph.json" with { type: "json" };
+import sorin from "../fixtures/sorin-graph.json" with { type: "json" };
 
 function card(id: string, x: number, y: number): Sim {
   return {
@@ -308,5 +309,34 @@ describe("the settled board, ten trials on inalla", () => {
     // two-card board sits nearly on it. Reducing over the unfiltered list instead puts the target
     // near LINK_DIST_MAX against an actual ~60, and this error jumps to ~198.
     expect(two.linkDistError).toBeLessThan(10);
+  });
+});
+
+/** DEFECT 1 (task-10 brief): the board is a random walk. `alphaTarget` is a floor, not a target it
+ *  settles at, so the simulation never stops -- and CENTER_PULL alone is too weak to hold the
+ *  centroid near the origin against that. Measured offline (scratchpad/drift.ts, same seeding as
+ *  boardTrial's own lcg(7)) on the sorin fixture: centroid distance from the origin goes
+ *  27 (tick 0) -> 516 (800) -> 609 (10,000) -> 921 (40,000) and keeps growing. Two horizons so a fix
+ *  that only slows the walk (rather than stopping it) still fails one of them. */
+describe("the board does not drift off screen", () => {
+  function centroidDistance(ticks: number): number {
+    // Seed 7 matches drift.ts's own LCG seed, so this reproduces the measured table above.
+    const { nodes } = boardTrial(sorin as TrialFixture, { ticks })(7);
+    const cx = nodes.reduce((s, n) => s + n.x, 0) / nodes.length;
+    const cy = nodes.reduce((s, n) => s + n.y, 0) / nodes.length;
+    return Math.hypot(cx, cy);
+  }
+
+  // Bound picked from what the de-drift force actually achieves: cancelling the common-mode
+  // velocity every tick keeps sum(vx)/sum(vy) at zero after each tick's forces, so the centroid's
+  // total displacement per tick is zero and it stays frozen at its tick-0 seed value -- measured at
+  // 27.3 on sorin, unmoved from 800 through 40,000 ticks (drift.ts). 100 is well clear of that and
+  // nowhere near today's failure (516 @ 800, 609 @ 10,000).
+  test("the centroid stays near the origin at 800 ticks", () => {
+    expect(centroidDistance(800)).toBeLessThan(100);
+  });
+
+  test("the centroid stays near the origin at 10,000 ticks, not just slower to drift", () => {
+    expect(centroidDistance(10000)).toBeLessThan(100);
   });
 });

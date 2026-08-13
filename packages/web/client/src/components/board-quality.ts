@@ -112,9 +112,34 @@ export interface Caps {
  *  units of it to make the board settle is a product judgement, not a computed one. `degnorm-k2` is
  *  a one-line change plus a re-cap if it is ever revisited. */
 export const QUALITY_CAPS: Record<string, Caps> = {
-  sorin: { nodeOverlaps: 0, edgeCrossings: 43058, linkDistError: 41 },
-  inalla: { nodeOverlaps: 0, edgeCrossings: 32740, linkDistError: 41 },
-  fairdrazi: { nodeOverlaps: 0, edgeCrossings: 35016, linkDistError: 48 },
-  changelings: { nodeOverlaps: 0, edgeCrossings: 6736, linkDistError: 36 },
-  braids: { nodeOverlaps: 0, edgeCrossings: 19796, linkDistError: 42 },
+  sorin: { nodeOverlaps: 0, edgeCrossings: 42237, linkDistError: 40 },
+  inalla: { nodeOverlaps: 0, edgeCrossings: 33368, linkDistError: 42 },
+  fairdrazi: { nodeOverlaps: 0, edgeCrossings: 34762, linkDistError: 48 },
+  changelings: { nodeOverlaps: 0, edgeCrossings: 6868, linkDistError: 36 },
+  braids: { nodeOverlaps: 0, edgeCrossings: 19335, linkDistError: 43 },
 };
+
+/** RE-CAPPED for task-10's de-drift force (board-force.ts's `forceDeDrift`), which cancels the
+ *  board's common-mode velocity every tick so the centroid stops walking off screen. That force
+ *  writes vx/vy, never x/y -- it cannot change the layout's SHAPE, only where that shape sits -- so
+ *  crossings/distError/overlaps (all translation-invariant on their own) should have been untouched
+ *  by it in isolation. They moved anyway, by single-digit percent, and the reason is `forceX`/
+ *  `forceY` (CENTER_PULL): that force pulls toward a FIXED point, which is not translation-invariant,
+ *  so once de-drift keeps the centroid pinned near its seed instead of wandering, CENTER_PULL is
+ *  acting on a different absolute position every tick from here on and the trajectory differs --
+ *  exactly the effect the brief predicted, not a layout regression.
+ *
+ *  Before -> after, five fixtures, same instrument (800 ticks, 10 trials):
+ *    sorin        crossings 43058 -> 42237 (-1.9%)   distErr 41 -> 40 (-2.4%)
+ *    inalla       crossings 32740 -> 33368 (+1.9%)   distErr 41 -> 42 (+2.4%)
+ *    fairdrazi    crossings 35016 -> 34762 (-0.7%)   distErr 48 -> 48 (unchanged)
+ *    changelings  crossings  6736 ->  6868 (+2.0%)   distErr 36 -> 36 (unchanged)
+ *    braids       crossings 19796 -> 19335 (-2.3%)   distErr 42 -> 43 (+2.4%)
+ *  nodeOverlaps stayed 0 -> 0 on every fixture. Every move is under 3%, nowhere near the brief's 10%
+ *  stop-and-diagnose line, so this is capped from the new measurement rather than investigated as a
+ *  regression. motionMean (uncapped, diagnostic only -- the 180-tick sample taken after the 800
+ *  settling ticks) also dropped, before -> after the de-drift force: sorin 13.75 -> 4.41, inalla
+ *  23.20 -> 8.83, fairdrazi 9.81 -> 3.76, changelings 4.60 -> 4.36, braids 9.17 -> 4.06. That drop is
+ *  the de-drift force doing its actual job, but it is NOT the instrument that caught DEFECT 1 --
+ *  180 ticks starting from an already-settled board never showed a walk this small to begin with;
+ *  the centroid-distance table in board-force.test.ts's own drift describe block is what did. */

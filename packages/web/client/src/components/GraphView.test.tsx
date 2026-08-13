@@ -8,6 +8,7 @@ import { zoomIdentity, type ZoomTransform } from "d3-zoom";
 import { CARD_MODE_Z } from "./card-node.js";
 import { IDENTITY_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE } from "./presets.js";
 import { createBoardSimulation, DEFAULT_PARAMS, LINK_DIST_MIN } from "./board-force.js";
+import sorinFixture from "../fixtures/sorin-graph.json" with { type: "json" };
 
 // Spies the real createBoardSimulation (importOriginal, not a stub) so every existing test still
 // gets a real simulation -- only the "drives the simulation's constants" test below reads the
@@ -521,6 +522,63 @@ describe("the camera", () => {
     const after = canvas.__graphProbe!().toWorld(at);
     expect(after.x).toBeCloseTo(before.x, 5);
     expect(after.y).toBeCloseTo(before.y, 5);
+  });
+});
+
+// Defect 2 (task-10 brief): the camera opened at the origin, zoom 1, while the node cloud settled
+// somewhere else entirely -- 13 of 84 cards on screen in the fullscreen measurement this reproduces
+// (1598x894, sorin). The fixture is the SAME 84-card deck that measurement used, not a synthetic
+// stand-in, because a handful of hand-placed nodes cannot reproduce a board wide enough to need a
+// real zoom-out.
+describe("fit to view", () => {
+  test("frames the whole settled board on screen after mount", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    const { canvas, tick } = frames(sorinFixture.graph as CardGraph);
+    // FIT_SETTLE_ALPHA (GraphView.tsx) sits just past 800 ticks under the shipped ALPHA_DECAY; 1000
+    // clears it with margin rather than chasing the exact crossing point.
+    tick(1000);
+    const probe = canvas.__graphProbe!();
+    // The visible WORLD rectangle: the canvas's own corners, inverted through whatever camera the
+    // fit landed on -- the same toWorld the pointer handlers use, not a reimplementation.
+    const topLeft = probe.toWorld({ clientX: 0, clientY: 0 });
+    const bottomRight = probe.toWorld({ clientX: 1598, clientY: 894 });
+    const [xMin, xMax] = [topLeft.x, bottomRight.x].sort((a, b) => a - b);
+    const [yMin, yMax] = [topLeft.y, bottomRight.y].sort((a, b) => a - b);
+    for (const n of probe) {
+      expect(n.x).toBeGreaterThanOrEqual(xMin);
+      expect(n.x).toBeLessThanOrEqual(xMax);
+      expect(n.y).toBeGreaterThanOrEqual(yMin);
+      expect(n.y).toBeLessThanOrEqual(yMax);
+    }
+  });
+
+  // CAMERA ONLY, same rule as labels.ts: a fit that nudged a node's own x/y (rather than just where
+  // the camera looks) would corrupt the very positions that encode synergy. Freezes the simulation
+  // (Task 7/8's own pattern) so any drift left over is the fit's doing and nothing else's -- but
+  // unlike that pattern, THIS mock's alpha() must return a real number (not the mock object itself):
+  // the fit gate reads it as a number to decide whether to fire at all.
+  test("a fit writes no node position, only the camera", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 300, height: 200, right: 300, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    // Starts high so the layout effect's OWN synchronous first tick (before the fit is even wired,
+    // see GraphView.tsx's comment on fitToViewPlaceholder) cannot mistake this for a settled board.
+    let alpha = 1;
+    const frozen = {
+      alpha: (v?: number) => { if (v !== undefined) alpha = v; return alpha; },
+      tick: () => frozen, stop: () => frozen,
+    } as unknown as ReturnType<typeof createBoardSimulation>;
+    vi.mocked(createBoardSimulation).mockReturnValueOnce(frozen);
+    const { canvas, tick } = frames(SAMPLE.graph);
+    const before = canvas.__graphProbe!().map((n) => ({ id: n.id, x: n.x, y: n.y }));
+    const zBefore = canvas.__graphProbe!().camZ;
+    alpha = 0.01; // now crosses FIT_SETTLE_ALPHA on the next tick
+    tick(1);
+    expect(canvas.__graphProbe!().map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(before);
+    // And the fit really ran -- not a vacuous pass because nothing happened at all.
+    expect(canvas.__graphProbe!().camZ).not.toBe(zBefore);
   });
 });
 
