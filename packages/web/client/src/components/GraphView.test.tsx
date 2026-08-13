@@ -637,7 +637,10 @@ describe("labels", () => {
     vi.mocked(createBoardSimulation).mockReturnValueOnce(frozen);
     const { canvas, tick } = frames(SAMPLE.graph);
     const before = canvas.__graphProbe!().map((n) => ({ id: n.id, x: n.x, y: n.y }));
-    fireEvent.wheel(canvas, { deltaY: -300 }); // crosses LABEL_ZOOM_FLOOR
+    // d3-zoom's wheelDelta puts this at k = 2^0.6 ~ 1.52, up from the default 1. That is well
+    // ABOVE LABEL_ZOOM_FLOOR (0.6), not across it -- the point is to be in the zoom band where
+    // every node is a label candidate, which is the widest the pass ever runs.
+    fireEvent.wheel(canvas, { deltaY: -300 });
     tick(3); // runs draw() -- and therefore the label pass -- with the simulation frozen
     expect(canvas.__graphProbe!().map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(before);
   });
