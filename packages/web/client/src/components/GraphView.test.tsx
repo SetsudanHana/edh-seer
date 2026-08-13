@@ -715,6 +715,72 @@ describe("fit to view", () => {
     tick(2);
     expect(canvas.__graphProbe!().camZ).toBe(zAfterUser);
   });
+
+  // Task 11 FIX ROUND: fitToView computed a camera once, against whatever the canvas measured at
+  // that instant, and never again -- so the normal way this board is viewed (open small, then go
+  // fullscreen) kept a camera framed for a pane a third the area of the real canvas. Measured in the
+  // browser (sorin fixture, in-tab 1534x518 -> fullscreen 1598x894): zoom stayed 0.538 across the
+  // resize where 1.053 was what actually fit. Reproduced here with a synthetic A-B pair rather than
+  // the sorin fixture, so the shrink (300x200 -> 100x67, same aspect ratio, a third the size) is
+  // large enough to be unmissable regardless of exactly where FIT_SETTLE_ALPHA lands the physics.
+  test("refits the camera when the canvas resizes while the fit still owns it", () => {
+    const rectSpy = vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 300, height: 200, right: 300, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "B" }), card({ id: "C" })],
+      [{ from: "A", to: "B", weight: 1, tags: [], reasonTexts: [] }],
+    );
+    const { canvas, tick } = frames(graph);
+    tick(1000); // settle and let the initial fit fire at the ORIGINAL 300x200
+
+    rectSpy.mockReturnValue({
+      left: 0, top: 0, width: 100, height: 67, right: 100, bottom: 67, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    act(() => { window.dispatchEvent(new Event("resize")); });
+
+    const probe = canvas.__graphProbe!();
+    const topLeft = probe.toWorld({ clientX: 0, clientY: 0 });
+    const bottomRight = probe.toWorld({ clientX: 100, clientY: 67 });
+    const [xMin, xMax] = [topLeft.x, bottomRight.x].sort((a, b) => a - b);
+    const [yMin, yMax] = [topLeft.y, bottomRight.y].sort((a, b) => a - b);
+    const a = probe.find((n) => n.id === "A")!;
+    const b = probe.find((n) => n.id === "B")!;
+    // Without a refit, the camera set for the 300x200 pane still shows the SAME world span, which
+    // does not fit inside a canvas a third the size -- A and/or B land outside it.
+    for (const n of [a, b]) {
+      expect(n.x).toBeGreaterThanOrEqual(xMin);
+      expect(n.x).toBeLessThanOrEqual(xMax);
+      expect(n.y).toBeGreaterThanOrEqual(yMin);
+      expect(n.y).toBeLessThanOrEqual(yMax);
+    }
+  });
+
+  // The other half of the same brief: a resize must NOT overwrite a camera the user has already
+  // taken over -- the exact promise the pre-fix `onResize` comment made ("would fight a user who has
+  // already panned"), which this fix must not lose.
+  test("does not refit on resize once the user has moved the camera", () => {
+    const rectSpy = vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 300, height: 200, right: 300, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    const { canvas, tick } = frames(SAMPLE.graph);
+    tick(1000);
+
+    act(() => {
+      canvas.__graphProbe!().endGesture(
+        { type: "mouseup", clientX: 10, clientY: 10 },
+        zoomIdentity.translate(5, 5).scale(3),
+      );
+    });
+    const afterUser = canvas.__graphProbe!().camZ;
+    expect(afterUser).toBe(3); // sanity: the gesture really did land
+
+    rectSpy.mockReturnValue({
+      left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    act(() => { window.dispatchEvent(new Event("resize")); });
+    expect(canvas.__graphProbe!().camZ).toBe(afterUser);
+  });
 });
 
 // Card mode paints a 5:7 RECTANGLE (ART_RADIUS*2 wide, *1.4 tall); circular chrome stroked over it

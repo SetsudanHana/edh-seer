@@ -156,10 +156,22 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   // Effect-local until the filter chips existed, which is why toggling one reset the view. A ref
   // survives the effect re-running, and the mode buttons below need to write z from outside it.
   const camRef = useRef({ x: 0, y: 0, z: 1 });
-  /** The graph object whose board has already been framed (or whose camera the user has taken over).
-   *  A ref, not effect-local state, because the fit has to survive the effect being torn down and
-   *  re-run for the same deck -- which is what StrictMode does on every dev mount. */
+  /** The graph object whose board has already had its ONE-TIME initial fit run. A ref, not
+   *  effect-local state, because the fit has to survive the effect being torn down and re-run for
+   *  the same deck -- which is what StrictMode does on every dev mount. Used to be the same ref as
+   *  `cameraOwnedByUserRef` below, conflating "the initial fit already ran" with "the user has taken
+   *  over the camera" -- which is exactly what made a resize unable to tell a camera the fit still
+   *  owns (safe to reframe) from one a user just panned (must be left alone), since both read as
+   *  "fitted" for the same reason. */
   const fittedGraphRef = useRef<CardGraph | null>(null);
+  /** The graph object whose camera a REAL user gesture (not the fit, not the initial seed) has
+   *  claimed. A resize consults THIS ref, not `fittedGraphRef`: while it is not the current graph,
+   *  the fit still owns the camera and a resize may reframe it for the new canvas size; once a
+   *  gesture claims it, a resize must leave the camera exactly alone -- the same promise the
+   *  pre-fix `onResize` comment made for a user who had already panned. Set only inside the "zoom"
+   *  handler's `sourceEvent` branch below, which is the same signal `fittedGraphRef` already used to
+   *  tell a real gesture from a programmatic transform. */
+  const cameraOwnedByUserRef = useRef<CardGraph | null>(null);
   // The Card/Miniature debug buttons jump the zoom level with no real pointer gesture behind it.
   // They used to write camRef.current.z directly, which left d3-zoom's own bookkeeping (the
   // canvas's `__zoom`) stale. Written by the layout effect once its zoomBehavior exists; the
@@ -562,12 +574,18 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       raf = requestAnimationFrame(loop);
     };
 
-    // A resize only needs the canvas's own backing-store size updated. cam.x/y (the zoom translate)
-    // is deliberately left untouched: it is an absolute, top-left-anchored offset, not a
-    // centre-relative one, so there is no dim-dependent term in it to recompute. A resize keeps the
-    // current pan/zoom exactly where it was on screen rather than re-centring the board, which
-    // would fight a user who has already panned.
-    const onResize = () => { dim = size(); };
+    // A resize updates the canvas's own backing-store size, then -- if the FIT still owns the
+    // camera (cameraOwnedByUserRef is not this graph) -- reframes it for the new dimensions. A
+    // camera the user deliberately moved is left exactly alone, which is what the original comment
+    // here protected; what it got wrong is that a camera the FIT last set is stale the instant the
+    // canvas changes size, and the normal way this board is viewed is exactly that: open small,
+    // then go fullscreen. Measured in the browser (sorin fixture): zoom stayed 0.538 across an
+    // in-tab-pane (1534x518) -> fullscreen (1598x894) resize, where 1.053 was what actually fit --
+    // 0.538 is also below LABEL_ZOOM_FLOOR (0.6), so the stale camera cost card names too.
+    const onResize = () => {
+      dim = size();
+      if (cameraOwnedByUserRef.current !== graph) fitToView();
+    };
     addEventListener("resize", onResize);
 
     // cam.x/y are top-left-anchored (see draw()'s doc comment above), the same convention
@@ -606,13 +624,18 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       .scaleExtent([0.15, MAX_Z])
       .on("zoom", (e: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
         cam.x = e.transform.x; cam.y = e.transform.y; cam.z = e.transform.k;
-        // A camera the USER moved is never overwritten by the pending one-time fit. The board takes
-        // ~696 ticks to reach FIT_SETTLE_ALPHA (see its comment), which is seconds of real time, and
-        // anyone who zoomed inside that window had their move silently reverted the moment the fit
-        // fired. `sourceEvent` is what separates the two: d3 leaves it null for a programmatic
+        // A camera the USER moved is never overwritten by the pending one-time fit, nor by a later
+        // resize (onResize, above). The board takes ~696 ticks to reach FIT_SETTLE_ALPHA (see its
+        // comment), which is seconds of real time, and anyone who zoomed inside that window had
+        // their move silently reverted the moment the fit fired. `sourceEvent` is what separates a
+        // real gesture from a programmatic one: d3 leaves it null for a programmatic
         // `zoom.transform`, so the fit's own call -- and the initial camera seed -- cannot cancel
-        // themselves here.
-        if (e.sourceEvent) { fitted = true; fittedGraphRef.current = graph; }
+        // themselves here, or claim `cameraOwnedByUserRef` they have no business claiming.
+        if (e.sourceEvent) {
+          fitted = true;
+          fittedGraphRef.current = graph;
+          cameraOwnedByUserRef.current = graph;
+        }
       });
     // A pan and a click arrive as the same physical mousedown -> up. d3-zoom reports the transform
     // at gesture start; comparing it to the transform at gesture END is the same question
