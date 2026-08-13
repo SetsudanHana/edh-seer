@@ -13,6 +13,7 @@ import {
   type BoardParams, type Sim, type SimLink,
 } from "./board-force.js";
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
+import { labelPriority, placeLabels } from "./labels.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
 // uses, while board-force.ts owns the values.
 export { ART_RADIUS, nodeRadius };
@@ -30,6 +31,15 @@ const BAR_H = 3;
  *  the middle into a solid sheet. */
 const EDGE_W_MIN = 0.4;
 const EDGE_W_MAX = 2.2;
+
+/** Screen px a card-name label renders at, held constant across zoom -- world-unit font size is
+ *  `LABEL_PX / cam.z`, same trick as the ×copies badge a few lines below. The formula was never the
+ *  defect (see labels.ts); what got labels deleted was letting the measured box feed back into
+ *  layout. It never does here: this constant reaches only the label pass at the end of draw(). */
+const LABEL_PX = 11;
+/** Below this zoom, most of the board is too small on screen for a name to mean anything -- only a
+ *  commander or whatever's under the pointer still gets one. */
+const LABEL_ZOOM_FLOOR = 0.6;
 
 type Point = { x: number; y: number };
 
@@ -75,7 +85,7 @@ export function edgeWidth(weight: number, maxWeight: number): number {
   return EDGE_W_MIN + t * (EDGE_W_MAX - EDGE_W_MIN);
 }
 
-export function GraphView({ graph }: { graph: CardGraph; report: DeckReport }) {
+export function GraphView({ graph, report }: { graph: CardGraph; report: DeckReport }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<
@@ -130,6 +140,11 @@ export function GraphView({ graph }: { graph: CardGraph; report: DeckReport }) {
   // buttons render before that effect runs and must survive it re-running without going stale,
   // hence a ref rather than a plain closure.
   const jumpZoomRef = useRef<(z: number) => void>(() => {});
+  // The card id under the pointer, read by the label pass inside the rAF loop -- a ref rather than
+  // `hover` (React state) for the same reason matchesRef/huesRef are refs: reading state there
+  // would either be stale between renders or force the layout effect to re-run on every
+  // pointermove, reheating the whole simulation as the user just moves the mouse.
+  const hoveredIdRef = useRef<string | null>(null);
 
   const paint = PAINT_MODES.find((m) => m.id === paintId) ?? PAINT_MODES[0];
   /** What the current paint mode's colours mean, for this deck. */
@@ -144,6 +159,17 @@ export function GraphView({ graph }: { graph: CardGraph; report: DeckReport }) {
   }, [paint, graph]);
   const huesRef = useRef<Map<string, string[]>>(new Map());
   huesRef.current = huesById;
+
+  // Card names in the command zone. Node ids ARE card names (labels.ts's brief), so this is a
+  // direct Set of ids. `report` is otherwise unread by this component -- this is its first real
+  // consumer. Read through a ref by the label pass, same reason as huesRef: it runs inside the rAF
+  // loop, and `report` is not a dependency of the layout effect below.
+  const commanders = useMemo(
+    () => new Set(report.cards.filter((c) => c.isCommander).map((c) => c.name)),
+    [report],
+  );
+  const commandersRef = useRef<Set<string>>(new Set());
+  commandersRef.current = commanders;
 
   /** Card node ids matching the current search, or null when the box is empty. Null and "the
    *  empty set" mean different things to the draw pass: null dims nothing, an empty set (a query
@@ -214,7 +240,16 @@ export function GraphView({ graph }: { graph: CardGraph; report: DeckReport }) {
     const links: SimLink[] = graph.edges
       .map((e) => ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight }))
       .filter((l): l is SimLink => Boolean(l.source && l.target));
-    for (const l of links) { l.source.deg++; l.target.deg++; }
+    // Sum of weight over every link touching a node -- NOT `deg` (a partner COUNT) a few lines
+    // below. An edge is binary but synergy has magnitude (CLAUDE.md): a card with six weak partners
+    // must not outrank one with two strong ones for a label. Built once here, read every frame by
+    // the label pass through the draw() closure below, never recomputed per frame.
+    const weightedDegree = new Map<string, number>();
+    for (const l of links) {
+      l.source.deg++; l.target.deg++;
+      weightedDegree.set(l.source.id, (weightedDegree.get(l.source.id) ?? 0) + l.weight);
+      weightedDegree.set(l.target.id, (weightedDegree.get(l.target.id) ?? 0) + l.weight);
+    }
     const maxWeight = links.reduce((m, l) => Math.max(m, l.weight), 0);
 
     const simulation = createBoardSimulation({ nodes, links, params });
@@ -426,6 +461,42 @@ export function GraphView({ graph }: { graph: CardGraph; report: DeckReport }) {
       // Canvas state is global and persistent, so a search left dimming on would leak into the
       // next frame's first edge.
       ctx.globalAlpha = 1;
+
+      // SEMANTIC-ZOOM LABELS -- pure paint (labels.ts). No node's x/y/radius is ever read FROM
+      // this pass, only INTO it: overlap is resolved in screen space, after the fact, and the
+      // result is a draw decision only. Below the zoom floor the candidate set itself narrows to
+      // commanders and the hovered neighbourhood, rather than asking placeLabels to reject 90-odd
+      // boxes crammed into a few screen px every frame.
+      const hoveredId = hoveredIdRef.current;
+      const hoveredSet = hoveredId
+        ? new Set([hoveredId, ...(neighborsOf.get(hoveredId) ?? [])])
+        : new Set<string>();
+      const candidates = cam.z < LABEL_ZOOM_FLOOR
+        ? nodes.filter((n) => commandersRef.current.has(n.id) || hoveredSet.has(n.id))
+        : nodes;
+      if (candidates.length > 0) {
+        // World-unit font size so it renders at a constant LABEL_PX screen px -- the formula the
+        // deleted room labels also used (roomFontPx); the defect was never the formula, only that
+        // its measured box got fed back into layout. ctx.measureText here returns a WORLD-unit
+        // width (it is unaffected by the active transform's scale, only by the font size that
+        // transform will later stretch), so it is multiplied by cam.z below to land in screen
+        // space -- an unconverted world box compared as though it were screen px is the exact bug
+        // that got labels deleted the first time (see this task's brief).
+        ctx.font = `500 ${LABEL_PX / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
+        ctx.textAlign = "center";
+        ctx.fillStyle = paintColors.fg;
+        const order = labelPriority(candidates, weightedDegree, commandersRef.current, hoveredSet);
+        const boxes = order.map((id) => {
+          const n = byId.get(id)!;
+          const wScreen = ctx.measureText(n.label).width * cam.z;
+          const sx = n.x * cam.z + cam.x, sy = n.y * cam.z + cam.y;
+          return { id, x: sx - wScreen / 2, y: sy - nodeRadius() * cam.z - LABEL_PX, w: wScreen, h: LABEL_PX };
+        });
+        for (const id of placeLabels(boxes)) {
+          const n = byId.get(id)!;
+          ctx.fillText(n.label, n.x, n.y - nodeRadius() - 4 / cam.z);
+        }
+      }
     };
 
     const loop = () => {
@@ -558,6 +629,7 @@ export function GraphView({ graph }: { graph: CardGraph; report: DeckReport }) {
       // A card's roles, translated to plain language -- the detailed build-category vocabulary the
       // canvas itself no longer shows.
       const detail = n ? (n.roles ?? []).map(subcategoryLabel).join(" · ") : "";
+      hoveredIdRef.current = n?.id ?? null;
       setHover(n
         ? {
             label: n.label, copies: n.copies ?? 1, deg: n.deg, detail,

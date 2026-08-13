@@ -618,3 +618,27 @@ describe("hover", () => {
     expect(screen.queryByText(/extra mana/)).toBeNull();
   });
 });
+
+// The paint-mode half of "labels never touch geometry" is already covered by "repaints without
+// moving a single card" above (Task 5) -- that one pins x/y across a facet switch. This is the
+// zoom half: crossing LABEL_ZOOM_FLOOR turns the label pass on, and it must be just as inert.
+describe("labels", () => {
+  // An ordinary tick already moves a node a little regardless of labels -- board-force.ts's
+  // ALPHA_FLOOR keeps the simulation's alpha above zero forever, so it never fully damps out (see
+  // its own doc comment). Comparing positions across a real tick would therefore fail on physics
+  // drift alone and prove nothing about labels specifically. This freezes the simulation itself
+  // (via the createBoardSimulation spy declared at the top of this file) to a no-op, leaving x/y
+  // untouched by anything except draw() -- so any drift left over is the label pass's doing and
+  // nothing else's.
+  test("writes no node position when the label pass draws at a high zoom", () => {
+    const frozen = {
+      alpha: () => frozen, tick: () => frozen, stop: () => frozen,
+    } as unknown as ReturnType<typeof createBoardSimulation>;
+    vi.mocked(createBoardSimulation).mockReturnValueOnce(frozen);
+    const { canvas, tick } = frames(SAMPLE.graph);
+    const before = canvas.__graphProbe!().map((n) => ({ id: n.id, x: n.x, y: n.y }));
+    fireEvent.wheel(canvas, { deltaY: -300 }); // crosses LABEL_ZOOM_FLOOR
+    tick(3); // runs draw() -- and therefore the label pass -- with the simulation frozen
+    expect(canvas.__graphProbe!().map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(before);
+  });
+});
