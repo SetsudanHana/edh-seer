@@ -1,91 +1,100 @@
 [
-  {
-    "a": "Forbidden Orchard",
-    "b": "Will of the Sultai",
-    "verdict": "neutral",
-    "stratum": "linked",
-    "judgedAt": "2026-08-05T23:09:12.186Z",
-    "note": "Was quarantined 2026-08-05 as a false edge. Re-measured 2026-08-07: the engine no longer links these, so the defect is fixed and the quarantine is banked."
-  },
-  {
-    "a": "Manaform Hellkite",
-    "b": "Elemental Eruption",
-    "verdict": "synergy",
-    "stratum": "linked",
-    "note": "Manaform Helkite  triggers on noncreature spells and not spells overall",
-    "judgedAt": "2026-08-05T23:10:50.397Z"
-  },
-  {
-    "a": "Mascot Exhibition",
-    "b": "Inkshield",
-    "verdict": "neutral",
-    "stratum": "shared-tag",
-    "note": "they both would fit in the same deck but there is no synergy between them, cause both just supy token creatures",
-    "judgedAt": "2026-08-05T23:11:58.744Z"
-  },
-  {
-    "a": "Court of Embereth",
-    "b": "Dion, Bahamut's Dominant // Bahamut, Warden of Light",
-    "verdict": "synergy",
-    "stratum": "shared-tag",
-    "note": "Court of Embereth second trigger deals damage to opponent based on amount of creatures you control, so token creation of creatures directl feeds it",
-    "knownDefect": true,
-    "judgedAt": "2026-08-05T23:13:58.437Z"
-  },
-  {
-    "a": "Warehouse Tabby",
-    "b": "Marrow-Gnawer",
-    "verdict": "neutral",
-    "stratum": "shared-tag",
-    "judgedAt": "2026-08-05T23:14:19.123Z"
-  },
-  {
-    "a": "Grave Endeavor",
-    "b": "Smuggler's Buggy",
-    "verdict": "neutral",
-    "stratum": "random",
-    "tagDefects": [
-      {
-        "card": "Smuggler's Buggy",
-        "note": "hidaway is basically also some sort of card adventage, cause you take those cards form your library and then you basically can play it without paying for it if you fulfill condition"
-      }
-    ],
-    "judgedAt": "2026-08-05T23:17:00.951Z"
-  },
-  {
-    "a": "Master Transmuter",
-    "b": "Enhanced Surveillance",
-    "verdict": "neutral",
-    "stratum": "random",
-    "tagDefects": [
-      {
-        "card": "Master Transmuter",
-        "note": "this is not static ability, this is activated ability that allows you to cheat artifact from your hand in to the play, so it would naturally be more powerful with more expensive artifacts"
-      },
-      {
-        "card": "Enhanced Surveillance",
-        "note": "provides you with graveyard recursion by shuffeling your library to your deck and also synergizez with surveil cause it allows you to look at more cards"
-      }
-    ],
-    "judgedAt": "2026-08-05T23:19:26.713Z"
-  },
-  {
-    "a": "K-9, Mark I",
-    "b": "Ellie and Alan, Paleontologists",
-    "verdict": "synergy",
-    "stratum": "random",
-    "tagDefects": [
-      {
-        "card": "K-9, Mark I",
-        "note": "this has activated ability that gives 1 legendary creature unblockable, and also static ability which gives legendary creatures ward 1 so it is legends matter type of synergy"
-      },
-      {
-        "card": "Ellie and Alan, Paleontologists",
-        "note": "exiling from your graveyard is not graveyard hate, effects like discovery or cascade are not top manupulation, they cheat spells from from your library if those spells cost less than X (the first one you will meet when seeing), Dicovery has this upside that you can choose to not cast it and then put it into your hand which it double's down for a draw"
-      }
-    ],
-    "note": "K-9 synergizes with legendary creatures",
-    "knownDefect": true,
-    "judgedAt": "2026-08-05T23:23:21.171Z"
-  }
+ {
+  "a": "Forbidden Orchard",
+  "b": "Will of the Sultai",
+  "verdict": "neutral",
+  "stratum": "linked",
+  "judgedAt": "2026-08-05T23:09:12.186Z",
+  "note": "Was quarantined 2026-08-05 as a false edge. Re-measured 2026-08-07: the engine no longer links these, so the defect is fixed and the quarantine is banked."
+ },
+ {
+  "a": "Manaform Hellkite",
+  "b": "Elemental Eruption",
+  "verdict": "synergy",
+  "stratum": "linked",
+  "note": "Manaform Helkite  triggers on noncreature spells and not spells overall",
+  "judgedAt": "2026-08-05T23:10:50.397Z"
+ },
+ {
+  "a": "Mascot Exhibition",
+  "b": "Inkshield",
+  "verdict": "neutral",
+  "stratum": "shared-tag",
+  "note": "they both would fit in the same deck but there is no synergy between them, cause both just supy token creatures",
+  "judgedAt": "2026-08-05T23:11:58.744Z"
+ },
+ {
+  "a": "Court of Embereth",
+  "b": "Dion, Bahamut's Dominant // Bahamut, Warden of Light",
+  "verdict": "synergy",
+  "stratum": "shared-tag",
+  "note": "Court of Embereth second trigger deals damage to opponent based on amount of creatures you control, so token creation of creatures directl feeds it",
+  "knownDefect": true,
+  "judgedAt": "2026-08-05T23:13:58.437Z"
+ },
+ {
+  "a": "Warehouse Tabby",
+  "b": "Marrow-Gnawer",
+  "verdict": "neutral",
+  "stratum": "shared-tag",
+  "judgedAt": "2026-08-05T23:14:19.123Z"
+ },
+ {
+  "a": "Grave Endeavor",
+  "b": "Smuggler's Buggy",
+  "verdict": "neutral",
+  "stratum": "random",
+  "tagDefects": [
+   {
+    "card": "Smuggler's Buggy",
+    "note": "hidaway is basically also some sort of card adventage, cause you take those cards form your library and then you basically can play it without paying for it if you fulfill condition"
+   }
+  ],
+  "judgedAt": "2026-08-05T23:17:00.951Z"
+ },
+ {
+  "a": "Master Transmuter",
+  "b": "Enhanced Surveillance",
+  "verdict": "neutral",
+  "stratum": "random",
+  "tagDefects": [
+   {
+    "card": "Master Transmuter",
+    "note": "this is not static ability, this is activated ability that allows you to cheat artifact from your hand in to the play, so it would naturally be more powerful with more expensive artifacts"
+   },
+   {
+    "card": "Enhanced Surveillance",
+    "note": "provides you with graveyard recursion by shuffeling your library to your deck and also synergizez with surveil cause it allows you to look at more cards"
+   }
+  ],
+  "judgedAt": "2026-08-05T23:19:26.713Z"
+ },
+ {
+  "a": "K-9, Mark I",
+  "b": "Ellie and Alan, Paleontologists",
+  "verdict": "synergy",
+  "stratum": "random",
+  "tagDefects": [
+   {
+    "card": "K-9, Mark I",
+    "note": "this has activated ability that gives 1 legendary creature unblockable, and also static ability which gives legendary creatures ward 1 so it is legends matter type of synergy"
+   },
+   {
+    "card": "Ellie and Alan, Paleontologists",
+    "note": "exiling from your graveyard is not graveyard hate, effects like discovery or cascade are not top manupulation, they cheat spells from from your library if those spells cost less than X (the first one you will meet when seeing), Dicovery has this upside that you can choose to not cast it and then put it into your hand which it double's down for a draw"
+   }
+  ],
+  "note": "K-9 synergizes with legendary creatures",
+  "knownDefect": true,
+  "judgedAt": "2026-08-05T23:23:21.171Z"
+ },
+ {
+  "a": "Big Score",
+  "b": "Warstorm Surge",
+  "verdict": "neutral",
+  "stratum": "linked",
+  "note": "Defect B: Big Score is an Instant creating two Treasure tokens and no creature. The treasure emit carries no type, so the hierarchy fallback (treasure -> artifact+creature, because Goldhound exists) satisfies Warstorm Surge enters:creature. Banked before the fix as its witness.",
+  "knownDefect": true,
+  "judgedAt": "2026-08-13T22:49:31.990Z"
+ }
 ]

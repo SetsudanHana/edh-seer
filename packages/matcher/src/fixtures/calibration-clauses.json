@@ -1182,5 +1182,115 @@
   "clauseTexts": {
    "1": "Discover X, where X is the mana value of the exiled card. Activate only as a sorcery."
   }
+ },
+ {
+  "name": "Big Score",
+  "oracleId": "a5cbd257-c836-493e-bb1a-76242619dea2",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "Treasure tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 4,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "treasure"
+   ]
+  },
+  "clauseTexts": {
+   "1": "As an additional cost to cast this spell, discard a card.",
+   "2": "Draw two cards and create two Treasure tokens."
+  }
+ },
+ {
+  "name": "Warstorm Surge",
+  "oracleId": "42fb1a1c-ab3d-4cdc-a6ff-a591f7481583",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "its power",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [],
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 6,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever a creature you control enters, it deals damage equal to its power to any target."
+  }
  }
 ]
