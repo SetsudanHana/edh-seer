@@ -25,12 +25,29 @@
  *      on, and both directions there are proven to fire.
  *
  *  A CAP OF 0 IS THE HARD CONDITION, unchanged. Nothing currently clean is weakened by this table;
- *  it only writes down where the board already fails. 19 of the 25 cases are zero on
- *  all four counts.
+ *  it only writes down where the board already fails. 20 of the 25 cases are zero on the four hard
+ *  counts (escapesTwo is soft and nonzero nearly everywhere -- see Caps below).
  *
  *  Raise a number only with a written reason. Lower it the moment something improves.
  *
  *  RAISES SO FAR, each with its reason.
+ *
+ *  5. LENS_DEMAND 0.25 (2026-08-13) -- separation retargeted from tangency to the overlap a pair's
+ *  SHARED members need. Raise 4 below was measured against three metrics that could not see its
+ *  own cost: driving every overlapping pair toward zero overlap shrank every lens 2-4x, and a lens
+ *  with no area is nowhere for a card in both rooms to stand. escapes.two is gated from this raise
+ *  onward so that cannot happen again.
+ *
+ *  18 counts over, 6 banked, across 5 cases. 14 of the 18 are `unresolved`, the softest of the
+ *  five, and the case this work exists for -- fairdrazi/Colour, the WUBRG deck where every gold
+ *  card is multi-room -- IMPROVES on two of three: overlaps 10 -> 7, intrusions 14 -> 11, against
+ *  unresolved 22 -> 26. Board-wide it buys 233 escapes for 12 hard counts; demand 1 buys 491 for
+ *  83, which is the trade this 0.25 was chosen to avoid. See LENS_DEMAND in board-force.ts for the
+ *  sweep and for why the middle of that curve cannot be ranked at ten trials.
+ *
+ *  Three caps of 0 go non-zero (inalla/Subtype overlaps and intrusions, changelings/Subtype
+ *  unresolved), which this file treats as the expensive kind of raise, and one already-raised cap
+ *  goes 2 -> 3 (sorin/Subtype intrusions).
  *
  *  4. ROOM_SEPARATION 0.02 (2026-08-13) -- the first force that pushes one ROOM off another
  *  directly. ONE number rises, sorin/Subtype intrusions 0 -> 2, and it is a cap of 0 becoming
@@ -87,37 +104,46 @@ export interface Caps {
   intrusions: number;
   /** Cards the projection could not place, counted against the circles as drawn. */
   unresolved: number;
+  /** A card in exactly TWO rooms, outside at least one of them.
+   *
+   *  GATED SINCE 2026-08-13, and it should have been from the start. It was measured and printed
+   *  from the beginning and capped by nothing, so every room-geometry change to date was scored
+   *  blind to it -- which is how ROOM_SEPARATION shipped a 2-4x lens shrink with every gated
+   *  number improving. It is the SOFT one of the five (two circles cannot always give a shared
+   *  card a legal position at all), so its caps are large and its job is to catch a change that
+   *  moves it by a lot, not to reach zero. */
+  escapesTwo: number;
 }
 
 /** Keyed `<fixture>/<preset label>`. Every fixture x preset the harness runs needs an entry --
  *  board-acceptance.test.ts fails if one is missing, so a newly captured deck cannot join the
  *  harness without someone looking at what it does. */
 export const ACCEPTANCE: Record<string, Caps> = {
-  "sorin/Role":            { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "sorin/Type":            { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "sorin/Colour":          { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "sorin/Mana value":      { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "sorin/Subtype":         { escapesOne: 0, overlaps:   0, intrusions:  2, unresolved:   0 },  // intrusions 0->2, raise 4
-  "inalla/Role":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "inalla/Type":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "inalla/Colour":         { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },  // 4/6/3 -> clean on all three
-  "inalla/Mana value":     { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "inalla/Subtype":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   2 },  // unresolved 8->2
-  "fairdrazi/Role":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },  // overlaps 1->0, unresolved 5->0
-  "fairdrazi/Type":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "fairdrazi/Colour":      { escapesOne: 0, overlaps:  10, intrusions: 14, unresolved:  22 },  // overlaps 29->10, intrusions 17->14, unresolved 50->22
-  "fairdrazi/Mana value":  { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "fairdrazi/Subtype":     { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "changelings/Role":      { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "changelings/Type":      { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "changelings/Colour":    { escapesOne: 0, overlaps:   0, intrusions:  1, unresolved:   0 },
-  "changelings/Mana value":{ escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "changelings/Subtype":   { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },  // intrusions 2->0, unresolved 8->0
-  "braids/Role":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "braids/Type":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "braids/Colour":         { escapesOne: 0, overlaps:   1, intrusions:  0, unresolved:   0 },
-  "braids/Mana value":     { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
-  "braids/Subtype":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0 },
+  "sorin/Role":              { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo: 121 },
+  "sorin/Type":              { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:  16 },
+  "sorin/Colour":            { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo: 130 },
+  "sorin/Mana value":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:   0 },
+  "sorin/Subtype":           { escapesOne: 0, overlaps:   0, intrusions:  3, unresolved:   0, escapesTwo:  22 },  // intrusions 0->2 raise 4, 2->3 raise 5
+  "inalla/Role":             { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo: 174 },
+  "inalla/Type":             { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:   0 },
+  "inalla/Colour":           { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   5, escapesTwo: 220 },  // overlaps+intrusions 4/6 -> 0, unresolved 0->5 raise 5
+  "inalla/Mana value":       { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:   0 },
+  "inalla/Subtype":          { escapesOne: 0, overlaps:   1, intrusions:  2, unresolved:   6, escapesTwo: 148 },  // unresolved 8->2 raise 4, then 0/0/2 -> 1/2/6 raise 5
+  "fairdrazi/Role":          { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo: 116 },  // overlaps 1->0, unresolved 5->0; clean through raise 5
+  "fairdrazi/Type":          { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:  52 },
+  "fairdrazi/Colour":        { escapesOne: 0, overlaps:   7, intrusions: 11, unresolved:  26, escapesTwo: 312 },  // 29/17/50 -> 10/14/22 raise 4 -> 7/11/26 raise 5
+  "fairdrazi/Mana value":    { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:   0 },
+  "fairdrazi/Subtype":       { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:  19 },
+  "changelings/Role":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:  82 },
+  "changelings/Type":        { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:  86 },
+  "changelings/Colour":      { escapesOne: 0, overlaps:   0, intrusions:  1, unresolved:   0, escapesTwo: 172 },
+  "changelings/Mana value":  { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:   0 },
+  "changelings/Subtype":     { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   1, escapesTwo:  35 },  // intrusions 2->0, unresolved 8->0, then 0->1 raise 5
+  "braids/Role":             { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo: 115 },
+  "braids/Type":             { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:  69 },
+  "braids/Colour":           { escapesOne: 0, overlaps:   1, intrusions:  0, unresolved:   0, escapesTwo:   0 },
+  "braids/Mana value":       { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:   0 },
+  "braids/Subtype":          { escapesOne: 0, overlaps:   0, intrusions:  0, unresolved:   0, escapesTwo:   0 },
 };
 
-export const zero: Caps = { escapesOne: 0, overlaps: 0, intrusions: 0, unresolved: 0 };
+export const zero: Caps = { escapesOne: 0, overlaps: 0, intrusions: 0, unresolved: 0, escapesTwo: 0 };

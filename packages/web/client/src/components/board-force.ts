@@ -2,7 +2,7 @@ import {
   forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY,
   type Simulation,
 } from "d3-force";
-import { ART_RADIUS, COLLISION_PAD, roomLayout } from "./deck-rooms.js";
+import { ART_RADIUS, CARD_FOOTPRINT_R, COLLISION_PAD, PACK, roomLayout } from "./deck-rooms.js";
 import type { Circle, RoomId, RoomTally } from "./deck-rooms.js";
 import type { GraphNode } from "../types.js";
 
@@ -560,7 +560,68 @@ export function forceRoomContainment(opts: {
  *  DOWN, 24 -> 17. */
 export const ROOM_SEPARATION = 0.02;
 
-/** Pushes apart two rooms whose circles overlap but whose memberships do not.
+/** What FRACTION of a full packing slot each shared card asks for in the lens.
+ *
+ *  1 asks for the same area roomRadius gives a card in its own room, and that is more than the
+ *  constraint actually needs: containment only requires a card to be INSIDE both circles, not
+ *  comfortably packed there, and a card in three rooms does not need a private slot in each of the
+ *  three pairwise lenses -- it stands in the region where all three meet, which every one of those
+ *  pairs already contains. A full-slot demand therefore double-counts every card in 3+ rooms and
+ *  over-asks for all of them.
+ *
+ *  Below 1 the pair is held at a narrower lens, so the rooms are pulled together less hard. Since
+ *  w scales as need^(2/3), a demand of f moves the target width by f^(2/3) -- half the demand is
+ *  63% of the width, not half of it.
+ *
+ *  Swept at ROOM_SEPARATION 0.02 over five fixtures x five presets x ten trials. `hard` is
+ *  overlaps + intrusions + unresolved, `esc` is escapes.two + escapes.3+; 0 is the old
+ *  tangency target, kept for comparison:
+ *
+ *      demand   hard   esc
+ *      0 (old)    52  2468
+ *      0.25       64  2235   -- chosen
+ *      0.5       156  2144
+ *      0.75      109  2012
+ *      1         135  1977
+ *
+ *  ESC IS THE SIGNAL, HARD IS NOISY. esc falls monotonically across the whole sweep; hard does
+ *  not -- 0.5 is worse than both its neighbours, so the middle of that curve cannot be ranked at
+ *  ten trials and no reading should be built on 0.5 vs 0.75 vs 1. 0.25 does not need the ranking:
+ *  it is the best hard total AND buys 233 escapes, +12 hard against the old target where demand 1
+ *  costs +83 for 491.
+ *
+ *  Low rather than high because the demand is an over-ask by construction, and 0.25 is where the
+ *  over-ask is paid off rather than where the lens stops mattering. */
+export const LENS_DEMAND = 0.25;
+
+/** The overlap two rooms need so the cards in BOTH have somewhere legal to stand.
+ *
+ *  Spends the same area per card that roomRadius spends on a room's own members -- pi *
+ *  CARD_FOOTPRINT_R^2 / PACK each -- so a lens and a room agree about how much space a card takes.
+ *
+ *  The geometry: a lens of width w between circles of effective radius r is two circular segments,
+ *  area ~ (4/3) * w^(3/2) * sqrt(r), taking the chord as ~2*sqrt(r*w) while w is small next to r.
+ *  Inverted for w, which is what the force needs -- it acts on a distance, not on an area. An exact
+ *  lens area is a closed form, but it does not INVERT in closed form, and the approximation errs on
+ *  the side of asking for slightly too much room while w stays well under r.
+ *
+ *  Harmonic mean for r: the tighter circle governs how wide the lens can get.
+ *
+ *  Never asks for more than full containment of the smaller circle. Past 2*min(r) the demand is
+ *  unsatisfiable at any centre distance, and an unsatisfiable demand pulls a pair together forever
+ *  -- which is how this force would earn back the collapse it exists to prevent. */
+export function requiredOverlap(
+  shared: number, ra: number, rb: number, demand: number = LENS_DEMAND,
+): number {
+  if (shared <= 0) return 0;
+  const need = (demand * Math.PI * CARD_FOOTPRINT_R * CARD_FOOTPRINT_R * shared) / PACK;
+  const r = (2 * ra * rb) / (ra + rb);
+  const w = Math.cbrt(((3 * need) / (4 * Math.sqrt(r))) ** 2);
+  return Math.min(w, 2 * Math.min(ra, rb));
+}
+
+/** Holds two rooms at the overlap their SHARED members need: pushes apart when they are closer
+ *  than that, pulls together when they are further.
  *
  *  Nothing has ever separated rooms directly. Long-range repulsion does it second-hand -- it holds
  *  the whole board apart, so distinct clusters stay distinct -- which is why shortening the range
@@ -568,20 +629,30 @@ export const ROOM_SEPARATION = 0.02;
  *  each other. Measured at REPULSION_RANGE 200, fairdrazi/Colour intrusions went 28 -> 132, and a
  *  wider foreignPush margin did not touch it, because a rim margin cannot reach a whole room.
  *
- *  EVERY PAIR, and the shared cards are what make that safe. This started as disjoint pairs only,
- *  on the reasoning that two rooms sharing a card must be allowed to intersect. That restriction is
- *  unnecessary (owner's observation): a card in both rooms appears in BOTH member lists, so the
- *  push gives it -k from one and +k from the other and it nets to exactly zero. Shared cards do not
- *  move, and because a circle is centred on its members, they anchor both circles.
+ *  EVERY PAIR. This started as disjoint pairs only, on the reasoning that two rooms sharing a card
+ *  must be allowed to intersect; the restriction was unnecessary, because a card in both rooms
+ *  appears in BOTH member lists and takes -k from one and +k from the other, netting to zero.
  *
- *  So a pair separates only as far as its shared membership allows, and then stops. Two rooms
- *  sharing nothing push apart until they no longer overlap; two rooms sharing half their cards
- *  barely move; a room nested inside another cannot be moved by this force at all. No threshold
- *  decides that -- the membership does.
+ *  BUT NETTING TO ZERO IS NOT A TETHER, and the first version of this comment claimed it was: "a
+ *  pair separates only as far as its shared membership allows". That is false, and the board showed
+ *  it. A shared card feels no NET force, so it does not move -- but nothing holds the two circles
+ *  to it. The UNSHARED members carry both centroids apart, the circles recentre on their members
+ *  each tick, and the shared cards are left stranded outside both receding rims. Measured: pushing
+ *  every overlapping pair toward zero overlap shrank every lens 2-4x, and inalla/Colour's R+U lens
+ *  ended up holding 1.2 card discs against the 7 cards that need it, B+U 0.7 against 6.
+ *
+ *  So the target is not tangency, it is `requiredOverlap`. A pair sharing nothing wants zero
+ *  overlap, which is exactly the original behaviour; a pair sharing cards wants a lens big enough
+ *  for them, and is pulled together when the board has pushed it past that.
+ *
+ *  A pair sharing nothing is only ever pushed APART, never drawn together -- two unrelated clusters
+ *  have no reason to meet, and that guarantee is what keeps this force's original purpose intact.
  *
  *  It composes with the one-sided rules the board already has: a non-member may leave a room but
- *  never enter (foreignPush), a member may enter but never leave (containment). Separation pushes
- *  the rooms; those two decide what the cards are allowed to do about it.
+ *  never enter (foreignPush), a member may enter but never leave (containment). Separation sizes
+ *  the lens; those two decide what the cards are allowed to do about it. A feasible lens is what
+ *  containment needs to aim AT -- it already pulls a card toward every room it is outside of, and
+ *  a target with no area is what it was failing against.
  *
  *  Translates each room's members equally, like forceNestedOffset, rather than pulling each toward
  *  a point: the cluster should move, not compress. */
@@ -589,8 +660,10 @@ export function forceRoomSeparation(opts: {
   roomsByNode: ReadonlyMap<string, readonly RoomId[]>;
   circles: () => ReadonlyMap<RoomId, Circle>;
   stiffness: number;
+  /** Optional, default LENS_DEMAND -- the fraction of a packing slot each shared card asks for. */
+  demand?: number;
 }): CustomForce {
-  let pairs: { a: RoomId; b: RoomId; aMembers: Sim[]; bMembers: Sim[] }[] = [];
+  let pairs: { a: RoomId; b: RoomId; shared: number; aMembers: Sim[]; bMembers: Sim[] }[] = [];
   const force = ((alpha: number) => {
     if (pairs.length === 0) return;
     const circles = opts.circles();
@@ -600,10 +673,16 @@ export function forceRoomSeparation(opts: {
       const dx = cb.x - ca.x, dy = cb.y - ca.y;
       const d = Math.hypot(dx, dy);
       const overlap = ca.r + cb.r - d;
-      if (overlap <= 0) continue;
+      // Signed: positive means they overlap more than their shared members need, negative less.
+      const error = overlap - requiredOverlap(p.shared, ca.r, cb.r, opts.demand ?? LENS_DEMAND);
+      if (error === 0) continue;
+      // A pair sharing nothing wants zero overlap and is never pulled together, so for those this
+      // is exactly the original "already clear of each other" skip.
+      if (error < 0 && p.shared === 0) continue;
       // Coincident centres: an arbitrary but fixed axis, as everywhere else on this board.
       const [ux, uy] = d === 0 ? [1, 0] : [dx / d, dy / d];
-      const k = overlap * opts.stiffness * alpha * 0.5;
+      // Negative k reverses both loops, which is the pull -- no second branch needed.
+      const k = error * opts.stiffness * alpha * 0.5;
       for (const n of p.aMembers) { n.vx -= ux * k; n.vy -= uy * k; }
       for (const n of p.bMembers) { n.vx += ux * k; n.vy += uy * k; }
     }
@@ -625,9 +704,13 @@ export function forceRoomSeparation(opts: {
     const ids = [...membersOf.keys()].sort();
     for (let i = 0; i < ids.length; i++) {
       for (let j = i + 1; j < ids.length; j++) {
+        const aMembers = membersOf.get(ids[i])!, bMembers = membersOf.get(ids[j])!;
+        // Counted once here for the same reason the pair list is: membership is fixed for a run,
+        // and this runs every tick per pair otherwise.
+        const held = new Set(aMembers);
         pairs.push({
-          a: ids[i], b: ids[j],
-          aMembers: membersOf.get(ids[i])!, bMembers: membersOf.get(ids[j])!,
+          a: ids[i], b: ids[j], aMembers, bMembers,
+          shared: bMembers.reduce((n, m) => n + (held.has(m) ? 1 : 0), 0),
         });
       }
     }
@@ -877,6 +960,7 @@ export interface BoardParams {
   foreignMargin: number;
   nestedOffset: number;
   roomSeparation: number;
+  lensDemand: number;
   breatheGrow: number;
   linkStiffness: number;
   centerPull: number;
@@ -895,6 +979,7 @@ export const DEFAULT_PARAMS: BoardParams = {
   foreignMargin: FOREIGN_MARGIN,
   nestedOffset: NESTED_OFFSET,
   roomSeparation: ROOM_SEPARATION,
+  lensDemand: LENS_DEMAND,
   breatheGrow: BREATHE_GROW,
   linkStiffness: LINK_STIFFNESS,
   centerPull: CENTER_PULL,
@@ -1006,6 +1091,7 @@ export function createBoardSimulation(opts: {
       roomsByNode: opts.roomsByNode,
       circles: roomCircles,
       stiffness: p.roomSeparation,
+      demand: p.lensDemand,
     }))
     .force("nested", forceNestedOffset({
       roomsByNode: opts.roomsByNode,

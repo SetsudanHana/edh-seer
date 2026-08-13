@@ -67,11 +67,12 @@ for (const name of fixtures) {
         overlaps: sum(t.map((x) => x.overlaps)),
         intrusions: sum(t.map((x) => x.intrusions)),
         unresolved: sum(t.map((x) => x.unresolved)),
+        escapesTwo: sum(t.map((x) => x.escapes.two)),
       };
       const cap = ACCEPTANCE[key];
       if (cap === undefined) missing.push(key);
       else {
-        for (const k of ["escapesOne", "overlaps", "intrusions", "unresolved"] as const) {
+        for (const k of ["escapesOne", "overlaps", "intrusions", "unresolved", "escapesTwo"] as const) {
           if (got[k] > cap[k]) over.push(`${key} ${k} ${got[k]} > cap ${cap[k]}`);
           else if (got[k] < cap[k]) under.push(`${key} ${k} ${got[k]} < cap ${cap[k]} -- lower it`);
         }

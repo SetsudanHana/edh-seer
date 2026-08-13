@@ -173,6 +173,69 @@ describe("forceRoomSeparation", () => {
     sep(new Map([["card:p", ["a"]], ["card:q", ["a", "b"]]]), [p, q], two);
     expect([q.vx, q.vy]).toEqual([0, 0]);
   });
+
+  // THE TARGET IS A LENS, NOT TANGENCY. Pushing every overlapping pair toward "no overlap" drives
+  // rooms that SHARE cards to tangency, where the lens has zero area and the cards in both rooms
+  // have nowhere legal to stand. Measured on the settled board: inalla/Colour's R+U lens held 1.2
+  // card discs against the 7 cards that need it, B+U held 0.7 against 6, and separation shrank
+  // every lens 2-4x. So the target is the overlap those shared members actually need.
+  describe("the lens a pair's shared members need", () => {
+    // Two rooms that share cards but sit tangent: the lens is empty and there is nowhere for the
+    // shared members to be. This is the case the original force drove TOWARD.
+    test("pulls two rooms that share cards TOGETHER when their lens is too small", () => {
+      const shared = card("card:s", 0, 0);
+      const x = card("card:x", -200, 0), y = card("card:y", 200, 0);
+      const tangent = () => new Map<RoomId, Circle>([
+        ["a", { x: -100, y: 0, r: 100 }], ["b", { x: 100, y: 0, r: 100 }],
+      ]);
+      sep(new Map([["card:s", ["a", "b"]], ["card:x", ["a"]], ["card:y", ["b"]]]),
+        [shared, x, y], tangent);
+      expect(x.vx).toBeGreaterThan(0); // room a sits left, pulled RIGHT, toward b
+      expect(y.vx).toBeLessThan(0);
+    });
+
+    test("still pushes apart when the overlap is far more than the shared members need", () => {
+      // One shared card between two large rooms needs only a sliver; these are nearly concentric.
+      const shared = card("card:s", 0, 0);
+      const x = card("card:x", -10, 0), y = card("card:y", 10, 0);
+      sep(new Map([["card:s", ["a", "b"]], ["card:x", ["a"]], ["card:y", ["b"]]]),
+        [shared, x, y], two);
+      expect(x.vx).toBeLessThan(0);
+      expect(y.vx).toBeGreaterThan(0);
+    });
+
+    // The guarantee that keeps the original purpose intact. Two rooms with no card in common have
+    // no lens to size, so they are only ever pushed apart -- never drawn together.
+    test("never pulls together two rooms that share nothing", () => {
+      const x = card("card:x", -300, 0), y = card("card:y", 300, 0);
+      sep(new Map([["card:x", ["a"]], ["card:y", ["b"]]]),
+        [x, y], () => new Map([["a", { x: -300, y: 0, r: 100 }], ["b", { x: 300, y: 0, r: 100 }]]));
+      expect([x.vx, y.vx]).toEqual([0, 0]);
+    });
+
+    test("asks for more overlap the more cards the pair shares", () => {
+      const need = (shared: number) => {
+        const cards: Sim[] = [];
+        const rooms = new Map<string, string[]>();
+        for (let i = 0; i < shared; i++) {
+          cards.push(card(`card:s${i}`, 0, 0));
+          rooms.set(`card:s${i}`, ["a", "b"]);
+        }
+        // One unshared member each, so the pair has something the force can actually move.
+        cards.push(card("card:x", -100, 0)); rooms.set("card:x", ["a"]);
+        cards.push(card("card:y", 100, 0)); rooms.set("card:y", ["b"]);
+        sep(rooms, cards, () => new Map<RoomId, Circle>([
+          ["a", { x: -70, y: 0, r: 100 }], ["b", { x: 70, y: 0, r: 100 }],
+        ]));
+        return cards[cards.length - 2].vx; // card:x, the unshared member of room a
+      };
+      // card:x is room a's UNSHARED member, sitting left: pushing the pair apart drives it further
+      // left (negative), pulling them together drives it right (positive). A pair sharing more
+      // cards needs a wider lens, so at one fixed geometry it is pushed apart less hard -- and past
+      // some count, pulled together instead.
+      expect(need(8)).toBeGreaterThan(need(1));
+    });
+  });
 });
 
 describe("forceNestedOffset", () => {
