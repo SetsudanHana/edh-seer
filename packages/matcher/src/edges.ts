@@ -275,10 +275,34 @@ function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
   return bare ? "oneshot" : "triggered";
 }
 
+/** How a SELF trigger reads. `themeSubjectKey` ignores `subject.self`, so a card watching only its
+ *  own entry keys `enters:any` and used to render as "a permanent entering" — a false sentence about
+ *  a card that watches nothing but itself, and the one that sent defect A's diagnosis to
+ *  `SubjectFilter.self` (which had covered "this land" since 2e27af4) instead of to the supertype and
+ *  umbrella gaps actually forming the edges.
+ *
+ *  The TAG is deliberately not changed to match. It is the panel's join key, and re-keying it would
+ *  detach every cached verdict on these pairs to fix prose — the trade DERIVE_VERSION 31 already
+ *  refused once, keeping judging debt at 0 through the umbrella work. */
+const SELF_EVENT: Record<string, string> = {
+  enters: "its own entry",
+  dies: "its own death",
+  leaves: "its own departure",
+  "enters-graveyard": "its own trip to the graveyard",
+  cast: "being cast",
+  attacks: "its own attack",
+  taps: "becoming tapped",
+  untaps: "untapping",
+  // The generic `its own ${verb}` reads as "its own counter added", which is not English.
+  "counter-added": "a counter being put on it",
+};
+
 /** Turn an internal zone-event key ("enters:creature", "cast:instant") into a reader-facing
  *  noun phrase. Fallback de-slugifies anything unmapped so no ":"/"-" token ever reaches the UI. */
-function humanizeEvent(key: string): string {
+function humanizeEvent(key: string, self = false): string {
   const [verb, subjRaw = ""] = key.split(":");
+  // A self trigger names no class, whatever the key says — the subject IS the consumer.
+  if (self) return SELF_EVENT[verb] ?? `its own ${verb.replace(/-/g, " ")}`;
   // A leading "-" is a NEGATED type (`cast:-creature`), which reads as the card writes it. Stripped
   // before the general dash-to-space rule, which would otherwise turn "-creature" into " creature"
   // and say the opposite of what the subject means.
@@ -388,7 +412,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         reasons.push({
           tag: key,
-          text: `${c.card.name} triggers on ${humanizeEvent(key)}; ${p.card.name} supplies it`,
+          text: `${c.card.name} triggers on ${humanizeEvent(key, t.subject.self === true)}; ${p.card.name} supplies it`,
           effectKind: a.effect.kind,
           repeatability: triggerRepeatability(t.subject),
           scaling: a.effect.scaling,

@@ -1592,3 +1592,48 @@ test("a disjunctive tutor keys on the branch that matched", () => {
   expect(tags).toContain("tutor:dragon");
   expect(tags).not.toContain("tutor:artifact");
 });
+
+// A SELF trigger watches only its own entry, but `themeSubjectKey` ignores `subject.self`, so it
+// keys `enters:any` and humanizeEvent rendered "triggers on A PERMANENT entering" — a false sentence
+// about a card that watches nothing but itself. That sentence is not cosmetic: it is what produced
+// the wrong mechanism for defect A on 2026-08-13, sending the diagnosis at `SubjectFilter.self`
+// (which had covered "this land" since 2e27af4) instead of at the supertype and umbrella gaps that
+// were actually forming the edges.
+//
+// The TAG is deliberately left alone. It is the panel's join key, and changing it would detach every
+// cached verdict on these pairs for a prose fix — the lesson DERIVE_VERSION 31 banked when it kept a
+// tag identical through the umbrella work and held judging debt at 0.
+test("a self trigger says whose entry it is, without moving the tag", () => {
+  const land = base("Shadowy Backstreet", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
+    effect: { kind: "top-manipulation" },
+  }], ["plains", "swamp"]);
+  const fetch = base("Marsh Flats", [{
+    kind: "activated",
+    effect: { kind: "ramp" },
+    emits: [{ verb: "enters", subject: { control: "you", token: null, subtype: ["plains", "swamp"] } }],
+  }]);
+  const etb = pairReasons(fetch, land, H).find((r) => r.tag.startsWith("enters"))!;
+  expect(etb.tag).toBe("enters:any");
+  expect(etb.text).toContain("its own entry");
+  expect(etb.text).not.toContain("a permanent entering");
+  expect(etb.text).toContain("Marsh Flats");
+});
+
+// A class trigger is untouched: "another creature you control enters" really does watch the board.
+test("a non-self trigger still reads as the class it watches", () => {
+  const payoff = base("Impact Tremors", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "non-combat-damage" },
+  }]);
+  const maker = base("Bitterblossom", [{
+    kind: "triggered",
+    effect: { kind: "token-generation" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }],
+  }]);
+  const etb = pairReasons(maker, payoff, H).find((r) => r.tag === "enters:creature")!;
+  expect(etb.text).toContain("a creature entering");
+  expect(etb.text).not.toContain("its own entry");
+});
