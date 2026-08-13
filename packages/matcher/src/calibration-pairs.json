@@ -93,8 +93,7 @@
   "b": "Warstorm Surge",
   "verdict": "neutral",
   "stratum": "linked",
-  "note": "Defect B: Big Score is an Instant creating two Treasure tokens and no creature. The treasure emit carries no type, so the hierarchy fallback (treasure -> artifact+creature, because Goldhound exists) satisfies Warstorm Surge enters:creature. Banked before the fix as its witness.",
-  "knownDefect": true,
+  "note": "Defect B: Big Score is an Instant creating two Treasure tokens and no creature. The treasure emit carries no type, so the hierarchy fallback (treasure -> artifact+creature, because Goldhound exists) satisfies Warstorm Surge enters:creature. Banked before the fix as its witness; the token type map (DERIVE_VERSION 33) closed it and the engine no longer links them.",
   "judgedAt": "2026-08-13T22:49:31.990Z"
  }
 ]

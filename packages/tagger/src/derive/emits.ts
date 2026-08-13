@@ -4,6 +4,7 @@
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { counterKindOf, parseSubject } from "./subject.js";
+import { tokenTypeFor } from "./token-types.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
  *  nothing; a guessed event is worse than silence because it forms edges that are not real. */
@@ -77,12 +78,22 @@ export function actionEmits(action: Action): GameEvent[] {
   // it adds. Without it every counter placer emitted an untyped counter-added that wildcarded onto
   // any counter payoff -- a +1/+1 producer "feeding" a poison or time consumer.
   const counter = action.verb === "add-counter" ? counterKindOf(action.object ?? "") : undefined;
+  // A NAMED token ("create two Treasure tokens") states a subtype and no type, because "token" is
+  // not a type word -- and an emit with no type falls through to matcher's CARD hierarchy, which
+  // answers `treasure -> artifact+creature` on the strength of Goldhound being an "Artifact Creature
+  // -- Treasure Dog". The tokens collection is the right oracle and says flatly "Token Artifact --
+  // Treasure". Only ever FILLS a missing type: an authored one is the card's own words and wins.
+  const tokenType = subject.token === true && subject.type === undefined
+    && typeof subject.subtype === "string"
+    ? tokenTypeFor(subject.subtype)
+    : undefined;
   return verbs.map((verb) => ({
     verb,
     subject: {
       ...subject,
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
+      ...(tokenType ? { type: tokenType } : {}),
     },
   }));
 }

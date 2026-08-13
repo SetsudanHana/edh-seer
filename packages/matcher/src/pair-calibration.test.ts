@@ -119,24 +119,20 @@ test("the known-defect quarantine never grows, and cannot rot", () => {
  *
  *  Lower this the moment either lands.
  *
- *  **3 as of 2026-08-14**, raised by one for a verdict banked DELIBERATELY, before its fix, as the
- *  witness for defect B (`specs/2026-08-14-edge-creation-strategy-review.md` §4-B):
- *  - **Big Score / Warstorm Surge** — judged `neutral`, and the engine links them. Big Score is an
- *    Instant that creates two Treasure tokens and no creature; the Treasure emit carries no `type`,
- *    so the hierarchy fallback (`treasure → artifact+creature`, because Goldhound is an
- *    `Artifact Creature — Treasure Dog`) satisfies Warstorm Surge's "whenever a creature you control
- *    enters". 81 reasons corpus-wide have this shape once creature producers — which supply a
- *    creature entering with their own body — are excluded.
+ *  It went to **3 and back to 2 on 2026-08-14**, within one session, and the round trip is the gate
+ *  working rather than a mistake. **Big Score / Warstorm Surge** was judged `neutral` and banked
+ *  DELIBERATELY while the engine still linked them, as the witness for defect B
+ *  (`specs/2026-08-14-edge-creation-strategy-review.md` §4-B): Big Score is an Instant that creates
+ *  two Treasure tokens and no creature, but the Treasure emit carried no `type`, so the CARD
+ *  hierarchy fallback (`treasure → artifact+creature`, because Goldhound is an `Artifact Creature —
+ *  Treasure Dog`) satisfied Warstorm Surge's "whenever a creature you control enters".
+ *  The token type map (DERIVE_VERSION 33) closed it, the ROT CHECK above fired on exactly that pair
+ *  — *"these now agree with the engine"* — and the improvement is banked by dropping `knownDefect`.
  *
- *  This is the cap being USED rather than bent: the defect is open, so the gate should be able to
- *  see it, and the quarantine is what keeps it visible without leaving the suite red. **Drop back to
- *  2 when the token type map lands** — the rot check above will fail on this pair the moment the
- *  engine stops linking them, which is the signal to bank it.
- *
- *  Defect B's OTHER half cannot be banked here at all. `blood`/`gold`/`junk` are absent from
- *  `hierarchy.json`, so those emits match nothing and the artifact payoff they should feed is a
- *  MISSING REASON on an EXISTING EDGE — every such producer in the 71 decks (Blood Fountain,
- *  Transmutation Font, Rose Cutthroat Raider) is itself an artifact and already links to that
- *  consumer with its own body. This gate is pair-level and is blind to it; `population-compare.ts`
- *  is the instrument for that direction. */
-const KNOWN_DEFECT_CAP = 3;
+ *  Defect B's OTHER half could not be banked here at all, and that is a property of this gate rather
+ *  than of the defect. `blood`/`gold`/`junk` were absent from `hierarchy.json`, so those emits
+ *  matched NOTHING and the artifact payoff they should feed was a MISSING REASON on an EXISTING
+ *  EDGE — every such producer in the 71 decks (Blood Fountain, Transmutation Font, Rose, Cutthroat
+ *  Raider) is itself an artifact and already links to that consumer with its own body. This gate is
+ *  pair-level and blind to it; `population-compare.ts` is the instrument for that direction. */
+const KNOWN_DEFECT_CAP = 2;

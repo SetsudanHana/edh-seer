@@ -105,3 +105,45 @@ test("an add-counter naming no known kind states none", () => {
   expect(actionEmits({ verb: "add-counter", object: "those counters" })[0].subject.counter).toBeUndefined();
   expect(actionEmits({ verb: "add-counter", object: "target creature" })[0].subject.counter).toBeUndefined();
 });
+
+// A NAMED token states its type on the TOKEN, not on the cards that happen to share its subtype.
+// "Create two Treasure tokens" parses to {token: true, subtype: "treasure"} with no type, because
+// "token" is not a type word — and matcher's `expandTypes` then falls back to the CARD hierarchy,
+// which answers `treasure -> artifact+creature` because Goldhound is an "Artifact Creature —
+// Treasure Dog". That made Big Score, an Instant with no creature anywhere, feed Warstorm Surge's
+// "whenever a creature you control enters". 164 subtype-only enters emits corpus-wide; 81 false
+// reasons once producers that are themselves creatures are excluded — those supply a creature
+// entering with their own body, which is a real edge and nothing to do with the token.
+test("a named token's type comes from the token, not from cards sharing its subtype", () => {
+  const enters = actionEmits({ verb: "create", object: "two Treasure tokens" })
+    .find((e) => e.verb === "enters")!;
+  expect(enters.subject.type).toBe("artifact");
+  expect(enters.subject.subtype).toBe("treasure");
+});
+
+// The same gap in the other direction, and the reason the defect looked non-uniform: `blood`,
+// `gold` and `junk` are ABSENT from hierarchy.json, so those emits expanded to the empty set and
+// failed EVERY typed consumer — including the correct `enters:artifact`. This half is a RECALL fix.
+test("a token subtype absent from the card hierarchy still gets its type", () => {
+  for (const [object, subtype] of [["a Blood token", "blood"], ["a Junk token", "junk"]]) {
+    const enters = actionEmits({ verb: "create", object }).find((e) => e.verb === "enters")!;
+    expect(enters.subject.type, object).toBe("artifact");
+    expect(enters.subject.subtype, object).toBe(subtype);
+  }
+});
+
+// An authored type is the card's own words and outranks the lookup: "a 1/1 white Soldier creature
+// token" already says creature. The map only fills a type that is MISSING.
+test("an authored token type is not overwritten by the token lookup", () => {
+  const enters = actionEmits({ verb: "create", object: "a 1/1 white Soldier creature token" })
+    .find((e) => e.verb === "enters")!;
+  expect(enters.subject.type).toBe("creature");
+});
+
+// Unknown stays unknown. A token subtype the collection does not carry gets no type invented for
+// it — the same refusal `parseCounter` makes for an unknown counter kind.
+test("an unrecognised token subtype states no type rather than guessing", () => {
+  const enters = actionEmits({ verb: "create", object: "a Grobnar token" })
+    .find((e) => e.verb === "enters")!;
+  expect(enters.subject.type).toBeUndefined();
+});
