@@ -5,7 +5,7 @@ import { DEFAULT_PARAMS, REPULSION } from "./board-force.js";
 
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
-const emptyProbe = () => ({ cards: [], circles: [], unresolved: 0 });
+const emptyProbe = () => ({ cards: [], edges: [] });
 
 describe("slider scale", () => {
   test("every knob round-trips its own default", () => {
@@ -39,23 +39,6 @@ describe("BoardTuner", () => {
     expect(screen.getAllByRole("slider")).toHaveLength(KNOBS.length);
   });
 
-  test("reports unresolved cards as a hard condition", () => {
-    vi.useFakeTimers();
-    const probe = () => ({ cards: [], circles: [], unresolved: 2 });
-    render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
-    act(() => { vi.advanceTimersByTime(300); });
-    expect(screen.getByTestId("metric-unresolved")).toHaveTextContent("2");
-    expect(screen.getByTestId("metric-unresolved").className).toContain("warning");
-  });
-
-  test("does not warn when every card was placed", () => {
-    vi.useFakeTimers();
-    const probe = () => ({ cards: [], circles: [], unresolved: 0 });
-    render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
-    act(() => { vi.advanceTimersByTime(300); });
-    expect(screen.getByTestId("metric-unresolved").className).not.toContain("warning");
-  });
-
   test("every knob explains what it controls, alongside its constant name", () => {
     render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={emptyProbe} />);
     for (const k of KNOBS) {
@@ -66,7 +49,7 @@ describe("BoardTuner", () => {
     }
     // The slider's accessible name stays the constant name, so the copy workflow and the tests
     // address knobs by the same identifier the source uses.
-    expect(screen.getByLabelText("foreignPush")).toBeTruthy();
+    expect(screen.getByLabelText("linkStrengthK")).toBeTruthy();
   });
 
   test("moving a slider reports the mapped value, not the slider position", () => {
@@ -78,53 +61,31 @@ describe("BoardTuner", () => {
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0][0].repulsion).toBeCloseTo(100, 4);
     // Every other key rides along unchanged.
-    expect(onChange.mock.calls[0][0].containment).toBe(DEFAULT_PARAMS.containment);
+    expect(onChange.mock.calls[0][0].centerPull).toBe(DEFAULT_PARAMS.centerPull);
   });
 
-  test("flags FOREIGN_PUSH >= CONTAINMENT without preventing it", () => {
-    const { rerender } = render(
-      <BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={emptyProbe} />,
-    );
-    expect(screen.queryByTestId("stiffness-warning")).toBeNull();
-    rerender(
-      <BoardTuner
-        params={{ ...DEFAULT_PARAMS, foreignPush: DEFAULT_PARAMS.containment }}
-        onChange={() => {}}
-        probe={emptyProbe}
-      />,
-    );
-    expect(screen.getByTestId("stiffness-warning")).toBeTruthy();
-    // Still movable: the constraint is flagged, not enforced.
-    expect(screen.getByLabelText("foreignPush")).not.toBeDisabled();
-  });
-
-  test("polls the probe and reports the hard conditions", () => {
+  test("polls the probe and reports the drawing-quality metrics", () => {
     vi.useFakeTimers();
-    // One card in room "ramp", sitting outside ramp's circle: one escape, one-room bucket.
-    // Two cards overlapping at the origin: one overlap pair.
+    // Two cards a hair apart at the origin: one overlapping pair. Their edge asks for 200 world
+    // units and gets 1, so the rms distance error is ~199.
     const probe = () => ({
-      cards: [
-        { x: 500, y: 0, rooms: ["ramp"] },
-        { x: 0, y: 0, rooms: [] },
-        { x: 1, y: 0, rooms: [] },
-      ],
-      circles: [{ id: "ramp", x: 0, y: 0, r: 100 }],
-      unresolved: 0,
+      cards: [{ id: "a", x: 0, y: 0 }, { id: "b", x: 1, y: 0 }],
+      edges: [{ from: "a", to: "b", target: 200 }],
     });
     render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
     act(() => { vi.advanceTimersByTime(300); });
-    expect(screen.getByTestId("metric-escapes-one")).toHaveTextContent("1");
     expect(screen.getByTestId("metric-overlaps")).toHaveTextContent("1");
-    // Both hard conditions are broken, so both read as warnings.
-    expect(screen.getByTestId("metric-escapes-one").className).toContain("warning");
+    expect(screen.getByTestId("metric-dist-error")).toHaveTextContent("199");
+    // Overlapping discs are the hard condition, so that one reads as a warning.
     expect(screen.getByTestId("metric-overlaps").className).toContain("warning");
+    // One edge cannot cross anything.
+    expect(screen.getByTestId("metric-crossings")).toHaveTextContent("0");
   });
 
   test("shows a cards count, so an empty or destroyed board reads as empty rather than perfect", () => {
     const probe = () => ({
-      cards: [{ x: 0, y: 0, rooms: [] }, { x: 1, y: 0, rooms: [] }],
-      circles: [],
-      unresolved: 0,
+      cards: [{ id: "a", x: 0, y: 0 }, { id: "b", x: 1, y: 0 }],
+      edges: [],
     });
     render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
     expect(screen.getByTestId("metric-cards")).toHaveTextContent("2");
@@ -137,11 +98,10 @@ describe("BoardTuner", () => {
     // panel would freeze on its first reading and display it forever. A second, different reading
     // from the same probe is what actually exercises the poll.
     const probe = vi.fn()
-      .mockReturnValueOnce({ cards: [{ x: 0, y: 0, rooms: [] }], circles: [], unresolved: 0 })
+      .mockReturnValueOnce({ cards: [{ id: "a", x: 0, y: 0 }], edges: [] })
       .mockReturnValue({
-        cards: [{ x: 0, y: 0, rooms: [] }, { x: 1, y: 0, rooms: [] }],
-        circles: [],
-        unresolved: 0,
+        cards: [{ id: "a", x: 0, y: 0 }, { id: "b", x: 1, y: 0 }],
+        edges: [],
       });
     render(<BoardTuner params={DEFAULT_PARAMS} onChange={() => {}} probe={probe} />);
     expect(screen.getByTestId("metric-cards")).toHaveTextContent("1");
@@ -164,7 +124,7 @@ describe("BoardTuner", () => {
     expect(text).toContain(`export const REPULSION = 100;`);
     expect(text).toContain(`// changed from ${REPULSION}`);
     // An unchanged constant is present but unmarked.
-    expect(text).toContain(`export const CONTAINMENT = ${DEFAULT_PARAMS.containment};`);
+    expect(text).toContain(`export const CENTER_PULL = ${DEFAULT_PARAMS.centerPull};`);
     expect(text.split("\n").filter((l) => l.includes("changed from"))).toHaveLength(1);
   });
 });

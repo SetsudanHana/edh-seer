@@ -7,9 +7,8 @@ type Category =
   | "boardWipe" | "burn" | "stax" | "protection" | "tutor" | "lands";
 
 // Exported for this file's own filter chips below. GraphView used to reuse these for its
-// role-ring zone labels, but Task 4 moved the graph to fixed rooms (see deck-rooms.ts, which
-// owns its own room labels now) -- these are plain internal exports again. (The glyph legend
-// is unrelated -- it derives its own verb keys straight from event node ids.)
+// role-ring zone labels; the graph names roles itself now (presets.ts's ROLE_GROUPS, which groups
+// these same categories into the six a deck is read by) -- these are plain internal exports again.
 export const CATEGORY_LABELS: Record<Category, string> = {
   ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
   stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",

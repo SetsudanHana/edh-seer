@@ -26,16 +26,3 @@ export function renderModeFor(z: number): RenderMode {
 export function cardImageUrl(artCrop: string): string {
   return artCrop.replace(/\/art_crop\//, "/normal/");
 }
-
-/** Flip is picture-only, so this is the only thing it touches. `faceArt` maps a face node id to its
- *  art; a single-faced card has no `face:<id>:1` entry, so a stray flipped id degrades to the front
- *  rather than rendering nothing. */
-export function faceArtOf(
-  cardId: string,
-  cardArt: string | undefined,
-  flipped: boolean,
-  faceArt: ReadonlyMap<string, string>,
-): string | undefined {
-  if (!flipped) return cardArt;
-  return faceArt.get(`${cardId.replace(/^card:/, "face:")}:1`) ?? cardArt;
-}

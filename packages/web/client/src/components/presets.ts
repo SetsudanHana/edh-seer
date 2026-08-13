@@ -1,246 +1,223 @@
-import type { CardGraph, GraphNode } from "../types.js";
-import { MIN_ROOM_CARDS, ROOMS, ROOM_HUE, roomsForCard, type RoomId } from "./deck-rooms.js";
+import type { GraphNode } from "../types.js";
 
-/** What a room's `test` is allowed to look at. Deliberately flat and small: a predicate that can
- *  reach the whole graph is a predicate nobody can reason about, and every fact here is already
- *  reified as an edge the graph carries. */
-export interface CardFacts {
-  id: string;
-  name: string;
-  roles: readonly string[];
-  /** FRONT face only -- and so is `subtypes`, so the Type and Subtype presets narrow together.
-   *
-   *  This is right for a TRANSFORM or FLIP card, whose back is reached by transforming a permanent
-   *  already in play. It is NOT what the engine says for a modal DFC / adventure / split, where
-   *  every face is castable in its own right (DERIVE_VERSION 30, `FRONT_FACE_ONLY` is an
-   *  allow-list of the transform/flip layouts, not a blanket rule) -- so the board calls Malakir
-   *  Rebirth // Malakir Bereavement an Instant and never a Land, while the corpus counts both
-   *  halves. Open contract question, not a settled reading: the FACE edges for the other faces are
-   *  already in the graph if the board should match the engine. */
-  types: readonly string[];
-  subtypes: readonly string[];
-  /** Colour IDENTITY, which is card-level -- the FACE-level COLOR edges are a different question. */
-  colors: readonly string[];
-  manaValue: number;
-  copies: number;
-  /** True if this card's name is one of report.combos[].cards -- the only thing anyone downstream
-   *  needs to know about combo membership. See the role preset's `test` below. */
-  comboCard: boolean;
-}
-
-/** One pass over the graph. Cheap enough to run per render, but callers should memoise on `graph`
- *  identity because the paint loop must not allocate. `comboCardNames` defaults to empty so every
- *  existing call site keeps compiling untouched. */
-export function cardFacts(
-  graph: CardGraph,
-  comboCardNames: ReadonlySet<string> = new Set(),
-): CardFacts[] {
-  const byId = new Map<string, GraphNode>(graph.nodes.map((n) => [n.id, n]));
-  const out: CardFacts[] = [];
-
-  // from -> edges, so each card is one lookup rather than a scan of every edge.
-  const from = new Map<string, { to: string; kind: string; index?: number }[]>();
-  for (const e of graph.edges) {
-    const list = from.get(e.from);
-    if (list) list.push(e);
-    else from.set(e.from, [e]);
-  }
-  const labelsOf = (id: string, kind: string): string[] =>
-    (from.get(id) ?? []).filter((e) => e.kind === kind).map((e) => byId.get(e.to)?.label ?? "");
-
-  for (const n of graph.nodes) {
-    if (n.kind !== "card") continue;
-    // index === 0 is the front face. A single-faced card still gets one FACE edge, and its index
-    // is 0, so there is no special case for the common shape.
-    const front = (from.get(n.id) ?? []).find((e) => e.kind === "FACE" && (e.index ?? 0) === 0);
-    const cmc = labelsOf(n.id, "CMC")[0];
-    out.push({
-      id: n.id,
-      name: n.label,
-      roles: n.roles ?? [],
-      types: front ? labelsOf(front.to, "TYPE") : [],
-      subtypes: front ? labelsOf(front.to, "SUBTYPE") : [],
-      colors: labelsOf(n.id, "IDENTITY"),
-      manaValue: cmc === undefined ? 0 : Number(cmc),
-      copies: n.copies ?? 1,
-      comboCard: comboCardNames.has(n.label),
-    });
-  }
-  return out;
-}
-
-export interface Room {
-  id: RoomId;
-  label: string;
-  hue: string;
-  test(card: CardFacts): boolean;
-  /** Role preset only: the BuildCategory values whose targets this room's tally sums. */
-  categories?: string[];
-  /** Claims cards no other room in the preset claimed. At most one per preset. */
-  fallback?: boolean;
-}
-
-export interface Preset {
+/** Position means synergy and nothing else now (board-force.ts), so a card's FACETS -- what it is,
+ *  what colours it runs, what job it does, what it costs -- are paint over that one geometry. A
+ *  paint mode is a pure function from a node's own fields to hues, so switching one is a restyle
+ *  and never a re-simulation.
+ *
+ *  Deliberately NOT a "group cards that share a value" force. That is what rooms were, and a room
+ *  force spends the layout on one facet permanently: cards of the same type do not bundle any more,
+ *  they are coloured. */
+export interface PaintMode {
   id: string;
   label: string;
-  /** Fixed presets ignore the argument; derived ones read the deck. */
-  rooms(cards: readonly CardFacts[]): Room[];
+  /** The values this card carries under this mode, in draw order. A card can carry several (an
+   *  Artifact Creature, a Golgari card, a card that both ramps and draws) -- each becomes one arc
+   *  on the card's rim, which is where the old room-membership rim went and why it survived the
+   *  retirement. Empty means the mode has nothing to say about this card. */
+  values(n: GraphNode): string[];
+  hue(value: string): string;
+  valueLabel(value: string): string;
 }
 
-/** Every room a card is in. The fallback is applied ONLY if nothing else claimed the card, which is
- *  what makes it a fallback rather than a room that is always on. */
-export function roomsForFacts(rooms: readonly Room[], card: CardFacts): RoomId[] {
-  const hit = rooms.filter((r) => !r.fallback && r.test(card)).map((r) => r.id);
-  if (hit.length > 0) return hit;
-  const fb = rooms.find((r) => r.fallback);
-  return fb && fb.test(card) ? [fb.id] : [];
+/** The sixth arc when a card carries more than six values. Six is rimArcs' legibility floor (60
+ *  degrees is ~10px of stroke at a 14px disc) and a WUBRG card already carries five. Neutral on
+ *  purpose -- it means "and more", not a value. */
+export const OVERFLOW_HUE = "#6b7280";
+
+/** Which hues a card's rim actually shows, capped at six. Two painters consume the rule: rimArcs
+ *  converts these to angles for miniature mode, and GraphView's card mode converts them to
+ *  equal-width bars along the card's bottom edge. One cap, one place. */
+export function rimHues(hues: readonly string[]): string[] {
+  return hues.length > 6 ? [...hues.slice(0, 5), OVERFLOW_HUE] : [...hues];
 }
 
-/** Distinct values across the deck, ordered by how many cards carry each. Ties break on the value
- *  so the board is stable across renders of one deck -- the arc cap consumes this order, so an
- *  unstable sort would make which arc gets dropped vary frame to frame.
- *
- *  `minCount` is the density floor (default 1, i.e. off). It counts DISTINCT CARDS, not copies:
- *  the floor exists because a circle below MIN_ROOM_CARDS cannot be drawn honestly, and what a
- *  radius packs is discs -- the same nodes-vs-copies line roomLayout already draws between
- *  `held.length` and `tallies.count`. */
-function byCount(
-  cards: readonly CardFacts[], valuesOf: (c: CardFacts) => readonly string[], minCount = 1,
-): string[] {
-  const n = new Map<string, number>();
-  for (const c of cards) for (const v of valuesOf(c)) n.set(v, (n.get(v) ?? 0) + 1);
-  return [...n.entries()]
-    .filter(([, count]) => count >= minCount)
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .map(([v]) => v);
+/** The card disc's rim, split into one equal arc per hue given. Takes hues, not values: this is
+ *  pure geometry with no business knowing what a paint mode is. Angles are radians from 12
+ *  o'clock, clockwise, covering the full circle. */
+export function rimArcs(hues: readonly string[]): Array<{ hue: string; from: number; to: number }> {
+  const shown = rimHues(hues);
+  if (shown.length === 0) return [];
+  const step = (Math.PI * 2) / shown.length;
+  const start = -Math.PI / 2;
+  return shown.map((hue, i) => ({ hue, from: start + i * step, to: start + (i + 1) * step }));
 }
 
-/** How alike two rooms' memberships must be to draw as one. Measured across both fixtures and all
- *  five presets: the only pair at or above this is Sorin's plains/swamp at 0.67. The next candidate
- *  anywhere is inalla's wizard/human at 0.48, which is a NESTING case and must not merge -- so the
- *  gap either side of 0.6 is wide, and this is not a knife-edge. */
-const MERGE_JACCARD = 0.6;
+/** Dark-surface categorical hues, carried over verbatim from the retired rooms' ROOM_HUE.
+ *
+ *  These are the result of a farthest-point + local search over an OKLCH grid, scored by worst
+ *  colour-vision-deficient deltaE across all 15 pairs among the six non-fallback roles, subject to
+ *  a hard normal-vision floor on every pair and >=3:1 contrast against the #14171b surface. They
+ *  are stroke colours (a 2.5px rim arc), so the target was WCAG's graphic-object floor, not the
+ *  4.5:1 body-text one. Do not reassign or repick without re-running that search -- the full
+ *  method is in `2026-08-04-circle-rooms` task-8-report.md. */
+export const ROLE_HUE: Record<string, string> = {
+  strategy: "#1c8db7",
+  wincons: "#b08e1d",
+  cardAdvantage: "#5b40f6",
+  ramp: "#146d9e",
+  lands: "#21a28f",
+  interaction: "#277310",
+  boardWipes: "#6b89f9",
+};
 
-/** Values whose member sets nearly coincide, grouped so they draw as ONE room.
- *
- *  Two rooms holding almost the same cards get almost the same centroid, and roomRadius gives them
- *  almost the same radius for almost the same count -- so they land as two near-coincident circles
- *  of equal size. The few cards in one but not the other then have NO legal position: inside A,
- *  outside B, with nothing between them. Measured on Sorin, where `plains`(5) and `swamp`(5) share
- *  4 dual lands: the lone basic Plains and basic Swamp were unplaceable on 10 of 10 seeds, the only
- *  deterministic failures on that board.
- *
- *  Merging is honest here because the rim already carries the truth the geometry cannot -- a card
- *  in the merged room still draws one arc per subtype it actually has, so "Plains / Swamp" says
- *  which of its members are which. rimArcs' own comment states that division.
- *
- *  Jaccard, NOT containment: `wizard`(33) strictly CONTAINS `faerie`(3) on inalla at containment
- *  1.00, and merging those would produce a 33-card room named after 3 of its members. Jaccard puts
- *  that pair at 0.09 and plains/swamp at 0.67. Nesting is a real problem too, and roomLayout
- *  handles it by sizing the parent for the annulus instead.
- *
- *  ponytail: one greedy pass, each value merged at most once, so a chain A~B~C yields one pair and
- *  a leftover rather than a growing blob. Transitive clustering is what a universal room is made
- *  of; revisit only with a deck that actually produces a chain. */
-function mergeNearIdentical(
-  values: readonly string[], cards: readonly CardFacts[], valuesOf: (c: CardFacts) => readonly string[],
-  minJaccard: number,
-): string[][] {
-  if (minJaccard <= 0 || values.length < 2) return values.map((v) => [v]);
-  const holders = new Map(values.map((v) => [v, new Set(cards.filter((c) => valuesOf(c).includes(v)).map((c) => c.id))]));
-  const pairs: { a: string; b: string; j: number }[] = [];
-  for (let i = 0; i < values.length; i++) for (let k = i + 1; k < values.length; k++) {
-    const A = holders.get(values[i])!, B = holders.get(values[k])!;
-    const shared = [...A].filter((x) => B.has(x)).length;
-    if (!shared) continue;
-    const j = shared / (A.size + B.size - shared);
-    if (j >= minJaccard) pairs.push({ a: values[i], b: values[k], j });
-  }
-  // Closest first, so the tightest pair wins a value that two pairs both want. Ties break on the
-  // values themselves -- the room list has to be identical across renders of one deck.
-  pairs.sort((x, y) => y.j - x.j || x.a.localeCompare(y.a) || x.b.localeCompare(y.b));
-  const partner = new Map<string, string>();
-  for (const { a, b } of pairs) {
-    if (partner.has(a) || partner.has(b)) continue;
-    partner.set(a, b);
-    partner.set(b, a);
-  }
-  const done = new Set<string>();
-  const out: string[][] = [];
-  for (const v of values) {
-    if (done.has(v)) continue;
-    const p = partner.get(v);
-    if (p === undefined) { out.push([v]); done.add(v); continue; }
-    out.push([v, p]);
-    done.add(v);
-    done.add(p);
-  }
-  return out;
+/** The engine's build categories, grouped into the six functional roles a deck is read by, plus
+ *  the `strategy` fallback for a card with no role at all. Carried over from the retired ROOMS:
+ *  the grouping is what makes "removal" and "counterspells" one answer-shaped fact rather than two
+ *  hues a reader has to reconcile. Order is the order the legend lists them in. */
+export const ROLE_GROUPS: { id: string; label: string; categories: string[] }[] = [
+  { id: "wincons", label: "Win conditions", categories: ["burn", "tutor"] },
+  { id: "cardAdvantage", label: "Card advantage", categories: ["draw", "cardSelection"] },
+  { id: "ramp", label: "Ramp", categories: ["ramp"] },
+  { id: "lands", label: "Lands", categories: ["lands"] },
+  { id: "interaction", label: "Interaction", categories: ["targetedRemoval", "stackInteraction", "protection", "stax"] },
+  { id: "boardWipes", label: "Board wipes", categories: ["boardWipe"] },
+  { id: "strategy", label: "Strategy", categories: [] },
+];
+
+const ROLE_OF_CATEGORY = new Map<string, string>(
+  ROLE_GROUPS.flatMap((g) => g.categories.map((c) => [c, g.id] as const)),
+);
+const ROLE_LABEL = new Map(ROLE_GROUPS.map((g) => [g.id, g.label]));
+
+/** Plain-language names for the categories whose engine key is jargon. "Card selection" means
+ *  scry/surveil/look-at-the-top-N/impulse-draw -- digging without drawing -- and "stack
+ *  interaction" is one letter from "stax" while meaning something unrelated. Shown on hover.
+ *  "Stax", "tutor" and "ramp" are Magic slang, not English words, so they get entries too.
+ *  "Protection", "draw" and "lands" are left untranslated: they already describe themselves
+ *  correctly to a non-Magic player. */
+const PLAIN: Record<string, string> = {
+  cardSelection: "digging",
+  stackInteraction: "counterspells",
+  targetedRemoval: "removal",
+  boardWipe: "board wipe",
+  burn: "burn & drain",
+  stax: "taxes & locks",
+  tutor: "deck search",
+  ramp: "extra mana",
+};
+
+export function subcategoryLabel(category: string): string {
+  return PLAIN[category] ?? category;
 }
 
-/** Derived rooms have no curated palette, so hues come off a fixed wheel by index. Deterministic
- *  for a given deck because the order above is. */
-const WHEEL = ["#1c8db7", "#b08e1d", "#5b40f6", "#146d9e", "#21a28f", "#277310", "#6b89f9", "#a3446e"];
-const hueAt = (i: number): string => WHEEL[i % WHEEL.length];
+/** Card types, in the order the palette assigns hues. The list is closed (Magic prints new types
+ *  about once a decade) so a fixed table beats hue-by-frequency: a creature is the same colour in
+ *  every deck, which a by-count assignment could not promise. Anything unlisted -- `kindred`, or a
+ *  type printed after this was written -- falls through to OVERFLOW_HUE rather than shifting every
+ *  other type's colour. */
+export const TYPE_HUE: Record<string, string> = {
+  creature: "#277310",
+  land: "#21a28f",
+  artifact: "#8d949f",
+  enchantment: "#1c8db7",
+  instant: "#5b40f6",
+  sorcery: "#6b89f9",
+  planeswalker: "#b08e1d",
+  battle: "#a3446e",
+};
 
-const derived = (
-  id: string,
-  label: string,
-  valuesOf: (c: CardFacts) => readonly string[],
-  /** Density floor: how many distinct cards a value needs before it earns a room. 1 is off, and
-   *  is right for every preset whose rare values are the FINDING -- a 2-card `7+` bucket is the
-   *  curve's tail, a 2-card enchantment count is the deck's composition. Only Subtype sets it,
-   *  because only there does a rare value mean "not a theme" rather than "here is the number". */
-  minRoom = 1,
-  /** Jaccard at or above which two values draw as one room. 0 is off. See mergeNearIdentical. */
-  minJaccard = 0,
-): Preset => ({
-  id,
-  label,
-  rooms: (cards) =>
-    mergeNearIdentical(byCount(cards, valuesOf, minRoom), cards, valuesOf, minJaccard)
-      .map((group, i) => ({
-        // A one-value group keeps its value as the id, so an unmerged room is byte-identical to
-        // what it was before merging existed -- no rekeying of anything holding a room id.
-        id: group.join("+"),
-        label: group.join(" / "),
-        hue: hueAt(i),
-        test: (c) => group.some((v) => valuesOf(c).includes(v)),
-      })),
-});
+/** WUBRG, by the game's own convention rather than by the palette search above: a blue card has to
+ *  read as blue. Black is the one that cannot be literal -- a black disc on a #14171b surface is
+ *  invisible -- so it takes the purple-grey that Magic's own dark-mode UIs use. `C` is colourless,
+ *  a real value and not an absence: a deck's artifacts are a thing to see. */
+export const IDENTITY_HUE: Record<string, string> = {
+  W: "#e9e0c6",
+  U: "#3d7ed6",
+  B: "#9b7fa8",
+  R: "#d4573a",
+  G: "#3f9e5c",
+  C: "#8d949f",
+};
+
+const IDENTITY_LABEL: Record<string, string> = {
+  W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", C: "Colourless",
+};
+
+/** Mana value is ORDERED, so it gets a sequential ramp and not a categorical palette -- the eye
+ *  should read "more" going one way. Monotone in lightness so it survives greyscale and colour
+ *  blindness alike. Index is the bucket, 0..7. */
+export const CMC_RAMP = [
+  "#cfe8f5", "#a5d3ec", "#7bbde2", "#5b9fd4", "#4b7fc4", "#4a5db3", "#48409e", "#3f2c7d",
+];
 
 /** 7+ is a bucket, not a value: a deck's 9-drop and its 12-drop are the same fact about the curve,
- *  and a room per distinct high value is a row of one-card rooms. */
-const mvBucket = (c: CardFacts): readonly string[] => [c.manaValue >= 7 ? "7+" : String(c.manaValue)];
+ *  and the ramp has to end somewhere. */
+export function cmcBucket(cmc: number): string {
+  return cmc >= 7 ? "7+" : String(Math.max(0, Math.trunc(cmc)));
+}
 
-export const PRESETS: Preset[] = [
+export function cmcRamp(cmc: number): string {
+  return CMC_RAMP[Math.min(CMC_RAMP.length - 1, Math.max(0, Math.trunc(cmc)))];
+}
+
+export const PAINT_MODES: PaintMode[] = [
   {
-    id: "role",
-    label: "Role",
-    // The one preset with a fixed room list, because it is the only one with build targets and the
-    // only one where an EMPTY room is the finding ("BOARD WIPES 0/3").
-    rooms: () =>
-      ROOMS.map((r) => ({
-        id: r.id,
-        label: r.label,
-        hue: ROOM_HUE[r.id],
-        categories: r.categories,
-        fallback: r.id === "strategy",
-        // Delegates to the shipped implementation rather than restating it: roomsForCard also
-        // folds in combo membership, and two copies of that rule would drift. `c.comboCard` is
-        // per-card, but roomsForCard's third argument is a set of NAMES (it was designed to check
-        // deck-wide combo membership in one call per card) -- reconstructing a one-or-zero-element
-        // set here is the smallest way to hand it what it wants without changing its signature.
-        test: (c: CardFacts) => roomsForCard([...c.roles], c.name, new Set(c.comboCard ? [c.name] : [])).includes(r.id),
-      })),
+    id: "type", label: "Type",
+    values: (n) => n.types ?? [],
+    hue: (v) => TYPE_HUE[v] ?? OVERFLOW_HUE,
+    valueLabel: (v) => v,
   },
-  derived("type", "Type", (c) => c.types),
-  derived("colour", "Colour", (c) => c.colors),
-  derived("manaValue", "Mana value", mvBucket),
-  // The one preset with a density floor. Subtype answers "is this deck actually a Vampire deck?",
-  // and a subtype carried by one card is not a theme -- drawn as a room it is the board claiming
-  // something the deck does not support. Measured before the floor: Sorin 19 rooms with ELEVEN
-  // holding a single card, inalla 21 with eleven. Land subtypes are deliberately NOT excluded
-  // (owner's call, against the tutor gate's precedent): Urza's Saga and Cave decks are real.
-  derived("subtype", "Subtype", (c) => c.subtypes, MIN_ROOM_CARDS, MERGE_JACCARD),
+  {
+    id: "identity", label: "Identity",
+    // A colourless card is `C`, not nothing -- otherwise every artifact and every basic-less land
+    // silently drops out of the legend it is a real member of.
+    values: (n) => (n.colors?.length ? n.colors : ["C"]),
+    hue: (v) => IDENTITY_HUE[v] ?? OVERFLOW_HUE,
+    valueLabel: (v) => IDENTITY_LABEL[v] ?? v,
+  },
+  {
+    id: "role", label: "Role",
+    // Roles are the engine's build categories; they group into the six functional roles plus the
+    // `strategy` fallback, exactly as the retired role rooms did.
+    values: (n) => {
+      const hit: string[] = [];
+      for (const role of n.roles ?? []) {
+        const group = ROLE_OF_CATEGORY.get(role);
+        if (group && !hit.includes(group)) hit.push(group);
+      }
+      return hit.length > 0 ? hit : ["strategy"];
+    },
+    hue: (v) => ROLE_HUE[v] ?? OVERFLOW_HUE,
+    valueLabel: (v) => ROLE_LABEL.get(v) ?? v,
+  },
+  {
+    id: "manaValue", label: "Mana value",
+    values: (n) => [cmcBucket(n.cmc ?? 0)],
+    hue: (v) => cmcRamp(v === "7+" ? 7 : Number(v)),
+    valueLabel: (v) => v,
+  },
 ];
+
+/** The hues one card shows under one mode, capped and ready to paint. */
+export function paintHues(mode: PaintMode, n: GraphNode): string[] {
+  return rimHues(mode.values(n).map((v) => mode.hue(v)));
+}
+
+export interface LegendRow { value: string; label: string; hue: string; count: number }
+
+/** What the colours mean, for the deck in front of you: one row per value actually present,
+ *  counting COPIES rather than distinct names (a 24-Mountain deck's Lands row reads 24, which is
+ *  the number a build target would be compared against).
+ *
+ *  Ordered by count descending, ties broken on the value, EXCEPT for modes whose values have a
+ *  natural order of their own -- role has a declared order and mana value is a number line, and
+ *  sorting either by popularity would make the legend jump between decks. */
+export function paintLegend(mode: PaintMode, nodes: readonly GraphNode[]): LegendRow[] {
+  const count = new Map<string, number>();
+  for (const n of nodes) {
+    for (const v of mode.values(n)) count.set(v, (count.get(v) ?? 0) + (n.copies ?? 1));
+  }
+  const rows = [...count].map(([value, c]) => ({
+    value, label: mode.valueLabel(value), hue: mode.hue(value), count: c,
+  }));
+  if (mode.id === "role") {
+    const order = ROLE_GROUPS.map((g) => g.id);
+    return rows.sort((a, b) => order.indexOf(a.value) - order.indexOf(b.value));
+  }
+  if (mode.id === "manaValue") {
+    const n = (v: string) => (v === "7+" ? 7 : Number(v));
+    return rows.sort((a, b) => n(a.value) - n(b.value));
+  }
+  return rows.sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+}

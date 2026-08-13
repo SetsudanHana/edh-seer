@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { boardMetrics, countOverlaps, DEFAULT_PARAMS, type BoardParams } from "./board-force.js";
+import { countOverlaps, DEFAULT_PARAMS, type BoardParams } from "./board-force.js";
+import { edgeCrossings, linkDistError } from "./board-quality.js";
 
 /** A slider descriptor. `log` knobs are d3 stiffnesses spanning decades, where a linear slider
  *  spends 90% of its travel in a range that visibly does nothing. */
@@ -19,18 +20,10 @@ export interface Knob {
 /** Ranges bracket every value the migration's ten-trial table tried (REPULSION 10..2200), so the
  *  panel can reproduce any published arm. See the design doc's 3. */
 export const KNOBS: readonly Knob[] = [
-  { key: "repulsion", what: "how hard every node pushes every other apart", min: 1, max: 2200, log: true },
-  { key: "repulsionRange", what: "how far that push reaches; below a room's width it only spaces neighbours", min: 40, max: 900, log: true },
-  { key: "roomAttraction", what: "pull between two cards per room they share", min: 1e-4, max: 1e-1, log: true },
-  { key: "containment", what: "how hard a room pulls a stray member back inside", min: 1e-4, max: 1e-1, log: true },
-  { key: "foreignPush", what: "how hard a room pushes a non-member out (must stay below containment)", min: 1e-4, max: 1e-1, log: true },
-  { key: "foreignMargin", what: "how far past a foreign room's rim its push still reaches", min: 0, max: 120, log: false },
-  { key: "roomSeparation", what: "how hard two rooms are held at the overlap their shared cards need", min: 1e-4, max: 3e-1, log: true },
-  { key: "lensDemand", what: "how much of a packing slot each shared card asks for in the lens", min: 0, max: 2, log: false },
-  { key: "nestedOffset", what: "how hard a room nested inside another slides off its parent's centre", min: 1e-4, max: 1e-1, log: true },
-  { key: "breatheGrow", what: "how fast a room whose cards are colliding grows to make space", min: 1e-4, max: 1e-1, log: true },
-  { key: "linkStiffness", what: "spring strength along an edge", min: 1e-4, max: 1e-1, log: true },
-  { key: "centerPull", what: "pull toward the origin, for nodes no room claims", min: 1e-5, max: 1e-2, log: true },
+  { key: "repulsion", what: "how hard every card pushes every other apart", min: 1, max: 2200, log: true },
+  { key: "repulsionRange", what: "how far that push reaches; below the board's width it only spaces neighbours", min: 40, max: 900, log: true },
+  { key: "linkStrengthK", what: "how hard a synergy edge holds its pair at the distance its weight asks for", min: 0.01, max: 1, log: true },
+  { key: "centerPull", what: "pull toward the origin, which is all that anchors a card with no edges", min: 1e-5, max: 1e-2, log: true },
   { key: "velocityDecay", what: "friction -- how much speed is kept between ticks", min: 0.01, max: 0.9, log: false },
   { key: "alphaDecay", what: "how fast the layout cools toward its resting energy", min: 0.001, max: 0.1, log: false },
   { key: "alphaFloor", what: "the energy it never cools below, so the board keeps settling", min: 0, max: 0.2, log: false },
@@ -64,27 +57,17 @@ export function fromSlider(k: Knob, position: number): number {
 }
 
 export interface ProbeSnapshot {
-  cards: readonly { x: number; y: number; rooms: readonly string[] | null }[];
-  circles: readonly { id: string; x: number; y: number; r: number }[];
-  /** Cards projectRoomMembership could not place within its pass ceiling. Unlike everything else
-   *  here it cannot be recomputed from a snapshot -- it is a fact about the last tick's work, not
-   *  about the resulting geometry, so the board has to hand it over. */
-  unresolved: number;
+  cards: readonly { id: string; x: number; y: number }[];
+  /** Every edge with the distance its weight asked for -- linkDistError's whole input, and not
+   *  recomputable from the node positions alone. */
+  edges: readonly { from: string; to: string; target: number }[];
 }
 
 /** The source constant a param key writes back to, for the copy button. */
 const CONSTANT_NAME: Record<keyof BoardParams, string> = {
   repulsion: "REPULSION",
   repulsionRange: "REPULSION_RANGE",
-  roomAttraction: "ROOM_ATTRACTION",
-  containment: "CONTAINMENT",
-  foreignMargin: "FOREIGN_MARGIN",
-  roomSeparation: "ROOM_SEPARATION",
-  lensDemand: "LENS_DEMAND",
-  nestedOffset: "NESTED_OFFSET",
-  breatheGrow: "BREATHE_GROW",
-  foreignPush: "FOREIGN_PUSH",
-  linkStiffness: "LINK_STIFFNESS",
+  linkStrengthK: "LINK_STRENGTH_K",
   centerPull: "CENTER_PULL",
   velocityDecay: "VELOCITY_DECAY",
   alphaDecay: "ALPHA_DECAY",
@@ -107,29 +90,25 @@ export function BoardTuner({
   probe: () => ProbeSnapshot | null;
 }) {
   const [metrics, setMetrics] = useState<
-    { cards: number; escapes: { one: number; two: number; threePlus: number }; intrusions: number;
-      overlaps: number; unresolved: number }
-  | null>(null);
+    { cards: number; overlaps: number; crossings: number; distError: number } | null
+  >(null);
 
   useEffect(() => {
     const read = () => {
       const snap = probe();
       if (!snap) return setMetrics(null);
-      const { escapes, intrusions } = boardMetrics(snap.cards, snap.circles);
+      const at = Object.fromEntries(snap.cards.map((c) => [c.id, { x: c.x, y: c.y }]));
       setMetrics({
-        cards: snap.cards.length, escapes, intrusions,
-        overlaps: countOverlaps(snap.cards), unresolved: snap.unresolved,
+        cards: snap.cards.length,
+        overlaps: countOverlaps(snap.cards),
+        crossings: edgeCrossings(snap.edges, at),
+        distError: Math.round(linkDistError(snap.edges, at)),
       });
     };
     read();
     const id = setInterval(read, POLL_MS);
     return () => clearInterval(id);
   }, [probe]);
-
-  // FOREIGN_PUSH < CONTAINMENT is a hard constraint (board-force.ts) -- the reverse expels cards
-  // from every room at once. Flagged, never enforced: watching the board fall apart is a thing a
-  // tuning rig is FOR, and a slider that refuses to move is worse than one that warns.
-  const stiffnessInverted = params.foreignPush >= params.containment;
 
   const copy = () => {
     const text = KNOBS.map((k) => {
@@ -182,33 +161,18 @@ export function BoardTuner({
         </div>
       ))}
 
-      {stiffnessInverted ? (
-        <p data-testid="stiffness-warning" className="text-(--warning) py-1">
-          foreignPush ≥ containment — cards are expelled from every room at once
-        </p>
-      ) : null}
-
       <div className="border-t border-(--separator) mt-2 pt-2">
         {metrics ? (
           <>
-            {/* A destroyed board reads identically to a settled one on every metric below: room
-             *  circles are DERIVED from their member cards' own positions (roomLayout in
-             *  board-force.ts), so an empty card set (the `card` kind chip toggled off) or every
-             *  card expelled off-screen (foreignPush misconfigured above containment) both leave
-             *  escapes/intrusions/overlaps at a clean zero -- the circles just follow the cards
-             *  wherever they went. This row is what makes that case legible instead of a false
-             *  pass. */}
+            {/* An empty board reads as a perfect one on every metric below -- zero overlaps, zero
+             *  crossings, zero distance error -- so the card count is what makes that case legible
+             *  instead of a false pass. */}
             {metric("metric-cards", "cards", metrics.cards, false)}
-            {metric("metric-escapes-one", "escapes 1-room", metrics.escapes.one, true)}
             {metric("metric-overlaps", "overlaps", metrics.overlaps, true)}
-            {/* The third hard condition, and the only one that is not a property of the geometry
-              *  in front of you: intrusions and escapes both read zero on a board the projection
-              *  gave up on, because it leaves the cards it could not place exactly where they
-              *  were and they are then counted like any other. */}
-            {metric("metric-unresolved", "unresolved", metrics.unresolved, true)}
-            {metric("metric-escapes-two", "escapes 2-room", metrics.escapes.two, false)}
-            {metric("metric-escapes-three", "escapes 3+", metrics.escapes.threePlus, false)}
-            {metric("metric-intrusions", "intrusions", metrics.intrusions, false)}
+            {metric("metric-crossings", "edge crossings", metrics.crossings, false)}
+            {/* rms |actual - the distance the edge's weight asked for|: the single number saying
+             *  whether the layout honoured the synergy weights at all. */}
+            {metric("metric-dist-error", "link dist error", metrics.distError, false)}
           </>
         ) : (
           <p className="text-(--muted)">no board</p>

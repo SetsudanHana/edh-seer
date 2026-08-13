@@ -1,236 +1,181 @@
 import { describe, expect, it } from "vitest";
-import { cardFacts } from "./presets.js";
-import type { CardGraph } from "../types.js";
+import {
+  IDENTITY_HUE, OVERFLOW_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE, cmcBucket, cmcRamp, paintHues,
+  paintLegend, rimArcs, rimHues, subcategoryLabel, type PaintMode,
+} from "./presets.js";
+import type { GraphNode } from "../types.js";
 
-/** Malakir Rebirth // Malakir Mire: an Instant whose back face is a Land. The front/back split is
- *  the whole point of the fixture -- grouping must never see the Land. */
-const graph: CardGraph = {
-  nodes: [
-    { id: "card:1", kind: "card", label: "Malakir Rebirth // Malakir Mire", roles: ["protection"], copies: 1 },
-    { id: "face:1:0", kind: "face", label: "Malakir Rebirth" },
-    { id: "face:1:1", kind: "face", label: "Malakir Mire" },
-    { id: "type:Instant", kind: "type", label: "Instant" },
-    { id: "type:Land", kind: "type", label: "Land" },
-    { id: "color:B", kind: "color", label: "B" },
-    { id: "cmc:2", kind: "cmc", label: "2" },
-    { id: "card:2", kind: "card", label: "Deathrite Shaman", copies: 1 },
-    { id: "face:2:0", kind: "face", label: "Deathrite Shaman" },
-    { id: "type:Creature", kind: "type", label: "Creature" },
-    { id: "subtype:Elf", kind: "subtype", label: "Elf" },
-    { id: "subtype:Shaman", kind: "subtype", label: "Shaman" },
-    { id: "color:G", kind: "color", label: "G" },
-    { id: "cmc:1", kind: "cmc", label: "1" },
-  ],
-  edges: [
-    { from: "card:1", to: "face:1:0", kind: "FACE", index: 0 },
-    { from: "card:1", to: "face:1:1", kind: "FACE", index: 1 },
-    { from: "face:1:0", to: "type:Instant", kind: "TYPE" },
-    { from: "face:1:1", to: "type:Land", kind: "TYPE" },
-    { from: "card:1", to: "color:B", kind: "IDENTITY" },
-    { from: "card:1", to: "cmc:2", kind: "CMC" },
-    { from: "card:2", to: "face:2:0", kind: "FACE", index: 0 },
-    { from: "face:2:0", to: "type:Creature", kind: "TYPE" },
-    { from: "face:2:0", to: "subtype:Elf", kind: "SUBTYPE" },
-    { from: "face:2:0", to: "subtype:Shaman", kind: "SUBTYPE" },
-    { from: "card:2", to: "color:B", kind: "IDENTITY" },
-    { from: "card:2", to: "color:G", kind: "IDENTITY" },
-    { from: "card:2", to: "cmc:1", kind: "CMC" },
-  ],
-};
-
-describe("cardFacts", () => {
-  it("returns one entry per card node and nothing else", () => {
-    expect(cardFacts(graph).map((f) => f.id)).toEqual(["card:1", "card:2"]);
-  });
-
-  it("reads types from the FRONT face only", () => {
-    const [rebirth] = cardFacts(graph);
-    expect(rebirth.types).toEqual(["Instant"]);
-  });
-
-  it("reads every subtype of the front face", () => {
-    const shaman = cardFacts(graph)[1];
-    expect([...shaman.subtypes].sort()).toEqual(["Elf", "Shaman"]);
-  });
-
-  it("reads colour identity from the card, not the face", () => {
-    const shaman = cardFacts(graph)[1];
-    expect([...shaman.colors].sort()).toEqual(["B", "G"]);
-  });
-
-  it("reads mana value as a number", () => {
-    expect(cardFacts(graph).map((f) => f.manaValue)).toEqual([2, 1]);
-  });
-
-  it("defaults roles and copies when the wire omitted them", () => {
-    const shaman = cardFacts(graph)[1];
-    expect(shaman.roles).toEqual([]);
-    expect(shaman.copies).toBe(1);
-  });
-
-  // Fix round 1 (task-8-report.md): comboCardNames is the second, optional argument -- every
-  // existing call above (all `cardFacts(graph)`, one argument) must keep defaulting to `false`.
-  it("defaults comboCard to false when no combo names are given", () => {
-    expect(cardFacts(graph).every((f) => f.comboCard === false)).toBe(true);
-  });
-
-  it("marks only the card named in comboCardNames, by name not id", () => {
-    const [rebirth, shaman] = cardFacts(graph, new Set(["Deathrite Shaman"]));
-    expect(rebirth.comboCard).toBe(false);
-    expect(shaman.comboCard).toBe(true);
-  });
-});
-
-import { PRESETS, roomsForFacts, type CardFacts, type Room } from "./presets.js";
-
-const facts = (over: Partial<CardFacts>): CardFacts => ({
-  id: "card:x", name: "X", roles: [], types: [], subtypes: [], colors: [], manaValue: 0, copies: 1,
-  comboCard: false,
+const node = (over: Partial<GraphNode>): GraphNode => ({
+  id: "X", label: "X", copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 0,
   ...over,
 });
-const preset = (id: string) => PRESETS.find((p) => p.id === id)!;
+const mode = (id: string): PaintMode => PAINT_MODES.find((m) => m.id === id)!;
 
-describe("PRESETS", () => {
-  it("ships five presets with role first", () => {
-    expect(PRESETS.map((p) => p.id)).toEqual(["role", "type", "colour", "manaValue", "subtype"]);
+describe("PAINT_MODES", () => {
+  it("ships the four facets a deck is read by, type first", () => {
+    expect(PAINT_MODES.map((m) => m.id)).toEqual(["type", "identity", "role", "manaValue"]);
+  });
+
+  // Every mode has to answer for every card, or a deck paints holes. Roles are the only optional
+  // field on the wire, and the role mode's fallback is what covers it.
+  it("gives every mode something to say about a card with no roles and no colours", () => {
+    const bare = node({ types: ["artifact"] });
+    for (const m of PAINT_MODES) expect(paintHues(m, bare).length).toBeGreaterThan(0);
   });
 });
 
-describe("the colour preset", () => {
-  const deck = [
-    facts({ id: "a", colors: ["B", "G"] }),
-    facts({ id: "b", colors: ["B"] }),
-    facts({ id: "c", colors: [] }),
-  ];
-
-  it("puts a Golgari card in BOTH colour rooms", () => {
-    const rooms = preset("colour").rooms(deck);
-    expect(roomsForFacts(rooms, deck[0]).sort()).toEqual(["B", "G"]);
+describe("the type mode", () => {
+  it("paints an Artifact Creature with one hue per type", () => {
+    expect(paintHues(mode("type"), node({ types: ["artifact", "creature"] })))
+      .toEqual([TYPE_HUE.artifact, TYPE_HUE.creature]);
   });
 
-  it("orders rooms by member count, descending", () => {
-    expect(preset("colour").rooms(deck).map((r) => r.id)).toEqual(["B", "G"]);
+  // A fixed table, not hue-by-frequency: a creature is the same colour in every deck.
+  it("gives a type the same hue whatever else the deck holds", () => {
+    const m = mode("type");
+    expect(m.hue("creature")).toBe(TYPE_HUE.creature);
   });
 
-  it("makes no room for a colour the deck does not run", () => {
-    expect(preset("colour").rooms(deck).map((r) => r.id)).not.toContain("W");
-  });
-
-  it("leaves a colourless card in no room at all", () => {
-    expect(roomsForFacts(preset("colour").rooms(deck), deck[2])).toEqual([]);
+  it("falls back to the overflow hue for a type it has never heard of", () => {
+    expect(mode("type").hue("kindred")).toBe(OVERFLOW_HUE);
   });
 });
 
-describe("the type preset", () => {
-  it("puts an Artifact Creature in two rooms", () => {
-    const deck = [facts({ id: "a", types: ["Artifact", "Creature"] })];
-    expect(roomsForFacts(preset("type").rooms(deck), deck[0]).sort()).toEqual(["Artifact", "Creature"]);
+describe("the identity mode", () => {
+  it("paints a Golgari card in both its colours, WUBRG order as the wire gives them", () => {
+    expect(paintHues(mode("identity"), node({ colors: ["B", "G"] })))
+      .toEqual([IDENTITY_HUE.B, IDENTITY_HUE.G]);
+  });
+
+  // Colourless is a VALUE, not an absence -- otherwise every artifact drops out of a legend it is
+  // a real member of.
+  it("paints a colourless card as colourless rather than leaving it bare", () => {
+    expect(paintHues(mode("identity"), node({ colors: [] }))).toEqual([IDENTITY_HUE.C]);
+    expect(mode("identity").valueLabel("C")).toBe("Colourless");
   });
 });
 
-describe("the mana value preset", () => {
+describe("the role mode", () => {
+  it("groups a build category into the role it belongs to", () => {
+    expect(paintHues(mode("role"), node({ roles: ["targetedRemoval"] }))).toEqual([ROLE_HUE.interaction]);
+  });
+
+  it("paints a card in two different roles once for each", () => {
+    expect(paintHues(mode("role"), node({ roles: ["ramp", "draw"] })))
+      .toEqual([ROLE_HUE.ramp, ROLE_HUE.cardAdvantage]);
+  });
+
+  // Two categories of one role are one hue, not two identical arcs.
+  it("does not repeat a role a card reaches by two categories", () => {
+    expect(paintHues(mode("role"), node({ roles: ["targetedRemoval", "protection"] })))
+      .toEqual([ROLE_HUE.interaction]);
+  });
+
+  it("sends a card no role claims to the strategy fallback", () => {
+    expect(paintHues(mode("role"), node({}))).toEqual([ROLE_HUE.strategy]);
+    expect(paintHues(mode("role"), node({ roles: [] }))).toEqual([ROLE_HUE.strategy]);
+  });
+
+  // The palette is the retired rooms' ROOM_HUE verbatim -- a validated set, not seven picked hues.
+  it("keeps the validated palette values", () => {
+    expect(ROLE_HUE).toEqual({
+      strategy: "#1c8db7", wincons: "#b08e1d", cardAdvantage: "#5b40f6", ramp: "#146d9e",
+      lands: "#21a28f", interaction: "#277310", boardWipes: "#6b89f9",
+    });
+  });
+});
+
+describe("the mana value mode", () => {
   it("buckets everything from seven upward into 7+", () => {
-    const deck = [facts({ id: "a", manaValue: 9 }), facts({ id: "b", manaValue: 7 })];
-    const rooms = preset("manaValue").rooms(deck);
-    expect(rooms.map((r) => r.id)).toEqual(["7+"]);
-    expect(roomsForFacts(rooms, deck[0])).toEqual(["7+"]);
+    expect(cmcBucket(7)).toBe("7+");
+    expect(cmcBucket(12)).toBe("7+");
+    expect(cmcBucket(6)).toBe("6");
   });
 
-  it("gives each card exactly one room", () => {
-    const deck = [facts({ id: "a", manaValue: 3 })];
-    expect(roomsForFacts(preset("manaValue").rooms(deck), deck[0])).toHaveLength(1);
+  it("gives a card exactly one hue", () => {
+    expect(paintHues(mode("manaValue"), node({ cmc: 3 }))).toHaveLength(1);
+  });
+
+  // Ordered data gets a sequential ramp: two adjacent mana values must not be two unrelated hues.
+  it("ramps monotonically rather than assigning categorical colours", () => {
+    const hues = [0, 1, 2, 3, 4, 5, 6, 7].map(cmcRamp);
+    expect(new Set(hues).size).toBe(8);
+    expect(cmcRamp(9)).toBe(cmcRamp(7));
   });
 });
 
-describe("the subtype preset's density floor", () => {
-  // Three Vampires and two Wizards: one tribe, one coincidence. Measured motivation, on the two
-  // checked-in fixtures: without the floor Sorin drew 19 rooms with ELEVEN holding a single card,
-  // each inflated by roomRadius to the 3-card size and centred on its one member.
+describe("rimHues", () => {
+  it("passes six or fewer through untouched", () => {
+    expect(rimHues(["a", "b", "c"])).toEqual(["a", "b", "c"]);
+  });
+
+  // Past six the arcs stop being legible, so the sixth says "and more" rather than hues being
+  // dropped silently.
+  it("caps at six, the last one meaning 'and more'", () => {
+    expect(rimHues(["a", "b", "c", "d", "e", "f", "g"]))
+      .toEqual(["a", "b", "c", "d", "e", OVERFLOW_HUE]);
+  });
+});
+
+describe("rimArcs", () => {
+  it("splits the full circle into one equal arc per hue", () => {
+    const arcs = rimArcs(["a", "b"]);
+    expect(arcs).toHaveLength(2);
+    expect(arcs[1].to - arcs[0].from).toBeCloseTo(Math.PI * 2);
+    expect(arcs[0].to).toBeCloseTo(arcs[1].from);
+  });
+
+  it("draws nothing for a card with no hues", () => {
+    expect(rimArcs([])).toEqual([]);
+  });
+});
+
+describe("paintLegend", () => {
   const deck = [
-    facts({ id: "a", subtypes: ["Vampire"] }),
-    facts({ id: "b", subtypes: ["Vampire"] }),
-    facts({ id: "c", subtypes: ["Vampire", "Wizard"] }),
-    facts({ id: "d", subtypes: ["Wizard"] }),
+    node({ id: "a", types: ["creature"], colors: ["B"], cmc: 2 }),
+    node({ id: "b", types: ["creature"], colors: ["B", "G"], cmc: 4 }),
+    node({ id: "c", types: ["land"], colors: [], cmc: 0, copies: 9 }),
   ];
 
-  it("gives a room to a subtype three cards carry", () => {
-    expect(preset("subtype").rooms(deck).map((r) => r.id)).toEqual(["Vampire"]);
+  it("names every value present in the deck, and none that is not", () => {
+    expect(paintLegend(mode("type"), deck).map((r) => r.value)).toEqual(["land", "creature"]);
+    // Ordered by copies: the 9-copy colourless land outweighs the two black cards.
+    expect(paintLegend(mode("identity"), deck).map((r) => r.value)).toEqual(["C", "B", "G"]);
   });
 
-  it("leaves a card whose only subtype is below the floor in NO room", () => {
-    // Not a fallback -- derived presets have none, so `d` joins the unroomed and CENTER_PULL
-    // holds it. That is the existing path for the 60 of 84 Sorin cards already in that state.
-    expect(roomsForFacts(preset("subtype").rooms(deck), deck[3])).toEqual([]);
+  // COPIES, not distinct names: a 9-land row that reads 1 is the number nobody can check a deck
+  // against.
+  it("counts copies, not nodes", () => {
+    const land = paintLegend(mode("type"), deck).find((r) => r.value === "land")!;
+    expect(land.count).toBe(9);
   });
 
-  it("still claims a card for the subtype that DID clear the floor", () => {
-    expect(roomsForFacts(preset("subtype").rooms(deck), deck[2])).toEqual(["Vampire"]);
+  it("orders a categorical mode by count, descending", () => {
+    expect(paintLegend(mode("type"), deck).map((r) => r.count)).toEqual([9, 2]);
   });
 
-  // The floor is Subtype-only, and this is the test that says so: on Mana value a 2-card 7+
-  // bucket is the curve's tail -- a finding, in the same way role's "BOARD WIPES 0/3" is one.
-  it("does not fire on the other derived presets", () => {
-    const thin = [facts({ id: "a", types: ["Enchantment"], manaValue: 9 })];
-    expect(preset("type").rooms(thin).map((r) => r.id)).toEqual(["Enchantment"]);
-    expect(preset("manaValue").rooms(thin).map((r) => r.id)).toEqual(["7+"]);
+  // Role and mana value have an order of their own -- sorting either by popularity would make the
+  // legend jump between decks.
+  it("keeps the declared order for roles and the number line for mana value", () => {
+    const roles = [node({ roles: ["boardWipe"] }), node({ roles: ["ramp"] }), node({ roles: ["ramp"] })];
+    expect(paintLegend(mode("role"), roles).map((r) => r.value)).toEqual(["ramp", "boardWipes"]);
+    expect(paintLegend(mode("manaValue"), deck).map((r) => r.value)).toEqual(["0", "2", "4"]);
+  });
+
+  it("carries a human label and the hue each row is drawn in", () => {
+    const black = paintLegend(mode("identity"), deck).find((r) => r.value === "B")!;
+    expect(black.label).toBe("Black");
+    expect(black.hue).toBe(IDENTITY_HUE.B);
   });
 });
 
-describe("the subtype preset's merging of near-identical rooms", () => {
-  // Sorin's plains/swamp shape: four dual lands carry both, one basic carries each alone. Two
-  // rooms of five sharing four land as near-coincident equal-radius circles, and the two singles
-  // then have no legal position -- inside one, outside the other, with nothing between them.
-  const shared = ["Plains", "Swamp"];
-  const nearIdentical = [
-    facts({ id: "d1", subtypes: shared }), facts({ id: "d2", subtypes: shared }),
-    facts({ id: "d3", subtypes: shared }), facts({ id: "d4", subtypes: shared }),
-    facts({ id: "p", subtypes: ["Plains"] }), facts({ id: "s", subtypes: ["Swamp"] }),
-  ];
-
-  it("draws two near-identical subtypes as ONE room", () => {
-    // jaccard 4/6 = 0.67, over the 0.6 threshold.
-    expect(preset("subtype").rooms(nearIdentical).map((r) => r.label)).toEqual(["Plains / Swamp"]);
+describe("subcategoryLabel", () => {
+  it("translates the categories whose engine key is jargon", () => {
+    expect(subcategoryLabel("cardSelection")).toBe("digging");
+    expect(subcategoryLabel("ramp")).toBe("extra mana");
   });
 
-  it("claims a card carrying either of the merged subtypes", () => {
-    const rooms = preset("subtype").rooms(nearIdentical);
-    expect(roomsForFacts(rooms, nearIdentical[4])).toEqual(["Plains+Swamp"]);
-    expect(roomsForFacts(rooms, nearIdentical[5])).toEqual(["Plains+Swamp"]);
-  });
-
-  // The case merging must NOT touch: inalla's wizard(33) strictly CONTAINS faerie(3), so
-  // containment is 1.00 and merging would name a 33-card room after 3 of its members. Jaccard puts
-  // it at 0.09. Scaled down here, the shape is the same: every Faerie is a Wizard.
-  it("leaves a small room nested inside a big one alone", () => {
-    const nested = [
-      ...Array.from({ length: 7 }, (_, i) => facts({ id: `w${i}`, subtypes: ["Wizard"] })),
-      ...Array.from({ length: 3 }, (_, i) => facts({ id: `f${i}`, subtypes: ["Wizard", "Faerie"] })),
-    ];
-    // jaccard 3/10 = 0.3, under the threshold.
-    expect(preset("subtype").rooms(nested).map((r) => r.id).sort()).toEqual(["Faerie", "Wizard"]);
-  });
-
-  it("leaves an unmerged room's id exactly as it was", () => {
-    // Nothing downstream holds a room id across this change if a solo room keeps its bare value.
-    const solo = Array.from({ length: 3 }, (_, i) => facts({ id: `c${i}`, subtypes: ["Cleric"] }));
-    expect(preset("subtype").rooms(solo).map((r) => r.id)).toEqual(["Cleric"]);
-  });
-});
-
-describe("the role preset", () => {
-  it("keeps the seven rooms and their order", () => {
-    expect(preset("role").rooms([]).map((r) => r.id)).toEqual([
-      "strategy", "wincons", "cardAdvantage", "ramp", "lands", "interaction", "boardWipes",
-    ]);
-  });
-
-  it("sends a card no other room claims to the fallback", () => {
-    const rooms = preset("role").rooms([]);
-    expect(roomsForFacts(rooms, facts({ roles: [] }))).toEqual(["strategy"]);
-  });
-
-  it("does not use the fallback when another room claims the card", () => {
-    const rooms = preset("role").rooms([]);
-    expect(roomsForFacts(rooms, facts({ roles: ["ramp"] }))).toEqual(["ramp"]);
+  it("leaves a category that is already plain English alone", () => {
+    expect(subcategoryLabel("draw")).toBe("draw");
   });
 });

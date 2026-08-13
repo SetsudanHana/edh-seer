@@ -95,17 +95,29 @@ export const SAMPLE: AnalyzeResponse = {
   resolvedCount: 99,
   totalCount: 100,
   commanderColorIdentity: ["R"],
+  // One node per distinct card, one edge per pair carrying at least one synergy reason. A facet
+  // (goblin, enters:creature) is a FIELD here, never a node -- that is the projection's whole
+  // point, and `id` is the card's name.
   graph: {
     nodes: [
-      { id: "card:krenko", kind: "card", label: "Krenko, Mob Boss" },
-      { id: "card:tremors", kind: "card", label: "Impact Tremors" },
-      { id: "subtype:goblin", kind: "subtype", label: "goblin" },
-      { id: "event:enters:creature", kind: "event", label: "enters:creature" },
+      {
+        id: "Krenko, Mob Boss", label: "Krenko, Mob Boss", copies: 1,
+        types: ["creature"], subtypes: ["goblin"], supertypes: ["legendary"],
+        colors: ["R"], cmc: 4, roles: ["burn"],
+      },
+      {
+        id: "Impact Tremors", label: "Impact Tremors", copies: 1,
+        types: ["enchantment"], subtypes: [], supertypes: [],
+        colors: ["R"], cmc: 2, roles: ["burn"],
+      },
     ],
     edges: [
-      { from: "card:krenko", to: "subtype:goblin", kind: "SUBTYPE" },
-      { from: "card:krenko", to: "event:enters:creature", kind: "EMITS" },
-      { from: "event:enters:creature", to: "card:tremors", kind: "TRIGGERS" },
+      {
+        from: "Krenko, Mob Boss", to: "Impact Tremors", weight: 2.4, tags: ["token"],
+        reasonTexts: ["Krenko makes tokens; Impact Tremors pays off tokens."],
+      },
     ],
+    undirectedReasons: 0,
+    offDeckReasons: 0,
   },
 };
