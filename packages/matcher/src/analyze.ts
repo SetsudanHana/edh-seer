@@ -17,7 +17,7 @@ import {
 } from "@mtg/engine";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
-import { pairReasons, cardThemeTags, directedReasons } from "./edges.js";
+import { pairReasons, cardThemeTags, cardCaresTags, directedReasons } from "./edges.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
@@ -258,7 +258,31 @@ export function analyzeDeckStructured(
   // before the fix: seven of eight spellslinger/aristocrat decks themed as "draw", and
   // orzhov-spellslinger led with "lose life". A deck's theme is what is DISTINCTIVE about it, which
   // is exactly what idf measures and what a constant idf cannot say.
-  const rankedThemes = rankThemes(deckFreq, themeStats);
+  // A DECK IS WHAT ITS PAYOFFS CARE ABOUT, NOT WHAT ITS CARDS HAPPEN TO DO. `deckFreq` counts
+  // triggers, emits and static effects alike, so a mechanic the deck merely DOES outvoted the one it
+  // is built around: the owner's Sorin list has 20 cards emitting life loss — removal spells that
+  // drain incidentally — against 7 triggering on casting a noncreature spell, and themed "lose life"
+  // while Charitable Levy, Sedgemoor Witch and Primal Amulet were the engine.
+  //
+  // A card that CARES about a tag counts full; one that only supplies it counts PRODUCER_SHARE.
+  // Not consumer-ONLY, which was measured and rejected: it fixes orzhov-spellslinger but strips
+  // wick-changelings of its rats and marchesa of its subjects, because a token or legends deck's
+  // identity really is in what it produces.
+  //
+  // Ranking only. `computeCohesion` keeps the RAW deckFreq below, so the reported cohesion score
+  // stays "how many cards carry this theme" rather than a weighted quantity nobody can read.
+  const PRODUCER_SHARE = 0.35; // tunable; calibrated across the 71 decks (see the commit message).
+  const caresFreq = new Map<string, number>();
+  for (const dc of resolved) {
+    if (!dc.tags) continue;
+    for (const tag of cardCaresTags(dc.tags)) caresFreq.set(tag, (caresFreq.get(tag) ?? 0) + 1);
+  }
+  const rankFreq = new Map<string, number>();
+  for (const [tag, n] of deckFreq) {
+    const cares = caresFreq.get(tag) ?? 0;
+    rankFreq.set(tag, cares + PRODUCER_SHARE * (n - cares));
+  }
+  const rankedThemes = rankThemes(rankFreq, themeStats);
   const themes = rankedThemes.map((tag) => ({ tag, count: deckFreq.get(tag)! }));
 
   const nonlandCount = resolved.filter((dc) => !isLand(dc)).length;

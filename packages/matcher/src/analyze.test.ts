@@ -710,3 +710,34 @@ test("themes rank by corpus rarity, not raw frequency", () => {
   expect(report.cohesion).not.toBeNull();
   expect(report.cohesion!.tag).not.toBe("draw:any");
 });
+
+/** A DECK IS WHAT ITS PAYOFFS CARE ABOUT, NOT WHAT ITS CARDS HAPPEN TO DO.
+ *
+ *  `cardThemeTags` counts triggers, emits and static effects indistinguishably, so a mechanic the
+ *  deck merely DOES outvoted the one it is BUILT AROUND. Measured on the owner's Sorin list
+ *  (orzhov-spellslinger): 20 cards emit life loss — mostly removal spells that drain incidentally —
+ *  against 7 that trigger on casting a noncreature spell, so it themed "lose life / gain life"
+ *  despite Charitable Levy, Monastery Mentor, Sedgemoor Witch and Primal Amulet being the engine.
+ *
+ *  Here three cards EMIT damage and two TRIGGER on casting. The consumers must lead. */
+test("theme ranking weighs what a card cares about above what it merely does", () => {
+  const emitsDamage: CardTags["abilities"] = [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+    effect: { kind: "damage", subject: { control: "opp", token: null } },
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null } }],
+  }];
+  const caresAboutCasting: CardTags["abilities"] = [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "instant", control: "you", token: null } },
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+  }];
+  const deck = [
+    dc("Burn A", emitsDamage), dc("Burn B", emitsDamage), dc("Burn C", emitsDamage),
+    dc("Mentor A", caresAboutCasting), dc("Mentor B", caresAboutCasting),
+  ];
+  // Equally rare in the corpus, so rarity cannot decide it — only the cares/does split can.
+  const stats: TagStats = { N: 1000, counts: { "non-combat-damage:opp": 20, "cast:instant": 20, "enters:any": 900 } };
+  const report = analyzeDeckStructured(deck, undefined, H, SEED_IMPACT_WEIGHTS, undefined, stats);
+  expect(report.cohesion!.tag).toBe("cast:instant");
+});

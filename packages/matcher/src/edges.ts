@@ -53,6 +53,25 @@ export function cardThemeTags(tags: CardTags): Set<string> {
   return out;
 }
 
+/** The subset of `cardThemeTags` a card CARES about — its triggers, and nothing it merely does.
+ *
+ *  A deck's theme is what its payoffs watch for, not what its cards happen to emit. Measured on the
+ *  owner's Sorin list: 20 cards emit life loss (mostly removal spells that drain incidentally)
+ *  against 7 that trigger on casting a noncreature spell, so `cardThemeTags` — which counts triggers,
+ *  emits and static effects indistinguishably — ranked the deck "lose life" while Charitable Levy,
+ *  Sedgemoor Witch and Primal Amulet were the actual engine.
+ *
+ *  Deliberately a SEPARATE function rather than a flag on `cardThemeTags`: membership ("is this a
+ *  lifegain card?") and identity ("is this a lifegain DECK?") are different questions, and the
+ *  edge/theme-membership callers want the union. */
+export function cardCaresTags(tags: CardTags): Set<string> {
+  const out = new Set<string>();
+  for (const a of tags.abilities) {
+    if (a.trigger) for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
+  }
+  return out;
+}
+
 /** The card's characteristics expressed as a concrete subject, for static-edge matching. */
 function characteristicsSubject(tags: CardTags): SubjectFilter {
   const c = tags.characteristics;
