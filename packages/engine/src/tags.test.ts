@@ -29,3 +29,43 @@ test("describeTag renders human labels for parametric and bare tags", () => {
   expect(describeTag("creature-etb")).toBe("creatures entering");
   expect(describeTag("artifact")).toBe("artifact");
 });
+
+/** A STRUCTURED THEME MUST NAME ITS SUBJECT, NOT JUST ITS MECHANISM.
+ *
+ *  `BARE_LABELS` is the FLAT engine's vocabulary (`creature-etb`, `sacrifice-fodder`), so every
+ *  structured tag — `enters:wizard`, `dies:creature` — fell through to the default branch and
+ *  rendered as its family alone. Measured on the 71 calibration decks: not one of five tribal decks
+ *  named its tribe (wick-changelings "enters / create token", draguns "draw / enters"), and
+ *  marchesa-legends-matter read "dies / enters".
+ *
+ *  The `cast` family already did this right — `cast:instant` renders "instants", which is why
+ *  otterly-awesome-spellslinger correctly themes as "instants". This generalises that precedent.
+ *  The phrasing deliberately mirrors the flat labels it sits beside: "creatures entering" is what
+ *  `creature-etb` has always rendered. */
+test("a structured tag renders its subject alongside the mechanism", () => {
+  expect(describeTag("enters:wizard")).toBe("wizards entering");
+  expect(describeTag("dies:creature")).toBe("creatures dying");
+  expect(describeTag("attacks:dragon")).toBe("dragons attacking");
+  expect(describeTag("sacrifice:artifact")).toBe("artifacts sacrificed");
+});
+
+/** `:any` names no subject, so there is nothing to say about it — the mechanism alone is the whole
+ *  claim, and "anys entering" would be worse than silence. */
+test("an `any` subject renders the bare mechanism", () => {
+  expect(describeTag("enters:any")).toBe("enters");
+  expect(describeTag("draw:any")).toBe("draw");
+});
+
+/** A NEGATION key reads as a word, not as punctuation. `themeSubjectKey` writes "-creature" for a
+ *  subject that excludes creatures, and kuja-spellslinger surfaced it to the user verbatim as
+ *  "-creatures". */
+test("a negated subject renders as `non<type>`", () => {
+  expect(describeTag("cast:-creature")).toBe("noncreature spells");
+  expect(describeTag("dies:-token")).toBe("nontokens dying");
+});
+
+/** `static:` is the exception: its value is an EFFECT KIND, not a subject (`edges.ts` writes
+ *  `static:${effect.kind}`), so "pumps static" would be a wrong sentence. It keeps the bare form. */
+test("static keeps its bare label because its value is a kind, not a subject", () => {
+  expect(describeTag("static:pump")).toBe("static");
+});
