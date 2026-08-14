@@ -114,7 +114,27 @@ export const REPULSION = 25;
 export const REPULSION_RANGE = 469;
 /** Pull toward the origin. Every node gets it now: a room used to anchor a card absolutely, and
  *  without one a component connected to nothing has no position at all. It is also what replaced
- *  holdCardCentroid -- a board every node is pulled toward cannot walk off screen. */
+ *  holdCardCentroid -- a board every node is pulled toward cannot walk off screen.
+ *
+ *  IT DOES NOT MEANINGFULLY ANCHOR AN ORPHAN, and this comment used to imply it did. A connected
+ *  card is placed by its link springs; a deg-0 card has only repulsion pushing it out and this
+ *  pulling it back, and at 0.0004 repulsion wins. Measured over 10 trials x 800 ticks, orphan mean
+ *  distance from the origin against the CONNECTED mean: sorin 703 vs 171 (13 orphans), changelings
+ *  736 vs 298 (36), braids 702 vs 223 (12). Orphans settle in a ring three to four times further out
+ *  than the deck.
+ *
+ *  MEASURED AND DELIBERATELY NOT "FIXED" (2026-08-14). A per-node multiplier on this force for
+ *  deg-0 nodes does pull them in -- x4 gives 552/583/563, x8 gives 478/473/500 -- but every arm
+ *  regresses the drawing-quality gate, because dragging orphans through the board displaces the
+ *  connected cards via repulsion: at x4, sorin crossings 42237 -> 42841 and braids 19335 -> 19559;
+ *  at x8, sorin -> 43799 (+3.7%), changelings 6868 -> 7044, braids -> 20452 (+5.8%). nodeOverlaps
+ *  stayed 0 throughout.
+ *
+ *  And the benefit is doubtful in the first place. `EDGELESS_ALPHA` exists because a blind judge
+ *  read two edgeless lands as the deck's most strongly related pair, from proximity plus a matching
+ *  ring colour -- so an orphan sitting OUTSIDE the connected board is arguably the correct sentence,
+ *  and pulling it inward re-creates the misread that demotion was added to prevent. Revisit only
+ *  with a product reason, not because the number looks small. */
 export const CENTER_PULL = 0.0004;
 /** d3's setter stores `1 - _`, so this yields the 0.86 retention the old VELOCITY_DAMPING had. */
 export const VELOCITY_DECAY = 0.14;
