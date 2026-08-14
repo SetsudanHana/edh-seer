@@ -1293,7 +1293,7 @@ test("an action with no amount leaves the field unset -- refused, not defaulted 
 test("a trigger carries its numeric threshold", () => {
   // The Millennium Calendar, third and fourth clauses: "When there are 1,000 or more time counters
   // on The Millennium Calendar, sacrifice it and each opponent loses 1,000 life." One printed
-  // trigger; the clause layer splits it into two records, and BOTH must carry the threshold.
+  // trigger, one action here (life loss); the derived ability must carry the threshold.
   // Without it the corpus reads this card as winning the turn it makes one time counter.
   const { abilities } = deriveAbilities(
     [{
@@ -1327,4 +1327,5 @@ test("a trigger with no threshold leaves the field unset", () => {
   );
   expect(abilities[0].trigger?.verbs).toEqual(["enters"]);
   expect(abilities[0].trigger?.threshold).toBeUndefined();
+  expect(abilities[0].trigger && "threshold" in abilities[0].trigger).toBe(false);
 });

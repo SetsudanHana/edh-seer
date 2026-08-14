@@ -553,7 +553,7 @@ export function deriveAbilities(
       }
       return false;
     };
-    let trigger: { verbs: Verb[]; subject: ReturnType<typeof parseSubject>; threshold?: { atLeast: number } } | undefined;
+    let trigger: Ability["trigger"];
     /** Does this clause fire on the card's own LEAVING? See the sacrifice filter below. */
     let selfLeavesTrigger = false;
     if (clause.trigger?.event) {
