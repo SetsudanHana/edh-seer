@@ -292,6 +292,28 @@ test("ReportTabs starts fetching card art on the Overview tab, before Graph is o
   });
 });
 
+// THE DISC AND THE CARD ARE DIFFERENT FILES. Card mode draws `/normal/`, the discs are
+// `/art_crop/`, so warming only the discs left "zoom in and wait" exactly as it was — the board was
+// warm and the card image had never been requested at all. Reported after the first attempt.
+test("ReportTabs warms the full card images too, not just the discs", async () => {
+  const fetchSpy = vi.fn((_url: unknown) => Promise.reject(new Error("no network in this test")));
+  vi.stubGlobal("fetch", fetchSpy);
+  const withArt = {
+    ...SAMPLE,
+    graph: {
+      ...SAMPLE.graph,
+      nodes: SAMPLE.graph.nodes.map((n, i) =>
+        (i === 0 ? { ...n, artCrop: "https://cards.example/art_crop/a/b/c.jpg" } : n)),
+    },
+  };
+
+  render(<ReportTabs data={withArt} />);
+
+  await vi.waitFor(() => {
+    expect(fetchSpy.mock.calls.some((c) => String(c[0]).includes("/normal/"))).toBe(true);
+  }, { timeout: 3000 });
+});
+
 test("ReportTabs shows the unresolved banner outside the tab body, regardless of active tab", async () => {
   render(<ReportTabs data={SAMPLE} />);
   expect(screen.getByText(/Beholder's Death Ray/)).toBeInTheDocument();

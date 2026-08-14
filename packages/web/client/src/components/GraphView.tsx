@@ -4,7 +4,9 @@ import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
 import type { CardGraph, DeckReport } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
-import { CARD_MODE_Z, MAX_Z, cardImageUrl, renderModeFor, shouldPrefetchCard } from "./card-node.js";
+import {
+  CARD_MODE_Z, MAX_Z, cardImageUrl, isOnScreen, renderModeFor, shouldPrefetchCard,
+} from "./card-node.js";
 import {
   PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
 } from "./presets.js";
@@ -442,6 +444,22 @@ export function GraphView(
         // rewrites the path segment to a bigger size), so switching modes cold is a real fetch,
         // not just a bigger draw of what miniature mode already had loaded.
         const src = mode === "card" && n.artCrop ? cardImageUrl(n.artCrop) : n.artCrop;
+        // WARM THE FULL IMAGE OF WHAT IS ON SCREEN while zooming in, not just what is hovered.
+        //
+        // The report-level warm-up fetches `art_crop` (the disc); card mode draws `/normal/` (the
+        // whole card). Those are DIFFERENT URLs, so a warm board still had no card image at all and
+        // zooming in started the fetch from cold — reported after the first attempt at this. Hover
+        // alone could not cover it: a wheel zoom need not move the pointer, so `pointermove` may
+        // never fire, and when it does it fires on arrival with no lead time.
+        //
+        // Bounded to the viewport, which is what makes this affordable: warming all 95 is the
+        // ~7.5MB that got the cropped-disc approach rejected, while at PREFETCH_Z the screen holds
+        // a couple of dozen cards and fewer the further in you go. Not urgent — this is speculative,
+        // and the card actually being drawn in card mode below jumps ahead of it.
+        if (mode !== "card" && n.artCrop && shouldPrefetchCard(cam.z)
+          && isOnScreen(n, cam, dim, ART_RADIUS * cam.z)) {
+          artLoader.request(cardImageUrl(n.artCrop));
+        }
         const img = src ? artLoader.get(src) : undefined;
         // A node stands for every copy of its card. Draw the stack behind the art so nine
         // Relentless Rats do not read as one Rat, and badge the count.

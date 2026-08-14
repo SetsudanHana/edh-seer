@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  CARD_MODE_Z, MAX_Z, PREFETCH_Z, cardImageUrl, renderModeFor, shouldPrefetchCard,
+  CARD_MODE_Z, MAX_Z, PREFETCH_Z, cardImageUrl, isOnScreen, renderModeFor, shouldPrefetchCard,
 } from "./card-node.js";
 
 describe("renderModeFor", () => {
@@ -57,5 +57,34 @@ describe("shouldPrefetchCard", () => {
   it("fetches nothing extra at whole-deck zoom, which is what the rejected version cost", () => {
     expect(shouldPrefetchCard(1)).toBe(false);
     expect(shouldPrefetchCard(PREFETCH_Z - 0.01)).toBe(false);
+  });
+});
+
+// WHICH cards get their full image warmed. Hover alone did not work in practice — a wheel zoom need
+// not move the pointer, so `pointermove` may never fire, and when it does it fires on arrival with
+// no lead time. The viewport is what bounds the cost: warming all 95 is the ~7.5MB that got the
+// cropped-disc approach rejected.
+describe("isOnScreen", () => {
+  const cam = { x: 0, y: 0, z: 1 };
+  const dim = { w: 800, h: 600 };
+
+  it("is true inside the canvas and false beyond it", () => {
+    expect(isOnScreen({ x: 400, y: 300 }, cam, dim)).toBe(true);
+    expect(isOnScreen({ x: 0, y: 0 }, cam, dim)).toBe(true);
+    expect(isOnScreen({ x: 801, y: 300 }, cam, dim)).toBe(false);
+    expect(isOnScreen({ x: 400, y: -1 }, cam, dim)).toBe(false);
+  });
+
+  it("applies the camera, so panning changes what counts", () => {
+    // The same world point, with the board panned 500px left, is off the left edge.
+    expect(isOnScreen({ x: 100, y: 100 }, { x: -500, y: 0, z: 1 }, dim)).toBe(false);
+    // ...and zoom moves it too: at 4x, world 100 sits at screen 400.
+    expect(isOnScreen({ x: 100, y: 100 }, { x: 0, y: 0, z: 4 }, dim)).toBe(true);
+    expect(isOnScreen({ x: 300, y: 100 }, { x: 0, y: 0, z: 4 }, dim)).toBe(false);
+  });
+
+  it("counts a card half-way in, which is the next one to be centred", () => {
+    expect(isOnScreen({ x: 810, y: 300 }, cam, dim)).toBe(false);
+    expect(isOnScreen({ x: 810, y: 300 }, cam, dim, 20)).toBe(true);
   });
 });

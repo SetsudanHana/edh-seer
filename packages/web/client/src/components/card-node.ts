@@ -52,3 +52,26 @@ export const PREFETCH_Z = CARD_MODE_Z * 0.6;
 export function shouldPrefetchCard(z: number): boolean {
   return z >= PREFETCH_Z;
 }
+
+/** Is this world position inside the canvas right now?
+ *
+ *  Used to bound which cards get their FULL image warmed while zooming in. Hover alone was not
+ *  enough and the reason is mechanical: a wheel zoom need not move the pointer at all, so
+ *  `pointermove` may never fire, and when it does it fires at the moment of arrival with no lead
+ *  time. Warming everything instead is the ~7.5MB the cropped-disc approach was rejected for
+ *  (card-node's PREFETCH_Z comment) — so the set is "what is on screen once the user has clearly
+ *  committed to zooming in", which is a couple of dozen cards at most and shrinks as they go
+ *  further.
+ *
+ *  Screen = world * z + pan, the same transform `draw` sets on the context. Generous by one card
+ *  radius so a card half-way in still counts: it is the next thing the user will centre. */
+export function isOnScreen(
+  world: { x: number; y: number },
+  cam: { x: number; y: number; z: number },
+  dim: { w: number; h: number },
+  margin = 0,
+): boolean {
+  const sx = world.x * cam.z + cam.x;
+  const sy = world.y * cam.z + cam.y;
+  return sx >= -margin && sx <= dim.w + margin && sy >= -margin && sy <= dim.h + margin;
+}

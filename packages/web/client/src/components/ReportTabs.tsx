@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AnalyzeResponse } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
+import { cardImageUrl } from "./card-node.js";
 import { OverviewTab } from "./OverviewTab.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CardList } from "./CardList.js";
@@ -34,11 +35,26 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
   const artLoaderRef = useRef<ArtLoader>(undefined);
   artLoaderRef.current ??= createArtLoader({ load: cachedImageLoad() });
   useEffect(() => {
+    const loader = artLoaderRef.current!;
+    const nodes = data.graph?.nodes ?? [];
     // Non-urgent by construction: this is background warming, and anything the user is actually
     // looking at (a hovered card, a card-mode card) jumps this queue via `request(url, true)`.
-    for (const n of data.graph?.nodes ?? []) {
-      if (n.artCrop) artLoaderRef.current!.request(n.artCrop);
-    }
+    for (const n of nodes) if (n.artCrop) loader.request(n.artCrop);
+
+    // THEN the full card images, which are a DIFFERENT file from the disc art — card mode draws
+    // `/normal/`, the discs are `/art_crop/`. Warming only the discs is why "zoom in and wait"
+    // survived the first attempt at this: the board was warm and the card image had never been
+    // requested at all. Queueing them AFTER means they never delay anything visible — the queue is
+    // FIFO, so every disc is already ahead of them, and the viewport/hover prefetch promotes
+    // whichever one the user actually approaches.
+    //
+    // Costs roughly 1.5x the disc bytes again (~7.5MB on a 100-card deck), spent while the user
+    // reads the Overview tab rather than while they wait for anything. Skipped on a metered or
+    // explicitly data-saving connection, where speculative megabytes are not ours to spend: the
+    // prefetch path still covers the card being zoomed into, it just pays for it on arrival.
+    const conn = (navigator as { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (conn?.saveData || /^(slow-)?2g$/.test(conn?.effectiveType ?? "")) return;
+    for (const n of nodes) if (n.artCrop) loader.request(cardImageUrl(n.artCrop));
   }, [data]);
   return (
     <div className="flex flex-col gap-6">
