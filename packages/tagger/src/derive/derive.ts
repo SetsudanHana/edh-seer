@@ -14,6 +14,7 @@ import { actionRecipients } from "./recipient.js";
 import { actionScaling } from "./scaling.js";
 import { parseSubject } from "./subject.js";
 import { repeatsFor } from "./repeats.js";
+import { thresholdFor } from "./threshold.js";
 import { SUBTYPES } from "./subtypes.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
@@ -552,7 +553,7 @@ export function deriveAbilities(
       }
       return false;
     };
-    let trigger: { verbs: Verb[]; subject: ReturnType<typeof parseSubject> } | undefined;
+    let trigger: { verbs: Verb[]; subject: ReturnType<typeof parseSubject>; threshold?: { atLeast: number } } | undefined;
     /** Does this clause fire on the card's own LEAVING? See the sacrifice filter below. */
     let selfLeavesTrigger = false;
     if (clause.trigger?.event) {
@@ -567,7 +568,11 @@ export function deriveAbilities(
         if (control) subject.control = control;
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
         selfLeavesTrigger = subject.self === true && verb === "leaves";
-        trigger = { verbs: [verb], subject };
+        // Read from the clause TEXT, not the trigger subject string: the count sits in the trigger
+        // clause's prose ("when there are 1,000 or more time counters on ..."), which is the same
+        // channel repeatsFor reads for its once-each-turn rule.
+        const threshold = thresholdFor(text);
+        trigger = threshold ? { verbs: [verb], subject, threshold } : { verbs: [verb], subject };
       } else {
         unknownTriggers.push(clause.trigger.event);
       }

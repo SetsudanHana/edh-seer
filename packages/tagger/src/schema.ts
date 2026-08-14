@@ -340,8 +340,16 @@ export type Repeats = "once" | "per-cycle" | "per-turn" | "repeatable" | "contin
 
 export interface Ability {
   kind: AbilityKind;
-  /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
-  trigger?: { verbs: Verb[]; subject: SubjectFilter };
+  /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs.
+   *
+   *  `threshold` is a numeric condition on WHEN the trigger fires — The Millennium Calendar's
+   *  "when there are 1,000 or more time counters". Absent means the trigger states no count, which
+   *  is the overwhelming majority; see `threshold.ts` for the two shapes deliberately excluded.
+   *
+   *  It records HOW MANY and never OF WHAT. For Calendar the trigger's own `subject.counter` supplies
+   *  the resource; for "if you control four or more lands" nothing does. A consumer must not assume
+   *  the threshold's subject is the trigger's subject. */
+  trigger?: { verbs: Verb[]; subject: SubjectFilter; threshold?: { atLeast: number } };
   /** An activated ability's activation cost, verbatim as `segment.ts` split it out of the body —
    *  "{X}{X}, {T}", "{T}, Sacrifice a creature". Unparsed on purpose: this records what the card
    *  says, and what a cost MEANS for a loop's economy is sub-project B's question.

@@ -1289,3 +1289,42 @@ test("an action with no amount leaves the field unset -- refused, not defaulted 
   expect(abilities[0].amount).toBeUndefined();
   expect("amount" in abilities[0]).toBe(false);
 });
+
+test("a trigger carries its numeric threshold", () => {
+  // The Millennium Calendar, third and fourth clauses: "When there are 1,000 or more time counters
+  // on The Millennium Calendar, sacrifice it and each opponent loses 1,000 life." One printed
+  // trigger; the clause layer splits it into two records, and BOTH must carry the threshold.
+  // Without it the corpus reads this card as winning the turn it makes one time counter.
+  const { abilities } = deriveAbilities(
+    [{
+      id: 1,
+      abilityType: "triggered",
+      trigger: { event: "counter-added", subject: "time counters on The Millennium Calendar", control: "you" },
+      actions: [{ verb: "lose-life", object: "each opponent", amount: "1,000" }],
+    }],
+    "The Millennium Calendar",
+    { 1: "When there are 1,000 or more time counters on The Millennium Calendar, sacrifice it and each opponent loses 1,000 life." },
+  );
+  expect(abilities[0].trigger?.threshold).toEqual({ atLeast: 1000 });
+  expect(abilities[0].amount).toBe("1,000");
+});
+
+test("a trigger with no threshold leaves the field unset", () => {
+  // Welcoming Vampire: "Whenever one or more other creatures you control with power 2 or less
+  // enter, draw a card." Exclusion 1 does the work here: "one or more" yields atLeast 1 and is
+  // dropped. The card's "power 2 or LESS" never reaches exclusion 2 at all, because COMPARISON
+  // matches only "or more"/"or greater"/"at least" -- worth knowing, since the stat gate is not
+  // what is protecting this card.
+  const { abilities } = deriveAbilities(
+    [{
+      id: 1,
+      abilityType: "triggered",
+      trigger: { event: "enters", subject: "another creature you control", control: "you" },
+      actions: [{ verb: "draw", object: "a card" }],
+    }],
+    "Welcoming Vampire",
+    { 1: "Whenever one or more other creatures you control with power 2 or less enter, draw a card." },
+  );
+  expect(abilities[0].trigger?.verbs).toEqual(["enters"]);
+  expect(abilities[0].trigger?.threshold).toBeUndefined();
+});
