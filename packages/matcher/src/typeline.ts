@@ -45,11 +45,16 @@ export function parseTypeLine(typeLine: string): ParsedTypeLine {
  *  - Those words include the back face's card types and the em dash itself, so "creature",
  *    "enchantment" and "—" all became subtypes.
  *
- *  Splitting on " // " is a no-op for a genuinely single-faced line, and `faces` wins when the
- *  caller has it — the same fallback `graph.ts` already does per face, which is why that path was
- *  never wrong. */
-export function parseTypeLineAllFaces(typeLine: string, faces?: readonly string[]): ParsedTypeLine {
-  const lines = faces?.length ? faces : typeLine.split(" // ");
+ *  Splits on " // ", which is a no-op for a genuinely single-faced line — the same fallback
+ *  `graph.ts` already does per face, which is why that path was never wrong.
+ *
+ *  It takes no `faces` array, and that is deliberate rather than an omission. This was first written
+ *  with one, preferring `card.faces` when the caller had it — but `docToCard` does not copy `faces`
+ *  onto `Card`, so the only caller passed `undefined` on every card and the argument was dead the
+ *  day it shipped. Scryfall's `type_line` joins every face with " // " anyway, so the split IS the
+ *  face list. A caller holding a real `CardDoc` can split its own faces and call this per face. */
+export function parseTypeLineAllFaces(typeLine: string): ParsedTypeLine {
+  const lines = typeLine.split(" // ");
   const out: ParsedTypeLine = { supertypes: [], types: [], subtypes: [] };
   for (const line of lines) {
     const p = parseTypeLine(line);

@@ -82,9 +82,4 @@ describe("parseTypeLineAllFaces", () => {
       .toEqual(parseTypeLine("Legendary Creature — Human Wizard"));
   });
 
-  test("explicit faces win over splitting the combined line", () => {
-    const p = parseTypeLineAllFaces("ignored", ["Artifact", "Land — Cave"]);
-    expect(p.types).toEqual(["artifact", "land"]);
-    expect(p.subtypes).toEqual(["cave"]);
-  });
 });

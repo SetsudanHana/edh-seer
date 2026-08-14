@@ -73,8 +73,7 @@ export function projectDeckGraph(
     // EVERY face, because a node is the whole card. `parseTypeLine` takes one face and leaves "//"
     // visible; passing the combined line here painted a literal "//" swatch in the Type legend and,
     // worse, dropped the back face's type on any card whose front face has subtypes.
-    const { types, subtypes, supertypes } = parseTypeLineAllFaces(
-      d.card.typeLine, d.card.faces?.map((f) => f.typeLine));
+    const { types, subtypes, supertypes } = parseTypeLineAllFaces(d.card.typeLine);
     nodes.push({
       id: d.card.name,
       label: d.card.name,
