@@ -1246,4 +1246,41 @@ describe("flow view", () => {
     tick();
     expect(calls).not.toContain(`set:strokeStyle=${FLOW_HUE.down}`);
   });
+
+  // task-5 brief: a blind judge shown the two flow hues with no key could not tell producer from
+  // consumer (confidence 2/5). The legend must name the DIRECTION in words, using the selected
+  // card's own name, and must fall back to the ordinary paint-mode legend when nothing is selected.
+  test("selecting a card replaces the paint legend with the two flow directions, named", () => {
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "B" }), card({ id: "X" })],
+      [
+        { from: "A", to: "B", weight: 2, tags: ["t"], reasonTexts: ["A feeds B"] },
+        { from: "X", to: "A", weight: 2, tags: ["t"], reasonTexts: ["X feeds A"] },
+      ],
+    );
+    const { canvas } = frames(graph);
+    const probe = canvas.__graphProbe!();
+
+    // Before selection: the ordinary paint-mode legend (defaults to Type), unchanged.
+    expect(screen.getByTestId("paint-legend")).toHaveTextContent("creature");
+
+    const node = probe.find((n) => n.id === "A")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+
+    const legend = screen.getByTestId("paint-legend");
+    expect(legend).toHaveTextContent("A feeds");
+    expect(legend).toHaveTextContent("feeds A");
+    const rows = [...legend.querySelectorAll('[data-testid="paint-legend-row"]')];
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.getAttribute("data-value"))).toEqual(["down", "up"]);
+    // The colour named "A feeds" (downstream: A -> other) is the same hue the edges themselves
+    // draw in for that direction, per FLOW_HUE -- the legend cannot invent its own mapping. jsdom
+    // normalises an inline hex background to rgb(), so both sides go through the same normalising
+    // element rather than comparing a literal hex string against jsdom's rgb() rendering.
+    const probeEl = document.createElement("span");
+    probeEl.style.background = FLOW_HUE.down;
+    expect((rows[0].querySelector("span") as HTMLElement).style.background).toBe(probeEl.style.background);
+    probeEl.style.background = FLOW_HUE.up;
+    expect((rows[1].querySelector("span") as HTMLElement).style.background).toBe(probeEl.style.background);
+  });
 });

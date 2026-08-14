@@ -950,6 +950,17 @@ export function GraphView(
   const flowRef = useRef<Flow | null>(null);
   flowRef.current = flow;
 
+  // What the flow hues mean, named with the selected card so direction reads in WORDS, not just
+  // colour -- a blind judge shown teal/gold lines with no key could not tell producer from consumer
+  // (task-5 brief). Replaces the paint legend entirely while a flow is active, rather than joining
+  // it, because "what do the colours mean" only has one answer on screen at a time.
+  const flowLegend = inspectingNode
+    ? [
+        { value: "down", label: `${inspectingNode.label} feeds`, hue: FLOW_HUE.down, count: undefined },
+        { value: "up", label: `feeds ${inspectingNode.label}`, hue: FLOW_HUE.up, count: undefined },
+      ]
+    : null;
+
   /** Reshapes __graphProbe()'s node array (with its `edges` property riding along) into what
    *  BoardTuner reads. Returns null before the first layout effect has run, or under a test with
    *  no canvas context. */
@@ -1069,7 +1080,7 @@ export function GraphView(
             aria-label="Paint legend"
             className="pointer-events-none absolute left-2 top-2 rounded-(--radius) border border-(--border) bg-(--background)/90 px-2 py-1 text-xs"
           >
-            {legend.map((row) => (
+            {(flowLegend ?? legend).map((row) => (
               <div
                 key={row.value}
                 data-testid="paint-legend-row"
@@ -1084,7 +1095,9 @@ export function GraphView(
                   className="inline-block size-2.5 shrink-0 rounded-full"
                 />
                 <span className="whitespace-nowrap">{row.label}</span>
-                <span className="font-mono tabular-nums text-(--muted)">{row.count}</span>
+                {/* Flow rows carry no count -- a direction is a fact about the graph shape, not a
+                 *  quantity of cards, unlike a paint-mode value. */}
+                {row.count !== undefined ? <span className="font-mono tabular-nums text-(--muted)">{row.count}</span> : null}
               </div>
             ))}
           </div>
