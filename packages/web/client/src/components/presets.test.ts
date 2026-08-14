@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  IDENTITY_HUE, OVERFLOW_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE, cmcBucket, cmcRamp, paintHues,
+  FLOW_HUE, IDENTITY_HUE, OVERFLOW_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE, cmcBucket, cmcRamp, paintHues,
   paintLegend, rimArcs, rimHues, subcategoryLabel, type PaintMode,
 } from "./presets.js";
 import type { GraphNode } from "../types.js";
@@ -178,4 +178,15 @@ describe("subcategoryLabel", () => {
   it("leaves a category that is already plain English alone", () => {
     expect(subcategoryLabel("draw")).toBe("draw");
   });
+});
+
+// NO NEW COLOUR IS INVENTED FOR THE FLOW VIEW. ROLE_HUE's palette came from a farthest-point search
+// over an OKLCH grid scored by worst colour-vision-deficient deltaE, with a hard 3:1 floor against
+// the #14171b surface. Asserting a hand-picked pair is distinguishable without re-running that
+// search is exactly the unmeasured claim this repo refuses, so the pair is taken FROM that palette.
+it("the flow hues come from the validated palette and are distinct", () => {
+  const validated = Object.values(ROLE_HUE);
+  expect(validated).toContain(FLOW_HUE.up);
+  expect(validated).toContain(FLOW_HUE.down);
+  expect(FLOW_HUE.up).not.toBe(FLOW_HUE.down);
 });

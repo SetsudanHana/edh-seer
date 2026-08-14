@@ -61,6 +61,21 @@ export const ROLE_HUE: Record<string, string> = {
   boardWipes: "#6b89f9",
 };
 
+/** The two hues the flow view paints direction with: `down` is what the clicked card FEEDS, `up` is
+ *  what feeds IT.
+ *
+ *  Both are taken from ROLE_HUE above rather than picked fresh. That palette is the output of a
+ *  farthest-point search over an OKLCH grid scored by worst colour-vision-deficient deltaE, subject
+ *  to a hard 3:1 contrast floor against the #14171b surface -- so these two are already known to
+ *  separate for a CVD viewer and to clear the graphic-object contrast floor as strokes. Picking a
+ *  fresh pair would mean asserting both properties without re-running that search.
+ *
+ *  `lands` (teal) and `wincons` (amber) are the pair: they sit furthest apart in hue among the
+ *  seven, so the two directions cannot be confused at a glance on a 2.5px rim arc. They do double
+ *  duty as role hues, which is not a conflict -- the role paint mode and the flow view never draw
+ *  the same rim at the same time (GraphView overrides `hues` for cards in the flow). */
+export const FLOW_HUE = { up: ROLE_HUE.lands, down: ROLE_HUE.wincons } as const;
+
 /** The engine's build categories, grouped into the six functional roles a deck is read by, plus
  *  the `strategy` fallback for a card with no role at all. Carried over from the retired ROOMS:
  *  the grouping is what makes "removal" and "counterspells" one answer-shaped fact rather than two
