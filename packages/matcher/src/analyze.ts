@@ -25,7 +25,7 @@ import { buildAxis, maxAxisWeight } from "./axis.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
 import { computeDeckMath } from "./deck-math.js";
-import { loadThemeStats, UNIFORM_STATS } from "./theme-stats.js";
+import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
 
 /**
@@ -252,7 +252,13 @@ export function analyzeDeckStructured(
 
   // themes and cohesion must agree on which tag leads, so both come from this one
   // rankThemes(deckFreq, ...) call instead of themes using its own raw-count sort.
-  const rankedThemes = rankThemes(deckFreq, UNIFORM_STATS);
+  // The SAME stats the axis is built from (line 113). This passed `UNIFORM_STATS` -- the empty-corpus
+  // fallback, where `globalIDF` is `log 2` for every tag -- so theme ranking collapsed to raw deck
+  // frequency and the commonest mechanism won in every deck. Measured on the 71 calibration decks
+  // before the fix: seven of eight spellslinger/aristocrat decks themed as "draw", and
+  // orzhov-spellslinger led with "lose life". A deck's theme is what is DISTINCTIVE about it, which
+  // is exactly what idf measures and what a constant idf cannot say.
+  const rankedThemes = rankThemes(deckFreq, themeStats);
   const themes = rankedThemes.map((tag) => ({ tag, count: deckFreq.get(tag)! }));
 
   const nonlandCount = resolved.filter((dc) => !isLand(dc)).length;

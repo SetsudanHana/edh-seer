@@ -16,7 +16,14 @@ export async function fetchTagDocs(cardTags: Pick<Collection, "find">): Promise<
 
 async function main(): Promise<void> {
   const store = await connect(loadConfig());
-  const docs = await fetchTagDocs(store.db.collection<CardTags>("cardTags"));
+  // THE SAME POPULATION THE ENGINE REASONS OVER. `TAGS_SOURCE` has defaulted to `derived` since
+  // 2026-08-06, but this generator read the FLAT `cardTags` collection, so the committed artifact
+  // described a corpus the matcher no longer uses -- N=20,410 flat-era cards against 2,541 derived
+  // ones, with a different tag vocabulary. `globalIDF` scores an ABSENT tag `log(N+1)`, the maximum,
+  // so every tag the derived layer invented after the artifact was built looked maximally rare and
+  // dominated the axis: `lose-life:opp` was absent, and orzhov-spellslinger themed as "lose life".
+  const source = process.env.TAGS_SOURCE === "flat" ? "cardTags" : "cardTagsDerived";
+  const docs = await fetchTagDocs(store.db.collection<CardTags>(source));
   const stats = computeThemeStats(docs);
   await store.close();
   const path = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "theme-stats.json");

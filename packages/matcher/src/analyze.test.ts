@@ -675,3 +675,38 @@ test("the pricing turn moves between decks, rather than being one number everywh
   const slowTurn = analyzeDeckStructured(slow, undefined, H).deckMath!.turn;
   expect(fastTurn).toBeLessThan(slowTurn);
 });
+
+/** THE THEME LINE MUST READ THE CORPUS STATS IT IS HANDED.
+ *
+ *  `analyzeDeckStructured` takes `themeStats` and fed it to `buildAxis`, but ranked the THEMES with
+ *  `UNIFORM_STATS` -- the deliberate empty-corpus fallback, where `globalIDF` is `log 2` for every
+ *  tag. A constant idf collapses ranking to raw deck frequency, so the commonest tag wins in every
+ *  deck: measured on the 71 calibration decks, SEVEN of eight spellslinger/aristocrat decks themed
+ *  as "draw", and orzhov-spellslinger led with "lose life".
+ *
+ *  This deck has MORE draw than damage. With honest stats saying draw is corpus-universal and
+ *  non-combat damage is rare, the rare mechanism must lead -- that is the whole point of weighting
+ *  by idf, and the assertion fails when the ranking ignores the stats it was given. */
+test("themes rank by corpus rarity, not raw frequency", () => {
+  const drawAbility: CardTags["abilities"] = [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }];
+  const damageAbility: CardTags["abilities"] = [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "instant", control: "you", token: null } },
+    effect: { kind: "damage", subject: { control: "opp", token: null } },
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null } }],
+  }];
+  const deck = [
+    dc("Drawer A", drawAbility), dc("Drawer B", drawAbility), dc("Drawer C", drawAbility),
+    dc("Bolt A", damageAbility), dc("Bolt B", damageAbility),
+  ];
+  // draw is in nearly every card in the corpus; the damage trigger is rare.
+  const stats: TagStats = { N: 1000, counts: { "draw:any": 900, "enters:any": 900, "cast:instant": 5, "non-combat-damage:opp": 5 } };
+  const report = analyzeDeckStructured(deck, undefined, H, SEED_IMPACT_WEIGHTS, undefined, stats);
+  expect(report.cohesion).not.toBeNull();
+  expect(report.cohesion!.tag).not.toBe("draw:any");
+});
