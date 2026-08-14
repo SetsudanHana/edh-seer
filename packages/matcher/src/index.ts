@@ -45,3 +45,4 @@ export {
   buildTagIndex, candidateFromTagIndex, mergeFixtures, pairKey, pickStratum, randomPair, upsertPair,
   type ClauseFixture, type PairRecord, type Stratum, type TagDefect, type Verdict,
 } from "./bin/pair-calibrate-core.js";
+export { detectLines, classifyGrowth, iterationsNeeded, type Line, type Piece, type Resource, type Growth } from "./lines.js";

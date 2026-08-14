@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { classifyGrowth, iterationsNeeded } from "./lines.js";
+import { classifyGrowth, detectLines, iterationsNeeded } from "./lines.js";
+import type { DeckCard } from "./types.js";
 
 describe("classifyGrowth", () => {
   // The measured multiplicative family is TINY and fully enumerable: "double" x7, "triple" x2,
@@ -103,5 +104,123 @@ describe("iterationsNeeded", () => {
   // A non-1 base landing exactly on a power: 3^2 x 3 = 27.
   test("a non-1 base at an exact power", () => {
     expect(iterationsNeeded(27, { kind: "multiplicative", factor: 3 }, 3)).toBe(2);
+  });
+});
+
+describe("detectLines", () => {
+  /** Built from the REAL derived document for The Millennium Calendar at DERIVE_VERSION 38, read off
+   *  the corpus, not from memory. Trimmed to the fields the detector reads. */
+  const calendar = {
+    card: { name: "The Millennium Calendar" },
+    tags: {
+      characteristics: { types: ["artifact"] },
+      abilities: [
+        { kind: "triggered", effect: { kind: "counter-placement", subject: { control: "any", token: null } },
+          trigger: { verbs: ["untaps"], subject: { control: "you", token: null, type: "permanent", scope: "all" } },
+          amount: "that many",
+          emits: [{ verb: "counter-added", subject: { control: "any", token: null, counter: "time" } }],
+          repeats: "repeatable" },
+        { kind: "activated", effect: { kind: "pump", subject: { control: "any", token: null, counter: "time" } },
+          cost: "{2}, {T}", amount: "double", repeats: "per-cycle" },
+        { kind: "triggered", effect: { kind: "" },
+          trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "time" }, threshold: { atLeast: 1000 } },
+          emits: [{ verb: "sacrifice", subject: { control: "any", token: null, self: true } }] },
+        { kind: "triggered", effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
+          trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "time" }, threshold: { atLeast: 1000 } },
+          amount: "1,000",
+          emits: [{ verb: "lose-life", subject: { control: "opp", token: null, scope: "each" } }] },
+      ],
+    },
+  } as unknown as DeckCard;
+
+  const gogo = {
+    card: { name: "Gogo, Master of Mimicry" },
+    tags: {
+      characteristics: { types: ["creature"] },
+      abilities: [{ kind: "activated", effect: { kind: "clone", scaling: "x-cost" }, cost: "{X}{X}, {T}", amount: "X", repeats: "per-cycle" }],
+    },
+  } as unknown as DeckCard;
+
+  test("Calendar alone yields one line, x2 growth, 10 iterations, a life-loss terminal", () => {
+    const lines = detectLines([calendar]);
+    expect(lines).toHaveLength(1);
+    const [l] = lines;
+    expect(l.anchor).toBe("The Millennium Calendar");
+    expect(l.resource).toEqual({ kind: "counter", name: "time" });
+    expect(l.threshold).toBe(1000);
+    expect(l.growth).toBe("multiplicative");
+    expect(l.iterations).toBe(10);
+    // The anchor ability ([2]) has a blank effect kind; the terminal comes from its SIBLING ([3])
+    // sharing the same trigger object -- the per-clause shared trigger ceiling, worked around.
+    expect(l.terminal).toBe("player-life-loss");
+    // Base is unstated ("that many"), so 1 is assumed and SAID, making 10 an upper bound.
+    expect(l.refusals).toContain("assumed-base-1");
+  });
+
+  test("two abilities sharing one threshold trigger produce ONE line, not two", () => {
+    expect(detectLines([calendar])).toHaveLength(1);
+  });
+
+  test("Gogo joins the piece set as unproven copy supply", () => {
+    const [l] = detectLines([calendar, gogo]);
+    const g = l.pieces.find((p) => p.card === "Gogo, Master of Mimicry");
+    expect(g).toBeDefined();
+    expect(g!.role).toBe("copy");
+    // No SubjectFilter can name an ability (sub-project B3), so the detector cannot prove Gogo copies
+    // THIS ability. Named with the claim marked unproven beats dropping the owner's own combo piece.
+    expect(g!.unproven).toBe(true);
+  });
+
+  test("a deck with no threshold anchor yields no lines", () => {
+    expect(detectLines([gogo])).toEqual([]);
+  });
+
+  test("an anchor whose resource cannot be named is refused, not emitted blank", () => {
+    const anchorless = {
+      card: { name: "Test Anchor" },
+      tags: { characteristics: { types: ["enchantment"] }, abilities: [
+        { kind: "triggered", effect: { kind: "draw-card" },
+          trigger: { verbs: ["upkeep"], subject: { control: "you", token: null }, threshold: { atLeast: 5 } } },
+      ] },
+    } as unknown as DeckCard;
+    expect(detectLines([anchorless])).toEqual([]);
+  });
+
+  // CORRECTION to the brief's SUPPLY_ROLE table (owner's ruling, 2026-08-14): only an `extra-phase`
+  // that itself carries an untap step is activation supply. Sphinx of the Second Sun's additional
+  // BEGINNING phase does; The Ninth Doctor's additional UPKEEP step does not, however supply-shaped
+  // it looks ("whenever The Ninth Doctor becomes untapped during your untap step, you get an
+  // additional upkeep step after this step" -- the trigger is untap-shaped, the payout is not).
+  const sphinx = {
+    card: { name: "Sphinx of the Second Sun" },
+    tags: {
+      characteristics: { types: ["creature"] },
+      abilities: [
+        { kind: "triggered", effect: { kind: "extra-phase", subject: { control: "you", token: null, phase: "beginning" } },
+          trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } } },
+      ],
+    },
+  } as unknown as DeckCard;
+
+  const ninthDoctor = {
+    card: { name: "The Ninth Doctor" },
+    tags: {
+      characteristics: { types: ["creature"] },
+      abilities: [
+        { kind: "triggered", effect: { kind: "extra-phase", subject: { control: "you", token: null, phase: "upkeep" } },
+          trigger: { verbs: ["untaps"], subject: { control: "self", token: null } } },
+      ],
+    },
+  } as unknown as DeckCard;
+
+  test("Sphinx's additional BEGINNING phase is activation supply, recorded with its phase", () => {
+    const [l] = detectLines([calendar, sphinx]);
+    const p = l.pieces.find((piece) => piece.card === "Sphinx of the Second Sun");
+    expect(p).toEqual({ card: "Sphinx of the Second Sun", role: "extra-phase", phase: "beginning" });
+  });
+
+  test("The Ninth Doctor's additional UPKEEP step is NOT activation supply", () => {
+    const [l] = detectLines([calendar, ninthDoctor]);
+    expect(l.pieces.find((piece) => piece.card === "The Ninth Doctor")).toBeUndefined();
   });
 });
