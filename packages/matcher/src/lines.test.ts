@@ -265,4 +265,178 @@ describe("detectLines", () => {
     const [l] = linesOf([calendar, ninthDoctor]);
     expect(l.pieces.find((piece) => piece.card === "The Ninth Doctor")).toBeUndefined();
   });
+
+  // "This land enters tapped. {T}: Add {C}. Whenever this land or another land you control enters,
+  // if you control seven or more lands with different names, create a 2/2 black Zombie creature
+  // token." Real derived doc, DERIVE_VERSION 39 -- trimmed to the two abilities the detector reads.
+  const fieldOfTheDead = {
+    card: { name: "Field of the Dead" },
+    tags: {
+      characteristics: { types: ["land"], subtypes: [] },
+      abilities: [
+        { kind: "activated", effect: { kind: "mana-generation", subject: { control: "any", token: null } }, cost: "{T}", repeats: "per-cycle" },
+        { kind: "triggered", effect: { kind: "token-generation", subject: { control: "any", token: true, colors: ["B"], type: "creature", subtype: "zombie" } },
+          trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" }, threshold: { atLeast: 7 } },
+          amount: "1",
+          emits: [{ verb: "create-token", subject: { control: "any", token: true, colors: ["B"], type: "creature", subtype: "zombie" } }, { verb: "enters", subject: { control: "any", token: true, colors: ["B"], type: "creature", subtype: "zombie" } }],
+          repeats: "repeatable" },
+      ],
+    },
+  } as unknown as DeckCard;
+
+  // "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the
+  // battlefield tapped, then shuffle. Then if you control four or more lands, untap that land."
+  // Real derived doc, DERIVE_VERSION 39 -- the fourth ability (`untap` kind) is the false activation
+  // supply finding 3 exists to gate; the third ability's `enters` emit is the genuine land supply.
+  const fabledPassage = {
+    card: { name: "Fabled Passage" },
+    tags: {
+      characteristics: { types: ["land"], subtypes: [] },
+      abilities: [
+        { kind: "activated", effect: { kind: "" }, cost: "{T}, Sacrifice this land",
+          emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "land", self: true } }, { verb: "dies", subject: { control: "any", token: null, type: "land", self: true } }],
+          repeats: "once" },
+        { kind: "activated", effect: { kind: "top-manipulation", subject: { control: "any", token: null, basic: true, type: "land" } },
+          cost: "{T}, Sacrifice this land", repeats: "once" },
+        { kind: "activated", effect: { kind: "" }, cost: "{T}, Sacrifice this land",
+          emits: [{ verb: "enters", subject: { control: "any", token: null, basic: true, type: "land" } }], repeats: "once" },
+        { kind: "activated", effect: { kind: "untap", subject: { control: "any", token: null, type: "land" } },
+          cost: "{T}, Sacrifice this land",
+          emits: [{ verb: "untaps", subject: { control: "any", token: null, type: "land" } }], repeats: "once" },
+      ],
+    },
+  } as unknown as DeckCard;
+
+  // FINDING 1 (2026-08-14 final review): `resourceOf` must only read a trigger's type/subtype as the
+  // threshold's resource when the trigger is a ZONE EVENT (design §6.1 rule 2). Real corpus witnesses,
+  // read off cardTagsDerived at DERIVE_VERSION 39, not from memory.
+  describe("finding 1: resource requires a zone-event trigger", () => {
+    // "Whenever this creature attacks, if you control eight or more lands, this creature becomes
+    // prepared." The trigger's subject carries `type:"creature"` (it's naming the attacker), but the
+    // printed threshold counts LANDS, not creatures -- `attacks` is not a zone event, and reading the
+    // subject's type here derives a confidently wrong resource.
+    const emeritusOfAbundance = {
+      card: { name: "Emeritus of Abundance // Regrowth" },
+      tags: {
+        characteristics: { types: ["creature", "sorcery"], subtypes: ["elf", "druid"] },
+        abilities: [
+          { kind: "triggered", effect: { kind: "" },
+            trigger: { verbs: ["attacks"], subject: { control: "you", token: null, type: "creature", self: true }, threshold: { atLeast: 8 } },
+            repeats: "per-cycle" },
+        ],
+      },
+    } as unknown as DeckCard;
+
+    // "Threshold -- Whenever you attack with one or more Rats, if there are seven or more cards in
+    // your graveyard, ..." The trigger's subject carries `subtype:"rat"`, but the printed threshold
+    // counts CARDS IN GRAVEYARD. Same shape, a different non-zone-event verb (`attacks`).
+    const persistentMarshstalker = {
+      card: { name: "Persistent Marshstalker" },
+      tags: {
+        characteristics: { types: ["creature"], subtypes: ["rat", "berserker"] },
+        abilities: [
+          { kind: "triggered",
+            effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, self: true, zone: "graveyard" } },
+            trigger: { verbs: ["attacks"], subject: { control: "you", token: null, subtype: "rat", scope: "all" }, threshold: { atLeast: 7 } },
+            emits: [{ verb: "enters", subject: { control: "any", token: null, fromZone: "graveyard", self: true } }],
+            repeats: "repeatable" },
+        ],
+      },
+    } as unknown as DeckCard;
+
+    test("Emeritus of Abundance: an attacks-trigger type is refused, not read as the resource", () => {
+      const result = detectLines([emeritusOfAbundance], hierarchy);
+      expect(result.lines).toEqual([]);
+      expect(result.refusals["no-resource"]).toBe(1);
+    });
+
+    test("Persistent Marshstalker: an attacks-trigger subtype is refused, not read as the resource", () => {
+      const result = detectLines([persistentMarshstalker], hierarchy);
+      expect(result.lines).toEqual([]);
+      expect(result.refusals["no-resource"]).toBe(1);
+    });
+
+    // Field of the Dead is the positive control: "Whenever this land or another land you control
+    // enters, if you control seven or more lands..." -- `enters` genuinely IS a zone event, so the
+    // resource is correctly read as `type:land`. This must keep working after the fix.
+    test("Field of the Dead: an enters-trigger type is still read as the resource", () => {
+      const [l] = linesOf([fieldOfTheDead]);
+      expect(l.resource).toEqual({ kind: "type", name: "land" });
+    });
+  });
+
+  // FINDING 2 (2026-08-14 final review): `actsOnResource`'s TYPE branch must also ask whether the
+  // effect kind can plausibly grow a COUNT -- a `pump` or `damage` effect naming the resource's type
+  // is not an amplifier just because it mentions the type. Real corpus witnesses.
+  describe("finding 2: a type-resource amplifier must grow a count, not just name a type", () => {
+    // A synthetic anchor -- no real corpus card runs a threshold off a zone-event `type:creature`
+    // trigger (the only two zone-event anchors in the whole derived corpus are Field of the Dead and
+    // Valakut, both lands) -- paired with the REAL amplifier abilities under test.
+    const creatureZoneAnchor = {
+      card: { name: "Test Creature Anchor" },
+      tags: { characteristics: { types: ["enchantment"], subtypes: [] }, abilities: [
+        { kind: "triggered", effect: { kind: "draw-card" },
+          trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature" }, threshold: { atLeast: 5 } } },
+      ] },
+    } as unknown as DeckCard;
+
+    // "If a creature you control would deal damage to a permanent or player, it deals double that
+    // damage instead." A `pump{type:creature}, amount "double"` -- it doubles DAMAGE, not the number
+    // of creatures.
+    const gratuitousViolence = {
+      card: { name: "Gratuitous Violence" },
+      tags: { characteristics: { types: ["enchantment"], subtypes: [] }, abilities: [
+        { kind: "static", effect: { kind: "pump", subject: { control: "you", token: null, type: "creature", scope: "all" } },
+          amount: "double", repeats: "continuous" },
+      ] },
+    } as unknown as DeckCard;
+
+    // "...it deals damage equal to twice the number of Vehicles you control to target creature or
+    // planeswalker an opponent controls." A `damage{type:[creature,planeswalker]}` amount "twice the
+    // number of Vehicles" -- it deals DAMAGE, not a count of creatures/planeswalkers.
+    const surgehackerMech = {
+      card: { name: "Surgehacker Mech" },
+      tags: { characteristics: { types: ["artifact"], subtypes: ["vehicle"] }, abilities: [
+        { kind: "triggered", effect: { kind: "damage", subject: { control: "opp", token: null, type: ["creature", "planeswalker"], scope: "target" }, scaling: "per-creature" },
+          trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
+          amount: "twice the number of Vehicles you control",
+          emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, type: ["creature", "planeswalker"], scope: "target" } }],
+          repeats: "once" },
+      ] },
+    } as unknown as DeckCard;
+
+    test("Gratuitous Violence is not read as a creature-count amplifier", () => {
+      const [l] = linesOf([creatureZoneAnchor, gratuitousViolence]);
+      expect(l.growth).not.toBe("multiplicative");
+      expect(l.pieces.find((p) => p.card === "Gratuitous Violence")).toBeUndefined();
+    });
+
+    test("Surgehacker Mech is not read as a creature-count amplifier", () => {
+      const [l] = linesOf([creatureZoneAnchor, surgehackerMech]);
+      expect(l.growth).not.toBe("multiplicative");
+      expect(l.pieces.find((p) => p.card === "Surgehacker Mech")).toBeUndefined();
+    });
+  });
+
+  // FINDING 3 (2026-08-14 final review): `needsUntap` must actually gate untap-shaped activation
+  // supply, not just sit computed and unread. Real corpus witness -- Field of the Dead's trigger has
+  // no amplifier (growth is additive-shaped from suppliers, not a repeated {T} activation), so the
+  // line needs no untap step, and Fabled Passage's `untap` role must not enter the piece set even
+  // though the card is a real (and correctly included) LAND SUPPLIER for this line.
+  test("Fabled Passage supplies Field of the Dead's lands but brings no untap piece", () => {
+    const [l] = linesOf([fieldOfTheDead, fabledPassage]);
+    expect(l.needsUntap).toBe(false);
+    const fabledPassagePieces = l.pieces.filter((p) => p.card === "Fabled Passage");
+    expect(fabledPassagePieces).toEqual([{ card: "Fabled Passage", role: "supplier" }]);
+    expect(l.pieces.some((p) => p.role === "untap")).toBe(false);
+  });
+
+  // Calendar's amplifier DOES cost `{2}, {T}` -- needsUntap must still gate IN a real untap supplier
+  // when the line actually needs one. Re-asserted here as the counterpart to the Field-of-the-Dead
+  // negative case above, using the same Sphinx fixture finding 3 must not regress.
+  test("needsUntap gates a real untap supplier IN when the line needs one", () => {
+    const [l] = linesOf([calendar, sphinx]);
+    expect(l.needsUntap).toBe(true);
+    expect(l.pieces.some((p) => p.card === "Sphinx of the Second Sun" && p.role === "extra-phase")).toBe(true);
+  });
 });

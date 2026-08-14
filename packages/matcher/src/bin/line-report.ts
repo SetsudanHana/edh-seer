@@ -51,7 +51,8 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
     const iters = l.iterations === undefined ? "unknown" : `${l.iterations}`;
     console.log(
       `${name} | ${l.anchor} | ${l.resource.kind}:${l.resource.name} | N=${l.threshold} | ` +
-      `${l.growth}${factor} | ${iters} activations | terminal ${l.terminal ?? "(none)"}`,
+      `${l.growth}${factor} | ${iters} activations | terminal ${l.terminal ?? "(none)"} | ` +
+      `needsUntap ${l.needsUntap}`,
     );
     const pieceStr = l.pieces.map((p) => {
       const bits: string[] = [p.role];

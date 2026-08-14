@@ -135,12 +135,33 @@ const SUPPLY_ROLE: Readonly<Record<string, Piece["role"]>> = {
  *  present for completeness (a `phase: "untap"` printing would be supply too); none exists yet. */
 const UNTAP_PHASES: ReadonlySet<string> = new Set(["beginning", "untap"]);
 
-/** What the threshold counts. A counter is exact; a zone/type trigger names its type. Anything else
- *  is refused -- an anchor whose resource cannot be named cannot have its suppliers identified
- *  either, and a piece set built from unidentified suppliers is a confidently wrong answer. */
+/** The zone-transition verbs -- the same four `edges.ts`'s own `humanizeEvent` switch treats as a
+ *  family (enters, enters-graveyard, dies, leaves), out of the 21-member `Verb` vocabulary in
+ *  schema.ts. A card entering or leaving a zone is the only kind of trigger whose SUBJECT type is a
+ *  count of "how many are in this zone" -- a phase trigger (`upkeep`, `end-step`, `begin-combat`) or
+ *  a state trigger (`attacks`, `taps`, `cast`) names a type for a wholly different reason (who is
+ *  attacking, what was cast), not a zone population, and reading its type as the threshold's resource
+ *  is a wrong sentence: design §6.1 rule 2. */
+const ZONE_EVENT_VERBS: ReadonlySet<string> = new Set(["enters", "enters-graveyard", "dies", "leaves"]);
+
+function isZoneEventTrigger(trigger: Record<string, any>): boolean {
+  const verbs: unknown[] = Array.isArray(trigger.verbs) ? trigger.verbs : [];
+  return verbs.some((v) => typeof v === "string" && ZONE_EVENT_VERBS.has(v));
+}
+
+/** What the threshold counts. A counter is exact; a zone-event trigger's type/subtype names its
+ *  population (Field of the Dead's `enters` + 7 is LANDS). A non-zone-event trigger's type/subtype
+ *  names something else entirely and is refused, not read -- Emeritus of Abundance's `attacks`
+ *  trigger carries `type:creature` but counts LANDS ("if you control eight or more lands"), and
+ *  Persistent Marshstalker's `attacks` trigger carries `subtype:rat` but counts CARDS IN GRAVEYARD.
+ *  Both were false resources under a rule that ignored what kind of trigger it was reading (finding
+ *  1, 2026-08-14 review). An anchor whose resource cannot be named cannot have its suppliers
+ *  identified either, and a piece set built from unidentified suppliers is a confidently wrong
+ *  answer. */
 function resourceOf(trigger: Record<string, any>): Resource | undefined {
   const s = trigger.subject ?? {};
   if (typeof s.counter === "string" && s.counter) return { kind: "counter", name: s.counter };
+  if (!isZoneEventTrigger(trigger)) return undefined;
   const type = Array.isArray(s.type) ? s.type[0] : s.type;
   if (typeof type === "string" && type) return { kind: "type", name: type };
   const sub = Array.isArray(s.subtype) ? s.subtype[0] : s.subtype;
@@ -148,11 +169,28 @@ function resourceOf(trigger: Record<string, any>): Resource | undefined {
   return undefined;
 }
 
+/** Effect kinds that can plausibly increase how many of a TYPE resource exist. A `pump` or `damage`
+ *  effect never does, however precisely its subject names the type -- finding 2 (2026-08-14 review):
+ *  Gratuitous Violence ("it deals double that damage instead") is a `pump{type:creature}` amplifier
+ *  that doubles DAMAGE, and Surgehacker Mech's `damage{type:[creature,planeswalker]}` amount "twice
+ *  the number of Vehicles" is the same shape -- both were false amplifiers under a type-only match
+ *  that never asked whether the effect grows a COUNT. Measured over the derived corpus: no
+ *  `token-generation` or `counter-placement` effect currently carries both a multiplicative amount
+ *  AND a type-resource subject, so this allowlist refuses every type-resource amplifier line found
+ *  today -- the honest answer given what the corpus actually has, not a workaround for it. A counter
+ *  resource is unaffected by this list: it is matched on `effect.subject.counter`, already exact
+ *  regardless of kind (Calendar's amplifier is a `pump` effect on `counter:time`, and that IS the
+ *  real thing -- restricting counter resources the same way would lose the headline witness). */
+const TYPE_AMPLIFIER_KINDS: ReadonlySet<string> = new Set(["counter-placement", "token-generation"]);
+
 /** Does this ability's effect act on the line's resource? A counter resource is matched on the
- *  effect subject's own counter field, which is how `pump{counter:time}` is told from a P/T pump. */
+ *  effect subject's own counter field, which is how `pump{counter:time}` is told from a P/T pump. A
+ *  type resource additionally requires an effect kind that can grow a count (`TYPE_AMPLIFIER_KINDS`
+ *  above). */
 function actsOnResource(ability: Record<string, any>, resource: Resource): boolean {
   const s = ability.effect?.subject ?? {};
   if (resource.kind === "counter") return s.counter === resource.name;
+  if (!TYPE_AMPLIFIER_KINDS.has(String(ability.effect?.kind ?? ""))) return false;
   const type = Array.isArray(s.type) ? s.type : [s.type];
   return type.includes(resource.name);
 }
@@ -217,9 +255,17 @@ export function detectLines(deck: readonly DeckCard[], hierarchy: Hierarchy): De
       const demandEvents = demandEventsOf(a.trigger);
 
       const pieces: Piece[] = [{ card: dc.card.name, role: "anchor" }];
+      // Untap-shaped activation supply (`untap`, `extra-turn`, an untap-bearing `extra-phase`) is
+      // only a real piece of the line when the line actually needs an untap -- an anchor's own
+      // trigger carries no cost, so today that means the amplifier's `{T}` (§6.4, finding 3). The
+      // amplifier can turn up on a card scanned AFTER the untap piece in this same loop, so the gate
+      // can't be applied inline; candidates are collected here and spliced into `pieces` only once
+      // `needsUntap` is known. Copy supply (Gogo) needs no untap at all and is pushed straight into
+      // `pieces`, ungated.
+      const untapSupplyPieces: Piece[] = [];
       let growth: Growth = { kind: "unknown" };
       let base = 0;
-      let needsUntap = false;
+      let needsUntap = typeof a.cost === "string" && a.cost.includes("{T}");
 
       for (const other of deck) {
         const otherAbilities = (other.tags?.abilities ?? []) as unknown as Record<string, any>[];
@@ -261,11 +307,11 @@ export function detectLines(deck: readonly DeckCard[], hierarchy: Hierarchy): De
           if (kind === "extra-phase") {
             const phase = b.effect?.subject?.phase;
             if (typeof phase === "string" && UNTAP_PHASES.has(phase)) {
-              pieces.push({ card: other.card.name, role: "extra-phase", phase });
+              untapSupplyPieces.push({ card: other.card.name, role: "extra-phase", phase });
             }
           } else {
             const role = SUPPLY_ROLE[kind];
-            if (role) pieces.push({ card: other.card.name, role });
+            if (role) untapSupplyPieces.push({ card: other.card.name, role });
           }
           // Gogo: a copier is activation supply that needs no untap at all. Named by KIND and a
           // non-fixed amount, and marked unproven -- `effect.subject` is absent because no
@@ -275,6 +321,13 @@ export function detectLines(deck: readonly DeckCard[], hierarchy: Hierarchy): De
           }
         }
       }
+
+      // Finding 3: an anchor whose amplifier costs no `{T}` needs no untap supply at all, and the
+      // untap-shaped candidates collected above simply don't enter the piece set (design §6.4's
+      // closing rule -- Colfenor's Urn, a triggered end-step ability with no cost, and Field of the
+      // Dead, whose token-generation trigger has no amplifier, both needed this; both were carrying
+      // an untap piece unconditionally before this gate existed).
+      if (needsUntap) pieces.push(...untapSupplyPieces);
 
       // "that many" / "that much" leaves the per-fire supply unstated. 1 is the PESSIMISTIC reading,
       // so the iteration count comes out an upper bound -- wrong in the safe direction only. Said
