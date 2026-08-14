@@ -70,7 +70,52 @@ export function thresholdFor(text: string): { atLeast: number } | undefined {
     // EXCLUSION 2: a stat comparison is SubjectFilter.stats' fact, not this one.
     if (STAT_SHAPE.test(text.slice(0, match.index))) continue;
 
+    // EXCLUSION 3: a comparison after "Then", or outside the clause's first sentence, conditions a
+    // RIDER, not the trigger. Primal Amulet reads "put a charge counter on this artifact. Then if
+    // there are four or more charge counters on it, you may remove those counters and transform it"
+    // -- the counter goes on REGARDLESS, so gating the counter-placement at 4 is a false sentence.
+    // 13 of the 58 thresholds this gate shipped without it were of that shape.
+    //
+    // BOTH halves are needed and neither is redundant. Kuja, Genome Sorcerer is caught by the
+    // "Then" test ONLY -- segment() rewrites its quoted granted ability and leaves no sentence
+    // period -- while Omnath, Rabble Rousing and Dowsing Device are caught by the sentence test
+    // only. Do not simplify this to one predicate.
+    //
+    // THE TRADE, accepted by the owner: the predicate refuses the whole clause, so ~7 currently
+    // CORRECT thresholds are lost with the 12 wrong ones. A missing answer beats a wrong one.
+    const before = text.slice(0, match.index);
+    if (/\bThen\b/.test(before) || before.includes(". ")) continue;
+
     return { atLeast };
   }
   return undefined;
+}
+
+/** Per-exclusion tallies for `ledger-coverage.ts`'s §8 breakdown. */
+export interface ThresholdTally {
+  excluded1: number;
+  excluded2: number;
+  excluded3: number;
+  accepted: number;
+}
+
+/** The same walk as `thresholdFor`, but visits every qualifying comparison in `text` instead of
+ *  stopping at the first one, and tallies which exclusion (if any) it hit into `tally`. Exists so
+ *  coverage reporting can show "exclusion 1 refused N, exclusion 2 refused M, ..." without changing
+ *  `thresholdFor`'s own signature or first-match-wins behaviour. */
+export function tallyThresholds(text: string, tally: ThresholdTally): void {
+  if (!CONDITION_CUE.test(text)) return;
+
+  for (const match of text.matchAll(COMPARISON)) {
+    const raw = match[1] ?? match[2];
+    if (!raw) continue;
+    const atLeast = valueOf(raw);
+    if (!Number.isFinite(atLeast)) continue;
+
+    if (atLeast <= 1) { tally.excluded1++; continue; }
+    if (STAT_SHAPE.test(text.slice(0, match.index))) { tally.excluded2++; continue; }
+    const before = text.slice(0, match.index);
+    if (/\bThen\b/.test(before) || before.includes(". ")) { tally.excluded3++; continue; }
+    tally.accepted++;
+  }
 }

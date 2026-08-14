@@ -121,6 +121,30 @@ test("a clause that drains and gains also yields a drain ability", () => {
   expect(drain?.effect.subject).toEqual({ control: "opp", token: null, scope: "each" });
 });
 
+test("an activated drain ability carries the clause's real cost", () => {
+  // Lampad of Death's Vigil: "{1}, Sacrifice a creature: Each opponent loses 1 life and you gain 1
+  // life." schema.ts: an absent `cost` means "not an activated ability" -- that distinction is
+  // load-bearing, and drainAbility built its literal without ever setting the field.
+  const { abilities } = deriveAbilities(
+    [{
+      id: 1,
+      abilityType: "activated",
+      actions: [
+        { verb: "lose-life", object: "each opponent" },
+        { verb: "gain-life", object: "you" },
+      ],
+    }],
+    undefined,
+    undefined,
+    { 1: "{1}, Sacrifice a creature" },
+  );
+  const drain = abilities.find((a) => a.effect.kind === "drain");
+  expect(drain?.cost).toBe("{1}, Sacrifice a creature");
+  // Merges two source actions -- no single amount is attributable, so it stays unset rather than
+  // guessed.
+  expect(drain?.amount).toBeUndefined();
+});
+
 test("gaining life alone is not a drain", () => {
   const { abilities } = deriveAbilities([{
     id: 1, abilityType: "static", actions: [{ verb: "gain-life", object: "you" }],

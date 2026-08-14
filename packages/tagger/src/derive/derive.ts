@@ -20,7 +20,7 @@ import { SUBTYPES } from "./subtypes.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 37;
+export const DERIVE_VERSION = 38;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -89,7 +89,7 @@ function normalizeTriggerVerb(event: string): Verb | null {
  *  in the engine's vocabulary and what aristocrats payoffs match on. Added ALONGSIDE the per-action
  *  abilities, not instead of them, so the card still registers on the lifeloss and lifegain axes.
  *  Without this, Zulaport Cutthroat and Blood Artist lose the kind their live tags carry today. */
-function drainAbility(clause: ClauseRecord, kind: AbilityKind, trigger: Ability["trigger"]): Ability | null {
+function drainAbility(clause: ClauseRecord, kind: AbilityKind, trigger: Ability["trigger"], cost: string): Ability | null {
   const actions = clause.actions ?? [];
   const loss = actions.find((a) => a.verb === "lose-life" && parseSubject(a.object ?? "").control !== "you");
   const gain = actions.find((a) => a.verb === "gain-life" && parseSubject(a.object ?? "").control === "you");
@@ -101,6 +101,10 @@ function drainAbility(clause: ClauseRecord, kind: AbilityKind, trigger: Ability[
   const keepSubject = kind !== "static" || namesItsTargets(subject);
   const ability: Ability = { kind, effect: keepSubject ? { kind: "drain", subject } : { kind: "drain" } };
   if (trigger) ability.trigger = trigger;
+  // No `amount`: a drain merges two source actions (the loss and the gain), and no single amount is
+  // attributable to the merged ability -- guessing one would be the wrong-sentence-dressed-as-data
+  // failure this project refuses everywhere else (see threshold.ts's header).
+  if (clause.abilityType === "activated") ability.cost = cost;
   return ability;
 }
 
@@ -665,7 +669,7 @@ export function deriveAbilities(
       abilities.push(ability);
     }
 
-    const drain = drainAbility(clause, kind, trigger);
+    const drain = drainAbility(clause, kind, trigger, cost);
     if (drain) abilities.push(drain);
 
     // A TRIGGER is a consumer signal in its own right, independent of what the effect does. Geode

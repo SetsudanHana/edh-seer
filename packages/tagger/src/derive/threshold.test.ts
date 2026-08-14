@@ -67,6 +67,29 @@ test("no comparison at all is refused", () => {
   expect(thresholdFor("")).toBeUndefined();
 });
 
+test("EXCLUSION 3: a comparison after 'Then' conditions a RIDER, not the trigger", () => {
+  // Primal Amulet // Primal Wellspring. The charge counter goes on REGARDLESS of the count --
+  // gating the counter-placement at 4 says the card does something it does not do.
+  expect(thresholdFor(
+    "Whenever you cast an instant or sorcery spell, put a charge counter on this artifact. Then if there are four or more charge counters on it, you may remove those counters and transform it.",
+  )).toBeUndefined();
+});
+
+test("EXCLUSION 3: a comparison in a LATER SENTENCE is a rider even without 'Then'", () => {
+  // Omnath, Locus of the Roil. The +1/+1 counter is unconditional; only the draw is gated.
+  expect(thresholdFor(
+    "Landfall — Whenever a land you control enters, put a +1/+1 counter on target Elemental you control. If you control eight or more lands, draw a card.",
+  )).toBeUndefined();
+});
+
+test("EXCLUSION 3 keeps a first-sentence threshold, which is the shape that IS the trigger", () => {
+  // The Millennium Calendar -- the whole point of the field. The condition is the trigger itself,
+  // not a rider on a later clause, so it must survive all three exclusions.
+  expect(thresholdFor(
+    "When there are 1,000 or more time counters on The Millennium Calendar, sacrifice it and each opponent loses 1,000 life.",
+  )).toEqual({ atLeast: 1000 });
+});
+
 test("the FIRST qualifying comparison wins when a sentence carries two", () => {
   // Twenty-Toed Toad: "Whenever this creature attacks, you win the game if there are twenty or
   // more counters on it or you have twenty or more life." An OR across two different resources;
