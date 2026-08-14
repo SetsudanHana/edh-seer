@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { classifyGrowth } from "./lines.js";
+import { classifyGrowth, iterationsNeeded } from "./lines.js";
 
 describe("classifyGrowth", () => {
   // The measured multiplicative family is TINY and fully enumerable: "double" x7, "triple" x2,
@@ -45,5 +45,32 @@ describe("classifyGrowth", () => {
   test("a P/T amount is not a growth step", () => {
     expect(classifyGrowth("+1/+1")).toEqual({ kind: "unknown" });
     expect(classifyGrowth("-1/-1")).toEqual({ kind: "unknown" });
+  });
+});
+
+describe("iterationsNeeded", () => {
+  // The headline witness. 1,000 time counters doubling from a pessimistic base of 1 is TEN
+  // activations -- which is why telling multiplicative from additive is the whole point.
+  test("Calendar: 1,000 at x2 from base 1 is 10", () => {
+    expect(iterationsNeeded(1000, { kind: "multiplicative", factor: 2 }, 1)).toBe(10);
+  });
+
+  // The additive control. 20 growth counters at +1 is 20 fires, and no amount of untapping shortens
+  // it. A classifier that ever collapsed the two would fail here.
+  test("Simic Ascendancy: 20 at +1 is 20", () => {
+    expect(iterationsNeeded(20, { kind: "additive", step: 1 }, 0)).toBe(20);
+  });
+
+  test("a base already past the threshold needs no iterations", () => {
+    expect(iterationsNeeded(20, { kind: "additive", step: 1 }, 20)).toBe(0);
+  });
+
+  test("unknown growth yields no number, rather than a guess", () => {
+    expect(iterationsNeeded(1000, { kind: "unknown" }, 1)).toBeUndefined();
+  });
+
+  // A multiplicative model needs something to multiply. Zero never grows.
+  test("a multiplicative line from base 0 is refused", () => {
+    expect(iterationsNeeded(1000, { kind: "multiplicative", factor: 2 }, 0)).toBeUndefined();
   });
 });

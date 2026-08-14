@@ -58,3 +58,21 @@ export function classifyGrowth(amount: string | undefined): Growth {
   // "x" (106), "that many" (23), "that much" (22) and everything else: refused, never defaulted.
   return { kind: "unknown" };
 }
+
+/** How many times the amplifier must fire to carry `base` to `threshold`.
+ *
+ *  Multiplicative: ceil(log_f(N / b)). Additive: ceil((N - b) / k). The two answers differ by two
+ *  orders of magnitude on the witnesses -- Calendar's 1,000 at x2 is 10, Simic Ascendancy's 20 at
+ *  +1 is 20 -- which is the entire reason the classifier exists.
+ *
+ *  `undefined` for an unknown growth model, and for a multiplicative model with nothing to multiply.
+ *  A refused answer is the point: a missing number beats a wrong one. */
+export function iterationsNeeded(threshold: number, growth: Growth, base: number): number | undefined {
+  if (base >= threshold) return 0;
+  if (growth.kind === "additive") return Math.ceil((threshold - base) / growth.step);
+  if (growth.kind === "multiplicative") {
+    if (base <= 0) return undefined;
+    return Math.ceil(Math.log(threshold / base) / Math.log(growth.factor));
+  }
+  return undefined;
+}
