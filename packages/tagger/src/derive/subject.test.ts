@@ -8,6 +8,36 @@ test("control comes from the possessive phrase, defaulting to any", () => {
   expect(parseSubject("target creature").control).toBe("any");
 });
 
+/** COMBAT NAMES THE OPPONENT WITHOUT SAYING "OPPONENT".
+ *
+ *  `control: "any"` is not a neutral unknown -- `matcher/subject.ts:39` skips the control check
+ *  entirely when either side is `any`, so a phrase this parser does not recognise becomes a
+ *  PERMISSION rather than a missing fact. Mjölnir, Storm Hammer's "tap target creature defending
+ *  player controls" derived `control: "any"` and satisfied Hawkeye, Master Marksman's "whenever
+ *  Hawkeye becomes tapped" (`control: "you", self: true`) -- an opponent's creature being tapped
+ *  read as your own creature being tapped.
+ *
+ *  Measured over the derived corpus before writing this: 12 clause actions say "defending player",
+ *  11 of them on an `attacks` trigger the card's own controller owns, and the 12th (Elturel
+ *  Survivors) is a characteristic-defining "+X/+0 where X is the number of lands defending player
+ *  controls" on an attacker. All 12 mean an opponent. "attacking player" appears once, on an
+ *  `attacks`/opponent trigger, and means an opponent too. */
+test("combat role words name an opponent", () => {
+  expect(parseSubject("target creature defending player controls").control).toBe("opp");
+  expect(parseSubject("defending player").control).toBe("opp");
+  expect(parseSubject("up to one target instant or sorcery card from defending player's graveyard").control).toBe("opp");
+  expect(parseSubject("attacking player").control).toBe("opp");
+});
+
+/** REFUSED, and the refusal is the point. "that player" names an ANTECEDENT, not a role: 12 clause
+ *  actions carry it across five different trigger shapes (`enters`, `damage-dealt`, `attacks`,
+ *  `upkeep`, and none at all), so the phrase alone cannot say whose. Resolving it needs the
+ *  antecedent machinery, not a vocabulary entry, and guessing "opp" here would re-create the exact
+ *  defect above in the other direction. */
+test("`that player` is not resolvable from the phrase and stays any", () => {
+  expect(parseSubject("up to one target creature that player controls").control).toBe("any");
+});
+
 test("a subject with no card type is a player — the absence of type IS the encoding", () => {
   // Zulaport Cutthroat's drain subject is {control:"opp", token:null} with no type at all.
   expect(parseSubject("each opponent")).toEqual({ control: "opp", token: null, scope: "each" });

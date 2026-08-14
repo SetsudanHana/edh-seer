@@ -14,6 +14,22 @@ const TYPES = [
 function parseControl(t: string): Control {
   // Negation first: "you don't control" must not fall through to the "you control" branch below.
   if (/\byou (?:don'?t|do not|don’t) control\b/.test(t)) return "opp";
+  // COMBAT NAMES THE OPPONENT WITHOUT SAYING "OPPONENT". Measured over the derived corpus: 12 clause
+  // actions say "defending player" and all 12 mean an opponent (11 sit on an `attacks` trigger the
+  // card's controller owns; the 12th, Elturel Survivors, is a characteristic-defining "+X/+0 where X
+  // is the number of lands defending player controls" on an attacker). "attacking player" appears
+  // once, on an opponent's `attacks` trigger, and also means an opponent.
+  //
+  // This is ORDERED BEFORE the "your" branch on purpose: Midnight Crusader Shuttle's "creature of
+  // your choice that defending player controls" carries both words, and the creature is the
+  // DEFENDING player's. Falling through to "you" there would invert the fact rather than lose it.
+  //
+  // Unrecognised control is not neutral. `matcher/subject.ts:39` skips the control check whenever
+  // either side is `any`, so a phrase this function cannot read becomes a PERMISSION: Mjölnir, Storm
+  // Hammer's "tap target creature defending player controls" satisfied Hawkeye, Master Marksman's
+  // "whenever Hawkeye becomes tapped". "that player controls" is deliberately NOT here -- it names an
+  // antecedent, not a role, and 12 corpus actions carry it across five different trigger shapes.
+  if (/\bdefending player\b|\battacking player\b/.test(t)) return "opp";
   if (/\byour opponents?\b|\bopponent'?s?\b|\beach opponent\b|\btarget opponent\b/.test(t)) return "opp";
   if (/\byou control\b|\byour\b|^you$/.test(t)) return "you";
   return "any";
