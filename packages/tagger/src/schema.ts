@@ -342,7 +342,13 @@ export interface Ability {
   kind: AbilityKind;
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: { verbs: Verb[]; subject: SubjectFilter };
-  /** Activated abilities: informational cost text, not parsed in Stage 1. */
+  /** An activated ability's activation cost, verbatim as `segment.ts` split it out of the body —
+   *  "{X}{X}, {T}", "{T}, Sacrifice a creature". Unparsed on purpose: this records what the card
+   *  says, and what a cost MEANS for a loop's economy is sub-project B's question.
+   *
+   *  Empty string means "activated, no cost recorded"; absent means "not an activated ability".
+   *  The distinction is load-bearing — it is the difference between a free sacrifice outlet and a
+   *  static ability. */
   cost?: string;
   /** How often this ability can fire — see
    *  `docs/superpowers/specs/2026-08-11-repeatability-taxonomy-design.md`.

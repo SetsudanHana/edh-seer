@@ -1229,3 +1229,29 @@ test("deriveCardTags threads clauseCosts all the way from DeriveInput to the lab
   expect(tags.abilities).toHaveLength(1);
   expect(tags.abilities[0].repeats).toBe("per-cycle");
 });
+
+test("an activated ability carries its real activation cost, not an empty string", () => {
+  // Gogo, Master of Mimicry: "{X}{X}, {T}: Copy target activated or triggered ability you control
+  // X times." segment.ts's classify() splits the cost out of the body before derivation sees it,
+  // so the cost arrives as the fourth argument, keyed by clause id. Documented at repeats.ts:12-14.
+  const { abilities } = deriveAbilities(
+    [{
+      id: 1,
+      abilityType: "activated",
+      actions: [{ verb: "copy", object: "target activated or triggered ability you control", amount: "X" }],
+    }],
+    "Gogo, Master of Mimicry",
+    { 1: "Copy target activated or triggered ability you control X times." },
+    { 1: "{X}{X}, {T}" },
+  );
+  expect(abilities[0].cost).toBe("{X}{X}, {T}");
+});
+
+test("an activated ability with no cost string keeps an empty cost rather than dropping the field", () => {
+  // The field is declared on every activated ability so a consumer can tell "no cost recorded"
+  // from "not an activated ability". Absent cost data is the empty string, as before.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "a card" }],
+  }]);
+  expect(abilities[0].cost).toBe("");
+});
