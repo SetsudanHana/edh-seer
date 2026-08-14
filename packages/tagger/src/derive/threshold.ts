@@ -59,6 +59,12 @@ export function thresholdFor(text: string): { atLeast: number } | undefined {
 
     // EXCLUSION 1: "one or more" is an English plural meaning "any", not a counted condition.
     // Emitting atLeast:1 would be a wrong sentence dressed as data. 98 of 208 corpus matches.
+    // This range check also does a second, unrelated job it was never asked to do: a broken
+    // NUMBER pattern that mis-parses "1,000" down to "000" (see the sabotage check in
+    // threshold.test.ts) yields atLeast:0, which is <=1 and gets silently absorbed HERE. That is
+    // why the sabotaged regex is observed to return `undefined` rather than the `{ atLeast: 0 }`
+    // its own parse produces -- a future regression in NUMBER will present as an ordinary refusal,
+    // not a visible failure, contrary to this file's header promise that gaps "stay visible".
     if (atLeast <= 1) continue;
 
     // EXCLUSION 2: a stat comparison is SubjectFilter.stats' fact, not this one.
