@@ -362,6 +362,60 @@ test("storm supplies no cast event, because a copy is not cast", () => {
   expect(ev.filter((e) => e.verb === "cast")).toHaveLength(1); // the card's own cast, nothing added
 });
 
+// AN ALTERNATIVE CASTING COST IS NEVER AN EMIT GAP — the family rule, tested once for all fifteen.
+// `impliedEvents` already pushes a `cast` for every nonland card, so a keyword describing ANOTHER
+// way to cast the same card adds a second, wider cast rather than a missing one. Flashback ranked #2
+// on the keyword gap list until this was measured: 212 of 212 flashback cards are Instants or
+// Sorceries and every one already implied its cast.
+test("keywords that only re-cast the same card add no cast event", () => {
+  for (const k of ["flashback", "escape", "foretell", "bestow", "evoke", "rebound", "mutate",
+    "warp", "kicker", "convoke", "flash", "morph", "disguise", "enchant"]) {
+    const ev = impliedEvents(kw([k], ["sorcery"]));
+    expect(ev.filter((e) => e.verb === "cast"), `${k} must not add a second cast`).toHaveLength(1);
+  }
+});
+
+// THE LAST FOUR EMIT-BEARING KEYWORDS, closing the vein. Each is justified by its printed reminder.
+test("cumulative upkeep ages the permanent and then kills it", () => {
+  // "At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it
+  // unless you pay its upkeep cost for each age counter on it."
+  const ev = impliedEvents(kw(["cumulative upkeep"]));
+  expect(ev.find((e) => e.verb === "counter-added")?.subject.counter).toBe("age");
+  expect(ev.find((e) => e.verb === "sacrifice")?.subject.self).toBe(true);
+  expect(ev.find((e) => e.verb === "dies")?.subject.self).toBe(true);
+});
+
+test("echo sacrifices the permanent that does not pay", () => {
+  // "At the beginning of your upkeep, if this came under your control since the beginning of your
+  // last upkeep, sacrifice it unless you pay its echo cost."
+  const ev = impliedEvents(kw(["echo"]));
+  expect(ev.find((e) => e.verb === "sacrifice")?.subject.self).toBe(true);
+  expect(ev.find((e) => e.verb === "dies")?.subject.self).toBe(true);
+});
+
+test("station names the counter kind it adds", () => {
+  // "Tap another creature you control: Put charge counters equal to its power on this Spacecraft."
+  expect(impliedEvents(kw(["station"], ["artifact"])).find((e) => e.verb === "counter-added")?.subject.counter)
+    .toBe("charge");
+});
+
+// MADNESS IS A DISCARD CONSUMER, NOT A PRODUCER. "If you discard this card, discard it into exile.
+// When you do, cast it for its madness cost or put it into your graveyard." The card supplies no
+// discard — it is conditional on YOU discarding it by some other means — and what it does supply
+// goes to EXILE, not the graveyard. Cycling is the contrast: cycling pays its own cost to discard.
+test("madness supplies no discard, because it does not do the discarding", () => {
+  expect(impliedEvents(kw(["madness"], ["instant"])).filter((e) => e.verb === "discard")).toHaveLength(0);
+});
+
+// SUSPEND IS REFUSED for the same reason, found on its own witness rather than by reasoning: its
+// time counters sit on a card in EXILE, not on a permanent you control, so no counters-matter payoff
+// can see them. A suspended card is a PROLIFERATE payoff — demand, not supply. The only consumer the
+// mapping reached was Regenerations Restored, whose trigger watches its OWN time counters.
+test("suspend supplies no counter, because the counters are on an exiled card", () => {
+  expect(impliedEvents(kw(["suspend"], ["sorcery"])).filter((e) => e.verb === "counter-added"))
+    .toHaveLength(0);
+});
+
 // Pump is an EFFECT kind, not an emitted event — a different channel entirely.
 test("prowess and exalted add no event", () => {
   const before = impliedEvents(chars(["creature"])).length;

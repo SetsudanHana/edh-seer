@@ -126,7 +126,22 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
  *  - **prowess, exalted** — "gets +1/+1 until end of turn" is a pump EFFECT, not an emitted event.
  *  - **unearth, persist's and undying's RETURN half** — "return this card ... to the battlefield"
  *    would be a second `enters` on top of the card's own implied one, and double-counting a card's
- *    entry is worse than missing its recursion. Their counters are kept; the re-entry is deferred. */
+ *    entry is worse than missing its recursion. Their counters are kept; the re-entry is deferred.
+ *  - **EVERY "alternative casting cost" keyword** — flashback, escape, foretell, bestow, evoke,
+ *    rebound, mutate, warp, kicker, convoke, flash, morph, disguise, enchant. `impliedEvents` pushes
+ *    a `cast` for EVERY nonland card, so a keyword describing another way to cast the same card adds
+ *    a second, wider cast rather than a missing one. Flashback ranked second on the keyword gap list
+ *    until it was measured: 212 of 212 flashback cards are Instants or Sorceries and every one
+ *    already implied its cast, and the corpus holds 0 consumers watching a graveyard-scoped cast.
+ *    A supply count cannot see this — count the CONSUMERS.
+ *  - **madness** — "If you discard this card, discard it into exile. When you do, cast it for its
+ *    madness cost or put it into your graveyard." The card supplies no discard: it is conditional on
+ *    YOU discarding it by other means, so madness is a discard CONSUMER. Cycling is the contrast —
+ *    it pays its own cost to discard itself.
+ *  - **suspend** — "exile it with three time counters on it". Those counters sit on a card in EXILE,
+ *    not on a permanent you control, so no counters-matter payoff can see them; a suspended card is
+ *    a PROLIFERATE payoff, which is demand rather than supply. Caught on its witness: the only
+ *    consumer it reached was Regenerations Restored, whose trigger is its own time counters. */
 const KEYWORD_EMITS: Record<string, { verb: GameEvent["verb"]; counter?: string; control?: "you" | "opp"; token?: true; self?: true }[]> = {
   // "Damage dealt by this creature also causes you to gain that much life."
   lifelink: [{ verb: "gain-life" }],
@@ -177,6 +192,21 @@ const KEYWORD_EMITS: Record<string, { verb: GameEvent["verb"]; counter?: string;
   // NOT. A library search is no emitted event, so the discard is all of it. See `keywordEvents` for
   // why this entry has to SUPPRESS the umbrella rather than merely sit beside it.
   typecycling: [{ verb: "discard", self: true }],
+  // "At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless
+  // you pay its upkeep cost for each age counter on it." The sacrifice is the card's OWN, and it is
+  // supply rather than drawback: the aura-drawback gate in `derive.ts` is keyed on `leaves` — a
+  // permanent undoing what it did as it departs — and this fires on UPKEEP. A body dying on a clock
+  // is the aristocrats shape, and `dies` is what 139 corpus consumers watch against 22 on
+  // `sacrifice`, so both are emitted exactly as an authored sacrifice action emits both.
+  "cumulative upkeep": [{ verb: "counter-added", counter: "age", self: true },
+    { verb: "sacrifice", self: true }, { verb: "dies", self: true }],
+  // "At the beginning of your upkeep, if this came under your control since the beginning of your
+  // last upkeep, sacrifice it unless you pay its echo cost." Same shape, same reasoning.
+  echo: [{ verb: "sacrifice", self: true }, { verb: "dies", self: true }],
+  // "Tap another creature you control: Put charge counters equal to its power on this Spacecraft."
+  // The tap of the OTHER creature is real supply too, but 4 corpus consumers watch `taps` against
+  // 17 on `counter-added`, and the spec shape here cannot say "another creature you control".
+  station: [{ verb: "counter-added", counter: "charge", self: true }],
 };
 
 /** The events a card's PRINTED KEYWORDS supply. Marked `implied: true` like every other synthetic
@@ -185,7 +215,12 @@ export function keywordEvents(chars: Characteristics): GameEvent[] {
   const out: GameEvent[] = [];
   // Keywords arrive with their argument attached ("Ward {2}", "Annihilator 2", "Protection from
   // Demons"), so match on the FIRST word — the same shape `isKeywordLine` uses in the segmenter.
-  const keys = (chars.keywords ?? []).map((raw) => String(raw).toLowerCase().split(/[\s{]/)[0]);
+  // The WHOLE keyword first, so two-word entries ("cumulative upkeep") are reachable at all — the
+  // first word alone would key them as "cumulative", and "basic landcycling" as "basic".
+  const keys = (chars.keywords ?? []).map((raw) => {
+    const whole = String(raw).toLowerCase().trim();
+    return whole in KEYWORD_EMITS ? whole : whole.split(/[\s{]/)[0];
+  });
   // ONE KEYWORD NARROWS ANOTHER, so the map alone cannot decide this. Scryfall stamps the umbrella
   // `Cycling` on every typecycling card as well as its specific name, but their printed reminder
   // SEARCHES the library where plain cycling draws — Eternal Dragon carries Plainscycling,
@@ -200,7 +235,14 @@ export function keywordEvents(chars: Characteristics): GameEvent[] {
           control: spec.control ?? "you",
           token: spec.token ?? null,
           ...(spec.counter ? { counter: spec.counter } : {}),
-          ...(spec.self ? { self: true } : {}),
+          // A SELF event happens to a KNOWN permanent — this one — so it carries this card's printed
+          // identity rather than staying untyped. Left untyped it wildcards onto typed consumers:
+          // Mystic Remora's age counter goes on an ENCHANTMENT and was reaching Fathom Mage's
+          // `counter-added:creature`, and cycling's discard reached typed graveyard recursion. Same
+          // fact `selfSubject` states for a card's own cast/enters, so it is reused rather than
+          // rebuilt — `counter` is overlaid after, since a counter is board state and not printed.
+          ...(spec.self ? { ...selfSubject(chars), self: true as const,
+            ...(spec.counter ? { counter: spec.counter } : {}) } : {}),
           // A token this card makes is a creature it did not print on its own type line, so the
           // subject says only what the reminder guarantees: it is a token, and it is a creature.
           ...(spec.token ? { type: "creature" } : {}),
