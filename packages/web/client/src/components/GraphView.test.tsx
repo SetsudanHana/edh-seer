@@ -1386,4 +1386,36 @@ describe("flow view", () => {
     tick();
     expect(offsets()).toEqual(first);
   });
+
+  // THE SIGN IS THE WHOLE CLAIM. A crawl running the wrong way is a confident lie about which card
+  // feeds which, and it looks perfectly healthy in a screenshot. Confirmed in a real browser (Task
+  // 2, Step 2) on Purphoros, God of the Forge -> Impact Tremors, a producer -> consumer edge the
+  // inspector named via "Feeds", at both the fit-to-deck zoom (camZ 1.888) and card mode (camZ
+  // 1.084): the painted dashes crawl toward the consumer end, matching the shipped `-crawl / cam.z`.
+  // This test exists so a later refactor cannot quietly flip it back.
+  test("the dash offset carries the confirmed sign, so the crawl runs producer to consumer", () => {
+    vi.spyOn(performance, "now").mockReturnValue(100);
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "B" })],
+      [{ from: "A", to: "B", weight: 2, tags: ["t"], reasonTexts: ["A feeds B"] }],
+    );
+    const { canvas, tick } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "A")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    calls.length = 0;
+    tick();
+    const z = canvas.__graphProbe!().camZ;
+
+    let last: string | null = null;
+    const offsets: string[] = [];
+    for (const c of calls) {
+      if (c.startsWith("set:lineDashOffset=")) last = c.slice("set:lineDashOffset=".length);
+      else if (c.startsWith("moveTo:") && last !== null) offsets.push(last);
+    }
+    const cycle = FLOW_DASH.on + FLOW_DASH.off;
+    const expected = -((100 / 1000 * FLOW_DASH.speed) % cycle) / z;
+    expect(offsets).toContain(String(expected));
+  });
 });
