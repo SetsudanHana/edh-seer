@@ -181,7 +181,12 @@ export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): bo
  *  makes the same claim in every deck, which is exactly wrong for these: Sapphire Medallion in
  *  mono-red does nothing, and Ghostly Prison protects you the same however the other 99 are chosen.
  *  See the applies-to pass for the measured cost of leaving them in. */
-const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set(["cost-reduction", "tax"]);
+// `win-game`, `extra-turn` and `extra-phase` join cost-reduction and tax for the same reason those
+// two are here: they are deck ROLES, not pairwise claims. "This card wins the game" says the
+// identical thing next to every other card in the deck, and an extra turn helps all 99 equally.
+const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set([
+  "cost-reduction", "tax", "win-game", "extra-turn", "extra-phase",
+]);
 
 export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
   if (consumer.verb !== "enters" && consumer.verb !== "cast") return false;
