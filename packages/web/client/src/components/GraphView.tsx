@@ -8,7 +8,7 @@ import {
   CARD_MODE_Z, MAX_Z, cardImageUrl, isOnScreen, renderModeFor, shouldPrefetchCard,
 } from "./card-node.js";
 import {
-  FLOW_HUE, PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
+  FLOW_DASH, FLOW_HUE, PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
 } from "./presets.js";
 import { computeFlow, type Flow, type FlowEdge } from "./flow.js";
 import {
@@ -407,6 +407,20 @@ export function GraphView(
       if (activeFlow) {
         for (const fe of activeFlow.edges) flowEdgeByPair.set(`${fe.from}>${fe.to}`, fe);
       }
+      // Direction as motion: flow edges are dashed, and the pattern crawls from producer to
+      // consumer. Read ONCE per frame, not per edge -- every edge in a frame must share a phase or
+      // the flow reads as noise instead of as one current.
+      //
+      // Wall-clock, not a frame counter: a per-frame increment would crawl twice as fast on a 120Hz
+      // display as on a 60Hz one. Modulo one dash cycle keeps the number small and changes nothing
+      // visible -- the pattern repeats every `on + off` pixels by definition.
+      //
+      // prefers-reduced-motion freezes the phase at 0. The dashes stay (a static dash is harmless)
+      // but they carry no direction, so those readers fall back to the flow legend's wording. That
+      // gap is recorded in the design doc; closing it means arrowheads, which are a separate item.
+      const stillMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+      const dashCycle = FLOW_DASH.on + FLOW_DASH.off;
+      const crawl = stillMotion ? 0 : (performance.now() / 1000 * FLOW_DASH.speed) % dashCycle;
       for (const l of links) {
         const fe = flowEdgeByPair.get(`${l.source.id}>${l.target.id}`);
         // An edge in the flow takes its direction's hue; everything else keeps the neutral stroke
@@ -414,11 +428,20 @@ export function GraphView(
         ctx.globalAlpha = activeFlow && !fe ? 0.15 : 1;
         ctx.strokeStyle = fe ? FLOW_HUE[fe.dir] : paintColors.sep;
         ctx.lineWidth = edgeWidth(l.weight, maxWeight) / cam.z;
+        // Sticky context state: the else branch is not optional. Without it the pattern set by the
+        // last flow edge would dash every rim, border and card frame drawn after this loop.
+        if (fe) {
+          ctx.setLineDash([FLOW_DASH.on / cam.z, FLOW_DASH.off / cam.z]);
+          ctx.lineDashOffset = -crawl / cam.z;
+        } else {
+          ctx.setLineDash([]);
+        }
         ctx.beginPath();
         ctx.moveTo(l.source.x, l.source.y); ctx.lineTo(l.target.x, l.target.y);
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
+      ctx.setLineDash([]);
 
       // A search dims what does not match rather than hiding it, so the deck keeps its shape and
       // you can see WHERE the match sits. `matchIds` null means no active search: dim nothing.

@@ -78,6 +78,12 @@ export const ROLE_HUE: Record<string, string> = {
  *  flow). */
 export const FLOW_HUE = { up: ROLE_HUE.lands, down: ROLE_HUE.wincons } as const;
 
+/** The crawling dash on a flow edge: `on`/`off` in SCREEN pixels, `speed` in screen pixels per
+ *  second. Direction is carried by the motion, so these three numbers are the whole encoding --
+ *  they live here, beside the hues, so tuning never touches the paint loop. Starting values were
+ *  set on the running board (see the design doc's §4). */
+export const FLOW_DASH = { on: 6, off: 6, speed: 30 } as const;
+
 /** The engine's build categories, grouped into the six functional roles a deck is read by, plus
  *  the `strategy` fallback for a card with no role at all. Carried over from the retired ROOMS:
  *  the grouping is what makes "removal" and "counterspells" one answer-shaped fact rather than two
