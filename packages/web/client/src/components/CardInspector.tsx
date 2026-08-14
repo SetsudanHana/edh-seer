@@ -14,10 +14,13 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, onClose,
+  node, edges, flow, onClose,
 }: {
   node: GraphNode;
   edges: readonly Edge[];
+  /** The drawn flow, when a flow is active. Only `truncated` is read: the panel states what the
+   *  board had to leave out. */
+  flow?: { truncated: Map<string, { total: number; shown: number }> } | null;
   onClose: () => void;
 }) {
   const typeLine = [...node.supertypes, ...node.types].join(" ")
@@ -25,6 +28,49 @@ export function CardInspector({
   // Strongest first -- the same ordering `edgeWidth`/`linkDistanceFor` already give the board
   // itself, so the panel agrees with what the geometry is claiming.
   const sorted = [...edges].sort((a, b) => b.weight - a.weight);
+  // An edge is directed and this card can sit on either end -- split into what it FEEDS (producer)
+  // and what FEEDS it (consumer) rather than one undifferentiated list, so the panel reads the same
+  // direction the board's arrows do.
+  const outgoing = sorted.filter((e) => e.from === node.id);
+  const incoming = sorted.filter((e) => e.to === node.id);
+  const cut = flow?.truncated.get(node.id);
+
+  // Shared <li> markup for one direction's list -- the row text and direction are fixed by which
+  // group a caller passes (every edge in `outgoing` has `node` as `from`, every edge in `incoming`
+  // has `node` as `to`), so there is no per-edge direction check left to make here.
+  const renderList = (list: readonly Edge[], isOutgoing: boolean) =>
+    list.length === 0 ? null : (
+      <ul className="flex flex-col gap-2">
+        {list.map((e) => {
+          const partner = isOutgoing ? e.to : e.from;
+          return (
+            <li key={`${e.from}->${e.to}`} className="flex flex-col gap-0.5">
+              <div className="flex justify-between gap-2">
+                <span>{isOutgoing ? `${node.label} → ${partner}` : `${partner} → ${node.label}`}</span>
+                <span className="font-mono tabular-nums text-(--muted) shrink-0">
+                  {e.weight.toFixed(1)}
+                </span>
+              </div>
+              {e.tags.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {e.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="eyebrow px-1 py-0.5 rounded-(--radius) border border-(--separator) text-(--muted)"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {e.reasonTexts.map((text, i) => (
+                <p key={i} className="text-(--muted) text-xs">{text}</p>
+              ))}
+            </li>
+          );
+        })}
+      </ul>
+    );
 
   return (
     <div
@@ -67,48 +113,35 @@ export function CardInspector({
       ) : null}
 
       <div className="border-t border-(--separator) pt-2 flex flex-col gap-2">
-        <h4 className="eyebrow text-(--muted)">Synergy edges</h4>
         {/* An empty edge list is the orphan diagnostic and has to read as a finding, not a blank
          *  panel that leaves a reader wondering whether the click even worked. */}
         {sorted.length === 0 ? (
-          <p className="text-(--muted)">No synergy edges — nothing else in the deck connects to this card.</p>
+          <>
+            <h4 className="eyebrow text-(--muted)">Synergy edges</h4>
+            <p className="text-(--muted)">No synergy edges — nothing else in the deck connects to this card.</p>
+          </>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {sorted.map((e) => {
-              // An edge is directed; this card can be the producer on one edge and the consumer on
-              // the next. The arrow always points from what's named first toward what's named
-              // second, so which side `node` sits on tells a reader which direction this edge runs.
-              const outgoing = e.from === node.id;
-              const partner = outgoing ? e.to : e.from;
-              return (
-                <li key={`${e.from}->${e.to}`} className="flex flex-col gap-0.5">
-                  <div className="flex justify-between gap-2">
-                    <span>{outgoing ? `${node.label} → ${partner}` : `${partner} → ${node.label}`}</span>
-                    <span className="font-mono tabular-nums text-(--muted) shrink-0">
-                      {e.weight.toFixed(1)}
-                    </span>
-                  </div>
-                  {e.tags.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {e.tags.map((t) => (
-                        <span
-                          key={t}
-                          className="eyebrow px-1 py-0.5 rounded-(--radius) border border-(--separator) text-(--muted)"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-                  {e.reasonTexts.map((text, i) => (
-                    <p key={i} className="text-(--muted) text-xs">{text}</p>
-                  ))}
-                </li>
-              );
-            })}
-          </ul>
+          <>
+            <h4 className="eyebrow text-(--muted)">Feeds</h4>
+            {/* The board caps a flow to the strongest FLOW_FANOUT_CAP edges per card -- a hub with 32
+             *  consumers draws 6. The panel says so rather than looking complete while quietly
+             *  showing a quarter of a card's reach. */}
+            {cut ? (
+              <p className="text-(--muted) text-xs">
+                {cut.total} in total · strongest {cut.shown} shown
+              </p>
+            ) : null}
+            {renderList(outgoing, true)}
+          </>
         )}
       </div>
+
+      {sorted.length > 0 ? (
+        <div className="border-t border-(--separator) pt-2 flex flex-col gap-2">
+          <h4 className="eyebrow text-(--muted)">Fed by</h4>
+          {renderList(incoming, false)}
+        </div>
+      ) : null}
     </div>
   );
 }

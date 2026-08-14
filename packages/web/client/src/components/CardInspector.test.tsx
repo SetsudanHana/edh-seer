@@ -63,4 +63,26 @@ describe("CardInspector", () => {
     expect(incomingRow.indexOf("Zulaport Cutthroat")).toBeLessThan(incomingRow.indexOf("Bitterblossom"));
     expect(outgoingRow.indexOf("Bitterblossom")).toBeLessThan(outgoingRow.indexOf("Zulaport Cutthroat"));
   });
+
+  // THE PANEL MUST SAY WHAT THE BOARD SAYS. A panel and a geometry that disagree is the failure the
+  // retired rooms already produced once.
+  it("splits the edge list into what the card feeds and what feeds it", () => {
+    const both = [
+      { from: "Bitterblossom", to: "Zulaport Cutthroat", weight: 2, tags: [], reasonTexts: ["feeds"] },
+      { from: "Intangible Virtue", to: "Bitterblossom", weight: 1, tags: [], reasonTexts: ["fed by"] },
+    ];
+    render(<CardInspector node={node} edges={both} onClose={() => {}} />);
+    expect(screen.getByText(/^Feeds$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Fed by$/)).toBeInTheDocument();
+  });
+
+  // TRUNCATION IS STATED, NEVER SILENT. A hub with 32 consumers draws 6; a view that omits three
+  // quarters of a card's reach while looking complete is what "a silent wrong answer is worse than a
+  // missing one" exists to prevent.
+  it("states how many edges were truncated from the drawn flow", () => {
+    const flow = { truncated: new Map([["Bitterblossom", { total: 32, shown: 6 }]]) };
+    render(<CardInspector node={node} edges={edges} flow={flow} onClose={() => {}} />);
+    expect(screen.getByText(/32 in total/)).toBeInTheDocument();
+    expect(screen.getByText(/strongest 6 shown/i)).toBeInTheDocument();
+  });
 });

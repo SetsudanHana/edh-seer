@@ -1118,6 +1118,7 @@ export function GraphView(
             <CardInspector
               node={inspectingNode}
               edges={inspectingEdges}
+              flow={flow}
               onClose={() => setInspectingId(null)}
             />
           ) : null}
