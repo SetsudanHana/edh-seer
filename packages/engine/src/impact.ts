@@ -31,6 +31,19 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     flicker: 0.8,
     "copy-spell": 0.8,
     clone: 0.7,
+    // win-game/extra-turn/extra-phase are UNREACHABLE today: all three sit in matcher's
+    // ROLE_NOT_SYNERGY (deck roles, not pairwise claims), so no Reason can ever carry one of
+    // these kinds and impactWeightOf() never reads these three numbers. They exist only to
+    // satisfy the "one entry per EFFECT_KIND" ratchet (impact.test.ts / impact-coverage.test.ts)
+    // and to stand as the regularization prior if that ever changes -- an honest placeholder,
+    // not a claim of having been calibrated against real data.
+    "win-game": 1.0, // the terminal effect: nothing an edge could claim outranks winning.
+    // An extra turn is a superset of extra-combat (0.9) -- it contains an extra combat step PLUS
+    // a draw, an untap and a main phase -- so it cannot be worth less than extra-combat.
+    "extra-turn": 0.9,
+    // A phase is a fraction of a turn, and only the beginning/untap ones even supply an untap
+    // step -- the same band as untap (0.4) below, not the doublers up top.
+    "extra-phase": 0.4,
     "cost-reduction": 0.6,
     "damage-multiplier": 0.6,
     "forced-sacrifice": 0.6,
