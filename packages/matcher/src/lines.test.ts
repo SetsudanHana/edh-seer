@@ -73,4 +73,35 @@ describe("iterationsNeeded", () => {
   test("a multiplicative line from base 0 is refused", () => {
     expect(iterationsNeeded(1000, { kind: "multiplicative", factor: 2 }, 0)).toBeUndefined();
   });
+
+  // Factor 3 is IEEE-754-unfriendly: log(9)/log(3) is 2.0000000000000004, not exactly 2, and a bare
+  // ceil overcounts by one at every exact power. "triple" is a real 2-instance corpus member, so a
+  // silently-wrong iteration count here is exactly the failure mode this file exists to refuse.
+  test("factor 3 exact powers do not overcount", () => {
+    expect(iterationsNeeded(9, { kind: "multiplicative", factor: 3 }, 1)).toBe(2);
+    expect(iterationsNeeded(27, { kind: "multiplicative", factor: 3 }, 1)).toBe(3);
+    expect(iterationsNeeded(81, { kind: "multiplicative", factor: 3 }, 1)).toBe(4);
+  });
+
+  // A non-power proves the float-snap doesn't over-round: 3^2=9 < 10 <= 3^3=27, so 3 iterations,
+  // not 2.
+  test("factor 3 non-power still rounds up correctly", () => {
+    expect(iterationsNeeded(10, { kind: "multiplicative", factor: 3 }, 1)).toBe(3);
+  });
+
+  // Factor 2 exact powers are the ones the brief's spot-checks already covered and must not regress.
+  test("factor 2 exact powers are unaffected", () => {
+    expect(iterationsNeeded(8, { kind: "multiplicative", factor: 2 }, 1)).toBe(3);
+    expect(iterationsNeeded(1024, { kind: "multiplicative", factor: 2 }, 1)).toBe(10);
+  });
+
+  // The headline witness, re-asserted after the fix.
+  test("Calendar still holds after the fix", () => {
+    expect(iterationsNeeded(1000, { kind: "multiplicative", factor: 2 }, 1)).toBe(10);
+  });
+
+  // A non-1 base landing exactly on a power: 3^2 x 3 = 27.
+  test("a non-1 base at an exact power", () => {
+    expect(iterationsNeeded(27, { kind: "multiplicative", factor: 3 }, 3)).toBe(2);
+  });
 });

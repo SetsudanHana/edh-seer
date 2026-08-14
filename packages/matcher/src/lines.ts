@@ -72,7 +72,15 @@ export function iterationsNeeded(threshold: number, growth: Growth, base: number
   if (growth.kind === "additive") return Math.ceil((threshold - base) / growth.step);
   if (growth.kind === "multiplicative") {
     if (base <= 0) return undefined;
-    return Math.ceil(Math.log(threshold / base) / Math.log(growth.factor));
+    const raw = Math.log(threshold / base) / Math.log(growth.factor);
+    // log_3(9) is 2.0000000000000004 in IEEE-754, not exactly 2 -- factor 2 doesn't hit this
+    // because its powers are exactly representable in binary floating point, but factor 3 (and any
+    // non-power-of-2 factor) does, at every exact power. A bare ceil overcounts by one there. Snap
+    // to the nearest integer only when within float noise of one, so a true non-power (10 at x3 from
+    // 1: raw ~2.096) is untouched and still rounds up to 3.
+    const rounded = Math.round(raw);
+    const snapped = Math.abs(raw - rounded) < 1e-9 ? rounded : raw;
+    return Math.ceil(snapped);
   }
   return undefined;
 }
