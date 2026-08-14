@@ -937,6 +937,30 @@ describe("hover", () => {
     fireEvent(canvas, new MouseEvent("pointermove", { clientX: node.x + 9000, clientY: node.y, bubbles: true }));
     expect(screen.queryByText(/extra mana/)).toBeNull();
   });
+
+  // THE WHOLE POINT OF PREFETCHING ON HOVER rather than fetching `normal` for every card: at
+  // whole-deck zoom it must cost NOTHING. The rejected alternative (one `normal` per card, cropped
+  // for the disc) added ~2.5MB to a 100-card deck's opening load to save ~75KB per card actually
+  // zoomed into. The camera starts at identity here, which is below PREFETCH_Z, so a hover at
+  // default zoom is exactly that case. The positive side of the threshold is unit-tested on
+  // `shouldPrefetchCard` — jsdom cannot construct the d3-zoom gesture that would raise cam.z.
+  test("hovering at whole-deck zoom fetches no full-card image", async () => {
+    const fetchSpy = vi.fn(() => Promise.reject(new Error("no network in this test")));
+    vi.stubGlobal("fetch", fetchSpy);
+    const { canvas } = frames(graphOf([
+      card({ id: "Sol Ring", artCrop: "https://cards.example/art_crop/front/a/b/x.jpg" }),
+    ]));
+    const node = canvas.__graphProbe!()[0];
+    fireEvent(canvas, new MouseEvent("pointermove", { clientX: node.x, clientY: node.y, bubbles: true }));
+    // The loader spaces dispatches 75ms apart, so a prefetch would be the SECOND request and would
+    // not have left the queue yet — asserting immediately here would pass whether or not it fired,
+    // which is decoration. Drain the queue first, then look.
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 250));
+    expect(fetchSpy.mock.calls.map((c) => String(c[0]))).toEqual([
+      "https://cards.example/art_crop/front/a/b/x.jpg",
+    ]);
+  });
 });
 
 // The paint-mode half of "labels never touch geometry" is already covered by "repaints without

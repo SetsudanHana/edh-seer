@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { CARD_MODE_Z, MAX_Z, cardImageUrl, renderModeFor } from "./card-node.js";
+import {
+  CARD_MODE_Z, MAX_Z, PREFETCH_Z, cardImageUrl, renderModeFor, shouldPrefetchCard,
+} from "./card-node.js";
 
 describe("renderModeFor", () => {
   it("is miniature below the threshold and card at or above it", () => {
@@ -37,5 +39,23 @@ describe("zoom bounds", () => {
     expect(CARD_MODE_Z).toBe(4);
     expect(renderModeFor(4)).toBe("card");
     expect(renderModeFor(3.99)).toBe("miniature");
+  });
+});
+
+// Card mode's image is a different file from the disc's, so crossing CARD_MODE_Z used to START a
+// fetch and the card arrived as a placeholder. Prefetching the HOVERED card is the alternative to
+// "fetch normal once and crop it for the disc", which was built, rendered against the true art_crop
+// and rejected: normal is ~1.5x the bytes (Sol Ring 71KB vs 44KB) so a 100-card deck's open goes
+// ~5.0MB -> ~7.5MB, and a fixed crop box showed a Saga's CHAPTER TEXT instead of its art.
+describe("shouldPrefetchCard", () => {
+  it("starts before card mode, so the image can land before the card is drawn", () => {
+    expect(PREFETCH_Z).toBeLessThan(CARD_MODE_Z);
+    expect(shouldPrefetchCard(PREFETCH_Z)).toBe(true);
+    expect(shouldPrefetchCard(CARD_MODE_Z)).toBe(true);
+  });
+
+  it("fetches nothing extra at whole-deck zoom, which is what the rejected version cost", () => {
+    expect(shouldPrefetchCard(1)).toBe(false);
+    expect(shouldPrefetchCard(PREFETCH_Z - 0.01)).toBe(false);
   });
 });

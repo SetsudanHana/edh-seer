@@ -4,7 +4,7 @@ import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
 import type { CardGraph, DeckReport } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
-import { CARD_MODE_Z, MAX_Z, cardImageUrl, renderModeFor } from "./card-node.js";
+import { CARD_MODE_Z, MAX_Z, cardImageUrl, renderModeFor, shouldPrefetchCard } from "./card-node.js";
 import {
   PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
 } from "./presets.js";
@@ -810,6 +810,14 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       // canvas itself no longer shows.
       const detail = n ? (n.roles ?? []).map(subcategoryLabel).join(" · ") : "";
       hoveredIdRef.current = n?.id ?? null;
+      // Fetch the full card for the one being APPROACHED, so crossing CARD_MODE_Z draws an image
+      // that has already landed instead of starting the request that card mode then waits on.
+      // Only the hovered card, and only once zoomed in past `PREFETCH_Z` — see card-node.ts for why
+      // the whole-deck alternative (one `normal` per card, cropped for the disc) was rejected on
+      // measurement. `request` dedupes, so pointermove firing continuously costs one fetch.
+      if (n?.artCrop && shouldPrefetchCard(camRef.current.z)) {
+        artLoaderRef.current!.request(cardImageUrl(n.artCrop));
+      }
       setHover(n
         ? {
             label: n.label, copies: n.copies ?? 1, deg: n.deg, detail,
