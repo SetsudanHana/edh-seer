@@ -60,6 +60,41 @@ test("artCrop rides along from the doc, absent when the doc had none", () => {
   expect(out.nodes.find((n) => n.id === "B")?.artCrop).toBeUndefined();
 });
 
+// A GENUINELY TWO-FACED CARD HAS NO CARD-LEVEL ART. Scryfall puts `image_uris` on each FACE for
+// transform and modal_dfc layouts and omits the top-level one, so 861 corpus cards are double-faced
+// and only 370 (43%) carry a card-level artCrop — Westvale Abbey // Ormendahl has none, and two at
+// face level. Owner-reported: "the double faced cards do not show images right now".
+test("a two-faced card falls back to its FRONT face's art", () => {
+  const graph = emptyGraph([node({ id: "Westvale Abbey // Ormendahl, Profane Prince", label: "Westvale Abbey" })]);
+  const docs = [{
+    _id: "w",
+    name: "Westvale Abbey // Ormendahl, Profane Prince",
+    faces: [
+      { name: "Westvale Abbey", artCrop: "https://example.com/front.jpg" },
+      { name: "Ormendahl, Profane Prince", artCrop: "https://example.com/back.jpg" },
+    ],
+  }];
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize);
+
+  // The FRONT face: it is the side the card is played from and the side the board draws.
+  expect(out.nodes[0]?.artCrop).toBe("https://example.com/front.jpg");
+});
+
+// Adventure, split and flip cards are ONE physical face, so they keep a card-level artCrop and the
+// faces array carries none. The card level must still win where both could apply.
+test("a card-level artCrop wins over a face's", () => {
+  const graph = emptyGraph([node({ id: "A", label: "A" })]);
+  const docs = [{
+    _id: "a", name: "A", artCrop: "https://example.com/card.jpg",
+    faces: [{ name: "A", artCrop: "https://example.com/face.jpg" }],
+  }];
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize);
+
+  expect(out.nodes[0]?.artCrop).toBe("https://example.com/card.jpg");
+});
+
 test("a report role that cannot be joined to any graph node is logged with its count, not thrown", () => {
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   const graph = emptyGraph([node({ id: "A", label: "A" })]);

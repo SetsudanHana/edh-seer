@@ -4,6 +4,38 @@ import { createArtLoader } from "./art-loader.js";
 const fakeImage = () => ({}) as HTMLImageElement;
 const immediate = async () => {};
 
+// THE QUEUE IS FIFO AND DISPATCHES ARE SPACED (75ms, Scryfall's own guidance), so a 95-card deck
+// takes ~7 seconds to work through what it asked for first. The card a user zooms into is asked for
+// LAST, behind all 95 discs — "when I zoom in I still have to wait for everything to load". The
+// spacing stays; what changes is which request gets the next slot.
+test("an urgent request jumps ahead of everything already queued", async () => {
+  const dispatched: string[] = [];
+  const loader = createArtLoader({
+    concurrency: 1, spacingMs: 0, delay: immediate,
+    load: async (url) => { dispatched.push(url); return fakeImage(); },
+  });
+  loader.request("a"); loader.request("b"); loader.request("c");
+  loader.request("zoomed", true);
+  await new Promise((r) => setTimeout(r, 0));
+  // "a" is already in flight when the urgent one arrives; the urgent one takes the NEXT slot.
+  expect(dispatched[0]).toBe("a");
+  expect(dispatched[1]).toBe("zoomed");
+});
+
+// The board requests every disc on its first frame, so by the time a user zooms in, that card's art
+// is already QUEUED — the promotion path, not the enqueue one, is what matters in practice.
+test("an urgent request promotes a url that is already waiting", async () => {
+  const dispatched: string[] = [];
+  const loader = createArtLoader({
+    concurrency: 1, spacingMs: 0, delay: immediate,
+    load: async (url) => { dispatched.push(url); return fakeImage(); },
+  });
+  loader.request("a"); loader.request("b"); loader.request("c");
+  loader.request("c", true);
+  await new Promise((r) => setTimeout(r, 0));
+  expect(dispatched[1]).toBe("c");
+});
+
 test("a repeated request for the same url loads it exactly once", async () => {
   let calls = 0;
   const loader = createArtLoader({ load: async () => { calls++; return fakeImage(); }, delay: immediate });

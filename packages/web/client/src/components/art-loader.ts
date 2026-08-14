@@ -11,8 +11,14 @@ export type ArtState = HTMLImageElement | "loading" | "error";
 export interface ArtLoader {
   /** Current state for a URL, or undefined if never requested. */
   get(url: string): ArtState | undefined;
-  /** Request a URL. Idempotent: safe to call every animation frame. */
-  request(url: string): void;
+  /** Request a URL. Idempotent: safe to call every animation frame.
+   *
+   *  `urgent` jumps the queue. The queue is FIFO and dispatches are SPACED (75ms), so a 95-card
+   *  deck takes ~7 seconds to dispatch whatever it asked for first — and the card a user zooms into
+   *  is asked for LAST, behind all 95 discs. Owner-reported: "when I zoom in I still have to wait
+   *  for everything to load". Spacing is Scryfall's own guidance and stays; what changes is which
+   *  request gets the next slot. */
+  request(url: string, urgent?: boolean): void;
 }
 
 export interface ArtLoaderOptions {
@@ -77,14 +83,25 @@ export function createArtLoader(options: ArtLoaderOptions): ArtLoader {
 
   return {
     get: (url) => state.get(url),
-    request: (url) => {
+    request: (url, urgent = false) => {
       // Idempotent by construction: `draw()` calls this every frame for every unresolved node.
       // `state.set(url, "loading")` below happens in this same synchronous call, before the url
       // could ever be queued again, so `state.has(url)` alone already covers a queued-but-not-yet-
       // dispatched url -- no separate `queue.includes` check needed.
-      if (state.has(url)) return;
+      //
+      // An already-QUEUED url can still be promoted, though, and that is the case that matters: the
+      // whole board is requested on the first frame, so by the time a user zooms into a card its
+      // disc art is already sitting in the queue behind 90-odd others. Promotion moves it to the
+      // front instead of returning early and leaving it there.
+      if (state.has(url)) {
+        if (!urgent) return;
+        const at = queue.indexOf(url);
+        if (at > 0) queue.unshift(...queue.splice(at, 1));
+        return;
+      }
       state.set(url, "loading");
-      queue.push(url);
+      if (urgent) queue.unshift(url);
+      else queue.push(url);
       void pump();
     },
   };

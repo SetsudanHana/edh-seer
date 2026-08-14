@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AnalyzeResponse } from "../types.js";
+import { createArtLoader, type ArtLoader } from "./art-loader.js";
+import { cachedImageLoad } from "./art-cache.js";
 import { OverviewTab } from "./OverviewTab.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CardList } from "./CardList.js";
@@ -19,6 +21,25 @@ const TABS: { id: TabId; label: string }[] = [
 
 export function ReportTabs({ data }: { data: AnalyzeResponse }) {
   const [active, setActive] = useState<TabId>("overview");
+  // THE ART LOADER OUTLIVES THE GRAPH TAB, and that is the whole point of it living here.
+  //
+  // `<GraphView>` is mounted by `active === "graph"` below, so nothing requested a single image
+  // until the user clicked Graph — and then all ~95 discs queued at once, 75ms apart, while they
+  // waited. Every `artCrop` URL arrives with the analyze response, and the user is reading the
+  // Overview tab for seconds before they ever reach the board: that time was thrown away.
+  //
+  // Owned here rather than made a module singleton so its lifetime is the REPORT's. A singleton
+  // would accumulate decoded images for every deck analysed in a session, with nothing to say when
+  // they stop mattering.
+  const artLoaderRef = useRef<ArtLoader>(undefined);
+  artLoaderRef.current ??= createArtLoader({ load: cachedImageLoad() });
+  useEffect(() => {
+    // Non-urgent by construction: this is background warming, and anything the user is actually
+    // looking at (a hovered card, a card-mode card) jumps this queue via `request(url, true)`.
+    for (const n of data.graph?.nodes ?? []) {
+      if (n.artCrop) artLoaderRef.current!.request(n.artCrop);
+    }
+  }, [data]);
   return (
     <div className="flex flex-col gap-6">
       {data.missing.length > 0 ? <MissingCards missing={data.missing} /> : null}
@@ -64,7 +85,8 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
         {active === "archetypes" && <ArchetypeBoard strategies={data.report.strategies} archetypes={data.report.archetypes} />}
         {active === "cards" && <CardList cards={data.report.cards} />}
         {active === "combos" && <ComboList combos={data.report.combos} />}
-        {active === "graph" && <GraphView graph={data.graph} report={data.report} />}
+        {active === "graph"
+          && <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />}
       </div>
     </div>
   );

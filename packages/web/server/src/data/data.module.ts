@@ -22,7 +22,12 @@ export const STORE = "MONGO_STORE";
  *  rides straight through on the node. */
 export function attachRolesAndArt(
   graph: ProjectedGraph,
-  docs: Array<{ _id: string; name: string; typeLine?: string; artCrop?: string; imageUris?: { art_crop?: string } }>,
+  docs: Array<{
+    _id: string; name: string; typeLine?: string; artCrop?: string;
+    imageUris?: { art_crop?: string };
+    /** Per-face art, which is where a transform or modal_dfc card's images actually live. */
+    faces?: Array<{ artCrop?: string }>;
+  }>,
   rolesByName: Map<string, string[]>,
   normalize: (name: string) => string,
 ): WireGraph {
@@ -51,7 +56,13 @@ export function attachRolesAndArt(
     const isLand = (doc?.typeLine ?? "").toLowerCase().includes("land");
     const base = rolesByNormalizedName.get(key);
     const roles = isLand && !(base ?? []).includes("lands") ? [...(base ?? []), "lands"] : base;
-    const artCrop = doc?.artCrop ?? doc?.imageUris?.art_crop;
+    // A GENUINELY TWO-FACED CARD HAS NO CARD-LEVEL ART. Scryfall puts `image_uris` on each FACE for
+    // transform and modal_dfc layouts and omits the top-level one: 861 corpus cards are double-faced
+    // and only 370 (43%) carry a card-level artCrop, so Westvale Abbey, Fell the Profane and 489
+    // others drew as a blank disc. The FRONT face is the fallback because it is the side the card is
+    // played from and the side the board draws; adventure/split/flip are one physical face and keep
+    // their card-level art, which still wins here.
+    const artCrop = doc?.artCrop ?? doc?.imageUris?.art_crop ?? doc?.faces?.find((f) => f.artCrop)?.artCrop;
     return {
       id: n.id,
       label: n.label,
@@ -138,7 +149,15 @@ export function attachRolesAndArt(
             // directly, which meant TAGS_SOURCE could not reach it -- the graph view and the
             // analysis would have rendered different edges for the same deck.
             const tagsLookup = tagger.createTagsLookup(store.db as Db);
-            const docs: Array<{ _id: string; name: string; typeLine?: string }> = [];
+            // `faces` is declared because it is genuinely PRESENT — `findByName` returns the whole
+            // corpus row with no projection, and a transform/modal_dfc card's only art lives there.
+            // Left off the annotation, `attachRolesAndArt`'s face fallback would look like dead code
+            // to every reader even though it fires: the same lie that made `Card.faces` appear alive
+            // in graph-projection when `docToCard` never copied it.
+            const docs: Array<{
+              _id: string; name: string; typeLine?: string; artCrop?: string;
+              faces?: Array<{ artCrop?: string }>;
+            }> = [];
             const deckCards = [];
             for (const name of new Set(cardNames)) {
               const doc = await lookup.findByName(data.normalizeName(name));

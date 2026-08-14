@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { ComboList } from "./ComboList.js";
@@ -264,6 +264,32 @@ test("ReportTabs defaults to the Overview tab and switches on click", async () =
   expect(screen.getByText("Krenko, Mob Boss")).toBeInTheDocument(); // CardList content
   await userEvent.click(screen.getByRole("tab", { name: "Combos" }));
   expect(screen.getByText(/Infinite loop/)).toBeInTheDocument(); // ComboList content
+});
+
+// ART WARMS BEFORE THE GRAPH TAB IS EVER OPENED. `<GraphView>` is mounted by `active === "graph"`,
+// so nothing requested an image until the user clicked Graph — and then ~95 discs queued at once,
+// 75ms apart, while they waited. Every artCrop URL arrives with the analyze response and the user
+// reads Overview for seconds first, so that time was being thrown away. Owner-reported: "why dont we
+// start loading the images even before we land on the graph?".
+test("ReportTabs starts fetching card art on the Overview tab, before Graph is opened", async () => {
+  const fetchSpy = vi.fn((_url: unknown) => Promise.reject(new Error("no network in this test")));
+  vi.stubGlobal("fetch", fetchSpy);
+  const withArt = {
+    ...SAMPLE,
+    graph: {
+      ...SAMPLE.graph,
+      nodes: SAMPLE.graph.nodes.map((n, i) =>
+        (i === 0 ? { ...n, artCrop: "https://cards.example/art_crop/a/b/c.jpg" } : n)),
+    },
+  };
+
+  render(<ReportTabs data={withArt} />);
+
+  // Never clicked Graph; the request is already out.
+  expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");
+  await vi.waitFor(() => {
+    expect(fetchSpy.mock.calls.some((c) => String(c[0]).includes("/art_crop/"))).toBe(true);
+  });
 });
 
 test("ReportTabs shows the unresolved banner outside the tab body, regardless of active tab", async () => {

@@ -112,7 +112,10 @@ export function edgeWidth(weight: number, maxWeight: number): number {
   return EDGE_W_MIN + t * (EDGE_W_MAX - EDGE_W_MIN);
 }
 
-export function GraphView({ graph, report }: { graph: CardGraph; report: DeckReport }) {
+export function GraphView(
+  { graph, report, artLoader: injectedArtLoader }:
+  { graph: CardGraph; report: DeckReport; artLoader?: ArtLoader },
+) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<
@@ -162,8 +165,13 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
   // Concurrency-capped, spaced, retrying art loader (see art-loader.ts), created once per mount so
   // state (and in-flight requests) survive a graph change re-running the effect. `load` reads
   // through the Cache API first (art-cache.ts) so art already seen renders with the network gone.
+  //
+  // Prefers the loader `ReportTabs` owns, when there is one: that loader started warming every
+  // card's art the moment the analyze response landed, seconds before this tab was ever opened, and
+  // taking it means arriving to images already decoded rather than re-requesting them. Falls back to
+  // its own so the component still stands alone (which is how every test renders it).
   const artLoaderRef = useRef<ArtLoader>(undefined);
-  artLoaderRef.current ??= createArtLoader({ load: cachedImageLoad() });
+  artLoaderRef.current ??= injectedArtLoader ?? createArtLoader({ load: cachedImageLoad() });
   // Effect-local until the filter chips existed, which is why toggling one reset the view. A ref
   // survives the effect re-running, and the mode buttons below need to write z from outside it.
   const camRef = useRef({ x: 0, y: 0, z: 1 });
@@ -482,7 +490,9 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // it is the only thing on screen at the moment the user is zoomed in and looking at
           // nothing else, so it has to read as a solid loading signal. Filled in the card's own
           // paint hue, so a deck whose art has not landed is still readable by facet.
-          if (src) artLoader.request(src);
+          // URGENT in card mode: only a handful of cards are on screen there and one of them is the
+          // card the user zoomed in to read, so it must not queue behind the other 90 discs.
+          if (src) artLoader.request(src, mode === "card");
           placeholderIds.add(n.id);
           ctx.fillStyle = hues[0] ?? paintColors.muted;
           if (mode === "card") {
@@ -829,8 +839,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       // Only the hovered card, and only once zoomed in past `PREFETCH_Z` — see card-node.ts for why
       // the whole-deck alternative (one `normal` per card, cropped for the disc) was rejected on
       // measurement. `request` dedupes, so pointermove firing continuously costs one fetch.
+      // Urgent, or the prefetch is pointless: the board queued every disc on its first frame, so an
+      // ordinary request for this card's full image lands behind all of them and arrives long after
+      // the user has finished zooming.
       if (n?.artCrop && shouldPrefetchCard(camRef.current.z)) {
-        artLoaderRef.current!.request(cardImageUrl(n.artCrop));
+        artLoaderRef.current!.request(cardImageUrl(n.artCrop), true);
       }
       setHover(n
         ? {
