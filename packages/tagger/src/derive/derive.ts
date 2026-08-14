@@ -649,7 +649,7 @@ export function deriveAbilities(
       };
       if (trigger) ability.trigger = trigger;
       // The REAL cost, not "". It has been in scope since line 522 and threaded to repeatsFor at
-      // line 676 for as long as `repeats` has existed; only this assignment threw it away, which is
+      // line 680 for as long as `repeats` has existed; only this assignment threw it away, which is
       // why `Ability.cost` could sit empty corpus-wide with every test green. Sub-project B needs it
       // to tell a loop that pays for itself from one that costs {2} an iteration.
       if (clause.abilityType === "activated") ability.cost = cost;

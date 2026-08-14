@@ -13,8 +13,10 @@ import type { Ability, Repeats } from "../schema.js";
  *  activated or triggered ability you control X times."`, `cost="{X}{X}, {T}"` -- so a `clauseText`
  *  never carries the cost. The extracted cost has no trailing colon either (`act[1].trim()` in
  *  `classify()` captures everything BEFORE the colon), so neither pattern below anchors on one.
- *  `Ability.cost` is NOT the channel: `derive.ts` sets it to `""` for every activated ability
- *  corpus-wide, so it is always empty. The caller must thread the real per-clause cost string in. */
+ *  `Ability.cost` is now populated with the real cost string in `derive.ts` (as of Task 1), but
+ *  this function still takes it as its own positional argument: Rules 1-2 do NOT read `Ability.cost`,
+ *  they read the `cost` parameter, so the two channels are independent and populating the field
+ *  cannot move a `repeats` label or `REFUSED_CAP`. */
 
 /** Sacrificing the card ITSELF is a one-shot; sacrificing A card of some type is a repeatable
  *  outlet, and conflating them would invert the answer on the commonest sacrifice shape there is.
