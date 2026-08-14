@@ -1,5 +1,5 @@
 import { impactEdgeWeight, type ImpactWeights, type Reason } from "@mtg/engine";
-import { parseTypeLine } from "./typeline.js";
+import { parseTypeLineAllFaces } from "./typeline.js";
 import type { DeckCard } from "./types.js";
 
 /** One deck card. Every facet that used to be its own graph node -- `color:B`, `type:creature`,
@@ -70,7 +70,11 @@ export function projectDeckGraph(
   for (const d of deck) {
     if (seen.has(d.card.name)) continue;
     seen.add(d.card.name);
-    const { types, subtypes, supertypes } = parseTypeLine(d.card.typeLine);
+    // EVERY face, because a node is the whole card. `parseTypeLine` takes one face and leaves "//"
+    // visible; passing the combined line here painted a literal "//" swatch in the Type legend and,
+    // worse, dropped the back face's type on any card whose front face has subtypes.
+    const { types, subtypes, supertypes } = parseTypeLineAllFaces(
+      d.card.typeLine, d.card.faces?.map((f) => f.typeLine));
     nodes.push({
       id: d.card.name,
       label: d.card.name,
