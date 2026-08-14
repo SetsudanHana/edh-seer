@@ -26,8 +26,11 @@ export interface Flow {
   /** Cycles found while walking. Not rendered today; recorded so a later loop detector starts from
    *  data rather than a rediscovery (spec §7). */
   cycles: Array<{ nodes: string[]; edges: FlowEdge[] }>;
-  /** Nodes whose fan was cut, and by how much. The UI states this rather than hiding it. */
-  truncated: Map<string, { total: number; shown: number }>;
+  /** Nodes whose fan was cut, and by how much -- keyed by direction as well as id, since a card can
+   *  sit as the root of BOTH walks at once and each has its own fanout to report. Keying by id alone
+   *  let the upstream walk's entry silently overwrite the downstream walk's for the root, so "feeds
+   *  10, shown 6" printed as "8 in total" when the same root also had 8 upstream. */
+  truncated: Map<string, { up?: { total: number; shown: number }; down?: { total: number; shown: number } }>;
 }
 
 export interface FlowOptions { fanoutCap?: number; nodeBudget?: number }
@@ -71,20 +74,37 @@ export function computeFlow(edges: readonly Edge[], rootId: string, opts: FlowOp
       for (const id of frontier) {
         const all = adj.get(id) ?? [];
         const kept = [...all].sort((a, b) => b.weight - a.weight).slice(0, fanoutCap);
-        if (all.length > kept.length) flow.truncated.set(id, { total: all.length, shown: kept.length });
+        if (all.length > kept.length) {
+          const entry = flow.truncated.get(id) ?? {};
+          entry[dir] = { total: all.length, shown: kept.length };
+          flow.truncated.set(id, entry);
+        }
 
         for (const edge of kept) {
           const other = dir === "down" ? edge.to : edge.from;
           const flowEdge: FlowEdge = { from: edge.from, to: edge.to, dir, depth };
 
           if (seen.has(other)) {
-            // A cycle: this edge closes a loop back onto something already walked. Recorded rather
-            // than dropped -- see the `cycles` doc comment.
-            const loop: string[] = [other];
-            for (let at: string | undefined = id; at !== undefined && at !== other; at = parent.get(at)) {
-              loop.push(at);
+            // Still a genuine direction-pure edge between two nodes already in this fan (e.g.
+            // A->B, A->C, B->C: B->C reaches C, already seen via A->C) -- draw it before deciding
+            // whether it ALSO closes a loop. Dropping it here used to silently erase a real edge
+            // between two lit cards.
+            flow.edges.push(flowEdge);
+            // A cycle only when `other` is an ANCESTOR of `id` on this walk -- i.e. walking `id`'s
+            // parent chain actually reaches `other`. A node reached a second time via a sibling
+            // path (the B->C case above) is a convergence, not a loop, and must not be recorded
+            // as one.
+            let isCycle = false;
+            for (let at: string | undefined = id; !isCycle && at !== undefined; at = parent.get(at)) {
+              if (at === other) isCycle = true;
             }
-            flow.cycles.push({ nodes: loop, edges: [flowEdge] });
+            if (isCycle) {
+              const loop: string[] = [other];
+              for (let at: string | undefined = id; at !== undefined && at !== other; at = parent.get(at)) {
+                loop.push(at);
+              }
+              flow.cycles.push({ nodes: loop, edges: [flowEdge] });
+            }
             continue;
           }
           if (flow.nodes.size >= nodeBudget) break;

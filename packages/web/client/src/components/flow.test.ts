@@ -34,12 +34,17 @@ describe("computeFlow", () => {
   });
 
   it("marks a card that both produces and consumes with both depths", () => {
-    // A -> B -> C and A -> C: C is downstream of both, B is downstream of A and upstream of C.
-    const flow = computeFlow([e("A", "B"), e("B", "C"), e("A", "C")], "B");
-    const a = flow.nodes.get("A");
-    expect(a?.upstreamDepth).toBe(1);
-    const c = flow.nodes.get("C");
-    expect(c?.downstreamDepth).toBe(1);
+    // A 3-cycle: X -> B -> Y -> X. Clicking X, the downstream walk reaches Y (via B, depth 2) and
+    // the upstream walk reaches Y directly (Y -> X, depth 1) -- Y is fed by X's own chain AND
+    // feeds X, so it genuinely carries both depths on ONE node. The old fixture asserted two
+    // different single-depth nodes and never exercised the `flow.nodes.get(other) ?? {}` merge
+    // that lets a node keep an earlier-set depth when the other walk visits it -- deleting that
+    // merge (so the second walk clobbers the first) kept the old test green.
+    const cycle = [e("X", "B"), e("B", "Y"), e("Y", "X")];
+    const flow = computeFlow(cycle, "X");
+    const y = flow.nodes.get("Y");
+    expect(y?.downstreamDepth).toBe(2);
+    expect(y?.upstreamDepth).toBe(1);
   });
 
   it("keeps the strongest fanoutCap edges per node and reports the rest as truncated", () => {
@@ -49,7 +54,21 @@ describe("computeFlow", () => {
     expect(flow.nodes.has("n9")).toBe(true);
     expect(flow.nodes.has("n7")).toBe(true);
     expect(flow.nodes.has("n6")).toBe(false);
-    expect(flow.truncated.get("A")).toEqual({ total: 10, shown: 3 });
+    expect(flow.truncated.get("A")).toEqual({ down: { total: 10, shown: 3 } });
+  });
+
+  // THE ROOT CAN BE TRUNCATED ON BOTH WALKS AT ONCE, AND MUST NOT COLLIDE. Keying `truncated` by id
+  // alone let the upstream walk's entry for the root silently overwrite the downstream walk's --
+  // a card feeding 10 (shown 6) and fed by 8 (shown 6) reported `{total:8,shown:6}` under BOTH
+  // headings, so "feeds 10" printed as "8 in total" in the panel.
+  it("keeps the root's downstream and upstream truncation separate", () => {
+    const downEdges = Array.from({ length: 10 }, (_, i) => e("R", `d${i}`, i));
+    const upEdges = Array.from({ length: 8 }, (_, i) => e(`u${i}`, "R", i));
+    const flow = computeFlow([...downEdges, ...upEdges], "R", { fanoutCap: 6 });
+    expect(flow.truncated.get("R")).toEqual({
+      down: { total: 10, shown: 6 },
+      up: { total: 8, shown: 6 },
+    });
   });
 
   it("caps the whole walk with the node budget, cutting the farthest ring", () => {
@@ -70,6 +89,18 @@ describe("computeFlow", () => {
     expect(flow.cycles.length).toBeGreaterThan(0);
     expect(flow.cycles[0].nodes).toContain("A");
     expect(flow.cycles[0].nodes).toContain("B");
+  });
+
+  // A GENUINE EDGE BETWEEN TWO FLOW NODES MUST NOT BE DROPPED AS A "CYCLE". A -> B, A -> C, B -> C:
+  // from A, B and C are both downstream at depth 1 and 1... wait, B->C is a real direction-pure
+  // edge reaching an already-seen node via a DIFFERENT path (convergence), not a loop back onto an
+  // ancestor. It has to be drawn -- on the board it's a neutral, dimmed line between two lit cards
+  // if it's missing, which reads as though B and C have no relationship at all.
+  it("keeps a genuine edge into an already-seen node when it is not a loop back to an ancestor", () => {
+    const flow = computeFlow([e("A", "B"), e("A", "C"), e("B", "C")], "A");
+    expect(flow.edges).toContainEqual({ from: "B", to: "C", dir: "down", depth: 2 });
+    // And it must NOT be misfiled as a cycle: C is not an ancestor of B on this walk.
+    expect(flow.cycles.some((c) => c.nodes.includes("B") && c.nodes.includes("C"))).toBe(false);
   });
 
   it("returns empty fans for a root with no edges", () => {

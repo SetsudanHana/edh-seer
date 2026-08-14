@@ -72,17 +72,49 @@ describe("CardInspector", () => {
       { from: "Intangible Virtue", to: "Bitterblossom", weight: 1, tags: [], reasonTexts: ["fed by"] },
     ];
     render(<CardInspector node={node} edges={both} onClose={() => {}} />);
-    expect(screen.getByText(/^Feeds$/)).toBeInTheDocument();
-    expect(screen.getByText(/^Fed by$/)).toBeInTheDocument();
+    // Both headings existing is not enough -- a mis-split that put both partners under ONE heading
+    // would still pass that assertion. Each partner must appear under its OWN heading's section.
+    const feedsSection = screen.getByText(/^Feeds$/).closest("div");
+    const fedBySection = screen.getByText(/^Fed by$/).closest("div");
+    expect(feedsSection?.textContent).toContain("Zulaport Cutthroat");
+    expect(feedsSection?.textContent).not.toContain("Intangible Virtue");
+    expect(fedBySection?.textContent).toContain("Intangible Virtue");
+    expect(fedBySection?.textContent).not.toContain("Zulaport Cutthroat");
+  });
+
+  // A ONE-DIRECTIONAL CARD MUST NOT RENDER AN EMPTY HEADING. Confirmed visible in production: a
+  // card with only outgoing edges left "Fed by" printed with nothing beneath it.
+  it("says 'None' rather than nothing under a heading with no edges in that direction", () => {
+    render(<CardInspector node={node} edges={edges} onClose={() => {}} />);
+    const fedBySection = screen.getByText(/^Fed by$/).closest("div");
+    expect(fedBySection?.textContent).toMatch(/none/i);
   });
 
   // TRUNCATION IS STATED, NEVER SILENT. A hub with 32 consumers draws 6; a view that omits three
   // quarters of a card's reach while looking complete is what "a silent wrong answer is worse than a
   // missing one" exists to prevent.
   it("states how many edges were truncated from the drawn flow", () => {
-    const flow = { truncated: new Map([["Bitterblossom", { total: 32, shown: 6 }]]) };
+    const flow = { truncated: new Map([["Bitterblossom", { down: { total: 32, shown: 6 } }]]) };
     render(<CardInspector node={node} edges={edges} flow={flow} onClose={() => {}} />);
     expect(screen.getByText(/32 in total/)).toBeInTheDocument();
     expect(screen.getByText(/strongest 6 shown/i)).toBeInTheDocument();
+  });
+
+  // THE ROOT CAN BE TRUNCATED ON BOTH WALKS AT ONCE -- keying by id alone let the upstream walk's
+  // entry silently overwrite the downstream walk's, so a card feeding 10 (shown 6) and fed by 8
+  // (shown 6) printed "8 in total" under "Feeds". Each heading must read its OWN direction's entry.
+  it("reports each direction's truncation separately, never the other direction's count", () => {
+    const flow = {
+      truncated: new Map([["Bitterblossom", { down: { total: 10, shown: 6 }, up: { total: 8, shown: 6 } }]]),
+    };
+    const both = [
+      { from: "Bitterblossom", to: "Zulaport Cutthroat", weight: 2, tags: [], reasonTexts: ["feeds"] },
+      { from: "Intangible Virtue", to: "Bitterblossom", weight: 1, tags: [], reasonTexts: ["fed by"] },
+    ];
+    render(<CardInspector node={node} edges={both} flow={flow} onClose={() => {}} />);
+    const feedsSection = screen.getByText(/^Feeds$/).closest("div");
+    const fedBySection = screen.getByText(/^Fed by$/).closest("div");
+    expect(feedsSection?.textContent).toMatch(/10 in total.*strongest 6 shown/i);
+    expect(fedBySection?.textContent).toMatch(/8 in total.*strongest 6 shown/i);
   });
 });

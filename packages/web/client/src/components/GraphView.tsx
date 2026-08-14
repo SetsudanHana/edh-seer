@@ -10,7 +10,7 @@ import {
 import {
   FLOW_HUE, PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
 } from "./presets.js";
-import { computeFlow, type Flow } from "./flow.js";
+import { computeFlow, type Flow, type FlowEdge } from "./flow.js";
 import {
   ART_RADIUS, createBoardSimulation, DEFAULT_PARAMS, linkDistanceFor, nodeRadius,
   type BoardParams, type Sim, type SimLink,
@@ -400,9 +400,15 @@ export function GraphView(
       // One stroke per edge rather than one path for all of them: width carries weight now, and a
       // single batched path can only have one width. ~200 edges a frame.
       const activeFlow = flowRef.current;
-      ctx.strokeStyle = paintColors.sep;
+      // Built once per draw, not per edge: an O(links) `.find` over `activeFlow.edges` inside the
+      // loop below was O(links x flowEdges) every frame. Keyed `from>to` -- flow edges are already
+      // direction-pure, so there is never a `to>from` collision to worry about.
+      const flowEdgeByPair = new Map<string, FlowEdge>();
+      if (activeFlow) {
+        for (const fe of activeFlow.edges) flowEdgeByPair.set(`${fe.from}>${fe.to}`, fe);
+      }
       for (const l of links) {
-        const fe = activeFlow?.edges.find((e) => e.from === l.source.id && e.to === l.target.id);
+        const fe = flowEdgeByPair.get(`${l.source.id}>${l.target.id}`);
         // An edge in the flow takes its direction's hue; everything else keeps the neutral stroke
         // and drops to the dim alpha, so the flow reads against the rest of the deck.
         ctx.globalAlpha = activeFlow && !fe ? 0.15 : 1;
@@ -662,7 +668,14 @@ export function GraphView(
           // pass is recomputed rather than shared -- that pass runs per node, this one per SURVIVING
           // label, so sharing it would mean threading a flag through placeLabels for no gain.
           const labelDemote = n.deg === 0 && (!matchIds || !matchIds.has(id));
-          ctx.globalAlpha = matchIds && !matchIds.has(id) ? 0.15 : labelDemote ? EDGELESS_ALPHA : 1;
+          // Same flow condition the node pass applies to the disc a few lines up (see its comment)
+          // -- without this a non-flow card kept a full-brightness NAME over a 0.15 disc, which is
+          // exactly the half-landed demotion that comment warns about.
+          const labelFlowNode = activeFlow?.nodes.get(id);
+          const labelIsRoot = activeFlow?.root === id;
+          ctx.globalAlpha = matchIds && !matchIds.has(id) ? 0.15
+            : activeFlow && !labelFlowNode && !labelIsRoot ? 0.15
+            : labelDemote ? EDGELESS_ALPHA : 1;
           ctx.fillText(n.label, n.x, n.y - nodeRadius() - 4 / cam.z);
         }
         // Canvas state is global and persistent (draw()'s own reset a few lines up already makes
@@ -943,9 +956,14 @@ export function GraphView(
 
   // Computed once per selection, never per frame: a BFS over ~260 edges is microseconds, but
   // recomputing it 60 times a second to get an identical answer is a frame-rate bug waiting to happen.
+  //
+  // Keyed on `inspectingNode`, not `inspectingId`: if `graph` changes while a selection is live and
+  // the id no longer resolves to a node, `inspectingNode` goes null and so must `flow` -- keying on
+  // the id alone left `flow` non-null with empty fans (the id still "selected", just resolving to
+  // nothing), which dims every node with no inspector and no legend open to explain why.
   const flow = useMemo(
-    () => (inspectingId ? computeFlow(graph.edges, inspectingId) : null),
-    [graph, inspectingId],
+    () => (inspectingNode ? computeFlow(graph.edges, inspectingNode.id) : null),
+    [graph, inspectingNode],
   );
   const flowRef = useRef<Flow | null>(null);
   flowRef.current = flow;

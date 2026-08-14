@@ -70,10 +70,12 @@ export const ROLE_HUE: Record<string, string> = {
  *  separate for a CVD viewer and to clear the graphic-object contrast floor as strokes. Picking a
  *  fresh pair would mean asserting both properties without re-running that search.
  *
- *  `lands` (teal) and `wincons` (amber) are the pair: they sit furthest apart in hue among the
- *  seven, so the two directions cannot be confused at a glance on a 2.5px rim arc. They do double
- *  duty as role hues, which is not a conflict -- the role paint mode and the flow view never draw
- *  the same rim at the same time (GraphView overrides `hues` for cards in the flow). */
+ *  `lands` (teal) and `wincons` (amber) are the pair: both come from the validated seven-hue
+ *  palette and read as visibly distinct on a 2.5px rim arc, so the two directions cannot be
+ *  confused at a glance -- no ΔE search was run to rank them against the other five pairings.
+ *  They do double duty as role hues, which is not a conflict -- the role paint mode and the flow
+ *  view never draw the same rim at the same time (GraphView overrides `hues` for cards in the
+ *  flow). */
 export const FLOW_HUE = { up: ROLE_HUE.lands, down: ROLE_HUE.wincons } as const;
 
 /** The engine's build categories, grouped into the six functional roles a deck is read by, plus
