@@ -2583,8 +2583,7 @@
   },
   "extra-turn": {
     "events": [],
-    "effectKind": null,
-    "needsEffectKind": "extra-turn",
+    "effectKind": "extra-turn",
     "uses": [
       "classifier",
       "weight"

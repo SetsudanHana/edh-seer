@@ -270,6 +270,17 @@ export const EFFECT_KINDS = [
   // stays the ordinary-card claim it is.
   "keyword-grant",
   "type-grant",
+  // The TERMINAL. 49 corpus cards say "you win the game" and the vocabulary could not express it:
+  // 12 of the 38 derived thresholds gate a blank effect kind, 4 of them alt-win cards (Simic
+  // Ascendancy, Revel in Riches, Hellkite Tyrant, Twenty-Toed Toad). Excluded from edges in
+  // `ROLE_NOT_SYNERGY` -- winning makes the identical claim next to all 99 other cards, which is
+  // the deck-role argument that took cost-reduction and tax out.
+  "win-game",
+  // ACTIVATION SUPPLY. An extra turn or a non-combat extra phase brings another untap step, which
+  // is what a `{T}` ability needs to fire again. Kept apart from `extra-combat` because
+  // `pressure.ts` reads that kind and an extra combat is not an extra untap.
+  "extra-turn",
+  "extra-phase",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];

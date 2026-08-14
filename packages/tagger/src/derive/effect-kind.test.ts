@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { actionEffectKind } from "./effect-kind.js";
+import { EFFECT_KINDS } from "../schema.js";
 
 test("the origin zone decides the kind, because the zone is the card", () => {
   // Scavenging Ooze, Bojuka Bog.
@@ -260,4 +261,10 @@ test("a plain keyword grant is untouched", () => {
 test("a speed keyword still outranks the type test", () => {
   expect(actionEffectKind({ verb: "grant-ability", object: "creatures you control gain haste until end of turn" }))
     .toBe("speed-increase");
+});
+
+test("the vocabulary can express winning and extra turns/phases", () => {
+  expect(EFFECT_KINDS).toContain("win-game");
+  expect(EFFECT_KINDS).toContain("extra-turn");
+  expect(EFFECT_KINDS).toContain("extra-phase");
 });
