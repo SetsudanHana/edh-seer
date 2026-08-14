@@ -4,7 +4,10 @@
  *  and emits one record per threshold anchor. Pure -- no store, no I/O.
  *  Design: docs/superpowers/specs/2026-08-14-threshold-lines-design.md */
 
-import type { DeckCard } from "./types.js";
+import type { GameEvent } from "@mtg/tagger";
+import type { DeckCard, Hierarchy } from "./types.js";
+import { producerEvents, eventMatches } from "./edges.js";
+import { normalizeZoneEvent } from "./zones.js";
 
 export type Growth =
   | { kind: "multiplicative"; factor: number }
@@ -154,21 +157,37 @@ function actsOnResource(ability: Record<string, any>, resource: Resource): boole
   return type.includes(resource.name);
 }
 
-/** Does this ability ADD the resource when it fires? Read off `emits`, which is where the resource
- *  ledger's own witness lives: Calendar's accumulator emits `counter-added{counter:time}`. */
-function suppliesResource(ability: Record<string, any>, resource: Resource): boolean {
+/** The anchor's own trigger, normalized into the demand event(s) a producer must satisfy -- exactly
+ *  what `directedReasons` builds for a consumer in edges.ts. Reused here rather than reinvented
+ *  (design §5.2): the anchor's trigger already IS the demand, so there is no need to build a second,
+ *  synthetic one out of `Resource`. */
+function demandEventsOf(trigger: Record<string, any>): GameEvent[] {
+  const verbs: any[] = Array.isArray(trigger.verbs) ? trigger.verbs : [];
+  return verbs.map((v) => normalizeZoneEvent({ verb: v, subject: trigger.subject }));
+}
+
+/** Does this specific ability's own emit satisfy the anchor's demand? Used only to read the
+ *  ability's `amount` for the growth/base model -- a `GameEvent` carries no amount, so the numeric
+ *  read stays ability-scoped even though supplier PIECE membership (below) is card-scoped and reads
+ *  every implied/derived event `producerEvents` can produce (a vanilla land's ETB, an implied
+ *  untyped proliferate counter-added). Same primitives (`normalizeZoneEvent` + `eventMatches`), just
+ *  applied at the ability's own emits rather than the card's merged producer events. */
+function abilitySuppliesDemand(ability: Record<string, any>, demandEvents: GameEvent[], h: Hierarchy): boolean {
   for (const e of ability.emits ?? []) {
-    if (resource.kind === "counter" && e.subject?.counter === resource.name) return true;
-    if (resource.kind === "type") {
-      const t = Array.isArray(e.subject?.type) ? e.subject.type : [e.subject?.type];
-      if (t.includes(resource.name)) return true;
-    }
+    const ne = normalizeZoneEvent(e);
+    if (demandEvents.some((t) => eventMatches(ne, t, h))) return true;
   }
   return false;
 }
 
-export function detectLines(deck: readonly DeckCard[]): Line[] {
+export interface DetectLinesResult { lines: Line[]; refusals: Record<string, number> }
+
+export function detectLines(deck: readonly DeckCard[], hierarchy: Hierarchy): DetectLinesResult {
   const lines: Line[] = [];
+  // Design §6.1/§7: a refused anchor is not silent. `no-resource` is the only refusal that drops an
+  // anchor before it ever becomes a Line, so it is the only one that needs its own tally --
+  // everything else (assumed-base-1, unknown-growth, no-terminal) rides on the Line it belongs to.
+  const refusalTally: Record<string, number> = {};
   // A trigger object is built ONCE PER CLAUSE and shared by every ability that clause derives, so
   // Calendar's [2] and [3] are the same anchor seen twice. Keying on the trigger object's identity
   // collapses them, and reading the sibling is how the terminal is recovered at all: [2] carries a
@@ -191,10 +210,11 @@ export function detectLines(deck: readonly DeckCard[]): Line[] {
 
       const refusals: string[] = [];
       const resource = resourceOf(a.trigger);
-      if (!resource) continue; // counted by the caller's tally; emits nothing
+      if (!resource) { refusalTally["no-resource"] = (refusalTally["no-resource"] ?? 0) + 1; continue; }
 
       const siblings = abilities.filter((x) => triggerKey(x.trigger) === key);
       const terminal = siblings.map((x) => String(x.effect?.kind ?? "")).find((k) => k !== "");
+      const demandEvents = demandEventsOf(a.trigger);
 
       const pieces: Piece[] = [{ card: dc.card.name, role: "anchor" }];
       let growth: Growth = { kind: "unknown" };
@@ -202,7 +222,24 @@ export function detectLines(deck: readonly DeckCard[]): Line[] {
       let needsUntap = false;
 
       for (const other of deck) {
-        for (const b of (other.tags?.abilities ?? []) as unknown as Record<string, any>[]) {
+        const otherAbilities = (other.tags?.abilities ?? []) as unknown as Record<string, any>[];
+        const producerEvts = other.tags ? producerEvents(other.tags) : [];
+
+        // Suppliers: reuse the engine's own event matching instead of a synthetic demand built from
+        // the Resource (design §5.2, and the fix for a measured bug -- the old resource-field check
+        // found 15 of 44 real Field of the Dead suppliers on a calibration deck, missing every
+        // vanilla land, because a land has no Ability and its "a land entered" fact lives only in
+        // `impliedEvents` inside `producerEvents`; it also missed a bare `proliferate` emit, whose
+        // implied counter-added carries no counter kind and is matched by `counterAddMatches`'s
+        // wildcard against a SPECIFIC counter demand).
+        if (demandEvents.some((t) => producerEvts.some((pe) => eventMatches(pe, t, hierarchy)))) {
+          // The anchor legitimately supplies its own threshold (Calendar's accumulator supplies
+          // Calendar's own trigger). Tagged "anchor", not a second "supplier" role for the same card
+          // -- it already got the anchor piece above, so this can't double it up under two roles.
+          pieces.push({ card: other.card.name, role: other === dc ? "anchor" : "supplier" });
+        }
+
+        for (const b of otherAbilities) {
           if (actsOnResource(b, resource) && b !== a) {
             const g = classifyGrowth(b.amount);
             if (g.kind === "multiplicative" && growth.kind !== "multiplicative") {
@@ -211,11 +248,10 @@ export function detectLines(deck: readonly DeckCard[]): Line[] {
               if (typeof b.cost === "string" && b.cost.includes("{T}")) needsUntap = true;
             }
           }
-          if (suppliesResource(b, resource)) {
+          if (abilitySuppliesDemand(b, demandEvents, hierarchy)) {
             const g = classifyGrowth(b.amount);
             if (g.kind === "additive") base = Math.max(base, g.step);
             if (growth.kind === "unknown") growth = g;
-            if (other.card.name !== dc.card.name) pieces.push({ card: other.card.name, role: "supplier" });
           }
           // Activation supply. `untap` and `extra-turn` count unconditionally; `extra-phase` counts
           // ONLY when the phase it grants itself carries an untap step (`UNTAP_PHASES`) -- Sphinx of
@@ -257,5 +293,5 @@ export function detectLines(deck: readonly DeckCard[]): Line[] {
       });
     }
   }
-  return lines;
+  return { lines, refusals: refusalTally };
 }

@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { classifyGrowth, detectLines, iterationsNeeded } from "./lines.js";
+import { loadHierarchy } from "./hierarchy.js";
 import type { DeckCard } from "./types.js";
+
+const hierarchy = loadHierarchy();
+/** `detectLines` returns `{ lines, refusals }` (a tally lives alongside the lines, design §7). Most
+ *  tests only care about the lines, so this trims the boilerplate at every call site. */
+const linesOf = (deck: readonly DeckCard[]) => detectLines(deck, hierarchy).lines;
 
 describe("classifyGrowth", () => {
   // The measured multiplicative family is TINY and fully enumerable: "double" x7, "triple" x2,
@@ -113,7 +119,7 @@ describe("detectLines", () => {
   const calendar = {
     card: { name: "The Millennium Calendar" },
     tags: {
-      characteristics: { types: ["artifact"] },
+      characteristics: { types: ["artifact"], subtypes: [] },
       abilities: [
         { kind: "triggered", effect: { kind: "counter-placement", subject: { control: "any", token: null } },
           trigger: { verbs: ["untaps"], subject: { control: "you", token: null, type: "permanent", scope: "all" } },
@@ -136,13 +142,13 @@ describe("detectLines", () => {
   const gogo = {
     card: { name: "Gogo, Master of Mimicry" },
     tags: {
-      characteristics: { types: ["creature"] },
+      characteristics: { types: ["creature"], subtypes: [] },
       abilities: [{ kind: "activated", effect: { kind: "clone", scaling: "x-cost" }, cost: "{X}{X}, {T}", amount: "X", repeats: "per-cycle" }],
     },
   } as unknown as DeckCard;
 
   test("Calendar alone yields one line, x2 growth, 10 iterations, a life-loss terminal", () => {
-    const lines = detectLines([calendar]);
+    const lines = linesOf([calendar]);
     expect(lines).toHaveLength(1);
     const [l] = lines;
     expect(l.anchor).toBe("The Millennium Calendar");
@@ -158,11 +164,11 @@ describe("detectLines", () => {
   });
 
   test("two abilities sharing one threshold trigger produce ONE line, not two", () => {
-    expect(detectLines([calendar])).toHaveLength(1);
+    expect(linesOf([calendar])).toHaveLength(1);
   });
 
   test("Gogo joins the piece set as unproven copy supply", () => {
-    const [l] = detectLines([calendar, gogo]);
+    const [l] = linesOf([calendar, gogo]);
     const g = l.pieces.find((p) => p.card === "Gogo, Master of Mimicry");
     expect(g).toBeDefined();
     expect(g!.role).toBe("copy");
@@ -172,18 +178,54 @@ describe("detectLines", () => {
   });
 
   test("a deck with no threshold anchor yields no lines", () => {
-    expect(detectLines([gogo])).toEqual([]);
+    expect(linesOf([gogo])).toEqual([]);
   });
 
   test("an anchor whose resource cannot be named is refused, not emitted blank", () => {
     const anchorless = {
       card: { name: "Test Anchor" },
-      tags: { characteristics: { types: ["enchantment"] }, abilities: [
+      tags: { characteristics: { types: ["enchantment"], subtypes: [] }, abilities: [
         { kind: "triggered", effect: { kind: "draw-card" },
           trigger: { verbs: ["upkeep"], subject: { control: "you", token: null }, threshold: { atLeast: 5 } } },
       ] },
     } as unknown as DeckCard;
-    expect(detectLines([anchorless])).toEqual([]);
+    const result = detectLines([anchorless], hierarchy);
+    expect(result.lines).toEqual([]);
+    expect(result.refusals["no-resource"]).toBe(1);
+  });
+
+  // Design §6.1/§7: a refused anchor is TALLIED, not just dropped, so a caller can report "N lines
+  // refused for no-resource" without re-implementing `resourceOf` outside this file. Real corpus
+  // witness, read off cardTagsDerived at DERIVE_VERSION 39, not from memory: Golbez, Crystal
+  // Collector's two threshold abilities (return at 4 artifacts, life loss at 4 artifacts) share one
+  // trigger whose subject is bare `{control:"you", token:null}` -- the "how many" (artifacts seen)
+  // is never encoded as a counter/type/subtype on the trigger itself, so the resource genuinely
+  // cannot be named. One shared trigger -> one tally increment, not two.
+  const golbez = {
+    card: { name: "Golbez, Crystal Collector" },
+    tags: {
+      characteristics: { types: ["legendary", "creature"], subtypes: ["human", "wizard"] },
+      abilities: [
+        { kind: "triggered", effect: { kind: "top-manipulation", subject: { control: "any", token: null } },
+          trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "artifact" } },
+          repeats: "repeatable" },
+        { kind: "triggered",
+          effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", scope: "target", zone: "graveyard" } },
+          trigger: { verbs: ["end-step"], subject: { control: "you", token: null }, threshold: { atLeast: 4 } },
+          repeats: "per-cycle" },
+        { kind: "triggered", effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
+          trigger: { verbs: ["end-step"], subject: { control: "you", token: null }, threshold: { atLeast: 4 } },
+          amount: "that card's power",
+          emits: [{ verb: "lose-life", subject: { control: "opp", token: null, scope: "each" } }],
+          repeats: "per-cycle" },
+      ],
+    },
+  } as unknown as DeckCard;
+
+  test("Golbez, Crystal Collector: a real no-resource anchor is refused and tallied once", () => {
+    const result = detectLines([golbez], hierarchy);
+    expect(result.lines).toEqual([]);
+    expect(result.refusals["no-resource"]).toBe(1);
   });
 
   // CORRECTION to the brief's SUPPLY_ROLE table (owner's ruling, 2026-08-14): only an `extra-phase`
@@ -194,7 +236,7 @@ describe("detectLines", () => {
   const sphinx = {
     card: { name: "Sphinx of the Second Sun" },
     tags: {
-      characteristics: { types: ["creature"] },
+      characteristics: { types: ["creature"], subtypes: [] },
       abilities: [
         { kind: "triggered", effect: { kind: "extra-phase", subject: { control: "you", token: null, phase: "beginning" } },
           trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } } },
@@ -205,7 +247,7 @@ describe("detectLines", () => {
   const ninthDoctor = {
     card: { name: "The Ninth Doctor" },
     tags: {
-      characteristics: { types: ["creature"] },
+      characteristics: { types: ["creature"], subtypes: [] },
       abilities: [
         { kind: "triggered", effect: { kind: "extra-phase", subject: { control: "you", token: null, phase: "upkeep" } },
           trigger: { verbs: ["untaps"], subject: { control: "self", token: null } } },
@@ -214,13 +256,13 @@ describe("detectLines", () => {
   } as unknown as DeckCard;
 
   test("Sphinx's additional BEGINNING phase is activation supply, recorded with its phase", () => {
-    const [l] = detectLines([calendar, sphinx]);
+    const [l] = linesOf([calendar, sphinx]);
     const p = l.pieces.find((piece) => piece.card === "Sphinx of the Second Sun");
     expect(p).toEqual({ card: "Sphinx of the Second Sun", role: "extra-phase", phase: "beginning" });
   });
 
   test("The Ninth Doctor's additional UPKEEP step is NOT activation supply", () => {
-    const [l] = detectLines([calendar, ninthDoctor]);
+    const [l] = linesOf([calendar, ninthDoctor]);
     expect(l.pieces.find((piece) => piece.card === "The Ninth Doctor")).toBeUndefined();
   });
 });
