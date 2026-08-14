@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { actionEffectKind } from "./effect-kind.js";
+import { actionEffectKind, extraPhaseName } from "./effect-kind.js";
 import { EFFECT_KINDS } from "../schema.js";
 
 test("the origin zone decides the kind, because the zone is the card", () => {
@@ -291,9 +291,14 @@ test("a skipped turn is refused, not credited", () => {
     .toBeNull();
 });
 
-// Cyclonus: the reason the old `extra-phase -> extra-combat` row existed. Combat is checked BEFORE
-// the general phase branch, so this must not become extra-phase.
-test("an additional combat phase stays extra-combat", () => {
+// SYNTHETIC input, not Cyclonus's real oracle text -- see the round-1 fix report and the
+// "Cyclonus's REAL clause..." test far below, which derives the OPPOSITE kind (extra-phase) from
+// Cyclonus's actual stored text. No known real card prints the literal phrase "additional combat
+// phase" this way; this fixture exists only to prove the combat branch still wins over the general
+// phase branch when a card's text genuinely does name a combat phase (World at War is the real
+// witness for that shape -- see its own test below). Originally written believing it described
+// Cyclonus; it does not, and is kept as a synthetic regression case rather than removed.
+test("an additional combat phase stays extra-combat (synthetic input)", () => {
   expect(actionEffectKind({ verb: "extra-phase", object: "an additional combat phase" },
     "Untap all creatures that attacked this turn. After this phase, there is an additional combat phase."))
     .toBe("extra-combat");
@@ -411,4 +416,70 @@ test("Savor the Moment stays refused (witness, not a fix -- it genuinely grants 
   expect(actionEffectKind({ verb: "extra-turn", object: "" },
     "Take an extra turn after this one. Skip the untap step of that turn."))
     .toBeNull();
+});
+
+// --- Round 2 fixes: extra-phase records WHICH phase (owner's ruling, subject.phase) ---
+// Every clause text below is real, stored corpus oracleText, fetched from the DB, never memory.
+
+test("Sphinx of the Second Sun grants the 'beginning' phase", () => {
+  expect(extraPhaseName("beginning phase",
+    "At the beginning of each of your postcombat main phases, there is an additional beginning phase after this phase."))
+    .toBe("beginning");
+});
+
+// Obeka's OWN object already names the real unit ("upkeep step"); its clause's "combat damage"
+// trigger must not leak in, and doesn't need to -- object-first resolves this one directly.
+test("Obeka, Splitter of Seconds grants the 'upkeep' phase", () => {
+  expect(extraPhaseName("upkeep step",
+    "Whenever Obeka deals combat damage to a player, you get that many additional upkeep steps after this phase."))
+    .toBe("upkeep");
+});
+
+test("Paradox Haze grants the 'upkeep' phase", () => {
+  expect(extraPhaseName("additional upkeep step",
+    "At the beginning of enchanted player's first upkeep each turn, that player gets an additional upkeep step after this step."))
+    .toBe("upkeep");
+});
+
+// Y'shtola RHUL (Legendary Creature -- Cat Druid, {4}{U}{U}, released 2025-06-13) -- NOT to be
+// confused with Y'shtola, Night's Blessed, a different card sharing only the Final Fantasy
+// crossover character's first name. Verified against the corpus: Y'shtola Rhul's stored oracleText
+// is exactly this clause, and Y'shtola, Night's Blessed's is entirely unrelated (Vigilance / an end
+// step life-loss draw trigger / a noncreature-spell damage-and-lifegain trigger -- no phase or step
+// text at all). This is the real "end" witness in the owner's 61-card measurement.
+test("Y'shtola Rhul grants the 'end' phase (not to be confused with Y'shtola, Night's Blessed)", () => {
+  expect(extraPhaseName("additional end step",
+    "At the beginning of your end step, exile target creature you control, then return it to the battlefield under its owner's control. Then if it's the first end step of the turn, there is an additional end step after this step."))
+    .toBe("end");
+});
+
+// "Untap, Upkeep, Draw" -- a real corpus card, modal ("Choose one"), covering both remaining
+// witnesses the 24-action extra-turn/extra-phase family has no example of. Its stored oracleText:
+// "Choose one -- * After this phase, there is an additional untap step. * After this phase, there
+// is an additional upkeep step. * After this phase, there is an additional draw step. Entwine {3}".
+test("'Untap, Upkeep, Draw' grants the 'untap' phase (its untap mode)", () => {
+  expect(extraPhaseName("", "After this phase, there is an additional untap step."))
+    .toBe("untap");
+});
+
+test("'Untap, Upkeep, Draw' grants the 'draw' phase (its draw mode)", () => {
+  expect(extraPhaseName("", "After this phase, there is an additional draw step."))
+    .toBe("draw");
+});
+
+// World at War's own real, stored action object -- "main phase" is the timing anchor for its
+// combat grant (see extraUnitKind's comment), but extraPhaseName is tested here in isolation from
+// the kind gate to prove the vocabulary itself recognises "main" from real text. In the real
+// pipeline this branch is never reached for World at War: its overall kind resolves to
+// extra-combat, which never calls extraPhaseName at all (see effectSubject's `kind === "extra-phase"`
+// gate in derive.ts).
+test("the vocabulary recognises the 'main' phase from real text (World at War's own object)", () => {
+  expect(extraPhaseName("main phase", "")).toBe("main");
+});
+
+// The closed vocabulary refuses rather than defaults when nothing names a phase -- the same
+// discipline `parseCounter` and `extraUnitKind` itself already apply.
+test("no named phase leaves extraPhaseName unset", () => {
+  expect(extraPhaseName("target opponent", "That player takes an extra turn after this one."))
+    .toBeUndefined();
 });

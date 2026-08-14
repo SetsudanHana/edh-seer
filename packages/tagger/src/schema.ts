@@ -108,6 +108,16 @@ export interface SubjectFilter {
   anyOf?: Partial<SubjectFilter>[];
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
+  /** Which phase or step an `extra-phase` effect grants, over a closed CR vocabulary: `untap`,
+   *  `upkeep`, `draw`, `main`, `combat`, `beginning`, `end`. Same shape as `counter` above, and for
+   *  the same reason: a coarse `extra-phase` conflated units the game itself keeps apart -- an
+   *  additional BEGINNING phase brings an untap step and is activation supply, while an additional
+   *  UPKEEP or END step brings none, and only recording which one lets a downstream weighting layer
+   *  tell them apart. Owner's ruling, 2026-08-14 (threshold-lines spec §4.3). Unset when the card's
+   *  text names no phase from the closed list -- refused, never defaulted. `combat` is listed for
+   *  the vocabulary's completeness but never actually appears here: a card whose text names a combat
+   *  phase derives the separate `extra-combat` kind instead, which carries no `phase` field at all. */
+  phase?: string;
   /** Zone the subject lives in; omitted means battlefield. E.g. "graveyard", "hand", "exile". */
   zone?: string;
   /** Zone the subject came FROM, when the text names one: "casts a spell from a graveyard" (River

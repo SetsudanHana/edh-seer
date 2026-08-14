@@ -192,6 +192,30 @@ function extraUnitKind(object: string, clauseText: string): EffectKind | null {
   return readUnit(object.toLowerCase()) ?? readUnit(clauseText.toLowerCase());
 }
 
+/** The closed CR phase/step vocabulary `SubjectFilter.phase` may name, per the owner's ruling
+ *  (2026-08-14): a coarse `extra-phase` conflated units the game keeps apart -- an extra beginning
+ *  phase brings an untap step and is activation supply (§6.4), an extra upkeep or end step brings
+ *  none. Measured over the corpus, cards granting an additional NAMED phase/step, 61 total: combat
+ *  52 (its own kind, `extra-combat`, never reaches this function) · beginning 4 · upkeep 3 · untap 1
+ *  · end 1. `draw` and `main` are in the vocabulary because the Comprehensive Rules name them as
+ *  turn structure, even though no corpus card in the extra-turn/extra-phase verb family names them
+ *  as its OWN grant (World at War's object names "main phase" only as the timing anchor for its
+ *  combat grant, per `extraUnitKind`'s own comment above). */
+const PHASE_NAMES = ["untap", "upkeep", "draw", "main", "combat", "beginning", "end"] as const;
+
+/** Anchored the same way `parseCounter` anchors on "counter": the phase word must immediately
+ *  precede "phase" or "step", so a CONDITION mentioning combat ("deals combat damage") or a
+ *  trigger's own timing ("at the beginning of your upkeep") isn't read as the granted unit. Object
+ *  first, clause as fallback -- the same precedence `extraUnitKind` and `costDirection` use, for the
+ *  same reason: the object is the action's own words. Unset (`undefined`) when neither text names a
+ *  phase from the closed list -- refused, never defaulted, so a future phase family doesn't
+ *  silently inherit today's list. */
+export function extraPhaseName(object: string, clauseText: string): string | undefined {
+  const read = (t: string): string | undefined =>
+    PHASE_NAMES.find((p) => new RegExp(`\\b${p}\\s+(?:phase|step)s?\\b`).test(t));
+  return read(object.toLowerCase()) ?? read(clauseText.toLowerCase());
+}
+
 export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
   const verb = action.verb ?? "";
   if (verb === "other" && WINS.test(`${action.object ?? ""} ${clauseText}`)) return "win-game";

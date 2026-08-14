@@ -8,7 +8,7 @@
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
-import { ZONE_SCOPED_KINDS, actionEffectKind } from "./effect-kind.js";
+import { ZONE_SCOPED_KINDS, actionEffectKind, extraPhaseName } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
 import { actionRecipients } from "./recipient.js";
 import { actionScaling } from "./scaling.js";
@@ -430,6 +430,14 @@ function effectSubject(
     // Only when the object text stated no owner of its own -- an explicit one is more specific.
     const owner = zoneOwner(clauseText, action.fromZone);
     if (owner && subject.control === "any") subject.control = owner;
+  }
+  // Owner's ruling 2026-08-14 (threshold-lines): a coarse extra-phase conflated units the game
+  // keeps apart -- an extra beginning phase brings an untap step (activation supply, §6.4 of the
+  // design spec) and an extra upkeep or end step brings none. Unset when the text names no phase
+  // from the closed list -- refused, never defaulted.
+  if (kind === "extra-phase") {
+    const phase = extraPhaseName(object, clauseText);
+    if (phase) subject.phase = phase;
   }
   return subject;
 }

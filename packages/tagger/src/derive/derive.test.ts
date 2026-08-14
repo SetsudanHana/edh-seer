@@ -1360,3 +1360,24 @@ test("a trigger with no threshold leaves the field unset", () => {
   expect(abilities[0].trigger?.threshold).toBeUndefined();
   expect(abilities[0].trigger && "threshold" in abilities[0].trigger).toBe(false);
 });
+
+// threshold-lines task 3, fix round 2 (owner's ruling): extra-phase now records WHICH phase, so
+// this is the end-to-end wiring check -- effect-kind.ts decides the phase name, derive.ts's
+// effectSubject attaches it to Ability.effect.subject.phase. Sphinx of the Second Sun's real
+// stored oracleText, fetched from the corpus: "At the beginning of each of your postcombat main
+// phases, there is an additional beginning phase after this phase." This is activation supply per
+// design spec §6.4 (phase "beginning" brings an untap step), unlike Obeka/Paradox Haze's "upkeep".
+test("an extra-phase ability's subject records WHICH phase, end to end", () => {
+  const { abilities } = deriveAbilities(
+    [{
+      id: 1,
+      abilityType: "triggered",
+      trigger: { event: "phase", subject: "your postcombat main phase", control: "you" },
+      actions: [{ verb: "extra-turn", object: "beginning phase" }],
+    }],
+    "Sphinx of the Second Sun",
+    { 1: "At the beginning of each of your postcombat main phases, there is an additional beginning phase after this phase." },
+  );
+  expect(abilities[0].effect.kind).toBe("extra-phase");
+  expect(abilities[0].effect.subject?.phase).toBe("beginning");
+});
