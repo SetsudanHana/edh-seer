@@ -30,6 +30,11 @@ const fakeCaches = (initial: Record<string, Blob> = {}) => {
   const cache = {
     match: async (url: string) => (store.has(url) ? new Response(store.get(url)!) : undefined),
     put: async (url: string, res: Response) => { store.set(url, await res.blob()); },
+    // `Cache.keys()` resolves in INSERTION order, and a Map iterates the same way — which is the
+    // property the trim relies on to evict oldest-first without storing timestamps. Without these
+    // two the trim threw into its own best-effort catch and the double silently hid it.
+    keys: async () => [...store.keys()],
+    delete: async (url: string) => store.delete(url),
   };
   return { open: async () => cache, store } as unknown as CacheStorage & { store: Map<string, Blob> };
 };
@@ -49,7 +54,12 @@ test("a cache miss fetches and stores the response", async () => {
   expect((caches as unknown as { store: Map<string, Blob> }).store.has("u")).toBe(true);
 });
 
-test("a failed fetch rejects so the loader's retry can see it", async () => {
+// OFFLINE still rejects, so the loader's retry can see it. Since the CORS fallback below, a thrown
+// fetch no longer rejects on its own — it tries `img.src` first. That does not weaken this contract:
+// offline, the image load fails too, which is what `decodeShouldFail` models here. The fallback only
+// rescues the case where the NETWORK is fine and `fetch` specifically was refused (no CORS headers).
+test("a failed fetch rejects so the loader's retry can see it, when the image fails too", async () => {
+  decodeShouldFail = true;
   const caches = fakeCaches();
   const load = cachedImageLoad(async () => { throw new Error("offline"); }, caches);
   await expect(load("u")).rejects.toThrow();
@@ -111,4 +121,59 @@ test("a decode failure rejects, and still revokes the object URL", async () => {
   await expect(load("u")).rejects.toThrow(/art decode failed/);
   expect(revokeSpy).toHaveBeenCalledTimes(1);
   revokeSpy.mockRestore();
+});
+
+// THE CACHE IS BOUNDED. Unbounded, entries accumulated for the life of the browser profile, and
+// quota eviction when it came could take the WHOLE bucket rather than the oldest slice — turning a
+// gentle miss into "every card you have ever seen is gone offline".
+test("writing past the cap trims the oldest entries and keeps the newest", async () => {
+  const caches = fakeCaches();
+  const load = cachedImageLoad(async () => new Response(blob()), caches);
+  for (let i = 0; i < 505; i++) await load(`u${i}`).catch(() => {});
+  const store = (caches as unknown as { store: Map<string, Blob> }).store;
+  expect(store.size).toBe(500);
+  expect(store.has("u0")).toBe(false);
+  expect(store.has("u504")).toBe(true);
+});
+
+// A version bump renames the bucket, so bumping CACHE_NAME should be self-cleaning rather than
+// leaving the old copy on disk forever.
+test("an earlier-versioned bucket is deleted", async () => {
+  const caches = fakeCaches();
+  const deleted: string[] = [];
+  const withNames = {
+    ...caches,
+    keys: async () => ["mtg-art-v0", "mtg-art-v1", "something-else"],
+    delete: async (n: string) => { deleted.push(n); return true; },
+  } as unknown as CacheStorage;
+  const load = cachedImageLoad(async () => new Response(blob()), withNames);
+  await load("u").catch(() => {});
+  expect(deleted).toEqual(["mtg-art-v0"]);
+});
+
+// CORS FALLBACK. Art loads through `fetch` so the bytes can be cached for offline, and a
+// cross-origin `fetch` needs CORS headers. Scryfall sends them today; if it ever stops, every card
+// silently degrades to a dot with no recovery path. A plain `img.src` needs no CORS to RENDER — it
+// only taints the canvas, and nothing in this client reads pixels back (no getImageData, toDataURL
+// or toBlob anywhere), so the taint costs nothing.
+test("a fetch the network refuses still renders through img.src", async () => {
+  const load = cachedImageLoad(async () => { throw new TypeError("Failed to fetch"); }, undefined);
+  await expect(load("u")).resolves.toBeDefined();
+});
+
+// The fallback must not paper over a DECODE failure: the bytes arrived and are not an image, so
+// there is nothing to fall back TO, and the loader's own retry path should see the rejection.
+test("a decode failure still rejects rather than falling back", async () => {
+  decodeShouldFail = true;
+  const load = cachedImageLoad(async () => new Response(blob()), undefined);
+  await expect(load("u")).rejects.toThrow();
+});
+
+// A non-ok RESPONSE is the server answering "no" — a 404 on a card with no art. Retrying the same
+// URL through a second path would just fail again, so it rejects on the first answer.
+test("a 404 rejects without a second attempt", async () => {
+  let fetched = 0;
+  const load = cachedImageLoad(async () => { fetched++; return new Response("", { status: 404 }); }, undefined);
+  await expect(load("u")).rejects.toThrow();
+  expect(fetched).toBe(1);
 });
