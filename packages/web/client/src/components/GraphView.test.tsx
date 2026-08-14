@@ -890,6 +890,19 @@ test("a card in card mode shows its paint hues as bars, not rim arcs", () => {
   expect(bars).not.toContain(placeholder);
 });
 
+// LABELS HAD A FLOOR BUT NO CEILING: they start above LABEL_ZOOM_FLOOR and never stopped, so from
+// CARD_MODE_Z (4) to MAX_Z (8) a name was painted over a card whose own art already prints it.
+// The suppressing branch is unit-tested on `labelCandidates` in labels.test.ts, not here — jsdom
+// cannot load an image, so every card in this harness draws as a PLACEHOLDER and the branch is
+// unreachable through the component. Same reason `traveledAsPan` is a pure function.
+//
+// What this pins is the carve-out, which IS reachable: a card with no art drawn keeps its label,
+// because nothing else on screen names it.
+test("a card mode placeholder keeps its label, having no art to name it", () => {
+  const calls = cardModeFrame(graphOf([card({ id: "Bojuka Bog" })]));
+  expect(calls.filter((c) => c.startsWith("fillText:Bojuka Bog")).length).toBeGreaterThan(0);
+});
+
 test("the search-match ring in card mode is a rectangle around the card box", () => {
   const calls: string[] = [];
   const { tick } = frames(graphOf([card({ id: "Bojuka Bog" })]), calls);
@@ -945,7 +958,9 @@ describe("hover", () => {
   // default zoom is exactly that case. The positive side of the threshold is unit-tested on
   // `shouldPrefetchCard` — jsdom cannot construct the d3-zoom gesture that would raise cam.z.
   test("hovering at whole-deck zoom fetches no full-card image", async () => {
-    const fetchSpy = vi.fn(() => Promise.reject(new Error("no network in this test")));
+    // Typed args, not `vi.fn(() => ...)`: an empty parameter list gives the spy an empty tuple for
+    // `mock.calls`, and reading `c[0]` off it is a type error rather than the URL we came for.
+    const fetchSpy = vi.fn((_url: unknown) => Promise.reject(new Error("no network in this test")));
     vi.stubGlobal("fetch", fetchSpy);
     const { canvas } = frames(graphOf([
       card({ id: "Sol Ring", artCrop: "https://cards.example/art_crop/front/a/b/x.jpg" }),

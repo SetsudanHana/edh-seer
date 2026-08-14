@@ -14,7 +14,7 @@ import {
 } from "./board-force.js";
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
 import { CardInspector } from "./CardInspector.js";
-import { labelPriority, placeLabels } from "./labels.js";
+import { labelCandidates, labelPriority, placeLabels } from "./labels.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
 // uses, while board-force.ts owns the values.
 export { ART_RADIUS, nodeRadius };
@@ -403,6 +403,11 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       const matchIds = matchesRef.current;
       const mode = renderModeFor(cam.z);
       const cardW = ART_RADIUS * 2, cardH = cardW * 1.4;
+      // Cards drawn as a loading/no-art placeholder this frame. Card mode suppresses name labels,
+      // because the card's own art prints the name — but a placeholder is a blank coloured
+      // rectangle, so those keep theirs or nothing on screen names them. Collected here rather than
+      // recomputed in the label pass so "did this node draw art?" has ONE answer per frame.
+      const placeholderIds = new Set<string>();
       for (const n of nodes) {
         // See EDGELESS_ALPHA's comment. Two things narrow when the demotion actually applies:
         // a search match wins over it (if the user went looking for this exact card, it must show
@@ -478,6 +483,7 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
           // nothing else, so it has to read as a solid loading signal. Filled in the card's own
           // paint hue, so a deck whose art has not landed is still readable by facet.
           if (src) artLoader.request(src);
+          placeholderIds.add(n.id);
           ctx.fillStyle = hues[0] ?? paintColors.muted;
           if (mode === "card") {
             ctx.fillRect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
@@ -548,9 +554,17 @@ export function GraphView({ graph, report }: { graph: CardGraph; report: DeckRep
       const hoveredSet = hoveredId
         ? new Set([hoveredId, ...(neighborsOf.get(hoveredId) ?? [])])
         : new Set<string>();
-      const candidates = cam.z < LABEL_ZOOM_FLOOR
-        ? nodes.filter((n) => commandersRef.current.has(n.id) || hoveredSet.has(n.id))
-        : nodes;
+      // A FLOOR AND, SINCE 2026-08-14, A CEILING. Labels used to start above LABEL_ZOOM_FLOOR and
+      // never stop, so from CARD_MODE_Z (4) to MAX_Z (8) a name was painted over a card whose own
+      // art prints that name larger and better. Above the ceiling only the cards with NO art drawn
+      // keep a label: a placeholder is a blank coloured rectangle, and suppressing its name would
+      // leave nothing on screen identifying it. Paint only — no candidate set has ever fed layout.
+      const candidates = labelCandidates(nodes, cam.z, {
+        zoomFloor: LABEL_ZOOM_FLOOR,
+        cardModeZoom: CARD_MODE_Z,
+        eligibleBelowFloor: new Set([...commandersRef.current, ...hoveredSet]),
+        placeholders: placeholderIds,
+      });
       if (candidates.length > 0) {
         // World-unit font size so it renders at a constant LABEL_PX screen px -- the formula the
         // deleted room labels also used (roomFontPx); the defect was never the formula, only that

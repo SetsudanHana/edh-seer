@@ -19,6 +19,35 @@ export function placeLabels(boxes: readonly LabelBox[]): string[] {
   return out;
 }
 
+/** Which nodes may carry a name label at this zoom — a FLOOR and a CEILING.
+ *
+ *  Below `zoomFloor` most of the board is too small on screen for a name to mean anything, so only
+ *  commanders and whatever is under the pointer stay eligible.
+ *
+ *  At or above `cardModeZoom` the board draws whole cards, and a card's own art prints its name
+ *  larger and better than a label can — so a label there is redundancy painted over the thing it
+ *  duplicates. Only cards drawn as a PLACEHOLDER keep one: a placeholder is a blank coloured
+ *  rectangle, and suppressing its name would leave nothing on screen identifying it.
+ *
+ *  A pure function, and separated from GraphView for the reason `traveledAsPan` is: jsdom cannot
+ *  load an image, so every card there draws as a placeholder and the ceiling's real branch can
+ *  never be reached through the component. The arithmetic is what is testable, not the render that
+ *  produces its inputs. Paint only — no candidate set has ever fed layout. */
+export function labelCandidates<T extends { id: string }>(
+  nodes: readonly T[],
+  z: number,
+  opts: {
+    zoomFloor: number;
+    cardModeZoom: number;
+    eligibleBelowFloor: ReadonlySet<string>;
+    placeholders: ReadonlySet<string>;
+  },
+): T[] {
+  if (z < opts.zoomFloor) return nodes.filter((n) => opts.eligibleBelowFloor.has(n.id));
+  if (z >= opts.cardModeZoom) return nodes.filter((n) => opts.placeholders.has(n.id));
+  return [...nodes];
+}
+
 /** Commander first, then weighted degree, then the hovered neighbourhood, then everything else.
  *  Ties broken by name so the order is stable between frames. */
 export function labelPriority(
