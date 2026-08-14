@@ -7,7 +7,7 @@ import { SAMPLE } from "../fixtures.js";
 import type { CardGraph, GraphNode } from "../types.js";
 import { zoomIdentity, type ZoomTransform } from "d3-zoom";
 import { CARD_MODE_Z } from "./card-node.js";
-import { IDENTITY_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE } from "./presets.js";
+import { FLOW_HUE, IDENTITY_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE } from "./presets.js";
 import { createBoardSimulation, DEFAULT_PARAMS, LINK_DIST_MIN } from "./board-force.js";
 import sorinFixture from "../fixtures/sorin-graph.json" with { type: "json" };
 
@@ -1192,5 +1192,58 @@ describe("the inspector", () => {
       probe.endGesture({ type: "mouseup", clientX: node.x + 9000, clientY: node.y });
     });
     expect(screen.queryByText("Krenko, Mob Boss")).toBeNull();
+  });
+});
+
+// CLICKING A CARD PAINTS THE FLOW. The board drew every edge in one colour, so production and
+// consumption were indistinguishable -- owner-reported from real use. The canvas spy records
+// `set:strokeStyle=` calls, so the assertion is that both flow hues reach the context.
+describe("flow view", () => {
+  test("a clicked card paints its edges in the two direction hues", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "B" }), card({ id: "X" })],
+      [
+        { from: "A", to: "B", weight: 2, tags: ["t"], reasonTexts: ["A feeds B"] },
+        { from: "X", to: "A", weight: 2, tags: ["t"], reasonTexts: ["X feeds A"] },
+      ],
+    );
+    const { canvas, tick } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "A")!;
+    // SELECT THE SAME WAY THE EXISTING INSPECTOR TESTS DO. The click path hangs off d3-zoom's "end"
+    // handler and jsdom cannot construct a real mousedown-driven zoom gesture at all — which is why
+    // the probe exposes `endGesture`. `fireEvent.click` would select nothing and the test would fail
+    // for a reason that has nothing to do with flow. See GraphView.test.tsx:1146.
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    calls.length = 0;
+    tick();
+
+    // A bare `calls.toContain(hue)` cannot fail here: B and X are also flow NODES, so their rim
+    // arcs paint the identical hue independently of the edge loop -- sabotaging the edge loop alone
+    // (hardcoding its strokeStyle back to the neutral separator colour) left the naive assertion
+    // green, which is exactly the "test that cannot fail" this task warns about. `moveTo` is unique
+    // to the edge loop (no other draw call in this component uses it), so pairing each `moveTo` with
+    // the strokeStyle most recently set before it isolates what colour the EDGE itself drew in.
+    const edgeStrokeColors = new Set<string>();
+    let lastStroke: string | null = null;
+    for (const c of calls) {
+      if (c.startsWith("set:strokeStyle=")) lastStroke = c.slice("set:strokeStyle=".length);
+      else if (c.startsWith("moveTo:") && lastStroke) edgeStrokeColors.add(lastStroke);
+    }
+    expect(edgeStrokeColors).toContain(FLOW_HUE.down);
+    expect(edgeStrokeColors).toContain(FLOW_HUE.up);
+  });
+
+  test("with nothing selected the board paints no flow hue", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "B" })],
+      [{ from: "A", to: "B", weight: 2, tags: [], reasonTexts: [] }],
+    );
+    const { tick } = frames(graph, calls);
+    calls.length = 0;
+    tick();
+    expect(calls).not.toContain(`set:strokeStyle=${FLOW_HUE.down}`);
   });
 });

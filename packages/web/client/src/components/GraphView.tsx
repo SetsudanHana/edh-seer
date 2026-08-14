@@ -8,8 +8,9 @@ import {
   CARD_MODE_Z, MAX_Z, cardImageUrl, isOnScreen, renderModeFor, shouldPrefetchCard,
 } from "./card-node.js";
 import {
-  PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
+  FLOW_HUE, PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
 } from "./presets.js";
+import { computeFlow, type Flow } from "./flow.js";
 import {
   ART_RADIUS, createBoardSimulation, DEFAULT_PARAMS, linkDistanceFor, nodeRadius,
   type BoardParams, type Sim, type SimLink,
@@ -398,13 +399,20 @@ export function GraphView(
 
       // One stroke per edge rather than one path for all of them: width carries weight now, and a
       // single batched path can only have one width. ~200 edges a frame.
+      const activeFlow = flowRef.current;
       ctx.strokeStyle = paintColors.sep;
       for (const l of links) {
+        const fe = activeFlow?.edges.find((e) => e.from === l.source.id && e.to === l.target.id);
+        // An edge in the flow takes its direction's hue; everything else keeps the neutral stroke
+        // and drops to the dim alpha, so the flow reads against the rest of the deck.
+        ctx.globalAlpha = activeFlow && !fe ? 0.15 : 1;
+        ctx.strokeStyle = fe ? FLOW_HUE[fe.dir] : paintColors.sep;
         ctx.lineWidth = edgeWidth(l.weight, maxWeight) / cam.z;
         ctx.beginPath();
         ctx.moveTo(l.source.x, l.source.y); ctx.lineTo(l.target.x, l.target.y);
         ctx.stroke();
       }
+      ctx.globalAlpha = 1;
 
       // A search dims what does not match rather than hiding it, so the deck keeps its shape and
       // you can see WHERE the match sits. `matchIds` null means no active search: dim nothing.
@@ -428,7 +436,14 @@ export function GraphView(
         const searchDim = matchIds && !matchIds.has(n.id);
         const searchHit = matchIds && matchIds.has(n.id);
         const demote = n.deg === 0 && mode !== "card" && !searchHit;
-        ctx.globalAlpha = searchDim ? 0.15 : demote ? EDGELESS_ALPHA : 1;
+        // FLOW OVERRIDES THE RIM, BUT ONLY ON CARDS IN THE FLOW (owner's call). Computed here,
+        // ahead of the alpha decision, so a card outside the flow dims as a whole -- art included,
+        // not just its rim -- rather than the art staying bright while only the ring goes faint.
+        const flowNode = activeFlow?.nodes.get(n.id);
+        const isRoot = activeFlow?.root === n.id;
+        ctx.globalAlpha = searchDim ? 0.15
+          : activeFlow && !flowNode && !isRoot ? 0.15
+          : demote ? EDGELESS_ALPHA : 1;
         // The draw-time radius for this node's circle/rim/clip -- ART_RADIUS everywhere except a
         // demoted edgeless card, which draws visibly smaller as well as fainter.
         // pickAt still hit-tests at the FULL radius: board-force.ts's nodeRadius comment says every
@@ -485,6 +500,19 @@ export function GraphView(
         // a second "nothing to show" path.
         const hues = demote ? [] : (huesRef.current.get(n.id) ?? []);
 
+        // Everything else keeps its paint-mode rim, dimmed: the paint mode answers "what are these
+        // cards", and a click asking "what does this feed" is no reason to stop answering that
+        // everywhere else. `hues` feeds BOTH the rim arcs and card mode's bottom bars, so overriding
+        // it here is the single insertion point for the whole node paint. (`flowNode`/`isRoot` were
+        // computed earlier, alongside the alpha decision -- see above.)
+        const flowHues = flowNode
+          ? [
+              ...(flowNode.upstreamDepth !== undefined ? [FLOW_HUE.up] : []),
+              ...(flowNode.downstreamDepth !== undefined ? [FLOW_HUE.down] : []),
+            ]
+          : [];
+        const paintHuesForNode = flowNode ? flowHues : hues;
+
         if (mode === "card" && img instanceof HTMLImageElement && img.naturalWidth > 0) {
           // The full card, not a cover-fit crop: a 5:7 box centred on the node. Card mode only
           // happens zoomed in, where neighbours are hundreds of screen px apart.
@@ -527,29 +555,40 @@ export function GraphView(
         if (mode === "card") {
           // Equal-width bars along the card's bottom edge. Card mode paints a rectangle, so there
           // is no rim to stroke arcs onto.
-          const barW = cardW / Math.max(hues.length, 1);
-          hues.forEach((hue, i) => {
+          const barW = cardW / Math.max(paintHuesForNode.length, 1);
+          paintHuesForNode.forEach((hue, i) => {
             ctx.fillStyle = hue;
             ctx.fillRect(n.x - cardW / 2 + i * barW, n.y + cardH / 2 - BAR_H, barW, BAR_H);
           });
-          if (hues.length === 0) {
+          if (paintHuesForNode.length === 0) {
             ctx.lineWidth = 1 / cam.z;
             ctx.strokeStyle = paintColors.border;
             ctx.strokeRect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
           }
         } else {
           ctx.lineWidth = 2.5 / cam.z;
-          for (const arc of rimArcs(hues)) {
+          for (const arc of rimArcs(paintHuesForNode)) {
             ctx.strokeStyle = arc.hue;
             ctx.beginPath();
             ctx.arc(n.x, n.y, r, arc.from, arc.to);
             ctx.stroke();
           }
-          if (hues.length === 0) {
+          if (paintHuesForNode.length === 0) {
             ctx.lineWidth = 1 / cam.z;
             ctx.strokeStyle = paintColors.border;
             ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, TAU); ctx.stroke();
           }
+        }
+
+        // The card you clicked, in neutral: it must not compete with the two direction hues, and
+        // "this is the thing you asked about" is a different claim from "this produces/consumes".
+        if (isRoot) {
+          ctx.lineWidth = 2.5 / cam.z;
+          ctx.strokeStyle = paintColors.fg;
+          ctx.beginPath();
+          if (mode === "card") ctx.strokeRect(n.x - cardW / 2 - 3, n.y - cardH / 2 - 3, cardW + 6, cardH + 6);
+          else ctx.arc(n.x, n.y, r + 3, 0, TAU);
+          ctx.stroke();
         }
 
         if (matchIds?.has(n.id)) {
@@ -901,6 +940,15 @@ export function GraphView(
   const inspectingEdges = inspectingId
     ? graph.edges.filter((e) => e.from === inspectingId || e.to === inspectingId)
     : [];
+
+  // Computed once per selection, never per frame: a BFS over ~260 edges is microseconds, but
+  // recomputing it 60 times a second to get an identical answer is a frame-rate bug waiting to happen.
+  const flow = useMemo(
+    () => (inspectingId ? computeFlow(graph.edges, inspectingId) : null),
+    [graph, inspectingId],
+  );
+  const flowRef = useRef<Flow | null>(null);
+  flowRef.current = flow;
 
   /** Reshapes __graphProbe()'s node array (with its `edges` property riding along) into what
    *  BoardTuner reads. Returns null before the first layout effect has run, or under a test with
