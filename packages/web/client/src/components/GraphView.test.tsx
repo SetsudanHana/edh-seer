@@ -1322,6 +1322,36 @@ describe("flow view", () => {
     expect(dashPerEdge).toContain("");
   });
 
+  // THE RESET AFTER THE LOOP, NOT JUST INSIDE IT. `ctx.setLineDash([]);` right after the edge loop
+  // (GraphView.tsx:444) is the only thing standing between a selected flow and every later stroke
+  // this frame reading as dashed -- card frames (`strokeRect`), rims and selection rings (`arc` +
+  // `stroke`) would all paint dashed for as long as a flow stayed selected, because canvas dash
+  // state is sticky on the context and `links` is drawn in `graph.edges` order, so whenever the
+  // LAST edge happens to be a flow edge nothing inside the loop ever clears it. A single-edge graph
+  // where that one edge IS the flow means the loop's own else-branch reset (line 437) never fires
+  // either, so this can only pass because of the reset AFTER the loop.
+  test("the dash pattern is cleared after the edge loop, not just inside it", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "B" })],
+      [{ from: "A", to: "B", weight: 2, tags: ["t"], reasonTexts: ["A feeds B"] }],
+    );
+    const { canvas, tick } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "A")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    calls.length = 0;
+    tick();
+
+    let lastMoveTo = -1;
+    calls.forEach((c, i) => { if (c.startsWith("moveTo:")) lastMoveTo = i; });
+    expect(lastMoveTo).toBeGreaterThanOrEqual(0);
+    // A `setLineDash([])` call records as the exact string "setLineDash:" (empty args.join), so a
+    // non-empty pattern set later cannot be mistaken for the reset.
+    const resetAfterLoop = calls.findIndex((c, i) => i > lastMoveTo && c === "setLineDash:");
+    expect(resetAfterLoop).toBeGreaterThan(-1);
+  });
+
   test("the dash offset advances with wall-clock time, so the dashes crawl", () => {
     const now = vi.spyOn(performance, "now").mockReturnValue(0);
     const calls: string[] = [];
