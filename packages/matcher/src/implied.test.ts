@@ -296,6 +296,52 @@ test("amass both adds a counter and makes a token", () => {
   expect(token!.subject.token).toBe(true);
 });
 
+// CYCLING IS THE LARGEST SINGLE KEYWORD GAP: 393 printed cards, and only 3 of the 33 in the derived
+// corpus emitted a `draw`. The segmenter marks a keyword line inert (segment.ts), which is right for
+// "Flying" and wrong here, because cycling's reminder text IS the ability.
+test("cycling supplies both halves of its own reminder", () => {
+  // "Cycling {3} ({3}, Discard this card: Draw a card.)" — Savai Triome.
+  const ev = impliedEvents(kw(["Cycling"], ["land"]));
+  expect(ev.find((e) => e.verb === "draw")?.subject.control).toBe("you");
+  expect(ev.find((e) => e.verb === "discard")?.subject.control).toBe("you");
+});
+
+// Scryfall stamps the umbrella `Cycling` on typecycling cards TOO, but their printed reminder
+// searches the library instead of drawing. 90 of the 393 are this shape, so an unconditional draw
+// would be a wrong sentence on every one of them rather than a missing one.
+test("typecycling discards but does NOT draw, because it searches instead", () => {
+  // "Plainscycling {2} ({2}, Discard this card: Search your library for a Plains card ...)" —
+  // Eternal Dragon, which carries Plainscycling, Landcycling, Typecycling AND Cycling.
+  const ev = impliedEvents(kw(["Plainscycling", "Landcycling", "Typecycling", "Cycling"]));
+  expect(ev.find((e) => e.verb === "discard")).toBeDefined();
+  expect(ev.find((e) => e.verb === "draw")).toBeUndefined();
+});
+
+// The discard is the card itself hitting the graveyard, and that reaches recursion payoffs through
+// the existing implied-fill path rather than any new machinery.
+test("cycling's discard implies a graveyard fill", () => {
+  const fills = impliedGraveyardEvents(impliedEvents(kw(["Cycling"])));
+  expect(fills.find((e) => e.verb === "enters" && e.subject.zone === "graveyard")).toBeDefined();
+});
+
+// A CYCLED CARD IS A KNOWN CARD. An ordinary discard takes an unknown card out of your hand, so its
+// fill is untyped on purpose and wildcards onto any typed recursion consumer. Cycling discards
+// ITSELF, and leaving that untyped let Deceptive Landscape — a Land — "enable" World Breaker
+// returning World Breaker, a claim the panel already holds a FALSE verdict on.
+test("cycling's fill is self-marked, so it carries the card's own printed types", () => {
+  const c = kw(["Cycling"], ["land"]);
+  const fill = impliedGraveyardEvents(impliedEvents(c))
+    .find((e) => e.verb === "enters" && e.subject.zone === "graveyard")!;
+  expect(fill.subject.self).toBe(true);
+  expect(selfFillTypes([fill], c)[0].subject.type).toEqual(["land"]);
+});
+
+// An ordinary discard still has nothing to stamp — the card leaving your hand really is unknown.
+test("a non-self discard's fill stays untyped", () => {
+  const out = impliedGraveyardEvents([{ verb: "discard", subject: { control: "you", token: null } }]);
+  expect(out[0].subject.self).toBeUndefined();
+});
+
 // STORM IS DELIBERATELY EXCLUDED. Its reminder says "copy it for each spell cast before it" — a copy
 // put onto the stack is NOT cast, so a `cast` emit would be a wrong sentence, not a missing one.
 test("storm supplies no cast event, because a copy is not cast", () => {

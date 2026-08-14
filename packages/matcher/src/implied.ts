@@ -122,7 +122,7 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
  *  - **unearth, persist's and undying's RETURN half** — "return this card ... to the battlefield"
  *    would be a second `enters` on top of the card's own implied one, and double-counting a card's
  *    entry is worse than missing its recursion. Their counters are kept; the re-entry is deferred. */
-const KEYWORD_EMITS: Record<string, { verb: GameEvent["verb"]; counter?: string; control?: "you" | "opp"; token?: true }[]> = {
+const KEYWORD_EMITS: Record<string, { verb: GameEvent["verb"]; counter?: string; control?: "you" | "opp"; token?: true; self?: true }[]> = {
   // "Damage dealt by this creature also causes you to gain that much life."
   lifelink: [{ verb: "gain-life" }],
   // "each opponent loses 1 life and you gain that much life."
@@ -163,16 +163,31 @@ const KEYWORD_EMITS: Record<string, { verb: GameEvent["verb"]; counter?: string;
   populate: [{ verb: "create-token", token: true }, { verb: "enters", token: true }],
   // "you may create a token copy that's tapped and attacking that player"
   myriad: [{ verb: "create-token", token: true }, { verb: "enters", token: true }],
+  // "Cycling {3} ({3}, Discard this card: Draw a card.)" — the largest single keyword gap in the
+  // corpus at 393 printed cards, of which only 3 of the 33 present in the derived corpus emitted a
+  // `draw`. The discard also reaches recursion payoffs, via `impliedGraveyardEvents`.
+  cycling: [{ verb: "discard", self: true }, { verb: "draw" }],
+  // "Plainscycling {2} ({2}, Discard this card: Search your library for a Plains card, reveal it,
+  // put it into your hand, then shuffle.)" — the discard is shared with plain cycling, the draw is
+  // NOT. A library search is no emitted event, so the discard is all of it. See `keywordEvents` for
+  // why this entry has to SUPPRESS the umbrella rather than merely sit beside it.
+  typecycling: [{ verb: "discard", self: true }],
 };
 
 /** The events a card's PRINTED KEYWORDS supply. Marked `implied: true` like every other synthetic
  *  event, so the self-supply gates in edges.ts treat them as baseline rather than authored surplus. */
 export function keywordEvents(chars: Characteristics): GameEvent[] {
   const out: GameEvent[] = [];
-  for (const raw of chars.keywords ?? []) {
-    // Keywords arrive with their argument attached ("Ward {2}", "Annihilator 2", "Protection from
-    // Demons"), so match on the FIRST word — the same shape `isKeywordLine` uses in the segmenter.
-    const k = String(raw).toLowerCase().split(/[\s{]/)[0];
+  // Keywords arrive with their argument attached ("Ward {2}", "Annihilator 2", "Protection from
+  // Demons"), so match on the FIRST word — the same shape `isKeywordLine` uses in the segmenter.
+  const keys = (chars.keywords ?? []).map((raw) => String(raw).toLowerCase().split(/[\s{]/)[0]);
+  // ONE KEYWORD NARROWS ANOTHER, so the map alone cannot decide this. Scryfall stamps the umbrella
+  // `Cycling` on every typecycling card as well as its specific name, but their printed reminder
+  // SEARCHES the library where plain cycling draws — Eternal Dragon carries Plainscycling,
+  // Landcycling, Typecycling and Cycling at once. 90 of the 393 printed cycling cards are this
+  // shape, so honouring the umbrella too would hand every one of them a draw it does not have.
+  const emitKeys = keys.includes("typecycling") ? keys.filter((k) => k !== "cycling") : keys;
+  for (const k of emitKeys) {
     for (const spec of KEYWORD_EMITS[k] ?? []) {
       out.push({
         verb: spec.verb,
@@ -180,6 +195,7 @@ export function keywordEvents(chars: Characteristics): GameEvent[] {
           control: spec.control ?? "you",
           token: spec.token ?? null,
           ...(spec.counter ? { counter: spec.counter } : {}),
+          ...(spec.self ? { self: true } : {}),
           // A token this card makes is a creature it did not print on its own type line, so the
           // subject says only what the reminder guarantees: it is a token, and it is a creature.
           ...(spec.token ? { type: "creature" } : {}),
@@ -199,7 +215,18 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
   for (const e of emits) {
     if (e.verb === "mill" || e.verb === "discard") {
       // Note: this (and authored token-generation emit subjects) carry no power/toughness/manaValue — a stats-conditioned consumer can't distinguish token/creature sizes here (Slice-1 limitation, not a bug).
-      out.push({ verb: "enters", subject: { control: e.subject.control, token: null, zone: "graveyard" } });
+      //
+      // `self` is the one thing carried through, because it changes what the fill IS. A discard
+      // normally takes an unknown card out of your hand, so an untyped fill is the honest answer and
+      // `graveyardFillMatches` wildcards it onto any typed recursion consumer on purpose. A card
+      // discarding ITSELF is not unknown — cycling is 303 corpus cards of exactly that shape, plus 9
+      // authored self-discards — and `selfFillTypes` downstream stamps its printed types on. Left
+      // untyped, Deceptive Landscape (a Land) "enabled" World Breaker returning World Breaker.
+      // Mill is never marked self and is left alone: a milled card's type really is unknown.
+      out.push({ verb: "enters", subject: {
+        control: e.subject.control, token: null, zone: "graveyard",
+        ...(e.subject.self === true ? { self: true } : {}),
+      } });
     } else if (e.verb === "leaves" && e.subject.zone === "battlefield" && e.subject.token !== true) {
       out.push({ verb: "enters", subject: { ...e.subject, zone: "graveyard" } });
     }
