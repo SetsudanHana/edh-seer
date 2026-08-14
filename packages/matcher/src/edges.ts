@@ -64,6 +64,10 @@ function characteristicsSubject(tags: CardTags): SubjectFilter {
     // legendary demand cannot be expressed there. Lifted to its own flag, as historic is.
     ...(types.includes("legendary") ? { legendary: true as const } : {}),
     ...(types.includes("basic") ? { basic: true as const } : {}),
+    // Printed keywords, for the static pass — this is the side a "creatures you control with flying"
+    // anthem is matched AGAINST, so without it every such anthem either reaches everything (before
+    // the filter existed) or nothing (after, if only one side were done).
+    ...(c.keywords?.length ? { keyword: c.keywords.map((k) => k.toLowerCase()) } : {}),
     type: c.types.length ? c.types.map((t) => t.toLowerCase()) : undefined,
     subtype: c.subtypes.length ? c.subtypes.map((t) => t.toLowerCase()) : undefined,
     colors: c.colors.length ? c.colors : undefined,

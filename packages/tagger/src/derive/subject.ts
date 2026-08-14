@@ -3,7 +3,7 @@
  *  This is the load-bearing part of derivation: if `control` and `type` cannot be recovered, no
  *  edge forms and the compass suite goes red for reasons unrelated to the rest of the layer. */
 import type { Control, StatPredicate, SubjectFilter } from "../schema.js";
-import { SUBTYPES } from "./subtypes.js";
+import { KEYWORD_ABILITIES, SUBTYPES } from "./subtypes.js";
 
 /** Card types the engine reasons about, plus the pseudo-types the matcher expands set-wise. */
 const TYPES = [
@@ -373,6 +373,40 @@ export function counterKindOf(object: string): string | undefined {
   return (COUNTER_KINDS as readonly string[]).includes(t) ? t : undefined;
 }
 
+/** Keyword abilities a subject narrows by: "creatures you control with flying".
+ *
+ *  Anchored on a preceding "with", never matched loose, because several keywords are ordinary
+ *  English words — fear, shadow, storm, echo, flash — and a bare match would narrow any sentence
+ *  containing one. That is the planeswalker-subtype trap `subtypes.ts` documents.
+ *
+ *  Longest-first so "first strike" wins over "strike" and "basic landcycling" over "landcycling".
+ *
+ *  Two shapes deliberately refused, both measured on the corpus:
+ *  - **"with flashback COST equal to its mana cost"** (Snapcaster Mage, Will of the Jeskai) is the
+ *    cost of a GRANT, not a subject demanding flashback. Same idea as `BASIC_LAND_TYPE`.
+ *  - **"with a flying counter on it"** — 15 keyword abilities are also KEYWORD COUNTERS (CR 122.1b),
+ *    and `parseCounter` already owns that sense. The article usually separates them anyway; the
+ *    lookahead covers the article-less phrasing.
+ *
+ *  "and" joins are consumed into one list because that is what the corpus prints (17 cases, against
+ *  0 that say "or"): "a 1/1 Bird with flying and vigilance" has both, so the list is ALL-of. */
+const KEYWORD_ALT = [...KEYWORD_ABILITIES]
+  .sort((a, b) => b.length - a.length)
+  .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+  .join("|");
+const KEYWORD_PHRASE = new RegExp(
+  `\\bwith ((?:${KEYWORD_ALT})(?:\\s+and\\s+(?:${KEYWORD_ALT}))*)\\b(?!\\s+(?:cost|counters?))`, "gi");
+
+function parseKeywords(t: string): string[] | undefined {
+  const found = new Set<string>();
+  for (const m of t.matchAll(KEYWORD_PHRASE)) {
+    for (const k of m[1].split(/\s+and\s+/)) found.add(k.trim().toLowerCase());
+  }
+  // Sorted so the same demand written in either order is the same filter, and so a tag key built
+  // from it is stable across cards.
+  return found.size ? [...found].sort() : undefined;
+}
+
 const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|hand)\b/i;
 
 export function parseSubject(text: string): SubjectFilter {
@@ -389,6 +423,9 @@ export function parseSubject(text: string): SubjectFilter {
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;
   if (LEGENDARY.test(t) && !NOT_LEGENDARY.test(t)) out.legendary = true;
   if (BASIC.test(t) && !NOT_BASIC.test(t) && !BASIC_LAND_TYPE.test(t)) out.basic = true;
+  // A keyword counter is a counter, so the counter reading wins where both could fire.
+  const keywords = counter ? undefined : parseKeywords(t);
+  if (keywords) out.keyword = keywords;
   const origin = t.match(ORIGIN_ZONE);
   if (origin) out.fromZone = origin[1].toLowerCase();
   if (colors) out.colors = colors;

@@ -241,6 +241,19 @@ test("a basic land's implied entry advertises the supertype", () => {
   expect(ev.find((e) => e.verb === "enters")?.subject.basic).toBe(true);
 });
 
+// The producer half of the keyword filter, set for the same reason the supertypes are: a consumer
+// demanding flying that no producer can advertise deletes real edges rather than narrowing false
+// ones (09ce98d's measured lesson — the one-sided cut cost 5).
+test("a card's implied events advertise its printed keywords", () => {
+  const ev = impliedEvents({ ...chars(["creature"], ["bird"]), keywords: ["Flying", "Vigilance"] });
+  expect(ev.find((e) => e.verb === "enters")?.subject.keyword).toEqual(["flying", "vigilance"]);
+});
+
+test("a card with no keywords advertises none", () => {
+  expect(impliedEvents(chars(["creature"])).find((e) => e.verb === "enters")?.subject.keyword)
+    .toBeUndefined();
+});
+
 // PRINTED KEYWORDS WERE A DEAD CHANNEL. `Characteristics.keywords` comes straight off the Scryfall
 // payload and MTGJSON's 220 keyword abilities are already generated into vocabulary.json, but the
 // only reader anywhere in the matcher was graph.ts, drawing keyword nodes for the graph view.

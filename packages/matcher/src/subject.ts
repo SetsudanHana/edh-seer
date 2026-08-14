@@ -27,6 +27,14 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // And the second supertype. This one matters most where the emit is the FILTER (the authored-emit
   // identity check in edges.ts): "search for a basic land card" was satisfied by every nonbasic land.
   if (consumer.basic === true && producer.basic !== true) return false;
+  // Printed keyword abilities, ALL of them — "creatures you control with flying". Not a type, so no
+  // other field could hold it and the narrowing used to vanish: Favorable Winds anthemed every
+  // creature. The producer side is its printed `keywords` array, stamped by `characteristicsSubject`
+  // and `selfSubject`, so a Bird token with flying satisfies it and a Llanowar Elf does not.
+  if (consumer.keyword !== undefined && consumer.keyword.length > 0) {
+    const has = new Set(arr(producer.keyword).map((k) => k.toLowerCase()));
+    if (!consumer.keyword.every((k) => has.has(k.toLowerCase()))) return false;
+  }
   // control: equal, or `any` on either side.
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) {
     return false;

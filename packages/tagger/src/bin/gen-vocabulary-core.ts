@@ -115,5 +115,20 @@ ${v.landSubtypes.map((s) => JSON.stringify(s)).join(", ")},
 export const CREATURE_SUBTYPES: readonly string[] = [
 ${v.creatureSubtypes.map((s) => JSON.stringify(s)).join(", ")},
 ];
+
+/** Every KEYWORD ABILITY, for subjects narrowed by one — "creatures you control with flying".
+ *
+ *  A keyword is not a type, so none of the lists above can carry it, and without a slot for it
+ *  "creatures you control with flying" derives as EVERY creature: Favorable Winds pumped the whole
+ *  board and Stalwart Shield-Bearers anthemed creatures that have no defender. Same over-wide
+ *  subject the \`legendary\` and \`basic\` supertypes had before they got filters.
+ *
+ *  Longest-first at the point of use, so "first strike" is never read as the "strike" of another
+ *  keyword, and always anchored on a preceding "with" — several of these are ordinary English
+ *  words ("fear", "shadow", "storm", "echo", "flash") and matching them loose in a sentence is the
+ *  planeswalker-subtype trap the SUBTYPES comment above describes. */
+export const KEYWORD_ABILITIES: readonly string[] = [
+${v.keywordAbilities.map((s) => JSON.stringify(s)).join(", ")},
+];
 `;
 }

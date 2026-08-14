@@ -77,6 +77,24 @@ export interface SubjectFilter {
    *  edges the 2026-08-13 board fixtures showed on self-ETB lands. 65 actions across 50 corpus docs.
    *  Same shape as `legendary`, and set on BOTH sides for the reason 09ce98d records. */
   basic?: true;
+  /** Printed KEYWORD ABILITIES the subject demands, ALL of them — "creatures you control with
+   *  flying", "a creature with defender", "spells with flash you cast".
+   *
+   *  A keyword is not a type, a subtype or a supertype, so nothing else here could carry it and the
+   *  narrowing was simply DROPPED: Favorable Winds' "creatures you control with flying get +1/+1"
+   *  derived `{type: creature, scope: all}` and anthemed every creature in the deck, exactly the
+   *  over-wide subject `legendary` had before 09ce98d. Measured on the corpus: 1,836 cards print a
+   *  keyword-narrowed subject, 108 of them inside the derived corpus.
+   *
+   *  ALL-of rather than OR because that is what the corpus prints: of the keyword-narrowed subjects
+   *  in the derived corpus, 97 name one keyword and 17 join two with "and" — "a 1/1 Bird with flying
+   *  and vigilance" has both. NOT ONE says "or", so a disjunction would be machinery for a shape no
+   *  card uses; `anyOf` is there if one ever prints.
+   *
+   *  Set on BOTH sides — `characteristicsSubject` and `selfSubject` read the printed `keywords`
+   *  array — for the reason 09ce98d records: a one-sided cut leaves consumers demanding something no
+   *  producer can advertise, which deletes real edges instead of narrowing false ones. */
+  keyword?: string[];
   /** A real DISJUNCTION: the subject is satisfied by ANY of these branches.
    *
    *  `type` is an OR-list and `subtype` is an OR-list, but the two are ANDed with each other, so

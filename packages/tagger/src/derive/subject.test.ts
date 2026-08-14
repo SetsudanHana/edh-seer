@@ -328,6 +328,49 @@ test("a negated legendary is not a legendary constraint", () => {
   expect(parseSubject("nonlegendary creatures you control").legendary).toBeUndefined();
 });
 
+// A KEYWORD IS NOT A TYPE, so nothing in SubjectFilter could carry it and the narrowing was simply
+// dropped: Favorable Winds' "creatures you control with flying get +1/+1" derived
+// {type: creature, scope: all} and anthemed EVERY creature, the same over-wide subject legendary had.
+// 1,836 corpus cards print a keyword-narrowed subject, 108 inside the derived corpus.
+test("a subject narrowed by a keyword records it", () => {
+  expect(parseSubject("creatures you control with flying").keyword).toEqual(["flying"]);
+  expect(parseSubject("other creatures you control with defender").keyword).toEqual(["defender"]);
+  expect(parseSubject("spells with flash you cast").keyword).toEqual(["flash"]);
+});
+
+// The token half of the same fact, and the reason this is not consumer-only: a Bird token WITH
+// flying has to be able to satisfy Favorable Winds. 98 of the 114 keyword-narrowed subjects in the
+// derived corpus are token objects like this one.
+test("a created token's keywords are recorded, so it can satisfy a keyword payoff", () => {
+  expect(parseSubject("a 1/1 blue Bird creature token with flying").keyword).toEqual(["flying"]);
+});
+
+// 17 of the corpus cases join two keywords with "and" and NOT ONE says "or", so the list is ALL-of.
+test("two keywords joined by and are both demanded", () => {
+  expect(parseSubject("1/1 green Insect creature tokens with flying and deathtouch").keyword)
+    .toEqual(["deathtouch", "flying"]);
+});
+
+test("a subject naming no keyword claims none", () => {
+  expect(parseSubject("creatures you control").keyword).toBeUndefined();
+  expect(parseSubject("target creature").keyword).toBeUndefined();
+});
+
+// "with flashback COST equal to its mana cost" (Snapcaster Mage, Will of the Jeskai) is not a
+// subject that demands flashback — it is the cost of a grant. The same shape as BASIC_LAND_TYPE.
+test("a keyword followed by cost is not a keyword demand", () => {
+  expect(parseSubject("target instant or sorcery card in your graveyard gains flashback until end of turn with flashback cost equal to its mana cost").keyword)
+    .toBeUndefined();
+});
+
+// Fifteen keyword abilities are also KEYWORD COUNTERS (Comprehensive Rules 122.1b), so "with a
+// flying counter on it" is a counter filter and not a keyword one. `parseCounter` already owns it.
+test("a keyword counter is a counter, not a keyword demand", () => {
+  const s = parseSubject("a creature you control with a flying counter on it");
+  expect(s.counter).toBe("flying");
+  expect(s.keyword).toBeUndefined();
+});
+
 // COUNTER KINDS ARE A CLOSED DICTIONARY, and cards either PRODUCE them or CARE about them - the same
 // shape as tokens. `SubjectFilter.counter` has been in the schema all along and the matcher's
 // counter-presence pass reads it, but the derive layer never wrote it, so it was a dead channel:

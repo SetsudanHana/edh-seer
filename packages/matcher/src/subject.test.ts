@@ -265,3 +265,25 @@ test("a basic demand is satisfied only by a basic", () => {
   // Opt-in: a consumer that says nothing about basic still takes a basic land.
   expect(subjectMatches(s({ type: "land", basic: true }), s({ type: "land" }), H)).toBe(true);
 });
+
+// A KEYWORD IS NOT A TYPE, so "creatures you control with flying" (Favorable Winds) had nowhere to
+// put the narrowing and anthemed EVERY creature. Same asymmetric, opt-in shape as the supertypes.
+test("a keyword demand is satisfied only by a producer printing that keyword", () => {
+  const bird = s({ type: "creature", keyword: ["flying"] });
+  const elf = s({ type: "creature" });
+  expect(subjectMatches(bird, s({ type: "creature", keyword: ["flying"] }), H)).toBe(true);
+  expect(subjectMatches(elf, s({ type: "creature", keyword: ["flying"] }), H)).toBe(false);
+  // Opt-in: an anthem that says nothing about keywords still reaches the Bird.
+  expect(subjectMatches(bird, s({ type: "creature" }), H)).toBe(true);
+});
+
+// The list is ALL-of: 17 corpus subjects join two keywords with "and", none with "or".
+test("every keyword in the demand must be present", () => {
+  const both = s({ type: "creature", keyword: ["deathtouch", "flying"] });
+  expect(subjectMatches(both, s({ type: "creature", keyword: ["deathtouch", "flying"] }), H)).toBe(true);
+  // A producer with only one of the two does not satisfy a demand for both...
+  expect(subjectMatches(s({ type: "creature", keyword: ["flying"] }),
+    s({ type: "creature", keyword: ["deathtouch", "flying"] }), H)).toBe(false);
+  // ...while a producer with MORE keywords than demanded still satisfies it.
+  expect(subjectMatches(both, s({ type: "creature", keyword: ["flying"] }), H)).toBe(true);
+});

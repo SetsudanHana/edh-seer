@@ -41,6 +41,11 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   // must be satisfiable by the basic it actually fetches, and a demand nothing can meet is a
   // silently deleted edge rather than a refused one.
   if (types.includes("basic")) out.basic = true;
+  // The producer half of `SubjectFilter.keyword`, and free — `Characteristics.keywords` arrives on
+  // the Scryfall payload. Set here for the reason 09ce98d records about legendary: a consumer
+  // demanding flying that no producer can advertise deletes real edges rather than narrowing false
+  // ones. Lowercased because the demand is parsed from lowercased clause text.
+  if (chars.keywords?.length) out.keyword = chars.keywords.map((k) => k.toLowerCase());
   out.power = parseStat(chars.power);
   out.toughness = parseStat(chars.toughness);
   out.manaValue = chars.cmc;
