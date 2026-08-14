@@ -60,13 +60,6 @@ export function computeFlow(edges: readonly Edge[], rootId: string, opts: FlowOp
     truncated: new Map(),
   };
 
-  // SABOTAGE — temporary, revert after the check.
-  const undirected = new Map<string, Edge[]>();
-  for (const e of real) {
-    (undirected.get(e.from) ?? undirected.set(e.from, []).get(e.from)!).push(e);
-    (undirected.get(e.to) ?? undirected.set(e.to, []).get(e.to)!).push(e);
-  }
-
   const walk = (adj: Map<string, Edge[]>, dir: "up" | "down"): void => {
     const seen = new Set<string>([rootId]);
     const parent = new Map<string, string>();
@@ -76,12 +69,12 @@ export function computeFlow(edges: readonly Edge[], rootId: string, opts: FlowOp
     while (frontier.length > 0 && flow.nodes.size < nodeBudget) {
       const next: string[] = [];
       for (const id of frontier) {
-        const all = undirected.get(id) ?? [];
+        const all = adj.get(id) ?? [];
         const kept = [...all].sort((a, b) => b.weight - a.weight).slice(0, fanoutCap);
         if (all.length > kept.length) flow.truncated.set(id, { total: all.length, shown: kept.length });
 
         for (const edge of kept) {
-          const other = edge.from === id ? edge.to : edge.from;
+          const other = dir === "down" ? edge.to : edge.from;
           const flowEdge: FlowEdge = { from: edge.from, to: edge.to, dir, depth };
 
           if (seen.has(other)) {
