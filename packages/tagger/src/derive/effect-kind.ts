@@ -57,7 +57,6 @@ const SIMPLE: Record<string, EffectKind> = {
   // every payoff in the engine actually reads. turn-face-up flips a manifested or morphed permanent
   // -- a state change of an existing permanent, which is what `animate` already names.
   amass: "counter-placement",
-  "extra-phase": "extra-combat",
   "turn-face-up": "animate",
   "trigger-again": "trigger-doubling",
   // No "copy-spell" row: VERBS (normalize-prompt.ts) has only "copy", never "copy-spell", so this
@@ -143,8 +142,40 @@ function exilesOwnGraveyard(object: string, clauseText: string): boolean {
   return YOUR_YARD.test(clauseText) && !OTHER_YARD.test(clauseText);
 }
 
+/** The win clause has no verb of its own. `VERBS` carries no win member, so every "you win the game"
+ *  in the corpus arrives as `other` with the meaning intact in the object -- measured identical on
+ *  Simic Ascendancy, Revel in Riches and Hellkite Tyrant. `other` is a wide door (15 such actions
+ *  across the 13 clause-carrying win cards), so this object test is the entire gate.
+ *
+ *  Only the YOU-WIN direction. "Target opponent loses the game" is already refused into
+ *  `unknownTriggers` by the LOSES_THE_GAME guard rather than being reinterpreted as life loss, and
+ *  that refusal stays. */
+const WINS = /\byou win the game\b/i;
+
+/** A turn or phase the card TAKES AWAY. Magosi's "Skip your next turn" is labelled `extra-phase` by
+ *  the clause layer, and crediting it as activation supply would be supply with the sign reversed --
+ *  strictly worse than none. Checked first, on the clause text, because the object ("your next
+ *  turn") is identical to the object of a real extra turn. */
+const SKIPPED = /\bskips?\b/i;
+
+/** Which unit the card adds. Combat is tested BEFORE the general phase branch: an additional combat
+ *  phase is `extra-combat`, which `pressure.ts` reads, and that is what the deleted
+ *  `extra-phase -> extra-combat` row in SIMPLE was written for (Cyclonus). */
+function extraUnitKind(object: string, clauseText: string): EffectKind | null {
+  const t = `${object} ${clauseText}`.toLowerCase();
+  if (SKIPPED.test(t)) return null;
+  if (/\bcombat\b/.test(t)) return "extra-combat";
+  if (/\bphase\b/.test(t)) return "extra-phase";
+  if (/\bturn\b/.test(t)) return "extra-turn";
+  return null;
+}
+
 export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
   const verb = action.verb ?? "";
+  if (verb === "other" && WINS.test(`${action.object ?? ""} ${clauseText}`)) return "win-game";
+  if (verb === "extra-turn" || verb === "extra-phase") {
+    return extraUnitKind(String(action.object ?? ""), clauseText);
+  }
   // 342 corpus cards carry a grant-ability action and the verb had no row here at all, so Lightning
   // Greaves and Swiftfoot Boots derived nothing whatsoever.
   if (verb === "grant-ability") {

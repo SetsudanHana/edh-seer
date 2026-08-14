@@ -1144,7 +1144,12 @@ test("an unrecognised trigger event still produces no ability", () => {
 //
 // Refused rather than reinterpreted: the engine has no "loses the game" event, so the honest answer
 // is an unknown trigger, not a near-miss. One corpus card has this shape, of four life-lost triggers.
-test("a life-lost trigger on a loses-the-game clause is refused", () => {
+//
+// The WIN action itself still derives its own kind (effect-kind.ts's win-game mapping, added
+// threshold-lines task 3) -- an untriggered `win-game` ability, exactly the same shape the
+// taps-for-mana refusal above already produces for `add-mana`. The refusal is of the TRIGGER, not
+// of the effect.
+test("a life-lost trigger on a loses-the-game clause is refused, but its win effect survives untriggered", () => {
   const { abilities, unknownTriggers } = deriveAbilities(
     [{
       id: 1,
@@ -1155,7 +1160,9 @@ test("a life-lost trigger on a loses-the-game clause is refused", () => {
     "Shinryu, Transcendent Rival",
     { 1: "When the chosen player loses the game, you win the game." },
   );
-  expect(abilities).toHaveLength(0);
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0].trigger).toBeUndefined();
+  expect(abilities[0].effect.kind).toBe("win-game");
   expect(unknownTriggers).toContain("loses-the-game");
 });
 

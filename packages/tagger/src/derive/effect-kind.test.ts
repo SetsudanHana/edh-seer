@@ -268,3 +268,47 @@ test("the vocabulary can express winning and extra turns/phases", () => {
   expect(EFFECT_KINDS).toContain("extra-turn");
   expect(EFFECT_KINDS).toContain("extra-phase");
 });
+
+// Simic Ascendancy / Revel in Riches / Hellkite Tyrant all record the win the same way: the LLM has
+// no win verb, so it reaches us through the `other` escape hatch with the meaning in the object.
+test("an `other` action whose object says you win the game is win-game", () => {
+  expect(actionEffectKind({ verb: "other", object: "you win the game" },
+    "At the beginning of your upkeep, if you have twenty or more growth counters on Simic Ascendancy, you win the game."))
+    .toBe("win-game");
+});
+
+test("an `other` action that is not a win is not win-game", () => {
+  expect(actionEffectKind({ verb: "other", object: "gain control of all artifacts that player controls" },
+    "Whenever Hellkite Tyrant deals combat damage to a player, gain control of all artifacts that player controls."))
+    .not.toBe("win-game");
+});
+
+// Magosi's DRAWBACK. The LLM labelled "Skip your next turn" with verb extra-phase; reading the verb
+// alone credits it as activation supply with the sign reversed, which is worse than no supply.
+test("a skipped turn is refused, not credited", () => {
+  expect(actionEffectKind({ verb: "extra-phase", object: "your next turn" },
+    "{U}, {T}: Put an eon counter on this land. Skip your next turn."))
+    .toBeNull();
+});
+
+// Cyclonus: the reason the old `extra-phase -> extra-combat` row existed. Combat is checked BEFORE
+// the general phase branch, so this must not become extra-phase.
+test("an additional combat phase stays extra-combat", () => {
+  expect(actionEffectKind({ verb: "extra-phase", object: "an additional combat phase" },
+    "Untap all creatures that attacked this turn. After this phase, there is an additional combat phase."))
+    .toBe("extra-combat");
+});
+
+// Sphinx of the Second Sun carries verb extra-turn for a PHASE -- the verb is unreliable in both
+// directions, so the object arbitrates.
+test("an additional beginning phase is extra-phase even under an extra-turn verb", () => {
+  expect(actionEffectKind({ verb: "extra-turn", object: "beginning phase" },
+    "At the beginning of each of your postcombat main phases, there is an additional beginning phase after this phase."))
+    .toBe("extra-phase");
+});
+
+test("a real extra turn is extra-turn", () => {
+  expect(actionEffectKind({ verb: "extra-turn", object: "extra turn" },
+    "{T}, Remove an eon counter from this land and return it to its owner's hand: Take an extra turn after this one."))
+    .toBe("extra-turn");
+});
