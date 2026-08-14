@@ -312,3 +312,103 @@ test("a real extra turn is extra-turn", () => {
     "{T}, Remove an eon counter from this land and return it to its owner's hand: Take an extra turn after this one."))
     .toBe("extra-turn");
 });
+
+// --- Round 1 fixes (threshold-lines task 3, fix round 1) ---
+// All clause texts below are the cards' real, corpus oracleText (or the reconstructed clause text
+// enumerate-phase-verbs.ts prints for that action), fetched from the DB, never from memory.
+
+// Time Stop and Ultima both say "End the turn." -- ending the CURRENT turn early, the opposite of
+// granting one. `\bskips?\b` alone didn't catch this; the near-miss `extra-turn` label was worse
+// than the null it should have been.
+test("ending the turn is refused, not credited as an extra turn (Time Stop)", () => {
+  expect(actionEffectKind({ verb: "extra-turn", object: "end the turn" }, "End the turn."))
+    .toBeNull();
+});
+
+test("ending the turn is refused, not credited as an extra turn (Ultima)", () => {
+  expect(actionEffectKind({ verb: "extra-turn", object: "end the turn" },
+    "Destroy all artifacts and creatures. End the turn."))
+    .toBeNull();
+});
+
+// Paradox Haze's object names its real granted unit ("additional upkeep step"); the clause's only
+// "turn" mention ("each turn") describes WHEN the trigger fires, not what it grants. Object-first
+// arbitration (this file's own costDirection precedent) reads the object and stops there.
+test("Paradox Haze's upkeep step is extra-phase, not extra-turn from a contextual 'each turn'", () => {
+  expect(actionEffectKind({ verb: "extra-turn", object: "additional upkeep step" },
+    "At the beginning of enchanted player's first upkeep each turn, that player gets an additional upkeep step after this step."))
+    .toBe("extra-phase");
+});
+
+// Y'shtola Rhul is the same shape: its object names an end step; the clause's "of the turn" is
+// contextual (once per turn), not the granted unit.
+test("Y'shtola Rhul's end step is extra-phase, not extra-turn from a contextual 'of the turn'", () => {
+  expect(actionEffectKind({ verb: "extra-turn", object: "additional end step" },
+    "At the beginning of your end step, exile target creature you control, then return it to the battlefield under its owner's control. Then if it's the first end step of the turn, there is an additional end step after this step."))
+    .toBe("extra-phase");
+});
+
+// Teferi, Master of Time's clause says "two extra TURNS" -- plural only, no singular "turn"
+// anywhere in the object or clause. The old singular-only `\bturn\b` derived nothing for a card
+// that unambiguously grants two extra turns.
+test("a plural 'extra turns' is still extra-turn", () => {
+  expect(actionEffectKind({ verb: "extra-turn", object: "two extra turns after this one" },
+    "Take two extra turns after this one."))
+    .toBe("extra-turn");
+});
+
+// Obeka's trigger is "deals COMBAT DAMAGE to a player" -- a combat-damage trigger, not a combat
+// phase grant. Requiring the literal phrase "combat phase" (not the bare word "combat") refuses
+// that reading. NOTE, measured rather than assumed: this derives `extra-phase`, not null -- Obeka's
+// own object ("upkeep step") independently names a real unit once `step` counts as one, which is
+// the same fix Paradox Haze needed. See the fix report for why this diverges from a null prediction.
+test("Obeka's combat-damage trigger is not extra-combat (bare 'combat' no longer qualifies)", () => {
+  const kind = actionEffectKind({ verb: "extra-turn", object: "upkeep step" },
+    "Whenever Obeka deals combat damage to a player, you get that many additional upkeep steps after this phase.");
+  expect(kind).not.toBe("extra-combat");
+  expect(kind).toBe("extra-phase");
+});
+
+// World at War is the control case for the fix above: its clause genuinely names an ADDITIONAL
+// COMBAT PHASE, and must stay extra-combat even though its own object ("main phase") is merely the
+// timing anchor ("after the second main phase"), not the granted unit. Combat is checked on the
+// combined object+clause text specifically so a generic phase match in the object can't shadow it.
+test("World at War's real additional combat phase stays extra-combat", () => {
+  expect(actionEffectKind({ verb: "extra-turn", object: "main phase" },
+    "After the second main phase this turn, there's an additional combat phase followed by an additional main phase."))
+    .toBe("extra-combat");
+});
+
+// Cyclonus's REAL corpus text (not the synthetic fixture above) never says "combat phase" anywhere
+// -- its trigger is "deals combat damage", and the phase it actually grants is described as an
+// "additional BEGINNING phase" (matching Sphinx/Shadow of the Second Sun's own wording exactly).
+// Verified against the card's stored oracleText: the design spec's premise that this card's grant
+// "genuinely is extra-combat" does not hold against the real text; only the fabricated fixture used
+// above (object "an additional combat phase") does. Locked in here so the divergence is visible
+// rather than silently different from what the synthetic test implies.
+test("Cyclonus's REAL clause names a beginning phase, not a combat phase, and is extra-phase", () => {
+  expect(actionEffectKind({ verb: "extra-phase", object: "beginning phase" },
+    "Whenever Cyclonus deals combat damage to a player, convert it. If you do, there is an additional beginning phase after this phase."))
+    .toBe("extra-phase");
+});
+
+// Bonus, not in the fix list but the same shape as Obeka/Paradox Haze: The Ninth Doctor's object
+// also names "an additional upkeep step" and previously derived nothing at all (no turn/phase/combat
+// word matched). It now lands the same place Paradox Haze does.
+test("The Ninth Doctor's upkeep step is extra-phase (same shape as Paradox Haze)", () => {
+  expect(actionEffectKind({ verb: "extra-turn", object: "an additional upkeep step" },
+    "Whenever The Ninth Doctor becomes untapped during your untap step, you get an additional upkeep step after this step."))
+    .toBe("extra-phase");
+});
+
+// Savor the Moment WITNESS, locking in a known false negative rather than fixing it. Its own
+// extra-turn action's object is empty (""); the "genuinely does grant a turn" fact lives only in
+// the clause, and the same clause's "Skip the untap step of that turn" trips SKIPPED before the
+// real grant is ever read. Net effect on this card is unchanged by the round-1 fixes (null before,
+// null after) -- this test exists so a future widening of SKIPPED can't silently flip this card
+// without a test noticing, one way or the other.
+test("Savor the Moment stays refused (witness, not a fix -- it genuinely grants a turn)", () => {
+  expect(actionEffectKind({ verb: "extra-turn", object: "" },
+    "Take an extra turn after this one. Skip the untap step of that turn."))
+    .toBeNull();
+});

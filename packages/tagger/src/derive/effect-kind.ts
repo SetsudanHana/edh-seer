@@ -152,22 +152,44 @@ function exilesOwnGraveyard(object: string, clauseText: string): boolean {
  *  that refusal stays. */
 const WINS = /\byou win the game\b/i;
 
-/** A turn or phase the card TAKES AWAY. Magosi's "Skip your next turn" is labelled `extra-phase` by
- *  the clause layer, and crediting it as activation supply would be supply with the sign reversed --
- *  strictly worse than none. Checked first, on the clause text, because the object ("your next
- *  turn") is identical to the object of a real extra turn. */
+/** A turn the card TAKES AWAY outright (Magosi's "Skip your next turn" drawback) or CUTS SHORT
+ *  (Time Stop / Ultima's "End the turn.", which ends the CURRENT turn rather than granting one).
+ *  Crediting either as activation supply is supply with the sign reversed -- strictly worse than
+ *  none. Checked on the COMBINED object+clause text: the action's own object is sometimes empty
+ *  (Savor the Moment) or names only the skipped/ended unit, not the drawback verb, so only the
+ *  clause carries the word that disqualifies it. Round 1 fix (2026-08-14): `\bskips?\b` alone read
+ *  Time Stop and Ultima as `extra-turn`, a near-miss label -- ending the turn is not granting one. */
 const SKIPPED = /\bskips?\b/i;
+const ENDS_TURN = /\bends?\s+the\s+turn\b/i;
 
-/** Which unit the card adds. Combat is tested BEFORE the general phase branch: an additional combat
- *  phase is `extra-combat`, which `pressure.ts` reads, and that is what the deleted
- *  `extra-phase -> extra-combat` row in SIMPLE was written for (Cyclonus). */
-function extraUnitKind(object: string, clauseText: string): EffectKind | null {
-  const t = `${object} ${clauseText}`.toLowerCase();
-  if (SKIPPED.test(t)) return null;
-  if (/\bcombat\b/.test(t)) return "extra-combat";
-  if (/\bphase\b/.test(t)) return "extra-phase";
-  if (/\bturn\b/.test(t)) return "extra-turn";
+/** Which unit the card adds, read from ONE text at a time -- object first, clause text only as a
+ *  fallback when the object names nothing. Same precedence `costDirection` and `exilesOwnGraveyard`
+ *  already use, for the same reason: the object is the action's OWN words, and the clause can carry
+ *  a CONTEXTUAL turn mention that isn't what the action grants. Round 1 fix: reading the combined
+ *  text let Paradox Haze's "each turn" (describing WHEN its upkeep-step trigger fires, not what it
+ *  grants) and Y'shtola Rhul's "of the turn" (same shape) both misfire as `extra-turn`, when both
+ *  objects ("additional upkeep step" / "additional end step") already name the real unit. `step` is
+ *  folded into the phase branch, not given its own kind: the vocabulary has no `extra-step`, and an
+ *  upkeep or end step is the same sub-turn unit the beginning-phase family already names. */
+function readUnit(t: string): EffectKind | null {
+  if (/\bphase\b|\bsteps?\b/.test(t)) return "extra-phase";
+  if (/\bturns?\b/.test(t)) return "extra-turn";
   return null;
+}
+
+/** Combat is tested BEFORE the general phase branch, and on the COMBINED text rather than
+ *  object-first: World at War's OBJECT is "main phase" (when the effect fires, not what it grants)
+ *  while its CLAUSE names the real "additional combat phase" -- object-first alone would read it as
+ *  a generic extra-phase and lose the more specific kind `pressure.ts` is meant to read.
+ *
+ *  Round 1 fix: requires the actual phrase "combat phase", not the bare word `combat`. The bare
+ *  word matched Obeka's "deals COMBAT DAMAGE to a player" -- a combat-damage TRIGGER, not a combat
+ *  phase GRANT -- and meshed it with Cyclonus and World at War, which genuinely add one. */
+function extraUnitKind(object: string, clauseText: string): EffectKind | null {
+  const combined = `${object} ${clauseText}`.toLowerCase();
+  if (SKIPPED.test(combined) || ENDS_TURN.test(combined)) return null;
+  if (/\bcombat phase\b/.test(combined)) return "extra-combat";
+  return readUnit(object.toLowerCase()) ?? readUnit(clauseText.toLowerCase());
 }
 
 export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
