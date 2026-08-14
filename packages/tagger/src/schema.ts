@@ -350,6 +350,16 @@ export interface Ability {
    *  The distinction is load-bearing — it is the difference between a free sacrifice outlet and a
    *  static ability. */
   cost?: string;
+  /** The amount stated by the action that produced this ability, verbatim from the clause —
+   *  "2", "X", "1,000".
+   *
+   *  A STRING, not a number. "X" is a legitimate value and `Number("X")` is NaN, which is exactly
+   *  how a `*` power once poisoned an entire pressure curve (`pressure.ts:41-43`). Whoever consumes
+   *  this decides what a variable amount means; derivation's job is to record what the card says.
+   *
+   *  Unset when the action states no amount. Never defaulted to 1 — "draw a card" and "draw 1 card"
+   *  are the same fact, but "no amount recorded" and "amount is one" are not. */
+  amount?: string;
   /** How often this ability can fire — see
    *  `docs/superpowers/specs/2026-08-11-repeatability-taxonomy-design.md`.
    *

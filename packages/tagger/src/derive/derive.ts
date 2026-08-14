@@ -653,6 +653,9 @@ export function deriveAbilities(
       // why `Ability.cost` could sit empty corpus-wide with every test green. Sub-project B needs it
       // to tell a loop that pays for itself from one that costs {2} an iteration.
       if (clause.abilityType === "activated") ability.cost = cost;
+      // The amount belongs to the ACTION, not the clause: Kaya's -2 is one clause whose two actions
+      // each carry their own. Assigned here, in the per-action loop, for that reason.
+      if (action.amount != null && action.amount !== "") ability.amount = action.amount;
       if (emits.length) ability.emits = emits;
       abilities.push(ability);
     }

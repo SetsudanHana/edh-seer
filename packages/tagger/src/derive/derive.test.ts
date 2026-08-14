@@ -1255,3 +1255,37 @@ test("an activated ability with no cost string keeps an empty cost rather than d
   }]);
   expect(abilities[0].cost).toBe("");
 });
+
+test("an ability records the amount of the action that produced it", () => {
+  // Kaya, Ghost Assassin -2: "Each opponent loses 2 life and you gain 2 life." One clause, two
+  // actions, each with its own amount -- so the amount belongs to the ability, never to the card.
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "activated",
+    actions: [
+      { verb: "lose-life", object: "each opponent", amount: "2" },
+      { verb: "gain-life", object: "you", amount: "2" },
+    ],
+  }]);
+  expect(abilities[0].amount).toBe("2");
+  expect(abilities[1].amount).toBe("2");
+});
+
+test("an amount stays a STRING, because X is a legitimate value", () => {
+  // Gogo, Master of Mimicry copies "X times". Coercing to a number gives NaN, the same failure
+  // pressure.ts:41-43 guards against for a `*` power -- one card poisoning a whole curve.
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "activated",
+    actions: [{ verb: "copy", object: "target activated or triggered ability you control", amount: "X" }],
+  }]);
+  expect(abilities[0].amount).toBe("X");
+});
+
+test("an action with no amount leaves the field unset -- refused, not defaulted to 1", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "a card" }],
+  }]);
+  expect(abilities[0].amount).toBeUndefined();
+  expect("amount" in abilities[0]).toBe(false);
+});
