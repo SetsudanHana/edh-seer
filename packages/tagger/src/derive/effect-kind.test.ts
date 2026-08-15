@@ -496,3 +496,29 @@ test("doubling reads WHAT is doubled, because the verb alone cannot say", () => 
 test("doubling something unnamed is refused, not guessed", () => {
   expect(actionEffectKind({ verb: "double", object: "that many instead" })).toBeNull();
 });
+
+// THREE OF THE SEVEN NEVER-PRODUCED EFFECT_KINDS, and all three are load-bearing in live product
+// code: mechanisms.ts needs copy-spell for spellslinger, forced-sacrifice for aristocrats and
+// enters-with-counters for counters; buckets.ts counts forced-sacrifice as a win condition.
+test("copying a SPELL is not cloning a permanent", () => {
+  expect(actionEffectKind({ verb: "copy", object: "target instant or sorcery spell" })).toBe("copy-spell");
+  expect(actionEffectKind({ verb: "copy", object: "that spell" })).toBe("copy-spell");
+  // The fallback stays: a permanent copy is a clone.
+  expect(actionEffectKind({ verb: "copy", object: "target creature you control" })).toBe("clone");
+});
+
+test("a sacrifice is forced only when an OPPONENT performs it", () => {
+  // An edict — removal. Your own sacrifice is a cost or an outlet, not removal.
+  expect(actionEffectKind({ verb: "sacrifice", object: "each opponent sacrifices a creature" }))
+    .toBe("forced-sacrifice");
+  expect(actionEffectKind({ verb: "sacrifice", object: "a creature you control" })).toBeNull();
+});
+
+test("entering WITH counters is 614.1c, not placing counters later", () => {
+  // Threefold Thunderhulk: "This creature enters with three +1/+1 counters on it."
+  expect(actionEffectKind({ verb: "add-counter", object: "+1/+1 counters" },
+    "This creature enters with three +1/+1 counters on it.")).toBe("enters-with-counters");
+  // A trigger that places counters later is ordinary counter-placement.
+  expect(actionEffectKind({ verb: "add-counter", object: "+1/+1 counter" },
+    "Whenever a creature enters, put a +1/+1 counter on it.")).toBe("counter-placement");
+});

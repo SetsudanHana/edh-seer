@@ -39,6 +39,11 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
  *  the zone is a recursion no graveyard-filler can ever feed. */
 export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recursion", "graveyard-hate"]);
 
+/** "enters with N counters on it" — the card's own entry, CR 614.1c. Anchored on "enters with" so a
+ *  clause that merely mentions entering ("whenever a creature enters, put a counter on it") is not
+ *  caught: that one really does place counters later and is ordinary `counter-placement`. */
+const ENTERS_WITH = /\benters? with\b[^.]{0,40}\bcounters?\b/i;
+
 const SIMPLE: Record<string, EffectKind> = {
   create: "token-generation",
   "deal-damage": "damage",
@@ -49,6 +54,8 @@ const SIMPLE: Record<string, EffectKind> = {
   untap: "untap",
   proliferate: "proliferate",
   animate: "animate",
+  // `copy` alone is ambiguous and the object resolves it — see the copy-spell branch in
+  // `actionEffectKind`. This row is the fallback: copying a PERMANENT is a clone.
   copy: "clone",
   "extra-combat": "extra-combat",
   // Named because the persist gate refused whole cards over their absence: Orcish Bowmasters
@@ -59,9 +66,9 @@ const SIMPLE: Record<string, EffectKind> = {
   amass: "counter-placement",
   "turn-face-up": "animate",
   "trigger-again": "trigger-doubling",
-  // No "copy-spell" row: VERBS (normalize-prompt.ts) has only "copy", never "copy-spell", so this
-  // row could never fire -- the clause vocabulary cannot distinguish copying a spell from copying a
-  // permanent, and every copy effect derives "clone" via the row above.
+  // (The old note here said `copy-spell` could never fire because VERBS has only `copy`. True of the
+  // VERB and false of the CLAUSE: the OBJECT says which is copied — "target spell" versus "target
+  // creature" — exactly as it does for `double`. Resolved in `actionEffectKind`.)
   mill: "top-manipulation",
   emblem: "token-generation",
   // A tutor rearranges what you draw, which is the same payoff `mill` names. Demonic Tutor's live
@@ -218,6 +225,11 @@ export function extraPhaseName(object: string, clauseText: string): string | und
 
 export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
   const verb = action.verb ?? "";
+  // CR 614.1c — "this creature enters with three +1/+1 counters on it" is a REPLACEMENT EFFECT on
+  // the card's own entry, not an ability that places counters later. The FACT already derived
+  // correctly (a self `counter-added` emit with the right counter kind); what was missing is the
+  // LABEL, which `mechanisms.ts:54` needs to see a counters deck. 635 corpus cards, 45 normalized.
+  if (verb === "add-counter" && ENTERS_WITH.test(clauseText)) return "enters-with-counters";
   if (verb === "other" && WINS.test(`${action.object ?? ""} ${clauseText}`)) return "win-game";
   if (verb === "extra-turn" || verb === "extra-phase") {
     return extraUnitKind(String(action.object ?? ""), clauseText);
@@ -251,6 +263,22 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     if (/\bmana\b/i.test(o)) return "mana-generation";
     // Doubling something the object does not name is not guessable; refuse rather than pick.
     return null;
+  }
+  // COPYING A SPELL IS NOT CLONING A PERMANENT. `copy-spell` is one of the seven EFFECT_KINDS
+  // derivation never produced, and `mechanisms.ts:47` requires it to see a spellslinger deck at all;
+  // the FLAT population produces it and derived never did. The verb cannot tell them apart and the
+  // object can, which is the `double` lesson one row up.
+  if (verb === "copy") {
+    const o = `${action.object ?? ""} ${clauseText}`;
+    return /\bspells?\b|\binstant\b|\bsorcery\b|\bability\b/i.test(o) ? "copy-spell" : "clone";
+  }
+  // A SACRIFICE SOMEONE ELSE IS MADE TO PERFORM is `forced-sacrifice` — an edict. Required by
+  // `mechanisms.ts:43` for aristocrats and `buckets.ts:10` as a win condition, and never produced.
+  // Your OWN sacrifice is a cost or an outlet, not removal, so the control side decides: only a
+  // sacrifice aimed at an opponent counts.
+  if (verb === "sacrifice") {
+    const control = parseSubject(action.object ?? "").control;
+    return control === "opp" ? "forced-sacrifice" : null;
   }
   if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
