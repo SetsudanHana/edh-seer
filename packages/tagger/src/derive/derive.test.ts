@@ -1381,3 +1381,43 @@ test("an extra-phase ability's subject records WHICH phase, end to end", () => {
   expect(abilities[0].effect.kind).toBe("extra-phase");
   expect(abilities[0].effect.subject?.phase).toBe("beginning");
 });
+
+test("a trigger the card's own text never names is REFUSED, not derived", () => {
+  // Parnesse, the Subtle Brush triggers on being TARGETED and on COPYING a spell — neither of which
+  // VERB_VOCAB can spell — and its stored clauses answered `enters` and `cast`. That made this
+  // deck's own commander claim 17 synergies, every one false.
+  const clauses = [{
+    id: 1, abilityType: "triggered" as const,
+    trigger: { event: "enters", subject: "you or a permanent you control becomes the target", control: "opponent" },
+    actions: [{ verb: "counter-spell", object: "that spell or ability" }],
+  }];
+  const text = "Whenever you or a permanent you control becomes the target of a spell or ability an opponent controls, counter that spell or ability unless that player pays 4 life.\nWhenever you copy a spell, up to one target opponent may also copy that spell.";
+  const out = deriveAbilities(clauses, "Parnesse, the Subtle Brush", { 1: text }, undefined, text);
+  expect(out.unknownTriggers).toContain("phantom:enters");
+  expect(out.abilities.some((a) => a.trigger !== undefined)).toBe(false);
+});
+
+test("the guard is CARD-scoped, so a modal clause keeps its trigger", () => {
+  // `segment()` splits "When Kairi dies, choose one —" into a trigger clause and one clause per
+  // mode, and a mode's own text does not repeat the trigger. Scoping the guard per clause was
+  // measured and refuses 18 real triggers of exactly this shape to catch 1 phantom.
+  const clauses = [{
+    id: 2, abilityType: "triggered" as const,
+    trigger: { event: "dies", subject: "this creature" },
+    actions: [{ verb: "return", object: "target nonland permanents" }],
+  }];
+  // The CARD's text is what the guard reads, and it carries the "dies" the mode clause lacks.
+  const card = "When Kairi, the Swirling Sky dies, choose one —\nReturn any number of target nonland permanents with total mana value 6 or less to their owners' hands.";
+  const out = deriveAbilities(clauses, "Kairi, the Swirling Sky", { 2: card }, undefined, card);
+  expect(out.unknownTriggers).not.toContain("phantom:dies");
+  expect(out.abilities.some((a) => a.trigger?.verbs.includes("dies"))).toBe(true);
+});
+
+test("no oracleText disables the guard rather than guessing", () => {
+  const clauses = [{
+    id: 1, abilityType: "triggered" as const,
+    trigger: { event: "enters", subject: "a creature" },
+    actions: [{ verb: "draw", object: "a card" }],
+  }];
+  expect(deriveAbilities(clauses, "Whatever").unknownTriggers).not.toContain("phantom:enters");
+});

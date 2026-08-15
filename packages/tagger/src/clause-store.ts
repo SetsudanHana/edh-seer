@@ -220,10 +220,17 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   untaps: /\buntap/i,
   draw: /\bdraws?\b|\bdrew\b/i,
   discard: /\bdiscard/i,
-  mill: /\bmill/i,
   "gain-life": /\bgains? \d|\bgain(s)? life|lifelink/i,
   "lose-life": /\bloses? \d|\blose(s)? life|life total/i,
-  sacrifice: /\bsacrific/i,
+  // The clause layer spells this `sacrificed`, but cards print the EVENT, not the word: Yuna, Grand
+  // Summoner says "whenever another permanent you control is put into a graveyard from the
+  // battlefield". Demanding the literal word refused 6 real triggers (Yuna, Lynde, Ratchet) — and
+  // Yuna is the headline witness of the Saga work, so the strict cue would have deleted the very
+  // claim that motivated all of this.
+  sacrifice: /\bsacrific|put into (a|your|their|its owner's|an opponent's) graveyard/i,
+  // Same shape: Bloodchief Ascension and Tamiyo's emblem both say "whenever a card is put into
+  // [someone]'s graveyard from anywhere", which the clause layer records as `milled`.
+  mill: /\bmill|put into (a|your|their|its owner's|an opponent's) graveyard|from (your|their) library/i,
   "create-token": /\btoken/i,
   "counter-added": /\bcounter/i,
   "land-play": /\bland\b/i,
@@ -250,10 +257,24 @@ const TRIGGER_CUES: Record<string, RegExp> = {
 export function hasPhantomTrigger(doc: CardClausesDoc | null, oracleText: string): boolean {
   if (!doc) return false; // no doc at all is `needsNormalize`'s business
   if (!oracleText) return false;
-  return doc.canonical.some((c) => {
-    const cue = TRIGGER_CUES[c.trigger?.event ?? ""];
-    return cue !== undefined && !cue.test(oracleText);
-  });
+  return doc.canonical.some((c) => !triggerHasCue(c.trigger?.event, oracleText));
+}
+
+/** Does this trigger event have a printed cue in the given text? False ONLY when the event is
+ *  checkable and the cue is absent — an unknown or uncheckable event answers true, since refusing
+ *  what we cannot judge would delete real triggers.
+ *
+ *  CARD-SCOPED, ALWAYS. Pass the whole card's text, never one clause's. Measured 2026-08-15: scoping
+ *  this to the clause the trigger sits in flags **19 clauses instead of 1, and 18 of the extra are
+ *  REAL** — every one a modal ability whose modes `segment()` split into their own clauses, so the
+ *  mode text no longer repeats the trigger. "When Kairi dies, choose one — • Return any number of
+ *  target nonland permanents" leaves a mode clause with no `dies` in it, and the same shape covers
+ *  Junji, Ayula, Satsuki, Jin Sakai, The Spear of Leonidas and Venser. Refusing 18 real triggers to
+ *  catch 1 phantom is the trade this project keeps having to measure rather than assume. */
+export function triggerHasCue(event: string | undefined, text: string): boolean {
+  if (!text) return true;
+  const cue = TRIGGER_CUES[event ?? ""];
+  return cue === undefined || cue.test(text);
 }
 
 /** Can re-asking this card's clauses actually change the answer? Only if the doc was answered by an

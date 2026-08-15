@@ -16,11 +16,12 @@ import { parseSubject } from "./subject.js";
 import { repeatsFor } from "./repeats.js";
 import { thresholdFor } from "./threshold.js";
 import { SUBTYPES } from "./subtypes.js";
+import { triggerHasCue } from "../clause-store.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 41;
+export const DERIVE_VERSION = 42;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -518,10 +519,20 @@ export function deriveAbilities(
   cardName?: string,
   clauseTexts?: Record<number, string>,
   clauseCosts?: Record<number, string>,
+  /** The card's own printed text, for the phantom-trigger guard. Joining `clauseTexts` is NOT a
+   *  substitute: `segment()` strips reminder text, and an ability that lives only in its reminder
+   *  (For Mirrodin!, cycling) would then look like a trigger the card never states. Absent disables
+   *  the guard rather than guessing. */
+  oracleText?: string,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
   const unknownTriggers: string[] = [];
+  // The whole card's text, for the phantom-trigger guard below. CARD-scoped on purpose and never
+  // per clause -- see `triggerHasCue`, where scoping it to the clause was measured and refuses 18
+  // real modal triggers to catch 1 phantom. Absent `clauseTexts` disables the guard rather than
+  // guessing, the same contract `recipient.ts` has.
+  const cardText = oracleText ?? "";
 
   for (const clause of clauses) {
     const kind = abilityKind(clause);
@@ -574,6 +585,14 @@ export function deriveAbilities(
         unknownTriggers.push("taps-for-mana");
       } else if (verb === "lose-life" && LOSES_THE_GAME.test(text)) {
         unknownTriggers.push("loses-the-game");
+      } else if (verb && !triggerHasCue(verb, cardText)) {
+        // THE NORMALIZER INVENTED THIS TRIGGER: nothing in the card's own text names the event.
+        // Parnesse, the Subtle Brush triggers on being TARGETED and on COPYING a spell, neither of
+        // which the vocabulary can spell, and its stored clauses answered `enters` and `cast` --
+        // which made this deck's own commander claim 17 synergies, every one false. Refusing here
+        // is free and works even when the money fix cannot: a re-ask whose answer the persist gate
+        // REFUSES leaves the older, wrong doc standing, so the clause layer alone cannot fix it.
+        unknownTriggers.push(`phantom:${verb}`);
       } else if (verb) {
         const subject = subjectFrom(clause.trigger.subject ?? "", cardName);
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
@@ -720,12 +739,14 @@ export interface DeriveInput {
    *  `clauseTexts`, for the self-sacrifice and tap-cost rules -- the cost is split OUT of the body
    *  text by `segment.ts`'s `classify()`, so it never appears in `clauseTexts`. */
   clauseCosts?: Record<number, string>;
+  /** The card's printed oracle text, read ONLY by the phantom-trigger guard. Absent disables it. */
+  oracleText?: string;
 }
 
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
  *  from the card document -- derivation never asks a model for what the database already knows. */
 export function deriveCardTags(input: DeriveInput): CardTags {
-  const { abilities } = deriveAbilities(input.clauses, input.name, input.clauseTexts, input.clauseCosts);
+  const { abilities } = deriveAbilities(input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText);
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,

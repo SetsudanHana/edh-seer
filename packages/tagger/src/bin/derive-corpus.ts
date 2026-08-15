@@ -43,6 +43,7 @@ for (const doc of clauseDocs) {
     characteristics: charsFrom(cards as never),
     clauseTexts: clauseTexts(cards as never),
     clauseCosts: clauseCosts(cards as never),
+    oracleText: (cards as { oracleText?: string }).oracleText,
   });
   // A card with real rules text deriving zero abilities is the Bitterblossom shape -- worth
   // counting out loud rather than silently writing a doc that reads as a vanilla bear.
