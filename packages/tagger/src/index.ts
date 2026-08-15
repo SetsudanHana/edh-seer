@@ -29,3 +29,4 @@ export {
 } from "./tags-lookup.js";
 
 export { SUBTYPES, LAND_SUBTYPES } from "./derive/subtypes.js";
+export { extractCharacteristics } from "./characteristics.js";

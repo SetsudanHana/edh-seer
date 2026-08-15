@@ -135,6 +135,7 @@ export function analyzeDeckStructured(
   // still wildcard onto a token this card never actually makes, unless the pair loop below only ever
   // asks the question for a (maker, token-it-structurally-creates) pair in the first place.
   const tokenNodes: DeckCard[] = [];
+  const tokenNodeNames = new Set<string>();
   const producerTokenOracles = new Map<string, Set<string>>();
   if (tokenTags) {
     const byOracle = new Map<string, DeckCard>();
@@ -143,7 +144,12 @@ export function analyzeDeckStructured(
         const tags = tokenTags(ref);
         if (!tags) continue; // unresolved -- refuse, never fall back to a (name, typeLine) lookup
         let node = byOracle.get(tags.oracleId);
-        if (!node) { node = tokenDeckCard(ref, tags); byOracle.set(tags.oracleId, node); tokenNodes.push(node); }
+        if (!node) {
+          node = tokenDeckCard(ref, tags);
+          byOracle.set(tags.oracleId, node);
+          tokenNodes.push(node);
+          tokenNodeNames.add(node.card.name);
+        }
         let oracles = producerTokenOracles.get(dc.card.name);
         if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
         oracles.add(tags.oracleId);
@@ -175,6 +181,16 @@ export function analyzeDeckStructured(
     }
   }
   edges.sort((x, y) => y.score - x.score);
+
+  // FINDINGS 1/2 (owner review, 2026-08-16): a token-inclusive `edges` fed straight into
+  // `groupEdgesByArchetype` and `themeMembership` leaked token names into `report.archetypes[].cards`
+  // (both read card names off reasons/edges with no token filter -- mechanisms.ts's
+  // `g.cards.add(edge.a/b)`, themes.ts's `payoffs.add(r.consumer)`/`surplus.add(r.producer)`) and
+  // inflated `report.themeMembership[].surplus/payoffs/baseline` (301 instances measured across the
+  // 71 decks). Filtered ONCE here rather than inside either shared function, alongside the other five
+  // token exclusions (`computeDeckMath`, `deckFreq`, `computeRoles`, `detectBuildCategories`,
+  // `ratedCards`) -- `report.edges` itself keeps every token edge, for the graph.
+  const cardEdges = edges.filter((e) => !tokenNodeNames.has(e.a) && !tokenNodeNames.has(e.b));
 
   // Deck-local frequency of theme tags (cards whose abilities carry the tag).
   const deckFreq = new Map<string, number>();
@@ -372,7 +388,7 @@ export function analyzeDeckStructured(
 
   const deckStats = computeDeckStats(resolved.map((dc) => dc.card));
 
-  const archetypes = groupEdgesByArchetype(edges);
+  const archetypes = groupEdgesByArchetype(cardEdges);
 
   const cardSignals = resolved
     .filter((dc) => dc.tags && !isLand(dc))
@@ -391,7 +407,7 @@ export function analyzeDeckStructured(
   // Theme membership: same axis ordering the zones will read, with statics dropped (an anthem is a
   // payoff of the theme supplying its subject, never a theme itself).
   const candidateTags = themeCandidates([...axis.keys()]);
-  const allReasons = edges.flatMap((e) => e.reasons);
+  const allReasons = cardEdges.flatMap((e) => e.reasons);
   const membership = themeMembership(resolved, allReasons, candidateTags).map((t) => ({
     tag: t.tag,
     surplus: t.surplus.length,

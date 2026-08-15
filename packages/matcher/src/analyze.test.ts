@@ -803,3 +803,45 @@ test("without a tokenTags lookup, no token node is created (existing callers are
   const report = analyzeDeckStructured([maker, carer], undefined, H);
   expect(report.edges.some((e) => e.a === "Treasure" || e.b === "Treasure")).toBe(false);
 });
+
+// Findings 1/2 (owner review, 2026-08-16): archetype grouping and theme membership both read card
+// names straight out of token-inclusive edges/reasons with no filter, so a token name leaked into
+// `report.archetypes[].cards` and inflated `themeMembership[].surplus/payoffs/baseline`. Reuses the
+// exact Inalla/Kindred Discovery fixture the pre-existing themeMembership test above pins, plus a
+// Wizard token: Inalla structurally creates it, and the token's OWN implied "enters" event (subtype
+// wizard, per its own characteristics) now correctly satisfies Kindred Discovery's "enters:wizard"
+// trigger — the token becomes a real, additional BASELINE producer of that tag (impliedProducer:
+// true), which is exactly the shape that leaked before the fix.
+test("Findings 1/2: a token node's name does not leak into archetype card lists or theme membership counts", () => {
+  const makerCard = {
+    name: "Inalla", typeLine: "Legendary Creature", oracleText: "", keywords: [], colors: [], manaValue: 0,
+    allParts: [{ component: "token", name: "Wizard", typeLine: "Token Creature — Wizard", printingId: "wizard-printing-id" }],
+  } as never;
+  const maker: DeckCard = {
+    card: makerCard,
+    tags: {
+      oracleId: "Inalla", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["legendary", "creature"], subtypes: ["wizard"], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: inallaAbility,
+    },
+  };
+  const payoff = dc("Kindred Discovery", wizardPayoffAbility);
+  const wizardTokenTags: CardTags = {
+    oracleId: "token-wizard-oracle", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["token", "creature"], subtypes: ["wizard"], colors: [], identity: [], cmc: 0, power: "1", toughness: "1", token: true, keywords: [] },
+    abilities: [],
+  };
+  const report = analyzeDeckStructured(
+    [maker, payoff], ["Inalla"], H, undefined, undefined, undefined,
+    (ref) => (ref.printingId === "wizard-printing-id" ? wizardTokenTags : null),
+  );
+  // Sanity: the token really is on the node/edge set, so the exclusions below are proven, not vacuous.
+  expect(report.edges.some((e) => e.a === "Wizard" || e.b === "Wizard")).toBe(true);
+
+  for (const g of report.archetypes ?? []) expect(g.cards).not.toContain("Wizard");
+
+  const entersWizard = report.themeMembership!.find((t) => t.tag === "enters:wizard")!;
+  expect(entersWizard).toBeDefined();
+  expect(entersWizard.surplus).toBeGreaterThanOrEqual(1); // Inalla's authored emit, unaffected
+  expect(entersWizard.baseline).toBe(0); // would be >=1 (the token) if the leak were still present
+});
