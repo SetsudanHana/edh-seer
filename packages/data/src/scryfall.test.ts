@@ -168,9 +168,10 @@ test("captures the widened gameplay fields", () => {
   expect(n.releasedAt).toBe("2024-11-15");
   expect(n.gameChanger).toBe(false);
   expect(n.reserved).toBe(false);
-  // The self-reference Scryfall includes is dropped; the token survives.
+  // The self-reference Scryfall includes is dropped; the token survives, now carrying its printing
+  // id — the exact join against `TokenDoc.printingIds` that (name, typeLine) alone cannot give.
   expect(n.allParts).toEqual([
-    { component: "token", name: "Goblin", typeLine: "Token Creature — Goblin" },
+    { component: "token", name: "Goblin", typeLine: "Token Creature — Goblin", printingId: "tok-goblin" },
   ]);
 });
 

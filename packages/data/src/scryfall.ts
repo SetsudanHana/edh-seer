@@ -6,6 +6,12 @@ export interface RelatedPart {
   component: string;
   name: string;
   typeLine: string;
+  /** PRINTING id, from `all_parts[].id`. Join this against `TokenDoc.printingIds`
+   *  (`ingest-tokens-core.ts`) to resolve exactly one token row — (name, typeLine) alone is
+   *  ambiguous (four "Wizard" / "Token Creature — Wizard" rows differ only in oracle text).
+   *  Carried for every component; only the `token` join is built today, `combo_piece`/`meld_part`
+   *  targets still resolve by name against `cards`. */
+  printingId?: string;
 }
 
 export interface CardFace {
@@ -118,12 +124,19 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     toughness: raw.toughness ?? null,
   };
 
-  /** Scryfall lists the card itself among its own related parts; drop it. `all_parts[].id` is a
-   *  PRINTING id and cannot be joined against the corpus, which keys on oracle_id, so it is not
-   *  stored -- stage 2 resolves combo_piece targets by name. */
+  /** Scryfall lists the card itself among its own related parts; drop it. `all_parts[].id` IS a
+   *  PRINTING id, and it cannot be joined against `cards` (keyed on oracle_id) -- but it CAN be
+   *  joined against `tokens.printingIds` (`ingest-tokens-core.ts`), which is built from exactly
+   *  these ids, so it is kept as `printingId` for the token half of the join. combo_piece/meld_part
+   *  targets still resolve by name against `cards`. */
   const allParts: RelatedPart[] | undefined = raw.all_parts
     ?.filter((p) => p.id !== raw.id && p.component && p.name && p.type_line)
-    .map((p) => ({ component: p.component!, name: p.name!, typeLine: p.type_line! }));
+    .map((p) => ({
+      component: p.component!,
+      name: p.name!,
+      typeLine: p.type_line!,
+      ...(p.id !== undefined ? { printingId: p.id } : {}),
+    }));
 
   const cardFaces: CardFace[] | undefined = raw.card_faces?.map((f) => ({
     name: f.name ?? "",

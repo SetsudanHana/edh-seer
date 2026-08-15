@@ -10,6 +10,14 @@
  *  themselves were missing, because the non-gameplay layout filter (correctly) keeps them out of the
  *  gameplay corpus. They go in their own collection instead.
  *
+ *  (name, typeLine) does NOT identify a token: several distinct oracle_ids share both (four "Wizard"
+ *  / "Token Creature — Wizard" rows differing only in oracle text). The exact join is a card's
+ *  `allParts[].id` — a PRINTING id — against `TokenDoc.printingIds`, the set of printing ids Scryfall
+ *  collapses onto one oracle_id. Verified against live Scryfall data before building on it: Kuja,
+ *  Genome Sorcerer's Wizard part carries printing id `04ae24bf-...`, one of three prints under
+ *  oracle_id `27a141bd-...` — the group whose oracle text is the noncreature-cast trigger, not the
+ *  other three Wizard oracle_ids that happen to share its name and type line.
+ *
  *  Pure, so the shaping is testable without the network.
  */
 
@@ -21,6 +29,10 @@ export interface ScryfallTokenFace {
   type_line?: string;
 }
 export interface ScryfallToken {
+  /** PRINTING id. Scryfall's `is:token` search returns one row per PRINTING under `unique=prints` —
+   *  several rows sharing an oracle_id are reprints of the same token and get merged by
+   *  `mergeTokenDocs`. */
+  id?: string;
   oracle_id?: string;
   name: string;
   type_line?: string;
@@ -49,6 +61,9 @@ export interface TokenDoc {
   /** Normal-size image, the one a deck list renders. */
   image?: string;
   artCrop?: string;
+  /** Every PRINTING id Scryfall collapsed into this oracle_id. This is the exact join target for a
+   *  card's `allParts[].printingId` — see the module comment. */
+  printingIds: string[];
 }
 
 /** A double-faced token keeps its images on `card_faces`, not at the top level, so a naive read of
@@ -69,6 +84,7 @@ export function tokenDoc(t: ScryfallToken): TokenDoc | null {
   return {
     _id: t.oracle_id,
     name: t.name,
+    printingIds: t.id ? [t.id] : [],
     ...(t.type_line !== undefined ? { typeLine: t.type_line } : {}),
     ...(t.oracle_text ? { oracleText: t.oracle_text } : {}),
     ...(t.power !== undefined ? { power: t.power } : {}),
@@ -81,11 +97,33 @@ export function tokenDoc(t: ScryfallToken): TokenDoc | null {
   };
 }
 
-/** The key a deck's `allParts` entry can be looked up by.
+/** Scryfall's `is:token` search has to run with `unique=prints` to see every printing id (995 rows
+ *  under `unique=cards`, 3,114 under `unique=prints`, verified live) — `unique=cards` silently picks
+ *  ONE representative printing per oracle_id, and that representative is not guaranteed to be the
+ *  printing id any given card's `allParts` entry points at. `tokenDoc` shapes one payload into one
+ *  doc per printing; this merges the printings that share an oracle_id back into one row, unioning
+ *  their printing ids rather than letting the last write win. First-seen payload's fields win for
+ *  everything else — reprints of a token do not change its rules text. */
+export function mergeTokenDocs(docs: TokenDoc[]): TokenDoc[] {
+  const byId = new Map<string, TokenDoc>();
+  for (const d of docs) {
+    const existing = byId.get(d._id);
+    if (!existing) {
+      byId.set(d._id, d);
+    } else {
+      const printingIds = [...new Set([...existing.printingIds, ...d.printingIds])];
+      byId.set(d._id, { ...existing, printingIds });
+    }
+  }
+  return [...byId.values()];
+}
+
+/** The key a deck's `allParts` entry can be looked up by, on (name, typeLine) alone.
  *
- *  `RelatedPart` keeps only `component`, `name` and `typeLine` — the Scryfall id it came with is a
- *  PRINTING id, deliberately dropped. So the join is name + type line, which distinguishes the
- *  several different tokens sharing a name: a 1/1 white Soldier is not a 2/2 black Soldier. */
+ *  KNOWN AMBIGUOUS — kept only as a coverage/reporting aid, never the join a graph edge should trust.
+ *  Several distinct oracle_ids share both name and type line (four "Wizard" / "Token Creature —
+ *  Wizard" rows with different oracle text); the exact join is `RelatedPart.printingId` against
+ *  `TokenDoc.printingIds`, see the module comment. */
 export function tokenKey(name: string, typeLine?: string): string {
   return `${name.toLowerCase()}|${(typeLine ?? "").toLowerCase()}`;
 }

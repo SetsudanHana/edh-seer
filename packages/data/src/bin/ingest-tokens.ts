@@ -1,8 +1,15 @@
 /** Fills a `tokens` collection from Scryfall, so a deck can be shown the tokens it needs.
  *
- *  FREE: ~6 paginated requests, 995 tokens. Scryfall rather than MTGJSON because this exists for the
- *  UI and Scryfall ships IMAGES; MTGJSON's tokens carry characteristics but no art, and are keyed by
- *  a uuid we would then have to translate.
+ *  FREE: ~32 paginated requests, ~3,100 printings collapsing to ~995 tokens. Scryfall rather than
+ *  MTGJSON because this exists for the UI and Scryfall ships IMAGES; MTGJSON's tokens carry
+ *  characteristics but no art, and are keyed by a uuid we would then have to translate.
+ *
+ *  `unique=prints`, NOT `unique=cards` — verified live: `unique=cards` returns 995 rows, one
+ *  Scryfall-chosen representative printing per oracle_id, and that representative is not guaranteed
+ *  to be the printing id any given card's `allParts` entry points at (Kuja, Genome Sorcerer's Wizard
+ *  part names a printing id `unique=cards` does not even fetch). `unique=prints` returns all 3,114 and
+ *  `mergeTokenDocs` collapses them back to one row per oracle_id, unioning every printing id onto
+ *  `printingIds` — the set a card's `allParts[].printingId` is joined against.
  *
  *  Tokens stay OUT of `cards`: the non-gameplay layout filter that excludes them is right, because
  *  the engine analyses a decklist and nobody puts a token in one. They get their own collection, and
@@ -13,9 +20,9 @@
  */
 import { fileURLToPath } from "node:url";
 import { connect, loadConfig } from "@mtg/data";
-import { tokenDoc, tokenKey, type ScryfallToken } from "./ingest-tokens-core.js";
+import { mergeTokenDocs, tokenDoc, tokenKey, type ScryfallToken } from "./ingest-tokens-core.js";
 
-const SEARCH = "https://api.scryfall.com/cards/search?q=is%3Atoken&unique=cards&order=name";
+const SEARCH = "https://api.scryfall.com/cards/search?q=is%3Atoken&unique=prints&order=name";
 const HEADERS = { "User-Agent": "mtg-synergy-engine/0.1", Accept: "application/json" };
 const sleep = (ms: number): Promise<void> => new Promise((r) => { setTimeout(r, ms); });
 
@@ -37,8 +44,9 @@ async function fetchAll(): Promise<ScryfallToken[]> {
 async function main(): Promise<void> {
   const dryRun = process.argv.includes("--dry-run");
   const raw = await fetchAll();
-  const docs = raw.map(tokenDoc).filter((d): d is NonNullable<typeof d> => d !== null);
-  console.log(`fetched ${raw.length} tokens | shaped ${docs.length} | with an image ${docs.filter((d) => d.image).length}`);
+  const perPrinting = raw.map(tokenDoc).filter((d): d is NonNullable<typeof d> => d !== null);
+  const docs = mergeTokenDocs(perPrinting);
+  console.log(`fetched ${raw.length} printings | merged to ${docs.length} tokens | with an image ${docs.filter((d) => d.image).length}`);
 
   const store = await connect(loadConfig());
   // How much of what our decks actually reference is covered — the number that decides whether a
@@ -65,6 +73,7 @@ async function main(): Promise<void> {
       { ordered: false },
     );
     await tokens.createIndex({ name: 1, typeLine: 1 });
+    await tokens.createIndex({ printingIds: 1 }); // the exact join, keyed off allParts[].printingId
     console.log(`wrote ${docs.length} token(s)`);
   }
   await store.close();

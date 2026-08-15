@@ -13,6 +13,14 @@ test("a card's created tokens come from allParts, deduped", () => {
   ]))).toEqual([{ name: "Treasure", typeLine: "Token Artifact — Treasure" }]);
 });
 
+// Kuja's Wizard part carries a printingId that distinguishes it from three other Wizard oracle_ids
+// sharing the same name and typeLine — this is the field that makes that resolution exact.
+test("a token's printing id rides along on the ref", () => {
+  expect(createdTokenRefs(card([
+    { component: "token", name: "Wizard", typeLine: "Token Creature — Wizard", printingId: "04ae24bf" },
+  ]))).toEqual([{ name: "Wizard", typeLine: "Token Creature — Wizard", printingId: "04ae24bf" }]);
+});
+
 test("only token parts count, and a card with none yields none", () => {
   // meld_part / combo_piece point at real CARDS, not tokens — including them would put a card on the
   // graph twice, once as itself and once as a phantom token.
