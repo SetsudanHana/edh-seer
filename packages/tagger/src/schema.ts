@@ -465,6 +465,10 @@ export interface Characteristics {
    *  cannot express is what ENTERS or is CAST, since those happen one face at a time.
    *  `impliedEvents` is its only reader. */
   faces?: { types: string[]; subtypes: string[] }[];
+  /** Scryfall's printing layout, carried so the matcher can apply the ZONE rules, which differ by
+   *  family and cannot be read off `faces` alone — split and adventure both list every face.
+   *  See `zoneTypes` in matcher/implied.ts. */
+  layout?: string;
   colors: string[];
   identity: string[];
   cmc: number;

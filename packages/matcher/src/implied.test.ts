@@ -1,7 +1,6 @@
 import { expect, test } from "vitest";
 import type { Characteristics, GameEvent } from "@mtg/tagger";
-import { impliedEvents, impliedGraveyardEvents, keywordAbilities } from "./implied.js";
-import { impliedCounterEvents, selfFillTypes } from "./implied.js";
+import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, keywordAbilities, selfFillTypes } from "./implied.js";
 
 const chars = (types: string[], subtypes: string[] = []): Characteristics => ({
   types, subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [],
@@ -489,4 +488,25 @@ test("a keyword that watches its OWN attack or entry supplies no trigger", () =>
   for (const k of ["Exalted", "Battle cry", "Mentor", "Annihilator 2", "Evolve", "Undying"]) {
     expect(keywordAbilities(kw([k])), k).toHaveLength(0);
   }
+});
+
+// A GRAVEYARD IS A ZONE, and the three CR rules for what a multi-face card IS there disagree with
+// each other — which is why `layout` had to be carried and why `faces` alone cannot decide it.
+test("in a zone a card is its FRONT face, except a split card, which combines", () => {
+  const fill = (chars: Characteristics) => selfFillTypes(
+    [{ verb: "enters", subject: { control: "you", token: null, zone: "graveyard", self: true } }], chars,
+  )[0].subject.type;
+  const base = { subtypes: [], colors: [], identity: [], cmc: 2, power: null, toughness: null,
+    token: false, keywords: [] };
+  // 715.4 — Brazen Borrower in a graveyard is a Creature and NOT an Instant.
+  expect(fill({ ...base, types: ["creature", "instant"], layout: "adventure",
+    faces: [{ types: ["creature"], subtypes: [] }, { types: ["instant"], subtypes: [] }] })).toEqual(["creature"]);
+  // 712.4a — an Instant // Land modal DFC is an Instant there, which is why it must not satisfy a
+  // payoff counting LAND cards in your graveyard.
+  expect(fill({ ...base, types: ["instant", "land"], layout: "modal_dfc",
+    faces: [{ types: ["instant"], subtypes: [] }, { types: ["land"], subtypes: [] }] })).toEqual(["instant"]);
+  // 709.4 — a split card really does have both halves' characteristics in every zone but the stack.
+  expect(fill({ ...base, types: ["instant", "sorcery"], layout: "split",
+    faces: [{ types: ["instant"], subtypes: [] }, { types: ["sorcery"], subtypes: [] }] }))
+    .toEqual(["instant", "sorcery"]);
 });

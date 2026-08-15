@@ -51,6 +51,8 @@ export function extractCharacteristics(card: Card): Characteristics {
     types: left,
     subtypes,
     ...(faces ? { faces } : {}),
+    // Carried for the zone rules — see `zoneTypes`. Free: it is already on the card document.
+    ...(card.layout ? { layout: card.layout } : {}),
     colors: card.colors,
     identity: card.colorIdentity ?? [],
     cmc: card.manaValue,

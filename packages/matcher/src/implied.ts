@@ -393,12 +393,42 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
  *  Necromancer's Vampire recursion and Archaeomancer's instant recursion.
  *
  *  Only fills already marked `self` are touched, and only where the fill states no type of its own. */
+/** WHAT A MULTI-FACE CARD IS *IN A ZONE*, which is not the union `types` holds and not always the
+ *  same as what it can be PLAYED as. Three Comprehensive Rules, three answers, and the layout is the
+ *  only thing that separates them — `faces` cannot, because split and adventure both list every face:
+ *
+ *   - **709.4 SPLIT** — "a split card has the combined characteristics of its two halves" in every
+ *     zone but the stack. The union is already right; these are left alone.
+ *   - **715.4 ADVENTURE / 720.4 OMEN** — "in every zone except the stack, and while on the stack not
+ *     as an Adventure, an adventurer card has only its NORMAL characteristics". Brazen Borrower in a
+ *     graveyard is a Creature and NOT an Instant.
+ *   - **712.4a DOUBLE-FACED** — a transforming or modal DFC has its FRONT face's characteristics
+ *     everywhere but the battlefield. Valakut Awakening // Valakut Stoneforge in a graveyard is an
+ *     Instant, not a land — which matters directly to the graveyard-scaling work, since Cavalier of
+ *     Flame counts LAND cards in your graveyard.
+ *
+ *  So the rule is: the front face, unless the layout is a split. A card with no `faces` is its own
+ *  one face and the union already says everything. */
+const UNIONS_IN_ZONE = new Set(["split"]);
+
+export function zoneTypes(chars: Characteristics): { types: string[]; subtypes: string[] } {
+  const front = chars.faces?.[0];
+  if (!front || (chars.layout && UNIONS_IN_ZONE.has(chars.layout))) {
+    return { types: chars.types, subtypes: chars.subtypes };
+  }
+  return { types: front.types, subtypes: front.subtypes };
+}
+
 export function selfFillTypes(events: GameEvent[], chars: Characteristics): GameEvent[] {
   return events.map((e) => {
     if (!(e.verb === "enters" && e.subject.zone === "graveyard" && e.subject.self === true)) return e;
     if (e.subject.type !== undefined || e.subject.subtype !== undefined) return e;
-    const types = chars.types.map((t) => t.toLowerCase());
-    const subtypes = chars.subtypes.map((t) => t.toLowerCase());
+    // A GRAVEYARD IS A ZONE, so the card there is its front face and not the union of its faces —
+    // see `zoneTypes`. Without this an adventurer's fill advertised its Instant half, and
+    // Marang River Regent // Coil and Catch "enabled" Archaeomancer returning an instant.
+    const zone = zoneTypes(chars);
+    const types = zone.types.map((t) => t.toLowerCase());
+    const subtypes = zone.subtypes.map((t) => t.toLowerCase());
     return { ...e, subject: {
       ...e.subject,
       ...(types.length ? { type: types } : {}),
