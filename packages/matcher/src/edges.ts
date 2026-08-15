@@ -78,6 +78,12 @@ function characteristicsSubject(tags: CardTags): SubjectFilter {
   const types = c.types.map((t) => t.toLowerCase());
   const subtypes = c.subtypes.map((t) => t.toLowerCase());
   return {
+    // The deck fact, on BOTH sides. `characteristicsSubject` is the CONSUMER argument in the
+    // self-trigger identity gate below, so a commander's own emit — which carries `commander` after
+    // markCommander — was tested against a printed subject that lacked it and failed, dropping the
+    // card's self-triggers. The same both-sides lesson `legendary` records at 09ce98d: a one-sided
+    // stamp deletes real edges instead of narrowing false ones.
+    ...(c.commander === true ? { commander: true as const } : {}),
     ...(isHistoric(types, subtypes) ? { historic: true as const } : {}),
     // The supertype is already in `types`, but `type` is an OR list on a consumer subject, so a
     // legendary demand cannot be expressed there. Lifted to its own flag, as historic is.

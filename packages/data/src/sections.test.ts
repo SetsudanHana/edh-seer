@@ -44,3 +44,34 @@ test("expands quantities in the deck section (basics counted by copy)", () => {
   const { deck } = parseDecklistSections("2 Forest\n1 Sol Ring");
   expect(deck).toEqual(["Forest", "Forest", "Sol Ring"]);
 });
+
+// THE HEADERLESS CONVENTION. Requiring a "Commander" header meant `commanders` came back empty for
+// all 71 calibration decks, so SubjectFilter.commander shipped with a producer side that could never
+// fire. Measured over those files: 67 have a one-card first block, 4 have two (partner pairs), none
+// has three or more.
+test("a headerless list reads its first block as the commander", () => {
+  const s = parseDecklistSections("1 Kratos, God of War\n\n30 Mountain\n1 Sol Ring");
+  expect(s.commanders).toEqual(["Kratos, God of War"]);
+  expect(s.deck).toContain("Sol Ring");
+  expect(s.deck).not.toContain("Kratos, God of War");
+});
+
+test("two cards before the blank line are a partner pair", () => {
+  const s = parseDecklistSections("1 Kediss, Emberclaw Familiar\n1 Kratos, God of War\n\n1 Sol Ring");
+  expect(s.commanders).toEqual(["Kediss, Emberclaw Familiar", "Kratos, God of War"]);
+});
+
+test("an explicit header always wins over the convention", () => {
+  const s = parseDecklistSections("Commander\n1 Kratos, God of War\n\nDeck\n1 Sol Ring");
+  expect(s.commanders).toEqual(["Kratos, God of War"]);
+  expect(s.deck).toEqual(["Sol Ring"]);
+});
+
+test("an ordinary list is NOT reinterpreted", () => {
+  // Three cards before the blank is a decklist that happens to have one, not a commander block —
+  // guessing there would mislabel two real deck cards.
+  const three = parseDecklistSections("1 Sol Ring\n1 Mana Crypt\n1 Mox Diamond\n\n1 Forest");
+  expect(three.commanders).toEqual([]);
+  // No blank line at all: nothing to split on.
+  expect(parseDecklistSections("1 Sol Ring\n1 Forest").commanders).toEqual([]);
+});
