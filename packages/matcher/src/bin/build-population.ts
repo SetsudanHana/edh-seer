@@ -5,6 +5,7 @@ import {
   connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
 } from "@mtg/data";
 import type { CardTags } from "@mtg/tagger";
+import { createTagsLookup } from "@mtg/tagger";
 import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES } from "../build.js";
 import { recommendedLands } from "../land-count.js";
 import { winconReport } from "../wincon.js";
@@ -85,7 +86,12 @@ async function main(): Promise<void> {
 
   const store = await connect(loadConfig());
   const lookup = mongoLookup(store);
-  const cardTags = store.db.collection("cardTags");
+  // THE SAME POPULATION THE PRODUCT READS. This gate hardcoded the FLAT `cardTags` collection, so
+  // once `TAGS_SOURCE` defaulted to `derived` (2026-08-06) it was watching a population nothing
+  // ships — a derivation change could reclassify a third of the corpus and this would report
+  // "unchanged", which is precisely the failure it exists to catch. Same shape as gen-theme-stats.ts
+  // reading flat tags while the axis ranked derived ones.
+  const cardTags = createTagsLookup(store.db);
   const out: Snapshot = {};
   const landRows: { deck: string; actual: number; target: number; avg: number; ramp: number; fast: number }[] = [];
 
@@ -95,7 +101,7 @@ async function main(): Promise<void> {
     for (const name of [...sections.commanders, ...sections.deck]) {
       const doc = await lookup.findByName(normalizeName(name));
       if (!doc) continue;
-      const tags = (await cardTags.findOne({ oracleId: doc._id })) as CardTags | null;
+      const tags = await cardTags.findOne(String(doc._id));
       inputs.push({ card: docToCard(doc), tags });
     }
     if (landsMode) {

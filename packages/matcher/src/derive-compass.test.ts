@@ -98,12 +98,11 @@ const KNOWN_BASELINE_DEFECTS: Record<string, string> = {
   // approach this layer replaces — and, for Doran, additionally inventing a toughness>=power
   // StatPredicate the card never states.
   "Doran, the Siege Tower / Wall of Omens": "Doran's damage rule is `verb: \"other\"`, inert by the normalizer's contract",
-  // These two passed until the typeless-static-subject fix, on a reason that read "Tekuthal's
-  // counter placement applies to Karn's Bastion" — Tekuthal puts an indestructible counter on
-  // ITSELF, so that edge was the whole-deck wildcard mesh, not a synergy. The real link is
-  // Tekuthal's proliferate-doubling, which is `verb: "other"` like Doran's.
-  "Karn's Bastion / Tekuthal, Inquiry Dominus": "Tekuthal's proliferate-doubling is `verb: \"other\"`, inert by the normalizer's contract",
-  "Tekuthal, Inquiry Dominus / Thrummingbird": "Tekuthal's proliferate-doubling is `verb: \"other\"`, inert by the normalizer's contract",
+  // The two Tekuthal pairs USED to sit here, quarantined on "Tekuthal's proliferate-doubling is
+  // `verb: "other"`, inert by the normalizer's contract". Banked 2026-08-15 by `replacement.ts`:
+  // the doubling is read off the clause TEXT rather than waiting for a verb, and Tekuthal now
+  // consumes the `proliferate` event both pairs supply. The ratchet caught it, which is the whole
+  // reason a passing quarantined pair is a FAILURE here.
 
   // --- reanimator (1): this one passed on a reason that contradicts the card, and stopped when the
   // reason got MORE correct. Animate Dead's ETB trigger used to normalize with subject "this",

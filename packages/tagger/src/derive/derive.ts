@@ -14,6 +14,7 @@ import { actionRecipients } from "./recipient.js";
 import { actionScaling } from "./scaling.js";
 import { parseSubject } from "./subject.js";
 import { repeatsFor } from "./repeats.js";
+import { replacementOf } from "./replacement.js";
 import { thresholdFor } from "./threshold.js";
 import { SUBTYPES } from "./subtypes.js";
 import { triggerHasCue } from "../clause-store.js";
@@ -21,7 +22,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 46;
+export const DERIVE_VERSION = 48;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -583,6 +584,11 @@ export function deriveAbilities(
       }
       return false;
     };
+    /** CR 614 multiplier, read off the clause text — the "would ... instead" frame the clause layer
+     *  does not record. Bound per CLAUSE because that is where the sentence sits: verified against
+     *  all 16 corpus cards carrying one of the templates, and in every case `segment()` gives the
+     *  replacement sentence a clause of its own, including Rankle and Torbran's fifth mode. */
+    const replacement = replacementOf(text);
     let trigger: Ability["trigger"];
     /** Does this clause fire on the card's own LEAVING? See the sacrifice filter below. */
     let selfLeavesTrigger = false;
@@ -639,6 +645,17 @@ export function deriveAbilities(
         unknownTriggers.push(clause.trigger.event);
       }
     }
+    // THE MULTIPLIER'S CONSUMER SIDE. A replacement clause states no trigger of its own, so nothing
+    // connected Hardened Scales to the counters it doubles or Academy Manufactor to the tokens it
+    // widens. The replaced event IS the trigger — the shape `prompt.ts` encodes for Tekuthal and
+    // `effect-class.ts` calls REPLACEMENT — and the ability carries no emit, so a doubler can never
+    // become a source of what it multiplies. Only when the clause has no authored trigger: Rankle
+    // and Torbran's mode inherits the parent's combat-damage trigger and must keep it.
+    if (replacement && !replacement.restricted && !trigger) {
+      const subject = subjectFrom(replacement.subjectText, cardName);
+      if (replacement.counter) subject.counter = replacement.counter;
+      trigger = { verbs: replacement.verbs, subject };
+    }
 
     const before = abilities.length;
     for (const action of clause.actions ?? []) {
@@ -659,7 +676,12 @@ export function deriveAbilities(
         // raw object is "it" and matches none of the spellings above.
         || (PRONOUN_OBJECT.test((action.object ?? "").trim())
           && antecedentIsSelf((clause.actions ?? []).indexOf(action)));
-      const effectKind = actionEffectKind(action, text);
+      // CR 614: a MULTIPLIER modifies occurrences of an event and is not a source of it. The clause
+      // layer records the verb the sentence uses and nothing about the "would ... instead" frame, so
+      // Hardened Scales answered `add-counter` and advertised a counter it never places. The kind
+      // names the multiplication, and the emits go — see `replacement.ts` and the consumer trigger
+      // below, which is the shape `prompt.ts` already documents for Tekuthal.
+      const effectKind = replacement?.kind ?? actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
       const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action)
         .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)))
@@ -675,7 +697,11 @@ export function deriveAbilities(
         // does not separate them. The EVENT does: a permanent leaving and undoing what it did is the
         // aura-drawback shape, while `dies` is the aristocrats shape. Only the sacrifice's own emits
         // are dropped; a leaves-trigger that makes tokens still supplies them.
-        .filter((e) => !(action.verb === "sacrifice" && selfLeavesTrigger));
+        .filter((e) => !(action.verb === "sacrifice" && selfLeavesTrigger))
+        // A multiplier performs nothing. Every emit of the clause goes, not only the one matching
+        // the replaced event: Academy Manufactor's clause answers `create` three times and creates
+        // a token on its own none of those times.
+        .filter(() => replacement === null);
       if (emitsSelf) for (const e of emits) e.subject.self = true;
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
@@ -740,7 +766,11 @@ export function deriveAbilities(
     // The effect stays honestly EMPTY — we know when it triggers, not what it does — and the actions
     // remain in `unclaimed`, so the derivation gap is still visible rather than papered over.
     if (trigger && abilities.length === before) {
-      abilities.push({ kind, effect: { kind: "" as const }, trigger });
+      // A multiplier reaches here when its action was refused upstream — Tekuthal's `proliferate` on
+      // a static clause, which `keywordActionOnStaticClause` drops precisely so it never becomes a
+      // proliferate source. The KIND is known even though the action was refused, so the ability is
+      // labelled rather than left empty.
+      abilities.push({ kind, effect: replacement ? { kind: replacement.kind } : { kind: "" as const }, trigger });
     }
 
     // Label everything this clause produced, in ONE place rather than at each of the three push
