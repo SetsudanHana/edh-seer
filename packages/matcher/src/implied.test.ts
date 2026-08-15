@@ -430,3 +430,32 @@ test("a nonbasic land's implied entry claims no supertype", () => {
   const ev = impliedEvents(chars(["land"], ["plains", "swamp"]));
   expect(ev.find((e) => e.verb === "enters")?.subject.basic).toBeUndefined();
 });
+
+// CR 704.5s: a Saga goes to its owner's graveyard after its final chapter. A state-based action, so
+// no card text states it and derivation, which reads text, cannot see it.
+test("a Saga supplies its own guaranteed death", () => {
+  // Summon: Fenrir — "Enchantment Creature — Saga Wolf", printed reminder "Sacrifice after III."
+  const ev = impliedEvents(chars(["enchantment", "creature"], ["saga", "wolf"]));
+  expect(ev.find((e) => e.verb === "sacrifice")?.subject.self).toBe(true);
+  const dies = ev.find((e) => e.verb === "dies");
+  expect(dies?.subject.self).toBe(true);
+  // The death carries the card's printed identity, or it wildcards onto typed consumers.
+  expect(dies?.subject.type).toEqual(["enchantment", "creature"]);
+  expect(dies?.subject.control).toBe("you");
+});
+
+test("a TRANSFORMING Saga is exiled, never dies, and supplies neither", () => {
+  // Azusa's Many Journeys // Likeness of the Seeker — "III — Exile this Saga, then return it to the
+  // battlefield transformed." The matcher never sees oracle text, so the discriminator is the type
+  // line: measured over all 234 corpus Sagas, multi-face <=> transform is exact (44 of 44).
+  const ev = impliedEvents({
+    ...chars(["enchantment", "creature"], ["saga", "human", "monk"]),
+    faces: [{ types: ["enchantment"], subtypes: ["saga"] }],
+  });
+  expect(ev.filter((e) => e.verb === "sacrifice" || e.verb === "dies")).toHaveLength(0);
+});
+
+test("a non-Saga enchantment supplies no death", () => {
+  expect(impliedEvents(chars(["enchantment"], ["aura"]))
+    .filter((e) => e.verb === "sacrifice" || e.verb === "dies")).toHaveLength(0);
+});

@@ -105,6 +105,8 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
   // Printed keywords are supply too, and were a dead channel until 2026-08-14. Appended once for the
   // whole card rather than per face: a keyword is printed on the card, not on a face.
   out.push(...keywordEvents(chars));
+  // A Saga's own death, which no ability states — see `sagaEvents`. Once for the card, same reason.
+  out.push(...sagaEvents(chars));
   return out;
 }
 
@@ -142,7 +144,9 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
  *    not on a permanent you control, so no counters-matter payoff can see them; a suspended card is
  *    a PROLIFERATE payoff, which is demand rather than supply. Caught on its witness: the only
  *    consumer it reached was Regenerations Restored, whose trigger is its own time counters. */
-const KEYWORD_EMITS: Record<string, { verb: GameEvent["verb"]; counter?: string; control?: "you" | "opp"; token?: true; self?: true }[]> = {
+interface EmitSpec { verb: GameEvent["verb"]; counter?: string; control?: "you" | "opp"; token?: true; self?: true }
+
+const KEYWORD_EMITS: Record<string, EmitSpec[]> = {
   // "Damage dealt by this creature also causes you to gain that much life."
   lifelink: [{ verb: "gain-life" }],
   // "each opponent loses 1 life and you gain that much life."
@@ -227,31 +231,65 @@ export function keywordEvents(chars: Characteristics): GameEvent[] {
   // Landcycling, Typecycling and Cycling at once. 90 of the 393 printed cycling cards are this
   // shape, so honouring the umbrella too would hand every one of them a draw it does not have.
   const emitKeys = keys.includes("typecycling") ? keys.filter((k) => k !== "cycling") : keys;
-  for (const k of emitKeys) {
-    for (const spec of KEYWORD_EMITS[k] ?? []) {
-      out.push({
-        verb: spec.verb,
-        subject: {
-          control: spec.control ?? "you",
-          token: spec.token ?? null,
-          ...(spec.counter ? { counter: spec.counter } : {}),
-          // A SELF event happens to a KNOWN permanent — this one — so it carries this card's printed
-          // identity rather than staying untyped. Left untyped it wildcards onto typed consumers:
-          // Mystic Remora's age counter goes on an ENCHANTMENT and was reaching Fathom Mage's
-          // `counter-added:creature`, and cycling's discard reached typed graveyard recursion. Same
-          // fact `selfSubject` states for a card's own cast/enters, so it is reused rather than
-          // rebuilt — `counter` is overlaid after, since a counter is board state and not printed.
-          ...(spec.self ? { ...selfSubject(chars), self: true as const,
-            ...(spec.counter ? { counter: spec.counter } : {}) } : {}),
-          // A token this card makes is a creature it did not print on its own type line, so the
-          // subject says only what the reminder guarantees: it is a token, and it is a creature.
-          ...(spec.token ? { type: "creature" } : {}),
-        },
-        implied: true,
-      });
-    }
-  }
+  for (const k of emitKeys) for (const spec of KEYWORD_EMITS[k] ?? []) out.push(syntheticEvent(chars, spec));
   return out;
+}
+
+/** One synthetic producer event from a spec, shared by the keyword and Saga channels. */
+function syntheticEvent(chars: Characteristics, spec: EmitSpec): GameEvent {
+  return {
+    verb: spec.verb,
+    subject: {
+      control: spec.control ?? "you",
+      token: spec.token ?? null,
+      ...(spec.counter ? { counter: spec.counter } : {}),
+      // A SELF event happens to a KNOWN permanent — this one — so it carries this card's printed
+      // identity rather than staying untyped. Left untyped it wildcards onto typed consumers:
+      // Mystic Remora's age counter goes on an ENCHANTMENT and was reaching Fathom Mage's
+      // `counter-added:creature`, and cycling's discard reached typed graveyard recursion. Same
+      // fact `selfSubject` states for a card's own cast/enters, so it is reused rather than
+      // rebuilt — `counter` is overlaid after, since a counter is board state and not printed.
+      ...(spec.self ? { ...selfSubject(chars), self: true as const,
+        ...(spec.counter ? { counter: spec.counter } : {}) } : {}),
+      // A token this card makes is a creature it did not print on its own type line, so the
+      // subject says only what the reminder guarantees: it is a token, and it is a creature.
+      ...(spec.token ? { type: "creature" } : {}),
+    },
+    implied: true,
+  };
+}
+
+/** WHAT A SAGA'S OWN TYPE SUPPLIES: its death. CR 704.5s puts a Saga with lore counters at or past
+ *  its final chapter number into its owner's graveyard — a state-based action, so NO ability states
+ *  it and derivation, which reads oracle text, cannot see it. That makes a Saga a *guaranteed*
+ *  future death, better evidence than most authored sacrifice outlets, that fed nothing.
+ *
+ *  Measured on the corpus before writing this: 234 Sagas, of which **17 sit in the derived corpus
+ *  and only 3 emitted any death verb**, against 31 death-watching consumer abilities an enchantment
+ *  could satisfy, spread over 12 of the 25 calibration decks that run a self-sacrificing Saga.
+ *
+ *  `sacrifice` AND `dies`, exactly as `echo` and `cumulative upkeep` emit them — a permanent dying
+ *  on a clock is the aristocrats shape, and `dies` is what most corpus consumers watch. The
+ *  graveyard fill follows for free: `normalizeZoneEvent` turns `dies` into `leaves@battlefield` and
+ *  `impliedGraveyardEvents` into `enters@graveyard`, with `selfFillTypes` stamping the printed types.
+ *
+ *  A TRANSFORMING Saga is EXILED and returned transformed — it never reaches a graveyard, so it must
+ *  get no death event. The matcher sees `Characteristics` and never oracle text, so the discriminator
+ *  is the type line, and it was measured rather than assumed: across all 234 corpus Sagas,
+ *  multi-face ⟺ says "transform" is EXACT (44 of 44), and single-face ⟺ states its own sacrifice
+ *  holds for 186 of 190.
+ *
+ *  ponytail: the 4 single-face exceptions are read as dying. Three of them really do die — The Legend
+ *  of Arena, The Many Deeds of Belzenlok and Saga of Krark Losing His Thumb simply print no
+ *  "Sacrifice after" reminder, and 704.5s applies to them regardless. The one genuine miss is **The
+ *  Aesir Escape Valhalla**, whose chapter III returns itself to its owner's HAND; it is not in the
+ *  derived corpus today. Reading oracle text here would fix it — and would mean threading text into a
+ *  layer whose whole input is characteristics, for one card. */
+export function sagaEvents(chars: Characteristics): GameEvent[] {
+  if (!chars.subtypes.some((t) => t.toLowerCase() === "saga")) return [];
+  if (chars.faces) return [];
+  return [{ verb: "sacrifice" as const, self: true as const }, { verb: "dies" as const, self: true as const }]
+    .map((spec) => syntheticEvent(chars, spec));
 }
 
 /** Graveyard-fill events implied by a producer's (already-normalized) emits: mill/discard put an
