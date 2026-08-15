@@ -497,3 +497,21 @@ test("a basic land TYPE is the subtype sense, not the supertype", () => {
     .basic).toBeUndefined();
   expect(parseSubject("a basic land type").basic).toBeUndefined();
 });
+
+// THE NEGATED KEYWORD — the `notType` shape for keywords. Luminous Broodmoth's "whenever a creature
+// you control WITHOUT flying dies" derived as bare {type: creature} and claimed flying creatures too.
+test("a subject narrowed by the ABSENCE of a keyword records it", () => {
+  expect(parseSubject("a creature you control without flying").notKeyword).toEqual(["flying"]);
+  expect(parseSubject("each creature without flying").notKeyword).toEqual(["flying"]);
+});
+
+test("`with` and `without` never fight over the same words", () => {
+  // "with " needs the space, so it cannot match inside "without".
+  expect(parseSubject("a creature you control without flying").keyword).toBeUndefined();
+  expect(parseSubject("creatures you control with flying").notKeyword).toBeUndefined();
+});
+
+test("an ordinary subject records no negated keyword", () => {
+  expect(parseSubject("target creature").notKeyword).toBeUndefined();
+  expect(parseSubject("another creature you control").notKeyword).toBeUndefined();
+});

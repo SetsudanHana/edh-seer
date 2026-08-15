@@ -287,3 +287,15 @@ test("every keyword in the demand must be present", () => {
   // ...while a producer with MORE keywords than demanded still satisfies it.
   expect(subjectMatches(both, s({ type: "creature", keyword: ["flying"] }), H)).toBe(true);
 });
+
+test("a negated keyword refuses a producer that HAS it, and passes one that does not", () => {
+  // Luminous Broodmoth: "whenever a creature you control without flying dies, return it".
+  const consumer = { control: "you" as const, token: null, type: "creature", notKeyword: ["flying"] };
+  const flyer = { control: "you" as const, token: false, type: "creature", keyword: ["flying"] };
+  const ground = { control: "you" as const, token: false, type: "creature", keyword: ["trample"] };
+  // An ABSENT keyword list is "has no keywords", not "unknown" — printed keywords arrive on every card.
+  const vanilla = { control: "you" as const, token: false, type: "creature" };
+  expect(subjectMatches(flyer, consumer, H)).toBe(false);
+  expect(subjectMatches(ground, consumer, H)).toBe(true);
+  expect(subjectMatches(vanilla, consumer, H)).toBe(true);
+});

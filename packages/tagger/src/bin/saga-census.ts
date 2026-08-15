@@ -6,7 +6,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
 import { DERIVED_COLLECTION } from "../clause-store.js";
-import type { Ability } from "../schema.js";
+import type { Ability, SubjectFilter } from "../schema.js";
 
 const store = await connect(loadConfig());
 
@@ -54,7 +54,7 @@ for (const d of derived) {
     const verbs = ab.trigger?.verbs ?? [];
     if (!verbs.some((v) => DEATH_VERBS.has(v))) continue;
     consumers++;
-    const s = ab.trigger?.subject ?? {};
+    const s: Partial<SubjectFilter> = ab.trigger?.subject ?? {};
     const t = s.type === undefined ? "(unset)" : JSON.stringify(s.type);
     const key = `${verbs.filter((v) => DEATH_VERBS.has(v)).join("/")} type=${t}${s.subtype ? ` subtype=${JSON.stringify(s.subtype)}` : ""}${s.self ? " SELF" : ""}`;
     byType.set(key, (byType.get(key) ?? 0) + 1);

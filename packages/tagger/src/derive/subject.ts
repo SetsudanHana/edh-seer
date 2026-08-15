@@ -412,15 +412,29 @@ const KEYWORD_ALT = [...KEYWORD_ABILITIES]
   .join("|");
 const KEYWORD_PHRASE = new RegExp(
   `\\bwith ((?:${KEYWORD_ALT})(?:\\s+and\\s+(?:${KEYWORD_ALT}))*)\\b(?!\\s+(?:cost|counters?))`, "gi");
+/** The negated form — "a creature you control without flying". Distinct from KEYWORD_PHRASE by the
+ *  space: `with ` cannot match inside "without", so the two never fight over the same words. Only
+ *  the "without X" spelling exists in the corpus; "non-flying" is an older template that survives on
+ *  no current oracle text (0 of 238 matches). */
+const NOT_KEYWORD_PHRASE = new RegExp(
+  `\\bwithout ((?:${KEYWORD_ALT})(?:\\s+and\\s+(?:${KEYWORD_ALT}))*)\\b(?!\\s+(?:cost|counters?))`, "gi");
 
-function parseKeywords(t: string): string[] | undefined {
+function keywordsFrom(t: string, re: RegExp): string[] | undefined {
   const found = new Set<string>();
-  for (const m of t.matchAll(KEYWORD_PHRASE)) {
+  for (const m of t.matchAll(re)) {
     for (const k of m[1].split(/\s+and\s+/)) found.add(k.trim().toLowerCase());
   }
   // Sorted so the same demand written in either order is the same filter, and so a tag key built
   // from it is stable across cards.
   return found.size ? [...found].sort() : undefined;
+}
+
+function parseKeywords(t: string): string[] | undefined {
+  return keywordsFrom(t, KEYWORD_PHRASE);
+}
+
+function parseNotKeywords(t: string): string[] | undefined {
+  return keywordsFrom(t, NOT_KEYWORD_PHRASE);
 }
 
 const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|hand)\b/i;
@@ -442,6 +456,11 @@ export function parseSubject(text: string): SubjectFilter {
   // A keyword counter is a counter, so the counter reading wins where both could fire.
   const keywords = counter ? undefined : parseKeywords(t);
   if (keywords) out.keyword = keywords;
+  // The negation is NOT gated on `counter`: "without flying" has no keyword-counter reading, since a
+  // permanent either has a flying counter or has no counter at all — there is no "without a flying
+  // counter" subject in the corpus.
+  const notKeywords = parseNotKeywords(t);
+  if (notKeywords) out.notKeyword = notKeywords;
   const origin = t.match(ORIGIN_ZONE);
   if (origin) out.fromZone = origin[1].toLowerCase();
   if (colors) out.colors = colors;

@@ -35,6 +35,13 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     const has = new Set(arr(producer.keyword).map((k) => k.toLowerCase()));
     if (!consumer.keyword.every((k) => has.has(k.toLowerCase()))) return false;
   }
+  // And the negation — "a creature you control WITHOUT flying". An absent producer keyword list
+  // satisfies it: printed keywords arrive free on every card, so "none recorded" really is "has
+  // none". Luminous Broodmoth returns what dies, and a flying creature is not what it returns.
+  if (consumer.notKeyword !== undefined && consumer.notKeyword.length > 0) {
+    const has = new Set(arr(producer.keyword).map((k) => k.toLowerCase()));
+    if (consumer.notKeyword.some((k) => has.has(k.toLowerCase()))) return false;
+  }
   // control: equal, or `any` on either side.
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) {
     return false;

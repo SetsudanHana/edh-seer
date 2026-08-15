@@ -95,6 +95,24 @@ export interface SubjectFilter {
    *  array — for the reason 09ce98d records: a one-sided cut leaves consumers demanding something no
    *  producer can advertise, which deletes real edges instead of narrowing false ones. */
   keyword?: string[];
+  /** Keyword abilities the subject demands the card does NOT have — "a creature you control without
+   *  flying". The `notType` shape, for keywords: `keyword` says what must be there, this says what
+   *  must not, and a subject can carry both.
+   *
+   *  Without it the narrowing vanished and the subject derived WIDER than printed: Luminous
+   *  Broodmoth's "whenever a creature you control without flying dies, return it to the battlefield"
+   *  derived as bare `{type: creature, control: you}` and claimed every FLYING creature in the deck
+   *  too — 7 false reasons the moment a named producer arrived (Saga deaths, 2026-08-15).
+   *
+   *  SMALL AND REAL, measured before the slot was added: 238 corpus matches over 233 cards, but 69
+   *  are a keyword's OWN reminder text ("deals combat damage before creatures without first strike"),
+   *  67 removal/target and 25 "can't" restrictions. **18 are trigger subjects and exactly 1 is in the
+   *  derived corpus.** Ranked by printed cards this looks like a 233-card family; counting consumers
+   *  it is Broodmoth plus Crimson Roc, Circle of Flame and Barbed Foliage.
+   *
+   *  An ABSENT producer `keyword` list satisfies it, which is correct rather than lenient: printed
+   *  keywords arrive free on every card, so "no keywords recorded" really is "has no keywords". */
+  notKeyword?: string[];
   /** A real DISJUNCTION: the subject is satisfied by ANY of these branches.
    *
    *  `type` is an OR-list and `subtype` is an OR-list, but the two are ANDed with each other, so
