@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 10;
+export const NORMALIZE_VERSION = 11;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -47,7 +47,7 @@ export const VOCAB_VERSION = 10;
  *
  *  Same shape as the 2026-08-06 finding this file already records for prose-vs-vocabulary, applied
  *  one level finer: gate each selector on the list it actually reads. */
-export const TRIGGER_VOCAB_VERSION = 10;
+export const TRIGGER_VOCAB_VERSION = 11;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -171,6 +171,33 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // by design; their value is that an ability's own emits survive with honest timing.
   "untap-step", "declare-attackers", "declare-blockers", "end-of-combat", "cleanup",
   "initiative", "city-blessing",
+  // A KEYWORD ACTION IS ALSO SOMETHING THAT HAPPENS. Found by the 2026-08-15 run itself: five cards
+  // were REFUSED with `unknown-trigger-event` for a word that had just become a legal VERB and was
+  // not in this list. Cards really do say "whenever a creature you control connives" (Iron Monger),
+  // "whenever you discover" (Curator of Sun's Creation), "whenever a creature you control explores"
+  // (Wildgrowth Walker), "whenever players finish voting" (Grudge Keeper), "whenever you manifest
+  // dread" (Paranormal Analyst). The action/trigger symmetry was missed on exactly the words added
+  // that morning. Corpus consumers: explore 5 · connive 5 · vote 3 · discover 1 · manifest dread 1.
+  "connive", "discover", "explore", "vote", "manifest-dread",
+  // The War Doctor prints BOTH of these in one line — "whenever one or more other permanents phase
+  // out and whenever one or more other cards are put into exile from anywhere". Exile is the larger
+  // by far at **59 corpus consumers**, and whether it also earns an ENGINE verb is a separate
+  // question with its own blast radius: 294 unclaimed `exile` ACTIONS are the supply side.
+  // Phasing is CR 702.25; 3 consumers.
+  "exiled", "phases-out",
+  // EVERY KEYWORD ACTION IS ALSO A TRIGGER EVENT — the general rule, after the 2026-08-15 run
+  // refused cards one at a time for exactly this. First pass added connive/discover/explore/vote/
+  // manifest-dread; the NEXT run then refused `exert` (Watchful Naga) and `forage` (Corpseberry
+  // Cultivator) on the identical shape. Whack-a-mole is the wrong response to a rule: a keyword
+  // action is something a player DOES, so "whenever you [do it]" is grammatical for all of them
+  // and a card can trigger on any. Listed rather than derived from VERBS at runtime so the two
+  // vocabularies stay independently readable and diffable.
+  "recruit", "bolster", "support", "adapt", "monstrosity", "blight", "investigate", "populate", "incubate", "manifest", "meld", "cloak", "earthbend", "goad", "regenerate", "exert", "detain", "suspect", "harness", "fateseal", "behold", "heal", "exchange", "convert", "double", "triple", "endure", "learn", "forage", "time-travel", "collect-evidence", "venture-into-the-dungeon", "face-a-villainous-choice", "waterbend", "airbend", "roll-dice", "flip-coin",
+  // DELIBERATELY NOT ADDED: `put`. Dreadhound was refused for it, but the card reads "When this
+  // creature enters, mill three cards. (Put the top three cards of your library into your
+  // graveyard.)" — its trigger is `enters` and the model answered from the REMINDER text. A word
+  // here would let that wrong answer persist instead of being refused. `enters-graveyard` and `mill`
+  // already carry the real event.
   // FOUND ONLY BY THE WHOLE-CORPUS CENSUS (`bin/corpus-trigger-census.ts`), and each is bigger than
   // every word above COMBINED. Owner's ruling 2026-08-15: the vocabulary serves any deck someone
   // brings, not the 71 calibration decks, so demand is counted over all ~34k cards. Ranking on the
