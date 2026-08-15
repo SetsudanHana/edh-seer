@@ -233,6 +233,25 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     // Lightning Greaves' haste lost that entirely. 14 corpus grant-ability actions read this way.
     return TYPE_GRANT.test(o) ? "type-grant" : "keyword-grant";
   }
+  // CR 701.10 / 701.11. `double` and `triple` joined VERBS on 2026-08-15; without a row here the
+  // word would land nowhere, and the corpus shows exactly what happens then — Gratuitous Violence
+  // ("if a creature you control would deal damage ... it deals DOUBLE that damage instead") had no
+  // doubling verb to reach for, so the clause layer answered `modify-pt` and it derived `pump`.
+  // Damage doubling read as a stat buff, on a card whose entire text is a damage multiplier.
+  //
+  // WHAT is doubled decides the kind, so the object is read rather than the verb alone. Three of the
+  // seven never-produced EFFECT_KINDS are this family (`token-doubling`, `damage-multiplier`,
+  // `enters-with-counters`) — the labels existed and nothing could emit them.
+  if (verb === "double" || verb === "triple") {
+    const o = `${action.object ?? ""} ${clauseText}`;
+    if (/\btokens?\b/i.test(o)) return "token-doubling";
+    if (/\bdamage\b/i.test(o)) return "damage-multiplier";
+    if (/\bcounters?\b/i.test(o)) return "counter-placement";
+    if (/\blife\b/i.test(o)) return "lifegain";
+    if (/\bmana\b/i.test(o)) return "mana-generation";
+    // Doubling something the object does not name is not guessable; refuse rather than pick.
+    return null;
+  }
   if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
   for (const r of ZONE_RULES) {

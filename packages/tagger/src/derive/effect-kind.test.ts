@@ -483,3 +483,16 @@ test("no named phase leaves extraPhaseName unset", () => {
   expect(extraPhaseName("target opponent", "That player takes an extra turn after this one."))
     .toBeUndefined();
 });
+
+// CR 701.10/701.11. `double` and `triple` gained a VERB on 2026-08-15 and needed somewhere to land:
+// three of the seven never-produced EFFECT_KINDS are this family, so the labels existed all along.
+test("doubling reads WHAT is doubled, because the verb alone cannot say", () => {
+  expect(actionEffectKind({ verb: "double", object: "tokens created under your control" })).toBe("token-doubling");
+  expect(actionEffectKind({ verb: "double", object: "damage dealt by creatures you control" })).toBe("damage-multiplier");
+  expect(actionEffectKind({ verb: "double", object: "counters placed on permanents you control" })).toBe("counter-placement");
+  expect(actionEffectKind({ verb: "triple", object: "the tokens" })).toBe("token-doubling");
+});
+
+test("doubling something unnamed is refused, not guessed", () => {
+  expect(actionEffectKind({ verb: "double", object: "that many instead" })).toBeNull();
+});
