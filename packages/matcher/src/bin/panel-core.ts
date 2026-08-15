@@ -27,6 +27,22 @@ export interface PanelVerdict {
   verdict: Verdict;
   cause: string;
   note: string;
+  /** WHICH MECHANISM this verdict was made against. A claim's `producer|consumer|tag` is NOT its
+   *  identity: the same triple can be asserted through an authored ability one day and through the
+   *  producer's own entry the next, and a verdict made against the first then scores the second.
+   *
+   *  Measured (Fable review, 2026-08-15): Goldspan Dragon -> Terror of the Peaks was cached `real`
+   *  for the right reason, the 2026-08-07 re-judge overturned it to `false` reading Goldspan's
+   *  TREASURE ability, and round 3 then drew that stale `false` against a claim asserting Goldspan's
+   *  own ENTRY. Origin of Metalbending -> Leyline of Resonance has the identical history. Those
+   *  became 2 of the 11 disagreements that kept precision withdrawn.
+   *
+   *  BACKWARD COMPATIBLE ON PURPOSE. Absent — which every verdict written before today is — means
+   *  "not recorded", and the claim scores exactly as it did before. A verdict that DOES carry it and
+   *  disagrees with the live claim is treated as UNJUDGED, so the mismatch surfaces as judging debt
+   *  instead of a silently wrong score. Protection accrues to new verdicts rather than invalidating
+   *  1,661 old ones. */
+  implied?: boolean;
 }
 
 /** One claim as the engine currently states it. */
@@ -81,6 +97,9 @@ export function scorePanel(
     seen.add(k);
     const v = by.get(k);
     if (!v) { out.unjudged.push(c); continue; }
+    // The verdict was made against a DIFFERENT mechanism than the engine now asserts. Owe it again
+    // rather than score it — see `PanelVerdict.implied`.
+    if (v.implied !== undefined && v.implied !== (c.implied === true)) { out.unjudged.push(c); continue; }
     if (v.verdict === "real") out.real++;
     else if (v.verdict === "false") out.false++;
     else out.uncertain++;

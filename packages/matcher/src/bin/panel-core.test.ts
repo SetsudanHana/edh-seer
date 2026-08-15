@@ -51,3 +51,30 @@ test("uncertain is excluded from precision, as in the sampling instrument", () =
   expect(s.uncertain).toBe(1);
   expect(s.precision).toBe(1);
 });
+
+// A CLAIM'S IDENTITY IS NOT `producer|consumer|tag`. The same triple can be asserted through an
+// authored ability one day and through the producer's own entry the next, and a verdict made against
+// the first then silently scores the second. Measured: Goldspan Dragon -> Terror of the Peaks was
+// cached `real` for the right reason, the 2026-08-07 re-judge overturned it to `false` reading
+// Goldspan's TREASURE ability, and round 3 drew that stale `false` against a claim asserting
+// Goldspan's own ENTRY — 2 of the 11 disagreements that kept precision withdrawn.
+test("a verdict made against a different mechanism is owed again, not scored", () => {
+  const claim = { producer: "Goldspan Dragon", consumer: "Terror of the Peaks", tag: "enters:creature" };
+  const verdict = { ...claim, verdict: "false" as const, cause: "", note: "judged the treasure ability" };
+
+  // Recorded against the AUTHORED mechanism, now asserted as the card's own entry: unjudged.
+  const mismatch = scorePanel([{ ...claim, implied: true }], [{ ...verdict, implied: false }]);
+  expect(mismatch.unjudged).toHaveLength(1);
+  expect(mismatch.false).toBe(0);
+
+  // Same mechanism on both sides: scored as before.
+  const agree = scorePanel([{ ...claim, implied: true }], [{ ...verdict, implied: true }]);
+  expect(agree.false).toBe(1);
+  expect(agree.unjudged).toHaveLength(0);
+
+  // BACKWARD COMPATIBLE: a verdict that never recorded a mechanism — which is every row written
+  // before 2026-08-15 — scores exactly as it always did, rather than invalidating 1,661 of them.
+  const legacy = scorePanel([{ ...claim, implied: true }], [verdict]);
+  expect(legacy.false).toBe(1);
+  expect(legacy.unjudged).toHaveLength(0);
+});
