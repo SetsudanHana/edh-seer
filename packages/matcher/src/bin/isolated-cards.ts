@@ -15,7 +15,7 @@ import { join } from "node:path";
 import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@mtg/data";
 import type { CardTags } from "@mtg/tagger";
 import { ComboIndex } from "@mtg/engine";
-import { analyzeDeckStructured } from "../index.js";
+import { analyzeDeckStructured, loadTokenTags } from "../index.js";
 import type { DeckCard } from "../types.js";
 
 const DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
@@ -23,6 +23,13 @@ const SHOW_ALL = process.argv.includes("--all");
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
 const derived = store.db.collection<CardTags>("cardTagsDerived");
+// TOKENS AS NODES (Task 6/7). Without this, `analyzeDeckStructured` builds zero token nodes and
+// `report.edges` is silently the real-card-only view -- a token-mediated maker (Task 7) reads as
+// isolated here even though its edge to the payoff survives two hops away, through a node this bin
+// never built. Same wiring as `population-compare.ts`/`panel-score.ts`; measuring the population
+// nothing ships is the exact `build-population.ts`-watching-flat-tags defect this repo already paid
+// for once.
+const tokenTags = await loadTokenTags(store.db);
 
 interface Row {
   decks: number; land: boolean; trigger: boolean; emit: boolean; effect: boolean;
@@ -46,7 +53,7 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
     meta.set(doc.name, { land: /Land/i.test(String(doc.typeLine ?? "")), oracle: String(doc.oracleText ?? ""), tags });
     deck.push({ card: docToCard(doc as never), tags });
   }
-  const report = analyzeDeckStructured(deck, sections.commanders, undefined, undefined, new ComboIndex([]));
+  const report = analyzeDeckStructured(deck, sections.commanders, undefined, undefined, new ComboIndex([]), undefined, tokenTags);
   const connected = new Set<string>();
   for (const e of report.edges) { connected.add(e.a); connected.add(e.b); }
 

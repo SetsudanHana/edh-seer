@@ -142,6 +142,73 @@ test("an instant does not produce an implied enters edge", () => {
   expect(reasons.some((r) => r.tag.startsWith("enters:"))).toBe(false);
 });
 
+// TASK 7 (tokens-as-nodes): tokens mediate. Deadly Dispute makes a Treasure; the Treasure token
+// is its own node on the graph (Task 6) and can supply its own "an artifact enters" fact to any
+// payoff. Before this task the maker ALSO supplied that fact directly -- one relation stated
+// twice. `directedReasons` is called (not `pairReasons`) to isolate the maker->payoff direction,
+// since the reverse direction and `meldReason` carry no signal for this shape.
+const treasureMaker = () => ({
+  card: { name: "Deadly Dispute", typeLine: "", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+  tags: {
+    oracleId: "Deadly Dispute", schemaVersion: 1, promptVersion: 1, model: "t",
+    // A SORCERY, not a creature: `base()`'s creature body would imply its own non-token
+    // `enters:creature` and mask exactly the shortcut this test targets, the same reason the
+    // pre-existing "token gate" test above uses a sorcery producer.
+    characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{
+      kind: "on-cast",
+      effect: { kind: "token-generation", subject: { type: "artifact", subtype: "treasure", control: "you", token: true } },
+      // Both verbs `create: ["create-token", "enters"]` (tagger/derive/emits.ts) produces off the
+      // same "create a Treasure token" sentence, same subject either way.
+      emits: [
+        { verb: "create-token", subject: { type: "artifact", subtype: "treasure", control: "you", token: true } },
+        { verb: "enters", subject: { type: "artifact", subtype: "treasure", control: "you", token: true } },
+      ],
+    }],
+  } as CardTags,
+});
+const treasureNode = () => ({
+  card: { name: "Treasure", typeLine: "Artifact — Treasure", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+  tags: {
+    oracleId: "treasure-token", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["artifact"], subtypes: ["treasure"], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: true, keywords: [] },
+    abilities: [],
+  } as CardTags,
+  isToken: true,
+});
+const artifactPayoff = () => base("Artifact ETB Payoff", [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { type: "artifact", control: "you", token: null } },
+  effect: { kind: "draw-card" },
+}]);
+
+test("token mediation: a Treasure maker's own token-entry event no longer edges a nontoken payoff directly", () => {
+  const reasons = directedReasons(treasureMaker(), artifactPayoff(), H);
+  expect(reasons.some((r) => r.tag.startsWith("enters:"))).toBe(false);
+});
+
+test("token mediation: the Treasure NODE's own entry still edges the payoff -- the two-hop path stands", () => {
+  const reasons = directedReasons(treasureNode(), artifactPayoff(), H);
+  expect(reasons.some((r) => r.tag === "enters:artifact")).toBe(true);
+});
+
+test("CR 614 multiplier still edges the maker, never the token, after mediation (owner's ruling, verified not assumed)", () => {
+  // "If you would create one or more Treasure tokens, instead create twice that many" derives to a
+  // TRIGGER on `create-token` with no emit of its own (derive/replacement.ts) -- it consumes the
+  // maker's action, so it must keep its edge to Deadly Dispute even though the mediation rule above
+  // suppresses the SAME producer's `enters` shortcut one verb over.
+  const doubler = base("Treasure Doubler", [{
+    kind: "triggered",
+    trigger: { verbs: ["create-token"], subject: { type: "artifact", subtype: "treasure", control: "you", token: true } },
+    effect: { kind: "token-doubling" },
+  }]);
+  const reasons = directedReasons(treasureMaker(), doubler, H);
+  expect(reasons.some((r) => r.tag.startsWith("create-token:"))).toBe(true);
+  // And confirm the mediation rule really did fire on this same producer for the ordinary payoff --
+  // otherwise this test would pass for the wrong reason (no suppression at all).
+  expect(directedReasons(treasureMaker(), artifactPayoff(), H).some((r) => r.tag.startsWith("enters:"))).toBe(false);
+});
+
 test("themeSubjectKey prefers subtype, then type, else any", () => {
   expect(themeSubjectKey({ subtype: "wizard", control: "you", token: null })).toBe("wizard");
   expect(themeSubjectKey({ type: "creature", control: "you", token: null })).toBe("creature");
@@ -749,11 +816,16 @@ test("reasons record whether the producer side was baseline or authored", () => 
     effect: { kind: "draw-card" },
   }]);
   const vanilla = base("Vanilla Bear", []);
-  const maker = base("Token Maker", [{
-    kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
-    effect: { kind: "token-generation", subject: { type: "creature", control: "you", token: true } },
-    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }],
+  // AUTHORED, but not a token emit. Task 7 (tokens-as-nodes) suppresses a maker's own authored
+  // token-entry event as a direct producer -- the token's own node supplies it two hops over
+  // instead -- so a token emit can no longer stand in for "authored surplus" here (it used to).
+  // An authored reanimation-style enters emit exercises the identical baseline/authored bookkeeping
+  // without going anywhere near that gate.
+  const maker = base("Reanimator", [{
+    kind: "activated",
+    cost: "{2}{B}",
+    effect: { kind: "graveyard-recursion" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: false } }],
   }]);
 
   const fromVanilla = directedReasons(vanilla, payoff, H);
@@ -762,20 +834,22 @@ test("reasons record whether the producer side was baseline or authored", () => 
 
   const fromMaker = directedReasons(maker, payoff, H);
   const authored = fromMaker.filter((r) => r.impliedProducer !== true);
-  expect(authored.length, "the authored token emit is surplus, not baseline").toBeGreaterThan(0);
+  expect(authored.length, "the authored reanimation emit is surplus, not baseline").toBeGreaterThan(0);
 });
 
 // Regression: a creature that satisfies a "whenever a creature enters" payoff BOTH by baseline
-// (it is a creature) AND by an authored token-generation emit must not double-count. Without
-// excluding impliedProducer from pairReasons' dedup key, this pair scores 2 -- a plain creature
-// token-maker against a ubiquitous ETB payoff scoring higher than it should purely because it
-// also happens to be a creature. See edges.ts pairReasons.
+// (it is a creature) AND by an authored enters emit must not double-count. Without excluding
+// impliedProducer from pairReasons' dedup key, this pair scores 2 -- a plain creature reanimator
+// against a ubiquitous ETB payoff scoring higher than it should purely because it also happens to
+// be a creature. See edges.ts pairReasons. (Not a token emit, deliberately: Task 7 suppresses a
+// token-entry emit as a direct producer before dedup ever sees it, which would make this pass for
+// the wrong reason -- one supply, not two collapsed into one.)
 test("pairReasons does not double-count a producer that satisfies one trigger by both baseline and authored emit", () => {
-  const maker = base("Token Maker", [{
-    kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
-    effect: { kind: "token-generation", subject: { type: "creature", control: "you", token: true } },
-    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }],
+  const maker = base("Reanimator", [{
+    kind: "activated",
+    cost: "{2}{B}",
+    effect: { kind: "graveyard-recursion" },
+    emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: false } }],
   }]);
   const payoff = base("ETB Payoff", [{
     kind: "triggered",

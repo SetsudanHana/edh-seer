@@ -442,6 +442,27 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       for (const rawVerb of a.trigger.verbs) {
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
         if (!eventMatches(e, t, h)) continue;
+        // TOKENS MEDIATE (Task 7, tokens-as-nodes, 2026-08-16). A maker's own "a Treasure enters"
+        // event and the Treasure NODE's own implied "it enters" event (Task 6 -- `selfSubject` in
+        // implied.ts now reads `chars.token` instead of hardcoding false) state the identical fact
+        // twice: once as a direct maker->payoff edge, once as the two-hop maker->token->payoff path
+        // the token node already supplies on its own (it rides the same `pairPool` every other card
+        // does, per `analyze.ts`). Drop the shortcut; the two-hop path stands.
+        //
+        // TWO EXEMPTIONS, both required for the design to hold together and both PROVEN by a test in
+        // edges.test.ts rather than assumed:
+        //  - the PRODUCER must not itself be a token node. A token's own implied `enters` ALSO
+        //    carries `subject.token === true` -- that is exactly what lets it supply the second hop --
+        //    so a token-blind rule would delete that hop along with the first and leave no path at
+        //    all between the maker and its payoffs.
+        //  - `create-token` is never suppressed. It is not a legal TRIGGERS member the clause layer
+        //    can produce (normalize-prompt.ts's TRIGGERS has no such event), so the only ability in
+        //    the corpus with `trigger.verbs` including it is a CR 614 multiplier
+        //    (derive/replacement.ts) -- and a token never "creates a token" by existing, so there is
+        //    no second hop for that verb to duplicate. The owner's ruling: a multiplier consumes the
+        //    MAKER's action, never the token's, and this is why the generic rule needs no special case
+        //    for it once the verb is excluded.
+        if (e.subject.token === true && t.verb !== "create-token" && !p.isToken && !c.isToken) continue;
         // A SELF trigger watches ONE permanent — its own. `selfEtbSelfSupplied` excludes implied and
         // token producers, but an AUTHORED emit that puts some OTHER object onto the battlefield
         // survived it, because a self subject names no type and so checks nothing: Windswept Heath
