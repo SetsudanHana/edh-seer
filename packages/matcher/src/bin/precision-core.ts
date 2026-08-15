@@ -116,6 +116,17 @@ export function claimFor(tag: string, producer: string, consumer: string, implie
   if (family === "counter-added") {
     return `${producer} puts counters on ${subject}; ${consumer} benefits from them being there`;
   }
+  // A land finder is a RELATION, not an event: nothing triggers, the card is simply findable.
+  // Without this the worksheet read "Farseek causes ramp-target:plains; Plains triggers on it".
+  if (family === "ramp-target") {
+    return `${producer} can search up ${consumer}, which is ${subject === "basic" ? "a basic land" : `a ${subject}`}`;
+  }
+  if (family === "scales") {
+    return `${producer} puts ${subject} cards into a graveyard; ${consumer} counts them and gets bigger`;
+  }
+  if (family === "tutor") {
+    return `${producer} can search up ${consumer}`;
+  }
   if (family === "static") {
     return `${producer}'s ${subject.replace(/-/g, " ")} applies to ${consumer}`;
   }

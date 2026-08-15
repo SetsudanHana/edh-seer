@@ -659,9 +659,41 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       ...(a.effect.subject.anyOf ?? []).flatMap((b) => list(b.subtype)),
     ];
     const narrows = subs.length > 0 || (a.effect.subject.stats?.length ?? 0) > 0;
-    if (!narrows) continue;
-    if (subs.length > 0 && subs.every((s) => LAND_SUBTYPES.has(s))) continue;
+    // A LAND FINDER IS ITS OWN RELATION, and it is the one the ramp diagnostic is built on (owner's
+    // ruling, 2026-08-15, reversing the blanket land exclusion above). Farseek relates to the Plains,
+    // Islands, Swamps and Mountains it can actually fetch — including every dual carrying one of
+    // those basic types — and Rampant Growth to the basics. That relation is what lets a report say
+    // "your ramp finds 4 targets for this colour and 11 for that one", which is a deckbuilding fact
+    // no other channel in the engine can state. `bin/ramp-coverage.ts` is its consumer.
+    //
+    // TWO SHAPES, because the cards say it two ways: a BASIC LAND TYPE list (Farseek, the fetchlands)
+    // and the `basic` supertype (Rampant Growth, Cultivate, Evolving Wilds). A bare "a land card"
+    // (Expedition Map, Sowing Mycospawn — 2 cards) stays refused: every land answers it, so it names
+    // no particular card, which is the same bar the typal tutors clear.
+    //
+    // CONTROL IS LOAD-BEARING HERE. Path to Exile and Assassin's Trophy search for a basic land too —
+    // for the OPPONENT, as compensation for removal — and derive `control: "opp"`. Claiming they ramp
+    // YOUR mana base is a wrong sentence. `any` is kept: it is the parser's "could not tell", and
+    // Cultivate and Evolving Wilds both land there.
+    const landSubtypes = subs.length > 0 && subs.every((s) => LAND_SUBTYPES.has(s));
+    const basicLand = a.effect.subject.basic === true && list(a.effect.subject.type).includes("land");
     const found = characteristicsSubject(c.tags);
+    if (landSubtypes || basicLand) {
+      if (a.effect.subject.control === "opp") continue;
+      if (!subjectMatches(found, a.effect.subject, h)) continue;
+      reasons.push({
+        tag: `ramp-target:${landSubtypes ? themeSubjectKey(a.effect.subject) : "basic"}`,
+        text: `${p.card.name} can fetch ${c.card.name}`,
+        effectKind: a.effect.kind,
+        repeatability:
+          a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
+        scaling: a.effect.scaling,
+        consumer: c.card.name,
+        producer: p.card.name,
+      });
+      continue;
+    }
+    if (!narrows) continue;
     if (!subjectMatches(found, a.effect.subject, h)) continue;
     // Key on the branch that MATCHED. "An artifact or Dragon card" keyed as `tutor:artifact` would
     // report a Dragon as an artifact — the same defect themeSubjectKey documents for negations.

@@ -1673,3 +1673,44 @@ test("a graveyard fill grows a per-graveyard payoff, gated on WHAT is counted", 
   // 676 candidate pairs in the 71 decks become 163 real ones.
   expect(reasons("creature", "land")).toHaveLength(0);
 });
+
+// A LAND FINDER RELATES TO WHAT IT CAN FETCH (owner's ruling 2026-08-15). The blanket land exclusion
+// was right that a fetchland is not a "synergy" in the payoff sense and wrong that it says nothing:
+// which lands your ramp can actually reach is a deckbuilding fact, and `bin/ramp-coverage.ts` states
+// it as "your ramp finds N of this type".
+test("a land finder edges to the lands it can fetch, and to no others", () => {
+  const finder = (subject: Record<string, unknown>): CardTags => ({
+    oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "on-cast", effect: { kind: "top-manipulation", subject: subject as never } }],
+  });
+  const land = (types: string[], subtypes: string[]): CardTags => ({
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types, subtypes, colors: [], identity: [], cmc: 0,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [],
+  });
+  const reasons = (f: CardTags, l: CardTags) => directedReasons(
+    { card: { name: "Finder" } as DeckCard["card"], tags: f },
+    { card: { name: "Land" } as DeckCard["card"], tags: l }, H,
+  ).filter((r) => r.tag.startsWith("ramp-target:"));
+
+  // Farseek: "a Plains, Island, Swamp, or Mountain card" — the basics AND every dual carrying one of
+  // those types, which is why Godless Shrine is a legal Farseek target and a Forest is not.
+  const farseek = finder({ control: "you", token: null, subtype: ["plains", "island", "swamp", "mountain"] });
+  expect(reasons(farseek, land(["land"], ["plains"]))).toHaveLength(1);
+  expect(reasons(farseek, land(["land"], ["plains", "swamp"]))).toHaveLength(1);
+  expect(reasons(farseek, land(["land"], ["forest"]))).toHaveLength(0);
+
+  // Rampant Growth says it the other way — the `basic` SUPERTYPE — so it finds basics only, never
+  // the dual that shares a type with them.
+  const rampant = finder({ control: "you", token: null, basic: true, type: "land" });
+  expect(reasons(rampant, land(["basic", "land"], ["forest"]))).toHaveLength(1);
+  expect(reasons(rampant, land(["land"], ["forest"]))).toHaveLength(0);
+
+  // Path to Exile searches for a basic land FOR THE OPPONENT, as compensation for removal. Claiming
+  // it ramps your mana base is a wrong sentence, and `control` is the only thing that separates them.
+  const pathToExile = finder({ control: "opp", token: null, basic: true, type: "land" });
+  expect(reasons(pathToExile, land(["basic", "land"], ["forest"]))).toHaveLength(0);
+});
