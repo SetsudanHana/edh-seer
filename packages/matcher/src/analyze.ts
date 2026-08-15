@@ -135,7 +135,6 @@ export function analyzeDeckStructured(
   // still wildcard onto a token this card never actually makes, unless the pair loop below only ever
   // asks the question for a (maker, token-it-structurally-creates) pair in the first place.
   const tokenNodes: DeckCard[] = [];
-  const tokenNodeNames = new Set<string>();
   const producerTokenOracles = new Map<string, Set<string>>();
   if (tokenTags) {
     const byOracle = new Map<string, DeckCard>();
@@ -148,7 +147,6 @@ export function analyzeDeckStructured(
           node = tokenDeckCard(ref, tags);
           byOracle.set(tags.oracleId, node);
           tokenNodes.push(node);
-          tokenNodeNames.add(node.card.name);
         }
         let oracles = producerTokenOracles.get(dc.card.name);
         if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
@@ -168,6 +166,19 @@ export function analyzeDeckStructured(
   // `createsReasons` demands.
   const pairPool: DeckCard[] = [...unique, ...tokenNodes];
   const edges: SynergyEdge[] = [];
+  // FINDINGS 1/2 (owner review, 2026-08-16), FIXED PROPERLY on re-review (2026-08-16): the first cut
+  // rebuilt this filter AFTER the fact by matching `edge.a`/`edge.b` against a set of token NAMES --
+  // wrong, because names are not unique. 10 of the 71 calibration decks run a real card whose name
+  // matches a token it creates (e.g. a card named "Treasure" alongside the Treasure token), and the
+  // name filter silently dropped that real card's edges from `report.archetypes[].cards` and
+  // `themeMembership`, same failure class as the leak it replaced but worse -- data loss with no
+  // error, instead of a cosmetic extra entry.
+  //
+  // Fixed by tagging IDENTITY at the point each edge is created, where `a.isToken`/`b.isToken` are
+  // still the actual node objects and cannot collide: `cardEdges` collects only the pairs where
+  // NEITHER side is a token node, built alongside `edges` in the same loop rather than reconstructed
+  // from it afterward. `report.edges` keeps every token edge, for the graph.
+  const cardEdges: SynergyEdge[] = [];
   for (let i = 0; i < pairPool.length; i++) {
     for (let j = i + 1; j < pairPool.length; j++) {
       const a = pairPool[i], b = pairPool[j];
@@ -176,21 +187,13 @@ export function analyzeDeckStructured(
         reasons.push(...createsReasons(a, b, hierarchy));
       }
       if (reasons.length > 0) {
-        edges.push({ a: a.card.name, b: b.card.name, score: reasons.length, reasons });
+        const edge = { a: a.card.name, b: b.card.name, score: reasons.length, reasons };
+        edges.push(edge);
+        if (!a.isToken && !b.isToken) cardEdges.push(edge);
       }
     }
   }
   edges.sort((x, y) => y.score - x.score);
-
-  // FINDINGS 1/2 (owner review, 2026-08-16): a token-inclusive `edges` fed straight into
-  // `groupEdgesByArchetype` and `themeMembership` leaked token names into `report.archetypes[].cards`
-  // (both read card names off reasons/edges with no token filter -- mechanisms.ts's
-  // `g.cards.add(edge.a/b)`, themes.ts's `payoffs.add(r.consumer)`/`surplus.add(r.producer)`) and
-  // inflated `report.themeMembership[].surplus/payoffs/baseline` (301 instances measured across the
-  // 71 decks). Filtered ONCE here rather than inside either shared function, alongside the other five
-  // token exclusions (`computeDeckMath`, `deckFreq`, `computeRoles`, `detectBuildCategories`,
-  // `ratedCards`) -- `report.edges` itself keeps every token edge, for the graph.
-  const cardEdges = edges.filter((e) => !tokenNodeNames.has(e.a) && !tokenNodeNames.has(e.b));
 
   // Deck-local frequency of theme tags (cards whose abilities carry the tag).
   const deckFreq = new Map<string, number>();

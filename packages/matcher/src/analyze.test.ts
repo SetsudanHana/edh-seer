@@ -845,3 +845,54 @@ test("Findings 1/2: a token node's name does not leak into archetype card lists 
   expect(entersWizard.surplus).toBeGreaterThanOrEqual(1); // Inalla's authored emit, unaffected
   expect(entersWizard.baseline).toBe(0); // would be >=1 (the token) if the leak were still present
 });
+
+// Round-1 re-review (2026-08-16): the fix above filtered `cardEdges` by matching `edge.a`/`edge.b`
+// against a set of token NAMES -- wrong, because names are not unique. 10 of the 71 calibration
+// decks run a real card whose name matches a token IT creates (witnessed live: "Coruscation Mage" in
+// kuja-spellslinger.txt makes a "Coruscation Mage" copy token). The name filter dropped every edge
+// naming that string, real-card edges included -- silent data loss, worse than the leak it replaced.
+// Reproduces the collision directly: "Twin" is a real card that (a) creates a token ALSO named
+// "Twin" and (b) has a genuine, unrelated static edge to "Payoff". A name-based filter zaps both;
+// an identity-based one (`a.isToken`/`b.isToken` at edge-creation time) must keep (b).
+const twinStaticAbility: CardTags["abilities"] = [{
+  kind: "static",
+  effect: { kind: "pump", subject: { subtype: "elf", control: "you", token: null } },
+}];
+const twinTokenMakerAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: false } },
+  effect: { kind: "token-generation", subject: { subtype: "twin-copy", control: "you", token: true } },
+  emits: [{ verb: "create-token", subject: { subtype: "twin-copy", control: "you", token: true } }],
+}];
+test("a real card whose name collides with the token it creates keeps its OWN edges in archetypes[].cards", () => {
+  const makerCard = {
+    name: "Twin", typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 0,
+    allParts: [{ component: "token", name: "Twin", typeLine: "Token Creature — Twin", printingId: "twin-printing-id" }],
+  } as never;
+  const maker: DeckCard = {
+    card: makerCard,
+    tags: {
+      oracleId: "Twin", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [...twinStaticAbility, ...twinTokenMakerAbility],
+    },
+  };
+  const payoff = dc("Payoff", [], ["elf"]);
+  const twinTokenTags: CardTags = {
+    oracleId: "token-twin-oracle", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["token", "creature"], subtypes: ["twin-copy"], colors: [], identity: [], cmc: 0, power: "2", toughness: "2", token: true, keywords: [] },
+    abilities: [],
+  };
+  const report = analyzeDeckStructured(
+    [maker, payoff], undefined, H, undefined, undefined, undefined,
+    (ref) => (ref.printingId === "twin-printing-id" ? twinTokenTags : null),
+  );
+  // Sanity: the collision is real -- two edges share the endpoint name "Twin", one to the token,
+  // one to a real card, so the exclusion below is being tested against the actual failure shape.
+  expect(report.edges.filter((e) => e.a === "Twin" || e.b === "Twin").length).toBe(2);
+  expect(report.edges.some((e) => [e.a, e.b].includes("Twin") && [e.a, e.b].includes("Payoff"))).toBe(true);
+
+  const cardsInArchetypes = new Set((report.archetypes ?? []).flatMap((g) => g.cards));
+  expect(cardsInArchetypes.has("Twin")).toBe(true); // the REAL card's own static edge must survive
+  expect(cardsInArchetypes.has("Payoff")).toBe(true); // its genuine partner must survive too
+});
