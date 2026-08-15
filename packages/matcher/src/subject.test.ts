@@ -299,3 +299,17 @@ test("a negated keyword refuses a producer that HAS it, and passes one that does
   expect(subjectMatches(ground, consumer, H)).toBe(true);
   expect(subjectMatches(vanilla, consumer, H)).toBe(true);
 });
+
+test("a subject demanding a NAME is satisfied only by that card", () => {
+  const h: Hierarchy = {};
+  const tardis = { control: "you" as const, token: false, named: "TARDIS", type: ["artifact"] };
+  const other = { control: "you" as const, token: false, named: "Sol Ring", type: ["artifact"] };
+  // Compared lowercased: the demand comes from lowercased clause text, the supply from the printed
+  // name. The First Doctor searching for "a card named TARDIS" is the corpus witness.
+  expect(subjectMatches(tardis, { control: "you", token: null, named: "tardis" }, h)).toBe(true);
+  expect(subjectMatches(other, { control: "you", token: null, named: "tardis" }, h)).toBe(false);
+  // A consumer that does not ask is unaffected — the same asymmetry legendary, basic and commander have.
+  expect(subjectMatches(other, { control: "you", token: null }, h)).toBe(true);
+  // And a producer with no name cannot satisfy a demand for one.
+  expect(subjectMatches({ control: "you", token: false }, { control: "you", token: null, named: "tardis" }, h)).toBe(false);
+});

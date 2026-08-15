@@ -142,6 +142,11 @@ export interface SubjectFilter {
    *  PARTIAL by construction: a branch carries only what DIFFERS. The matcher merges the outer
    *  subject into each branch before testing, so `control` and `token` arrive from there. */
   anyOf?: Partial<SubjectFilter>[];
+  /** A CARD NAME the subject demands, lowercased — "a card named TARDIS", "creatures named Rat
+   *  Colony". No other slot can hold it: a name is not a type, a subtype or a supertype. Mostly a
+   *  singleton pointer in EDH, but 13 corpus cards say "a deck can have any number of cards named
+   *  ..." and all 13 count their own name, which is an archetype the engine could not see at all. */
+  named?: string;
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** Which phase or step an `extra-phase` effect grants, over a closed CR vocabulary: `untap`,

@@ -1714,3 +1714,37 @@ test("a land finder edges to the lands it can fetch, and to no others", () => {
   const pathToExile = finder({ control: "opp", token: null, basic: true, type: "land" });
   expect(reasons(pathToExile, land(["basic", "land"], ["forest"]))).toHaveLength(0);
 });
+
+// THE ARCHETYPE NO CALIBRATION DECK CONTAINS. 13 corpus cards say "a deck can have any number of
+// cards named ..." and all 13 count their own name — Dragon's Approach runs 30 copies, Rat Colony
+// and Shadowborn Apostle likewise. None is in the 71 decks, so population and panel are blind to
+// this by construction and a unit test is the only instrument that can see it at all.
+test("a card that counts its own name reaches its other copies, and nothing else", () => {
+  const ratColony = (): CardTags => ({
+    oracleId: "rat", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: ["rat"], colors: ["B"], identity: ["B"], cmc: 2,
+      power: "1", toughness: "1", token: false, keywords: [] },
+    // "Rat Colony gets +1/+0 for each other creature you control named Rat Colony."
+    abilities: [{
+      kind: "static",
+      effect: { kind: "pump", subject: { control: "you", token: null, type: "creature", named: "rat colony" } },
+    }],
+  });
+  const plainRat = (): CardTags => ({
+    oracleId: "other", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: ["rat"], colors: ["B"], identity: ["B"], cmc: 1,
+      power: "1", toughness: "1", token: false, keywords: [] },
+    abilities: [],
+  });
+  const between = (aName: string, aTags: CardTags, bName: string, bTags: CardTags) => directedReasons(
+    { card: { name: aName } as DeckCard["card"], tags: aTags },
+    { card: { name: bName } as DeckCard["card"], tags: bTags }, H,
+  ).filter((r) => r.tag.startsWith("static:"));
+
+  // Another copy IS the payoff — quantities are expanded into separate deck entries, so two copies
+  // are two nodes and the relation between them is real.
+  expect(between("Rat Colony", ratColony(), "Rat Colony", ratColony())).toHaveLength(1);
+  // A different Rat is not. Without the name slot this anthem reached every Rat in the deck, which
+  // is the defect the CS benchmark recorded as our one missing qualifier.
+  expect(between("Rat Colony", ratColony(), "Marrow-Gnawer", plainRat())).toHaveLength(0);
+});

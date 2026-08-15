@@ -17,6 +17,10 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // humanizeEvent then rendered, to the user, as "an artifact being cast" about an instant, and
   // which cardThemeTags grouped with artifact-cast decks. A subtype is more specific still, so it
   // keeps priority over both.
+  // A NAME outranks everything below it — it identifies ONE card, which is as specific as a subject
+  // gets. Only 10 clauses in the derived corpus carry one, so the theme fragmentation this could
+  // cause is bounded, and a name really is its own theme where it appears.
+  if (s.named !== undefined) return s.named;
   const negated = s.notType ?? [];
   // A DISJUNCTION holds its type/subtype in the branches, so a subject with `anyOf` has neither on
   // the outside and would key as "any" — turning Prowl's `enters:creature` into `enters:any` and
@@ -73,7 +77,7 @@ export function cardCaresTags(tags: CardTags): Set<string> {
 }
 
 /** The card's characteristics expressed as a concrete subject, for static-edge matching. */
-function characteristicsSubject(tags: CardTags): SubjectFilter {
+function characteristicsSubject(tags: CardTags, name?: string): SubjectFilter {
   const c = tags.characteristics;
   const types = c.types.map((t) => t.toLowerCase());
   const subtypes = c.subtypes.map((t) => t.toLowerCase());
@@ -84,6 +88,10 @@ function characteristicsSubject(tags: CardTags): SubjectFilter {
     // card's self-triggers. The same both-sides lesson `legendary` records at 09ce98d: a one-sided
     // stamp deletes real edges instead of narrowing false ones.
     ...(c.commander === true ? { commander: true as const } : {}),
+    // The card's own NAME, so a subject demanding one can be satisfied. Threaded from the DeckCard
+    // rather than read off the tags, because `CardTags` carries an oracleId and characteristics and
+    // has never carried the printed name. Only the callers that judge a card's identity pass it.
+    ...(name !== undefined ? { named: name } : {}),
     ...(isHistoric(types, subtypes) ? { historic: true as const } : {}),
     // The supertype is already in `types`, but `type` is an OR list on a consumer subject, so a
     // legendary demand cannot be expressed there. Lifted to its own flag, as historic is.
@@ -461,7 +469,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           // state no type line carries. Keeping it made The Great Henge unable to put a +1/+1
           // counter on Dusk Legion Duelist, whose trigger watches exactly that.
           const { counter: _stateOnly, ...printedMatchable } = identity;
-          if (!subjectMatches(characteristicsSubject(c.tags), printedMatchable, h)) continue;
+          if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) continue;
         }
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         reasons.push({
@@ -509,7 +517,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         // itself.
         if (e.subject.self === true) continue;
         const { zone: _fillZone, ...fillIdentity } = e.subject;
-        if (!subjectMatches(characteristicsSubject(c.tags), fillIdentity, h)) continue;
+        if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), fillIdentity, h)) continue;
       }
       const repeatability =
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
@@ -613,7 +621,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated
     // counter-presence pass below is what supplies that state.
     const { counter: _stateOnly, ...printedMatchable } = a.effect.subject;
-    if (!subjectMatches(characteristicsSubject(c.tags), printedMatchable, h)) continue;
+    if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) continue;
     reasons.push({
       // A non-static ability keeps the `${kind}:${subject}` shape the graveyard-recursion and
       // counter-presence passes use; `static:` stays reserved for what cardThemeTags calls static.
@@ -658,7 +666,11 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       ...list(a.effect.subject.subtype),
       ...(a.effect.subject.anyOf ?? []).flatMap((b) => list(b.subtype)),
     ];
-    const narrows = subs.length > 0 || (a.effect.subject.stats?.length ?? 0) > 0;
+    // A NAME narrows harder than any subtype: it picks out one card. The First Doctor searches for
+    // "a card named TARDIS" and derived a bare `top-manipulation` the gate refused as unnarrowed, so
+    // the most specific tutor in the corpus was the one that formed nothing.
+    const narrows = subs.length > 0 || (a.effect.subject.stats?.length ?? 0) > 0
+      || a.effect.subject.named !== undefined;
     // A LAND FINDER IS ITS OWN RELATION, and it is the one the ramp diagnostic is built on (owner's
     // ruling, 2026-08-15, reversing the blanket land exclusion above). Farseek relates to the Plains,
     // Islands, Swamps and Mountains it can actually fetch — including every dual carrying one of
@@ -677,7 +689,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     // Cultivate and Evolving Wilds both land there.
     const landSubtypes = subs.length > 0 && subs.every((s) => LAND_SUBTYPES.has(s));
     const basicLand = a.effect.subject.basic === true && list(a.effect.subject.type).includes("land");
-    const found = characteristicsSubject(c.tags);
+    const found = characteristicsSubject(c.tags, c.card.name);
     if (landSubtypes || basicLand) {
       if (a.effect.subject.control === "opp") continue;
       if (!subjectMatches(found, a.effect.subject, h)) continue;

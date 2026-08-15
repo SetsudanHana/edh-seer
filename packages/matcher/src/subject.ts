@@ -32,6 +32,11 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // And the second supertype. This one matters most where the emit is the FILTER (the authored-emit
   // identity check in edges.ts): "search for a basic land card" was satisfied by every nonbasic land.
   if (consumer.basic === true && producer.basic !== true) return false;
+  // A CARD NAME. Same asymmetry as every qualifier above: a consumer that does not ask is unaffected,
+  // one that DOES ask is satisfied only by the card bearing that name. Compared lowercased, because
+  // the demand is parsed from lowercased clause text while the supply is the printed name.
+  if (consumer.named !== undefined
+    && consumer.named.toLowerCase() !== (producer.named ?? "").toLowerCase()) return false;
   // Printed keyword abilities, ALL of them — "creatures you control with flying". Not a type, so no
   // other field could hold it and the narrowing used to vanish: Favorable Winds anthemed every
   // creature. The producer side is its printed `keywords` array, stamped by `characteristicsSubject`

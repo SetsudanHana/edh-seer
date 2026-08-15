@@ -515,3 +515,17 @@ test("an ordinary subject records no negated keyword", () => {
   expect(parseSubject("target creature").notKeyword).toBeUndefined();
   expect(parseSubject("another creature you control").notKeyword).toBeUndefined();
 });
+
+// A CARD NAME is the one qualifier no other slot can hold, and the CS benchmark recorded it as the
+// single real gap against their qualifier set. EDH is singleton, so a name usually points at one
+// card — but 13 corpus cards say "a deck can have any number of cards named ..." and all 13 count
+// their own, which is an archetype (Dragon's Approach, Shadowborn Apostle, Rat Colony).
+test("a subject can name a card", () => {
+  expect(parseSubject("a card named TARDIS").named).toBe("tardis");
+  expect(parseSubject("creatures you control named Rat Colony").named).toBe("rat colony");
+  // The name stops before the ZONE, which is `fromZone`'s job — otherwise the name becomes
+  // "rite of flame in each graveyard" and matches nothing ever.
+  expect(parseSubject("each card named Rite of Flame in each graveyard").named).toBe("rite of flame");
+  // No name, no field.
+  expect(parseSubject("a creature you control").named).toBeUndefined();
+});

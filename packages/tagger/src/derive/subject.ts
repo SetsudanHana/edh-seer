@@ -443,6 +443,11 @@ const COMMANDER = /\b(?:a|your|another|each|target)?\s*commanders?\b/i;
 
 const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|hand)\b/i;
 
+/** "a card named TARDIS", "creatures named Rat Colony", "cards named Dragon's Approach in your
+ *  graveyard". The name runs to a comma, a preposition, or the end — never past one, or the zone
+ *  ends up inside the name. */
+const NAMED = /\bnamed\s+([^,.]+?)(?=\s+(?:in|on|from|under|with|that|you|an?\b|to)\s|[,.]|$)/i;
+
 export function parseSubject(text: string): SubjectFilter {
   const t = text.toLowerCase().trim();
   const { type, notType, umbrella, plural } = parseTypes(t);
@@ -469,6 +474,17 @@ export function parseSubject(text: string): SubjectFilter {
   // fact, so only the demand is readable here; the supply is stamped per deck by the matcher.
   // Anchored to avoid "commander damage" (a different concept) and the Commander format's own name.
   if (COMMANDER.test(t) && !/commander damage/i.test(t)) out.commander = true;
+  // A CARD NAME, which no other slot can hold. EDH is singleton, so a name mostly identifies ONE
+  // card — but 13 corpus cards say "a deck can have any number of cards named ..." and every one of
+  // them counts its own name, which is a whole archetype (Dragon's Approach, Shadowborn Apostle, Rat
+  // Colony, Persistent Petitioners). 170 corpus cards say "card(s) named" at all, and the named TUTOR
+  // is the shape the calibration corpus can actually witness: The First Doctor searches for "a card
+  // named TARDIS" and both are in `it-is-time`.
+  //
+  // Stops at a comma, a preposition or end of clause — "cards named Rite of Flame IN EACH GRAVEYARD"
+  // names the card, not the zone, and the zone is already `fromZone`'s job.
+  const named = t.match(NAMED);
+  if (named) out.named = named[1].trim();
   const origin = t.match(ORIGIN_ZONE);
   if (origin) out.fromZone = origin[1].toLowerCase();
   if (colors) out.colors = colors;
