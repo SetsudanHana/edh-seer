@@ -3,15 +3,18 @@
  *
  *  Mirrors `normalize-corpus.ts` exactly — same segment/prompt path, same free-inert-clause carve
  *  out, same persist-gate-refuses-rather-than-banks behaviour, same `--run` gate. The only things
- *  that differ are the SOURCE collection and the SELECTOR: a token qualifies when some card in the
- *  clause corpus references it via `allParts` (`component: "token"`) and the token carries non-empty
- *  `oracleText`. Vanilla tokens (a bare 1/1 Soldier) have no text to normalize and are excluded by
- *  that same oracleText check — they were never going to ask the model anything.
+ *  that differ are the SOURCE collection and the SELECTOR: a token qualifies when it is the EXACT
+ *  resolution of some clause-corpus card's `allParts` token part — joined on `printingId` against
+ *  `TokenDoc.printingIds` (Task 4a, c90e708), not on (name, typeLine), which is ambiguous (four
+ *  "Wizard" / "Token Creature — Wizard" rows differ only in oracle text). A printing id that
+ *  resolves to zero or more than one token row is a REFUSAL — logged, not guessed at — because a
+ *  wrong pick here is a wrong ability normalized for money. Vanilla tokens (a bare 1/1 Soldier) have
+ *  no text to normalize and are excluded by the same oracleText check.
  *
  *  Deliberately NOT mirrored: `--refresh-other` and the keyword-exemplar scope widening. Both exist
- *  in the corpus bin to keep a 2,500-card corpus current against a moving vocabulary without a full
- *  re-buy; 87 tokens is small enough that a vocabulary change just re-runs this file with `--run`,
- *  and `needsNormalize` (segmentHash + version) already skips whatever hasn't changed.
+ *  in the corpus bin to keep a ~2,650-card corpus current against a moving vocabulary without a full
+ *  re-buy; this bin's scope is small enough that a vocabulary change just re-runs the whole file, and
+ *  `needsNormalize` (segmentHash + version) already skips whatever hasn't changed.
  *
  *  Usage:
  *    tsx src/bin/normalize-tokens.ts                    # dry run, prints the bill
@@ -53,6 +56,7 @@ interface TokenRow {
   typeLine?: string;
   oracleText?: string;
   keywords?: string[];
+  printingIds: string[];
 }
 
 const store = await connect(loadConfig());
@@ -66,47 +70,40 @@ const corpusOracleIds = await clausesCol.distinct("oracleId", { isToken: { $ne: 
 const referencingCards = await store.db.collection("cards")
   .find(
     { _id: { $in: corpusOracleIds } as never, allParts: { $exists: true } },
-    { projection: { allParts: 1 } },
+    { projection: { allParts: 1, name: 1 } },
   )
-  .toArray() as unknown as { allParts: { component?: string; name: string; typeLine?: string }[] }[];
+  .toArray() as unknown as { name: string; allParts: { component?: string; name: string; typeLine?: string; printingId?: string }[] }[];
 
-const tokenKey = (name: string, typeLine?: string): string => `${name.toLowerCase()}|${(typeLine ?? "").toLowerCase()}`;
-const wanted = new Set<string>();
-for (const c of referencingCards) {
-  for (const p of c.allParts) if (p.component === "token") wanted.add(tokenKey(p.name, p.typeLine));
-}
-
-// `allParts` (Scryfall's RelatedPart) carries only name + typeLine, never the printing id, so a
-// referenced token is a KEY, not a row: name+typeLine is the only identity the corpus can give us.
-// The `tokens` collection is NOT unique on that key — measured: of the 127 keys the corpus
-// references, 50 resolve to more than one token doc (different specific tokens genuinely share a
-// name and type line, e.g. "Rat" is printed plain, Deathtouch, Lifelink and "can't block" across
-// different cards). Normalizing every candidate row overcounts 127 identities into 336 doc matches;
-// deduping to one row per key is what gets back to a per-IDENTITY count. Where more than one
-// candidate carries text and they DISAGREE (31 of the 127 keys), there is no signal in `allParts`
-// that says which one a given card actually makes, so the choice below is an arbitrary, deterministic
-// tie-break (lowest `_id`) — not a claim that it is the right one. Flagged in the dry-run output
-// rather than silently resolved, because a wrong pick here is a wrong ability normalized for money.
-const byKey = new Map<string, TokenRow[]>();
+// THE EXACT JOIN (Task 4a, c90e708). `allParts[].id` is a PRINTING id, joinable against
+// `TokenDoc.printingIds` — the set of printing ids Scryfall collapses onto one token oracle_id.
+// (name, typeLine) alone is NOT a key: 4 "Wizard" / "Token Creature — Wizard" rows differ only in
+// oracle text, and Kuja, Genome Sorcerer's own part was one of the ambiguous ones. No tie-break: a
+// printing id that resolves to zero or more than one token row is a REFUSAL, reported below, never
+// guessed at.
 const allTokens = await store.db.collection<TokenRow>("tokens").find({}).toArray();
+const byPrintingId = new Map<string, TokenRow[]>();
 for (const t of allTokens) {
-  const k = tokenKey(t.name, t.typeLine);
-  const bucket = byKey.get(k);
-  if (bucket) bucket.push(t); else byKey.set(k, [t]);
+  for (const pid of t.printingIds) {
+    const bucket = byPrintingId.get(pid);
+    if (bucket) bucket.push(t); else byPrintingId.set(pid, [t]);
+  }
 }
 
-let ambiguousKeys = 0;
-let disagreeingKeys = 0;
-const tokens: TokenRow[] = [];
-for (const key of wanted) {
-  const candidates = (byKey.get(key) ?? []).filter((t) => (t.oracleText ?? "").trim() !== "");
-  if (candidates.length === 0) continue;
-  if (candidates.length > 1) {
-    ambiguousKeys++;
-    if (new Set(candidates.map((c) => c.oracleText?.trim())).size > 1) disagreeingKeys++;
+let tokenPartEntries = 0;
+const resolvedIds = new Set<string>();
+const unresolved: { card: string; part: string; reason: string }[] = [];
+for (const c of referencingCards) {
+  for (const p of c.allParts) {
+    if (p.component !== "token") continue;
+    tokenPartEntries++;
+    if (!p.printingId) { unresolved.push({ card: c.name, part: p.name, reason: "no printingId on this allParts entry" }); continue; }
+    const rows = byPrintingId.get(p.printingId) ?? [];
+    if (rows.length === 0) { unresolved.push({ card: c.name, part: p.name, reason: `printingId ${p.printingId} matches no token row` }); continue; }
+    if (rows.length > 1) { unresolved.push({ card: c.name, part: p.name, reason: `printingId ${p.printingId} matches ${rows.length} token rows` }); continue; }
+    resolvedIds.add(rows[0]._id);
   }
-  tokens.push([...candidates].sort((a, b) => a._id.localeCompare(b._id))[0]);
 }
+const tokens = allTokens.filter((t) => resolvedIds.has(t._id) && (t.oracleText ?? "").trim() !== "");
 
 interface Job {
   oracleId: string;
@@ -140,9 +137,14 @@ const outputTokens = billable * EST_OUTPUT_TOKENS;
 const usd = (inputTokens / 1e6) * USD_PER_M_INPUT + (outputTokens / 1e6) * USD_PER_M_OUTPUT;
 
 const cfg = loadTaggerConfig();
-console.log(`wanted token identities (name+typeLine) referenced by the clause corpus: ${wanted.size}`);
-console.log(`  of those, with >=1 textful token doc: ${tokens.length}`);
-console.log(`  ambiguous (>1 candidate doc for the key): ${ambiguousKeys}, of which disagree on text: ${disagreeingKeys} — see comment above, tie-break is lowest _id`);
+console.log(`token allParts entries (component=token) on clause-corpus cards: ${tokenPartEntries}`);
+console.log(`  resolved to exactly one token row via printingId: ${resolvedIds.size} distinct token(s)`);
+console.log(`  UNRESOLVED (refused, not guessed): ${unresolved.length}`);
+if (unresolved.length) {
+  for (const u of unresolved.slice(0, 10)) console.log(`    ${u.card} -> "${u.part}": ${u.reason}`);
+  if (unresolved.length > 10) console.log(`    ...and ${unresolved.length - 10} more`);
+}
+console.log(`  of the resolved tokens, with non-empty oracleText: ${tokens.length}`);
 console.log(`  tokens needing normalization: ${jobs.length}${LIMIT ? ` (limited to ${LIMIT})` : ""}`);
 console.log(`  of those, answered in code (no model call): ${freeCards}`);
 console.log(`  model: ${cfg.model} | provider: ${cfg.provider}`);
