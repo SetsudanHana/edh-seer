@@ -25,7 +25,15 @@ const stamp = (s: SubjectFilter): SubjectFilter => ({ ...s, commander: true as c
  *  describes what the card WATCHES rather than what it IS.
  *
  *  `emits` is the load-bearing one: a commander's combat damage, death and entry are what a
- *  commander-matters consumer is looking for. */
+ *  commander-matters consumer is looking for.
+ *
+ *  AN EMIT SUBJECT SAYS WHAT THE EVENT HAPPENS TO, NOT WHO CAUSED IT, so only a `self` one is the
+ *  commander. Stamping every emit made 158 of the 71 decks' 164 commander emits carry a false
+ *  sentence — Acererak's Zombie token is not a commander, and neither is the creature Y'shtola Rhul
+ *  blinks. Two identity checks in `edges.ts` (the self-ETB gate and the reanimator fill) use a
+ *  producer's emit subject as a FILTER against the consumer's printed characteristics, where
+ *  `subjectMatches` then demands the CONSUMER be a commander: Bellowing Crier's own ETB stopped
+ *  being blinkable because a Frog Advisor is not one. The 6 self emits are what the flag is for. */
 export function markCommander(tags: CardTags): CardTags {
   return {
     ...tags,
@@ -35,7 +43,7 @@ export function markCommander(tags: CardTags): CardTags {
     characteristics: { ...tags.characteristics, commander: true },
     abilities: tags.abilities.map((a) => ({
       ...a,
-      emits: a.emits?.map((e) => ({ ...e, subject: stamp(e.subject) })),
+      emits: a.emits?.map((e) => (e.subject.self === true ? { ...e, subject: stamp(e.subject) } : e)),
     })),
   };
 }
