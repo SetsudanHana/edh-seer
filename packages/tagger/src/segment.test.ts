@@ -441,3 +441,29 @@ test("an `or` joining two SUBJECTS of ONE verb is one condition, not two", () =>
   const kavu = segment("Whenever this creature or another Kavu you control enters, exile the top card of your library.", [], "Creature — Kavu");
   expect(kavu[0].multiTrigger).toBeUndefined();
 });
+
+// Scryfall's `keywords` lists ability WORDS and keyword ACTIONS beside keyword abilities, so a line
+// can start with one and still state a real ability. 585 lines over 578 cards were being made inert
+// this way; found because the persist gate refused Dark Dabbling and the refusal was worth reading.
+test("an ability-word label is not a keyword line, so its ability survives", () => {
+  // Krosan Beast: a static pump that was thrown away whole.
+  const cl = segment("Threshold — This creature gets +7/+7 as long as there are seven or more cards in your graveyard.", ["Threshold"], "Creature — Beast");
+  expect(cl[0].kind).not.toBe("keyword");
+  // Red Death, Shipwrecker: an ACTIVATED ability behind an ability word.
+  const red = segment("Alluring Eyes — {T}: Goad target creature an opponent controls.", ["Goad"], "Creature — Fish");
+  expect(red[0].kind).not.toBe("keyword");
+});
+
+test("a keyword ACTION used as a verb is a sentence, not a keyword line", () => {
+  // Death Ward is one line and the leading word is a printed keyword.
+  const cl = segment("Regenerate target creature.", ["Regenerate"], "Instant");
+  expect(cl[0].kind).not.toBe("keyword");
+});
+
+test("real keyword lines stay inert", () => {
+  expect(segment("Flying", ["Flying"], "Creature — Bird")[0].kind).toBe("keyword");
+  expect(segment("Ward {2}", ["Ward"], "Creature — Fish")[0].kind).toBe("keyword");
+  expect(segment("Flying, trample", ["Flying", "Trample"], "Creature — Dragon")[0].kind).toBe("keyword");
+  // An Aura's enchant restriction states no action and is correctly inert — no period, no em dash.
+  expect(segment("Enchant creature you control", ["Enchant"], "Enchantment — Aura")[0].kind).toBe("keyword");
+});

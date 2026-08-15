@@ -297,6 +297,17 @@ function stripReminder(line: string): string {
  *  arguments ("protection from Demons", "ward {2}"), so match on a part STARTING WITH one. */
 function isKeywordLine(line: string, keywords: string[]): boolean {
   if (line === "") return false;
+  // AN ABILITY WORD IS NOT A KEYWORD LINE. Scryfall's `keywords` lists ability words and keyword
+  // ACTIONS alongside keyword abilities, and a line may START with one and then state a real
+  // ability: "Threshold — This creature gets +7/+7 as long as ...", "Alluring Eyes — {T}: Goad
+  // target creature ...". Marking those inert threw the whole ability away. The em dash is the
+  // reliable marker — an ability word is always printed with one, a keyword line never has one.
+  if (line.includes("—")) return false;
+  // A keyword line NAMES something, at most with a parameter ("Ward {2}", "Protection from Demons",
+  // "Annihilator 2"). It never ends in a full stop. "Regenerate target creature." and "Mill seven
+  // cards. Then put all cards ..." both begin with a printed keyword ACTION and are whole sentences;
+  // without this, Death Ward and Beluna Grandsquall lose their entire text.
+  if (line.trimEnd().endsWith(".")) return false;
   const kw = keywords.map((k) => k.toLowerCase());
   return line
     .toLowerCase()
