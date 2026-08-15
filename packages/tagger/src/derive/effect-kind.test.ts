@@ -522,3 +522,17 @@ test("entering WITH counters is 614.1c, not placing counters later", () => {
   expect(actionEffectKind({ verb: "add-counter", object: "+1/+1 counter" },
     "Whenever a creature enters, put a +1/+1 counter on it.")).toBe("counter-placement");
 });
+
+// A CARD RECOVERED FROM A GRAVEYARD IS RECOVERED WHEREVER IT LANDS. The zone table had rows for
+// graveyard -> battlefield and graveyard -> hand and none for graveyard -> LIBRARY, so the effect
+// derived nothing at all and the card kept only its trigger. Mystic Sanctuary floated unconnected in
+// every deck running it; `bin/isolated-cards.ts` is what surfaced it.
+test("returning a card from a graveyard to the library is still recursion", () => {
+  expect(actionEffectKind({ verb: "put", fromZone: "graveyard", toZone: "library",
+    object: "target instant or sorcery card" })).toBe("graveyard-recursion");
+  expect(actionEffectKind({ verb: "return", fromZone: "graveyard", toZone: "library",
+    object: "target card" })).toBe("graveyard-recursion");
+  // The other direction is untouched: library -> graveyard is a self-mill, which is top-manipulation.
+  expect(actionEffectKind({ verb: "put", fromZone: null, toZone: "graveyard",
+    object: "the top three cards of your library" })).toBe("top-manipulation");
+});

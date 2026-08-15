@@ -19,6 +19,15 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
   { verb: "return", from: "graveyard", to: "battlefield", kind: "graveyard-recursion" },
   { verb: "put", from: "graveyard", to: "hand", kind: "graveyard-recursion" },
   { verb: "return", from: "graveyard", to: "hand", kind: "graveyard-recursion" },
+  // ...and to the LIBRARY, which had no row and so derived NOTHING — the whole effect vanished and
+  // the card kept only its trigger. Getting a card back on top of your library is recovery from the
+  // graveyard exactly as returning it to hand is; you draw it next turn. Found by
+  // `bin/isolated-cards.ts`: Mystic Sanctuary floats unconnected in every deck that runs it, its
+  // "put target instant or sorcery card from your graveyard on top of your library" claimed by
+  // nothing. 8 clause actions (Cavalier of Thorns, Witch's Cottage, Noxious Revival, Perpetual
+  // Timepiece), 79 corpus cards.
+  { verb: "put", from: "graveyard", to: "library", kind: "graveyard-recursion" },
+  { verb: "return", from: "graveyard", to: "library", kind: "graveyard-recursion" },
   // Muldrotha templates recursion as permission to PLAY/CAST out of the graveyard rather than to
   // move a card, so keying only on put/return lost the whole card.
   { verb: "play", from: "graveyard", kind: "graveyard-recursion" },
