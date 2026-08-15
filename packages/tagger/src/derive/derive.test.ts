@@ -1421,3 +1421,40 @@ test("no oracleText disables the guard rather than guessing", () => {
   }];
   expect(deriveAbilities(clauses, "Whatever").unknownTriggers).not.toContain("phantom:enters");
 });
+
+// `damage-dealt` names no DIRECTION, and the two directions are opposite facts.
+test("a combat-damage trigger reaches the verb the engine already had", () => {
+  const clauses = [{
+    id: 1, abilityType: "triggered" as const,
+    trigger: { event: "damage-dealt", subject: "this creature", control: "you" },
+    actions: [{ verb: "draw", object: "a card" }],
+  }];
+  const text = "Whenever this creature deals combat damage to a player, draw a card.";
+  const out = deriveAbilities(clauses, "Whatever", { 1: text }, undefined, text);
+  expect(out.abilities[0]?.trigger?.verbs).toEqual(["combat-damage"]);
+});
+
+test("noncombat damage takes the other verb, not the combat one", () => {
+  const clauses = [{
+    id: 1, abilityType: "triggered" as const,
+    trigger: { event: "damage-dealt", subject: "this creature", control: "you" },
+    actions: [{ verb: "draw", object: "a card" }],
+  }];
+  const text = "Whenever this creature deals damage to a player, draw a card.";
+  const out = deriveAbilities(clauses, "Whatever", { 1: text }, undefined, text);
+  expect(out.abilities[0]?.trigger?.verbs).toEqual(["non-combat-damage"]);
+});
+
+test("RECEIVING damage is refused, never given the dealing verb", () => {
+  // Hornet Nest: "Whenever this creature is dealt damage, create that many 1/1 Insect tokens."
+  // Mapped to `combat-damage` it would claim Hornet Nest DEALS damage — the opposite fact.
+  const clauses = [{
+    id: 1, abilityType: "triggered" as const,
+    trigger: { event: "damage-dealt", subject: "this creature", control: "you" },
+    actions: [{ verb: "create-token", object: "1/1 green Insect creature tokens" }],
+  }];
+  const text = "Whenever this creature is dealt damage, create that many 1/1 green Insect creature tokens with flying and deathtouch.";
+  const out = deriveAbilities(clauses, "Hornet Nest", { 1: text }, undefined, text);
+  expect(out.unknownTriggers).toContain("damage-received");
+  expect(out.abilities.some((a) => a.trigger !== undefined)).toBe(false);
+});

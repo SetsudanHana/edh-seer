@@ -21,7 +21,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 42;
+export const DERIVE_VERSION = 43;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -76,12 +76,19 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   milled: "mill",
 };
 
+/** "Whenever this creature IS DEALT damage" (Hornet Nest, Flumph, Boros Reckoner) — the receiving
+ *  side, which no engine verb spells. 20 of the 180 `damage-dealt` clauses. */
+const DAMAGE_RECEIVED = /\b(?:is|are|becomes?) dealt\b/i;
+/** Combat vs noncombat, read off the clause the trigger sits in. Plural "deal combat damage" counts:
+ *  "whenever one or more creatures you control deal combat damage" is the same event. */
+const COMBAT_DAMAGE = /\bcombat damage\b/i;
+
 /** Normalize a trigger event through VERB_ALIASES, then check it against the closed VERB_VOCAB.
  *  A near-miss spelling that survives uncorrected (e.g. "die" instead of "dies") means the trigger
  *  silently never matches any producer event -- dead with no error, since triggers have no
  *  `unclaimed`-style safety net of their own. Returns null for anything illegal so the caller can
  *  omit the trigger rather than assert a verb the vocabulary doesn't recognise. */
-function normalizeTriggerVerb(event: string): Verb | null {
+export function normalizeTriggerVerb(event: string): Verb | null {
   const normalized = CLAUSE_TRIGGER_TO_VERB[event] ?? VERB_ALIASES[event] ?? event;
   return LEGAL_VERBS.has(normalized) ? (normalized as Verb) : null;
 }
@@ -585,6 +592,30 @@ export function deriveAbilities(
         unknownTriggers.push("taps-for-mana");
       } else if (verb === "lose-life" && LOSES_THE_GAME.test(text)) {
         unknownTriggers.push("loses-the-game");
+      } else if (clause.trigger.event === "damage-dealt") {
+        // DIRECTION IS NOT IN THE EVENT NAME. `damage-dealt` covers both "deals combat damage to a
+        // player" and "is dealt damage", which are opposite facts, so the clause TEXT decides —
+        // the same move the two rules above make for taps-for-mana and loses-the-game.
+        //
+        // Measured over the 180 clauses carrying it: 92 lines say "deals COMBAT damage", 26 "deals
+        // damage", and only 20 say "IS dealt damage". So ~118 of them name an event the engine
+        // ALREADY HAS a verb for and were dropped whole for want of a table row.
+        //
+        // RECEIVING damage gets no verb rather than a near-miss: it is the opposite direction, and
+        // handing it `combat-damage` would make Hornet Nest and Boros Reckoner claim they DEAL it.
+        if (DAMAGE_RECEIVED.test(text)) {
+          unknownTriggers.push("damage-received");
+        } else if (text === "") {
+          // No clause text, no way to tell. Refusing matches today's behaviour exactly, since
+          // `damage-dealt` maps to nothing at all right now — so this can only add, never regress.
+          unknownTriggers.push("damage-dealt");
+        } else {
+          const subject = subjectFrom(clause.trigger.subject ?? "", cardName);
+          const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
+          if (control) subject.control = control;
+          if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
+          trigger = { verbs: [COMBAT_DAMAGE.test(text) ? "combat-damage" : "non-combat-damage"], subject };
+        }
       } else if (verb && !triggerHasCue(verb, cardText)) {
         // THE NORMALIZER INVENTED THIS TRIGGER: nothing in the card's own text names the event.
         // Parnesse, the Subtle Brush triggers on being TARGETED and on COPYING a spell, neither of
