@@ -3,7 +3,7 @@ import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
 import { LAND_SUBTYPES } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, selfFillTypes } from "./implied.js";
+import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, selfFillTypes } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 
@@ -424,8 +424,12 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
   const pEvents = producerEvents(p.tags);
 
   // Event edges: normalized producer event ↔ normalized consumer trigger.
+  // A printed KEYWORD can be a triggered ability too, and its reminder text is inert at the clause
+  // layer, so `tags.abilities` never holds it — see `keywordAbilities`. The demand half of the same
+  // channel `keywordEvents` supplies.
+  const cAbilities = [...c.tags.abilities, ...keywordAbilities(c.tags.characteristics)];
   for (const e of pEvents) {
-    for (const a of c.tags.abilities) {
+    for (const a of cAbilities) {
       if (!a.trigger) continue;
       for (const rawVerb of a.trigger.verbs) {
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });

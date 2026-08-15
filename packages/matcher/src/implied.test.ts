@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Characteristics, GameEvent } from "@mtg/tagger";
-import { impliedEvents, impliedGraveyardEvents } from "./implied.js";
+import { impliedEvents, impliedGraveyardEvents, keywordAbilities } from "./implied.js";
 import { impliedCounterEvents, selfFillTypes } from "./implied.js";
 
 const chars = (types: string[], subtypes: string[] = []): Characteristics => ({
@@ -458,4 +458,35 @@ test("a TRANSFORMING Saga is exiled, never dies, and supplies neither", () => {
 test("a non-Saga enchantment supplies no death", () => {
   expect(impliedEvents(chars(["enchantment"], ["aura"]))
     .filter((e) => e.verb === "sacrifice" || e.verb === "dies")).toHaveLength(0);
+});
+
+// THE DEMAND HALF OF THE KEYWORD CHANNEL. `KEYWORD_EMITS` has been rich since 2026-08-14, but a
+// keyword whose reminder text is a TRIGGERED ability had no path at all: the segmenter makes a
+// keyword line inert, so `tags.abilities` never holds it.
+test("a keyword whose reminder is a triggered ability supplies the TRIGGER", () => {
+  // "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)"
+  const a = keywordAbilities(kw(["Prowess"]));
+  expect(a).toHaveLength(1);
+  expect(a[0].trigger?.verbs).toEqual(["cast"]);
+  expect(a[0].effect.kind).toBe("pump");
+  // The subject must resolve to the NARROWED type list, or `castSelfSupplied` refuses it as an
+  // unconstrained cast watcher and the keyword forms no edge at all.
+  expect(a[0].trigger?.subject.notType).toContain("creature");
+});
+
+test("extort watches casting, and the argument form is matched too", () => {
+  // "Extort (Whenever you cast a spell, you may pay {W/B}...)" — its subject is UNNARROWED, so
+  // `castSelfSupplied` refuses every implied producer and only an authored cast emit can feed it.
+  // Correct, and measured: that is why extort is not the member of this table that moves anything.
+  expect(keywordAbilities(kw(["Extort"]))[0].trigger?.verbs).toEqual(["cast"]);
+  expect(keywordAbilities(kw(["Ward {2}"]))).toHaveLength(0);
+});
+
+test("a keyword that watches its OWN attack or entry supplies no trigger", () => {
+  // Every attack- and block-triggered keyword watches itself, so no other card can supply it —
+  // and evolve is refused for a different reason: its intervening if compares the entering
+  // creature against this one's stats, which no SubjectFilter can express.
+  for (const k of ["Exalted", "Battle cry", "Mentor", "Annihilator 2", "Evolve", "Undying"]) {
+    expect(keywordAbilities(kw([k])), k).toHaveLength(0);
+  }
 });

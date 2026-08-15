@@ -1,4 +1,5 @@
-import type { Characteristics, GameEvent, SubjectFilter } from "@mtg/tagger";
+import type { Ability, Characteristics, GameEvent, SubjectFilter } from "@mtg/tagger";
+import { parseSubject } from "@mtg/tagger";
 import { parseStat } from "./stats.js";
 
 const PERMANENT_TYPES = new Set(["creature", "artifact", "enchantment", "planeswalker", "battle", "land"]);
@@ -216,6 +217,66 @@ const KEYWORD_EMITS: Record<string, EmitSpec[]> = {
   // 17 on `counter-added`, and the spec shape here cannot say "another creature you control".
   station: [{ verb: "counter-added", counter: "charge", self: true }],
 };
+
+/** What a printed keyword WATCHES. `KEYWORD_EMITS` above is the supply half and has been rich for a
+ *  while; the demand half had no path at all, which is the structural miss the Fable review's item 6
+ *  names — a keyword whose reminder text is a TRIGGERED ability derives no trigger, because
+ *  `segment.ts` makes a keyword line inert and reminder text with it.
+ *
+ *  MEASURED BEFORE BUILDING, and the named card is not the win. Extort is 17 corpus cards / 3
+ *  derived / 3 with no trigger at all, and its reminder is "**Whenever you cast a spell**, you may
+ *  pay {W/B}" — UNNARROWED, so `castSelfSupplied` refuses every implied producer on purpose and
+ *  extort can only ever be fed by an AUTHORED cast emit. It is here because it is correct and
+ *  because the review asked for it, not because it moves the population. PROWESS is the member that
+ *  pays: "whenever you cast a **noncreature** spell" narrows, so the gate lets it through, and it is
+ *  87 corpus cards against extort's 17.
+ *
+ *  REFUSED, with the reason, so the next reader does not add it:
+ *  - **evolve** — "whenever a creature you control enters, **if that creature has greater power or
+ *    toughness than this creature**". The condition is an intervening if (CR 603.4) comparing the
+ *    entering creature against the CONSUMER's own stats, which `SubjectFilter.stats` cannot express.
+ *    Recording the trigger without it claims every creature in the deck, which is knowingly adding
+ *    the defect `bin/intervening-if-audit.ts` was built to count. Its counter EMIT is already
+ *    supplied above; only the demand half is refused.
+ *  - **every attack- and block-triggered keyword** (exalted, battle cry, mentor, melee, annihilator,
+ *    training, dethrone, bushido, renown, ingest, afflict, flanking) — each watches ITS OWN attack or
+ *    block, so no other card supplies it, and `combatSelfSupplied` refuses the unnarrowed combat
+ *    baseline anyway. Their EFFECTS are already emitted above where they carry one.
+ *  - **cascade, undying, persist, haunt** — all self-triggered ("when you cast THIS spell", "when
+ *    THIS creature dies"), so a consumer trigger has nothing to receive.
+ *
+ *  Subjects are parsed from the printed reminder wording with the SAME `parseSubject` the clause
+ *  layer uses, so a keyword-supplied trigger and an authored one are the same shape — and, for
+ *  prowess, so that "noncreature spell" resolves to the type list `castConsumerNarrows` reads. */
+const KEYWORD_TRIGGERS: Record<string, { verbs: GameEvent["verb"][]; subject: string; kind: string }> = {
+  // "Extort (Whenever you cast a spell, you may pay {W/B}. If you do, each opponent loses 1 life and
+  // you gain that much life.)"
+  extort: { verbs: ["cast"], subject: "a spell", kind: "drain" },
+  // "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)"
+  prowess: { verbs: ["cast"], subject: "a noncreature spell", kind: "pump" },
+};
+
+/** The triggered abilities a card's printed keywords give it, in the shape `directedReasons` already
+ *  reads. Not merged into `CardTags.abilities`: those are DERIVED and stored, and this is a matcher
+ *  fact about a printed characteristic — the same split `keywordEvents` observes.
+ *
+ *  CEILING, stated: only edge formation sees these. Theme, archetype and mechanism detection read
+ *  `tags.abilities` directly, so a prowess creature still does not count toward a spellslinger theme.
+ *  `keywordEvents` has the identical ceiling and has since it shipped. */
+export function keywordAbilities(chars: Characteristics): Ability[] {
+  const out: Ability[] = [];
+  for (const raw of chars.keywords ?? []) {
+    const whole = String(raw).toLowerCase().trim();
+    const spec = KEYWORD_TRIGGERS[whole] ?? KEYWORD_TRIGGERS[whole.split(/[\s{]/)[0]];
+    if (!spec) continue;
+    out.push({
+      kind: "triggered",
+      trigger: { verbs: spec.verbs, subject: parseSubject(spec.subject) },
+      effect: { kind: spec.kind as Ability["effect"]["kind"] },
+    });
+  }
+  return out;
+}
 
 /** The events a card's PRINTED KEYWORDS supply. Marked `implied: true` like every other synthetic
  *  event, so the self-supply gates in edges.ts treat them as baseline rather than authored surplus. */
