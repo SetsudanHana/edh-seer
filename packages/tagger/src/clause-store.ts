@@ -201,6 +201,61 @@ export function dropsTriggerObject(doc: CardClausesDoc | null, oracleText: strin
     NAMES_A_FILTER.test(line.slice(0, line.includes(", ") ? line.indexOf(", ") : line.length)));
 }
 
+/** A PRINTED CUE for each trigger event — a word the card must contain somewhere if it really has
+ *  that trigger. Events whose cue is unwritable are absent on purpose and therefore never checked:
+ *  `cast` is implied for every nonland, and the phase triggers are structural, not textual.
+ *
+ *  Deliberately generous — one cue ANYWHERE in the card's text clears the whole card, and each
+ *  alternative below was widened after reading the card it cleared. Card text conjugates freely
+ *  ("artifacts you control LEAVE the battlefield", "put into YOUR graveyard", "is attackED"), and a
+ *  narrow cue would report a defect that is really a missing verb form. Under-reporting is the
+ *  correct failure direction for something that decides a spend. */
+const TRIGGER_CUES: Record<string, RegExp> = {
+  dies: /\bdies?\b|put into (a|your|their|its owner's) graveyard|\bsacrific/i,
+  enters: /\benter(s|ing|ed)?\b|put onto the battlefield|returns? .* to the battlefield/i,
+  "enters-graveyard": /graveyard|\bdies?\b|\bmill|\bdiscard/i,
+  leaves: /\bleaves?\b|\bleave\b|\bdies?\b|put into (a|your|their|its owner's) graveyard|\bexile|returns? .* to (its|their) owner|lose(s)? control/i,
+  attacks: /\battack(s|ed|ing)?\b/i,
+  taps: /\btap(s|ped|ping)?\b/i,
+  untaps: /\buntap/i,
+  draw: /\bdraws?\b|\bdrew\b/i,
+  discard: /\bdiscard/i,
+  mill: /\bmill/i,
+  "gain-life": /\bgains? \d|\bgain(s)? life|lifelink/i,
+  "lose-life": /\bloses? \d|\blose(s)? life|life total/i,
+  sacrifice: /\bsacrific/i,
+  "create-token": /\btoken/i,
+  "counter-added": /\bcounter/i,
+  "land-play": /\bland\b/i,
+  proliferate: /\bproliferate/i,
+  "combat-damage": /\bcombat damage|\bdeals? damage/i,
+  "non-combat-damage": /\bdamage/i,
+};
+
+/** Did the model INVENT a trigger the card does not have?
+ *
+ *  The worst thing this pipeline can produce: everything downstream of the clause layer is
+ *  deterministic and will faithfully propagate a hallucination forever. Grim Guardian's printed text
+ *  is a single constellation ETB trigger, and its stored clauses carry a SECOND ability triggering on
+ *  `dies` — which then claimed every enchantment death in its deck as a synergy.
+ *
+ *  Measured corpus-wide when this was written: **12 clauses over 11 cards, of 940 checkable trigger
+ *  clauses (1.3%)**, in two families. **A phantom DUPLICATE of a real trigger with the event flipped**
+ *  — Risen Reef and three Constellation cards (Grim Guardian, Doomwake Giant, Agent of Erebos) all
+ *  have a real `enters` plus a phantom `dies`, and Butcher of Malakir is the mirror image. And
+ *  **`proliferate` used as a dumping ground** for events the vocabulary cannot spell — "you expend 4",
+ *  "you expend 8", "while scrying" — which is precisely what `unknownTriggers` exists to prevent.
+ *
+ *  Shares its cue table with `bin/phantom-trigger-audit.ts`, which is free and prints the witnesses. */
+export function hasPhantomTrigger(doc: CardClausesDoc | null, oracleText: string): boolean {
+  if (!doc) return false; // no doc at all is `needsNormalize`'s business
+  if (!oracleText) return false;
+  return doc.canonical.some((c) => {
+    const cue = TRIGGER_CUES[c.trigger?.event ?? ""];
+    return cue !== undefined && !cue.test(oracleText);
+  });
+}
+
 /** Can re-asking this card's clauses actually change the answer? Only if the doc was answered by an
  *  OLDER prompt than the one that would be sent now.
  *

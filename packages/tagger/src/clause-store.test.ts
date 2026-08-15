@@ -3,7 +3,7 @@ import type { Clause } from "./segment.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import {
   segmentHash, needsNormalize, needsDerive, carriesOther, missesASplit, disagreesOnType,
-  dropsOriginZone, worthReasking, dropsTriggerObject,
+  dropsOriginZone, worthReasking, dropsTriggerObject, hasPhantomTrigger,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "./clause-store.js";
 
@@ -251,4 +251,36 @@ test("dropsTriggerObject leaves alone a trigger whose subject really is a player
   expect(dropsTriggerObject(clauseDoc({
     canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "draw", subject: "you" }, actions: [] }],
   }), "Whenever you draw a card, put a +1/+1 counter on target creature you control.")).toBe(false);
+});
+
+test("hasPhantomTrigger catches a trigger the card does not have", () => {
+  // Grim Guardian prints ONE trigger, a constellation ETB. Its stored clauses carry a second
+  // ability triggering on `dies`, which then claimed every enchantment death in its deck. Three
+  // Constellation cards and Risen Reef share this exact shape: a real `enters` plus a phantom
+  // `dies`; Butcher of Malakir is the mirror image.
+  const grimGuardian = "Constellation — Whenever this creature or another enchantment you control enters, each opponent loses 1 life.";
+  expect(hasPhantomTrigger(clauseDoc({
+    canonical: [
+      { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "another enchantment you control" }, actions: [] },
+      { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "another enchantment you control" }, actions: [] },
+    ],
+  }), grimGuardian)).toBe(true);
+
+  // The real trigger alone is clean.
+  expect(hasPhantomTrigger(clauseDoc({
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "another enchantment you control" }, actions: [] }],
+  }), grimGuardian)).toBe(false);
+});
+
+test("hasPhantomTrigger takes the card's own verb FORMS, and refuses to judge what it cannot check", () => {
+  // Card text conjugates: "artifacts you control LEAVE the battlefield" is a leaves trigger, and a
+  // cue demanding "leaves" would report 6 defects that are really a missing verb form.
+  expect(hasPhantomTrigger(clauseDoc({
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "leaves", subject: "artifacts you control" }, actions: [] }],
+  }), "Whenever one or more artifacts you control leave the battlefield during your turn, create a 1/1 token.")).toBe(false);
+  // `cast` has no writable cue — every nonland implies one — so it is absent from the table and a
+  // cast trigger is never judged, rather than judged wrongly.
+  expect(hasPhantomTrigger(clauseDoc({
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell" }, actions: [] }],
+  }), "Some text mentioning nothing at all.")).toBe(false);
 });
