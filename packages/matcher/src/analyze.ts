@@ -18,6 +18,7 @@ import {
 import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
 import { pairReasons, cardThemeTags, cardCaresTags, directedReasons } from "./edges.js";
+import { markCommander } from "./commander.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
@@ -77,11 +78,15 @@ export function analyzeDeckStructured(
 ): DeckReport {
   const commanderSet = new Set(commanderNames ?? []);
 
-  // Deck-aware chosen-type resolution, applied once before any edge formation.
+  // Deck-aware passes, applied once before any edge formation. Chosen types resolve against what the
+  // deck actually runs; the commander stamp marks WHICH cards the list designated, which is the only
+  // way `SubjectFilter.commander` can ever be satisfied — see commander.ts.
   const counts = deckSubtypeCounts(inputs);
-  const resolved: DeckCard[] = inputs.map((dc) =>
-    dc.tags ? { card: dc.card, tags: resolveChosenTypes(dc.tags, counts, hierarchy) } : dc,
-  );
+  const resolved: DeckCard[] = inputs.map((dc) => {
+    if (!dc.tags) return dc;
+    const tags = resolveChosenTypes(dc.tags, counts, hierarchy);
+    return { card: dc.card, tags: commanderSet.has(dc.card.name) ? markCommander(tags) : tags };
+  });
 
   // Pairwise edges over unordered pairs; i < j guarantees no self-pair and no double-count
   // (pairReasons already unions both directions for a given {a,b}).

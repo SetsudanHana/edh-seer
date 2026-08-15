@@ -150,6 +150,11 @@ export function combatNarrowsByType(subject: SubjectFilter): boolean {
  *  zero implied supply and surfaces in the census as a real hole -- we do not model a token attacking. */
 function combatNarrowsOffType(subject: SubjectFilter): boolean {
   if ((subject.stats?.length ?? 0) > 0) return true;
+  // A COMMANDER IS ONE OR TWO CARDS, so a combat consumer naming one is the narrowest shape there
+  // is — the opposite of the deck-level state condition this gate exists to refuse. Without it
+  // Kediss, Emberclaw Familiar's "whenever a commander you control deals combat damage" read as
+  // generic combat, was judged self-supplied, and formed no edge at all — even to the commander.
+  if (subject.commander === true) return true;
   if (subject.counter) return true;
   if (subject.chosenType) return true;
   if ((subject.colors?.length ?? 0) > 0) return true;

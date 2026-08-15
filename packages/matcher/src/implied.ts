@@ -46,6 +46,10 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   // demanding flying that no producer can advertise deletes real edges rather than narrowing false
   // ones. Lowercased because the demand is parsed from lowercased clause text.
   if (chars.keywords?.length) out.keyword = chars.keywords.map((k) => k.toLowerCase());
+  // The deck fact, so a commander's IMPLIED cast/enters/attacks/combat-damage advertise it too. See
+  // commander.ts: stamping only authored emits left a commander-matters consumer blind to the very
+  // events commanders mostly supply.
+  if (chars.commander === true) out.commander = true;
   out.power = parseStat(chars.power);
   out.toughness = parseStat(chars.toughness);
   out.manaValue = chars.cmc;

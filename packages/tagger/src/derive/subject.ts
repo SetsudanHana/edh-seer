@@ -437,6 +437,10 @@ function parseNotKeywords(t: string): string[] | undefined {
   return keywordsFrom(t, NOT_KEYWORD_PHRASE);
 }
 
+/** "a commander you control", "your commander", "another commander". Not "commander damage", which
+ *  names the 21-damage alternate loss rule rather than a permanent. */
+const COMMANDER = /\b(?:a|your|another|each|target)?\s*commanders?\b/i;
+
 const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|hand)\b/i;
 
 export function parseSubject(text: string): SubjectFilter {
@@ -461,6 +465,10 @@ export function parseSubject(text: string): SubjectFilter {
   // counter" subject in the corpus.
   const notKeywords = parseNotKeywords(t);
   if (notKeywords) out.notKeyword = notKeywords;
+  // CR 903. "a commander you control", "your commander", "commander creatures you control". A DECK
+  // fact, so only the demand is readable here; the supply is stamped per deck by the matcher.
+  // Anchored to avoid "commander damage" (a different concept) and the Commander format's own name.
+  if (COMMANDER.test(t) && !/commander damage/i.test(t)) out.commander = true;
   const origin = t.match(ORIGIN_ZONE);
   if (origin) out.fromZone = origin[1].toLowerCase();
   if (colors) out.colors = colors;

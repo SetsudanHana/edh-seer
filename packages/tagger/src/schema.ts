@@ -113,6 +113,24 @@ export interface SubjectFilter {
    *  An ABSENT producer `keyword` list satisfies it, which is correct rather than lenient: printed
    *  keywords arrive free on every card, so "no keywords recorded" really is "has no keywords". */
   notKeyword?: string[];
+  /** The subject demands a COMMANDER — "a commander you control", "your commander".
+   *
+   *  UNLIKE every other qualifier here, this is a DECK fact and not a printed one. The same card is
+   *  a commander in one list and an ordinary creature in another, so `parseSubject` sets it on the
+   *  CONSUMER side from the clause text, and the PRODUCER side is stamped per deck by
+   *  `markCommanders` (matcher/commander.ts) — the shape `resolveChosenTypes` already uses for the
+   *  other deck-aware fact.
+   *
+   *  Found by sweeping CR 903 in an engine that analyses the Commander format and had never read it.
+   *  206 corpus cards / 35 derived name a commander as a subject. Kediss, Emberclaw Familiar prints
+   *  "Whenever a commander you control deals combat damage to an opponent" and derived
+   *  `{control: "you", token: null}` — no type at all, so it matched ANY combat damage from anything
+   *  you control.
+   *
+   *  NO `type: creature` alongside: CR 903.3 lets a commander be a legendary creature, a VEHICLE, or
+   *  a Spacecraft with power/toughness, so stamping `creature` would narrow past what the rules say.
+   *  `commander` is the tighter filter anyway — it reaches one or two cards in a deck. */
+  commander?: true;
   /** A real DISJUNCTION: the subject is satisfied by ANY of these branches.
    *
    *  `type` is an OR-list and `subtype` is an OR-list, but the two are ANDed with each other, so
@@ -449,6 +467,13 @@ export interface Characteristics {
   toughness: string | null;
   /** Printed cards are always false. */
   token: boolean;
+  /** THE ONE DECK FACT ON AN OTHERWISE PRINTED RECORD. Set per deck by `markCommander`
+   *  (matcher/commander.ts), never by extraction — CR 903.3 says the commander designation "is not a
+   *  characteristic of the object represented by the card". It lives here anyway because a card's
+   *  IMPLIED events (`impliedEvents` → `selfSubject`) are synthesized from `Characteristics` at match
+   *  time and are exactly the ones a commander-matters consumer needs: a commander's combat damage,
+   *  entry and death. Stamping only the authored emits left Kediss unable to see its own partner. */
+  commander?: boolean;
   keywords: string[];
 }
 
