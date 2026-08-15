@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 9;
+export const NORMALIZE_VERSION = 10;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -37,6 +37,18 @@ export const NORMALIZE_MIN_COMPATIBLE = 3;
  *  identical. Priced at $0.69 to fix 9 cards. With this the same run selects 10 and costs $0.02. */
 export const VOCAB_VERSION = 8;
 
+/** The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION.
+ *
+ *  One constant for all three lists is the `--refresh-other` treadmill wearing a different hat. A
+ *  TRIGGERS-only change cannot improve a card stuck on an `other` ACTION — the verb it needed still
+ *  does not exist — so selecting those cards buys back identical answers and a bill. Measured on
+ *  this very batch: one shared constant priced 182 cards at $0.78, of which ~140 were `other`-action
+ *  cards that VERBS did not change for. Split, the same batch is the trigger-stuck cards alone.
+ *
+ *  Same shape as the 2026-08-06 finding this file already records for prose-vs-vocabulary, applied
+ *  one level finer: gate each selector on the list it actually reads. */
+export const TRIGGER_VOCAB_VERSION = 10;
+
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
   "add-mana", "add-counter", "remove-counter", "grant-ability", "modify-pt", "prevent", "cast",
@@ -57,6 +69,46 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // an engine verb, so they form no edges and surface in `unknownTriggers` — the point is that one
   // unnameable clause no longer throws away the whole card.
   "search", "becomes-target", "scry", "surveil", "unlocked", "transform",
+  // ADDED 2026-08-15 from two sweeps that disagreed with each other, which is why both were run.
+  // `bin/trigger-vocab-gaps.ts` reads what the clause layer NEEDED and could not say — 38 trigger
+  // clauses answered `other`; `bin/cr-vocab-sweep.ts` reads what the GAME defines, from the
+  // Comprehensive Rules. Each word below is followed by its rule (where the CR names it) and the
+  // count of derived-corpus cards that reach for it.
+  //
+  // `copy` is the one that started this: CR 707, already a legal VERBS member as an ACTION, missing
+  // from TRIGGERS — so Parnesse, the Subtle Brush ("whenever you copy a spell") answered `cast`, and
+  // when a re-ask finally said `copy` the persist gate refused it for not being in this list. 2.
+  "copy",
+  // CR 700.13. "Whenever you commit a crime" — Gisa, Magda, Duelist of the Mind, Patrolling
+  // Peacemaker. Found by BOTH sweeps. 4.
+  "crime",
+  // CR 700.14. "Whenever you expend N" — Muerra, Trailtracker Scout, Wandertale Mentor. Both. 3.
+  "expend",
+  // CR 700.11. A permanent card hit your graveyard this turn. CR-only — the corpus sweep never
+  // surfaced it, because these cards phrase it as a condition rather than a trigger. 2.
+  "descended",
+  // Corpus-only, each with a card stuck behind it and each a named CR concept in a section the
+  // vocabulary diff does not reach: day/night (CR 730, The Celestus), dice (Vrondiss), dungeons
+  // (CR 309, Loot Dispute), the monarch (CR 720, Starscream), the Ring (Sauron, Call of the Ring),
+  // clash (CR 701.30, Marvo).
+  "day-night", "dice-rolled", "dungeon-completed", "monarch", "ring-tempts", "clash",
+  // FOUND ONLY BY THE WHOLE-CORPUS CENSUS (`bin/corpus-trigger-census.ts`), and each is bigger than
+  // every word above COMBINED. Owner's ruling 2026-08-15: the vocabulary serves any deck someone
+  // brings, not the 71 calibration decks, so demand is counted over all ~34k cards. Ranking on the
+  // derived corpus would have shipped the small words and missed these two entirely.
+  //
+  // "Whenever this creature becomes blocked" — 164 cards. The ATTACKER's side; `blocks` is the
+  // blocker's and does not cover it.
+  "becomes-blocked",
+  // "When you cycle this card" — 91 cards. The cycling EMIT shipped 2026-08-14; the trigger side
+  // never had a word, so a cycling payoff could not say what it watches.
+  "cycled",
+  // 32 and 18 cards. Both are printed events with no other spelling available.
+  "mutates", "becomes-monstrous",
+  // DELIBERATELY EXCLUDED, so the next reader does not "complete" the list: Planechase
+  // (chaos ensues / planeswalk, 238 cards), Archenemy (scheme, 84) and Contraptions (crank, 45) are
+  // the largest residue families in the corpus and NONE of them is an EDH event — no plane, scheme
+  // or contraption is ever in a decklist. `specializes` (42) is Alchemy-only and digital.
   // The same escape hatch VERBS has always had. Its absence was pure asymmetry: the model, told to
   // pick EXACTLY one member, invented "other" anyway on 9 cards and lost all of them.
   "other",

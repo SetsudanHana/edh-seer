@@ -92,6 +92,26 @@ export function carriesOther(doc: CardClausesDoc | null, vocabVersion?: number):
   return (doc?.canonical ?? []).some((c) => (c.actions ?? []).some((a) => a.verb === "other"));
 }
 
+/** Is this card stuck on the escape hatch for its TRIGGER, rather than for an action?
+ *
+ *  `carriesOther` reads `actions` only, so a card whose actions are all fine and whose TRIGGER
+ *  answered `other` is invisible to it — and those are exactly the cards an additive TRIGGERS change
+ *  can improve. 38 trigger clauses in the calibration corpus answered `other`, none of which
+ *  `carriesOther` selects. Same VOCAB_VERSION gate and same reason: a doc answered under the current
+ *  vocabulary already had every word available, so re-asking buys the same answer and only a bill.
+ *
+ *  Also selects a trigger event that is NOT a legal TRIGGERS member — the model inventing a word
+ *  ("copy" before it was one) is the same "no word fit" signal as reaching for `other` explicitly. */
+export function carriesOtherTrigger(doc: CardClausesDoc | null, legalTriggers: readonly string[], vocabVersion?: number): boolean {
+  if (!doc) return false; // no doc at all is `needsNormalize`'s business
+  if (vocabVersion !== undefined && doc.normalizeVersion >= vocabVersion) return false;
+  const legal = new Set(legalTriggers);
+  return doc.canonical.some((c) => {
+    const e = c.trigger?.event;
+    return e !== undefined && e !== "none" && (e === "other" || !legal.has(e));
+  });
+}
+
 /** Was this card answered before the prompt asked for a record per trigger condition? Such a doc
  *  recorded ONE of the clause's two events and silently dropped the other — Ichor Wellspring
  *  remembered as an ETB payoff and not as a death payoff, which is half the card.

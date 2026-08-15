@@ -3,7 +3,7 @@ import type { Clause } from "./segment.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import {
   segmentHash, needsNormalize, needsDerive, carriesOther, missesASplit, disagreesOnType,
-  dropsOriginZone, worthReasking, dropsTriggerObject, hasPhantomTrigger,
+  dropsOriginZone, worthReasking, dropsTriggerObject, hasPhantomTrigger, carriesOtherTrigger,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "./clause-store.js";
 
@@ -283,4 +283,33 @@ test("hasPhantomTrigger takes the card's own verb FORMS, and refuses to judge wh
   expect(hasPhantomTrigger(clauseDoc({
     canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell" }, actions: [] }],
   }), "Some text mentioning nothing at all.")).toBe(false);
+});
+
+test("carriesOtherTrigger finds a card stuck on its TRIGGER, which carriesOther cannot see", () => {
+  // Parnesse, the Subtle Brush: its ACTIONS are all fine, its trigger had no word. 38 trigger
+  // clauses in the corpus answered `other` and `carriesOther` selects none of them, because it
+  // reads `actions` only.
+  const legal = ["enters", "dies", "copy"];
+  const stuck = clauseDoc({
+    normalizeVersion: 3,
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "other", subject: "you copy a spell" }, actions: [{ verb: "copy", object: "that spell" }] }],
+  });
+  expect(carriesOtherTrigger(stuck, legal, 10)).toBe(true);
+  expect(carriesOther(stuck, 10)).toBe(false);
+
+  // An event the model INVENTED is the same "no word fit" signal as saying `other` outright.
+  expect(carriesOtherTrigger(clauseDoc({
+    normalizeVersion: 3,
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature" }, actions: [] }],
+  }), legal, 10)).toBe(true);
+
+  // Answered under the CURRENT trigger vocabulary: every word was already available, so re-asking
+  // buys the same answer and a bill. Same gate, same reason, as carriesOther.
+  expect(carriesOtherTrigger({ ...stuck, normalizeVersion: 10 }, legal, 10)).toBe(false);
+
+  // A legal trigger is not a gap.
+  expect(carriesOtherTrigger(clauseDoc({
+    normalizeVersion: 3,
+    canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "a creature" }, actions: [] }],
+  }), legal, 10)).toBe(false);
 });
