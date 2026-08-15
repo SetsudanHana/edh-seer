@@ -421,8 +421,20 @@ export interface Ability {
    *
    *  It records HOW MANY and never OF WHAT. For Calendar the trigger's own `subject.counter` supplies
    *  the resource; for "if you control four or more lands" nothing does. A consumer must not assume
-   *  the threshold's subject is the trigger's subject. */
-  trigger?: { verbs: Verb[]; subject: SubjectFilter; threshold?: { atLeast: number } };
+   *  the threshold's subject is the trigger's subject.
+   *
+   *  `thresholdSubject` is the noun the threshold counts, when it names a countable permanent — see
+   *  `thresholdSubjectFor`. Present only alongside `threshold`, and only sometimes even then: "if you
+   *  control ten or more Treasures" carries one, Cabal Ritual's "seven or more cards in your
+   *  graveyard" carries none (a zone-scoped card count has no `type`/`subtype` to parse), and
+   *  "thirteen cards in your hand" is refused on purpose because no `SubjectFilter` can express a
+   *  hand-size condition. */
+  trigger?: {
+    verbs: Verb[];
+    subject: SubjectFilter;
+    threshold?: { atLeast: number };
+    thresholdSubject?: SubjectFilter;
+  };
   /** An activated ability's activation cost, verbatim as `segment.ts` split it out of the body —
    *  "{X}{X}, {T}", "{T}, Sacrifice a creature". Unparsed on purpose: this records what the card
    *  says, and what a cost MEANS for a loop's economy is sub-project B's question.

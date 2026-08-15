@@ -91,6 +91,33 @@ export function thresholdFor(text: string): { atLeast: number } | undefined {
   return undefined;
 }
 
+import type { SubjectFilter } from "../schema.js";
+import { parseSubject } from "./subject.js";
+
+/** WHAT the threshold counts. `thresholdFor` returns the number; this returns the noun, and without
+ *  it a win condition claims every card in the deck. Revel in Riches counts TREASURES, Hellkite
+ *  Tyrant ARTIFACTS, and both derive an untyped subject today.
+ *
+ *  Reads the words AFTER the comparison and stops at the clause end, so "ten or more Treasures, you
+ *  win the game" yields "treasures" and not the whole sentence. Refuses when the noun is not a
+ *  countable permanent — "thirteen cards in your hand" is a hand-size condition and no SubjectFilter
+ *  can express it. */
+export function thresholdSubjectFor(text: string): SubjectFilter | undefined {
+  if (!CONDITION_CUE.test(text)) return undefined;
+  // COMPARISON is an alternation (`N or more|at least N`), and `|` binds looser than concatenation:
+  // appending `\s+([^,.]+)` straight onto its source would only attach the noun capture to the
+  // SECOND branch, leaving "ten or more Treasures" with an undefined group. Wrapping the whole
+  // alternation in a non-capturing group fixes the precedence so either branch feeds the same noun
+  // group, which is why `m[m.length - 1]` below can rely on always being that noun.
+  const m = new RegExp(`(?:${COMPARISON.source})\\s+([^,.]+)`, "i").exec(text);
+  if (!m) return undefined;
+  const noun = (m[m.length - 1] ?? "").trim();
+  if (noun === "" || /\bcards? in (?:your|their) hand\b|\blife\b/i.test(noun)) return undefined;
+  const subject = parseSubject(noun);
+  const hasType = subject.type !== undefined || subject.subtype !== undefined;
+  return hasType ? subject : undefined;
+}
+
 /** Per-exclusion tallies for `ledger-coverage.ts`'s §8 breakdown. */
 export interface ThresholdTally {
   excluded1: number;

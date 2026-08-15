@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { thresholdFor } from "./threshold.js";
+import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 
 test("a counter threshold on a trigger is recorded", () => {
   // The Millennium Calendar: "When there are 1,000 or more time counters on The Millennium
@@ -98,4 +98,20 @@ test("the FIRST qualifying comparison wins when a sentence carries two", () => {
   expect(thresholdFor(
     "Whenever this creature attacks, you win the game if there are twenty or more counters on it or you have twenty or more life.",
   )).toEqual({ atLeast: 20 });
+});
+
+// A NUMBER WITHOUT ITS NOUN CLAIMS EVERYTHING — the same lesson `scalingSubject` learned for
+// per-graveyard counts. Revel in Riches derives atLeast:10 and an UNTYPED subject, so the engine
+// knows the number and not that it counts TREASURES. Measured: only 1 of the 10 win-game cards in
+// the 71 decks names anything at all.
+test("a threshold carries the noun it counts", () => {
+  expect(thresholdSubjectFor("At the beginning of your end step, if you control ten or more "
+    + "Treasures, you win the game.")).toMatchObject({ subtype: "treasure" });
+  expect(thresholdSubjectFor("At the beginning of your upkeep, if you control twenty or more "
+    + "artifacts, you win the game.")).toMatchObject({ type: "artifact" });
+  // No countable noun, no subject — refused rather than guessed, as thresholdFor itself refuses.
+  expect(thresholdSubjectFor("At the beginning of your upkeep, if you have exactly thirteen cards "
+    + "in your hand, you win the game.")).toBeUndefined();
+  // No threshold at all.
+  expect(thresholdSubjectFor("Whenever a creature you control dies, draw a card.")).toBeUndefined();
 });

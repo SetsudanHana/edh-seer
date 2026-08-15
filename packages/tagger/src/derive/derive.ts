@@ -15,14 +15,14 @@ import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject } from "./subject.js";
 import { repeatsFor } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
-import { thresholdFor } from "./threshold.js";
+import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { SUBTYPES } from "./subtypes.js";
 import { triggerHasCue } from "../clause-store.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 53;
+export const DERIVE_VERSION = 54;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -656,7 +656,10 @@ export function deriveAbilities(
         // clause's prose ("when there are 1,000 or more time counters on ..."), which is the same
         // channel repeatsFor reads for its once-each-turn rule.
         const threshold = thresholdFor(text);
-        trigger = threshold ? { verbs: [verb], subject, threshold } : { verbs: [verb], subject };
+        const thresholdSubject = threshold ? thresholdSubjectFor(text) : undefined;
+        trigger = threshold
+          ? { verbs: [verb], subject, threshold, ...(thresholdSubject ? { thresholdSubject } : {}) }
+          : { verbs: [verb], subject };
       } else {
         unknownTriggers.push(clause.trigger.event);
       }
