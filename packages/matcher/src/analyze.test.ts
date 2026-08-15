@@ -741,3 +741,65 @@ test("theme ranking weighs what a card cares about above what it merely does", (
   const report = analyzeDeckStructured(deck, undefined, H, SEED_IMPACT_WEIGHTS, undefined, stats);
   expect(report.cohesion!.tag).toBe("cast:instant");
 });
+
+// Task 6 (tokens-as-nodes): a Treasure-making card and a Treasure-caring card. The carer's trigger
+// is "sacrifice a Treasure" — neither the maker's authored emits (create-token, enters) nor the
+// (vanilla, ability-less) token's own characteristics satisfy a `sacrifice` verb, so nothing in this
+// two-card deck connects maker to carer directly. The only edge either card can form is the maker's
+// NEW `creates:` edge to the Treasure node itself.
+const treasureMakerAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: false } },
+  effect: { kind: "token-generation", subject: { subtype: "treasure", control: "you", token: true } },
+  emits: [
+    { verb: "create-token", subject: { subtype: "treasure", control: "you", token: true } },
+    { verb: "enters", subject: { subtype: "treasure", control: "you", token: true } },
+  ],
+}];
+const treasureCarerAbility: CardTags["abilities"] = [{
+  kind: "triggered",
+  trigger: { verbs: ["sacrifice"], subject: { subtype: "treasure", control: "you", token: null } },
+  effect: { kind: "draw-card" },
+}];
+// Vanilla, per Task 5's measurement that 59 of 94 derived tokens carry zero abilities (a plain
+// Flying Bird) — exercises the fact that `createsReasons` cannot lean on the token having any
+// trigger of its own, unlike every other reason-forming pass in edges.ts.
+const treasureTags: CardTags = {
+  oracleId: "token-treasure-oracle", schemaVersion: 1, promptVersion: 1, model: "t",
+  characteristics: { types: ["token", "artifact"], subtypes: ["treasure"], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: true, keywords: [] },
+  abilities: [],
+};
+const makerCard = {
+  name: "Treasure Maker", typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 0,
+  // `createdTokenRefs` (tokens.ts) reads this positionally-untyped field off the raw Card; it isn't
+  // part of the `Card` interface, hence the cast, matching how `dc()` above already casts its literal.
+  allParts: [{ component: "token", name: "Treasure", typeLine: "Token Artifact — Treasure", printingId: "treasure-printing-id" }],
+} as never;
+const maker: DeckCard = {
+  card: makerCard,
+  tags: {
+    oracleId: "Treasure Maker", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+    abilities: treasureMakerAbility,
+  },
+};
+const carer = dc("Treasure Carer", treasureCarerAbility);
+
+test("a token maker produces a token node, and edges to it rather than to an unrelated carer", () => {
+  const report = analyzeDeckStructured(
+    [maker, carer], undefined, H, undefined, undefined, undefined,
+    (ref) => (ref.printingId === "treasure-printing-id" ? treasureTags : null),
+  );
+  const creates = report.edges.find((e) => e.reasons.some((r) => r.tag === "creates:treasure"));
+  expect(creates).toBeDefined();
+  expect([creates!.a, creates!.b].sort()).toEqual(["Treasure", "Treasure Maker"]);
+  // The maker edges to the NODE, not to the carer — nothing here structurally links them.
+  expect(report.edges.some((e) => [e.a, e.b].includes("Treasure Maker") && [e.a, e.b].includes("Treasure Carer"))).toBe(false);
+  // Exclusion list (owner's ruling, 2026-08-15): the token must not leak into the ranked card list.
+  expect(report.cards.map((c) => c.name).sort()).toEqual(["Treasure Carer", "Treasure Maker"]);
+});
+
+test("without a tokenTags lookup, no token node is created (existing callers are unaffected)", () => {
+  const report = analyzeDeckStructured([maker, carer], undefined, H);
+  expect(report.edges.some((e) => e.a === "Treasure" || e.b === "Treasure")).toBe(false);
+});

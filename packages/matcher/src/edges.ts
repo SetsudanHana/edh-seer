@@ -814,6 +814,46 @@ function meldReason(a: DeckCard, b: DeckCard): Reason[] {
   }];
 }
 
+/** Token creation edges: a producer's own AUTHORED create-token emit, matched against the token
+ *  NODE's characteristics (Task 6, tokens-as-nodes). A dedicated pass because every other reason in
+ *  this file requires the CONSUMER to carry an ability (a trigger, an effect subject) -- a token
+ *  node commonly has none: 59 of the 94 derived tokens are vanilla (a plain Flying Bird), and
+ *  without this a maker card and its own token would form no edge at all despite the token sitting
+ *  on the node set.
+ *
+ *  RESTRICTED TO AUTHORED emits (`ability.emits`), never `producerEvents`'s keyword-implied ones
+ *  (Amass, Fabricate, Embalm, ...). A keyword-implied create-token event carries no type filter --
+ *  `KEYWORD_EMITS` records `{verb:"create-token", token:true}` and nothing else -- so matching it
+ *  through `subjectMatches` would claim a Fabricate creature makes every OTHER token type in the
+ *  deck too, since every token satisfies a filter that only checks control and token-ness.
+ *
+ *  Callers must gate this to pairs where `p` is structurally known to create `c`
+ *  (`createdTokenRefs`, matcher/tokens.ts -- the exact printingId join Task 3/4a built) before
+ *  calling: that is what stops an untyped authored emit (rare, but present) from wildcarding onto a
+ *  token this card never actually makes. `subjectMatches`/`themeSubjectKey` here only pick the best
+ *  reason tag/text among the card's own emits, never decide the relationship itself. */
+export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
+  if (!p.tags || !c.tags || c.tags.characteristics.token !== true) return [];
+  const consumerSubject = characteristicsSubject(c.tags, c.card.name);
+  const reasons: Reason[] = [];
+  for (const pa of p.tags.abilities) {
+    for (const e of pa.emits ?? []) {
+      if (e.verb !== "create-token") continue;
+      if (!subjectMatches(consumerSubject, e.subject, h)) continue;
+      reasons.push({
+        tag: `creates:${themeSubjectKey(e.subject)}`,
+        text: `${p.card.name} creates ${c.card.name}`,
+        effectKind: "token-generation",
+        repeatability:
+          pa.kind === "static" ? "static" : pa.kind === "activated" ? "activated" : pa.kind === "on-cast" ? "oneshot" : "triggered",
+        consumer: c.card.name,
+        producer: p.card.name,
+      });
+    }
+  }
+  return dedupeReasons(reasons);
+}
+
 export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
   return dedupeReasons([
     ...directedReasons(a, b, h),

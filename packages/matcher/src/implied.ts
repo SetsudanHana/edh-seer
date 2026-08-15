@@ -22,7 +22,12 @@ export function isHistoric(types: string[], subtypes: string[]): boolean {
 function selfSubject(chars: Characteristics): SubjectFilter {
   const types = chars.types.map((t) => t.toLowerCase());
   const subtypes = chars.subtypes.map((t) => t.toLowerCase());
-  const out: SubjectFilter = { control: "you", token: false };
+  // `token: false` was hardcoded here for the project's whole life, correctly -- until a TOKEN
+  // itself became a node with its own implied events (Task 6, tokens-as-nodes). A token's own entry
+  // genuinely IS a token, and reading `chars.token` (already correct on a real card, which is always
+  // false per `Characteristics.token`'s own doc comment) is what lets "whenever a token enters" match
+  // it, exactly as `characteristicsSubject` (edges.ts) already reads it for the consumer side.
+  const out: SubjectFilter = { control: "you", token: chars.token === true };
   const type = collapse(types);
   const subtype = collapse(subtypes);
   if (type !== undefined) out.type = type;
@@ -95,7 +100,14 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
       seen.add(key);
       out.push({ verb, subject, implied: true });
     };
-    if (!isLand) push("cast");
+    // CR 111.7: a token is neither a card nor a spell, so it is never cast. Unreachable for a real
+    // card (`Characteristics.token` is always false there) until Task 6 put a TOKEN's own
+    // characteristics through this function -- untested before because nothing ever called it with
+    // `token: true`. Without this a Treasure or a Bird satisfied "whenever you cast a creature spell"
+    // just by existing on the node set: measured on the 71 calibration decks, 1,115 reasons touching
+    // a token carried the `cast` verb before this line existed, more than every other family
+    // combined including `creates` itself (511).
+    if (!isLand && !chars.token) push("cast");
     if (isPermanent) push("enters");
     // A creature on the battlefield can attack and connect, exactly as a nonland card can be cast.
     // These only ever reach a consumer that filters on WHICH creature attacks -- see

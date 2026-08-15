@@ -92,5 +92,12 @@ export function docToCard(d: CardDoc): Card {
     // reached `Card`. The mana audit is its first consumer.
     ...(d.manaCost !== undefined ? { manaCost: d.manaCost } : {}),
     ...(d.producedMana !== undefined ? { producedMana: d.producedMana } : {}),
+    // Same gap as the two fields above, found the same way (Task 6, tokens-as-nodes): `allParts` was
+    // on `CardDoc` and dropped here, so `createdTokenRefs` (matcher/tokens.ts) read `[]` off every
+    // live `Card` no matter what a card's Scryfall data said -- `population-compare.ts` reported zero
+    // token nodes across all 71 calibration decks until this line existed. `Card` does not declare
+    // the field (engine cannot depend on `RelatedPart`, which lives here), so `createdTokenRefs`
+    // reads it back off an untyped cast, exactly as it already did in its own tests.
+    ...(d.allParts !== undefined ? { allParts: d.allParts } : {}),
   };
 }

@@ -1,7 +1,9 @@
 export * from "./types.js";
 export { analyzeDeckStructured } from "./analyze.js";
 export { subjectMatches } from "./subject.js";
-export { pairReasons, cardThemeTags, themeSubjectKey, directedReasons } from "./edges.js";
+export { pairReasons, cardThemeTags, themeSubjectKey, directedReasons, createsReasons } from "./edges.js";
+export { createdTokenRefs, type TokenRef } from "./tokens.js";
+export { loadTokenTags } from "./token-tags.js";
 export { loadHierarchy, buildHierarchy, impliesType } from "./hierarchy.js";
 export { resolveChosenTypes, deckSubtypeCounts } from "./chosen-type.js";
 export { buildDeckCards, type CardTagsLookup } from "./deck-cards.js";

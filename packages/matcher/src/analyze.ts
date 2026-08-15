@@ -15,9 +15,11 @@ import {
   type TagStats,
   type ImpactWeights,
 } from "@mtg/engine";
+import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
-import { pairReasons, cardThemeTags, cardCaresTags, directedReasons } from "./edges.js";
+import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons } from "./edges.js";
+import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { markCommander } from "./commander.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
@@ -68,6 +70,19 @@ function computeRoles(cards: DeckCard[]): { ramp: number; draw: number; removal:
   return { ramp, draw, removal };
 }
 
+/** Build the synthetic node for a token derivation row -- a `DeckCard`-shaped entry the pair loop
+ *  can walk exactly like a real card, carrying the token's OWN derived characteristics and
+ *  abilities. Only the fields `Card` requires are synthesized; the rest (mana cost, produced mana,
+ *  ...) genuinely do not apply to a permanent that is never cast. */
+function tokenDeckCard(ref: TokenRef, tags: CardTags): DeckCard {
+  const c = tags.characteristics;
+  return {
+    card: { name: ref.name, typeLine: ref.typeLine, oracleText: "", keywords: c.keywords, colors: c.colors, manaValue: 0 },
+    tags,
+    isToken: true,
+  };
+}
+
 export function analyzeDeckStructured(
   inputs: DeckCard[],
   commanderNames?: string[],
@@ -75,6 +90,12 @@ export function analyzeDeckStructured(
   impactWeights: ImpactWeights = loadImpactWeights(),
   combos?: ComboIndex,
   themeStats: TagStats = loadThemeStats(),
+  // Optional so every existing caller (~15: bins, the web server, the CLI) keeps working unchanged.
+  // A caller that wants tokens on the graph supplies a lookup backed by the 94 rows Task 5 derived
+  // into `cardTagsDerived` -- resolve via `tokens.findOne({printingIds: ref.printingId})` then
+  // `cardTagsDerived.findOne({oracleId: tokenDoc._id})`, and return null (never a name lookup) when
+  // either step misses.
+  tokenTags?: (ref: TokenRef) => CardTags | null,
 ): DeckReport {
   const commanderSet = new Set(commanderNames ?? []);
 
@@ -106,14 +127,50 @@ export function analyzeDeckStructured(
   const unique = [...byName.values()].map((v) => v.card);
   const quantities = Object.fromEntries([...byName].filter(([, v]) => v.copies > 1).map(([n, v]) => [n, v.copies]));
 
+  // TOKEN NODES (Task 6, tokens-as-nodes). Structural, not inferred: `createdTokenRefs` is the EXACT
+  // card->token link (a printing id against `tokens.printingIds`, Task 3/4a), so which token a card
+  // makes is a fact, never a subject-matching guess. Deduped on the token's own `oracleId` -- several
+  // makers of "Treasure" in one deck must share ONE node, not one each. `producerTokenOracles` is the
+  // gate `createsReasons` needs: restricting it to AUTHORED emits means an untyped one (rare) could
+  // still wildcard onto a token this card never actually makes, unless the pair loop below only ever
+  // asks the question for a (maker, token-it-structurally-creates) pair in the first place.
+  const tokenNodes: DeckCard[] = [];
+  const producerTokenOracles = new Map<string, Set<string>>();
+  if (tokenTags) {
+    const byOracle = new Map<string, DeckCard>();
+    for (const dc of unique) {
+      for (const ref of createdTokenRefs(dc.card)) {
+        const tags = tokenTags(ref);
+        if (!tags) continue; // unresolved -- refuse, never fall back to a (name, typeLine) lookup
+        let node = byOracle.get(tags.oracleId);
+        if (!node) { node = tokenDeckCard(ref, tags); byOracle.set(tags.oracleId, node); tokenNodes.push(node); }
+        let oracles = producerTokenOracles.get(dc.card.name);
+        if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
+        oracles.add(tags.oracleId);
+      }
+    }
+  }
+
   // Pairwise edges over unordered pairs; i < j guarantees no self-pair and no double-count
   // (pairReasons already unions both directions for a given {a,b}).
+  //
+  // Token nodes ride along ONLY here -- the array this loop walks -- and nowhere below: not
+  // `computeDeckMath`, `deckFreq`, `computeRoles`, `detectBuildCategories` or `ratedCards`, all of
+  // which stay on `unique`/`resolved`. Every figure those produce is a probability over a 100-card
+  // library, and a token is never drawn. `pairPool` puts every token AFTER every real card, so for
+  // i < j a (real, token) cross-pair always has the real card at `i` -- exactly the shape
+  // `createsReasons` demands.
+  const pairPool: DeckCard[] = [...unique, ...tokenNodes];
   const edges: SynergyEdge[] = [];
-  for (let i = 0; i < unique.length; i++) {
-    for (let j = i + 1; j < unique.length; j++) {
-      const reasons = pairReasons(unique[i], unique[j], hierarchy);
+  for (let i = 0; i < pairPool.length; i++) {
+    for (let j = i + 1; j < pairPool.length; j++) {
+      const a = pairPool[i], b = pairPool[j];
+      const reasons = pairReasons(a, b, hierarchy);
+      if (b.isToken && producerTokenOracles.get(a.card.name)?.has(b.tags!.oracleId)) {
+        reasons.push(...createsReasons(a, b, hierarchy));
+      }
       if (reasons.length > 0) {
-        edges.push({ a: unique[i].card.name, b: unique[j].card.name, score: reasons.length, reasons });
+        edges.push({ a: a.card.name, b: b.card.name, score: reasons.length, reasons });
       }
     }
   }

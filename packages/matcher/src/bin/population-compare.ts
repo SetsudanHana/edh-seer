@@ -17,7 +17,7 @@ import {
 } from "@mtg/data";
 import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
-import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
 import { meshReport, type MeshGroup } from "../mesh.js";
 
 const DIR = process.argv[2]?.startsWith("--") ? "packages/cli/decks/calibration" : (process.argv[2] ?? "packages/cli/decks/calibration");
@@ -27,6 +27,9 @@ const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
 const flat: CardTagsLookup = createTagsLookup(store.db, "flat");
 const derived: CardTagsLookup = createTagsLookup(store.db, "derived-first");
+// Task 6 (tokens-as-nodes): both populations get the SAME token lookup -- the 94 rows Task 5 derived
+// live in `cardTagsDerived` regardless of which population (flat/derived) the CARD side reads from.
+const tokenTags = await loadTokenTags(store.db);
 
 interface Row {
   deck: string; edges: [number, number]; reasons: [number, number]; theme: [string, string];
@@ -46,7 +49,9 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
 
   const run = async (tags: CardTagsLookup) => {
     const deckCards = await buildDeckCards(cards, lookup, tags);
-    const report = analyzeDeckStructured(deckCards, commanderNames, undefined, undefined, new ComboIndex(combos));
+    const report = analyzeDeckStructured(
+      deckCards, commanderNames, undefined, undefined, new ComboIndex(combos), undefined, tokenTags,
+    );
     return { report, deckCards };
   };
   const a = await run(flat);

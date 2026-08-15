@@ -18,7 +18,7 @@ import {
 } from "@mtg/data";
 import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
-import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
 import { claimFor } from "./precision-core.js";
 import { scorePanel, wilsonPanel, type PanelClaim, type PanelVerdict } from "./panel-core.js";
 
@@ -38,6 +38,10 @@ const cache = readFileSync(`${PANEL}/verdicts.jsonl`, "utf8").split("\n")
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
 const tags: CardTagsLookup = createTagsLookup(store.db, "derived");
+// Task 6 (tokens-as-nodes). A `creates:` reason's consumer is the token's own name, which never
+// appears in `pairs.json` (every panel pair names two real cards), so this cannot introduce judging
+// debt on its own -- the `want.has(...)` filter below drops it before it reaches `current`.
+const tokenTags = await loadTokenTags(store.db);
 
 // Scored DECK BY DECK through `analyzeDeckStructured`, the same entry point the sampling instrument
 // used and the same one the product uses. Calling `pairReasons` directly skips the deck-level passes
@@ -63,7 +67,7 @@ for (const [deck, want] of wantedByDeck) {
   const deckCards = await buildDeckCards(cards, lookup, tags);
   const report = analyzeDeckStructured(
     deckCards, cards.filter((c) => cmd.has(normalizeName(c.name))).map((c) => c.name),
-    undefined, undefined, new ComboIndex(combos),
+    undefined, undefined, new ComboIndex(combos), undefined, tokenTags,
   );
   for (const e of report.edges) {
     for (const r of e.reasons) {
