@@ -1458,3 +1458,26 @@ test("RECEIVING damage is refused, never given the dealing verb", () => {
   expect(out.unknownTriggers).toContain("damage-received");
   expect(out.abilities.some((a) => a.trigger !== undefined)).toBe(false);
 });
+
+// `damage-dealt` IS WHERE AN INVENTED TRIGGER HIDES: it is the event the normalizer reaches for when
+// it cannot spell one, and its branch sat ABOVE the phantom guard in the chain, returning a verb of
+// its own and never being checked. 3 of the 180 damage-dealt clauses are cards whose text never says
+// "damage" at all.
+test("a damage trigger on a card that never mentions damage is refused", () => {
+  // Path of Ancestry: "When that mana is spent to cast a creature spell that shares a creature type
+  // with your commander, scry 1." Derived as "whenever a creature commander you control deals
+  // noncombat damage, scry" — a wrong sentence, and its real trigger is inexpressible (no verb
+  // covers "mana is spent"), so honest silence is the answer.
+  const clauses = [{
+    id: 1, abilityType: "triggered" as const,
+    trigger: { event: "damage-dealt", control: "you",
+      subject: "that mana is spent to cast a creature spell that shares a creature type with your commander" },
+    actions: [{ verb: "scry", object: "1" }],
+  }];
+  const text = "When that mana is spent to cast a creature spell that shares a creature type with "
+    + "your commander, scry 1.";
+  const out = deriveAbilities(clauses, "Path of Ancestry", { 1: text }, undefined,
+    `{T}: Add one mana of any color in your commander's color identity. ${text}`);
+  expect(out.abilities.find((a) => a.trigger)?.trigger).toBeUndefined();
+  expect(out.unknownTriggers).toContain("phantom:non-combat-damage");
+});

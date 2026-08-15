@@ -22,7 +22,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 50;
+export const DERIVE_VERSION = 51;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -616,11 +616,27 @@ export function deriveAbilities(
           // `damage-dealt` maps to nothing at all right now — so this can only add, never regress.
           unknownTriggers.push("damage-dealt");
         } else {
-          const subject = subjectFrom(clause.trigger.subject ?? "", cardName);
-          const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
-          if (control) subject.control = control;
-          if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
-          trigger = { verbs: [COMBAT_DAMAGE.test(text) ? "combat-damage" : "non-combat-damage"], subject };
+          const damageVerb = COMBAT_DAMAGE.test(text) ? "combat-damage" : "non-combat-damage";
+          // THIS BRANCH USED TO BYPASS THE PHANTOM GUARD, because it sits ABOVE it in the chain and
+          // returns a verb of its own. `damage-dealt` is the event the normalizer reaches for when it
+          // cannot spell a trigger, so it is exactly where an invented one hides: PATH OF ANCESTRY
+          // triggers on "that mana is spent to cast a creature spell that shares a creature type with
+          // your commander" and derived "whenever a creature commander you control deals noncombat
+          // damage" — a card whose text never says damage at all. 3 of the 180 `damage-dealt` clauses
+          // are this shape (also Ultima, Origin of Oblivion and Professor Hojo).
+          //
+          // Their real triggers are inexpressible — no verb covers "mana is spent", "becomes the
+          // target of an activated ability" — so refusing leaves honest silence rather than a wrong
+          // answer, which is the same call `unknownTriggers` records everywhere else.
+          if (!triggerHasCue(damageVerb, cardText)) {
+            unknownTriggers.push(`phantom:${damageVerb}`);
+          } else {
+            const subject = subjectFrom(clause.trigger.subject ?? "", cardName);
+            const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
+            if (control) subject.control = control;
+            if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
+            trigger = { verbs: [damageVerb], subject };
+          }
         }
       } else if (verb && !triggerHasCue(verb, cardText)) {
         // THE NORMALIZER INVENTED THIS TRIGGER: nothing in the card's own text names the event.
