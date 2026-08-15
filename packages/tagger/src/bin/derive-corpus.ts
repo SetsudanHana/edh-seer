@@ -16,6 +16,8 @@ import {
 } from "../clause-store.js";
 
 const FORCE = process.argv.includes("--force");
+/** Token characteristics live outside `cards` -- see `packages/data/src/bin/ingest-tokens-core.ts`. */
+const TOKENS_COLLECTION = "tokens";
 
 const store = await connect(loadConfig());
 await ensureClauseIndexes(store.db);
@@ -25,25 +27,32 @@ const derivedCol = store.db.collection<DerivedTagsDoc>(DERIVED_COLLECTION);
 const clauseDocs = await clausesCol.find({}).toArray();
 console.log(`clause docs: ${clauseDocs.length} | DERIVE_VERSION ${DERIVE_VERSION}`);
 
-let written = 0, skipped = 0, empty = 0;
+let written = 0, skipped = 0, empty = 0, tokenWritten = 0;
 for (const doc of clauseDocs) {
   const existing = await derivedCol.findOne({ oracleId: doc.oracleId });
   if (!FORCE && !needsDerive(existing, doc, DERIVE_VERSION)) { skipped++; continue; }
 
-  const cards = await store.cards.findOne({ _id: doc.oracleId } as never);
-  if (!cards) { console.log(`SKIP ${doc.name}: card doc missing`); continue; }
+  // Task 4 wrote 94 token rows into this same collection, keyed on the token's own oracle id and
+  // flagged `isToken: true` — they have no entry in `cards` at all, so their characteristics must
+  // come from `tokens` instead. `CardClausesDoc` doesn't declare the field because ordinary cards
+  // never carry it; only `normalize-tokens.ts`'s writes do.
+  const isToken = (doc as CardClausesDoc & { isToken?: boolean }).isToken === true;
+  const source = isToken
+    ? await store.db.collection(TOKENS_COLLECTION).findOne({ _id: doc.oracleId } as never)
+    : await store.cards.findOne({ _id: doc.oracleId } as never);
+  if (!source) { console.log(`SKIP ${doc.name}: ${isToken ? "token" : "card"} doc missing`); continue; }
 
-  // Always re-read printed characteristics from the card document. Reusing the existing derived
-  // doc's copy would carry stale colours or a stale type line forward through every re-derive,
-  // which is the opposite of what a free rebuild is for.
+  // Always re-read printed characteristics from the card/token document. Reusing the existing
+  // derived doc's copy would carry stale colours or a stale type line forward through every
+  // re-derive, which is the opposite of what a free rebuild is for.
   const tags = deriveCardTags({
     oracleId: doc.oracleId,
     name: doc.name,
     clauses: doc.canonical,
-    characteristics: charsFrom(cards as never),
-    clauseTexts: clauseTexts(cards as never),
-    clauseCosts: clauseCosts(cards as never),
-    oracleText: (cards as { oracleText?: string }).oracleText,
+    characteristics: isToken ? tokenCharsFrom(source as never) : charsFrom(source as never),
+    clauseTexts: clauseTexts(source as never),
+    clauseCosts: clauseCosts(source as never),
+    oracleText: (source as { oracleText?: string }).oracleText,
   });
   // A card with real rules text deriving zero abilities is the Bitterblossom shape -- worth
   // counting out loud rather than silently writing a doc that reads as a vanilla bear.
@@ -57,14 +66,16 @@ for (const doc of clauseDocs) {
         deriveVersion: DERIVE_VERSION,
         normalizeVersion: doc.normalizeVersion,
         segmentHash: doc.segmentHash,
+        ...(isToken ? { isToken: true } : {}),
       },
     },
     { upsert: true },
   );
   written++;
+  if (isToken) tokenWritten++;
 }
 
-console.log(`derived ${written}, up-to-date ${skipped}, wrote ${empty} card(s) with clauses but zero abilities`);
+console.log(`derived ${written} (${tokenWritten} token), up-to-date ${skipped}, wrote ${empty} card(s)/token(s) with clauses but zero abilities`);
 await store.close();
 
 /** Clause id -> clause text, recomputed rather than stored. `segment()` is deterministic over the
@@ -109,4 +120,14 @@ function charsFrom(doc: {
     toughness: doc.toughness ?? null,
     keywords: doc.keywords ?? [],
   } as never) as DerivedTagsDoc["characteristics"];
+}
+
+/** Same shape as `charsFrom`, plus `token: true`. `extractCharacteristics` hardcodes `token: false`
+ *  (right for every card, which is all it has ever seen) so this is the one place that flips it.
+ *  Load-bearing in both directions per `subject.ts`'s asymmetric tri-state check: it is what lets a
+ *  token satisfy a consumer demanding `token: true`, and what stops it satisfying one demanding
+ *  `token: false`. A token document carries no `manaValue` -- `charsFrom` already defaults an
+ *  absent one to 0, which is correct for a token (it is never cast, so it has none). */
+function tokenCharsFrom(doc: Parameters<typeof charsFrom>[0]): DerivedTagsDoc["characteristics"] {
+  return { ...charsFrom(doc), token: true };
 }
