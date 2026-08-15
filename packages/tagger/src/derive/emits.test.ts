@@ -147,3 +147,48 @@ test("an unrecognised token subtype states no type rather than guessing", () => 
     .find((e) => e.verb === "enters")!;
   expect(enters.subject.type).toBeUndefined();
 });
+
+// KEYWORD ACTIONS EXPAND INTO THE PRIMITIVES THE RULES SAY THEY ARE. The clause records the card's
+// own word; derivation gives the matcher ordinary events. Each expectation is CR 701's definition.
+test("connive is draw-then-discard, the pattern the community calls looting", () => {
+  // 701.50: "draws a card, then discards a card."
+  const ev = actionEmits({ verb: "connive", object: "this creature" });
+  expect(ev.map((e) => e.verb).sort()).toEqual(["discard", "draw"]);
+});
+
+test("recruit is connive's shape too, per 701.70", () => {
+  // "Draw a card, then discard a card. If you discarded a nonland card this way, create a 1/1 white
+  // Human Soldier." The token is CONDITIONAL and deliberately not emitted.
+  const ev = actionEmits({ verb: "recruit", object: "you" });
+  expect(ev.map((e) => e.verb).sort()).toEqual(["discard", "draw"]);
+  expect(ev.some((e) => e.verb === "create-token")).toBe(false);
+});
+
+test("bolster places a +1/+1 counter, and says WHICH counter", () => {
+  // 701.39: "Put N +1/+1 counters on that creature." The object names the recipient, not the
+  // counter, so an untyped emit would wildcard onto poison and time payoffs.
+  const ev = actionEmits({ verb: "bolster", object: "a creature you control" });
+  expect(ev.map((e) => e.verb)).toEqual(["counter-added"]);
+  expect(ev[0].subject.counter).toBe("+1/+1");
+});
+
+test("blight is the SIGN that makes the counter kind a map and not a constant", () => {
+  // 701.68: "put N -1/-1 counters on a creature you control."
+  expect(actionEmits({ verb: "blight", object: "a creature you control" })[0].subject.counter).toBe("-1/-1");
+});
+
+test("investigate creates a token and something enters; manifest does NOT create one", () => {
+  // 701.16 investigate: "Create a Clue token." 701.40 manifest: "Put that CARD onto the battlefield
+  // face down" — a card, never a token.
+  expect(actionEmits({ verb: "investigate", object: "a Clue token" }).map((e) => e.verb).sort())
+    .toEqual(["create-token", "enters"]);
+  expect(actionEmits({ verb: "manifest", object: "the top card of your library" }).map((e) => e.verb))
+    .toEqual(["enters"]);
+});
+
+test("a keyword the rules give no event emits nothing at all", () => {
+  // goad 701.15 and regenerate 701.19 are a status and a replacement effect. They earn a VERB so the
+  // clause survives, and no emit, because there is no event to claim.
+  expect(actionEmits({ verb: "goad", object: "target creature" })).toEqual([]);
+  expect(actionEmits({ verb: "regenerate", object: "this creature" })).toEqual([]);
+});

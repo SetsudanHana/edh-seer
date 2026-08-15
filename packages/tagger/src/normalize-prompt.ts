@@ -35,7 +35,7 @@ export const NORMALIZE_MIN_COMPATIBLE = 3;
  *  prose fix reopen the whole `carriesOther` set — on 2026-08-06 a one-line rule about trigger
  *  subjects selected 158 cards, of which 148 had been bought hours earlier at v8 and would come back
  *  identical. Priced at $0.69 to fix 9 cards. With this the same run selects 10 and costs $0.02. */
-export const VOCAB_VERSION = 8;
+export const VOCAB_VERSION = 10;
 
 /** The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION.
  *
@@ -58,6 +58,32 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // Conversion, Ugin's Mastery), extra-phase (Cyclonus). The gate refused the whole card rather
   // than one clause, so a missing verb cost 100% of the card.
   "amass", "turn-face-up", "extra-phase",
+  // CR 701 KEYWORD ACTIONS, added 2026-08-15 for COMPLETENESS rather than for current demand —
+  // normalization is a one-way ratchet and nobody re-runs 36k cards to add a word. The 69 actions in
+  // CR 701 were reconciled by hand against this list; these are the ones it did not carry.
+  //
+  // Adding the keyword does NOT cost the primitives. `EMITS` in derive/emits.ts expands each one
+  // into the events the Comprehensive Rules say it IS — connive and recruit into draw+discard,
+  // bolster into a +1/+1 counter — so the clause records the card's own word and the matcher still
+  // sees ordinary events. That was the owner's correction to an earlier draft of this list, which
+  // had proposed leaving out any keyword whose primitive was already expressible.
+  //
+  // Expanded in EMITS (the rules give them a primitive):
+  "connive", "recruit", "bolster", "support", "adapt", "monstrosity", "blight", "investigate",
+  "populate", "incubate", "manifest", "discover",
+  // Recorded but emitting NOTHING, because the rules give them no event to emit: a status
+  // (goad 701.15, detain 701.35, suspect 701.60, harness 701.64, exert 701.43), a replacement
+  // effect (regenerate 701.19), library manipulation nobody triggers on (clash 701.30,
+  // fateseal 701.29, behold 701.4), damage removal (heal 701.69), or a player choice
+  // (vote 701.38). They still earn a word: without one the model answers `other` and the clause
+  // is lost whole, which is how 38 trigger clauses ended up on the escape hatch.
+  "goad", "regenerate", "exert", "detain", "suspect", "harness", "vote", "clash", "fateseal",
+  "behold", "heal", "meld", "exchange", "convert", "double", "triple",
+  // CONDITIONAL, so recorded with no emit rather than a guessed one: explore (701.44, land to hand
+  // OR a counter), endure (701.63, a token XOR counters), learn (701.48, discard-then-draw OR
+  // fetch a Lesson), forage (701.61, sacrifice a Food OR exile three cards), time travel (701.56,
+  // add OR remove time counters), collect evidence (701.59, exile from a graveyard).
+  "explore", "endure", "learn", "forage", "time-travel", "collect-evidence",
   "other", "none"];
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
 export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps", "untaps", "cast",
