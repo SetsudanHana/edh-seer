@@ -17,12 +17,13 @@ import { repeatsFor } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { SUBTYPES } from "./subtypes.js";
+import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
 import { triggerHasCue } from "../clause-store.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 54;
+export const DERIVE_VERSION = 55;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -115,36 +116,6 @@ function drainAbility(clause: ClauseRecord, kind: AbilityKind, trigger: Ability[
   // failure this project refuses everywhere else (see threshold.ts's header).
   if (clause.abilityType === "activated") ability.cost = cost;
   return ability;
-}
-
-/** Does this TRIGGER subject name the card itself? "When THIS creature enters" watches one
- *  permanent -- its own -- while "whenever another creature you control enters" watches the deck,
- *  and `parseSubject` reduces both to {type: creature}. The clause text is the only place the
- *  difference survives, so it is recovered here.
- *
- *  A subject mentioning "another" or "other" is NOT self even when it opens with a self-reference:
- *  Zulaport Cutthroat's "this creature or another creature you control" is a real aristocrats
- *  payoff, and marking it self would delete the edge this engine most wants to find. */
-function isSelfSubject(text: string, cardName?: string): boolean {
-  const t = text.trim().toLowerCase();
-  if (t === "") return false;
-  if (/\banother\b|\bother\b/.test(t)) return false;
-  // Bare "this" with no noun after it — how Bojuka Bog and Zhalfirin Void record their own entry.
-  // Checked HERE rather than by widening SELF_REFERENCE, which effect subjects also use: a trigger
-  // subject of "this" is unambiguous, while an effect object beginning "this turn ..." is not.
-  if (/^this\b/.test(t)) return true;
-  if (SELF_REFERENCE.test(t)) return true;
-  if (!cardName) return false;
-  const name = cardName.toLowerCase();
-  // The model names the card either in full ("Urza, Lord High Artificer") or by the short name a
-  // card's own text uses ("Urza"), which is everything before the first comma or face divider.
-  if (t === name || t === name.split(/[,/]/)[0].trim()) return true;
-  // A card with no comma in its name still shortens itself: Imskir Iron-Eater's own text says
-  // "Imskir". Accept the FIRST WORD — but never when that word is a creature type, because
-  // "whenever a Goblin enters" on a card named Goblin Bombardment is a real typal payoff and
-  // marking it self would delete the edges a Goblin deck is made of.
-  const first = name.split(/\s+/)[0];
-  return t === first && !SUBTYPES.has(first);
 }
 
 /** "this creature or another artifact you control" — a trigger that watches the card's OWN entry and,
@@ -260,12 +231,6 @@ function orBranches(text: string): Partial<SubjectFilter>[] {
   }
   return out;
 }
-
-/** The card talking about itself. Anchored at the start, because a self-reference anywhere else is
- *  part of a larger subject ("creatures other than this one"), and confined to the noun so the rest
- *  of the sentence cannot leak in. */
-const SELF_REFERENCE =
-  /^this (?:spell|card|creature|artifact|enchantment|permanent|land|planeswalker|equipment|vehicle|token)\b/i;
 
 /** The "your library for ..." preamble a search object always carries; stripping it leaves the thing
  *  actually searched for, which is the subject the pronoun that follows refers to. */

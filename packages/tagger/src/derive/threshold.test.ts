@@ -115,3 +115,50 @@ test("a threshold carries the noun it counts", () => {
   // No threshold at all.
   expect(thresholdSubjectFor("Whenever a creature you control dies, draw a card.")).toBeUndefined();
 });
+
+// Review finding 1 (Important): `thresholdSubjectFor` used to run its OWN `.exec()` over the raw
+// text instead of sharing `thresholdFor`'s match selection, so on a sentence with TWO comparisons it
+// could pick a different one -- the noun from an EXCLUDED match, paired with the number from the
+// winning one. Persistent Marshstalker's clause text (fetched from the corpus, not retyped):
+// "Whenever you attack with one or more Rats, if there are seven or more cards in your graveyard,
+// you may pay {2}{B}. If you do, return this card from your graveyard to the battlefield tapped and
+// attacking." "one or more Rats" is excluded by #1 (an English plural), "seven or more cards" is the
+// real threshold -- the bug paired {atLeast: 7} with {subtype: "rat"}, a number and a noun from two
+// different clauses of the sentence.
+test("REVIEW FINDING 1: the noun comes from the SAME comparison the number does", () => {
+  const text = "Whenever you attack with one or more Rats, if there are seven or more cards in your "
+    + "graveyard, you may pay {2}{B}. If you do, return this card from your graveyard to the "
+    + "battlefield tapped and attacking.";
+  expect(thresholdFor(text)).toEqual({ atLeast: 7 });
+  // "cards in your graveyard" is a zone-scoped card count (also finding 2's shape below), not a
+  // permanent class, and the number that survives is the graveyard one, not the Rats one -- so this
+  // must be undefined, NOT {subtype: "rat"}.
+  expect(thresholdSubjectFor(text)).toBeUndefined();
+});
+
+// Review finding 2 (Important): the hand/life exclusion was an allow-list of ONE zone ("hand") and
+// missed every other zone a card count can name. The Everflowing Well // The Myriad Pools's clause
+// text (fetched from the corpus): "Descend 8 — At the beginning of your upkeep, if there are eight
+// or more permanent cards in your graveyard, transform The Everflowing Well." The noun "permanent
+// cards in your graveyard" used to derive {type: "permanent"} with no zone, which a consumer reads
+// as "permanents you control" -- the opposite zone from the one printed.
+test("REVIEW FINDING 2: a zone-scoped card count is refused for ANY zone, not just hand", () => {
+  const text = "Descend 8 — At the beginning of your upkeep, if there are eight or more permanent "
+    + "cards in your graveyard, transform The Everflowing Well.";
+  expect(thresholdFor(text)).toEqual({ atLeast: 8 });
+  expect(thresholdSubjectFor(text)).toBeUndefined();
+});
+
+// Review finding 3 (Important): no self-reference guard ran before the noun was parsed as a type.
+// Colfenor's Urn's clause text (fetched from the corpus): "At the beginning of the end step, if
+// three or more cards have been exiled with this artifact, sacrifice it. If you do, return those
+// cards to the battlefield under their owner's control." The noun "cards have been exiled with this
+// artifact" used to derive {type: "artifact"}, reading the Urn itself as the counted class -- the
+// self-trigger defect family that has been 74% of this project's false edges, in a new place.
+test("REVIEW FINDING 3: a self-referencing noun is refused, not read as a type", () => {
+  const text = "At the beginning of the end step, if three or more cards have been exiled with this "
+    + "artifact, sacrifice it. If you do, return those cards to the battlefield under their owner's "
+    + "control.";
+  expect(thresholdFor(text)).toEqual({ atLeast: 3 });
+  expect(thresholdSubjectFor(text)).toBeUndefined();
+});

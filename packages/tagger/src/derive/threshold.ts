@@ -12,6 +12,9 @@
  *  THE PARSE IS EASY AND THE GATES ARE THE WORK. 208 corpus sentences carry a numeric comparison
  *  inside a condition; only 81 are thresholds. See
  *  `docs/superpowers/specs/2026-08-14-resource-ledger-design.md` section 6. */
+import type { SubjectFilter } from "../schema.js";
+import { parseSubject } from "./subject.js";
+import { mentionsSelf } from "./self-reference.js";
 
 /** Spelled numbers that appear in a Magic threshold. Not a general word-to-number table: the
  *  vocabulary printed on cards is small and closed, and a wider one invites matching prose. */
@@ -44,11 +47,18 @@ function valueOf(raw: string): number {
   return word ?? Number(raw.replace(/,/g, ""));
 }
 
-/** The trigger threshold stated by `text`, or `undefined` when it states none.
+/** The winning comparison in `text`, chosen by walking every candidate and applying the same three
+ *  exclusions `thresholdFor` has always applied — run ONCE, here, so `thresholdFor` and
+ *  `thresholdSubjectFor` can never disagree about which comparison is the trigger's.
  *
- *  Refuses rather than guesses, as `repeatsFor` does: an unrecognised numeric condition leaves the
- *  field unset and stays visible as a gap. */
-export function thresholdFor(text: string): { atLeast: number } | undefined {
+ *  That disagreement was a real bug, not a hypothetical one: `thresholdSubjectFor` used to run its
+ *  own independent `.exec()` over the raw text, so on a sentence with TWO comparisons it could pick
+ *  a different one than `thresholdFor` did. Persistent Marshstalker is the witness -- "whenever you
+ *  attack with one or more Rats, if there are seven or more cards in your graveyard" carries "one or
+ *  more Rats" (excluded by #1, an English plural) AND "seven or more cards" (the real threshold), and
+ *  the independent exec picked the FIRST one up, pairing `threshold: {atLeast: 7}` with
+ *  `thresholdSubject: {subtype: "rat"}` -- a number and a noun from two different sentences. */
+function selectThreshold(text: string): { atLeast: number; end: number } | undefined {
   if (!CONDITION_CUE.test(text)) return undefined;
 
   for (const match of text.matchAll(COMPARISON)) {
@@ -86,33 +96,50 @@ export function thresholdFor(text: string): { atLeast: number } | undefined {
     const before = text.slice(0, match.index);
     if (/\bThen\b/.test(before) || before.includes(". ")) continue;
 
-    return { atLeast };
+    return { atLeast, end: (match.index ?? 0) + match[0].length };
   }
   return undefined;
 }
 
-import type { SubjectFilter } from "../schema.js";
-import { parseSubject } from "./subject.js";
+/** The trigger threshold stated by `text`, or `undefined` when it states none.
+ *
+ *  Refuses rather than guesses, as `repeatsFor` does: an unrecognised numeric condition leaves the
+ *  field unset and stays visible as a gap. */
+export function thresholdFor(text: string): { atLeast: number } | undefined {
+  const m = selectThreshold(text);
+  return m ? { atLeast: m.atLeast } : undefined;
+}
+
+/** A zone-scoped card count is not a battlefield count. "Eight or more permanent cards in your
+ *  graveyard" and "thirteen cards in your hand" both name a COUNT of cards sitting in a zone, not a
+ *  class of permanents on the battlefield -- and no `SubjectFilter` can say "in your graveyard", so
+ *  reading `type: "permanent"` off "permanent cards in your graveyard" (The Everflowing Well) claims
+ *  "permanents you control", the opposite zone from the one printed.
+ *
+ *  General to every zone rather than an allow-list of "hand": refusing beats guessing, and a zone
+ *  word this doesn't know about is a gap that stays visible instead of a wrong sentence. `life` stays
+ *  a separate alternative -- "twenty or more life" names no zone phrase at all. */
+const NON_PERMANENT_NOUN = /\bin (?:your|their|a|each|all) [^.]{0,20}(?:hand|graveyard|library|exile)\b|\blife\b/i;
 
 /** WHAT the threshold counts. `thresholdFor` returns the number; this returns the noun, and without
  *  it a win condition claims every card in the deck. Revel in Riches counts TREASURES, Hellkite
  *  Tyrant ARTIFACTS, and both derive an untyped subject today.
  *
- *  Reads the words AFTER the comparison and stops at the clause end, so "ten or more Treasures, you
- *  win the game" yields "treasures" and not the whole sentence. Refuses when the noun is not a
- *  countable permanent — "thirteen cards in your hand" is a hand-size condition and no SubjectFilter
- *  can express it. */
+ *  Reads the words after `selectThreshold`'s winning match and stops at the clause end, so "ten or
+ *  more Treasures, you win the game" yields "treasures" and not the whole sentence. Refuses when the
+ *  noun is not a countable permanent — a zone-scoped card count (`NON_PERMANENT_NOUN`) or a
+ *  self-reference (`mentionsSelf`) is not one, and neither is a noun `parseSubject` cannot type. */
 export function thresholdSubjectFor(text: string): SubjectFilter | undefined {
-  if (!CONDITION_CUE.test(text)) return undefined;
-  // COMPARISON is an alternation (`N or more|at least N`), and `|` binds looser than concatenation:
-  // appending `\s+([^,.]+)` straight onto its source would only attach the noun capture to the
-  // SECOND branch, leaving "ten or more Treasures" with an undefined group. Wrapping the whole
-  // alternation in a non-capturing group fixes the precedence so either branch feeds the same noun
-  // group, which is why `m[m.length - 1]` below can rely on always being that noun.
-  const m = new RegExp(`(?:${COMPARISON.source})\\s+([^,.]+)`, "i").exec(text);
+  const m = selectThreshold(text);
   if (!m) return undefined;
-  const noun = (m[m.length - 1] ?? "").trim();
-  if (noun === "" || /\bcards? in (?:your|their) hand\b|\blife\b/i.test(noun)) return undefined;
+  const nounMatch = /^\s+([^,.]+)/.exec(text.slice(m.end));
+  if (!nounMatch) return undefined;
+  const noun = nounMatch[1].trim();
+  if (noun === "" || NON_PERMANENT_NOUN.test(noun)) return undefined;
+  // Colfenor's Urn: "if three or more cards have been exiled with THIS ARTIFACT" is about the Urn's
+  // own exile pile, not a deck-wide class of artifacts -- and unlike a trigger subject field, this
+  // noun is scraped from free prose, so the self-reference can sit anywhere in it, not just the head.
+  if (mentionsSelf(noun)) return undefined;
   const subject = parseSubject(noun);
   const hasType = subject.type !== undefined || subject.subtype !== undefined;
   return hasType ? subject : undefined;
