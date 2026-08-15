@@ -266,5 +266,143 @@
     "Power-up",
     "Teamwork",
     "Storied"
+  ],
+  "sections": [
+    {
+      "rule": "700",
+      "name": "General"
+    },
+    {
+      "rule": "701",
+      "name": "Keyword Actions"
+    },
+    {
+      "rule": "702",
+      "name": "Keyword Abilities"
+    },
+    {
+      "rule": "703",
+      "name": "Turn-Based Actions"
+    },
+    {
+      "rule": "704",
+      "name": "State-Based Actions"
+    },
+    {
+      "rule": "705",
+      "name": "Flipping a Coin"
+    },
+    {
+      "rule": "706",
+      "name": "Rolling a Die"
+    },
+    {
+      "rule": "707",
+      "name": "Copying Objects"
+    },
+    {
+      "rule": "708",
+      "name": "Face-Down Spells and Permanents"
+    },
+    {
+      "rule": "709",
+      "name": "Split Cards"
+    },
+    {
+      "rule": "710",
+      "name": "Flip Cards"
+    },
+    {
+      "rule": "711",
+      "name": "Leveler Cards"
+    },
+    {
+      "rule": "712",
+      "name": "Double-Faced Cards"
+    },
+    {
+      "rule": "713",
+      "name": "Substitute Cards"
+    },
+    {
+      "rule": "714",
+      "name": "Saga Cards"
+    },
+    {
+      "rule": "715",
+      "name": "Adventurer Cards"
+    },
+    {
+      "rule": "716",
+      "name": "Class Cards"
+    },
+    {
+      "rule": "717",
+      "name": "Attraction Cards"
+    },
+    {
+      "rule": "718",
+      "name": "Prototype Cards"
+    },
+    {
+      "rule": "719",
+      "name": "Case Cards"
+    },
+    {
+      "rule": "720",
+      "name": "Omen Cards"
+    },
+    {
+      "rule": "721",
+      "name": "Station Cards"
+    },
+    {
+      "rule": "722",
+      "name": "Preparation Cards"
+    },
+    {
+      "rule": "723",
+      "name": "Controlling Another Player"
+    },
+    {
+      "rule": "724",
+      "name": "Ending Turns and Phases"
+    },
+    {
+      "rule": "725",
+      "name": "The Monarch"
+    },
+    {
+      "rule": "726",
+      "name": "The Initiative"
+    },
+    {
+      "rule": "727",
+      "name": "Restarting the Game"
+    },
+    {
+      "rule": "728",
+      "name": "Rad Counters"
+    },
+    {
+      "rule": "729",
+      "name": "Subgames"
+    },
+    {
+      "rule": "730",
+      "name": "Merging with Permanents"
+    },
+    {
+      "rule": "731",
+      "name": "Day and Night"
+    },
+    {
+      "rule": "732",
+      "name": "Taking Shortcuts"
+    },
+    {
+      "rule": "733",
+      "name": "Handling Illegal Actions"
+    }
   ]
 }

@@ -34,6 +34,12 @@ const out = {
   version: file.replace(/\D/g, ""),
   actions: headings("701"),
   abilities: headings("702"),
+  // Every CR 7xx section — "Additional Rules", where the game puts its per-mechanic rules (Saga is
+  // 714, Adventure 715, Omen 720, the monarch 725). Committed so `cr-completeness.test.ts` can
+  // require a verdict for each without reading the gitignored rules cache.
+  sections: [...new Map([...cr.matchAll(/^(7\d\d)\. ([A-Z][^\n]{2,50})$/gm)]
+    .map((m) => [m[1], m[2].trim()] as [string, string])).entries()]
+    .map(([rule, name]) => ({ rule, name })),
 };
 
 const json = `${JSON.stringify(out, null, 2)}\n`;
@@ -54,4 +60,4 @@ if (CHECK) {
 }
 
 writeFileSync(OUT, json);
-console.log(`wrote ${OUT}: ${out.actions.length} keyword actions, ${out.abilities.length} keyword abilities (rules ${out.version})`);
+console.log(`wrote ${OUT}: ${out.actions.length} keyword actions, ${out.abilities.length} keyword abilities, ${out.sections.length} 7xx sections (rules ${out.version})`);
