@@ -88,14 +88,32 @@ export function analyzeDeckStructured(
     return { card: dc.card, tags: commanderSet.has(dc.card.name) ? markCommander(tags) : tags };
   });
 
+  // ONE NODE PER CARD, WITH ITS COUNT (owner's ruling, 2026-08-15). `parseDecklistSections` expands
+  // "6 Plains" into six entries, so the pair loop was producing six identical Farseek->Plains edges
+  // and the graph six identical nodes. Measured across the 71 decks: 12.2% of card slots are
+  // duplicate copies, and they carried 3,628 duplicate edges — 10.9% of the population.
+  //
+  // Deduped ONLY here, for the relations. `computeDeckMath` keeps the FULL list below, because every
+  // figure it produces is a probability over a 100-card library and collapsing basics would silently
+  // turn it into a 65-card deck. `deckFreq` keeps the full list too: theme frequency asks how much of
+  // the deck carries a tag, which is a question about slots and not about distinct cards.
+  const byName = new Map<string, { card: DeckCard; copies: number }>();
+  for (const dc of resolved) {
+    const seen = byName.get(dc.card.name);
+    if (seen) seen.copies++;
+    else byName.set(dc.card.name, { card: dc, copies: 1 });
+  }
+  const unique = [...byName.values()].map((v) => v.card);
+  const quantities = Object.fromEntries([...byName].filter(([, v]) => v.copies > 1).map(([n, v]) => [n, v.copies]));
+
   // Pairwise edges over unordered pairs; i < j guarantees no self-pair and no double-count
   // (pairReasons already unions both directions for a given {a,b}).
   const edges: SynergyEdge[] = [];
-  for (let i = 0; i < resolved.length; i++) {
-    for (let j = i + 1; j < resolved.length; j++) {
-      const reasons = pairReasons(resolved[i], resolved[j], hierarchy);
+  for (let i = 0; i < unique.length; i++) {
+    for (let j = i + 1; j < unique.length; j++) {
+      const reasons = pairReasons(unique[i], unique[j], hierarchy);
       if (reasons.length > 0) {
-        edges.push({ a: resolved[i].card.name, b: resolved[j].card.name, score: reasons.length, reasons });
+        edges.push({ a: unique[i].card.name, b: unique[j].card.name, score: reasons.length, reasons });
       }
     }
   }
@@ -139,11 +157,13 @@ export function analyzeDeckStructured(
   // undirected reasons together in one O(n²) sweep instead of two.
   interface Dir { support: number; feederSum: number; partnerCount: number; partners: { name: string; contribution: number; reasons: Reason[] }[] }
   const dir = new Map<string, Dir>();
-  for (const dc of resolved) dir.set(dc.card.name, { support: 0, feederSum: 0, partnerCount: 0, partners: [] });
-  for (let i = 0; i < resolved.length; i++) {
-    for (let j = 0; j < resolved.length; j++) {
+  // Deduped for the same reason the undirected loop above is: six copies of a basic contributed six
+  // times to every partner's support, inflating per-card ratings by however many copies the deck ran.
+  for (const dc of unique) dir.set(dc.card.name, { support: 0, feederSum: 0, partnerCount: 0, partners: [] });
+  for (let i = 0; i < unique.length; i++) {
+    for (let j = 0; j < unique.length; j++) {
       if (i === j) continue;
-      const p = resolved[i], c = resolved[j];
+      const p = unique[i], c = unique[j];
       const reasons = directedReasons(p, c, hierarchy); // p feeds c
       if (reasons.length === 0) continue;
       const maxW = maxAxisWeight(reasons, axis);
@@ -327,6 +347,10 @@ export function analyzeDeckStructured(
     commanders: presentCommanders,
     cards: ratedCards,
     edges,
+    /** How many copies each repeated card contributes, so one node can say "x6". Absent for
+     *  singletons, which is every card in a legal EDH deck except basics and the any-number family
+     *  (Dragon's Approach, Rat Colony, Shadowborn Apostle). */
+    quantities,
     combos: foundCombos,
     themes,
     manaCurve: deckStats.manaCurve,

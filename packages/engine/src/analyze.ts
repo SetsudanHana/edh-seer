@@ -201,6 +201,9 @@ export interface DeckReport {
   commanders: string[];
   cards: CardSynergy[];
   edges: SynergyEdge[];
+  /** Copies per repeated card, so ONE node can show "x6" instead of six identical nodes. Only cards
+   *  with more than one copy appear. Absent from the flat engine, which never deduped. */
+  quantities?: Record<string, number>;
   combos: Combo[];
   themes: { tag: string; count: number }[];
   manaCurve: ManaCurveBucket[];

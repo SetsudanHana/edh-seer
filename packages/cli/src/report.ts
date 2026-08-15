@@ -21,7 +21,12 @@ export function formatReport(report: DeckReport): string {
   for (const c of report.cards.slice(0, 20)) {
     const tag = c.isCommander ? " [commander]" : "";
     const plural = c.partnerCount === 1 ? "" : "s";
-    lines.push(`[${c.score.toFixed(2)}] ${c.name}${tag} — synergizes with ${c.partnerCount} card${plural}`);
+    // ONE ROW PER CARD, with its count: the analyzer collapses copies into a single node so six
+    // basics are one relation and not six identical ones, and the count is how the row still says
+    // the deck runs six. The graph has shown this as a "x6" badge since it shipped.
+    const copies = report.quantities?.[c.name];
+    const qty = copies ? ` x${copies}` : "";
+    lines.push(`[${c.score.toFixed(2)}] ${c.name}${qty}${tag} — synergizes with ${c.partnerCount} card${plural}`);
     for (const p of c.topPartners.slice(0, 3)) {
       for (const r of p.reasons) {
         lines.push(`    - ${p.name}: ${r.text}`);
