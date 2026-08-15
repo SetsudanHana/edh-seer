@@ -70,21 +70,53 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   //
   // Expanded in EMITS (the rules give them a primitive):
   "connive", "recruit", "bolster", "support", "adapt", "monstrosity", "blight", "investigate",
-  "populate", "incubate", "manifest", "discover",
+  "populate", "incubate", "manifest", "discover", "meld",
   // Recorded but emitting NOTHING, because the rules give them no event to emit: a status
   // (goad 701.15, detain 701.35, suspect 701.60, harness 701.64, exert 701.43), a replacement
   // effect (regenerate 701.19), library manipulation nobody triggers on (clash 701.30,
   // fateseal 701.29, behold 701.4), damage removal (heal 701.69), or a player choice
   // (vote 701.38). They still earn a word: without one the model answers `other` and the clause
   // is lost whole, which is how 38 trigger clauses ended up on the escape hatch.
+  // (meld moved to the expanded group above on a re-read: 701.42a puts cards onto the battlefield.)
+  //
+  // REGENERATE IS A REPLACEMENT EFFECT AND EMITS NOTHING, which a first pass got wrong by reading
+  // 701.19a too literally: "instead remove all damage marked on it and its controller TAPS IT" is
+  // not a tap that happens when you regenerate. Regenerating puts up a SHIELD; the tap happens later
+  // and only if a destruction is actually attempted — and only destruction, never sacrifice. An
+  // action that creates a replacement effect emits nothing at the time it is performed, the same
+  // reason connive's conditional counter is omitted. 428 corpus cards, and an unconditional `taps`
+  // on all of them would have been a wrong sentence on every one that never got destroyed.
   "goad", "regenerate", "exert", "detain", "suspect", "harness", "vote", "clash", "fateseal",
-  "behold", "heal", "meld", "exchange", "convert", "double", "triple",
+  "behold", "heal", "exchange", "convert", "double", "triple",
   // CONDITIONAL, so recorded with no emit rather than a guessed one: explore (701.44, land to hand
   // OR a counter), endure (701.63, a token XOR counters), learn (701.48, discard-then-draw OR
   // fetch a Lesson), forage (701.61, sacrifice a Food OR exile three cards), time travel (701.56,
   // add OR remove time counters), collect evidence (701.59, exile from a graveyard).
   "explore", "endure", "learn", "forage", "time-travel", "collect-evidence",
   "other", "none"];
+/** Terms whose EXEMPLARS join the normalization scope, so a vocabulary addition is exercised on real
+ *  cards instead of sitting untested until someone happens to play one.
+ *
+ *  The calibration corpus is 71 decks and covers only the mechanics the owner already plays, so a
+ *  word added for completeness (the ratchet argument — see CLAUDE.md) would otherwise never appear in
+ *  a single clause. A handful of cards per term is enough to prove the expansion in `EMITS` produces
+ *  the events the Comprehensive Rules say it should.
+ *
+ *  Every term here is a word this vocabulary gained on 2026-08-15. Trigger words are included too:
+ *  `copy` is the reason any of this happened. */
+export const EXEMPLAR_TERMS = [
+  // Keyword actions the rules give a primitive, so the expansion is testable.
+  "connive", "recruit", "bolster", "support", "adapt", "monstrosity", "blight", "investigate",
+  "populate", "incubate", "manifest", "discover", "meld",
+  // Keyword actions that emit nothing — the test is that the CLAUSE survives rather than falling to
+  // `other`, which is the whole reason they earned a word.
+  "goad", "regenerate", "exert", "detain", "suspect", "vote", "clash", "fateseal", "behold", "heal",
+  "explore", "endure", "learn", "forage",
+  // Trigger words.
+  "becomes blocked", "cycle", "mutates", "monstrous", "commits a crime", "expend", "descended",
+  "copy a spell", "rolls a", "becomes the monarch", "Ring tempts",
+] as const;
+
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
 export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps", "untaps", "cast",
   "upkeep", "begin-combat", "end-step", "draw", "draw-step", "main-phase", "combat-damage-step", "damage-dealt", "life-gained", "life-lost",

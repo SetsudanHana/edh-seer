@@ -25,7 +25,7 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText } fr
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { buildRequest, normalizeCard } from "../normalize-card.js";
-import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE, VOCAB_VERSION, TRIGGER_VOCAB_VERSION, TRIGGERS } from "../normalize-prompt.js";
+import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE, VOCAB_VERSION, TRIGGER_VOCAB_VERSION, TRIGGERS, EXEMPLAR_TERMS } from "../normalize-prompt.js";
 import { segment } from "../segment.js";
 import {
   CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, carriesOther, missesASplit,
@@ -75,6 +75,27 @@ function calibrationNames(): string[] {
 
 const store = await connect(loadConfig());
 await ensureClauseIndexes(store.db);
+
+/** A few real cards per newly-added vocabulary term, so the addition is exercised instead of sitting
+ *  untested. DETERMINISTIC — sorted by oracle-text length then name — so the same cards are chosen on
+ *  every run and the scope does not drift card by card. Shortest text first on purpose: the simplest
+ *  printing of a keyword is the clearest test of it, and the cheapest to normalize. */
+const EXEMPLARS_PER_TERM = 3;
+async function exemplarNames(): Promise<string[]> {
+  const out = new Set<string>();
+  for (const term of EXEMPLAR_TERMS) {
+    const safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const found = await store.cards
+      .find({ oracleText: new RegExp(`\\b${safe}`, "i") } as never)
+      .project({ name: 1, oracleText: 1 })
+      .toArray() as unknown as { name: string; oracleText?: string }[];
+    found
+      .sort((a, b) => (a.oracleText ?? "").length - (b.oracleText ?? "").length || a.name.localeCompare(b.name))
+      .slice(0, EXEMPLARS_PER_TERM)
+      .forEach((c) => out.add(normalizeName(c.name)));
+  }
+  return [...out];
+}
 const lookup = mongoLookup(store);
 const clausesCol = store.db.collection<CardClausesDoc>(CLAUSES_COLLECTION);
 
@@ -89,7 +110,9 @@ interface Job {
 
 const jobs: Job[] = [];
 const unresolved: string[] = [];
-for (const name of calibrationNames()) {
+const exemplars = await exemplarNames();
+const scope = [...new Set([...calibrationNames(), ...exemplars])];
+for (const name of scope) {
   const doc = (await lookup.findByName(name)) as
     { _id: string; name: string; oracleText?: string; keywords?: string[]; typeLine?: string } | null;
   if (!doc) { unresolved.push(name); continue; }
@@ -124,7 +147,7 @@ const outputTokens = billable * EST_OUTPUT_TOKENS;
 const usd = (inputTokens / 1e6) * USD_PER_M_INPUT + (outputTokens / 1e6) * USD_PER_M_OUTPUT;
 
 const cfg = loadTaggerConfig();
-console.log(`scope: calibration corpus`);
+console.log(`scope: calibration corpus + ${exemplars.length} keyword exemplars (${scope.length} cards)`);
 console.log(`  cards needing normalization: ${jobs.length}${LIMIT ? ` (limited to ${LIMIT})` : ""}`);
 console.log(`  of those, answered in code (no model call): ${freeCards}`);
 if (unresolved.length) console.log(`  unresolved names: ${unresolved.length} (${unresolved.slice(0, 3).join(", ")}...)`);

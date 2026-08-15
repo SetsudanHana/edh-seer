@@ -71,6 +71,10 @@ const EMITS: Record<string, Verb[]> = {
   // cast that card without paying its mana cost." Cascade is already mapped this way in
   // KEYWORD_EMITS on the identical "may cast without paying" wording, so this follows precedent.
   discover: ["cast"],
+  // 701.42a: "put them onto the battlefield with their back faces up and combined." A zone change,
+  // so a meld is an `enters`. Separate channel from the `meld` REASON edges.ts draws off
+  // `meldPartner`, which is a printed characteristic rather than an event.
+  meld: ["enters"],
 };
 
 /** The counter KIND a keyword action places, since its object names the RECIPIENT rather than the
