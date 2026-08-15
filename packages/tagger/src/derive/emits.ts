@@ -75,6 +75,16 @@ const EMITS: Record<string, Verb[]> = {
   // so a meld is an `enters`. Separate channel from the `meld` REASON edges.ts draws off
   // `meldPartner`, which is a printed characteristic rather than an event.
   meld: ["enters"],
+  // 701.58a: "turn it face down ... Put that card onto the battlefield face down." Manifest's twin,
+  // with ward {2}; a CARD again, so `enters` and never `create-token`.
+  cloak: ["enters"],
+  // 701.62a: "Look at the top two cards of your library. Manifest one of them, then put the cards
+  // you looked at that were not manifested this way into your GRAVEYARD." The discard half is a
+  // library-to-graveyard move, which is a mill.
+  "manifest-dread": ["enters", "mill"],
+  // 701.66a: "Target land you control becomes a 0/0 land creature with haste ... Put N +1/+1
+  // counters on it." The animate half is an effect, not an event; the counters are the event.
+  earthbend: ["counter-added"],
 };
 
 /** The counter KIND a keyword action places, since its object names the RECIPIENT rather than the
@@ -85,6 +95,7 @@ const EMITS: Record<string, Verb[]> = {
  *  `blight` is -1/-1 (CR 701.68) and is the reason this is a MAP and not a constant. */
 const KEYWORD_COUNTER: Record<string, string> = {
   bolster: "+1/+1", support: "+1/+1", adapt: "+1/+1", monstrosity: "+1/+1", incubate: "+1/+1",
+  earthbend: "+1/+1",
   blight: "-1/-1",
 };
 

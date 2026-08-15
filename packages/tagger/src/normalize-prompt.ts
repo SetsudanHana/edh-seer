@@ -70,7 +70,7 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   //
   // Expanded in EMITS (the rules give them a primitive):
   "connive", "recruit", "bolster", "support", "adapt", "monstrosity", "blight", "investigate",
-  "populate", "incubate", "manifest", "discover", "meld",
+  "populate", "incubate", "manifest", "discover", "meld", "cloak", "manifest-dread", "earthbend",
   // Recorded but emitting NOTHING, because the rules give them no event to emit: a status
   // (goad 701.15, detain 701.35, suspect 701.60, harness 701.64, exert 701.43), a replacement
   // effect (regenerate 701.19), library manipulation nobody triggers on (clash 701.30,
@@ -93,6 +93,13 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // fetch a Lesson), forage (701.61, sacrifice a Food OR exile three cards), time travel (701.56,
   // add OR remove time counters), collect evidence (701.59, exile from a graveyard).
   "explore", "endure", "learn", "forage", "time-travel", "collect-evidence",
+  // Found only by COMPUTING the CR 701 diff rather than eyeballing it — the hand reconciliation
+  // claimed completeness and had missed nine. `venture-into-the-dungeon` (701.49) moves a marker,
+  // `face-a-villainous-choice` (701.55) is a choice wrapper and `waterbend` (701.67) is an
+  // alternative way to pay a cost, so none of the three has an event. `airbend` (701.65) EXILES the
+  // objects, and `exile` itself carries no emit row today, so it follows that existing decision
+  // rather than inventing a new one. `ring-tempts` is already a TRIGGER word; it is an action too.
+  "venture-into-the-dungeon", "face-a-villainous-choice", "waterbend", "airbend", "ring-tempts",
   "other", "none"];
 /** Terms whose EXEMPLARS join the normalization scope, so a vocabulary addition is exercised on real
  *  cards instead of sitting untested until someone happens to play one.
@@ -107,7 +114,7 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
 export const EXEMPLAR_TERMS = [
   // Keyword actions the rules give a primitive, so the expansion is testable.
   "connive", "recruit", "bolster", "support", "adapt", "monstrosity", "blight", "investigate",
-  "populate", "incubate", "manifest", "discover", "meld",
+  "populate", "incubate", "manifest", "discover", "meld", "cloak", "manifest-dread", "earthbend",
   // Keyword actions that emit nothing — the test is that the CLAUSE survives rather than falling to
   // `other`, which is the whole reason they earned a word.
   "goad", "regenerate", "exert", "detain", "suspect", "vote", "clash", "fateseal", "behold", "heal",
