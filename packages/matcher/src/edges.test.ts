@@ -1748,3 +1748,36 @@ test("a card that counts its own name reaches its other copies, and nothing else
   // is the defect the CS benchmark recorded as our one missing qualifier.
   expect(between("Rat Colony", ratColony(), "Marrow-Gnawer", plainRat())).toHaveLength(0);
 });
+
+// A ROLE SAYS THE SAME THING NEXT TO EVERY CARD — which is true of Laboratory Maniac and false of
+// Revel in Riches. "Wins if you control ten Treasures" is a claim about Treasure producers
+// specifically, so a win condition that NAMES what it counts is a relation, not a role.
+test("a typed win condition edges to what it counts; an untyped one stays a role", () => {
+  const revel = (withSubject: boolean): CardTags => ({
+    oracleId: "revel", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: [], colors: ["B"], identity: ["B"], cmc: 5,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{
+      kind: "triggered",
+      trigger: {
+        verbs: ["upkeep"], subject: { control: "you", token: null },
+        threshold: { atLeast: 10 },
+        ...(withSubject ? { thresholdSubject: { control: "you", token: null, subtype: "treasure" } } : {}),
+      },
+      effect: { kind: "win-game" },
+    }],
+  });
+  const treasureMaker = (): CardTags => ({
+    oracleId: "maker", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["artifact"], subtypes: ["treasure"], colors: [], identity: [], cmc: 0,
+      power: null, toughness: null, token: true, keywords: [] },
+    abilities: [],
+  });
+  const reasons = (withSubject: boolean) => directedReasons(
+    { card: { name: "Treasure" } as DeckCard["card"], tags: treasureMaker() },
+    { card: { name: "Revel in Riches" } as DeckCard["card"], tags: revel(withSubject) }, H,
+  ).filter((r) => r.tag.startsWith("wincon:"));
+
+  expect(reasons(true)).toHaveLength(1);
+  expect(reasons(false)).toHaveLength(0);
+});

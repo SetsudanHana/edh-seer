@@ -582,6 +582,26 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     }
   }
 
+  // A WIN CONDITION THAT NAMES WHAT IT COUNTS IS A RELATION, NOT A ROLE. `win-game` sits in
+  // ROLE_NOT_SYNERGY because "this card wins the game" says the identical thing next to every card —
+  // true of Laboratory Maniac, false of Revel in Riches, which wins on ten TREASURES and is
+  // therefore a claim about Treasure producers. Gated on `thresholdSubject`: an untyped win
+  // condition stays a role, exactly as before.
+  for (const a of c.tags.abilities) {
+    if (a.effect.kind !== "win-game") continue;
+    const counted = a.trigger?.thresholdSubject;
+    if (!counted) continue;
+    if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), counted, h)) continue;
+    reasons.push({
+      tag: `wincon:${themeSubjectKey(counted)}`,
+      text: `${p.card.name} is what ${c.card.name} counts toward winning`,
+      effectKind: a.effect.kind,
+      repeatability: "static",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+  }
+
   // Static edges: P is a lord whose effect subject C's characteristics satisfy. (UNCHANGED)
   //
   // Plus one non-static kind. A `clone` states WHICH permanent becomes the copy — "target
