@@ -186,7 +186,8 @@ export type Verb =
   | "proliferate"
   | "upkeep"
   | "begin-combat"
-  | "end-step";
+  | "end-step"
+  | "dice-rolled";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -218,6 +219,11 @@ export const VERB_VOCAB: readonly Verb[] = [
   "upkeep",
   "begin-combat",
   "end-step",
+  // CR 706. Only 7 corpus cards trigger on a roll, but 162 instruct one — the supply was there and
+  // had no verb to arrive as, so the consumers starved. Coin flips (CR 705) get NO engine verb: 81
+  // cards flip and ZERO trigger on someone else flipping, because a flip is self-contained
+  // ("flip a coin. If you win the flip, ..."), and Okaun/Zndrsplt flip and pay off on one card.
+  "dice-rolled",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */

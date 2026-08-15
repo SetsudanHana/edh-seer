@@ -192,3 +192,13 @@ test("a keyword the rules give no event emits nothing at all", () => {
   expect(actionEmits({ verb: "goad", object: "target creature" })).toEqual([]);
   expect(actionEmits({ verb: "regenerate", object: "this creature" })).toEqual([]);
 });
+
+test("rolling dice emits the event 7 corpus consumers watch; flipping a coin emits nothing", () => {
+  // CR 706.1 — 162 corpus cards instruct a roll against 7 that trigger on one, so supply was never
+  // the scarce side; it simply had no verb to arrive as.
+  expect(actionEmits({ verb: "roll-dice", object: "a d20" }).map((e) => e.verb)).toEqual(["dice-rolled"]);
+  // CR 705 — 81 cards flip and ZERO trigger on another card's flip. A flip is self-contained
+  // ("flip a coin. If you win the flip, ..."), and even Okaun and Zndrsplt flip and pay off on one
+  // card. A word with no event, like goad and vote.
+  expect(actionEmits({ verb: "flip-coin", object: "a coin" })).toEqual([]);
+});

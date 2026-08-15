@@ -12,7 +12,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
 import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
-import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../../../matcher/src/index.js";
+import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
 
 const DIR = "packages/cli/decks/calibration";
 const store = await connect(loadConfig());

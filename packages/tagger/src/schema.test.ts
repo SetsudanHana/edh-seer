@@ -2,10 +2,17 @@ import { expect, test } from "vitest";
 import { VERB_VOCAB, VERB_ALIASES, SCHEMA_VERSION, SCALING_BASES, SCALING_ALIASES, EFFECT_KINDS } from "./schema.js";
 
 test("VERB_VOCAB is a closed, unique verb list", () => {
-  expect(VERB_VOCAB).toHaveLength(23);
+  // A COUNT RATCHET: every engine verb is a matching surface, so growing this list must be a
+  // decision rather than a side effect. 23 -> 24 on 2026-08-15 for `dice-rolled` (CR 706), the
+  // only member of today's vocabulary work that earned an ENGINE verb rather than just a clause
+  // word — 162 corpus cards instruct a roll and 7 trigger on one, and without a verb the supply
+  // could not reach them. Coin flips (CR 705) were REFUSED the same day: 81 cards flip and zero
+  // trigger on another card's flip.
+  expect(VERB_VOCAB).toHaveLength(24);
   expect(VERB_VOCAB).toContain("enters");
   expect(VERB_VOCAB).toContain("create-token");
   expect(VERB_VOCAB).toContain("land-play");
+  expect(VERB_VOCAB).toContain("dice-rolled");
   expect(new Set(VERB_VOCAB).size).toBe(VERB_VOCAB.length);
 });
 

@@ -85,6 +85,14 @@ const EMITS: Record<string, Verb[]> = {
   // 701.66a: "Target land you control becomes a 0/0 land creature with haste ... Put N +1/+1
   // counters on it." The animate half is an effect, not an event; the counters are the event.
   earthbend: ["counter-added"],
+  // CR 706.1: "An effect that instructs a player to roll a die will specify what kind of die to roll
+  // and how many." 162 corpus cards instruct a roll against 7 that trigger on one — supply is not
+  // the scarce side here, it simply had no verb to arrive as.
+  //
+  // `flip-coin` is deliberately ABSENT: 81 corpus cards flip and none triggers on another card's
+  // flip. A flip is self-contained ("flip a coin. If you win the flip, ..."), and even Okaun and
+  // Zndrsplt flip and pay off on the same card. A word without an event, like goad and vote.
+  "roll-dice": ["dice-rolled"],
 };
 
 /** The counter KIND a keyword action places, since its object names the RECIPIENT rather than the

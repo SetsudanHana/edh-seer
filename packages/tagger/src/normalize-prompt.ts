@@ -100,6 +100,9 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // objects, and `exile` itself carries no emit row today, so it follows that existing decision
   // rather than inventing a new one. `ring-tempts` is already a TRIGGER word; it is an action too.
   "venture-into-the-dungeon", "face-a-villainous-choice", "waterbend", "airbend", "ring-tempts",
+  // CR 706 and 705. `roll-dice` expands to a `dice-rolled` event; `flip-coin` gets no emit, because
+  // no corpus card triggers on another card's flip — a flip is self-contained.
+  "roll-dice", "flip-coin",
   // DESIGNATIONS the game itself can hold, each its own CR section, and keywords are only one axis
   // of the dictionary. `monarch` (725) and `day-night` (731) went in above; these were missed.
   // `initiative` is CR 726 and `city-blessing` is what Ascend (702.131) grants.
