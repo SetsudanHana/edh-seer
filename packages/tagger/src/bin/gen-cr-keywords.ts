@@ -34,11 +34,12 @@ const out = {
   version: file.replace(/\D/g, ""),
   actions: headings("701"),
   abilities: headings("702"),
-  // Every CR 7xx section — "Additional Rules", where the game puts its per-mechanic rules (Saga is
-  // 714, Adventure 715, Omen 720, the monarch 725). Committed so `cr-completeness.test.ts` can
-  // require a verdict for each without reading the gitignored rules cache.
-  sections: [...new Map([...cr.matchAll(/^(7\d\d)\. ([A-Z][^\n]{2,50})$/gm)]
+  // EVERY CR section, all nine bands — not just the 700s. The 700s are where the per-mechanic rules
+  // live (Saga 714, Adventure 715, Omen 720), but 800 is multiplayer and 903 is COMMANDER, and an
+  // EDH engine that never swept 903 is exactly the blind spot this list exists to remove.
+  sections: [...new Map([...cr.matchAll(/^([1-9]\d\d)\. ([A-Z][^\n]{2,55})$/gm)]
     .map((m) => [m[1], m[2].trim()] as [string, string])).entries()]
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
     .map(([rule, name]) => ({ rule, name })),
 };
 
@@ -60,4 +61,4 @@ if (CHECK) {
 }
 
 writeFileSync(OUT, json);
-console.log(`wrote ${OUT}: ${out.actions.length} keyword actions, ${out.abilities.length} keyword abilities, ${out.sections.length} 7xx sections (rules ${out.version})`);
+console.log(`wrote ${OUT}: ${out.actions.length} keyword actions, ${out.abilities.length} keyword abilities, ${out.sections.length} CR sections (rules ${out.version})`);

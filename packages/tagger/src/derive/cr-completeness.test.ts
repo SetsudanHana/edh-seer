@@ -111,12 +111,9 @@ test("every CR 7xx section has been judged — a new mechanic cannot arrive unno
   // Everything found before this sweep was found because someone THOUGHT OF IT: a section picked by
   // hand, or a mechanic the owner named. Enumerating the section list turns "did we miss a mechanic?"
   // into a finite checklist. 34 sections at rules 20260807; a 35th must be judged, not ignored.
-  expect(crKeywords.sections.length).toBe(34);
-  // The rules are numbered contiguously from 700, so a gap means the parse dropped a heading.
-  const numbers = crKeywords.sections.map((s) => Number(s.rule)).sort((a, b) => a - b);
-  expect(numbers[0]).toBe(700);
-  for (let i = 1; i < numbers.length; i++) {
-    expect(numbers[i], `CR 7xx section numbering jumps at ${numbers[i - 1]} -> ${numbers[i]}`)
-      .toBe(numbers[i - 1] + 1);
-  }
+  // 147 sections across all nine bands at rules 20260807 — extended from the 7xx-only pass once the
+  // owner asked for the rest, which is how CR 903 (Commander) got swept in an EDH engine.
+  expect(crKeywords.sections.length).toBe(147);
+  expect(crKeywords.sections.some((s) => s.rule === "903" && /Commander/.test(s.name))).toBe(true);
+  expect(crKeywords.sections.some((s) => s.rule === "714" && /Saga/.test(s.name))).toBe(true);
 });

@@ -269,6 +269,386 @@
   ],
   "sections": [
     {
+      "rule": "100",
+      "name": "General"
+    },
+    {
+      "rule": "101",
+      "name": "The Magic Golden Rules"
+    },
+    {
+      "rule": "102",
+      "name": "Players"
+    },
+    {
+      "rule": "103",
+      "name": "Starting the Game"
+    },
+    {
+      "rule": "104",
+      "name": "Ending the Game"
+    },
+    {
+      "rule": "105",
+      "name": "Colors"
+    },
+    {
+      "rule": "106",
+      "name": "Mana"
+    },
+    {
+      "rule": "107",
+      "name": "Numbers and Symbols"
+    },
+    {
+      "rule": "108",
+      "name": "Cards"
+    },
+    {
+      "rule": "109",
+      "name": "Objects"
+    },
+    {
+      "rule": "110",
+      "name": "Permanents"
+    },
+    {
+      "rule": "111",
+      "name": "Tokens"
+    },
+    {
+      "rule": "112",
+      "name": "Spells"
+    },
+    {
+      "rule": "113",
+      "name": "Abilities"
+    },
+    {
+      "rule": "114",
+      "name": "Emblems"
+    },
+    {
+      "rule": "115",
+      "name": "Targets"
+    },
+    {
+      "rule": "116",
+      "name": "Special Actions"
+    },
+    {
+      "rule": "117",
+      "name": "Timing and Priority"
+    },
+    {
+      "rule": "118",
+      "name": "Costs"
+    },
+    {
+      "rule": "119",
+      "name": "Life"
+    },
+    {
+      "rule": "120",
+      "name": "Damage"
+    },
+    {
+      "rule": "121",
+      "name": "Drawing a Card"
+    },
+    {
+      "rule": "122",
+      "name": "Counters"
+    },
+    {
+      "rule": "123",
+      "name": "Stickers"
+    },
+    {
+      "rule": "200",
+      "name": "General"
+    },
+    {
+      "rule": "201",
+      "name": "Name"
+    },
+    {
+      "rule": "202",
+      "name": "Mana Cost and Color"
+    },
+    {
+      "rule": "203",
+      "name": "Illustration"
+    },
+    {
+      "rule": "204",
+      "name": "Color Indicator"
+    },
+    {
+      "rule": "205",
+      "name": "Type Line"
+    },
+    {
+      "rule": "206",
+      "name": "Expansion Symbol"
+    },
+    {
+      "rule": "207",
+      "name": "Text Box"
+    },
+    {
+      "rule": "208",
+      "name": "Power/Toughness"
+    },
+    {
+      "rule": "209",
+      "name": "Loyalty"
+    },
+    {
+      "rule": "210",
+      "name": "Defense"
+    },
+    {
+      "rule": "211",
+      "name": "Hand Modifier"
+    },
+    {
+      "rule": "212",
+      "name": "Life Modifier"
+    },
+    {
+      "rule": "213",
+      "name": "Information Below the Text Box"
+    },
+    {
+      "rule": "300",
+      "name": "General"
+    },
+    {
+      "rule": "301",
+      "name": "Artifacts"
+    },
+    {
+      "rule": "302",
+      "name": "Creatures"
+    },
+    {
+      "rule": "303",
+      "name": "Enchantments"
+    },
+    {
+      "rule": "304",
+      "name": "Instants"
+    },
+    {
+      "rule": "305",
+      "name": "Lands"
+    },
+    {
+      "rule": "306",
+      "name": "Planeswalkers"
+    },
+    {
+      "rule": "307",
+      "name": "Sorceries"
+    },
+    {
+      "rule": "308",
+      "name": "Kindreds"
+    },
+    {
+      "rule": "309",
+      "name": "Dungeons"
+    },
+    {
+      "rule": "310",
+      "name": "Battles"
+    },
+    {
+      "rule": "311",
+      "name": "Planes"
+    },
+    {
+      "rule": "312",
+      "name": "Phenomena"
+    },
+    {
+      "rule": "313",
+      "name": "Vanguards"
+    },
+    {
+      "rule": "314",
+      "name": "Schemes"
+    },
+    {
+      "rule": "315",
+      "name": "Conspiracies"
+    },
+    {
+      "rule": "400",
+      "name": "General"
+    },
+    {
+      "rule": "401",
+      "name": "Library"
+    },
+    {
+      "rule": "402",
+      "name": "Hand"
+    },
+    {
+      "rule": "403",
+      "name": "Battlefield"
+    },
+    {
+      "rule": "404",
+      "name": "Graveyard"
+    },
+    {
+      "rule": "405",
+      "name": "Stack"
+    },
+    {
+      "rule": "406",
+      "name": "Exile"
+    },
+    {
+      "rule": "407",
+      "name": "Ante"
+    },
+    {
+      "rule": "408",
+      "name": "Command"
+    },
+    {
+      "rule": "500",
+      "name": "General"
+    },
+    {
+      "rule": "501",
+      "name": "Beginning Phase"
+    },
+    {
+      "rule": "502",
+      "name": "Untap Step"
+    },
+    {
+      "rule": "503",
+      "name": "Upkeep Step"
+    },
+    {
+      "rule": "504",
+      "name": "Draw Step"
+    },
+    {
+      "rule": "505",
+      "name": "Main Phase"
+    },
+    {
+      "rule": "506",
+      "name": "Combat Phase"
+    },
+    {
+      "rule": "507",
+      "name": "Beginning of Combat Step"
+    },
+    {
+      "rule": "508",
+      "name": "Declare Attackers Step"
+    },
+    {
+      "rule": "509",
+      "name": "Declare Blockers Step"
+    },
+    {
+      "rule": "510",
+      "name": "Combat Damage Step"
+    },
+    {
+      "rule": "511",
+      "name": "End of Combat Step"
+    },
+    {
+      "rule": "512",
+      "name": "Ending Phase"
+    },
+    {
+      "rule": "513",
+      "name": "End Step"
+    },
+    {
+      "rule": "514",
+      "name": "Cleanup Step"
+    },
+    {
+      "rule": "600",
+      "name": "General"
+    },
+    {
+      "rule": "601",
+      "name": "Casting Spells"
+    },
+    {
+      "rule": "602",
+      "name": "Activating Activated Abilities"
+    },
+    {
+      "rule": "603",
+      "name": "Handling Triggered Abilities"
+    },
+    {
+      "rule": "604",
+      "name": "Handling Static Abilities"
+    },
+    {
+      "rule": "605",
+      "name": "Mana Abilities"
+    },
+    {
+      "rule": "606",
+      "name": "Loyalty Abilities"
+    },
+    {
+      "rule": "607",
+      "name": "Linked Abilities"
+    },
+    {
+      "rule": "608",
+      "name": "Resolving Spells and Abilities"
+    },
+    {
+      "rule": "609",
+      "name": "Effects"
+    },
+    {
+      "rule": "610",
+      "name": "One-Shot Effects"
+    },
+    {
+      "rule": "611",
+      "name": "Continuous Effects"
+    },
+    {
+      "rule": "612",
+      "name": "Text-Changing Effects"
+    },
+    {
+      "rule": "613",
+      "name": "Interaction of Continuous Effects"
+    },
+    {
+      "rule": "614",
+      "name": "Replacement Effects"
+    },
+    {
+      "rule": "615",
+      "name": "Prevention Effects"
+    },
+    {
+      "rule": "616",
+      "name": "Interaction of Replacement and/or Prevention Effects"
+    },
+    {
       "rule": "700",
       "name": "General"
     },
@@ -403,6 +783,78 @@
     {
       "rule": "733",
       "name": "Handling Illegal Actions"
+    },
+    {
+      "rule": "800",
+      "name": "General"
+    },
+    {
+      "rule": "801",
+      "name": "Limited Range of Influence Option"
+    },
+    {
+      "rule": "802",
+      "name": "Attack Multiple Players Option"
+    },
+    {
+      "rule": "803",
+      "name": "Attack Left and Attack Right Options"
+    },
+    {
+      "rule": "804",
+      "name": "Deploy Creatures Option"
+    },
+    {
+      "rule": "805",
+      "name": "Shared Team Turns Option"
+    },
+    {
+      "rule": "806",
+      "name": "Free-for-All Variant"
+    },
+    {
+      "rule": "807",
+      "name": "Grand Melee Variant"
+    },
+    {
+      "rule": "808",
+      "name": "Team vs. Team Variant"
+    },
+    {
+      "rule": "809",
+      "name": "Emperor Variant"
+    },
+    {
+      "rule": "810",
+      "name": "Two-Headed Giant Variant"
+    },
+    {
+      "rule": "811",
+      "name": "Alternating Teams Variant"
+    },
+    {
+      "rule": "900",
+      "name": "General"
+    },
+    {
+      "rule": "901",
+      "name": "Planechase"
+    },
+    {
+      "rule": "902",
+      "name": "Vanguard"
+    },
+    {
+      "rule": "903",
+      "name": "Commander"
+    },
+    {
+      "rule": "904",
+      "name": "Archenemy"
+    },
+    {
+      "rule": "905",
+      "name": "Conspiracy Draft"
     }
   ]
 }
