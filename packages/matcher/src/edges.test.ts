@@ -1637,3 +1637,39 @@ test("a non-self trigger still reads as the class it watches", () => {
   expect(etb.text).toContain("a creature entering");
   expect(etb.text).not.toContain("its own entry");
 });
+
+// SCALING EDGES. `effect.scaling` was derived, copied onto every Reason and read by impact.ts,
+// buckets.ts and wincon.ts — but formed no edge, because a payoff that merely gets BIGGER fires
+// nothing. Bonehoard is a 0/0 Germ until something dies.
+test("a graveyard fill grows a per-graveyard payoff, gated on WHAT is counted", () => {
+  const filler = (type: string): CardTags => ({
+    oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{
+      kind: "on-cast", effect: { kind: "top-manipulation" },
+      emits: [{ verb: "enters-graveyard", subject: { control: "you", token: null, type } }],
+    }],
+  });
+  const payoff = (counted: string): CardTags => ({
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["artifact"], subtypes: [], colors: [], identity: [], cmc: 4,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{
+      kind: "static",
+      effect: { kind: "pump", scaling: "per-graveyard",
+        scalingSubject: { control: "you", token: null, type: counted, zone: "graveyard" } },
+    }],
+  });
+  const reasons = (fill: string, counts: string) => directedReasons(
+    { card: { name: "Filler" } as DeckCard["card"], tags: filler(fill) },
+    { card: { name: "Payoff" } as DeckCard["card"], tags: payoff(counts) }, H,
+  ).filter((r) => r.tag.startsWith("scales:"));
+
+  // Bonehoard counts creature cards: a creature hitting the yard grows it.
+  expect(reasons("creature", "creature")).toHaveLength(1);
+  // Cavalier of Flame counts LAND cards. A creature fill does not feed it, and the basis alone —
+  // both are `per-graveyard` — cannot tell the two apart. That distinction is worth 64% of the fan:
+  // 676 candidate pairs in the 71 decks become 163 real ones.
+  expect(reasons("creature", "land")).toHaveLength(0);
+});

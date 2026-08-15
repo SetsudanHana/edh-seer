@@ -16,13 +16,23 @@
  *  A count the vocabulary cannot name (Dragonspark Reactor's charge counters) stays UNSET, which the
  *  engine already reads as "fixed". */
 import type { Action } from "../canonicalize.js";
-import type { ScalingBasis } from "../schema.js";
+import type { ScalingBasis, SubjectFilter } from "../schema.js";
+import { parseSubject } from "./subject.js";
+
+/** A count OF A GRAVEYARD'S CONTENTS: "in your graveyard", "in all graveyards", "in each graveyard". */
+const GRAVEYARD_COUNT = /\bin (?:your|a|an|each|their|all|its owner's) [^.,;]{0,30}graveyards?\b/i;
 
 /** Order matters. A graveyard count is per-graveyard even when the thing counted is a creature --
  *  SCALING_ALIASES maps "per-graveyard-creature" to per-graveyard, so that is the canonical reading
  *  and it must be tested before per-creature can claim Diregraf Colossus. */
 const BASES: [RegExp, ScalingBasis][] = [
-  [/\bin (?:your|a|each|their|all) graveyards?\b|\bgraveyards?\b/i, "per-graveyard"],
+  // MENTIONING A GRAVEYARD IS NOT COUNTING ONE. This row used to carry a bare `\bgraveyards?\b`
+  // alternative, and it claimed 3 of the 17 per-graveyard payoffs in the derived corpus for cards
+  // that count nothing there: Stonespeaker Crystal EXILES "any number of target players' graveyards"
+  // and Glimpse the Impossible counts "each card put INTO your graveyard this way" — its own exiled
+  // cards. A false basis is not inert: impact.ts weights by it, buckets.ts and wincon.ts read it.
+  // "into" is excluded for free by requiring a space after "in".
+  [GRAVEYARD_COUNT, "per-graveyard"],
   [/\bopponents?\b|\bplayers? in the game\b|\beach player\b/i, "per-opponent"],
   [/\bcreatures?\b/i, "per-creature"],
   [/\b(?:permanents?|artifacts?|enchantments?|lands?|devotion)\b/i, "per-permanent"],
@@ -34,6 +44,31 @@ const BASES: [RegExp, ScalingBasis][] = [
  *  artifacts, and the table would have called it per-permanent off the word "artifact". Everything
  *  from " on " is dropped for that reason; " in " is kept, because "in your graveyard" IS the basis. */
 const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60})/i;
+
+/** WHAT a graveyard count counts, as a subject the matcher can compare a fill against.
+ *
+ *  The BASIS is not the subject: Cavalier of Flame counts LAND cards in your graveyard, Glamdring
+ *  instants and sorceries, Bonehoard creatures — all three `per-graveyard`. An edge drawn off the
+ *  basis alone would claim that milling any card feeds all of them, which is 676 candidate pairs in
+ *  the 71 decks and mostly wrong-type. With this, `edges.ts` can put the fill through
+ *  `graveyardFillMatches` exactly as a reanimator demand goes through it.
+ *
+ *  The OWNER matters and is read from the same phrase: "your graveyard" is yours, "all graveyards" is
+ *  anyone's, and "their graveyard" is the OPPONENT's — Riverchurn Monument mills each target player
+ *  for the size of THEIR yard, which your own fillers do not feed. */
+export function scalingSubject(action: Action): SubjectFilter | undefined {
+  const text = `${action.amount ?? ""} ${action.object ?? ""}`;
+  if (!GRAVEYARD_COUNT.test(text)) return undefined;
+  const counted = COUNTED.exec(text);
+  if (!counted) return undefined;
+  const noun = counted[1];
+  const subject = parseSubject(noun.split(/\s+in\s+/i)[0]);
+  subject.zone = "graveyard";
+  subject.control = /\btheir\b/i.test(noun) ? "opp"
+    : /\ball graveyards?\b|\beach graveyard\b/i.test(noun) ? "any"
+    : "you";
+  return subject;
+}
 
 export function actionScaling(action: Action): ScalingBasis | undefined {
   const amount = action.amount ?? "";

@@ -393,6 +393,11 @@ export interface Effect {
   subject?: SubjectFilter;
   /** Normalized to the closed SCALING_BASES set at validation time; absent → "fixed". */
   scaling?: string;
+  /** WHAT the count counts, when the basis alone cannot say. `per-graveyard` covers Cavalier of
+   *  Flame's land cards, Glamdring's instants and sorceries and Bonehoard's creatures alike, so an
+   *  edge drawn off the basis would claim that milling anything feeds all three. Carries the zone
+   *  and the owner too, so `graveyardFillMatches` can judge it like any other graveyard demand. */
+  scalingSubject?: SubjectFilter;
 }
 
 export type AbilityKind = "triggered" | "activated" | "static" | "on-cast";

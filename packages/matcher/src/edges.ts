@@ -525,6 +525,55 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     }
   }
 
+  // Scaling edge: a producer graveyard fill makes C's per-graveyard payoff BIGGER. Not a trigger —
+  // nothing fires — which is why the channel had no edge despite `effect.scaling` being derived,
+  // copied onto every Reason and read by impact.ts, buckets.ts and wincon.ts. Bonehoard is a 0/0
+  // Germ until something dies.
+  //
+  // GATED ON WHAT IS COUNTED, never on the basis alone. `per-graveyard` covers Cavalier of Flame's
+  // LAND cards, Glamdring's instants and sorceries and Bonehoard's creatures alike, and the basis
+  // would claim all three are fed by milling anything — 676 candidate pairs across the 71 decks.
+  // `effect.scalingSubject` carries the counted type and whose graveyard, so the fill goes through
+  // `graveyardFillMatches` exactly as a reanimator demand does. A payoff whose count derived no
+  // subject forms nothing rather than everything.
+  for (const e of pEvents) {
+    if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
+    for (const a of c.tags.abilities) {
+      if (a.effect.scaling !== "per-graveyard" || !a.effect.scalingSubject) continue;
+      // AN UNTYPED COUNT IS A WILDCARD, and `graveyardFillMatches` passes an untyped demand on
+      // purpose, so this is where it has to be refused. Rite of Flame counts "cards NAMED Rite of
+      // Flame in each graveyard" — a name, which no SubjectFilter can express — and it parsed to
+      // nothing and claimed all 61 fills in its decks. Riverchurn Monument's "cards in their
+      // graveyard" is honestly untyped and goes the same way: 49 claims the engine cannot justify.
+      // A missing answer beats a wrong one, and the two are 110 of the 273 this loop first made.
+      //
+      // For RITE OF FLAME the refusal is the whole answer, not a stopgap: EDH is singleton, so a
+      // card counting its own name finds at most one other copy, in an opponent's graveyard.
+      // BUT THE `named` GAP ITSELF IS REAL HERE, and singleton is not the argument against it
+      // (owner, 2026-08-15): **13 corpus cards say "a deck can have any number of cards named …"
+      // and all 13 count their own name** — Dragon's Approach, Slime Against Humanity, Shadowborn
+      // Apostle, Rat Colony, Hare Apparent, Persistent Petitioners. A Dragon's Approach deck runs 30
+      // copies and the engine cannot see the archetype at all. 35 cards count a name anywhere, 19 of
+      // them in a graveyard. That is a roadmap item, not a line of code here.
+      const counted = a.effect.scalingSubject;
+      if (list(counted.type).length === 0 && list(counted.subtype).length === 0) continue;
+      // A deck ROLE is not a pairwise synergy, and cost-reduction is the rule's own first member:
+      // The Capitoline Triad costs less for each historic card in your graveyard, which says the
+      // same thing next to every card in the deck.
+      if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
+      if (!graveyardFillMatches(e.subject, a.effect.scalingSubject, h)) continue;
+      reasons.push({
+        tag: `scales:${themeSubjectKey(a.effect.scalingSubject)}`,
+        text: `${p.card.name} fills the graveyard, growing ${c.card.name}`,
+        effectKind: a.effect.kind,
+        repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
+        scaling: a.effect.scaling,
+        consumer: c.card.name,
+        producer: p.card.name,
+      });
+    }
+  }
+
   // Static edges: P is a lord whose effect subject C's characteristics satisfy. (UNCHANGED)
   //
   // Plus one non-static kind. A `clone` states WHICH permanent becomes the copy — "target

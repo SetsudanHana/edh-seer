@@ -11,7 +11,7 @@ import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, extraPhaseName } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
 import { actionRecipients } from "./recipient.js";
-import { actionScaling } from "./scaling.js";
+import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject } from "./subject.js";
 import { repeatsFor } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
@@ -22,7 +22,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 48;
+export const DERIVE_VERSION = 49;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -733,12 +733,16 @@ export function deriveAbilities(
       // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;
       // derivation had simply never set it, so the channel was dark under TAGS_SOURCE=derived.
       const scaling = actionScaling(action);
+      // WHAT the count counts, beside the basis — see `scalingSubject`. Only graveyard counts carry
+      // one today, because that is the slice `edges.ts` can judge with an existing gate.
+      const countedSubject = scalingSubject(action);
       const effect = effectKind
         ? keepSubject ? { kind: effectKind, subject } : { kind: effectKind }
         : { kind: "" as const };
+      const scaled = scaling ? { ...effect, scaling } : effect;
       const ability: Ability = {
         kind,
-        effect: scaling ? { ...effect, scaling } : effect,
+        effect: countedSubject ? { ...scaled, scalingSubject: countedSubject } : scaled,
       };
       if (trigger) ability.trigger = trigger;
       // The REAL cost, not "". It has been in scope since line 522 and threaded to repeatsFor at
