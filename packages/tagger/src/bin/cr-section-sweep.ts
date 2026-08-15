@@ -56,6 +56,23 @@ const STATUS: Record<string, Status> = {
   "732": { verdict: "N/A", note: "taking shortcuts is a play convention" },
   "733": { verdict: "N/A", note: "handling illegal actions is a judge procedure" },
 
+  // --- BANDS 1xx-6xx, judged individually 2026-08-15 after the owner asked whether any other
+  // sections had been looked at. They had not; these are the ones that turned out to matter.
+  "104": { verdict: "PARTIAL", note: "ending the game — `win-game` kind exists; 'loses the game' is a REFUSED trigger (LOSES_THE_GAME)", probe: /wins? the game|loses? the game/i },
+  "111": { verdict: "MODELLED", note: "tokens — `token` tri-state on every subject, token-types.json from the tokens collection" },
+  "113": { verdict: "MODELLED", note: "abilities — 113.3's four categories map to AbilityKind" },
+  "115": { verdict: "PARTIAL", note: "targets — `becomes-target` trigger exists; nothing models WHAT a spell targets, so heroic-shaped payoffs have no supply" },
+  "116": { verdict: "OPEN", note: "special actions — turning face up is one, and 708 is the same hole from the other side", probe: /turn .{0,20}face up/i },
+  "118": { verdict: "OPEN", note: "costs — additional and alternative costs unmodelled; Ability.cost holds the STRING and nothing parses it", probe: /rather than pay|without paying its mana cost/i },
+  "122": { verdict: "MODELLED", note: "counters — COUNTER_KINDS, fixed against 122.1b (a18a969)" },
+  "205": { verdict: "MODELLED", note: "type line — types/subtypes/supertypes generated from MTGJSON with a --check gate" },
+  "310": { verdict: "OPEN", note: "Battles — a CARD TYPE, in the type vocabulary but with no defense/siege model", typeLine: /Battle/ },
+  "604": { verdict: "PARTIAL", note: "static abilities — 604.3 characteristic-defining abilities unmodelled, so Tarmogoyf derives nothing" },
+  "607": { verdict: "OPEN", note: "linked abilities — 'exiled with' pairs; the per-clause shared-trigger ceiling is this", probe: /exiled with/i },
+  "611": { verdict: "PARTIAL", note: "continuous effects — statics derive, layers do not; `namesItsTargets` is the only mesh guard" },
+  "614": { verdict: "OPEN", note: "REPLACEMENT EFFECTS — the largest gap in the engine. No shape for 'if X would Y, instead Z'", probe: /\bwould\b[^.]{0,80}\binstead\b/i },
+  "615": { verdict: "OPEN", note: "prevention effects — 'prevent' has no model; a prevented damage still emits", probe: /\bprevent\b/i },
+
   // --- MULTIPLAYER (800s) and VARIANTS (900s). EDH is a multiplayer variant, so these are not
   // optional colour: 903 IS the format. Swept 2026-08-15 after the 7xx pass.
   "800": { verdict: "PARTIAL", note: "multiplayer general — the engine models no opponent at all; every number is optimistic by construction" },
