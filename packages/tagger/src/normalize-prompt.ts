@@ -100,6 +100,10 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // objects, and `exile` itself carries no emit row today, so it follows that existing decision
   // rather than inventing a new one. `ring-tempts` is already a TRIGGER word; it is an action too.
   "venture-into-the-dungeon", "face-a-villainous-choice", "waterbend", "airbend", "ring-tempts",
+  // DESIGNATIONS the game itself can hold, each its own CR section, and keywords are only one axis
+  // of the dictionary. `monarch` (725) and `day-night` (731) went in above; these were missed.
+  // `initiative` is CR 726 and `city-blessing` is what Ascend (702.131) grants.
+  "initiative", "city-blessing",
   "other", "none"];
 /** Terms whose EXEMPLARS join the normalization scope, so a vocabulary addition is exercised on real
  *  cards instead of sitting untested until someone happens to play one.
@@ -157,6 +161,13 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // (CR 309, Loot Dispute), the monarch (CR 720, Starscream), the Ring (Sauron, Call of the Ring),
   // clash (CR 701.30, Marvo).
   "day-night", "dice-rolled", "dungeon-completed", "monarch", "ring-tempts", "clash",
+  // THE REST OF THE TURN, from CR 500-514. A turn is five phases and eleven steps; this list had six
+  // of them. The beginning phase is untap/upkeep/draw (501.1) and combat is beginning of combat /
+  // declare attackers / declare blockers / combat damage / end of combat (506.1), with cleanup
+  // closing the ending phase. Nothing EMITS a phase — the turn supplies it — so these form no edges
+  // by design; their value is that an ability's own emits survive with honest timing.
+  "untap-step", "declare-attackers", "declare-blockers", "end-of-combat", "cleanup",
+  "initiative", "city-blessing",
   // FOUND ONLY BY THE WHOLE-CORPUS CENSUS (`bin/corpus-trigger-census.ts`), and each is bigger than
   // every word above COMBINED. Owner's ruling 2026-08-15: the vocabulary serves any deck someone
   // brings, not the 71 calibration decks, so demand is counted over all ~34k cards. Ranking on the

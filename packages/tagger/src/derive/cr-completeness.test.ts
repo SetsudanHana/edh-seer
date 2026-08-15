@@ -15,6 +15,7 @@
  *  clone. */
 import { expect, test } from "vitest";
 import { VERBS } from "../normalize-prompt.js";
+import { KEYWORD_ABILITIES } from "./subtypes.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
 
 /** CR English -> our engine spelling, only where they differ. */
@@ -62,6 +63,38 @@ test("the exclusion list stays honest — every entry is really in the rules", (
   for (const excluded of Object.keys(EXCLUDED)) {
     expect(actions.has(excluded), `EXCLUDED names "${excluded}", which CR 701 does not list`).toBe(true);
   }
+});
+
+/** CR 702 abilities absent from `KEYWORD_ABILITIES`, which `gen-vocabulary.ts` generates from
+ *  MTGJSON. **MTGJSON LAGS THE RULES**, and its `--check` guards drift from MTGJSON rather than from
+ *  the game — so without this ratchet the gap grows silently every set.
+ *
+ *  A RATCHET, like KNOWN_DEFECT_CAP: the list may only SHRINK. A new keyword arriving in the CR
+ *  before MTGJSON catches up fails the test, which is the signal to add it by hand. */
+const MTGJSON_LAG = [
+  "space sculptor", "visit", "plot", "start your engines!", "∞ (infinity)", "storied",
+];
+
+test("every CR 702 keyword ability is known, or is a recorded MTGJSON lag", () => {
+  const ours = new Set(KEYWORD_ABILITIES.map((k) => k.toLowerCase()));
+  const lag = new Set(MTGJSON_LAG);
+  const unaccounted = crKeywords.abilities
+    .map((a) => a.toLowerCase())
+    // "Daybound and Nightbound" is ONE heading for TWO keywords, which MTGJSON lists separately.
+    // A heading naming several keywords is covered when each of its parts is.
+    .filter((a) => !a.split(" and ").every((part) => ours.has(part.trim())))
+    .filter((a) => !lag.has(a));
+  expect(unaccounted, `CR 702 abilities missing from KEYWORD_ABILITIES and not recorded as MTGJSON lag:\n  ${unaccounted.join("\n  ")}`)
+    .toEqual([]);
+});
+
+test("the MTGJSON lag list only shrinks", () => {
+  // If MTGJSON catches up, the entry must be REMOVED rather than left to rot — a stale exemption
+  // hides the next real gap behind a plausible-looking reason.
+  const ours = new Set(KEYWORD_ABILITIES.map((k) => k.toLowerCase()));
+  const caughtUp = MTGJSON_LAG.filter((k) => ours.has(k));
+  expect(caughtUp, `MTGJSON now has these — drop them from MTGJSON_LAG: ${caughtUp.join(", ")}`)
+    .toEqual([]);
 });
 
 test("no alias points at a verb we do not have", () => {
