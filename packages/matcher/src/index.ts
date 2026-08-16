@@ -11,7 +11,7 @@ export { parseStat, evalStatPredicate } from "./stats.js";
 export { buildGraph, type CardGraph, type GraphNode, type GraphEdge, type NodeKind, type EdgeKind } from "./graph.js";
 export { addEventEdges, orphanCards } from "./graph-events.js";
 export {
-  projectDeckGraph,
+  projectDeckGraph, nodeId, TOKEN_ID_PREFIX,
   type ProjectedGraph,
   type ProjectedNode,
   type ProjectedEdge,

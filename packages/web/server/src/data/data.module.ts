@@ -66,6 +66,10 @@ export function attachRolesAndArt(
     return {
       id: n.id,
       label: n.label,
+      // A token node joins no card doc by design (its id is `token:<name>`, and there is no corpus
+      // row for a token) -- so it carries no roles and no art. ponytail: the `tokens` collection
+      // DOES hold an art crop; join it here if a blank disc reads as a bug rather than as a token.
+      ...(n.isToken ? { isToken: true as const } : {}),
       copies: n.copies,
       types: n.types,
       subtypes: n.subtypes,
@@ -190,11 +194,9 @@ export function attachRolesAndArt(
             // The SAME node list the edges above were formed over -- `projectDeckGraph` builds its
             // nodes off this array and counts a reason naming anything else as `offDeckReasons`, so
             // without the tokens here every token edge would be silently dropped from the view.
-            // One copy each: a token is not a card slot.
-            // ponytail: a token whose name collides with a real card in the deck (10 of the 71
-            // calibration decks) merges into that card's node -- `projectDeckGraph` dedupes on name,
-            // and the wire has no identity field. Give the wire node an `isToken` flag if the merged
-            // node ever reads wrong on the board.
+            // One copy each: a token is not a card slot. A token whose name collides with a real
+            // card in the deck stays its OWN node -- `projectDeckGraph` keys on `nodeId`, not on the
+            // name, because 92 of the corpus's 661 token names are also a real card.
             projectionDeck.push(
               ...matcher.collectTokenNodes(deckCards as never, tokenTags).nodes,
             );

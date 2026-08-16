@@ -924,6 +924,13 @@ test("a token nothing but its maker relates to is reported unpartnered", () => {
     [maker, payoff], ["Inalla"], H, undefined, undefined, undefined, lookup,
   );
   expect(withPayoff.tokenNodes).toEqual([{ name: "Wizard", hasPartner: true }]);
+  // Every reason touching the token says WHICH SIDE it is, so the graph can key it apart from a
+  // real card of the same name -- 92 corpus token names are also a card.
+  const tokenReasons = withPayoff.edges
+    .filter((e) => e.a === "Wizard" || e.b === "Wizard")
+    .flatMap((e) => e.reasons);
+  expect(tokenReasons.length).toBeGreaterThan(0);
+  expect(tokenReasons.every((r) => r.producerIsToken === true || r.consumerIsToken === true)).toBe(true);
 
   // Maker alone: the only edge the Wizard can have is the `creates:` one back to Inalla, which is
   // exactly what does NOT count as a partner -- the "this deck makes Clues and nothing cares" case.

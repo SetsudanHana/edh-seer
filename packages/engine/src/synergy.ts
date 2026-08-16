@@ -25,6 +25,14 @@ export interface Reason {
   consumer?: string;
   /** Card name on the supplying side. See `consumer`. */
   producer?: string;
+  /** True when the producing side is a TOKEN node rather than a card in the deck. A name is not an
+   *  identity: 92 of the 661 distinct token names in the corpus are also a real card (Llanowar
+   *  Elves, Mutavault, Sacred Cat), and a card that makes a token copy of itself puts both in one
+   *  deck. Without this the two collapse into one node and the token's relations are attributed to
+   *  the card. Set by the structured matcher; unset by the flat engine. */
+  producerIsToken?: boolean;
+  /** True when the CONSUMING side is a token node. See `producerIsToken`. */
+  consumerIsToken?: boolean;
   /** True when the producer side of this reason was a SYNTHESISED baseline event — the card
    *  supplying it does so merely by existing (any nonland is cast; any permanent enters), not by
    *  an authored effect. Absent when the supply was authored, i.e. surplus. Theme membership

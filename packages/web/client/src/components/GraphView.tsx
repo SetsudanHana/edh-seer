@@ -211,18 +211,17 @@ export function GraphView(
   // pointermove, reheating the whole simulation as the user just moves the mouse.
   const hoveredIdRef = useRef<string | null>(null);
 
-  /** Token node ids the default view hides. A node id IS a card name (labels.ts), and a token can
-   *  share its name with a real card in the same deck, so a name present in `report.cards` is that
-   *  CARD's node and must never be hidden -- the projection merged the two, and dropping the node
-   *  would delete a real card from the board. */
+  /** Node ids of the tokens the default view hides. Matched on `isToken` + label, never on the name
+   *  alone: a token can share its name with a real card in the same deck (92 corpus token names do),
+   *  and hiding that card's node would delete a real card from the board. */
   const loneTokens = useMemo(() => {
-    const cardNames = new Set(report.cards.map((c) => c.name));
-    return new Set(
-      (report.tokenNodes ?? [])
-        .filter((t) => !t.hasPartner && !cardNames.has(t.name))
-        .map((t) => t.name),
+    const lone = new Set(
+      (report.tokenNodes ?? []).filter((t) => !t.hasPartner).map((t) => t.name),
     );
-  }, [report]);
+    return new Set(
+      fullGraph.nodes.filter((n) => n.isToken && lone.has(n.label)).map((n) => n.id),
+    );
+  }, [fullGraph, report]);
 
   /** What the board actually draws. Identical object when nothing is hidden, so the layout effect
    *  below (which keys on `graph`) does not re-simulate for decks with no lone tokens. */
@@ -664,6 +663,26 @@ export function GraphView(
           ctx.textAlign = "center";
           ctx.fillStyle = paintColors.fg;
           ctx.fillText(`×${copies}`, n.x, n.y + ART_RADIUS + 11 / cam.z);
+        }
+
+        // A TOKEN IS NOT A CARD, AND THE BOARD HAS TO SAY SO -- it can carry the same name as a real
+        // card sitting next to it (92 corpus token names are also a card). Dashed rim: the node is a
+        // permanent the deck MAKES, not one of the 99 it holds. The word goes in the copies badge's
+        // slot, which is free here -- a token is always exactly one node.
+        if (n.isToken) {
+          ctx.save();
+          ctx.setLineDash([4 / cam.z, 3 / cam.z]);
+          ctx.lineWidth = 1.5 / cam.z;
+          ctx.strokeStyle = paintColors.muted;
+          ctx.beginPath();
+          if (mode === "card") ctx.strokeRect(n.x - cardW / 2 - 3, n.y - cardH / 2 - 3, cardW + 6, cardH + 6);
+          else ctx.arc(n.x, n.y, r + 3, 0, TAU);
+          ctx.stroke();
+          ctx.restore();
+          ctx.font = `500 ${10 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
+          ctx.textAlign = "center";
+          ctx.fillStyle = paintColors.muted;
+          ctx.fillText("token", n.x, n.y + ART_RADIUS + 11 / cam.z);
         }
       }
       // Canvas state is global and persistent, so a search left dimming on would leak into the

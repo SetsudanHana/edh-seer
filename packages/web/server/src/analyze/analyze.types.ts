@@ -3,9 +3,13 @@ import type { DeckReport } from "@mtg/engine";
 /** A deck card. Facet values are FIELDS, never nodes -- see
  *  docs/superpowers/specs/2026-08-13-deck-graph-presentation-design.md §1. */
 export interface WireGraphNode {
-  /** Card name. */
+  /** Node identity: the card's name, or `token:<name>` for a token node. A name is not an identity
+   *  -- 92 corpus token names are also a real card -- so the two must not share an id. */
   id: string;
+  /** The plain name, token or not. What the board labels the node. */
   label: string;
+  /** True on a token node: a permanent the deck MAKES rather than a card it holds. */
+  isToken?: boolean;
   /** How many copies the deck holds. Every copy collapses into one node, so a deck's 24 basic
    *  Mountains are one disc; this is where the count survives so the node can say so. */
   copies: number;

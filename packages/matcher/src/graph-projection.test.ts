@@ -96,3 +96,43 @@ describe("projectDeckGraph", () => {
     expect(g.edges).toEqual([]);
   });
 });
+
+// A NAME IS NOT AN IDENTITY. 92 of the corpus's 661 distinct token names are also a real card
+// (Llanowar Elves, Mutavault, Sacred Cat), and a card that makes a token copy of itself puts both
+// in one deck. Keyed on the name, the two collapsed into one node and the token's relations were
+// read as the card's.
+describe("a token that shares its name with a real card", () => {
+  const tokenCard = (name: string): DeckCard => ({ ...card(name), isToken: true });
+
+  it("is its own node, and the card keeps its bare id", () => {
+    const g = projectDeckGraph([card("Llanowar Elves"), tokenCard("Llanowar Elves")], [], W);
+    expect(g.nodes.map((n) => n.id).sort()).toEqual(["Llanowar Elves", "token:Llanowar Elves"]);
+    expect(g.nodes.map((n) => n.label)).toEqual(["Llanowar Elves", "Llanowar Elves"]);
+    expect(g.nodes.find((n) => n.isToken)?.id).toBe("token:Llanowar Elves");
+  });
+
+  it("takes only the reasons stamped for its own side", () => {
+    const toToken: Reason = { ...reason("Chord of Calling", "Llanowar Elves", "creates:elf"), consumerIsToken: true };
+    const toCard = reason("Chord of Calling", "Llanowar Elves", "tutor:elf");
+    const g = projectDeckGraph(
+      [card("Chord of Calling"), card("Llanowar Elves"), tokenCard("Llanowar Elves")],
+      [toToken, toCard],
+      W,
+    );
+    expect(g.edges.map((e) => `${e.from}->${e.to}:${e.tags.join()}`).sort()).toEqual([
+      "Chord of Calling->Llanowar Elves:tutor:elf",
+      "Chord of Calling->token:Llanowar Elves:creates:elf",
+    ]);
+    expect(g.offDeckReasons).toBe(0);
+  });
+
+  it("counts a reason for a token the deck does not make as off-deck, not as the card's", () => {
+    const g = projectDeckGraph(
+      [card("Chord of Calling"), card("Llanowar Elves")],
+      [{ ...reason("Chord of Calling", "Llanowar Elves", "creates:elf"), consumerIsToken: true }],
+      W,
+    );
+    expect(g.edges).toEqual([]);
+    expect(g.offDeckReasons).toBe(1);
+  });
+});

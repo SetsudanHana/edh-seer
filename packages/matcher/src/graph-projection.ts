@@ -6,9 +6,16 @@ import type { DeckCard } from "./types.js";
  *  `cmc:3` -- is a FIELD here. A facet value as a node is a hub: `color:B` reached degree 83 in an
  *  84-card deck, which flattens shortest paths and merges unrelated structure under clustering. */
 export interface ProjectedNode {
-  /** Card name. The projection keys on name because `SynergyEdge` and `Reason` do. */
+  /** Node identity. The card's name for a real card; `token:<name>` for a token node, because a
+   *  NAME IS NOT AN IDENTITY -- 92 of the corpus's 661 distinct token names are also a real card,
+   *  and a card making a token copy of itself puts both in one deck. Keyed on the name alone, the
+   *  two collapsed into one node and the token's relations were read as the card's. */
   id: string;
+  /** What the node is CALLED -- the plain name, token or not. */
   label: string;
+  /** True on a token node. Present so the view can mark it as one rather than inferring it from
+   *  the id's shape. */
+  isToken?: boolean;
   copies: number;
   types: string[];
   subtypes: string[];
@@ -53,6 +60,17 @@ export interface ProjectOptions {
 const DEFAULT_TOP_K = 4;
 const DEFAULT_FLOOR = 0;
 
+/** The prefix that separates a token node from a card of the same name. Exported because the view
+ *  reads node ids and a caller comparing an id against a card name has to know the shape. */
+export const TOKEN_ID_PREFIX = "token:";
+
+/** A node's identity. Tokens are prefixed; cards keep their bare name, so every id that existed
+ *  before tokens were nodes still reads exactly as it did -- including `pairs.json`'s panel keys and
+ *  every fixture. */
+export function nodeId(name: string, isToken?: boolean): string {
+  return isToken ? `${TOKEN_ID_PREFIX}${name}` : name;
+}
+
 export function projectDeckGraph(
   deck: DeckCard[],
   reasons: Reason[],
@@ -63,21 +81,23 @@ export function projectDeckGraph(
   const floor = opts.floor ?? DEFAULT_FLOOR;
 
   const copies = new Map<string, number>();
-  for (const d of deck) copies.set(d.card.name, (copies.get(d.card.name) ?? 0) + 1);
+  for (const d of deck) copies.set(nodeId(d.card.name, d.isToken), (copies.get(nodeId(d.card.name, d.isToken)) ?? 0) + 1);
 
   const nodes: ProjectedNode[] = [];
   const seen = new Set<string>();
   for (const d of deck) {
-    if (seen.has(d.card.name)) continue;
-    seen.add(d.card.name);
+    const id = nodeId(d.card.name, d.isToken);
+    if (seen.has(id)) continue;
+    seen.add(id);
     // EVERY face, because a node is the whole card. `parseTypeLine` takes one face and leaves "//"
     // visible; passing the combined line here painted a literal "//" swatch in the Type legend and,
     // worse, dropped the back face's type on any card whose front face has subtypes.
     const { types, subtypes, supertypes } = parseTypeLineAllFaces(d.card.typeLine);
     nodes.push({
-      id: d.card.name,
+      id,
       label: d.card.name,
-      copies: copies.get(d.card.name) ?? 1,
+      ...(d.isToken ? { isToken: true } : {}),
+      copies: copies.get(id) ?? 1,
       types, subtypes, supertypes,
       colors: d.card.colors,
       cmc: d.card.manaValue,
@@ -89,9 +109,14 @@ export function projectDeckGraph(
   const grouped = new Map<string, { from: string; to: string; reasons: Reason[] }>();
   for (const r of reasons) {
     if (!r.producer || !r.consumer) { undirectedReasons++; continue; }
-    if (!seen.has(r.producer) || !seen.has(r.consumer)) { offDeckReasons++; continue; }
-    const key = `${r.producer}->${r.consumer}`;
-    const g = grouped.get(key) ?? { from: r.producer, to: r.consumer, reasons: [] };
+    // `producerIsToken`/`consumerIsToken` are what make a token and a same-named card two nodes
+    // here instead of one -- see `nodeId`. A reason from the flat engine carries neither, which
+    // reads as "both sides are cards", the only thing that engine can produce.
+    const from = nodeId(r.producer, r.producerIsToken);
+    const to = nodeId(r.consumer, r.consumerIsToken);
+    if (!seen.has(from) || !seen.has(to)) { offDeckReasons++; continue; }
+    const key = `${from}->${to}`;
+    const g = grouped.get(key) ?? { from, to, reasons: [] };
     g.reasons.push(r);
     grouped.set(key, g);
   }

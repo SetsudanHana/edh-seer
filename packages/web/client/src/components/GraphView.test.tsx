@@ -1450,18 +1450,19 @@ describe("flow view", () => {
   });
 });
 
-describe("lone tokens", () => {
-  // A token nothing but its own maker relates to. Hidden by default so a deck that makes Clues
-  // nobody cares about does not scatter disconnected discs across the board; the chip reveals them,
-  // because that isolation is itself a deckbuilding fact.
-  const loneTokenReport = { ...SAMPLE.report, tokenNodes: [{ name: "Clue", hasPartner: false }] };
-  const withToken = () => graphOf([card({ id: "Bear" }), card({ id: "Clue" })]);
+describe("token nodes", () => {
+  // A token node is not a card node: its id is `token:<name>` because 92 of the corpus's 661 token
+  // names are ALSO a real card, and a deck can hold both at once.
+  const clue = () => card({ id: "token:Clue", label: "Clue", isToken: true });
+  const loneReport = { ...SAMPLE.report, tokenNodes: [{ name: "Clue", hasPartner: false }] };
   const labelOf = (container: HTMLElement) =>
     container.querySelector("canvas")!.getAttribute("aria-label");
 
-  test("hidden by default, revealed by the chip", async () => {
+  test("an unpartnered token is hidden until the chip reveals it", async () => {
     makeContextSpy();
-    const { container } = render(<GraphView graph={withToken()} report={loneTokenReport} />);
+    const { container } = render(
+      <GraphView graph={graphOf([card({ id: "Bear" }), clue()])} report={loneReport} />,
+    );
     expect(labelOf(container)).toBe("Deck graph: 1 cards, 0 synergies");
 
     await userEvent.click(screen.getByRole("button", { name: /lone tokens/ }));
@@ -1474,16 +1475,24 @@ describe("lone tokens", () => {
     expect(screen.queryByRole("button", { name: /lone tokens/ })).toBeNull();
   });
 
-  // The projection dedupes nodes on NAME, so a token sharing its name with a real card in the deck
-  // is that card's node. Hiding it would delete a real card from the board.
-  test("a token name that is also a real card in the deck is never hidden", () => {
+  // The failure this guards: hiding by NAME would delete the real card, which is a card in the 99.
+  test("a real card sharing the token's name is never hidden", async () => {
     makeContextSpy();
-    const realName = SAMPLE.report.cards[0].name;
-    const report = { ...SAMPLE.report, tokenNodes: [{ name: realName, hasPartner: false }] };
-    const { container } = render(
-      <GraphView graph={graphOf([card({ id: realName }), card({ id: "Bear" })])} report={report} />,
-    );
+    const graph = graphOf([card({ id: "Clue" }), clue()]);
+    const { container } = render(<GraphView graph={graph} report={loneReport} />);
+    expect(labelOf(container)).toBe("Deck graph: 1 cards, 0 synergies");
+
+    await userEvent.click(screen.getByRole("button", { name: /lone tokens/ }));
     expect(labelOf(container)).toBe("Deck graph: 2 cards, 0 synergies");
-    expect(screen.queryByRole("button", { name: /lone tokens/ })).toBeNull();
+  });
+
+  // Distinguishable on the board, not only in the data: a dashed rim and the word under the disc.
+  test("draws a token marker no card node gets", () => {
+    const calls: string[] = [];
+    // SAMPLE.report carries no `tokenNodes`, so nothing is hidden and the token is on the board.
+    const { tick } = frames(graphOf([card({ id: "Bear" }), clue()]), calls);
+    tick();
+    expect(calls.some((c) => c.startsWith("fillText:token,"))).toBe(true);
+    expect(calls.some((c) => c.startsWith("setLineDash:"))).toBe(true);
   });
 });

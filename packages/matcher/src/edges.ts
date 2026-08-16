@@ -424,6 +424,27 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
   return out;
 }
 
+/** Records which SIDE of a reason is a token node. A NAME IS NOT AN IDENTITY: 92 of the corpus's
+ *  661 distinct token names are also a real card (Llanowar Elves, Mutavault, Sacred Cat), and a card
+ *  that makes a token copy of itself puts both names in one deck. Every downstream reader keys on
+ *  `producer`/`consumer` strings, so without this the two collapse into a single node and the
+ *  token's relations are attributed to the card.
+ *
+ *  Stamped at the three CHOKE POINTS where the sides are still known objects -- this function's
+ *  callers are `directedReasons`, `createsReasons` and `meldReason` -- rather than at each of the
+ *  fifteen places a reason literal is built. Doing it later, off the names alone, is exactly the
+ *  ambiguity this exists to remove.
+ *
+ *  The strings themselves are deliberately UNCHANGED: `pairs.json` keys the whole judged panel on
+ *  `producer|consumer|tag`, so decorating a name would invalidate every cached verdict. */
+function stampSides(r: Reason, producer: DeckCard, consumer: DeckCard): Reason {
+  return {
+    ...r,
+    ...(producer.isToken ? { producerIsToken: true } : {}),
+    ...(consumer.isToken ? { consumerIsToken: true } : {}),
+  };
+}
+
 /** Directional reasons from producer P to consumer C: event edges (P.emits ↔ C.triggers) and
  *  static edges (P.static effect ↔ C.characteristics). */
 export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
@@ -796,7 +817,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     }
   }
 
-  return dedupeReasons(reasons);
+  return dedupeReasons(reasons.map((r) => stampSides(r, p, c)));
 }
 
 /** All reasons for the unordered pair {a,b}: union of a→b and b→a directional reasons, deduped
@@ -826,13 +847,13 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
 function meldReason(a: DeckCard, b: DeckCard): Reason[] {
   const partnered = a.card.meldPartner === b.card.name || b.card.meldPartner === a.card.name;
   if (!partnered) return [];
-  return [{
+  return [stampSides({
     tag: "meld",
     text: `${a.card.name} and ${b.card.name} meld together`,
     repeatability: "oneshot",
     producer: a.card.name,
     consumer: b.card.name,
-  }];
+  }, a, b)];
 }
 
 /** Token creation edges: a producer's own AUTHORED create-token emit, matched against the token
@@ -872,7 +893,7 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
       });
     }
   }
-  return dedupeReasons(reasons);
+  return dedupeReasons(reasons.map((r) => stampSides(r, p, c)));
 }
 
 export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
