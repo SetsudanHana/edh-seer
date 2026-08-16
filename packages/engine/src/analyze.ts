@@ -204,6 +204,11 @@ export interface DeckReport {
   /** Copies per repeated card, so ONE node can show "x6" instead of six identical nodes. Only cards
    *  with more than one copy appear. Absent from the flat engine, which never deduped. */
   quantities?: Record<string, number>;
+  /** Tokens the deck can make, each flagged with whether anything beyond its own creator relates to
+   *  it. The DEFAULT view shows only those with a partner; the toggle reveals the rest. A token with
+   *  no partner is a real signal — "this deck makes Clues and nothing cares" — which is why the data
+   *  carries it even when the view hides it. */
+  tokenNodes?: { name: string; hasPartner: boolean }[];
   combos: Combo[];
   themes: { tag: string; count: number }[];
   manaCurve: ManaCurveBucket[];

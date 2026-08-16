@@ -1449,3 +1449,41 @@ describe("flow view", () => {
     expect(offsets).toContain(String(expected));
   });
 });
+
+describe("lone tokens", () => {
+  // A token nothing but its own maker relates to. Hidden by default so a deck that makes Clues
+  // nobody cares about does not scatter disconnected discs across the board; the chip reveals them,
+  // because that isolation is itself a deckbuilding fact.
+  const loneTokenReport = { ...SAMPLE.report, tokenNodes: [{ name: "Clue", hasPartner: false }] };
+  const withToken = () => graphOf([card({ id: "Bear" }), card({ id: "Clue" })]);
+  const labelOf = (container: HTMLElement) =>
+    container.querySelector("canvas")!.getAttribute("aria-label");
+
+  test("hidden by default, revealed by the chip", async () => {
+    makeContextSpy();
+    const { container } = render(<GraphView graph={withToken()} report={loneTokenReport} />);
+    expect(labelOf(container)).toBe("Deck graph: 1 cards, 0 synergies");
+
+    await userEvent.click(screen.getByRole("button", { name: /lone tokens/ }));
+    expect(labelOf(container)).toBe("Deck graph: 2 cards, 0 synergies");
+  });
+
+  test("no chip when the deck has none to reveal", () => {
+    makeContextSpy();
+    render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+    expect(screen.queryByRole("button", { name: /lone tokens/ })).toBeNull();
+  });
+
+  // The projection dedupes nodes on NAME, so a token sharing its name with a real card in the deck
+  // is that card's node. Hiding it would delete a real card from the board.
+  test("a token name that is also a real card in the deck is never hidden", () => {
+    makeContextSpy();
+    const realName = SAMPLE.report.cards[0].name;
+    const report = { ...SAMPLE.report, tokenNodes: [{ name: realName, hasPartner: false }] };
+    const { container } = render(
+      <GraphView graph={graphOf([card({ id: realName }), card({ id: "Bear" })])} report={report} />,
+    );
+    expect(labelOf(container)).toBe("Deck graph: 2 cards, 0 synergies");
+    expect(screen.queryByRole("button", { name: /lone tokens/ })).toBeNull();
+  });
+});

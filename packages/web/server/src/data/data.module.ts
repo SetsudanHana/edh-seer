@@ -168,7 +168,14 @@ export function attachRolesAndArt(
             // The report is what carries the reasons; the projection is a join of two outputs that
             // already exist, not new derivation. `buildGraph`/`addEventEdges` stay in the matcher
             // for the census tooling -- they simply no longer feed the view.
-            const report = matcher.analyzeDeckStructured(deckCards as never);
+            // Tokens are nodes (tokens-as-nodes, 2026-08-15). Resolved up front because
+            // `analyzeDeckStructured` is pure and takes a SYNCHRONOUS lookup; `loadTokenTags` reads
+            // the whole `tokens` collection once (a few hundred rows) and joins it to the derived
+            // token rows.
+            const tokenTags = await matcher.loadTokenTags(store.db as Db);
+            const report = matcher.analyzeDeckStructured(
+              deckCards as never, undefined, undefined, undefined, undefined, undefined, tokenTags,
+            );
             const reasons = report.edges.flatMap((e) => e.reasons);
             // `deckCards` above is deduped by name (one lookup per unique card), but
             // `projectDeckGraph` counts a node's `copies` off how many times its name appears in
@@ -180,6 +187,17 @@ export function attachRolesAndArt(
             const projectionDeck = deckCards.flatMap((dc) =>
               Array(copiesByName.get(dc.card.name) ?? 1).fill(dc),
             );
+            // The SAME node list the edges above were formed over -- `projectDeckGraph` builds its
+            // nodes off this array and counts a reason naming anything else as `offDeckReasons`, so
+            // without the tokens here every token edge would be silently dropped from the view.
+            // One copy each: a token is not a card slot.
+            // ponytail: a token whose name collides with a real card in the deck (10 of the 71
+            // calibration decks) merges into that card's node -- `projectDeckGraph` dedupes on name,
+            // and the wire has no identity field. Give the wire node an `isToken` flag if the merged
+            // node ever reads wrong on the board.
+            projectionDeck.push(
+              ...matcher.collectTokenNodes(deckCards as never, tokenTags).nodes,
+            );
             const projected = matcher.projectDeckGraph(
               projectionDeck as never, reasons, engine.loadImpactWeights(),
             );
@@ -189,12 +207,18 @@ export function attachRolesAndArt(
             const lookup = data.mongoLookup(store as never);
             const tagsLookup: CardTagsLookup = tagger.createTagsLookup(store.db as Db);
             const deckCards = await matcher.buildDeckCards(cards as never, lookup, tagsLookup);
+            // Same token lookup the `graph` dep uses -- the two must agree, or the report's
+            // `tokenNodes` (which the view's toggle reads) would describe a different deck than the
+            // board draws.
+            const tokenTags = await matcher.loadTokenTags(store.db as Db);
             return matcher.analyzeDeckStructured(
               deckCards,
               commanderNames,
               undefined,
               undefined,
               new engine.ComboIndex(combos as never),
+              undefined,
+              tokenTags,
             );
           },
         };

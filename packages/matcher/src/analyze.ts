@@ -83,6 +83,45 @@ function tokenDeckCard(ref: TokenRef, tags: CardTags): DeckCard {
   };
 }
 
+/** Every token node a deck can make, plus the two directions of the maker relation. Exported
+ *  because the GRAPH PROJECTION needs the identical node list: `projectDeckGraph` builds its nodes
+ *  off the deck array it is given and drops a reason naming anything else as `offDeckReasons`, so a
+ *  server that fed it only real cards would throw away every token edge this function's nodes
+ *  earned. One fact, one path -- the caller re-deriving the dedupe is how the two lists drift. */
+export function collectTokenNodes(
+  deck: DeckCard[],
+  tokenTags: (ref: TokenRef) => CardTags | null,
+): {
+  nodes: DeckCard[];
+  /** card name -> the oracleIds of the tokens it structurally creates. */
+  producerTokenOracles: Map<string, Set<string>>;
+  /** token oracleId -> the card name(s) that make it. */
+  tokenCreators: Map<string, Set<string>>;
+} {
+  const nodes: DeckCard[] = [];
+  const producerTokenOracles = new Map<string, Set<string>>();
+  const tokenCreators = new Map<string, Set<string>>();
+  const byOracle = new Map<string, DeckCard>();
+  for (const dc of deck) {
+    for (const ref of createdTokenRefs(dc.card)) {
+      const tags = tokenTags(ref);
+      if (!tags) continue; // unresolved -- refuse, never fall back to a (name, typeLine) lookup
+      if (!byOracle.has(tags.oracleId)) {
+        const node = tokenDeckCard(ref, tags);
+        byOracle.set(tags.oracleId, node);
+        nodes.push(node);
+      }
+      let oracles = producerTokenOracles.get(dc.card.name);
+      if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
+      oracles.add(tags.oracleId);
+      let creators = tokenCreators.get(tags.oracleId);
+      if (!creators) tokenCreators.set(tags.oracleId, (creators = new Set()));
+      creators.add(dc.card.name);
+    }
+  }
+  return { nodes, producerTokenOracles, tokenCreators };
+}
+
 export function analyzeDeckStructured(
   inputs: DeckCard[],
   commanderNames?: string[],
@@ -134,26 +173,12 @@ export function analyzeDeckStructured(
   // gate `createsReasons` needs: restricting it to AUTHORED emits means an untyped one (rare) could
   // still wildcard onto a token this card never actually makes, unless the pair loop below only ever
   // asks the question for a (maker, token-it-structurally-creates) pair in the first place.
-  const tokenNodes: DeckCard[] = [];
-  const producerTokenOracles = new Map<string, Set<string>>();
-  if (tokenTags) {
-    const byOracle = new Map<string, DeckCard>();
-    for (const dc of unique) {
-      for (const ref of createdTokenRefs(dc.card)) {
-        const tags = tokenTags(ref);
-        if (!tags) continue; // unresolved -- refuse, never fall back to a (name, typeLine) lookup
-        let node = byOracle.get(tags.oracleId);
-        if (!node) {
-          node = tokenDeckCard(ref, tags);
-          byOracle.set(tags.oracleId, node);
-          tokenNodes.push(node);
-        }
-        let oracles = producerTokenOracles.get(dc.card.name);
-        if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
-        oracles.add(tags.oracleId);
-      }
-    }
-  }
+  // `tokenCreators` is the reverse of `producerTokenOracles` -- oracleId -> the card name(s) that
+  // make it. It feeds `tokenNodesReport` below: a token's "creator" set is what a partnering edge
+  // must NOT be to count (an edge back to your own maker is not a partner, see that block).
+  const { nodes: tokenNodes, producerTokenOracles, tokenCreators } = tokenTags
+    ? collectTokenNodes(unique, tokenTags)
+    : { nodes: [] as DeckCard[], producerTokenOracles: new Map<string, Set<string>>(), tokenCreators: new Map<string, Set<string>>() };
 
   // Pairwise edges over unordered pairs; i < j guarantees no self-pair and no double-count
   // (pairReasons already unions both directions for a given {a,b}).
@@ -194,6 +219,26 @@ export function analyzeDeckStructured(
     }
   }
   edges.sort((x, y) => y.score - x.score);
+
+  // A TOKEN PARTNERS WHEN SOMETHING BEYOND ITS OWN MAKER RELATES TO IT (owner's ruling, presentation
+  // task). Scanned off `edges` -- the array already carries every token-touching pair, both the
+  // maker's own `creates:` edge (Task 6) and whatever a payoff forms with the token directly (Task
+  // 7's mediation). A Treasure that only ever edges back to a card in `tokenCreators.get(oracleId)`
+  // (its own maker(s)) is unpartnered -- "this deck makes Clues and nothing cares" is a real
+  // deckbuilding fact, not noise, which is why it stays IN the data (below) even though the default
+  // view will hide it.
+  const tokenOracleByName = new Map(tokenNodes.map((dc) => [dc.card.name, dc.tags!.oracleId] as const));
+  const partneredOracles = new Set<string>();
+  for (const edge of edges) {
+    const aOracle = tokenOracleByName.get(edge.a);
+    if (aOracle && !tokenCreators.get(aOracle)?.has(edge.b)) partneredOracles.add(aOracle);
+    const bOracle = tokenOracleByName.get(edge.b);
+    if (bOracle && !tokenCreators.get(bOracle)?.has(edge.a)) partneredOracles.add(bOracle);
+  }
+  const tokenNodesReport = tokenNodes.map((dc) => ({
+    name: dc.card.name,
+    hasPartner: partneredOracles.has(dc.tags!.oracleId),
+  }));
 
   // Deck-local frequency of theme tags (cards whose abilities carry the tag).
   const deckFreq = new Map<string, number>();
@@ -427,6 +472,10 @@ export function analyzeDeckStructured(
      *  singletons, which is every card in a legal EDH deck except basics and the any-number family
      *  (Dragon's Approach, Rat Colony, Shadowborn Apostle). */
     quantities,
+    /** Every token node the deck built (Task 6), each flagged with whether an edge beyond its own
+     *  maker touches it. Empty when `tokenTags` was never supplied -- most of the ~15 existing
+     *  callers, none of which need the graph view. */
+    tokenNodes: tokenNodesReport,
     combos: foundCombos,
     themes,
     manaCurve: deckStats.manaCurve,

@@ -116,9 +116,14 @@ export function edgeWidth(weight: number, maxWeight: number): number {
 }
 
 export function GraphView(
-  { graph, report, artLoader: injectedArtLoader }:
+  { graph: fullGraph, report, artLoader: injectedArtLoader }:
   { graph: CardGraph; report: DeckReport; artLoader?: ArtLoader },
 ) {
+  /** Reveal the tokens nothing but their own maker relates to. Off by default: a deck that makes
+   *  Clues nobody cares about would otherwise scatter disconnected discs across the board. The data
+   *  carries them either way -- that isolation IS a deckbuilding signal, which is why this is a view
+   *  filter and not an omission upstream. */
+  const [showLoneTokens, setShowLoneTokens] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<
@@ -205,6 +210,30 @@ export function GraphView(
   // would either be stale between renders or force the layout effect to re-run on every
   // pointermove, reheating the whole simulation as the user just moves the mouse.
   const hoveredIdRef = useRef<string | null>(null);
+
+  /** Token node ids the default view hides. A node id IS a card name (labels.ts), and a token can
+   *  share its name with a real card in the same deck, so a name present in `report.cards` is that
+   *  CARD's node and must never be hidden -- the projection merged the two, and dropping the node
+   *  would delete a real card from the board. */
+  const loneTokens = useMemo(() => {
+    const cardNames = new Set(report.cards.map((c) => c.name));
+    return new Set(
+      (report.tokenNodes ?? [])
+        .filter((t) => !t.hasPartner && !cardNames.has(t.name))
+        .map((t) => t.name),
+    );
+  }, [report]);
+
+  /** What the board actually draws. Identical object when nothing is hidden, so the layout effect
+   *  below (which keys on `graph`) does not re-simulate for decks with no lone tokens. */
+  const graph = useMemo(() => {
+    if (showLoneTokens || loneTokens.size === 0) return fullGraph;
+    return {
+      ...fullGraph,
+      nodes: fullGraph.nodes.filter((n) => !loneTokens.has(n.id)),
+      edges: fullGraph.edges.filter((e) => !loneTokens.has(e.from) && !loneTokens.has(e.to)),
+    };
+  }, [fullGraph, loneTokens, showLoneTokens]);
 
   const paint = PAINT_MODES.find((m) => m.id === paintId) ?? PAINT_MODES[0];
   /** What the current paint mode's colours mean, for this deck. */
@@ -1054,6 +1083,21 @@ export function GraphView(
                 Miniature
               </button>
             </>
+          ) : null}
+
+          {/* Only when the deck HAS one: a chip that can never change anything is worse than no
+            *  chip, and most decks make no unpartnered token at all. */}
+          {loneTokens.size > 0 ? (
+            <button
+              type="button"
+              aria-pressed={showLoneTokens}
+              onClick={() => setShowLoneTokens((v) => !v)}
+              className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                showLoneTokens ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+              }`}
+            >
+              lone tokens ({loneTokens.size})
+            </button>
           ) : null}
 
           <button

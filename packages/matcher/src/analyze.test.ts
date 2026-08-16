@@ -896,3 +896,39 @@ test("a real card whose name collides with the token it creates keeps its OWN ed
   expect(cardsInArchetypes.has("Twin")).toBe(true); // the REAL card's own static edge must survive
   expect(cardsInArchetypes.has("Payoff")).toBe(true); // its genuine partner must survive too
 });
+
+test("a token nothing but its maker relates to is reported unpartnered", () => {
+  const makerCard = {
+    name: "Inalla", typeLine: "Legendary Creature", oracleText: "", keywords: [], colors: [], manaValue: 0,
+    allParts: [{ component: "token", name: "Wizard", typeLine: "Token Creature — Wizard", printingId: "wizard-printing-id" }],
+  } as never;
+  const maker: DeckCard = {
+    card: makerCard,
+    tags: {
+      oracleId: "Inalla", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["legendary", "creature"], subtypes: ["wizard"], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: inallaAbility,
+    },
+  };
+  const payoff = dc("Kindred Discovery", wizardPayoffAbility);
+  const wizardTokenTags: CardTags = {
+    oracleId: "token-wizard-oracle", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["token", "creature"], subtypes: ["wizard"], colors: [], identity: [], cmc: 0, power: "1", toughness: "1", token: true, keywords: [] },
+    abilities: [],
+  };
+  const lookup = (ref: { printingId?: string }) =>
+    (ref.printingId === "wizard-printing-id" ? wizardTokenTags : null);
+
+  // With the payoff in the deck the Wizard has a relation beyond its own maker.
+  const withPayoff = analyzeDeckStructured(
+    [maker, payoff], ["Inalla"], H, undefined, undefined, undefined, lookup,
+  );
+  expect(withPayoff.tokenNodes).toEqual([{ name: "Wizard", hasPartner: true }]);
+
+  // Maker alone: the only edge the Wizard can have is the `creates:` one back to Inalla, which is
+  // exactly what does NOT count as a partner -- the "this deck makes Clues and nothing cares" case.
+  const alone = analyzeDeckStructured(
+    [maker, dc("Bear", [])], ["Inalla"], H, undefined, undefined, undefined, lookup,
+  );
+  expect(alone.tokenNodes).toEqual([{ name: "Wizard", hasPartner: false }]);
+});

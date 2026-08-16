@@ -1,5 +1,5 @@
 export * from "./types.js";
-export { analyzeDeckStructured } from "./analyze.js";
+export { analyzeDeckStructured, collectTokenNodes } from "./analyze.js";
 export { subjectMatches } from "./subject.js";
 export { pairReasons, cardThemeTags, themeSubjectKey, directedReasons, createsReasons } from "./edges.js";
 export { createdTokenRefs, type TokenRef } from "./tokens.js";
