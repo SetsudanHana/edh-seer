@@ -39,6 +39,17 @@ export interface CardSynergy {
   /** Directional authority: the card's payoff support (√ of the summed weight of edges that FEED
    *  it). A well-fed anchor scores high; a pure feeder ~0. Set only by analyzeDeckStructured. */
   authority?: number;
+  /** Directional feeder lift: √ of the summed (feeder-share) weight of edges this card FEEDS.
+   *  The counterpart to `authority`. Raw score, not a rating — the protected-set test in
+   *  `specs/2026-08-18-per-role-score-design.md` §4.2 compares scores, and comparing the rounded
+   *  ratings instead would misclassify cards near the boundary. Set only by analyzeDeckStructured. */
+  feederLift?: number;
+  /** 0–5, same deck denominator as `synergyRating`: what this card earns as the PAYOFF of its
+   *  edges. A pure enabler reads 0 here and high on `feederRating`. Set only by
+   *  analyzeDeckStructured. */
+  payoffRating?: number;
+  /** 0–5, same denominator: what it earns as a FEEDER, BEFORE `roleBlend` is applied. */
+  feederRating?: number;
   /** 0–1: how strongly this card's best synergy edge sits on the deck's strategy axis (the max
    *  axis weight over its edges' reason tags). The continuous value behind `doubleDuty`, which
    *  hard-cuts it at a threshold and so fires on ~half a deck. Set only by analyzeDeckStructured. */

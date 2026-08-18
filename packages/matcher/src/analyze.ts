@@ -260,6 +260,7 @@ export function analyzeDeckStructured(
   const AXIS_BOOST = 1.5; // tunable: a fully on-axis edge counts 2.5x an off-axis one.
   const AXIS_ON_THRESHOLD = 0.25; // tunable: min axis weight for an edge to count on-axis (calibrated).
   const FEEDER_SHARE = 0.25; // tunable: a feeder gets this share of a payoff-edge's weight (√-damped).
+  const ROLE_BLEND = impactWeights.roleBlend ?? 1; // config, not a constant: see spec §3.1
 
   // Axis / coverage pass (undirected — unchanged semantics).
   const onAxisCards = new Set<string>();
@@ -409,7 +410,11 @@ export function analyzeDeckStructured(
     .map(([name, v]) => {
       const authority = authorityByName.get(name) ?? 0;
       const feederLift = Math.sqrt(v.feederSum);
-      const score = authority + feederLift;
+      // THE BLEND IS STATED, NOT EMERGENT (spec 2026-08-18-per-role-score §3.1). A card carries one
+      // score summed across BOTH roles, so a discount on its glutted-FEEDER role drags its rating
+      // in a scarce-PAYOFF role nothing discounted -- the measured reason the magnitude term ships
+      // off. `roleBlend: 1` is the historical behaviour exactly; absent reads as 1.
+      const score = authority + ROLE_BLEND * feederLift;
       const tags = tagsByName.get(name);
       const raw = tags ? computeCardBuckets(tags, impactWeights) : { consistency: 0, efficiency: 0, "win-condition": 0 };
       const authorityNorm = maxAuthority > 0 ? authority / maxAuthority : 0;
@@ -431,6 +436,7 @@ export function analyzeDeckStructured(
         isCommander: commanderSet.has(name),
         score,
         authority,
+        feederLift,
         partnerCount: distinctPartners.length,
         topPartners: distinctPartners
           .sort((x, y) => y.contribution - x.contribution)
@@ -444,10 +450,12 @@ export function analyzeDeckStructured(
     .sort((x, y) => y.score - x.score || y.partnerCount - x.partnerCount || x.name.localeCompare(y.name));
 
   const nonlandByName = new Map(resolved.map((dc) => [dc.card.name, !isLand(dc)] as const));
-  const { ratingByName, positiveCoherence } = computeSynergyRatings(
+  const { ratingByName, payoffRatingByName, feederRatingByName, positiveCoherence } = computeSynergyRatings(
     cards.map((c) => ({
       name: c.name,
       score: c.score,
+      payoffScore: c.authority ?? 0,
+      feederScore: c.feederLift ?? 0,
       isNonland: nonlandByName.get(c.name) ?? true,
       axisWeight: bestAxisWeight.get(c.name) ?? 0,
     })),
@@ -479,9 +487,14 @@ export function analyzeDeckStructured(
     const base = ratingByName.get(c.name) ?? 0;
     const doubleDuty = !!roles && roles.length > 0 && onAxisCards.has(c.name);
     const axisWeight = bestAxisWeight.get(c.name) ?? 0;
+    // The role ratings are NOT given the doubleDuty premium: that premium is a statement about the
+    // card filling two BUILD jobs, not about either synergy role, so it stays on the headline and
+    // the additive identity breaks for those cards by design.
+    const payoffRating = payoffRatingByName.get(c.name) ?? 0;
+    const feederRating = feederRatingByName.get(c.name) ?? 0;
     return doubleDuty
-      ? { ...c, synergyRating: doubleDutyRating(base), axisWeight, doubleDuty: true, doubleDutyRoles: roles, roles }
-      : { ...c, synergyRating: base, axisWeight, roles };
+      ? { ...c, synergyRating: doubleDutyRating(base), payoffRating, feederRating, axisWeight, doubleDuty: true, doubleDutyRoles: roles, roles }
+      : { ...c, synergyRating: base, payoffRating, feederRating, axisWeight, roles };
   });
 
   // themes and cohesion must agree on which tag leads, so both come from this one

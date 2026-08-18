@@ -1035,3 +1035,35 @@ test("a maker that gives its token to an OPPONENT earns no two-hop credit", () =
   expect(report.cards.find((c) => c.name === "Beast Giver")!.partnerCount).toBe(0);
   expect(report.cards.find((c) => c.name === "Treasure Carer")!.partnerCount).toBe(0);
 });
+
+/** `dc`, `H`, `inallaAbility` and `kindredDiscoveryAbility` are the fixtures already defined at the
+ *  top of this file — Inalla makes Wizard tokens (the FEEDER), Kindred Discovery triggers on a
+ *  creature entering (the PAYOFF). */
+test("payoff and feeder ratings reconstruct the headline at roleBlend 1", () => {
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility);
+  const report = analyzeDeckStructured([maker, payoff], undefined, H);
+  for (const c of report.cards) {
+    if (c.synergyRating === undefined || c.doubleDuty) continue; // the doubleDuty premium is headline-only
+    const sum = (c.payoffRating ?? 0) + (c.feederRating ?? 0);
+    // The identity is exact before rounding; all three are rounded to 0.1 independently, so allow
+    // one rounding step per component.
+    expect(Math.abs(sum - c.synergyRating)).toBeLessThanOrEqual(0.2);
+  }
+});
+
+test("the two roles separate: the maker earns feeder credit, the payoff earns payoff credit", () => {
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility);
+  const report = analyzeDeckStructured([maker, payoff], undefined, H);
+  const inalla = report.cards.find((c) => c.name === "Inalla")!;
+  const kindred = report.cards.find((c) => c.name === "Kindred Discovery")!;
+  // Inalla feeds Kindred Discovery, so Inalla carries feeder lift and Kindred Discovery authority.
+  expect(inalla.feederLift!).toBeGreaterThan(0);
+  expect(inalla.feederRating!).toBeGreaterThan(0);
+  expect(kindred.authority!).toBeGreaterThan(0);
+  expect(kindred.payoffRating!).toBeGreaterThan(0);
+  // The sentence the blended rating could never say: the maker's payoff-side credit is not what
+  // puts it in the deck.
+  expect(inalla.payoffRating!).toBeLessThan(kindred.payoffRating!);
+});
