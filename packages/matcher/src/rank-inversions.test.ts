@@ -27,8 +27,8 @@ test("counts feeders rated above the payoff they feed, in glutted shapes only", 
  *  must FALL, and no scarce payoff may LOSE rating. A pass on the first with a fall on the second
  *  is the failure this exists to catch. */
 test("the diff reports inversions moved and payoffs whose rating fell", () => {
-  const before = { shapes: 1, inversions: 5, payoffs: [{ tag: "t", name: "payoff", rating: 2, feedersAbove: 5 }], unmeasurablePayoffs: 0, unmeasurableFeeders: 0 };
-  const after = { shapes: 1, inversions: 1, payoffs: [{ tag: "t", name: "payoff", rating: 1.5, feedersAbove: 1 }], unmeasurablePayoffs: 0, unmeasurableFeeders: 0 };
+  const before = { shapes: 1, inversions: 5, payoffs: [{ tag: "t", name: "payoff", rating: 2, feedersAbove: 5 }], unmeasurablePayoffs: 0, unmeasurableFeederPairs: 0 };
+  const after = { shapes: 1, inversions: 1, payoffs: [{ tag: "t", name: "payoff", rating: 1.5, feedersAbove: 1 }], unmeasurablePayoffs: 0, unmeasurableFeederPairs: 0 };
   const d = diffInversions(before, after);
   expect(d.inversionsBefore).toBe(5);
   expect(d.inversionsAfter).toBe(1);
@@ -59,6 +59,6 @@ test("a payoff or feeder missing from the ratings map is unmeasurable, not rated
   expect(report.unmeasurablePayoffs).toBe(1);
   // "Elemental" (unmeasurable feeder) does not count toward feedersAbove against "payoff".
   expect(report.payoffs).toContainEqual({ tag: "cast:spell", name: "payoff", rating: 1, feedersAbove: 0 });
-  expect(report.unmeasurableFeeders).toBe(1);
+  expect(report.unmeasurableFeederPairs).toBe(1);
   expect(report.inversions).toBe(1);
 });

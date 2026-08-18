@@ -31,8 +31,11 @@ export interface InversionReport {
   /** Payoffs skipped because `ratingByName` had no entry — a token node, ABSENT from
    *  `report.cards` by construction, not zero-rated. Counted so the exclusion is visible. */
   unmeasurablePayoffs: number;
-  /** Feeder instances skipped for the same reason, one per (payoff, feeder) pair examined. */
-  unmeasurableFeeders: number;
+  /** Feeder instances skipped for the same reason, one per (payoff, feeder) pair examined — a
+   *  PAIR-OCCURRENCE count, not a count of distinct unmeasurable cards, exactly as `inversions`
+   *  itself counts per pair: one token feeder increments this once for every payoff it is
+   *  compared against, not once total. */
+  unmeasurableFeederPairs: number;
 }
 
 export interface InversionDiff {
@@ -44,8 +47,8 @@ export interface InversionDiff {
   payoffsFallen: { tag: string; name: string; from: number; to: number }[];
   unmeasurablePayoffsBefore: number;
   unmeasurablePayoffsAfter: number;
-  unmeasurableFeedersBefore: number;
-  unmeasurableFeedersAfter: number;
+  unmeasurableFeederPairsBefore: number;
+  unmeasurableFeederPairsAfter: number;
 }
 
 export function countInversions(
@@ -53,7 +56,7 @@ export function countInversions(
   ratingByName: ReadonlyMap<string, number>,
   opts: { glut: number },
 ): InversionReport {
-  const out: InversionReport = { shapes: 0, inversions: 0, payoffs: [], unmeasurablePayoffs: 0, unmeasurableFeeders: 0 };
+  const out: InversionReport = { shapes: 0, inversions: 0, payoffs: [], unmeasurablePayoffs: 0, unmeasurableFeederPairs: 0 };
   for (const row of rows) {
     const r = ratio(row, "avail");
     if (r === null || r <= opts.glut) continue;
@@ -71,7 +74,7 @@ export function countInversions(
       let feedersAbove = 0;
       for (const f of row.supply.names) {
         if (f === payoff) continue;
-        if (!ratingByName.has(f)) { out.unmeasurableFeeders++; continue; }
+        if (!ratingByName.has(f)) { out.unmeasurableFeederPairs++; continue; }
         if (ratingByName.get(f)! > rating) feedersAbove++;
       }
       out.inversions += feedersAbove;
@@ -99,7 +102,7 @@ export function diffInversions(a: InversionReport, b: InversionReport): Inversio
     payoffsFallen,
     unmeasurablePayoffsBefore: a.unmeasurablePayoffs,
     unmeasurablePayoffsAfter: b.unmeasurablePayoffs,
-    unmeasurableFeedersBefore: a.unmeasurableFeeders,
-    unmeasurableFeedersAfter: b.unmeasurableFeeders,
+    unmeasurableFeederPairsBefore: a.unmeasurableFeederPairs,
+    unmeasurableFeederPairsAfter: b.unmeasurableFeederPairs,
   };
 }

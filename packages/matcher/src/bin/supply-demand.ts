@@ -77,7 +77,7 @@ const files = only
   : readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort().map((f) => join(DIR, f));
 
 const all: Row[] = [];
-const inversionTotals: InversionReport = { shapes: 0, inversions: 0, payoffs: [], unmeasurablePayoffs: 0, unmeasurableFeeders: 0 };
+const inversionTotals: InversionReport = { shapes: 0, inversions: 0, payoffs: [], unmeasurablePayoffs: 0, unmeasurableFeederPairs: 0 };
 let totalReasons = 0;
 for (const path of files) {
   const deck = path.split("/").pop()!.replace(/\.txt$/, "");
@@ -108,7 +108,7 @@ for (const path of files) {
     inversionTotals.shapes += rep.shapes;
     inversionTotals.inversions += rep.inversions;
     inversionTotals.unmeasurablePayoffs += rep.unmeasurablePayoffs;
-    inversionTotals.unmeasurableFeeders += rep.unmeasurableFeeders;
+    inversionTotals.unmeasurableFeederPairs += rep.unmeasurableFeederPairs;
     inversionTotals.payoffs.push(...rep.payoffs.map((p) => ({ ...p, tag: `${deck}/${p.tag}` })));
   }
   for (const r of rows) all.push({ ...r, deck });
@@ -223,10 +223,10 @@ if (AGAINST) {
   console.log(`INVERSIONS ${d.inversionsBefore} -> ${d.inversionsAfter} over ${d.shapesBefore} -> ${d.shapesAfter} glutted shapes (glut ${GLUT})`);
   console.log(`PAYOFFS THAT FELL: ${d.payoffsFallen.length}${d.payoffsFallen.length ? "" : "  <- the criterion"}`);
   for (const p of d.payoffsFallen.slice(0, 20)) console.log(`  ${p.from} -> ${p.to}  ${p.tag.replace("/", " / ")} / ${p.name}`);
-  console.log(`unmeasurable: ${d.unmeasurablePayoffsBefore} -> ${d.unmeasurablePayoffsAfter} payoffs, ${d.unmeasurableFeedersBefore} -> ${d.unmeasurableFeedersAfter} feeders — token nodes carry no synergyRating`);
+  console.log(`unmeasurable: ${d.unmeasurablePayoffsBefore} -> ${d.unmeasurablePayoffsAfter} payoffs, ${d.unmeasurableFeederPairsBefore} -> ${d.unmeasurableFeederPairsAfter} feeder comparisons (token nodes carry no synergyRating)`);
 } else if (INVERSIONS) {
   console.log(`INVERSIONS ${inversionTotals.inversions} over ${inversionTotals.shapes} glutted shapes (glut ${GLUT})`);
-  console.log(`unmeasurable: ${inversionTotals.unmeasurablePayoffs} payoffs, ${inversionTotals.unmeasurableFeeders} feeders — token nodes carry no synergyRating`);
+  console.log(`unmeasurable: ${inversionTotals.unmeasurablePayoffs} payoffs, ${inversionTotals.unmeasurableFeederPairs} feeder comparisons (token nodes carry no synergyRating)`);
   const worst = [...inversionTotals.payoffs].sort((a, b) => b.feedersAbove - a.feedersAbove).slice(0, 15);
   console.log("  feedersAbove  rating  deck / shape / payoff");
   for (const p of worst) console.log(`  ${String(p.feedersAbove).padStart(12)}  ${String(p.rating).padStart(6)}  ${p.tag.replace("/", " / ")} / ${p.name}`);
