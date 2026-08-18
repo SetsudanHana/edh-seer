@@ -1437,7 +1437,12 @@ test("a self fill does not enable a different card's self-recursion", () => {
 // blue spells do I run" - a property of deck CONSTRUCTION, not a relationship with any particular
 // blue card. Sapphire Medallion in a mono-red deck does nothing, and no pairwise edge can say that.
 // Left in, one cost reducer fans out to 60-68 cards at the same weight as a two-card combo.
-test("a cost reducer forms no edge with a card it happens to discount", () => {
+// RULING OVERTURNED 2026-08-18 (owner): "your cost reducing card is as good as many cards it can
+// reduce." This test asserted the 2026-08-06 position -- that a reducer makes the identical claim
+// in every deck -- and now asserts the opposite, which is the whole content of the change. A
+// Medallion in the WRONG deck still forms nothing, but by its subject failing to match, not by the
+// family being excluded; the colour case is covered in the cost-reduction describe block below.
+test("a cost reducer edges the card it discounts", () => {
   const medallion = base("Sapphire Medallion", [{
     kind: "static",
     effect: {
@@ -1446,7 +1451,7 @@ test("a cost reducer forms no edge with a card it happens to discount", () => {
     },
   }]);
   const spell = base("An Offer You Can't Refuse", []);
-  expect(pairReasons(medallion, spell, H).some((r) => r.tag === "static:cost-reduction")).toBe(false);
+  expect(pairReasons(medallion, spell, H).some((r) => r.tag === "static:cost-reduction")).toBe(true);
 });
 
 // A TAX IS INTERACTION / PROTECTION, NOT SYNERGY (user ruling, 2026-08-06). Propaganda and Ghostly
@@ -1949,5 +1954,67 @@ describe("token mediation only suppresses when a usable token node exists", () =
   test("no token parts at all does not suppress either", () => {
     const reasons = directedReasons(maker([]), payoff as unknown as DeckCard, H);
     expect(reasons.map((r: Reason) => r.tag)).toContain("enters:any");
+  });
+});
+
+// COST REDUCTION IS A PAIRWISE CLAIM AGAIN (owner's ruling, 2026-08-18: "your cost reducing card is
+// as good as many cards it can reduce"). The 2026-08-06 ruling had it in ROLE_NOT_SYNERGY because a
+// Medallion "makes the identical claim in every deck" -- but it does nothing in mono-red BECAUSE
+// there is nothing to reduce, which the subject's own colour filter states by forming no edge.
+describe("cost reduction forms edges, gated by what can actually be cast", () => {
+  const reducer = (subject: Record<string, unknown>) => base("Jet Medallion", [{
+    kind: "static",
+    effect: { kind: "cost-reduction", subject },
+    emits: [],
+  }] as never);
+  const spell = (name: string, types: string[], colors: string[] = ["B"]) => {
+    const dc = base(name, [] as never);
+    (dc.tags.characteristics as unknown as Record<string, unknown>).types = types;
+    (dc.tags.characteristics as unknown as Record<string, unknown>).colors = colors;
+    return dc;
+  };
+
+  test("it reduces a matching spell, and says so in the card's own words", () => {
+    const reasons = directedReasons(
+      reducer({ type: "creature", colors: ["B"], control: "you", token: null, scope: "all" }),
+      spell("Bloodghast", ["creature"]), H,
+    );
+    const cut = reasons.find((r: Reason) => r.tag === "static:cost-reduction");
+    expect(cut).toBeDefined();
+    expect(cut!.text).toBe("Jet Medallion reduces what Bloodghast costs");
+  });
+
+  test("a colour it does not name gets no edge — that is what 'does nothing in mono-red' looks like", () => {
+    const reasons = directedReasons(
+      reducer({ type: "creature", colors: ["B"], control: "you", token: null, scope: "all" }),
+      spell("Lightning Bolt", ["creature"], ["R"]), H,
+    );
+    expect(reasons.map((r: Reason) => r.tag)).not.toContain("static:cost-reduction");
+  });
+
+  test("a land is PLAYED, not cast (CR 305.1), so it is never reduced", () => {
+    const reasons = directedReasons(
+      reducer({ type: "land", control: "you", token: null, scope: "all" }),
+      spell("Swamp", ["land"], []), H,
+    );
+    expect(reasons.map((r: Reason) => r.tag)).not.toContain("static:cost-reduction");
+  });
+
+  test("a reducer aimed at OPPONENTS' spells is tax pointing the other way, and forms nothing", () => {
+    const reasons = directedReasons(
+      reducer({ type: "creature", control: "opp", token: null, scope: "all" }),
+      spell("Bloodghast", ["creature"]), H,
+    );
+    expect(reasons.map((r: Reason) => r.tag)).not.toContain("static:cost-reduction");
+  });
+
+  test("tax stays a deck role and forms no edge", () => {
+    const ghostlyPrison = base("Ghostly Prison", [{
+      kind: "static",
+      effect: { kind: "tax", subject: { control: "opp", type: "creature", scope: "all" } },
+      emits: [],
+    }] as never);
+    const reasons = directedReasons(ghostlyPrison, spell("Bloodghast", ["creature"]), H);
+    expect(reasons.map((r: Reason) => r.tag)).not.toContain("static:tax");
   });
 });

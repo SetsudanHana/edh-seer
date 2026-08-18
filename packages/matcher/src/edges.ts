@@ -224,8 +224,14 @@ export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): bo
 // two are here: they are deck ROLES, not pairwise claims. "This card wins the game" says the
 // identical thing next to every other card in the deck, and an extra turn helps all 99 equally.
 export const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set([
-  "cost-reduction", "tax", "win-game", "extra-turn", "extra-phase",
+  "tax", "win-game", "extra-turn", "extra-phase",
 ]);
+
+/** Card types that are PLAYED, never cast (CR 305.1) — a land can never be the consumer of a cost
+ *  reduction, however broadly the reducer is worded. Checked against the card's whole type union so
+ *  an Instant // Land modal DFC, which really is castable as its instant face, keeps its edge. */
+const isLandOnly = (tags: CardTags): boolean =>
+  tags.characteristics.types.length > 0 && tags.characteristics.types.every((t) => t === "land");
 
 export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
   if (consumer.verb !== "enters" && consumer.verb !== "cast") return false;
@@ -696,14 +702,21 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     const appliesTo = a.kind === "static"
       || (a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined);
     if (!appliesTo || !a.effect.subject) continue;
-    // DECK ROLES ARE NOT PAIRWISE SYNERGIES (user rulings, 2026-08-06).
+    // DECK ROLES ARE NOT PAIRWISE SYNERGIES (user rulings, 2026-08-06) — WITH `cost-reduction`
+    // REMOVED FROM THAT SET BY THE OWNER, 2026-08-18: "your cost reducing card is as good as many
+    // cards it can reduce."
     //
-    // `cost-reduction` is RAMP. A Medallion's value is "how many blue spells do I run" — a property
-    // of deck CONSTRUCTION, not a relationship with any particular blue card. Sapphire Medallion in
-    // a mono-red deck does nothing, and a pairwise edge has no way to say so: it makes the identical
-    // claim in both decks. Measured at the ruling: recovering 16 blank cost reducers added 3,600
-    // edges and took the mesh from 411 to 2,408, single reducers fanning to 68 cards — the weight a
-    // two-card combo gets. Each claim defensible, all of them together worthless.
+    // The 2026-08-06 argument was that a Medallion makes the identical claim in every deck, since
+    // Sapphire Medallion in mono-red does nothing. The overturning argument is that it does nothing
+    // there BECAUSE there is nothing to reduce, which a pairwise edge states correctly by forming
+    // zero edges in that deck and forty in a mono-blue one. The colour and type restrictions are
+    // already on the subject, so `subjectMatches` does that work for free.
+    //
+    // The measured cost is fan-out, and it is real: admitting this family takes edges 32,220 ->
+    // 36,607, reasons 40,612 -> 46,219 and MESHED 288 -> 3,420, with Ugin, the Ineffable reaching
+    // 74 cards in one deck. Fan-out is the POINT here (the count is the value), so `mesh.ts` exempts
+    // this one tag from the mesh census rather than letting a deliberate width drown the instrument
+    // that exists to catch accidental ones.
     //
     // `tax` is INTERACTION / PROTECTION. Propaganda and Ghostly Prison make opponents attack you
     // less. That is a role the deck plays against the table, not a relation to a card you chose to
@@ -718,13 +731,23 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     // counter-presence pass below is what supplies that state.
     const { counter: _stateOnly, ...printedMatchable } = a.effect.subject;
     if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) continue;
+    if (a.effect.kind === "cost-reduction") {
+      // A LAND IS PLAYED, NOT CAST (CR 305.1). "Spells you cast cost {1} less" reaches no land, and
+      // the type union keeps a modal DFC's castable face.
+      if (isLandOnly(c.tags)) continue;
+      // "Spells your OPPONENTS cast cost less" is not a relation to a card you chose to run — it is
+      // the tax family pointing the other way, and tax stays in ROLE_NOT_SYNERGY.
+      if (a.effect.subject.control === "opp") continue;
+    }
     reasons.push({
       // A non-static ability keeps the `${kind}:${subject}` shape the graveyard-recursion and
       // counter-presence passes use; `static:` stays reserved for what cardThemeTags calls static.
       tag: a.kind === "static"
         ? `static:${a.effect.kind}`
         : `${a.effect.kind}:${themeSubjectKey(a.effect.subject)}`,
-      text: `${p.card.name}'s ${a.effect.kind.replace(/-/g, " ")} applies to ${c.card.name}`,
+      text: a.effect.kind === "cost-reduction"
+        ? `${p.card.name} reduces what ${c.card.name} costs`
+        : `${p.card.name}'s ${a.effect.kind.replace(/-/g, " ")} applies to ${c.card.name}`,
       effectKind: a.effect.kind,
       repeatability:
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",

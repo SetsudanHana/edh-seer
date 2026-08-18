@@ -50,4 +50,27 @@ describe("meshReport", () => {
     expect(meshReport(reasons, 10, 0.3).meshed).toBe(4);
     expect(meshReport(reasons, 10, MESH_CAP).meshed).toBe(0);
   });
+
+  // A DELIBERATELY WIDE FAMILY MUST NOT BLIND THE INSTRUMENT. `static:cost-reduction` reaches every
+  // card it reduces on purpose (owner's ruling, 2026-08-18), and leaving it in the census took
+  // MESHED 288 -> 3,420 across the 71 decks -- at which point an ACCIDENTAL mesh, the only thing
+  // this report exists to show, is invisible inside the total.
+  it("does not count a wide cost-reduction fan as mesh, and still counts it in the population", () => {
+    const reasons = Array.from({ length: 8 }, (_, i) => r("static:cost-reduction", "Jet Medallion", `c${i}`));
+    const out = meshReport(reasons, 10);
+    expect(out.meshed).toBe(0);
+    expect(out.clean).toBe(8);
+    expect(out.groups).toEqual([]);
+  });
+
+  it("still catches an accidental mesh sitting beside an exempt one", () => {
+    const reasons = [
+      ...Array.from({ length: 8 }, (_, i) => r("static:cost-reduction", "Jet Medallion", `c${i}`)),
+      ...Array.from({ length: 8 }, (_, i) => r("static:pump", "Runaway Anthem", `c${i}`)),
+    ];
+    const out = meshReport(reasons, 10);
+    expect(out.meshed).toBe(8);
+    expect(out.clean).toBe(8);
+    expect(out.groups.map((g) => g.tag)).toEqual(["static:pump"]);
+  });
 });
