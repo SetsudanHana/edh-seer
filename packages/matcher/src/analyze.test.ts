@@ -269,6 +269,36 @@ test("a scaling payoff out-ranks an otherwise-identical fixed payoff", () => {
   expect(scaler).toBeGreaterThan(flat);
 });
 
+// Fixture for the magnitude-discount test below: one payoff triggering on enters:creature against
+// twelve vanilla creature bodies, putting that tag's supply:demand ratio at ~12:1 on `avail` —
+// comfortably past GLUT = 3.
+function gluttedDeck(): DeckCard[] {
+  const payoff = dc("Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const bodies = Array.from({ length: 12 }, (_, i) => dc(`Body ${i + 1}`, []));
+  return [payoff, ...bodies];
+}
+
+test("a glutted shape's feeder credit falls when the magnitude term is on, and is untouched at beta 0", () => {
+  // Build a deck with one payoff and many identical feeders so `enters:creature` is heavily
+  // supply-glutted, then read the feeder's own rating with the term off and on.
+  const weightsOff = { ...SEED_IMPACT_WEIGHTS, magnitude: { glut: 3, beta: 0 } };
+  const weightsOn = { ...SEED_IMPACT_WEIGHTS, magnitude: { glut: 3, beta: 0.5 } };
+  // Signature is (inputs, commanderNames?, hierarchy, impactWeights, combos?, themeStats, tokenTags?)
+  // — impactWeights is the FOURTH argument, verified at analyze.ts:125-138.
+  const off = analyzeDeckStructured(gluttedDeck(), [], undefined, weightsOff);
+  const on = analyzeDeckStructured(gluttedDeck(), [], undefined, weightsOn);
+  const feederOff = off.cards.find((c) => c.name === "Body 1")!;
+  const feederOn = on.cards.find((c) => c.name === "Body 1")!;
+  expect(feederOn.score).toBeLessThan(feederOff.score);
+  const payoffOff = off.cards.find((c) => c.name === "Payoff")!;
+  const payoffOn = on.cards.find((c) => c.name === "Payoff")!;
+  expect(payoffOn.score).toBe(payoffOff.score); // the scarce side's RAW score never moves
+});
+
 import { ComboIndex } from "@mtg/engine";
 
 const rampAbility: CardTags["abilities"] = [{

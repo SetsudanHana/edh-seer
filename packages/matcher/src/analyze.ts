@@ -25,6 +25,8 @@ import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
 import { buildAxis, maxAxisWeight } from "./axis.js";
+import { magnitudeMultipliers } from "./magnitude.js";
+import { buildSupplyDemand } from "./supply-demand.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
 import { computeDeckMath } from "./deck-math.js";
@@ -334,6 +336,25 @@ export function analyzeDeckStructured(
     }
   }
 
+  // THE MAGNITUDE DISCOUNT (spec 2026-08-18). Computed ONCE per deck off the same undirected
+  // `edges` reasons the pass below re-derives directionally, so the ratio a card is judged against
+  // is the deck's whole claim population and not the pair's. `beta: 0` (the shipped default)
+  // returns empty maps, so this is inert until a measured sweep turns it on.
+  const magOpts = impactWeights.magnitude;
+  const mag = magOpts
+    ? magnitudeMultipliers(
+        buildSupplyDemand(
+          edges.flatMap((e) => e.reasons),
+          unique.map((dc) => ({
+            name: dc.card.name,
+            tags: dc.tags ?? null,
+            isCommander: commanderSet.has(dc.card.name),
+          })),
+        ),
+        magOpts,
+      )
+    : { feeder: new Map<string, number>(), payoff: new Map<string, number>() };
+
   for (let i = 0; i < unique.length; i++) {
     for (let j = 0; j < unique.length; j++) {
       if (i === j) continue;
@@ -343,19 +364,24 @@ export function analyzeDeckStructured(
       const reasons = hop ? [...direct, ...hop] : direct;
       if (reasons.length === 0) continue;
       const maxW = maxAxisWeight(reasons, axis);
-      const w = impactEdgeWeight(reasons, impactWeights) * (1 + AXIS_BOOST * maxW);
+      const axisBoost = 1 + AXIS_BOOST * maxW;
+      // Two weights, not one: the discount belongs to the crowded side. A supply-glutted tag cuts
+      // what the FEEDER earns for supplying it and leaves the payoff's support alone; a
+      // demand-glutted tag does the mirror.
+      const wPayoff = impactEdgeWeight(reasons, impactWeights, (tag) => mag.payoff.get(tag) ?? 1) * axisBoost;
+      const wFeeder = impactEdgeWeight(reasons, impactWeights, (tag) => mag.feeder.get(tag) ?? 1) * axisBoost;
       // Commander boost: credit is amplified when the OTHER endpoint is the commander (mirrors the
       // old boostForA/boostForB semantics).
       const payoffBoost = commanderSet.has(p.card.name) ? COMMANDER_BOOST : 1;
       const feederBoost = commanderSet.has(c.card.name) ? COMMANDER_BOOST : 1;
       const cAgg = dir.get(c.card.name)!;
       const pAgg = dir.get(p.card.name)!;
-      cAgg.support += w * payoffBoost;
+      cAgg.support += wPayoff * payoffBoost;
       cAgg.partnerCount += 1;
-      cAgg.partners.push({ name: p.card.name, contribution: w * payoffBoost, reasons });
-      pAgg.feederSum += FEEDER_SHARE * w * feederBoost;
+      cAgg.partners.push({ name: p.card.name, contribution: wPayoff * payoffBoost, reasons });
+      pAgg.feederSum += FEEDER_SHARE * wFeeder * feederBoost;
       pAgg.partnerCount += 1;
-      pAgg.partners.push({ name: c.card.name, contribution: FEEDER_SHARE * w * feederBoost, reasons });
+      pAgg.partners.push({ name: c.card.name, contribution: FEEDER_SHARE * wFeeder * feederBoost, reasons });
     }
   }
   const authorityByName = new Map<string, number>();

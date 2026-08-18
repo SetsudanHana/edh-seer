@@ -22,7 +22,10 @@ import { ratio, type SupplyDemandRow } from "./supply-demand.js";
  *  CRUSHED. `static`, `tutor` and `ramp-target` are the measured exclusions: 267 of 1,456 rows
  *  whose medians are 0.1-0.3 because they are one-to-many by construction (one anthem against
  *  every creature it buffs), carrying 156 of the 208 demand-starved rows. `clone` is out for the
- *  same shape at 2 rows. */
+ *  same shape at 2 rows. `wincon` is out too, silently rather than measured: it is 2 rows of
+ *  1,456, and the win-game family already sits in the matcher's `ROLE_NOT_SYNERGY` (a deck role,
+ *  not a pairwise claim), so weighting it would weight a claim the engine deliberately does not
+ *  make. */
 export const MAGNITUDE_VERBS: ReadonlySet<string> = new Set([
   "enters", "leaves", "dies", "cast", "sacrifice", "creates", "create-token",
   "graveyard-recursion", "draw", "discard", "mill", "counter-added", "proliferate",

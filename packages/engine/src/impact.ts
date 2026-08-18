@@ -6,6 +6,10 @@ export interface ImpactWeights {
   repeatability: Record<string, number>;
   scaling: Record<string, number>;
   damping: number;
+  /** Supply:demand magnitude discount. Absent or `beta: 0` disables it — the term ships inert and
+   *  is turned on by a measured sweep, not by a default. See
+   *  `specs/2026-08-18-edge-magnitude-design.md` §5. */
+  magnitude?: { glut: number; beta: number };
 }
 
 /** Weight when a reason's effectKind is missing or absent from the config: unknown synergy ≈ low impact. */
@@ -87,6 +91,7 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     unbounded: 2.5,
   },
   damping: 0.5,
+  magnitude: { glut: 3, beta: 0 },
 };
 
 /**
