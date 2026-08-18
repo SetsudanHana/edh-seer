@@ -107,6 +107,7 @@ export function computeCohesion(
   ranked: Tag[],
   deckFreq: Map<Tag, number>,
   nonlandCount: number,
+  fold: (tag: Tag) => Tag = (t) => t,
 ): Cohesion | null {
   // `tribe-nontoken:X` is a matching-precision shadow of `tribe:X`, not a distinct
   // theme — drop it from theme naming so cohesion reports "Wizards", not the
@@ -121,7 +122,22 @@ export function computeCohesion(
   // still render the identical label as the primary. Comparing family, not position, catches
   // that wherever in the ranking it falls.
   const secondary = themes.slice(1).find((t) => tagFamily(t) !== tagFamily(primary)) ?? null;
-  const score = Math.min(1, (deckFreq.get(primary) ?? 0) / nonlandCount);
+  // COHESION MEASURES THE FAMILY, THE RANKING AND THE AXIS DO NOT (2026-08-18).
+  //
+  // A deck whose plan is "make tokens" splits across 22 `create-token:<subtype>` tags, so counting
+  // only the primary TAG reported the owner's Samut list as 3 of 63 nonlands -- 0.05, "unfocused",
+  // for a deck that is plainly focused. Summing whatever folds to the primary's family fixes that
+  // number and touches nothing else.
+  //
+  // FOLDING THE AXIS TOO WAS TRIED THE SAME DAY AND MEASURABLY REGRESSED: collapsing many axis keys
+  // into one made that key normalize to 1.0 and pushed every other family down, so the same deck
+  // went breadth 4.2 -> 2.0 and SYNERGY 3.8 -> 2.9, while 9 of 12 sampled decks -- every tribal one
+  // among them -- themed the identical "creatures entering". Cohesion is a SHARE, which a family
+  // answers correctly; the axis is a RANKING, where one universal bucket destroys the signal.
+  const familyKey = fold(primary);
+  let familyFreq = 0;
+  for (const [tag, freq] of deckFreq) if (fold(tag) === familyKey) familyFreq += freq;
+  const score = Math.min(1, familyFreq / nonlandCount);
   return {
     theme: describeTag(primary),
     tag: primary,

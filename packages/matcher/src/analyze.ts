@@ -25,6 +25,7 @@ import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
 import { buildAxis, maxAxisWeight } from "./axis.js";
+import { makeFold } from "./theme-fold.js";
 import { magnitudeMultipliers } from "./magnitude.js";
 import { buildSupplyDemand } from "./supply-demand.js";
 import { detectArchetypes } from "./archetypes.js";
@@ -534,7 +535,7 @@ export function analyzeDeckStructured(
   const themes = rankedThemes.map((tag) => ({ tag, count: deckFreq.get(tag)! }));
 
   const nonlandCount = resolved.filter((dc) => !isLand(dc)).length;
-  const cohesion = computeCohesion(rankedThemes, deckFreq, nonlandCount);
+  const cohesion = computeCohesion(rankedThemes, deckFreq, nonlandCount, makeFold(hierarchy));
 
   const deckStats = computeDeckStats(resolved.map((dc) => dc.card));
 
