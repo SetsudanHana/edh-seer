@@ -59,10 +59,16 @@ test("dampByAlpha divides by partnerCount^alpha; 0 partners → 0", () => {
   expect(dampByAlpha(10, 0, 0.5)).toBe(0);
 });
 
-test("loadImpactWeights reads the committed JSON and has a numeric damping", () => {
+test("loadImpactWeights reads the committed JSON and covers every seeded kind", () => {
   const w = loadImpactWeights();
   expect(typeof w.damping).toBe("number");
-  expect(Object.keys(w.kinds).length).toBe(27);
+  // NOT a pinned count. This assertion used to read `toBe(27)`, which pinned the shipped file at
+  // exactly the seven-kind gap it had: the JSON scores production, so a kind in SEED and absent
+  // there scores UNKNOWN_KIND_WEIGHT (0.2) instead of its weight -- 1,411 of the 71 decks' 40,563
+  // reasons were being scored that way. A count can only ever pin whatever number was current;
+  // coverage is the property that matters.
+  const missing = Object.keys(SEED_IMPACT_WEIGHTS.kinds).filter((k) => !(k in w.kinds));
+  expect(missing).toEqual([]);
 });
 
 // GUARD: `bin/calibrate.ts` writes `calibrate-core.ts`'s `clone()` over this file wholesale, and

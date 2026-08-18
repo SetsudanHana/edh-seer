@@ -40,12 +40,13 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     flicker: 0.8,
     "copy-spell": 0.8,
     clone: 0.7,
-    // win-game/extra-turn/extra-phase are UNREACHABLE today: all three sit in matcher's
-    // ROLE_NOT_SYNERGY (deck roles, not pairwise claims), so no Reason can ever carry one of
-    // these kinds and impactWeightOf() never reads these three numbers. They exist only to
-    // satisfy the "one entry per EFFECT_KIND" ratchet (impact.test.ts / impact-coverage.test.ts)
-    // and to stand as the regularization prior if that ever changes -- an honest placeholder,
-    // not a claim of having been calibrated against real data.
+    // ALL THREE ARE REACHABLE, and the comment that used to sit here saying otherwise was
+    // measured false on 2026-08-18: across the 71 calibration decks, win-game carries 11 reasons
+    // in 2 decks, extra-turn 2, extra-phase 2. ROLE_NOT_SYNERGY is applied in the static and
+    // scaling passes only (`edges.ts`), so a TRIGGERED ability whose effect kind is one of these
+    // still forms an event edge in pass 1 -- and `win-game` is re-admitted outright when it names
+    // what it counts (Hellkite Tyrant, "if you control twenty or more artifacts, you win the
+    // game"). These numbers are hand-set priors, never calibrated against data; they are read.
     "win-game": 1.0, // the terminal effect: nothing an edge could claim outranks winning.
     // An extra turn is a superset of extra-combat (0.9) -- it contains an extra combat step PLUS
     // a draw, an untap and a main phase -- so it cannot be worth less than extra-combat.

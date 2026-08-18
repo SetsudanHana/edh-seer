@@ -273,10 +273,13 @@ deliberate — several exist precisely because no product surface can see what t
 ## 6. Known defects and ceilings
 
 **Live defects**
-1. **The shipped `impact-weights.json` is missing 7 effect kinds that `SEED_IMPACT_WEIGHTS`
-   defines.** Four are reachable — `extra-combat`, `graveyard-hate`, `keyword-grant`, `type-grant` —
-   and therefore score at `UNKNOWN_KIND_WEIGHT = 0.2` in production. The coverage ratchet asserts
-   against SEED only, so nothing catches it. *(Verified 2026-08-18.)*
+1. ~~The shipped `impact-weights.json` is missing 7 effect kinds.~~ **FIXED 2026-08-18.** All
+   seven turned out to be reachable, not four — the "unreachable" comment in SEED was measured
+   false. Blast radius was **1,411 of 40,563 reasons (3.48%)**, led by `keyword-grant` 846 and
+   `type-grant` 419. Fixing it moved **459 of 6,236 ratings (7.4%)** and one deck's top card
+   (Moraug, Fury of Akoum 3.3 → 5.0 in `rakdos-landfall`); population and panel unchanged. Both
+   tests that should have caught it were themselves the defect — one asserted coverage against SEED
+   instead of the shipped file, the other pinned `kinds.length === 27`, i.e. pinned the gap.
 2. **Duplicate reason sentences still reach the user.** The graph wire dedupes per edge, but the CLI
    (`report.ts:32`) and the Archetypes board (`ArchetypeBoard.tsx:47`) render raw — one trigger with
    six effect kinds prints six identical lines.
