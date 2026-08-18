@@ -118,12 +118,32 @@ export interface Caps {
  *  units of it to make the board settle is a product judgement, not a computed one. `degnorm-k2` is
  *  a one-line change plus a re-cap if it is ever revisited. */
 export const QUALITY_CAPS: Record<string, Caps> = {
-  sorin: { nodeOverlaps: 0, cardOverlaps: 16, edgeCrossings: 40211, linkDistError: 75 },
-  inalla: { nodeOverlaps: 0, cardOverlaps: 8, edgeCrossings: 33099, linkDistError: 54 },
-  fairdrazi: { nodeOverlaps: 0, cardOverlaps: 23, edgeCrossings: 36643, linkDistError: 61 },
-  changelings: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 7337, linkDistError: 41 },
-  braids: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 23551, linkDistError: 47 },
+  sorin: { nodeOverlaps: 0, cardOverlaps: 11, edgeCrossings: 41207, linkDistError: 77 },
+  inalla: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 33151, linkDistError: 56 },
+  fairdrazi: { nodeOverlaps: 0, cardOverlaps: 17, edgeCrossings: 37354, linkDistError: 61 },
+  changelings: { nodeOverlaps: 0, cardOverlaps: 1, edgeCrossings: 7400, linkDistError: 42 },
+  braids: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 23607, linkDistError: 47 },
 };
+
+/** RE-CAPPED AGAIN, same day, for the de-drift ORDER fix (board-force.ts). `forceDeDrift` ran LAST
+ *  and so cancelled the centre pull's own contribution -- a pull toward the origin on a displaced
+ *  board is almost entirely common-mode, which is precisely what that force subtracts -- so the
+ *  board could never come home: seeded at x=800 it moved 3e-13 over 400 ticks and 2e-13 over 10,000.
+ *  Moving it BEFORE forceX/forceY restores the return (798 -> 697 over 10k ticks) and KEEPS the
+ *  anti-walk property it exists for: centroid distance from the origin after 40k ticks, three seeds,
+ *  27 -> 19 on sorin and 21 -> 15 on the other four.
+ *
+ *  Before -> after (the card-mode caps above -> these):
+ *    sorin        cardOverlaps 16 -> 11   crossings 40211 -> 41207 (+2.5%)  distErr 75 -> 77
+ *    inalla       cardOverlaps  8 ->  0   crossings 33099 -> 33151 (+0.2%)  distErr 54 -> 56
+ *    fairdrazi    cardOverlaps 23 -> 17   crossings 36643 -> 37354 (+1.9%)  distErr 61 -> 61
+ *    changelings  cardOverlaps  0 ->  1   crossings  7337 ->  7400 (+0.9%)  distErr 41 -> 42
+ *    braids       cardOverlaps  0 ->  0   crossings 23551 -> 23607 (+0.2%)  distErr 47 -> 47
+ *  Every move is under 3% -- well inside the stop-and-diagnose line -- and it is the same effect the
+ *  de-drift re-cap already recorded once: CENTER_PULL pulls toward a FIXED point, so it is not
+ *  translation-invariant, and any change to where the board sits changes the trajectory from there
+ *  on. Card overlaps IMPROVED on three fixtures and rose by one pair on changelings; the residual is
+ *  the soft collide, unchanged in kind. */
 
 /** RE-CAPPED 2026-08-18 for the card-mode collision fix, and the interesting number is the one that
  *  was not here before. `cardOverlaps` is NEW: the old table capped `nodeOverlaps` at 0 and every

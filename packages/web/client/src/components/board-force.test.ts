@@ -135,28 +135,31 @@ describe("createBoardSimulation's stated invariants", () => {
    *  because forceX/forceY claimed only UNZONED nodes, so a roomed card had no absolute anchor at
    *  all and a common-mode velocity was invisible to every force.
    *
-   *  THE BOARD STAYS PUT. IT DOES NOT COME BACK -- measured 2026-08-18, and the older wording here
-   *  ("the board comes back on its own") was never true. `forceDeDrift` is inserted LAST and
-   *  subtracts the MEAN velocity from every node, and a centre pull on a cluster far from the origin
-   *  is almost entirely common-mode, so de-drift cancels the very component that would carry it
-   *  home: the centroid of a board seeded at x=800 moves 3e-13 over 400 ticks, and 2e-13 over
-   *  10,000. This test asserted the return and passed on float residue whose SIGN happened to be
-   *  negative; the card-mode collision change altered the cluster geometry, the sign flipped, and
-   *  that is how the defect surfaced.
-   *
-   *  Pinned as what actually holds -- no walk -- with the defect recorded in ROADMAP rather than
-   *  banked here as if intended. Inserting de-drift BEFORE forceX/forceY does restore the return
-   *  (798 -> 697 over 10k ticks) and keeps the anti-walk property (centroid 19-20 world units from
-   *  origin after 40k ticks on sorin, against 27 today), but it moves the layout and so wants its
-   *  own re-cap. */
-  test("a board displaced from the origin does not walk further away", () => {
+   *  BOTH HALVES ARE PINNED, because for months only one of them was true. `forceDeDrift` was
+   *  inserted LAST and subtracted the MEAN velocity from every node, which is almost exactly what a
+   *  centre pull on a displaced board contributes -- so the board stayed put and never came home,
+   *  moving 3e-13 over 400 ticks from x=800. The older version of this test asserted the return and
+   *  passed on float residue whose sign the card-mode collision change flipped, which is how it was
+   *  found. De-drift now runs BEFORE forceX/forceY. */
+  test("pulls a board displaced from the origin back toward it", () => {
     const nodes = Array.from({ length: 12 }, (_, i) => card(`c${i}`, 800 + Math.cos(i) * 40, Math.sin(i) * 40));
     const simulation = createBoardSimulation({ nodes, links: [] });
     const centroidX = () => nodes.reduce((s, n) => s + n.x, 0) / nodes.length;
     const before = centroidX();
     for (let i = 0; i < 400; i++) simulation.tick();
-    // Held to a world unit: de-drift pins the centroid, for better (no walk) and for worse (no
-    // return). A real drift would be tens of units -- the defect this force was added for was 67.
+    // A world unit of margin, not 3e-13: this has to fail if the force order regresses.
+    expect(centroidX()).toBeLessThan(before - 1);
+  });
+
+  test("and still cancels a common-mode drift that no force intended", () => {
+    const nodes = Array.from({ length: 12 }, (_, i) => card(`c${i}`, Math.cos(i) * 40, Math.sin(i) * 40));
+    const simulation = createBoardSimulation({ nodes, links: [] });
+    // A pure translation given to every node at once -- the walk this force was added for.
+    for (const n of nodes) { n.vx = 5; n.vy = 0; }
+    const centroidX = () => nodes.reduce((s, n) => s + n.x, 0) / nodes.length;
+    const before = centroidX();
+    simulation.tick();
+    // One tick: the injected 5 units of common-mode velocity are gone, not integrated into position.
     expect(Math.abs(centroidX() - before)).toBeLessThan(1);
   });
 

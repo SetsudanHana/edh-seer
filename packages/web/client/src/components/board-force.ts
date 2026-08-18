@@ -304,12 +304,21 @@ export function createBoardSimulation(opts: {
     .force("collide", forceCollide<Sim>()
       .radius(() => nodeRadius() + p.collidePad / 2)
       .iterations(p.collideIterations))
+    // BEFORE THE CENTRE PULL, AND THAT ORDER IS THE WHOLE POINT (2026-08-18). d3 applies forces in
+    // insertion order, so running de-drift LAST -- as it did until now -- cancelled the centre
+    // pull's own contribution: a pull toward the origin on a board far from it is almost entirely
+    // COMMON-MODE, which is exactly what this force subtracts. Measured on the old order, a board
+    // seeded at x=800 moved 3e-13 over 400 ticks and 2e-13 over 10,000: it stayed put forever, and
+    // the comment here claimed it "comes back on its own".
+    //
+    // Placed here it still does its actual job, because charge, link and collide have already
+    // written their contributions and any net translation from THEM is what gets cancelled. The
+    // centre pull then writes a deliberate translation that nothing removes. Measured both ways,
+    // 40k ticks, three seeds: centroid distance from the origin 27 -> 19 on sorin, 21 -> 15 on the
+    // other four, so the anti-walk property the force exists for is kept, not traded away.
+    .force("deDrift", forceDeDrift())
     .force("x", forceX<Sim>(0).strength(p.centerPull))
     .force("y", forceY<Sim>(0).strength(p.centerPull))
-    // LAST: d3 applies forces in insertion order and integrates afterwards, so this has to run
-    // after charge/link/collide/x/y have all written their contribution to vx/vy in order to
-    // cancel the BOARD's net translation rather than any one force's.
-    .force("deDrift", forceDeDrift())
     .velocityDecay(p.velocityDecay)
     .alphaDecay(p.alphaDecay)
     .alphaTarget(p.alphaFloor)
