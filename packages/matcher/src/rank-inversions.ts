@@ -28,6 +28,11 @@ export interface InversionReport {
   shapes: number;
   inversions: number;
   payoffs: PayoffRating[];
+  /** Payoffs skipped because `ratingByName` had no entry — a token node, ABSENT from
+   *  `report.cards` by construction, not zero-rated. Counted so the exclusion is visible. */
+  unmeasurablePayoffs: number;
+  /** Feeder instances skipped for the same reason, one per (payoff, feeder) pair examined. */
+  unmeasurableFeeders: number;
 }
 
 export interface InversionDiff {
@@ -37,6 +42,10 @@ export interface InversionDiff {
   shapesAfter: number;
   /** Scarce payoffs that LOST rating. The criterion says this must be empty. */
   payoffsFallen: { tag: string; name: string; from: number; to: number }[];
+  unmeasurablePayoffsBefore: number;
+  unmeasurablePayoffsAfter: number;
+  unmeasurableFeedersBefore: number;
+  unmeasurableFeedersAfter: number;
 }
 
 export function countInversions(
@@ -44,16 +53,27 @@ export function countInversions(
   ratingByName: ReadonlyMap<string, number>,
   opts: { glut: number },
 ): InversionReport {
-  const out: InversionReport = { shapes: 0, inversions: 0, payoffs: [] };
+  const out: InversionReport = { shapes: 0, inversions: 0, payoffs: [], unmeasurablePayoffs: 0, unmeasurableFeeders: 0 };
   for (const row of rows) {
     const r = ratio(row, "avail");
     if (r === null || r <= opts.glut) continue;
     out.shapes++;
     for (const payoff of row.demand.names) {
-      const rating = ratingByName.get(payoff) ?? 0;
+      // A payoff ABSENT from the ratings map (a token node — the ratings pass never reads one)
+      // is unmeasurable, not the worst possible rating. Scoring it 0 would manufacture an
+      // inversion against every real feeder; skip it and count the exclusion instead.
+      if (!ratingByName.has(payoff)) {
+        out.unmeasurablePayoffs++;
+        continue;
+      }
+      const rating = ratingByName.get(payoff)!;
       // A card on BOTH sides of one shape cannot invert against itself.
-      const feedersAbove = row.supply.names
-        .filter((f) => f !== payoff && (ratingByName.get(f) ?? 0) > rating).length;
+      let feedersAbove = 0;
+      for (const f of row.supply.names) {
+        if (f === payoff) continue;
+        if (!ratingByName.has(f)) { out.unmeasurableFeeders++; continue; }
+        if (ratingByName.get(f)! > rating) feedersAbove++;
+      }
       out.inversions += feedersAbove;
       out.payoffs.push({ tag: row.key, name: payoff, rating, feedersAbove });
     }
@@ -77,5 +97,9 @@ export function diffInversions(a: InversionReport, b: InversionReport): Inversio
     shapesBefore: a.shapes,
     shapesAfter: b.shapes,
     payoffsFallen,
+    unmeasurablePayoffsBefore: a.unmeasurablePayoffs,
+    unmeasurablePayoffsAfter: b.unmeasurablePayoffs,
+    unmeasurableFeedersBefore: a.unmeasurableFeeders,
+    unmeasurableFeedersAfter: b.unmeasurableFeeders,
   };
 }
