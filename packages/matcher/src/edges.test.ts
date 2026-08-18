@@ -168,6 +168,15 @@ const treasureMaker = () => ({
     }],
   } as CardTags,
 });
+// The maker must LIST the Treasure it makes: suppression is a trade for the two-hop path, and
+// `hasMediatingToken` refuses the trade when no node can carry the fact (see the placeholder-"Copy"
+// case at the bottom of this file). Before that rule these fixtures had no `allParts` at all and
+// still suppressed, which is the shape that silently deleted Second Harvest's every claim.
+const withTreasurePart = (dc: ReturnType<typeof treasureMaker>) => {
+  (dc.card as unknown as { allParts: unknown }).allParts =
+    [{ component: "token", name: "Treasure", typeLine: "Token Artifact — Treasure" }];
+  return dc;
+};
 const treasureNode = () => ({
   card: { name: "Treasure", typeLine: "Artifact — Treasure", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
   tags: {
@@ -184,7 +193,7 @@ const artifactPayoff = () => base("Artifact ETB Payoff", [{
 }]);
 
 test("token mediation: a Treasure maker's own token-entry event no longer edges a nontoken payoff directly", () => {
-  const reasons = directedReasons(treasureMaker(), artifactPayoff(), H);
+  const reasons = directedReasons(withTreasurePart(treasureMaker()), artifactPayoff(), H);
   expect(reasons.some((r) => r.tag.startsWith("enters:"))).toBe(false);
 });
 
@@ -203,11 +212,11 @@ test("CR 614 multiplier still edges the maker, never the token, after mediation 
     trigger: { verbs: ["create-token"], subject: { type: "artifact", subtype: "treasure", control: "you", token: true } },
     effect: { kind: "token-doubling" },
   }]);
-  const reasons = directedReasons(treasureMaker(), doubler, H);
+  const reasons = directedReasons(withTreasurePart(treasureMaker()), doubler, H);
   expect(reasons.some((r) => r.tag.startsWith("create-token:"))).toBe(true);
   // And confirm the mediation rule really did fire on this same producer for the ordinary payoff --
   // otherwise this test would pass for the wrong reason (no suppression at all).
-  expect(directedReasons(treasureMaker(), artifactPayoff(), H).some((r) => r.tag.startsWith("enters:"))).toBe(false);
+  expect(directedReasons(withTreasurePart(treasureMaker()), artifactPayoff(), H).some((r) => r.tag.startsWith("enters:"))).toBe(false);
 });
 
 test("themeSubjectKey prefers subtype, then type, else any", () => {
@@ -1896,5 +1905,49 @@ describe("claimCount", () => {
     claimCount(chain);
 
     expect(chain.map((r) => (r as { effectKind?: string }).effectKind)).toEqual(before);
+  });
+});
+
+// SUPPRESSION IS A TRADE, AND A TRADE NEEDS SOMETHING RECEIVED. Token mediation deletes a maker's
+// direct "a token enters" edge because the token NODE re-supplies it one hop later. Second Harvest
+// lists only Scryfall's placeholder "Copy" part (type line `Token`, no card type), so no node can
+// carry the fact and the relation was simply deleted -- 0.3 rating, one partner, invisible to a
+// Caretaker's Talent in the same deck. Both directions pinned: a typed part still suppresses.
+describe("token mediation only suppresses when a usable token node exists", () => {
+  const payoff = base("Caretaker's Talent", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: true } },
+    effect: { kind: "draw-card", subject: { control: "you" } },
+    emits: [],
+  }] as never);
+  const maker = (parts: { component: string; name: string; typeLine: string }[]): DeckCard => {
+    const m = base("Maker", [{
+      kind: "on-cast",
+      effect: { kind: "token-generation", subject: { control: "you", token: true } },
+      emits: [{ verb: "enters", subject: { control: "you", token: true } }],
+    }] as never) as unknown as DeckCard;
+    (m.card as unknown as { allParts: unknown }).allParts = parts;
+    return m;
+  };
+
+  test("a typeless placeholder part does NOT suppress — the direct edge stands", () => {
+    const reasons = directedReasons(
+      maker([{ component: "token", name: "Copy", typeLine: "Token" }]),
+      payoff as unknown as DeckCard, H,
+    );
+    expect(reasons.map((r: Reason) => r.tag)).toContain("enters:any");
+  });
+
+  test("a typed part suppresses, because the token node carries the fact instead", () => {
+    const reasons = directedReasons(
+      maker([{ component: "token", name: "Saproling", typeLine: "Token Creature — Saproling" }]),
+      payoff as unknown as DeckCard, H,
+    );
+    expect(reasons.map((r: Reason) => r.tag)).not.toContain("enters:any");
+  });
+
+  test("no token parts at all does not suppress either", () => {
+    const reasons = directedReasons(maker([]), payoff as unknown as DeckCard, H);
+    expect(reasons.map((r: Reason) => r.tag)).toContain("enters:any");
   });
 });

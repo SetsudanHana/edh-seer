@@ -6,6 +6,7 @@ import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subje
 import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, selfFillTypes } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
+import { hasMediatingToken } from "./tokens.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -506,7 +507,17 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         //    no second hop for that verb to duplicate. The owner's ruling: a multiplier consumes the
         //    MAKER's action, never the token's, and this is why the generic rule needs no special case
         //    for it once the verb is excluded.
-        if (e.subject.token === true && t.verb !== "create-token" && !p.isToken && !c.isToken) continue;
+        //  - the producer must actually HAVE a token a node can be built from. Suppression trades a
+        //    direct edge for a two-hop path; if the trade receives nothing, the relation is simply
+        //    deleted. Second Harvest's only token part is the placeholder "Copy" (type line
+        //    `Token`, no card type, its own oracle text calling itself a stand-in), so its
+        //    "for each token you control, create a copy" claimed NOTHING -- 0.3 rating, one
+        //    partner, invisible to a Caretaker's Talent in the same deck. See
+        //    `hasMediatingToken` in tokens.ts.
+        if (
+          e.subject.token === true && t.verb !== "create-token" && !p.isToken && !c.isToken
+          && hasMediatingToken(p.card)
+        ) continue;
         // A SELF trigger watches ONE permanent — its own. `selfEtbSelfSupplied` excludes implied and
         // token producers, but an AUTHORED emit that puts some OTHER object onto the battlefield
         // survived it, because a self subject names no type and so checks nothing: Windswept Heath

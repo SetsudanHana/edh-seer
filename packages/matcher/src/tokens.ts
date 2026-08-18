@@ -31,3 +31,31 @@ export function createdTokenRefs(card: Card): TokenRef[] {
   }
   return [...out.values()];
 }
+
+/** Card types a token must name for a NODE built from it to satisfy anything. A token row whose
+ *  type line names none of them is a PLACEHOLDER, not a permanent: Scryfall's "Copy" row is type
+ *  line `Token` and its own oracle text says "(This token can be used to represent a token that's a
+ *  copy of a permanent.)". 163 of the 995 ingested token rows are typeless this way, and 349 corpus
+ *  cards reference one. */
+const TOKEN_CARD_TYPES = /\b(Creature|Artifact|Enchantment|Land|Planeswalker|Battle)\b/i;
+
+/** Can a node built from this ref carry a claim at all? A typeless placeholder cannot: it satisfies
+ *  no typed subject, and `impliedEvents` gives it no `enters` either, because its type line names no
+ *  permanent type. */
+export function isMediatingTokenRef(ref: TokenRef): boolean {
+  return TOKEN_CARD_TYPES.test(ref.typeLine);
+}
+
+/** Does this card make at least one token a node can be built from?
+ *
+ *  THE SUPPRESSION RULE NEEDS THIS, and a live deck is what showed why. Token mediation deletes a
+ *  maker's direct "a token enters" edge on the ground that the token NODE re-supplies it one hop
+ *  later. Second Harvest ("For each token you control, create a token that's a copy of that
+ *  permanent") lists exactly one token part -- the placeholder "Copy" -- so the direct edge was
+ *  deleted and the hop it was traded for lands on a node that satisfies nothing. In
+ *  `naya-spellslinger` that left a token doubler rated 0.3 with ONE partner, invisible to
+ *  Caretaker's Talent's "whenever one or more tokens you control enter", which has 29 partners of
+ *  its own. A trade is only sound when something is received. */
+export function hasMediatingToken(card: Card): boolean {
+  return createdTokenRefs(card).some(isMediatingTokenRef);
+}
