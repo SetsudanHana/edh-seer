@@ -29,7 +29,10 @@ export interface InversionReport {
   inversions: number;
   payoffs: PayoffRating[];
   /** Payoffs skipped because `ratingByName` had no entry — a token node, ABSENT from
-   *  `report.cards` by construction, not zero-rated. Counted so the exclusion is visible. */
+   *  `report.cards` by construction, not zero-rated. Counted so the exclusion is visible.
+   *  A (deck, shape, payoff) ROW-OCCURRENCE count, not a count of distinct unmeasurable cards,
+   *  exactly as `unmeasurableFeederPairs` below: one token payoff increments this once per
+   *  glutted shape it sits in, not once total. */
   unmeasurablePayoffs: number;
   /** Feeder instances skipped for the same reason, one per (payoff, feeder) pair examined — a
    *  PAIR-OCCURRENCE count, not a count of distinct unmeasurable cards, exactly as `inversions`

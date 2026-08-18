@@ -339,13 +339,20 @@ export function analyzeDeckStructured(
   // THE MAGNITUDE DISCOUNT (spec 2026-08-18). Computed ONCE per deck off the same undirected
   // `edges` reasons the pass below re-derives directionally, so the ratio a card is judged against
   // is the deck's whole claim population and not the pair's. `beta: 0` (the shipped default)
-  // returns empty maps, so this is inert until a measured sweep turns it on.
+  // makes `magnitudeMultipliers` return empty maps -- but gate the CENSUS itself on beta > 0, not
+  // just its output, so "ships inert" is literally true: every analyze() call was building the
+  // whole supply:demand census (an O(reasons) pass over the deck) and throwing it away.
   const magOpts = impactWeights.magnitude;
-  const mag = magOpts
+  const mag = magOpts && magOpts.beta > 0
     ? magnitudeMultipliers(
         buildSupplyDemand(
           edges.flatMap((e) => e.reasons),
-          unique.map((dc) => ({
+          // `resolved`, every physical copy -- not `unique` (deduped by name). `library` inside
+          // `buildSupplyDemand` is `inputs.filter(!isCommander).length`, and you draw from real
+          // copies: a 30-basic deck has ~70 DISTINCT non-commander names but 99 real cards, a ~40%
+          // undercount of the library `pDrawn` divides by. `byName` in there already dedupes for
+          // the shape of the row, so array length is the only thing this changes.
+          resolved.map((dc) => ({
             name: dc.card.name,
             tags: dc.tags ?? null,
             isCommander: commanderSet.has(dc.card.name),

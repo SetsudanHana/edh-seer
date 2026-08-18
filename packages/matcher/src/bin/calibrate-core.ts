@@ -107,7 +107,14 @@ function rng(seed: number): () => number {
 }
 
 function clone(w: ImpactWeights): ImpactWeights {
-  return { kinds: { ...w.kinds }, repeatability: { ...w.repeatability }, scaling: { ...w.scaling }, damping: w.damping };
+  // `magnitude` is NOT a tunable param (see `params()` below) and must still survive a
+  // round-trip: `calibrate.ts` writes this clone over the committed `impact-weights.json`
+  // wholesale, so dropping the field here would silently delete the shipped `{glut: 3, beta: 0}`
+  // block the moment anyone runs the calibrator.
+  return {
+    kinds: { ...w.kinds }, repeatability: { ...w.repeatability }, scaling: { ...w.scaling }, damping: w.damping,
+    ...(w.magnitude ? { magnitude: { ...w.magnitude } } : {}),
+  };
 }
 
 /** Flat list of tunable param handles (get/set) over kinds, repeatability, scaling, and damping.

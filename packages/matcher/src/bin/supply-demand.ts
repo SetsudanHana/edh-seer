@@ -44,8 +44,14 @@ const flag = (name: string): string | undefined => {
 const INVERSIONS = args.includes("--inversions");
 const SAVE = flag("--save");
 const AGAINST = flag("--against");
-const GLUT = Number(flag("--glut") ?? 3);
-const flagValues = new Set([SAVE, AGAINST, flag("--glut")].filter(Boolean) as string[]);
+const glutFlag = flag("--glut");
+const GLUT = glutFlag === undefined ? 3 : Number(glutFlag);
+// `r <= NaN` is always false, so an unparseable --glut silently reads EVERY row as glutted rather
+// than failing loudly.
+if (!Number.isFinite(GLUT) || GLUT <= 0) {
+  throw new Error(`--glut must be a finite positive number, got ${JSON.stringify(glutFlag)}`);
+}
+const flagValues = new Set([SAVE, AGAINST, glutFlag].filter(Boolean) as string[]);
 const only = args.find((a) => !a.startsWith("--") && !flagValues.has(a));
 const TURN = 5;
 
@@ -221,7 +227,11 @@ if (AGAINST) {
   const before = JSON.parse(readJson(AGAINST, "utf8")) as InversionReport;
   const d = diffInversions(before, inversionTotals);
   console.log(`INVERSIONS ${d.inversionsBefore} -> ${d.inversionsAfter} over ${d.shapesBefore} -> ${d.shapesAfter} glutted shapes (glut ${GLUT})`);
-  console.log(`PAYOFFS THAT FELL: ${d.payoffsFallen.length}${d.payoffsFallen.length ? "" : "  <- the criterion"}`);
+  // `payoffsFallen` is one row per (deck, shape, payoff) -- a card sitting in three glutted
+  // shapes in one deck counts three times. Print the distinct-card count alongside so a reader
+  // never mistakes the row total for a card total (CLAUDE.md's own "as if they were cards" trap).
+  const distinctPayoffsFallen = new Set(d.payoffsFallen.map((p) => `${p.tag.split("/")[0]}::${p.name}`)).size;
+  console.log(`PAYOFFS THAT FELL: ${d.payoffsFallen.length} row(s) (deck/shape/payoff) over ${distinctPayoffsFallen} distinct card(s)${d.payoffsFallen.length ? "" : "  <- the criterion"}`);
   for (const p of d.payoffsFallen.slice(0, 20)) console.log(`  ${p.from} -> ${p.to}  ${p.tag.replace("/", " / ")} / ${p.name}`);
   console.log(`unmeasurable: ${d.unmeasurablePayoffsBefore} -> ${d.unmeasurablePayoffsAfter} payoffs, ${d.unmeasurableFeederPairsBefore} -> ${d.unmeasurableFeederPairsAfter} feeder comparisons (token nodes carry no synergyRating)`);
 } else if (INVERSIONS) {

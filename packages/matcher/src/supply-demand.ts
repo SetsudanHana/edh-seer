@@ -29,7 +29,11 @@
  */
 import { seen } from "@mtg/engine";
 import type { Reason } from "@mtg/engine";
+import { VERB_VOCAB } from "@mtg/tagger";
 import type { Ability, CardTags } from "@mtg/tagger";
+import { nodeId } from "./graph-projection.js";
+
+const KNOWN_VERBS: ReadonlySet<string> = new Set(VERB_VOCAB);
 
 /** Events a labelled ability contributes PER ROUND of the pod, as a provisional reading of the
  *  `Repeats` taxonomy. These are the axis, not the answer: the curve that turns a supply:demand
@@ -129,7 +133,15 @@ export function cardRate(
       ? (a.emits ?? []).some((e) => e.verb === verb)
       : (a.trigger?.verbs ?? []).some((v: string) => v === verb),
   );
-  if (abilities.length === 0) return { rate: IMPLIED_RATE, label: "implied" };
+  // `creates`, `graveyard-recursion` and `scales` are SYNTHESIZED tag prefixes (edges.ts, not
+  // VERB_VOCAB members), so no `Ability` can ever match one and every side reads the raw
+  // card-count ratio by construction -- 38% of rows. Labelled distinctly from a genuine implied
+  // supply (a real verb the card merely happens to carry no repeatable ability for) so the ceiling
+  // is visible rather than hidden inside "implied". Rate stays IMPLIED_RATE either way: this is a
+  // labelling fix only, no ratio changes.
+  if (abilities.length === 0) {
+    return { rate: IMPLIED_RATE, label: KNOWN_VERBS.has(verb) ? "implied" : "unmatched-verb" };
+  }
 
   let best = { rate: -1, label: "implied" };
   for (const a of abilities) {
@@ -189,7 +201,11 @@ export function buildSupplyDemand(
       out.rate += IMPLIED_RATE;
       out.avail += IMPLIED_RATE * pDrawn;
       out.labels.token = (out.labels.token ?? 0) + 1;
-      out.names.push(name);
+      // TOKEN_ID_PREFIX (`nodeId`), not the bare name: 92 of 661 distinct token names in the
+      // corpus collide with a real card name, and `rank-inversions.ts` looks names up in
+      // `ratingByName` (keyed on `report.cards`, real cards only). A bare token name would
+      // silently borrow the same-named card's rating instead of reading UNMEASURABLE.
+      out.names.push(nodeId(name, true));
     }
     return out;
   };

@@ -65,6 +65,13 @@ test("loadImpactWeights reads the committed JSON and has a numeric damping", () 
   expect(Object.keys(w.kinds).length).toBe(27);
 });
 
+// GUARD: `bin/calibrate.ts` writes `calibrate-core.ts`'s `clone()` over this file wholesale, and
+// `clone()` did not carry `magnitude` forward -- running the calibrator silently deleted the
+// shipped {glut: 3, beta: 0} block. This fails the moment that regresses.
+test("committed impact-weights.json keeps its magnitude block (glut: 3, beta: 0, term shipped off)", () => {
+  expect(loadImpactWeights().magnitude).toEqual({ glut: 3, beta: 0 });
+});
+
 test("impactWeightOf folds in scaleMult: per-creature drain > fixed drain", () => {
   const perCreature = impactWeightOf(
     { tag: "t", text: "", effectKind: "drain", repeatability: "triggered", scaling: "per-creature" },
