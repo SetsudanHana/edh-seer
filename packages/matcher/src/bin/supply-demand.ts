@@ -28,7 +28,7 @@
 import { readFileSync, readdirSync, writeFileSync, readFileSync as readJson } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
-import { ComboIndex, loadImpactWeights } from "@mtg/engine";
+import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
 import { countInversions, diffInversions, type InversionReport } from "../rank-inversions.js";
@@ -111,7 +111,6 @@ for (const path of files) {
   if (INVERSIONS || SAVE || AGAINST) {
     // Absent means UNMEASURABLE, never zero: a card with no rating must be skipped and counted,
     // not scored 0 against real feeders (the `?? 0` defect the fix wave removed for tokens).
-    const ROLE_BLEND = loadImpactWeights().roleBlend ?? 1;
     const has = <T,>(v: T | undefined): v is T => v !== undefined;
     const ratings = {
       payoff: new Map(report.cards.filter((c) => has(c.payoffRating)).map((c) => [c.name, c.payoffRating!] as const)),
@@ -119,7 +118,15 @@ for (const path of files) {
       headline: new Map(report.cards.filter((c) => has(c.synergyRating)).map((c) => [c.name, c.synergyRating!] as const)),
       // The protected set is defined on SCORES, not on the rounded ratings, so a card sitting near
       // the boundary is not misclassified by a 0.05 rounding step.
-      majorityPayoff: new Set(report.cards.filter((c) => (c.authority ?? 0) >= ROLE_BLEND * (c.feederLift ?? 0)).map((c) => c.name)),
+      //
+      // Deliberately NOT `authority >= roleBlend * feederLift`, the formula in analyze.ts:417 — that
+      // would be a second copy of the formula reading a second `loadImpactWeights()` call, and both
+      // `?? 0` defaults fire together on any `CardSynergy` lacking the fields (`0 >= 0` -> true),
+      // defaulting an unmeasured card INTO the protected set. `score = authority + roleBlend *
+      // feederLift` makes protected <=> `authority >= score - authority` <=> `2 * authority >=
+      // score`, using only shipped fields with no re-read of `roleBlend` and no default-in trap:
+      // absent `authority` now means NOT classified, never protected.
+      majorityPayoff: new Set(report.cards.filter((c) => c.authority !== undefined && 2 * c.authority >= c.score).map((c) => c.name)),
     };
     const rep = countInversions(rows, ratings, { glut: GLUT });
     inversionTotals.shapes += rep.shapes;
@@ -244,12 +251,13 @@ if (AGAINST) {
   const prot = d.headlineFallenProtected;
   console.log(`PART 2 -- PROTECTED (majority-payoff) HEADLINE FALLS: ${prot.length} row(s) over ${distinct(prot)} distinct card(s)${prot.length === 0 ? "  <- clears" : "  <- FAILS"}`);
   for (const p of prot.slice(0, 20)) console.log(`  ${p.from} -> ${p.to}  ${p.tag.replace("/", " / ")} / ${p.name}`);
+  if (prot.length > 20) console.log(`  ... ${prot.length - 20} more`);
   const other = d.headlineFallenOther;
   console.log(`reported, NOT a gate -- majority-feeder headline falls: ${other.length} row(s) over ${distinct(other)} distinct card(s)`);
-  console.log(`unmeasurable: ${d.unmeasurablePayoffsBefore} -> ${d.unmeasurablePayoffsAfter} payoffs, ${d.unmeasurableFeederPairsBefore} -> ${d.unmeasurableFeederPairsAfter} feeder comparisons (token nodes carry no synergyRating)`);
+  console.log(`unmeasurable: ${d.unmeasurablePayoffsBefore} -> ${d.unmeasurablePayoffsAfter} payoff rows, ${d.unmeasurableFeederPairsBefore} -> ${d.unmeasurableFeederPairsAfter} feeder pairs (token nodes carry no synergyRating)`);
 } else if (INVERSIONS) {
   console.log(`INVERSIONS ${inversionTotals.inversions} over ${inversionTotals.shapes} glutted shapes (glut ${GLUT})`);
-  console.log(`unmeasurable: ${inversionTotals.unmeasurablePayoffs} payoffs, ${inversionTotals.unmeasurableFeederPairs} feeder comparisons (token nodes carry no synergyRating)`);
+  console.log(`unmeasurable: ${inversionTotals.unmeasurablePayoffs} payoff rows, ${inversionTotals.unmeasurableFeederPairs} feeder pairs (token nodes carry no synergyRating)`);
   const worst = [...inversionTotals.payoffs].sort((a, b) => b.feedersAbove - a.feedersAbove).slice(0, 15);
   console.log("  feedersAbove  rating  deck / shape / payoff");
   for (const p of worst) console.log(`  ${String(p.feedersAbove).padStart(12)}  ${String(p.rating).padStart(6)}  ${p.tag.replace("/", " / ")} / ${p.name}`);

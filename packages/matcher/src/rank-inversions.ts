@@ -96,7 +96,16 @@ export function countInversions(
       // is unmeasurable, not the worst possible rating. Scoring it 0 would manufacture an
       // inversion against every real feeder; skip it and count the exclusion instead.
       if (!ratings.payoff.has(payoff)) { out.unmeasurablePayoffs++; continue; }
+      // The headline map is keyed by `has(c.synergyRating)` while the payoff map above is keyed by
+      // `has(c.payoffRating)` — two DIFFERENT predicates over the same `report.cards` array that
+      // only coincide because `analyze.ts` happens to set both fields in one object literal. Falling
+      // back to the payoff rating here would silently read a PAYOFF rating as a headline if they
+      // ever diverge, and a payoff rating cannot fall under a discount-only term (§4.2), so the gate
+      // would quietly start passing. Treat a missing headline exactly like a missing payoff rating:
+      // unmeasurable, skip the whole row, reusing the counter that already exists for the sibling case.
+      if (!ratings.headline.has(payoff)) { out.unmeasurablePayoffs++; continue; }
       const rating = ratings.payoff.get(payoff)!;
+      const headline = ratings.headline.get(payoff)!;
       // A card on BOTH sides of one shape cannot invert against itself.
       let feedersAbove = 0;
       for (const f of row.supply.names) {
@@ -107,7 +116,7 @@ export function countInversions(
       out.inversions += feedersAbove;
       out.payoffs.push({
         tag: row.key, name: payoff, rating,
-        headline: ratings.headline.get(payoff) ?? rating,
+        headline,
         protectedPayoff: ratings.majorityPayoff.has(payoff),
         feedersAbove,
       });
@@ -117,6 +126,17 @@ export function countInversions(
 }
 
 export function diffInversions(a: InversionReport, b: InversionReport): InversionDiff {
+  // A pre-per-role snapshot has no `headline`/`protectedPayoff` on its payoff rows. Diffing against
+  // one silently reads `undefined` on both sides: `now.headline >= before.headline` is false for
+  // every row (a false `undefined >= undefined`), so every row files as a fall, and
+  // `before.protectedPayoff` is falsy so every fall lands in `headlineFallenOther` — printing
+  // "0 row(s) ... <- clears" on the gate that decides whether a discount may ship, from the wrong
+  // file, silently. Refuse rather than guess.
+  for (const rep of [a, b]) {
+    if (rep.payoffs.some((p) => typeof p.headline !== "number" || typeof p.protectedPayoff !== "boolean")) {
+      throw new Error("snapshot predates the per-role fields; re-take the baseline");
+    }
+  }
   const byKey = (rep: InversionReport) => new Map(rep.payoffs.map((p) => [`${p.tag}::${p.name}`, p] as const));
   const after = byKey(b);
   const headlineFallenProtected: InversionDiff["headlineFallenProtected"] = [];

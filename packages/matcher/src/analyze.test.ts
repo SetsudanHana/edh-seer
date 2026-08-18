@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { analyzeDeckStructured } from "./analyze.js";
-import { SEED_IMPACT_WEIGHTS } from "@mtg/engine";
+import { SEED_IMPACT_WEIGHTS, loadImpactWeights } from "@mtg/engine";
 import type { TagStats } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -1066,4 +1066,22 @@ test("the two roles separate: the maker earns feeder credit, the payoff earns pa
   // The sentence the blended rating could never say: the maker's payoff-side credit is not what
   // puts it in the deck.
   expect(inalla.payoffRating!).toBeLessThan(kindred.payoffRating!);
+});
+
+// Important 4 (final-review fix wave, 2026-08-18): `impact.test.ts` only asserts the committed JSON
+// VALUE `roleBlend: 1`; nothing asserted the field is WIRED. Deleting `ROLE_BLEND *` from
+// `analyze.ts:417` (score = authority + ROLE_BLEND * feederLift) left the whole suite green before
+// this test existed.
+test("roleBlend actually scales feederLift into score, not just a config field nothing reads", () => {
+  const maker = dc("Inalla", inallaAbility, ["wizard"]);
+  const payoff = dc("Kindred Discovery", kindredDiscoveryAbility);
+  const w = { ...loadImpactWeights(), roleBlend: 0 };
+  // Inalla is the feeder here (no authority of her own — nothing feeds her), so at roleBlend 0 her
+  // score collapses to `authority` alone (~0) and must fall below the roleBlend-1 default, where it
+  // is `authority + feederLift`.
+  const blendOff = analyzeDeckStructured([maker, payoff], undefined, H, w);
+  const blendOn = analyzeDeckStructured([maker, payoff], undefined, H);
+  const inallaOff = blendOff.cards.find((c) => c.name === "Inalla")!;
+  const inallaOn = blendOn.cards.find((c) => c.name === "Inalla")!;
+  expect(inallaOff.score).toBeLessThan(inallaOn.score);
 });
