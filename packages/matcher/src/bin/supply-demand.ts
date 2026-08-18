@@ -28,7 +28,7 @@
 import { readFileSync, readdirSync, writeFileSync, readFileSync as readJson } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
-import { ComboIndex } from "@mtg/engine";
+import { ComboIndex, loadImpactWeights } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
 import { countInversions, diffInversions, type InversionReport } from "../rank-inversions.js";
@@ -109,8 +109,19 @@ for (const path of files) {
     { turn: TURN },
   );
   if (INVERSIONS || SAVE || AGAINST) {
-    const ratingByName = new Map(report.cards.map((c) => [c.name, c.synergyRating ?? 0] as const));
-    const rep = countInversions(rows, ratingByName, { glut: GLUT });
+    // Absent means UNMEASURABLE, never zero: a card with no rating must be skipped and counted,
+    // not scored 0 against real feeders (the `?? 0` defect the fix wave removed for tokens).
+    const ROLE_BLEND = loadImpactWeights().roleBlend ?? 1;
+    const has = <T,>(v: T | undefined): v is T => v !== undefined;
+    const ratings = {
+      payoff: new Map(report.cards.filter((c) => has(c.payoffRating)).map((c) => [c.name, c.payoffRating!] as const)),
+      feeder: new Map(report.cards.filter((c) => has(c.feederRating)).map((c) => [c.name, c.feederRating!] as const)),
+      headline: new Map(report.cards.filter((c) => has(c.synergyRating)).map((c) => [c.name, c.synergyRating!] as const)),
+      // The protected set is defined on SCORES, not on the rounded ratings, so a card sitting near
+      // the boundary is not misclassified by a 0.05 rounding step.
+      majorityPayoff: new Set(report.cards.filter((c) => (c.authority ?? 0) >= ROLE_BLEND * (c.feederLift ?? 0)).map((c) => c.name)),
+    };
+    const rep = countInversions(rows, ratings, { glut: GLUT });
     inversionTotals.shapes += rep.shapes;
     inversionTotals.inversions += rep.inversions;
     inversionTotals.unmeasurablePayoffs += rep.unmeasurablePayoffs;
@@ -226,13 +237,15 @@ if (SAVE) {
 if (AGAINST) {
   const before = JSON.parse(readJson(AGAINST, "utf8")) as InversionReport;
   const d = diffInversions(before, inversionTotals);
-  console.log(`INVERSIONS ${d.inversionsBefore} -> ${d.inversionsAfter} over ${d.shapesBefore} -> ${d.shapesAfter} glutted shapes (glut ${GLUT})`);
-  // `payoffsFallen` is one row per (deck, shape, payoff) -- a card sitting in three glutted
-  // shapes in one deck counts three times. Print the distinct-card count alongside so a reader
-  // never mistakes the row total for a card total (CLAUDE.md's own "as if they were cards" trap).
-  const distinctPayoffsFallen = new Set(d.payoffsFallen.map((p) => `${p.tag.split("/")[0]}::${p.name}`)).size;
-  console.log(`PAYOFFS THAT FELL: ${d.payoffsFallen.length} row(s) (deck/shape/payoff) over ${distinctPayoffsFallen} distinct card(s)${d.payoffsFallen.length ? "" : "  <- the criterion"}`);
-  for (const p of d.payoffsFallen.slice(0, 20)) console.log(`  ${p.from} -> ${p.to}  ${p.tag.replace("/", " / ")} / ${p.name}`);
+  console.log(`PART 1 -- INVERSIONS ${d.inversionsBefore} -> ${d.inversionsAfter} over ${d.shapesBefore} -> ${d.shapesAfter} glutted shapes (glut ${GLUT})${d.inversionsAfter < d.inversionsBefore ? "  <- clears" : "  <- FAILS"}`);
+  // One row per (deck, shape, payoff); a card in three glutted shapes in one deck counts three
+  // times. Print the distinct-card count alongside so the row total is never read as a card total.
+  const distinct = (rows: { tag: string; name: string }[]) => new Set(rows.map((p) => `${p.tag.split("/")[0]}::${p.name}`)).size;
+  const prot = d.headlineFallenProtected;
+  console.log(`PART 2 -- PROTECTED (majority-payoff) HEADLINE FALLS: ${prot.length} row(s) over ${distinct(prot)} distinct card(s)${prot.length === 0 ? "  <- clears" : "  <- FAILS"}`);
+  for (const p of prot.slice(0, 20)) console.log(`  ${p.from} -> ${p.to}  ${p.tag.replace("/", " / ")} / ${p.name}`);
+  const other = d.headlineFallenOther;
+  console.log(`reported, NOT a gate -- majority-feeder headline falls: ${other.length} row(s) over ${distinct(other)} distinct card(s)`);
   console.log(`unmeasurable: ${d.unmeasurablePayoffsBefore} -> ${d.unmeasurablePayoffsAfter} payoffs, ${d.unmeasurableFeederPairsBefore} -> ${d.unmeasurableFeederPairsAfter} feeder comparisons (token nodes carry no synergyRating)`);
 } else if (INVERSIONS) {
   console.log(`INVERSIONS ${inversionTotals.inversions} over ${inversionTotals.shapes} glutted shapes (glut ${GLUT})`);

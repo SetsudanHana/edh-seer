@@ -9,17 +9,41 @@
  *  badly-placed payoff under thirty feeders counts thirty — the magnitude of the wrongness is the
  *  point.
  *
- *  Pre-registered acceptance for the magnitude discount, BOTH parts (spec §5):
+ *  Re-registered acceptance for the magnitude discount, BOTH parts (spec §4.2):
  *    1. total inversions FALL;
- *    2. the count of scarce payoffs whose rating FELL is ZERO.
+ *    2. no PROTECTED payoff's HEADLINE rating (`synergyRating`) FALLS. Protected = majority-payoff
+ *       (`authority >= roleBlend * feederLift`). `payoffRating` itself cannot fall under a
+ *       discount-only term (the discount never reaches `support`, and the deck denominator can only
+ *       fall), so gating on it would be a gate that could never fire — the headline is what the
+ *       product shows and what part 2 has to protect. Falls among majority-feeder cards are counted
+ *       and printed but gate nothing.
  */
 import { ratio, type SupplyDemandRow } from "./supply-demand.js";
+
+export interface CardRatings {
+  /** 0–5 payoff-role rating, keyed by card name. A missing name is UNMEASURABLE, never 0. */
+  payoff: ReadonlyMap<string, number>;
+  /** 0–5 feeder-role rating, same denominator. */
+  feeder: ReadonlyMap<string, number>;
+  /** The blended `synergyRating` — what the product shows, and what part 2 gates on. */
+  headline: ReadonlyMap<string, number>;
+  /** Cards whose headline is majority-payoff (`authority >= roleBlend * feederLift`): the
+   *  PROTECTED set. These must not lose headline rating. */
+  majorityPayoff: ReadonlySet<string>;
+}
 
 export interface PayoffRating {
   tag: string;
   name: string;
+  /** The PAYOFF-role rating this row is judged on. */
   rating: number;
-  /** Cards supplying this shape that are rated strictly above this payoff. */
+  /** The card's blended headline rating. Part 2 reads this, not `rating`: a discount-only term
+   *  cannot lower `authority` and `deckMax` can only fall, so `rating` weakly RISES at every BETA
+   *  and a gate on it could never fire. */
+  headline: number;
+  /** True when this payoff is in the protected majority-payoff set. */
+  protectedPayoff: boolean;
+  /** Cards supplying this shape whose FEEDER rating exceeds this payoff's PAYOFF rating. */
   feedersAbove: number;
 }
 
@@ -28,7 +52,7 @@ export interface InversionReport {
   shapes: number;
   inversions: number;
   payoffs: PayoffRating[];
-  /** Payoffs skipped because `ratingByName` had no entry — a token node, ABSENT from
+  /** Payoffs skipped because `ratings.payoff` had no entry — a token node, ABSENT from
    *  `report.cards` by construction, not zero-rated. Counted so the exclusion is visible.
    *  A (deck, shape, payoff) ROW-OCCURRENCE count, not a count of distinct unmeasurable cards,
    *  exactly as `unmeasurableFeederPairs` below: one token payoff increments this once per
@@ -46,8 +70,11 @@ export interface InversionDiff {
   inversionsAfter: number;
   shapesBefore: number;
   shapesAfter: number;
-  /** Scarce payoffs that LOST rating. The criterion says this must be empty. */
-  payoffsFallen: { tag: string; name: string; from: number; to: number }[];
+  /** Protected (majority-payoff) payoffs whose HEADLINE rating fell. Part 2 of the criterion says
+   *  this must be empty. */
+  headlineFallenProtected: { tag: string; name: string; from: number; to: number }[];
+  /** Majority-feeder payoffs whose HEADLINE rating fell. Reported for visibility; gates nothing. */
+  headlineFallenOther: { tag: string; name: string; from: number; to: number }[];
   unmeasurablePayoffsBefore: number;
   unmeasurablePayoffsAfter: number;
   unmeasurableFeederPairsBefore: number;
@@ -56,7 +83,7 @@ export interface InversionDiff {
 
 export function countInversions(
   rows: readonly SupplyDemandRow[],
-  ratingByName: ReadonlyMap<string, number>,
+  ratings: CardRatings,
   opts: { glut: number },
 ): InversionReport {
   const out: InversionReport = { shapes: 0, inversions: 0, payoffs: [], unmeasurablePayoffs: 0, unmeasurableFeederPairs: 0 };
@@ -68,20 +95,22 @@ export function countInversions(
       // A payoff ABSENT from the ratings map (a token node — the ratings pass never reads one)
       // is unmeasurable, not the worst possible rating. Scoring it 0 would manufacture an
       // inversion against every real feeder; skip it and count the exclusion instead.
-      if (!ratingByName.has(payoff)) {
-        out.unmeasurablePayoffs++;
-        continue;
-      }
-      const rating = ratingByName.get(payoff)!;
+      if (!ratings.payoff.has(payoff)) { out.unmeasurablePayoffs++; continue; }
+      const rating = ratings.payoff.get(payoff)!;
       // A card on BOTH sides of one shape cannot invert against itself.
       let feedersAbove = 0;
       for (const f of row.supply.names) {
         if (f === payoff) continue;
-        if (!ratingByName.has(f)) { out.unmeasurableFeederPairs++; continue; }
-        if (ratingByName.get(f)! > rating) feedersAbove++;
+        if (!ratings.feeder.has(f)) { out.unmeasurableFeederPairs++; continue; }
+        if (ratings.feeder.get(f)! > rating) feedersAbove++;
       }
       out.inversions += feedersAbove;
-      out.payoffs.push({ tag: row.key, name: payoff, rating, feedersAbove });
+      out.payoffs.push({
+        tag: row.key, name: payoff, rating,
+        headline: ratings.headline.get(payoff) ?? rating,
+        protectedPayoff: ratings.majorityPayoff.has(payoff),
+        feedersAbove,
+      });
     }
   }
   return out;
@@ -90,19 +119,21 @@ export function countInversions(
 export function diffInversions(a: InversionReport, b: InversionReport): InversionDiff {
   const byKey = (rep: InversionReport) => new Map(rep.payoffs.map((p) => [`${p.tag}::${p.name}`, p] as const));
   const after = byKey(b);
-  const payoffsFallen: InversionDiff["payoffsFallen"] = [];
+  const headlineFallenProtected: InversionDiff["headlineFallenProtected"] = [];
+  const headlineFallenOther: InversionDiff["headlineFallenOther"] = [];
   for (const [k, before] of byKey(a)) {
     const now = after.get(k);
-    if (now && now.rating < before.rating) {
-      payoffsFallen.push({ tag: before.tag, name: before.name, from: before.rating, to: now.rating });
-    }
+    if (!now || now.headline >= before.headline) continue;
+    const row = { tag: before.tag, name: before.name, from: before.headline, to: now.headline };
+    (before.protectedPayoff ? headlineFallenProtected : headlineFallenOther).push(row);
   }
   return {
     inversionsBefore: a.inversions,
     inversionsAfter: b.inversions,
     shapesBefore: a.shapes,
     shapesAfter: b.shapes,
-    payoffsFallen,
+    headlineFallenProtected,
+    headlineFallenOther,
     unmeasurablePayoffsBefore: a.unmeasurablePayoffs,
     unmeasurablePayoffsAfter: b.unmeasurablePayoffs,
     unmeasurableFeederPairsBefore: a.unmeasurableFeederPairs,
