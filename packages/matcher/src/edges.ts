@@ -227,6 +227,32 @@ export const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set([
   "tax", "win-game", "extra-turn", "extra-phase",
 ]);
 
+/** A SELF cost reduction reduces the card ITSELF, and its subject is the MEASURING STICK.
+ *
+ *  The Great Henge reads "This spell costs {X} less to cast, where X is the greatest power among
+ *  creatures you control" and derives `cost-reduction` with subject `{type: creature, control:
+ *  you}` — the creatures whose power sets X, NOT a set of cards it makes cheaper. Read as an
+ *  ordinary reducer it claimed to discount 45 creatures in one deck and became that deck's
+ *  top-rated card. Owner caught it the day the family was admitted; measured at **129 false
+ *  reasons across the 71 decks, all of them The Great Henge**, out of 5,596 cost-reduction reasons.
+ *
+ *  Corpus-wide the family is **11 of 64 cards deriving a cost reduction (17%)** — Blasphemous Act,
+ *  Bolt Bend, Sunderflock, Rowdy Research, Valiant Changeling, Excalibur, Furygale Flocking, Blood
+ *  for the Blood God!, The Capitoline Triad, Mutated Cultist and the Henge. Ten of the eleven match
+ *  this cue; the eleventh (Mutated Cultist, "the NEXT SPELL you cast this turn costs {1} less") is
+ *  genuinely other-reducing and must keep its edges, which is why the looser "costs {1} less to
+ *  cast for each" phrasing is NOT a cue — it appears on both shapes.
+ *
+ *  THE RELATION IS REAL IN REVERSE and this guard does not capture it: big creatures make the Henge
+ *  cheaper, so the Henge is a `scales:`-family CONSUMER of power, not a producer of discounts.
+ *  Refusing the wrong direction beats stating it backwards; the reverse edge is its own item.
+ *
+ *  ponytail: card-scoped cue, so a card printing BOTH a self reduction and a real other-reduction
+ *  loses the real one. None of the 64 does today. Clause scoping would need the clause text at
+ *  match time, which the matcher does not carry. */
+const reducesItself = (oracleText: string | undefined): boolean =>
+  /\bthis spell costs\b|\bthis ability costs\b/i.test(oracleText ?? "");
+
 /** Card types that are PLAYED, never cast (CR 305.1) — a land can never be the consumer of a cost
  *  reduction, however broadly the reducer is worded. Checked against the card's whole type union so
  *  an Instant // Land modal DFC, which really is castable as its instant face, keeps its edge. */
@@ -732,6 +758,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     const { counter: _stateOnly, ...printedMatchable } = a.effect.subject;
     if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) continue;
     if (a.effect.kind === "cost-reduction") {
+      // A SELF REDUCTION'S SUBJECT IS WHAT MEASURES IT, NOT WHAT IT DISCOUNTS — see `reducesItself`.
+      if (reducesItself(p.card.oracleText)) continue;
       // A LAND IS PLAYED, NOT CAST (CR 305.1). "Spells you cast cost {1} less" reaches no land, and
       // the type union keeps a modal DFC's castable face.
       if (isLandOnly(c.tags)) continue;

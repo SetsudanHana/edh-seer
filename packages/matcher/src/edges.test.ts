@@ -2017,4 +2017,27 @@ describe("cost reduction forms edges, gated by what can actually be cast", () =>
     const reasons = directedReasons(ghostlyPrison, spell("Bloodghast", ["creature"]), H);
     expect(reasons.map((r: Reason) => r.tag)).not.toContain("static:tax");
   });
+
+  // "This spell costs {X} less to cast, where X is the greatest power among creatures you control."
+  // The subject is the measuring stick, not the discounted cards. Measured at 129 false reasons in
+  // the 71 decks — all The Great Henge — which the ruling's own first day made that deck's top card.
+  test("a SELF reduction claims nothing: its subject is what measures it", () => {
+    const henge = base("The Great Henge", [{
+      kind: "static",
+      effect: { kind: "cost-reduction", subject: { type: "creature", control: "you", token: null, scope: "all" } },
+      emits: [],
+    }] as never);
+    (henge.card as unknown as { oracleText: string }).oracleText =
+      "This spell costs {X} less to cast, where X is the greatest power among creatures you control.";
+    const reasons = directedReasons(henge, spell("Bloodghast", ["creature"]), H);
+    expect(reasons.map((r: Reason) => r.tag)).not.toContain("static:cost-reduction");
+  });
+
+  test("a reducer that discounts OTHER cards is untouched by that guard", () => {
+    const medallion = reducer({ type: "creature", control: "you", token: null, scope: "all" });
+    (medallion.card as unknown as { oracleText: string }).oracleText =
+      "Creature spells you cast cost {1} less to cast.";
+    const reasons = directedReasons(medallion, spell("Bloodghast", ["creature"]), H);
+    expect(reasons.map((r: Reason) => r.tag)).toContain("static:cost-reduction");
+  });
 });
