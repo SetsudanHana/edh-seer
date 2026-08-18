@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ART_RADIUS, GraphView, edgeWidth, nodeRadius, seedPosition, traveledAsPan } from "./GraphView.js";
+import { CARD_H, CARD_W } from "./board-force.js";
 import { SAMPLE } from "../fixtures.js";
 import type { CardGraph, GraphNode } from "../types.js";
 import { zoomIdentity, type ZoomTransform } from "d3-zoom";
@@ -843,7 +844,8 @@ describe("fit to view", () => {
   });
 });
 
-// Card mode paints a 5:7 RECTANGLE (ART_RADIUS*2 wide, *1.4 tall); circular chrome stroked over it
+// Card mode paints a 5:7 RECTANGLE (CARD_W x CARD_H, sized off the settled spacing so it cannot
+// overlap its neighbour -- board-force.ts); circular chrome stroked over it
 // is the defect these three protect against.
 function cardModeFrame(graph: CardGraph) {
   const calls: string[] = [];
@@ -874,7 +876,7 @@ test("a card in card mode shows its paint hues as bars, not rim arcs", () => {
   expect(bars).toHaveLength(2);
   for (const bar of bars) {
     const [, , w, h] = bar.slice("fillRect:".length).split(",").map(Number);
-    expect(w).toBeCloseTo(ART_RADIUS, 6); // 28 / 2 values
+    expect(w).toBeCloseTo(CARD_W / 2, 6); // two hues, so half the card each
     expect(h).toBe(3);
   }
   expect(calls.filter((c) => c.startsWith("arc:") && c.split(",")[2] === String(ART_RADIUS)))
@@ -884,7 +886,7 @@ test("a card in card mode shows its paint hues as bars, not rim arcs", () => {
   const placeholder = calls.find((c) => {
     if (!c.startsWith("fillRect:")) return false;
     const [, , w, h] = c.slice("fillRect:".length).split(",").map(Number);
-    return w === ART_RADIUS * 2 && Math.abs(h - ART_RADIUS * 2 * 1.4) < 1e-6;
+    return w === CARD_W && Math.abs(h - CARD_H) < 1e-6;
   });
   expect(placeholder).toBeDefined();
   expect(bars).not.toContain(placeholder);
@@ -914,7 +916,7 @@ test("the search-match ring in card mode is a rectangle around the card box", ()
   // Outset 3 on every side of the 28x39.2 box.
   const ring = calls.find((c) => {
     const [, , w, h] = c.startsWith("strokeRect:") ? c.slice("strokeRect:".length).split(",").map(Number) : [];
-    return w === ART_RADIUS * 2 + 6 && Math.abs(h - (ART_RADIUS * 2 * 1.4 + 6)) < 1e-6;
+    return w === CARD_W + 6 && Math.abs(h - (CARD_H + 6)) < 1e-6;
   });
   expect(ring).toBeDefined();
   // Never the old circular ring at ART_RADIUS + 3.

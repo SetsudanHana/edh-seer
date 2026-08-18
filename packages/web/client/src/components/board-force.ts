@@ -11,6 +11,38 @@ export const ART_RADIUS = 14;
 /** The gap forceCollide leaves between two settled discs. Half of it rides on each disc. */
 export const COLLISION_PAD = 5;
 
+/** The centre-to-centre distance two settled nodes end up at, at the shipped pad. Every card-mode
+ *  size is derived from it, so the drawn card and the space the simulation leaves for it cannot
+ *  drift apart -- the same failure `nodeRadius`'s comment above records (cards simulated at 3.5
+ *  while painting at 14). */
+export const SETTLED_SPACING = 2 * (ART_RADIUS + COLLISION_PAD / 2);
+
+/** A Magic card is 5:7; 1.4 is that ratio. */
+export const CARD_ASPECT = 1.4;
+
+/** CARD MODE SIZED SO IT CANNOT OVERLAP (2026-08-18, owner-reported twice: 2026-08-13 and again
+ *  today). Card mode paints a RECTANGLE, and two axis-aligned rectangles miss each other only when
+ *  |dx| >= w or |dy| >= h -- so a circular collision of centre distance D guarantees no overlap only
+ *  when D >= the card's DIAGONAL, not its height. At the shipped 28 x 39.2 the diagonal is 48.2
+ *  against a settled spacing of 33, and cards overlapped on every board.
+ *
+ *  MEASURED over the five fixtures, 10 seeds, 800 ticks -- mean overlapping card pairs:
+ *    shipped 28 x 39.2                       sorin 76.3 · inalla 68.8 · fairdrazi 104.9 · changelings 16.6 · braids 19.7
+ *    collide raised to diagonal/2 (r 24.1)   sorin  3.8 · inalla  1.2 · fairdrazi   5.4 · changelings  0.1 · braids  0.0
+ *    THIS: card shrunk to fit the spacing    sorin  0.4 · inalla  0.5 · fairdrazi   0.3 · changelings  0.0 · braids  0.1
+ *
+ *  The layout arm works and COSTS THE LAYOUT: linkDistError rose 39 -> 73 on sorin (+87%), 41 -> 54,
+ *  48 -> 60, 36 -> 41, 42 -> 47, because a hard 48.2 floor between centres stops a dense mesh
+ *  compressing. Sizing the card instead leaves crossings and distError BYTE-IDENTICAL -- the
+ *  simulation is untouched -- and answers the design question the roadmap raised: card mode is a
+ *  zoom STATE, and spacing the whole board for a view you are only sometimes in taxes the view you
+ *  are always in. The residual ~0.4 pairs is the soft collide (one iteration, alpha decay) letting a
+ *  few pairs settle inside the radius; it is not the geometry.
+ *
+ *  Derived, never typed twice: change the pad and the card follows. */
+export const CARD_W = SETTLED_SPACING / Math.hypot(1, CARD_ASPECT);
+export const CARD_H = CARD_W * CARD_ASPECT;
+
 /** A graph node as the force simulation sees it. `index` is written by d3-force itself when the
  *  node array is bound to a simulation; it is not ours to set.
  *
@@ -191,6 +223,10 @@ export interface BoardParams {
   alphaDecay: number;
   alphaFloor: number;
   collideIterations: number;
+  /** The gap forceCollide leaves between two settled nodes, in world units. Half rides on each.
+   *  A knob and not a constant because the value the DISC needs and the value the CARD needs are
+   *  different numbers -- see COLLISION_PAD. */
+  collidePad: number;
 }
 
 export const DEFAULT_PARAMS: BoardParams = {
@@ -203,6 +239,7 @@ export const DEFAULT_PARAMS: BoardParams = {
   alphaDecay: ALPHA_DECAY,
   alphaFloor: ALPHA_FLOOR,
   collideIterations: COLLIDE_ITERATIONS,
+  collidePad: COLLISION_PAD,
 };
 
 /** The whole board layout as one d3 simulation: repulsion, weighted synergy springs, disc
@@ -244,7 +281,7 @@ export function createBoardSimulation(opts: {
         l.weight, maxWeight, p.linkStrengthK,
         p.linkDegreeNorm ? Math.min(l.source.deg, l.target.deg) : 1)))
     .force("collide", forceCollide<Sim>()
-      .radius(() => nodeRadius() + COLLISION_PAD / 2)
+      .radius(() => nodeRadius() + p.collidePad / 2)
       .iterations(p.collideIterations))
     .force("x", forceX<Sim>(0).strength(p.centerPull))
     .force("y", forceY<Sim>(0).strength(p.centerPull))

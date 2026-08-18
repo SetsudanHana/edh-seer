@@ -12,7 +12,7 @@ import {
 } from "./presets.js";
 import { computeFlow, type Flow, type FlowEdge } from "./flow.js";
 import {
-  ART_RADIUS, createBoardSimulation, DEFAULT_PARAMS, linkDistanceFor, nodeRadius,
+  ART_RADIUS, CARD_H, CARD_W, createBoardSimulation, DEFAULT_PARAMS, linkDistanceFor, nodeRadius,
   type BoardParams, type Sim, type SimLink,
 } from "./board-force.js";
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
@@ -477,7 +477,7 @@ export function GraphView(
       // rebuilt only when the effect re-runs, and the effect must not re-run on every keystroke.
       const matchIds = matchesRef.current;
       const mode = renderModeFor(cam.z);
-      const cardW = ART_RADIUS * 2, cardH = cardW * 1.4;
+      const cardW = CARD_W, cardH = CARD_H;
       // Cards drawn as a loading/no-art placeholder this frame. Card mode suppresses name labels,
       // because the card's own art prints the name — but a placeholder is a blank coloured
       // rectangle, so those keep theirs or nothing on screen names them. Collected here rather than
@@ -814,8 +814,9 @@ export function GraphView(
     };
 
     const pickAt = (wx: number, wy: number): Sim | null => {
-      // Card mode paints a 5:7 RECTANGLE (ART_RADIUS*2 wide, *1.4 tall -- see draw()'s
-      // `mode === "card"` branch), not the disc nodeRadius() reports for the sim/miniature paint.
+      // Card mode paints a 5:7 RECTANGLE (CARD_W x CARD_H, sized off the settled spacing in
+      // board-force.ts -- see draw()'s `mode === "card"` branch), not the disc nodeRadius() reports
+      // for the sim/miniature paint.
       // Hit-testing the inscribed circle there left the top/bottom bands and all four corners dead
       // to the pointer. Computed once per pick rather than per node: it depends only on cam.z.
       const cardMode = renderModeFor(cam.z) === "card";
@@ -823,7 +824,7 @@ export function GraphView(
       for (const n of nodes) {
         const dx = n.x - wx, dy = n.y - wy;
         const inside = cardMode
-          ? Math.abs(dx) <= ART_RADIUS && Math.abs(dy) <= ART_RADIUS * 1.4
+          ? Math.abs(dx) <= CARD_W / 2 && Math.abs(dy) <= CARD_H / 2
           : Math.hypot(dx, dy) / nodeRadius() <= 1;
         if (!inside) continue;
         const d = Math.hypot(dx, dy) / nodeRadius();

@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { forceCollide, forceLink, forceManyBody, forceX, forceY } from "d3-force";
 import {
-  ALPHA_DECAY, ALPHA_FLOOR, ART_RADIUS, CENTER_PULL, COLLIDE_ITERATIONS, DEFAULT_PARAMS,
+  ALPHA_DECAY, ALPHA_FLOOR, ART_RADIUS, CARD_ASPECT, CARD_H, CARD_W, CENTER_PULL, COLLIDE_ITERATIONS,
+  COLLISION_PAD, DEFAULT_PARAMS, SETTLED_SPACING,
   LINK_DEGREE_NORM, LINK_DIST_MAX, LINK_DIST_MIN, LINK_STRENGTH_K, REPULSION, REPULSION_RANGE, VELOCITY_DECAY,
   countOverlaps, createBoardSimulation, linkDistanceFor, linkStrengthFor, nodeRadius,
   type BoardParams, type Sim, type SimLink,
@@ -200,6 +201,7 @@ describe("BoardParams", () => {
       alphaDecay: ALPHA_DECAY,
       alphaFloor: ALPHA_FLOOR,
       collideIterations: COLLIDE_ITERATIONS,
+      collidePad: COLLISION_PAD,
     });
   });
 
@@ -339,4 +341,22 @@ describe("the board does not drift off screen", () => {
   test("the centroid stays near the origin at 10,000 ticks, not just slower to drift", () => {
     expect(centroidDistance(10000)).toBeLessThan(100);
   });
+});
+
+// CARD MODE MUST NOT OVERLAP. Two axis-aligned rectangles miss each other only when |dx| >= w or
+// |dy| >= h, so a circular collision guarantees it only when the settled centre distance covers the
+// card's DIAGONAL. The shipped 28 x 39.2 had a diagonal of 48.2 against a spacing of 33, which is
+// why cards overlapped on every board (owner-reported 2026-08-13 and again 2026-08-18).
+test("a card's diagonal fits inside the distance collision leaves between two settled nodes", () => {
+  expect(Math.hypot(CARD_W, CARD_H)).toBeLessThanOrEqual(SETTLED_SPACING);
+});
+
+test("the settled spacing is what the collide force actually leaves, not a second copy of it", () => {
+  expect(SETTLED_SPACING).toBe(2 * (ART_RADIUS + DEFAULT_PARAMS.collidePad / 2));
+});
+
+// A card still has to be worth zooming to: the guard above is satisfiable by a card of zero size.
+test("the card keeps its 5:7 shape and most of the disc's width", () => {
+  expect(CARD_H / CARD_W).toBeCloseTo(CARD_ASPECT, 10);
+  expect(CARD_W).toBeGreaterThan(ART_RADIUS); // wider than the disc's radius, i.e. not a stamp
 });
