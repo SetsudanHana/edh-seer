@@ -40,5 +40,6 @@
     "unbounded": 2.5
   },
   "damping": 0.5,
-  "magnitude": { "glut": 3, "beta": 0 }
+  "magnitude": { "glut": 3, "beta": 0 },
+  "roleBlend": 1
 }

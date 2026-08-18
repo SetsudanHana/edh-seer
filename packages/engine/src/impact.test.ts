@@ -117,3 +117,9 @@ test("omitting the multiplier is identical to passing one that returns 1", () =>
     impactEdgeWeight(reasons, SEED_IMPACT_WEIGHTS, () => 1),
   );
 });
+
+test("the committed weights file carries the roleBlend, and it ships at 1", () => {
+  // Same guard as `magnitude`: `calibrate.ts` writes `clone()`'s output over this file wholesale,
+  // so a field `clone()` forgets is silently deleted by any calibrator run.
+  expect(loadImpactWeights().roleBlend).toBe(1);
+});

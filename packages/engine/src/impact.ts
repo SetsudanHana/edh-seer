@@ -10,6 +10,11 @@ export interface ImpactWeights {
    *  is turned on by a measured sweep, not by a default. See
    *  `specs/2026-08-18-edge-magnitude-design.md` §5. */
   magnitude?: { glut: number; beta: number };
+  /** How much of a card's FEEDER-role credit counts toward its blended headline score:
+   *  `score = authority + roleBlend * feederLift`. 1 is the historical behaviour (the two roles
+   *  were summed with no coefficient) and is what ships; 0 gives a payoff-only headline. Absent
+   *  reads as 1. See `specs/2026-08-18-per-role-score-design.md` §3.1. */
+  roleBlend?: number;
 }
 
 /** Weight when a reason's effectKind is missing or absent from the config: unknown synergy ≈ low impact. */
@@ -92,6 +97,7 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
   },
   damping: 0.5,
   magnitude: { glut: 3, beta: 0 },
+  roleBlend: 1,
 };
 
 /**
