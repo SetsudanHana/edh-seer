@@ -424,6 +424,29 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
   return out;
 }
 
+/** How many DISTINCT CLAIMS a reason set makes — the edge score, and not `reasons.length`.
+ *
+ *  ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE CLAIM. Archon of Cruelty's single entry trigger
+ *  ("target opponent sacrifices a creature, discards a card and loses 3 life; you draw a card and
+ *  gain 3 life") derives SIX reasons that are byte-identical in tag and text and differ only in
+ *  `effectKind` — forced-sacrifice, (none), player-life-loss, draw-card, lifegain, drain — so every
+ *  reanimation spell in the deck scored 6 against it while a one-payoff creature off the identical
+ *  trigger scored 1. Measured across the 71 decks: **9,268 of 40,563 reasons (22.8%) sit in a
+ *  duplicate (tag, text) group**, 4,010 groups over 3,985 edges (12.4%), sized 2x 3,012 · 3x 808 ·
+ *  4x 160 · 6x 30 — and **64 of 71 decks re-order their top ten edges** when the duplicates stop
+ *  counting. That is chain LENGTH driving the ranking, which is the magnitude axis wearing a
+ *  disguise; magnitude belongs to `impactEdgeWeight` (max per distinct tag, already immune to this)
+ *  and to the open edge-magnitude work, not to how many sentences one trigger generates.
+ *
+ *  THE REASONS THEMSELVES ARE NOT COLLAPSED, deliberately — `dedupeReasons` cannot merge them
+ *  because `effectKind` is LOAD-BEARING for archetype detection: `mechanisms.ts` matches an
+ *  archetype on a reason's kind, and Archon's six carry aristocrats' `forced-sacrifice`, `drain` and
+ *  `player-life-loss` alongside `draw-card` and `lifegain`. Dropping five of six would silently
+ *  narrow every detector that reads them. So the objects stay and only the COUNT collapses. */
+export function claimCount(reasons: Reason[]): number {
+  return new Set(reasons.map((r) => `${r.tag} ${r.text}`)).size;
+}
+
 /** Records which SIDE of a reason is a token node. A NAME IS NOT AN IDENTITY: 92 of the corpus's
  *  661 distinct token names are also a real card (Llanowar Elves, Mutavault, Sacred Cat), and a card
  *  that makes a token copy of itself puts both names in one deck. Every downstream reader keys on

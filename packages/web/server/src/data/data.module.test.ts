@@ -216,3 +216,29 @@ test("a token with no art row keeps the blank disc rather than borrowing a card'
 
   expect(out.nodes[0]?.artCrop).toBeUndefined();
 });
+
+// ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE SENTENCE TO A READER. Six reasons identical in text
+// and differing only in `effectKind` printed the same line six times in the inspector — seen live on
+// a token panel. The reason OBJECTS must survive (archetype detection reads their kinds), so the
+// collapse happens here, on the wire.
+test("identical reason sentences are collapsed on the wire, however many effect kinds derived them", () => {
+  const graph = {
+    ...emptyGraph([node({ id: "A", label: "A" }), node({ id: "B", label: "B" })]),
+    edges: [{
+      from: "A", to: "B", weight: 1, tags: ["enters:creature"],
+      reasons: [
+        { tag: "enters:creature", text: "A triggers on entry; B supplies it", effectKind: "drain" },
+        { tag: "enters:creature", text: "A triggers on entry; B supplies it", effectKind: "draw-card" },
+        { tag: "enters:creature", text: "A triggers on entry; B supplies it", effectKind: "" },
+        { tag: "enters:creature", text: "B fills the graveyard, enabling A's recursion", effectKind: "graveyard-recursion" },
+      ],
+    }],
+  } as unknown as ProjectedGraph;
+
+  const out = attachRolesAndArt(graph, [{ _id: "a", name: "A" }, { _id: "b", name: "B" }], new Map(), normalize);
+
+  expect(out.edges[0]?.reasonTexts).toEqual([
+    "A triggers on entry; B supplies it",
+    "B fills the graveyard, enabling A's recursion",
+  ]);
+});

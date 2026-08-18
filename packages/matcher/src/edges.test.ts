@@ -1,5 +1,6 @@
-import { expect, test } from "vitest";
-import { pairReasons, directedReasons, cardThemeTags, themeSubjectKey } from "./edges.js";
+import { describe, expect, test } from "vitest";
+import { pairReasons, directedReasons, cardThemeTags, themeSubjectKey, claimCount } from "./edges.js";
+import type { Reason } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
@@ -1854,4 +1855,46 @@ test("a typed win condition edges to what it counts; an untyped one stays a role
 
   expect(reasons(true)).toHaveLength(1);
   expect(reasons(false)).toHaveLength(0);
+});
+
+// ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE CLAIM (2026-08-18). Archon of Cruelty's single entry
+// trigger derives six reasons identical in tag and text, differing only in `effectKind`, so every
+// reanimation spell in the deck scored 6 against it. Measured: 9,268 of 40,563 reasons (22.8%) sit
+// in such a group, and 64 of 71 decks re-order their top ten edges once they stop counting.
+describe("claimCount", () => {
+  const reason = (over: Partial<Reason> = {}): Reason => ({
+    tag: "enters:creature",
+    text: "Archon of Cruelty triggers on its own entry; Animate Dead supplies it",
+    producer: "Animate Dead",
+    consumer: "Archon of Cruelty",
+    ...over,
+  } as Reason);
+
+  test("one trigger with a chain of effects counts once, however many kinds it derives", () => {
+    const chain = ["forced-sacrifice", "", "player-life-loss", "draw-card", "lifegain", "drain"]
+      .map((effectKind) => reason({ effectKind } as Partial<Reason>));
+
+    expect(chain).toHaveLength(6);
+    expect(claimCount(chain)).toBe(1);
+  });
+
+  test("genuinely different claims still count separately", () => {
+    expect(claimCount([
+      reason(),
+      reason({ text: "Animate Dead fills the graveyard, enabling Archon of Cruelty's recursion" }),
+      reason({ tag: "dies:creature" }),
+    ])).toBe(3);
+  });
+
+  // The objects themselves must survive: `mechanisms.ts` matches archetypes on `effectKind`, and
+  // Archon's six carry aristocrats' forced-sacrifice/drain/player-life-loss beside draw-card and
+  // lifegain. Only the COUNT collapses.
+  test("counting does not remove the reasons that carry the kinds detectors read", () => {
+    const chain = ["forced-sacrifice", "drain"].map((effectKind) => reason({ effectKind } as Partial<Reason>));
+    const before = chain.map((r) => (r as { effectKind?: string }).effectKind);
+
+    claimCount(chain);
+
+    expect(chain.map((r) => (r as { effectKind?: string }).effectKind)).toEqual(before);
+  });
 });

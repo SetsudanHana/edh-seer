@@ -96,7 +96,14 @@ export function attachRolesAndArt(
     to: e.to,
     weight: e.weight,
     tags: e.tags,
-    reasonTexts: e.reasons.map((r) => r.text),
+    // ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE SENTENCE TO A READER. Archon of Cruelty's entry
+    // trigger derives six reasons identical in tag and text, differing only in `effectKind`, and the
+    // inspector printed the line six times -- seen live on the Treasure token panel (three identical
+    // "Nadier's Nightblade triggers on a permanent leaving the battlefield" lines). Deduped HERE, on
+    // the wire, and not in the reason set: `effectKind` is load-bearing for archetype detection, so
+    // the objects must survive even when their sentences do not. Same collapse `claimCount` applies
+    // to the score.
+    reasonTexts: [...new Set(e.reasons.map((r) => r.text))],
   }));
 
   return { nodes, edges, undirectedReasons: graph.undirectedReasons, offDeckReasons: graph.offDeckReasons };

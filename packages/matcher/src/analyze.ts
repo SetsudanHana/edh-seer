@@ -18,7 +18,7 @@ import {
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
-import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou } from "./edges.js";
+import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { markCommander } from "./commander.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
@@ -212,7 +212,7 @@ export function analyzeDeckStructured(
         reasons.push(...createsReasons(a, b, hierarchy));
       }
       if (reasons.length > 0) {
-        const edge = { a: a.card.name, b: b.card.name, score: reasons.length, reasons };
+        const edge = { a: a.card.name, b: b.card.name, score: claimCount(reasons), reasons };
         edges.push(edge);
         if (!a.isToken && !b.isToken) cardEdges.push(edge);
       }
@@ -402,7 +402,7 @@ export function analyzeDeckStructured(
         topPartners: distinctPartners
           .sort((x, y) => y.contribution - x.contribution)
           .slice(0, 5)
-          .map(({ name, reasons }) => ({ name, score: reasons.length, reasons })),
+          .map(({ name, reasons }) => ({ name, score: claimCount(reasons), reasons })),
       };
       return bucketCount > 0
         ? { ...base, bucketScores: { consistency: raw.consistency * versatilityMult, efficiency: raw.efficiency * versatilityMult, "win-condition": winCondition * versatilityMult }, bucketCount }
