@@ -83,7 +83,7 @@ export function parseDecklistSections(text: string): { commanders: string[]; dec
   }
 
   if (commanders.length > 0 || sawHeader) return { commanders, deck };
-  return implicitCommanderBlock(text) ?? { commanders, deck };
+  return implicitCommanderBlock(text) ?? flatExportCommander(text) ?? { commanders, deck };
 }
 
 /** The headerless convention: commander(s), blank line, the 99. Returns undefined unless the text
@@ -105,4 +105,50 @@ function implicitCommanderBlock(text: string): { commanders: string[]; deck: str
   const commanders = expand(head);
   if (commanders.length === 0) return undefined;
   return { commanders, deck: expand(tail) };
+}
+
+/** THE FLAT EXPORT: no header, no blank line, and the commander first followed by an ALPHABETICAL
+ *  99. Moxfield's plain "1 Samut, the Driving Force (DFT) 367" export has exactly this shape, and
+ *  because it carries no blank line the convention rule above cannot fire — so a pasted deck came
+ *  back with ZERO commanders. Measured cost of that on the owner's own list (2026-08-18): with no
+ *  commander parsed, `COMMANDER_TF_BOOST` never fires, `markCommander` stamps nothing, and
+ *  `pressure.ts` prices the commander by draw probability instead of command-zone availability —
+ *  the whole cascade CLAUDE.md records for the 71 decks, on every deck a user pastes.
+ *
+ *  THE SIGNAL IS THE SORT, NOT THE POSITION. "First line is the commander" alone would crown the
+ *  first card of any list; what identifies this export is that lines 2..n are in alphabetical order
+ *  and the head is NOT — one card deliberately placed outside a sorted list. Verified before the
+ *  rule was written: it fires on the owner's file and on **ZERO of the 71 calibration decks**, all
+ *  of which carry the blank line and take the path above.
+ *
+ *  IT UNDER-DETECTS ON PURPOSE. A commander that happens to sort first ("Atraxa" ahead of an
+ *  alphabetical 99) does not break the order, so nothing is inferred and the deck reads exactly as
+ *  it does today — a missing commander, not a wrong one. Same for an export sorted by type or by
+ *  mana value: unsorted tail, no inference. */
+function flatExportCommander(text: string): { commanders: string[]; deck: string[] } | undefined {
+  const lines = text.split(/\r?\n/).map((l) => l.trim())
+    .filter((l) => l !== "" && !l.startsWith("#") && !l.startsWith("//"));
+  // A real decklist, not a fragment: below this a "sorted list with one card out of order" is as
+  // likely to be a scrap of notes as a deck.
+  if (lines.length < 30) return undefined;
+  const names = lines.map(cleanCardLine).filter(Boolean);
+  if (names.length !== lines.length) return undefined;
+
+  // 1 commander or a partner pair, the same 1-2 the blank-line rule allows.
+  for (const headCount of [1, 2]) {
+    const head = names.slice(0, headCount);
+    const tail = names.slice(headCount);
+    if (tail.length === 0) continue;
+    const lower = tail.map((n) => n.toLowerCase());
+    const sorted = lower.every((n, i) => i === 0 || lower[i - 1] <= n);
+    if (!sorted) continue;
+    // Every head card must sit OUTSIDE the sorted run — that is what marks it as placed, not sorted.
+    if (!head.every((h) => h.toLowerCase() > lower[0])) continue;
+    const expand = (ls: string[]): string[] => ls.flatMap((l) => {
+      const name = cleanCardLine(l);
+      return name ? Array.from({ length: cardQty(l) }, () => name) : [];
+    });
+    return { commanders: expand(lines.slice(0, headCount)), deck: expand(lines.slice(headCount)) };
+  }
+  return undefined;
 }
