@@ -222,7 +222,7 @@ export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): bo
 // `win-game`, `extra-turn` and `extra-phase` join cost-reduction and tax for the same reason those
 // two are here: they are deck ROLES, not pairwise claims. "This card wins the game" says the
 // identical thing next to every other card in the deck, and an extra turn helps all 99 equally.
-const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set([
+export const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set([
   "cost-reduction", "tax", "win-game", "extra-turn", "extra-phase",
 ]);
 

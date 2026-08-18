@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { analyzeDeck, ComboIndex, type Card, type Combo } from "@mtg/engine";
-import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "@mtg/matcher";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@mtg/matcher";
 import { createTagsLookup } from "@mtg/tagger";
 import {
   loadConfig,
@@ -51,8 +51,13 @@ async function reportFromDecklist(input: string): Promise<string> {
     const commanderNames = cards.filter((c) => cmdNorm.has(normalizeName(c.name))).map((c) => c.name);
     const tagsLookup: CardTagsLookup = createTagsLookup(store.db);
     const deckCards = await buildDeckCards(cards, lookup, tagsLookup);
+    // TOKENS ARE NODES HERE TOO. Omitting `tokenTags` is not a lighter run, it is the PRE-TOKEN
+    // engine: no token nodes, so no two-hop mediation, so different partner counts and different
+    // ratings from the same deck the web server rates. Found 2026-08-18 by the same deck printing
+    // one partner count in the CLI and another through the API.
+    const tokenTags = await loadTokenTags(store.db);
     return formatReport(
-      analyzeDeckStructured(deckCards, commanderNames, undefined, undefined, new ComboIndex(combos)),
+      analyzeDeckStructured(deckCards, commanderNames, undefined, undefined, new ComboIndex(combos), undefined, tokenTags),
     );
   } finally {
     await store.close();

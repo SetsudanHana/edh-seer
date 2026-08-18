@@ -18,7 +18,7 @@ import {
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
-import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount } from "./edges.js";
+import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { markCommander } from "./commander.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
@@ -29,6 +29,7 @@ import { magnitudeMultipliers } from "./magnitude.js";
 import { buildSupplyDemand } from "./supply-demand.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
+import { cutCandidates, deckSlack } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
 import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
@@ -553,6 +554,30 @@ export function analyzeDeckStructured(
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
   const { buildScore, buildCategories, suggestions } = computeBuild(resolved, strategies[0]?.name);
 
+  // THE CUT LIST -- a join over what is already computed, never new analysis. It reads the rated
+  // cards, the axis weights, the BUILD roles and the per-category surplus, and names CANDIDATES
+  // with their reasons; see `cut-list.ts` for the three failure directions that make "candidates,
+  // with the argument attached" the only honest shape for it.
+  const deckRoleCards = new Set(
+    resolved
+      .filter((dc) => dc.tags?.abilities?.some((a) => ROLE_NOT_SYNERGY.has(a.effect.kind)))
+      .map((dc) => dc.card.name),
+  );
+  const cutList = cutCandidates(
+    ratedCards.map((c) => ({
+      name: c.name,
+      rating: c.synergyRating ?? 0,
+      axisWeight: c.axisWeight ?? 0,
+      partnerCount: c.partnerCount,
+      roles: c.roles ?? [],
+      isLand: !(nonlandByName.get(c.name) ?? true),
+      isCommander: c.isCommander,
+      isComboPiece: comboCardNames.has(c.name),
+      fillsDeckRole: deckRoleCards.has(c.name),
+    })),
+  );
+  const slack = deckSlack(buildCategories);
+
   // Theme membership: same axis ordering the zones will read, with statics dropped (an anthem is a
   // payoff of the theme supplying its subject, never a theme itself).
   const candidateTags = themeCandidates([...axis.keys()]);
@@ -594,6 +619,8 @@ export function analyzeDeckStructured(
     buildScore,
     buildCategories,
     suggestions,
+    cutList,
+    slack,
     // No turn override: the deck's own clock sets the horizon. Passing a 5 here is what kept the
     // whole clock-pricing change from reaching the report at all -- every unit test passed because
     // they call computeDeckMath directly, and only a live deck showed `turnSource: "override"`.

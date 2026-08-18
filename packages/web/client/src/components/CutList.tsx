@@ -1,0 +1,53 @@
+import type { DeckReport } from "../types.js";
+
+/** THE CUT LIST — "which cards is the deck not using?" — and the deck-level slack beside it.
+ *
+ *  Every row states its own argument, because the engine's three failure directions all point the
+ *  same way: a relation it cannot express looks exactly like a card doing nothing (see matcher's
+ *  `cut-list.ts`). The caption is not decoration — it is the difference between a tool that helps
+ *  and one that confidently deletes a player's best card. */
+export function CutList({ cutList, slack }: { cutList: DeckReport["cutList"]; slack: DeckReport["slack"] }) {
+  const hasCuts = !!cutList && cutList.length > 0;
+  const hasSlack = !!slack && slack.length > 0;
+  if (!hasCuts && !hasSlack) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="eyebrow">Where the room is</h3>
+      {hasCuts && (
+        <>
+          <p className="text-sm text-(--muted)">
+            Cards nothing in the deck connects to, that sit off your main theme and fill no role the deck is
+            measured on. Candidates, not a verdict — a synergy the engine can&apos;t read looks the same as
+            one that isn&apos;t there.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {cutList!.map((c) => (
+              <li key={c.name} className="rounded-lg border border-(--separator) px-3 py-2">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-sm">{c.name}</span>
+                  <span className="text-xs font-mono text-(--muted)">{c.rating.toFixed(1)}</span>
+                </div>
+                <p className="text-xs text-(--muted)">{c.reasons.join(" · ")}</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {hasSlack && (
+        <>
+          <p className="text-sm text-(--muted)">
+            You carry more of these than the target. The category, never a card — nothing here ranks two ramp
+            cards against each other.
+          </p>
+          <ul className="flex flex-wrap gap-2">
+            {slack!.map((s) => (
+              <li key={s.category} className="text-sm rounded-full border border-(--separator) px-3 py-1 text-(--muted)">
+                {s.category} {s.count}/{s.target} <span className="text-(--muted)">(+{s.over})</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}

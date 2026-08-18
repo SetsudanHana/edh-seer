@@ -245,6 +245,15 @@ export interface DeckReport {
   buildCategories?: { category: string; count: number; target: number }[];
   /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
   suggestions?: string[];
+  /** Cards the deck is not using, weakest first, each carrying its own reasons in plain words.
+   *  CANDIDATES, never a verdict -- a missing edge looks exactly like a useless card, and the
+   *  build layer counts a category's members without ranking them. Matcher-only; structural here
+   *  for the same reason `buildCategories` is (this package must not depend on @mtg/matcher). */
+  cutList?: { name: string; rating: number; partners: number; reasons: string[] }[];
+  /** Build categories the deck carries MORE of than its target, biggest surplus first — where the
+   *  deck has room. Names the CATEGORY and never a member: nothing in this engine ranks two ramp
+   *  cards against each other, which is exactly why the cut list protects any card with a role. */
+  slack?: { category: string; count: number; target: number; over: number }[];
   /** Deck math: what the deck demands of itself and what it can answer, priced by when you draw
    *  it. Matcher-only, and structural here for the same reason `buildCategories` is -- this package
    *  must not depend on @mtg/matcher. */

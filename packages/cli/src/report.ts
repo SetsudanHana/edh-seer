@@ -54,5 +54,27 @@ export function formatReport(report: DeckReport): string {
   lines.push("=== Roles ===");
   lines.push(`  ramp: ${report.roles.ramp}  draw: ${report.roles.draw}  removal: ${report.roles.removal}`);
 
+  // CANDIDATES, with the argument attached — never a verdict. See matcher's `cut-list.ts` for the
+  // three ways this list is wrong, all of which point the same direction: a relation the engine
+  // cannot express looks exactly like a card doing nothing.
+  if (report.cutList && report.cutList.length > 0) {
+    lines.push("");
+    lines.push("=== Cut candidates ===");
+    lines.push("  Not a verdict: a card the engine cannot connect looks the same as one that does nothing.");
+    for (const c of report.cutList) {
+      lines.push(`  [${c.rating.toFixed(1)}] ${c.name}`);
+      lines.push(`      ${c.reasons.join("; ")}`);
+    }
+  }
+  if (report.slack && report.slack.length > 0) {
+    lines.push("");
+    lines.push("=== Where the slack is ===");
+    lines.push("  Categories you carry more of than the target. The category, never a member — nothing here");
+    lines.push("  ranks two ramp cards against each other.");
+    for (const s of report.slack) {
+      lines.push(`  ${s.category}: ${s.count}/${s.target} (+${s.over})`);
+    }
+  }
+
   return lines.join("\n");
 }

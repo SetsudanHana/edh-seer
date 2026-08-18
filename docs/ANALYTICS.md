@@ -254,6 +254,7 @@ Everything here runs on every analysis and reaches no user:
 | `bucketScores` / `bucketCount` / versatility multiplier | `analyze.ts:419-424,447` | the whole consistency/efficiency/win-condition subsystem — appears only in a test fixture |
 | `axisWeight` per card | `analyze.ts:489` | input to ratings; the shipped field has no reader |
 | `report.axis`, `report.themeMembership` | `analyze.ts:589,601` | no UI, no CLI |
+| `report.cutList`, `report.slack` | `analyze.ts` | **surfaced 2026-08-18** — CLI section + web Overview |
 | `report.themes`, `report.roles`, `report.quantities` | | CLI only, never web |
 | `undirectedReasons`, `offDeckReasons` | `graph-projection.ts:107` | cross the wire; nothing renders them |
 | `classifyEffect` | `effect-class.ts:39` | exported, called by **nothing**; self-marked `ponytail: unread` |
@@ -286,6 +287,9 @@ deliberate — several exist precisely because no product surface can see what t
 3. **Board fixtures predate tokens-as-nodes** — all five carry zero token nodes, so every
    fixture-driven layout test runs on a graph the product no longer produces.
 4. **Toggling LONE TOKENS re-runs the simulation** (it changes `graph` identity, a layout-effect dep).
+5. ~~The CLI runs the pre-token engine~~ — **FIXED 2026-08-18**: `main.ts` never passed `tokenTags`,
+   so the CLI rated every deck without token nodes or two-hop mediation while the web rated it with
+   them.
 
 **Structural ceilings, each measured and accepted**
 - A rating is deck-relative and rounded to 0.1 — small real movements are invisible, uniform ones
@@ -327,7 +331,11 @@ recorded here — **none of these are built; this is a ranked queue, not a chang
 
 ### Missing, ranked by value ÷ effort
 
-1. **The cut list** — "I'm at 104 cards, which 4 go?" Every input already exists on every run
+1. ~~**The cut list**~~ — **BUILT 2026-08-18** (`matcher/src/cut-list.ts`, CLI + web). Rules
+   hardened twice by measurement: a BUILD role and a `ROLE_NOT_SYNERGY` kind both protect a card
+   outright, because the first cut flagged Sol Ring (ramp over target) and Jet Medallion (cost
+   reduction forms no edge by design). Median 3 candidates per deck, 20 of 71 decks yield none.
+   Original proposal below. Every input already exists on every run
    (`synergyRating`, `axisWeight`, build roles, combo membership, land status, per-category
    count-vs-target). Flag a card when it is low-rated AND off-axis AND fills no role the deck is
    short on AND is not a land or combo piece. **Must ship as cut *candidates* with a printed reason

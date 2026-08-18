@@ -1,0 +1,123 @@
+/** THE CUT LIST — "I'm at 104 cards, which 4 go?"
+ *
+ *  The most-asked deckbuilding question, and every input already existed on the report: a
+ *  deck-relative `synergyRating`, an `axisWeight` saying whether the card's best edge sits on the
+ *  deck's own strategy axis, the functional BUILD roles it fills, and the per-category count vs
+ *  target. This module is a JOIN over those, not new analysis.
+ *
+ *  IT NAMES CANDIDATES AND NEVER DECIDES. Three of the four inputs have a known failure direction:
+ *
+ *  - **A missing edge looks like a useless card.** Derivation covers the corpus unevenly (a deck
+ *    outside the 71 calibration decks is only partly covered), and whole relations are still
+ *    inexpressible -- "my tutor can find you" is the largest one. `isolated-cards.ts` has always
+ *    reported its own figure as an UPPER BOUND for this reason.
+ *  - **A FUNCTIONAL ROLE PROTECTS A CARD OUTRIGHT, and measuring is what forced that.** The first
+ *    cut let a card through when every role it fills sat in a category ALREADY OVER TARGET -- and
+ *    the 71-deck run promptly flagged **Sol Ring, Arcane Signet, Dark Ritual and Cabal Ritual**,
+ *    because `burakos-crashing-the-party` runs ramp 14/10 and the build layer counts a category's
+ *    members without ranking them. Nothing in this repo models card quality, so "your ramp is over
+ *    target" cannot become "cut this rock" -- the surplus is real, the attribution is invented.
+ *    Any card with a build role is now protected, and the surplus is reported at DECK level
+ *    (`slack`) where it is true: "ramp 14/10" names the category, never a member.
+ *  - **A rating is deck-relative** (`score / deckMax`), so "low" means low FOR THIS DECK. In a deck
+ *    with one enormous engine piece, ordinary good cards rate low.
+ *
+ *  Hence every row carries its own reasons in plain words, so the player checks the argument rather
+ *  than the verdict. A cut list that printed "cut these" would be exactly the confident wrong
+ *  answer this engine refuses everywhere else.
+ *
+ *  Excluded outright, never candidates: cards carrying a `ROLE_NOT_SYNERGY` effect kind (they are
+ *  edge-free by design, not by weakness), lands (the mana base is not a synergy question -- that is
+ *  `land-count.ts`), commanders (not cuttable), and combo pieces (a two-card combo is the plan, and
+ *  the halves rate low precisely because a combo is not a mesh of edges). */
+
+/** How strongly a card's best edge must sit on the deck's axis to count as on-theme. The same
+ *  0.25 the double-duty gate uses in `analyze.ts`, and the same reason: below it the edge exists
+ *  but points somewhere the deck is not going. */
+export const CUT_AXIS_MAX = 0.25;
+
+/** Deck-relative rating at or below which a card reads as "doing little here". 1.0 of 5 is a fifth
+ *  of the deck's best engine piece. MEASURED across the 71 calibration decks before it was chosen:
+ *  at 0.5 the median deck yields 4 candidates, at 1.0 it yields 11, at 1.5 it yields 19 -- and 19
+ *  is a fifth of the deck, which is a different (and unanswerable) question than "which 4 go". */
+export const CUT_RATING_MAX = 1.0;
+
+export interface CutInput {
+  name: string;
+  /** 0-5, deck-relative. */
+  rating: number;
+  /** 0-1: how far the card's best synergy edge sits on the deck's axis. */
+  axisWeight: number;
+  /** How many distinct cards it relates to at all. */
+  partnerCount: number;
+  /** Functional BUILD roles it fills ("ramp", "draw", ...); empty when it fills none. */
+  roles: readonly string[];
+  /** The card carries an effect kind the matcher classes as a DECK ROLE rather than a pairwise
+   *  claim (`ROLE_NOT_SYNERGY`: cost-reduction, tax, win-game, extra-turn, extra-phase). Such a
+   *  card forms no edge BY DESIGN, so its zero partner count says nothing about it. */
+  fillsDeckRole: boolean;
+  isLand: boolean;
+  isCommander: boolean;
+  isComboPiece: boolean;
+}
+
+export interface CutCandidate {
+  name: string;
+  rating: number;
+  /** How many distinct cards relate to it at all. 0 is the strongest signal on this list. */
+  partners: number;
+  /** Plain-language why, one clause per condition that fired. Always three. */
+  reasons: string[];
+}
+
+/** Categories the deck carries MORE of than its (archetype-adjusted) target, biggest surplus
+ *  first. This is where a deck has room, stated at the level the engine can actually defend: it
+ *  names the category and never a member, because nothing here ranks two ramp cards against each
+ *  other. Cutting from a surplus category by `over` cards still leaves the deck at target. */
+export function deckSlack(
+  categories: readonly { category: string; count: number; target: number }[],
+): { category: string; count: number; target: number; over: number }[] {
+  return categories
+    .filter((c) => c.target > 0 && c.count > c.target)
+    .map((c) => ({ ...c, over: c.count - c.target }))
+    .sort((a, b) => b.over - a.over || a.category.localeCompare(b.category));
+}
+
+/** Cards the deck is not using, weakest first. Never more than `limit` rows -- the question is
+ *  "which few go", and a 30-row list is the same as no list. */
+export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandidate[] {
+  const out: CutCandidate[] = [];
+  for (const c of cards) {
+    if (c.isLand || c.isCommander || c.isComboPiece) continue;
+    // A functional role protects the card outright -- see the header. This is the gate that keeps
+    // Sol Ring off the list.
+    if (c.roles.length > 0) continue;
+    // AND SO DOES A DECK ROLE, for a reason the engine states itself. `ROLE_NOT_SYNERGY` (cost
+    // reduction, tax, win-game, extra turn/phase) forms no edge ON PURPOSE -- "Sapphire Medallion
+    // in mono-red does nothing" is a deck-construction fact a pairwise claim cannot carry. So a
+    // Jet Medallion reads 0 partners BY CONSTRUCTION, and the first 71-deck run duly flagged it.
+    // Reading a deliberate silence as evidence of uselessness is the worst mistake this list can
+    // make, because the silence is the engine's own.
+    if (c.fillsDeckRole) continue;
+    if (c.rating > CUT_RATING_MAX) continue;
+    if (c.axisWeight >= CUT_AXIS_MAX) continue;
+
+    const reasons: string[] = [];
+    reasons.push(
+      c.partnerCount === 0
+        ? "nothing in the deck connects to it"
+        : `only ${c.partnerCount} card${c.partnerCount === 1 ? " connects" : "s connect"} to it`,
+    );
+    reasons.push(
+      c.axisWeight === 0
+        ? "no edge on your main theme"
+        : "its edges point away from your main theme",
+    );
+    reasons.push("fills none of the functional roles the deck is measured on");
+    out.push({ name: c.name, rating: c.rating, partners: c.partnerCount, reasons });
+  }
+  // Weakest first; ties by fewest partners, then by name so the order is stable across runs.
+  out.sort((a, b) =>
+    a.rating - b.rating || a.partners - b.partners || a.name.localeCompare(b.name));
+  return out.slice(0, limit);
+}

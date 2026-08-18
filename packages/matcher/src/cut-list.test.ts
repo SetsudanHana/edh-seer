@@ -1,0 +1,85 @@
+import { expect, test } from "vitest";
+import { cutCandidates, deckSlack, CUT_RATING_MAX, CUT_AXIS_MAX, type CutInput } from "./cut-list.js";
+
+const card = (over: Partial<CutInput> & { name: string }): CutInput => ({
+  rating: 0, axisWeight: 0, partnerCount: 0, roles: [], isLand: false, isCommander: false,
+  isComboPiece: false, fillsDeckRole: false, ...over,
+});
+const CATS = [
+  { category: "ramp", count: 14, target: 10 },   // four to spare
+  { category: "draw", count: 10, target: 10 },   // exactly at target
+  { category: "boardWipe", count: 1, target: 3 },
+];
+
+test("a dead card is a candidate and its reasons name every condition", () => {
+  const [row] = cutCandidates([card({ name: "Dead Weight" })]);
+  expect(row.name).toBe("Dead Weight");
+  expect(row.reasons).toEqual([
+    "nothing in the deck connects to it",
+    "no edge on your main theme",
+    "fills none of the functional roles the deck is measured on",
+  ]);
+});
+
+test("lands, commanders and combo pieces are never candidates", () => {
+  const rows = cutCandidates([
+    card({ name: "Wastes", isLand: true }),
+    card({ name: "The Boss", isCommander: true }),
+    card({ name: "Half A Combo", isComboPiece: true }),
+  ]);
+  expect(rows).toEqual([]);
+});
+
+// THE GATE THAT KEEPS SOL RING OFF THE LIST. Before it, a card whose every role sat in an
+// over-target category was a candidate, and the 71-deck run flagged Sol Ring, Arcane Signet and
+// Dark Ritual in a deck running ramp 14/10. Nothing here ranks two ramp cards, so a surplus
+// category cannot name which member is the worst one.
+test("any functional role protects the card, even in a category way over target", () => {
+  const rows = cutCandidates([
+    card({ name: "Nth Rock", roles: ["ramp"] }),
+    card({ name: "Nth Cantrip", roles: ["draw"] }),
+    card({ name: "Roleless", roles: [] }),
+  ]);
+  expect(rows.map((r) => r.name)).toEqual(["Roleless"]);
+  expect(rows[0].reasons[2]).toBe("fills none of the functional roles the deck is measured on");
+});
+
+// A deliberate silence is not evidence: cost reduction and tax form no edge by design, so their
+// zero partner count means nothing. The first 71-deck run flagged Jet Medallion for exactly this.
+test("a ROLE_NOT_SYNERGY card is protected, however dead it looks", () => {
+  const rows = cutCandidates([card({ name: "Jet Medallion", fillsDeckRole: true })]);
+  expect(rows).toEqual([]);
+});
+
+test("deckSlack names the over-target categories, biggest surplus first, and never a card", () => {
+  expect(deckSlack(CATS)).toEqual([{ category: "ramp", count: 14, target: 10, over: 4 }]);
+  // target 0 means "reported, never scored" (graveyardHate) — it can never be over.
+  expect(deckSlack([{ category: "graveyardHate", count: 2, target: 0 }])).toEqual([]);
+});
+
+test("the rating and axis gates are boundaries, not ranges", () => {
+  const rows = cutCandidates([
+    card({ name: "At The Rating Line", rating: CUT_RATING_MAX }),
+    card({ name: "Over The Rating Line", rating: CUT_RATING_MAX + 0.1 }),
+    card({ name: "At The Axis Line", axisWeight: CUT_AXIS_MAX }),
+    card({ name: "Under The Axis Line", axisWeight: CUT_AXIS_MAX - 0.01 }),
+  ]);
+  // weakest first, so the rating-0 card leads the rating-1.0 one
+  expect(rows.map((r) => r.name)).toEqual(["Under The Axis Line", "At The Rating Line"]);
+});
+
+test("an on-theme edge is stated as pointing away, not as absent", () => {
+  const [row] = cutCandidates([card({ name: "Off Axis", axisWeight: 0.1, partnerCount: 1 })]);
+  expect(row.reasons[0]).toBe("only 1 card connects to it");
+  expect(row.reasons[1]).toBe("its edges point away from your main theme");
+});
+
+test("weakest first, ties broken by fewest partners then name, and the list is capped", () => {
+  const rows = cutCandidates([
+    card({ name: "B", rating: 0.5, partnerCount: 3 }),
+    card({ name: "A", rating: 0.5, partnerCount: 3 }),
+    card({ name: "Lonely", rating: 0.5, partnerCount: 1 }),
+    card({ name: "Zero", rating: 0 }),
+  ], 3);
+  expect(rows.map((r) => r.name)).toEqual(["Zero", "Lonely", "A"]);
+});

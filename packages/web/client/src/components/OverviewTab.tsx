@@ -3,6 +3,7 @@ import { DeckIdentity } from "./DeckIdentity.js";
 import { HeadlineScores } from "./HeadlineScores.js";
 import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { SuggestionsList } from "./SuggestionsList.js";
+import { CutList } from "./CutList.js";
 import { StatTiles } from "./StatTiles.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
 import { LandMathChart } from "./LandMathChart.js";
@@ -33,6 +34,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
       <div className="columns-1 xl:columns-2 gap-6 [&>*]:break-inside-avoid [&>*]:mb-6">
         <BuildBenchmarks categories={data.report.buildCategories} deckMath={data.report.deckMath} />
         <SuggestionsList suggestions={data.report.suggestions} />
+        <CutList cutList={data.report.cutList} slack={data.report.slack} />
         <HighSynergyCards cards={data.report.cards} />
         <StatTiles avgManaValue={data.report.avgManaValue} />
         <ManaCurveChart curve={data.report.manaCurve} />
