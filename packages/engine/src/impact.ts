@@ -15,6 +15,10 @@ export interface ImpactWeights {
    *  were summed with no coefficient) and is what ships; 0 gives a payoff-only headline. Absent
    *  reads as 1. See `specs/2026-08-18-per-role-score-design.md` §3.1. */
   roleBlend?: number;
+  /** Family-grouped theme ranking. Absent or `alpha: 0` is the per-tag ranking that shipped before
+   *  2026-08-19; `massShare` is how much of a family's tf-idf mass its top member must hold to name
+   *  it. Registered criteria and the sweep: `specs/2026-08-19-theme-family-ranking-design.md`. */
+  themeRank?: { alpha: number; massShare: number };
 }
 
 /** Weight when a reason's effectKind is missing or absent from the config: unknown synergy ≈ low impact. */
@@ -99,6 +103,7 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
   damping: 0.5,
   magnitude: { glut: 3, beta: 0 },
   roleBlend: 1,
+  themeRank: { alpha: 0, massShare: 0.5 },
 };
 
 /**

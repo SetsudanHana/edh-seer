@@ -48,5 +48,6 @@
   },
   "damping": 0.5,
   "magnitude": { "glut": 3, "beta": 0 },
-  "roleBlend": 1
+  "roleBlend": 1,
+  "themeRank": { "alpha": 0, "massShare": 0.5 }
 }

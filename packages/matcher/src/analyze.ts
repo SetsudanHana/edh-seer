@@ -531,7 +531,12 @@ export function analyzeDeckStructured(
     const cares = caresFreq.get(tag) ?? 0;
     rankFreq.set(tag, cares + PRODUCER_SHARE * (n - cares));
   }
-  const rankedThemes = rankThemes(rankFreq, themeStats);
+  // Family-grouped ranking, gated on `themeRank` in impact-weights.json. `alpha: 0` (the shipped
+  // default) is the per-tag ranking exactly. See specs/2026-08-19-theme-family-ranking-design.md.
+  const themeRank = impactWeights.themeRank;
+  const rankedThemes = rankThemes(rankFreq, themeStats, themeRank && themeRank.alpha > 0
+    ? { fold: makeFold(hierarchy), alpha: themeRank.alpha, massShare: themeRank.massShare }
+    : undefined);
   const themes = rankedThemes.map((tag) => ({ tag, count: deckFreq.get(tag)! }));
 
   const nonlandCount = resolved.filter((dc) => !isLand(dc)).length;

@@ -44,7 +44,22 @@ export function globalIDF(stats: TagStats, tag: Tag): number {
  * over a dense-but-common staple (mana) or a rare-but-incidental one-off — then lexical order
  * for determinism.
  */
-export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats): Tag[] {
+/** How a deck's themes are grouped and named. Absent (or `alpha: 0`) reproduces the per-tag
+ *  ranking exactly, which is the wiring acceptance test — see
+ *  `specs/2026-08-19-theme-family-ranking-design.md`. */
+export interface ThemeRankOptions {
+  /** Maps a tag to the family key it is COUNTED under (matcher's `makeFold`). */
+  fold: (tag: Tag) => Tag;
+  /** How much of the rest of a family's strength is added to its strongest member. 0 = today. */
+  alpha: number;
+  /** Share of a family's tf-idf MASS its top member must hold to NAME the family. Mass rather than
+   *  count because rarity concentrates it: a tribe's rare tag holds most of its family's mass while
+   *  a 22-way token split holds ~10% of its own. Count share is the rule MEASURED to fail — it
+   *  generalised nine of twelve decks to "creatures entering" (reverted 2026-08-18). */
+  massShare: number;
+}
+
+export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats, opts?: ThemeRankOptions): Tag[] {
   const scored = [...deckFreq.entries()]
     .map(([tag, freq]) => ({ tag, key: freq * globalIDF(stats, tag) }));
   const keyByTag = new Map(scored.map((s) => [s.tag, s.key]));
@@ -58,7 +73,7 @@ export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats): Tag[] {
     return anyTag === tag ? own : own + (keyByTag.get(anyTag) ?? 0);
   };
 
-  return scored
+  const perTag = scored
     .sort((a, b) => {
       const fa = subsumedKey(a.tag);
       const fb = subsumedKey(b.tag);
@@ -66,6 +81,28 @@ export function rankThemes(deckFreq: Map<Tag, number>, stats: TagStats): Tag[] {
       return fb - fa || b.key - a.key || a.tag.localeCompare(b.tag);
     })
     .map((r) => r.tag);
+  if (!opts || opts.alpha === 0) return perTag;
+
+  // FAMILIES RANK, THE MASS-DOMINANT CHILD NAMES.
+  const members = new Map<Tag, Tag[]>();
+  for (const tag of deckFreq.keys()) {
+    const key = opts.fold(tag);
+    members.set(key, [...(members.get(key) ?? []), tag]);
+  }
+  const mass = (tag: Tag): number => (deckFreq.get(tag) ?? 0) * globalIDF(stats, tag);
+  const ranked: { key: Tag; score: number; name: Tag }[] = [];
+  for (const [key, ms] of members) {
+    const strengths = ms.map(subsumedKey).sort((a, b) => b - a);
+    const score = strengths[0] + opts.alpha * strengths.slice(1).reduce((a, b) => a + b, 0);
+    const total = ms.reduce((sum, t) => sum + mass(t), 0);
+    const top = ms.reduce((best, t) => (mass(t) > mass(best) || (mass(t) === mass(best) && t < best) ? t : best), ms[0]);
+    // A family whose members carry no mass at all (every idf 0) cannot be named by one of them.
+    const name = total > 0 && mass(top) / total >= opts.massShare ? top : key;
+    ranked.push({ key, score, name });
+  }
+  return ranked
+    .sort((a, b) => b.score - a.score || a.key.localeCompare(b.key))
+    .map((r) => r.name);
 }
 
 /** Map each deck tag to its theme weight THEME_DECAY^(rank-1) (rank 1 = weight 1). */

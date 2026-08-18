@@ -160,3 +160,41 @@ test("a real theme is not pushed to a fractional rank by many small same-family 
   const w = themeWeights(deckFreq, UNIFORM);
   expect(w.get("cast:instant")).toBeCloseTo(1); // rank 1, not rank 9
 });
+
+// FAMILY-GROUPED RANKING (specs/2026-08-19-theme-family-ranking-design.md). alpha 0 must be the
+// per-tag ranking byte for byte -- that is the wiring acceptance test -- and the naming rule uses
+// tf-idf MASS, because count share was measured to generalise nine of twelve decks to "creatures
+// entering" and cost every tribal deck its tribe.
+const FOLD = (t: string): string => t.startsWith("enters:") && t !== "enters:any" && t !== "enters:creature"
+  ? "enters:creature" : t;
+const STATS = { N: 1000, counts: { "enters:creature": 400, "enters:wizard": 6, "enters:goblin": 6, "enters:rat": 6, "draw:any": 300 } };
+
+test("alpha 0 leaves the per-tag ranking untouched", () => {
+  const freq = new Map([["enters:wizard", 5], ["enters:creature", 9], ["draw:any", 12]]);
+  const plain = rankThemes(freq, STATS);
+  expect(rankThemes(freq, STATS, { fold: FOLD, alpha: 0, massShare: 0.5 })).toEqual(plain);
+});
+
+test("a family outranks a bigger common tag only once the rest of it counts", () => {
+  // Sized so the premise holds: draw:any (idf 1.20) x 14 = 16.8 beats each fragment alone
+  // (idf 4.96 x 3 = 14.9), and loses to the three of them summed.
+  const freq = new Map([["enters:wizard", 3], ["enters:goblin", 3], ["enters:rat", 3], ["draw:any", 14]]);
+  expect(rankThemes(freq, STATS)[0]).toBe("draw:any");
+  const folded = rankThemes(freq, STATS, { fold: FOLD, alpha: 0.5, massShare: 0.5 })[0];
+  expect(folded).toBe("enters:creature"); // spread family, so the family key names it
+});
+
+test("a mass-dominant child names its family; a spread family is named by the family key", () => {
+  const tribal = new Map([["enters:wizard", 20], ["enters:goblin", 1], ["draw:any", 2]]);
+  expect(rankThemes(tribal, STATS, { fold: FOLD, alpha: 0.5, massShare: 0.5 })[0]).toBe("enters:wizard");
+  const spread = new Map([["enters:wizard", 4], ["enters:goblin", 4], ["enters:rat", 4], ["draw:any", 2]]);
+  expect(rankThemes(spread, STATS, { fold: FOLD, alpha: 0.5, massShare: 0.5 })[0]).toBe("enters:creature");
+});
+
+test("mass beats count: a rare child names a family it does not dominate by count", () => {
+  // wizard is 6 of 16 by COUNT (37%, under the old rule) but carries the rare tag, so most of the
+  // family's tf-idf mass -- exactly the case count share got wrong.
+  const freq = new Map([["enters:wizard", 6], ["enters:creature", 10]]);
+  const out = rankThemes(freq, STATS, { fold: FOLD, alpha: 0.5, massShare: 0.5 })[0];
+  expect(out).toBe("enters:wizard");
+});
