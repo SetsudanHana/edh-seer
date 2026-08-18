@@ -114,8 +114,18 @@ export function loadImpactWeights(): ImpactWeights {
 
 /** Sum impact over DISTINCT reason tags, keeping the MAX-impact reason per tag: when a mutual
  *  edge carries two reasons sharing one tag but differing in effectKind, the higher-impact kind
- *  wins (order-independent — avoids silently keeping a lower-impact effectKind). */
-export function impactEdgeWeight(reasons: Reason[], w: ImpactWeights): number {
+ *  wins (order-independent — avoids silently keeping a lower-impact effectKind).
+ *
+ *  `tagMultiplier` scales each tag's surviving contribution. It exists for the supply:demand
+ *  magnitude discount, which is a fact about the TAG in this deck (how crowded that shape is) and
+ *  not about the pair — one pair's reasons routinely span a glutted tag and a scarce one, so a
+ *  per-pair multiplier cannot express it. Applied after the max-per-tag selection, so it composes
+ *  with that anti-inflation rule instead of fighting it. Omitted → 1 for every tag. */
+export function impactEdgeWeight(
+  reasons: Reason[],
+  w: ImpactWeights,
+  tagMultiplier?: (tag: string) => number,
+): number {
   const best = new Map<string, number>();
   for (const r of reasons) {
     const v = impactWeightOf(r, w);
@@ -123,7 +133,7 @@ export function impactEdgeWeight(reasons: Reason[], w: ImpactWeights): number {
     if (prev === undefined || v > prev) best.set(r.tag, v);
   }
   let sum = 0;
-  for (const v of best.values()) sum += v;
+  for (const [tag, v] of best) sum += v * (tagMultiplier ? tagMultiplier(tag) : 1);
   return sum;
 }
 

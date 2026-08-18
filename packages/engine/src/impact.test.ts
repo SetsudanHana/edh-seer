@@ -90,3 +90,23 @@ test("seed + committed config carry one scaling entry per SCALING_BASES member (
     ["fixed", "per-cast-or-spell", "per-creature", "per-graveyard", "per-opponent", "per-permanent", "unbounded", "x-cost"]);
   expect(Object.keys(loadImpactWeights().scaling).length).toBe(8);
 });
+
+test("impactEdgeWeight scales each tag's contribution by an optional per-tag multiplier", () => {
+  const reasons = [
+    { tag: "enters:creature", text: "", effectKind: "draw-card" },
+    { tag: "dies:creature", text: "", effectKind: "draw-card" },
+  ];
+  const plain = impactEdgeWeight(reasons, SEED_IMPACT_WEIGHTS);
+  const halved = impactEdgeWeight(reasons, SEED_IMPACT_WEIGHTS, (tag) => (tag === "enters:creature" ? 0.5 : 1));
+  // draw-card is 1.0 with neutral repeatability and fixed scaling, so plain is 2 and the
+  // multiplier takes half of one of the two tags.
+  expect(plain).toBe(2);
+  expect(halved).toBe(1.5);
+});
+
+test("omitting the multiplier is identical to passing one that returns 1", () => {
+  const reasons = [{ tag: "enters:creature", text: "", effectKind: "draw-card" }];
+  expect(impactEdgeWeight(reasons, SEED_IMPACT_WEIGHTS)).toBe(
+    impactEdgeWeight(reasons, SEED_IMPACT_WEIGHTS, () => 1),
+  );
+});
