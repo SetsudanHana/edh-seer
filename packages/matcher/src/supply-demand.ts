@@ -91,6 +91,10 @@ export interface SideTotals {
   /** `repeats` label → cards, plus `implied` for a card supplying the shape merely by existing and
    *  `token` for a token node. */
   labels: Record<string, number>;
+  /** The cards on this side, in reason order. A count cannot answer "do this shape's feeders
+   *  outrank its payoff", which is the one direction-correctness question the ratings diff
+   *  structurally cannot make. Tokens are included, named as they appear on the Reason. */
+  names: string[];
 }
 
 export interface SupplyDemandRow {
@@ -102,7 +106,7 @@ export interface SupplyDemandRow {
   supply: SideTotals;
 }
 
-const empty = (): SideTotals => ({ cards: 0, rate: 0, avail: 0, commander: false, refused: 0, tokens: 0, labels: {} });
+const empty = (): SideTotals => ({ cards: 0, rate: 0, avail: 0, commander: false, refused: 0, tokens: 0, labels: {}, names: [] });
 
 /** Leading integer of an ability's `amount`, capped. "X" and any wording the parse cannot read
  *  count as one — an unknown count is not a zero, and guessing high is how a magnitude channel
@@ -177,13 +181,15 @@ export function buildSupplyDemand(
       out.commander ||= input?.isCommander === true;
       if (label === "REFUSED") out.refused++;
       out.labels[label] = (out.labels[label] ?? 0) + 1;
+      out.names.push(name);
     }
-    for (const _ of tokens) {
+    for (const name of tokens) {
       out.tokens++;
       out.cards++;
       out.rate += IMPLIED_RATE;
       out.avail += IMPLIED_RATE * pDrawn;
       out.labels.token = (out.labels.token ?? 0) + 1;
+      out.names.push(name);
     }
     return out;
   };

@@ -97,3 +97,14 @@ test("a token producer is counted on the side but reported apart from the cards"
   expect(row.supply.cards).toBe(1);
   expect(row.supply.labels).toEqual({ token: 1 });
 });
+
+/** The inversion instrument needs to know WHICH cards are on a side, not just how many: the
+ *  question "do this shape's feeders outrank its payoff" cannot be asked of a count. */
+test("a side carries the names of the cards on it", () => {
+  const row = only(buildSupplyDemand(
+    [reason("engine", "payoff"), reason("body", "payoff")],
+    deck(["engine", engine, false], ["body", body, false], ["payoff", payoff, false]),
+  ));
+  expect([...row.supply.names].sort()).toEqual(["body", "engine"]);
+  expect(row.demand.names).toEqual(["payoff"]);
+});

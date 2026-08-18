@@ -25,18 +25,28 @@
  *
  *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/supply-demand.ts [--verbose] [deck.txt]
  */
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync, readFileSync as readJson } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
 import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
+import { countInversions, diffInversions, type InversionReport } from "../rank-inversions.js";
 import { buildSupplyDemand, ratio, type SupplyDemandRow } from "../supply-demand.js";
 
 const DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
 const args = process.argv.slice(2);
 const VERBOSE = args.includes("--verbose");
-const only = args.find((a) => !a.startsWith("--"));
+const flag = (name: string): string | undefined => {
+  const i = args.indexOf(name);
+  return i >= 0 ? args[i + 1] : undefined;
+};
+const INVERSIONS = args.includes("--inversions");
+const SAVE = flag("--save");
+const AGAINST = flag("--against");
+const GLUT = Number(flag("--glut") ?? 3);
+const flagValues = new Set([SAVE, AGAINST, flag("--glut")].filter(Boolean) as string[]);
+const only = args.find((a) => !a.startsWith("--") && !flagValues.has(a));
 const TURN = 5;
 
 /** Ratio buckets, symmetric about parity. The question they answer is whether the mass sits near
@@ -67,8 +77,10 @@ const files = only
   : readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort().map((f) => join(DIR, f));
 
 const all: Row[] = [];
+const inversionTotals: InversionReport = { shapes: 0, inversions: 0, payoffs: [] };
 let totalReasons = 0;
 for (const path of files) {
+  const deck = path.split("/").pop()!.replace(/\.txt$/, "");
   const sections = parseDecklistSections(readFileSync(path, "utf8"));
   const { cards, combos } = await resolveNames([...sections.commanders, ...sections.deck], lookup);
   const cmdNorm = new Set(sections.commanders.map(normalizeName));
@@ -90,7 +102,13 @@ for (const path of files) {
     })),
     { turn: TURN },
   );
-  const deck = path.split("/").pop()!.replace(/\.txt$/, "");
+  if (INVERSIONS || SAVE || AGAINST) {
+    const ratingByName = new Map(report.cards.map((c) => [c.name, c.synergyRating ?? 0] as const));
+    const rep = countInversions(rows, ratingByName, { glut: GLUT });
+    inversionTotals.shapes += rep.shapes;
+    inversionTotals.inversions += rep.inversions;
+    inversionTotals.payoffs.push(...rep.payoffs.map((p) => ({ ...p, tag: `${deck}/${p.tag}` })));
+  }
   for (const r of rows) all.push({ ...r, deck });
   if (!only) process.stdout.write(".");
 }
@@ -191,4 +209,21 @@ if (VERBOSE) {
     const rows = all.filter((r) => r.deck === deck).sort((a, b) => rat(b, "rate") - rat(a, "rate"));
     show(`${deck} — ${rows.length} shapes`, rows);
   }
+}
+
+if (SAVE) {
+  writeFileSync(SAVE, JSON.stringify(inversionTotals));
+  console.log(`saved ${inversionTotals.payoffs.length} payoff rows (${inversionTotals.inversions} inversions over ${inversionTotals.shapes} glutted shapes, glut ${GLUT}) to ${SAVE}`);
+}
+if (AGAINST) {
+  const before = JSON.parse(readJson(AGAINST, "utf8")) as InversionReport;
+  const d = diffInversions(before, inversionTotals);
+  console.log(`INVERSIONS ${d.inversionsBefore} -> ${d.inversionsAfter} over ${d.shapesBefore} -> ${d.shapesAfter} glutted shapes (glut ${GLUT})`);
+  console.log(`PAYOFFS THAT FELL: ${d.payoffsFallen.length}${d.payoffsFallen.length ? "" : "  <- the criterion"}`);
+  for (const p of d.payoffsFallen.slice(0, 20)) console.log(`  ${p.from} -> ${p.to}  ${p.tag.replace("/", " / ")} / ${p.name}`);
+} else if (INVERSIONS) {
+  console.log(`INVERSIONS ${inversionTotals.inversions} over ${inversionTotals.shapes} glutted shapes (glut ${GLUT})`);
+  const worst = [...inversionTotals.payoffs].sort((a, b) => b.feedersAbove - a.feedersAbove).slice(0, 15);
+  console.log("  feedersAbove  rating  deck / shape / payoff");
+  for (const p of worst) console.log(`  ${String(p.feedersAbove).padStart(12)}  ${String(p.rating).padStart(6)}  ${p.tag.replace("/", " / ")} / ${p.name}`);
 }
