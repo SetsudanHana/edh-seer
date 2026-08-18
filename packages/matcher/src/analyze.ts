@@ -34,6 +34,7 @@ import { cutCandidates, deckSlack } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
 import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
+import { rankThemesByLoop } from "./theme-loop.js";
 
 /**
  * Structured-engine counterpart of `@mtg/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -533,11 +534,27 @@ export function analyzeDeckStructured(
   }
   // Family-grouped ranking, gated on `themeRank` in impact-weights.json. `alpha: 0` (the shipped
   // default) is the per-tag ranking exactly. See specs/2026-08-19-theme-family-ranking-design.md.
+  // Hoisted above the theme ranking: loop ranking reads the reasons to split surplus from payoffs.
+  const allReasons = cardEdges.flatMap((e) => e.reasons);
   const themeRank = impactWeights.themeRank;
-  const rankedThemes = rankThemes(rankFreq, themeStats, themeRank && themeRank.alpha > 0
+  const tfidfRanked = rankThemes(rankFreq, themeStats, themeRank && themeRank.alpha > 0
     ? { fold: makeFold(hierarchy), alpha: themeRank.alpha, massShare: themeRank.massShare }
     : undefined);
-  const themes = rankedThemes.map((tag) => ({ tag, count: deckFreq.get(tag)! }));
+  // LOOP RANKING reads the membership split (surplus / baseline / payoffs) that `themeMembership`
+  // has always computed and nothing ranked by. Built here rather than at the report assembly below
+  // because the ranking now depends on it. See theme-loop.ts.
+  const loopMembership = themeRank?.mode === "loop"
+    ? themeMembership(resolved, allReasons, themeCandidates([...deckFreq.keys()]))
+    : undefined;
+  const rankedThemes = loopMembership
+    ? (() => {
+        const tfidf = new Map(tfidfRanked.map((t, i) => [t, tfidfRanked.length - i]));
+        const byLoop = rankThemesByLoop(loopMembership, tfidf);
+        // A deck where no tag closes a loop keeps the old ranking rather than reporting nothing.
+        return byLoop.length > 0 ? byLoop : tfidfRanked;
+      })()
+    : tfidfRanked;
+  const themes = rankedThemes.map((tag) => ({ tag, count: deckFreq.get(tag) ?? 0 }));
 
   const nonlandCount = resolved.filter((dc) => !isLand(dc)).length;
   const cohesion = computeCohesion(rankedThemes, deckFreq, nonlandCount, makeFold(hierarchy));
@@ -587,7 +604,6 @@ export function analyzeDeckStructured(
   // Theme membership: same axis ordering the zones will read, with statics dropped (an anthem is a
   // payoff of the theme supplying its subject, never a theme itself).
   const candidateTags = themeCandidates([...axis.keys()]);
-  const allReasons = cardEdges.flatMap((e) => e.reasons);
   const membership = themeMembership(resolved, allReasons, candidateTags).map((t) => ({
     tag: t.tag,
     surplus: t.surplus.length,

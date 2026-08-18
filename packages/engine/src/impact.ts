@@ -18,7 +18,13 @@ export interface ImpactWeights {
   /** Family-grouped theme ranking. Absent or `alpha: 0` is the per-tag ranking that shipped before
    *  2026-08-19; `massShare` is how much of a family's tf-idf mass its top member must hold to name
    *  it. Registered criteria and the sweep: `specs/2026-08-19-theme-family-ranking-design.md`. */
-  themeRank?: { alpha: number; massShare: number };
+  themeRank?: {
+    /** `"tfidf"` (default) is deckFreq × idf, the ranking that has always shipped. `"loop"` ranks a
+     *  tag by the SUPPLY/DEMAND LOOP it closes — see `rankThemesByLoop`. */
+    mode?: "tfidf" | "loop";
+    alpha: number;
+    massShare: number;
+  };
 }
 
 /** Weight when a reason's effectKind is missing or absent from the config: unknown synergy ≈ low impact. */
