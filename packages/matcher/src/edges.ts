@@ -874,6 +874,25 @@ function meldReason(a: DeckCard, b: DeckCard): Reason[] {
  *  calling: that is what stops an untyped authored emit (rare, but present) from wildcarding onto a
  *  token this card never actually makes. `subjectMatches`/`themeSubjectKey` here only pick the best
  *  reason tag/text among the card's own emits, never decide the relationship itself. */
+/** Does `p` create token `c` UNDER OUR CONTROL? Beast Within and Generous Gift make their Beast/
+ *  Elephant for the permanent's controller -- "Its controller creates a 3/3 green Beast" -- and the
+ *  clause layer already records that, `control: "opp"` on the `create-token` emit.
+ *
+ *  Separate from `createsReasons` on purpose, and the graph edge deliberately keeps ignoring it: "this
+ *  card makes that token exist" is TRUE for Beast Within, which is why the token is on its board at
+ *  all. What is false is the RATINGS claim built on top of it -- that Beast Within supports your
+ *  token payoff -- because a payoff says "tokens YOU control". So the traversal gates, the edge does
+ *  not. `control: "any"` counts as ours: a card that says only "create a 4/4 Dragon" (Elemental
+ *  Eruption) creates it under its own controller, and refusing those would delete nearly every real
+ *  token maker in the corpus. */
+export function createsForYou(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
+  if (!p.tags || !c.tags || c.tags.characteristics.token !== true) return false;
+  const consumerSubject = characteristicsSubject(c.tags, c.card.name);
+  return p.tags.abilities.some((pa) =>
+    (pa.emits ?? []).some((e) =>
+      e.verb === "create-token" && e.subject.control !== "opp" && subjectMatches(consumerSubject, e.subject, h)));
+}
+
 export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
   if (!p.tags || !c.tags || c.tags.characteristics.token !== true) return [];
   const consumerSubject = characteristicsSubject(c.tags, c.card.name);

@@ -939,3 +939,69 @@ test("a token nothing but its maker relates to is reported unpartnered", () => {
   );
   expect(alone.tokenNodes).toEqual([{ name: "Wizard", hasPartner: false }]);
 });
+
+// THE RATINGS PASS WALKS THE TWO HOPS (2026-08-18). Task 7's mediation moved a maker's relation to
+// its payoff onto the token node, and the directional pass iterates real cards only -- so a token
+// payoff read as synergising with nothing. Measured before the fix across the 71 decks: 100 cards
+// with ZERO directed partners while carrying token edges, 43 of which HAD partners pre-mediation;
+// the worst was Caretaker's Talent at 30 partners -> 0 in a token deck.
+const treasureSacTokenTags: CardTags = {
+  oracleId: "token-treasure-oracle", schemaVersion: 1, promptVersion: 1, model: "t",
+  characteristics: { types: ["token", "artifact"], subtypes: ["treasure"], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: true, keywords: [] },
+  abilities: [{
+    kind: "activated",
+    effect: { kind: "mana-generation" },
+    emits: [{ verb: "sacrifice", subject: { subtype: "treasure", control: "you", token: true } }],
+  }],
+};
+
+test("a maker and a token payoff are partners THROUGH the token, with the token named in the reason", () => {
+  const report = analyzeDeckStructured(
+    [maker, carer], undefined, H, undefined, undefined, undefined,
+    (ref) => (ref.printingId === "treasure-printing-id" ? treasureSacTokenTags : null),
+  );
+
+  const makerCardOut = report.cards.find((c) => c.name === "Treasure Maker")!;
+  const carerCardOut = report.cards.find((c) => c.name === "Treasure Carer")!;
+  expect(makerCardOut.partnerCount).toBe(1);
+  expect(carerCardOut.partnerCount).toBe(1);
+  expect(makerCardOut.topPartners[0]?.name).toBe("Treasure Carer");
+  // The reason is the TOKEN's, borrowed for the pair -- one fact, one path. The text still names the
+  // token, so the inspector can show which token mediates.
+  expect(carerCardOut.topPartners[0]?.reasons[0]?.text).toContain("Treasure");
+  // Still no DIRECT edge between them: the graph keeps mediating, only the ratings traverse.
+  expect(report.edges.some((e) => [e.a, e.b].includes("Treasure Maker") && [e.a, e.b].includes("Treasure Carer"))).toBe(false);
+});
+
+// WHO GETS THE TOKEN DECIDES WHETHER THE HOP EXISTS. Beast Within's Beast goes to the permanent's
+// controller -- an opponent -- and a payoff says "tokens YOU control", so crediting its maker would
+// state a synergy the card cannot supply. Caught by measuring: the first cut lifted Beast Within and
+// Generous Gift from 0 to 2.0 in naya-spellslinger.
+test("a maker that gives its token to an OPPONENT earns no two-hop credit", () => {
+  const oppMaker: DeckCard = {
+    card: {
+      name: "Beast Giver", typeLine: "Instant", oracleText: "", keywords: [], colors: [], manaValue: 0,
+      allParts: [{ component: "token", name: "Treasure", typeLine: "Token Artifact — Treasure", printingId: "treasure-printing-id" }],
+    } as never,
+    tags: {
+      oracleId: "Beast Giver", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["instant"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{
+        kind: "on-cast",
+        effect: { kind: "token-generation", subject: { subtype: "treasure", control: "opp", token: true } },
+        emits: [
+          { verb: "create-token", subject: { subtype: "treasure", control: "opp", token: true } },
+          { verb: "enters", subject: { subtype: "treasure", control: "opp", token: true } },
+        ],
+      }],
+    },
+  };
+
+  const report = analyzeDeckStructured(
+    [oppMaker, carer], undefined, H, undefined, undefined, undefined,
+    (ref) => (ref.printingId === "treasure-printing-id" ? treasureSacTokenTags : null),
+  );
+
+  expect(report.cards.find((c) => c.name === "Beast Giver")!.partnerCount).toBe(0);
+  expect(report.cards.find((c) => c.name === "Treasure Carer")!.partnerCount).toBe(0);
+});

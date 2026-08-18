@@ -18,7 +18,7 @@ import {
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
-import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons } from "./edges.js";
+import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { markCommander } from "./commander.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
@@ -281,11 +281,66 @@ export function analyzeDeckStructured(
   // Deduped for the same reason the undirected loop above is: six copies of a basic contributed six
   // times to every partner's support, inflating per-card ratings by however many copies the deck ran.
   for (const dc of unique) dir.set(dc.card.name, { support: 0, feederSum: 0, partnerCount: 0, partners: [] });
+
+  // THE RATINGS PASS WALKS THE SAME TWO HOPS THE GRAPH DOES (2026-08-18). Task 7 made tokens
+  // MEDIATE -- a maker no longer edges straight to a token payoff, it edges to the token and the
+  // token edges to the payoff -- but this loop iterates `unique`, the real cards, so a relation that
+  // now lives on a token node was invisible to it. Measured before the fix: 100 cards across the 71
+  // decks had ZERO directed partners while carrying token edges, 43 of them having had partners
+  // before mediation, the worst being Caretaker's Talent ("whenever one or more tokens you control
+  // enter, draw a card") at 30 partners -> 0 in `naya-spellslinger` -- a token payoff reading as
+  // synergising with nothing in a token deck. A wrong sentence, not a missing one.
+  //
+  // The fix is TRAVERSAL, not a second copy of the fact: the reasons still live on the token edges
+  // and this pass borrows them for the pair they connect. Both directions are walked, because both
+  // were direct edges before mediation -- maker -> token -> payoff (Empty the Warrens feeding
+  // Caretaker's Talent) and buff -> token -> maker (an anthem on Soldiers relating to what makes
+  // Soldiers).
+  //
+  // MERGED INTO THE PAIR'S DIRECT REASONS, NOT CREDITED SEPARATELY, and that is what keeps it from
+  // inflating: `impactEdgeWeight` takes the max per distinct tag, so a maker whose four token types
+  // all satisfy one `enters:any` trigger scores that tag ONCE -- exactly as the single direct edge
+  // did before. A separate credit per token would have paid it four times.
+  const hopKey = (p: string, c: string): string => `${p} -> ${c}`;
+  const twoHopReasons = new Map<string, Reason[]>();
+  const addHop = (p: string, c: string, reasons: Reason[]): void => {
+    if (reasons.length === 0 || p === c) return; // a card does not feed itself through its own token
+    const existing = twoHopReasons.get(hopKey(p, c));
+    if (existing) existing.push(...reasons);
+    else twoHopReasons.set(hopKey(p, c), [...reasons]);
+  };
+  const uniqueByName = new Map(unique.map((dc) => [dc.card.name, dc] as const));
+  for (const t of tokenNodes) {
+    const makers = tokenCreators.get(t.tags!.oracleId);
+    if (!makers) continue;
+    // WHO GETS THE TOKEN DECIDES WHETHER THE HOP EXISTS. Beast Within and Generous Gift hand their
+    // Beast/Elephant to the permanent's CONTROLLER -- an opponent -- and a payoff reads "tokens YOU
+    // control", so crediting them would state a synergy the card cannot supply. Caught by measuring:
+    // the first cut lifted Beast Within and Generous Gift from 0 to 2.0 in `naya-spellslinger`, which
+    // is exactly the case CLAUDE.md already flags as why `isolated-cards.ts` reads as an upper bound.
+    const ourMakers = [...makers].filter((m) => {
+      const maker = uniqueByName.get(m);
+      return maker !== undefined && createsForYou(maker, t, hierarchy);
+    });
+    if (ourMakers.length === 0) continue;
+    for (const other of unique) {
+      const name = other.card.name;
+      const tokenFeeds = directedReasons(t, other, hierarchy); // token -> card
+      const feedsToken = directedReasons(other, t, hierarchy); // card -> token
+      for (const maker of ourMakers) {
+        addHop(maker, name, tokenFeeds);
+        addHop(name, maker, feedsToken);
+      }
+    }
+  }
+
   for (let i = 0; i < unique.length; i++) {
     for (let j = 0; j < unique.length; j++) {
       if (i === j) continue;
       const p = unique[i], c = unique[j];
-      const reasons = directedReasons(p, c, hierarchy); // p feeds c
+      const hop = twoHopReasons.get(hopKey(p.card.name, c.card.name));
+      const direct = directedReasons(p, c, hierarchy); // p feeds c
+      const reasons = hop ? [...direct, ...hop] : direct;
       if (reasons.length === 0) continue;
       const maxW = maxAxisWeight(reasons, axis);
       const w = impactEdgeWeight(reasons, impactWeights) * (1 + AXIS_BOOST * maxW);
