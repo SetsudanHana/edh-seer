@@ -50,6 +50,9 @@ export const FIXTURES = ["sorin", "inalla", "fairdrazi", "changelings", "braids"
  *  invariant the projection exists to hold, so it is asserted empty rather than given a number. */
 export interface QualityMetrics {
   nodeOverlaps: number;
+  /** Two card-mode RECTANGLES overlapping. Separate from nodeOverlaps because the disc metric read
+   *  0 on every fixture while cards overlapped 76 times -- see countCardOverlaps. */
+  cardOverlaps: number;
   edgeCrossings: number;
   linkDistError: number;
   /** Ids of any node that is not a plain card. Must be empty. */
@@ -61,6 +64,9 @@ export interface QualityMetrics {
 export interface Caps {
   /** Two card discs closer than 2 * ART_RADIUS. */
   nodeOverlaps: number;
+  /** Two card-mode rectangles overlapping. Not 0: the collide force is SOFT (one iteration, alpha
+   *  decay), so a few pairs settle inside a radius that geometrically guarantees separation. */
+  cardOverlaps: number;
   /** Properly crossing edge pairs, shared endpoints excluded. */
   edgeCrossings: number;
   /** rms |actual - target| link distance, rounded up to an integer for the table. */
@@ -112,12 +118,44 @@ export interface Caps {
  *  units of it to make the board settle is a product judgement, not a computed one. `degnorm-k2` is
  *  a one-line change plus a re-cap if it is ever revisited. */
 export const QUALITY_CAPS: Record<string, Caps> = {
-  sorin: { nodeOverlaps: 0, edgeCrossings: 42237, linkDistError: 40 },
-  inalla: { nodeOverlaps: 0, edgeCrossings: 33368, linkDistError: 42 },
-  fairdrazi: { nodeOverlaps: 0, edgeCrossings: 34762, linkDistError: 48 },
-  changelings: { nodeOverlaps: 0, edgeCrossings: 6868, linkDistError: 36 },
-  braids: { nodeOverlaps: 0, edgeCrossings: 19335, linkDistError: 43 },
+  sorin: { nodeOverlaps: 0, cardOverlaps: 16, edgeCrossings: 40211, linkDistError: 75 },
+  inalla: { nodeOverlaps: 0, cardOverlaps: 8, edgeCrossings: 33099, linkDistError: 54 },
+  fairdrazi: { nodeOverlaps: 0, cardOverlaps: 23, edgeCrossings: 36643, linkDistError: 61 },
+  changelings: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 7337, linkDistError: 41 },
+  braids: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 23551, linkDistError: 47 },
 };
+
+/** RE-CAPPED 2026-08-18 for the card-mode collision fix, and the interesting number is the one that
+ *  was not here before. `cardOverlaps` is NEW: the old table capped `nodeOverlaps` at 0 and every
+ *  fixture met it while cards overlapped on every board, because the disc metric cannot see a
+ *  rectangle. THE GATE WAS MEASURING THE WRONG SHAPE, which is how this shipped twice and had to be
+ *  owner-reported twice (2026-08-13, 2026-08-18).
+ *
+ *  COLLISION_PAD is now derived from the card's DIAGONAL (5 -> 20.2, spacing 33 -> 48.2), because
+ *  two axis-aligned rectangles miss each other only when |dx| >= w OR |dy| >= h. Owner's ruling on
+ *  the alternative: the first cut shrank the CARD to fit the old spacing, which cost the layout
+ *  nothing and made the card 19.2 wide — rejected, "I would prefer having bigger cards cause they
+ *  should be readable", so the card keeps 28 x 39.2 and the board pays.
+ *
+ *  Before -> after, five fixtures, same instrument (800 ticks, 10 trials, summed / meaned as above):
+ *    sorin        cardOverlaps 763 -> 16    crossings 42237 -> 40211 (-4.8%)   distErr 40 -> 75 (+87%)
+ *    inalla       cardOverlaps 688 ->  8    crossings 33368 -> 33099 (-0.8%)   distErr 42 -> 54 (+29%)
+ *    fairdrazi    cardOverlaps 1049 -> 23   crossings 34762 -> 36643 (+5.4%)   distErr 48 -> 61 (+27%)
+ *    changelings  cardOverlaps 166 ->  0    crossings  6868 ->  7337 (+6.8%)   distErr 36 -> 41 (+14%)
+ *    braids       cardOverlaps 197 ->  0    crossings 19335 -> 23551 (+21.8%)  distErr 43 -> 47 (+9.3%)
+ *  nodeOverlaps stayed 0 -> 0 everywhere.
+ *
+ *  TWO MOVES ARE OVER THE 10% STOP-AND-DIAGNOSE LINE and both are the change doing its job rather
+ *  than a second defect. distError rises because a hard 48.2 floor between centres stops a dense
+ *  mesh compressing to the distance its edge weights ask for — sorin is the densest board here and
+ *  moves most, which is the predicted ordering. braids' crossings rise because a smaller board (75
+ *  cards) spread 46% further has longer edges over the same topology, and a longer edge crosses
+ *  more. The shape is unchanged: no fixture gained a node overlap, and cardOverlaps fell 98%.
+ *
+ *  cardOverlaps is NOT capped at 0 on the two big meshes because the collide force is SOFT — one
+ *  iteration, alpha decay — so a handful of pairs settle inside a radius that geometrically
+ *  guarantees separation. `collideIterations: 2` takes sorin 16 -> ~10 at more crossings; it is a
+ *  tuning-panel knob, not the default. */
 
 /** RE-CAPPED for task-10's de-drift force (board-force.ts's `forceDeDrift`), which cancels the
  *  board's common-mode velocity every tick so the centroid stops walking off screen. That force

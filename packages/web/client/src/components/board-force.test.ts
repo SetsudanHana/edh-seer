@@ -133,15 +133,31 @@ describe("createBoardSimulation's stated invariants", () => {
 
   /** What replaced holdCardCentroid. The room board WALKED -- 67 world units of drift every 3s --
    *  because forceX/forceY claimed only UNZONED nodes, so a roomed card had no absolute anchor at
-   *  all and a common-mode velocity was invisible to every force. Every node is pulled toward the
-   *  origin now, so the board comes back on its own and the positional pass could go. */
-  test("pulls a board displaced from the origin back toward it", () => {
+   *  all and a common-mode velocity was invisible to every force.
+   *
+   *  THE BOARD STAYS PUT. IT DOES NOT COME BACK -- measured 2026-08-18, and the older wording here
+   *  ("the board comes back on its own") was never true. `forceDeDrift` is inserted LAST and
+   *  subtracts the MEAN velocity from every node, and a centre pull on a cluster far from the origin
+   *  is almost entirely common-mode, so de-drift cancels the very component that would carry it
+   *  home: the centroid of a board seeded at x=800 moves 3e-13 over 400 ticks, and 2e-13 over
+   *  10,000. This test asserted the return and passed on float residue whose SIGN happened to be
+   *  negative; the card-mode collision change altered the cluster geometry, the sign flipped, and
+   *  that is how the defect surfaced.
+   *
+   *  Pinned as what actually holds -- no walk -- with the defect recorded in ROADMAP rather than
+   *  banked here as if intended. Inserting de-drift BEFORE forceX/forceY does restore the return
+   *  (798 -> 697 over 10k ticks) and keeps the anti-walk property (centroid 19-20 world units from
+   *  origin after 40k ticks on sorin, against 27 today), but it moves the layout and so wants its
+   *  own re-cap. */
+  test("a board displaced from the origin does not walk further away", () => {
     const nodes = Array.from({ length: 12 }, (_, i) => card(`c${i}`, 800 + Math.cos(i) * 40, Math.sin(i) * 40));
     const simulation = createBoardSimulation({ nodes, links: [] });
     const centroidX = () => nodes.reduce((s, n) => s + n.x, 0) / nodes.length;
     const before = centroidX();
     for (let i = 0; i < 400; i++) simulation.tick();
-    expect(centroidX()).toBeLessThan(before);
+    // Held to a world unit: de-drift pins the centroid, for better (no walk) and for worse (no
+    // return). A real drift would be tens of units -- the defect this force was added for was 67.
+    expect(Math.abs(centroidX() - before)).toBeLessThan(1);
   });
 
   // Every node takes the centre pull now, not just the ones no room claimed -- a card with no

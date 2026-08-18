@@ -5,7 +5,7 @@
  *
  *  The tick loop here is GraphView's loop, and that is the reason to have this file at all.
  *  Anything that changes it must change here, once. */
-import { countOverlaps, createBoardSimulation, linkDistanceFor, type BoardParams, type Sim, type SimLink } from "./board-force.js";
+import { countCardOverlaps, countOverlaps, createBoardSimulation, linkDistanceFor, type BoardParams, type Sim, type SimLink } from "./board-force.js";
 import { edgeCrossings, linkDistError, hubFreedom, type QualityMetrics } from "./board-quality.js";
 import type { CardGraph } from "../types.js";
 
@@ -75,6 +75,7 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
     }));
     const quality: QualityMetrics = {
       nodeOverlaps: countOverlaps(nodes),
+      cardOverlaps: countCardOverlaps(nodes),
       edgeCrossings: edgeCrossings(edges, at),
       linkDistError: linkDistError(edges, at),
       hubFreedom: hubFreedom(graph.nodes),

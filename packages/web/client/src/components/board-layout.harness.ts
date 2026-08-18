@@ -60,6 +60,7 @@ for (const name of fixtures) {
     const key = ARMS.length > 1 ? `${name}/${arm.name}` : name;
     const got: Caps = {
       nodeOverlaps: sum(t.map((x) => x.nodeOverlaps)),
+      cardOverlaps: sum(t.map((x) => x.cardOverlaps)),
       edgeCrossings: sum(t.map((x) => x.edgeCrossings)),
       linkDistError: Math.ceil(mean(t.map((x) => x.linkDistError))),
     };
@@ -68,7 +69,7 @@ for (const name of fixtures) {
     const cap = QUALITY_CAPS[key];
     if (cap === undefined) missing.push(key);
     else {
-      for (const k of ["nodeOverlaps", "edgeCrossings", "linkDistError"] as const) {
+      for (const k of ["nodeOverlaps", "cardOverlaps", "edgeCrossings", "linkDistError"] as const) {
         if (got[k] > cap[k]) over.push(`${key} ${k} ${got[k]} > cap ${cap[k]}`);
         else if (got[k] < cap[k]) under.push(`${key} ${k} ${got[k]} < cap ${cap[k]} -- lower it`);
       }
@@ -79,6 +80,7 @@ for (const name of fixtures) {
       String(t[0].cards).padStart(5),
       String(t[0].edges).padStart(5),
       String(got.nodeOverlaps).padStart(8),
+      String(got.cardOverlaps).padStart(9),
       String(got.edgeCrossings).padStart(9),
       got.linkDistError.toFixed(0).padStart(9),
       mean(t.map((x) => x.motionMean)).toFixed(2).padStart(10),
@@ -89,7 +91,7 @@ for (const name of fixtures) {
 
 console.log([
   "fixture     ", ...(ARMS.length > 1 ? ["arm      "] : []), "cards", "edges",
-  "overlaps", "crossings", "distError", "motionMean", "motionMax",
+  "overlaps", "cardOverlap", "crossings", "distError", "motionMean", "motionMax",
 ].join(" "));
 console.log(rows.join("\n"));
 

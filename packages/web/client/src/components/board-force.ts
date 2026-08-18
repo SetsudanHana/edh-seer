@@ -8,40 +8,43 @@ import type { GraphNode } from "../types.js";
  *  property of the CARD, not of the geometry that used to group them, so it belongs beside
  *  nodeRadius -- the one function that reads it. */
 export const ART_RADIUS = 14;
-/** The gap forceCollide leaves between two settled discs. Half of it rides on each disc. */
-export const COLLISION_PAD = 5;
-
-/** The centre-to-centre distance two settled nodes end up at, at the shipped pad. Every card-mode
- *  size is derived from it, so the drawn card and the space the simulation leaves for it cannot
- *  drift apart -- the same failure `nodeRadius`'s comment above records (cards simulated at 3.5
- *  while painting at 14). */
-export const SETTLED_SPACING = 2 * (ART_RADIUS + COLLISION_PAD / 2);
-
 /** A Magic card is 5:7; 1.4 is that ratio. */
 export const CARD_ASPECT = 1.4;
 
-/** CARD MODE SIZED SO IT CANNOT OVERLAP (2026-08-18, owner-reported twice: 2026-08-13 and again
- *  today). Card mode paints a RECTANGLE, and two axis-aligned rectangles miss each other only when
- *  |dx| >= w or |dy| >= h -- so a circular collision of centre distance D guarantees no overlap only
- *  when D >= the card's DIAGONAL, not its height. At the shipped 28 x 39.2 the diagonal is 48.2
- *  against a settled spacing of 33, and cards overlapped on every board.
+/** What card mode paints. THE CARD IS THE PRIMITIVE and the collision follows it (owner's ruling,
+ *  2026-08-18: "I would prefer having bigger cards cause they should be readable"). The first cut
+ *  had this the other way round -- card sized down to fit the disc spacing -- which removed the
+ *  overlap at zero layout cost but made the card 19.2 wide in the one view whose entire purpose is
+ *  reading the card. */
+export const CARD_W = ART_RADIUS * 2;
+export const CARD_H = CARD_W * CARD_ASPECT;
+
+/** CARD MODE MUST NOT OVERLAP, AND THE DIAGONAL IS WHAT DECIDES IT (2026-08-18; owner-reported
+ *  2026-08-13 and again today, reproduced live at card zoom before any edit).
+ *
+ *  Two axis-aligned rectangles miss each other only when |dx| >= w OR |dy| >= h, so a CIRCULAR
+ *  collision of settled centre distance D guarantees it only when D >= the card's DIAGONAL. At the
+ *  old pad of 5 the spacing was 33 against a diagonal of 48.2, so cards overlapped -- and not only
+ *  on the y axis as the roadmap entry had it: the worst case is diagonal neighbours.
  *
  *  MEASURED over the five fixtures, 10 seeds, 800 ticks -- mean overlapping card pairs:
- *    shipped 28 x 39.2                       sorin 76.3 · inalla 68.8 · fairdrazi 104.9 · changelings 16.6 · braids 19.7
- *    collide raised to diagonal/2 (r 24.1)   sorin  3.8 · inalla  1.2 · fairdrazi   5.4 · changelings  0.1 · braids  0.0
- *    THIS: card shrunk to fit the spacing    sorin  0.4 · inalla  0.5 · fairdrazi   0.3 · changelings  0.0 · braids  0.1
+ *    pad 5, card 28 x 39.2 (before)   sorin 76.3 · inalla 68.8 · fairdrazi 104.9 · changelings 16.6 · braids 19.7
+ *    THIS: pad 20.2, card unchanged   sorin  3.8 · inalla  1.2 · fairdrazi   5.4 · changelings  0.1 · braids  0.0
+ *    (rejected) card shrunk to 19.2   sorin  0.4 · inalla  0.5 · fairdrazi   0.3 · changelings  0.0 · braids  0.1
  *
- *  The layout arm works and COSTS THE LAYOUT: linkDistError rose 39 -> 73 on sorin (+87%), 41 -> 54,
- *  48 -> 60, 36 -> 41, 42 -> 47, because a hard 48.2 floor between centres stops a dense mesh
- *  compressing. Sizing the card instead leaves crossings and distError BYTE-IDENTICAL -- the
- *  simulation is untouched -- and answers the design question the roadmap raised: card mode is a
- *  zoom STATE, and spacing the whole board for a view you are only sometimes in taxes the view you
- *  are always in. The residual ~0.4 pairs is the soft collide (one iteration, alpha decay) letting a
- *  few pairs settle inside the radius; it is not the geometry.
+ *  THE COST IS REAL AND IT IS THE LAYOUT'S, which is why the rejected arm was measured first: a hard
+ *  48.2 floor between centres stops a dense mesh compressing, so linkDistError rises (see the
+ *  re-capped table on QUALITY_CAPS). The owner took that trade for a readable card. The residual
+ *  ~1-5 pairs is the SOFT collide -- one iteration, alpha decay -- letting a few pairs settle inside
+ *  the radius; raising `collideIterations` to 2 takes sorin 3.8 -> 2.4 and inalla to 0.0 at more
+ *  crossings, and is a knob on the tuning panel rather than a default.
  *
- *  Derived, never typed twice: change the pad and the card follows. */
-export const CARD_W = SETTLED_SPACING / Math.hypot(1, CARD_ASPECT);
-export const CARD_H = CARD_W * CARD_ASPECT;
+ *  Derived, never typed twice: the card's size decides the gap, so the two cannot drift apart --
+ *  the exact failure `nodeRadius`'s comment above records. */
+export const COLLISION_PAD = Math.hypot(CARD_W, CARD_H) - 2 * ART_RADIUS;
+
+/** The centre-to-centre distance two settled nodes end up at. */
+export const SETTLED_SPACING = 2 * (ART_RADIUS + COLLISION_PAD / 2);
 
 /** A graph node as the force simulation sees it. `index` is written by d3-force itself when the
  *  node array is bound to a simulation; it is not ours to set.
@@ -83,6 +86,24 @@ export function countOverlaps(cards: readonly { x: number; y: number }[]): numbe
   for (let i = 0; i < cards.length; i++) {
     for (let j = i + 1; j < cards.length; j++) {
       if (Math.hypot(cards[i].x - cards[j].x, cards[i].y - cards[j].y) < 2 * ART_RADIUS) overlaps++;
+    }
+  }
+  return overlaps;
+}
+
+/** Pairs of CARDS that overlap in card mode -- the metric `countOverlaps` above could not see.
+ *
+ *  It read discs (centres closer than 2 * ART_RADIUS) and reported 0 on every fixture while 76 pairs
+ *  of CARDS overlapped on sorin, because a card is a rectangle and a disc is not. A gate measuring
+ *  the wrong shape is worse than no gate: it says the board is clean while the user is looking at
+ *  cards stacked on top of each other, which is exactly how this shipped twice.
+ *
+ *  Rectangles, so the test is per axis: they miss only when |dx| >= CARD_W or |dy| >= CARD_H. */
+export function countCardOverlaps(cards: readonly { x: number; y: number }[]): number {
+  let overlaps = 0;
+  for (let i = 0; i < cards.length; i++) {
+    for (let j = i + 1; j < cards.length; j++) {
+      if (Math.abs(cards[i].x - cards[j].x) < CARD_W && Math.abs(cards[i].y - cards[j].y) < CARD_H) overlaps++;
     }
   }
   return overlaps;
