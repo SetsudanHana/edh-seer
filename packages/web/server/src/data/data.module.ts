@@ -30,6 +30,11 @@ export function attachRolesAndArt(
   }>,
   rolesByName: Map<string, string[]>,
   normalize: (name: string) => string,
+  /** Token node id (`token:<name>`) -> art crop, from the `tokens` collection. A token joins no
+   *  corpus row, so `docs` can never carry its art; the caller resolves it by the token's ORACLE id
+   *  and hands the result in keyed by node id. Defaults to empty so a caller with no token nodes
+   *  (and every existing test) is unchanged. */
+  tokenArtById: Map<string, string> = new Map(),
 ): WireGraph {
   const docByName = new Map(docs.map((d) => [normalize(d.name), d] as const));
   const nodeIds = new Set(graph.nodes.map((n) => normalize(n.id)));
@@ -62,13 +67,18 @@ export function attachRolesAndArt(
     // others drew as a blank disc. The FRONT face is the fallback because it is the side the card is
     // played from and the side the board draws; adventure/split/flip are one physical face and keep
     // their card-level art, which still wins here.
-    const artCrop = doc?.artCrop ?? doc?.imageUris?.art_crop ?? doc?.faces?.find((f) => f.artCrop)?.artCrop;
+    // A TOKEN'S ART COMES FROM THE `tokens` COLLECTION, NEVER FROM `docs`. Keyed on the node id, not
+    // the label: 92 of the corpus's 661 token names are also a real card, and a name key would hand
+    // the Treasure token the art of a card called Treasure -- the exact confusion `nodeId` exists to
+    // prevent. A token with no row in the map keeps the blank dashed disc, which is honest.
+    const artCrop = n.isToken
+      ? tokenArtById.get(n.id)
+      : doc?.artCrop ?? doc?.imageUris?.art_crop ?? doc?.faces?.find((f) => f.artCrop)?.artCrop;
     return {
       id: n.id,
       label: n.label,
       // A token node joins no card doc by design (its id is `token:<name>`, and there is no corpus
-      // row for a token) -- so it carries no roles and no art. ponytail: the `tokens` collection
-      // DOES hold an art crop; join it here if a blank disc reads as a bug rather than as a token.
+      // row for a token) -- so it carries no roles. Its ART comes from `tokenArtById` above.
       ...(n.isToken ? { isToken: true as const } : {}),
       copies: n.copies,
       types: n.types,
@@ -197,13 +207,31 @@ export function attachRolesAndArt(
             // One copy each: a token is not a card slot. A token whose name collides with a real
             // card in the deck stays its OWN node -- `projectDeckGraph` keys on `nodeId`, not on the
             // name, because 92 of the corpus's 661 token names are also a real card.
-            projectionDeck.push(
-              ...matcher.collectTokenNodes(deckCards as never, tokenTags).nodes,
-            );
+            const tokenNodes = matcher.collectTokenNodes(deckCards as never, tokenTags).nodes;
+            projectionDeck.push(...tokenNodes);
+            // TOKEN ART, joined on the token's ORACLE id -- `tags.oracleId` on a token node IS the
+            // `tokens` row's `_id` (that is what `loadTokenTags` keys its synthesis on), so this is
+            // the exact join, not the (name, typeLine) guess Task 3/4a retired. Keyed OUT by node id
+            // because that is what `attachRolesAndArt` sees.
+            // ponytail: two DIFFERENT tokens sharing a name collapse to one node id already (that is
+            // `nodeId`'s granularity, not this join's) -- last one wins here; give a node its oracle
+            // id if that ever needs separating.
+            const tokenArtById = new Map<string, string>();
+            if (tokenNodes.length > 0) {
+              const oracleIds = [...new Set(tokenNodes.map((t) => t.tags!.oracleId))];
+              const rows = await (store.db as Db).collection<{ _id: string; artCrop?: string }>("tokens")
+                .find({ _id: { $in: oracleIds } }, { projection: { artCrop: 1 } })
+                .toArray();
+              const artByOracle = new Map(rows.map((r) => [r._id, r.artCrop]));
+              for (const t of tokenNodes) {
+                const art = artByOracle.get(t.tags!.oracleId);
+                if (art) tokenArtById.set(matcher.nodeId(t.card.name, true), art);
+              }
+            }
             const projected = matcher.projectDeckGraph(
               projectionDeck as never, reasons, engine.loadImpactWeights(),
             );
-            return attachRolesAndArt(projected, docs, rolesByName, data.normalizeName);
+            return attachRolesAndArt(projected, docs, rolesByName, data.normalizeName, tokenArtById);
           },
           analyze: async (cards, combos, commanderNames) => {
             const lookup = data.mongoLookup(store as never);

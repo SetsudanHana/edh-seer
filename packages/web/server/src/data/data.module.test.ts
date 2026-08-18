@@ -190,3 +190,29 @@ test("undirectedReasons and offDeckReasons pass straight through", () => {
   expect(out.undirectedReasons).toBe(3);
   expect(out.offDeckReasons).toBe(2);
 });
+
+// A TOKEN JOINS NO CORPUS ROW, so its art can only come from the `tokens` collection, handed in by
+// node id. Keyed on the id and not the label because 92 of the corpus's 661 token names are also a
+// real card: a name key would paint the Treasure token with the art of a card called Treasure.
+test("a token node takes its art from the token map, never from a same-named card doc", () => {
+  const graph = emptyGraph([
+    node({ id: "token:Treasure", label: "Treasure", isToken: true, types: ["token", "artifact"] }),
+    node({ id: "Treasure", label: "Treasure" }),
+  ]);
+  const docs = [{ _id: "card", name: "Treasure", artCrop: "https://example.com/card.jpg" }];
+  const tokenArt = new Map([["token:Treasure", "https://example.com/token.jpg"]]);
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize, tokenArt);
+
+  expect(out.nodes.find((n) => n.id === "token:Treasure")?.artCrop).toBe("https://example.com/token.jpg");
+  expect(out.nodes.find((n) => n.id === "Treasure")?.artCrop).toBe("https://example.com/card.jpg");
+});
+
+test("a token with no art row keeps the blank disc rather than borrowing a card's", () => {
+  const graph = emptyGraph([node({ id: "token:Bird", label: "Bird", isToken: true })]);
+  const docs = [{ _id: "b", name: "Bird", artCrop: "https://example.com/bird-card.jpg" }];
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize, new Map());
+
+  expect(out.nodes[0]?.artCrop).toBeUndefined();
+});
