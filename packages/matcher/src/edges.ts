@@ -668,6 +668,68 @@ function stampSides(r: Reason, producer: DeckCard, consumer: DeckCard): Reason {
 
 /** Directional reasons from producer P to consumer C: event edges (P.emits ↔ C.triggers) and
  *  static edges (P.static effect ↔ C.characteristics). */
+/** THE PRINTED TEMPLATES OF THE COPY FAMILY. `enters` is the subset that puts a NEW object onto the
+ *  battlefield; "becomes a copy" changes one already there. */
+const COPY_ENTERS_CUE = /tokens? that(?:'s| is| are) (?:a )?cop(?:y|ies) of|enters? as a copy of/i;
+const COPY_BECOMES_CUE = /becomes? a copy of/i;
+/** "Except it's a 3/3 Dragon", "except it loses all other card types" -- a copy whose CARD TYPES are
+ *  rewritten, where the derived subject describes what the token BECOMES and not what it copies.
+ *  Astral Dragon copies a NONCREATURE permanent and derives `{type: creature, subtype: dragon}`;
+ *  reading that as its target made it claim every Dragon in a Dragon deck. Additive wording is left
+ *  alone on purpose -- Phantasmal Image's "except it's an Illusion IN ADDITION TO its other types"
+ *  is still a copy of the creature -- as is a stat-only change (Saw in Half's halved power). */
+const COPY_REPLACES_TYPE_CUE = /loses all other card types|except (?:it|they)(?:'s|'re| is| are) \d+\/\d+/i;
+/** A populate effect copies a TOKEN, never the commander -- refused rather than claimed, on the
+ *  same rule as everything else here: a wrong claim costs more than a missing one. */
+const COPY_OF_TOKEN_CUE = /copy of (?:a |an |another |target |that )*(?:\w+ )?token/i;
+
+/** Board state and provenance a copy claim must not carry into the type test: `token` means opposite
+ *  things on the two shapes of the family, and `control`/`zone`/`counter` describe the object being
+ *  copied, not the card whose printed characteristics this is matched against. */
+const strip = (s: Partial<SubjectFilter>): Partial<SubjectFilter> => {
+  const { token: _t, zone: _z, counter: _c, control: _ctl, ...rest } = s;
+  return rest;
+};
+
+/** What a copy effect can copy, or undefined when the card copies no permanent.
+ *
+ *  The TYPE comes from the derived effect subject, which is the half the printed cue cannot give:
+ *  Relm's Sketching copies an artifact, creature or land, Replication Technique a permanent, and a
+ *  `clone` static that derived no subject defaults to creature -- every member of the family copies
+ *  a creature at minimum. `token` is DROPPED because the field means opposite things on the two
+ *  shapes: on "create a token that's a copy of target creature" it describes what is CREATED, on a
+ *  populate effect what is COPIED, and only the printed cue tells them apart.
+ *
+ *  CEILING (`ponytail:` -- read before trusting a claim): `control` is ignored, so a card making an
+ *  OPPONENT copy something over-claims, and Coiling Rebirth's copy is conditioned on the creature
+ *  NOT being legendary, which no derived field records. Both are single cards; gate on control only
+ *  if a measurement finds the family bigger than that. */
+function copySubject(p: DeckCard): { subject: SubjectFilter; enters: boolean } | undefined {
+  const oracle = p.card.oracleText ?? "";
+  if (COPY_OF_TOKEN_CUE.test(oracle)) return undefined;
+  const enters = COPY_ENTERS_CUE.test(oracle);
+  if (!enters && !COPY_BECOMES_CUE.test(oracle)) return undefined;
+  if (COPY_REPLACES_TYPE_CUE.test(oracle)) return undefined;
+  // A TYPED subject first, and a `clone` static only as the fallback. Court of Vantress derives TWO
+  // token-generation abilities -- an untyped one and the real `["artifact","enchantment"]` one --
+  // and taking the first made it claim to copy a creature. A `clone` static (Stunt Double) derives
+  // no subject at all, and creature is the honest default there: every printed member of that
+  // family copies a creature at minimum. Anything else untyped is REFUSED, not widened.
+  const abilities = p.tags?.abilities ?? [];
+  const typed = abilities
+    .filter((a) => (a.effect.kind === "clone" || a.effect.kind === "token-generation")
+      && (a.effect.subject?.type !== undefined || a.effect.subject?.subtype !== undefined))
+    .map((a) => a.effect.subject as Partial<SubjectFilter>);
+  // THE FIRST typed branch, not all of them. Merging every branch into an `anyOf` was built and
+  // MEASURED: it recovers Saheeli's Artistry's creature mode (its artifact mode derives first) and
+  // costs a FALSE claim on the frozen panel -- 86.4% -> 86.2%, false 63 -> 64. Under-claiming is the
+  // correct failure direction, so the wider read is refused, not tuned.
+  const raw: Partial<SubjectFilter> | undefined = typed[0]
+    ?? (abilities.some((a) => a.effect.kind === "clone") ? { type: "creature" } : undefined);
+  if (raw === undefined) return undefined;
+  return { subject: { ...strip(raw), control: "any", token: null } as SubjectFilter, enters };
+}
+
 export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
   if (!p.tags || !c.tags) return [];
   const reasons: Reason[] = [];
@@ -1079,6 +1141,56 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         consumer: c.card.name,
         producer: p.card.name,
       });
+    }
+  }
+
+  // THE COPY FAMILY, AND THE RULE NOBODY PRINTS (CR 707.2 + CR 704.5j).
+  //
+  // A copy effect puts a second Hidetsugu and Kairi onto the battlefield. Two facts follow, and the
+  // engine could state neither. The copy has the copied card's abilities (CR 707.2), so the copied
+  // card's OWN entry trigger fires again -- and if it is LEGENDARY, CR 704.5j immediately puts one
+  // of the two into its owner's graveyard, firing its own death trigger. The legend rule is a
+  // STATE-BASED ACTION printed on no card, so no clause layer can ever reach it: the same shape as
+  // a Saga's own sacrifice (`sagaEvents` in implied.ts), except a Saga at least prints a reminder.
+  //
+  // Measured on `hidetsugu-and-kairi-like-to-multiply`, the deck built to abuse exactly this: 28
+  // cards carry a permanent-copy cue and 18 of them had degree <= 1, their only edge a medallion.
+  //
+  // WHY THE PRINTED CUE AND NOT AN EFFECT KIND. The derived kinds do not separate the family. Rite
+  // of Replication derives `token-generation` byte-identically to a 1/1 Soldier maker, and the one
+  // structural marker (`scope: "target"` with `token: true`) reads 38 corpus cards of which 4 are
+  // Role/Aura tokens ATTACHED to a target, not copies of it. The three templates are printed and
+  // nothing else uses them.
+  const copy = copySubject(p);
+  if (copy && !c.isToken) {
+    const legendary = c.tags.characteristics.types.includes("legendary");
+    for (const a of c.tags.abilities) {
+      if (!a.trigger?.subject.self) continue;
+      for (const rawVerb of a.trigger.verbs) {
+        // The RAW verb, not the normalized one: `normalizeZoneEvent` rewrites `dies` to
+        // `leaves`@battlefield, which a plain "when this leaves the battlefield" trigger also
+        // becomes -- and a bounce is not a death the legend rule causes.
+        if (rawVerb !== "enters" && rawVerb !== "dies") continue;
+        // ENTERS is claimed only by the cues that put a NEW object onto the battlefield. "Becomes a
+        // copy" (Sakashima's Will) rewrites a permanent already in play -- no entry, still two
+        // legends. DIES needs the legend rule, so it needs a legendary consumer and nothing else.
+        if (rawVerb === "enters" && !copy.enters) continue;
+        if (rawVerb === "dies" && !legendary) continue;
+        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
+        if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) continue;
+        const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
+        reasons.push({
+          tag: key,
+          text: rawVerb === "dies"
+            ? `${p.card.name} copies ${c.card.name}; the legend rule puts one of them into the graveyard, triggering its death ability`
+            : `${c.card.name} triggers on ${humanizeEvent(key, true)}; ${p.card.name} copies it`,
+          effectKind: a.effect.kind,
+          repeatability: triggerRepeatability(t.subject),
+          scaling: a.effect.scaling,
+          consumer: c.card.name,
+          producer: p.card.name,
+        });
+      }
     }
   }
 

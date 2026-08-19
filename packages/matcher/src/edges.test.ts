@@ -2159,3 +2159,68 @@ describe("cost reduction needs generic mana to reduce", () => {
     expect(costReasons(generic, spell("No Cost Recorded", "")).length).toBeGreaterThan(0);
   });
 });
+
+
+// COPY + THE LEGEND RULE (CR 707.2 / 704.5j). A copy effect fires the copied card's own entry
+// trigger, and a legendary copy dies to a state-based action no card prints.
+const copyFixture = (name: string, oracle: string, subject: Record<string, unknown> = { type: "creature", token: true, scope: "target" }) => ({
+  card: { name, typeLine: "Sorcery", oracleText: oracle, keywords: [], colors: [], manaValue: 4 } as never,
+  tags: {
+    oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 4, power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "on-cast", effect: { kind: "token-generation", subject } }],
+  } as unknown as CardTags,
+});
+const selfTriggerLegend = (name: string, legendary = true) => ({
+  card: { name, typeLine: "Legendary Creature", oracleText: "", keywords: [], colors: [], manaValue: 5 } as never,
+  tags: {
+    oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: legendary ? ["legendary", "creature"] : ["creature"], subtypes: [], colors: [], identity: [], cmc: 5, power: null, toughness: null, token: false, keywords: [] },
+    abilities: [
+      { kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } }, effect: { kind: "draw-card" } },
+      { kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, self: true } }, effect: { kind: "player-life-loss" } },
+    ],
+  } as unknown as CardTags,
+});
+
+test("copy: a token copy of a legend fires its entry trigger AND its death trigger", () => {
+  const r = directedReasons(copyFixture("Rite of Replication", "Create a token that's a copy of target creature."), selfTriggerLegend("Hidetsugu and Kairi"), H);
+  expect(r.some((x) => x.tag === "enters:any" && /copies it/.test(x.text))).toBe(true);
+  expect(r.some((x) => x.tag === "dies:any" && /legend rule/.test(x.text))).toBe(true);
+});
+
+test("copy: a NONLEGENDARY consumer gets the entry and never the legend rule", () => {
+  const r = directedReasons(copyFixture("Rite of Replication", "Create a token that's a copy of target creature."), selfTriggerLegend("Solemn Simulacrum", false), H);
+  expect(r.some((x) => x.tag === "enters:any")).toBe(true);
+  expect(r.some((x) => x.tag === "dies:any")).toBe(false);
+});
+
+test("copy: 'becomes a copy' makes no entry — the permanent is already on the battlefield", () => {
+  const r = directedReasons(copyFixture("Sakashima's Will", "Choose a creature you control. Each other creature you control becomes a copy of that creature until end of turn.", { type: "creature" }), selfTriggerLegend("Hidetsugu and Kairi"), H);
+  expect(r.some((x) => x.tag === "enters:any")).toBe(false);
+  expect(r.some((x) => x.tag === "dies:any")).toBe(true);
+});
+
+test("copy: a populate effect copies a TOKEN and claims nothing", () => {
+  const r = directedReasons(copyFixture("Growing Ranks", "Populate. (Create a token that's a copy of a creature token you control.)"), selfTriggerLegend("Hidetsugu and Kairi"), H);
+  expect(r.length).toBe(0);
+});
+
+test("copy: a card that copies an ARTIFACT does not copy a creature", () => {
+  const r = directedReasons(copyFixture("Sculpting Steel", "Create a token that's a copy of target artifact.", { type: "artifact", token: true, scope: "target" }), selfTriggerLegend("Hidetsugu and Kairi"), H);
+  expect(r.length).toBe(0);
+});
+
+test("copy: a token whose card types are REWRITTEN copies something else entirely", () => {
+  // Astral Dragon copies a NONCREATURE permanent; its derived subject describes the 3/3 Dragon the
+  // token becomes, so reading it as the target claimed every Dragon in the deck.
+  const p = copyFixture("Astral Dragon", "When this creature enters, create two tokens that are copies of target noncreature permanent, except they're 3/3 Dragon creatures.", { type: "creature", subtype: "dragon", token: true, scope: "target" });
+  expect(directedReasons(p, selfTriggerLegend("Hidetsugu and Kairi"), H).length).toBe(0);
+});
+
+test("copy: an untyped token-generation ability does not widen a card that also names types", () => {
+  // Court of Vantress derives two token-generation abilities; only the second names what it copies.
+  const p = copyFixture("Court of Vantress", "At the beginning of your upkeep, choose up to one other target enchantment or artifact. If you're the monarch, you may create a token that's a copy of it.", { control: "any", token: null });
+  p.tags.abilities.push({ kind: "triggered", effect: { kind: "token-generation", subject: { type: ["artifact", "enchantment"], token: true, scope: "target" } } } as never);
+  expect(directedReasons(p, selfTriggerLegend("Hidetsugu and Kairi"), H).length).toBe(0);
+});
