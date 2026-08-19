@@ -34,6 +34,7 @@ import { cutCandidates, deckSlack } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
 import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
+import { promoteSpecificHeadline } from "./theme-promote.js";
 import { rankThemesByLoop } from "./theme-loop.js";
 
 /**
@@ -575,10 +576,16 @@ export function analyzeDeckStructured(
         return byLoop.length > 0 ? byLoop : tfidfRanked;
       })()
     : tfidfRanked;
-  const themes = rankedThemes.map((tag) => ({ tag, count: deckFreq.get(tag) ?? 0 }));
+  // THE PROMOTION RULE (spec §10). A post-rank guard only the HEAD can move through: a headline must
+  // not be a strict generalization of a sibling the deck plainly cares about. Needs the census, so
+  // it is computed here whether or not loop mode asked for one. See theme-promote.ts.
+  const promoteMembership = loopMembership
+    ?? themeMembership(resolved, allReasons, themeCandidates([...deckFreq.keys()]));
+  const promotedThemes = promoteSpecificHeadline(rankedThemes, deckFreq, promoteMembership);
+  const themes = promotedThemes.map((tag) => ({ tag, count: deckFreq.get(tag) ?? 0 }));
 
   const nonlandCount = resolved.filter((dc) => !isLand(dc)).length;
-  const cohesion = computeCohesion(rankedThemes, deckFreq, nonlandCount, makeFold(hierarchy));
+  const cohesion = computeCohesion(promotedThemes, deckFreq, nonlandCount, makeFold(hierarchy));
 
   const deckStats = computeDeckStats(resolved.map((dc) => dc.card));
 
