@@ -79,9 +79,33 @@ function impliedEntryThemeTags(tags: CardTags): string[] {
   if ((tags.characteristics.types ?? []).some((t) => t.toLowerCase() === "land")) return [];
   return impliedEvents(tags.characteristics)
     .filter((e) => e.verb === "enters")
-    .map((e) => {
+    .flatMap((e) => {
       const n = normalizeZoneEvent(e);
-      return zoneEventKey(n.verb, n.subject.zone, themeSubjectKey(n.subject));
+      // ONE TAG PER SUBTYPE, not one keyed on the first (roadmap A9). `themeSubjectKey` returns a
+      // single key and resolves subtypes with `list(subtype)[0]` -- the first as PRINTED -- so a
+      // "Human Wizard" keyed `enters:human` and never `enters:wizard`, and printed order decided
+      // which. Measured: `inalla`, a WIZARD deck, counted `enters:human` 15 against `enters:wizard`
+      // 9, and `marchesa-legends-matter`, a LEGENDS deck, read the headline "humans entering".
+      //
+      // `themeSubjectKey` ITSELF IS NOT TOUCHED and must not be: it keys REASON tags, and the frozen
+      // panel keys its cached verdicts on `producer|consumer|tag` -- the last attempt to compose
+      // extra facts into that key cost 22 judging debt while changing no theme. Only the IMPLIED
+      // entry fans out, and it has no Reason of its own. A card's AUTHORED emits keep first-subtype
+      // keying above, so they stay consistent with the reason tags their edges carry.
+      // A CHANGELING IS EVERY CREATURE TYPE, and fanning out over that is ~350 tags for one card.
+      // `extractCharacteristics` replaces a changeling's subtypes with the whole CREATURE_SUBTYPES
+      // list (printed ones FIRST), which is right for MATCHING -- a changeling really does satisfy
+      // every typal payoff -- and nonsense as a THEME: measured, `tribal-tribal` went
+      // "shapeshifters entering" -> "bears entering" and the corpus census nearly doubled,
+      // 4,500 deck-tags -> 8,706. A changeling advertises its PRINTED type, which is subtypes[0].
+      const changeling = (tags.characteristics.keywords ?? []).some((k) => k.toLowerCase() === "changeling");
+      const subtypes = changeling
+        ? [n.subject.subtype ?? []].flat().slice(0, 1).map((x) => String(x).toLowerCase())
+        : [n.subject.subtype ?? []].flat().map((x) => String(x).toLowerCase());
+      const keys = subtypes.length > 0
+        ? subtypes.map((sub) => themeSubjectKey({ ...n.subject, subtype: sub }))
+        : [themeSubjectKey(n.subject)];
+      return [...new Set(keys)].map((k) => zoneEventKey(n.verb, n.subject.zone, k));
     });
 }
 

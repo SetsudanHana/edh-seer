@@ -2069,9 +2069,37 @@ describe("implied entry theme tags", () => {
     expect([...cardThemeTags(chars(["instant"]))]).toEqual([]);
   });
 
+  // A HUMAN WIZARD IS BOTH (roadmap A9). themeSubjectKey resolves subtypes with list(subtype)[0],
+  // so printed order decided which one a card's own entry advertised -- a WIZARD deck counted
+  // enters:human 15 against enters:wizard 9.
+  test("a multi-subtype permanent advertises EVERY subtype, not the first as printed", () => {
+    const tags = [...cardThemeTags(chars(["creature"], ["human", "wizard"]))];
+    expect(tags).toContain("enters:human");
+    expect(tags).toContain("enters:wizard");
+  });
+
+  test("a permanent with NO subtype still advertises its card type", () => {
+    expect([...cardThemeTags(chars(["artifact"]))]).toEqual(["enters:artifact"]);
+  });
+
   test("adds ENTRY only, never the implied cast or attack", () => {
     const tags = [...cardThemeTags(chars(["creature"], ["dragon"]))];
     expect(tags).toEqual(["enters:dragon"]);
     expect(tags.some((t) => t.startsWith("cast:") || t.startsWith("attacks:"))).toBe(false);
   });
+});
+
+// A CHANGELING IS EVERY CREATURE TYPE, which is right for MATCHING and nonsense as a THEME: fanning
+// out over ~350 subtypes took `tribal-tribal` from "shapeshifters entering" to "bears entering" and
+// nearly doubled the corpus census. It advertises its PRINTED type.
+test("a changeling advertises its printed type only, not all 350", () => {
+  const changeling: CardTags = {
+    oracleId: "x", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["creature"], subtypes: ["shapeshifter", "bear", "wizard"], colors: [], identity: [],
+      cmc: 1, power: null, toughness: null, token: false, keywords: ["changeling"],
+    },
+    abilities: [],
+  };
+  expect([...cardThemeTags(changeling)]).toEqual(["enters:shapeshifter"]);
 });
