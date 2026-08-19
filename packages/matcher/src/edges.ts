@@ -42,8 +42,52 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
 
 /** A card's set of theme tags (for deck-frequency ranking): one per trigger verb, emit, and
  *  static effect. Mirrors the flat engine's produces∪cares membership. */
+/** The theme tags a card earns just by BEING a permanent that enters the battlefield.
+ *
+ *  `cardThemeTags` read a card's ABILITIES only, so a permanent's own entry contributed nothing:
+ *  measured on `braids-mono-black-enchantress`, 36 of 75 nonlands ARE enchantments and only 8
+ *  carried `enters:enchantment`, which is why that deck's cohesion read 0.14 once the fold stopped
+ *  summing unrelated families into it.
+ *
+ *  Built off `impliedEvents` rather than re-derived, so the tag says exactly what the matcher
+ *  claims -- one face at a time, no `cast` for a token (CR 111.7), a transform card's back face
+ *  excluded. ENTRY ONLY: `impliedEvents` also pushes `cast` for every nonland and
+ *  `attacks`/`combat-damage` for every creature, and adding those would make every nonland a
+ *  `cast:` theme card and every creature an `attacks:` one -- a different and much larger claim.
+ *
+ *  Supply, never demand, so `cardCaresTags` does NOT get these and they enter `rankFreq` at
+ *  `PRODUCER_SHARE` rather than at full weight.
+ *
+ *  KEYED AT THE SUBTYPE, not the card type, and the alternative was BUILT AND MEASURED rather than
+ *  argued (spec §3). A type-level key LOST two subtype-level primaries -- `magar-spellslinger`
+ *  `enters:treasure` and `rocket-the-mechanist` `enters:vehicle` both collapsing into
+ *  `enters:artifact`, which is the exact collapse the family-ranking design was refused for -- and
+ *  took distinct headlines to 20, under the incumbent 21. The subtype key loses none and takes
+ *  distinct headlines to 29. Fragmentation is not a hazard here because `computeCohesion` FOLDS
+ *  (`theme-fold.ts`), so a deck's Dragons are counted inside the creature family regardless. */
+function impliedEntryThemeTags(tags: CardTags): string[] {
+  // Absent characteristics (partial fixtures, and any caller holding a hand-built CardTags) yield
+  // NO entry tags rather than throwing -- a missing answer, never a crash.
+  if (!tags.characteristics) return [];
+  // A LAND'S OWN ENTRY IS THE MANA BASE, NEVER A THEME -- the same ruling that keeps a fetchland
+  // naming Swamp out of synergy, and that puts ramp and tax in `ROLE_NOT_SYNERGY`. MEASURED, not
+  // assumed: without this the first cut of this function themed **38 of 71 decks** on a basic land
+  // type -- "islands entering" on 13, "swamps entering" on 8, "mountains entering" on 5 -- because
+  // ~35 basics per deck out-count every real theme. A landfall deck still themes `enters:land`
+  // through the payoffs that TRIGGER on it and the ramp that AUTHORS it; what is excluded is a
+  // Island claiming to be a theme by existing.
+  if ((tags.characteristics.types ?? []).some((t) => t.toLowerCase() === "land")) return [];
+  return impliedEvents(tags.characteristics)
+    .filter((e) => e.verb === "enters")
+    .map((e) => {
+      const n = normalizeZoneEvent(e);
+      return zoneEventKey(n.verb, n.subject.zone, themeSubjectKey(n.subject));
+    });
+}
+
 export function cardThemeTags(tags: CardTags): Set<string> {
   const out = new Set<string>();
+  for (const t of impliedEntryThemeTags(tags)) out.add(t);
   for (const a of tags.abilities) {
     if (a.trigger) for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
     for (const e of a.emits ?? []) out.add(`${e.verb}:${themeSubjectKey(e.subject)}`);

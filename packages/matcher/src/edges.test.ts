@@ -2041,3 +2041,37 @@ describe("cost reduction forms edges, gated by what can actually be cast", () =>
     expect(reasons.map((r: Reason) => r.tag)).toContain("static:cost-reduction");
   });
 });
+
+// A PERMANENT'S OWN ENTRY IS A THEME TAG (roadmap A4, 2026-08-19). `cardThemeTags` read a card's
+// ABILITIES only, so 36 of braids-mono-black-enchantress's 75 nonlands were enchantments and 8
+// carried `enters:enchantment` -- which is why that deck's cohesion read 0.14 once the fold stopped
+// summing unrelated families into it.
+describe("implied entry theme tags", () => {
+  const chars = (types: string[], subtypes: string[] = []): CardTags => ({
+    oracleId: "x", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types, subtypes, colors: [], identity: [], cmc: 1, power: null, toughness: null, token: false, keywords: [] },
+    abilities: [],
+  });
+
+  test("keys a permanent's own entry at its SUBTYPE, and gives a vanilla card a tag at all", () => {
+    expect([...cardThemeTags(chars(["enchantment"]))]).toContain("enters:enchantment");
+    expect([...cardThemeTags(chars(["creature"], ["dragon"]))]).toContain("enters:dragon");
+  });
+
+  test("gives a LAND nothing -- a land's own entry is the mana base, never a theme", () => {
+    // Without this, ~35 basics per deck out-counted every real theme: the first cut themed 38 of the
+    // 71 calibration decks on a basic land type, 13 of them "islands entering".
+    expect([...cardThemeTags(chars(["land"], ["island"]))]).not.toContain("enters:island");
+    expect([...cardThemeTags(chars(["land"], ["island"]))]).toEqual([]);
+  });
+
+  test("gives an instant or sorcery nothing -- it never enters the battlefield", () => {
+    expect([...cardThemeTags(chars(["instant"]))]).toEqual([]);
+  });
+
+  test("adds ENTRY only, never the implied cast or attack", () => {
+    const tags = [...cardThemeTags(chars(["creature"], ["dragon"]))];
+    expect(tags).toEqual(["enters:dragon"]);
+    expect(tags.some((t) => t.startsWith("cast:") || t.startsWith("attacks:"))).toBe(false);
+  });
+});

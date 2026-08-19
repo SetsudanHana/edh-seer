@@ -13,8 +13,10 @@ const tokenAbility: CardTags["abilities"] = [{ kind: "triggered", trigger: { ver
 test("computeThemeStats counts document frequency per theme tag and total N", () => {
   const stats = computeThemeStats([doc(drawAbility), doc(drawAbility), doc(tokenAbility)]);
   expect(stats.N).toBe(3);
-  // 'enters:creature' appears on the two draw docs (their trigger subject).
-  expect(stats.counts["enters:creature"]).toBe(2);
+  // 'enters:creature' is on the two draw docs (their trigger subject) AND on all three by IMPLIED
+  // ENTRY -- every one of these fixtures is a creature, and a permanent's own entry is a theme tag
+  // of its card type since roadmap A4. Three, not two.
+  expect(stats.counts["enters:creature"]).toBe(3);
   // the token doc's distinctive emit is rarer.
   expect(stats.counts["enters:saproling"]).toBe(1);
 });
