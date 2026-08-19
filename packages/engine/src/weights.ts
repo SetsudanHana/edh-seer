@@ -17,8 +17,15 @@ export interface Cohesion {
   /** describeTag of the secondary theme, or null when the deck has only one theme. */
   secondary: string | null;
   secondaryTag: Tag | null;
-  /** Share of nonland cards touching the primary theme, in [0,1]. */
+  /** Share of nonland cards touching the PRIMARY THEME ITSELF, in [0,1]. Hand-checkable against the
+   *  decklist: for `enters:wizard` it is the deck's Wizard count over its nonland count. */
   score: number;
+  /** Share of nonland cards touching the primary's folded FAMILY. Equals `score` when the primary is
+   *  already general — `enters:creature` IS its family. The pair is the point (roadmap A10): a name
+   *  can be specific while the plan is broad, and one number cannot say both. `cult-of-clones` reads
+   *  "daleks entering" at theme 0.08 and family 0.46 — five Daleks inside a creature deck, which is
+   *  a real and actionable thing to be told. */
+  familyScore: number;
   label: string;
 }
 
@@ -205,26 +212,40 @@ export function computeCohesion(
   // went breadth 4.2 -> 2.0 and SYNERGY 3.8 -> 2.9, while 9 of 12 sampled decks -- every tribal one
   // among them -- themed the identical "creatures entering". Cohesion is a SHARE, which a family
   // answers correctly; the axis is a RANKING, where one universal bucket destroys the signal.
-  const familyKey = fold(primary);
-  let score: number;
-  if (cardThemeTagSets) {
-    // DISTINCT CARDS, which is what "share of the deck on theme" means.
-    let onTheme = 0;
-    for (const tags of cardThemeTagSets) {
-      for (const t of tags) if (fold(t) === familyKey) { onTheme++; break; }
+  // A SPECIFIC PRIMARY MEASURES ITSELF; A GENERAL ONE MEASURES ITS FAMILY (2026-08-19, roadmap A10).
+  // `fold(tag) === fold(primary)` counted the whole family whatever the primary was. That is right
+  // for the case the fold shipped for -- a token deck splitting across 22 `create-token:<subtype>`
+  // keys read 3 of 63 nonlands, 0.05 "unfocused" -- and wrong once the primary is already specific:
+  // `inalla` read "wizards entering 0.71" where 0.71 was the share of the deck that is CREATURE-ish.
+  // The label named one thing and the number measured another.
+  //
+  // ONE PREDICATE, NO BRANCH. A general primary is its own fold key, so `fold(tag) === primary`
+  // still admits every family member and its number is byte-identical. A specific primary is not
+  // its own fold key, so nothing folds INTO a leaf and only the tag itself counts.
+  const onTheme = (tag: Tag): boolean => tag === primary || fold(tag) === primary;
+  const inFamily = (tag: Tag): boolean => fold(tag) === fold(primary);
+  const share = (member: (tag: Tag) => boolean): number => {
+    if (cardThemeTagSets) {
+      // DISTINCT CARDS, which is what "share of the deck on theme" means.
+      let count = 0;
+      for (const tags of cardThemeTagSets) {
+        for (const t of tags) if (member(t)) { count++; break; }
+      }
+      return count / nonlandCount;
     }
-    score = onTheme / nonlandCount;
-  } else {
-    let familyFreq = 0;
-    for (const [tag, freq] of deckFreq) if (fold(tag) === familyKey) familyFreq += freq;
-    score = Math.min(1, familyFreq / nonlandCount);
-  }
+    let freq = 0;
+    for (const [tag, n] of deckFreq) if (member(tag)) freq += n;
+    return Math.min(1, freq / nonlandCount);
+  };
+  const score = share(onTheme);
+  const familyScore = share(inFamily);
   return {
     theme: describeTag(primary),
     tag: primary,
     secondary: secondary ? describeTag(secondary) : null,
     secondaryTag: secondary,
     score,
+    familyScore,
     label: cohesionLabel(score),
   };
 }

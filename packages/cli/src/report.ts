@@ -12,6 +12,12 @@ export function formatReport(report: DeckReport): string {
     const secondary = report.cohesion.secondary ? ` / ${report.cohesion.secondary}` : "";
     lines.push(`  Theme: ${report.cohesion.theme}${secondary}`);
     lines.push(`  Cohesion: ${report.cohesion.score.toFixed(2)} (${report.cohesion.label})`);
+    // A NAME CAN BE SPECIFIC WHILE THE PLAN IS BROAD, and one number cannot say both (roadmap A10).
+    // Printed only when they differ, i.e. only when the primary is a specific tag inside a wider
+    // family: "daleks entering" at 0.08 of the deck but 0.46 of the creature family.
+    if (Math.abs(report.cohesion.familyScore - report.cohesion.score) > 0.005) {
+      lines.push(`  (its wider family: ${report.cohesion.familyScore.toFixed(2)})`);
+    }
   } else {
     lines.push("  (no themes)");
   }

@@ -220,8 +220,10 @@ test("mass beats count: a rare child names a family it does not dominate by coun
 // sum ran past the card count: 5 of the 71 calibration decks read exactly 1.00 because
 // `Math.min(1, ...)` clamped an over-count. The headline number was a ceiling, not a share.
 test("cohesion counts distinct CARDS, so a card on two family tags is not counted twice", () => {
-  const ranked = ["enters:wizard", "enters:creature"];
-  const deckFreq = new Map([["enters:wizard", 3], ["enters:creature", 3]]);
+  // A GENERAL primary, so the whole family is in scope and the double-count is visible (roadmap
+  // A10 made a SPECIFIC primary count only itself, which would hide it).
+  const ranked = ["enters:creature", "enters:wizard"];
+  const deckFreq = new Map([["enters:creature", 3], ["enters:wizard", 3]]);
   const fold = (t: string): string => (t === "enters:wizard" ? "enters:creature" : t);
   // Three cards, each carrying BOTH tags. The sum says 6/4 -> clamped to 1.00; the truth is 3/4.
   const cards = [
@@ -239,4 +241,50 @@ test("a card counts once for the family even when it carries several of its tags
   const cards = [new Set(["enters:wizard", "enters:human", "enters:creature"])];
   const c = computeCohesion(["enters:creature"], new Map([["enters:creature", 1]]), 2, fold, cards)!;
   expect(c.score).toBeCloseTo(0.5);
+});
+
+// A SPECIFIC PRIMARY MEASURES ITSELF; A GENERAL ONE MEASURES ITS FAMILY (roadmap A10). The label
+// named one thing and the number measured another: inalla read "wizards entering 0.71" where 0.71
+// was the share of the deck that is CREATURE-ish.
+test("a GENERAL primary still measures its whole family -- the token fold is untouched", () => {
+  const fold = (t: string): string => (t.startsWith("create-token:") ? "create-token:creature" : t);
+  const cards = [
+    new Set(["create-token:saproling"]), new Set(["create-token:goblin"]),
+    new Set(["create-token:citizen"]), new Set(["draw:any"]),
+  ];
+  const deckFreq = new Map([["create-token:creature", 0], ["create-token:saproling", 1]]);
+  const c = computeCohesion(["create-token:creature"], deckFreq, 4, fold, cards)!;
+  expect(c.score).toBeCloseTo(0.75); // three of four, exactly as the family reading gave
+});
+
+test("a SPECIFIC primary measures only itself, not everything that shares its family", () => {
+  const fold = (t: string): string => (t.startsWith("enters:") && t !== "enters:creature" ? "enters:creature" : t);
+  const cards = [
+    new Set(["enters:wizard", "enters:creature"]),
+    new Set(["enters:wizard"]),
+    new Set(["enters:goblin"]), // same FAMILY, different tribe -- must not count
+    new Set(["enters:creature"]),
+  ];
+  const deckFreq = new Map([["enters:wizard", 2], ["enters:goblin", 1]]);
+  const c = computeCohesion(["enters:wizard"], deckFreq, 4, fold, cards)!;
+  expect(c.score).toBeCloseTo(0.5); // the two Wizards, not the Goblin and not the bare creature
+});
+
+// A NAME CAN BE SPECIFIC WHILE THE PLAN IS BROAD, and one number cannot say both (roadmap A10).
+test("familyScore reports the wider family beside the theme's own share", () => {
+  const fold = (t: string): string => (t.startsWith("enters:") && t !== "enters:creature" ? "enters:creature" : t);
+  const cards = [
+    new Set(["enters:dalek"]), new Set(["enters:goblin"]),
+    new Set(["enters:goblin"]), new Set(["draw:any"]),
+  ];
+  const c = computeCohesion(["enters:dalek"], new Map([["enters:dalek", 1]]), 4, fold, cards)!;
+  expect(c.score).toBeCloseTo(0.25);       // one Dalek of four nonlands
+  expect(c.familyScore).toBeCloseTo(0.75); // three creatures of four
+});
+
+test("a general primary's two shares are the same number -- it IS its family", () => {
+  const fold = (t: string): string => (t.startsWith("enters:") && t !== "enters:creature" ? "enters:creature" : t);
+  const cards = [new Set(["enters:dalek"]), new Set(["draw:any"])];
+  const c = computeCohesion(["enters:creature"], new Map([["enters:creature", 1]]), 2, fold, cards)!;
+  expect(c.familyScore).toBe(c.score);
 });
