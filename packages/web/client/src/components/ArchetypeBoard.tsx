@@ -44,7 +44,14 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
             <li key={`${pair.a}-${pair.b}-${i}`} className="text-sm">
               <span className="font-semibold">{pair.a} + {pair.b}</span>
               <ul className="mt-0.5 flex flex-col gap-0.5">
-                {pair.reasons.map((r, j) => (
+                {/* ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE SENTENCE TO A READER. Archon of
+                    Cruelty's entry trigger derives six reasons identical in tag and text, differing
+                    only in `effectKind` -- and the objects survive on purpose, because `effectKind`
+                    is load-bearing for archetype detection. So the dedupe belongs at the reader, as
+                    it already does on the graph wire (`data.module.ts`). Inline rather than shared:
+                    the client value-imports nothing from `@mtg/engine` today, and pulling the engine
+                    into the browser bundle for four lines is a worse trade than repeating them. */}
+                {[...new Map(pair.reasons.map((r) => [r.text, r] as const)).values()].map((r, j) => (
                   <li key={j} className="text-(--muted) border-l border-(--separator) pl-2">{r.text}</li>
                 ))}
               </ul>

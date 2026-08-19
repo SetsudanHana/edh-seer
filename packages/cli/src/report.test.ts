@@ -43,6 +43,7 @@ const report: DeckReport = {
     secondary: "Treasures",
     secondaryTag: "treasure",
     score: 0.5,
+    familyScore: 0.5,
     label: "focused",
   },
 };
@@ -66,4 +67,29 @@ test("formatReport renders a placeholder when cohesion is null", () => {
   const out = formatReport({ ...report, cohesion: null });
   expect(out).toContain("=== Deck cohesion ===");
   expect(out).toContain("(no themes)");
+});
+
+// ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE SENTENCE TO A READER. Bontu's Monument printed
+// "triggers on a creature being cast" three times for each of three partners -- nine rows where
+// three belong -- because the reason OBJECTS survive on purpose (effectKind is load-bearing for
+// archetype detection) and only the graph wire was deduping them.
+test("a partner's repeated sentence is printed once", () => {
+  const dup = (text: string, effectKind: string) => ({ tag: "cast:creature", text, effectKind });
+  const dupReport = {
+    ...report,
+    cards: [{
+      name: "Bontu's Monument", score: 8.7, synergyRating: 4, partnerCount: 1, isCommander: false,
+      topPartners: [{
+        name: "Burakos, Party Leader",
+        reasons: [
+          dup("Bontu's Monument triggers on a creature being cast; Burakos supplies it", "drain"),
+          dup("Bontu's Monument triggers on a creature being cast; Burakos supplies it", "lifegain"),
+          dup("Bontu's Monument triggers on a creature being cast; Burakos supplies it", "player-life-loss"),
+        ],
+      }],
+    }],
+  } as never;
+  const out = formatReport(dupReport);
+  const hits = out.split("\n").filter((l) => l.includes("triggers on a creature being cast"));
+  expect(hits).toHaveLength(1);
 });

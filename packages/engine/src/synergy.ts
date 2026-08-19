@@ -41,6 +41,32 @@ export interface Reason {
   impliedProducer?: boolean;
 }
 
+/**
+ * Collapse reasons that say the SAME SENTENCE, keeping the first of each.
+ *
+ * ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE CLAIM, and the objects deliberately survive: Archon of
+ * Cruelty's single entry trigger derives SIX reasons identical in tag and text and differing only in
+ * `effectKind`, and `effectKind` is LOAD-BEARING for archetype detection (`mechanisms.ts` matches on
+ * it, and Archon's six carry aristocrats' `forced-sacrifice`, `drain` and `player-life-loss` beside
+ * `draw-card` and `lifegain`). Dropping five of six would silently narrow every detector that reads
+ * them. `claimCount` already fixed what the SCORE counts; this is what the READER sees.
+ *
+ * Measured across the 71 decks: 9,268 of 40,563 reasons (22.8%) sit in a duplicate (tag, text)
+ * group. The graph wire has deduped since it shipped; the CLI and the Archetypes board did not, so
+ * Bontu's Monument printed "triggers on a creature being cast" THREE TIMES for each of three
+ * partners — nine rows where three belong.
+ */
+export function dedupeReasonsByText(reasons: readonly Reason[]): Reason[] {
+  const seen = new Set<string>();
+  const out: Reason[] = [];
+  for (const r of reasons) {
+    if (seen.has(r.text)) continue;
+    seen.add(r.text);
+    out.push(r);
+  }
+  return out;
+}
+
 export interface SynergyResult {
   score: number;
   reasons: Reason[];

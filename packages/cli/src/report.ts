@@ -1,4 +1,4 @@
-import type { DeckReport } from "@mtg/engine";
+import { dedupeReasonsByText, type DeckReport } from "@mtg/engine";
 
 export function formatReport(report: DeckReport): string {
   const lines: string[] = [];
@@ -34,7 +34,11 @@ export function formatReport(report: DeckReport): string {
     const qty = copies ? ` x${copies}` : "";
     lines.push(`[${c.score.toFixed(2)}] ${c.name}${qty}${tag} — synergizes with ${c.partnerCount} card${plural}`);
     for (const p of c.topPartners.slice(0, 3)) {
-      for (const r of p.reasons) {
+      // ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE CLAIM. The reason OBJECTS survive on purpose --
+      // `effectKind` is load-bearing for archetype detection -- so the dedupe belongs at the reader,
+      // where the graph wire has always done it. Bontu's Monument printed the identical sentence
+      // three times per partner before this.
+      for (const r of dedupeReasonsByText(p.reasons)) {
         lines.push(`    - ${p.name}: ${r.text}`);
       }
     }

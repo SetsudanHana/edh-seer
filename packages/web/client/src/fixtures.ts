@@ -70,6 +70,7 @@ export const SAMPLE: AnalyzeResponse = {
       secondary: "Goblins",
       secondaryTag: "tribe:goblin",
       score: 0.65,
+    familyScore: 0.65,
       label: "highly focused",
     },
     strategies: [
