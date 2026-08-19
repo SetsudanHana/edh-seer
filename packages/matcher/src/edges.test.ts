@@ -2103,3 +2103,59 @@ test("a changeling advertises its printed type only, not all 350", () => {
   };
   expect([...cardThemeTags(changeling)]).toEqual(["enters:shapeshifter"]);
 });
+
+// A COST REDUCTION CANNOT TAKE GENERIC MANA BELOW ZERO (CR 118.7). Found by the OWNER, from two
+// `uncertain` verdicts on the panel debt: "spells cost {1} less" does nothing to a card costing {U}.
+// Measured: 740 of 5,482 cost-reduction reasons targeted a zero-generic consumer.
+describe("cost reduction needs generic mana to reduce", () => {
+  const H2: Hierarchy = {};
+  const reducer = (name: string, oracleText: string): DeckCard => ({
+    card: { name, typeLine: "Artifact", oracleText, keywords: [], colors: [], manaValue: 2 } as never,
+    tags: {
+      oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["artifact"], subtypes: [], colors: [], identity: [], cmc: 2, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{ kind: "static", effect: { kind: "cost-reduction", subject: { type: "spell", control: "you", token: null, scope: "all" } } }],
+    },
+  });
+  const spell = (name: string, manaCost: string, keywords: string[] = []): DeckCard => ({
+    card: { name, typeLine: "Creature — Wizard", oracleText: "", keywords, colors: ["U"], manaValue: 1, manaCost } as never,
+    tags: {
+      oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["creature"], subtypes: ["wizard"], colors: ["U"], identity: ["U"], cmc: 1, power: "1", toughness: "1", token: false, keywords },
+      abilities: [],
+    },
+  });
+  const costReasons = (p: DeckCard, c: DeckCard) =>
+    directedReasons(p, c, H2).filter((r) => r.effectKind === "cost-reduction");
+
+  const generic = reducer("Sapphire Medallion", "Blue spells you cast cost {1} less to cast.");
+
+  test("refuses a consumer whose cost is all coloured pips -- the owner's K-9 witness", () => {
+    expect(costReasons(generic, spell("K-9, Mark I", "{U}"))).toEqual([]);
+    expect(costReasons(generic, spell("Baleful Strix", "{U}{B}"))).toEqual([]);
+  });
+
+  test("{0} is a numeric symbol carrying ZERO generic -- refused too", () => {
+    expect(costReasons(generic, spell("Mishra's Bauble", "{0}"))).toEqual([]);
+  });
+
+  test("keeps a consumer with any generic at all, and X counts because it is chosen", () => {
+    expect(costReasons(generic, spell("Ordinary Spell", "{1}{U}")).length).toBeGreaterThan(0);
+    expect(costReasons(generic, spell("X Spell", "{X}{U}")).length).toBeGreaterThan(0);
+  });
+
+  test("keeps it when the reducer takes a COLOURED pip -- Defiler of Flesh really does discount {U}", () => {
+    const coloured = reducer("Defiler of Dreams", "Blue spells you cast cost {U} less to cast.");
+    expect(costReasons(coloured, spell("K-9, Mark I", "{U}")).length).toBeGreaterThan(0);
+  });
+
+  test("keeps it when the consumer has an ADDITIONAL COST -- CR 601.2f adds it before reductions", () => {
+    // Everflowing Chalice is {0} with Multikicker {2}: kicked twice it totals {4}, and a reducer
+    // takes it to {3}. The first cut refused it, and the owner caught that.
+    expect(costReasons(generic, spell("Everflowing Chalice", "{0}", ["Multikicker"])).length).toBeGreaterThan(0);
+  });
+
+  test("an unrecorded mana cost is never refused -- a missing answer, not a wrong one", () => {
+    expect(costReasons(generic, spell("No Cost Recorded", "")).length).toBeGreaterThan(0);
+  });
+});

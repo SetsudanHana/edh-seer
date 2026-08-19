@@ -359,6 +359,65 @@ export const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set([
 const reducesItself = (oracleText: string | undefined): boolean =>
   /\bthis spell costs\b|\bthis ability costs\b/i.test(oracleText ?? "");
 
+/** A cost reduction cannot take generic mana below zero (CR 118.7), so "spells you cast cost {1}
+ *  less" does NOTHING to a card costing exactly `{U}`.
+ *
+ *  FOUND BY THE OWNER, from two `uncertain` verdicts on the panel debt (2026-08-19) and not by any
+ *  instrument here: Serah Farron -> K-9, Mark I `{U}` and The Water Crystal -> Nashi. Measured
+ *  across the 71 decks, **740 of 5,482 cost-reduction reasons** target a consumer with no generic
+ *  mana, over 208 distinct cards -- Baleful Strix `{U}{B}`, Birds of Paradise `{G}`, Archmage's
+ *  Charm `{U}{U}{U}`.
+ *
+ *  `X` COUNTS AS GENERIC: it is chosen, so there is something to reduce. A consumer with no recorded
+ *  mana cost is not refused -- a missing answer, never a wrong one.
+ *
+ *  IT IS PAIRWISE, and that is the answer to the owner's own caveat: a TAX effect on the table adds
+ *  generic and the reduction then bites, which is exactly why both witnesses are `uncertain` rather
+ *  than `false`. But that is a THREE-card statement, and every claim this engine makes is about two.
+ *  In the two-card case there is nothing to reduce. */
+const hasGenericMana = (manaCost: string | undefined): boolean => {
+  if (!manaCost) return true; // not recorded — refuse nothing
+  for (const m of manaCost.matchAll(/\{([^}]+)\}/g)) {
+    // THE AMOUNT, NOT THE SHAPE. `{0}` is a numeric symbol carrying ZERO generic mana, and a
+    // reduction cannot take it below zero either — the first cut tested for a digit and kept
+    // Mishra's Bauble, Urza's Bauble and Everflowing Chalice, 19 claims the guard exists to refuse.
+    if (/^\d+$/.test(m[1]) && Number(m[1]) > 0) return true;
+    if (/^[XYZ]$/i.test(m[1])) return true; // chosen, so there is something to reduce
+  }
+  return false;
+};
+
+/** Does the reduction take a COLOURED pip rather than generic mana? A BLANKET GUARD WOULD BE WRONG
+ *  and measuring is what showed it: Defiler of Flesh ("costs {B} less"), Defiler of Dreams, Eluge
+ *  and Morophon ("costs {W}{U}{B}{R}{G} less") really do reduce a `{U}` spell — Morophon makes it
+ *  free. Of the 740 zero-generic claims, **17 have a reducer of this shape and must be KEPT**. */
+const reducesColouredMana = (oracleText: string | undefined): boolean =>
+  /costs?\s+\{[WUBRGC]\}[^.]{0,40}?less/i.test(oracleText ?? "");
+
+/** AN ADDITIONAL COST IS ADDED BEFORE A REDUCTION IS SUBTRACTED, so a card with one is not safe to
+ *  refuse however small its printed cost (owner's correction, 2026-08-19). CR 601.2f: "The total
+ *  cost is the mana cost or alternative cost …, PLUS all additional costs and cost increases, AND
+ *  MINUS all cost reductions." Everflowing Chalice is `{0}` with **Multikicker {2}** — kicked twice
+ *  it totals {4}, and a reducer takes it to {3}. The first cut refused it.
+ *
+ *  THE LIST IS THE 17 KEYWORDS CR 702.x DEFINES WITH AN ADDITIONAL COST, plus `offspring` and
+ *  `tiered`, which the owner named and which postdate the rules file entirely. **Deliberately NOT
+ *  split into mana and non-mana additional costs**: the CR states most of them with a `[cost]`
+ *  placeholder, so the split is not verifiable from the rules text, and being lenient here costs a
+ *  handful of claims that should go while being strict would DELETE REAL ONES. A wrong refusal is
+ *  the worse error for a guard.
+ *
+ *  Measured: **120 of the 4,304 corpus cards with zero generic mana (2.8%)** carry one — led by
+ *  spree 17, buyback 15, splice 7, gift 6, multikicker 5. */
+const ADDITIONAL_COST_KEYWORDS: ReadonlySet<string> = new Set([
+  "buyback", "kicker", "multikicker", "entwine", "splice", "offering", "replicate", "conspire",
+  "retrace", "escalate", "jump-start", "casualty", "squad", "bargain", "spree", "gift", "tiered",
+  "offspring",
+]);
+
+const hasAdditionalCost = (tags: CardTags | undefined): boolean =>
+  (tags?.characteristics.keywords ?? []).some((k) => ADDITIONAL_COST_KEYWORDS.has(k.toLowerCase()));
+
 /** Card types that are PLAYED, never cast (CR 305.1) — a land can never be the consumer of a cost
  *  reduction, however broadly the reducer is worded. Checked against the card's whole type union so
  *  an Instant // Land modal DFC, which really is castable as its instant face, keeps its edge. */
@@ -878,6 +937,15 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       // "Spells your OPPONENTS cast cost less" is not a relation to a card you chose to run — it is
       // the tax family pointing the other way, and tax stays in ROLE_NOT_SYNERGY.
       if (a.effect.subject.control === "opp") continue;
+      // A REDUCTION CANNOT TAKE GENERIC MANA BELOW ZERO (CR 118.7) — see `hasGenericMana`. The
+      // colour exemption is checked on the PRODUCER's printed text, the same way `reducesItself`
+      // reads it, because a coloured-pip reduction really does discount a `{U}` spell.
+      // A REDUCTION CANNOT TAKE GENERIC MANA BELOW ZERO (CR 118.7) — see `hasGenericMana`. Both
+      // exemptions are checked because both are real: a coloured-pip reduction discounts a `{U}`
+      // spell, and an ADDITIONAL COST adds to the total before reductions subtract from it.
+      if (!hasGenericMana(c.card.manaCost)
+        && !reducesColouredMana(p.card.oracleText)
+        && !hasAdditionalCost(c.tags)) continue;
     }
     reasons.push({
       // A non-static ability keeps the `${kind}:${subject}` shape the graveyard-recursion and
