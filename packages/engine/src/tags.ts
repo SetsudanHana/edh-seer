@@ -78,8 +78,24 @@ const MECHANISM_PHRASE: Record<string, string> = {
  *  which reached the user verbatim as "-creatures" on kuja-spellslinger; it reads as a word here.
  *  Returns null for `any`, which names no subject at all — the mechanism alone is the whole claim,
  *  and "anys entering" is worse than silence. */
+/** Subjects whose plural is not "+s". `legendary` is a SUPERTYPE, not a noun, and it became a
+ *  headline when it got a theme key (roadmap A11) — "legendarys entering" is not English. The rest
+ *  are creature types whose plural is the same word; they read as headlines too, and this list is
+ *  the whole fix rather than a pluralizer nobody asked for. */
+const IRREGULAR_PLURAL: Record<string, string> = {
+  legendary: "legendary permanents",
+  merfolk: "Merfolk",
+  kithkin: "Kithkin",
+  eldrazi: "Eldrazi",
+  samurai: "Samurai",
+  ninja: "Ninja",
+  spirit: "Spirits",
+};
+
 function subjectPhrase(value: string): string | null {
   if (value === "any") return null;
+  const irregular = IRREGULAR_PLURAL[value];
+  if (irregular !== undefined) return irregular;
   const negated = value.startsWith("-");
   const noun = negated ? `non${value.slice(1)}` : value;
   return noun.endsWith("s") ? noun : `${noun}s`;

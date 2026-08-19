@@ -86,3 +86,12 @@ test("the dominance test is a SHARE, so a small family counts the same as a larg
   expect(foldFamilies(small, f).get("enters:creature")!.representative).toBe("enters:wizard");
   expect(foldFamilies(even, f).get("enters:creature")!.representative).toBe("enters:creature");
 });
+
+// A SUPERTYPE IS ITS OWN FAMILY. `legendary` is neither a card type nor a subtype, so SUBTYPE_TYPES
+// cannot place it and it fell through to hierarchy.json, whose scraped `legendary` key lists
+// `creature` first -- a legends deck's family was the creature family (roadmap A11).
+test("a supertype value is never folded into a card type", () => {
+  const misleading = { legendary: ["creature", "artifact", "enchantment"], snow: ["land", "creature"] };
+  expect(foldThemeTag("enters:legendary", misleading)).toBe("enters:legendary");
+  expect(foldThemeTag("enters:snow", misleading)).toBe("enters:snow");
+});

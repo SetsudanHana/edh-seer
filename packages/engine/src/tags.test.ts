@@ -69,3 +69,14 @@ test("a negated subject renders as `non<type>`", () => {
 test("static keeps its bare label because its value is a kind, not a subject", () => {
   expect(describeTag("static:pump")).toBe("static");
 });
+
+// `legendary` is a SUPERTYPE, not a noun, and it became a headline when it got a theme key
+// (roadmap A11): "legendarys entering" is not English. Same for the creature types whose plural is
+// the same word -- `mono-blue-tribal-tribal` read "merfolks entering".
+test("a supertype and the same-plural creature types read as English", () => {
+  expect(describeTag("enters:legendary")).toBe("legendary permanents entering");
+  expect(describeTag("enters:merfolk")).toBe("Merfolk entering");
+  expect(describeTag("enters:eldrazi")).toBe("Eldrazi entering");
+  // The ordinary case is untouched.
+  expect(describeTag("enters:wizard")).toBe("wizards entering");
+});

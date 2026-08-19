@@ -1,6 +1,9 @@
 import type { Reason } from "@mtg/engine";
 import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
 import { LAND_SUBTYPES } from "@mtg/tagger";
+/** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
+ *  must never be keyed as one -- see `impliedEntryThemeTags`. */
+const SUPERTYPES: ReadonlySet<string> = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, selfFillTypes } from "./implied.js";
@@ -102,9 +105,22 @@ function impliedEntryThemeTags(tags: CardTags): string[] {
       const subtypes = changeling
         ? [n.subject.subtype ?? []].flat().slice(0, 1).map((x) => String(x).toLowerCase())
         : [n.subject.subtype ?? []].flat().map((x) => String(x).toLowerCase());
+      // A SUPERTYPE IS NOT A CARD TYPE, and `splitTypeLine` does not separate them -- so
+      // `Characteristics.types` for "Legendary Creature -- Human Rogue" is ["legendary","creature"]
+      // and `themeSubjectKey`'s `list(type)[0]` fallback named a subtypeless legendary permanent
+      // `legendary` INSTEAD OF its card type. Stripping them here makes a Legendary Artifact key
+      // `enters:artifact`, which is what it is (roadmap A11).
+      const typed = { ...n.subject, type: [n.subject.type ?? []].flat().map((t) => String(t).toLowerCase()).filter((t) => !SUPERTYPES.has(t)) };
       const keys = subtypes.length > 0
-        ? subtypes.map((sub) => themeSubjectKey({ ...n.subject, subtype: sub }))
-        : [themeSubjectKey(n.subject)];
+        ? subtypes.map((sub) => themeSubjectKey({ ...typed, subtype: sub }))
+        : [themeSubjectKey(typed)];
+      // LEGENDS MATTER IS A THEME AND HAD NO KEY. `SubjectFilter.legendary` already carries the fact
+      // (09ce98d sets it on `selfSubject`); only the theme key was missing, so a legends deck read
+      // its most common creature type instead -- `marchesa-legends-matter` headlined "humans
+      // entering" on `enters:human` 28 against `enters:legendary` 10. `basic` is the other supertype
+      // `selfSubject` carries and is out of scope by construction: it appears only on LANDS, whose
+      // own entry is already excluded above.
+      if (n.subject.legendary === true) keys.push("legendary");
       return [...new Set(keys)].map((k) => zoneEventKey(n.verb, n.subject.zone, k));
     });
 }

@@ -28,6 +28,9 @@ import type { Hierarchy } from "./types.js";
  *   - `counter:` — the value is a counter kind (`+1/+1`), not a creature type. */
 const NEVER_FOLD: ReadonlySet<string> = new Set(["tribe", "tribe-nontoken", "static", "counter"]);
 
+/** The closed six, per CR 205.4a plus the un-set `host`/`elite`. */
+const SUPERTYPES: ReadonlySet<string> = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
+
 /** Card types, in the order a multi-type subtype resolves. Only the six spell subtypes (adventure,
  *  arcane, chorus, lesson, omen, trap) are genuinely multi-type under `SUBTYPE_TYPES`; the order
  *  still matters for the `hierarchy.json` FALLBACK below, whose lists are long. */
@@ -49,6 +52,11 @@ export function foldThemeTag(tag: string, h: Hierarchy): string {
   // folded into `enters:creature`**: a landfall deck's family was the creature family. Found by
   // measuring the authoritative-map change on `rakdos-landfall`, not by reading the code.
   if ((ALL_CARD_TYPES as readonly string[]).includes(value)) return tag;
+  // A SUPERTYPE IS ITS OWN FAMILY. `legendary` is not a card type and not a subtype, so
+  // `SUBTYPE_TYPES` cannot place it and it fell through to `hierarchy.json`, whose scraped
+  // `legendary` key lists `creature` first -- so a legends deck's family was the creature family.
+  // Same defect as `enters:land` above, one rung up the type line (roadmap A11).
+  if (SUPERTYPES.has(value)) return tag;
   // ASK THE ASSIGNMENT, NOT THE CO-OCCURRENCE COUNT (owner's observation, 2026-08-19).
   // `SUBTYPE_TYPES` is CR 205.3 generated from MTGJSON: which card type a subtype IS.
   // `hierarchy.json` is built by scraping printed type lines, so it records which card types a
