@@ -54,6 +54,26 @@ export interface CardSynergy {
    *  axis weight over its edges' reason tags). The continuous value behind `doubleDuty`, which
    *  hard-cuts it at a threshold and so fires on ~half a deck. Set only by analyzeDeckStructured. */
   axisWeight?: number;
+  /** Printed mana cost, e.g. "{5}{B}{B}", and its mana value. Carried so a reader can weigh the
+   *  effect against what it costs — the owner's "effect + cost" — WITHOUT the two ever being
+   *  multiplied into one number. Cost is deliberately not in `synergyRating`: measured over the 71
+   *  decks, nonland payoff cards mean MV 3.43 against feeders' 3.04, so a cost term discounts
+   *  payoffs by construction (`specs/2026-08-19-clock-and-mana-model-review.md` §5). Absent on the
+   *  flat engine and on a card with no printed cost. */
+  manaCost?: string;
+  manaValue?: number;
+  /** When can you actually cast it: the same two axes `DeckMath.castability` reports, for THIS
+   *  card, at its own mana value as the deadline. `mana` counts lands only and `manaWithRocks` adds
+   *  the rocks already castable, so the pair is an interval; the colour rows are separate and are
+   *  never folded in. Absent on a land, on the flat engine, and on a cost the model REFUSES to
+   *  price (X costs, delve, convoke, affinity, free casts) — a refusal reads as a blank, never a
+   *  zero. */
+  castability?: {
+    turn: number;
+    mana: number;
+    manaWithRocks: number;
+    colors: { color: string; pips: number; p: number }[];
+  };
   /** True when the card fills a functional BUILD role AND has an on-axis synergy edge — one card,
    *  two jobs. Set only by @mtg/matcher's analyzeDeckStructured; the card also carries a small
    *  capped synergyRating premium. Undefined on the flat engine. */

@@ -212,6 +212,31 @@ test("CardList sorts by synergyRating descending, then name", () => {
   expect(rows[1]).toContain("Impact Tremors");
 });
 
+/** The owner's "effect + cost": the two facts sit side by side and are never multiplied. Cost is
+ *  deliberately absent from `synergyRating` — measured over the 71 decks, payoff cards skew
+ *  expensive, so a cost term would discount payoffs by construction. */
+test("Cards tab shows what a card costs and when you can cast it, beside the rating", () => {
+  const cards = [{
+    name: "Breach the Multiverse", synergyRating: 3.7, topPartners: [], manaCost: "{5}{B}{B}",
+    manaValue: 7, castability: { turn: 7, mana: 0.22, manaWithRocks: 0.4, colors: [] },
+  }] as any;
+  render(<CardList cards={cards} />);
+  const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Breach"))!;
+  expect(within(row).getByText("{5}{B}{B}")).toBeInTheDocument();
+  expect(within(row).getByText("22% – 40% by T7")).toBeInTheDocument();
+  expect(within(row).getByText("3.7")).toBeInTheDocument();
+});
+
+/** A land has no cost row and a REFUSED cost (X, delve, convoke, a free cast) has no castability.
+ *  Both must read as a blank: a 0% would tell the reader they cannot cast the card. */
+test("a land or an unpriced cost renders a dash, never a zero", () => {
+  const cards = [{ name: "Island", synergyRating: 0, topPartners: [] }] as any;
+  render(<CardList cards={cards} />);
+  const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Island"))!;
+  expect(within(row).getByText("—")).toBeInTheDocument();
+  expect(within(row).queryByText(/%/)).not.toBeInTheDocument();
+});
+
 test("Cards tab shows a card's functional role as a readable chip", () => {
   const cards = [{ name: "Sol Ring", roles: ["ramp"], synergyRating: 1.3, topPartners: [] }] as any;
   render(<CardList cards={cards} />);

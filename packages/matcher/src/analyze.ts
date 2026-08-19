@@ -32,6 +32,7 @@ import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
 import { cutCandidates, deckSlack } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
+import { deckCastability, type CardCastability } from "./castability.js";
 import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
 import { promoteSpecificHeadline } from "./theme-promote.js";
@@ -507,6 +508,18 @@ export function analyzeDeckStructured(
   // ponytail: detectBuildCategories also runs inside computeBuild below; the second linear scan is
   // negligible and keeps computeBuild's signature untouched.
   const buildRoles = rolesByCard(detectBuildCategories(resolved));
+  // What each card costs and when you can cast it, carried onto the card row so the reader can
+  // weigh effect against cost without the engine multiplying the two. `deckCastability` skips lands
+  // and drops the rows it REFUSES to price, so a missing entry is a refusal or a land and reads as
+  // a blank rather than a zero.
+  // ponytail: computeDeckMath runs this same pass for its own top-4 table; the second scan is ~99
+  // small hypergeometric sums and keeps that function's signature untouched.
+  const castByName = new Map(
+    deckCastability(resolved, { commanderNames: [...commanderSet] }).cards
+      .map((r: CardCastability) =>
+        [r.name, { turn: r.turn, mana: r.mana!, manaWithRocks: r.manaWithRocks!, colors: r.colors }] as const),
+  );
+  const printedCost = new Map(resolved.map((dc) => [dc.card.name, dc.card] as const));
   const ratedCards: CardSynergy[] = cards.map((c) => {
     const roles = buildRoles.get(c.name);
     const base = ratingByName.get(c.name) ?? 0;
@@ -517,9 +530,15 @@ export function analyzeDeckStructured(
     // the additive identity breaks for those cards by design.
     const payoffRating = payoffRatingByName.get(c.name) ?? 0;
     const feederRating = feederRatingByName.get(c.name) ?? 0;
+    const card = printedCost.get(c.name);
+    const cost = {
+      ...(card?.manaCost !== undefined ? { manaCost: card.manaCost } : {}),
+      ...(card !== undefined ? { manaValue: card.manaValue } : {}),
+      ...(castByName.has(c.name) ? { castability: castByName.get(c.name)! } : {}),
+    };
     return doubleDuty
-      ? { ...c, synergyRating: doubleDutyRating(base), payoffRating, feederRating, axisWeight, doubleDuty: true, doubleDutyRoles: roles, roles }
-      : { ...c, synergyRating: base, payoffRating, feederRating, axisWeight, roles };
+      ? { ...c, ...cost, synergyRating: doubleDutyRating(base), payoffRating, feederRating, axisWeight, doubleDuty: true, doubleDutyRoles: roles, roles }
+      : { ...c, ...cost, synergyRating: base, payoffRating, feederRating, axisWeight, roles };
   });
 
   // themes and cohesion must agree on which tag leads, so both come from this one

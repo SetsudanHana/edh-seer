@@ -30,6 +30,14 @@ const selectedChipStyle: CSSProperties = {
   backgroundClip: "padding-box, border-box",
 };
 
+const pct = (p: number) => `${Math.round(p * 100)}%`;
+
+/** The mana axis as the interval it is: lands only at the low end, plus the rocks already castable
+ *  at the high one. Collapsed to a single figure when the deck runs no rock cheap enough to widen
+ *  it, so a rockless deck does not read "31% - 31%". */
+export const castRange = (c: { mana: number; manaWithRocks: number }): string =>
+  pct(c.manaWithRocks) === pct(c.mana) ? pct(c.mana) : `${pct(c.mana)} – ${pct(c.manaWithRocks)}`;
+
 export function CardList({ cards }: { cards: DeckReport["cards"] }) {
   const [filter, setFilter] = useState<Category | "all">("all");
   const present = new Set(cards.flatMap((c) => (c.roles ?? []) as Category[]));
@@ -67,6 +75,10 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
               <th className="eyebrow text-left font-normal py-2 pr-2 w-10">#</th>
               <th className="eyebrow text-left font-normal py-2 pr-2">Card</th>
               <th className="eyebrow text-left font-normal py-2 pr-2 w-56">Roles</th>
+              {/* COST BESIDE THE RATING, NEVER MULTIPLIED INTO IT. What a card does and what it
+                *  costs are two facts, and a reader weighing "is this 9-drop worth it" needs both
+                *  in view -- the same never-multiply ruling the castability axes already ship. */}
+              <th className="eyebrow text-right font-normal py-2 pr-2 w-32">Cost</th>
               <th className="eyebrow text-right font-normal py-2 w-20">Synergy</th>
             </tr>
           </thead>
@@ -89,6 +101,16 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
                         </span>
                       ))}
                     </span>
+                  </td>
+                  <td className="py-2 pr-2 text-right">
+                    {/* An em dash for a land or an unpriced cost -- a refusal must never render as
+                      *  0%, which a reader would take as "you cannot cast this". */}
+                    <span className="block font-mono tabular-nums">{c.manaCost ?? "—"}</span>
+                    {c.castability ? (
+                      <span className="block text-xs text-(--muted) tabular-nums">
+                        {castRange(c.castability)} by T{c.castability.turn}
+                      </span>
+                    ) : null}
                   </td>
                   <td className="py-2 text-right font-mono tabular-nums text-(--accent)">
                     {c.synergyRating !== undefined ? c.synergyRating.toFixed(1) : "—"}
