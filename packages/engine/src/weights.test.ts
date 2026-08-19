@@ -214,3 +214,29 @@ test("mass beats count: a rare child names a family it does not dominate by coun
   const out = rankThemes(freq, STATS, { fold: FOLD, alpha: 0.5, massShare: 0.5 })[0];
   expect(out).toBe("enters:wizard");
 });
+
+// COHESION IS A SHARE OF CARDS (roadmap A7, 2026-08-19). Summing `deckFreq` across the family counts
+// a card ONCE PER TAG it carries there, and once every permanent's own entry became a theme tag the
+// sum ran past the card count: 5 of the 71 calibration decks read exactly 1.00 because
+// `Math.min(1, ...)` clamped an over-count. The headline number was a ceiling, not a share.
+test("cohesion counts distinct CARDS, so a card on two family tags is not counted twice", () => {
+  const ranked = ["enters:wizard", "enters:creature"];
+  const deckFreq = new Map([["enters:wizard", 3], ["enters:creature", 3]]);
+  const fold = (t: string): string => (t === "enters:wizard" ? "enters:creature" : t);
+  // Three cards, each carrying BOTH tags. The sum says 6/4 -> clamped to 1.00; the truth is 3/4.
+  const cards = [
+    new Set(["enters:wizard", "enters:creature"]),
+    new Set(["enters:wizard", "enters:creature"]),
+    new Set(["enters:wizard", "enters:creature"]),
+    new Set(["draw:any"]),
+  ];
+  expect(computeCohesion(ranked, deckFreq, 4, fold)!.score).toBe(1); // the old over-count, clamped
+  expect(computeCohesion(ranked, deckFreq, 4, fold, cards)!.score).toBeCloseTo(0.75);
+});
+
+test("a card counts once for the family even when it carries several of its tags", () => {
+  const fold = (t: string): string => (t.startsWith("enters:") ? "enters:creature" : t);
+  const cards = [new Set(["enters:wizard", "enters:human", "enters:creature"])];
+  const c = computeCohesion(["enters:creature"], new Map([["enters:creature", 1]]), 2, fold, cards)!;
+  expect(c.score).toBeCloseTo(0.5);
+});

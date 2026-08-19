@@ -170,6 +170,15 @@ export function computeCohesion(
   deckFreq: Map<Tag, number>,
   nonlandCount: number,
   fold: (tag: Tag) => Tag = (t) => t,
+  /** Each nonland card's own theme tags. COHESION IS A SHARE OF CARDS, and without this it cannot
+   *  be one: the fallback sums `deckFreq` across the family, which counts a card ONCE PER TAG it
+   *  carries in that family. A Wizard whose own entry keys `enters:wizard` and which also triggers
+   *  on `enters:creature` was counted twice. Measured: 5 of the 71 calibration decks read exactly
+   *  1.00 because the sum ran PAST the card count and `Math.min(1, ...)` clamped it -- so the
+   *  headline number was an over-count wearing a ceiling, not a share. Supply it and the clamp
+   *  becomes unreachable. Absent (the flat engine, which holds no per-card tag sets), the old sum
+   *  is kept so that caller's numbers do not silently change. */
+  cardThemeTagSets?: readonly ReadonlySet<Tag>[],
 ): Cohesion | null {
   // `tribe-nontoken:X` is a matching-precision shadow of `tribe:X`, not a distinct
   // theme — drop it from theme naming so cohesion reports "Wizards", not the
@@ -197,9 +206,19 @@ export function computeCohesion(
   // among them -- themed the identical "creatures entering". Cohesion is a SHARE, which a family
   // answers correctly; the axis is a RANKING, where one universal bucket destroys the signal.
   const familyKey = fold(primary);
-  let familyFreq = 0;
-  for (const [tag, freq] of deckFreq) if (fold(tag) === familyKey) familyFreq += freq;
-  const score = Math.min(1, familyFreq / nonlandCount);
+  let score: number;
+  if (cardThemeTagSets) {
+    // DISTINCT CARDS, which is what "share of the deck on theme" means.
+    let onTheme = 0;
+    for (const tags of cardThemeTagSets) {
+      for (const t of tags) if (fold(t) === familyKey) { onTheme++; break; }
+    }
+    score = onTheme / nonlandCount;
+  } else {
+    let familyFreq = 0;
+    for (const [tag, freq] of deckFreq) if (fold(tag) === familyKey) familyFreq += freq;
+    score = Math.min(1, familyFreq / nonlandCount);
+  }
   return {
     theme: describeTag(primary),
     tag: primary,

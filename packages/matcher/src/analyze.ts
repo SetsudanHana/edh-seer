@@ -584,8 +584,13 @@ export function analyzeDeckStructured(
   const promotedThemes = promoteSpecificHeadline(rankedThemes, deckFreq, promoteMembership);
   const themes = promotedThemes.map((tag) => ({ tag, count: deckFreq.get(tag) ?? 0 }));
 
-  const nonlandCount = resolved.filter((dc) => !isLand(dc)).length;
-  const cohesion = computeCohesion(promotedThemes, deckFreq, nonlandCount, makeFold(hierarchy));
+  const nonlands = resolved.filter((dc) => !isLand(dc));
+  const nonlandCount = nonlands.length;
+  // COHESION IS A SHARE OF CARDS, so it is given the per-card tag sets rather than left to sum
+  // `deckFreq` across the family -- which counted a card once per tag it carried there and drove
+  // 5 of the 71 decks into the `Math.min(1, ...)` clamp. See computeCohesion.
+  const cohesion = computeCohesion(promotedThemes, deckFreq, nonlandCount, makeFold(hierarchy),
+    nonlands.map((dc) => (dc.tags ? cardThemeTags(dc.tags) : new Set<string>())));
 
   const deckStats = computeDeckStats(resolved.map((dc) => dc.card));
 
