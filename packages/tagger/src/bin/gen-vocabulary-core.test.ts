@@ -40,6 +40,20 @@ test("planeswalker subtypes are kept out of the free-text set but not discarded"
   expect(v.planeswalkerSubtypes).toEqual(["chandra", "jace", "will"]);
 });
 
+// THE AUTHORITATIVE SUBTYPE -> CARD TYPE MAP. `matcher/hierarchy.json` answers a DIFFERENT question
+// (which card types a subtype has been printed beside) and the two disagree on 19 of 453 subtypes.
+test("subtypeTypes is the CR assignment: one type each, land and creature disjoint", () => {
+  const v = buildVocabulary(types, enums);
+  expect(v.subtypeTypes["vehicle"]).toEqual(["artifact"]);
+  expect(v.subtypeTypes["cave"]).toEqual(["land"]);
+  expect(v.subtypeTypes["dragon"]).toEqual(["creature"]);
+  expect(v.subtypeTypes["saga"]).toEqual(["enchantment"]);
+  // A subtype claimed by both instant and sorcery keeps both -- the only genuine multi-type case.
+  expect(v.subtypeTypes["arcane"]).toEqual(["instant", "sorcery"]);
+  const lands = new Set(v.landSubtypes);
+  expect(v.creatureSubtypes.filter((s) => lands.has(s))).toEqual([]);
+});
+
 test("spell subtypes are pooled across instant and sorcery, deduped", () => {
   expect(buildVocabulary(types, enums).spellSubtypes).toEqual(["adventure", "arcane", "lesson"]);
 });
@@ -53,7 +67,12 @@ test("the rendered module is valid TypeScript exporting a Set of every permanent
   const src = renderSubtypesModule(buildVocabulary(types, enums));
   expect(src).toContain("export const SUBTYPES: ReadonlySet<string> = new Set([");
   expect(src).toContain('"vehicle"');
-  expect(src).not.toContain('"chandra"');
+  // The guard is about the FREE-TEXT set, not the whole module: `SUBTYPE_TYPES` below it maps every
+  // subtype to its card type and legitimately names planeswalker ones. Scoped to the SUBTYPES
+  // literal, which is what `parseSubject` matches against.
+  const freeText = src.slice(src.indexOf("export const SUBTYPES"), src.indexOf("export const LAND_SUBTYPES"));
+  expect(freeText).not.toContain('"chandra"');
+  expect(freeText).not.toContain('"will"');
   // GENERATED, so nobody hand-edits it back into rot.
   expect(src).toContain("GENERATED");
 });

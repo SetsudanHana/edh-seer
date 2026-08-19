@@ -47,6 +47,19 @@ export interface Vocabulary {
    *  subtype is the one kind that means "mana base" rather than "typal" — a fetchland naming Swamp
    *  is ramp, not a Swamp-tribal payoff. */
   landSubtypes: string[];
+  /** THE AUTHORITATIVE SUBTYPE -> CARD TYPE MAP (CR 205.3). Every subtype, lowercased, against the
+   *  card type(s) whose list CR puts it on. This is an ASSIGNMENT and not a co-occurrence count:
+   *  `matcher/hierarchy.json` is built by scraping printed type lines, so it records every card
+   *  type a subtype has ever been PRINTED BESIDE -- `forest` reaches `creature` through Dryad Arbor
+   *  ("Land Creature -- Forest Dryad") and `treasure` reaches it through artifact creatures -- which
+   *  is the right question for "what can this subject denote" and the WRONG one for "what type is
+   *  this subtype".
+   *
+   *  Nearly every subtype has exactly one type: measured against CardTypes.json, the ONLY subtypes
+   *  claimed by more than one card type are the six that are both instant and sorcery (adventure,
+   *  arcane, chorus, lesson, omen, trap), which is CR's spell-type list by design. In particular
+   *  LAND and CREATURE subtypes are DISJOINT -- 0 of 18 x 350. */
+  subtypeTypes: Record<string, string[]>;
   /** The closed six: Basic, Host, Legendary, Ongoing, Snow, World. */
   supertypes: string[];
   keywordActions: string[];
@@ -61,6 +74,25 @@ const lower = (xs: readonly string[]): string[] => [...new Set(xs.map((s) => s.t
  *  in a sentence narrow a subject that is about creatures. */
 const PERMANENT_TYPES = ["artifact", "battle", "creature", "enchantment", "land"] as const;
 
+/** Invert CardTypes' per-type subtype lists into subtype -> the card types that claim it. */
+function subtypeTypes(types: CardTypesPayload): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const t of SUBTYPE_BEARING_TYPES) {
+    for (const s of types.data[t]?.subTypes ?? []) {
+      const k = s.toLowerCase();
+      (out[k] ??= []).push(t);
+    }
+  }
+  return Object.fromEntries(Object.keys(out).sort().map((k) => [k, out[k]]));
+}
+
+/** Card types whose subtype lists we record. Excludes the formats nobody puts in a decklist
+ *  (plane, phenomenon, scheme, vanguard, conspiracy) and `tribal`, which has no list of its own --
+ *  a Kindred card carries CREATURE subtypes. */
+const SUBTYPE_BEARING_TYPES = [
+  "creature", "land", "artifact", "enchantment", "battle", "planeswalker", "instant", "sorcery",
+] as const;
+
 export function buildVocabulary(types: CardTypesPayload, enums: EnumValuesPayload): Vocabulary {
   const sub = (k: string): string[] => types.data[k]?.subTypes ?? [];
   return {
@@ -70,6 +102,7 @@ export function buildVocabulary(types: CardTypesPayload, enums: EnumValuesPayloa
     spellSubtypes: lower([...sub("instant"), ...sub("sorcery")]),
     planeSubtypes: lower([...sub("plane"), ...sub("phenomenon")]),
     landSubtypes: lower(sub("land")),
+    subtypeTypes: subtypeTypes(types),
     supertypes: lower(enums.data.card.supertypes),
     keywordActions: lower(enums.data.keywords.keywordActions),
     keywordAbilities: lower(enums.data.keywords.keywordAbilities),
@@ -115,6 +148,22 @@ ${v.landSubtypes.map((s) => JSON.stringify(s)).join(", ")},
 export const CREATURE_SUBTYPES: readonly string[] = [
 ${v.creatureSubtypes.map((s) => JSON.stringify(s)).join(", ")},
 ];
+
+/** THE AUTHORITATIVE SUBTYPE -> CARD TYPE MAP (CR 205.3), subtype lowercased.
+ *
+ *  Ask this when the question is "what card type IS this subtype". Do NOT ask
+ *  \`matcher/hierarchy.json\`: that is built by scraping printed type lines, so it answers "what
+ *  card types has this subtype been printed beside", and the two differ on 19 of 453 subtypes --
+ *  \`treasure\`, \`clue\`, \`food\`, \`equipment\` and \`book\` read as CREATURE types there, as do
+ *  \`forest\`, \`island\`, \`locus\` and \`mountain\`, \`saga\`, \`background\` and \`shrine\`, while
+ *  \`vehicle\` reads as a LAND type.
+ *
+ *  A list rather than a single type because six subtypes really are two: adventure, arcane, chorus,
+ *  lesson, omen and trap are both instant and sorcery. Every other subtype has exactly one, and
+ *  LAND and CREATURE subtypes are disjoint. */
+export const SUBTYPE_TYPES: Readonly<Record<string, readonly string[]>> = {
+${Object.entries(v.subtypeTypes).map(([k, ts]) => `  ${JSON.stringify(k)}: [${ts.map((t) => JSON.stringify(t)).join(", ")}],`).join("\n")}
+};
 
 /** Every KEYWORD ABILITY, for subjects narrowed by one — "creatures you control with flying".
  *

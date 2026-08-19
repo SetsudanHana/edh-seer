@@ -32,7 +32,32 @@ test("tribe and static never fold", () => {
 
 test("an unknown value and a negation are left alone", () => {
   expect(foldThemeTag("cast:-creature", H)).toBe("cast:-creature");
-  expect(foldThemeTag("enters:spacecraft", H)).toBe("enters:spacecraft");
+  // Not a subtype in any card type's list, so neither the authoritative map nor the fixture
+  // hierarchy can place it. (`spacecraft` used to serve here and no longer can -- it IS an artifact
+  // subtype, and the authoritative map now says so regardless of what the fixture holds.)
+  expect(foldThemeTag("enters:notatype", H)).toBe("enters:notatype");
+});
+
+// ASK THE ASSIGNMENT, NOT THE CO-OCCURRENCE COUNT (owner's observation, 2026-08-19). `hierarchy.json`
+// is scraped off printed type lines, so `treasure` reaches `creature` through artifact creatures and
+// `forest` through Dryad Arbor -- and TYPE_PRIORITY puts creature first, so a Treasure deck's
+// `enters:treasure` was counted inside the CREATURE family.
+test("the authoritative map beats the co-occurrence hierarchy where they disagree", () => {
+  const misleading = { treasure: ["artifact", "creature"], forest: ["land", "creature"], vehicle: ["artifact", "land"], saga: ["enchantment", "creature"] };
+  expect(foldThemeTag("enters:treasure", misleading)).toBe("enters:artifact");
+  expect(foldThemeTag("enters:forest", misleading)).toBe("enters:land");
+  expect(foldThemeTag("enters:vehicle", misleading)).toBe("enters:artifact");
+  expect(foldThemeTag("enters:saga", misleading)).toBe("enters:enchantment");
+});
+
+// A CARD TYPE IS ITS OWN FAMILY. `hierarchy.json` is keyed on the words after a type line's em
+// dash, which includes the card types themselves, and `h["land"]` lists `creature` first -- so
+// `enters:land` folded into `enters:creature` and a landfall deck's family was the creature family.
+test("a value that is already a card type is never re-folded", () => {
+  const misleading = { land: ["land", "creature"], artifact: ["artifact", "creature"], creature: ["creature"] };
+  expect(foldThemeTag("enters:land", misleading)).toBe("enters:land");
+  expect(foldThemeTag("enters:artifact", misleading)).toBe("enters:artifact");
+  expect(foldThemeTag("enters:creature", misleading)).toBe("enters:creature");
 });
 
 test("NO_FOLD is the identity, so an opt-out caller behaves exactly as before", () => {

@@ -968,6 +968,1535 @@
   "town",
   "urza's"
  ],
+ "subtypeTypes": {
+  "abian": [
+   "planeswalker"
+  ],
+  "adventure": [
+   "instant",
+   "sorcery"
+  ],
+  "advisor": [
+   "creature"
+  ],
+  "aetherborn": [
+   "creature"
+  ],
+  "ajani": [
+   "planeswalker"
+  ],
+  "alien": [
+   "creature"
+  ],
+  "ally": [
+   "creature"
+  ],
+  "aminatou": [
+   "planeswalker"
+  ],
+  "andorian": [
+   "creature"
+  ],
+  "angel": [
+   "creature"
+  ],
+  "angrath": [
+   "planeswalker"
+  ],
+  "antelope": [
+   "creature"
+  ],
+  "ape": [
+   "creature"
+  ],
+  "arcane": [
+   "instant",
+   "sorcery"
+  ],
+  "archer": [
+   "creature"
+  ],
+  "archon": [
+   "creature"
+  ],
+  "arlinn": [
+   "planeswalker"
+  ],
+  "armadillo": [
+   "creature"
+  ],
+  "army": [
+   "creature"
+  ],
+  "artificer": [
+   "creature"
+  ],
+  "arzakon": [
+   "planeswalker"
+  ],
+  "ashiok": [
+   "planeswalker"
+  ],
+  "assassin": [
+   "creature"
+  ],
+  "assembly-worker": [
+   "creature"
+  ],
+  "astartes": [
+   "creature"
+  ],
+  "atog": [
+   "creature"
+  ],
+  "attraction": [
+   "artifact"
+  ],
+  "aura": [
+   "enchantment"
+  ],
+  "aurochs": [
+   "creature"
+  ],
+  "automaton": [
+   "creature"
+  ],
+  "avatar": [
+   "creature"
+  ],
+  "azra": [
+   "creature"
+  ],
+  "b.o.b.": [
+   "planeswalker"
+  ],
+  "background": [
+   "enchantment"
+  ],
+  "badger": [
+   "creature"
+  ],
+  "bahamut": [
+   "planeswalker"
+  ],
+  "balloon": [
+   "creature"
+  ],
+  "barbarian": [
+   "creature"
+  ],
+  "bard": [
+   "creature"
+  ],
+  "basilisk": [
+   "creature"
+  ],
+  "basri": [
+   "planeswalker"
+  ],
+  "bat": [
+   "creature"
+  ],
+  "bear": [
+   "creature"
+  ],
+  "beast": [
+   "creature"
+  ],
+  "beaver": [
+   "creature"
+  ],
+  "beeble": [
+   "creature"
+  ],
+  "beholder": [
+   "creature"
+  ],
+  "berserker": [
+   "creature"
+  ],
+  "bird": [
+   "creature"
+  ],
+  "bison": [
+   "creature"
+  ],
+  "blinkmoth": [
+   "creature"
+  ],
+  "blood": [
+   "artifact"
+  ],
+  "boar": [
+   "creature"
+  ],
+  "bobblehead": [
+   "artifact"
+  ],
+  "bolas": [
+   "planeswalker"
+  ],
+  "book": [
+   "artifact"
+  ],
+  "borg": [
+   "creature"
+  ],
+  "brainiac": [
+   "creature"
+  ],
+  "bringer": [
+   "creature"
+  ],
+  "brushwagg": [
+   "creature"
+  ],
+  "c'tan": [
+   "creature"
+  ],
+  "caitian": [
+   "creature"
+  ],
+  "calix": [
+   "planeswalker"
+  ],
+  "camarid": [
+   "creature"
+  ],
+  "camel": [
+   "creature"
+  ],
+  "capybara": [
+   "creature"
+  ],
+  "caribou": [
+   "creature"
+  ],
+  "carrier": [
+   "creature"
+  ],
+  "cartouche": [
+   "enchantment"
+  ],
+  "case": [
+   "enchantment"
+  ],
+  "cat": [
+   "creature"
+  ],
+  "cave": [
+   "land"
+  ],
+  "centaur": [
+   "creature"
+  ],
+  "chandra": [
+   "planeswalker"
+  ],
+  "chicken": [
+   "creature"
+  ],
+  "child": [
+   "creature"
+  ],
+  "chimera": [
+   "creature"
+  ],
+  "chorus": [
+   "instant",
+   "sorcery"
+  ],
+  "citizen": [
+   "creature"
+  ],
+  "class": [
+   "enchantment"
+  ],
+  "cleric": [
+   "creature"
+  ],
+  "cloud": [
+   "land"
+  ],
+  "clown": [
+   "creature"
+  ],
+  "clue": [
+   "artifact"
+  ],
+  "cockatrice": [
+   "creature"
+  ],
+  "comet": [
+   "planeswalker"
+  ],
+  "construct": [
+   "creature"
+  ],
+  "contraption": [
+   "artifact"
+  ],
+  "coward": [
+   "creature"
+  ],
+  "coyote": [
+   "creature"
+  ],
+  "crab": [
+   "creature"
+  ],
+  "crocodile": [
+   "creature"
+  ],
+  "curse": [
+   "enchantment"
+  ],
+  "custodes": [
+   "creature"
+  ],
+  "cyberman": [
+   "creature"
+  ],
+  "cyclops": [
+   "creature"
+  ],
+  "dack": [
+   "planeswalker"
+  ],
+  "dakkon": [
+   "planeswalker"
+  ],
+  "dalek": [
+   "creature"
+  ],
+  "daretti": [
+   "planeswalker"
+  ],
+  "dauthi": [
+   "creature"
+  ],
+  "davriel": [
+   "planeswalker"
+  ],
+  "deb": [
+   "planeswalker"
+  ],
+  "dellian": [
+   "planeswalker"
+  ],
+  "demigod": [
+   "creature"
+  ],
+  "demon": [
+   "creature"
+  ],
+  "desert": [
+   "land"
+  ],
+  "deserter": [
+   "creature"
+  ],
+  "detective": [
+   "creature"
+  ],
+  "devil": [
+   "creature"
+  ],
+  "dihada": [
+   "planeswalker"
+  ],
+  "dinosaur": [
+   "creature"
+  ],
+  "djinn": [
+   "creature"
+  ],
+  "doctor": [
+   "creature"
+  ],
+  "dog": [
+   "creature"
+  ],
+  "domri": [
+   "planeswalker"
+  ],
+  "dovin": [
+   "planeswalker"
+  ],
+  "dragon": [
+   "creature"
+  ],
+  "drake": [
+   "creature"
+  ],
+  "dreadnought": [
+   "creature"
+  ],
+  "drix": [
+   "creature"
+  ],
+  "drone": [
+   "creature"
+  ],
+  "druid": [
+   "creature"
+  ],
+  "dryad": [
+   "creature"
+  ],
+  "duck": [
+   "planeswalker"
+  ],
+  "dungeon": [
+   "planeswalker"
+  ],
+  "dwarf": [
+   "creature"
+  ],
+  "dyfed": [
+   "planeswalker"
+  ],
+  "echidna": [
+   "creature"
+  ],
+  "efreet": [
+   "creature"
+  ],
+  "egg": [
+   "creature"
+  ],
+  "elder": [
+   "creature"
+  ],
+  "eldrazi": [
+   "creature"
+  ],
+  "elemental": [
+   "creature"
+  ],
+  "elephant": [
+   "creature"
+  ],
+  "elf": [
+   "creature"
+  ],
+  "elk": [
+   "creature"
+  ],
+  "ellywick": [
+   "planeswalker"
+  ],
+  "elminster": [
+   "planeswalker"
+  ],
+  "elspeth": [
+   "planeswalker"
+  ],
+  "employee": [
+   "creature"
+  ],
+  "equipment": [
+   "artifact"
+  ],
+  "ersta": [
+   "planeswalker"
+  ],
+  "estrid": [
+   "planeswalker"
+  ],
+  "eternal": [
+   "creature"
+  ],
+  "eye": [
+   "creature"
+  ],
+  "faerie": [
+   "creature"
+  ],
+  "feroz": [
+   "planeswalker"
+  ],
+  "ferret": [
+   "creature"
+  ],
+  "fish": [
+   "creature"
+  ],
+  "flagbearer": [
+   "creature"
+  ],
+  "food": [
+   "artifact"
+  ],
+  "forest": [
+   "land"
+  ],
+  "fortification": [
+   "artifact"
+  ],
+  "fox": [
+   "creature"
+  ],
+  "fractal": [
+   "creature"
+  ],
+  "freyalise": [
+   "planeswalker"
+  ],
+  "frog": [
+   "creature"
+  ],
+  "fungus": [
+   "creature"
+  ],
+  "gamer": [
+   "creature"
+  ],
+  "gamma": [
+   "creature"
+  ],
+  "gargoyle": [
+   "creature"
+  ],
+  "garruk": [
+   "planeswalker"
+  ],
+  "gate": [
+   "land"
+  ],
+  "germ": [
+   "creature"
+  ],
+  "giant": [
+   "creature"
+  ],
+  "gideon": [
+   "planeswalker"
+  ],
+  "giraffe": [
+   "creature"
+  ],
+  "gith": [
+   "creature"
+  ],
+  "glimmer": [
+   "creature"
+  ],
+  "gnoll": [
+   "creature"
+  ],
+  "gnome": [
+   "creature"
+  ],
+  "goat": [
+   "creature"
+  ],
+  "goblin": [
+   "creature"
+  ],
+  "god": [
+   "creature"
+  ],
+  "gold": [
+   "artifact"
+  ],
+  "golem": [
+   "creature"
+  ],
+  "gorgon": [
+   "creature"
+  ],
+  "gorn": [
+   "creature"
+  ],
+  "graveborn": [
+   "creature"
+  ],
+  "greensleeves": [
+   "planeswalker"
+  ],
+  "gremlin": [
+   "creature"
+  ],
+  "griffin": [
+   "creature"
+  ],
+  "grist": [
+   "planeswalker"
+  ],
+  "guest": [
+   "creature"
+  ],
+  "guff": [
+   "planeswalker"
+  ],
+  "hag": [
+   "creature"
+  ],
+  "halfling": [
+   "creature"
+  ],
+  "hamster": [
+   "creature"
+  ],
+  "harpy": [
+   "creature"
+  ],
+  "head": [
+   "creature"
+  ],
+  "hedgehog": [
+   "creature"
+  ],
+  "hellion": [
+   "creature"
+  ],
+  "hero": [
+   "creature"
+  ],
+  "hippo": [
+   "creature"
+  ],
+  "hippogriff": [
+   "creature"
+  ],
+  "homarid": [
+   "creature"
+  ],
+  "homunculus": [
+   "creature"
+  ],
+  "horror": [
+   "creature"
+  ],
+  "horse": [
+   "creature"
+  ],
+  "huatli": [
+   "planeswalker"
+  ],
+  "human": [
+   "creature"
+  ],
+  "hydra": [
+   "creature"
+  ],
+  "hyena": [
+   "creature"
+  ],
+  "illusion": [
+   "creature"
+  ],
+  "imp": [
+   "creature"
+  ],
+  "incarnation": [
+   "creature"
+  ],
+  "incubator": [
+   "artifact"
+  ],
+  "infinity": [
+   "artifact"
+  ],
+  "inhuman": [
+   "creature"
+  ],
+  "inkling": [
+   "creature"
+  ],
+  "inquisitor": [
+   "creature"
+  ],
+  "insect": [
+   "creature"
+  ],
+  "inzerva": [
+   "planeswalker"
+  ],
+  "island": [
+   "land"
+  ],
+  "jace": [
+   "planeswalker"
+  ],
+  "jackal": [
+   "creature"
+  ],
+  "jared": [
+   "planeswalker"
+  ],
+  "jaya": [
+   "planeswalker"
+  ],
+  "jellyfish": [
+   "creature"
+  ],
+  "jeska": [
+   "planeswalker"
+  ],
+  "juggernaut": [
+   "creature"
+  ],
+  "junk": [
+   "artifact"
+  ],
+  "kaito": [
+   "planeswalker"
+  ],
+  "kangaroo": [
+   "creature"
+  ],
+  "karn": [
+   "planeswalker"
+  ],
+  "kasmina": [
+   "planeswalker"
+  ],
+  "kavu": [
+   "creature"
+  ],
+  "kaya": [
+   "planeswalker"
+  ],
+  "kelpien": [
+   "creature"
+  ],
+  "kiora": [
+   "planeswalker"
+  ],
+  "kirin": [
+   "creature"
+  ],
+  "kithkin": [
+   "creature"
+  ],
+  "klingon": [
+   "creature"
+  ],
+  "knight": [
+   "creature"
+  ],
+  "kobold": [
+   "creature"
+  ],
+  "kor": [
+   "creature"
+  ],
+  "koth": [
+   "planeswalker"
+  ],
+  "kraken": [
+   "creature"
+  ],
+  "kree": [
+   "creature"
+  ],
+  "lair": [
+   "land"
+  ],
+  "lamia": [
+   "creature"
+  ],
+  "lammasu": [
+   "creature"
+  ],
+  "lanthanite": [
+   "creature"
+  ],
+  "leech": [
+   "creature"
+  ],
+  "lemur": [
+   "creature"
+  ],
+  "lesson": [
+   "instant",
+   "sorcery"
+  ],
+  "leviathan": [
+   "creature"
+  ],
+  "lhurgoyf": [
+   "creature"
+  ],
+  "licid": [
+   "creature"
+  ],
+  "liliana": [
+   "planeswalker"
+  ],
+  "lizard": [
+   "creature"
+  ],
+  "llama": [
+   "creature"
+  ],
+  "lobster": [
+   "creature"
+  ],
+  "locus": [
+   "land"
+  ],
+  "lolth": [
+   "planeswalker"
+  ],
+  "lukka": [
+   "planeswalker"
+  ],
+  "luxior": [
+   "planeswalker"
+  ],
+  "manticore": [
+   "creature"
+  ],
+  "map": [
+   "artifact"
+  ],
+  "master": [
+   "planeswalker"
+  ],
+  "masticore": [
+   "creature"
+  ],
+  "mercenary": [
+   "creature"
+  ],
+  "merfolk": [
+   "creature"
+  ],
+  "metathran": [
+   "creature"
+  ],
+  "mine": [
+   "land"
+  ],
+  "minion": [
+   "creature"
+  ],
+  "minotaur": [
+   "creature"
+  ],
+  "minsc": [
+   "planeswalker"
+  ],
+  "mite": [
+   "creature"
+  ],
+  "mole": [
+   "creature"
+  ],
+  "monger": [
+   "creature"
+  ],
+  "mongoose": [
+   "creature"
+  ],
+  "monk": [
+   "creature"
+  ],
+  "monkey": [
+   "creature"
+  ],
+  "monopoly": [
+   "planeswalker"
+  ],
+  "moogle": [
+   "creature"
+  ],
+  "moonfolk": [
+   "creature"
+  ],
+  "mordenkainen": [
+   "planeswalker"
+  ],
+  "mount": [
+   "creature"
+  ],
+  "mountain": [
+   "land"
+  ],
+  "mouse": [
+   "creature"
+  ],
+  "mutant": [
+   "creature"
+  ],
+  "myr": [
+   "creature"
+  ],
+  "mystic": [
+   "creature"
+  ],
+  "naga": [
+   "creature"
+  ],
+  "nahiri": [
+   "planeswalker"
+  ],
+  "narset": [
+   "planeswalker"
+  ],
+  "nautilus": [
+   "creature"
+  ],
+  "necron": [
+   "creature"
+  ],
+  "nephilim": [
+   "creature"
+  ],
+  "nightmare": [
+   "creature"
+  ],
+  "nightstalker": [
+   "creature"
+  ],
+  "niko": [
+   "planeswalker"
+  ],
+  "ninja": [
+   "creature"
+  ],
+  "nissa": [
+   "planeswalker"
+  ],
+  "nixilis": [
+   "planeswalker"
+  ],
+  "noble": [
+   "creature"
+  ],
+  "noggle": [
+   "creature"
+  ],
+  "nomad": [
+   "creature"
+  ],
+  "nymph": [
+   "creature"
+  ],
+  "octopus": [
+   "creature"
+  ],
+  "officer": [
+   "creature"
+  ],
+  "ogre": [
+   "creature"
+  ],
+  "oko": [
+   "planeswalker"
+  ],
+  "omen": [
+   "instant",
+   "sorcery"
+  ],
+  "ooze": [
+   "creature"
+  ],
+  "orb": [
+   "creature"
+  ],
+  "orc": [
+   "creature"
+  ],
+  "orgg": [
+   "creature"
+  ],
+  "orion": [
+   "creature"
+  ],
+  "otter": [
+   "creature"
+  ],
+  "ouphe": [
+   "creature"
+  ],
+  "ox": [
+   "creature"
+  ],
+  "oyster": [
+   "creature"
+  ],
+  "pangolin": [
+   "creature"
+  ],
+  "peasant": [
+   "creature"
+  ],
+  "pegasus": [
+   "creature"
+  ],
+  "pentavite": [
+   "creature"
+  ],
+  "performer": [
+   "creature"
+  ],
+  "pest": [
+   "creature"
+  ],
+  "phelddagrif": [
+   "creature"
+  ],
+  "phoenix": [
+   "creature"
+  ],
+  "phyrexian": [
+   "creature"
+  ],
+  "pilot": [
+   "creature"
+  ],
+  "pincher": [
+   "creature"
+  ],
+  "pirate": [
+   "creature"
+  ],
+  "plains": [
+   "land"
+  ],
+  "plan": [
+   "enchantment"
+  ],
+  "planet": [
+   "land"
+  ],
+  "plant": [
+   "creature"
+  ],
+  "platypus": [
+   "creature"
+  ],
+  "porcupine": [
+   "creature"
+  ],
+  "possum": [
+   "creature"
+  ],
+  "power-plant": [
+   "land"
+  ],
+  "powerstone": [
+   "artifact"
+  ],
+  "praetor": [
+   "creature"
+  ],
+  "primarch": [
+   "creature"
+  ],
+  "prism": [
+   "creature"
+  ],
+  "processor": [
+   "creature"
+  ],
+  "q": [
+   "creature"
+  ],
+  "qu": [
+   "creature"
+  ],
+  "quintorius": [
+   "planeswalker"
+  ],
+  "rabbit": [
+   "creature"
+  ],
+  "raccoon": [
+   "creature"
+  ],
+  "ral": [
+   "planeswalker"
+  ],
+  "ranger": [
+   "creature"
+  ],
+  "rat": [
+   "creature"
+  ],
+  "rebel": [
+   "creature"
+  ],
+  "reflection": [
+   "creature"
+  ],
+  "reveler": [
+   "creature"
+  ],
+  "rhino": [
+   "creature"
+  ],
+  "rigger": [
+   "creature"
+  ],
+  "robot": [
+   "creature"
+  ],
+  "rogue": [
+   "creature"
+  ],
+  "role": [
+   "enchantment"
+  ],
+  "room": [
+   "enchantment"
+  ],
+  "rowan": [
+   "planeswalker"
+  ],
+  "rukh": [
+   "creature"
+  ],
+  "rune": [
+   "enchantment"
+  ],
+  "sable": [
+   "creature"
+  ],
+  "saga": [
+   "enchantment"
+  ],
+  "saheeli": [
+   "planeswalker"
+  ],
+  "salamander": [
+   "creature"
+  ],
+  "samurai": [
+   "creature"
+  ],
+  "samut": [
+   "planeswalker"
+  ],
+  "sand": [
+   "creature"
+  ],
+  "saproling": [
+   "creature"
+  ],
+  "sarkhan": [
+   "planeswalker"
+  ],
+  "satyr": [
+   "creature"
+  ],
+  "scarecrow": [
+   "creature"
+  ],
+  "scientist": [
+   "creature"
+  ],
+  "scion": [
+   "creature"
+  ],
+  "scorpion": [
+   "creature"
+  ],
+  "scout": [
+   "creature"
+  ],
+  "sculpture": [
+   "creature"
+  ],
+  "seal": [
+   "creature"
+  ],
+  "serf": [
+   "creature"
+  ],
+  "serpent": [
+   "creature"
+  ],
+  "serra": [
+   "planeswalker"
+  ],
+  "servo": [
+   "creature"
+  ],
+  "shade": [
+   "creature"
+  ],
+  "shaman": [
+   "creature"
+  ],
+  "shapeshifter": [
+   "creature"
+  ],
+  "shard": [
+   "enchantment"
+  ],
+  "shark": [
+   "creature"
+  ],
+  "sheep": [
+   "creature"
+  ],
+  "shi'ar": [
+   "creature"
+  ],
+  "shrine": [
+   "enchantment"
+  ],
+  "siege": [
+   "battle"
+  ],
+  "sifa": [
+   "planeswalker"
+  ],
+  "siren": [
+   "creature"
+  ],
+  "sivitri": [
+   "planeswalker"
+  ],
+  "skeleton": [
+   "creature"
+  ],
+  "skrull": [
+   "creature"
+  ],
+  "skunk": [
+   "creature"
+  ],
+  "slith": [
+   "creature"
+  ],
+  "sliver": [
+   "creature"
+  ],
+  "sloth": [
+   "creature"
+  ],
+  "slug": [
+   "creature"
+  ],
+  "snail": [
+   "creature"
+  ],
+  "snake": [
+   "creature"
+  ],
+  "soldier": [
+   "creature"
+  ],
+  "soltari": [
+   "creature"
+  ],
+  "sorcerer": [
+   "creature"
+  ],
+  "sorin": [
+   "planeswalker"
+  ],
+  "spacecraft": [
+   "artifact"
+  ],
+  "spawn": [
+   "creature"
+  ],
+  "specter": [
+   "creature"
+  ],
+  "spellshaper": [
+   "creature"
+  ],
+  "sphere": [
+   "land"
+  ],
+  "sphinx": [
+   "creature"
+  ],
+  "spider": [
+   "creature"
+  ],
+  "spike": [
+   "creature"
+  ],
+  "spirit": [
+   "creature"
+  ],
+  "splinter": [
+   "creature"
+  ],
+  "sponge": [
+   "creature"
+  ],
+  "spy": [
+   "creature"
+  ],
+  "squid": [
+   "creature"
+  ],
+  "squirrel": [
+   "creature"
+  ],
+  "starfish": [
+   "creature"
+  ],
+  "stone": [
+   "artifact"
+  ],
+  "surrakar": [
+   "creature"
+  ],
+  "survivor": [
+   "creature"
+  ],
+  "svega": [
+   "planeswalker"
+  ],
+  "swamp": [
+   "land"
+  ],
+  "symbiote": [
+   "creature"
+  ],
+  "synth": [
+   "creature"
+  ],
+  "szat": [
+   "planeswalker"
+  ],
+  "talosian": [
+   "creature"
+  ],
+  "tamiyo": [
+   "planeswalker"
+  ],
+  "tasha": [
+   "planeswalker"
+  ],
+  "teddy": [
+   "creature"
+  ],
+  "teferi": [
+   "planeswalker"
+  ],
+  "tellarite": [
+   "creature"
+  ],
+  "tentacle": [
+   "creature"
+  ],
+  "terminus": [
+   "artifact"
+  ],
+  "tetravite": [
+   "creature"
+  ],
+  "teyo": [
+   "planeswalker"
+  ],
+  "tezzeret": [
+   "planeswalker"
+  ],
+  "thalakos": [
+   "creature"
+  ],
+  "tholian": [
+   "creature"
+  ],
+  "thomil": [
+   "planeswalker"
+  ],
+  "thopter": [
+   "creature"
+  ],
+  "thrull": [
+   "creature"
+  ],
+  "tibalt": [
+   "planeswalker"
+  ],
+  "tiefling": [
+   "creature"
+  ],
+  "time lord": [
+   "creature"
+  ],
+  "tosk": [
+   "creature"
+  ],
+  "tower": [
+   "land"
+  ],
+  "town": [
+   "land"
+  ],
+  "toy": [
+   "creature"
+  ],
+  "trap": [
+   "instant",
+   "sorcery"
+  ],
+  "treasure": [
+   "artifact"
+  ],
+  "treefolk": [
+   "creature"
+  ],
+  "trilobite": [
+   "creature"
+  ],
+  "triskelavite": [
+   "creature"
+  ],
+  "troll": [
+   "creature"
+  ],
+  "turtle": [
+   "creature"
+  ],
+  "tyranid": [
+   "creature"
+  ],
+  "tyvar": [
+   "planeswalker"
+  ],
+  "ugin": [
+   "planeswalker"
+  ],
+  "unicorn": [
+   "creature"
+  ],
+  "urza": [
+   "planeswalker"
+  ],
+  "urza's": [
+   "land"
+  ],
+  "urzan": [
+   "creature"
+  ],
+  "utrom": [
+   "creature"
+  ],
+  "vampire": [
+   "creature"
+  ],
+  "varmint": [
+   "creature"
+  ],
+  "vedalken": [
+   "creature"
+  ],
+  "vehicle": [
+   "artifact"
+  ],
+  "venser": [
+   "planeswalker"
+  ],
+  "villain": [
+   "creature"
+  ],
+  "vivien": [
+   "planeswalker"
+  ],
+  "volver": [
+   "creature"
+  ],
+  "vorta": [
+   "creature"
+  ],
+  "vraska": [
+   "planeswalker"
+  ],
+  "vronos": [
+   "planeswalker"
+  ],
+  "vulcan": [
+   "creature"
+  ],
+  "wall": [
+   "creature"
+  ],
+  "walrus": [
+   "creature"
+  ],
+  "wanderer": [
+   "planeswalker"
+  ],
+  "warlock": [
+   "creature"
+  ],
+  "warrior": [
+   "creature"
+  ],
+  "weasel": [
+   "creature"
+  ],
+  "weird": [
+   "creature"
+  ],
+  "werewolf": [
+   "creature"
+  ],
+  "whale": [
+   "creature"
+  ],
+  "will": [
+   "planeswalker"
+  ],
+  "windgrace": [
+   "planeswalker"
+  ],
+  "wizard": [
+   "creature"
+  ],
+  "wolf": [
+   "creature"
+  ],
+  "wolverine": [
+   "creature"
+  ],
+  "wombat": [
+   "creature"
+  ],
+  "worm": [
+   "creature"
+  ],
+  "worzel": [
+   "planeswalker"
+  ],
+  "wraith": [
+   "creature"
+  ],
+  "wrenn": [
+   "planeswalker"
+  ],
+  "wurm": [
+   "creature"
+  ],
+  "xenagos": [
+   "planeswalker"
+  ],
+  "xindi": [
+   "creature"
+  ],
+  "yanggu": [
+   "planeswalker"
+  ],
+  "yanling": [
+   "planeswalker"
+  ],
+  "yeti": [
+   "creature"
+  ],
+  "zariel": [
+   "planeswalker"
+  ],
+  "zombie": [
+   "creature"
+  ],
+  "zubera": [
+   "creature"
+  ]
+ },
  "supertypes": [
   "basic",
   "host",
@@ -1059,6 +2588,7 @@
  "keywordAbilities": [
   "absorb",
   "affinity",
+  "affinitycycling",
   "afflict",
   "afterlife",
   "aftermath",
@@ -1154,6 +2684,7 @@
   "gift",
   "graft",
   "gravestorm",
+  "halflingcycling",
   "harmonize",
   "haste",
   "haunt",

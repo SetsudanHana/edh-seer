@@ -1,4 +1,6 @@
 import { tagFamily } from "@mtg/engine";
+import { SUBTYPE_TYPES } from "@mtg/tagger";
+import { ALL_CARD_TYPES } from "./hierarchy.js";
 import type { Hierarchy } from "./types.js";
 
 /** THE THEME FOLD — a deck's identity is the family, not its largest fragment.
@@ -26,9 +28,9 @@ import type { Hierarchy } from "./types.js";
  *   - `counter:` — the value is a counter kind (`+1/+1`), not a creature type. */
 const NEVER_FOLD: ReadonlySet<string> = new Set(["tribe", "tribe-nontoken", "static", "counter"]);
 
-/** Card types, in the order a multi-type subtype resolves. A subtype belonging to several card
- *  types (Kindred rows put creature types on non-creatures) picks the first match here so the fold
- *  is deterministic across runs rather than dependent on `hierarchy.json` ordering. */
+/** Card types, in the order a multi-type subtype resolves. Only the six spell subtypes (adventure,
+ *  arcane, chorus, lesson, omen, trap) are genuinely multi-type under `SUBTYPE_TYPES`; the order
+ *  still matters for the `hierarchy.json` FALLBACK below, whose lists are long. */
 const TYPE_PRIORITY = ["creature", "land", "artifact", "enchantment", "planeswalker", "battle", "instant", "sorcery"];
 
 /** Maps a theme tag to the family key it should be COUNTED under. Returns the tag unchanged when it
@@ -40,7 +42,26 @@ export function foldThemeTag(tag: string, h: Hierarchy): string {
   if (family === tag || NEVER_FOLD.has(family)) return tag;
   const value = tag.slice(family.length + 1);
   if (value === "any" || value.startsWith("-")) return tag;
-  const parents = h[value.toLowerCase()];
+  // A VALUE THAT IS ALREADY A CARD TYPE IS ITS OWN FAMILY -- the doc comment above has always
+  // claimed this and the code did not do it. `hierarchy.json` is keyed by whatever words appear
+  // after the em dash of a printed type line, which includes the card types themselves ("Creature
+  // -- Land Ship" makes `land` a key), and `h["land"]` lists `creature` first, so **`enters:land`
+  // folded into `enters:creature`**: a landfall deck's family was the creature family. Found by
+  // measuring the authoritative-map change on `rakdos-landfall`, not by reading the code.
+  if ((ALL_CARD_TYPES as readonly string[]).includes(value)) return tag;
+  // ASK THE ASSIGNMENT, NOT THE CO-OCCURRENCE COUNT (owner's observation, 2026-08-19).
+  // `SUBTYPE_TYPES` is CR 205.3 generated from MTGJSON: which card type a subtype IS.
+  // `hierarchy.json` is built by scraping printed type lines, so it records which card types a
+  // subtype has been printed BESIDE -- the right question for `expandTypes` ("what can this subject
+  // denote") and the wrong one here. They disagree on 19 of 453 subtypes, and the disagreements are
+  // the ones this repo cares about: `treasure`, `clue`, `food`, `equipment` and `book` folded to
+  // `creature`, as did `forest`, `island`, `locus`, `mountain`, `saga`, `background` and `shrine`,
+  // while `vehicle` folded to `land`. So a Treasure deck's `enters:treasure` counted inside the
+  // creature family -- which is part of what CLAUDE.md recorded as the family sweep collapsing
+  // `magar-spellslinger` and `rocket-the-mechanist` into "creatures entering".
+  // The hierarchy stays as the fallback: it carries 73 keys the authoritative list does not,
+  // mostly multi-word type lines split on whitespace, and a missing answer would silently unfold.
+  const parents = SUBTYPE_TYPES[value.toLowerCase()] ?? h[value.toLowerCase()];
   if (!parents || parents.length === 0) return tag;
   const parent = TYPE_PRIORITY.find((t) => parents.includes(t)) ?? parents[0];
   return `${family}:${parent}`;

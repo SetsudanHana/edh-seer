@@ -28,5 +28,5 @@ export {
   type TagsSource, type TagsReader,
 } from "./tags-lookup.js";
 
-export { SUBTYPES, LAND_SUBTYPES } from "./derive/subtypes.js";
+export { SUBTYPES, LAND_SUBTYPES, SUBTYPE_TYPES } from "./derive/subtypes.js";
 export { extractCharacteristics } from "./characteristics.js";
