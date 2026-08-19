@@ -27,8 +27,33 @@ export const COMBO_EDGE_WEIGHT = 1000;
 /** Geometric decay applied per theme rank: weight = THEME_DECAY^(rank-1). */
 export const THEME_DECAY = 2 / 3;
 
+/** Cached max-observed idf per stats object -- one pass over `counts`, reused for every lookup. */
+const maxObservedIDFCache = new WeakMap<TagStats, number>();
+
+/** The idf of the RAREST tag the corpus actually observed. An absent tag is clamped to this. */
+function maxObservedIDF(stats: TagStats): number {
+  const cached = maxObservedIDFCache.get(stats);
+  if (cached !== undefined) return cached;
+  let min = Infinity;
+  for (const c of Object.values(stats.counts)) if (c < min) min = c;
+  // Empty corpus (UNIFORM_STATS): nothing observed, so there is nothing to clamp to and every
+  // tag scores the same log(N+1) constant -- the deliberate deckFreq-only fallback.
+  const idf = Math.log((stats.N + 1) / (min === Infinity ? 1 : min + 1));
+  maxObservedIDFCache.set(stats, idf);
+  return idf;
+}
+
+/**
+ * Rarity weight of a tag. An ABSENT tag is CLAMPED to the rarest OBSERVED tag rather than scoring
+ * the unreachable log(N+1) ceiling: absence is not evidence of extreme rarity. Two ways a tag is
+ * absent while being nothing of the kind -- a chosen-type-RESOLVED tag (`attacks:lord`) that
+ * `gen-theme-stats` computes over raw card documents can never see, and a tag whose generator ran
+ * before the derivation that produces it (the `combat-damage` staleness of 2026-08-18). Unclamped,
+ * both out-rank every real theme in the deck, which is how a 3-card fragment became a headline.
+ */
 export function globalIDF(stats: TagStats, tag: Tag): number {
-  const count = stats.counts[tag] ?? 0;
+  const count = stats.counts[tag];
+  if (count === undefined) return maxObservedIDF(stats);
   return Math.log((stats.N + 1) / (count + 1));
 }
 

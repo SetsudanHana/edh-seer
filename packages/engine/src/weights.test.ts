@@ -12,6 +12,22 @@ test("globalIDF decreases as count rises; a missing tag gets the max", () => {
   expect(globalIDF(stats, "brand:new")).toBeGreaterThanOrEqual(globalIDF(stats, "treasure"));
 });
 
+test("an ABSENT tag is CLAMPED to the rarest observed tag, never above it", () => {
+  // log((100+1)/(0+1)) = 4.615 would out-rank every real tag in the corpus, including the
+  // rarest one at 3.516 -- and a tag can be absent for reasons that are not rarity at all
+  // (`attacks:lord` is chosen-type-resolved per deck, so gen-theme-stats can never count it).
+  expect(globalIDF(stats, "brand:new")).toBeCloseTo(globalIDF(stats, "treasure"));
+  expect(globalIDF(stats, "brand:new")).toBeLessThan(Math.log(101));
+});
+
+test("an empty corpus still degrades to the flat log(N+1) fallback", () => {
+  // UNIFORM_STATS: nothing is observed, so there is no rarest tag to clamp to and every tag
+  // must score the same constant -- the deckFreq-only behaviour the axis falls back to.
+  const empty: TagStats = { N: 1, counts: {} };
+  expect(globalIDF(empty, "anything")).toBeCloseTo(Math.log(2));
+  expect(globalIDF(empty, "else")).toBeCloseTo(globalIDF(empty, "anything"));
+});
+
 test("rankThemes orders by deckFreq × globalIDF, dense+rare first", () => {
   // cast:sorcery is dense in deck but common in corpus; tribe:wizard is dense AND rare.
   const deckFreq = new Map<string, number>([["cast:sorcery", 8], ["tribe:wizard", 6], ["treasure", 1]]);
