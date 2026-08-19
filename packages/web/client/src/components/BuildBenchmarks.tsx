@@ -352,8 +352,10 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
           {/* A turn number that does not say how it was made reads as a prediction. It is a RATE:
             *  useful for comparing two decks, useless as a date. */}
           <p className="text-xs text-(--muted) max-w-[65ch]">
-            Expected attacking power against one opponent's 40 life. Nobody blocks in this model and
-            nothing is removed, so it is optimistic — read it to compare decks, not to plan a game.
+            Expected attacking power against one opponent's 40 life. Nobody blocks in this model,
+            nothing is removed, and there is no mana budget — a creature counts once the turn number
+            reaches its cost, however many others arrived with it, and no ramp shortens that. Read it
+            to compare decks, not to plan a game.
           </p>
         </div>
   ) : null;
@@ -552,8 +554,9 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             ? "a fixed horizon"
             : "this deck's own clock"}
         , {seen} cards seen. Supply is unweighted — a repeatable outlet counts the same as a
-        one-shot. No mulligans and no opponent, and card draw is ignored, so each figure is
-        conservative for a deck that draws.
+        one-shot. No mulligans and no opponent, and card draw is ignored: a deck five cards ahead of
+        that reads about 11 points higher on a coverage figure, ten cards ahead about 20, so each
+        one is conservative for a deck that draws.
       </p>
 
       {[...sections]

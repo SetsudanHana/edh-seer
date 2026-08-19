@@ -50,6 +50,10 @@ export interface CutInput {
   axisWeight: number;
   /** How many distinct cards it relates to at all. */
   partnerCount: number;
+  /** The card's printed mana value. Read as a TIEBREAK only, never as a gate — nothing in this
+   *  repo models card quality, so "expensive" is not "bad". Two cards the engine cannot connect are
+   *  different cut candidates when one costs 9 and the other 1, and that is the whole claim. */
+  manaValue: number;
   /** Functional BUILD roles it fills ("ramp", "draw", ...); empty when it fills none. */
   roles: readonly string[];
   /** The card carries an effect kind the matcher classes as a DECK ROLE rather than a pairwise
@@ -66,6 +70,8 @@ export interface CutCandidate {
   rating: number;
   /** How many distinct cards relate to it at all. 0 is the strongest signal on this list. */
   partners: number;
+  /** Printed mana value, carried so the reader can see what a row costs. See `CutInput`. */
+  manaValue: number;
   /** Plain-language why, one clause per condition that fired. Always three. */
   reasons: string[];
 }
@@ -114,10 +120,15 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
         : "its edges point away from your main theme",
     );
     reasons.push("fills none of the functional roles the deck is measured on");
-    out.push({ name: c.name, rating: c.rating, partners: c.partnerCount, reasons });
+    out.push({ name: c.name, rating: c.rating, partners: c.partnerCount, manaValue: c.manaValue, reasons });
   }
-  // Weakest first; ties by fewest partners, then by name so the order is stable across runs.
+  // Weakest first; ties by fewest partners, then by the MOST EXPENSIVE — a 9-drop the deck cannot
+  // connect costs a turn to play as well as a slot to hold, which a 1-drop does not, and that is
+  // the only sense in which cost belongs on this list. It breaks ties and never admits a row:
+  // membership is decided entirely above, and mana value is not one of the gates (measured: 0
+  // candidates changed across the 71 decks). Name last, so the order is stable across runs.
   out.sort((a, b) =>
-    a.rating - b.rating || a.partners - b.partners || a.name.localeCompare(b.name));
+    a.rating - b.rating || a.partners - b.partners
+    || b.manaValue - a.manaValue || a.name.localeCompare(b.name));
   return out.slice(0, limit);
 }

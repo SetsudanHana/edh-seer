@@ -619,12 +619,14 @@ export function analyzeDeckStructured(
       .filter((dc) => dc.tags?.abilities?.some((a) => ROLE_NOT_SYNERGY.has(a.effect.kind)))
       .map((dc) => dc.card.name),
   );
+  const manaValueByName = new Map(resolved.map((dc) => [dc.card.name, dc.card.manaValue]));
   const cutList = cutCandidates(
     ratedCards.map((c) => ({
       name: c.name,
       rating: c.synergyRating ?? 0,
       axisWeight: c.axisWeight ?? 0,
       partnerCount: c.partnerCount,
+      manaValue: manaValueByName.get(c.name) ?? 0,
       roles: c.roles ?? [],
       isLand: !(nonlandByName.get(c.name) ?? true),
       isCommander: c.isCommander,

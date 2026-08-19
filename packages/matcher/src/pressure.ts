@@ -23,7 +23,15 @@ const isCreature = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().inc
  *  no creature has summoning sickness, and every body attacks every turn. Those all push the same
  *  way, so the absolute number is optimistic and should be read as a RATE for comparing decks
  *  rather than as damage a real game will produce. The one bias pushing the other way is ramp,
- *  which nothing here models. */
+ *  which nothing here models.
+ *
+ *  THERE IS NO MANA BUDGET AT ALL, which is a deeper optimism than any of those and was unstated
+ *  until 2026-08-19. `manaValue <= turn` gates each creature INDEPENDENTLY: nothing sums the mana
+ *  values of the creatures deployed against the mana a deck could actually have, so turn 6 fields
+ *  every drawn creature costing 6 or less at once. Adding ramp here would correct a constraint that
+ *  does not exist -- the honest version is a goldfish simulator with a stated play policy, and that
+ *  is a project rather than a coefficient. REFUSED deliberately;
+ *  `specs/2026-08-19-clock-and-mana-model-review.md` §3. */
 export function expectedPower(
   deck: readonly DeckCard[],
   turn: number,

@@ -72,7 +72,9 @@ export function formatReport(report: DeckReport): string {
     lines.push("=== Cut candidates ===");
     lines.push("  Not a verdict: a card the engine cannot connect looks the same as one that does nothing.");
     for (const c of report.cutList) {
-      lines.push(`  [${c.rating.toFixed(1)}] ${c.name}`);
+      // Mana value beside the rating: two cards nothing connects to are different cut candidates
+      // when one costs 9 and the other 1. It orders the list and never admits a row to it.
+      lines.push(`  [${c.rating.toFixed(1)}] ${c.name} (${c.manaValue} mana)`);
       lines.push(`      ${c.reasons.join("; ")}`);
     }
   }

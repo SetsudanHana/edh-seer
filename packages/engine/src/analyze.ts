@@ -252,7 +252,7 @@ export interface DeckReport {
    *  CANDIDATES, never a verdict -- a missing edge looks exactly like a useless card, and the
    *  build layer counts a category's members without ranking them. Matcher-only; structural here
    *  for the same reason `buildCategories` is (this package must not depend on @mtg/matcher). */
-  cutList?: { name: string; rating: number; partners: number; reasons: string[] }[];
+  cutList?: { name: string; rating: number; partners: number; manaValue: number; reasons: string[] }[];
   /** Build categories the deck carries MORE of than its target, biggest surplus first — where the
    *  deck has room. Names the CATEGORY and never a member: nothing in this engine ranks two ramp
    *  cards against each other, which is exactly why the cut list protects any card with a role. */

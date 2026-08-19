@@ -9,6 +9,28 @@ const CHEAP = 2;
 
 const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
 
+/** A modal double-faced card with a LAND back, and whether that land enters untapped -- Karsten
+ *  prices the two differently (0.74 of a land against 0.38), because a tapped one costs you the
+ *  turn you play it.
+ *
+ *  `layout` IS THE GATE, and measuring is what forced it: the type-line test alone catches Treasure
+ *  Map // Treasure Cove, Dowsing Dagger // Lost Vale, Ojer Axonil and Growing Rites of Itlimoc,
+ *  which are TRANSFORM cards -- their land back is reached by transforming a permanent already in
+ *  play and you can never play them as a land. That is the same distinction `FRONT_FACE_ONLY` draws
+ *  in derive. Five of the fifteen candidates in the 71 decks are that shape.
+ *
+ *  UNTAPPED covers two printed shapes: a back with no tapped clause at all, and the Zendikar Rising
+ *  cycle's "As this land enters, you may pay 3 life. If you don't, it enters tapped" -- a real
+ *  choice, and the cycle Karsten's untapped coefficient was fitted on. */
+const mdfcLandBack = (dc: DeckCard): "untapped" | "tapped" | null => {
+  if (dc.card.layout !== "modal_dfc") return null;
+  const halves = dc.card.typeLine.split("//").map((s) => s.trim());
+  if (halves.length !== 2 || /\bland\b/i.test(halves[0]) || !/\bland\b/i.test(halves[1])) return null;
+  const back = (dc.card.oracleText ?? "").split("\n//\n")[1] ?? "";
+  if (/you may pay/i.test(back)) return "untapped";
+  return /enters tapped/i.test(back) ? "tapped" : "untapped";
+};
+
 /** Karsten's inputs, read off the deck.
  *
  *  THE SPLIT THIS EXISTS FOR: `fast-mana` sits inside the ramp category everywhere else in this
@@ -26,7 +48,12 @@ export function landInputs(
 ): Required<KarstenInputs> {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  const nonland = library.filter((dc) => !isLand(dc));
+  // AN MDFC IS A SPELL YOU MAY PLAY AS A LAND, and Karsten's convention is to count it as a spell
+  // and then discount the land requirement by its own coefficient. `isLand` is a type-line test, so
+  // "Instant // Land" reads as a land everywhere else in this repo -- correct for the graph and the
+  // matcher, wrong here, where counting it as a full land AND applying the coefficient would pay
+  // for the same card twice. Local to the regression; no other reader's notion of a land moves.
+  const nonland = library.filter((dc) => !isLand(dc) || mdfcLandBack(dc) !== null);
 
   const avgManaValue = nonland.length > 0
     ? nonland.reduce((sum, dc) => sum + dc.card.manaValue, 0) / nonland.length
@@ -51,8 +78,19 @@ export function landInputs(
       .filter((dc) => dc.card.manaValue <= CHEAP && (dc.card.producedMana ?? []).length > 0)
       .map((dc) => dc.card.name),
   ]);
+  const mdfc = library.map(mdfcLandBack);
+  const mdfcNames = new Set(
+    library.filter((_, i) => mdfc[i] !== null).map((dc) => dc.card.name),
+  );
+
   const rampPlusDraw = nonland.filter(
-    (dc) => accelerants.has(dc.card.name) && dc.card.manaValue <= CHEAP && !fastNames.has(dc.card.name),
+    (dc) => accelerants.has(dc.card.name) && dc.card.manaValue <= CHEAP
+      && !fastNames.has(dc.card.name)
+      // An MDFC is priced by its own coefficient below; counting Silundi Vision as cheap ramp as
+      // well would pay for the same card twice, which is the exact error the fast-mana split exists
+      // to avoid. It reaches the accelerant net at all only because `producedMana` carries the BACK
+      // face's colour.
+      && !mdfcNames.has(dc.card.name),
   ).length;
 
   return {
@@ -60,11 +98,8 @@ export function landInputs(
     rampPlusDraw,
     fastMana: fast.length,
     commanders: Math.max(1, commanders.size),
-    // Not detected: nothing in this repo reads card layout, so a deck running Bala Ged Recovery
-    // reads very slightly land-heavy. Reported as an explicit 0 rather than left to the
-    // regression's default, so the omission is visible at the call site.
-    mdfcUntapped: 0,
-    mdfcTapped: 0,
+    mdfcUntapped: mdfc.filter((m) => m === "untapped").length,
+    mdfcTapped: mdfc.filter((m) => m === "tapped").length,
   };
 }
 
@@ -88,7 +123,11 @@ export function recommendedLands(
   const commanders = new Set(opts.commanderNames ?? []);
   return {
     ...inputs,
-    actual: deck.filter((dc) => !commanders.has(dc.card.name) && isLand(dc)).length,
+    // MDFCs are OUT of the land count for the same reason they are in `nonland` above: the target
+    // they are measured against already prices them, at 0.74 of a land untapped and 0.38 tapped.
+    actual: deck.filter(
+      (dc) => !commanders.has(dc.card.name) && isLand(dc) && mdfcLandBack(dc) === null,
+    ).length,
     target: Math.round(karstenLands(inputs)),
   };
 }

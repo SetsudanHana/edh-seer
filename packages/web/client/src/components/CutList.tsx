@@ -25,7 +25,12 @@ export function CutList({ cutList, slack }: { cutList: DeckReport["cutList"]; sl
               <li key={c.name} className="rounded-lg border border-(--separator) px-3 py-2">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-sm">{c.name}</span>
-                  <span className="text-xs font-mono text-(--muted)">{c.rating.toFixed(1)}</span>
+                  {/* Cost beside the rating, because two cards nothing connects to are different
+                    *  cut candidates when one costs 9 and the other 1. It breaks ties in the
+                    *  ordering and is never a reason a card appears here at all. */}
+                  <span className="text-xs font-mono text-(--muted)">
+                    {c.manaValue} mana · {c.rating.toFixed(1)}
+                  </span>
                 </div>
                 <p className="text-xs text-(--muted)">{c.reasons.join(" · ")}</p>
               </li>

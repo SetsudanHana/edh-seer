@@ -89,6 +89,14 @@ export function computeDeckMath(
   // The clock is optimistic (nobody blocks), so it lands EARLY, which prices fewer cards seen and
   // understates availability. The bias runs against flattering the deck, which is the direction to
   // be wrong in.
+  //
+  // EXCEPT FOR ONE CASCADE, WHICH RUNS THE OTHER WAY AND HITS THE RAMP DECKS HARDEST (2026-08-19).
+  // `expectedPower` gates a creature on `manaValue <= turn` and models no ramp, so a deck that ramps
+  // has its fatties dated LATE and its clock reads late with them. A late clock is a bigger `turn`,
+  // hence a bigger `seen(turn)`, hence availability OVERSTATED and `required` understated -- for
+  // exactly the decks that accelerate. Everything else in this layer is conservative; this is not,
+  // and the two do not cancel in any measured way.
+  // `specs/2026-08-19-clock-and-mana-model-review.md` §3.
   const curve = pressureCurve(deck, { commanderNames });
   const clockTurn = curve.find((p) => p.cumulative >= STARTING_LIFE)?.turn;
   const clock = {

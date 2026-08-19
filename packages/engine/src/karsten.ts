@@ -12,8 +12,10 @@ export interface KarstenInputs {
    *  spec says most implementations miss. */
   fastMana: number;
   commanders?: number;
-  /** Modal double-faced cards with a land back. Not detected anywhere in this repo yet, so callers
-   *  pass 0 and the deck reads very slightly land-heavy if it runs them. */
+  /** Modal double-faced cards with a land back, split by whether that land enters untapped. Detected
+   *  from `layout` + the back face's text in `landInputs` since 2026-08-19 — before that both were
+   *  hardcoded 0 and a deck running them read land-heavy by roughly 0.4-0.7 of a land each.
+   *  TRANSFORM cards are not these: their land back cannot be played. */
   mdfcUntapped?: number;
   mdfcTapped?: number;
 }

@@ -8,7 +8,15 @@
  *  - **No mulligans.** EDH's free first mulligan plus London shifts required counts by about one
  *    card. The Karsten regression absorbs it for lands; nothing absorbs it here.
  *  - **`seen(T) = 7 + T` ignores card draw**, so every figure is CONSERVATIVE for a deck that
- *    draws, and the error compounds (cantrips draw cantrips).
+ *    draws, and the error compounds (cantrips draw cantrips). MEASURED, so the caveat carries a
+ *    size rather than a direction alone: for `P(>= 1 of 4 answers)` at the corpus median clock of
+ *    T9, a deck five cards ahead reads 62.1% against the modelled 51.2% (**+10.9pp**), and ten
+ *    cards ahead **+19.9pp**; `minCopies` at 50% confidence moves 4 copies to 3. Correcting it in
+ *    closed form is REFUSED — the obvious geometric series assumes every draw spell is cast on
+ *    sight, which is a play policy wearing a formula's clothes, and no instrument here can judge a
+ *    probability (the panel judges CLAIMS, `ratings-compare` judges RATINGS). A goldfish simulator
+ *    would have to come first, at which point it IS the correction and this is its oracle.
+ *    `specs/2026-08-19-clock-and-mana-model-review.md` §3.
  *  - **No opponent.** Nothing is countered, killed, taxed or Stax'd, so results skew optimistic
  *    exactly where interaction is heaviest.
  *  - **`jointAvailability` assumes disjoint groups**, and our build categories overlap on purpose

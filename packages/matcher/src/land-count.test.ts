@@ -95,3 +95,49 @@ test("MDFC counts are zero, and say so rather than being silently absent", () =>
   expect(inputs.mdfcUntapped).toBe(0);
   expect(inputs.mdfcTapped).toBe(0);
 });
+
+const mdfc = (name: string, back: string, layout = "modal_dfc") =>
+  mk(name, 3, `Destroy target creature.\n//\n${back}`, "Instant // Land", {
+    layout, producedMana: ["B"],
+  });
+
+/** Karsten prices a land-back MDFC as a fraction of a land: 0.74 untapped, 0.38 tapped. Both were
+ *  hardcoded 0 until 2026-08-19, and the card was ALSO counted as a full land by the type-line
+ *  test -- paying for it twice, in the wrong direction. */
+test("a modal DFC with a land back is a spell priced as a fraction of a land", () => {
+  const deck = [
+    mdfc("Hagra Mauling", "This land enters tapped. {T}: Add {B}."),
+    mdfc("Blackbloom Rogue", "As this land enters, you may pay 3 life. If you don't, it enters tapped. {T}: Add {B}."),
+    ...Array.from({ length: 30 }, (_, i) => land(`Swamp-${i}`)),
+  ];
+  const rec = recommendedLands(deck);
+  expect(rec.mdfcTapped).toBe(1);
+  expect(rec.mdfcUntapped).toBe(1); // the pay-3-life cycle is the untapped one
+  // Counted as spells, not as lands, so the 30 Swamps are the whole land count.
+  expect(rec.actual).toBe(30);
+});
+
+/** A TRANSFORM card's land back is reached by transforming a permanent already in play -- you can
+ *  never play Treasure Map as a land, so it is not one of these. The type-line test alone cannot
+ *  tell them apart, and five of the fifteen candidates in the calibration decks are this shape. */
+test("a transform card with a land back is NOT a modal DFC", () => {
+  const deck = [
+    mdfc("Treasure Map", "(Transforms from Treasure Map.) {T}: Add {C}.", "transform"),
+    ...Array.from({ length: 30 }, (_, i) => land(`Swamp-${i}`)),
+  ];
+  const rec = recommendedLands(deck);
+  expect(rec.mdfcTapped + rec.mdfcUntapped).toBe(0);
+  // Still a land by the type-line test everywhere else in the repo, so it stays in the count.
+  expect(rec.actual).toBe(31);
+});
+
+/** `producedMana` carries the BACK face's colour, so a cheap MDFC reaches the accelerant net. It is
+ *  already paid for by its own coefficient; counting it as cheap ramp as well is the Mox error. */
+test("an MDFC is not also counted as cheap ramp", () => {
+  const cheap = mk("Silundi Vision", 2, "Look at the top seven cards.\n//\nThis land enters tapped. {T}: Add {U}.",
+    "Instant // Land", { layout: "modal_dfc", producedMana: ["U"] });
+  const deck = [cheap, ...Array.from({ length: 30 }, (_, i) => land(`Swamp-${i}`))];
+  const inputs = landInputs(deck);
+  expect(inputs.mdfcTapped).toBe(1);
+  expect(inputs.rampPlusDraw).toBe(0);
+});

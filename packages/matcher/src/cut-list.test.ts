@@ -2,8 +2,8 @@ import { expect, test } from "vitest";
 import { cutCandidates, deckSlack, CUT_RATING_MAX, CUT_AXIS_MAX, type CutInput } from "./cut-list.js";
 
 const card = (over: Partial<CutInput> & { name: string }): CutInput => ({
-  rating: 0, axisWeight: 0, partnerCount: 0, roles: [], isLand: false, isCommander: false,
-  isComboPiece: false, fillsDeckRole: false, ...over,
+  rating: 0, axisWeight: 0, partnerCount: 0, manaValue: 0, roles: [], isLand: false,
+  isCommander: false, isComboPiece: false, fillsDeckRole: false, ...over,
 });
 const CATS = [
   { category: "ramp", count: 14, target: 10 },   // four to spare
@@ -82,4 +82,25 @@ test("weakest first, ties broken by fewest partners then name, and the list is c
     card({ name: "Zero", rating: 0 }),
   ], 3);
   expect(rows.map((r) => r.name)).toEqual(["Zero", "Lonely", "A"]);
+});
+
+/** Cost orders the list and never admits a row to it. Two cards the deck cannot connect are
+ *  different cut candidates when one costs 9 and the other 1 -- which is the only sense in which
+ *  cost belongs here, since nothing in this repo models card quality. */
+test("mana value breaks a tie, expensive first, and gates nothing", () => {
+  const base = { rating: 0.3, axisWeight: 0, partnerCount: 0, roles: [], fillsDeckRole: false, isLand: false, isCommander: false, isComboPiece: false };
+  const rows = cutCandidates([
+    { ...base, name: "Cheap", manaValue: 1 },
+    { ...base, name: "Expensive", manaValue: 9 },
+  ]);
+  expect(rows.map((r) => r.name)).toEqual(["Expensive", "Cheap"]);
+  expect(rows.map((r) => r.manaValue)).toEqual([9, 1]);
+});
+
+test("a costly card the deck DOES use is still not a candidate", () => {
+  const rows = cutCandidates([{
+    name: "Expensive engine", rating: 3.0, axisWeight: 0.8, partnerCount: 12, manaValue: 9,
+    roles: [], fillsDeckRole: false, isLand: false, isCommander: false, isComboPiece: false,
+  }]);
+  expect(rows).toEqual([]);
 });
