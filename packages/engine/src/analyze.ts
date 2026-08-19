@@ -168,6 +168,11 @@ export interface DeckMath {
     rampPlusDraw: number;
     /** Zero-cost repeatable mana, worth a whole land each. */
     fastMana: number;
+    /** Modal DFCs with a land back, worth 0.74 of a land untapped and 0.38 tapped. They are NOT in
+     *  `actual` — this regression prices them as spells — while the `lands` BUILD category counts
+     *  them by type line, so this is exactly the gap between the two land numbers a reader sees on
+     *  one panel. */
+    mdfc: number;
   };
   /** The deck's hardest casts, on TWO axes that are never multiplied together: can you have the
    *  mana, and can you have the colours. The product would read as one clean number and be wrong --

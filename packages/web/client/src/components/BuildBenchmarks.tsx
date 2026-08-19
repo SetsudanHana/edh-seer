@@ -414,6 +414,9 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             <span className="w-32 shrink-0 tabular-nums">{lands.actual} in deck</span>
             <span className="flex-1 text-xs text-(--muted)">
               avg mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap ramp/draw · {lands.fastMana} fast mana
+              {lands.mdfc > 0
+                ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as spells, not lands`
+                : ""}
             </span>
             <span
               className={`w-16 shrink-0 text-right tabular-nums ${

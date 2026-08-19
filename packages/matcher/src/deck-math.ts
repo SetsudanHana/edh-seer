@@ -169,6 +169,11 @@ export function computeDeckMath(
     avgManaValue: Math.round(rec.avgManaValue * 100) / 100,
     rampPlusDraw: rec.rampPlusDraw,
     fastMana: rec.fastMana,
+    // Carried so the panel can say why this land count differs from the build row's: a modal DFC
+    // with a land back is a LAND to the type-line test the build categories use and a SPELL to this
+    // regression, which prices it at 0.74 or 0.38 of one. Two numbers on one screen with no
+    // explanation reads as a defect in the report.
+    mdfc: rec.mdfcUntapped + rec.mdfcTapped,
   };
 
   return {

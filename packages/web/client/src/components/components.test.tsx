@@ -419,7 +419,7 @@ const DECK_MATH = {
     focus: 0.52,
     primary: "go-wide",
   },
-  lands: { actual: 37, target: 34, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2 },
+  lands: { actual: 37, target: 34, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2, mdfc: 0 },
   castability: {
     cards: [
       { name: "Ulamog", turn: 10, mana: 0.03, manaWithRocks: 0.11, colors: [] },
@@ -610,6 +610,18 @@ test("BuildBenchmarks shows the hardest casts on two axes, never one blended num
   // the same percentage by construction, and a bare "3% mana" repeated down the block was read as
   // a broken readout by three of four player reviews.
   expect(screen.getByText(/3% – 11% to have 10 mana by turn 10/i)).toBeInTheDocument();
+});
+
+/** Two land numbers reach one panel -- this regression's (an MDFC is a spell worth a fraction of a
+ *  land) and the build category's (an MDFC is a land, by type line). Unexplained, that reads as a
+ *  defect in the report, so the row says which it is counting. */
+test("the land row explains an MDFC count, and says nothing when there is none", () => {
+  const { unmount } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.queryByText(/modal DFC/i)).not.toBeInTheDocument();
+  unmount();
+  const withMdfc = { ...DECK_MATH, lands: { ...DECK_MATH.lands, mdfc: 4 } };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withMdfc} />);
+  expect(screen.getByText(/4 modal DFCs counted as spells, not lands/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks says where its turn came from, because it varies per deck", () => {
