@@ -16,7 +16,9 @@ import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
 import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
+import { SUBTYPE_TYPES } from "@mtg/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.js";
+import { ALL_CARD_TYPES } from "../hierarchy.js";
 
 interface DeckTheme {
   deck: string; primary: string; label: string; secondary: string | null;
@@ -25,6 +27,9 @@ interface DeckTheme {
    *  ranks by it at the shipped settings, so it is invisible to every other gate including this
    *  tool's own headline diff (roadmap A2). */
   census: [string, number, number, number][];
+  /** Every ranked theme with its deck frequency, so the DOMINATED-HEADLINE criterion (spec
+   *  `2026-08-19-theme-family-ranking-design.md` §9) can be computed off a snapshot. */
+  themes: [string, number][];
 }
 
 const args = process.argv.slice(2);
@@ -51,6 +56,7 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
     primary: r.cohesion?.tag ?? "-", label: r.cohesion?.theme ?? "-", secondary: r.cohesion?.secondaryTag ?? null,
     cohesion: r.cohesion?.score ?? 0, breadth: r.positiveCoherence ?? 0, synergy: r.synergyOverall ?? 0,
     top5: r.themes.slice(0, 5).map((t) => t.tag),
+    themes: r.themes.map((t) => [t.tag, t.count] as [string, number]),
     census: (r.themeMembership ?? []).map((t) => [t.tag, t.surplus, t.payoffs, t.baseline] as [string, number, number, number]),
   });
   process.stdout.write(".");
@@ -85,7 +91,52 @@ function isSubtypePrimary(tag: string): boolean {
   return v !== "any" && !["creature", "artifact", "enchantment", "land", "planeswalker", "battle", "instant", "sorcery", "permanent", "spell"].includes(v) && !v.startsWith("-");
 }
 
+/** THE DOMINATED-HEADLINE CRITERION (spec §9). A headline is DOMINATED when the deck also carries a
+ *  strictly MORE SPECIFIC sibling of the same verb -- a subtype of the headline's card type, or any
+ *  subject at all when the headline says `any` -- with comparable in-deck support. "Creatures
+ *  entering" on a Dragon deck that also carries `enters:dragon` is a true statement that says less
+ *  than the deck does.
+ *
+ *  Reported as a CURVE over the support share rather than at one hand-picked threshold, because no
+ *  value of it has been measured and picking one silently would be inventing the criterion. */
+const GENERAL = new Set(["any", ...ALL_CARD_TYPES]);
+function dominators(row: DeckTheme): { tag: string; count: number; head: number }[] {
+  const i = row.primary.indexOf(":");
+  if (i === -1) return [];
+  const verb = row.primary.slice(0, i), value = row.primary.slice(i + 1);
+  if (!GENERAL.has(value)) return []; // already specific -- nothing can generalise it
+  const head = (row.themes ?? []).find(([t]) => t === row.primary)?.[1] ?? 0;
+  if (head === 0) return [];
+  const out: { tag: string; count: number; head: number }[] = [];
+  for (const [tag, count] of row.themes ?? []) {
+    if (tag === row.primary || !tag.startsWith(verb + ":")) continue;
+    const v = tag.slice(verb.length + 1);
+    if (GENERAL.has(v) || v.startsWith("-")) continue;
+    // Strictly more specific: a subtype OF the headline's card type, or of anything when `any`.
+    const types = SUBTYPE_TYPES[v];
+    if (!types) continue;
+    if (value !== "any" && !types.includes(value)) continue;
+    out.push({ tag, count, head });
+  }
+  return out.sort((a, b) => b.count - a.count);
+}
+
+function dominatedReport(rs: DeckTheme[], title: string): void {
+  console.log(`\n${title} — DOMINATED HEADLINES (criterion §9)`);
+  for (const share of [0.3, 0.5, 0.7, 1.0]) {
+    const hit = rs.filter((r) => dominators(r).some((d) => d.count >= share * d.head));
+    console.log(`  sibling support >= ${(100 * share).toFixed(0)}% of the headline's: ${hit.length} of ${rs.length} decks dominated`);
+  }
+  const worst = rs.map((r) => ({ r, d: dominators(r)[0] })).filter((x) => x.d !== undefined)
+    .sort((a, b) => (b.d!.count / b.d!.head) - (a.d!.count / a.d!.head)).slice(0, 12);
+  console.log("  strongest dominators (deck · headline(count) · best more-specific sibling(count)):");
+  for (const { r, d } of worst) {
+    console.log(`    ${r.deck.padEnd(34)} ${r.primary}(${d!.head})  <-  ${d!.tag}(${d!.count})`);
+  }
+}
+
 summarise(rows, "CURRENT");
+dominatedReport(rows, "CURRENT");
 if (SAVE) { writeFileSync(SAVE, JSON.stringify(rows, null, 2)); console.log(`\nsaved ${rows.length} decks to ${SAVE}`); }
 
 if (AGAINST) {
