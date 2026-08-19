@@ -135,3 +135,26 @@ test("a card with no mana cost demands nothing", () => {
   const deck = fillTo(100, [source("Swamp", ["B"]), card("Ancestral Vision", "", 0)]);
   expect(manaAudit(deck)).toEqual([]);
 });
+
+/** The definitional half of the same fix `castability.ts` carries: a ritual adds mana once and is
+ *  gone, so it is not a source you can hold to the audit's 90% confidence. Measured over the 71
+ *  calibration decks it moved `supplied` on 103 of 153 colour rows. */
+test("a one-shot ritual is not a coloured source", () => {
+  const ritual = (i: number) => card(`Dark Ritual-${i}`, "{B}", 1, { producedMana: ["B"], typeLine: "Instant" });
+  const deck = fillTo(100, [
+    card("Damnation", "{2}{B}{B}", 4),
+    ...Array.from({ length: 8 }, (_, i) => ritual(i)),
+    ...Array.from({ length: 20 }, (_, i) => source(`Swamp-${i}`, ["B"])),
+  ]);
+  expect(manaAudit(deck).find((r) => r.color === "B")!.supplied).toBe(20);
+});
+
+/** …and a mana ROCK still is one: the exclusion is about one-shots, not about nonlands. */
+test("a permanent source is still counted", () => {
+  const deck = fillTo(100, [
+    card("Damnation", "{2}{B}{B}", 4),
+    card("Charcoal Diamond", "{2}", 2, { producedMana: ["B"], typeLine: "Artifact" }),
+    ...Array.from({ length: 20 }, (_, i) => source(`Swamp-${i}`, ["B"])),
+  ]);
+  expect(manaAudit(deck).find((r) => r.color === "B")!.supplied).toBe(21);
+});

@@ -147,7 +147,7 @@ export function computeDeckMath(
     // The hardest few only: a per-card list of 99 rows is a spreadsheet, not a readout, and the
     // cards a reader can act on are the ones at the bottom.
     cards: cast.cards.slice(0, CASTABILITY_ROWS).map((c) => ({
-      name: c.name, turn: c.turn, mana: c.mana!,
+      name: c.name, turn: c.turn, mana: c.mana!, manaWithRocks: c.manaWithRocks!,
       colors: c.colors.map((x) => ({ color: x.color, pips: x.pips, p: x.p })),
     })),
     refused: cast.refused,

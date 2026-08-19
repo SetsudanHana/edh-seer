@@ -262,9 +262,18 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             {/* Keyed on the figure itself, not just the turn: two cards only share a heading when
               *  they genuinely share a probability, so a fractional mana value can never be folded
               *  into a group whose number it does not actually carry. */}
-            {[...new Set(castability.cards.map((c) => `${c.turn}:${c.mana}`))].map((groupKey) => {
-              const group = castability.cards.filter((c) => `${c.turn}:${c.mana}` === groupKey);
-              const { turn: costTurn, mana } = group[0]!;
+            {[...new Set(castability.cards.map((c) => `${c.turn}:${c.mana}:${c.manaWithRocks}`))].map((groupKey) => {
+              const group = castability.cards.filter(
+                (c) => `${c.turn}:${c.mana}:${c.manaWithRocks}` === groupKey,
+              );
+              const { turn: costTurn, mana, manaWithRocks } = group[0]!;
+              // A RANGE, low to high, and never a single number: lands-only under-states, and
+              // lands-plus-rocks over-states because the rock needs lands too. Collapsed to one
+              // figure when the deck runs no rock cheap enough to matter, so a rockless deck does
+              // not print "78% – 78%".
+              const manaText = pct(manaWithRocks) === pct(mana)
+                ? pct(mana)
+                : `${pct(mana)} – ${pct(manaWithRocks)}`;
               return (
                 <li key={groupKey} className="flex flex-col gap-1">
                   <div className="flex items-baseline gap-3 text-sm">
@@ -272,7 +281,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                       {costTurn}-drop{group.length === 1 ? "" : "s"}
                     </span>
                     <span className="shrink-0 tabular-nums">
-                      {pct(mana)} to have {costTurn} mana by turn {costTurn}
+                      {manaText} to have {costTurn} mana by turn {costTurn}
                     </span>
                   </div>
                   <ul className="flex flex-col gap-1 border-l border-(--separator) pl-3">
@@ -289,7 +298,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                           // which card it is about. On its own line the name always fits.
                           className="flex flex-col sm:flex-row sm:items-baseline gap-x-3 text-sm"
                           aria-label={
-                            `${c.name}, ${pct(c.mana)} to have ${c.turn} mana by turn ${c.turn}`
+                            `${c.name}, ${manaText} to have ${c.turn} mana by turn ${c.turn}`
                             + (colourPart ? `, ${colourPart}` : "")
                           }
                         >

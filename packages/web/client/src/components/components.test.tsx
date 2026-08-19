@@ -422,8 +422,8 @@ const DECK_MATH = {
   lands: { actual: 37, target: 34, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2 },
   castability: {
     cards: [
-      { name: "Ulamog", turn: 10, mana: 0.03, colors: [] },
-      { name: "Damnation", turn: 4, mana: 0.61, colors: [{ color: "B", pips: 2, p: 0.74 }] },
+      { name: "Ulamog", turn: 10, mana: 0.03, manaWithRocks: 0.11, colors: [] },
+      { name: "Damnation", turn: 4, mana: 0.61, manaWithRocks: 0.78, colors: [{ color: "B", pips: 2, p: 0.74 }] },
     ],
     refused: 3,
     biases: "Ignores ramp, so it under-states; ignores tapped lands and colour coupling, so it over-states.",
@@ -597,17 +597,19 @@ test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () =
 
 test("BuildBenchmarks shows the hardest casts on two axes, never one blended number", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByLabelText(/Ulamog, 3% to have 10 mana by turn 10/i)).toBeInTheDocument();
+  // A RANGE on the mana axis: lands-only under-states, lands-plus-rocks over-states, and a single
+  // number would have to pick one of the two wrong ones.
+  expect(screen.getByLabelText(/Ulamog, 3% – 11% to have 10 mana by turn 10/i)).toBeInTheDocument();
   // Mana and colour stay separate: "mana yes, colour no" is a different problem from its inverse,
   // and 61% x 74% would be both wrong and undiagnosable.
-  expect(screen.getByLabelText(/Damnation, 61% to have 4 mana by turn 4, 74% for 2 B/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/Damnation, 61% – 78% to have 4 mana by turn 4, 74% for 2 B/i)).toBeInTheDocument();
   // The refusals are a count, not a silence: a card the model will not price must not read as a
   // card it priced at zero.
   expect(screen.getByText(/3 cards refused/i)).toBeInTheDocument();
   // THE DEADLINE IS ON SCREEN, not only in the aria-label. Four cards of equal mana value tie at
   // the same percentage by construction, and a bare "3% mana" repeated down the block was read as
   // a broken readout by three of four player reviews.
-  expect(screen.getByText(/3% to have 10 mana by turn 10/i)).toBeInTheDocument();
+  expect(screen.getByText(/3% – 11% to have 10 mana by turn 10/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks says where its turn came from, because it varies per deck", () => {

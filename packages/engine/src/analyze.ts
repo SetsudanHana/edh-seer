@@ -180,7 +180,10 @@ export interface DeckMath {
     cards: {
       name: string;
       turn: number;
+      /** Lower bound: lands only. Upper bound: plus the rocks already castable by then. Reported as
+       *  a pair on purpose — the exact figure needs a play policy this layer does not have. */
       mana: number;
+      manaWithRocks: number;
       colors: { color: string; pips: number; p: number }[];
     }[];
     refused: number;

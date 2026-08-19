@@ -1,5 +1,5 @@
 import { pAtLeast, seen } from "@mtg/engine";
-import { COLORS, pipsByColor, type Color } from "./mana-audit.js";
+import { COLORS, isManaSource, pipsByColor, type Color } from "./mana-audit.js";
 import type { DeckCard } from "./types.js";
 
 /** Costs this model cannot represent, and the reason each is refused.
@@ -36,8 +36,19 @@ export interface CardCastability {
   /** The turn this is priced at: the card's own mana value, the same deadline rule the mana audit
    *  uses. You want to cast a 3-drop on turn 3. */
   turn: number;
-  /** P(at least `manaValue` lands by `turn`). Null when the cost is refused. */
+  /** P(at least `manaValue` lands by `turn`). Null when the cost is refused.
+   *
+   *  The LOWER bound of the pair: no ramp of any kind counts. */
   mana: number | null;
+  /** The UPPER bound: lands plus every nonland permanent mana source cheap enough to have been cast
+   *  first (`manaValue < turn`). Null exactly when `mana` is.
+   *
+   *  OPTIMISTIC BY CONSTRUCTION, and it must never become the headline: the rock itself needs lands
+   *  to cast, so the two are positively correlated, and it also ignores summoning sickness on a
+   *  dork. Read the pair as an interval containing the truth -- which is the honest shape, since the
+   *  exact answer needs a play policy (which land did you play, did you cast the rock or hold
+   *  removal) and this layer has none. */
+  manaWithRocks: number | null;
   /** One row per coloured pip requirement, each its own probability. NEVER multiplied into `mana`
    *  or into each other -- see `deckCastability`. */
   colors: { color: Color; pips: number; p: number }[];
@@ -63,21 +74,35 @@ export function cardCastability(
 
   const refusal = REFUSALS.find((r) => r.test(card));
   if (refusal) {
-    return { name: card.card.name, manaValue: card.card.manaValue, turn, mana: null, colors: [], refused: refusal.reason };
+    return {
+      name: card.card.name, manaValue: card.card.manaValue, turn,
+      mana: null, manaWithRocks: null, colors: [], refused: refusal.reason,
+    };
   }
 
   const pips = pipsByColor(card.card.manaCost);
   const colors = COLORS.filter((c) => (pips[c] ?? 0) > 0).map((color) => {
     const need = pips[color]!;
-    const sources = library.filter((dc) => (dc.card.producedMana ?? []).includes(color)).length;
+    const sources = library.filter(
+      (dc) => isManaSource(dc) && (dc.card.producedMana ?? []).includes(color),
+    ).length;
     return { color, pips: need, p: pAtLeast(need, sources, seen(turn), library.length) };
   });
+
+  // A rock counts only for turns after its own -- a Signet cast on turn 2 is mana from turn 3.
+  const rocks = library.filter(
+    (dc) => !dc.card.typeLine.toLowerCase().includes("land")
+      && isManaSource(dc)
+      && (dc.card.producedMana ?? []).length > 0
+      && dc.card.manaValue < turn,
+  ).length;
 
   return {
     name: card.card.name,
     manaValue: card.card.manaValue,
     turn,
     mana: pAtLeast(card.card.manaValue, lands, seen(turn), library.length),
+    manaWithRocks: pAtLeast(card.card.manaValue, lands + rocks, seen(turn), library.length),
     colors,
   };
 }
@@ -94,13 +119,15 @@ export interface DeckCastability {
 
 /** Every nonland card's castability, hardest first.
  *
- *  WRONG IN TWO DIRECTIONS AT ONCE, which is why the biases travel with the output:
- *  - it ignores ramp, so it UNDER-estimates -- a Signet is not a land here;
- *  - it ignores tapped lands and colour coupling, so it OVER-estimates.
- *  They partly cancel, which is the trap: the number reads plausible and is not. Anything better
- *  needs a play policy (which land did you play on turn 2, did you cast the rock or hold removal),
- *  and that is a heuristic where all the real error lives -- the spec frames Tier 3 as a matching
- *  problem and never mentions it. */
+ *  REPORTED AS AN INTERVAL, because the two biases used to be folded into one number that read
+ *  plausible and was not: `mana` counts lands only and so UNDER-states (a Signet is not a land),
+ *  `manaWithRocks` counts every rock already castable and so OVER-states (the rock needs lands
+ *  too). The truth is between them and nothing here can name it -- that needs a play policy (which
+ *  land did you play on turn 2, did you cast the rock or hold removal), which is where all the real
+ *  error lives and which the spec's Tier 3 never mentions.
+ *
+ *  Still unmodelled in BOTH bounds, so they push the pair up together rather than widening it:
+ *  tapped lands and colour coupling. */
 export function deckCastability(
   deck: readonly DeckCard[],
   opts: { commanderNames?: readonly string[] } = {},
@@ -119,7 +146,8 @@ export function deckCastability(
       .sort((a, b) => (a.mana ?? 1) - (b.mana ?? 1) || b.manaValue - a.manaValue),
     refused: rows.filter((r) => r.mana === null).length,
     biases:
-      "Ignores ramp, so it under-states; ignores tapped lands and colour coupling, so it over-states. "
-      + "The two partly cancel, which is exactly why neither is safe to drop.",
+      "A range, not a number: the low figure counts lands only, the high one adds every rock cheap "
+      + "enough to be down already — and a rock needs lands too, so the truth sits between them. "
+      + "Both ignore tapped lands and colour coupling, so both read high.",
   };
 }

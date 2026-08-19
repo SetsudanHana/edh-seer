@@ -35,6 +35,20 @@ export function pipsByColor(manaCost: string | undefined): Partial<Record<Color,
   return out;
 }
 
+/** A card whose mana you can still be holding: everything except a one-shot spell.
+ *
+ *  A ritual adds mana ONCE, on resolution, and is then gone. Counting it as a source claims you can
+ *  hold it to a 90% confidence, which is the one thing it can never do -- and it made the two
+ *  castability axes count different universes, the mana axis lands-only and the colour axis every
+ *  `producedMana` card including Dark Ritual. Definitional, not probabilistic: a one-shot is not a
+ *  source at any confidence.
+ *
+ *  A permanent type anywhere on the type line wins, so an "Instant // Land" modal DFC still counts
+ *  -- `typeLine` is the union of the faces (`splitTypeLine`), and the land half is a real source. */
+export const isManaSource = (dc: DeckCard): boolean =>
+  !/\b(instant|sorcery)\b/i.test(dc.card.typeLine)
+  || /\b(artifact|creature|enchantment|land)\b/i.test(dc.card.typeLine);
+
 /** One "N cards want this many pips by this turn" demand, and whether the deck supplies it. */
 export interface ColorDemand {
   pips: number;
@@ -74,6 +88,11 @@ export interface ManaAuditRow {
  *  - **Rocks are counted as sources but not as ramp.** A Signet is a source on the turn it is cast,
  *    not on turn one, and nothing here knows that.
  *
+ *  One thing it does NOT do any more: a one-shot ritual is not a source (`isManaSource`). Measured
+ *  over the 71 calibration decks, 139 of 3,197 `producedMana` library cards were one-shots, moving
+ *  `supplied` on 103 of 153 colour rows and flipping 59 of 1,250 demands from met to unmet, with 9
+ *  colours acquiring a `worst` row they did not report before.
+ *
  *  It also says nothing about how many lands to run -- pip density drives composition only. */
 export function manaAudit(
   deck: readonly DeckCard[],
@@ -84,7 +103,9 @@ export function manaAudit(
 
   const rows: ManaAuditRow[] = [];
   for (const color of COLORS) {
-    const supplied = library.filter((dc) => (dc.card.producedMana ?? []).includes(color)).length;
+    const supplied = library.filter(
+      (dc) => isManaSource(dc) && (dc.card.producedMana ?? []).includes(color),
+    ).length;
 
     // Group by (pips, deadline): "12 cards want {B}{B} by T3" is one row, not twelve.
     const groups = new Map<string, ColorDemand>();

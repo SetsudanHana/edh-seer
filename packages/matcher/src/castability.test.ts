@@ -87,8 +87,10 @@ test("the deck summary ranks the hardest casts first and counts what it refused"
   const summary = deckCastability(deck);
   expect(summary.cards[0].name).toBe("Ulamog"); // the least castable of the modelled cards
   expect(summary.refused).toBe(1);
-  // Both biases have to travel with the number, and the summary is where a reader meets it.
-  expect(summary.biases).toMatch(/ramp/i);
+  // Both biases have to travel with the number, and the summary is where a reader meets it: what
+  // each end of the range counts, and what neither end counts.
+  expect(summary.biases).toMatch(/lands only/i);
+  expect(summary.biases).toMatch(/rock/i);
   expect(summary.biases).toMatch(/tapped/i);
 });
 
@@ -107,4 +109,54 @@ test("a commander is priced like any other card but never counted in the library
   const p = (s: ReturnType<typeof deckCastability>) => s.cards.find((c) => c.name === "Boss")!.mana!;
   // A 99-card library concentrates the lands slightly, so the same commander is easier to cast.
   expect(p(withCmd)).toBeGreaterThan(p(without));
+});
+
+const rock = (name: string, manaValue: number, produces: string[] = ["B"]): DeckCard => ({
+  card: {
+    name, typeLine: "Artifact", oracleText: "", keywords: [], colors: [], manaValue,
+    manaCost: `{${manaValue}}`, producedMana: produces,
+  } as Card,
+  tags: null,
+});
+
+const ritual = (name: string, produces: string[] = ["B"]): DeckCard => ({
+  card: {
+    name, typeLine: "Instant", oracleText: "", keywords: [], colors: [], manaValue: 1,
+    manaCost: "{B}", producedMana: produces,
+  } as Card,
+  tags: null,
+});
+
+/** The pair is the deliverable: lands-only is the floor, lands-plus-rocks the ceiling, and neither
+ *  is the answer on its own. */
+test("the mana axis is a range, and the rocks end is the higher one", () => {
+  const deck = deckOf([spell("Damnation", "{2}{B}{B}", 4), ...Array.from({ length: 6 }, (_, i) => rock(`Signet-${i}`, 2))], 34);
+  const row = cardCastability(deck.find((d) => d.card.name === "Damnation")!, deck);
+  expect(row.mana).toBeCloseTo(pAtLeast(4, 34, seen(4), 100), 10);
+  expect(row.manaWithRocks).toBeCloseTo(pAtLeast(4, 40, seen(4), 100), 10);
+  expect(row.manaWithRocks!).toBeGreaterThan(row.mana!);
+});
+
+/** A rock cast on the turn the card is due has produced nothing yet, so the two ends collapse and
+ *  the reader is told one number rather than a fake interval. */
+test("a rock too expensive to be down already does not widen the range", () => {
+  const deck = deckOf([spell("Bear", "{1}{B}", 2), ...Array.from({ length: 6 }, (_, i) => rock(`Rock-${i}`, 2))], 34);
+  const row = cardCastability(deck.find((d) => d.card.name === "Bear")!, deck);
+  expect(row.manaWithRocks).toBe(row.mana);
+});
+
+/** A ritual adds mana once and is gone. It is not a source you can hold to 90% on either axis. */
+test("a one-shot ritual is not a coloured source and is not a rock", () => {
+  const withRituals = deckOf([spell("Damnation", "{2}{B}{B}", 4), ...Array.from({ length: 8 }, (_, i) => ritual(`Dark Ritual-${i}`))], 34);
+  const without = deckOf([spell("Damnation", "{2}{B}{B}", 4)], 34);
+  const row = (deck: DeckCard[]) => cardCastability(deck.find((d) => d.card.name === "Damnation")!, deck);
+  expect(row(withRituals).colors[0].p).toBeCloseTo(row(without).colors[0].p, 10);
+  expect(row(withRituals).manaWithRocks).toBeCloseTo(row(without).manaWithRocks!, 10);
+});
+
+test("a refused cost has no range either, rather than half a one", () => {
+  const deck = deckOf([spell("Fireball", "{X}{R}", 1)], 37);
+  const row = cardCastability(deck.find((d) => d.card.name === "Fireball")!, deck);
+  expect(row.mana).toBeNull();
+  expect(row.manaWithRocks).toBeNull();
 });
