@@ -28,6 +28,52 @@ function authoredSurplusTags(tags: CardTags): Set<string> {
   return out;
 }
 
+/** Which EVENT a static effect is a payoff of, by its effect KIND (owner's ruling, 2026-08-19).
+ *  A static carries no event tag of its own -- an anthem's reasons read `static:pump` -- so a LORD,
+ *  the archetypal tribal payoff, was a payoff of NO `enters:`/`attacks:` tag and the census
+ *  under-counted exactly the specific themes a loop ranking has to see.
+ *
+ *  The kind decides the verb, because the kinds do not pay off on the same event. A lord, an anthem
+ *  and a keyword granter improve permanents that are ON the battlefield, so they pay off when the
+ *  subject ENTERS. A cost reducer pays off when the subject is CAST -- it does nothing for a
+ *  creature already in play. Keying every static to every verb sharing its subject was measured and
+ *  refused: 317 of 1,075 credits across the 71 decks (29.5%) landed on a REMOVAL verb
+ *  (`dies` 139 · `sacrifice` 110 · `leaves` 37 · `discard` 13 · `mill` 11 · `enters-graveyard` 7),
+ *  where the claim inverts -- an anthem does nothing when a creature dies.
+ *
+ *  AN UNMAPPED KIND CREDITS NOTHING. `tax` is opponent-facing and stays out by the same ruling that
+ *  keeps it in `ROLE_NOT_SYNERGY`; `graveyard-recursion`, `untap`, `damage-multiplier` and
+ *  `token-generation` reach 2 or fewer instances each as statics and are left unanswered rather
+ *  than guessed. The five mapped kinds are 305 of the 313 statics carrying a usable subject (97.4%).
+ */
+const STATIC_PAYOFF_VERB: Record<string, string> = {
+  pump: "enters",
+  "keyword-grant": "enters",
+  "type-grant": "enters",
+  "speed-increase": "enters", // Maelstrom Wanderer, "creatures you control have haste" -- a keyword grant by another name
+  animate: "enters", // Bello, "each non-Equipment artifact you control ... is a 4/4 Elemental"
+  "cost-reduction": "cast",
+};
+
+/** The event tags a card's STATIC abilities make it a payoff of. Subject-typed and OURS only: a
+ *  subject that keys `any` names no class and crediting it would be a guess, and an opponent-facing
+ *  static (Ghostly Prison) is not a payoff of anything we chose to run. */
+function staticPayoffTags(tags: CardTags): Set<string> {
+  const out = new Set<string>();
+  for (const a of tags.abilities) {
+    if (a.kind !== "static") continue;
+    const kind = a.effect?.kind;
+    const subject = a.effect?.subject;
+    if (!kind || !subject) continue;
+    const verb = STATIC_PAYOFF_VERB[kind];
+    if (!verb || subject.control === "opp") continue;
+    const key = themeSubjectKey(subject);
+    if (key === "any") continue;
+    out.add(`${verb}:${key}`);
+  }
+  return out;
+}
+
 /** Share of the deck that may supply a tag by baseline alone before the tag stops being a theme
  *  and becomes deck arithmetic. Re-derived on the 71-deck corpus (bin/theme-cal.ts) and NO PLATEAU
  *  WAS FOUND — every step 0.35→0.70 changes at least one deck's answer, so 0.55 is retained as the
@@ -63,8 +109,11 @@ export function themeMembership(
   // ability on the card, and re-running that inside the tags.map loop below would redo it once
   // per candidate tag.
   const surplusTagsByCard = new Map<string, Set<string>>();
+  const staticPayoffsByCard = new Map<string, Set<string>>();
   for (const dc of deckCards) {
-    if (dc.tags) surplusTagsByCard.set(dc.card.name, authoredSurplusTags(dc.tags));
+    if (!dc.tags) continue;
+    surplusTagsByCard.set(dc.card.name, authoredSurplusTags(dc.tags));
+    staticPayoffsByCard.set(dc.card.name, staticPayoffTags(dc.tags));
   }
   return tags.map((tag) => {
     const surplus = new Set<string>();
@@ -84,6 +133,11 @@ export function themeMembership(
     // surplus -- see authoredSurplusTags.
     for (const dc of deckCards) {
       if (surplusTagsByCard.get(dc.card.name)?.has(tag)) surplus.add(dc.card.name);
+      // A STATIC is a payoff of the event its kind maps to -- see STATIC_PAYOFF_VERB. Read off the
+      // card, not off a Reason, because a static's Reason carries `static:<kind>` and never the
+      // event tag; and off the card the credit stands even when the deck holds no producer to draw
+      // an edge with, exactly as an authored surplus emit does above.
+      if (staticPayoffsByCard.get(dc.card.name)?.has(tag)) payoffs.add(dc.card.name);
     }
     // A card that both produces surplus and supplies baseline is a surplus producer.
     for (const n of surplus) baseline.delete(n);

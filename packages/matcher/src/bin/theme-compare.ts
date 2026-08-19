@@ -21,6 +21,10 @@ import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.j
 interface DeckTheme {
   deck: string; primary: string; label: string; secondary: string | null;
   cohesion: number; breadth: number; synergy: number; top5: string[];
+  /** The membership census, [tag, surplus, payoffs, baseline] -- what a loop ranking reads. Nothing
+   *  ranks by it at the shipped settings, so it is invisible to every other gate including this
+   *  tool's own headline diff (roadmap A2). */
+  census: [string, number, number, number][];
 }
 
 const args = process.argv.slice(2);
@@ -47,6 +51,7 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
     primary: r.cohesion?.tag ?? "-", label: r.cohesion?.theme ?? "-", secondary: r.cohesion?.secondaryTag ?? null,
     cohesion: r.cohesion?.score ?? 0, breadth: r.positiveCoherence ?? 0, synergy: r.synergyOverall ?? 0,
     top5: r.themes.slice(0, 5).map((t) => t.tag),
+    census: (r.themeMembership ?? []).map((t) => [t.tag, t.surplus, t.payoffs, t.baseline] as [string, number, number, number]),
   });
   process.stdout.write(".");
 }
@@ -66,6 +71,10 @@ function summarise(rs: DeckTheme[], title: string): void {
   console.log(`  cohesion median ${med(rs.map((r) => r.cohesion)).toFixed(2)} · unfocused ${rs.filter((r) => r.cohesion < 0.3).length} · focused ${rs.filter((r) => r.cohesion >= 0.3 && r.cohesion < 0.6).length} · highly ${rs.filter((r) => r.cohesion >= 0.6).length}`);
   console.log(`  subtype-level primaries: ${rs.filter((r) => isSubtypePrimary(r.primary)).length}`);
   console.log("  top headlines: " + sp.slice(0, 6).map(([l, n]) => `${l} ×${n}`).join(" · "));
+  const cs = rs.flatMap((r) => r.census ?? []);
+  const loops = cs.filter(([, sup, pay]) => sup > 0 && pay > 0);
+  console.log(`  census: ${cs.length} deck-tags · payoff credits ${cs.reduce((a, [, , p]) => a + p, 0)} · surplus ${cs.reduce((a, [, s2]) => a + s2, 0)}`);
+  console.log(`          tags CLOSING a loop (surplus>0 and payoffs>0): ${loops.length} · of them subtype-level ${loops.filter(([t]) => isSubtypePrimary(t)).length}`);
 }
 
 /** A primary whose subject is NOT a bare card type — the tribal/specific case criterion 2 protects. */
@@ -89,6 +98,27 @@ if (AGAINST) {
   console.log(`\nDIFF\n  primary theme changed: ${changed.length}/${rows.length}`);
   console.log(`  LOST a subtype-level primary (criterion 2): ${lostSubtype.length}${lostSubtype.length ? " -> " + lostSubtype.map((r) => `${r.deck} ${byDeck.get(r.deck)!.primary}->${r.primary}`).join(", ") : ""}`);
   console.log(`  cohesion moved: ${cohMoved.length}`);
+  // THE CENSUS DIFF. Nothing ranks by the census at the shipped settings, so this is the only place
+  // a change to it is visible at all -- the headline diff above reads zero by construction.
+  const cIdx = (r: DeckTheme): Map<string, [number, number, number]> =>
+    new Map((r.census ?? []).map(([t, s2, p, b]) => [t, [s2, p, b]] as const));
+  let gainedPayoff = 0, gainedSurplus = 0, newLoops = 0;
+  const newLoopRows: string[] = [];
+  for (const r of rows) {
+    const b = byDeck.get(r.deck); if (!b) continue;
+    const before = cIdx(b), after = cIdx(r);
+    for (const [tag, [s2, p]] of after) {
+      const [bs = 0, bp = 0] = before.get(tag) ?? [0, 0, 0];
+      if (p > bp) gainedPayoff += p - bp;
+      if (s2 > bs) gainedSurplus += s2 - bs;
+      if ((bs > 0 && bp > 0) === false && s2 > 0 && p > 0) {
+        newLoops++;
+        if (isSubtypePrimary(tag) && newLoopRows.length < 20) newLoopRows.push(`${r.deck} ${tag} (surplus ${bs}->${s2}, payoffs ${bp}->${p})`);
+      }
+    }
+  }
+  console.log(`  CENSUS: payoff credits gained ${gainedPayoff} · surplus credits gained ${gainedSurplus} · tags that NEWLY close a loop ${newLoops}`);
+  if (newLoopRows.length) console.log("  newly-closing SUBTYPE-level tags:\n    " + newLoopRows.join("\n    "));
   console.log("\n  every changed headline (criterion 6 -- read them all):");
   for (const r of changed) {
     const b = byDeck.get(r.deck)!;

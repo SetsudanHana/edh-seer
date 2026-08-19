@@ -309,11 +309,32 @@ export function analyzeDeckStructured(
   // did before. A separate credit per token would have paid it four times.
   const hopKey = (p: string, c: string): string => `${p} -> ${c}`;
   const twoHopReasons = new Map<string, Reason[]>();
+  // THE MEMBERSHIP CENSUS IS TOKEN-BLIND WITHOUT THIS (roadmap A2). `allReasons` below is built from
+  // `cardEdges`, which excludes every edge touching a token -- correctly, since a token is not a card
+  // in the deck -- so a token deck's whole plan sits on exactly the excluded edges and
+  // `themeMembership` reads a surplus/payoff split that is missing it. The same two hops the ratings
+  // pass walks are re-stamped onto the REAL cards at their ends and handed to the census. Not a
+  // second copy of the fact: these Reasons never reach `report.edges`, `report.archetypes` or the
+  // graph, only the census.
+  const twoHopCensusReasons: Reason[] = [];
   const addHop = (p: string, c: string, reasons: Reason[]): void => {
     if (reasons.length === 0 || p === c) return; // a card does not feed itself through its own token
     const existing = twoHopReasons.get(hopKey(p, c));
     if (existing) existing.push(...reasons);
     else twoHopReasons.set(hopKey(p, c), [...reasons]);
+    for (const r of reasons) {
+      twoHopCensusReasons.push({
+        ...r,
+        producer: p,
+        consumer: c,
+        producerIsToken: undefined,
+        consumerIsToken: undefined,
+        // A token's own `enters` is IMPLIED -- the token existing supplies it -- but the CARD at the
+        // producing end of the hop authored it by making the token, so for the card the supply is
+        // surplus, not baseline. Only re-stamp the direction whose producer was the token.
+        impliedProducer: r.producerIsToken ? undefined : r.impliedProducer,
+      });
+    }
   };
   const uniqueByName = new Map(unique.map((dc) => [dc.card.name, dc] as const));
   for (const t of tokenNodes) {
@@ -535,7 +556,7 @@ export function analyzeDeckStructured(
   // Family-grouped ranking, gated on `themeRank` in impact-weights.json. `alpha: 0` (the shipped
   // default) is the per-tag ranking exactly. See specs/2026-08-19-theme-family-ranking-design.md.
   // Hoisted above the theme ranking: loop ranking reads the reasons to split surplus from payoffs.
-  const allReasons = cardEdges.flatMap((e) => e.reasons);
+  const allReasons = [...cardEdges.flatMap((e) => e.reasons), ...twoHopCensusReasons];
   const themeRank = impactWeights.themeRank;
   const tfidfRanked = rankThemes(rankFreq, themeStats, themeRank && themeRank.alpha > 0
     ? { fold: makeFold(hierarchy), alpha: themeRank.alpha, massShare: themeRank.massShare }

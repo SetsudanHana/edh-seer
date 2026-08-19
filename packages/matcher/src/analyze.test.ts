@@ -1003,6 +1003,26 @@ test("a maker and a token payoff are partners THROUGH the token, with the token 
   expect(report.edges.some((e) => [e.a, e.b].includes("Treasure Maker") && [e.a, e.b].includes("Treasure Carer"))).toBe(false);
 });
 
+// THE MEMBERSHIP CENSUS WALKS THE SAME TWO HOPS (roadmap A2, 2026-08-19). `allReasons` is built
+// from `cardEdges`, which excludes every token-touching edge, so a token deck's plan sat on exactly
+// the excluded edges and `themeMembership` reported a split that was missing it -- and any loop-based
+// ranking reading that split measures a lie.
+test("a token-mediated relation reaches themeMembership, credited to the REAL cards", () => {
+  const report = analyzeDeckStructured(
+    [maker, carer], undefined, H, undefined, undefined, undefined,
+    (ref) => (ref.printingId === "treasure-printing-id" ? treasureSacTokenTags : null),
+  );
+  const sac = report.themeMembership!.find((t) => t.tag === "sacrifice:treasure");
+  expect(sac).toBeDefined();
+  // The maker SUPPLIES it through the token it makes, and the carer is the payoff. Neither is a
+  // token, because the hop is re-stamped onto the cards at its ends.
+  expect(sac!.surplus + sac!.payoffs).toBeGreaterThan(0);
+  expect(sac!.payoffs).toBeGreaterThan(0);
+  // No token name leaks into the census -- the tags are a card-level split, and 92 of 661 token
+  // names collide with a real card's.
+  expect(report.themeMembership!.some((t) => t.tag.startsWith("static:"))).toBe(false);
+});
+
 // WHO GETS THE TOKEN DECIDES WHETHER THE HOP EXISTS. Beast Within's Beast goes to the permanent's
 // controller -- an opponent -- and a payoff says "tokens YOU control", so crediting its maker would
 // state a synergy the card cannot supply. Caught by measuring: the first cut lifted Beast Within and
