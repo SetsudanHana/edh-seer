@@ -1,3 +1,5 @@
+import { joinMultiWordSubtypes } from "@mtg/tagger";
+
 /** Card supertypes, per the comprehensive rules (plus the un-set `host`/`elite`). Everything else
  *  left of the em dash is a card type. */
 const SUPERTYPES = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
@@ -26,7 +28,8 @@ export function parseTypeLine(typeLine: string): ParsedTypeLine {
   const supertypes: string[] = [];
   const types: string[] = [];
   for (const w of words(left)) (SUPERTYPES.has(w) ? supertypes : types).push(w);
-  return { supertypes, types, subtypes: words(right) };
+  // "Time Lord" is ONE subtype, not two -- see joinMultiWordSubtypes.
+  return { supertypes, types, subtypes: joinMultiWordSubtypes(words(right)) };
 }
 
 /** The WHOLE card: every face's type line, unioned and deduped, for a caller that wants what the

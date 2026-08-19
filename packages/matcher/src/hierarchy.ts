@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { joinMultiWordSubtypes } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
 
 const CARD_TYPES = [
@@ -17,7 +18,9 @@ export function buildHierarchy(typeLines: string[]): Hierarchy {
     if (!right) continue;
     const types = left.toLowerCase().split(/\s+/).filter((w) => CARD_TYPES.includes(w));
     if (types.length === 0) continue;
-    for (const sub of right.toLowerCase().split(/\s+/).filter(Boolean)) {
+    // "Time Lord" is ONE subtype, not two -- see joinMultiWordSubtypes. Without this the scraped
+    // map grows `time` and `lord` keys that are subtypes of nothing.
+    for (const sub of joinMultiWordSubtypes(right.toLowerCase().split(/\s+/).filter(Boolean))) {
       const set = new Set(h[sub] ?? []);
       for (const t of types) set.add(t);
       h[sub] = [...set];

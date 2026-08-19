@@ -615,3 +615,33 @@ export const SUBTYPE_TYPES: Readonly<Record<string, readonly string[]>> = {
 export const KEYWORD_ABILITIES: readonly string[] = [
 "absorb", "affinity", "affinitycycling", "afflict", "afterlife", "aftermath", "amplify", "annihilator", "ascend", "assist", "augment", "aura swap", "awaken", "backup", "banding", "bargain", "basic landcycling", "battle cry", "bestow", "blitz", "bloodthirst", "boast", "bushido", "buyback", "cascade", "casualty", "champion", "changeling", "choose a background", "cipher", "cleave", "commander ninjutsu", "companion", "compleated", "conspire", "convoke", "craft", "crew", "cumulative upkeep", "cycling", "dash", "daybound", "deathtouch", "decayed", "defender", "delve", "demonstrate", "desertwalk", "dethrone", "devoid", "devour", "disguise", "disturb", "doctor's companion", "double agenda", "double strike", "double team", "dredge", "echo", "embalm", "emerge", "enchant", "encore", "enlist", "entwine", "epic", "equip", "escalate", "escape", "eternalize", "evoke", "evolve", "exalted", "exhaust", "exploit", "extort", "fabricate", "fading", "fear", "firebending", "first strike", "flanking", "flash", "flashback", "flying", "for mirrodin!", "forecast", "forestcycling", "forestwalk", "foretell", "fortify", "freerunning", "frenzy", "friends forever", "fuse", "gift", "graft", "gravestorm", "halflingcycling", "harmonize", "haste", "haunt", "hexproof", "hexproof from", "hidden agenda", "hideaway", "horsemanship", "impending", "improvise", "increment", "indestructible", "infect", "ingest", "intensity", "intimidate", "islandcycling", "islandwalk", "job select", "jump-start", "kicker", "landcycling", "landwalk", "legendary landwalk", "level up", "lifelink", "living metal", "living weapon", "madness", "max speed", "mayhem", "megamorph", "melee", "menace", "mentor", "miracle", "mobilize", "modular", "more than meets the eye", "morph", "mountaincycling", "mountainwalk", "multikicker", "mutate", "myriad", "nightbound", "ninjutsu", "nonbasic landwalk", "offering", "offspring", "outlast", "overload", "paradigm", "partner", "partner with", "persist", "phasing", "plainscycling", "plainswalk", "poisonous", "power-up", "protection", "prototype", "provoke", "prowess", "prowl", "rampage", "ravenous", "reach", "read ahead", "rebound", "reconfigure", "recover", "reinforce", "renown", "replicate", "retrace", "riot", "ripple", "saddle", "scavenge", "shadow", "shroud", "skulk", "slivercycling", "sneak", "solved", "soulbond", "soulshift", "specialize", "spectacle", "splice", "split second", "spree", "squad", "station", "storm", "sunburst", "surge", "suspend", "swampcycling", "swampwalk", "teamwork", "tiered", "toxic", "training", "trample", "transfigure", "transmute", "tribute", "typecycling", "umbra armor", "undaunted", "undying", "unearth", "unleash", "vanishing", "vigilance", "ward", "warp", "web-slinging", "wither", "wizardcycling",
 ];
+
+/** MULTI-WORD SUBTYPES, derived from `SUBTYPE_TYPES` rather than hand-listed so the generator stays
+ *  the single source. Exactly ONE exists in all of Magic today: "Time Lord". */
+const MULTI_WORD_SUBTYPES: readonly string[] = Object.keys(SUBTYPE_TYPES).filter((s) => s.includes(" "));
+const MAX_SUBTYPE_WORDS = Math.max(1, ...MULTI_WORD_SUBTYPES.map((s) => s.split(" ").length));
+
+/** Re-join the words of a type line's subtype part into real subtypes, longest match first.
+ *
+ *  Every type-line splitter in this repo split the subtype part on whitespace, so "Legendary
+ *  Creature — Time Lord Doctor" produced `["time", "lord", "doctor"]` — two subtypes that do not
+ *  exist and one that does. Measured: 23 derived rows carry the split `time`/`lord`, and it reached
+ *  the product, where `it-is-time` themed `enters:time`, a subtype of nothing. (The 36 rows that
+ *  already carry the joined "time lord" are CHANGELINGS, which take the whole
+ *  `CREATURE_SUBTYPES` list and never go through a splitter.)
+ *
+ *  Longest-match-first over the real vocabulary, so a hypothetical three-word subtype works without
+ *  a code change and an ordinary "Human Wizard" is untouched. */
+export function joinMultiWordSubtypes(words: readonly string[]): string[] {
+  if (MULTI_WORD_SUBTYPES.length === 0) return [...words];
+  const out: string[] = [];
+  for (let i = 0; i < words.length; ) {
+    let take = 1;
+    for (let n = Math.min(MAX_SUBTYPE_WORDS, words.length - i); n > 1; n--) {
+      if (MULTI_WORD_SUBTYPES.includes(words.slice(i, i + n).join(" "))) { take = n; break; }
+    }
+    out.push(words.slice(i, i + take).join(" "));
+    i += take;
+  }
+  return out;
+}

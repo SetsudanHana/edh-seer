@@ -1,6 +1,6 @@
 import type { Card } from "@mtg/engine";
 import type { Characteristics } from "./schema.js";
-import { CREATURE_SUBTYPES } from "./derive/subtypes.js";
+import { CREATURE_SUBTYPES, joinMultiWordSubtypes } from "./derive/subtypes.js";
 
 /** Scryfall type lines use an em dash (U+2014) between types and subtypes. */
 const TYPE_SUBTYPE_SEP = " — ";
@@ -81,7 +81,8 @@ export function splitTypeLine(typeLine: string): [string[], string[]] {
   for (const face of typeLine.split(FACE_SEP)) {
     const [typesPart, subtypesPart = ""] = face.split(TYPE_SUBTYPE_SEP);
     for (const w of words(typesPart)) if (!types.includes(w)) types.push(w);
-    for (const w of words(subtypesPart)) if (!subtypes.includes(w)) subtypes.push(w);
+    // "Time Lord" is ONE subtype, not two -- see joinMultiWordSubtypes.
+    for (const w of joinMultiWordSubtypes(words(subtypesPart))) if (!subtypes.includes(w)) subtypes.push(w);
   }
   return [types, subtypes];
 }
