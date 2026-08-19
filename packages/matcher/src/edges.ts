@@ -313,6 +313,28 @@ export const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set([
 
 /** A SELF cost reduction reduces the card ITSELF, and its subject is the MEASURING STICK.
  *
+ *  THE REVERSE EDGE WAS PROPOSED AND IS REFUSED, MEASURED 2026-08-19 (roadmap C2). "Big creatures
+ *  make The Great Henge cheaper, so it is a `scales:`-family CONSUMER of power" is TRUE and it does
+ *  not survive being counted: "greatest power among creatures you control" restricts NOTHING, so
+ *  every creature satisfies the subject and the reverse edge reaches **33, 31 and 46 creatures** in
+ *  the three calibration decks that run it — the IDENTICAL fan-out as the defect this guard was
+ *  written to fix, where the Henge claimed to discount 45 creatures and became its deck's top card
+ *  (129 false reasons). Reversing the arrow does not change the count, only the sentence.
+ *
+ *  The population is 10 self-reducers by the printed cue, and they share no shape: a board count
+ *  including the OPPONENT's creatures (Blasphemous Act), a max-power (Great Henge) or max-mana-value
+ *  (Sunderflock) reading, a stat THRESHOLD (Bolt Bend), event counts within a turn (Rowdy Research,
+ *  Blood for the Blood God!), graveyard counts (Furygale Flocking, The Capitoline Triad) and a
+ *  creature-TYPE-diversity count (Valiant Changeling). Three of the ten derive no subject at all.
+ *
+ *  WHAT WOULD DISCRIMINATE is a STAT-GATED reading — Bolt Bend's "if you control a creature with
+ *  power 4 or greater" is a real claim about big creatures specifically, and `SubjectFilter.stats`
+ *  already exists to say it. It is ONE card in 3 of the 71 decks and its threshold derives nowhere,
+ *  so it is a roadmap item and not a line of code here.
+ *
+ *  The graveyard subset already has its channel and uses it: the scaling loop below forms
+ *  `scales:` edges for any cost reducer whose count names a type.
+ *
  *  The Great Henge reads "This spell costs {X} less to cast, where X is the greatest power among
  *  creatures you control" and derives `cost-reduction` with subject `{type: creature, control:
  *  you}` — the creatures whose power sets X, NOT a set of cards it makes cheaper. Read as an
@@ -757,9 +779,15 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       // them in a graveyard. That is a roadmap item, not a line of code here.
       const counted = a.effect.scalingSubject;
       if (list(counted.type).length === 0 && list(counted.subtype).length === 0) continue;
-      // A deck ROLE is not a pairwise synergy, and cost-reduction is the rule's own first member:
-      // The Capitoline Triad costs less for each historic card in your graveyard, which says the
-      // same thing next to every card in the deck.
+      // A deck ROLE is not a pairwise synergy. CORRECTED 2026-08-19: this comment used to say
+      // "cost-reduction is the rule's own first member" and cite The Capitoline Triad — both parts
+      // are now false. `cost-reduction` LEFT `ROLE_NOT_SYNERGY` on 2026-08-18 (the owner overturned
+      // the 2026-08-06 ruling: "your cost reducing card is as good as many cards it can reduce"),
+      // so this gate has not excluded it since, and a scaling cost reducer whose count names a type
+      // DOES form edges today — Furygale Flocking earns 11 `scales:instant` reasons in
+      // `izzet-big-mana`. The Capitoline Triad is refused by the untyped-count guard ABOVE, not by
+      // this one: its `scalingSubject` is `{historic: true, zone: graveyard}` with no type or
+      // subtype. The set is now {tax, win-game, extra-turn, extra-phase}.
       if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
       if (!graveyardFillMatches(e.subject, a.effect.scalingSubject, h)) continue;
       reasons.push({
