@@ -88,5 +88,21 @@ export function formatReport(report: DeckReport): string {
     }
   }
 
+  // WHAT YOUR LIBRARY IS WORTH to a payoff that reads a random card off the top. Deck level and
+  // naming no member, for the reason `topdeck.ts` gives at length: the trigger chooses nothing, so
+  // an edge to one expensive spell would be true of every one of them equally.
+  if (report.deckMath && report.deckMath.topdeck.length > 0) {
+    lines.push("");
+    lines.push("=== Off the top ===");
+    for (const t of report.deckMath.topdeck) {
+      const land = Math.round(t.landShare * 100);
+      lines.push(`  ${t.card}: a random card off your library is worth ${t.meanManaValue} mana`);
+      lines.push(`      ${t.nonlandMeanManaValue} when it is not a land, and ${land}% of the time it is one`);
+      if (t.castable) {
+        lines.push(`      ${Math.round(t.castable.share * 100)}% of your library is ${t.castable.types.join(" or ")} — what it can cast for free`);
+      }
+    }
+  }
+
   return lines.join("\n");
 }

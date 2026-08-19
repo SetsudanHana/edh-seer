@@ -426,6 +426,7 @@ test("a benchmark bar is read against a fixed target mark, so over-target does n
 });
 
 const DECK_MATH = {
+  topdeck: [],
   turn: 5,
   seen: 12,
   library: 99,
@@ -694,4 +695,31 @@ test("SuggestionsList renders each suggestion; hidden when empty", () => {
   expect(screen.getByText("No board wipe (target 3)")).toBeInTheDocument();
   rerender(<SuggestionsList suggestions={[]} />);
   expect(screen.queryByText(/board wipe/)).not.toBeInTheDocument();
+});
+
+test("BuildBenchmarks states what a random card off the library is worth, and stays silent without one", () => {
+  const { unmount } = render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={{
+        ...DECK_MATH,
+        topdeck: [{
+          card: "Hidetsugu and Kairi",
+          meanManaValue: 2.63,
+          nonlandMeanManaValue: 4.02,
+          landShare: 0.37,
+          castable: { types: ["instant", "sorcery"], share: 0.46 },
+        }],
+      }}
+    />,
+  );
+  expect(screen.getByText(/off the top/i)).toBeInTheDocument();
+  expect(screen.getByText("2.63")).toBeInTheDocument();
+  // Both readings, never one: 4.02 is what a hit is worth when it is not a land, and 37% of hits are.
+  expect(screen.getByText(/4\.02 when it is not a land, and 37% of the/)).toBeInTheDocument();
+  expect(screen.getByText(/46% of your library is instant or sorcery/)).toBeInTheDocument();
+  unmount();
+  // Most decks run no such card, and an empty heading is worse than no heading.
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.queryByText(/off the top/i)).not.toBeInTheDocument();
 });

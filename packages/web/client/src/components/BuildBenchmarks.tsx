@@ -429,6 +429,33 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
         </div>
   ) : null;
 
+  // WHAT YOUR LIBRARY IS WORTH to a payoff that reads a random card off the top. Sits with "how you
+  // win" because it IS the plan for the decks that run one -- Hidetsugu and Kairi drains for the
+  // mana value of whatever is on top, so the curve is the payoff. Deck level and naming no member:
+  // the trigger CHOOSES nothing, so an edge to one expensive spell would be true of every one of
+  // them equally (`topdeck.ts` carries the refusal in full).
+  const topdeckBlock = deckMath.topdeck.length > 0 ? (
+        <div className="flex flex-col gap-1.5">
+          <h5 className="eyebrow">Off the top</h5>
+          <ul className="flex flex-col gap-1">
+            {deckMath.topdeck.map((t) => (
+              <li key={t.card} className="flex items-baseline gap-3 text-sm">
+                <span className="w-40 shrink-0 truncate">{t.card}</span>
+                <span className="flex-1 text-xs text-(--muted)">
+                  a random card off your library is worth{" "}
+                  <span className="tabular-nums text-(--fg)">{t.meanManaValue}</span> mana —{" "}
+                  {t.nonlandMeanManaValue} when it is not a land, and {Math.round(t.landShare * 100)}% of the
+                  time it is one
+                  {t.castable
+                    ? ` · ${Math.round(t.castable.share * 100)}% of your library is ${t.castable.types.join(" or ")}, which it casts for free`
+                    : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+  ) : null;
+
   const coloursBlock = colors.length > 0 ? (
         <div className="flex flex-col gap-1.5">
           <h5 className="eyebrow">Colours</h5>
@@ -533,7 +560,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
       flagged: answers.some((a) => a.count === 0 || a.required > a.count),
       blocks: [answersBlock],
     },
-    { title: "How you win", flagged: false, blocks: [clockBlock, winBlock] },
+    { title: "How you win", flagged: false, blocks: [clockBlock, winBlock, topdeckBlock] },
     // Not a question a player arrives with -- it describes the deck's own internal engine -- so it
     // is named plainly and sits last whatever else is wrong.
     { title: "What your cards are waiting for", flagged: false, blocks: [demandBlock] },

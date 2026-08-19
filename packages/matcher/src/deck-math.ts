@@ -8,6 +8,7 @@ import { winconReport } from "./wincon.js";
 import { pressureCurve, STARTING_LIFE } from "./pressure.js";
 import { deckCastability } from "./castability.js";
 import type { DeckCard, Hierarchy } from "./types.js";
+import { topdeckPayoffs } from "./topdeck.js";
 
 /** The classes the doctrine says every deck should be able to answer (design §12.3), in the order
  *  they are reported.
@@ -178,6 +179,6 @@ export function computeDeckMath(
 
   return {
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,
-    castability, demand,
+    castability, demand, topdeck: topdeckPayoffs(deck, commanderNames),
   };
 }

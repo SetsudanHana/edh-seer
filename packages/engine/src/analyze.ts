@@ -174,6 +174,24 @@ export interface DeckMath {
     focus: number;
     primary?: string;
   };
+  /** Payoffs that read a RANDOM card off your own library, and what your library gives them.
+   *
+   *  Hidetsugu and Kairi drains for the mana value of whatever is on top, so the deck's curve IS the
+   *  payoff. Reported at deck level and never as an edge: the trigger CHOOSES nothing, so a claim
+   *  about one expensive spell would be true of every one of them equally — see `topdeck.ts` for the
+   *  refusal in full. Empty for the decks that run no such card, which is most of them. */
+  topdeck: {
+    card: string;
+    /** Expected mana value of one hit over the WHOLE library — lands included, because a land is
+     *  exiled like anything else and pays out zero. */
+    meanManaValue: number;
+    /** The same mean with lands dropped: what a hit is worth when it is not a land. */
+    nonlandMeanManaValue: number;
+    /** Share of the library that is a land, i.e. the share of hits that pay nothing. */
+    landShare: number;
+    /** The free-cast half, when the card has one. */
+    castable?: { types: string[]; share: number };
+  }[];
   /** Karsten's land-count regression against what the deck runs. Tier B -- published and
    *  independently confirmed, unlike the target the build benchmark scores against, which is a flat
    *  36 for every deck.
