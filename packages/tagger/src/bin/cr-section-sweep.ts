@@ -23,12 +23,12 @@ interface Status { verdict: Verdict; note: string; probe?: RegExp; typeLine?: Re
 const STATUS: Record<string, Status> = {
   "700": { verdict: "PARTIAL", note: "general concepts; modified/outlaw/party/descended still unmodelled as subject filters" },
   "701": { verdict: "MODELLED", note: "keyword actions — complete + ratcheted by cr-completeness.test.ts" },
-  "702": { verdict: "PARTIAL", note: "keyword abilities — 6 short of the CR, ratcheted as MTGJSON_LAG" },
-  "703": { verdict: "OPEN", note: "turn-based actions — never swept" },
-  "704": { verdict: "PARTIAL", note: "state-based actions — Sagas closed 2026-08-15, legend rule / 0-loyalty / poison open" },
+  "702": { verdict: "PARTIAL", note: "keyword abilities — 5 short of the CR (was 6; MTGJSON caught up on `storied` 2026-08-20), ratcheted as MTGJSON_LAG" },
+  "703": { verdict: "PARTIAL", note: "turn-based actions — SWEPT 2026-08-20, all 13 of 703.4 judged: phasing/day-night/untap/draw/lore/attackers/blockers/combat damage/cleanup all have trigger words, scheme + Attractions are N/A on legality, defending-player choice is the 800-series opponent gap, damage removal and mana emptying carry no printed trigger (0 corpus cards). Residue was `phases-in`, now a word." },
+  "704": { verdict: "PARTIAL", note: "state-based actions — Sagas closed 2026-08-15, the 704.5j legend rule closed 2026-08-19 (copy-of-a-legend dies); 0-loyalty and poison open" },
   "705": { verdict: "OPEN", note: "coin flips — no event, no vocabulary", probe: /flips? a coin/i },
   "706": { verdict: "PARTIAL", note: "dice — `dice-rolled` trigger added 2026-08-15, no effect model", probe: /rolls? a d/i },
-  "707": { verdict: "PARTIAL", note: "copying — `copy` verb and trigger exist; no model of what a copy IS" },
+  "707": { verdict: "PARTIAL", note: "copying — `copy` verb and trigger exist; 707.2 (a copy has the copied abilities, so its entry trigger fires) shipped 2026-08-19; still no model of what a copy IS" },
   "708": { verdict: "OPEN", note: "face-down spells/permanents — manifest and cloak emit `enters`, nothing knows they are face down", probe: /face down/i },
   "709": { verdict: "MODELLED", note: "split cards — playableFaces lists both halves", layout: "split" },
   "710": { verdict: "MODELLED", note: "flip cards — FRONT_FACE_ONLY allow-list", layout: "flip" },
@@ -62,7 +62,7 @@ const STATUS: Record<string, Status> = {
   "111": { verdict: "MODELLED", note: "tokens — `token` tri-state on every subject, token-types.json from the tokens collection" },
   "113": { verdict: "MODELLED", note: "abilities — 113.3's four categories map to AbilityKind" },
   "115": { verdict: "PARTIAL", note: "targets — `becomes-target` trigger exists; nothing models WHAT a spell targets, so heroic-shaped payoffs have no supply" },
-  "116": { verdict: "OPEN", note: "special actions — turning face up is one, and 708 is the same hole from the other side", probe: /turn .{0,20}face up/i },
+  "116": { verdict: "PARTIAL", note: "special actions — SWEPT 2026-08-20, all 12 of 116.2 judged: playing a land reaches the engine as `enters`, turning face up has both a verb and a trigger (119 trigger clauses), Rooms unlocking has `unlocked`, suspend/companion/foretell are keywords with no event anyone watches, Circling Vultures is a discard, planar die and conspiracies are N/A on legality. The one real hole is `plot` (116.2k), already tracked as MTGJSON lag. 708 face-down is still the same hole from the other side.", probe: /turn .{0,20}face up/i },
   "118": { verdict: "OPEN", note: "costs — additional and alternative costs unmodelled; Ability.cost holds the STRING and nothing parses it", probe: /rather than pay|without paying its mana cost/i },
   "122": { verdict: "MODELLED", note: "counters — COUNTER_KINDS, fixed against 122.1b (a18a969)" },
   "205": { verdict: "MODELLED", note: "type line — types/subtypes/supertypes generated from MTGJSON with a --check gate" },
@@ -79,7 +79,7 @@ const STATUS: Record<string, Status> = {
   "801": { verdict: "N/A", note: "limited range of influence — not used in EDH" },
   "802": { verdict: "OPEN", note: "attack multiple players — the pressure clock accumulates against ONE opponent's 40" },
   "806": { verdict: "PARTIAL", note: "free-for-all is the EDH shape; pod analysis is a known blocked item" },
-  "903": { verdict: "OPEN", note: "COMMANDER — `SubjectFilter.commander` does not exist; 206 corpus cards / 35 derived name it", probe: /\b(a |your )commanders?\b(?! damage)/i },
+  "903": { verdict: "PARTIAL", note: "COMMANDER — `SubjectFilter.commander` SHIPPED 2026-08-15 (a deck fact per 903.3, stamped by markCommander); commander tax, colour-identity legality and Partner/Background are still unmodelled", probe: /\b(a |your )commanders?\b(?! damage)/i },
 };
 
 /** Bands with no per-section verdict yet, stated as a band rather than faked one section at a time.

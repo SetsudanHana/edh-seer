@@ -47,7 +47,7 @@ export const VOCAB_VERSION = 10;
  *
  *  Same shape as the 2026-08-06 finding this file already records for prose-vs-vocabulary, applied
  *  one level finer: gate each selector on the list it actually reads. */
-export const TRIGGER_VOCAB_VERSION = 11;
+export const TRIGGER_VOCAB_VERSION = 12;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -129,6 +129,10 @@ export const EXEMPLAR_TERMS = [
   // Trigger words.
   "becomes blocked", "cycle", "mutates", "monstrous", "commits a crime", "expend", "descended",
   "copy a spell", "rolls a", "becomes the monarch", "Ring tempts",
+  // The CR 703/116 sweep of 2026-08-20. Phrased as the cards phrase them, so the exemplar selector
+  // finds real witnesses: Syr Konrad and Turntimber Sower for the graveyard event, and the three
+  // small ones which would otherwise never appear in a normalized clause at all.
+  "graveyard from anywhere", "becomes crewed", "loses control of", "phases in", "tapped for mana",
 ] as const;
 
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
@@ -193,6 +197,31 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // and a card can trigger on any. Listed rather than derived from VERBS at runtime so the two
   // vocabularies stay independently readable and diffable.
   "recruit", "bolster", "support", "adapt", "monstrosity", "blight", "investigate", "populate", "incubate", "manifest", "meld", "cloak", "earthbend", "goad", "regenerate", "exert", "detain", "suspect", "harness", "fateseal", "behold", "heal", "exchange", "convert", "double", "triple", "endure", "learn", "forage", "time-travel", "collect-evidence", "venture-into-the-dungeon", "face-a-villainous-choice", "waterbend", "airbend", "roll-dice", "flip-coin",
+  // THE CR 703/116 SWEEP, 2026-08-20. Turn-based actions (703) and special actions (116) were the
+  // two axes the completeness stub listed as NEVER SWEPT. Both are now walked rule by rule, and the
+  // residue is these five printed events — each one a thing the GAME does that this vocabulary could
+  // not spell. Counted over the whole ~34k corpus, per the 2026-08-15 ruling that a word is sized
+  // against what the game can express and not against the 71 decks.
+  //
+  // "put into a graveyard FROM ANYWHERE" — 104 cards, 44 of them in a trigger clause, and the
+  // biggest single residue left in the trigger list. `dies` (battlefield), `milled` (library) and
+  // `discarded` (hand) split the same event by ORIGIN, so a card that deliberately watches every
+  // origin at once had to pick one and be wrong about the rest: Syr Konrad, the Grim spells out all
+  // three, and Skola Grovedancer, Turntimber Sower and Worldspine Wurm each say "from anywhere"
+  // outright. It maps to the engine's `enters-graveyard` verb (below), which is origin-blind and is
+  // exactly what these cards mean.
+  "put-into-graveyard",
+  // "becomes crewed" (4 cards, all triggers) — CR 702.122. "loses control" (10 / 8) — a control
+  // change is a real event with no other spelling. "phases in" (45 / 6) — CR 702.25 and 703.4a;
+  // `phases-out` was added on 2026-08-15 and its other half was missed, which is the kind of gap
+  // only a rule-by-rule walk finds.
+  "becomes-crewed", "loses-control", "phases-in",
+  // "tapped for mana" (32 / 23) — CR 106.11. `derive.ts` already REFUSES this into `unknownTriggers`
+  // by reading the clause text (`TAPPED_FOR_MANA`), because the engine has no such event; the word
+  // changes nothing downstream today and makes the stored clause say what the card says instead of
+  // the near-miss `taps`. When an engine event arrives, the fact is already recorded rather than
+  // needing a re-ask of 23 cards.
+  "tapped-for-mana",
   // DELIBERATELY NOT ADDED: `put`. Dreadhound was refused for it, but the card reads "When this
   // creature enters, mill three cards. (Put the top three cards of your library into your
   // graveyard.)" — its trigger is `enters` and the model answered from the REMINDER text. A word

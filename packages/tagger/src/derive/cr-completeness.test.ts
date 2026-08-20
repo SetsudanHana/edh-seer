@@ -14,7 +14,8 @@
  *  Reads the COMMITTED `cr-keywords.json`, never the gitignored rules cache, so it passes in a fresh
  *  clone. */
 import { expect, test } from "vitest";
-import { VERBS } from "../normalize-prompt.js";
+import { TRIGGERS, VERBS } from "../normalize-prompt.js";
+import { normalizeTriggerVerb } from "./derive.js";
 import { KEYWORD_ABILITIES } from "./subtypes.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
 
@@ -72,7 +73,10 @@ test("the exclusion list stays honest — every entry is really in the rules", (
  *  A RATCHET, like KNOWN_DEFECT_CAP: the list may only SHRINK. A new keyword arriving in the CR
  *  before MTGJSON catches up fails the test, which is the signal to add it by hand. */
 const MTGJSON_LAG = [
-  "space sculptor", "visit", "plot", "start your engines!", "∞ (infinity)", "storied",
+  // "storied" DROPPED 2026-08-20: MTGJSON caught up (keyword abilities 222 -> 223) and the
+  // shrink-only test below failed until it was removed, which is the ratchet working in the
+  // direction nobody usually gets to see.
+  "space sculptor", "visit", "plot", "start your engines!", "∞ (infinity)",
 ];
 
 test("every CR 702 keyword ability is known, or is a recorded MTGJSON lag", () => {
@@ -116,4 +120,25 @@ test("every CR 7xx section has been judged — a new mechanic cannot arrive unno
   expect(crKeywords.sections.length).toBe(147);
   expect(crKeywords.sections.some((s) => s.rule === "903" && /Commander/.test(s.name))).toBe(true);
   expect(crKeywords.sections.some((s) => s.rule === "714" && /Saga/.test(s.name))).toBe(true);
+});
+
+/** THE CR 703/116 SWEEP, 2026-08-20. Turn-based actions and special actions were the two axes the
+ *  completeness stub listed as never swept. Walking them rule by rule left five printed events the
+ *  trigger vocabulary could not spell, and the largest — "put into a graveyard from anywhere" — is
+ *  the only one with a matcher verb waiting for it.
+ *
+ *  Pinned because a word is worthless if nothing maps it: `put-into-graveyard` must reach
+ *  `enters-graveyard`, which is origin-blind, and NOT `dies`/`milled`/`discarded`, each of which
+ *  would narrow the claim to one origin. The other four are refusals by design and must stay
+ *  refusals — `normalizeTriggerVerb` returns null so `deriveAbilities` records them in
+ *  `unknownTriggers` rather than picking a near-miss. */
+test("the CR 703/116 residue words are legal, and only the graveyard one maps to a verb", () => {
+  const added = ["put-into-graveyard", "becomes-crewed", "loses-control", "phases-in", "tapped-for-mana"];
+  for (const w of added) {
+    expect(TRIGGERS, `${w} must be a legal trigger event or the persist gate refuses the card`).toContain(w);
+  }
+  expect(normalizeTriggerVerb("put-into-graveyard")).toBe("enters-graveyard");
+  for (const w of ["becomes-crewed", "loses-control", "phases-in", "tapped-for-mana"]) {
+    expect(normalizeTriggerVerb(w), `${w} has no engine event — it must refuse, not near-miss`).toBeNull();
+  }
 });

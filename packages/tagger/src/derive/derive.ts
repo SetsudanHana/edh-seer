@@ -76,6 +76,12 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   sacrificed: "sacrifice",
   discarded: "discard",
   milled: "mill",
+  // ORIGIN-BLIND BY DESIGN (CR 703/116 sweep, 2026-08-20). `dies`, `milled` and `discarded` split
+  // one event by where the card came FROM; "put into a graveyard from anywhere" is the union, which
+  // is precisely what `enters-graveyard` already means to the matcher — `normalizeZoneEvent` derives
+  // it for all three origins. Mapping it to any one of them would be a narrower claim than the card
+  // makes: Syr Konrad, the Grim watches the battlefield, the library AND the graveyard's exits.
+  "put-into-graveyard": "enters-graveyard",
 };
 
 /** "Whenever this creature IS DEALT damage" (Hornet Nest, Flumph, Boros Reckoner) — the receiving

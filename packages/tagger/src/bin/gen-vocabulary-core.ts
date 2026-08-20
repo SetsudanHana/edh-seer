@@ -179,5 +179,41 @@ ${Object.entries(v.subtypeTypes).map(([k, ts]) => `  ${JSON.stringify(k)}: [${ts
 export const KEYWORD_ABILITIES: readonly string[] = [
 ${v.keywordAbilities.map((s) => JSON.stringify(s)).join(", ")},
 ];
+
+/** MULTI-WORD SUBTYPES, derived from \`SUBTYPE_TYPES\` rather than hand-listed so the generator stays
+ *  the single source. Exactly ONE exists in all of Magic today: "Time Lord". */
+const MULTI_WORD_SUBTYPES: readonly string[] = Object.keys(SUBTYPE_TYPES).filter((s) => s.includes(" "));
+const MAX_SUBTYPE_WORDS = Math.max(1, ...MULTI_WORD_SUBTYPES.map((s) => s.split(" ").length));
+
+/** Re-join the words of a type line's subtype part into real subtypes, longest match first.
+ *
+ *  Every type-line splitter in this repo split the subtype part on whitespace, so "Legendary
+ *  Creature — Time Lord Doctor" produced \`["time", "lord", "doctor"]\` — two subtypes that do not
+ *  exist and one that does. Measured: 23 derived rows carried the split \`time\`/\`lord\`, and it
+ *  reached the product, where \`it-is-time\` themed \`enters:time\`, a subtype of nothing. (The 36 rows
+ *  that already carry the joined "time lord" are CHANGELINGS, which take the whole
+ *  \`CREATURE_SUBTYPES\` list and never go through a splitter.)
+ *
+ *  Longest-match-first over the real vocabulary, so a hypothetical three-word subtype works without
+ *  a code change and an ordinary "Human Wizard" is untouched.
+ *
+ *  RENDERED BY THE GENERATOR, not hand-written into the generated file. It lived in \`subtypes.ts\`
+ *  as hand-edited code from 2026-08-19 until 2026-08-20, when the first re-run of
+ *  \`gen-vocabulary.ts\` since then DELETED it — three importers and 20 tests went red at once. A
+ *  generated file cannot hold hand edits; anything that belongs beside the data belongs in the
+ *  renderer. */
+export function joinMultiWordSubtypes(words: readonly string[]): string[] {
+  if (MULTI_WORD_SUBTYPES.length === 0) return [...words];
+  const out: string[] = [];
+  for (let i = 0; i < words.length; ) {
+    let take = 1;
+    for (let n = Math.min(MAX_SUBTYPE_WORDS, words.length - i); n > 1; n--) {
+      if (MULTI_WORD_SUBTYPES.includes(words.slice(i, i + n).join(" "))) { take = n; break; }
+    }
+    out.push(words.slice(i, i + take).join(" "));
+    i += take;
+  }
+  return out;
+}
 `;
 }
