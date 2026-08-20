@@ -175,6 +175,23 @@ test("LandMathChart shows 8 bars (0-7 lands), labels the peak percentage, and ca
   expect(screen.getByTitle("30% chance of exactly 3 lands")).toBeInTheDocument(); // tooltip on peak bar
 });
 
+// The distribution chart is titled by its own <summary>, so it passes BarChart an EMPTY heading --
+// which made it a role="img" with an empty accessible name, i.e. an unlabelled image to a screen
+// reader. The heading is what a sighted reader sees and the name is a separate obligation.
+test("LandMathChart's chart carries an accessible name of its own", () => {
+  render(<LandMathChart landCount={38} deckSize={99} />);
+  expect(screen.getByRole("img", { name: /lands in your opening seven/i })).toBeInTheDocument();
+});
+
+// The <desc> is generic code reading each caller's own sentences, so it is worth seeing it once on
+// the PERCENTAGE chart as well as the count one (BarChart.test.tsx): a wording that reads correctly
+// for "19 cards at mana value 3" can still read as nonsense for a probability.
+test("LandMathChart's chart describes its shape in the caller's own units", () => {
+  const { container } = render(<LandMathChart landCount={38} deckSize={99} />);
+  expect(container.querySelector("svg > desc")!.textContent)
+    .toBe("8 bars, 0 to 7. Highest: 30% chance of exactly 3 lands.");
+});
+
 // PAIRS ARE WHAT A GROUP CLAIMS; cards are only what it reaches. Both are printed, and the bar is
 // sized by pairs — four groups reading "70 cards" with pair counts from 334 to 440 painted four
 // identical full-width tracks over four different findings.

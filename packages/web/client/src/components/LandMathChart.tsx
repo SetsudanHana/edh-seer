@@ -26,6 +26,7 @@ export function LandMathChart({ landCount, deckSize }: { landCount: number; deck
         <div className="pt-2">
           <BarChart
             heading=""
+            ariaLabel="Lands in your opening seven, full distribution"
             bars={probs.map((p, k) => ({
               label: String(k),
               value: p,
