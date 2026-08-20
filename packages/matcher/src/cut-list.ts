@@ -63,6 +63,17 @@ export interface CutInput {
   isLand: boolean;
   isCommander: boolean;
   isComboPiece: boolean;
+  /** DEMANDS THE DECK CANNOT MEET, already humanised ("planeswalkers entering"). An intervening-if
+   *  condition names something the deck must provide — "if a creature died this turn", "if a
+   *  planeswalker entered under your control" — and a deck that provides none makes the card dead
+   *  text. Measured across the 71 decks: 33 card-slots carry a checkable condition and ONE is
+   *  unsatisfiable, `braids-mono-black-enchantress` running Oath of Liliana with zero planeswalkers.
+   *
+   *  A REASON, NEVER A GATE. It is evidence the card is doing nothing, and it joins the other three
+   *  clauses rather than admitting a row on its own — the same discipline the rest of this module
+   *  keeps, because the engine reads conditions from a CLOSED MAP of four shapes and a card whose
+   *  condition it cannot read reports nothing at all. */
+  unmetConditions?: readonly string[];
 }
 
 export interface CutCandidate {
@@ -120,6 +131,9 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
         : "its edges point away from your main theme",
     );
     reasons.push("fills none of the functional roles the deck is measured on");
+    for (const want of c.unmetConditions ?? []) {
+      reasons.push(`its condition needs ${want}, and nothing in the deck provides that`);
+    }
     out.push({ name: c.name, rating: c.rating, partners: c.partnerCount, manaValue: c.manaValue, reasons });
   }
   // Weakest first; ties by fewest partners, then by the MOST EXPENSIVE — a 9-drop the deck cannot
@@ -210,6 +224,11 @@ export function trimOrder(
       protections.push(room ? `fills ${c.roles.join(", ")} — ${room}, so there is room here` : `fills ${c.roles.join(", ")}`);
     }
     if (c.roles.length === 0) reasons.push("fills none of the functional roles the deck is measured on");
+    // The sharpest row this list can print: not "nothing connects to it" but "the card's own text
+    // asks for something you do not run".
+    for (const want of c.unmetConditions ?? []) {
+      reasons.push(`its condition needs ${want}, and nothing in the deck provides that`);
+    }
 
     if (c.isComboPiece) protections.push("half of a combo the deck assembles");
     // A deck role forms no edge BY DESIGN, so its low partner count is the engine's own silence and

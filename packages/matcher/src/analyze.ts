@@ -6,6 +6,7 @@ import {
   impactEdgeWeight,
   computeDeckStats,
   computeSynergyRatings,
+  describeTag,
   ComboIndex,
   type Combo,
   type DeckReport,
@@ -252,6 +253,41 @@ export function analyzeDeckStructured(
   for (const dc of resolved) {
     if (!dc.tags) continue;
     for (const tag of cardThemeTags(dc.tags)) deckFreq.set(tag, (deckFreq.get(tag) ?? 0) + 1);
+  }
+
+  // DECK FIT: a condition naming something the deck does not have (owner, 2026-08-20). "If you have
+  // a card that cares about red permanents and have none, it is not a very good card in the deck."
+  // `conditionCares` states the demand as a theme tag and `deckFreq` already counts the supply, so
+  // this is a JOIN over what is computed rather than new analysis.
+  //
+  // FOLDED, because supply is keyed FINER than demand: a planeswalker's own entry themes at its
+  // SUBTYPE (`enters:liliana`), while Oath of Liliana asks for `enters:planeswalker`. That is the
+  // same predicate `computeCohesion` settled on — `tag === want || fold(tag) === want` — and without
+  // it every planeswalker condition would read unmet in a deck full of planeswalkers.
+  //
+  // The card's OWN tags are excluded: Warlock Class must not satisfy its own demand for a creature
+  // dying. A card with no condition, or one whose demand the deck meets, reports nothing.
+  const foldFit = makeFold(hierarchy);
+  const suppliedTags = new Map<string, Set<string>>();
+  for (const dc of resolved) {
+    if (!dc.tags) continue;
+    for (const tag of cardThemeTags(dc.tags)) {
+      for (const key of new Set([tag, foldFit(tag)])) {
+        const set = suppliedTags.get(key) ?? new Set<string>();
+        set.add(dc.card.name);
+        suppliedTags.set(key, set);
+      }
+    }
+  }
+  const unmetByCard = new Map<string, string[]>();
+  for (const dc of resolved) {
+    if (!dc.tags) continue;
+    const wants = [...new Set(dc.tags.abilities.flatMap((a) => a.conditionCares ?? []))];
+    const unmet = wants.filter((w) => {
+      const suppliers = suppliedTags.get(w);
+      return !suppliers || [...suppliers].every((n) => n === dc.card.name);
+    });
+    if (unmet.length > 0) unmetByCard.set(dc.card.name, unmet);
   }
 
   // The deck's strategy axis — commander theme tags (anchor) widened by dominant deck themes.
@@ -656,6 +692,7 @@ export function analyzeDeckStructured(
     isCommander: c.isCommander,
     isComboPiece: comboCardNames.has(c.name),
     fillsDeckRole: deckRoleCards.has(c.name),
+    unmetConditions: (unmetByCard.get(c.name) ?? []).map((t) => describeTag(t as never)),
   }));
   const cutList = cutCandidates(cutInputs);
   const slack = deckSlack(buildCategories);

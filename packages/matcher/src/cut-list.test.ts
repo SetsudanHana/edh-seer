@@ -157,3 +157,29 @@ test("lands and commanders are outside the trim universe entirely", () => {
   ], CATS);
   expect(rows.map((r) => r.name)).toEqual(["Cuttable"]);
 });
+
+// DECK FIT (owner, 2026-08-20): "if you have a card that cares about red permanents and have none,
+// it is not a very good card in the deck." An intervening-if condition names something the deck must
+// provide, and a deck providing none makes that text dead.
+test("an unmet condition is a REASON on both lists, and never a gate", () => {
+  const dead = card({ name: "Oath of Liliana", unmetConditions: ["planeswalkers entering"] });
+  const [cut] = cutCandidates([dead]);
+  expect(cut.reasons).toContain("its condition needs planeswalkers entering, and nothing in the deck provides that");
+
+  // NEVER A GATE, and Oath of Liliana is exactly why. Its "at the beginning of each end step, if a
+  // planeswalker entered under your control this turn" half is dead in a deck with none — but its
+  // ETB ("each opponent sacrifices a creature") is unconditional and real, so the card still works.
+  // Verified live: it renders in trim at rating 1.5 carrying BOTH the unmet condition and
+  // "its best edge is on your main theme". A rule that demoted it would throw away a working card.
+  const protectedCard = card({
+    name: "Oath of Liliana", unmetConditions: ["planeswalkers entering"], rating: 1.5, roles: ["draw"],
+  });
+  expect(cutCandidates([protectedCard])).toEqual([]);
+  const [row] = trimOrder([protectedCard], CATS);
+  expect(row.protections.length).toBeGreaterThan(0);
+  expect(row.reasons.some((r) => r.includes("nothing in the deck provides that"))).toBe(true);
+
+  // A card whose condition the deck DOES meet says nothing at all.
+  expect(cutCandidates([card({ name: "Warlock Class" })])[0].reasons
+    .some((r) => r.includes("nothing in the deck provides"))).toBe(false);
+});
