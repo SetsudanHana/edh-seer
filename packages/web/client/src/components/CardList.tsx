@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { DeckReport } from "../types.js";
+import { CardName } from "./card-drawer.js";
 
 type Category =
   | "ramp" | "draw" | "cardSelection" | "targetedRemoval" | "stackInteraction"
@@ -90,7 +91,7 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
                 <tr key={c.name} className="border-b border-(--separator) align-top">
                   <td className="py-2 pr-2 font-mono tabular-nums text-(--muted)">{String(i + 1).padStart(2, "0")}</td>
                   <td className="py-2 pr-2 min-w-0">
-                    <span className="block truncate">{c.name}</span>
+                    <CardName name={c.name} className="block truncate max-w-full" />
                     {reason ? <span className="block text-xs text-(--muted) truncate">{reason}</span> : null}
                   </td>
                   <td className="py-2 pr-2">

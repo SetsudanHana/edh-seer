@@ -1,4 +1,5 @@
 import type { DeckReport } from "../types.js";
+import { CardName } from "./card-drawer.js";
 
 const ANCHOR_SHARE = 0.75; // tunable: a card is an "anchor" if its authority ≥ this share of the deck max.
 
@@ -22,7 +23,7 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
               <span className="pip shrink-0 tabular-nums">{(c.synergyRating ?? 0).toFixed(1)}</span>
               <span className="flex-1 min-w-0">
                 <span className="block truncate">
-                  {c.name}
+                  <CardName name={c.name} />
                   {isAnchor ? <span className="ml-2 text-xs text-(--warning)">⚡ anchor</span> : null}
                   {c.doubleDuty ? (
                     <span className="ml-2 text-xs text-(--success)">

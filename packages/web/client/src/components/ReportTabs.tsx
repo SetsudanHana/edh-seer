@@ -9,6 +9,7 @@ import { CardList } from "./CardList.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
 import { GraphView } from "./GraphView.js";
+import { CardDrawerProvider } from "./card-drawer.js";
 
 type TabId = "overview" | "archetypes" | "cards" | "combos" | "graph";
 
@@ -57,6 +58,8 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
     for (const n of nodes) if (n.artCrop) loader.request(cardImageUrl(n.artCrop));
   }, [data]);
   return (
+    // Every card name under here can open the inspector; the graph keeps its own in-canvas one.
+    <CardDrawerProvider graph={data.graph}>
     <div className="flex flex-col gap-6">
       {data.missing.length > 0 ? <MissingCards missing={data.missing} /> : null}
       {/* PINNED, because the report is ~3,000px tall and the only way between its five sections
@@ -105,5 +108,6 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
           && <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />}
       </div>
     </div>
+    </CardDrawerProvider>
   );
 }

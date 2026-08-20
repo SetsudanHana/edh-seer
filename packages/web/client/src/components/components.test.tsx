@@ -37,17 +37,33 @@ const cohesionDraw = {
   label: "focused",
 } as NonNullable<typeof SAMPLE.report.cohesion>;
 
-test("DeckIdentity headlines the primary archetype, not the cohesion theme", () => {
+// THE HEADLINE FLIPPED, 2026-08-20, and the test it replaces was right when it was written.
+// `strategies[0]` led from 8de3c72 (2026-08-01) because a cohesion theme was then routinely a bare
+// functional role -- `UNIFORM_STATS` collapsed the theme ranking to raw frequency and seven of
+// eight decks themed "draw". That was fixed on 2026-08-18 (0c59087, 38e5248) and A1-A11 rebuilt the
+// ranking on top of it; the guard outlived its defect, and on a wizard deck it printed "Tokens".
+test("DeckIdentity headlines the cohesion theme, not the top archetype", () => {
   render(
     <DeckIdentity cohesion={cohesionDraw} strategies={[{ name: "tokens", label: "Tokens", confidence: 0.4 }]} />,
   );
-  expect(screen.getByText("Tokens")).toBeInTheDocument(); // archetype headline
-  expect(screen.queryByText("Draw")).not.toBeInTheDocument(); // functional role is NOT the headline
+  expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Draw");
+  // The archetype survives as context, with its share -- not as the title.
+  expect(screen.getByText(/signals Tokens 40%/)).toBeInTheDocument();
 });
 
-test("DeckIdentity falls back to the cohesion theme when there are no strategies", () => {
+test("DeckIdentity prints the focus label with its share", () => {
   render(<DeckIdentity cohesion={cohesionDraw} strategies={undefined} />);
-  expect(screen.getByText("Draw")).toBeInTheDocument(); // fallback headline
+  expect(screen.getByText("focused · 0.40")).toBeInTheDocument();
+});
+
+// A10's rule: a SPECIFIC primary measures itself, so the family share is the difference between
+// "this deck is broken" and "five Daleks inside a creature deck".
+test("DeckIdentity shows the wider family only when it differs from the primary", () => {
+  const narrow = { ...cohesionDraw, score: 0.08, familyScore: 0.46 };
+  const { rerender } = render(<DeckIdentity cohesion={narrow} />);
+  expect(screen.getByText(/wider family 0\.46/)).toBeInTheDocument();
+  rerender(<DeckIdentity cohesion={{ ...cohesionDraw, familyScore: cohesionDraw.score }} />);
+  expect(screen.queryByText(/wider family/)).not.toBeInTheDocument();
 });
 
 test("ComboList shows the combo result", () => {
@@ -755,4 +771,47 @@ test("trim rows stay hidden until asked for, then show N with what keeps each ca
 test("trim renders even when the passive cut list is empty — the case it exists for", () => {
   render(<CutList cutList={[]} slack={[]} trim={TRIM} />);
   expect(screen.getByText(/Over on cards\?/)).toBeTruthy();
+});
+
+// --- The card drawer (F8): the inspector, reachable from any card name in the report. ---
+
+test("clicking a card name in the Cards table opens the inspector on that card", async () => {
+  const user = userEvent.setup();
+  render(<ReportTabs data={SAMPLE} />);
+  await user.click(screen.getByRole("tab", { name: "Cards" }));
+  await user.click(screen.getByRole("button", { name: "Krenko, Mob Boss" }));
+  const panel = screen.getByTestId("card-inspector");
+  expect(within(panel).getByRole("heading", { level: 3 })).toHaveTextContent("Krenko, Mob Boss");
+  // The edges come from the graph, both directions, with the reason sentence intact.
+  expect(within(panel).getByText(/Krenko makes tokens; Impact Tremors pays off tokens\./)).toBeInTheDocument();
+});
+
+// One combo, two pieces: one the deck holds and one it does not. The first opens the inspector;
+// the second stays plain text, because a click that does nothing is worse than no affordance --
+// and a combo really can name a card outside the deck.
+test("a combo piece opens the inspector, Escape closes it, and an unknown piece stays text", async () => {
+  const user = userEvent.setup();
+  const withStranger = {
+    ...SAMPLE,
+    report: {
+      ...SAMPLE.report,
+      combos: [{ cards: ["Krenko, Mob Boss", "Not In This Deck"], result: "Infinite loop" }],
+    },
+  };
+  render(<ReportTabs data={withStranger} />);
+  await user.click(screen.getByRole("tab", { name: "Combos" }));
+  expect(screen.getByText("Not In This Deck")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Not In This Deck" })).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Krenko, Mob Boss" }));
+  const panel = screen.getByTestId("card-inspector");
+  expect(panel).toBeInTheDocument();
+  // PORTALLED, and this assertion is a regression guard rather than a style preference: the report
+  // sits inside `.reveal`, whose animation fill mode leaves a `transform` on the element, and a
+  // transformed ancestor is the containing block for `position: fixed` -- so a drawer rendered in
+  // place anchors to a 2,000px div and scrolls off screen. jsdom cannot see the layout; it CAN see
+  // that the panel is not inside that subtree.
+  expect(panel.closest(".reveal")).toBeNull();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByTestId("card-inspector")).not.toBeInTheDocument();
 });

@@ -1,4 +1,5 @@
 import type { DeckReport } from "../types.js";
+import { CardName } from "./card-drawer.js";
 
 function ArrowIcon() {
   return (
@@ -32,7 +33,16 @@ export function ComboList({ combos }: { combos: DeckReport["combos"] }) {
             <li key={i} className="flex items-center gap-3 py-1.5 border-b border-(--separator)">
               <span className="pip shrink-0 tabular-nums">{c.cards.length}</span>
               <span className="text-sm flex items-center gap-2 flex-wrap">
-                <span className="font-semibold">{c.cards.join(" + ")}</span>
+                {/* Each piece opens its own inspector: "these three go infinite" is only
+                    actionable once you can ask what each one is doing. */}
+                <span className="font-semibold flex flex-wrap items-baseline gap-1">
+                  {c.cards.map((name, k) => (
+                    <span key={name}>
+                      {k > 0 ? <span className="text-(--muted) font-normal"> + </span> : null}
+                      <CardName name={name} />
+                    </span>
+                  ))}
+                </span>
                 <span className="text-(--accent)">
                   <ArrowIcon />
                 </span>

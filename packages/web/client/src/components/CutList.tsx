@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { DeckReport } from "../types.js";
+import { CardName } from "./card-drawer.js";
 
 /** THE CUT LIST — "which cards is the deck not using?" — and the deck-level slack beside it.
  *
@@ -31,7 +32,7 @@ export function CutList({ cutList, slack, trim }:
             {cutList!.map((c) => (
               <li key={c.name} className="rounded-lg border border-(--separator) px-3 py-2">
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm">{c.name}</span>
+                  <span className="text-sm"><CardName name={c.name} /></span>
                   {/* Cost beside the rating, because two cards nothing connects to are different
                     *  cut candidates when one costs 9 and the other 1. It breaks ties in the
                     *  ordering and is never a reason a card appears here at all. */}
@@ -71,7 +72,7 @@ export function CutList({ cutList, slack, trim }:
                 {trim!.slice(0, trimN).map((t) => (
                   <li key={t.name} className="rounded-lg border border-(--separator) px-3 py-2">
                     <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-sm">{t.name}</span>
+                      <span className="text-sm"><CardName name={t.name} /></span>
                       <span className="text-xs font-mono text-(--muted)">
                         {t.manaValue} mana &middot; {t.rating.toFixed(1)}
                       </span>
