@@ -252,7 +252,11 @@ test("Cards tab shows what a card costs and when you can cast it, beside the rat
   }] as any;
   render(<CardList cards={cards} />);
   const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Breach"))!;
-  expect(within(row).getAllByRole("img", { name: /mana/i }).length).toBeGreaterThan(0);
+  // Pins the actual symbol set "{5}{B}{B}" decodes to, not merely "some image rendered" -- a
+  // dropped pip (e.g. only one black symbol) would still pass a bare non-empty check.
+  expect(within(row).getAllByAltText(/mana/i).map((img) => img.getAttribute("alt"))).toEqual([
+    "5 generic mana", "one black mana", "one black mana",
+  ]);
   expect(within(row).getByText("22% – 40% by T7")).toBeInTheDocument();
   expect(within(row).getByText("3.7")).toBeInTheDocument();
 });
@@ -703,8 +707,13 @@ test("BuildBenchmarks shows the land count the deck's own curve asks for", () =>
 test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // The spec's own worked sentence: 12 cards want {B}{B} by T3, that needs 33 sources, you run 26.
-  expect(screen.getByLabelText(/B, 26 sources, 12 cards want 2 pips by turn 3, which needs 33/i))
-    .toBeInTheDocument();
+  const bRow = screen.getByLabelText(/B, 26 sources, 12 cards want 2 pips by turn 3, which needs 33/i);
+  expect(bRow).toBeInTheDocument();
+  // The label above is spelled in words on purpose (screen readers), but the VISIBLE pip phrase
+  // ("2 cards want {B}{B} on turn 3") must render as symbols, never brace text -- that line has no
+  // other coverage, and reverting it alone would pass the rest of the suite unnoticed.
+  expect(within(bRow).getAllByRole("img", { name: /mana/i }).length).toBeGreaterThan(0);
+  expect(within(bRow).queryByText(/\{[^}]+\}/)).toBeNull();
   // A colour that pays for itself says so rather than being dropped -- an absent row would read as
   // "not checked".
   expect(screen.getByLabelText(/U, 30 sources, enough/i)).toBeInTheDocument();
