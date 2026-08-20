@@ -27,6 +27,14 @@ packages/web/.impeccable/critique/
 # MTGJSON bulk download cache (50MB), re-fetched on demand by ingest-mtgjson.ts
 packages/data/.mtgjson-cache/
 
-# Claude Code worktrees and session state (git worktrees live under .claude/worktrees/)
-.claude/
+# Claude Code worktrees and session state (git worktrees live under .claude/worktrees/).
+# `.claude/*` rather than `.claude/`, because git does not descend into an excluded
+# DIRECTORY -- a negation inside one can never re-include anything. Excluding the
+# contents instead leaves the directory itself visible, so `!` works below.
+.claude/*
+# TRACKED ON PURPOSE: the player-persona reviewer agents and their harness. They are a
+# measuring instrument with a validated track record, they carry the fixtures and the
+# scoring rules, and the last time these personas lived only in a session the prompt text
+# was lost and every round had to be re-improvised.
+!.claude/agents/
 .cr-cache/
