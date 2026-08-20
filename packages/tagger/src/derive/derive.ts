@@ -10,6 +10,7 @@ import type { Ability, AbilityKind, CardTags, Characteristics, Control, SubjectF
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, extraPhaseName } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
+import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
 import { actionRecipients } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject } from "./subject.js";
@@ -23,7 +24,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 63;
+export const DERIVE_VERSION = 65;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -770,9 +771,16 @@ export function deriveAbilities(
     // Label everything this clause produced, in ONE place rather than at each of the three push
     // sites above (the main action loop, `drainAbility`, and the trigger-only fallback). A fourth
     // push site added later cannot silently skip labelling this way.
+    // The DEMAND an intervening-if condition makes on the deck, recorded in the same one place. Only
+    // an ability with a TRIGGER can carry one (CR 603.4 checks the condition when the trigger would
+    // fire), so a static or on-cast clause is skipped even if the sentence happens to say "if".
+    const conditionCares = interveningIfOf(text) ? conditionCares_(interveningIfOf(text)!) : [];
     for (let i = before; i < abilities.length; i++) {
       const repeats = repeatsFor(abilities[i], text, cost);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
+      if (conditionCares.length > 0 && abilities[i].trigger) {
+        abilities[i] = { ...abilities[i], conditionCares };
+      }
     }
   }
   return { abilities, unclaimed, unknownTriggers };

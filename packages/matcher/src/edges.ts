@@ -157,6 +157,16 @@ export function cardCaresTags(tags: CardTags): Set<string> {
   const out = new Set<string>();
   for (const a of tags.abilities) {
     if (a.trigger) for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
+    // AN INTERVENING-IF CONDITION IS A DEMAND EVEN WHEN NO SINGLE CARD SATISFIES IT (owner,
+    // 2026-08-20). "Whenever a permanent you control is put into a graveyard, IF IT HAD COUNTERS ON
+    // IT" makes Yuna, Grand Summoner a counters payoff; "if a creature died this turn" makes Warlock
+    // Class an aristocrats one. Neither fact reached the axis, because `cardCaresTags` read the
+    // trigger's own verb and subject and nothing else — Yuna carried `counter-added:any` only as
+    // SUPPLY (she places counters), never as demand.
+    //
+    // A cares tag forms NO edge, so this can only move the ranking layer: the acceptance test is
+    // that population and panel stay byte-identical while themes and ratings move.
+    for (const tag of a.conditionCares ?? []) out.add(tag);
   }
   return out;
 }

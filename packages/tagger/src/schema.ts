@@ -497,6 +497,12 @@ export interface Ability {
    *  Unset when the action states no amount. Never defaulted to 1 — "draw a card" and "draw 1 card"
    *  are the same fact, but "no amount recorded" and "amount is one" are not. */
   amount?: string;
+  /** THEME TAGS THE ABILITY'S INTERVENING-IF CONDITION DEMANDS — "if it had counters on it" wants a
+   *  counters deck, "if a creature died this turn" wants an aristocrats one.
+   *
+   *  Not an evaluable condition and deliberately not one: see `conditionCares`. It records only the
+   *  DEMAND, so `cardCaresTags` can put the card on the right axis. Forms no edge, ever. */
+  conditionCares?: string[];
   /** How often this ability can fire — see
    *  `docs/superpowers/specs/2026-08-11-repeatability-taxonomy-design.md`.
    *

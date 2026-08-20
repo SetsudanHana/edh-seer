@@ -63,3 +63,39 @@ const FAMILIES: { family: ConditionFamily; re: RegExp }[] = [
 export function conditionFamily(condition: string): ConditionFamily {
   return FAMILIES.find((f) => f.re.test(condition))?.family ?? "other";
 }
+
+/** THE DEMAND A CONDITION MAKES ON THE DECK, as ordinary `cares` tags.
+ *
+ *  Owner's framing, 2026-08-20: an intervening if forms no edge, but it still says what the card
+ *  NEEDS around it — "Yuna should score more in a counters deck", Warlock Class is an aristocrats
+ *  payoff, Alesha cares about attacking. The condition is a CONSUMING side even when no single
+ *  producer satisfies it, and `cardCaresTags` is exactly the channel: it feeds `rankFreq` at full
+ *  weight, then the axis, then `axisWeight` and the rating.
+ *
+ *  **A CLOSED MAP, NOT AN EVALUATOR.** The 2026-08-15 refusal stands — the corpus prints 241 distinct
+ *  conditions and a slot general enough to EVALUATE them is a second rules engine. This does not
+ *  evaluate anything: it recognises four printed shapes and emits a tag the theme layer already
+ *  speaks. Everything else returns nothing, which is the honest answer for "it was kicked".
+ *
+ *  DELIBERATELY OMITTED: `control` and `life` conditions ("you control a red permanent", "the player
+ *  with the most life"). They are real DECK-FIT facts — Oath of Liliana in a deck with no
+ *  planeswalkers is a bad card, measured at 1 of 33 such slots across the 71 decks — but a colour or
+ *  a player's life total is not a theme any card supplies, so a cares tag would be a category error.
+ *  That belongs on the cut list, not the axis. Also omitted: `cast-entry` ("if you cast it"), which
+ *  narrows the EVENT rather than naming a deck demand. */
+export function conditionCares(condition: string): string[] {
+  const out: string[] = [];
+  // "if it had one or more counters on it" (Yuna, Iron Apprentice), "if The Ozolith has counters on
+  // it". The kind is not read: a subject key of `any` is what the counter theme already uses, and
+  // guessing "+1/+1" would claim more than the text says.
+  if (/\bcounters?\b/i.test(condition)) out.push("counter-added:any");
+  // "if a creature died this turn" (Warlock Class) — the aristocrats demand.
+  if (/\b(?:a|another|one or more) creatures? (?:died|has died|have died)\b/i.test(condition)) out.push("dies:creature");
+  // "if you attacked this turn" (Alesha) — the aggro demand.
+  if (/\byou(?:'ve)? attacked\b|\byou have attacked\b/i.test(condition)) out.push("attacks:any");
+  // "if a planeswalker entered the battlefield under your control this turn" (Oath of Liliana,
+  // Oath of Chandra).
+  const entered = condition.match(/\ban? (planeswalker|creature|artifact|enchantment|land) entered\b/i);
+  if (entered) out.push(`enters:${entered[1].toLowerCase()}`);
+  return [...new Set(out)];
+}
