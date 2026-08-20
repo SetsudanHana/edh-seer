@@ -2367,3 +2367,41 @@ test("a recursion that returns only what it put there itself is fed by no other 
   // An ordinary reanimator names a class and any fill enables it.
   expect(reasons("Return target creature card from your graveyard to the battlefield.").length).toBe(1);
 });
+
+// The narrow half of family C: an untyped recursion on an ability with its own graveyard-entry
+// trigger returns what THAT trigger saw, so a fill the trigger cannot see enables nothing —
+// Kefka milling a creature for Marchesa, whose trigger needs a +1/+1 counter. A fill the trigger
+// DOES see is dropped one line earlier and stated by the event-edge loop as `dies:creature`.
+test("an untyped recursion behind its own trigger is not fed by a fill that trigger cannot see", () => {
+  const mill: CardTags = {
+    oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 3,
+      power: "2", toughness: "2", token: false, keywords: [] },
+    abilities: [{
+      kind: "triggered", effect: { kind: "mill" },
+      trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature", self: true } },
+      emits: [{ verb: "enters-graveyard", subject: { control: "you", token: null, type: "creature" } }],
+    }],
+  };
+  const marchesa = (triggerSubject: Record<string, unknown>): CardTags => ({
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 5,
+      power: "3", toughness: "3", token: false, keywords: [] },
+    abilities: [{
+      kind: "triggered",
+      // Untyped recursion — "return THAT card", the object the trigger saw.
+      effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, zone: "graveyard" } },
+      trigger: { verbs: ["dies"], subject: triggerSubject as never },
+    }],
+  });
+  const reasons = (t: Record<string, unknown>) => directedReasons(
+    { card: { name: "Kefka" } as DeckCard["card"], tags: mill },
+    { card: { name: "Marchesa" } as DeckCard["card"], tags: marchesa(t) }, H,
+  ).filter((r) => r.tag.startsWith("graveyard-recursion:"));
+
+  // The trigger demands a +1/+1 counter; a plain mill cannot produce that creature's death.
+  expect(reasons({ control: "you", token: null, type: "creature", counter: "+1/+1" })).toHaveLength(0);
+  // An UNRESTRICTED trigger (Meathook Massacre II) is the case the blanket version got wrong — the
+  // relation is real, and the event-edge loop states it, so this loop must not double-count it.
+  expect(reasons({ control: "you", token: null, type: "creature" })).toHaveLength(0);
+});

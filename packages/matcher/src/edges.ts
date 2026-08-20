@@ -455,6 +455,16 @@ const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
   /\bfrom among (?:those|them)\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b/i
     .test(oracleText ?? "");
 
+/** An UNTYPED recursion on an ability that carries its own graveyard-entry trigger: it returns the
+ *  object that trigger saw, never an arbitrary card someone else put there. Reached only AFTER the
+ *  trigger-match skip above, so by here the fill is one the trigger does NOT see. */
+const GRAVEYARD_ENTRY_VERBS = new Set(["dies", "milled", "discarded", "sacrificed", "enters-graveyard"]);
+function returnsWhatItsOwnTriggerSaw(a: CardTags["abilities"][number]): boolean {
+  const s = a.effect.subject;
+  if (!s || s.type !== undefined || s.subtype !== undefined) return false;
+  return (a.trigger?.verbs ?? []).some((v) => GRAVEYARD_ENTRY_VERBS.has(v));
+}
+
 export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
   if (consumer.verb !== "enters" && consumer.verb !== "cast") return false;
   // Only the GRAVEYARD variant is excluded (it has its own matcher). `normalizeZoneEvent` stamps
@@ -884,17 +894,24 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       // Pendant returns what hit your graveyard FROM THE BATTLEFIELD this turn — 49 corpus cards).
       // Card-scoped printed cue, the same shape and ceiling as `reducesItself`.
       if (recursionIsSelfSupplied(c.card.oracleText)) continue;
-      // THE STRUCTURAL SIBLING OF THIS RULE WAS BUILT AND REFUSED ON ITS OWN MEASUREMENT (2026-08-20).
-      // An UNTYPED recursion on an ability carrying its own graveyard-entry trigger returns exactly
-      // what that trigger saw ("whenever a creature you control with a +1/+1 counter on it dies,
-      // return THAT CARD"), and **21 derived cards share the shape** — Marchesa, Kaya's Ghostform,
-      // Feign Death, Luminous Broodmoth, Optimus Prime, Shirei. Refusing them buys 2 false claims
-      // and **costs 3 REAL ones**, all on Meathook Massacre II ("whenever a creature you control
-      // dies, return that card" — an UNRESTRICTED trigger, so a sacrifice outlet really does enable
-      // it). The event-edge loop is supposed to carry those under `dies:creature` and does in
-      // `smooth-criminal`, but in two other decks the relation vanished outright, so the rule is
-      // sound in principle and its cost is a GAP IN THE `dies` CHANNEL, not a wrong answer here.
-      // Fix that channel first; this refusal is not worth 3 real claims today.
+      // AN UNTYPED RECURSION ON AN ABILITY WITH ITS OWN GRAVEYARD-ENTRY TRIGGER RETURNS WHAT THAT
+      // TRIGGER SAW — "whenever a creature you control with a +1/+1 counter on it dies, return THAT
+      // CARD" — so a fill that does NOT satisfy the trigger enables nothing. **21 derived cards share
+      // the shape**: Marchesa, Kaya's Ghostform, Feign Death, Luminous Broodmoth, Optimus Prime,
+      // Shirei. The skip above already drops the fills that DO satisfy the trigger, because the
+      // event-edge loop states them; this drops the rest, which is the wildcard an untyped recursion
+      // subject would otherwise wave through — Kefka milling a creature for Marchesa, whose trigger
+      // needs a +1/+1 counter.
+      //
+      // A BLANKET VERSION OF THIS WAS BUILT FIRST AND WAS WRONG, and the correction is worth keeping:
+      // it also refused fills that DO satisfy the trigger, costing 3 REAL claims on Meathook Massacre
+      // II, whose trigger is UNRESTRICTED ("whenever a creature you control dies, return that card")
+      // so a sacrifice outlet really does enable it. The first diagnosis of that cost — "a gap in the
+      // `dies` channel" — was ALSO wrong: it compared pairs against decks that do not contain the
+      // producer at all. `smooth-criminal` is the only deck holding those three pairs and the
+      // `dies:creature` edge carries every one of them. **Check that a deck contains both cards
+      // before reading a missing claim as a missing channel.**
+      if (returnsWhatItsOwnTriggerSaw(a)) continue;
       if (!graveyardFillMatches(e.subject, a.effect.subject, h)) continue;
       // A SELF-scoped recursion returns the card ITSELF ("return this card from your graveyard"), so
       // a fill enables it only if that fill could contain THAT card. Reassembling Skeleton is a real
