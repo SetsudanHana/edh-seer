@@ -252,9 +252,21 @@ test("Cards tab shows what a card costs and when you can cast it, beside the rat
   }] as any;
   render(<CardList cards={cards} />);
   const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Breach"))!;
-  expect(within(row).getByText("{5}{B}{B}")).toBeInTheDocument();
+  expect(within(row).getAllByRole("img", { name: /mana/i }).length).toBeGreaterThan(0);
   expect(within(row).getByText("22% – 40% by T7")).toBeInTheDocument();
   expect(within(row).getByText("3.7")).toBeInTheDocument();
+});
+
+/** The precon persona listed "{3}{B}{B} and the rest of the cost symbols" among words it could not
+ *  understand. Brace notation must not survive anywhere in this table -- widened past a single
+ *  colour letter, since a generic-mana token like "{3}" carries no letter at all. */
+test("the Cards table renders costs as symbols, not as brace notation", () => {
+  const cards = [{
+    name: "Breach the Multiverse", synergyRating: 3.7, topPartners: [], manaCost: "{3}{B}{B}",
+  }] as any;
+  render(<CardList cards={cards} />);
+  expect(screen.queryByText(/\{[^}]+\}/)).toBeNull();
+  expect(screen.getAllByRole("img", { name: /mana/ }).length).toBeGreaterThan(0);
 });
 
 /** A land has no cost row and a REFUSED cost (X, delve, convoke, a free cast) has no castability.

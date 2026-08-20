@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
+import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 
@@ -197,7 +198,7 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
                   <td className="py-2 pr-2 text-right">
                     {/* An em dash for a land or an unpriced cost -- a refusal must never render as
                       *  0%, which a reader would take as "you cannot cast this". */}
-                    <span className="block font-mono tabular-nums">{c.manaCost ?? "—"}</span>
+                    <span className="block"><ManaSymbols cost={c.manaCost ?? ""} /></span>
                     {c.castability ? (
                       <span className="block text-xs text-(--muted) tabular-nums">
                         {castRange(c.castability)} by T{c.castability.turn}

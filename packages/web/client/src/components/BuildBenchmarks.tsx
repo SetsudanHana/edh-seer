@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 import type { DeckReport } from "../types.js";
 import { Explain } from "./Explain.js";
+import { ManaSymbols } from "./ManaSymbols.js";
 
 const LABEL: Record<string, string> = {
   ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
@@ -518,7 +519,15 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                     *  it a fact about one early double-pip spell rather than about the mana base. */}
                   <span className="flex-1 text-(--muted) text-xs">
                     {c.worst
-                      ? `${plural(c.worst.cards, "card")} ${c.worst.cards === 1 ? "wants" : "want"} ${("{" + c.color + "}").repeat(c.worst.pips)} on turn ${c.worst.turn}`
+                      // Colour demand now renders in the same notation as a printed cost, so the
+                      // reader meets one convention instead of two ("4 W" here, "{3}{B}{B}" in the
+                      // Cards table).
+                      ? (
+                        <>
+                          {plural(c.worst.cards, "card")} {c.worst.cards === 1 ? "wants" : "want"}{" "}
+                          <ManaSymbols cost={`{${c.color}}`.repeat(c.worst.pips)} /> on turn {c.worst.turn}
+                        </>
+                      )
                       : "every cost covered"}
                   </span>
                   {/* "23 of 36 sources" and "short 13" were the same subtraction printed twice.
