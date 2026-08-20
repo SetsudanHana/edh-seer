@@ -41,8 +41,9 @@ export function CutList({ cutList, slack }: { cutList: DeckReport["cutList"]; sl
       {hasSlack && (
         <>
           <p className="text-sm text-(--muted)">
-            You carry more of these than the target. The category, never a card — nothing here ranks two ramp
-            cards against each other.
+            You carry more of these than the Command Zone template&rsquo;s floor &mdash; a deckbuilding convention
+            someone typed, not a number measured from any deck. The category, never a card &mdash; nothing here
+            ranks two ramp cards against each other.
           </p>
           <ul className="flex flex-wrap gap-2">
             {slack!.map((s) => (
