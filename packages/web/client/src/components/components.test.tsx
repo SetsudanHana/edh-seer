@@ -539,15 +539,40 @@ test("an answer row says how many of its answers exile, and flags a graveyard ro
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // 4 creature answers, 1 of which exiles -- the other 3 are undone by a reanimator.
   expect(screen.getByLabelText(/creature, 4 cards.*1 of them exile/i)).toBeInTheDocument();
-  // The graveyard row's finding is the ZERO: it has hate, and none of it answers an engine.
+  // The graveyard row's finding is the ZERO: it has hate, and none of it answers an engine. The row
+  // still SAYS so to a screen reader; on screen it is promoted to a sentence, below.
   expect(screen.getByLabelText(/graveyard.*none recurring/i)).toBeInTheDocument();
   // A class with nothing to say says nothing -- no "0 of them exile" noise on an empty row.
   expect(screen.queryByLabelText(/artifact, no answers.*exile/i)).not.toBeInTheDocument();
   // Spelled out on screen, not abbreviated: `0 ex` / `0 rec` were the two most-misread strings on
   // this panel, including by a reader who guessed "exile" correctly and still called it broken.
-  expect(screen.getByText("none recurring")).toBeInTheDocument();
   expect(screen.getByText("1 exile")).toBeInTheDocument();
   expect(screen.queryByText(/\bex\b/)).not.toBeInTheDocument();
+});
+
+// A UNIFORM MODE IS A FINDING ABOUT THE DECK, NOT A SUFFIX ON SIX ROWS. On a real deck every row
+// carries the same one -- the review's deck read "none exile" six times -- and repetition is what
+// made the two facts worth acting on invisible.
+test("a mode every answer shares is promoted to one sentence and dropped from the rows", () => {
+  // TWO answered classes, both with zero exile: a single row's suffix is not repetition, so the
+  // promotion deliberately does not fire on one row (the fixture's artifact row has no answers).
+  const noExile = {
+    ...DECK_MATH,
+    answers: DECK_MATH.answers.map((a) => ({ ...a, exiling: 0, count: a.count || 3 })),
+  };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={noExile} />);
+  expect(screen.getByText(/Nothing this deck kills is exiled/)).toBeInTheDocument();
+  expect(screen.queryByText("none exile")).not.toBeInTheDocument();
+  // The graveyard row is the same rule on its own axis: the fixture's hate never recurs.
+  expect(screen.getByText(/graveyard hate is one-shot/)).toBeInTheDocument();
+  expect(screen.queryByText("none recurring")).not.toBeInTheDocument();
+});
+
+// A DISAGREEING COLUMN STILL EARNS ITS SUFFIX -- the promotion fires on uniformity, not on zero.
+test("per-row modes survive when the rows disagree", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.getByText("1 exile")).toBeInTheDocument();
+  expect(screen.queryByText(/Nothing this deck kills is exiled/)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks says how many answers short a class is, not just how likely it is", () => {
@@ -814,4 +839,32 @@ test("a combo piece opens the inspector, Escape closes it, and an unknown piece 
   expect(panel.closest(".reveal")).toBeNull();
   await user.keyboard("{Escape}");
   expect(screen.queryByTestId("card-inspector")).not.toBeInTheDocument();
+});
+
+// A COLOUR DEMAND NO DECK CAN MEET IS NOT A SHORTFALL. Each row is one early double-pip card's own
+// 90% figure, and the rows are independent demands on the same lands -- the review's deck asked
+// 36 + 33 + 33 sources of 34 lands. Amber there says "your mana base is broken" about arithmetic,
+// and the honest fix is the spell.
+test("colour rows stop crying wolf when the demands cannot all be met", () => {
+  const overcommitted = {
+    ...DECK_MATH,
+    lands: { ...DECK_MATH.lands, actual: 34, target: 35 },
+    colors: [
+      { color: "U", supplied: 22, worst: { pips: 2, turn: 2, required: 36, cards: 1 } },
+      { color: "B", supplied: 20, worst: { pips: 2, turn: 3, required: 33, cards: 2 } },
+      { color: "R", supplied: 21, worst: { pips: 2, turn: 3, required: 33, cards: 1 } },
+    ],
+  };
+  const { unmount } = render(
+    <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={overcommitted} />,
+  );
+  expect(screen.getByText(/want 102 sources from 34 lands, which no\s+deck can hold/)).toBeInTheDocument();
+  expect(screen.getByText("22 of 36 sources")).toHaveClass("text-(--muted)");
+  unmount();
+
+  // And it still fires where the gap IS closable: one colour, wanting fewer sources than the deck
+  // holds lands.
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.getByText("26 of 33 sources")).toHaveClass("text-(--warning)");
+  expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
 });

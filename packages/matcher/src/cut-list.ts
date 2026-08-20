@@ -95,6 +95,14 @@ export function deckSlack(
   categories: readonly { category: string; count: number; target: number }[],
 ): { category: string; count: number; target: number; over: number }[] {
   return categories
+    // LANDS ARE NOT A SURPLUS CATEGORY, and printing them here put two land verdicts on one screen
+    // saying opposite things: this chip read "lands 37/36 (+1)" — one land OVER a flat convention —
+    // while `land-count.ts`'s own block 400px below read "34 in deck … wants 35", one land SHORT of
+    // a target derived from the deck's own curve and acceleration. Both are right about different
+    // questions and neither cross-references the other, which reads as a broken report (the E4
+    // defect, one layer up: two readouts sharing a number). The Karsten block is the land verdict,
+    // so this one goes rather than being annotated.
+    .filter((c) => c.category !== "lands")
     .filter((c) => c.target > 0 && c.count > c.target)
     .map((c) => ({ ...c, over: c.count - c.target }))
     .sort((a, b) => b.over - a.over || a.category.localeCompare(b.category));

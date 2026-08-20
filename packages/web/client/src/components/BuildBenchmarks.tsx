@@ -173,6 +173,14 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
   const wincons = deckMath.wincons;
   const clock = deckMath.clock;
   const castability = deckMath.castability;
+  // THE MODE IS A FINDING, NOT A SUFFIX. Every row on a real deck carries the same one — this deck
+  // reads "none exile" six times — and repeated six times it is noise, while said once it is a
+  // sentence a deckbuilder acts on. Per-row text survives only when the rows DISAGREE, which is
+  // when the suffix is carrying information.
+  const answered = answers.filter((a) => a.class !== "graveyard" && a.count > 0);
+  const noneExile = answered.length > 1 && answered.every((a) => a.exiling === 0);
+  const graveyard = answers.find((a) => a.class === "graveyard");
+  const noneRecurring = graveyard !== undefined && graveyard.count > 0 && graveyard.recurring === 0;
   const answersBlock = (
       <div className="flex flex-col gap-1.5">
         <h5 className="eyebrow">Answers by turn {turn}</h5>
@@ -197,8 +205,8 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             const mode = none
               ? ""
               : a.class === "graveyard"
-                ? a.recurring > 0 ? `${a.recurring} recurring` : "none recurring"
-                : a.exiling > 0 ? `${a.exiling} exile` : "none exile";
+                ? noneRecurring ? "" : a.recurring > 0 ? `${a.recurring} recurring` : "none recurring"
+                : noneExile ? "" : a.exiling > 0 ? `${a.exiling} exile` : "none exile";
             const modeLabel = none
               ? ""
               : a.class === "graveyard"
@@ -231,7 +239,14 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                 {/* The one prescriptive figure on the panel, and now the only number in its row
                   *  besides the count it is measured from. Narrower at 390px, where the label needs
                   *  96px for "planeswalker" and the count group was wrapping onto two lines. */}
-                <span className="w-16 sm:w-24 shrink-0 text-right tabular-nums text-(--warning)">
+                {/* MUTED, NOT AMBER, and this is a ruling rather than a style choice. A count of
+                  *  ZERO is a fact about the deck — it cannot answer that class at all — and keeps
+                  *  the warning colour above. "3 short of 5" is a CONVENTION's opinion about how
+                  *  many you should hold, over classes (land, graveyard) whose floor nobody here
+                  *  has calibrated; `BASE_TARGETS` is recorded as uncalibrated doctrine. Painting
+                  *  five of six rows amber on a deck this engine rates 4.9/5 teaches the reader
+                  *  that amber means nothing, and the one row that earns it loses with them. */}
+                <span className="w-16 sm:w-24 shrink-0 text-right tabular-nums text-(--muted)">
                   {a.fromCommandZone ? "" : short > 0 ? `${short} short` : ""}
                 </span>
               </li>
@@ -241,10 +256,27 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
         {/* The shortfall column is meaningless without the confidence it is measured against, and
           *  that confidence is a stated doctrine rather than a fact about the deck. Say it out loud
           *  next to the numbers it produces, the way the pricing turn is. */}
+        {/* THE TWO FINDINGS THIS PANEL WAS BURYING. Both were per-row suffixes repeated down the
+          *  column; both are single facts about the whole deck, and both are the kind of thing a
+          *  player changes a decklist over. */}
+        {noneExile ? (
+          <p className="text-sm text-(--warning) max-w-[65ch]">
+            Nothing this deck kills is exiled — everything it answers can come back.
+          </p>
+        ) : null}
+        {noneRecurring ? (
+          <p className="text-sm text-(--warning) max-w-[65ch]">
+            Its graveyard hate is one-shot: {plural(graveyard!.count, "card")}, none of which keeps
+            working after it resolves.
+          </p>
+        ) : null}
         {answers.some((a) => a.required > a.count) ? (
           <p className="text-xs text-(--muted) max-w-[65ch]">
             "Short" counts the cards this deck would have to add before it holds an answer of that
-            class more often than not by turn {turn}.
+            class more often than not by turn {turn}. The COUNT is this deck's own; that it should
+            hold one of every class is a deckbuilding convention someone typed, not a number
+            measured from any deck — and nobody has calibrated the floor for land or graveyard
+            answers at all.
           </p>
         ) : null}
       </div>
@@ -456,6 +488,16 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
         </div>
   ) : null;
 
+  // CAN THE MANA BASE EVEN HOLD THIS? Each row's `required` is the sources ONE early double-pip card
+  // wants at 90% confidence, and the rows are independent demands on the same lands: this deck asks
+  // 36 + 33 + 33 = 102 source-slots of 34 lands. A three-colour deck cannot satisfy them all, so
+  // painting each row amber says "your mana base is broken" about an arithmetic impossibility, and
+  // the honest fix is usually the SPELL rather than the land count. Amber survives only where the
+  // gap is closable — a single row whose demand fits inside the deck's own land count, in a deck
+  // whose rows together also fit.
+  const totalRequired = colors.reduce((n, c) => n + (c.worst?.required ?? 0), 0);
+  const landRoom = lands?.actual ?? 0;
+  const overcommitted = totalRequired > landRoom;
   const coloursBlock = colors.length > 0 ? (
         <div className="flex flex-col gap-1.5">
           <h5 className="eyebrow">Colours</h5>
@@ -483,7 +525,13 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                     *  The pair survives as one cell, coloured: the reader can see the gap and its
                     *  size in one place. */}
                   <span
-                    className={`w-40 shrink-0 text-right tabular-nums ${c.worst ? "text-(--warning)" : "text-(--success)"}`}
+                    className={`w-40 shrink-0 text-right tabular-nums ${
+                      !c.worst
+                        ? "text-(--success)"
+                        : overcommitted || c.worst.required > landRoom
+                          ? "text-(--muted)"
+                          : "text-(--warning)"
+                    }`}
                   >
                     {c.worst ? `${c.supplied} of ${c.worst.required} sources` : `${c.supplied} sources, enough`}
                   </span>
@@ -498,10 +546,13 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             *  and the honest fix for a demand no 100-card deck can meet is usually the spell. */}
           {colors.some((c) => c.worst) ? (
             <p className="text-xs text-(--muted) max-w-[65ch]">
-              "Short" is measured against the earliest double-pip card named on each row, at 90%
-              confidence — not against the deck's land count, which is judged above. A single early
-              double pip can ask for more sources than a three-colour deck can hold, and cutting or
-              delaying that card answers it as well as adding lands does.
+              Each row is the earliest double-pip card in that colour, at 90% confidence — not the
+              deck's land count, which is judged above.{" "}
+              {overcommitted
+                ? `Together these rows want ${totalRequired} sources from ${landRoom} lands, which no
+                   deck can hold — so read them as what each card is asking for, not as a shortfall
+                   to fix. Cutting or delaying one early double pip answers it; adding lands cannot.`
+                : "Cutting or delaying an early double pip answers a gap as well as adding lands does."}
             </p>
           ) : null}
         </div>
@@ -552,12 +603,18 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
   const sections: { title: string; flagged: boolean; blocks: ReactNode[] }[] = [
     {
       title: "Can you cast your cards",
-      flagged: colors.some((c) => c.worst) || (lands !== undefined && Math.abs(lands.actual - lands.target) > 2),
+      // A row nobody can close does not lead the panel either — same ruling as the colour it paints.
+      flagged:
+        colors.some((c) => c.worst && !overcommitted && c.worst.required <= landRoom)
+        || (lands !== undefined && Math.abs(lands.actual - lands.target) > 2),
       blocks: [landsBlock, coloursBlock, castsBlock],
     },
     {
       title: "Can you deal with theirs",
-      flagged: answers.some((a) => a.count === 0 || a.required > a.count),
+      // FLAG WHAT IS PAINTED. A class with NO answers is a fact about the deck, and so are the two
+      // findings below it; "3 short of 5" is a convention's opinion and is rendered muted, so it no
+      // longer decides which section a reader meets first either.
+      flagged: answers.some((a) => a.count === 0) || noneExile || noneRecurring,
       blocks: [answersBlock],
     },
     { title: "How you win", flagged: false, blocks: [clockBlock, winBlock, topdeckBlock] },

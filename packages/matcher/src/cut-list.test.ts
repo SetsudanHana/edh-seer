@@ -55,6 +55,9 @@ test("deckSlack names the over-target categories, biggest surplus first, and nev
   expect(deckSlack(CATS)).toEqual([{ category: "ramp", count: 14, target: 10, over: 4 }]);
   // target 0 means "reported, never scored" (graveyardHate) — it can never be over.
   expect(deckSlack([{ category: "graveyardHate", count: 2, target: 0 }])).toEqual([]);
+  // LANDS ARE NEVER A SLACK ROW whatever the counts say: `land-count.ts` owns the land verdict from
+  // the deck's own curve, and this chip's flat convention contradicted it on the same screen.
+  expect(deckSlack([{ category: "lands", count: 37, target: 36 }])).toEqual([]);
 });
 
 test("the rating and axis gates are boundaries, not ranges", () => {
