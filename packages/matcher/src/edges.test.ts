@@ -1763,6 +1763,39 @@ test("a graveyard fill grows a per-graveyard payoff, gated on WHAT is counted", 
   expect(reasons("creature", "land")).toHaveLength(0);
 });
 
+// C2b: a count narrowed by HISTORIC is not a wildcard. The Capitoline Triad — "this spell costs {1}
+// less to cast for each historic card in your graveyard" — derives `{historic: true, zone:
+// graveyard}` with no type and no subtype, so the untyped-count guard refused its own deck's
+// commander. An honestly untyped count (Riverchurn Monument) is still refused, which is what the
+// second expectation pins: remove `counted.historic !== true` from the guard and it fails.
+test("a historic-narrowed graveyard count is not a wildcard, an untyped one still is", () => {
+  const filler: CardTags = {
+    oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["artifact"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{
+      kind: "activated", effect: { kind: "mill" },
+      emits: [{ verb: "enters-graveyard", subject: { control: "you", token: null } }],
+    }],
+  };
+  const payoff = (scalingSubject: Record<string, unknown>): CardTags => ({
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["artifact"], subtypes: [], colors: [], identity: [], cmc: 7,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{
+      kind: "static",
+      effect: { kind: "cost-reduction", scaling: "per-graveyard", scalingSubject: scalingSubject as never },
+    }],
+  });
+  const reasons = (counted: Record<string, unknown>) => directedReasons(
+    { card: { name: "Millstone" } as DeckCard["card"], tags: filler },
+    { card: { name: "The Capitoline Triad" } as DeckCard["card"], tags: payoff(counted) }, H,
+  ).filter((r) => r.tag.startsWith("scales:"));
+
+  expect(reasons({ control: "you", token: null, historic: true, zone: "graveyard" })).toHaveLength(1);
+  expect(reasons({ control: "you", token: null, zone: "graveyard" })).toHaveLength(0);
+});
+
 // A LAND FINDER RELATES TO WHAT IT CAN FETCH (owner's ruling 2026-08-15). The blanket land exclusion
 // was right that a fetchland is not a "synergy" in the payoff sense and wrong that it says nothing:
 // which lands your ramp can actually reach is a deckbuilding fact, and `bin/ramp-coverage.ts` states

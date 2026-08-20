@@ -899,7 +899,19 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       // copies and the engine cannot see the archetype at all. 35 cards count a name anywhere, 19 of
       // them in a graveyard. That is a roadmap item, not a line of code here.
       const counted = a.effect.scalingSubject;
-      if (list(counted.type).length === 0 && list(counted.subtype).length === 0) continue;
+      // HISTORIC IS A NARROWING, and refusing it was the one wrong refusal here (roadmap C2b,
+      // measured 2026-08-20). Artifact-legendary-or-Saga is a printed class, not a wildcard, so a
+      // count restricted to it is not the Riverchurn shape. The population is EXACTLY THREE untyped
+      // scaling subjects in the whole derived corpus: Riverchurn Monument (honestly untyped, still
+      // refused), Rite of Flame (`named`, refused on purpose — the `named` gap is its own item) and
+      // The Capitoline Triad, which is a calibration deck's own COMMANDER and could state nothing
+      // about the graveyard its cost reduction reads.
+      //
+      // KEYED `scales:any`, deliberately. `themeSubjectKey` has no `historic` branch and adding one
+      // would re-key two OTHER live subjects (Abstergo Entertainment, Samwise Gamgee), risking
+      // frozen-panel debt for a cosmetic gain. The guard above is what refuses a wildcard; the key
+      // is a grouping label and the reason text names both cards.
+      if (list(counted.type).length === 0 && list(counted.subtype).length === 0 && counted.historic !== true) continue;
       // A deck ROLE is not a pairwise synergy. CORRECTED 2026-08-19: this comment used to say
       // "cost-reduction is the rule's own first member" and cite The Capitoline Triad — both parts
       // are now false. `cost-reduction` LEFT `ROLE_NOT_SYNERGY` on 2026-08-18 (the owner overturned
