@@ -536,3 +536,20 @@ test("returning a card from a graveyard to the library is still recursion", () =
   expect(actionEffectKind({ verb: "put", fromZone: null, toZone: "graveyard",
     object: "the top three cards of your library" })).toBe("top-manipulation");
 });
+
+// A NEGATIVE MODIFIER IS NOT AN ANTHEM (panel family E, 2026-08-20). `modify-pt` maps to `pump`,
+// which is right for "+2/+2" and the exact opposite of the truth for "-2/-2": measured, 30 of 301
+// derived pump abilities carry a negative amount — Massacre Wurm, Toxic Deluge, Doomwake Giant,
+// Tragic Slip — and every reader of `pump` was wrong about them, including `wincon.ts`, which
+// counted Massacre Wurm as a go-wide FINISHER.
+test("a negative power/toughness modifier derives debuff, not pump", () => {
+  expect(actionEffectKind({ verb: "modify-pt", object: "creatures your opponents control", amount: "-2/-2" }))
+    .toBe("debuff");
+  expect(actionEffectKind({ verb: "modify-pt", object: "creatures you control", amount: "-X/-X" }))
+    .toBe("debuff");
+  // The sign is the whole test: an anthem is untouched.
+  expect(actionEffectKind({ verb: "modify-pt", object: "creatures you control", amount: "+2/+2" }))
+    .toBe("pump");
+  // No amount recorded is not a guess — it stays the ordinary kind.
+  expect(actionEffectKind({ verb: "modify-pt", object: "target creature" })).toBe("pump");
+});

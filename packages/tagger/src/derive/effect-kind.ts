@@ -239,6 +239,11 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // correctly (a self `counter-added` emit with the right counter kind); what was missing is the
   // LABEL, which `mechanisms.ts:54` needs to see a counters deck. 635 corpus cards, 45 normalized.
   if (verb === "add-counter" && ENTERS_WITH.test(clauseText)) return "enters-with-counters";
+  // A NEGATIVE modifier is not an anthem. `modify-pt` maps to `pump` below, which is right for
+  // "+2/+2" and the exact opposite of the truth for "-2/-2": Massacre Wurm's static applied to every
+  // creature the deck plays, and `wincon.ts` counted it as a go-wide finisher. The AMOUNT already
+  // carried the sign and nothing read it.
+  if (verb === "modify-pt" && /^\s*-/.test(String(action.amount ?? ""))) return "debuff";
   if (verb === "other" && WINS.test(`${action.object ?? ""} ${clauseText}`)) return "win-game";
   if (verb === "extra-turn" || verb === "extra-phase") {
     return extraUnitKind(String(action.object ?? ""), clauseText);

@@ -322,6 +322,14 @@ export const EFFECT_KINDS = [
   "draw-card",
   "forced-sacrifice",
   "pump",
+  /** A NEGATIVE power/toughness modifier. Shaped like `pump` and meaning the opposite: Massacre Wurm,
+   *  Toxic Deluge and Doomwake Giant are removal, not anthems, and reading them as anthems put a
+   *  false claim on every creature in the deck. Measured 2026-08-20: **30 of 301 derived pump
+   *  abilities (10%) carry a negative amount**, 186 corpus cards print "get -N/-N". Its own kind
+   *  rather than a matcher-side gate because five readers consult this field — `mechanisms.ts` uses
+   *  `pump` for four archetypes and `wincon.ts` for the go-wide finisher — and every one of them was
+   *  wrong about these cards. */
+  "debuff",
   "cost-reduction",
   "trigger-doubling",
   "graveyard-recursion",

@@ -359,6 +359,24 @@ export const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set([
 const reducesItself = (oracleText: string | undefined): boolean =>
   /\bthis spell costs\b|\bthis ability costs\b/i.test(oracleText ?? "");
 
+/** A reduction on ACTIVATING an ability discounts a card that HAS one, and nothing else.
+ *
+ *  Forensic Gadgeteer's "activated abilities of artifacts you control cost {1} less to ACTIVATE"
+ *  derives an ordinary `cost-reduction` over "artifacts you control", so it claimed to discount every
+ *  artifact in the deck — including Servo Schematic, whose abilities are all TRIGGERED, and
+ *  Stridehangar Automaton, whose abilities are all STATIC. Both judged FALSE.
+ *
+ *  **REFUSING THE WHOLE CARD WAS BUILT FIRST AND IS WRONG — measured, it deletes THREE REAL CLAIMS**
+ *  (Thought Vessel, Transmutation Font, Dross Skullbomb, each judged real with the note "X is an
+ *  artifact with activated abilities"). The discount is perfectly real; what it cannot reach is a
+ *  consumer with no activated ability to pay for. So the printed cue selects the PRODUCER and the
+ *  CONSUMER's own ability list decides, which is a fact the engine already carries.
+ *
+ *  Card-scoped cue, same ceiling as `reducesItself`: 2 in the derived corpus (Forensic Gadgeteer,
+ *  Training Grounds) against **83 corpus cards** printing "less to activate". */
+const reducesAnAbility = (oracleText: string | undefined): boolean =>
+  /\bless to activate\b|\bactivated abilities .{0,40}\bcost\b/i.test(oracleText ?? "");
+
 /** A cost reduction cannot take generic mana below zero (CR 118.7), so "spells you cast cost {1}
  *  less" does NOTHING to a card costing exactly `{U}`.
  *
@@ -996,6 +1014,13 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     // Both still DERIVE: the kinds remain on the card and stay available as role signals for
     // `build.ts`. They simply stop claiming an edge.
     if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
+    // A DEBUFF IS NOT AN ANTHEM, and this pass says "P's static applies to C" — a sentence that
+    // claims C is IMPROVED. A negative modifier never improves the card it reaches, so relabelling
+    // `pump` -> `debuff` at derive is only half the fix: measured, it left Curse of Death's Hold ->
+    // Entity Tracker standing with a new tag and turned a judged FALSE into judging debt. The claim
+    // has to go, not get renamed. What these cards really relate to is the OPPONENT'S board, which
+    // is not in the deck and has no node.
+    if (a.effect.kind === "debuff") continue;
     // A counter-presence condition ("creatures you control WITH a +1/+1 counter") is a BOARD STATE,
     // not a printed characteristic, and this pass matches against the type line. Demanding it here
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated
@@ -1005,6 +1030,9 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     if (a.effect.kind === "cost-reduction") {
       // A SELF REDUCTION'S SUBJECT IS WHAT MEASURES IT, NOT WHAT IT DISCOUNTS — see `reducesItself`.
       if (reducesItself(p.card.oracleText)) continue;
+      // An ability discount needs an ability to discount — see `reducesAnAbility`.
+      if (reducesAnAbility(p.card.oracleText)
+        && !(c.tags?.abilities ?? []).some((ca) => ca.kind === "activated")) continue;
       // A LAND IS PLAYED, NOT CAST (CR 305.1). "Spells you cast cost {1} less" reaches no land, and
       // the type union keeps a modal DFC's castable face.
       if (isLandOnly(c.tags)) continue;

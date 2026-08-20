@@ -2257,3 +2257,35 @@ test("copy: an untyped token-generation ability does not widen a card that also 
   p.tags.abilities.push({ kind: "triggered", effect: { kind: "token-generation", subject: { type: ["artifact", "enchantment"], token: true, scope: "target" } } } as never);
   expect(directedReasons(p, selfTriggerLegend("Hidetsugu and Kairi"), H).length).toBe(0);
 });
+
+// PANEL FAMILY E (2026-08-20): a DEBUFF forms no applies-to edge, and an ABILITY discount needs an
+// ability to discount.
+test("a debuff makes no anthem claim, and an ability discount needs an activated ability", () => {
+  const statik = (kind: string, extra: Record<string, unknown> = {}): CardTags => ({
+    oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: [], colors: [], identity: [], cmc: 4,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "static", effect: { kind, subject: { control: "you", token: null, type: "creature", scope: "all" } } as never }],
+    ...extra,
+  });
+  const creature = (abilityKind?: string): CardTags => ({
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: 2, toughness: 2, token: false, keywords: [] },
+    abilities: abilityKind ? [{ kind: abilityKind, effect: { kind: "draw-card" } } as never] : [],
+  });
+  const reasons = (pTags: CardTags, cTags: CardTags, oracle?: string) => directedReasons(
+    { card: { name: "Curse", oracleText: oracle } as DeckCard["card"], tags: pTags },
+    { card: { name: "Bear" } as DeckCard["card"], tags: cTags }, H,
+  ).filter((r) => r.tag.startsWith("static:"));
+
+  // An anthem still claims; a debuff never does — "P's static applies to C" says C is IMPROVED.
+  expect(reasons(statik("pump"), creature()).length).toBe(1);
+  expect(reasons(statik("debuff"), creature()).length).toBe(0);
+
+  // Forensic Gadgeteer: refusing the whole card was measured wrong — it deleted three REAL claims.
+  // The consumer's own ability list decides.
+  const gadgeteer = "Activated abilities of artifacts you control cost {1} less to activate.";
+  expect(reasons(statik("cost-reduction"), creature("activated"), gadgeteer).length).toBe(1);
+  expect(reasons(statik("cost-reduction"), creature("triggered"), gadgeteer).length).toBe(0);
+});
