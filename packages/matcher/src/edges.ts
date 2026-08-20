@@ -642,7 +642,7 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
  *  `player-life-loss` alongside `draw-card` and `lifegain`. Dropping five of six would silently
  *  narrow every detector that reads them. So the objects stay and only the COUNT collapses. */
 export function claimCount(reasons: Reason[]): number {
-  return new Set(reasons.map((r) => `${r.tag} ${r.text}`)).size;
+  return new Set(reasons.map((r) => `${r.tag}\u0000${r.text}`)).size;
 }
 
 /** Records which SIDE of a reason is a token node. A NAME IS NOT AN IDENTITY: 92 of the corpus's
