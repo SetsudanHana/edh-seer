@@ -66,6 +66,30 @@ export interface SubjectFilter {
    *  satisfies it. Set on a CONSUMER by `parseSubject`, and on a PRODUCER by the matcher, which reads
    *  it off the printed type line. */
   historic?: true;
+  /** The subject demands an OUTLAW — CR 700.12, an object with the Assassin, Mercenary, Pirate,
+   *  Rogue and/or Warlock creature type. A printed fact read off the type line, exactly like
+   *  `historic`, and set on BOTH sides for the reason 09ce98d records: a consumer demand a producer
+   *  cannot state is a demand nothing satisfies.
+   *
+   *  20 corpus cards, ZERO of them in the derived corpus today. Added as VOCABULARY insurance rather
+   *  than for current demand — the subject is parsed at derive time and derivation is free, but a
+   *  subject the parser cannot see reads WIDER than printed, and "other outlaws you control have
+   *  haste" (Vihaan, Hellspur Posse Boss) would anthem every creature the way Favorable Winds did
+   *  before `keyword` existed. */
+  outlaw?: true;
+  /** The subject demands a MODIFIED permanent — CR 700.9: it has a counter on it, is equipped, or is
+   *  enchanted by an Aura its controller controls.
+   *
+   *  A BOARD STATE, NEVER A PRINTED CHARACTERISTIC — the same class as `counter`, whose arrival broke
+   *  three identity gates that were comparing it against a type line. So this is set on a CONSUMER by
+   *  `parseSubject` and on a PRODUCER only where the printed card really does say it: a permanent
+   *  that ENTERS WITH COUNTERS ON ITSELF is modified from the moment it arrives, and nothing else on
+   *  a type line can tell.
+   *
+   *  44 corpus cards, 40 with a "modified <noun>" subject, 2 in the derived corpus. It NARROWS:
+   *  Kodama of the West Tree says "whenever a MODIFIED creature you control deals combat damage" and
+   *  derives a subject of every creature you control. */
+  modified?: true;
   /** The subject demands the LEGENDARY supertype. "Legendary creatures you control get +2/+2"
    *  (Serah Farron) and Jodah's +X/+X derived a subject of EVERY creature without it, which were the
    *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:

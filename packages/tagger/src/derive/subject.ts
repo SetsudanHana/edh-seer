@@ -306,6 +306,19 @@ const CHOSEN = /\bof the chosen\b|\bthe chosen (?:type|color|colour)\b/i;
  *  engine cannot express the inverse — better unset than inverted. */
 const HISTORIC = /\bhistoric\b/i;
 
+/** CR 700.12 outlaws and CR 700.9 modified permanents, both with their negation.
+ *
+ *  "Destroy target NON-OUTLAW creature" (Shoot the Sheriff) and "protection from modified creatures"
+ *  (Louvaq, the Aberrant) are the inverse constraint, which the engine cannot express — better unset
+ *  than inverted, the same call `NOT_HISTORIC` and `NOT_LEGENDARY` make.
+ *
+ *  Anchored on the whole word: "outlaws" appears in reminder text listing the five types, and
+ *  `modified` must not match "unmodified" or the "modifications" of a reminder line. */
+const OUTLAW = /\boutlaws?\b/i;
+const NOT_OUTLAW = /\bnon-?outlaws?\b/i;
+const MODIFIED = /\bmodified\b/i;
+const NOT_MODIFIED = /\b(?:un|non-?)modified\b|\bprotection from modified\b/i;
+
 /** The LEGENDARY supertype, and its negation. Helm of the Host, Quantum Misalignment and Vesuvan
  *  Duplimancy all copy something "except it isn't legendary" — reading that as a legendary
  *  constraint inverts the card, the same trap `nontoken` and `notType` exist for. */
@@ -460,6 +473,8 @@ export function parseSubject(text: string): SubjectFilter {
   const counter = parseCounter(t);
   if (counter) out.counter = counter;
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;
+  if (OUTLAW.test(t) && !NOT_OUTLAW.test(t)) out.outlaw = true;
+  if (MODIFIED.test(t) && !NOT_MODIFIED.test(t)) out.modified = true;
   if (LEGENDARY.test(t) && !NOT_LEGENDARY.test(t)) out.legendary = true;
   if (BASIC.test(t) && !NOT_BASIC.test(t) && !BASIC_LAND_TYPE.test(t)) out.basic = true;
   // A keyword counter is a counter, so the counter reading wins where both could fire.

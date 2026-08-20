@@ -19,6 +19,15 @@ export function isHistoric(types: string[], subtypes: string[]): boolean {
   return types.includes("legendary") || types.includes("artifact") || subtypes.includes("saga");
 }
 
+/** CR 700.12: an outlaw is an object with the Assassin, Mercenary, Pirate, Rogue and/or Warlock
+ *  creature type. A printed fact, read off the type line exactly as `isHistoric` is — the noun is
+ *  the only thing that is new, and it is the reason a card can say "other outlaws you control" and
+ *  mean five subtypes at once. */
+const OUTLAW_SUBTYPES = ["assassin", "mercenary", "pirate", "rogue", "warlock"];
+export function isOutlaw(subtypes: string[]): boolean {
+  return subtypes.some((s) => OUTLAW_SUBTYPES.includes(s));
+}
+
 function selfSubject(chars: Characteristics): SubjectFilter {
   const types = chars.types.map((t) => t.toLowerCase());
   const subtypes = chars.subtypes.map((t) => t.toLowerCase());
@@ -33,6 +42,15 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   if (type !== undefined) out.type = type;
   if (subtype !== undefined) out.subtype = subtype;
   if (isHistoric(types, subtypes)) out.historic = true;
+  if (isOutlaw(subtypes)) out.outlaw = true;
+  // NO `modified` STAMP, and the reason is measured rather than architectural. CR 700.9 has exactly
+  // one printed case — a permanent that ENTERS WITH COUNTERS on itself is modified on arrival — but
+  // that fact lives in the card's ABILITIES (the `enters-with-counters` effect kind) and this
+  // function sees only `Characteristics`. Widening the signature buys nothing today: the only
+  // derived consumer of a `modified` subject is Kodama of the West Tree, whose trigger is
+  // combat-damage, and `combatSelfSupplied` already refuses every baseline producer for it — so
+  // Kodama forms 0 combat-damage reasons with or without a supply side. Wire it when a consumer
+  // exists that a stamped producer could actually reach.
   // A card's own cast/enters event must advertise its COLOURS, or every colour-narrowed trigger
   // matches nothing: Aragorn, the Uniter watches white, blue, red and green spells and found none of
   // its own deck. Written even when EMPTY, because "colorless" is a real answer and an absent field

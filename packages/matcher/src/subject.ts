@@ -22,6 +22,14 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // from its type line. Opt-in like every other field: a consumer that does not ask is unaffected,
   // and a consumer that DOES ask is satisfied only by a card that is one.
   if (consumer.historic === true && producer.historic !== true) return false;
+  // CR 700.12. An outlaw is five creature types wearing one noun, so this reads off the type line
+  // exactly as `historic` does — `isOutlaw` in implied.ts stamps the producer side.
+  if (consumer.outlaw === true && producer.outlaw !== true) return false;
+  // CR 700.9. A BOARD STATE, so the only producer that can state it is one whose printed text says
+  // it arrives modified — a permanent that enters with counters on itself. Everything else fails,
+  // which UNDER-claims deliberately: "whenever a modified creature you control deals combat damage"
+  // is false about an unmodified creature, and a missing answer beats a wrong one.
+  if (consumer.modified === true && producer.modified !== true) return false;
   // Same shape as historic: a legendary-matters anthem reaches only legendary permanents.
   if (consumer.legendary === true && producer.legendary !== true) return false;
   // A DECK fact, not a printed one — see commander.ts. Same asymmetry as the two supertypes above:

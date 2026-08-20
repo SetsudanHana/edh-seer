@@ -1,9 +1,10 @@
 import { expect, test } from "vitest";
 import { counterAddMatches, graveyardFillMatches, subjectMatches } from "./subject.js";
+import { isOutlaw } from "./implied.js";
 import type { SubjectFilter } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
 
-const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"], treasure: ["artifact"] };
+const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"], treasure: ["artifact"], pirate: ["creature"], bear: ["creature"] };
 const s = (o: Partial<SubjectFilter>): SubjectFilter => ({ control: "you", token: null, ...o });
 
 test("consumer type is satisfied by a producer subtype via the hierarchy", () => {
@@ -312,4 +313,30 @@ test("a subject demanding a NAME is satisfied only by that card", () => {
   expect(subjectMatches(other, { control: "you", token: null }, h)).toBe(true);
   // And a producer with no name cannot satisfy a demand for one.
   expect(subjectMatches({ control: "you", token: false }, { control: "you", token: null, named: "tardis" }, h)).toBe(false);
+});
+
+// CR 700.12 / 700.9, added 2026-08-20. `outlaw` is a PRINTED fact and is set on both sides, so a
+// Pirate satisfies an outlaw demand and a Bear does not. `modified` is a BOARD STATE — the same
+// class as `counter`, which broke three identity gates when it was first compared against a type
+// line — so no printed producer can state it and every producer fails the demand. That
+// under-claims on purpose: "whenever a modified creature you control deals combat damage" is a
+// false sentence about an unmodified creature.
+test("an outlaw demand reads the type line; a modified demand is satisfied by nothing printed", () => {
+  const pirate: SubjectFilter = { control: "you", token: null, type: "creature", subtype: "pirate", outlaw: true };
+  const bear: SubjectFilter = { control: "you", token: null, type: "creature", subtype: "bear" };
+  const wantsOutlaw: SubjectFilter = { control: "you", token: null, type: "creature", outlaw: true };
+  expect(subjectMatches(pirate, wantsOutlaw, H)).toBe(true);
+  expect(subjectMatches(bear, wantsOutlaw, H)).toBe(false);
+  // A consumer that does not ask is unaffected — the same opt-in asymmetry every supertype has.
+  expect(subjectMatches(pirate, { control: "you", token: null, type: "creature" }, H)).toBe(true);
+
+  const wantsModified: SubjectFilter = { control: "you", token: null, type: "creature", modified: true };
+  expect(subjectMatches(bear, wantsModified, H)).toBe(false);
+  expect(subjectMatches(pirate, wantsModified, H)).toBe(false);
+});
+
+test("isOutlaw is the five CR 700.12 creature types and nothing else", () => {
+  for (const t of ["assassin", "mercenary", "pirate", "rogue", "warlock"]) expect(isOutlaw([t])).toBe(true);
+  expect(isOutlaw(["human", "wizard"])).toBe(false);
+  expect(isOutlaw([])).toBe(false);
 });

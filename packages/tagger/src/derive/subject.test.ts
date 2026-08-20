@@ -529,3 +529,24 @@ test("a subject can name a card", () => {
   // No name, no field.
   expect(parseSubject("a creature you control").named).toBeUndefined();
 });
+
+// CR 700.12 OUTLAW and CR 700.9 MODIFIED, added 2026-08-20. Both NARROW a subject that would
+// otherwise read as its bare noun: "other outlaws you control have haste" is not an anthem on every
+// creature, and Kodama of the West Tree's "whenever a MODIFIED creature you control deals combat
+// damage" is not every creature you control. Same shape as `historic`, negations included — the
+// engine cannot express the inverse, so a negated mention leaves the field UNSET rather than
+// inverted.
+test("outlaw and modified narrow a subject, and their negations do not invert it", () => {
+  expect(parseSubject("other outlaws you control").outlaw).toBe(true);
+  expect(parseSubject("an outlaw spell").outlaw).toBe(true);
+  // Shoot the Sheriff: "destroy target non-outlaw creature". Refusing to record it is the point.
+  expect(parseSubject("target non-outlaw creature").outlaw).toBeUndefined();
+  expect(parseSubject("target creature you control").outlaw).toBeUndefined();
+
+  expect(parseSubject("a modified creature you control").modified).toBe(true);
+  expect(parseSubject("each modified creature you control").modified).toBe(true);
+  // Louvaq, the Aberrant has "protection from modified creatures" — the inverse constraint.
+  expect(parseSubject("protection from modified creatures").modified).toBeUndefined();
+  expect(parseSubject("an unmodified creature").modified).toBeUndefined();
+  expect(parseSubject("target creature you control").modified).toBeUndefined();
+});
