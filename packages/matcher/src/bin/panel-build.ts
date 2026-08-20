@@ -90,8 +90,13 @@ for (const f of readdirSync(OUT).filter((n) => n.startsWith("verdicts-") && n.en
 // overwrite, but it can no longer forget. Measured after the fix: a rebuild loses ZERO.
 const previous = existsSync(join(OUT, "verdicts.jsonl")) ? readJsonl<PanelVerdict>(join(OUT, "verdicts.jsonl")) : [];
 if (previous.length > 0) {
-  verdicts = mergeVerdicts(previous, verdicts);
-  console.log(`  existing cache: ${previous.length} rows folded in (a rebuild may add, never forget)`);
+  // FOLDED LAST, so the cache WINS a tie. It is the accumulated, already-resolved record — every
+  // correction in the order it was made — while the source files are provenance and are replayed in
+  // alphabetical order, which is not chronological. Folding it first let a 2026-08-06 source file
+  // overturn a 2026-08-15 correction. `mergeVerdicts` still lets a USER verdict in a source file
+  // through, so a fresh re-judge is never blocked by an older Claude row in the cache.
+  verdicts = mergeVerdicts(verdicts, previous);
+  console.log(`  existing cache: ${previous.length} rows folded in LAST (a rebuild may add, never overturn)`);
 }
 // COUNTED ON DISTINCT CLAIMS, never on rows: the cache is de-duplicated by this rebuild, so a
 // row-count comparison fires on every legitimate run and would make the guard noise.

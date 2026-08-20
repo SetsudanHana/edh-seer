@@ -78,3 +78,50 @@ test("a verdict made against a different mechanism is owed again, not scored", (
   expect(legacy.false).toBe(1);
   expect(legacy.unjudged).toHaveLength(0);
 });
+
+// THE AUTHORITY ORDER, and why it had to be encoded rather than left to row order (2026-08-20).
+// The cache is append-ordered and a rebuild replays sources alphabetically, so the two disagreed on
+// 8 claims and read 92.0% against 93.8% — the panel's headline moving with nothing but file order.
+// Of 64 claims whose duplicate rows disagree, 44 are the owner overriding an earlier Claude verdict.
+const row = (over: Partial<PanelVerdict> & { producer: string }): PanelVerdict => ({
+  consumer: "C", tag: "enters:creature", verdict: "real", cause: "", note: "", ...over,
+});
+const owner = (over: Partial<PanelVerdict> & { producer: string }): PanelVerdict =>
+  row({ note: "USER VERDICT (draw). ", ...over });
+
+test("a user verdict is never overwritten by a Claude one, in either merge order", () => {
+  const claude = row({ producer: "P", verdict: "real" });
+  const user = owner({ producer: "P", verdict: "false" });
+  expect(mergeVerdicts([claude], [user])[0].verdict).toBe("false");
+  // ...and the same the other way round, which is the case row order used to decide.
+  expect(mergeVerdicts([user], [claude])[0].verdict).toBe("false");
+  // Two Claude verdicts still resolve by order: later wins, the original rule.
+  expect(mergeVerdicts([claude], [row({ producer: "P", verdict: "uncertain" })])[0].verdict).toBe("uncertain");
+});
+
+test("verdicts about different MECHANISMS both survive a merge", () => {
+  // `implied` marks a producer supplying the event by BEING itself rather than through an ability.
+  // Collapsing the two cost two judged claims the first time this dedupe was attempted.
+  const authored = owner({ producer: "P", verdict: "false", implied: false });
+  const byBeing = row({ producer: "P", verdict: "real", implied: true });
+  expect(mergeVerdicts([authored], [byBeing])).toHaveLength(2);
+});
+
+test("scoring reads the verdict for the mechanism the engine asserts, not whichever row is last", () => {
+  const cache = [
+    row({ producer: "P", verdict: "false", implied: false }),
+    row({ producer: "P", verdict: "real", implied: true }),
+  ];
+  const claim = (implied: boolean) => [{ producer: "P", consumer: "C", tag: "enters:creature", implied }];
+  expect(scorePanel(claim(true), cache).real).toBe(1);
+  expect(scorePanel(claim(false), cache).false).toBe(1);
+  // Reversing the rows must change nothing — the fault this replaces.
+  expect(scorePanel(claim(true), [...cache].reverse()).real).toBe(1);
+  // A row with no `implied` is the wildcard, and answers either mechanism.
+  expect(scorePanel(claim(true), [row({ producer: "P", verdict: "uncertain" })]).uncertain).toBe(1);
+  // But an EXACT mechanism row beats the wildcard when both exist — otherwise a stale general
+  // verdict silently outranks one made against the mechanism the engine actually asserts.
+  const both = [row({ producer: "P", verdict: "uncertain" }), row({ producer: "P", verdict: "real", implied: true })];
+  expect(scorePanel(claim(true), both).real).toBe(1);
+  expect(scorePanel(claim(true), [...both].reverse()).real).toBe(1);
+});

@@ -73,15 +73,48 @@ export function claimKey(producer: string, consumer: string, tag: string): strin
   return `${producer}|${consumer}|${tag}`;
 }
 
+/** Does this verdict come from the OWNER? The panel's authority order, stated once: the user judges,
+ *  Claude proposes. `panel-score.ts --rejudge` already excludes these rows for the same reason —
+ *  re-judging them would overwrite the answer with the thing being tested. */
+export const isUserVerdict = (v: PanelVerdict): boolean => v.note.startsWith("USER VERDICT");
+
 /** Fold new verdicts over old. Later wins, so a corrected judgment supersedes without the caller
- *  having to find and delete the original — 17 of the first 600 rows needed exactly that. */
+ *  having to find and delete the original — 17 of the first 600 rows needed exactly that.
+ *
+ *  EXCEPT THAT A USER VERDICT IS NEVER OVERWRITTEN BY A CLAUDE ONE, whatever the order. Measured on
+ *  the cache 2026-08-20: of 64 claims whose duplicate rows DISAGREE, **44 are exactly this shape** —
+ *  the owner overriding an earlier Claude verdict, with notes that say so ("OVERRIDES Claude's cached
+ *  false"). Order alone carried that rule, which is why `panel-build.ts` and the raw file disagreed
+ *  on 8 claims and read 92.0% against 93.8%: the file is in append order, a rebuild is in source
+ *  order. Encoding the authority makes the merge insensitive to order for those 44; the remaining 20
+ *  (17 Claude-vs-Claude, 3 owner-vs-owner) are genuine chronology and are settled ONCE by
+ *  de-duplicating the cache in append order. */
+/** The key a verdict is DEDUPED on, which is not the key it is looked up by.
+ *
+ *  `implied` marks the mechanism the verdict was made against — a producer supplying an event by
+ *  BEING itself, rather than through an authored ability — and `scorePanel` owes the claim again
+ *  when the two disagree. So two rows sharing a triple but differing on `implied` are verdicts about
+ *  DIFFERENT THINGS and both must survive; collapsing them cost two judged claims the first time
+ *  this dedupe was attempted (Hornet Nest -> Enduring Innocence, Aragorn -> Prowl), each of which
+ *  had an owner verdict on the authored mechanism and a Claude verdict on the implied one.
+ *
+ *  A row with no `implied` at all is the wildcard the field's absence has always meant, and keeps its
+ *  own slot. */
+export const verdictKey = (v: PanelVerdict): string =>
+  `${claimKey(v.producer, v.consumer, v.tag)}|${v.implied === undefined ? "*" : v.implied}`;
+
 export function mergeVerdicts(
   existing: readonly PanelVerdict[],
   incoming: readonly PanelVerdict[],
 ): PanelVerdict[] {
   const by = new Map<string, PanelVerdict>();
-  for (const v of existing) by.set(claimKey(v.producer, v.consumer, v.tag), v);
-  for (const v of incoming) by.set(claimKey(v.producer, v.consumer, v.tag), v);
+  for (const v of existing) by.set(verdictKey(v), v);
+  for (const v of incoming) {
+    const k = verdictKey(v);
+    const held = by.get(k);
+    if (held && isUserVerdict(held) && !isUserVerdict(v)) continue;
+    by.set(k, v);
+  }
   return [...by.values()];
 }
 
@@ -89,22 +122,33 @@ export function scorePanel(
   current: readonly PanelClaim[],
   cache: readonly PanelVerdict[],
 ): PanelScore {
-  const by = new Map(cache.map((v) => [claimKey(v.producer, v.consumer, v.tag), v]));
+  // LOOKUP AS PRECISE AS STORAGE. A verdict is stored per MECHANISM (`implied`), so consulting the
+  // cache by triple alone made the score depend on which row happened to sit LAST in the file — the
+  // same claim reading 93.6% or 94.3% purely from row order, which is what made a rebuild unsafe to
+  // run. The exact mechanism wins; a row with no `implied` is the wildcard its absence has always
+  // meant and is the fallback.
+  const exact = new Map<string, PanelVerdict>();
+  const wildcard = new Map<string, PanelVerdict>();
+  for (const v of cache) {
+    const k = claimKey(v.producer, v.consumer, v.tag);
+    if (v.implied === undefined) wildcard.set(k, v);
+    else exact.set(`${k}|${v.implied}`, v);
+  }
   const seen = new Set<string>();
   const out: PanelScore = { real: 0, false: 0, uncertain: 0, unjudged: [], dropped: 0, precision: null };
   for (const c of current) {
     const k = claimKey(c.producer, c.consumer, c.tag);
     seen.add(k);
-    const v = by.get(k);
+    const v = exact.get(`${k}|${c.implied === true}`) ?? wildcard.get(k);
     if (!v) { out.unjudged.push(c); continue; }
-    // The verdict was made against a DIFFERENT mechanism than the engine now asserts. Owe it again
-    // rather than score it — see `PanelVerdict.implied`.
-    if (v.implied !== undefined && v.implied !== (c.implied === true)) { out.unjudged.push(c); continue; }
     if (v.verdict === "real") out.real++;
     else if (v.verdict === "false") out.false++;
     else out.uncertain++;
   }
-  out.dropped = [...by.keys()].filter((k) => !seen.has(k)).length;
+  // "Cached verdicts the engine no longer claims" counts CLAIMS, so it counts distinct triples
+  // across both maps — a claim with a verdict for each mechanism is one dropped claim, not two.
+  const cachedClaims = new Set([...wildcard.keys(), ...[...exact.keys()].map((k) => k.slice(0, k.lastIndexOf("|")))]);
+  out.dropped = [...cachedClaims].filter((k) => !seen.has(k)).length;
   const decided = out.real + out.false;
   if (decided > 0) out.precision = out.real / decided;
   return out;
