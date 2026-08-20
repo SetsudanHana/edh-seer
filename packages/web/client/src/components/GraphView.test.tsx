@@ -2,7 +2,8 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { StrictMode } from "react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ART_RADIUS, GraphView, edgeWidth, nodeRadius, seedPosition, traveledAsPan } from "./GraphView.js";
+import { EDIT_REHEAT_ALPHA } from "./board-force.js";
+import { ART_RADIUS, GraphView, edgeAlpha, edgeWidth, jitterFromId, nodeRadius, seedPosition, traveledAsPan } from "./GraphView.js";
 import { CARD_H, CARD_W } from "./board-force.js";
 import { SAMPLE } from "../fixtures.js";
 import type { CardGraph, GraphNode } from "../types.js";
@@ -576,6 +577,13 @@ describe("fit to view", () => {
   // the CONNECTED cards are framed, which is the same claim the old test made minus the orphans it
   // was never supposed to be making a promise about.
   test("frames the connected cluster on screen after mount", () => {
+    // THIS ASSERTION IS AN EXACT RECTANGLE, AND IT USED TO BE FLAKY -- 2 failures in 5 full-suite
+    // runs, always by ~1.5% of the visible span (-317.09 against a bound of -312.46). The randomness
+    // was OURS: `seedPosition` fell back to `Math.cos(i) * 260 + Math.random() * 30`, so every run
+    // started from a different cloud. (d3-force itself is deterministic -- it jiggles coincident
+    // points from its own seeded LCG, never Math.random.) A local `Math.random` stub held it for one
+    // day; `jitterFromId` (roadmap H5) removed the randomness from the product instead, so this test
+    // needs no stub at all and the board a player sees is the same one every load.
     vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
     } as DOMRect);
@@ -1000,10 +1008,12 @@ describe("hover", () => {
 // moving a single card" above (Task 5) -- that one pins x/y across a facet switch. This is the
 // zoom half: crossing LABEL_ZOOM_FLOOR turns the label pass on, and it must be just as inert.
 describe("labels", () => {
-  // An ordinary tick already moves a node a little regardless of labels -- board-force.ts's
-  // ALPHA_FLOOR keeps the simulation's alpha above zero forever, so it never fully damps out (see
-  // its own doc comment). Comparing positions across a real tick would therefore fail on physics
-  // drift alone and prove nothing about labels specifically. This freezes the simulation itself
+  // An ordinary tick still moves a node a little at the alpha these tests run at, so comparing
+  // positions across a real tick would fail on physics drift and prove nothing about labels
+  // specifically. (Until 2026-08-20 the reason was stronger: ALPHA_FLOOR held alpha above zero
+  // FOREVER, so the board never damped out at all. It does now -- but a test that ticks a few
+  // frames from a fresh seed is nowhere near rest, so the freeze below is still what isolates the
+  // label pass.) This freezes the simulation itself
   // (via the createBoardSimulation spy declared at the top of this file) to a no-op, leaving x/y
   // untouched by anything except draw() -- so any drift left over is the label pass's doing and
   // nothing else's.
@@ -1288,9 +1298,14 @@ describe("flow view", () => {
     const legend = screen.getByTestId("paint-legend");
     expect(legend).toHaveTextContent("A feeds");
     expect(legend).toHaveTextContent("feeds A");
+    // THE FLOW ROWS STACK ON TOP, THEY DO NOT REPLACE (roadmap H3). The two legends answer different
+    // questions -- the flow rows name the EDGE hues, the paint rows name the card RIMS, and both are
+    // on screen at once. Replacing them meant a facet switch mid-selection repainted every rim with
+    // no key anywhere.
     const rows = [...legend.querySelectorAll('[data-testid="paint-legend-row"]')];
-    expect(rows).toHaveLength(2);
-    expect(rows.map((r) => r.getAttribute("data-value"))).toEqual(["down", "up"]);
+    expect(rows.map((r) => r.getAttribute("data-value")).slice(0, 2)).toEqual(["down", "up"]);
+    expect(legend).toHaveTextContent("creature");
+    expect(rows.length).toBeGreaterThan(2);
     // The colour named "A feeds" (downstream: A -> other) is the same hue the edges themselves
     // draw in for that direction, per FLOW_HUE -- the legend cannot invent its own mapping. jsdom
     // normalises an inline hex background to rgb(), so both sides go through the same normalising
@@ -1512,5 +1527,176 @@ describe("token nodes", () => {
     tick();
     expect(calls.some((c) => c.startsWith("fillText:token,"))).toBe(true);
     expect(calls.some((c) => c.startsWith("setLineDash:"))).toBe(true);
+  });
+});
+
+// WEIGHT NOW BUYS OPACITY AS WELL AS WIDTH. Width alone cannot separate 300 edges: at board zoom the
+// difference between the thinnest and thickest stroke is under two device pixels, which is why the
+// mesh read as uniform grey. The floor is deliberately not 0 -- a weak edge is still a real claim.
+describe("edgeAlpha", () => {
+  test("a stronger edge is more opaque, and the ramp is deck-relative", () => {
+    expect(edgeAlpha(8, 8)).toBeGreaterThan(edgeAlpha(1, 8));
+    // Same weight, weaker deck maximum -> more opaque: the normalisation is the deck's own max,
+    // exactly as edgeWidth and linkDistanceFor do it.
+    expect(edgeAlpha(4, 4)).toBeGreaterThan(edgeAlpha(4, 8));
+  });
+
+  test("the weakest edge stays visible and the strongest is not opaque", () => {
+    expect(edgeAlpha(0, 8)).toBeGreaterThan(0.1);
+    expect(edgeAlpha(8, 8)).toBeLessThan(1);
+  });
+
+  test("a degenerate maximum does not produce NaN", () => {
+    expect(edgeAlpha(0, 0)).toBeGreaterThan(0);
+    expect(Number.isFinite(edgeAlpha(5, 0))).toBe(true);
+  });
+});
+
+// THE SEARCH-VS-FLOW PRECEDENCE BUG (roadmap H3). `searchHit` guarded only the edgeless demotion,
+// so a match sitting outside the selected card's flow fell into the flow branch and painted at 0.15
+// -- accent ring included, since the ring is stroked under the alpha the node pass already set. The
+// board said "1 MATCH" and showed the reader nothing.
+//
+// Asserted through the paint trace at the one place a match is identifiable: the accent ring is
+// drawn ONLY for a search hit, so the alpha in force when that ring is stroked is the match's own.
+test("a search match outside the active flow still paints at full strength", () => {
+  const calls: string[] = [];
+  const graph = graphOf(
+    [card({ id: "A" }), card({ id: "B" }), card({ id: "Z" })],
+    [{ from: "A", to: "B", weight: 2, tags: ["t"], reasonTexts: ["A feeds B"] }],
+  );
+  const { canvas, tick } = frames(graph, calls);
+  const probe = canvas.__graphProbe!();
+  // Select A: its flow reaches B, and Z is outside it.
+  const a = probe.find((n) => n.id === "A")!;
+  act(() => { probe.endGesture({ type: "mouseup", clientX: a.x, clientY: a.y }); });
+  // Now search for Z -- a MATCH that is simultaneously outside the flow, which is the exact case.
+  fireEvent.change(screen.getByPlaceholderText(/find a card/i), { target: { value: "Z" } });
+  calls.length = 0;
+  tick(1);
+
+  const ringAt = calls.indexOf("set:strokeStyle=#5b8dee");
+  expect(ringAt).toBeGreaterThan(-1); // the match ring was drawn at all
+  const alphaBefore = calls.slice(0, ringAt).filter((c) => c.startsWith("set:globalAlpha=")).at(-1);
+  expect(alphaBefore).toBe("set:globalAlpha=1");
+});
+
+// THE SEED IS A HASH NOW, NOT A DIE ROLL (roadmap H5). Same deck, same board, every page load -- for
+// a report that was a shrug; for a deckbuilding surface, a player who has learned where their combo
+// sits should not lose that by refreshing.
+describe("jitterFromId", () => {
+  test("is stable for an id and different across ids and axes", () => {
+    expect(jitterFromId("Sol Ring")).toBe(jitterFromId("Sol Ring"));
+    expect(jitterFromId("Sol Ring")).not.toBe(jitterFromId("Sol Ring ")); // one space apart
+    // The y axis gets its own draw from the same id, or every node would seed on a diagonal.
+    expect(jitterFromId("Sol Ring")).not.toBe(jitterFromId("Sol Ring", "y"));
+  });
+
+  test("stays inside [0, 1) for ids that differ only in the high bits", () => {
+    for (const id of ["", "a", "Zzzzzzzzzzzzzzzzzz", "\u00e9\u00e8\u00ea", "Krenko, Mob Boss"]) {
+      const v = jitterFromId(id);
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(1);
+    }
+  });
+});
+
+// SEARCH RAN OVER THE DRAWN GRAPH ONLY (roadmap H6). Lands are hidden by default -- 31 of them on a
+// typical deck -- so searching "Forest" reported "no matches" about a deck full of Forests, which is
+// a false sentence by this project's own standard. The count now names what the filter is holding
+// back, and the hint reveals it in one click.
+describe("a match the board is hiding", () => {
+  const deck = (): CardGraph => graphOf(
+    [card({ id: "Bitterblossom" }), card({ id: "Snow-Covered Forest", types: ["land"] })],
+    [],
+  );
+
+  test("names the hidden match instead of reporting none, and revealing it makes it a real match", () => {
+    frames(deck());
+    fireEvent.change(screen.getByPlaceholderText(/find a card/i), { target: { value: "forest" } });
+    // The drawn board has no Forest -- it is filtered out -- so the plain count says so...
+    expect(screen.getByTestId("graph-search-count")).toHaveTextContent("no matches");
+    // ...and the hint says the deck does have one, behind a filter.
+    const hint = screen.getByTestId("graph-search-hidden");
+    expect(hint).toHaveTextContent("+1 hidden");
+
+    fireEvent.click(hint);
+    expect(screen.getByTestId("graph-search-count")).toHaveTextContent("1 match");
+    expect(screen.queryByTestId("graph-search-hidden")).toBeNull();
+  });
+
+  test("says nothing when every match is already on the board", () => {
+    frames(deck());
+    fireEvent.change(screen.getByPlaceholderText(/find a card/i), { target: { value: "bitter" } });
+    expect(screen.getByTestId("graph-search-count")).toHaveTextContent("1 match");
+    expect(screen.queryByTestId("graph-search-hidden")).toBeNull();
+  });
+});
+
+// HOVER IS A ONE-HOP PREVIEW OF THE FLOW (roadmap H8). Clicking was the only way to see what a card
+// relates to -- fine for a report, poor for a deckbuilding surface, where a player sweeping the
+// board wants a card's relations without committing to a selection.
+describe("hover highlights one hop", () => {
+  const deck = (): CardGraph => graphOf(
+    [card({ id: "A" }), card({ id: "B" }), card({ id: "Far" })],
+    [{ from: "A", to: "B", weight: 2, tags: ["t"], reasonTexts: ["A feeds B"] }],
+  );
+
+  test("a hovered card's edge takes the flow's own direction hue", () => {
+    const calls: string[] = [];
+    const { canvas, tick } = frames(deck(), calls);
+    const a = canvas.__graphProbe!().find((n) => n.id === "A")!;
+    fireEvent(canvas, new MouseEvent("pointermove", { clientX: a.x, clientY: a.y, bubbles: true }));
+    calls.length = 0;
+    tick(1);
+    // "down" is the hue the legend already names "<card> feeds", so hover and click speak the same
+    // language rather than inventing a second highlight colour.
+    expect(calls).toContain(`set:strokeStyle=${FLOW_HUE.down}`);
+    // ...and the board behind it dims WITHOUT going out, unlike a flow's 0.15.
+    expect(calls).toContain("set:globalAlpha=0.45");
+  });
+
+  test("a click outranks the pointer: no hover dim while a flow is active", () => {
+    const calls: string[] = [];
+    const { canvas, tick } = frames(deck(), calls);
+    const probe = canvas.__graphProbe!();
+    const a = probe.find((n) => n.id === "A")!;
+    // Select A, then park the pointer on the unrelated card.
+    act(() => { probe.endGesture({ type: "mouseup", clientX: a.x, clientY: a.y }); });
+    const far = probe.find((n) => n.id === "Far")!;
+    fireEvent(canvas, new MouseEvent("pointermove", { clientX: far.x, clientY: far.y, bubbles: true }));
+    calls.length = 0;
+    tick(1);
+    // The flow's own dim is 0.15; the hover dim must not appear at all, or hovering an unrelated
+    // card while a flow is open would dim the flow's own members.
+    expect(calls).not.toContain("set:globalAlpha=0.45");
+    expect(calls).toContain("set:globalAlpha=0.15");
+  });
+});
+
+// A DECK CHANGE GETS MEASURED ENERGY, NOT A GUESS (roadmap H9). The old 0.3 disturbed the board as
+// much as the edit did -- reheating while changing NOTHING moved sorin's p95 866 world units. The
+// value lives in board-force.ts beside its measurement table; this pins that the layout effect
+// reads it rather than carrying its own number, and that a FIRST layout still gets full energy.
+describe("reheat energy", () => {
+  test("a settled board is reheated to EDIT_REHEAT_ALPHA, a fresh one to 1", () => {
+    const alphas: number[] = [];
+    const sim = {
+      alpha(v?: number) { if (typeof v === "number") alphas.push(v); return v ?? 0; },
+      tick() { return this; },
+      stop() { return this; },
+    } as unknown as ReturnType<typeof createBoardSimulation>;
+    vi.mocked(createBoardSimulation).mockReturnValue(sim);
+    // Same environment frames() builds: a canvas context and a captured rAF, or the layout effect
+    // returns before it ever reaches the simulation.
+    vi.stubGlobal("requestAnimationFrame", () => 0);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    makeContextSpy();
+    const { rerender } = render(<GraphView graph={graphOf([card({ id: "A" }), card({ id: "B" })], [])} report={SAMPLE.report} />);
+    expect(alphas[0]).toBe(1); // nothing on screen yet: organise from scratch
+    // A new graph object on the same component instance is the deck-changed path -- it inherits the
+    // previous positions through prevPositionsRef, so it is a REHEAT, not a fresh layout.
+    rerender(<GraphView graph={graphOf([card({ id: "A" }), card({ id: "B" }), card({ id: "C" })], [])} report={SAMPLE.report} />);
+    expect(alphas.at(-1)).toBe(EDIT_REHEAT_ALPHA);
   });
 });

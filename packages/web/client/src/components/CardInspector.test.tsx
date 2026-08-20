@@ -90,14 +90,15 @@ describe("CardInspector", () => {
     expect(fedBySection?.textContent).toMatch(/none/i);
   });
 
-  // TRUNCATION IS STATED, NEVER SILENT. A hub with 32 consumers draws 6; a view that omits three
-  // quarters of a card's reach while looking complete is what "a silent wrong answer is worse than a
-  // missing one" exists to prevent.
-  it("states how many edges were truncated from the drawn flow", () => {
+  // TRUNCATION IS STATED, NEVER SILENT — but it is the BOARD that truncates, and the sentence has to
+  // say which. It used to read "32 in total · strongest 6 shown" as a header over this panel's own
+  // list, which renders EVERY edge; a reviewer reading it concluded the other 26 relations were
+  // unreachable. Both facts, in one sentence: the board draws 6, the panel lists all 32.
+  it("says the BOARD draws the strongest few, and that the panel lists them all", () => {
     const flow = { truncated: new Map([["Bitterblossom", { down: { total: 32, shown: 6 } }]]) };
     render(<CardInspector node={node} edges={edges} flow={flow} onClose={() => {}} />);
-    expect(screen.getByText(/32 in total/)).toBeInTheDocument();
-    expect(screen.getByText(/strongest 6 shown/i)).toBeInTheDocument();
+    expect(screen.getByText(/board draws the strongest 6/i)).toBeInTheDocument();
+    expect(screen.getByText(/all 32 are listed here/i)).toBeInTheDocument();
   });
 
   // THE ROOT CAN BE TRUNCATED ON BOTH WALKS AT ONCE -- keying by id alone let the upstream walk's
@@ -114,7 +115,7 @@ describe("CardInspector", () => {
     render(<CardInspector node={node} edges={both} flow={flow} onClose={() => {}} />);
     const feedsSection = screen.getByText(/^Feeds$/).closest("div");
     const fedBySection = screen.getByText(/^Fed by$/).closest("div");
-    expect(feedsSection?.textContent).toMatch(/10 in total.*strongest 6 shown/i);
-    expect(fedBySection?.textContent).toMatch(/8 in total.*strongest 6 shown/i);
+    expect(feedsSection?.textContent).toMatch(/strongest 6.*all 10 are listed/i);
+    expect(fedBySection?.textContent).toMatch(/strongest 6.*all 8 are listed/i);
   });
 });

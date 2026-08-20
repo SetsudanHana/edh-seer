@@ -35,25 +35,48 @@ describe("labelCandidates", () => {
 });
 
 const box = (id: string, x: number, y: number, w = 40, h = 12) => ({ id, x, y, w, h });
+/** One label with a single candidate slot -- the shape these tests were written against, before a
+ *  blocked label could try a second position. */
+const only = (b: ReturnType<typeof box>) => [b];
+const ids = (placed: { id: string }[]) => placed.map((p) => p.id);
 
 describe("placeLabels", () => {
   it("draws a lone label", () => {
-    expect(placeLabels([box("a", 0, 0)])).toEqual(["a"]);
+    expect(ids(placeLabels([only(box("a", 0, 0))]))).toEqual(["a"]);
   });
 
   it("drops the lower-priority label of an overlapping pair", () => {
     // Input is priority-ordered; the first one wins.
-    expect(placeLabels([box("high", 0, 0), box("low", 5, 0)])).toEqual(["high"]);
+    expect(ids(placeLabels([only(box("high", 0, 0)), only(box("low", 5, 0))]))).toEqual(["high"]);
   });
 
   it("keeps both when they clear each other", () => {
-    expect(placeLabels([box("a", 0, 0), box("b", 100, 0)])).toEqual(["a", "b"]);
+    expect(ids(placeLabels([only(box("a", 0, 0)), only(box("b", 100, 0))]))).toEqual(["a", "b"]);
   });
 
   it("never reorders: a later label cannot displace an earlier one", () => {
     // The whole point. If a big label could evict a small one, which labels showed would depend on
     // the camera, and the reveal would flicker as the user zoomed.
-    const out = placeLabels([box("first", 0, 0, 10, 10), box("second", 2, 0, 400, 10)]);
-    expect(out).toEqual(["first"]);
+    const out = placeLabels([only(box("first", 0, 0, 10, 10)), only(box("second", 2, 0, 400, 10))]);
+    expect(ids(out)).toEqual(["first"]);
+  });
+
+  // ROADMAP H7. The pass compared labels against labels only, so a label could be printed straight
+  // across a neighbouring card's art -- three such collisions in one screenshot of a real deck.
+  it("refuses a slot that covers another node, and reports which slot it used", () => {
+    const nodeInTheWay = box("other-node", 0, 0, 30, 30);
+    const blocked = box("a", 5, 5, 20, 10);      // sits on top of that node
+    const free = box("a", 5, 100, 20, 10);       // the below-the-node fallback
+    expect(placeLabels([[blocked, free]], [nodeInTheWay])).toEqual([{ id: "a", slot: 1 }]);
+  });
+
+  it("a label may sit on its OWN node, or nothing could ever be labelled", () => {
+    const own = box("a", 0, 0, 30, 30);
+    expect(placeLabels([only(box("a", 5, 5, 20, 10))], [own])).toEqual([{ id: "a", slot: 0 }]);
+  });
+
+  it("drops the label when every slot is blocked", () => {
+    const wall = box("other-node", 0, 0, 500, 500);
+    expect(placeLabels([[box("a", 5, 5), box("a", 5, 200)]], [wall])).toEqual([]);
   });
 });

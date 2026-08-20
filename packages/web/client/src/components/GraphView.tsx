@@ -12,7 +12,8 @@ import {
 } from "./presets.js";
 import { computeFlow, type Flow, type FlowEdge } from "./flow.js";
 import {
-  ART_RADIUS, CARD_H, CARD_W, createBoardSimulation, DEFAULT_PARAMS, linkDistanceFor, nodeRadius,
+  ART_RADIUS,
+  EDIT_REHEAT_ALPHA, CARD_H, CARD_W, createBoardSimulation, DEFAULT_PARAMS, linkDistanceFor, nodeRadius,
   type BoardParams, type Sim, type SimLink,
 } from "./board-force.js";
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
@@ -35,6 +36,23 @@ const BAR_H = 3;
  *  the middle into a solid sheet. */
 const EDGE_W_MIN = 0.4;
 const EDGE_W_MAX = 2.2;
+
+/** Opacity of the weakest and the strongest edge. THE THIRD CHANNEL WEIGHT WAS NOT SPENDING: it
+ *  already buys distance (linkDistanceFor) and width (above), while every edge on the board was
+ *  painted at full opacity in a border colour -- so the mesh read as uniform grey noise and the
+ *  strong relationships, which are the product, were indistinguishable from the incidental ones.
+ *  A narrow floor rather than 0: a weak edge is still a real claim and must not vanish. */
+const EDGE_A_MIN = 0.14;
+const EDGE_A_MAX = 0.72;
+
+/** HOVER IS A ONE-HOP PREVIEW OF THE FLOW (roadmap H8). Clicking a card was the ONLY way to see
+ *  what it relates to, which is a fine report and a poor deckbuilding surface -- a player sweeping
+ *  the board should be able to read a card's relations without committing to a selection. Gentler
+ *  than the flow's 0.15 on purpose: a hover is a glance, so the rest of the deck stays legible
+ *  behind it rather than going out. A multiplier on the edge's own weight-driven alpha, so the
+ *  strong/weak reading H2 added survives the dim. */
+const HOVER_EDGE_DIM = 0.3;
+const HOVER_NODE_DIM = 0.45;
 
 /** A card with `deg === 0` sits on the board by repulsion and centre-pull alone -- its POSITION
  *  carries no synergy information. A blind judge, shown a correctly fitted and labelled board,
@@ -66,12 +84,13 @@ const LABEL_ZOOM_FLOOR = 0.6;
  *  touches the edges reads as cropped, not framed. */
 const FIT_MARGIN = 0.9;
 /** How settled the board has to be before the one-time fit-to-view reads its bounding box. Close to
- *  ALPHA_FLOOR (0.02, board-force.ts) rather than a magic tick count: alpha decays toward the floor
- *  at a fixed per-TICK rate regardless of frame rate, so this lands at the same physical amount of
- *  settling on a slow device as a fast one, and it sits just inside this codebase's own "settled"
- *  convention: alpha (decaying toward ALPHA_FLOOR, NOT toward zero, at ALPHA_DECAY 0.005) crosses
- *  0.05 at tick 696 and reaches 0.038 by tick 800 -- board-layout.harness.ts's default, and what
- *  every cap was measured at. A fit read from the unsettled seed cloud (tick 0) would frame where
+ *  a magic tick count: alpha decays at a fixed per-TICK rate regardless of frame rate, so this lands
+ *  at the same physical amount of settling on a slow device as a fast one. UPDATED 2026-08-20 with
+ *  `ALPHA_FLOOR` 0.02 -> 0 (roadmap H1): alpha now decays toward ZERO, so it crosses 0.05 at tick
+ *  ~600 (was 696, when it was decaying toward a 0.02 floor and levelled at 0.038 by tick 800). The
+ *  fit therefore fires slightly EARLIER and against a board that will actually come to rest;
+ *  board-layout.harness.ts still gates at 800 ticks, which is now mid-settle by design -- see
+ *  QUALITY_CAPS. A fit read from the unsettled seed cloud (tick 0) would frame where
  *  the cards temporarily are, not where they end up, and go stale the moment the layout spreads.
  *  That window is seconds long, so a user CAN zoom inside it: the "zoom" handler cancels the
  *  pending fit when it sees a real gesture, or the fit would overwrite their camera. */
@@ -99,6 +118,21 @@ export function traveledAsPan(
   return Math.hypot(end.x - start.x, end.y - start.y) > threshold || end.k !== start.k;
 }
 
+/** A stable pseudo-random number in [0, 1) for a node id — FNV-1a, so the SAME deck lays out the
+ *  same way on every page load. This was `Math.random()`, which made the seed cloud different every
+ *  time: a report can shrug at that, but the board is becoming a deckbuilding surface, and a player
+ *  who has learned where their combo sits should not have to re-learn it because they refreshed.
+ *  `salt` gives the y axis its own draw without a second hash function. */
+export function jitterFromId(id: string, salt = ""): number {
+  let h = 0x811c9dc5;
+  const s = `${id}${salt}`;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0) / 4294967296;
+}
+
 /** Where a node that's new since the last render should start: the centroid of whichever of its
  *  neighbours already had a position (from the previous layout), so it visibly joins the cluster
  *  it connects to rather than dropping in at an arbitrary spot. Falls back to `fallback` when none
@@ -119,6 +153,16 @@ export function edgeWidth(weight: number, maxWeight: number): number {
   if (maxWeight <= 0) return EDGE_W_MIN;
   const t = Math.min(1, Math.max(0, weight / maxWeight));
   return EDGE_W_MIN + t * (EDGE_W_MAX - EDGE_W_MIN);
+}
+
+/** Opacity for one edge, on the same deck-relative normalisation `edgeWidth` uses. Width alone
+ *  cannot separate 300 edges -- at these zooms the difference between 0.4 and 2.2 world units is
+ *  under two device pixels -- so the strong third of a deck's relationships now also reads darker
+ *  than the incidental two-thirds. */
+export function edgeAlpha(weight: number, maxWeight: number): number {
+  if (maxWeight <= 0) return EDGE_A_MIN;
+  const t = Math.min(1, Math.max(0, weight / maxWeight));
+  return EDGE_A_MIN + t * (EDGE_A_MAX - EDGE_A_MIN);
 }
 
 export function GraphView(
@@ -292,6 +336,23 @@ export function GraphView(
     return hit;
   }, [graph, query]);
 
+  /** Matches the board is not drawing, because a filter hides them. `matches` above searches the
+   *  DRAWN graph, which is correct for the dimming pass and a false sentence on its own: with lands
+   *  hidden (the default, 31 of them on a typical deck) searching "Forest" reported NO MATCHES about
+   *  a deck full of Forests. Split by WHY each one is hidden, so the reveal flips only the filter
+   *  that is actually in the way. */
+  const hiddenMatches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    const drawn = new Set(graph.nodes.map((n) => n.id));
+    let lands = 0, tokens = 0;
+    for (const n of fullGraph.nodes) {
+      if (drawn.has(n.id) || !n.label.toLowerCase().includes(q)) continue;
+      if (landNodes.has(n.id)) lands++; else tokens++;
+    }
+    return lands + tokens > 0 ? { lands, tokens, total: lands + tokens } : null;
+  }, [fullGraph, graph, query, landNodes]);
+
   // The layout effect's draw() reads this through a ref rather than closing over `matches`
   // directly, and `matches` is deliberately absent from that effect's dependency array below --
   // the effect owns the force simulation, and adding `matches` there would reheat and re-seed the
@@ -311,6 +372,7 @@ export function GraphView(
       fg: css.getPropertyValue("--foreground").trim() || "#e6e8eb",
       muted: css.getPropertyValue("--muted").trim() || "#8b93a1",
       sep: css.getPropertyValue("--separator").trim() || "#1d2126",
+      edge: css.getPropertyValue("--edge").trim() || "#6b7688",
       border: css.getPropertyValue("--border").trim() || "#262b31",
       surface: css.getPropertyValue("--surface").trim() || "#14171b",
     };
@@ -338,8 +400,8 @@ export function GraphView(
       const prev = prevPositions.get(n.id);
       if (prev) return { ...n, x: prev.x, y: prev.y, vx: prev.vx, vy: prev.vy, deg: 0 };
       const seed = seedPosition(neighborsOf.get(n.id) ?? [], prevPositions, {
-        x: Math.cos(i) * 260 + Math.random() * 30,
-        y: Math.sin(i) * 260 + Math.random() * 30,
+        x: Math.cos(i) * 260 + jitterFromId(n.id) * 30,
+        y: Math.sin(i) * 260 + jitterFromId(n.id, "y") * 30,
       });
       return { ...n, x: seed.x, y: seed.y, vx: 0, vy: 0, deg: 0 };
     });
@@ -364,8 +426,15 @@ export function GraphView(
 
     const simulation = createBoardSimulation({ nodes, links, params });
     // A from-scratch graph gets full energy to organize; a graph that already has settled
-    // positions only needs enough to let what changed find its place.
-    simulation.alpha(isFirstLayout ? 1 : 0.3);
+    // positions only needs enough to let what changed find its place -- and how much that is, is
+    // measured rather than guessed now. See EDIT_REHEAT_ALPHA (board-force.ts) for the table.
+    //
+    // It equals FIT_SETTLE_ALPHA, so a graph change now re-frames the camera on its FIRST tick
+    // instead of ~6 s later. That is the better of the two behaviours (a fit that arrives seconds
+    // after the change reads as the board moving on its own) and it is a coincidence of two
+    // separately-chosen numbers, so do not couple them: the fit's threshold answers "settled
+    // enough to frame", this answers "energy enough to admit a change".
+    simulation.alpha(isFirstLayout ? 1 : EDIT_REHEAT_ALPHA);
 
     // Measurement hook for the readability judge (and for anyone debugging layout in a console):
     // the live simulation state, which is otherwise sealed inside this closure. Read-only snapshot,
@@ -429,7 +498,10 @@ export function GraphView(
     // no-op and is filled in later: it closes over consts declared further down, which a closure
     // capturing them directly would hit in their temporal dead zone. Effect-local rather than a
     // ref: nothing outside this effect needs to call it. The frame loop's first call is made AFTER
-    // the real assignment (see `loop()` below), so no tick ever runs against this stub.
+    // the real assignment (see `loop()` below), so no tick ever runs against this stub -- a claim
+    // this comment made for months while `loop()` actually sat ABOVE the assignment. It was true in
+    // effect only because alpha never satisfied the fit condition on the first synchronous call;
+    // EDIT_REHEAT_ALPHA made it false and the StrictMode fit test caught it (roadmap H9).
     let fitToView = () => {};
 
     const artLoader = artLoaderRef.current!;
@@ -468,15 +540,38 @@ export function GraphView(
       // prefers-reduced-motion freezes the phase at 0. The dashes stay (a static dash is harmless)
       // but they carry no direction, so those readers fall back to the flow legend's wording. That
       // gap is recorded in the design doc; closing it means arrowheads, which are a separate item.
+      // Hoisted above the EDGE pass -- it used to be built inside the label pass, which is the last
+      // thing draw() does. Both passes read the same set now, so a hovered card's edges, its
+      // partners and their labels cannot disagree about what "one hop" means.
+      const hoveredId = hoveredIdRef.current;
+      const hoveredSet = hoveredId
+        ? new Set([hoveredId, ...(neighborsOf.get(hoveredId) ?? [])])
+        : new Set<string>();
+      // A CLICK OUTRANKS A HOVER, ALWAYS. The flow is what the reader deliberately asked for; the
+      // hover is where their pointer happens to be. Running both at once would dim the flow's own
+      // cards whenever the pointer sat over an unrelated one.
+      const hoverActive = hoveredId !== null && !activeFlow;
       const stillMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
       const dashCycle = FLOW_DASH.on + FLOW_DASH.off;
       const crawl = stillMotion ? 0 : (performance.now() / 1000 * FLOW_DASH.speed) % dashCycle;
       for (const l of links) {
         const fe = flowEdgeByPair.get(`${l.source.id}>${l.target.id}`);
-        // An edge in the flow takes its direction's hue; everything else keeps the neutral stroke
-        // and drops to the dim alpha, so the flow reads against the rest of the deck.
-        ctx.globalAlpha = activeFlow && !fe ? 0.15 : 1;
-        ctx.strokeStyle = fe ? FLOW_HUE[fe.dir] : paintColors.sep;
+        // An edge in the flow takes its direction's hue at full opacity; everything else keeps the
+        // neutral stroke and drops to the dim alpha, so the flow reads against the rest of the deck.
+        // Outside a flow, opacity carries WEIGHT (edgeAlpha) -- the flat 0.15 stays for the dimmed
+        // background because a dimmed edge is scenery, and re-ranking scenery by weight would make
+        // the strongest UNSELECTED edge compete with the flow the reader asked for.
+        // A hovered card's own edges take the flow's direction hues -- the same two colours the
+        // legend already names, so hover and click say the same thing in the same language.
+        const hoverDir = hoverActive && l.source.id === hoveredId ? "down"
+          : hoverActive && l.target.id === hoveredId ? "up"
+          : null;
+        ctx.globalAlpha = fe ? 1
+          : activeFlow ? 0.15
+          : hoverDir ? 1
+          : hoverActive ? edgeAlpha(l.weight, maxWeight) * HOVER_EDGE_DIM
+          : edgeAlpha(l.weight, maxWeight);
+        ctx.strokeStyle = fe ? FLOW_HUE[fe.dir] : hoverDir ? FLOW_HUE[hoverDir] : paintColors.edge;
         ctx.lineWidth = edgeWidth(l.weight, maxWeight) / cam.z;
         // Sticky context state: the else branch is not optional. Without it the pattern set by the
         // last flow edge would dash every rim, border and card frame drawn after this loop.
@@ -520,8 +615,16 @@ export function GraphView(
         // not just its rim -- rather than the art staying bright while only the ring goes faint.
         const flowNode = activeFlow?.nodes.get(n.id);
         const isRoot = activeFlow?.root === n.id;
+        // A SEARCH HIT OUTRANKS THE FLOW DIM (roadmap H3). `searchHit` guarded only `demote`, so a
+        // card the user went looking for, sitting outside the selected card's flow, fell into the
+        // flow branch and dimmed to 0.15 -- accent ring included, since the ring below is drawn
+        // under this same alpha. The board then reported "2 MATCHES" and showed the reader nothing.
+        // Precedence, in words: a non-match under an active search is scenery; a MATCH is what was
+        // asked for and is never dimmed by anything; only then does the flow decide.
         ctx.globalAlpha = searchDim ? 0.15
+          : searchHit ? 1
           : activeFlow && !flowNode && !isRoot ? 0.15
+          : hoverActive && !hoveredSet.has(n.id) ? HOVER_NODE_DIM
           : demote ? EDGELESS_ALPHA : 1;
         // The draw-time radius for this node's circle/rim/clip -- ART_RADIUS everywhere except a
         // demoted edgeless card, which draws visibly smaller as well as fainter.
@@ -716,10 +819,6 @@ export function GraphView(
       // result is a draw decision only. Below the zoom floor the candidate set itself narrows to
       // commanders and the hovered neighbourhood, rather than asking placeLabels to reject 90-odd
       // boxes crammed into a few screen px every frame.
-      const hoveredId = hoveredIdRef.current;
-      const hoveredSet = hoveredId
-        ? new Set([hoveredId, ...(neighborsOf.get(hoveredId) ?? [])])
-        : new Set<string>();
       // A FLOOR AND, SINCE 2026-08-14, A CEILING. Labels used to start above LABEL_ZOOM_FLOOR and
       // never stop, so from CARD_MODE_Z (4) to MAX_Z (8) a name was painted over a card whose own
       // art prints that name larger and better. Above the ceiling only the cards with NO art drawn
@@ -743,23 +842,44 @@ export function GraphView(
         ctx.textAlign = "center";
         ctx.fillStyle = paintColors.fg;
         const order = labelPriority(candidates, weightedDegree, commandersRef.current, hoveredSet);
+        // TWO SLOTS PER LABEL, above then below -- see placeLabels. `mode === "card"` uses the
+        // card's own half-height, so a label clears the printed card rather than the disc that is
+        // not being drawn.
+        const nodeHalfH = (mode === "card" ? cardH / 2 : nodeRadius()) * cam.z;
         const boxes = order.map((id) => {
           const n = byId.get(id)!;
           const wScreen = ctx.measureText(n.label).width * cam.z;
           const sx = n.x * cam.z + cam.x, sy = n.y * cam.z + cam.y;
-          return {
+          const common = {
             id,
             x: sx - wScreen / 2 - LABEL_GAP,
-            y: sy - nodeRadius() * cam.z - LABEL_PX - LABEL_GAP,
             w: wScreen + LABEL_GAP * 2,
             h: LABEL_PX + LABEL_GAP * 2,
           };
+          return [
+            { ...common, y: sy - nodeHalfH - LABEL_PX - LABEL_GAP },
+            { ...common, y: sy + nodeHalfH + LABEL_GAP },
+          ];
         });
+        // THE NODES ARE OBSTACLES TOO (roadmap H7). Every node on the board, at the size it
+        // actually paints -- a disc of nodeRadius() in miniature, the full CARD_W x CARD_H rectangle
+        // in card mode -- so a label can no longer be printed across a neighbour's art. Built from
+        // `nodes` rather than from `candidates`: a label must clear every node it could cover, and
+        // at a zoom below LABEL_ZOOM_FLOOR most nodes carry no label of their own while still being
+        // very much in the way.
+        const halfW = (mode === "card" ? cardW : nodeRadius() * 2) * cam.z / 2;
+        const nodeBoxes = nodes.map((n) => ({
+          id: n.id,
+          x: n.x * cam.z + cam.x - halfW,
+          y: n.y * cam.z + cam.y - nodeHalfH,
+          w: halfW * 2,
+          h: nodeHalfH * 2,
+        }));
         // Same dimming rule the node pass uses a few lines up, and the same reason: a search keeps
         // the deck's shape rather than hiding what doesn't match, so a matching card's NAME must
         // read as clearly as its ring does. `matchIds` (not `matches`) -- see the node pass's own
         // comment on why this reads the ref.
-        for (const id of placeLabels(boxes)) {
+        for (const { id, slot } of placeLabels(boxes, nodeBoxes)) {
           const n = byId.get(id)!;
           // An edgeless card's NAME is demoted with its disc. Without this the demotion half-lands:
           // a faint, shrunken, colourless dot under a full-brightness label, which is a card
@@ -775,7 +895,12 @@ export function GraphView(
           ctx.globalAlpha = matchIds && !matchIds.has(id) ? 0.15
             : activeFlow && !labelFlowNode && !labelIsRoot ? 0.15
             : labelDemote ? EDGELESS_ALPHA : 1;
-          ctx.fillText(n.label, n.x, n.y - nodeRadius() - 4 / cam.z);
+          // Slot 1 is the below-the-node fallback: the text baseline sits under the node rather
+          // than over it, so the drawn position is the one placeLabels actually reserved.
+          const halfWorld = mode === "card" ? cardH / 2 : nodeRadius();
+          ctx.fillText(n.label, n.x, slot === 0
+            ? n.y - halfWorld - 4 / cam.z
+            : n.y + halfWorld + (LABEL_PX + 2) / cam.z);
         }
         // Canvas state is global and persistent (draw()'s own reset a few lines up already makes
         // this mistake impossible for the node pass) -- a search left dimming on here would leak
@@ -915,12 +1040,6 @@ export function GraphView(
       gestureStart = t;
     };
 
-    // The frame loop starts HERE, after fitToView is real, rather than where it is defined. Its
-    // first call is synchronous, so starting it earlier would run ticks against the stub above --
-    // which an earlier revision guarded with a placeholder-identity check on every frame, forever,
-    // instead of moving one line.
-    loop();
-
     // CAMERA ONLY -- reads the settled node cloud's bounding box and moves the camera to frame it;
     // writes no node position (same rule as labels.ts). Routed through zoomBehavior.transform for
     // the same reason jumpZoomRef is, just above: a raw cam.x/y/z write would leave d3-zoom's own
@@ -953,6 +1072,17 @@ export function GraphView(
       selection.call(zoomBehavior.transform, t);
       gestureStart = t;
     };
+
+    // THE FRAME LOOP STARTS HERE, AFTER fitToView IS REAL. It used to start twelve lines above this
+    // assignment while claiming in its own comment to start below it, and that was harmless only
+    // because the first call is SYNCHRONOUS and alpha then always exceeded FIT_SETTLE_ALPHA (a
+    // fresh layout starts at 1, a reheat used to start at 0.3). Lowering the reheat to
+    // EDIT_REHEAT_ALPHA (0.05) made the first synchronous call satisfy the fit condition
+    // immediately, so the fit ran against the no-op stub, marked itself done, and the camera never
+    // moved -- the exact StrictMode symptom the "torn down and re-run" test pins, which is what
+    // caught this. A comment that describes where code SHOULD be is not a guard.
+    loop();
+
 
     // THE CLICK PATH. Its body opens the inspector on the card under the pointer:
     // `pickAt(...toWorld(point))`, then the panel. That body is the ONLY part of this that was ever
@@ -1070,8 +1200,13 @@ export function GraphView(
 
   // What the flow hues mean, named with the selected card so direction reads in WORDS, not just
   // colour -- a blind judge shown teal/gold lines with no key could not tell producer from consumer
-  // (task-5 brief). Replaces the paint legend entirely while a flow is active, rather than joining
-  // it, because "what do the colours mean" only has one answer on screen at a time.
+  // (task-5 brief).
+  //
+  // IT STACKS ON TOP OF THE PAINT LEGEND NOW, RATHER THAN REPLACING IT (roadmap H3). The old note
+  // here said "what do the colours mean" has one answer on screen at a time -- but the two legends
+  // answer DIFFERENT questions: the flow rows say what the EDGE hues mean, the paint rows say what
+  // the card RIMS mean, and both are painted at once. Replacing meant switching TYPE -> ROLE while a
+  // card was selected repainted every rim with no key anywhere on screen.
   const flowLegend = inspectingNode
     ? [
         { value: "down", label: `${inspectingNode.label} feeds`, hue: FLOW_HUE.down, count: undefined },
@@ -1199,6 +1334,22 @@ export function GraphView(
               {matches.size > 0 ? `${matches.size} match${matches.size === 1 ? "" : "es"}` : "no matches"}
             </span>
           ) : null}
+          {/* A MATCH THE BOARD IS HIDING IS STILL A MATCH. Reporting only what is drawn made the
+           *  count a false sentence about the deck; naming the count AND the filter holding it back
+           *  makes it a true one the reader can act on in a click. */}
+          {hiddenMatches ? (
+            <button
+              type="button"
+              data-testid="graph-search-hidden"
+              className="eyebrow text-(--accent)"
+              onClick={() => {
+                if (hiddenMatches.lands > 0) setShowLands(true);
+                if (hiddenMatches.tokens > 0) setShowLoneTokens(true);
+              }}
+            >
+              +{hiddenMatches.total} hidden — show
+            </button>
+          ) : null}
         </div>
 
         {/* What the colours mean. In the DOM rather than on the canvas: a canvas label's measured
@@ -1218,7 +1369,7 @@ export function GraphView(
           aria-label="Paint legend"
           className="pointer-events-none flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--muted)"
         >
-          {(flowLegend ?? legend).map((row) => (
+          {[...(flowLegend ?? []), ...legend].map((row) => (
             <div
               key={row.value}
               data-testid="paint-legend-row"

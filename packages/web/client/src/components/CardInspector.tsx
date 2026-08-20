@@ -126,12 +126,15 @@ export function CardInspector({
         ) : (
           <>
             <h4 className="eyebrow text-(--muted)">Feeds</h4>
-            {/* The board caps a flow to the strongest FLOW_FANOUT_CAP edges per card -- a hub with 32
-             *  consumers draws 6. The panel says so rather than looking complete while quietly
-             *  showing a quarter of a card's reach. */}
+            {/* THE SENTENCE IS ABOUT THE BOARD, AND IT HAS TO SAY SO. The flow caps at
+             *  FLOW_FANOUT_CAP edges per card, so a hub with 67 consumers DRAWS 6 -- but this panel
+             *  renders every one of them (`sorted` is unsliced, below). Sitting as a header over
+             *  that complete list, "67 in total · strongest 6 shown" read as describing the LIST,
+             *  and a reviewer reading this very panel concluded the other 61 relations were
+             *  unreachable. If the author of a truncation note can misread it, so can a player. */}
             {cutDown ? (
               <p className="text-(--muted) text-xs">
-                {cutDown.total} in total · strongest {cutDown.shown} shown
+                The board draws the strongest {cutDown.shown} — all {cutDown.total} are listed here
               </p>
             ) : null}
             {renderList(outgoing, true)}
@@ -144,7 +147,7 @@ export function CardInspector({
           <h4 className="eyebrow text-(--muted)">Fed by</h4>
           {cutUp ? (
             <p className="text-(--muted) text-xs">
-              {cutUp.total} in total · strongest {cutUp.shown} shown
+              The board draws the strongest {cutUp.shown} — all {cutUp.total} are listed here
             </p>
           ) : null}
           {renderList(incoming, false)}

@@ -46,6 +46,12 @@
 
   --border: #262b31;
   --separator: #1d2126;
+  /* THE SYNERGY EDGE. Its own token because the board used to stroke every relation in
+     --separator -- a hairline BORDER colour, #1d2126 on a #14171b surface -- which drew the
+     product's entire output in near-background. Sits between separator and --muted: visible as a
+     mesh, still quiet enough that 300 of them are not a sheet. Opacity carries WEIGHT (edgeAlpha,
+     GraphView.tsx), so this is the colour of a strong edge and the weak ones fade from it. */
+  --edge: #6b7688;
   --focus: var(--accent);
 
   --radius: 0.5rem;
