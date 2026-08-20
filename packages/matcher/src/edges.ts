@@ -442,6 +442,14 @@ const hasAdditionalCost = (tags: CardTags | undefined): boolean =>
 const isLandOnly = (tags: CardTags): boolean =>
   tags.characteristics.types.length > 0 && tags.characteristics.types.every((t) => t === "land");
 
+/** Does this card return only cards IT exiled, and only ever exile an opponent's?
+ *
+ *  Two printed facts, both needed. "Exiled with <name>" says the returned set is one the engine
+ *  cannot enumerate; "an opponent controls" says your own cards can never be in it. Either alone is
+ *  not enough — Ghost Vacuum has the first and returns your graveyard's cards happily. */
+const exilesOnlyOpponents = (oracleText: string | undefined): boolean =>
+  /\bexiled with\b/i.test(oracleText ?? "") && /\ban opponent controls\b/i.test(oracleText ?? "");
+
 export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
   if (consumer.verb !== "enters" && consumer.verb !== "cast") return false;
   // Only the GRAVEYARD variant is excluded (it has its own matcher). `normalizeZoneEvent` stamps
@@ -806,6 +814,19 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         // `zone` is dropped for the same reason as in the reanimator gate below: printed
         // characteristics sit in no zone.
         if (t.subject.self === true) {
+          // "EXILED WITH THIS CARD" IS A SET ONLY THE PRODUCER CAN ENUMERATE, and the emit drops the
+          // restriction: Gisa, Glorious Resurrector and The Darkness Crystal both emit a bare
+          // `enters: creature` for "put all creature cards exiled with <me> onto the battlefield",
+          // so they claimed to fire the self-ETB of every creature in the deck. Both judged FALSE.
+          //
+          // GATED ON THE OPPONENT CUE, and measuring is what forced it: **185 corpus cards say
+          // "exiled with", 10 of them derive an enters/cast emit**, and refusing all ten would delete
+          // real claims — Ghost Vacuum exiles from ANY graveyard and Colfenor's Urn exiles YOUR OWN
+          // dying creatures, so both really can return a deck-mate and fire its trigger. Gisa and
+          // The Darkness Crystal are replacement effects on a creature AN OPPONENT CONTROLS dying,
+          // so the set can never hold a card of yours. Card-scoped printed cue, the same shape and
+          // the same ceiling as `reducesItself`.
+          if (exilesOnlyOpponents(p.card.oracleText)) continue;
           const { zone: _eventZone, ...identity } = e.subject;
           // The producer re-entering ITSELF (Reassembling Skeleton, Drownyard Temple) is a real
           // entry for anything watching creatures, but it is never the CONSUMER entering, which is

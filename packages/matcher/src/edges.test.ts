@@ -2289,3 +2289,42 @@ test("a debuff makes no anthem claim, and an ability discount needs an activated
   expect(reasons(statik("cost-reduction"), creature("activated"), gadgeteer).length).toBe(1);
   expect(reasons(statik("cost-reduction"), creature("triggered"), gadgeteer).length).toBe(0);
 });
+
+// PANEL FAMILY B (2026-08-20): "exiled with <this card>" is a set only the producer can enumerate,
+// and the emit drops the restriction — Gisa and The Darkness Crystal emitted a bare
+// `enters: creature` for "put all creature cards exiled with <me> onto the battlefield" and claimed
+// to fire the self-ETB of every creature in the deck.
+test("a card that only ever exiles an opponent's cannot fire a deck-mate's own entry trigger", () => {
+  const returner: CardTags = {
+    oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 5,
+      power: 4, toughness: 4, token: false, keywords: [] },
+    abilities: [{
+      kind: "triggered", effect: { kind: "graveyard-recursion" },
+      trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } },
+      emits: [{ verb: "enters", subject: { control: "you", token: null, type: "creature" } }],
+    }],
+  };
+  const selfEtb: CardTags = {
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 4,
+      power: 2, toughness: 2, token: false, keywords: [] },
+    abilities: [{
+      kind: "triggered", effect: { kind: "forced-sacrifice" },
+      trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature", self: true } },
+    }],
+  };
+  const reasons = (oracle: string) => directedReasons(
+    { card: { name: "Gisa", oracleText: oracle } as DeckCard["card"], tags: returner },
+    { card: { name: "Demon's Disciple" } as DeckCard["card"], tags: selfEtb }, H,
+  ).filter((r) => r.tag.startsWith("enters:"));
+
+  // BOTH printed facts are required. Gisa's own text carries them.
+  expect(reasons("If a creature an opponent controls would die, exile it instead. At the beginning of "
+    + "your upkeep, put all creature cards exiled with Gisa onto the battlefield.")).toHaveLength(0);
+  // Ghost Vacuum's shape: it exiles from ANY graveyard, so a deck-mate really can come back and fire.
+  expect(reasons("{T}: Exile target card from a graveyard. Put each creature card exiled with this "
+    + "artifact onto the battlefield under your control.").length).toBe(1);
+  // An ordinary reanimator names no exile set at all and is untouched.
+  expect(reasons("Return target creature card from your graveyard to the battlefield.").length).toBe(1);
+});
