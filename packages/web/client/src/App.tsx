@@ -7,6 +7,7 @@ import { ColorIdentityPicker } from "./components/ColorIdentityPicker.js";
 import { useAccentIdentity } from "./lib/use-accent-identity.js";
 import { identityGradient } from "./lib/color-identity.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
+import { diffRuns, loadLastRun, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
 
 export default function App() {
   const [commanders, setCommanders] = useState("");
@@ -15,13 +16,21 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(true);
+  // What the last Re-analyze moved. Held in state rather than derived on render because it is a
+  // fact about a TRANSITION -- once the snapshot is written, the same `data` no longer implies it.
+  const [diff, setDiff] = useState<RunDiff | null>(null);
   const { manualPick, setManualPick, active } = useAccentIdentity(data?.commanderColorIdentity);
 
   async function onAnalyze() {
     setLoading(true);
     setError(null);
     try {
-      setData(await analyzeDeck(decklist, commanders));
+      const next = await analyzeDeck(decklist, commanders);
+      const previous = loadLastRun();
+      const snapshot = snapshotRun(next);
+      setDiff(previous ? diffRuns(previous, snapshot) : null);
+      saveLastRun(snapshot);
+      setData(next);
       setEditing(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -98,7 +107,7 @@ export default function App() {
       )}
       {data && (
         <div className="reveal">
-          <ReportView data={data} />
+          <ReportView data={data} diff={diff} />
         </div>
       )}
     </main>

@@ -4,7 +4,6 @@ import { HeadlineScores } from "./HeadlineScores.js";
 import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { SuggestionsList } from "./SuggestionsList.js";
 import { CutList } from "./CutList.js";
-import { StatTiles } from "./StatTiles.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
@@ -36,7 +35,6 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         <SuggestionsList suggestions={data.report.suggestions} />
         <CutList cutList={data.report.cutList} slack={data.report.slack} trim={data.report.trim} />
         <HighSynergyCards cards={data.report.cards} />
-        <StatTiles avgManaValue={data.report.avgManaValue} />
         <ManaCurveChart curve={data.report.manaCurve} />
         <LandMathChart landCount={data.report.landCount} deckSize={data.resolvedCount} />
       </div>

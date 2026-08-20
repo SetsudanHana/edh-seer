@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
-import { StatTiles } from "./StatTiles.js";
 import { OverviewTab } from "./OverviewTab.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
 import { LandMathChart } from "./LandMathChart.js";
@@ -17,6 +16,7 @@ import { HeadlineScores } from "./HeadlineScores.js";
 import { BuildBenchmarks, demandSentence } from "./BuildBenchmarks.js";
 import { SuggestionsList } from "./SuggestionsList.js";
 import { SAMPLE } from "../fixtures.js";
+import { RunDiffStrip } from "./RunDiffStrip.js";
 
 test("DeckIdentity shows the headline theme", () => {
   render(<DeckIdentity cohesion={SAMPLE.report.cohesion} />);
@@ -88,22 +88,15 @@ test("MissingCards renders nothing when empty", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
-test("StatTiles shows avg CMC", () => {
-  render(<StatTiles avgManaValue={2.7} />);
-  expect(screen.getByText("2.7")).toBeInTheDocument();
-  expect(screen.getByText("Avg CMC")).toBeInTheDocument();
-});
-
-test("Overview shows Avg CMC but not a standalone Lands stat tile", () => {
-  render(<StatTiles avgManaValue={2.7} />);
-  expect(screen.getByText("Avg CMC")).toBeInTheDocument();
-  expect(screen.queryByText("Lands")).not.toBeInTheDocument();
-});
-
-test("OverviewTab renders deck identity and stat tiles from the full response", () => {
+// THE AVG CMC TILE IS GONE, and its test with it: a one-tile "grid" printed 2.9 while the Lands
+// row four blocks above already read "avg mana value 2.92", where the figure is doing work (it is
+// what sets the land target). One number, one place.
+test("OverviewTab renders the deck identity, and avg mana value only where it is load-bearing", () => {
   render(<OverviewTab data={SAMPLE} />);
   expect(screen.getByText("Tokens")).toBeInTheDocument(); // DeckIdentity theme
-  expect(screen.getByText("2.7")).toBeInTheDocument(); // avgManaValue stat tile
+  // The tile is gone; the figure survives in the Lands row, where it is what sets the land target
+  // (asserted in the deck-math tests, which are the ones carrying a `deckMath` fixture).
+  expect(screen.queryByText("Avg CMC")).not.toBeInTheDocument();
 });
 
 test("ManaCurveChart labels the 7+ bucket and shows the peak count", () => {
@@ -630,14 +623,18 @@ test("a deck with no combat clock says so rather than naming a turn", () => {
   expect(screen.getByLabelText(/no combat clock/i)).toBeInTheDocument();
 });
 
-test("BuildBenchmarks shows the win plans, scored on concentration not breadth", () => {
+// THE BARS ARE A SENTENCE NOW. A share is what a bar says worst here -- the COUNTS are what
+// separate "46% of a three-card plan" from "46% of a thirteen-card one" -- and the concentration
+// figure needed a footnote apologising that its direction runs opposite to everything above it.
+test("BuildBenchmarks names the win plans with their counts, and says which direction is good", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByLabelText(/go-wide, 12 cards, 60% of the deck's win plan/i)).toBeInTheDocument();
-  expect(screen.getByLabelText(/burn, 8 cards, 40% of the deck's win plan/i)).toBeInTheDocument();
-  // The focus index has to say which DIRECTION is good, or a reader will assume more plans is
-  // better -- it is the one number here scored the opposite way to the coverage above it.
-  expect(screen.getByText(/focus 0\.52/i)).toBeInTheDocument();
-  expect(screen.getByText(/concentration/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/win plans: go-wide 12 cards, burn 8 cards, focus 0\.52 of 1\.00/i)).toBeInTheDocument();
+  expect(screen.getByText(/go-wide/)).toBeInTheDocument();
+  expect(screen.getByText("12 cards")).toBeInTheDocument();
+  // The concentration index has to say which DIRECTION is good, or a reader will assume more plans
+  // is better -- it is the one number here scored the opposite way to the coverage above it.
+  expect(screen.getByText(/Concentration 0\.52 of 1\.00/)).toBeInTheDocument();
+  expect(screen.getByText(/Higher is better here/)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows the land count the deck's own curve asks for", () => {
@@ -867,4 +864,75 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   expect(screen.getByText("26 of 33 sources")).toHaveClass("text-(--warning)");
   expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
+});
+
+// --- The run diff (F13): what your last edit did. ---
+
+test("the run-diff strip names the cards, the moved scores and the moved categories", () => {
+  render(
+    <RunDiffStrip
+      diff={{
+        added: ["Arcane Signet"],
+        removed: ["Mountain"],
+        synergy: { from: 3.4, to: 3.9 },
+        build: undefined,
+        theme: undefined,
+        categories: [{ category: "ramp", from: 6, to: 7 }],
+      }}
+    />,
+  );
+  expect(screen.getByText("Since your last run")).toBeInTheDocument();
+  expect(screen.getByText("3.4 → 3.9")).toBeInTheDocument();
+  expect(screen.getByText("(+0.5)", { exact: false })).toBeInTheDocument();
+  expect(screen.getByText("6 → 7")).toBeInTheDocument();
+  expect(screen.getByText("Arcane Signet")).toBeInTheDocument();
+  expect(screen.getByText("Mountain")).toBeInTheDocument();
+});
+
+// Nothing to say renders NOTHING. A strip reading "no change" after a no-op re-analyse is the same
+// noise the strip exists to remove.
+test("the run-diff strip renders nothing without a diff", () => {
+  const { container } = render(<RunDiffStrip diff={null} />);
+  expect(container).toBeEmptyDOMElement();
+});
+
+// --- Overview weight (F12). ---
+
+// THE CAVEATS SURVIVE WORD FOR WORD AND STOP COSTING A QUARTER OF THE PANEL. The horizon itself
+// stays visible, because a reader who does not know the turn cannot read a single figure below it.
+// Asserted on `open`, not on presence: jsdom renders a closed <details>'s children into the DOM, so
+// a query for the text finds it either way -- what changes is whether a reader can see it.
+test("the model's caveats fold away while the horizon they qualify stays visible", async () => {
+  const user = userEvent.setup();
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.getByText(/Everything below is priced at turn 5/)).toBeInTheDocument();
+  const caveat = screen.getByText(/Supply is unweighted/).closest("details")!;
+  expect(caveat.open).toBe(false);
+  await user.click(within(caveat).getByText("what this number ignores"));
+  expect(caveat.open).toBe(true);
+});
+
+// A LIST WHOSE EVERY ROW READS THE SAME WAY IS NOT A FINDING. What matters is a want with nothing
+// supplying it -- and on a working deck there are none, which is why the full list folds.
+test("wants vs supplies leads with the unmet ones and folds the rest", () => {
+  const unmet = {
+    ...DECK_MATH,
+    demand: [
+      { key: "enters:any", consumers: 20, suppliers: 84, available: 1, fromCommandZone: false },
+      { key: "dies:any", consumers: 4, suppliers: 0, available: 0, fromCommandZone: false },
+    ],
+  };
+  const { unmount } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={unmet} />);
+  expect(screen.getByText("1 want with nothing in the deck supplying it.")).toBeInTheDocument();
+  // The unmet row leads OUTSIDE the expander, and the satisfied one appears only inside it.
+  const folded = screen.getByText("all 2 wants").closest("details")!;
+  expect(folded.open).toBe(false);
+  expect(within(folded).getByText("20 want · 84 supply")).toBeInTheDocument();
+  expect(screen.getAllByText("4 want · 0 supply")[0]).toHaveClass("text-(--warning)");
+  expect(screen.queryAllByText("20 want · 84 supply")).toHaveLength(1);
+  unmount();
+
+  // A deck with nothing unmet says so in one line rather than listing rows that all agree.
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.getByText("Every want in this deck has something supplying it.")).toBeInTheDocument();
 });

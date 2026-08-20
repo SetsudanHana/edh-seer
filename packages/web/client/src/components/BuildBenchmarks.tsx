@@ -28,6 +28,20 @@ const TARGET_MARK = 0.7;
  *  precision it does not have. */
 const pct = (p: number): string => `${Math.round(p * 100)}%`;
 
+/** A CAVEAT, ONE CLICK AWAY. The candour is a differentiator and every word of it survives — a
+ *  figure that does not say what it ignores is a figure a reader cannot weigh. What does not
+ *  survive is the pixels: five multi-line grey blocks ran roughly a quarter of this panel's height,
+ *  so the panel's own disclaimers were its largest single section.
+ *  → `specs/2026-08-20-report-usability-review.md` §4 */
+function Caveat({ label = "what this number ignores", children }: { label?: string; children: ReactNode }) {
+  return (
+    <details className="max-w-[65ch]">
+      <summary className="eyebrow cursor-pointer text-(--muted)">{label}</summary>
+      <p className="text-xs text-(--muted) pt-1">{children}</p>
+    </details>
+  );
+}
+
 const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
 
 /** The event half of a census key (`enters`, `dies`, `cast`, `end-step`…) as the words a player
@@ -271,13 +285,13 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
           </p>
         ) : null}
         {answers.some((a) => a.required > a.count) ? (
-          <p className="text-xs text-(--muted) max-w-[65ch]">
+          <Caveat label={'what "short" is measured against'}>
             "Short" counts the cards this deck would have to add before it holds an answer of that
             class more often than not by turn {turn}. The COUNT is this deck's own; that it should
             hold one of every class is a deckbuilding convention someone typed, not a number
             measured from any deck — and nobody has calibrated the floor for land or graveyard
             answers at all.
-          </p>
+          </Caveat>
         ) : null}
       </div>
   );
@@ -349,12 +363,12 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
               );
             })}
           </ul>
-          <p className="text-xs text-(--muted) max-w-[65ch]">
+          <Caveat label="how these are priced">
             {castability.refused > 0
               ? `${plural(castability.refused, "card")} refused — X costs, delve, convoke and free casts are not priced rather than guessed. `
               : ""}
             {castability.biases}
-          </p>
+          </Caveat>
         </div>
   ) : null;
 
@@ -383,47 +397,39 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
           </div>
           {/* A turn number that does not say how it was made reads as a prediction. It is a RATE:
             *  useful for comparing two decks, useless as a date. */}
-          <p className="text-xs text-(--muted) max-w-[65ch]">
+          <Caveat label="how the clock is modelled">
             Expected attacking power against one opponent's 40 life. Nobody blocks in this model,
             nothing is removed, and there is no mana budget — a creature counts once the turn number
             reaches its cost, however many others arrived with it, and no ramp shortens that. Read it
             to compare decks, not to plan a game.
-          </p>
+          </Caveat>
         </div>
   ) : null;
 
+  // WIN PLANS, FOLDED INTO A SENTENCE. Three bars carried three shares, and a share is the one
+  // thing a bar says worst here: the counts are what distinguish "46% of a three-card plan" from
+  // "46% of a thirteen-card one", and the concentration figure needed a footnote apologising that
+  // its direction is inverted against every other number on the panel. Said in words, the direction
+  // is in the sentence and the apology is unnecessary.
   const winBlock = wincons && wincons.classes.length > 0 ? (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
           <h5 className="eyebrow">Win plans</h5>
-          <ul className="flex flex-col gap-1">
-            {wincons.classes.map((w) => (
-              <li
-                key={w.class}
-                className="flex items-center gap-3 text-sm"
-                aria-label={`${w.class}, ${w.count} cards, ${Math.round(w.share * 100)}% of the deck's win plan`}
-              >
-                <span className="w-24 shrink-0">{w.class}</span>
-                {/* The bar IS the share, so the share is not printed again beside it. The count is
-                  *  the one thing the bar cannot say -- 46% of a three-card plan and 46% of a
-                  *  thirteen-card plan are different decks. */}
-                <span className="flex-1 h-1.5 rounded-full bg-(--separator) overflow-hidden">
-                  <span className="block h-full rounded-full bg-(--accent)" style={{ width: `${w.share * 100}%` }} />
-                </span>
-                <span className="w-16 shrink-0 text-right tabular-nums text-(--muted)">{plural(w.count, "card")}</span>
-              </li>
+          <p
+            className="text-sm"
+            aria-label={`win plans: ${wincons.classes.map((w) => `${w.class} ${w.count} cards`).join(", ")}, focus ${wincons.focus.toFixed(2)} of 1.00`}
+          >
+            <span className="text-(--muted)">Mostly </span>
+            {wincons.classes.map((w, i) => (
+              <span key={w.class}>
+                {i > 0 ? <span className="text-(--muted)"> · </span> : null}
+                {w.class} <span className="tabular-nums text-(--muted)">{plural(w.count, "card")}</span>
+              </span>
             ))}
-          </ul>
-          {/* Says which direction is good, because this is the ONE number here scored the opposite
-            *  way to everything above it. Answers want breadth; a win plan wants concentration, and
-            *  a reader who assumes "more is better" reads a scattered deck as a versatile one. */}
-          {/* The scale, because a bare 0.41 has no top and no bottom. It is a Herfindahl over the
-            *  plan shares: 1.00 is one plan, and n even plans is 1/n — so the floor moves with how
-            *  many plans the deck has, and stating both ends is the only way to read the number. */}
+          </p>
           <p className="text-xs text-(--muted) max-w-[65ch]">
-            Focus {wincons.focus.toFixed(2)} of 1.00 — how concentrated the win plan is, where 1.00
-            is a deck all-in on one plan and {(1 / Math.max(1, wincons.classes.length)).toFixed(2)} is
-            these {wincons.classes.length} plans split evenly. Concentration, not coverage: higher is
-            better here, unlike every other figure on this panel.
+            Concentration {wincons.focus.toFixed(2)} of 1.00, where 1.00 is a deck all-in on one plan
+            and {(1 / Math.max(1, wincons.classes.length)).toFixed(2)} is these {wincons.classes.length}{" "}
+            plans split evenly. Higher is better here, unlike every other figure on this panel.
           </p>
         </div>
   ) : null;
@@ -544,50 +550,71 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             *  base is broken" and then discarded the whole block for contradicting the row above.
             *  It does not contradict it: a land count and a pip deadline are different questions,
             *  and the honest fix for a demand no 100-card deck can meet is usually the spell. */}
-          {colors.some((c) => c.worst) ? (
+          {overcommitted ? (
             <p className="text-xs text-(--muted) max-w-[65ch]">
-              Each row is the earliest double-pip card in that colour, at 90% confidence — not the
-              deck's land count, which is judged above.{" "}
-              {overcommitted
-                ? `Together these rows want ${totalRequired} sources from ${landRoom} lands, which no
-                   deck can hold — so read them as what each card is asking for, not as a shortfall
-                   to fix. Cutting or delaying one early double pip answers it; adding lands cannot.`
-                : "Cutting or delaying an early double pip answers a gap as well as adding lands does."}
+              Together these rows want {totalRequired} sources from {landRoom} lands, which no deck
+              can hold — read them as what each card is asking for, not as a shortfall to fix.
             </p>
+          ) : null}
+          {colors.some((c) => c.worst) ? (
+            <Caveat label="what each row is measured against">
+              Each row is the earliest double-pip card in that colour, at 90% confidence — not the
+              deck's land count, which is judged above. Cutting or delaying one early double pip
+              answers a gap as well as adding lands does
+              {overcommitted ? ", and here it is the only thing that can" : ""}.
+            </Caveat>
           ) : null}
         </div>
   ) : null;
 
+  // WANTS VS SUPPLIES, UNMET FIRST AND THE REST FOLDED. Every row is a pair of counts with no
+  // verdict attached, and on a deck that works they all read the same way — "15 want · 47 supply" —
+  // so the block spent its height restating that the deck functions. The row that MATTERS is a want
+  // with nothing supplying it, and on a good deck there are none, which is exactly why the whole
+  // list belongs one click down rather than open by default. A row the GAME supplies (an end step,
+  // an upkeep) is never unmet: nothing has to provide it.
+  const demandRow = (d: (typeof demand)[number]) => {
+    const sentence = demandSentence(d.key);
+    const label =
+      d.available === null
+        ? `${sentence}, ${d.consumers} cards want it, the game supplies it`
+        : `${sentence}, ${d.consumers} cards want it, ${d.suppliers} supply it`;
+    return (
+      <li key={d.key} className="flex items-center gap-3 text-sm" aria-label={label}>
+        {/* The raw census key stays reachable on hover, because `bin/deck-availability.ts` prints
+          *  keys and a report you cannot match against the bin is a dead end. */}
+        <span className="flex-1 truncate" title={d.key}>{sentence}</span>
+        <span className={`shrink-0 tabular-nums ${d.available !== null && d.suppliers === 0 ? "text-(--warning)" : "text-(--muted)"}`}>
+          {d.available === null
+            ? `${d.consumers} want · the game supplies it`
+            : `${d.consumers} want · ${d.suppliers} supply`}
+        </span>
+      </li>
+    );
+  };
+  const unmet = demand.filter((d) => d.available !== null && d.suppliers === 0);
   const demandBlock = (
       <div className="flex flex-col gap-1.5">
         <h5 className="eyebrow">Wants vs supplies</h5>
-        <ul className="flex flex-col gap-1">
-          {demand.map((d) => {
-            const sentence = demandSentence(d.key);
-            const label =
-              d.available === null
-                ? `${sentence}, ${d.consumers} cards want it, the game supplies it`
-                : `${sentence}, ${d.consumers} cards want it, ${d.suppliers} supply it`;
-            return (
-              <li key={d.key} className="flex items-center gap-3 text-sm" aria-label={label}>
-                {/* The raw census key stays reachable on hover, because `bin/deck-availability.ts`
-                  *  prints keys and a report you cannot match against the bin is a dead end. */}
-                <span className="flex-1 truncate" title={d.key}>{sentence}</span>
-                {/* The availability percentage is GONE from this block. It was derived from the two
-                  *  counts beside it, and on a real deck it reads 100% on every row with a supplier
-                  *  and "—" on every row without one -- a column with no variance, restating a
-                  *  comparison the counts already make. "0 supply" is likewise not printed: nothing
-                  *  supplies an end step because nothing has to, and every reviewer read the zero as
-                  *  a hole in their deck. */}
-                <span className="shrink-0 tabular-nums text-(--muted)">
-                  {d.available === null
-                    ? `${d.consumers} want · the game supplies it`
-                    : `${d.consumers} want · ${d.suppliers} supply`}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        {unmet.length > 0 ? (
+          <>
+            <p className="text-sm text-(--muted)">
+              {plural(unmet.length, "want")} with nothing in the deck supplying{" "}
+              {unmet.length === 1 ? "it" : "them"}.
+            </p>
+            <ul className="flex flex-col gap-1">{unmet.map(demandRow)}</ul>
+          </>
+        ) : (
+          <p className="text-sm text-(--muted)">
+            Every want in this deck has something supplying it.
+          </p>
+        )}
+        <details>
+          <summary className="eyebrow cursor-pointer text-(--muted)">
+            all {demand.length} wants
+          </summary>
+          <ul className="flex flex-col gap-1 pt-1">{demand.map(demandRow)}</ul>
+        </details>
       </div>
   );
 
@@ -633,18 +660,26 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
         *  sit ~1,400px further down — so the reader met the number, guessed at it, and only later
         *  found out what it meant. The caveats stay with it: they qualify every block, not just the
         *  last one. */}
-      <p className="text-xs text-(--muted) max-w-[65ch]">
-        Everything below is priced at turn {turn} —{" "}
-        {deckMath.turnSource === "corpus-median"
-          ? "the median of the calibration decks, because this deck has no combat clock"
-          : deckMath.turnSource === "override"
-            ? "a fixed horizon"
-            : "this deck's own clock"}
-        , {seen} cards seen. Supply is unweighted — a repeatable outlet counts the same as a
-        one-shot. No mulligans and no opponent, and card draw is ignored: a deck five cards ahead of
-        that reads about 11 points higher on a coverage figure, ten cards ahead about 20, so each
-        one is conservative for a deck that draws.
-      </p>
+      {/* THE HORIZON STAYS VISIBLE and its caveats fold: every probability below is priced at this
+        *  turn, so a reader who does not know the number cannot read the panel at all — while the
+        *  four things the model ignores are what they consult once and then stop needing. */}
+      <div className="flex flex-col gap-1">
+        <p className="text-xs text-(--muted) max-w-[65ch]">
+          Everything below is priced at turn {turn} —{" "}
+          {deckMath.turnSource === "corpus-median"
+            ? "the median of the calibration decks, because this deck has no combat clock"
+            : deckMath.turnSource === "override"
+              ? "a fixed horizon"
+              : "this deck's own clock"}
+          , {seen} cards seen.
+        </p>
+        <Caveat>
+          Supply is unweighted — a repeatable outlet counts the same as a one-shot. No mulligans and
+          no opponent, and card draw is ignored: a deck five cards ahead of that reads about 11
+          points higher on a coverage figure, ten cards ahead about 20, so each one is conservative
+          for a deck that draws.
+        </Caveat>
+      </div>
 
       {[...sections]
         .sort((a, b) => Number(b.flagged) - Number(a.flagged))
