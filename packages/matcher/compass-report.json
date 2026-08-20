@@ -1,0 +1,66 @@
+{
+  "total": 55,
+  "pass": 46,
+  "recall": 0.8363636363636363,
+  "perCategory": {
+    "aristocrats": {
+      "pass": 4,
+      "total": 4
+    },
+    "tokens-go-wide": {
+      "pass": 0,
+      "total": 3
+    },
+    "spellslinger": {
+      "pass": 7,
+      "total": 9
+    },
+    "reanimator": {
+      "pass": 4,
+      "total": 4
+    },
+    "voltron-auras": {
+      "pass": 0,
+      "total": 4
+    },
+    "lifegain-payoff": {
+      "pass": 5,
+      "total": 5
+    },
+    "counters-plus1": {
+      "pass": 2,
+      "total": 2
+    },
+    "mill-self": {
+      "pass": 3,
+      "total": 3
+    },
+    "wheels-draw": {
+      "pass": 5,
+      "total": 5
+    },
+    "power-matters": {
+      "pass": 2,
+      "total": 2
+    },
+    "toughness-matters": {
+      "pass": 1,
+      "total": 1
+    },
+    "mana-ramp-payoff": {
+      "pass": 1,
+      "total": 1
+    },
+    "graveyard-matters": {
+      "pass": 3,
+      "total": 3
+    },
+    "blink-etb": {
+      "pass": 9,
+      "total": 9
+    }
+  },
+  "causes": {
+    "WRONG-REASON": 9
+  }
+}

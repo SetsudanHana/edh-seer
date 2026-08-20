@@ -90,10 +90,27 @@ test("groupEdgesByArchetype: an edge matching one category lands in exactly that
   expect(groups[0].pairs).toEqual([{ a: "Blood Artist", b: "Fling", reasons: edges[0].reasons }]);
 });
 
-test("groupEdgesByArchetype: an edge matching two categories appears in both groups", () => {
+// AN EDGE STILL JOINS EVERY CATEGORY IT MATCHES — what changed is that a group saying nothing the
+// bigger one has not already said is dropped before it reaches the reader. With a single edge the
+// two groups are the SAME pair under two headings, which is the duplication the dedupe exists for.
+test("groupEdgesByArchetype: a group that is a near-duplicate of a bigger one is dropped", () => {
   const edges = [{ a: "A", b: "B", reasons: [reason({ tag: "create-token:any" }), reason({ effectKind: "forced-sacrifice" })] }];
   const groups = groupEdgesByArchetype(edges);
-  const categories = groups.map((g) => g.category).sort();
+  expect(groups).toHaveLength(1);
+  expect(["aristocrats", "tokens-go-wide"]).toContain(groups[0].category);
+});
+
+test("groupEdgesByArchetype: a category with pairs of its own survives beside a bigger group", () => {
+  const edges = [
+    { a: "A", b: "B", reasons: [reason({ effectKind: "drain" })] },
+    { a: "C", b: "D", reasons: [reason({ effectKind: "drain" })] },
+    { a: "E", b: "F", reasons: [reason({ effectKind: "drain" })] },
+    // Two pairs the aristocrats group never sees: 2 of 3 shared is under the 0.9 bar.
+    { a: "G", b: "H", reasons: [reason({ tag: "create-token:any" })] },
+    { a: "I", b: "J", reasons: [reason({ tag: "create-token:any" })] },
+    { a: "A", b: "B", reasons: [reason({ tag: "create-token:any" }), reason({ effectKind: "drain" })] },
+  ];
+  const categories = groupEdgesByArchetype(edges).map((g) => g.category).sort();
   expect(categories).toEqual(["aristocrats", "tokens-go-wide"]);
 });
 
@@ -106,15 +123,19 @@ test("groupEdgesByArchetype: an edge matching no category lands in 'other', sort
   expect(groups[groups.length - 1].cards).toEqual(["P", "Q"]);
 });
 
-test("groupEdgesByArchetype: groups sort by member card count descending", () => {
+// SORTED BY PAIRS, NOT CARDS. Card count is what a group reaches; pairs are what it claims, and on
+// a real deck four groups read "70 cards" while their pair counts ran 334 to 440.
+test("groupEdgesByArchetype: groups sort by pair count descending", () => {
   const edges = [
     { a: "A", b: "B", reasons: [reason({ effectKind: "drain" })] },
     { a: "C", b: "D", reasons: [reason({ tag: "create-token:any" })] },
-    { a: "E", b: "F", reasons: [reason({ effectKind: "drain" })] },
+    { a: "E", b: "F", reasons: [reason({ tag: "create-token:any" })] },
+    { a: "G", b: "H", reasons: [reason({ tag: "create-token:any" })] },
   ];
   const groups = groupEdgesByArchetype(edges);
-  expect(groups[0].category).toBe("aristocrats");
-  expect(groups[0].cards).toHaveLength(4);
+  expect(groups[0].category).toBe("tokens-go-wide");
+  expect(groups[0].pairs).toHaveLength(3);
+  expect(groups[1].category).toBe("aristocrats");
 });
 
 test("every MechanismCategory has a MECHANISM_LABELS entry", () => {

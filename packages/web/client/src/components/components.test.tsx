@@ -175,14 +175,17 @@ test("LandMathChart shows 8 bars (0-7 lands), labels the peak percentage, and ca
   expect(screen.getByTitle("30% chance of exactly 3 lands")).toBeInTheDocument(); // tooltip on peak bar
 });
 
-test("ArchetypeBoard shows a bar per group and expands to reveal pairs on click", async () => {
+// PAIRS ARE WHAT A GROUP CLAIMS; cards are only what it reaches. Both are printed, and the bar is
+// sized by pairs — four groups reading "70 cards" with pair counts from 334 to 440 painted four
+// identical full-width tracks over four different findings.
+test("ArchetypeBoard counts pairs beside cards and previews a pair without a click", async () => {
   render(<ArchetypeBoard archetypes={SAMPLE.report.archetypes} />);
   expect(screen.getByText("Tokens Go Wide")).toBeInTheDocument();
-  expect(screen.getByText("2 cards")).toBeInTheDocument();
-  // Pair detail is collapsed by default.
-  expect(screen.queryByText(/Krenko, Mob Boss \+ Impact Tremors/)).not.toBeInTheDocument();
-  await userEvent.click(screen.getByText("Tokens Go Wide"));
+  expect(screen.getByText(/1 pair · 2 cards/)).toBeInTheDocument();
+  // A COLLAPSED ROW IS A LABEL AND A NUMBER, and a label is exactly what a reader cannot check:
+  // the only thing that showed the review a mislabelled group was reading its pairs. Two are open.
   expect(screen.getByText(/Krenko, Mob Boss \+ Impact Tremors/)).toBeInTheDocument();
+  await userEvent.click(screen.getByText("Tokens Go Wide"));
   expect(screen.getByText(/pays off tokens/)).toBeInTheDocument();
 });
 
@@ -935,4 +938,41 @@ test("wants vs supplies leads with the unmet ones and folds the rest", () => {
   // A deck with nothing unmet says so in one line rather than listing rows that all agree.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   expect(screen.getByText("Every want in this deck has something supplying it.")).toBeInTheDocument();
+});
+
+// --- The Cards table (F5). ---
+
+// A RATING IS DECK-RELATIVE and the table never said so: 51 of 94 rows sit under 1.0 on a deck the
+// same app rates 4.1 of 5, and a role card is silent BY DESIGN (`ROLE_NOT_SYNERGY`). Without the
+// sentence, a reader takes Sol Ring at 0.3 as a verdict.
+test("CardList says what the rating is measured against", () => {
+  render(<CardList cards={SAMPLE.report.cards} />);
+  expect(screen.getByText(/Rated against this deck's best synergy card/)).toBeInTheDocument();
+  expect(screen.getByText(/score low by design/)).toBeInTheDocument();
+});
+
+test("CardList sorts by name and by cost, not only by rating", async () => {
+  const user = userEvent.setup();
+  const cards = [
+    { name: "Zebra Ritual", synergyRating: 4.0, manaValue: 1, roles: [] },
+    { name: "Ancient Colossus", synergyRating: 0.2, manaValue: 9, roles: [] },
+  ] as never;
+  render(<CardList cards={cards} />);
+  const names = () => screen.getAllByRole("row").slice(1).map((r) => r.textContent?.split("\n")[0] ?? "");
+  expect(names()[0]).toContain("Zebra Ritual"); // rating order, the default
+
+  await user.click(screen.getByRole("button", { name: /^Card/ }));
+  expect(names()[0]).toContain("Ancient Colossus"); // alphabetical
+
+  await user.click(screen.getByRole("button", { name: /^Cost/ }));
+  expect(names()[0]).toContain("Ancient Colossus"); // most expensive first
+});
+
+test("CardList filters by name", async () => {
+  const user = userEvent.setup();
+  render(<CardList cards={SAMPLE.report.cards} />);
+  await user.type(screen.getByRole("searchbox", { name: "Filter cards by name" }), "krenko");
+  const rows = screen.getAllByRole("row").slice(1);
+  expect(rows).toHaveLength(1);
+  expect(rows[0]!.textContent).toContain("Krenko");
 });

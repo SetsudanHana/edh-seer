@@ -19,11 +19,23 @@ function StrategyRow({ s, max }: { s: Strategy; max: number }) {
   );
 }
 
+/** The reason sentences of one pair, deduped — see the note in the expanded list below. */
+const pairReasons = (pair: Group["pairs"][number]): string[] =>
+  [...new Map(pair.reasons.map((r) => [r.text, r] as const)).values()].map((r) => r.text);
+
 function GroupRow({ group, max }: { group: Group; max: number }) {
   const [open, setOpen] = useState(false);
-  const widthPct = Math.max(4, Math.round((group.cards.length / max) * 100));
+  // SIZED BY PAIRS, NOT CARDS. Card count is what a group REACHES; pairs are what it CLAIMS, and
+  // the two disagree wildly — on the review deck four groups all read "70 cards" while their pair
+  // counts ran 334 to 440, so the bars were four identical full-width tracks over four different
+  // findings. The engine ranks by pairs now (`mechanisms.ts`); this makes the bar agree with it.
+  const widthPct = Math.max(4, Math.round((group.pairs.length / max) * 100));
   const shown = group.pairs.slice(0, PAIR_CAP);
   const extra = group.pairs.length - shown.length;
+  // TWO PAIRS IN THE OPEN, because a collapsed row is a label and a number, and a label is exactly
+  // what a reader cannot check. The one thing that told the review "Aristocrats" was mislabelled
+  // was reading its pairs — which took a click, on one group, out of thirteen.
+  const preview = group.pairs.slice(0, 2);
   return (
     <div className="flex flex-col gap-1 py-2 border-b border-(--separator)">
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-3 text-left w-full" aria-expanded={open}>
@@ -34,10 +46,20 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
         <div className="flex-1 h-2 bg-(--separator) rounded-full overflow-hidden">
           <div className="h-full rounded-full" style={{ width: `${widthPct}%`, backgroundImage: "var(--accent-gradient)" }} />
         </div>
-        <span className="font-mono text-xs text-(--muted) w-20 text-right shrink-0">
-          {group.cards.length} card{group.cards.length === 1 ? "" : "s"}
+        <span className="font-mono text-xs text-(--muted) w-28 text-right shrink-0 tabular-nums">
+          {group.pairs.length} pair{group.pairs.length === 1 ? "" : "s"} · {group.cards.length} cards
         </span>
       </button>
+      {open ? null : (
+        <ul className="flex flex-col pl-6 text-xs text-(--muted)">
+          {preview.map((pair, i) => (
+            <li key={`${pair.a}-${pair.b}-${i}`} className="truncate">
+              {pair.a} + {pair.b}
+              {pairReasons(pair)[0] ? <span> — {pairReasons(pair)[0]}</span> : null}
+            </li>
+          ))}
+        </ul>
+      )}
       {open ? (
         <ul className="flex flex-col gap-2 pl-4 pt-1">
           {shown.map((pair, i) => (
@@ -51,8 +73,8 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
                     it already does on the graph wire (`data.module.ts`). Inline rather than shared:
                     the client value-imports nothing from `@mtg/engine` today, and pulling the engine
                     into the browser bundle for four lines is a worse trade than repeating them. */}
-                {[...new Map(pair.reasons.map((r) => [r.text, r] as const)).values()].map((r, j) => (
-                  <li key={j} className="text-(--muted) border-l border-(--separator) pl-2">{r.text}</li>
+                {pairReasons(pair).map((text, j) => (
+                  <li key={j} className="text-(--muted) border-l border-(--separator) pl-2">{text}</li>
                 ))}
               </ul>
             </li>
@@ -71,7 +93,7 @@ export function ArchetypeBoard({ strategies, archetypes }: { strategies?: DeckRe
     return <p className="text-(--muted) text-sm">No recognizable archetype patterns — try adding more synergy pieces.</p>;
   }
   const sMax = hasStrategies ? Math.max(...strategies!.map((s) => s.confidence)) : 1;
-  const gMax = hasGroups ? Math.max(1, ...archetypes!.map((g) => g.cards.length)) : 1;
+  const gMax = hasGroups ? Math.max(1, ...archetypes!.map((g) => g.pairs.length)) : 1;
   return (
     <div className="flex flex-col gap-6">
       {hasStrategies ? (
