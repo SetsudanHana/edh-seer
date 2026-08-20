@@ -36,3 +36,34 @@ export function parseManaCost(cost: string): ManaSymbol[] {
     return { raw, code, label: labelFor(code, raw) };
   });
 }
+
+/** Scryfall's symbology SVGs. The board already loads card art from Scryfall at runtime
+ *  (`cardImageUrl`), so this adds no new external dependency -- and roughly 25 distinct symbols
+ *  cover a whole deck, so the browser caches them after first paint.
+ *
+ *  A WEBFONT WAS REJECTED: mana-font renders symbols as private-use glyphs, so a screen reader
+ *  receives nothing and the 390px legibility problem the phone persona reported gets worse. */
+const SYMBOL_URL = (code: string): string => `https://svgs.scryfall.io/card-symbols/${code}.svg`;
+
+export function ManaSymbols({ cost }: { cost: string }): React.JSX.Element {
+  const symbols = parseManaCost(cost);
+  if (symbols.length === 0) return <span className="text-(--muted)">—</span>;
+  return (
+    <span role="img" aria-label={symbols.map((s) => s.label).join(", ")} className="inline-flex items-center gap-0.5">
+      {symbols.map((s, i) =>
+        s.code
+          ? (
+            // Sized in em so a symbol scales with the row it sits in rather than fighting it.
+            <img
+              key={`${s.raw}-${i}`}
+              src={SYMBOL_URL(s.code)}
+              alt={s.label}
+              className="inline-block"
+              style={{ width: "0.95em", height: "0.95em" }}
+            />
+          )
+          : <span key={`${s.raw}-${i}`}>{s.raw}</span>,
+      )}
+    </span>
+  );
+}

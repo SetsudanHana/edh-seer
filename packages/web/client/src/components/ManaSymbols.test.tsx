@@ -1,5 +1,6 @@
+import { render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
-import { parseManaCost } from "./ManaSymbols.js";
+import { ManaSymbols, parseManaCost } from "./ManaSymbols.js";
 
 describe("parseManaCost", () => {
   test("splits a plain cost into its symbols", () => {
@@ -24,4 +25,25 @@ describe("parseManaCost", () => {
     expect(parseManaCost("banana")).toEqual([{ raw: "banana", code: "", label: "banana" }]);
     expect(parseManaCost("")).toEqual([]);
   });
+});
+
+test("renders one image per symbol, each with its own text alternative", () => {
+  render(<ManaSymbols cost="{3}{B}{B}" />);
+  const imgs = screen.getAllByRole("img", { name: /mana/ });
+  // 3 symbols + the wrapper's own label
+  expect(imgs.length).toBeGreaterThanOrEqual(3);
+  expect(screen.getByAltText("3 generic mana")).toBeInTheDocument();
+  expect(screen.getAllByAltText("one black mana")).toHaveLength(2);
+});
+
+// A land has no mana cost. An em dash is the established "not applicable" mark in this report
+// (deckCastability already renders one rather than a misleading 0%).
+test("an empty cost renders an em dash, not an empty cell", () => {
+  render(<ManaSymbols cost="" />);
+  expect(screen.getByText("—")).toBeInTheDocument();
+});
+
+test("an unreadable cost prints verbatim rather than disappearing", () => {
+  render(<ManaSymbols cost="banana" />);
+  expect(screen.getByText("banana")).toBeInTheDocument();
 });
