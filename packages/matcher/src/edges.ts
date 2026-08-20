@@ -450,6 +450,11 @@ const isLandOnly = (tags: CardTags): boolean =>
 const exilesOnlyOpponents = (oracleText: string | undefined): boolean =>
   /\bexiled with\b/i.test(oracleText ?? "") && /\ban opponent controls\b/i.test(oracleText ?? "");
 
+/** A recursion restricted to cards the consumer's OWN earlier action put in the graveyard. */
+const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
+  /\bfrom among (?:those|them)\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b/i
+    .test(oracleText ?? "");
+
 export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
   if (consumer.verb !== "enters" && consumer.verb !== "cast") return false;
   // Only the GRAVEYARD variant is excluded (it has its own matcher). `normalizeZoneEvent` stamps
@@ -871,6 +876,25 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         const t = normalizeZoneEvent({ verb: v, subject: a.trigger!.subject });
         return t.verb === "enters" && t.subject.zone === "graveyard" && graveyardFillMatches(e.subject, t.subject, h);
       })) continue;
+      // THE SET IS DEFINED BY THE CONSUMER'S OWN EARLIER ACTION, so no other card's fill can put
+      // anything in it. Three printed templates, each measured over the whole corpus:
+      // "from among those" (Ripples of Undeath mills three and returns one OF THOSE; Nashi the
+      // same), "put into a graveyard this way" (Necromantic Selection destroys all creatures and
+      // returns one IT killed — 24 corpus cards) and "put there this turn" (Gerrard's Hourglass
+      // Pendant returns what hit your graveyard FROM THE BATTLEFIELD this turn — 49 corpus cards).
+      // Card-scoped printed cue, the same shape and ceiling as `reducesItself`.
+      if (recursionIsSelfSupplied(c.card.oracleText)) continue;
+      // THE STRUCTURAL SIBLING OF THIS RULE WAS BUILT AND REFUSED ON ITS OWN MEASUREMENT (2026-08-20).
+      // An UNTYPED recursion on an ability carrying its own graveyard-entry trigger returns exactly
+      // what that trigger saw ("whenever a creature you control with a +1/+1 counter on it dies,
+      // return THAT CARD"), and **21 derived cards share the shape** — Marchesa, Kaya's Ghostform,
+      // Feign Death, Luminous Broodmoth, Optimus Prime, Shirei. Refusing them buys 2 false claims
+      // and **costs 3 REAL ones**, all on Meathook Massacre II ("whenever a creature you control
+      // dies, return that card" — an UNRESTRICTED trigger, so a sacrifice outlet really does enable
+      // it). The event-edge loop is supposed to carry those under `dies:creature` and does in
+      // `smooth-criminal`, but in two other decks the relation vanished outright, so the rule is
+      // sound in principle and its cost is a GAP IN THE `dies` CHANNEL, not a wrong answer here.
+      // Fix that channel first; this refusal is not worth 3 real claims today.
       if (!graveyardFillMatches(e.subject, a.effect.subject, h)) continue;
       // A SELF-scoped recursion returns the card ITSELF ("return this card from your graveyard"), so
       // a fill enables it only if that fill could contain THAT card. Reassembling Skeleton is a real

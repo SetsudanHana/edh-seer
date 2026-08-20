@@ -2271,7 +2271,7 @@ test("a debuff makes no anthem claim, and an ability discount needs an activated
   const creature = (abilityKind?: string): CardTags => ({
     oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
     characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 2,
-      power: 2, toughness: 2, token: false, keywords: [] },
+      power: "2", toughness: "2", token: false, keywords: [] },
     abilities: abilityKind ? [{ kind: abilityKind, effect: { kind: "draw-card" } } as never] : [],
   });
   const reasons = (pTags: CardTags, cTags: CardTags, oracle?: string) => directedReasons(
@@ -2298,7 +2298,7 @@ test("a card that only ever exiles an opponent's cannot fire a deck-mate's own e
   const returner: CardTags = {
     oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
     characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 5,
-      power: 4, toughness: 4, token: false, keywords: [] },
+      power: "4", toughness: "4", token: false, keywords: [] },
     abilities: [{
       kind: "triggered", effect: { kind: "graveyard-recursion" },
       trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } },
@@ -2308,7 +2308,7 @@ test("a card that only ever exiles an opponent's cannot fire a deck-mate's own e
   const selfEtb: CardTags = {
     oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
     characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 4,
-      power: 2, toughness: 2, token: false, keywords: [] },
+      power: "2", toughness: "2", token: false, keywords: [] },
     abilities: [{
       kind: "triggered", effect: { kind: "forced-sacrifice" },
       trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature", self: true } },
@@ -2326,5 +2326,44 @@ test("a card that only ever exiles an opponent's cannot fire a deck-mate's own e
   expect(reasons("{T}: Exile target card from a graveyard. Put each creature card exiled with this "
     + "artifact onto the battlefield under your control.").length).toBe(1);
   // An ordinary reanimator names no exile set at all and is untouched.
+  expect(reasons("Return target creature card from your graveyard to the battlefield.").length).toBe(1);
+});
+
+// PANEL FAMILY C (2026-08-20): a recursion restricted to what the CONSUMER'S OWN earlier action put
+// in the graveyard cannot be enabled by anyone else's fill.
+test("a recursion that returns only what it put there itself is fed by no other card", () => {
+  const filler: CardTags = {
+    oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{
+      kind: "on-cast", effect: { kind: "mill" },
+      emits: [{ verb: "enters-graveyard", subject: { control: "you", token: null, type: "creature" } }],
+    }],
+  };
+  const recursion: CardTags = {
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: [], colors: [], identity: [], cmc: 4,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{
+      kind: "activated",
+      effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
+    }],
+  };
+  const reasons = (oracle: string) => directedReasons(
+    { card: { name: "Filler" } as DeckCard["card"], tags: filler },
+    { card: { name: "Recursion", oracleText: oracle } as DeckCard["card"], tags: recursion }, H,
+  ).filter((r) => r.tag.startsWith("graveyard-recursion:"));
+
+  // Necromantic Selection destroys all creatures and returns one IT killed; Ripples of Undeath mills
+  // three and returns one OF THOSE; Gerrard's Hourglass Pendant returns what hit the graveyard FROM
+  // THE BATTLEFIELD this turn. None of the three can be fed by someone else's mill.
+  expect(reasons("Destroy all creatures, then return a creature card put into a graveyard this way to the battlefield."))
+    .toHaveLength(0);
+  expect(reasons("Mill three cards. Then you may pay {1}. If you do, put a card from among those cards into your hand."))
+    .toHaveLength(0);
+  expect(reasons("Return to the battlefield all creature cards in your graveyard that were put there from the battlefield this turn."))
+    .toHaveLength(0);
+  // An ordinary reanimator names a class and any fill enables it.
   expect(reasons("Return target creature card from your graveyard to the battlefield.").length).toBe(1);
 });
