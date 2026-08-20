@@ -78,9 +78,15 @@ export function CutList({ cutList, slack, trim }:
                       </span>
                     </div>
                     <p className="text-xs text-(--muted)">{t.reasons.join(" \u00b7 ")}</p>
-                    <p className="text-xs text-(--muted)">
-                      <span className="font-medium">keeps it:</span>{" "}
-                      {t.protections.length > 0 ? t.protections.join(" \u00b7 ") : "\u2014 nothing"}
+                    {/* THE KEEP SIDE IS NOT FINE PRINT. A row that says "fills none of the roles"
+                      *  above "its best edge is on your main theme" is arguing with itself, and the
+                      *  second line is the one that decides — so it reads at the page's normal
+                      *  weight with a success-toned label, not as a footnote to the cut. */}
+                    <p className="text-xs">
+                      <span className="font-medium text-(--success)">keeps it:</span>{" "}
+                      <span className={t.protections.length > 0 ? "text-(--foreground)" : "text-(--muted)"}>
+                        {t.protections.length > 0 ? t.protections.join(" \u00b7 ") : "\u2014 nothing"}
+                      </span>
                     </p>
                   </li>
                 ))}

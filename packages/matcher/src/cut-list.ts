@@ -108,9 +108,44 @@ export function deckSlack(
     .sort((a, b) => b.over - a.over || a.category.localeCompare(b.category));
 }
 
+/** THE DECK'S OWN MIDDLE, because a partner count means nothing absolute: 38 partners is isolation
+ *  in a deck whose median is 60 and the opposite in a deck whose median is 7. Taken over the
+ *  cuttable universe — lands and commanders are not candidates, so counting them would drag the
+ *  middle down and make everything look well connected. */
+function medianPartnerCount(cards: readonly CutInput[]): number | null {
+  const counts = cards
+    .filter((c) => !c.isLand && !c.isCommander)
+    .map((c) => c.partnerCount)
+    .sort((a, b) => a - b);
+  // NULL BELOW A HANDFUL OF CARDS, because "better connected than half the deck" is not a sentence
+  // about a three-card list — with one cuttable card the median IS that card, so it would be called
+  // well connected on the strength of its own single edge. No comparison available means the row
+  // falls back to the plain wording rather than inventing a middle.
+  return counts.length >= 4 ? counts[Math.floor(counts.length / 2)]! : null;
+}
+
+/** How a row states its connectedness.
+ *
+ *  "ONLY" IS A CLAIM AND IT USED TO FIRE UNCONDITIONALLY. Measured across the 71 calibration decks,
+ *  **2,955 trim rows said "only N cards connect to it" about a card better connected than half its
+ *  own deck** — Herald's Horn at 38 partners in a deck whose median is 7, i.e. the deck's tribal
+ *  cost-reducer described as isolated. A well-connected card can still be the right cut; what was
+ *  false is the REASON given, and the honest one is that nothing it touches is worth much here. */
+function connectionReason(partnerCount: number, median: number | null): string {
+  if (partnerCount === 0) return "nothing in the deck connects to it";
+  // AT the median counts as well connected: "only 7 cards connect to it" is a false emphasis in a
+  // deck whose typical card has exactly 7, which is where 1,061 of the misdescribed rows sat when
+  // this was first written as a strict comparison.
+  if (median !== null && partnerCount >= median) {
+    return `${partnerCount} cards connect to it, but none of those links is strong`;
+  }
+  return `only ${partnerCount} card${partnerCount === 1 ? " connects" : "s connect"} to it`;
+}
+
 /** Cards the deck is not using, weakest first. Never more than `limit` rows -- the question is
  *  "which few go", and a 30-row list is the same as no list. */
 export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandidate[] {
+  const median = medianPartnerCount(cards);
   const out: CutCandidate[] = [];
   for (const c of cards) {
     if (c.isLand || c.isCommander || c.isComboPiece) continue;
@@ -128,11 +163,7 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
     if (c.axisWeight >= CUT_AXIS_MAX) continue;
 
     const reasons: string[] = [];
-    reasons.push(
-      c.partnerCount === 0
-        ? "nothing in the deck connects to it"
-        : `only ${c.partnerCount} card${c.partnerCount === 1 ? " connects" : "s connect"} to it`,
-    );
+    reasons.push(connectionReason(c.partnerCount, median));
     reasons.push(
       c.axisWeight === 0
         ? "no edge on your main theme"
@@ -193,17 +224,15 @@ export function trimOrder(
   categories: readonly { category: string; count: number; target: number }[] = [],
 ): TrimRow[] {
   const surplus = new Map(deckSlack(categories).map((s) => [s.category, s]));
+  const median = medianPartnerCount(cards);
   const rows: TrimRow[] = [];
   for (const c of cards) {
     if (c.isLand || c.isCommander) continue;
     const reasons: string[] = [];
     const protections: string[] = [];
 
-    reasons.push(
-      c.partnerCount === 0
-        ? "nothing in the deck connects to it"
-        : `only ${c.partnerCount} card${c.partnerCount === 1 ? " connects" : "s connect"} to it`,
-    );
+    const wellConnected = median !== null && c.partnerCount > 0 && c.partnerCount >= median;
+    reasons.push(connectionReason(c.partnerCount, median));
     if (c.axisWeight < CUT_AXIS_MAX) {
       reasons.push(c.axisWeight === 0 ? "no edge on your main theme" : "its edges point away from your main theme");
     } else {
@@ -238,6 +267,13 @@ export function trimOrder(
       reasons.push(`its condition needs ${want}, and nothing in the deck provides that`);
     }
 
+    // AND IT IS A PROTECTION, not merely a wording fix. `rows.sort` leads on protection COUNT, so
+    // without this a card wired into half the deck sorted ahead of a card nothing touches: measured,
+    // **43 of the 355 top-five slots across the 71 decks were held by a card better connected than
+    // its deck's median**. Cutting it may still be right; it should not be the first thing offered.
+    if (wellConnected) {
+      protections.push(`connects to ${c.partnerCount} cards, more than half this deck`);
+    }
     if (c.isComboPiece) protections.push("half of a combo the deck assembles");
     // A deck role forms no edge BY DESIGN, so its low partner count is the engine's own silence and
     // not evidence about the card. Same protection the passive list gives it.

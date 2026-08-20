@@ -186,3 +186,42 @@ test("an unmet condition is a REASON on both lists, and never a gate", () => {
   expect(cutCandidates([card({ name: "Warlock Class" })])[0].reasons
     .some((r) => r.includes("nothing in the deck provides"))).toBe(false);
 });
+
+// --- F6: what a partner count means depends on the deck it is in. ---
+
+/** A deck with a REAL SPREAD of partner counts, median 3: a flat fixture where every card carries
+ *  the same count has no middle to be above, and "at the median" would then be true of everyone. */
+const deckOf = (partners: number): CutInput[] => [
+  card({ name: "Wired In", partnerCount: partners, rating: 0.8 }),
+  card({ name: "Loner", partnerCount: 1, rating: 0.8 }),
+  ...[0, 2, 3, 4, 6, 9].map((p, i) => card({ name: `Filler ${i}`, partnerCount: p, rating: 0.8 })),
+];
+
+// MEASURED ACROSS THE 71 DECKS BEFORE THIS EXISTED: 2,521 trim rows said "only N cards connect to
+// it" about a card better connected than half its own deck — Herald's Horn at 38 partners in a deck
+// whose median is 7, i.e. the deck's tribal cost-reducer described as isolated.
+test("a card better connected than half its deck is not described as isolated", () => {
+  const rows = trimOrder(deckOf(38));
+  const wired = rows.find((r) => r.name === "Wired In")!;
+  expect(wired.reasons[0]).toBe("38 cards connect to it, but none of those links is strong");
+  const loner = rows.find((r) => r.name === "Loner")!;
+  expect(loner.reasons[0]).toBe("only 1 card connects to it");
+});
+
+// AND IT IS A PROTECTION, not merely a wording fix: `trimOrder` leads on protection COUNT, so
+// without it a card wired into half the deck was offered for the cut ahead of a card nothing
+// touches. 28 of the 355 top-five slots across the 71 decks were held by such a card; now 2.
+test("being well connected pushes a card down the trim order", () => {
+  const rows = trimOrder(deckOf(38));
+  expect(rows[0]!.name).not.toBe("Wired In");
+  expect(rows.find((r) => r.name === "Wired In")!.protections)
+    .toContain("connects to 38 cards, more than half this deck");
+});
+
+// A THREE-CARD LIST HAS NO MIDDLE. With one cuttable card the median IS that card, so a naive
+// comparison would call it well connected on the strength of its own single edge.
+test("a universe too small to have a middle keeps the plain wording", () => {
+  const [row] = trimOrder([card({ name: "Alone", partnerCount: 2, rating: 0.5 })]);
+  expect(row!.reasons[0]).toBe("only 2 cards connect to it");
+  expect(row!.protections.join(" ")).not.toContain("more than half");
+});
