@@ -1,6 +1,6 @@
 import { dedupeReasonsByText, type DeckReport } from "@mtg/engine";
 
-export function formatReport(report: DeckReport): string {
+export function formatReport(report: DeckReport, trim = 0): string {
   const lines: string[] = [];
 
   lines.push("=== Commanders ===");
@@ -76,6 +76,19 @@ export function formatReport(report: DeckReport): string {
       // when one costs 9 and the other 1. It orders the list and never admits a row to it.
       lines.push(`  [${c.rating.toFixed(1)}] ${c.name} (${c.manaValue} mana)`);
       lines.push(`      ${c.reasons.join("; ")}`);
+    }
+  }
+  // TRIM MODE — printed only when asked for, because it always has an answer and an unasked-for
+  // "here are 5 cards to cut" is a verdict. `--trim N`.
+  if (trim > 0 && report.trim && report.trim.length > 0) {
+    lines.push("");
+    lines.push(`=== Trim ${trim} ===`);
+    lines.push("  Weakest first, with what argues each one STAYS. Rows tied on every measured axis are");
+    lines.push("  ordered by name: nothing here ranks two ramp cards against each other.");
+    for (const t of report.trim.slice(0, trim)) {
+      lines.push(`  [${t.rating.toFixed(1)}] ${t.name} (${t.manaValue} mana)`);
+      lines.push(`      why: ${t.reasons.join("; ")}`);
+      lines.push(`      keeps it: ${t.protections.length > 0 ? t.protections.join("; ") : "\u2014 nothing"}`);
     }
   }
   if (report.slack && report.slack.length > 0) {

@@ -30,7 +30,7 @@ import { magnitudeMultipliers } from "./magnitude.js";
 import { buildSupplyDemand } from "./supply-demand.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
-import { cutCandidates, deckSlack } from "./cut-list.js";
+import { cutCandidates, deckSlack, trimOrder } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
 import { deckCastability, type CardCastability } from "./castability.js";
 import { loadThemeStats } from "./theme-stats.js";
@@ -639,21 +639,25 @@ export function analyzeDeckStructured(
       .map((dc) => dc.card.name),
   );
   const manaValueByName = new Map(resolved.map((dc) => [dc.card.name, dc.card.manaValue]));
-  const cutList = cutCandidates(
-    ratedCards.map((c) => ({
-      name: c.name,
-      rating: c.synergyRating ?? 0,
-      axisWeight: c.axisWeight ?? 0,
-      partnerCount: c.partnerCount,
-      manaValue: manaValueByName.get(c.name) ?? 0,
-      roles: c.roles ?? [],
-      isLand: !(nonlandByName.get(c.name) ?? true),
-      isCommander: c.isCommander,
-      isComboPiece: comboCardNames.has(c.name),
-      fillsDeckRole: deckRoleCards.has(c.name),
-    })),
-  );
+  const cutInputs = ratedCards.map((c) => ({
+    name: c.name,
+    rating: c.synergyRating ?? 0,
+    axisWeight: c.axisWeight ?? 0,
+    partnerCount: c.partnerCount,
+    manaValue: manaValueByName.get(c.name) ?? 0,
+    roles: c.roles ?? [],
+    isLand: !(nonlandByName.get(c.name) ?? true),
+    isCommander: c.isCommander,
+    isComboPiece: comboCardNames.has(c.name),
+    fillsDeckRole: deckRoleCards.has(c.name),
+  }));
+  const cutList = cutCandidates(cutInputs);
   const slack = deckSlack(buildCategories);
+  // TRIM MODE: the same inputs asked a different question — "I must cut five" rather than "is
+  // anything here doing nothing". The whole ranked order ships, not a slice, so a caller picks its
+  // own N without a round trip; see `trimOrder` for why a category surplus counts here and does not
+  // in `cutCandidates`.
+  const trim = trimOrder(cutInputs, buildCategories);
 
   // Theme membership: same axis ordering the zones will read, with statics dropped (an anthem is a
   // payoff of the theme supplying its subject, never a theme itself).
@@ -697,6 +701,7 @@ export function analyzeDeckStructured(
     suggestions,
     cutList,
     slack,
+    trim,
     // No turn override: the deck's own clock sets the horizon. Passing a 5 here is what kept the
     // whole clock-pricing change from reaching the report at all -- every unit test passed because
     // they call computeDeckMath directly, and only a live deck showed `turnSource: "override"`.

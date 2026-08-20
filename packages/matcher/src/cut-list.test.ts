@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { cutCandidates, deckSlack, CUT_RATING_MAX, CUT_AXIS_MAX, type CutInput } from "./cut-list.js";
+import { cutCandidates, deckSlack, trimOrder, CUT_RATING_MAX, CUT_AXIS_MAX, type CutInput } from "./cut-list.js";
 
 const card = (over: Partial<CutInput> & { name: string }): CutInput => ({
   rating: 0, axisWeight: 0, partnerCount: 0, manaValue: 0, roles: [], isLand: false,
@@ -103,4 +103,57 @@ test("a costly card the deck DOES use is still not a candidate", () => {
     roles: [], fillsDeckRole: false, isLand: false, isCommander: false, isComboPiece: false,
   }]);
   expect(rows).toEqual([]);
+});
+
+// TRIM MODE. `cutCandidates` filters and is EMPTY on 18 of the 71 calibration decks; "I'm five over"
+// still needs five rows there, which is the whole reason this exists.
+test("trim always has an Nth row, where the passive cut list has none at all", () => {
+  const tight = [
+    card({ name: "Engine", rating: 4, axisWeight: 0.9, partnerCount: 20 }),
+    card({ name: "Rock", rating: 0, roles: ["ramp"] }),
+    card({ name: "Wheel", rating: 2, axisWeight: 0.6, partnerCount: 9, roles: ["draw"] }),
+  ];
+  expect(cutCandidates(tight)).toEqual([]);
+  expect(trimOrder(tight, CATS)).toHaveLength(3);
+});
+
+// THE SOL RING REGRESSION, one layer up. The first cut of `trimOrder` dropped the protection from a
+// role in an over-target category, which put `burakos-crashing-the-party`'s ENTIRE RAMP PACKAGE —
+// Sol Ring included — in its top five, all tied at 0.0 and ordered by mana value. A role protects
+// whatever the category count says; the surplus rides on the protection TEXT.
+test("an over-target role still protects, and sorts behind a card with no role at all", () => {
+  const rows = trimOrder([
+    card({ name: "Sol Ring", roles: ["ramp"] }),
+    card({ name: "Random Card" }),
+  ], CATS);
+  expect(rows.map((r) => r.name)).toEqual(["Random Card", "Sol Ring"]);
+  expect(rows[0].protections).toEqual([]);
+  expect(rows[1].protections[0]).toContain("ramp is at 14 against a target of 10");
+});
+
+test("a role in a category still under target says nothing about room", () => {
+  const [row] = trimOrder([card({ name: "Wrath", roles: ["boardWipe"] })], CATS);
+  expect(row.protections).toEqual(["fills boardWipe"]);
+  expect(row.reasons.join(" ")).not.toContain("room");
+});
+
+test("trim protects a combo piece and a deck-role card, which the cut list drops entirely", () => {
+  const rows = trimOrder([
+    card({ name: "Half A Combo", isComboPiece: true }),
+    card({ name: "Jet Medallion", fillsDeckRole: true }),
+  ], CATS);
+  expect(cutCandidates(rows.map((r) => card({ name: r.name })))).toHaveLength(2); // both cuttable when stripped
+  expect(rows.find((r) => r.name === "Half A Combo")!.protections)
+    .toEqual(["half of a combo the deck assembles"]);
+  expect(rows.find((r) => r.name === "Jet Medallion")!.protections[0])
+    .toContain("without forming edges");
+});
+
+test("lands and commanders are outside the trim universe entirely", () => {
+  const rows = trimOrder([
+    card({ name: "Wastes", isLand: true }),
+    card({ name: "The Boss", isCommander: true }),
+    card({ name: "Cuttable" }),
+  ], CATS);
+  expect(rows.map((r) => r.name)).toEqual(["Cuttable"]);
 });

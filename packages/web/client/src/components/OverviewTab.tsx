@@ -34,7 +34,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
       <div className="columns-1 xl:columns-2 gap-6 [&>*]:break-inside-avoid [&>*]:mb-6">
         <BuildBenchmarks categories={data.report.buildCategories} deckMath={data.report.deckMath} />
         <SuggestionsList suggestions={data.report.suggestions} />
-        <CutList cutList={data.report.cutList} slack={data.report.slack} />
+        <CutList cutList={data.report.cutList} slack={data.report.slack} trim={data.report.trim} />
         <HighSynergyCards cards={data.report.cards} />
         <StatTiles avgManaValue={data.report.avgManaValue} />
         <ManaCurveChart curve={data.report.manaCurve} />

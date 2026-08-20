@@ -20,13 +20,13 @@ interface DeckFile {
   commanders?: string[];
 }
 
-function reportFromJson(path: string): string {
+function reportFromJson(path: string, trim: number): string {
   const deck = JSON.parse(readFileSync(path, "utf8")) as DeckFile;
   const combos = deck.combos ? new ComboIndex(deck.combos) : undefined;
-  return formatReport(analyzeDeck(deck.cards, combos, deck.commanders));
+  return formatReport(analyzeDeck(deck.cards, combos, deck.commanders), trim);
 }
 
-async function reportFromDecklist(input: string): Promise<string> {
+async function reportFromDecklist(input: string, trim: number): Promise<string> {
   let commanderNamesTyped: string[] = [];
   let deckNames: string[];
   if (input.includes("moxfield.com")) {
@@ -58,6 +58,7 @@ async function reportFromDecklist(input: string): Promise<string> {
     const tokenTags = await loadTokenTags(store.db);
     return formatReport(
       analyzeDeckStructured(deckCards, commanderNames, undefined, undefined, new ComboIndex(combos), undefined, tokenTags),
+      trim,
     );
   } finally {
     await store.close();
@@ -66,13 +67,17 @@ async function reportFromDecklist(input: string): Promise<string> {
 
 async function main(): Promise<void> {
   const input = process.argv[2];
+  // `--trim N`: "I'm N over, what goes?" Off by default — the list always has an answer, and an
+  // unasked-for one reads as a verdict.
+  const trimArg = process.argv.indexOf("--trim");
+  const trim = trimArg > 0 ? Number(process.argv[trimArg + 1] ?? 0) : 0;
   if (!input) {
-    console.error("Usage: tsx src/main.ts <deck.json | deck.txt | moxfield-url>");
+    console.error("Usage: tsx src/main.ts <deck.json | deck.txt | moxfield-url> [--trim N]");
     process.exit(1);
   }
   const report = input.endsWith(".json")
-    ? reportFromJson(input)
-    : await reportFromDecklist(input);
+    ? reportFromJson(input, trim)
+    : await reportFromDecklist(input, trim);
   console.log(report);
 }
 

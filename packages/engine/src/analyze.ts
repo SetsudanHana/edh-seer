@@ -296,6 +296,10 @@ export interface DeckReport {
    *  build layer counts a category's members without ranking them. Matcher-only; structural here
    *  for the same reason `buildCategories` is (this package must not depend on @mtg/matcher). */
   cutList?: { name: string; rating: number; partners: number; manaValue: number; reasons: string[] }[];
+  /** TRIM MODE, the whole ranked order: every cuttable card weakest-first, each row carrying what
+   *  argues it STAYS. `cutList` filters and can be empty on a tight deck; this always has an Nth
+   *  row, because "I'm five over" is a question that must be answered. */
+  trim?: { name: string; rating: number; partners: number; manaValue: number; reasons: string[]; protections: string[] }[];
   /** Build categories the deck carries MORE of than its target, biggest surplus first — where the
    *  deck has room. Names the CATEGORY and never a member: nothing in this engine ranks two ramp
    *  cards against each other, which is exactly why the cut list protects any card with a role. */

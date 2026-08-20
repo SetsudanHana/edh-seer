@@ -10,6 +10,7 @@ import { ManaCurveChart } from "./ManaCurveChart.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CardList } from "./CardList.js";
+import { CutList } from "./CutList.js";
 import { ReportTabs } from "./ReportTabs.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { HeadlineScores } from "./HeadlineScores.js";
@@ -722,4 +723,36 @@ test("BuildBenchmarks states what a random card off the library is worth, and st
   // Most decks run no such card, and an empty heading is worse than no heading.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   expect(screen.queryByText(/off the top/i)).not.toBeInTheDocument();
+});
+
+// TRIM MODE is opt-in and client-side: the server ships the whole ranked order and N is a slice, so
+// changing it must not need a round trip. It stays behind a click because a list that ALWAYS has an
+// answer reads as a verdict when nobody asked for one.
+const TRIM = [
+  { name: "Dead Weight", rating: 0, partners: 0, manaValue: 2, reasons: ["nothing in the deck connects to it"], protections: [] },
+  { name: "Sol Ring", rating: 0, partners: 0, manaValue: 1, reasons: ["nothing in the deck connects to it"],
+    protections: ["fills ramp — ramp is at 16 against a target of 10, so there is room here"] },
+  { name: "Third Card", rating: 0.4, partners: 1, manaValue: 3, reasons: ["only 1 card connects to it"], protections: ["fills draw"] },
+];
+
+test("trim rows stay hidden until asked for, then show N with what keeps each card", async () => {
+  render(<CutList cutList={[]} slack={[]} trim={TRIM} />);
+  expect(screen.queryByText("Dead Weight")).toBeNull();
+
+  await userEvent.click(screen.getByRole("button", { name: "3" }));
+  expect(screen.getByText("Dead Weight")).toBeTruthy();
+  expect(screen.getByText("Third Card")).toBeTruthy();
+  // The protection is rendered, not just the weakness — that is the whole difference from the cut
+  // list, and it is what stops "cut Sol Ring" reading as a verdict.
+  expect(screen.getByText(/ramp is at 16 against a target of 10/)).toBeTruthy();
+  expect(screen.getByText(/nothing here ranks two ramp cards against each other/)).toBeTruthy();
+
+  // Clicking the active count closes it again.
+  await userEvent.click(screen.getByRole("button", { name: "3" }));
+  expect(screen.queryByText("Dead Weight")).toBeNull();
+});
+
+test("trim renders even when the passive cut list is empty — the case it exists for", () => {
+  render(<CutList cutList={[]} slack={[]} trim={TRIM} />);
+  expect(screen.getByText(/Over on cards\?/)).toBeTruthy();
 });

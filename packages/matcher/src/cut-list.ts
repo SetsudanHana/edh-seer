@@ -132,3 +132,97 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
     || b.manaValue - a.manaValue || a.name.localeCompare(b.name));
   return out.slice(0, limit);
 }
+
+
+/** ONE ROW OF TRIM MODE. Same weakness clauses the cut list prints, plus what argues the card
+ *  STAYS — so the reader is handed a trade rather than a verdict. */
+export interface TrimRow {
+  name: string;
+  rating: number;
+  partners: number;
+  manaValue: number;
+  /** Why it is weak, in plain words. Same clauses `cutCandidates` writes, plus the surplus note. */
+  reasons: string[];
+  /** What argues AGAINST cutting it. EMPTY on a card the passive cut list would already name. */
+  protections: string[];
+}
+
+/** TRIM MODE — "I'm 5 over, what goes?"
+ *
+ *  `cutCandidates` answers a different question: it FILTERS, so it returns 0-12 rows and is empty on
+ *  a tight deck, which is the right answer to "is anything here doing nothing" and no answer at all
+ *  to "I must cut five". This ranks EVERY cuttable card weakest-first and always has an Nth row.
+ *
+ *  **THE SURPLUS IS USED HERE AND REFUSED THERE, deliberately.** The passive list will not let a
+ *  category surplus make a member a candidate — the Sol Ring lesson: nothing in this repo ranks two
+ *  ramp cards against each other, so "your ramp is over target" cannot become "cut this rock". But a
+ *  caller who has ASKED for five rows is getting five, and refusing the surplus would rank a
+ *  surplus-category ramp rock exactly level with an under-target draw spell, which is worse advice
+ *  than saying so. A role in an over-target category therefore does not PROTECT — it is reported as
+ *  a reason, naming the category and its counts — while the order among cards sharing that category
+ *  is still decided by rating, partners and cost, never by any judgement of card quality. So this
+ *  never says "cut Sol Ring rather than Arcane Signet"; it says "these are your least-connected
+ *  cards and here is what each one is doing".
+ *
+ *  Lands and commanders are out of the universe entirely: a land is `land-count.ts`'s question and a
+ *  commander is not cuttable. Everything else appears, protections attached. */
+export function trimOrder(
+  cards: readonly CutInput[],
+  categories: readonly { category: string; count: number; target: number }[] = [],
+): TrimRow[] {
+  const surplus = new Map(deckSlack(categories).map((s) => [s.category, s]));
+  const rows: TrimRow[] = [];
+  for (const c of cards) {
+    if (c.isLand || c.isCommander) continue;
+    const reasons: string[] = [];
+    const protections: string[] = [];
+
+    reasons.push(
+      c.partnerCount === 0
+        ? "nothing in the deck connects to it"
+        : `only ${c.partnerCount} card${c.partnerCount === 1 ? " connects" : "s connect"} to it`,
+    );
+    if (c.axisWeight < CUT_AXIS_MAX) {
+      reasons.push(c.axisWeight === 0 ? "no edge on your main theme" : "its edges point away from your main theme");
+    } else {
+      protections.push("its best edge is on your main theme");
+    }
+    if (c.rating > CUT_RATING_MAX) protections.push(`rates ${c.rating.toFixed(1)} of 5 in this deck`);
+
+    // A ROLE ALWAYS PROTECTS, and the FIRST CUT OF THIS FUNCTION PROVED WHY — measured, not argued.
+    // Letting an over-target category strip the protection made `burakos-crashing-the-party`'s top
+    // five rows its ENTIRE RAMP PACKAGE — Honor-Worn Shaku, Arcane Signet, Dark Ritual, Sol Ring,
+    // Springleaf Drum — all rated 0.0, all tied, their order decided by mana value. That is the Sol
+    // Ring failure this module's header already records, rebuilt one layer up: the deck really is
+    // ramp 16/10, and "cut five ramp cards" is arithmetic the engine can defend, but "cut THESE
+    // five" is an attribution it cannot, because nothing here ranks two ramp cards against each
+    // other.
+    //
+    // So the surplus rides on the protection TEXT instead of removing the protection. A role-filler
+    // still sorts behind every card with no role at all, and the reader is told where the deck has
+    // room — which is the same sentence `slack` prints at deck level, attached to a row rather than
+    // substituted for one.
+    const over = c.roles.filter((r) => surplus.has(r));
+    if (c.roles.length > 0) {
+      const room = over
+        .map((r) => { const s = surplus.get(r)!; return `${r} is at ${s.count} against a target of ${s.target}`; })
+        .join(", ");
+      protections.push(room ? `fills ${c.roles.join(", ")} — ${room}, so there is room here` : `fills ${c.roles.join(", ")}`);
+    }
+    if (c.roles.length === 0) reasons.push("fills none of the functional roles the deck is measured on");
+
+    if (c.isComboPiece) protections.push("half of a combo the deck assembles");
+    // A deck role forms no edge BY DESIGN, so its low partner count is the engine's own silence and
+    // not evidence about the card. Same protection the passive list gives it.
+    if (c.fillsDeckRole) protections.push("does its work without forming edges (cost reduction, tax and friends)");
+
+    rows.push({ name: c.name, rating: c.rating, partners: c.partnerCount, manaValue: c.manaValue, reasons, protections });
+  }
+  // Least protected first, then the same weakest-first key the cut list uses. Name last, so the
+  // order is stable across runs.
+  rows.sort((a, b) =>
+    a.protections.length - b.protections.length
+    || a.rating - b.rating || a.partners - b.partners
+    || b.manaValue - a.manaValue || a.name.localeCompare(b.name));
+  return rows;
+}
