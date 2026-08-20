@@ -7,9 +7,9 @@
  *  region of the population this project actually knows something about.
  *
  *  Usage: tsx src/bin/panel-build.ts */
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { mergeVerdicts, type PanelVerdict } from "./panel-core.js";
+import { claimKey, mergeVerdicts, type PanelVerdict } from "./panel-core.js";
 
 const DRAWS = ["2026-08-06", "2026-08-07", "2026-08-08"];
 const OUT = "docs/measurements/panel";
@@ -74,6 +74,33 @@ for (const f of readdirSync(OUT).filter((n) => n.startsWith("verdicts-") && n.en
   const paid = readJsonl<PanelVerdict>(join(OUT, f));
   verdicts = mergeVerdicts(verdicts, paid);
   console.log(`  ${f}: ${paid.length} verdicts folded in`);
+}
+
+// THE EXISTING CACHE IS ITSELF A SOURCE, and this is the THIRD time its absence has cost verdicts.
+// The comment above says a rebuild dropped them "twice"; on 2026-08-20 a rebuild run to fold in ten
+// re-judged claims took judging debt 0 -> 26, because **28 unique verdicts exist ONLY in the
+// generated cache** — judgements made in-session and paid against worksheets that were never kept
+// as their own `verdicts-*.jsonl`.
+//
+// (The raw line counts looked far worse, 1,689 -> 1,084, and that number is MOSTLY DUPLICATE LINES
+// COLLAPSING: the cache holds 1,689 lines for 1,112 distinct claims. Count unique claims before
+// panicking, and before reporting a loss.)
+//
+// Folding the cache in as the FIRST source makes a rebuild monotonic — it can add and it can
+// overwrite, but it can no longer forget. Measured after the fix: a rebuild loses ZERO.
+const previous = existsSync(join(OUT, "verdicts.jsonl")) ? readJsonl<PanelVerdict>(join(OUT, "verdicts.jsonl")) : [];
+if (previous.length > 0) {
+  verdicts = mergeVerdicts(previous, verdicts);
+  console.log(`  existing cache: ${previous.length} rows folded in (a rebuild may add, never forget)`);
+}
+// COUNTED ON DISTINCT CLAIMS, never on rows: the cache is de-duplicated by this rebuild, so a
+// row-count comparison fires on every legitimate run and would make the guard noise.
+const distinctClaims = (vs: readonly PanelVerdict[]): number =>
+  new Set(vs.map((v) => claimKey(v.producer, v.consumer, v.tag))).size;
+if (distinctClaims(verdicts) < distinctClaims(previous)) {
+  console.error(`REFUSING TO WRITE: rebuild produced ${distinctClaims(verdicts)} distinct claims, `
+    + `fewer than the ${distinctClaims(previous)} already cached. A verdict exists that no source file reproduces.`);
+  process.exit(1);
 }
 
 mkdirSync(OUT, { recursive: true });

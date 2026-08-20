@@ -26,6 +26,8 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
 import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.js";
+import { renderSheet } from "./rejudge-sheet-html.js";
+import { claimFor } from "./precision-core.js";
 
 const arg = (f: string): string | undefined => {
   const i = process.argv.indexOf(f);
@@ -104,9 +106,33 @@ for (const [i, r] of rows.entries()) {
     `  > ${String(card.get(r.consumer)?.oracleText ?? "").replace(/\n/g, "\n  > ")}`, "");
 }
 writeFileSync(`${OUT}.md`, `${md.join("\n")}\n`);
+
+// AND AN INTERACTIVE SHEET, because judging 10 claims in a text file means holding the verdict
+// vocabulary and the JSONL shape in your head while reading oracle text. The page carries the same
+// facts, one claim at a time, and writes the JSONL itself. Self-contained: no fonts, no scripts, no
+// styles fetched from anywhere, so it renders under a strict CSP.
+const payload = rows.map((r) => {
+  const c = cache.get(`${r.producer}|${r.consumer}|${r.tag}`)!;
+  const facts = (n: string) => {
+    const d = card.get(n);
+    return { name: n, cost: d?.manaCost ?? "", typeLine: d?.typeLine ?? "", colors: d?.colors ?? [], oracle: d?.oracleText ?? "" };
+  };
+  return {
+    producer: facts(r.producer), consumer: facts(r.consumer), tag: r.tag,
+    // THE SENTENCE BEING JUDGED. The first cut of the sheet did not show it at all — the cached note
+    // sat where the claim belonged, so the last thing read before clicking was Claude's OLD
+    // reasoning. `Calibrate.tsx` had the answer already: it hides the engine's reasons until asked,
+    // because seeing what the engine believes anchors the verdict to it.
+    claim: claimFor(r.tag, r.producer, r.consumer),
+    decks: [...r.decks], cachedVerdict: c.verdict, cause: c.cause ?? "",
+    judgedBy: (c.note ?? "").startsWith("USER VERDICT") ? "owner" : "Claude",
+    note: (c.note ?? "").replace(/^USER VERDICT[^.]*\.\s*/, "").trim(),
+  };
+});
+writeFileSync(`${OUT}.html`, renderSheet(payload, TAG ?? "all tags", WANT));
+console.log(`${rows.length} rows -> ${OUT}.md, ${OUT}.jsonl and ${OUT}.html`);
 writeFileSync(`${OUT}.jsonl`, `${rows.map((r) => JSON.stringify({
   producer: r.producer, consumer: r.consumer, tag: r.tag,
   verdict: "", cause: "", note: "USER VERDICT (cost-reduction re-judge, 2026-08-20). ",
 })).join("\n")}\n`);
-console.log(`${rows.length} rows -> ${OUT}.md and ${OUT}.jsonl`);
 process.exit(0);
