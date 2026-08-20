@@ -386,7 +386,7 @@ describe("the paint mode", () => {
 });
 
 describe("the paint legend", () => {
-  test("names every value in the deck with how many copies carry it", () => {
+  test("names every value in the deck with how many copies carry it", async () => {
     makeContextSpy();
     const graph = graphOf([
       card({ id: "Mountain", types: ["land"], copies: 24 }),
@@ -394,9 +394,13 @@ describe("the paint legend", () => {
     ]);
     render(<GraphView graph={graph} report={SAMPLE.report} />);
     const legend = screen.getByTestId("paint-legend");
-    expect(legend).toHaveTextContent("land");
-    expect(legend).toHaveTextContent("24");
     expect(legend).toHaveTextContent("creature");
+    // LANDS ARE OFF BY DEFAULT: 37 of the review deck's 101 nodes are lands, nearly all edgeless,
+    // and the board's own caption says position means synergy — which is false of them.
+    expect(legend).not.toHaveTextContent("land");
+    await userEvent.click(screen.getByRole("button", { name: /^lands \(1\)/ }));
+    expect(screen.getByTestId("paint-legend")).toHaveTextContent("land");
+    expect(screen.getByTestId("paint-legend")).toHaveTextContent("24");
   });
 
   test("relabels itself when the paint mode changes", () => {
@@ -575,7 +579,17 @@ describe("fit to view", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
     } as DOMRect);
-    const { canvas, tick } = frames(sorinFixture.graph as CardGraph);
+    // THE 36 ORPHANS ARE RETYPED, NOT REMOVED. This test reproduces a measurement taken on the whole
+    // 84-card cloud, where those orphans are what crushed the connected cluster into ~15% of the
+    // frame — and lands are hidden by default now, which would quietly turn this into a 48-node
+    // board and stop pinning the defect. Retyping keeps every node, its edges and its orphanhood,
+    // and takes the land filter out of the question.
+    const cloud = {
+      ...(sorinFixture.graph as CardGraph),
+      nodes: (sorinFixture.graph as CardGraph).nodes.map((n) =>
+        n.types.includes("land") ? { ...n, types: ["artifact"] } : n),
+    };
+    const { canvas, tick } = frames(cloud);
     // FIT_SETTLE_ALPHA (GraphView.tsx) sits just past 800 ticks under the shipped ALPHA_DECAY; 1000
     // clears it with margin rather than chasing the exact crossing point.
     tick(1000);
@@ -865,7 +879,9 @@ test("a multi-copy card in card mode stacks rectangles, not circles", () => {
 });
 
 test("a card in card mode shows its paint hues as bars, not rim arcs", () => {
-  const calls = cardModeFrame(graphOf([card({ id: "Bojuka Bog", types: ["land", "creature"] })]));
+  // An artifact creature, not the land it used to be: lands are hidden by default now, and this
+  // test is about how TWO hues paint on one card, not about which types they are.
+  const calls = cardModeFrame(graphOf([card({ id: "Sarcomancy", types: ["artifact", "creature"] })]));
   // Structural, not a literal-string match against draw()'s canvas-wide background wipe: a paint
   // bar is the only fillRect whose height is BAR_H (3) -- a module-private constant, so its value
   // is repeated here. The wipe and the art-loading placeholder both have some other height.

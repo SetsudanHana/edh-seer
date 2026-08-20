@@ -9,6 +9,8 @@ import { CardList } from "./CardList.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
 import { GraphView } from "./GraphView.js";
+import { GraphList } from "./GraphList.js";
+import { useIsNarrow } from "../lib/use-narrow.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 
 type TabId = "overview" | "archetypes" | "cards" | "combos" | "graph";
@@ -23,6 +25,9 @@ const TABS: { id: TabId; label: string }[] = [
 
 export function ReportTabs({ data }: { data: AnalyzeResponse }) {
   const [active, setActive] = useState<TabId>("overview");
+  // Under `sm`, the Graph tab ships the graph's DATA as a list instead of its LAYOUT as a canvas —
+  // see `GraphList` for why the board is the part that fails at that width.
+  const narrow = useIsNarrow();
   // THE ART LOADER OUTLIVES THE GRAPH TAB, and that is the whole point of it living here.
   //
   // `<GraphView>` is mounted by `active === "graph"` below, so nothing requested a single image
@@ -104,8 +109,9 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
         {active === "archetypes" && <ArchetypeBoard strategies={data.report.strategies} archetypes={data.report.archetypes} />}
         {active === "cards" && <CardList cards={data.report.cards} />}
         {active === "combos" && <ComboList combos={data.report.combos} />}
-        {active === "graph"
-          && <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />}
+        {active === "graph" && (narrow
+          ? <GraphList graph={data.graph} />
+          : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />)}
       </div>
     </div>
     </CardDrawerProvider>

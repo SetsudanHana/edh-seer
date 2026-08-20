@@ -52,6 +52,12 @@ const EDGELESS_RADIUS_SCALE = 0.55;
  *  defect (see labels.ts); what got labels deleted was letting the measured box feed back into
  *  layout. It never does here: this constant reaches only the label pass at the end of draw(). */
 const LABEL_PX = 11;
+
+/** Breathing room around a label's COLLISION box, in screen px. `placeLabels` rejects an exact
+ *  overlap, so two names could sit a pixel apart and read as one run of text — which is what the
+ *  central cluster looked like at default zoom. Applied to the collision box only; the text is
+ *  still drawn at the node. */
+const LABEL_GAP = 4;
 /** Below this zoom, most of the board is too small on screen for a name to mean anything -- only a
  *  commander or whatever's under the pointer still gets one. */
 const LABEL_ZOOM_FLOOR = 0.6;
@@ -124,6 +130,12 @@ export function GraphView(
    *  carries them either way -- that isolation IS a deckbuilding signal, which is why this is a view
    *  filter and not an omission upstream. */
   const [showLoneTokens, setShowLoneTokens] = useState(false);
+  // LANDS ARE OFF BY DEFAULT, and it is the caption below that makes this a correctness fix rather
+  // than a preference: "two cards sit close because they do something for each other". 37 of this
+  // deck's 101 nodes are lands, nearly all of them edgeless, so a third of the board was a ring of
+  // discs the sentence is false about — and the cluster the sentence IS about got the middle third
+  // of the canvas to fit in.
+  const [showLands, setShowLands] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<
@@ -223,16 +235,26 @@ export function GraphView(
     );
   }, [fullGraph, report]);
 
+  /** Land nodes, by TYPE LINE rather than by role: `roles` carries the build category, and what
+   *  matters here is what the node IS on the board. */
+  const landNodes = useMemo(
+    () => new Set(fullGraph.nodes.filter((n) => n.types.includes("land")).map((n) => n.id)),
+    [fullGraph],
+  );
+
   /** What the board actually draws. Identical object when nothing is hidden, so the layout effect
-   *  below (which keys on `graph`) does not re-simulate for decks with no lone tokens. */
+   *  below (which keys on `graph`) does not re-simulate for decks with nothing to hide. */
   const graph = useMemo(() => {
-    if (showLoneTokens || loneTokens.size === 0) return fullGraph;
+    const hidden = new Set<string>();
+    if (!showLoneTokens) for (const id of loneTokens) hidden.add(id);
+    if (!showLands) for (const id of landNodes) hidden.add(id);
+    if (hidden.size === 0) return fullGraph;
     return {
       ...fullGraph,
-      nodes: fullGraph.nodes.filter((n) => !loneTokens.has(n.id)),
-      edges: fullGraph.edges.filter((e) => !loneTokens.has(e.from) && !loneTokens.has(e.to)),
+      nodes: fullGraph.nodes.filter((n) => !hidden.has(n.id)),
+      edges: fullGraph.edges.filter((e) => !hidden.has(e.from) && !hidden.has(e.to)),
     };
-  }, [fullGraph, loneTokens, showLoneTokens]);
+  }, [fullGraph, loneTokens, showLoneTokens, landNodes, showLands]);
 
   const paint = PAINT_MODES.find((m) => m.id === paintId) ?? PAINT_MODES[0];
   /** What the current paint mode's colours mean, for this deck. */
@@ -725,7 +747,13 @@ export function GraphView(
           const n = byId.get(id)!;
           const wScreen = ctx.measureText(n.label).width * cam.z;
           const sx = n.x * cam.z + cam.x, sy = n.y * cam.z + cam.y;
-          return { id, x: sx - wScreen / 2, y: sy - nodeRadius() * cam.z - LABEL_PX, w: wScreen, h: LABEL_PX };
+          return {
+            id,
+            x: sx - wScreen / 2 - LABEL_GAP,
+            y: sy - nodeRadius() * cam.z - LABEL_PX - LABEL_GAP,
+            w: wScreen + LABEL_GAP * 2,
+            h: LABEL_PX + LABEL_GAP * 2,
+          };
         });
         // Same dimming rule the node pass uses a few lines up, and the same reason: a search keeps
         // the deck's shape rather than hiding what doesn't match, so a matching card's NAME must
@@ -1107,6 +1135,19 @@ export function GraphView(
 
           {/* Only when the deck HAS one: a chip that can never change anything is worse than no
             *  chip, and most decks make no unpartnered token at all. */}
+          {landNodes.size > 0 ? (
+            <button
+              type="button"
+              aria-pressed={showLands}
+              onClick={() => setShowLands((v) => !v)}
+              className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                showLands ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+              }`}
+            >
+              lands ({landNodes.size})
+            </button>
+          ) : null}
+
           {loneTokens.size > 0 ? (
             <button
               type="button"
@@ -1160,6 +1201,45 @@ export function GraphView(
           ) : null}
         </div>
 
+        {/* What the colours mean. In the DOM rather than on the canvas: a canvas label's measured
+         *  box does not scale with zoom the way the board does, so which labels collided -- and
+         *  therefore where they got pushed -- was zoom-dependent.
+         *
+         *  A ROW ABOVE THE BOARD, NOT AN OVERLAY ON IT: it used to float over the top-left
+         *  corner and cover whatever the force put there — on the review deck, four discs and
+         *  their labels. Above the canvas it costs one line of height and hides nothing.
+         *  `pointer-events-none` stays anyway, because the canvas binds pointermove/wheel
+         *  directly on itself, so a sibling capturing pointer events puts a dead zone on it. No scroll cap: a paint mode's values are
+         *  bounded (8 types, 6 colours, 7 roles, 8 mana-value buckets), unlike the 40-80 rooms
+         *  the subtype preset could produce. */}
+        <div
+          data-testid="paint-legend"
+          role="group"
+          aria-label="Paint legend"
+          className="pointer-events-none flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--muted)"
+        >
+          {(flowLegend ?? legend).map((row) => (
+            <div
+              key={row.value}
+              data-testid="paint-legend-row"
+              data-value={row.value}
+              className="flex items-center gap-1.5"
+            >
+              {/* A graphic object next to text, so it carries the 3:1 floor the palette was
+               *  validated against. The text beside it is the page's normal foreground. */}
+              <span
+                aria-hidden="true"
+                style={{ background: row.hue }}
+                className="inline-block size-2.5 shrink-0 rounded-full"
+              />
+              <span className="whitespace-nowrap">{row.label}</span>
+              {/* Flow rows carry no count -- a direction is a fact about the graph shape, not a
+               *  quantity of cards, unlike a paint-mode value. */}
+              {row.count !== undefined ? <span className="font-mono tabular-nums text-(--muted)">{row.count}</span> : null}
+            </div>
+          ))}
+        </div>
+
         <div
           className={`relative rounded-(--radius) border border-(--border) overflow-hidden ${
             isFullscreen ? "flex-1 min-h-0" : "h-[380px] sm:h-[520px]"
@@ -1170,42 +1250,6 @@ export function GraphView(
             className="block w-full h-full cursor-grab touch-none"
             aria-label={`Deck graph: ${graph.nodes.length} cards, ${graph.edges.length} synergies`}
           />
-          {/* What the colours mean. In the DOM rather than on the canvas: a canvas label's measured
-           *  box does not scale with zoom the way the board does, so which labels collided -- and
-           *  therefore where they got pushed -- was zoom-dependent.
-           *
-           *  `pointer-events-none` because the canvas binds pointermove/wheel directly on itself
-           *  (not delegated from the wrapper), so a sibling that captured pointer events would put
-           *  a dead zone over the board wherever it sits. No scroll cap: a paint mode's values are
-           *  bounded (8 types, 6 colours, 7 roles, 8 mana-value buckets), unlike the 40-80 rooms
-           *  the subtype preset could produce. */}
-          <div
-            data-testid="paint-legend"
-            role="group"
-            aria-label="Paint legend"
-            className="pointer-events-none absolute left-2 top-2 rounded-(--radius) border border-(--border) bg-(--background)/90 px-2 py-1 text-xs"
-          >
-            {(flowLegend ?? legend).map((row) => (
-              <div
-                key={row.value}
-                data-testid="paint-legend-row"
-                data-value={row.value}
-                className="flex items-center gap-1.5"
-              >
-                {/* A graphic object next to text, so it carries the 3:1 floor the palette was
-                 *  validated against. The text beside it is the page's normal foreground. */}
-                <span
-                  aria-hidden="true"
-                  style={{ background: row.hue }}
-                  className="inline-block size-2.5 shrink-0 rounded-full"
-                />
-                <span className="whitespace-nowrap">{row.label}</span>
-                {/* Flow rows carry no count -- a direction is a fact about the graph shape, not a
-                 *  quantity of cards, unlike a paint-mode value. */}
-                {row.count !== undefined ? <span className="font-mono tabular-nums text-(--muted)">{row.count}</span> : null}
-              </div>
-            ))}
-          </div>
           {hover ? (
             <div
               className="pointer-events-none absolute rounded-(--radius) border border-(--border) bg-(--background) px-2 py-1 text-xs whitespace-nowrap"
