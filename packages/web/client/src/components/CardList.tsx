@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
+import { Explain } from "./Explain.js";
 
 type Category =
   | "ramp" | "draw" | "cardSelection" | "targetedRemoval" | "stackInteraction"
@@ -105,6 +106,15 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
     <div className="flex flex-col gap-3">
       <h3 className="eyebrow">Cards</h3>
       <p className="text-xs text-(--muted) max-w-[65ch]">{SCALE_NOTE}</p>
+      {/* THE COST COLUMN'S OWN SCALE. "49% – 69% by T5" was explained in a footnote on a different
+        *  tab, so on this one it was two unlabelled numbers. */}
+      <Explain label="what the cost figures mean">
+        A range, low to high: the low number counts lands only and under-states, the high one adds
+        every mana rock cheap enough to already be down and over-states, because a rock needs lands
+        too. Both ignore tapped lands and colour, so both read high. The turn is the card's own mana
+        value — a 5-drop is priced at turn 5 — and a land or an unpriceable cost renders an em dash
+        rather than 0%.
+      </Explain>
       <div className="flex gap-2 flex-wrap items-center">
         {chip("all", "All")}
         {categories.map((c) => chip(c, CATEGORY_LABELS[c]))}

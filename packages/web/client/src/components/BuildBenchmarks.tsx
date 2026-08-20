@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import type { DeckReport } from "../types.js";
+import { Explain } from "./Explain.js";
 
 const LABEL: Record<string, string> = {
   ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
@@ -28,18 +29,11 @@ const TARGET_MARK = 0.7;
  *  precision it does not have. */
 const pct = (p: number): string => `${Math.round(p * 100)}%`;
 
-/** A CAVEAT, ONE CLICK AWAY. The candour is a differentiator and every word of it survives — a
- *  figure that does not say what it ignores is a figure a reader cannot weigh. What does not
- *  survive is the pixels: five multi-line grey blocks ran roughly a quarter of this panel's height,
- *  so the panel's own disclaimers were its largest single section.
+/** A CAVEAT, ONE CLICK AWAY — `Explain` under this panel's own label, since everything folded here
+ *  is a statement about what a figure IGNORES rather than what it means.
  *  → `specs/2026-08-20-report-usability-review.md` §4 */
 function Caveat({ label = "what this number ignores", children }: { label?: string; children: ReactNode }) {
-  return (
-    <details className="max-w-[65ch]">
-      <summary className="eyebrow cursor-pointer text-(--muted)">{label}</summary>
-      <p className="text-xs text-(--muted) pt-1">{children}</p>
-    </details>
-  );
+  return <Explain label={label}>{children}</Explain>;
 }
 
 const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;

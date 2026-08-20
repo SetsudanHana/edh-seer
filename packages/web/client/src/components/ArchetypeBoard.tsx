@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { DeckReport } from "../types.js";
+import { Explain } from "./Explain.js";
 
 type Group = NonNullable<DeckReport["archetypes"]>[number];
 type Strategy = NonNullable<DeckReport["strategies"]>[number];
@@ -99,12 +100,25 @@ export function ArchetypeBoard({ strategies, archetypes }: { strategies?: DeckRe
       {hasStrategies ? (
         <div className="flex flex-col gap-2">
           <h3 className="eyebrow">Strategies</h3>
+          {/* A PERCENTAGE WITH NO DENOMINATOR IS NOT A FIGURE. "Tokens 22%" was 22% of something the
+            *  page never named — and the bars are scaled to the leader, not to 100%, so the widest
+            *  one says "most" and not "all". */}
+          <Explain label="what the percentages count">
+            The share of the deck's nonland cards whose own text signals that plan. A card can
+            signal several, so these do not add to 100% — and the bars are drawn against the
+            strongest plan rather than against the whole deck.
+          </Explain>
           <div className="flex flex-col">{strategies!.map((s) => <StrategyRow key={s.name} s={s} max={sMax} />)}</div>
         </div>
       ) : null}
       {hasGroups ? (
         <div className="flex flex-col gap-2">
           <h3 className="eyebrow">Synergy groups</h3>
+          <Explain label="what a group counts">
+            Pairs of cards whose synergy matches a known mechanism, and the cards those pairs touch.
+            One pair can belong to several groups, a group ranks by PAIRS rather than by cards, and a
+            group saying nothing a bigger one has not already said is dropped.
+          </Explain>
           <div className="flex flex-col">{archetypes!.map((g) => <GroupRow key={g.category} group={g} max={gMax} />)}</div>
         </div>
       ) : null}

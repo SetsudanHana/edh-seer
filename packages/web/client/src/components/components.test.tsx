@@ -403,12 +403,30 @@ test("HighSynergyCards marks the top-authority anchor and double-duty cards", ()
 
 test("HeadlineScores shows SYNERGY and BUILD with band labels and sub-facets", () => {
   render(<HeadlineScores report={SAMPLE.report} />);
-  expect(screen.getByText(/SYNERGY/i)).toBeInTheDocument();
+  // Exact, not a regex: both words now also occur inside the glosses that say what each tile
+  // measures, and a loose match would find those instead of the labels.
+  expect(screen.getByText("SYNERGY")).toBeInTheDocument();
   expect(screen.getByText("4.0")).toBeInTheDocument();      // synergyOverall
-  expect(screen.getByText(/BUILD/i)).toBeInTheDocument();
+  expect(screen.getByText("BUILD")).toBeInTheDocument();
   expect(screen.getByText("3.7")).toBeInTheDocument();      // buildScore
   expect(screen.getAllByText(/Tuned|Focused/).length).toBeGreaterThan(0); // band labels (both tiles have one)
-  expect(screen.getByText(/breadth/i)).toBeInTheDocument(); // sub-facet
+  // "breadth" now appears twice: the sub-facet line and the gloss that says what it measures.
+  expect(screen.getAllByText(/breadth/i).length).toBeGreaterThan(0); // sub-facet
+});
+
+// THE BANDS WERE IN A `title` TOOLTIP, which does not exist on touch and is undiscoverable with a
+// mouse — on the page's own lead figure. They are printed now, one click down, beside a gloss that
+// says what the two halves of SYNERGY actually measure and which card the anchor is.
+test("HeadlineScores explains its scale and names the anchor card", async () => {
+  const user = userEvent.setup();
+  render(<HeadlineScores report={SAMPLE.report} />);
+  const gloss = screen.getAllByText("what this measures");
+  expect(gloss).toHaveLength(2); // SYNERGY and BUILD each say what they mean
+  await user.click(gloss[0]!);
+  // Both tiles carry the band scale, so both copies are in the DOM; what matters is that it is
+  // printed at all rather than hidden in a `title`.
+  expect(screen.getAllByText(/0–1.5 unfocused/).length).toBe(2);
+  expect(screen.getByText(/Krenko, Mob Boss/)).toBeInTheDocument(); // the deck's best-fed card
 });
 
 test("BuildBenchmarks renders a bar per category, flags under-target, omits zero-target", () => {
@@ -975,4 +993,21 @@ test("CardList filters by name", async () => {
   const rows = screen.getAllByRole("row").slice(1);
   expect(rows).toHaveLength(1);
   expect(rows[0]!.textContent).toContain("Krenko");
+});
+
+// A PERCENTAGE WITH NO DENOMINATOR IS NOT A FIGURE, and the bars are scaled to the leader rather
+// than to 100%, so the widest one says "most" and not "all".
+test("ArchetypeBoard says what its percentages count", () => {
+  render(<ArchetypeBoard strategies={SAMPLE.report.strategies} archetypes={SAMPLE.report.archetypes} />);
+  expect(screen.getByText("what the percentages count")).toBeInTheDocument();
+  expect(screen.getByText(/share of the deck's nonland cards/)).toBeInTheDocument();
+  expect(screen.getByText(/do not add to 100%/)).toBeInTheDocument();
+});
+
+// The castability range was explained in a footnote on a DIFFERENT tab, so on this one it was two
+// unlabelled numbers.
+test("CardList explains the cost range on the tab that prints it", () => {
+  render(<CardList cards={SAMPLE.report.cards} />);
+  expect(screen.getByText("what the cost figures mean")).toBeInTheDocument();
+  expect(screen.getByText(/counts lands only and under-states/)).toBeInTheDocument();
 });
