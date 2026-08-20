@@ -23,7 +23,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 58;
+export const DERIVE_VERSION = 61;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -673,7 +673,7 @@ export function deriveAbilities(
       // below, which is the shape `prompt.ts` already documents for Tekuthal.
       const effectKind = replacement?.kind ?? actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
-      const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action)
+      const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action, text)
         .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,

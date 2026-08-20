@@ -202,3 +202,36 @@ test("rolling dice emits the event 7 corpus consumers watch; flipping a coin emi
   // card. A word with no event, like goad and vote.
   expect(actionEmits({ verb: "flip-coin", object: "a coin" })).toEqual([]);
 });
+
+// FAMILY A (panel, 2026-08-20): an UNSTATED controller is the ability's controller, not a wildcard
+// that satisfies an opponent-facing trigger. `parseControl` returns "any" for anything it cannot
+// read and `matcher/subject.ts` treats "any" as a PERMISSION — measured, 3,157 of 4,137 emits carry
+// it against 108 triggers demanding an opponent.
+test("an unstated controller defaults to you on the verbs the rules pin to the controller", () => {
+  expect(actionEmits({ verb: "draw", object: "a card" }, "Draw a card.")[0].subject.control).toBe("you");
+  expect(actionEmits({ verb: "mill", object: "three cards" }, "Mill three cards.")[0].subject.control).toBe("you");
+  expect(actionEmits({ verb: "sacrifice", object: "another creature" }, "Sacrifice another creature.")[0].subject.control)
+    .toBe("you");
+});
+
+// A BLANKET DEFAULT WOULD BE WRONG, which is why this is a verb list: "destroy target permanent"
+// and "tap target creature" name no player either and are routinely aimed at an opponent's board.
+test("verbs whose object can be anyone's keep their unstated control", () => {
+  expect(actionEmits({ verb: "tap", object: "target creature" })[0].subject.control).toBe("any");
+  expect(actionEmits({ verb: "destroy", object: "target permanent" })[0].subject.control).toBe("any");
+});
+
+// THE SENTENCE DECIDES, NOT THE OBJECT — reading `action.object` alone cost two REAL panel claims.
+// Dark Deal ("each player discards all the cards in their hand, then draws that many cards") and
+// Ruin Grinder ("each player draws seven cards") derive an action whose object is just "cards",
+// with the player named earlier in the sentence; both really do make an OPPONENT draw, which is
+// what Orcish Bowmasters and Scrawling Crawler watch for.
+test("a player named anywhere in the clause blocks the default", () => {
+  const withText = actionEmits({ verb: "draw", object: "seven cards" }, "Each player draws seven cards.");
+  expect(withText[0].subject.control).toBe("any");
+  // NO CLAUSE TEXT IS "SAY NOTHING", never "guess you" — Pongify's Ape token goes to the destroyed
+  // permanent's controller, and from the object text alone it reads as yours.
+  expect(actionEmits({ verb: "draw", object: "a card" }, undefined)[0].subject.control).toBe("any");
+  expect(actionEmits({ verb: "draw", object: "cards" }, "Target opponent draws a card.")[0].subject.control)
+    .toBe("any");
+});

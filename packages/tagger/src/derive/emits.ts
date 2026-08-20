@@ -142,7 +142,38 @@ const ZONE_EMITS: { verb: string; to: string; verbs: Verb[] }[] = [
   { verb: "put", to: "battlefield", verbs: ["enters"] },
 ];
 
-export function actionEmits(action: Action): GameEvent[] {
+/** Verbs whose object is NECESSARILY the ability's controller's when the text names no player.
+ *
+ *  `parseControl` returns "any" for anything it cannot read, and `matcher/subject.ts` treats "any"
+ *  as a PERMISSION rather than an unknown — so an unstated controller satisfies a consumer that
+ *  demands an OPPONENT. Measured 2026-08-20: **3,157 of 4,137 emits (76%) carry `any`**, against
+ *  **108 triggers that demand an opponent**, and the frozen panel's largest genuinely-broken false
+ *  family is exactly this — six of them "whenever an OPPONENT draws a card" (Orcish Bowmasters,
+ *  Mind's Eye, Faerie Mastermind) fed by YOUR own draw.
+ *
+ *  **A BLANKET DEFAULT WOULD BE WRONG, which is why this is a verb list.** Of the 6,729 `any` action
+ *  objects in the clause corpus, **6,503 (96.6%) name no player at all** — but "destroy target
+ *  permanent" and "tap target creature" name no player either and are routinely aimed at an
+ *  OPPONENT'S permanent. Only the verbs below are ones the rules pin to the controller: you may
+ *  sacrifice only what you control (CR 701.17a), an unqualified draw/mill/discard/scry/surveil is
+ *  the controller's, mana goes to the controller's pool, a created token is the controller's
+ *  (CR 111.2), and a search is of your own library.
+ *
+ *  DELIBERATELY OUT: destroy · exile · tap · untap · deal-damage · counter-spell · add-counter ·
+ *  attach · return (to hand — "return target creature to its owner's hand" is usually theirs) and
+ *  `enters` (Chaos Warp's own text has the OWNER of the target put the revealed card onto the
+ *  battlefield, so a fetchland and a Chaos Warp cannot share a default). */
+const CONTROLLER_DEFAULT: ReadonlySet<string> = new Set([
+  "draw", "mill", "discard", "sacrifice", "search", "scry", "surveil", "add-mana", "create",
+  "gain-life", "lose-life",
+]);
+
+/** Does the text name a player at all? 226 of the 6,729 `any` objects do, and they are the ones the
+ *  default must not touch: "target player" (92), "that player" (62 — an antecedent, genuinely
+ *  ambiguous), "each player" (48), "players" (14), "a player" (7), "any player" (3). */
+const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a) player\b|\bplayers\b|\bopponents?\b/i;
+
+export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
   const zoned = ZONE_EMITS.find((r) => r.verb === action.verb && r.to === (action.toZone ?? null));
   const subject = parseSubject(action.object ?? "");
   const verbs = zoned?.verbs
@@ -171,10 +202,32 @@ export function actionEmits(action: Action): GameEvent[] {
     && typeof subject.subtype === "string"
     ? tokenTypeFor(subject.subtype)
     : undefined;
+  // See `CONTROLLER_DEFAULT`: an unstated controller on one of these verbs is the ability's
+  // controller, not a wildcard that satisfies an opponent-facing trigger.
+  // READ THE SENTENCE, NOT THE OBJECT — the first cut tested `action.object` alone and it cost two
+  // REAL panel claims, both of them "each player draws": Dark Deal ("each player discards all the
+  // cards in their hand, then draws that many cards") and Ruin Grinder ("each player draws seven
+  // cards") derive an action whose object is just "cards", with the player named earlier in the
+  // sentence. Both really do make an OPPONENT draw, which is exactly what Orcish Bowmasters and
+  // Scrawling Crawler watch for. Falling back to the object when no clause text is supplied keeps
+  // the guard conservative: an unreadable scope leaves `any`, i.e. today's behaviour.
+  //
+  // AND THE DEFAULT REQUIRES THE TEXT: with no clause text the answer is "say nothing", not "guess
+  // you". Falling back to the object alone was measured wrong twice over — it cost the two REAL
+  // claims above, and it broke the standing Pongify case, whose Ape token goes to the DESTROYED
+  // permanent's controller and reads as yours from the object text alone. `deriveAbilities` always
+  // supplies the text in production; a caller that does not gets today's behaviour unchanged.
+  const control = !!clauseText
+    && subject.control === "any"
+    && CONTROLLER_DEFAULT.has(action.verb ?? "")
+    && !NAMES_A_PLAYER.test(clauseText)
+    ? "you" as const
+    : subject.control;
   return verbs.map((verb) => ({
     verb,
     subject: {
       ...subject,
+      control,
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
       ...(tokenType ? { type: tokenType } : {}),
