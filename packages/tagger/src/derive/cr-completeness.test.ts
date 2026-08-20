@@ -66,18 +66,17 @@ test("the exclusion list stays honest — every entry is really in the rules", (
   }
 });
 
-/** CR 702 abilities absent from `KEYWORD_ABILITIES`, which `gen-vocabulary.ts` generates from
- *  MTGJSON. **MTGJSON LAGS THE RULES**, and its `--check` guards drift from MTGJSON rather than from
- *  the game — so without this ratchet the gap grows silently every set.
+/** CR 702 abilities absent from `KEYWORD_ABILITIES`.
  *
- *  A RATCHET, like KNOWN_DEFECT_CAP: the list may only SHRINK. A new keyword arriving in the CR
- *  before MTGJSON catches up fails the test, which is the signal to add it by hand. */
-const MTGJSON_LAG = [
-  // "storied" DROPPED 2026-08-20: MTGJSON caught up (keyword abilities 222 -> 223) and the
-  // shrink-only test below failed until it was removed, which is the ratchet working in the
-  // direction nobody usually gets to see.
-  "space sculptor", "visit", "plot", "start your engines!", "∞ (infinity)",
-];
+ *  **THE LIST IS EMPTY AND CANNOT REFILL, since 2026-08-20.** `gen-vocabulary.ts` now UNIONS
+ *  MTGJSON's catalogue with the CR's own 702 headings (`cr-keywords.json`, itself generated from the
+ *  cached rules text), so a keyword the rules define is in this vocabulary whether or not MTGJSON has
+ *  caught up. Before that, the lag was five deep — space sculptor, visit, plot, start your engines!
+ *  and ∞ — and was tracked by hand, one re-typed word per set.
+ *
+ *  KEPT rather than deleted, because the union happens at GENERATION time: an artifact that was not
+ *  regenerated after a rules update lags exactly as MTGJSON did, and this is what says so. */
+const MTGJSON_LAG: string[] = [];
 
 test("every CR 702 keyword ability is known, or is a recorded MTGJSON lag", () => {
   const ours = new Set(KEYWORD_ABILITIES.map((k) => k.toLowerCase()));
@@ -85,7 +84,9 @@ test("every CR 702 keyword ability is known, or is a recorded MTGJSON lag", () =
   const unaccounted = crKeywords.abilities
     .map((a) => a.toLowerCase())
     // "Daybound and Nightbound" is ONE heading for TWO keywords, which MTGJSON lists separately.
-    // A heading naming several keywords is covered when each of its parts is.
+    // A heading naming several keywords is covered when each of its parts is. Same for the "∞
+    // (Infinity)" gloss, which the generator strips because the card prints only the symbol.
+    .map((a) => a.replace(/\s*\([^)]*\)\s*$/, ""))
     .filter((a) => !a.split(" and ").every((part) => ours.has(part.trim())))
     .filter((a) => !lag.has(a));
   expect(unaccounted, `CR 702 abilities missing from KEYWORD_ABILITIES and not recorded as MTGJSON lag:\n  ${unaccounted.join("\n  ")}`)
@@ -94,11 +95,27 @@ test("every CR 702 keyword ability is known, or is a recorded MTGJSON lag", () =
 
 test("the MTGJSON lag list only shrinks", () => {
   // If MTGJSON catches up, the entry must be REMOVED rather than left to rot — a stale exemption
-  // hides the next real gap behind a plausible-looking reason.
+  // hides the next real gap behind a plausible-looking reason. Vacuous now that the list is empty by
+  // construction, and kept as the guard that it STAYS empty: an entry added back here has to be
+  // argued for, because the union above should have made it unnecessary.
   const ours = new Set(KEYWORD_ABILITIES.map((k) => k.toLowerCase()));
   const caughtUp = MTGJSON_LAG.filter((k) => ours.has(k));
   expect(caughtUp, `MTGJSON now has these — drop them from MTGJSON_LAG: ${caughtUp.join(", ")}`)
     .toEqual([]);
+});
+
+test("the CR 702 union really happened — the five words MTGJSON lagged on are present", () => {
+  // Named individually rather than counted: a count test pins whatever number was current, which is
+  // precisely how `impact.test.ts` pinned a 7-kind gap for months.
+  const ours = new Set(KEYWORD_ABILITIES.map((k) => k.toLowerCase()));
+  for (const k of ["plot", "start your engines!", "space sculptor", "visit", "∞"]) {
+    expect(ours.has(k), `${k} is a CR 702 keyword and must be in KEYWORD_ABILITIES`).toBe(true);
+  }
+  // The heading is "∞ (Infinity)" and the CARD prints the symbol, so the gloss must not survive.
+  expect(ours.has("∞ (infinity)")).toBe(false);
+  // "Daybound and Nightbound" is one heading for two keywords; both halves, never the joined string.
+  expect(ours.has("daybound") && ours.has("nightbound")).toBe(true);
+  expect(ours.has("daybound and nightbound")).toBe(false);
 });
 
 test("no alias points at a verb we do not have", () => {

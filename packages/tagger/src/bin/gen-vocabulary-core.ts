@@ -11,6 +11,29 @@
  *  Pure, so the shaping can be tested without the network.
  */
 
+import crKeywords from "../derive/cr-keywords.json" with { type: "json" };
+
+/** CR 702 headings, normalized to the keyword as a card PRINTS it.
+ *
+ *  MTGJSON LAGS THE RULES, and until 2026-08-20 that lag was tracked by hand in
+ *  `cr-completeness.test.ts` as a shrink-only list — five entries deep and growing every set, each
+ *  one a keyword `SubjectFilter.keyword` could not see. The rules text is itself a generated,
+ *  committed artifact here (`cr-keywords.json`), so the honest fix is to UNION the two sources and
+ *  make the lag structurally impossible rather than re-typing whatever MTGJSON is behind on.
+ *
+ *  Three heading shapes need normalizing, and all three are in the rules today:
+ *  - "Daybound and Nightbound" is ONE heading for TWO keywords.
+ *  - "∞ (Infinity)" glosses a symbol; the card prints the symbol, so the parenthetical goes.
+ *  - Everything else is the keyword verbatim, including the exclamation in "Start Your Engines!". */
+function crKeywordAbilities(): string[] {
+  return crKeywords.abilities.flatMap((heading) =>
+    heading
+      .replace(/\s*\([^)]*\)\s*$/, "")
+      .split(/\s+and\s+/)
+      .map((k) => k.trim().toLowerCase())
+      .filter((k) => k.length > 0));
+}
+
 /** The shape of mtgjson.com/api/v5/CardTypes.json. */
 export interface CardTypesPayload {
   data: Record<string, { subTypes: string[]; superTypes: string[] }>;
@@ -105,7 +128,7 @@ export function buildVocabulary(types: CardTypesPayload, enums: EnumValuesPayloa
     subtypeTypes: subtypeTypes(types),
     supertypes: lower(enums.data.card.supertypes),
     keywordActions: lower(enums.data.keywords.keywordActions),
-    keywordAbilities: lower(enums.data.keywords.keywordAbilities),
+    keywordAbilities: lower([...enums.data.keywords.keywordAbilities, ...crKeywordAbilities()]),
     abilityWords: lower(enums.data.keywords.abilityWords),
   };
 }
