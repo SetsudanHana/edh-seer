@@ -114,3 +114,22 @@ test("a card with no voltron subtype is not voltron", () => {
   const out = detectArchetypes([sig("X", { themeTags: ["enters:creature"] })], [], 12);
   expect(out.some((r) => r.name === "voltron")).toBe(false);
 });
+
+// A CONDITION IS AN ARCHETYPE SIGNAL (owner, 2026-08-20). `cardThemeTags` carries a card's trigger
+// verbs, so "whenever a creature dies" already reads as aristocrats — but Warlock Class triggers on
+// the END STEP and names the deaths only in its intervening if ("at the beginning of your end step,
+// if a creature died this turn"), so the payoff was invisible to every archetype. The tag arrives
+// through `Ability.conditionCares`; `analyze.ts` unions it into the signal.
+test("a card that pays off when creatures die is aristocrats, even if it causes none", () => {
+  const endStepPayoff: CardSignal = {
+    // What Warlock Class looks like WITHOUT the condition: an end-step trigger and a life-loss
+    // effect, which names no death at all.
+    name: "Warlock Class", themeTags: ["end-step:any", "lose-life:any"], effectKinds: ["player-life-loss"], subtypes: [],
+  };
+  const withCondition: CardSignal = { ...endStepPayoff, themeTags: [...endStepPayoff.themeTags, "dies:creature"] };
+  const filler = (i: number): CardSignal => ({ name: `f${i}`, themeTags: [], effectKinds: [], subtypes: [] });
+  const deck = (c: CardSignal) => detectArchetypes([c, ...Array.from({ length: 9 }, (_, i) => filler(i))], [], 10);
+
+  expect(deck(endStepPayoff).map((a) => a.name)).not.toContain("aristocrats");
+  expect(deck(withCondition).map((a) => a.name)).toContain("aristocrats");
+});

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, directedReasons, cardThemeTags, themeSubjectKey, claimCount } from "./edges.js";
+import { pairReasons, directedReasons, cardThemeTags, themeSubjectKey, claimCount , cardCaresTags} from "./edges.js";
 import type { Reason } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -2404,4 +2404,28 @@ test("an untyped recursion behind its own trigger is not fed by a fill that trig
   // An UNRESTRICTED trigger (Meathook Massacre II) is the case the blanket version got wrong — the
   // relation is real, and the event-edge loop states it, so this loop must not double-count it.
   expect(reasons({ control: "you", token: null, type: "creature" })).toHaveLength(0);
+});
+
+// An intervening-if condition reaches the theme layer as a DEMAND (owner, 2026-08-20): Yuna is a
+// counters payoff and Warlock Class an aristocrats one, and neither fact is in a trigger verb.
+test("cardCaresTags carries the demand an intervening-if condition makes", () => {
+  const warlockClass: CardTags = {
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: ["class"], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{
+      kind: "triggered", effect: { kind: "player-life-loss" },
+      trigger: { verbs: ["end-step"], subject: { control: "you", token: null } },
+      conditionCares: ["dies:creature"],
+    }],
+  };
+  const cares = cardCaresTags(warlockClass);
+  // The trigger's own verb is still there...
+  expect(cares.has("end-step:any")).toBe(true);
+  // ...and so is the condition's demand, which no trigger verb states.
+  expect(cares.has("dies:creature")).toBe(true);
+
+  // A card with no condition is untouched.
+  const plain: CardTags = { ...warlockClass, abilities: [{ ...warlockClass.abilities[0], conditionCares: undefined }] };
+  expect([...cardCaresTags(plain)]).toEqual(["end-step:any"]);
 });

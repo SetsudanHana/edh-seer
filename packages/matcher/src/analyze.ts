@@ -619,7 +619,13 @@ export function analyzeDeckStructured(
     .filter((dc) => dc.tags && !isLand(dc))
     .map((dc) => ({
       name: dc.card.name,
-      themeTags: [...cardThemeTags(dc.tags!)],
+      // A CONDITION IS AN ARCHETYPE SIGNAL TOO (owner, 2026-08-20). `cardThemeTags` already carries a
+      // card's trigger verbs, so "whenever a creature dies" reads as aristocrats — but Warlock Class
+      // triggers on the END STEP and names the deaths only in its intervening if ("at the beginning
+      // of your end step, IF A CREATURE DIED THIS TURN"), so the payoff was invisible to every
+      // archetype. `conditionCares` is the demand the condition makes, and a card that pays off when
+      // creatures die belongs to aristocrats whether or not it causes any.
+      themeTags: [...cardThemeTags(dc.tags!), ...dc.tags!.abilities.flatMap((a) => a.conditionCares ?? [])],
       effectKinds: dc.tags!.abilities.map((a) => a.effect.kind),
       subtypes: (dc.tags!.characteristics?.subtypes ?? []).filter(
         (s) => s === "equipment" || (s === "aura" && /enchant creature/i.test(dc.card.oracleText)),
