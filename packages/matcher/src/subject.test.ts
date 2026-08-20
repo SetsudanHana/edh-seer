@@ -4,7 +4,7 @@ import { isOutlaw } from "./implied.js";
 import type { SubjectFilter } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
 
-const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"], treasure: ["artifact"], pirate: ["creature"], bear: ["creature"], dragon: ["creature"], ogre: ["creature"], demon: ["creature"] };
+const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"], treasure: ["artifact"], pirate: ["creature"], bear: ["creature"], dragon: ["creature"], ogre: ["creature"], demon: ["creature"], land: ["land"] };
 const s = (o: Partial<SubjectFilter>): SubjectFilter => ({ control: "you", token: null, ...o });
 
 test("consumer type is satisfied by a producer subtype via the hierarchy", () => {
@@ -372,4 +372,28 @@ test("a negated subtype refuses the card it names and nothing else", () => {
   expect(subjectMatches(p(["zombie"]), wants, H)).toBe(true);
   // A producer naming no subtype cannot carry a negated one, so it is not refused.
   expect(subjectMatches({ control: "you", token: null, type: "creature" }, wants, H)).toBe(true);
+});
+
+// THE ARRIVAL SLOT (owner's framing, 2026-08-20): the one intervening-if shape that is a PROPERTY OF
+// THE EVENT, so it narrows the producer instead of needing an evaluator. Satoru, the Infiltrator —
+// "if none of them were cast or no mana was spent to cast them" — claimed every creature in the deck.
+test("a not-cast demand is met by a token or an entry from a zone, never by a plain cast", () => {
+  const wants: SubjectFilter = { control: "you", token: null, type: "creature", notCast: true };
+  // A token was never cast.
+  expect(subjectMatches({ control: "you", token: true, type: "creature" }, wants, H)).toBe(true);
+  // Reanimated, blinked, or otherwise put onto the battlefield from a stated zone.
+  expect(subjectMatches({ control: "you", token: null, type: "creature", fromZone: "graveyard" }, wants, H)).toBe(true);
+  expect(subjectMatches({ control: "you", token: null, type: "creature", fromZone: "exile" }, wants, H)).toBe(true);
+  // A card's own implied entry IS the cast — 104 of 748 derived enters emits, and the case Satoru
+  // excludes by name.
+  expect(subjectMatches({ control: "you", token: null, type: "creature" }, wants, H)).toBe(false);
+  // A consumer that does not ask is unaffected.
+  expect(subjectMatches({ control: "you", token: null, type: "creature" },
+    { control: "you", token: null, type: "creature" }, H)).toBe(true);
+});
+
+test("an enters-tapped demand needs a producer that says tapped", () => {
+  const wants: SubjectFilter = { control: "you", token: null, type: "permanent", entersTapped: true };
+  expect(subjectMatches({ control: "you", token: null, type: "land", entersTapped: true }, wants, H)).toBe(true);
+  expect(subjectMatches({ control: "you", token: null, type: "land" }, wants, H)).toBe(false);
 });

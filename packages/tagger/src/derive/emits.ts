@@ -223,11 +223,18 @@ export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
     && !NAMES_A_PLAYER.test(clauseText)
     ? "you" as const
     : subject.control;
+  // ARRIVED TAPPED, the supply half of `SubjectFilter.entersTapped`. "Search your library for a land
+  // card, put it onto the battlefield TAPPED" really does satisfy Amulet of Vigor and Tiller Engine,
+  // which are the only two cards in the corpus that ask. Read from the clause text, which is where
+  // the word sits — the object is just "it".
+  const arrivesTapped = verbs.includes("enters")
+    && /\b(?:battlefield|enters?|play)\b[^.]{0,30}?\btapped\b|\btapped\b[^.]{0,20}?\bunder\b/i.test(clauseText ?? "");
   return verbs.map((verb) => ({
     verb,
     subject: {
       ...subject,
       control,
+      ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
       ...(tokenType ? { type: tokenType } : {}),

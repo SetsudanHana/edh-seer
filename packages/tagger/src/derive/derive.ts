@@ -24,7 +24,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 65;
+export const DERIVE_VERSION = 66;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -473,6 +473,12 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
  *  the aristocrats edge this engine most wants to find. */
 const REMOVAL_VERBS = new Set(["destroy", "exile"]);
 
+/** "if none of them were cast", "if it wasn't cast", "no mana was spent to cast", "without being
+ *  played" — the entry happened by some route other than casting. Card-scoped like every other
+ *  printed cue here. */
+const ARRIVED_WITHOUT_CASTING =
+  /\b(?:wasn't|weren't) cast\b|\bnone of them were cast\b|\bno mana was spent\b|\bwithout being played\b/i;
+
 const ARRIVES_TAPPED = /\b(?:battlefield|enters?|play)\b[^.]{0,30}?\btapped\b|\btapped\b[^.]{0,20}?\bunder\b/i;
 
 /** "Whenever you tap a permanent for {C}" (Forsaken Monument), "whenever enchanted land is tapped for
@@ -775,11 +781,25 @@ export function deriveAbilities(
     // an ability with a TRIGGER can carry one (CR 603.4 checks the condition when the trigger would
     // fire), so a static or on-cast clause is skipped even if the sentence happens to say "if".
     const conditionCares = interveningIfOf(text) ? conditionCares_(interveningIfOf(text)!) : [];
+    // HOW THE OBJECT ARRIVED. The condition "if none of them were cast or no mana was spent"
+    // (Satoru) and the trigger phrase "enters tapped" (Amulet of Vigor, Tiller Engine) are both
+    // properties of the ENTRY, so they narrow the trigger's own subject rather than needing a
+    // condition evaluator. "Without being played" is the land wording of the same fact.
+    const arrivalNotCast = ARRIVED_WITHOUT_CASTING.test(text);
+    const arrivalTapped = /\benters tapped\b/i.test(text);
     for (let i = before; i < abilities.length; i++) {
       const repeats = repeatsFor(abilities[i], text, cost);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
       if (conditionCares.length > 0 && abilities[i].trigger) {
         abilities[i] = { ...abilities[i], conditionCares };
+      }
+      const trig = abilities[i].trigger;
+      if (trig && trig.verbs.includes("enters") && (arrivalNotCast || arrivalTapped)) {
+        abilities[i] = { ...abilities[i], trigger: { ...trig, subject: {
+          ...trig.subject,
+          ...(arrivalNotCast ? { notCast: true as const } : {}),
+          ...(arrivalTapped ? { entersTapped: true as const } : {}),
+        } } };
       }
     }
   }

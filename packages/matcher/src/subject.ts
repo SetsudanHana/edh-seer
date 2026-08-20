@@ -158,6 +158,16 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // A NEGATED SUBTYPE, the same test one rung down the type line. No abstention clause is needed:
   // unlike a card type, a subtype is never expressed by an umbrella — "a spell" says nothing about
   // Dragons either way, and a producer that lists no subtype simply cannot carry a negated one.
+  // HOW THE OBJECT ARRIVED — the one intervening-if shape that is a property of the EVENT and so
+  // narrows the producer instead of needing to be evaluated (owner's framing, 2026-08-20).
+  //
+  // Inferred rather than stamped: a TOKEN was never cast, and an entry FROM A STATED ZONE (put or
+  // returned from a graveyard, exile, library or hand) was put there rather than cast. A card's own
+  // implied entry is the cast, and carries neither mark. 644 of 748 derived `enters` emits qualify,
+  // so this refuses the ordinary cast entry and keeps every blink, token and reanimation.
+  if (consumer.notCast === true
+    && !(producer.token === true || producer.fromZone !== undefined)) return false;
+  if (consumer.entersTapped === true && producer.entersTapped !== true) return false;
   const negatedSubtypes = consumer.notSubtype ?? [];
   if (negatedSubtypes.length > 0) {
     const subs = arr(producer.subtype).map((x) => x.toLowerCase());

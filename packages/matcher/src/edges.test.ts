@@ -2429,3 +2429,37 @@ test("cardCaresTags carries the demand an intervening-if condition makes", () =>
   const plain: CardTags = { ...warlockClass, abilities: [{ ...warlockClass.abilities[0], conditionCares: undefined }] };
   expect([...cardCaresTags(plain)]).toEqual(["end-step:any"]);
 });
+
+// THE FOURTH TIME THIS SHAPE HAS BITTEN (`zone`, `counter`, `commander`, now `entersTapped`): in the
+// self-trigger identity gate a producer's emit is the FILTER against the consumer's PRINTED
+// characteristics, so a field describing the EVENT must be stripped there or it demands the consumer
+// card BE that way. Keeping `entersTapped` silently deleted 29 real self-ETB claims the moment the
+// field existed — Eldrazi Confluence blinking Solemn Simulacrum, Fungal Fortitude returning Gray
+// Merchant of Asphodel.
+test("a producer that arrives tapped still fires an ordinary self-ETB trigger", () => {
+  const fetcher: CardTags = {
+    oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 4,
+      power: "2", toughness: "2", token: false, keywords: [] },
+    abilities: [{
+      kind: "triggered", effect: { kind: "token-generation" },
+      trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature", self: true } },
+      // "put that card onto the battlefield tapped" — arrival state, SUPPLY side.
+      emits: [{ verb: "enters", subject: { control: "you", token: null, type: "creature", entersTapped: true } }],
+    }],
+  };
+  const selfEtb: CardTags = {
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 5,
+      power: "2", toughness: "4", token: false, keywords: [] },
+    abilities: [{
+      kind: "triggered", effect: { kind: "drain" },
+      trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature", self: true } },
+    }],
+  };
+  const reasons = directedReasons(
+    { card: { name: "Eldrazi Confluence" } as DeckCard["card"], tags: fetcher },
+    { card: { name: "Solemn Simulacrum" } as DeckCard["card"], tags: selfEtb }, H,
+  ).filter((r) => r.tag.startsWith("enters:"));
+  expect(reasons.length).toBeGreaterThan(0);
+});

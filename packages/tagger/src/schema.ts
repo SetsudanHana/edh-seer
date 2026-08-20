@@ -41,6 +41,24 @@ export interface SubjectFilter {
    *  which is precisely the card the text excludes. It is also the slot CR 700.16 `worthy` needs
    *  ("legendary, ISN'T A VILLAIN, and is red and/or white"), so one field serves both. */
   notSubtype?: string[];
+  /** THE OBJECT ARRIVED WITHOUT BEING CAST OR PLAYED — a blink, a token, a reanimation.
+   *
+   *  CR 603.4's intervening if is refused as a general slot (241 distinct conditions), but this one
+   *  shape is a PROPERTY OF THE EVENT the producer supplies, so it narrows which producer satisfies
+   *  the trigger rather than needing to be evaluated. Satoru, the Infiltrator — "whenever Satoru
+   *  and/or one or more other nontoken creatures you control enter, IF NONE OF THEM WERE CAST OR NO
+   *  MANA WAS SPENT to cast them" — claimed every creature in the deck without it, and Deep Gnome
+   *  Terramancer wants lands entering "WITHOUT BEING PLAYED".
+   *
+   *  Answered on the producer side by INFERENCE, never a second field: a token creation or an entry
+   *  from a stated zone (put/return from a graveyard, exile, library or hand) arrived without being
+   *  cast, while a card's own implied entry is the cast. Measured: 644 of 748 derived `enters` emits
+   *  are one of the two. */
+  notCast?: true;
+  /** THE OBJECT ARRIVED TAPPED. Two cards demand it — Amulet of Vigor and Tiller Engine — and both
+   *  read "whenever a permanent you control ENTERS TAPPED". Set on both sides from the same printed
+   *  cue `ARRIVES_TAPPED` already uses to suppress a phantom `taps` event. */
+  entersTapped?: true;
   /** The umbrella noun a multi-umbrella `type` list was resolved FROM — "permanent" for
    *  "permanent spell".
    *

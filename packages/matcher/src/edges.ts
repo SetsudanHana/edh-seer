@@ -867,7 +867,15 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           // below: this compares against a card's PRINTED characteristics, and a counter is a board
           // state no type line carries. Keeping it made The Great Henge unable to put a +1/+1
           // counter on Dusk Legion Duelist, whose trigger watches exactly that.
-          const { counter: _stateOnly, ...printedMatchable } = identity;
+          // ARRIVAL STATE IS NOT A PRINTED CHARACTERISTIC, and this gate compares against a type
+          // line. `entersTapped` rides on an emit as SUPPLY ("put it onto the battlefield tapped"),
+          // but here the emit is the FILTER, so keeping it demanded that the consumer card BE
+          // tapped — which no card is — and silently deleted 29 real self-ETB claims the moment the
+          // field existed: Eldrazi Confluence blinking Solemn Simulacrum, Fungal Fortitude returning
+          // Gray Merchant of Asphodel. The fourth time this exact shape has bitten (`zone`,
+          // `counter`, `commander`): **a field that describes the EVENT must be stripped wherever an
+          // emit is used to identify a CARD.**
+          const { counter: _stateOnly, entersTapped: _arrival, ...printedMatchable } = identity;
           if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) continue;
         }
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
@@ -941,7 +949,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         // exists to demand proof: Necromancy sacrificing itself "enabled" Eye of Nidhogg returning
         // itself.
         if (e.subject.self === true) continue;
-        const { zone: _fillZone, ...fillIdentity } = e.subject;
+        const { zone: _fillZone, entersTapped: _fillArrival, ...fillIdentity } = e.subject;
         if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), fillIdentity, h)) continue;
       }
       const repeatability =
