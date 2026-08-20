@@ -192,9 +192,64 @@ export const CENTER_PULL = 0.0004;
 /** d3's setter stores `1 - _`, so this yields the 0.86 retention the old VELOCITY_DAMPING had. */
 export const VELOCITY_DECAY = 0.14;
 export const ALPHA_DECAY = 0.005;
-/** The loop FLOORS alpha and keeps ticking forever; it never stops. alphaTarget reproduces that,
- *  alphaMin would stop the simulation instead. */
-export const ALPHA_FLOOR = 0.02;
+/** THE BOARD IS ALLOWED TO STOP (2026-08-20). This was 0.02 -- an `alphaTarget`, so alpha never
+ *  decayed to rest and the board crept forever under a paint loop that never idled. The value was
+ *  ported from the pre-d3 hand-rolled loop, whose own comment said "it FLOORS alpha and keeps
+ *  ticking forever; it never stops": flooring alpha was the only thing keeping THAT loop alive.
+ *  Under d3 nothing needs a warm simulation -- there is no node drag, and every other interaction
+ *  moves the camera rather than the nodes.
+ *
+ *  MEASURED, five fixtures x five seeds, motion sampled over 60 ticks after the settle depth where
+ *  the floor actually bites (at 800 ticks the two arms are within noise BY CONSTRUCTION, since
+ *  (1 - ALPHA_DECAY)^800 ~ 0.018 is already at the old floor):
+ *
+ *    fixture      settle   arm          cardOverlaps  crossings  distErr  mean px/tick  worst px/s
+ *    sorin         4000    floor 0.02       11.4        4140       75       0.1479        79.4
+ *    sorin         4000    floor 0            0.0        4061       76       0.0000         0.0
+ *    sorin        20000    floor 0.02         2.4        4154       75       0.1550        77.3
+ *    sorin        20000    floor 0            0.0        3946       76       0.0000         0.0
+ *    fairdrazi     4000    floor 0.02         2.2        3942       62       0.0485        13.5
+ *    fairdrazi     4000    floor 0            0.0        3548       61       0.0000         0.0
+ *    inalla        4000    floor 0.02         0.0        3061       56       0.0280         5.8
+ *    inalla        4000    floor 0            0.0        3184       55       0.0000         0.0
+ *    braids       20000    floor 0.02         0.2        2228       45       0.0188         5.0
+ *    braids       20000    floor 0            0.0        2417       47       0.0000         0.0
+ *    changelings  20000    floor 0.02         0.0         710       42       0.0337         7.4
+ *    changelings  20000    floor 0            0.0         730       41       0.0000         0.0
+ *
+ *  Motion goes to EXACTLY zero and quality does not degrade -- card overlaps reach 0.0 on all five,
+ *  and the old arm's overlaps RE-FORM as the board keeps creeping (sorin 11.4 pairs at 4,000 ticks
+ *  against 2.4 at 20,000: the number is a moving target because the board is). Crossings -10% to
+ *  +5%, rms link-distance error +-2.
+ *
+ *  IT IS STILL A KNOB, and the tuner can put the floor back -- `BoardParams.alphaFloor`. What it
+ *  must NOT become is a way to keep a board warm for an editor: energy belongs injected by an EVENT
+ *  (`simulation.alpha(x).restart()` on a deck mutation, which the layout effect already does at
+ *  0.3 on a graph change), not leaked continuously. → roadmap H1, measurements/graph-2026-08-20 */
+export const ALPHA_FLOOR = 0;
+/** THE ENERGY A DECK CHANGE GETS (roadmap H9). A from-scratch board gets `alpha(1)`; a board that
+ *  already has settled positions only needs enough for what CHANGED to find its place, and this was
+ *  0.3 — a number nobody had measured.
+ *
+ *  MEASURED (board-edit.harness.ts, five fixtures, hub/median/leaf, add and remove): at 0.3 an edit
+ *  displaces pre-existing cards by a p95 of 100-1,100 world units, against a card diagonal of 48.2.
+ *  **The edit is not what does it — the REHEAT is**: reheating a settled board while changing
+ *  NOTHING moves it nearly as far (sorin p95 866.6 against 1107.4 for removing a 54-degree hub), and
+ *  removing a DEG-0 LEAF moved that board 700 units. Drift was ruled out: subtracting the
+ *  common-mode translation changes the figures by under 1%.
+ *
+ *  At 0.05 the same edits displace 2-5x less (inalla median card 433.9 → 69.3, braids median
+ *  99.8 → 21.3), and the two things a gentler reheat could break are both measured and fine:
+ *  a newly added card still travels 70-100 units from its neighbours'-centroid seed and lands
+ *  **overlapping nothing**, and the bulk case the product actually performs — the LANDS chip
+ *  revealing ~31 nodes at once — settles with **zero lands overlapping and zero stuck at their
+ *  seed** on all five fixtures, while halving the disturbance to the rest of the board
+ *  (fairdrazi p95 464.9 → 208.7, sorin 334.4 → 127.1).
+ *
+ *  `sorin` stays over the criterion at every value (386 at 0.05): a sparse, orphan-heavy board
+ *  propagates a change furthest, and no reheat setting fixes that. Recorded, not tuned around. */
+export const EDIT_REHEAT_ALPHA = 0.05;
+
 /** forceCollide is velocity-based, so it converges on overlaps rather than guaranteeing they are
  *  gone. Measured across every REPULSION value tried: zero overlapping discs at d3's default 1
  *  iteration, because integration is `x += vx *= 0.86` immediately after the force pass. */

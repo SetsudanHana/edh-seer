@@ -117,12 +117,47 @@ export interface Caps {
  *  three arms side by side. Distance fidelity is what says "distance means synergy", so spending 8
  *  units of it to make the board settle is a product judgement, not a computed one. `degnorm-k2` is
  *  a one-line change plus a re-cap if it is ever revisited. */
+/** RE-CAPPED 2026-08-20 — THE BOARD IS ALLOWED TO STOP (`ALPHA_FLOOR` 0.02 → 0, roadmap H1).
+ *
+ *  These are the harness's own settings (800 ticks, 10 trials), which is MID-SETTLE for a board
+ *  that now comes to rest: alpha reaches ~0.018 at 800 ticks and the layout freezes around 1,400.
+ *  Kept at 800 anyway, so the gate stays comparable with every re-cap above it.
+ *
+ *  THE ARMS, measured like-for-like at 4,000 ticks where both are done moving (10 trials):
+ *    fixture      arm       cardOverlaps  crossings  distErr  motionMax
+ *    sorin        floor .02      84         41294      78       83.9
+ *    sorin        floor 0         0         40119      77        0.0
+ *    inalla       floor .02       7         33131      56       12.0
+ *    inalla       floor 0         0         36161      60        0.0
+ *    fairdrazi    floor .02       4         37764      63       14.8
+ *    fairdrazi    floor 0         0         35193      62        0.0
+ *    changelings  floor .02       2          7399      43       15.0
+ *    changelings  floor 0         0          7429      42        0.0
+ *    braids       floor .02       0         23485      46       13.5
+ *    braids       floor 0         0         23665      48        0.0
+ *
+ *  **CARD OVERLAPS GO TO ZERO ON ALL FIVE AND MOTION GOES TO EXACTLY ZERO.** sorin's 84 overlapping
+ *  card pairs at 4,000 ticks are the old arm's real state, and they are a MOVING TARGET (2.4 pairs
+ *  at 20,000) precisely because that board never stops rearranging itself.
+ *
+ *  THE COST, and it is one fixture: **inalla loses 9.1% of crossings (33,131 → 36,161) and 4 units
+ *  of rms distance error**, past the 3% stop-and-diagnose line the re-caps above hold themselves to.
+ *  The mechanism is that the floor's leaked energy kept nudging the densest board out of bad
+ *  configurations; with no floor it freezes in the first local minimum it reaches. Diagnosed rather
+ *  than assumed: an `alphaDecay 0.0025` arm at 8,000 ticks — twice the exploration — recovers
+ *  inalla's distance error (60 → 56) and leaves crossings WORSE at 36,443, so this is freezing, not
+ *  exploration time, and no decay setting buys it back.
+ *
+ *  TAKEN, with the cost recorded rather than hidden: zero overlaps and a board that stops beat 9%
+ *  of a crossings count on one fixture, and `cardOverlaps` is the metric with an owner ruling behind
+ *  it ("I would prefer having bigger cards cause they should be readable"). One line to revert —
+ *  `ALPHA_FLOOR` in board-force.ts. */
 export const QUALITY_CAPS: Record<string, Caps> = {
-  sorin: { nodeOverlaps: 0, cardOverlaps: 11, edgeCrossings: 41207, linkDistError: 77 },
-  inalla: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 33151, linkDistError: 56 },
-  fairdrazi: { nodeOverlaps: 0, cardOverlaps: 17, edgeCrossings: 37354, linkDistError: 61 },
-  changelings: { nodeOverlaps: 0, cardOverlaps: 1, edgeCrossings: 7400, linkDistError: 42 },
-  braids: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 23607, linkDistError: 47 },
+  sorin: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 40163, linkDistError: 77 },
+  inalla: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 36211, linkDistError: 59 },
+  fairdrazi: { nodeOverlaps: 0, cardOverlaps: 1, edgeCrossings: 35195, linkDistError: 62 },
+  changelings: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 7413, linkDistError: 42 },
+  braids: { nodeOverlaps: 0, cardOverlaps: 1, edgeCrossings: 23686, linkDistError: 48 },
 };
 
 /** RE-CAPPED AGAIN, same day, for the de-drift ORDER fix (board-force.ts). `forceDeDrift` ran LAST
