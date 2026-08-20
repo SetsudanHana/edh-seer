@@ -510,3 +510,30 @@ test("in a zone a card is its FRONT face, except a split card, which combines", 
     faces: [{ types: ["instant"], subtypes: [] }, { types: ["sorcery"], subtypes: [] }] }))
     .toEqual(["instant", "sorcery"]);
 });
+
+// C2c, the other half: a SELF fill carries the card's own supertype flags even when the clause
+// already named a type. Burnished Hart is an Artifact Creature whose ability sacrifices it as a
+// CREATURE, so the emit arrives with `type: creature` and used to skip the stamp entirely — leaving
+// a genuinely historic card invisible to a historic-matters payoff.
+test("a self graveyard fill carries historic even when the clause named a different type", () => {
+  const chars = (types: string[], subtypes: string[] = []): Characteristics => ({
+    types, subtypes, colors: [], identity: [], cmc: 3, power: null, toughness: null,
+    token: false, keywords: [],
+  });
+  const fill = (subject: Record<string, unknown>): GameEvent =>
+    ({ verb: "enters", subject: { control: "you", token: null, zone: "graveyard", self: true, ...subject } } as GameEvent);
+
+  // "Sacrifice this creature" on an Artifact Creature — the type is stated, the supertype is not.
+  const [hart] = selfFillTypes([fill({ type: "creature" })], chars(["artifact", "creature"]));
+  expect(hart.subject.historic).toBe(true);
+  expect(hart.subject.type).toBe("creature");
+
+  // A plain creature stamps nothing, which is what keeps this from being a blanket true.
+  const [bear] = selfFillTypes([fill({ type: "creature" })], chars(["creature"], ["bear"]));
+  expect(bear.subject.historic).toBeUndefined();
+
+  // The untyped path still stamps the printed types AND the flags.
+  const [saga] = selfFillTypes([fill({})], chars(["enchantment"], ["saga"]));
+  expect(saga.subject.historic).toBe(true);
+  expect(saga.subject.subtype).toEqual(["saga"]);
+});

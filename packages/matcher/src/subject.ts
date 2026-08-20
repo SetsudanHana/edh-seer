@@ -6,6 +6,31 @@ import { evalStatPredicate } from "./stats.js";
 const arr = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
 
+/** Does a CLASS subject guarantee historic, without any card being named? (CR 700.6: artifact,
+ *  legendary or Saga.)
+ *
+ *  `historic` is stamped by `selfSubject` off a card's own type line, so until 2026-08-20 only a
+ *  SELF event could satisfy a historic demand: a card putting ITSELF into the graveyard matched,
+ *  while "whenever an ARTIFACT you control dies" -- which is historic supply by definition -- did
+ *  not. Measured on the one deck that reads a historic subject, `the-capitoline-triad`: 13 claims
+ *  without this, 21 with.
+ *
+ *  EVERY MEMBER OF AN OR-LIST MUST QUALIFY, which is the whole subtlety. `type` is an OR
+ *  (`expandTypes` unions it), so `{type: ["artifact", "creature"]}` is satisfied by a plain creature
+ *  and guarantees nothing; `allTypes` is an AND, so one qualifying member is enough. Same reading
+ *  the `notType`/`umbrella` fields already force elsewhere: a list that means OR cannot be tested
+ *  member-by-member as though it meant AND. */
+function impliesHistoric(s: SubjectFilter): boolean {
+  const qualifies = (t: string): boolean => t === "artifact" || t === "legendary";
+  if (s.legendary === true) return true;
+  if (arr(s.allTypes).some(qualifies)) return true;
+  const types = arr(s.type);
+  if (types.length > 0 && types.every(qualifies)) return true;
+  const subtypes = arr(s.subtype);
+  if (types.length === 0 && subtypes.length > 0 && subtypes.every((t) => t === "saga")) return true;
+  return false;
+}
+
 /** Does the concrete producer subject satisfy the consumer filter? Every field the consumer
  *  leaves unset is a wildcard; a field it sets must be satisfied by the producer. */
 export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
@@ -21,7 +46,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // "Historic" is artifact, legendary or Saga -- a printed fact the matcher stamps on the producer
   // from its type line. Opt-in like every other field: a consumer that does not ask is unaffected,
   // and a consumer that DOES ask is satisfied only by a card that is one.
-  if (consumer.historic === true && producer.historic !== true) return false;
+  if (consumer.historic === true && producer.historic !== true && !impliesHistoric(producer)) return false;
   // CR 700.12. An outlaw is five creature types wearing one noun, so this reads off the type line
   // exactly as `historic` does — `isOutlaw` in implied.ts stamps the producer side.
   if (consumer.outlaw === true && producer.outlaw !== true) return false;

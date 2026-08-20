@@ -452,7 +452,24 @@ export function zoneTypes(chars: Characteristics): { types: string[]; subtypes: 
 export function selfFillTypes(events: GameEvent[], chars: Characteristics): GameEvent[] {
   return events.map((e) => {
     if (!(e.verb === "enters" && e.subject.zone === "graveyard" && e.subject.self === true)) return e;
-    if (e.subject.type !== undefined || e.subject.subtype !== undefined) return e;
+    // SUPERTYPE FLAGS ARE STAMPED EVEN WHEN A TYPE IS ALREADY STATED, and the early return below is
+    // why they had to be. `self` means the object IS this card, so its printed supertypes are known
+    // facts about the event whatever noun the clause used for it — and a card that says "sacrifice
+    // THIS CREATURE" arrives here with `type: creature` already set and used to skip out with no
+    // flags at all. Measured 2026-08-20: **Burnished Hart is an Artifact Creature** whose own
+    // ability sacrifices it as a creature, so it really does put an artifact — a historic card — in
+    // the graveyard, and The Capitoline Triad could not see it. Same for Otawara (Legendary Land,
+    // channelled), Boromir and Sojourner's Companion.
+    const own = zoneTypes(chars);
+    const ownTypes = own.types.map((t) => t.toLowerCase());
+    const ownSubtypes = own.subtypes.map((t) => t.toLowerCase());
+    const flags: Partial<SubjectFilter> = {
+      ...(isHistoric(ownTypes, ownSubtypes) ? { historic: true as const } : {}),
+      ...(isOutlaw(ownSubtypes) ? { outlaw: true as const } : {}),
+    };
+    if (e.subject.type !== undefined || e.subject.subtype !== undefined) {
+      return Object.keys(flags).length ? { ...e, subject: { ...e.subject, ...flags } } : e;
+    }
     // A GRAVEYARD IS A ZONE, so the card there is its front face and not the union of its faces —
     // see `zoneTypes`. Without this an adventurer's fill advertised its Instant half, and
     // Marang River Regent // Coil and Catch "enabled" Archaeomancer returning an instant.
@@ -461,6 +478,7 @@ export function selfFillTypes(events: GameEvent[], chars: Characteristics): Game
     const subtypes = zone.subtypes.map((t) => t.toLowerCase());
     return { ...e, subject: {
       ...e.subject,
+      ...flags,
       ...(types.length ? { type: types } : {}),
       ...(subtypes.length ? { subtype: subtypes } : {}),
     } };

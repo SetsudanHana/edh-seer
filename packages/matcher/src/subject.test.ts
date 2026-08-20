@@ -340,3 +340,26 @@ test("isOutlaw is the five CR 700.12 creature types and nothing else", () => {
   expect(isOutlaw(["human", "wizard"])).toBe(false);
   expect(isOutlaw([])).toBe(false);
 });
+
+// C2c: a CLASS subject that guarantees historic satisfies a historic demand. `historic` is stamped
+// off a card's own type line, so before 2026-08-20 only a SELF event could satisfy one — "whenever
+// an ARTIFACT you control dies" is historic supply by CR 700.6 and did not match.
+test("a class subject implies historic only when EVERY member of its OR-list qualifies", () => {
+  const wants: SubjectFilter = { control: "you", token: null, historic: true };
+  const p = (o: Partial<SubjectFilter>): SubjectFilter => ({ control: "you", token: null, ...o });
+
+  expect(subjectMatches(p({ type: "artifact" }), wants, H)).toBe(true);
+  expect(subjectMatches(p({ legendary: true, type: "creature" }), wants, H)).toBe(true);
+  expect(subjectMatches(p({ subtype: "saga" }), wants, H)).toBe(true);
+  // An artifact CREATURE is an AND — one qualifying member is enough.
+  expect(subjectMatches(p({ allTypes: ["artifact", "creature"] }), wants, H)).toBe(true);
+
+  // THE OR-LIST IS THE WHOLE SUBTLETY, and it has two live witnesses: Evereth, Viceroy of Plunder
+  // ("sacrifice another creature or artifact") and Midgar, City of Mako ("sacrifice an artifact or
+  // creature") guarantee only that ONE of the two hit the graveyard, so neither guarantees a
+  // historic card. A `some` reading claims they do — measured, it buys 4 claims and 3 of them are
+  // this shape, the fourth being Tibalt's Trickery, an Instant.
+  expect(subjectMatches(p({ type: ["artifact", "creature"] }), wants, H)).toBe(false);
+  expect(subjectMatches(p({ type: "creature" }), wants, H)).toBe(false);
+  expect(subjectMatches(p({ type: "instant" }), wants, H)).toBe(false);
+});
