@@ -4,7 +4,7 @@ import { isOutlaw } from "./implied.js";
 import type { SubjectFilter } from "@mtg/tagger";
 import type { Hierarchy } from "./types.js";
 
-const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"], treasure: ["artifact"], pirate: ["creature"], bear: ["creature"] };
+const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"], treasure: ["artifact"], pirate: ["creature"], bear: ["creature"], dragon: ["creature"], ogre: ["creature"], demon: ["creature"] };
 const s = (o: Partial<SubjectFilter>): SubjectFilter => ({ control: "you", token: null, ...o });
 
 test("consumer type is satisfied by a producer subtype via the hierarchy", () => {
@@ -362,4 +362,14 @@ test("a class subject implies historic only when EVERY member of its OR-list qua
   expect(subjectMatches(p({ type: ["artifact", "creature"] }), wants, H)).toBe(false);
   expect(subjectMatches(p({ type: "creature" }), wants, H)).toBe(false);
   expect(subjectMatches(p({ type: "instant" }), wants, H)).toBe(false);
+});
+
+test("a negated subtype refuses the card it names and nothing else", () => {
+  const wants: SubjectFilter = { control: "you", token: null, type: "creature", notSubtype: ["dragon"] };
+  const p = (subtype: string[]): SubjectFilter => ({ control: "you", token: null, type: "creature", subtype });
+  // Hidetsugu and Kairi is an Ogre Demon Dragon; Junji's "non-Dragon" excludes exactly it.
+  expect(subjectMatches(p(["ogre", "demon", "dragon"]), wants, H)).toBe(false);
+  expect(subjectMatches(p(["zombie"]), wants, H)).toBe(true);
+  // A producer naming no subtype cannot carry a negated one, so it is not refused.
+  expect(subjectMatches({ control: "you", token: null, type: "creature" }, wants, H)).toBe(true);
 });

@@ -29,6 +29,18 @@ export interface SubjectFilter {
    *  instant, and grouping noncreature-spell payoffs under `cast:artifact` puts them on the wrong
    *  theme axis. Set only when the negation actually narrowed something. */
   notType?: string[];
+  /** SUBTYPES the text negated — "target **non-Dragon** creature card", "each non-Zombie creature".
+   *
+   *  `notType` cannot carry these: it holds CARD TYPES and is tested through `expandTypes`, so a
+   *  negated Dragon would either be dropped or read as a negated card type. Measured 2026-08-20:
+   *  **65 distinct subtypes are negated across 247 corpus cards, 14 of them in the derived corpus**
+   *  — non-Human, non-Zombie, non-Dragon, non-Angel, non-Sliver and 60 more.
+   *
+   *  The witness is Junji, the Midnight Sky returning "target non-Dragon creature card": without
+   *  this it claimed to reanimate **Hidetsugu and Kairi, a Legendary Creature — Ogre Demon Dragon**,
+   *  which is precisely the card the text excludes. It is also the slot CR 700.16 `worthy` needs
+   *  ("legendary, ISN'T A VILLAIN, and is red and/or white"), so one field serves both. */
+  notSubtype?: string[];
   /** The umbrella noun a multi-umbrella `type` list was resolved FROM — "permanent" for
    *  "permanent spell".
    *

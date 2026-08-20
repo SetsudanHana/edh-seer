@@ -550,3 +550,19 @@ test("outlaw and modified narrow a subject, and their negations do not invert it
   expect(parseSubject("an unmodified creature").modified).toBeUndefined();
   expect(parseSubject("target creature you control").modified).toBeUndefined();
 });
+
+// CR-shaped negation one rung down the type line (2026-08-20). `notType` holds CARD TYPES and is
+// tested through `expandTypes`, so a negated SUBTYPE had nowhere to go: Junji, the Midnight Sky
+// returns "target non-Dragon creature card" and claimed to reanimate Hidetsugu and Kairi, a
+// Legendary Creature — Ogre Demon Dragon. 65 distinct subtypes are negated across 247 corpus cards.
+test("a negated subtype is recorded, and never contaminates the positive list", () => {
+  expect(parseSubject("target non-Dragon creature card").notSubtype).toEqual(["dragon"]);
+  expect(parseSubject("target non-Dragon creature card").subtype).toBeUndefined();
+  // Plurals singularise exactly as the positive parse does.
+  expect(parseSubject("non-Zombies you control").notSubtype).toEqual(["zombie"]);
+  // The neighbouring negations keep their own slots — none of these is a subtype.
+  expect(parseSubject("a noncreature spell").notSubtype).toBeUndefined();
+  expect(parseSubject("nonbasic lands you control").notSubtype).toBeUndefined();
+  expect(parseSubject("nontoken creature").notSubtype).toBeUndefined();
+  expect(parseSubject("target creature card").notSubtype).toBeUndefined();
+});

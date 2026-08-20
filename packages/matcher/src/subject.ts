@@ -155,6 +155,14 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     const has = expandTypes(arr(producer.type), arr(producer.subtype), h);
     if (!all.every((t) => has.has(t.toLowerCase()))) return false;
   }
+  // A NEGATED SUBTYPE, the same test one rung down the type line. No abstention clause is needed:
+  // unlike a card type, a subtype is never expressed by an umbrella — "a spell" says nothing about
+  // Dragons either way, and a producer that lists no subtype simply cannot carry a negated one.
+  const negatedSubtypes = consumer.notSubtype ?? [];
+  if (negatedSubtypes.length > 0) {
+    const subs = arr(producer.subtype).map((x) => x.toLowerCase());
+    if (negatedSubtypes.some((t) => subs.includes(t.toLowerCase()))) return false;
+  }
   const negated = consumer.notType ?? [];
   if (negated.length > 0) {
     const producerTokens = arr(producer.type);

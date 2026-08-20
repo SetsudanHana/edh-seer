@@ -207,6 +207,27 @@ function parseSubtypes(t: string): { subtype?: string | string[]; plural: boolea
   return { subtype: found.length === 1 ? found[0] : found.length ? found : undefined, plural };
 }
 
+/** SUBTYPES the text NEGATED — "target non-Dragon creature card", "each non-Zombie creature".
+ *
+ *  Safe to read off the same word list because `parseSubtypes` tokenises on `[a-z'-]+`, so
+ *  "non-dragon" arrives as ONE token and never joins the positive list: there is no risk of a card
+ *  demanding a Dragon and excluding one at the same time.
+ *
+ *  Measured 2026-08-20: **65 distinct subtypes are negated across 247 corpus cards**, 14 in the
+ *  derived corpus. Both spellings appear, so the hyphen is optional, and the word is singularised
+ *  exactly as the positive parse does ("non-Zombies"). */
+function parseNotSubtypes(t: string): string[] | undefined {
+  const found: string[] = [];
+  for (const m of t.matchAll(/\bnon-?([a-z']+)\b/g)) {
+    for (const s of singulars(m[1])) {
+      if (!SUBTYPES.has(s)) continue;
+      if (!found.includes(s)) found.push(s);
+      break;
+    }
+  }
+  return found.length ? found : undefined;
+}
+
 /** The quantifier the text used. An explicit word wins; otherwise a plural noun is a mass effect
  *  ("creatures you control" is an anthem) and a bare singular says nothing, so it stays unset. */
 function parseScope(t: string, pluralType: boolean): SubjectFilter["scope"] {
@@ -505,6 +526,8 @@ export function parseSubject(text: string): SubjectFilter {
   if (colors) out.colors = colors;
   if (type) out.type = type;
   if (notType?.length) out.notType = notType;
+  const notSubtype = parseNotSubtypes(t);
+  if (notSubtype) out.notSubtype = notSubtype;
   if (umbrella) out.umbrella = umbrella;
   const all = compoundTypes(t);
   if (all) out.allTypes = all;
