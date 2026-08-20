@@ -73,7 +73,7 @@ test("ComboList shows the combo result", () => {
 });
 
 test("ComboList section title uses the eyebrow convention, not a bold heading", () => {
-  const { container } = render(<ComboList combos={[{ cards: ["A", "B"], results: ["X"] } as any]} />);
+  const { container } = render(<ComboList combos={[{ cards: ["A", "B"], result: "X" }]} />);
   const title = [...container.querySelectorAll("*")].find((el) => el.textContent === "Combos");
   expect(title?.className).toContain("eyebrow");
 });
@@ -1010,4 +1010,49 @@ test("CardList explains the cost range on the tab that prints it", () => {
   render(<CardList cards={SAMPLE.report.cards} />);
   expect(screen.getByText("what the cost figures mean")).toBeInTheDocument();
   expect(screen.getByText(/counts lands only and under-states/)).toBeInTheDocument();
+});
+
+// --- F10 / F11: saying a thing once. ---
+
+// THIRTEEN COMMA-JOINED "Infinite X" CLAUSES was the whole row. The count survives; the list does
+// not, and the source is named — which also says why the STEPS are absent.
+test("ComboList leads with a few results and counts the rest", () => {
+  render(<ComboList combos={[{ cards: ["A", "B"], result: "Infinite mana, Infinite tokens, Infinite damage, Infinite draw, Win the game" }]} />);
+  expect(screen.getByText(/Infinite mana · Infinite tokens · Infinite damage/)).toBeInTheDocument();
+  expect(screen.getByText(/\+2 more/)).toBeInTheDocument();
+  expect(screen.queryByText(/Win the game/)).not.toBeInTheDocument();
+  expect(screen.getByText(/Commander Spellbook/)).toBeInTheDocument();
+});
+
+// ONE MECHANISM, SAID ONCE. On the review deck 25 of 94 rows printed the same sentence with the
+// names swapped, and the rows whose reason was DIFFERENT read exactly like the rest.
+test("CardList says a shared mechanism once and leaves the distinctive rows their sentence", () => {
+  const wiz = (name: string, extra?: string) => ({
+    name,
+    synergyRating: 2,
+    roles: [],
+    topPartners: [{
+      name: "Inalla",
+      score: 2,
+      reasons: [
+        { tag: "enters:wizard", text: `${name} triggers on a wizard entering; Inalla supplies it` },
+        ...(extra ? [{ tag: "dies:creature", text: extra }] : []),
+      ],
+    }],
+  });
+  const cards = [
+    ...[...Array(6)].map((_, i) => wiz(`Wiz ${i}`)),
+    wiz("Odd One", "Odd One returns a creature from your graveyard"),
+  ] as never;
+  render(<CardList cards={cards} />);
+  // The count and the sentence are separate text nodes (React splits `{count}` from the string),
+  // so this matches the node that carries the words.
+  expect(screen.getByText(/said once here/)).toBeInTheDocument();
+  // SEVEN, not six: "Odd One" leads with the shared reason too — what makes it distinctive is the
+  // SECOND reason it carries, which is exactly the row the fold has to keep.
+  expect(screen.getByText("7").parentElement?.textContent).toMatch(/^7 × Wiz 0 triggers on a wizard entering/);
+  // The shared sentence appears ONCE, in the note — not on the six rows that share it.
+  expect(screen.getAllByText(/triggers on a wizard entering/)).toHaveLength(1);
+  // And the row with something else to say keeps it.
+  expect(screen.getByText("Odd One returns a creature from your graveyard")).toBeInTheDocument();
 });

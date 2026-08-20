@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
 import { Explain } from "./Explain.js";
+import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 
 type Category =
   | "ramp" | "draw" | "cardSelection" | "targetedRemoval" | "stackInteraction"
@@ -75,6 +76,12 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
   const [query, setQuery] = useState("");
   const present = new Set(cards.flatMap((c) => (c.roles ?? []) as Category[]));
   const categories = CATEGORY_ORDER.filter((c) => present.has(c));
+  // ONE MECHANISM, SAID ONCE. Measured on the review deck: 94 rows carry 12 distinct reason
+  // sentences and the top one covers 25 of them, so a quarter of the table repeated "X triggers on
+  // a wizard entering; Inalla supplies it" with only the names changing — and the rows whose reason
+  // was DIFFERENT, which is where the information is, read exactly like the rest.
+  const shapes = reasonShapes(cards);
+  const names = new Set(cards.map((c) => c.name));
   const needle = query.trim().toLowerCase();
   const byName = (a: DeckReport["cards"][number], b: DeckReport["cards"][number]) => a.name.localeCompare(b.name);
   const visible = cards
@@ -115,6 +122,22 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
         value — a 5-drop is priced at turn 5 — and a land or an unpriceable cost renders an em dash
         rather than 0%.
       </Explain>
+      {shapes.shared.length > 0 ? (
+        <div className="text-xs text-(--muted) max-w-[65ch] flex flex-col gap-0.5">
+          <span>
+            Most of this deck connects in{" "}
+            {shapes.shared.length === 1 ? "one way" : `${shapes.shared.length} ways`}, said once here
+            instead of on every row:
+          </span>
+          {shapes.shared.map((sh) => (
+            <span key={sh.template}>
+              <span className="tabular-nums">{sh.count}</span> ×{" "}
+              <span className="text-(--foreground)">{sh.sample}</span>
+            </span>
+          ))}
+          <span>A row with a sentence of its own is a card doing something else.</span>
+        </div>
+      ) : null}
       <div className="flex gap-2 flex-wrap items-center">
         {chip("all", "All")}
         {categories.map((c) => chip(c, CATEGORY_LABELS[c]))}
@@ -153,7 +176,7 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
           </thead>
           <tbody>
             {visible.map((c, i) => {
-              const reason = c.topPartners?.[0]?.reasons?.[0]?.text;
+              const reason = distinctiveReason(c, shapes.shared, names);
               const roles = (c.roles ?? []) as Category[];
               return (
                 <tr key={c.name} className="border-b border-(--separator) align-top">
