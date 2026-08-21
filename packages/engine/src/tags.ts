@@ -23,6 +23,9 @@ const BARE_LABELS: Record<string, string> = {
   "aura": "auras",
   "equipment": "equipment",
   "attack-trigger": "attack triggers",
+  // roadmap G1: a deck whose entry triggers are worth re-firing, and which carries the flicker,
+  // copy and trigger-doubling effects that do it.
+  "etb-refire": "re-firing entry triggers",
 };
 
 function capitalize(s: string): string {
