@@ -101,9 +101,12 @@ const completeShell = (): DeckCard[] => {
   return cards;
 };
 
-test("a complete goodstuff shell scores near 5", () => {
+test("a complete goodstuff shell scores exactly 5 (every parent, and lands, exactly at target)", () => {
+  // 10 ramp = Ramp 10/10, 10 draw + 4 scry = Consistency 14/14, 10 kill = Interaction 10/10,
+  // 3 wipes = Board wipes 3/3, 36 lands on the nose -- every scored parent attains 1.0, so the
+  // weighted mean is 5 exactly rather than merely "near" it.
   const { buildScore } = computeBuild(completeShell(), "goodstuff");
-  expect(buildScore).toBeGreaterThan(4.5);
+  expect(buildScore).toBeCloseTo(5, 5);
 });
 
 test("an empty pile scores near 0 and suggests the big gaps", () => {
@@ -113,13 +116,60 @@ test("an empty pile scores near 0 and suggests the big gaps", () => {
   expect(suggestions.some((s) => /Ramp 0\/10/.test(s))).toBe(true);
 });
 
-test("archetype deltas shift targets: Voltron wants fewer wipes, more protection", () => {
+// RETARGETED for Task 7: `boardWipe` and `protection` no longer carry a target of their own --
+// the archetype delta named on each now reaches the PARENT that owns it (`Board wipes` is
+// boardWipe's own single-leaf parent and moves unchanged in meaning; `protection` lives inside the
+// multi-leaf `Interaction` parent, so its delta widens the whole group). See build.ts's
+// ARCHETYPE_TARGET_DELTAS doc comment for the full reasoning and which archetypes this affects.
+test("archetype deltas shift PARENT targets: Voltron wants fewer wipes, more interaction", () => {
   const cards = [mk("Shield", "Permanents you control gain indestructible.", "Instant")];
-  const voltron = computeBuild(cards, "voltron").buildCategories;
-  const goodstuff = computeBuild(cards, "goodstuff").buildCategories;
-  const t = (c: { category: string; target: number }[], k: string) => c.find((x) => x.category === k)!.target;
-  expect(t(voltron, "boardWipe")).toBeLessThan(t(goodstuff, "boardWipe"));
-  expect(t(voltron, "protection")).toBeGreaterThan(t(goodstuff, "protection"));
+  const voltron = computeBuild(cards, "voltron").buildParents;
+  const goodstuff = computeBuild(cards, "goodstuff").buildParents;
+  const t = (ps: typeof voltron, name: string) => ps.find((p) => p.name === name)!.target;
+  expect(t(voltron, "Board wipes")).toBeLessThan(t(goodstuff, "Board wipes"));
+  expect(t(voltron, "Interaction")).toBeGreaterThan(t(goodstuff, "Interaction"));
+});
+
+test("a grouped leaf never carries a target of its own, whatever the archetype", () => {
+  // Voltron deltas BOTH boardWipe and protection -- the two leaves most likely to leak a stray
+  // target back onto the leaf row if the redirection to the parent were wrong.
+  const cards = [mk("Shield", "Permanents you control gain indestructible.", "Instant")];
+  const { buildCategories } = computeBuild(cards, "voltron");
+  for (const c of buildCategories) {
+    if (c.category === "lands") continue; // the one leaf that still scores on its own band
+    expect(c.target).toBe(0);
+  }
+});
+
+test("a parent's count is the UNION of its leaves, not the sum -- a card carrying two leaves counts once", () => {
+  // "Scry 2, then draw a card" with a structured draw-card ability hits BOTH cardSelection.text
+  // (the oracle "scry" pattern) and draw.effect (the effectKind) -- the Grave Researcher shape the
+  // brief names. Summing the two leaf sets would read Consistency as 3 (2 + 1); the deck only runs
+  // 2 distinct cards.
+  const cards = [
+    mk("Grave Researcher", "Scry 2, then draw a card.", "Sorcery", drawAbility),
+    mk("Divination", "Draw two cards.", "Sorcery", drawAbility),
+  ];
+  const members = detectBuildCategories(cards);
+  expect(members.get("draw")).toEqual(new Set(["Grave Researcher", "Divination"]));
+  expect(members.get("cardSelection")).toEqual(new Set(["Grave Researcher"]));
+
+  const { buildParents } = computeBuild(cards, undefined);
+  const consistency = buildParents.find((p) => p.name === "Consistency")!;
+  expect(consistency.count).toBe(2);
+});
+
+test("buildScore is computed from PARENT attainment: any leaf inside a parent can carry its whole floor", () => {
+  // 14 tutors and nothing else meets Consistency's target of 14 outright -- under the retired
+  // leaf-scored shape this would have scored ZERO (draw's own target was 10, unmet; tutor's own
+  // target was always 0 and excluded), because no single leaf floor could ever be satisfied by a
+  // different leaf. That is exactly the shape the owner's ruling retires.
+  const tutors = Array.from({ length: 14 }, (_, i) =>
+    mk(`Tutor ${i}`, "Search your library for a card, put that card into your hand, then shuffle.", "Sorcery"));
+  const { buildParents } = computeBuild(tutors, undefined);
+  const consistency = buildParents.find((p) => p.name === "Consistency")!;
+  expect(consistency.count).toBe(14);
+  expect(consistency.target).toBe(14);
 });
 
 test("a zero-target category is neutral: it neither scores nor appears as a gap", () => {

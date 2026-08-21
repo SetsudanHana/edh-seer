@@ -4,19 +4,6 @@ import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 
-/** PARENTS GROUP; LEAVES SCORE (owner, 2026-08-20). A parent carries no target and no ratio of its
- *  own -- summing three independently-set targets (`BASE_TARGETS`, `build.ts:92`) invents a
- *  benchmark nobody measured, and four player reviews refused exactly that shape when two correct
- *  numbers answered different questions. `burn` and `stax` stay outside the grouping (win-plan and
- *  tax signals, not build roles) and render after the parents exactly as they do today; `lands` is
- *  already in `REPORTED_ELSEWHERE` and keeps its own block. */
-const PARENTS: { name: string; leaves: string[] }[] = [
-  { name: "Consistency", leaves: ["draw", "cardSelection", "tutor"] },
-  { name: "Ramp", leaves: ["ramp"] },
-  { name: "Interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] },
-  { name: "Board wipes", leaves: ["boardWipe"] },
-];
-
 /** Scored here and NOT listed as a benchmark row: the land count is reported once, by the block
  *  below, which derives its target from this deck's own curve instead of the flat 36 every deck was
  *  measured against. Two rows for one quantity, disagreeing on the target, is the panel's most
@@ -116,38 +103,35 @@ export function demandSentence(key: string): string {
 }
 
 export function BuildBenchmarks({
-  categories, deckMath,
+  categories, parents, deckMath,
 }: {
   categories: DeckReport["buildCategories"];
+  /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). This is what carries
+   *  a target now — see the doc comment on `parentRow` below. The engine owns the grouping; there
+   *  is no local `PARENTS` const to fall out of sync with it any more. */
+  parents?: DeckReport["buildParents"];
   deckMath?: DeckReport["deckMath"];
 }) {
   if (!categories || categories.length === 0) return null;
-  // zero-target = neutral, omitted (mirrors engine)
-  const rows = categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category));
-  if (rows.length === 0) return null;
+  const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
+  const groupedLeaves = new Set((parents ?? []).flatMap((p) => p.leaves));
+  // Anything no parent names (burn, stax) renders after them, exactly as before this task -- those
+  // are win-plan and tax signals, never build roles, and each still carries its OWN target (today
+  // always 0, per `build.ts`'s `BASE_TARGETS`, so nothing renders here in practice).
+  const ungrouped = categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category) && !groupedLeaves.has(c.category));
+  if ((parents?.length ?? 0) === 0 && ungrouped.length === 0 && !deckMath) return null;
 
-  /** A single leaf's bar, unchanged from before grouping existed -- geometry, `TARGET_MARK`, the
-   *  flagged/state logic and the row's own `aria-label` are all untouched. `headingName` is
-   *  CONFLICT 8's fix, REVISED (F2): a parent wrapping exactly one leaf whose LABEL equals the
-   *  parent's own name (Ramp -> ramp, Board wipes -> boardWipe) renders no separate heading at all
-   *  -- suppressing the label text alone left the `w-24` column empty, which read as an unlabelled
-   *  bar floating next to a heading, worse than the repetition it replaced. Instead the row's own
-   *  label span carries the `<h4>` itself, exactly where the leaf's name would have sat: one
-   *  heading in the DOM (rank preserved), the name visible once, the column never blank, and the
-   *  bar still aligned with every other row. The `aria-label` keeps the full sentence regardless,
-   *  because a screen reader reads a row out of heading context. */
-  const row = (c: (typeof rows)[number], headingName?: string) => {
-    const name = LABEL[c.category] ?? c.category;
-    // Every remaining category is a FLOOR -- lands were the one two-sided band, and they are
-    // reported by their own block now, so over-target needs no case here.
-    const flagged = c.count < c.target;
+  /** ONE BAR SHAPE, geometry and `TARGET_MARK` unchanged from before grouping existed — only WHO
+   *  gets a bar changed. Owner's 2026-08-21 ruling overrides the shape shipped 2026-08-20 ("a parent
+   *  carries no target of its own"): a target declared ONCE at the parent, with leaves showing only
+   *  how the deck spent it, is a different object, and that is what a parent's own row draws here. */
+  const bar = (key: string, label: ReactNode, ariaName: string, count: number, target: number, note = "") => {
+    const flagged = count < target;
     const state = flagged ? "under target" : "on target";
-    const fill = Math.max(0, Math.min(1, (c.count / c.target) * TARGET_MARK));
+    const fill = Math.max(0, Math.min(1, (count / target) * TARGET_MARK));
     return (
-      <li key={c.category} className="flex items-center gap-3" aria-label={`${name} ${c.count} of ${c.target}, ${state}`}>
-        <span className="w-24 shrink-0 text-sm">
-          {headingName ? <h4 className="eyebrow">{headingName}</h4> : name}
-        </span>
+      <li key={key} className="flex items-center gap-3" aria-label={`${ariaName} ${count} of ${target}, ${state}${note}`}>
+        <span className="w-24 shrink-0 text-sm">{label}</span>
         <span className="relative flex-1 h-2 rounded-full bg-(--separator) overflow-hidden">
           <span
             className={`absolute inset-y-0 left-0 rounded-full ${flagged ? "bg-(--warning)" : "bg-(--success)"}`}
@@ -161,16 +145,59 @@ export function BuildBenchmarks({
             style={{ left: `${TARGET_MARK * 100}%` }}
           />
         </span>
-        <span className="w-14 shrink-0 text-right text-sm stat-num">{c.count}/{c.target}</span>
+        <span className="w-14 shrink-0 text-right text-sm stat-num">{count}/{target}</span>
         <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
       </li>
     );
   };
 
-  const grouped = new Set(PARENTS.flatMap((p) => p.leaves));
-  // Anything PARENTS does not name (burn, stax) renders after them, exactly as it did before this
-  // task -- those are win-plan and tax signals, not build roles, and were never asked to group.
-  const ungrouped = rows.filter((c) => !grouped.has(c.category));
+  /** THE PARENT'S OWN ROW — target, ratio and flag, exactly the bar a leaf used to draw. Its `<h4>`
+   *  rides inside the label span (same slot a leaf's name would sit in), so the column is never
+   *  blank and there is exactly one heading in the DOM whether the parent has one leaf or four —
+   *  the single/multi-leaf branch this used to need (CONFLICT 8, F2) is gone: every parent has a
+   *  ratio of its own now, so there is no more "no separate heading" special case to make.
+   *
+   *  `sumOfLeaves` is passed in rather than recomputed -- the caller already has it, because the
+   *  leaf rows below need the identical number for F4's share fix. When it exceeds the parent's own
+   *  UNION count, a card fills more than one of this parent's leaves (Grave Researcher: cardSelection
+   *  AND draw-adjacent) -- said in the aria-label rather than left for a reader to notice the leaf
+   *  shares summing past 100% of a total they can't see (fix F4, controller review 2026-08-21). */
+  const parentRow = (p: NonNullable<typeof parents>[number], sumOfLeaves: number) => {
+    const overlapNote = sumOfLeaves > p.count
+      ? `; its leaves sum to ${sumOfLeaves} because some cards fill more than one`
+      : "";
+    return bar(p.name, <h4 className="eyebrow">{p.name}</h4>, p.name, p.count, p.target, overlapNote);
+  };
+
+  /** A LEAF UNDER A MULTI-LEAF PARENT — count and SHARE, never a target, ratio or flag (owner's
+   *  ruling: "only a parent can be under target"). A single-leaf parent (Ramp, Board wipes) never
+   *  calls this: its leaf row would just repeat the parent's own bar as "100%", which is the exact
+   *  duplicate the folded shape exists to avoid.
+   *
+   *  SHARE IS OF THE LEAF SUM, NOT THE PARENT'S UNION (fix F4). Interaction's leaves summed to 9
+   *  against a union of 8 (one card fills two), so dividing by the union read 114% across the row
+   *  -- a distribution that doesn't total 100% reads as a broken number on a panel whose whole
+   *  argument is that its numbers mean what they say. Dividing by the leaf sum instead makes every
+   *  row's shares total 100% ALWAYS, by construction; the overlap is reported once, on the parent
+   *  row above, rather than smeared invisibly across every leaf's percentage. */
+  const leafRow = (category: string, parentName: string, sumOfLeaves: number) => {
+    const name = LABEL[category] ?? category;
+    const count = countByLeaf.get(category) ?? 0;
+    const share = sumOfLeaves > 0 ? Math.round((count / sumOfLeaves) * 100) : 0;
+    return (
+      <li key={category} className="flex items-center gap-3 text-sm text-(--muted)" aria-label={`${name} ${count}, ${share}% of ${parentName}`}>
+        {/* FIX F3 (controller review, 2026-08-21): `w-24` with a `pl-3` indent left only 84px for
+          *  the label text, and three real leaf names need more -- "Stack interaction" measures
+          *  121px, "Graveyard hate" 110px, "Card selection" 105px, all truncating (the graveyard one
+          *  dangerously: "Graveyard …" reads as either hate or recursion, opposite things). Widened
+          *  to `w-36` (144px, clears the widest with room to spare) and the indent DROPPED -- the
+          *  missing bar/ratio/flag and the muted colour already mark a leaf row as subordinate, so
+          *  the indent was decorative, not load-bearing, and it was the thing costing the width. */}
+        <span className="w-36 shrink-0 truncate">{name}</span>
+        <span className="flex-1 stat-num">{count} · {share}%</span>
+      </li>
+    );
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -179,36 +206,24 @@ export function BuildBenchmarks({
         *  reader got a structure a sighted reader could not see. Foreground weight is the whole
         *  difference; the children keep the muted eyebrow they already had. */}
       <h3 className="eyebrow text-(--foreground)">Build benchmarks</h3>
-      {PARENTS.map((p) => {
-        // Ordered by PARENTS.leaves, never by the input array -- a parent groups its leaves
-        // together on the page regardless of what order the engine happened to report them in.
-        const leafRows = p.leaves
-          .map((leaf) => rows.find((c) => c.category === leaf))
-          .filter((c): c is (typeof rows)[number] => c !== undefined);
-        // CONFLICT 7: `BASE_TARGETS` sets stackInteraction/protection/tutor/graveyardHate to 0, and
-        // only ARCHETYPE_ADJUST lifts them -- so on a deck with no archetype adjustment a parent can
-        // have zero surviving leaves. Never render an empty heading over nothing.
-        if (leafRows.length === 0) return null;
-        // F2: fold the heading INTO the row rather than suppressing the row's own label text --
-        // see the `row()` doc comment above for why the earlier shape (CONFLICT 8) left a blank
-        // column.
-        const foldHeading = leafRows.length === 1 && LABEL[leafRows[0]!.category] === p.name;
-        return (
-          <Fragment key={p.name}>
-            {/* The heading gets its own wrapper, separate from the `<ul>` of leaves: a parent
-              *  carries NO target and no ratio of its own, and keeping its subtree free of any
-              *  digit is how that stays true rather than merely asserted. Skipped entirely when
-              *  `foldHeading` -- that heading rides inside the single row below instead. */}
-            {foldHeading ? null : <div><h4 className="eyebrow">{p.name}</h4></div>}
-            <ul className="flex flex-col gap-1.5">
-              {leafRows.map((c) => row(c, foldHeading ? p.name : undefined))}
-            </ul>
-          </Fragment>
-        );
-      })}
-      {ungrouped.length > 0 ? (
-        <ul className="flex flex-col gap-1.5">{ungrouped.map((c) => row(c))}</ul>
-      ) : null}
+      <ul className="flex flex-col gap-1.5">
+        {(parents ?? []).map((p) => {
+          // Computed once per parent and shared by its own row (the overlap note) and every leaf
+          // beneath it (the share denominator) -- see the two doc comments above for why each reads it.
+          const sumOfLeaves = p.leaves.reduce((s, l) => s + (countByLeaf.get(l) ?? 0), 0);
+          return (
+            <Fragment key={p.name}>
+              {parentRow(p, sumOfLeaves)}
+              {/* Ordered by the parent's own `leaves` list, never re-sorted -- a parent groups its
+                *  leaves together on the page regardless of what order the engine happened to report
+                *  them in. Every leaf renders, including a zero-count one (tutor at 0 IS the finding
+                *  a combo deck's Consistency group is thin on). */}
+              {p.leaves.length > 1 ? p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves)) : null}
+            </Fragment>
+          );
+        })}
+        {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
+      </ul>
 
       {deckMath ? <DeckMathRows deckMath={deckMath} /> : null}
     </div>

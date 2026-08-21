@@ -1,14 +1,18 @@
 import { expect, test } from "vitest";
-import { cutCandidates, deckSlack, trimOrder, CUT_RATING_MAX, CUT_AXIS_MAX, type CutInput } from "./cut-list.js";
+import { cutCandidates, deckSlack, trimOrder, CUT_RATING_MAX, CUT_AXIS_MAX, type CutInput, type SlackParent } from "./cut-list.js";
 
 const card = (over: Partial<CutInput> & { name: string }): CutInput => ({
   rating: 0, axisWeight: 0, partnerCount: 0, manaValue: 0, roles: [], isLand: false,
   isCommander: false, isComboPiece: false, fillsDeckRole: false, ...over,
 });
-const CATS = [
-  { category: "ramp", count: 14, target: 10 },   // four to spare
-  { category: "draw", count: 10, target: 10 },   // exactly at target
-  { category: "boardWipe", count: 1, target: 3 },
+// FIX F2 (controller review, 2026-08-21): `deckSlack`/`trimOrder` read `buildParents` now, not
+// leaf `buildCategories` -- a leaf's own target is permanently 0 since Task 7, so it could never
+// be "over" again. A card's `roles` stay LEAF names (`rolesByCard` is unchanged), which is why
+// each parent here still lists the same leaf the old fixture named.
+const PARENTS: SlackParent[] = [
+  { name: "Ramp", count: 14, target: 10, leaves: ["ramp"] },        // four to spare
+  { name: "Consistency", count: 10, target: 10, leaves: ["draw"] }, // exactly at target
+  { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
 ];
 
 test("a dead card is a candidate and its reasons name every condition", () => {
@@ -51,13 +55,15 @@ test("a ROLE_NOT_SYNERGY card is protected, however dead it looks", () => {
   expect(rows).toEqual([]);
 });
 
-test("deckSlack names the over-target categories, biggest surplus first, and never a card", () => {
-  expect(deckSlack(CATS)).toEqual([{ category: "ramp", count: 14, target: 10, over: 4 }]);
-  // target 0 means "reported, never scored" (graveyardHate) — it can never be over.
-  expect(deckSlack([{ category: "graveyardHate", count: 2, target: 0 }])).toEqual([]);
-  // LANDS ARE NEVER A SLACK ROW whatever the counts say: `land-count.ts` owns the land verdict from
-  // the deck's own curve, and this chip's flat convention contradicted it on the same screen.
-  expect(deckSlack([{ category: "lands", count: 37, target: 36 }])).toEqual([]);
+test("deckSlack names the over-target PARENTS, biggest surplus first, and never a card", () => {
+  expect(deckSlack(PARENTS)).toEqual([{ category: "Ramp", count: 14, target: 10, over: 4 }]);
+  // target 0 means "reported, never scored" (no archetype delta has lifted this group) — it can
+  // never be over.
+  expect(deckSlack([{ name: "Interaction", count: 2, target: 0, leaves: ["graveyardHate"] }])).toEqual([]);
+  // NO LANDS EXCLUSION NEEDED ANY MORE: `lands` was never a `BUILD_PARENTS` member to begin with
+  // (build.ts keeps it scored on its own two-sided band, outside every parent), so it can never
+  // reach `deckSlack` as a row at all -- the guarantee moved from a filter here to the shape of
+  // `buildParents` itself. `land-count.ts` still owns the land verdict from the deck's own curve.
 });
 
 test("the rating and axis gates are boundaries, not ranges", () => {
@@ -117,7 +123,7 @@ test("trim always has an Nth row, where the passive cut list has none at all", (
     card({ name: "Wheel", rating: 2, axisWeight: 0.6, partnerCount: 9, roles: ["draw"] }),
   ];
   expect(cutCandidates(tight)).toEqual([]);
-  expect(trimOrder(tight, CATS)).toHaveLength(3);
+  expect(trimOrder(tight, PARENTS)).toHaveLength(3);
 });
 
 // THE SOL RING REGRESSION, one layer up. The first cut of `trimOrder` dropped the protection from a
@@ -128,14 +134,16 @@ test("an over-target role still protects, and sorts behind a card with no role a
   const rows = trimOrder([
     card({ name: "Sol Ring", roles: ["ramp"] }),
     card({ name: "Random Card" }),
-  ], CATS);
+  ], PARENTS);
   expect(rows.map((r) => r.name)).toEqual(["Random Card", "Sol Ring"]);
   expect(rows[0].protections).toEqual([]);
-  expect(rows[1].protections[0]).toContain("ramp is at 14 against a target of 10");
+  // Names the PARENT ("Ramp"), never the leaf role -- fix F2: the leaf's own count is no longer
+  // the number that is over target, so restating the leaf name here would be a false sentence.
+  expect(rows[1].protections[0]).toContain("Ramp is at 14 against a target of 10");
 });
 
 test("a role in a category still under target says nothing about room", () => {
-  const [row] = trimOrder([card({ name: "Wrath", roles: ["boardWipe"] })], CATS);
+  const [row] = trimOrder([card({ name: "Wrath", roles: ["boardWipe"] })], PARENTS);
   expect(row.protections).toEqual(["fills boardWipe"]);
   expect(row.reasons.join(" ")).not.toContain("room");
 });
@@ -144,7 +152,7 @@ test("trim protects a combo piece and a deck-role card, which the cut list drops
   const rows = trimOrder([
     card({ name: "Half A Combo", isComboPiece: true }),
     card({ name: "Jet Medallion", fillsDeckRole: true }),
-  ], CATS);
+  ], PARENTS);
   expect(cutCandidates(rows.map((r) => card({ name: r.name })))).toHaveLength(2); // both cuttable when stripped
   expect(rows.find((r) => r.name === "Half A Combo")!.protections)
     .toEqual(["half of a combo the deck assembles"]);
@@ -157,7 +165,7 @@ test("lands and commanders are outside the trim universe entirely", () => {
     card({ name: "Wastes", isLand: true }),
     card({ name: "The Boss", isCommander: true }),
     card({ name: "Cuttable" }),
-  ], CATS);
+  ], PARENTS);
   expect(rows.map((r) => r.name)).toEqual(["Cuttable"]);
 });
 
@@ -178,7 +186,7 @@ test("an unmet condition is a REASON on both lists, and never a gate", () => {
     name: "Oath of Liliana", unmetConditions: ["planeswalkers entering"], rating: 1.5, roles: ["draw"],
   });
   expect(cutCandidates([protectedCard])).toEqual([]);
-  const [row] = trimOrder([protectedCard], CATS);
+  const [row] = trimOrder([protectedCard], PARENTS);
   expect(row.protections.length).toBeGreaterThan(0);
   expect(row.reasons.some((r) => r.includes("nothing in the deck provides that"))).toBe(true);
 

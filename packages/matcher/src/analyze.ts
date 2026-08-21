@@ -669,7 +669,7 @@ export function analyzeDeckStructured(
     }));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
-  const { buildScore, buildCategories, suggestions } = computeBuild(resolved, strategies[0]?.name);
+  const { buildScore, buildCategories, buildParents, suggestions } = computeBuild(resolved, strategies[0]?.name);
 
   // THE CUT LIST -- a join over what is already computed, never new analysis. It reads the rated
   // cards, the axis weights, the BUILD roles and the per-category surplus, and names CANDIDATES
@@ -695,12 +695,12 @@ export function analyzeDeckStructured(
     unmetConditions: (unmetByCard.get(c.name) ?? []).map((t) => describeTag(t as never)),
   }));
   const cutList = cutCandidates(cutInputs);
-  const slack = deckSlack(buildCategories);
+  const slack = deckSlack(buildParents);
   // TRIM MODE: the same inputs asked a different question — "I must cut five" rather than "is
   // anything here doing nothing". The whole ranked order ships, not a slice, so a caller picks its
   // own N without a round trip; see `trimOrder` for why a category surplus counts here and does not
   // in `cutCandidates`.
-  const trim = trimOrder(cutInputs, buildCategories);
+  const trim = trimOrder(cutInputs, buildParents);
 
   // Theme membership: same axis ordering the zones will read, with statics dropped (an anthem is a
   // payoff of the theme supplying its subject, never a theme itself).
@@ -741,6 +741,7 @@ export function analyzeDeckStructured(
     strategies,
     buildScore,
     buildCategories,
+    buildParents,
     suggestions,
     cutList,
     slack,

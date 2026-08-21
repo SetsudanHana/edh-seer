@@ -87,24 +87,33 @@ export interface CutCandidate {
   reasons: string[];
 }
 
-/** Categories the deck carries MORE of than its (archetype-adjusted) target, biggest surplus
+/** A PARENT row, the shape `computeBuild` reports as `BuildResult.buildParents` -- the same
+ *  interface repeated here (not imported) because `cut-list.ts`, like `build.ts` itself, must not
+ *  create a circular dependency; the two are kept structurally identical on purpose. */
+export interface SlackParent { name: string; count: number; target: number; leaves: readonly string[] }
+
+/** Groups the deck carries MORE of than their (archetype-adjusted) PARENT target, biggest surplus
  *  first. This is where a deck has room, stated at the level the engine can actually defend: it
- *  names the category and never a member, because nothing here ranks two ramp cards against each
- *  other. Cutting from a surplus category by `over` cards still leaves the deck at target. */
+ *  names the PARENT and never a member, because nothing here ranks two ramp cards against each
+ *  other. Cutting from a surplus group by `over` cards still leaves the deck at target.
+ *
+ *  FIX F2 (controller review, 2026-08-21): this used to read LEAF `buildCategories`, but Task 7
+ *  moved every leaf's target to 0 -- a leaf's own `target > 0` filter can now never pass, so a real
+ *  surplus (Interaction running 18 against a floor of 10) went silently unreported. `deckSlack`
+ *  exists BECAUSE of a recorded defect (Sol Ring, Arcane Signet and Dark Ritual all named as cut
+ *  candidates in a deck running ramp 16/10) whose fix was exactly this sentence at deck level, so
+ *  losing it silently would be the same defect returning. Reads `buildParents` now; `lands` needs
+ *  no exclusion any more because it was never a `BUILD_PARENTS` member to begin with. */
 export function deckSlack(
-  categories: readonly { category: string; count: number; target: number }[],
+  parents: readonly SlackParent[],
 ): { category: string; count: number; target: number; over: number }[] {
-  return categories
-    // LANDS ARE NOT A SURPLUS CATEGORY, and printing them here put two land verdicts on one screen
-    // saying opposite things: this chip read "lands 37/36 (+1)" — one land OVER a flat convention —
-    // while `land-count.ts`'s own block 400px below read "34 in deck … wants 35", one land SHORT of
-    // a target derived from the deck's own curve and acceleration. Both are right about different
-    // questions and neither cross-references the other, which reads as a broken report (the E4
-    // defect, one layer up: two readouts sharing a number). The Karsten block is the land verdict,
-    // so this one goes rather than being annotated.
-    .filter((c) => c.category !== "lands")
-    .filter((c) => c.target > 0 && c.count > c.target)
-    .map((c) => ({ ...c, over: c.count - c.target }))
+  return parents
+    .filter((p) => p.target > 0 && p.count > p.target)
+    // `category` is the field name every reader of `report.slack` already expects
+    // (`CutList.tsx`'s `BUILD_CATEGORY_LABEL[s.category] ?? s.category`); a parent's NAME
+    // ("Interaction", "Board wipes") is already plain English, so the same fallback renders it
+    // correctly with no client change.
+    .map((p) => ({ category: p.name, count: p.count, target: p.target, over: p.count - p.target }))
     .sort((a, b) => b.over - a.over || a.category.localeCompare(b.category));
 }
 
@@ -221,9 +230,21 @@ export interface TrimRow {
  *  commander is not cuttable. Everything else appears, protections attached. */
 export function trimOrder(
   cards: readonly CutInput[],
-  categories: readonly { category: string; count: number; target: number }[] = [],
+  parents: readonly SlackParent[] = [],
 ): TrimRow[] {
-  const surplus = new Map(deckSlack(categories).map((s) => [s.category, s]));
+  // FIX F2 (controller review, 2026-08-21): reads `buildParents` now, not leaf `buildCategories` --
+  // see `deckSlack`'s own doc comment for why the leaf version went permanently silent under Task 7.
+  // A card's `roles` are still LEAF names (`rolesByCard` is built off `detectBuildCategories`
+  // membership, never off a parent), so the lookup below is keyed by leaf; every leaf of an
+  // over-target parent points at that SAME parent-level slack row, which is what the protection
+  // text below actually names.
+  const overParents = deckSlack(parents);
+  const surplusByLeaf = new Map<string, { name: string; count: number; target: number }>();
+  for (const p of parents) {
+    const slack = overParents.find((s) => s.category === p.name);
+    if (!slack) continue;
+    for (const leaf of p.leaves) surplusByLeaf.set(leaf, { name: p.name, count: slack.count, target: slack.target });
+  }
   const median = medianPartnerCount(cards);
   const rows: TrimRow[] = [];
   for (const c of cards) {
@@ -253,10 +274,19 @@ export function trimOrder(
     // still sorts behind every card with no role at all, and the reader is told where the deck has
     // room — which is the same sentence `slack` prints at deck level, attached to a row rather than
     // substituted for one.
-    const over = c.roles.filter((r) => surplus.has(r));
+    // FIX F2: name the PARENT, never the leaf role. "targetedRemoval is at 18 against a target of
+    // 10" became a false sentence the moment Task 7 moved every leaf's own target to 0 -- the true
+    // one is "Interaction is at 18 against a target of 10". Deduped by parent so a card carrying
+    // two roles from the SAME over-target parent (targetedRemoval AND protection, both Interaction)
+    // states the room once, not twice.
+    const overGroups = new Map<string, { name: string; count: number; target: number }>();
+    for (const r of c.roles) {
+      const s = surplusByLeaf.get(r);
+      if (s) overGroups.set(s.name, s);
+    }
     if (c.roles.length > 0) {
-      const room = over
-        .map((r) => { const s = surplus.get(r)!; return `${r} is at ${s.count} against a target of ${s.target}`; })
+      const room = [...overGroups.values()]
+        .map((s) => `${s.name} is at ${s.count} against a target of ${s.target}`)
         .join(", ");
       protections.push(room ? `fills ${c.roles.join(", ")} — ${room}, so there is room here` : `fills ${c.roles.join(", ")}`);
     }

@@ -87,19 +87,64 @@ export function detectAnswerClasses(cards: DeckCard[]): Map<string, AnswerClassM
   return m;
 }
 
-/** Command-Zone base targets (floors, except lands which is a two-sided band). Tunable. */
+/** Command-Zone base targets (floors, except lands which is a two-sided band). Tunable.
+ *
+ *  LEAVES NO LONGER CARRY A TARGET (owner, 2026-08-21, overriding spec §6.2's leaf-scored shape).
+ *  Every leaf that sits inside a `BUILD_PARENTS` entry below is 0 here, whatever its own count looks
+ *  like -- measured over the 71 calibration decks, card selection's median SHARE of Consistency is
+ *  11% and tutor's is 0% (44 of 71 decks carry none), so neither was ever a floor a deck must clear
+ *  on its own; it is how this deck happened to spend a floor set at the group. Only `lands` keeps a
+ *  real number (its own two-sided band, scored apart from every parent); `burn` and `stax` stay at
+ *  0 because they are win-plan/tax signals, reported but never folded into a parent or scored. */
 export const BASE_TARGETS: Record<BuildCategory, number> = {
-  ramp: 10, draw: 10, cardSelection: 4, targetedRemoval: 10, stackInteraction: 0, boardWipe: 3,
-  burn: 0, stax: 0, protection: 0, tutor: 0, lands: 36,
-  // Target 0 = reported, never scored. The doctrine says every deck should carry graveyard hate
-  // (design 12.3), but it is the one answer class that does NOT scale with count -- one Bojuka Bog
-  // answers a recursion engine not at all -- so a count target would be a Tier C guess dressed as
-  // a number. The honest target comes from required_k plus the static/repeatable axis, both later
-  // steps. Until then a nonzero target here would silently re-tune buildScore for every deck.
-  graveyardHate: 0,
+  ramp: 0, draw: 0, cardSelection: 0, targetedRemoval: 0, stackInteraction: 0, boardWipe: 0,
+  burn: 0, stax: 0, protection: 0, tutor: 0, graveyardHate: 0,
+  lands: 36,
 };
 
-/** Per-archetype target shifts (added to the base, floored at 0). Starting points, tunable. */
+/** A parent's floor, DECLARED ONCE HERE rather than invented by summing its leaves' old targets
+ *  (owner, 2026-08-21, overriding spec §6.2). Same Command Zone provenance the leaf floors carried
+ *  (14, 10, 10, 3 today), stated at the level a player actually reasons about -- "do I have enough
+ *  consistency" rather than "do I have enough card selection specifically".
+ *
+ *  MEASURED, not fitted (`build-population.ts` over the 71 calibration decks) -- median (union) /
+ *  p25-p75: Consistency 15 / 12-19, Ramp 13 / 10-17, Interaction 18 / 13-21, Board wipes 1 / 0-2.
+ *  Every sum-of-leaf-floors number below sits inside or near its own band, which is why the shape
+ *  moved rather than the numbers: 14, 10, 10 and 3 are still the targets, just no longer three (or
+ *  four) independent claims about one deck. */
+export interface BuildParentSpec { name: string; leaves: BuildCategory[]; target: number; weight: number }
+
+export const BUILD_PARENTS: BuildParentSpec[] = [
+  { name: "Consistency", leaves: ["draw", "cardSelection", "tutor"], target: 14, weight: 1 },
+  { name: "Ramp", leaves: ["ramp"], target: 10, weight: 1 },
+  { name: "Interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], target: 10, weight: 1 },
+  { name: "Board wipes", leaves: ["boardWipe"], target: 3, weight: 0.5 },
+];
+
+/** Every leaf a parent owns. `lands`, `burn` and `stax` are deliberately absent -- see the note
+ *  above `BASE_TARGETS` for why they stay outside every group. */
+const GROUPED_LEAVES = new Set<BuildCategory>(BUILD_PARENTS.flatMap((p) => p.leaves));
+
+/** Per-archetype target shifts, STILL KEYED BY THE LEAF THEY NAME -- "combo decks want tutors" is
+ *  the readable fact; `adjustedParentTargets` is what decides where it lands.
+ *
+ *  WHERE A DELTA REACHES NOW, AND WHY (owner's decision, 2026-08-21, the two honest options the
+ *  brief posed): apply it to the PARENT that owns the named leaf, never drop it. A delta on a leaf
+ *  that IS a whole single-leaf parent on its own (`boardWipe`) reaches exactly the card it always
+ *  named, unchanged in meaning. A delta on a leaf living INSIDE a multi-leaf parent (`tutor` inside
+ *  Consistency, `protection` inside Interaction) reaches the PARENT's floor instead, because the
+ *  leaf has no floor of its own to raise any more: `combo: { tutor: 4 }` no longer means "run four
+ *  tutors", it means "a combo deck's Consistency floor sits four higher than goodstuff's",
+ *  satisfiable by tutors, draw, card selection, or any mix. Dropping the delta instead would erase
+ *  the true fact that combo/reanimator/voltron decks want MORE of the group a tutor or protection
+ *  spell sits in; folding it into the parent keeps that fact and drops only the narrower claim
+ *  (spend it on THIS leaf) the 0%-median-share measurement above says was never grounded.
+ *
+ *  MEANING CHANGES FOR: `voltron` (protection +3 now widens Interaction as a whole, not a
+ *  protection-spell count), `combo` (tutor +4 widens Consistency, protection +2 widens Interaction),
+ *  `reanimator` (tutor +2 widens Consistency). UNCHANGED IN MEANING: `tokens`, `aristocrats`,
+ *  `counters` (each names `boardWipe`, a single-leaf parent, so leaf and parent move as one) and
+ *  `landfall` (`lands` sits outside every parent and keeps its own band, exactly as before). */
 export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<BuildCategory, number>>>> = {
   tokens: { boardWipe: -2 },          // don't wipe your own board
   aristocrats: { boardWipe: -1 },
@@ -110,42 +155,56 @@ export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<B
   counters: { boardWipe: -1 },
 };
 
-/** Category importance in the weighted average. Interaction/engine categories weigh full; the
- *  situational ones (wipes/protection/tutors) weigh half. Tunable. */
-const CATEGORY_WEIGHT: Record<BuildCategory, number> = {
-  ramp: 1, draw: 1, cardSelection: 0.5, targetedRemoval: 1, stackInteraction: 0.5, boardWipe: 0.5,
-  burn: 0.5, stax: 0.5, protection: 0.5, tutor: 0.5, graveyardHate: 0.5, lands: 1,
-};
-
-const LABELS: Record<BuildCategory, string> = {
-  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
-  stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain",
-  stax: "Stax", protection: "Protection", tutor: "Tutors", graveyardHate: "Graveyard hate",
-  lands: "Lands",
-};
-
 /** Full credit within ±3 of the land target, linear falloff to 0 at ±12 (24 or 48 lands). */
 const LAND_BAND = 3;
 const LAND_FALLOFF = 9;
 
+/** Lands' own scoring weight -- the one leaf that still scores on its own band, outside every
+ *  parent. Matches the old per-leaf `CATEGORY_WEIGHT.lands`, which this replaces. */
+const LANDS_WEIGHT = 1;
+
 const clamp01 = (x: number): number => Math.max(0, Math.min(1, x));
 
+/** Leaf-level targets: `lands` (and, always at 0, `burn`/`stax`) for their own scoring/reporting,
+ *  and every grouped leaf for the `buildCategories` per-leaf `target` field a leaf shows nothing
+ *  meaningful in any more. A grouped leaf IGNORES `ARCHETYPE_TARGET_DELTAS` here on purpose -- its
+ *  delta already reached its parent in `adjustedParentTargets`, and applying it again here would
+ *  double the shift (and resurrect a leaf target the whole point of this task retires). */
 export function adjustedTargets(primary: Archetype | undefined): Record<BuildCategory, number> {
   const t = { ...BASE_TARGETS };
   const deltas = primary ? ARCHETYPE_TARGET_DELTAS[primary] : undefined;
   if (deltas) {
     for (const [k, v] of Object.entries(deltas)) {
       const key = k as BuildCategory;
+      if (GROUPED_LEAVES.has(key)) continue; // reaches the parent instead -- see adjustedParentTargets
       t[key] = Math.max(0, t[key] + (v ?? 0));
     }
   }
   return t;
 }
 
+/** Parent-level targets, archetype-adjusted: each parent's own floor plus the sum of any delta
+ *  named on one of ITS leaves (see `ARCHETYPE_TARGET_DELTAS`'s doc comment for the full reasoning). */
+export function adjustedParentTargets(primary: Archetype | undefined): BuildParentSpec[] {
+  const deltas = primary ? ARCHETYPE_TARGET_DELTAS[primary] : undefined;
+  return BUILD_PARENTS.map((p) => {
+    let delta = 0;
+    if (deltas) for (const leaf of p.leaves) delta += deltas[leaf] ?? 0;
+    return { ...p, target: Math.max(0, p.target + delta) };
+  });
+}
+
 export interface BuildResult {
-  /** 0–5: weighted mean of per-category attainment (categories with target 0 are excluded). */
+  /** 0–5: weighted mean of per-PARENT attainment (a parent with target 0 would be excluded; none
+   *  is, today) plus lands, scored on its own band. */
   buildScore: number;
+  /** Per-leaf count, for the client's distribution rows. `target` is 0 on every grouped leaf now --
+   *  see `BASE_TARGETS` -- and stays real only for `lands` (and the always-0 `burn`/`stax`). */
   buildCategories: { category: string; count: number; target: number }[];
+  /** One row per `BUILD_PARENTS` entry: archetype-adjusted target, and the UNION of its leaves'
+   *  member sets (never the sum -- see `computeBuild`). The client renders the target, ratio and
+   *  flag HERE and only count+share on the leaf rows beneath (owner's 2026-08-21 ruling). */
+  buildParents: { name: string; count: number; target: number; leaves: string[] }[];
   suggestions: string[];
 }
 
@@ -160,47 +219,71 @@ export function computeBuild(cards: DeckCard[], primary: Archetype | undefined):
 
   const buildCategories = BUILD_CATEGORIES.map((c) => ({ category: c, count: countOf(c), target: targets[c] }));
 
+  const parentTargets = adjustedParentTargets(primary);
+  // A PARENT'S COUNT IS A UNION, NEVER A SUM -- a card can carry two of a parent's leaves (Grave
+  // Researcher is cardSelection AND draw-adjacent), and summing would double-count it. Measured
+  // overlap across the 71 decks: 0.5 cards on Consistency, 1.3 on Interaction -- small, and still
+  // wrong to ignore. Kept BuildCategory-typed (not the public `string[]` shape) so `buildSuggestions`
+  // can call `countOf` on a leaf directly; widened to the public shape only at the return below.
+  const parentsWithCount = parentTargets.map((p) => {
+    const union = new Set<string>();
+    for (const leaf of p.leaves) for (const name of members.get(leaf) ?? []) union.add(name);
+    return { ...p, count: union.size };
+  });
+
   let weightSum = 0;
   let attainSum = 0;
-  for (const c of BUILD_CATEGORIES) {
-    const target = targets[c];
-    if (target <= 0) continue; // zero-target category is neutral — excluded from the score
-    const count = countOf(c);
-    const attainment =
-      c === "lands"
-        ? clamp01(1 - Math.max(0, Math.abs(count - target) - LAND_BAND) / LAND_FALLOFF)
-        : Math.min(count / target, 1); // exceeding a floor never penalizes
-    weightSum += CATEGORY_WEIGHT[c];
-    attainSum += CATEGORY_WEIGHT[c] * attainment;
+  for (const p of parentsWithCount) {
+    if (p.target <= 0) continue; // same "neutral, unscored" convention every zero-target category used
+    const attainment = Math.min(p.count / p.target, 1); // exceeding a floor never penalizes
+    weightSum += p.weight;
+    attainSum += p.weight * attainment;
+  }
+  // Lands scores exactly as before, on its own two-sided band, outside every parent.
+  const landsTarget = targets.lands;
+  if (landsTarget > 0) {
+    const attainment = clamp01(1 - Math.max(0, Math.abs(landCount - landsTarget) - LAND_BAND) / LAND_FALLOFF);
+    weightSum += LANDS_WEIGHT;
+    attainSum += LANDS_WEIGHT * attainment;
   }
   const buildScore = weightSum > 0 ? (attainSum / weightSum) * 5 : 0;
 
-  return { buildScore, buildCategories, suggestions: buildSuggestions(countOf, targets) };
+  const buildParents = parentsWithCount.map((p) => ({ name: p.name, count: p.count, target: p.target, leaves: p.leaves as string[] }));
+
+  return { buildScore, buildCategories, buildParents, suggestions: buildSuggestions(parentsWithCount, countOf, targets) };
 }
 
-/** Concrete, few, actionable — ranked by gap size, top 4. Never scolding. */
+/** Concrete, few, actionable — ranked by gap size, top 4. Never scolding.
+ *
+ *  PARENT-LEVEL NOW (owner's 2026-08-21 ruling): a leaf can no longer be short of anything, so a
+ *  gap names its parent only -- "Consistency 9/14 — add ~5". `lands` is unchanged: its own band,
+ *  its own message.
+ *
+ *  NO "THINNEST LEAF" HINT (fix F1, controller review 2026-08-21): a first cut named the leaf the
+ *  deck ran least of, e.g. "(thinnest: tutors)" -- but `tutor` has a 0% MEDIAN SHARE across the 71
+ *  calibration decks and 44 of 71 decks carry none at all, so on a real deck it was almost always
+ *  the one leaf the corpus says nobody runs. Naming it turned "your Consistency is short" into "go
+ *  buy tutors", a recommendation nothing measured supports and exactly the leaf-level claim this
+ *  task exists to remove. It was also redundant with the leaf distribution rows the client already
+ *  renders beneath the parent bar, which show every leaf's real count. */
 function buildSuggestions(
+  parents: (BuildParentSpec & { count: number })[],
   countOf: (c: BuildCategory) => number,
   targets: Record<BuildCategory, number>,
 ): string[] {
   const gaps: { gap: number; text: string }[] = [];
-  for (const c of BUILD_CATEGORIES) {
-    const target = targets[c];
-    if (target <= 0) continue;
-    const count = countOf(c);
-    if (c === "lands") {
-      if (count < target - LAND_BAND) gaps.push({ gap: target - count, text: `Lands ${count} — aim for ~${target}` });
-      else if (count > target + LAND_BAND) gaps.push({ gap: count - target, text: `Lands ${count} — high, aim for ~${target}` });
-      continue;
-    }
-    if (count < target) {
-      const text =
-        count === 0 && c === "boardWipe"
-          ? `No board wipe (target ${target})`
-          : `${LABELS[c]} ${count}/${target} — add ~${target - count}`;
-      gaps.push({ gap: target - count, text });
-    }
+  for (const p of parents) {
+    if (p.target <= 0 || p.count >= p.target) continue;
+    const text =
+      p.count === 0 && p.name === "Board wipes"
+        ? `No board wipe (target ${p.target})`
+        : `${p.name} ${p.count}/${p.target} — add ~${p.target - p.count}`;
+    gaps.push({ gap: p.target - p.count, text });
   }
+  const landsTarget = targets.lands;
+  const landCount = countOf("lands");
+  if (landCount < landsTarget - LAND_BAND) gaps.push({ gap: landsTarget - landCount, text: `Lands ${landCount} — aim for ~${landsTarget}` });
+  else if (landCount > landsTarget + LAND_BAND) gaps.push({ gap: landCount - landsTarget, text: `Lands ${landCount} — high, aim for ~${landsTarget}` });
   return gaps.sort((a, b) => b.gap - a.gap).slice(0, 4).map((g) => g.text);
 }
 

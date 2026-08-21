@@ -462,98 +462,149 @@ test("HeadlineScores explains its scale and names the anchor card", async () => 
   expect(screen.getByText(/Krenko, Mob Boss/)).toBeInTheDocument(); // the deck's best-fed card
 });
 
-test("BuildBenchmarks renders a bar per category, flags under-target, omits zero-target", () => {
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+// TASK 7 (owner, 2026-08-21): a target now lives on the PARENT, and the shape below is the one
+// this superseded — "benchmarks group under parents, and a parent shows no target of its own"
+// (2026-08-20) asserted the exact opposite of what ships now. Kept only as history in the ledger;
+// the live tests assert the new contract.
+test("BuildBenchmarks renders a bar per PARENT, flags under-target; a leaf shows count and share, never a ratio", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
   expect(screen.getByText("Ramp")).toBeInTheDocument();
-  expect(screen.getByText("6/10")).toBeInTheDocument();      // under target
-  expect(screen.getByText("14/10")).toBeInTheDocument();     // over target (draw)
-  expect(screen.queryByText("Tutors")).not.toBeInTheDocument(); // tutor target 0 → omitted
-  // under-target rows expose an accessible flag
-  expect(screen.getByLabelText(/Ramp 6 of 10, under target/i)).toBeInTheDocument();
+  expect(screen.getByText("6/10")).toBeInTheDocument();      // Ramp PARENT, under its own target
+  expect(screen.getByText("14/10")).toBeInTheDocument();     // Consistency PARENT, over its own target
+  // Tutors is a Consistency LEAF: it renders (owner's ruling: every leaf shows, including a zero),
+  // but never as a "x/y" ratio -- only its count and share of Consistency's own total.
+  expect(screen.getByText(/^Tutors$/)).toBeInTheDocument();
+  const tutors = screen.getByText(/^Tutors$/).closest("li")!;
+  expect(tutors.textContent).not.toMatch(/\d+\s*\/\s*\d+/);
+  expect(tutors.textContent).toMatch(/0\s*·\s*0%/);
+  // Only a PARENT carries the under-target flag.
+  expect(screen.getByLabelText(/^Ramp 6 of 10, under target/i)).toBeInTheDocument();
 });
 
 test("a benchmark bar is read against a fixed target mark, so over-target does not paint as full", () => {
-  const { container } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+  const { container } = render(
+    <BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />,
+  );
   // The FILL specifically — a two-sided category also paints a satisfied band, and matching on
   // "any span with a width" would silently read that instead.
   const width = (label: RegExp): string =>
     (screen.getByLabelText(label).querySelector('[class*="bg-(--success)"], [class*="bg-(--warning)"]') as HTMLElement)
       .style.width;
-  // The target sits at 70% of every track. 6/10 stops short of it, 14/10 runs past it -- the old
-  // `min(1, count/target)` clamp painted BOTH at the same width as 4/4 and 1/1.
-  expect(width(/Ramp 6 of 10/i)).toBe("42%");
-  expect(width(/Draw 14 of 10/i)).toBe("98%");
-  // And the mark itself is on screen, once per row, or the widths above compare against nothing.
-  expect(container.querySelectorAll('span[style*="left: 70%"]').length).toBe(
-    container.querySelectorAll("li[aria-label]").length,
-  );
+  // The target sits at 70% of every track. Ramp 6/10 stops short of it, Consistency 14/10 runs
+  // past it -- the old `min(1, count/target)` clamp painted BOTH at the same width as 4/4 and 1/1.
+  expect(width(/^Ramp 6 of 10/i)).toBe("42%");
+  expect(width(/^Consistency 14 of 10/i)).toBe("98%");
+  // The mark itself is on screen once per PARENT row (leaf rows carry no target, so no mark) --
+  // four parents in this fixture, none ungrouped.
+  expect(container.querySelectorAll('span[style*="left: 70%"]').length).toBe(SAMPLE.report.buildParents!.length);
 });
 
-// PARENTS GROUP; LEAVES SCORE (owner, 2026-08-20). A parent carries no target of its own -- summing
-// three independently-set targets invents a benchmark nobody measured.
-test("benchmarks group under parents, and a parent shows no target of its own", () => {
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+// A PARENT CARRIES ITS OWN TARGET NOW (owner, 2026-08-21, overriding the 2026-08-20 shape this
+// test used to pin -- "a parent shows no target of its own"). A floor declared ONCE at the parent,
+// with leaves showing only how the deck spent it, is a different object from the summed-leaves
+// shape the spec refused, and it is what ships.
+test("a parent DOES carry its own target and ratio; a leaf beneath it never restates one", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
   expect(screen.getByText("Consistency")).toBeInTheDocument();
   expect(screen.getByText("Interaction")).toBeInTheDocument();
-  // A parent-level "20/24" is a number nobody measured -- three independently-set targets summed.
-  const consistency = screen.getByText("Consistency").closest("li, div")!;
-  expect(consistency.textContent).not.toMatch(/\d+\s*\/\s*\d+/);
+  const consistency = screen.getByText("Consistency").closest("li")!;
+  expect(consistency.textContent).toMatch(/14\s*\/\s*10/); // the PARENT's own ratio
+  // Draw is a Consistency LEAF: count and share of the parent's own 14, never a "x/y" of its own.
+  const draw = screen.getByText(/^Draw$/).closest("li")!;
+  expect(draw.textContent).not.toMatch(/\d+\s*\/\s*\d+/);
+  expect(draw.textContent).toMatch(/12\s*·\s*86%/); // 12 of Consistency's 14 = 86%
 });
 
-// A scrambled category order (not the array order PARENTS.leaves lists, not the order the fixture
-// above happens to use) so the test can only pass if the component actually GROUPS rather than
-// coincidentally rendering in input order.
-const SCRAMBLED_CATEGORIES = [
-  { category: "boardWipe", count: 1, target: 3 },
-  { category: "cardSelection", count: 2, target: 4 },
-  { category: "draw", count: 6, target: 10 },
-  { category: "ramp", count: 8, target: 10 },
-  { category: "targetedRemoval", count: 3, target: 10 },
-  { category: "graveyardHate", count: 1, target: 2 },
+// FIX F4 (controller review, 2026-08-21, found live on `burakos-crashing-the-party`): Interaction's
+// real numbers were Removal 5 + Stack interaction 2 + Graveyard hate 1 + Protection 0 = 9 leaf
+// mentions, but the parent's own UNION was 8 (one card fills two leaves) -- dividing each leaf's
+// share by the union read 75+13+13+13 = 114%, which reads as a broken number on a panel whose whole
+// argument is that its figures mean what they say.
+const OVERLAP_CATEGORIES = [
+  { category: "draw", count: 6, target: 0 },
+  { category: "cardSelection", count: 3, target: 0 },
 ] as unknown as typeof SAMPLE.report.buildCategories;
+const OVERLAP_PARENTS = [
+  // 6 + 3 = 9 leaf mentions; ONE card fills both leaves, so the parent's own union is only 8.
+  { name: "Consistency", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
+] as unknown as typeof SAMPLE.report.buildParents;
+
+test("leaf shares total 100% even when a card fills two leaves, and the parent's own row says so", () => {
+  render(<BuildBenchmarks categories={OVERLAP_CATEGORIES} parents={OVERLAP_PARENTS} />);
+  // Divided by the LEAF SUM (9), never the parent's union (8): 6/9 = 67%, 3/9 = 33%. These total
+  // 100% by construction -- 6/8 + 3/8 would have been 112%.
+  expect(screen.getByLabelText(/^Draw 6, 67% of Consistency/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Card selection 3, 33% of Consistency/)).toBeInTheDocument();
+  // The overlap is a REAL FACT ABOUT THE DECK, stated once on the parent row, rather than left for
+  // a reader to notice the leaves summing past the parent's own count.
+  expect(screen.getByLabelText(/^Consistency 8 of 10, under target; its leaves sum to 9/)).toBeInTheDocument();
+});
+
+// A scrambled category order (not the array order BUILD_PARENTS.leaves lists, not the order the
+// fixture above happens to use) so the test can only pass if the component actually GROUPS rather
+// than coincidentally rendering in input order. `parents` is authored by hand here, mirroring what
+// `computeBuild` would derive from these same leaf counts (unions, no overlap in this fixture).
+const SCRAMBLED_CATEGORIES = [
+  { category: "boardWipe", count: 1, target: 0 },
+  { category: "cardSelection", count: 2, target: 0 },
+  { category: "draw", count: 6, target: 0 },
+  { category: "ramp", count: 8, target: 0 },
+  { category: "targetedRemoval", count: 3, target: 0 },
+  { category: "graveyardHate", count: 1, target: 0 },
+] as unknown as typeof SAMPLE.report.buildCategories;
+const SCRAMBLED_PARENTS = [
+  { name: "Consistency", count: 8, target: 10, leaves: ["draw", "cardSelection", "tutor"] }, // 6+2+0
+  { name: "Ramp", count: 8, target: 10, leaves: ["ramp"] },
+  { name: "Interaction", count: 4, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] }, // 3+0+1+0
+  { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
+] as unknown as typeof SAMPLE.report.buildParents;
 
 test("every leaf still renders under exactly one parent", () => {
-  const { container } = render(<BuildBenchmarks categories={SCRAMBLED_CATEGORIES} />);
-  // DOM order follows PARENTS, never the input array: Consistency's own leaves (draw, cardSelection)
-  // before Ramp's, before Interaction's (targetedRemoval, graveyardHate), before Board wipes' --
-  // which the scrambled input above does not hold in either order.
+  const { container } = render(<BuildBenchmarks categories={SCRAMBLED_CATEGORIES} parents={SCRAMBLED_PARENTS} />);
+  // DOM order follows BUILD_PARENTS, never the input array: Consistency's own leaves (draw, card
+  // selection, tutor) before Ramp's, before Interaction's (removal, stack interaction, graveyard
+  // hate, protection), before Board wipes' -- which the scrambled input above does not hold in
+  // either order.
   //
-  // Ramp and Board wipes carry no separate heading (F2, revised CONFLICT 8): their single leaf's
-  // label equals the parent name, so the parent's `<h4>` rides INSIDE that leaf's row instead of
-  // sitting above it -- the `li` (its `aria-label`) therefore precedes its own nested `<h4>` (its
-  // `textContent`) in document order, the opposite order from the multi-leaf parents above, whose
-  // heading is a separate element that comes first.
+  // EVERY PARENT NESTS ITS OWN `<h4>` NOW (Task 7 simplification -- there is no more single/multi
+  // fold split, because every parent has a ratio of its own to show): its `<li>` (the `aria-label`)
+  // therefore always precedes its own nested `<h4>` (the `textContent`) in document order. A
+  // single-leaf parent (Ramp, Board wipes) stops there; a multi-leaf one is followed by its leaf
+  // rows, each a count+share `<li>` with no nested heading of its own.
   const text = [...container.querySelectorAll("h4, li[aria-label]")]
     .map((el) => el.getAttribute("aria-label") ?? el.textContent);
   expect(text).toEqual([
+    "Consistency 8 of 10, under target",
     "Consistency",
-    expect.stringMatching(/^Draw 6 of 10/),
-    expect.stringMatching(/^Card selection 2 of 4/),
-    expect.stringMatching(/^Ramp 8 of 10/),
+    expect.stringMatching(/^Draw 6, 75% of Consistency/),
+    expect.stringMatching(/^Card selection 2, 25% of Consistency/),
+    expect.stringMatching(/^Tutors 0, 0% of Consistency/), // absent from SCRAMBLED_CATEGORIES entirely -- still renders, at 0
+    "Ramp 8 of 10, under target",
     "Ramp",
+    "Interaction 4 of 10, under target",
     "Interaction",
-    expect.stringMatching(/^Removal 3 of 10/),
-    expect.stringMatching(/^Graveyard hate 1 of 2/),
-    expect.stringMatching(/^Board wipes 1 of 3/),
+    expect.stringMatching(/^Removal 3, 75% of Interaction/),
+    expect.stringMatching(/^Stack interaction 0, 0% of Interaction/),
+    expect.stringMatching(/^Graveyard hate 1, 25% of Interaction/),
+    expect.stringMatching(/^Protection 0, 0% of Interaction/),
+    "Board wipes 1 of 3, under target",
     "Board wipes",
   ]);
-  // Grouping must not drop a leaf's own ratio -- each row still carries its count/target.
-  expect(screen.getByLabelText(/^Draw 6 of 10/)).toBeInTheDocument();
-  expect(screen.getByLabelText(/^Card selection 2 of 4/)).toBeInTheDocument();
+  // Grouping must not drop a PARENT's own ratio -- each parent row still carries its count/target.
+  expect(screen.getByLabelText(/^Consistency 8 of 10/)).toBeInTheDocument();
   expect(screen.getByLabelText(/^Ramp 8 of 10/)).toBeInTheDocument();
-  expect(screen.getByLabelText(/^Removal 3 of 10/)).toBeInTheDocument();
-  expect(screen.getByLabelText(/^Graveyard hate 1 of 2/)).toBeInTheDocument(); // CONFLICT 9
-  expect(screen.getByLabelText(/^Board wipes 1 of 3/)).toBeInTheDocument();
-  // CONFLICT 8: a single-leaf parent whose leaf label repeats the parent's own name renders that
-  // name once, not twice (heading, then a blank-looking row repeating it).
+  expect(screen.getByLabelText(/^Interaction 4 of 10/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Board wipes 1 of 3/)).toBeInTheDocument(); // CONFLICT 9's label survives
+  // CONFLICT 8 (now unconditional, not a fold): a parent's name renders exactly once, nested inside
+  // its own row's label span rather than duplicated by a leaf whose label happens to match it.
   expect(screen.getAllByText("Ramp")).toHaveLength(1);
   expect(screen.getAllByText("Board wipes")).toHaveLength(1);
-  // F2: the earlier fix suppressed the row's label TEXT and left the `w-24` column empty, which
-  // rendered as an unlabelled bar floating next to the heading above it. The label slot must never
-  // be blank -- it now carries the folded heading itself.
+  // The label slot must never be blank -- Task 7 keeps that guarantee for every parent, not only a
+  // folded single-leaf one, since every parent now nests its `<h4>` in exactly this slot.
   const labelSlot = (label: RegExp) => screen.getByLabelText(label).firstElementChild;
   expect(labelSlot(/^Ramp 8 of 10/)?.textContent?.trim()).toBe("Ramp");
   expect(labelSlot(/^Board wipes 1 of 3/)?.textContent?.trim()).toBe("Board wipes");
+  expect(labelSlot(/^Consistency 8 of 10/)?.textContent?.trim()).toBe("Consistency");
 });
 
 const DECK_MATH = {
@@ -839,7 +890,7 @@ test("BuildBenchmarks carries the caveat that makes the numbers readable", () =>
 });
 
 test("BuildBenchmarks renders without deck math at all", () => {
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
   expect(screen.getByText("Ramp")).toBeInTheDocument();
   expect(screen.queryByText(/answers by turn/i)).not.toBeInTheDocument();
 });

@@ -285,10 +285,18 @@ export interface DeckReport {
   /** BUILD /5: archetype-adjusted functional-template completeness. Matcher-only (see above);
    *  stays undefined on the flat analyzeDeck. */
   buildScore?: number;
-  /** Per functional-category count vs adjusted target (Ramp 6/10, …), for readouts + suggestions.
-   *  Matcher-only. `category` is a plain string (not the matcher-only BuildCategory union) because
-   *  this package must not depend on @mtg/matcher — same convention as ArchetypeGroup.category. */
+  /** Per-leaf count, for the client's within-parent distribution rows. `target` is 0 on every
+   *  leaf grouped under a `buildParents` entry (owner's 2026-08-21 ruling: a leaf shows count and
+   *  share, never a target) and stays real only for `lands` (and the always-0 `burn`/`stax`, which
+   *  are win-plan/tax signals and were never folded into a parent). Matcher-only. `category` is a
+   *  plain string (not the matcher-only BuildCategory union) because this package must not depend
+   *  on @mtg/matcher — same convention as ArchetypeGroup.category. */
   buildCategories?: { category: string; count: number; target: number }[];
+  /** The four Command-Zone template groups (Consistency, Ramp, Interaction, Board wipes), each
+   *  carrying its OWN archetype-adjusted target and the UNION of its leaves' member counts (never
+   *  the sum -- a card can carry two leaves). This is what actually scores and flags now; a leaf
+   *  under `buildCategories` never does. Matcher-only, same reason as `buildCategories`. */
+  buildParents?: { name: string; count: number; target: number; leaves: string[] }[];
   /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
   suggestions?: string[];
   /** Cards the deck is not using, weakest first, each carrying its own reasons in plain words.
