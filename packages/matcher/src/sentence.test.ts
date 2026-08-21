@@ -1,8 +1,9 @@
 import { describe, expect, test } from "vitest";
+import { VERB_VOCAB } from "@mtg/tagger";
 import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, tutorSentence, winconSentence,
+  staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence,
 } from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
@@ -66,6 +67,14 @@ describe("eventVerbPhrase", () => {
 
   test("falls back to a naive plural for a verb this map has never seen", () => {
     expect(eventVerbPhrase("some-future-verb:any")).toBe("some future verbs");
+  });
+
+  // The fallback above is unreachable today only because every VERB_VOCAB member has a table entry;
+  // nothing enforced that, and this project adds verbs often (F3, review round 1). A future verb
+  // added to schema.ts without a matching entry here would silently ship the naive plural.
+  test("every @mtg/tagger VERB_VOCAB member has a VERB_PHRASES entry", () => {
+    const missing = VERB_VOCAB.filter((v) => !(v in VERB_PHRASES));
+    expect(missing).toEqual([]);
   });
 });
 
@@ -145,6 +154,22 @@ describe("staticGrantSentence — a continuous static reaching a card", () => {
       "Odd Card gives Squire its graveyard hate",
     );
   });
+
+  // F1 (review round 1): the test above happens to pick a kind ("graveyard-hate") that reads fine
+  // as a bare noun and so never exposed that a VERB-shaped kind reads as nonsense through the
+  // identical fallback — "gives Squire its proliferate" / "its enters with counters" / "its untap".
+  // These three now have explicit entries rather than a wider, cleverer transform.
+  test("a verb-shaped kind gets an explicit phrase instead of the naive fallback", () => {
+    expect(staticGrantSentence("Anthem", "Squire", "proliferate")).toBe(
+      "Anthem gives Squire the ability to proliferate",
+    );
+    expect(staticGrantSentence("Anthem", "Squire", "enters-with-counters")).toBe(
+      "Anthem gives Squire counters as it enters",
+    );
+    expect(staticGrantSentence("Anthem", "Squire", "untap")).toBe(
+      "Anthem gives Squire an extra untap",
+    );
+  });
 });
 
 describe("costReductionSentence", () => {
@@ -173,7 +198,9 @@ describe("the five small verbatim sentences", () => {
   });
 
   test("counterPresenceSentence", () => {
-    expect(counterPresenceSentence("Sludge Monster", "Hardened Scales", "+1/+1")).toBe(
+    // (producer, consumer, counterKind), matching every sibling in this module -- Hardened Scales
+    // is what PUTS the counters there, so it is the producer argument now (F4, review round 1).
+    expect(counterPresenceSentence("Hardened Scales", "Sludge Monster", "+1/+1")).toBe(
       "Sludge Monster benefits from +1/+1 counters being on the board; Hardened Scales puts them there",
     );
   });

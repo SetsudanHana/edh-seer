@@ -47,7 +47,10 @@ export function effectPhrase(kind: string | undefined, amount: string | undefine
  *  `dedupeReasons` key on tag, so nothing collapses), and a reader does not need to be told which of
  *  Scrap Trawler's two typed triggers fired, only that Executioner's Capsule caused a death and
  *  Scrap Trawler responded to it. */
-const VERB_PHRASES: Record<string, string> = {
+// Exported only so a completeness test can walk it against @mtg/tagger's VERB_VOCAB -- this table
+// grows every time this project adds a verb, and the naive fallback below is wrong for every
+// noun-shaped one, so a forgotten entry must fail a test rather than ship silently.
+export const VERB_PHRASES: Record<string, string> = {
   enters: "enters",
   "enters-graveyard": "hits the graveyard",
   dies: "dies",
@@ -134,8 +137,21 @@ export function graveyardFeedsScaling(producer: string, consumer: string): strin
 /** kind -> what a continuous STATIC effect gives the class of card its subject reaches. Direction
  *  is the mirror of PHRASES above: there the CONSUMER performs what a triggered effect does; here
  *  the PRODUCER's own static keeps granting it, so the phrase reads "<producer> gives <consumer>
- *  <phrase>" rather than naming an event that fires. An unmapped kind still reads as English via
- *  the de-slugified fallback, never a raw tag. */
+ *  <phrase>" rather than naming an event that fires.
+ *
+ *  EVERY member of `EFFECT_KINDS` (schema.ts, 35 total) was checked against the fallback's own
+ *  sentence, "gives <consumer> its <kind, hyphens to spaces>". Three read as an unconjugated VERB
+ *  rather than a noun phrase and needed an explicit entry: `proliferate` ("... its proliferate"),
+ *  `enters-with-counters` ("... its enters with counters") and `untap` ("... its untap"). The
+ *  remaining 26 unmapped kinds are already noun phrases and pass through the fallback fine — damage,
+ *  lifegain, drain, draw-card, forced-sacrifice, trigger-doubling, graveyard-recursion,
+ *  token-doubling, damage-multiplier, top-manipulation, counter-placement, mana-generation,
+ *  fast-mana, ritual, copy-spell, flicker, graveyard-hate (the existing covering test), extra-combat,
+ *  plus `debuff`, `cost-reduction`, `tax`, `win-game`, `extra-turn` and `extra-phase`, which can
+ *  never reach this function at all: `cost-reduction` takes the ternary's other branch at the one
+ *  call site, `debuff` is refused by its own `continue` two lines above that call, and the other four
+ *  sit in `ROLE_NOT_SYNERGY` and are refused before the push that would reach here. A kind this table
+ *  has never seen still reads as English via the de-slugified fallback, never a raw tag. */
 const GRANT_PHRASES: Record<string, string> = {
   pump: "bigger stats",
   "keyword-grant": "an extra keyword ability",
@@ -143,6 +159,9 @@ const GRANT_PHRASES: Record<string, string> = {
   "speed-increase": "haste",
   animate: "life as a creature",
   clone: "a copy of what it targets",
+  proliferate: "the ability to proliferate",
+  "enters-with-counters": "counters as it enters",
+  untap: "an extra untap",
 };
 
 /** Replaces the ternary's non-cost-reduction branch, whose old text — "P's <kind> applies to C" —
@@ -171,7 +190,7 @@ export function tutorSentence(producer: string, consumer: string): string {
   return `${producer} can search up ${consumer}`;
 }
 
-export function counterPresenceSentence(consumer: string, producer: string, counterKind: string): string {
+export function counterPresenceSentence(producer: string, consumer: string, counterKind: string): string {
   return `${consumer} benefits from ${counterKind} counters being on the board; ${producer} puts them there`;
 }
 

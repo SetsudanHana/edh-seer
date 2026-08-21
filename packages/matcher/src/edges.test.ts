@@ -61,7 +61,14 @@ test("static edge: a zombie lord matches a zombie by characteristics", () => {
   }]);
   const zombie = base("Gravecrawler", [], ["zombie"]);
   const reasons = pairReasons(lord, zombie, H);
-  expect(reasons.some((r) => r.tag === "static:pump")).toBe(true);
+  const pump = reasons.find((r) => r.tag === "static:pump");
+  expect(pump).toBeDefined();
+  // F2 (review round 1): every other static:pump test here asserts .tag only, never .text -- so a
+  // swapped ternary branch or a swapped producer/consumer argument at the one call site
+  // (edges.ts, staticGrantSentence(p.card.name, c.card.name, a.effect.kind)) would ship silently.
+  // The cost-reduction branch of the identical ternary is asserted end-to-end below; this is that
+  // same coverage for the other branch.
+  expect(pump!.text).toBe("Death Baron gives Gravecrawler bigger stats");
 });
 
 test("clone edge: an activated copy that names a subtype applies to a card of that subtype", () => {

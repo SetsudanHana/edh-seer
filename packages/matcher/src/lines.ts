@@ -135,7 +135,7 @@ const SUPPLY_ROLE: Readonly<Record<string, Piece["role"]>> = {
  *  present for completeness (a `phase: "untap"` printing would be supply too); none exists yet. */
 const UNTAP_PHASES: ReadonlySet<string> = new Set(["beginning", "untap"]);
 
-/** The zone-transition verbs -- the same four `edges.ts`'s own `humanizeEvent` switch treats as a
+/** The zone-transition verbs -- the same four `sentence.ts`'s `VERB_PHRASES` table treats as a
  *  family (enters, enters-graveyard, dies, leaves), out of the 23-member `Verb` vocabulary in
  *  schema.ts. A card entering or leaving a zone is the only kind of trigger whose SUBJECT type is a
  *  count of "how many are in this zone" -- a phase trigger (`upkeep`, `end-step`, `begin-combat`) or

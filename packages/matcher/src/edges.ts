@@ -1178,7 +1178,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       if (!subjectMatches(emit.subject, want, h)) continue;
       reasons.push({
         tag: `counter-added:${themeSubjectKey(want)}`,
-        text: counterPresenceSentence(c.card.name, p.card.name, want.counter),
+        text: counterPresenceSentence(p.card.name, c.card.name, want.counter),
         effectKind: ca.effect.kind,
         repeatability: ca.kind === "static" ? "static" : ca.kind === "activated" ? "activated" : ca.kind === "on-cast" ? "oneshot" : "triggered",
         scaling: ca.effect.scaling,
