@@ -95,7 +95,14 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   landfall: { tags: ["enters:land"] },
   "counters-plus1": { tags: ["proliferate:any"], effectKinds: ["counter-placement", "enters-with-counters"] },
   "mana-ramp-payoff": { effectKinds: ["mana-generation", "fast-mana", "ritual", "cost-reduction", "tax"] },
-  "graveyard-matters": { effectKinds: ["graveyard-recursion", "top-manipulation"] },
+  // `top-manipulation` IS NOT A GRAVEYARD KIND, and it was the whole category. `effect-kind.ts`
+  // maps search, scry, surveil AND mill to it, so every tutor and every fetchland read as a
+  // graveyard card -- measured on `samut-the-driving-force`, a deck with no graveyard theme: 77
+  // pairs, ZERO carrying a graveyard-recursion reason, `top-manipulation` 92 and nothing else, every
+  // row the mana base ("Arid Mesa can fetch Cinder Glade"). Mill is the one member with a real
+  // graveyard claim and the KIND cannot separate it from a fetchland, so it cannot carry the
+  // category; a self-mill deck reaches `mill-self` on `enters-graveyard:*` instead.
+  "graveyard-matters": { effectKinds: ["graveyard-recursion"] },
   "attack-matters": { tags: ["attacks:creature"] },
   "blink-etb": { effectKinds: ["flicker", "clone"] },
   "mill-self": { tags: ["enters-graveyard:creature", "enters-graveyard:any"] },
