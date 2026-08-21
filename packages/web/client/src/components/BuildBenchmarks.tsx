@@ -387,14 +387,18 @@ export function BuildBenchmarks({
 
 /** The corpus count of RECURRING graveyard hate by type -- the pieces that shut an engine off
  *  rather than eating one card. Measured from `graveyardHateRecurring`, `answer-coverage.ts`'s
- *  `GRAVEYARD_HATE_SHARE` (creature 36 · artifact 16 · enchantment 6, n = 58 typed). Stated as a
- *  literal because it is a fact about the FORMAT, not about this deck, and a reader can check it.
- *  A HAND-COPY, and it has to stay one -- `GRAVEYARD_HATE_SHARE` carries the SHARE (a fraction of
- *  58), this the raw COUNT the sentence below reads aloud, and the two do not round-trip cleanly
- *  enough to derive one from the other at display time. `answer-coverage.ts`'s own doc comment
- *  names this file as the one place that has to move if that table is ever re-measured (whole-branch
- *  review IMPORTANT 2) -- there is no code link between them, only that comment on both ends. */
-const HATE_COUNTS = { creature: 36, artifact: 16, enchantment: 6 } as const;
+ *  `GRAVEYARD_HATE_SHARE` (creature 39 · artifact 19 · enchantment 8, n = 66 typed, 1 other).
+ *  Stated as a literal because it is a fact about the FORMAT, not about this deck, and a reader can
+ *  check it. A HAND-COPY, and it has to stay one -- `GRAVEYARD_HATE_SHARE` carries the SHARE (a
+ *  fraction of 66), this the raw COUNT the sentence below reads aloud, and the two do not round-trip
+ *  cleanly enough to derive one from the other at display time. `answer-coverage.ts`'s own doc
+ *  comment names this file as the one place that has to move if that table is ever re-measured
+ *  (whole-branch review IMPORTANT 2) -- there is no code link between them, only that comment on
+ *  both ends.
+ *  CORRECTED 2026-08-21 (residual fix wave): was 36/16/6 (n=58), a subset the original probe
+ *  produced by nesting inside the wrong branch -- see `answer-coverage.ts`'s `GRAVEYARD_HATE_SHARE`
+ *  for the diagnosis. */
+const HATE_COUNTS = { creature: 39, artifact: 19, enchantment: 8 } as const;
 /** WHICH CLASSES THE GRAVEYARD SENTENCE CAN NAME -- derived from `GRAVEYARD_HATE_SHARE`'s own
  *  non-zero, non-creature rows (whole-branch review MINOR 6), not a second hardcoded
  *  `["artifact", "enchantment"]` a few lines below that had no link back to the table it was

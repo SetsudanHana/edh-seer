@@ -28,25 +28,31 @@ export const ANSWER_BASELINE: Record<string, number> = {
 };
 
 /** Where recurring graveyard hate actually lives, measured over the corpus cards matching
- *  `graveyardHateRecurring`: creature 36 · artifact 16 · enchantment 6, n = 58 typed.
+ *  `graveyardHateRecurring`: creature 39 · artifact 19 · enchantment 8, n = 66 typed (1 other).
+ *
+ *  CORRECTED 2026-08-21 (residual fix wave): the design's original probe tested this rule INSIDE a
+ *  `graveyardHatePositive` branch, so it counted the INTERSECTION of the two rules -- a strict
+ *  subset (36/16/6, n=58) -- while §2.4 documents the provenance as "the corpus cards matching
+ *  `graveyardHateRecurring`" alone. The two describe different sets; 36/16/6 was an artifact of the
+ *  probe's nesting, not a deliberate choice, and never matched its own stated provenance.
  *
  *  So a deck whose plan runs through the graveyard needs creature and artifact removal
  *  specifically -- Scavenging Ooze and Grafdigger's Cage, not a Naturalize.
  *
  *  KNOWN CEILING, and it bounds how much weight this table can ever carry: the corpus can COUNT
- *  hate pieces and cannot RANK them. Rest in Peace and Scavenging Ooze are both one row of the 58,
+ *  hate pieces and cannot RANK them. Rest in Peace and Scavenging Ooze are both one row of the 66,
  *  though the first turns a reanimator deck off completely and the second eats one card a turn.
  *  Nothing derived separates a total shutoff from incremental exile.
  *  ponytail: count-weighted, upgrade when a severity field exists.
  *
  *  A HAND-COPY OF THESE COUNTS ALSO LIVES IN THE CLIENT, `BuildBenchmarks.tsx`'s `HATE_COUNTS`
- *  (whole-branch review IMPORTANT 2), for the sentence that says "16 artifacts and 6 enchantments
+ *  (whole-branch review IMPORTANT 2), for the sentence that says "19 artifacts and 8 enchantments
  *  in the format shut it off". If this table is re-measured, `HATE_COUNTS` must move with it -- the
  *  provenance is one-way today (the client cites this file; this file does not know the client
  *  exists) and nothing catches the two drifting apart from each other. `gen-answer-pool.ts --check`
  *  gates THIS table against the live corpus but cannot see the client copy at all. */
 export const GRAVEYARD_HATE_SHARE: Record<string, number> = {
-  creature: 36 / 58, artifact: 16 / 58, enchantment: 6 / 58, land: 0, planeswalker: 0,
+  creature: 39 / 66, artifact: 19 / 66, enchantment: 8 / 66, land: 0, planeswalker: 0,
 };
 
 export interface CoverageResult {

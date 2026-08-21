@@ -955,8 +955,8 @@ test("BuildBenchmarks warns a graveyard deck about the hate it cannot remove", (
     />,
   );
   expect(screen.getByText(/plan runs through the graveyard/i)).toBeInTheDocument();
-  expect(screen.getByText(/16 artifacts/)).toBeInTheDocument();
-  expect(screen.getByText(/6 enchantments/)).toBeInTheDocument();
+  expect(screen.getByText(/19 artifacts/)).toBeInTheDocument();
+  expect(screen.getByText(/8 enchantments/)).toBeInTheDocument();
   // DECK_MATH has no enchantment row at all, so both classes read unanswered -- grammatical plural.
   expect(screen.getByText(/answers neither/)).toBeInTheDocument();
 });
@@ -983,8 +983,8 @@ test("BuildBenchmarks reads grammatically when only one hate class is unanswered
   expect(screen.queryByText(/answers no enchantment\b/)).not.toBeInTheDocument();
   // MINOR 6 (whole-branch review): artifact is ANSWERED here (count 2), so its count must not be
   // cited as a live threat -- only the enchantment count this deck actually lacks.
-  expect(screen.getByText(/6 enchantments/)).toBeInTheDocument();
-  expect(screen.queryByText(/16 artifacts/)).not.toBeInTheDocument();
+  expect(screen.getByText(/8 enchantments/)).toBeInTheDocument();
+  expect(screen.queryByText(/19 artifacts/)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks says nothing about hate when the deck has no graveyard plan", () => {
