@@ -144,3 +144,13 @@ test("every MechanismCategory has a MECHANISM_LABELS entry", () => {
     expect(MECHANISM_LABELS[c as MechanismCategory].length).toBeGreaterThan(0);
   }
 });
+
+test("a fetchland's top-manipulation reason is not a Graveyard Matters claim", () => {
+  // ROADMAP G3, and the guard is against a RE-ADD: `top-manipulation` covers search, scry, surveil
+  // and mill together, so with it in the table every tutor and every fetchland was a graveyard
+  // card -- 7,301 pairs over 70 of the 71 calibration decks, against 4,095 over 63 without it, and
+  // a Walls deck led its report with "Graveyard Matters". Mill is the one member with a real
+  // graveyard claim and the kind cannot separate it from a fetchland.
+  expect(categoryMatches(reason({ effectKind: "top-manipulation" }), "graveyard-matters")).toBe(false);
+  expect(categoryMatches(reason({ effectKind: "graveyard-recursion" }), "graveyard-matters")).toBe(true);
+});
