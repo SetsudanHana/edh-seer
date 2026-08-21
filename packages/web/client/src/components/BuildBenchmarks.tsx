@@ -215,8 +215,20 @@ export function BuildBenchmarks({
    *  gets a bar changed. Owner's 2026-08-21 ruling overrides the shape shipped 2026-08-20 ("a parent
    *  carries no target of its own"): a target declared ONCE at the parent, with leaves showing only
    *  how the deck spent it, is a different object, and that is what a parent's own row draws here. */
-  const bar = (key: string, label: ReactNode, ariaName: string, count: number, target: number, note = "") => {
-    const flagged = count < target;
+  const bar = (
+    key: string, label: ReactNode, ariaName: string, count: number, target: number, note = "",
+    /** Flags the row even though `count >= target` — the ONE caller that needs this is the
+     *  Interaction parent, whose score multiplies count attainment by answer coverage (design §3).
+     *  Without it this tick could read "met" while the headline it feeds is not, which is the exact
+     *  defect 7714d91 rejected for the land count: a panel number the score does not use at face
+     *  value must not render as if it does. */
+    forceFlag = false,
+    /** Rendered ON SCREEN, after the flag icon — the aria-label's `note` already said this in
+     *  words for a screen reader, but that alone left a sighted reader with no way to see it; same
+     *  mistake this task's own pool annotation made and fixed the same way. */
+    suffix: ReactNode = null,
+  ) => {
+    const flagged = count < target || forceFlag;
     const state = flagged ? "under target" : "on target";
     const fill = Math.max(0, Math.min(1, (count / target) * TARGET_MARK));
     return (
@@ -237,6 +249,7 @@ export function BuildBenchmarks({
         </span>
         <span className="w-14 shrink-0 text-right text-sm stat-num">{count}/{target}</span>
         <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
+        {suffix}
       </li>
     );
   };
@@ -256,7 +269,25 @@ export function BuildBenchmarks({
     const overlapNote = sumOfLeaves > p.count
       ? `; its leaves sum to ${sumOfLeaves} because some cards fill more than one`
       : "";
-    return bar(p.name, <h4 className="eyebrow">{p.name}</h4>, p.name, p.count, p.target, overlapNote);
+    // INTERACTION IS THE ONE COVERAGE-WEIGHTED PARENT (`build.ts`'s `coverageWeighted: true`).
+    // Matched by NAME, not a flag on `p` -- this package's `buildParents` shape is structural
+    // (`{name, count, target, leaves}`) and carries no such field, the same reason `lands` is
+    // special-cased by name in `REPORTED_ELSEWHERE` above. The score multiplies this parent's count
+    // attainment by `answerCoverage.coverage`, so 11/10 can score under 1 even though the ratio
+    // alone reads "met" -- the row has to say so, or it disagrees with the headline it feeds.
+    const interactionCoverage = p.name === "Interaction" ? answerCoverage : undefined;
+    const dockedByCoverage = interactionCoverage !== undefined && interactionCoverage.coverage < 1;
+    const covered = interactionCoverage?.rows.filter((r) => r.covered).length ?? 0;
+    const total = interactionCoverage?.rows.length ?? 0;
+    const coverageNote = dockedByCoverage ? `, but answers ${covered} of ${total} classes` : "";
+    return bar(
+      p.name, <h4 className="eyebrow">{p.name}</h4>, p.name, p.count, p.target,
+      overlapNote + coverageNote,
+      dockedByCoverage,
+      dockedByCoverage
+        ? <span className="text-xs text-(--muted) shrink-0">but answers {covered} of {total} classes</span>
+        : null,
+    );
   };
 
   /** A LEAF UNDER A MULTI-LEAF PARENT — count and SHARE, never a target, ratio or flag (owner's
@@ -471,8 +502,8 @@ function DeckMathRows({
         {graveyardVulnerability >= VULNERABLE && unansweredHate.length > 0 ? (
           <p className="text-sm text-(--warning) max-w-[65ch]">
             Your plan runs through the graveyard. {HATE_COUNTS.artifact} artifacts and{" "}
-            {HATE_COUNTS.enchantment} enchantments in the format shut it off, and this deck answers{" "}
-            {unansweredHate.length === 2 ? "neither" : `no ${unansweredHate[0]}`}.
+            {HATE_COUNTS.enchantment} enchantments in the format shut it off, and this deck{" "}
+            {unansweredHate.length === 2 ? "answers neither" : `has no ${unansweredHate[0]} removal`}.
           </p>
         ) : null}
         {answers.some((a) => a.required > a.count) ? (

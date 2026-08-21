@@ -641,6 +641,76 @@ test("every leaf still renders under exactly one parent", () => {
   expect(labelSlot(/^Consistency 8 of 10/)?.textContent?.trim()).toBe("Consistency");
 });
 
+// Controller finding 1 (task 6 fix round): the score multiplies Interaction's count attainment by
+// `answerCoverage.coverage`, so a row reading "11/10" (met on count alone) can still be the reason
+// the headline is under 5. Live on `sarevok-lord-of-pain` the panel ticked Interaction while the
+// score docked it by 0.816 -- nothing on screen explained the gap. Same defect class 7714d91
+// rejected for the land count: a panel number the score does not use at face value must not render
+// as if it does.
+const INTERACTION_MET_PARENTS = [
+  { name: "Interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] },
+] as unknown as typeof SAMPLE.report.buildParents;
+
+test("the Interaction row shows the coverage dock when coverage is under 1, even though the count alone is met", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={INTERACTION_MET_PARENTS}
+      answerCoverage={{
+        coverage: 0.816,
+        source: "weighted",
+        graveyardVulnerability: 0,
+        rows: [
+          { class: "creature", poolShare: 1, demand: 0.3, weight: 0.3, covered: true },
+          { class: "artifact", poolShare: 1, demand: 0.24, weight: 0.24, covered: false },
+          { class: "enchantment", poolShare: 1, demand: 0.21, weight: 0.21, covered: true },
+          { class: "planeswalker", poolShare: 1, demand: 0.03, weight: 0.03, covered: false },
+          { class: "land", poolShare: 1, demand: 0.21, weight: 0.21, covered: true },
+        ],
+      }}
+    />,
+  );
+  expect(screen.getByText(/but answers 3 of 5 classes/i)).toBeInTheDocument();
+  // Ratio and count still read as authored -- the dock is an EXPLANATION beside 11/10, not a
+  // replacement of it.
+  expect(screen.getByLabelText(/^Interaction 11 of 10/)).toBeInTheDocument();
+  // The flag reads as NOT fully met, because it is not -- 11/10 * 0.816 < 1, same threshold the
+  // score itself scores against. A tick here would be the exact defect being fixed.
+  expect(screen.getByLabelText(/^Interaction 11 of 10, under target/)).toBeInTheDocument();
+});
+
+test("the Interaction row says nothing about coverage when it is fully covered", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={INTERACTION_MET_PARENTS}
+      answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/^Interaction 11 of 10, on target/)).toBeInTheDocument();
+});
+
+test("the Interaction row says nothing about coverage when no answerCoverage was supplied", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={INTERACTION_MET_PARENTS} />);
+  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/^Interaction 11 of 10, on target/)).toBeInTheDocument();
+});
+
+// A non-Interaction parent is never coverage-weighted, even when it happens to be under-covered
+// class-wise -- the multiplier only ever applies to Interaction (`build.ts`'s `coverageWeighted`).
+test("a coverage dock never appears on a parent other than Interaction", () => {
+  const ramp = [{ name: "Ramp", count: 6, target: 10, leaves: ["ramp"] }] as unknown as typeof SAMPLE.report.buildParents;
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={ramp}
+      answerCoverage={{ coverage: 0.5, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+});
+
 const DECK_MATH = {
   topdeck: [],
   turn: 5,
@@ -819,6 +889,30 @@ test("BuildBenchmarks warns a graveyard deck about the hate it cannot remove", (
   );
   expect(screen.getByText(/plan runs through the graveyard/i)).toBeInTheDocument();
   expect(screen.getByText(/16 artifacts/)).toBeInTheDocument();
+  // DECK_MATH has no enchantment row at all, so both classes read unanswered -- grammatical plural.
+  expect(screen.getByText(/answers neither/)).toBeInTheDocument();
+});
+
+// Controller finding 2 (task 6 fix round): "this deck answers no artifact" is not English -- the
+// singular branch needed its own wording, not just the plural's. One unanswered class (here,
+// artifact is answered and enchantment is not) exercises the branch the fixture above never hit.
+test("BuildBenchmarks reads grammatically when only one hate class is unanswered", () => {
+  const oneAnswered = {
+    ...DECK_MATH,
+    answers: [
+      ...DECK_MATH.answers,
+      { class: "enchantment", count: 0, exiling: 0, recurring: 0, fromCommandZone: false, available: 0, required: 6 },
+    ].map((a) => (a.class === "artifact" ? { ...a, count: 2 } : a)),
+  };
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={oneAnswered}
+      answerCoverage={{ coverage: 0.8, source: "weighted", graveyardVulnerability: 0.635, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/has no enchantment removal/)).toBeInTheDocument();
+  expect(screen.queryByText(/answers no enchantment\b/)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks says nothing about hate when the deck has no graveyard plan", () => {
