@@ -47,8 +47,18 @@ export function DeckIdentity({
     <div className="border border-(--border) rounded-(--radius) p-5 bg-(--surface) flex flex-col gap-2">
       <div className="flex items-baseline gap-3 flex-wrap">
         <span className="eyebrow shrink-0">Deck identity</span>
-        <h2 className="text-2xl font-bold leading-none text-(--accent) capitalize">{cohesion.theme}</h2>
+        {/* NAMING A DECK IS A CLAIM, AND IT CAN BE DECLINED (roadmap A15). Under the floor the
+            headline is carried by one or two cards, so the title says so and the tag drops to the
+            subtitle -- the same shape the CLI prints. The engine's own invariant is that a silent
+            wrong answer is worse than a missing one, and this heading was the loudest place it did
+            not hold. */}
+        {cohesion.dominant === false ? (
+          <h2 className="text-2xl font-bold leading-none text-(--muted)">No dominant theme</h2>
+        ) : (
+          <h2 className="text-2xl font-bold leading-none text-(--accent) capitalize">{cohesion.theme}</h2>
+        )}
         <span className="text-sm text-(--muted) tabular-nums">
+          {cohesion.dominant === false ? `strongest: ${cohesion.theme} · ` : ""}
           {focus}
           {family ? ` (wider family ${family})` : ""}
         </span>

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { detectArchetypes, type CardSignal } from "./archetypes.js";
+import { detectArchetypes, dominantArchetype, type CardSignal } from "./archetypes.js";
 
 const sig = (name: string, opts: { themeTags?: string[]; effectKinds?: string[]; subtypes?: string[] }): CardSignal => ({
   name,
@@ -179,4 +179,18 @@ test("a maker of only resource tokens is not a Tokens card", () => {
   // proof it makes a Treasure, and a silent exclusion is the wrong failure direction.
   const untagged: CardSignal = { name: "Unknown", themeTags: [], effectKinds: ["token-generation"], subtypes: [] };
   expect(detectArchetypes([untagged], [], 5).find((r) => r.name === "tokens")!.confidence).toBeCloseTo(0.2, 5);
+});
+
+// A NAMING LAYER MAY SAY "I DON'T KNOW" (roadmap A15). `detectArchetypes` always returns a top row,
+// so a deck with no positive identity gets named whatever ranked second: cares-gating the
+// aristocrats signature (A13) halved the false confidences on the six owner-named control decks and
+// moved not one of their labels. `dominantArchetype` is the abstention the ranked list cannot make.
+test("no archetype leads when the top confidence is under the floor", () => {
+  const weak = [{ name: "aristocrats" as const, label: "Aristocrats", confidence: 0.2 }];
+  const strong = [{ name: "aristocrats" as const, label: "Aristocrats", confidence: 0.32 }];
+  expect(dominantArchetype(weak)).toBeUndefined();
+  expect(dominantArchetype(strong)?.name).toBe("aristocrats");
+  // Goodstuff is the "nothing matched" row and never names a deck, whatever its confidence.
+  expect(dominantArchetype([{ name: "goodstuff", label: "Goodstuff / Midrange", confidence: 0.9 }])).toBeUndefined();
+  expect(dominantArchetype([])).toBeUndefined();
 });

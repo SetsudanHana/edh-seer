@@ -1,8 +1,7 @@
 import { expect, test } from "vitest";
 import {
   globalIDF, rankThemes, themeWeights, weightedEdge, dampedScore,
-  computeCohesion, cohesionLabel, COMBO_EDGE_WEIGHT, THEME_DECAY, tagFamily, type TagStats,
-} from "./weights.js";
+  computeCohesion, cohesionLabel, COMBO_EDGE_WEIGHT, THEME_DECAY, tagFamily, type TagStats, THEME_NAME_FLOOR } from "./weights.js";
 
 const stats: TagStats = { N: 100, counts: { "cast:sorcery": 80, "tribe:wizard": 5, "treasure": 2 } };
 
@@ -287,4 +286,20 @@ test("a general primary's two shares are the same number -- it IS its family", (
   const cards = [new Set(["enters:dalek"]), new Set(["draw:any"])];
   const c = computeCohesion(["enters:creature"], new Map([["enters:creature", 1]]), 2, fold, cards)!;
   expect(c.familyScore).toBe(c.score);
+});
+
+// A THEME CARRIED BY TWO CARDS MUST NOT NAME THE DECK (roadmap A15). The bar is NOT a correctness
+// prediction: measured over the 71 calibration decks, cohesion does not separate right headlines
+// from wrong ones (hits median 0.31, misses 0.33), and the worst wrong headline sits at 0.70. What
+// it catches is a headline with no support -- `venser` reads 0.02, "proliferate", one card.
+test("cohesion declines to name the deck below THEME_NAME_FLOOR", () => {
+  const freq = new Map<string, number>([["proliferate:permanent", 1], ["draw:any", 1]]);
+  const thin = computeCohesion(["proliferate:permanent", "draw:any"], freq, 50);
+  expect(thin!.score).toBeLessThan(THEME_NAME_FLOOR);
+  expect(thin!.dominant).toBe(false);
+  // The tag is still reported -- it IS the deck's best-supported theme, and withholding it entirely
+  // would be a different lie. Only the CLAIM that it names the deck is withdrawn.
+  expect(thin!.tag).toBe("proliferate:permanent");
+  const thick = computeCohesion(["proliferate:permanent", "draw:any"], new Map([["proliferate:permanent", 20]]), 50);
+  expect(thick!.dominant).toBe(true);
 });

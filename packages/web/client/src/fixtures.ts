@@ -85,7 +85,7 @@ export const SAMPLE: AnalyzeResponse = {
       secondaryTag: "tribe:goblin",
       score: 0.65,
     familyScore: 0.65,
-      label: "highly focused",
+      label: "highly focused", dominant: true,
     },
     strategies: [
       { name: "tokens", label: "Tokens", confidence: 0.42 },
