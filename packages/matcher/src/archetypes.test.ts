@@ -133,3 +133,50 @@ test("a card that pays off when creatures die is aristocrats, even if it causes 
   expect(deck(endStepPayoff).map((a) => a.name)).not.toContain("aristocrats");
   expect(deck(withCondition).map((a) => a.name)).toContain("aristocrats");
 });
+
+// AN ARISTOCRATS DECK IS ITS PAYOFFS, NOT THE REMOVAL THAT HAPPENS TO EMIT A SACRIFICE
+// (2026-08-21). MEASURED over the 71 calibration decks: 815 of the 974 aristocrats matches are
+// supply-only against 159 cares-backed, and Aristocrats topped 28 decks including 4 the owner named
+// "Control" -- decks with no Zulaport and no Blood Artist. Same lesson as `analyze.ts:590`'s Sorin
+// defect, one layer up.
+test("a card that only SUPPLIES a demand-defined archetype's signal counts at producer share", () => {
+  const payoff: CardSignal = {
+    name: "Zulaport Cutthroat", themeTags: ["dies:creature"], caresTags: ["dies:creature"],
+    effectKinds: ["drain"], subtypes: [],
+  };
+  const removal: CardSignal = {
+    name: "Bake into a Pie", themeTags: ["dies:creature"], caresTags: [], effectKinds: [], subtypes: [],
+  };
+  const full = detectArchetypes([payoff], [], 10).find((r) => r.name === "aristocrats")!;
+  const supply = detectArchetypes([removal], [], 10).find((r) => r.name === "aristocrats");
+  expect(full.confidence).toBeCloseTo(0.1, 5);
+  // 0.35/10 = 0.035, under ARCHETYPE_FLOOR 0.08 -- one removal spell is not an aristocrats deck.
+  expect(supply).toBeUndefined();
+  const both = detectArchetypes([payoff, removal], [], 10).find((r) => r.name === "aristocrats")!;
+  expect(both.confidence).toBeCloseTo(0.135, 5);
+});
+
+/** A caller that computes no demand side keeps the old all-supply behaviour, so the ~15 existing
+ *  callers of `detectArchetypes` are unaffected until they opt in. */
+test("an absent caresTags leaves a demand-defined archetype counting supply full", () => {
+  const removal: CardSignal = { name: "Bake into a Pie", themeTags: ["dies:creature"], effectKinds: [], subtypes: [] };
+  expect(detectArchetypes([removal], [], 10).find((r) => r.name === "aristocrats")!.confidence).toBeCloseTo(0.1, 5);
+});
+
+// MAKING A TREASURE IS RAMP, NOT A TOKENS DECK -- the same exclusion `wincon.ts` already applies to
+// go-wide, whose own comment records that keying on token-generation alone made it the primary plan
+// of 52 of 71 decks. MEASURED here: 227 of the 774 token matches are resource-only, 218 Treasure.
+test("a maker of only resource tokens is not a Tokens card", () => {
+  const treasure: CardSignal = {
+    name: "Dockside Extortionist", themeTags: ["create-token:treasure"], effectKinds: ["token-generation"], subtypes: [],
+  };
+  const saprolings: CardSignal = {
+    name: "Sprout Swarm", themeTags: ["create-token:saproling"], effectKinds: ["token-generation"], subtypes: [],
+  };
+  expect(detectArchetypes([treasure], [], 5).find((r) => r.name === "tokens")).toBeUndefined();
+  expect(detectArchetypes([saprolings], [], 5).find((r) => r.name === "tokens")!.confidence).toBeCloseTo(0.2, 5);
+  // A card whose kind fired on evidence with no `create-token:` tag is NOT excluded: silence is not
+  // proof it makes a Treasure, and a silent exclusion is the wrong failure direction.
+  const untagged: CardSignal = { name: "Unknown", themeTags: [], effectKinds: ["token-generation"], subtypes: [] };
+  expect(detectArchetypes([untagged], [], 5).find((r) => r.name === "tokens")!.confidence).toBeCloseTo(0.2, 5);
+});
