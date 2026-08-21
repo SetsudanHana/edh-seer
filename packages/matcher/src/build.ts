@@ -1,6 +1,7 @@
 import type { DeckCard } from "./types.js";
 import type { Archetype } from "./archetypes.js";
 import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
+import { answerCoverage, type CoverageResult } from "./answer-coverage.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
 export type BuildCategory =
@@ -117,12 +118,21 @@ export const BASE_TARGETS: Record<BuildCategory, number> = {
  *  Every sum-of-leaf-floors number below sits inside or near its own band, which is why the shape
  *  moved rather than the numbers: 14, 10, 10 and 3 are still the targets, just no longer three (or
  *  four) independent claims about one deck. */
-export interface BuildParentSpec { name: string; leaves: BuildCategory[]; target: number; weight: number }
+export interface BuildParentSpec {
+  name: string;
+  leaves: BuildCategory[];
+  target: number;
+  weight: number;
+  /** This parent's attainment is multiplied by answer COVERAGE as well as its count (design §3).
+   *  Declared here rather than matched on `name` in `computeBuild`, so the fact lives beside the
+   *  parent it describes and a rename cannot silently unwire it. */
+  coverageWeighted?: true;
+}
 
 export const BUILD_PARENTS: BuildParentSpec[] = [
   { name: "Consistency", leaves: ["draw", "cardSelection", "tutor"], target: 14, weight: 1 },
   { name: "Ramp", leaves: ["ramp"], target: 10, weight: 1 },
-  { name: "Interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], target: 10, weight: 1 },
+  { name: "Interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], target: 10, weight: 1, coverageWeighted: true },
   { name: "Board wipes", leaves: ["boardWipe"], target: 3, weight: 0.5 },
 ];
 
@@ -292,6 +302,9 @@ export interface BuildResult {
    *  say WHY the number is what it is rather than print a fallback silently. */
   landsTargetSource: LandsTarget["source"];
   suggestions: string[];
+  /** The coverage multiplier applied to `Interaction`, and the per-class weights it was built
+   *  from, so the panel and a test can say WHY the number is what it is rather than trust it. */
+  answerCoverage: CoverageResult;
 }
 
 /** `karstenLandsTarget` is `land-count.ts`'s `recommendedLands(...).target` -- the regression's own
@@ -303,6 +316,13 @@ export function computeBuild(
   cards: DeckCard[],
   primary: Archetype | undefined,
   karstenLandsTarget?: number,
+  /** Union of the COMMANDERS' colour identities (CR 903.4). Undefined for a caller that has not
+   *  computed it, which refuses the pool weight rather than guessing one -- see `answerCoverage`. */
+  colorIdentity?: string[],
+  /** `max(confidence(reanimator), confidence(aristocrats))` from `detectArchetypes`. 0 for a deck
+   *  whose plan does not run through the graveyard, which is the neutral value: at v=0 demand is
+   *  the format baseline alone. */
+  graveyardVulnerability = 0,
 ): BuildResult {
   const members = detectBuildCategories(cards);
   const landsGate = gatedLandsTarget(karstenLandsTarget);
@@ -314,6 +334,13 @@ export function computeBuild(
   const countOf = (c: BuildCategory): number => (c === "lands" ? landCount : members.get(c)?.size ?? 0);
 
   const buildCategories = BUILD_CATEGORIES.map((c) => ({ category: c, count: countOf(c), target: targets[c] }));
+
+  // BREADTH, beside the count. `detectAnswerClasses` already lives in this file, so unlike the
+  // Karsten land target this needs no threading from `computeDeckMath` and no call reordering.
+  const answered = new Set(
+    [...detectAnswerClasses(cards)].filter(([, m]) => m.cards.size > 0).map(([cls]) => cls),
+  );
+  const coverage = answerCoverage(colorIdentity, answered, graveyardVulnerability);
 
   const parentTargets = adjustedParentTargets(primary);
   // A PARENT'S COUNT IS A UNION, NEVER A SUM -- a card can carry two of a parent's leaves (Grave
@@ -331,7 +358,10 @@ export function computeBuild(
   let attainSum = 0;
   for (const p of parentsWithCount) {
     if (p.target <= 0) continue; // same "neutral, unscored" convention every zero-target category used
-    const attainment = Math.min(p.count / p.target, 1); // exceeding a floor never penalizes
+    // COVERAGE MULTIPLIES, IT DOES NOT REPLACE. Ten creature-removal spells and nothing else is
+    // both enough cards and one answer; the product is the only reading that says so.
+    const counted = Math.min(p.count / p.target, 1); // exceeding a floor never penalizes
+    const attainment = p.coverageWeighted ? counted * coverage.coverage : counted;
     weightSum += p.weight;
     attainSum += p.weight * attainment;
   }
@@ -350,6 +380,7 @@ export function computeBuild(
     buildScore, buildCategories, buildParents,
     landsTargetSource: landsGate.source,
     suggestions: buildSuggestions(parentsWithCount, countOf, targets),
+    answerCoverage: coverage,
   };
 }
 

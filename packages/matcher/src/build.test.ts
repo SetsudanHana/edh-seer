@@ -1,7 +1,8 @@
-import { expect, test } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import { detectBuildCategories, computeBuild, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT } from "./build.js";
 import type { DeckCard } from "./types.js";
 import type { CardTags } from "@mtg/tagger";
+import { answerCoverage } from "./answer-coverage.js";
 
 /** Minimal DeckCard: oracleText + typeLine drive the heuristics; abilities drive ramp/draw. */
 const mk = (
@@ -95,16 +96,23 @@ const completeShell = (): DeckCard[] => {
   for (let i = 0; i < 10; i++) cards.push(mk(`Rock ${i}`, "Add {C}.", "Artifact", rampAbility));
   for (let i = 0; i < 10; i++) cards.push(mk(`Draw ${i}`, "Draw a card.", "Sorcery", drawAbility));
   for (let i = 0; i < 4; i++) cards.push(mk(`Scry ${i}`, "Scry 2.", "Sorcery"));
-  for (let i = 0; i < 10; i++) cards.push(mk(`Kill ${i}`, "Destroy target creature.", "Instant"));
+  // TASK 3: spread across all five answer classes so this shell also hits full COVERAGE, not just
+  // full count -- ten creature-only kill spells would now cap Interaction below its target.
+  for (let i = 0; i < 6; i++) cards.push(mk(`Kill ${i}`, "Destroy target creature.", "Instant"));
+  cards.push(mk("Wipe Art", "Destroy target artifact.", "Instant"));
+  cards.push(mk("Wipe Ench", "Destroy target enchantment.", "Instant"));
+  cards.push(mk("Wipe Walker", "Destroy target planeswalker.", "Instant"));
+  cards.push(mk("Wipe Land", "Destroy target land.", "Instant"));
   for (let i = 0; i < 3; i++) cards.push(mk(`Wipe ${i}`, "Destroy all creatures.", "Sorcery"));
   for (let i = 0; i < 36; i++) cards.push(mk(`Land ${i}`, "", "Basic Land — Forest"));
   return cards;
 };
 
 test("a complete goodstuff shell scores exactly 5 (every parent, and lands, exactly at target)", () => {
-  // 10 ramp = Ramp 10/10, 10 draw + 4 scry = Consistency 14/14, 10 kill = Interaction 10/10,
-  // 3 wipes = Board wipes 3/3, 36 lands on the nose -- every scored parent attains 1.0, so the
-  // weighted mean is 5 exactly rather than merely "near" it.
+  // 10 ramp = Ramp 10/10, 10 draw + 4 scry = Consistency 14/14, 10 kill spread across all five
+  // answer classes = Interaction 10/10 count AND coverage 1.0 (task 3), 3 wipes = Board wipes
+  // 3/3, 36 lands on the nose -- every scored parent attains 1.0, so the weighted mean is 5
+  // exactly rather than merely "near" it.
   const { buildScore } = computeBuild(completeShell(), "goodstuff");
   expect(buildScore).toBeCloseTo(5, 5);
 });
@@ -494,4 +502,52 @@ test("the sacrifice-to-fetch-two ramp land still fills the ramp role", () => {
     ),
   ]);
   expect(members.get("ramp")).toEqual(new Set(["Myriad Landscape"]));
+});
+
+describe("Interaction scores coverage x count", () => {
+  // Two decks with the SAME number of interaction cards, one of which answers only creatures.
+  const removal = (name: string, text: string) => ({
+    card: { name, typeLine: "Instant", oracleText: text, keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 2, power: null, toughness: null },
+    tags: null,
+  }) as never;
+
+  const narrow = Array.from({ length: 10 }, (_, i) => removal(`Kill ${i}`, "Destroy target creature."));
+  const broad = [
+    ...Array.from({ length: 6 }, (_, i) => removal(`Kill ${i}`, "Destroy target creature.")),
+    removal("Wipe Art", "Destroy target artifact."),
+    removal("Wipe Ench", "Destroy target enchantment."),
+    removal("Wipe Walker", "Destroy target planeswalker."),
+    removal("Wipe Land", "Destroy target land."),
+  ];
+
+  it("rates the broad deck above the narrow one at the same card count", () => {
+    const a = computeBuild(narrow, undefined, undefined, ["B"], 0);
+    const b = computeBuild(broad, undefined, undefined, ["B"], 0);
+    expect(b.answerCoverage.coverage).toBeGreaterThan(a.answerCoverage.coverage);
+    expect(b.buildScore).toBeGreaterThan(a.buildScore);
+  });
+
+  it("reports the coverage it scored with, so a reader can check the number", () => {
+    const r = computeBuild(broad, undefined, undefined, ["B"], 0);
+    expect(r.answerCoverage.source).toBe("weighted");
+    expect(r.answerCoverage.rows).toHaveLength(5);
+  });
+
+  it("falls back to unweighted when no identity is supplied, and never crashes an existing caller", () => {
+    const r = computeBuild(broad, undefined);
+    expect(r.answerCoverage.source).toBe("unweighted");
+    expect(Number.isFinite(r.buildScore)).toBe(true);
+  });
+
+  it("multiplies rather than replaces -- full coverage on two cards is still a thin deck", () => {
+    const thin = [
+      removal("A", "Destroy target creature."), removal("B2", "Destroy target artifact."),
+      removal("C", "Destroy target enchantment."), removal("D", "Destroy target planeswalker."),
+      removal("E", "Destroy target land."),
+    ];
+    const r = computeBuild(thin, undefined, undefined, ["B"], 0);
+    expect(r.answerCoverage.coverage).toBeCloseTo(1, 6);
+    const interaction = r.buildParents.find((p) => p.name === "Interaction")!;
+    expect(interaction.count).toBeLessThan(interaction.target);
+  });
 });
