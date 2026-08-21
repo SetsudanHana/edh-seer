@@ -35,31 +35,68 @@ function Caveat({ label = "what this number ignores", children }: { label?: stri
 const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
 
 /** The event half of a census key (`enters`, `dies`, `cast`, `end-step`…) as the words a player
- *  would use. A verb absent here is NOT guessed at — `demandSentence` falls back to printing the
- *  raw key, which is ugly and true, rather than inventing a phrase for a verb the engine grew
- *  after this map was written. */
+ *  would use, for every verb `@mtg/tagger`'s `VERB_VOCAB` can put in a consumer's trigger except
+ *  the three `availability.ts` calls `PHASE_VERBS` (those live in `DEMAND_PHASE` below, because a
+ *  phase carries no subject to glue this onto). The completeness test below this component walks
+ *  both maps against those two engine lists directly, so a verb the engine grows can no longer
+ *  ship silently unmapped — see `demandSentence`'s fallback for what happens if one ever is.
+ *
+ *  Two entries needed a call rather than a lookup:
+ *  - `counter-added`: the subject is what the counter lands ON ("a creature getting a counter"),
+ *    not the counter's own kind — the field this reads is the consumer's demand, and a demand
+ *    names a permanent, never a +1/+1.
+ *  - `proliferate`: no corpus card narrows WHAT proliferates (it is a player action over "any
+ *    number" of permanents/players with counters, not an event scoped to a card type), so its
+ *    subjectKey is always `any` and "anything proliferating" is the honest reading of a
+ *    genuinely-untargeted demand — the same "anything <verb>ing" shape `attacks:any` already uses,
+ *    not a special case invented for this one verb. */
 const DEMAND_VERB: Record<string, string> = {
   enters: "entering the battlefield",
   "enters-graveyard": "going to a graveyard",
   dies: "dying",
+  leaves: "leaving the battlefield",
   cast: "being cast",
   attacks: "attacking",
-  blocks: "blocking",
-  sacrificed: "being sacrificed",
-  discarded: "being discarded",
-  exiled: "being exiled",
+  taps: "becoming tapped",
+  untaps: "untapping",
+  "non-combat-damage": "dealing noncombat damage",
+  "combat-damage": "dealing combat damage",
+  draw: "drawing a card",
+  discard: "being discarded",
+  mill: "being milled",
+  "gain-life": "gaining life",
+  "lose-life": "losing life",
+  sacrifice: "being sacrificed",
+  "create-token": "being created",
+  "counter-added": "getting a counter",
+  "land-play": "being played",
+  proliferate: "proliferating",
+  "dice-rolled": "rolling a die",
 };
 
 /** Phase keys carry no subject — "an end step" is the whole demand, and gluing a subject onto it
- *  ("anything an end step") is nonsense. */
+ *  ("anything an end step") is nonsense. Kept in exact lockstep with `availability.ts`'s own
+ *  `PHASE_VERBS` (the completeness test enforces it): `combat-damage` and `draw-step` do NOT belong
+ *  here — the first is an event with a subject (a CREATURE dealing combat damage), the second is a
+ *  phase name the engine has never used a trigger key for. Both bugs shipped from this map
+ *  disagreeing with the engine's own list instead of reading it. */
 const DEMAND_PHASE: Record<string, string> = {
   "end-step": "an end step",
   upkeep: "an upkeep",
-  "draw-step": "a draw step",
-  "combat-damage": "combat damage",
+  "begin-combat": "the beginning of combat",
 };
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** A raw census key, de-slugified. Reached only when a verb or a subject shape has no entry above
+ *  — which the completeness test says should never happen for a real `VERB_VOCAB` member, so this
+ *  is the SAFETY NET for a verb the engine grows tomorrow, not the everyday path. `humanizeEvent`
+ *  (edges.ts, deleted 0fb5e4d once `sentence.ts` took over reason-sentence rendering) shipped this
+ *  exact idea as its own default case: colons and dashes are the only things distinguishing a raw
+ *  key from an ordinary English sentence, so stripping them to spaces is still ugly and true, but
+ *  it no longer LOOKS like engine internals — the failure this map has already shipped twice
+ *  (`combat-damage`, `begin-combat`) was a raw identifier reaching a reader, not an English gap. */
+const deslugify = (key: string): string => key.replace(/[:-]/g, " ");
 
 /** Turn a census key into the sentence its own aria-label already implies — `enters:type:creature`
  *  is "a creature entering the battlefield", not a colon-separated identifier.
@@ -77,7 +114,9 @@ export function demandSentence(key: string): string {
   if (phase && subjectKey === "any") return phase;
 
   const event = DEMAND_VERB[verb];
-  if (!event) return key; // unknown verb: say the true ugly thing rather than a plausible wrong one
+  // Unknown verb: say the true ugly thing, de-slugified, rather than inventing a phrase for a verb
+  // the engine grew after this map was written.
+  if (!event) return deslugify(key);
 
   /** "artifact", "battle", "creature" -> "an artifact, battle or creature". */
   const oneOf = (members: string[]): string => {
@@ -96,11 +135,19 @@ export function demandSentence(key: string): string {
   } else if (subjectKey.startsWith("type:")) {
     subject = oneOf(subjectKey.slice("type:".length).split("+"));
   } else {
-    return key;
+    // A subject shape this function has no branch for — same failure mode as an unmapped verb,
+    // same fallback for the same reason.
+    return deslugify(key);
   }
 
   return `${subject} ${event}${narrowed ? " (a real one, not the game's own)" : ""}`;
 }
+
+/** Exported ONLY for the completeness test below (`components.test.tsx`) to walk against
+ *  `@mtg/tagger`'s `VERB_VOCAB` and `@mtg/matcher`'s `PHASE_VERBS` — the two engine lists that
+ *  define exactly what a census key's verb half can ever be. Not meant as a public API otherwise;
+ *  read `demandSentence` if you want the rendering. */
+export { DEMAND_VERB, DEMAND_PHASE };
 
 export function BuildBenchmarks({
   categories, parents, deckMath,

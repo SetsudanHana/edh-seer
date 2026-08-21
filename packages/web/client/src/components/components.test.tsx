@@ -813,8 +813,79 @@ test("demandSentence says the true ugly thing rather than a plausible wrong one"
     "an artifact, enchantment or instant being cast",
   );
   expect(demandSentence("end-step:any")).toBe("an end step");
-  // An unknown verb is NOT dressed up in a phrase it never earned: the key survives verbatim.
-  expect(demandSentence("bushido:type:creature")).toBe("bushido:type:creature");
+  // An unknown verb is NOT dressed up in a phrase it never earned, but the "true ugly thing" is now
+  // de-slugified rather than the bare key -- a colon-separated identifier read as evidence of a
+  // template to four separate player reviews (task 8 brief), and de-slugifying is still honest
+  // about not knowing the verb without looking like engine internals.
+  expect(demandSentence("bushido:type:creature")).toBe("bushido type creature");
+});
+
+// TASK 8: `combat-damage` sat in `DEMAND_PHASE`, which only fires when the subject is `any` -- so
+// the single biggest raw-key offender (22 of 71 decks' worth) fell PAST it with a typed subject and
+// printed the key verbatim. It is an event with a subject (a CREATURE dealing combat damage), not a
+// phase, and belongs in `DEMAND_VERB` like any other verb.
+test("combat-damage reads as an event with a subject, not a phase", () => {
+  expect(demandSentence("combat-damage:type:creature")).toBe("a creature dealing combat damage");
+  expect(demandSentence("combat-damage:type:permanent")).toBe("a permanent dealing combat damage");
+  // The " (narrowed)" suffix is a real combat-trigger distinction (census.ts's `consumerKey`) and
+  // must survive the move out of the phase map.
+  expect(demandSentence("combat-damage:type:creature (narrowed)")).toBe(
+    "a creature dealing combat damage (a real one, not the game's own)",
+  );
+});
+
+// `begin-combat` is one of `availability.ts`'s three `PHASE_VERBS` and was simply absent, so it
+// fell through DEMAND_PHASE (no entry) and DEMAND_VERB (also no entry) to the raw key.
+// `draw-step` was the opposite defect: it sat in the phase map and is never a real trigger verb
+// (`draw` is; `draw-step` is not a `VERB_VOCAB` member at all), so it did nothing but risk masking
+// a future bug the same way `combat-damage` masked this one.
+test("begin-combat is a phase, and phases match availability.ts's own PHASE_VERBS", () => {
+  expect(demandSentence("begin-combat:any")).toBe("the beginning of combat");
+});
+
+// The rest of task 8's measured 53 raw rows: every verb this brief named, plus the two DEMAND_VERB
+// wrote a comment about (`proliferate`, `counter-added`) rather than a plain lookup.
+test("every verb the controller measured reaching the demand list as a raw key now reads as English", () => {
+  expect(demandSentence("draw:any")).toBe("anything drawing a card");
+  expect(demandSentence("counter-added:type:creature")).toBe("a creature getting a counter");
+  expect(demandSentence("non-combat-damage:type:permanent")).toBe("a permanent dealing noncombat damage");
+  expect(demandSentence("leaves:any")).toBe("anything leaving the battlefield");
+  expect(demandSentence("leaves:type:creature")).toBe("a creature leaving the battlefield");
+  expect(demandSentence("leaves:type:artifact")).toBe("an artifact leaving the battlefield");
+  expect(demandSentence("dice-rolled:any")).toBe("anything rolling a die");
+  expect(demandSentence("discard:any")).toBe("anything being discarded");
+  expect(demandSentence("gain-life:any")).toBe("anything gaining life");
+  // proliferate names no card type in the corpus (it is a player action over "any number" of
+  // permanents/players with counters, never scoped to a card type), so its subject is always
+  // `any` -- "anything proliferating" is the honest reading of that, not a guess dressed as one.
+  expect(demandSentence("proliferate:any")).toBe("anything proliferating");
+  // None of these may contain the raw separators a reader mistook for a template.
+  for (const key of [
+    "draw:any", "counter-added:type:creature", "non-combat-damage:type:permanent", "leaves:any",
+    "dice-rolled:any", "discard:any", "gain-life:any", "proliferate:any",
+    "combat-damage:type:creature", "begin-combat:any",
+  ]) {
+    expect(demandSentence(key)).not.toMatch(/[:-]/);
+  }
+});
+
+// STEP 5: no output of `demandSentence`, mapped or not, may contain a raw census separator -- fed
+// every shape task 8 measured plus a verb the engine does not have yet, so a verb added tomorrow
+// without a matching entry degrades to readable words instead of shipping its own name back.
+test("demandSentence never emits a colon or a dash, mapped verb or not", () => {
+  const keys = [
+    "enters:type:creature", "enters:subtype:wizard", "cast:type:artifact+enchantment+instant",
+    "end-step:any", "begin-combat:any", "upkeep:any",
+    "combat-damage:type:creature", "combat-damage:type:creature (narrowed)", "combat-damage:type:permanent",
+    "non-combat-damage:type:permanent", "draw:any", "leaves:any", "leaves:type:creature",
+    "leaves:type:artifact", "counter-added:type:creature", "counter-added:any", "discard:any",
+    "gain-life:any", "proliferate:any", "dice-rolled:any",
+    // A verb this map has never seen, exactly the shape a future engine verb would arrive as.
+    "some-future-verb:type:creature",
+  ];
+  for (const key of keys) {
+    expect(demandSentence(key)).not.toMatch(/[:-]/);
+  }
 });
 
 test("BuildBenchmarks shows the measured clock, and calls it what it is", () => {

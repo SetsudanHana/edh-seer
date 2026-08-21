@@ -70,7 +70,11 @@ export interface AvailabilityOptions {
  *  Without this they read as the worst holes on the board -- three cards wanting `end-step:any`
  *  against zero suppliers is 0%, i.e. "your deck cannot reach its own end step". Caught on the
  *  running app, not by a test, because the fixtures have no phase triggers. */
-const PHASE_VERBS = new Set(["upkeep", "begin-combat", "end-step"]);
+// Exported so a reader elsewhere (BuildBenchmarks.tsx's demand map, and its own completeness
+// test) can walk this SAME set rather than keeping a second copy that can drift from it — which is
+// exactly how that map ended up disagreeing with this list in both directions (task 8 brief,
+// 2026-08-20: `combat-damage` in the map's phase table, `begin-combat` missing from it).
+export const PHASE_VERBS = new Set(["upkeep", "begin-combat", "end-step"]);
 
 export function deckAvailability(
   deck: readonly DeckCard[],

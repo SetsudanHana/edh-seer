@@ -20,7 +20,7 @@ export {
 export { themeMembership, themeCandidates, BASELINE_CAP, type ThemeMembership } from "./themes.js";
 export { classifyEffect, type EffectClass } from "./effect-class.js";
 export {
-  deckAvailability, type AvailabilityRow, type AvailabilityOptions,
+  deckAvailability, PHASE_VERBS, type AvailabilityRow, type AvailabilityOptions,
 } from "./availability.js";
 export {
   detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, type BuildCategory,
