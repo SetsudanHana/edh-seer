@@ -130,9 +130,47 @@ function impliedEntryThemeTags(tags: CardTags): string[] {
     });
 }
 
+/** WHAT A SELF-ETB TRIGGER ACTUALLY WANTS (roadmap G1, owner's ruling 2026-08-21).
+ *
+ *  "When THIS creature enters, draw a card" and "whenever ANOTHER Wizard you control enters" were
+ *  keyed to the same tag, and they are two different facts: the second is a demand for Wizards, the
+ *  first is a demand for something that makes this card enter AGAIN -- flicker, a copy, a
+ *  Panharmonicon. Keyed as `enters:<class>` demand, the self trigger claimed the deck wanted its own
+ *  card type, at FULL weight against `PRODUCER_SHARE` 0.35 for supply.
+ *
+ *  THE DEMAND IS ON THE RE-FIRER, NOT ON THE ETB CARD, and that is what makes the tag discriminate.
+ *  Flickering a vanilla creature does nothing, so the flicker card is the one that WATCHES for ETB
+ *  abilities; the ETB card SUPPLIES them. Measured over the 71 decks before it was written: keyed
+ *  the other way round (ETB card cares) it headlines 11 decks including one with a single flicker
+ *  effect, which is the universal-bucket failure three theme designs have already died on; keyed
+ *  this way it headlines 5, every one carrying 7 or more re-firers. Corpus: 369 self-ETB cards and
+ *  109 re-firers of 2,745, so the tag's idf is 1.75 -- it cannot win by rarity either.
+ *
+ *  Ceilings, both recorded rather than built: the tag carries no TYPE, so an enchantment's ETB and a
+ *  creature-only flicker read as the same demand; and self-bounce (Whitemane Lion) and reanimation
+ *  re-fire an ETB too, but they are not in the owner's three and reanimation has its own theme. */
+export const ETB_REFIRE = "etb-refire";
+
+/** Effect kinds that make a permanent's entry trigger fire again. `trigger-doubling` over-claims --
+ *  Isshin doubles ATTACK triggers and Tekuthal proliferate -- and the copy family is wider than the
+ *  `clone` kind (C4 matches copies on a printed cue, because a copy derives `token-generation`
+ *  byte-identically to a token maker). Both are ceilings on a 109-card population, not reasons to
+ *  widen the predicate here. */
+const REFIRE_KINDS: ReadonlySet<string> = new Set(["flicker", "clone", "trigger-doubling"]);
+
+const refiresEntries = (tags: CardTags): boolean =>
+  tags.abilities.some((a) => a.effect?.kind !== undefined && REFIRE_KINDS.has(a.effect.kind));
+
+const hasSelfEntryTrigger = (tags: CardTags): boolean =>
+  tags.abilities.some((a) => a.trigger?.subject?.self === true && a.trigger.verbs.includes("enters"));
+
 export function cardThemeTags(tags: CardTags): Set<string> {
   const out = new Set<string>();
   for (const t of impliedEntryThemeTags(tags)) out.add(t);
+  // BOTH SIDES carry the tag, because `rankFreq` is only computed for tags present in `deckFreq`,
+  // which this function feeds. The demand half is added to `cardCaresTags` as well; the supply half
+  // is not, so it rides at `PRODUCER_SHARE` like any other supply.
+  if (refiresEntries(tags) || hasSelfEntryTrigger(tags)) out.add(ETB_REFIRE);
   for (const a of tags.abilities) {
     if (a.trigger) for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
     for (const e of a.emits ?? []) out.add(`${e.verb}:${themeSubjectKey(e.subject)}`);
@@ -161,7 +199,13 @@ export function cardThemeTags(tags: CardTags): Set<string> {
 export function cardCaresTags(tags: CardTags): Set<string> {
   const out = new Set<string>();
   for (const a of tags.abilities) {
-    if (a.trigger) for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
+    // A SELF TRIGGER IS NOT A DEMAND FOR ITS OWN CLASS -- see `ETB_REFIRE` above. The `enters` case
+    // has somewhere to go (the deck's re-firers); the others simply say nothing about what the deck
+    // wants, so they are dropped rather than re-keyed. Left deliberately narrow: an extra combat is
+    // the analogous supply for a self `attacks` trigger and is its own item.
+    if (a.trigger && a.trigger.subject?.self !== true) {
+      for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
+    }
     // AN INTERVENING-IF CONDITION IS A DEMAND EVEN WHEN NO SINGLE CARD SATISFIES IT (owner,
     // 2026-08-20). "Whenever a permanent you control is put into a graveyard, IF IT HAD COUNTERS ON
     // IT" makes Yuna, Grand Summoner a counters payoff; "if a creature died this turn" makes Warlock
@@ -173,6 +217,9 @@ export function cardCaresTags(tags: CardTags): Set<string> {
     // that population and panel stay byte-identical while themes and ratings move.
     for (const tag of a.conditionCares ?? []) out.add(tag);
   }
+  // THE RE-FIRER IS THE PAYOFF THAT WATCHES: a flicker, a copy or a trigger doubler is worth nothing
+  // beside vanilla creatures and everything beside a deck full of entry triggers.
+  if (refiresEntries(tags)) out.add(ETB_REFIRE);
   return out;
 }
 

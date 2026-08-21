@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, directedReasons, cardThemeTags, themeSubjectKey, claimCount , cardCaresTags} from "./edges.js";
+import { pairReasons, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE } from "./edges.js";
 import type { Reason } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -2478,4 +2478,46 @@ test("a producer that arrives tapped still fires an ordinary self-ETB trigger", 
     { card: { name: "Solemn Simulacrum" } as DeckCard["card"], tags: selfEtb }, H,
   ).filter((r) => r.tag.startsWith("enters:"));
   expect(reasons.length).toBeGreaterThan(0);
+});
+
+// A SELF ETB TRIGGER AND A CLASS ETB TRIGGER ARE TWO DIFFERENT FACTS (roadmap G1, owner's ruling
+// 2026-08-21). "When THIS creature enters, draw" wants something to make it enter AGAIN; "whenever
+// ANOTHER Wizard you control enters" wants Wizards. They shared one tag, so the first claimed the
+// deck wanted its own card type, at full weight against PRODUCER_SHARE 0.35 for supply.
+test("a self entry trigger is not a demand for its own class, and supplies etb-refire", () => {
+  const t = base("Bellowing Crier", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, self: true } },
+    effect: { kind: "draw-card" },
+  }]).tags;
+  expect([...cardCaresTags(t)]).not.toContain("enters:creature");
+  expect([...cardCaresTags(t)]).not.toContain(ETB_REFIRE); // it SUPPLIES the tag, it does not want it
+  expect([...cardThemeTags(t)]).toContain(ETB_REFIRE);
+});
+
+// THE DEMAND IS ON THE RE-FIRER, which is what makes the tag discriminate: keyed the other way it
+// headlines 11 of the 71 decks including one with a single flicker effect; keyed this way, 4, each
+// carrying 7 or more.
+test("a flicker, clone or trigger doubler CARES about entry triggers", () => {
+  for (const kind of ["flicker", "clone", "trigger-doubling"]) {
+    const t = base("Eldrazi Displacer", [{
+      kind: "activated",
+      effect: { kind, subject: { type: "creature", control: "you", token: null } },
+    }]).tags;
+    expect([...cardCaresTags(t)]).toContain(ETB_REFIRE);
+    expect([...cardThemeTags(t)]).toContain(ETB_REFIRE);
+  }
+});
+
+// INALLA IS THE ACCEPTANCE TEST: its eminence reads "whenever another nontoken Wizard you control
+// enters", a CLASS subject, so the deck really does want Wizards and the tag must survive untouched.
+// Measured: inalla's headline is byte-identical across this change ("wizards entering", 0.60).
+test("a class entry trigger keeps its demand and supplies no etb-refire", () => {
+  const t = base("Inalla, Archmage Ritualist", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: false } },
+    effect: { kind: "token-generation" },
+  }]).tags;
+  expect([...cardCaresTags(t)]).toContain("enters:wizard");
+  expect([...cardThemeTags(t)]).not.toContain(ETB_REFIRE);
 });

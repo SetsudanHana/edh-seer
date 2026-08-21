@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { promoteSpecificHeadline } from "./theme-promote.js";
+import { promoteSpecificHeadline, demoteUnrankableHeadline } from "./theme-promote.js";
 import type { ThemeMembership } from "./themes.js";
 
 const m = (tag: string, payoffs: number): ThemeMembership => ({
@@ -56,4 +56,34 @@ test("promotion MOVES the tag to the head and keeps every other tag, in order", 
   const freq = new Map([["enters:creature", 10], ["draw:any", 8], ["enters:wizard", 9], ["dies:creature", 4]]);
   const out = promoteSpecificHeadline(ranked, freq, [m("enters:wizard", 3)]);
   expect(out).toEqual(["enters:wizard", "enters:creature", "draw:any", "dies:creature"]);
+});
+
+/** A TIMING KEY IS TRUE OF EVERY DECK AND ACTIONABLE FOR NONE. Measured on the 71 calibration
+ *  decks: `upkeep:any` headlined 2 of them, and the count only rises when demand shrinks elsewhere,
+ *  because a phase key never competes on merit. */
+test("a phase headline is demoted when nothing in the deck supplies the step", () => {
+  expect(demoteUnrankableHeadline(["upkeep:any", "draw:any", "enters:creature"]))
+    .toEqual(["draw:any", "upkeep:any", "enters:creature"]);
+});
+
+/** THE ONE DECK THAT EARNS IT. `obeka-upkeep-shenanigans` runs Obeka, Splitter of Seconds
+ *  (`extra-phase` with `subject.phase: upkeep`), so "upkeep" is that deck's actual plan -- the first
+ *  cut of this guard renamed it "auras entering" at cohesion 0.10. A BEGINNING phase contains the
+ *  upkeep step (CR 501), so Sphinx of the Second Sun counts too. */
+test("a phase headline SURVIVES when the deck supplies that phase", () => {
+  expect(demoteUnrankableHeadline(["upkeep:any", "draw:any"], new Set(["upkeep"]))[0]).toBe("upkeep:any");
+  expect(demoteUnrankableHeadline(["upkeep:any", "draw:any"], new Set(["beginning"]))[0]).toBe("upkeep:any");
+  // A different phase does not license it: an extra END step is not an upkeep deck.
+  expect(demoteUnrankableHeadline(["upkeep:any", "draw:any"], new Set(["end"]))[0]).toBe("draw:any");
+});
+
+/** `__none__` is `chosen-type.ts`'s NO_MATCH -- a placeholder competing as a theme, recorded in the
+ *  A1 blast radius as reaching some deck's top 5 in 4 of the 71 decks. */
+test("an unresolved chosen-type placeholder cannot be the headline", () => {
+  expect(demoteUnrankableHeadline(["cast:__none__", "dies:creature"])[0]).toBe("dies:creature");
+});
+
+/** SAY THE TRUE THING RATHER THAN NOTHING: with no rankable tag anywhere, the head stands. */
+test("an all-unrankable list is left alone", () => {
+  expect(demoteUnrankableHeadline(["upkeep:any", "cast:__none__"])).toEqual(["upkeep:any", "cast:__none__"]);
 });
