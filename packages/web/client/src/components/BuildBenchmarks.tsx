@@ -119,7 +119,14 @@ export function BuildBenchmarks({
   // are win-plan and tax signals, never build roles, and each still carries its OWN target (today
   // always 0, per `build.ts`'s `BASE_TARGETS`, so nothing renders here in practice).
   const ungrouped = categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category) && !groupedLeaves.has(c.category));
-  if ((parents?.length ?? 0) === 0 && ungrouped.length === 0 && !deckMath) return null;
+  // FIX F2 (controller review, 2026-08-21): `build.ts`'s own scoring loop skips a parent whose
+  // target is <= 0 outright ("neutral, unscored") -- a bare `count / target` here has no such
+  // guard, so the day an archetype delta zeroes a parent's floor this would divide by zero and
+  // paint a NaN/Infinity-width bar. Unreachable today (no delta takes a parent below 1; re-cutting
+  // `ARCHETYPE_TARGET_DELTAS` is the owner's call, not this fix round's) but mirrored here anyway,
+  // the same "not scored, so not shown" convention `ungrouped` above already applies to a leaf.
+  const scoredParents = (parents ?? []).filter((p) => p.target > 0);
+  if (scoredParents.length === 0 && ungrouped.length === 0 && !deckMath) return null;
 
   /** ONE BAR SHAPE, geometry and `TARGET_MARK` unchanged from before grouping existed — only WHO
    *  gets a bar changed. Owner's 2026-08-21 ruling overrides the shape shipped 2026-08-20 ("a parent
@@ -207,7 +214,7 @@ export function BuildBenchmarks({
         *  difference; the children keep the muted eyebrow they already had. */}
       <h3 className="eyebrow text-(--foreground)">Build benchmarks</h3>
       <ul className="flex flex-col gap-1.5">
-        {(parents ?? []).map((p) => {
+        {scoredParents.map((p) => {
           // Computed once per parent and shared by its own row (the overlap note) and every leaf
           // beneath it (the share denominator) -- see the two doc comments above for why each reads it.
           const sumOfLeaves = p.leaves.reduce((s, l) => s + (countByLeaf.get(l) ?? 0), 0);

@@ -540,6 +540,40 @@ test("leaf shares total 100% even when a card fills two leaves, and the parent's
   expect(screen.getByLabelText(/^Consistency 8 of 10, under target; its leaves sum to 9/)).toBeInTheDocument();
 });
 
+// FIX F2 (controller review, 2026-08-21): `build.ts`'s own scoring loop skips a parent whose
+// target is <= 0 outright ("neutral, unscored" -- `if (p.target <= 0) continue;`), but `bar()`'s
+// fill was a bare `count / target` with no matching guard. Unreachable through today's
+// `ARCHETYPE_TARGET_DELTAS` (nothing zeroes a parent's floor -- re-cutting those deltas is the
+// owner's call, not this fix round's), but the day one does, a NONZERO count against a zero
+// target divides to Infinity and a zero count against a zero target divides to NaN -- either
+// paints a bar with a nonsense width. Mirrored here directly, the same "not scored, so not shown"
+// treatment the `ungrouped` leaf filter already gives a zero-target leaf.
+const ZERO_TARGET_CATEGORIES = [
+  { category: "ramp", count: 6, target: 0 },
+  { category: "boardWipe", count: 2, target: 0 },
+] as unknown as typeof SAMPLE.report.buildCategories;
+const ZERO_TARGET_PARENTS = [
+  { name: "Ramp", count: 6, target: 10, leaves: ["ramp"] },
+  // count > 0 against target 0 is deliberate -- it is the Infinity-producing case (2/0), the more
+  // dangerous of the two since `Math.min(1, Infinity)` still used to read as a full-width bar.
+  { name: "Board wipes", count: 2, target: 0, leaves: ["boardWipe"] },
+] as unknown as typeof SAMPLE.report.buildParents;
+
+test("a zero-target parent renders no bar at all, mirroring build.ts's own 'not scored' skip", () => {
+  const { container } = render(
+    <BuildBenchmarks categories={ZERO_TARGET_CATEGORIES} parents={ZERO_TARGET_PARENTS} />,
+  );
+  // The scored parent still renders normally.
+  expect(screen.getByText("Ramp")).toBeInTheDocument();
+  // The zero-target parent is entirely absent -- not present with a broken/NaN bar, absent outright,
+  // the same treatment a zero-target LEAF already gets from the `ungrouped` filter above.
+  expect(screen.queryByText("Board wipes")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText(/^Board wipes/)).not.toBeInTheDocument();
+  // No element anywhere carries a NaN- or Infinity-derived width.
+  expect(container.innerHTML).not.toMatch(/NaN/);
+  expect(container.innerHTML).not.toMatch(/Infinity/);
+});
+
 // A scrambled category order (not the array order BUILD_PARENTS.leaves lists, not the order the
 // fixture above happens to use) so the test can only pass if the component actually GROUPS rather
 // than coincidentally rendering in input order. `parents` is authored by hand here, mirroring what

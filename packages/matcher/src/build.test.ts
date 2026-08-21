@@ -164,19 +164,42 @@ test("buildScore is computed from PARENT attainment: any leaf inside a parent ca
   // leaf-scored shape this would have scored ZERO (draw's own target was 10, unmet; tutor's own
   // target was always 0 and excluded), because no single leaf floor could ever be satisfied by a
   // different leaf. That is exactly the shape the owner's ruling retires.
+  //
+  // EXPECTED buildScore, by hand from computeBuild's formula (no archetype -> no deltas, so every
+  // BUILD_PARENTS target and BASE_TARGETS.lands=36 apply unmodified). Only Consistency has any
+  // count; the other three parents and lands sit at 0:
+  //   Consistency  count 14, target 14, weight 1   -> attainment min(14/14,1) = 1
+  //   Ramp         count 0,  target 10, weight 1   -> attainment min(0/10,1)  = 0
+  //   Interaction  count 0,  target 10, weight 1   -> attainment min(0/10,1)  = 0
+  //   Board wipes  count 0,  target 3,  weight 0.5 -> attainment min(0/3,1)   = 0
+  //   Lands        count 0,  target 36 -> |0-36|=36, over the +/-3 band by 33, /9 falloff = 3.667,
+  //                clamped to 0 attainment, weight 1 (LANDS_WEIGHT)
+  //   weightSum  = 1 + 1 + 1 + 0.5 + 1 = 4.5
+  //   attainSum  = 1*1 + 1*0 + 1*0 + 0.5*0 + 1*0 = 1
+  //   buildScore = (attainSum / weightSum) * 5 = (1 / 4.5) * 5 = 10/9 ~= 1.1111
   const tutors = Array.from({ length: 14 }, (_, i) =>
     mk(`Tutor ${i}`, "Search your library for a card, put that card into your hand, then shuffle.", "Sorcery"));
-  const { buildParents } = computeBuild(tutors, undefined);
+  const { buildParents, buildScore } = computeBuild(tutors, undefined);
   const consistency = buildParents.find((p) => p.name === "Consistency")!;
   expect(consistency.count).toBe(14);
   expect(consistency.target).toBe(14);
+  expect(buildScore).toBeCloseTo(10 / 9, 5);
 });
 
-test("a zero-target category is neutral: it neither scores nor appears as a gap", () => {
-  // goodstuff protection/tutor targets are 0 → a deck with none of them isn't penalized for it.
-  const { suggestions } = computeBuild(completeShell(), "goodstuff");
-  expect(suggestions.some((s) => /Protection|Tutor/i.test(s))).toBe(false);
-});
+// F3 (controller review, 2026-08-21): the old "a zero-target category is neutral" test asserted
+// /Protection|Tutor/i never appears in `suggestions` -- but `buildSuggestions` (build.ts) iterates
+// `parents` exclusively and builds its text from `p.name`, so a LEAF name (Protection, Tutor, or
+// any other) can never appear in a suggestion for ANY reason, target zero or not. The assertion
+// passed for a fact unrelated to zero-target handling and could not have failed short of a parent
+// itself being renamed "Protection" or "Tutor". Deleted rather than retargeted: the property it
+// meant to guard -- a leaf with no floor of its own doesn't drag its parent down or get flagged on
+// its own -- is already pinned by "a grouped leaf never carries a target of its own" above (leaf
+// `target` is always 0) and by this file's PARENT-attainment test above (a zero-floor leaf can
+// still carry its whole parent's floor). The complementary case a retarget would actually need --
+// a PARENT whose own target reaches 0 -- is unreachable through `ARCHETYPE_TARGET_DELTAS` today
+// (no delta zeroes Board wipes' floor of 3) and re-cutting those deltas is the owner's call, not
+// this fix round's; see `packages/web/client/src/components/components.test.tsx` (F2, the
+// zero-target-parent BuildBenchmarks fixture) for that case covered directly at the rendering layer.
 
 test("land count is two-sided: heavy flood is flagged, not rewarded", () => {
   const flood = completeShell().concat(Array.from({ length: 12 }, (_, i) => mk(`Extra Land ${i}`, "", "Land")));
