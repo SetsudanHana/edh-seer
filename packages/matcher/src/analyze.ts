@@ -673,6 +673,9 @@ export function analyzeDeckStructured(
       // archetype. `conditionCares` is the demand the condition makes, and a card that pays off when
       // creatures die belongs to aristocrats whether or not it causes any.
       themeTags: [...cardThemeTags(dc.tags!), ...dc.tags!.abilities.flatMap((a) => a.conditionCares ?? [])],
+      // The demand half, for the archetypes that are defined by their payoffs rather than by what
+      // their cards do -- see `ARCHETYPE_SIGNATURE`'s `demandDefined`.
+      caresTags: [...cardCaresTags(dc.tags!), ...dc.tags!.abilities.flatMap((a) => a.conditionCares ?? [])],
       effectKinds: dc.tags!.abilities.map((a) => a.effect.kind),
       subtypes: (dc.tags!.characteristics?.subtypes ?? []).filter(
         (s) => s === "equipment" || (s === "aura" && /enchant creature/i.test(dc.card.oracleText)),
