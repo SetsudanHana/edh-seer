@@ -2,7 +2,6 @@ import { describe, expect, it, test } from "vitest";
 import { detectBuildCategories, computeBuild, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT } from "./build.js";
 import type { DeckCard } from "./types.js";
 import type { CardTags } from "@mtg/tagger";
-import { answerCoverage } from "./answer-coverage.js";
 
 /** Minimal DeckCard: oracleText + typeLine drive the heuristics; abilities drive ramp/draw. */
 const mk = (

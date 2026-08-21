@@ -635,7 +635,11 @@ test("every leaf still renders under exactly one parent", () => {
   expect(screen.getAllByText("Board wipes")).toHaveLength(1);
   // The label slot must never be blank -- Task 7 keeps that guarantee for every parent, not only a
   // folded single-leaf one, since every parent now nests its `<h4>` in exactly this slot.
-  const labelSlot = (label: RegExp) => screen.getByLabelText(label).firstElementChild;
+  //
+  // ONE LEVEL DEEPER THAN BEFORE (whole-branch review MINOR 7): the `<li>`'s first child is now a
+  // flex row `<div>` (the suffix note moved to its own line below it, so the row and the note no
+  // longer fight over one line's width on a narrow viewport), and the label span sits inside THAT.
+  const labelSlot = (label: RegExp) => screen.getByLabelText(label).firstElementChild?.firstElementChild;
   expect(labelSlot(/^Ramp 8 of 10/)?.textContent?.trim()).toBe("Ramp");
   expect(labelSlot(/^Board wipes 1 of 3/)?.textContent?.trim()).toBe("Board wipes");
   expect(labelSlot(/^Consistency 8 of 10/)?.textContent?.trim()).toBe("Consistency");
@@ -647,8 +651,11 @@ test("every leaf still renders under exactly one parent", () => {
 // score docked it by 0.816 -- nothing on screen explained the gap. Same defect class 7714d91
 // rejected for the land count: a panel number the score does not use at face value must not render
 // as if it does.
+// `coverageWeighted: true` is required here (whole-branch review IMPORTANT 4): the row is now
+// selected by that flag, not by `name === "Interaction"`, so a fixture missing it would silently
+// stop exercising the coverage dock these tests exist to check.
 const INTERACTION_MET_PARENTS = [
-  { name: "Interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] },
+  { name: "Interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
 ] as unknown as typeof SAMPLE.report.buildParents;
 
 test("the Interaction row shows the coverage dock when coverage is under 1, even though the count alone is met", () => {
@@ -709,6 +716,66 @@ test("a coverage dock never appears on a parent other than Interaction", () => {
     />,
   );
   expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+});
+
+// Whole-branch review IMPORTANT 4: the dock is selected by `p.coverageWeighted`, not by matching
+// the parent's name, so it must survive a rename AND must not fire on a same-named row that lacks
+// the flag -- both directions of the guarantee the flag exists to make.
+test("the coverage dock follows the flag through a parent rename, not the name 'Interaction'", () => {
+  const renamed = [
+    { name: "Board control", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
+  ] as unknown as typeof SAMPLE.report.buildParents;
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={renamed}
+      answerCoverage={{ coverage: 0.816, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/but answers 0 of 0 classes/i)).toBeInTheDocument();
+});
+
+test("a parent named 'Interaction' without the flag gets no coverage dock", () => {
+  const unflagged = [
+    { name: "Interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] },
+  ] as unknown as typeof SAMPLE.report.buildParents;
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={unflagged}
+      answerCoverage={{ coverage: 0.816, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+});
+
+// Whole-branch review IMPORTANT 3: design §3's own promise -- "every poolShare is set to 1 and the
+// panel says so" -- reached the wire (`answerCoverage.source`) and never reached the screen. An
+// identity-less deck (no commander detected) is scored as though every colour could supply every
+// class, and until this the panel said nothing about it.
+test("the Interaction row admits the colour pool was unweighted when no commander was detected", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={INTERACTION_MET_PARENTS}
+      answerCoverage={{ coverage: 1, source: "unweighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/colour pool unweighted/i)).toBeInTheDocument();
+  expect(screen.getByText(/no commander detected/i)).toBeInTheDocument();
+  // Coverage is 1 here -- no docking note is owed, only the unweighted one.
+  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+});
+
+test("the Interaction row says nothing about the pool when a commander WAS detected", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={INTERACTION_MET_PARENTS}
+      answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/colour pool unweighted/i)).not.toBeInTheDocument();
 });
 
 const DECK_MATH = {
@@ -889,6 +956,7 @@ test("BuildBenchmarks warns a graveyard deck about the hate it cannot remove", (
   );
   expect(screen.getByText(/plan runs through the graveyard/i)).toBeInTheDocument();
   expect(screen.getByText(/16 artifacts/)).toBeInTheDocument();
+  expect(screen.getByText(/6 enchantments/)).toBeInTheDocument();
   // DECK_MATH has no enchantment row at all, so both classes read unanswered -- grammatical plural.
   expect(screen.getByText(/answers neither/)).toBeInTheDocument();
 });
@@ -913,6 +981,10 @@ test("BuildBenchmarks reads grammatically when only one hate class is unanswered
   );
   expect(screen.getByText(/has no enchantment removal/)).toBeInTheDocument();
   expect(screen.queryByText(/answers no enchantment\b/)).not.toBeInTheDocument();
+  // MINOR 6 (whole-branch review): artifact is ANSWERED here (count 2), so its count must not be
+  // cited as a live threat -- only the enchantment count this deck actually lacks.
+  expect(screen.getByText(/6 enchantments/)).toBeInTheDocument();
+  expect(screen.queryByText(/16 artifacts/)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks says nothing about hate when the deck has no graveyard plan", () => {

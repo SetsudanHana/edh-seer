@@ -1,6 +1,6 @@
 import { minCopies, pAtLeast, seen } from "@mtg/engine";
 import type { DeckMath } from "@mtg/engine";
-import { loadAnswerPool, identityKey } from "./answer-pool.js";
+import { loadAnswerPool, identityKey, POOL_CLASSES, commanderIdentity } from "./answer-pool.js";
 import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";
 import { manaAudit } from "./mana-audit.js";
@@ -13,14 +13,15 @@ import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { topdeckPayoffs } from "./topdeck.js";
 
 /** The classes the doctrine says every deck should be able to answer (design §12.3), in the order
- *  they are reported.
+ *  they are reported. Derived from `POOL_CLASSES` (whole-branch review MINOR 2) rather than a
+ *  second hand-typed copy of the same six names -- this one keeps `graveyard`, unlike
+ *  `answer-coverage.ts`'s `COVERAGE_CLASSES`, because the panel reports it even though scoring does
+ *  not (design §3).
  *
  *  Reported even at ZERO, always: 27 of the 71 calibration decks carry no artifact removal and 26
  *  no enchantment removal, and a table that lists only what a deck has cannot say so. The absent
  *  row is the finding. */
-export const ANSWER_CLASSES = [
-  "creature", "artifact", "enchantment", "planeswalker", "land", "graveyard",
-] as const;
+export const ANSWER_CLASSES = POOL_CLASSES;
 
 /** How many demand shapes reach the report. The tail is long and mostly single-consumer noise;
  *  the panel is a summary, and `bin/deck-availability.ts` prints all of them. */
@@ -119,13 +120,10 @@ export function computeDeckMath(
     turnOverride !== undefined ? "override" : clockTurn !== undefined ? "clock" : "corpus-median";
 
   // The commanders' identity (CR 903.4), for the pool row below -- never the union of all 100
-  // cards. `undefined` when no commander NAME resolved to an actual card in `deck` (Task 4's
-  // lesson): a requested name that matched nothing must leave the pool absent, not fall back to
-  // an empty/colorless identity that would silently understate every pool.
-  const commanderCards = deck.filter((dc) => commanders.has(dc.card.name));
-  const identity = commanderCards.length
-    ? [...new Set(commanderCards.flatMap((dc) => dc.card.colorIdentity ?? []))]
-    : undefined;
+  // cards. `commanderIdentity` (answer-pool.js, whole-branch review MINOR 1) is the one place this
+  // is derived, shared with `analyze.ts`'s identical need, so the panel's `pool` row and the
+  // score's `poolShare` can never describe two different colour identities for the same deck.
+  const identity = commanderIdentity(deck, commanders);
   const poolRow = identity ? loadAnswerPool()[identityKey(identity)] : undefined;
 
   const answers = ANSWER_CLASSES.map((cls) => {

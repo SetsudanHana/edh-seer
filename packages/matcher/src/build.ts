@@ -294,8 +294,11 @@ export interface BuildResult {
   buildCategories: { category: string; count: number; target: number }[];
   /** One row per `BUILD_PARENTS` entry: archetype-adjusted target, and the UNION of its leaves'
    *  member sets (never the sum -- see `computeBuild`). The client renders the target, ratio and
-   *  flag HERE and only count+share on the leaf rows beneath (owner's 2026-08-21 ruling). */
-  buildParents: { name: string; count: number; target: number; leaves: string[] }[];
+   *  flag HERE and only count+share on the leaf rows beneath (owner's 2026-08-21 ruling).
+   *  `coverageWeighted` is present (always `true`) only on the parent `BuildParentSpec` marked so --
+   *  absent everywhere else, so a client can select the coverage-weighted parent by flag instead of
+   *  matching its name (whole-branch review IMPORTANT 4). */
+  buildParents: { name: string; count: number; target: number; leaves: string[]; coverageWeighted?: true }[];
   /** Which target `buildScore` actually scored the land count against (task 9) -- 'derived' when
    *  `karstenLandsTarget` landed inside `gatedLandsTarget`'s tested range, 'flat' when it fell
    *  outside (an extrapolation) or was never supplied. Exists so a caller (the panel, a test) can
@@ -337,6 +340,13 @@ export function computeBuild(
 
   // BREADTH, beside the count. `detectAnswerClasses` already lives in this file, so unlike the
   // Karsten land target this needs no threading from `computeDeckMath` and no call reordering.
+  // ponytail: the `.size > 0` filter is UNREACHABLE against `detectAnswerClasses`'s own
+  // implementation today (whole-branch review criterion 5, design §10) -- a Map entry for a class
+  // is only ever created in the same branch that immediately adds a card to it, so no entry can
+  // exist with `cards.size === 0`. Left in rather than deleted: it is one cheap line documenting an
+  // invariant `detectAnswerClasses` owns, and removing it is a bet that invariant can never change
+  // underneath this call. Upgrade path if it ever does: the design's own criterion 5 write-up is
+  // the place to re-derive whether the filter is still vacuous.
   const answered = new Set(
     [...detectAnswerClasses(cards)].filter(([, m]) => m.cards.size > 0).map(([cls]) => cls),
   );
@@ -360,6 +370,19 @@ export function computeBuild(
     if (p.target <= 0) continue; // same "neutral, unscored" convention every zero-target category used
     // COVERAGE MULTIPLIES, IT DOES NOT REPLACE. Ten creature-removal spells and nothing else is
     // both enough cards and one answer; the product is the only reading that says so.
+    //
+    // THE SEAM: `p.count` is the union of ALL FOUR Interaction leaves (targetedRemoval,
+    // stackInteraction, graveyardHate, protection), but `coverage` can only ever be lifted by the
+    // five PERMANENT answer classes `detectAnswerClasses` tracks -- no counterspell and no
+    // protection spell can ever set a `covered` bit, so a deck can max this parent's count on cards
+    // structurally incapable of moving the multiplier applied to it. MEASURED (whole-branch review
+    // finding IMPORTANT 1): mean 10.38 Interaction-counted cards per deck carry no coverage class at
+    // all across the 71 calibration decks, 65 of 71 decks carry >= 5, max 24 (`voltron-mill`: 26
+    // counted, 24 coverage-blind -- 7 stack, 12 protection -- coverage cut to 0.520). DELIBERATELY
+    // NOT FIXED HERE: dropping `stackInteraction`/`protection` from the count would re-scope what
+    // `Interaction` means and re-open its target of 10, calibrated on the union of all four leaves --
+    // a bigger change than this multiply, needing its own before/after. See design §9 for the full
+    // measurement and the ruling not to re-litigate it in a fix wave.
     const counted = Math.min(p.count / p.target, 1); // exceeding a floor never penalizes
     const attainment = p.coverageWeighted ? counted * coverage.coverage : counted;
     weightSum += p.weight;
@@ -374,7 +397,15 @@ export function computeBuild(
   }
   const buildScore = weightSum > 0 ? (attainSum / weightSum) * 5 : 0;
 
-  const buildParents = parentsWithCount.map((p) => ({ name: p.name, count: p.count, target: p.target, leaves: p.leaves as string[] }));
+  // `coverageWeighted` rides along ONLY when true (whole-branch review IMPORTANT 4) -- the client
+  // was selecting this parent with `p.name === "Interaction"`, the exact string match this flag
+  // exists to make unnecessary (see `BuildParentSpec.coverageWeighted`'s own comment). A rename of
+  // this parent can no longer silently unwire the panel's coverage note while the score keeps
+  // docking it, the panel/score disagreement class this branch already closed twice.
+  const buildParents = parentsWithCount.map((p) => ({
+    name: p.name, count: p.count, target: p.target, leaves: p.leaves as string[],
+    ...(p.coverageWeighted ? { coverageWeighted: true } as const : {}),
+  }));
 
   return {
     buildScore, buildCategories, buildParents,

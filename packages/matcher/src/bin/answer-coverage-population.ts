@@ -30,14 +30,13 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
   const inter = rep.buildParents!.find((p) => p.name === "Interaction")!;
   const coverage = rep.answerCoverage!;
   // CRITERION 4: the same deck with vulnerability forced to 0, to isolate the blend's effect.
-  const covAtV0 = coverage.rows.length
-    ? (() => {
-        // Imported, never restated -- a second copy of the table is a second thing to get wrong.
-        const w = coverage.rows.map((r) => ({ ...r, weight: r.poolShare * (ANSWER_BASELINE[r.class] ?? 0) }));
-        const tot = w.reduce((x, r) => x + r.weight, 0);
-        return tot > 0 ? w.reduce((x, r) => x + (r.covered ? r.weight : 0), 0) / tot : 1;
-      })()
-    : 1;
+  // `coverage.rows` is always `COVERAGE_CLASSES.length` (5) -- `answerCoverage` builds one row per
+  // class unconditionally -- so the `.length ? ... : 1` guard this used to carry was dead (MINOR 3,
+  // whole-branch review).
+  // Imported, never restated -- a second copy of the table is a second thing to get wrong.
+  const w = coverage.rows.map((r) => ({ ...r, weight: r.poolShare * (ANSWER_BASELINE[r.class] ?? 0) }));
+  const tot = w.reduce((x, r) => x + r.weight, 0);
+  const covAtV0 = tot > 0 ? w.reduce((x, r) => x + (r.covered ? r.weight : 0), 0) / tot : 1;
   rows.push({
     deck: file.replace(/\.txt$/, ""), score: rep.buildScore!, coverage: coverage.coverage,
     covAtV0, interaction: Math.min(inter.count / inter.target, 1),

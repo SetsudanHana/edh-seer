@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { DeckCard } from "./types.js";
 
 /** Every answer class the pool counts. `graveyard` is counted and stored even though
  *  `answer-coverage.ts` excludes it from the coverage denominator (design §3) -- the artifact
@@ -41,4 +42,24 @@ export function poolShare(colorIdentity: string[], cls: string): number {
   const max = pool.WUBRG?.[cls];
   if (!row || row[cls] === undefined || !max) return 1;
   return row[cls] / max;
+}
+
+/** The union of the COMMANDERS' colour identities (CR 903.4) -- never the deck's other 99 cards.
+ *  `undefined` when no name in `commanders` matched an actual card in `deck`: a requested name that
+ *  resolved to nothing must leave identity absent, not fall back to an empty/colourless identity
+ *  that would silently understate every pool (Task 4's lesson, the design's own §3).
+ *
+ *  ONE HELPER, NOT TWO COPIES (whole-branch review MINOR 1) -- `analyze.ts` and `deck-math.ts` each
+ *  carried this identical four-line derivation, and a drift between them would mean the panel's
+ *  `pool` row and the score's `poolShare` describe two different colour identities for the same
+ *  deck: the panel/score disagreement class this branch already closed twice. */
+export function commanderIdentity(
+  deck: readonly DeckCard[],
+  commanders: ReadonlySet<string> | readonly string[],
+): string[] | undefined {
+  const names = commanders instanceof Set ? commanders : new Set(commanders);
+  const commanderCards = deck.filter((dc) => names.has(dc.card.name));
+  return commanderCards.length
+    ? [...new Set(commanderCards.flatMap((dc) => dc.card.colorIdentity ?? []))]
+    : undefined;
 }

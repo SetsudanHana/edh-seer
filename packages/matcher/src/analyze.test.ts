@@ -1137,3 +1137,20 @@ describe("answer coverage reaches the report", () => {
     expect(analyzeDeckStructured(deck, ["Nonexistent Commander"]).answerCoverage!.source).toBe("unweighted");
   });
 });
+
+// Whole-branch review IMPORTANT 5: a decklist whose library resolves to ZERO cards -- only a
+// commander line, or every other name failing to resolve -- used to 500 the whole analysis.
+// `computeDeckMath`'s `minCopies` (hypergeometric.ts) THROWS at library=0 on purpose ("a silent
+// wrong answer is worse than a missing one"), and nothing upstream of the call guarded it.
+// Confirmed BEFORE this fix (direct `computeDeckMath` call, one commander, no library):
+// `minCopies: P(>= 1 by turn 9) >= 0.5 is unreachable at any copy count in 0`.
+it("analyses a commander-only deck instead of throwing, with deckMath simply absent", () => {
+  const cmd = {
+    card: { name: "Solo Commander", typeLine: "Legendary Creature — Zombie", oracleText: "", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 3, power: "3", toughness: "3" },
+    tags: null,
+  } as never;
+  const report = analyzeDeckStructured([cmd], ["Solo Commander"]);
+  expect(report.deckMath).toBeUndefined();
+  // Every other section still reports -- the guard skips one block, not the whole analysis.
+  expect(report.commanders).toEqual(["Solo Commander"]);
+});

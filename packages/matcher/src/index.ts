@@ -51,3 +51,7 @@ export {
   detectLines, classifyGrowth, iterationsNeeded,
   type Line, type Piece, type Resource, type Growth, type DetectLinesResult,
 } from "./lines.js";
+export {
+  answerCoverage, COVERAGE_CLASSES, ANSWER_BASELINE, GRAVEYARD_HATE_SHARE, type CoverageResult,
+} from "./answer-coverage.js";
+export { poolShare, commanderIdentity, identityKey, POOL_CLASSES, type AnswerPool } from "./answer-pool.js";

@@ -323,8 +323,13 @@ export interface DeckReport {
   /** The four Command-Zone template groups (Consistency, Ramp, Interaction, Board wipes), each
    *  carrying its OWN archetype-adjusted target and the UNION of its leaves' member counts (never
    *  the sum -- a card can carry two leaves). This is what actually scores and flags now; a leaf
-   *  under `buildCategories` never does. Matcher-only, same reason as `buildCategories`. */
-  buildParents?: { name: string; count: number; target: number; leaves: string[] }[];
+   *  under `buildCategories` never does. Matcher-only, same reason as `buildCategories`.
+   *  `coverageWeighted` is `true` only on the one parent (`Interaction`) whose attainment the score
+   *  multiplies by `answerCoverage.coverage` -- absent everywhere else, so a client can select it by
+   *  flag instead of matching `name === "Interaction"` (whole-branch review IMPORTANT 4: a rename of
+   *  that parent would otherwise silently unwire the panel's coverage note while the score kept
+   *  docking it). */
+  buildParents?: { name: string; count: number; target: number; leaves: string[]; coverageWeighted?: true }[];
   /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
   suggestions?: string[];
   /** The coverage multiplier `Interaction` was scored with, its per-class weights, and the

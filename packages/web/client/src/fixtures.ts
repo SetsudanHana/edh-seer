@@ -73,7 +73,7 @@ export const SAMPLE: AnalyzeResponse = {
       // overlap in this fixture) -- Ramp is UNDER, same numbers the old leaf-scored fixture used.
       { name: "Consistency", count: 14, target: 10, leaves: ["draw", "cardSelection", "tutor"] },
       { name: "Ramp", count: 6, target: 10, leaves: ["ramp"] },
-      { name: "Interaction", count: 8, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] },
+      { name: "Interaction", count: 8, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
       { name: "Board wipes", count: 0, target: 3, leaves: ["boardWipe"] },
     ],
     suggestions: ["No board wipe (target 3)", "Ramp 6/10 — add ~4", "Removal 7/10 — add ~3"],

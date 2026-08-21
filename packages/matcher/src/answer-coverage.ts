@@ -1,6 +1,8 @@
-import { poolShare } from "./answer-pool.js";
+import { poolShare, POOL_CLASSES } from "./answer-pool.js";
 
-/** The classes coverage is scored over.
+/** The classes coverage is scored over -- `POOL_CLASSES` minus `graveyard`, derived rather than a
+ *  third hand-copy of the same five names (whole-branch review MINOR 2: `ANSWER_CLASSES`,
+ *  `POOL_CLASSES` and this were three parallel lists nothing kept in sync).
  *
  *  `graveyard` IS DELIBERATELY ABSENT and this is not an oversight (design §3). Two reasons, either
  *  sufficient: it is a ZONE rather than a card type, so the `gameChanger` list that sets every
@@ -9,7 +11,7 @@ import { poolShare } from "./answer-pool.js";
  *  reanimator deck is not made to want Rest in Peace by being a reanimator deck, it is made to fear
  *  it. Inventing a baseline for it would be the Tier C guess the 2026-08-11 answer-modes design
  *  refused. It still counts inside the Interaction COUNT through the `graveyardHate` leaf. */
-export const COVERAGE_CLASSES = ["creature", "artifact", "enchantment", "planeswalker", "land"] as const;
+export const COVERAGE_CLASSES = POOL_CLASSES.filter((c) => c !== "graveyard");
 
 /** How often each class appears among cards the format says you MUST answer.
  *
@@ -35,7 +37,14 @@ export const ANSWER_BASELINE: Record<string, number> = {
  *  hate pieces and cannot RANK them. Rest in Peace and Scavenging Ooze are both one row of the 58,
  *  though the first turns a reanimator deck off completely and the second eats one card a turn.
  *  Nothing derived separates a total shutoff from incremental exile.
- *  ponytail: count-weighted, upgrade when a severity field exists. */
+ *  ponytail: count-weighted, upgrade when a severity field exists.
+ *
+ *  A HAND-COPY OF THESE COUNTS ALSO LIVES IN THE CLIENT, `BuildBenchmarks.tsx`'s `HATE_COUNTS`
+ *  (whole-branch review IMPORTANT 2), for the sentence that says "16 artifacts and 6 enchantments
+ *  in the format shut it off". If this table is re-measured, `HATE_COUNTS` must move with it -- the
+ *  provenance is one-way today (the client cites this file; this file does not know the client
+ *  exists) and nothing catches the two drifting apart from each other. `gen-answer-pool.ts --check`
+ *  gates THIS table against the live corpus but cannot see the client copy at all. */
 export const GRAVEYARD_HATE_SHARE: Record<string, number> = {
   creature: 36 / 58, artifact: 16 / 58, enchantment: 6 / 58, land: 0, planeswalker: 0,
 };

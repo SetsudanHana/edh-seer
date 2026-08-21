@@ -3,6 +3,14 @@ import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+// A DEEP IMPORT, NOT THE BARREL (whole-branch review MINOR 6). `@mtg/matcher`'s `index.ts` also
+// re-exports `analyze.js`, which reaches `@mtg/engine`'s top-level `readFileSync(new URL(...,
+// import.meta.url))` -- fine under a real node process, broken under this file's default jsdom test
+// environment ("The URL must be of scheme file", the exact failure `BuildBenchmarks.demand.test.ts`
+// documents and works around with a per-file `node` override). `answer-coverage.ts` itself has no
+// top-level side effect (its one file read, `loadAnswerPool`, is lazy, inside a function body), so
+// importing it directly skips the barrel's unrelated eager reads entirely.
+import { GRAVEYARD_HATE_SHARE } from "@mtg/matcher/src/answer-coverage.js";
 
 /** Scored here and NOT listed as a benchmark row: the land count is reported once, by the block
  *  below, which derives its target from this deck's own curve instead of the flat 36 every deck was
@@ -232,24 +240,31 @@ export function BuildBenchmarks({
     const state = flagged ? "under target" : "on target";
     const fill = Math.max(0, Math.min(1, (count / target) * TARGET_MARK));
     return (
-      <li key={key} className="flex items-center gap-3" aria-label={`${ariaName} ${count} of ${target}, ${state}${note}`}>
-        <span className="w-24 shrink-0 text-sm">{label}</span>
-        <span className="relative flex-1 h-2 rounded-full bg-(--separator) overflow-hidden">
-          <span
-            className={`absolute inset-y-0 left-0 rounded-full ${flagged ? "bg-(--warning)" : "bg-(--success)"}`}
-            style={{ width: `${+(fill * 100).toFixed(2)}%` }}
-          />
-          {/* The target itself, so a row is read against a landmark rather than against the
-            *  end of its own track. Every row's mark sits at the same x, which is what makes
-            *  rows with different targets comparable at a glance. */}
-          <span
-            className="absolute inset-y-0 w-px bg-(--foreground) opacity-70"
-            style={{ left: `${TARGET_MARK * 100}%` }}
-          />
-        </span>
-        <span className="w-14 shrink-0 text-right text-sm stat-num">{count}/{target}</span>
-        <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
-        {suffix}
+      <li key={key} className="flex flex-col gap-0.5" aria-label={`${ariaName} ${count} of ${target}, ${state}${note}`}>
+        <div className="flex items-center gap-3">
+          <span className="w-24 shrink-0 text-sm">{label}</span>
+          <span className="relative flex-1 h-2 rounded-full bg-(--separator) overflow-hidden">
+            <span
+              className={`absolute inset-y-0 left-0 rounded-full ${flagged ? "bg-(--warning)" : "bg-(--success)"}`}
+              style={{ width: `${+(fill * 100).toFixed(2)}%` }}
+            />
+            {/* The target itself, so a row is read against a landmark rather than against the
+              *  end of its own track. Every row's mark sits at the same x, which is what makes
+              *  rows with different targets comparable at a glance. */}
+            <span
+              className="absolute inset-y-0 w-px bg-(--foreground) opacity-70"
+              style={{ left: `${TARGET_MARK * 100}%` }}
+            />
+          </span>
+          <span className="w-14 shrink-0 text-right text-sm stat-num">{count}/{target}</span>
+          <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
+        </div>
+        {/* ON ITS OWN LINE, NOT CROWDED INTO THE FLEX ROW (whole-branch review MINOR 7) -- the row
+          *  above already spends `w-24 + flex-1 + w-14 + w-4` plus three `gap-3`s, and this text can
+          *  run to ~150px (the Interaction coverage note); at 390px the flex row had nothing left to
+          *  give it and either overflowed or crushed the bar to nothing. A second line wraps freely
+          *  at any width instead. */}
+        {suffix ? <p className="pl-24 text-xs text-(--muted)">{suffix}</p> : null}
       </li>
     );
   };
@@ -269,24 +284,43 @@ export function BuildBenchmarks({
     const overlapNote = sumOfLeaves > p.count
       ? `; its leaves sum to ${sumOfLeaves} because some cards fill more than one`
       : "";
-    // INTERACTION IS THE ONE COVERAGE-WEIGHTED PARENT (`build.ts`'s `coverageWeighted: true`).
-    // Matched by NAME, not a flag on `p` -- this package's `buildParents` shape is structural
-    // (`{name, count, target, leaves}`) and carries no such field, the same reason `lands` is
-    // special-cased by name in `REPORTED_ELSEWHERE` above. The score multiplies this parent's count
-    // attainment by `answerCoverage.coverage`, so 11/10 can score under 1 even though the ratio
-    // alone reads "met" -- the row has to say so, or it disagrees with the headline it feeds.
-    const interactionCoverage = p.name === "Interaction" ? answerCoverage : undefined;
+    // INTERACTION IS THE ONE COVERAGE-WEIGHTED PARENT, selected by `p.coverageWeighted`
+    // (whole-branch review IMPORTANT 4) -- NOT by matching `p.name === "Interaction"`, the exact
+    // string match `BuildParentSpec.coverageWeighted` was built to make unnecessary. A prior draft
+    // of this row used the name match; a rename of the parent would have silently unwired this note
+    // while the score kept docking it, the identical panel/score disagreement this branch already
+    // fixed twice elsewhere. The score multiplies this parent's count attainment by
+    // `answerCoverage.coverage`, so 11/10 can score under 1 even though the ratio alone reads "met"
+    // -- the row has to say so, or it disagrees with the headline it feeds.
+    const interactionCoverage = p.coverageWeighted ? answerCoverage : undefined;
     const dockedByCoverage = interactionCoverage !== undefined && interactionCoverage.coverage < 1;
     const covered = interactionCoverage?.rows.filter((r) => r.covered).length ?? 0;
     const total = interactionCoverage?.rows.length ?? 0;
-    const coverageNote = dockedByCoverage ? `, but answers ${covered} of ${total} classes` : "";
+    // THE POOL WEIGHT'S OWN REFUSAL NOW REACHES THE SCREEN (whole-branch review IMPORTANT 3).
+    // `answerCoverage.source` was computed and typed all the way to the client and never read here
+    // -- design §3's own promise ("the panel says so") stopped one field short. Refusing the pool
+    // weight sets every `poolShare` to 1, which is the UNIFORM reading this whole feature exists to
+    // reject, so an identity-less deck (no commander detected -- most often a pasted list with a
+    // typo'd or unresolved commander line) is charged as though every colour could supply every
+    // class, silently. Follows the same "a fallback must say so" precedent `lands.targetSource`
+    // already ships (see that block's own comment).
+    const unweighted = interactionCoverage?.source === "unweighted";
+    const coverageNote =
+      (dockedByCoverage ? `, but answers ${covered} of ${total} classes` : "") +
+      (unweighted ? ", colour pool unweighted -- no commander detected" : "");
+    const suffix =
+      dockedByCoverage || unweighted ? (
+        <>
+          {dockedByCoverage ? <>but answers {covered} of {total} classes</> : null}
+          {dockedByCoverage && unweighted ? " · " : null}
+          {unweighted ? "colour pool unweighted — no commander detected" : null}
+        </>
+      ) : null;
     return bar(
       p.name, <h4 className="eyebrow">{p.name}</h4>, p.name, p.count, p.target,
       overlapNote + coverageNote,
       dockedByCoverage,
-      dockedByCoverage
-        ? <span className="text-xs text-(--muted) shrink-0">but answers {covered} of {total} classes</span>
-        : null,
+      suffix,
     );
   };
 
@@ -354,8 +388,22 @@ export function BuildBenchmarks({
 /** The corpus count of RECURRING graveyard hate by type -- the pieces that shut an engine off
  *  rather than eating one card. Measured from `graveyardHateRecurring`, `answer-coverage.ts`'s
  *  `GRAVEYARD_HATE_SHARE` (creature 36 · artifact 16 · enchantment 6, n = 58 typed). Stated as a
- *  literal because it is a fact about the FORMAT, not about this deck, and a reader can check it. */
+ *  literal because it is a fact about the FORMAT, not about this deck, and a reader can check it.
+ *  A HAND-COPY, and it has to stay one -- `GRAVEYARD_HATE_SHARE` carries the SHARE (a fraction of
+ *  58), this the raw COUNT the sentence below reads aloud, and the two do not round-trip cleanly
+ *  enough to derive one from the other at display time. `answer-coverage.ts`'s own doc comment
+ *  names this file as the one place that has to move if that table is ever re-measured (whole-branch
+ *  review IMPORTANT 2) -- there is no code link between them, only that comment on both ends. */
 const HATE_COUNTS = { creature: 36, artifact: 16, enchantment: 6 } as const;
+/** WHICH CLASSES THE GRAVEYARD SENTENCE CAN NAME -- derived from `GRAVEYARD_HATE_SHARE`'s own
+ *  non-zero, non-creature rows (whole-branch review MINOR 6), not a second hardcoded
+ *  `["artifact", "enchantment"]` a few lines below that had no link back to the table it was
+ *  standing in for. `creature` is excluded because every deck answers creatures (design §2.2: zero
+ *  of the 71 calibration decks read a creature-removal zero), so citing it here would be citing a
+ *  threat this sentence has never once needed to name. */
+const HATE_CLASSES = (Object.keys(GRAVEYARD_HATE_SHARE) as (keyof typeof HATE_COUNTS)[]).filter(
+  (c) => c !== "creature" && (GRAVEYARD_HATE_SHARE[c] ?? 0) > 0,
+);
 /** Below this the deck does not have a graveyard PLAN, it has some graveyard cards. Measured
  *  (design §2.4): 16 of the 71 calibration decks clear it, 33 clear 0.2 -- 0.3 is where the top of
  *  the distribution is aristocrats and reanimator decks rather than incidental recursion. */
@@ -396,8 +444,9 @@ function DeckMathRows({
   const noneExile = answered.length > 1 && answered.every((a) => a.exiling === 0);
   const graveyard = answers.find((a) => a.class === "graveyard");
   const noneRecurring = graveyard !== undefined && graveyard.count > 0 && graveyard.recurring === 0;
-  // The two classes recurring graveyard hate actually occupies that this deck cannot remove.
-  const unansweredHate = (["artifact", "enchantment"] as const).filter(
+  // WHICH of `HATE_CLASSES` this deck cannot remove -- derived from the table, not a second
+  // hardcoded pair (whole-branch review MINOR 6).
+  const unansweredHate = HATE_CLASSES.filter(
     (c) => (answers.find((a) => a.class === c)?.count ?? 0) === 0,
   );
   const graveyardVulnerability = answerCoverage?.graveyardVulnerability ?? 0;
@@ -501,9 +550,19 @@ function DeckMathRows({
           *  a deck with no graveyard plan at all is never told to fear hate it does not need. */}
         {graveyardVulnerability >= VULNERABLE && unansweredHate.length > 0 ? (
           <p className="text-sm text-(--warning) max-w-[65ch]">
-            Your plan runs through the graveyard. {HATE_COUNTS.artifact} artifacts and{" "}
-            {HATE_COUNTS.enchantment} enchantments in the format shut it off, and this deck{" "}
-            {unansweredHate.length === 2 ? "answers neither" : `has no ${unansweredHate[0]} removal`}.
+            {/* ONLY THE CLASSES THIS DECK ACTUALLY LACKS ARE CITED (whole-branch review MINOR 6) --
+              *  the two counts used to print unconditionally, so a deck that answers artifacts but
+              *  not enchantments read "16 artifacts and 6 enchantments... shut it off", citing 16
+              *  artifacts as a live threat this deck in fact handles. */}
+            Your plan runs through the graveyard.{" "}
+            {unansweredHate.map((c) => plural(HATE_COUNTS[c], c)).join(" and ")} in the format shut
+            it off, and this deck{" "}
+            {unansweredHate.length === 2
+              ? "answers neither"
+              : unansweredHate.length > 2
+                ? "answers none of them"
+                : `has no ${unansweredHate[0]} removal`}
+            .
           </p>
         ) : null}
         {answers.some((a) => a.required > a.count) ? (
