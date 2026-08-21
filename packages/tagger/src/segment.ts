@@ -260,7 +260,15 @@ const TRIGGER_CUE = /^(when|whenever|at the beginning|at end)/i;
  *  trigger followed by a printed keyword were told to answer the clause twice, the overflow record
  *  landed on the keyword's id, and the gate refused the whole card for a duplicate id and a trigger
  *  on a non-triggered clause. */
-const EVENT_VERB = String.raw`(?:is put|is turned|attacks|blocks|becomes blocked|dies|enters|leaves|is dealt)`;
+const EVENT_VERB = String.raw`(?:is put|is turned|attacks|blocks|becomes blocked|dies|enters|leaves|is dealt`
+  // ACTIONS A PLAYER TAKES ARE EVENTS TOO, and their absence made a whole family invisible: the
+  // detector that selects a doc for re-normalization (`missesASplit`) keys on this flag, so
+  // "Whenever you create OR SACRIFICE a token" (Mirkwood Bats) was answered with one event, the
+  // other silently dropped, and no selector could ever see it. MEASURED corpus-wide: 30 cards carry
+  // a two-event trigger head whose verbs are all outside the original list, and the segmenter
+  // flagged 0 -- "cycle or discard" (6), "play a land from exile or cast a spell from exile" (3),
+  // "create or sacrifice", "gain or lose life", "cast or cycle".
+  + String.raw`|cycles?|discards?|creates?|sacrifices?|casts?|plays?|mills?|exiles?)`;
 const TWO_CONDITIONS = new RegExp(
   String.raw`^(?:when|whenever|at the beginning)[^,]*?\b(?:and (?:when|whenever|at the beginning)\b`
   + String.raw`|${EVENT_VERB}[^,]*?\bor (?:[a-z' ]{1,40}\s)?${EVENT_VERB}\b)`,

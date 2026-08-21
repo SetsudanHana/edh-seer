@@ -467,3 +467,28 @@ test("real keyword lines stay inert", () => {
   // An Aura's enchant restriction states no action and is correctly inert — no period, no em dash.
   expect(segment("Enchant creature you control", ["Enchant"], "Enchantment — Aura")[0].kind).toBe("keyword");
 });
+
+// AN ACTION A PLAYER TAKES IS AN EVENT TOO (roadmap G2c, owner's correction 2026-08-21). The
+// original EVENT_VERB list held only things that HAPPEN TO a permanent, so a trigger head naming two
+// player actions was never flagged, the model answered it with one event, and the other was silently
+// dropped with no selector able to see it. Mirkwood Bats -- "Whenever you create or sacrifice a
+// token" -- derives `sacrifice` alone and is in the owner's own smooth-criminal deck.
+// MEASURED corpus-wide: 30 cards carry such a head and the segmenter flagged 0; widening the list
+// flags 48 more cards in total and loses none.
+test("a trigger naming two player actions is a multiTrigger clause", () => {
+  const bats = segment("Flying\nWhenever you create or sacrifice a token, each opponent loses 1 life.");
+  expect(bats.find((c) => /create or sacrifice/.test(c.text))?.multiTrigger).toBe(true);
+  // The families the sweep found, each with a named witness.
+  expect(segment("Whenever you cycle or discard a card, scry 1.")[0].multiTrigger).toBe(true);
+  expect(segment("Whenever you play a land or cast a spell, draw a card.")[0].multiTrigger).toBe(true);
+  expect(segment("Whenever you cast a white spell or a Plains you control enters, you gain 1 life.")[0].multiTrigger).toBe(true);
+});
+
+/** ONE EVENT WITH TWO SUBJECTS IS STILL ONE EVENT -- the distinction the "or" branch has always
+ *  required a verb on both sides to make. Widening the verb list must not blur it, or eight cards
+ *  with a two-subject trigger get told to answer one clause twice (the failure recorded above). */
+test("two subjects sharing one event are still not a multiTrigger", () => {
+  expect(segment("Whenever this creature or another permanent enters, draw a card.")[0].multiTrigger).toBeUndefined();
+  expect(segment("Whenever you cast an instant or sorcery spell, put a +1/+1 counter on this creature.")[0].multiTrigger).toBeUndefined();
+  expect(segment("Whenever one or more creatures you control enter, draw a card.")[0].multiTrigger).toBeUndefined();
+});
