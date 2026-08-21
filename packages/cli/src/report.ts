@@ -7,6 +7,18 @@ export function formatReport(report: DeckReport, trim = 0): string {
   lines.push(report.commanders.length ? `  ${report.commanders.join(", ")}` : "  (none specified)");
 
   lines.push("");
+  // THE THREE-SLOT SENTENCE FIRST (roadmap A16): win route · engine · means. It leads because it is
+  // the only line that answers "what is this deck" without picking one coordinate to be the whole
+  // position -- the cohesion block below is the ENGINE slot on its own, and reading it alone is what
+  // scored a one-slot instrument against a composite for four naming designs running.
+  if (report.identity) {
+    const clauses = [report.identity.win, report.identity.engine, report.identity.means].filter(Boolean);
+    if (clauses.length > 0) {
+      lines.push("=== What this deck is ===");
+      for (const c of clauses) lines.push(`  ${c}`);
+      lines.push("");
+    }
+  }
   lines.push("=== Deck cohesion ===");
   if (report.cohesion) {
     const secondary = report.cohesion.secondary ? ` / ${report.cohesion.secondary}` : "";

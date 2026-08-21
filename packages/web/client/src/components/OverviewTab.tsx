@@ -14,7 +14,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
       {/* Full width, both of them: the deck's identity and its two headline scores are the answer
         *  the rest of the page explains, and they read as the page's lead only while nothing sits
         *  beside them. */}
-      <DeckIdentity cohesion={data.report.cohesion} colorIdentity={data.commanderColorIdentity} strategies={data.report.strategies} />
+      <DeckIdentity cohesion={data.report.cohesion} colorIdentity={data.commanderColorIdentity} strategies={data.report.strategies} identity={data.report.identity} />
       <HeadlineScores report={data.report} />
 
       {/* NATIVE MULTI-COLUMN, not a grid. These blocks are independent, self-contained and wildly
