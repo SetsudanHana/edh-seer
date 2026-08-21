@@ -14,20 +14,44 @@
 import { expect, test } from "vitest";
 import { VERB_VOCAB } from "@mtg/tagger";
 import { PHASE_VERBS } from "@mtg/matcher";
-import { DEMAND_VERB, DEMAND_PHASE } from "./BuildBenchmarks.js";
+import { DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS } from "./BuildBenchmarks.js";
 
-// A completeness ratchet, derived from the engine's own vocabulary rather than from this file's
-// map -- `VERB_VOCAB` is every verb a consumer's trigger can carry (buildCensus reads
-// `Ability.trigger.verb`, typed to that exact union), and `PHASE_VERBS` (`availability.ts`'s own
-// authority on what a phase is) is the subset the GAME supplies rather than a card, so it needs a
-// `DEMAND_PHASE` entry instead of a `DEMAND_VERB` one. Neither list lives in BuildBenchmarks.tsx,
-// so this test moves when the engine's vocabulary does, unlike the map it is checking -- exactly
-// the shape `sentence.test.ts` already uses for `VERB_PHRASES` against this same `VERB_VOCAB`.
+// A completeness-AND-disjointness ratchet, derived from the engine's own vocabulary rather than
+// from this file's maps -- `VERB_VOCAB` is every verb a consumer's trigger can carry (buildCensus
+// reads `Ability.trigger.verb`, typed to that exact union), and `PHASE_VERBS`
+// (`availability.ts`'s own authority on what a phase is) is the subset the GAME supplies rather
+// than a card. Neither list lives in BuildBenchmarks.tsx, so this test moves when the engine's
+// vocabulary does, unlike the maps it is checking -- exactly the shape `sentence.test.ts` already
+// uses for `VERB_PHRASES` against this same `VERB_VOCAB`.
 //
+// THREE tables now, not two (review finding F1, task 8 fix round 1): `DEMAND_SUBJECTLESS` holds
+// the player-action verbs (draw, gain-life, lose-life, dice-rolled, proliferate) that have no true
+// passive reading once glued to a permanent subject. A verb must land in EXACTLY ONE of the three
+// -- zero is a silent raw-key fallback, two is a bug nobody would notice because both branches
+// would return something plausible.
+const TABLES = [DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS] as const;
+
 // PROVEN TO FIRE (verified by hand while implementing task 8, not shipped as a second test):
 // deleting the `leaves` entry from `DEMAND_VERB` and re-running failed this test with
 // `missing = ["leaves"]`; restoring the entry made it pass again.
 test("every VERB_VOCAB member the engine can put on a consumer's trigger has a demand phrase", () => {
-  const missing = VERB_VOCAB.filter((v) => !(PHASE_VERBS.has(v) ? v in DEMAND_PHASE : v in DEMAND_VERB));
+  const missing = VERB_VOCAB.filter((v) => !TABLES.some((t) => v in t));
   expect(missing).toEqual([]);
+});
+
+// PROVEN TO FIRE (fix round 1): duplicating `draw` into `DEMAND_VERB` (already present in
+// `DEMAND_SUBJECTLESS`) failed this test with `duplicated = ["draw"]`; removing the duplicate made
+// it pass again.
+test("no VERB_VOCAB member sits in more than one of the three demand tables", () => {
+  const duplicated = VERB_VOCAB.filter((v) => TABLES.filter((t) => v in t).length > 1);
+  expect(duplicated).toEqual([]);
+});
+
+// PHASE_VERBS is the one sub-list an outside authority (availability.ts) pins down exactly: a verb
+// the GAME supplies, never a card, must land in DEMAND_PHASE specifically, not merely somewhere
+// among the three (the two tests above would pass even if `upkeep` were misfiled into
+// DEMAND_SUBJECTLESS, since that is still "exactly one").
+test("every PHASE_VERBS member lands in DEMAND_PHASE, not DEMAND_VERB or DEMAND_SUBJECTLESS", () => {
+  const misfiled = [...PHASE_VERBS].filter((v) => !(v in DEMAND_PHASE));
+  expect(misfiled).toEqual([]);
 });

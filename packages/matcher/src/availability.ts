@@ -74,7 +74,11 @@ export interface AvailabilityOptions {
 // test) can walk this SAME set rather than keeping a second copy that can drift from it — which is
 // exactly how that map ended up disagreeing with this list in both directions (task 8 brief,
 // 2026-08-20: `combat-damage` in the map's phase table, `begin-combat` missing from it).
-export const PHASE_VERBS = new Set(["upkeep", "begin-combat", "end-step"]);
+// Typed ReadonlySet, not Set: this is a shared engine singleton reachable by any importer (the
+// web client's demand-table ratchet reads it directly), and nothing here or elsewhere mutates it --
+// the type says so rather than leaving a consumer able to corrupt what `deckAvailability` reads on
+// every call (review finding F2, task 8 fix round 1).
+export const PHASE_VERBS: ReadonlySet<string> = new Set(["upkeep", "begin-combat", "end-step"]);
 
 export function deckAvailability(
   deck: readonly DeckCard[],

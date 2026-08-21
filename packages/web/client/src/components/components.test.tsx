@@ -846,19 +846,20 @@ test("begin-combat is a phase, and phases match availability.ts's own PHASE_VERB
 // The rest of task 8's measured 53 raw rows: every verb this brief named, plus the two DEMAND_VERB
 // wrote a comment about (`proliferate`, `counter-added`) rather than a plain lookup.
 test("every verb the controller measured reaching the demand list as a raw key now reads as English", () => {
-  expect(demandSentence("draw:any")).toBe("anything drawing a card");
+  expect(demandSentence("draw:any")).toBe("a card being drawn");
   expect(demandSentence("counter-added:type:creature")).toBe("a creature getting a counter");
   expect(demandSentence("non-combat-damage:type:permanent")).toBe("a permanent dealing noncombat damage");
   expect(demandSentence("leaves:any")).toBe("anything leaving the battlefield");
   expect(demandSentence("leaves:type:creature")).toBe("a creature leaving the battlefield");
   expect(demandSentence("leaves:type:artifact")).toBe("an artifact leaving the battlefield");
-  expect(demandSentence("dice-rolled:any")).toBe("anything rolling a die");
+  expect(demandSentence("dice-rolled:any")).toBe("a die being rolled");
   expect(demandSentence("discard:any")).toBe("anything being discarded");
-  expect(demandSentence("gain-life:any")).toBe("anything gaining life");
+  expect(demandSentence("gain-life:any")).toBe("life being gained");
   // proliferate names no card type in the corpus (it is a player action over "any number" of
-  // permanents/players with counters, never scoped to a card type), so its subject is always
-  // `any` -- "anything proliferating" is the honest reading of that, not a guess dressed as one.
-  expect(demandSentence("proliferate:any")).toBe("anything proliferating");
+  // permanents/players with counters, never scoped to a card type) -- but unlike `attacks:any`,
+  // where "anything attacking" is TRUE of a permanent, nothing but a PLAYER proliferates, so it no
+  // longer glues "anything" onto the front (review finding F1, fix round 1).
+  expect(demandSentence("proliferate:any")).toBe("proliferating");
   // None of these may contain the raw separators a reader mistook for a template.
   for (const key of [
     "draw:any", "counter-added:type:creature", "non-combat-damage:type:permanent", "leaves:any",
@@ -867,6 +868,20 @@ test("every verb the controller measured reaching the demand list as a raw key n
   ]) {
     expect(demandSentence(key)).not.toMatch(/[:-]/);
   }
+});
+
+// F1 (task 8 fix round 1): `demandSentence` glued a permanent subject onto five PLAYER-only verbs,
+// producing a grammatical sentence that is FALSE -- "anything drawing a card" claims a permanent
+// draws, when only a player ever does. FAILS against the pre-fix strings ("anything drawing a
+// card", "anything gaining life", "anything losing life", "anything rolling a die", "anything
+// proliferating"); passes once each reads as the whole demand with no subject glued on, the same
+// structural move `DEMAND_PHASE` already makes for a phase.
+test("draw, gain-life, lose-life, dice-rolled and proliferate read as their true sentence, not a false one glued to a subject", () => {
+  expect(demandSentence("draw:any")).toBe("a card being drawn");
+  expect(demandSentence("gain-life:any")).toBe("life being gained");
+  expect(demandSentence("lose-life:any")).toBe("life being lost");
+  expect(demandSentence("dice-rolled:any")).toBe("a die being rolled");
+  expect(demandSentence("proliferate:any")).toBe("proliferating");
 });
 
 // STEP 5: no output of `demandSentence`, mapped or not, may contain a raw census separator -- fed

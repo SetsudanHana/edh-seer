@@ -35,21 +35,28 @@ function Caveat({ label = "what this number ignores", children }: { label?: stri
 const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
 
 /** The event half of a census key (`enters`, `dies`, `cast`, `end-step`…) as the words a player
- *  would use, for every verb `@mtg/tagger`'s `VERB_VOCAB` can put in a consumer's trigger except
+ *  would use, for every verb `@mtg/tagger`'s `VERB_VOCAB` can put in a consumer's trigger EXCEPT
  *  the three `availability.ts` calls `PHASE_VERBS` (those live in `DEMAND_PHASE` below, because a
- *  phase carries no subject to glue this onto). The completeness test below this component walks
- *  both maps against those two engine lists directly, so a verb the engine grows can no longer
- *  ship silently unmapped — see `demandSentence`'s fallback for what happens if one ever is.
+ *  phase carries no subject to glue this onto) AND the five `DEMAND_SUBJECTLESS` below (a player
+ *  action has no permanent subject either). The completeness test below this component walks all
+ *  three maps against `VERB_VOCAB`/`PHASE_VERBS` directly, so a verb the engine grows can no longer
+ *  ship silently unmapped, unmapped twice, or glued to a subject that cannot perform it — see
+ *  `demandSentence`'s fallback for what happens if one ever is.
  *
- *  Two entries needed a call rather than a lookup:
+ *  Every remaining entry reads as a TRUE sentence once `${subject} ${event}` is glued: the subject
+ *  is always the OBJECT the event happens to or the ACTOR performing it, and every verb below is
+ *  true of a permanent in one of those two roles — `mill`/`discard`/`sacrifice`/`create-token` are
+ *  PASSIVE ("a card being milled" is true regardless of who mills it) and `enters`/`dies`/`leaves`/
+ *  `taps`/`untaps`/`attacks`/`cast`/`combat-damage`/`non-combat-damage`/`counter-added`/`land-play`
+ *  are ACTIVE, naming a permanent or card as the thing that does it. Checked one at a time against
+ *  review finding F1 (task 8 fix round 1), which is why this comment says so rather than leaving the
+ *  reader to re-derive it: `draw`, `gain-life`, `lose-life`, `dice-rolled` and `proliferate` failed
+ *  that check (CR pins all five to the CONTROLLER, never a permanent) and moved out.
+ *
+ *  One entry still needs a call rather than a lookup:
  *  - `counter-added`: the subject is what the counter lands ON ("a creature getting a counter"),
  *    not the counter's own kind — the field this reads is the consumer's demand, and a demand
- *    names a permanent, never a +1/+1.
- *  - `proliferate`: no corpus card narrows WHAT proliferates (it is a player action over "any
- *    number" of permanents/players with counters, not an event scoped to a card type), so its
- *    subjectKey is always `any` and "anything proliferating" is the honest reading of a
- *    genuinely-untargeted demand — the same "anything <verb>ing" shape `attacks:any` already uses,
- *    not a special case invented for this one verb. */
+ *    names a permanent, never a +1/+1. */
 const DEMAND_VERB: Record<string, string> = {
   enters: "entering the battlefield",
   "enters-graveyard": "going to a graveyard",
@@ -61,17 +68,12 @@ const DEMAND_VERB: Record<string, string> = {
   untaps: "untapping",
   "non-combat-damage": "dealing noncombat damage",
   "combat-damage": "dealing combat damage",
-  draw: "drawing a card",
   discard: "being discarded",
   mill: "being milled",
-  "gain-life": "gaining life",
-  "lose-life": "losing life",
   sacrifice: "being sacrificed",
   "create-token": "being created",
   "counter-added": "getting a counter",
   "land-play": "being played",
-  proliferate: "proliferating",
-  "dice-rolled": "rolling a die",
 };
 
 /** Phase keys carry no subject — "an end step" is the whole demand, and gluing a subject onto it
@@ -84,6 +86,25 @@ const DEMAND_PHASE: Record<string, string> = {
   "end-step": "an end step",
   upkeep: "an upkeep",
   "begin-combat": "the beginning of combat",
+};
+
+/** Player actions, not permanent events — the CR pins each of these five to the CONTROLLER
+ *  (CLAUDE.md's own list of controller-only verbs: draw · mill · discard · sacrifice · search ·
+ *  scry · surveil · add-mana · create · gain-life · lose-life; the other six in that list stay in
+ *  `DEMAND_VERB` because their PASSIVE reading — "a card being milled/discarded", "a permanent
+ *  being created/sacrificed" — is true of the object no matter who acts on it). None of these five
+ *  has a true passive reading once glued to a subject: "anything drawing a card" told the reader a
+ *  PERMANENT draws, which nothing does — review finding F1, task 8 fix round 1. Same structural move
+ *  `DEMAND_PHASE` already makes for a phase: the phrase IS the whole demand, no subject glued on.
+ *  `proliferate` moves here too — no corpus card narrows WHAT proliferates (it is a player action
+ *  over "any number" of permanents/players with counters), so "anything proliferating" was the same
+ *  false-actor sentence, not a genuinely free choice of wording. */
+const DEMAND_SUBJECTLESS: Record<string, string> = {
+  draw: "a card being drawn",
+  "gain-life": "life being gained",
+  "lose-life": "life being lost",
+  "dice-rolled": "a die being rolled",
+  proliferate: "proliferating",
 };
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
@@ -112,6 +133,14 @@ export function demandSentence(key: string): string {
 
   const phase = DEMAND_PHASE[verb];
   if (phase && subjectKey === "any") return phase;
+
+  // A player action has no permanent subject to glue this onto either -- same shape as the phase
+  // check above, one rung down (the subject slot always resolves to "any" for these five, since
+  // nothing narrows WHO draws or gains life to a card type).
+  const subjectless = DEMAND_SUBJECTLESS[verb];
+  if (subjectless && subjectKey === "any") {
+    return `${subjectless}${narrowed ? " (a real one, not the game's own)" : ""}`;
+  }
 
   const event = DEMAND_VERB[verb];
   // Unknown verb: say the true ugly thing, de-slugified, rather than inventing a phrase for a verb
@@ -147,7 +176,7 @@ export function demandSentence(key: string): string {
  *  `@mtg/tagger`'s `VERB_VOCAB` and `@mtg/matcher`'s `PHASE_VERBS` — the two engine lists that
  *  define exactly what a census key's verb half can ever be. Not meant as a public API otherwise;
  *  read `demandSentence` if you want the rendering. */
-export { DEMAND_VERB, DEMAND_PHASE };
+export { DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 
 export function BuildBenchmarks({
   categories, parents, deckMath,
