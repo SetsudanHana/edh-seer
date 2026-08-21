@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { effectPhrase, eventVerbPhrase, reasonSentence } from "./sentence.js";
+import {
+  costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
+  fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
+  staticGrantSentence, tutorSentence, winconSentence,
+} from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
   // effectKind is absent on 8.9% of reasons and `amount` on more than half of abilities, so the
@@ -20,6 +24,15 @@ describe("effectPhrase — the fallback ladder", () => {
 
   test("an amount of X reads as X, not as a number", () => {
     expect(effectPhrase("draw-card", "X")).toBe("draws you X cards");
+  });
+
+  // "makes 1 tokens" and "puts 1 counters on it" both shipped from the amount branch before this
+  // — an amount of exactly one is a singular, and the no-amount form is already the English for it.
+  test("an amount of one reads as a singular, not as '1 tokens'", () => {
+    expect(effectPhrase("token-generation", "1")).toBe("makes a token");
+    expect(effectPhrase("token-generation", "3")).toBe("makes 3 tokens");
+    expect(effectPhrase("counter-placement", "1")).toBe("puts a counter on it");
+    expect(effectPhrase("counter-placement", "2")).toBe("puts 2 counters on it");
   });
 });
 
@@ -90,5 +103,88 @@ describe("reasonSentence", () => {
       producer: "A", consumer: "B", eventKey: "enters:creature", effectKind: "draw-card",
     });
     expect(s).not.toContain("supplies");
+  });
+});
+
+describe("graveyardEnablesRecursion — the reanimator-consumer relation", () => {
+  test("cause first, both cards named, no engine vocabulary", () => {
+    expect(graveyardEnablesRecursion("Faithless Looting", "Muldrotha")).toBe(
+      "When Faithless Looting is in the graveyard, Muldrotha can bring it back",
+    );
+    expect(graveyardEnablesRecursion("Faithless Looting", "Muldrotha")).not.toContain("recursion");
+    expect(graveyardEnablesRecursion("Faithless Looting", "Muldrotha")).not.toContain("enabling");
+  });
+});
+
+describe("graveyardFeedsScaling — the per-graveyard payoff relation", () => {
+  test("cause first, both cards named", () => {
+    expect(graveyardFeedsScaling("Ruin Crab", "Bonehoard")).toBe(
+      "When Ruin Crab is in the graveyard, Bonehoard gets bigger",
+    );
+  });
+});
+
+describe("staticGrantSentence — a continuous static reaching a card", () => {
+  test("a mapped kind reads as a plain grant", () => {
+    expect(staticGrantSentence("Death Baron", "Gravecrawler", "pump")).toBe(
+      "Death Baron gives Gravecrawler bigger stats",
+    );
+    expect(staticGrantSentence("Anthem", "Squire", "keyword-grant")).toBe(
+      "Anthem gives Squire an extra keyword ability",
+    );
+  });
+
+  test("never says 's static applies to", () => {
+    const s = staticGrantSentence("Anthem", "Squire", "pump");
+    expect(s).not.toContain("applies to");
+    expect(s).not.toContain("static");
+  });
+
+  test("an unmapped kind still reads as English", () => {
+    expect(staticGrantSentence("Odd Card", "Squire", "graveyard-hate")).toBe(
+      "Odd Card gives Squire its graveyard hate",
+    );
+  });
+});
+
+describe("costReductionSentence", () => {
+  test("exact text, unchanged from before this module existed", () => {
+    expect(costReductionSentence("Jet Medallion", "Bloodghast")).toBe(
+      "Jet Medallion reduces what Bloodghast costs",
+    );
+  });
+});
+
+describe("the five small verbatim sentences", () => {
+  test("winconSentence", () => {
+    expect(winconSentence("Treasure", "Revel in Riches")).toBe(
+      "Treasure is what Revel in Riches counts toward winning",
+    );
+  });
+
+  test("fetchSentence", () => {
+    expect(fetchSentence("Farseek", "Godless Shrine")).toBe("Farseek can fetch Godless Shrine");
+  });
+
+  test("tutorSentence", () => {
+    expect(tutorSentence("Worldly Tutor", "Craterhoof Behemoth")).toBe(
+      "Worldly Tutor can search up Craterhoof Behemoth",
+    );
+  });
+
+  test("counterPresenceSentence", () => {
+    expect(counterPresenceSentence("Sludge Monster", "Hardened Scales", "+1/+1")).toBe(
+      "Sludge Monster benefits from +1/+1 counters being on the board; Hardened Scales puts them there",
+    );
+  });
+
+  test("meldSentence", () => {
+    expect(meldSentence("Mishra, Claimed by Gix", "Phyrexian Dragon Engine")).toBe(
+      "Mishra, Claimed by Gix and Phyrexian Dragon Engine meld together",
+    );
+  });
+
+  test("createsSentence", () => {
+    expect(createsSentence("Krenko's Command", "Goblin")).toBe("Krenko's Command creates Goblin");
   });
 });
