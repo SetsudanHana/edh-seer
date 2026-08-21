@@ -1,9 +1,9 @@
 import { minCopies, pAtLeast, seen } from "@mtg/engine";
 import type { DeckMath } from "@mtg/engine";
 import { deckAvailability } from "./availability.js";
-import { detectAnswerClasses } from "./build.js";
+import { detectAnswerClasses, gatedLandsTarget } from "./build.js";
 import { manaAudit } from "./mana-audit.js";
-import { recommendedLands } from "./land-count.js";
+import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { winconReport } from "./wincon.js";
 import { pressureCurve, STARTING_LIFE } from "./pressure.js";
 import { deckCastability } from "./castability.js";
@@ -71,7 +71,11 @@ export function computeDeckMath(
   hierarchy: Hierarchy,
   commanderNames: readonly string[] = [],
   turnOverride?: number,
-  opts: { comboCards?: readonly string[] } = {},
+  // `landRecommendation`: task 9 -- `analyze.ts` computes `recommendedLands` once, up front, and
+  // passes it here so this function does not call `karstenLands` a second time for the same deck.
+  // Absent for every other caller (this file's own tests, `answer-availability.ts`), which fall
+  // back to computing it themselves; `land-count.ts` is still the only place the regression runs.
+  opts: { comboCards?: readonly string[]; landRecommendation?: LandRecommendation } = {},
 ): DeckMath {
   const commanders = new Set(commanderNames);
   const library = deck.length - deck.filter((dc) => commanders.has(dc.card.name)).length;
@@ -163,10 +167,21 @@ export function computeDeckMath(
     biases: cast.biases,
   };
 
-  const rec = recommendedLands(deck, { commanderNames });
+  const rec = opts.landRecommendation ?? recommendedLands(deck, { commanderNames });
+  // THE SAME GATE `computeBuild` SCORES AGAINST (task 9) -- before this, `target` here was always
+  // the regression's raw rounded answer, whatever it was, while the build score fell back to a flat
+  // 36 whenever it looked wrong. That let the panel print "wants 50" beside a score that had quietly
+  // scored against 36 instead -- two numbers on one screen for one quantity, disagreeing, neither
+  // one saying so. `gatedLandsTarget` is the one place that decision is made; both readers call it
+  // on the identical rounded input, so they can't disagree again.
+  const landsGate = gatedLandsTarget(rec.target);
   const lands = {
     actual: rec.actual,
-    target: rec.target,
+    target: landsGate.target,
+    targetSource: landsGate.source,
+    // The regression's own answer, kept even on a fallback -- "wants 36" with no working when the
+    // curve's own math says 50 reads as the report hiding the number it didn't like.
+    rawTarget: rec.target,
     avgManaValue: Math.round(rec.avgManaValue * 100) / 100,
     rampPlusDraw: rec.rampPlusDraw,
     fastMana: rec.fastMana,

@@ -95,7 +95,12 @@ export function detectAnswerClasses(cards: DeckCard[]): Map<string, AnswerClassM
  *  11% and tutor's is 0% (44 of 71 decks carry none), so neither was ever a floor a deck must clear
  *  on its own; it is how this deck happened to spend a floor set at the group. Only `lands` keeps a
  *  real number (its own two-sided band, scored apart from every parent); `burn` and `stax` stay at
- *  0 because they are win-plan/tax signals, reported but never folded into a parent or scored. */
+ *  0 because they are win-plan/tax signals, reported but never folded into a parent or scored.
+ *
+ *  `lands: 36` IS A FALLBACK NOW, NOT THE SCORED NUMBER (task 9, owner's ruling 2026-08-21) -- it
+ *  measures nothing (67 of 71 calibration decks hit it outright, since every EDH deck is built to
+ *  this same convention) and only wins when `land-count.ts`'s own regression extrapolates past its
+ *  tested range. See `gatedLandsTarget`. */
 export const BASE_TARGETS: Record<BuildCategory, number> = {
   ramp: 0, draw: 0, cardSelection: 0, targetedRemoval: 0, stackInteraction: 0, boardWipe: 0,
   burn: 0, stax: 0, protection: 0, tutor: 0, graveyardHate: 0,
@@ -144,7 +149,9 @@ const GROUPED_LEAVES = new Set<BuildCategory>(BUILD_PARENTS.flatMap((p) => p.lea
  *  protection-spell count), `combo` (tutor +4 widens Consistency, protection +2 widens Interaction),
  *  `reanimator` (tutor +2 widens Consistency). UNCHANGED IN MEANING: `tokens`, `aristocrats`,
  *  `counters` (each names `boardWipe`, a single-leaf parent, so leaf and parent move as one) and
- *  `landfall` (`lands` sits outside every parent and keeps its own band, exactly as before). */
+ *  `landfall` (`lands` sits outside every parent and keeps its own band, exactly as before -- and
+ *  still applies on top of a DERIVED band now that one exists, see `adjustedTargets`'s doc comment
+ *  for why that is not a double-count, task 9). */
 export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<BuildCategory, number>>>> = {
   tokens: { boardWipe: -2 },          // don't wipe your own board
   aristocrats: { boardWipe: -1 },
@@ -159,6 +166,44 @@ export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<B
 const LAND_BAND = 3;
 const LAND_FALLOFF = 9;
 
+/** THE REGRESSION'S OWN TESTED RANGE (task 9, owner's ruling 2026-08-21) --
+ *  `packages/engine/src/karsten.test.ts`'s four published arms: avgManaValue 1.8 -> 3.5 yielding
+ *  lands 28 -> 39. `karstenLands` carries a floor ("play -2 lands is not advice") but no ceiling of
+ *  its own, so a deck whose curve runs past where anyone checked it keeps answering anyway --
+ *  izzet-big-mana's avgManaValue 5.98 (71% past the top arm) answers 50 lands in a 99-card deck,
+ *  which is not advice either. This is that same argument at the other end: outside the tested
+ *  range the derived target is an extrapolation, not a measurement, and `gatedLandsTarget` refuses
+ *  it rather than score against a guess.
+ *
+ *  MEASURED (controller, task 9 brief): the flat 36 gives 67 of 71 calibration decks full land
+ *  attainment -- it discriminates for nobody, because every EDH deck is built to the convention it
+ *  came from. Gated, the derived target changes attainment on 16 of 71 (15 falling, 1 rising), and
+ *  12 of 71 decks fall back (their curve asks for 40-50). This bound is the regression's own tested
+ *  range, not fitted to these 71 decks -- the self-comparison trap `BASE_TARGETS`'s median/p25/p75
+ *  note already warns about. */
+export const KARSTEN_TESTED_MIN = 28;
+export const KARSTEN_TESTED_MAX = 39;
+
+export interface LandsTarget {
+  target: number;
+  /** 'derived' when `land-count.ts`'s regression landed inside the tested range and scored;
+   *  'flat' when it fell outside (an extrapolation) or was never supplied at all. */
+  source: "derived" | "flat";
+}
+
+/** THE ONE PLACE THIS DECISION IS MADE (task 9) -- `computeBuild` (the score) and
+ *  `computeDeckMath`'s `lands` block (the panel row) both call this on the SAME rounded Karsten
+ *  target (`land-count.ts`'s `recommendedLands(...).target`, computed once upstream and threaded
+ *  in), so they can never again disagree about which number a deck is being measured against. That
+ *  disagreement -- the score scoring flat 36 while the panel showed the regression's own answer --
+ *  is the defect this task closes. */
+export function gatedLandsTarget(karstenTarget: number | undefined): LandsTarget {
+  if (karstenTarget !== undefined && karstenTarget >= KARSTEN_TESTED_MIN && karstenTarget <= KARSTEN_TESTED_MAX) {
+    return { target: karstenTarget, source: "derived" };
+  }
+  return { target: BASE_TARGETS.lands, source: "flat" };
+}
+
 /** Lands' own scoring weight -- the one leaf that still scores on its own band, outside every
  *  parent. Matches the old per-leaf `CATEGORY_WEIGHT.lands`, which this replaces. */
 const LANDS_WEIGHT = 1;
@@ -169,9 +214,26 @@ const clamp01 = (x: number): number => Math.max(0, Math.min(1, x));
  *  and every grouped leaf for the `buildCategories` per-leaf `target` field a leaf shows nothing
  *  meaningful in any more. A grouped leaf IGNORES `ARCHETYPE_TARGET_DELTAS` here on purpose -- its
  *  delta already reached its parent in `adjustedParentTargets`, and applying it again here would
- *  double the shift (and resurrect a leaf target the whole point of this task retires). */
-export function adjustedTargets(primary: Archetype | undefined): Record<BuildCategory, number> {
-  const t = { ...BASE_TARGETS };
+ *  double the shift (and resurrect a leaf target the whole point of this task retires).
+ *
+ *  `landsTarget` is the GATED number (`gatedLandsTarget`'s output, already decided by the caller) --
+ *  never a raw Karsten figure, and never recomputed here, so this function has no opinion of its
+ *  own about the regression. Defaults to the flat convention so every existing caller (tests, the
+ *  CLI path with no Karsten input at hand) keeps its pre-task-9 answer unless it opts in.
+ *
+ *  `landfall`'s `{ lands: 4 }` delta still applies here, ON TOP OF whichever target was chosen
+ *  (task 9, owner's ruling): it is a different claim from the one the regression answers. Karsten
+ *  reads castability -- can this curve be CAST on time -- and has no term for how often a landfall
+ *  payoff wants to see a land drop, which is a question about TRIGGER density, not curve. A cheap,
+ *  land-search-heavy landfall deck if anything pulls the derived target DOWN (lower avg mana value),
+ *  which is the opposite direction from what the archetype wants, so the delta is not double-counting
+ *  a fact the regression already sees -- it is compensating for an axis the regression cannot see at
+ *  all. Affects every deck whose primary archetype is `landfall`, whichever target is in force. */
+export function adjustedTargets(
+  primary: Archetype | undefined,
+  landsTarget: number = BASE_TARGETS.lands,
+): Record<BuildCategory, number> {
+  const t = { ...BASE_TARGETS, lands: landsTarget };
   const deltas = primary ? ARCHETYPE_TARGET_DELTAS[primary] : undefined;
   if (deltas) {
     for (const [k, v] of Object.entries(deltas)) {
@@ -205,12 +267,27 @@ export interface BuildResult {
    *  member sets (never the sum -- see `computeBuild`). The client renders the target, ratio and
    *  flag HERE and only count+share on the leaf rows beneath (owner's 2026-08-21 ruling). */
   buildParents: { name: string; count: number; target: number; leaves: string[] }[];
+  /** Which target `buildScore` actually scored the land count against (task 9) -- 'derived' when
+   *  `karstenLandsTarget` landed inside `gatedLandsTarget`'s tested range, 'flat' when it fell
+   *  outside (an extrapolation) or was never supplied. Exists so a caller (the panel, a test) can
+   *  say WHY the number is what it is rather than print a fallback silently. */
+  landsTargetSource: LandsTarget["source"];
   suggestions: string[];
 }
 
-export function computeBuild(cards: DeckCard[], primary: Archetype | undefined): BuildResult {
+/** `karstenLandsTarget` is `land-count.ts`'s `recommendedLands(...).target` -- the regression's own
+ *  rounded answer for THIS deck, computed once upstream (analyze.ts) and threaded in here rather
+ *  than recomputed, so `land-count.ts` stays the one place `karstenLands` is called. Undefined for
+ *  every caller that has not computed it (existing tests, any other path), which falls back to the
+ *  flat convention through `gatedLandsTarget`. */
+export function computeBuild(
+  cards: DeckCard[],
+  primary: Archetype | undefined,
+  karstenLandsTarget?: number,
+): BuildResult {
   const members = detectBuildCategories(cards);
-  const targets = adjustedTargets(primary);
+  const landsGate = gatedLandsTarget(karstenLandsTarget);
+  const targets = adjustedTargets(primary, landsGate.target);
   // Lands are the one multi-copy category: count land CARDS (copies), not distinct names, so a
   // deck's ~24 basics register as ~24, not 1. Every other category is singleton in Commander, so
   // distinct-name membership size already equals the copy count.
@@ -250,7 +327,11 @@ export function computeBuild(cards: DeckCard[], primary: Archetype | undefined):
 
   const buildParents = parentsWithCount.map((p) => ({ name: p.name, count: p.count, target: p.target, leaves: p.leaves as string[] }));
 
-  return { buildScore, buildCategories, buildParents, suggestions: buildSuggestions(parentsWithCount, countOf, targets) };
+  return {
+    buildScore, buildCategories, buildParents,
+    landsTargetSource: landsGate.source,
+    suggestions: buildSuggestions(parentsWithCount, countOf, targets),
+  };
 }
 
 /** Concrete, few, actionable — ranked by gap size, top 4. Never scolding.

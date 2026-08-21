@@ -661,7 +661,7 @@ const DECK_MATH = {
     focus: 0.52,
     primary: "go-wide",
   },
-  lands: { actual: 37, target: 34, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2, mdfc: 0 },
+  lands: { actual: 37, target: 34, targetSource: "derived" as const, rawTarget: 34, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2, mdfc: 0 },
   castability: {
     cards: [
       { name: "Ulamog", turn: 10, mana: 0.03, manaWithRocks: 0.11, colors: [] },
@@ -933,8 +933,8 @@ test("BuildBenchmarks names the win plans with their counts, and says which dire
 
 test("BuildBenchmarks shows the land count the deck's own curve asks for", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  // Deck-derived, unlike the flat 36 the benchmark above scores against -- and it shows the inputs,
-  // because "34" with no working is a number to argue with rather than act on.
+  // Deck-derived, and now the SAME number buildScore is scored against (task 9) -- and it shows the
+  // inputs, because "34" with no working is a number to argue with rather than act on.
   expect(screen.getByLabelText(/37 lands in the deck, this curve wants 34/i)).toBeInTheDocument();
   // The regression's author is implementation, not a label: the reader is asking how many lands
   // to run, not whose formula answered.
@@ -942,6 +942,25 @@ test("BuildBenchmarks shows the land count the deck's own curve asks for", () =>
   expect(screen.getByText(/avg mana value 2\.7/i)).toBeInTheDocument();
   expect(screen.getByText(/12 cheap ramp/i)).toBeInTheDocument();
   expect(screen.getByText(/2 fast mana/i)).toBeInTheDocument();
+  // A number scored on the derived target says nothing about "flat convention" -- that wording is
+  // reserved for a fallback (next test), and its presence here would be the silent-swap defect.
+  expect(screen.queryByText(/flat convention/i)).not.toBeInTheDocument();
+});
+
+test("BuildBenchmarks says so when the land target falls back to the flat convention (task 9)", () => {
+  // A big-mana deck's curve can ask the regression for more lands than it was ever tested giving --
+  // `gatedLandsTarget` refuses outside [28, 39] and scores the flat 36 instead. The row must show
+  // THAT number (matching what buildScore used) and say why, not silently swap between two figures
+  // that mean different things.
+  const fallback = {
+    ...DECK_MATH,
+    lands: { ...DECK_MATH.lands, target: 36, targetSource: "flat" as const, rawTarget: 50 },
+  };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={fallback} />);
+  expect(
+    screen.getByLabelText(/37 lands in the deck, this curve wants 36 -- the flat convention, because this curve's own regression asks for 50, outside the tested range/i),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/flat convention -- this curve's own regression asks for 50, outside the tested range/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () => {

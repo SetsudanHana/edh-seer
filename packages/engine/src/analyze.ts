@@ -193,14 +193,25 @@ export interface DeckMath {
     castable?: { types: string[]; share: number };
   }[];
   /** Karsten's land-count regression against what the deck runs. Tier B -- published and
-   *  independently confirmed, unlike the target the build benchmark scores against, which is a flat
-   *  36 for every deck.
+   *  independently confirmed. The build benchmark's score reads `target` too now (task 9,
+   *  2026-08-21) -- before that fix it scored a flat 36 regardless of what this block showed, so
+   *  the panel and the score could (and did) disagree about the same deck.
    *
    *  Reads AVERAGE mana value only, so a bimodal deck and a flat one get the same answer, and it has
    *  no colour term at all: how many lands is a different question from which ones. */
   lands: {
     actual: number;
+    /** What `buildScore` is actually scored against -- the regression's own rounded answer when it
+     *  falls inside its tested range (`@mtg/matcher`'s `gatedLandsTarget`), the flat convention
+     *  otherwise. Equal to `rawTarget` except on a fallback. */
     target: number;
+    /** 'derived' when `target` is this deck's own regression answer; 'flat' when the regression
+     *  extrapolated past where it was tested and the flat convention won instead -- render the
+     *  reason on a fallback, never swap silently between two numbers that mean different things. */
+    targetSource: "derived" | "flat";
+    /** The regression's own rounded answer, always -- even on a fallback, so a reader can see what
+     *  the curve's own math said and why it was refused, rather than have the number vanish. */
+    rawTarget: number;
     avgManaValue: number;
     /** Cheap ramp and draw, worth 0.28 of a land each. */
     rampPlusDraw: number;

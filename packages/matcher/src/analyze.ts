@@ -33,6 +33,7 @@ import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
 import { cutCandidates, deckSlack, trimOrder } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
+import { recommendedLands } from "./land-count.js";
 import { deckCastability, type CardCastability } from "./castability.js";
 import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
@@ -669,7 +670,14 @@ export function analyzeDeckStructured(
     }));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
-  const { buildScore, buildCategories, buildParents, suggestions } = computeBuild(resolved, strategies[0]?.name);
+  // TASK 9: `recommendedLands` (the Karsten regression) is called ONCE here and threaded to both
+  // `computeBuild` (the score, gated) and `computeDeckMath` below (the panel row) -- before this,
+  // `computeBuild` never saw this number at all and scored a flat 36 while the panel showed the
+  // regression's own answer, so the two disagreed about the same deck. `land-count.ts` stays the
+  // only place `karstenLands` itself runs.
+  const landRec = recommendedLands(resolved, { commanderNames: [...commanderSet] });
+  const { buildScore, buildCategories, buildParents, suggestions } =
+    computeBuild(resolved, strategies[0]?.name, landRec.target);
 
   // THE CUT LIST -- a join over what is already computed, never new analysis. It reads the rated
   // cards, the axis weights, the BUILD roles and the per-category surplus, and names CANDIDATES
@@ -749,7 +757,7 @@ export function analyzeDeckStructured(
     // No turn override: the deck's own clock sets the horizon. Passing a 5 here is what kept the
     // whole clock-pricing change from reaching the report at all -- every unit test passed because
     // they call computeDeckMath directly, and only a live deck showed `turnSource: "override"`.
-    deckMath: computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, { comboCards }),
+    deckMath: computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, { comboCards, landRecommendation: landRec }),
     themeMembership: membership,
   };
 }

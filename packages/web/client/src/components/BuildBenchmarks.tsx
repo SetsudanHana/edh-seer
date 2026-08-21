@@ -6,9 +6,10 @@ import { ManaSymbols } from "./ManaSymbols.js";
 
 /** Scored here and NOT listed as a benchmark row: the land count is reported once, by the block
  *  below, which derives its target from this deck's own curve instead of the flat 36 every deck was
- *  measured against. Two rows for one quantity, disagreeing on the target, is the panel's most
- *  literal duplicate -- and this component's own comment already said that when they disagree it is
- *  the fixed target that is guessing. `buildScore` still uses the flat target; only the row is gone. */
+ *  measured against. `buildScore` now reads the SAME derived target (task 9, 2026-08-21) whenever
+ *  it falls inside `gatedLandsTarget`'s tested range, so this row and the score can no longer
+ *  disagree about which number this deck is being held to -- and the row says so when the regression
+ *  extrapolates and the score falls back instead (`lands.targetSource`). */
 const REPORTED_ELSEWHERE = new Set(["lands"]);
 
 /** Where the target sits on a benchmark track, as a fraction of its width.
@@ -592,10 +593,20 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             *
             *  The regression behind it is Karsten's, and that name is implementation: the reader is
             *  asking how many lands to run, not whose formula answered. It lives in the code and in
-            *  `land-count.ts`, not in the label. */}
+            *  `land-count.ts`, not in the label.
+            *
+            *  A FALLBACK MUST SAY SO (task 9, owner's ruling): the regression has no ceiling of its
+            *  own, so a big-mana deck's curve can extrapolate past where it was ever tested --
+            *  `gatedLandsTarget` refuses that and scores the flat convention instead, and a silent
+            *  swap between two numbers that mean different things is the same defect as the silent
+            *  extrapolation it replaces. */}
           <div
             className="flex items-center gap-3 text-sm"
-            aria-label={`${lands.actual} lands in the deck, this curve wants ${lands.target}`}
+            aria-label={`${lands.actual} lands in the deck, this curve wants ${lands.target}${
+              lands.targetSource === "flat"
+                ? ` -- the flat convention, because this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
+                : ""
+            }`}
           >
             <span className="w-32 shrink-0 stat-num">{lands.actual} in deck</span>
             {/* A sentence, not a table cell -- "avg mana value 2.6 · 4 cheap ramp/draw · 0 fast
@@ -605,6 +616,9 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
               avg mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap ramp/draw · {lands.fastMana} fast mana
               {lands.mdfc > 0
                 ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as spells, not lands`
+                : ""}
+              {lands.targetSource === "flat"
+                ? ` · flat convention -- this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
                 : ""}
             </span>
             <span
