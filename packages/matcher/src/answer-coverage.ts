@@ -47,10 +47,11 @@ export const ANSWER_BASELINE: Record<string, number> = {
  *
  *  A HAND-COPY OF THESE COUNTS ALSO LIVES IN THE CLIENT, `BuildBenchmarks.tsx`'s `HATE_COUNTS`
  *  (whole-branch review IMPORTANT 2), for the sentence that says "19 artifacts and 8 enchantments
- *  in the format shut it off". If this table is re-measured, `HATE_COUNTS` must move with it -- the
- *  provenance is one-way today (the client cites this file; this file does not know the client
- *  exists) and nothing catches the two drifting apart from each other. `gen-answer-pool.ts --check`
- *  gates THIS table against the live corpus but cannot see the client copy at all. */
+ *  in the format shut it off" -- NOT an import: a client-side import of this file once took the
+ *  whole app down (`node:fs`, transitively through `answer-pool.ts`), so it has to stay a literal.
+ *  If this table is re-measured, `HATE_COUNTS` must move with it by hand -- but `gen-answer-pool.ts
+ *  --check` now reads `BuildBenchmarks.tsx` as text and fails on drift between the two (2026-08-21
+ *  critical-fix wave), so the two can no longer disagree silently even without a code-level link. */
 export const GRAVEYARD_HATE_SHARE: Record<string, number> = {
   creature: 39 / 66, artifact: 19 / 66, enchantment: 8 / 66, land: 0, planeswalker: 0,
 };

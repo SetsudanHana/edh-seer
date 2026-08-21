@@ -3,14 +3,16 @@ import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
-// A DEEP IMPORT, NOT THE BARREL (whole-branch review MINOR 6). `@mtg/matcher`'s `index.ts` also
-// re-exports `analyze.js`, which reaches `@mtg/engine`'s top-level `readFileSync(new URL(...,
-// import.meta.url))` -- fine under a real node process, broken under this file's default jsdom test
-// environment ("The URL must be of scheme file", the exact failure `BuildBenchmarks.demand.test.ts`
-// documents and works around with a per-file `node` override). `answer-coverage.ts` itself has no
-// top-level side effect (its one file read, `loadAnswerPool`, is lazy, inside a function body), so
-// importing it directly skips the barrel's unrelated eager reads entirely.
-import { GRAVEYARD_HATE_SHARE } from "@mtg/matcher/src/answer-coverage.js";
+// NOTHING IS VALUE-IMPORTED FROM @mtg/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
+// prior deep import of `GRAVEYARD_HATE_SHARE` from `@mtg/matcher/src/answer-coverage.js` (reasoned
+// as skipping the barrel's node:fs-touching re-export of `analyze.js`) was itself fatal: that file
+// imports `poolShare`/`POOL_CLASSES` from `./answer-pool.js`, which reads `answer-pool.json` via a
+// MODULE-SCOPE `readFileSync("node:fs")` -- not lazy, not inside `loadAnswerPool`'s function body as
+// the removed comment claimed. Vite externalises `node:fs` for the browser, so the module graph died
+// on load and the app never mounted (white screen, "Cannot access node:fs.readFileSync in client
+// code"). No subpath of `@mtg/matcher` is safe to value-import from client code; see `HATE_COUNTS`
+// below for the hand-copy this now falls back to, and `land-math.ts` for the one library (`@mtg/
+// engine/hypergeometric`) that genuinely has no fs dependency and can be reached this way.
 
 /** Scored here and NOT listed as a benchmark row: the land count is reported once, by the block
  *  below, which derives its target from this deck's own curve instead of the flat 36 every deck was
@@ -399,14 +401,22 @@ export function BuildBenchmarks({
  *  produced by nesting inside the wrong branch -- see `answer-coverage.ts`'s `GRAVEYARD_HATE_SHARE`
  *  for the diagnosis. */
 const HATE_COUNTS = { creature: 39, artifact: 19, enchantment: 8 } as const;
-/** WHICH CLASSES THE GRAVEYARD SENTENCE CAN NAME -- derived from `GRAVEYARD_HATE_SHARE`'s own
- *  non-zero, non-creature rows (whole-branch review MINOR 6), not a second hardcoded
+/** THIS FILE CANNOT IMPORT `GRAVEYARD_HATE_SHARE` -- it is client code, and `answer-coverage.ts`
+ *  transitively pulls in `node:fs` through `answer-pool.ts`'s module-scope `readFileSync`, which is
+ *  fatal in the browser (see the top-of-file comment; this is the regression that comment documents).
+ *  `packages/matcher/src/bin/gen-answer-pool.ts --check` reads THIS FILE as text alongside
+ *  `answer-coverage.ts`'s own table and fails on drift, so the two constants cannot silently
+ *  disagree even without a code-level import. If you are tempted to import the table directly:
+ *  don't, it breaks the app. Hand-copy `HATE_COUNTS` instead and let the gate catch drift.
+ *
+ *  WHICH CLASSES THE GRAVEYARD SENTENCE CAN NAME -- derived from `HATE_COUNTS`'s own non-zero,
+ *  non-creature rows (whole-branch review MINOR 6), not a second hardcoded
  *  `["artifact", "enchantment"]` a few lines below that had no link back to the table it was
  *  standing in for. `creature` is excluded because every deck answers creatures (design §2.2: zero
  *  of the 71 calibration decks read a creature-removal zero), so citing it here would be citing a
  *  threat this sentence has never once needed to name. */
-const HATE_CLASSES = (Object.keys(GRAVEYARD_HATE_SHARE) as (keyof typeof HATE_COUNTS)[]).filter(
-  (c) => c !== "creature" && (GRAVEYARD_HATE_SHARE[c] ?? 0) > 0,
+const HATE_CLASSES = (Object.keys(HATE_COUNTS) as (keyof typeof HATE_COUNTS)[]).filter(
+  (c) => c !== "creature" && (HATE_COUNTS[c] ?? 0) > 0,
 );
 /** Below this the deck does not have a graveyard PLAN, it has some graveyard cards. Measured
  *  (design §2.4): 16 of the 71 calibration decks clear it, 33 clear 0.2 -- 0.3 is where the top of

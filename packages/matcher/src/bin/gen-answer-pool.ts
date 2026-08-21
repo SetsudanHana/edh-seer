@@ -24,6 +24,19 @@ import { answerClassesOf, loadRules } from "../rules.js";
 import { POOL_CLASSES, identityKey, type AnswerPool } from "../answer-pool.js";
 import { ANSWER_BASELINE, GRAVEYARD_HATE_SHARE } from "../answer-coverage.js";
 
+// THE CLIENT'S HAND-COPY IS GATED TOO (2026-08-21 critical-fix wave). `BuildBenchmarks.tsx` cannot
+// import `GRAVEYARD_HATE_SHARE` -- `answer-coverage.ts` transitively touches `node:fs` and killed
+// the whole app when it tried -- so its `HATE_COUNTS` is a literal, hand-copied RAW COUNT (not the
+// share this file's own table carries). A plain regex read of the file as text, checked against the
+// same `hateCounts` this sweep already measures: the smallest thing that can catch the two
+// disagreeing, and disagreeing silently is exactly how `answer-coverage.ts`'s own comment above
+// `GRAVEYARD_HATE_SHARE` used to describe this gap.
+// ponytail: regex over a TSX file's source text, not an AST read -- upgrade if `HATE_COUNTS`'s
+// shape ever gets more complex than `{ creature: N, artifact: N, enchantment: N }`.
+const CLIENT_HATE_FILE = join(
+  dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "web", "client", "src", "components", "BuildBenchmarks.tsx",
+);
+
 const CHECK = process.argv.includes("--check");
 const COLORS = ["W", "U", "B", "R", "G"] as const;
 const store = await connect(loadConfig());
@@ -105,17 +118,36 @@ for (const c of HATE_CLASSES) {
   }
 }
 
+// THE CLIENT'S RAW-COUNT HAND-COPY, checked the same way -- see the top-of-file comment.
+const clientSource = readFileSync(CLIENT_HATE_FILE, "utf8");
+const clientMatch = clientSource.match(
+  /const HATE_COUNTS = \{ creature: (\d+), artifact: (\d+), enchantment: (\d+) \} as const;/,
+);
+if (!clientMatch) {
+  console.error(`DRIFT: could not find HATE_COUNTS in ${CLIENT_HATE_FILE} -- did its shape change?`);
+  tableDrift = true;
+} else {
+  const [, clientCreature, clientArtifact, clientEnchantment] = clientMatch.map(Number);
+  const clientCounts = { creature: clientCreature, artifact: clientArtifact, enchantment: clientEnchantment };
+  for (const c of HATE_CLASSES) {
+    if (clientCounts[c] !== hateCounts[c]) {
+      console.error(`DRIFT: BuildBenchmarks.tsx HATE_COUNTS.${c} = ${clientCounts[c]}, measured ${hateCounts[c]}`);
+      tableDrift = true;
+    }
+  }
+}
+
 if (CHECK) {
   const current = readFileSync(target, "utf8");
   if (current !== out || tableDrift) {
     if (current !== out) console.error("DRIFT: answer-pool.json is stale. Re-run without --check.");
-    if (tableDrift) console.error("DRIFT: ANSWER_BASELINE or GRAVEYARD_HATE_SHARE (answer-coverage.ts) is stale against the corpus.");
+    if (tableDrift) console.error("DRIFT: ANSWER_BASELINE, GRAVEYARD_HATE_SHARE (answer-coverage.ts) or BuildBenchmarks.tsx's HATE_COUNTS is stale against the corpus.");
     process.exit(1);
   }
-  console.log("answer-pool.json and the two hand-transcribed tables are up to date.");
+  console.log("answer-pool.json and the three hand-transcribed tables are up to date.");
 } else {
   writeFileSync(target, out);
   console.log(`wrote ${target}`);
-  if (tableDrift) console.log("NOTE: ANSWER_BASELINE / GRAVEYARD_HATE_SHARE drifted -- update answer-coverage.ts by hand (design §4).");
+  if (tableDrift) console.log("NOTE: ANSWER_BASELINE / GRAVEYARD_HATE_SHARE / BuildBenchmarks.tsx HATE_COUNTS drifted -- update by hand (design §4).");
 }
 await store.close();
