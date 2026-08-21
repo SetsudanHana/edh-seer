@@ -26,6 +26,21 @@ test("DeckIdentity shows the headline theme", () => {
 // A NAMING LAYER MAY DECLINE (roadmap A15). Under `THEME_NAME_FLOOR` the headline is carried by one
 // or two cards -- `venser` reads 0.02 across the calibration corpus -- so the title says so and the
 // tag drops to the subtitle rather than vanishing: it IS the deck's best-supported theme.
+// THE HEADING IS THE ENGINE SLOT, so the sentence beneath it must not restate it -- a live browser
+// showed "creatures dying" as the heading and "fueled by creatures dying (46% of nonlands)" one line
+// below. Win route and means are what the heading does NOT already say.
+test("DeckIdentity's sentence does not repeat the heading's own theme", () => {
+  render(
+    <DeckIdentity
+      cohesion={SAMPLE.report.cohesion}
+      identity={{ win: "wins by damage or drain (20 cards)", engine: "fueled by Tokens (46% of nonlands)", means: "18 interaction cards against a target of 10" }}
+    />,
+  );
+  expect(screen.getByText(/wins by damage or drain/)).toBeTruthy();
+  expect(screen.getByText(/18 interaction cards/)).toBeTruthy();
+  expect(screen.queryByText(/fueled by/)).toBeNull();
+});
+
 test("DeckIdentity declines to name a deck whose theme is not dominant", () => {
   render(<DeckIdentity cohesion={{ ...SAMPLE.report.cohesion!, dominant: false, theme: "proliferate", score: 0.02 }} />);
   expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("No dominant theme");
