@@ -52,7 +52,7 @@ export function ComboList({ combos }: { combos: DeckReport["combos"] }) {
         <ul className="flex flex-col gap-2">
           {combos.map((c, i) => (
             <li key={i} className="flex items-center gap-3 py-1.5 border-b border-(--separator)">
-              <span className="pip shrink-0 tabular-nums">{c.cards.length}</span>
+              <span className="pip shrink-0">{c.cards.length}</span>
               <span className="text-sm flex items-center gap-2 flex-wrap">
                 {/* Each piece opens its own inspector: "these three go infinite" is only
                     actionable once you can ask what each one is doing. */}

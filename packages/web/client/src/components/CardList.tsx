@@ -181,7 +181,7 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
               const roles = (c.roles ?? []) as Category[];
               return (
                 <tr key={c.name} className="border-b border-(--separator) align-top">
-                  <td className="py-2 pr-2 font-mono tabular-nums text-(--muted)">{String(i + 1).padStart(2, "0")}</td>
+                  <td className="py-2 pr-2 stat-num text-(--muted)">{String(i + 1).padStart(2, "0")}</td>
                   <td className="py-2 pr-2 min-w-0">
                     <CardName name={c.name} className="block truncate max-w-full" />
                     {reason ? <span className="block text-xs text-(--muted) truncate">{reason}</span> : null}
@@ -200,12 +200,12 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
                       *  0%, which a reader would take as "you cannot cast this". */}
                     <span className="block"><ManaSymbols cost={c.manaCost ?? ""} /></span>
                     {c.castability ? (
-                      <span className="block text-xs text-(--muted) tabular-nums">
+                      <span className="block text-xs text-(--muted) stat-num">
                         {castRange(c.castability)} by T{c.castability.turn}
                       </span>
                     ) : null}
                   </td>
-                  <td className="py-2 text-right font-mono tabular-nums text-(--accent)">
+                  <td className="py-2 text-right stat-num text-(--accent)">
                     {c.synergyRating !== undefined ? c.synergyRating.toFixed(1) : "—"}
                   </td>
                 </tr>

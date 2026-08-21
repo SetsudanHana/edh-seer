@@ -22,11 +22,13 @@ function ScoreTile({
     <div className="flex-1 min-w-0 flex flex-col gap-0.5 rounded-lg border border-(--separator) p-4">
       <span className="eyebrow">{label}</span>
       <span className="flex items-baseline gap-1">
-        <span className={`text-3xl font-semibold tabular-nums ${TONE_CLASS[band.tone]}`}>{score.toFixed(1)}</span>
-        <span className="text-sm text-(--muted)">/5</span>
+        <span className={`text-3xl font-semibold stat-num ${TONE_CLASS[band.tone]}`}>{score.toFixed(1)}</span>
+        <span className="text-sm text-(--muted) stat-num">/5</span>
       </span>
       <span className={`text-sm ${TONE_CLASS[band.tone]}`}>{band.label}</span>
-      {sub ? <span className="text-xs text-(--muted)">{sub}</span> : null}
+      {/* "breadth 4.2 · anchor 5.0" is a sentence, not a table cell -- stays the body face, tabular
+        *  only so the two figures don't shift the "·" between them on re-render. */}
+      {sub ? <span className="text-xs text-(--muted) tabular-nums">{sub}</span> : null}
       {children}
     </div>
   );

@@ -40,7 +40,7 @@ export function RunDiffStrip({ diff }: { diff: RunDiff | null }) {
   if (diff.synergy) {
     parts.push(
       <span key="syn">
-        SYNERGY <span className="text-(--foreground) tabular-nums">{diff.synergy.from.toFixed(1)} → {diff.synergy.to.toFixed(1)}</span>{" "}
+        SYNERGY <span className="text-(--foreground) stat-num">{diff.synergy.from.toFixed(1)} → {diff.synergy.to.toFixed(1)}</span>{" "}
         ({signed(diff.synergy.from, diff.synergy.to)})
       </span>,
     );
@@ -48,7 +48,7 @@ export function RunDiffStrip({ diff }: { diff: RunDiff | null }) {
   if (diff.build) {
     parts.push(
       <span key="build">
-        BUILD <span className="text-(--foreground) tabular-nums">{diff.build.from.toFixed(1)} → {diff.build.to.toFixed(1)}</span>{" "}
+        BUILD <span className="text-(--foreground) stat-num">{diff.build.from.toFixed(1)} → {diff.build.to.toFixed(1)}</span>{" "}
         ({signed(diff.build.from, diff.build.to)})
       </span>,
     );
@@ -64,7 +64,7 @@ export function RunDiffStrip({ diff }: { diff: RunDiff | null }) {
     parts.push(
       <span key={c.category}>
         {inlineLabel(c.category)}{" "}
-        <span className="text-(--foreground) tabular-nums">{c.from} → {c.to}</span>
+        <span className="text-(--foreground) stat-num">{c.from} → {c.to}</span>
       </span>,
     );
   }

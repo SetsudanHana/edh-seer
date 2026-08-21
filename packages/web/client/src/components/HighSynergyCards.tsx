@@ -31,7 +31,7 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
           const isAnchor = maxAuthority > 0 && (c.authority ?? 0) >= ANCHOR_SHARE * maxAuthority;
           return (
             <li key={c.name} className="flex items-center gap-3 py-1.5 border-b border-(--separator)">
-              <span className="pip shrink-0 tabular-nums">{(c.synergyRating ?? 0).toFixed(1)}</span>
+              <span className="pip shrink-0">{(c.synergyRating ?? 0).toFixed(1)}</span>
               <span className="flex-1 min-w-0">
                 <span className="block truncate">
                   <CardName name={c.name} />

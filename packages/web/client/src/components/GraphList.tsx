@@ -72,7 +72,7 @@ export function GraphList({ graph }: { graph: CardGraph }) {
                 {r.isToken ? <span>{r.label}</span> : <CardName name={r.label} />}
                 {r.isToken ? <span className="ml-2 text-xs text-(--muted)">token</span> : null}
               </span>
-              <span className="shrink-0 font-mono tabular-nums text-xs text-(--muted)">
+              <span className="shrink-0 stat-num text-xs text-(--muted)">
                 {r.partners} partner{r.partners === 1 ? "" : "s"}
               </span>
             </span>

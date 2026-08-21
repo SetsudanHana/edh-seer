@@ -111,7 +111,12 @@ h3 {
      count, or tally renders inside this circle, echoing a standings-board
      rank marker. Same latent shape as `.eyebrow` above (a plain `color`
      property nothing currently overrides), moved for consistency rather
-     than because a caller depends on it today. */
+     than because a caller depends on it today.
+
+     `font-variant-numeric: tabular-nums` lives here, not at each call site: every
+     pip is a number by the doc comment above, so a call-by-call `tabular-nums`
+     utility was either present or silently missing per caller (the "RESOLVED
+     51/51" pip in ReportView.tsx had none). One property, always on. */
   .pip {
     --pip-color: var(--accent);
     display: inline-flex;
@@ -128,6 +133,30 @@ h3 {
     font-weight: 600;
     line-height: 1;
     flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* THE ONE FACE FOR EVERY STATISTIC (owner ruling, 2026-08-21). A rating, a score, a count/target
+     ratio, a percentage, a mana or turn figure -- anything that is itself the fact a row exists to
+     report -- renders here instead of each component hand-pairing `font-mono tabular-nums` (or
+     `tabular-nums` alone, or neither): the Overview tab measured three different outcomes for "a
+     number" before this existed (SYNERGY's 30px Inter tabular, a benchmark ratio's 14px Inter
+     tabular, and the RESOLVED pip's 12px mono NON-tabular), so digits belonging to the same reading
+     did not even share a face, let alone align.
+
+     Mono, not Inter: it is already this app's data face -- `.eyebrow` and `.pip` above both set it,
+     several call sites (the deck line count, `CardInspector`'s edge weights) already reached for
+     `font-mono tabular-nums` by hand, and the file's own top comment calls this a "standings-desk"
+     analytics dashboard, where a distinct face for data separates it from the sentences describing
+     it. Deliberately sets ONLY family + alignment -- size, weight and colour stay the caller's own
+     `text-*`/`text-(--...)` utilities, exactly as `.eyebrow` leaves `color` to its callers today.
+
+     NOT for a number that is merely named inside a sentence ("14 cards seen", "avg mana value 2.6 ·
+     4 cheap ramp/draw") -- switching faces mid-sentence reads worse than the inconsistency this
+     fixes, so prose keeps Inter and pairs the bare `.tabular-nums` utility below instead. */
+  .stat-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
   }
 }
 

@@ -48,7 +48,7 @@ export function DeckIdentity({
       <div className="flex items-baseline gap-3 flex-wrap">
         <span className="eyebrow shrink-0">Deck identity</span>
         <h2 className="text-2xl font-bold leading-none text-(--accent) capitalize">{cohesion.theme}</h2>
-        <span className="text-sm text-(--muted)">
+        <span className="text-sm text-(--muted) tabular-nums">
           {focus}
           {family ? ` (wider family ${family})` : ""}
         </span>
@@ -71,7 +71,7 @@ export function DeckIdentity({
         *  each strategy because the list is ranked and the gaps matter — "Tokens 22% · Aristocrats
         *  14%" says something a bare ordered list does not. */}
       {cohesion.secondary || top.length > 0 ? (
-        <p className="text-sm text-(--muted)">
+        <p className="text-sm text-(--muted) tabular-nums">
           {cohesion.secondary ? <span>also cares about {cohesion.secondary}</span> : null}
           {cohesion.secondary && top.length > 0 ? <span> · </span> : null}
           {top.length > 0 ? (

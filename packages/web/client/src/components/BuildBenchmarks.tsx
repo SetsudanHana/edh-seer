@@ -161,7 +161,7 @@ export function BuildBenchmarks({
             style={{ left: `${TARGET_MARK * 100}%` }}
           />
         </span>
-        <span className="w-14 shrink-0 text-right text-sm tabular-nums">{c.count}/{c.target}</span>
+        <span className="w-14 shrink-0 text-right text-sm stat-num">{c.count}/{c.target}</span>
         <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
       </li>
     );
@@ -294,7 +294,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                   *  ellipsis, at every viewport -- the longest class name has to fit, because a
                   *  truncated row label is a row the reader cannot identify. */}
                 <span className="w-24 shrink-0 capitalize">{a.class}</span>
-                <span className="flex-1 text-right tabular-nums flex items-baseline justify-end gap-1.5">
+                <span className="flex-1 text-right stat-num flex items-baseline justify-end gap-1.5">
                   <span className={none ? "text-(--warning)" : "text-(--muted)"}>
                     {none ? "none" : plural(a.count, "card")}
                   </span>
@@ -310,7 +310,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                   *  has calibrated; `BASE_TARGETS` is recorded as uncalibrated doctrine. Painting
                   *  five of six rows amber on a deck this engine rates 4.9/5 teaches the reader
                   *  that amber means nothing, and the one row that earns it loses with them. */}
-                <span className="w-16 sm:w-24 shrink-0 text-right tabular-nums text-(--muted)">
+                <span className="w-16 sm:w-24 shrink-0 text-right stat-num text-(--muted)">
                   {a.fromCommandZone ? "" : short > 0 ? `${short} short` : ""}
                 </span>
               </li>
@@ -373,10 +373,10 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
               return (
                 <li key={groupKey} className="flex flex-col gap-1">
                   <div className="flex items-baseline gap-3 text-sm">
-                    <span className="flex-1">
+                    <span className="flex-1 stat-num">
                       {costTurn}-drop{group.length === 1 ? "" : "s"}
                     </span>
-                    <span className="shrink-0 tabular-nums">
+                    <span className="shrink-0 stat-num">
                       {manaText} to have {costTurn} mana by turn {costTurn}
                     </span>
                   </div>
@@ -402,7 +402,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                             *  so the correlation is positive -- and the product would hide whether
                             *  the deck's problem is mana or colour. */}
                           <span className="flex-1 sm:truncate text-(--muted)">{c.name}</span>
-                          <span className="shrink-0 sm:text-right tabular-nums text-(--muted) text-xs">
+                          <span className="shrink-0 sm:text-right stat-num text-(--muted) text-xs">
                             {colourPart || "no coloured pips"}
                           </span>
                         </li>
@@ -436,10 +436,10 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             {/* Two turn numbers in one row read as a contradiction unless each says what it is
               *  about — the headline is when this deck kills, the aside is a snapshot on the way
               *  there, and readers took the pair for a mistake. */}
-            <span className="w-32 shrink-0">
+            <span className="w-32 shrink-0 stat-num">
               {clock.turn === undefined ? "no clock" : `Kills on turn ${clock.turn}`}
             </span>
-            <span className="flex-1 text-xs text-(--muted)">
+            <span className="flex-1 text-xs text-(--muted) tabular-nums">
               {clock.turn === undefined
                 ? "nothing here kills through combat — a mill or alt-win deck has no combat clock"
                 : `${clock.powerAtFive} expected power on board by turn 5, on the way there`}
@@ -476,7 +476,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
               </span>
             ))}
           </p>
-          <p className="text-xs text-(--muted) max-w-[65ch]">
+          <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
             Concentration {wincons.focus.toFixed(2)} of 1.00, where 1.00 is a deck all-in on one plan
             and {(1 / Math.max(1, wincons.classes.length)).toFixed(2)} is these {wincons.classes.length}{" "}
             plans split evenly. Higher is better here, unlike every other figure on this panel.
@@ -499,15 +499,18 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             className="flex items-center gap-3 text-sm"
             aria-label={`${lands.actual} lands in the deck, this curve wants ${lands.target}`}
           >
-            <span className="w-32 shrink-0 tabular-nums">{lands.actual} in deck</span>
-            <span className="flex-1 text-xs text-(--muted)">
+            <span className="w-32 shrink-0 stat-num">{lands.actual} in deck</span>
+            {/* A sentence, not a table cell -- "avg mana value 2.6 · 4 cheap ramp/draw · 0 fast
+              *  mana" stays the body face and only picks up plain tabular alignment so its three
+              *  figures don't shift the "·"s between them. */}
+            <span className="flex-1 text-xs text-(--muted) tabular-nums">
               avg mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap ramp/draw · {lands.fastMana} fast mana
               {lands.mdfc > 0
                 ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as spells, not lands`
                 : ""}
             </span>
             <span
-              className={`w-16 shrink-0 text-right tabular-nums ${
+              className={`w-16 shrink-0 text-right stat-num ${
                 Math.abs(lands.actual - lands.target) > 2 ? "text-(--warning)" : "text-(--success)"
               }`}
             >
@@ -529,9 +532,9 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             {deckMath.topdeck.map((t) => (
               <li key={t.card} className="flex items-baseline gap-3 text-sm">
                 <span className="w-40 shrink-0 truncate">{t.card}</span>
-                <span className="flex-1 text-xs text-(--muted)">
+                <span className="flex-1 text-xs text-(--muted) tabular-nums">
                   a random card off your library is worth{" "}
-                  <span className="tabular-nums text-(--fg)">{t.meanManaValue}</span> mana —{" "}
+                  <span className="text-(--fg)">{t.meanManaValue}</span> mana —{" "}
                   {t.nonlandMeanManaValue} when it is not a land, and {Math.round(t.landShare * 100)}% of the
                   time it is one
                   {t.castable
@@ -589,7 +592,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                     *  The pair survives as one cell, coloured: the reader can see the gap and its
                     *  size in one place. */}
                   <span
-                    className={`w-40 shrink-0 text-right tabular-nums ${
+                    className={`w-40 shrink-0 text-right stat-num ${
                       !c.worst
                         ? "text-(--success)"
                         : overcommitted || c.worst.required > landRoom
@@ -642,7 +645,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
         {/* The raw census key stays reachable on hover, because `bin/deck-availability.ts` prints
           *  keys and a report you cannot match against the bin is a dead end. */}
         <span className="flex-1 truncate" title={d.key}>{sentence}</span>
-        <span className={`shrink-0 tabular-nums ${d.available !== null && d.suppliers === 0 ? "text-(--warning)" : "text-(--muted)"}`}>
+        <span className={`shrink-0 stat-num ${d.available !== null && d.suppliers === 0 ? "text-(--warning)" : "text-(--muted)"}`}>
           {d.available === null
             ? `${d.consumers} want · the game supplies it`
             : `${d.consumers} want · ${d.suppliers} supply`}
@@ -722,7 +725,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
         *  turn, so a reader who does not know the number cannot read the panel at all — while the
         *  four things the model ignores are what they consult once and then stop needing. */}
       <div className="flex flex-col gap-1">
-        <p className="text-xs text-(--muted) max-w-[65ch]">
+        <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
           Everything below is priced at turn {turn} —{" "}
           {deckMath.turnSource === "corpus-median"
             ? "the median of the calibration decks, because this deck has no combat clock"

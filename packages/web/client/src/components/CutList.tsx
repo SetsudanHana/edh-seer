@@ -37,7 +37,7 @@ export function CutList({ cutList, slack, trim }:
                   {/* Cost beside the rating, because two cards nothing connects to are different
                     *  cut candidates when one costs 9 and the other 1. It breaks ties in the
                     *  ordering and is never a reason a card appears here at all. */}
-                  <span className="text-xs font-mono text-(--muted)">
+                  <span className="text-xs stat-num text-(--muted)">
                     {c.manaValue} mana · {c.rating.toFixed(1)}
                   </span>
                 </div>
@@ -74,7 +74,7 @@ export function CutList({ cutList, slack, trim }:
                   <li key={t.name} className="rounded-lg border border-(--separator) px-3 py-2">
                     <div className="flex items-baseline justify-between gap-3">
                       <span className="text-sm"><CardName name={t.name} /></span>
-                      <span className="text-xs font-mono text-(--muted)">
+                      <span className="text-xs stat-num text-(--muted)">
                         {t.manaValue} mana &middot; {t.rating.toFixed(1)}
                       </span>
                     </div>
@@ -106,7 +106,8 @@ export function CutList({ cutList, slack, trim }:
           <ul className="flex flex-wrap gap-2">
             {slack!.map((s) => (
               <li key={s.category} className="text-sm rounded-full border border-(--separator) px-3 py-1 text-(--muted)">
-                {BUILD_CATEGORY_LABEL[s.category] ?? s.category} {s.count}/{s.target} <span className="text-(--muted)">(+{s.over})</span>
+                {BUILD_CATEGORY_LABEL[s.category] ?? s.category}{" "}
+                <span className="stat-num">{s.count}/{s.target} (+{s.over})</span>
               </li>
             ))}
           </ul>

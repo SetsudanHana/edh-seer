@@ -15,7 +15,7 @@ function StrategyRow({ s, max }: { s: Strategy; max: number }) {
       <div className="flex-1 h-2 bg-(--separator) rounded-full overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${widthPct}%`, backgroundImage: "var(--accent-gradient)" }} />
       </div>
-      <span className="font-mono text-xs text-(--muted) w-12 text-right shrink-0 tabular-nums">{pct}%</span>
+      <span className="stat-num text-xs text-(--muted) w-12 text-right shrink-0">{pct}%</span>
     </div>
   );
 }
@@ -47,7 +47,7 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
         <div className="flex-1 h-2 bg-(--separator) rounded-full overflow-hidden">
           <div className="h-full rounded-full" style={{ width: `${widthPct}%`, backgroundImage: "var(--accent-gradient)" }} />
         </div>
-        <span className="font-mono text-xs text-(--muted) w-28 text-right shrink-0 tabular-nums">
+        <span className="stat-num text-xs text-(--muted) w-28 text-right shrink-0">
           {group.pairs.length} pair{group.pairs.length === 1 ? "" : "s"} · {group.cards.length} cards
         </span>
       </button>

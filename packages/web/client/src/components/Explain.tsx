@@ -13,7 +13,10 @@ export function Explain({ label, children }: { label: string; children: ReactNod
   return (
     <details className="max-w-[65ch]">
       <summary className="eyebrow cursor-pointer text-(--muted)">{label}</summary>
-      <div className="text-xs text-(--muted) pt-1">{children}</div>
+      {/* Explain bodies are prose (a caveat, a scale, a "what this means"), and several name a
+        *  number that can shift on re-render ("by turn 7", "10 points higher") -- `tabular-nums`
+        *  here once covers every caller rather than each Caveat/Explain instance needing its own. */}
+      <div className="text-xs text-(--muted) pt-1 tabular-nums">{children}</div>
     </details>
   );
 }
