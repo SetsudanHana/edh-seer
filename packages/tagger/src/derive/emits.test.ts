@@ -235,3 +235,35 @@ test("a player named anywhere in the clause blocks the default", () => {
   expect(actionEmits({ verb: "draw", object: "cards" }, "Target opponent draws a card.")[0].subject.control)
     .toBe("any");
 });
+
+// A RECIPIENT IS NOT A SUBJECT (2026-08-22). `parseSubject` reads type words out of whatever text it
+// is handed, so Arcane Denial's draw -- whose object the model records as "target spell's
+// controller", correctly naming WHO draws -- produced `type: spell` and the theme tag `draw:spell`.
+// One card then took a whole deck's headline, because `rankThemes` adds a tag's `:any` sibling's
+// strength to its own: `draw:spell` inherited all 29 cards of `draw:any` and `birb-control` read
+// "draw" at cohesion 0.02, one card of 78.
+test("a player-shaped object gives a draw no card type", () => {
+  const e = actionEmits({ verb: "draw", object: "target spell's controller" })[0];
+  expect(e.subject.type).toBeUndefined();
+  expect(actionEmits({ verb: "draw", object: "you" })[0].subject.type).toBeUndefined();
+  // A REAL card type on a draw survives: "draw a card" says nothing, but a typed draw is rare and
+  // must not be swallowed by this guard.
+  expect(actionEmits({ verb: "draw", object: "a creature card" })[0].subject.type).toBe("creature");
+  // Ledger Shredder's "this creature connives" names the permanent whose ability it is, not the card
+  // drawn -- the same defect with a permanent in place of a player, and it took three decks'
+  // headlines to cohesion 0.02 on a single card.
+  expect(actionEmits({ verb: "draw", object: "this creature" })[0].subject.type).toBeUndefined();
+  // AND THROUGH A KEYWORD: `connive` IS a draw and a discard (CR 701.50), so the action verb is
+  // `connive` while the emit carrying the bad subject is `draw`. Keying the guard on the action verb
+  // missed this and cost a re-derive to discover.
+  const connive = actionEmits({ verb: "connive", object: "this creature" }).find((e) => e.verb === "draw")!;
+  expect(connive.subject.type).toBeUndefined();
+});
+
+/** THE PLAYER HALF IS KEPT, and it is load-bearing: `lose-life` with `{control: "opp"}` is how a
+ *  drain finds its victim, and `lose-life:opp` is a tag with real consumers. Only the card type,
+ *  which was never in the sentence, is dropped. */
+test("a life change still carries the player it happens to", () => {
+  expect(actionEmits({ verb: "lose-life", object: "each opponent" })[0].subject)
+    .toEqual({ control: "opp", token: null, scope: "each" });
+});

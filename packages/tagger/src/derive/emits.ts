@@ -173,14 +173,51 @@ const CONTROLLER_DEFAULT: ReadonlySet<string> = new Set([
  *  ambiguous), "each player" (48), "players" (14), "a player" (7), "any player" (3). */
 const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a) player\b|\bplayers\b|\bopponents?\b/i;
 
+/** Verbs whose object names WHO the thing happens to, not WHAT it happens to. The same list
+ *  `CONTROLLER_DEFAULT` pins to the controller, for the same reason: the rules make the player the
+ *  object of a draw, a mill or a life change. */
+const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
+  "draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life",
+]);
+
+/** An object that IS a player. "target spell's controller", "that player's owner", "you", "each
+ *  opponent" -- none of them describes a card, so none should become a typed subject. */
+const PLAYER_OBJECT = /\b(?:controllers?|owners?|players?|opponents?)\b|^\s*you\s*$/i;
+
 export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
   const zoned = ZONE_EMITS.find((r) => r.verb === action.verb && r.to === (action.toZone ?? null));
+  // A RECIPIENT IS NOT A SUBJECT (2026-08-22). `parseSubject` reads type words out of whatever text
+  // it is given, so Arcane Denial's draw -- whose object the model records as "TARGET SPELL'S
+  // CONTROLLER", correctly naming who draws -- yielded `type: spell` and the theme tag `draw:spell`.
+  // A one-card tag then took a deck's headline outright, because `rankThemes` adds a tag's `:any`
+  // sibling's strength to its own (subsumption), so `draw:spell` inherited all 29 cards of
+  // `draw:any` and outranked it: `birb-control` read "draw" at cohesion 0.02, one card of 78.
+  // Same shape on Ledger Shredder ("this creature connives") -> `draw:creature`.
   const subject = parseSubject(action.object ?? "");
+  // A DRAW'S OBJECT IS ALMOST NEVER THE CARD DRAWN. It is the player ("target spell's controller",
+  // Arcane Denial) or the permanent whose ability it is ("this creature connives", Ledger Shredder),
+  // and `parseSubject` reads a type word out of either. A real typed draw says so -- "reveal cards
+  // until you reveal a creature CARD, draw it" -- so the word `card` is the positive test rather
+  // than a blocklist of the shapes seen so far.
   const verbs = zoned?.verbs
     ?? (action.verb === "play" ? landPlayVerbs(subject)
       : action.verb === "tap" ? tapVerbs(subject)
       : EMITS[action.verb ?? ""]);
   if (!verbs) return [];
+  // KEYED ON THE EMITTED VERB, NOT THE ACTION'S. A keyword expands to the events the rules say it
+  // IS -- `connive` is a draw and a discard (CR 701.50) -- so Ledger Shredder's action verb is
+  // `connive` while the emit that carries the bad subject is `draw`. Checking the action verb missed
+  // it entirely and cost a re-derive to find out.
+  const drawWithoutCard = verbs.includes("draw") && !/\bcards?\b/i.test(action.object ?? "");
+  if (drawWithoutCard || (verbs.some((v) => RECIPIENT_VERBS.has(v)) && PLAYER_OBJECT.test(action.object ?? ""))) {
+    // The player half is KEPT -- `lose-life` with `{control: "opp"}` is how a drain finds its
+    // victim, and `lose-life:opp` is a real tag with real consumers. Only the card TYPE goes, since
+    // it was never in the sentence: the words "spell" and "creature" arrived inside the phrase
+    // naming the person, or inside the permanent whose ability it is.
+    delete subject.type;
+    delete subject.subtype;
+    delete subject.self;
+  }
   // The ORIGIN zone, for the consumers that demand one (River Kelpie's "enters from a graveyard",
   // Rivaz's "casts a Dragon spell from your graveyard"). Taken from the action rather than the object
   // text because the text usually does not repeat it -- "return it to the battlefield" states the
