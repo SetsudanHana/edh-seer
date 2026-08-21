@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import { analyzeDeckStructured } from "./analyze.js";
 import { SEED_IMPACT_WEIGHTS, loadImpactWeights } from "@mtg/engine";
 import type { TagStats } from "@mtg/engine";
@@ -1104,4 +1104,26 @@ test("roleBlend actually scales feederLift into score, not just a config field n
   const inallaOff = blendOff.cards.find((c) => c.name === "Inalla")!;
   const inallaOn = blendOn.cards.find((c) => c.name === "Inalla")!;
   expect(inallaOff.score).toBeLessThan(inallaOn.score);
+});
+
+describe("answer coverage reaches the report", () => {
+  it("weights by the COMMANDERS' identity, not by the whole deck's", () => {
+    // A mono-black commander with an off-identity card in the 99 is not a five-colour deck.
+    const deck = [
+      { card: { name: "Black Commander", typeLine: "Legendary Creature — Zombie", oracleText: "", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 3, power: "3", toughness: "3" }, tags: null },
+      { card: { name: "Naturalize", typeLine: "Instant", oracleText: "Destroy target artifact or enchantment.", keywords: [], colors: ["G"], colorIdentity: ["G"], manaValue: 2, power: null, toughness: null }, tags: null },
+    ] as never[];
+    const report = analyzeDeckStructured(deck, ["Black Commander"]);
+    expect(report.answerCoverage!.source).toBe("weighted");
+    const artifact = report.answerCoverage!.rows.find((r) => r.class === "artifact")!;
+    // Black's artifact pool is the smallest of any identity; a five-colour read would be 1.
+    expect(artifact.poolShare).toBeLessThan(0.2);
+  });
+
+  it("refuses the pool weight when no commander was detected", () => {
+    const deck = [
+      { card: { name: "Lone Card", typeLine: "Instant", oracleText: "Destroy target creature.", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 2, power: null, toughness: null }, tags: null },
+    ] as never[];
+    expect(analyzeDeckStructured(deck).answerCoverage!.source).toBe("unweighted");
+  });
 });

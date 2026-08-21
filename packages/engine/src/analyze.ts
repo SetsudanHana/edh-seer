@@ -322,6 +322,16 @@ export interface DeckReport {
   buildParents?: { name: string; count: number; target: number; leaves: string[] }[];
   /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
   suggestions?: string[];
+  /** The coverage multiplier `Interaction` was scored with, its per-class weights, and the
+   *  graveyard vulnerability it was built from. Present so the panel and a test can say WHY the
+   *  number is what it is rather than trust it. Matcher-only, optional for the same reason every
+   *  other matcher-only field here is: the flat `analyzeDeck` above never populates it. */
+  answerCoverage?: {
+    coverage: number;
+    source: "weighted" | "unweighted";
+    graveyardVulnerability: number;
+    rows: { class: string; poolShare: number; demand: number; weight: number; covered: boolean }[];
+  };
   /** Cards the deck is not using, weakest first, each carrying its own reasons in plain words.
    *  CANDIDATES, never a verdict -- a missing edge looks exactly like a useless card, and the
    *  build layer counts a category's members without ranking them. Matcher-only; structural here

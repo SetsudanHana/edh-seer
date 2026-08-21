@@ -676,8 +676,20 @@ export function analyzeDeckStructured(
   // regression's own answer, so the two disagreed about the same deck. `land-count.ts` stays the
   // only place `karstenLands` itself runs.
   const landRec = recommendedLands(resolved, { commanderNames: [...commanderSet] });
-  const { buildScore, buildCategories, buildParents, suggestions } =
-    computeBuild(resolved, strategies[0]?.name, landRec.target);
+  // A DECK'S COLOUR IDENTITY IS ITS COMMANDERS' (CR 903.4), never the union of the 99 -- an
+  // off-identity card in a pasted list is an illegal card, not a sixth colour, and reading it as
+  // one would tell a mono-black deck it has white's enchantment removal available.
+  const commanderIdentity = commanderSet.size
+    ? [...new Set(resolved.filter((dc) => commanderSet.has(dc.card.name)).flatMap((dc) => dc.card.colorIdentity ?? []))]
+    : undefined;
+  // The graveyard axis is the one vulnerability with a corpus rule able to count its hate pieces
+  // (`graveyardHateRecurring`); see the design's §4 for why the other axes stay unbuilt.
+  const graveyardVulnerability = Math.max(
+    0,
+    ...strategies.filter((s) => s.name === "reanimator" || s.name === "aristocrats").map((s) => s.confidence),
+  );
+  const { buildScore, buildCategories, buildParents, suggestions, answerCoverage: coverage } =
+    computeBuild(resolved, strategies[0]?.name, landRec.target, commanderIdentity, graveyardVulnerability);
 
   // THE CUT LIST -- a join over what is already computed, never new analysis. It reads the rated
   // cards, the axis weights, the BUILD roles and the per-category surplus, and names CANDIDATES
@@ -751,6 +763,7 @@ export function analyzeDeckStructured(
     buildCategories,
     buildParents,
     suggestions,
+    answerCoverage: coverage,
     cutList,
     slack,
     trim,
