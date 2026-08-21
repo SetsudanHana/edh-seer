@@ -480,6 +480,8 @@ const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|
 /** "a card named TARDIS", "creatures named Rat Colony", "cards named Dragon's Approach in your
  *  graveyard". The name runs to a comma, a preposition, or the end — never past one, or the zone
  *  ends up inside the name. */
+/** "…creature token named X" — the name belongs to the token being created, not to a card. */
+const TOKEN_CREATION = /\btokens?\s+named\b/i;
 const NAMED = /\bnamed\s+([^,.]+?)(?=\s+(?:in|on|from|under|with|that|you|an?\b|to)\s|[,.]|$)/i;
 
 export function parseSubject(text: string): SubjectFilter {
@@ -519,7 +521,16 @@ export function parseSubject(text: string): SubjectFilter {
   //
   // Stops at a comma, a preposition or end of clause — "cards named Rite of Flame IN EACH GRAVEYARD"
   // names the card, not the zone, and the zone is already `fromZone`'s job.
-  const named = t.match(NAMED);
+  // A TOKEN'S OWN NAME IS NOT A CARD TO LOOK FOR (roadmap G2b, 2026-08-21). "Create a 1/1 red
+  // Kobold creature token named Kobolds of Kher Keep" names the TOKEN; there is no such card in any
+  // deck, and `themeSubjectKey` ranks `named` above everything else, so the theme key became
+  // `create-token:kobolds of kher keep`. MEASURED across the 71 decks: 6 tags key on a token's
+  // printed name -- banana (Kibo), cordyceps infected (Ellie), mark of the rani attached (The Rani),
+  // kobolds of kher keep, lightning rager, mishra's warform -- every one of which has a real subtype
+  // the key should have used, so it both names the wrong noun and fragments the family six more
+  // ways. The `named` slot keeps doing its real job (Dragon's Approach, a named tutor's target);
+  // it just stops firing on the one text where the name belongs to something being CREATED.
+  const named = TOKEN_CREATION.test(t) ? null : t.match(NAMED);
   if (named) out.named = named[1].trim();
   const origin = t.match(ORIGIN_ZONE);
   if (origin) out.fromZone = origin[1].toLowerCase();

@@ -47,7 +47,7 @@ export const VOCAB_VERSION = 10;
  *
  *  Same shape as the 2026-08-06 finding this file already records for prose-vs-vocabulary, applied
  *  one level finer: gate each selector on the list it actually reads. */
-export const TRIGGER_VOCAB_VERSION = 13;
+export const TRIGGER_VOCAB_VERSION = 14;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -199,6 +199,13 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // card for exactly this absence — the gate working, and naming its own missing word.
   // Corpus consumers: 13 cards print "whenever you create ..." plus Mirkwood Bats' OR shape.
   "create",
+  // CR 701.15 `reveal`, ADDED 2026-08-21 in the same run that added `create` -- and named the same
+  // way, by the persist gate refusing a card for it: `unknown-trigger-event — "reveal" is not in
+  // TRIGGERS` (Yuna's Whistle). Cards really do watch a reveal: "whenever you reveal a card",
+  // "whenever a player reveals a card". Added BEFORE the bulk re-normalization rather than after,
+  // because normalization is a one-way ratchet -- a word missing at buy time is frozen into every
+  // card bought without it, which is how the corpus ended up with `copy` and `create` gaps.
+  "reveal",
   // EVERY KEYWORD ACTION IS ALSO A TRIGGER EVENT — the general rule, after the 2026-08-15 run
   // refused cards one at a time for exactly this. First pass added connive/discover/explore/vote/
   // manifest-dread; the NEXT run then refused `exert` (Watchful Naga) and `forage` (Corpseberry

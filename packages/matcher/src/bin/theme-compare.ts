@@ -23,6 +23,11 @@ import { ALL_CARD_TYPES } from "../hierarchy.js";
 interface DeckTheme {
   deck: string; primary: string; label: string; secondary: string | null;
   cohesion: number; breadth: number; synergy: number; top5: string[];
+  /** Whether the theme layer would NAME this deck (roadmap A15's `Cohesion.dominant`). In the
+   *  snapshot because a RANKING change can silently flip a deck from "no dominant theme" to a
+   *  confident headline and back, and this table is the only place that movement would ever be
+   *  seen -- every other column can hold still while this one moves. */
+  dominant: boolean;
   /** The membership census, [tag, surplus, payoffs, baseline] -- what a loop ranking reads. Nothing
    *  ranks by it at the shipped settings, so it is invisible to every other gate including this
    *  tool's own headline diff (roadmap A2). */
@@ -55,6 +60,7 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
     deck: file.replace(/\.txt$/, ""),
     primary: r.cohesion?.tag ?? "-", label: r.cohesion?.theme ?? "-", secondary: r.cohesion?.secondaryTag ?? null,
     cohesion: r.cohesion?.score ?? 0, breadth: r.positiveCoherence ?? 0, synergy: r.synergyOverall ?? 0,
+    dominant: r.cohesion?.dominant !== false,
     top5: r.themes.slice(0, 5).map((t) => t.tag),
     themes: r.themes.map((t) => [t.tag, t.count] as [string, number]),
     census: (r.themeMembership ?? []).map((t) => [t.tag, t.surplus, t.payoffs, t.baseline] as [string, number, number, number]),
@@ -75,6 +81,7 @@ function summarise(rs: DeckTheme[], title: string): void {
   console.log(`\n${title}`);
   console.log(`  decks ${rs.length} · distinct headlines ${sp.length} · MODAL "${sp[0][0]}" on ${sp[0][1]} decks (${(100 * sp[0][1] / rs.length).toFixed(0)}%)`);
   console.log(`  cohesion median ${med(rs.map((r) => r.cohesion)).toFixed(2)} · unfocused ${rs.filter((r) => r.cohesion < 0.3).length} · focused ${rs.filter((r) => r.cohesion >= 0.3 && r.cohesion < 0.6).length} · highly ${rs.filter((r) => r.cohesion >= 0.6).length}`);
+  console.log(`  decks the theme layer DECLINES to name (A15): ${rs.filter((r) => !r.dominant).length} of ${rs.length}`);
   console.log(`  subtype-level primaries: ${rs.filter((r) => isSubtypePrimary(r.primary)).length}`);
   console.log("  top headlines: " + sp.slice(0, 6).map(([l, n]) => `${l} ×${n}`).join(" · "));
   const cs = rs.flatMap((r) => r.census ?? []);
@@ -149,6 +156,12 @@ if (AGAINST) {
   console.log(`\nDIFF\n  primary theme changed: ${changed.length}/${rows.length}`);
   console.log(`  LOST a subtype-level primary (criterion 2): ${lostSubtype.length}${lostSubtype.length ? " -> " + lostSubtype.map((r) => `${r.deck} ${byDeck.get(r.deck)!.primary}->${r.primary}`).join(", ") : ""}`);
   console.log(`  cohesion moved: ${cohMoved.length}`);
+  {
+    // A DECK THAT STOPS (OR STARTS) BEING NAMED is a movement no other column shows: cohesion can
+    // cross A15's floor while the headline TAG never changes, so the primary-theme diff reads clean.
+    const flipped = rows.filter((r) => { const b = byDeck.get(r.deck); return b !== undefined && b.dominant !== r.dominant; });
+    console.log(`  decks that started/stopped being NAMED: ${flipped.length}${flipped.length ? ` -> ${flipped.map((f) => `${f.deck} ${f.dominant ? "now named" : "now declines"}`).join(", ")}` : ""}`);
+  }
   // THE CENSUS DIFF. Nothing ranks by the census at the shipped settings, so this is the only place
   // a change to it is visible at all -- the headline diff above reads zero by construction.
   const cIdx = (r: DeckTheme): Map<string, [number, number, number]> =>

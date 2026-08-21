@@ -566,3 +566,19 @@ test("a negated subtype is recorded, and never contaminates the positive list", 
   expect(parseSubject("nontoken creature").notSubtype).toBeUndefined();
   expect(parseSubject("target creature card").notSubtype).toBeUndefined();
 });
+
+// A TOKEN'S OWN NAME IS NOT A CARD TO LOOK FOR (roadmap G2b, 2026-08-21). `themeSubjectKey` ranks
+// `named` above every other slot, so "create a 1/1 red Kobold creature token named Kobolds of Kher
+// Keep" keyed the theme `create-token:kobolds of kher keep` -- a card that exists in no deck.
+// MEASURED: 6 such tags across the 71 calibration decks, each with a real subtype the key should
+// have used.
+test("a token's printed name does not become the subject's `named`", () => {
+  const tok = parseSubject("a 1/1 red Kobold creature token named Kobolds of Kher Keep");
+  expect(tok.named).toBeUndefined();
+  expect(tok.subtype).toContain("kobold");
+  // THE SLOT KEEPS ITS REAL JOB: a named card really is its own theme (Dragon's Approach, and the
+  // named tutor The First Doctor searching for "a card named TARDIS").
+  // Names normalize to lower case, as every other subject value does.
+  expect(parseSubject("a card named TARDIS").named).toBe("tardis");
+  expect(parseSubject("any number of cards named Dragon's Approach").named).toBe("dragon's approach");
+});

@@ -120,7 +120,7 @@ export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, ArchetypeSignature>>
  *  incidental Treasure maker a Tokens card -- MEASURED, 227 of the 774 token matches across the 71
  *  decks are resource-only, 218 of them Treasure. `any` is NOT here: `create-token:any` is a named
  *  member of the signature, so an untyped token maker still counts. */
-const RESOURCE_TOKENS: ReadonlySet<string> = new Set([
+export const RESOURCE_TOKENS: ReadonlySet<string> = new Set([
   "treasure", "clue", "food", "blood", "map", "gold", "powerstone", "incubator", "junk",
 ]);
 

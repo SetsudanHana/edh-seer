@@ -1,3 +1,4 @@
+import { RESOURCE_TOKENS } from "./archetypes.js";
 import { loadRules, ruleMatches } from "./rules.js";
 import type { DeckCard } from "./types.js";
 
@@ -25,8 +26,17 @@ export function detectWincons(deck: readonly DeckCard[]): Map<string, Set<string
 }
 
 /** Token subtypes that are RESOURCES, not a board. A Treasure is ramp and a Clue is card draw; a
- *  deck full of them is not going wide, and `manaToken` already treats the first three as ramp. */
-const RESOURCE_TOKENS = new Set(["treasure", "gold", "clue", "food", "blood", "map", "junk", "powerstone", "incubator"]);
+ *  deck full of them is not going wide.
+ *
+ *  ONE SET, THREE CONSUMERS (2026-08-21). This file and `archetypes.ts` each held their own copy,
+ *  and the divergence cost a measurement: the first arm of the roadmap's G2 token fold re-derived
+ *  the same Treasure defect a THIRD time, headlining `magar-spellslinger` (a spellslinger deck) and
+ *  `mari-takes-control` (a control deck) as "artifacts created" off their Treasures. The question
+ *  every site asks is identical -- "is this token a board or a resource" -- so the SET is shared and
+ *  each consumer still does its own thing with the answer: this file drops them from go-wide,
+ *  `archetypes.ts` refuses them the Tokens signature, and the theme fold refused to fold them.
+ *  (The `manaToken` this comment used to cite no longer exists anywhere in the repo.) */
+export { RESOURCE_TOKENS } from "./archetypes.js";
 
 /** Does this card make CREATURE tokens?
  *

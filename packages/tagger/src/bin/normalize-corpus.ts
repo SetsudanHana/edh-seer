@@ -62,6 +62,13 @@ const CONCURRENCY = Number(arg("--concurrency") ?? 6);
  *  clauses corpus-wide without moving a single clause id, so 34 persisted docs carry an answer given
  *  under the wrong typing — hence `disagreesOnType`. */
 const REFRESH_OTHER = process.argv.includes("--refresh-other");
+/** Re-ask every doc answered under a prompt older than N. NOT `NORMALIZE_MIN_COMPATIBLE`, which is a
+ *  claim that older answers are INVALID and re-buys the whole corpus the moment it moves -- this is
+ *  a refresh you can point at part of the corpus and stop. Measured 2026-08-21: 1,985 of the 2,756
+ *  clause docs (72%) were answered under v3, the original calibration buy, and the prompt has since
+ *  gained the CR keyword-action triggers, origin zones, trigger objects and the one-record-per-
+ *  condition rule that `missesASplit` exists to catch. */
+const BELOW_VERSION = Number(arg("--below-version") ?? 0);
 
 /** The calibration corpus: 2,544 distinct cards over 71 labelled decks. */
 function calibrationNames(): string[] {
@@ -126,7 +133,8 @@ for (const name of scope) {
       || dropsTriggerObject(existing, doc.oracleText ?? "")
       || hasPhantomTrigger(existing, doc.oracleText ?? "")
       || carriesOtherTrigger(existing, TRIGGERS, TRIGGER_VOCAB_VERSION));
-  if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable) continue;
+  const stale = BELOW_VERSION > 0 && existing !== null && existing.normalizeVersion < BELOW_VERSION;
+  if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable && !stale) continue;
   jobs.push({ oracleId: doc._id, name: doc.name, oracleText: doc.oracleText, keywords: doc.keywords, typeLine: doc.typeLine, hash });
 }
 
