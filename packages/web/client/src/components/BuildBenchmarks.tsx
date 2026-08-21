@@ -7,7 +7,24 @@ const LABEL: Record<string, string> = {
   ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
   stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
   protection: "Protection", tutor: "Tutors",
+  // graveyardHate shipped no label at all -- fine while its target sat at 0 (BASE_TARGETS never
+  // lets it survive the leaf filter), but ARCHETYPE_ADJUST can lift it off zero, and the moment it
+  // does `LABEL[c.category] ?? c.category` printed the raw camelCase key.
+  graveyardHate: "Graveyard hate",
 };
+
+/** PARENTS GROUP; LEAVES SCORE (owner, 2026-08-20). A parent carries no target and no ratio of its
+ *  own -- summing three independently-set targets (`BASE_TARGETS`, `build.ts:92`) invents a
+ *  benchmark nobody measured, and four player reviews refused exactly that shape when two correct
+ *  numbers answered different questions. `burn` and `stax` stay outside the grouping (win-plan and
+ *  tax signals, not build roles) and render after the parents exactly as they do today; `lands` is
+ *  already in `REPORTED_ELSEWHERE` and keeps its own block. */
+const PARENTS: { name: string; leaves: string[] }[] = [
+  { name: "Consistency", leaves: ["draw", "cardSelection", "tutor"] },
+  { name: "Ramp", leaves: ["ramp"] },
+  { name: "Interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] },
+  { name: "Board wipes", leaves: ["boardWipe"] },
+];
 
 /** Scored here and NOT listed as a benchmark row: the land count is reported once, by the block
  *  below, which derives its target from this deck's own curve instead of the flat 36 every deck was
@@ -117,6 +134,48 @@ export function BuildBenchmarks({
   // zero-target = neutral, omitted (mirrors engine)
   const rows = categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category));
   if (rows.length === 0) return null;
+
+  /** A single leaf's bar, unchanged from before grouping existed -- geometry, `TARGET_MARK`, the
+   *  flagged/state logic and the row's own `aria-label` are all untouched. `hideOwnLabel` is
+   *  CONFLICT 8 only: a parent wrapping exactly one leaf whose LABEL equals the parent's own name
+   *  (Ramp -> ramp, Board wipes -> boardWipe) would otherwise print its heading, then a row
+   *  repeating it -- the stuck record this whole phase exists to remove. The label `<span>` stays
+   *  (it carries the row's `w-24` alignment); only its text goes, and the aria-label keeps the full
+   *  name regardless, because a screen reader reads a row out of heading context. */
+  const row = (c: (typeof rows)[number], hideOwnLabel: boolean) => {
+    const name = LABEL[c.category] ?? c.category;
+    // Every remaining category is a FLOOR -- lands were the one two-sided band, and they are
+    // reported by their own block now, so over-target needs no case here.
+    const flagged = c.count < c.target;
+    const state = flagged ? "under target" : "on target";
+    const fill = Math.max(0, Math.min(1, (c.count / c.target) * TARGET_MARK));
+    return (
+      <li key={c.category} className="flex items-center gap-3" aria-label={`${name} ${c.count} of ${c.target}, ${state}`}>
+        <span className="w-24 shrink-0 text-sm">{hideOwnLabel ? "" : name}</span>
+        <span className="relative flex-1 h-2 rounded-full bg-(--separator) overflow-hidden">
+          <span
+            className={`absolute inset-y-0 left-0 rounded-full ${flagged ? "bg-(--warning)" : "bg-(--success)"}`}
+            style={{ width: `${+(fill * 100).toFixed(2)}%` }}
+          />
+          {/* The target itself, so a row is read against a landmark rather than against the
+            *  end of its own track. Every row's mark sits at the same x, which is what makes
+            *  rows with different targets comparable at a glance. */}
+          <span
+            className="absolute inset-y-0 w-px bg-(--foreground) opacity-70"
+            style={{ left: `${TARGET_MARK * 100}%` }}
+          />
+        </span>
+        <span className="w-14 shrink-0 text-right text-sm tabular-nums">{c.count}/{c.target}</span>
+        <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
+      </li>
+    );
+  };
+
+  const grouped = new Set(PARENTS.flatMap((p) => p.leaves));
+  // Anything PARENTS does not name (burn, stax) renders after them, exactly as it did before this
+  // task -- those are win-plan and tax signals, not build roles, and were never asked to group.
+  const ungrouped = rows.filter((c) => !grouped.has(c.category));
+
   return (
     <div className="flex flex-col gap-2">
       {/* The parent of eight headings, and until now indistinguishable from the seven beneath it --
@@ -124,36 +183,32 @@ export function BuildBenchmarks({
         *  reader got a structure a sighted reader could not see. Foreground weight is the whole
         *  difference; the children keep the muted eyebrow they already had. */}
       <h3 className="eyebrow text-(--foreground)">Build benchmarks</h3>
-      <ul className="flex flex-col gap-1.5">
-        {rows.map((c) => {
-          const name = LABEL[c.category] ?? c.category;
-          // Every remaining category is a FLOOR -- lands were the one two-sided band, and they are
-          // reported by their own block now, so over-target needs no case here.
-          const flagged = c.count < c.target;
-          const state = flagged ? "under target" : "on target";
-          const fill = Math.max(0, Math.min(1, (c.count / c.target) * TARGET_MARK));
-          return (
-            <li key={c.category} className="flex items-center gap-3" aria-label={`${name} ${c.count} of ${c.target}, ${state}`}>
-              <span className="w-24 shrink-0 text-sm">{name}</span>
-              <span className="relative flex-1 h-2 rounded-full bg-(--separator) overflow-hidden">
-                <span
-                  className={`absolute inset-y-0 left-0 rounded-full ${flagged ? "bg-(--warning)" : "bg-(--success)"}`}
-                  style={{ width: `${+(fill * 100).toFixed(2)}%` }}
-                />
-                {/* The target itself, so a row is read against a landmark rather than against the
-                  *  end of its own track. Every row's mark sits at the same x, which is what makes
-                  *  rows with different targets comparable at a glance. */}
-                <span
-                  className="absolute inset-y-0 w-px bg-(--foreground) opacity-70"
-                  style={{ left: `${TARGET_MARK * 100}%` }}
-                />
-              </span>
-              <span className="w-14 shrink-0 text-right text-sm tabular-nums">{c.count}/{c.target}</span>
-              <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
-            </li>
-          );
-        })}
-      </ul>
+      {PARENTS.map((p) => {
+        // Ordered by PARENTS.leaves, never by the input array -- a parent groups its leaves
+        // together on the page regardless of what order the engine happened to report them in.
+        const leafRows = p.leaves
+          .map((leaf) => rows.find((c) => c.category === leaf))
+          .filter((c): c is (typeof rows)[number] => c !== undefined);
+        // CONFLICT 7: `BASE_TARGETS` sets stackInteraction/protection/tutor/graveyardHate to 0, and
+        // only ARCHETYPE_ADJUST lifts them -- so on a deck with no archetype adjustment a parent can
+        // have zero surviving leaves. Never render an empty heading over nothing.
+        if (leafRows.length === 0) return null;
+        const suppressOwnLabel = leafRows.length === 1 && LABEL[leafRows[0]!.category] === p.name;
+        return (
+          <Fragment key={p.name}>
+            {/* The heading gets its own wrapper, separate from the `<ul>` of leaves: a parent
+              *  carries NO target and no ratio of its own, and keeping its subtree free of any
+              *  digit is how that stays true rather than merely asserted. */}
+            <div><h4 className="eyebrow text-(--foreground)">{p.name}</h4></div>
+            <ul className="flex flex-col gap-1.5">
+              {leafRows.map((c) => row(c, suppressOwnLabel))}
+            </ul>
+          </Fragment>
+        );
+      })}
+      {ungrouped.length > 0 ? (
+        <ul className="flex flex-col gap-1.5">{ungrouped.map((c) => row(c, false))}</ul>
+      ) : null}
 
       {deckMath ? <DeckMathRows deckMath={deckMath} /> : null}
     </div>

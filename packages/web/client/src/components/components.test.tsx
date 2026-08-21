@@ -489,6 +489,61 @@ test("a benchmark bar is read against a fixed target mark, so over-target does n
   );
 });
 
+// PARENTS GROUP; LEAVES SCORE (owner, 2026-08-20). A parent carries no target of its own -- summing
+// three independently-set targets invents a benchmark nobody measured.
+test("benchmarks group under parents, and a parent shows no target of its own", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+  expect(screen.getByText("Consistency")).toBeInTheDocument();
+  expect(screen.getByText("Interaction")).toBeInTheDocument();
+  // A parent-level "20/24" is a number nobody measured -- three independently-set targets summed.
+  const consistency = screen.getByText("Consistency").closest("li, div")!;
+  expect(consistency.textContent).not.toMatch(/\d+\s*\/\s*\d+/);
+});
+
+// A scrambled category order (not the array order PARENTS.leaves lists, not the order the fixture
+// above happens to use) so the test can only pass if the component actually GROUPS rather than
+// coincidentally rendering in input order.
+const SCRAMBLED_CATEGORIES = [
+  { category: "boardWipe", count: 1, target: 3 },
+  { category: "cardSelection", count: 2, target: 4 },
+  { category: "draw", count: 6, target: 10 },
+  { category: "ramp", count: 8, target: 10 },
+  { category: "targetedRemoval", count: 3, target: 10 },
+  { category: "graveyardHate", count: 1, target: 2 },
+] as unknown as typeof SAMPLE.report.buildCategories;
+
+test("every leaf still renders under exactly one parent", () => {
+  const { container } = render(<BuildBenchmarks categories={SCRAMBLED_CATEGORIES} />);
+  // DOM order follows PARENTS, never the input array: Consistency's own leaves (draw, cardSelection)
+  // before Ramp's, before Interaction's (targetedRemoval, graveyardHate), before Board wipes' --
+  // which the scrambled input above does not hold in either order.
+  const text = [...container.querySelectorAll("h4, li[aria-label]")]
+    .map((el) => el.getAttribute("aria-label") ?? el.textContent);
+  expect(text).toEqual([
+    "Consistency",
+    expect.stringMatching(/^Draw 6 of 10/),
+    expect.stringMatching(/^Card selection 2 of 4/),
+    "Ramp",
+    expect.stringMatching(/^Ramp 8 of 10/),
+    "Interaction",
+    expect.stringMatching(/^Removal 3 of 10/),
+    expect.stringMatching(/^Graveyard hate 1 of 2/),
+    "Board wipes",
+    expect.stringMatching(/^Board wipes 1 of 3/),
+  ]);
+  // Grouping must not drop a leaf's own ratio -- each row still carries its count/target.
+  expect(screen.getByLabelText(/^Draw 6 of 10/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Card selection 2 of 4/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Ramp 8 of 10/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Removal 3 of 10/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Graveyard hate 1 of 2/)).toBeInTheDocument(); // CONFLICT 9
+  expect(screen.getByLabelText(/^Board wipes 1 of 3/)).toBeInTheDocument();
+  // CONFLICT 8: a single-leaf parent whose leaf label repeats the parent's own name renders that
+  // name once, not twice (heading, then a blank-looking row repeating it).
+  expect(screen.getAllByText("Ramp")).toHaveLength(1);
+  expect(screen.getAllByText("Board wipes")).toHaveLength(1);
+});
+
 const DECK_MATH = {
   topdeck: [],
   turn: 5,
@@ -530,8 +585,10 @@ const DECK_MATH = {
 };
 
 test("deck-math blocks are grouped under the question they answer, worst section first", () => {
+  // Scoped to `<section> > h4` -- T6's parent-category headings are h4 too (same rank, sibling
+  // concern), and this test is about the four deck-math QUESTION sections specifically.
   const headings = (): string[] =>
-    [...document.querySelectorAll("h4")].map((h) => h.textContent ?? "");
+    [...document.querySelectorAll("section > h4")].map((h) => h.textContent ?? "");
 
   // Both sections carry a flag on this fixture (colour B is short, artifact has no answers), so the
   // fixed order stands and "cast" leads.
