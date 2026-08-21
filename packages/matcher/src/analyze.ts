@@ -19,6 +19,7 @@ import {
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { loadHierarchy } from "./hierarchy.js";
+import { deckSentence } from "./deck-sentence.js";
 import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { markCommander } from "./commander.js";
@@ -727,6 +728,16 @@ export function analyzeDeckStructured(
   }));
   const cutList = cutCandidates(cutInputs);
   const slack = deckSlack(buildParents);
+  // HOISTED OUT OF THE RETURN OBJECT so the identity sentence below can read its wincons. The
+  // guard is unchanged and its reasoning still applies: a deck of only commanders makes
+  // `library === 0` and `minCopies` throws there on purpose, so the block is omitted rather than
+  // faked.
+  const deckMath = resolved.length > commanderSet.size
+    ? computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, {
+        comboCards, landRecommendation: landRec, primary: strategies[0]?.name,
+      })
+    : undefined;
+
   // TRIM MODE: the same inputs asked a different question — "I must cut five" rather than "is
   // anything here doing nothing". The whole ranked order ships, not a slice, so a caller picks its
   // own N without a round trip; see `trimOrder` for why a category surplus counts here and does not
@@ -791,11 +802,16 @@ export function analyzeDeckStructured(
     // The throw itself must stay: the caller is where the guard belongs. `DeckReport.deckMath` is
     // already optional and the panel already renders nothing when it is absent, so an empty library
     // reports every OTHER section and simply omits the one block that has nothing to divide by.
-    deckMath: resolved.length > commanderSet.size
-      ? computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, {
-          comboCards, landRecommendation: landRec, primary: strategies[0]?.name,
-        })
-      : undefined,
+    deckMath,
+    // THE THREE-SLOT SENTENCE (roadmap A16): win route · engine · means, each read off the
+    // instrument that already answers it. A join, not new analysis -- and the engine slot is null
+    // exactly when the theme layer declined to name the deck (A15), which is that abstention
+    // reaching the one place a reader looks.
+    identity: deckSentence(
+      cohesion,
+      deckMath?.wincons,
+      buildParents.find((p) => p.name === "Interaction"),
+    ),
     themeMembership: membership,
   };
 }

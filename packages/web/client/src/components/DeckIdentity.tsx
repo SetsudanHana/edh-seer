@@ -25,10 +25,12 @@ export function DeckIdentity({
   cohesion,
   colorIdentity,
   strategies,
+  identity,
 }: {
   cohesion: DeckReport["cohesion"];
   colorIdentity?: string[];
   strategies?: DeckReport["strategies"];
+  identity?: DeckReport["identity"];
 }) {
   if (!cohesion) return null;
   // The share is printed beside the label because the label alone is a bucket boundary: "focused"
@@ -77,6 +79,16 @@ export function DeckIdentity({
           </span>
         ) : null}
       </div>
+      {/* THE THREE-SLOT SENTENCE (roadmap A16): win route · engine · means, each from the instrument
+        *  that already answers it. It sits directly under the heading because the heading is the
+        *  ENGINE slot alone -- and reading one slot as the whole answer is the mistake four naming
+        *  designs were refused for. A null slot is dropped, never phrased: the engine clause is
+        *  absent exactly when the theme layer declined to name the deck (A15). */}
+      {identity && (identity.win || identity.engine || identity.means) ? (
+        <p className="text-sm text-(--fg) tabular-nums">
+          {[identity.win, identity.engine, identity.means].filter(Boolean).join(" · ")}
+        </p>
+      ) : null}
       {/* The second theme and the archetype shares, on one muted line. A percentage is printed for
         *  each strategy because the list is ranked and the gaps matter — "Tokens 22% · Aristocrats
         *  14%" says something a bare ordered list does not. */}

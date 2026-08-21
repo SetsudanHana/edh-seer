@@ -376,6 +376,11 @@ export interface DeckReport {
   themeMembership?: {
     tag: string; surplus: number; payoffs: number; baseline: number; selective: boolean;
   }[];
+  /** WHAT THIS DECK IS, as the three-slot sentence its parts already answer (roadmap A16): win
+   *  route · engine · means. A slot is null when its layer has nothing to say -- notably `engine`,
+   *  which is null exactly when `cohesion.dominant` is false. Built by `deckSentence` in the
+   *  matcher; every clause is a join over fields on this same report. */
+  identity?: { win: string | null; engine: string | null; means: string | null };
 }
 
 interface Agg {
