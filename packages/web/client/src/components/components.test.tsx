@@ -790,6 +790,48 @@ test("BuildBenchmarks says how many answers short a class is, not just how likel
   expect(screen.queryByLabelText(/graveyard.*short/i)).not.toBeInTheDocument();
 });
 
+// Task 6: the coefficient discounts a colourless-pool zero on purpose; the panel is where that
+// finding has to survive in words, since the score itself just reads as a smaller number.
+test("BuildBenchmarks names the colour pool on a zero row, so the pie is not read as a mistake", () => {
+  const withPool = {
+    ...DECK_MATH,
+    answers: DECK_MATH.answers.map((a) => (a.class === "artifact" ? { ...a, pool: 56 } : a)),
+  };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withPool} />);
+  expect(screen.getByText(/your colours offer 56/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks says nothing about a colour's pool when it was never resolved", () => {
+  // DECK_MATH's artifact row carries no `pool` at all -- absent, not zero, per the field's own
+  // doc comment ("Absent when no commander was detected"). A printed 0 would assert the colours
+  // have no answers, which is false; it must render nothing.
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.queryByText(/your colours offer/i)).not.toBeInTheDocument();
+});
+
+test("BuildBenchmarks warns a graveyard deck about the hate it cannot remove", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 0.8, source: "weighted", graveyardVulnerability: 0.635, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/plan runs through the graveyard/i)).toBeInTheDocument();
+  expect(screen.getByText(/16 artifacts/)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks says nothing about hate when the deck has no graveyard plan", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 0.8, source: "weighted", graveyardVulnerability: 0.05, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/plan runs through the graveyard/i)).not.toBeInTheDocument();
+});
+
 test("BuildBenchmarks shows demand against supply, and refuses a number where none applies", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // The census key is engine vocabulary; the row says what the key MEANS and keeps the key on

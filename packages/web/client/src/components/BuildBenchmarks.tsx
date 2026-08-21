@@ -182,7 +182,7 @@ export function demandSentence(key: string): string {
 export { DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 
 export function BuildBenchmarks({
-  categories, parents, deckMath,
+  categories, parents, deckMath, answerCoverage,
 }: {
   categories: DeckReport["buildCategories"];
   /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). This is what carries
@@ -190,6 +190,10 @@ export function BuildBenchmarks({
    *  is no local `PARENTS` const to fall out of sync with it any more. */
   parents?: DeckReport["buildParents"];
   deckMath?: DeckReport["deckMath"];
+  /** Carries `graveyardVulnerability` (task 5) down to the answers block — the only reason this
+   *  panel needs it is to decide whether the graveyard-hate sentence below is a finding about THIS
+   *  deck or noise on every deck. */
+  answerCoverage?: DeckReport["answerCoverage"];
 }) {
   if (!categories || categories.length === 0) return null;
   const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
@@ -311,17 +315,32 @@ export function BuildBenchmarks({
         {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
       </ul>
 
-      {deckMath ? <DeckMathRows deckMath={deckMath} /> : null}
+      {deckMath ? <DeckMathRows deckMath={deckMath} answerCoverage={answerCoverage} /> : null}
     </div>
   );
 }
+
+/** The corpus count of RECURRING graveyard hate by type -- the pieces that shut an engine off
+ *  rather than eating one card. Measured from `graveyardHateRecurring`, `answer-coverage.ts`'s
+ *  `GRAVEYARD_HATE_SHARE` (creature 36 · artifact 16 · enchantment 6, n = 58 typed). Stated as a
+ *  literal because it is a fact about the FORMAT, not about this deck, and a reader can check it. */
+const HATE_COUNTS = { creature: 36, artifact: 16, enchantment: 6 } as const;
+/** Below this the deck does not have a graveyard PLAN, it has some graveyard cards. Measured
+ *  (design §2.4): 16 of the 71 calibration decks clear it, 33 clear 0.2 -- 0.3 is where the top of
+ *  the distribution is aristocrats and reanimator decks rather than incidental recursion. */
+const VULNERABLE = 0.3;
 
 /** The deck-math readouts, folded in under the category bars (project owner's call) rather than
  *  given their own tab: they answer the same question the benchmarks do -- "is this deck built" --
  *  and the counts above are what they reprice.
  *
  *  A benchmark says "6 ramp, want 10". These say what that means in a game you actually play. */
-function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath"]> }) {
+function DeckMathRows({
+  deckMath, answerCoverage,
+}: {
+  deckMath: NonNullable<DeckReport["deckMath"]>;
+  answerCoverage?: DeckReport["answerCoverage"];
+}) {
   const { turn, seen, demand } = deckMath;
   // WORST FIRST, in both ranked blocks. The doctrine's order (creature, artifact, enchantment,
   // planeswalker, land, graveyard) is a fixed list, so the rows a reader can act on landed wherever
@@ -346,6 +365,11 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
   const noneExile = answered.length > 1 && answered.every((a) => a.exiling === 0);
   const graveyard = answers.find((a) => a.class === "graveyard");
   const noneRecurring = graveyard !== undefined && graveyard.count > 0 && graveyard.recurring === 0;
+  // The two classes recurring graveyard hate actually occupies that this deck cannot remove.
+  const unansweredHate = (["artifact", "enchantment"] as const).filter(
+    (c) => (answers.find((a) => a.class === c)?.count ?? 0) === 0,
+  );
+  const graveyardVulnerability = answerCoverage?.graveyardVulnerability ?? 0;
   const answersBlock = (
       <div className="flex flex-col gap-1.5">
         <h5 className="eyebrow">Answers by turn {turn}</h5>
@@ -367,8 +391,11 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             // this panel -- four player reviews, four failures to decode, including the reader who
             // correctly guessed "exile" and still called it broken because every row read `0 ex`.
             // It is also the row's only independent fact: see below.
+            // A ZERO ROW'S OWN "MODE" SLOT IS WHERE THE POOL SHOWS ON SCREEN, not only in the
+            // aria-label below -- otherwise the finding this whole annotation exists for is
+            // readable to a screen reader and invisible to everyone else.
             const mode = none
-              ? ""
+              ? (a.pool !== undefined ? `your colours offer ${a.pool}` : "")
               : a.class === "graveyard"
                 ? noneRecurring ? "" : a.recurring > 0 ? `${a.recurring} recurring` : "none recurring"
                 : noneExile ? "" : a.exiling > 0 ? `${a.exiling} exile` : "none exile";
@@ -377,8 +404,11 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
               : a.class === "graveyard"
                 ? a.recurring > 0 ? `, ${a.recurring} recurring` : ", none recurring"
                 : a.exiling > 0 ? `, ${a.exiling} of them exile` : ", none of them exile";
+            // A ZERO IS ONLY A FINDING WHEN THE POOL IS NOT. Measured: of the 60 zero rows across
+            // the 71 calibration decks, 17 are artifact and their MEDIAN pool is 56 -- the
+            // mono-black number. Printing the pool is what separates the colour pie from a gap.
             const label = none
-              ? `${a.class}, no answers${shortfall}`
+              ? `${a.class}, no answers${shortfall}${a.pool !== undefined ? ` — your colours offer ${a.pool}` : ""}`
               : a.fromCommandZone
                 ? `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}${modeLabel}, always (commander)`
                 : `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}${modeLabel}${shortfall}`;
@@ -433,6 +463,16 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
           <p className="text-sm text-(--warning) max-w-[65ch]">
             Its graveyard hate is one-shot: {plural(graveyard!.count, "card")}, none of which keeps
             working after it resolves.
+          </p>
+        ) : null}
+        {/* THE SCORE DISCOUNTS A GRAVEYARD ZERO ON PURPOSE (task 5) -- the panel is where the finding
+          *  survives. Gated on the deck's OWN measured vulnerability, not on any answer row alone, so
+          *  a deck with no graveyard plan at all is never told to fear hate it does not need. */}
+        {graveyardVulnerability >= VULNERABLE && unansweredHate.length > 0 ? (
+          <p className="text-sm text-(--warning) max-w-[65ch]">
+            Your plan runs through the graveyard. {HATE_COUNTS.artifact} artifacts and{" "}
+            {HATE_COUNTS.enchantment} enchantments in the format shut it off, and this deck answers{" "}
+            {unansweredHate.length === 2 ? "neither" : `no ${unansweredHate[0]}`}.
           </p>
         ) : null}
         {answers.some((a) => a.required > a.count) ? (
