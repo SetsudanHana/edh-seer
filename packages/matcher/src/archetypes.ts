@@ -50,6 +50,32 @@ const ARCHETYPE_FLOOR = 0.08;
 
 const GOODSTUFF: ArchetypeRanking = { name: "goodstuff", label: ARCHETYPE_LABELS.goodstuff, confidence: 0 };
 
+/** Confidence the top archetype must reach before it may LEAD -- before a report says "this is a
+ *  Tokens deck" rather than "these signals are present" (roadmap A15).
+ *
+ *  THE NAMING LAYERS ARE THE ONLY CODE IN THIS REPO THAT CANNOT SAY "I DON'T KNOW". The persist gate
+ *  refuses a card, `unknownTriggers` refuses a near-miss, the tutor gate refuses a bare type -- but
+ *  `detectArchetypes` always returns a top row (GOODSTUFF sits at confidence 0 and can never win a
+ *  sort), so a deck with no positive identity in this vocabulary gets named whatever ranked second.
+ *  Measured: cares-gating the aristocrats signature (roadmap A13) halved the false confidences on
+ *  the six owner-named control decks -- zenos 0.43 -> 0.20 -- and moved not one of their labels,
+ *  because argmax has nothing else to return.
+ *
+ *  0.25 comes from the distribution, not from tuning: over the 71 decks the top confidence runs
+ *  median 0.19 / p75 0.31, the decks nobody disputes lead at 0.32-0.51 (smooth-criminal 0.32,
+ *  rakdos-landfall 0.35, acererak-combo 0.44, naya-spellslinger 0.51), and five of the six control
+ *  decks lead at 0.11-0.22. */
+export const ARCHETYPE_LEAD_FLOOR = 0.25;
+
+/** The archetype a report may NAME the deck after, or undefined when none is strong enough.
+ *  `detectArchetypes`' ranked list is unchanged and every existing consumer keeps reading it --
+ *  including `computeBuild`, whose target adjustment reads `strategies[0]` and is a SCORING
+ *  question, not a naming one. */
+export function dominantArchetype(ranked: readonly ArchetypeRanking[]): ArchetypeRanking | undefined {
+  const top = ranked[0];
+  return top && top.name !== "goodstuff" && top.confidence >= ARCHETYPE_LEAD_FLOOR ? top : undefined;
+}
+
 export interface CardSignal {
   name: string;
   /** The card's own theme tags (from cardThemeTags): "${verb}:${subjectKey}" / "static:${kind}". */
@@ -70,7 +96,7 @@ export interface CardSignal {
  *  match every archetype (the bug this replaces). Tag strings mirror the validated ones
  *  already used in mechanisms.ts CATEGORY_MATCH. Voltron keys on subtypes (equipment,
  *  creature-enchanting auras) rather than tags/effect-kinds. Tunable. */
-export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, { tags?: string[]; effectKinds?: string[]; subtypes?: string[] }>> = {
+export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, ArchetypeSignature>> = {
   tokens: { tags: ["create-token:any"], effectKinds: ["token-generation", "token-doubling"] },
   // death/sacrifice events define aristocrats; forced-sacrifice dropped — edict engines land
   // via their dies:/sacrifice: emits, and dropping it sheds the destroy→forced-sacrifice mislabel.

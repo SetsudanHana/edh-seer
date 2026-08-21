@@ -23,6 +23,23 @@ test("DeckIdentity shows the headline theme", () => {
   expect(screen.getByText("Tokens")).toBeInTheDocument();
 });
 
+// A NAMING LAYER MAY DECLINE (roadmap A15). Under `THEME_NAME_FLOOR` the headline is carried by one
+// or two cards -- `venser` reads 0.02 across the calibration corpus -- so the title says so and the
+// tag drops to the subtitle rather than vanishing: it IS the deck's best-supported theme.
+test("DeckIdentity declines to name a deck whose theme is not dominant", () => {
+  render(<DeckIdentity cohesion={{ ...SAMPLE.report.cohesion!, dominant: false, theme: "proliferate", score: 0.02 }} />);
+  expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("No dominant theme");
+  expect(screen.getByText(/strongest: proliferate/)).toBeTruthy();
+});
+
+// An ABSENT `dominant` is a caller that predates the field, never a negative opinion -- the CLI
+// defaulting the other way made a 0.50-cohesion fixture abstain.
+test("DeckIdentity names the deck when dominant is absent", () => {
+  const { dominant: _drop, ...older } = SAMPLE.report.cohesion!;
+  render(<DeckIdentity cohesion={older as typeof SAMPLE.report.cohesion} />);
+  expect(screen.getByRole("heading", { level: 2 }).textContent).toBe(SAMPLE.report.cohesion!.theme);
+});
+
 test("DeckIdentity renders nothing when there's no cohesion", () => {
   const { container } = render(<DeckIdentity cohesion={null} />);
   expect(container).toBeEmptyDOMElement();

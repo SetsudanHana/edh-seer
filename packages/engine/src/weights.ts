@@ -27,7 +27,24 @@ export interface Cohesion {
    *  a real and actionable thing to be told. */
   familyScore: number;
   label: string;
+  /** Whether this theme is strong enough to NAME the deck (roadmap A15). False when the primary
+   *  touches less than `THEME_NAME_FLOOR` of the nonlands: the tag is still the deck's
+   *  best-supported theme and every other reader keeps using it, but a report that leads with it is
+   *  telling a player their deck is about something 3 cards do.
+   *
+   *  THE BAR IS NOT A CORRECTNESS PREDICTION, and it must not be read as one. Measured over the 71
+   *  calibration decks, cohesion does NOT separate right headlines from wrong ones -- against the
+   *  owner's own deck names the hits have median cohesion 0.31 and the MISSES 0.33, and the worst
+   *  wrong headline (`naya-spellslinger`, "creatures entering") sits at 0.70 and is a perfectly TRUE
+   *  sentence. What this bar catches is a different thing: a headline with no support at all. */
+  dominant: boolean;
 }
+
+/** Share of nonlands the primary theme must touch before the report leads with it. Chosen from the
+ *  distribution rather than from correctness: cohesion over the 71 decks runs min 0.02, p10 0.08,
+ *  median 0.33, max 1.00, and the tail below 0.10 is `venser` 0.02, `mishra-claimed-by-tokens` 0.03
+ *  and four decks at 0.05-0.06 -- headlines carried by one or two cards. */
+export const THEME_NAME_FLOOR = 0.1;
 
 export const COMBO_EDGE_WEIGHT = 1000;
 
@@ -247,5 +264,6 @@ export function computeCohesion(
     score,
     familyScore,
     label: cohesionLabel(score),
+    dominant: score >= THEME_NAME_FLOOR,
   };
 }
