@@ -47,7 +47,7 @@ export const VOCAB_VERSION = 10;
  *
  *  Same shape as the 2026-08-06 finding this file already records for prose-vs-vocabulary, applied
  *  one level finer: gate each selector on the list it actually reads. */
-export const TRIGGER_VOCAB_VERSION = 12;
+export const TRIGGER_VOCAB_VERSION = 13;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -189,6 +189,16 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // question with its own blast radius: 294 unclaimed `exile` ACTIONS are the supply side.
   // Phasing is CR 702.25; 3 consumers.
   "exiled", "phases-out",
+  // CR 701.6 `create`, ADDED 2026-08-21 — the same story as `copy` above, and found the same way.
+  // `create-token` has always been a legal VERB as an ACTION; the trigger side was missing, so a
+  // card that watches token creation could not be recorded. The OWNER named the witness from memory
+  // against a claim this repo carried in two files ("nothing in the corpus triggers on token
+  // creation"): **Mirkwood Bats, "Whenever you create or sacrifice a token", which derived
+  // `sacrifice` alone and sits in the owner's own smooth-criminal deck.** When the segmenter fix
+  // finally asked for both records, the model answered `create` and the persist gate refused the
+  // card for exactly this absence — the gate working, and naming its own missing word.
+  // Corpus consumers: 13 cards print "whenever you create ..." plus Mirkwood Bats' OR shape.
+  "create",
   // EVERY KEYWORD ACTION IS ALSO A TRIGGER EVENT — the general rule, after the 2026-08-15 run
   // refused cards one at a time for exactly this. First pass added connive/discover/explore/vote/
   // manifest-dread; the NEXT run then refused `exert` (Watchful Naga) and `forage` (Corpseberry

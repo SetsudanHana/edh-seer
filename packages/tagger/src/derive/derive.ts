@@ -24,7 +24,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 66;
+export const DERIVE_VERSION = 68;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -83,6 +83,11 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   // it for all three origins. Mapping it to any one of them would be a narrower claim than the card
   // makes: Syr Konrad, the Grim watches the battlefield, the library AND the graveyard's exits.
   "put-into-graveyard": "enters-graveyard",
+  // CR 701.6. The clause layer names the ACTION ("create"), the engine names the EVENT the matcher
+  // keys on -- and `create-token` is the verb every token maker already emits, so a payoff watching
+  // creation and a card creating one meet on the same tag. Added 2026-08-21 with the TRIGGERS entry;
+  // without this the event would derive to nothing and land in `unknownTriggers`.
+  create: "create-token",
 };
 
 /** "Whenever this creature IS DEALT damage" (Hornet Nest, Flumph, Boros Reckoner) — the receiving
@@ -246,6 +251,15 @@ const PRONOUN_SOURCE = /^(?:your |their |a |an )?librar(?:y|ies)(?: for)?\s*/i;
 /** Objects that name no thing of their own and inherit one from earlier in the clause. A closed list,
  *  read off the 107 untyped `enters` emits in the corpus rather than guessed: "that creature" names a
  *  type and must keep parsing as itself, so only bare back-references belong here. */
+/** Verbs whose object is the thing being multiplied, so a narrowing inside it decides WHICH cards
+ *  the multiplier touches. */
+const MULTIPLIER_VERBS: ReadonlySet<string> = new Set(["double", "triple"]);
+
+/** Printed narrowings no `SubjectFilter` can hold: a counter PRESENCE (CR 700.9's `modified` is
+ *  demand-only and names no kind) and an ATTACHMENT (the Equipment's own host). Both are checkable
+ *  by a player and not by this engine. */
+const UNEXPRESSIBLE_NARROWING = /\bwith counters on (?:them|it)\b|\bequipped creature\b|\benchanted creature\b/i;
+
 const PRONOUN_OBJECT =
   /^(?:(?:the |that |those )?(?:searched|exiled|chosen) cards?|that cards?|those cards|it|them|the cards?|one|one of those cards)$/i;
 
@@ -385,6 +399,19 @@ function effectSubject(
   // apply to, and edges.ts fanned that one card out to 97 consumers -- the widest mesh in the
   // derived population. Parse only the self-reference, which names a bare singular and so keeps no
   // subject at all: the card holds its `static:cost-reduction` theme tag and forms no edges.
+  // A MULTIPLIER'S SUBJECT CARRIES A NARROWING THE FILTER CANNOT HOLD (2026-08-21). Same shape as
+  // the Excalibur case above: the parser reads the nouns and drops the condition after them, and the
+  // static applies-to pass then claims every card matching the nouns.
+  //
+  // MEASURED: re-normalizing the corpus gave Raphael, the Muscle ("Double all damage that creatures
+  // you control WITH COUNTERS ON THEM would deal") the subject {creature, you, all} and Mjolnir,
+  // Hammer of Thor ("Double all damage EQUIPPED CREATURE would deal") the subject {creature, any,
+  // all}. Together they took MESHED 288 -> 405 -- 60 + 57, the whole regression. A counter presence
+  // and an attachment are both real, printed and unrepresentable here, and CR 614's own rule in
+  // `replacement.ts` already says what to do: keep the KIND, claim nothing about which cards it
+  // applies to. Scoped to the multiplier verbs, because that is what was measured to break; the
+  // aura/equipment host read as a class is a wider standing defect with its own item.
+  if (MULTIPLIER_VERBS.has(action.verb ?? "") && UNEXPRESSIBLE_NARROWING.test(object)) return parseSubject("");
   const self = object.match(SELF_REFERENCE);
   const subject = subjectFrom(self ? self[0] : countTruncated(object), cardName);
   // ...and RECORD that it was self-referential. The match was already being used to avoid parsing
@@ -752,6 +779,25 @@ export function deriveAbilities(
       if (action.amount != null && action.amount !== "") ability.amount = action.amount;
       if (emits.length) ability.emits = emits;
       abilities.push(ability);
+    }
+
+    // A RESTRICTION THE ENGINE CANNOT CHECK MAKES THE STATIC LABEL-ONLY TOO, not just the trigger
+    // (2026-08-21). `replacement.restricted` already suppressed the synthesized consumer trigger for
+    // exactly this reason -- "a claim it cannot check is the wrong-answer direction this repo
+    // refuses" -- but the ability's own SUBJECT survived, and the static applies-to pass in
+    // `edges.ts` reads that subject and claims every card matching it.
+    //
+    // MEASURED, and it is why this exists: re-normalizing the corpus gave Raphael, the Muscle
+    // ("Double all damage that creatures you control WITH COUNTERS ON THEM would deal") the subject
+    // `{creature, you, all}` and Mjolnir, Hammer of Thor ("Double all damage EQUIPPED CREATURE would
+    // deal") the subject `{creature, any, all}`. Together they took MESHED 288 -> 405: 60 + 57 = the
+    // whole +117. The narrowing is real, printed, and unrepresentable -- a counter presence and an
+    // attachment -- so the honest answer is to keep the KIND (the product classifiers want it) and
+    // claim nothing about which cards it applies to.
+    if (replacement?.restricted) {
+      for (let i = before; i < abilities.length; i++) {
+        if (abilities[i].kind === "static" && abilities[i].effect?.subject) delete abilities[i].effect.subject;
+      }
     }
 
     const drain = drainAbility(clause, kind, trigger, cost);

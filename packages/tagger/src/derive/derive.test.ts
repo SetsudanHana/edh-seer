@@ -1481,3 +1481,48 @@ test("a damage trigger on a card that never mentions damage is refused", () => {
   expect(out.abilities.find((a) => a.trigger)?.trigger).toBeUndefined();
   expect(out.unknownTriggers).toContain("phantom:non-combat-damage");
 });
+
+// CR 701.6 `create` IS A TRIGGER EVENT (2026-08-21). `create-token` was always a legal VERB as an
+// ACTION and the trigger side was missing, so a card watching token creation could not be recorded —
+// the same story `copy` has in the TRIGGERS list. The owner named the witness from memory against a
+// claim this repo carried in two files: Mirkwood Bats, "Whenever you create or sacrifice a token".
+test("a create trigger derives the create-token verb", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "create", subject: "a token", control: "you" },
+    actions: [{ verb: "lose-life", object: "each opponent", amount: "1" }],
+  }]);
+  expect(abilities[0].trigger?.verbs).toContain("create-token");
+});
+
+// A MULTIPLIER'S NARROWING LIVES INSIDE ITS OBJECT, and dropping it claims every card the nouns
+// match. MEASURED: re-normalizing gave Raphael, the Muscle and Mjölnir, Hammer of Thor the subjects
+// {creature, you, all} and {creature, any, all}, taking MESHED 288 -> 405 (60 + 57, the whole
+// regression). The kind survives — product classifiers want it — and the claim about WHICH cards
+// does not, which is CR 614's own rule in `replacement.ts` applied one layer over.
+test("a multiplier narrowed by something unrepresentable keeps its kind and claims no cards", () => {
+  const counters = deriveAbilities([{
+    id: 1,
+    abilityType: "static",
+    actions: [{ verb: "double", object: "all damage that creatures you control with counters on them would deal" }],
+  }]).abilities[0];
+  expect(counters.effect.kind).toBe("damage-multiplier");
+  expect(counters.effect.subject).toBeUndefined();
+
+  const equipped = deriveAbilities([{
+    id: 1,
+    abilityType: "static",
+    actions: [{ verb: "double", object: "all damage equipped creature would deal" }],
+  }]).abilities[0];
+  expect(equipped.effect.subject).toBeUndefined();
+
+  // UNNARROWED MULTIPLIERS ARE UNTOUCHED: Gratuitous Violence's "creatures you control" is a class
+  // this filter can hold, and the static edge it forms is a true sentence about those creatures.
+  const plain = deriveAbilities([{
+    id: 1,
+    abilityType: "static",
+    actions: [{ verb: "double", object: "all damage creatures you control would deal" }],
+  }]).abilities[0];
+  expect(plain.effect.subject).toBeDefined();
+});
