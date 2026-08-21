@@ -151,6 +151,11 @@ export interface DeckMath {
      *  0 when a commander answers the class, since a card available in every game owes nothing to a
      *  draw probability. */
     required: number;
+    /** How many answers of this class exist inside the deck's colour identity, corpus-wide
+     *  (`answer-pool.json`). A count of 0 beside a POOL of 56 is the colour pie; a count of 0
+     *  beside a pool of 421 is a deckbuilding choice, and the panel must be able to tell a reader
+     *  which one it is looking at. Absent when no commander was detected. */
+    pool?: number;
   }[];
   /** The deck's measured combat clock: expected attacking power per turn, and the turn that
    *  accumulates to one opponent's 40 life.
@@ -193,14 +198,37 @@ export interface DeckMath {
     castable?: { types: string[]; share: number };
   }[];
   /** Karsten's land-count regression against what the deck runs. Tier B -- published and
-   *  independently confirmed, unlike the target the build benchmark scores against, which is a flat
-   *  36 for every deck.
+   *  independently confirmed. The build benchmark's score reads `target` too now (task 9,
+   *  2026-08-21) -- before that fix it scored a flat 36 regardless of what this block showed, so
+   *  the panel and the score could (and did) disagree about the same deck.
    *
    *  Reads AVERAGE mana value only, so a bimodal deck and a flat one get the same answer, and it has
    *  no colour term at all: how many lands is a different question from which ones. */
   lands: {
     actual: number;
+    /** What `buildScore` is actually scored against -- the regression's own rounded answer (via
+     *  `@mtg/matcher`'s `gatedLandsTarget`, the flat convention on a fallback) PLUS any archetype
+     *  delta folded in by `adjustedTargets` (landfall's `+4`, task 9 fix F1). Equal to
+     *  `rawTarget + archetypeDelta` always -- the same call `computeBuild` makes on the identical
+     *  input, so the panel and the score can never again disagree about this number. */
     target: number;
+    /** 'derived' when the GATE landed on this deck's own regression answer; 'flat' when the
+     *  regression extrapolated past where it was tested and the flat convention won instead --
+     *  render the reason on a fallback, never swap silently between two numbers that mean different
+     *  things. Independent of `archetypeDelta`, which can be non-zero under either source. */
+    targetSource: "derived" | "flat";
+    /** The regression's own rounded answer, always -- even on a fallback, so a reader can see what
+     *  the curve's own math said and why it was refused, rather than have the number vanish. */
+    rawTarget: number;
+    /** The archetype adjustment already folded into `target` (landfall's `lands: +4` today, 0 for
+     *  every other deck) -- named explicitly so a silent shift from `rawTarget`/the gate's own
+     *  answer to `target` is never the reader's job to notice. Task 9 fix F1: before this field
+     *  existed the score alone applied the delta and the panel printed the un-adjusted number
+     *  beside it. */
+    archetypeDelta: number;
+    /** Which archetype the delta above came from (e.g. "Landfall") -- present only when
+     *  `archetypeDelta !== 0`. */
+    archetypeLabel?: string;
     avgManaValue: number;
     /** Cheap ramp and draw, worth 0.28 of a land each. */
     rampPlusDraw: number;
@@ -285,12 +313,35 @@ export interface DeckReport {
   /** BUILD /5: archetype-adjusted functional-template completeness. Matcher-only (see above);
    *  stays undefined on the flat analyzeDeck. */
   buildScore?: number;
-  /** Per functional-category count vs adjusted target (Ramp 6/10, …), for readouts + suggestions.
-   *  Matcher-only. `category` is a plain string (not the matcher-only BuildCategory union) because
-   *  this package must not depend on @mtg/matcher — same convention as ArchetypeGroup.category. */
+  /** Per-leaf count, for the client's within-parent distribution rows. `target` is 0 on every
+   *  leaf grouped under a `buildParents` entry (owner's 2026-08-21 ruling: a leaf shows count and
+   *  share, never a target) and stays real only for `lands` (and the always-0 `burn`/`stax`, which
+   *  are win-plan/tax signals and were never folded into a parent). Matcher-only. `category` is a
+   *  plain string (not the matcher-only BuildCategory union) because this package must not depend
+   *  on @mtg/matcher — same convention as ArchetypeGroup.category. */
   buildCategories?: { category: string; count: number; target: number }[];
+  /** The four Command-Zone template groups (Consistency, Ramp, Interaction, Board wipes), each
+   *  carrying its OWN archetype-adjusted target and the UNION of its leaves' member counts (never
+   *  the sum -- a card can carry two leaves). This is what actually scores and flags now; a leaf
+   *  under `buildCategories` never does. Matcher-only, same reason as `buildCategories`.
+   *  `coverageWeighted` is `true` only on the one parent (`Interaction`) whose attainment the score
+   *  multiplies by `answerCoverage.coverage` -- absent everywhere else, so a client can select it by
+   *  flag instead of matching `name === "Interaction"` (whole-branch review IMPORTANT 4: a rename of
+   *  that parent would otherwise silently unwire the panel's coverage note while the score kept
+   *  docking it). */
+  buildParents?: { name: string; count: number; target: number; leaves: string[]; coverageWeighted?: true }[];
   /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
   suggestions?: string[];
+  /** The coverage multiplier `Interaction` was scored with, its per-class weights, and the
+   *  graveyard vulnerability it was built from. Present so the panel and a test can say WHY the
+   *  number is what it is rather than trust it. Matcher-only, optional for the same reason every
+   *  other matcher-only field here is: the flat `analyzeDeck` above never populates it. */
+  answerCoverage?: {
+    coverage: number;
+    source: "weighted" | "unweighted";
+    graveyardVulnerability: number;
+    rows: { class: string; poolShare: number; demand: number; weight: number; covered: boolean }[];
+  };
   /** Cards the deck is not using, weakest first, each carrying its own reasons in plain words.
    *  CANDIDATES, never a verdict -- a missing edge looks exactly like a useless card, and the
    *  build layer counts a category's members without ranking them. Matcher-only; structural here

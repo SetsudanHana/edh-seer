@@ -33,6 +33,8 @@ import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
 import { cutCandidates, deckSlack, trimOrder } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
+import { recommendedLands } from "./land-count.js";
+import { commanderIdentity } from "./answer-pool.js";
 import { deckCastability, type CardCastability } from "./castability.js";
 import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
@@ -669,7 +671,24 @@ export function analyzeDeckStructured(
     }));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
-  const { buildScore, buildCategories, suggestions } = computeBuild(resolved, strategies[0]?.name);
+  // TASK 9: `recommendedLands` (the Karsten regression) is called ONCE here and threaded to both
+  // `computeBuild` (the score, gated) and `computeDeckMath` below (the panel row) -- before this,
+  // `computeBuild` never saw this number at all and scored a flat 36 while the panel showed the
+  // regression's own answer, so the two disagreed about the same deck. `land-count.ts` stays the
+  // only place `karstenLands` itself runs.
+  const landRec = recommendedLands(resolved, { commanderNames: [...commanderSet] });
+  // A DECK'S COLOUR IDENTITY IS ITS COMMANDERS' (CR 903.4), never the union of the 99 -- an
+  // off-identity card in a pasted list is an illegal card, not a sixth colour, and reading it as
+  // one would tell a mono-black deck it has white's enchantment removal available.
+  const identity = commanderIdentity(resolved, commanderSet);
+  // The graveyard axis is the one vulnerability with a corpus rule able to count its hate pieces
+  // (`graveyardHateRecurring`); see the design's §4 for why the other axes stay unbuilt.
+  const graveyardVulnerability = Math.max(
+    0,
+    ...strategies.filter((s) => s.name === "reanimator" || s.name === "aristocrats").map((s) => s.confidence),
+  );
+  const { buildScore, buildCategories, buildParents, suggestions, answerCoverage: coverage } =
+    computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability);
 
   // THE CUT LIST -- a join over what is already computed, never new analysis. It reads the rated
   // cards, the axis weights, the BUILD roles and the per-category surplus, and names CANDIDATES
@@ -695,12 +714,12 @@ export function analyzeDeckStructured(
     unmetConditions: (unmetByCard.get(c.name) ?? []).map((t) => describeTag(t as never)),
   }));
   const cutList = cutCandidates(cutInputs);
-  const slack = deckSlack(buildCategories);
+  const slack = deckSlack(buildParents);
   // TRIM MODE: the same inputs asked a different question — "I must cut five" rather than "is
   // anything here doing nothing". The whole ranked order ships, not a slice, so a caller picks its
   // own N without a round trip; see `trimOrder` for why a category surplus counts here and does not
   // in `cutCandidates`.
-  const trim = trimOrder(cutInputs, buildCategories);
+  const trim = trimOrder(cutInputs, buildParents);
 
   // Theme membership: same axis ordering the zones will read, with statics dropped (an anthem is a
   // payoff of the theme supplying its subject, never a theme itself).
@@ -741,14 +760,30 @@ export function analyzeDeckStructured(
     strategies,
     buildScore,
     buildCategories,
+    buildParents,
     suggestions,
+    answerCoverage: coverage,
     cutList,
     slack,
     trim,
     // No turn override: the deck's own clock sets the horizon. Passing a 5 here is what kept the
     // whole clock-pricing change from reaching the report at all -- every unit test passed because
     // they call computeDeckMath directly, and only a live deck showed `turnSource: "override"`.
-    deckMath: computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, { comboCards }),
+    // `primary: strategies[0]?.name` -- the SAME archetype `computeBuild` above scored the land
+    // target's delta against (task 9 fix F1), so this panel row and that score can never disagree.
+    //
+    // SKIPPED ON A ZERO-CARD LIBRARY (whole-branch review IMPORTANT 5). A decklist that resolves to
+    // only its commander(s) -- or every other name failing to resolve -- makes `library === 0`, and
+    // `minCopies` (`hypergeometric.ts`) THROWS there on purpose ("a silent wrong answer is worse
+    // than a missing one"); nothing upstream of this call guarded it, so the whole analysis 500'd.
+    // The throw itself must stay: the caller is where the guard belongs. `DeckReport.deckMath` is
+    // already optional and the panel already renders nothing when it is absent, so an empty library
+    // reports every OTHER section and simply omits the one block that has nothing to divide by.
+    deckMath: resolved.length > commanderSet.size
+      ? computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, {
+          comboCards, landRecommendation: landRec, primary: strategies[0]?.name,
+        })
+      : undefined,
     themeMembership: membership,
   };
 }

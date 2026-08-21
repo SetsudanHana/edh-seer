@@ -252,9 +252,25 @@ test("Cards tab shows what a card costs and when you can cast it, beside the rat
   }] as any;
   render(<CardList cards={cards} />);
   const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Breach"))!;
-  expect(within(row).getByText("{5}{B}{B}")).toBeInTheDocument();
+  // Pins the actual symbol set "{5}{B}{B}" decodes to, not merely "some image rendered" -- a
+  // dropped pip (e.g. only one black symbol) would still pass a bare non-empty check.
+  expect(within(row).getAllByAltText(/mana/i).map((img) => img.getAttribute("alt"))).toEqual([
+    "5 generic mana", "one black mana", "one black mana",
+  ]);
   expect(within(row).getByText("22% – 40% by T7")).toBeInTheDocument();
   expect(within(row).getByText("3.7")).toBeInTheDocument();
+});
+
+/** The precon persona listed "{3}{B}{B} and the rest of the cost symbols" among words it could not
+ *  understand. Brace notation must not survive anywhere in this table -- widened past a single
+ *  colour letter, since a generic-mana token like "{3}" carries no letter at all. */
+test("the Cards table renders costs as symbols, not as brace notation", () => {
+  const cards = [{
+    name: "Breach the Multiverse", synergyRating: 3.7, topPartners: [], manaCost: "{3}{B}{B}",
+  }] as any;
+  render(<CardList cards={cards} />);
+  expect(screen.queryByText(/\{[^}]+\}/)).toBeNull();
+  expect(screen.getAllByRole("img", { name: /mana/ }).length).toBeGreaterThan(0);
 });
 
 /** A land has no cost row and a REFUSED cost (X, delve, convoke, a free cast) has no castability.
@@ -446,31 +462,320 @@ test("HeadlineScores explains its scale and names the anchor card", async () => 
   expect(screen.getByText(/Krenko, Mob Boss/)).toBeInTheDocument(); // the deck's best-fed card
 });
 
-test("BuildBenchmarks renders a bar per category, flags under-target, omits zero-target", () => {
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+// TASK 7 (owner, 2026-08-21): a target now lives on the PARENT, and the shape below is the one
+// this superseded — "benchmarks group under parents, and a parent shows no target of its own"
+// (2026-08-20) asserted the exact opposite of what ships now. Kept only as history in the ledger;
+// the live tests assert the new contract.
+test("BuildBenchmarks renders a bar per PARENT, flags under-target; a leaf shows count and share, never a ratio", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
   expect(screen.getByText("Ramp")).toBeInTheDocument();
-  expect(screen.getByText("6/10")).toBeInTheDocument();      // under target
-  expect(screen.getByText("14/10")).toBeInTheDocument();     // over target (draw)
-  expect(screen.queryByText("Tutors")).not.toBeInTheDocument(); // tutor target 0 → omitted
-  // under-target rows expose an accessible flag
-  expect(screen.getByLabelText(/Ramp 6 of 10, under target/i)).toBeInTheDocument();
+  expect(screen.getByText("6/10")).toBeInTheDocument();      // Ramp PARENT, under its own target
+  expect(screen.getByText("14/10")).toBeInTheDocument();     // Consistency PARENT, over its own target
+  // Tutors is a Consistency LEAF: it renders (owner's ruling: every leaf shows, including a zero),
+  // but never as a "x/y" ratio -- only its count and share of Consistency's own total.
+  expect(screen.getByText(/^Tutors$/)).toBeInTheDocument();
+  const tutors = screen.getByText(/^Tutors$/).closest("li")!;
+  expect(tutors.textContent).not.toMatch(/\d+\s*\/\s*\d+/);
+  expect(tutors.textContent).toMatch(/0\s*·\s*0%/);
+  // Only a PARENT carries the under-target flag.
+  expect(screen.getByLabelText(/^Ramp 6 of 10, under target/i)).toBeInTheDocument();
 });
 
 test("a benchmark bar is read against a fixed target mark, so over-target does not paint as full", () => {
-  const { container } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+  const { container } = render(
+    <BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />,
+  );
   // The FILL specifically — a two-sided category also paints a satisfied band, and matching on
   // "any span with a width" would silently read that instead.
   const width = (label: RegExp): string =>
     (screen.getByLabelText(label).querySelector('[class*="bg-(--success)"], [class*="bg-(--warning)"]') as HTMLElement)
       .style.width;
-  // The target sits at 70% of every track. 6/10 stops short of it, 14/10 runs past it -- the old
-  // `min(1, count/target)` clamp painted BOTH at the same width as 4/4 and 1/1.
-  expect(width(/Ramp 6 of 10/i)).toBe("42%");
-  expect(width(/Draw 14 of 10/i)).toBe("98%");
-  // And the mark itself is on screen, once per row, or the widths above compare against nothing.
-  expect(container.querySelectorAll('span[style*="left: 70%"]').length).toBe(
-    container.querySelectorAll("li[aria-label]").length,
+  // The target sits at 70% of every track. Ramp 6/10 stops short of it, Consistency 14/10 runs
+  // past it -- the old `min(1, count/target)` clamp painted BOTH at the same width as 4/4 and 1/1.
+  expect(width(/^Ramp 6 of 10/i)).toBe("42%");
+  expect(width(/^Consistency 14 of 10/i)).toBe("98%");
+  // The mark itself is on screen once per PARENT row (leaf rows carry no target, so no mark) --
+  // four parents in this fixture, none ungrouped.
+  expect(container.querySelectorAll('span[style*="left: 70%"]').length).toBe(SAMPLE.report.buildParents!.length);
+});
+
+// A PARENT CARRIES ITS OWN TARGET NOW (owner, 2026-08-21, overriding the 2026-08-20 shape this
+// test used to pin -- "a parent shows no target of its own"). A floor declared ONCE at the parent,
+// with leaves showing only how the deck spent it, is a different object from the summed-leaves
+// shape the spec refused, and it is what ships.
+test("a parent DOES carry its own target and ratio; a leaf beneath it never restates one", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
+  expect(screen.getByText("Consistency")).toBeInTheDocument();
+  expect(screen.getByText("Interaction")).toBeInTheDocument();
+  const consistency = screen.getByText("Consistency").closest("li")!;
+  expect(consistency.textContent).toMatch(/14\s*\/\s*10/); // the PARENT's own ratio
+  // Draw is a Consistency LEAF: count and share of the parent's own 14, never a "x/y" of its own.
+  const draw = screen.getByText(/^Draw$/).closest("li")!;
+  expect(draw.textContent).not.toMatch(/\d+\s*\/\s*\d+/);
+  expect(draw.textContent).toMatch(/12\s*·\s*86%/); // 12 of Consistency's 14 = 86%
+});
+
+// FIX F4 (controller review, 2026-08-21, found live on `burakos-crashing-the-party`): Interaction's
+// real numbers were Removal 5 + Stack interaction 2 + Graveyard hate 1 + Protection 0 = 9 leaf
+// mentions, but the parent's own UNION was 8 (one card fills two leaves) -- dividing each leaf's
+// share by the union read 75+13+13+13 = 114%, which reads as a broken number on a panel whose whole
+// argument is that its figures mean what they say.
+const OVERLAP_CATEGORIES = [
+  { category: "draw", count: 6, target: 0 },
+  { category: "cardSelection", count: 3, target: 0 },
+] as unknown as typeof SAMPLE.report.buildCategories;
+const OVERLAP_PARENTS = [
+  // 6 + 3 = 9 leaf mentions; ONE card fills both leaves, so the parent's own union is only 8.
+  { name: "Consistency", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
+] as unknown as typeof SAMPLE.report.buildParents;
+
+test("leaf shares total 100% even when a card fills two leaves, and the parent's own row says so", () => {
+  render(<BuildBenchmarks categories={OVERLAP_CATEGORIES} parents={OVERLAP_PARENTS} />);
+  // Divided by the LEAF SUM (9), never the parent's union (8): 6/9 = 67%, 3/9 = 33%. These total
+  // 100% by construction -- 6/8 + 3/8 would have been 112%.
+  expect(screen.getByLabelText(/^Draw 6, 67% of Consistency/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Card selection 3, 33% of Consistency/)).toBeInTheDocument();
+  // The overlap is a REAL FACT ABOUT THE DECK, stated once on the parent row, rather than left for
+  // a reader to notice the leaves summing past the parent's own count.
+  expect(screen.getByLabelText(/^Consistency 8 of 10, under target; its leaves sum to 9/)).toBeInTheDocument();
+});
+
+// FIX F2 (controller review, 2026-08-21): `build.ts`'s own scoring loop skips a parent whose
+// target is <= 0 outright ("neutral, unscored" -- `if (p.target <= 0) continue;`), but `bar()`'s
+// fill was a bare `count / target` with no matching guard. Unreachable through today's
+// `ARCHETYPE_TARGET_DELTAS` (nothing zeroes a parent's floor -- re-cutting those deltas is the
+// owner's call, not this fix round's), but the day one does, a NONZERO count against a zero
+// target divides to Infinity and a zero count against a zero target divides to NaN -- either
+// paints a bar with a nonsense width. Mirrored here directly, the same "not scored, so not shown"
+// treatment the `ungrouped` leaf filter already gives a zero-target leaf.
+const ZERO_TARGET_CATEGORIES = [
+  { category: "ramp", count: 6, target: 0 },
+  { category: "boardWipe", count: 2, target: 0 },
+] as unknown as typeof SAMPLE.report.buildCategories;
+const ZERO_TARGET_PARENTS = [
+  { name: "Ramp", count: 6, target: 10, leaves: ["ramp"] },
+  // count > 0 against target 0 is deliberate -- it is the Infinity-producing case (2/0), the more
+  // dangerous of the two since `Math.min(1, Infinity)` still used to read as a full-width bar.
+  { name: "Board wipes", count: 2, target: 0, leaves: ["boardWipe"] },
+] as unknown as typeof SAMPLE.report.buildParents;
+
+test("a zero-target parent renders no bar at all, mirroring build.ts's own 'not scored' skip", () => {
+  const { container } = render(
+    <BuildBenchmarks categories={ZERO_TARGET_CATEGORIES} parents={ZERO_TARGET_PARENTS} />,
   );
+  // The scored parent still renders normally.
+  expect(screen.getByText("Ramp")).toBeInTheDocument();
+  // The zero-target parent is entirely absent -- not present with a broken/NaN bar, absent outright,
+  // the same treatment a zero-target LEAF already gets from the `ungrouped` filter above.
+  expect(screen.queryByText("Board wipes")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText(/^Board wipes/)).not.toBeInTheDocument();
+  // No element anywhere carries a NaN- or Infinity-derived width.
+  expect(container.innerHTML).not.toMatch(/NaN/);
+  expect(container.innerHTML).not.toMatch(/Infinity/);
+});
+
+// A scrambled category order (not the array order BUILD_PARENTS.leaves lists, not the order the
+// fixture above happens to use) so the test can only pass if the component actually GROUPS rather
+// than coincidentally rendering in input order. `parents` is authored by hand here, mirroring what
+// `computeBuild` would derive from these same leaf counts (unions, no overlap in this fixture).
+const SCRAMBLED_CATEGORIES = [
+  { category: "boardWipe", count: 1, target: 0 },
+  { category: "cardSelection", count: 2, target: 0 },
+  { category: "draw", count: 6, target: 0 },
+  { category: "ramp", count: 8, target: 0 },
+  { category: "targetedRemoval", count: 3, target: 0 },
+  { category: "graveyardHate", count: 1, target: 0 },
+] as unknown as typeof SAMPLE.report.buildCategories;
+const SCRAMBLED_PARENTS = [
+  { name: "Consistency", count: 8, target: 10, leaves: ["draw", "cardSelection", "tutor"] }, // 6+2+0
+  { name: "Ramp", count: 8, target: 10, leaves: ["ramp"] },
+  { name: "Interaction", count: 4, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] }, // 3+0+1+0
+  { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
+] as unknown as typeof SAMPLE.report.buildParents;
+
+test("every leaf still renders under exactly one parent", () => {
+  const { container } = render(<BuildBenchmarks categories={SCRAMBLED_CATEGORIES} parents={SCRAMBLED_PARENTS} />);
+  // DOM order follows BUILD_PARENTS, never the input array: Consistency's own leaves (draw, card
+  // selection, tutor) before Ramp's, before Interaction's (removal, stack interaction, graveyard
+  // hate, protection), before Board wipes' -- which the scrambled input above does not hold in
+  // either order.
+  //
+  // EVERY PARENT NESTS ITS OWN `<h4>` NOW (Task 7 simplification -- there is no more single/multi
+  // fold split, because every parent has a ratio of its own to show): its `<li>` (the `aria-label`)
+  // therefore always precedes its own nested `<h4>` (the `textContent`) in document order. A
+  // single-leaf parent (Ramp, Board wipes) stops there; a multi-leaf one is followed by its leaf
+  // rows, each a count+share `<li>` with no nested heading of its own.
+  const text = [...container.querySelectorAll("h4, li[aria-label]")]
+    .map((el) => el.getAttribute("aria-label") ?? el.textContent);
+  expect(text).toEqual([
+    "Consistency 8 of 10, under target",
+    "Consistency",
+    expect.stringMatching(/^Draw 6, 75% of Consistency/),
+    expect.stringMatching(/^Card selection 2, 25% of Consistency/),
+    expect.stringMatching(/^Tutors 0, 0% of Consistency/), // absent from SCRAMBLED_CATEGORIES entirely -- still renders, at 0
+    "Ramp 8 of 10, under target",
+    "Ramp",
+    "Interaction 4 of 10, under target",
+    "Interaction",
+    expect.stringMatching(/^Removal 3, 75% of Interaction/),
+    expect.stringMatching(/^Stack interaction 0, 0% of Interaction/),
+    expect.stringMatching(/^Graveyard hate 1, 25% of Interaction/),
+    expect.stringMatching(/^Protection 0, 0% of Interaction/),
+    "Board wipes 1 of 3, under target",
+    "Board wipes",
+  ]);
+  // Grouping must not drop a PARENT's own ratio -- each parent row still carries its count/target.
+  expect(screen.getByLabelText(/^Consistency 8 of 10/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Ramp 8 of 10/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Interaction 4 of 10/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Board wipes 1 of 3/)).toBeInTheDocument(); // CONFLICT 9's label survives
+  // CONFLICT 8 (now unconditional, not a fold): a parent's name renders exactly once, nested inside
+  // its own row's label span rather than duplicated by a leaf whose label happens to match it.
+  expect(screen.getAllByText("Ramp")).toHaveLength(1);
+  expect(screen.getAllByText("Board wipes")).toHaveLength(1);
+  // The label slot must never be blank -- Task 7 keeps that guarantee for every parent, not only a
+  // folded single-leaf one, since every parent now nests its `<h4>` in exactly this slot.
+  //
+  // ONE LEVEL DEEPER THAN BEFORE (whole-branch review MINOR 7): the `<li>`'s first child is now a
+  // flex row `<div>` (the suffix note moved to its own line below it, so the row and the note no
+  // longer fight over one line's width on a narrow viewport), and the label span sits inside THAT.
+  const labelSlot = (label: RegExp) => screen.getByLabelText(label).firstElementChild?.firstElementChild;
+  expect(labelSlot(/^Ramp 8 of 10/)?.textContent?.trim()).toBe("Ramp");
+  expect(labelSlot(/^Board wipes 1 of 3/)?.textContent?.trim()).toBe("Board wipes");
+  expect(labelSlot(/^Consistency 8 of 10/)?.textContent?.trim()).toBe("Consistency");
+});
+
+// Controller finding 1 (task 6 fix round): the score multiplies Interaction's count attainment by
+// `answerCoverage.coverage`, so a row reading "11/10" (met on count alone) can still be the reason
+// the headline is under 5. Live on `sarevok-lord-of-pain` the panel ticked Interaction while the
+// score docked it by 0.816 -- nothing on screen explained the gap. Same defect class 7714d91
+// rejected for the land count: a panel number the score does not use at face value must not render
+// as if it does.
+// `coverageWeighted: true` is required here (whole-branch review IMPORTANT 4): the row is now
+// selected by that flag, not by `name === "Interaction"`, so a fixture missing it would silently
+// stop exercising the coverage dock these tests exist to check.
+const INTERACTION_MET_PARENTS = [
+  { name: "Interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
+] as unknown as typeof SAMPLE.report.buildParents;
+
+test("the Interaction row shows the coverage dock when coverage is under 1, even though the count alone is met", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={INTERACTION_MET_PARENTS}
+      answerCoverage={{
+        coverage: 0.816,
+        source: "weighted",
+        graveyardVulnerability: 0,
+        rows: [
+          { class: "creature", poolShare: 1, demand: 0.3, weight: 0.3, covered: true },
+          { class: "artifact", poolShare: 1, demand: 0.24, weight: 0.24, covered: false },
+          { class: "enchantment", poolShare: 1, demand: 0.21, weight: 0.21, covered: true },
+          { class: "planeswalker", poolShare: 1, demand: 0.03, weight: 0.03, covered: false },
+          { class: "land", poolShare: 1, demand: 0.21, weight: 0.21, covered: true },
+        ],
+      }}
+    />,
+  );
+  expect(screen.getByText(/but answers 3 of 5 classes/i)).toBeInTheDocument();
+  // Ratio and count still read as authored -- the dock is an EXPLANATION beside 11/10, not a
+  // replacement of it.
+  expect(screen.getByLabelText(/^Interaction 11 of 10/)).toBeInTheDocument();
+  // The flag reads as NOT fully met, because it is not -- 11/10 * 0.816 < 1, same threshold the
+  // score itself scores against. A tick here would be the exact defect being fixed.
+  expect(screen.getByLabelText(/^Interaction 11 of 10, under target/)).toBeInTheDocument();
+});
+
+test("the Interaction row says nothing about coverage when it is fully covered", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={INTERACTION_MET_PARENTS}
+      answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/^Interaction 11 of 10, on target/)).toBeInTheDocument();
+});
+
+test("the Interaction row says nothing about coverage when no answerCoverage was supplied", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={INTERACTION_MET_PARENTS} />);
+  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/^Interaction 11 of 10, on target/)).toBeInTheDocument();
+});
+
+// A non-Interaction parent is never coverage-weighted, even when it happens to be under-covered
+// class-wise -- the multiplier only ever applies to Interaction (`build.ts`'s `coverageWeighted`).
+test("a coverage dock never appears on a parent other than Interaction", () => {
+  const ramp = [{ name: "Ramp", count: 6, target: 10, leaves: ["ramp"] }] as unknown as typeof SAMPLE.report.buildParents;
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={ramp}
+      answerCoverage={{ coverage: 0.5, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+});
+
+// Whole-branch review IMPORTANT 4: the dock is selected by `p.coverageWeighted`, not by matching
+// the parent's name, so it must survive a rename AND must not fire on a same-named row that lacks
+// the flag -- both directions of the guarantee the flag exists to make.
+test("the coverage dock follows the flag through a parent rename, not the name 'Interaction'", () => {
+  const renamed = [
+    { name: "Board control", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
+  ] as unknown as typeof SAMPLE.report.buildParents;
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={renamed}
+      answerCoverage={{ coverage: 0.816, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/but answers 0 of 0 classes/i)).toBeInTheDocument();
+});
+
+test("a parent named 'Interaction' without the flag gets no coverage dock", () => {
+  const unflagged = [
+    { name: "Interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] },
+  ] as unknown as typeof SAMPLE.report.buildParents;
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={unflagged}
+      answerCoverage={{ coverage: 0.816, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+});
+
+// Whole-branch review IMPORTANT 3: design §3's own promise -- "every poolShare is set to 1 and the
+// panel says so" -- reached the wire (`answerCoverage.source`) and never reached the screen. An
+// identity-less deck (no commander detected) is scored as though every colour could supply every
+// class, and until this the panel said nothing about it.
+test("the Interaction row admits the colour pool was unweighted when no commander was detected", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={INTERACTION_MET_PARENTS}
+      answerCoverage={{ coverage: 1, source: "unweighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/colour pool unweighted/i)).toBeInTheDocument();
+  expect(screen.getByText(/no commander detected/i)).toBeInTheDocument();
+  // Coverage is 1 here -- no docking note is owed, only the unweighted one.
+  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
+});
+
+test("the Interaction row says nothing about the pool when a commander WAS detected", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={INTERACTION_MET_PARENTS}
+      answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/colour pool unweighted/i)).not.toBeInTheDocument();
 });
 
 const DECK_MATH = {
@@ -493,7 +798,7 @@ const DECK_MATH = {
     focus: 0.52,
     primary: "go-wide",
   },
-  lands: { actual: 37, target: 34, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2, mdfc: 0 },
+  lands: { actual: 37, target: 34, targetSource: "derived" as const, rawTarget: 34, archetypeDelta: 0, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2, mdfc: 0 },
   castability: {
     cards: [
       { name: "Ulamog", turn: 10, mana: 0.03, manaWithRocks: 0.11, colors: [] },
@@ -514,8 +819,10 @@ const DECK_MATH = {
 };
 
 test("deck-math blocks are grouped under the question they answer, worst section first", () => {
+  // Scoped to `<section> > h4` -- T6's parent-category headings are h4 too (same rank, sibling
+  // concern), and this test is about the four deck-math QUESTION sections specifically.
   const headings = (): string[] =>
-    [...document.querySelectorAll("h4")].map((h) => h.textContent ?? "");
+    [...document.querySelectorAll("section > h4")].map((h) => h.textContent ?? "");
 
   // Both sections carry a flag on this fixture (colour B is short, artifact has no answers), so the
   // fixed order stands and "cast" leads.
@@ -620,6 +927,77 @@ test("BuildBenchmarks says how many answers short a class is, not just how likel
   expect(screen.queryByLabelText(/graveyard.*short/i)).not.toBeInTheDocument();
 });
 
+// Task 6: the coefficient discounts a colourless-pool zero on purpose; the panel is where that
+// finding has to survive in words, since the score itself just reads as a smaller number.
+test("BuildBenchmarks names the colour pool on a zero row, so the pie is not read as a mistake", () => {
+  const withPool = {
+    ...DECK_MATH,
+    answers: DECK_MATH.answers.map((a) => (a.class === "artifact" ? { ...a, pool: 56 } : a)),
+  };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withPool} />);
+  expect(screen.getByText(/your colours offer 56/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks says nothing about a colour's pool when it was never resolved", () => {
+  // DECK_MATH's artifact row carries no `pool` at all -- absent, not zero, per the field's own
+  // doc comment ("Absent when no commander was detected"). A printed 0 would assert the colours
+  // have no answers, which is false; it must render nothing.
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.queryByText(/your colours offer/i)).not.toBeInTheDocument();
+});
+
+test("BuildBenchmarks warns a graveyard deck about the hate it cannot remove", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 0.8, source: "weighted", graveyardVulnerability: 0.635, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/plan runs through the graveyard/i)).toBeInTheDocument();
+  expect(screen.getByText(/19 artifacts/)).toBeInTheDocument();
+  expect(screen.getByText(/8 enchantments/)).toBeInTheDocument();
+  // DECK_MATH has no enchantment row at all, so both classes read unanswered -- grammatical plural.
+  expect(screen.getByText(/answers neither/)).toBeInTheDocument();
+});
+
+// Controller finding 2 (task 6 fix round): "this deck answers no artifact" is not English -- the
+// singular branch needed its own wording, not just the plural's. One unanswered class (here,
+// artifact is answered and enchantment is not) exercises the branch the fixture above never hit.
+test("BuildBenchmarks reads grammatically when only one hate class is unanswered", () => {
+  const oneAnswered = {
+    ...DECK_MATH,
+    answers: [
+      ...DECK_MATH.answers,
+      { class: "enchantment", count: 0, exiling: 0, recurring: 0, fromCommandZone: false, available: 0, required: 6 },
+    ].map((a) => (a.class === "artifact" ? { ...a, count: 2 } : a)),
+  };
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={oneAnswered}
+      answerCoverage={{ coverage: 0.8, source: "weighted", graveyardVulnerability: 0.635, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/has no enchantment removal/)).toBeInTheDocument();
+  expect(screen.queryByText(/answers no enchantment\b/)).not.toBeInTheDocument();
+  // MINOR 6 (whole-branch review): artifact is ANSWERED here (count 2), so its count must not be
+  // cited as a live threat -- only the enchantment count this deck actually lacks.
+  expect(screen.getByText(/8 enchantments/)).toBeInTheDocument();
+  expect(screen.queryByText(/19 artifacts/)).not.toBeInTheDocument();
+});
+
+test("BuildBenchmarks says nothing about hate when the deck has no graveyard plan", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 0.8, source: "weighted", graveyardVulnerability: 0.05, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/plan runs through the graveyard/i)).not.toBeInTheDocument();
+});
+
 test("BuildBenchmarks shows demand against supply, and refuses a number where none applies", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // The census key is engine vocabulary; the row says what the key MEANS and keeps the key on
@@ -643,8 +1021,94 @@ test("demandSentence says the true ugly thing rather than a plausible wrong one"
     "an artifact, enchantment or instant being cast",
   );
   expect(demandSentence("end-step:any")).toBe("an end step");
-  // An unknown verb is NOT dressed up in a phrase it never earned: the key survives verbatim.
-  expect(demandSentence("bushido:type:creature")).toBe("bushido:type:creature");
+  // An unknown verb is NOT dressed up in a phrase it never earned, but the "true ugly thing" is now
+  // de-slugified rather than the bare key -- a colon-separated identifier read as evidence of a
+  // template to four separate player reviews (task 8 brief), and de-slugifying is still honest
+  // about not knowing the verb without looking like engine internals.
+  expect(demandSentence("bushido:type:creature")).toBe("bushido type creature");
+});
+
+// TASK 8: `combat-damage` sat in `DEMAND_PHASE`, which only fires when the subject is `any` -- so
+// the single biggest raw-key offender (22 of 71 decks' worth) fell PAST it with a typed subject and
+// printed the key verbatim. It is an event with a subject (a CREATURE dealing combat damage), not a
+// phase, and belongs in `DEMAND_VERB` like any other verb.
+test("combat-damage reads as an event with a subject, not a phase", () => {
+  expect(demandSentence("combat-damage:type:creature")).toBe("a creature dealing combat damage");
+  expect(demandSentence("combat-damage:type:permanent")).toBe("a permanent dealing combat damage");
+  // The " (narrowed)" suffix is a real combat-trigger distinction (census.ts's `consumerKey`) and
+  // must survive the move out of the phase map.
+  expect(demandSentence("combat-damage:type:creature (narrowed)")).toBe(
+    "a creature dealing combat damage (a real one, not the game's own)",
+  );
+});
+
+// `begin-combat` is one of `availability.ts`'s three `PHASE_VERBS` and was simply absent, so it
+// fell through DEMAND_PHASE (no entry) and DEMAND_VERB (also no entry) to the raw key.
+// `draw-step` was the opposite defect: it sat in the phase map and is never a real trigger verb
+// (`draw` is; `draw-step` is not a `VERB_VOCAB` member at all), so it did nothing but risk masking
+// a future bug the same way `combat-damage` masked this one.
+test("begin-combat is a phase, and phases match availability.ts's own PHASE_VERBS", () => {
+  expect(demandSentence("begin-combat:any")).toBe("the beginning of combat");
+});
+
+// The rest of task 8's measured 53 raw rows: every verb this brief named, plus the two DEMAND_VERB
+// wrote a comment about (`proliferate`, `counter-added`) rather than a plain lookup.
+test("every verb the controller measured reaching the demand list as a raw key now reads as English", () => {
+  expect(demandSentence("draw:any")).toBe("a card being drawn");
+  expect(demandSentence("counter-added:type:creature")).toBe("a creature getting a counter");
+  expect(demandSentence("non-combat-damage:type:permanent")).toBe("a permanent dealing noncombat damage");
+  expect(demandSentence("leaves:any")).toBe("anything leaving the battlefield");
+  expect(demandSentence("leaves:type:creature")).toBe("a creature leaving the battlefield");
+  expect(demandSentence("leaves:type:artifact")).toBe("an artifact leaving the battlefield");
+  expect(demandSentence("dice-rolled:any")).toBe("a die being rolled");
+  expect(demandSentence("discard:any")).toBe("anything being discarded");
+  expect(demandSentence("gain-life:any")).toBe("life being gained");
+  // proliferate names no card type in the corpus (it is a player action over "any number" of
+  // permanents/players with counters, never scoped to a card type) -- but unlike `attacks:any`,
+  // where "anything attacking" is TRUE of a permanent, nothing but a PLAYER proliferates, so it no
+  // longer glues "anything" onto the front (review finding F1, fix round 1).
+  expect(demandSentence("proliferate:any")).toBe("proliferating");
+  // None of these may contain the raw separators a reader mistook for a template.
+  for (const key of [
+    "draw:any", "counter-added:type:creature", "non-combat-damage:type:permanent", "leaves:any",
+    "dice-rolled:any", "discard:any", "gain-life:any", "proliferate:any",
+    "combat-damage:type:creature", "begin-combat:any",
+  ]) {
+    expect(demandSentence(key)).not.toMatch(/[:-]/);
+  }
+});
+
+// F1 (task 8 fix round 1): `demandSentence` glued a permanent subject onto five PLAYER-only verbs,
+// producing a grammatical sentence that is FALSE -- "anything drawing a card" claims a permanent
+// draws, when only a player ever does. FAILS against the pre-fix strings ("anything drawing a
+// card", "anything gaining life", "anything losing life", "anything rolling a die", "anything
+// proliferating"); passes once each reads as the whole demand with no subject glued on, the same
+// structural move `DEMAND_PHASE` already makes for a phase.
+test("draw, gain-life, lose-life, dice-rolled and proliferate read as their true sentence, not a false one glued to a subject", () => {
+  expect(demandSentence("draw:any")).toBe("a card being drawn");
+  expect(demandSentence("gain-life:any")).toBe("life being gained");
+  expect(demandSentence("lose-life:any")).toBe("life being lost");
+  expect(demandSentence("dice-rolled:any")).toBe("a die being rolled");
+  expect(demandSentence("proliferate:any")).toBe("proliferating");
+});
+
+// STEP 5: no output of `demandSentence`, mapped or not, may contain a raw census separator -- fed
+// every shape task 8 measured plus a verb the engine does not have yet, so a verb added tomorrow
+// without a matching entry degrades to readable words instead of shipping its own name back.
+test("demandSentence never emits a colon or a dash, mapped verb or not", () => {
+  const keys = [
+    "enters:type:creature", "enters:subtype:wizard", "cast:type:artifact+enchantment+instant",
+    "end-step:any", "begin-combat:any", "upkeep:any",
+    "combat-damage:type:creature", "combat-damage:type:creature (narrowed)", "combat-damage:type:permanent",
+    "non-combat-damage:type:permanent", "draw:any", "leaves:any", "leaves:type:creature",
+    "leaves:type:artifact", "counter-added:type:creature", "counter-added:any", "discard:any",
+    "gain-life:any", "proliferate:any", "dice-rolled:any",
+    // A verb this map has never seen, exactly the shape a future engine verb would arrive as.
+    "some-future-verb:type:creature",
+  ];
+  for (const key of keys) {
+    expect(demandSentence(key)).not.toMatch(/[:-]/);
+  }
 });
 
 test("BuildBenchmarks shows the measured clock, and calls it what it is", () => {
@@ -677,8 +1141,8 @@ test("BuildBenchmarks names the win plans with their counts, and says which dire
 
 test("BuildBenchmarks shows the land count the deck's own curve asks for", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  // Deck-derived, unlike the flat 36 the benchmark above scores against -- and it shows the inputs,
-  // because "34" with no working is a number to argue with rather than act on.
+  // Deck-derived, and now the SAME number buildScore is scored against (task 9) -- and it shows the
+  // inputs, because "34" with no working is a number to argue with rather than act on.
   expect(screen.getByLabelText(/37 lands in the deck, this curve wants 34/i)).toBeInTheDocument();
   // The regression's author is implementation, not a label: the reader is asking how many lands
   // to run, not whose formula answered.
@@ -686,13 +1150,54 @@ test("BuildBenchmarks shows the land count the deck's own curve asks for", () =>
   expect(screen.getByText(/avg mana value 2\.7/i)).toBeInTheDocument();
   expect(screen.getByText(/12 cheap ramp/i)).toBeInTheDocument();
   expect(screen.getByText(/2 fast mana/i)).toBeInTheDocument();
+  // A number scored on the derived target says nothing about "flat convention" -- that wording is
+  // reserved for a fallback (next test), and its presence here would be the silent-swap defect.
+  expect(screen.queryByText(/flat convention/i)).not.toBeInTheDocument();
+});
+
+test("BuildBenchmarks says so when the land target falls back to the flat convention (task 9)", () => {
+  // A big-mana deck's curve can ask the regression for more lands than it was ever tested giving --
+  // `gatedLandsTarget` refuses outside [28, 39] and scores the flat 36 instead. The row must show
+  // THAT number (matching what buildScore used) and say why, not silently swap between two figures
+  // that mean different things.
+  const fallback = {
+    ...DECK_MATH,
+    lands: { ...DECK_MATH.lands, target: 36, targetSource: "flat" as const, rawTarget: 50 },
+  };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={fallback} />);
+  expect(
+    screen.getByLabelText(/37 lands in the deck, this curve wants 36 -- the flat convention, because this curve's own regression asks for 50, outside the tested range/i),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/flat convention -- this curve's own regression asks for 50, outside the tested range/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks says so when an archetype delta is folded into the land target (fix F1, task 9)", () => {
+  // rakdos-landfall's exact shape (controller review 2026-08-21): a derived 39 from the curve, plus
+  // landfall's own +4, scored as 43 -- and the panel must say why 43 is not simply the curve's own
+  // answer, the same "never swap silently" rule the flat-fallback test above already covers.
+  const landfall = {
+    ...DECK_MATH,
+    lands: { ...DECK_MATH.lands, target: 43, targetSource: "derived" as const, rawTarget: 39, archetypeDelta: 4, archetypeLabel: "Landfall" },
+  };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={landfall} />);
+  expect(
+    screen.getByLabelText(/37 lands in the deck, this curve wants 43 -- 39 from the curve plus 4 because this is a landfall deck/i),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/39 from the curve plus 4 because this is a landfall deck/i)).toBeInTheDocument();
+  // Never the flat-convention wording on a purely-derived-plus-delta row.
+  expect(screen.queryByText(/flat convention/i)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // The spec's own worked sentence: 12 cards want {B}{B} by T3, that needs 33 sources, you run 26.
-  expect(screen.getByLabelText(/B, 26 sources, 12 cards want 2 pips by turn 3, which needs 33/i))
-    .toBeInTheDocument();
+  const bRow = screen.getByLabelText(/B, 26 sources, 12 cards want 2 pips by turn 3, which needs 33/i);
+  expect(bRow).toBeInTheDocument();
+  // The label above is spelled in words on purpose (screen readers), but the VISIBLE pip phrase
+  // ("2 cards want {B}{B} on turn 3") must render as symbols, never brace text -- that line has no
+  // other coverage, and reverting it alone would pass the rest of the suite unnoticed.
+  expect(within(bRow).getAllByRole("img", { name: /mana/i }).length).toBeGreaterThan(0);
+  expect(within(bRow).queryByText(/\{[^}]+\}/)).toBeNull();
   // A colour that pays for itself says so rather than being dropped -- an absent row would read as
   // "not checked".
   expect(screen.getByLabelText(/U, 30 sources, enough/i)).toBeInTheDocument();
@@ -749,7 +1254,7 @@ test("BuildBenchmarks carries the caveat that makes the numbers readable", () =>
 });
 
 test("BuildBenchmarks renders without deck math at all", () => {
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} />);
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
   expect(screen.getByText("Ramp")).toBeInTheDocument();
   expect(screen.queryByText(/answers by turn/i)).not.toBeInTheDocument();
 });
@@ -831,6 +1336,22 @@ test("trim rows stay hidden until asked for, then show N with what keeps each ca
 test("trim renders even when the passive cut list is empty — the case it exists for", () => {
   render(<CutList cutList={[]} slack={[]} trim={TRIM} />);
   expect(screen.getByText(/Over on cards\?/)).toBeTruthy();
+});
+
+// F3: the slack chip printed the raw camelCase key ("targetedRemoval 14/10 (+4)") because this
+// file had no label map at all -- BuildBenchmarks' fix for the identical bug (CONFLICT 9,
+// `graveyardHate`) could not reach here, since its map was a local `const`. Both now import the
+// same `BUILD_CATEGORY_LABEL`.
+test("the slack chip names its category in words, not the raw camelCase key", () => {
+  render(
+    <CutList
+      cutList={[]}
+      slack={[{ category: "targetedRemoval", count: 14, target: 10, over: 4 }]}
+      trim={[]}
+    />,
+  );
+  expect(screen.getByText(/Removal/)).toBeInTheDocument();
+  expect(screen.queryByText(/targetedRemoval/)).not.toBeInTheDocument();
 });
 
 // --- The card drawer (F8): the inspector, reachable from any card name in the report. ---

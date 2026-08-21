@@ -135,7 +135,7 @@ export function BoardTuner({
       className={`flex justify-between gap-3 ${hard && value > 0 ? "text-(--warning)" : "text-(--muted)"}`}
     >
       <span>{label}</span>
-      <span className="tabular-nums">{value}</span>
+      <span className="stat-num">{value}</span>
     </div>
   );
 
@@ -154,7 +154,7 @@ export function BoardTuner({
         <div key={k.key} className="flex flex-col gap-0.5 py-1">
           <span className="flex justify-between text-(--muted)">
             {k.key}
-            <output className="tabular-nums">{formatValue(params[k.key])}</output>
+            <output className="stat-num">{formatValue(params[k.key])}</output>
           </span>
           <span className="text-(--muted) leading-tight" style={{ fontSize: 10 }}>{k.what}</span>
           <input

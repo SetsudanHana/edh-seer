@@ -46,7 +46,9 @@ test("reason text is human-readable — no raw tag tokens leak", () => {
   const reasons = pairReasons(maker, etbPayoff, H);
   const etb = reasons.find((r) => r.tag === "enters:creature")!;
   expect(etb.text).not.toMatch(/:/); // no "enters:creature" style token
-  expect(etb.text).toContain("a creature entering");
+  // Cause first, naming the producer card rather than its class (sentence.ts) -- no engine
+  // vocabulary and no raw tag either.
+  expect(etb.text).toBe("When Inalla enters, Kindred Discovery draws you cards");
   // both card names still present (CLI + engine rely on this)
   expect(etb.text).toContain(maker.card.name);
   expect(etb.text).toContain(etbPayoff.card.name);
@@ -59,7 +61,14 @@ test("static edge: a zombie lord matches a zombie by characteristics", () => {
   }]);
   const zombie = base("Gravecrawler", [], ["zombie"]);
   const reasons = pairReasons(lord, zombie, H);
-  expect(reasons.some((r) => r.tag === "static:pump")).toBe(true);
+  const pump = reasons.find((r) => r.tag === "static:pump");
+  expect(pump).toBeDefined();
+  // F2 (review round 1): every other static:pump test here asserts .tag only, never .text -- so a
+  // swapped ternary branch or a swapped producer/consumer argument at the one call site
+  // (edges.ts, staticGrantSentence(p.card.name, c.card.name, a.effect.kind)) would ship silently.
+  // The cost-reduction branch of the identical ternary is asserted end-to-end below; this is that
+  // same coverage for the other branch.
+  expect(pump!.text).toBe("Death Baron gives Gravecrawler bigger stats");
 });
 
 test("clone edge: an activated copy that names a subtype applies to a card of that subtype", () => {
@@ -1009,11 +1018,15 @@ test("a payoff watching OTHER casts is untouched", () => {
   expect(directedReasons(spell, payoff, H).some((r) => r.tag.startsWith("cast"))).toBe(true);
 });
 
-test("a dying artifact is not described as a dying creature", () => {
+test("a dying artifact and a dying creature keep distinct tags even though the prose now matches", () => {
   // Scrap Trawler watches its own death AND another artifact hitting the graveyard, so a sac outlet
-  // supplies both `dies:creature` and `dies:artifact`. humanizeEvent hardcoded "a creature dying"
-  // for every dies event, so the two reasons rendered as identical lines -- which read as a
-  // duplicate bug, but is really the reader being told an artifact is a creature.
+  // supplies both `dies:creature` and `dies:artifact`. humanizeEvent USED TO hardcode "a creature
+  // dying" for every dies event, rendering the two reasons as identical lines -- an artifact told
+  // to the reader as a creature. sentence.ts's fix is structural rather than a second case: the
+  // cause now names the specific PRODUCER CARD ("When Executioner's Capsule dies") and drops the
+  // subject/type entirely, so the two rows read identically ON PURPOSE -- a reader does not need to
+  // be told which of Scrap Trawler's two typed triggers fired, only that a death happened and it
+  // responded. What must still be distinct is the TAG, which `claimCount`/`dedupeReasons` key on.
   const outlet = base("Executioner's Capsule", [{
     kind: "activated",
     effect: { kind: "" },
@@ -1034,11 +1047,12 @@ test("a dying artifact is not described as a dying creature", () => {
       effect: { kind: "graveyard-recursion" },
     },
   ]);
-  const texts = directedReasons(outlet, trawler, H)
-    .filter((r) => r.tag.startsWith("dies")).map((r) => r.text);
-  expect(new Set(texts).size).toBe(texts.length);
-  expect(texts.some((t) => t.includes("an artifact dying"))).toBe(true);
-  expect(texts.some((t) => t.includes("a creature dying"))).toBe(true);
+  const reasons = directedReasons(outlet, trawler, H).filter((r) => r.tag.startsWith("dies"));
+  const tags = reasons.map((r) => r.tag);
+  expect(new Set(tags)).toEqual(new Set(["dies:creature", "dies:artifact"]));
+  const texts = reasons.map((r) => r.text);
+  expect(new Set(texts).size).toBe(1); // prose collapses on purpose; the tag is what stays distinct
+  expect(texts[0]).toBe("When Executioner's Capsule dies, Scrap Trawler brings a card back");
 });
 
 test("directedReasons does not repeat a reason it has already made", () => {
@@ -1088,7 +1102,7 @@ test("every reason tag the engine emits humanizes into prose, never a raw tag", 
   const texts = directedReasons(producer, consumer, H).map((r) => r.text);
   expect(texts.length).toBeGreaterThan(0);
   for (const t of texts) expect(t).not.toMatch(/leaves any|:/);
-  expect(texts[0]).toContain("leaving the battlefield");
+  expect(texts[0]).toBe("When Imskir Iron-Eater leaves the battlefield, Nadier's Nightblade drains each opponent");
 });
 
 test("a becomes-tapped reason humanizes into prose, never a raw tag", () => {
@@ -1108,7 +1122,8 @@ test("a becomes-tapped reason humanizes into prose, never a raw tag", () => {
   const texts = directedReasons(producer, consumer, H).map((r) => r.text);
   expect(texts.length).toBeGreaterThan(0);
   for (const t of texts) expect(t).not.toMatch(/taps creature|taps any|:/);
-  expect(texts[0]).toContain("becoming tapped");
+  // effectKind "card-draw" (not "draw-card") carries no phrase, which is rung 3 of the ladder.
+  expect(texts[0]).toBe("When Merrow Reejerey becomes tapped, Unctus, Grand Metatect triggers");
 });
 
 test("a self-recursion is only enabled by a fill that could contain the card itself", () => {
@@ -1328,10 +1343,10 @@ test("a historic cast watcher narrows, and only historic cards satisfy it", () =
 });
 
 test("a negated subject keys and reads as the negation, not as one arbitrary member", () => {
-  // `cast:artifact` for a noncreature trigger is not a cosmetic wart: humanizeEvent renders the key
-  // into the reason the user reads, so an INSTANT supplying Valley Floodcaller produced "triggers on
-  // an artifact being cast". cardThemeTags uses the same key, so those payoffs were grouped with
-  // artifact-cast decks on the theme axis.
+  // `cast:artifact` for a noncreature trigger is not a cosmetic wart: cardThemeTags uses the same
+  // key, so a wrong one grouped these payoffs with artifact-cast decks on the theme axis. The
+  // rendered TEXT no longer needs the subject at all -- sentence.ts names the specific producer
+  // card as the cause, not its class -- so what this test now pins is the TAG.
   const floodcaller = base("Valley Floodcaller", [{
     kind: "triggered",
     trigger: { verbs: ["cast"], subject: {
@@ -1349,7 +1364,8 @@ test("a negated subject keys and reads as the negation, not as one arbitrary mem
   };
   const reasons = pairReasons(instant, floodcaller, H);
   expect(reasons.some((r) => r.tag === "cast:-creature")).toBe(true);
-  expect(reasons.find((r) => r.tag === "cast:-creature")!.text).toContain("a noncreature spell being cast");
+  expect(reasons.find((r) => r.tag === "cast:-creature")!.text)
+    .toBe("When Rakdos Charm is cast, Valley Floodcaller makes your creatures bigger");
 });
 
 test("an artifact CREATURE spell does not satisfy a noncreature trigger", () => {
@@ -1683,11 +1699,11 @@ test("a disjunctive tutor keys on the branch that matched", () => {
 });
 
 // A SELF trigger watches only its own entry, but `themeSubjectKey` ignores `subject.self`, so it
-// keys `enters:any` and humanizeEvent rendered "triggers on A PERMANENT entering" — a false sentence
-// about a card that watches nothing but itself. That sentence is not cosmetic: it is what produced
-// the wrong mechanism for defect A on 2026-08-13, sending the diagnosis at `SubjectFilter.self`
-// (which had covered "this land" since 2e27af4) instead of at the supertype and umbrella gaps that
-// were actually forming the edges.
+// keys `enters:any` — the same tag a card watching any permanent would carry. That is not a
+// rendering defect any more (sentence.ts's `self` flag makes the PROSE say whose entry it is,
+// independent of the tag); it is what produced the wrong mechanism for defect A on 2026-08-13,
+// sending the diagnosis at `SubjectFilter.self` (which had covered "this land" since 2e27af4)
+// instead of at the supertype and umbrella gaps that were actually forming the edges.
 //
 // The TAG is deliberately left alone. It is the panel's join key, and changing it would detach every
 // cached verdict on these pairs for a prose fix — the lesson DERIVE_VERSION 31 banked when it kept a
@@ -1705,8 +1721,7 @@ test("a self trigger says whose entry it is, without moving the tag", () => {
   }]);
   const etb = pairReasons(fetch, land, H).find((r) => r.tag.startsWith("enters"))!;
   expect(etb.tag).toBe("enters:any");
-  expect(etb.text).toContain("its own entry");
-  expect(etb.text).not.toContain("a permanent entering");
+  expect(etb.text).toBe("When Shadowy Backstreet enters thanks to Marsh Flats, it triggers");
   expect(etb.text).toContain("Marsh Flats");
 });
 
@@ -1723,7 +1738,8 @@ test("a non-self trigger still reads as the class it watches", () => {
     emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }],
   }]);
   const etb = pairReasons(maker, payoff, H).find((r) => r.tag === "enters:creature")!;
-  expect(etb.text).toContain("a creature entering");
+  // No "thanks to" -- a class trigger's cause is the producer's own event, not the consumer's.
+  expect(etb.text).toBe("When Bitterblossom enters, Impact Tremors triggers");
   expect(etb.text).not.toContain("its own entry");
 });
 

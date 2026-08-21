@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
+import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 
@@ -180,7 +181,7 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
               const roles = (c.roles ?? []) as Category[];
               return (
                 <tr key={c.name} className="border-b border-(--separator) align-top">
-                  <td className="py-2 pr-2 font-mono tabular-nums text-(--muted)">{String(i + 1).padStart(2, "0")}</td>
+                  <td className="py-2 pr-2 stat-num text-(--muted)">{String(i + 1).padStart(2, "0")}</td>
                   <td className="py-2 pr-2 min-w-0">
                     <CardName name={c.name} className="block truncate max-w-full" />
                     {reason ? <span className="block text-xs text-(--muted) truncate">{reason}</span> : null}
@@ -197,14 +198,14 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
                   <td className="py-2 pr-2 text-right">
                     {/* An em dash for a land or an unpriced cost -- a refusal must never render as
                       *  0%, which a reader would take as "you cannot cast this". */}
-                    <span className="block font-mono tabular-nums">{c.manaCost ?? "—"}</span>
+                    <span className="block"><ManaSymbols cost={c.manaCost ?? ""} /></span>
                     {c.castability ? (
-                      <span className="block text-xs text-(--muted) tabular-nums">
+                      <span className="block text-xs text-(--muted) stat-num">
                         {castRange(c.castability)} by T{c.castability.turn}
                       </span>
                     ) : null}
                   </td>
-                  <td className="py-2 text-right font-mono tabular-nums text-(--accent)">
+                  <td className="py-2 text-right stat-num text-(--accent)">
                     {c.synergyRating !== undefined ? c.synergyRating.toFixed(1) : "—"}
                   </td>
                 </tr>

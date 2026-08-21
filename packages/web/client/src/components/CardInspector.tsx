@@ -50,7 +50,7 @@ export function CardInspector({
             <li key={`${e.from}->${e.to}`} className="flex flex-col gap-0.5">
               <div className="flex justify-between gap-2">
                 <span>{isOutgoing ? `${node.label} → ${partner}` : `${partner} → ${node.label}`}</span>
-                <span className="font-mono tabular-nums text-(--muted) shrink-0">
+                <span className="stat-num text-(--muted) shrink-0">
                   {e.weight.toFixed(1)}
                 </span>
               </div>
@@ -96,7 +96,7 @@ export function CardInspector({
         <h3 className="text-base font-medium">
           {node.label}
           {node.copies > 1 ? (
-            <span className="ml-1.5 font-mono tabular-nums text-(--muted)">×{node.copies}</span>
+            <span className="ml-1.5 stat-num text-(--muted)">×{node.copies}</span>
           ) : null}
         </h3>
         <p className="text-(--muted) text-xs">{typeLine}</p>

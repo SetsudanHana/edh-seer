@@ -1386,7 +1386,7 @@ export function GraphView(
               <span className="whitespace-nowrap">{row.label}</span>
               {/* Flow rows carry no count -- a direction is a fact about the graph shape, not a
                *  quantity of cards, unlike a paint-mode value. */}
-              {row.count !== undefined ? <span className="font-mono tabular-nums text-(--muted)">{row.count}</span> : null}
+              {row.count !== undefined ? <span className="stat-num text-(--muted)">{row.count}</span> : null}
             </div>
           ))}
         </div>
@@ -1407,7 +1407,7 @@ export function GraphView(
               style={{ left: hover.x + 12, top: hover.y + 12 }}
             >
               {hover.label}{" "}
-              <span className="text-(--muted) font-mono tabular-nums">
+              <span className="text-(--muted) stat-num">
                 {hover.copies > 1 ? `×${hover.copies} · ` : ""}{hover.deg} partners
               </span>
               {hover.detail ? <span className="text-(--muted)"> · {hover.detail}</span> : null}

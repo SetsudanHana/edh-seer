@@ -2,6 +2,8 @@ import { expect, test } from "vitest";
 import type { Card } from "@mtg/engine";
 import { seen } from "@mtg/engine";
 import { computeDeckMath, CORPUS_MEDIAN_CLOCK } from "./deck-math.js";
+import { computeBuild } from "./build.js";
+import type { LandRecommendation } from "./land-count.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 const H: Hierarchy = {};
@@ -131,4 +133,51 @@ test("an answer row says how many of its answers exile, and how many recur", () 
   // shortfall and its bar must be untouched by this step.
   expect(creature.required).toBeGreaterThan(0);
   expect(creature.available).toBeGreaterThan(0);
+});
+
+/** Fix F1 (task 9, controller review 2026-08-21): a landfall deck's `computeDeckMath` panel row and
+ *  `computeBuild`'s score both apply `ARCHETYPE_TARGET_DELTAS.landfall`'s `lands: +4` on top of the
+ *  identical gated Karsten target, so they can never again print two different numbers for "what
+ *  this deck wants". This is the exact `rakdos-landfall` shape the review measured live: gated
+ *  target 39, score's scored target 43 -- before the fix the panel stayed at 39. */
+test("a landfall deck's panel target and scored target agree, including the archetype delta", () => {
+  const deck = fillTo(100, []);
+  const rec: LandRecommendation = {
+    avgManaValue: 3.2, rampPlusDraw: 0, fastMana: 0, commanders: 1,
+    mdfcUntapped: 0, mdfcTapped: 0, actual: 39, target: 39, // inside [28, 39]: the gate reads 'derived'
+  };
+
+  const scoredTarget = computeBuild(deck, "landfall", rec.target)
+    .buildCategories.find((c) => c.category === "lands")!.target;
+  const dm = computeDeckMath(deck, H, [], undefined, { landRecommendation: rec, primary: "landfall" });
+
+  expect(dm.lands.targetSource).toBe("derived");
+  expect(dm.lands.archetypeDelta).toBe(4);
+  expect(dm.lands.archetypeLabel).toBe("Landfall");
+  expect(dm.lands.target).toBe(scoredTarget); // 43 === 43 -- THE divergence this task closes
+  expect(dm.lands.target).toBe(43);
+
+  // Omitting `primary` (every pre-task-9 caller, and every other archetype) must not invent a
+  // delta out of nowhere.
+  const noPrimary = computeDeckMath(deck, H, [], undefined, { landRecommendation: rec });
+  expect(noPrimary.lands.archetypeDelta).toBe(0);
+  expect(noPrimary.lands.archetypeLabel).toBeUndefined();
+  expect(noPrimary.lands.target).toBe(39);
+});
+
+test("answer rows carry their colour pool -- says how many answers of the class the deck's colours can supply at all", () => {
+  const deck = [
+    { card: { name: "Cmdr", typeLine: "Legendary Creature — Zombie", oracleText: "", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 3, power: "3", toughness: "3" }, tags: null },
+    // A non-empty library -- with only the commander in `deck`, `library` is 0 and `minCopies`
+    // throws (correctly: "how many copies to reach confidence" has no answer in a 0-card library).
+    // That is orthogonal to what this test checks, so give it one filler card.
+    { card: { name: "Filler", typeLine: "Creature — Human", oracleText: "", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 2, power: "2", toughness: "2" }, tags: null },
+  ] as never[];
+  const dm = computeDeckMath(deck, {}, ["Cmdr"]);
+  const artifact = dm.answers.find((a) => a.class === "artifact")!;
+  expect(artifact.count).toBe(0);
+  // The zero is the finding only when the pool is not. Black's artifact pool is the smallest
+  // of any identity, so this row means "the colour pie", not "you forgot".
+  expect(artifact.pool).toBeGreaterThan(0);
+  expect(artifact.pool).toBeLessThan(100);
 });

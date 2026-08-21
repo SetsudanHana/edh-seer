@@ -10,6 +10,11 @@ import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
+import {
+  copySentence, costReductionSentence, counterPresenceSentence, createsSentence, fetchSentence,
+  graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
+  staticGrantSentence, tutorSentence, winconSentence,
+} from "./sentence.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -17,10 +22,10 @@ const list = (v: string | string[] | undefined): string[] =>
 /** A short human/grouping key for a subject: its subtype, else its type, else "any". */
 export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // A NEGATION outranks the list it resolves to. `type` holds the six types "noncreature spell"
-  // leaves, and taking the first of them keyed Valley Floodcaller as `cast:artifact` -- which
-  // humanizeEvent then rendered, to the user, as "an artifact being cast" about an instant, and
-  // which cardThemeTags grouped with artifact-cast decks. A subtype is more specific still, so it
-  // keeps priority over both.
+  // leaves, and taking the first of them keyed Valley Floodcaller as `cast:artifact` -- a wrong tag
+  // for a card that excludes creatures, not one that names artifacts -- and cardThemeTags grouped
+  // it with artifact-cast decks on the theme axis. A subtype is more specific still, so it keeps
+  // priority over both.
   // A NAME outranks everything below it — it identifies ONE card, which is as specific as a subject
   // gets. Only 10 clauses in the derived corpus carry one, so the theme fragmentation this could
   // cause is bounded, and a name really is its own theme where it appears.
@@ -33,9 +38,9 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   if (first !== undefined) return themeSubjectKey(first);
   // An UMBRELLA outranks the list it resolves to, for the same reason a negation does: "permanent
   // spell" resolves to five concrete types, and taking the first keyed Hylda's Crown of Winter --
-  // an Artifact -- as `cast:creature`, which humanizeEvent renders as "a creature being cast". It
-  // ranks BELOW the negation, because "nonland permanent" is more precisely named by what it
-  // excludes, and that is the key the panel's verdicts already carry.
+  // an Artifact -- as `cast:creature`, a wrong tag naming a class the card is not. It ranks BELOW
+  // the negation, because "nonland permanent" is more precisely named by what it excludes, and that
+  // is the key the panel's verdicts already carry.
   return list(s.subtype)[0]
     ?? (negated.length ? `-${negated[0]}` : undefined)
     ?? s.umbrella
@@ -571,90 +576,6 @@ function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
   return bare ? "oneshot" : "triggered";
 }
 
-/** How a SELF trigger reads. `themeSubjectKey` ignores `subject.self`, so a card watching only its
- *  own entry keys `enters:any` and used to render as "a permanent entering" — a false sentence about
- *  a card that watches nothing but itself, and the one that sent defect A's diagnosis to
- *  `SubjectFilter.self` (which had covered "this land" since 2e27af4) instead of to the supertype and
- *  umbrella gaps actually forming the edges.
- *
- *  The TAG is deliberately not changed to match. It is the panel's join key, and re-keying it would
- *  detach every cached verdict on these pairs to fix prose — the trade DERIVE_VERSION 31 already
- *  refused once, keeping judging debt at 0 through the umbrella work. */
-const SELF_EVENT: Record<string, string> = {
-  enters: "its own entry",
-  dies: "its own death",
-  leaves: "its own departure",
-  "enters-graveyard": "its own trip to the graveyard",
-  cast: "being cast",
-  attacks: "its own attack",
-  taps: "becoming tapped",
-  untaps: "untapping",
-  // The generic `its own ${verb}` reads as "its own counter added", which is not English.
-  "counter-added": "a counter being put on it",
-};
-
-/** Turn an internal zone-event key ("enters:creature", "cast:instant") into a reader-facing
- *  noun phrase. Fallback de-slugifies anything unmapped so no ":"/"-" token ever reaches the UI. */
-function humanizeEvent(key: string, self = false): string {
-  const [verb, subjRaw = ""] = key.split(":");
-  // A self trigger names no class, whatever the key says — the subject IS the consumer.
-  if (self) return SELF_EVENT[verb] ?? `its own ${verb.replace(/-/g, " ")}`;
-  // A leading "-" is a NEGATED type (`cast:-creature`), which reads as the card writes it. Stripped
-  // before the general dash-to-space rule, which would otherwise turn "-creature" into " creature"
-  // and say the opposite of what the subject means.
-  const negated = subjRaw.startsWith("-");
-  const subj = negated ? `non${subjRaw.slice(1)} spell` : subjRaw.replace(/-/g, " ");
-  const art = (w: string) => (/^[aeiou]/i.test(w) ? "an" : "a");
-  switch (verb) {
-    case "enters":
-      return subj === "any" ? "a permanent entering" : `${art(subj)} ${subj} entering`;
-    case "enters-graveyard":
-      return subj === "any" ? "a card hitting the graveyard" : `${art(subj)} ${subj} hitting the graveyard`;
-    case "cast":
-      return `${art(subj)} ${subj} being cast`;
-    case "attacks":
-      return subj === "any" ? "an attack" : `${art(subj)} ${subj} attacking`;
-    // Subject-aware for the same reason `enters` is. A `dies` event is any permanent LEAVING THE
-    // BATTLEFIELD (see zoneEventKey), not only a creature, and hardcoding "a creature dying" both
-    // told the reader an artifact was a creature and rendered two genuinely different reasons --
-    // Scrap Trawler's dies:creature and dies:artifact -- as identical lines.
-    case "dies":
-      return subj === "any" ? "a permanent dying" : `${art(subj)} ${subj} dying`;
-    // zoneEventKey turns leaves@battlefield into `dies`, so a bare `leaves` is a permanent going
-    // somewhere the graveyard is not — exile, hand, library. Without a case it fell through to the
-    // de-slugify default and shipped "triggers on leaves any" to the web UI as English.
-    case "leaves":
-      return subj === "any"
-        ? "a permanent leaving the battlefield"
-        : `${art(subj)} ${subj} leaving the battlefield`;
-    // Same defect as `leaves`: no case, so the de-slugify default shipped "triggers on taps
-    // creature" to the web UI as English. "Becoming tapped" rather than "being tapped", because the
-    // event is the state change — a permanent that ARRIVES tapped never becomes tapped and emits
-    // nothing (see ARRIVES_TAPPED in tagger's derive.ts).
-    case "taps":
-      return subj === "any" ? "a permanent becoming tapped" : `${art(subj)} ${subj} becoming tapped`;
-    case "untaps":
-      return subj === "any" ? "a permanent untapping" : `${art(subj)} ${subj} untapping`;
-    case "counter-added":
-      return "a counter being added";
-    // These fell through to the de-slugify default and shipped "triggers on gain life any" to the
-    // UI as English. Latent before the keyword channel (2026-08-14) and unmissable after it, since
-    // lifelink and extort make gain-life a common event where it was nearly absent.
-    case "gain-life":
-      return "life being gained";
-    case "lose-life":
-      return "life being lost";
-    case "sacrifice":
-      return subj === "any" ? "a permanent being sacrificed" : `${art(subj)} ${subj} being sacrificed`;
-    case "create-token":
-      return subj === "any" ? "a token being created" : `${art(subj)} ${subj} token being created`;
-    case "proliferate":
-      return "proliferate";
-    default:
-      return key.replace(/[:-]/g, " ");
-  }
-}
-
 /** Drop reasons identical in every field a reader or a score can see. `impliedProducer` is excluded
  *  from the key because it is provenance rather than content — two reasons that say the same thing
  *  are one reason whether or not one of them came from an implied event.
@@ -881,7 +802,10 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         reasons.push({
           tag: key,
-          text: `${c.card.name} triggers on ${humanizeEvent(key, t.subject.self === true)}; ${p.card.name} supplies it`,
+          text: reasonSentence({
+            producer: p.card.name, consumer: c.card.name, eventKey: key,
+            effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
+          }),
           effectKind: a.effect.kind,
           repeatability: triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
@@ -956,7 +880,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
       reasons.push({
         tag: `graveyard-recursion:${themeSubjectKey(a.effect.subject)}`,
-        text: `${p.card.name} fills the graveyard, enabling ${c.card.name}'s recursion`,
+        text: graveyardEnablesRecursion(p.card.name, c.card.name),
         effectKind: a.effect.kind,
         repeatability,
         scaling: a.effect.scaling,
@@ -1023,7 +947,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       if (!graveyardFillMatches(e.subject, a.effect.scalingSubject, h)) continue;
       reasons.push({
         tag: `scales:${themeSubjectKey(a.effect.scalingSubject)}`,
-        text: `${p.card.name} fills the graveyard, growing ${c.card.name}`,
+        text: graveyardFeedsScaling(p.card.name, c.card.name),
         effectKind: a.effect.kind,
         repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
         scaling: a.effect.scaling,
@@ -1045,7 +969,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), counted, h)) continue;
     reasons.push({
       tag: `wincon:${themeSubjectKey(counted)}`,
-      text: `${p.card.name} is what ${c.card.name} counts toward winning`,
+      text: winconSentence(p.card.name, c.card.name),
       effectKind: a.effect.kind,
       repeatability: "static",
       consumer: c.card.name,
@@ -1136,8 +1060,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         ? `static:${a.effect.kind}`
         : `${a.effect.kind}:${themeSubjectKey(a.effect.subject)}`,
       text: a.effect.kind === "cost-reduction"
-        ? `${p.card.name} reduces what ${c.card.name} costs`
-        : `${p.card.name}'s ${a.effect.kind.replace(/-/g, " ")} applies to ${c.card.name}`,
+        ? costReductionSentence(p.card.name, c.card.name)
+        : staticGrantSentence(p.card.name, c.card.name, a.effect.kind),
       effectKind: a.effect.kind,
       repeatability:
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
@@ -1204,7 +1128,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       if (!subjectMatches(found, a.effect.subject, h)) continue;
       reasons.push({
         tag: `ramp-target:${landSubtypes ? themeSubjectKey(a.effect.subject) : "basic"}`,
-        text: `${p.card.name} can fetch ${c.card.name}`,
+        text: fetchSentence(p.card.name, c.card.name),
         effectKind: a.effect.kind,
         repeatability:
           a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
@@ -1222,7 +1146,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     const matched = anyOf?.find((b) => subjectMatches(found, { ...shared, ...b }, h));
     reasons.push({
       tag: `tutor:${themeSubjectKey(matched ?? a.effect.subject)}`,
-      text: `${p.card.name} can search up ${c.card.name}`,
+      text: tutorSentence(p.card.name, c.card.name),
       effectKind: a.effect.kind,
       repeatability:
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
@@ -1254,7 +1178,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       if (!subjectMatches(emit.subject, want, h)) continue;
       reasons.push({
         tag: `counter-added:${themeSubjectKey(want)}`,
-        text: `${c.card.name} benefits from ${want.counter} counters being on the board; ${p.card.name} puts them there`,
+        text: counterPresenceSentence(p.card.name, c.card.name, want.counter),
         effectKind: ca.effect.kind,
         repeatability: ca.kind === "static" ? "static" : ca.kind === "activated" ? "activated" : ca.kind === "on-cast" ? "oneshot" : "triggered",
         scaling: ca.effect.scaling,
@@ -1301,9 +1225,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         reasons.push({
           tag: key,
-          text: rawVerb === "dies"
-            ? `${p.card.name} copies ${c.card.name}; the legend rule puts one of them into the graveyard, triggering its death ability`
-            : `${c.card.name} triggers on ${humanizeEvent(key, true)}; ${p.card.name} copies it`,
+          text: copySentence(p.card.name, c.card.name, key, rawVerb === "dies"),
           effectKind: a.effect.kind,
           repeatability: triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
@@ -1346,7 +1268,7 @@ function meldReason(a: DeckCard, b: DeckCard): Reason[] {
   if (!partnered) return [];
   return [stampSides({
     tag: "meld",
-    text: `${a.card.name} and ${b.card.name} meld together`,
+    text: meldSentence(a.card.name, b.card.name),
     repeatability: "oneshot",
     producer: a.card.name,
     consumer: b.card.name,
@@ -1400,7 +1322,7 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
       if (!subjectMatches(consumerSubject, e.subject, h)) continue;
       reasons.push({
         tag: `creates:${themeSubjectKey(e.subject)}`,
-        text: `${p.card.name} creates ${c.card.name}`,
+        text: createsSentence(p.card.name, c.card.name),
         effectKind: "token-generation",
         repeatability:
           pa.kind === "static" ? "static" : pa.kind === "activated" ? "activated" : pa.kind === "on-cast" ? "oneshot" : "triggered",

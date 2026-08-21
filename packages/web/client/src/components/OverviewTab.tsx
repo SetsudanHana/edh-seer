@@ -31,7 +31,12 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         *  remaining blocks filled column two, and column three rendered empty -- 550px of dead space
         *  where the gutter used to be. */}
       <div className="columns-1 xl:columns-2 gap-6 [&>*]:break-inside-avoid [&>*]:mb-6">
-        <BuildBenchmarks categories={data.report.buildCategories} deckMath={data.report.deckMath} />
+        <BuildBenchmarks
+          categories={data.report.buildCategories}
+          parents={data.report.buildParents}
+          deckMath={data.report.deckMath}
+          answerCoverage={data.report.answerCoverage}
+        />
         <SuggestionsList suggestions={data.report.suggestions} />
         <CutList cutList={data.report.cutList} slack={data.report.slack} trim={data.report.trim} />
         <HighSynergyCards cards={data.report.cards} />

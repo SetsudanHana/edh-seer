@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import { analyzeDeckStructured } from "./analyze.js";
 import { SEED_IMPACT_WEIGHTS, loadImpactWeights } from "@mtg/engine";
 import type { TagStats } from "@mtg/engine";
@@ -1104,4 +1104,53 @@ test("roleBlend actually scales feederLift into score, not just a config field n
   const inallaOff = blendOff.cards.find((c) => c.name === "Inalla")!;
   const inallaOn = blendOn.cards.find((c) => c.name === "Inalla")!;
   expect(inallaOff.score).toBeLessThan(inallaOn.score);
+});
+
+describe("answer coverage reaches the report", () => {
+  it("weights by the COMMANDERS' identity, not by the whole deck's", () => {
+    // A mono-black commander with an off-identity card in the 99 is not a five-colour deck.
+    const deck = [
+      { card: { name: "Black Commander", typeLine: "Legendary Creature — Zombie", oracleText: "", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 3, power: "3", toughness: "3" }, tags: null },
+      { card: { name: "Naturalize", typeLine: "Instant", oracleText: "Destroy target artifact or enchantment.", keywords: [], colors: ["G"], colorIdentity: ["G"], manaValue: 2, power: null, toughness: null }, tags: null },
+    ] as never[];
+    const report = analyzeDeckStructured(deck, ["Black Commander"]);
+    expect(report.answerCoverage!.source).toBe("weighted");
+    const artifact = report.answerCoverage!.rows.find((r) => r.class === "artifact")!;
+    // Black's artifact pool is the smallest of any identity; a five-colour read would be 1.
+    expect(artifact.poolShare).toBeLessThan(0.2);
+  });
+
+  it("refuses the pool weight when no commander was detected", () => {
+    const deck = [
+      { card: { name: "Lone Card", typeLine: "Instant", oracleText: "Destroy target creature.", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 2, power: null, toughness: null }, tags: null },
+    ] as never[];
+    expect(analyzeDeckStructured(deck).answerCoverage!.source).toBe("unweighted");
+  });
+
+  it("refuses the pool weight when the named commander matches no card in the deck", () => {
+    // A typo'd or unresolved commander name must not silently read as a matched-but-colorless
+    // identity ([]) -- that is a real, thin pool (key "C") and gets weighted as one. It must fall
+    // back to unweighted exactly like "no commander" does.
+    const deck = [
+      { card: { name: "Lone Card", typeLine: "Instant", oracleText: "Destroy target creature.", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 2, power: null, toughness: null }, tags: null },
+    ] as never[];
+    expect(analyzeDeckStructured(deck, ["Nonexistent Commander"]).answerCoverage!.source).toBe("unweighted");
+  });
+});
+
+// Whole-branch review IMPORTANT 5: a decklist whose library resolves to ZERO cards -- only a
+// commander line, or every other name failing to resolve -- used to 500 the whole analysis.
+// `computeDeckMath`'s `minCopies` (hypergeometric.ts) THROWS at library=0 on purpose ("a silent
+// wrong answer is worse than a missing one"), and nothing upstream of the call guarded it.
+// Confirmed BEFORE this fix (direct `computeDeckMath` call, one commander, no library):
+// `minCopies: P(>= 1 by turn 9) >= 0.5 is unreachable at any copy count in 0`.
+it("analyses a commander-only deck instead of throwing, with deckMath simply absent", () => {
+  const cmd = {
+    card: { name: "Solo Commander", typeLine: "Legendary Creature — Zombie", oracleText: "", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 3, power: "3", toughness: "3" },
+    tags: null,
+  } as never;
+  const report = analyzeDeckStructured([cmd], ["Solo Commander"]);
+  expect(report.deckMath).toBeUndefined();
+  // Every other section still reports -- the guard skips one block, not the whole analysis.
+  expect(report.commanders).toEqual(["Solo Commander"]);
 });

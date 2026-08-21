@@ -20,7 +20,7 @@ export {
 export { themeMembership, themeCandidates, BASELINE_CAP, type ThemeMembership } from "./themes.js";
 export { classifyEffect, type EffectClass } from "./effect-class.js";
 export {
-  deckAvailability, type AvailabilityRow, type AvailabilityOptions,
+  deckAvailability, PHASE_VERBS, type AvailabilityRow, type AvailabilityOptions,
 } from "./availability.js";
 export {
   detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, type BuildCategory,
@@ -51,3 +51,7 @@ export {
   detectLines, classifyGrowth, iterationsNeeded,
   type Line, type Piece, type Resource, type Growth, type DetectLinesResult,
 } from "./lines.js";
+export {
+  answerCoverage, COVERAGE_CLASSES, ANSWER_BASELINE, GRAVEYARD_HATE_SHARE, type CoverageResult,
+} from "./answer-coverage.js";
+export { poolShare, commanderIdentity, identityKey, POOL_CLASSES, type AnswerPool } from "./answer-pool.js";

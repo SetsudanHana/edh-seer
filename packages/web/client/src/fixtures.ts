@@ -53,14 +53,28 @@ export const SAMPLE: AnalyzeResponse = {
     synergyOverall: 4.0,
     anchoring: 4.0,
     buildScore: 3.7,
+    // Task 7 (owner, 2026-08-21): a leaf's `target` is always 0 now — only `lands` (its own
+    // two-sided band, outside every parent) keeps a real one. `buildParents` below is what actually
+    // scores and flags.
     buildCategories: [
-      { category: "ramp", count: 6, target: 10 },
-      { category: "draw", count: 14, target: 10 },
-      { category: "targetedRemoval", count: 7, target: 10 },
-      { category: "boardWipe", count: 0, target: 3 },
-      { category: "protection", count: 2, target: 0 },
+      { category: "ramp", count: 6, target: 0 },
+      { category: "draw", count: 12, target: 0 },
+      { category: "cardSelection", count: 2, target: 0 },
       { category: "tutor", count: 0, target: 0 },
+      { category: "targetedRemoval", count: 5, target: 0 },
+      { category: "stackInteraction", count: 2, target: 0 },
+      { category: "graveyardHate", count: 1, target: 0 },
+      { category: "protection", count: 0, target: 0 },
+      { category: "boardWipe", count: 0, target: 0 },
       { category: "lands", count: 37, target: 36 },
+    ],
+    buildParents: [
+      // Consistency is OVER its own target (union of draw 12 + cardSelection 2 + tutor 0, no
+      // overlap in this fixture) -- Ramp is UNDER, same numbers the old leaf-scored fixture used.
+      { name: "Consistency", count: 14, target: 10, leaves: ["draw", "cardSelection", "tutor"] },
+      { name: "Ramp", count: 6, target: 10, leaves: ["ramp"] },
+      { name: "Interaction", count: 8, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
+      { name: "Board wipes", count: 0, target: 3, leaves: ["boardWipe"] },
     ],
     suggestions: ["No board wipe (target 3)", "Ramp 6/10 — add ~4", "Removal 7/10 — add ~3"],
     roles: { ramp: 4, draw: 10, removal: 6 },

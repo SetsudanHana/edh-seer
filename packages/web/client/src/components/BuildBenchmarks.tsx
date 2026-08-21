@@ -1,18 +1,27 @@
 import { Fragment, type ReactNode } from "react";
 import type { DeckReport } from "../types.js";
+import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
-
-const LABEL: Record<string, string> = {
-  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
-  stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
-  protection: "Protection", tutor: "Tutors",
-};
+import { ManaSymbols } from "./ManaSymbols.js";
+// NOTHING IS VALUE-IMPORTED FROM @mtg/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
+// prior deep import of `GRAVEYARD_HATE_SHARE` from `@mtg/matcher/src/answer-coverage.js` (reasoned
+// as skipping the barrel's node:fs-touching re-export of `analyze.js`) was itself fatal: that file
+// imports `poolShare`/`POOL_CLASSES` from `./answer-pool.js`, which reads `answer-pool.json` via a
+// MODULE-SCOPE `readFileSync("node:fs")` -- not lazy, not inside `loadAnswerPool`'s function body as
+// the removed comment claimed. Vite externalises `node:fs` for the browser, so the module graph died
+// on load and the app never mounted (white screen, "Cannot access node:fs.readFileSync in client
+// code"). No subpath of `@mtg/matcher` is safe to value-import from client code; see `HATE_COUNTS`
+// below for the hand-copy this now falls back to, and `land-math.ts` for the one library (`@mtg/
+// engine/hypergeometric`) that genuinely has no fs dependency and can be reached this way.
 
 /** Scored here and NOT listed as a benchmark row: the land count is reported once, by the block
  *  below, which derives its target from this deck's own curve instead of the flat 36 every deck was
- *  measured against. Two rows for one quantity, disagreeing on the target, is the panel's most
- *  literal duplicate -- and this component's own comment already said that when they disagree it is
- *  the fixed target that is guessing. `buildScore` still uses the flat target; only the row is gone. */
+ *  measured against. `buildScore` now reads the SAME target (task 9, 2026-08-21) -- `gatedLandsTarget`
+ *  plus whatever `ARCHETYPE_TARGET_DELTAS` adds for this deck's primary archetype, both applied via
+ *  the identical `adjustedTargets` call the score itself makes -- so this row and the score can no
+ *  longer disagree about which number this deck is being held to. Two things can make `target` differ
+ *  from `rawTarget` and the row names both: the regression extrapolating and the score falling back
+ *  instead (`lands.targetSource`), and an archetype delta folded in (`lands.archetypeDelta`). */
 const REPORTED_ELSEWHERE = new Set(["lands"]);
 
 /** Where the target sits on a benchmark track, as a fraction of its width.
@@ -39,31 +48,89 @@ function Caveat({ label = "what this number ignores", children }: { label?: stri
 const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
 
 /** The event half of a census key (`enters`, `dies`, `cast`, `end-step`…) as the words a player
- *  would use. A verb absent here is NOT guessed at — `demandSentence` falls back to printing the
- *  raw key, which is ugly and true, rather than inventing a phrase for a verb the engine grew
- *  after this map was written. */
+ *  would use, for every verb `@mtg/tagger`'s `VERB_VOCAB` can put in a consumer's trigger EXCEPT
+ *  the three `availability.ts` calls `PHASE_VERBS` (those live in `DEMAND_PHASE` below, because a
+ *  phase carries no subject to glue this onto) AND the five `DEMAND_SUBJECTLESS` below (a player
+ *  action has no permanent subject either). The completeness test below this component walks all
+ *  three maps against `VERB_VOCAB`/`PHASE_VERBS` directly, so a verb the engine grows can no longer
+ *  ship silently unmapped, unmapped twice, or glued to a subject that cannot perform it — see
+ *  `demandSentence`'s fallback for what happens if one ever is.
+ *
+ *  Every remaining entry reads as a TRUE sentence once `${subject} ${event}` is glued: the subject
+ *  is always the OBJECT the event happens to or the ACTOR performing it, and every verb below is
+ *  true of a permanent in one of those two roles — `mill`/`discard`/`sacrifice`/`create-token` are
+ *  PASSIVE ("a card being milled" is true regardless of who mills it) and `enters`/`dies`/`leaves`/
+ *  `taps`/`untaps`/`attacks`/`cast`/`combat-damage`/`non-combat-damage`/`counter-added`/`land-play`
+ *  are ACTIVE, naming a permanent or card as the thing that does it. Checked one at a time against
+ *  review finding F1 (task 8 fix round 1), which is why this comment says so rather than leaving the
+ *  reader to re-derive it: `draw`, `gain-life`, `lose-life`, `dice-rolled` and `proliferate` failed
+ *  that check (CR pins all five to the CONTROLLER, never a permanent) and moved out.
+ *
+ *  One entry still needs a call rather than a lookup:
+ *  - `counter-added`: the subject is what the counter lands ON ("a creature getting a counter"),
+ *    not the counter's own kind — the field this reads is the consumer's demand, and a demand
+ *    names a permanent, never a +1/+1. */
 const DEMAND_VERB: Record<string, string> = {
   enters: "entering the battlefield",
   "enters-graveyard": "going to a graveyard",
   dies: "dying",
+  leaves: "leaving the battlefield",
   cast: "being cast",
   attacks: "attacking",
-  blocks: "blocking",
-  sacrificed: "being sacrificed",
-  discarded: "being discarded",
-  exiled: "being exiled",
+  taps: "becoming tapped",
+  untaps: "untapping",
+  "non-combat-damage": "dealing noncombat damage",
+  "combat-damage": "dealing combat damage",
+  discard: "being discarded",
+  mill: "being milled",
+  sacrifice: "being sacrificed",
+  "create-token": "being created",
+  "counter-added": "getting a counter",
+  "land-play": "being played",
 };
 
 /** Phase keys carry no subject — "an end step" is the whole demand, and gluing a subject onto it
- *  ("anything an end step") is nonsense. */
+ *  ("anything an end step") is nonsense. Kept in exact lockstep with `availability.ts`'s own
+ *  `PHASE_VERBS` (the completeness test enforces it): `combat-damage` and `draw-step` do NOT belong
+ *  here — the first is an event with a subject (a CREATURE dealing combat damage), the second is a
+ *  phase name the engine has never used a trigger key for. Both bugs shipped from this map
+ *  disagreeing with the engine's own list instead of reading it. */
 const DEMAND_PHASE: Record<string, string> = {
   "end-step": "an end step",
   upkeep: "an upkeep",
-  "draw-step": "a draw step",
-  "combat-damage": "combat damage",
+  "begin-combat": "the beginning of combat",
+};
+
+/** Player actions, not permanent events — the CR pins each of these five to the CONTROLLER
+ *  (CLAUDE.md's own list of controller-only verbs: draw · mill · discard · sacrifice · search ·
+ *  scry · surveil · add-mana · create · gain-life · lose-life; the other six in that list stay in
+ *  `DEMAND_VERB` because their PASSIVE reading — "a card being milled/discarded", "a permanent
+ *  being created/sacrificed" — is true of the object no matter who acts on it). None of these five
+ *  has a true passive reading once glued to a subject: "anything drawing a card" told the reader a
+ *  PERMANENT draws, which nothing does — review finding F1, task 8 fix round 1. Same structural move
+ *  `DEMAND_PHASE` already makes for a phase: the phrase IS the whole demand, no subject glued on.
+ *  `proliferate` moves here too — no corpus card narrows WHAT proliferates (it is a player action
+ *  over "any number" of permanents/players with counters), so "anything proliferating" was the same
+ *  false-actor sentence, not a genuinely free choice of wording. */
+const DEMAND_SUBJECTLESS: Record<string, string> = {
+  draw: "a card being drawn",
+  "gain-life": "life being gained",
+  "lose-life": "life being lost",
+  "dice-rolled": "a die being rolled",
+  proliferate: "proliferating",
 };
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** A raw census key, de-slugified. Reached only when a verb or a subject shape has no entry above
+ *  — which the completeness test says should never happen for a real `VERB_VOCAB` member, so this
+ *  is the SAFETY NET for a verb the engine grows tomorrow, not the everyday path. `humanizeEvent`
+ *  (edges.ts, deleted 0fb5e4d once `sentence.ts` took over reason-sentence rendering) shipped this
+ *  exact idea as its own default case: colons and dashes are the only things distinguishing a raw
+ *  key from an ordinary English sentence, so stripping them to spaces is still ugly and true, but
+ *  it no longer LOOKS like engine internals — the failure this map has already shipped twice
+ *  (`combat-damage`, `begin-combat`) was a raw identifier reaching a reader, not an English gap. */
+const deslugify = (key: string): string => key.replace(/[:-]/g, " ");
 
 /** Turn a census key into the sentence its own aria-label already implies — `enters:type:creature`
  *  is "a creature entering the battlefield", not a colon-separated identifier.
@@ -80,8 +147,18 @@ export function demandSentence(key: string): string {
   const phase = DEMAND_PHASE[verb];
   if (phase && subjectKey === "any") return phase;
 
+  // A player action has no permanent subject to glue this onto either -- same shape as the phase
+  // check above, one rung down (the subject slot always resolves to "any" for these five, since
+  // nothing narrows WHO draws or gains life to a card type).
+  const subjectless = DEMAND_SUBJECTLESS[verb];
+  if (subjectless && subjectKey === "any") {
+    return `${subjectless}${narrowed ? " (a real one, not the game's own)" : ""}`;
+  }
+
   const event = DEMAND_VERB[verb];
-  if (!event) return key; // unknown verb: say the true ugly thing rather than a plausible wrong one
+  // Unknown verb: say the true ugly thing, de-slugified, rather than inventing a phrase for a verb
+  // the engine grew after this map was written.
+  if (!event) return deslugify(key);
 
   /** "artifact", "battle", "creature" -> "an artifact, battle or creature". */
   const oneOf = (members: string[]): string => {
@@ -100,22 +177,185 @@ export function demandSentence(key: string): string {
   } else if (subjectKey.startsWith("type:")) {
     subject = oneOf(subjectKey.slice("type:".length).split("+"));
   } else {
-    return key;
+    // A subject shape this function has no branch for — same failure mode as an unmapped verb,
+    // same fallback for the same reason.
+    return deslugify(key);
   }
 
   return `${subject} ${event}${narrowed ? " (a real one, not the game's own)" : ""}`;
 }
 
+/** Exported ONLY for the completeness test below (`components.test.tsx`) to walk against
+ *  `@mtg/tagger`'s `VERB_VOCAB` and `@mtg/matcher`'s `PHASE_VERBS` — the two engine lists that
+ *  define exactly what a census key's verb half can ever be. Not meant as a public API otherwise;
+ *  read `demandSentence` if you want the rendering. */
+export { DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
+
 export function BuildBenchmarks({
-  categories, deckMath,
+  categories, parents, deckMath, answerCoverage,
 }: {
   categories: DeckReport["buildCategories"];
+  /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). This is what carries
+   *  a target now — see the doc comment on `parentRow` below. The engine owns the grouping; there
+   *  is no local `PARENTS` const to fall out of sync with it any more. */
+  parents?: DeckReport["buildParents"];
   deckMath?: DeckReport["deckMath"];
+  /** Carries `graveyardVulnerability` (task 5) down to the answers block — the only reason this
+   *  panel needs it is to decide whether the graveyard-hate sentence below is a finding about THIS
+   *  deck or noise on every deck. */
+  answerCoverage?: DeckReport["answerCoverage"];
 }) {
   if (!categories || categories.length === 0) return null;
-  // zero-target = neutral, omitted (mirrors engine)
-  const rows = categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category));
-  if (rows.length === 0) return null;
+  const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
+  const groupedLeaves = new Set((parents ?? []).flatMap((p) => p.leaves));
+  // Anything no parent names (burn, stax) renders after them, exactly as before this task -- those
+  // are win-plan and tax signals, never build roles, and each still carries its OWN target (today
+  // always 0, per `build.ts`'s `BASE_TARGETS`, so nothing renders here in practice).
+  const ungrouped = categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category) && !groupedLeaves.has(c.category));
+  // FIX F2 (controller review, 2026-08-21): `build.ts`'s own scoring loop skips a parent whose
+  // target is <= 0 outright ("neutral, unscored") -- a bare `count / target` here has no such
+  // guard, so the day an archetype delta zeroes a parent's floor this would divide by zero and
+  // paint a NaN/Infinity-width bar. Unreachable today (no delta takes a parent below 1; re-cutting
+  // `ARCHETYPE_TARGET_DELTAS` is the owner's call, not this fix round's) but mirrored here anyway,
+  // the same "not scored, so not shown" convention `ungrouped` above already applies to a leaf.
+  const scoredParents = (parents ?? []).filter((p) => p.target > 0);
+  if (scoredParents.length === 0 && ungrouped.length === 0 && !deckMath) return null;
+
+  /** ONE BAR SHAPE, geometry and `TARGET_MARK` unchanged from before grouping existed — only WHO
+   *  gets a bar changed. Owner's 2026-08-21 ruling overrides the shape shipped 2026-08-20 ("a parent
+   *  carries no target of its own"): a target declared ONCE at the parent, with leaves showing only
+   *  how the deck spent it, is a different object, and that is what a parent's own row draws here. */
+  const bar = (
+    key: string, label: ReactNode, ariaName: string, count: number, target: number, note = "",
+    /** Flags the row even though `count >= target` — the ONE caller that needs this is the
+     *  Interaction parent, whose score multiplies count attainment by answer coverage (design §3).
+     *  Without it this tick could read "met" while the headline it feeds is not, which is the exact
+     *  defect 7714d91 rejected for the land count: a panel number the score does not use at face
+     *  value must not render as if it does. */
+    forceFlag = false,
+    /** Rendered ON SCREEN, after the flag icon — the aria-label's `note` already said this in
+     *  words for a screen reader, but that alone left a sighted reader with no way to see it; same
+     *  mistake this task's own pool annotation made and fixed the same way. */
+    suffix: ReactNode = null,
+  ) => {
+    const flagged = count < target || forceFlag;
+    const state = flagged ? "under target" : "on target";
+    const fill = Math.max(0, Math.min(1, (count / target) * TARGET_MARK));
+    return (
+      <li key={key} className="flex flex-col gap-0.5" aria-label={`${ariaName} ${count} of ${target}, ${state}${note}`}>
+        <div className="flex items-center gap-3">
+          <span className="w-24 shrink-0 text-sm">{label}</span>
+          <span className="relative flex-1 h-2 rounded-full bg-(--separator) overflow-hidden">
+            <span
+              className={`absolute inset-y-0 left-0 rounded-full ${flagged ? "bg-(--warning)" : "bg-(--success)"}`}
+              style={{ width: `${+(fill * 100).toFixed(2)}%` }}
+            />
+            {/* The target itself, so a row is read against a landmark rather than against the
+              *  end of its own track. Every row's mark sits at the same x, which is what makes
+              *  rows with different targets comparable at a glance. */}
+            <span
+              className="absolute inset-y-0 w-px bg-(--foreground) opacity-70"
+              style={{ left: `${TARGET_MARK * 100}%` }}
+            />
+          </span>
+          <span className="w-14 shrink-0 text-right text-sm stat-num">{count}/{target}</span>
+          <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
+        </div>
+        {/* ON ITS OWN LINE, NOT CROWDED INTO THE FLEX ROW (whole-branch review MINOR 7) -- the row
+          *  above already spends `w-24 + flex-1 + w-14 + w-4` plus three `gap-3`s, and this text can
+          *  run to ~150px (the Interaction coverage note); at 390px the flex row had nothing left to
+          *  give it and either overflowed or crushed the bar to nothing. A second line wraps freely
+          *  at any width instead. */}
+        {suffix ? <p className="pl-24 text-xs text-(--muted)">{suffix}</p> : null}
+      </li>
+    );
+  };
+
+  /** THE PARENT'S OWN ROW — target, ratio and flag, exactly the bar a leaf used to draw. Its `<h4>`
+   *  rides inside the label span (same slot a leaf's name would sit in), so the column is never
+   *  blank and there is exactly one heading in the DOM whether the parent has one leaf or four —
+   *  the single/multi-leaf branch this used to need (CONFLICT 8, F2) is gone: every parent has a
+   *  ratio of its own now, so there is no more "no separate heading" special case to make.
+   *
+   *  `sumOfLeaves` is passed in rather than recomputed -- the caller already has it, because the
+   *  leaf rows below need the identical number for F4's share fix. When it exceeds the parent's own
+   *  UNION count, a card fills more than one of this parent's leaves (Grave Researcher: cardSelection
+   *  AND draw-adjacent) -- said in the aria-label rather than left for a reader to notice the leaf
+   *  shares summing past 100% of a total they can't see (fix F4, controller review 2026-08-21). */
+  const parentRow = (p: NonNullable<typeof parents>[number], sumOfLeaves: number) => {
+    const overlapNote = sumOfLeaves > p.count
+      ? `; its leaves sum to ${sumOfLeaves} because some cards fill more than one`
+      : "";
+    // INTERACTION IS THE ONE COVERAGE-WEIGHTED PARENT, selected by `p.coverageWeighted`
+    // (whole-branch review IMPORTANT 4) -- NOT by matching `p.name === "Interaction"`, the exact
+    // string match `BuildParentSpec.coverageWeighted` was built to make unnecessary. A prior draft
+    // of this row used the name match; a rename of the parent would have silently unwired this note
+    // while the score kept docking it, the identical panel/score disagreement this branch already
+    // fixed twice elsewhere. The score multiplies this parent's count attainment by
+    // `answerCoverage.coverage`, so 11/10 can score under 1 even though the ratio alone reads "met"
+    // -- the row has to say so, or it disagrees with the headline it feeds.
+    const interactionCoverage = p.coverageWeighted ? answerCoverage : undefined;
+    const dockedByCoverage = interactionCoverage !== undefined && interactionCoverage.coverage < 1;
+    const covered = interactionCoverage?.rows.filter((r) => r.covered).length ?? 0;
+    const total = interactionCoverage?.rows.length ?? 0;
+    // THE POOL WEIGHT'S OWN REFUSAL NOW REACHES THE SCREEN (whole-branch review IMPORTANT 3).
+    // `answerCoverage.source` was computed and typed all the way to the client and never read here
+    // -- design §3's own promise ("the panel says so") stopped one field short. Refusing the pool
+    // weight sets every `poolShare` to 1, which is the UNIFORM reading this whole feature exists to
+    // reject, so an identity-less deck (no commander detected -- most often a pasted list with a
+    // typo'd or unresolved commander line) is charged as though every colour could supply every
+    // class, silently. Follows the same "a fallback must say so" precedent `lands.targetSource`
+    // already ships (see that block's own comment).
+    const unweighted = interactionCoverage?.source === "unweighted";
+    const coverageNote =
+      (dockedByCoverage ? `, but answers ${covered} of ${total} classes` : "") +
+      (unweighted ? ", colour pool unweighted -- no commander detected" : "");
+    const suffix =
+      dockedByCoverage || unweighted ? (
+        <>
+          {dockedByCoverage ? <>but answers {covered} of {total} classes</> : null}
+          {dockedByCoverage && unweighted ? " · " : null}
+          {unweighted ? "colour pool unweighted — no commander detected" : null}
+        </>
+      ) : null;
+    return bar(
+      p.name, <h4 className="eyebrow">{p.name}</h4>, p.name, p.count, p.target,
+      overlapNote + coverageNote,
+      dockedByCoverage,
+      suffix,
+    );
+  };
+
+  /** A LEAF UNDER A MULTI-LEAF PARENT — count and SHARE, never a target, ratio or flag (owner's
+   *  ruling: "only a parent can be under target"). A single-leaf parent (Ramp, Board wipes) never
+   *  calls this: its leaf row would just repeat the parent's own bar as "100%", which is the exact
+   *  duplicate the folded shape exists to avoid.
+   *
+   *  SHARE IS OF THE LEAF SUM, NOT THE PARENT'S UNION (fix F4). Interaction's leaves summed to 9
+   *  against a union of 8 (one card fills two), so dividing by the union read 114% across the row
+   *  -- a distribution that doesn't total 100% reads as a broken number on a panel whose whole
+   *  argument is that its numbers mean what they say. Dividing by the leaf sum instead makes every
+   *  row's shares total 100% ALWAYS, by construction; the overlap is reported once, on the parent
+   *  row above, rather than smeared invisibly across every leaf's percentage. */
+  const leafRow = (category: string, parentName: string, sumOfLeaves: number) => {
+    const name = LABEL[category] ?? category;
+    const count = countByLeaf.get(category) ?? 0;
+    const share = sumOfLeaves > 0 ? Math.round((count / sumOfLeaves) * 100) : 0;
+    return (
+      <li key={category} className="flex items-center gap-3 text-sm text-(--muted)" aria-label={`${name} ${count}, ${share}% of ${parentName}`}>
+        {/* FIX F3 (controller review, 2026-08-21): `w-24` with a `pl-3` indent left only 84px for
+          *  the label text, and three real leaf names need more -- "Stack interaction" measures
+          *  121px, "Graveyard hate" 110px, "Card selection" 105px, all truncating (the graveyard one
+          *  dangerously: "Graveyard …" reads as either hate or recursion, opposite things). Widened
+          *  to `w-36` (144px, clears the widest with room to spare) and the indent DROPPED -- the
+          *  missing bar/ratio/flag and the muted colour already mark a leaf row as subordinate, so
+          *  the indent was decorative, not load-bearing, and it was the thing costing the width. */}
+        <span className="w-36 shrink-0 truncate">{name}</span>
+        <span className="flex-1 stat-num">{count} · {share}%</span>
+      </li>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-2">
       {/* The parent of eight headings, and until now indistinguishable from the seven beneath it --
@@ -124,47 +364,76 @@ export function BuildBenchmarks({
         *  difference; the children keep the muted eyebrow they already had. */}
       <h3 className="eyebrow text-(--foreground)">Build benchmarks</h3>
       <ul className="flex flex-col gap-1.5">
-        {rows.map((c) => {
-          const name = LABEL[c.category] ?? c.category;
-          // Every remaining category is a FLOOR -- lands were the one two-sided band, and they are
-          // reported by their own block now, so over-target needs no case here.
-          const flagged = c.count < c.target;
-          const state = flagged ? "under target" : "on target";
-          const fill = Math.max(0, Math.min(1, (c.count / c.target) * TARGET_MARK));
+        {scoredParents.map((p) => {
+          // Computed once per parent and shared by its own row (the overlap note) and every leaf
+          // beneath it (the share denominator) -- see the two doc comments above for why each reads it.
+          const sumOfLeaves = p.leaves.reduce((s, l) => s + (countByLeaf.get(l) ?? 0), 0);
           return (
-            <li key={c.category} className="flex items-center gap-3" aria-label={`${name} ${c.count} of ${c.target}, ${state}`}>
-              <span className="w-24 shrink-0 text-sm">{name}</span>
-              <span className="relative flex-1 h-2 rounded-full bg-(--separator) overflow-hidden">
-                <span
-                  className={`absolute inset-y-0 left-0 rounded-full ${flagged ? "bg-(--warning)" : "bg-(--success)"}`}
-                  style={{ width: `${+(fill * 100).toFixed(2)}%` }}
-                />
-                {/* The target itself, so a row is read against a landmark rather than against the
-                  *  end of its own track. Every row's mark sits at the same x, which is what makes
-                  *  rows with different targets comparable at a glance. */}
-                <span
-                  className="absolute inset-y-0 w-px bg-(--foreground) opacity-70"
-                  style={{ left: `${TARGET_MARK * 100}%` }}
-                />
-              </span>
-              <span className="w-14 shrink-0 text-right text-sm tabular-nums">{c.count}/{c.target}</span>
-              <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
-            </li>
+            <Fragment key={p.name}>
+              {parentRow(p, sumOfLeaves)}
+              {/* Ordered by the parent's own `leaves` list, never re-sorted -- a parent groups its
+                *  leaves together on the page regardless of what order the engine happened to report
+                *  them in. Every leaf renders, including a zero-count one (tutor at 0 IS the finding
+                *  a combo deck's Consistency group is thin on). */}
+              {p.leaves.length > 1 ? p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves)) : null}
+            </Fragment>
           );
         })}
+        {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
       </ul>
 
-      {deckMath ? <DeckMathRows deckMath={deckMath} /> : null}
+      {deckMath ? <DeckMathRows deckMath={deckMath} answerCoverage={answerCoverage} /> : null}
     </div>
   );
 }
+
+/** The corpus count of RECURRING graveyard hate by type -- the pieces that shut an engine off
+ *  rather than eating one card. Measured from `graveyardHateRecurring`, `answer-coverage.ts`'s
+ *  `GRAVEYARD_HATE_SHARE` (creature 39 · artifact 19 · enchantment 8, n = 66 typed, 1 other).
+ *  Stated as a literal because it is a fact about the FORMAT, not about this deck, and a reader can
+ *  check it. A HAND-COPY, and it has to stay one -- `GRAVEYARD_HATE_SHARE` carries the SHARE (a
+ *  fraction of 66), this the raw COUNT the sentence below reads aloud, and the two do not round-trip
+ *  cleanly enough to derive one from the other at display time. `answer-coverage.ts`'s own doc
+ *  comment names this file as the one place that has to move if that table is ever re-measured
+ *  (whole-branch review IMPORTANT 2) -- there is no code link between them, only that comment on
+ *  both ends.
+ *  CORRECTED 2026-08-21 (residual fix wave): was 36/16/6 (n=58), a subset the original probe
+ *  produced by nesting inside the wrong branch -- see `answer-coverage.ts`'s `GRAVEYARD_HATE_SHARE`
+ *  for the diagnosis. */
+const HATE_COUNTS = { creature: 39, artifact: 19, enchantment: 8 } as const;
+/** THIS FILE CANNOT IMPORT `GRAVEYARD_HATE_SHARE` -- it is client code, and `answer-coverage.ts`
+ *  transitively pulls in `node:fs` through `answer-pool.ts`'s module-scope `readFileSync`, which is
+ *  fatal in the browser (see the top-of-file comment; this is the regression that comment documents).
+ *  `packages/matcher/src/bin/gen-answer-pool.ts --check` reads THIS FILE as text alongside
+ *  `answer-coverage.ts`'s own table and fails on drift, so the two constants cannot silently
+ *  disagree even without a code-level import. If you are tempted to import the table directly:
+ *  don't, it breaks the app. Hand-copy `HATE_COUNTS` instead and let the gate catch drift.
+ *
+ *  WHICH CLASSES THE GRAVEYARD SENTENCE CAN NAME -- derived from `HATE_COUNTS`'s own non-zero,
+ *  non-creature rows (whole-branch review MINOR 6), not a second hardcoded
+ *  `["artifact", "enchantment"]` a few lines below that had no link back to the table it was
+ *  standing in for. `creature` is excluded because every deck answers creatures (design §2.2: zero
+ *  of the 71 calibration decks read a creature-removal zero), so citing it here would be citing a
+ *  threat this sentence has never once needed to name. */
+const HATE_CLASSES = (Object.keys(HATE_COUNTS) as (keyof typeof HATE_COUNTS)[]).filter(
+  (c) => c !== "creature" && (HATE_COUNTS[c] ?? 0) > 0,
+);
+/** Below this the deck does not have a graveyard PLAN, it has some graveyard cards. Measured
+ *  (design §2.4): 16 of the 71 calibration decks clear it, 33 clear 0.2 -- 0.3 is where the top of
+ *  the distribution is aristocrats and reanimator decks rather than incidental recursion. */
+const VULNERABLE = 0.3;
 
 /** The deck-math readouts, folded in under the category bars (project owner's call) rather than
  *  given their own tab: they answer the same question the benchmarks do -- "is this deck built" --
  *  and the counts above are what they reprice.
  *
  *  A benchmark says "6 ramp, want 10". These say what that means in a game you actually play. */
-function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath"]> }) {
+function DeckMathRows({
+  deckMath, answerCoverage,
+}: {
+  deckMath: NonNullable<DeckReport["deckMath"]>;
+  answerCoverage?: DeckReport["answerCoverage"];
+}) {
   const { turn, seen, demand } = deckMath;
   // WORST FIRST, in both ranked blocks. The doctrine's order (creature, artifact, enchantment,
   // planeswalker, land, graveyard) is a fixed list, so the rows a reader can act on landed wherever
@@ -189,6 +458,12 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
   const noneExile = answered.length > 1 && answered.every((a) => a.exiling === 0);
   const graveyard = answers.find((a) => a.class === "graveyard");
   const noneRecurring = graveyard !== undefined && graveyard.count > 0 && graveyard.recurring === 0;
+  // WHICH of `HATE_CLASSES` this deck cannot remove -- derived from the table, not a second
+  // hardcoded pair (whole-branch review MINOR 6).
+  const unansweredHate = HATE_CLASSES.filter(
+    (c) => (answers.find((a) => a.class === c)?.count ?? 0) === 0,
+  );
+  const graveyardVulnerability = answerCoverage?.graveyardVulnerability ?? 0;
   const answersBlock = (
       <div className="flex flex-col gap-1.5">
         <h5 className="eyebrow">Answers by turn {turn}</h5>
@@ -210,8 +485,11 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             // this panel -- four player reviews, four failures to decode, including the reader who
             // correctly guessed "exile" and still called it broken because every row read `0 ex`.
             // It is also the row's only independent fact: see below.
+            // A ZERO ROW'S OWN "MODE" SLOT IS WHERE THE POOL SHOWS ON SCREEN, not only in the
+            // aria-label below -- otherwise the finding this whole annotation exists for is
+            // readable to a screen reader and invisible to everyone else.
             const mode = none
-              ? ""
+              ? (a.pool !== undefined ? `your colours offer ${a.pool}` : "")
               : a.class === "graveyard"
                 ? noneRecurring ? "" : a.recurring > 0 ? `${a.recurring} recurring` : "none recurring"
                 : noneExile ? "" : a.exiling > 0 ? `${a.exiling} exile` : "none exile";
@@ -220,8 +498,11 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
               : a.class === "graveyard"
                 ? a.recurring > 0 ? `, ${a.recurring} recurring` : ", none recurring"
                 : a.exiling > 0 ? `, ${a.exiling} of them exile` : ", none of them exile";
+            // A ZERO IS ONLY A FINDING WHEN THE POOL IS NOT. Measured: of the 60 zero rows across
+            // the 71 calibration decks, 17 are artifact and their MEDIAN pool is 56 -- the
+            // mono-black number. Printing the pool is what separates the colour pie from a gap.
             const label = none
-              ? `${a.class}, no answers${shortfall}`
+              ? `${a.class}, no answers${shortfall}${a.pool !== undefined ? ` — your colours offer ${a.pool}` : ""}`
               : a.fromCommandZone
                 ? `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}${modeLabel}, always (commander)`
                 : `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}${modeLabel}${shortfall}`;
@@ -238,7 +519,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                   *  ellipsis, at every viewport -- the longest class name has to fit, because a
                   *  truncated row label is a row the reader cannot identify. */}
                 <span className="w-24 shrink-0 capitalize">{a.class}</span>
-                <span className="flex-1 text-right tabular-nums flex items-baseline justify-end gap-1.5">
+                <span className="flex-1 text-right stat-num flex items-baseline justify-end gap-1.5">
                   <span className={none ? "text-(--warning)" : "text-(--muted)"}>
                     {none ? "none" : plural(a.count, "card")}
                   </span>
@@ -254,7 +535,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                   *  has calibrated; `BASE_TARGETS` is recorded as uncalibrated doctrine. Painting
                   *  five of six rows amber on a deck this engine rates 4.9/5 teaches the reader
                   *  that amber means nothing, and the one row that earns it loses with them. */}
-                <span className="w-16 sm:w-24 shrink-0 text-right tabular-nums text-(--muted)">
+                <span className="w-16 sm:w-24 shrink-0 text-right stat-num text-(--muted)">
                   {a.fromCommandZone ? "" : short > 0 ? `${short} short` : ""}
                 </span>
               </li>
@@ -276,6 +557,26 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
           <p className="text-sm text-(--warning) max-w-[65ch]">
             Its graveyard hate is one-shot: {plural(graveyard!.count, "card")}, none of which keeps
             working after it resolves.
+          </p>
+        ) : null}
+        {/* THE SCORE DISCOUNTS A GRAVEYARD ZERO ON PURPOSE (task 5) -- the panel is where the finding
+          *  survives. Gated on the deck's OWN measured vulnerability, not on any answer row alone, so
+          *  a deck with no graveyard plan at all is never told to fear hate it does not need. */}
+        {graveyardVulnerability >= VULNERABLE && unansweredHate.length > 0 ? (
+          <p className="text-sm text-(--warning) max-w-[65ch]">
+            {/* ONLY THE CLASSES THIS DECK ACTUALLY LACKS ARE CITED (whole-branch review MINOR 6) --
+              *  the two counts used to print unconditionally, so a deck that answers artifacts but
+              *  not enchantments read "16 artifacts and 6 enchantments... shut it off", citing 16
+              *  artifacts as a live threat this deck in fact handles. */}
+            Your plan runs through the graveyard.{" "}
+            {unansweredHate.map((c) => plural(HATE_COUNTS[c], c)).join(" and ")} in the format shut
+            it off, and this deck{" "}
+            {unansweredHate.length === 2
+              ? "answers neither"
+              : unansweredHate.length > 2
+                ? "answers none of them"
+                : `has no ${unansweredHate[0]} removal`}
+            .
           </p>
         ) : null}
         {answers.some((a) => a.required > a.count) ? (
@@ -317,10 +618,10 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
               return (
                 <li key={groupKey} className="flex flex-col gap-1">
                   <div className="flex items-baseline gap-3 text-sm">
-                    <span className="flex-1">
+                    <span className="flex-1 stat-num">
                       {costTurn}-drop{group.length === 1 ? "" : "s"}
                     </span>
-                    <span className="shrink-0 tabular-nums">
+                    <span className="shrink-0 stat-num">
                       {manaText} to have {costTurn} mana by turn {costTurn}
                     </span>
                   </div>
@@ -346,7 +647,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                             *  so the correlation is positive -- and the product would hide whether
                             *  the deck's problem is mana or colour. */}
                           <span className="flex-1 sm:truncate text-(--muted)">{c.name}</span>
-                          <span className="shrink-0 sm:text-right tabular-nums text-(--muted) text-xs">
+                          <span className="shrink-0 sm:text-right stat-num text-(--muted) text-xs">
                             {colourPart || "no coloured pips"}
                           </span>
                         </li>
@@ -380,10 +681,10 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             {/* Two turn numbers in one row read as a contradiction unless each says what it is
               *  about — the headline is when this deck kills, the aside is a snapshot on the way
               *  there, and readers took the pair for a mistake. */}
-            <span className="w-32 shrink-0">
+            <span className="w-32 shrink-0 stat-num">
               {clock.turn === undefined ? "no clock" : `Kills on turn ${clock.turn}`}
             </span>
-            <span className="flex-1 text-xs text-(--muted)">
+            <span className="flex-1 text-xs text-(--muted) tabular-nums">
               {clock.turn === undefined
                 ? "nothing here kills through combat — a mill or alt-win deck has no combat clock"
                 : `${clock.powerAtFive} expected power on board by turn 5, on the way there`}
@@ -420,13 +721,26 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
               </span>
             ))}
           </p>
-          <p className="text-xs text-(--muted) max-w-[65ch]">
+          <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
             Concentration {wincons.focus.toFixed(2)} of 1.00, where 1.00 is a deck all-in on one plan
             and {(1 / Math.max(1, wincons.classes.length)).toFixed(2)} is these {wincons.classes.length}{" "}
             plans split evenly. Higher is better here, unlike every other figure on this panel.
           </p>
         </div>
   ) : null;
+
+  // THE DELTA MUST SAY SO TOO (fix F1, controller review 2026-08-21) -- a landfall deck's target is
+  // the gate's answer PLUS `ARCHETYPE_TARGET_DELTAS.landfall`, and staying silent about the `+4` is
+  // the identical defect as a silent fallback: a reader sees "wants 43" and deserves to know 4 of
+  // those are because this is a landfall deck, not a wider curve. Computed once, worded slightly
+  // differently in the two spots it appears (aria-label vs. the visible caveat) purely to match how
+  // the pre-existing flat-fallback wording already differs between those two spots.
+  const deltaAmount = lands.archetypeDelta !== 0
+    ? `${lands.archetypeDelta > 0 ? "plus" : "minus"} ${Math.abs(lands.archetypeDelta)} because this is a ${lands.archetypeLabel?.toLowerCase()} deck`
+    : undefined;
+  const deltaRaw = lands.targetSource === "flat" ? "" : `${lands.rawTarget} from the curve `;
+  const landsAriaDelta = deltaAmount ? `${lands.targetSource === "flat" ? ", plus" : " --"} ${deltaRaw}${deltaAmount}` : "";
+  const landsVisibleDelta = deltaAmount ? ` · ${deltaRaw}${deltaAmount}` : "";
 
   const landsBlock = lands ? (
         <div className="flex flex-col gap-1.5">
@@ -438,20 +752,38 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             *
             *  The regression behind it is Karsten's, and that name is implementation: the reader is
             *  asking how many lands to run, not whose formula answered. It lives in the code and in
-            *  `land-count.ts`, not in the label. */}
+            *  `land-count.ts`, not in the label.
+            *
+            *  A FALLBACK MUST SAY SO (task 9, owner's ruling): the regression has no ceiling of its
+            *  own, so a big-mana deck's curve can extrapolate past where it was ever tested --
+            *  `gatedLandsTarget` refuses that and scores the flat convention instead, and a silent
+            *  swap between two numbers that mean different things is the same defect as the silent
+            *  extrapolation it replaces. AND SO MUST AN ARCHETYPE DELTA (fix F1, above) -- see
+            *  `landsAriaDelta`/`landsVisibleDelta`. */}
           <div
             className="flex items-center gap-3 text-sm"
-            aria-label={`${lands.actual} lands in the deck, this curve wants ${lands.target}`}
+            aria-label={`${lands.actual} lands in the deck, this curve wants ${lands.target}${
+              lands.targetSource === "flat"
+                ? ` -- the flat convention, because this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
+                : ""
+            }${landsAriaDelta}`}
           >
-            <span className="w-32 shrink-0 tabular-nums">{lands.actual} in deck</span>
-            <span className="flex-1 text-xs text-(--muted)">
+            <span className="w-32 shrink-0 stat-num">{lands.actual} in deck</span>
+            {/* A sentence, not a table cell -- "avg mana value 2.6 · 4 cheap ramp/draw · 0 fast
+              *  mana" stays the body face and only picks up plain tabular alignment so its three
+              *  figures don't shift the "·"s between them. */}
+            <span className="flex-1 text-xs text-(--muted) tabular-nums">
               avg mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap ramp/draw · {lands.fastMana} fast mana
               {lands.mdfc > 0
                 ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as spells, not lands`
                 : ""}
+              {lands.targetSource === "flat"
+                ? ` · flat convention -- this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
+                : ""}
+              {landsVisibleDelta}
             </span>
             <span
-              className={`w-16 shrink-0 text-right tabular-nums ${
+              className={`w-16 shrink-0 text-right stat-num ${
                 Math.abs(lands.actual - lands.target) > 2 ? "text-(--warning)" : "text-(--success)"
               }`}
             >
@@ -473,9 +805,9 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             {deckMath.topdeck.map((t) => (
               <li key={t.card} className="flex items-baseline gap-3 text-sm">
                 <span className="w-40 shrink-0 truncate">{t.card}</span>
-                <span className="flex-1 text-xs text-(--muted)">
+                <span className="flex-1 text-xs text-(--muted) tabular-nums">
                   a random card off your library is worth{" "}
-                  <span className="tabular-nums text-(--fg)">{t.meanManaValue}</span> mana —{" "}
+                  <span className="text-(--fg)">{t.meanManaValue}</span> mana —{" "}
                   {t.nonlandMeanManaValue} when it is not a land, and {Math.round(t.landShare * 100)}% of the
                   time it is one
                   {t.castable
@@ -518,14 +850,22 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
                     *  it a fact about one early double-pip spell rather than about the mana base. */}
                   <span className="flex-1 text-(--muted) text-xs">
                     {c.worst
-                      ? `${plural(c.worst.cards, "card")} ${c.worst.cards === 1 ? "wants" : "want"} ${("{" + c.color + "}").repeat(c.worst.pips)} on turn ${c.worst.turn}`
+                      // Colour demand now renders in the same notation as a printed cost, so the
+                      // reader meets one convention instead of two ("4 W" here, "{3}{B}{B}" in the
+                      // Cards table).
+                      ? (
+                        <>
+                          {plural(c.worst.cards, "card")} {c.worst.cards === 1 ? "wants" : "want"}{" "}
+                          <ManaSymbols cost={`{${c.color}}`.repeat(c.worst.pips)} /> on turn {c.worst.turn}
+                        </>
+                      )
                       : "every cost covered"}
                   </span>
                   {/* "23 of 36 sources" and "short 13" were the same subtraction printed twice.
                     *  The pair survives as one cell, coloured: the reader can see the gap and its
                     *  size in one place. */}
                   <span
-                    className={`w-40 shrink-0 text-right tabular-nums ${
+                    className={`w-40 shrink-0 text-right stat-num ${
                       !c.worst
                         ? "text-(--success)"
                         : overcommitted || c.worst.required > landRoom
@@ -578,7 +918,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
         {/* The raw census key stays reachable on hover, because `bin/deck-availability.ts` prints
           *  keys and a report you cannot match against the bin is a dead end. */}
         <span className="flex-1 truncate" title={d.key}>{sentence}</span>
-        <span className={`shrink-0 tabular-nums ${d.available !== null && d.suppliers === 0 ? "text-(--warning)" : "text-(--muted)"}`}>
+        <span className={`shrink-0 stat-num ${d.available !== null && d.suppliers === 0 ? "text-(--warning)" : "text-(--muted)"}`}>
           {d.available === null
             ? `${d.consumers} want · the game supplies it`
             : `${d.consumers} want · ${d.suppliers} supply`}
@@ -658,7 +998,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
         *  turn, so a reader who does not know the number cannot read the panel at all — while the
         *  four things the model ignores are what they consult once and then stop needing. */}
       <div className="flex flex-col gap-1">
-        <p className="text-xs text-(--muted) max-w-[65ch]">
+        <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
           Everything below is priced at turn {turn} —{" "}
           {deckMath.turnSource === "corpus-median"
             ? "the median of the calibration decks, because this deck has no combat clock"
@@ -690,7 +1030,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             key={s.title}
             className={`flex flex-col gap-5 ${i > 0 ? "border-t border-(--separator) pt-6" : ""}`}
           >
-            <h4 className="eyebrow text-(--foreground)">{s.title}</h4>
+            <h4 className="eyebrow">{s.title}</h4>
             {s.blocks.filter(Boolean).map((block, i) => (
               // Keyed by position within its section: these are fixed, authored blocks, never a
               // list that reorders inside a section.
