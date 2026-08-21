@@ -661,7 +661,7 @@ const DECK_MATH = {
     focus: 0.52,
     primary: "go-wide",
   },
-  lands: { actual: 37, target: 34, targetSource: "derived" as const, rawTarget: 34, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2, mdfc: 0 },
+  lands: { actual: 37, target: 34, targetSource: "derived" as const, rawTarget: 34, archetypeDelta: 0, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2, mdfc: 0 },
   castability: {
     cards: [
       { name: "Ulamog", turn: 10, mana: 0.03, manaWithRocks: 0.11, colors: [] },
@@ -961,6 +961,23 @@ test("BuildBenchmarks says so when the land target falls back to the flat conven
     screen.getByLabelText(/37 lands in the deck, this curve wants 36 -- the flat convention, because this curve's own regression asks for 50, outside the tested range/i),
   ).toBeInTheDocument();
   expect(screen.getByText(/flat convention -- this curve's own regression asks for 50, outside the tested range/i)).toBeInTheDocument();
+});
+
+test("BuildBenchmarks says so when an archetype delta is folded into the land target (fix F1, task 9)", () => {
+  // rakdos-landfall's exact shape (controller review 2026-08-21): a derived 39 from the curve, plus
+  // landfall's own +4, scored as 43 -- and the panel must say why 43 is not simply the curve's own
+  // answer, the same "never swap silently" rule the flat-fallback test above already covers.
+  const landfall = {
+    ...DECK_MATH,
+    lands: { ...DECK_MATH.lands, target: 43, targetSource: "derived" as const, rawTarget: 39, archetypeDelta: 4, archetypeLabel: "Landfall" },
+  };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={landfall} />);
+  expect(
+    screen.getByLabelText(/37 lands in the deck, this curve wants 43 -- 39 from the curve plus 4 because this is a landfall deck/i),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/39 from the curve plus 4 because this is a landfall deck/i)).toBeInTheDocument();
+  // Never the flat-convention wording on a purely-derived-plus-delta row.
+  expect(screen.queryByText(/flat convention/i)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () => {

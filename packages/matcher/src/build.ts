@@ -196,7 +196,21 @@ export interface LandsTarget {
  *  target (`land-count.ts`'s `recommendedLands(...).target`, computed once upstream and threaded
  *  in), so they can never again disagree about which number a deck is being measured against. That
  *  disagreement -- the score scoring flat 36 while the panel showed the regression's own answer --
- *  is the defect this task closes. */
+ *  is the defect this task closes.
+ *
+ *  ponytail: THIS GATES THE REGRESSION'S OUTPUT, NOT ITS INPUTS -- and the two are not the same
+ *  refusal (fix F2, controller review 2026-08-21). With `commanders=1, rampPlusDraw=0, fastMana=0,
+ *  mdfcUntapped=0, mdfcTapped=0`, `karstenLands`'s arithmetic reduces to
+ *  `raw = 31.419 + 3.135*avgManaValue`, so avgManaValue alone stays inside [28, 39] only up to
+ *  ~2.42 -- but `rampPlusDraw`/`fastMana`/the MDFC terms all SUBTRACT from `raw`, and nothing bounds
+ *  how large they can be relative to `avgManaValue`. A deck can walk `avgManaValue` out to roughly
+ *  7.76 (e.g. ~20 cheap accelerants and 6 fast-mana rocks alongside a curve near 6) and still land
+ *  inside [28, 39], indistinguishable here from a deck whose curve was actually tested. So "refuses
+ *  to extrapolate" is only PARTLY true: it refuses an extreme MV with an ordinary ramp package, and
+ *  says nothing about an extreme MV propped up by an extreme ramp package. Upgrade path if this ever
+ *  matters: gate the INPUTS (bound `avgManaValue`, or ramp/fast directly) rather than `raw`, which
+ *  the controller's ruling explicitly declined to do here -- an input gate would refuse decks this
+ *  output gate currently scores, and that trade needs its own before/after over the 71 decks. */
 export function gatedLandsTarget(karstenTarget: number | undefined): LandsTarget {
   if (karstenTarget !== undefined && karstenTarget >= KARSTEN_TESTED_MIN && karstenTarget <= KARSTEN_TESTED_MAX) {
     return { target: karstenTarget, source: "derived" };
@@ -228,7 +242,12 @@ const clamp01 = (x: number): number => Math.max(0, Math.min(1, x));
  *  land-search-heavy landfall deck if anything pulls the derived target DOWN (lower avg mana value),
  *  which is the opposite direction from what the archetype wants, so the delta is not double-counting
  *  a fact the regression already sees -- it is compensating for an axis the regression cannot see at
- *  all. Affects every deck whose primary archetype is `landfall`, whichever target is in force. */
+ *  all. MEASURED, not merely argued (fix F3, controller review 2026-08-21): exactly ONE of the 71
+ *  calibration decks has a `landfall`-primary and a derived (non-fallback) land target --
+ *  `rakdos-landfall`, at a derived target of 39, ABOVE the corpus median of 36 -- so the one deck
+ *  the delta actually reaches is not the regression running low and needing a rescue; it is a deck
+ *  the curve already prices as land-hungry, running even more on top by deliberate design. Affects
+ *  every deck whose primary archetype is `landfall`, whichever target is in force. */
 export function adjustedTargets(
   primary: Archetype | undefined,
   landsTarget: number = BASE_TARGETS.lands,

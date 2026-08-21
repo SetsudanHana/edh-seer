@@ -757,7 +757,11 @@ export function analyzeDeckStructured(
     // No turn override: the deck's own clock sets the horizon. Passing a 5 here is what kept the
     // whole clock-pricing change from reaching the report at all -- every unit test passed because
     // they call computeDeckMath directly, and only a live deck showed `turnSource: "override"`.
-    deckMath: computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, { comboCards, landRecommendation: landRec }),
+    // `primary: strategies[0]?.name` -- the SAME archetype `computeBuild` above scored the land
+    // target's delta against (task 9 fix F1), so this panel row and that score can never disagree.
+    deckMath: computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, {
+      comboCards, landRecommendation: landRec, primary: strategies[0]?.name,
+    }),
     themeMembership: membership,
   };
 }

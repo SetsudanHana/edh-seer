@@ -1,13 +1,14 @@
 import { minCopies, pAtLeast, seen } from "@mtg/engine";
 import type { DeckMath } from "@mtg/engine";
 import { deckAvailability } from "./availability.js";
-import { detectAnswerClasses, gatedLandsTarget } from "./build.js";
+import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";
 import { manaAudit } from "./mana-audit.js";
 import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { winconReport } from "./wincon.js";
 import { pressureCurve, STARTING_LIFE } from "./pressure.js";
 import { deckCastability } from "./castability.js";
 import type { DeckCard, Hierarchy } from "./types.js";
+import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { topdeckPayoffs } from "./topdeck.js";
 
 /** The classes the doctrine says every deck should be able to answer (design §12.3), in the order
@@ -75,7 +76,11 @@ export function computeDeckMath(
   // passes it here so this function does not call `karstenLands` a second time for the same deck.
   // Absent for every other caller (this file's own tests, `answer-availability.ts`), which fall
   // back to computing it themselves; `land-count.ts` is still the only place the regression runs.
-  opts: { comboCards?: readonly string[]; landRecommendation?: LandRecommendation } = {},
+  // `primary`: task 9 fix F1 -- the SAME archetype `computeBuild` scores against, so its
+  // `ARCHETYPE_TARGET_DELTAS` (landfall's `lands: +4`) reaches this panel row too. Before this fix
+  // `computeBuild` alone applied the delta, so a landfall deck's panel said "wants 39" beside a
+  // score that had silently scored it against 43 -- the exact disagreement task 9 exists to close.
+  opts: { comboCards?: readonly string[]; landRecommendation?: LandRecommendation; primary?: Archetype } = {},
 ): DeckMath {
   const commanders = new Set(commanderNames);
   const library = deck.length - deck.filter((dc) => commanders.has(dc.card.name)).length;
@@ -175,13 +180,26 @@ export function computeDeckMath(
   // one saying so. `gatedLandsTarget` is the one place that decision is made; both readers call it
   // on the identical rounded input, so they can't disagree again.
   const landsGate = gatedLandsTarget(rec.target);
+  // THE SAME `adjustedTargets` CALL `computeBuild` MAKES (task 9 fix F1) -- reusing it, rather than
+  // re-adding `ARCHETYPE_TARGET_DELTAS.landfall` here by hand, is what guarantees the two can never
+  // diverge again: same function, same `primary`, same gated input, so the same output. `lands` sits
+  // outside `GROUPED_LEAVES` (see that set's own comment), so this call touches nothing else in the
+  // returned record.
+  const finalLandsTarget = adjustedTargets(opts.primary, landsGate.target).lands;
+  const archetypeDelta = finalLandsTarget - landsGate.target;
   const lands = {
     actual: rec.actual,
-    target: landsGate.target,
+    target: finalLandsTarget,
     targetSource: landsGate.source,
     // The regression's own answer, kept even on a fallback -- "wants 36" with no working when the
     // curve's own math says 50 reads as the report hiding the number it didn't like.
     rawTarget: rec.target,
+    // NON-ZERO ONLY WHEN AN ARCHETYPE DELTA WAS FOLDED IN (landfall's `lands: +4` today) -- a
+    // silent adjustment is the same defect this task closes for the flat/derived fallback, so it is
+    // named here too rather than left for the reader to notice `target !== rawTarget` and wonder
+    // why. 0 for every other deck, `archetypeLabel` absent alongside it.
+    archetypeDelta,
+    ...(archetypeDelta !== 0 && opts.primary ? { archetypeLabel: ARCHETYPE_LABELS[opts.primary] } : {}),
     avgManaValue: Math.round(rec.avgManaValue * 100) / 100,
     rampPlusDraw: rec.rampPlusDraw,
     fastMana: rec.fastMana,

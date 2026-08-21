@@ -6,10 +6,12 @@ import { ManaSymbols } from "./ManaSymbols.js";
 
 /** Scored here and NOT listed as a benchmark row: the land count is reported once, by the block
  *  below, which derives its target from this deck's own curve instead of the flat 36 every deck was
- *  measured against. `buildScore` now reads the SAME derived target (task 9, 2026-08-21) whenever
- *  it falls inside `gatedLandsTarget`'s tested range, so this row and the score can no longer
- *  disagree about which number this deck is being held to -- and the row says so when the regression
- *  extrapolates and the score falls back instead (`lands.targetSource`). */
+ *  measured against. `buildScore` now reads the SAME target (task 9, 2026-08-21) -- `gatedLandsTarget`
+ *  plus whatever `ARCHETYPE_TARGET_DELTAS` adds for this deck's primary archetype, both applied via
+ *  the identical `adjustedTargets` call the score itself makes -- so this row and the score can no
+ *  longer disagree about which number this deck is being held to. Two things can make `target` differ
+ *  from `rawTarget` and the row names both: the regression extrapolating and the score falling back
+ *  instead (`lands.targetSource`), and an archetype delta folded in (`lands.archetypeDelta`). */
 const REPORTED_ELSEWHERE = new Set(["lands"]);
 
 /** Where the target sits on a benchmark track, as a fraction of its width.
@@ -583,6 +585,19 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
         </div>
   ) : null;
 
+  // THE DELTA MUST SAY SO TOO (fix F1, controller review 2026-08-21) -- a landfall deck's target is
+  // the gate's answer PLUS `ARCHETYPE_TARGET_DELTAS.landfall`, and staying silent about the `+4` is
+  // the identical defect as a silent fallback: a reader sees "wants 43" and deserves to know 4 of
+  // those are because this is a landfall deck, not a wider curve. Computed once, worded slightly
+  // differently in the two spots it appears (aria-label vs. the visible caveat) purely to match how
+  // the pre-existing flat-fallback wording already differs between those two spots.
+  const deltaAmount = lands.archetypeDelta !== 0
+    ? `${lands.archetypeDelta > 0 ? "plus" : "minus"} ${Math.abs(lands.archetypeDelta)} because this is a ${lands.archetypeLabel?.toLowerCase()} deck`
+    : undefined;
+  const deltaRaw = lands.targetSource === "flat" ? "" : `${lands.rawTarget} from the curve `;
+  const landsAriaDelta = deltaAmount ? `${lands.targetSource === "flat" ? ", plus" : " --"} ${deltaRaw}${deltaAmount}` : "";
+  const landsVisibleDelta = deltaAmount ? ` · ${deltaRaw}${deltaAmount}` : "";
+
   const landsBlock = lands ? (
         <div className="flex flex-col gap-1.5">
           <h5 className="eyebrow">Lands</h5>
@@ -599,14 +614,15 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             *  own, so a big-mana deck's curve can extrapolate past where it was ever tested --
             *  `gatedLandsTarget` refuses that and scores the flat convention instead, and a silent
             *  swap between two numbers that mean different things is the same defect as the silent
-            *  extrapolation it replaces. */}
+            *  extrapolation it replaces. AND SO MUST AN ARCHETYPE DELTA (fix F1, above) -- see
+            *  `landsAriaDelta`/`landsVisibleDelta`. */}
           <div
             className="flex items-center gap-3 text-sm"
             aria-label={`${lands.actual} lands in the deck, this curve wants ${lands.target}${
               lands.targetSource === "flat"
                 ? ` -- the flat convention, because this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
                 : ""
-            }`}
+            }${landsAriaDelta}`}
           >
             <span className="w-32 shrink-0 stat-num">{lands.actual} in deck</span>
             {/* A sentence, not a table cell -- "avg mana value 2.6 · 4 cheap ramp/draw · 0 fast
@@ -620,6 +636,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
               {lands.targetSource === "flat"
                 ? ` · flat convention -- this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
                 : ""}
+              {landsVisibleDelta}
             </span>
             <span
               className={`w-16 shrink-0 text-right stat-num ${

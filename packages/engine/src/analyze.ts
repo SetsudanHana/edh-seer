@@ -201,17 +201,29 @@ export interface DeckMath {
    *  no colour term at all: how many lands is a different question from which ones. */
   lands: {
     actual: number;
-    /** What `buildScore` is actually scored against -- the regression's own rounded answer when it
-     *  falls inside its tested range (`@mtg/matcher`'s `gatedLandsTarget`), the flat convention
-     *  otherwise. Equal to `rawTarget` except on a fallback. */
+    /** What `buildScore` is actually scored against -- the regression's own rounded answer (via
+     *  `@mtg/matcher`'s `gatedLandsTarget`, the flat convention on a fallback) PLUS any archetype
+     *  delta folded in by `adjustedTargets` (landfall's `+4`, task 9 fix F1). Equal to
+     *  `rawTarget + archetypeDelta` always -- the same call `computeBuild` makes on the identical
+     *  input, so the panel and the score can never again disagree about this number. */
     target: number;
-    /** 'derived' when `target` is this deck's own regression answer; 'flat' when the regression
-     *  extrapolated past where it was tested and the flat convention won instead -- render the
-     *  reason on a fallback, never swap silently between two numbers that mean different things. */
+    /** 'derived' when the GATE landed on this deck's own regression answer; 'flat' when the
+     *  regression extrapolated past where it was tested and the flat convention won instead --
+     *  render the reason on a fallback, never swap silently between two numbers that mean different
+     *  things. Independent of `archetypeDelta`, which can be non-zero under either source. */
     targetSource: "derived" | "flat";
     /** The regression's own rounded answer, always -- even on a fallback, so a reader can see what
      *  the curve's own math said and why it was refused, rather than have the number vanish. */
     rawTarget: number;
+    /** The archetype adjustment already folded into `target` (landfall's `lands: +4` today, 0 for
+     *  every other deck) -- named explicitly so a silent shift from `rawTarget`/the gate's own
+     *  answer to `target` is never the reader's job to notice. Task 9 fix F1: before this field
+     *  existed the score alone applied the delta and the panel printed the un-adjusted number
+     *  beside it. */
+    archetypeDelta: number;
+    /** Which archetype the delta above came from (e.g. "Landfall") -- present only when
+     *  `archetypeDelta !== 0`. */
+    archetypeLabel?: string;
     avgManaValue: number;
     /** Cheap ramp and draw, worth 0.28 of a land each. */
     rampPlusDraw: number;
