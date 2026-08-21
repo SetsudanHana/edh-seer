@@ -38,7 +38,7 @@ import { commanderIdentity } from "./answer-pool.js";
 import { deckCastability, type CardCastability } from "./castability.js";
 import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
-import { promoteSpecificHeadline } from "./theme-promote.js";
+import { promoteSpecificHeadline, demoteUnrankableHeadline } from "./theme-promote.js";
 import { rankThemesByLoop } from "./theme-loop.js";
 
 /**
@@ -638,7 +638,16 @@ export function analyzeDeckStructured(
   // it is computed here whether or not loop mode asked for one. See theme-promote.ts.
   const promoteMembership = loopMembership
     ?? themeMembership(resolved, allReasons, themeCandidates([...deckFreq.keys()]));
-  const promotedThemes = promoteSpecificHeadline(rankedThemes, deckFreq, promoteMembership);
+  // A TIMING KEY OR AN UNRESOLVED PLACEHOLDER CANNOT NAME A DECK, and it is demoted before the
+  // promotion rule runs so that rule has a real headline to work from.
+  const suppliedPhases = new Set<string>();
+  for (const dc of resolved) {
+    for (const a of dc.tags?.abilities ?? []) {
+      if (a.effect?.kind === "extra-phase" && a.effect.subject?.phase) suppliedPhases.add(a.effect.subject.phase);
+    }
+  }
+  const rankableThemes = demoteUnrankableHeadline(rankedThemes, suppliedPhases);
+  const promotedThemes = promoteSpecificHeadline(rankableThemes, deckFreq, promoteMembership);
   const themes = promotedThemes.map((tag) => ({ tag, count: deckFreq.get(tag) ?? 0 }));
 
   const nonlands = resolved.filter((dc) => !isLand(dc));

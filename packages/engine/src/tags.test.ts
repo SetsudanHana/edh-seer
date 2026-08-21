@@ -65,9 +65,14 @@ test("a negated subject renders as `non<type>`", () => {
 });
 
 /** `static:` is the exception: its value is an EFFECT KIND, not a subject (`edges.ts` writes
- *  `static:${effect.kind}`), so "pumps static" would be a wrong sentence. It keeps the bare form. */
-test("static keeps its bare label because its value is a kind, not a subject", () => {
-  expect(describeTag("static:pump")).toBe("static");
+ *  `static:${effect.kind}`), so the generic subject+phrase path would say "pumps static", a wrong
+ *  sentence. It used to fall back to the bare family name for that reason -- but "static" names
+ *  nothing either, and `everything-is-a-land`, a CLONE deck, headlined the literal word "static"
+ *  on `static:clone`. The kind IS the content of the tag, so it renders as the kind. */
+test("static renders its kind, which is the whole content of the tag", () => {
+  expect(describeTag("static:pump")).toBe("pump effects");
+  expect(describeTag("static:clone")).toBe("clone effects");
+  expect(describeTag("static:cost-reduction")).toBe("cost reduction effects");
 });
 
 // `legendary` is a SUPERTYPE, not a noun, and it became a headline when it got a theme key

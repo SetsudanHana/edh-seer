@@ -119,6 +119,12 @@ export function describeTag(t: Tag): string {
       return `${value}s`;
     case "token":
       return value ? `${value} tokens` : "tokens";
+    // A STATIC NAMES ITS KIND OR IT NAMES NOTHING. The default branch below has no
+    // `MECHANISM_PHRASE` entry for `static`, so it fell through to the bare family name and every
+    // static theme rendered as the word "static" -- `everything-is-a-land`, a CLONE deck, headlined
+    // "static" on `static:clone`. The kind is the whole content of the tag.
+    case "static":
+      return value ? `${value.replace(/-/g, " ")} effects` : "static effects";
     default: {
       const phrase = MECHANISM_PHRASE[family];
       if (value === undefined || phrase === undefined) return bare();
