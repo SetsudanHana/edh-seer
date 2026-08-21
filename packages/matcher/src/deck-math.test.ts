@@ -164,3 +164,20 @@ test("a landfall deck's panel target and scored target agree, including the arch
   expect(noPrimary.lands.archetypeLabel).toBeUndefined();
   expect(noPrimary.lands.target).toBe(39);
 });
+
+test("answer rows carry their colour pool -- says how many answers of the class the deck's colours can supply at all", () => {
+  const deck = [
+    { card: { name: "Cmdr", typeLine: "Legendary Creature — Zombie", oracleText: "", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 3, power: "3", toughness: "3" }, tags: null },
+    // A non-empty library -- with only the commander in `deck`, `library` is 0 and `minCopies`
+    // throws (correctly: "how many copies to reach confidence" has no answer in a 0-card library).
+    // That is orthogonal to what this test checks, so give it one filler card.
+    { card: { name: "Filler", typeLine: "Creature — Human", oracleText: "", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 2, power: "2", toughness: "2" }, tags: null },
+  ] as never[];
+  const dm = computeDeckMath(deck, {}, ["Cmdr"]);
+  const artifact = dm.answers.find((a) => a.class === "artifact")!;
+  expect(artifact.count).toBe(0);
+  // The zero is the finding only when the pool is not. Black's artifact pool is the smallest
+  // of any identity, so this row means "the colour pie", not "you forgot".
+  expect(artifact.pool).toBeGreaterThan(0);
+  expect(artifact.pool).toBeLessThan(100);
+});

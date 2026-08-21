@@ -1,5 +1,6 @@
 import { minCopies, pAtLeast, seen } from "@mtg/engine";
 import type { DeckMath } from "@mtg/engine";
+import { loadAnswerPool, identityKey } from "./answer-pool.js";
 import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";
 import { manaAudit } from "./mana-audit.js";
@@ -117,6 +118,16 @@ export function computeDeckMath(
   const turnSource: DeckMath["turnSource"] =
     turnOverride !== undefined ? "override" : clockTurn !== undefined ? "clock" : "corpus-median";
 
+  // The commanders' identity (CR 903.4), for the pool row below -- never the union of all 100
+  // cards. `undefined` when no commander NAME resolved to an actual card in `deck` (Task 4's
+  // lesson): a requested name that matched nothing must leave the pool absent, not fall back to
+  // an empty/colorless identity that would silently understate every pool.
+  const commanderCards = deck.filter((dc) => commanders.has(dc.card.name));
+  const identity = commanderCards.length
+    ? [...new Set(commanderCards.flatMap((dc) => dc.card.colorIdentity ?? []))]
+    : undefined;
+  const poolRow = identity ? loadAnswerPool()[identityKey(identity)] : undefined;
+
   const answers = ANSWER_CLASSES.map((cls) => {
     const found = classes.get(cls);
     const members = found?.cards ?? new Set<string>();
@@ -136,6 +147,10 @@ export function computeDeckMath(
       // `available` line directly above it, against the same turn and the same library. A commander
       // owes nothing to a draw probability, so its class requires nothing.
       required: fromCommandZone ? 0 : minCopies(1, turn, REQUIRED_CONFIDENCE, library),
+      /** How many answers of this class EXIST inside the deck's colour identity, corpus-wide.
+       *  Absent when no commander was detected -- an identity we cannot read must not become a
+       *  claim about what the deck's colours can do. */
+      ...(poolRow?.[cls] !== undefined ? { pool: poolRow[cls] } : {}),
     };
   });
 

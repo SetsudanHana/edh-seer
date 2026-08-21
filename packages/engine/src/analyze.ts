@@ -151,6 +151,11 @@ export interface DeckMath {
      *  0 when a commander answers the class, since a card available in every game owes nothing to a
      *  draw probability. */
     required: number;
+    /** How many answers of this class exist inside the deck's colour identity, corpus-wide
+     *  (`answer-pool.json`). A count of 0 beside a POOL of 56 is the colour pie; a count of 0
+     *  beside a pool of 421 is a deckbuilding choice, and the panel must be able to tell a reader
+     *  which one it is looking at. Absent when no commander was detected. */
+    pool?: number;
   }[];
   /** The deck's measured combat clock: expected attacking power per turn, and the turn that
    *  accumulates to one opponent's 40 life.
