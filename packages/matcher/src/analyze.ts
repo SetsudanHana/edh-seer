@@ -679,8 +679,9 @@ export function analyzeDeckStructured(
   // A DECK'S COLOUR IDENTITY IS ITS COMMANDERS' (CR 903.4), never the union of the 99 -- an
   // off-identity card in a pasted list is an illegal card, not a sixth colour, and reading it as
   // one would tell a mono-black deck it has white's enchantment removal available.
-  const commanderIdentity = commanderSet.size
-    ? [...new Set(resolved.filter((dc) => commanderSet.has(dc.card.name)).flatMap((dc) => dc.card.colorIdentity ?? []))]
+  const commanderCards = resolved.filter((dc) => commanderSet.has(dc.card.name));
+  const commanderIdentity = commanderCards.length
+    ? [...new Set(commanderCards.flatMap((dc) => dc.card.colorIdentity ?? []))]
     : undefined;
   // The graveyard axis is the one vulnerability with a corpus rule able to count its hate pieces
   // (`graveyardHateRecurring`); see the design's §4 for why the other axes stay unbuilt.

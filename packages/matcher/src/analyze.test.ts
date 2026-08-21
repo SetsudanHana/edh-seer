@@ -1126,4 +1126,14 @@ describe("answer coverage reaches the report", () => {
     ] as never[];
     expect(analyzeDeckStructured(deck).answerCoverage!.source).toBe("unweighted");
   });
+
+  it("refuses the pool weight when the named commander matches no card in the deck", () => {
+    // A typo'd or unresolved commander name must not silently read as a matched-but-colorless
+    // identity ([]) -- that is a real, thin pool (key "C") and gets weighted as one. It must fall
+    // back to unweighted exactly like "no commander" does.
+    const deck = [
+      { card: { name: "Lone Card", typeLine: "Instant", oracleText: "Destroy target creature.", keywords: [], colors: ["B"], colorIdentity: ["B"], manaValue: 2, power: null, toughness: null }, tags: null },
+    ] as never[];
+    expect(analyzeDeckStructured(deck, ["Nonexistent Commander"]).answerCoverage!.source).toBe("unweighted");
+  });
 });
