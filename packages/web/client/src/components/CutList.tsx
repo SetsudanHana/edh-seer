@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { DeckReport } from "../types.js";
+import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
 import { CardName } from "./card-drawer.js";
 
 /** THE CUT LIST — "which cards is the deck not using?" — and the deck-level slack beside it.
@@ -105,7 +106,7 @@ export function CutList({ cutList, slack, trim }:
           <ul className="flex flex-wrap gap-2">
             {slack!.map((s) => (
               <li key={s.category} className="text-sm rounded-full border border-(--separator) px-3 py-1 text-(--muted)">
-                {s.category} {s.count}/{s.target} <span className="text-(--muted)">(+{s.over})</span>
+                {BUILD_CATEGORY_LABEL[s.category] ?? s.category} {s.count}/{s.target} <span className="text-(--muted)">(+{s.over})</span>
               </li>
             ))}
           </ul>

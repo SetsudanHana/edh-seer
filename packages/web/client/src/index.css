@@ -80,34 +80,55 @@ h3 {
   letter-spacing: -0.01em;
 }
 
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
+/* Both rules below live in `components` -- a layer Tailwind's own `@layer theme, base, components,
+   utilities` declares BELOW `utilities`, so any utility class always wins over these regardless of
+   source order or specificity. Written unlayered (as they were before), they sat in the implicit
+   final layer, which beats even the `utilities` layer outright -- so `className="eyebrow
+   text-(--foreground)"` silently kept rendering `--muted`, the colour below, no matter which
+   colour utility was added alongside it. Confirmed in the browser: the "Build benchmarks" h3 and a
+   parent h4, both `eyebrow text-(--foreground)`, computed to the IDENTICAL `rgb(139, 147, 161)`
+   (`--muted`) before this fix. Every OTHER `.eyebrow`/`.pip` caller passes no colour utility at
+   all, so nothing here competes with `--muted`/`--pip-color` and they keep rendering exactly as
+   before.
 
-/* Rank pip: the report's one recurring signature — every numeric score,
-   count, or tally renders inside this circle, echoing a standings-board
-   rank marker. */
-.pip {
-  --pip-color: var(--accent);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.75rem;
-  height: 1.75rem;
-  padding: 0 0.25rem;
-  border-radius: 999px;
-  border: 1px solid var(--pip-color);
-  color: var(--pip-color);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1;
-  flex-shrink: 0;
+   The layer fix is what made the bug reachable at all -- it does not say every caller's requested
+   colour was RIGHT. It wasn't: a follow-up review found `text-(--foreground)` had been added to
+   three `BuildBenchmarks.tsx` headings (the block h3 and both h4 tiers) with no prior visible
+   effect, and once the layer fix let it through it flattened all three to one bright colour where
+   the muted h4s used to recede behind the data. Only the block h3 keeps the override now; see that
+   file for the corrected tiering. */
+@layer components {
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Rank pip: the report's one recurring signature — every numeric score,
+     count, or tally renders inside this circle, echoing a standings-board
+     rank marker. Same latent shape as `.eyebrow` above (a plain `color`
+     property nothing currently overrides), moved for consistency rather
+     than because a caller depends on it today. */
+  .pip {
+    --pip-color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    border: 1px solid var(--pip-color);
+    color: var(--pip-color);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    flex-shrink: 0;
+  }
 }
 
 .tabular-nums {

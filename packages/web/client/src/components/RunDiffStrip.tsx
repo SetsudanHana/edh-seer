@@ -1,10 +1,13 @@
+import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
 import type { RunDiff } from "../lib/run-diff.js";
 
-const LABEL: Record<string, string> = {
-  ramp: "ramp", draw: "draw", cardSelection: "card selection", targetedRemoval: "removal",
-  stackInteraction: "stack interaction", boardWipe: "board wipes", burn: "burn & drain", stax: "stax",
-  protection: "protection", tutor: "tutors", graveyardHate: "graveyard hate", lands: "lands",
-};
+// This strip reads inline ("ramp 6 → 7"), not as a standalone heading, so it wants the shared
+// label lower-cased rather than a second copy of the map's words -- verified every entry survives
+// a plain `.toLowerCase()` (e.g. "Card selection" -> "card selection", "Burn & drain" -> "burn &
+// drain"), which is what made keeping a byte-for-byte duplicate of `BUILD_CATEGORY_LABEL` here (as
+// this file used to) an unforced defect rather than a real second requirement.
+const inlineLabel = (category: string): string =>
+  (BUILD_CATEGORY_LABEL[category] ?? category).toLowerCase();
 
 const signed = (from: number, to: number): string => `${to > from ? "+" : ""}${(to - from).toFixed(1)}`;
 
@@ -60,7 +63,7 @@ export function RunDiffStrip({ diff }: { diff: RunDiff | null }) {
   for (const c of diff.categories.slice(0, 3)) {
     parts.push(
       <span key={c.category}>
-        {LABEL[c.category] ?? c.category}{" "}
+        {inlineLabel(c.category)}{" "}
         <span className="text-(--foreground) tabular-nums">{c.from} → {c.to}</span>
       </span>,
     );

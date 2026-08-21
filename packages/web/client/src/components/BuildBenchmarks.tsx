@@ -1,17 +1,8 @@
 import { Fragment, type ReactNode } from "react";
 import type { DeckReport } from "../types.js";
+import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
-
-const LABEL: Record<string, string> = {
-  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
-  stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
-  protection: "Protection", tutor: "Tutors",
-  // graveyardHate shipped no label at all -- fine while its target sat at 0 (BASE_TARGETS never
-  // lets it survive the leaf filter), but ARCHETYPE_ADJUST can lift it off zero, and the moment it
-  // does `LABEL[c.category] ?? c.category` printed the raw camelCase key.
-  graveyardHate: "Graveyard hate",
-};
 
 /** PARENTS GROUP; LEAVES SCORE (owner, 2026-08-20). A parent carries no target and no ratio of its
  *  own -- summing three independently-set targets (`BASE_TARGETS`, `build.ts:92`) invents a
@@ -136,13 +127,16 @@ export function BuildBenchmarks({
   if (rows.length === 0) return null;
 
   /** A single leaf's bar, unchanged from before grouping existed -- geometry, `TARGET_MARK`, the
-   *  flagged/state logic and the row's own `aria-label` are all untouched. `hideOwnLabel` is
-   *  CONFLICT 8 only: a parent wrapping exactly one leaf whose LABEL equals the parent's own name
-   *  (Ramp -> ramp, Board wipes -> boardWipe) would otherwise print its heading, then a row
-   *  repeating it -- the stuck record this whole phase exists to remove. The label `<span>` stays
-   *  (it carries the row's `w-24` alignment); only its text goes, and the aria-label keeps the full
-   *  name regardless, because a screen reader reads a row out of heading context. */
-  const row = (c: (typeof rows)[number], hideOwnLabel: boolean) => {
+   *  flagged/state logic and the row's own `aria-label` are all untouched. `headingName` is
+   *  CONFLICT 8's fix, REVISED (F2): a parent wrapping exactly one leaf whose LABEL equals the
+   *  parent's own name (Ramp -> ramp, Board wipes -> boardWipe) renders no separate heading at all
+   *  -- suppressing the label text alone left the `w-24` column empty, which read as an unlabelled
+   *  bar floating next to a heading, worse than the repetition it replaced. Instead the row's own
+   *  label span carries the `<h4>` itself, exactly where the leaf's name would have sat: one
+   *  heading in the DOM (rank preserved), the name visible once, the column never blank, and the
+   *  bar still aligned with every other row. The `aria-label` keeps the full sentence regardless,
+   *  because a screen reader reads a row out of heading context. */
+  const row = (c: (typeof rows)[number], headingName?: string) => {
     const name = LABEL[c.category] ?? c.category;
     // Every remaining category is a FLOOR -- lands were the one two-sided band, and they are
     // reported by their own block now, so over-target needs no case here.
@@ -151,7 +145,9 @@ export function BuildBenchmarks({
     const fill = Math.max(0, Math.min(1, (c.count / c.target) * TARGET_MARK));
     return (
       <li key={c.category} className="flex items-center gap-3" aria-label={`${name} ${c.count} of ${c.target}, ${state}`}>
-        <span className="w-24 shrink-0 text-sm">{hideOwnLabel ? "" : name}</span>
+        <span className="w-24 shrink-0 text-sm">
+          {headingName ? <h4 className="eyebrow">{headingName}</h4> : name}
+        </span>
         <span className="relative flex-1 h-2 rounded-full bg-(--separator) overflow-hidden">
           <span
             className={`absolute inset-y-0 left-0 rounded-full ${flagged ? "bg-(--warning)" : "bg-(--success)"}`}
@@ -193,21 +189,25 @@ export function BuildBenchmarks({
         // only ARCHETYPE_ADJUST lifts them -- so on a deck with no archetype adjustment a parent can
         // have zero surviving leaves. Never render an empty heading over nothing.
         if (leafRows.length === 0) return null;
-        const suppressOwnLabel = leafRows.length === 1 && LABEL[leafRows[0]!.category] === p.name;
+        // F2: fold the heading INTO the row rather than suppressing the row's own label text --
+        // see the `row()` doc comment above for why the earlier shape (CONFLICT 8) left a blank
+        // column.
+        const foldHeading = leafRows.length === 1 && LABEL[leafRows[0]!.category] === p.name;
         return (
           <Fragment key={p.name}>
             {/* The heading gets its own wrapper, separate from the `<ul>` of leaves: a parent
               *  carries NO target and no ratio of its own, and keeping its subtree free of any
-              *  digit is how that stays true rather than merely asserted. */}
-            <div><h4 className="eyebrow text-(--foreground)">{p.name}</h4></div>
+              *  digit is how that stays true rather than merely asserted. Skipped entirely when
+              *  `foldHeading` -- that heading rides inside the single row below instead. */}
+            {foldHeading ? null : <div><h4 className="eyebrow">{p.name}</h4></div>}
             <ul className="flex flex-col gap-1.5">
-              {leafRows.map((c) => row(c, suppressOwnLabel))}
+              {leafRows.map((c) => row(c, foldHeading ? p.name : undefined))}
             </ul>
           </Fragment>
         );
       })}
       {ungrouped.length > 0 ? (
-        <ul className="flex flex-col gap-1.5">{ungrouped.map((c) => row(c, false))}</ul>
+        <ul className="flex flex-col gap-1.5">{ungrouped.map((c) => row(c))}</ul>
       ) : null}
 
       {deckMath ? <DeckMathRows deckMath={deckMath} /> : null}
@@ -754,7 +754,7 @@ function DeckMathRows({ deckMath }: { deckMath: NonNullable<DeckReport["deckMath
             key={s.title}
             className={`flex flex-col gap-5 ${i > 0 ? "border-t border-(--separator) pt-6" : ""}`}
           >
-            <h4 className="eyebrow text-(--foreground)">{s.title}</h4>
+            <h4 className="eyebrow">{s.title}</h4>
             {s.blocks.filter(Boolean).map((block, i) => (
               // Keyed by position within its section: these are fixed, authored blocks, never a
               // list that reorders inside a section.

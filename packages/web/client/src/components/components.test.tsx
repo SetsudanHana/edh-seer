@@ -517,19 +517,25 @@ test("every leaf still renders under exactly one parent", () => {
   // DOM order follows PARENTS, never the input array: Consistency's own leaves (draw, cardSelection)
   // before Ramp's, before Interaction's (targetedRemoval, graveyardHate), before Board wipes' --
   // which the scrambled input above does not hold in either order.
+  //
+  // Ramp and Board wipes carry no separate heading (F2, revised CONFLICT 8): their single leaf's
+  // label equals the parent name, so the parent's `<h4>` rides INSIDE that leaf's row instead of
+  // sitting above it -- the `li` (its `aria-label`) therefore precedes its own nested `<h4>` (its
+  // `textContent`) in document order, the opposite order from the multi-leaf parents above, whose
+  // heading is a separate element that comes first.
   const text = [...container.querySelectorAll("h4, li[aria-label]")]
     .map((el) => el.getAttribute("aria-label") ?? el.textContent);
   expect(text).toEqual([
     "Consistency",
     expect.stringMatching(/^Draw 6 of 10/),
     expect.stringMatching(/^Card selection 2 of 4/),
-    "Ramp",
     expect.stringMatching(/^Ramp 8 of 10/),
+    "Ramp",
     "Interaction",
     expect.stringMatching(/^Removal 3 of 10/),
     expect.stringMatching(/^Graveyard hate 1 of 2/),
-    "Board wipes",
     expect.stringMatching(/^Board wipes 1 of 3/),
+    "Board wipes",
   ]);
   // Grouping must not drop a leaf's own ratio -- each row still carries its count/target.
   expect(screen.getByLabelText(/^Draw 6 of 10/)).toBeInTheDocument();
@@ -542,6 +548,12 @@ test("every leaf still renders under exactly one parent", () => {
   // name once, not twice (heading, then a blank-looking row repeating it).
   expect(screen.getAllByText("Ramp")).toHaveLength(1);
   expect(screen.getAllByText("Board wipes")).toHaveLength(1);
+  // F2: the earlier fix suppressed the row's label TEXT and left the `w-24` column empty, which
+  // rendered as an unlabelled bar floating next to the heading above it. The label slot must never
+  // be blank -- it now carries the folded heading itself.
+  const labelSlot = (label: RegExp) => screen.getByLabelText(label).firstElementChild;
+  expect(labelSlot(/^Ramp 8 of 10/)?.textContent?.trim()).toBe("Ramp");
+  expect(labelSlot(/^Board wipes 1 of 3/)?.textContent?.trim()).toBe("Board wipes");
 });
 
 const DECK_MATH = {
@@ -909,6 +921,22 @@ test("trim rows stay hidden until asked for, then show N with what keeps each ca
 test("trim renders even when the passive cut list is empty — the case it exists for", () => {
   render(<CutList cutList={[]} slack={[]} trim={TRIM} />);
   expect(screen.getByText(/Over on cards\?/)).toBeTruthy();
+});
+
+// F3: the slack chip printed the raw camelCase key ("targetedRemoval 14/10 (+4)") because this
+// file had no label map at all -- BuildBenchmarks' fix for the identical bug (CONFLICT 9,
+// `graveyardHate`) could not reach here, since its map was a local `const`. Both now import the
+// same `BUILD_CATEGORY_LABEL`.
+test("the slack chip names its category in words, not the raw camelCase key", () => {
+  render(
+    <CutList
+      cutList={[]}
+      slack={[{ category: "targetedRemoval", count: 14, target: 10, over: 4 }]}
+      trim={[]}
+    />,
+  );
+  expect(screen.getByText(/Removal/)).toBeInTheDocument();
+  expect(screen.queryByText(/targetedRemoval/)).not.toBeInTheDocument();
 });
 
 // --- The card drawer (F8): the inspector, reachable from any card name in the report. ---
