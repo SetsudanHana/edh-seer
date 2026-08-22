@@ -505,6 +505,26 @@ export interface Ability {
    *  The distinction is load-bearing — it is the difference between a free sacrifice outlet and a
    *  static ability. */
   cost?: string;
+  /** WHICH TRIGGERS THIS ABILITY DOUBLES. Present only on `trigger-doubling`.
+   *
+   *  Panharmonicon prints "If an artifact or creature ENTERING causes a triggered ability of a
+   *  permanent you control to trigger, that ability triggers an additional time"; Isshin prints the
+   *  same sentence with "a creature ATTACKING", Drivnod with "a creature DYING". The clause layer
+   *  records only the OBJECT ("a triggered ability of a permanent you control") and drops the
+   *  qualifier, so all three derived BYTE-IDENTICALLY and the whole family carried no subject and
+   *  formed no edge. Measured 2026-08-22: 16 derived trigger-doubling abilities, 15 with no subject.
+   *
+   *  IT IS ITS OWN FIELD AND DELIBERATELY NOT `effect.subject`, which was the first design and is a
+   *  footgun (Fable's review, 2026-08-22). A subject stamped there flows into the STATIC APPLIES-TO
+   *  pass, which matches it against consumers' TYPE LINES — so "Panharmonicon's static applies to
+   *  Arcane Signet" would be claimed about every vanilla artifact in the deck. Today
+   *  `namesItsTargets` blocks that BY ACCIDENT (a bare singular with no mass scope drops the
+   *  subject); a subject built to pass that gate would rebuild the Serah/Excalibur mesh.
+   *
+   *  A DOUBLER WHOSE QUALIFIER NAMES NO EVENT THIS LIST HOLDS RECORDS NOTHING and stays silent —
+   *  Veyran ("instant or sorcery spell you cast"), Wayta, Harmonic Prodigy. Refusal over a guessed
+   *  near-miss, as everywhere else in this file. */
+  doubles?: Verb[];
   /** The amount stated by the action that produced this ability, verbatim from the clause —
    *  "2", "X", "1,000".
    *

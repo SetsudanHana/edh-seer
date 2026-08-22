@@ -171,6 +171,14 @@ export function staticGrantSentence(producer: string, consumer: string, kind: st
   return `${producer} gives ${consumer} ${phrase}`;
 }
 
+/** "Panharmonicon doubles Solemn Simulacrum's enters trigger". Says WHICH trigger, because the whole
+ *  point of the doubling channel is that Panharmonicon (entering), Isshin (attacking) and Drivnod
+ *  (dying) were indistinguishable before it — a sentence that dropped the event would reintroduce
+ *  exactly the ambiguity the field was added to remove. */
+export function doublesSentence(producer: string, consumer: string, verb: string): string {
+  return `${producer} doubles ${consumer}'s ${VERB_PHRASES[verb] ?? verb} trigger`;
+}
+
 /** The cost-reduction branch was already plain English and its text does not change — moved here
  *  only so sentence.ts is the single place every reason sentence is built. */
 export function costReductionSentence(producer: string, consumer: string): string {

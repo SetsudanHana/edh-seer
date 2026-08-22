@@ -2522,8 +2522,8 @@ test("a self entry trigger is not a demand for its own class, and supplies etb-r
 // THE DEMAND IS ON THE RE-FIRER, which is what makes the tag discriminate: keyed the other way it
 // headlines 11 of the 71 decks including one with a single flicker effect; keyed this way, 4, each
 // carrying 7 or more.
-test("a flicker, clone or trigger doubler CARES about entry triggers", () => {
-  for (const kind of ["flicker", "clone", "trigger-doubling"]) {
+test("a flicker, clone or ENTRY doubler cares about entry triggers — an attack doubler does not", () => {
+  for (const kind of ["flicker", "clone"]) {
     const t = base("Eldrazi Displacer", [{
       kind: "activated",
       effect: { kind, subject: { type: "creature", control: "you", token: null } },
@@ -2531,6 +2531,54 @@ test("a flicker, clone or trigger doubler CARES about entry triggers", () => {
     expect([...cardCaresTags(t)]).toContain(ETB_REFIRE);
     expect([...cardThemeTags(t)]).toContain(ETB_REFIRE);
   }
+
+  // A doubler now qualifies on WHICH triggers it doubles, not on carrying the kind. The bare kind
+  // used to be enough, and this file's own REFIRE_KINDS comment recorded the resulting over-claim:
+  // "Isshin doubles ATTACK triggers and Tekuthal proliferate". A deck could headline `etb-refire` on
+  // a card that doubles no entry at all.
+  const panharmonicon = base("Panharmonicon", [{
+    kind: "static", effect: { kind: "trigger-doubling" }, doubles: ["enters"],
+  }]).tags;
+  expect([...cardThemeTags(panharmonicon)]).toContain(ETB_REFIRE);
+
+  const isshin = base("Isshin, Two Heavens as One", [{
+    kind: "static", effect: { kind: "trigger-doubling" }, doubles: ["attacks"],
+  }]).tags;
+  expect([...cardThemeTags(isshin)]).not.toContain(ETB_REFIRE);
+
+  // A doubler whose printed qualifier the closed map cannot read (Veyran, "instant or sorcery spell
+  // you cast") records no `doubles` and no longer counts. It was counted on no evidence before, so
+  // this narrows in the under-claiming direction on purpose.
+  const veyran = base("Veyran, Voice of Duality", [{ kind: "static", effect: { kind: "trigger-doubling" } }]).tags;
+  expect([...cardThemeTags(veyran)]).not.toContain(ETB_REFIRE);
+});
+
+test("a trigger doubler pairs with a card whose trigger it doubles, and only that card", () => {
+  const panharmonicon = base("Panharmonicon", [{
+    kind: "static", effect: { kind: "trigger-doubling" }, doubles: ["enters"],
+  }]);
+  const etbHaver = base("Solemn Simulacrum", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } },
+    effect: { kind: "ramp" },
+  }]);
+  const doubled = pairReasons(panharmonicon, etbHaver, H);
+  expect(doubled.some((r) => r.tag === "doubles:enters")).toBe(true);
+  expect(doubled.find((r) => r.tag === "doubles:enters")!.text)
+    .toBe("Panharmonicon doubles Solemn Simulacrum's enters trigger");
+
+  // CROSS-CLASS IS THE WHOLE DEFECT THIS FIELD EXISTS TO FIX: Isshin doubles ATTACK triggers, so it
+  // must claim nothing about an ETB card. Before `doubles`, Isshin and Panharmonicon derived
+  // byte-identically and neither claimed anything at all.
+  const isshin = base("Isshin, Two Heavens as One", [{
+    kind: "static", effect: { kind: "trigger-doubling" }, doubles: ["attacks"],
+  }]);
+  expect(pairReasons(isshin, etbHaver, H).some((r) => r.tag.startsWith("doubles:"))).toBe(false);
+
+  // A consumer with NO triggered ability receives nothing — the type-line trap that would have
+  // followed from stamping this into `effect.subject` instead.
+  const vanilla = base("Arcane Signet", [{ kind: "activated", effect: { kind: "mana-generation" } }]);
+  expect(pairReasons(panharmonicon, vanilla, H).some((r) => r.tag.startsWith("doubles:"))).toBe(false);
 });
 
 // INALLA IS THE ACCEPTANCE TEST: its eminence reads "whenever another nontoken Wizard you control

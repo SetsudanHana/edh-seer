@@ -16,6 +16,7 @@ import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject } from "./subject.js";
 import { repeatsFor } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
+import { doubledVerbs } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
@@ -24,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 71;
+export const DERIVE_VERSION = 72;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -777,6 +778,14 @@ export function deriveAbilities(
       // The amount belongs to the ACTION, not the clause: Kaya's -2 is one clause whose two actions
       // each carry their own. Assigned here, in the per-action loop, for that reason.
       if (action.amount != null && action.amount !== "") ability.amount = action.amount;
+      // WHICH triggers a doubler doubles, read off the printed text — the clause layer records only
+      // the object and drops the qualifier, so Panharmonicon (entering), Isshin (attacking) and
+      // Drivnod (dying) were byte-identical before this. Empty for a doubler whose qualifier names
+      // no event the closed map holds, which keeps that card silent rather than guessing.
+      if (effectKind === "trigger-doubling") {
+        const doubles = doubledVerbs(text);
+        if (doubles.length) ability.doubles = doubles;
+      }
       if (emits.length) ability.emits = emits;
       abilities.push(ability);
     }

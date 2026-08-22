@@ -13,7 +13,7 @@ import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, counterPresenceSentence, createsSentence, fetchSentence,
   graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, tutorSentence, winconSentence,
+  staticGrantSentence, tutorSentence, winconSentence, doublesSentence,
 } from "./sentence.js";
 
 const list = (v: string | string[] | undefined): string[] =>
@@ -151,15 +151,27 @@ function impliedEntryThemeTags(tags: CardTags): string[] {
  *  re-fire an ETB too, but they are not in the owner's three and reanimation has its own theme. */
 export const ETB_REFIRE = "etb-refire";
 
-/** Effect kinds that make a permanent's entry trigger fire again. `trigger-doubling` over-claims --
- *  Isshin doubles ATTACK triggers and Tekuthal proliferate -- and the copy family is wider than the
- *  `clone` kind (C4 matches copies on a printed cue, because a copy derives `token-generation`
- *  byte-identically to a token maker). Both are ceilings on a 109-card population, not reasons to
- *  widen the predicate here. */
-const REFIRE_KINDS: ReadonlySet<string> = new Set(["flicker", "clone", "trigger-doubling"]);
+/** Effect kinds that make a permanent's entry trigger fire again.
+ *
+ *  `trigger-doubling` USED TO OVER-CLAIM HERE and the ceiling was recorded in this comment: Isshin
+ *  doubles ATTACK triggers and Tekuthal proliferate, and both counted as ETB re-firers, so a deck
+ *  could headline `etb-refire` on a card that doubles no entry at all. `Ability.doubles` now records
+ *  WHICH triggers a doubler doubles, so the kind is no longer consulted bare — a doubler qualifies
+ *  only when it names `enters`.
+ *
+ *  A DOUBLER WHOSE QUALIFIER THE CLOSED MAP CANNOT READ (Veyran, Wayta, Harmonic Prodigy) records no
+ *  `doubles` and therefore no longer counts. A deliberate narrowing in the under-claiming direction:
+ *  it was counting them on no evidence before.
+ *
+ *  The copy family remains wider than the `clone` kind (C4 matches copies on a printed cue, because
+ *  a copy derives `token-generation` byte-identically to a token maker) — still a ceiling on a
+ *  109-card population, not a reason to widen the predicate here. */
+const REFIRE_KINDS: ReadonlySet<string> = new Set(["flicker", "clone"]);
 
 const refiresEntries = (tags: CardTags): boolean =>
-  tags.abilities.some((a) => a.effect?.kind !== undefined && REFIRE_KINDS.has(a.effect.kind));
+  tags.abilities.some((a) =>
+    (a.effect?.kind !== undefined && REFIRE_KINDS.has(a.effect.kind))
+    || (a.effect?.kind === "trigger-doubling" && (a.doubles ?? []).includes("enters")));
 
 const hasSelfEntryTrigger = (tags: CardTags): boolean =>
   tags.abilities.some((a) => a.trigger?.subject?.self === true && a.trigger.verbs.includes("enters"));
@@ -1138,6 +1150,45 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       consumer: c.card.name,
       producer: p.card.name,
     });
+  }
+  // TRIGGER-DOUBLING edges: P makes C's triggered ability fire twice. Panharmonicon + Solemn
+  // Simulacrum is the relation; Panharmonicon + a vanilla creature is not.
+  //
+  // THIS IS A TRIGGER-TO-TRIGGER PASS AND IT IS THE FIRST ONE. Every other pass here runs a
+  // producer's EVENT against a consumer's TRIGGER. A doubler emits no event -- it modifies an
+  // ability -- so the consumer side is matched on what it TRIGGERS ON, and nothing is synthesized on
+  // the producer side. (Fable's review, 2026-08-22, refuted the two obvious alternatives: applying
+  // the CR 614 precedent mechanically would synthesize `trigger: enters` and pair Panharmonicon with
+  // every artifact's and creature's IMPLIED ENTRY -- every vanilla body in the deck; and pairing with
+  // a TOKEN MAKER is a three-card claim, since tokens entering fire nothing unless some third card
+  // carries the ability, which is the shape B3 refused for the tax interaction.)
+  //
+  // `a.doubles` IS READ, NEVER `a.effect.subject` -- a subject stamped for this family would flow
+  // into the static applies-to pass above, which matches against TYPE LINES, and claim
+  // "Panharmonicon's static applies to Arcane Signet" about every vanilla artifact in the deck.
+  //
+  // A SELF TRIGGER COUNTS, and it is the headline case: Solemn Simulacrum's own ETB is exactly what
+  // Panharmonicon doubles. This pass therefore does NOT apply the self-reference gates the event
+  // passes need -- there is no class-vs-self ambiguity when the consumer's own printed trigger is
+  // the thing being doubled.
+  for (const a of p.tags?.abilities ?? []) {
+    if (a.effect?.kind !== "trigger-doubling" || !a.doubles?.length) continue;
+    for (const ca of c.tags?.abilities ?? []) {
+      const verb = (ca.trigger?.verbs ?? []).find((v) => a.doubles!.includes(v));
+      if (!verb) continue;
+      // A doubler says "a triggered ability of a permanent YOU CONTROL". A consumer whose trigger
+      // watches an OPPONENT's board is not doubled by it.
+      if (ca.trigger?.subject?.control === "opp") continue;
+      reasons.push({
+        tag: `doubles:${verb}`,
+        text: doublesSentence(p.card.name, c.card.name, verb),
+        effectKind: "trigger-doubling",
+        repeatability: "static",
+        consumer: c.card.name,
+        producer: p.card.name,
+      });
+      break; // one claim per consumer ability, not one per matching verb
+    }
   }
   // TUTOR edges: P can SEARCH UP C. "My search can find you" is not a producer-event to
   // consumer-trigger relation, which is why the recall measurement filed the family as
