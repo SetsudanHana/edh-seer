@@ -1306,7 +1306,7 @@ test("HeadlineScores uses semantic tokens, not raw Tailwind palette classes", ()
 
 test("SuggestionsList renders each suggestion; hidden when empty", () => {
   const { rerender } = render(<SuggestionsList suggestions={SAMPLE.report.suggestions} />);
-  expect(screen.getByText("No board wipe (target 3)")).toBeInTheDocument();
+  expect(screen.getByText("No board wipe (target 3), typically 3–5 mana")).toBeInTheDocument();
   rerender(<SuggestionsList suggestions={[]} />);
   expect(screen.queryByText(/board wipe/)).not.toBeInTheDocument();
 });

@@ -127,13 +127,34 @@ export interface BuildParentSpec {
    *  Declared here rather than matched on `name` in `computeBuild`, so the fact lives beside the
    *  parent it describes and a rename cannot silently unwire it. */
   coverageWeighted?: true;
+  /** What a card filling this parent typically COSTS, as the p25-p75 band of the reference decks --
+   *  the shape half of "what should I add?" (roadmap F14).
+   *
+   *  A BAND AND NEVER A POINT, because the point claim is not supported and measuring is what showed
+   *  it: the modal mana value is only 25-42% of the cards in EVERY leaf (ramp modal 2 = 36%, draw
+   *  modal 3 = 25%, board wipe modal 5 = 33%), so "add a two-mana rock" would be wrong about two
+   *  thirds of the time. That is the `thinnest: tutors` defect one rung along -- a specific
+   *  recommendation nothing measured supports -- and it is why this reads "typically 2-3 mana"
+   *  rather than naming a cost.
+   *
+   *  MEASURED over the 71 calibration decks, per PARENT (the union of its leaves), because a
+   *  suggestion names a parent and never a leaf: Consistency 2-4 (n=1181, 65% of cards inside) ·
+   *  Ramp 2-3 (n=930, 56%) · Interaction 2-4 (n=1324, 64%) · Board wipes 3-5 (n=98, 73%).
+   *  `build-population.ts --cost-bands` recomputes them and fails on drift, because a
+   *  hand-transcribed table drifting from the corpus it claims to describe is exactly what
+   *  `GRAVEYARD_HATE_SHARE` shipped as 36/16/6 against a source that measured 39/19/8.
+   *
+   *  DOCTRINE, with the same caveat `BASE_TARGETS` carries: these are ONE owner's 71 decks, not a
+   *  meta. `lands` deliberately has no band -- a land is mana value 0 and the number would be
+   *  nonsense. */
+  costBand: [number, number];
 }
 
 export const BUILD_PARENTS: BuildParentSpec[] = [
-  { name: "Consistency", leaves: ["draw", "cardSelection", "tutor"], target: 14, weight: 1 },
-  { name: "Ramp", leaves: ["ramp"], target: 10, weight: 1 },
-  { name: "Interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], target: 10, weight: 1, coverageWeighted: true },
-  { name: "Board wipes", leaves: ["boardWipe"], target: 3, weight: 0.5 },
+  { name: "Consistency", leaves: ["draw", "cardSelection", "tutor"], target: 14, weight: 1, costBand: [2, 4] },
+  { name: "Ramp", leaves: ["ramp"], target: 10, weight: 1, costBand: [2, 3] },
+  { name: "Interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], target: 10, weight: 1, coverageWeighted: true, costBand: [2, 4] },
+  { name: "Board wipes", leaves: ["boardWipe"], target: 3, weight: 0.5, costBand: [3, 5] },
 ];
 
 /** Every leaf a parent owns. `lands`, `burn` and `stax` are deliberately absent -- see the note
@@ -436,10 +457,13 @@ function buildSuggestions(
   const gaps: { gap: number; text: string }[] = [];
   for (const p of parents) {
     if (p.target <= 0 || p.count >= p.target) continue;
+    // The cost band is the SHAPE half of the answer (F14), appended to whichever sentence the gap
+    // produced. `lands` below gets none on purpose: a land is mana value 0.
+    const band = `, typically ${p.costBand[0]}–${p.costBand[1]} mana`;
     const text =
       p.count === 0 && p.name === "Board wipes"
-        ? `No board wipe (target ${p.target})`
-        : `${p.name} ${p.count}/${p.target} — add ~${p.target - p.count}`;
+        ? `No board wipe (target ${p.target})${band}`
+        : `${p.name} ${p.count}/${p.target} — add ~${p.target - p.count}${band}`;
     gaps.push({ gap: p.target - p.count, text });
   }
   const landsTarget = targets.lands;

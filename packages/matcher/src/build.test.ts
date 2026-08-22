@@ -550,3 +550,19 @@ describe("Interaction scores coverage x count", () => {
     expect(interaction.count).toBeLessThan(interaction.target);
   });
 });
+
+test("a gap names a cost BAND, and a land gap does not", () => {
+  // F14: the shape half of "what should I add?". A BAND, never a point -- the modal mana value is
+  // only 25-42% of the cards in every leaf, so "add a two-mana rock" would be wrong about two
+  // thirds of the time, which is the `thinnest: tutors` defect one rung along.
+  const { suggestions } = computeBuild([mk("Lonely", "Vanilla.", "Creature")], "goodstuff");
+  const ramp = suggestions.find((s) => /^Ramp /.test(s));
+  expect(ramp).toMatch(/typically 2–3 mana/);
+  // Every parent gap carries one, whichever four the gap ranking happens to surface.
+  for (const gap of suggestions.filter((s) => !/^Lands /.test(s))) expect(gap).toMatch(/typically \d–\d mana/);
+  // A LAND IS MANA VALUE 0, so its gap gets no band -- the number would be nonsense.
+  const flood = Array.from({ length: 48 }, (_, i) => mk(`Land ${i}`, "", "Land"));
+  const landGap = computeBuild(flood, "goodstuff").suggestions.find((s) => /^Lands /.test(s));
+  expect(landGap).toBeDefined();
+  expect(landGap).not.toMatch(/typically/);
+});

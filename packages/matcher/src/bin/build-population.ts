@@ -6,7 +6,7 @@ import {
 } from "@mtg/data";
 import type { CardTags } from "@mtg/tagger";
 import { createTagsLookup } from "@mtg/tagger";
-import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES } from "../build.js";
+import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, BUILD_PARENTS } from "../build.js";
 import { recommendedLands } from "../land-count.js";
 import { winconReport } from "../wincon.js";
 import { measuredClock, pressureCurve } from "../pressure.js";
@@ -77,12 +77,49 @@ function landReport(rows: { deck: string; actual: number; target: number; avg: n
   );
 }
 
+/** Recompute `BuildParentSpec.costBand` from the decks and fail on drift.
+ *
+ *  The band is HAND-TRANSCRIBED into `BUILD_PARENTS`, and a hand-transcribed table drifting from
+ *  the population it claims to describe is a defect this repo has already shipped once:
+ *  `GRAVEYARD_HATE_SHARE` sat at 36/16/6 against a stated source that measured 39/19/8, because
+ *  nothing recomputed it. This is that check, in the gate that already sweeps these decks. */
+function reportCostBands(
+  mvByLeaf: Map<string, number[]>,
+): void {
+  const q = (a: number[], p: number): number => {
+    const sorted = [...a].sort((x, y) => x - y);
+    return sorted[Math.floor(sorted.length * p)];
+  };
+  let drift = 0;
+  for (const parent of BUILD_PARENTS) {
+    const arr = parent.leaves.flatMap((l) => mvByLeaf.get(l) ?? []);
+    if (arr.length === 0) { console.log(`  ${parent.name}: NO CARDS MEASURED`); drift++; continue; }
+    const lo = q(arr, 0.25), hi = q(arr, 0.75);
+    const inside = arr.filter((v) => v >= lo && v <= hi).length;
+    const [tLo, tHi] = parent.costBand;
+    const ok = lo === tLo && hi === tHi;
+    if (!ok) drift++;
+    console.log(
+      `  ${parent.name.padEnd(12)} n=${String(arr.length).padStart(4)} measured ${lo}-${hi} ` +
+      `(${((inside / arr.length) * 100).toFixed(0)}% inside) · table ${tLo}-${tHi} ${ok ? "ok" : "DRIFT"}`,
+    );
+  }
+  if (drift > 0) {
+    console.log(`\n${drift} parent(s) drifted — update BUILD_PARENTS[].costBand and its provenance comment.`);
+    process.exitCode = 1;
+  } else {
+    console.log("\nno drift: every band matches the decks it claims to describe.");
+  }
+}
+
 async function main(): Promise<void> {
   if (process.argv[2] === "--diff") {
     diff(process.argv[3], process.argv[4]);
     return;
   }
   const landsMode = process.argv[2] === "--lands";
+  const bandsMode = process.argv[2] === "--cost-bands";
+  const mvByLeaf = new Map<string, number[]>();
 
   const store = await connect(loadConfig());
   const lookup = mongoLookup(store);
@@ -113,6 +150,17 @@ async function main(): Promise<void> {
       continue;
     }
     const members = detectBuildCategories(inputs);
+    if (bandsMode) {
+      // Mana value off the CARD, not off a report: this bin never builds one, and `manaValue` is the same
+      // field `land-count.ts` prices a curve from.
+      const mv = new Map(inputs.map((i) => [i.card.name, i.card.manaValue]));
+      for (const [cat, set] of members) {
+        const arr = mvByLeaf.get(cat) ?? [];
+        for (const n of set) { const v = mv.get(n); if (typeof v === "number") arr.push(v); }
+        mvByLeaf.set(cat, arr);
+      }
+      continue;
+    }
     const deck: Record<string, string[]> = {};
     // Answer classes ride in the same snapshot under an `answer:` prefix, so the coverage axis is
     // under the same gate as the categories. They are a different axis, not finer categories: a
@@ -139,7 +187,8 @@ async function main(): Promise<void> {
     out[file.replace(/\.txt$/, "")] = deck;
   }
 
-  if (landsMode) landReport(landRows);
+  if (bandsMode) reportCostBands(mvByLeaf);
+  else if (landsMode) landReport(landRows);
   else console.log(JSON.stringify(out, null, 1));
   await store.close();
 }
