@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 75;
+export const DERIVE_VERSION = 76;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -552,6 +552,50 @@ const LOSES_THE_GAME = /\blos(?:es|e|ing) the game\b/i;
 
 const TAPPED_FOR_MANA = /\btapp?(?:ed|s|ing)?\b[^.]{0,30}?\bfor\s+(?:mana|\{)/i;
 
+/** THE TEXT THIS CLAUSE WAS WRITTEN FROM, when the normalizer's clause id is not one the segmenter
+ *  produced.
+ *
+ *  THE DEFECT, measured 2026-08-23 (roadmap K3c): the model SPLITS an or-trigger into two clauses
+ *  while `segment()` produces one, so the second clause carries an id no segmenter clause has and
+ *  `clauseTexts[id]` is undefined. Archon of Cruelty is the witness -- one printed sentence,
+ *  "Whenever this creature enters OR ATTACKS, target opponent sacrifices a creature", derived
+ *  `control: "opp"` on the enters branch and `control: "any"` on the attacks branch, because
+ *  `actionRecipients` never ran for the branch with no text. It is why K3a's filter could not reach
+ *  that card.
+ *
+ *  IT IS NOT ONLY ABOUT CONTROL. Six derive rules read this text -- recipients, the controller
+ *  default, `arrivesTapped`, the intervening-if, the threshold and the replacement frame -- and
+ *  every one of them silently degrades to "say nothing" for an orphan clause. Measured: 40 of 2,667
+ *  clause documents (1.5%) carry one, Mirkwood Bats among them, which is the same card the
+ *  or-trigger family (G2c) is filed on.
+ *
+ *  TWO RESOLVABLE SHAPES AND NO GUESSING BEYOND THEM:
+ *   - a DECIMAL sub-id ("2.1") is the model numbering a split of segment 2, so the base id is the
+ *     answer and is read directly;
+ *   - an INTEGER sibling is matched by the one thing that distinguishes it -- its TRIGGER EVENT.
+ *     `triggerHasCue` is the predicate the phantom-trigger guard already uses, so if exactly ONE
+ *     segmented text carries a printed cue for this clause's event, that text is the sentence the
+ *     clause was split out of.
+ *
+ *  AMBIGUITY RETURNS THE EMPTY STRING, which is today's behaviour: a missing answer beats a wrong
+ *  one, and adopting the wrong sentence would let a recipient or a controller default fire on words
+ *  from a DIFFERENT ability. */
+export function textForClause(
+  clause: { id: number | string; trigger?: { event?: string } | null },
+  clauseTexts?: Record<number, string>,
+): string {
+  if (!clauseTexts) return "";
+  const own = clauseTexts[clause.id as number];
+  if (own) return own;
+  // "2.1" -> 2. `Number.parseInt` stops at the dot, which is exactly the base id.
+  const base = Number.parseInt(String(clause.id), 10);
+  if (Number.isFinite(base) && clauseTexts[base]) return clauseTexts[base];
+  const event = clause.trigger?.event;
+  if (!event) return "";
+  const hits = Object.values(clauseTexts).filter((t) => t && triggerHasCue(event, t));
+  return hits.length === 1 ? hits[0] : "";
+}
+
 export function deriveAbilities(
   clauses: ClauseRecord[],
   cardName?: string,
@@ -577,10 +621,11 @@ export function deriveAbilities(
     // Who performs each action, when the clause names someone the object text does not carry. The
     // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
     // is ambiguous and is left alone -- a missing answer beats a wrong one.
-    const actors = clauseTexts?.[clause.id] ? actionRecipients(clauseTexts[clause.id]) : {};
+    const clauseText = textForClause(clause, clauseTexts);
+    const actors = clauseText ? actionRecipients(clauseText) : {};
     const actorFor = (verb?: string): Control | undefined =>
       (clause.actions ?? []).filter((a) => a.verb === verb).length === 1 ? actors[verb ?? ""] : undefined;
-    const text = clauseTexts?.[clause.id] ?? "";
+    const text = clauseText;
     const cost = clauseCosts?.[clause.id] ?? "";
     // A fetch is two actions: `search "your library for a Swamp or Mountain card"`, then
     // `put "that card" onto the battlefield`. The EMIT comes from the put, whose object is a

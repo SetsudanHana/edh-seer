@@ -1,5 +1,5 @@
-import { expect, test } from "vitest";
-import { deriveAbilities, deriveCardTags } from "./derive.js";
+import { describe, expect, test } from "vitest";
+import { deriveAbilities, deriveCardTags, textForClause } from "./derive.js";
 import type { Characteristics } from "../schema.js";
 
 test("one ability per action, sharing the clause kind and trigger", () => {
@@ -1525,4 +1525,35 @@ test("a multiplier narrowed by something unrepresentable keeps its kind and clai
     actions: [{ verb: "double", object: "all damage creatures you control would deal" }],
   }]).abilities[0];
   expect(plain.effect.subject).toBeDefined();
+});
+
+describe("an orphan clause id still finds the sentence it was split out of (K3c)", () => {
+  const texts = {
+    1: "Flying",
+    2: "Whenever this creature enters or attacks, target opponent sacrifices a creature or planeswalker of their choice, discards a card, and loses 3 life.",
+  };
+
+  test("the model's extra clause for an OR-trigger adopts the sentence, matched on its event", () => {
+    // Archon of Cruelty: segment() produces 2 clauses, the normalizer stores 3. Clause 3 is the
+    // `attacks` half and has no text of its own, so `actionRecipients` never ran and the sacrifice
+    // derived `control: "any"` where the enters half derived `"opp"` -- one sentence, two answers.
+    expect(textForClause({ id: 3, trigger: { event: "attacks" } }, texts)).toBe(texts[2]);
+  });
+
+  test("a DECIMAL sub-id reads its base segment directly", () => {
+    expect(textForClause({ id: "2.1" as unknown as number, trigger: { event: "attacks" } }, texts)).toBe(texts[2]);
+  });
+
+  test("a clause with its OWN text is untouched", () => {
+    expect(textForClause({ id: 1, trigger: undefined }, texts)).toBe("Flying");
+  });
+
+  test("AMBIGUITY RETURNS NOTHING — a missing answer beats words from another ability", () => {
+    // Two sentences could be the source, so adopting either would let a recipient or a controller
+    // default fire on a DIFFERENT ability's words.
+    const two = { 1: "Whenever this creature attacks, draw a card.", 2: "Whenever this creature attacks, each opponent loses 1 life." };
+    expect(textForClause({ id: 5, trigger: { event: "attacks" } }, two)).toBe("");
+    // And an orphan with no trigger at all has nothing to match on.
+    expect(textForClause({ id: 9, trigger: undefined }, texts)).toBe("");
+  });
 });
