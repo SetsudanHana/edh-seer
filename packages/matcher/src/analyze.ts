@@ -41,6 +41,7 @@ import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
 import { promoteSpecificHeadline, demoteUnrankableHeadline } from "./theme-promote.js";
 import { rankThemesByLoop } from "./theme-loop.js";
+import { deckThing } from "./thing.js";
 
 /**
  * Structured-engine counterpart of `@mtg/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -656,8 +657,28 @@ export function analyzeDeckStructured(
   // COHESION IS A SHARE OF CARDS, so it is given the per-card tag sets rather than left to sum
   // `deckFreq` across the family -- which counted a card once per tag it carried there and drove
   // 5 of the 71 decks into the `Math.min(1, ...)` clamp. See computeCohesion.
+  const nonlandTagSets = nonlands.map((dc) => (dc.tags ? cardThemeTags(dc.tags) : new Set<string>()));
   const cohesion = computeCohesion(promotedThemes, deckFreq, nonlandCount, makeFold(hierarchy),
-    nonlands.map((dc) => (dc.tags ? cardThemeTags(dc.tags) : new Set<string>())));
+    nonlandTagSets);
+
+  // "N CARDS DO THIS DECK'S THING" (roadmap K2). THE SAME CARDS COHESION COUNTS, by name — the
+  // numerator it already computes and never names. Recomputing the predicate here rather than
+  // returning names from `computeCohesion` keeps the flat engine's signature alone; the predicate
+  // is A10's `tag === primary || fold(tag) === primary`, one line.
+  //
+  // `count` IS NOT `cohesion.score * nonlandCount` and must not be described as if it were: the
+  // commander is pulled out of the count and stated at P = 1 beside it, so the identity that holds
+  // is `count + fromCommandZone.length === round(score * nonlandCount)`. `bin/thing-set-diff.ts`
+  // checks that across all 71 decks, because two numbers on one screen disagreeing is the
+  // MDFC-lands defect and a comment is not a check.
+  const foldTag = makeFold(hierarchy);
+  const onThemeCards = cohesion
+    ? nonlands
+      .filter((_, i) => [...nonlandTagSets[i]].some(
+        (t) => t === cohesion.tag || foldTag(t) === cohesion.tag))
+      .map((dc) => dc.card.name)
+    : [];
+  const thing = deckThing(cohesion, onThemeCards, commanderSet, resolved.length - commanderSet.size);
 
   const deckStats = computeDeckStats(resolved.map((dc) => dc.card));
 
@@ -779,6 +800,7 @@ export function analyzeDeckStructured(
     axis: [...axis].map(([tag, weight]) => ({ tag, weight })).sort((x, y) => y.weight - x.weight || x.tag.localeCompare(y.tag)),
     roles: computeRoles(resolved),
     cohesion,
+    thing,
     archetypes,
     strategies,
     buildScore,
@@ -811,6 +833,9 @@ export function analyzeDeckStructured(
       cohesion,
       deckMath?.wincons,
       buildParents.find((p) => p.name === "Interaction"),
+      // The SAME archetype the build score and the land target already read (`strategies[0]`), so
+      // the win slot's combo gate cannot disagree with the rest of the report about what the deck is.
+      strategies[0]?.name,
     ),
     themeMembership: membership,
   };

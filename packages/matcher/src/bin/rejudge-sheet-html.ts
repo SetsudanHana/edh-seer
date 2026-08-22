@@ -15,55 +15,19 @@ export interface SheetRow {
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-/** Mana symbols as readable pips. The corpus writes them `{2}{G/U}`; a hybrid keeps its slash. */
-const pips = (cost: string): string =>
-  cost ? [...cost.matchAll(/\{([^}]+)\}/g)].map((m) => `<span class="pip">${esc(m[1])}</span>`).join("") : `<span class="pip pip-none">no cost</span>`;
-
-const cardPanel = (c: SheetCard, role: string): string => `
-      <div class="card" data-role="${role}">
-        <div class="card-head">
-          <span class="role">${role}</span>
-          <span class="cost">${pips(c.cost)}</span>
-        </div>
-        <h3 class="card-name">${esc(c.name)}</h3>
-        <p class="type-line">${esc(c.typeLine)}${c.colors.length ? ` <span class="colors">${esc(c.colors.join(""))}</span>` : ""}</p>
-        <div class="oracle">${esc(c.oracle).split("\n").map((l) => `<p>${l}</p>`).join("")}</div>
-      </div>`;
-
-export function renderSheet(rows: SheetRow[], tag: string, want: string): string {
-  const claims = rows.map((r, i) => `
-    <article class="claim" id="claim-${i}" data-index="${i}">
-      <header class="claim-head">
-        <span class="num">${i + 1}<span class="of">/${rows.length}</span></span>
-        <div class="claim-title">
-          <h2>${esc(r.producer.name)} <span class="arrow">&rarr;</span> ${esc(r.consumer.name)}</h2>
-          <p class="meta"><code>${esc(r.tag)}</code> &middot; seen in ${r.decks.map((d) => `<span class="deck">${esc(d)}</span>`).join(" ")}</p>
-        </div>
-        <span class="state" data-state="unjudged">unjudged</span>
-      </header>
-
-      <div class="cards">${cardPanel(r.producer, "producer")}${cardPanel(r.consumer, "consumer")}</div>
-
-      <div class="claim-sentence">
-        <span class="ask">Is this true of these two cards?</span>
-        <p class="sentence">${esc(r.claim)}</p>
-      </div>
-
-      <details class="cached">
-        <summary>what was cached (opens what someone already concluded)</summary>
-        <span class="cached-verdict">${esc(r.cachedVerdict)} by ${esc(r.judgedBy)}${r.cause ? ` &middot; ${esc(r.cause)}` : ""}</span>
-        ${r.note ? `<p class="cached-note">${esc(r.note)}</p>` : ""}
-      </details>
-
-      <div class="verdicts" role="group" aria-label="Verdict for claim ${i + 1}">
-        <button type="button" class="v v-real" data-v="real">real</button>
-        <button type="button" class="v v-false" data-v="false">false</button>
-        <button type="button" class="v v-uncertain" data-v="uncertain">uncertain</button>
-        <input type="text" class="why" placeholder="why (optional, goes in the note)" aria-label="Note for claim ${i + 1}" />
-      </div>
-    </article>`).join("");
-
-  return `<title>Re-judge: ${esc(tag)}</title>
+/** THE PAGE'S LOOK AND ITS INTERACTION, SHARED BY EVERY JUDGING SHEET.
+ *
+ *  Extracted so a second claim type does not mean a second copy — and the reason it matters is the
+ *  clipboard ladder in `sheetScript`: it has three rungs because a sandboxed frame denies clipboard
+ *  access and the first version reported NOTHING when the promise rejected. A duplicated copy means
+ *  the next fix to that has to be made twice, and one of them will be missed.
+ *
+ *  The MARKUP is deliberately NOT shared. A pairwise claim shows two cards and an arrow; a
+ *  thing-list claim shows one card under a theme phrase. Forcing one template to render both would
+ *  print "producer" and "consumer" on a sheet where neither word is true.
+ *
+ *  Extraction verified BYTE-IDENTICAL against the pre-extraction render of the same fixture. */
+export const SHEET_CSS = `<meta charset="utf-8">
 <style>
   :root {
     color-scheme: light dark;
@@ -172,50 +136,20 @@ export function renderSheet(rows: SheetRow[], tag: string, want: string): string
   .out pre { font-family: var(--mono); font-size: .68rem; background: var(--panel); border: 1px solid var(--rule);
              border-radius: 4px; padding: 1rem; overflow-x: auto; white-space: pre; }
   .out summary { font-family: var(--mono); font-size: .75rem; color: var(--steel); cursor: pointer; padding: .5rem 0; }
-</style>
+</style>`;
 
-<div class="wrap">
-  <header class="masthead">
-    <div>
-      <span class="kicker">panel re-judge &middot; ${esc(tag)}</span>
-      <h1>${rows.length} claims cached as <em>${esc(want)}</em></h1>
-      <p class="sub">Judge the <em>sentence</em> &mdash; is it true of those two cards? Not whether the synergy is
-        interesting, and not whether the cached verdict was right. What was cached stays folded away until
-        you ask for it, so it cannot anchor the answer.</p>
-    </div>
-  </header>
-  ${claims}
-</div>
-
-<div class="out">
-  <details>
-    <summary>JSONL output</summary>
-    <pre id="json">judge a claim to start</pre>
-  </details>
-</div>
-
-<div class="dock">
-  <span class="progress"><span id="done">0</span> / ${rows.length}</span>
-  <span class="bar"><i id="fill"></i></span>
-  <button type="button" id="copy" disabled>copy JSONL</button>
-  <button type="button" class="ghost" id="reset">reset</button>
-</div>
-
-<script id="rows" type="application/json">${JSON.stringify(rows.map((r) => ({ producer: r.producer.name, consumer: r.consumer.name, tag: r.tag }))).replace(/</g, "\\u003c")}</script>
-<script>
+/** The judging interaction: verdict buttons, notes, progress and the JSONL export.
+ *
+ *  `lineBuilder` is the ONE claim-shaped part — the JS body of `line(i)`, turning row `i` plus its
+ *  verdict into the record that claim type stores. Everything else is identical whatever is judged. */
+export function sheetScript(lineBuilder: string): string {
+  return `<script>
   (function () {
     var rows = JSON.parse(document.getElementById("rows").textContent);
     var verdicts = {};
     var notes = {};
 
-    function line(i) {
-      return JSON.stringify({
-        producer: rows[i].producer, consumer: rows[i].consumer, tag: rows[i].tag,
-        verdict: verdicts[i], cause: "",
-        note: "USER VERDICT (cost-reduction re-judge, 2026-08-20). " + (notes[i] || "")
-      });
-    }
-    function refresh() {
+${lineBuilder}    function refresh() {
       var picked = Object.keys(verdicts);
       document.getElementById("done").textContent = String(picked.length);
       document.getElementById("fill").style.width = (picked.length / rows.length * 100) + "%";
@@ -294,6 +228,98 @@ export function renderSheet(rows: SheetRow[], tag: string, want: string): string
     });
     refresh();
   })();
-</script>
+</script>`;
+}
+
+/** What `rejudge-sheet.ts` stores for a PAIRWISE verdict. Unchanged by the extraction. */
+const LINE_BUILDER = `    function line(i) {
+      return JSON.stringify({
+        producer: rows[i].producer, consumer: rows[i].consumer, tag: rows[i].tag,
+        verdict: verdicts[i], cause: "",
+        note: "USER VERDICT (cost-reduction re-judge, 2026-08-20). " + (notes[i] || "")
+      });
+    }
+`;
+
+/** Mana symbols as readable pips. The corpus writes them `{2}{G/U}`; a hybrid keeps its slash. */
+const pips = (cost: string): string =>
+  cost ? [...cost.matchAll(/\{([^}]+)\}/g)].map((m) => `<span class="pip">${esc(m[1])}</span>`).join("") : `<span class="pip pip-none">no cost</span>`;
+
+const cardPanel = (c: SheetCard, role: string): string => `
+      <div class="card" data-role="${role}">
+        <div class="card-head">
+          <span class="role">${role}</span>
+          <span class="cost">${pips(c.cost)}</span>
+        </div>
+        <h3 class="card-name">${esc(c.name)}</h3>
+        <p class="type-line">${esc(c.typeLine)}${c.colors.length ? ` <span class="colors">${esc(c.colors.join(""))}</span>` : ""}</p>
+        <div class="oracle">${esc(c.oracle).split("\n").map((l) => `<p>${l}</p>`).join("")}</div>
+      </div>`;
+
+export function renderSheet(rows: SheetRow[], tag: string, want: string): string {
+  const claims = rows.map((r, i) => `
+    <article class="claim" id="claim-${i}" data-index="${i}">
+      <header class="claim-head">
+        <span class="num">${i + 1}<span class="of">/${rows.length}</span></span>
+        <div class="claim-title">
+          <h2>${esc(r.producer.name)} <span class="arrow">&rarr;</span> ${esc(r.consumer.name)}</h2>
+          <p class="meta"><code>${esc(r.tag)}</code> &middot; seen in ${r.decks.map((d) => `<span class="deck">${esc(d)}</span>`).join(" ")}</p>
+        </div>
+        <span class="state" data-state="unjudged">unjudged</span>
+      </header>
+
+      <div class="cards">${cardPanel(r.producer, "producer")}${cardPanel(r.consumer, "consumer")}</div>
+
+      <div class="claim-sentence">
+        <span class="ask">Is this true of these two cards?</span>
+        <p class="sentence">${esc(r.claim)}</p>
+      </div>
+
+      <details class="cached">
+        <summary>what was cached (opens what someone already concluded)</summary>
+        <span class="cached-verdict">${esc(r.cachedVerdict)} by ${esc(r.judgedBy)}${r.cause ? ` &middot; ${esc(r.cause)}` : ""}</span>
+        ${r.note ? `<p class="cached-note">${esc(r.note)}</p>` : ""}
+      </details>
+
+      <div class="verdicts" role="group" aria-label="Verdict for claim ${i + 1}">
+        <button type="button" class="v v-real" data-v="real">real</button>
+        <button type="button" class="v v-false" data-v="false">false</button>
+        <button type="button" class="v v-uncertain" data-v="uncertain">uncertain</button>
+        <input type="text" class="why" placeholder="why (optional, goes in the note)" aria-label="Note for claim ${i + 1}" />
+      </div>
+    </article>`).join("");
+
+  return `<title>Re-judge: ${esc(tag)}</title>
+${SHEET_CSS}
+
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <span class="kicker">panel re-judge &middot; ${esc(tag)}</span>
+      <h1>${rows.length} claims cached as <em>${esc(want)}</em></h1>
+      <p class="sub">Judge the <em>sentence</em> &mdash; is it true of those two cards? Not whether the synergy is
+        interesting, and not whether the cached verdict was right. What was cached stays folded away until
+        you ask for it, so it cannot anchor the answer.</p>
+    </div>
+  </header>
+  ${claims}
+</div>
+
+<div class="out">
+  <details>
+    <summary>JSONL output</summary>
+    <pre id="json">judge a claim to start</pre>
+  </details>
+</div>
+
+<div class="dock">
+  <span class="progress"><span id="done">0</span> / ${rows.length}</span>
+  <span class="bar"><i id="fill"></i></span>
+  <button type="button" id="copy" disabled>copy JSONL</button>
+  <button type="button" class="ghost" id="reset">reset</button>
+</div>
+
+<script id="rows" type="application/json">${JSON.stringify(rows.map((r) => ({ producer: r.producer.name, consumer: r.consumer.name, tag: r.tag }))).replace(/</g, "\\u003c")}</script>
+${sheetScript(LINE_BUILDER)}
 `;
 }

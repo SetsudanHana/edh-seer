@@ -174,7 +174,7 @@ export interface DeckMath {
    *  Scored the OPPOSITE way to `answers`: coverage wants breadth, focus wants concentration. A
    *  deck all-in on one plan beats a deck with three half-plans, so a low focus is the finding. */
   wincons: {
-    classes: { class: string; count: number; share: number }[];
+    classes: { class: string; count: number; share: number; cards?: string[] }[];
     /** Herfindahl over the class shares: 1 is single-minded, 1/n is n plans split evenly. */
     focus: number;
     primary?: string;
@@ -302,6 +302,14 @@ export interface DeckReport {
   medianManaValue: number;
   roles: { ramp: number; draw: number; removal: number };
   cohesion: Cohesion | null;
+  /** "N cards do this deck's thing, and two of them by turn 3 is P%" (roadmap K2). Null exactly
+   *  when `cohesion.dominant` is false — the theme layer declining to name the deck (A15) must not
+   *  be followed by a number about the thing it just declined to name. Defined in
+   *  `matcher/src/thing.ts`; typed structurally here because the flat engine never produces one. */
+  thing?: {
+    theme: string; tag: string; count: number; cards: string[];
+    fromCommandZone: string[]; turn: number; k: number; probability: number;
+  } | null;
   archetypes?: ArchetypeGroup[];
   /** 0–5 deck positive-coherence: mean nonland synergyRating. Matcher-only (see above). */
   positiveCoherence?: number;
