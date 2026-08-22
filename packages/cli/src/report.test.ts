@@ -40,6 +40,9 @@ const report: DeckReport = {
   cohesion: {
     theme: "Goblins",
     tag: "tribe:goblin",
+    // `dominant` is REQUIRED and this fixture never had it -- `vitest` does not typecheck, so the
+    // suite stayed green while `tsc -p packages/cli` failed at HEAD. The recorded trap, again.
+    dominant: true,
     secondary: "Treasures",
     secondaryTag: "treasure",
     score: 0.5,
@@ -92,4 +95,44 @@ test("a partner's repeated sentence is printed once", () => {
   const out = formatReport(dupReport);
   const hits = out.split("\n").filter((l) => l.includes("triggers on a creature being cast"));
   expect(hits).toHaveLength(1);
+});
+
+test("the commander's cast odds ship WITH what is wrong with them", () => {
+  const r = {
+    ...report,
+    deckMath: { topdeck: [], castability: { cards: [], refused: 0, biases: "", commanders: [
+      { name: "Samut, the Driving Force", turn: 6, mana: 0.341, manaWithRocks: 0.435, colors: [] },
+    ] } },
+  } as unknown as DeckReport;
+  const out = formatReport(r);
+  expect(out).toContain("34% – 44% to have 6 mana by turn 6");
+  // A bare percentage the engine already knows reads low is worse than no percentage.
+  expect(out).toContain("land-fetch ramp");
+  // One commander needs no name prefix; the line sits under the name already printed.
+  expect(out).not.toContain("Samut, the Driving Force: 34%");
+});
+
+test("a refused cost prints an em dash and the reason, never 0%", () => {
+  const r = {
+    ...report,
+    deckMath: { topdeck: [], castability: { cards: [], refused: 1, biases: "", commanders: [
+      { name: "Omarthis", turn: 2, mana: null, manaWithRocks: null, colors: [], refused: "X cost — the mana value on the card is not what you pay" },
+    ] } },
+  } as unknown as DeckReport;
+  const out = formatReport(r);
+  expect(out).toContain("— (X cost");
+  expect(out).not.toMatch(/\b0%/);
+});
+
+test("the thing block abstains with the theme layer, and prints its own ceiling", () => {
+  const withThing = formatReport({ ...report, thing: {
+    theme: "creatures entering", tag: "enters:creature", count: 39, cards: [],
+    fromCommandZone: ["Samut, the Driving Force"], turn: 3, k: 2, probability: 0.96,
+  } } as unknown as DeckReport);
+  expect(withThing).toContain("39 cards do this deck's thing (creatures entering)");
+  expect(withThing).toContain("96% to have 2 of them by turn 3");
+  expect(withThing).toContain("from the command zone, every game");
+  expect(withThing).toContain("one in six");
+  // Null exactly when the theme layer declined to name the deck.
+  expect(formatReport({ ...report, thing: null } as unknown as DeckReport)).not.toContain("does the deck do its thing");
 });

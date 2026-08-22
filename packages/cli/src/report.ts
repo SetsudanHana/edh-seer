@@ -1,10 +1,34 @@
 import { dedupeReasonsByText, type DeckReport } from "@mtg/engine";
 
+/** A probability as a whole percent. Never rounded to 0% for a real chance: a reader treats 0% as
+ *  "cannot happen", and the model's refusals are printed as an em dash instead. */
+const pct = (p: number): string => `${Math.max(1, Math.round(p * 100))}%`;
+
 export function formatReport(report: DeckReport, trim = 0): string {
   const lines: string[] = [];
 
   lines.push("=== Commanders ===");
   lines.push(report.commanders.length ? `  ${report.commanders.join(", ")}` : "  (none specified)");
+  // WHEN IS IT ONLINE (roadmap K5). A RANGE, never one number, and an em dash when the model refuses
+  // the cost -- a 0% would tell a reader their commander is uncastable.
+  const cmdCast = report.deckMath?.castability.commanders ?? [];
+  for (const c of cmdCast) {
+    // The name is repeated only for a PARTNER PAIR, where two rows need telling apart.
+    const who = cmdCast.length > 1 ? `${c.name}: ` : "";
+    const odds = c.mana === null
+      ? `— (${c.refused})`
+      : `${pct(c.mana)} – ${pct(c.manaWithRocks ?? c.mana)} to have ${c.turn} mana by turn ${c.turn}`;
+    lines.push(`  ${who}${odds}`);
+    if (c.commandZoneCaveat) lines.push(`    note: ${c.commandZoneCaveat}`);
+  }
+  // THE RANGE SHIPS WITH WHAT IS WRONG WITH IT, or it should not ship. `manaWithRocks` counts only
+  // permanents that produce mana, so a deck that ramps with Farseek and Cultivate reads LOW -- on
+  // the owner's own Samut deck the range is 34-43% against a simulated 55.8%, outside it entirely
+  // (roadmap I11). The panel carries this in `castability.biases`; the CLI never prints that, so
+  // without this line a reader gets a bare percentage the engine already knows is wrong.
+  if (cmdCast.some((c) => c.mana !== null)) {
+    lines.push("  (lands and mana rocks only — land-fetch ramp like Cultivate is not counted, so this reads low)");
+  }
 
   lines.push("");
   // THE THREE-SLOT SENTENCE FIRST (roadmap A16): win route · engine · means. It leads because it is
@@ -18,6 +42,22 @@ export function formatReport(report: DeckReport, trim = 0): string {
       for (const c of clauses) lines.push(`  ${c}`);
       lines.push("");
     }
+  }
+  // "N CARDS DO THIS DECK'S THING" (roadmap K2), and it sits with the identity sentence because it
+  // is the same question with a number attached. ABSENT when the theme layer declined to name the
+  // deck -- a count under a withdrawn claim would hand the reader back the sentence just taken away.
+  //
+  // THE CEILING IS PRINTED WITH IT (K3b): owner-judged at 95.0% precision on the cards it lists, and
+  // it misses about one in six that an owner would count. Both halves ship or neither does.
+  if (report.thing) {
+    lines.push("=== Does the deck do its thing? ===");
+    lines.push(`  ${report.thing.count} cards do this deck's thing (${report.thing.theme})`);
+    lines.push(`  ${pct(report.thing.probability)} to have ${report.thing.k} of them by turn ${report.thing.turn}`);
+    if (report.thing.fromCommandZone.length > 0) {
+      lines.push(`  plus ${report.thing.fromCommandZone.join(", ")} from the command zone, every game`);
+    }
+    lines.push("  (counts the cards on your main theme; it misses roughly one in six a player would count)");
+    lines.push("");
   }
   lines.push("=== Deck cohesion ===");
   if (report.cohesion) {
