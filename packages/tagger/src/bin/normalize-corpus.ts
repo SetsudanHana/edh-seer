@@ -24,6 +24,8 @@
  *    tsx src/bin/normalize-corpus.ts --refresh-other    # re-ask only the cards stuck on `other`
  *    tsx src/bin/normalize-corpus.ts --run --batch      # submit to the Batch API at HALF PRICE
  *    tsx src/bin/normalize-corpus.ts --collect <file>   # poll + persist a submitted batch
+ *    tsx src/bin/normalize-corpus.ts --card "Isshin, Two Heavens as One" --run
+ *                                                       # pull one named card into the corpus
  *
  *  Needs `set -a && source .env && set +a` and TAGGER_PROVIDER=anthropic, or it silently falls back
  *  to Ollama and every card returns `ERROR: fetch failed`. */
@@ -83,6 +85,19 @@ const BELOW_VERSION = Number(arg("--below-version") ?? 0);
  *  requests, half price, results within 24h. Writes a state file naming the batch and its jobs so
  *  `--collect` can persist the answers in a LATER process -- the whole point, since the results are
  *  not there when the submitting process exits. */
+/** Pull a NAMED card into scope even though no calibration deck runs it (owner's ruling,
+ *  2026-08-22: "if you need a card, we can always bring it in the corpus even if it is not covered
+ *  by 71 decks"). Repeatable.
+ *
+ *  WHEN GIVEN, THESE ARE THE WHOLE SCOPE rather than an addition to it. Bringing in a witness is a
+ *  targeted act — you want the bill to be one card, and you want the dry run to say so. The
+ *  calibration corpus is still there on the next run without the flag.
+ *
+ *  This is the same need `EXEMPLAR_TERMS` serves for a VOCABULARY addition, one rung more general:
+ *  there the witness is chosen by the word it exercises, here by name, because the reason you want
+ *  a card is often a DEFECT rather than a word — 14 of the 15 trigger-doublers derive no subject,
+ *  and checking whether Isshin joins them should not require it to be in someone's deck first. */
+const CARDS = process.argv.reduce<string[]>((acc, a, i) => (a === "--card" && process.argv[i + 1] ? [...acc, process.argv[i + 1]] : acc), []);
 const BATCH = process.argv.includes("--batch");
 const COLLECT = arg("--collect");
 
@@ -218,7 +233,9 @@ interface Job {
 const jobs: Job[] = [];
 const unresolved: string[] = [];
 const exemplars = await exemplarNames();
-const scope = [...new Set([...calibrationNames(), ...exemplars])];
+const scope = CARDS.length
+  ? [...new Set(CARDS.map(normalizeName))]
+  : [...new Set([...calibrationNames(), ...exemplars])];
 /** THE SCOPE IS DEDUPED BY NAME AND THAT IS NOT THE SAME AS DEDUPED BY CARD. A card reachable by
  *  two names — its real one and a flavor name, since `searchNames` merged those on 2026-07-12 —
  *  arrives twice. Measured: 2,544 scope names resolve to 2,541 distinct cards, the three being
@@ -267,7 +284,9 @@ const outputTokens = billable * EST_OUTPUT_TOKENS;
 const usd = (inputTokens / 1e6) * USD_PER_M_INPUT + (outputTokens / 1e6) * USD_PER_M_OUTPUT;
 
 const cfg = loadTaggerConfig();
-console.log(`scope: calibration corpus + ${exemplars.length} keyword exemplars (${scope.length} cards)`);
+console.log(CARDS.length
+  ? `scope: ${scope.length} named card(s) — ${CARDS.join(", ")}`
+  : `scope: calibration corpus + ${exemplars.length} keyword exemplars (${scope.length} cards)`);
 console.log(`  cards needing normalization: ${jobs.length}${LIMIT ? ` (limited to ${LIMIT})` : ""}`);
 console.log(`  of those, answered in code (no model call): ${freeCards}`);
 if (unresolved.length) console.log(`  unresolved names: ${unresolved.length} (${unresolved.slice(0, 3).join(", ")}...)`);
