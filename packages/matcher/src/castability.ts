@@ -25,7 +25,19 @@ const REFUSALS: { test: (dc: DeckCard) => boolean; reason: string }[] = [
     reason: "affinity/improvise — the cost depends on the board",
   },
   {
-    test: (dc) => /without paying its mana cost/i.test(dc.card.oracleText ?? ""),
+    // ONLY WHEN *THIS* CARD IS THE ONE CAST FREE, AND ONLY IF IT IS FREE ON THE FIRST CAST.
+    // The bare phrase refuses 540 corpus cards where 19 deserve it (roadmap K5a, found by K5
+    // reporting the commander's own row):
+    //   - 487 use it about ANOTHER card -- Hidetsugu and Kairi's DEATH trigger free-casts the
+    //     exiled card, Jodah's trigger free-casts the revealed one. Six of the 71 decks' commanders
+    //     were unpriced for that, which is a blank where a real number belongs.
+    //   - 34 are REBOUND ("cast this card FROM EXILE"): the second cast is free and the FIRST one
+    //     costs its printed mana, so the mana value prices it correctly. Hence the `from exile`
+    //     exclusion rather than a bare "this card" test.
+    //   - 19 are the real shape -- Deadly Rollick, Flawless Maneuver, Mogg Salvage -- where the card
+    //     really can hit the table without its mana cost and the printed value is a lie.
+    test: (dc) => /cast this (?:spell|card)(?! from exile)[^.]{0,40}?without paying its mana cost/i
+      .test(dc.card.oracleText ?? ""),
     reason: "alternative cost — the card can be cast for free",
   },
 ];

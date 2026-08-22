@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Card } from "@mtg/engine";
 import { pAtLeast, seen } from "@mtg/engine";
 import { cardCastability, deckCastability } from "./castability.js";
@@ -159,4 +159,26 @@ test("a refused cost has no range either, rather than half a one", () => {
   const row = cardCastability(deck.find((d) => d.card.name === "Fireball")!, deck);
   expect(row.mana).toBeNull();
   expect(row.manaWithRocks).toBeNull();
+});
+
+describe("what 'cast for free' actually refuses (K5a)", () => {
+  const c = (name: string, oracleText: string, manaCost = "{2}{B}", manaValue = 3): DeckCard =>
+    ({ card: { name, typeLine: "Creature — Human", oracleText, manaCost, manaValue, keywords: [], colors: [] } as never, tags: null });
+  const lands = Array.from({ length: 40 }, (_, i) =>
+    ({ card: { name: `L${i}`, typeLine: "Basic Land — Swamp", oracleText: "", manaValue: 0, keywords: [], colors: [], producedMana: ["B"] } as never, tags: null }));
+  const priced = (dc: DeckCard) => cardCastability(dc, [dc, ...lands]).mana !== null;
+
+  test("the phrase about ANOTHER card does not refuse this one", () => {
+    // Hidetsugu and Kairi's DEATH trigger free-casts the exiled card. Six of the 71 decks' own
+    // commanders were unpriced for this, which is a blank where a real number belongs.
+    expect(priced(c("Hidetsugu and Kairi", "When this creature dies, exile the top card of your library. You may cast it without paying its mana cost."))).toBe(true);
+  });
+
+  test("REBOUND is priced: the second cast is free and the FIRST costs its printed mana", () => {
+    expect(priced(c("Staggershock", "Rebound (Exile this card as it resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)"))).toBe(true);
+  });
+
+  test("a card that really is free on its first cast is still refused", () => {
+    expect(priced(c("Deadly Rollick", "If you control a commander, you may cast this spell without paying its mana cost."))).toBe(false);
+  });
 });
