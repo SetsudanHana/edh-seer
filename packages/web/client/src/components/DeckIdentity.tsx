@@ -26,11 +26,15 @@ export function DeckIdentity({
   colorIdentity,
   strategies,
   identity,
+  thing,
+  commanderCast,
 }: {
   cohesion: DeckReport["cohesion"];
   colorIdentity?: string[];
   strategies?: DeckReport["strategies"];
   identity?: DeckReport["identity"];
+  thing?: DeckReport["thing"];
+  commanderCast?: NonNullable<DeckReport["deckMath"]>["castability"]["commanders"];
 }) {
   if (!cohesion) return null;
   // The share is printed beside the label because the label alone is a bucket boundary: "focused"
@@ -94,6 +98,53 @@ export function DeckIdentity({
       {identity && (identity.win || identity.means) ? (
         <p className="text-sm text-(--fg) tabular-nums">
           {[identity.win, identity.means].filter(Boolean).join(" · ")}
+        </p>
+      ) : null}
+      {/* DOES THE DECK DO ITS THING (roadmap K2), directly under the heading, because the heading
+        *  NAMES the thing and this counts it. The theme phrase is deliberately not repeated -- it is
+        *  the h2 one line above.
+        *
+        *  IT CARRIES ITS OWN CEILING (K3b): owner-judged at 95.0% precision on the cards it lists,
+        *  and measured to miss about one in six a player would count. A count that looks exact and
+        *  is not is the failure this whole layer is built to avoid, so the caveat is a title on the
+        *  figure rather than a footnote somewhere else. */}
+      {thing ? (
+        <p className="text-sm text-(--fg) tabular-nums">
+          <strong>{thing.count} cards</strong> do it · {Math.max(1, Math.round(thing.probability * 100))}% to have{" "}
+          {thing.k} of them by turn {thing.turn}
+          {thing.fromCommandZone.length > 0 ? `, plus ${thing.fromCommandZone.join(", ")} every game` : ""}
+          <span className="block text-xs text-(--muted)">
+            owner-judged 95% precise on what it lists; it misses roughly one in six a player would count
+          </span>
+        </p>
+      ) : null}
+      {/* WHEN IS THE COMMANDER ONLINE (roadmap K5). A RANGE, never one number, and it ships with the
+        *  reason it reads low: `manaWithRocks` counts only permanents that produce mana, so a deck
+        *  ramping on Farseek and Cultivate is priced without its ramp -- on the owner's own Samut
+        *  deck the range is 34-43% against a simulated 55.8% (I11). A refused cost prints an em dash
+        *  and never 0%, because a reader treats 0% as "cannot happen". */}
+      {commanderCast && commanderCast.length > 0 ? (
+        <p className="text-sm text-(--muted) tabular-nums">
+          {/* SUBJECT FIRST. The first cut read "21-72% by turn 6 to cast your commander", which makes
+              a reader hold a number before knowing what it is about -- seen on the live page, not in
+              any test. */}
+          <span>Commander castable: </span>
+          {commanderCast.map((c) => {
+            const odds = c.mana === null
+              ? `— (${c.refused ?? "cost not modelled"})`
+              : `${Math.max(1, Math.round(c.mana * 100))}–${Math.max(1, Math.round((c.manaWithRocks ?? c.mana) * 100))}% by turn ${c.turn}`;
+            return `${commanderCast.length > 1 ? `${c.name}: ` : ""}${odds}`;
+          }).join(" · ")}
+          {/* THE CAVEAT IS VISIBLE, NOT A TOOLTIP. It was a `title` first, and a tooltip is not a
+              caveat on a touch device or for anyone who never hovers -- the CLI prints this line
+              outright and the web hid it. The figure is measurably LOW for a land-fetch ramp deck
+              (I11: 34-43% against a simulated 55.8% on the owner's own list), so a reader who never
+              hovers would take a wrong number at face value. */}
+          {commanderCast.some((c) => c.mana !== null) ? (
+            <span className="block text-xs text-(--muted)">
+              lands and mana rocks only — land-fetch ramp like Cultivate is not counted, so this reads low
+            </span>
+          ) : null}
         </p>
       ) : null}
       {/* The second theme and the archetype shares, on one muted line. A percentage is printed for

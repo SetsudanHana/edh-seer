@@ -18,6 +18,32 @@ import { SuggestionsList } from "./SuggestionsList.js";
 import { SAMPLE } from "../fixtures.js";
 import { RunDiffStrip } from "./RunDiffStrip.js";
 
+test("DeckIdentity counts the deck's thing under the heading that names it", () => {
+  render(<DeckIdentity cohesion={SAMPLE.report.cohesion} thing={{
+    theme: "creatures entering", tag: "enters:creature", count: 39, cards: [],
+    fromCommandZone: ["Samut, the Driving Force"], turn: 3, k: 2, probability: 0.96,
+  }} />);
+  expect(screen.getByText(/39 cards/)).toBeInTheDocument();
+  expect(screen.getByText(/96% to have 2 of them by turn 3/)).toBeInTheDocument();
+  // A command-zone member is available every game, so it is named beside the count and never
+  // folded into a draw probability.
+  expect(screen.getByText(/plus Samut, the Driving Force every game/)).toBeInTheDocument();
+});
+
+test("the commander's cast odds are a RANGE, and a refused cost is an em dash and never 0%", () => {
+  const { rerender } = render(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
+    { name: "Samut, the Driving Force", turn: 6, mana: 0.341, manaWithRocks: 0.435, colors: [] },
+  ]} />);
+  expect(screen.getByText(/34–44% by turn 6/)).toBeInTheDocument();
+  // ONE commander needs no name prefix; a partner pair does, or the two rows cannot be told apart.
+  expect(screen.queryByText(/Samut, the Driving Force: /)).not.toBeInTheDocument();
+  rerender(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
+    { name: "Omarthis", turn: 2, mana: null, manaWithRocks: null, colors: [], refused: "X cost — the mana value on the card is not what you pay" },
+  ]} />);
+  expect(screen.getByText(/— \(X cost/)).toBeInTheDocument();
+  expect(screen.queryByText(/\b0%/)).not.toBeInTheDocument();
+});
+
 test("DeckIdentity shows the headline theme", () => {
   render(<DeckIdentity cohesion={SAMPLE.report.cohesion} />);
   expect(screen.getByText("Tokens")).toBeInTheDocument();
