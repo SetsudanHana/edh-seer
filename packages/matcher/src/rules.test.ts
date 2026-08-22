@@ -326,3 +326,34 @@ test("only graveyard carries a recurring mark", () => {
     expect([...(classes.get(cls)?.recurring ?? [])], cls).toEqual([]);
   }
 });
+
+/** `entersTapped` gates `ramp.land.bigMana`'s `not` clause, and it used to match the word "tapped"
+ *  inside a CONDITIONAL clause -- so a land that enters untapped most of the time read as one that
+ *  never does (roadmap I9's second defect). Measured over the 71 calibration decks the fix moves 0
+ *  category memberships, so this test is the only thing standing between the negative lookahead and
+ *  a silent revert. */
+test("a conditionally-tapped land is not read as unconditionally tapped", () => {
+  const conditional = mk(
+    "Riverpyre Verge",
+    "This land enters tapped unless you control a Mountain or an Island.\n{T}: Add {U}{R}.",
+    "Land",
+  );
+  const unconditional = mk("Karoo Gate", "This land enters tapped.\n{T}: Add {G}{W}.", "Land");
+  const bigMana = (c: DeckCard): boolean =>
+    (detectBuildCategories([c]).get("ramp") ?? new Set()).has(c.card.name);
+  expect(bigMana(conditional)).toBe(true);
+  expect(bigMana(unconditional)).toBe(false);
+});
+
+/** K4b: `altWin` matched the NEGATION of a win condition. Both witnesses were found by K4 making
+ *  the sentence NAME its card — "wins by an alternate win condition (The Golden Throne)" is visibly
+ *  wrong where "an alternate win condition" would have hidden it. */
+test("a card that prevents LOSING is not an alternate win condition", () => {
+  const alt = (c: DeckCard): boolean => (detectWincons([c]).get("alt-win") ?? new Set()).has(c.card.name);
+  expect(alt(mk("Platinum Angel", "Flying\nYou can't lose the game and your opponents can't win the game.", "Artifact Creature — Angel"))).toBe(false);
+  expect(alt(mk("The Golden Throne", "If you would lose the game, instead exile The Golden Throne and your life total becomes 1.", "Artifact"))).toBe(false);
+  // The control arm: making somebody ELSE lose is a real alternate win, and 18 of the 20 cards the
+  // detector finds are genuine. The fix must not cost them.
+  expect(alt(mk("Thassa's Oracle", "If X is greater than or equal to the number of cards in your library, you win the game.", "Creature — Merfolk Wizard"))).toBe(true);
+  expect(alt(mk("Vorpal Sword", "Whenever equipped creature deals combat damage to a player, that player loses the game.", "Artifact — Equipment"))).toBe(true);
+});

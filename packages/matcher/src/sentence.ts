@@ -198,6 +198,22 @@ export function tutorSentence(producer: string, consumer: string): string {
   return `${producer} can search up ${consumer}`;
 }
 
+/** A conditional land's demand, stated as the relation it is: this land is better because that card
+ *  carries the basic land type it names. Two templates, two different sentences — a check land is
+ *  about ENTERING, a verge land is about ACTIVATING, and saying "enters untapped" about a verge is a
+ *  wrong sentence. */
+export function landConditionSentence(
+  producer: string,
+  consumer: string,
+  subtype: string,
+  kind: "check" | "verge",
+): string {
+  const type = subtype.charAt(0).toUpperCase() + subtype.slice(1);
+  return kind === "check"
+    ? `${consumer} enters untapped when you control a ${type}, and ${producer} is one`
+    : `${consumer} can only use its second mana ability while you control a ${type}, and ${producer} is one`;
+}
+
 export function counterPresenceSentence(producer: string, consumer: string, counterKind: string): string {
   return `${consumer} benefits from ${counterKind} counters being on the board; ${producer} puts them there`;
 }

@@ -13,8 +13,10 @@ import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, counterPresenceSentence, createsSentence, fetchSentence,
   graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, tutorSentence, winconSentence, doublesSentence,
+  staticGrantSentence, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
+import { classifyLand } from "./land-conditions.js";
+import { parseTypeLineAllFaces } from "./typeline.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -1365,6 +1367,40 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           producer: p.card.name,
         });
       }
+    }
+  }
+
+  // A CONDITIONAL LAND IS A DEPENDENCY ON YOUR MANA BASE'S SHAPE (roadmap I9, owner's ruling
+  // 2026-08-22: "Cinder Glade will never come in untapped if you do not have any basics in the
+  // deck"). Rootbound Crag enters untapped only while you control a Mountain or a Forest, and
+  // Thornspire Verge's second mana ability is switched off without one. That is a pairwise relation
+  // the engine had no channel for, and it is PRINTED — so it is read here rather than derived,
+  // free, the `sagaEvents` shape.
+  //
+  // THE CONSUMER IS THE LAND. It demands; the card carrying the type supplies. Reading it the other
+  // way round would say a Mountain "does something" to the Crag, which is backwards — the Crag is
+  // the card whose value moves.
+  //
+  // ONLY `check` AND `verge`, both of which name a basic land SUBTYPE. `bfz` demands the SUPERTYPE
+  // `basic` as a COUNT ("two or more basic lands"), so every basic contributes equally and it names
+  // no member — the registered "a claim that applies to a card merely for being an ordinary card is
+  // false". It is a deck-level fact, the `deckSlack` shape, and forms nothing here. Everything the
+  // classifier could not read is `unclassified` and forms nothing either.
+  const landCond = classifyLand(c.card);
+  if ((landCond.template === "check" || landCond.template === "verge") && p.card.name !== c.card.name) {
+    // The PRINTED type line, every face — an "Instant // Land — Mountain" really is a Mountain when
+    // you play its land half. Basics and nonbasics alike: Steam Vents carries Mountain, and 233
+    // nonbasic land slots across the 71 decks do the same.
+    const supplied = new Set(parseTypeLineAllFaces(p.card.typeLine).subtypes);
+    const match = landCond.subtypes.find((t) => supplied.has(t));
+    if (match !== undefined) {
+      reasons.push({
+        tag: `land-condition:${match}`,
+        text: landConditionSentence(p.card.name, c.card.name, match, landCond.template),
+        repeatability: "static",
+        consumer: c.card.name,
+        producer: p.card.name,
+      });
     }
   }
 

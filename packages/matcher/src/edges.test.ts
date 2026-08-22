@@ -2641,3 +2641,65 @@ test("a class entry trigger keeps its demand and supplies no etb-refire", () => 
   expect([...cardCaresTags(t)]).toContain("enters:wizard");
   expect([...cardThemeTags(t)]).not.toContain(ETB_REFIRE);
 });
+
+describe("a conditional land relates to the mana base that turns it on (I9)", () => {
+  const land = (name: string, typeLine: string, oracleText: string): DeckCard => ({
+    card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue: 0 } as never,
+    tags: {
+      oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["land"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [],
+    } as CardTags,
+  });
+  // Printed text, fetched from the corpus.
+  const crag = land("Rootbound Crag", "Land", "This land enters tapped unless you control a Mountain or a Forest.\n{T}: Add {R} or {G}.");
+  const verge = land("Thornspire Verge", "Land", "{T}: Add {R}.\n{T}: Add {G}. Activate only if you control a Mountain or a Forest.");
+  const glade = land("Cinder Glade", "Land — Mountain Forest", "({T}: Add {R} or {G.})\nThis land enters tapped unless you control two or more basic lands.");
+  const shock = land("Stomping Ground", "Land — Mountain Forest", "({T}: Add {R} or {G}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.");
+  const island = land("Island", "Basic Land — Island", "({T}: Add {U}.)");
+
+  test("a check land is the CONSUMER and the card carrying the type is the producer", () => {
+    const reasons = directedReasons(shock, crag, H);
+    const r = reasons.find((x) => String(x.tag).startsWith("land-condition:"))!;
+    expect(r.tag).toBe("land-condition:mountain");
+    expect(r.consumer).toBe("Rootbound Crag");
+    expect(r.producer).toBe("Stomping Ground");
+    expect(r.text).toBe("Rootbound Crag enters untapped when you control a Mountain, and Stomping Ground is one");
+  });
+
+  test("a NONBASIC carrying the type satisfies it — the subtype, not the supertype", () => {
+    // Stomping Ground is `Land — Mountain Forest` and is not basic. 233 nonbasic land slots across
+    // the 71 decks carry a basic land type; every one of them turns a check land on.
+    expect(directedReasons(shock, crag, H).some((r) => String(r.tag).startsWith("land-condition:"))).toBe(true);
+  });
+
+  test("a land of the WRONG type forms nothing", () => {
+    expect(directedReasons(island, crag, H).some((r) => String(r.tag).startsWith("land-condition:"))).toBe(false);
+  });
+
+  test("a verge land says ACTIVATING, not entering — a wrong sentence about the same relation", () => {
+    const r = directedReasons(shock, verge, H).find((x) => String(x.tag).startsWith("land-condition:"))!;
+    expect(r.text).toContain("second mana ability");
+    expect(r.text).not.toContain("enters untapped");
+  });
+
+  test("a REVEAL land forms no edge though it names the types — its condition is your HAND", () => {
+    // Port Town: "you may reveal a Plains or Island card from your hand". It carries subtypes, so
+    // it is the one refused template a dropped guard would actually leak — and the claim it would
+    // make ("enters untapped when you control a Plains") is about the wrong zone entirely.
+    const portTown = land("Port Town", "Land", "As this land enters, you may reveal a Plains or Island card from your hand. If you don't, this land enters tapped.\n{T}: Add {W} or {U}.");
+    const plains = land("Sacred Foundry", "Land — Mountain Plains", "({T}: Add {R} or {W}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.");
+    expect(directedReasons(plains, portTown, H).some((r) => String(r.tag).startsWith("land-condition:"))).toBe(false);
+  });
+
+  test("a bfz land forms NO edge — it counts the SUPERTYPE, so it names no member", () => {
+    // "two or more basic lands" is satisfied by every basic equally, which is the registered
+    // "a claim that applies to a card merely for being an ordinary card is false".
+    expect(directedReasons(island, glade, H).some((r) => String(r.tag).startsWith("land-condition:"))).toBe(false);
+    expect(directedReasons(shock, glade, H).some((r) => String(r.tag).startsWith("land-condition:"))).toBe(false);
+  });
+
+  test("the relation does not run backwards: the Crag supplies nothing to the Mountain", () => {
+    expect(directedReasons(crag, shock, H).some((r) => String(r.tag).startsWith("land-condition:"))).toBe(false);
+  });
+});
