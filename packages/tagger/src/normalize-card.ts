@@ -32,6 +32,34 @@ export function buildRequest(name: string, segmented: Clause[]): { system: strin
   return { system: SYSTEM, user: `Card: ${name}\nClauses:\n${listClauses(askable)}` };
 }
 
+/** Does this card need the model at all? A card whose every clause is inert -- a vanilla creature
+ *  with only "Flying, trample" -- has nothing to ask about. Exported so the batch submitter can
+ *  answer those in code and keep them out of the batch entirely. */
+export function needsModel(segmented: Clause[]): boolean {
+  return segmented.some((c) => !INERT.has(c.kind));
+}
+
+/** Turn a raw model reply into a gated card. Split out from `normalizeCard` so a BATCH result --
+ *  which arrives hours after its request was sent and has no provider to call -- goes through the
+ *  identical parse and the identical gate. Two paths that produced answers two different ways is
+ *  exactly how a cheaper arm silently banks a different corpus. */
+export function parseNormalizedCard(segmented: Clause[], raw: string): NormalizedCard {
+  const got = JSON.parse(raw) as { clauses?: unknown[] };
+  const clauses = [...(got.clauses ?? []), ...synthesize(segmented)]
+    .sort((a, b) => (a as { id: number }).id - (b as { id: number }).id) as ClauseRecord[];
+
+  // Gate the RAW answer: canonicalize collapses an empty action list to [{verb:"none"}] and nulls
+  // implied origin zones, so validating after it would mask the defects worth rejecting for.
+  const violations = validateClauses(segmented, clauses);
+  return { clauses, canonical: canonicalize(clauses), violations, rejected: rejections(violations) };
+}
+
+/** The all-inert answer, produced without the model. */
+export function codeAnsweredCard(segmented: Clause[]): NormalizedCard {
+  const clauses = synthesize(segmented);
+  return { clauses, canonical: canonicalize(clauses), violations: [], rejected: [] };
+}
+
 /** Inert clauses answered without the model, keeping their slot ids filled. */
 function synthesize(segmented: Clause[]): ClauseRecord[] {
   return segmented
@@ -45,27 +73,15 @@ export async function normalizeCard(
 ): Promise<NormalizedCard> {
   const segmented = segment(card.oracleText ?? "", card.keywords ?? [], card.typeLine ?? "");
 
-  // A card whose every clause is inert — a vanilla creature with only "Flying, trample" — has
-  // nothing to ask about. Answering it in code is both cheaper and more correct than sending an
-  // empty clause list and paying for whatever comes back. 19 such cards in the calibration scope,
-  // and a far larger share of the full corpus, which is mostly vanillas and keyword-only cards.
-  if (!segmented.some((c) => !INERT.has(c.kind))) {
-    const clauses = synthesize(segmented);
-    return { clauses, canonical: canonicalize(clauses), violations: [], rejected: [] };
-  }
+  // Answering an all-inert card in code is both cheaper and more correct than sending an empty
+  // clause list and paying for whatever comes back. 19 such cards in the calibration scope, and a
+  // far larger share of the full corpus, which is mostly vanillas and keyword-only cards.
+  if (!needsModel(segmented)) return codeAnsweredCard(segmented);
 
   const { system, user } = buildRequest(card.name, segmented);
-
   const raw = await provider.chat([
     { role: "system", content: system },
     { role: "user", content: user },
   ]);
-  const got = JSON.parse(raw) as { clauses?: unknown[] };
-  const clauses = [...(got.clauses ?? []), ...synthesize(segmented)]
-    .sort((a, b) => (a as { id: number }).id - (b as { id: number }).id) as ClauseRecord[];
-
-  // Gate the RAW answer: canonicalize collapses an empty action list to [{verb:"none"}] and nulls
-  // implied origin zones, so validating after it would mask the defects worth rejecting for.
-  const violations = validateClauses(segmented, clauses);
-  return { clauses, canonical: canonicalize(clauses), violations, rejected: rejections(violations) };
+  return parseNormalizedCard(segmented, raw);
 }

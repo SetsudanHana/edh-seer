@@ -3,10 +3,16 @@
  *  Defaults to a DRY RUN: it prints how many cards need normalizing and what that costs, calls
  *  nothing and writes nothing. `--run` is the only thing that spends.
  *
- *  ONE CARD PER CALL, N calls in flight. Not negotiable, and not a style preference:
- *  `bin/tag-batch-api.ts` puts 40 cards in one prompt, and that batching is the documented cause of
- *  the old pipeline's dropped and duplicated clauses (32 clauses vs 39-41 for the same cards sent
- *  singly). Do not "optimise" this into batches.
+ *  ONE CARD PER CALL. Not negotiable, and not a style preference: `bin/tag-batch-api.ts` puts 40
+ *  cards in ONE PROMPT, and that prompt-stuffing is the documented cause of the old pipeline's
+ *  dropped and duplicated clauses (32 clauses vs 39-41 for the same cards sent singly). Do not
+ *  "optimise" this by putting several cards in a request.
+ *
+ *  THE ANTHROPIC BATCH API IS A DIFFERENT THING AND IS FINE, which is why `--batch` exists. It
+ *  sends the SAME one-card request, byte-identical (`anthropicBody` is shared with the live path) --
+ *  it batches the TRANSPORT, not the prompt. The failure above came from asking one question about
+ *  40 cards; here each card still gets its own question, its own answer and its own gate. It is
+ *  half price, and it returns within 24h instead of immediately, which is the whole trade.
  *
  *  Every card is written the moment it passes the gate. Never buffer and flush at the end: a run
  *  killed at card 2000 of 2544 must lose nothing already paid for.
@@ -16,15 +22,19 @@
  *    tsx src/bin/normalize-corpus.ts --run              # spends
  *    tsx src/bin/normalize-corpus.ts --run --limit 3    # smallest useful end-to-end check
  *    tsx src/bin/normalize-corpus.ts --refresh-other    # re-ask only the cards stuck on `other`
+ *    tsx src/bin/normalize-corpus.ts --run --batch      # submit to the Batch API at HALF PRICE
+ *    tsx src/bin/normalize-corpus.ts --collect <file>   # poll + persist a submitted batch
  *
  *  Needs `set -a && source .env && set +a` and TAGGER_PROVIDER=anthropic, or it silently falls back
  *  to Ollama and every card returns `ERROR: fetch failed`. */
-import { readFileSync, readdirSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText } from "@mtg/data";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
-import { buildRequest, normalizeCard } from "../normalize-card.js";
+import { buildRequest, codeAnsweredCard, needsModel, normalizeCard, parseNormalizedCard, type NormalizedCard } from "../normalize-card.js";
+import { anthropicText, type AnthropicResponse } from "../llm/anthropic.js";
+import { batchResults, batchStatus, submitBatch } from "../llm/anthropic-batch.js";
 import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE, VOCAB_VERSION, TRIGGER_VOCAB_VERSION, TRIGGERS, EXEMPLAR_TERMS } from "../normalize-prompt.js";
 import { segment } from "../segment.js";
 import {
@@ -69,6 +79,12 @@ const REFRESH_OTHER = process.argv.includes("--refresh-other");
  *  gained the CR keyword-action triggers, origin zones, trigger objects and the one-record-per-
  *  condition rule that `missesASplit` exists to catch. */
 const BELOW_VERSION = Number(arg("--below-version") ?? 0);
+/** Submit the selection to the Anthropic Batch API instead of calling it live: same one-card
+ *  requests, half price, results within 24h. Writes a state file naming the batch and its jobs so
+ *  `--collect` can persist the answers in a LATER process -- the whole point, since the results are
+ *  not there when the submitting process exits. */
+const BATCH = process.argv.includes("--batch");
+const COLLECT = arg("--collect");
 
 /** The calibration corpus: 2,544 distinct cards over 71 labelled decks. */
 function calibrationNames(): string[] {
@@ -106,6 +122,90 @@ async function exemplarNames(): Promise<string[]> {
 const lookup = mongoLookup(store);
 const clausesCol = store.db.collection<CardClausesDoc>(CLAUSES_COLLECTION);
 
+let ok = 0, refused = 0, failed = 0, warned = 0;
+
+/** The ONLY writer. Live and batch share it so a half-price answer cannot be banked under looser
+ *  rules than a full-price one — the gate, the version stamp and the refusal semantics are the same
+ *  sentence for both. A refused card is NOT persisted, so it simply re-queues on the next run. */
+async function persistCard(job: { oracleId: string; name: string; hash: string }, res: NormalizedCard, model: string): Promise<void> {
+  if (res.rejected.length) {
+    refused++;
+    console.log(`REFUSED ${job.name}: ${res.rejected.map((v) => `${v.kind} — ${v.detail}`).join(" | ")}`);
+    return;
+  }
+  if (res.violations.length) warned++;
+  // Persisted the moment it validates. A kill mid-run must not lose paid work.
+  await clausesCol.updateOne(
+    { oracleId: job.oracleId },
+    {
+      $set: {
+        oracleId: job.oracleId, name: job.name,
+        clauses: res.clauses, canonical: res.canonical,
+        segmentHash: job.hash, normalizeVersion: NORMALIZE_VERSION,
+        model, updatedAt: new Date(), warnings: res.violations,
+      },
+    },
+    { upsert: true },
+  );
+  ok++;
+}
+
+/** What `--batch` writes and `--collect` reads. The jobs ride along because a batch outlives the
+ *  process that sent it: by collection time the SELECTION may no longer reproduce (another run may
+ *  have persisted some of these cards), and a card must be written back under the hash it was
+ *  actually asked about, not under whatever it hashes to hours later. */
+interface BatchState {
+  batchId: string;
+  model: string;
+  prefill: boolean;
+  submittedAt: string;
+  jobs: { oracleId: string; name: string; hash: string }[];
+}
+const BATCH_DIR = new URL("../../.batches/", import.meta.url).pathname;
+
+if (COLLECT) {
+  const state = JSON.parse(readFileSync(COLLECT, "utf8")) as BatchState;
+  const bcfg = loadTaggerConfig();
+  const client = { apiKey: bcfg.anthropicApiKey ?? "", baseUrl: bcfg.anthropicBaseUrl, model: state.model, maxTokens: 3000 };
+  const status = await batchStatus(client, state.batchId);
+  console.log(`batch ${state.batchId}: ${status.processingStatus} ${JSON.stringify(status.counts)}`);
+  if (status.processingStatus !== "ended") {
+    console.log(`\nNOT READY — results appear only when processing_status is "ended". Re-run --collect later.`);
+    await store.close();
+    process.exit(0);
+  }
+
+  const byId = new Map(state.jobs.map((j) => [j.oracleId, j]));
+  const results = await batchResults(client, state.batchId);
+  let missing = 0;
+  for (const r of results) {
+    const job = byId.get(r.customId);
+    // Keyed on custom_id, never on position: the API returns results in ANY order.
+    if (!job) { missing++; continue; }
+    if (r.type !== "succeeded") {
+      failed++;
+      console.log(`FAILED  ${job.name}: batch result ${r.type}${r.error ? ` — ${r.error}` : ""}`);
+      continue;
+    }
+    try {
+      const doc = await lookup.findByName(normalizeName(job.name)) as
+        { oracleText?: string; keywords?: string[]; typeLine?: string } | null;
+      const segmented = segment(doc?.oracleText ?? "", doc?.keywords ?? [], doc?.typeLine ?? "");
+      const raw = anthropicText(r.body as AnthropicResponse, state.prefill, 3000);
+      await persistCard(job, parseNormalizedCard(segmented, raw), state.model);
+    } catch (e) {
+      failed++;
+      console.log(`FAILED  ${job.name}: ${(e as Error).message.slice(0, 160)}`);
+    }
+  }
+  const unreturned = state.jobs.length - results.length;
+  console.log(`\npersisted ${ok}, refused ${refused} (re-queue), failed ${failed}, persisted-with-warnings ${warned}`);
+  if (missing) console.log(`${missing} results had no matching job in the state file (ignored)`);
+  if (unreturned > 0) console.log(`${unreturned} submitted cards returned no result at all — they re-queue on the next run`);
+  await store.close();
+  process.exit(0);
+}
+
 interface Job {
   oracleId: string;
   name: string;
@@ -119,10 +219,22 @@ const jobs: Job[] = [];
 const unresolved: string[] = [];
 const exemplars = await exemplarNames();
 const scope = [...new Set([...calibrationNames(), ...exemplars])];
+/** THE SCOPE IS DEDUPED BY NAME AND THAT IS NOT THE SAME AS DEDUPED BY CARD. A card reachable by
+ *  two names — its real one and a flavor name, since `searchNames` merged those on 2026-07-12 —
+ *  arrives twice. Measured: 2,544 scope names resolve to 2,541 distinct cards, the three being
+ *  Rampant Growth, Reanimate and Exsanguinate, each also listed under a Universes Beyond name.
+ *
+ *  The live path never noticed because normalizing the same card twice is merely wasteful (last
+ *  write wins). `--batch` DID notice: Anthropic rejects a batch whose `custom_id`s are not unique,
+ *  and the custom_id is the oracle id. Fixed here rather than in the batch submitter so the live
+ *  path stops paying for three cards twice as well. */
+const seenIds = new Set<string>();
 for (const name of scope) {
   const doc = (await lookup.findByName(name)) as
     { _id: string; name: string; oracleText?: string; keywords?: string[]; typeLine?: string } | null;
   if (!doc) { unresolved.push(name); continue; }
+  if (seenIds.has(doc._id)) continue;
+  seenIds.add(doc._id);
   const hash = segmentHash(doc.oracleText ?? "", doc.typeLine ?? "", doc.keywords ?? []);
   const existing = await clausesCol.findOne({ oracleId: doc._id });
   const segmented = segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "");
@@ -162,9 +274,11 @@ if (unresolved.length) console.log(`  unresolved names: ${unresolved.length} (${
 console.log(`  model: ${cfg.model} | provider: ${cfg.provider}`);
 console.log(`  est. input ${inputTokens.toLocaleString()} tok, output ~${outputTokens.toLocaleString()} tok`);
 console.log(`  ESTIMATED COST: $${usd.toFixed(2)} (priced at claude-haiku-4-5 list rates)`);
+// The Batch API is half price for a byte-identical request; the trade is up to 24h of latency.
+if (BATCH) console.log(`  VIA --batch: $${(usd / 2).toFixed(2)} (Batch API, 50% off, results within 24h)`);
 
 if (!RUN) {
-  console.log(`\nDRY RUN — nothing called, nothing written. Re-run with --run to spend.`);
+  console.log(`\nDRY RUN — nothing called, nothing written. Re-run with --run${BATCH ? " --batch" : ""} to spend.`);
   if (cfg.provider !== "anthropic") {
     console.log(`NOTE: provider is "${cfg.provider}"; --run would refuse until you source .env.`);
   }
@@ -194,31 +308,51 @@ Pass --allow-provider only if you genuinely mean to normalize with ${cfg.model}.
 
 const queue = LIMIT ? jobs.slice(0, LIMIT) : jobs;
 const provider = createProvider({ ...cfg, maxTokens: 3000 });
-let ok = 0, refused = 0, failed = 0, warned = 0;
+
+if (BATCH) {
+  // Cards answerable in code never reach the model, so they are written now rather than being sent
+  // and waited on for 24 hours. Same helper the live path uses.
+  const send: { customId: string; messages: { role: "system" | "user"; content: string }[] }[] = [];
+  for (const job of queue) {
+    const segmented = segment(job.oracleText ?? "", job.keywords ?? [], job.typeLine ?? "");
+    if (!needsModel(segmented)) { await persistCard(job, codeAnsweredCard(segmented), provider.model); continue; }
+    const { system, user } = buildRequest(job.name, segmented);
+    send.push({ customId: job.oracleId, messages: [{ role: "system", content: system }, { role: "user", content: user }] });
+  }
+
+  // PROBE FIRST, because a batch cannot do the live path's per-call prefill fallback: it detects an
+  // unsupported assistant prefill from the ERROR of a real call, and by the time a batch errors it
+  // has already cost the whole run. One cheap live call settles the request shape for all of them.
+  // Carries a system message on purpose: `anthropicBody` marks the system block cache_control, and
+  // the API rejects that on an EMPTY text block ("system.0: cache_control cannot be set for empty
+  // text blocks"). A probe shaped unlike a real request tests the wrong thing anyway.
+  await provider.chat([
+    { role: "system", content: "You reply with a JSON object and nothing else." },
+    { role: "user", content: "Reply with {\"ok\":true}." },
+  ]);
+  const prefill = (provider as { prefill?: boolean }).prefill ?? false;
+
+  const client = { apiKey: cfg.anthropicApiKey ?? "", baseUrl: cfg.anthropicBaseUrl, model: provider.model, maxTokens: 3000 };
+  const batchId = await submitBatch(client, send, prefill);
+  const state: BatchState = {
+    batchId, model: provider.model, prefill, submittedAt: new Date().toISOString(),
+    jobs: queue.map((j) => ({ oracleId: j.oracleId, name: j.name, hash: j.hash })),
+  };
+  mkdirSync(BATCH_DIR, { recursive: true });
+  const statePath = join(BATCH_DIR, `${batchId}.json`);
+  writeFileSync(statePath, JSON.stringify(state, null, 2));
+
+  console.log(`\nSUBMITTED batch ${batchId}: ${send.length} cards to the model, ${ok} answered in code and already written.`);
+  console.log(`state: ${statePath}`);
+  console.log(`\nResults are ready within 24h and are kept for 29 days. Collect with:`);
+  console.log(`  npx tsx packages/tagger/src/bin/normalize-corpus.ts --collect ${statePath}`);
+  await store.close();
+  process.exit(0);
+}
 
 async function work(job: Job): Promise<void> {
   try {
-    const res = await normalizeCard(provider, job);
-    if (res.rejected.length) {
-      refused++;
-      console.log(`REFUSED ${job.name}: ${res.rejected.map((v) => `${v.kind} — ${v.detail}`).join(" | ")}`);
-      return; // not persisted, so it re-queues on the next run
-    }
-    if (res.violations.length) warned++;
-    // Persisted the moment it validates. A kill mid-run must not lose paid work.
-    await clausesCol.updateOne(
-      { oracleId: job.oracleId },
-      {
-        $set: {
-          oracleId: job.oracleId, name: job.name,
-          clauses: res.clauses, canonical: res.canonical,
-          segmentHash: job.hash, normalizeVersion: NORMALIZE_VERSION,
-          model: provider.model, updatedAt: new Date(), warnings: res.violations,
-        },
-      },
-      { upsert: true },
-    );
-    ok++;
+    await persistCard(job, await normalizeCard(provider, job), provider.model);
   } catch (e) {
     failed++;
     console.log(`FAILED  ${job.name}: ${(e as Error).message.slice(0, 160)}`);
