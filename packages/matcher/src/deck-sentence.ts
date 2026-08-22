@@ -36,16 +36,50 @@ const WIN_PHRASE: Record<string, string> = {
   stompy: "attacking with big creatures",
 };
 
+/** THE WIN SLOT IS NOT AN ARGMAX, AND THE ARGMAX IS THE DEFECT (roadmap K4). A deck holding
+ *  Thassa's Oracle wins with Thassa's Oracle, whatever 30 creatures it also plays — `winconReport`
+ *  already knows this, which is why `combo` and `alt-win` are exempt from its FLOOR, and the
+ *  sentence then threw the knowledge away by taking `classes[0]`.
+ *
+ *  **COMBO IS GATED ON THE ARCHETYPE, AND THE UNGATED RULE IS REFUSED ON MEASUREMENT.** 29 of the 71
+ *  decks contain a known combo and `dominantArchetype === "combo"` on only **6**. Letting mere
+ *  PRESENCE take the slot headlines "wins by a combo" on decks holding one two-card interaction —
+ *  `bello-enchantress` (1 piece, a tokens deck), `flashy-azula` (1, spellslinger), `yuna-hope-of-
+ *  spira` (1, counters) — which is the registered falsifier firing, and it agrees with the standing
+ *  measurement that the 14 decks with <= 4 pieces are not combo decks at all.
+ *
+ *  THE GATE REMOVES COMBO FROM THE ARGMAX TOO, not just from the preference. Both routes produce the
+ *  identical wrong sentence, so gating only the preference would leave `armies-of-saruman` (3
+ *  pieces, a counters deck) still reading "wins by a combo" because combo happened to out-count
+ *  everything else. A class the deck is not allowed to be named by is not a candidate.
+ *
+ *  ALT-WIN NAMES THE CARD. "An alternate win condition" hides a wrong detection; "(Thassa's Oracle)"
+ *  exposes it, which is the cut list's discipline — print the fact and let the reader judge. */
 export function deckSentence(
   cohesion: Cohesion | null | undefined,
   wincons: WinconReport | undefined,
   interaction: { count: number; target: number } | undefined,
+  dominantArchetype?: string,
 ): DeckSentence {
-  const top = wincons?.classes?.[0];
+  const classes = wincons?.classes ?? [];
+  const comboEligible = dominantArchetype === "combo";
+  const eligible = classes.filter((c) => c.class !== "combo" || comboEligible);
+  // Combo first when the deck really is a combo deck — in one, an alt-win card is usually the
+  // combo's own finisher (Thassa's Oracle is the archetypal case), so naming the combo is the
+  // truer sentence. Then alt-win, then whatever is largest.
+  const top = eligible.find((c) => c.class === "combo")
+    ?? eligible.find((c) => c.class === "alt-win")
+    ?? eligible[0];
   const phrase = top ? WIN_PHRASE[top.class] : undefined;
   // A class with no phrase is DROPPED, never printed raw: `winconReport`'s vocabulary can grow, and
   // a report saying "wins by stompy" is worse than a report saying nothing about how it wins.
-  const win = top && phrase ? `wins by ${phrase} (${top.count} cards)` : null;
+  // ONLY ALT-WIN NAMES ITS CARDS. A combo deck's piece list is 28 names on `acererak-combo`, and a
+  // sentence that recites them is not a sentence — the count is what a reader can use. An alternate
+  // win condition is one or two cards and naming them is the whole point (criterion ii).
+  const named = top?.class === "alt-win" && top.cards?.length
+    ? ` (${top.cards.join(", ")})`
+    : ` (${top?.count} ${top?.count === 1 ? "card" : "cards"})`;
+  const win = top && phrase ? `wins by ${phrase}${named}` : null;
   const engine = cohesion && cohesion.dominant !== false
     ? `fueled by ${cohesion.theme} (${Math.round(cohesion.score * 100)}% of nonlands)`
     : null;

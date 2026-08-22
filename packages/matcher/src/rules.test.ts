@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import type { Card } from "@mtg/engine";
 import { detectAnswerClasses, detectBuildCategories } from "./build.js";
+import { detectWincons } from "./wincon.js";
 import { answerClassesOf, loadRules, ruleMatches, RULES_VERSION } from "./rules.js";
 import type { DeckCard } from "./types.js";
 

@@ -124,7 +124,12 @@ function hasWidePayoff(deck: readonly DeckCard[]): boolean {
 }
 
 export interface WinconReport {
-  classes: { class: string; count: number; share: number }[];
+  /** `cards` is carried for BINARY classes only (`combo`, `alt-win`) and nowhere else. The deck
+   *  sentence NAMES an alternate win condition — "wins by an alternate win condition (Thassa's
+   *  Oracle)" — because naming it is what lets a reader catch a wrong detection, where "an alternate
+   *  win condition" hides one. The other classes hold up to 30 names and a sentence never says
+   *  them, so shipping the list would be wire weight nothing reads. */
+  classes: { class: string; count: number; share: number; cards?: string[] }[];
   /** Herfindahl over the shares. */
   focus: number;
   /** The largest class, absent when the deck names no wincon. */
@@ -161,7 +166,10 @@ export function winconReport(
   );
   const total = [...counts.values()].reduce((a, b) => a + b, 0);
   const classes = [...counts]
-    .map(([cls, count]) => ({ class: cls, count, share: total > 0 ? count / total : 0 }))
+    .map(([cls, count]) => ({
+      class: cls, count, share: total > 0 ? count / total : 0,
+      ...(BINARY.has(cls) ? { cards: [...(members.get(cls) ?? [])].sort() } : {}),
+    }))
     .sort((a, b) => b.count - a.count || a.class.localeCompare(b.class));
 
   return { classes, focus: focusIndex(counts), ...(classes[0] ? { primary: classes[0].class } : {}) };

@@ -39,7 +39,7 @@
     "exileReturnsToBattlefield": "return (?:it|that card) to the battlefield|returns to the battlefield",
     "bounceRemoval": "return target\\s+(?<class>[^.;:]{0,60}?)\\s+to (?:its owner's|their|the owner's|owner's) hand",
     "millOpponents": "(?:target opponent|each opponent|target player|each player)[^.]{0,40}?mills|mills? \\w+ cards?[^.]{0,40}?(?:target opponent|each opponent)",
-    "altWin": "you win the game|wins? the game|loses? the game|lose the game",
+    "altWin": "(?<!can['\u2019]t |cannot |would |don['\u2019]t |doesn['\u2019]t )(?:you win the game|wins? the game|loses? the game|lose the game)",
     "enchantCreature": "enchant creature",
     "commanderDamage": "commander damage|deals combat damage to a player[^.]{0,60}?(?:that player loses the game|wins the game)"
   },
