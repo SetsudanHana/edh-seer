@@ -1171,7 +1171,7 @@ test("demandSentence never emits a colon or a dash, mapped verb or not", () => {
 
 test("BuildBenchmarks shows the measured clock, and calls it what it is", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByLabelText(/clock turn 8, 6.4 expected power at turn 5/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/beats one opponent on turn 8, 6.4 expected power at turn 5/i)).toBeInTheDocument();
   // Optimistic by construction -- nobody blocks in this model -- and a turn number that does not
   // say so reads as a prediction rather than a rate.
   expect(screen.getByText(/nobody blocks/i)).toBeInTheDocument();
@@ -1651,4 +1651,13 @@ test("CardList says a shared mechanism once and leaves the distinctive rows thei
   expect(screen.getAllByText(/triggers on a wizard entering/)).toHaveLength(1);
   // And the row with something else to say keeps it.
   expect(screen.getByText("Odd One returns a creature from your graveyard")).toBeInTheDocument();
+});
+
+// K6: the clock is combat pressure against ONE opponent, and the label used to claim the game.
+test("the clock says which opponent it beats, not that it wins the game", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  expect(screen.getByText("Combat pressure")).toBeInTheDocument();
+  expect(screen.getByText(/Beats one opponent turn 8/)).toBeInTheDocument();
+  // "Kills on turn 8" in a four-player pod reads as "wins on turn 8" -- wrong by a factor of three.
+  expect(screen.queryByText(/Kills on turn/)).not.toBeInTheDocument();
 });

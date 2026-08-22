@@ -669,20 +669,29 @@ function DeckMathRows({
 
   const clockBlock = clock ? (
         <div className="flex flex-col gap-1">
-          <h5 className="eyebrow">Clock</h5>
+          {/* NAMED FOR WHAT IT MEASURES (roadmap K6). It was "Clock" over "Kills on turn 8", and in a
+            *  four-player pod that reads as "wins on turn 8" -- wrong by roughly a factor of three,
+            *  since this counts combat damage against ONE opponent's 40 life. `pressure.ts` has
+            *  argued exactly that in a comment since it was written ("a deck that can kill the table
+            *  three times over is not three times as fast"), and the label said the opposite.
+            *  THE NUMBER IS UNCHANGED AND MUST NOT BE DELETED: `deck-math.ts` prices every
+            *  availability, `required` and castability figure at this turn, so removing it drops all
+            *  71 decks onto the flat corpus median with no instrument saying that is an improvement.
+            *  This is a rename and a demotion in the reading order, nothing more. */}
+          <h5 className="eyebrow">Combat pressure</h5>
           <div
             className="flex items-center gap-3 text-sm"
             aria-label={
               clock.turn === undefined
                 ? `no combat clock, ${clock.powerAtFive} expected power at turn 5`
-                : `clock turn ${clock.turn}, ${clock.powerAtFive} expected power at turn 5`
+                : `beats one opponent on turn ${clock.turn}, ${clock.powerAtFive} expected power at turn 5`
             }
           >
             {/* Two turn numbers in one row read as a contradiction unless each says what it is
               *  about — the headline is when this deck kills, the aside is a snapshot on the way
               *  there, and readers took the pair for a mistake. */}
             <span className="w-32 shrink-0 stat-num">
-              {clock.turn === undefined ? "no clock" : `Kills on turn ${clock.turn}`}
+              {clock.turn === undefined ? "no combat clock" : `Beats one opponent turn ${clock.turn}`}
             </span>
             <span className="flex-1 text-xs text-(--muted) tabular-nums">
               {clock.turn === undefined
@@ -693,7 +702,8 @@ function DeckMathRows({
           {/* A turn number that does not say how it was made reads as a prediction. It is a RATE:
             *  useful for comparing two decks, useless as a date. */}
           <Caveat label="how the clock is modelled">
-            Expected attacking power against one opponent's 40 life. Nobody blocks in this model,
+            Expected attacking power against ONE opponent's 40 life — not the table. Three opponents
+            is three boards and three life totals, and nothing here models that. Nobody blocks,
             nothing is removed, and there is no mana budget — a creature counts once the turn number
             reaches its cost, however many others arrived with it, and no ramp shortens that. Read it
             to compare decks, not to plan a game.
