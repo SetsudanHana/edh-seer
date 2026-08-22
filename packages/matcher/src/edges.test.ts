@@ -71,6 +71,30 @@ test("static edge: a zombie lord matches a zombie by characteristics", () => {
   expect(pump!.text).toBe("Death Baron gives Gravecrawler bigger stats");
 });
 
+test("static edge: a static describing the card ITSELF claims no other card (G4)", () => {
+  // Planar Nexus prints "This land is every nonbasic land type" and derives
+  // `{type: land, scope: each, self: true}` -- the self-reference recorded CORRECTLY by derive.
+  // The static applies-to pass still rendered "Planar Nexus's type grant applies to Swamp" 21 times
+  // in one deck, because `printedMatchable` strips `counter` and lets `self` through into
+  // `subjectMatches`, which does not read `self` at all.
+  //
+  // The control is the case BELOW it: an identical static WITHOUT `self` must keep its edge, or the
+  // gate is just deleting the type-grant family. That half is what makes this test worth having --
+  // a refusal test that never checks the thing it must NOT refuse can be passed by `return []`.
+  const nexus = base("Planar Nexus", [{
+    kind: "static",
+    effect: { kind: "type-grant", subject: { subtype: "zombie", control: "any", token: null, self: true } },
+  }]);
+  const other = base("Gravecrawler", [], ["zombie"]);
+  expect(pairReasons(nexus, other, H).some((r) => r.tag === "static:type-grant")).toBe(false);
+
+  const realGrant = base("Maskwood Nexus", [{
+    kind: "static",
+    effect: { kind: "type-grant", subject: { subtype: "zombie", control: "any", token: null } },
+  }]);
+  expect(pairReasons(realGrant, other, H).some((r) => r.tag === "static:type-grant")).toBe(true);
+});
+
 test("clone edge: an activated copy that names a subtype applies to a card of that subtype", () => {
   // Shapesharer: "{2}{U}: Target Shapeshifter becomes a copy of target creature." The applies-to
   // pass only ever considered STATIC abilities, so a copy that names WHO becomes the copy formed no

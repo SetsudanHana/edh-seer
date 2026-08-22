@@ -1072,6 +1072,27 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     // has to go, not get renamed. What these cards really relate to is the OPPONENT'S board, which
     // is not in the deck and has no node.
     if (a.effect.kind === "debuff") continue;
+    // A STATIC THAT DESCRIBES THE CARD ITSELF CLAIMS NO OTHER CARD. Planar Nexus prints "This land
+    // is every nonbasic land type", derives `{type: land, scope: each, self: true}` -- the
+    // self-reference recorded CORRECTLY -- and this pass rendered "Planar Nexus's type grant applies
+    // to Swamp" 21 TIMES IN ONE DECK. Derive was innocent; `printedMatchable` strips `counter` and
+    // `self` rides through into `subjectMatches`, WHICH DOES NOT READ `self` AT ALL (a fact this
+    // repo first recorded on 2026-08-06, when a self-marked fill rode through the same way).
+    //
+    // FOUND BY THE SKEPTIC PERSONA FROM THE FAN-OUT ALONE, without reading the card: "the same claim
+    // shape repeated on ~13 lands is the signature of a claim earned by being a land rather than by
+    // anything about this deck." No gate in this repo could see it -- population, panel and mesh all
+    // read normal.
+    //
+    // MEASURED AT ONE CARD: 1 of 172 derived statics carrying a subject has `self: true`. The gate
+    // is worth one line and no more -- but it IS worth that line, because self-reference is the
+    // largest defect family this engine has had (74% of all false edges at its peak) and the next
+    // printed "this permanent is ..." walks straight into it.
+    //
+    // DO NOT TEACH `subjectMatches` ABOUT `self` INSTEAD. It is the identity predicate the
+    // self-trigger gate depends on, and widening it there is exactly how the `entersTapped` strip
+    // silently deleted 29 real claims.
+    if (a.effect.subject.self === true) continue;
     // A counter-presence condition ("creatures you control WITH a +1/+1 counter") is a BOARD STATE,
     // not a printed characteristic, and this pass matches against the type line. Demanding it here
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated
