@@ -42,6 +42,15 @@ export interface DeckThing {
  *  ruling that control is a MEANS rather than a thing — the means slot carries them, so there is no
  *  fallback to invent.
  *
+ *  KNOWN CEILING, MEASURED (roadmap K3b): this list misses about one card in six that an owner
+ *  would count -- 3 of 19 judged exclusions, 15.8%, on the 2026-08-23 draw. The misses are three
+ *  different shapes and all three were refused on measurement rather than fixed: a STATIC ENABLER
+ *  ("you have no maximum hand size" in a draw deck) has no predicate that is not unbounded; a
+ *  VERB-CROSSED subsumption ("a Saga is an enchantment") reads as noise at every width tried, because
+ *  a card watching every enchantment is indistinguishable from one watching every creature; and a
+ *  COUNTER CARRIER in a proliferate deck is real but needs a shared predicate widened for 21 slots
+ *  in 3 decks, which would also move the set the 95.0% precision figure was measured on.
+ *
  *  NEVER MULTIPLIED INTO A SCORE (registered, and the `castability.ts` never-multiply ruling one
  *  layer over): P(drawn) is not P(castable) and neither is a rating. */
 export function deckThing(
