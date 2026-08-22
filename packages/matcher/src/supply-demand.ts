@@ -32,6 +32,7 @@ import type { Reason } from "@mtg/engine";
 import { VERB_VOCAB } from "@mtg/tagger";
 import type { Ability, CardTags } from "@mtg/tagger";
 import { nodeId } from "./graph-projection.js";
+import { DEFAULT_POD_SIZE } from "./format.js";
 
 const KNOWN_VERBS: ReadonlySet<string> = new Set(VERB_VOCAB);
 
@@ -47,7 +48,8 @@ const KNOWN_VERBS: ReadonlySet<string> = new Set(VERB_VOCAB);
 export const EVENTS_PER_ROUND: Record<string, number> = {
   once: 1,
   "per-cycle": 1,
-  "per-turn": 4,
+  // One firing per player per round — the pod size, not a magic 4 (roadmap J1).
+  "per-turn": DEFAULT_POD_SIZE,
   repeatable: 6,
   continuous: 1,
 };
