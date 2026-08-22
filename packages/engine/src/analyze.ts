@@ -259,6 +259,28 @@ export interface DeckMath {
     }[];
     refused: number;
     biases: string;
+    /** THE COMMANDER'S OWN ROW, which is the build-around question stated directly (roadmap K5):
+     *  "your commander is online turn X". One entry, or two for a partner pair.
+     *
+     *  Never inside `cards`, which is the HARDEST few of the 99 — a commander is not competing for
+     *  that list, it is the card the deck is built around, and a reader looks for it by name.
+     *
+     *  `mana` is null exactly when the cost is refused (an X cost, delve, convoke…), and a renderer
+     *  must print an em dash there and NEVER 0%: a reader trusts a percentage absolutely, and 0%
+     *  would say the commander is uncastable. */
+    commanders?: {
+      name: string;
+      turn: number;
+      mana: number | null;
+      manaWithRocks: number | null;
+      colors: { color: string; pips: number; p: number }[];
+      refused?: string;
+      /** Present when the commander does something from the COMMAND ZONE (eminence, Lurrus-style
+       *  static, commander ninjutsu). The turn below is then WRONG in the deck's favour's opposite
+       *  direction — the ability is online from turn 1 at no mana and this figure prices the CAST.
+       *  ~51 corpus cards; the derive fix is J10 and is not a blocker for saying so here. */
+      commandZoneCaveat?: string;
+    }[];
   };
   /** Per-colour feasibility: what the deck's own pips demand by each card's own mana value,
    *  against how many sources it runs. Absent colours are colours nothing in the deck costs.

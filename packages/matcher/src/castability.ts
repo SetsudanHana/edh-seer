@@ -148,6 +148,9 @@ export function deckCastability(
     biases:
       "A range, not a number: the low figure counts lands only, the high one adds every rock cheap "
       + "enough to be down already — and a rock needs lands too, so the truth sits between them. "
-      + "Both ignore tapped lands and colour coupling, so both read high.",
+      + "Both ignore tapped lands and colour coupling, so both read high. For a deck that ramps with "
+      + "LAND-FETCH spells the range reads LOW instead and can miss the truth entirely: the high "
+      + "figure counts only permanents that produce mana, so Farseek and Cultivate are invisible to "
+      + "it.",
   };
 }

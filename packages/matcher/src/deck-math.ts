@@ -7,7 +7,7 @@ import { manaAudit } from "./mana-audit.js";
 import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { winconReport } from "./wincon.js";
 import { pressureCurve, STARTING_LIFE } from "./pressure.js";
-import { deckCastability } from "./castability.js";
+import { cardCastability, deckCastability } from "./castability.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { topdeckPayoffs } from "./topdeck.js";
@@ -174,6 +174,30 @@ export function computeDeckMath(
   const wincons = winconReport(deck, { comboCards: opts.comboCards });
 
   const cast = deckCastability(deck, { commanderNames });
+  // THE COMMANDER'S OWN ROW (roadmap K5). `deckCastability` prices every nonland and then reports
+  // the HARDEST few; the commander is the one card a reader looks for BY NAME, and on a 6-drop it
+  // is routinely nowhere near the hardest four. Same function, same two axes, no second model.
+  // WORKS FROM THE COMMAND ZONE, read off the printed cue. Inalla's eminence is online turn 1 at
+  // zero mana, so a CAST probability is the wrong question for it — and saying so beside the number
+  // is the honest surface while the derive fix (J10) is unbuilt. Measured: exactly 1 of the 75
+  // commanders across the 71 calibration decks carries such a cue, and it is Inalla; 89 corpus
+  // cards print one.
+  const COMMAND_ZONE_CUE = /from the command zone|eminence|commander ninjutsu|in the command zone/i;
+  const commanderRows = deck
+    .filter((dc) => commanders.has(dc.card.name) && !dc.card.typeLine.toLowerCase().includes("land"))
+    .map((dc) => cardCastability(dc, deck, { commanderNames }))
+    .map((c) => ({
+      name: c.name, turn: c.turn, mana: c.mana, manaWithRocks: c.manaWithRocks,
+      colors: c.colors.map((x) => ({ color: x.color, pips: x.pips, p: x.p })),
+      ...(c.refused ? { refused: c.refused } : {}),
+    }));
+  for (const row of commanderRows) {
+    const dc = deck.find((d) => d.card.name === row.name);
+    if (dc && COMMAND_ZONE_CUE.test(dc.card.oracleText ?? "")) {
+      (row as { commandZoneCaveat?: string }).commandZoneCaveat =
+        "part of this commander works from the command zone, so it is doing something before you can cast it";
+    }
+  }
   const castability = {
     // The hardest few only: a per-card list of 99 rows is a spreadsheet, not a readout, and the
     // cards a reader can act on are the ones at the bottom.
@@ -183,6 +207,7 @@ export function computeDeckMath(
     })),
     refused: cast.refused,
     biases: cast.biases,
+    ...(commanderRows.length > 0 ? { commanders: commanderRows } : {}),
   };
 
   const rec = opts.landRecommendation ?? recommendedLands(deck, { commanderNames });
