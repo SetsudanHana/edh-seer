@@ -2703,3 +2703,41 @@ describe("a conditional land relates to the mana base that turns it on (I9)", ()
     expect(directedReasons(crag, shock, H).some((r) => String(r.tag).startsWith("land-condition:"))).toBe(false);
   });
 });
+
+describe("an opponent's permanent is not this deck's theme (K3a)", () => {
+  const withEmit = (name: string, verb: string, subject: Record<string, unknown>) => base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, self: true } },
+    effect: { kind: "token-generation" },
+    emits: [{ verb, subject } as never],
+  }]);
+
+  test("a token handed to the OPPONENT forms no theme tag", () => {
+    // Beast Within's 3/3 goes to the destroyed permanent's controller. It was counted toward
+    // "creatures entering" in a deck whose payoffs say "you control", and the owner judged it FALSE.
+    const tags = cardThemeTags(withEmit("Beast Within", "create-token", { type: "creature", control: "opp", token: true }).tags!);
+    expect([...tags].some((t) => t.startsWith("create-token:"))).toBe(false);
+  });
+
+  test("the SAME emit under your own control still forms one", () => {
+    const tags = cardThemeTags(withEmit("Ellie", "create-token", { type: "creature", control: "you", token: true }).tags!);
+    expect([...tags]).toContain("create-token:creature");
+  });
+
+  test("DRAINING AN OPPONENT IS THE DECK DOING ITS THING — a player subject is kept", () => {
+    // The control arm. 215 of the 454 opponent-facing emits name the PLAYER (lose-life 90,
+    // damage 74); Gray Merchant of Asphodel is one, and filtering it would delete the drain theme
+    // from every aristocrats deck in the corpus.
+    const tags = cardThemeTags(withEmit("Gray Merchant", "lose-life", { control: "opp" }).tags!);
+    expect([...tags]).toContain("lose-life:any");
+  });
+
+  test("a TRIGGER watching an opponent is untouched — only emits are filtered", () => {
+    const card = base("Watcher", [{
+      kind: "triggered",
+      trigger: { verbs: ["dies"], subject: { type: "creature", control: "opp", token: null } },
+      effect: { kind: "draw-card" },
+    }]);
+    expect([...cardThemeTags(card.tags!)]).toContain("dies:creature");
+  });
+});

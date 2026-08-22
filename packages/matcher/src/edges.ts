@@ -178,6 +178,31 @@ const refiresEntries = (tags: CardTags): boolean =>
 const hasSelfEntryTrigger = (tags: CardTags): boolean =>
   tags.abilities.some((a) => a.trigger?.subject?.self === true && a.trigger.verbs.includes("enters"));
 
+/** AN EVENT ON THE OPPONENT'S PERMANENT IS NOT THIS DECK'S THEME (roadmap K3a, owner-judged
+ *  2026-08-23). Beast Within gives the destroyed permanent's controller a 3/3, and Archon of Cruelty
+ *  makes an OPPONENT sacrifice — both were counted toward "creatures entering" and "creatures dying"
+ *  in decks whose payoffs say "you control", and both were judged FALSE. They were 2 of the 2 falses
+ *  in the whole draw.
+ *
+ *  THE FILTER IS AT THE READ, NEVER IN THE KEY. Composing control into `themeSubjectKey` was tried
+ *  on 2026-08-14 and cost **22 judging debt while changing no theme** — the frozen panel keys its
+ *  verdicts on `producer|consumer|tag`, so re-keying detaches them. `theme-fold.ts` set the
+ *  precedent: read-time, never a re-key.
+ *
+ *  **IT MUST NAME A PERMANENT, AND A BLANKET CONTROL TEST WOULD BE A WORSE DEFECT THAN THE ONE IT
+ *  CLOSES.** Measured over the 71 decks, 454 emits carry `control: "opp"` and they split 239 naming
+ *  a permanent against 215 naming the PLAYER — lose-life 90, damage-to-a-player 74. **Draining an
+ *  opponent IS the deck doing its thing**: Gray Merchant of Asphodel is in that second group, and
+ *  excluding it would delete the drain theme from every aristocrats deck in the corpus.
+ *
+ *  Only the EMIT side is filtered. 107 triggers carry `control: "opp"` and no judged claim names
+ *  one — a card that WATCHES an opponent's board may well be an opponent-facing theme in its own
+ *  right, and there is no measurement yet either way. */
+function opponentsPermanent(subject: SubjectFilter | undefined): boolean {
+  if (!subject || subject.control !== "opp") return false;
+  return subject.type !== undefined || subject.subtype !== undefined;
+}
+
 export function cardThemeTags(tags: CardTags): Set<string> {
   const out = new Set<string>();
   for (const t of impliedEntryThemeTags(tags)) out.add(t);
@@ -187,7 +212,10 @@ export function cardThemeTags(tags: CardTags): Set<string> {
   if (refiresEntries(tags) || hasSelfEntryTrigger(tags)) out.add(ETB_REFIRE);
   for (const a of tags.abilities) {
     if (a.trigger) for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
-    for (const e of a.emits ?? []) out.add(`${e.verb}:${themeSubjectKey(e.subject)}`);
+    for (const e of a.emits ?? []) {
+      if (opponentsPermanent(e.subject)) continue;
+      out.add(`${e.verb}:${themeSubjectKey(e.subject)}`);
+    }
     // No subject requirement here, unlike the static EDGE below. Membership asks "is this card a
     // <kind> card?", which does not depend on knowing WHICH permanents it applies to. Requiring a
     // subject silenced every static whose recipient is unrecoverable -- Rage Reflection's
