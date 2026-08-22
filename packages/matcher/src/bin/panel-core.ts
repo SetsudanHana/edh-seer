@@ -62,6 +62,12 @@ export interface PanelScore {
   uncertain: number;
   /** Claims the engine makes today that no verdict covers. The debt to pay before the next reading. */
   unjudged: PanelClaim[];
+  /** The claims judged FALSE, with the note they were judged under. The precision headline says how
+   *  many there are; this says WHICH, which is the only form the number is actionable in. Kept here
+   *  rather than re-derived at a call site because the cache lookup is exact-then-wildcard and
+   *  re-implementing it is how a reader ends up measuring something adjacent to the panel. Roadmap
+   *  C7 was a HAND-TRANSCRIBED version of this list and went stale by 41 claims in two days. */
+  falses: { claim: PanelClaim; note: string }[];
   /** Cached verdicts the engine no longer claims. Kept, not deleted: the change may be reverted. */
   dropped: number;
   precision: number | null;
@@ -135,14 +141,14 @@ export function scorePanel(
     else exact.set(`${k}|${v.implied}`, v);
   }
   const seen = new Set<string>();
-  const out: PanelScore = { real: 0, false: 0, uncertain: 0, unjudged: [], dropped: 0, precision: null };
+  const out: PanelScore = { real: 0, false: 0, uncertain: 0, unjudged: [], falses: [], dropped: 0, precision: null };
   for (const c of current) {
     const k = claimKey(c.producer, c.consumer, c.tag);
     seen.add(k);
     const v = exact.get(`${k}|${c.implied === true}`) ?? wildcard.get(k);
     if (!v) { out.unjudged.push(c); continue; }
     if (v.verdict === "real") out.real++;
-    else if (v.verdict === "false") out.false++;
+    else if (v.verdict === "false") { out.false++; out.falses.push({ claim: c, note: v.note }); }
     else out.uncertain++;
   }
   // "Cached verdicts the engine no longer claims" counts CLAIMS, so it counts distinct triples

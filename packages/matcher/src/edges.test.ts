@@ -1279,6 +1279,54 @@ test("a trigger that names an ORIGIN zone is not satisfied by an event from anyw
   expect(pairReasons(reanimator, kelpie, H).some((r) => r.tag.startsWith("enters:"))).toBe(true);
 });
 
+test("a trigger narrowed by a TARGETING restriction claims nothing", () => {
+  // Leyline of Resonance: "whenever you cast an instant or sorcery spell THAT TARGETS ONLY A SINGLE
+  // CREATURE YOU CONTROL". Nothing here models targeting, so the demand cannot be checked -- and the
+  // parse was wrong twice over: `parseTypes` swept the relative clause, so the derived type list was
+  // `[creature, instant, sorcery]` and every creature spell in the deck satisfied it. 59 reasons in
+  // `amarant-one-punch-is-all-i-need` alone, and 3 of the frozen panel's falses.
+  const creatureSpell = base("Amarant Coral", [{
+    kind: "static",
+    effect: { kind: "" },
+    emits: [{ verb: "cast", subject: { type: "creature", control: "you", token: null, self: true } }],
+  }]);
+  const leyline = base("Leyline of Resonance", [{
+    kind: "triggered",
+    trigger: {
+      verbs: ["cast"],
+      subject: { type: ["creature", "instant", "sorcery"], control: "you", token: null, restricted: true },
+    },
+    effect: { kind: "copy-spell" },
+  }]);
+  expect(pairReasons(creatureSpell, leyline, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
+  // The SAME trigger without the restriction still matches -- so the refusal is the flag doing the
+  // work, not the fixture failing to match for some other reason.
+  const unrestricted = base("Leyline of Resonance", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: ["creature", "instant", "sorcery"], control: "you", token: null } },
+    effect: { kind: "copy-spell" },
+  }]);
+  expect(pairReasons(creatureSpell, unrestricted, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
+});
+
+test("a restriction on the PRODUCER's emit is ignored -- it can only ever be a demand", () => {
+  // The `entersTapped` lesson: a field describing the EVENT, read on the producer side, becomes a
+  // demand that the consumer CARD have that property, and silently deleted 29 real claims. A
+  // producer's emit never states how a spell was targeted, so `eventMatches` reads the flag on the
+  // consumer only.
+  const producer = base("Some Spell", [{
+    kind: "static",
+    effect: { kind: "" },
+    emits: [{ verb: "cast", subject: { type: "instant", control: "you", token: null, restricted: true } }],
+  }]);
+  const watcher = base("Watcher", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { type: "instant", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(pairReasons(producer, watcher, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
+});
+
 test("a trigger with no origin is still satisfied by an event that has one", () => {
   // The constraint is opt-in in ONE direction only. An unset trigger `fromZone` means "any origin",
   // so stamping origins onto producer emits must not cost a single edge that exists today.

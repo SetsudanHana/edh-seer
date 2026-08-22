@@ -134,6 +134,20 @@ if (rejudge) {
   console.log(`  wrote ${rows.length} live claims to re-judge (${distinct.length - rows.length} are the user's) -> ${rejudge}`);
 }
 
+// `--falses` dumps the claims judged FALSE, with the note they were judged under and both oracle
+// texts — the work list for any precision item. Roadmap C7 was this list, transcribed by hand on
+// 2026-08-20, and it was stale by 41 claims two days later because false fell 63 -> 22 under six
+// separate fixes. A list that has to be re-typed to stay true is a list that stops being true.
+const falsesOut = arg("--falses");
+if (falsesOut) {
+  writeFileSync(falsesOut, `${s.falses.map(({ claim: c, note }, id) => JSON.stringify({
+    id, producer: c.producer, consumer: c.consumer, tag: c.tag,
+    claim: claimFor(c.tag, c.producer, c.consumer, c.implied === true),
+    note, producerOracle: oracle.get(c.producer) ?? "", consumerOracle: oracle.get(c.consumer) ?? "",
+  })).join("\n")}\n`);
+  console.log(`  wrote ${s.falses.length} false claims -> ${falsesOut}`);
+}
+
 const out = arg("--worksheet");
 if (out && s.unjudged.length) {
   writeFileSync(out, `${s.unjudged.map((c, id) => JSON.stringify({

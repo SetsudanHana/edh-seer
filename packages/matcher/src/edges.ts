@@ -616,6 +616,19 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolea
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
   if (producer.verb !== consumer.verb) return false;
+  // A TARGETING RESTRICTION IS A DEMAND NOTHING HERE CAN CHECK, so the trigger claims no producer.
+  // `replacement.restricted` one layer over: keep the ability and its kind, claim no cards. Read on
+  // the CONSUMER only — a producer's emit never states how a spell was targeted, so the field can
+  // only ever be a demand, and reading it on the producer would be the `entersTapped` mistake (a
+  // field describing the event, used to identify a card, silently deleting 29 real claims).
+  //
+  // MEASURED: 108 reasons across the 71 decks, from 3 cards — Leyline of Resonance 59 `cast:creature`
+  // (it triggers on instants and sorceries; the `creature` is LEAKED out of the relative clause),
+  // Vesuvan Duplimancy 36 `cast:creature` (head noun "a spell", so its whole type list is leaked),
+  // Exterminator Magmarch 13 `cast:instant` (right noun, unchecked restriction). Seven cached panel
+  // verdicts on these cards are FALSE against one REAL, and the REAL one is knowingly lost — see
+  // `SubjectFilter.restricted`.
+  if (consumer.subject.restricted === true) return false;
   if (!originMatches(producer.subject, consumer.subject)) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
   if (castSelfSupplied(producer, consumer)) return false;

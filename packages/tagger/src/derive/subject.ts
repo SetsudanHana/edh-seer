@@ -484,6 +484,13 @@ const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|
 const TOKEN_CREATION = /\btokens?\s+named\b/i;
 const NAMED = /\bnamed\s+([^,.]+?)(?=\s+(?:in|on|from|under|with|that|you|an?\b|to)\s|[,.]|$)/i;
 
+/** A TARGETING RESTRICTION, WHICH NOTHING HERE MODELS. "an instant or sorcery spell that targets
+ *  only a single creature you control". Anchored on "targets only", the printed template — 24 corpus
+ *  cards carry it, 3 of them on a trigger subject. `that targets` WITHOUT "only" is a different and
+ *  looser sentence (135 corpus cards, mostly "target spell that targets a creature" removal) and is
+ *  deliberately out. */
+const TARGETS_ONLY = /\btargets? only\b/i;
+
 export function parseSubject(text: string): SubjectFilter {
   const t = text.toLowerCase().trim();
   const { type, notType, umbrella, plural } = parseTypes(t);
@@ -498,6 +505,13 @@ export function parseSubject(text: string): SubjectFilter {
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;
   if (OUTLAW.test(t) && !NOT_OUTLAW.test(t)) out.outlaw = true;
   if (MODIFIED.test(t) && !NOT_MODIFIED.test(t)) out.modified = true;
+  // Set BEFORE anything reads the parsed types, because the two defects are independent: the type
+  // list is ALSO wrong here (`parseTypes` sweeps the relative clause, so Vesuvan Duplimancy's "a
+  // spell that targets only a single artifact or creature you control" derives `[creature,
+  // artifact]` — the thing targeted, not the spell cast). Refusing the subject outright makes the
+  // leak unreachable rather than fixing it, which is the smaller change AND the right answer: a
+  // corrected noun would still claim every instant in the deck. See `SubjectFilter.restricted`.
+  if (TARGETS_ONLY.test(t)) out.restricted = true;
   if (LEGENDARY.test(t) && !NOT_LEGENDARY.test(t)) out.legendary = true;
   if (BASIC.test(t) && !NOT_BASIC.test(t) && !BASIC_LAND_TYPE.test(t)) out.basic = true;
   // A keyword counter is a counter, so the counter reading wins where both could fire.

@@ -582,3 +582,13 @@ test("a token's printed name does not become the subject's `named`", () => {
   expect(parseSubject("a card named TARDIS").named).toBe("tardis");
   expect(parseSubject("any number of cards named Dragon's Approach").named).toBe("dragon's approach");
 });
+
+test("a targeting restriction is recorded, and 'that targets' without 'only' is not", () => {
+  // 24 corpus cards print "that targets only"; 3 carry it on a trigger subject. The looser "that
+  // targets" is 135 cards and a different sentence ("target spell that targets a creature"), so the
+  // cue is anchored on "targets only".
+  expect(parseSubject("an instant or sorcery spell that targets only a single creature you control").restricted).toBe(true);
+  expect(parseSubject("a spell that targets only a single artifact or creature you control").restricted).toBe(true);
+  expect(parseSubject("target spell that targets a creature").restricted).toBeUndefined();
+  expect(parseSubject("an instant or sorcery spell").restricted).toBeUndefined();
+});

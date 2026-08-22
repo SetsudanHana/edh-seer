@@ -59,6 +59,31 @@ export interface SubjectFilter {
    *  read "whenever a permanent you control ENTERS TAPPED". Set on both sides from the same printed
    *  cue `ARRIVES_TAPPED` already uses to suppress a phantom `taps` event. */
   entersTapped?: true;
+  /** THE SUBJECT IS NARROWED BY A TARGETING RESTRICTION, AND NOTHING HERE MODELS TARGETING. "an
+   *  instant or sorcery spell THAT TARGETS ONLY A SINGLE CREATURE YOU CONTROL" (Leyline of
+   *  Resonance), "a spell THAT TARGETS ONLY A SINGLE ARTIFACT OR CREATURE YOU CONTROL" (Vesuvan
+   *  Duplimancy). A demand only the consumer side can carry, and `eventMatches` refuses it — the
+   *  `replacement.restricted` rule one layer over: keep the ability and its kind, claim no cards.
+   *
+   *  IT COST TWO SEPARATE DEFECTS, and the first is why the honest fix is refusal rather than a
+   *  better parse. (1) The type LEAKED out of the relative clause: `parseTypes` sweeps the whole
+   *  string, so Leyline derived `[creature, instant, sorcery]` and Vesuvan — whose head noun is
+   *  merely "a spell" — derived `[creature, artifact]`, naming the thing being TARGETED instead of
+   *  the spell being cast. (2) Even with the head noun right, the restriction cannot be checked:
+   *  Leyline would claim every instant in the deck, and only the ones that happen to target your own
+   *  creature are real. That is the registered "a claim that applies to a card merely for being an
+   *  ordinary card is false".
+   *
+   *  MEASURED: 24 corpus cards print "that targets only", 3 carry it on a trigger subject in the
+   *  derived corpus, and those 3 made 108 reasons across the 71 decks — 59 Leyline `cast:creature`,
+   *  36 Vesuvan `cast:creature`, 13 Exterminator Magmarch `cast:instant`. Seven of the frozen
+   *  panel's cached verdicts on these cards are FALSE against one REAL.
+   *
+   *  THE ONE REAL CLAIM IS KNOWINGLY LOST AND IS THE PRICE: Origin of Metalbending is an Instant
+   *  whose mode puts a counter on "target creature you control", so Leyline really does copy it —
+   *  but the engine cannot tell it from the instants that target an opponent, and under-claiming is
+   *  the direction this repo refuses to trade away. The Hidetsugu top-of-library refusal, again. */
+  restricted?: true;
   /** The umbrella noun a multi-umbrella `type` list was resolved FROM — "permanent" for
    *  "permanent spell".
    *
