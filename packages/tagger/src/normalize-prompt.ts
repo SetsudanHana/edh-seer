@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 12;
+export const NORMALIZE_VERSION = 13;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -35,7 +35,7 @@ export const NORMALIZE_MIN_COMPATIBLE = 3;
  *  prose fix reopen the whole `carriesOther` set — on 2026-08-06 a one-line rule about trigger
  *  subjects selected 158 cards, of which 148 had been bought hours earlier at v8 and would come back
  *  identical. Priced at $0.69 to fix 9 cards. With this the same run selects 10 and costs $0.02. */
-export const VOCAB_VERSION = 10;
+export const VOCAB_VERSION = 13;
 
 /** The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION.
  *
@@ -47,7 +47,20 @@ export const VOCAB_VERSION = 10;
  *
  *  Same shape as the 2026-08-06 finding this file already records for prose-vs-vocabulary, applied
  *  one level finer: gate each selector on the list it actually reads. */
-export const TRIGGER_VOCAB_VERSION = 14;
+/*  LOWERED 14 -> 13 on 2026-08-22, which reads backwards and is the gate being REPAIRED. This
+ *  constant is documented as "the NORMALIZE_VERSION at which TRIGGERS last changed", and the
+ *  selector asks `doc.normalizeVersion >= TRIGGER_VOCAB_VERSION`. It had drifted into being used as
+ *  a plain counter (12 -> 13 for `create`, 13 -> 14 for `reveal`) while NORMALIZE_VERSION stayed at
+ *  12 -- so it sat ABOVE every version any doc could carry, and the gate it exists to be selected
+ *  EVERY doc with an `other` trigger, forever. Measured before the change: the highest stored
+ *  normalizeVersion in the corpus is 12, so nothing was ever gated out.
+ *
+ *  That is the `--refresh-other` treadmill this file already records twice, arriving through the
+ *  guard written to stop it. At 13 the invariant holds again: v13 is the first prompt carrying the
+ *  whole trigger list, so a doc answered at v13+ genuinely had every word and is correctly skipped,
+ *  while everything below is still selected. No doc is de-selected by the change -- none exists at
+ *  13 or above.  */
+export const TRIGGER_VOCAB_VERSION = 13;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -107,6 +120,27 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // of the dictionary. `monarch` (725) and `day-night` (731) went in above; these were missed.
   // `initiative` is CR 726 and `city-blessing` is what Ascend (702.131) grants.
   "initiative", "city-blessing",
+  // THE ACTION SIDE OF THREE CONCEPTS WHOSE TRIGGER SIDE ALREADY EXISTED, added 2026-08-22. The
+  // same asymmetry `copy` and `create` were each found by, and found the same way -- by cards
+  // falling to the `other` escape hatch. `loses-control`, `phases-out` and `monarch` are all legal
+  // TRIGGERS and none was a legal VERB, so a card that PERFORMS the action lost the clause whole.
+  //
+  // SIZED OVER THE WHOLE ~34k CORPUS per the 2026-08-15 completeness ruling, with the count of
+  // already-normalized calibration cards sitting on `other` beside it:
+  //   gain-control  348 corpus, 11 of 27 normalized on `other` (Flayer of Loyalties, Sakashima's Will)
+  //   phase-out      60 corpus,  7 of 10 normalized on `other` (Robe of Stars, Slip Out the Back)
+  //   monarch        64 corpus,  5 of 15 normalized on `other` (Forth Eorlingas!, Court of Embereth)
+  //
+  // THE CONTROL FOR THE MECHANISM IS `initiative`, one line above: the same KIND of concept as
+  // `monarch` (a designation the game tracks, CR 726 against CR 720) and already a VERB. 23 corpus
+  // cards, 8 normalized, ZERO on the escape hatch. Having the word is the entire difference.
+  //
+  // NONE GETS AN `EMITS` ROW, following `initiative` and `city-blessing` exactly. Their trigger
+  // counterparts carry no `CLAUSE_TRIGGER_TO_VERB` mapping either, so there is no consumer for an
+  // emit to reach and a guessed event would buy nothing while risking false edges. The word's job
+  // here is that the CLAUSE SURVIVES rather than being lost whole -- the same reason goad, vote and
+  // regenerate each earned one.
+  "gain-control", "phase-out", "monarch",
   "other", "none"];
 /** Terms whose EXEMPLARS join the normalization scope, so a vocabulary addition is exercised on real
  *  cards instead of sitting untested until someone happens to play one.
@@ -133,6 +167,9 @@ export const EXEMPLAR_TERMS = [
   // finds real witnesses: Syr Konrad and Turntimber Sower for the graveyard event, and the three
   // small ones which would otherwise never appear in a normalized clause at all.
   "graveyard from anywhere", "becomes crewed", "loses control of", "phases in", "tapped for mana",
+  // The action-side additions of 2026-08-22. "becomes the monarch" is already listed above as a
+  // trigger word and now exercises the VERB too, so only the other two are new here.
+  "gain control of", "phases out",
 ] as const;
 
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];

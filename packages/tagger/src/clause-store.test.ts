@@ -6,6 +6,9 @@ import {
   dropsOriginZone, worthReasking, dropsTriggerObject, hasPhantomTrigger, carriesOtherTrigger,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "./clause-store.js";
+import {
+  NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE, VOCAB_VERSION, TRIGGER_VOCAB_VERSION,
+} from "./normalize-prompt.js";
 
 const HASH = segmentHash("Flying", "Creature — Faerie", ["Flying"]);
 
@@ -312,4 +315,24 @@ test("carriesOtherTrigger finds a card stuck on its TRIGGER, which carriesOther 
     normalizeVersion: 3,
     canonical: [{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "a creature" }, actions: [] }],
   }), legal, 10)).toBe(false);
+});
+
+/** THE GATE CONSTANTS MUST SIT AT OR BELOW THE PROMPT VERSION, or they gate nothing.
+ *
+ *  `carriesOther` and `carriesOtherTrigger` both skip a doc when `doc.normalizeVersion >= <gate>`.
+ *  A gate ABOVE the current NORMALIZE_VERSION can therefore never be reached by any doc that has
+ *  ever been written, so it selects the whole `other` population on every run, forever — the
+ *  `--refresh-other` treadmill arriving through the guard built to prevent it.
+ *
+ *  This is not hypothetical: TRIGGER_VOCAB_VERSION sat at 14 against a NORMALIZE_VERSION of 12 from
+ *  the `reveal` addition (2026-08-21) until 2026-08-22, because it was being incremented as a plain
+ *  counter rather than set to the prompt version its list changed at. Every doc in the corpus
+ *  topped out at v12, so nothing was ever gated out. */
+test("vocabulary gate versions cannot exceed the prompt version", () => {
+  expect(VOCAB_VERSION).toBeLessThanOrEqual(NORMALIZE_VERSION);
+  expect(TRIGGER_VOCAB_VERSION).toBeLessThanOrEqual(NORMALIZE_VERSION);
+  // And a gate below MIN_COMPATIBLE is dead the other way: every live doc is at or above it, so the
+  // selector can never fire at all.
+  expect(VOCAB_VERSION).toBeGreaterThanOrEqual(NORMALIZE_MIN_COMPATIBLE);
+  expect(TRIGGER_VOCAB_VERSION).toBeGreaterThanOrEqual(NORMALIZE_MIN_COMPATIBLE);
 });
