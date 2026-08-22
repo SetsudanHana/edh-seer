@@ -28,6 +28,20 @@ const DIM_BY_DEFAULT: NodeKind[] = ["layout", "cmc", "mana", "color"];
 /** Render a graph as a single self-contained HTML file: no CDN, no build step, no install. Open it
  *  in a browser and it lays itself out.
  *
+ *  THIS IS NOT THE APP'S DECK BOARD, AND IT IS NOT MEANT TO BE (roadmap H13, refused 2026-08-22).
+ *  The two render DIFFERENT GRAPHS. This one is `buildGraph`'s printed-characteristics graph — cards
+ *  joined through their type, subtype, keyword, mana, cmc and layout nodes, plus reified `event:`
+ *  nodes under `--events` — around 330 nodes for one deck, aimed at Cytoscape/Gephi-style
+ *  exploration of what cards SHARE. The app's board (`projectDeckGraph` + `board-force.ts`) draws
+ *  ~84 nodes: the cards themselves and the synergy edges between them.
+ *
+ *  So the physics differing is not a divergence between two views of one thing. This loop is
+ *  inverse-SQUARE repulsion (`900/d²`, rest 70, damping 0.86, gravity 0.0016) against d3's
+ *  inverse-LINEAR `forceManyBody`, and unifying them was considered and refused: there is nothing to
+ *  match, `d3-force` is a dependency of `@mtg/web` rather than this package, and the kind checkboxes
+ *  below deliberately RE-SETTLE the layout (`alpha = 0.5`), so a pre-settled static export would be
+ *  a behaviour change rather than a simplification.
+ *
  *  ponytail: O(n^2) repulsion every tick, which is fine for the few-hundred-node subgraphs the
  *  exporter produces (a deck is ~330 nodes = ~54k pairs) and would need Barnes-Hut past a few
  *  thousand. The exporter caps card count anyway, so that ceiling is not reachable today. */

@@ -11,6 +11,21 @@ export type ArtState = HTMLImageElement | "loading" | "error";
 export interface ArtLoader {
   /** Current state for a URL, or undefined if never requested. */
   get(url: string): ArtState | undefined;
+  /** Called back whenever a url's state SETTLES to an image or an error; returns an unsubscribe.
+   *
+   *  The board's paint loop reads art by POLLING `get()` every frame, which is fine while the loop
+   *  runs every frame and silently wrong the moment it parks (roadmap H11): an image landing is the
+   *  one driver with no user action and no React render behind it, so nothing else can wake the
+   *  board and a card stays a dot until some unrelated interaction.
+   *
+   *  A SUBSCRIPTION AND NOT A CONSTRUCTOR OPTION, because the loader is SHARED. `ReportTabs` builds
+   *  one and starts warming art the moment the analyze response lands, and `GraphView` prefers that
+   *  one over its own — so a callback passed at construction is wired to the loader the board
+   *  usually does NOT use. Found in a live browser with the tests green: parking was correct and
+   *  art would simply never have repainted.
+   *
+   *  Not fired for `undefined -> "loading"`, which changes nothing anyone can see. */
+  subscribe(onSettled: () => void): () => void;
   /** Request a URL. Idempotent: safe to call every animation frame.
    *
    *  `urgent` jumps the queue. The queue is FIFO and dispatches are SPACED (75ms), so a 95-card
@@ -44,10 +59,16 @@ export function createArtLoader(options: ArtLoaderOptions): ArtLoader {
   let active = 0;
   let pumping = false;
 
+  const settled = new Set<() => void>();
+  const settle = (url: string, value: ArtState): void => {
+    state.set(url, value);
+    for (const fn of settled) fn();
+  };
+
   const attempt = async (url: string): Promise<void> => {
     for (let tryIndex = 0; tryIndex <= retries; tryIndex++) {
       try {
-        state.set(url, await options.load(url));
+        settle(url, await options.load(url));
         return;
       } catch {
         // Back off before the retry; a burst that drew a 429 will draw another one immediately.
@@ -55,7 +76,7 @@ export function createArtLoader(options: ArtLoaderOptions): ArtLoader {
       }
     }
     // Permanent after the retries are spent: a card that genuinely has no art must not retry forever.
-    state.set(url, "error");
+    settle(url, "error");
   };
 
   const pump = async (): Promise<void> => {
@@ -83,6 +104,7 @@ export function createArtLoader(options: ArtLoaderOptions): ArtLoader {
 
   return {
     get: (url) => state.get(url),
+    subscribe: (fn) => { settled.add(fn); return () => { settled.delete(fn); }; },
     request: (url, urgent = false) => {
       // Idempotent by construction: `draw()` calls this every frame for every unresolved node.
       // `state.set(url, "loading")` below happens in this same synchronous call, before the url

@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { StrictMode } from "react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { EDIT_REHEAT_ALPHA } from "./board-force.js";
+import { EDIT_REHEAT_ALPHA, PARK_ALPHA } from "./board-force.js";
 import { ART_RADIUS, GraphView, edgeAlpha, edgeWidth, jitterFromId, nodeRadius, seedPosition, traveledAsPan } from "./GraphView.js";
 import { CARD_H, CARD_W } from "./board-force.js";
 import { SAMPLE } from "../fixtures.js";
@@ -1698,5 +1698,59 @@ describe("reheat energy", () => {
     // previous positions through prevPositionsRef, so it is a REHEAT, not a fresh layout.
     rerender(<GraphView graph={graphOf([card({ id: "A" }), card({ id: "B" }), card({ id: "C" })], [])} report={SAMPLE.report} />);
     expect(alphas.at(-1)).toBe(EDIT_REHEAT_ALPHA);
+  });
+});
+
+// H11. The loop used to tick, draw and reschedule unconditionally: a board that had finished
+// settling repainted 60 times a second for as long as the tab was open. Parking is only reachable
+// because H1 took ALPHA_FLOOR to 0, so alpha actually decays through PARK_ALPHA.
+describe("paint parking", () => {
+  /** A simulation frozen BELOW the park threshold, i.e. a settled board. `tick` is a no-op, so
+   *  nothing can drift it back above and the only thing deciding whether a frame paints is the
+   *  dirty flag. */
+  const settled = () => ({
+    alpha: (v?: number) => (v === undefined ? PARK_ALPHA / 2 : PARK_ALPHA / 2),
+    tick() { return this; },
+    stop() { return this; },
+  } as unknown as ReturnType<typeof createBoardSimulation>);
+
+  test("a settled board stops painting, and an invalidation wakes it", () => {
+    vi.mocked(createBoardSimulation).mockReturnValue(settled());
+    const calls: string[] = [];
+    const { canvas, tick } = frames(SAMPLE.graph, calls);
+    // The mount's own frames drain whatever was owed; after them the board is quiet.
+    tick(3);
+    const quiet = calls.length;
+    tick(10);
+    expect(calls.length).toBe(quiet);
+
+    // A REAL driver with no React render behind it: moving the pointer onto a node. The board must
+    // paint again, or the hover highlight never appears.
+    const probe = canvas.__graphProbe!();
+    const node = probe[0];
+    const screen = { clientX: node.x, clientY: node.y };
+    canvas.dispatchEvent(new MouseEvent("pointermove", { ...screen, bubbles: true }));
+    tick(1);
+    expect(calls.length).toBeGreaterThan(quiet);
+  });
+
+  test("a board still settling paints every frame regardless of the dirty flag", () => {
+    // The guard must never park a board that is still MOVING -- that is the frozen-board failure,
+    // and it is worse than any amount of wasted paint. Its own stub rather than the real
+    // simulation: `createBoardSimulation` is a module-level `vi.fn`, so an earlier test's
+    // `mockReturnValue` is still in force here and the first version of this test was measuring
+    // THAT (a leaked alpha of 0, i.e. an already-parked board) rather than anything it wrote.
+    const moving = {
+      alpha: (v?: number) => (v === undefined ? 1 : 1),
+      tick() { return this; },
+      stop() { return this; },
+    } as unknown as ReturnType<typeof createBoardSimulation>;
+    vi.mocked(createBoardSimulation).mockReturnValue(moving);
+    const calls: string[] = [];
+    const { tick } = frames(SAMPLE.graph, calls);
+    tick(2);
+    const before = calls.length;
+    tick(5);
+    expect(calls.length).toBeGreaterThan(before);
   });
 });

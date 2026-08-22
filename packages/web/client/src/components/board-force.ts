@@ -227,6 +227,17 @@ export const ALPHA_DECAY = 0.005;
  *  (`simulation.alpha(x).restart()` on a deck mutation, which the layout effect already does at
  *  0.3 on a graph change), not leaked continuously. → roadmap H1, measurements/graph-2026-08-20 */
 export const ALPHA_FLOOR = 0;
+
+/** The alpha at or below which the board is PARKED: no tick, no repaint until something invalidates.
+ *
+ *  This is d3-force's OWN default `alphaMin`, restated as a named constant rather than read off the
+ *  simulation. The board drives `tick()` by hand, so d3 never consults its own alphaMin and the value
+ *  had no effect on anything; naming it here gives the stop condition one home next to
+ *  `ALPHA_FLOOR`, and keeps the paint loop from depending on a method the test stubs of
+ *  `createBoardSimulation` do not implement. With `ALPHA_FLOOR` at 0 the alpha really does decay
+ *  through this, which is the whole reason parking is reachable at all — H1 is the prerequisite.
+ *  → roadmap H11 */
+export const PARK_ALPHA = 0.001;
 /** THE ENERGY A DECK CHANGE GETS (roadmap H9). A from-scratch board gets `alpha(1)`; a board that
  *  already has settled positions only needs enough for what CHANGED to find its place, and this was
  *  0.3 — a number nobody had measured.

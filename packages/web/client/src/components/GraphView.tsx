@@ -14,6 +14,7 @@ import { computeFlow, type Flow, type FlowEdge } from "./flow.js";
 import {
   ART_RADIUS,
   EDIT_REHEAT_ALPHA, CARD_H, CARD_W, createBoardSimulation, DEFAULT_PARAMS, linkDistanceFor, nodeRadius,
+  PARK_ALPHA,
   type BoardParams, type Sim, type SimLink,
 } from "./board-force.js";
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
@@ -234,8 +235,30 @@ export function GraphView(
   // card's art the moment the analyze response landed, seconds before this tab was ever opened, and
   // taking it means arriving to images already decoded rather than re-requesting them. Falls back to
   // its own so the component still stands alone (which is how every test renders it).
+  /** PAINT PARKING. The loop used to tick, draw and reschedule unconditionally, so a board that had
+   *  finished settling still repainted 60 times a second forever. `invalidate()` marks a frame owed;
+   *  the loop early-outs when none is owed and nothing continuous is running.
+   *
+   *  THE rAF IS NEVER CANCELLED, deliberately. A missed wake is a FROZEN BOARD, which is far worse
+   *  than a warm laptop, so the loop stays alive and a missed invalidation self-heals on the next
+   *  one instead of being unrecoverable.
+   *
+   *  THE CATCH-ALL BELOW IS WHAT MAKES THIS SAFE, and it is one hook rather than six. `huesRef`,
+   *  `commandersRef`, `matchesRef` and `flowRef` are all assigned in the COMPONENT BODY, so any
+   *  change to what they hold implies a render happened — an effect with NO dependency array runs
+   *  after every render and therefore covers all of them, plus any ref added here later. Only the
+   *  three drivers with no render behind them need explicit calls: the camera (d3-zoom writes
+   *  `cam` directly), the hover id, and art landing (`onSettled`, since `draw()` READS art by
+   *  polling and a poll that never runs never sees it). */
+  const dirtyRef = useRef(true);
+  const invalidate = useCallback(() => { dirtyRef.current = true; }, []);
+  useEffect(() => { dirtyRef.current = true; });
+
   const artLoaderRef = useRef<ArtLoader>(undefined);
   artLoaderRef.current ??= injectedArtLoader ?? createArtLoader({ load: cachedImageLoad() });
+  // Whichever loader this ended up with -- `ReportTabs`' shared one, or its own fallback. `draw()`
+  // reads art by POLLING, and a parked loop never polls, so an image landing has to say so.
+  useEffect(() => artLoaderRef.current!.subscribe(invalidate), [invalidate]);
   // Effect-local until the filter chips existed, which is why toggling one reset the view. A ref
   // survives the effect re-running, and the mode buttons below need to write z from outside it.
   const camRef = useRef({ x: 0, y: 0, z: 1 });
@@ -919,16 +942,31 @@ export function GraphView(
     // passed throughout, because they drive alpha down by hand instead of letting it decay.
     let fitted = fittedGraphRef.current === graph;
     const loop = () => {
-      simulation.tick();
-      // <=, not <: an exactly-0.05 alpha is settled enough, and floating-point decay can land on
-      // it without ever going strictly below.
-      if (!fitted && simulation.alpha() <= FIT_SETTLE_ALPHA) {
-        fitToView();
-        fitted = true;
-        fittedGraphRef.current = graph;
+      // Rescheduled FIRST, so no early return below can end the loop. See `invalidate`'s comment:
+      // the rAF is deliberately immortal, because a missed wake is a frozen board.
+      raf = requestAnimationFrame(loop);
+      // The two CONTINUOUS drivers, neither of which sets the dirty flag because neither is an
+      // event: the simulation still moving, and the flow's crawling dash (`FLOW_DASH.speed`), which
+      // animates off `performance.now()` and so needs a frame every frame while a flow is open.
+      // `prefers-reduced-motion` freezes the crawl, and a frozen crawl is not a driver.
+      const moving = simulation.alpha() > PARK_ALPHA;
+      const crawling = flowRef.current !== null
+        && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches !== true;
+      if (!dirtyRef.current && !moving && !crawling) return;
+      dirtyRef.current = false;
+      // Only while moving: ticking a settled simulation advances its alpha decay for nothing, and
+      // the fit below is reached BY those ticks, so it cannot be starved by this gate.
+      if (moving) {
+        simulation.tick();
+        // <=, not <: an exactly-0.05 alpha is settled enough, and floating-point decay can land on
+        // it without ever going strictly below.
+        if (!fitted && simulation.alpha() <= FIT_SETTLE_ALPHA) {
+          fitToView();
+          fitted = true;
+          fittedGraphRef.current = graph;
+        }
       }
       draw();
-      raf = requestAnimationFrame(loop);
     };
 
     // A resize updates the canvas's own backing-store size, then -- if the FIT still owns the
@@ -992,6 +1030,7 @@ export function GraphView(
       .scaleExtent([0.15, MAX_Z])
       .on("zoom", (e: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
         cam.x = e.transform.x; cam.y = e.transform.y; cam.z = e.transform.k;
+        invalidate();
         // A camera the USER moved is never overwritten by the pending one-time fit, nor by a later
         // resize (onResize, above). The board takes ~696 ticks to reach FIT_SETTLE_ALPHA (see its
         // comment), which is seconds of real time, and anyone who zoomed inside that window had
@@ -1133,6 +1172,7 @@ export function GraphView(
       // A card's roles, translated to plain language -- the detailed build-category vocabulary the
       // canvas itself no longer shows.
       const detail = n ? (n.roles ?? []).map(subcategoryLabel).join(" · ") : "";
+      if (hoveredIdRef.current !== (n?.id ?? null)) invalidate();
       hoveredIdRef.current = n?.id ?? null;
       // Fetch the full card for the one being APPROACHED, so crossing CARD_MODE_Z draws an image
       // that has already landed instead of starting the request that card mode then waits on.

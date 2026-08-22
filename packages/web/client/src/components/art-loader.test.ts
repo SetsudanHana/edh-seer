@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { createArtLoader } from "./art-loader.js";
 
 const fakeImage = () => ({}) as HTMLImageElement;
@@ -122,4 +122,21 @@ test("a dispatch does not fire until the spacing delay for the previous one reso
   releaseDelay!();
   await new Promise((r) => setTimeout(r, 0));
   expect(calls).toBe(2); // resolving it releases exactly the next dispatch
+});
+
+test("a settled url notifies subscribers, and unsubscribing stops it", async () => {
+  // The board polls `get()` inside its paint loop, so once that loop PARKS (roadmap H11) an image
+  // landing is invisible unless the loader says so. Found in a live browser with every test green:
+  // `ReportTabs` builds the loader the board actually uses, and a constructor callback would have
+  // been wired to the loader it does not.
+  let woken = 0;
+  const loader = createArtLoader({ load: async () => fakeImage(), delay: immediate });
+  const off = loader.subscribe(() => { woken++; });
+  loader.request("a.png");
+  await vi.waitFor(() => expect(loader.get("a.png")).not.toBe("loading"));
+  expect(woken).toBe(1);
+  off();
+  loader.request("b.png");
+  await vi.waitFor(() => expect(loader.get("b.png")).not.toBe("loading"));
+  expect(woken).toBe(1);
 });
