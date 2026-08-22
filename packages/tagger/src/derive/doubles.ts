@@ -12,6 +12,23 @@
  *  A near-miss here would make a doubler claim the wrong half of the deck, so refusal is the only
  *  correct failure direction.
  *
+ *  CEILING, RECORDED THE DAY IT SHIPPED: this map holds the EVENT and drops the TYPE NARROWING
+ *  beside it. Panharmonicon says "an artifact or creature entering", Naban "a Wizard you control",
+ *  Gandalf "a legendary permanent or an artifact", Ancient Greenwarden "a LAND". Only four of the
+ *  twelve — Yarok, Elesh Norn, Starfield Vocalist, Virtue of Knowledge — say the unrestricted "a
+ *  permanent", where the recorded verb is the whole story.
+ *
+ *  MEASURED over the 71 decks: 102 claims come from a type-narrowed doubler and none is measurably
+ *  false, because the narrowings that ARE played are satisfied nearly always in the decks that play
+ *  them (artifact-or-creature covers most ETB permanents; Naban's Wizard restriction sits in a
+ *  WIZARD deck; Gandalf's legendary restriction in a legends deck). The sharp case is **Ancient
+ *  Greenwarden, which doubles LANDFALL only** — claiming it doubles a creature's ETB is plainly
+ *  wrong, and it is safe today solely because no calibration deck runs it.
+ *
+ *  Closing it needs the qualifier's SUBJECT recorded beside the verb and checked against the
+ *  consumer's trigger subject. Deliberately not built with the verb: that is a second field and a
+ *  second matcher condition, and the population that would exercise it is one unplayed card.
+ *
  *  READ FROM THE TEXT AND NOT FROM A NEW MODEL ANSWER, so this is free: no NORMALIZE_VERSION bump
  *  and no re-buy. Same move `reducesItself`, `triggerHasCue` and `ARRIVES_TAPPED` already make. */
 import type { Verb } from "../schema.js";
