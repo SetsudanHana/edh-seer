@@ -39,6 +39,25 @@ const mk = (
   tags: tags(name, opts.kinds ?? [], opts.subtypes ?? [], opts.anthem ?? false),
 });
 
+/** A token that leaves the turn it arrived is not a board you win with, but it IS still a board.
+ *  Inalla copies a Wizard and exiles it at the beginning of the next end step; she was counted among
+ *  12 go-wide cards in her own deck on a board that does not exist when the turn ends. Found by the
+ *  TUNER persona rejecting its own deck's report.
+ *
+ *  The second half is the one that matters: the flag must exclude the WIN PLAN and nothing else. A
+ *  temporary token still enters (its ETB payoffs are real, and that is Inalla's actual engine),
+ *  still attacks with haste, and can still be sacrificed in response. `wincon.ts` is deliberately
+ *  the only reader of `temporary` — deleting the token's relations to fix a label would repeat the
+ *  `entersTapped` mistake, which silently removed 29 real claims. */
+test("a token that leaves the turn it arrived is not a go-wide plan", () => {
+  const permanent = mk("Krenko", { kinds: ["token-generation"] });
+  expect([...(detectWincons([permanent]).get("go-wide") ?? [])]).toEqual(["Krenko"]);
+
+  const temporary = mk("Inalla, Archmage Ritualist", { kinds: ["token-generation"] });
+  temporary.tags!.abilities[0].temporary = true;
+  expect(detectWincons([temporary]).has("go-wide")).toBe(false);
+});
+
 test("each class is detected by its own structural signature", () => {
   const classes = detectWincons([
     mk("Krenko", { kinds: ["token-generation"] }),

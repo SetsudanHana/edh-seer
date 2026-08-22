@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 72;
+export const DERIVE_VERSION = 74;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -94,6 +94,30 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
 /** "Whenever this creature IS DEALT damage" (Hornet Nest, Flumph, Boros Reckoner) — the receiving
  *  side, which no engine verb spells. 20 of the 180 `damage-dealt` clauses. */
 const DAMAGE_RECEIVED = /\b(?:is|are|becomes?) dealt\b/i;
+/** A token that LEAVES THE SAME TURN IT ARRIVED — see `Ability.temporary`. Three printed shapes,
+ *  and the third is only reachable by NAME.
+ *
+ *  1. END STEP / END OF TURN — "Exile it at the beginning of the next end step" (Inalla, Cogwork
+ *     Assembler, Flameshadow Conjuring), "Exile them" (Chandra, Flamecaller). 227 corpus cards.
+ *  2. END OF COMBAT — "Sacrifice that token at end of combat" (Geist of Saint Traft, Kavaron
+ *     Harrier, Phantom Steed, Mirror Match, Altaïr Ibn-La'Ahad, Mirror Mockery). 20 corpus cards
+ *     survive reminder-stripping with an explicit cue. Several more in that population sacrifice
+ *     THEMSELVES rather than a token (Mardu Blazebringer, Keldon Battlewagon); the
+ *     `token-generation` gate at the call site excludes them.
+ *  3. DECAYED (CR 702.147) — "can't block. When it attacks, sacrifice it at end of combat." OWNER'S
+ *     CATCH, 2026-08-22: the family is wider than the end-step wording, and decayed is the sharp
+ *     case because **`segment.ts` STRIPS REMINDER TEXT**, so the sentence that says what decayed
+ *     MEANS is gone by the time derive sees the clause. What survives is the keyword's NAME, so the
+ *     name is what this matches — the same move `keywordEvents` makes for cycling, where the
+ *     reminder text IS the ability. 19 corpus cards, 16 of them token makers.
+ *
+ *  Anchored on the token pronoun in shapes 1 and 2 so a clause that exiles something ELSE at end of
+ *  turn cannot match. "sacrifice" sits beside "exile" because the family splits on the MANNER and
+ *  what undermines a go-wide plan is the LEAVING, not how it happens. */
+const LEAVES_SAME_TURN =
+  /\b(?:exile|sacrifice)\s+(?:it|them|that token|those tokens)\b[^.]{0,80}?\b(?:at the beginning of the next end step|at end of turn|at end of combat)\b/i;
+/** Shape 3, matched on the keyword's NAME because its reminder text is stripped before derive. */
+const DECAYED = /\bwith decayed\b/i;
 /** Combat vs noncombat, read off the clause the trigger sits in. Plural "deal combat damage" counts:
  *  "whenever one or more creatures you control deal combat damage" is the same event. */
 const COMBAT_DAMAGE = /\bcombat damage\b/i;
@@ -782,6 +806,10 @@ export function deriveAbilities(
       // the object and drops the qualifier, so Panharmonicon (entering), Isshin (attacking) and
       // Drivnod (dying) were byte-identical before this. Empty for a doubler whose qualifier names
       // no event the closed map holds, which keeps that card silent rather than guessing.
+      // The token this ability makes leaves at the next end step. Read off the clause text because
+      // the clause layer records the exile as a bare `exile: "it"` action whose object cannot say
+      // WHEN — the timing is only in the sentence.
+      if (effectKind === "token-generation" && (LEAVES_SAME_TURN.test(text) || DECAYED.test(text))) ability.temporary = true;
       if (effectKind === "trigger-doubling") {
         const doubles = doubledVerbs(text);
         if (doubles.length) ability.doubles = doubles;

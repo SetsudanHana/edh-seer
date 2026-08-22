@@ -51,6 +51,18 @@ export { RESOURCE_TOKENS } from "./archetypes.js";
 function makesCreatureTokens(dc: DeckCard): boolean {
   return (dc.tags?.abilities ?? []).some((a) => {
     if (!["token-generation", "token-doubling"].includes(a.effect.kind)) return false;
+    // A TOKEN THAT LEAVES AT THE NEXT END STEP IS NOT A BOARD YOU WIN WITH. Inalla copies a Wizard
+    // and exiles it at the beginning of the next end step; she was counted among 12 go-wide cards on
+    // a board that does not exist when the turn ends. Found by the TUNER persona rejecting its own
+    // deck's report: "my tokens are sacrificed at end of turn, so tuning toward a go-wide plan would
+    // make the deck worse."
+    //
+    // THIS IS THE ONLY READER OF `temporary`, deliberately. The token keeps every edge it has --
+    // it enters, so the ETB payoffs it feeds are real and are Inalla's actual engine; it attacks
+    // with haste; it can be sacrificed in response. Only the WIN-PLAN reading excludes it. Deleting
+    // its relations to fix this label would repeat the `entersTapped` mistake, which silently
+    // removed 29 real claims.
+    if (a.temporary) return false;
     const subject = a.effect.subject;
     // Token doubling has no subject of its own -- it doubles whatever you were already making, so
     // it is a go-wide payoff on any board.

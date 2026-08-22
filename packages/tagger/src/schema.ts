@@ -525,6 +525,27 @@ export interface Ability {
    *  Veyran ("instant or sorcery spell you cast"), Wayta, Harmonic Prodigy. Refusal over a guessed
    *  near-miss, as everywhere else in this file. */
   doubles?: Verb[];
+  /** THE TOKEN THIS ABILITY CREATES LEAVES AT THE NEXT END STEP. Present only on
+   *  `token-generation`.
+   *
+   *  Inalla copies a Wizard and "exile it at the beginning of the next end step"; Kiki-Jiki,
+   *  Flameshadow Conjuring, Cogwork Assembler and Chandra, Flamecaller are the same shape. The
+   *  clause layer RECORDS the exile — Inalla's canonical carries a fourth action, `exile: "it"` —
+   *  and derive threw it away, so `wincon.ts` counted Inalla among 12 go-wide cards on a board that
+   *  does not exist at end of turn. Found by the TUNER persona rejecting its own deck's report:
+   *  "my tokens are sacrificed at end of turn, so tuning toward a go-wide plan would make the deck
+   *  worse."
+   *
+   *  A TEMPORARY TOKEN KEEPS ALL OF ITS EDGES AND THIS FLAG MUST NOT DELETE ANY. It enters, so every
+   *  ETB payoff it feeds is real — that IS Inalla's engine — it attacks with haste, and it can be
+   *  sacrificed in response. Only the WIN-PLAN reading excludes it, which is `wincon.ts`'s go-wide
+   *  membership and nothing else. Deleting the token's relations to fix a label would repeat the
+   *  `entersTapped` mistake, where stamping a field as supply silently removed 29 real claims.
+   *
+   *  ON THE ABILITY AND DELIBERATELY NOT ON THE EMIT'S SUBJECT, for that same reason: a field on a
+   *  `SubjectFilter` becomes an identity filter wherever an emit is used to identify a card, which
+   *  is exactly how `entersTapped`, `zone`, `counter` and `commander` each broke a gate. */
+  temporary?: true;
   /** The amount stated by the action that produced this ability, verbatim from the clause —
    *  "2", "X", "1,000".
    *
