@@ -5,8 +5,17 @@
  *  over a known library size, nothing fitted and nothing guessed.
  *
  *  WHAT THEY DO NOT MODEL, and it matters at every call site:
- *  - **No mulligans.** EDH's free first mulligan plus London shifts required counts by about one
- *    card. The Karsten regression absorbs it for lands; nothing absorbs it here.
+ *  - **No mulligans, and this file long UNDERSTATED ITS OWN CAVEAT BY SEVENFOLD.** It used to say
+ *    the free first mulligan "shifts required counts by about one card". MEASURED 2026-08-23: at the
+ *    90% three-land-drops tail it is worth **seven lands** -- 44 with no mulligan against **37**
+ *    under EDH's free London mulligan with a standard keep band. Mulligans exist precisely to prune
+ *    the bad tail, so their effect CONCENTRATES exactly where a threshold sits, and "about one card"
+ *    is only true near the middle of a distribution where nobody asks these questions. The
+ *    understatement had real consequences: a published community claim ("37 lands hits three land
+ *    drops ~90% of the time") was computed here as 80.0%, written up as refuted, and had to be
+ *    withdrawn -- it is 90.3%. `matcher/src/mulligan.ts` prices the policy in closed form and is
+ *    what any threshold question should call; the Karsten regression absorbs it for lands; nothing
+ *    else here does.
  *  - **`seen(T) = 7 + T` ignores card draw**, so every figure is CONSERVATIVE for a deck that
  *    draws, and the error compounds (cantrips draw cantrips). MEASURED, so the caveat carries a
  *    size rather than a direction alone: for `P(>= 1 of 4 answers)` at the corpus median clock of
