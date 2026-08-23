@@ -125,6 +125,21 @@ export function formatReport(report: DeckReport, trim = 0): string {
   lines.push("=== Roles ===");
   lines.push(`  ramp: ${report.roles.ramp}  draw: ${report.roles.draw}  removal: ${report.roles.removal}`);
 
+  // HOW YOUR RAMP SURVIVES BEING ATTACKED, beside the count and never folded into it. The ordering
+  // is measured, not asserted: `answer-pool.json` counts 1,839 cards in the format that answer a
+  // creature, 755 an artifact and 306 a land, and one board wipe takes every dork at once and no
+  // rock and no land. Printed only when the deck runs ramp at all -- three zeroes state nothing.
+  const rr = report.rampResilience;
+  if (rr && rr.landShare !== undefined) {
+    lines.push("");
+    lines.push("=== How resilient your ramp is ===");
+    lines.push(`  lands ${rr.land}  ·  rocks ${rr.rock}  ·  dorks ${rr.dork}  —  ${Math.round(100 * rr.landShare)}% land-shaped`);
+    lines.push("  A fetched land survives what a rock does not, and a rock survives what a dork does not:");
+    lines.push("  306 cards in the format answer a land, 755 answer an artifact, 1,839 answer a creature —");
+    lines.push("  and a board wipe takes every dork at once. Not scored: a deck without green cannot run");
+    lines.push("  green land ramp, and docking it for that would be charging it for its colours.");
+  }
+
   // CANDIDATES, with the argument attached — never a verdict. See matcher's `cut-list.ts` for the
   // three ways this list is wrong, all of which point the same direction: a relation the engine
   // cannot express looks exactly like a card doing nothing.

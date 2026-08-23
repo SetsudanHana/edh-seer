@@ -37,20 +37,46 @@ const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().include
  *  `panel-score.ts` watches edge precision, and a detector edit moves neither. */
 export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set<string>> {
   const m = new Map<BuildCategory, Set<string>>();
+  for (const [id, names] of detectBuildRules(cards)) {
+    const cat = RULE_CATEGORY.get(id) as BuildCategory;
+    let s = m.get(cat);
+    if (!s) { s = new Set(); m.set(cat, s); }
+    for (const n of names) s.add(n);
+  }
+  return m;
+}
+
+/** Which RULE matched, not merely which category it rolled up to.
+ *
+ *  The rule table already draws distinctions the category folds away: `ramp` is five separate rules
+ *  (`ramp.land.fetchesTwo`, `ramp.land.bigMana`, `ramp.landFetchSpell`, `ramp.effect`,
+ *  `ramp.manaToken`) and a Signet and a Cultivate are the same number afterwards. They are not the
+ *  same card -- a rock dies to an artifact wipe and a fetched Forest does not -- so anything asking
+ *  about the SHAPE of a package rather than its size needs the id.
+ *
+ *  `detectBuildCategories` is built on this rather than beside it, so there is one matching loop and
+ *  a rules edit cannot move one readout without the other. */
+export function detectBuildRules(cards: DeckCard[]): Map<string, Set<string>> {
+  const m = new Map<string, Set<string>>();
   const set = loadRules();
 
   for (const dc of cards) {
     for (const rule of set.rules) {
       if (!rule.category || !ruleMatches(rule, dc, set)) continue;
-      const cat = rule.category as BuildCategory;
-      let s = m.get(cat);
-      if (!s) { s = new Set(); m.set(cat, s); }
+      let s = m.get(rule.id);
+      if (!s) { s = new Set(); m.set(rule.id, s); }
       s.add(dc.card.name);
     }
   }
 
   return m;
 }
+
+/** Rule id -> the category it rolls up to. Read from the same `loadRules()` table, so it cannot
+ *  drift from the rules themselves. */
+const RULE_CATEGORY = new Map<string, string>(
+  loadRules().rules.filter((r) => r.category).map((r) => [r.id, r.category as string]),
+);
 
 /** The cards covering one answer class, split by mode. Name SETS rather than counters: a set is
  *  what lets a later panel say which card, and it makes double-matching harmless -- every exile
@@ -306,6 +332,86 @@ export function adjustedParentTargets(primary: Archetype | undefined): BuildPare
   });
 }
 
+/** How a deck's ramp would survive being attacked, as three counts (design: owner's ruling,
+ *  2026-08-23 -- "mana dorks are cool ramp but creatures are the easiest to get rid of, then mana
+ *  rocks because being artifacts against red decks is sad, and lands are the most resilient").
+ *
+ *  THE ORDER IS MEASURED, NOT ASSERTED. `answer-pool.json` -- the same generated artifact the
+ *  Interaction coverage axis already scores against -- counts how many cards in the format answer
+ *  each permanent class: creature **1,839** · artifact **755** · land **306**. So a mana dork sits
+ *  in the most-answered class in Magic, a rock in one answered 2.5x as often as a land, and a
+ *  fetched Forest in the least-answered of the three. A board WIPE widens the same gap again and is
+ *  in none of those counts, since one takes every dork at once and no rock and no land.
+ *
+ *  MEASURED over the 71 calibration decks (`bin/ramp-shape.ts`): green-identity decks run 68 land /
+ *  69 rock / 71 dork (land share 32.7%), non-green 95 / 512 / 105 (13.3%). Nine decks run a ramp
+ *  package that is 100% rock-shaped and NOT ONE of them is green -- the owner's claim reproduced
+ *  from the corpus rather than from the ruling.
+ *
+ *  REPORTED, NEVER SCORED, and that is a decision rather than an omission. Weighting a parent's
+ *  attainment by tier would dock a mono-red deck for not running green land ramp, which is the
+ *  exact failure `answer-pool.json` exists to prevent on the Interaction axis (a mono-black deck's
+ *  artifact answer pool is 56 against white's 215, so it is charged less for missing one). Scoring
+ *  this honestly needs an identity-relative land-ramp pool that does not exist yet; until it does,
+ *  the composition is a fact printed beside the count, the same shape as the cut list's mana-value
+ *  column and `conditionCares`' unmet-condition note -- a reason, never a gate. */
+export interface RampResilience {
+  /** A land, or anything that puts one onto the battlefield -- including a CREATURE that does, since
+   *  the land stays when the body dies. Answered only by land destruction. */
+  land: number;
+  /** A noncreature mana source: a rock, a Treasure maker, a ritual. Answered by artifact removal and
+   *  survives a board wipe. */
+  rock: number;
+  /** A creature that taps for mana. Answered by everything that answers a creature, which is the
+   *  largest answer class in the format, and by every board wipe at once. */
+  dork: number;
+  /** `land / (land + rock + dork)`, or undefined when the deck runs no ramp at all -- 0 would read
+   *  as "all fragile" for a deck that has nothing to be fragile. */
+  landShare?: number;
+}
+
+/** Which tier each ramp rule lands in. LAND WINS OVER EVERYTHING, and Solemn Simulacrum is why: it
+ *  is a creature, it dies to every wipe, and the land it fetched is still there afterwards. What
+ *  survives is the mana, not the body that bought it.
+ *
+ *  ponytail: A RITUAL IS NOT A ROCK and is counted as one here -- Dark Ritual has no durability at
+ *  all, and also nothing to destroy, so it sits on a different axis (one-shot vs permanent) that
+ *  this three-tier read cannot express. Same for a Treasure, which is consumed on use. Upgrade path
+ *  if it matters: a fourth `oneShot` tier off `effectKind: ritual` plus the token rule, which is a
+ *  rule-table read and needs no new detector. */
+const RAMP_TIERS: [tier: keyof RampResilience, ruleIds: string[]][] = [
+  ["land", ["ramp.land.fetchesTwo", "ramp.land.bigMana", "ramp.landFetchSpell"]],
+  ["rock", ["ramp.effect", "ramp.manaToken"]],
+];
+
+/** The ramp package split by what would take it off the table. */
+export function rampResilience(cards: DeckCard[]): RampResilience {
+  const byRule = detectBuildRules(cards);
+  const isCreature = new Map(
+    cards.map((dc) => [dc.card.name, /\bcreature\b/i.test(dc.card.typeLine)]),
+  );
+
+  const seen = new Set<string>();
+  const out: RampResilience = { land: 0, rock: 0, dork: 0 };
+  for (const [tier, ruleIds] of RAMP_TIERS) {
+    for (const id of ruleIds) {
+      for (const name of byRule.get(id) ?? []) {
+        // First tier to claim a card keeps it, so a card matching two rules cannot be counted twice
+        // and the more resilient reading always wins.
+        if (seen.has(name)) continue;
+        seen.add(name);
+        // A creature that only TAPS for mana is a dork; one that fetched a land is already banked
+        // above and never reaches here.
+        if (tier === "rock" && isCreature.get(name)) out.dork += 1;
+        else out[tier] += 1;
+      }
+    }
+  }
+
+  const total = out.land + out.rock + out.dork;
+  return total > 0 ? { ...out, landShare: out.land / total } : out;
+}
+
 export interface BuildResult {
   /** 0–5: weighted mean of per-PARENT attainment (a parent with target 0 would be excluded; none
    *  is, today) plus lands, scored on its own band. */
@@ -329,6 +435,9 @@ export interface BuildResult {
   /** The coverage multiplier applied to `Interaction`, and the per-class weights it was built
    *  from, so the panel and a test can say WHY the number is what it is rather than trust it. */
   answerCoverage: CoverageResult;
+  /** How the Ramp parent's cards would survive being attacked. Reported beside the count and never
+   *  folded into it -- see `RampResilience`. */
+  rampResilience: RampResilience;
 }
 
 /** `karstenLandsTarget` is `land-count.ts`'s `recommendedLands(...).target` -- the regression's own
@@ -433,6 +542,7 @@ export function computeBuild(
     landsTargetSource: landsGate.source,
     suggestions: buildSuggestions(parentsWithCount, countOf, targets),
     answerCoverage: coverage,
+    rampResilience: rampResilience(cards),
   };
 }
 

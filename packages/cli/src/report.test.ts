@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import type { DeckReport } from "@mtg/engine";
 import { formatReport } from "./report.js";
 
@@ -135,4 +135,26 @@ test("the thing block abstains with the theme layer, and prints its own ceiling"
   expect(withThing).toContain("one in six");
   // Null exactly when the theme layer declined to name the deck.
   expect(formatReport({ ...report, thing: null } as unknown as DeckReport)).not.toContain("does the deck do its thing");
+});
+
+describe("ramp resilience", () => {
+  it("prints the three tiers and the land share", () => {
+    const out = formatReport({ ...report, rampResilience: { land: 8, rock: 5, dork: 2, landShare: 8 / 15 } });
+    expect(out).toContain("=== How resilient your ramp is ===");
+    expect(out).toContain("lands 8  ·  rocks 5  ·  dorks 2  —  53% land-shaped");
+    // The caveat is BLOCK TEXT, not a tooltip: the K9 review found tooltips never reach a touch
+    // user, and "not scored" is the load-bearing half of this section.
+    expect(out).toContain("Not scored");
+  });
+
+  it("says nothing at all for a deck with no ramp", () => {
+    // Three zeroes state nothing, and `landShare` is deliberately absent rather than 0 there --
+    // 0% land-shaped would read as "all fragile" for a deck that has nothing to be fragile.
+    const out = formatReport({ ...report, rampResilience: { land: 0, rock: 0, dork: 0 } });
+    expect(out).not.toContain("How resilient your ramp is");
+  });
+
+  it("says nothing when the field is absent (the flat engine never populates it)", () => {
+    expect(formatReport(report)).not.toContain("How resilient your ramp is");
+  });
 });

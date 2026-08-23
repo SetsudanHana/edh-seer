@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { detectBuildCategories, computeBuild, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT } from "./build.js";
+import { detectBuildCategories, computeBuild, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT } from "./build.js";
 import type { DeckCard } from "./types.js";
 import type { CardTags } from "@mtg/tagger";
 
@@ -565,4 +565,53 @@ test("a gap names a cost BAND, and a land gap does not", () => {
   const landGap = computeBuild(flood, "goodstuff").suggestions.find((s) => /^Lands /.test(s));
   expect(landGap).toBeDefined();
   expect(landGap).not.toMatch(/typically/);
+});
+
+describe("rampResilience", () => {
+  // Answer-pool ordering: creature 1,839 answers · artifact 755 · land 306. A tier is only worth
+  // separating because those three numbers differ.
+  const dork = mk("Llanowar Elves", "{T}: Add {G}.", "Creature — Elf Druid", rampAbility);
+  const rock = mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility);
+  const fetchSpell = mk("Cultivate", "Search your library for up to two basic land cards, reveal them, put one onto the battlefield tapped and the other into your hand.", "Sorcery");
+
+  it("splits the package three ways", () => {
+    const r = rampResilience([dork, rock, fetchSpell]);
+    expect(r).toMatchObject({ land: 1, rock: 1, dork: 1 });
+    expect(r.landShare).toBeCloseTo(1 / 3);
+  });
+
+  it("a creature that FETCHES a land is land-shaped, not a dork", () => {
+    // Solemn Simulacrum is the whole reason land wins the tie: it dies to every board wipe and the
+    // land it fetched is still on the battlefield afterwards. What survives is the mana, not the
+    // body that bought it. This case matches only `ramp.landFetchSpell`, so it pins the TYPE-LINE
+    // rule (a creature in the land tier is not demoted to dork) and NOT the tier precedence --
+    // reordering RAMP_TIERS leaves it green. The Wood Elves case below is the one that fires on
+    // precedence, verified by actually reordering the table.
+    const solemn = mk(
+      "Solemn Simulacrum",
+      "When this creature enters, you may search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+      "Artifact Creature — Golem",
+    );
+    expect(rampResilience([solemn])).toMatchObject({ land: 1, rock: 0, dork: 0 });
+  });
+
+  it("counts a card once even when two ramp rules match it", () => {
+    // Both `ramp.landFetchSpell` and `ramp.effect` catch this one, so it pins BOTH halves: the total
+    // must stay 1, and the resilient tier must be the one that claims it. PROVEN TO FIRE -- putting
+    // "rock" first in RAMP_TIERS fails this test and nothing else in the suite.
+    const both = mk(
+      "Wood Elves",
+      "When this creature enters, search your library for a Forest card and put it onto the battlefield.",
+      "Creature — Elf Scout",
+      rampAbility,
+    );
+    const r = rampResilience([both]);
+    expect(r.land + r.rock + r.dork).toBe(1);
+    expect(r.land).toBe(1);
+  });
+
+  it("a deck with no ramp has no share rather than a share of zero", () => {
+    // 0 would read as "all fragile" for a deck that has nothing to be fragile.
+    expect(rampResilience([mk("Grizzly Bears", "", "Creature — Bear")]).landShare).toBeUndefined();
+  });
 });

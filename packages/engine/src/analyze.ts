@@ -372,6 +372,16 @@ export interface DeckReport {
     graveyardVulnerability: number;
     rows: { class: string; poolShare: number; demand: number; weight: number; covered: boolean }[];
   };
+  /** How the Ramp parent's cards would survive being attacked, split by what answers each one:
+   *  a fetched land (306 cards in the format answer a land), a rock (755 answer an artifact), a
+   *  mana dork (1,839 answer a creature, and one board wipe takes them all at once). Those three
+   *  figures come from `answer-pool.json`, the same generated artifact the Interaction coverage
+   *  axis scores against, so the ordering is measured rather than asserted.
+   *
+   *  REPORTED, NEVER SCORED: weighting attainment by tier would dock a mono-red deck for not
+   *  running green land ramp. See `RampResilience` in the matcher for the full reasoning and the
+   *  identity-relative pool that scoring it honestly would need. Matcher-only. */
+  rampResilience?: { land: number; rock: number; dork: number; landShare?: number };
   /** Cards the deck is not using, weakest first, each carrying its own reasons in plain words.
    *  CANDIDATES, never a verdict -- a missing edge looks exactly like a useless card, and the
    *  build layer counts a category's members without ranking them. Matcher-only; structural here

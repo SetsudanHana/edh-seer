@@ -721,7 +721,7 @@ export function analyzeDeckStructured(
     0,
     ...strategies.filter((s) => s.name === "reanimator" || s.name === "aristocrats").map((s) => s.confidence),
   );
-  const { buildScore, buildCategories, buildParents, suggestions, answerCoverage: coverage } =
+  const { buildScore, buildCategories, buildParents, suggestions, answerCoverage: coverage, rampResilience } =
     computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability);
 
   // THE CUT LIST -- a join over what is already computed, never new analysis. It reads the rated
@@ -808,6 +808,7 @@ export function analyzeDeckStructured(
     buildParents,
     suggestions,
     answerCoverage: coverage,
+    rampResilience,
     cutList,
     slack,
     trim,
