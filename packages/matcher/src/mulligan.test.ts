@@ -40,3 +40,26 @@ describe("mulligan policy", () => {
     expect(landsForDrops(3, 0.999)).toBeUndefined();
   });
 });
+
+/** THE RATCHET UNDER L1's REFUSAL (spec §10.1). `landsForDrops` takes no deck argument, so the
+ *  "first-principles per-deck land target" it was proposed for cannot vary across decks except
+ *  through `need` — and the step is twelve lands wide, so either every deck's target is 37 (and a
+ *  constant scores a perfect zero against it) or it is a count no Commander deck runs.
+ *
+ *  If someone makes this function deck-aware, these fail and the refusal is due a re-read. */
+describe("landsForDrops is not a per-deck quantity — L1's refusal", () => {
+  it("varies only through `need`, and three drops at 90% is exactly the conventional 37", () => {
+    expect(landsForDrops(3, 0.9)).toBe(37);
+  });
+
+  it("steps to a count no Commander deck runs the moment a fourth drop is asked for", () => {
+    expect(landsForDrops(4, 0.9)).toBe(49);
+    expect(landsForDrops(5, 0.9)).toBe(56);
+  });
+
+  it("moves by at most one land across the keep bands a real player uses", () => {
+    const bands = [STANDARD_KEEP, new Set([2, 3, 4, 5]), new Set([2, 3, 4, 5, 6])];
+    const answers = bands.map((k) => landsForDrops(3, 0.9, k)!);
+    expect(Math.max(...answers) - Math.min(...answers)).toBeLessThanOrEqual(1);
+  });
+});

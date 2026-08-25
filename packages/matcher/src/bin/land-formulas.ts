@@ -7,6 +7,7 @@ import {
 import { createTagsLookup } from "@mtg/tagger";
 import { detectBuildCategories, gatedLandsTarget } from "../build.js";
 import { landInputs, recommendedLands } from "../land-count.js";
+import { STANDARD_KEEP, pLandDrops } from "../mulligan.js";
 import type { DeckCard } from "../types.js";
 
 /** Five published land-count formulas against what the 71 calibration decks actually run.
@@ -132,6 +133,85 @@ function report(rows: { deck: string; facts: Facts; karsten: number }[]): void {
   console.log(`\n  actual land counts: ${Math.min(...actuals)}-${Math.max(...actuals)}, mean ${(actuals.reduce((a, b) => a + b, 0) / actuals.length).toFixed(1)}`);
 }
 
+
+/** `--probability`: the same recommendations, priced as what they DELIVER rather than as how closely
+ *  they resemble 71 decks (roadmap L1).
+ *
+ *  THIS IS A SENSITIVITY AND NOT A CONTEST, and the distinction is the item's own correction.
+ *  `P` is a monotone function of `L` at a fixed deck size, so ranking formulas by distance in
+ *  probability is ranking them by distance in lands with a squash applied -- the probability scale
+ *  cannot create discriminating information the land scale lacks. What it DOES buy is an absolute
+ *  reading with no fit in it: "this deck makes its first three land drops 88% of the time" is a
+ *  statement about the deck, not about how much it looks like the others, which is the target
+ *  contamination `report()` above cannot escape.
+ *
+ *  L1's OTHER PROPOSAL IS REFUSED HERE RATHER THAN BUILT. Scoring formulas by MAE against
+ *  `landsForDrops(...)` cannot work: that function takes no deck argument (`DECK`/`HAND` are module
+ *  constants), so its answer varies only through `need`, and the step is enormous -- 37 lands for
+ *  three drops at 90%, 49 for four. Either every deck's target is 37, in which case `Flat37` scores
+ *  a perfect zero and the metric is the constant it was written to expose, or a deck's target is 49
+ *  and no Commander deck can reach it. Spec §10.1. */
+const NEEDS = [3, 4] as const;
+
+function probabilityReport(rows: { deck: string; facts: Facts; karsten: number }[]): void {
+  const cols = ["Gated", ...FORMULAS.map((f) => f.name)];
+  const preds = (r: typeof rows[number]): number[] =>
+    [gatedLandsTarget(r.karsten).target, ...FORMULAS.map((f) => Math.round(f.f(r.facts)))];
+  const pct = (v: number): string => `${(v * 100).toFixed(1)}%`;
+
+  for (const need of NEEDS) {
+    console.log(`\n  === P(first ${need} land drops), under the free-mulligan policy (mulligan.ts) ===\n`);
+    console.log(`  ${"deck".padEnd(32)} ${"runs".padStart(4)} ${"ACTUAL".padStart(7)}   `
+      + cols.map((c) => c.padStart(9)).join("") + `   ${"spread".padStart(7)}`);
+    const spreads: number[] = [];
+    for (const r of rows) {
+      const ps = preds(r).map((l) => pLandDrops(l, need));
+      const spread = Math.max(...ps) - Math.min(...ps);
+      spreads.push(spread);
+      console.log(`  ${r.deck.padEnd(32)} ${String(r.facts.actual).padStart(4)} `
+        + `${pct(pLandDrops(r.facts.actual, need)).padStart(7)}   `
+        + ps.map((v) => pct(v).padStart(9)).join("") + `   ${`${(spread * 100).toFixed(1)}pp`.padStart(7)}`);
+    }
+    const q = [...spreads].sort((a, b) => a - b);
+    const at = (f: number): number => q[Math.min(q.length - 1, Math.floor(f * q.length))];
+    const actuals = rows.map((r) => pLandDrops(r.facts.actual, need)).sort((a, b) => a - b);
+    console.log(`\n  THE DECKS' OWN ANSWER: median ${pct(actuals[Math.floor(actuals.length / 2)])}`
+      + ` · p25 ${pct(actuals[Math.floor(actuals.length * 0.25)])} · p75 ${pct(actuals[Math.floor(actuals.length * 0.75)])}`
+      + ` · range ${pct(actuals[0])}-${pct(actuals[actuals.length - 1])}`);
+    console.log(`  SPREAD ACROSS THE SIX RECOMMENDATIONS: median ${(at(0.5) * 100).toFixed(1)}pp`
+      + ` · p25 ${(at(0.25) * 100).toFixed(1)}pp · p75 ${(at(0.75) * 100).toFixed(1)}pp`
+      + ` · max ${(Math.max(...spreads) * 100).toFixed(1)}pp`);
+    // WITHOUT RambIe, whose 20-74 range is an outlier the other five do not share: a median spread
+    // set by one formula nobody would follow describes that formula, not the genre.
+    const i = cols.indexOf("RambIe");
+    const five = rows.map((r) => { const ps = preds(r).filter((_, k) => k !== i).map((l) => pLandDrops(l, need)); return Math.max(...ps) - Math.min(...ps); }).sort((a, b) => a - b);
+    console.log(`  ... excluding RambIe (range 20-74 lands): median ${(five[Math.floor(five.length / 2)] * 100).toFixed(1)}pp`
+      + ` · max ${(Math.max(...five) * 100).toFixed(1)}pp`);
+    console.log(`  THE CONVERSION RATE: around 36-38 lands one land is worth `
+      + `${((pLandDrops(37, need) - pLandDrops(36, need)) * 100).toFixed(2)}pp here.`);
+  }
+
+  // P3: L1's own prediction. A rank is the MAE-in-lands order, which no keep band can touch --
+  // what a band moves is the PROBABILITY each recommendation delivers, so that is what is swept.
+  console.log(`\n  === keep-band sensitivity (L1 predicted no rank flip) ===\n`);
+  const bands: [string, ReadonlySet<number>][] = [
+    ["{2,3,4}", STANDARD_KEEP], ["{2,3,4,5}", new Set([2, 3, 4, 5])], ["{3,4}", new Set([3, 4])],
+  ];
+  // THE ORDER IS GENEROSITY, NOT QUALITY, and it must be labelled as such or the row reads as a
+  // ranking with `Flat37` winning. More probability is not better -- a 60-land deck makes every
+  // land drop and loses every game. What this column tests is only whether the ORDER is stable when
+  // the keep band moves, which is L1's registered prediction.
+  console.log(`  ${"band".padEnd(12)} ${"median ACTUAL P(3)".padStart(20)} ${"median spread".padStart(14)}   most generous -> least (NOT best -> worst)`);
+  for (const [label, keep] of bands) {
+    const acts = rows.map((r) => pLandDrops(r.facts.actual, 3, keep)).sort((a, b) => a - b);
+    const sp = rows.map((r) => { const ps = preds(r).map((l) => pLandDrops(l, 3, keep)); return Math.max(...ps) - Math.min(...ps); }).sort((a, b) => a - b);
+    const order = cols.map((c, k) => ({ c, m: rows.reduce((a, r) => a + pLandDrops(preds(r)[k], 3, keep), 0) / rows.length }))
+      .sort((a, b) => b.m - a.m).map((x) => x.c).join(" > ");
+    console.log(`  ${label.padEnd(12)} ${pct(acts[Math.floor(acts.length / 2)]).padStart(20)} `
+      + `${`${(sp[Math.floor(sp.length / 2)] * 100).toFixed(1)}pp`.padStart(14)}   ${order}`);
+  }
+}
+
 async function main(): Promise<void> {
   const store = await connect(loadConfig());
   const lookup = mongoLookup(store);
@@ -178,7 +258,8 @@ async function main(): Promise<void> {
     });
   }
 
-  report(rows);
+  if (process.argv.includes("--probability")) probabilityReport(rows);
+  else report(rows);
   await store.close();
 }
 
