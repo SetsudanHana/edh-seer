@@ -2378,6 +2378,57 @@ test("a debuff makes no anthem claim, and an ability discount needs an activated
   expect(reasons(statik("cost-reduction"), creature("triggered"), gadgeteer).length).toBe(0);
 });
 
+// 1c (2026-08-25): CR 118.7 on the ACTIVATED side. Owner's ruling 2026-08-23, OVERTURNING a cached
+// REAL — "the consumer has activated abilities" is necessary and NOT sufficient. Forensic Gadgeteer
+// prints its own floor and Thought Vessel's only ability is `{T}: Add {C}`, which has no mana in its
+// cost at all, so `{1} less to activate` removes nothing.
+test("an ability discount reads the ABILITY's cost, not the card's, and respects the printed floor", () => {
+  const reducer = (oracle: string): DeckCard => ({
+    card: { name: "Forensic Gadgeteer", oracleText: oracle } as DeckCard["card"],
+    tags: {
+      oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+      characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 3,
+        power: "2", toughness: "3", token: false, keywords: [] },
+      abilities: [{ kind: "static", effect: { kind: "cost-reduction", subject: { control: "you", token: null, type: "artifact", scope: "all" } } } as never],
+    },
+  } as DeckCard);
+  // The consumer's own mana cost is deliberately `{2}` throughout: it carries generic, so the
+  // spell-side guard would keep every one of these and only the ABILITY cost separates them.
+  const artifact = (name: string, ...costs: string[]): DeckCard => ({
+    card: { name, manaCost: "{2}" } as DeckCard["card"],
+    tags: {
+      oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+      characteristics: { types: ["artifact"], subtypes: [], colors: [], identity: [], cmc: 2,
+        power: null, toughness: null, token: false, keywords: [] },
+      abilities: costs.map((cost) => ({ kind: "activated", cost, effect: { kind: "draw-card" } })) as never,
+    },
+  } as DeckCard);
+  const claims = (p: DeckCard, c: DeckCard) =>
+    directedReasons(p, c, H).filter((r) => r.effectKind === "cost-reduction").length;
+
+  const FLOOR = "Activated abilities of artifacts you control cost {1} less to activate. This effect can't reduce the mana in that cost to less than one mana.";
+  const NO_FLOOR = "Activated abilities of artifacts you control cost {1} less to activate.";
+
+  // Thought Vessel: `{T}: Add {C}` — no mana in the cost, so nothing to reduce, floor or no floor.
+  expect(claims(reducer(FLOOR), artifact("Thought Vessel", "{T}"))).toBe(0);
+  expect(claims(reducer(NO_FLOOR), artifact("Thought Vessel", "{T}"))).toBe(0);
+
+  // Dross Skullbomb and Transmutation Font: an ability with generic mana above the floor. Both were
+  // judged REAL and must survive — refusing the whole card was already measured wrong once.
+  expect(claims(reducer(FLOOR), artifact("Dross Skullbomb", "{1}, Sacrifice this artifact", "{2}{B}, Sacrifice this artifact"))).toBe(1);
+  expect(claims(reducer(FLOOR), artifact("Transmutation Font", "{T}", "{3}, {T}, Sacrifice three artifact tokens with different names"))).toBe(1);
+
+  // Executioner's Capsule is the case that pins the floor at "some ability SURVIVES it" rather than
+  // "some ability has generic": `{1}{B}, {T}, Sacrifice this artifact` is two mana, reduced to one,
+  // which is not LESS than one. Its card cost is `{B}` — the spell-side guard would refuse it, which
+  // is why reading the ability's cost is a recall gain here and a refusal on Thought Vessel.
+  expect(claims(reducer(FLOOR), artifact("Executioner's Capsule", "{1}{B}, {T}, Sacrifice this artifact"))).toBe(1);
+
+  // A Signet's `{1}, {T}` is one mana: a floored reducer cannot touch it, an unfloored one can.
+  expect(claims(reducer(FLOOR), artifact("Izzet Signet", "{1}, {T}"))).toBe(0);
+  expect(claims(reducer(NO_FLOOR), artifact("Izzet Signet", "{1}, {T}"))).toBe(1);
+});
+
 // PANEL FAMILY B (2026-08-20): "exiled with <this card>" is a set only the producer can enumerate,
 // and the emit drops the restriction — Gisa and The Darkness Crystal emitted a bare
 // `enters: creature` for "put all creature cards exiled with <me> onto the battlefield" and claimed

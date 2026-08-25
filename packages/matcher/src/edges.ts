@@ -509,6 +509,34 @@ const hasGenericMana = (manaCost: string | undefined): boolean => {
   return false;
 };
 
+/** The distinct activation costs a consumer's abilities print, for the CR 118.7 check on the
+ *  activated side. `Ability.cost` is the real string `segment.ts`'s `classify()` split out (1,494 of
+ *  1,501 activated abilities carry one), and its absence is the schema's own "not activated" marker
+ *  — so an activated ability with an EMPTY cost falls through `hasGenericMana`'s "not recorded,
+ *  refuse nothing" branch, which is the right direction for a guard. */
+const activationCosts = (tags: CardTags | undefined): (string | undefined)[] =>
+  [...new Set((tags?.abilities ?? []).filter((a) => a.kind === "activated").map((a) => a.cost))];
+
+/** Mana in an activation cost, for the printed floor below. Non-mana components ("Sacrifice this
+ *  artifact", "{T}") contribute nothing, which is the point: the floor is stated about the MANA in
+ *  that cost. A symbol this cannot read counts as one mana, so an unparsed cost reads BIGGER and
+ *  survives the floor — a wrong refusal deletes a real claim, a wrong keep costs one. */
+const manaInCost = (cost: string | undefined): number => {
+  let n = 0;
+  for (const m of cost?.matchAll(/\{([^}]+)\}/g) ?? []) {
+    if (/^\d+$/.test(m[1])) n += Number(m[1]);
+    else if (m[1].toUpperCase() !== "T" && m[1].toUpperCase() !== "Q") n += 1;
+  }
+  return n;
+};
+
+/** Does the reducer print the one-mana floor? Both derived ability-reducers do — Forensic Gadgeteer
+ *  and Training Grounds carry the identical sentence — but it is NOT part of "costs less to
+ *  activate", so a future reducer without one must not inherit it. 90 corpus cards match the
+ *  ability-reducer cue; this is the narrower question asked separately. */
+const reducesToAFloor = (oracleText: string | undefined): boolean =>
+  /can't reduce the mana in that cost to less than one mana/i.test(oracleText ?? "");
+
 /** Does the reduction take a COLOURED pip rather than generic mana? A BLANKET GUARD WOULD BE WRONG
  *  and measuring is what showed it: Defiler of Flesh ("costs {B} less"), Defiler of Dreams, Eluge
  *  and Morophon ("costs {W}{U}{B}{R}{G} less") really do reduce a `{U}` spell — Morophon makes it
@@ -1157,22 +1185,37 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     if (a.effect.kind === "cost-reduction") {
       // A SELF REDUCTION'S SUBJECT IS WHAT MEASURES IT, NOT WHAT IT DISCOUNTS — see `reducesItself`.
       if (reducesItself(p.card.oracleText)) continue;
-      // An ability discount needs an ability to discount — see `reducesAnAbility`.
-      if (reducesAnAbility(p.card.oracleText)
-        && !(c.tags?.abilities ?? []).some((ca) => ca.kind === "activated")) continue;
       // A LAND IS PLAYED, NOT CAST (CR 305.1). "Spells you cast cost {1} less" reaches no land, and
       // the type union keeps a modal DFC's castable face.
       if (isLandOnly(c.tags)) continue;
       // "Spells your OPPONENTS cast cost less" is not a relation to a card you chose to run — it is
       // the tax family pointing the other way, and tax stays in ROLE_NOT_SYNERGY.
       if (a.effect.subject.control === "opp") continue;
-      // A REDUCTION CANNOT TAKE GENERIC MANA BELOW ZERO (CR 118.7) — see `hasGenericMana`. The
-      // colour exemption is checked on the PRODUCER's printed text, the same way `reducesItself`
-      // reads it, because a coloured-pip reduction really does discount a `{U}` spell.
-      // A REDUCTION CANNOT TAKE GENERIC MANA BELOW ZERO (CR 118.7) — see `hasGenericMana`. Both
-      // exemptions are checked because both are real: a coloured-pip reduction discounts a `{U}`
-      // spell, and an ADDITIONAL COST adds to the total before reductions subtract from it.
-      if (!hasGenericMana(c.card.manaCost)
+      if (reducesAnAbility(p.card.oracleText)) {
+        // AN ABILITY DISCOUNT IS ABOUT THE ABILITY'S COST AND NEVER THE CARD'S. The two are
+        // different strings and reading the wrong one is wrong in BOTH directions: Thought Vessel
+        // costs `{2}` and its only ability is `{T}: Add {C}`, so the card looks discountable and the
+        // ability is not; Executioner's Capsule costs `{B}` and its ability costs `{1}{B}, {T},
+        // Sacrifice this artifact`, so the card looks undiscountable and the ability is not.
+        const costs = activationCosts(c.tags);
+        // An ability discount needs an ability to discount — see `reducesAnAbility`.
+        if (!costs.length) continue;
+        // CR 118.7 ON THE ACTIVATED SIDE. Owner's ruling 2026-08-23, OVERTURNING a cached REAL:
+        // "the consumer has activated abilities" is necessary and not sufficient. `{T}: Add {C}` has
+        // no mana in its cost at all, so `{1} less to activate` removes nothing.
+        if (!costs.some(hasGenericMana) && !reducesColouredMana(p.card.oracleText)) continue;
+        // AND THE PRINTED FLOOR, which BOTH derived reducers carry: "can't reduce the mana in that
+        // cost to less than one mana". An ability costing one mana cannot be reduced at all, so a
+        // Signet (`{1}, {T}: Add …`) is not discounted however much generic it prints. Gated on the
+        // producer's own cue, because a reducer WITHOUT a floor really would take that ability to
+        // zero. Read as "some ability survives the floor", so Executioner's Capsule (`{1}{B}` = two
+        // mana, reduced to one) keeps its claim and its owner-era verdict with it.
+        if (reducesToAFloor(p.card.oracleText)
+          && !costs.some((cost) => hasGenericMana(cost) && manaInCost(cost) >= 2)) continue;
+      } else if (!hasGenericMana(c.card.manaCost)
+        // A REDUCTION CANNOT TAKE GENERIC MANA BELOW ZERO (CR 118.7) — see `hasGenericMana`. Both
+        // exemptions are checked because both are real: a coloured-pip reduction discounts a `{U}`
+        // spell, and an ADDITIONAL COST adds to the total before reductions subtract from it.
         && !reducesColouredMana(p.card.oracleText)
         && !hasAdditionalCost(c.tags)) continue;
     }
