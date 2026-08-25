@@ -1287,7 +1287,11 @@ test("the land row explains an MDFC count, and says nothing when there is none",
   unmount();
   const withMdfc = { ...DECK_MATH, lands: { ...DECK_MATH.lands, mdfc: 4 } };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withMdfc} />);
-  expect(screen.getByText(/4 modal DFCs counted as spells, not lands/i)).toBeInTheDocument();
+  expect(screen.getByText(/4 modal DFCs priced as spells, discounting the target/i)).toBeInTheDocument();
+  // AND THE DECK'S OWN LAND COUNT IS PRINTED BESIDE IT (owner, 2026-08-23): a reader who counts the
+  // lands in front of them gets `actual + mdfc`, which is what the build `lands` chip shows, so the
+  // row states both rather than leaving the discrepancy to be found. DECK_MATH.lands.actual is 37.
+  expect(screen.getByText(/\(41 with MDFCs\)/)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks says where its turn came from, because it varies per deck", () => {

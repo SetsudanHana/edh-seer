@@ -772,20 +772,32 @@ function DeckMathRows({
             *  `landsAriaDelta`/`landsVisibleDelta`. */}
           <div
             className="flex items-center gap-3 text-sm"
-            aria-label={`${lands.actual} lands in the deck, this curve wants ${lands.target}${
+            aria-label={`${lands.actual} lands in the deck${
+              lands.mdfc > 0 ? `, ${lands.actual + lands.mdfc} counting modal DFCs with a land back` : ""
+            }, this curve wants ${lands.target}${
               lands.targetSource === "flat"
                 ? ` -- the flat convention, because this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
                 : ""
             }${landsAriaDelta}`}
           >
-            <span className="w-32 shrink-0 stat-num">{lands.actual} in deck</span>
+            {/* THE BRACKET IS THE DECK'S OWN LAND COUNT, and it exists because the two numbers are
+              *  both right and disagree (owner, 2026-08-23). `actual` holds an MDFC OUT -- Karsten
+              *  prices it as a spell and then discounts the target by 0.74 untapped / 0.38 tapped,
+              *  so counting it here as well would pay for the same card twice -- while every other
+              *  reader in this repo, the build `lands` chip included, counts it by type line. A
+              *  reader who counts their own lands gets the bracketed figure, so print it rather
+              *  than leave them to find the discrepancy. */}
+            <span className="w-52 shrink-0 stat-num">
+              {lands.actual} in deck
+              {lands.mdfc > 0 ? <span className="text-xs text-(--muted)"> ({lands.actual + lands.mdfc} with MDFCs)</span> : ""}
+            </span>
             {/* A sentence, not a table cell -- "avg mana value 2.6 · 4 cheap ramp/draw · 0 fast
               *  mana" stays the body face and only picks up plain tabular alignment so its three
               *  figures don't shift the "·"s between them. */}
             <span className="flex-1 text-xs text-(--muted) tabular-nums">
               avg mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap ramp/draw · {lands.fastMana} fast mana
               {lands.mdfc > 0
-                ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as spells, not lands`
+                ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} priced as spells, discounting the target rather than counting as lands`
                 : ""}
               {lands.targetSource === "flat"
                 ? ` · flat convention -- this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
