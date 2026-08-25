@@ -27,8 +27,66 @@ const ANY_NUMBER_NAMED = /a deck can have any number of cards named/i;
  *  PLANESWALKER and a legal commander because it says so in its own text. */
 const CAN_BE_COMMANDER = /can be your commander/i;
 
+/** CR 702.124 — WHICH PAIRS MAY LEAD A DECK TOGETHER (roadmap J12's partner half). J4 shipped a
+ *  commander check that accepts a Background without ever looking at its partner, and said so in its
+ *  own comment; this is that deferred half.
+ *
+ *  MEASURED FIRST, AND THE CR-DERIVED LIST WAS SHORT BY THREE. The roadmap named five abilities;
+ *  the corpus prints SIX forms — **Partner 70 · Partner with <name> 54 · Partner—Friends forever 7 ·
+ *  Partner—Character select 6 · Partner—Survivors 4 · Partner—Father & son 2**, plus Choose a
+ *  Background 32 and Doctor's companion 27. So the rule reads the LABEL after the em dash and pairs
+ *  any two cards printing the same one, rather than enumerating the labels — Friends forever is not
+ *  special, and a seventh group printed next year works without a code change. */
+const PARTNER_BARE = /(?:^|\n)Partner \(/;
+/** 702.124c names the specific other card, so the pair is licensed only with THAT card. */
+const PARTNER_WITH = /(?:^|\n)Partner with ([^(\n]+)/i;
+/** 702.124's named groups. The captured label is the thing that must match on both cards. */
+const PARTNER_LABEL = /(?:^|\n)Partner—([^(\n]+?)\s*\(/i;
+const CHOOSE_BACKGROUND = /Choose a Background/i;
+const DOCTORS_COMPANION = /Doctor's companion/i;
+
+function partnerLabel(text: string): string | undefined {
+  return PARTNER_LABEL.exec(text)?.[1]?.trim().toLowerCase();
+}
+
+/** Does `a` name `b`? "Partner with Kydele, Chosen of Kruphix" carries the whole printed name, so a
+ *  containment test either way is enough and survives the comma every legendary name has. */
+function namesPartner(a: Card, b: Card): boolean {
+  const who = PARTNER_WITH.exec(a.oracleText ?? "")?.[1]?.trim().toLowerCase().replace(/\.$/, "");
+  if (!who) return false;
+  const other = b.name.toLowerCase();
+  return who.includes(other) || other.includes(who);
+}
+
+/** The printed ability that licenses this pair, or undefined when nothing on either card does.
+ *
+ *  UNDER-REPORTS, exactly as `isLegalCommander` does and for the same measured reason: the naive
+ *  reading of 903.3 flagged five legal decks. A pair this cannot license is REPORTED, so every
+ *  licensing shape the corpus actually prints has to be here — which is why the six forms were
+ *  counted before the regexes were written rather than after. */
+function pairingLicense(a: Card, b: Card): string | undefined {
+  const ta = a.oracleText ?? "";
+  const tb = b.oracleText ?? "";
+  if (PARTNER_BARE.test(ta) && PARTNER_BARE.test(tb)) return "partner";
+  if (namesPartner(a, b) || namesPartner(b, a)) return "partner with";
+  const la = partnerLabel(ta);
+  if (la !== undefined && la === partnerLabel(tb)) return la;
+  // A Background is the SECOND commander, so the licence is on the other card. Checked both ways
+  // round because a decklist states no order.
+  const isBg = (c: Card): boolean => (c.typeLine ?? "").toLowerCase().includes("background");
+  if ((CHOOSE_BACKGROUND.test(ta) && isBg(b)) || (CHOOSE_BACKGROUND.test(tb) && isBg(a))) return "choose a background";
+  // 702.124's Doctor's companion wants the OTHER to be the Doctor — a legendary creature whose type
+  // line says Doctor. 17 corpus cards qualify.
+  const isDoctor = (c: Card): boolean => {
+    const l = (c.typeLine ?? "").toLowerCase();
+    return l.includes("legendary") && l.includes("doctor");
+  };
+  if ((DOCTORS_COMPANION.test(ta) && isDoctor(b)) || (DOCTORS_COMPANION.test(tb) && isDoctor(a))) return "doctor's companion";
+  return undefined;
+}
+
 export interface LegalityFinding {
-  rule: "size" | "duplicate" | "color-identity" | "commander";
+  rule: "size" | "duplicate" | "color-identity" | "commander" | "pairing";
   /** What a reader should do about it, in their own words. */
   detail: string;
   /** The cards involved, where naming them helps. Empty for a deck-level count. */
@@ -115,6 +173,21 @@ export function deckLegality({ cards, commanders }: LegalityInput): LegalityFind
         cards: off.sort(),
       });
     }
+  }
+
+  // 702.124 — two commanders need a printed ability that pairs THEM, and three is never legal.
+  if (commanders.length > 2) {
+    out.push({
+      rule: "pairing",
+      detail: `${commanders.length} commanders, and no ability in the format lets a deck have more than two`,
+      cards: commanders.map((c) => c.name).sort(),
+    });
+  } else if (commanders.length === 2 && pairingLicense(commanders[0], commanders[1]) === undefined) {
+    out.push({
+      rule: "pairing",
+      detail: "these two cannot be commanders together — neither prints Partner, a Partner group, Choose a Background or Doctor's companion that names the other",
+      cards: commanders.map((c) => c.name).sort(),
+    });
   }
 
   // 903.3 — who may lead the deck.

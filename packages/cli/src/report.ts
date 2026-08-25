@@ -225,7 +225,7 @@ export function formatReport(report: DeckReport, trim = 0): string {
       lines.push(`  ${l.detail}`);
       if (l.cards.length > 0) lines.push(`      ${l.cards.slice(0, 8).join(" · ")}${l.cards.length > 8 ? ` … and ${l.cards.length - 8} more` : ""}`);
     }
-    lines.push("  (four rules of many — this is a report, not a verdict, and nothing here stops the analysis)");
+    lines.push("  (five rules of many — this is a report, not a verdict, and nothing here stops the analysis)");
   }
 
   // MANA AVAILABILITY (roadmap I11's report wiring). A SIMULATION, NOT A FORMULA, and an INTERVAL
