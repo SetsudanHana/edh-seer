@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import type { Card } from "@mtg/engine";
 import { pAtLeast, seen } from "@mtg/engine";
 import { cardCastability, deckCastability } from "./castability.js";
@@ -180,5 +180,50 @@ describe("what 'cast for free' actually refuses (K5a)", () => {
 
   test("a card that really is free on its first cast is still refused", () => {
     expect(priced(c("Deadly Rollick", "If you control a commander, you may cast this spell without paying its mana cost."))).toBe(false);
+  });
+});
+
+/** ROADMAP I6. Putting a permanent onto the battlefield from hand is not casting it, so none of the
+ *  percentages this module produces apply to whatever it cheats in. The list ships; no rate does. */
+describe("cheats into play", () => {
+  const cheat = (name: string, text: string): DeckCard => ({
+    card: {
+      name, typeLine: "Enchantment", manaCost: "{3}{R}", manaValue: 4,
+      oracleText: text, keywords: [], colors: ["R"],
+    } as DeckCard["card"],
+    tags: null,
+  });
+
+  it("names a card that puts a creature onto the battlefield from hand", () => {
+    const deck = [cheat("Sneak Attack", "{R}: You may put a creature card from your hand onto the battlefield. That creature gains haste.")];
+    expect(deckCastability(deck).cheatsIntoPlay).toEqual(["Sneak Attack"]);
+  });
+
+  it("REFUSES a land from hand — that is a land drop you already had, which is ramp", () => {
+    const deck = [
+      cheat("Wrenn and Seven", "You may put any number of land cards from your hand onto the battlefield."),
+      cheat("Growth Spiral", "Draw a card. You may put a land card from your hand onto the battlefield."),
+    ];
+    expect(deckCastability(deck).cheatsIntoPlay).toEqual([]);
+  });
+
+  it("does not fire on a card that merely CASTS something for free — a different family", () => {
+    const deck = [cheat("Mizzix's Mastery", "Exile target instant or sorcery card from your graveyard. Copy it. You may cast the copy without paying its mana cost.")];
+    expect(deckCastability(deck).cheatsIntoPlay).toEqual([]);
+  });
+
+  it("changes no percentage — the figures stand and the caveat says what they miss", () => {
+    const spell = (i: number): DeckCard => ({
+      card: { name: `f-${i}`, typeLine: "Sorcery", manaCost: "{1}", manaValue: 1, oracleText: "", keywords: [], colors: [] } as DeckCard["card"],
+      tags: null,
+    });
+    const base = Array.from({ length: 60 }, (_, i) => spell(i));
+    const without = deckCastability(base);
+    const with_ = deckCastability([...base, cheat("Sneak Attack", "{R}: You may put a creature card from your hand onto the battlefield.")]);
+    for (const row of without.cards) {
+      const same = with_.cards.find((r) => r.name === row.name)!;
+      expect(same.mana).toBe(row.mana);
+      expect(same.manaWithRocks).toBe(row.manaWithRocks);
+    }
   });
 });

@@ -119,6 +119,31 @@ export function cardCastability(
   };
 }
 
+/** A card that puts a NONLAND permanent from your hand onto the battlefield (roadmap I6).
+ *
+ *  PUTTING IS NOT CASTING, and the owner drew that line deliberately: the permanent never uses the
+ *  stack, so it dodges cast triggers and countermagic, and its printed mana cost is never paid.
+ *  Every percentage in this module prices CASTING, so in a deck holding one of these the figure on
+ *  its biggest creature is correct and beside the point.
+ *
+ *  A LAND FROM HAND IS EXCLUDED: that is a land drop you already had -- ramp, which
+ *  `detectBuildCategories` models -- and it is 52 of the 159 raw matches corpus-wide.
+ *
+ *  MEASURED before it was built: 107 corpus cards, 10 of the 71 calibration decks, and ALL TEN also
+ *  hold a nonland at mana value 6 or more (8 of them at 8 or more), so the caveat always has
+ *  something to be about. ZERO of the 107 put the card under an OPPONENT's control. The family was
+ *  enumerated by the noun it names -- creature card 30, permanent card 9, artifact card 5, then
+ *  singletons down to "construct, robot, or vehicle" -- rather than sampled. */
+const CHEATS_INTO_PLAY =
+  /put (?:a|an|any number of|up to \w+|target|that|those) [^.]{0,60}?from your hand onto the battlefield/i;
+const LAND_FROM_HAND =
+  /put (?:a|an|any number of|up to \w+|that) [^.]{0,40}?lands? [^.]{0,20}?from your hand onto the battlefield/i;
+
+export const cheatsIntoPlay = (dc: DeckCard): boolean => {
+  const t = dc.card.oracleText ?? "";
+  return CHEATS_INTO_PLAY.test(t) && !LAND_FROM_HAND.test(t);
+};
+
 export interface DeckCastability {
   /** Modelled cards, hardest cast first. */
   cards: CardCastability[];
@@ -127,6 +152,14 @@ export interface DeckCastability {
   /** The two biases, in the order they are meant to be read. Ships WITH the number, because the
    *  number reads plausible on its own and is not. */
   biases: string;
+  /** Cards in the deck that put a nonland permanent onto the battlefield FROM HAND, so its printed
+   *  cost is never paid and none of the percentages above apply to it (roadmap I6).
+   *
+   *  A LIST AND NEVER A NUMBER. How often a deck actually cheats a card into play depends on drawing
+   *  the enabler, keeping it alive and holding a target -- a play model this layer does not have,
+   *  and neither does the goldfish simulator, which casts no removal and has no opponent. Same
+   *  refusal J5 made for the commander tax. */
+  cheatsIntoPlay: string[];
 }
 
 /** Every nonland card's castability, hardest first.
@@ -153,7 +186,12 @@ export function deckCastability(
   // list reads as a defect in the analysis rather than in the input.
   const byName = new Map(rows.filter((r) => r.mana !== null).map((r) => [r.name, r]));
 
+  // Deduped by name for the same reason the rows are: a commander named in both sections arrives
+  // twice, and a caveat listing one card twice reads as a defect in the analysis.
+  const cheats = [...new Set(deck.filter(cheatsIntoPlay).map((dc) => dc.card.name))];
+
   return {
+    cheatsIntoPlay: cheats,
     cards: [...byName.values()]
       .sort((a, b) => (a.mana ?? 1) - (b.mana ?? 1) || b.manaValue - a.manaValue),
     refused: rows.filter((r) => r.mana === null).length,

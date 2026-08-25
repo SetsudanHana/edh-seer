@@ -259,6 +259,11 @@ export interface DeckMath {
     }[];
     refused: number;
     biases: string;
+    /** Cards that put a nonland permanent onto the battlefield FROM HAND (roadmap I6): the printed
+     *  cost is never paid and the stack is never used, so none of the figures above apply to what
+     *  they cheat in. Absent when the deck holds none. A LIST AND NEVER A RATE -- how often a deck
+     *  actually does it needs a play model nothing here has. */
+    cheatsIntoPlay?: string[];
     /** THE COMMANDER'S OWN ROW, which is the build-around question stated directly (roadmap K5):
      *  "your commander is online turn X". One entry, or two for a partner pair.
      *

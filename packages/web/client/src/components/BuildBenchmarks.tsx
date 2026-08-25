@@ -663,6 +663,18 @@ function DeckMathRows({
               ? `${plural(castability.refused, "card")} refused — X costs, delve, convoke and free casts are not priced rather than guessed. `
               : ""}
             {castability.biases}
+            {/* ROADMAP I6. Putting a permanent onto the battlefield is not casting it, so it uses no
+              *  stack, dodges countermagic and never pays the printed cost — and every percentage
+              *  above prices casting. Named cards and no rate: how often the deck actually does it
+              *  needs the enabler drawn, alive and holding a target, which is a play model this
+              *  layer does not have. */}
+            {castability.cheatsIntoPlay && castability.cheatsIntoPlay.length > 0 ? (
+              <>
+                {" "}And {castability.cheatsIntoPlay.join(", ")} can put a permanent onto the
+                battlefield straight from your hand, which is not casting it — nothing above prices
+                that, and the cost on whatever it cheats in is never paid.
+              </>
+            ) : null}
           </Caveat>
         </div>
   ) : null;

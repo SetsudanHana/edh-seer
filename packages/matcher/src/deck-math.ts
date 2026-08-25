@@ -217,6 +217,10 @@ export function computeDeckMath(
     })),
     refused: cast.refused,
     biases: cast.biases,
+    // ROADMAP I6: cards that put a nonland permanent onto the battlefield FROM HAND. Every figure
+    // above prices CASTING, and putting is not casting -- so on a deck holding one of these the
+    // percentage on its biggest creature is correct and beside the point. A list, never a rate.
+    ...(cast.cheatsIntoPlay.length > 0 ? { cheatsIntoPlay: cast.cheatsIntoPlay } : {}),
     ...(commanderRows.length > 0 ? { commanders: commanderRows } : {}),
   };
 
