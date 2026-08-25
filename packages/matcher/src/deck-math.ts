@@ -167,7 +167,15 @@ export function computeDeckMath(
     color: r.color,
     supplied: r.supplied,
     ...(r.worst
-      ? { worst: { pips: r.worst.pips, turn: r.worst.turn, required: r.worst.required, cards: r.worst.cards } }
+      ? {
+        worst: {
+          pips: r.worst.pips, turn: r.worst.turn, required: r.worst.required,
+          // BOTH ENDS REACH THE READER. `required` prices the free mulligan and `requiredRaw` does
+          // not; the keep band is a LAND band, so the first over-states the help for a colour and
+          // the second under-states it. A renderer showing one number alone picks a model silently.
+          requiredRaw: r.worst.requiredRaw, cards: r.worst.cards,
+        },
+      }
       : {}),
   }));
 

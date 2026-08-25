@@ -1,4 +1,5 @@
 import { minCopies } from "@mtg/engine";
+import { minSources } from "./mulligan.js";
 import type { DeckCard } from "./types.js";
 
 /** The five colours, in WUBRG order. Colourless is deliberately absent: every deck can pay generic
@@ -56,10 +57,22 @@ export interface ColorDemand {
    *  defensible assumption rather than a fitted parameter -- and it is the one place the spec's
    *  per-card idea kills a Tier C guess outright. */
   turn: number;
-  /** Sources needed for `SOURCE_CONFIDENCE` of having `pips` of them by `turn`. */
+  /** Sources needed for `SOURCE_CONFIDENCE` of having `pips` of them by `turn`, WITH the free
+   *  mulligan priced in (`mulligan.ts`). An UPPER BOUND on the mulligan's help: the keep band reads
+   *  a hand's LAND count and this applies it to one colour, which a real player does not do. */
   required: number;
+  /** The same figure with NO mulligan at all -- what this field held until 2026-08-25, and the other
+   *  end of the interval. It UNDER-states by the same keep-rule mismatch `required` over-states by,
+   *  so the truth sits between them and neither is deleted (roadmap L5, spec §11).
+   *
+   *  Absent only when no source count in the deck reaches the confidence raw, which cannot happen
+   *  for a demand a real card presents. */
+  requiredRaw: number;
   /** How many cards in the deck carry exactly this demand. */
   cards: number;
+  /** Read against `required`, so the report UNDER-claims a shortfall rather than over-claiming one.
+   *  Anchoring on `requiredRaw` instead told 62 of the 71 calibration decks they were short by a
+   *  median of ten sources, off a model measured to over-state by up to fourteen. */
   met: boolean;
 }
 
@@ -87,6 +100,14 @@ export interface ManaAuditRow {
  *    and a source gated behind a condition counts the same as a basic.
  *  - **Rocks are counted as sources but not as ramp.** A Signet is a source on the turn it is cast,
  *    not on turn one, and nothing here knows that.
+ *
+ *  ONE THING IT NO LONGER GETS WRONG: the requirement is priced WITH the free mulligan. `required`
+ *  was `minCopies` alone until 2026-08-25 -- raw hypergeometric, the same model that read 37 lands
+ *  as an 80% three-land-drop deck before `mulligan.ts` corrected it to 90.3%. Raw, {C}{C} by turn 2
+ *  "needs" 36 sources of 99 and {C}{C}{C} by turn 3 "needs" 44, and 139 of the 71 decks' 153 colour
+ *  rows carried an unmet demand off those numbers. Both ends now ship (`required`, `requiredRaw`):
+ *  the keep band reads LANDS, so applying it to one colour over-states the mulligan's help exactly
+ *  as ignoring it under-states, and the truth is between. Roadmap L5, spec §11.
  *
  *  One thing it does NOT do any more: a one-shot ritual is not a source (`isManaSource`). Measured
  *  over the 71 calibration decks, 139 of 3,197 `producedMana` library cards were one-shots, moving
@@ -120,8 +141,13 @@ export function manaAudit(
         existing.cards++;
         continue;
       }
-      const required = minCopies(pips, turn, SOURCE_CONFIDENCE, library.length);
-      groups.set(key, { pips, turn, required, cards: 1, met: supplied >= required });
+      const requiredRaw = minCopies(pips, turn, SOURCE_CONFIDENCE, library.length);
+      // `minSources` searches a 99-card deck while `minCopies` is told the real library size, so the
+      // pair is not perfectly commensurable on a deck that lost cards to resolution -- and the raw
+      // figure is the conservative end, so the corrected one is clamped never to exceed it rather
+      // than allowed to read HIGHER than the model it corrects (criterion S2).
+      const required = Math.min(requiredRaw, minSources(pips, turn, SOURCE_CONFIDENCE) ?? requiredRaw);
+      groups.set(key, { pips, turn, required, requiredRaw, cards: 1, met: supplied >= required });
     }
     if (groups.size === 0) continue;
 

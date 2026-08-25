@@ -851,7 +851,16 @@ function DeckMathRows({
   // whose rows together also fit.
   const totalRequired = colors.reduce((n, c) => n + (c.worst?.required ?? 0), 0);
   const landRoom = lands?.actual ?? 0;
-  const overcommitted = totalRequired > landRoom;
+  // ONE ROW CANNOT "TOGETHER" WANT ANYTHING, and with a single colour there is no competition for
+  // slots to warn about -- the row already states its own shortfall. Found in a live browser on
+  // `draguns` (mono-blue, one colour row wanting 37 against 36 lands), where the message fired on a
+  // one-land margin and said "which no deck can hold" about a deck that plainly could.
+  //
+  // ponytail: the comparison is still loose for two or more colours -- `totalRequired` counts
+  // SOURCES, which include rocks and dorks, against LANDS, and a dual land answers two rows at once.
+  // Tightening that needs a per-colour supply ceiling this component does not have; the guard here
+  // only removes the case where the sentence is self-evidently false.
+  const overcommitted = colors.filter((c) => c.worst).length > 1 && totalRequired > landRoom;
   const coloursBlock = colors.length > 0 ? (
         <div className="flex flex-col gap-1.5">
           <h5 className="eyebrow">Colours</h5>
@@ -917,7 +926,19 @@ function DeckMathRows({
               Each row is the earliest double-pip card in that colour, at 90% confidence — not the
               deck's land count, which is judged above. Cutting or delaying one early double pip
               answers a gap as well as adding lands does
-              {overcommitted ? ", and here it is the only thing that can" : ""}.
+              {overcommitted ? ", and here it is the only thing that can" : ""}.{" "}
+              {/* BOTH MODELS, IN ONE SENTENCE. The figure prices the free mulligan; the keep band it
+                *  uses reads a hand's LAND count, so applied to one colour it over-states the help
+                *  exactly as ignoring the mulligan under-states it. Showing the pair is what stops
+                *  the row claiming a precision neither model has — and until 2026-08-25 only the
+                *  raw end shipped, which told most decks they were short. */}
+              The counts price the free mulligan; without it the same rows would ask for{" "}
+              {/* DEDUPED: a five-colour deck whose rows all sit at the same pip and turn produced
+                *  "20, 20, 20, 20, 20", which is noise rather than five facts. Found in a live
+                *  browser on `fairdrazi-5-color-less`. */}
+              {[...new Set(colors.filter((c) => c.worst).map((c) => c.worst!.requiredRaw))].join(", ")} instead, and
+              the truth sits between — the mulligan is judged on a hand's land count, not on its
+              sources of one colour.
             </Caveat>
           ) : null}
         </div>

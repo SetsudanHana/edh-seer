@@ -291,7 +291,11 @@ export interface DeckMath {
     color: string;
     supplied: number;
     /** The biggest shortfall, when one exists. */
-    worst?: { pips: number; turn: number; required: number; cards: number };
+    /** `required` prices the free mulligan; `requiredRaw` does not. The keep band reads a hand's
+     *  LAND count, so applied to one colour the first over-states the mulligan's help exactly as the
+     *  second under-states it — the pair is an interval and a renderer showing one alone picks a
+     *  model silently (roadmap L5). */
+    worst?: { pips: number; turn: number; required: number; requiredRaw: number; cards: number };
   }[];
   /** The deck's biggest demand shapes: how many cards want the event, how many supply it, and
    *  whether you will have a supplier. */

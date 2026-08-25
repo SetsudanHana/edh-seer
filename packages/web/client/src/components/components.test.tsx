@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent, within, cleanup } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { DeckIdentity } from "./DeckIdentity.js";
@@ -869,7 +869,7 @@ const DECK_MATH = {
     biases: "Ignores ramp, so it under-states; ignores tapped lands and colour coupling, so it over-states.",
   },
   colors: [
-    { color: "B", supplied: 26, worst: { pips: 2, turn: 3, required: 33, cards: 12 } },
+    { color: "B", supplied: 18, worst: { pips: 2, turn: 3, required: 21, requiredRaw: 33, cards: 12 } },
     { color: "U", supplied: 30 },
   ],
   demand: [
@@ -1251,8 +1251,11 @@ test("BuildBenchmarks says so when an archetype delta is folded into the land ta
 
 test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  // The spec's own worked sentence: 12 cards want {B}{B} by T3, that needs 33 sources, you run 26.
-  const bRow = screen.getByLabelText(/B, 26 sources, 12 cards want 2 pips by turn 3, which needs 33/i);
+  // The spec's own worked sentence, at the MULLIGAN-CORRECTED requirement (roadmap L5): 12 cards
+  // want {B}{B} by T3, that needs 21 sources, you run 18. The raw figure this row used to show was
+  // 33 -- and at 26 sources, the count the fixture carried until 2026-08-25, the corrected model
+  // says the colour is fine, which is the over-claim the correction removes.
+  const bRow = screen.getByLabelText(/B, 18 sources, 12 cards want 2 pips by turn 3, which needs 21/i);
   expect(bRow).toBeInTheDocument();
   // The label above is spelled in words on purpose (screen readers), but the VISIBLE pip phrase
   // ("2 cards want {B}{B} on turn 3") must render as symbols, never brace text -- that line has no
@@ -1262,6 +1265,28 @@ test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () =
   // A colour that pays for itself says so rather than being dropped -- an absent row would read as
   // "not checked".
   expect(screen.getByLabelText(/U, 30 sources, enough/i)).toBeInTheDocument();
+});
+
+/** S4 (roadmap L5): the row shows the mulligan-corrected requirement, so the raw one has to be
+ *  ON SCREEN somewhere or the reader cannot tell which model produced the number. A caveat naming
+ *  only one end lets the pair collapse back to a point the next time somebody edits the copy. */
+test("the colour caveat names BOTH models, not just the one in the row", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  const caveat = screen.getByText(/without it the same rows would ask for/i);
+  expect(caveat).toBeInTheDocument();
+  // The raw end, and the reason the pair is an interval rather than a better number.
+  expect(caveat).toHaveTextContent("33");
+
+  // Deduped: rows sharing a raw figure must not print it once per row.
+  cleanup();
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={{
+    ...DECK_MATH,
+    colors: ["U", "B", "R"].map((color) => ({
+      color, supplied: 11, worst: { pips: 1, turn: 3, required: 15, requiredRaw: 20, cards: 1 },
+    })),
+  }} />);
+  expect(screen.getByText(/without it the same rows would ask for/i)).toHaveTextContent(/ask for 20 instead/i);
+  expect(caveat).toHaveTextContent(/land count, not on its\s+sources of one colour/i);
 });
 
 test("BuildBenchmarks shows the hardest casts on two axes, never one blended number", () => {
@@ -1471,22 +1496,35 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
     ...DECK_MATH,
     lands: { ...DECK_MATH.lands, actual: 34, target: 35 },
     colors: [
-      { color: "U", supplied: 22, worst: { pips: 2, turn: 2, required: 36, cards: 1 } },
-      { color: "B", supplied: 20, worst: { pips: 2, turn: 3, required: 33, cards: 2 } },
-      { color: "R", supplied: 21, worst: { pips: 2, turn: 3, required: 33, cards: 1 } },
+      { color: "U", supplied: 22, worst: { pips: 2, turn: 2, required: 22, requiredRaw: 36, cards: 1 } },
+      { color: "B", supplied: 20, worst: { pips: 2, turn: 3, required: 21, requiredRaw: 33, cards: 2 } },
+      { color: "R", supplied: 21, worst: { pips: 2, turn: 3, required: 21, requiredRaw: 33, cards: 1 } },
     ],
   };
   const { unmount } = render(
     <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={overcommitted} />,
   );
-  expect(screen.getByText(/want 102 sources from 34 lands, which no\s+deck can hold/)).toBeInTheDocument();
-  expect(screen.getByText("22 of 36 sources")).toHaveClass("text-(--muted)");
+  expect(screen.getByText(/want 64 sources from 34 lands, which no\s+deck can hold/)).toBeInTheDocument();
+  expect(screen.getByText("22 of 22 sources")).toHaveClass("text-(--muted)");
   unmount();
+
+  // ONE ROW CANNOT OVERCOMMIT TOGETHER WITH ITSELF. Found in a live browser on `draguns`: one
+  // colour row wanting 37 sources against 36 lands fired "which no deck can hold" on a one-land
+  // margin, about a deck that holds nonland sources too.
+  const single = {
+    ...DECK_MATH,
+    lands: { ...DECK_MATH.lands, actual: 36, target: 37 },
+    colors: [{ color: "U", supplied: 33, worst: { pips: 3, turn: 3, required: 37, requiredRaw: 44, cards: 1 } }],
+  };
+  const solo = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={single} />);
+  expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
+  expect(screen.getByText("33 of 37 sources")).toBeInTheDocument();
+  solo.unmount();
 
   // And it still fires where the gap IS closable: one colour, wanting fewer sources than the deck
   // holds lands.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByText("26 of 33 sources")).toHaveClass("text-(--warning)");
+  expect(screen.getByText("18 of 21 sources")).toHaveClass("text-(--warning)");
   expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
 });
 

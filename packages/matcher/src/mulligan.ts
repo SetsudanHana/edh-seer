@@ -1,4 +1,4 @@
-import { pAtLeast } from "@mtg/engine";
+import { pAtLeast, seen } from "@mtg/engine";
 
 /** EDH MULLIGAN POLICY, IN CLOSED FORM. No simulation is needed for a land-count question, and
  *  that is the whole point of this module.
@@ -53,29 +53,59 @@ const REACHABLE = DECK - HAND;
  *  composition, not about hitting drops. */
 const bottomed = (j: number): number => (j >= 5 ? j - 1 : Math.min(j, HAND - 1));
 
-/** P(the deck makes its first `need` land drops), under the owner's policy.
+/** P(seeing at least `need` cards of a category of size `size` by `turn`), under the owner's policy.
  *
- *  `need` lands among the kept hand plus `need` draws IS hitting every drop in order, not merely the
- *  last one: a player gains at most one land per turn, so `landsSeen(need) >= need` forces
- *  `landsSeen(k) >= k` at every earlier k. No overstatement hides in the aggregate. */
-export function pLandDrops(lands: number, need = 3, keep: ReadonlySet<number> = STANDARD_KEEP): number {
+ *  THE KEEP BAND IS A LAND BAND, so this is EXACT for lands and an UPPER BOUND on the mulligan's
+ *  help for anything else (roadmap L5). Applied to "sources of one colour" it models a player who
+ *  mulligans on black sources specifically, which nobody does -- a real player keeps on lands, which
+ *  tracks the colour category only partly. For a mono-coloured deck the two nearly coincide; for a
+ *  five-colour deck this reads optimistic. Its counterpart bound is the RAW figure (`minCopies`,
+ *  no mulligan at all), which under-states by the same mismatch, so the pair is reported and neither
+ *  is deleted. */
+export function pByTurn(
+  size: number, need: number, turn: number, keep: ReadonlySet<number> = STANDARD_KEEP,
+): number {
+  const draws = seen(turn) - HAND;
   const afterKeep = (inHand: number, drawn: number): number =>
-    pAtLeast(need - inHand, lands - drawn, need, REACHABLE);
+    pAtLeast(need - inHand, size - drawn, draws, REACHABLE);
 
   // The forced six: no choice left, so every hand is played out.
   let stage = 0;
-  for (let j = 0; j <= HAND; j++) stage += exactly(j, lands, HAND, DECK) * afterKeep(bottomed(j), j);
+  for (let j = 0; j <= HAND; j++) stage += exactly(j, size, HAND, DECK) * afterKeep(bottomed(j), j);
 
   // Hand 2 (the free mulligan) then hand 1, each keeping on the band and otherwise falling through
   // to the stage below it.
   for (let round = 0; round < 2; round++) {
     let acc = 0;
     for (let j = 0; j <= HAND; j++) {
-      acc += exactly(j, lands, HAND, DECK) * (keep.has(j) ? afterKeep(j, j) : stage);
+      acc += exactly(j, size, HAND, DECK) * (keep.has(j) ? afterKeep(j, j) : stage);
     }
     stage = acc;
   }
   return stage;
+}
+
+/** P(the deck makes its first `need` land drops), under the owner's policy.
+ *
+ *  `need` lands among the kept hand plus `need` draws IS hitting every drop in order, not merely the
+ *  last one: a player gains at most one land per turn, so `landsSeen(need) >= need` forces
+ *  `landsSeen(k) >= k` at every earlier k. No overstatement hides in the aggregate.
+ *
+ *  The deadline for N land drops IS turn N, which is why this is `pByTurn` on its own diagonal. */
+export function pLandDrops(lands: number, need = 3, keep: ReadonlySet<number> = STANDARD_KEEP): number {
+  return pByTurn(lands, need, need, keep);
+}
+
+/** The fewest sources of a category reaching `confidence` on having `need` of them by `turn` -- the
+ *  mulligan-corrected counterpart of `minCopies`, which computes the same quantity raw.
+ *
+ *  Returns `undefined` rather than a number when no count in the deck gets there, for the same
+ *  reason `landsForDrops` does: a silent 99 would read as advice. */
+export function minSources(
+  need: number, turn: number, confidence = 0.9, keep: ReadonlySet<number> = STANDARD_KEEP,
+): number | undefined {
+  for (let s = 1; s <= DECK; s++) if (pByTurn(s, need, turn, keep) >= confidence) return s;
+  return undefined;
 }
 
 /** The fewest lands reaching `confidence` on the first `need` land drops under this policy -- the
