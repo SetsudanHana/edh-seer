@@ -5,7 +5,7 @@ import type { DeckCard } from "../types.js";
 
 /** `manaAt[turn - 1][trial]` — three trials, four turns. */
 const result = (manaAt: number[][]): SimulateResult =>
-  ({ trials: manaAt[0].length, turns: manaAt.length, manaAt, payableShareAt: [], byCard: new Map() });
+  ({ trials: manaAt[0].length, turns: manaAt.length, manaAt, payableShareAt: [], byCard: new Map(), byCardCastable: new Map() });
 
 const card = (over: Partial<DeckCard["card"]>): DeckCard =>
   ({ card: { name: "x", typeLine: "Artifact", manaValue: 2, oracleText: "", producedMana: [], ...over } as DeckCard["card"], tags: null });

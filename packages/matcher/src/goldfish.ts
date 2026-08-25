@@ -1,5 +1,5 @@
 import type { DeckCard } from "./types.js";
-import { isManaSource } from "./mana-audit.js";
+import { COLORS, isManaSource, type Color } from "./mana-audit.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
 
@@ -207,6 +207,95 @@ function produced(o: ManaOutput, lands: readonly OnBoardLand[]): number {
   return o.amount;
 }
 
+/** COLOURS AS A BITMASK over `COLORS`. Colourless is the EMPTY mask, not a sixth bit: `{C}` pays
+ *  generic and no coloured pip, which is exactly what an empty mask does under `payable` below. */
+export function colorMask(producedMana: readonly string[] | undefined): number {
+  let m = 0;
+  for (const c of producedMana ?? []) {
+    const i = COLORS.indexOf(c.toUpperCase() as Color);
+    if (i >= 0) m |= 1 << i;
+  }
+  return m;
+}
+
+/** A FETCHLAND IS A COLOUR FIXER AND A THINNER (owner, 2026-08-25). Cracking it searches the library,
+ *  so two facts follow that a plain land does not have: you CHOOSE which land, so the fetch is a
+ *  wildcard for whatever its fetchable set covers; and the fetched land LEAVES the library.
+ *
+ *  It is why `producedMana` looks incomplete on lands and is not: 2,500 of the 2,646 land slots in
+ *  the 71 decks carry one, and the entire remainder is fetchlands, which correctly produce nothing
+ *  of their own. */
+const FETCHLAND = /search your library for an?[^.]*\bland card\b/i;
+const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
+
+/** What a fetchland can find in THIS deck, as a colour mask.
+ *
+ *  ponytail: computed once off the whole deck, not per trial off the remaining library, so it
+ *  over-claims slightly as the library empties. The alternative is recomputing a mask every crack. */
+export function fetchMask(oracleText: string, deck: readonly { typeLine: string; producedMana?: readonly string[] }[]): number {
+  const text = oracleText.toLowerCase();
+  const named = BASIC_TYPES.filter((t) => text.includes(t));
+  const wantsBasic = /\bbasic land card\b/.test(text);
+  let m = 0;
+  for (const c of deck) {
+    const line = c.typeLine.toLowerCase();
+    if (!line.includes("land")) continue;
+    if (named.length > 0 && !named.some((t) => line.includes(t))) continue;
+    if (named.length === 0 && wantsBasic && !line.includes("basic")) continue;
+    m |= colorMask(c.producedMana);
+  }
+  return m;
+}
+
+/** One coloured requirement of a mana cost, as the set of colours that may pay it. A mono pip is one
+ *  colour; a hybrid or Phyrexian pip is either colour it names — which is why `pipsByColor` is not
+ *  reused here: it counts `{B/R}` against BOTH, correct for "does the deck have the sources" and
+ *  wrong for "can this hand pay the cost". */
+export interface Cost { total: number; pips: number[] }
+export function parseCost(manaCost: string | undefined): Cost | null {
+  if (!manaCost) return null;
+  let total = 0;
+  const pips: number[] = [];
+  for (const symbol of manaCost.match(/\{[^}]+\}/g) ?? []) {
+    const inner = symbol.slice(1, -1).toUpperCase();
+    if (inner.includes("X")) return null; // an X cost is not a number; `castability.ts` refuses it too
+    const parts = inner.split("/");
+    const n = Number(parts.find((x) => /^\d+$/.test(x)));
+    if (Number.isFinite(n) && parts.length === 1) { total += n; continue; }
+    total += 1;
+    const mask = colorMask(parts.filter((x) => (COLORS as readonly string[]).includes(x)));
+    if (mask !== 0) pips.push(mask); // {C}, {S} and a generic-hybrid half reach no colour
+  }
+  return { total, pips };
+}
+
+/** CAN THIS BOARD PAY THIS COST — a FEASIBILITY question, never a product of per-pip probabilities.
+ *
+ *  `castability.ts` refuses to multiply its two axes because both are driven by the same lands and
+ *  the product under-estimates. Asking the board directly removes the question: the correlation is
+ *  handled by construction.
+ *
+ *  Bipartite feasibility (Gale/Hall): payable iff total supply covers the total cost AND, for every
+ *  subset S of the five colours, the pips that ONLY S can pay do not exceed the supply that can
+ *  produce something in S. 31 subsets, and only those inside the cost's own colours can bind. */
+export function payable(sources: readonly { mana: number; colors: number }[], cost: Cost): boolean {
+  let total = 0;
+  for (const s of sources) total += s.mana;
+  if (total < cost.total) return false;
+  if (cost.pips.length === 0) return true;
+  let union = 0;
+  for (const p of cost.pips) union |= p;
+  for (let sub = union; sub > 0; sub = (sub - 1) & union) {
+    let demand = 0;
+    for (const p of cost.pips) if ((p & ~sub) === 0) demand++;
+    if (demand === 0) continue;
+    let supply = 0;
+    for (const s of sources) if ((s.colors & sub) !== 0) supply += s.mana;
+    if (supply < demand) return false;
+  }
+  return true;
+}
+
 interface DeckSlot {
   name: string;
   manaValue: number;
@@ -214,6 +303,14 @@ interface DeckSlot {
   isLand: boolean;
   output: ManaOutput;
   everyLandType: boolean;
+  /** Colours this source can make, as a mask. A fetchland carries what it can FIND. */
+  colors: number;
+  /** The card's own cost, parsed once. `null` for a land or an X cost. */
+  cost: Cost | null;
+  /** Costs are deduped per trial-turn on this key -- 270 distinct across all 71 decks. */
+  costKey: string;
+  /** A fetchland removes the land it finds from the library. */
+  fetches: boolean;
   land?: LandCondition;
   accelerant?: Accelerant | null;
 }
@@ -248,13 +345,18 @@ export interface SimulateResult {
    *  `castableShare`: the model is colour-blind, and a field name is exactly where a banned word
    *  creeps back in. */
   payableShareAt: number[][];
+  /** Per card, per turn: P(the board could pay this card's WHOLE cost, colours included. This one IS
+   *  castability: the two axes `castability.ts` refuses to multiply are asked of the same board in
+   *  the same trial, so the correlation between them is handled by construction. A card with an X
+   *  cost reads 0 and is refused upstream, exactly as `castability.ts` refuses it. */
+  byCardCastable: Map<string, number[]>;
   /** Per card, per turn: P(the board could tap at least that card's mana value by then). Still not
    *  "castable" — see the colour ceiling. */
   byCard: Map<string, number[]>;
 }
 
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
-interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean }
+interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean; colors: number }
 
 function boardFor(lands: OnBoardLand[], pod: number): { lands: number; basics: number; types: Set<string>; opponents: number } {
   const types = new Set<string>();
@@ -274,8 +376,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   const random = rng(opts.seed ?? 1);
   const holdUp = opts.holdUp ?? 0;
 
+  const printed = deck.map((dc) => ({ typeLine: dc.card.typeLine ?? "", producedMana: dc.card.producedMana }));
   const slots: DeckSlot[] = deck.map((dc) => {
     const isLand = /\bland\b/i.test(dc.card.typeLine ?? "");
+    const text = dc.card.oracleText ?? "";
+    // A land-fetch SPELL searches the library too, so it fixes colours and thins by the same fact.
+    const fetches = (isLand && FETCHLAND.test(text)) || (!isLand && LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text));
     return {
       name: dc.card.name,
       manaValue: dc.card.manaValue ?? 0,
@@ -283,6 +389,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       isLand,
       output: manaOutput(dc.card.oracleText),
       everyLandType: isEveryLandType(dc.card.typeLine, dc.card.oracleText),
+      colors: fetches ? fetchMask(text, printed) : colorMask(dc.card.producedMana),
+      fetches,
+      cost: isLand ? null : parseCost(dc.card.manaCost),
+      costKey: dc.card.manaCost ?? "",
       ...(isLand ? { land: classifyLand(dc.card) } : { accelerant: classifyAccelerant(dc) }),
     };
   });
@@ -291,7 +401,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   const manaAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const payableShareAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const byCardHits = new Map<string, number[]>();
-  for (const s of nonlands) if (!byCardHits.has(s.name)) byCardHits.set(s.name, Array(turns).fill(0));
+  const byCardCastHits = new Map<string, number[]>();
+  for (const s of nonlands) {
+    if (!byCardHits.has(s.name)) byCardHits.set(s.name, Array(turns).fill(0));
+    if (!byCardCastHits.has(s.name)) byCardCastHits.set(s.name, Array(turns).fill(0));
+  }
 
   for (let t = 0; t < trials; t++) {
     const library = [...slots];
@@ -302,8 +416,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     }
     const hand: DeckSlot[] = library.splice(0, 7);
     const lands: OnBoardLand[] = [];
-    const rocks: { turn: number; mana: number }[] = [];   // the turn each landed, and what it taps for
-    const dorks: { turn: number; mana: number }[] = [];
+    const rocks: { turn: number; mana: number; colors: number }[] = [];   // the turn each landed, what it taps for, and in which colours
+    const dorks: { turn: number; mana: number; colors: number }[] = [];
 
     for (let turn = 1; turn <= turns; turn++) {
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
@@ -336,15 +450,31 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           typeLine: played.typeLine,
           output: played.output,
           everyLandType: played.everyLandType,
+          colors: played.colors,
         });
+        // A FETCHLAND TAKES ITS LAND OUT OF THE DECK (owner, 2026-08-25). Board +1 land, library -1
+        // land, which is what cracking one actually does -- the fetch itself taps for nothing and
+        // the land it finds is what is standing there.
+        if (played.fetches) {
+          const li = library.findIndex((c) => c.isLand);
+          if (li >= 0) library.splice(li, 1);
+        }
       }
 
       // A land contributes unless it entered TAPPED this very turn. A rock pays the turn it lands
       // (CR 302.6); a dork waits one.
-      const production = (): number =>
-        lands.reduce((n, l) => n + (l.enteredTapped && l.enteredTurn === turn ? 0 : produced(l.output, lands)), 0)
-        + rocks.reduce((n, r) => n + (r.turn <= turn ? r.mana : 0), 0)
-        + dorks.reduce((n, d) => n + (d.turn < turn ? d.mana : 0), 0);
+      const untappedSources = (): { mana: number; colors: number }[] => {
+        const out: { mana: number; colors: number }[] = [];
+        for (const l of lands) {
+          if (l.enteredTapped && l.enteredTurn === turn) continue;
+          const m = produced(l.output, lands);
+          if (m > 0) out.push({ mana: m, colors: l.colors });
+        }
+        for (const r of rocks) if (r.turn <= turn) out.push({ mana: r.mana, colors: r.colors });
+        for (const d of dorks) if (d.turn < turn) out.push({ mana: d.mana, colors: d.colors });
+        return out;
+      };
+      const production = (): number => untappedSources().reduce((n: number, x) => n + x.mana, 0);
 
       // Rule 3: spend on accelerants, cheapest first, greedily. THIS RULE DOES NEARLY ALL THE WORK,
       // and it is what makes every output a ceiling: the owner's own decks hold mana up for
@@ -362,8 +492,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         pool -= cast.manaValue;
         const a = cast.accelerant!;
         const mana = produced(cast.output, lands);
-        if (a.kind === "rock") { rocks.push({ turn, mana }); pool += mana; }
-        else if (a.kind === "dork") dorks.push({ turn, mana });
+        if (a.kind === "rock") { rocks.push({ turn, mana, colors: cast.colors }); pool += mana; }
+        else if (a.kind === "dork") dorks.push({ turn, mana, colors: cast.colors });
         else {
           // A FETCHED LAND DOES NOT CONSUME THE LAND DROP — it is put onto the battlefield, not
           // played — and it follows its own tapped state, which the spell's text states.
@@ -371,27 +501,40 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           // "a Forest" and the trial never chooses one. It counts as a LAND and as NEITHER a basic
           // nor a type, which is the pessimistic direction for every other conditional land on the
           // board: fewer suppliers means more of them enter tapped. Stated rather than guessed.
-          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true, typeLine: "", output: { amount: 1 }, everyLandType: false });
+          // A FETCHED LAND'S IDENTITY IS UNKNOWN, but its COLOUR is not: the spell names what it may
+          // find, and `fetchMask` reads that against the lands this deck actually holds.
+          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true, typeLine: "", output: { amount: 1 }, everyLandType: false, colors: cast.colors });
+          const li = library.findIndex((c) => c.isLand);
+          if (li >= 0) library.splice(li, 1);
           if (a.fetchTapped !== true) pool += 1;
         }
       }
 
-      const made = production();
+      const untapped = untappedSources();
+      const made = untapped.reduce((n, x) => n + x.mana, 0);
       manaAt[turn - 1].push(made);
-      let payable = 0;
+      // COLOUR IS ASKED OF THE BOARD, ONCE PER DISTINCT COST. A cost the board cannot pay is not a
+      // second probability to multiply in -- it is this trial answering no.
+      const castableByCost = new Map<string, boolean>();
+      let affordable = 0;
       for (const s of nonlands) {
-        if (s.manaValue <= made) {
-          payable++;
-          byCardHits.get(s.name)![turn - 1]++;
-        }
+        if (s.manaValue > made) continue;
+        affordable++;
+        byCardHits.get(s.name)![turn - 1]++;
+        if (s.cost === null) continue;
+        let ok = castableByCost.get(s.costKey);
+        if (ok === undefined) { ok = payable(untapped, s.cost); castableByCost.set(s.costKey, ok); }
+        if (ok) byCardCastHits.get(s.name)![turn - 1]++;
       }
-      payableShareAt[turn - 1].push(nonlands.length > 0 ? payable / nonlands.length : 0);
+      payableShareAt[turn - 1].push(nonlands.length > 0 ? affordable / nonlands.length : 0);
     }
   }
 
   const byCard = new Map<string, number[]>();
   for (const [name, hits] of byCardHits) byCard.set(name, hits.map((h) => h / trials));
-  return { trials, turns, manaAt, payableShareAt, byCard };
+  const byCardCastable = new Map<string, number[]>();
+  for (const [name, hits] of byCardCastHits) byCardCastable.set(name, hits.map((h) => h / trials));
+  return { trials, turns, manaAt, payableShareAt, byCard, byCardCastable };
 }
 
 /** P(at least `m` mana by turn `t`) straight off a run. */

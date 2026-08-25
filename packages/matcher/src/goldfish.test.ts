@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { pAtLeast, seen } from "@mtg/engine";
 import type { DeckCard } from "./types.js";
-import { classifyAccelerant, isEveryLandType, manaAvailability, manaOutput, pAtLeastMana, quantiles, rng, simulate } from "./goldfish.js";
+import { classifyAccelerant, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate } from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -149,11 +149,18 @@ test("quantiles report the spread and survive an empty sample", () => {
   expect(quantiles([])).toEqual({ p25: 0, median: 0, p75: 0 });
 });
 
-// C10. NO OUTPUT CARRIES THE WORD "castable" WHILE THE MODEL IS COLOUR-BLIND. A criterion because it
-// is exactly the label that drifts back in through a field name or a renderer.
-test("no result field says castable", () => {
+// C10, NOW A PERMISSION RATHER THAN A PROHIBITION (L4a, 2026-08-25). The word "castable" was banned
+// outright while the model was colour-blind. Colour is modelled now, so the rule is that the word may
+// appear on the ONE field that actually checks it and nowhere else -- which is the same guard, and
+// still the label that drifts back in through a field name or a renderer.
+test("only the colour-aware field may say castable", () => {
   const r = simulate([...basics(37), ...spells(62, 3)], { trials: 50, turns: 2, seed: 1 });
-  expect(Object.keys(r).join(" ")).not.toMatch(/castab/i);
+  const named = Object.keys(r).filter((k) => /castab/i.test(k));
+  expect(named).toEqual(["byCardCastable"]);
+  // The mana-only readouts keep their old names, because they still answer the old, narrower
+  // question: how much mana, not whether the colours line up.
+  expect(Object.keys(r)).toContain("byCard");
+  expect(Object.keys(r)).toContain("payableShareAt");
 });
 
 // THE REPORT WIRING (I11 step 5). This is where the refused quantities could leak into a headline,
@@ -289,4 +296,93 @@ test("a gated land is held until its gate is met, not played as a blank", () => 
   // A land that is a blank forever is still played once nothing else is left, so the fifth drop
   // arrives on schedule and turns the whole pile on.
   expect(pAtLeastMana(r, 5, 5)).toBeGreaterThan(0.9);
+});
+
+// ---------------------------------------------------------------------------------------------
+// L4a — COLOUR-AWARE CASTABILITY. Criteria registered in the design spec (§T.4) BEFORE any number
+// existed. `castability.ts` refuses to multiply its mana and colour axes because both are driven by
+// the same lands; asking the BOARD removes the question entirely.
+// ---------------------------------------------------------------------------------------------
+
+const dual = (n: number, name: string, colors: string[]): DeckCard[] =>
+  Array.from({ length: n }, (_, i) => ({
+    card: { name: `${name} ${i}`, typeLine: `Land — ${name}`, oracleText: "{T}: Add one mana of any color.", keywords: [], colors: [], manaValue: 0, producedMana: colors } as never,
+    tags: null,
+  }));
+const spell = (n: number, name: string, manaCost: string, manaValue: number): DeckCard[] =>
+  Array.from({ length: n }, (_, i) => ({
+    card: { name: `${name} ${i}`, typeLine: "Sorcery", oracleText: "", keywords: [], colors: [], manaValue, manaCost } as never,
+    tags: null,
+  }));
+
+test("parseCost reads a hybrid pip as EITHER colour, which is why pipsByColor is not reused", () => {
+  expect(parseCost("{2}{B}{B}")).toEqual({ total: 4, pips: [colorMask(["B"]), colorMask(["B"])] });
+  // `pipsByColor` counts {B/R} against BOTH black and red -- right for "does the deck have sources",
+  // wrong for "can this board pay". Here it is ONE pip that either colour satisfies.
+  expect(parseCost("{B/R}")).toEqual({ total: 1, pips: [colorMask(["B", "R"])] });
+  // {C} is a cost this model pays with anything: it reaches no colour.
+  expect(parseCost("{C}")).toEqual({ total: 1, pips: [] });
+  // An X cost is not a number, and `castability.ts` refuses it too.
+  expect(parseCost("{X}{R}")).toBeNull();
+  expect(parseCost(undefined)).toBeNull();
+});
+
+test("payable is a feasibility question, not a product of per-pip probabilities", () => {
+  const W = colorMask(["W"]), U = colorMask(["U"]), WU = colorMask(["W", "U"]);
+  const cost = parseCost("{U}{U}")!;
+  // Two Islands pay {U}{U}; one Island and one Plains do not, though both boards have two mana.
+  expect(payable([{ mana: 1, colors: U }, { mana: 1, colors: U }], cost)).toBe(true);
+  expect(payable([{ mana: 1, colors: U }, { mana: 1, colors: W }], cost)).toBe(false);
+  // A DUAL IS ONE MANA, NOT TWO. Two duals pay {U}{U}; one dual cannot, which is the exact error a
+  // per-pip probability makes when it counts the same land against both pips.
+  expect(payable([{ mana: 1, colors: WU }, { mana: 1, colors: WU }], cost)).toBe(true);
+  expect(payable([{ mana: 2, colors: 0 }, { mana: 1, colors: WU }], cost)).toBe(false);
+  // Sol Ring pays GENERIC and no coloured pip: colourless is the empty mask, not a sixth colour.
+  expect(payable([{ mana: 2, colors: 0 }, { mana: 1, colors: U }], parseCost("{2}{U}")!)).toBe(true);
+  expect(payable([{ mana: 2, colors: 0 }], parseCost("{1}{U}")!)).toBe(false);
+});
+
+test("C1/C2/C3: the colour model is an anchor, a bound and a discriminator", () => {
+  const anyColor = ["W", "U", "B", "R", "G"];
+  const bolt = spell(50, "Bolt", "{R}{R}{R}", 3);
+
+  // C1, THE NO-OP ANCHOR. With every source able to make every colour, the colour-aware answer is
+  // the mana-only one. A wiring error shows here first.
+  const rainbow = simulate([...dual(49, "City", anyColor), ...bolt], { trials: 4_000, turns: 4, seed: 4 });
+  expect(rainbow.byCardCastable.get("Bolt 0")).toEqual(rainbow.byCard.get("Bolt 0"));
+
+  // C3, THE DEFECT IT EXISTS FOR, WITH ITS OWN CONTROL. A deck whose lands make the wrong colour
+  // reads ZERO however much mana it has; the same deck in the right colour is unaffected.
+  const wrong = simulate([...dual(49, "Island", ["U"]), ...bolt], { trials: 4_000, turns: 4, seed: 4 });
+  const right = simulate([...dual(49, "Mountain", ["R"]), ...bolt], { trials: 4_000, turns: 4, seed: 4 });
+  expect(wrong.byCard.get("Bolt 0")![3]).toBeGreaterThan(0.5);      // the mana is there
+  expect(wrong.byCardCastable.get("Bolt 0")![3]).toBe(0);           // and it cannot cast it
+  expect(right.byCardCastable.get("Bolt 0")).toEqual(right.byCard.get("Bolt 0"));
+
+  // C2, THE BOUND, over every card and every turn with NO exceptions: colour can only take away.
+  for (const r of [rainbow, wrong, right]) {
+    for (const [name, curve] of r.byCardCastable) {
+      const mana = r.byCard.get(name)!;
+      curve.forEach((p, i) => expect(p).toBeLessThanOrEqual(mana[i]));
+    }
+  }
+});
+
+test("C4: a fetchland is a colour fixer AND a thinner", () => {
+  const tarn = "Sacrifice this land: Search your library for an Island or Mountain land card, put it onto the battlefield, then shuffle.";
+  const deckPrinted = [{ typeLine: "Land — Island", producedMana: ["U"] }, { typeLine: "Land — Mountain", producedMana: ["R"] }, { typeLine: "Land — Forest", producedMana: ["G"] }];
+  // It finds what it NAMES, against what this deck actually holds -- so it is a blue and red source
+  // and not a green one, and in a deck with no Mountain it would not be a red one either.
+  expect(fetchMask(tarn, deckPrinted)).toBe(colorMask(["U", "R"]));
+  expect(fetchMask(tarn, [{ typeLine: "Land — Island", producedMana: ["U"] }])).toBe(colorMask(["U"]));
+
+  // THINNING: the land it finds LEAVES the library, so a deck of fetches draws better than the same
+  // deck of blanks. Measured through the simulator rather than asserted.
+  const fetch = (i: number): DeckCard => ({
+    card: { name: `Tarn ${i}`, typeLine: "Land", oracleText: tarn, keywords: [], colors: [], manaValue: 0, producedMana: [] } as never,
+    tags: null,
+  });
+  const withFetch = simulate([...Array.from({ length: 20 }, (_, i) => fetch(i)), ...dual(20, "Island", ["U"]), ...spell(59, "Spell", "{U}", 1)], { trials: 4_000, turns: 3, seed: 6 });
+  // A fetch counts as a blue source through what it finds; without the colour read it would be 0.
+  expect(withFetch.byCardCastable.get("Spell 0")![2]).toBeGreaterThan(0.9);
 });
