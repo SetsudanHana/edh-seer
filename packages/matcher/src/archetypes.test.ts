@@ -1,11 +1,12 @@
 import { expect, test } from "vitest";
 import { detectArchetypes, dominantArchetype, type CardSignal } from "./archetypes.js";
 
-const sig = (name: string, opts: { themeTags?: string[]; effectKinds?: string[]; subtypes?: string[] }): CardSignal => ({
+const sig = (name: string, opts: { themeTags?: string[]; effectKinds?: string[]; subtypes?: string[]; cardTypes?: string[] }): CardSignal => ({
   name,
   themeTags: opts.themeTags ?? [],
   effectKinds: opts.effectKinds ?? [],
   subtypes: opts.subtypes ?? [],
+  ...(opts.cardTypes ? { cardTypes: opts.cardTypes } : {}),
 });
 
 test("a card with its own token-generation effect kind maps to tokens as primary", () => {
@@ -193,4 +194,32 @@ test("no archetype leads when the top confidence is under the floor", () => {
   // Goodstuff is the "nothing matched" row and never names a deck, whatever its confidence.
   expect(dominantArchetype([{ name: "goodstuff", label: "Goodstuff / Midrange", confidence: 0.9 }])).toBeUndefined();
   expect(dominantArchetype([])).toBeUndefined();
+});
+
+// M1 (2026-08-25, owner-reported): SUPERFRIENDS IS A CARD TYPE COUNT AND NOTHING ELSE. Every other
+// signature row keys on a MECHANISM, and this archetype has none — what makes a deck superfriends is
+// that a third of it is planeswalkers. A 21-walker Chandra deck was labelled TOKENS.
+test("a deck of planeswalkers is superfriends, and one or two walkers is not", () => {
+  const walkers = Array.from({ length: 20 }, (_, i) => sig(`Chandra ${i}`, { cardTypes: ["legendary", "planeswalker"] }));
+  const out = detectArchetypes(walkers, [], 64);
+  expect(out[0].name).toBe("superfriends");
+  expect(out[0].label).toBe("Superfriends");
+  expect(out[0].confidence).toBeCloseTo(20 / 64, 5);
+
+  // THE TRIPWIRE A11 REGISTERED. Every EDH deck runs a walker or two, and the existing
+  // ARCHETYPE_FLOOR (0.08) is what keeps those out — measured over the 71 decks, planeswalkers per
+  // deck are 0 on fifty, 1 on fourteen, 2 on five, then 18 and 21, so no new threshold was needed.
+  const incidental = [
+    sig("Lone Walker", { cardTypes: ["planeswalker"] }),
+    sig("Second Walker", { cardTypes: ["planeswalker"] }),
+    ...Array.from({ length: 8 }, (_, i) => sig(`Bear ${i}`, { effectKinds: ["token-generation"] })),
+  ];
+  expect(detectArchetypes(incidental, [], 64).map((r) => r.name)).not.toContain("superfriends");
+});
+
+// A TYPE-DEFINED ROW MUST NOT REACH A CARD WHOSE TYPES THE CALLER DID NOT COMPUTE. `cardTypes` is
+// optional, and a signal without it matches no type row rather than matching every one.
+test("a signal with no cardTypes matches no type-defined archetype", () => {
+  const out = detectArchetypes(Array.from({ length: 20 }, (_, i) => sig(`X ${i}`, {})), [], 64);
+  expect(out.map((r) => r.name)).not.toContain("superfriends");
 });

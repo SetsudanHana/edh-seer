@@ -2792,3 +2792,33 @@ describe("an opponent's permanent is not this deck's theme (K3a)", () => {
     expect([...cardThemeTags(card.tags!)]).toContain("dies:creature");
   });
 });
+
+// M2 (2026-08-25, owner-reported): A PLANESWALKER'S SUBTYPE IS A CHARACTER NAME, and the deck's
+// identity is the CARD TYPE. The A9 fan-out emits one key per subtype and the card-type key only
+// when there is no subtype — right for a creature (a Wizard deck wants `enters:wizard`, not
+// `enters:creature`) and wrong for a planeswalker. MEASURED: `mono-blue-plainswalker-control` runs
+// EIGHTEEN walkers, split them `enters:jace` 7 / `enters:teferi` 3, and headlined "jaces entering"
+// at cohesion 0.11 — a 7-card theme named over an 18-card deck.
+test("a planeswalker's own entry advertises its card type as well as its character", () => {
+  const walker = (name: string, subtype: string): CardTags => ({
+    oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["legendary", "planeswalker"], subtypes: [subtype], colors: [], identity: [], cmc: 4, power: null, toughness: null, token: false, keywords: [] },
+    abilities: [],
+  } as CardTags);
+
+  const tags = [...cardThemeTags(walker("Jace, the Mind Sculptor", "jace"))];
+  // ADDITIVE, NEVER A REPLACEMENT — planeswalker subtypes are real typal identities, so a payoff
+  // naming one still finds it.
+  expect(tags).toContain("enters:planeswalker");
+  expect(tags).toContain("enters:jace");
+  // A11's supertype key rides along unchanged.
+  expect(tags).toContain("enters:legendary");
+
+  // PLANESWALKER-ONLY, and the restraint is the design: pushing every card's type here would give
+  // every creature `enters:creature`, the universal-bucket failure three theme designs died on.
+  const wizard = base("Human Wizard", [], ["human", "wizard"]).tags;
+  const creatureTags = [...cardThemeTags(wizard)];
+  expect(creatureTags).toContain("enters:human");
+  expect(creatureTags).toContain("enters:wizard");
+  expect(creatureTags).not.toContain("enters:creature");
+});

@@ -703,6 +703,10 @@ export function analyzeDeckStructured(
       subtypes: (dc.tags!.characteristics?.subtypes ?? []).filter(
         (s) => s === "equipment" || (s === "aura" && /enchant creature/i.test(dc.card.oracleText)),
       ),
+      // The type COUNT half, for the one archetype no mechanism defines — see ARCHETYPE_SIGNATURE's
+      // `superfriends` row. Read off the derived characteristics, which is where every other field
+      // here comes from, so a card with no tags contributes nothing rather than a guess.
+      cardTypes: (dc.tags!.characteristics?.types ?? []).map((t) => t.toLowerCase()),
     }));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);

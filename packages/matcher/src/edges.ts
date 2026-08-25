@@ -128,6 +128,25 @@ function impliedEntryThemeTags(tags: CardTags): string[] {
       // `selfSubject` carries and is out of scope by construction: it appears only on LANDS, whose
       // own entry is already excluded above.
       if (n.subject.legendary === true) keys.push("legendary");
+      // A PLANESWALKER'S SUBTYPE IS A CHARACTER NAME, AND THE DECK'S IDENTITY IS THE CARD TYPE
+      // (roadmap M2, owner-reported 2026-08-23). The A9 fan-out above emits one key per subtype and
+      // the card-type key only when there is NO subtype, which is right for a creature — a Wizard
+      // deck wants `enters:wizard`, not `enters:creature` — and wrong for a planeswalker, whose
+      // subtype is Chandra or Jace. MEASURED: `mono-blue-plainswalker-control` runs EIGHTEEN
+      // walkers and split them `enters:jace` 7 / `enters:teferi` 3, headlining "jaces entering" at
+      // cohesion 0.11 — a 7-card theme named over an 18-card deck.
+      //
+      // ADDITIVE, NEVER A REPLACEMENT. Planeswalker subtypes are real typal identities (the
+      // vocabulary work emits them separately for exactly that reason, and Chandra tribal exists),
+      // so `enters:chandra` survives beside `enters:planeswalker` and a payoff that names one still
+      // finds it. What changes is that a deck of MIXED walkers now has one tag to count.
+      //
+      // PLANESWALKER-ONLY, and the restraint is the whole design. Pushing every card's type here
+      // would give every creature `enters:creature`, which is the universal-bucket failure three
+      // theme designs have already died on.
+      if ((tags.characteristics.types ?? []).some((t) => t.toLowerCase() === "planeswalker")) {
+        keys.push("planeswalker");
+      }
       return [...new Set(keys)].map((k) => zoneEventKey(n.verb, n.subject.zone, k));
     });
 }

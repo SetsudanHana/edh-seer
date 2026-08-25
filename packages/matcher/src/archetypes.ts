@@ -19,6 +19,7 @@ export type Archetype =
   | "counters"
   | "voltron"
   | "combo"
+  | "superfriends"
   | "goodstuff";
 
 export const ARCHETYPE_LABELS: Record<Archetype, string> = {
@@ -31,6 +32,7 @@ export const ARCHETYPE_LABELS: Record<Archetype, string> = {
   counters: "+1/+1 Counters",
   voltron: "Voltron",
   combo: "Combo",
+  superfriends: "Superfriends",
   goodstuff: "Goodstuff / Midrange",
 };
 
@@ -89,6 +91,11 @@ export interface CardSignal {
   effectKinds: string[];
   /** Voltron-relevant card subtypes: "equipment" always; "aura" only when it enchants a creature. */
   subtypes: string[];
+  /** The card's own CARD TYPES, lowercased. The one archetype defined by a type COUNT rather than by
+   *  a mechanism needs it, and no tag can express it: `ARCHETYPE_SIGNATURE` keys on theme tags,
+   *  effect kinds and subtypes, and "this deck runs 21 planeswalkers" is none of those. Optional so
+   *  a caller that does not compute it simply matches no type-defined row. */
+  cardTypes?: string[];
 }
 
 /** Each archetype's DEFINING own-card mechanism. Deliberately tight and mostly disjoint:
@@ -113,6 +120,18 @@ export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, ArchetypeSignature>>
   reanimator: { effectKinds: ["graveyard-recursion", "animate"] },
   counters: { tags: ["proliferate:any"], effectKinds: ["counter-placement", "enters-with-counters", "proliferate"] },
   voltron: { subtypes: ["equipment", "aura"] },
+  // SUPERFRIENDS IS A CARD TYPE COUNT AND NOTHING ELSE (roadmap M1, owner-reported 2026-08-23). A
+  // 21-planeswalker deck read as "wins by damage or drain" with no planeswalker label in existence,
+  // because every other row here keys on a MECHANISM and this archetype has none: what makes a deck
+  // superfriends is that a third of it is planeswalkers.
+  //
+  // NO NEW THRESHOLD, and that is the measurement rather than a convenience. Planeswalkers per deck
+  // across the 71 are 0 on FIFTY decks, 1 on fourteen, 2 on five — and then 18 and 21. The most any
+  // non-superfriends deck runs is 2 (3.4% of its nonlands) against 28.1% and 32.8% for the two real
+  // ones, so every threshold between them gives the identical answer and `ARCHETYPE_FLOOR` (0.08)
+  // already separates them by a factor of eight. The A11 tripwire — cap how many of the 71 it may
+  // top, then measure — is satisfied with the widest margin any archetype here has.
+  superfriends: { cardTypes: ["planeswalker"] },
 };
 
 /** A token that is MANA OR A CARD, not a board presence. Making a Treasure is ramp: the go-wide
@@ -138,6 +157,10 @@ export interface ArchetypeSignature {
   tags?: string[];
   effectKinds?: string[];
   subtypes?: string[];
+  /** Card types the archetype is DEFINED BY, matched against `CardSignal.cardTypes`. The only row
+   *  using it is superfriends, and it exists because that archetype is a type COUNT and nothing
+   *  else — see the row for the measurement. */
+  cardTypes?: string[];
   /** The archetype is its PAYOFFS, so a card matching only on the supply side counts at
    *  `PRODUCER_SHARE` rather than full. Set per row, with the measurement in the comment beside it
    *  -- most archetypes are supply-defined (a token maker MAKES tokens, a reanimation spell DOES
@@ -153,7 +176,8 @@ function matchesSignature(signal: CardSignal, sig: ArchetypeSignature): boolean 
     ) ?? false;
   const kindHit = sig.effectKinds?.some((k) => signal.effectKinds.includes(k)) ?? false;
   const subtypeHit = sig.subtypes?.some((s) => signal.subtypes.includes(s)) ?? false;
-  return tagHit || kindHit || subtypeHit;
+  const typeHit = sig.cardTypes?.some((t) => (signal.cardTypes ?? []).includes(t)) ?? false;
+  return tagHit || kindHit || subtypeHit || typeHit;
 }
 
 /** Whether the signature is satisfied by what the card WANTS, as opposed to what it supplies. */
