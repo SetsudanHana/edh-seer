@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
-import { deriveAbilities, deriveCardTags, textForClause } from "./derive.js";
+import { describe, expect, it, test } from "vitest";
+import { deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import type { Characteristics } from "../schema.js";
 
 test("one ability per action, sharing the clause kind and trigger", () => {
@@ -1631,4 +1631,55 @@ test("a counter trigger whose subject says the counters were removed is refused,
   }], "Whatever");
   expect(added.unknownTriggers).not.toContain("counter-removed");
   expect(added.abilities.some((a) => a.trigger?.verbs?.includes("counter-added"))).toBe(true);
+});
+
+/** ROADMAP I7. A permanent entering under a controller the schema cannot name claims nothing. */
+describe("entersUnderAnotherPlayer", () => {
+  it("fires on Chaos Warp — the owner of the target gets the random top card", () => {
+    expect(entersUnderAnotherPlayer(
+      "The owner of target permanent shuffles it into their library, then reveals the top card of "
+      + "their library. If it's a permanent card, they put it onto the battlefield.",
+    )).toBe(true);
+  });
+
+  it("fires on the its-controller-fetches-a-basic cycle", () => {
+    expect(entersUnderAnotherPlayer(
+      "Exile target creature. Its controller may search their library for a basic land card, put "
+      + "that card onto the battlefield tapped, then shuffle.",
+    )).toBe(true);
+  });
+
+  it("REFUSES to fire when the card says the permanent enters under YOUR control", () => {
+    // Curse of Unbinding: revealed off the enchanted player's library, but yours on the battlefield.
+    expect(entersUnderAnotherPlayer(
+      "At the beginning of enchanted player's upkeep, that player reveals cards from the top of "
+      + "their library until they reveal a creature card. Put that card onto the battlefield under "
+      + "your control.",
+    )).toBe(false);
+  });
+
+  it("REFUSES to fire when the card also searches YOUR library — two puts, one of them real", () => {
+    // Demolition Field. The clause layer records no owner per action, so a card-level refusal would
+    // delete the real half; over-claiming on one card beats deleting a true claim.
+    expect(entersUnderAnotherPlayer(
+      "Destroy target nonbasic land an opponent controls. That land's controller may search their "
+      + "library for a basic land card, put it onto the battlefield, then shuffle. You may search "
+      + "your library for a basic land card, put it onto the battlefield, then shuffle.",
+    )).toBe(false);
+  });
+
+  it("does not fire on 'each player', which names no antecedent controller", () => {
+    // Field of Ruin: "each player" includes YOU, so you really do get a basic.
+    expect(entersUnderAnotherPlayer(
+      "Destroy target nonbasic land an opponent controls. Each player searches their library for a "
+      + "basic land card, puts it onto the battlefield, then shuffles.",
+    )).toBe(false);
+  });
+
+  it("does not fire on a search of your OWN library", () => {
+    expect(entersUnderAnotherPlayer(
+      "Return this land to its owner's hand: Search your library for a Gate card, put it onto the "
+      + "battlefield, then shuffle.",
+    )).toBe(false);
+  });
 });

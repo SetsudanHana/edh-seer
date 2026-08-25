@@ -25,7 +25,44 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 80;
+export const DERIVE_VERSION = 81;
+
+/** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
+ *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
+ *  ANOTHER PLAYER'S library (roadmap I7).
+ *
+ *  WHY IT IS A REFUSAL AND NOT A BETTER `control` VALUE. `SubjectFilter.control` is {you, opp, any}
+ *  and the printed fact is "whoever owns the target", which is none of them — Chaos Warp aimed at
+ *  your own permanent gives YOU the new one. `any` is the worst of the three, because
+ *  `matcher/subject.ts` reads it as a PERMISSION: it satisfies a `you` demand and an `opp` demand
+ *  alike, so Chaos Warp claimed to put every creature in your deck onto the battlefield. Measured on
+ *  `eggman`: thirteen rows of the shape "When Coalstoke Gearhulk enters thanks to Chaos Warp, it
+ *  brings a card back", which is false twice over — the card that enters is a RANDOM top card, and
+ *  it enters under the target owner's control. Same resolution `replacement.restricted` and C7's
+ *  `SubjectFilter.restricted` both reached: keep the ability, claim no cards.
+ *
+ *  TWO EXCLUSIONS, EACH FOUND BY READING A CARD THAT WOULD OTHERWISE LOSE A REAL CLAIM:
+ *  - "under your control" — Curse of Unbinding reveals off the ENCHANTED PLAYER's library and then
+ *    says "Put that card onto the battlefield under your control". The creature really is yours.
+ *  - "your library" — Demolition Field and Tempt with Discovery each have TWO puts, one off an
+ *    opponent's library and one off yours, and the clause layer records no owner per action, so a
+ *    card-level refusal would delete the real half. Over-claiming on one card beats deleting a true
+ *    claim, which is the correct direction when REMOVING.
+ *  "Each player searches their library" (Field of Ruin) falls out for free: it names no antecedent
+ *  controller, so the first cue never fires on it.
+ *
+ *  MEASURED: 73 corpus cards match the library half and 8 are derived; the exclusions take it to
+ *  FIVE — Chaos Warp, Cleansing Wildfire, Assassin's Trophy, Sundering Eruption and Path to Exile —
+ *  sitting in 26, 1, 2, 21 and 6 of the 71 decks. */
+const ANTECEDENT_CONTROLLER =
+  /\b(?:the owner of|its owner|its controller|that (?:land's |permanent's |creature's )?controller|that player)\b/i;
+const FROM_THEIR_LIBRARY =
+  /their librar(?:y|ies)[^.]{0,120}?\.?[^.]{0,120}?puts? (?:it|them|that card|those cards) onto the battlefield/i;
+
+export function entersUnderAnotherPlayer(cardText: string): boolean {
+  if (!ANTECEDENT_CONTROLLER.test(cardText) || !FROM_THEIR_LIBRARY.test(cardText)) return false;
+  return !/under your control/i.test(cardText) && !/your librar(?:y|ies)/i.test(cardText);
+}
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -839,7 +876,10 @@ export function deriveAbilities(
         // A multiplier performs nothing. Every emit of the clause goes, not only the one matching
         // the replaced event: Academy Manufactor's clause answers `create` three times and creates
         // a token on its own none of those times.
-        .filter(() => replacement === null);
+        .filter(() => replacement === null)
+        // ROADMAP I7. The permanent arrives under a controller the schema cannot name, so the emit
+        // claims nothing rather than claiming everyone. See `entersUnderAnotherPlayer`.
+        .filter((e) => !(e.verb === "enters" && entersUnderAnotherPlayer(cardText)));
       if (emitsSelf) for (const e of emits) e.subject.self = true;
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
