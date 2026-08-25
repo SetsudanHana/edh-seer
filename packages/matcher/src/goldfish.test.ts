@@ -274,3 +274,19 @@ test("a land that is every land type answers a subtype check by itself", () => {
   expect(pAtLeastMana(withNexus, 4, 2)).toBeGreaterThan(0.2);
   expect(pAtLeastMana(withBasics, 3, 2)).toBe(0);
 });
+
+test("a gated land is held until its gate is met, not played as a blank", () => {
+  // OWNER'S POLICY, 2026-08-25: Temple of the False God is your FIFTH land and no earlier. A deck of
+  // four Forests and 95 Temples must play the Forests first -- playing a Temple on turn 1 is a land
+  // drop that produces nothing at all.
+  const temple = (i: number): DeckCard =>
+    card(`Temple ${i}`, "Land", 0, "{T}: Add {C}{C}. Activate only if you control five or more lands.");
+  const deck = [...basics(4), ...Array.from({ length: 95 }, (_, i) => temple(i))];
+  const r = simulate(deck, { trials: 5_000, turns: 5, seed: 9 });
+  // Every Forest in the opening seven or the first draws goes down first, so early turns still make
+  // mana. Held wrongly, a trial that opens on Temples reads 0 here.
+  expect(pAtLeastMana(r, 1, 1)).toBeGreaterThan(0.2);
+  // A land that is a blank forever is still played once nothing else is left, so the fifth drop
+  // arrives on schedule and turns the whole pile on.
+  expect(pAtLeastMana(r, 5, 5)).toBeGreaterThan(0.9);
+});

@@ -311,12 +311,22 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       const drawn = library.shift();
       if (drawn) hand.push(drawn);
 
-      // Rule 2: one land per turn, preferring whichever enters UNTAPPED given the board right now.
-      // GREEDY AND OCCASIONALLY WRONG — a player with spare mana banks the untapped land and plays
-      // the tapped one first. Direction pessimistic, and small.
+      // Rule 2: one land per turn, preferring whichever enters UNTAPPED given the board right now —
+      // and never a land whose own gate is unmet, because that is not a land drop, it is a blank.
+      // TEMPLE OF THE FALSE GOD IS PLAYED AS YOUR FIFTH LAND (owner, 2026-08-25) and no earlier: it
+      // taps for nothing under five lands, so playing it turn one costs a whole turn of mana. The
+      // gate counts the land itself, hence `lands.length + 1`.
+      // GREEDY AND OCCASIONALLY WRONG BEYOND THAT — a player with spare mana banks the untapped land
+      // and plays the tapped one first. Direction pessimistic, and small.
       const board = boardFor(lands, pod);
-      const landIdx = hand.findIndex((c) => c.isLand && c.land && !entersTapped(c.land, board));
-      const idx = landIdx >= 0 ? landIdx : hand.findIndex((c) => c.isLand);
+      const blank = (c: DeckSlot): boolean =>
+        c.output.needsLands !== undefined && lands.length + 1 < c.output.needsLands;
+      const live = (c: DeckSlot): boolean => c.isLand && !blank(c);
+      const idx = [
+        hand.findIndex((c) => live(c) && c.land !== undefined && !entersTapped(c.land, board)),
+        hand.findIndex(live),
+        hand.findIndex((c) => c.isLand),
+      ].find((i) => i >= 0) ?? -1;
       if (idx >= 0) {
         const played = hand.splice(idx, 1)[0];
         lands.push({
