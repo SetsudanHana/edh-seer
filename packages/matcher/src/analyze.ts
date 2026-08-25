@@ -46,6 +46,7 @@ import { deckBracket } from "./brackets.js";
 import { unmetLandConditions } from "./land-conditions.js";
 import { commanderDamage } from "./commander-damage.js";
 import { manaAvailability } from "./goldfish.js";
+import { deckLegality } from "./legality.js";
 
 /**
  * Structured-engine counterpart of `@mtg/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -824,6 +825,12 @@ export function analyzeDeckStructured(
     // it — including one in the shuffle would both dilute the draw and pretend it can be drawn.
     // FEEDS NO SCORE, which is the condition the K7/J7 reconciliation holds under.
     manaAvailability: manaAvailability(resolved.filter((dc) => !commanderSet.has(dc.card.name))),
+    // CR 903.3 and 903.5a-d, as a REPORT (roadmap J4). `resolved` is one entry per COPY, which is
+    // what the size and duplicate rules count. Feeds no score and refuses nothing.
+    legality: deckLegality({
+      cards: resolved.map((dc) => dc.card),
+      commanders: resolved.filter((dc) => commanderSet.has(dc.card.name)).map((dc) => dc.card),
+    }),
     archetypes,
     strategies,
     buildScore,

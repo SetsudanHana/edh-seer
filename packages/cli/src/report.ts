@@ -210,6 +210,20 @@ export function formatReport(report: DeckReport, trim = 0): string {
     }
   }
 
+  // DECK LEGALITY AS A REPORT, NEVER A GATE (roadmap J4, CR 903.3 / 903.5a-d). A partial paste is a
+  // normal thing to hand this tool, so refusing to analyse would be the wrong failure direction —
+  // the same ruling `cutCandidates` ships. Silence means nothing was FOUND, not that the deck is
+  // legal: four rules are checked and the format has more.
+  if (report.legality && report.legality.length > 0) {
+    lines.push("");
+    lines.push("=== Against the format ===");
+    for (const l of report.legality) {
+      lines.push(`  ${l.detail}`);
+      if (l.cards.length > 0) lines.push(`      ${l.cards.slice(0, 8).join(" · ")}${l.cards.length > 8 ? ` … and ${l.cards.length - 8} more` : ""}`);
+    }
+    lines.push("  (four rules of many — this is a report, not a verdict, and nothing here stops the analysis)");
+  }
+
   // MANA AVAILABILITY (roadmap I11's report wiring). A SIMULATION, NOT A FORMULA, and an INTERVAL
   // rather than a point because the model's own falsifier fired: policy sensitivity measured 27.6pp
   // against a 32.7pp median ramp signal, so this is a POLICY property at deck scale. Both ends or

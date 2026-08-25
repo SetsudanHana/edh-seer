@@ -332,6 +332,11 @@ export interface DeckReport {
     theme: string; tag: string; count: number; cards: string[];
     fromCommandZone: string[]; turn: number; k: number; probability: number;
   } | null;
+  /** What is off about this deck against CR 903.3 and 903.5a-d (roadmap J4). A REPORT and never a
+   *  gate — a partial paste is a normal thing to hand this tool. An EMPTY list means nothing was
+   *  found, never "the deck is legal": four rules are checked and the format has more. Defined in
+   *  `matcher/src/legality.ts`; feeds no score. */
+  legality?: { rule: string; detail: string; cards: string[] }[];
   /** Mana availability from a seeded goldfish simulation (roadmap I11's report wiring).
    *
    *  AN INTERVAL AND NEVER A POINT — the model's own falsifier fired, so what ships is the pair of
