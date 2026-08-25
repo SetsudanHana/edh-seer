@@ -181,7 +181,9 @@ export function computeDeckMath(
   // zero mana, so a CAST probability is the wrong question for it — and saying so beside the number
   // is the honest surface while the derive fix (J10) is unbuilt. Measured: exactly 1 of the 75
   // commanders across the 71 calibration decks carries such a cue, and it is Inalla; 89 corpus
-  // cards print one.
+  // cards print one. RE-MEASURED 2026-08-25 (roadmap J10): this cue matches **84** corpus cards, not
+  // the 89 written here originally — corpus drift, corrected in passing rather than left to the next
+  // audit. The 1-of-75 figure still holds, and it is still Inalla.
   const COMMAND_ZONE_CUE = /from the command zone|eminence|commander ninjutsu|in the command zone/i;
   const commanderRows = deck
     .filter((dc) => commanders.has(dc.card.name) && !dc.card.typeLine.toLowerCase().includes("land"))
