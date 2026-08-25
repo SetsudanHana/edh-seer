@@ -38,7 +38,10 @@ import { DEFAULT_POD_SIZE, opponents } from "./format.js";
  *    those six must be specific colours nothing here checks.
  *  - **ONE-SHOT MANA IS DROPPED, AND NOT OBVIOUSLY CONSERVATIVELY**: Big Score's Treasures PERSIST,
  *    and rituals really do enable a turn.
- *  - **ACCELERANT VALUE IS +1 FLAT.** Enduring Vitality scales with creatures; Sol Ring makes two.
+ *  - **A SOURCE IS WORTH WHAT IT TAPS FOR, since `manaOutput` (2026-08-25) — Sol Ring two, Thran
+ *    Dynamo three, assembled tron seven. What is STILL flat: a source whose output depends on a
+ *    board this model does not track. Enduring Vitality scales with creatures, Cabal Coffers with
+ *    Swamps, and a filter or karoo land is priced at its NET one on purpose.
  *  - **NO OPPONENT.** Nothing is Stax'd, countered or killed.
  *
  *  **THE WHOLE-ITEM FALSIFIER FIRED, AND THIS IS THE RECORDED OUTCOME (2026-08-25).** The design
@@ -112,11 +115,105 @@ export function classifyAccelerant(dc: DeckCard): Accelerant | null {
   return { name, manaValue, kind: /\bcreature\b/.test(line) ? "dork" : "rock" };
 }
 
+/** How much mana ONE activation nets, and the board condition it is gated on. Every source in this
+ *  model produced exactly ONE mana until this existed — a Forest, Sol Ring and an assembled Urza's
+ *  Tower alike — so the whole ramp curve was priced off the COUNT of sources rather than their
+ *  output. Sol Ring alone sits in 52 of the 71 decks.
+ *
+ *  READ FROM PRINTED TEXT, like `classifyAccelerant` beside it, so the play policy never moves when
+ *  derivation does. */
+export interface ManaOutput {
+  /** The unconditional amount. 1 for an ordinary source. */
+  amount: number;
+  /** `Temple of the False God`: "Activate only if you control five or more lands". */
+  needsLands?: number;
+  /** The tron shape: two named other lands on the board upgrade the amount.
+   *
+   *  DRAWING THE TRIO IS NOT HOW TRON ASSEMBLES, and the first cut of this branch missed it and
+   *  measured zero. Three NAMED singletons among the 13 cards a turn-6 trial has seen is
+   *  (13x12x11)/(99x98x97) = 0.18% — but PLANAR NEXUS is "every nonbasic land type", so one card is
+   *  an Urza's Mine AND an Urza's Power-Plant at once, and it sits in 6 of the 7 tron decks.
+   *  `everyLandType` is what makes the branch reachable. Prismatic Omen is deliberately NOT it:
+   *  every BASIC land type does not include Urza's. */
+  tron?: { subtypes: [string, string]; amount: number };
+}
+
+/** MANA IN A COST STRING. `{2}` is two, `{U}` is one, `{T}` is none — because "{1}, {T}: Add {U}{B}"
+ *  is ONE mana and reading the Add run alone prices it at two. The first count over this corpus made
+ *  exactly that mistake and reported 27 lands where the answer is 9. */
+const TAP_ONLY = /^\{t\}:\s*add\s/i;
+const ADD_RUN = /add ((?:\{[^}]+\}\s*)+)/i;
+const SYMBOLS = /\{[^}]+\}/g;
+/** Mana this model cannot spend correctly. It is COLOUR-BLIND (C10), so a restriction it cannot
+ *  check must not be counted at face value — Jegantha taps for five that pay no generic cost. */
+const RESTRICTED = /spend this mana only|can't be spent|this mana can't/i;
+/** A karoo returns a land as it enters, so tapping for two off one fewer land is NET NEUTRAL and
+ *  the incumbent 1 is already right. Counting it 2 without modelling the bounce over-claims. */
+const BOUNCES = /return a land you control to its owner's hand/i;
+const LAND_GATE = /activate only if you control (\w+) or more lands/i;
+/** "If you control an Urza's Power-Plant and an Urza's Tower, add {C}{C}{C} instead." Matched on the
+ *  SUBTYPE as printed inside the sentence, which is what the board carries — and the subtype is
+ *  `Urza's Power-Plant` with a hyphen while the CARD is `Urza's Power Plant` without one. */
+const TRON = /if you control (?:an?|the) ([^,]+?) and (?:an?|the) ([^,]+?), add ((?:\{[^}]+\})+) instead/i;
+/** A land that IS every land type, so it answers any subtype check on the board by itself — Planar
+ *  Nexus, and Omo's everything counter one layer out of reach. BASIC-ONLY IS REFUSED: Prismatic
+ *  Omen's "every basic land type" does not include Urza's, which is the whole point of the check. */
+const EVERY_LAND_TYPE = /\bis every (?:nonbasic )?land type\b/i;
+export function isEveryLandType(typeLine: string | undefined, oracleText: string | undefined): boolean {
+  return /\bland\b/i.test(typeLine ?? "") && EVERY_LAND_TYPE.test(oracleText ?? "");
+}
+
+const WORD_NUMBER: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+};
+
+export function manaOutput(oracleText: string | undefined): ManaOutput {
+  const text = oracleText ?? "";
+  if (BOUNCES.test(text)) return { amount: 1 };
+  let out: ManaOutput = { amount: 1 };
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    // The cost must be EXACTLY {T}. A sacrifice, a counter removal or a loyalty cost is not a tap
+    // this model can pay, and a mana cost is what makes a filter land a one-mana land.
+    if (!TAP_ONLY.test(line) || RESTRICTED.test(line)) continue;
+    const run = ADD_RUN.exec(line);
+    if (!run) continue;
+    const amount = (run[1].match(SYMBOLS) ?? []).length;
+    const gate = LAND_GATE.exec(line);
+    const tron = TRON.exec(line);
+    const here: ManaOutput = {
+      amount,
+      ...(gate && WORD_NUMBER[gate[1].toLowerCase()] ? { needsLands: WORD_NUMBER[gate[1].toLowerCase()] } : {}),
+      ...(tron ? { tron: { subtypes: [tron[1].trim(), tron[2].trim()], amount: (tron[3].match(SYMBOLS) ?? []).length } } : {}),
+    };
+    // A gated line only wins if it beats what the card already makes unconditionally.
+    const bestOf = (o: ManaOutput): number => Math.max(o.amount, o.tron?.amount ?? 0);
+    if (bestOf(here) > bestOf(out)) out = here;
+  }
+  return out;
+}
+
+/** What a source taps for right now. */
+function produced(o: ManaOutput, lands: readonly OnBoardLand[]): number {
+  if (o.tron) {
+    const has = (s: string): boolean =>
+      lands.some((l) => l.everyLandType || l.typeLine.toLowerCase().includes(s.toLowerCase()));
+    if (o.tron.subtypes.every(has)) return o.tron.amount;
+  }
+  // ZERO, not one. "Activate only if you control five or more lands" means Temple of the False God
+  // taps for NOTHING below the gate — the incumbent priced it at one, which is a land that does not
+  // exist for the first four turns of every game.
+  if (o.needsLands !== undefined && lands.length < o.needsLands) return 0;
+  return o.amount;
+}
+
 interface DeckSlot {
   name: string;
   manaValue: number;
   typeLine: string;
   isLand: boolean;
+  output: ManaOutput;
+  everyLandType: boolean;
   land?: LandCondition;
   accelerant?: Accelerant | null;
 }
@@ -157,7 +254,7 @@ export interface SimulateResult {
 }
 
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
-interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string }
+interface OnBoardLand { cond: LandCondition; enteredTurn: number; enteredTapped: boolean; typeLine: string; output: ManaOutput; everyLandType: boolean }
 
 function boardFor(lands: OnBoardLand[], pod: number): { lands: number; basics: number; types: Set<string>; opponents: number } {
   const types = new Set<string>();
@@ -184,6 +281,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       manaValue: dc.card.manaValue ?? 0,
       typeLine: dc.card.typeLine ?? "",
       isLand,
+      output: manaOutput(dc.card.oracleText),
+      everyLandType: isEveryLandType(dc.card.typeLine, dc.card.oracleText),
       ...(isLand ? { land: classifyLand(dc.card) } : { accelerant: classifyAccelerant(dc) }),
     };
   });
@@ -203,8 +302,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     }
     const hand: DeckSlot[] = library.splice(0, 7);
     const lands: OnBoardLand[] = [];
-    const rocks: number[] = [];   // the turn each landed
-    const dorks: number[] = [];
+    const rocks: { turn: number; mana: number }[] = [];   // the turn each landed, and what it taps for
+    const dorks: { turn: number; mana: number }[] = [];
 
     for (let turn = 1; turn <= turns; turn++) {
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
@@ -225,15 +324,17 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           enteredTurn: turn,
           enteredTapped: entersTapped(played.land!, board),
           typeLine: played.typeLine,
+          output: played.output,
+          everyLandType: played.everyLandType,
         });
       }
 
       // A land contributes unless it entered TAPPED this very turn. A rock pays the turn it lands
       // (CR 302.6); a dork waits one.
       const production = (): number =>
-        lands.filter((l) => !(l.enteredTapped && l.enteredTurn === turn)).length
-        + rocks.filter((r) => r <= turn).length
-        + dorks.filter((d) => d < turn).length;
+        lands.reduce((n, l) => n + (l.enteredTapped && l.enteredTurn === turn ? 0 : produced(l.output, lands)), 0)
+        + rocks.reduce((n, r) => n + (r.turn <= turn ? r.mana : 0), 0)
+        + dorks.reduce((n, d) => n + (d.turn < turn ? d.mana : 0), 0);
 
       // Rule 3: spend on accelerants, cheapest first, greedily. THIS RULE DOES NEARLY ALL THE WORK,
       // and it is what makes every output a ceiling: the owner's own decks hold mana up for
@@ -250,8 +351,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         const cast = hand.splice(best, 1)[0];
         pool -= cast.manaValue;
         const a = cast.accelerant!;
-        if (a.kind === "rock") { rocks.push(turn); pool += 1; }
-        else if (a.kind === "dork") dorks.push(turn);
+        const mana = produced(cast.output, lands);
+        if (a.kind === "rock") { rocks.push({ turn, mana }); pool += mana; }
+        else if (a.kind === "dork") dorks.push({ turn, mana });
         else {
           // A FETCHED LAND DOES NOT CONSUME THE LAND DROP — it is put onto the battlefield, not
           // played — and it follows its own tapped state, which the spell's text states.
@@ -259,7 +361,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
           // "a Forest" and the trial never chooses one. It counts as a LAND and as NEITHER a basic
           // nor a type, which is the pessimistic direction for every other conditional land on the
           // board: fewer suppliers means more of them enter tapped. Stated rather than guessed.
-          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true, typeLine: "" });
+          lands.push({ cond: { template: "none", subtypes: [], bounces: false }, enteredTurn: turn, enteredTapped: a.fetchTapped === true, typeLine: "", output: { amount: 1 }, everyLandType: false });
           if (a.fetchTapped !== true) pool += 1;
         }
       }

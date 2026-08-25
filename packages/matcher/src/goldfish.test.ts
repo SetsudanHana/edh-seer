@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { pAtLeast, seen } from "@mtg/engine";
 import type { DeckCard } from "./types.js";
-import { classifyAccelerant, manaAvailability, pAtLeastMana, quantiles, rng, simulate } from "./goldfish.js";
+import { classifyAccelerant, isEveryLandType, manaAvailability, manaOutput, pAtLeastMana, quantiles, rng, simulate } from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -183,4 +183,94 @@ test("the report shape is an INTERVAL on the cell the policy moves, and a median
   // C10 REACHES THE REPORT SHAPE TOO — the field name is exactly where a banned word creeps back in.
   expect(JSON.stringify(m)).not.toMatch(/castab/i);
   expect(m.accelerants).toBe(1);
+});
+
+// ---------------------------------------------------------------------------------------------
+// WHAT A SOURCE TAPS FOR. Every source in this model produced exactly one mana until `manaOutput`
+// existed — a Forest, Sol Ring and an assembled Urza's Tower alike. Sol Ring alone is in 52 of the
+// 71 decks. Oracle text below is quoted from the corpus, never recalled.
+// ---------------------------------------------------------------------------------------------
+
+test("manaOutput reads what one tap nets, and refuses what it cannot price", () => {
+  // The whole point: a rock that taps for two.
+  expect(manaOutput("{T}: Add {C}{C}.")).toEqual({ amount: 2 });
+  expect(manaOutput("{T}: Add {C}{C}{C}.")).toEqual({ amount: 3 });
+  // An ordinary source, and a card with no mana ability at all.
+  expect(manaOutput("({T}: Add {G}.)")).toEqual({ amount: 1 });
+  expect(manaOutput(undefined)).toEqual({ amount: 1 });
+
+  // A COST IS NOT FREE. A filter land pays one to make two, and a payment land pays {1} — both are
+  // ONE mana. Reading the Add run alone is what took the first count over this corpus from 9 lands
+  // to 27.
+  expect(manaOutput("{T}: Add {C}.\n{U/R}, {T}: Add {U}{U}, {U}{R}, or {R}{R}.")).toEqual({ amount: 1 });
+  expect(manaOutput("{1}, {T}: Add {U}{B}.")).toEqual({ amount: 1 });
+  // Nor is a sacrifice, a counter or a loyalty cost a tap this model can pay.
+  expect(manaOutput("{T}, Sacrifice a creature: Add {B}{B}.")).toEqual({ amount: 1 });
+  expect(manaOutput("Sacrifice a creature: Add {C}{C}.")).toEqual({ amount: 1 });
+  expect(manaOutput("+1: Add {R}{R}.")).toEqual({ amount: 1 });
+
+  // RESTRICTED MANA IS REFUSED, because this model is colour-blind (C10) and cannot check the
+  // restriction. Jegantha taps for five that pay no generic cost.
+  expect(manaOutput("{T}: Add {W}{U}{B}{R}{G}. This mana can't be spent to pay generic mana costs.")).toEqual({ amount: 1 });
+  expect(manaOutput("{T}: Add {C}{U}. Spend this mana only to activate abilities.")).toEqual({ amount: 1 });
+
+  // A KAROO IS NET NEUTRAL — it taps for two off one fewer land, and the bounce is not modelled, so
+  // counting it two over-claims. Rakdos Carnarium, verbatim.
+  expect(manaOutput("This land enters tapped.\nWhen this land enters, return a land you control to its owner's hand.\n{T}: Add {B}{R}.")).toEqual({ amount: 1 });
+
+  // Temple of the False God, verbatim: two mana, and NOTHING below five lands.
+  expect(manaOutput("{T}: Add {C}{C}. Activate only if you control five or more lands.")).toEqual({ amount: 2, needsLands: 5 });
+
+  // The tron shape. The SUBTYPE is `Urza's Power-Plant`, hyphenated, while the CARD is `Urza's
+  // Power Plant` without one — so the board is matched on the type line and never on the name.
+  expect(manaOutput("{T}: Add {C}. If you control an Urza's Mine and an Urza's Power-Plant, add {C}{C}{C} instead."))
+    .toEqual({ amount: 1, tron: { subtypes: ["Urza's Mine", "Urza's Power-Plant"], amount: 3 } });
+});
+
+test("a source's output reaches the board: tron assembles, Temple stays dark under five lands", () => {
+  const tron = (n: string, sub: string, others: [string, string], add: string): DeckCard[] =>
+    Array.from({ length: 33 }, (_, i) =>
+      card(`${n} ${i}`, `Land — ${sub}`, 0, `{T}: Add {C}. If you control an ${others[0]} and an ${others[1]}, add ${add} instead.`));
+  const deck = [
+    ...tron("Mine", "Urza's Mine", ["Urza's Power-Plant", "Urza's Tower"], "{C}{C}"),
+    ...tron("Plant", "Urza's Power-Plant", ["Urza's Mine", "Urza's Tower"], "{C}{C}"),
+    ...tron("Tower", "Urza's Tower", ["Urza's Mine", "Urza's Power-Plant"], "{C}{C}{C}"),
+  ];
+  const assembled = simulate(deck, { trials: 5_000, turns: 3, seed: 11 });
+  // Three land drops cap a plain deck at three mana. Assembled tron taps for seven off the same
+  // three drops, which is exactly the fact `manaWithRocks` and this model both used to miss.
+  expect(pAtLeastMana(assembled, 7, 3)).toBeGreaterThan(0.1);
+  expect(pAtLeastMana(simulate(basics(99), { trials: 5_000, turns: 3, seed: 11 }), 4, 3)).toBe(0);
+
+  // A GATE IS ZERO BELOW ITS THRESHOLD, not one. A deck of nothing but Temples makes no mana at all
+  // for four turns; the incumbent read one per Temple.
+  const temples = Array.from({ length: 99 }, (_, i) =>
+    card(`Temple ${i}`, "Land", 0, "{T}: Add {C}{C}. Activate only if you control five or more lands."));
+  const t = simulate(temples, { trials: 2_000, turns: 6, seed: 11 });
+  expect(pAtLeastMana(t, 1, 4)).toBe(0);
+  expect(pAtLeastMana(t, 10, 5)).toBe(1);
+});
+
+test("a land that is every land type answers a subtype check by itself", () => {
+  // Planar Nexus, verbatim — one card is an Urza's Mine AND an Urza's Power-Plant, which is how tron
+  // actually assembles in Commander. It sits in 6 of the 7 tron decks in the calibration corpus.
+  const nexusText = "This land is every nonbasic land type. (Nonbasic land types include Cave, Desert, Gate, Lair, Locus, Mine, Power-Plant, Sphere, Tower, and Urza's.)\n{T}: Add {C}.";
+  expect(isEveryLandType("Land", nexusText)).toBe(true);
+  // Prismatic Omen is REFUSED twice over: it is an enchantment, and every BASIC land type does not
+  // include Urza's.
+  expect(isEveryLandType("Enchantment", "Lands you control are every basic land type in addition to their other types.")).toBe(false);
+  expect(isEveryLandType("Land", "Lands you control are every basic land type in addition to their other types.")).toBe(false);
+  expect(isEveryLandType("Land", "{T}: Add {C}.")).toBe(false);
+
+  // Through the simulator: one Urza's Tower plus one Planar Nexus taps for three, and the same
+  // Tower with ordinary lands beside it taps for one.
+  const tower = (i: number): DeckCard =>
+    card(`Urza's Tower ${i}`, "Land — Urza's Tower", 0, "{T}: Add {C}. If you control an Urza's Mine and an Urza's Power-Plant, add {C}{C}{C} instead.");
+  const nexus = (i: number): DeckCard => card(`Planar Nexus ${i}`, "Land", 0, nexusText);
+  const half = (f: (i: number) => DeckCard): DeckCard[] => Array.from({ length: 50 }, (_, i) => f(i));
+  const withNexus = simulate([...half(tower), ...half(nexus)], { trials: 5_000, turns: 2, seed: 5 });
+  const withBasics = simulate([...half(tower), ...basics(50)], { trials: 5_000, turns: 2, seed: 5 });
+  // Two land drops: 1 + 3 with the Nexus beside the Tower, never more than 2 without it.
+  expect(pAtLeastMana(withNexus, 4, 2)).toBeGreaterThan(0.2);
+  expect(pAtLeastMana(withBasics, 3, 2)).toBe(0);
 });

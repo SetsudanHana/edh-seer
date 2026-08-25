@@ -102,6 +102,13 @@ export function cardCastability(
   });
 
   // A rock counts only for turns after its own -- a Signet cast on turn 2 is mana from turn 3.
+  //
+  // EVERY ROCK COUNTS ONE, AND SOL RING TAPS FOR TWO. `goldfish.ts` prices a source by what it
+  // actually taps for (`manaOutput`); this closed form cannot -- `pAtLeast` counts SUCCESSES among
+  // draws, and a source worth two mana is not a success worth two. Fixing it here means leaving the
+  // hypergeometric, which is what the simulator already is. The direction is UNDER-statement, so it
+  // stays inside `manaWithRocks`'s standing job of being the upper bound of an interval.
+  // ponytail: read the simulator when the rock count matters; this axis is a bound, not an answer.
   const rocks = library.filter(
     (dc) => !dc.card.typeLine.toLowerCase().includes("land")
       && isManaSource(dc)
