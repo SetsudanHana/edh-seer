@@ -71,6 +71,10 @@ export function formatReport(report: DeckReport, trim = 0): string {
     lines.push(`  ${pct(report.thing.probability)} to have ${report.thing.k} of them by turn ${report.thing.turn}`);
     if (report.thing.fromCommandZone.length > 0) {
       lines.push(`  plus ${report.thing.fromCommandZone.join(", ")} from the command zone, every game`);
+      // …AND "EVERY GAME" IS TRUE ONCE (CR 903.8, roadmap J5). The line invites being read as free
+      // and repeatable; the tax is what makes the second and third casts expensive, and nothing here
+      // models how often the commander dies.
+      if (report.commanderTax) lines.push(`    (${report.commanderTax.caveat})`);
     }
     lines.push("  (counts the cards on your main theme; it misses roughly one in six a player would count)");
     lines.push("");

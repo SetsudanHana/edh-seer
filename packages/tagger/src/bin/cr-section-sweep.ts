@@ -79,7 +79,7 @@ const STATUS: Record<string, Status> = {
   "801": { verdict: "N/A", note: "limited range of influence — not used in EDH" },
   "802": { verdict: "OPEN", note: "attack multiple players — the pressure clock accumulates against ONE opponent's 40" },
   "806": { verdict: "PARTIAL", note: "free-for-all is the EDH shape; pod analysis is a known blocked item" },
-  "903": { verdict: "PARTIAL", note: "COMMANDER — `SubjectFilter.commander` SHIPPED 2026-08-15 (a deck fact per 903.3, stamped by markCommander); commander tax, colour-identity legality and Partner/Background are still unmodelled", probe: /\b(a |your )commanders?\b(?! damage)/i },
+  "903": { verdict: "PARTIAL", note: "COMMANDER — `SubjectFilter.commander` SHIPPED 2026-08-15 (a deck fact per 903.3, stamped by markCommander); 903.5a-d LEGALITY shipped 2026-08-25 as a report (`legality.ts`, incl. colour identity and who may lead); 903.8 commander tax ships as a CAVEAT and not a number, because the tax follows how often the commander has DIED and nothing here simulates a game; Partner/Background pairing is still unmodelled (J12)", probe: /\b(a |your )commanders?\b(?! damage)/i },
 };
 
 /** Bands with no per-section verdict yet, stated as a band rather than faked one section at a time.

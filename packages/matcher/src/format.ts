@@ -29,3 +29,31 @@ export const MIN_POD_SIZE = 2;
 export function opponents(podSize: number = DEFAULT_POD_SIZE): number {
   return Math.max(MIN_POD_SIZE, Math.floor(podSize)) - 1;
 }
+
+/** CR 903.8 — THE COMMANDER TAX. Each previous cast FROM THE COMMAND ZONE adds {2} to the cost.
+ *
+ *  THE LARGEST UNMODELLED COST IN THE FORMAT, and it stays unmodelled on purpose (roadmap J5): the
+ *  tax is a function of how many times the commander has been CAST from the zone, which is a
+ *  function of how many times it has DIED — and nothing here simulates a game. The goldfish model
+ *  (I11) casts no removal and has no opponent, so it cannot answer it either.
+ *
+ *  SO WHAT SHIPS IS A CAVEAT, NOT A NUMBER, exactly as the item asked. A commander is priced at
+ *  **P = 1** in `availability.ts` and `deck-math.ts` and reported as "available every game", which is
+ *  TRUE and invites being read as free and repeatable. It is free ONCE. */
+export const COMMANDER_TAX_PER_CAST = 2;
+
+/** What the Nth cast from the command zone costs on top of the printed mana value. Zero for the
+ *  first. A function rather than a bare constant because the interesting figure is the TOTAL a
+ *  player has paid by the time they are casting it again, and every future reader of 903.8 wants
+ *  that rather than the increment. */
+export function commanderTax(castNumber: number): number {
+  return Math.max(0, Math.floor(castNumber) - 1) * COMMANDER_TAX_PER_CAST;
+}
+
+/** The sentence that goes beside the P = 1 figure. Shipped as DATA on the report rather than written
+ *  into each renderer: **no subpath of `@mtg/matcher` is safe to value-import from client code** — a
+ *  recorded critical regression (BuildBenchmarks.tsx, 2026-08-21) — so a shared constant is the only
+ *  way both surfaces can say the same thing without one of them drifting. */
+export const COMMANDER_TAX_CAVEAT =
+  `free the first time only — each recast from the command zone costs {${COMMANDER_TAX_PER_CAST}} more `
+  + "(CR 903.8), and nothing here models how often it dies";

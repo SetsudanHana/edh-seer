@@ -25,6 +25,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         thing={data.report.thing}
         commanderCast={data.report.deckMath?.castability.commanders}
         manaAvailability={data.report.manaAvailability}
+        commanderTax={data.report.commanderTax}
       />
       <HeadlineScores report={data.report} />
 

@@ -332,6 +332,12 @@ export interface DeckReport {
     theme: string; tag: string; count: number; cards: string[];
     fromCommandZone: string[]; turn: number; k: number; probability: number;
   } | null;
+  /** CR 903.8's commander tax, as a CAVEAT and not a number (roadmap J5). A commander is priced at
+   *  P = 1 and reported as "available every game", which is true and invites being read as free and
+   *  repeatable — it is free ONCE. The tax is a function of how many times the commander has died,
+   *  which nothing here simulates, so what ships is the sentence. Present only when the deck has a
+   *  commander; feeds no score. */
+  commanderTax?: { perCast: number; caveat: string };
   /** What is off about this deck against CR 903.3 and 903.5a-d (roadmap J4). A REPORT and never a
    *  gate — a partial paste is a normal thing to hand this tool. An EMPTY list means nothing was
    *  found, never "the deck is legal": four rules are checked and the format has more. Defined in

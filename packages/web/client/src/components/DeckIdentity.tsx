@@ -29,6 +29,7 @@ export function DeckIdentity({
   thing,
   commanderCast,
   manaAvailability,
+  commanderTax,
 }: {
   cohesion: DeckReport["cohesion"];
   colorIdentity?: string[];
@@ -39,6 +40,8 @@ export function DeckIdentity({
   /** Only to reconcile the two readouts of the same cell — never to render a second figure of its
    *  own; the mana-availability panel owns that. */
   manaAvailability?: DeckReport["manaAvailability"];
+  /** CR 903.8's caveat, shipped as data so this file and the CLI cannot drift apart. */
+  commanderTax?: DeckReport["commanderTax"];
 }) {
   if (!cohesion) return null;
   // The share is printed beside the label because the label alone is a bucket boundary: "focused"
@@ -117,6 +120,14 @@ export function DeckIdentity({
           <strong>{thing.count} cards</strong> do it · {Math.max(1, Math.round(thing.probability * 100))}% to have{" "}
           {thing.k} of them by turn {thing.turn}
           {thing.fromCommandZone.length > 0 ? `, plus ${thing.fromCommandZone.join(", ")} every game` : ""}
+          {/* "EVERY GAME" IS TRUE ONCE (CR 903.8, roadmap J5). The line invites being read as free
+              and repeatable; the tax is what makes the second and third casts expensive. The
+              sentence arrives as DATA rather than being written here, because no subpath of
+              `@mtg/matcher` is safe to value-import from client code — a recorded regression — and a
+              second copy of a sentence is how two surfaces start disagreeing. */}
+          {thing.fromCommandZone.length > 0 && commanderTax ? (
+            <span className="block text-xs text-(--muted)">{commanderTax.caveat}</span>
+          ) : null}
           <span className="block text-xs text-(--muted)">
             owner-judged 95% precise on what it lists; it misses roughly one in six a player would count
           </span>
