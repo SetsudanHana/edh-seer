@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 13;
+export const NORMALIZE_VERSION = 14;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -60,7 +60,7 @@ export const VOCAB_VERSION = 13;
  *  whole trigger list, so a doc answered at v13+ genuinely had every word and is correctly skipped,
  *  while everything below is still selected. No doc is de-selected by the change -- none exists at
  *  13 or above.  */
-export const TRIGGER_VOCAB_VERSION = 13;
+export const TRIGGER_VOCAB_VERSION = 14;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -212,6 +212,29 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // by design; their value is that an ability's own emits survive with honest timing.
   "untap-step", "declare-attackers", "declare-blockers", "end-of-combat", "cleanup",
   "initiative", "city-blessing",
+  // CR 602 — ACTIVATING AN ABILITY IS SOMETHING A PLAYER DOES, and "whenever you activate …" is
+  // therefore grammatical, exactly as it is for every keyword action in the block below. Added
+  // 2026-08-25 (roadmap M3).
+  //
+  // SIZED AGAINST THE GAME AND NOT AGAINST SUPERFRIENDS, per the 2026-08-15 completeness ruling:
+  // **36 corpus cards print an activation trigger and only 6 are loyalty-specific** — Burning-Tree
+  // Shaman, Harsh Mentor, Runic Armasaur, Illusionist's Bracers, Verrak, Ertha Jo. The loyalty
+  // reading is 17% of the family.
+  //
+  // AND THE ITEM'S PREMISE WAS WRONG IN THE USEFUL DIRECTION. The roadmap recorded "Chandra's
+  // Regulator derives `{kind: "triggered"}` with no trigger … and the gate refused rather than
+  // guessing". **The gate refused nothing**: all four normalized members answer
+  // `{event: "other", subject: "you activate a loyalty ability of a Chandra planeswalker"}` with
+  // `unknownTriggers: []`. The word was missing, so the model took the escape hatch and put the
+  // whole sentence in the subject — the same place the pipeline keeps leaving facts it has no slot
+  // for (`counter-removed`, `taps-for-mana`, `loses-the-game`, `damage-dealt`).
+  //
+  // IT MAPS TO NO ENGINE VERB, deliberately, and joins `search` / `becomes-target` / `unlocked` in
+  // that: nothing EMITS an activation today, so it forms no edges and surfaces in
+  // `unknownTriggers`. The value is that an unnameable clause stops being silently empty — M4
+  // measured this same channel at six supply emits and zero demand, and a visible refusal is what
+  // a future demand would be built against.
+  "activate",
   // A KEYWORD ACTION IS ALSO SOMETHING THAT HAPPENS. Found by the 2026-08-15 run itself: five cards
   // were REFUSED with `unknown-trigger-event` for a word that had just become a legal VERB and was
   // not in this list. Cards really do say "whenever a creature you control connives" (Iron Monger),
