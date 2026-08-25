@@ -1,14 +1,7 @@
 import { expect, test } from "vitest";
 import type { Reason } from "@mtg/engine";
 import { EFFECT_KINDS, VERB_VOCAB } from "@mtg/tagger";
-import {
-  MECHANISM_CATEGORIES,
-  CATEGORY_MATCH,
-  categoryMatches,
-  groupEdgesByArchetype,
-  MECHANISM_LABELS,
-  type MechanismCategory,
-} from "./mechanisms.js";
+import { CATEGORY_MATCH, MECHANISM_CATEGORIES, MECHANISM_LABELS, categoryDefines, categoryMatches, groupEdgesByArchetype, type MechanismCategory } from "./mechanisms.js";
 
 const reason = (over: Partial<Reason>): Reason => ({ tag: "", text: "", ...over });
 
@@ -153,4 +146,27 @@ test("a fetchland's top-manipulation reason is not a Graveyard Matters claim", (
   // graveyard claim and the kind cannot separate it from a fetchland.
   expect(categoryMatches(reason({ effectKind: "top-manipulation" }), "graveyard-matters")).toBe(false);
   expect(categoryMatches(reason({ effectKind: "graveyard-recursion" }), "graveyard-matters")).toBe(true);
+});
+
+// J3 (2026-08-25): `pump` IS TOO BROAD TO CARRY VOLTRON, and `counter-placement` is not. The group
+// covered 27 of 71 decks and 2,780 pairs on decks that are plainly not voltron; dropping `pump`
+// alone takes it to 4 decks and 76 pairs, so that one kind carried 2,704 of them.
+test("an anthem does not join voltron, and a constellation counter still does", () => {
+  const reason = (tag: string, effectKind?: string): Reason =>
+    ({ tag, text: "", repeatability: "static", ...(effectKind ? { effectKind } : {}) } as Reason);
+
+  // THE DEFINING HALF IS UNTOUCHED — an Equipment or an Aura entering really is the signal.
+  expect(categoryDefines(reason("enters:equipment"), "voltron-auras")).toBe(true);
+  expect(categoryDefines(reason("enters:aura"), "voltron-auras")).toBe(true);
+
+  // A bare anthem is `static:pump` on any creature in any deck, and it used to join.
+  expect(categoryMatches(reason("static:pump", "pump"), "voltron-auras")).toBe(false);
+
+  // The four gold pairs the compass holds: All That Glitters and friends reach Setessan Champion on
+  // `enters:enchantment` + `counter-placement`. Dropping this kind too was measured and cost all
+  // four — the ratchet said so rather than any argument.
+  expect(categoryMatches(reason("enters:enchantment", "counter-placement"), "voltron-auras")).toBe(true);
+  // …but a supporting kind alone never DEFINES the group, which is what stops one Equipment holding
+  // a category up for a whole deck.
+  expect(categoryDefines(reason("enters:enchantment", "counter-placement"), "voltron-auras")).toBe(false);
 });

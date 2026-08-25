@@ -90,7 +90,29 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   // Sage's Reverie against Setessan Champion emit `enters:enchantment` and `static:pump`, never an
   // aura-typed tag, so the narrow rule deletes the archetype's own textbook pairs. Left wide, with
   // the loss recorded rather than the ratchet raised.
-  "voltron-auras": { tags: ["enters:aura", "enters:equipment"], supportingKinds: ["pump", "counter-placement"] },
+  // `pump` IS GONE AND `counter-placement` STAYS, and dropping both was measured first and was
+  // WRONG (roadmap J3, 2026-08-25). This file's own header says the archetype signatures "EXCLUDE
+  // broad shared kinds (damage, draw-card, pump) that would make every card match every archetype
+  // (the bug this replaces)" — `ARCHETYPE_SIGNATURE` does exclude `pump`; this table kept it.
+  //
+  // THE DEFINING HALF WAS ALWAYS RIGHT and is untouched: an Equipment or an Aura entering really is
+  // the voltron signal. What was wrong is that ONE Equipment makes the category SURVIVE, after which
+  // `pump` swept every anthem in the deck into it. **MEASURED: 27 of 71 decks and 2,780 pairs, about
+  // 103 pairs per deck** — `mono-blue-blink`, `rakdos-landfall`, `tribal-tribal`, `smooth-criminal`
+  // and `obeka-upkeep-shenanigans` among them. Dropping `pump` alone takes it to **4 decks / 76
+  // pairs**, so that one kind carried 2,704 of the 2,780.
+  //
+  // DROPPING `counter-placement` TOO COSTS FOUR GOLD PAIRS, and the compass ratchet is what said so
+  // rather than any argument: All That Glitters, Ethereal Armor, Ancestral Mask and Sage's Reverie
+  // all reach Setessan Champion on `enters:enchantment` + `counter-placement` — constellation
+  // putting a counter on the creature the Aura is growing, which is the enchantress-voltron relation
+  // this category is for. The tag is `enters:enchantment` and not `enters:aura` because a reason
+  // keys on the CONSUMER's demand, and Setessan Champion asks for an enchantment.
+  //
+  // AND THE WRONG CATEGORY WAS DELETING RIGHT ONES BESIDE IT — G3's second lesson, confirmed again:
+  // `dedupeNearIdentical` drops a group whose pairs sit inside a bigger one's, so **`fight-club` and
+  // `voltron-mill` get `tokens-go-wide` back** (61 -> 63 decks, +42 pairs). Nothing is lost.
+  "voltron-auras": { tags: ["enters:aura", "enters:equipment"], supportingKinds: ["counter-placement"] },
   "lifegain-payoff": { tags: ["gain-life:any"], effectKinds: ["drain"] },
   landfall: { tags: ["enters:land"] },
   "counters-plus1": { tags: ["proliferate:any"], effectKinds: ["counter-placement", "enters-with-counters"] },

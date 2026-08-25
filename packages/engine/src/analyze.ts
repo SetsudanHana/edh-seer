@@ -332,6 +332,12 @@ export interface DeckReport {
     theme: string; tag: string; count: number; cards: string[];
     fromCommandZone: string[]; turn: number; k: number; probability: number;
   } | null;
+  /** Connections needed to deal 21 commander damage (CR 903.10a), as a RANGE from a bare commander
+   *  to one carrying everything the deck can attach. Present only on a deck detected as voltron —
+   *  a 1-power commander in a spellslinger deck needs twenty-one connections, which is true and
+   *  useless. Defined in `matcher/src/commander-damage.ts`; NOT the clock, which measures total
+   *  board power against 40 life. */
+  commanderDamage?: { commander: string; power: number; attachable: number; attachableCount: number; bare: number; kitted: number }[];
   /** Cards whose printed land condition THIS deck cannot meet (roadmap I9's deck-level half).
    *  A REASON, never a gate: the card still taps for mana and still rates, and the honest surface is
    *  to print the fact. Defined in `matcher/src/land-conditions.ts`; typed structurally here because

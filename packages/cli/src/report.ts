@@ -194,6 +194,18 @@ export function formatReport(report: DeckReport, trim = 0): string {
     }
   }
 
+  // TWENTY-ONE COMMANDER DAMAGE (CR 903.10a), and it is NOT the clock — that curve is total board
+  // power against 40 life, while this must come from ONE creature. A range, because the two ends are
+  // two assumptions: a bare commander, and one carrying everything the deck can attach.
+  if (report.commanderDamage && report.commanderDamage.length > 0) {
+    lines.push("");
+    lines.push("=== 21 commander damage ===");
+    for (const c of report.commanderDamage) {
+      lines.push(`  ${c.commander} (power ${c.power}): ${c.bare} connections bare, ${c.kitted} carrying all ${c.attachableCount} of the deck's Equipment and Auras`);
+      lines.push(`      +${c.attachable} power is attachable in total — the kitted end assumes you draw, cast and attach every piece`);
+    }
+  }
+
   // WHAT THE DECK CANNOT TURN ON (roadmap I9's deck-level half). The pairwise pass says "Rootbound
   // Crag enters untapped because you run Steam Vents" and can say NOTHING when the answer is zero,
   // so a land that never turns on reads exactly like a land with no condition. A reason, not a gate.

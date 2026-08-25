@@ -44,6 +44,7 @@ import { rankThemesByLoop } from "./theme-loop.js";
 import { deckThing } from "./thing.js";
 import { deckBracket } from "./brackets.js";
 import { unmetLandConditions } from "./land-conditions.js";
+import { commanderDamage } from "./commander-damage.js";
 
 /**
  * Structured-engine counterpart of `@mtg/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -813,6 +814,10 @@ export function analyzeDeckStructured(
     // The deck-level half of I9: the pairwise pass states the POSITIVE and can say nothing when the
     // answer is zero, and that silence reads exactly like a card with no condition at all.
     landConditions: unmetLandConditions(resolved.map((dc) => dc.card)),
+    // TWENTY-ONE, FROM ONE CREATURE (CR 903.10a) — and deliberately NOT a threshold swap in
+    // `pressure.ts`, whose curve is total board power. Gated on the deck's OWN detected archetype so
+    // this module cannot disagree with `detectArchetypes` about what the deck is.
+    commanderDamage: commanderDamage(resolved, [...commanderSet], strategies[0]?.name),
     archetypes,
     strategies,
     buildScore,
