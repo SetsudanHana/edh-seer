@@ -38,3 +38,6 @@ packages/data/.mtgjson-cache/
 # was lost and every round had to be re-improvised.
 !.claude/agents/
 .cr-cache/
+
+# Serena MCP project cache
+.serena/
