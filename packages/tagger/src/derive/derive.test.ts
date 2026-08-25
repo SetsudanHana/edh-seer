@@ -299,6 +299,34 @@ test("proliferate derives on both sides of the vocabulary bridge", () => {
   expect(payoff.abilities[0].trigger?.verbs).toEqual(["proliferate"]);
 });
 
+// J12 (2026-08-25): A BACKGROUND'S WHOLE PURPOSE IS BUFFING THE OTHER COMMANDER, and it was reading
+// as synergising with nothing. The grant's recipient comes from the clause TEXT (`grantRecipient`),
+// and the guard beside it demanded a SUBTYPE — so "Commander creatures you own" was dropped as if it
+// were the whole-deck claim "creatures you control gain haste". A commander is one card, or two.
+// Measured: of the 71 decks exactly 4 run two commanders, all four run a Background, and the edges
+// between the pair read 0 · 0 · 0 · 1 before this and 0 · 1 · 1 · 2 after.
+test("a grant narrowed to commanders keeps its subject, though it names no subtype", () => {
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "that ability" }] }],
+    "Feywild Visitor",
+    { 1: "Commander creatures you own have that ability" },
+  );
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0].effect.subject?.commander).toBe(true);
+  expect(abilities[0].effect.subject?.type).toBe("creature");
+});
+
+// THE OTHER DIRECTION, and it is what the subtype rule is FOR: an untyped grant to the whole board is
+// the ordinary-card claim the rubric calls false, and the carve-out must not widen to it.
+test("a grant to every creature you control still keeps no subject", () => {
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "haste" }] }],
+    "Anger",
+    { 1: "Creatures you control have haste" },
+  );
+  expect(abilities[0]?.effect.subject).toBeUndefined();
+});
+
 test("a kindred anthem names its targets, so it survives the static-subject guard", () => {
   // "Zombies you control get +1/+1": namesItsTargets checks subject.subtype, which parseSubject
   // never set, so the whole subject was dropped and no edge formed against any Zombie.

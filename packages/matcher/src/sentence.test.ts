@@ -139,7 +139,7 @@ describe("staticGrantSentence — a continuous static reaching a card", () => {
       "Death Baron gives Gravecrawler bigger stats",
     );
     expect(staticGrantSentence("Anthem", "Squire", "keyword-grant")).toBe(
-      "Anthem gives Squire an extra keyword ability",
+      "Anthem gives Squire an extra ability",
     );
   });
 

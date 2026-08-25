@@ -154,7 +154,12 @@ export function graveyardFeedsScaling(producer: string, consumer: string): strin
  *  has never seen still reads as English via the de-slugified fallback, never a raw tag. */
 const GRANT_PHRASES: Record<string, string> = {
   pump: "bigger stats",
-  "keyword-grant": "an extra keyword ability",
+  // "AN EXTRA ABILITY" AND NOT "AN EXTRA KEYWORD ABILITY" (roadmap J12). `grant-ability` covers
+  // both a printed keyword and a whole quoted ability, and the kind alone cannot tell them apart —
+  // Feywild Visitor hands its commander a combat-damage TRIGGER, which is not a keyword, so the
+  // narrower word was a false sentence about it. The wider one is true of both: CR 702 makes a
+  // keyword an ability, so nothing is lost on the cards the old phrase described correctly.
+  "keyword-grant": "an extra ability",
   "type-grant": "an extra creature type",
   "speed-increase": "haste",
   animate: "life as a creature",

@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 79;
+export const DERIVE_VERSION = 80;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -412,7 +412,16 @@ function effectSubject(
       // turn" reaches every creature in the deck -- the ordinary-card claim the rubric calls false,
       // and the mesh that made `static` the engine's worst family. Naming a SUBTYPE is what makes it
       // a synergy: "other Merfolk you control have ward {1}" picks out particular cards.
-      if (s.subtype === undefined) return parseSubject("");
+      //
+      // A COMMANDER NARROWING DISCRIMINATES AS HARD AS A SUBTYPE, AND HARDER (roadmap J12). "Commander
+      // creatures you own" is ONE card, or two — the opposite of the whole-deck claim this gate
+      // refuses — and `combatNarrowsOffType` already ships that exact reasoning for the same field.
+      // Without the carve-out a Background, whose entire printed purpose is buffing the other
+      // commander, reads as synergising with nothing: measured over the 71 decks, exactly 4 run two
+      // commanders, all four run a Background, and the edges between the pair read 0 · 0 · 0 · 1.
+      // The one that worked (Cultist of the Absolute) got there by `modify-pt`, which never passes
+      // through this gate at all.
+      if (s.subtype === undefined && s.commander !== true) return parseSubject("");
       return s;
     }
   }
