@@ -217,7 +217,7 @@ export function formatReport(report: DeckReport, trim = 0): string {
   // DECK LEGALITY AS A REPORT, NEVER A GATE (roadmap J4, CR 903.3 / 903.5a-d). A partial paste is a
   // normal thing to hand this tool, so refusing to analyse would be the wrong failure direction —
   // the same ruling `cutCandidates` ships. Silence means nothing was FOUND, not that the deck is
-  // legal: four rules are checked and the format has more.
+  // legal: five rules are checked and the format has more.
   if (report.legality && report.legality.length > 0) {
     lines.push("");
     lines.push("=== Against the format ===");

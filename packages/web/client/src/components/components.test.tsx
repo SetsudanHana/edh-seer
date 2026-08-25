@@ -11,6 +11,7 @@ import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CardList } from "./CardList.js";
 import { CutList } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
+import { LegalityPanel } from "./LegalityPanel.js";
 import { ManaAvailability } from "./ManaAvailability.js";
 import { ReportTabs } from "./ReportTabs.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
@@ -1721,5 +1722,36 @@ test("the mana panel shows a policy range, its spread, and says what it is not",
   unmount();
 
   const { container } = render(<ManaAvailability manaAvailability={undefined} />);
+  expect(container).toBeEmptyDOMElement();
+});
+
+// J4 + J12's pairing rule, wired to the web 2026-08-25. THE COPY IS THE ASSERTION, not just the
+// findings: this panel sits above two real scores out of five, and a list of complaints with no
+// caveat reads as a verdict. Silence must mean "nothing was FOUND", never "the deck is legal".
+test("the legality panel reports and never gates, and says how many rules it checked", () => {
+  const { unmount } = render(<LegalityPanel legality={[
+    { rule: "size", detail: "34 cards, and a Commander deck is exactly 100", cards: [] },
+    { rule: "pairing", detail: "these two cannot be commanders together", cards: ["Haunted One", "Krenko, Mob Boss"] },
+  ]} />);
+  expect(screen.getByText(/34 cards/)).toBeInTheDocument();
+  expect(screen.getByText(/cannot be commanders together/)).toBeInTheDocument();
+  expect(screen.getByText(/Haunted One/)).toBeInTheDocument();
+  expect(screen.getByText(/report, not a verdict/i)).toBeInTheDocument();
+  expect(screen.getByText(/nothing here stops the analysis/i)).toBeInTheDocument();
+  expect(screen.getByText(/Five rules are checked/i)).toBeInTheDocument();
+  unmount();
+
+  // CAPPED AT EIGHT, as the CLI caps it — a colour-identity finding on a badly pasted deck can name
+  // dozens, and a list that long stops being read.
+  const many = render(<LegalityPanel legality={[{
+    rule: "color-identity", detail: "11 cards are outside R", cards: Array.from({ length: 11 }, (_, i) => `Card ${i}`),
+  }]} />);
+  expect(screen.getByText(/and 3 more/)).toBeInTheDocument();
+  expect(screen.queryByText("Card 10")).toBeNull();
+  many.unmount();
+
+  // A legal deck renders NOTHING — never a heading over an empty panel saying the deck is fine,
+  // which would be a claim these five rules cannot make.
+  const { container } = render(<LegalityPanel legality={[]} />);
   expect(container).toBeEmptyDOMElement();
 });

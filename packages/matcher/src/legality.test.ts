@@ -155,3 +155,12 @@ test("commander damage is per commander, so a partner pair gets two clocks", () 
   const rows = commanderDamage([{ card: a }, { card: b }] as never, ["A", "B"], "voltron");
   expect(rows.map((r) => [r.commander, r.bare])).toEqual([["A", 7], ["B", 3]]);
 });
+
+// FOUND IN A LIVE BROWSER, NOT IN ANY TEST (2026-08-25). A Moxfield export lists the commander in
+// the decklist as well as naming it, so the same card arrives twice — the tool's OWN example deck
+// did — and the pairing rule then flagged "Krenko, Mob Boss · Krenko, Mob Boss" as an illegal pair,
+// because a card does not partner with itself. One card is one commander.
+test("the same commander named twice is one commander, not an illegal pair", () => {
+  expect(deckLegality({ cards: [cmd, cmd, ...filler(98)], commanders: [cmd, cmd] })
+    .map((f) => f.rule)).not.toContain("pairing");
+});

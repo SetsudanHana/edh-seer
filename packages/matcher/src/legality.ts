@@ -176,17 +176,24 @@ export function deckLegality({ cards, commanders }: LegalityInput): LegalityFind
   }
 
   // 702.124 — two commanders need a printed ability that pairs THEM, and three is never legal.
-  if (commanders.length > 2) {
+  //
+  // BY NAME, AND THE LIVE BROWSER IS WHAT CAUGHT IT. A Moxfield export lists the commander in the
+  // decklist as well as naming it, so the same card routinely arrives twice — and the tool's own
+  // example deck does it. Counted as slots that reads as "two commanders", and the pair then fails
+  // every licensing test because a card does not partner with itself: the panel flagged
+  // "Krenko, Mob Boss · Krenko, Mob Boss" as an illegal pairing. One card is one commander.
+  const distinct = [...new Map(commanders.map((c) => [c.name, c])).values()];
+  if (distinct.length > 2) {
     out.push({
       rule: "pairing",
-      detail: `${commanders.length} commanders, and no ability in the format lets a deck have more than two`,
-      cards: commanders.map((c) => c.name).sort(),
+      detail: `${distinct.length} commanders, and no ability in the format lets a deck have more than two`,
+      cards: distinct.map((c) => c.name).sort(),
     });
-  } else if (commanders.length === 2 && pairingLicense(commanders[0], commanders[1]) === undefined) {
+  } else if (distinct.length === 2 && pairingLicense(distinct[0], distinct[1]) === undefined) {
     out.push({
       rule: "pairing",
       detail: "these two cannot be commanders together — neither prints Partner, a Partner group, Choose a Background or Doctor's companion that names the other",
-      cards: commanders.map((c) => c.name).sort(),
+      cards: distinct.map((c) => c.name).sort(),
     });
   }
 

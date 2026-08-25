@@ -5,6 +5,7 @@ import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { SuggestionsList } from "./SuggestionsList.js";
 import { CutList } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
+import { LegalityPanel } from "./LegalityPanel.js";
 import { UnmetConditions } from "./UnmetConditions.js";
 import { ManaAvailability } from "./ManaAvailability.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
@@ -43,6 +44,9 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         *  remaining blocks filled column two, and column three rendered empty -- 550px of dead space
         *  where the gutter used to be. */}
       <div className="columns-1 xl:columns-2 gap-6 [&>*]:break-inside-avoid [&>*]:mb-6">
+        {/* LEADS THE COLUMN: a deck that is not legal is the first thing a reader needs, and every
+          *  number below it is computed over a list the format would not let them play. */}
+        <LegalityPanel legality={data.report.legality} />
         <BuildBenchmarks
           categories={data.report.buildCategories}
           parents={data.report.buildParents}
