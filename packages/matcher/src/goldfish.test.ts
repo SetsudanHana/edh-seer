@@ -376,6 +376,27 @@ test("C4: a fetchland is a colour fixer AND a thinner", () => {
   expect(fetchMask(tarn, deckPrinted)).toBe(colorMask(["U", "R"]));
   expect(fetchMask(tarn, [{ typeLine: "Land — Island", producedMana: ["U"] }])).toBe(colorMask(["U"]));
 
+  // "an Island OR Mountain card" IS AN OR, NOT AN AND (owner, 2026-08-25): a plain Island is a legal
+  // target, a plain Mountain is, and a land carrying both is. One word (`some` vs `every`) separates
+  // this from a fetch that can find almost nothing.
+  expect(fetchMask(tarn, [{ typeLine: "Basic Land — Island", producedMana: ["U"] }])).toBe(colorMask(["U"]));
+  expect(fetchMask(tarn, [{ typeLine: "Basic Land — Mountain", producedMana: ["R"] }])).toBe(colorMask(["R"]));
+  // And a land carrying NEITHER is not a target, however much mana it makes.
+  expect(fetchMask(tarn, [{ typeLine: "Basic Land — Forest", producedMana: ["G"] }])).toBe(0);
+
+  // NAMING A TYPE IS NOT DEMANDING A BASIC (owner, 2026-08-25). Scalding Tarn searches for a
+  // "card", not a "basic land card", so a SHOCKLAND carrying both types is a legal target -- and in
+  // `iz-it-izzet` that is what takes it from 19 lands to 20.
+  const shock = [{ typeLine: "Land — Island Mountain", producedMana: ["U", "R"] }];
+  expect(fetchMask(tarn, shock)).toBe(colorMask(["U", "R"]));
+  // The mirror, and the one card in the 71 decks that needs it: Seething Landscape says BASIC, so
+  // the same shockland is NOT a legal target. Verbatim.
+  const landscape = "{T}, Sacrifice this land: Search your library for a basic Island, Swamp, or Mountain card, put it onto the battlefield tapped, then shuffle.";
+  expect(fetchMask(landscape, shock)).toBe(0);
+  expect(fetchMask(landscape, [...shock, { typeLine: "Basic Land — Swamp", producedMana: ["B"] }])).toBe(colorMask(["B"]));
+  // `nonbasic` contains `basic`, and reading it as a demand would empty every mask.
+  expect(fetchMask("Search your library for a nonbasic land card.", shock)).toBe(colorMask(["U", "R"]));
+
   // THINNING: the land it finds LEAVES the library, so a deck of fetches draws better than the same
   // deck of blanks. Measured through the simulator rather than asserted.
   const fetch = (i: number): DeckCard => ({

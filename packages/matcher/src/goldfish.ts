@@ -235,13 +235,21 @@ const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const
 export function fetchMask(oracleText: string, deck: readonly { typeLine: string; producedMana?: readonly string[] }[]): number {
   const text = oracleText.toLowerCase();
   const named = BASIC_TYPES.filter((t) => text.includes(t));
-  const wantsBasic = /\bbasic land card\b/.test(text);
+  // NAMING A TYPE IS NOT DEMANDING A BASIC, and the two are independent (owner, 2026-08-25).
+  // Scalding Tarn searches for "an Island or Mountain CARD", so it finds Steam Vents -- a
+  // `Land - Island Mountain` -- and every other dual carrying one of those types, 20 lands in
+  // `iz-it-izzet` rather than the 19 basics. Seething Landscape says "a BASIC Island, Swamp, or
+  // Mountain card" and finds only basics. The word is read on its own, not as a fallback for a
+  // fetch that names nothing. `nonbasic` needs no stripping -- `\b` does not match inside it, which
+  // the test asserts rather than assumes, because it is exactly the kind of thing that stops being
+  // true when someone "simplifies" the pattern.
+  const wantsBasic = /\bbasic\b/.test(text);
   let m = 0;
   for (const c of deck) {
     const line = c.typeLine.toLowerCase();
     if (!line.includes("land")) continue;
     if (named.length > 0 && !named.some((t) => line.includes(t))) continue;
-    if (named.length === 0 && wantsBasic && !line.includes("basic")) continue;
+    if (wantsBasic && !line.includes("basic")) continue;
     m |= colorMask(c.producedMana);
   }
   return m;
