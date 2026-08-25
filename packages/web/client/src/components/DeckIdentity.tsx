@@ -28,6 +28,7 @@ export function DeckIdentity({
   identity,
   thing,
   commanderCast,
+  manaAvailability,
 }: {
   cohesion: DeckReport["cohesion"];
   colorIdentity?: string[];
@@ -35,6 +36,9 @@ export function DeckIdentity({
   identity?: DeckReport["identity"];
   thing?: DeckReport["thing"];
   commanderCast?: NonNullable<DeckReport["deckMath"]>["castability"]["commanders"];
+  /** Only to reconcile the two readouts of the same cell — never to render a second figure of its
+   *  own; the mana-availability panel owns that. */
+  manaAvailability?: DeckReport["manaAvailability"];
 }) {
   if (!cohesion) return null;
   // The share is printed beside the label because the label alone is a bucket boundary: "focused"
@@ -145,6 +149,20 @@ export function DeckIdentity({
               lands and mana rocks only — land-fetch ramp like Cultivate is not counted, so this reads low
             </span>
           ) : null}
+          {/* …AND THE ENGINE NOW KNOWS BY HOW MUCH, so the caveat names the better number instead of
+              gesturing at it. Two readouts of the SAME cell on one page is the trap this repo
+              recorded once already (the land row reading "33 in deck" above a chip reading "lands
+              37/36"). ONLY WHEN IT IS LITERALLY THE SAME CELL: the commander row's `turn` is its own
+              mana value, and the simulation's headline is fixed at six mana on turn six, so they
+              coincide only for a six-mana commander. */}
+          {manaAvailability && manaAvailability.headline.mana === manaAvailability.headline.turn
+            && commanderCast.some((c) => c.mana !== null && c.turn === manaAvailability.headline.turn) ? (
+              <span className="block text-xs text-(--muted)">
+                the mana-availability panel models that ramp and reads{" "}
+                {Math.round(manaAvailability.headline.low * 100)}–{Math.round(manaAvailability.headline.high * 100)}%
+                {" "}for the same cell
+              </span>
+            ) : null}
         </p>
       ) : null}
       {/* The second theme and the archetype shares, on one muted line. A percentage is printed for

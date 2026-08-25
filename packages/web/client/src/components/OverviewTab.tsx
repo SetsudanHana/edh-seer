@@ -6,6 +6,7 @@ import { SuggestionsList } from "./SuggestionsList.js";
 import { CutList } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
 import { UnmetConditions } from "./UnmetConditions.js";
+import { ManaAvailability } from "./ManaAvailability.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
@@ -23,6 +24,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         identity={data.report.identity}
         thing={data.report.thing}
         commanderCast={data.report.deckMath?.castability.commanders}
+        manaAvailability={data.report.manaAvailability}
       />
       <HeadlineScores report={data.report} />
 
@@ -51,6 +53,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         <UnmetConditions landConditions={data.report.landConditions} />
         <BracketPanel bracket={data.report.bracket} />
         <HighSynergyCards cards={data.report.cards} />
+        <ManaAvailability manaAvailability={data.report.manaAvailability} />
         <ManaCurveChart curve={data.report.manaCurve} />
         <LandMathChart landCount={data.report.landCount} deckSize={data.resolvedCount} />
       </div>

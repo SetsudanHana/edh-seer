@@ -45,6 +45,7 @@ import { deckThing } from "./thing.js";
 import { deckBracket } from "./brackets.js";
 import { unmetLandConditions } from "./land-conditions.js";
 import { commanderDamage } from "./commander-damage.js";
+import { manaAvailability } from "./goldfish.js";
 
 /**
  * Structured-engine counterpart of `@mtg/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -818,6 +819,11 @@ export function analyzeDeckStructured(
     // `pressure.ts`, whose curve is total board power. Gated on the deck's OWN detected archetype so
     // this module cannot disagree with `detectArchetypes` about what the deck is.
     commanderDamage: commanderDamage(resolved, [...commanderSet], strategies[0]?.name),
+    // THE GOLDFISH MODEL REACHES A READER (I11's report wiring). A COMMANDER IS NOT IN THE LIBRARY
+    // (CR 903.6) and this model draws from one, so it is excluded exactly as `deck-math.ts` excludes
+    // it — including one in the shuffle would both dilute the draw and pretend it can be drawn.
+    // FEEDS NO SCORE, which is the condition the K7/J7 reconciliation holds under.
+    manaAvailability: manaAvailability(resolved.filter((dc) => !commanderSet.has(dc.card.name))),
     archetypes,
     strategies,
     buildScore,

@@ -332,6 +332,18 @@ export interface DeckReport {
     theme: string; tag: string; count: number; cards: string[];
     fromCommandZone: string[]; turn: number; k: number; probability: number;
   } | null;
+  /** Mana availability from a seeded goldfish simulation (roadmap I11's report wiring).
+   *
+   *  AN INTERVAL AND NEVER A POINT — the model's own falsifier fired, so what ships is the pair of
+   *  play policies (spend-everything, a CEILING; hold-up-2, nearer real play). NOT the per-card
+   *  castability figure: that one is colour-aware and counts lands, this one is colour-blind and
+   *  models ramp and tapped lands. Defined in `matcher/src/goldfish.ts`; feeds NO score. */
+  manaAvailability?: {
+    trials: number;
+    accelerants: number;
+    rows: { turn: number; mana: { median: number; p25: number; p75: number }; payableShare: { median: number; p25: number; p75: number } }[];
+    headline: { mana: number; turn: number; low: number; high: number };
+  };
   /** Connections needed to deal 21 commander damage (CR 903.10a), as a RANGE from a bare commander
    *  to one carrying everything the deck can attach. Present only on a deck detected as voltron —
    *  a 1-power commander in a spellslinger deck needs twenty-one connections, which is true and

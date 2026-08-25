@@ -11,6 +11,7 @@ import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CardList } from "./CardList.js";
 import { CutList } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
+import { ManaAvailability } from "./ManaAvailability.js";
 import { ReportTabs } from "./ReportTabs.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { HeadlineScores } from "./HeadlineScores.js";
@@ -1692,5 +1693,33 @@ test("the bracket panel names what put the deck there, and never reads as a grad
 
   // An analysis with no bracket renders nothing at all, never a heading over an empty panel.
   const { container } = render(<BracketPanel bracket={undefined} />);
+  expect(container).toBeEmptyDOMElement();
+});
+
+// I11's REPORT WIRING. This panel is where the model's refused quantities could leak into a headline,
+// so the copy is asserted, not just the numbers: the range must be named as the PLAY POLICY and the
+// colour blindness must be on screen rather than in a tooltip.
+test("the mana panel shows a policy range, its spread, and says what it is not", () => {
+  const rows = [1, 2, 3].map((turn) => ({
+    turn,
+    mana: { median: turn, p25: turn - 1, p75: turn + 1 },
+    payableShare: { median: 0.5, p25: 0.4, p75: 0.6 },
+  }));
+  const { unmount } = render(<ManaAvailability manaAvailability={{
+    trials: 2000, accelerants: 11, rows, headline: { mana: 6, turn: 6, low: 0.55, high: 0.62 },
+  }} />);
+  // BOTH ENDS OR NOTHING — the point readout was withdrawn by the model's own falsifier.
+  expect(screen.getByText(/55% – 62%/)).toBeInTheDocument();
+  expect(screen.getByText(/to make 6 mana by turn 6/)).toBeInTheDocument();
+  // The range is named as the POLICY, not as uncertainty in general.
+  expect(screen.getByText(/play policy/i)).toBeInTheDocument();
+  expect(screen.getByText(/ceiling no real deck plays to/i)).toBeInTheDocument();
+  // C10 reaches the reader: colour blindness is stated on screen.
+  expect(screen.getByText(/never castability/i)).toBeInTheDocument();
+  // C7: the spread is beside every median.
+  expect(screen.getAllByText(/\(40%–60%\)/).length).toBe(3);
+  unmount();
+
+  const { container } = render(<ManaAvailability manaAvailability={undefined} />);
   expect(container).toBeEmptyDOMElement();
 });

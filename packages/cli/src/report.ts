@@ -28,6 +28,22 @@ export function formatReport(report: DeckReport, trim = 0): string {
   // without this line a reader gets a bare percentage the engine already knows is wrong.
   if (cmdCast.some((c) => c.mana !== null)) {
     lines.push("  (lands and mana rocks only — land-fetch ramp like Cultivate is not counted, so this reads low)");
+    // …AND NOW THE ENGINE KNOWS BY HOW MUCH, so the caveat names the better number instead of
+    // gesturing at it. Two readouts of the SAME cell in one report is the trap this repo already
+    // recorded once (the MDFC land row reading "33 in deck" above a chip reading "lands 37/36"); a
+    // reader who is shown 34-43% and 55-62% and left to choose has been given nothing.
+    // ONLY WHEN IT IS LITERALLY THE SAME CELL. The commander row is P(cast by turn = its mana
+    // value), and the simulation's headline is fixed at six mana on turn six — they coincide only
+    // for a six-mana commander. Printing the pointer otherwise would compare two different
+    // questions, which is worse than printing nothing.
+    const ma = report.manaAvailability;
+    // The commander row's `turn` IS its mana value (`castability.ts`: "the deadline: the card's own
+    // mana value"), and the headline's mana equals its turn, so one comparison settles both.
+    const sameCell = !!ma && ma.headline.mana === ma.headline.turn
+      && cmdCast.some((c) => c.mana !== null && c.turn === ma.headline.turn);
+    if (ma && sameCell) {
+      lines.push(`  (the simulation below models that ramp and reads ${Math.round(ma.headline.low * 100)}% – ${Math.round(ma.headline.high * 100)}% for the same cell)`);
+    }
   }
 
   lines.push("");
@@ -192,6 +208,37 @@ export function formatReport(report: DeckReport, trim = 0): string {
         lines.push(`      ${Math.round(t.castable.share * 100)}% of your library is ${t.castable.types.join(" or ")} — what it can cast for free`);
       }
     }
+  }
+
+  // MANA AVAILABILITY (roadmap I11's report wiring). A SIMULATION, NOT A FORMULA, and an INTERVAL
+  // rather than a point because the model's own falsifier fired: policy sensitivity measured 27.6pp
+  // against a 32.7pp median ramp signal, so this is a POLICY property at deck scale. Both ends or
+  // neither — the low end holds up two mana, the high end spends everything on acceleration.
+  if (report.manaAvailability && report.manaAvailability.rows.length > 0) {
+    const m = report.manaAvailability;
+    lines.push("");
+    lines.push("=== Mana availability ===");
+    lines.push(`  ${m.trials} simulated games under two play policies, with ${m.accelerants} accelerants in the deck`);
+    // ONE FIGURE WHEN THE TWO POLICIES AGREE, never "100% - 100%" — the same collapse
+    // `castability.ts`'s range already ships, for the same reason.
+    const lo = Math.round(m.headline.low * 100), hi = Math.round(m.headline.high * 100);
+    const odds = lo === hi ? `${lo}%` : `${lo}% - ${hi}%`;
+    lines.push(`  by turn ${m.headline.turn} you can make ${m.headline.mana} mana ${odds} of the time`);
+    lines.push("    (the range is the PLAY POLICY: the low end holds up two mana, the high end spends");
+    lines.push("     everything on acceleration and is a CEILING no real deck plays to)");
+    lines.push("");
+    lines.push("  turn   mana (p25-median-p75)   spells you could pay for");
+    for (const r of m.rows) {
+      const mana = `${r.mana.p25}-${r.mana.median}-${r.mana.p75}`;
+      const sh = (v: number): string => `${Math.round(v * 100)}%`;
+      lines.push(`  ${String(r.turn).padStart(4)}   ${mana.padEnd(20)}   ${sh(r.payableShare.p25)}-${sh(r.payableShare.median)}-${sh(r.payableShare.p75)}`);
+    }
+    // THE CAVEATS ARE NOT DECORATION. Every one is a stated ceiling from the model's own design, and
+    // a reader who does not see them will take the high end as the answer.
+    lines.push("  the per-turn rows are the spend-everything policy; the two policies agree on every");
+    lines.push("    median, and disagree only in the tail — which is what the range above is");
+    lines.push("  colour is ignored entirely, so this is MANA and never castability: a {3}{R}{G}{W}");
+    lines.push("    spell needs three specific colours nothing here checks");
   }
 
   // TWENTY-ONE COMMANDER DAMAGE (CR 903.10a), and it is NOT the clock — that curve is total board

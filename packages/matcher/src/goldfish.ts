@@ -296,3 +296,86 @@ export function quantiles(values: readonly number[]): { p25: number; median: num
   const at = (q: number): number => s[Math.min(s.length - 1, Math.floor(q * s.length))];
   return { p25: at(0.25), median: at(0.5), p75: at(0.75) };
 }
+
+/** Trials the REPORT runs at, against the 20k the bin uses.
+ *
+ *  CHOSEN AGAINST THE WIDTH OF THE THING IT SITS INSIDE, which is the only defensible way to pick a
+ *  Monte Carlo sample size: at 2,000 trials the headline cell reads within about 0.5pp of the 20,000
+ *  answer, and the POLICY interval it is reported inside has a median width of 7.0pp. A number whose
+ *  noise rivals its own stated width would be misleading; one an order of magnitude under it is not.
+ *  Measured cost: about 24ms per policy arm on a 99-card deck, so ~48ms on an analyze request. */
+export const REPORT_TRIALS = 2_000;
+
+export interface ManaAvailabilityRow {
+  turn: number;
+  /** Mana the board could tap, under the spend-everything policy: median with p25/p75 beside it.
+   *
+   *  THE MEDIAN IS POLICY-INSENSITIVE AND THE TAIL IS NOT, which is a finding rather than a
+   *  convenience and is why this row is not itself a policy interval. Measured on `samut.txt`: the
+   *  two policies agree on the median at every one of the eight turns, while P(>= 6 mana at turn 6)
+   *  moves by up to 27.6pp across the corpus. Reporting a policy interval HERE would print
+   *  "15% - 15%" eight times and hide the sensitivity somewhere the reader never looks; the headline
+   *  below is computed on the quantity that actually moves. */
+  mana: { median: number; p25: number; p75: number };
+  /** Share of the deck's nonlands this turn could PAY for. Median with p25/p75.
+   *
+   *  COMPUTED IN-TRIAL, never as "median mana" glued to "share of nonlands at or under it". Those
+   *  are two medians from different distributions and a reader multiplies them; §9 refuses that
+   *  chart outright and this is the arithmetic that replaces it. */
+  payableShare: { median: number; p25: number; p75: number };
+}
+
+export interface ManaAvailability {
+  trials: number;
+  /** Accelerants the deck runs, by the printed-data classifier. */
+  accelerants: number;
+  rows: ManaAvailabilityRow[];
+  /** THE ONE QUANTITY THE POLICY MOVES, and therefore the one reported as an INTERVAL: P(the board
+   *  could tap `mana` by `turn`), from the hold-up-2 policy to the spend-everything ceiling. This is
+   *  the cell the whole-item falsifier was measured on. */
+  headline: { mana: number; turn: number; low: number; high: number };
+}
+
+/** THE REPORT SHAPE, and it is an INTERVAL because the point readout was WITHDRAWN.
+ *
+ *  The item's own falsifier fired: policy sensitivity measured 27.6pp against a 32.7pp median ramp
+ *  signal, so mana availability is a POLICY property at this deck's scale. The two arms are the two
+ *  policies — spend-everything is a CEILING, hold-up-2 is nearer how a deck is actually played — and
+ *  any renderer of this owes the reader both ends and neither alone.
+ *
+ *  IT IS NOT THE PER-CARD CASTABILITY FIGURE and must never be shown as a better version of it.
+ *  `castability.ts` is COLOUR-AWARE and counts lands (or lands plus already-castable rocks); this is
+ *  COLOUR-BLIND and models ramp and tapped lands. Neither contains the other, and the measured fact
+ *  is that castability's interval does not contain this model's answer on a green land-ramp deck. */
+export function manaAvailability(
+  deck: readonly DeckCard[],
+  opts: { trials?: number; turns?: number; seed?: number } = {},
+): ManaAvailability {
+  const trials = opts.trials ?? REPORT_TRIALS;
+  const turns = opts.turns ?? 8;
+  const seed = opts.seed ?? 20260822;
+  const greedy = simulate(deck, { trials, turns, seed });
+  const held = simulate(deck, { trials, turns, seed, holdUp: 2 });
+  const rows: ManaAvailabilityRow[] = [];
+  for (let t = 1; t <= turns; t++) {
+    const g = quantiles(greedy.manaAt[t - 1]);
+    const h = quantiles(held.manaAt[t - 1]);
+    const gs = quantiles(greedy.payableShareAt[t - 1]);
+    const hs = quantiles(held.payableShareAt[t - 1]);
+    void h; void hs;
+    rows.push({
+      turn: t,
+      mana: { median: g.median, p25: g.p25, p75: g.p75 },
+      payableShare: { median: gs.median, p25: gs.p25, p75: gs.p75 },
+    });
+  }
+  // Six mana on turn six — the cell §5's measured failure lives at, and the cell the falsifier was
+  // measured on. Not swept.
+  const lo = pAtLeastMana(held, 6, 6), hi = pAtLeastMana(greedy, 6, 6);
+  return {
+    trials,
+    accelerants: deck.map(classifyAccelerant).filter((a) => a !== null).length,
+    rows,
+    headline: { mana: 6, turn: 6, low: Math.min(lo, hi), high: Math.max(lo, hi) },
+  };
+}

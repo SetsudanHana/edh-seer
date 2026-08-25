@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { pAtLeast, seen } from "@mtg/engine";
 import type { DeckCard } from "./types.js";
-import { classifyAccelerant, pAtLeastMana, quantiles, rng, simulate } from "./goldfish.js";
+import { classifyAccelerant, manaAvailability, pAtLeastMana, quantiles, rng, simulate } from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -154,4 +154,33 @@ test("quantiles report the spread and survive an empty sample", () => {
 test("no result field says castable", () => {
   const r = simulate([...basics(37), ...spells(62, 3)], { trials: 50, turns: 2, seed: 1 });
   expect(Object.keys(r).join(" ")).not.toMatch(/castab/i);
+});
+
+// THE REPORT WIRING (I11 step 5). This is where the refused quantities could leak into a headline,
+// so the shape itself is asserted rather than left to a renderer's good intentions.
+test("the report shape is an INTERVAL on the cell the policy moves, and a median-plus-spread elsewhere", () => {
+  const deck = [...basics(37), card("Sol Ring", "Artifact", 1, "{T}: Add {C}{C}.", ["C"]), ...spells(61, 3)];
+  const m = manaAvailability(deck, { trials: 2_000, turns: 8 });
+
+  // THE HEADLINE IS THE FALSIFIER'S OWN CELL, and it is a range with both ends present.
+  expect(m.headline).toMatchObject({ mana: 6, turn: 6 });
+  expect(m.headline.low).toBeLessThanOrEqual(m.headline.high);
+
+  // THE PER-TURN ROWS ARE NOT A SECOND INTERVAL, and that is the finding: the two policies agree on
+  // every median and disagree only in the tail. Each row carries its spread instead, so C7 holds
+  // without printing "15% - 15%" eight times.
+  expect(m.rows).toHaveLength(8);
+  for (const r of m.rows) {
+    expect(r.mana.p25).toBeLessThanOrEqual(r.mana.median);
+    expect(r.mana.median).toBeLessThanOrEqual(r.mana.p75);
+    expect(r.payableShare.p25).toBeLessThanOrEqual(r.payableShare.median);
+    expect(r.payableShare.median).toBeLessThanOrEqual(r.payableShare.p75);
+  }
+  // The land-drop cap survives the wiring: turn 1 can never be more than one mana off one land, and
+  // the accelerant cannot arrive before it is drawn.
+  expect(m.rows[0].mana.p75).toBeLessThanOrEqual(2);
+
+  // C10 REACHES THE REPORT SHAPE TOO — the field name is exactly where a banned word creeps back in.
+  expect(JSON.stringify(m)).not.toMatch(/castab/i);
+  expect(m.accelerants).toBe(1);
 });
