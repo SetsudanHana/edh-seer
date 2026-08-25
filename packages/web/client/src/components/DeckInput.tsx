@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Button, TextArea } from "@heroui/react";
+import { deckExportText } from "../lib/deck-export.js";
 
 export function DeckInput({
   commanders,
@@ -19,6 +21,16 @@ export function DeckInput({
   collapsed?: boolean;
   onEdit?: () => void;
 }) {
+  // Label doubles as the confirmation. A clipboard write has no visible result of its own, and a
+  // separate toast is a second surface for a fact that fits on the control that caused it.
+  const [copied, setCopied] = useState(false);
+
+  async function onCopy() {
+    await navigator.clipboard.writeText(deckExportText(commanders, value));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
   if (collapsed) {
     const count = value.split("\n").filter((l) => l.trim()).length;
     const cmdName = commanders.split("\n")[0]?.replace(/^\d+\s+/, "").trim();
@@ -29,6 +41,7 @@ export function DeckInput({
           {cmdName ? <> · {cmdName}</> : null}
         </span>
         <div className="flex gap-2 shrink-0">
+          <button type="button" onClick={() => void onCopy()} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">{copied ? "Copied" : "Copy decklist"}</button>
           <button type="button" onClick={onEdit} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">Edit</button>
           <Button variant="primary" isDisabled={loading} onPress={onAnalyze} style={{ backgroundImage: "var(--accent-gradient)" }}>
             {loading ? "Analyzing…" : "Re-analyze"}
