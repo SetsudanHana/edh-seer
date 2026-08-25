@@ -194,6 +194,17 @@ export function formatReport(report: DeckReport, trim = 0): string {
     }
   }
 
+  // WHAT THE DECK CANNOT TURN ON (roadmap I9's deck-level half). The pairwise pass says "Rootbound
+  // Crag enters untapped because you run Steam Vents" and can say NOTHING when the answer is zero,
+  // so a land that never turns on reads exactly like a land with no condition. A reason, not a gate.
+  if (report.landConditions && report.landConditions.length > 0) {
+    lines.push("");
+    lines.push("=== Conditions this deck cannot meet ===");
+    for (const l of report.landConditions) {
+      lines.push(`  ${l.card}: wants ${l.wants} — ${l.has}`);
+    }
+  }
+
   // WHICH TABLE THIS DECK IS FOR (roadmap L3). WotC's published bracket rule, read off two lists the
   // engine already carries. It DESCRIBES and never grades: a 4-5 deck is not a worse deck than a
   // 1-2 deck, it is a deck for a different table, and the wording has to carry that or the number

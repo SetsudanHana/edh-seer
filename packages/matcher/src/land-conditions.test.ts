@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { classifyLand, entersTapped, type LandBoard } from "./land-conditions.js";
+import { basicTypeDemand, classifyLand, entersTapped, type LandBoard, unmetLandConditions } from "./land-conditions.js";
 
 /** Oracle text FETCHED FROM THE CORPUS, never typed from memory (the standing rule). */
 const CARDS = {
@@ -174,4 +174,49 @@ describe("a multi-face card is classified on its LAND face", () => {
     });
     expect(c).toMatchObject({ template: "pay-life", count: 3 });
   });
+});
+
+// I9's REMAINDER (2026-08-25): the deck-level half, and the same demand on a card that is not a
+// land. The pairwise pass states the POSITIVE and can say nothing when the answer is zero, so a
+// land that never turns on reads exactly like a land with no condition at all.
+test("a check land with no supplier in the deck is reported, and one with a supplier is not", () => {
+  const crag = { name: "Rootbound Crag", typeLine: "Land", oracleText: "This land enters tapped unless you control a Mountain or a Forest.\n{T}: Add {R} or {G}." };
+  const island = { name: "Island", typeLine: "Basic Land — Island", oracleText: "" };
+  // `draguns`' real case: a blue land whose condition names Mountain or Forest, in an island deck.
+  expect(unmetLandConditions([crag, island])).toEqual([
+    { card: "Rootbound Crag", template: "check", wants: "a Mountain or a Forest", has: "no land of either type" },
+  ]);
+
+  // A NONBASIC CARRYING THE TYPE SATISFIES IT — the subtype-vs-supertype distinction this whole
+  // family turns on. Steam Vents is a Mountain.
+  const vents = { name: "Steam Vents", typeLine: "Land — Island Mountain", oracleText: "As this land enters, you may pay 2 life. If you don't, it enters tapped." };
+  expect(unmetLandConditions([crag, vents])).toEqual([]);
+});
+
+test("a bfz land counts BASICS, and a shockland carrying the type does not help it", () => {
+  const glade = { name: "Cinder Glade", typeLine: "Land — Mountain Forest", oracleText: "This land enters tapped unless you control two or more basic lands.\n{T}: Add {R} or {G}." };
+  const vents = { name: "Steam Vents", typeLine: "Land — Island Mountain", oracleText: "" };
+  // Cinder Glade does NOT satisfy its own condition, and neither does a shockland: the demand is the
+  // SUPERTYPE `basic`, as a count.
+  expect(unmetLandConditions([glade, vents])).toEqual([
+    { card: "Cinder Glade", template: "bfz", wants: "2 or more basic lands", has: "0 basics in the deck" },
+  ]);
+
+  const mtn = { name: "Mountain", typeLine: "Basic Land — Mountain", oracleText: "" };
+  expect(unmetLandConditions([glade, mtn, { ...mtn, name: "Mountain 2" }])).toEqual([]);
+});
+
+// FAMILY G: the same demand on a card that is NOT a land. 22 corpus cards, zero of them lands, and
+// zero in the 71 calibration decks — so this test is the only instrument that can see it.
+test("a nonland demanding a basic type is read the same way, and its edge is the same edge", () => {
+  const apes = { name: "Summit Apes", typeLine: "Creature — Ape", oracleText: "Summit Apes can't be blocked as long as you control a Mountain." };
+  expect(basicTypeDemand(apes)).toEqual(["mountain"]);
+  expect(unmetLandConditions([apes, { name: "Island", typeLine: "Basic Land — Island", oracleText: "" }])).toEqual([
+    { card: "Summit Apes", template: "basic-type-demand", wants: "a Mountain", has: "no land of that type" },
+  ]);
+  expect(unmetLandConditions([apes, { name: "Mountain", typeLine: "Basic Land — Mountain", oracleText: "" }])).toEqual([]);
+
+  // A LAND'S OWN CONDITION IS ASKED FIRST, so a card that is both is never reported twice.
+  const both = { name: "Odd One", typeLine: "Land", oracleText: "This land enters tapped unless you control a Forest. It is bigger as long as you control a Mountain." };
+  expect(unmetLandConditions([both]).length).toBe(1);
 });

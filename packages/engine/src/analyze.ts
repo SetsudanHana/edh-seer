@@ -332,6 +332,11 @@ export interface DeckReport {
     theme: string; tag: string; count: number; cards: string[];
     fromCommandZone: string[]; turn: number; k: number; probability: number;
   } | null;
+  /** Cards whose printed land condition THIS deck cannot meet (roadmap I9's deck-level half).
+   *  A REASON, never a gate: the card still taps for mana and still rates, and the honest surface is
+   *  to print the fact. Defined in `matcher/src/land-conditions.ts`; typed structurally here because
+   *  the flat engine never produces one. */
+  landConditions?: { card: string; template: string; wants: string; has: string }[];
   /** Which Commander Bracket the deck's CONTENTS allow (roadmap L3, WotC's official 1-5 tiers).
    *  Three bands and not five: 1 vs 2 is about how the deck was built and 4 vs 5 is a meta
    *  judgement, neither of which is a checkable list. Defined in `matcher/src/brackets.ts`; typed

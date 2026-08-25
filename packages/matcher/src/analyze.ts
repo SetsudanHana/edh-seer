@@ -43,6 +43,7 @@ import { promoteSpecificHeadline, demoteUnrankableHeadline } from "./theme-promo
 import { rankThemesByLoop } from "./theme-loop.js";
 import { deckThing } from "./thing.js";
 import { deckBracket } from "./brackets.js";
+import { unmetLandConditions } from "./land-conditions.js";
 
 /**
  * Structured-engine counterpart of `@mtg/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -809,6 +810,9 @@ export function analyzeDeckStructured(
     // WotC's bracket rule over facts the engine already had: `gameChanger` on every corpus card
     // and the combos `foundCombos` resolved above. A join, so it forms no edge and reads no rating.
     bracket: deckBracket(resolved.map((dc) => dc.card), foundCombos),
+    // The deck-level half of I9: the pairwise pass states the POSITIVE and can say nothing when the
+    // answer is zero, and that silence reads exactly like a card with no condition at all.
+    landConditions: unmetLandConditions(resolved.map((dc) => dc.card)),
     archetypes,
     strategies,
     buildScore,

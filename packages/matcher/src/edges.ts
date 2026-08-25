@@ -15,7 +15,7 @@ import {
   graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   staticGrantSentence, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
-import { classifyLand } from "./land-conditions.js";
+import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { parseTypeLineAllFaces } from "./typeline.js";
 
 const list = (v: string | string[] | undefined): string[] =>
@@ -1477,16 +1477,23 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
   // false". It is a deck-level fact, the `deckSlack` shape, and forms nothing here. Everything the
   // classifier could not read is `unclassified` and forms nothing either.
   const landCond = classifyLand(c.card);
-  if ((landCond.template === "check" || landCond.template === "verge") && p.card.name !== c.card.name) {
+  // THE G FAMILY IS THE SAME DEMAND ON A CARD THAT IS NOT A LAND (roadmap I9): Summit Apes wants a
+  // Mountain exactly as Rootbound Crag does, so it takes the same SUBTYPE edge. A land's own
+  // condition is asked first, so a card can never claim both.
+  const wantedSubtypes = landCond.template === "check" || landCond.template === "verge"
+    ? landCond.subtypes
+    : basicTypeDemand(c.card);
+  if (wantedSubtypes.length > 0 && p.card.name !== c.card.name) {
     // The PRINTED type line, every face — an "Instant // Land — Mountain" really is a Mountain when
     // you play its land half. Basics and nonbasics alike: Steam Vents carries Mountain, and 233
     // nonbasic land slots across the 71 decks do the same.
     const supplied = new Set(parseTypeLineAllFaces(p.card.typeLine).subtypes);
-    const match = landCond.subtypes.find((t) => supplied.has(t));
+    const match = wantedSubtypes.find((t) => supplied.has(t));
     if (match !== undefined) {
       reasons.push({
         tag: `land-condition:${match}`,
-        text: landConditionSentence(p.card.name, c.card.name, match, landCond.template),
+        text: landConditionSentence(p.card.name, c.card.name, match,
+          landCond.template === "check" || landCond.template === "verge" ? landCond.template : "basic-type-demand"),
         repeatability: "static",
         consumer: c.card.name,
         producer: p.card.name,

@@ -206,9 +206,12 @@ export function landConditionSentence(
   producer: string,
   consumer: string,
   subtype: string,
-  kind: "check" | "verge",
+  kind: "check" | "verge" | "basic-type-demand",
 ): string {
   const type = subtype.charAt(0).toUpperCase() + subtype.slice(1);
+  // The G family is the same demand on a card that is NOT a land, so its sentence says what the
+  // card gets rather than how it enters — Summit Apes is bigger, not untapped.
+  if (kind === "basic-type-demand") return `${consumer} is better while you control a ${type}, and ${producer} is one`;
   return kind === "check"
     ? `${consumer} enters untapped when you control a ${type}, and ${producer} is one`
     : `${consumer} can only use its second mana ability while you control a ${type}, and ${producer} is one`;

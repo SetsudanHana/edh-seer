@@ -207,3 +207,102 @@ export function entersTapped(cond: LandCondition, board: LandBoard): boolean {
       return true;
   }
 }
+
+/** The five basic land types, as printed. The G family and every `check`/`verge` cue name one. */
+const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
+
+/** THE SAME DEMAND PRINTED ON A CARD THAT IS NOT A LAND (roadmap I9, family G): Summit Apes has
+ *  *"as long as you control a Mountain"*, Kird Ape *"as long as you control a Forest"*. Twenty-two
+ *  corpus cards, and **zero of them are lands** — which is precisely why this belongs beside
+ *  `classifyLand` rather than inside it: whatever channel states "this card is worse without
+ *  Forests" has to serve both halves of the family.
+ *
+ *  MEASURED, AND IT BUYS NOTHING ON THIS CORPUS: **0 of the 22 appear in the 71 calibration decks**,
+ *  so it forms no edge and fires no warning here. It is built for the pasted list, and its unit test
+ *  is the only instrument that can see it — the same standing as `SubjectFilter.named`'s 13 cards. */
+export function basicTypeDemand(card: Pick<Card, "oracleText">): string[] {
+  const m = new RegExp(
+    `as long as you control (?:a|an|another)\\s+(${BASIC_TYPES.join("|")})\\b`, "i",
+  ).exec(card.oracleText ?? "");
+  return m ? [m[1].toLowerCase()] : [];
+}
+
+/** A card in this deck whose printed land condition this deck cannot meet, in the reader's words. */
+export interface UnmetLandCondition {
+  card: string;
+  template: LandTemplate | "basic-type-demand";
+  /** What the card asks for. */
+  wants: string;
+  /** What the deck actually holds. */
+  has: string;
+}
+
+/** WHAT THE DECK CANNOT TURN ON — the deck-level half of I9, and the half a reader never saw.
+ *
+ *  THE PAIRWISE PASS IN `edges.ts` STATES THE POSITIVE ("Rootbound Crag enters untapped because you
+ *  run Steam Vents") AND CAN SAY NOTHING WHEN THE ANSWER IS ZERO: no supplier, no edge, no row, and
+ *  the silence reads exactly like a card with no condition at all. This is the same shape the unmet
+ *  `conditionCares` row already ships for nonland demands — a REASON, never a gate: the card still
+ *  taps for mana and still rates, and the honest surface is to print the fact.
+ *
+ *  THREE TEMPLATES, and they are three different demands (owner's correction, 2026-08-22 — the
+ *  supertype-vs-subtype distinction this whole item turns on):
+ *    - `check`/`verge` want a basic land SUBTYPE, satisfied by a basic Mountain AND by every
+ *      nonbasic carrying that type (Steam Vents, and Cinder Glade itself).
+ *    - `bfz` wants the SUPERTYPE `basic`, as a COUNT. A shockland does not count and Cinder Glade
+ *      does not satisfy its own condition.
+ *    - The G family is `check`'s demand on a card that is not a land.
+ *
+ *  MEASURED OVER THE 71 DECKS: **`check`/`verge` fires on exactly ONE — `draguns` runs Mistrise
+ *  Village**, a BLUE land whose condition names Mountain or Forest, in an island deck, so it enters
+ *  tapped every game forever. **`bfz` fires on ZERO of the 24 decks that run one** (basics per deck
+ *  run min 4, median 12, max 30), and **G on zero of 71**. One in seventy-one is the `Oath of
+ *  Liliana` rate and carries the same caveat: these are the owner's own well-built decks. */
+export function unmetLandConditions(
+  cards: readonly Pick<Card, "name" | "typeLine" | "oracleText">[],
+): UnmetLandCondition[] {
+  const subtypes = new Set<string>();
+  let basics = 0;
+  for (const c of cards) {
+    const line = c.typeLine ?? "";
+    for (const t of BASIC_TYPES) if (new RegExp(`\\b${t}\\b`, "i").test(line)) subtypes.add(t);
+    if (/\bbasic\b/i.test(line) && /\bland\b/i.test(line)) basics++;
+  }
+
+  // A basic land type is a proper noun on the card, and the pairwise sentence already capitalises
+  // it — the two surfaces must not spell the same type two ways.
+  const named_ = (ts: string[]): string => ts.map((t) => `a ${t.charAt(0).toUpperCase()}${t.slice(1)}`).join(" or ");
+
+  const out: UnmetLandCondition[] = [];
+  for (const c of cards) {
+    const cond = classifyLand(c);
+    if ((cond.template === "check" || cond.template === "verge") && cond.subtypes.length > 0
+      && !cond.subtypes.some((t) => subtypes.has(t))) {
+      out.push({
+        card: c.name,
+        template: cond.template,
+        wants: named_(cond.subtypes),
+        has: "no land of either type",
+      });
+      continue;
+    }
+    if (cond.template === "bfz" && basics < (cond.count ?? 2)) {
+      // NAMES NO MEMBER, deliberately: every basic contributes equally, so a claim about one of them
+      // would be true of any ordinary basic — the registered "a claim that applies to a card merely
+      // for being an ordinary card is false". The deck-level count is the whole fact.
+      out.push({
+        card: c.name,
+        template: "bfz",
+        wants: `${cond.count ?? 2} or more basic lands`,
+        has: `${basics} basic${basics === 1 ? "" : "s"} in the deck`,
+      });
+      continue;
+    }
+    // A LAND'S OWN CONDITION IS ASKED FIRST, so a card that is both is never double-reported.
+    const wanted = basicTypeDemand(c);
+    if (wanted.length > 0 && !wanted.some((t) => subtypes.has(t))) {
+      out.push({ card: c.name, template: "basic-type-demand", wants: named_(wanted), has: "no land of that type" });
+    }
+  }
+  return out.sort((a, b) => a.card.localeCompare(b.card));
+}
