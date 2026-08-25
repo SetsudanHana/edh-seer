@@ -64,9 +64,15 @@ export async function ingestFlavorNames(
   let applied = 0;
   let skipped = 0;
   for (const { oracleId, flavorName } of pairs) {
+    // AN EMPTY KEY IS NOT A NAME (roadmap I3). Two corpus cards carried one from this path —
+    // Arcane Denial and Force of Negation, whose Secret Lair flavor names clean to nothing — and a
+    // decklist line that cleaned to empty resolved to one of them at random. Skipped rather than
+    // written, and counted as such so a rising rate would be visible.
+    const key = normalizeName(flavorName);
+    if (key === "") { skipped++; continue; }
     const res = await cards.updateOne(
       { _id: oracleId },
-      { $addToSet: { searchNames: normalizeName(flavorName) } },
+      { $addToSet: { searchNames: key } },
     );
     if (res.matchedCount === 0) {
       skipped++;

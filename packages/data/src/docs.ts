@@ -41,9 +41,25 @@ export interface ComboDoc {
 
 export function toCardDoc(n: NormalizedCard): CardDoc {
   const { produces, cares } = extractTags(n.card);
+  // A BACK-FACE NAME IS NOT A CARD NAME (roadmap I3, owner's fix). Indexing every face made
+  // **Studious First-Year // Rampant Growth claim the key `rampant growth`**, so a decklist line
+  // "1 Rampant Growth" could resolve to a Bear Wizard — and WHICH doc won was decided by `findOne`
+  // order, i.e. by nothing.
+  //
+  // MEASURED over the 34,433-card corpus: 79 colliding `searchNames` keys, **27 where a FACE name
+  // collides with a whole card's NAME — prepare 20, split 6, normal 2** — and the list is famous
+  // spells: Lightning Bolt, Brainstorm, Ancestral Recall, Careful Study, Exsanguinate, Sign in
+  // Blood, Stream of Life, Replenish, Seething Song.
+  //
+  // FRONT FACE ONLY IS SAFE ACROSS EVERY MULTI-FACE LAYOUT, because a decklist names a card by its
+  // front or by the whole "A // B" string, and both are still indexed. The only thing lost is
+  // writing the BACK half of a split alone, which no export format does.
+  //
+  // AN EMPTY KEY IS DROPPED TOO. It cannot be typed deliberately and it makes any line that cleans
+  // to empty resolve at random — see `ingestFlavorNames`, which is the other writer of this field.
   const searchNames = Array.from(
-    new Set([n.card.name, ...n.faceNames].map(normalizeName)),
-  );
+    new Set([n.card.name, ...n.faceNames.slice(0, 1)].map(normalizeName)),
+  ).filter((k) => k !== "");
   return {
     _id: n.oracleId,
     name: n.card.name,
