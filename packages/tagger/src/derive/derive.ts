@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 78;
+export const DERIVE_VERSION = 79;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -552,6 +552,13 @@ const LOSES_THE_GAME = /\blos(?:es|e|ing) the game\b/i;
 
 const TAPPED_FOR_MANA = /\btapp?(?:ed|s|ing)?\b[^.]{0,30}?\bfor\s+(?:mana|\{)/i;
 
+/** A counter trigger whose SUBJECT says the counters came off. Read on the subject and not on the
+ *  clause text, deliberately: a planeswalker's text names both directions in different sentences
+ *  ("counters are removed" in the trigger, "put a loyalty counter" in a loyalty ability), so a
+ *  card-scoped test would refuse the ADDING half too. The subject is the one string that describes
+ *  THIS trigger. */
+const COUNTER_REMOVED = /\bremoved?\b/i;
+
 /** THE TEXT THIS CLAUSE WAS WRITTEN FROM, when the normalizer's clause id is not one the segmenter
  *  produced.
  *
@@ -683,6 +690,24 @@ export function deriveAbilities(
         unknownTriggers.push("taps-for-mana");
       } else if (verb === "lose-life" && LOSES_THE_GAME.test(text)) {
         unknownTriggers.push("loses-the-game");
+      } else if (verb === "counter-added" && COUNTER_REMOVED.test(clause.trigger.subject ?? "")) {
+        // A COUNTER COMING OFF IS THE OPPOSITE EVENT, AND THE CLAUSE ALREADY SAYS SO — in its
+        // SUBJECT, which is where this pipeline keeps putting the direction (roadmap M4, free).
+        // Chandra, Fire Artisan prints "whenever one or more loyalty counters are REMOVED from
+        // Chandra, she deals that much damage" and normalizes to
+        // `{event: "counter-added", subject: "loyalty counters removed from Chandra"}`: the model
+        // reached for the nearest legal event and left the truth in the subject. Derived as written
+        // it is a FALSE claim rather than a missing one — every counter-placer in the deck feeds a
+        // trigger that fires when counters LEAVE.
+        //
+        // REFUSED RATHER THAN REINTERPRETED, exactly as `loses-the-game` and `taps-for-mana` are
+        // one branch up: `counter-removed` is not in `TRIGGERS`, and adding it is a vocabulary bump
+        // that re-selects the whole `other`-trigger population and SPENDS. A visible refusal beats
+        // a banked near-miss.
+        //
+        // ONE CLAUSE CORPUS-WIDE, measured — and the size is not the point: 9 corpus cards print a
+        // trigger on counters being removed, so this is the one the normalizer happened to answer.
+        unknownTriggers.push("counter-removed");
       } else if (clause.trigger.event === "damage-dealt") {
         // DIRECTION IS NOT IN THE EVENT NAME. `damage-dealt` covers both "deals combat damage to a
         // player" and "is dealt damage", which are opposite facts, so the clause TEXT decides —

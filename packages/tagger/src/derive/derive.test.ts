@@ -1577,3 +1577,30 @@ test("a clause granted to a token the card creates derives nothing, and the same
   const unguarded = deriveAbilities([clause], "Vivi's Persistence", { 2: text }, undefined, text);
   expect(unguarded.abilities.some((a) => a.trigger?.verbs?.includes("cast"))).toBe(true);
 });
+
+// M4 (2026-08-25): A COUNTER COMING OFF IS THE OPPOSITE EVENT, AND THE CLAUSE ALREADY SAYS SO — in
+// its SUBJECT, which is where this pipeline keeps putting the direction (`taps-for-mana`,
+// `loses-the-game`, `damage-dealt` all read a string the model left behind rather than the event
+// name). Derived as written, Chandra, Fire Artisan claims to trigger when counters are ADDED, so
+// every counter-placer in the deck falsely feeds a trigger that fires when they LEAVE.
+test("a counter trigger whose subject says the counters were removed is refused, not inverted", () => {
+  const removed = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "counter-added", subject: "loyalty counters removed from Chandra", control: "you" },
+    actions: [{ verb: "deal-damage", object: "target opponent", amount: "that much" }],
+  }], "Chandra, Fire Artisan");
+  expect(removed.unknownTriggers).toContain("counter-removed");
+  expect(removed.abilities.some((a) => a.trigger?.verbs?.includes("counter-added"))).toBe(false);
+
+  // …and the ADDING half is untouched, which is the direction that matters: a planeswalker names
+  // both in different sentences, so a card-scoped test would have refused this one too.
+  const added = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "counter-added", subject: "a +1/+1 counter on a creature you control", control: "you" },
+    actions: [{ verb: "draw", object: "a card" }],
+  }], "Whatever");
+  expect(added.unknownTriggers).not.toContain("counter-removed");
+  expect(added.abilities.some((a) => a.trigger?.verbs?.includes("counter-added"))).toBe(true);
+});
