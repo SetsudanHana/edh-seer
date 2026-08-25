@@ -38,6 +38,16 @@ const TARGET_MARK = 0.7;
  *  precision it does not have. */
 const pct = (p: number): string => `${Math.round(p * 100)}%`;
 
+/** How far the colour-blind figure must sit above the real one before the panel says the problem is
+ *  COLOUR. Below this the two numbers say the same thing and the second is noise. Matches the CLI. */
+const COLOUR_GAP = 0.05;
+
+/** A policy interval, collapsed to ONE figure when the two ends round the same. "91% - 91%" reads as
+ *  a broken readout -- I11 settled that for the simulation's own rows, and the first cut of this
+ *  panel reproduced it on the diagnostic line. Found in a live browser, not by a test. */
+const band = (b: { low: number; high: number }): string =>
+  pct(b.low) === pct(b.high) ? pct(b.low) : `${pct(b.low)} – ${pct(b.high)}`;
+
 /** A CAVEAT, ONE CLICK AWAY — `Explain` under this panel's own label, since everything folded here
  *  is a statement about what a figure IGNORES rather than what it means.
  *  → `specs/2026-08-20-report-usability-review.md` §4 */
@@ -603,18 +613,15 @@ function DeckMathRows({
             {/* Keyed on the figure itself, not just the turn: two cards only share a heading when
               *  they genuinely share a probability, so a fractional mana value can never be folded
               *  into a group whose number it does not actually carry. */}
-            {[...new Set(castability.cards.map((c) => `${c.turn}:${c.mana}:${c.manaWithRocks}`))].map((groupKey) => {
+            {[...new Set(castability.cards.map((c) => `${c.turn}:${c.castable.low}:${c.castable.high}`))].map((groupKey) => {
               const group = castability.cards.filter(
-                (c) => `${c.turn}:${c.mana}:${c.manaWithRocks}` === groupKey,
+                (c) => `${c.turn}:${c.castable.low}:${c.castable.high}` === groupKey,
               );
-              const { turn: costTurn, mana, manaWithRocks } = group[0]!;
-              // A RANGE, low to high, and never a single number: lands-only under-states, and
-              // lands-plus-rocks over-states because the rock needs lands too. Collapsed to one
-              // figure when the deck runs no rock cheap enough to matter, so a rockless deck does
-              // not print "78% – 78%".
-              const manaText = pct(manaWithRocks) === pct(mana)
-                ? pct(mana)
-                : `${pct(mana)} – ${pct(manaWithRocks)}`;
+              const { turn: costTurn, castable } = group[0]!;
+              // A RANGE, low to high, and never a single number -- but the range is the PLAY POLICY
+              // now, not the old pair of arithmetic biases. Collapsed to one figure when the two
+              // ends round the same, so a row never reads "78% – 78%".
+              const castText = band(castable);
               return (
                 <li key={groupKey} className="flex flex-col gap-1">
                   <div className="flex items-baseline gap-3 text-sm">
@@ -622,33 +629,33 @@ function DeckMathRows({
                       {costTurn}-drop{group.length === 1 ? "" : "s"}
                     </span>
                     <span className="shrink-0 stat-num">
-                      {manaText} to have {costTurn} mana by turn {costTurn}
+                      {castText} to cast by turn {costTurn}
                     </span>
                   </div>
                   <ul className="flex flex-col gap-1 border-l border-(--separator) pl-3">
                     {group.map((c) => {
-                      const colourPart = c.colors
-                        .map((x) => `${pct(x.p)} for ${x.pips} ${x.color}`)
-                        .join(", ");
+                      // WHICH PROBLEM IT IS. The headline folds mana and colour together; this is
+                      // the same cell with colours ignored, so a wide gap says the deck cannot make
+                      // the COLOURS and a narrow one says it cannot make the MANA. Shown only when
+                      // the gap is worth acting on -- below that it is a second number saying the
+                      // same thing, which is how a panel stops being read.
+                      const gap = c.mana.high - c.castable.high;
+                      const note = gap >= COLOUR_GAP
+                        ? `mana alone ${band(c.mana)} — the colours are what is short`
+                        : "";
                       return (
                         <li
                           key={c.name}
-                          // STACKED AT NARROW. Side by side, the fixed colour figures kept their
-                          // full width while the card name truncated -- "Inalla, Archmage Ritualist"
-                          // wants 163px and had 110 -- so the row lost the one thing identifying
-                          // which card it is about. On its own line the name always fits.
+                          // STACKED AT NARROW. Side by side, the fixed figures kept their full width
+                          // while the card name truncated -- "Inalla, Archmage Ritualist" wants
+                          // 163px and had 110 -- so the row lost the one thing identifying which
+                          // card it is about. On its own line the name always fits.
                           className="flex flex-col sm:flex-row sm:items-baseline gap-x-3 text-sm"
-                          aria-label={
-                            `${c.name}, ${manaText} to have ${c.turn} mana by turn ${c.turn}`
-                            + (colourPart ? `, ${colourPart}` : "")
-                          }
+                          aria-label={`${c.name}, ${castText} to cast by turn ${c.turn}` + (note ? `, ${note}` : "")}
                         >
-                          {/* Two axes, never multiplied into one. Both are driven by the same lands,
-                            *  so the correlation is positive -- and the product would hide whether
-                            *  the deck's problem is mana or colour. */}
                           <span className="flex-1 sm:truncate text-(--muted)">{c.name}</span>
                           <span className="shrink-0 sm:text-right stat-num text-(--muted) text-xs">
-                            {colourPart || "no coloured pips"}
+                            {note}
                           </span>
                         </li>
                       );

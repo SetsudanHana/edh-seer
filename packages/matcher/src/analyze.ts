@@ -45,7 +45,7 @@ import { deckThing } from "./thing.js";
 import { deckBracket } from "./brackets.js";
 import { unmetLandConditions } from "./land-conditions.js";
 import { commanderDamage } from "./commander-damage.js";
-import { manaAvailability } from "./goldfish.js";
+import { manaModel } from "./goldfish.js";
 import { deckLegality } from "./legality.js";
 import { COMMANDER_TAX_CAVEAT, COMMANDER_TAX_PER_CAST } from "./format.js";
 
@@ -558,12 +558,15 @@ export function analyzeDeckStructured(
   // weigh effect against cost without the engine multiplying the two. `deckCastability` skips lands
   // and drops the rows it REFUSES to price, so a missing entry is a refusal or a land and reads as
   // a blank rather than a zero.
-  // ponytail: computeDeckMath runs this same pass for its own top-4 table; the second scan is ~99
-  // small hypergeometric sums and keeps that function's signature untouched.
+  // BOTH POLICY ARMS, RUN ONCE, and shared with `computeDeckMath` and `report.manaAvailability`.
+  // A COMMANDER IS NOT IN THE LIBRARY (CR 903.6) and this model draws from one, so it is excluded
+  // from the shuffle and PRICED anyway through `alsoPrice` — "can I cast my commander on turn six"
+  // is the one card a reader looks for by name.
+  const simLibrary = resolved.filter((dc) => !commanderSet.has(dc.card.name));
+  const manaSim = manaModel(simLibrary, { alsoPrice: resolved.filter((dc) => commanderSet.has(dc.card.name)) });
   const castByName = new Map(
-    deckCastability(resolved, { commanderNames: [...commanderSet] }).cards
-      .map((r: CardCastability) =>
-        [r.name, { turn: r.turn, mana: r.mana!, manaWithRocks: r.manaWithRocks!, colors: r.colors }] as const),
+    deckCastability(resolved, manaSim.curves).cards
+      .map((r: CardCastability) => [r.name, { turn: r.turn, castable: r.castable!, mana: r.mana! }] as const),
   );
   const printedCost = new Map(resolved.map((dc) => [dc.card.name, dc.card] as const));
   const ratedCards: CardSynergy[] = cards.map((c) => {
@@ -766,6 +769,7 @@ export function analyzeDeckStructured(
   const deckMath = resolved.length > commanderSet.size
     ? computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, {
         comboCards, landRecommendation: landRec, primary: strategies[0]?.name,
+        castCurves: manaSim.curves,
       })
     : undefined;
 
@@ -825,7 +829,7 @@ export function analyzeDeckStructured(
     // (CR 903.6) and this model draws from one, so it is excluded exactly as `deck-math.ts` excludes
     // it — including one in the shuffle would both dilute the draw and pretend it can be drawn.
     // FEEDS NO SCORE, which is the condition the K7/J7 reconciliation holds under.
-    manaAvailability: manaAvailability(resolved.filter((dc) => !commanderSet.has(dc.card.name))),
+    manaAvailability: manaSim.availability,
     // CR 903.3 and 903.5a-d, as a REPORT (roadmap J4). `resolved` is one entry per COPY, which is
     // what the size and duplicate rules count. Feeds no score and refuses nothing.
     legality: deckLegality({

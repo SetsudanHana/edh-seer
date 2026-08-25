@@ -30,7 +30,7 @@ import { join } from "node:path";
 import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@mtg/data";
 import { createTagsLookup } from "@mtg/tagger";
 import { detectBuildCategories } from "../build.js";
-import { cardCastability } from "../castability.js";
+import { costRefusal } from "../castability.js";
 import { quantiles, simulate, type SimulateResult } from "../goldfish.js";
 import { castTurnStats, castTurns, silenceRamp, type CastTurn } from "./commander-ramp-core.js";
 import type { DeckCard } from "../types.js";
@@ -96,7 +96,7 @@ async function rowsFor(file: string, dir: string): Promise<Row[]> {
     const mv = c.card.manaValue;
     // THE COST REFUSALS ARE REUSED, NOT RE-TYPED. An {X} or free-cast commander's printed mana value
     // is not what you pay, so a turn computed from it would be a confident wrong answer.
-    const refused = cardCastability(c, deck, { commanderNames: commanders }).refused;
+    const refused = costRefusal(c);
     const st = (r: SimulateResult): CastTurn => castTurnStats(castTurns(r, mv), TURNS);
     return {
       deck: file.replace(/\.txt$/, ""), commander: c.card.name, mv,

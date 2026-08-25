@@ -133,11 +133,12 @@ export function DeckIdentity({
           </span>
         </p>
       ) : null}
-      {/* WHEN IS THE COMMANDER ONLINE (roadmap K5). A RANGE, never one number, and it ships with the
-        *  reason it reads low: `manaWithRocks` counts only permanents that produce mana, so a deck
-        *  ramping on Farseek and Cultivate is priced without its ramp -- on the owner's own Samut
-        *  deck the range is 34-43% against a simulated 55.8% (I11). A refused cost prints an em dash
-        *  and never 0%, because a reader treats 0% as "cannot happen". */}
+      {/* WHEN IS THE COMMANDER ONLINE (roadmap K5). A RANGE, never one number, and the range is the
+        *  PLAY POLICY: the low end holds up two mana before casting an accelerant, the high end
+        *  spends everything on acceleration. MANA AND COLOURS TOGETHER (L4a) -- the old pair of
+        *  hypergeometric axes could not be combined and so no figure here meant "you can cast it".
+        *  A refused cost prints an em dash and never 0%, because a reader treats 0% as
+        *  "cannot happen". */}
       {commanderCast && commanderCast.length > 0 ? (
         <p className="text-sm text-(--muted) tabular-nums">
           {/* SUBJECT FIRST. The first cut read "21-72% by turn 6 to cast your commander", which makes
@@ -145,9 +146,12 @@ export function DeckIdentity({
               any test. */}
           <span>Commander castable: </span>
           {commanderCast.map((c) => {
-            const odds = c.mana === null
+            const p = (x: number) => Math.max(1, Math.round(x * 100));
+            const odds = c.castable === null
               ? `— (${c.refused ?? "cost not modelled"})`
-              : `${Math.max(1, Math.round(c.mana * 100))}–${Math.max(1, Math.round((c.manaWithRocks ?? c.mana) * 100))}% by turn ${c.turn}`;
+              : p(c.castable.low) === p(c.castable.high)
+                ? `${p(c.castable.low)}% by turn ${c.turn}`
+                : `${p(c.castable.low)}–${p(c.castable.high)}% by turn ${c.turn}`;
             return `${commanderCast.length > 1 ? `${c.name}: ` : ""}${odds}`;
           }).join(" · ")}
           {/* THE CAVEAT IS VISIBLE, NOT A TOOLTIP. It was a `title` first, and a tooltip is not a

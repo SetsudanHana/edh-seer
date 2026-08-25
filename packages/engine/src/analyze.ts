@@ -62,17 +62,17 @@ export interface CardSynergy {
    *  flat engine and on a card with no printed cost. */
   manaCost?: string;
   manaValue?: number;
-  /** When can you actually cast it: the same two axes `DeckMath.castability` reports, for THIS
-   *  card, at its own mana value as the deadline. `mana` counts lands only and `manaWithRocks` adds
-   *  the rocks already castable, so the pair is an interval; the colour rows are separate and are
-   *  never folded in. Absent on a land, on the flat engine, and on a cost the model REFUSES to
-   *  price (X costs, delve, convoke, affinity, free casts) — a refusal reads as a blank, never a
-   *  zero. */
+  /** When can you actually cast it — mana AND colours, at its own mana value as the deadline.
+   *  `castable` is the answer and the interval is the PLAY POLICY (the low end holds up two mana,
+   *  the high end spends everything on acceleration). `mana` is the same cell with colours ignored,
+   *  kept as the DIAGNOSTIC: a card whose `mana` is high and whose `castable` is low has a colour
+   *  problem and not a ramp problem. Absent on a land, on the flat engine, and on a cost the model
+   *  REFUSES to price (X costs, delve, convoke, affinity, free casts) — a refusal reads as a blank,
+   *  never a zero. */
   castability?: {
     turn: number;
-    mana: number;
-    manaWithRocks: number;
-    colors: { color: string; pips: number; p: number }[];
+    castable: { low: number; high: number };
+    mana: { low: number; high: number };
   };
   /** True when the card fills a functional BUILD role AND has an on-axis synergy edge — one card,
    *  two jobs. Set only by @mtg/matcher's analyzeDeckStructured; the card also carries a small
@@ -251,11 +251,12 @@ export interface DeckMath {
     cards: {
       name: string;
       turn: number;
-      /** Lower bound: lands only. Upper bound: plus the rocks already castable by then. Reported as
-       *  a pair on purpose — the exact figure needs a play policy this layer does not have. */
-      mana: number;
-      manaWithRocks: number;
-      colors: { color: string; pips: number; p: number }[];
+      /** P(you can cast it) — mana and colours together. The interval is the PLAY POLICY: the low
+       *  end holds up two mana before casting an accelerant, the high end spends everything on
+       *  acceleration and is a ceiling no real deck plays to. */
+      castable: { low: number; high: number };
+      /** The same cell with colours ignored, kept as the diagnostic. */
+      mana: { low: number; high: number };
     }[];
     refused: number;
     biases: string;
@@ -270,15 +271,14 @@ export interface DeckMath {
      *  Never inside `cards`, which is the HARDEST few of the 99 — a commander is not competing for
      *  that list, it is the card the deck is built around, and a reader looks for it by name.
      *
-     *  `mana` is null exactly when the cost is refused (an X cost, delve, convoke…), and a renderer
-     *  must print an em dash there and NEVER 0%: a reader trusts a percentage absolutely, and 0%
-     *  would say the commander is uncastable. */
+     *  `castable` is null exactly when the cost is refused (an X cost, delve, convoke…), and a
+     *  renderer must print an em dash there and NEVER 0%: a reader trusts a percentage absolutely,
+     *  and 0% would say the commander is uncastable. */
     commanders?: {
       name: string;
       turn: number;
-      mana: number | null;
-      manaWithRocks: number | null;
-      colors: { color: string; pips: number; p: number }[];
+      castable: { low: number; high: number } | null;
+      mana: { low: number; high: number } | null;
       refused?: string;
       /** Present when the commander does something from the COMMAND ZONE (eminence, Lurrus-style
        *  static, commander ninjutsu). The turn below is then WRONG in the deck's favour's opposite

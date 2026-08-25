@@ -1,5 +1,4 @@
-import { pAtLeast, seen } from "@mtg/engine";
-import { COLORS, isManaSource, pipsByColor, type Color } from "./mana-audit.js";
+import { MAX_PRICED_TURN, type CastCurve } from "./goldfish.js";
 import type { DeckCard } from "./types.js";
 
 /** Costs this model cannot represent, and the reason each is refused.
@@ -48,82 +47,53 @@ export interface CardCastability {
   /** The turn this is priced at: the card's own mana value, the same deadline rule the mana audit
    *  uses. You want to cast a 3-drop on turn 3. */
   turn: number;
-  /** P(at least `manaValue` lands by `turn`). Null when the cost is refused.
+  /** P(YOU CAN CAST IT) by `turn` -- mana and colours together, as the POLICY interval.
    *
-   *  The LOWER bound of the pair: no ramp of any kind counts. */
-  mana: number | null;
-  /** The UPPER bound: lands plus every nonland permanent mana source cheap enough to have been cast
-   *  first (`manaValue < turn`). Null exactly when `mana` is.
+   *  ONE NUMBER, AND IT MEANS WHAT IT SAYS. This module used to report two hypergeometric axes and
+   *  refuse to multiply them, correctly: both are driven by the same lands, so the product
+   *  under-states, and "mana yes, colour no" is a different deck problem from "colour yes, mana no".
+   *  The cost of that refusal was that NO figure here meant "you can cast this card". The simulation
+   *  asks the board both questions in the same trial, so the combination is free and the correlation
+   *  is handled by construction.
    *
-   *  OPTIMISTIC BY CONSTRUCTION, and it must never become the headline: the rock itself needs lands
-   *  to cast, so the two are positively correlated, and it also ignores summoning sickness on a
-   *  dork. Read the pair as an interval containing the truth -- which is the honest shape, since the
-   *  exact answer needs a play policy (which land did you play, did you cast the rock or hold
-   *  removal) and this layer has none. */
-  manaWithRocks: number | null;
-  /** One row per coloured pip requirement, each its own probability. NEVER multiplied into `mana`
-   *  or into each other -- see `deckCastability`. */
-  colors: { color: Color; pips: number; p: number }[];
-  /** Present only when `mana` is null: why the model will not price this card. */
+   *  THE INTERVAL IS THE PLAY POLICY, not the two old biases: the low end holds up two mana before
+   *  casting an accelerant, the high end spends everything on acceleration and is a CEILING no real
+   *  deck plays to. Null when the cost is refused. */
+  castable: { low: number; high: number } | null;
+  /** THE SAME CELL WITH COLOURS IGNORED -- the diagnostic, and the only reason to keep two numbers.
+   *  A card whose `mana` is high and whose `castable` is low has a COLOUR problem, not a ramp
+   *  problem, and those are fixed differently. Equal to `castable` when the colours line up. */
+  mana: { low: number; high: number } | null;
+  /** Present only when `castable` is null: why the model will not price this card. */
   refused?: string;
 }
 
-/** Tier 1 castability for one card: can you have the mana, and can you have the colours.
- *
- *  TWO AXES, REPORTED SEPARATELY AND NEVER MULTIPLIED. The product is the tempting single number
- *  and it is wrong: both axes are driven by the same lands, so the correlation is positive and
- *  `P(mana) x P(colour)` under-estimates. It also destroys the diagnosis -- "mana yes, colour no"
- *  is a different deck problem from "colour yes, mana no", and the product hides which you have. */
+/** Why this card's cost cannot be represented, or undefined. Exported because a caller can want the
+ *  REFUSAL without wanting a probability — `commander-ramp.ts` needs to know that an {X} commander's
+ *  printed mana value is not what you pay, and re-typing this list there is how two of them drift. */
+export function costRefusal(card: DeckCard): string | undefined {
+  return REFUSALS.find((r) => r.test(card))?.reason;
+}
+
 export function cardCastability(
   card: DeckCard,
-  deck: readonly DeckCard[],
-  opts: { commanderNames?: readonly string[] } = {},
+  curves: ReadonlyMap<string, CastCurve>,
 ): CardCastability {
-  const commanders = new Set(opts.commanderNames ?? []);
-  const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  const lands = library.filter((dc) => dc.card.typeLine.toLowerCase().includes("land")).length;
-  const turn = Math.max(1, Math.round(card.card.manaValue));
+  const manaValue = card.card.manaValue;
+  const turn = Math.max(1, Math.round(manaValue));
+  const blank = { name: card.card.name, manaValue, turn, castable: null, mana: null };
 
-  const refusal = REFUSALS.find((r) => r.test(card));
-  if (refusal) {
-    return {
-      name: card.card.name, manaValue: card.card.manaValue, turn,
-      mana: null, manaWithRocks: null, colors: [], refused: refusal.reason,
-    };
+  const refusal = costRefusal(card);
+  if (refusal) return { ...blank, refused: refusal };
+  // PAST THE SIMULATION'S HORIZON IS A REFUSAL, not a figure quietly answering a nearer turn.
+  if (turn > MAX_PRICED_TURN) {
+    return { ...blank, refused: `mana value ${manaValue} — past the ${MAX_PRICED_TURN} turns this model simulates` };
   }
-
-  const pips = pipsByColor(card.card.manaCost);
-  const colors = COLORS.filter((c) => (pips[c] ?? 0) > 0).map((color) => {
-    const need = pips[color]!;
-    const sources = library.filter(
-      (dc) => isManaSource(dc) && (dc.card.producedMana ?? []).includes(color),
-    ).length;
-    return { color, pips: need, p: pAtLeast(need, sources, seen(turn), library.length) };
-  });
-
-  // A rock counts only for turns after its own -- a Signet cast on turn 2 is mana from turn 3.
-  //
-  // EVERY ROCK COUNTS ONE, AND SOL RING TAPS FOR TWO. `goldfish.ts` prices a source by what it
-  // actually taps for (`manaOutput`); this closed form cannot -- `pAtLeast` counts SUCCESSES among
-  // draws, and a source worth two mana is not a success worth two. Fixing it here means leaving the
-  // hypergeometric, which is what the simulator already is. The direction is UNDER-statement, so it
-  // stays inside `manaWithRocks`'s standing job of being the upper bound of an interval.
-  // ponytail: read the simulator when the rock count matters; this axis is a bound, not an answer.
-  const rocks = library.filter(
-    (dc) => !dc.card.typeLine.toLowerCase().includes("land")
-      && isManaSource(dc)
-      && (dc.card.producedMana ?? []).length > 0
-      && dc.card.manaValue < turn,
-  ).length;
-
-  return {
-    name: card.card.name,
-    manaValue: card.card.manaValue,
-    turn,
-    mana: pAtLeast(card.card.manaValue, lands, seen(turn), library.length),
-    manaWithRocks: pAtLeast(card.card.manaValue, lands + rocks, seen(turn), library.length),
-    colors,
-  };
+  const curve = curves.get(card.card.name);
+  if (!curve || !curve.castable[turn - 1]) {
+    return { ...blank, refused: "not priced — the card is not in the simulated library" };
+  }
+  return { ...blank, castable: curve.castable[turn - 1], mana: curve.mana[turn - 1] };
 }
 
 /** A card that puts a NONLAND permanent from your hand onto the battlefield (roadmap I6).
@@ -171,27 +141,23 @@ export interface DeckCastability {
 
 /** Every nonland card's castability, hardest first.
  *
- *  REPORTED AS AN INTERVAL, because the two biases used to be folded into one number that read
- *  plausible and was not: `mana` counts lands only and so UNDER-states (a Signet is not a land),
- *  `manaWithRocks` counts every rock already castable and so OVER-states (the rock needs lands
- *  too). The truth is between them and nothing here can name it -- that needs a play policy (which
- *  land did you play on turn 2, did you cast the rock or hold removal), which is where all the real
- *  error lives and which the spec's Tier 3 never mentions.
- *
- *  Still unmodelled in BOTH bounds, so they push the pair up together rather than widening it:
- *  tapped lands and colour coupling. */
+ *  REPORTED AS AN INTERVAL, and the interval is now the PLAY POLICY rather than two arithmetic
+ *  biases. It used to be `mana` (lands only, UNDER-states) against `manaWithRocks` (every rock
+ *  already castable, OVER-states), with the truth somewhere between and nothing able to name it.
+ *  The simulation names it: the low end holds up two mana, the high end spends everything on
+ *  acceleration, and that is where the real error lives. */
 export function deckCastability(
   deck: readonly DeckCard[],
-  opts: { commanderNames?: readonly string[] } = {},
+  curves: ReadonlyMap<string, CastCurve>,
 ): DeckCastability {
   const rows = deck
     .filter((dc) => !dc.card.typeLine.toLowerCase().includes("land"))
-    .map((dc) => cardCastability(dc, deck, opts));
+    .map((dc) => cardCastability(dc, curves));
 
   // Deduped by name: a decklist that names its commander in both the commander section and the
   // deck body arrives here with two identical entries, and the same card twice in a "hardest casts"
   // list reads as a defect in the analysis rather than in the input.
-  const byName = new Map(rows.filter((r) => r.mana !== null).map((r) => [r.name, r]));
+  const byName = new Map(rows.filter((r) => r.castable !== null).map((r) => [r.name, r]));
 
   // Deduped by name for the same reason the rows are: a commander named in both sections arrives
   // twice, and a caveat listing one card twice reads as a defect in the analysis.
@@ -200,14 +166,13 @@ export function deckCastability(
   return {
     cheatsIntoPlay: cheats,
     cards: [...byName.values()]
-      .sort((a, b) => (a.mana ?? 1) - (b.mana ?? 1) || b.manaValue - a.manaValue),
-    refused: rows.filter((r) => r.mana === null).length,
+      .sort((a, b) => (a.castable?.high ?? 1) - (b.castable?.high ?? 1) || b.manaValue - a.manaValue),
+    refused: rows.filter((r) => r.castable === null).length,
     biases:
-      "A range, not a number: the low figure counts lands only, the high one adds every rock cheap "
-      + "enough to be down already — and a rock needs lands too, so the truth sits between them. "
-      + "Both ignore tapped lands and colour coupling, so both read high. For a deck that ramps with "
-      + "LAND-FETCH spells the range reads LOW instead and can miss the truth entirely: the high "
-      + "figure counts only permanents that produce mana, so Farseek and Cultivate are invisible to "
-      + "it.",
+      "A range, not a number, and the range is the PLAY POLICY: the low end holds up two mana before "
+      + "casting an accelerant, the high end spends everything on acceleration and is a ceiling no "
+      + "real deck plays to. Simulated over 2,000 shuffles with no opponent — nothing is countered, "
+      + "killed or taxed — and with no cantrips cast, so a draw-heavy deck reads low. Colours are "
+      + "modelled; mulligans are not.",
   };
 }

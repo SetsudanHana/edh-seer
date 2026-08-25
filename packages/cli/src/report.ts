@@ -4,6 +4,15 @@ import { dedupeReasonsByText, type DeckReport } from "@mtg/engine";
  *  "cannot happen", and the model's refusals are printed as an em dash instead. */
 const pct = (p: number): string => `${Math.max(1, Math.round(p * 100))}%`;
 
+/** A policy interval, collapsed to ONE figure when the two ends round the same -- "62% - 62%" reads
+ *  as a broken range, and I11 already settled that rule for the simulation's own rows. */
+const band = (b: { low: number; high: number }): string =>
+  pct(b.low) === pct(b.high) ? pct(b.low) : `${pct(b.low)} – ${pct(b.high)}`;
+
+/** How far `mana` must sit above `castable` before the report says the problem is COLOUR. Below
+ *  this the two numbers say the same thing and the second one is noise. */
+const COLOUR_GAP = 0.05;
+
 export function formatReport(report: DeckReport, trim = 0): string {
   const lines: string[] = [];
 
@@ -15,35 +24,25 @@ export function formatReport(report: DeckReport, trim = 0): string {
   for (const c of cmdCast) {
     // The name is repeated only for a PARTNER PAIR, where two rows need telling apart.
     const who = cmdCast.length > 1 ? `${c.name}: ` : "";
-    const odds = c.mana === null
+    const odds = c.castable === null
       ? `— (${c.refused})`
-      : `${pct(c.mana)} – ${pct(c.manaWithRocks ?? c.mana)} to have ${c.turn} mana by turn ${c.turn}`;
+      : `${band(c.castable)} to cast it by turn ${c.turn}`;
     lines.push(`  ${who}${odds}`);
+    // WHICH PROBLEM IT IS. `castable` folds mana and colour together; `mana` is the same cell with
+    // colours ignored, so a wide gap says the deck cannot make the COLOURS and a narrow one says it
+    // cannot make the MANA. Printed only when the gap is worth acting on -- otherwise it is a second
+    // number saying the same thing, which is how a report stops being read.
+    if (c.castable && c.mana && c.mana.high - c.castable.high >= COLOUR_GAP) {
+      lines.push(`    the mana is there ${band(c.mana)} of the time — what is missing is the colours`);
+    }
     if (c.commandZoneCaveat) lines.push(`    note: ${c.commandZoneCaveat}`);
   }
-  // THE RANGE SHIPS WITH WHAT IS WRONG WITH IT, or it should not ship. `manaWithRocks` counts only
-  // permanents that produce mana, so a deck that ramps with Farseek and Cultivate reads LOW -- on
-  // the owner's own Samut deck the range is 34-43% against a simulated 55.8%, outside it entirely
-  // (roadmap I11). The panel carries this in `castability.biases`; the CLI never prints that, so
-  // without this line a reader gets a bare percentage the engine already knows is wrong.
-  if (cmdCast.some((c) => c.mana !== null)) {
-    lines.push("  (lands and mana rocks only — land-fetch ramp like Cultivate is not counted, so this reads low)");
-    // …AND NOW THE ENGINE KNOWS BY HOW MUCH, so the caveat names the better number instead of
-    // gesturing at it. Two readouts of the SAME cell in one report is the trap this repo already
-    // recorded once (the MDFC land row reading "33 in deck" above a chip reading "lands 37/36"); a
-    // reader who is shown 34-43% and 55-62% and left to choose has been given nothing.
-    // ONLY WHEN IT IS LITERALLY THE SAME CELL. The commander row is P(cast by turn = its mana
-    // value), and the simulation's headline is fixed at six mana on turn six — they coincide only
-    // for a six-mana commander. Printing the pointer otherwise would compare two different
-    // questions, which is worse than printing nothing.
-    const ma = report.manaAvailability;
-    // The commander row's `turn` IS its mana value (`castability.ts`: "the deadline: the card's own
-    // mana value"), and the headline's mana equals its turn, so one comparison settles both.
-    const sameCell = !!ma && ma.headline.mana === ma.headline.turn
-      && cmdCast.some((c) => c.mana !== null && c.turn === ma.headline.turn);
-    if (ma && sameCell) {
-      lines.push(`  (the simulation below models that ramp and reads ${Math.round(ma.headline.low * 100)}% – ${Math.round(ma.headline.high * 100)}% for the same cell)`);
-    }
+  // THE RANGE SHIPS WITH WHAT IS WRONG WITH IT, or it should not ship. The range is the PLAY POLICY
+  // now (hold up two mana, or spend everything on acceleration) rather than the old pair of
+  // arithmetic biases, and the old "reads low, land-fetch ramp is not counted" caveat is GONE
+  // because the simulation models land-fetch ramp -- it was the measured defect that motivated it.
+  if (cmdCast.some((c) => c.castable !== null)) {
+    lines.push("  (simulated: the low end holds up two mana, the high end spends everything on ramp)");
   }
 
   lines.push("");

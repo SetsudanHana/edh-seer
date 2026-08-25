@@ -101,22 +101,47 @@ test("the commander's cast odds ship WITH what is wrong with them", () => {
   const r = {
     ...report,
     deckMath: { topdeck: [], castability: { cards: [], refused: 0, biases: "", commanders: [
-      { name: "Samut, the Driving Force", turn: 6, mana: 0.341, manaWithRocks: 0.435, colors: [] },
+      { name: "Samut, the Driving Force", turn: 6, castable: { low: 0.55, high: 0.62 }, mana: { low: 0.56, high: 0.63 } },
     ] } },
   } as unknown as DeckReport;
   const out = formatReport(r);
-  expect(out).toContain("34% – 44% to have 6 mana by turn 6");
-  // A bare percentage the engine already knows reads low is worse than no percentage.
-  expect(out).toContain("land-fetch ramp");
+  expect(out).toContain("55% – 62% to cast it by turn 6");
+  // A bare percentage with no play policy attached is worse than no percentage.
+  expect(out).toContain("holds up two mana");
   // One commander needs no name prefix; the line sits under the name already printed.
-  expect(out).not.toContain("Samut, the Driving Force: 34%");
+  expect(out).not.toContain("Samut, the Driving Force: 55%");
+});
+
+test("a wide mana-versus-castable gap names the COLOUR as the problem, and a narrow one stays quiet", () => {
+  const row = (castable: { low: number; high: number }, mana: { low: number; high: number }) => formatReport({
+    ...report,
+    deckMath: { topdeck: [], castability: { cards: [], refused: 0, biases: "", commanders: [
+      { name: "Cmd", turn: 4, castable, mana },
+    ] } },
+  } as unknown as DeckReport);
+  // The mana is there four times in five and the colours are not: that is a different deck problem
+  // from being short on mana, and it is fixed differently.
+  expect(row({ low: 0.2, high: 0.3 }, { low: 0.7, high: 0.8 })).toContain("what is missing is the colours");
+  // A gap under the threshold is a second number saying the same thing.
+  expect(row({ low: 0.7, high: 0.78 }, { low: 0.7, high: 0.8 })).not.toContain("what is missing is the colours");
+});
+
+test("a degenerate range collapses to one figure rather than reading 62% – 62%", () => {
+  const out = formatReport({
+    ...report,
+    deckMath: { topdeck: [], castability: { cards: [], refused: 0, biases: "", commanders: [
+      { name: "Cmd", turn: 2, castable: { low: 0.618, high: 0.621 }, mana: { low: 0.618, high: 0.621 } },
+    ] } },
+  } as unknown as DeckReport);
+  expect(out).toContain("62% to cast it by turn 2");
+  expect(out).not.toContain("62% – 62%");
 });
 
 test("a refused cost prints an em dash and the reason, never 0%", () => {
   const r = {
     ...report,
     deckMath: { topdeck: [], castability: { cards: [], refused: 1, biases: "", commanders: [
-      { name: "Omarthis", turn: 2, mana: null, manaWithRocks: null, colors: [], refused: "X cost — the mana value on the card is not what you pay" },
+      { name: "Omarthis", turn: 2, castable: null, mana: null, refused: "X cost — the mana value on the card is not what you pay" },
     ] } },
   } as unknown as DeckReport;
   const out = formatReport(r);

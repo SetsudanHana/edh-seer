@@ -10,10 +10,14 @@ import { DEFAULT_POD_SIZE, opponents } from "./format.js";
  *  that died three times in this repo (the supply:demand discount, twice more under re-registration);
  *  a stated policy is auditable, and every number below can be argued with by reading rule 1-5.
  *
- *  WHAT IT REPLACES: nothing yet. This is a leaf module and a bin — **nothing imports it into
- *  `pressure.ts`, `deck-math.ts` or any score**, which is the condition the K7/J7 reconciliation
- *  holds under. Report wiring is its own later item, and it is where the refused quantities could
- *  leak into a headline.
+ *  WHAT IT REPLACES, since L4a (2026-08-25): `castability.ts`'s two hypergeometric axes. That module
+ *  reported a mana axis and a colour axis and refused to multiply them — correctly, since both are
+ *  driven by the same lands — and the cost of the refusal was that NO figure in the report meant
+ *  "you can cast this card". This model asks the board both questions in the same trial.
+ *
+ *  **IT STILL FEEDS NO SCORE**, which is the condition the K7/J7 reconciliation holds under:
+ *  `deck-math.ts` reads it for the castability PANEL and `pressure.ts` does not read it at all, so
+ *  no rating, `buildScore` or archetype moves when a number here does.
  *
  *  THE DEFECT IT EXISTS FOR, measured on the owner's own deck: `castability.ts` ships an INTERVAL
  *  whose contract is "the truth is between them", and on `samut.txt` at turn 6 that pair reads
@@ -33,9 +37,9 @@ import { DEFAULT_POD_SIZE, opponents } from "./format.js";
  *    by the sensitivity arm.
  *  - **THE DRAW BIAS SURVIVES**: rule 5 casts no cantrips, so `seen(T) = 7 + T` is as wrong here as
  *    in the closed form.
- *  - **COLOURS ARE IGNORED ENTIRELY**, which is why nothing here is called "castable" — for Samut,
- *    `{3}{R}{G}{W}`, "P(castable by T6)" would be a wrong sentence. It is P(six mana), and three of
- *    those six must be specific colours nothing here checks.
+ *  - **COLOURS ARE MODELLED SINCE L4a**, which is why `byCardCastable` may carry that word and the
+ *    mana rows may not: `manaAt` and `payableShareAt` are still P(six mana) and say nothing about
+ *    whether three of those six can be the right colours.
  *  - **ONE-SHOT MANA IS DROPPED, AND NOT OBVIOUSLY CONSERVATIVELY**: Big Score's Treasures PERSIST,
  *    and rituals really do enable a turn.
  *  - **A SOURCE IS WORTH WHAT IT TAPS FOR, since `manaOutput` (2026-08-25) — Sol Ring two, Thran
@@ -271,6 +275,12 @@ export function parseCost(manaCost: string | undefined): Cost | null {
     const n = Number(parts.find((x) => /^\d+$/.test(x)));
     if (Number.isFinite(n) && parts.length === 1) { total += n; continue; }
     total += 1;
+    // A COLORLESS HYBRID CONSTRAINS NOTHING. `{C/W}` is payable with {C} OR {W}, so any source pays
+    // it -- and Ulalek, Fused Atrocity costs `{C/W}{C/U}{C/B}{C/R}{C/G}`, which read as a WUBRG
+    // demand priced a colourless Eldrazi deck's own commander at 6%. Found in a live CLI run, not by
+    // a test. A NUMERIC hybrid (`{2/W}`) keeps its colour: the generic alternative costs MORE, so
+    // demanding the colour is the under-claiming direction, which is the one this repo takes.
+    if (parts.includes("C")) continue;
     const mask = colorMask(parts.filter((x) => (COLORS as readonly string[]).includes(x)));
     if (mask !== 0) pips.push(mask); // {C}, {S} and a generic-hybrid half reach no colour
   }
@@ -317,6 +327,8 @@ interface DeckSlot {
   cost: Cost | null;
   /** Costs are deduped per trial-turn on this key -- 270 distinct across all 71 decks. */
   costKey: string;
+  /** Priced but not shuffled in -- a commander. Excluded from the deck's payable SHARE. */
+  isExtra?: boolean;
   /** A fetchland removes the land it finds from the library. */
   fetches: boolean;
   land?: LandCondition;
@@ -333,6 +345,9 @@ export interface SimulateOptions {
    *  spend never does. NOT A TUNING SURFACE: it exists to SIZE the policy error, and if that error
    *  rivals the ramp signal the point readout is withdrawn and an interval ships. */
   holdUp?: number;
+  /** Cards to PRICE without shuffling in — a commander, which is not in the library (CR 903.6) and
+   *  is still the one card a reader looks for by name. */
+  alsoPrice?: readonly DeckCard[];
 }
 
 export interface SimulateResult {
@@ -378,6 +393,9 @@ function boardFor(lands: OnBoardLand[], pod: number): { lands: number; basics: n
 }
 
 export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}): SimulateResult {
+  // `alsoPrice` cards are COSTED but never SHUFFLED IN. A commander is not in the library (CR 903.6)
+  // and yet "can I cast my commander on turn six" is the one question a reader looks for by name.
+  // They are excluded from `payableShareAt`, which is a share OF THE DECK.
   const trials = opts.trials ?? 20_000;
   const turns = opts.turns ?? 8;
   const pod = opts.podSize ?? DEFAULT_POD_SIZE;
@@ -405,12 +423,27 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     };
   });
   const nonlands = slots.filter((s) => !s.isLand);
+  const extras: DeckSlot[] = (opts.alsoPrice ?? []).map((dc) => ({
+    name: dc.card.name,
+    manaValue: dc.card.manaValue ?? 0,
+    typeLine: dc.card.typeLine ?? "",
+    isLand: false,
+    output: { amount: 1 },
+    everyLandType: false,
+    colors: 0,
+    fetches: false,
+    cost: parseCost(dc.card.manaCost),
+    costKey: dc.card.manaCost ?? "",
+    accelerant: null,
+    isExtra: true,
+  }));
+  const priced = [...nonlands, ...extras];
 
   const manaAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const payableShareAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const byCardHits = new Map<string, number[]>();
   const byCardCastHits = new Map<string, number[]>();
-  for (const s of nonlands) {
+  for (const s of priced) {
     if (!byCardHits.has(s.name)) byCardHits.set(s.name, Array(turns).fill(0));
     if (!byCardCastHits.has(s.name)) byCardCastHits.set(s.name, Array(turns).fill(0));
   }
@@ -525,9 +558,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // second probability to multiply in -- it is this trial answering no.
       const castableByCost = new Map<string, boolean>();
       let affordable = 0;
-      for (const s of nonlands) {
+      for (const s of priced) {
         if (s.manaValue > made) continue;
-        affordable++;
+        if (!s.isExtra) affordable++;
         byCardHits.get(s.name)![turn - 1]++;
         if (s.cost === null) continue;
         let ok = castableByCost.get(s.costKey);
@@ -568,6 +601,12 @@ export function quantiles(values: readonly number[]): { p25: number; median: num
  *  noise rivals its own stated width would be misleading; one an order of magnitude under it is not.
  *  Measured cost: about 24ms per policy arm on a 99-card deck, so ~48ms on an analyze request. */
 export const REPORT_TRIALS = 2_000;
+
+/** The availability TABLE is eight rows. The simulation may run longer to price a big card. */
+const ROW_TURNS = 8;
+/** Past this a card is refused rather than priced — a longer simulation is not a better answer when
+ *  nothing here models a game that goes that long. */
+export const MAX_PRICED_TURN = 12;
 
 export interface ManaAvailabilityRow {
   turn: number;
@@ -614,13 +653,47 @@ export function manaAvailability(
   deck: readonly DeckCard[],
   opts: { trials?: number; turns?: number; seed?: number } = {},
 ): ManaAvailability {
+  return manaModel(deck, opts).availability;
+}
+
+/** P(you can cast this card by turn N), as the POLICY interval — plus the same cell with COLOURS
+ *  IGNORED, which is the diagnostic. A card whose `mana` is high and whose `castable` is low has a
+ *  colour problem and not a ramp problem, and that is a different thing to fix.
+ *
+ *  This is what replaced `castability.ts`'s two hypergeometric axes. Those could never be combined:
+ *  both were driven by the same lands, so their product under-states, and `pAtLeast` never caps land
+ *  drops. Asking the BOARD makes the combination free. */
+export interface CastCurve {
+  /** Indexed by `turn - 1`. */
+  castable: { low: number; high: number }[];
+  mana: { low: number; high: number }[];
+}
+
+export interface ManaModel {
+  availability: ManaAvailability;
+  /** By card name, for every nonland in the library plus everything in `alsoPrice`. */
+  curves: Map<string, CastCurve>;
+  turns: number;
+}
+
+/** BOTH POLICIES, RUN ONCE. `analyze` needs the availability table AND every card's castability, and
+ *  running four simulations for two answers off the same trials would be pure waste. */
+export function manaModel(
+  deck: readonly DeckCard[],
+  opts: { trials?: number; turns?: number; seed?: number; alsoPrice?: readonly DeckCard[] } = {},
+): ManaModel {
   const trials = opts.trials ?? REPORT_TRIALS;
-  const turns = opts.turns ?? 8;
   const seed = opts.seed ?? 20260822;
-  const greedy = simulate(deck, { trials, turns, seed });
-  const held = simulate(deck, { trials, turns, seed, holdUp: 2 });
+  const alsoPrice = opts.alsoPrice ?? [];
+  // EIGHT TURNS UNLESS THE DECK HOLDS SOMETHING BIGGER. A ten-drop priced "by turn 8" would be a
+  // different question answered quietly, so the run is extended to reach it — and capped, because
+  // past twelve the honest answer is a refusal rather than a longer simulation.
+  const biggest = Math.max(0, ...[...deck, ...alsoPrice].map((dc) => Math.round(dc.card.manaValue ?? 0)));
+  const turns = opts.turns ?? Math.min(MAX_PRICED_TURN, Math.max(ROW_TURNS, biggest));
+  const greedy = simulate(deck, { trials, turns, seed, alsoPrice });
+  const held = simulate(deck, { trials, turns, seed, holdUp: 2, alsoPrice });
   const rows: ManaAvailabilityRow[] = [];
-  for (let t = 1; t <= turns; t++) {
+  for (let t = 1; t <= Math.min(ROW_TURNS, turns); t++) {
     const g = quantiles(greedy.manaAt[t - 1]);
     const h = quantiles(held.manaAt[t - 1]);
     const gs = quantiles(greedy.payableShareAt[t - 1]);
@@ -635,10 +708,26 @@ export function manaAvailability(
   // Six mana on turn six — the cell §5's measured failure lives at, and the cell the falsifier was
   // measured on. Not swept.
   const lo = pAtLeastMana(held, 6, 6), hi = pAtLeastMana(greedy, 6, 6);
+  const band = (a: number, b: number): { low: number; high: number } =>
+    ({ low: Math.min(a, b), high: Math.max(a, b) });
+  const curves = new Map<string, CastCurve>();
+  for (const [name, g] of greedy.byCardCastable) {
+    const h = held.byCardCastable.get(name) ?? g;
+    const gm = greedy.byCard.get(name) ?? g;
+    const hm = held.byCard.get(name) ?? gm;
+    curves.set(name, {
+      castable: g.map((p, i) => band(p, h[i] ?? p)),
+      mana: gm.map((p, i) => band(p, hm[i] ?? p)),
+    });
+  }
   return {
-    trials,
-    accelerants: deck.map(classifyAccelerant).filter((a) => a !== null).length,
-    rows,
-    headline: { mana: 6, turn: 6, low: Math.min(lo, hi), high: Math.max(lo, hi) },
+    turns,
+    curves,
+    availability: {
+      trials,
+      accelerants: deck.map(classifyAccelerant).filter((a) => a !== null).length,
+      rows,
+      headline: { mana: 6, turn: 6, low: Math.min(lo, hi), high: Math.max(lo, hi) },
+    },
   };
 }

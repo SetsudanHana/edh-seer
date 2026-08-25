@@ -52,11 +52,13 @@ function SortButton({ label, active, onClick }: { label: string; active: boolean
   );
 }
 
-/** The mana axis as the interval it is: lands only at the low end, plus the rocks already castable
- *  at the high one. Collapsed to a single figure when the deck runs no rock cheap enough to widen
- *  it, so a rockless deck does not read "31% - 31%". */
-export const castRange = (c: { mana: number; manaWithRocks: number }): string =>
-  pct(c.manaWithRocks) === pct(c.mana) ? pct(c.mana) : `${pct(c.mana)} – ${pct(c.manaWithRocks)}`;
+/** P(you can cast it) as the interval it is, and the interval is the PLAY POLICY: the low end holds
+ *  up two mana before casting an accelerant, the high end spends everything on acceleration.
+ *  Collapsed to a single figure when the two ends round the same, so a row never reads "31% - 31%". */
+export const castRange = (c: { castable: { low: number; high: number } }): string =>
+  pct(c.castable.low) === pct(c.castable.high)
+    ? pct(c.castable.low)
+    : `${pct(c.castable.low)} – ${pct(c.castable.high)}`;
 
 type SortKey = "synergy" | "name" | "cost";
 
@@ -117,11 +119,12 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
       {/* THE COST COLUMN'S OWN SCALE. "49% – 69% by T5" was explained in a footnote on a different
         *  tab, so on this one it was two unlabelled numbers. */}
       <Explain label="what the cost figures mean">
-        A range, low to high: the low number counts lands only and under-states, the high one adds
-        every mana rock cheap enough to already be down and over-states, because a rock needs lands
-        too. Both ignore tapped lands and colour, so both read high. The turn is the card's own mana
-        value — a 5-drop is priced at turn 5 — and a land or an unpriceable cost renders an em dash
-        rather than 0%.
+        The chance you can actually cast it — mana and colours together — simulated over 2,000
+        shuffles. A range, low to high, and the range is how you play: the low end holds up two mana
+        before casting an accelerant, the high end spends everything on acceleration and is a ceiling
+        no real deck plays to. The turn is the card's own mana value — a 5-drop is priced at turn 5 —
+        and a land or an unpriceable cost renders an em dash rather than 0%. No opponent is modelled
+        and no cantrips are cast, so a draw-heavy deck reads low.
       </Explain>
       {shapes.shared.length > 0 ? (
         <div className="text-xs text-(--muted) max-w-[65ch] flex flex-col gap-0.5">

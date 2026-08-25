@@ -35,13 +35,13 @@ test("DeckIdentity counts the deck's thing under the heading that names it", () 
 
 test("the commander's cast odds are a RANGE, and a refused cost is an em dash and never 0%", () => {
   const { rerender } = render(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
-    { name: "Samut, the Driving Force", turn: 6, mana: 0.341, manaWithRocks: 0.435, colors: [] },
+    { name: "Samut, the Driving Force", turn: 6, castable: { low: 0.55, high: 0.62 }, mana: { low: 0.56, high: 0.63 } },
   ]} />);
-  expect(screen.getByText(/34–44% by turn 6/)).toBeInTheDocument();
+  expect(screen.getByText(/55–62% by turn 6/)).toBeInTheDocument();
   // ONE commander needs no name prefix; a partner pair does, or the two rows cannot be told apart.
   expect(screen.queryByText(/Samut, the Driving Force: /)).not.toBeInTheDocument();
   rerender(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
-    { name: "Omarthis", turn: 2, mana: null, manaWithRocks: null, colors: [], refused: "X cost — the mana value on the card is not what you pay" },
+    { name: "Omarthis", turn: 2, castable: null, mana: null, refused: "X cost — the mana value on the card is not what you pay" },
   ]} />);
   expect(screen.getByText(/— \(X cost/)).toBeInTheDocument();
   expect(screen.queryByText(/\b0%/)).not.toBeInTheDocument();
@@ -309,7 +309,7 @@ test("CardList sorts by synergyRating descending, then name", () => {
 test("Cards tab shows what a card costs and when you can cast it, beside the rating", () => {
   const cards = [{
     name: "Breach the Multiverse", synergyRating: 3.7, topPartners: [], manaCost: "{5}{B}{B}",
-    manaValue: 7, castability: { turn: 7, mana: 0.22, manaWithRocks: 0.4, colors: [] },
+    manaValue: 7, castability: { turn: 7, castable: { low: 0.22, high: 0.4 }, mana: { low: 0.22, high: 0.4 } },
   }] as any;
   render(<CardList cards={cards} />);
   const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Breach"))!;
@@ -862,8 +862,8 @@ const DECK_MATH = {
   lands: { actual: 37, target: 34, targetSource: "derived" as const, rawTarget: 34, archetypeDelta: 0, avgManaValue: 2.7, rampPlusDraw: 12, fastMana: 2, mdfc: 0 },
   castability: {
     cards: [
-      { name: "Ulamog", turn: 10, mana: 0.03, manaWithRocks: 0.11, colors: [] },
-      { name: "Damnation", turn: 4, mana: 0.61, manaWithRocks: 0.78, colors: [{ color: "B", pips: 2, p: 0.74 }] },
+      { name: "Ulamog", turn: 10, castable: { low: 0.03, high: 0.11 }, mana: { low: 0.03, high: 0.11 } },
+      { name: "Damnation", turn: 4, castable: { low: 0.61, high: 0.78 }, mana: { low: 0.7, high: 0.9 } },
     ],
     refused: 3,
     biases: "Ignores ramp, so it under-states; ignores tapped lands and colour coupling, so it over-states.",
@@ -1289,21 +1289,42 @@ test("the colour caveat names BOTH models, not just the one in the row", () => {
   expect(caveat).toHaveTextContent(/land count, not on its\s+sources of one colour/i);
 });
 
-test("BuildBenchmarks shows the hardest casts on two axes, never one blended number", () => {
+test("BuildBenchmarks says whether you can CAST it, and names colour when that is the problem", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  // A RANGE on the mana axis: lands-only under-states, lands-plus-rocks over-states, and a single
-  // number would have to pick one of the two wrong ones.
-  expect(screen.getByLabelText(/Ulamog, 3% – 11% to have 10 mana by turn 10/i)).toBeInTheDocument();
-  // Mana and colour stay separate: "mana yes, colour no" is a different problem from its inverse,
-  // and 61% x 74% would be both wrong and undiagnosable.
-  expect(screen.getByLabelText(/Damnation, 61% – 78% to have 4 mana by turn 4, 74% for 2 B/i)).toBeInTheDocument();
+  // A RANGE, and the range is the PLAY POLICY: the low end holds up two mana, the high end spends
+  // everything on acceleration. A single number would have to pick one of the two.
+  expect(screen.getByLabelText(/Ulamog, 3% – 11% to cast by turn 10/i)).toBeInTheDocument();
+  // WHICH PROBLEM IT IS. Damnation's mana is there 70-90% of the time and it casts 61-78%, so the
+  // gap is the colours -- a different deck problem from being short on mana, fixed differently.
+  expect(screen.getByLabelText(/Damnation, 61% – 78% to cast by turn 4, mana alone 70% – 90%/i)).toBeInTheDocument();
+  // Ulamog's colours line up, so it gets no second number: below the gap it would say the same
+  // thing twice, which is how a panel stops being read.
+  expect(screen.getByLabelText(/Ulamog/i).textContent).not.toMatch(/mana alone/i);
   // The refusals are a count, not a silence: a card the model will not price must not read as a
   // card it priced at zero.
   expect(screen.getByText(/3 cards refused/i)).toBeInTheDocument();
   // THE DEADLINE IS ON SCREEN, not only in the aria-label. Four cards of equal mana value tie at
-  // the same percentage by construction, and a bare "3% mana" repeated down the block was read as
-  // a broken readout by three of four player reviews.
-  expect(screen.getByText(/3% – 11% to have 10 mana by turn 10/i)).toBeInTheDocument();
+  // the same percentage by construction, and a bare "3%" repeated down the block was read as a
+  // broken readout by three of four player reviews.
+  expect(screen.getByText(/3% – 11% to cast by turn 10/i)).toBeInTheDocument();
+});
+
+/** A DEGENERATE RANGE COLLAPSES TO ONE FIGURE. "91% – 91%" reads as a broken readout, and the first
+ *  cut of this panel printed exactly that on the diagnostic line -- found in a live browser on a
+ *  real deck, not by any test. */
+test("BuildBenchmarks never prints a range whose two ends are the same figure", () => {
+  const math = {
+    ...DECK_MATH,
+    castability: {
+      refused: 0, biases: "", cards: [
+        { name: "Path to Exile", turn: 1, castable: { low: 0.31, high: 0.31 }, mana: { low: 0.912, high: 0.914 } },
+      ],
+    },
+  } as never;
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={math} />);
+  expect(screen.getByText(/31% to cast by turn 1/i)).toBeInTheDocument();
+  expect(screen.getByText(/mana alone 91% — the colours are what is short/i)).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/(\d+)% – \1%/);
 });
 
 /** Two land numbers reach one panel -- this regression's (an MDFC is a spell worth a fraction of a
@@ -1650,7 +1671,9 @@ test("ArchetypeBoard says what its percentages count", () => {
 test("CardList explains the cost range on the tab that prints it", () => {
   render(<CardList cards={SAMPLE.report.cards} />);
   expect(screen.getByText("what the cost figures mean")).toBeInTheDocument();
-  expect(screen.getByText(/counts lands only and under-states/)).toBeInTheDocument();
+  // The figure is CASTABILITY now — mana and colours together — and the range is the play policy.
+  expect(screen.getByText(/mana and colours together/)).toBeInTheDocument();
+  expect(screen.getByText(/holds up two mana/)).toBeInTheDocument();
 });
 
 // --- F10 / F11: saying a thing once. ---

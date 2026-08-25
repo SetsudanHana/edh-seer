@@ -322,6 +322,13 @@ test("parseCost reads a hybrid pip as EITHER colour, which is why pipsByColor is
   expect(parseCost("{B/R}")).toEqual({ total: 1, pips: [colorMask(["B", "R"])] });
   // {C} is a cost this model pays with anything: it reaches no colour.
   expect(parseCost("{C}")).toEqual({ total: 1, pips: [] });
+  // A COLORLESS HYBRID CONSTRAINS NOTHING — `{C/W}` is payable with {C} or {W}. Ulalek, Fused
+  // Atrocity costs `{C/W}{C/U}{C/B}{C/R}{C/G}`, and reading that as a WUBRG demand priced a
+  // colourless Eldrazi deck's own commander at 6%. Found in a live run, not by a test.
+  expect(parseCost("{C/W}{C/U}{C/B}{C/R}{C/G}")).toEqual({ total: 5, pips: [] });
+  // A NUMERIC hybrid keeps its colour: the generic alternative costs MORE, so demanding the colour
+  // under-claims, which is the direction this repo takes.
+  expect(parseCost("{2/W}")).toEqual({ total: 1, pips: [colorMask(["W"])] });
   // An X cost is not a number, and `castability.ts` refuses it too.
   expect(parseCost("{X}{R}")).toBeNull();
   expect(parseCost(undefined)).toBeNull();
