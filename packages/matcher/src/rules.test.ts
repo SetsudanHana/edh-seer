@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card } from "@mtg/engine";
-import { detectAnswerClasses, detectBuildCategories } from "./build.js";
+import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { detectWincons } from "./wincon.js";
 import { answerClassesOf, loadRules, ruleMatches, RULES_VERSION } from "./rules.js";
 import type { DeckCard } from "./types.js";
@@ -357,4 +357,56 @@ test("a card that prevents LOSING is not an alternate win condition", () => {
   // detector finds are genuine. The fix must not cost them.
   expect(alt(mk("Thassa's Oracle", "If X is greater than or equal to the number of cards in your library, you win the game.", "Creature — Merfolk Wizard"))).toBe(true);
   expect(alt(mk("Vorpal Sword", "Whenever equipped creature deals combat damage to a player, that player loses the game.", "Artifact — Equipment"))).toBe(true);
+});
+
+// I5 (2026-08-25): IMPULSE DRAW IS NOT CARD SELECTION, and the `selection` pattern said so outright
+// — its third alternative was literally the impulse template. Selection REORDERS what you will
+// draw; impulse draw ADDS cards you may cast, usually only this turn.
+test("impulse draw is its own category and no longer reads as card selection", () => {
+  const cats = (dc: DeckCard) => [...detectBuildCategories([dc]).keys()];
+
+  // Light Up the Stage's shape. Measured: 14 distinct cards across the 71 decks, none of which was
+  // already counted as draw, so the leaf is not a rename of one that existed.
+  const impulse = mk("Light Up the Stage", "Exile the top two cards of your library. Until the end of your next turn, you may play those cards.", "Sorcery");
+  expect(cats(impulse)).toContain("impulseDraw");
+  expect(cats(impulse)).not.toContain("cardSelection");
+
+  // …and the two halves that stay selection.
+  expect(cats(mk("Preordain", "Scry 2, then draw a card.", "Sorcery"))).toContain("cardSelection");
+  expect(cats(mk("Consider", "Look at the top card of your library. Surveil 1.", "Instant"))).toContain("cardSelection");
+
+  // BOTH LEAVES SIT INSIDE CONSISTENCY, which is what makes this a labelling change and not a
+  // scoring one: measured over the 71 decks, the Consistency union moved in 0 of them.
+  const consistency = BUILD_PARENTS.find((p) => p.name === "Consistency")!;
+  expect(consistency.leaves).toContain("impulseDraw");
+  expect(consistency.leaves).toContain("cardSelection");
+});
+
+// I4 (2026-08-25): RAMP IS A NET GAIN. `ramp.effect` matched any mana-generating effect kind with
+// no net test, so Manamorphose — two mana for two mana plus a cantrip — read as acceleration.
+test("a one-shot mana spell is ramp only when it nets, and a permanent mana source always is", () => {
+  const cats = (dc: DeckCard) => [...detectBuildCategories([dc]).keys()];
+  const spell = (name: string, oracleText: string, manaValue: number, typeLine = "Instant"): DeckCard => ({
+    card: { name, oracleText, typeLine, manaValue } as Card,
+    tags: { oracleId: name, schemaVersion: 1, promptVersion: 0, model: "t",
+      characteristics: { types: [], subtypes: [], colors: [], identity: [], cmc: manaValue, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{ kind: "on-cast", effect: { kind: "mana-generation" } }] } as never,
+  });
+
+  // Dark Ritual nets +2; Manamorphose nets 0 and is the item's named witness.
+  expect(cats(spell("Dark Ritual", "Add {B}{B}{B}.", 1, "Instant"))).toContain("ramp");
+  expect(cats(spell("Manamorphose", "Add two mana in any combination of colors.\nDraw a card.", 2))).not.toContain("ramp");
+
+  // A RATE IS NOT AN AMOUNT. Jeska's Will adds one {R} per card in an opponent's hand — the most
+  // explosive rituals in the format state no fixed number, so unreadable must KEEP the card.
+  expect(cats(spell("Jeska's Will", "Add {R} for each card in target opponent's hand.", 3, "Sorcery"))).toContain("ramp");
+
+  // THE MAXIMUM, NOT THE SUM: Cabal Ritual's second sentence says "instead".
+  expect(cats(spell("Cabal Ritual", "Add {B}{B}{B}.\nThreshold — Add {B}{B}{B}{B}{B} instead if there are seven or more cards in your graveyard.", 2, "Sorcery"))).toContain("ramp");
+
+  // A PERMANENT MANA SOURCE REPEATS, so it is never net-tested — a dork nets 0 the turn it lands.
+  expect(cats(spell("Llanowar Elves", "{T}: Add {G}.", 1, "Creature — Elf Druid"))).toContain("ramp");
+  // …including one whose OTHER face is a sorcery. Bramble Familiar // Fetch Quest's `{T}: Add {G}`
+  // is a mana dork, and the type-line union carries "Sorcery" from the Adventure half.
+  expect(cats(spell("Bramble Familiar // Fetch Quest", "{T}: Add {G}.\n//\nMill seven cards.", 2, "Creature — Elemental Raccoon // Sorcery — Adventure"))).toContain("ramp");
 });

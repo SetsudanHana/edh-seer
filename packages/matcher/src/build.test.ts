@@ -313,14 +313,20 @@ test("mana-sac token makers (Eldrazi Spawn/Scion, Gold) count as ramp, like Trea
   expect(m.get("ramp")).toEqual(new Set(["Glimpse the Impossible", "Sacrifice the Wastes"]));
 });
 
-test("card selection (scry/surveil/impulse) is detected; plain draw is not selection", () => {
+// I5 (2026-08-25) SPLIT THIS TEST'S OWN SUBJECT: impulse draw left `cardSelection`. Selection
+// REORDERS what you will draw; impulse draw ADDS cards you may cast, usually only this turn. The
+// `selection` pattern's third alternative was literally the impulse template, so the two were one
+// category. Both leaves sit inside Consistency, so the parent count is unmoved -- measured, 0 of 71
+// decks.
+test("card selection is scry/surveil/look-at-top; impulse draw is its own leaf; plain draw is neither", () => {
   const m = detectBuildCategories([
     mk("Preordain", "Scry 2, then draw a card.", "Sorcery"),
     mk("Sink Below", "Surveil 2. Draw a card.", "Instant"),
     mk("Light Up the Stage", "Exile the top two cards of your library. Until the end of your next turn, you may play those cards.", "Sorcery"),
     mk("Divination", "Draw two cards.", "Sorcery"),
   ]);
-  expect(m.get("cardSelection")).toEqual(new Set(["Preordain", "Sink Below", "Light Up the Stage"]));
+  expect(m.get("cardSelection")).toEqual(new Set(["Preordain", "Sink Below"]));
+  expect(m.get("impulseDraw")).toEqual(new Set(["Light Up the Stage"]));
 });
 
 test("burn & drain: damage/life-loss to players (not creatures, not self)", () => {

@@ -17,6 +17,28 @@ export type RuleClause =
    *  language: the moment this file can express arithmetic it stops being config and starts being
    *  a program nobody can gate. `*` power is not a number and never matches. */
   | { op: "powerOverMv"; atLeast: number }
+  /** RAMP IS A NET GAIN (owner's rule, roadmap I4). A ONE-SHOT mana spell that adds no more than it
+   *  costs is fixing, not acceleration: Dark Ritual is `{B}` for `{B}{B}{B}` and Manamorphose is two
+   *  mana for two mana plus a cantrip. The second named comparison in this file, and written the
+   *  same way `powerOverMv` is — the arithmetic lives in code and the config names only the
+   *  threshold, because the moment this file can express arithmetic it stops being config.
+   *
+   *  IT JUDGES ONE-SHOTS ONLY, which is in the name because it is the whole subtlety. A PERMANENT
+   *  mana source repeats, so Llanowar Elves nets 0 on the turn it lands and is ramp regardless —
+   *  testing it would delete every mana dork in the format. */
+  | { op: "oneShotNetsMana"; atLeast: number }
+  /** A CREATURE WITH HEXPROOF PROTECTS ITSELF, NOT THE BOARD (roadmap I1). The `protection` pattern
+   *  is matched anywhere in the oracle text, so Sylvan Caryatid — a mana dork whose printed keyword
+   *  is hexproof — counted toward Interaction beside Lightning Greaves. True when EVERY protection
+   *  word on the card is one of its own PRINTED KEYWORDS and nothing is granted away.
+   *
+   *  NARROW ON PURPOSE, and the measurement is why. Over the 71 decks the family splits 79 granted /
+   *  20 self-keyword / 41 UNSPLITTABLE by any regex — "this spell can't be countered" and "phases
+   *  out" are not keywords at all, and a card can grant with no cue this side of a parser
+   *  (Delighted Halfling's "Legendary creature spells you cast can't be countered"). The honest fix
+   *  for the residue is a derive-side read of the grant's SUBJECT, which is its own item; this
+   *  clause takes only the cases the printed keyword list settles outright. */
+  | { op: "protectionIsOwnKeyword" }
   | { op: "anyOf"; clauses: RuleClause[] };
 
 export interface Rule {
@@ -88,6 +110,60 @@ function pattern(set: RuleSet, name: string): RegExp {
   return re;
 }
 
+/** The `protection` pattern's own alternatives, as a global matcher, so `protectionIsOwnKeyword`
+ *  can ask which of them a card actually says. Kept beside the op rather than read out of
+ *  `rules.json` because the op's whole question is about THESE words against a printed keyword
+ *  list, and a pattern edit that silently changed the question would be invisible. */
+const PROTECTION_WORDS = /hexproof|indestructible|protection from|can't be countered|shroud|phases? out/gi;
+
+/** Protection handed to something else. The templating is fixed enough to read — "creatures you
+ *  control GAIN hexproof", "equipped creature HAS indestructible" — and this is the half that IS
+ *  Interaction. */
+const GRANTS_PROTECTION =
+  /\b(?:gains?|have|has|get|grants?)\b[^.]{0,70}?(?:hexproof|indestructible|shroud|protection from|phases? out)/i;
+
+const NUMBER_WORD: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+};
+
+/** The most mana any one "Add …" sentence on the card states, or `undefined` when none of them
+ *  states a fixed number.
+ *
+ *  THE MAXIMUM, not the sum: Cabal Ritual's second sentence is "Add {B}{B}{B}{B}{B} INSTEAD", and
+ *  Rite of Flame's fixed `{R}{R}` sits beside a variable "for each card named Rite of Flame". Taking
+ *  the largest readable one keeps the card whenever any branch of it accelerates, which is the
+ *  lenient direction a refusal-shaped rule wants.
+ *
+ *  Read from ORACLE TEXT and not from the derived ability, deliberately and with a measurement
+ *  behind it: `mana-generation` abilities carry NO amount and NO emit — Dark Ritual and Manamorphose
+ *  derive BYTE-IDENTICALLY (`{kind: "on-cast", effect: {kind: "mana-generation"}}`) — so the fact
+ *  this rule needs does not exist downstream of the clause layer. The clause DOES hold it, in
+ *  `action.object` ("{B}{B}{B}", "two mana in any combination of colors", 537 add-mana actions
+ *  corpus-wide), so deriving `Ability.amount` for it is the root-cause fix; it is a separate item
+ *  because `Ability.amount` is read by `sentence.ts`, `lines.ts` and `supply-demand.ts` and would
+ *  move reason text and threshold lines with it. → roadmap I4's own note. */
+function manaAdded(oracle: string): number | undefined {
+  let best: number | undefined;
+  for (const m of oracle.matchAll(/\badd\s+((?:\{[^}]+\}\s*)+|\w+ mana\b)/gi)) {
+    const frag = m[1];
+    let n: number | undefined;
+    if (frag.trimStart().startsWith("{")) {
+      n = 0;
+      for (const sym of frag.matchAll(/\{([^}]+)\}/g)) {
+        if (/^\d+$/.test(sym[1])) n += Number(sym[1]);
+        // A chosen amount is not a fixed one, and neither is what follows a "for each".
+        else if (/^[XYZ]$/i.test(sym[1])) return undefined;
+        else n += 1;
+      }
+    } else n = NUMBER_WORD[frag.trim().split(/\s+/)[0].toLowerCase()];
+    if (n === undefined) return undefined;
+    // "Add {R} FOR EACH card in target opponent's hand" states a rate, not an amount.
+    if (/^\s*(?:for each|equal to|where|times)\b/i.test(oracle.slice(m.index + m[0].length))) return undefined;
+    best = Math.max(best ?? 0, n);
+  }
+  return best;
+}
+
 function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
   switch (clause.op) {
     case "oracle":
@@ -104,6 +180,32 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       // is the answer we want: a creature whose power is defined by the board is not a beater whose
       // size can be read off the card.
       return power - dc.card.manaValue >= clause.atLeast;
+    }
+    case "oneShotNetsMana": {
+      const line = (dc.card.typeLine ?? "").toLowerCase();
+      // A card with a PERMANENT face is not a one-shot however its other half is typed. Bramble
+      // Familiar // Fetch Quest is a Creature with a Sorcery Adventure and its `{T}: Add {G}` is a
+      // mana DORK; Blazing Firesinger // Seething Song is the same shape. Reading the type-line
+      // union alone cut both, which is the `isLand` mistake one card layout over.
+      if (!/\b(instant|sorcery)\b/.test(line)) return true;
+      if (/\b(creature|artifact|enchantment|land|planeswalker|battle)\b/.test(line)) return true;
+      const added = manaAdded(dc.card.oracleText ?? "");
+      // Unreadable means the card does not state a fixed number — "Add {R} for each card in target
+      // opponent's hand" (Jeska's Will, Rousing Refrain, Path of the Pyromancer). Those are the most
+      // explosive rituals in the format, so a missing answer must keep the card rather than cut it.
+      if (added === undefined) return true;
+      return added - (dc.card.manaValue ?? 0) >= clause.atLeast;
+    }
+    case "protectionIsOwnKeyword": {
+      const txt = dc.card.oracleText ?? "";
+      // A GRANT WINS, always: a card can print a keyword AND hand it out, and handing it out is the
+      // Interaction fact. Checked first so the keyword list can never overrule it.
+      if (GRANTS_PROTECTION.test(txt)) return false;
+      const words = new Set([...txt.matchAll(PROTECTION_WORDS)].map((m) => m[0].toLowerCase()));
+      if (words.size === 0) return false;
+      // "protection from Humans" is the printed keyword `protection`; the rest are their own word.
+      const keywords = new Set((dc.tags?.characteristics?.keywords ?? []).map((k) => k.toLowerCase()));
+      return [...words].every((w) => keywords.has(w === "protection from" ? "protection" : w));
     }
     case "anyOf":
       return clause.clauses.some((c) => clauseHolds(c, dc, set));

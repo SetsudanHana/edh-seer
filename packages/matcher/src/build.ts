@@ -8,6 +8,7 @@ export type BuildCategory =
   | "ramp"
   | "draw"
   | "cardSelection"
+  | "impulseDraw"
   | "targetedRemoval"
   | "stackInteraction"
   | "boardWipe"
@@ -19,7 +20,7 @@ export type BuildCategory =
   | "lands";
 
 export const BUILD_CATEGORIES: BuildCategory[] = [
-  "ramp", "draw", "cardSelection", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "graveyardHate", "lands",
+  "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "graveyardHate", "lands",
 ];
 
 const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
@@ -129,7 +130,7 @@ export function detectAnswerClasses(cards: DeckCard[]): Map<string, AnswerClassM
  *  this same convention) and only wins when `land-count.ts`'s own regression extrapolates past its
  *  tested range. See `gatedLandsTarget`. */
 export const BASE_TARGETS: Record<BuildCategory, number> = {
-  ramp: 0, draw: 0, cardSelection: 0, targetedRemoval: 0, stackInteraction: 0, boardWipe: 0,
+  ramp: 0, draw: 0, cardSelection: 0, impulseDraw: 0, targetedRemoval: 0, stackInteraction: 0, boardWipe: 0,
   burn: 0, stax: 0, protection: 0, tutor: 0, graveyardHate: 0,
   lands: 36,
 };
@@ -177,7 +178,7 @@ export interface BuildParentSpec {
 }
 
 export const BUILD_PARENTS: BuildParentSpec[] = [
-  { name: "Consistency", leaves: ["draw", "cardSelection", "tutor"], target: 14, weight: 1, costBand: [2, 4] },
+  { name: "Consistency", leaves: ["draw", "cardSelection", "impulseDraw", "tutor"], target: 14, weight: 1, costBand: [2, 4] },
   { name: "Ramp", leaves: ["ramp"], target: 10, weight: 1, costBand: [2, 3] },
   { name: "Interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], target: 10, weight: 1, coverageWeighted: true, costBand: [2, 4] },
   { name: "Board wipes", leaves: ["boardWipe"], target: 3, weight: 0.5, costBand: [3, 5] },

@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 6,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -32,7 +32,8 @@
     "bigManaLand": "(?:^|[.;\\n(])\\s*\\{t\\}\\s*:\\s*add\\s+(?:(?:\\{[wubrgcs\\d/]+\\}\\s*){2,}|two|three|four)",
     "entersTapped": "enters(?: the battlefield)? tapped(?!\\s+unless)",
     "manaToken": "create\\b[\\s\\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?",
-    "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?|exile the top \\w+ cards? of your library[\\s\\S]*?you may play",
+    "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?",
+    "impulseDraw": "exile the top \\w+ cards? of your library[\\s\\S]*?you may play",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
     "typedRemoval": "(?:destroy|exile)[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "exileRemoval": "exile[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
@@ -91,8 +92,12 @@
     {
       "id": "ramp.effect",
       "category": "ramp",
-      "match": [{ "op": "effectKind", "in": ["mana-generation", "fast-mana", "ritual"] }],
-      "not": [{ "op": "typeLine", "contains": "land" }]
+      "match": [
+        { "op": "effectKind", "in": ["mana-generation", "fast-mana", "ritual"] },
+        { "op": "oneShotNetsMana", "atLeast": 1 }
+      ],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "RAMP IS A NET GAIN (owner's rule, roadmap I4): Dark Ritual is {B} for {B}{B}{B} and Manamorphose is two mana for two mana plus a cantrip. The net test judges ONE-SHOTS ONLY -- a permanent mana source repeats, so a dork nets 0 the turn it lands and is ramp anyway."
     },
     {
       "id": "draw.effect",
@@ -138,6 +143,13 @@
       "not": [{ "op": "typeLine", "contains": "land" }]
     },
     {
+      "id": "impulseDraw.text",
+      "category": "impulseDraw",
+      "match": [{ "op": "oracle", "pattern": "impulseDraw" }],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "SELECTION REORDERS WHAT YOU WILL DRAW; IMPULSE DRAW ADDS CARDS YOU MAY CAST, usually only this turn. The `selection` pattern's third alternative was literally the impulse template, so Light Up the Stage and Jeska's Will were filed as scry. Nearer draw, and carrying a DEADLINE draw does not have, so it is its own leaf rather than folded into either -- inside Consistency, where both neighbours already sit, so the parent count cannot move."
+    },
+    {
       "id": "stackInteraction.text",
       "category": "stackInteraction",
       "match": [{ "op": "oracle", "pattern": "stack" }],
@@ -175,7 +187,8 @@
       "id": "protection.text",
       "category": "protection",
       "match": [{ "op": "oracle", "pattern": "protection" }],
-      "not": [{ "op": "typeLine", "contains": "land" }]
+      "not": [{ "op": "typeLine", "contains": "land" }, { "op": "protectionIsOwnKeyword" }],
+      "why": "A CREATURE WITH HEXPROOF PROTECTS ITSELF, NOT THE BOARD (roadmap I1). Granted to other permanents (Lightning Greaves, Heroic Intervention) is Interaction; printed on the card's own body is a stat. Only the cases the printed KEYWORD list settles outright are refused -- see the op, and the 41-card residue it deliberately leaves alone."
     },
     {
       "id": "tutor.text",

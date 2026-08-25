@@ -121,6 +121,12 @@ const TYPE_GRANT =
  *  spells worse, so an opponent-scoped cost change is a tax however the direction is worded. With
  *  neither signal the answer is null — guessing between two opposites is the near-miss class this
  *  file exists to refuse. */
+/** A clause talking about the cost of the spell it is printed on. Anchored on "this spell" and not
+ *  on the card's name, because the clause layer has already rewritten self-references and the
+ *  templating is fixed: CR 601.2f's additional costs, alternative costs and self-reductions all
+ *  print it. */
+const SELF_COST = /\bthis spell(?:'s)?\s+(?:mana\s+)?cost|\bthis spell costs\b/i;
+
 function costDirection(object: string, clauseText = ""): EffectKind | null {
   const read = (t: string): EffectKind | null => {
     // Only the DIRECTION WORDS can conflict. The "cost {1}" proxy below matches "{1} more" and
@@ -138,8 +144,24 @@ function costDirection(object: string, clauseText = ""): EffectKind | null {
   // and the entire ability was dropped. 16 corpus cards derived NOTHING for this reason -- among
   // them Foundry Inspector and Etherium Sculptor, which this file's own comment above claims carry
   // live cost-reduction tags. Same shape, and same precedence, as exilesOwnGraveyard below.
-  return read(object.toLowerCase()) ?? read(clauseText.toLowerCase());
+  const own = read(object.toLowerCase());
+  if (own) return own;
+  const fallback = clauseText.toLowerCase();
+  const direction = read(fallback);
+  // A SENTENCE ABOUT THIS SPELL'S OWN COST CANNOT BE A TAX, and the fallback is where that goes
+  // wrong because it reads a whole clause rather than the action (I2, 2026-08-25). Stax is a cost an
+  // OPPONENT pays; an increase in what YOU pay for YOUR OWN spell is an additional cost, which
+  // CR 601.2f adds before reductions subtract. Two cards, two different leaks, one guard:
+  // **Call the Coppercoats** carries Strive ("This spell costs {1}{W} more to cast for each target
+  // beyond the first") and read `more` -> tax; **Blasphemous Edict** carries an ALTERNATIVE cost
+  // ("you may pay {B} rather than pay this spell's mana cost") whose clause happens to say
+  // "each opponent", so the opponent cue fired on a sentence about neither cost nor opponents' costs.
+  // A REDUCTION SURVIVES: "this spell costs {1} less" is still a discount to the caster, which is
+  // the direction this file already models. Refusing the label rather than inventing one is the
+  // standing rule here — guessing between two opposites is what `costDirection` exists to avoid.
+  return direction === "tax" && SELF_COST.test(fallback) ? null : direction;
 }
+
 
 /** Whose graveyard an exile empties. Exiling YOUR OWN graveyard is a cost paid in your own
  *  resources — escape, delve, Mizzix's Mastery copying the spell it exiles — and is the opposite of

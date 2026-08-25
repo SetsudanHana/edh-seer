@@ -7,19 +7,19 @@ import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 
 type Category =
-  | "ramp" | "draw" | "cardSelection" | "targetedRemoval" | "stackInteraction"
+  | "ramp" | "draw" | "cardSelection" | "impulseDraw" | "targetedRemoval" | "stackInteraction"
   | "boardWipe" | "burn" | "stax" | "protection" | "tutor" | "lands";
 
 // Exported for this file's own filter chips below. GraphView used to reuse these for its
 // role-ring zone labels; the graph names roles itself now (presets.ts's ROLE_GROUPS, which groups
 // these same categories into the six a deck is read by) -- these are plain internal exports again.
 export const CATEGORY_LABELS: Record<Category, string> = {
-  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", targetedRemoval: "Removal",
+  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", impulseDraw: "Impulse draw", targetedRemoval: "Removal",
   stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
   protection: "Protection", tutor: "Tutors", lands: "Lands",
 };
 export const CATEGORY_ORDER: Category[] = [
-  "ramp", "draw", "cardSelection", "targetedRemoval", "stackInteraction",
+  "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction",
   "boardWipe", "burn", "stax", "protection", "tutor", "lands",
 ];
 

@@ -90,7 +90,7 @@ export const FLOW_DASH = { on: 6, off: 6, speed: 30 } as const;
  *  hues a reader has to reconcile. Order is the order the legend lists them in. */
 export const ROLE_GROUPS: { id: string; label: string; categories: string[] }[] = [
   { id: "wincons", label: "Win conditions", categories: ["burn", "tutor"] },
-  { id: "cardAdvantage", label: "Card advantage", categories: ["draw", "cardSelection"] },
+  { id: "cardAdvantage", label: "Card advantage", categories: ["draw", "cardSelection", "impulseDraw"] },
   { id: "ramp", label: "Ramp", categories: ["ramp"] },
   { id: "lands", label: "Lands", categories: ["lands"] },
   { id: "interaction", label: "Interaction", categories: ["targetedRemoval", "stackInteraction", "protection", "stax"] },
@@ -104,13 +104,16 @@ const ROLE_OF_CATEGORY = new Map<string, string>(
 const ROLE_LABEL = new Map(ROLE_GROUPS.map((g) => [g.id, g.label]));
 
 /** Plain-language names for the categories whose engine key is jargon. "Card selection" means
- *  scry/surveil/look-at-the-top-N/impulse-draw -- digging without drawing -- and "stack
+ *  scry/surveil/look-at-the-top-N -- digging without drawing -- while "impulse draw" is the exiled
+ *  cards you may cast, usually only this turn (I5, 2026-08-25: the two were one category, and the
+ *  selection pattern's own third alternative was the impulse template). "Stack
  *  interaction" is one letter from "stax" while meaning something unrelated. Shown on hover.
  *  "Stax", "tutor" and "ramp" are Magic slang, not English words, so they get entries too.
  *  "Protection", "draw" and "lands" are left untranslated: they already describe themselves
  *  correctly to a non-Magic player. */
 const PLAIN: Record<string, string> = {
   cardSelection: "digging",
+  impulseDraw: "cast from exile",
   stackInteraction: "counterspells",
   targetedRemoval: "removal",
   boardWipe: "board wipe",

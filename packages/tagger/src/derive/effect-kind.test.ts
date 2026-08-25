@@ -553,3 +553,41 @@ test("a negative power/toughness modifier derives debuff, not pump", () => {
   // No amount recorded is not a guess — it stays the ordinary kind.
   expect(actionEffectKind({ verb: "modify-pt", object: "target creature" })).toBe("pump");
 });
+
+// I2 (2026-08-25): STAX IS A COST AN OPPONENT PAYS. An increase in what YOU pay for YOUR OWN spell
+// is an additional cost, which CR 601.2f adds before reductions subtract — and the CLAUSE-TEXT
+// FALLBACK is where that went wrong, because it reads a whole clause rather than one action.
+test("a sentence about this spell's own cost is never a tax", () => {
+  // Call the Coppercoats, via Strive. The object carries no direction word at all, so the fallback
+  // fires and reads `more` off "This spell costs {1}{W} more to cast".
+  expect(actionEffectKind(
+    { verb: "cost-modify", object: "{1}{W} per target beyond the first" },
+    "Strive — This spell costs {1}{W} more to cast for each target beyond the first.",
+  )).toBeNull();
+
+  // Blasphemous Edict: an ALTERNATIVE cost whose clause happens to say "each opponent", so the
+  // opponent cue fired on a sentence about neither cost nor opponents' costs. Different leak, same
+  // guard.
+  expect(actionEffectKind(
+    { verb: "cost-modify", object: "you may pay {B} rather than pay this spell's mana cost" },
+    "As an additional cost, you may pay {B} rather than pay this spell's mana cost. Each opponent sacrifices a creature.",
+  )).toBeNull();
+
+  // A SELF REDUCTION SURVIVES — it is still a discount to the caster, and the direction is one this
+  // file already models.
+  expect(actionEffectKind(
+    { verb: "cost-modify", object: "this spell costs {1} less" },
+    "This spell costs {1} less to cast for each creature you control.",
+  )).toBe("cost-reduction");
+
+  // And the fallback keeps doing the job it was added for: Sapphire Medallion's object carries only
+  // the SUBJECT, with the direction left behind in the clause, and it names no "this spell".
+  expect(actionEffectKind(
+    { verb: "cost-modify", object: "Blue spells you cast" },
+    "Blue spells you cast cost {1} less to cast.",
+  )).toBe("cost-reduction");
+
+  // A REAL tax is untouched.
+  expect(actionEffectKind({ verb: "cost-modify", object: "Noncreature spells your opponents cast cost {1} more" }))
+    .toBe("tax");
+});
