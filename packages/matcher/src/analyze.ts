@@ -42,6 +42,7 @@ import { themeMembership, themeCandidates } from "./themes.js";
 import { promoteSpecificHeadline, demoteUnrankableHeadline } from "./theme-promote.js";
 import { rankThemesByLoop } from "./theme-loop.js";
 import { deckThing } from "./thing.js";
+import { deckBracket } from "./brackets.js";
 
 /**
  * Structured-engine counterpart of `@mtg/engine`'s `analyzeDeck`: same `DeckReport` shape,
@@ -801,6 +802,9 @@ export function analyzeDeckStructured(
     roles: computeRoles(resolved),
     cohesion,
     thing,
+    // WotC's bracket rule over facts the engine already had: `gameChanger` on every corpus card
+    // and the combos `foundCombos` resolved above. A join, so it forms no edge and reads no rating.
+    bracket: deckBracket(resolved.map((dc) => dc.card), foundCombos),
     archetypes,
     strategies,
     buildScore,

@@ -20,6 +20,13 @@ export interface Card {
    *  says a card costs 4 and cannot say that two of those are black. Absent on lands and on the
    *  back faces of split cards. */
   manaCost?: string;
+  /** WotC's Commander Bracket "Game Changer" list — 53 cards, straight from Scryfall's
+   *  `game_changer`. A published LIST rather than a judgement, which is what makes the bracket rule
+   *  a lookup. Present only when the source card carried it.
+   *
+   *  THE THIRD FIELD FOUND SITTING ON `CardDoc` AND DROPPED BY `docToCard`, after `producedMana`
+   *  and `allParts`. Check that join before recording a field as "stored, unused". */
+  gameChanger?: boolean;
   /** Scryfall produced_mana: the colours this card can add, e.g. ["B","G"]. Includes "C" for
    *  colorless. Present only on cards that produce mana at all.
    *

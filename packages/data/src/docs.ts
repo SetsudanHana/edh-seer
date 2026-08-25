@@ -99,5 +99,9 @@ export function docToCard(d: CardDoc): Card {
     // the field (engine cannot depend on `RelatedPart`, which lives here), so `createdTokenRefs`
     // reads it back off an untyped cast, exactly as it already did in its own tests.
     ...(d.allParts !== undefined ? { allParts: d.allParts } : {}),
+    // Third time (see the two notes above): on `CardDoc` since the card-graph work, documented
+    // there as "stored, unused", and unused because it never reached `Card`. The bracket rule is
+    // its first consumer.
+    ...(d.gameChanger !== undefined ? { gameChanger: d.gameChanger } : {}),
   };
 }

@@ -10,6 +10,7 @@ import { LandMathChart } from "./LandMathChart.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CardList } from "./CardList.js";
 import { CutList } from "./CutList.js";
+import { BracketPanel } from "./BracketPanel.js";
 import { ReportTabs } from "./ReportTabs.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { HeadlineScores } from "./HeadlineScores.js";
@@ -1664,4 +1665,32 @@ test("the clock says which opponent it beats, not that it wins the game", () => 
   expect(screen.getByText(/Beats one opponent turn 8/)).toBeInTheDocument();
   // "Kills on turn 8" in a four-player pod reads as "wins on turn 8" -- wrong by a factor of three.
   expect(screen.queryByText(/Kills on turn/)).not.toBeInTheDocument();
+});
+
+// L3 (2026-08-25). The bracket panel DESCRIBES and never grades, and it sits one column from two
+// real scores out of five — so the copy has to say what the number is about, or "Bracket 4" reads
+// as 4/5.
+test("the bracket panel names what put the deck there, and never reads as a grade", () => {
+  const { unmount } = render(<BracketPanel bracket={{
+    band: "4-5",
+    gameChangers: ["Rhystic Study"],
+    infiniteCombos: 2,
+    cheapCombos: [{ cards: ["Isochron Scepter", "Dramatic Reversal"], result: "Infinite untap", manaValue: 4 }],
+    reasons: [],
+  }} />);
+  expect(screen.getByText(/Bracket 4-5/)).toBeInTheDocument();
+  expect(screen.getByText(/by what the deck contains, not how good it is/i)).toBeInTheDocument();
+  expect(screen.getByText(/Rhystic Study/)).toBeInTheDocument();
+  expect(screen.getByText(/2 infinite combos/)).toBeInTheDocument();
+  expect(screen.getByText(/4 mana total/)).toBeInTheDocument();
+  unmount();
+
+  // 1-2 states the absence rather than rendering an empty list.
+  const two = render(<BracketPanel bracket={{ band: "1-2", gameChangers: [], infiniteCombos: 0, cheapCombos: [], reasons: [] }} />);
+  expect(screen.getByText(/No Game Changers and no infinite combo/i)).toBeInTheDocument();
+  two.unmount();
+
+  // An analysis with no bracket renders nothing at all, never a heading over an empty panel.
+  const { container } = render(<BracketPanel bracket={undefined} />);
+  expect(container).toBeEmptyDOMElement();
 });

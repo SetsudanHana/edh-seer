@@ -194,5 +194,23 @@ export function formatReport(report: DeckReport, trim = 0): string {
     }
   }
 
+  // WHICH TABLE THIS DECK IS FOR (roadmap L3). WotC's published bracket rule, read off two lists the
+  // engine already carries. It DESCRIBES and never grades: a 4-5 deck is not a worse deck than a
+  // 1-2 deck, it is a deck for a different table, and the wording has to carry that or the number
+  // reads as a score out of five.
+  if (report.bracket) {
+    const b = report.bracket;
+    lines.push("");
+    lines.push("=== Commander bracket ===");
+    lines.push(`  Bracket ${b.band} — what this deck's contents allow, not how good it is`);
+    for (const r of b.reasons) lines.push(`    ${r}`);
+    if (b.band === "1-2") {
+      lines.push("    no Game Changers and no infinite combo");
+    }
+    // The bands are 1-2 and 4-5 rather than 1, 2, 4 and 5 because the halves differ on facts no
+    // list settles, and saying so beats printing a number that looks more precise than it is.
+    lines.push("    (1 vs 2 is about how the deck was built, 4 vs 5 about the table — neither is a list)");
+  }
+
   return lines.join("\n");
 }

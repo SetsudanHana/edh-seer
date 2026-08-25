@@ -332,6 +332,17 @@ export interface DeckReport {
     theme: string; tag: string; count: number; cards: string[];
     fromCommandZone: string[]; turn: number; k: number; probability: number;
   } | null;
+  /** Which Commander Bracket the deck's CONTENTS allow (roadmap L3, WotC's official 1-5 tiers).
+   *  Three bands and not five: 1 vs 2 is about how the deck was built and 4 vs 5 is a meta
+   *  judgement, neither of which is a checkable list. Defined in `matcher/src/brackets.ts`; typed
+   *  structurally here because the flat engine never produces one. DESCRIBES, never grades. */
+  bracket?: {
+    band: "1-2" | "3" | "4-5";
+    gameChangers: string[];
+    infiniteCombos: number;
+    cheapCombos: { cards: string[]; result: string; manaValue: number }[];
+    reasons: string[];
+  };
   archetypes?: ArchetypeGroup[];
   /** 0–5 deck positive-coherence: mean nonland synergyRating. Matcher-only (see above). */
   positiveCoherence?: number;
