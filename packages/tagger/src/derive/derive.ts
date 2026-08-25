@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 76;
+export const DERIVE_VERSION = 77;
 
 /** Verbs that state no action at all; they are inert, not unclaimed. */
 const INERT_VERBS = new Set(["none"]);
@@ -606,6 +606,11 @@ export function deriveAbilities(
    *  (For Mirrodin!, cycling) would then look like a trigger the card never states. Absent disables
    *  the guard rather than guessing. */
   oracleText?: string,
+  /** Clause ids whose ability was granted to a token the same clause creates — `segment.ts`'s
+   *  `grantedToOwnToken`. They derive NOTHING here: the token carries the ability on its own row,
+   *  so deriving it on the card as well states the relation twice. Absent disables the guard rather
+   *  than guessing, the same contract `oracleText` and `clauseTexts` have. */
+  grantedToken?: ReadonlySet<number>,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -617,6 +622,11 @@ export function deriveAbilities(
   const cardText = oracleText ?? "";
 
   for (const clause of clauses) {
+    // The whole clause goes, not just its trigger. What is quoted on a created token is a complete
+    // ability -- Vivi's Persistence's Wizard both watches the cast AND deals the damage -- so
+    // keeping the effect and dropping the trigger would leave the card claiming to do a thing it
+    // never does. The token's own derived row carries both halves.
+    if (grantedToken?.has(clause.id)) continue;
     const kind = abilityKind(clause);
     // Who performs each action, when the clause names someone the object text does not carry. The
     // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
@@ -952,12 +962,16 @@ export interface DeriveInput {
   clauseCosts?: Record<number, string>;
   /** The card's printed oracle text, read ONLY by the phantom-trigger guard. Absent disables it. */
   oracleText?: string;
+  /** Clause ids granted to a token the same clause creates, from `segment.ts`'s `grantedToOwnToken`.
+   *  Same free-to-recompute contract as `clauseTexts`; absent disables the guard. */
+  grantedToken?: ReadonlySet<number>;
 }
 
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
  *  from the card document -- derivation never asks a model for what the database already knows. */
 export function deriveCardTags(input: DeriveInput): CardTags {
-  const { abilities } = deriveAbilities(input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText);
+  const { abilities } = deriveAbilities(
+    input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken);
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,

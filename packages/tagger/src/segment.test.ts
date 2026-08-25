@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { effectActions, segment } from "./segment.js";
+import { effectActions, grantedToOwnToken, segment } from "./segment.js";
 
 // Every card here is one the extraction experiment or the quality audit got wrong.
 
@@ -491,4 +491,39 @@ test("two subjects sharing one event are still not a multiTrigger", () => {
   expect(segment("Whenever this creature or another permanent enters, draw a card.")[0].multiTrigger).toBeUndefined();
   expect(segment("Whenever you cast an instant or sorcery spell, put a +1/+1 counter on this creature.")[0].multiTrigger).toBeUndefined();
   expect(segment("Whenever one or more creatures you control enter, draw a card.")[0].multiTrigger).toBeUndefined();
+});
+
+/** 1b, the round-4 census's biggest false family. A quoted ability granted to a token the clause
+ *  itself creates belongs to the TOKEN, which already derives it from its own row -- attributing it
+ *  to the card as well states the relation twice, and every noncreature spell in the deck edged to
+ *  Vivi's Persistence AND to its Wizard. Owner's ruling, six times over: "the token that X produces
+ *  triggers on it, not this instant." */
+test("a grant to a token the clause creates is selected, and a grant to your own creatures is not", () => {
+  const vivi = segment(
+    'Create a 0/1 black Wizard creature token with "Whenever you cast a noncreature spell, this token deals 1 damage to each opponent."',
+  );
+  const granted = vivi.find((c) => c.kind === "granted");
+  expect(granted).toBeDefined();
+  expect([...grantedToOwnToken(vivi)]).toEqual([granted!.id]);
+
+  // Bello, Bard of the Brambles grants to permanents YOU CONTROL. The trigger is real and belongs
+  // to those creatures, so a blanket refusal of every granted clause would be a second wrong answer.
+  const bello = segment(
+    'During your turn, each non-Equipment artifact you control with mana value 4 or greater is a 4/4 Elemental creature in addition to its other types and has indestructible, haste, and "Whenever this creature deals combat damage to a player, draw a card."',
+  );
+  expect(bello.some((c) => c.kind === "granted")).toBe(true);
+  expect(grantedToOwnToken(bello).size).toBe(0);
+});
+
+/** The cue reads the PARENT and never the granted text, because the word "token" routinely appears
+ *  inside the granted ability itself: Kaito, Cunning Infiltrator's emblem creates a Ninja token, and
+ *  the clause that grants it merely says "You get an emblem with that ability". An emblem is the
+ *  same wrong sentence one object over and is deliberately left alone -- it has no node for the
+ *  relation to move to, so refusing it would delete a claim rather than relocate it. */
+test("a token named only inside the granted ability does not select the grant", () => {
+  const kaito = segment(
+    'You get an emblem with "Whenever a player casts a spell, you create a 2/1 blue Ninja creature token."',
+  );
+  expect(kaito.some((c) => c.kind === "granted")).toBe(true);
+  expect(grantedToOwnToken(kaito).size).toBe(0);
 });

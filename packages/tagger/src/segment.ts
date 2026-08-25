@@ -203,6 +203,40 @@ function extractGranted(text: string): { body: string; granted: string[] } {
   return { body, granted };
 }
 
+/** A clause that makes a token, so an ability granted inside it belongs to the TOKEN. Anchored on
+ *  the two words together and within one sentence, because "create" alone is any effect and "token"
+ *  alone appears in a granted ability's own text (Kaito, Cunning Infiltrator's emblem creates a
+ *  Ninja; the PARENT merely says "You get an emblem with that ability"). */
+const CREATES_A_TOKEN = /\bcreates?\b[^.]*\btokens?\b/i;
+
+/** The granted clauses whose receiver is a token the SAME clause creates — Vivi's Persistence's
+ *  "create a 0/1 black Wizard creature token with '<a triggered ability>'". The token already
+ *  derives that ability from its own row in `tokens`, so attributing it to the card as well
+ *  DOUBLE-COUNTS the relation: every noncreature spell edged to the instant AND to its Wizard.
+ *  Owner's ruling, six times over in the 2026-08-23 census: "the token that X produces triggers on
+ *  it, not this instant."
+ *
+ *  SCOPED TO A CREATED TOKEN AND NOTHING WIDER, because most grants are real. Bello, Bard of the
+ *  Brambles grants to your own creatures, an Equipment grants to the equipped creature, and a
+ *  copy-self grant ("except it has that ability") really does land on this card — all of those keep
+ *  the ability. Measured over the whole clause corpus: 94 granted clauses on 92 cards, and this cue
+ *  selects the 25 token-receiver ones with ZERO false positives against the other 69.
+ *
+ *  NOT AN EMBLEM, though "You get an emblem with that ability" is the same wrong sentence one
+ *  object over: an emblem has no node for the relation to move to, so refusing it would delete a
+ *  claim rather than relocate it, and no panel claim witnesses the defect. Its own item if one
+ *  appears. */
+export function grantedToOwnToken(clauses: Clause[]): Set<number> {
+  const byId = new Map(clauses.map((c) => [c.id, c]));
+  const out = new Set<number>();
+  for (const c of clauses) {
+    if (c.kind !== "granted" || c.parentId === undefined) continue;
+    const parent = byId.get(c.parentId);
+    if (parent && CREATES_A_TOKEN.test(parent.text)) out.add(c.id);
+  }
+  return out;
+}
+
 /** A sentence starting a new trigger inside another clause ("Add {U}. When you spend this mana,
  *  ... ") is its own ability; leaving it inline let one run record it and the next ignore it. */
 function splitEmbeddedTriggers(text: string): string[] {

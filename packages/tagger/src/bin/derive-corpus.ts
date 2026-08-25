@@ -7,7 +7,7 @@
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { connect, loadConfig } from "@mtg/data";
 import { extractCharacteristics } from "../characteristics.js";
-import { segment } from "../segment.js";
+import { grantedToOwnToken, segment } from "../segment.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
 import {
@@ -53,6 +53,7 @@ for (const doc of clauseDocs) {
     clauseTexts: clauseTexts(source as never),
     clauseCosts: clauseCosts(source as never),
     oracleText: (source as { oracleText?: string }).oracleText,
+    grantedToken: grantedTokenClauses(source as never),
   });
   // A card with real rules text deriving zero abilities is the Bitterblossom shape -- worth
   // counting out loud rather than silently writing a doc that reads as a vanilla bear.
@@ -86,6 +87,14 @@ function clauseTexts(doc: { oracleText?: string; keywords?: string[]; typeLine?:
   const out: Record<number, string> = {};
   for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) out[c.id] = c.text;
   return out;
+}
+
+/** The clause ids whose ability was granted to a token the clause itself creates, from the same
+ *  deterministic `segment()` the two maps above use. `grantedToOwnToken` needs the `kind`/`parentId`
+ *  structure, which `ClauseRecord` does not carry -- the persisted clause doc is the model's answer,
+ *  and this is a fact about the SEGMENTATION, so it is recomputed here rather than stored. */
+function grantedTokenClauses(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): ReadonlySet<number> {
+  return grantedToOwnToken(segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? ""));
 }
 
 /** Clause id -> the clause's activation cost, from the SAME `segment()` call `clauseTexts` uses --

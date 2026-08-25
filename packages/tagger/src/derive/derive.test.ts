@@ -1557,3 +1557,23 @@ describe("an orphan clause id still finds the sentence it was split out of (K3c)
     expect(textForClause({ id: 9, trigger: undefined }, texts)).toBe("");
   });
 });
+
+/** 1b. The whole clause goes, not just its trigger: what is quoted on a created token is a complete
+ *  ability, so keeping the effect and dropping the trigger would leave the card claiming to deal the
+ *  damage its Wizard deals. Both directions, because the guard is only correct if the SAME clause
+ *  still derives when its receiver is not a created token (Bello, an Equipment, a copy-self grant). */
+test("a clause granted to a token the card creates derives nothing, and the same clause derives without the guard", () => {
+  const clause = {
+    id: 2,
+    abilityType: "triggered",
+    trigger: { event: "cast", subject: "a noncreature spell", control: "you" },
+    actions: [{ verb: "deal-damage", object: "each opponent", amount: "1" }],
+  };
+  const text = 'Create a 0/1 black Wizard creature token with "Whenever you cast a noncreature spell, this token deals 1 damage to each opponent."';
+
+  const guarded = deriveAbilities([clause], "Vivi's Persistence", { 2: text }, undefined, text, new Set([2]));
+  expect(guarded.abilities).toEqual([]);
+
+  const unguarded = deriveAbilities([clause], "Vivi's Persistence", { 2: text }, undefined, text);
+  expect(unguarded.abilities.some((a) => a.trigger?.verbs?.includes("cast"))).toBe(true);
+});
