@@ -682,3 +682,21 @@ test("N12: a fetch that finds a TAPPED land gives a tapped land", () => {
   expect(pAtLeastMana(r, 4, 4)).toBe(0);
   expect(pAtLeastMana(late, 4, 4)).toBeGreaterThan(0.5);
 });
+
+// N14. A PHYREXIAN PIP KEEPS ITS COLOUR, and the reason is a missing model rather than a reading of
+// the card: its alternative is TWO LIFE, and nothing here has a life total. Same direction as the
+// `{2/W}` ruling beside it, a much larger number, and stated rather than left implicit.
+test("N14: a Phyrexian pip demands its colour, because this model cannot pay life", () => {
+  const dismember = parseCost("{1}{B/P}{B/P}")!;
+  expect(dismember).toEqual({ total: 3, pips: [colorMask(["B"]), colorMask(["B"])] });
+
+  const swamp = { mana: 1, colors: colorMask(["B"]) };
+  const forest = { mana: 1, colors: colorMask(["G"]) };
+  // Three green sources make the mana and not the colour, so the model says no -- where a player
+  // pays four life and casts it off one land. UNDER-claiming, which is the direction this repo takes.
+  expect(payable([forest, forest, forest], dismember)).toBe(false);
+  expect(payable([forest, swamp, swamp], dismember)).toBe(true);
+
+  // The pip is still ONE mana of the total, exactly as the rules count it.
+  expect(parseCost("{G/P}")).toEqual({ total: 1, pips: [colorMask(["G"])] });
+});

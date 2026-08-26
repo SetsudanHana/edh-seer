@@ -374,6 +374,17 @@ export function parseCost(manaCost: string | undefined): Cost | null {
     //
     // A NUMERIC hybrid (`{2/W}`) keeps its colour: the generic alternative costs MORE, so demanding
     // the colour is the under-claiming direction, which is the one this repo takes.
+    //
+    // A PHYREXIAN pip (`{B/P}`) KEEPS ITS COLOUR TOO, AND THAT IS A REAL UNDER-CLAIM WITH A MEASURED
+    // SIZE (roadmap N14). Its alternative is TWO LIFE, not mana, and nothing here has a life total --
+    // the goldfish has no opponent, takes no damage and pays no life, so pricing the pip as free
+    // would be a claim this model cannot support. So it demands the colour, and the cost is stated
+    // rather than hidden: measured at each card's own mana-value turn across the 71 decks, paying the
+    // life instead would read **+15 to +23pp on a single pip** (Phyrexian Metamorph 78% -> 94% in 4
+    // decks, Tezzeret's Gambit, Jace the Perfected Mind) and **+23 to +52pp where the cost prints two
+    // or three** -- Dismember `{1}{B/P}{B/P}` 51% -> 99% in `mari-takes-control`, K'rrik
+    // `{4}{B/P}{B/P}{B/P}` 39% -> 91% in `gengar`. 6 distinct cards, 12 slots.
+    // Same direction as `{2/W}`, a much bigger number, and now written down.
     const mask = colorMask(parts.filter((x) => x === "C" || (COLORS as readonly string[]).includes(x)));
     if (mask !== 0) pips.push(mask); // {S} and a generic-hybrid half still reach no colour
   }
