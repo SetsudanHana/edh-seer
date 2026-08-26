@@ -449,3 +449,30 @@ test("a card with no protection at all does not match the rule at all", () => {
   // direction. Recorded rather than shipped as a guard that fires.
   expect(ruleMatches(protectionRule(), asCard("Bear", "Vanilla."))).toBe(false);
 });
+
+test("stripping hexproof from an opponent is removal, not protection", () => {
+  // Shadowspear and Nowhere to Run exist so your REMOVAL connects. Counted as Interaction of the
+  // protection kind, they reached a true category through a false sentence.
+  const shadowspear = asCard("Shadowspear",
+    "Equipped creature gets +1/+1 and has trample and lifelink.\n{1}: Permanents your opponents control lose hexproof and indestructible until end of turn.\nEquip {2}");
+  expect(ruleMatches(protectionRule(), shadowspear)).toBe(false);
+  const nowhere = asCard("Nowhere to Run",
+    "Creatures your opponents control can be the targets of spells and abilities as though they didn't have hexproof.");
+  expect(ruleMatches(protectionRule(), nowhere)).toBe(false);
+});
+
+test("a card that grants AND strips keeps its own half", () => {
+  // Archetype of Endurance, verbatim in shape: one sentence gives your creatures hexproof, the next
+  // takes it from theirs. Only the second goes — which is why this is a strip and not a refusal.
+  const c = asCard("Archetype of Endurance",
+    "Creatures you control have hexproof.\nCreatures your opponents control lose hexproof and can't have hexproof.");
+  expect(ruleMatches(protectionRule(), c)).toBe(true);
+});
+
+test("the strip takes the SENTENCE, because one clause can name two words", () => {
+  // A phrase-level cut on Shadowspear leaves "indestructible" standing, and the card reads as
+  // protection again through the half that was never about protecting anything of yours.
+  const c = asCard("Two Words",
+    "{1}: Permanents your opponents control lose hexproof and indestructible until end of turn.");
+  expect(ruleMatches(protectionRule(), c)).toBe(false);
+});

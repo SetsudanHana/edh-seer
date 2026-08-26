@@ -136,6 +136,28 @@ const PROTECTION_WORDS = /hexproof|indestructible|protection from|can't be count
 const SELF_PROTECTION =
   /\bthis spell can'?t be countered\b|\benters with an indestructible counter on it\b/gi;
 
+/** Protection TAKEN AWAY FROM OPPONENTS, which is the opposite of protecting anything of yours.
+ *
+ *  Shadowspear's *"Permanents your opponents control lose hexproof and indestructible"* and Nowhere
+ *  to Run's *"as though they didn't have hexproof"* are removal ENABLERS — they exist so your removal
+ *  connects — and both were counted as Interaction of the PROTECTION kind, which is a true category
+ *  reached by a false sentence. **12 corpus cards, 3 in the 71 decks** (those two plus The Fire
+ *  Nation Drill).
+ *
+ *  STRIPPED BY SENTENCE, not by phrase, and the difference is load-bearing: Shadowspear names TWO
+ *  protection words in one clause and a phrase-level cut would leave "indestructible" standing.
+ *
+ *  A CARD THAT DOES BOTH KEEPS ITS OWN HALF, which is why this is a strip and not a refusal —
+ *  **Archetype of Endurance** grants hexproof to your creatures in one sentence and strips it from
+ *  theirs in the next, and only the second sentence goes. */
+const ANTI_PROTECTION =
+  /\byour opponents control\b[^.]{0,90}?\b(?:lose|don'?t have|can'?t have|didn'?t have)\b[^.]{0,40}?\b(?:hexproof|shroud|indestructible|ward|protection from)\b/i;
+
+/** Drop every sentence that takes protection away from an opponent. */
+function withoutAntiProtection(text: string): string {
+  return text.split(/(?<=[.!?])\s+|\n/).filter((line) => !ANTI_PROTECTION.test(line)).join(" ");
+}
+
 const GRANTS_PROTECTION =
   /\b(?:gains?|have|has|get|grants?)\b[^.]{0,70}?(?:hexproof|indestructible|shroud|protection from|phases? out)/i;
 
@@ -217,7 +239,12 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       const txt = dc.card.oracleText ?? "";
       // A GRANT WINS, always: a card can print a keyword AND hand it out, and handing it out is the
       // Interaction fact. Checked first so the keyword list can never overrule it.
-      if (GRANTS_PROTECTION.test(txt)) return false;
+      // THE GRANT TEST READS THE SAME TEXT THE WORD COUNT DOES. Shadowspear's "Permanents your
+      // opponents control LOSE hexproof" has no grant verb, but a sentence like "creatures your
+      // opponents control don't HAVE hexproof" does — and `GRANTS_PROTECTION` matches on "have".
+      // Asking both questions of the same stripped text is what keeps them from disagreeing.
+      const granting = withoutAntiProtection(txt);
+      if (GRANTS_PROTECTION.test(granting)) return false;
       const found = (t: string): Set<string> =>
         new Set([...t.matchAll(PROTECTION_WORDS)].map((m) => m[0].toLowerCase()));
       // NO PROTECTION AT ALL IS NOT SELF-PROTECTION. UNREACHABLE through the shipped rule — the op
@@ -227,7 +254,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       if (found(txt).size === 0) return false;
       // WHAT IS LEFT AFTER THE CARD'S CLAIMS ABOUT ITSELF. If nothing is, every cue was about the
       // card itself and it protects nothing else.
-      const rest = found(txt.replace(SELF_PROTECTION, " "));
+      const rest = found(withoutAntiProtection(txt).replace(SELF_PROTECTION, " "));
       if (rest.size === 0) return true;
       // "protection from Humans" is the printed keyword `protection`; the rest are their own word.
       const keywords = new Set((dc.tags?.characteristics?.keywords ?? []).map((k) => k.toLowerCase()));
