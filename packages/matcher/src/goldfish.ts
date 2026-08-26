@@ -100,6 +100,24 @@ export interface Accelerant {
 const LAND_FETCH = /search your library for (?:a |an |up to \w+ )?(?:basic )?(?:land|forest|island|swamp|mountain|plains)/i;
 const ONTO_BATTLEFIELD = /onto the battlefield/i;
 const SUSPEND = /\bsuspend \d/i;
+/** A FETCH IS NOT FREE JUST BECAUSE THIS MODEL PERFORMS IT (roadmap N12). Myriad Landscape's two
+ *  basics cost `{2}`, Urza's Cave `{3}`, and **Wayfarer's Bauble is cast for {1} and then cracked for
+ *  {2} a turn later** — none of which the model pays, so each was a free land the moment it appeared.
+ *  The activation cost is what sits before the colon on the fetch's own line; `{T}` and a sacrifice
+ *  and a life payment are all costs this model CAN pay, and a mana symbol is not.
+ *
+ *  A LAND THAT FAILS THIS IS STILL A LAND — Myriad Landscape taps for `{C}` and enters tapped — it
+ *  simply neither fixes colours nor thins until someone pays. That is the under-claiming direction,
+ *  and it is 63 land slots plus 25 spell slots across the 71 decks. */
+const MANA_IN_COST = /\{(?!t\}|q\})[^}]+\}/i;
+function fetchCostsMana(text: string): boolean {
+  const line = text.split("\n").find((l) => LAND_FETCH.test(l)) ?? "";
+  return line.includes(":") && MANA_IN_COST.test(line.slice(0, line.indexOf(":")));
+}
+/** The fetched land's own tapped state, printed on the fetch: "put it onto the battlefield TAPPED".
+ *  Fabled Passage — 21 slots, and the only card of the family that prints the clause — then untaps it
+ *  once you control four lands, which is the `slow` shape one board count over. */
+const FETCH_UNTAPS = /untap that land/i;
 const FETCHES_TAPPED = /onto the battlefield tapped/i;
 
 /** DOES THIS CARD MAKE MANA, or does Scryfall merely think so? `producedMana` is stamped from QUOTED
@@ -136,7 +154,7 @@ export function classifyAccelerant(dc: DeckCard): Accelerant | null {
   // it is not until it dies and transforms.
   if (/\bland\b/.test(line)) return null;
   const text = dc.card.oracleText ?? "";
-  if (LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text)) {
+  if (LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text) && !fetchCostsMana(text)) {
     return { name, manaValue, kind: "land-fetch", fetchTapped: FETCHES_TAPPED.test(text) };
   }
   // A ONE-SHOT IS NOT A SOURCE at any confidence — `isManaSource`'s own ruling, and the measured
@@ -420,6 +438,10 @@ interface DeckSlot {
   isExtra?: boolean;
   /** A fetchland removes the land it finds from the library. */
   fetches: boolean;
+  /** The land this fetch FINDS arrives tapped -- Evolving Wilds and the Landscape cycle. */
+  fetchTapped?: boolean;
+  /** ...unless you already control this many lands: Fabled Passage's own untap clause. */
+  fetchUntapsAt?: number;
   land?: LandCondition;
   accelerant?: Accelerant | null;
 }
@@ -496,7 +518,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     const isLand = /\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout));
     const text = dc.card.oracleText ?? "";
     // A land-fetch SPELL searches the library too, so it fixes colours and thins by the same fact.
-    const fetches = LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text);
+    const fetches = LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text) && !fetchCostsMana(text);
     return {
       name: dc.card.name,
       manaValue: dc.card.manaValue ?? 0,
@@ -506,6 +528,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       everyLandType: isEveryLandType(dc.card.typeLine, dc.card.oracleText),
       colors: fetches ? fetchMask(text, printed) : colorMask(dc.card.producedMana),
       fetches,
+      fetchTapped: fetches && FETCHES_TAPPED.test(text),
+      ...(fetches && FETCH_UNTAPS.test(text) ? { fetchUntapsAt: 3 } : {}),
       cost: isLand ? null : parseCost(dc.card.manaCost),
       costKey: dc.card.manaCost ?? "",
       ...(isLand ? { land: classifyLand(dc.card) } : { accelerant: classifyAccelerant(dc) }),
@@ -583,7 +607,13 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         lands.push({
           cond: played.land!,
           enteredTurn: turn,
-          enteredTapped: entersTapped(played.land!, board),
+          // WHAT IS STANDING THERE IS THE FETCHED LAND, so its tapped state is the one that counts --
+          // the fetch itself is sacrificed. Fabled Passage untaps it at four lands, which is measured
+          // against the board BEFORE this drop, hence three (roadmap N12).
+          enteredTapped: played.fetches
+            ? played.fetchTapped === true
+              && !(played.fetchUntapsAt !== undefined && board.lands >= played.fetchUntapsAt)
+            : entersTapped(played.land!, board),
           typeLine: played.typeLine,
           output: played.output,
           everyLandType: played.everyLandType,

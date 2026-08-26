@@ -634,3 +634,51 @@ test("N11: a colourless hybrid is colourless OR its colour, not 'anything'", () 
   // the colour is the under-claiming direction.
   expect(payable([forest, forest, forest], parseCost("{2/W}")!)).toBe(false);
 });
+
+// N12. A FETCH IS NOT FREE, INSTANT AND UNTAPPED just because the model performs it the moment the
+// land is played. Two printed facts were being ignored: what cracking it COSTS, and whether the land
+// it finds arrives TAPPED.
+test("N12: a crack that costs mana is not a fetch this model can perform", () => {
+  // Wayfarer's Bauble, verbatim: cast for {1}, then {2} and a tap and a sacrifice, a turn later.
+  // Priced as a cast-time fetch it was a one-mana ramp spell that put a land onto the battlefield.
+  const bauble = card("Wayfarer's Bauble", "Artifact", 1,
+    "{2}, {T}, Sacrifice this artifact: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.");
+  expect(classifyAccelerant(bauble)).toBeNull();
+
+  // Nature's Lore resolves its fetch, so it stays a land-fetch accelerant.
+  const lore = card("Nature's Lore", "Sorcery", 2,
+    "Search your library for a Forest card, put it onto the battlefield, then shuffle.");
+  expect(classifyAccelerant(lore)?.kind).toBe("land-fetch");
+
+  // A LAND whose crack costs mana is an ordinary land: Myriad Landscape taps for {C} and its two
+  // basics cost {2} the model never pays, so it neither fixes colours nor thins.
+  const landscape = (i: number) => card(`Myriad ${i}`, "Land", 0,
+    "This land enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.",
+    ["C"]);
+  const green = card("Green", "Sorcery", 1, "");
+  (green.card as { manaCost?: string }).manaCost = "{G}";
+  const deck = [...Array.from({ length: 20 }, (_, i) => landscape(i)), ...basics(17), ...spells(61, 3), green];
+  const r = simulate(deck, { trials: 4_000, turns: 4, seed: 9 });
+  // Its colours are its own {C}, not the green of the basics it could fetch for {2}.
+  expect(r.byCardCastable.get("Green")![3]).toBeLessThan(r.byCard.get("Green")![3]);
+});
+
+test("N12: a fetch that finds a TAPPED land gives a tapped land", () => {
+  const wilds = (i: number) => card(`Wilds ${i}`, "Land", 0,
+    "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", []);
+  const deck = [...Array.from({ length: 37 }, (_, i) => wilds(i)), ...spells(62, 3)];
+  const r = simulate(deck, { trials: 4_000, turns: 3, seed: 9 });
+  // Every land in this deck arrives tapped, so turn one makes nothing at all.
+  expect(pAtLeastMana(r, 1, 1)).toBe(0);
+
+  // FABLED PASSAGE UNTAPS ITS LAND once you control four, so it is tapped early and not late -- the
+  // `slow` shape, and the one card of the family that prints the clause (21 slots).
+  const passage = (i: number) => card(`Passage ${i}`, "Land", 0,
+    "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle. Then if you control four or more lands, untap that land.", []);
+  const late = simulate([...Array.from({ length: 37 }, (_, i) => passage(i)), ...spells(62, 3)], { trials: 4_000, turns: 6, seed: 9 });
+  expect(pAtLeastMana(late, 1, 1)).toBe(0);
+  // THE CELL THAT SEPARATES THE TWO: on turn four the land played THIS turn is the difference. Every
+  // land tapped reads 0% for four mana on turn four; untapping at four lands reads 64%.
+  expect(pAtLeastMana(r, 4, 4)).toBe(0);
+  expect(pAtLeastMana(late, 4, 4)).toBeGreaterThan(0.5);
+});
