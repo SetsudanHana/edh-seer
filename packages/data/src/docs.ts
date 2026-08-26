@@ -106,7 +106,17 @@ export function docToCard(d: CardDoc): Card {
     // Both were on the documents and dropped here, which is why CLAUDE.md could list producedMana
     // as an available win with nothing consuming it: 2,641 corpus cards carry it and it never
     // reached `Card`. The mana audit is its first consumer.
-    ...(d.manaCost !== undefined ? { manaCost: d.manaCost } : {}),
+    // A DOUBLE-FACED CARD'S COST IS ON ITS FRONT FACE (CR 712.4a: a card in hand is its front face,
+    // and that is the cost you pay). Scryfall puts no `mana_cost` on the card itself for those
+    // layouts, so this arrived undefined, `parseCost` refused it, and the mana model published an
+    // all-zero castability curve -- `iz-it-izzet` was told its own commander casts 0% of the time on
+    // turn two, when Ashling, Rekindled costs {1}{R}. A REFUSAL RENDERED AS A MEASUREMENT, on 58
+    // distinct cards / 116 slots across the 71 decks. The card-level cost still wins where there is
+    // one (a split card carries its combined cost there), and an EMPTY face cost stays undefined --
+    // "" parses as a FREE spell, which is a worse answer than a refusal.
+    ...(d.manaCost !== undefined
+      ? { manaCost: d.manaCost }
+      : d.faces?.[0]?.manaCost ? { manaCost: d.faces[0].manaCost } : {}),
     ...(d.producedMana !== undefined ? { producedMana: d.producedMana } : {}),
     // Same gap as the two fields above, found the same way (Task 6, tokens-as-nodes): `allParts` was
     // on `CardDoc` and dropped here, so `createdTokenRefs` (matcher/tokens.ts) read `[]` off every

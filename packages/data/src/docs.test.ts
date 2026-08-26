@@ -111,3 +111,32 @@ test("searchNames never carries an empty key", () => {
   } as never);
   expect(doc.searchNames).not.toContain("");
 });
+
+// A DOUBLE-FACED CARD'S MANA COST IS ON ITS FRONT FACE, and `docToCard` dropped the whole `faces`
+// array -- so `manaCost` arrived undefined, `parseCost` refused it, and the mana model published an
+// all-zero castability curve. A REFUSAL RENDERED AS A MEASUREMENT: `iz-it-izzet` was told its own
+// commander is castable 0% of the time on turn two, when Ashling, Rekindled costs {1}{R}.
+// 58 distinct cards / 116 slots across the 71 calibration decks. Found in a live run, and it is the
+// FOURTH field on the document that this join was dropping (producedMana, allParts, gameChanger).
+test("a double-faced card carries its FRONT face's mana cost (CR 712.4a)", () => {
+  const doc = {
+    _id: "x", name: "Ashling, Rekindled // Ashling, Rimebound",
+    typeLine: "Legendary Creature — Elemental Sorcerer // Legendary Creature — Elemental Wizard",
+    oracleText: "…", keywords: [], colors: ["R"], manaValue: 2, layout: "transform",
+    faces: [
+      { name: "Ashling, Rekindled", typeLine: "Legendary Creature — Elemental Sorcerer", manaCost: "{1}{R}" },
+      { name: "Ashling, Rimebound", typeLine: "Legendary Creature — Elemental Wizard", manaCost: "" },
+    ],
+  } as unknown as Parameters<typeof docToCard>[0];
+  expect(docToCard(doc).manaCost).toBe("{1}{R}");
+
+  // THE CARD-LEVEL COST STILL WINS WHERE THERE IS ONE. A split card carries its combined cost on the
+  // card and its halves on the faces, and the card's is the one every other reader already uses.
+  const split = { ...doc, manaCost: "{2}{U}" } as unknown as Parameters<typeof docToCard>[0];
+  expect(docToCard(split).manaCost).toBe("{2}{U}");
+
+  // A back face with no cost of its own must not become an empty-string cost, which parses to a
+  // FREE spell rather than to a refusal.
+  const backOnly = { ...doc, faces: [{ name: "b", typeLine: "t", manaCost: "" }] } as unknown as Parameters<typeof docToCard>[0];
+  expect(docToCard(backOnly).manaCost).toBeUndefined();
+});
