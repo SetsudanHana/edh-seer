@@ -410,3 +410,42 @@ test("a one-shot mana spell is ramp only when it nets, and a permanent mana sour
   // is a mana dork, and the type-line union carries "Sorcery" from the Adventure half.
   expect(cats(spell("Bramble Familiar // Fetch Quest", "{T}: Add {G}.\n//\nMill seven cards.", 2, "Creature — Elemental Raccoon // Sorcery — Adventure"))).toContain("ramp");
 });
+
+// --- self-protection in words that are not a printed keyword (roadmap I1) ---
+
+const protectionRule = () => loadRules().rules.find((r) => r.id.startsWith("protection"))!;
+const asCard = (name: string, oracleText: string, keywords: string[] = []): DeckCard => ({
+  card: { name, typeLine: "Creature", oracleText, keywords, colors: [], manaValue: 3 } as never,
+  tags: { oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 3, power: "3", toughness: "3", token: false, keywords } as never,
+    abilities: [] } as never,
+});
+
+test("a spell that cannot be countered protects nothing but itself", () => {
+  // 10 of the 113 cards the protection rule fires on say only this — Nezahal, Niv-Mizzet Parun,
+  // Toski. A creature that cannot be countered is not one of a deck's ten Interaction cards.
+  const c = asCard("Nezahal", "This spell can't be countered.\nYou have no maximum hand size.");
+  expect(ruleMatches(protectionRule(), c)).toBe(false);
+});
+
+test("entering with an indestructible counter ON ITSELF is the same fact", () => {
+  const c = asCard("Myojin of Grim Betrayal", "Myojin of Grim Betrayal enters with an indestructible counter on it if you cast it from your hand.");
+  expect(ruleMatches(protectionRule(), c)).toBe(false);
+});
+
+test("a card that says both keeps its other half", () => {
+  // Stripped, not matched: the remaining word still has to clear the printed-keyword test, and here
+  // it does not — the hexproof is handed to something else.
+  const c = asCard("Both", "This spell can't be countered.\nCreatures you control gain hexproof until end of turn.");
+  expect(ruleMatches(protectionRule(), c)).toBe(true);
+});
+
+test("a card with no protection at all does not match the rule at all", () => {
+  // NOT A TEST OF THE EMPTY GUARD, and saying so is the point: `protectionIsOwnKeyword` only runs
+  // once the protection pattern has matched, so its `found(txt).size === 0` branch is UNREACHABLE
+  // through the shipped rule and mutating it away changes no test. It is kept because a caller that
+  // did reach it would otherwise be told a silent card protects itself, and the rule reads the op
+  // under `not:` — so the wrong answer there would SUPPRESS the rule, which is the under-claiming
+  // direction. Recorded rather than shipped as a guard that fires.
+  expect(ruleMatches(protectionRule(), asCard("Bear", "Vanilla."))).toBe(false);
+});

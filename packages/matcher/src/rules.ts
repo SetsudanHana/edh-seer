@@ -119,6 +119,23 @@ const PROTECTION_WORDS = /hexproof|indestructible|protection from|can't be count
 /** Protection handed to something else. The templating is fixed enough to read — "creatures you
  *  control GAIN hexproof", "equipped creature HAS indestructible" — and this is the half that IS
  *  Interaction. */
+/** Protection the card states about ITSELF in words that are not a printed keyword.
+ *
+ *  `protectionIsOwnKeyword` asks whether every protection word on a card is one of its OWN, and it
+ *  answered that against the printed keyword list — so it could see "hexproof" on a Sylvan Caryatid
+ *  and could not see **"This spell can't be countered"**, which is the same fact in a sentence.
+ *  Measured over the 71 decks: **13 of the 113 cards the protection rule fires on say only this** —
+ *  10 "this spell can't be countered" (Nezahal, Niv-Mizzet Parun, Hullbreaker Horror, Toski, Chandra
+ *  Awakened Inferno, Rise of the Eldrazi, Glen Elendra's Answer, Commence the Endgame, Hexing
+ *  Squelcher, Inferno of the Star Mounts) and 3 Myojin entering with an indestructible counter ON
+ *  THEMSELVES. A creature that cannot be countered protects nothing but itself, and counting it as
+ *  one of a deck's ten Interaction cards is the Sylvan Caryatid defect in a different sentence.
+ *
+ *  IT IS STRIPPED, NOT MATCHED, so a card that says both keeps its other half: the remaining words
+ *  still have to clear the printed-keyword test, and a GRANT still wins before any of this runs. */
+const SELF_PROTECTION =
+  /\bthis spell can'?t be countered\b|\benters with an indestructible counter on it\b/gi;
+
 const GRANTS_PROTECTION =
   /\b(?:gains?|have|has|get|grants?)\b[^.]{0,70}?(?:hexproof|indestructible|shroud|protection from|phases? out)/i;
 
@@ -201,11 +218,20 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       // A GRANT WINS, always: a card can print a keyword AND hand it out, and handing it out is the
       // Interaction fact. Checked first so the keyword list can never overrule it.
       if (GRANTS_PROTECTION.test(txt)) return false;
-      const words = new Set([...txt.matchAll(PROTECTION_WORDS)].map((m) => m[0].toLowerCase()));
-      if (words.size === 0) return false;
+      const found = (t: string): Set<string> =>
+        new Set([...t.matchAll(PROTECTION_WORDS)].map((m) => m[0].toLowerCase()));
+      // NO PROTECTION AT ALL IS NOT SELF-PROTECTION. UNREACHABLE through the shipped rule — the op
+      // only runs once the protection pattern has matched — and mutating it away changes no test,
+      // which is stated rather than left for someone to discover. Kept because the op reads under
+      // `not:`, so a wrong answer here SUPPRESSES the rule, and under-claiming is the direction.
+      if (found(txt).size === 0) return false;
+      // WHAT IS LEFT AFTER THE CARD'S CLAIMS ABOUT ITSELF. If nothing is, every cue was about the
+      // card itself and it protects nothing else.
+      const rest = found(txt.replace(SELF_PROTECTION, " "));
+      if (rest.size === 0) return true;
       // "protection from Humans" is the printed keyword `protection`; the rest are their own word.
       const keywords = new Set((dc.tags?.characteristics?.keywords ?? []).map((k) => k.toLowerCase()));
-      return [...words].every((w) => keywords.has(w === "protection from" ? "protection" : w));
+      return [...rest].every((w) => keywords.has(w === "protection from" ? "protection" : w));
     }
     case "anyOf":
       return clause.clauses.some((c) => clauseHolds(c, dc, set));

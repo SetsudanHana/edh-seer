@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
