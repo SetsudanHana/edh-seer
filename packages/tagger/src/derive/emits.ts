@@ -3,7 +3,7 @@
  *  vocabulary, but without its `dies` emit no aristocrats edge ever forms. */
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
-import { counterKindOf, parseSubject } from "./subject.js";
+import { counterKindOf, parseSubject, COUNT_PHRASE } from "./subject.js";
 import { tokenTypeFor } from "./token-types.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
@@ -171,6 +171,8 @@ const CONTROLLER_DEFAULT: ReadonlySet<string> = new Set([
 /** Does the text name a player at all? 226 of the 6,729 `any` objects do, and they are the ones the
  *  default must not touch: "target player" (92), "that player" (62 — an antecedent, genuinely
  *  ambiguous), "each player" (48), "players" (14), "a player" (7), "any player" (3). */
+/** Where a COUNT begins — the same cue `derive/subject.ts` cuts on, exported from there so one
+ *  edit moves both readers. */
 const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a) player\b|\bplayers\b|\bopponents?\b/i;
 
 /** Verbs whose object names WHO the thing happens to, not WHAT it happens to. The same list
@@ -254,10 +256,19 @@ export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
   // claims above, and it broke the standing Pongify case, whose Ape token goes to the DESTROYED
   // permanent's controller and reads as yours from the object text alone. `deriveAbilities` always
   // supplies the text in production; a caller that does not gets today's behaviour unchanged.
+  //
+  // A PLAYER NAMED ONLY INSIDE A COUNT DOES NOT BLOCK THE DEFAULT (roadmap I2). "Create a Junk token
+  // FOR EACH OPPONENT you attacked" names an opponent, so this guard declined and the tokens stayed
+  // `any` — a PERMISSION, which satisfies an opponent-facing consumer as readily as your own token
+  // payoff. The opponents are the multiplier; CR 111.2 makes the tokens the controller's. Same cut
+  // `parseControl` makes one file over, so the two cannot disagree about where a sentence's head
+  // ends. Four cards: Call the Coppercoats, Rose, Hylda's Crown of Winter, Kaito.
+  const head = clauseText?.split(COUNT_PHRASE)[0];
+  const sentenceHead = head && head.trim().length > 0 ? head : clauseText;
   const control = !!clauseText
     && subject.control === "any"
     && CONTROLLER_DEFAULT.has(action.verb ?? "")
-    && !NAMES_A_PLAYER.test(clauseText)
+    && !NAMES_A_PLAYER.test(sentenceHead ?? "")
     ? "you" as const
     : subject.control;
   // ARRIVED TAPPED, the supply half of `SubjectFilter.entersTapped`. "Search your library for a land

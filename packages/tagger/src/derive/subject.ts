@@ -11,7 +11,25 @@ const TYPES = [
   "battle", "permanent", "spell", "token", "card",
 ] as const;
 
+/** Where a COUNT begins. Everything after it describes HOW MANY, not who acts.
+ *
+ *  "Create a Junk token FOR EACH OPPONENT you attacked" makes the tokens YOURS; the opponents are
+ *  the multiplier. `parseControl` matched the nearest player and handed the tokens to the opponent,
+ *  so the card supplied nothing to its own deck's token payoffs — the opposite of what it does.
+ *  Same family as C6, one layer along, and it is the second half of roadmap I2. */
+export const COUNT_PHRASE = /\b(?:for each\b|where x is\b|equal to the number of\b)/;
+
 function parseControl(t: string): Control {
+  // A PLAYER NAMED ONLY INSIDE A COUNT IS NOT THE ACTOR. Cut there first, so the branches below read
+  // the sentence's HEAD. A subject that really is opponent-facing keeps its cue, because that cue
+  // sits BEFORE the count: "each opponent loses 1 life for each creature you control" still reads
+  // `opp`, and "creatures your opponents control" has no count at all.
+  //
+  // WHAT IS LEFT WHEN THE HEAD NAMES NOBODY IS `any`, NOT `you` — this function does not get to
+  // guess. `CONTROLLER_DEFAULT` in `emits.ts` then settles the verbs the rules pin to the
+  // controller, which is where "you draw" and "you create" (CR 111.2) actually come from.
+  const head = t.split(COUNT_PHRASE)[0];
+  if (head.trim().length > 0) t = head;
   // Negation first: "you don't control" must not fall through to the "you control" branch below.
   if (/\byou (?:don'?t|do not|don’t) control\b/.test(t)) return "opp";
   // COMBAT NAMES THE OPPONENT WITHOUT SAYING "OPPONENT". Measured over the derived corpus: 12 clause

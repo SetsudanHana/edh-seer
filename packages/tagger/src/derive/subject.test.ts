@@ -592,3 +592,27 @@ test("a targeting restriction is recorded, and 'that targets' without 'only' is 
   expect(parseSubject("target spell that targets a creature").restricted).toBeUndefined();
   expect(parseSubject("an instant or sorcery spell").restricted).toBeUndefined();
 });
+
+// --- a player named only inside a COUNT is not the actor (roadmap I2) ---
+
+test("the tokens are yours when the opponents are the count", () => {
+  // Rose, Cutthroat Raider: "create a Junk token for each opponent you attacked". The opponents are
+  // the multiplier; the tokens are yours, and reading them as the opponent's made the card supply
+  // nothing to its own deck's token payoffs.
+  expect(parseSubject("a Junk token for each opponent you attacked").control).not.toBe("opp");
+});
+
+test("a count over what opponents control does not hand them the effect", () => {
+  // Hylda's Crown of Winter: "Draw a card for each tapped creature your opponents control."
+  expect(parseSubject("a card for each tapped creature your opponents control").control).not.toBe("opp");
+});
+
+test("an opponent-facing subject keeps its cue, because the cue sits BEFORE the count", () => {
+  expect(parseSubject("each opponent loses 1 life for each creature you control").control).toBe("opp");
+  expect(parseSubject("creatures your opponents control").control).toBe("opp");
+});
+
+test("a count phrase with nothing before it is left alone rather than emptied", () => {
+  // Cutting to an empty head would throw away the only text there is.
+  expect(parseSubject("for each opponent you attacked").control).toBe("opp");
+});
