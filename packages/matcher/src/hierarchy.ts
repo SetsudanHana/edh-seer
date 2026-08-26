@@ -84,3 +84,77 @@ export function loadHierarchy(): Hierarchy {
   const path = join(dirname(fileURLToPath(import.meta.url)), "..", "hierarchy.json");
   return JSON.parse(readFileSync(path, "utf8")) as Hierarchy;
 }
+
+/** What a THEME TAG's subject key can denote, as concrete card types — or `undefined` when the key
+ *  names something that is not a type at all.
+ *
+ *  A SUBTYPE RETURNS UNDEFINED ON PURPOSE, and it is the whole safety of this function. `wizard`
+ *  really is a subset of `creature`, and folding it that way is the FAMILY ranking that was built,
+ *  swept and refused three times — it generalised nine of twelve decks to "creatures entering" and
+ *  cost five decks their tribe. This asks a narrower question: whether two tags describe the same
+ *  class of CARD TYPES at different widths. A named card and a placeholder are out for the same
+ *  reason. */
+export function keyDenotes(key: string, family: string): ReadonlySet<string> | undefined {
+  // A LAND IS PLAYED, NOT CAST (CR 305.1), so inside the `cast:` family the universe is the castable
+  // types and nothing else. Without this the chain breaks at its middle link: `-creature` expands to
+  // ALL_CARD_TYPES minus creature, which CONTAINS land and is therefore not a subset of `spell` —
+  // and "noncreature spell", the phrase the tag came from, plainly is one. `themeSubjectKey` ranks a
+  // negation above an umbrella, so the "spell" half of that subject is dropped from the key and this
+  // is where it comes back.
+  const universe = family === "cast"
+    ? new Set(PSEUDO_TYPE_SETS.spell)
+    : new Set<string>(ALL_CARD_TYPES);
+  const narrow = (types: Iterable<string>): Set<string> => {
+    const out = new Set<string>();
+    for (const t of types) if (universe.has(t)) out.add(t);
+    return out;
+  };
+  if (key === "any") return universe;
+  if (key.startsWith("-")) {
+    const excluded = key.slice(1);
+    if (!(ALL_CARD_TYPES as readonly string[]).includes(excluded)) return undefined;
+    return narrow([...universe].filter((t) => t !== excluded));
+  }
+  if (PSEUDO_TYPE_SETS[key] !== undefined) return narrow(PSEUDO_TYPE_SETS[key]);
+  if ((ALL_CARD_TYPES as readonly string[]).includes(key)) {
+    const one = narrow([key]);
+    // A type outside its own family's universe denotes NOTHING there — `cast:land` would be an empty
+    // set, which is a subset of everything and would absorb the whole family. Refused rather than
+    // ranked.
+    return one.size > 0 ? one : undefined;
+  }
+  return undefined;
+}
+
+/** For each tag, the tags in `tags` it ABSORBS: the ones in its family saying something STRICTLY
+ *  NARROWER, so the WIDER claim carries the family's combined strength and names it.
+ *
+ *  THE DIRECTION WAS MEASURED, NOT CHOSEN. Letting the NARROW tag absorb its wider siblings — the
+ *  shape the `:any` rule already had — promotes the narrowest tag in every family, because a rarer
+ *  key carries a higher idf and then inherits a commoner one's mass on top. Over the 71 decks it
+ *  moved 20 headlines and **thirteen more decks stopped being nameable at all**: `birb-control`
+ *  went from "draw" (0.43) to **"instants" (0.05)**, `mono-blue-plainswalker-control` from
+ *  "planeswalkers entering" (0.28) to "instants" (0.02). That is the universal-bucket failure with
+ *  its sign flipped — an over-SPECIFIC bucket — and it is refused for the same reason.
+ *
+ *  Strict: a tag never absorbs itself, and two tags denoting the SAME set absorb neither — they are
+ *  the same claim spelled twice, and crediting both would double-count it. */
+export function subsumptionMap(tags: Iterable<string>): Map<string, string[]> {
+  const rows: { tag: string; family: string; denotes: ReadonlySet<string> }[] = [];
+  for (const tag of tags) {
+    const i = tag.indexOf(":");
+    if (i === -1) continue;
+    const family = tag.slice(0, i);
+    const denotes = keyDenotes(tag.slice(i + 1), family);
+    if (denotes !== undefined) rows.push({ tag, family, denotes });
+  }
+  const out = new Map<string, string[]>();
+  for (const a of rows) {
+    const narrower = rows.filter((b) =>
+      b.tag !== a.tag && b.family === a.family
+      && b.denotes.size < a.denotes.size
+      && [...b.denotes].every((t) => a.denotes.has(t)));
+    out.set(a.tag, narrower.map((b) => b.tag));
+  }
+  return out;
+}

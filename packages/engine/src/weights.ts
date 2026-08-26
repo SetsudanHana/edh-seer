@@ -203,6 +203,18 @@ export function computeCohesion(
    *  becomes unreachable. Absent (the flat engine, which holds no per-card tag sets), the old sum
    *  is kept so that caller's numbers do not silently change. */
   cardThemeTagSets?: readonly ReadonlySet<Tag>[],
+  /** For each tag, the tags in its family it SUBSUMES — ones saying something strictly narrower.
+   *  Cohesion is a SHARE, so a card whose theme tag sits INSIDE the primary's claim is on theme:
+   *  `cast:instant` is inside `cast:-creature`, and counting them apart is what left three decks
+   *  the owner named "spellslinger" with no theme at all. Supplied by the caller because the subset
+   *  relation lives in `hierarchy.ts`, one layer up.
+   *
+   *  THE RANKING IS DELIBERATELY NOT GIVEN THIS, and the reason is measured: absorbing the relation
+   *  into `rankThemes` eats the family from whichever end it is applied — the narrow end promoted
+   *  "instants" onto nine decks, the wide end put "enters" on a dozen and cost `marchesa` its 0.98
+   *  legends headline. Cohesion is a SHARE and the axis is a RANKING, which is the same split
+   *  recorded when folding the axis was tried in 2026-08-18. */
+  subsumes?: ReadonlyMap<Tag, readonly Tag[]>,
 ): Cohesion | null {
   // `tribe-nontoken:X` is a matching-precision shadow of `tribe:X`, not a distinct
   // theme — drop it from theme naming so cohesion reports "Wizards", not the
@@ -239,7 +251,8 @@ export function computeCohesion(
   // ONE PREDICATE, NO BRANCH. A general primary is its own fold key, so `fold(tag) === primary`
   // still admits every family member and its number is byte-identical. A specific primary is not
   // its own fold key, so nothing folds INTO a leaf and only the tag itself counts.
-  const onTheme = (tag: Tag): boolean => tag === primary || fold(tag) === primary;
+  const covered = new Set(subsumes?.get(primary) ?? []);
+  const onTheme = (tag: Tag): boolean => tag === primary || fold(tag) === primary || covered.has(tag);
   const inFamily = (tag: Tag): boolean => fold(tag) === fold(primary);
   const share = (member: (tag: Tag) => boolean): number => {
     if (cardThemeTagSets) {

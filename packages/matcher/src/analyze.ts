@@ -18,7 +18,7 @@ import {
 } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
-import { loadHierarchy } from "./hierarchy.js";
+import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
 import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
@@ -668,7 +668,7 @@ export function analyzeDeckStructured(
   // 5 of the 71 decks into the `Math.min(1, ...)` clamp. See computeCohesion.
   const nonlandTagSets = nonlands.map((dc) => (dc.tags ? cardThemeTags(dc.tags) : new Set<string>()));
   const cohesion = computeCohesion(promotedThemes, deckFreq, nonlandCount, makeFold(hierarchy),
-    nonlandTagSets);
+    nonlandTagSets, subsumptionMap(deckFreq.keys()));
 
   // "N CARDS DO THIS DECK'S THING" (roadmap K2). THE SAME CARDS COHESION COUNTS, by name — the
   // numerator it already computes and never names. Recomputing the predicate here rather than
