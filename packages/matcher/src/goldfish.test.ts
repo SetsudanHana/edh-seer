@@ -779,3 +779,58 @@ test("O2: a phase trigger that adds a FIXED amount is a source; the rest are ref
   expect(manaOutput("Counter target spell. At the beginning of your next main phase, add {C}{C}.").amount).toBe(1);
   expect(manaOutput("At the beginning of your first main phase of the game, add {G}{G}.").amount).toBe(1);
 });
+
+// O2, THE EVENT-TRIGGER HALF. Classified corpus-wide by whether this simulator PRODUCES the event,
+// and only one bucket survives: a LAND ENTERING, which is rule 2 and happens every turn a land drop
+// does. Combat, an opponent, a creature dying and a spell cast are all events the goldfish does not
+// have -- so those cards are refused rather than priced off a stream that is not there.
+test("O2: landfall mana pays per land entering, and only that bucket is modellable", () => {
+  // Lotus Cobra, verbatim. A creature cast in your main phase misses that turn's land drop, which
+  // already happened under rule 2 -- so it pays from the next turn, like every other engine here.
+  const cobra = (i: number) => card(`Lotus Cobra ${i}`, "Creature — Snake", 2,
+    "Landfall — Whenever a land you control enters, add one mana of any color.", ["B", "G", "R", "U", "W"]);
+  const deck = [...Array.from({ length: 12 }, (_, i) => cobra(i)), ...basics(37), ...spells(50, 3)];
+  const r = simulate(deck, { trials: 4_000, turns: 8, seed: 21 });
+
+  // IT IS A REAL SOURCE: the same deck with the Cobras replaced by blanks reads materially lower.
+  const blank = [...Array.from({ length: 12 }, (_, i) => card(`Blank ${i}`, "Creature — Snake", 2, "")),
+    ...basics(37), ...spells(50, 3)];
+  expect(pAtLeastMana(r, 6, 6)).toBeGreaterThan(pAtLeastMana(simulate(blank, { trials: 4_000, turns: 8, seed: 21 }), 6, 6) + 0.05);
+
+  // AND IT IS WORTH LESS THAN A FLAT DORK, which is the correction rather than an upgrade: the mana
+  // arrives only when a land ENTERS, and a deck misses land drops. Priced as an ordinary one-mana
+  // dork -- what it was before -- the same board reads HIGHER than the truth.
+  const asDork = [...Array.from({ length: 12 }, (_, i) => card(`Dork ${i}`, "Creature — Snake", 2, "{T}: Add {G}.", ["G"])),
+    ...basics(37), ...spells(50, 3)];
+  const dorkArm = pAtLeastMana(simulate(asDork, { trials: 4_000, turns: 8, seed: 21 }), 9, 8);
+  expect(pAtLeastMana(r, 9, 8)).toBeLessThan(dorkArm);
+
+  // PER EVENT, NOT PER TURN: a land-fetch SPELL puts a second land onto the battlefield in the same
+  // turn, and the Cobra is paid for both.
+  const withFetch = [...Array.from({ length: 12 }, (_, i) => cobra(i)),
+    ...Array.from({ length: 10 }, (_, i) => card(`Lore ${i}`, "Sorcery", 2, "Search your library for a Forest card, put it onto the battlefield, then shuffle.")),
+    ...basics(30), ...spells(47, 3)];
+  const fetched = simulate(withFetch, { trials: 4_000, turns: 8, seed: 21 });
+  expect(pAtLeastMana(fetched, 6, 5)).toBeGreaterThan(pAtLeastMana(r, 6, 5));
+
+  // A SPELL CAST, COMBAT, AN OPPONENT AND A CREATURE DYING ARE NOT EVENTS THIS MODEL HAS. Birgi is
+  // the owner's own card and is deliberately NOT priced off the accelerants rule 3 happens to cast:
+  // that stream is a fraction of a real deck's spells and would feed back into the casting loop.
+  const birgi = card("Birgi, God of Storytelling", "Legendary Creature — God", 3,
+    "Whenever you cast a spell, add {R}. Until end of turn, you don't lose this mana as steps and phases end.", ["R"]);
+  expect(manaOutput(birgi.card.oracleText).amount).toBe(1);
+
+  // NO PRINTED WITNESS, and the comment says so: all three landfall-mana cards in the corpus are
+  // unrestricted, so this pins the guard against the SHAPE. It is kept because every other mana
+  // reader in this module checks the restriction, and landfall being the one that does not is how a
+  // rule quietly diverges from its neighbours.
+  const restricted = card("Not A Real Card", "Creature — Snake", 2,
+    "Whenever a land you control enters, add {G}{G}. Spend this mana only to cast creature spells.", ["G"]);
+  expect(classifyAccelerant(restricted)?.kind).toBe("dork");
+  const board = [...Array.from({ length: 12 }, () => restricted), ...basics(37), ...spells(50, 3)];
+  const asRestricted = simulate(board, { trials: 4_000, turns: 8, seed: 21 });
+  // REFUSED, so it reads EXACTLY like the ordinary one-mana dork arm above -- same composition, same
+  // seed, same answer. Counted as landfall it would add TWO per land and diverge, which is the cell
+  // that separates the two readings.
+  expect(pAtLeastMana(asRestricted, 9, 8)).toBe(dorkArm);
+});

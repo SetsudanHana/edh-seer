@@ -184,6 +184,9 @@ export function classifyAccelerant(dc: DeckCard): Accelerant | null {
   // first main phase, so that turn's trigger has already happened. Dork timing, for the same reason
   // a land aura has it (roadmap O2).
   if (PHASE_ADD.test(text) && !PHASE_ONE_SHOT.test(text)) return { name, manaValue, kind: "dork" };
+  // LANDFALL MANA MISSES THE TURN IT LANDS: rule 2 plays the land BEFORE rule 3 casts anything, so
+  // the land drop that turn has already happened. Dork timing, same as the others.
+  if (landfallMana(text) > 0) return { name, manaValue, kind: "dork" };
   return { name, manaValue, kind: /\bcreature\b/.test(line) ? "dork" : "rock" };
 }
 
@@ -233,6 +236,14 @@ const ADD_ADDITIONAL = /adds? an additional (?:((?:\{[^}]+\}\s*)+)|(one|two|thre
  *  one-shot is not a source at any confidence -- `isManaSource`'s own ruling. */
 const PHASE_ADD = /at the beginning of[^.]{0,80}?\badds? ((?:\{[^}]+\}\s*)+)/i;
 const PHASE_ONE_SHOT = /at the beginning of your next|first main phase of the game/i;
+/** LANDFALL MANA, and it is the ONLY event-triggered mana this simulator can price (roadmap O2).
+ *  Classified corpus-wide by whether the model PRODUCES the event: a land entering is rule 2 and
+ *  happens every turn a land drop does, plus every fetch. The other buckets are refused because the
+ *  event does not exist here -- COMBAT (the Azulas, Fire Nation Occupation), an OPPONENT (Waste Not),
+ *  a BOARD EVENT (Carnival of Souls, Rose), and YOU CAST A SPELL (Birgi), where rule 3 casts only
+ *  ACCELERANTS, so pricing off that stream would read a fraction of a real deck's spells AND feed
+ *  back into the casting loop it came from. */
+const LANDFALL_ADD = /whenever a land (?:you control |)enters(?: the battlefield under your control|)[^.]{0,30}?adds? ((?:\{[^}]+\}\s*)+|one mana|two mana)/i;
 const PHASE_RATE = /\bfor each\b|\bwhere x is\b|equal to/i;
 /** UNREACHABLE ON TODAY'S CORPUS AND KEPT ANYWAY, recorded rather than quietly shipped as decoration:
  *  `PHASE_ADD` demands a symbol run, and NO corpus card prints a multi-symbol rate ("add {G}{G} for
@@ -304,6 +315,14 @@ export function manaOutput(oracleText: string | undefined): ManaOutput {
     if (bestOf(here) > bestOf(out)) out = here;
   }
   return out;
+}
+
+/** Mana a card adds per LAND ENTERING, or 0. Refused when the mana is restricted, for the same
+ *  reason every other restricted source is: this model cannot check what mana is spent on. */
+function landfallMana(text: string): number {
+  const m = LANDFALL_ADD.exec(text);
+  if (!m || RESTRICTED.test(text)) return 0;
+  return m[1].startsWith("{") ? (m[1].match(SYMBOLS) ?? []).length : (m[1].startsWith("two") ? 2 : 1);
 }
 
 /** What a source taps for right now. */
@@ -509,6 +528,8 @@ interface DeckSlot {
    *  AURA is deliberately absent -- it enchants ONE land, so its bonus is its own amount and it is
    *  priced as an ordinary dork (roadmap O2). */
   tapBonus?: "colorless" | "creature";
+  /** Mana per LAND ENTERING, which is one land drop a turn plus anything a fetch puts down. */
+  landfall?: number;
   land?: LandCondition;
   accelerant?: Accelerant | null;
 }
@@ -598,6 +619,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       fetchTapped: fetches && FETCHES_TAPPED.test(text),
       ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
       ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_CREATURE.test(text) ? { tapBonus: "creature" as const } : {}),
+      ...(!isLand && landfallMana(text) > 0 ? { landfall: landfallMana(text) } : {}),
       ...(fetches && FETCH_UNTAPS.test(text) ? { fetchUntapsAt: 3 } : {}),
       cost: isLand ? null : parseCost(dc.card.manaCost),
       costKey: dc.card.manaCost ?? "",
@@ -651,6 +673,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     // A PER-SOURCE BONUS, kept beside the sources rather than among them: it makes OTHER permanents
     // produce more, so it has no mana of its own to add (roadmap O2).
     const bonuses: { turn: number; need: "colorless" | "creature"; colors: number }[] = [];
+    // Landfall mana is per EVENT, not per turn: it pays for each land that entered THIS turn, which
+    // is the land drop and anything a fetch put down beside it.
+    const landfalls: { turn: number; mana: number; colors: number }[] = [];
 
     for (let turn = 1; turn <= turns; turn++) {
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
@@ -718,6 +743,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         // permanent TAPPED for {C}, so a source making two mana off one tap is still one trigger.
         // Counted after the sources exist and never against another bonus, which is what keeps two
         // Monuments from reading each other.
+        // PER LAND ENTERING THIS TURN -- the drop plus whatever a fetch found.
+        const entered = lands.filter((l) => l.enteredTurn === turn).length;
+        for (const f of landfalls) if (f.turn <= turn && entered > 0) out.push({ mana: f.mana * entered, colors: f.colors });
         const base = out.length;
         for (const b of bonuses) {
           if (b.turn > turn) continue;
@@ -756,7 +784,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         const mana = produced(cast.output, lands);
         // A PER-SOURCE BONUS BRINGS NO MANA OF ITS OWN, so it goes to `bonuses` INSTEAD of the source
         // lists -- adding it to both would pay it once for existing and once per source.
-        if (cast.tapBonus !== undefined) {
+        if (cast.landfall !== undefined) {
+          landfalls.push({ turn: turn + 1, mana: cast.landfall, colors: cast.colors });
+        }
+        else if (cast.tapBonus !== undefined) {
           bonuses.push({ turn: a.kind === "rock" ? turn : turn + 1, need: cast.tapBonus, colors: cast.colors });
         }
         else if (a.kind === "rock") { rocks.push({ turn, mana, colors: cast.colors }); pool += mana; }
