@@ -142,3 +142,18 @@ test("a static credits no REMOVAL verb, no opponent-facing subject, and no unmap
   expect(castTag.payoffs).toEqual([]);
   expect(entersAny.payoffs).toEqual([]);
 });
+
+test("a legends anthem is a payoff of legendary permanents entering, not of creatures entering", () => {
+  // Jodah, the Unifier, verbatim: "Legendary creatures you control get +X/+X, where X is the number
+  // of legendary creatures you control." The subject has carried `legendary: true` since 09ce98d;
+  // the census keyed it `enters:creature`, which credits a legends payoff against every creature.
+  const jodah = card("Jodah, the Unifier", [{
+    kind: "static",
+    effect: { kind: "pump", subject: { control: "you", token: null, legendary: true, type: "creature", scope: "all" } },
+  }] as never);
+  const tags = themeMembership([jodah], [], ["enters:legendary", "enters:creature"]);
+  const legendary = tags.find((t) => t.tag === "enters:legendary");
+  const creature = tags.find((t) => t.tag === "enters:creature");
+  expect(legendary?.payoffs).toContain("Jodah, the Unifier");
+  expect(creature?.payoffs ?? []).not.toContain("Jodah, the Unifier");
+});

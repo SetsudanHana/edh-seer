@@ -67,7 +67,16 @@ function staticPayoffTags(tags: CardTags): Set<string> {
     if (!kind || !subject) continue;
     const verb = STATIC_PAYOFF_VERB[kind];
     if (!verb || subject.control === "opp") continue;
-    const key = themeSubjectKey(subject);
+    // A SUPERTYPE OUTRANKS THE CARD TYPE, AND ONLY HERE. Jodah, the Unifier's anthem is gated on
+    // `legendary: true` and keyed `enters:creature`, so the census credited a legends payoff as a
+    // payoff of every creature entering -- a wider claim than the card makes. `themeSubjectKey`
+    // itself cannot learn this: it keys REASON tags, and the frozen panel's verdicts are keyed on
+    // `producer|consumer|tag`, so composing another fact into it costs judging debt while changing
+    // no theme (measured, 22 rows, 2026-08-14). `historic` rides along -- CR 700.6 makes it the
+    // same shape, and it is one derived card.
+    const key = subject.legendary === true
+      ? "legendary"
+      : subject.historic === true ? "historic" : themeSubjectKey(subject);
     if (key === "any") continue;
     out.add(`${verb}:${key}`);
   }
