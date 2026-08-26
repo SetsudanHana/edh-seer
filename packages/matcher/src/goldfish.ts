@@ -100,6 +100,15 @@ export interface Accelerant {
 const LAND_FETCH = /search your library for (?:a |an |up to \w+ )?(?:basic )?(?:land|forest|island|swamp|mountain|plains)/i;
 const ONTO_BATTLEFIELD = /onto the battlefield/i;
 const SUSPEND = /\bsuspend \d/i;
+/** A TAP-REPLACEMENT: mana that arrives when some OTHER permanent is tapped (roadmap O2). Two shapes,
+ *  and they are not the same size -- a land AURA is bounded at what its one enchanted land adds,
+ *  while Forsaken Monument pays for EVERY permanent tapped for {C} and is worth as much as the board
+ *  is wide. High Tide prints the same shape and is refused elsewhere for being an Instant. */
+const TAP_REPLACEMENT = /is tapped for mana|tap a (?:permanent|creature|land)\b[^.]*\bfor\b/i;
+/** Which sources a per-source bonus reads. `colorless` is checkable only because `{C}` became a real
+ *  mask bit (N11); before that a colourless source and a colourless COST were the same empty mask. */
+const BONUS_COLORLESS = /tap a permanent for \{c\}|tap a land for \{c\}/i;
+const BONUS_CREATURE = /tap a creature for mana/i;
 /** A FETCH IS NOT FREE JUST BECAUSE THIS MODEL PERFORMS IT (roadmap N12). Myriad Landscape's two
  *  basics cost `{2}`, Urza's Cave `{3}`, and **Wayfarer's Bauble is cast for {1} and then cracked for
  *  {2} a turn later** — none of which the model pays, so each was a free land the moment it appeared.
@@ -166,6 +175,11 @@ export function classifyAccelerant(dc: DeckCard): Accelerant | null {
   // The same shape `castability.ts` REFUSES rather than prices (roadmap N9).
   if (SUSPEND.test(text) && (dc.card.manaValue ?? 0) === 0) return null;
   if (!isManaSource(dc) || (dc.card.producedMana ?? []).length === 0 || !makesItsOwnMana(text)) return null;
+  // A LAND AURA WAITS A TURN, because the land it enchants is what pays for it: you tap the Forest
+  // for {G}, cast Wild Growth on it, and the Forest is tapped. That is a DORK's timing, and pricing
+  // it as a rock gave the deck a mana it does not have on the turn it matters most (roadmap O2).
+  const tapReplacement = TAP_REPLACEMENT.test(text);
+  if (tapReplacement && /\baura\b/.test(line)) return { name, manaValue, kind: "dork" };
   return { name, manaValue, kind: /\bcreature\b/.test(line) ? "dork" : "rock" };
 }
 
@@ -202,6 +216,10 @@ const ADD_RUN = /add ((?:\{[^}]+\}\s*)+)/i;
  *  deliberately absent -- it is a RATE and not an amount, the ruling I4 already made one subsystem
  *  over -- so a card that adds X keeps the incumbent 1 rather than a guess. */
 const ADD_WORDS = /add (one|two|three|four|five|six|seven|eight|nine|ten) mana\b/i;
+/** A TAP-REPLACEMENT: the mana arrives when some OTHER permanent is tapped, so there is no `{T}:` to
+ *  read and the amount sits in a sentence the tap reader never looks at (roadmap O2). Overgrowth adds
+ *  `{G}{G}`, Wild Growth one, Fertile Ground "an additional one mana of any color". */
+const ADD_ADDITIONAL = /adds? an additional (?:((?:\{[^}]+\}\s*)+)|(one|two|three) mana)/i;
 const SYMBOLS = /\{[^}]+\}/g;
 /** Mana this model cannot spend correctly. It is COLOUR-BLIND (C10), so a restriction it cannot
  *  check must not be counted at face value — Jegantha taps for five that pay no generic cost. */
@@ -230,6 +248,11 @@ export function manaOutput(oracleText: string | undefined): ManaOutput {
   const text = oracleText ?? "";
   if (BOUNCES.test(text)) return { amount: 1 };
   let out: ManaOutput = { amount: 1 };
+  // A TAP-REPLACEMENT has no `{T}:` line to find, so it is read before the loop and never inside it.
+  const extra = ADD_ADDITIONAL.exec(text);
+  if (extra && !RESTRICTED.test(text)) {
+    out = { amount: extra[1] ? (extra[1].match(SYMBOLS) ?? []).length : WORD_NUMBER[extra[2].toLowerCase()] };
+  }
   for (const raw of text.split("\n")) {
     const line = raw.trim();
     // The cost must be EXACTLY {T}. A sacrifice, a counter removal or a loyalty cost is not a tap
@@ -453,6 +476,11 @@ interface DeckSlot {
   fetchTapped?: boolean;
   /** ...unless you already control this many lands: Fabled Passage's own untap clause. */
   fetchUntapsAt?: number;
+  /** A tap-replacement that pays PER QUALIFYING SOURCE rather than once: Forsaken Monument reads
+   *  every permanent tapped for {C}, Leyline of Abundance every creature tapped for mana. A land
+   *  AURA is deliberately absent -- it enchants ONE land, so its bonus is its own amount and it is
+   *  priced as an ordinary dork (roadmap O2). */
+  tapBonus?: "colorless" | "creature";
   land?: LandCondition;
   accelerant?: Accelerant | null;
 }
@@ -540,6 +568,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       colors: fetches ? fetchMask(text, printed) : colorMask(dc.card.producedMana),
       fetches,
       fetchTapped: fetches && FETCHES_TAPPED.test(text),
+      ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
+      ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_CREATURE.test(text) ? { tapBonus: "creature" as const } : {}),
       ...(fetches && FETCH_UNTAPS.test(text) ? { fetchUntapsAt: 3 } : {}),
       cost: isLand ? null : parseCost(dc.card.manaCost),
       costKey: dc.card.manaCost ?? "",
@@ -590,6 +620,9 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     const lands: OnBoardLand[] = [];
     const rocks: { turn: number; mana: number; colors: number }[] = [];   // the turn each landed, what it taps for, and in which colours
     const dorks: { turn: number; mana: number; colors: number }[] = [];
+    // A PER-SOURCE BONUS, kept beside the sources rather than among them: it makes OTHER permanents
+    // produce more, so it has no mana of its own to add (roadmap O2).
+    const bonuses: { turn: number; need: "colorless" | "creature"; colors: number }[] = [];
 
     for (let turn = 1; turn <= turns; turn++) {
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
@@ -642,13 +675,30 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // (CR 302.6); a dork waits one.
       const untappedSources = (): { mana: number; colors: number }[] => {
         const out: { mana: number; colors: number }[] = [];
+        // Tracked so a per-source bonus can count what it actually reads: a creature bonus pays for
+        // dorks and not for lands, a colourless one for anything that taps for {C}.
+        const isCreature: boolean[] = [];
+        const push = (mana: number, colors: number, creature: boolean): void => { out.push({ mana, colors }); isCreature.push(creature); };
         for (const l of lands) {
           if (l.enteredTapped && l.enteredTurn === turn) continue;
           const m = produced(l.output, lands);
-          if (m > 0) out.push({ mana: m, colors: l.colors });
+          if (m > 0) push(m, l.colors, false);
         }
-        for (const r of rocks) if (r.turn <= turn) out.push({ mana: r.mana, colors: r.colors });
-        for (const d of dorks) if (d.turn < turn) out.push({ mana: d.mana, colors: d.colors });
+        for (const r of rocks) if (r.turn <= turn) push(r.mana, r.colors, false);
+        for (const d of dorks) if (d.turn < turn) push(d.mana, d.colors, true);
+        // A TAP-REPLACEMENT PAYS PER SOURCE, NOT PER MANA: Forsaken Monument adds one {C} for every
+        // permanent TAPPED for {C}, so a source making two mana off one tap is still one trigger.
+        // Counted after the sources exist and never against another bonus, which is what keeps two
+        // Monuments from reading each other.
+        const base = out.length;
+        for (const b of bonuses) {
+          if (b.turn > turn) continue;
+          let n = 0;
+          for (let i = 0; i < base; i++) {
+            if (b.need === "creature" ? isCreature[i] : (out[i].colors & COLORLESS) !== 0) n++;
+          }
+          if (n > 0) out.push({ mana: n, colors: b.colors });
+        }
         return out;
       };
       const production = (): number => untappedSources().reduce((n: number, x) => n + x.mana, 0);
@@ -676,7 +726,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         pool -= cast.manaValue;
         const a = cast.accelerant!;
         const mana = produced(cast.output, lands);
-        if (a.kind === "rock") { rocks.push({ turn, mana, colors: cast.colors }); pool += mana; }
+        // A PER-SOURCE BONUS BRINGS NO MANA OF ITS OWN, so it goes to `bonuses` INSTEAD of the source
+        // lists -- adding it to both would pay it once for existing and once per source.
+        if (cast.tapBonus !== undefined) {
+          bonuses.push({ turn: a.kind === "rock" ? turn : turn + 1, need: cast.tapBonus, colors: cast.colors });
+        }
+        else if (a.kind === "rock") { rocks.push({ turn, mana, colors: cast.colors }); pool += mana; }
         else if (a.kind === "dork") dorks.push({ turn, mana, colors: cast.colors });
         else {
           // A FETCHED LAND DOES NOT CONSUME THE LAND DROP — it is put onto the battlefield, not

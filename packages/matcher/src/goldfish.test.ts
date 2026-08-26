@@ -700,3 +700,43 @@ test("N14: a Phyrexian pip demands its colour, because this model cannot pay lif
   // The pip is still ONE mana of the total, exactly as the rules count it.
   expect(parseCost("{G/P}")).toEqual({ total: 1, pips: [colorMask(["G"])] });
 });
+
+// O2. A TAP-REPLACEMENT MAKES AN EXISTING SOURCE PRODUCE MORE, and it was being priced as a flat
+// one-mana rock -- so Forsaken Monument, which adds {C} for EVERY permanent tapped for {C}, was worth
+// exactly one mana in a deck with twenty-seven colourless lands. Three defects, one family.
+test("O2: a land aura waits a turn, because the land pays for it", () => {
+  // Wild Growth, verbatim. You enchant a land you already control, tapping it to pay -- so it nets
+  // nothing the turn it lands and pays from the next, which is a DORK's timing and not a rock's.
+  const growth = card("Wild Growth", "Enchantment — Aura", 1,
+    "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}.", ["G"]);
+  expect(classifyAccelerant(growth)?.kind).toBe("dork");
+
+  // Overgrowth adds TWO, and the amount is in the sentence the tap reader never looked at.
+  const over = card("Overgrowth", "Enchantment — Aura", 3,
+    "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}{G}.", ["G"]);
+  expect(manaOutput(over.card.oracleText).amount).toBe(2);
+  expect(manaOutput(growth.card.oracleText).amount).toBe(1);
+  // "an additional one mana of any color" is one, in words.
+  expect(manaOutput("Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.").amount).toBe(1);
+
+  // AN ORDINARY ROCK IS UNTOUCHED: it brings its own mana and pays the turn it lands (CR 302.6).
+  expect(classifyAccelerant(card("Sol Ring", "Artifact", 1, "{T}: Add {C}{C}.", ["C"]))?.kind).toBe("rock");
+});
+
+test("O2: a per-source bonus scales with the board it reads", () => {
+  const monument = (i: number) => card(`Monument ${i}`, "Legendary Artifact", 5,
+    "Whenever you tap a permanent for {C}, add an additional {C}.", ["C"]);
+  const wastes = (i: number) => card(`Wastes ${i}`, "Basic Land — Wastes", 0, "", ["C"]);
+  const deck = [...Array.from({ length: 12 }, (_, i) => monument(i)), ...Array.from({ length: 37 }, (_, i) => wastes(i)), ...spells(50, 3)];
+  const r = simulate(deck, { trials: 4_000, turns: 8, seed: 12 });
+
+  // With the Monument out, every colourless land taps for two. Priced as a flat one-mana rock the
+  // deck could not reach ten mana by turn eight; reading the bonus it routinely does.
+  expect(pAtLeastMana(r, 10, 8)).toBeGreaterThan(0.3);
+
+  // AND IT IS NOT FREE MONEY: the bonus counts SOURCES, not mana, so a source making two mana off one
+  // tap is still one trigger. A deck with no colourless source gets nothing from it.
+  const green = [...Array.from({ length: 12 }, (_, i) => monument(i)), ...basics(37), ...spells(50, 3)];
+  const none = simulate(green, { trials: 4_000, turns: 8, seed: 12 });
+  expect(pAtLeastMana(none, 10, 8)).toBe(0);
+});
