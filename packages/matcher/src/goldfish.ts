@@ -180,6 +180,10 @@ export function classifyAccelerant(dc: DeckCard): Accelerant | null {
   // it as a rock gave the deck a mana it does not have on the turn it matters most (roadmap O2).
   const tapReplacement = TAP_REPLACEMENT.test(text);
   if (tapReplacement && /\baura\b/.test(line)) return { name, manaValue, kind: "dork" };
+  // A PHASE TRIGGER PAYS FROM THE NEXT TURN, whatever its type line says: you cast it DURING your
+  // first main phase, so that turn's trigger has already happened. Dork timing, for the same reason
+  // a land aura has it (roadmap O2).
+  if (PHASE_ADD.test(text) && !PHASE_ONE_SHOT.test(text)) return { name, manaValue, kind: "dork" };
   return { name, manaValue, kind: /\bcreature\b/.test(line) ? "dork" : "rock" };
 }
 
@@ -220,6 +224,20 @@ const ADD_WORDS = /add (one|two|three|four|five|six|seven|eight|nine|ten) mana\b
  *  read and the amount sits in a sentence the tap reader never looks at (roadmap O2). Overgrowth adds
  *  `{G}{G}`, Wild Growth one, Fertile Ground "an additional one mana of any color". */
 const ADD_ADDITIONAL = /adds? an additional (?:((?:\{[^}]+\}\s*)+)|(one|two|three) mana)/i;
+/** A PHASE TRIGGER: mana that arrives every turn without tapping anything, so again there is no
+ *  `{T}:` to read (roadmap O2). **The GUARDS are most of this rule.** Of 32 corpus cards printing the
+ *  shape, nearly all add a RATE -- "for each Raccoon you control", "for each charge counter" -- which
+ *  the "a rate is not an amount" ruling refuses (I4, one subsystem over); six RESTRICT the mana, which
+ *  this model cannot check; and two are ONE-SHOTS wearing a trigger, where "your NEXT main phase"
+ *  (Mana Drain) and "first main phase OF THE GAME" (Chancellor of the Tangle) each fire once. A
+ *  one-shot is not a source at any confidence -- `isManaSource`'s own ruling. */
+const PHASE_ADD = /at the beginning of[^.]{0,80}?\badds? ((?:\{[^}]+\}\s*)+)/i;
+const PHASE_ONE_SHOT = /at the beginning of your next|first main phase of the game/i;
+const PHASE_RATE = /\bfor each\b|\bwhere x is\b|equal to/i;
+/** UNREACHABLE ON TODAY'S CORPUS AND KEPT ANYWAY, recorded rather than quietly shipped as decoration:
+ *  `PHASE_ADD` demands a symbol run, and NO corpus card prints a multi-symbol rate ("add {G}{G} for
+ *  each Elf"). Every rate in the family adds ONE symbol per unit, so refusing it changes no number
+ *  today -- the guard exists because the shape is printable and the failure would be an over-claim. */
 const SYMBOLS = /\{[^}]+\}/g;
 /** Mana this model cannot spend correctly. It is COLOUR-BLIND (C10), so a restriction it cannot
  *  check must not be counted at face value — Jegantha taps for five that pay no generic cost. */
@@ -252,6 +270,16 @@ export function manaOutput(oracleText: string | undefined): ManaOutput {
   const extra = ADD_ADDITIONAL.exec(text);
   if (extra && !RESTRICTED.test(text)) {
     out = { amount: extra[1] ? (extra[1].match(SYMBOLS) ?? []).length : WORD_NUMBER[extra[2].toLowerCase()] };
+  }
+  // A PHASE TRIGGER, on the same footing and behind the same three guards.
+  // THE RATE TEST READS THE WHOLE SENTENCE, not the match: `PHASE_ADD` stops at the symbol run, so
+  // Muerra's "for each Raccoon you control" sits AFTER it and a guard tested on `phase[0]` cannot see
+  // the words it exists for. Caught by a corpus probe, which is the only thing that would have.
+  const phase = PHASE_ADD.exec(text);
+  const sentence = phase ? (text.slice(phase.index).split(/(?<=\.)\s/)[0] ?? "") : "";
+  if (phase && !RESTRICTED.test(text) && !PHASE_ONE_SHOT.test(text) && !PHASE_RATE.test(sentence)) {
+    const n = (phase[1].match(SYMBOLS) ?? []).length;
+    if (n > out.amount) out = { amount: n };
   }
   for (const raw of text.split("\n")) {
     const line = raw.trim();

@@ -740,3 +740,42 @@ test("O2: a per-source bonus scales with the board it reads", () => {
   const none = simulate(green, { trials: 4_000, turns: 8, seed: 12 });
   expect(pAtLeastMana(none, 10, 8)).toBe(0);
 });
+
+// O2, THE PHASE-TRIGGER HALF. "At the beginning of your first main phase, add {G}{G}" is a recurring
+// source that never taps, so `manaOutput`'s `{T}:` reader sees nothing. The rule is small because the
+// GUARDS take almost the whole family: of 32 corpus cards printing the shape, most add a RATE, six
+// restrict the mana, and two are one-shots wearing a trigger.
+test("O2: a phase trigger that adds a FIXED amount is a source; the rest are refused", () => {
+  // Hulking Raptor, verbatim. It is a creature and pays from the turn after it lands, like any dork:
+  // you cast it DURING your main phase, so that turn's trigger has already happened.
+  const raptor = card("Hulking Raptor", "Creature — Dinosaur", 4,
+    "Ward {2}\nAt the beginning of your first main phase, add {G}{G}.", ["G"]);
+  expect(classifyAccelerant(raptor)?.kind).toBe("dork");
+  expect(manaOutput(raptor.card.oracleText).amount).toBe(2);
+
+  // A NON-CREATURE PHASE TRIGGER IS THE SHAPE THE TIMING RULE EXISTS FOR -- Eladamri's Vineyard is an
+  // Enchantment, so the generic creature branch would call it a rock and pay it a turn early.
+  // 9 of the corpus family are non-creatures.
+  const vineyard = card("Eladamri's Vineyard", "Enchantment", 2,
+    "At the beginning of each upkeep, that player adds {G}{G}.", ["G"]);
+  expect(classifyAccelerant(vineyard)?.kind).toBe("dork");
+
+  // A RATE IS NOT AN AMOUNT -- the I4 ruling one subsystem over. Muerra adds one per Raccoon and
+  // Black Market one per charge counter; neither is a number this model knows.
+  expect(manaOutput("At the beginning of your first main phase, add {R} or {G} for each Raccoon you control.").amount).toBe(1);
+  expect(manaOutput("At the beginning of your first main phase, add {B} for each charge counter on this enchantment.").amount).toBe(1);
+  // NOT A REAL CARD, and the comment says so: no corpus card prints a MULTI-SYMBOL rate, so this is
+  // the one assertion here with no printed witness. It pins the guard against the shape rather than
+  // against a card, because the rate words sit AFTER the symbol run and were invisible to the first
+  // version of the guard.
+  expect(manaOutput("At the beginning of your first main phase, add {G}{G} for each Elf you control.").amount).toBe(1);
+
+  // RESTRICTED mana stays refused by the standing rule: Thran Turbine's two colourless cannot cast
+  // spells at all, and this model cannot check what mana is spent on.
+  expect(manaOutput("At the beginning of your upkeep, you may add {C}{C}. This mana can't be spent to cast spells.").amount).toBe(1);
+
+  // A ONE-SHOT IS NOT A SOURCE, at any confidence. "Your NEXT main phase" fires once (Mana Drain),
+  // and "first main phase OF THE GAME" fires once (Chancellor of the Tangle).
+  expect(manaOutput("Counter target spell. At the beginning of your next main phase, add {C}{C}.").amount).toBe(1);
+  expect(manaOutput("At the beginning of your first main phase of the game, add {G}{G}.").amount).toBe(1);
+});
