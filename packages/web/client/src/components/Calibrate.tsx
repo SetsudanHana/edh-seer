@@ -80,6 +80,12 @@ export function Calibrate() {
     setNote("");
     try {
       const res = await fetch("/api/calibrate/pair");
+      // A 404 IS THE TOOL BEING OFF, NOT A FAILURE. The routes are not mounted unless
+      // `MTG_CALIBRATE=1` — the verdict route writes the panel's own inputs — so "failed: 404" would
+      // send the owner debugging a server that is behaving exactly as configured.
+      if (res.status === 404) {
+        throw new Error("the calibration tool is not enabled on this server — start it with MTG_CALIBRATE=1");
+      }
       if (!res.ok) throw new Error(`pair request failed: ${res.status}`);
       setPair((await res.json()) as Pair);
     } catch (e) {
