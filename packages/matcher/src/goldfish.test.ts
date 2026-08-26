@@ -514,3 +514,27 @@ test("N3: a transform card's land back is not a land drop, and the front face is
   // 34.0% here; refusing the land face reads 0.96%, measured by mutating the allow-list.
   expect(pAtLeastMana(withMdfc, 6, 6)).toBeGreaterThan(0.3);
 });
+
+// N1. A PROBABILITY CANNOT EXCEED 1, AND THIS ONE READ 3.0. `byCardHits` keys on card NAME and was
+// incremented once per COPY per trial-turn, so N copies of a card accumulated N hits -- and the 13
+// documented "any number of copies" cards make that a legal, ordinary paste. The 71 calibration
+// decks are singleton, so every measurement ever taken here was blind to it.
+test("N1: a card is counted once per trial-turn however many copies the deck runs", () => {
+  const copies = (n: number, name: string, manaValue: number): DeckCard[] =>
+    Array.from({ length: n }, () => card(name, "Sorcery", manaValue));
+  const cheap = card("Solo", "Sorcery", 1);
+  (cheap.card as { manaCost?: string }).manaCost = "{G}";
+  const many = copies(30, "Approach", 1);
+  for (const c of many) (c.card as { manaCost?: string }).manaCost = "{G}";
+  const r = simulate([...basics(37), ...many, ...spells(31, 3), cheap], { trials: 2_000, turns: 4, seed: 5 });
+
+  const approach = r.byCard.get("Approach")!;
+  const castable = r.byCardCastable.get("Approach")!;
+  for (let t = 0; t < 4; t++) {
+    expect(approach[t]).toBeLessThanOrEqual(1);
+    expect(castable[t]).toBeLessThanOrEqual(1);
+  }
+  // And it is the same question as the singleton's, so the two read alike rather than 30x apart.
+  expect(approach[3]).toBeCloseTo(r.byCard.get("Solo")![3], 2);
+  expect(castable[3]).toBeCloseTo(r.byCardCastable.get("Solo")![3], 2);
+});

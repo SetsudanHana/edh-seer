@@ -476,6 +476,13 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     isExtra: true,
   }));
   const priced = [...nonlands, ...extras];
+  // A PROBABILITY IS PER CARD, NOT PER COPY (roadmap N1). `byCardHits` keys on NAME, so a deck
+  // running 30 Dragon's Approach accumulated 30 hits per trial-turn and printed 2,934%. The event
+  // "this card is castable" is a property of the board and the COST, which every copy shares, so it
+  // is counted on the first slot of each name and skipped on the rest. `affordable` below still
+  // counts every copy, deliberately: that share really is 30 castable cards of 99.
+  const seenName = new Set<string>();
+  const countsForByCard = priced.map((s) => { const first = !seenName.has(s.name); seenName.add(s.name); return first; });
 
   const manaAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const payableShareAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
@@ -594,14 +601,15 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // second probability to multiply in -- it is this trial answering no.
       const castableByCost = new Map<string, boolean>();
       let affordable = 0;
-      for (const s of priced) {
+      for (let i = 0; i < priced.length; i++) {
+        const s = priced[i];
         if (s.manaValue > made) continue;
         if (!s.isExtra) affordable++;
-        byCardHits.get(s.name)![turn - 1]++;
+        if (countsForByCard[i]) byCardHits.get(s.name)![turn - 1]++;
         if (s.cost === null) continue;
         let ok = castableByCost.get(s.costKey);
         if (ok === undefined) { ok = payable(untapped, s.cost); castableByCost.set(s.costKey, ok); }
-        if (ok) byCardCastHits.get(s.name)![turn - 1]++;
+        if (ok && countsForByCard[i]) byCardCastHits.get(s.name)![turn - 1]++;
       }
       payableShareAt[turn - 1].push(nonlands.length > 0 ? affordable / nonlands.length : 0);
     }
