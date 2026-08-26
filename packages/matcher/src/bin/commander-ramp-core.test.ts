@@ -40,7 +40,11 @@ describe("silenceRamp", () => {
   const ramp = new Set(["Sol Ring", "Cultivate", "Bad Ramp", "Ramp Land"]);
 
   it("silences a classifiable nonland ramp card and leaves the slot in place", () => {
-    const lib = [card({ name: "Sol Ring", producedMana: ["C"] }), card({ name: "Other" })];
+    // ORACLE TEXT VERBATIM FROM THE CORPUS. The fixture used to carry an empty string, and after N9
+    // a card whose own text never says "add" is not a mana source however its `producedMana` reads --
+    // which is the whole point of that rule, and a fixture that does not resemble a real card cannot
+    // exercise it.
+    const lib = [card({ name: "Sol Ring", producedMana: ["C"], oracleText: "{T}: Add {C}{C}." }), card({ name: "Other" })];
     const out = silenceRamp(lib, ramp);
     expect(out.silenced).toBe(1);
     expect(out.deck).toHaveLength(2);

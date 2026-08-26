@@ -99,7 +99,30 @@ export interface Accelerant {
  *  this module needs the TAPPED half too and a rule row carries no payload. */
 const LAND_FETCH = /search your library for (?:a |an |up to \w+ )?(?:basic )?(?:land|forest|island|swamp|mountain|plains)/i;
 const ONTO_BATTLEFIELD = /onto the battlefield/i;
+const SUSPEND = /\bsuspend \d/i;
 const FETCHES_TAPPED = /onto the battlefield tapped/i;
+
+/** DOES THIS CARD MAKE MANA, or does Scryfall merely think so? `producedMana` is stamped from QUOTED
+ *  TOKEN TEXT as well as the card's own abilities, so **Pitiless Plunderer** — which taps for nothing
+ *  and makes Treasures — arrived carrying five colours and was priced as a four-mana dork adding one
+ *  every turn from the turn after it lands (roadmap N9). Treasure mana is a ONE-SHOT resource, and
+ *  `isManaSource` already refuses one-shots on exactly that ground: the same rule, one layer over.
+ *
+ *  TWO WAYS TO REALLY MAKE MANA, and both are printed. The card says "add" in its OWN text, or it
+ *  GRANTS a mana ability to permanents you control — Enduring Vitality's *"Creatures you control have
+ *  '{T}: Add one mana of any color'"* is a genuine engine and is one of the three accelerants the old
+ *  hypergeometric model could see at all. **A grant whose quoted ability SACRIFICES the permanent is
+ *  the one-shot again wearing a grant's sentence** (Goldspan Dragon grants to Treasures), so it is
+ *  refused with the rest. */
+function makesItsOwnMana(text: string): boolean {
+  // Quotes hold OTHER objects' abilities -- a token's, an enchanted permanent's -- so the card's own
+  // claim is what is left when they are stripped.
+  if (/\badds?\b/i.test(text.replace(/"[^"]*"/g, " "))) return true;
+  for (const m of text.matchAll(/\b(?:has|have) "([^"]*)"/gi)) {
+    if (/\badds?\b/i.test(m[1]) && !/sacrifice this/i.test(m[1])) return true;
+  }
+  return false;
+}
 
 /** What kind of accelerant a card is, or null. Read from PRINTED data only — `producedMana` and the
  *  type line — because a play policy that depends on derivation would move whenever derivation did. */
@@ -119,7 +142,12 @@ export function classifyAccelerant(dc: DeckCard): Accelerant | null {
   // A ONE-SHOT IS NOT A SOURCE at any confidence — `isManaSource`'s own ruling, and the measured
   // reason it exists (139 of 3,197 `producedMana` library cards are rituals). Dark Ritual really
   // does enable a turn, which is a stated ceiling and not an oversight.
-  if (!isManaSource(dc) || (dc.card.producedMana ?? []).length === 0) return null;
+  // A SUSPENDED CARD IS NEVER CAST FROM HAND FOR ITS PRINTED COST (CR 702.62), and rule 3 casts by
+  // mana value alone -- so Sol Talisman and Mox Tantalite, both mana value 0, were deployed FREE on
+  // turn one and taps for two from turn two. The real sequence is a cost plus a three-turn wait.
+  // The same shape `castability.ts` REFUSES rather than prices (roadmap N9).
+  if (SUSPEND.test(text) && (dc.card.manaValue ?? 0) === 0) return null;
+  if (!isManaSource(dc) || (dc.card.producedMana ?? []).length === 0 || !makesItsOwnMana(text)) return null;
   return { name, manaValue, kind: /\bcreature\b/.test(line) ? "dork" : "rock" };
 }
 
@@ -151,6 +179,11 @@ export interface ManaOutput {
  *  exactly that mistake and reported 27 lands where the answer is 9. */
 const TAP_ONLY = /^\{t\}:\s*add\s/i;
 const ADD_RUN = /add ((?:\{[^}]+\}\s*)+)/i;
+/** THE SAME AMOUNT IN WORDS, which the symbol reader cannot see: "Add three mana of any one color"
+ *  (roadmap N10). **Sceptre of Eternal Glory is in 11 decks and was priced at one.** `X` is
+ *  deliberately absent -- it is a RATE and not an amount, the ruling I4 already made one subsystem
+ *  over -- so a card that adds X keeps the incumbent 1 rather than a guess. */
+const ADD_WORDS = /add (one|two|three|four|five|six|seven|eight|nine|ten) mana\b/i;
 const SYMBOLS = /\{[^}]+\}/g;
 /** Mana this model cannot spend correctly. It is COLOUR-BLIND (C10), so a restriction it cannot
  *  check must not be counted at face value — Jegantha taps for five that pay no generic cost. */
@@ -185,8 +218,11 @@ export function manaOutput(oracleText: string | undefined): ManaOutput {
     // this model can pay, and a mana cost is what makes a filter land a one-mana land.
     if (!TAP_ONLY.test(line) || RESTRICTED.test(line)) continue;
     const run = ADD_RUN.exec(line);
-    if (!run) continue;
-    const amount = (run[1].match(SYMBOLS) ?? []).length;
+    const words = ADD_WORDS.exec(line);
+    if (!run && !words) continue;
+    const amount = run
+      ? (run[1].match(SYMBOLS) ?? []).length
+      : WORD_NUMBER[words![1].toLowerCase()];
     const gate = LAND_GATE.exec(line);
     const tron = TRON.exec(line);
     const here: ManaOutput = {

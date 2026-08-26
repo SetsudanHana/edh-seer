@@ -538,3 +538,55 @@ test("N1: a card is counted once per trial-turn however many copies the deck run
   expect(approach[3]).toBeCloseTo(r.byCard.get("Solo")![3], 2);
   expect(castable[3]).toBeCloseTo(r.byCardCastable.get("Solo")![3], 2);
 });
+
+// N9. SCRYFALL STAMPS `produced_mana` FROM QUOTED TOKEN TEXT, so a card that makes Treasures reads
+// as a permanent that taps for mana every turn. Treasure mana is a ONE-SHOT resource, and this model
+// already refuses one-shots on `isManaSource`'s own ruling -- the same rule, one layer over.
+test("N9: token mana is not a mana source, and a granted mana ability still is", () => {
+  const plunderer = card("Pitiless Plunderer", "Creature — Human Pirate", 4,
+    'Whenever another creature you control dies, create a Treasure token. (It\'s an artifact with "{T}, Sacrifice this token: Add one mana of any color.")',
+    ["B", "G", "R", "U", "W"]);
+  expect(classifyAccelerant(plunderer)).toBeNull();
+
+  // A GRANT TO PERMANENTS YOU CONTROL IS RECURRING MANA and stays: Enduring Vitality is one of the
+  // three accelerants on `samut` the old hypergeometric model could see at all.
+  const vitality = card("Enduring Vitality", "Enchantment Creature — Elk Glimmer", 3,
+    'Vigilance\nCreatures you control have "{T}: Add one mana of any color."', ["B", "G", "R", "U", "W"]);
+  expect(classifyAccelerant(vitality)?.kind).toBe("dork");
+
+  // THE GRANT IS NOT ENOUGH ON ITS OWN -- Goldspan Dragon grants to TREASURES, and a permanent that
+  // sacrifices itself for mana is the one-shot again, in a sentence shaped like a grant.
+  const goldspan = card("Goldspan Dragon", "Creature — Dragon", 5,
+    'Flying, haste\nWhenever this creature attacks, create a Treasure token.\nTreasures you control have "{T}, Sacrifice this artifact: Add two mana of any one color."',
+    ["B", "G", "R", "U", "W"]);
+  expect(classifyAccelerant(goldspan)).toBeNull();
+
+  // A SUSPENDED MANA ROCK IS NOT A TURN-ONE ROCK. Mana value 0 and rule 3 casts by mana value, so
+  // Sol Talisman landed free on turn one; the real sequence is {1} and a three-turn wait.
+  const talisman = card("Sol Talisman", "Artifact", 0,
+    "Suspend 3—{1} (Rather than cast this card from your hand, pay {1} and exile it with three time counters on it.)\n{T}: Add {C}{C}.", ["C"]);
+  expect(classifyAccelerant(talisman)).toBeNull();
+
+  // The ordinary rock is untouched: it says "Add" in its own text.
+  expect(classifyAccelerant(card("Sol Ring", "Artifact", 1, "{T}: Add {C}{C}.", ["C"]))?.kind).toBe("rock");
+});
+
+// N10. "ADD THREE MANA OF ANY ONE COLOR" IS INVISIBLE TO A READER THAT COUNTS `{...}` SYMBOLS.
+// Sceptre of Eternal Glory is in 11 decks and was priced at one mana.
+test("N10: a word-form amount is read, and its gate with it", () => {
+  const sceptre = manaOutput("{T}: Add one mana of any color.\n{T}: Add three mana of any one color. Activate only if you control three or more lands with the same name.");
+  // The gated line wins because it makes more -- and it is ZERO below the gate, not one.
+  expect(sceptre.amount).toBe(3);
+  // SAME NAME IS UNCHECKABLE HERE and "three or more lands" is its floor, so the gate under-claims
+  // rather than counting three from turn one.
+  expect(sceptre.needsLands).toBe(3);
+
+  expect(manaOutput("{T}: Add three mana of any one color.").amount).toBe(3);
+  expect(manaOutput("{T}: Add two mana in any combination of {U}, {B}, and/or {R}.").amount).toBe(2);
+  // Restricted mana stays one: the model is colour-blind, so it cannot check the restriction.
+  expect(manaOutput("{T}: Add two mana in any combination of colors. Spend this mana only to cast Elemental spells.").amount).toBe(1);
+  // A cost that is not exactly {T} is not a tap this model can pay.
+  expect(manaOutput("{1}, {T}: Add two mana in any combination of colors.").amount).toBe(1);
+  // An X amount is a RATE, not an amount -- it stays at one rather than being guessed.
+  expect(manaOutput("{T}: Add X mana of any one color, where X is the number of Elves you control.").amount).toBe(1);
+});
