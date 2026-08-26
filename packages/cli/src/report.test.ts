@@ -105,11 +105,25 @@ test("the commander's cast odds ship WITH what is wrong with them", () => {
     ] } },
   } as unknown as DeckReport;
   const out = formatReport(r);
-  expect(out).toContain("55% – 62% to cast it by turn 6");
-  // A bare percentage with no play policy attached is worse than no percentage.
+  // SEVEN POINTS APART IS THE POLICY BARELY MATTERING, so one number (owner's call, 2026-08-26).
+  // The falsifier's finding is not withdrawn -- policy DOES move the answer -- it is narrowed to the
+  // decks where it measurably does, which is 22 of the 71.
+  expect(out).toContain("55% to cast it by turn 6");
+  // A bare percentage with no play policy attached is worse than no percentage, so the sentence
+  // that says what the figure IS still prints whether or not the range collapsed.
   expect(out).toContain("holds up two mana");
   // One commander needs no name prefix; the line sits under the name already printed.
   expect(out).not.toContain("Samut, the Driving Force: 55%");
+
+  // AND A DECK WHERE SEQUENCING REALLY DECIDES IT KEEPS BOTH ENDS. `iz-it-izzet` measures 30% - 67%,
+  // a 36pp spread no single number can stand for.
+  const wide = formatReport({
+    ...report,
+    deckMath: { topdeck: [], castability: { cards: [], refused: 0, biases: "", commanders: [
+      { name: "Cmd", turn: 6, castable: { low: 0.30, high: 0.67 }, mana: { low: 0.31, high: 0.68 } },
+    ] } },
+  } as unknown as DeckReport);
+  expect(wide).toContain("30% – 67% to cast it by turn 6");
 });
 
 test("a wide mana-versus-castable gap names the COLOUR as the problem, and a narrow one stays quiet", () => {
@@ -198,5 +212,7 @@ test("a measured-impossible cast prints 0%, and a chance that merely rounds to z
   expect(row({ low: 0, high: 0 })).toContain("0% to cast it by turn 10");
   // Not zero, so it must not read as "cannot happen" -- and 1% would overstate it two hundred fold.
   expect(row({ low: 0.0005, high: 0.004 })).toContain("<1% to cast it by turn 10");
-  expect(row({ low: 0, high: 0.004 })).toContain("0% – <1% to cast it by turn 10");
+  // A zero low against a rounds-to-zero high is the policy not mattering, so it collapses to the
+  // conservative end -- the measured zero -- rather than printing "0% - <1%".
+  expect(row({ low: 0, high: 0.004 })).toContain("0% to cast it by turn 10");
 });

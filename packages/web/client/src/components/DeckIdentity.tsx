@@ -1,6 +1,6 @@
 import type { DeckReport } from "../types.js";
 import { identityGradient, identityLabel } from "../lib/color-identity.js";
-import { band, percent } from "@mtg/engine/percent";
+import { percent, policyBand } from "@mtg/engine/percent";
 
 /** WHAT IS THIS DECK — answered by the instrument built to answer it.
  *
@@ -149,7 +149,7 @@ export function DeckIdentity({
           {commanderCast.map((c) => {
             const odds = c.castable === null
               ? `— (${c.refused ?? "cost not modelled"})`
-              : `${band(c.castable.low, c.castable.high)} by turn ${c.turn}`;
+              : `${policyBand(c.castable.low, c.castable.high)} by turn ${c.turn}`;
             return `${commanderCast.length > 1 ? `${c.name}: ` : ""}${odds}`;
           }).join(" · ")}
           {/* THE CAVEAT IS VISIBLE, NOT A TOOLTIP. It was a `title` first, and a tooltip is not a

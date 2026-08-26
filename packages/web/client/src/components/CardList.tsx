@@ -7,7 +7,7 @@ import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 // ONE RENDERER ACROSS THE SURFACES (roadmap N6): this file printed "0%" where the CLI floored
 // the same cell at "1%". A measured zero is a measurement; the floor belongs on the refusal path.
-import { band } from "@mtg/engine/percent";
+import { policyBand } from "@mtg/engine/percent";
 
 type Category =
   | "ramp" | "draw" | "cardSelection" | "impulseDraw" | "targetedRemoval" | "stackInteraction"
@@ -58,7 +58,7 @@ function SortButton({ label, active, onClick }: { label: string; active: boolean
  *  up two mana before casting an accelerant, the high end spends everything on acceleration.
  *  Collapsed to a single figure when the two ends round the same, so a row never reads "31% - 31%". */
 export const castRange = (c: { castable: { low: number; high: number } }): string =>
-  band(c.castable.low, c.castable.high);
+  policyBand(c.castable.low, c.castable.high);
 
 type SortKey = "synergy" | "name" | "cost";
 

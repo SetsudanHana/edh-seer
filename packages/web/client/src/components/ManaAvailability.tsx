@@ -1,4 +1,5 @@
 import type { DeckReport } from "../types.js";
+import { policyBand } from "@mtg/engine/percent";
 
 /** MANA AVAILABILITY — a seeded goldfish simulation, not a formula (roadmap I11's report wiring).
  *
@@ -27,9 +28,7 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
           *  number there: a range whose ends are equal is not a range, and printing it as one makes
           *  a reader look for a difference that is not there. */}
         <span className="stat-num text-2xl">
-          {pct(m.headline.low) === pct(m.headline.high)
-            ? pct(m.headline.low)
-            : `${pct(m.headline.low)} – ${pct(m.headline.high)}`}
+          {policyBand(m.headline.low, m.headline.high)}
         </span>
         <span className="text-xs text-(--muted)">
           to make {m.headline.mana} mana by turn {m.headline.turn}

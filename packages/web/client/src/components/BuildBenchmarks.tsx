@@ -3,6 +3,7 @@ import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { policyBand } from "@mtg/engine/percent";
 // NOTHING IS VALUE-IMPORTED FROM @mtg/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
 // prior deep import of `GRAVEYARD_HATE_SHARE` from `@mtg/matcher/src/answer-coverage.js` (reasoned
 // as skipping the barrel's node:fs-touching re-export of `analyze.js`) was itself fatal: that file
@@ -45,8 +46,7 @@ const COLOUR_GAP = 0.05;
 /** A policy interval, collapsed to ONE figure when the two ends round the same. "91% - 91%" reads as
  *  a broken readout -- I11 settled that for the simulation's own rows, and the first cut of this
  *  panel reproduced it on the diagnostic line. Found in a live browser, not by a test. */
-const band = (b: { low: number; high: number }): string =>
-  pct(b.low) === pct(b.high) ? pct(b.low) : `${pct(b.low)} – ${pct(b.high)}`;
+const band = (b: { low: number; high: number }): string => policyBand(b.low, b.high);
 
 /** A CAVEAT, ONE CLICK AWAY — `Explain` under this panel's own label, since everything folded here
  *  is a statement about what a figure IGNORES rather than what it means.

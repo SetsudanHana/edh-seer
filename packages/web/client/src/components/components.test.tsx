@@ -45,7 +45,10 @@ test("the commander's cast odds are a RANGE, and a refused cost is an em dash an
   const { rerender } = render(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
     { name: "Samut, the Driving Force", turn: 6, castable: { low: 0.55, high: 0.62 }, mana: { low: 0.56, high: 0.63 } },
   ]} />);
-  expect(screen.getByText(/55% – 62% by turn 6/)).toBeInTheDocument();
+  // SEVEN POINTS APART IS THE POLICY BARELY MATTERING, so one number (owner's call, 2026-08-26) --
+  // and the CLI reads the same, which is what the shared renderer is for.
+  expect(screen.getByText(/55% by turn 6/)).toBeInTheDocument();
+  expect(screen.queryByText(/55% – 62%/)).not.toBeInTheDocument();
   expect(screen.queryByText(/is not counted/)).not.toBeInTheDocument();
   expect(screen.getByText(/holds up two mana/)).toBeInTheDocument();
   // ONE commander needs no name prefix; a partner pair does, or the two rows cannot be told apart.
@@ -1787,12 +1790,22 @@ test("the mana panel shows a policy range, its spread, and says what it is not",
   const { unmount } = render(<ManaAvailability manaAvailability={{
     trials: 2000, accelerants: 11, rows, headline: { mana: 6, turn: 6, low: 0.55, high: 0.62 },
   }} />);
-  // BOTH ENDS OR NOTHING — the point readout was withdrawn by the model's own falsifier.
-  expect(screen.getByText(/55% – 62%/)).toBeInTheDocument();
+  // BOTH ENDS WHERE THE POLICY DECIDES THE ANSWER, one number where it does not. The falsifier's
+  // finding stands -- policy moves this cell -- and is narrowed to the 22 of 71 decks whose two arms
+  // sit more than 8pp apart. Seven points is not one of them.
+  expect(screen.getByText(/55%/)).toBeInTheDocument();
+  expect(screen.queryByText(/55% – 62%/)).not.toBeInTheDocument();
   expect(screen.getByText(/to make 6 mana by turn 6/)).toBeInTheDocument();
   // The range is named as the POLICY, not as uncertainty in general.
   expect(screen.getByText(/play policy/i)).toBeInTheDocument();
   expect(screen.getByText(/ceiling no real deck plays to/i)).toBeInTheDocument();
+  // AND THE WIDE DECK KEEPS BOTH ENDS. `iz-it-izzet` measures 30% - 67% at this cell, a 36pp spread
+  // where the sequencing decides the answer and no single number can stand for it.
+  unmount();
+  render(<ManaAvailability manaAvailability={{
+    trials: 2000, accelerants: 11, rows, headline: { mana: 6, turn: 6, low: 0.30, high: 0.67 },
+  }} />);
+  expect(screen.getByText(/30% – 67%/)).toBeInTheDocument();
   // C10 reaches the reader: colour blindness is stated on screen.
   expect(screen.getByText(/never castability/i)).toBeInTheDocument();
   // C7: the spread is beside every median.

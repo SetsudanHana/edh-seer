@@ -1,12 +1,16 @@
 import { dedupeReasonsByText, type DeckReport } from "@mtg/engine";
-import { band as range, percent } from "@mtg/engine/percent";
+import { percent, policyBand } from "@mtg/engine/percent";
 
 /** SHARED WITH THE WEB, one copy (roadmap N6). This file floored a probability at 1% and
  *  `CardList.tsx` did not, so a measured-impossible cast read "1%" here and "0%" there. The floor
  *  belongs on the REFUSAL path -- an unpriceable card prints an em dash -- and a measured zero is a
- *  measurement. */
+ *  measurement.
+ *
+ *  AND THE POLICY INTERVAL COLLAPSES BELOW 8pp: two policies that barely disagree were telling the
+ *  reader the same thing twice, while the decks where sequencing really decides the answer keep both
+ *  ends (owner's call, 2026-08-26). */
 const pct = percent;
-const band = (b: { low: number; high: number }): string => range(b.low, b.high);
+const band = (b: { low: number; high: number }): string => policyBand(b.low, b.high);
 
 /** How far `mana` must sit above `castable` before the report says the problem is COLOUR. Below
  *  this the two numbers say the same thing and the second one is noise. */
@@ -236,10 +240,11 @@ export function formatReport(report: DeckReport, trim = 0): string {
     lines.push("");
     lines.push("=== Mana availability ===");
     lines.push(`  ${m.trials} simulated games under two play policies, with ${m.accelerants} accelerants in the deck`);
-    // ONE FIGURE WHEN THE TWO POLICIES AGREE, never "100% - 100%" — the same collapse
-    // `castability.ts`'s range already ships, for the same reason.
-    const lo = Math.round(m.headline.low * 100), hi = Math.round(m.headline.high * 100);
-    const odds = lo === hi ? `${lo}%` : `${lo}% - ${hi}%`;
+    // THE SHARED RENDERER, like every other policy interval on the page. This line had its own copy
+    // of the collapse rule -- and it collapsed only when the two ends ROUNDED alike, so it printed a
+    // plain hyphen where the rest of the report prints an en dash and it never learned the 8pp rule.
+    // THIRD copy of a sentence-shaped rule found in this file; found by reading real output.
+    const odds = policyBand(m.headline.low, m.headline.high);
     lines.push(`  by turn ${m.headline.turn} you can make ${m.headline.mana} mana ${odds} of the time`);
     lines.push("    (the range is the PLAY POLICY: the low end holds up two mana, the high end spends");
     lines.push("     everything on acceleration and is a CEILING no real deck plays to)");
