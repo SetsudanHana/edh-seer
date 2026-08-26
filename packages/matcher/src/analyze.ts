@@ -18,6 +18,7 @@ import {
 } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
+import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
 import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY } from "./edges.js";
@@ -817,6 +818,9 @@ export function analyzeDeckStructured(
     roles: computeRoles(resolved),
     cohesion,
     thing,
+    // HOW MUCH OF THE DECK THE SYNERGY ENGINE COULD READ. Omitted when it read all of it: a report
+    // with nothing to admit says nothing.
+    ...(deckCoverage(resolved) ?? {}),
     // WotC's bracket rule over facts the engine already had: `gameChanger` on every corpus card
     // and the combos `foundCombos` resolved above. A join, so it forms no edge and reads no rating.
     bracket: deckBracket(resolved.map((dc) => dc.card), foundCombos),

@@ -5,6 +5,7 @@ import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { SuggestionsList } from "./SuggestionsList.js";
 import { CutList } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
+import { CoveragePanel } from "./CoveragePanel.js";
 import { LegalityPanel } from "./LegalityPanel.js";
 import { UnmetConditions } from "./UnmetConditions.js";
 import { ManaAvailability } from "./ManaAvailability.js";
@@ -44,8 +45,12 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         *  remaining blocks filled column two, and column three rendered empty -- 550px of dead space
         *  where the gutter used to be. */}
       <div className="columns-1 xl:columns-2 gap-6 [&>*]:break-inside-avoid [&>*]:mb-6">
-        {/* LEADS THE COLUMN: a deck that is not legal is the first thing a reader needs, and every
-          *  number below it is computed over a list the format would not let them play. */}
+        {/* LEADS THE COLUMN, above legality: every number in this report is computed over the part
+          *  of the deck the engine could READ, and a reader not told that reads a half-deck figure
+          *  as a whole-deck one. Absent when it read all of it. */}
+        <CoveragePanel coverage={data.report.coverage} />
+        {/* Then: a deck that is not legal is the next thing a reader needs, and every number below
+          *  it is computed over a list the format would not let them play. */}
         <LegalityPanel legality={data.report.legality} />
         <BuildBenchmarks
           categories={data.report.buildCategories}

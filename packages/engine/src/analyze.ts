@@ -313,6 +313,24 @@ export interface DeckMath {
   }[];
 }
 
+export interface DeckCoverage {
+  /** Cards that resolved against the corpus. Never the paste's line count — an unresolved name is
+   *  a different failure and `missing` already reports it. */
+  resolved: number;
+  /** Of those, how many the synergy engine could read. */
+  derived: number;
+  /** The names it could not, capped for the same reason the legality report caps its lists: a paste
+   *  can produce dozens and a list that long stops being read. */
+  underivedNames: string[];
+  /** Whether the list above was cut. */
+  more: number;
+  /** The sentence itself, built ONCE here rather than in each renderer. No subpath of
+   *  `@mtg/matcher` is safe to value-import from client code (the 2026-08-21 regression), and a
+   *  second copy of a sentence is how two surfaces start disagreeing — the same ruling the
+   *  commander-tax caveat ships under. */
+  caveat: string;
+}
+
 export interface DeckReport {
   commanders: string[];
   cards: CardSynergy[];
@@ -325,6 +343,19 @@ export interface DeckReport {
    *  no partner is a real signal — "this deck makes Clues and nothing cares" — which is why the data
    *  carries it even when the view hides it. */
   tokenNodes?: { name: string; hasPartner: boolean }[];
+  /** How much of the deck the SYNERGY engine could actually read.
+   *
+   *  A card that resolves against the corpus but has no derived tags forms NO edges, carries NO
+   *  theme and cannot reach an archetype — and it looked exactly like a fully analysed card, because
+   *  `MissingCards` reports only names that failed to RESOLVE. **Measured on a real precon: 52 of
+   *  100 cards derived, so 48 were silently invisible to every synergy number on the page.** The
+   *  71 calibration decks are ~99% derived, which is why nothing here ever showed it.
+   *
+   *  NARROW ON PURPOSE, because the loss is narrow: an underived card still counts toward the mana
+   *  base, the land count, castability, legality, the bracket, combo detection and most build
+   *  categories, all of which read PRINTED data. Absent when every card is derived — a report with
+   *  nothing to admit says nothing. */
+  coverage?: DeckCoverage;
   combos: Combo[];
   themes: { tag: string; count: number }[];
   manaCurve: ManaCurveBucket[];

@@ -19,6 +19,17 @@ const COLOUR_GAP = 0.05;
 export function formatReport(report: DeckReport, trim = 0): string {
   const lines: string[] = [];
 
+  // WHAT THE ENGINE COULD NOT READ COMES FIRST, because it qualifies every synergy number below it.
+  // Same position and the same reason as the legality report in the web Overview: a figure computed
+  // over half a deck should not be read before the reader is told it was half a deck.
+  if (report.coverage) {
+    lines.push("=== What this report could not read ===");
+    lines.push(`  ${report.coverage.caveat}`);
+    const more = report.coverage.more > 0 ? `, and ${report.coverage.more} more` : "";
+    lines.push(`  ${report.coverage.underivedNames.join(" · ")}${more}`);
+    lines.push("");
+  }
+
   lines.push("=== Commanders ===");
   lines.push(report.commanders.length ? `  ${report.commanders.join(", ")}` : "  (none specified)");
   // WHEN IS IT ONLINE (roadmap K5). A RANGE, never one number, and an em dash when the model REFUSES
