@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { pAtLeast, seen } from "@mtg/engine";
 import type { DeckCard } from "./types.js";
-import { classifyAccelerant, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand } from "./goldfish.js";
+import { classifyAccelerant, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -886,4 +886,65 @@ test("O1: a commander that makes mana is deployed, because the command zone alwa
   // never dilutes the deck it is not in.
   expect(withMana.byCard.has("Mana Commander")).toBe(true);
   expect(pAtLeastMana(without, 6, 6)).toBe(pAtLeastMana(simulate(deck, { trials: 8_000, turns: 8, seed: 41 }), 6, 6));
+});
+
+// --- coloured-source sequencing (roadmap L4) ---
+
+const W = 1, U = 2, B = 4, R = 8, G = 16;
+
+test("the land played is the one the hand's colours ask for, not the one the shuffle put first", () => {
+  // A Mountain first in hand and an Island second, with {U}{U} to cast: the incumbent rule read
+  // tapped-ness and then HAND ORDER, so it played the Mountain half the time.
+  expect(pickLand([{ colors: R }, { colors: U }], 0, [U, U])).toBe(1);
+});
+
+test("a colour the board already makes is not a reason to play a second source of it", () => {
+  expect(pickLand([{ colors: U }, { colors: R }], U, [U, R])).toBe(1);
+});
+
+test("a land covering two unmet demands beats one covering a single demand", () => {
+  expect(pickLand([{ colors: B }, { colors: U | R }], 0, [B, U, R])).toBe(1);
+});
+
+test("no colour tension keeps hand order, which is the rule this replaced", () => {
+  // The acceptance test for every deck that is mono-coloured or already fixed: byte-identical.
+  expect(pickLand([{ colors: G }, { colors: G }], G, [G, G])).toBe(0);
+  expect(pickLand([{ colors: W }, { colors: U }], 0, [])).toBe(0);
+});
+
+test("a hybrid pip is satisfied by either half", () => {
+  // `parseCost` gives `{U/R}` one pip whose mask names both, so a Mountain answers it.
+  expect(pickLand([{ colors: G }, { colors: R }], 0, [U | R])).toBe(1);
+});
+
+test("the sequencing rule is reached THROUGH simulate, not only as a pure function", () => {
+  // A PROBE THAT CALLS THE INNER FUNCTION DOES NOT TEST THE GATE THAT SELECTS IT — the fifth time
+  // this repo records that shape, so the rule is separated here through the whole simulation.
+  //
+  // Thirty Islands, thirty Mountains and forty `{U}{R}` two-drops: on turn two the card is castable
+  // only off ONE of each. Playing by hand order takes two Islands about half the time.
+  const dual = (i: number): DeckCard => ({
+    card: {
+      name: `Bolt ${i}`, typeLine: "Instant", oracleText: "", keywords: [], colors: ["U", "R"],
+      manaValue: 2, manaCost: "{U}{R}",
+    } as never,
+    tags: null,
+  });
+  const landOf = (name: string, color: string, i: number): DeckCard => ({
+    card: {
+      name: `${name} ${i}`, typeLine: `Basic Land — ${name}`, oracleText: `{T}: Add {${color}}.`,
+      keywords: [], colors: [], manaValue: 0, producedMana: [color],
+    } as never,
+    tags: null,
+  });
+  const deck = [
+    ...Array.from({ length: 30 }, (_, i) => landOf("Island", "U", i)),
+    ...Array.from({ length: 30 }, (_, i) => landOf("Mountain", "R", i)),
+    ...Array.from({ length: 40 }, (_, i) => dual(i)),
+  ];
+  const t2 = simulate(deck, { trials: 4_000, turns: 3, seed: 11 }).byCardCastable.get("Bolt 0")![1];
+  // MEASURED IN BOTH ARMS, because a threshold picked by eye is how a test comes to pass in both:
+  // the first version of this one asserted 0.4 and the colour-BLIND rule already read 0.508.
+  // Hand order 50.8%, colour-aware 92.5% — the gap is every hand holding both colours.
+  expect(t2).toBeGreaterThan(0.85);
 });

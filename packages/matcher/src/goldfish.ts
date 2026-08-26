@@ -511,6 +511,40 @@ export function payable(sources: readonly { mana: number; colors: number }[], co
   return true;
 }
 
+/** WHICH LAND TO PLAY, once tapped-ness has chosen the candidates: the one that unlocks the most
+ *  COLOURS the hand is asking for and the board cannot yet make.
+ *
+ *  THE INFORMATION IS THE PLAYER'S OWN — what is in hand and what is on the board, never a future
+ *  draw — which is what separates this from a policy that peeks. A player holding an Island and a
+ *  Mountain with `{U}{U}` in hand plays the Island; the incumbent rule read tapped-ness and then
+ *  HAND ORDER, i.e. the shuffle, so it played either one at random.
+ *
+ *  IT SCORES UNMET PIPS AND NOT CARDS. "How many cards in hand does this land make castable" is the
+ *  question a player actually asks, and answering it means calling `payable` once per candidate per
+ *  card per turn per trial; scoring the colour demand is one pass over the same information and
+ *  gets the same answer wherever a colour is the thing that binds. A land that makes a card castable
+ *  by adding the sixth MANA rather than the missing COLOUR is invisible to this rule, and that is
+ *  the case the tapped-ness preference above already handles.
+ *
+ *  A TIE FALLS BACK TO HAND ORDER, so a deck with no colour tension is byte-identical to the rule
+ *  this replaced. */
+export function pickLand(
+  candidates: readonly { colors: number }[],
+  boardColors: number,
+  demandPips: readonly number[],
+): number {
+  let best = 0;
+  let bestScore = -1;
+  for (let i = 0; i < candidates.length; i++) {
+    let score = 0;
+    for (const pip of demandPips) {
+      if ((pip & boardColors) === 0 && (pip & candidates[i].colors) !== 0) score++;
+    }
+    if (score > bestScore) { bestScore = score; best = i; }
+  }
+  return best;
+}
+
 /** EVERY FETCH PRINTS "THEN SHUFFLE" -- verified against corpus text on Farseek, Cultivate,
  *  Nature's Lore, Evolving Wilds, Fabled Passage and Scalding Tarn -- so the residual library
  *  is exchangeable and the land that leaves is UNIFORMLY RANDOM. Taking the earliest one in draw
@@ -738,8 +772,21 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       const blank = (c: DeckSlot): boolean =>
         c.output.needsLands !== undefined && lands.length + 1 < c.output.needsLands;
       const live = (c: DeckSlot): boolean => c.isLand && !blank(c);
+      // COLOUR IS ASKED OF THE HAND BEFORE THE SHUFFLE IS. Among the lands that enter untapped and
+      // whose own gate is met, the one that covers the most colours the hand wants and the board
+      // cannot make wins; ties keep hand order, so a deck with no colour tension is unchanged.
+      const untappedIdx: number[] = [];
+      for (let i = 0; i < hand.length; i++) {
+        if (live(hand[i]) && hand[i].land !== undefined && !entersTapped(hand[i].land!, board)) untappedIdx.push(i);
+      }
+      let boardColors = 0;
+      for (const l of lands) boardColors |= l.colors;
+      const demandPips: number[] = [];
+      for (const c of hand) if (!c.isLand && c.cost) demandPips.push(...c.cost.pips);
       const idx = [
-        hand.findIndex((c) => live(c) && c.land !== undefined && !entersTapped(c.land, board)),
+        untappedIdx.length > 0
+          ? untappedIdx[pickLand(untappedIdx.map((i) => hand[i]), boardColors, demandPips)]
+          : -1,
         hand.findIndex(live),
         hand.findIndex((c) => c.isLand),
       ].find((i) => i >= 0) ?? -1;
