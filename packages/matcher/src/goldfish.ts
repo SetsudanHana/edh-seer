@@ -564,6 +564,13 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // Rule 3: spend on accelerants, cheapest first, greedily. THIS RULE DOES NEARLY ALL THE WORK,
       // and it is what makes every output a ceiling: the owner's own decks hold mana up for
       // interaction, and this one never does.
+      //
+      // THE TIE-BREAK AT EQUAL MANA VALUE IS HAND ORDER, i.e. the shuffle (roadmap N18). A rock and a
+      // dork both costing two produce different boards -- the rock pays the turn it lands per
+      // CR 302.6, the dork waits -- so which one goes first is a POLICY choice, and in a module whose
+      // whole thesis is that the policy IS the model it is stated rather than left implicit. It is
+      // not a defect: the order is uniformly random across trials, so it averages rather than biases,
+      // and preferring the rock would be a THIRD policy arm, not a fix.
       let pool = production();
       for (;;) {
         let best = -1;
@@ -640,9 +647,13 @@ export function quantiles(values: readonly number[]): { p25: number; median: num
 /** Trials the REPORT runs at, against the 20k the bin uses.
  *
  *  CHOSEN AGAINST THE WIDTH OF THE THING IT SITS INSIDE, which is the only defensible way to pick a
- *  Monte Carlo sample size: at 2,000 trials the headline cell reads within about 0.5pp of the 20,000
- *  answer, and the POLICY interval it is reported inside has a median width of 7.0pp. A number whose
- *  noise rivals its own stated width would be misleading; one an order of magnitude under it is not.
+ *  Monte Carlo sample size. The POLICY interval it is reported inside has a median width of 7.0pp,
+ *  and the sampling noise at 2,000 trials is well under that: **SD 0.83-1.22pp (median 1.03) across
+ *  10 decks x 20 seeds, with the worst single excursion from the 20,000-trial answer at 3.6pp**
+ *  (roadmap N5, re-measured 2026-08-26). This comment used to claim "within about 0.5pp", which is
+ *  optimistic by 2x on the SD and 7x on the tail; the CONCLUSION survives the correction and the
+ *  sentence did not. A figure that prints as a whole percent inside a 7pp band can carry a 1pp SE;
+ *  raising the trial count on this alone would buy accuracy nothing reads.
  *  Measured cost: about 24ms per policy arm on a 99-card deck, so ~48ms on an analyze request. */
 export const REPORT_TRIALS = 2_000;
 
