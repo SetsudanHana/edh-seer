@@ -834,3 +834,56 @@ test("O2: landfall mana pays per land entering, and only that bucket is modellab
   // that separates the two readings.
   expect(pAtLeastMana(asRestricted, 9, 8)).toBe(dorkArm);
 });
+
+// O1. THE FLIP, AND THE ITEM'S OWN PREMISE SHRANK TWICE UNDER MEASUREMENT. Ashling was ALREADY
+// counted -- as a one-mana dork, through `producedMana` -- so the gap was never the whole engine,
+// only the difference between one and two. And the flip needs no play model after all: the card is
+// cast in a main phase and flips at the NEXT one, which is exactly the dork timing the model already
+// has. What was actually missing is the AMOUNT in words and the restriction being checkable.
+test("O1: a restricted phase trigger counts when the deck makes the restriction vacuous", () => {
+  const back = "Whenever this creature transforms into Ashling, Rimebound and at the beginning of your first main phase, add two mana of any one color. Spend this mana only to cast spells with mana value 4 or greater.";
+  // THE AMOUNT IS IN WORDS -- "add two mana of any one color" -- which the symbol reader never saw.
+  expect(manaOutput(back).amount).toBe(2);
+
+  // IN A DECK WITH NOTHING CHEAP, THE RESTRICTION BINDS NOTHING. `iz-it-izzet` is built that way:
+  // all 62 of its nonlands are mana value 4 or greater, so "spend only on mana value 4 or greater"
+  // costs it exactly nothing -- and mana value is the ONE restriction this model can check, because
+  // it knows every card's.
+  // THE ENGINE'S OWN MANA VALUE COUNTS, and that is correct rather than awkward: a deck holding a
+  // two-drop has a two-drop to cast, so the restriction binds. Real Ashling is the COMMANDER, outside
+  // the library, which is why `iz-it-izzet` clears it -- the fixture uses a four-drop to stand in.
+  const ashling = (i: number) => card(`Ashling ${i}`, "Legendary Creature — Elemental Sorcerer", 4, back, ["U"]);
+  const expensive = [...Array.from({ length: 12 }, (_, i) => ashling(i)), ...basics(37), ...spells(50, 6)];
+  const cheap = [...Array.from({ length: 12 }, (_, i) => ashling(i)), ...basics(37), ...spells(50, 2)];
+  const rich = simulate(expensive, { trials: 4_000, turns: 8, seed: 31 });
+  const poor = simulate(cheap, { trials: 4_000, turns: 8, seed: 31 });
+
+  // Same lands, same count of the same card: the ONLY difference is whether the deck can spend the
+  // mana. The deck of six-drops gets it; the deck of two-drops does not.
+  expect(pAtLeastMana(rich, 8, 7)).toBeGreaterThan(pAtLeastMana(poor, 8, 7));
+
+  // AND THE REFUSAL IS THE DEFAULT: a restriction this model cannot check still refuses outright.
+  expect(manaOutput("At the beginning of your upkeep, you may add {C}{C}. This mana can't be spent to cast spells.").amount).toBe(1);
+  expect(manaOutput("At the beginning of your first main phase, add two mana of any one color. Spend this mana only to cast Dragon spells.").amount).toBe(1);
+});
+
+// O1, THE PIECE THAT UNLOCKS IT. A COMMANDER IS NOT IN THE LIBRARY, so rule 3 never cast it and a
+// commander that MAKES MANA contributed nothing -- 6 of the 71 decks have one, including both Ashling
+// decks. It is the most reliable accelerant a deck can have: available from the command zone every
+// game, no draw required. So it starts in hand rather than in the library, and rule 3 casts it when
+// the mana is there, like anything else.
+test("O1: a commander that makes mana is deployed, because the command zone always has it", () => {
+  const bear = card("Bear", "Creature — Bear", 2, "");
+  const dork = card("Mana Commander", "Legendary Creature — Elf Druid", 2, "{T}: Add {G}.", ["G"]);
+  const deck = [...basics(37), ...spells(62, 4)];
+
+  const withMana = simulate(deck, { trials: 8_000, turns: 8, seed: 41, alsoPrice: [dork] });
+  const without = simulate(deck, { trials: 8_000, turns: 8, seed: 41, alsoPrice: [bear] });
+  // The same 99 cards; the only difference is whether the commander taps for mana.
+  expect(pAtLeastMana(withMana, 6, 6)).toBeGreaterThan(pAtLeastMana(without, 6, 6) + 0.05);
+
+  // IT IS STILL PRICED, not silently turned into a library card: the commander keeps its own row and
+  // never dilutes the deck it is not in.
+  expect(withMana.byCard.has("Mana Commander")).toBe(true);
+  expect(pAtLeastMana(without, 6, 6)).toBe(pAtLeastMana(simulate(deck, { trials: 8_000, turns: 8, seed: 41 }), 6, 6));
+});

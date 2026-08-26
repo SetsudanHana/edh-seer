@@ -202,6 +202,9 @@ export interface ManaOutput {
   amount: number;
   /** `Temple of the False God`: "Activate only if you control five or more lands". */
   needsLands?: number;
+  /** This mana may be spent only on spells at or above this mana value (roadmap O1). It is counted
+   *  ONLY when the deck makes the restriction vacuous, which `simulate` settles. */
+  needsMinMV?: number;
   /** The tron shape: two named other lands on the board upgrade the amount.
    *
    *  DRAWING THE TRIO IS NOT HOW TRON ASSEMBLES, and the first cut of this branch missed it and
@@ -234,7 +237,13 @@ const ADD_ADDITIONAL = /adds? an additional (?:((?:\{[^}]+\}\s*)+)|(one|two|thre
  *  this model cannot check; and two are ONE-SHOTS wearing a trigger, where "your NEXT main phase"
  *  (Mana Drain) and "first main phase OF THE GAME" (Chancellor of the Tangle) each fire once. A
  *  one-shot is not a source at any confidence -- `isManaSource`'s own ruling. */
-const PHASE_ADD = /at the beginning of[^.]{0,80}?\badds? ((?:\{[^}]+\}\s*)+)/i;
+const PHASE_ADD = /at the beginning of[^.]{0,80}?\badds? ((?:\{[^}]+\}\s*)+|(?:one|two|three|four) mana)/i;
+/** THE ONE RESTRICTION THIS MODEL CAN CHECK (roadmap O1). Every other "spend this mana only to cast
+ *  X" names a colour or a type the module is blind to, so it refuses them; a MANA VALUE threshold is
+ *  different, because it knows every card's. **`iz-it-izzet` is built so it binds nothing -- all 62 of
+ *  its nonlands are mana value 4 or greater** -- and that is a construction the report should be able
+ *  to see. Settled against the DECK in `simulate`, since a cue alone cannot know it. */
+const MV_RESTRICTION = /spend this mana only to cast spells with mana value (\d+) or greater/i;
 const PHASE_ONE_SHOT = /at the beginning of your next|first main phase of the game/i;
 /** LANDFALL MANA, and it is the ONLY event-triggered mana this simulator can price (roadmap O2).
  *  Classified corpus-wide by whether the model PRODUCES the event: a land entering is rule 2 and
@@ -286,11 +295,15 @@ export function manaOutput(oracleText: string | undefined): ManaOutput {
   // THE RATE TEST READS THE WHOLE SENTENCE, not the match: `PHASE_ADD` stops at the symbol run, so
   // Muerra's "for each Raccoon you control" sits AFTER it and a guard tested on `phase[0]` cannot see
   // the words it exists for. Caught by a corpus probe, which is the only thing that would have.
+  // A MANA VALUE restriction is RECORDED rather than refused, because the deck can settle it.
   const phase = PHASE_ADD.exec(text);
   const sentence = phase ? (text.slice(phase.index).split(/(?<=\.)\s/)[0] ?? "") : "";
-  if (phase && !RESTRICTED.test(text) && !PHASE_ONE_SHOT.test(text) && !PHASE_RATE.test(sentence)) {
-    const n = (phase[1].match(SYMBOLS) ?? []).length;
-    if (n > out.amount) out = { amount: n };
+  const mv = MV_RESTRICTION.exec(text);
+  if (phase && !(RESTRICTED.test(text) && !mv) && !PHASE_ONE_SHOT.test(text) && !PHASE_RATE.test(sentence)) {
+    const n = phase[1].startsWith("{")
+      ? (phase[1].match(SYMBOLS) ?? []).length
+      : WORD_NUMBER[phase[1].split(" ")[0].toLowerCase()];
+    if (n > out.amount) out = { amount: n, ...(mv ? { needsMinMV: Number(mv[1]) } : {}) };
   }
   for (const raw of text.split("\n")) {
     const line = raw.trim();
@@ -323,6 +336,15 @@ function landfallMana(text: string): number {
   const m = LANDFALL_ADD.exec(text);
   if (!m || RESTRICTED.test(text)) return 0;
   return m[1].startsWith("{") ? (m[1].match(SYMBOLS) ?? []).length : (m[1].startsWith("two") ? 2 : 1);
+}
+
+/** A source whose mana carries a mana-value restriction the DECK does not make vacuous is worth what
+ *  it was before that restriction was read -- one. Under-claiming, which is the direction this module
+ *  takes everywhere it cannot check a restriction (roadmap O1). */
+function spendable(o: ManaOutput, cheapestNonland: number): ManaOutput {
+  if (o.needsMinMV === undefined) return o;
+  const { needsMinMV, ...rest } = o;
+  return cheapestNonland >= needsMinMV ? rest : { ...rest, amount: 1 };
 }
 
 /** What a source taps for right now. */
@@ -602,6 +624,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   const holdUp = opts.holdUp ?? 0;
 
   const printed = deck.map((dc) => ({ typeLine: dc.card.typeLine ?? "", producedMana: dc.card.producedMana }));
+  // THE CHEAPEST NONLAND settles every mana-value restriction at once: mana that may be spent only at
+  // value N or greater is worth its face in a deck holding nothing below N (roadmap O1).
+  const cheapest = Math.min(Infinity, ...deck
+    .filter((dc) => !/\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout)))
+    .map((dc) => dc.card.manaValue ?? 0));
   const slots: DeckSlot[] = deck.map((dc) => {
     const isLand = /\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout));
     const text = dc.card.oracleText ?? "";
@@ -612,7 +639,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       manaValue: dc.card.manaValue ?? 0,
       typeLine: dc.card.typeLine ?? "",
       isLand,
-      output: manaOutput(dc.card.oracleText),
+      output: spendable(manaOutput(dc.card.oracleText), cheapest),
       everyLandType: isEveryLandType(dc.card.typeLine, dc.card.oracleText),
       colors: fetches ? fetchMask(text, printed) : colorMask(dc.card.producedMana),
       fetches,
@@ -627,20 +654,31 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     };
   });
   const nonlands = slots.filter((s) => !s.isLand);
-  const extras: DeckSlot[] = (opts.alsoPrice ?? []).map((dc) => ({
-    name: dc.card.name,
-    manaValue: dc.card.manaValue ?? 0,
-    typeLine: dc.card.typeLine ?? "",
-    isLand: false,
-    output: { amount: 1 },
-    everyLandType: false,
-    colors: 0,
-    fetches: false,
-    cost: parseCost(dc.card.manaCost),
-    costKey: dc.card.manaCost ?? "",
-    accelerant: null,
-    isExtra: true,
-  }));
+  // AN EXTRA IS PRICED, AND IF IT MAKES MANA IT IS ALSO PLAYED. These rows used to be cost-only --
+  // `accelerant: null`, `output: 1`, `colors: 0` -- which is why a mana-producing COMMANDER
+  // contributed nothing to the board it is guaranteed to be on (roadmap O1). They now read the same
+  // printed facts a library slot does; what stays different is `isExtra`, so the commander never
+  // enters the `payableShare` denominator of a deck it is not in.
+  const extras: DeckSlot[] = (opts.alsoPrice ?? []).map((dc) => {
+    const text = dc.card.oracleText ?? "";
+    return {
+      name: dc.card.name,
+      manaValue: dc.card.manaValue ?? 0,
+      typeLine: dc.card.typeLine ?? "",
+      isLand: false,
+      output: spendable(manaOutput(text), cheapest),
+      everyLandType: false,
+      colors: colorMask(dc.card.producedMana),
+      fetches: false,
+      cost: parseCost(dc.card.manaCost),
+      costKey: dc.card.manaCost ?? "",
+      accelerant: classifyAccelerant(dc),
+      ...(TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
+      ...(TAP_REPLACEMENT.test(text) && BONUS_CREATURE.test(text) ? { tapBonus: "creature" as const } : {}),
+      ...(landfallMana(text) > 0 ? { landfall: landfallMana(text) } : {}),
+      isExtra: true,
+    };
+  });
   const priced = [...nonlands, ...extras];
   // A PROBABILITY IS PER CARD, NOT PER COPY (roadmap N1). `byCardHits` keys on NAME, so a deck
   // running 30 Dragon's Approach accumulated 30 hits per trial-turn and printed 2,934%. The event
@@ -667,6 +705,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       [library[i], library[j]] = [library[j], library[i]];
     }
     const hand: DeckSlot[] = library.splice(0, 7);
+    // A COMMANDER THAT MAKES MANA STARTS IN HAND, because the command zone is not the library: it is
+    // available every game with no draw, which makes it the most reliable accelerant a deck has, and
+    // rule 3 was never able to cast it (roadmap O1). 6 of the 71 decks have one and every one was
+    // priced at zero. It is NOT shuffled in -- that would both dilute the draw and pretend it can be
+    // drawn (CR 903.6, the rule `alsoPrice` already exists for) -- and it keeps its own priced row.
+    for (const e of extras) if (e.accelerant) hand.push(e);
     const lands: OnBoardLand[] = [];
     const rocks: { turn: number; mana: number; colors: number }[] = [];   // the turn each landed, what it taps for, and in which colours
     const dorks: { turn: number; mana: number; colors: number }[] = [];
