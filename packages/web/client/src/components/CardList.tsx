@@ -5,6 +5,9 @@ import { CardName } from "./card-drawer.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
+// ONE RENDERER ACROSS THE SURFACES (roadmap N6): this file printed "0%" where the CLI floored
+// the same cell at "1%". A measured zero is a measurement; the floor belongs on the refusal path.
+import { band } from "@mtg/engine/percent";
 
 type Category =
   | "ramp" | "draw" | "cardSelection" | "impulseDraw" | "targetedRemoval" | "stackInteraction"
@@ -34,7 +37,6 @@ const selectedChipStyle: CSSProperties = {
   backgroundClip: "padding-box, border-box",
 };
 
-const pct = (p: number) => `${Math.round(p * 100)}%`;
 
 /** A column header that sorts. Marked with `aria-sort` on the header cell's own button rather than
  *  a caret glyph alone, so the state is available to a reader who cannot see the accent colour. */
@@ -56,9 +58,7 @@ function SortButton({ label, active, onClick }: { label: string; active: boolean
  *  up two mana before casting an accelerant, the high end spends everything on acceleration.
  *  Collapsed to a single figure when the two ends round the same, so a row never reads "31% - 31%". */
 export const castRange = (c: { castable: { low: number; high: number } }): string =>
-  pct(c.castable.low) === pct(c.castable.high)
-    ? pct(c.castable.low)
-    : `${pct(c.castable.low)} – ${pct(c.castable.high)}`;
+  band(c.castable.low, c.castable.high);
 
 type SortKey = "synergy" | "name" | "cost";
 

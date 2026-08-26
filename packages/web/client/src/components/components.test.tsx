@@ -33,11 +33,14 @@ test("DeckIdentity counts the deck's thing under the heading that names it", () 
   expect(screen.getByText(/plus Samut, the Driving Force every game/)).toBeInTheDocument();
 });
 
+// N6: ONE RENDERER ACROSS THE SURFACES. The range reads "55% – 62%" here exactly as it does in the
+// CLI and in `CardList` -- this panel used to print its own compact "55–62%", which is how a
+// measured zero came to read "1%" in one surface and "0%" in another.
 test("the commander's cast odds are a RANGE, and a refused cost is an em dash and never 0%", () => {
   const { rerender } = render(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
     { name: "Samut, the Driving Force", turn: 6, castable: { low: 0.55, high: 0.62 }, mana: { low: 0.56, high: 0.63 } },
   ]} />);
-  expect(screen.getByText(/55–62% by turn 6/)).toBeInTheDocument();
+  expect(screen.getByText(/55% – 62% by turn 6/)).toBeInTheDocument();
   // ONE commander needs no name prefix; a partner pair does, or the two rows cannot be told apart.
   expect(screen.queryByText(/Samut, the Driving Force: /)).not.toBeInTheDocument();
   rerender(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
@@ -45,6 +48,13 @@ test("the commander's cast odds are a RANGE, and a refused cost is an em dash an
   ]} />);
   expect(screen.getByText(/— \(X cost/)).toBeInTheDocument();
   expect(screen.queryByText(/\b0%/)).not.toBeInTheDocument();
+
+  // A REFUSAL IS AN EM DASH; A MEASURED ZERO IS 0%. 20,000 trials of no, on a cost the model CAN
+  // price, is a measurement -- printing "1%" would claim the cast is possible (roadmap N6).
+  rerender(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
+    { name: "Kozilek", turn: 10, castable: { low: 0, high: 0 }, mana: { low: 0.4, high: 0.5 } },
+  ]} />);
+  expect(screen.getByText(/0% by turn 10/)).toBeInTheDocument();
 });
 
 test("DeckIdentity shows the headline theme", () => {

@@ -1,5 +1,6 @@
 import type { DeckReport } from "../types.js";
 import { identityGradient, identityLabel } from "../lib/color-identity.js";
+import { band, percent } from "@mtg/engine/percent";
 
 /** WHAT IS THIS DECK — answered by the instrument built to answer it.
  *
@@ -117,7 +118,7 @@ export function DeckIdentity({
         *  figure rather than a footnote somewhere else. */}
       {thing ? (
         <p className="text-sm text-(--fg) tabular-nums">
-          <strong>{thing.count} cards</strong> do it · {Math.max(1, Math.round(thing.probability * 100))}% to have{" "}
+          <strong>{thing.count} cards</strong> do it · {percent(thing.probability)} to have{" "}
           {thing.k} of them by turn {thing.turn}
           {thing.fromCommandZone.length > 0 ? `, plus ${thing.fromCommandZone.join(", ")} every game` : ""}
           {/* "EVERY GAME" IS TRUE ONCE (CR 903.8, roadmap J5). The line invites being read as free
@@ -146,12 +147,9 @@ export function DeckIdentity({
               any test. */}
           <span>Commander castable: </span>
           {commanderCast.map((c) => {
-            const p = (x: number) => Math.max(1, Math.round(x * 100));
             const odds = c.castable === null
               ? `— (${c.refused ?? "cost not modelled"})`
-              : p(c.castable.low) === p(c.castable.high)
-                ? `${p(c.castable.low)}% by turn ${c.turn}`
-                : `${p(c.castable.low)}–${p(c.castable.high)}% by turn ${c.turn}`;
+              : `${band(c.castable.low, c.castable.high)} by turn ${c.turn}`;
             return `${commanderCast.length > 1 ? `${c.name}: ` : ""}${odds}`;
           }).join(" · ")}
           {/* THE CAVEAT IS VISIBLE, NOT A TOOLTIP. It was a `title` first, and a tooltip is not a

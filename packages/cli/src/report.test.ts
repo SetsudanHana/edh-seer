@@ -183,3 +183,20 @@ describe("ramp resilience", () => {
     expect(formatReport(report)).not.toContain("How resilient your ramp is");
   });
 });
+
+// N6. A REFUSAL AND A MEASURED ZERO ARE DIFFERENT ANSWERS AND MUST READ DIFFERENTLY. The test above
+// covers the refusal; this covers the measurement. The CLI floored every probability at 1% while the
+// web `CardList` floored nothing, so the same impossible cast read "1%" in one surface and "0%" in
+// the other -- both now render through `@mtg/engine/percent`.
+test("a measured-impossible cast prints 0%, and a chance that merely rounds to zero prints <1%", () => {
+  const row = (castable: { low: number; high: number }) => formatReport({
+    ...report,
+    deckMath: { topdeck: [], castability: { cards: [], refused: 0, biases: "", commanders: [
+      { name: "Cmd", turn: 10, castable, mana: castable },
+    ] } },
+  } as unknown as DeckReport);
+  expect(row({ low: 0, high: 0 })).toContain("0% to cast it by turn 10");
+  // Not zero, so it must not read as "cannot happen" -- and 1% would overstate it two hundred fold.
+  expect(row({ low: 0.0005, high: 0.004 })).toContain("<1% to cast it by turn 10");
+  expect(row({ low: 0, high: 0.004 })).toContain("0% – <1% to cast it by turn 10");
+});

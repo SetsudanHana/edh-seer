@@ -1,13 +1,12 @@
 import { dedupeReasonsByText, type DeckReport } from "@mtg/engine";
+import { band as range, percent } from "@mtg/engine/percent";
 
-/** A probability as a whole percent. Never rounded to 0% for a real chance: a reader treats 0% as
- *  "cannot happen", and the model's refusals are printed as an em dash instead. */
-const pct = (p: number): string => `${Math.max(1, Math.round(p * 100))}%`;
-
-/** A policy interval, collapsed to ONE figure when the two ends round the same -- "62% - 62%" reads
- *  as a broken range, and I11 already settled that rule for the simulation's own rows. */
-const band = (b: { low: number; high: number }): string =>
-  pct(b.low) === pct(b.high) ? pct(b.low) : `${pct(b.low)} – ${pct(b.high)}`;
+/** SHARED WITH THE WEB, one copy (roadmap N6). This file floored a probability at 1% and
+ *  `CardList.tsx` did not, so a measured-impossible cast read "1%" here and "0%" there. The floor
+ *  belongs on the REFUSAL path -- an unpriceable card prints an em dash -- and a measured zero is a
+ *  measurement. */
+const pct = percent;
+const band = (b: { low: number; high: number }): string => range(b.low, b.high);
 
 /** How far `mana` must sit above `castable` before the report says the problem is COLOUR. Below
  *  this the two numbers say the same thing and the second one is noise. */
@@ -18,8 +17,9 @@ export function formatReport(report: DeckReport, trim = 0): string {
 
   lines.push("=== Commanders ===");
   lines.push(report.commanders.length ? `  ${report.commanders.join(", ")}` : "  (none specified)");
-  // WHEN IS IT ONLINE (roadmap K5). A RANGE, never one number, and an em dash when the model refuses
-  // the cost -- a 0% would tell a reader their commander is uncastable.
+  // WHEN IS IT ONLINE (roadmap K5). A RANGE, never one number, and an em dash when the model REFUSES
+  // the cost. A MEASURED zero is a different thing and prints 0% (N6): 20,000 trials of no, on a cost
+  // this model can price, is a measurement, and flooring it at 1% claims the cast is possible.
   const cmdCast = report.deckMath?.castability.commanders ?? [];
   for (const c of cmdCast) {
     // The name is repeated only for a PARTNER PAIR, where two rows need telling apart.

@@ -6,7 +6,8 @@
   "//exports": "The barrel is NODE-ONLY: index.ts pulls analyze.ts, which readFileSync's its tag weights at module load. Pure-computation modules a browser may evaluate get their own subpath here.",
   "exports": {
     ".": "./src/index.ts",
-    "./hypergeometric": "./src/hypergeometric.ts"
+    "./hypergeometric": "./src/hypergeometric.ts",
+    "./percent": "./src/percent.ts"
   },
   "scripts": {
     "test": "vitest run",
