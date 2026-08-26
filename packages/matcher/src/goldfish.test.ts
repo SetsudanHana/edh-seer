@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { pAtLeast, seen } from "@mtg/engine";
 import type { DeckCard } from "./types.js";
-import { classifyAccelerant, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate } from "./goldfish.js";
+import { classifyAccelerant, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand } from "./goldfish.js";
 
 const card = (name: string, typeLine: string, manaValue = 0, oracleText = "", producedMana?: string[]): DeckCard => ({
   card: { name, typeLine, oracleText, keywords: [], colors: [], manaValue, ...(producedMana ? { producedMana } : {}) } as never,
@@ -413,4 +413,52 @@ test("C4: a fetchland is a colour fixer AND a thinner", () => {
   const withFetch = simulate([...Array.from({ length: 20 }, (_, i) => fetch(i)), ...dual(20, "Island", ["U"]), ...spell(59, "Spell", "{U}", 1)], { trials: 4_000, turns: 3, seed: 6 });
   // A fetch counts as a blue source through what it finds; without the colour read it would be 0.
   expect(withFetch.byCardCastable.get("Spell 0")![2]).toBeGreaterThan(0.9);
+});
+
+// N15. A FETCH SAYS "THEN SHUFFLE", SO THE LAND THAT LEAVES IS UNIFORMLY RANDOM. Taking the EARLIEST
+// land in draw order pushes the survivors later and understates mana on exactly the fetch decks the
+// land-fetch feature was built for -- measured +1.90pp mean on P(>=6 mana at T6) over the 71 decks,
+// worst `naya-spellslinger` +6.92pp.
+test("N15: a fetch removes a UNIFORMLY RANDOM land, not the first one in draw order", () => {
+  // The pick is the rng's, so a stubbed generator names the land that leaves. Three lands at indices
+  // 0, 2 and 3; asking for the last of the three must take index 3 and never index 0.
+  const lib = () => [{ isLand: true, id: "L0" }, { isLand: false, id: "X" }, { isLand: true, id: "L1" }, { isLand: true, id: "L2" }];
+  const last = lib();
+  takeRandomLand(last, () => 0.99);
+  expect(last.map((c) => c.id)).toEqual(["L0", "X", "L1"]);
+
+  const middle = lib();
+  takeRandomLand(middle, () => 0.5);
+  expect(middle.map((c) => c.id)).toEqual(["L0", "X", "L2"]);
+
+  // A library with no land left is a no-op rather than a splice of index -1, which would eat the
+  // last card in the deck.
+  const none = [{ isLand: false, id: "X" }];
+  takeRandomLand(none, () => 0);
+  expect(none.map((c) => c.id)).toEqual(["X"]);
+});
+
+test("N15: the simulator's fetches read the corrected policy, and it pays on a fetch-heavy deck", () => {
+  const FETCH = "{T}, Pay 1 life, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield, then shuffle.";
+  const deck: DeckCard[] = [
+    ...Array.from({ length: 20 }, (_, i) => card(`Fetch ${i}`, "Land", 0, FETCH, [])),
+    ...Array.from({ length: 17 }, (_, i) => card(`Forest ${i}`, "Basic Land — Forest", 0, "", ["G"])),
+    ...spells(62, 3),
+  ];
+  // MEASURED under the old earliest-land policy at this seed: 14.76%. The correction can only move
+  // it UP, since taking the earliest land is what delayed the survivors.
+  const r = simulate(deck, { trials: TRIALS, turns: 8, seed: 11 });
+  expect(pAtLeastMana(r, 6, 6)).toBeGreaterThan(0.16);
+
+  // THE OTHER SITE. A land-fetch SPELL resolves through its own branch, so the fetchland arm above
+  // leaves it untested -- verified by mutating one site at a time. Nature's Lore, verbatim, in a
+  // deck that can cast it. MEASURED under the old policy at this seed: 60.27%.
+  const LORE = "Search your library for a Forest card, put it onto the battlefield, then shuffle.";
+  const ramp: DeckCard[] = [
+    ...Array.from({ length: 20 }, (_, i) => card(`Lore ${i}`, "Sorcery", 2, LORE)),
+    ...basics(30),
+    ...spells(49, 3),
+  ];
+  const withRamp = simulate(ramp, { trials: TRIALS, turns: 8, seed: 11 });
+  expect(pAtLeastMana(withRamp, 6, 6)).toBeGreaterThan(0.65);
 });
