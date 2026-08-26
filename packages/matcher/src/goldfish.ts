@@ -253,10 +253,22 @@ function produced(o: ManaOutput, lands: readonly OnBoardLand[]): number {
 
 /** COLOURS AS A BITMASK over `COLORS`. Colourless is the EMPTY mask, not a sixth bit: `{C}` pays
  *  generic and no coloured pip, which is exactly what an empty mask does under `payable` below. */
+/** THE SIXTH BIT. Colourless is a MANA TYPE, not the absence of one (CR 106.1b), and `{C}` is payable
+ *  only with colourless mana (CR 107.4c) — so carrying it as the empty mask was right for a SOURCE,
+ *  where colourless constrains nothing about what it can pay, and exactly backwards for a COST, where
+ *  it constrains everything. A board of Forests read as able to cast Kozilek (roadmap N11).
+ *
+ *  It sits above the five colours rather than inside `COLORS`, because `mana-audit.ts`'s WUBRG list
+ *  is about COLOURED SOURCES against Karsten's table and a sixth entry there would change what that
+ *  table counts. */
+const COLORLESS = 1 << COLORS.length;
+
 export function colorMask(producedMana: readonly string[] | undefined): number {
   let m = 0;
   for (const c of producedMana ?? []) {
-    const i = COLORS.indexOf(c.toUpperCase() as Color);
+    const u = c.toUpperCase();
+    if (u === "C") { m |= COLORLESS; continue; }
+    const i = COLORS.indexOf(u as Color);
     if (i >= 0) m |= 1 << i;
   }
   return m;
@@ -336,14 +348,16 @@ export function parseCost(manaCost: string | undefined): Cost | null {
     const n = Number(parts.find((x) => /^\d+$/.test(x)));
     if (Number.isFinite(n) && parts.length === 1) { total += n; continue; }
     total += 1;
-    // A COLORLESS HYBRID CONSTRAINS NOTHING. `{C/W}` is payable with {C} OR {W}, so any source pays
-    // it -- and Ulalek, Fused Atrocity costs `{C/W}{C/U}{C/B}{C/R}{C/G}`, which read as a WUBRG
-    // demand priced a colourless Eldrazi deck's own commander at 6%. Found in a live CLI run, not by
-    // a test. A NUMERIC hybrid (`{2/W}`) keeps its colour: the generic alternative costs MORE, so
-    // demanding the colour is the under-claiming direction, which is the one this repo takes.
-    if (parts.includes("C")) continue;
-    const mask = colorMask(parts.filter((x) => (COLORS as readonly string[]).includes(x)));
-    if (mask !== 0) pips.push(mask); // {C}, {S} and a generic-hybrid half reach no colour
+    // A COLORLESS HYBRID IS COLOURLESS *OR* ITS COLOUR, and it used to constrain nothing at all --
+    // `{C/W}` was read as "any source pays it", which is a WIDER claim than the card makes. Ulalek,
+    // Fused Atrocity costs `{C/W}{C/U}{C/B}{C/R}{C/G}`: read as a WUBRG demand it priced a colourless
+    // Eldrazi deck's own commander at 6%, and read as unconstrained it would let five Forests cast
+    // it. With the sixth bit both halves are just true (roadmap N11).
+    //
+    // A NUMERIC hybrid (`{2/W}`) keeps its colour: the generic alternative costs MORE, so demanding
+    // the colour is the under-claiming direction, which is the one this repo takes.
+    const mask = colorMask(parts.filter((x) => x === "C" || (COLORS as readonly string[]).includes(x)));
+    if (mask !== 0) pips.push(mask); // {S} and a generic-hybrid half still reach no colour
   }
   return { total, pips };
 }
@@ -355,8 +369,9 @@ export function parseCost(manaCost: string | undefined): Cost | null {
  *  handled by construction.
  *
  *  Bipartite feasibility (Gale/Hall): payable iff total supply covers the total cost AND, for every
- *  subset S of the five colours, the pips that ONLY S can pay do not exceed the supply that can
- *  produce something in S. 31 subsets, and only those inside the cost's own colours can bind. */
+ *  subset S of the SIX mana types (WUBRG plus colourless, N11), the pips that ONLY S can pay do not
+ *  exceed the supply that can produce something in S. 63 subsets, and only those inside the cost's
+ *  own types can bind -- a `{2}{U}` card costs one subset test, not 63. */
 export function payable(sources: readonly { mana: number; colors: number }[], cost: Cost): boolean {
   let total = 0;
   for (const s of sources) total += s.mana;

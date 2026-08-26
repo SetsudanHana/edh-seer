@@ -2,8 +2,15 @@ import { minCopies } from "@mtg/engine";
 import { minSources } from "./mulligan.js";
 import type { DeckCard } from "./types.js";
 
-/** The five colours, in WUBRG order. Colourless is deliberately absent: every deck can pay generic
- *  and colourless costs from any source, so there is no feasibility question to ask. */
+/** The five colours, in WUBRG order. Colourless is deliberately absent HERE, and the reason the old
+ *  one gave was false as a statement of the rules: "every deck can pay generic and colourless costs
+ *  from any source" is true of GENERIC and false of COLOURLESS — `{C}` is payable only with
+ *  colourless mana (CR 107.4c), which `goldfish.ts` now models as a sixth mask bit (roadmap N11).
+ *
+ *  What is true is narrower: THIS table counts COLOURED SOURCES against Karsten's published
+ *  thresholds, and those thresholds are about coloured pips. A sixth entry would change what the
+ *  table counts rather than correct it, so the feasibility question is asked one module over, where
+ *  a board is available to ask it of. */
 export const COLORS = ["W", "U", "B", "R", "G"] as const;
 export type Color = (typeof COLORS)[number];
 

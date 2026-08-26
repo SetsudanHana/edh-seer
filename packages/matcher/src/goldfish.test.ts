@@ -320,12 +320,16 @@ test("parseCost reads a hybrid pip as EITHER colour, which is why pipsByColor is
   // `pipsByColor` counts {B/R} against BOTH black and red -- right for "does the deck have sources",
   // wrong for "can this board pay". Here it is ONE pip that either colour satisfies.
   expect(parseCost("{B/R}")).toEqual({ total: 1, pips: [colorMask(["B", "R"])] });
-  // {C} is a cost this model pays with anything: it reaches no colour.
-  expect(parseCost("{C}")).toEqual({ total: 1, pips: [] });
-  // A COLORLESS HYBRID CONSTRAINS NOTHING — `{C/W}` is payable with {C} or {W}. Ulalek, Fused
-  // Atrocity costs `{C/W}{C/U}{C/B}{C/R}{C/G}`, and reading that as a WUBRG demand priced a
-  // colourless Eldrazi deck's own commander at 6%. Found in a live run, not by a test.
-  expect(parseCost("{C/W}{C/U}{C/B}{C/R}{C/G}")).toEqual({ total: 5, pips: [] });
+  // {C} IS A DEMAND, NOT AN ABSENCE OF ONE (CR 107.4c): colourless mana pays it and nothing else.
+  // It used to read as "any source pays this", so a board of Forests could cast Kozilek (N11).
+  expect(parseCost("{C}")).toEqual({ total: 1, pips: [colorMask(["C"])] });
+  // A COLORLESS HYBRID IS COLOURLESS *OR* ITS COLOUR. Ulalek, Fused Atrocity costs
+  // `{C/W}{C/U}{C/B}{C/R}{C/G}`: reading it as a WUBRG demand priced a colourless Eldrazi deck's own
+  // commander at 6%, and reading it as unconstrained let five Forests cast it. Both halves are true
+  // with the sixth bit.
+  expect(parseCost("{C/W}{C/U}{C/B}{C/R}{C/G}")).toEqual({ total: 5, pips: [
+    colorMask(["C", "W"]), colorMask(["C", "U"]), colorMask(["C", "B"]), colorMask(["C", "R"]), colorMask(["C", "G"]),
+  ] });
   // A NUMERIC hybrid keeps its colour: the generic alternative costs MORE, so demanding the colour
   // under-claims, which is the direction this repo takes.
   expect(parseCost("{2/W}")).toEqual({ total: 1, pips: [colorMask(["W"])] });
@@ -589,4 +593,44 @@ test("N10: a word-form amount is read, and its gate with it", () => {
   expect(manaOutput("{1}, {T}: Add two mana in any combination of colors.").amount).toBe(1);
   // An X amount is a RATE, not an amount -- it stays at one rather than being guessed.
   expect(manaOutput("{T}: Add X mana of any one color, where X is the number of Elves you control.").amount).toBe(1);
+});
+
+// N11. `{C}` IS A RULES-REAL DEMAND (CR 107.4c): colourless mana, and no other kind pays it. The
+// model carried colourless as the EMPTY mask -- right for a SOURCE, since colourless constrains
+// nothing about what it can pay, and exactly backwards for a COST, where it constrains everything.
+// A board of Forests read as able to cast Kozilek.
+test("N11: a colourless pip demands colourless mana, and a coloured source cannot pay it", () => {
+  const forest = { mana: 1, colors: colorMask(["G"]) };
+  const wastes = { mana: 1, colors: colorMask(["C"]) };
+  const eldrazi = parseCost("{4}{C}{C}")!;
+
+  // Six green sources make the mana and cannot make the demand.
+  expect(payable(Array(6).fill(forest), eldrazi)).toBe(false);
+  // Four Forests and two Wastes can.
+  expect(payable([...Array(4).fill(forest), wastes, wastes], eldrazi)).toBe(true);
+  // One Wastes is one colourless mana, and the cost wants two.
+  expect(payable([...Array(5).fill(forest), wastes], eldrazi)).toBe(false);
+
+  // A COLOURLESS SOURCE STILL PAYS GENERIC, which is the half that was always right.
+  expect(payable(Array(6).fill(wastes), parseCost("{5}{G}")!)).toBe(false);
+  expect(payable([...Array(5).fill(wastes), forest], parseCost("{5}{G}")!)).toBe(true);
+});
+
+test("N11: a colourless hybrid is colourless OR its colour, not 'anything'", () => {
+  const ulalek = parseCost("{C/W}{C/U}{C/B}{C/R}{C/G}")!;
+  const wastes = { mana: 1, colors: colorMask(["C"]) };
+  const forest = { mana: 1, colors: colorMask(["G"]) };
+  const plains = { mana: 1, colors: colorMask(["W"]) };
+
+  // Five colourless sources pay every half of it -- the Eldrazi deck's own commander.
+  expect(payable(Array(5).fill(wastes), ulalek)).toBe(true);
+  // Five FORESTS do not: green pays the {C/G} half and nothing else.
+  expect(payable(Array(5).fill(forest), ulalek)).toBe(false);
+  // One of each colour does, which is the WUBRG reading being right for the right reason.
+  expect(payable([plains, { mana: 1, colors: colorMask(["U"]) }, { mana: 1, colors: colorMask(["B"]) },
+    { mana: 1, colors: colorMask(["R"]) }, forest], ulalek)).toBe(true);
+
+  // A NUMERIC hybrid keeps its colour, unchanged: the generic alternative costs MORE, so demanding
+  // the colour is the under-claiming direction.
+  expect(payable([forest, forest, forest], parseCost("{2/W}")!)).toBe(false);
 });
