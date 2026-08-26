@@ -79,3 +79,78 @@ test("the commander is on the board every game, not drawn", () => {
   // P = 1 rather than 12%, so it contributes its whole 6 power from the turn it is castable.
   expect(withCmd[4].power - without[4].power).toBeGreaterThan(4);
 });
+
+// --- the mana budget (roadmap L4 / `2026-08-19-clock-and-mana-model-review.md` §3) ---
+
+/** A deck that is NOTHING BUT five-drops, which is what it takes for the budget to bind at all.
+ *
+ *  A creature costs its mana value times the odds you have drawn it, so ten fatties in a hundred
+ *  cards cost six expected mana on turn five and fifteen turns of mana pays for them outright. The
+ *  budget is a constraint on decks whose creature count is large against their mana, and the
+ *  fixture has to be one of those or it measures nothing -- the first version of this test was a
+ *  ten-creature deck and passed in both arms. */
+const fatties = (): DeckCard[] =>
+  Array.from({ length: 100 }, (_, i) => beater(`fatty-${i}`, "5", 5));
+
+test("without a budget every creature past its own mana value deploys at once", () => {
+  // The incumbent behaviour, pinned so the budget arm is measured against something.
+  expect(expectedPower(fatties(), 5)).toBeCloseTo(100 * 5 * (12 / 100), 6);
+});
+
+test("a mana budget deploys fewer creatures than the deck has drawn", () => {
+  // Twelve five-drops expected in hand want sixty mana; 1+2+3+4+5 is fifteen, so a quarter of them
+  // are on the board and the rest are stranded in hand -- which is what a real turn five looks like.
+  const budgeted = expectedPower(fatties(), 5, { manaBudget: [1, 2, 3, 4, 5] });
+  expect(budgeted).toBeLessThan(expectedPower(fatties(), 5));
+  expect(budgeted).toBeCloseTo(15 / 5 * 5, 6);
+});
+
+test("the budget is cumulative across turns, not per turn", () => {
+  // Five mana every turn would cast ONE five-drop a turn if the budget were per-turn; over five
+  // turns it is twenty-five mana and five of them, which is what a board built over five turns is.
+  expect(expectedPower(fatties(), 5, { manaBudget: [5, 5, 5, 5, 5] })).toBeCloseTo(25 / 5 * 5, 6);
+});
+
+test("the last creature the budget can only part-pay for lands part of the time", () => {
+  // Ten and a half mana of a deck whose creatures cost 0.6 expected mana each: seventeen and a half
+  // of them. Truncating to seventeen would make the curve step, and a step in the curve is a step
+  // in the clock.
+  expect(expectedPower(fatties(), 5, { manaBudget: [1, 1, 1, 1, 6.5] })).toBeCloseTo(10.5, 6);
+});
+
+test("a budget that is never binding reproduces the unbudgeted answer exactly", () => {
+  const deck = fatties();
+  expect(expectedPower(deck, 5, { manaBudget: [1000, 1000, 1000, 1000, 1000] }))
+    .toBe(expectedPower(deck, 5));
+});
+
+test("past the simulated turns the budget grows by one land a turn", () => {
+  // Holding the last simulated value flat instead would date a slow deck LATE, and a late clock is
+  // the one bias in this layer that flatters the deck -- the cascade this item exists to close.
+  const deck = fatties();
+  const grown = expectedPower(deck, 8, { manaBudget: [1, 2, 3, 4, 5] });
+  const clamped = expectedPower(deck, 8, { manaBudget: [1, 2, 3, 4, 5, 5, 5, 5] });
+  expect(grown).toBeGreaterThan(clamped);
+});
+
+test("a budget makes the clock later, never earlier", () => {
+  const deck = fatties();
+  const free = measuredClock(deck);
+  const paid = measuredClock(deck, { manaBudget: [1, 2, 3, 4, 5, 6, 7, 8] });
+  expect(free).toBeDefined();
+  expect(paid === undefined || paid >= free!).toBe(true);
+});
+
+test("a ramping board casts a creature its turn number cannot pay for", () => {
+  // The RAMP half of the cascade. Turn 5 with eight mana on the board really does cast an eight
+  // drop, and the incumbent `manaValue <= turn` dated it turn eight -- late, which is the one
+  // direction this layer must not be wrong in.
+  const deck = fillTo(100, [beater("Titan", "6", 8)]);
+  expect(expectedPower(deck, 5)).toBe(0);
+  expect(expectedPower(deck, 5, { manaBudget: [1, 2, 4, 6, 8] })).toBeGreaterThan(0);
+});
+
+test("a creature is still refused when the board cannot pay for it that turn", () => {
+  const deck = fillTo(100, [beater("Titan", "6", 8)]);
+  expect(expectedPower(deck, 5, { manaBudget: [1, 2, 3, 4, 5] })).toBe(0);
+});

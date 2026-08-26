@@ -93,6 +93,7 @@ export function computeDeckMath(
     landRecommendation?: LandRecommendation;
     primary?: Archetype;
     castCurves?: ReadonlyMap<string, CastCurve>;
+    manaBudget?: readonly number[];
   } = {},
 ): DeckMath {
   const castCurves = opts.castCurves ?? new Map<string, CastCurve>();
@@ -114,14 +115,19 @@ export function computeDeckMath(
   // understates availability. The bias runs against flattering the deck, which is the direction to
   // be wrong in.
   //
-  // EXCEPT FOR ONE CASCADE, WHICH RUNS THE OTHER WAY AND HITS THE RAMP DECKS HARDEST (2026-08-19).
-  // `expectedPower` gates a creature on `manaValue <= turn` and models no ramp, so a deck that ramps
-  // has its fatties dated LATE and its clock reads late with them. A late clock is a bigger `turn`,
-  // hence a bigger `seen(turn)`, hence availability OVERSTATED and `required` understated -- for
-  // exactly the decks that accelerate. Everything else in this layer is conservative; this is not,
-  // and the two do not cancel in any measured way.
+  // THE CASCADE THAT RAN THE OTHER WAY IS CLOSED (roadmap L4, 2026-08-26). It read: `expectedPower`
+  // gates a creature on `manaValue <= turn`, nothing sums what the board deployed against what the
+  // board could pay, so a deck that ramps had its fatties dated LATE and its clock read late with
+  // them -- a bigger `turn`, a bigger `seen(turn)`, availability OVERSTATED and `required`
+  // understated, for exactly the decks that accelerate. It was the one bias in this layer that
+  // flattered the deck. `manaBudget` is the simulated median mana curve, so the clock is now priced
+  // against a board that has to pay for itself AND that ramp reaches.
+  //
+  // ABSENT FOR A CALLER THAT HAS NO SIMULATION (this file's tests, `answer-availability.ts`), which
+  // then get the unbudgeted clock -- the same degradation `castCurves` already makes, and the same
+  // reason: a wrong number here is worse than the older one.
   // `specs/2026-08-19-clock-and-mana-model-review.md` §3.
-  const curve = pressureCurve(deck, { commanderNames });
+  const curve = pressureCurve(deck, { commanderNames, ...(opts.manaBudget ? { manaBudget: opts.manaBudget } : {}) });
   const clockTurn = curve.find((p) => p.cumulative >= STARTING_LIFE)?.turn;
   const clock = {
     ...(clockTurn !== undefined ? { turn: clockTurn } : {}),

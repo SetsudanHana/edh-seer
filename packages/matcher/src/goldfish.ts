@@ -979,6 +979,14 @@ export interface ManaModel {
   /** By card name, for every nonland in the library plus everything in `alsoPrice`. */
   curves: Map<string, CastCurve>;
   turns: number;
+  /** Median mana the board could TAP, per turn, indexed by `turn - 1` and running the full `turns`
+   *  rather than the table's eight rows.
+   *
+   *  IT IS THE MEDIAN AND NOT AN INTERVAL BECAUSE THE MEDIAN IS POLICY-INSENSITIVE -- measured, and
+   *  the same finding `ManaAvailabilityRow.mana` is built on: the two policy arms agree on the
+   *  median at every turn while the tail moves by up to 27.6pp. Its one consumer is
+   *  `pressure.ts`'s mana budget, which needs a number rather than a band. */
+  manaMedian: number[];
 }
 
 /** BOTH POLICIES, RUN ONCE. `analyze` needs the availability table AND every card's castability, and
@@ -1028,6 +1036,7 @@ export function manaModel(
   return {
     turns,
     curves,
+    manaMedian: greedy.manaAt.map((col) => quantiles(col).median),
     availability: {
       trials,
       accelerants: deck.map(classifyAccelerant).filter((a) => a !== null).length,

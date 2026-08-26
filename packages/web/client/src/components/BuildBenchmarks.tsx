@@ -722,10 +722,11 @@ function DeckMathRows({
             *  useful for comparing two decks, useless as a date. */}
           <Caveat label="how the clock is modelled">
             Expected attacking power against ONE opponent's 40 life — not the table. Three opponents
-            is three boards and three life totals, and nothing here models that. Nobody blocks,
-            nothing is removed, and there is no mana budget — a creature counts once the turn number
-            reaches its cost, however many others arrived with it, and no ramp shortens that. Read it
-            to compare decks, not to plan a game.
+            is three boards and three life totals, and nothing here models that. Nobody blocks and
+            nothing is removed. Creatures are deployed cheapest first against the mana the simulation
+            says this deck makes, so ramp does shorten it — but that budget is every point of mana
+            the board produced, and a real deck spends some of it on removal and on draw. Read it to
+            compare decks, not to plan a game.
           </Caveat>
         </div>
   ) : null;

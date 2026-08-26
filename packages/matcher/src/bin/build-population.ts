@@ -10,6 +10,7 @@ import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, BUILD_PAR
 import { recommendedLands } from "../land-count.js";
 import { winconReport } from "../wincon.js";
 import { measuredClock, pressureCurve } from "../pressure.js";
+import { manaModel } from "../goldfish.js";
 import type { DeckCard } from "../types.js";
 
 /** Build-category membership across the calibration decks, as one number per category plus the
@@ -177,9 +178,17 @@ async function main(): Promise<void> {
     // Through winconReport, not detectWincons: the deck-level gates (a token maker is only a win
     // plan when something pays it off) are the part most likely to regress.
     for (const w of winconReport(inputs).classes) deck[`wincon:${w.class}`] = [String(w.count)];
-    const clock = measuredClock(inputs, { commanderNames: sections.commanders });
+    // THE CLOCK IS PRICED AGAINST A MANA BUDGET, so this gate has to run the same simulation
+    // `analyze.ts` does or it would measure a clock nothing ships (roadmap L4). The commander is
+    // priced without being shuffled in (CR 903.6), exactly as `analyze.ts` does it.
+    const cmd = new Set(sections.commanders);
+    const sim = manaModel(inputs.filter((dc) => !cmd.has(dc.card.name)), {
+      alsoPrice: inputs.filter((dc) => cmd.has(dc.card.name)),
+    });
+    const clockOpts = { commanderNames: sections.commanders, manaBudget: sim.manaMedian };
+    const clock = measuredClock(inputs, clockOpts);
     deck["clock"] = [clock === undefined ? "none" : String(clock)];
-    deck["power@5"] = [pressureCurve(inputs, { commanderNames: sections.commanders })[4].power.toFixed(1)];
+    deck["power@5"] = [pressureCurve(inputs, clockOpts)[4].power.toFixed(1)];
     // Every known category, including empty ones: a category that stops matching anything is the
     // failure this gate exists to catch, and an absent key would read as "not measured".
     for (const cat of BUILD_CATEGORIES) deck[cat] = [...(members.get(cat) ?? [])].sort();

@@ -770,6 +770,8 @@ export function analyzeDeckStructured(
     ? computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, {
         comboCards, landRecommendation: landRec, primary: strategies[0]?.name,
         castCurves: manaSim.curves,
+        // The clock's mana budget, off the same two arms — see `pressure.ts`.
+        manaBudget: manaSim.manaMedian,
       })
     : undefined;
 
