@@ -107,7 +107,11 @@ export function classifyAccelerant(dc: DeckCard): Accelerant | null {
   const line = (dc.card.typeLine ?? "").toLowerCase();
   const name = dc.card.name;
   const manaValue = dc.card.manaValue ?? 0;
-  if (/\bland\b/.test(line)) return null; // a land is a land drop, never an accelerant cast
+  // A land is a land drop, never an accelerant cast -- and this reads the JOINED type line ON PURPOSE
+  // where `simulate` reads the FRONT face (N3): a transform card's `producedMana` carries its BACK
+  // face's mana, so a front-face read here would price Ojer Axonil as a recurring red source, which
+  // it is not until it dies and transforms.
+  if (/\bland\b/.test(line)) return null;
   const text = dc.card.oracleText ?? "";
   if (LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text)) {
     return { name, manaValue, kind: "land-fetch", fetchTapped: FETCHES_TAPPED.test(text) };
@@ -228,8 +232,14 @@ export function colorMask(producedMana: readonly string[] | undefined): number {
  *
  *  It is why `producedMana` looks incomplete on lands and is not: 2,500 of the 2,646 land slots in
  *  the 71 decks carry one, and the entire remainder is fetchlands, which correctly produce nothing
- *  of their own. */
-const FETCHLAND = /search your library for an?[^.]*\bland card\b/i;
+ *  of their own.
+ *
+ *  THE GATE IS `LAND_FETCH` FOR A LAND AND A SPELL ALIKE (roadmap N2, 2026-08-26). It used to demand
+ *  the literal words "land card" on the land side, and the fetch cycle does not print them --
+ *  Scalding Tarn says "an Island or Mountain CARD" -- so all ten real fetchlands fell through, 110
+ *  of the 162 slots this correction reaches. One predicate, because the two sides ask the same
+ *  question, and the land side gains `ONTO_BATTLEFIELD` with it: a search that puts the land in HAND
+ *  is not a land drop. */
 const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
 
 /** What a fetchland can find in THIS deck, as a colour mask.
@@ -257,6 +267,21 @@ export function fetchMask(oracleText: string, deck: readonly { typeLine: string;
     m |= colorMask(c.producedMana);
   }
   return m;
+}
+
+/** CR 712.4a: A CARD IN HAND IS ITS FRONT FACE, so a transform card's land back can never be played
+ *  as a land -- it is reached by transforming a permanent already on the battlefield. The type-line
+ *  test alone took a phantom land drop on 10 distinct cards / 23 deck-slots (Treasure Map, Primal
+ *  Amulet, Ojer Axonil, Dowsing Dagger and friends) and dropped each from the priced denominator.
+ *  `land-count.ts` already makes this check; this module never learned it (roadmap N3).
+ *
+ *  AN ALLOW-LIST OF FRONT-FACE-ONLY LAYOUTS, never a reject-list -- the `FRONT_FACE_ONLY` precedent,
+ *  so the next layout printed keeps today's reading rather than being silently narrowed. A MODAL DFC
+ *  keeps its land face, because you really do play that side: 28 distinct cards / 186 slots. */
+const FRONT_FACE_ONLY = new Set(["transform", "flip"]);
+function frontTypeLine(typeLine: string | undefined, layout: string | undefined): string {
+  const line = typeLine ?? "";
+  return layout && FRONT_FACE_ONLY.has(layout) ? line.split("//")[0] : line;
 }
 
 /** One coloured requirement of a mana cost, as the set of colours that may pay it. A mono pip is one
@@ -417,10 +442,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
 
   const printed = deck.map((dc) => ({ typeLine: dc.card.typeLine ?? "", producedMana: dc.card.producedMana }));
   const slots: DeckSlot[] = deck.map((dc) => {
-    const isLand = /\bland\b/i.test(dc.card.typeLine ?? "");
+    const isLand = /\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout));
     const text = dc.card.oracleText ?? "";
     // A land-fetch SPELL searches the library too, so it fixes colours and thins by the same fact.
-    const fetches = (isLand && FETCHLAND.test(text)) || (!isLand && LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text));
+    const fetches = LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text);
     return {
       name: dc.card.name,
       manaValue: dc.card.manaValue ?? 0,

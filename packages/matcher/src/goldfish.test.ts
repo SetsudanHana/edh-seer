@@ -376,7 +376,9 @@ test("C1/C2/C3: the colour model is an anchor, a bound and a discriminator", () 
 });
 
 test("C4: a fetchland is a colour fixer AND a thinner", () => {
-  const tarn = "Sacrifice this land: Search your library for an Island or Mountain land card, put it onto the battlefield, then shuffle.";
+  // VERBATIM FROM THE CORPUS. The fixture used to read "an Island or Mountain LAND card" -- a word
+  // no fetchland prints -- so C4 passed against a card this repo had invented (roadmap N2).
+  const tarn = "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Mountain card, put it onto the battlefield, then shuffle.";
   const deckPrinted = [{ typeLine: "Land — Island", producedMana: ["U"] }, { typeLine: "Land — Mountain", producedMana: ["R"] }, { typeLine: "Land — Forest", producedMana: ["G"] }];
   // It finds what it NAMES, against what this deck actually holds -- so it is a blue and red source
   // and not a green one, and in a deck with no Mountain it would not be a red one either.
@@ -461,4 +463,54 @@ test("N15: the simulator's fetches read the corrected policy, and it pays on a f
   ];
   const withRamp = simulate(ramp, { trials: TRIALS, turns: 8, seed: 11 });
   expect(pAtLeastMana(withRamp, 6, 6)).toBeGreaterThan(0.65);
+});
+
+// N2. THE TEN REAL FETCHLANDS ARE FETCHLANDS. The gate demanded the literal words "land card" and
+// the cycle prints "an Island or Mountain CARD", so ~110 slots -- concentrated in exactly the
+// multicolour decks the colour model was built for -- were an untapped land making one colourless
+// mana and thinning nothing.
+test("N2: the fetch cycle matches the gate, on its own printed text", () => {
+  const TARN = "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Mountain card, put it onto the battlefield, then shuffle.";
+  const tarns = Array.from({ length: 20 }, (_, i) => card(`Tarn ${i}`, "Land", 0, TARN, []));
+  const islands = Array.from({ length: 17 }, (_, i) => card(`Island ${i}`, "Basic Land — Island", 0, "", ["U"]));
+  const blue = Array.from({ length: 62 }, (_, i) => card(`Blue ${i}`, "Sorcery", 3, "", undefined));
+  // The fetch produces nothing of its own, so without the colour read the deck has 17 blue sources
+  // for a {U}{U}{U} cost and reads far under its real mana. WITH it, every Tarn is a blue source.
+  const r = simulate([...tarns, ...islands, ...blue.slice(0, 61), card("Cryptic", "Instant", 4, "", undefined)], { trials: TRIALS, turns: 6, seed: 4 });
+  expect(r.byCardCastable.get("Cryptic")).toBeDefined();
+
+  // MEASURED with the fetch inert (the old gate): 22.29% at turn 4 for a triple-blue four-drop.
+  const triple = card("Triple", "Sorcery", 4, "", undefined);
+  (triple.card as { manaCost?: string }).manaCost = "{1}{U}{U}{U}";
+  const withFetch = simulate([...tarns, ...islands, ...blue.slice(0, 61), triple], { trials: TRIALS, turns: 6, seed: 4 });
+  expect(withFetch.byCardCastable.get("Triple")![3]).toBeGreaterThan(0.3);
+});
+
+// N3. CR 712.4a -- A CARD IN HAND IS ITS FRONT FACE, so a transform card's land back can never be
+// played as a land. `land-count.ts` already makes this check (E4); `goldfish.ts` never learned it,
+// and took a phantom land drop on 23 deck-slots while dropping the card from the priced denominator.
+test("N3: a transform card's land back is not a land drop, and the front face is priced", () => {
+  const compass = (i: number): DeckCard => {
+    const c = card(`Compass ${i}`, "Artifact // Land", 3, "{3}, {T}: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.");
+    (c.card as { layout?: string }).layout = "transform";
+    return c;
+  };
+  const deck = [...Array.from({ length: 20 }, (_, i) => compass(i)), ...basics(17), ...spells(62, 3)];
+  const r = simulate(deck, { trials: TRIALS, turns: 6, seed: 4 });
+  // It is a SPELL, so it is priced -- a land is not, which is how the phantom land drop also removed
+  // it from `payableShareAt`'s denominator.
+  expect(r.byCard.has("Compass 0")).toBe(true);
+  // And the deck has 17 lands, not 37. Read as lands these would be a normal mana base.
+  expect(pAtLeastMana(r, 6, 6)).toBeLessThan(0.1);
+
+  // A MODAL DFC KEEPS ITS LAND FACE -- you really do play that side (28 distinct cards, 186 slots in
+  // the 71 decks), which is the half a blanket type-line-plus-`//` rule would have broken.
+  const mdfc = (i: number): DeckCard => {
+    const c = card(`Shatterskull ${i}`, "Sorcery // Land", 3, "");
+    (c.card as { layout?: string }).layout = "modal_dfc";
+    return c;
+  };
+  const withMdfc = simulate([...Array.from({ length: 20 }, (_, i) => mdfc(i)), ...basics(17), ...spells(62, 3)], { trials: TRIALS, turns: 6, seed: 4 });
+  // 34.0% here; refusing the land face reads 0.96%, measured by mutating the allow-list.
+  expect(pAtLeastMana(withMdfc, 6, 6)).toBeGreaterThan(0.3);
 });
