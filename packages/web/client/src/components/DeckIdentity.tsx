@@ -153,13 +153,16 @@ export function DeckIdentity({
             return `${commanderCast.length > 1 ? `${c.name}: ` : ""}${odds}`;
           }).join(" · ")}
           {/* THE CAVEAT IS VISIBLE, NOT A TOOLTIP. It was a `title` first, and a tooltip is not a
-              caveat on a touch device or for anyone who never hovers -- the CLI prints this line
-              outright and the web hid it. The figure is measurably LOW for a land-fetch ramp deck
-              (I11: 34-43% against a simulated 55.8% on the owner's own list), so a reader who never
-              hovers would take a wrong number at face value. */}
+              caveat on a touch device or for anyone who never hovers.
+              WHAT IT SAYS IS THE PLAY POLICY, because that is what the interval now IS. It used to
+              read "lands and mana rocks only -- land-fetch ramp like Cultivate is not counted, so
+              this reads low", which L4a deleted from the CLI when the figure became a SIMULATION that
+              models land-fetch ramp -- and this copy of the sentence went on being read for a week.
+              FOUND IN A LIVE BROWSER, and it is the N6 shape one panel over: two copies of a
+              sentence, one of them updated. */}
           {commanderCast.some((c) => c.mana !== null) ? (
             <span className="block text-xs text-(--muted)">
-              lands and mana rocks only — land-fetch ramp like Cultivate is not counted, so this reads low
+              simulated: the low end holds up two mana, the high end spends everything on ramp
             </span>
           ) : null}
           {/* …AND THE ENGINE NOW KNOWS BY HOW MUCH, so the caveat names the better number instead of

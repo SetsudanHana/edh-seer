@@ -33,6 +33,11 @@ test("DeckIdentity counts the deck's thing under the heading that names it", () 
   expect(screen.getByText(/plus Samut, the Driving Force every game/)).toBeInTheDocument();
 });
 
+// A CAVEAT THAT OUTLIVED THE DEFECT IT DESCRIBED. This panel printed "land-fetch ramp like Cultivate
+// is not counted, so this reads low" -- deleted from the CLI when L4a made the figure a SIMULATION
+// that models land-fetch ramp, and kept here, where it went on being read. Found in a live browser,
+// not by a test. N6 is the same shape one panel over: two copies of a sentence, one of them updated.
+
 // N6: ONE RENDERER ACROSS THE SURFACES. The range reads "55% – 62%" here exactly as it does in the
 // CLI and in `CardList` -- this panel used to print its own compact "55–62%", which is how a
 // measured zero came to read "1%" in one surface and "0%" in another.
@@ -41,6 +46,8 @@ test("the commander's cast odds are a RANGE, and a refused cost is an em dash an
     { name: "Samut, the Driving Force", turn: 6, castable: { low: 0.55, high: 0.62 }, mana: { low: 0.56, high: 0.63 } },
   ]} />);
   expect(screen.getByText(/55% – 62% by turn 6/)).toBeInTheDocument();
+  expect(screen.queryByText(/is not counted/)).not.toBeInTheDocument();
+  expect(screen.getByText(/holds up two mana/)).toBeInTheDocument();
   // ONE commander needs no name prefix; a partner pair does, or the two rows cannot be told apart.
   expect(screen.queryByText(/Samut, the Driving Force: /)).not.toBeInTheDocument();
   rerender(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
