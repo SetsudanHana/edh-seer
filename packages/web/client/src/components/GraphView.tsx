@@ -375,6 +375,21 @@ export function GraphView(
   const paint = PAINT_MODES.find((m) => m.id === paintId) ?? PAINT_MODES[0];
   /** What the current paint mode's colours mean, for this deck. */
   const legend = useMemo(() => paintLegend(paint, graph.nodes), [paint, graph]);
+  /** THE COUNTS CAN EXCEED THE DECK, AND SAYING SO IS THE FIX RATHER THAN CHANGING THEM.
+   *  `paintLegend` counts a node once per VALUE it paints, which is correct -- a Legendary Artifact
+   *  Creature really does show two hues -- but it reads as a card census, and three of four persona
+   *  reviews stopped to do the arithmetic: "57 + 24 + 6 + 1 is 88, plus 35 lands is 123, which is
+   *  more than 100... I had to guess and I'm not sure." All three landed on double-counting and
+   *  none was confident, which is a caveat's whole job left undone.
+   *
+   *  CONDITIONAL, LIKE EVERY OTHER ADMISSION THIS REPORT MAKES. A mana-value legend cannot
+   *  overcount (one bucket per card) and neither can a single-type deck, so a note there would be
+   *  noise claiming a defect that is not present. It appears when the sum genuinely exceeds the
+   *  slots on the board, and is silent otherwise. */
+  const legendOvercounts = useMemo(() => {
+    const slots = graph.nodes.reduce((n, x) => n + (x.copies ?? 1), 0);
+    return legend.reduce((n, r) => n + r.count, 0) > slots;
+  }, [legend, graph]);
 
   /** Card id -> the hues it paints, under the CURRENT mode. Rebuilt when the mode changes and read
    *  by the draw loop through a ref, so a mode switch repaints without touching the simulation. */
@@ -739,13 +754,22 @@ export function GraphView(
         if (fe && !offEvent && !offFocus) {
           const hx = l.target.x - tx * ART_RADIUS;
           const hy = l.target.y - ty * ART_RADIUS;
-          const head = 5 / cam.z;
+          // FILLED AND BIGGER, BECAUSE THE STROKED ONE DID NOT DO ITS JOB. It shipped as a 5px
+          // three-point STROKE at the edge's own 1-2px line width, which is a chevron a reader has
+          // to already be looking for. The tuner review -- given a still, which is exactly the case
+          // this mark exists for -- reported "I cannot resolve an arrowhead on any of the ~30
+          // painted dashes", and lost the task it needed direction for. A filled triangle at 8px
+          // reads as a solid shape rather than three thin lines, and its area does not depend on
+          // the edge's weight.
+          const head = 8 / cam.z;
           ctx.setLineDash([]);
           ctx.beginPath();
-          ctx.moveTo(hx - tx * head - ty * head * 0.55, hy - ty * head + tx * head * 0.55);
+          ctx.moveTo(hx - tx * head - ty * head * 0.5, hy - ty * head + tx * head * 0.5);
           ctx.lineTo(hx, hy);
-          ctx.lineTo(hx - tx * head + ty * head * 0.55, hy - ty * head - tx * head * 0.55);
-          ctx.stroke();
+          ctx.lineTo(hx - tx * head + ty * head * 0.5, hy - ty * head - tx * head * 0.5);
+          ctx.closePath();
+          ctx.fillStyle = ctx.strokeStyle;
+          ctx.fill();
         }
       }
       ctx.globalAlpha = 1;
@@ -1508,13 +1532,28 @@ export function GraphView(
             *  facet, this filters the EDGES by a mechanism, and the two compose — trace `dies` while
             *  painting by role and the board says which roles the death chain runs through.
             *
-            *  Capped at the eight commonest, with the count on each: the tail is verbs one or two
-            *  edges carry, and a chip row long enough to wrap three times is a list, not a control.
+            *  THE LABEL NAMES THE SCOPE, AND THAT IS A CORRECTION. It read "Trace event", which said
+            *  neither what the numbers count nor what they count it over -- and the flow legend four
+            *  lines below uses the SAME mechanism words with per-card numbers, so a reader met
+            *  "Being cast 90" here and "Being cast 10" there with nothing to reconcile them. Three
+            *  of four persona reviews guessed deck-wide-versus-one-card and none was confident;
+            *  one wrote "if I'm wrong about this, I'm wrong about the whole screen". Naming the
+            *  UNIT (connections) and the SCOPE (this deck / this card) on each row is the whole fix.
+            *
+            *  NO CAP, AND THE OLD ONE WAS A SILENT TRUNCATION. It rendered the eight commonest with
+            *  no ellipsis and no "more", so the row read as the complete menu of what can be traced
+            *  -- a skeptic reviewer spotted a mechanism on the board with no chip and concluded "I
+            *  stopped trusting the chip counts as a census of anything". MEASURED over the 71 decks:
+            *  distinct mechanisms per deck run min 5 - p50 11 - p90 14 - MAX 15, and **59 of 71
+            *  decks (83%) exceeded the cap of 8**, so it was hiding three to seven mechanisms on
+            *  nearly every deck. Fifteen chips wrap to two rows; that is a control, and a menu that
+            *  lies about its own contents is not. This repo's own rule: no silent caps.
+            *
             *  Absent entirely on a deck whose edges carry one event, where naming it changes
             *  nothing. */}
           {eventCounts.length > 1 ? (
             <div className="basis-full flex flex-wrap gap-2 items-baseline">
-              <span className="eyebrow text-(--muted)">Trace event</span>
+              <span className="eyebrow text-(--muted)">Connections across the deck</span>
               <button
                 type="button"
                 aria-pressed={eventVerb === null}
@@ -1525,7 +1564,7 @@ export function GraphView(
               >
                 All
               </button>
-              {eventCounts.slice(0, 8).map(([verb, count]) => (
+              {eventCounts.map(([verb, count]) => (
                 <button
                   key={verb}
                   type="button"
@@ -1571,16 +1610,24 @@ export function GraphView(
             </button>
           ) : null}
 
-          <button
-            type="button"
-            aria-pressed={debug}
-            onClick={() => setDebug((d) => !d)}
-            className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
-              debug ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
-            }`}
-          >
-            debug
-          </button>
+          {/* DEV ONLY. It sat between "lands (35)" and "fullscreen", where every neighbour is
+            *  English about the deck and this one is English about the PROGRAM. Two persona reviews
+            *  flagged it and both declined to press it -- "I didn't press it in case it did
+            *  something I couldn't undo" -- so it was costing trust on a surface it cannot help.
+            *  The panel it opens is already `import.meta.env.DEV`-gated further down; only the
+            *  toggle was reachable in a production build. */}
+          {import.meta.env.DEV ? (
+            <button
+              type="button"
+              aria-pressed={debug}
+              onClick={() => setDebug((d) => !d)}
+              className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                debug ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+              }`}
+            >
+              debug
+            </button>
+          ) : null}
 
           {canFullscreen ? (
             <button
@@ -1644,6 +1691,15 @@ export function GraphView(
           aria-label="Paint legend"
           className="pointer-events-none flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--muted)"
         >
+          {/* THE SCOPE, NAMED. These rows use the same mechanism words as the chip row above and
+            *  count something different -- connections through ONE card rather than across the
+            *  deck. Every persona review asked what the numbers counted and none could tell:
+            *  "is 62 cards or 62 separate interactions?", "ten edges, ten other cards, or ten
+            *  reason sentences?". A count with no unit is not evidence, and two counts that share
+            *  a vocabulary without sharing a scope are worse than either alone. */}
+          {flowLegend && flowLegend.length > 0 ? (
+            <span className="eyebrow shrink-0">Connections through this card</span>
+          ) : null}
           {/* A FLOW ROW IS A BUTTON AND A PAINT ROW IS NOT, because only the first has something to
             *  isolate: clicking an event dims the rest of the flow, which is the "and filter them"
             *  half of the same complaint. Clicking it again clears. The paint rows stay inert, so
@@ -1694,6 +1750,11 @@ export function GraphView(
               {row.count !== undefined ? <span className="stat-num text-(--muted)">{row.count}</span> : null}
             </div>
           ))}
+          {legendOvercounts ? (
+            <span data-testid="paint-legend-overcount" className="opacity-70">
+              a card in two rows is counted in both
+            </span>
+          ) : null}
         </div>
 
         <div

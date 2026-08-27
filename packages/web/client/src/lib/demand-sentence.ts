@@ -206,7 +206,12 @@ export const MECHANISM: Record<string, string> = {
   creates: "creating a token",
   "ramp-target": "fetching a land",
   tutor: "searching up a card",
-  "graveyard-recursion": "bringing cards back",
+  // "FROM WHERE, TO WHERE?" -- a tuner's objection, and half of it is answerable. The engine's
+  // sentence is "When P is in the GRAVEYARD, C can bring it back", so the source zone is a printed
+  // fact and belongs in the label. The DESTINATION is not in the kind (graveyard-to-hand and
+  // graveyard-to-battlefield derive the same one), so the label does not claim it -- naming a zone
+  // the tag cannot distinguish would be the wrong half of the same complaint.
+  "graveyard-recursion": "bringing cards back from a graveyard",
   scales: "getting bigger",
   doubles: "doubling a trigger",
   wincon: "counting toward a win",
@@ -242,8 +247,16 @@ export const MECHANISM: Record<string, string> = {
  *  measured set plus the rest of `GRANT_PHRASES`, and an unmapped kind falls through to de-slugified
  *  text, which is exactly what every one of them did before this map existed. */
 export const STATIC_KIND: Record<string, string> = {
-  "static:cost-reduction": "costing less",
-  "static:pump": "bigger stats",
+  // "LESS THAN WHAT?" -- asked by two persona reviews independently. The engine's own sentence is
+  // "P reduces what C COSTS", and a cost reduction is refused on a land because "a land is played,
+  // not cast", so the thing reduced is the CAST cost and the label can say so.
+  "static:cost-reduction": "costing less to cast",
+  // "BIGGER STATS" LEFT OUT THE ONE FACT A TUNER CUTS ON. Their words: "Anthems? +1/+1 counters?
+  // Equipment? A 'power equal to the number of legends you control' effect? All four are different
+  // cards to me and I'd cut them differently." The KIND genuinely cannot separate those -- `pump`
+  // is any power/toughness increase -- so the honest move is to name the axis precisely rather than
+  // to imply a narrower claim. `PHRASES.pump` in the engine is "gives +N/+N", which is exactly this.
+  "static:pump": "boosting power and toughness",
   "static:keyword-grant": "granted abilities",
   "static:type-grant": "granted types",
   "static:speed-increase": "haste",

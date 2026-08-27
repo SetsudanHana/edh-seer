@@ -1,5 +1,6 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { StrictMode } from "react";
+import { eventLabel } from "../lib/demand-sentence.js";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { EDIT_REHEAT_ALPHA, PARK_ALPHA } from "./board-force.js";
@@ -1460,6 +1461,70 @@ describe("flow view", () => {
     expect(offsetsThisFrame()).not.toEqual(first);
   });
 
+  // FOUR PERSONA REVIEWS ASKED WHAT THE NUMBERS COUNT AND NONE COULD TELL. The chip row and the
+  // flow legend share a mechanism vocabulary and count different things over different scopes, so
+  // each states its own -- "if I'm wrong about this, I'm wrong about the whole screen".
+  test("both mechanism rows say what they count and over what", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "R" }), card({ id: "X" }), card({ id: "Y" })],
+      [
+        { from: "R", to: "X", weight: 2, tags: ["enters:creature"], reasonTexts: ["R feeds X"] },
+        { from: "R", to: "Y", weight: 2, tags: ["cast:spell"], reasonTexts: ["R feeds Y"] },
+      ],
+    );
+    const { canvas } = frames(graph, calls);
+    // Deck-wide row, before anything is selected.
+    expect(document.body.textContent).toContain("Connections across the deck");
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    expect(document.body.textContent).toContain("Connections through this card");
+  });
+
+  // A SILENT CAP READS AS A COMPLETE MENU. The chip row rendered the eight commonest with no
+  // ellipsis, and 59 of 71 calibration decks carry MORE than eight mechanisms (p50 11, max 15) --
+  // so on 83% of decks it hid three to seven and said nothing. A skeptic reviewer found a mechanism
+  // on the board with no chip and stopped trusting the counts as a census of anything.
+  test("every mechanism on the board gets a chip, with no silent truncation", () => {
+    const calls: string[] = [];
+    const verbs = ["enters", "cast", "dies", "attacks", "leaves", "taps", "untaps", "discard", "mill", "sacrifice"];
+    const nodes = [card({ id: "R" }), ...verbs.map((v, i) => card({ id: `N${i}` }))];
+    const edges = verbs.map((v, i) => ({
+      from: "R", to: `N${i}`, weight: 2, tags: [`${v}:creature`], reasonTexts: [`R ${v} N${i}`],
+    }));
+    frames(graphOf(nodes, edges), calls);
+    // Ten distinct mechanisms, all ten named -- the old cap would have shown eight.
+    const text = document.body.textContent ?? "";
+    for (const v of verbs) expect(text).toContain(eventLabel(v));
+  });
+
+  // THE PAINT COUNTS CAN EXCEED THE DECK, and three of four persona reviews stopped to do the
+  // arithmetic without reaching a confident answer. A node paints one hue per value it carries, so
+  // an artifact creature is counted twice -- correct, and unreadable without being said.
+  test("the paint legend admits double-counting only when it actually double-counts", () => {
+    const twoTypes = card({ id: "A" });
+    (twoTypes as unknown as Record<string, unknown>).types = ["artifact", "creature"];
+    const oneType = card({ id: "B" });
+    (oneType as unknown as Record<string, unknown>).types = ["creature"];
+
+    const calls: string[] = [];
+    frames(graphOf([twoTypes, oneType], [
+      { from: "A", to: "B", weight: 2, tags: ["enters:creature"], reasonTexts: ["A feeds B"] },
+    ]), calls);
+    expect(document.querySelector('[data-testid="paint-legend-overcount"]')).not.toBeNull();
+
+    cleanup();
+    const calls2: string[] = [];
+    const plain1 = card({ id: "C" }); (plain1 as unknown as Record<string, unknown>).types = ["creature"];
+    const plain2 = card({ id: "D" }); (plain2 as unknown as Record<string, unknown>).types = ["creature"];
+    frames(graphOf([plain1, plain2], [
+      { from: "C", to: "D", weight: 2, tags: ["enters:creature"], reasonTexts: ["C feeds D"] },
+    ]), calls2);
+    // Silent when nothing is double-counted: a caveat claiming a defect that is not present is noise.
+    expect(document.querySelector('[data-testid="paint-legend-overcount"]')).toBeNull();
+  });
+
   // A STATIC IS A CLASS, NOT A MECHANISM. A reason tag is `<mechanism>:<subject>` everywhere except
   // the static family, where it is `static:<mechanism>` -- so splitting on the colon threw the
   // mechanism away and called a cost cut and an anthem the same thing. 6,829 of 43,376 reasons
@@ -1486,9 +1551,12 @@ describe("flow view", () => {
     // TWO ROWS, NOT ONE COLLAPSED "static".
     expect(values).not.toContain("static");
     // AND IN A PLAYER'S WORDS, never the raw kind -- an internal identifier rendered as English is
-    // the defect `demand-sentence.ts` exists to prevent.
-    expect(rows.map((r) => r.textContent).join(" ")).toContain("Costing less");
-    expect(rows.map((r) => r.textContent).join(" ")).toContain("Bigger stats");
+    // the defect `demand-sentence.ts` exists to prevent. Asserted as "not the raw key, and the two
+    // differ" rather than as exact strings: `demand-sentence.test.ts` already ratchets the raw-key
+    // fallback, and pinning wording here made a persona-driven reword fail a test about SPLITTING.
+    const labels = rows.map((r) => (r.textContent ?? "").replace(/\d+$/, "").trim());
+    expect(labels.some((l) => /static/i.test(l))).toBe(false);
+    expect(new Set(labels).size).toBe(labels.length);
     // Distinct hues: the whole point is that they stop looking alike.
     const strokes = rows.map((r) => r.querySelector("path")?.getAttribute("stroke"));
     expect(new Set(strokes).size).toBe(strokes.length);
