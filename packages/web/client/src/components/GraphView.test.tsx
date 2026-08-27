@@ -1754,3 +1754,40 @@ describe("paint parking", () => {
     expect(calls.length).toBeGreaterThan(before);
   });
 });
+
+/** TRACE ONE EVENT THROUGH THE DECK — owner-reported 2026-08-27: a click showed the flow but every
+ *  mechanism in it looked alike, so a deck's `dies` chain and its `enters` chain were one mesh.
+ *
+ *  The chips are DOM and testable here; the dimming itself is canvas and is verified in a live
+ *  browser, which is the standing rule for this component. */
+describe("trace-event filter", () => {
+  test("names the events this deck's edges carry, commonest first, with counts", () => {
+    render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+    const verbs = new Map<string, number>();
+    for (const e of SAMPLE.graph.edges) {
+      for (const v of new Set(e.tags.map((t) => t.split(":")[0]))) verbs.set(v, (verbs.get(v) ?? 0) + 1);
+    }
+    if (verbs.size < 2) return; // the row is absent by design when naming an event changes nothing
+    const [topVerb, topCount] = [...verbs].sort((a, b) => b[1] - a[1])[0];
+    expect(screen.getByText(/Trace event/i)).toBeInTheDocument();
+    const chip = screen.getByRole("button", { name: new RegExp(`${topCount}$`) });
+    expect(chip).toBeInTheDocument();
+    expect(topVerb.length).toBeGreaterThan(0);
+  });
+
+  test("a chip toggles, and clicking the active one clears the trace rather than stranding it", async () => {
+    const user = userEvent.setup();
+    render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+    const all = screen.queryByRole("button", { name: "All" });
+    if (!all) return; // single-event deck: no row
+    const chips = screen.getAllByRole("button").filter((b) => /\s\d+$/.test(b.textContent ?? ""));
+    const first = chips[0]!;
+    expect(all).toHaveAttribute("aria-pressed", "true");
+    await user.click(first);
+    expect(first).toHaveAttribute("aria-pressed", "true");
+    expect(all).toHaveAttribute("aria-pressed", "false");
+    await user.click(first);
+    expect(first).toHaveAttribute("aria-pressed", "false");
+    expect(all).toHaveAttribute("aria-pressed", "true");
+  });
+});

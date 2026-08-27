@@ -146,3 +146,15 @@ export function demandSentence(key: string): string {
 
   return `${subject} ${event}${narrowed ? " (a real one, not the game's own)" : ""}`;
 }
+
+/** A census key's VERB half as a chip label — "dies" -> "Dying", "combat-damage" -> "Dealing combat
+ *  damage". Reuses `DEMAND_VERB` rather than adding a second vocabulary: this repo has now twice
+ *  shipped an internal identifier rendered as English (`targetedRemoval`, `enters:type:land`), and
+ *  both times the humane label already existed one file over.
+ *
+ *  A verb the map has never seen de-slugs rather than printing a raw token, which is the same
+ *  fallback `demandSentence` takes and for the same reason. */
+export function eventLabel(verb: string): string {
+  const phrase = DEMAND_VERB[verb] ?? DEMAND_PHASE[verb] ?? verb.replace(/-/g, " ");
+  return phrase.charAt(0).toUpperCase() + phrase.slice(1);
+}

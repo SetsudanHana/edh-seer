@@ -11,6 +11,7 @@ import {
   FLOW_DASH, FLOW_HUE, PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
 } from "./presets.js";
 import { computeFlow, type Flow, type FlowEdge } from "./flow.js";
+import { eventLabel } from "../lib/demand-sentence.js";
 import {
   ART_RADIUS,
   EDIT_REHEAT_ALPHA, CARD_H, CARD_W, createBoardSimulation, DEFAULT_PARAMS, linkDistanceFor, nodeRadius,
@@ -197,6 +198,19 @@ export function GraphView(
   /** Which facet the board is PAINTED by. It moves no node: geometry is synergy and only synergy,
    *  so switching this is a restyle of a layout that never re-simulates. */
   const [paintId, setPaintId] = useState(PAINT_MODES[0].id);
+  /** WHICH EVENT THE READER IS TRACING, or null for all of them.
+   *
+   *  Owner-reported 2026-08-27: "when I click a card this shows me the flow of events, but I cannot
+   *  distinguish them, or filter them — say I am interested in the flow of a specific event through
+   *  the deck". The board could say WHAT connects to what and never WHICH MECHANISM did it, so a
+   *  deck's `dies` chain and its `enters` chain were one indistinguishable mesh.
+   *
+   *  A FILTER RATHER THAN A COLOUR, and that is the design decision. Colouring edges by event needs
+   *  one hue per verb; this corpus has ~20 and a categorical palette holds 6-8 before the colours
+   *  stop being tellable apart — the rainbow would be less legible than the mesh it replaced. Naming
+   *  one event and dimming the rest scales to any number of them, and it is the same
+   *  dim-rather-than-hide grammar the search already uses, so the deck keeps its shape. */
+  const [eventVerb, setEventVerb] = useState<string | null>(null);
   // Capability check rather than a user-agent sniff: iOS Safari on iPhone has no element
   // fullscreen, and a button that silently does nothing is worse than no button.
   const canFullscreen = typeof Element !== "undefined" && "requestFullscreen" in Element.prototype;
@@ -323,6 +337,33 @@ export function GraphView(
     };
   }, [fullGraph, loneTokens, showLoneTokens, landNodes, showLands]);
 
+  /** The events this deck's edges actually carry, commonest first, with the number of edges each
+   *  one explains. Derived from the drawn graph rather than the full one, so hiding lands changes
+   *  the counts a reader is choosing between. An edge carries several tags and therefore counts
+   *  once per distinct verb — the question is "how many connections would naming this event show
+   *  me", and an edge that carries `dies` is one of those whether or not it also carries `cast`. */
+  const eventCounts = useMemo(() => {
+    const n = new Map<string, number>();
+    for (const e of graph.edges) {
+      for (const verb of new Set(e.tags.map((t) => t.split(":")[0]))) n.set(verb, (n.get(verb) ?? 0) + 1);
+    }
+    return [...n].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [graph]);
+
+  /** True when this edge carries the traced event. One predicate, used by the paint loop AND by the
+   *  flow walk, so what is drawn and what is walked cannot disagree about what an edge is. */
+  const edgeHasEvent = useCallback(
+    (e: { tags: string[] }) => eventVerb === null || e.tags.some((t) => t.split(":")[0] === eventVerb),
+    [eventVerb],
+  );
+
+  /** The edges a flow may walk. Filtering HERE rather than inside `computeFlow` keeps that module
+   *  about traversal and this one about what the reader asked to see. */
+  const flowEdges = useMemo(
+    () => (eventVerb === null ? graph.edges : graph.edges.filter(edgeHasEvent)),
+    [graph, eventVerb, edgeHasEvent],
+  );
+
   const paint = PAINT_MODES.find((m) => m.id === paintId) ?? PAINT_MODES[0];
   /** What the current paint mode's colours mean, for this deck. */
   const legend = useMemo(() => paintLegend(paint, graph.nodes), [paint, graph]);
@@ -382,6 +423,11 @@ export function GraphView(
   // whole layout on every keystroke, moving the board under the user while they type.
   const matchesRef = useRef<Set<string> | null>(null);
   matchesRef.current = matches;
+  /** The event predicate, read by the paint loop. Assigned in the COMPONENT BODY like every other
+   *  ref here, which is exactly what the catch-all invalidation effect above relies on: changing it
+   *  implies a render, and that effect wakes the parked rAF so the board repaints. */
+  const edgeHasEventRef = useRef(edgeHasEvent);
+  edgeHasEventRef.current = edgeHasEvent;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -435,6 +481,12 @@ export function GraphView(
     const links: SimLink[] = graph.edges
       .map((e) => ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight }))
       .filter((l): l is SimLink => Boolean(l.source && l.target));
+    // WHICH TAGS EACH DRAWN EDGE CARRIES, keyed the way `flowEdgeByPair` already keys. `SimLink`
+    // deliberately does not carry them: it is the SIMULATION's type and the force layout has no
+    // business knowing what a mechanism is. Graph-scoped, so it is rebuilt when the board's edges
+    // change and never per frame.
+    const tagsByPair = new Map<string, string[]>();
+    for (const e of graph.edges) tagsByPair.set(`${e.from}>${e.to}`, e.tags);
     // Sum of weight over every link touching a node -- NOT `deg` (a partner COUNT) a few lines
     // below. An edge is binary but synergy has magnitude (CLAUDE.md): a card with six weak partners
     // must not outrank one with two strong ones for a label. Built once here, read every frame by
@@ -589,23 +641,52 @@ export function GraphView(
         const hoverDir = hoverActive && l.source.id === hoveredId ? "down"
           : hoverActive && l.target.id === hoveredId ? "up"
           : null;
-        ctx.globalAlpha = fe ? 1
+        // AN EDGE THAT DOES NOT CARRY THE TRACED EVENT IS SCENERY, and it outranks every other
+        // alpha rule here: the reader named one mechanism, so nothing else on the board may present
+        // itself as the answer — not a hover, and not the direction hues of a flow that walked only
+        // matching edges anyway. Dimmed rather than hidden, the same grammar the search uses, so the
+        // deck keeps its shape and the traced chain reads AGAINST it rather than in a vacuum.
+        const offEvent = !edgeHasEventRef.current({ tags: tagsByPair.get(`${l.source.id}>${l.target.id}`) ?? [] });
+        ctx.globalAlpha = offEvent ? 0.06
+          : fe ? 1
           : activeFlow ? 0.15
           : hoverDir ? 1
           : hoverActive ? edgeAlpha(l.weight, maxWeight) * HOVER_EDGE_DIM
           : edgeAlpha(l.weight, maxWeight);
-        ctx.strokeStyle = fe ? FLOW_HUE[fe.dir] : hoverDir ? FLOW_HUE[hoverDir] : paintColors.edge;
+        ctx.strokeStyle = offEvent ? paintColors.edge
+          : fe ? FLOW_HUE[fe.dir]
+          : hoverDir ? FLOW_HUE[hoverDir]
+          : paintColors.edge;
         ctx.lineWidth = edgeWidth(l.weight, maxWeight) / cam.z;
         // Sticky context state: the else branch is not optional. Without it the pattern set by the
         // last flow edge would dash every rim, border and card frame drawn after this loop.
-        if (fe) {
+        if (fe && !offEvent) {
           ctx.setLineDash([FLOW_DASH.on / cam.z, FLOW_DASH.off / cam.z]);
           ctx.lineDashOffset = -crawl / cam.z;
         } else {
           ctx.setLineDash([]);
         }
+        // TRIMMED TO THE RIM, NOT DRAWN TO THE CENTRE. A centre-to-centre line runs UNDER both
+        // discs, and once the discs carry card art the line reads as sliding beneath the card and
+        // out the other side — owner-reported, 2026-08-27. It also makes an edge that merely PASSES
+        // a third card look like it terminates there. Ending the stroke at the rim leaves the
+        // relationship legible and the disc unbroken.
+        //
+        // ART_RADIUS is the disc, which is what the miniature and dot modes draw. CARD mode draws a
+        // larger rectangle, so a line still enters the card frame there — that view is one card
+        // filling the screen with its neighbours off it, so the case is cosmetic rather than the one
+        // reported. Stated rather than silently approximated.
+        const ex = l.target.x - l.source.x;
+        const ey = l.target.y - l.source.y;
+        const elen = Math.hypot(ex, ey);
+        // Two overlapping discs have no visible span between them; drawing anyway would paint a
+        // backwards stub poking out of both.
+        if (elen <= ART_RADIUS * 2) continue;
+        const tx = ex / elen;
+        const ty = ey / elen;
         ctx.beginPath();
-        ctx.moveTo(l.source.x, l.source.y); ctx.lineTo(l.target.x, l.target.y);
+        ctx.moveTo(l.source.x + tx * ART_RADIUS, l.source.y + ty * ART_RADIUS);
+        ctx.lineTo(l.target.x - tx * ART_RADIUS, l.target.y - ty * ART_RADIUS);
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
@@ -1232,7 +1313,7 @@ export function GraphView(
   // the id alone left `flow` non-null with empty fans (the id still "selected", just resolving to
   // nothing), which dims every node with no inspector and no legend open to explain why.
   const flow = useMemo(
-    () => (inspectingNode ? computeFlow(graph.edges, inspectingNode.id) : null),
+    () => (inspectingNode ? computeFlow(flowEdges, inspectingNode.id) : null),
     [graph, inspectingNode],
   );
   const flowRef = useRef<Flow | null>(null);
@@ -1306,6 +1387,49 @@ export function GraphView(
                 Miniature
               </button>
             </>
+          ) : null}
+
+          {/* TRACE ONE EVENT THROUGH THE DECK. Owner-reported: a click showed the flow but every
+            *  mechanism in it looked alike, so a `dies` chain and an `enters` chain were one mesh.
+            *
+            *  A SEPARATE ROW FROM THE PAINT CHIPS, because they answer different questions and
+            *  sitting them together implied they were alternatives: paint colours the CARDS by a
+            *  facet, this filters the EDGES by a mechanism, and the two compose — trace `dies` while
+            *  painting by role and the board says which roles the death chain runs through.
+            *
+            *  Capped at the eight commonest, with the count on each: the tail is verbs one or two
+            *  edges carry, and a chip row long enough to wrap three times is a list, not a control.
+            *  Absent entirely on a deck whose edges carry one event, where naming it changes
+            *  nothing. */}
+          {eventCounts.length > 1 ? (
+            <div className="basis-full flex flex-wrap gap-2 items-baseline">
+              <span className="eyebrow text-(--muted)">Trace event</span>
+              <button
+                type="button"
+                aria-pressed={eventVerb === null}
+                onClick={() => setEventVerb(null)}
+                className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                  eventVerb === null ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                }`}
+              >
+                All
+              </button>
+              {eventCounts.slice(0, 8).map(([verb, count]) => (
+                <button
+                  key={verb}
+                  type="button"
+                  aria-pressed={verb === eventVerb}
+                  // Clicking the active chip clears it: the reader who wants out of a trace should
+                  // not have to find "All".
+                  onClick={() => setEventVerb((v) => (v === verb ? null : verb))}
+                  className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                    verb === eventVerb ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                  }`}
+                >
+                  {eventLabel(verb)} <span className="opacity-60">{count}</span>
+                </button>
+              ))}
+            </div>
           ) : null}
 
           {/* Only when the deck HAS one: a chip that can never change anything is worse than no
