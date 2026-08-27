@@ -30,7 +30,9 @@ function Movement({
         <h2 className="text-lg font-bold tracking-[-0.01em]">
           {title}{mark}
         </h2>
-        {count ? <span className="text-xs text-(--muted) stat-num">{count}</span> : null}
+        {/* A SENTENCE, NOT A FIGURE. "the panels each finding is read from" was set in mono, which
+          *  is the costume use `index.css` explicitly rules out. */}
+        {count ? <span className="text-xs text-(--muted)">{count}</span> : null}
       </div>
       {children}
     </section>

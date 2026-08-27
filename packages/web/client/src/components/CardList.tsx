@@ -129,7 +129,15 @@ function SortButton({ label, active, onClick }: { label: string; active: boolean
       className={`eyebrow ${active ? "text-(--accent)" : ""}`}
     >
       {label}
-      {active ? <span aria-hidden="true"> ↓</span> : null}
+      {/* AN AUTHORED SVG, NEVER A GLYPH — `DESIGN.md`'s own rule, and `↓` rendered at whatever
+        *  weight the reader's font chose beside 11px mono caps. `aria-sort` on the button already
+        *  carries the state for a reader who cannot see it. */}
+      {active ? (
+        <svg aria-hidden="true" width="8" height="9" viewBox="0 0 8 9" fill="none" stroke="currentColor"
+          strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" className="inline-block ml-1 align-middle">
+          <path d="M4 .8v7.2M1.2 5.4 4 8.2l2.8-2.8" />
+        </svg>
+      ) : null}
     </button>
   );
 }
@@ -302,9 +310,23 @@ export function CardList({ cards, artByName, coverage }: {
         // other panel — slid sideways under the thumb. The phone persona reported it as "the numbers
         // are off the right edge" (2026-08-27) and only a live measurement showed it was the entire
         // page rather than the table.
-        <div className="overflow-x-auto -mx-1 px-1">
+        // THE SCROLL BOX EXISTS ONLY WHERE THE TABLE OVERFLOWS. `overflow-x: auto` makes this div a
+        // scroll container, and a `position: sticky` header inside a scroll container sticks to THAT
+        // box rather than the viewport — measured: the header sat 728px above the fold while
+        // "stuck". The horizontal scroll was only ever needed at phone widths (the table's
+        // `min-w-[46rem]` fits a desktop container), so the container stops existing above `sm` and
+        // the sticky header works where a 52-row scan actually happens.
+        <div className="overflow-x-auto sm:overflow-x-visible -mx-1 px-1">
         <table className="w-full min-w-[46rem] text-sm border-collapse">
-          <thead>
+          {/* STICKY, because scanning a 52-row table BY COLUMN is exactly what a tuner does and the
+            *  labels used to scroll away — the brief's own sentence, "the precon player did not know
+            *  what the last column was". Offset by the tab strip, which is itself sticky at top-0.
+            *  The background is opaque or the rows show through as it passes over them.
+            *
+            *  THE OFFSET IS THE TAB STRIP'S MEASURED HEIGHT (33px in a live browser), not a round
+            *  number: at 44px an 11px band of scrolling rows showed between the strip and the
+            *  header and read as a rendering glitch. */}
+          <thead className="sticky top-[33px] z-[5] bg-(--background)">
             <tr className="border-b border-(--border)">
               <th className="eyebrow text-left font-normal py-2 pr-2 w-10">#</th>
               <th className="eyebrow text-left font-normal py-2 pr-2">

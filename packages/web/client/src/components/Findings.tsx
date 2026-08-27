@@ -14,9 +14,16 @@ import { useState } from "react";
  *  THE ORDER IS ARITHMETIC, NOT EDITORIAL. See `lib/findings.ts`: every source already carries its
  *  own target, and the rank is the fraction of that target missing. No weight was chosen.
  *
- *  THE SEVERITY MARK IS THE ONLY COLOUR ON THE LIST, and it is ordinal rather than semantic — first
- *  row, middle rows, last rows. It repeats what the ORDER already says, which is deliberate: at
- *  390px the rank column is dropped and the mark is what survives.
+ *  THE RULE BESIDE EACH HEADLINE IS NEUTRAL, AND THAT IS A CORRECTION. It shipped as
+ *  `[danger, warning, muted]` indexed by ROW POSITION, so red meant "first" rather than "critical" —
+ *  semantic tokens carrying ordinal meaning, which `DESIGN.md`'s Semantic-vs-Accent Rule reserves
+ *  for state and quality. On a well-tuned deck the mildest finding would still have opened blood
+ *  red. The list is already labelled "worst first" and each row carries its own figure and a bar
+ *  showing how much of its target is met, so MAGNITUDE is stated twice in data; a third statement in
+ *  a colour that means position was decoration telling a small lie.
+ *
+ *  Tone by magnitude was the alternative and is refused for now: it needs a threshold nobody has
+ *  measured, and this file's whole claim is that it introduces no constant beyond the row cap.
  */
 
 /** The one number a row is proving, and the bar under it. Right-aligned tabular mono, so a column
@@ -33,8 +40,6 @@ function Figure({ f }: { f: Finding }) {
   );
 }
 
-const SEVERITY = ["bg-(--danger)", "bg-(--warning)", "bg-(--muted)"];
-
 export function Findings({ report }: { report: DeckReport }) {
   const all = findings(report);
   // Every shortfall is computed; the cap is what SHOWS. The rest are reachable rather than dropped
@@ -47,8 +52,11 @@ export function Findings({ report }: { report: DeckReport }) {
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline gap-3 flex-wrap">
         <h2 className="text-lg font-bold tracking-[-0.01em]">What is wrong with this deck</h2>
-        <span className="text-xs text-(--muted) stat-num">
-          {all.length} {all.length === 1 ? "finding" : "findings"}, worst first
+        {/* A SENTENCE, SO IT KEEPS INTER. `index.css`'s own comment reserves `.stat-num` for a
+          *  figure and says prose keeps Inter; only the count is tabular. */}
+        <span className="text-xs text-(--muted)">
+          <span className="tabular-nums">{all.length}</span>{" "}
+          {all.length === 1 ? "finding" : "findings"}, worst first
         </span>
       </div>
       <ul className="flex flex-col border-t border-(--border)">
@@ -60,7 +68,7 @@ export function Findings({ report }: { report: DeckReport }) {
             <span aria-hidden="true" className="hidden sm:block stat-num text-sm text-(--muted) pt-1.5">{i + 1}</span>
             <div className="flex flex-col gap-2.5 min-w-0 order-2 sm:order-none">
               <h3 className="text-xl sm:text-2xl font-bold leading-tight tracking-[-0.02em] flex gap-3">
-                <span aria-hidden="true" className={`w-[3px] shrink-0 rounded-full self-stretch ${SEVERITY[Math.min(i, SEVERITY.length - 1)]}`} />
+                <span aria-hidden="true" className="w-[3px] shrink-0 rounded-full self-stretch bg-(--border)" />
                 <span>{f.headline}</span>
               </h3>
               <p className="text-sm text-(--muted) max-w-[62ch] tabular-nums">{f.detail}</p>
