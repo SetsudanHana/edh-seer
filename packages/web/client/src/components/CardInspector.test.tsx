@@ -241,3 +241,41 @@ describe("CardInspector partner text", () => {
     expect(screen.queryByText(/'s text$/)).toBeNull();
   });
 });
+
+/** A DOUBLE-FACED CARD DREW ONLY ITS FRONT. Owner, 2026-08-27: "for double faced cards we need a
+ *  way to present them, cause right now you see only front". The corpus carries every face's name,
+ *  type line, cost, text and art; none of it reached the panel. */
+describe("CardInspector faces", () => {
+  const twoFaced = {
+    id: "Megatron", label: "Megatron, Tyrant // Megatron, Destructive Force", copies: 1,
+    types: ["artifact", "creature"], subtypes: ["robot", "vehicle"], supertypes: ["legendary"],
+    typeLine: "Legendary Artifact Creature — Robot // Legendary Artifact — Vehicle",
+    colors: ["B"], cmc: 6,
+    faces: [
+      { name: "Megatron, Tyrant", typeLine: "Legendary Artifact Creature — Robot",
+        manaCost: "{3}{R}{W}{B}", oracleText: "Your opponents can't cast spells during combat." },
+      { name: "Megatron, Destructive Force", typeLine: "Legendary Artifact — Vehicle",
+        oracleText: "Living metal (During your turn, this Vehicle is also a creature.)" },
+    ],
+  };
+
+  it("opens on the front face and can flip to the back", async () => {
+    render(<CardInspector node={twoFaced as never} edges={[]} onClose={() => {}} />);
+    // The front is the default: it is the side the card is played from and the side the board draws.
+    expect(screen.getByText("Legendary Artifact Creature — Robot")).toBeInTheDocument();
+    expect(screen.getByText(/Your opponents can't cast spells during combat/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Megatron, Destructive Force" }));
+    // The BACK's own type line, not the joined one -- once the panel describes a face, the joined
+    // line names an object you are not looking at.
+    expect(screen.getByText("Legendary Artifact — Vehicle")).toBeInTheDocument();
+    expect(screen.getByText(/Living metal/)).toBeInTheDocument();
+  });
+
+  it("shows no flip control on a single-face card", () => {
+    const { faces: _dropped, ...single } = twoFaced;
+    render(<CardInspector node={single as never} edges={[]} onClose={() => {}} />);
+    // A control that cannot change anything is worse than no control.
+    expect(screen.queryByTestId("face-flip")).toBeNull();
+  });
+});

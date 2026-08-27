@@ -22,6 +22,10 @@ export interface WireGraphNode {
   typeLine?: string;
   /** The card's own oracle text, so the panel can show the evidence for a claim about it. */
   oracleText?: string;
+  /** EVERY PRINTED FACE, so a surface showing the card can show the side you are not looking at.
+   *  Absent on a single-face card. Owner, 2026-08-27: "for double faced cards we need a way to
+   *  present them, cause right now you see only front". */
+  faces?: { name: string; typeLine?: string; manaCost?: string; oracleText?: string; artCrop?: string }[];
   colors: string[];
   cmc: number;
   /** Functional BUILD roles the report gave this card. Absent when it had none -- not the same as

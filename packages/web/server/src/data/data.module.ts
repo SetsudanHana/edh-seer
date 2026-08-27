@@ -25,8 +25,9 @@ export function attachRolesAndArt(
   docs: Array<{
     _id: string; name: string; typeLine?: string; artCrop?: string;
     imageUris?: { art_crop?: string };
-    /** Per-face art, which is where a transform or modal_dfc card's images actually live. */
-    faces?: Array<{ artCrop?: string }>;
+    /** Per-face art, which is where a transform or modal_dfc card's images actually live -- and the
+     *  rest of each face, so the panel can show the side the board is not drawing. */
+    faces?: Array<{ name?: string; typeLine?: string; manaCost?: string; oracleText?: string; artCrop?: string }>;
   }>,
   rolesByName: Map<string, string[]>,
   normalize: (name: string) => string,
@@ -95,6 +96,20 @@ export function attachRolesAndArt(
       // (see the roles comment above), so reading `doc` alone would leave every token without one.
       ...(n.typeLine ?? doc?.typeLine ? { typeLine: n.typeLine ?? doc?.typeLine } : {}),
       ...(n.oracleText ? { oracleText: n.oracleText } : {}),
+      // EVERY FACE, so the panel can show the back. Taken from the DOC rather than the projection:
+      // faces are printing data the matcher has no use for, and threading them through
+      // `ProjectedNode` would put them in the CLI's graph export too. Only when there is more than
+      // one -- a single-face card has nothing to flip to, and an array of one is a control that
+      // does nothing.
+      ...((doc?.faces?.length ?? 0) > 1
+        ? { faces: doc!.faces!.map((f) => ({
+            name: f.name ?? "",
+            ...(f.typeLine ? { typeLine: f.typeLine } : {}),
+            ...(f.manaCost ? { manaCost: f.manaCost } : {}),
+            ...(f.oracleText ? { oracleText: f.oracleText } : {}),
+            ...(f.artCrop ? { artCrop: f.artCrop } : {}),
+          })) }
+        : {}),
       colors: n.colors,
       cmc: n.cmc,
       ...(roles && roles.length > 0 ? { roles } : {}),

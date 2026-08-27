@@ -265,3 +265,31 @@ test("the printed type line survives the wire join", () => {
   expect(out.nodes[0].typeLine).toBe(graph.nodes[0].typeLine);
   expect(out.nodes[1].typeLine).toBe("Token Artifact — Treasure");
 });
+
+/** AND THE FACES, for the same reason and through the same join that has now eaten seven fields.
+ *  A double-faced card's panel drew only its front; the corpus carries every face's name, type
+ *  line, cost, text and art, and none of it reached the client until it was named here. */
+test("every printed face survives the wire join, and only when there is more than one", () => {
+  const graph = {
+    nodes: [
+      { id: "Megatron", label: "Megatron", copies: 1, types: ["artifact", "creature"],
+        subtypes: ["robot", "vehicle"], supertypes: ["legendary"], colors: ["B"], cmc: 6 },
+      { id: "Sol Ring", label: "Sol Ring", copies: 1, types: ["artifact"],
+        subtypes: [], supertypes: [], colors: [], cmc: 1 },
+    ],
+    edges: [], undirectedReasons: 0, offDeckReasons: 0,
+  };
+  const docs = [
+    { _id: "m", name: "Megatron", faces: [
+      { name: "Megatron, Tyrant", typeLine: "Legendary Artifact Creature — Robot", artCrop: "http://a" },
+      { name: "Megatron, Destructive Force", typeLine: "Legendary Artifact — Vehicle", artCrop: "http://b" },
+    ] },
+    { _id: "s", name: "Sol Ring" },
+  ];
+  const out = attachRolesAndArt(graph as never, docs as never, new Map(), (n: string) => n.toLowerCase());
+  const meg = out.nodes.find((n) => n.id === "Megatron");
+  expect(meg?.faces).toHaveLength(2);
+  expect(meg?.faces?.[1].name).toBe("Megatron, Destructive Force");
+  // A single-face card carries none: an array of one is a flip control that does nothing.
+  expect(out.nodes.find((n) => n.id === "Sol Ring")?.faces).toBeUndefined();
+});

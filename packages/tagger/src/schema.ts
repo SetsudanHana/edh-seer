@@ -525,6 +525,14 @@ export type Repeats = "once" | "per-cycle" | "per-turn" | "repeatable" | "contin
 
 export interface Ability {
   kind: AbilityKind;
+  /** WHICH FACE PRINTS THIS ABILITY — absent for the front face and for every single-face card,
+   *  1 or more for a back face. From `segment.ts`'s own face counter, recomputed at derive time.
+   *
+   *  A multi-face card's `types`/`subtypes` are the UNION over its faces (right for what the
+   *  permanent can BE), so an ability printed on a Land back and an ability printed on an Instant
+   *  front were indistinguishable and both matched against that union. `Characteristics.faces`
+   *  already fixed the same problem for IMPLIED events; this is the authored half. */
+  face?: number;
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs.
    *
    *  `threshold` is a numeric condition on WHEN the trigger fires — The Millennium Calendar's

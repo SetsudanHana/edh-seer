@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 84;
+export const DERIVE_VERSION = 85;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -664,6 +664,9 @@ export function deriveAbilities(
    *  so deriving it on the card as well states the relation twice. Absent disables the guard rather
    *  than guessing, the same contract `oracleText` and `clauseTexts` have. */
   grantedToken?: ReadonlySet<number>,
+  /** Clause id -> which face prints it, from `segment()`. Stamped onto every ability the clause
+   *  derives, so a back-face ability stops being indistinguishable from a front-face one. */
+  clauseFaces?: Record<number, number>,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -680,6 +683,9 @@ export function deriveAbilities(
     // keeping the effect and dropping the trigger would leave the card claiming to do a thing it
     // never does. The token's own derived row carries both halves.
     if (grantedToken?.has(clause.id)) continue;
+    // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
+    // matcher can stop reading a back-face ability against the card's UNION of types.
+    const face = clauseFaces?.[clause.id];
     const kind = abilityKind(clause);
     // Who performs each action, when the clause names someone the object text does not carry. The
     // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
@@ -944,6 +950,7 @@ export function deriveAbilities(
         if (doubles.length) ability.doubles = doubles;
       }
       if (emits.length) ability.emits = emits;
+      if (face) ability.face = face;
       abilities.push(ability);
     }
 
@@ -967,7 +974,7 @@ export function deriveAbilities(
     }
 
     const drain = drainAbility(clause, kind, trigger, cost);
-    if (drain) abilities.push(drain);
+    if (drain) { if (face) drain.face = face; abilities.push(drain); }
 
     // A TRIGGER is a consumer signal in its own right, independent of what the effect does. Geode
     // Rager's "Landfall — whenever a land you control enters, GOAD each creature target player
@@ -983,7 +990,8 @@ export function deriveAbilities(
       // a static clause, which `keywordActionOnStaticClause` drops precisely so it never becomes a
       // proliferate source. The KIND is known even though the action was refused, so the ability is
       // labelled rather than left empty.
-      abilities.push({ kind, effect: replacement ? { kind: replacement.kind } : { kind: "" as const }, trigger });
+      abilities.push({ kind, effect: replacement ? { kind: replacement.kind } : { kind: "" as const }, trigger,
+        ...(face ? { face } : {}) });
     }
 
     // Label everything this clause produced, in ONE place rather than at each of the three push
@@ -1029,6 +1037,10 @@ export interface DeriveInput {
    *  deterministic, so this is recomputed rather than stored, and an absent map only means the
    *  actor-recovery in `recipient.ts` says nothing. */
   clauseTexts?: Record<number, string>;
+  /** Clause id -> the face that clause is printed on, straight from `segment()`. Same shape and
+   *  same reason as `clauseTexts`: deterministic, so recomputed rather than stored. Absent leaves
+   *  every ability faceless, which is what every single-face card wants anyway. */
+  clauseFaces?: Record<number, number>;
   /** Clause id -> the clause's activation cost, straight from `segment()`. Same shape and same
    *  reason as `clauseTexts`: free to recompute, so nothing is stored. `repeatsFor` reads this, not
    *  `clauseTexts`, for the self-sacrifice and tap-cost rules -- the cost is split OUT of the body
@@ -1045,7 +1057,8 @@ export interface DeriveInput {
  *  from the card document -- derivation never asks a model for what the database already knows. */
 export function deriveCardTags(input: DeriveInput): CardTags {
   const { abilities } = deriveAbilities(
-    input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken);
+    input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
+    input.clauseFaces);
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,

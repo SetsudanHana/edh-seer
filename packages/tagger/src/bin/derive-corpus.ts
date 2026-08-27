@@ -52,6 +52,7 @@ for (const doc of clauseDocs) {
     characteristics: isToken ? tokenCharsFrom(source as never) : charsFrom(source as never),
     clauseTexts: clauseTexts(source as never),
     clauseCosts: clauseCosts(source as never),
+    clauseFaces: clauseFaces(source as never),
     oracleText: (source as { oracleText?: string }).oracleText,
     grantedToken: grantedTokenClauses(source as never),
   });
@@ -86,6 +87,17 @@ await store.close();
 function clauseTexts(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, string> {
   const out: Record<number, string> = {};
   for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) out[c.id] = c.text;
+  return out;
+}
+
+/** Clause id -> the face it is printed on, from the SAME deterministic `segment()` the maps above
+ *  use. `segment.ts` has always tracked the face in order to classify each clause against its own
+ *  face's type line; this carries the number forward instead of dropping it. */
+function clauseFaces(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, number> {
+  const out: Record<number, number> = {};
+  for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) {
+    if (c.face) out[c.id] = c.face;
+  }
   return out;
 }
 

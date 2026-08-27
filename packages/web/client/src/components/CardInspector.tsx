@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { CardGraph, GraphNode } from "../types.js";
 import { tagLabel } from "../lib/demand-sentence.js";
 import { cardImageUrl } from "./card-node.js";
@@ -66,6 +67,19 @@ export function CardInspector({
   // that Ghyrson Starn does not synergise with token creation until Impact Tremors is added, at
   // which point tokens entering become damage and the route exists. Both edges were always formed
   // and neither list could say so.
+  /** WHICH FACE THE PANEL IS SHOWING. A double-faced card drew only its front here -- the image,
+   *  the name and (until the printed type line landed) the type were all the front's, and the back
+   *  was unreachable. Owner, 2026-08-27: "for double faced cards we need a way to present them,
+   *  cause right now you see only front."
+   *
+   *  Index 0 is the front and is the default, because that is the side the card is played from and
+   *  the side the board draws. Reset whenever the selected card changes, or flipping one card would
+   *  leave the next one opening on its back. */
+  const [faceIdx, setFaceIdx] = useState(0);
+  useEffect(() => { setFaceIdx(0); }, [node.id]);
+  const faces = node.faces ?? [];
+  const face = faces.length > 1 ? faces[Math.min(faceIdx, faces.length - 1)] : undefined;
+
   const routes = routesThrough(edges, node.id);
   const cutDown = flow?.truncated.get(node.id)?.down;
   const cutUp = flow?.truncated.get(node.id)?.up;
@@ -144,22 +158,55 @@ export function CardInspector({
         *  relationship clears the fold, which is what tells them the panel continues.
         *  `object-contain` keeps the card's aspect ratio: a portrait card in a wide box letterboxes
         *  rather than stretching, and a stretched card face is worse than a small one. */}
-      {node.artCrop ? (
+      {face?.artCrop ?? node.artCrop ? (
         <img
-          src={cardImageUrl(node.artCrop)}
-          alt={node.label}
+          src={cardImageUrl((face?.artCrop ?? node.artCrop)!)}
+          alt={face?.name ?? node.label}
           className="w-full max-h-52 object-contain shrink-0 rounded-(--radius) border border-(--border)"
         />
       ) : null}
 
+      {/* THE FLIP, ONLY WHEN THERE IS SOMETHING TO FLIP TO. A control that cannot change anything is
+        *  worse than none, so a single-face card renders nothing here. The button names the side you
+        *  would GO to, not the one you are on -- "Megatron, Destructive Force" is a destination and
+        *  "front" is a state, and a reader who has to work out which is which has been given a
+        *  puzzle rather than a control. */}
+      {faces.length > 1 ? (
+        <div className="flex flex-wrap gap-1" data-testid="face-flip">
+          {faces.map((f, i) => (
+            <button
+              key={f.name || i}
+              type="button"
+              aria-pressed={i === faceIdx}
+              onClick={() => setFaceIdx(i)}
+              className={`eyebrow rounded-(--radius) border px-2 py-0.5 ${
+                i === faceIdx ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+              }`}
+            >
+              {f.name || `face ${i + 1}`}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <div>
         <h3 className="text-base font-medium">
-          {node.label}
+          {face ? face.name : node.label}
           {node.copies > 1 ? (
             <span className="ml-1.5 stat-num text-(--muted)">×{node.copies}</span>
           ) : null}
         </h3>
-        <p className="text-(--muted) text-xs">{typeLine}</p>
+        {/* THE CHOSEN FACE'S OWN TYPE LINE. The whole printed line ("… — Robot // … — Vehicle")
+          *  is right when the panel is describing the CARD; once it is describing one FACE, that
+          *  face's own line is the true sentence and the joined one names an object you are not
+          *  looking at. */}
+        <p className="text-(--muted) text-xs">{face?.typeLine ?? typeLine}</p>
+        {face?.manaCost ? (
+          <p className="text-(--muted) text-xs">{face.manaCost}</p>
+        ) : null}
+        {face?.oracleText ? (
+          <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">{face.oracleText}</p>
+        ) : null}
       </div>
 
       {node.roles && node.roles.length > 0 ? (
