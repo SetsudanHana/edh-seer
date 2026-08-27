@@ -17,10 +17,20 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, flow, onClose,
+  node, edges, flow, textOf, onClose,
 }: {
   node: GraphNode;
   edges: readonly Edge[];
+  /** The PARTNER's printed text, by node id. Every sentence in this panel is a claim about a card
+   *  whose text the panel did not show, and a skeptic review put the consequence plainly: "a right
+   *  answer and a wrong answer are the same pixels". It could audit only the two pairs it believed
+   *  it knew -- Samwise Gamgee and Aragorn, the Uniter -- and misremembered both, calling the engine
+   *  wrong where oracle text says it is right. An expert getting it wrong from memory is the whole
+   *  argument for putting the evidence next to the claim.
+   *
+   *  Optional so every existing caller and fixture keeps working; a row with no text simply shows
+   *  no disclosure rather than an empty one. */
+  textOf?: (id: string) => string | undefined;
   /** The drawn flow, when a flow is active. Only `truncated` is read: the panel states what the
    *  board had to leave out -- direction-keyed, since the root can have its own fanout cut on
    *  BOTH walks and each has to report its own count under its own heading. */
@@ -92,6 +102,19 @@ export function CardInspector({
               {e.reasonTexts.map((text, i) => (
                 <p key={i} className="text-(--muted) text-xs">{text}</p>
               ))}
+              {/* THE EVIDENCE, ONE CLICK FROM THE CLAIM, AND COLLAPSED BY DEFAULT. Sixty-two rows of
+                *  oracle text would bury the relationships this panel exists to list -- and the
+                *  reader who wants to CHECK one claim wants one card's text, not every card's. The
+                *  partner is the card the sentence is about and the card the panel never showed;
+                *  this card's own text is already in the image above. */}
+              {textOf?.(partner) ? (
+                <details className="text-xs">
+                  <summary className="cursor-pointer text-(--muted) hover:text-(--accent)">
+                    {partner}'s text
+                  </summary>
+                  <p className="mt-1 whitespace-pre-line text-(--muted)">{textOf(partner)}</p>
+                </details>
+              ) : null}
             </li>
           );
         })}

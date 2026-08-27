@@ -425,6 +425,15 @@ export function GraphView(
     [graph],
   );
 
+  /** Printed text by node id, for the panel's per-relationship evidence. Built from the FULL graph
+   *  rather than the filtered one: hiding a land from the BOARD must not hide the text of a card a
+   *  relationship names. */
+  const textById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of fullGraph.nodes) if (n.oracleText) m.set(n.id, n.oracleText);
+    return (id: string) => m.get(id);
+  }, [fullGraph]);
+
   const legendOvercounts = useMemo(() => {
     const slots = graph.nodes.reduce((n, x) => n + (x.copies ?? 1), 0);
     return legend.reduce((n, r) => n + r.count, 0) > slots;
@@ -1444,6 +1453,31 @@ export function GraphView(
    *  that meant only up/down, so a token's forty-edge fan was one undifferentiated mesh. Hue carries
    *  the MECHANISM now and direction moves to the dash crawl. Scoped to the selected card's own
    *  flow, which is why a palette is possible at all -- see `FLOW_EVENT_HUES`. */
+  /** How many pairs in the flow do NOT touch the selected card. The flow walks TWO hops, so the
+   *  per-card row counts relationships between two OTHER cards -- while the panel below lists only
+   *  this card's DIRECT edges. Two different sets, one screen, nothing saying so:
+   *
+   *    - Round one, a tuner: "Creating a token 3" on a card whose printed text creates nothing.
+   *      (Checked: all three of those edges were two hops out, none touched the card.)
+   *    - Round three, a skeptic: "Creating a token 3 does not reconcile -- the two rows whose
+   *      sentences say 'makes a token' carry no CREATING A TOKEN chip."
+   *
+   *  Both read the row as the card's own tally and found it contradicting the panel. It is not a
+   *  tally; it is what the board LIT UP, which is the thing the row sits above. Saying how much of
+   *  it is indirect is what makes the two lists reconcilable. */
+  const flowIndirect = useMemo(() => {
+    if (!flow) return 0;
+    const seen = new Set<string>();
+    let n = 0;
+    for (const fe of flow.edges) {
+      const pair = `${fe.from}>${fe.to}`;
+      if (seen.has(pair)) continue;
+      seen.add(pair);
+      if (fe.from !== flow.root && fe.to !== flow.root) n++;
+    }
+    return n;
+  }, [flow]);
+
   const flowEvents = useMemo(() => {
     if (!flow) return [] as { verb: string; count: number; hue: string }[];
     const n = new Map<string, number>();
@@ -1749,7 +1783,14 @@ export function GraphView(
             *  reason sentences?". A count with no unit is not evidence, and two counts that share
             *  a vocabulary without sharing a scope are worse than either alone. */}
           {flowLegend && flowLegend.length > 0 ? (
-            <span className="eyebrow shrink-0">Card pairs through this card</span>
+            <span className="eyebrow shrink-0">
+              Card pairs in this card&apos;s flow
+              {flowIndirect > 0 ? (
+                <span data-testid="flow-indirect-note" className="opacity-70">
+                  {" "}&middot; {flowIndirect} reached through it
+                </span>
+              ) : null}
+            </span>
           ) : null}
           {/* A FLOW ROW IS A BUTTON AND A PAINT ROW IS NOT, because only the first has something to
             *  isolate: clicking an event dims the rest of the flow, which is the "and filter them"
@@ -1857,6 +1898,7 @@ export function GraphView(
               node={inspectingNode}
               edges={inspectingEdges}
               flow={flow}
+              textOf={textById}
               onClose={() => setInspectingId(null)}
             />
           ) : null}

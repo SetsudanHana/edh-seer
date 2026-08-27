@@ -1487,7 +1487,34 @@ describe("flow view", () => {
     const probe = canvas.__graphProbe!();
     const node = probe.find((n) => n.id === "R")!;
     act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
-    expect(document.body.textContent).toContain("Card pairs through this card");
+    // "in this card's FLOW", not "through this card": the flow walks two hops, so the row counts
+    // pairs between two OTHER cards while the panel lists only direct edges -- two reviewers read
+    // the old wording as the card's own tally and reported it contradicting the panel.
+    expect(document.body.textContent).toContain("Card pairs in this card's flow");
+  });
+
+  // THE FLOW WALKS TWO HOPS, so the per-card row counts pairs between two OTHER cards while the
+  // panel below lists only direct edges. Two reviewers read the row as the card's own tally and
+  // reported it contradicting the panel -- "Creating a token 3" on a card that creates nothing, and
+  // "does not reconcile: the rows whose sentences say 'makes a token' carry no such chip". Saying
+  // how much of the flow is indirect is what makes the two lists reconcilable.
+  test("the per-card row says how many of its pairs are reached through the card", () => {
+    const calls: string[] = [];
+    // R -> M -> F: the M->F edge is in R's flow and touches R at neither end.
+    // Take the canvas from `frames`, as every other probe test does: querying the DOM for it loses
+    // the typed handle and the probe's own node type with it.
+    const { canvas } = frames(graphOf(
+      [card({ id: "R" }), card({ id: "M" }), card({ id: "F" })],
+      [
+        { from: "R", to: "M", weight: 2, tags: ["enters:creature"], reasonTexts: ["R feeds M"] },
+        { from: "M", to: "F", weight: 2, tags: ["cast:spell"], reasonTexts: ["M feeds F"] },
+      ],
+    ), calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    expect(document.body.textContent).toContain("Card pairs in this card's flow");
+    expect(screen.getByTestId("flow-indirect-note").textContent).toContain("1 reached through it");
   });
 
   // A COUNT OVER THE VISIBLE BOARD MUST NOT CLAIM TO BE A COUNT OVER THE DECK. Lands are hidden by

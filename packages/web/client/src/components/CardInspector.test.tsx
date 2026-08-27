@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { CardInspector } from "./CardInspector.js";
 
 const node = {
@@ -204,5 +205,39 @@ describe("CardInspector card image", () => {
     const img = screen.getByAltText("Grim Haruspex");
     expect(img.className).toMatch(/max-h-/);
     expect(img.className).toContain("object-contain");
+  });
+});
+
+/** THE EVIDENCE FOR A CLAIM, BESIDE THE CLAIM. Every sentence in this panel is about a card whose
+ *  text the panel did not show. A skeptic review could audit only the two pairs it believed it knew
+ *  and misremembered BOTH -- calling the engine wrong where oracle text says it is right -- and
+ *  concluded "a right answer and a wrong answer are the same pixels". */
+describe("CardInspector partner text", () => {
+  const node = {
+    id: "Megatron", label: "Megatron", copies: 1,
+    types: ["creature"], subtypes: [], supertypes: ["legendary"],
+    typeLine: "Legendary Artifact Creature — Robot", colors: ["B"], cmc: 6,
+  };
+  const edges = [{
+    from: "Megatron", to: "Samwise Gamgee", weight: 1.6,
+    tags: ["enters:creature"],
+    reasonTexts: ["When Megatron enters, Samwise Gamgee makes a token"],
+  }];
+  const text = (id: string) =>
+    id === "Samwise Gamgee"
+      ? "Whenever another nontoken creature you control enters, create a Food token."
+      : undefined;
+
+  it("offers the PARTNER's printed text, not the selected card's", async () => {
+    render(<CardInspector node={node as never} edges={edges as never} textOf={text} onClose={() => {}} />);
+    // Collapsed by default: sixty-two rows of oracle text would bury the relationships.
+    const d = screen.getByText("Samwise Gamgee's text");
+    await userEvent.click(d);
+    expect(screen.getByText(/Whenever another nontoken creature you control enters/)).toBeInTheDocument();
+  });
+
+  it("shows no disclosure when the partner's text is unknown", () => {
+    render(<CardInspector node={node as never} edges={edges as never} onClose={() => {}} />);
+    expect(screen.queryByText(/'s text$/)).toBeNull();
   });
 });

@@ -94,6 +94,7 @@ export function attachRolesAndArt(
       // The projection's copy wins and the doc is the fallback: a TOKEN node joins no doc at all
       // (see the roles comment above), so reading `doc` alone would leave every token without one.
       ...(n.typeLine ?? doc?.typeLine ? { typeLine: n.typeLine ?? doc?.typeLine } : {}),
+      ...(n.oracleText ? { oracleText: n.oracleText } : {}),
       colors: n.colors,
       cmc: n.cmc,
       ...(roles && roles.length > 0 ? { roles } : {}),

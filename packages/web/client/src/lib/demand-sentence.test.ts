@@ -83,3 +83,23 @@ test("a whole reason tag reads as English, keeping the subject that narrows it",
     expect(tagLabel(t).toLowerCase()).not.toContain(":");
   }
 });
+
+/** TWO MECHANISMS MUST NOT READ AS ONE. `GETTING BIGGER 1` sat beside `BOOSTING POWER AND TOUGHNESS
+ *  30` and three consecutive persona reviews said they name the same thing -- "two names, no
+ *  distinction given", "I don't know which one a pump effect I care about lands in". They ARE
+ *  different (`scales` is graveyard-driven by construction; `static:pump` is an ordinary power and
+ *  toughness boost) and the labels have to carry that.
+ *
+ *  Asserted over the whole measured vocabulary rather than this one pair: any two mechanisms sharing
+ *  a label is the same defect wherever it appears, and pinning only the pair that was reported would
+ *  catch it once. */
+test("no two mechanisms share a label", () => {
+  const byLabel = new Map<string, string[]>();
+  for (const [mechanism] of MEASURED) {
+    const label = eventLabel(mechanism).toLowerCase();
+    (byLabel.get(label) ?? byLabel.set(label, []).get(label)!).push(mechanism);
+  }
+  const collisions = [...byLabel].filter(([, ms]) => ms.length > 1)
+    .map(([label, ms]) => `${label}: ${ms.join(" + ")}`);
+  expect(collisions).toEqual([]);
+});

@@ -36,6 +36,11 @@ export interface ProjectedNode {
    *  break on one -- the inspector falls back to the recomposed line, which is worse and is still
    *  better than nothing. Every graph this function builds carries it. */
   typeLine?: string;
+  /** The card's own oracle text, so a surface that makes a CLAIM about this card can show the
+   *  evidence beside it. A skeptic review (2026-08-27) could audit only the two pairs it believed
+   *  it already knew, and misremembered BOTH cards' printed text -- concluding "a right answer and
+   *  a wrong answer are the same pixels". The engine was right both times and could not prove it. */
+  oracleText?: string;
   colors: string[];
   cmc: number;
   /** Attached by the server from the deck report; absent here. */
@@ -116,6 +121,7 @@ export function projectDeckGraph(
       copies: copies.get(id) ?? 1,
       types, subtypes, supertypes,
       typeLine: d.card.typeLine,
+      oracleText: d.card.oracleText,
       colors: d.card.colors,
       cmc: d.card.manaValue,
     });

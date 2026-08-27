@@ -212,7 +212,16 @@ export const MECHANISM: Record<string, string> = {
   // graveyard-to-battlefield derive the same one), so the label does not claim it -- naming a zone
   // the tag cannot distinguish would be the wrong half of the same complaint.
   "graveyard-recursion": "bringing cards back from a graveyard",
-  scales: "getting bigger",
+  // "GETTING BIGGER 1" SAT BESIDE "BOOSTING POWER AND TOUGHNESS 30" and three reviewers in a row
+  // said they name the same thing: "two names, no distinction given", "sound like the same thing and
+  // are two separate chips", "I don't know which one a pump effect I care about lands in".
+  //
+  // They are different, and the difference is the GRAVEYARD -- checked in the engine rather than
+  // guessed: the scaling loop opens `if (a.effect.scaling !== "per-graveyard") continue`, and
+  // `scalingSubject` returns undefined unless the text counts something in a graveyard. So every
+  // `scales:` reason on this board is a payoff that grows with a graveyard, and the label can say so
+  // without over-claiming. `static:pump` stays the ordinary power/toughness boost.
+  scales: "getting bigger from a graveyard",
   doubles: "doubling a trigger",
   wincon: "counting toward a win",
   meld: "melding",
@@ -269,6 +278,16 @@ export const STATIC_KIND: Record<string, string> = {
   "static:proliferate": "proliferating",
   "static:enters-with-counters": "entering with counters",
 };
+
+/** THE VOCABULARY MIXES TWO KINDS OF THING, AND THAT IS INHERENT RATHER THAN AN OVERSIGHT.
+ *  A skeptic review (2026-08-27) put it exactly: `entering the battlefield`, `being cast` and
+ *  `attacking` name the event a card WATCHES, while `bringing cards back from a graveyard`,
+ *  `costing less to cast` and `fetching a land` name the EFFECT. That is what the tags are --
+ *  `edges.ts` writes a trigger event for an event edge and an effect kind for a static or a pass
+ *  literal -- so no labelling can unify them without re-keying the engine's reasons, which the
+ *  frozen panel's cached verdicts are keyed on. Recorded so the next reader knows it was seen and
+ *  priced, not missed. `creating a token` is the one that could honestly be read either way.
+ */
 
 /** The mechanism a reason tag names, for any surface that groups edges by mechanism.
  *
