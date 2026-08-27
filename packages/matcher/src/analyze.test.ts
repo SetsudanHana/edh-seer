@@ -1406,3 +1406,57 @@ test("MINOR: COMMANDER_BOOST reaches partners of either face of a two-faced comm
   const goblinBoosted = withBoost.cards.find((c) => c.name === "Goblin Grunt")!;
   expect(goblinBoosted.score).toBeGreaterThan(goblinNoBoost.score); // back-face boost
 });
+
+// ============================================================================
+// REVIEW FIX ROUND 2 (2026-08-27) -- finding 3's own fix (tokenCreators keyed on physicalName)
+// broke `ourMakers`: `uniqueByName` is keyed by FACE name and has no entry under a combined
+// "Front // Back" string, so the lookup was always undefined and the whole two-hop pass was
+// silently skipped for every two-faced token maker, in both directions.
+// ============================================================================
+
+const twoFacedTreasureMaker = (): DeckCard => ({
+  card: {
+    name: "Maker Front // Maker Back",
+    typeLine: "Creature // Land",
+    oracleText: "a\n// b",
+    keywords: [], colors: [], manaValue: 2,
+    faces: [
+      { name: "Maker Front", typeLine: "Creature", oracleText: "a", manaCost: "{2}", colors: [] },
+      { name: "Maker Back", typeLine: "Land", oracleText: "b", colors: [] },
+    ],
+    // Shared at the CARD level (faceDeckCards spreads it onto both faces) -- the exact shape that
+    // made `tokenCreators` register both face names before finding 3's fix.
+    allParts: [{ component: "token", name: "Treasure", typeLine: "Token Artifact — Treasure", printingId: "treasure-printing-id" }],
+  } as never,
+  tags: {
+    oracleId: "maker-front", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["creature", "land"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [],
+      faces: [{ types: ["creature"], subtypes: [] }, { types: ["land"], subtypes: [] }],
+    },
+    // Face 0 (front, default): genuinely creates the Treasure. Face 1 (back) has no abilities at
+    // all -- it must NOT be the one that ends up "creating" anything.
+    abilities: treasureMakerAbility,
+  } as CardTags,
+});
+
+const treasurePayoff = dc("Treasure Payoff", [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { subtype: "treasure", control: "you", token: null } },
+  effect: { kind: "draw-card" },
+}]);
+
+test("END-TO-END: a two-faced maker's token creation reaches a payoff through the two-hop path", () => {
+  const report = analyzeDeckStructured(
+    [twoFacedTreasureMaker(), treasurePayoff], undefined, H, undefined, undefined, undefined,
+    (ref) => (ref.printingId === "treasure-printing-id" ? treasureTags : null),
+  );
+  // Sanity: the token really is on the graph, so the hop below is being tested against the real
+  // failure shape and not a vacuous absence.
+  expect(report.edges.some((e) => e.a === "Treasure" || e.b === "Treasure")).toBe(true);
+  const front = report.cards.find((c) => c.name === "Maker Front")!;
+  expect(front.topPartners.some((p) => p.name === "Treasure Payoff")).toBe(true);
+  const payoff = report.cards.find((c) => c.name === "Treasure Payoff")!;
+  expect(payoff.topPartners.some((p) => p.name === "Maker Front")).toBe(true);
+});

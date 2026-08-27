@@ -446,10 +446,19 @@ export function analyzeDeckStructured(
     // control", so crediting them would state a synergy the card cannot supply. Caught by measuring:
     // the first cut lifted Beast Within and Generous Gift from 0 to 2.0 in `naya-spellslinger`, which
     // is exactly the case CLAUDE.md already flags as why `isolated-cards.ts` reads as an upper bound.
-    const ourMakers = [...makers].filter((m) => {
-      const maker = uniqueByName.get(m);
-      return maker !== undefined && createsForYou(maker, t, hierarchy);
-    });
+    // `makers` is keyed by PHYSICAL name (collectTokenNodes, finding 3, 2026-08-27); `addHop`
+    // and `twoHopReasons` are keyed by FACE name, and `createsForYou` reads a face's OWN
+    // (face-filtered) abilities -- a two-faced maker's non-creating face must not pass just
+    // because its sibling does. So this resolves each physical maker name back to whichever of
+    // its OWN faces are present in `unique` (one, for a single-face card) and keeps only the
+    // face(s) that individually pass `createsForYou` -- fixing the regression finding 3's own fix
+    // introduced: `uniqueByName.get(m)` was always `undefined` for a two-faced maker, since
+    // `uniqueByName` has no entry under a combined "Front // Back" string, so `ourMakers` was
+    // always empty and the whole hop was silently skipped for every two-faced maker.
+    const ourMakers = unique
+      .filter((dc) => makers.has(physicalName(dc.card.name)))
+      .filter((dc) => createsForYou(dc, t, hierarchy))
+      .map((dc) => dc.card.name);
     if (ourMakers.length === 0) continue;
     for (const other of unique) {
       const name = other.card.name;
