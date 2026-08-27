@@ -400,7 +400,12 @@ describe("the paint legend", () => {
     // LANDS ARE OFF BY DEFAULT: 37 of the review deck's 101 nodes are lands, nearly all edgeless,
     // and the board's own caption says position means synergy — which is false of them.
     expect(legend).not.toHaveTextContent("land");
-    await userEvent.click(screen.getByRole("button", { name: /^lands \(1\)/ }));
+    // THE TOGGLE AND THE LEGEND COUNT THE SAME THING NOW, and this fixture was the defect in
+    // miniature: ONE Mountain node with 24 copies read "lands (1)" beside a legend reading "24",
+    // and this test asserted both numbers without noticing they disagree. Three persona reviews hit
+    // the live version -- "lands (35)" against "land 40" -- and called it the first number they
+    // would want to trust for a mana-base job. A player means COPIES by "how many lands".
+    await userEvent.click(screen.getByRole("button", { name: /^lands \(24\)/ }));
     expect(screen.getByTestId("paint-legend")).toHaveTextContent("land");
     expect(screen.getByTestId("paint-legend")).toHaveTextContent("24");
   });
@@ -1474,12 +1479,63 @@ describe("flow view", () => {
       ],
     );
     const { canvas } = frames(graph, calls);
-    // Deck-wide row, before anything is selected.
-    expect(document.body.textContent).toContain("Connections across the deck");
+    // THE UNIT IS NAMED, NOT JUST THE SCOPE. Naming the scope alone still left three of four
+    // reviewers unable to say what was counted; a chip counts card PAIRS.
+    // This fixture hides nothing, so the deck-wide claim is true and the row makes it.
+    expect(document.body.textContent).toContain("Card pairs across the deck");
+    expect(document.querySelector('[data-testid="graph-hidden-note"]')).toBeNull();
     const probe = canvas.__graphProbe!();
     const node = probe.find((n) => n.id === "R")!;
     act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
-    expect(document.body.textContent).toContain("Connections through this card");
+    expect(document.body.textContent).toContain("Card pairs through this card");
+  });
+
+  // A COUNT OVER THE VISIBLE BOARD MUST NOT CLAIM TO BE A COUNT OVER THE DECK. Lands are hidden by
+  // DEFAULT, so the deck-wide label was false on nearly every deck the moment it shipped. Three
+  // reviewers caught it by pressing the toggle and watching the numbers move -- "the default screen
+  // is a ranking of a subset presented as a ranking". The label follows the state rather than a
+  // caveat being bolted onto a false one.
+  test("the deck-wide row says 'on the board' and names what is hidden, and only then", async () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "Mountain", types: ["land"], copies: 3 }), card({ id: "A" }), card({ id: "B" }), card({ id: "C" })],
+      [
+        // TWO non-land mechanisms, because the row is gated on the board carrying more than one --
+        // with the land hidden, a single-mechanism board renders no row at all to make a claim with.
+        { from: "A", to: "B", weight: 2, tags: ["enters:creature"], reasonTexts: ["A feeds B"] },
+        { from: "A", to: "C", weight: 2, tags: ["cast:spell"], reasonTexts: ["A feeds C"] },
+        { from: "Mountain", to: "A", weight: 2, tags: ["ramp-target:basic"], reasonTexts: ["M feeds A"] },
+      ],
+    );
+    frames(graph, calls);
+    // Lands off by default: the row must not claim the deck, and must say what is missing.
+    expect(document.body.textContent).toContain("Card pairs on the board");
+    expect(document.body.textContent).not.toContain("Card pairs across the deck");
+    // SLOTS, not nodes -- one Mountain node, three copies.
+    expect(screen.getByTestId("graph-hidden-note").textContent).toContain("3 lands");
+
+    await userEvent.click(screen.getByRole("button", { name: /^lands \(3\)/ }));
+    // Nothing hidden now, so the deck-wide claim is true and the row makes it.
+    expect(document.body.textContent).toContain("Card pairs across the deck");
+    expect(document.querySelector('[data-testid="graph-hidden-note"]')).toBeNull();
+  });
+
+  // A PAIR CAN DO TWO THINGS, so the chips sum past the number of pairs -- the same arithmetic
+  // complaint the type legend already pre-empts, one row up. Conditional for the same reason: a
+  // caveat claiming a defect that is not present is noise.
+  test("the mechanism rows admit double-counting only when a pair carries two mechanisms", () => {
+    const calls: string[] = [];
+    frames(graphOf([card({ id: "A" }), card({ id: "B" })], [
+      { from: "A", to: "B", weight: 2, tags: ["enters:creature", "attacks:creature"], reasonTexts: ["A feeds B"] },
+    ]), calls);
+    expect(document.querySelector('[data-testid="mechanism-overcount"]')).not.toBeNull();
+
+    cleanup();
+    const calls2: string[] = [];
+    frames(graphOf([card({ id: "C" }), card({ id: "D" })], [
+      { from: "C", to: "D", weight: 2, tags: ["enters:creature"], reasonTexts: ["C feeds D"] },
+    ]), calls2);
+    expect(document.querySelector('[data-testid="mechanism-overcount"]')).toBeNull();
   });
 
   // A SILENT CAP READS AS A COMPLETE MENU. The chip row rendered the eight commonest with no

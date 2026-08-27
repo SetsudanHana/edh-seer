@@ -107,11 +107,25 @@ export function CardInspector({
         close
       </button>
 
+      {/* CAPPED, BECAUSE THE IMAGE WAS EATING THE WHOLE PANEL AND THE RELATIONSHIPS ARE THE PRODUCT.
+        *  MEASURED on the review deck: the panel is 500px tall with 1,415px of content, and FEEDS
+        *  began 49px BELOW its own bottom edge -- so two thirds of it was reachable only by
+        *  scrolling a box with no affordance, and nothing above the fold hinted there was more.
+        *  Across two persona rounds, three reviewers clicked a card and reported the panel tells
+        *  them nothing: "I clicked a card hoping to be told something and was shown the card",
+        *  and "the tool makes ~300 counted claims and shows me the operands of none of them".
+        *  I twice wrote this off as a screenshot crop; it is the panel's own layout.
+        *
+        *  The image STAYS and stays first -- a reader who clicked an art disc needs to know which
+        *  card they hit, and the name alone does not do that at a glance. It is capped so the first
+        *  relationship clears the fold, which is what tells them the panel continues.
+        *  `object-contain` keeps the card's aspect ratio: a portrait card in a wide box letterboxes
+        *  rather than stretching, and a stretched card face is worse than a small one. */}
       {node.artCrop ? (
         <img
           src={cardImageUrl(node.artCrop)}
           alt={node.label}
-          className="w-full rounded-(--radius) border border-(--border)"
+          className="w-full max-h-52 object-contain shrink-0 rounded-(--radius) border border-(--border)"
         />
       ) : null}
 

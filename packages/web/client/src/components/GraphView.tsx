@@ -323,6 +323,17 @@ export function GraphView(
     [fullGraph],
   );
 
+  /** Land SLOTS, not land nodes -- the toggle read "lands (35)" beside a type legend reading
+   *  "land 40" on the same screen, five apart, and three reviews flagged it ("for a mana-base job
+   *  this is the first number I'd want to trust"). Both were right and neither said which it was:
+   *  35 distinct land NAMES, 40 land CARDS, because this deck's five basics run two copies each.
+   *  The legend counts copies, and "how many lands does this deck run" means copies to a player, so
+   *  the toggle counts copies too and the two numbers agree. */
+  const landSlots = useMemo(
+    () => fullGraph.nodes.filter((n) => landNodes.has(n.id)).reduce((n, x) => n + (x.copies ?? 1), 0),
+    [fullGraph, landNodes],
+  );
+
   /** What the board actually draws. Identical object when nothing is hidden, so the layout effect
    *  below (which keys on `graph`) does not re-simulate for decks with nothing to hide. */
   const graph = useMemo(() => {
@@ -386,6 +397,34 @@ export function GraphView(
    *  overcount (one bucket per card) and neither can a single-type deck, so a note there would be
    *  noise claiming a defect that is not present. It appears when the sum genuinely exceeds the
    *  slots on the board, and is silent otherwise. */
+  /** WHAT THE BOARD IS CURRENTLY HIDING, in the reader's words, or null when it hides nothing.
+   *
+   *  Both mechanism rows count over `graph`, which the lands and lone-token toggles filter -- and
+   *  lands are hidden BY DEFAULT, so the deck-wide row was making a false claim on nearly every
+   *  deck the moment it was labelled. Three persona reviews caught it by pressing the toggle:
+   *  "ENTERING THE BATTLEFIELD 79" became 91, "BRINGING CARDS BACK" 18 became 26, and a mechanism
+   *  absent from the default row (FETCHING A LAND 78) appeared. One wrote: "the default screen is a
+   *  ranking of a subset presented as a ranking." A skeptic found the PER-CARD row moves too --
+   *  the same selected card read "Bringing cards back from a graveyard 2" and then 3.
+   *
+   *  So the label changes with the state rather than a caveat being bolted onto a false one: with
+   *  nothing hidden the row really is across the deck, and with something hidden it is across the
+   *  board and says what is missing. */
+  const hiddenFromBoard = useMemo(() => {
+    const parts: string[] = [];
+    if (!showLands && landNodes.size > 0) parts.push(`${landSlots} lands`);
+    if (!showLoneTokens && loneTokens.size > 0) parts.push(`${loneTokens.size} lone tokens`);
+    return parts.length > 0 ? parts.join(" and ") : null;
+  }, [showLands, landNodes, landSlots, showLoneTokens, loneTokens]);
+
+  /** True when one card pair carries more than one mechanism, so the chips sum past the number of
+   *  pairs. Same shape and same reason as `legendOvercounts` below: a reviewer added the chips up,
+   *  got a number bigger than the deck, and had no way to know whether that was a bug. */
+  const mechanismOvercounts = useMemo(
+    () => graph.edges.some((e) => new Set(e.tags.map(mechanismKey)).size > 1),
+    [graph],
+  );
+
   const legendOvercounts = useMemo(() => {
     const slots = graph.nodes.reduce((n, x) => n + (x.copies ?? 1), 0);
     return legend.reduce((n, r) => n + r.count, 0) > slots;
@@ -1553,7 +1592,19 @@ export function GraphView(
             *  nothing. */}
           {eventCounts.length > 1 ? (
             <div className="basis-full flex flex-wrap gap-2 items-baseline">
-              <span className="eyebrow text-(--muted)">Connections across the deck</span>
+              <span className="eyebrow text-(--muted)">
+                {/* THE UNIT, NOT JUST THE SCOPE. Naming the scope last round left three of four
+                  *  reviewers unable to say WHAT was counted -- "whether 'BEING CAST 90' is 90
+                  *  cards, 90 card-pairs, or 90 written reasons decides whether a card with
+                  *  'Being cast 10' is well-connected or just noisy". A chip counts card PAIRS
+                  *  whose relationship includes that mechanism. */}
+                {hiddenFromBoard ? "Card pairs on the board" : "Card pairs across the deck"}
+              </span>
+              {hiddenFromBoard ? (
+                <span data-testid="graph-hidden-note" className="eyebrow text-(--muted) opacity-70">
+                  {hiddenFromBoard} hidden
+                </span>
+              ) : null}
               <button
                 type="button"
                 aria-pressed={eventVerb === null}
@@ -1593,7 +1644,7 @@ export function GraphView(
                 showLands ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
               }`}
             >
-              lands ({landNodes.size})
+              lands ({landSlots})
             </button>
           ) : null}
 
@@ -1698,7 +1749,7 @@ export function GraphView(
             *  reason sentences?". A count with no unit is not evidence, and two counts that share
             *  a vocabulary without sharing a scope are worse than either alone. */}
           {flowLegend && flowLegend.length > 0 ? (
-            <span className="eyebrow shrink-0">Connections through this card</span>
+            <span className="eyebrow shrink-0">Card pairs through this card</span>
           ) : null}
           {/* A FLOW ROW IS A BUTTON AND A PAINT ROW IS NOT, because only the first has something to
             *  isolate: clicking an event dims the rest of the flow, which is the "and filter them"
@@ -1750,9 +1801,17 @@ export function GraphView(
               {row.count !== undefined ? <span className="stat-num text-(--muted)">{row.count}</span> : null}
             </div>
           ))}
+          {mechanismOvercounts ? (
+            <span data-testid="mechanism-overcount" className="opacity-70">
+              a pair doing two things is counted in both
+            </span>
+          ) : null}
           {legendOvercounts ? (
             <span data-testid="paint-legend-overcount" className="opacity-70">
-              a card in two rows is counted in both
+              {/* "a card in TWO ROWS" was unreadable to a beginner -- "I don't know what 'rows'
+                *  means here; there are two rows of coloured labels on screen and also rows of
+                *  buttons". The fact is about TYPES, so the sentence names types. */}
+              a card with two types is counted in both
             </span>
           ) : null}
         </div>

@@ -180,3 +180,29 @@ describe("CardInspector tag chips", () => {
     expect(screen.queryByText("enters:creature")).toBeNull();
   });
 });
+
+/** THE IMAGE IS CAPPED SO THE RELATIONSHIPS CLEAR THE FOLD.
+ *
+ *  jsdom has no layout, so the real check is a MEASUREMENT and not this test: on the review deck
+ *  the panel is 500px tall with 1,415px of content, and FEEDS began 49px BELOW its own bottom edge
+ *  -- two thirds of the panel reachable only by scrolling a box with no affordance. Three persona
+ *  reads across two rounds reported the panel tells them nothing. After the cap, measured live:
+ *  content 1,259px, and both FEEDS and the first relationship row sit above the fold.
+ *
+ *  What this test can pin is that the constraint EXISTS and that the aspect ratio is preserved --
+ *  an uncapped `w-full` image is what ate the panel, and a capped one without `object-contain`
+ *  would stretch a portrait card, which is worse than a small one. */
+describe("CardInspector card image", () => {
+  it("caps the card image and keeps its aspect ratio", () => {
+    const node = {
+      id: "Grim Haruspex", label: "Grim Haruspex", copies: 1,
+      types: ["creature"], subtypes: ["human"], supertypes: [],
+      typeLine: "Creature — Human Wizard", colors: ["B"], cmc: 3,
+      artCrop: "https://example.com/a.jpg",
+    };
+    render(<CardInspector node={node as never} edges={[]} onClose={() => {}} />);
+    const img = screen.getByAltText("Grim Haruspex");
+    expect(img.className).toMatch(/max-h-/);
+    expect(img.className).toContain("object-contain");
+  });
+});
