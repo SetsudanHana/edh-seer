@@ -1460,6 +1460,44 @@ describe("flow view", () => {
     expect(offsetsThisFrame()).not.toEqual(first);
   });
 
+  // ISOLATING A MECHANISM PAINTS IT IN ITS OWN HUE. 29 of the Jodah deck's 335 edges carry more
+  // than one verb (8.7%), and `offFocus` correctly KEEPS such an edge lit when either verb is the
+  // isolated one -- so without this it stayed lit in the other verb's colour, and the reader who
+  // clicked "attacks" saw the "enters" hue.
+  test("an edge carrying two mechanisms takes the ISOLATED one's hue", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "R" }), card({ id: "X" }), card({ id: "Y" })],
+      [
+        // Ranked first by count, so `enters` owns hue 0 and `attacks` hue 1.
+        { from: "R", to: "Y", weight: 2, tags: ["enters:creature"], reasonTexts: ["R feeds Y"] },
+        { from: "R", to: "X", weight: 2, tags: ["enters:creature", "attacks:creature"], reasonTexts: ["R feeds X"] },
+      ],
+    );
+    const { canvas, tick } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+
+    const attacks = [...document.querySelectorAll('[data-testid="paint-legend-row"]')]
+      .find((r) => r.getAttribute("data-value") === "attacks") as HTMLElement;
+    act(() => { attacks.click(); });
+    calls.length = 0;
+    tick();
+    // The multi-verb edge is still drawn (offFocus keeps it) and now carries the attacks hue.
+    // SCOPED TO THE EDGE PASS, never to the raw call list: `FLOW_EVENT_HUES` reuses `ROLE_HUE`, so
+    // a node rim can stroke the same hex and an unscoped assertion passes in both arms.
+    const edgeStrokes = new Set<string>();
+    let last: string | null = null;
+    for (const c of calls) {
+      if (c.startsWith("set:strokeStyle=")) last = c.slice("set:strokeStyle=".length);
+      else if (c.startsWith("moveTo:") && last !== null) edgeStrokes.add(last);
+    }
+    expect(edgeStrokes.has(FLOW_EVENT_HUES[1])).toBe(true);
+    // And the mechanism it is NOT isolated on must not be painting any edge this frame.
+    expect(edgeStrokes.has(FLOW_EVENT_HUES[0])).toBe(false);
+  });
+
   // A CYCLE IS ONE EDGE, NOT TWO. Both direction-pure walks reach an edge that sits in a loop, so
   // `flow.edges` holds that pair twice -- and the legend counted it twice. Measured on the Jodah
   // deck 2026-08-27: 5 of 103 flows, 21 pairs, and the busiest double-counted 6 of its 55 edges.

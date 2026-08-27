@@ -660,8 +660,15 @@ export function GraphView(
         // used to mean up/down and nothing else, so a forty-edge flow was one mesh; it means the
         // EVENT now, and direction moved to the dash crawl below.
         const edgeVerbs = edgeTags.map((t) => t.split(":")[0]);
-        const flowVerb = fe ? edgeVerbs.find((v) => flowHueRef.current.has(v)) : undefined;
         const focus = flowFocusRef.current;
+        // AN ISOLATED MECHANISM PAINTS IN ITS OWN HUE, even on an edge that carries another one
+        // first. 29 of the Jodah deck's 335 edges span more than one verb (8.7%), so without this
+        // an edge kept by `offFocus` below could stay lit in a DIFFERENT mechanism's colour --
+        // the reader isolates "Attacking" and sees a green line, which is the exact confusion the
+        // hue change exists to remove. Ranked order still decides an unfocused edge.
+        const flowVerb = fe
+          ? (focus !== null && edgeVerbs.includes(focus) ? focus : edgeVerbs.find((v) => flowHueRef.current.has(v)))
+          : undefined;
         const offFocus = fe !== undefined && focus !== null && !edgeVerbs.includes(focus);
         ctx.globalAlpha = offEvent ? 0.06
           : offFocus ? 0.12
