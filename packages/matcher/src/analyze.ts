@@ -18,6 +18,7 @@ import {
 } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
+import { faceDeckCards } from "./faces.js";
 import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
@@ -156,6 +157,10 @@ export function analyzeDeckStructured(
   tokenTags?: (ref: TokenRef) => CardTags | null,
 ): DeckReport {
   const commanderSet = new Set(commanderNames ?? []);
+  // A face node carries the FACE's name, and the decklist designated the CARD. Every commander test
+  // over a `unique` entry goes through this; the ones over `resolved` keep using the name directly,
+  // because `resolved` holds physical cards.
+  const isCommanderNode = (dc: DeckCard): boolean => commanderSet.has(dc.parentName ?? dc.card.name);
 
   // Deck-aware passes, applied once before any edge formation. Chosen types resolve against what the
   // deck actually runs; the commander stamp marks WHICH cards the list designated, which is the only
@@ -182,7 +187,13 @@ export function analyzeDeckStructured(
     if (seen) seen.copies++;
     else byName.set(dc.card.name, { card: dc, copies: 1 });
   }
-  const unique = [...byName.values()].map((v) => v.card);
+  // A FACE IS A NODE (2026-08-27, owner's ruling): "if you flip the card it can care about different
+  // events and produce different ones". Expanded HERE and nowhere above -- `resolved` above stays the
+  // physical cards, so `computeDeckMath`, `deckFreq`, `computeRoles`, `detectBuildCategories` and
+  // `land-count.ts` keep counting a two-faced card once. E4 already prices an "Instant // Land" as a
+  // FRACTION of a land; turning 100 slots into 105 entries there would break `lands 37/36`, the mana
+  // simulation and castability at once.
+  const unique = [...byName.values()].flatMap((v) => faceDeckCards(v.card));
   const quantities = Object.fromEntries([...byName].filter(([, v]) => v.copies > 1).map(([n, v]) => [n, v.copies]));
 
   // TOKEN NODES (Task 6, tokens-as-nodes). Structural, not inferred: `createdTokenRefs` is the EXACT
@@ -453,8 +464,8 @@ export function analyzeDeckStructured(
       const wFeeder = impactEdgeWeight(reasons, impactWeights, (tag) => mag.feeder.get(tag) ?? 1) * axisBoost;
       // Commander boost: credit is amplified when the OTHER endpoint is the commander (mirrors the
       // old boostForA/boostForB semantics).
-      const payoffBoost = commanderSet.has(p.card.name) ? COMMANDER_BOOST : 1;
-      const feederBoost = commanderSet.has(c.card.name) ? COMMANDER_BOOST : 1;
+      const payoffBoost = isCommanderNode(p) ? COMMANDER_BOOST : 1;
+      const feederBoost = isCommanderNode(c) ? COMMANDER_BOOST : 1;
       const cAgg = dir.get(c.card.name)!;
       const pAgg = dir.get(p.card.name)!;
       cAgg.support += wPayoff * payoffBoost;
@@ -506,7 +517,10 @@ export function analyzeDeckStructured(
       const distinctPartners = [...dedupedPartners.values()];
       const base = {
         name,
-        isCommander: commanderSet.has(name),
+        // `name` is a `dir` key, i.e. a FACE name once `unique` is face-split -- `uniqueByName`
+        // (built off the same `unique` array) is the way back to the DeckCard `isCommanderNode`
+        // needs. Every name in `dir` came from `unique`, so the lookup is never absent.
+        isCommander: isCommanderNode(uniqueByName.get(name)!),
         score,
         authority,
         feederLift,

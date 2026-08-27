@@ -1154,3 +1154,84 @@ it("analyses a commander-only deck instead of throwing, with deckMath simply abs
   // Every other section still reports -- the guard skips one block, not the whole analysis.
   expect(report.commanders).toEqual(["Solo Commander"]);
 });
+
+// A FACE IS A NODE (2026-08-27, owner's ruling): "if you flip the card it can care about different
+// events and produce different ones". Expanded in `unique` and nowhere above it -- `resolved` stays
+// the physical cards, so `computeDeckMath`, `deckFreq`, `computeRoles` and `detectBuildCategories`
+// keep counting a two-faced card once. This deck is 3 physical cards, one of them the modal DFC
+// "Fell the Profane // Fell Mire" (Instant // Land) already used as the faces.ts/edges.ts fixture.
+const fellTheProfane = (): DeckCard => ({
+  card: {
+    name: "Fell the Profane // Fell Mire",
+    typeLine: "Instant // Land",
+    oracleText: "Destroy target creature or planeswalker.\n// Fell Mire enters the battlefield tapped.",
+    keywords: [], colors: ["B"], manaValue: 2,
+    faces: [
+      { name: "Fell the Profane", typeLine: "Instant", oracleText: "Destroy target creature or planeswalker.", manaCost: "{1}{B}", colors: ["B"] },
+      { name: "Fell Mire", typeLine: "Land", oracleText: "Fell Mire enters the battlefield tapped.", colors: [] },
+    ],
+  } as never,
+  tags: {
+    oracleId: "fell-the-profane", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["instant", "land"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [],
+      faces: [
+        { types: ["instant"], subtypes: [] },
+        { types: ["land"], subtypes: [] },
+      ],
+    },
+    abilities: [],
+  } as CardTags,
+});
+
+test("a multi-face card is rated once per face and counted once as a card", () => {
+  const beater = dc("Vanilla Beater", []);
+  const another = dc("Another Beater", []);
+  const report = analyzeDeckStructured([beater, another, fellTheProfane()], undefined, H);
+  const rated = report.cards.map((c) => c.name);
+  expect(rated).toContain("Fell the Profane");
+  expect(rated).toContain("Fell Mire");
+  expect(rated).not.toContain("Fell the Profane // Fell Mire");
+  // `DeckReport` has no `stats.totalCards` field (checked -- @mtg/engine's DeckReport carries
+  // `manaCurve`/`landCount` directly, both from `computeDeckStats(resolved.map(dc => dc.card))`).
+  // Same invariant, real fields: the library stayed 3 PHYSICAL cards. A face split that leaked past
+  // `unique` into `resolved` would count the DFC's Instant face AND its Land face separately here,
+  // reading landCount 1 + nonland 3 = 4 instead of 3.
+  const nonlandCount = report.manaCurve.reduce((sum, b) => sum + b.count, 0);
+  expect(nonlandCount + report.landCount).toBe(3);
+});
+
+test("a commander that is a multi-face card is still the commander on its front face", () => {
+  const dfcCommander: DeckCard = {
+    card: {
+      name: "Ajani, Nacatl Pariah // Ajani, Nacatl Avenger",
+      typeLine: "Legendary Creature — Cat Cleric // Legendary Planeswalker — Ajani",
+      oracleText: "a\n// b",
+      keywords: [], colors: ["W"], manaValue: 2,
+      faces: [
+        { name: "Ajani, Nacatl Pariah", typeLine: "Legendary Creature — Cat Cleric", oracleText: "a", manaCost: "{1}{W}", colors: ["W"] },
+        { name: "Ajani, Nacatl Avenger", typeLine: "Legendary Planeswalker — Ajani", oracleText: "b", colors: ["W", "G"] },
+      ],
+    } as never,
+    tags: {
+      oracleId: "ajani-nacatl-pariah", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: {
+        types: ["creature"], subtypes: ["cat", "cleric"], colors: ["W"], identity: ["W", "G"], cmc: 2,
+        power: "1", toughness: "1", token: false, keywords: [],
+        faces: [
+          { types: ["creature"], subtypes: ["cat", "cleric"] },
+          { types: ["planeswalker"], subtypes: ["ajani"] },
+        ],
+      },
+      abilities: [],
+    } as CardTags,
+  };
+  const other = dc("Filler", []);
+  const report = analyzeDeckStructured(
+    [dfcCommander, other],
+    ["Ajani, Nacatl Pariah // Ajani, Nacatl Avenger"],
+    H,
+  );
+  expect(report.cards.find((c) => c.name === "Ajani, Nacatl Pariah")?.isCommander).toBe(true);
+});
