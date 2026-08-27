@@ -1460,6 +1460,67 @@ describe("flow view", () => {
     expect(offsetsThisFrame()).not.toEqual(first);
   });
 
+  // A CYCLE IS ONE EDGE, NOT TWO. Both direction-pure walks reach an edge that sits in a loop, so
+  // `flow.edges` holds that pair twice -- and the legend counted it twice. Measured on the Jodah
+  // deck 2026-08-27: 5 of 103 flows, 21 pairs, and the busiest double-counted 6 of its 55 edges.
+  // The paint loop was already immune (it keys a Map by pair), so the defect was in the NUMBERS
+  // alone, which is the harder kind to see.
+  test("an edge in a cycle is counted once in the legend, not once per walk", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "R" }), card({ id: "X" })],
+      [
+        { from: "R", to: "X", weight: 2, tags: ["enters:creature"], reasonTexts: ["R feeds X"] },
+        { from: "X", to: "R", weight: 2, tags: ["enters:creature"], reasonTexts: ["X feeds R"] },
+      ],
+    );
+    const { canvas } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+
+    const rows = [...document.querySelectorAll('[data-testid="paint-legend-row"]')]
+      .filter((r) => r.tagName === "BUTTON");
+    const enters = rows.find((r) => r.getAttribute("data-value") === "enters");
+    expect(enters).toBeDefined();
+    // Two distinct pairs, each counted once -- never four.
+    expect(enters!.textContent).toContain("2");
+  });
+
+  // THE CRAWL AND THE ARROWHEAD MUST AGREE, AND NOTHING ASSERTED IT UNTIL THE JODAH DECK.
+  // The test above pins only that the offset MOVES, which is direction-agnostic -- so it stayed
+  // green while upstream edges crawled one way and their arrowheads pointed the other. `fe.dir`
+  // records which WALK found an edge, not which way the event travels; the event always goes
+  // `from -> to` and the arrowhead is always drawn at the target, so one constant sign is the only
+  // reading that agrees. A root with one edge in each fan must show ONE current, not two.
+  test("both fans crawl the same way, so motion and the arrowheads cannot disagree", () => {
+    vi.spyOn(performance, "now").mockReturnValue(100);
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "R" }), card({ id: "B" })],
+      [
+        { from: "A", to: "R", weight: 2, tags: ["t"], reasonTexts: ["A feeds R"] },
+        { from: "R", to: "B", weight: 2, tags: ["t"], reasonTexts: ["R feeds B"] },
+      ],
+    );
+    const { canvas, tick } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+
+    calls.length = 0;
+    tick();
+    const offsets = new Set<string>();
+    let last: string | null = null;
+    for (const c of calls) {
+      if (c.startsWith("set:lineDashOffset=")) last = c.slice("set:lineDashOffset=".length);
+      else if (c.startsWith("moveTo:") && last !== null && last !== "0") offsets.add(last);
+    }
+    expect(offsets.size).toBe(1);
+    // Negative, i.e. travelling toward the TARGET -- the end the arrowhead is drawn at.
+    expect(Number([...offsets][0])).toBeLessThan(0);
+  });
+
   // prefers-reduced-motion is not a preference to weigh against how good the crawl looks. A reader
   // who asked the OS to stop animations gets a frozen phase; the dashes stay (harmless, and they
   // still mark which edges are in the flow) and direction falls back to the legend's wording.

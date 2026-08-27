@@ -681,11 +681,20 @@ export function GraphView(
         // last flow edge would dash every rim, border and card frame drawn after this loop.
         if (fe && !offEvent && !offFocus) {
           ctx.setLineDash([FLOW_DASH.on / cam.z, FLOW_DASH.off / cam.z]);
-          // DIRECTION IS THE CRAWL NOW THAT HUE CARRIES THE MECHANISM. Dashes travel AWAY from the
-          // clicked card on what it feeds and TOWARD it on what feeds it, so the two channels are
-          // independent: colour says which event, motion says which way. `FLOW_DASH`'s own comment
-          // already called the motion the encoding -- it just was not being used as one.
-          ctx.lineDashOffset = (fe.dir === "down" ? -crawl : crawl) / cam.z;
+          // DIRECTION IS THE CRAWL NOW THAT HUE CARRIES THE MECHANISM: colour says which event,
+          // motion says which way. `FLOW_DASH`'s own comment already called the motion the encoding
+          // -- it just was not being used as one.
+          //
+          // ALWAYS TOWARD THE TARGET, AND `fe.dir` IS DELIBERATELY NOT CONSULTED. It shipped as
+          // `dir === "down" ? -crawl : crawl`, which makes the dashes radiate AWAY from the clicked
+          // card in both fans -- while the arrowhead below is drawn at `l.target` in both fans. On
+          // every UPSTREAM edge the two encodings therefore pointed opposite ways. `dir` records
+          // which WALK found the edge, not which way the event travels; the event always goes
+          // `from -> to`, the line is always drawn source-to-target, so one constant sign is the
+          // only reading that agrees with the arrowhead and with the graph. Caught on the Jodah
+          // deck 2026-08-27. What is lost is the "radiating outward" reading, which the arrowhead's
+          // orientation relative to the clicked card already states.
+          ctx.lineDashOffset = -crawl / cam.z;
         } else {
           ctx.setLineDash([]);
         }
@@ -1368,8 +1377,18 @@ export function GraphView(
   const flowEvents = useMemo(() => {
     if (!flow) return [] as { verb: string; count: number; hue: string }[];
     const n = new Map<string, number>();
+    // COUNTED PER PAIR, NOT PER WALK. A card that both feeds and is fed by the same neighbour sits
+    // in a CYCLE, and the two direction-pure walks each reach that edge -- so `flow.edges` holds it
+    // twice and the legend counted it twice. Measured on the Jodah deck 2026-08-27: 5 of 103 flows
+    // contain such a pair, 21 pairs in all, and the busiest flow double-counted 6 of its 55 edges.
+    // The paint loop was already immune (`flowEdgeByPair` is a Map), so this was a defect in the
+    // NUMBERS on screen and nowhere else -- which is the harder kind to notice.
+    const counted = new Set<string>();
     for (const fe of flow.edges) {
-      for (const verb of new Set((tagsByPairBody.get(`${fe.from}>${fe.to}`) ?? []).map((t) => t.split(":")[0]))) {
+      const pair = `${fe.from}>${fe.to}`;
+      if (counted.has(pair)) continue;
+      counted.add(pair);
+      for (const verb of new Set((tagsByPairBody.get(pair) ?? []).map((t) => t.split(":")[0]))) {
         n.set(verb, (n.get(verb) ?? 0) + 1);
       }
     }
