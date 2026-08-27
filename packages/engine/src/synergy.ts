@@ -33,6 +33,16 @@ export interface Reason {
   producerIsToken?: boolean;
   /** True when the CONSUMING side is a token node. See `producerIsToken`. */
   consumerIsToken?: boolean;
+  /** WHICH FACE of the producing card printed this relation, when the producer is one face of a
+   *  multi-face card. Absent for the front face and for every single-face card, so a front-face
+   *  reason is byte-identical to what this engine produced before faces were nodes.
+   *
+   *  The NAME beside it stays the PHYSICAL card's ("A // B"), never the face's: `pairs.json` keys the
+   *  whole judged panel on `producer|consumer|tag`, and composing a fact into that key cost 22
+   *  judging debt the last time it was tried. The face is a field, not a decoration on a name. */
+  producerFace?: number;
+  /** The consuming side's face. See `producerFace`. */
+  consumerFace?: number;
   /** True when the producer side of this reason was a SYNTHESISED baseline event — the card
    *  supplying it does so merely by existing (any nonland is cast; any permanent enters), not by
    *  an authored effect. Absent when the supply was authored, i.e. surplus. Theme membership

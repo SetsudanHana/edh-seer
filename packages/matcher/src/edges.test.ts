@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { pairReasons, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE } from "./edges.js";
+import { faceDeckCards } from "./faces.js";
 import type { Reason } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -2943,4 +2944,64 @@ test("a dealer demand still discriminates on control", () => {
     effect: { kind: "draw-card" },
   }]);
   expect(directedReasons(mine, wantsTheirs, H).map((r) => r.tag)).not.toContain("non-combat-damage:opp");
+});
+
+// A FACE IS A NODE (2026-08-27, Task 3). `mdfcProducer` is an Instant // Land modal DFC: front
+// face casts as an Instant, back face is a Land that enters. `faceDeckCards` splits it into two
+// DeckCards, each carrying only its own face's implied events -- see `faces.ts`.
+const mdfcProducer = (): DeckCard => ({
+  card: {
+    name: "Fell the Profane // Fell Mire",
+    typeLine: "Instant // Land",
+    oracleText: "Destroy target creature or planeswalker.\n// Fell Mire enters the battlefield tapped.",
+    keywords: [], colors: ["B"], manaValue: 2,
+    faces: [
+      { name: "Fell the Profane", typeLine: "Instant", oracleText: "Destroy target creature or planeswalker.", manaCost: "{1}{B}", colors: ["B"] },
+      { name: "Fell Mire", typeLine: "Land", oracleText: "Fell Mire enters the battlefield tapped.", colors: [] },
+    ],
+  } as never,
+  tags: {
+    oracleId: "fell-the-profane", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["instant", "land"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [],
+      faces: [
+        { types: ["instant"], subtypes: [] },
+        { types: ["land"], subtypes: [] },
+      ],
+    },
+    abilities: [],
+  } as CardTags,
+});
+
+const landfallConsumer = (): DeckCard => base("Lotus Cobra", [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: ["land"] } },
+  effect: { kind: "add-mana" },
+}]);
+
+const castConsumer = (): DeckCard => base("Guttersnipe", [{
+  kind: "triggered",
+  trigger: { verbs: ["cast"], subject: { control: "you", token: null, type: ["instant"] } },
+  effect: { kind: "damage" },
+}]);
+
+// A FACE IS A NODE, AND THE PANEL MUST NOT NOTICE. `pairs.json` keys 895 frozen pairs on
+// `producer|consumer|tag`, so the NAME stays the physical card's and the face rides beside it.
+test("a reason from a back-face ability names the card and stamps the face", () => {
+  const [, back] = faceDeckCards(mdfcProducer());
+  const consumer = landfallConsumer();
+  const reasons = directedReasons(back, consumer, {});
+  expect(reasons.length).toBeGreaterThan(0);
+  expect(reasons[0].producer).toBe("Fell the Profane // Fell Mire");
+  expect(reasons[0].producerFace).toBe(1);
+});
+
+test("a reason from the front face names the card and stamps no face", () => {
+  const [front] = faceDeckCards(mdfcProducer());
+  const consumer = castConsumer();
+  const reasons = directedReasons(front, consumer, {});
+  expect(reasons.length).toBeGreaterThan(0);
+  expect(reasons[0].producer).toBe("Fell the Profane // Fell Mire");
+  expect(reasons[0].producerFace).toBeUndefined();
 });

@@ -802,6 +802,16 @@ function stampSides(r: Reason, producer: DeckCard, consumer: DeckCard): Reason {
     ...r,
     ...(producer.isToken ? { producerIsToken: true } : {}),
     ...(consumer.isToken ? { consumerIsToken: true } : {}),
+    // A FACE NODE CARRIES THE FACE'S NAME so the by-name maps in `analyze.ts` stay collision-free —
+    // two faces of one card would otherwise share a `dir` key. The REASON carries the physical
+    // card's name, because the panel keys on it. Rewritten here, in the one place every reason
+    // literal already passes through, rather than at the fifteen sites that build one.
+    ...(producer.parentName ? { producer: producer.parentName } : {}),
+    ...(consumer.parentName ? { consumer: consumer.parentName } : {}),
+    // `producer.face` rather than `!== undefined`: face 0 is the front and stamps nothing, which
+    // keeps a front-face reason byte-identical to what this engine produced before faces were nodes.
+    ...(producer.face ? { producerFace: producer.face } : {}),
+    ...(consumer.face ? { consumerFace: consumer.face } : {}),
   };
 }
 
