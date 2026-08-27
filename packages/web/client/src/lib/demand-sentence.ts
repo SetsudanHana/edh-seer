@@ -155,9 +155,65 @@ export function demandSentence(key: string): string {
  *  A verb the map has never seen de-slugs rather than printing a raw token, which is the same
  *  fallback `demandSentence` takes and for the same reason. */
 export function eventLabel(verb: string): string {
-  const phrase = STATIC_KIND[verb] ?? DEMAND_VERB[verb] ?? DEMAND_PHASE[verb] ?? verb.replace(/-/g, " ");
+  const phrase = STATIC_KIND[verb] ?? MECHANISM[verb] ?? DEMAND_VERB[verb]
+    ?? DEMAND_SUBJECTLESS[verb] ?? DEMAND_PHASE[verb] ?? verb.replace(/-/g, " ");
   return phrase.charAt(0).toUpperCase() + phrase.slice(1);
 }
+
+/** THE MECHANISMS A REASON TAG NAMES THAT A CENSUS KEY NEVER DOES.
+ *
+ *  `DEMAND_VERB` was built for CENSUS keys — what a consumer's trigger watches. A reason TAG carries
+ *  a partly different vocabulary, because most of `edges.ts`'s passes write their own literal:
+ *  `ramp-target:`, `tutor:`, `creates:`, `land-condition:`, `doubles:`, `scales:`, `wincon:`,
+ *  `graveyard-recursion:`, `meld`. Nothing had ever reconciled the two lists, so every one of those
+ *  fell through `eventLabel`'s de-slugify branch and reached the reader as an internal identifier:
+ *  "Ramp target", "Creates", "Doubles".
+ *
+ *  IT IS NOT A LONG TAIL. Measured across the 71 calibration decks 2026-08-27, by reason count and
+ *  by decks: **`creates` 662 in SEVENTY of 71 decks · `ramp-target` 1,543 in SIXTY-NINE** — the two
+ *  worst offenders are in essentially every deck anyone would paste — then `land-condition` 576 (45)
+ *  · `tutor` 479 (27) · `scales` 255 (16) · `doubles` 234 (7) · `clone` 44 (2) · `wincon` 11 (2).
+ *
+ *  EVERY LABEL IS TAKEN FROM THE ENGINE'S OWN SENTENCE FOR THAT TAG, never from reading the tag's
+ *  name — `sentence.ts` is where each pass says in English what it claims, so it is the authority on
+ *  what the mechanism IS:
+ *    - `creates`             `createsSentence`            "P creates C"
+ *    - `ramp-target`         `fetchSentence`              "P can fetch C"
+ *    - `tutor`               `tutorSentence`              "P can search up C"
+ *    - `graveyard-recursion` `graveyardEnablesRecursion`  "When P is in the graveyard, C can bring it back"
+ *    - `scales`              `graveyardFeedsScaling`      "When P is in the graveyard, C gets bigger"
+ *    - `doubles`             `doublesSentence`            "P doubles C's <verb> trigger"
+ *    - `wincon`              `winconSentence`             "P is what C counts toward winning"
+ *    - `meld`                `meldSentence`               "A and B meld together"
+ *    - `land-condition`      `landConditionSentence`      three templates, all of the shape
+ *                            "C is better/enters untapped/can use its second mana ability while you
+ *                            control a <basic type>, and P is one" — so the label names the DEMAND
+ *                            the three share, which is the only thing true of all of them.
+ *    - `clone`               `GRANT_PHRASES.clone`        "a copy of what it targets"
+ *
+ *  `clone` IS AN EFFECT KIND, NOT A PASS LITERAL, and it is here because the static pass's other
+ *  branch writes `<effect kind>:<subject>` — so an effect kind can reach a legend as a mechanism.
+ *  Its `static:clone` twin above carries the same phrase on purpose: the mechanism is the same fact
+ *  whether or not the ability granting it is static, and giving one surface two words for it is the
+ *  disagreement this whole module exists to prevent.
+ *
+ *  STILL NO RATCHET OVER EVERY POSSIBLE KIND, AND THAT IS A CHOICE. `EFFECT_KINDS` is importable and
+ *  would make one — but most of its ~40 members have never formed a reason in 71 decks, and a label
+ *  invented for a mechanism nobody has a witness for is a guess dressed as coverage. The test below
+ *  pins the MEASURED set; anything else keeps the de-slugify fallback, which is what every entry
+ *  here had before it was measured. */
+export const MECHANISM: Record<string, string> = {
+  creates: "creating a token",
+  "ramp-target": "fetching a land",
+  tutor: "searching up a card",
+  "graveyard-recursion": "bringing cards back",
+  scales: "getting bigger",
+  doubles: "doubling a trigger",
+  wincon: "counting toward a win",
+  meld: "melding",
+  "land-condition": "needing a basic type",
+  clone: "copying a permanent",
+};
 
 /** A STATIC IS A CLASS, NOT A MECHANISM, AND EVERY OTHER TAG'S FIRST COMPONENT IS A MECHANISM.
  *
