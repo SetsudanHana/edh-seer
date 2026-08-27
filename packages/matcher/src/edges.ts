@@ -831,6 +831,20 @@ const COPY_REPLACES_TYPE_CUE = /loses all other card types|except (?:it|they)(?:
 /** A populate effect copies a TOKEN, never the commander -- refused rather than claimed, on the
  *  same rule as everything else here: a wrong claim costs more than a missing one. */
 const COPY_OF_TOKEN_CUE = /copy of (?:a |an |another |target |that )*(?:\w+ )?token/i;
+/** "Another target NONLEGENDARY creature you control" -- a copy ability that explicitly excludes
+ *  legendary permanents from what it copies. CR gives no way around a printed restriction, so a
+ *  legendary consumer can never be the thing this ability copies.
+ *
+ *  This is the reopening condition `copySubject`'s own CEILING comment named on 2026-08-19
+ *  (`8831688d`): "gate on control only if a measurement finds the family bigger than that." It just
+ *  did -- Reflection of Kiki-Jiki's back-face copy ability reaching Kardur, Doomscourge (a
+ *  legendary creature) once face-scoping (2026-08-27) let `typed[0]` resolve to the RIGHT ability
+ *  instead of an unrelated earlier one. MEASURED 2026-08-27: 12 corpus cards print a copy cue
+ *  alongside the literal word "nonlegendary", 3 in the derived corpus.
+ *
+ *  Read off the printed cue, not a derived field -- none records it, and adding one is a schema and
+ *  re-derive question this fix does not need to answer for three cards. */
+const COPY_EXCLUDES_LEGENDARY_CUE = /\bnonlegendary\b/i;
 
 /** Board state and provenance a copy claim must not carry into the type test: `token` means opposite
  *  things on the two shapes of the family, and `control`/`zone`/`counter` describe the object being
@@ -850,10 +864,13 @@ const strip = (s: Partial<SubjectFilter>): Partial<SubjectFilter> => {
  *  populate effect what is COPIED, and only the printed cue tells them apart.
  *
  *  CEILING (`ponytail:` -- read before trusting a claim): `control` is ignored, so a card making an
- *  OPPONENT copy something over-claims, and Coiling Rebirth's copy is conditioned on the creature
- *  NOT being legendary, which no derived field records. Both are single cards; gate on control only
- *  if a measurement finds the family bigger than that. */
-function copySubject(p: DeckCard): { subject: SubjectFilter; enters: boolean } | undefined {
+ *  OPPONENT copy something over-claims, and Coiling Rebirth's copy is conditioned on "that creature
+ *  isn't legendary" -- an intervening-if the engine has refused generally, not the literal word
+ *  `notLegendary` catches. Both single cards; gate on control only if a measurement finds the
+ *  family bigger than that. */
+function copySubject(
+  p: DeckCard,
+): { subject: SubjectFilter; enters: boolean; notLegendary: boolean } | undefined {
   const oracle = p.card.oracleText ?? "";
   if (COPY_OF_TOKEN_CUE.test(oracle)) return undefined;
   const enters = COPY_ENTERS_CUE.test(oracle);
@@ -876,7 +893,13 @@ function copySubject(p: DeckCard): { subject: SubjectFilter; enters: boolean } |
   const raw: Partial<SubjectFilter> | undefined = typed[0]
     ?? (abilities.some((a) => a.effect.kind === "clone") ? { type: "creature" } : undefined);
   if (raw === undefined) return undefined;
-  return { subject: { ...strip(raw), control: "any", token: null } as SubjectFilter, enters };
+  // SCOPED TO THE EXPLICIT TYPED ABILITY ONLY (`typed.length > 0`), never the untyped `clone`-static
+  // fallback -- Naga Fleshcrafter is why. Its "nonlegendary" sits on a SEPARATE ability (Renew, kind
+  // `copy-spell`, never a `typed` candidate) from the one that actually supplies this card's copy
+  // subject ("may have this creature enter as a copy of ANY creature", genuinely unrestricted, read
+  // through the fallback). A card-wide test with no such scoping would have refused that real claim.
+  const notLegendary = typed.length > 0 && COPY_EXCLUDES_LEGENDARY_CUE.test(oracle);
+  return { subject: { ...strip(raw), control: "any", token: null } as SubjectFilter, enters, notLegendary };
 }
 
 /** Could the producer ITSELF be the object its own emit describes?
@@ -1516,30 +1539,34 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
   const copy = copySubject(p);
   if (copy && !c.isToken) {
     const legendary = c.tags.characteristics.types.includes("legendary");
-    for (const a of c.tags.abilities) {
-      if (!a.trigger?.subject.self) continue;
-      for (const rawVerb of a.trigger.verbs) {
-        // The RAW verb, not the normalized one: `normalizeZoneEvent` rewrites `dies` to
-        // `leaves`@battlefield, which a plain "when this leaves the battlefield" trigger also
-        // becomes -- and a bounce is not a death the legend rule causes.
-        if (rawVerb !== "enters" && rawVerb !== "dies") continue;
-        // ENTERS is claimed only by the cues that put a NEW object onto the battlefield. "Becomes a
-        // copy" (Sakashima's Will) rewrites a permanent already in play -- no entry, still two
-        // legends. DIES needs the legend rule, so it needs a legendary consumer and nothing else.
-        if (rawVerb === "enters" && !copy.enters) continue;
-        if (rawVerb === "dies" && !legendary) continue;
-        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
-        if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) continue;
-        const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
-        reasons.push({
-          tag: key,
-          text: copySentence(p.card.name, c.card.name, key, rawVerb === "dies"),
-          effectKind: a.effect.kind,
-          repeatability: triggerRepeatability(t.subject),
-          scaling: a.effect.scaling,
-          consumer: c.card.name,
-          producer: p.card.name,
-        });
+    // A copy ability that prints "nonlegendary" cannot ever copy a legendary consumer, by ANY verb
+    // -- CR gives no way around a printed restriction. See `COPY_EXCLUDES_LEGENDARY_CUE`.
+    if (!(copy.notLegendary && legendary)) {
+      for (const a of c.tags.abilities) {
+        if (!a.trigger?.subject.self) continue;
+        for (const rawVerb of a.trigger.verbs) {
+          // The RAW verb, not the normalized one: `normalizeZoneEvent` rewrites `dies` to
+          // `leaves`@battlefield, which a plain "when this leaves the battlefield" trigger also
+          // becomes -- and a bounce is not a death the legend rule causes.
+          if (rawVerb !== "enters" && rawVerb !== "dies") continue;
+          // ENTERS is claimed only by the cues that put a NEW object onto the battlefield. "Becomes
+          // a copy" (Sakashima's Will) rewrites a permanent already in play -- no entry, still two
+          // legends. DIES needs the legend rule, so it needs a legendary consumer and nothing else.
+          if (rawVerb === "enters" && !copy.enters) continue;
+          if (rawVerb === "dies" && !legendary) continue;
+          const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
+          if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) continue;
+          const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
+          reasons.push({
+            tag: key,
+            text: copySentence(p.card.name, c.card.name, key, rawVerb === "dies"),
+            effectKind: a.effect.kind,
+            repeatability: triggerRepeatability(t.subject),
+            scaling: a.effect.scaling,
+            consumer: c.card.name,
+            producer: p.card.name,
+          });
+        }
       }
     }
   }

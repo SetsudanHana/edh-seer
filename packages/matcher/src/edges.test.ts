@@ -2399,6 +2399,15 @@ test("copy: an untyped token-generation ability does not widen a card that also 
   expect(directedReasons(p, selfTriggerLegend("Hidetsugu and Kairi"), H).length).toBe(0);
 });
 
+// Reopening condition (2026-08-27): CR gives no way around a printed "nonlegendary" restriction, so
+// a copy ability naming one can never reach a legendary consumer -- but it must still reach the
+// nonlegendary one it genuinely can copy. Both directions proven to fire.
+test("copy: a NONLEGENDARY-restricted copy ability never reaches a legendary consumer, and still reaches a nonlegendary one", () => {
+  const p = copyFixture("Reflection of Kiki-Jiki", "Create a token that's a copy of another target nonlegendary creature you control, except it has haste.");
+  expect(directedReasons(p, selfTriggerLegend("Kardur, Doomscourge", true), H).length).toBe(0);
+  expect(directedReasons(p, selfTriggerLegend("Solemn Simulacrum", false), H).some((x) => x.tag === "enters:any")).toBe(true);
+});
+
 // PANEL FAMILY E (2026-08-20): a DEBUFF forms no applies-to edge, and an ABILITY discount needs an
 // ability to discount.
 test("a debuff makes no anthem claim, and an ability discount needs an activated ability", () => {
