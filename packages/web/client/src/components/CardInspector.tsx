@@ -1,5 +1,7 @@
 import type { CardGraph, GraphNode } from "../types.js";
 import { cardImageUrl } from "./card-node.js";
+import { routesThrough } from "../lib/routes.js";
+import { demandSentence } from "../lib/demand-sentence.js";
 import { subcategoryLabel } from "./presets.js";
 
 type Edge = CardGraph["edges"][number];
@@ -34,6 +36,12 @@ export function CardInspector({
   // direction the board's arrows do.
   const outgoing = sorted.filter((e) => e.from === node.id);
   const incoming = sorted.filter((e) => e.to === node.id);
+  // TWO-HOP ROUTES, and the card in the middle that makes each one exist. The lists above are one
+  // hop each, so a relationship that runs THROUGH a third card was invisible: the owner's case is
+  // that Ghyrson Starn does not synergise with token creation until Impact Tremors is added, at
+  // which point tokens entering become damage and the route exists. Both edges were always formed
+  // and neither list could say so.
+  const routes = routesThrough(edges, node.id);
   const cutDown = flow?.truncated.get(node.id)?.down;
   const cutUp = flow?.truncated.get(node.id)?.up;
 
@@ -151,6 +159,39 @@ export function CardInspector({
             </p>
           ) : null}
           {renderList(incoming, false)}
+        </div>
+      ) : null}
+
+      {/* THE ROUTE, NAMED AT EVERY STEP. A player can see three cards connected on the board and
+        *  still not know why; what makes this readable is that both mechanisms are spelled out, and
+        *  that the middle card is the subject of the sentence rather than a waypoint in it — it is
+        *  the card whose presence bought the route, which is the thing a deckbuilder acts on. */}
+      {routes.length > 0 ? (
+        <div className="border-t border-(--separator) pt-2 flex flex-col gap-2">
+          <h4 className="eyebrow text-(--muted)">Reached through</h4>
+          <ul className="flex flex-col gap-2">
+            {routes.map((r) => (
+              <li key={`${r.dir}:${r.through}`} className="flex flex-col gap-0.5">
+                <div className="text-xs">
+                  <span className="stat-num">{r.total}</span>{" "}
+                  {r.total === 1 ? "card" : "cards"}{" "}
+                  {r.dir === "in" ? "reach" : "are reached by"} {node.label} through{" "}
+                  <span className="text-(--accent)">{r.through}</span>
+                </div>
+                {/* The chain in the order it happens, so it reads as one sentence rather than as
+                  *  two tags a reader has to compose themselves. */}
+                {r.farTag && r.nearTag ? (
+                  <div className="text-xs text-(--muted)">
+                    {demandSentence(r.dir === "in" ? r.farTag : r.nearTag)} → {r.through} →{" "}
+                    {demandSentence(r.dir === "in" ? r.nearTag : r.farTag)}
+                  </div>
+                ) : null}
+                <div className="text-xs text-(--muted)">
+                  {r.ends.join(", ")}{r.total > r.ends.length ? ` and ${r.total - r.ends.length} more` : ""}
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
     </div>
