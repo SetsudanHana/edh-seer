@@ -44,6 +44,10 @@ export const CUT_RATING_MAX = 1.0;
 
 export interface CutInput {
   name: string;
+  /** The physical card this row's face belongs to ("Fell the Profane // Fell Mire"), present only
+   *  when `name` is one face of a multi-face card. See `mergeFaces` -- a reader cuts the CARD, not
+   *  a face, so two rows sharing a `cardName` collapse to one before anything is proposed. */
+  cardName?: string;
   /** 0-5, deck-relative. */
   rating: number;
   /** 0-1: how far the card's best synergy edge sits on the deck's axis. */
@@ -161,15 +165,45 @@ function connectionReason(partnerCount: number, median: number | null): string {
   return `only ${partnerCount} card${partnerCount === 1 ? " connects" : "s connect"} to it`;
 }
 
+/** A CARD IS THE UNIT OF A CUT. A face node is rated on its own -- that is the whole point of faces
+ *  as nodes -- but a reader removes a CARD from a sleeve, so the two faces are merged back before
+ *  anything is proposed. The merged row takes the STRONGEST face's protections (a role, a combo
+ *  slot or a commander designation on either face protects the card, because cutting takes both
+ *  away) and the strongest face's numbers, so a card is never proposed on the strength of its
+ *  weaker half alone. */
+function mergeFaces(rows: readonly CutInput[]): CutInput[] {
+  const out = new Map<string, CutInput>();
+  for (const r of rows) {
+    const key = r.cardName ?? r.name;
+    const prev = out.get(key);
+    if (!prev) { out.set(key, { ...r, name: key }); continue; }
+    out.set(key, {
+      ...prev,
+      rating: Math.max(prev.rating, r.rating),
+      axisWeight: Math.max(prev.axisWeight, r.axisWeight),
+      partnerCount: Math.max(prev.partnerCount, r.partnerCount),
+      roles: [...new Set([...prev.roles, ...r.roles])],
+      isLand: prev.isLand && r.isLand,
+      isCommander: prev.isCommander || r.isCommander,
+      isComboPiece: prev.isComboPiece || r.isComboPiece,
+      fillsDeckRole: prev.fillsDeckRole || r.fillsDeckRole,
+      derived: prev.derived || r.derived,
+      unmetConditions: [...new Set([...(prev.unmetConditions ?? []), ...(r.unmetConditions ?? [])])],
+    });
+  }
+  return [...out.values()];
+}
+
 /** Cards the deck is not using, weakest first. Never more than `limit` rows -- the question is
  *  "which few go", and a 30-row list is the same as no list.
  *
  *  A CARD THE ENGINE NEVER READ IS NOT A CANDIDATE. It is reported separately by `unjudged` below,
  *  because the two sentences differ and only one of them is a reason to cut. */
 export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandidate[] {
-  const median = medianPartnerCount(cards);
+  const merged = mergeFaces(cards);
+  const median = medianPartnerCount(merged);
   const out: CutCandidate[] = [];
-  for (const c of cards) {
+  for (const c of merged) {
     if (c.isLand || c.isCommander || c.isComboPiece) continue;
     // A functional role protects the card outright -- see the header. This is the gate that keeps
     // Sol Ring off the list.
@@ -281,9 +315,11 @@ export function trimOrder(
     if (!slack) continue;
     for (const leaf of p.leaves) surplusByLeaf.set(leaf, { name: p.name, count: slack.count, target: slack.target });
   }
-  const median = medianPartnerCount(cards);
+  // A two-faced card is one seat at the table, same as in `cutCandidates` -- see `mergeFaces`.
+  const merged = mergeFaces(cards);
+  const median = medianPartnerCount(merged);
   const rows: TrimRow[] = [];
-  for (const c of cards) {
+  for (const c of merged) {
     if (c.isLand || c.isCommander) continue;
     const reasons: string[] = [];
     const protections: string[] = [];

@@ -840,6 +840,9 @@ export function analyzeDeckStructured(
     const physical = physicalName(c.name);
     return {
       name: c.name,
+      // Present only when `c.name` is one face of a multi-face card, so `mergeFaces` (cut-list.ts)
+      // can collapse the deck's two rated faces back into the one card a reader would cut.
+      ...(physical !== c.name ? { cardName: physical } : {}),
       rating: c.synergyRating ?? 0,
       axisWeight: c.axisWeight ?? 0,
       partnerCount: c.partnerCount,

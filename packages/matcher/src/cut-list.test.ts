@@ -269,3 +269,38 @@ test("trim keeps an unread card and says why it cannot judge it", () => {
   expect(row.reasons.join(" ")).not.toContain("nothing in the deck connects to it");
   expect(row.protections.join(" ")).toContain("not read yet");
 });
+
+// YOU CANNOT CUT HALF A CARD. A modal DFC whose land back does nothing and whose front does nothing
+// is ONE cut, not two, and the row has to name the card a reader would physically remove.
+test("two face rows for one card collapse to a single candidate naming the card", () => {
+  const rows = cutCandidates([
+    { name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", rating: 0.2, axisWeight: 0, partnerCount: 0, manaValue: 4, roles: [], isLand: false, isCommander: false, isComboPiece: false, fillsDeckRole: false, derived: true, unmetConditions: [] },
+    { name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", rating: 0.4, axisWeight: 0, partnerCount: 1, manaValue: 4, roles: [], isLand: false, isCommander: false, isComboPiece: false, fillsDeckRole: false, derived: true, unmetConditions: [] },
+  ]);
+  expect(rows).toHaveLength(1);
+  expect(rows[0].name).toBe("Fell the Profane // Fell Mire");
+});
+
+// A card is protected by ANY of its faces doing work — cutting it takes both away.
+test("a face that fills a role protects the whole card", () => {
+  const rows = cutCandidates([
+    { name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", rating: 0.2, axisWeight: 0, partnerCount: 0, manaValue: 4, roles: [], isLand: false, isCommander: false, isComboPiece: false, fillsDeckRole: false, derived: true, unmetConditions: [] },
+    { name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", rating: 0.2, axisWeight: 0, partnerCount: 0, manaValue: 4, roles: ["ramp"], isLand: false, isCommander: false, isComboPiece: false, fillsDeckRole: false, derived: true, unmetConditions: [] },
+  ]);
+  expect(rows).toHaveLength(0);
+});
+
+// trimOrder must merge too -- it ranks every cuttable card and hands a reader its own N off the
+// top, so a two-faced card appearing twice there is the identical defect one surface over. The
+// merge keeps the STRONGEST face's numbers, so the row reads "connects to 1 card" (Fell Mire's
+// number), not "connects to 0" (Fell the Profane's) -- the merged row must not under-state a card
+// by quoting its weaker half.
+test("trimOrder merges a card's two faces into one ranked row", () => {
+  const rows = trimOrder([
+    card({ name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", partnerCount: 0 }),
+    card({ name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", partnerCount: 1 }),
+  ]);
+  expect(rows).toHaveLength(1);
+  expect(rows[0]!.name).toBe("Fell the Profane // Fell Mire");
+  expect(rows[0]!.partners).toBe(1);
+});
