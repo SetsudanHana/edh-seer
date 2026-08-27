@@ -1460,6 +1460,40 @@ describe("flow view", () => {
     expect(offsetsThisFrame()).not.toEqual(first);
   });
 
+  // A STATIC IS A CLASS, NOT A MECHANISM. A reason tag is `<mechanism>:<subject>` everywhere except
+  // the static family, where it is `static:<mechanism>` -- so splitting on the colon threw the
+  // mechanism away and called a cost cut and an anthem the same thing. 6,829 of 43,376 reasons
+  // (15.7%) across the 71 decks are `static:`, over eight distinct mechanisms.
+  test("the static family splits into its own mechanisms, each named and hued", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "R" }), card({ id: "X" }), card({ id: "Y" })],
+      [
+        { from: "R", to: "X", weight: 2, tags: ["static:cost-reduction"], reasonTexts: ["R reduces what X costs"] },
+        { from: "R", to: "Y", weight: 2, tags: ["static:pump"], reasonTexts: ["R gives Y bigger stats"] },
+      ],
+    );
+    const { canvas } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+
+    const rows = [...document.querySelectorAll('[data-testid="paint-legend-row"]')]
+      .filter((r) => r.tagName === "BUTTON");
+    const values = rows.map((r) => r.getAttribute("data-value"));
+    expect(values).toContain("static:cost-reduction");
+    expect(values).toContain("static:pump");
+    // TWO ROWS, NOT ONE COLLAPSED "static".
+    expect(values).not.toContain("static");
+    // AND IN A PLAYER'S WORDS, never the raw kind -- an internal identifier rendered as English is
+    // the defect `demand-sentence.ts` exists to prevent.
+    expect(rows.map((r) => r.textContent).join(" ")).toContain("Costing less");
+    expect(rows.map((r) => r.textContent).join(" ")).toContain("Bigger stats");
+    // Distinct hues: the whole point is that they stop looking alike.
+    const strokes = rows.map((r) => r.querySelector("path")?.getAttribute("stroke"));
+    expect(new Set(strokes).size).toBe(strokes.length);
+  });
+
   // ISOLATING A MECHANISM PAINTS IT IN ITS OWN HUE. 29 of the Jodah deck's 335 edges carry more
   // than one verb (8.7%), and `offFocus` correctly KEEPS such an edge lit when either verb is the
   // isolated one -- so without this it stayed lit in the other verb's colour, and the reader who

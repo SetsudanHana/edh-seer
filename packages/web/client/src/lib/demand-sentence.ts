@@ -155,6 +155,57 @@ export function demandSentence(key: string): string {
  *  A verb the map has never seen de-slugs rather than printing a raw token, which is the same
  *  fallback `demandSentence` takes and for the same reason. */
 export function eventLabel(verb: string): string {
-  const phrase = DEMAND_VERB[verb] ?? DEMAND_PHASE[verb] ?? verb.replace(/-/g, " ");
+  const phrase = STATIC_KIND[verb] ?? DEMAND_VERB[verb] ?? DEMAND_PHASE[verb] ?? verb.replace(/-/g, " ");
   return phrase.charAt(0).toUpperCase() + phrase.slice(1);
+}
+
+/** A STATIC IS A CLASS, NOT A MECHANISM, AND EVERY OTHER TAG'S FIRST COMPONENT IS A MECHANISM.
+ *
+ *  Reason tags are built two ways (`edges.ts`): a normal one is `<mechanism>:<subject>` —
+ *  `enters:creature`, `cast:spell` — so splitting on the colon yields the mechanism. A static one is
+ *  `static:<mechanism>`, so the same split yields the literal word "static" and throws the mechanism
+ *  away. Measured across the 71 calibration decks 2026-08-27: **6,829 of 43,376 reasons (15.7%) are
+ *  `static:`, over EIGHT distinct mechanisms** — cost-reduction 4,326 (59 decks) · pump 1,698 (34) ·
+ *  keyword-grant 425 (22) · type-grant 229 (5) · speed-increase 61 · untap 45 · token-generation 44 ·
+ *  animate 1. A cost cut and an anthem are not the same thing to a deckbuilder, and the graph legend
+ *  was calling both of them "Static".
+ *
+ *  IT WAS NAMING THE WRONG HALF OF A REAL EDGE. On the Jodah deck, Serah Farron reaches a token
+ *  carrying BOTH `static:cost-reduction` and `static:pump`; the first was false (a token is never
+ *  cast) and the second true, and the legend printed the word that came from the false one.
+ *
+ *  THE ENGINE ALREADY HAS ENGLISH FOR THESE and it is deliberately not imported: `sentence.ts`'s
+ *  `GRANT_PHRASES` fits the slot "<producer> gives <consumer> ___" ("bigger stats", "an extra
+ *  ability"), which is a different grammar from a legend LABEL, and no subpath of `@mtg/matcher` is
+ *  safe to value-import from client code anyway (the 2026-08-21 regression). Same reason
+ *  `DEMAND_VERB` and the engine's own `VERB_PHRASES` coexist.
+ *
+ *  NO COMPLETENESS RATCHET, AND THAT IS STATED RATHER THAN QUIETLY MISSING. `DEMAND_VERB` can be
+ *  walked against `VERB_VOCAB` because that list is authoritative; there is no list of "effect kinds
+ *  that can appear on a STATIC ability" — it is whatever derivation produces — so this is the
+ *  measured set plus the rest of `GRANT_PHRASES`, and an unmapped kind falls through to de-slugified
+ *  text, which is exactly what every one of them did before this map existed. */
+export const STATIC_KIND: Record<string, string> = {
+  "static:cost-reduction": "costing less",
+  "static:pump": "bigger stats",
+  "static:keyword-grant": "granted abilities",
+  "static:type-grant": "granted types",
+  "static:speed-increase": "haste",
+  "static:untap": "extra untaps",
+  "static:token-generation": "making tokens",
+  "static:animate": "becoming a creature",
+  // Present in the engine's `GRANT_PHRASES` and unmeasured in the 71 decks — an arbitrary paste can
+  // still produce them, and a label costs nothing where the fallback would print a slug.
+  "static:clone": "copying a permanent",
+  "static:proliferate": "proliferating",
+  "static:enters-with-counters": "entering with counters",
+};
+
+/** The mechanism a reason tag names, for any surface that groups edges by mechanism.
+ *
+ *  ONE FUNCTION FOR THE TRACE CHIPS AND THE FLOW LEGEND. They read the same tags and would otherwise
+ *  disagree about what an edge IS — the chip saying "Static 18" beside a legend saying "Costing less
+ *  12", which is how two surfaces start telling different stories about one number. */
+export function mechanismKey(tag: string): string {
+  return tag.startsWith("static:") ? tag : tag.split(":")[0];
 }

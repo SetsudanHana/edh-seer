@@ -11,7 +11,7 @@ import {
   FLOW_DASH, FLOW_EVENT_HUES, FLOW_HUE, OVERFLOW_HUE, PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
 } from "./presets.js";
 import { computeFlow, type Flow, type FlowEdge } from "./flow.js";
-import { eventLabel } from "../lib/demand-sentence.js";
+import { eventLabel, mechanismKey } from "../lib/demand-sentence.js";
 import {
   ART_RADIUS,
   EDIT_REHEAT_ALPHA, CARD_H, CARD_W, createBoardSimulation, DEFAULT_PARAMS, linkDistanceFor, nodeRadius,
@@ -345,7 +345,7 @@ export function GraphView(
   const eventCounts = useMemo(() => {
     const n = new Map<string, number>();
     for (const e of graph.edges) {
-      for (const verb of new Set(e.tags.map((t) => t.split(":")[0]))) n.set(verb, (n.get(verb) ?? 0) + 1);
+      for (const verb of new Set(e.tags.map(mechanismKey))) n.set(verb, (n.get(verb) ?? 0) + 1);
     }
     return [...n].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   }, [graph]);
@@ -353,7 +353,7 @@ export function GraphView(
   /** True when this edge carries the traced event. One predicate, used by the paint loop AND by the
    *  flow walk, so what is drawn and what is walked cannot disagree about what an edge is. */
   const edgeHasEvent = useCallback(
-    (e: { tags: string[] }) => eventVerb === null || e.tags.some((t) => t.split(":")[0] === eventVerb),
+    (e: { tags: string[] }) => eventVerb === null || e.tags.some((t) => mechanismKey(t) === eventVerb),
     [eventVerb],
   );
 
@@ -659,7 +659,7 @@ export function GraphView(
         // WHICH MECHANISM THIS EDGE IS, and whether the reader has isolated a different one. Hue
         // used to mean up/down and nothing else, so a forty-edge flow was one mesh; it means the
         // EVENT now, and direction moved to the dash crawl below.
-        const edgeVerbs = edgeTags.map((t) => t.split(":")[0]);
+        const edgeVerbs = edgeTags.map(mechanismKey);
         const focus = flowFocusRef.current;
         // AN ISOLATED MECHANISM PAINTS IN ITS OWN HUE, even on an edge that carries another one
         // first. 29 of the Jodah deck's 335 edges span more than one verb (8.7%), so without this
@@ -1395,7 +1395,7 @@ export function GraphView(
       const pair = `${fe.from}>${fe.to}`;
       if (counted.has(pair)) continue;
       counted.add(pair);
-      for (const verb of new Set((tagsByPairBody.get(pair) ?? []).map((t) => t.split(":")[0]))) {
+      for (const verb of new Set((tagsByPairBody.get(pair) ?? []).map(mechanismKey))) {
         n.set(verb, (n.get(verb) ?? 0) + 1);
       }
     }
