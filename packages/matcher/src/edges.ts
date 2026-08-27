@@ -714,6 +714,24 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
     return graveyardFillMatches(producer.subject, consumer.subject, h);
   }
   if (producer.verb === "counter-added") return counterAddMatches(producer.subject, consumer.subject, h);
+  // A DAMAGE EVENT HAS TWO PARTICIPANTS, AND A DEALER MUST BE COMPARED AGAINST A DEALER.
+  //
+  // A damage TRIGGER always names the source — "whenever another source you control deals exactly 1
+  // damage" — because the receiving direction ("is dealt damage") is routed to `unknownTriggers` in
+  // derive and never reaches here. The emit side was inconsistent: the IMPLIED combat event's
+  // subject is the creature (the dealer), while an AUTHORED damage emit's subject is
+  // `parseSubject(action.object)` — the victim, "each opponent". So the authored half was checking a
+  // victim against a dealer and could never match.
+  //
+  // MEASURED WITNESS (owner's own case, 2026-08-27): Impact Tremors "deals 1 damage to each
+  // opponent" takes 10 incoming `enters:creature` edges and formed ZERO outgoing ones in a deck
+  // holding six cards that trigger on damage, Ghyrson Starn among them.
+  //
+  // `dealer ?? subject` is what makes this additive: only an authored damage emit sets `dealer`, so
+  // the implied combat case falls back to exactly the comparison it makes today.
+  if (producer.verb === "non-combat-damage" || producer.verb === "combat-damage") {
+    return subjectMatches(producer.dealer ?? producer.subject, consumer.subject, h);
+  }
   return subjectMatches(producer.subject, consumer.subject, h);
 }
 

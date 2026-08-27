@@ -362,6 +362,31 @@ export interface GameEvent {
    *  written solely by `packages/matcher/src/implied.ts`. Used to scope `combatSelfSupplied` to
    *  implied combat only, so authored combat emits (goad, Mage Slayer, Saskia) still form edges. */
   implied?: true;
+  /** WHO DEALT THE DAMAGE — damage verbs only, and only on an AUTHORED emit.
+   *
+   *  A damage event has two participants and `subject` can only hold one of them. The engine had
+   *  been using it for BOTH, inconsistently, and the mismatch cost the whole authored-damage
+   *  channel its consumers:
+   *
+   *    implied `combat-damage` (implied.ts)  subject = the creature   -> the DEALER
+   *    authored `deal-damage`  (emits.ts)    subject = "each opponent" -> the VICTIM
+   *    a `damage-dealt` TRIGGER (derive.ts)  subject = "a source you control" -> the DEALER
+   *
+   *  So combat damage matched dealer-to-dealer and worked, while an authored damage emit was
+   *  compared against a trigger naming the dealer and could never match. **Owner's witness: Impact
+   *  Tremors deals 1 damage to each opponent and Ghyrson Starn triggers on "another source you
+   *  control deals exactly 1 damage" — measured, Impact Tremors takes 10 incoming edges and forms
+   *  ZERO outgoing ones in a deck holding six cards that trigger on damage.**
+   *
+   *  RECORDED IN THIS REPO ALREADY, one layer over: the CR 614 multiplier work states that
+   *  "capturing 'a creature you control would deal damage' compares a dealer against an emit
+   *  describing its VICTIM, and no edge would ever form". It was written there as a reason to refuse
+   *  a multiplier's subject; nobody noticed the ordinary damage channel had the same hole.
+   *
+   *  ADDITIVE ON PURPOSE. `subject` keeps exactly the meaning it has today on every event, so no
+   *  stored doc changes meaning and no existing edge moves; an emit that does not set this falls
+   *  back to `subject`, which is the dealer for the implied combat case. */
+  dealer?: SubjectFilter;
 }
 
 /** The closed set of recognized effect.kind labels. Extraction output is normalized to this

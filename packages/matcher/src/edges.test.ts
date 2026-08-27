@@ -2843,3 +2843,73 @@ test("a planeswalker's own entry advertises its card type as well as its charact
   expect(creatureTags).toContain("enters:wizard");
   expect(creatureTags).not.toContain("enters:creature");
 });
+
+/** A DAMAGE EVENT HAS TWO PARTICIPANTS, AND A DEALER MUST BE COMPARED AGAINST A DEALER.
+ *
+ *  Owner's witness, 2026-08-27: Impact Tremors "deals 1 damage to each opponent"; Ghyrson Starn
+ *  triggers on "another source YOU CONTROL deals exactly 1 damage to a permanent or player". The
+ *  emit's subject is the VICTIM and the trigger's subject is the DEALER, and comparing them meant
+ *  the authored damage channel formed no edges at all — measured, Impact Tremors took 10 incoming
+ *  edges and zero outgoing in a deck holding six cards that trigger on damage.
+ *
+ *  Ghyrson is unconstrained on the victim, which is the owner's own correction and the reason the
+ *  roles must be separated rather than merged: it triggers on damage to ANY permanent or player,
+ *  including yourself. */
+test("a damage emit's dealer satisfies a trigger that names the dealer", () => {
+  const tremors = base("Impact Tremors", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+    // The victim is an opponent; the dealer is this card, which its controller controls.
+    emits: [{
+      verb: "non-combat-damage",
+      subject: { control: "opp", token: null, scope: "each" },
+      dealer: { control: "you", token: null },
+    }],
+  }]);
+  const ghyrson = base("Ghyrson Starn", [{
+    kind: "triggered",
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null } },
+    effect: { kind: "damage" },
+  }]);
+  const tags = directedReasons(tremors, ghyrson, H).map((r) => r.tag);
+  expect(tags).toContain("non-combat-damage:any");
+});
+
+/** The fix must be ADDITIVE. An implied combat emit carries no `dealer` — its subject IS the
+ *  creature dealing the damage — so it falls back to exactly the comparison it made before. */
+test("an emit with no dealer still matches on its subject, as implied combat damage does", () => {
+  const dealer = base("Attacker", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "damage" },
+    emits: [{ verb: "combat-damage", subject: { type: "creature", control: "you", token: null } }],
+  }]);
+  const payoff = base("Damage Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["combat-damage"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(directedReasons(dealer, payoff, H).map((r) => r.tag)).toContain("combat-damage:creature");
+});
+
+/** And it must not become a wildcard: a trigger demanding an OPPONENT's source is not satisfied by
+ *  damage YOUR card deals. */
+test("a dealer demand still discriminates on control", () => {
+  const mine = base("My Pinger", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+    effect: { kind: "damage" },
+    emits: [{
+      verb: "non-combat-damage",
+      subject: { control: "opp", token: null },
+      dealer: { control: "you", token: null },
+    }],
+  }]);
+  const wantsTheirs = base("Watches Opponents", [{
+    kind: "triggered",
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "opp", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(directedReasons(mine, wantsTheirs, H).map((r) => r.tag)).not.toContain("non-combat-damage:opp");
+});

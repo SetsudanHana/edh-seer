@@ -8,6 +8,9 @@ import { tokenTypeFor } from "./token-types.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
  *  nothing; a guessed event is worse than silence because it forms edges that are not real. */
+/** The verbs whose events have TWO participants, so an emit has to say which one `subject` is. */
+const DAMAGE_VERBS: ReadonlySet<string> = new Set(["non-combat-damage", "combat-damage"]);
+
 const EMITS: Record<string, Verb[]> = {
   destroy: ["dies"],
   sacrifice: ["sacrifice", "dies"],
@@ -287,5 +290,15 @@ export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
       ...(counter ? { counter } : {}),
       ...(tokenType ? { type: tokenType } : {}),
     },
+    // WHO DEALT IT. A damage action's `object` is the VICTIM ("each opponent"), so `subject` above
+    // cannot also be the source — and a damage TRIGGER names the source ("whenever another source
+    // you control deals 1 damage"). Without this the two were compared against each other and the
+    // authored damage channel formed no edges at all; see `GameEvent.dealer`.
+    //
+    // THE DEALER IS THE ABILITY'S OWN SOURCE, WHICH IS A RULES FACT AND NOT A GUESS: CR 609.7 makes
+    // the source of an effect's damage the object that produced the effect, and that object is this
+    // card, controlled by its controller. So `{control: "you"}` — the same reading `CONTROLLER_DEFAULT`
+    // takes for every other verb whose actor the sentence leaves unstated.
+    ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null } } : {}),
   }));
 }
