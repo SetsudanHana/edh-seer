@@ -72,11 +72,15 @@ export function CardInspector({
    *  was unreachable. Owner, 2026-08-27: "for double faced cards we need a way to present them,
    *  cause right now you see only front."
    *
-   *  Index 0 is the front and is the default, because that is the side the card is played from and
-   *  the side the board draws. Reset whenever the selected card changes, or flipping one card would
-   *  leave the next one opening on its back. */
-  const [faceIdx, setFaceIdx] = useState(0);
-  useEffect(() => { setFaceIdx(0); }, [node.id]);
+   *  Index 0 (the front) is the fallback, because that is the side the card is played from and the
+   *  side the board draws by default. Seeded from the CLICKED node's own `face` instead, so a back
+   *  face's own node (Task 8: `n.face` is its index into this same `faces` array, stamped by the
+   *  server off the doc both nodes join) opens the panel already flipped -- the click already told
+   *  the panel which side the user meant. Re-seeded whenever the selected card changes (its `id`
+   *  differs per face, since a face is its own node), or flipping one card would leave the next one
+   *  opening on the wrong side. */
+  const [faceIdx, setFaceIdx] = useState(node.face ?? 0);
+  useEffect(() => { setFaceIdx(node.face ?? 0); }, [node.id, node.face]);
   const faces = node.faces ?? [];
   const face = faces.length > 1 ? faces[Math.min(faceIdx, faces.length - 1)] : undefined;
 

@@ -1044,6 +1044,21 @@ export function GraphView(
           ctx.fillStyle = paintColors.muted;
           ctx.fillText("token", n.x, n.y + ART_RADIUS + 11 / cam.z);
         }
+
+        // SHARED RIM, NO LINK (owner's ruling, 2026-08-27). The two faces of one card -- Task 7's
+        // front (bare id) and back (`face:<n>:<name>`) -- both carry `cardName`, so a rim marks
+        // them as one card without an edge drawn between them: no new edge kind, no legend entry,
+        // nothing for a count to see. `cardName` is the test, never `face` -- it is present on
+        // BOTH faces, while `face` is absent on the front. Solid, not dashed, and `fg` not `muted`,
+        // so it reads as a different fact from the token's dashed rim just above.
+        if (n.cardName !== undefined) {
+          ctx.lineWidth = 1.5 / cam.z;
+          ctx.strokeStyle = paintColors.fg;
+          ctx.beginPath();
+          if (mode === "card") ctx.strokeRect(n.x - cardW / 2 - 3, n.y - cardH / 2 - 3, cardW + 6, cardH + 6);
+          else ctx.arc(n.x, n.y, r + 3, 0, TAU);
+          ctx.stroke();
+        }
       }
       // Canvas state is global and persistent, so a search left dimming on would leak into the
       // next frame's first edge.

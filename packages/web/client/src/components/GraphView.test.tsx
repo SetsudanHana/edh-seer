@@ -1854,6 +1854,35 @@ describe("token nodes", () => {
   });
 });
 
+describe("face pair nodes", () => {
+  // SHARED RIM, NO LINK (owner's ruling, 2026-08-27). The two faces of one card are marked as one
+  // card by a matching outline, the way a token is marked by its dashed rim. Nothing is drawn
+  // between them, so no new edge kind reaches the legend or any count. `cardName` is present on
+  // BOTH faces (Task 7); `face` is absent on the front, so `cardName` is the test that fires on
+  // both nodes and `face` is not.
+  test("both faces of one card paint the same-card rim, and no edge joins them", () => {
+    const calls: string[] = [];
+    const front = card({ id: "A // B", label: "A", cardName: "A // B" });
+    const back = card({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" });
+    const { canvas, tick } = frames(graphOf([front, back]), calls);
+    // The mount itself already ran one draw pass before this test can see it (the layout effect
+    // calls `loop()` once directly, ahead of ever scheduling a frame -- see `loop`'s own comment).
+    // Clearing here isolates the ONE pass this `tick()` triggers, the same convention the paint-mode
+    // hue test above uses for the identical reason.
+    calls.length = 0;
+    tick();
+
+    // A solid stroke in `--foreground`, once per face node -- distinct from the token rim just
+    // above, which is dashed and drawn in `--muted`. jsdom's getComputedStyle returns "" for a
+    // custom property, so both fall back to the literal default GraphView.tsx ships when the CSS
+    // variable is absent.
+    expect(calls.filter((c) => c === "set:strokeStyle=#e6e8eb").length).toBe(2);
+
+    const edges = canvas.__graphProbe!().edges;
+    expect(edges.some((e) => e.from.includes("A // B") && e.to.includes("A // B"))).toBe(false);
+  });
+});
+
 // WEIGHT NOW BUYS OPACITY AS WELL AS WIDTH. Width alone cannot separate 300 edges: at board zoom the
 // difference between the thinnest and thickest stroke is under two device pixels, which is why the
 // mesh read as uniform grey. The floor is deliberately not 0 -- a weak edge is still a real claim.

@@ -272,6 +272,17 @@ describe("CardInspector faces", () => {
     expect(screen.getByText(/Living metal/)).toBeInTheDocument();
   });
 
+  // Task 8: the board rims both faces of one card, and clicking the back-face circle passes the
+  // BACK face's own node -- carrying `face: 1`, its index into this same `faces` array (Task 8's
+  // server comment: both nodes join the same doc, so the index means the same thing on either).
+  // The click already told the panel which side was meant, so it must not reopen on the front.
+  it("opens on the back face when the clicked node is the back face's own node", () => {
+    render(<CardInspector node={{ ...twoFaced, face: 1 } as never} edges={[]} onClose={() => {}} />);
+    expect(screen.getByText("Legendary Artifact — Vehicle")).toBeInTheDocument();
+    expect(screen.getByText(/Living metal/)).toBeInTheDocument();
+    expect(screen.queryByText("Legendary Artifact Creature — Robot")).toBeNull();
+  });
+
   it("shows no flip control on a single-face card", () => {
     const { faces: _dropped, ...single } = twoFaced;
     render(<CardInspector node={single as never} edges={[]} onClose={() => {}} />);
