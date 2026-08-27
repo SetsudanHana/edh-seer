@@ -188,6 +188,19 @@ export function formatReport(report: DeckReport, trim = 0): string {
       lines.push(`      ${c.reasons.join("; ")}`);
     }
   }
+  // THE REFUSAL, NAMED — cards the cut list dropped because the engine never read them. Measured
+  // 2026-08-27 on `precon-party-time`: 12 of 12 shipped candidates were exactly this, so the gate
+  // that removes them takes the section to zero rows on a partly-read deck. Removing them SILENTLY
+  // would tell the reader less than this does: these really are the cards a player is eyeing, and
+  // they arrive with the correct sentence instead of the wrong one.
+  if (report.unjudged && report.unjudged.length > 0) {
+    lines.push("");
+    lines.push(`=== Not judged (${report.unjudged.length}) ===`);
+    lines.push("  These look unconnected and are NOT cut candidates: the engine has not read them yet.");
+    lines.push("  \"Nothing connects to it\" and \"we could not read it\" are different sentences,");
+    lines.push("  and only the first is a reason to cut.");
+    lines.push(`  ${report.unjudged.join(", ")}`);
+  }
   // TRIM MODE — printed only when asked for, because it always has an answer and an unasked-for
   // "here are 5 cards to cut" is a verdict. `--trim N`.
   if (trim > 0 && report.trim && report.trim.length > 0) {

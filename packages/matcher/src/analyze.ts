@@ -33,7 +33,7 @@ import { magnitudeMultipliers } from "./magnitude.js";
 import { buildSupplyDemand } from "./supply-demand.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
-import { cutCandidates, deckSlack, trimOrder } from "./cut-list.js";
+import { cutCandidates, deckSlack, trimOrder, unjudgedCandidates } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
 import { recommendedLands } from "./land-count.js";
 import { commanderIdentity } from "./answer-pool.js";
@@ -570,6 +570,10 @@ export function analyzeDeckStructured(
       .map((r: CardCastability) => [r.name, { turn: r.turn, castable: r.castable!, mana: r.mana! }] as const),
   );
   const printedCost = new Map(resolved.map((dc) => [dc.card.name, dc.card] as const));
+  // WHICH CARDS THE ENGINE ACTUALLY READ, read from the same fact `deckCoverage` reports as a
+  // headline: a resolved card carrying no derived tags. It rides on every rated row and on the cut
+  // list, so a surface can tell "reads zero" apart from "was never opened".
+  const derivedByName = new Map(resolved.map((dc) => [dc.card.name, dc.tags !== null && dc.tags !== undefined]));
   const ratedCards: CardSynergy[] = cards.map((c) => {
     const roles = buildRoles.get(c.name);
     const base = ratingByName.get(c.name) ?? 0;
@@ -585,6 +589,7 @@ export function analyzeDeckStructured(
       ...(card?.manaCost !== undefined ? { manaCost: card.manaCost } : {}),
       ...(card !== undefined ? { manaValue: card.manaValue } : {}),
       ...(castByName.has(c.name) ? { castability: castByName.get(c.name)! } : {}),
+      derived: derivedByName.get(c.name) ?? true,
     };
     return doubleDuty
       ? { ...c, ...cost, synergyRating: doubleDutyRating(base), payoffRating, feederRating, axisWeight, doubleDuty: true, doubleDutyRoles: roles, roles }
@@ -759,9 +764,16 @@ export function analyzeDeckStructured(
     isCommander: c.isCommander,
     isComboPiece: comboCardNames.has(c.name),
     fillsDeckRole: deckRoleCards.has(c.name),
+    // Absent from the map means the card is not in `resolved` at all, which cannot happen for a
+    // rated card; defaulting TRUE keeps the old behaviour on any path that ever does.
+    derived: derivedByName.get(c.name) ?? true,
     unmetConditions: (unmetByCard.get(c.name) ?? []).map((t) => describeTag(t as never)),
   }));
   const cutList = cutCandidates(cutInputs);
+  // The rows the cut list REFUSED because it could not read the card. Reported so the refusal is
+  // visible: a list that silently shrinks to nothing tells the reader less than one that names the
+  // cards and the reason.
+  const unjudged = unjudgedCandidates(cutInputs);
   const slack = deckSlack(buildParents);
   // HOISTED OUT OF THE RETURN OBJECT so the identity sentence below can read its wincons. The
   // guard is unchanged and its reasoning still applies: a deck of only commanders makes
@@ -858,6 +870,7 @@ export function analyzeDeckStructured(
     answerCoverage: coverage,
     rampResilience,
     cutList,
+    unjudged,
     slack,
     trim,
     // No turn override: the deck's own clock sets the horizon. Passing a 5 here is what kept the

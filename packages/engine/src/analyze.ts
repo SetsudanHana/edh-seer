@@ -22,6 +22,15 @@ export interface SynergyEdge {
 export interface CardSynergy {
   name: string;
   isCommander: boolean;
+  /** THE ENGINE READ THIS CARD'S ORACLE TEXT. False when the card resolved against the corpus but
+   *  carries no derived tags — it forms no edge, carries no theme and reaches no archetype, so
+   *  every synergy figure on the row is a structural zero rather than a measurement.
+   *
+   *  A ROW WITH NOTHING TO SAY MUST NOT LOOK LIKE A ROW SAYING ZERO. Measured on
+   *  `precon-party-time`, 59 of 82 rated rows read `0.0` — a column with no variance is not data,
+   *  and the reader cannot tell "we read it and it connects to nothing" from "we never read it".
+   *  Absent on the flat engine, where the distinction does not exist. */
+  derived?: boolean;
   score: number;
   partnerCount: number;
   topPartners: { name: string; score: number; reasons: Reason[] }[];
@@ -472,6 +481,15 @@ export interface DeckReport {
    *  build layer counts a category's members without ranking them. Matcher-only; structural here
    *  for the same reason `buildCategories` is (this package must not depend on @mtg/matcher). */
   cutList?: { name: string; rating: number; partners: number; manaValue: number; reasons: string[] }[];
+  /** Cards that would have been cut candidates if the engine had READ them — names only, in the
+   *  order the cut list would have ranked them.
+   *
+   *  It exists so the refusal is visible. "Nothing connects to it" and "we could not read it" are
+   *  different sentences and only the first is a reason to cut; measured 2026-08-27 on
+   *  `precon-party-time`, **12 of 12 shipped cut candidates were the second sentence wearing the
+   *  first one's clothes.** A cut list that silently shrank to zero would tell the reader less than
+   *  one that hands them the same twelve names with the correct reason attached. */
+  unjudged?: string[];
   /** TRIM MODE, the whole ranked order: every cuttable card weakest-first, each row carrying what
    *  argues it STAYS. `cutList` filters and can be empty on a tight deck; this always has an Nth
    *  row, because "I'm five over" is a question that must be answered. */
