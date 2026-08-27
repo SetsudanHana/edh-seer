@@ -12,6 +12,7 @@ import { ManaCurveChart } from "./ManaCurveChart.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { Findings } from "./Findings.js";
+import { findings } from "../lib/findings.js";
 import { DerivedMark } from "./CoveragePanel.js";
 
 /** A movement, not a panel. Three registers exist on this page and this is the middle one: a
@@ -67,6 +68,11 @@ function Movement({
 export function OverviewTab({ data }: { data: AnalyzeResponse }) {
   const { report } = data;
   const mark = <DerivedMark coverage={report.coverage} />;
+  // Which prescriptions a finding already printed as its own action line, so the Prescribe movement
+  // stops restating them. `findings` is pure and cheap; `Findings` calls it too.
+  const prescribedByFinding = findings(report)
+    .filter((f) => f.kind === "build")
+    .map((f) => f.figureLabel);
   return (
     <div className="flex flex-col gap-14">
       {/* A deck the format would not let you play is not a deck this report can diagnose, so
@@ -99,7 +105,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         *  they sit beside each other rather than eight panels apart. */}
       <Movement title="What to change">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-          <SuggestionsList suggestions={report.suggestions} />
+          <SuggestionsList suggestions={report.suggestions} shownAsFindings={prescribedByFinding} />
           <CutList
             cutList={report.cutList}
             unjudged={report.unjudged}
@@ -123,6 +129,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
           commanderCast={report.deckMath?.castability.commanders}
           manaAvailability={report.manaAvailability}
           commanderTax={report.commanderTax}
+          coverage={report.coverage}
         />
         <HeadlineScores report={report} />
         <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">

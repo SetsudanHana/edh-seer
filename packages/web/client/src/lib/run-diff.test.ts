@@ -52,3 +52,29 @@ test("a snapshot carries the deck, both scores, the theme and the build counts",
   expect(snap.theme).toBe(SAMPLE.report.cohesion!.theme);
   expect(snap.categories.ramp).toBe(6);
 });
+
+/** THE LOOP'S MEMORY OF THE THING THE REPORT LEADS WITH. The strip carried scores, theme and leaf
+ *  categories but not the ranked diagnosis — so a tuner who cut for card draw and re-pasted got a
+ *  re-ranked list and no statement that the number they were chasing had moved. */
+test("a finding whose figure moved is reported, and a fixed one is reported as gone", () => {
+  const base = { cards: ["a", "b", "c", "d"], categories: {} };
+  const prev = { ...base, findings: { "build:Consistency": "Consistency 6/14", "lands": "lands 30/36" } };
+  const next = { ...base, findings: { "build:Consistency": "Consistency 9/14" } };
+  const d = diffRuns(prev, next)!;
+  expect(d.findings).toEqual([
+    { id: "build:Consistency", label: "Consistency", from: "Consistency 6/14", to: "Consistency 9/14" },
+    { id: "lands", label: "lands", from: "lands 30/36" },
+  ]);
+});
+
+test("an unchanged diagnosis contributes nothing, so a no-op re-analyse still renders no strip", () => {
+  const snap = { cards: ["a", "b"], categories: {}, findings: { x: "Ramp 9/10" } };
+  expect(diffRuns(snap, snap)).toBeNull();
+});
+
+/** Older snapshots in sessionStorage predate the field; a missing one must not crash the strip. */
+test("a snapshot with no findings field is tolerated", () => {
+  const prev = { cards: ["a", "b"], categories: {} };
+  const next = { cards: ["a", "b"], categories: {}, findings: { x: "Ramp 9/10" } };
+  expect(diffRuns(prev, next)!.findings).toEqual([{ id: "x", label: "Ramp", to: "Ramp 9/10" }]);
+});

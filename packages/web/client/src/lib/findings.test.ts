@@ -63,8 +63,15 @@ test("thin answer classes collapse into a single finding", () => {
   }));
   expect(rows).toHaveLength(1);
   expect(rows[0].kind).toBe("answers");
-  expect(rows[0].figure).toBe("13%");
+  // THE FIGURE MUST MEASURE WHAT THE HEADLINE IS ABOUT. It used to be the single worst class's
+  // availability (LAND, 13%) under a headline about four classes — a number a reader cannot check
+  // against the sentence above it. It counts the classes covered now.
+  expect(rows[0].figure).toBe("1/5");
+  expect(rows[0].figureLabel).toBe("answer types covered");
   expect(rows[0].detail).not.toContain("graveyard");
+  // The thinnest class is still named, but as the DETAIL's own clause rather than as the headline
+  // figure, so the two cannot disagree.
+  expect(rows[0].detail).toContain("the thinnest is land");
 });
 
 /** THE DEFECT THE 2026-08-27 PERSONA RUN FOUND ON THE PAGE'S FOCAL ELEMENT, pinned in both
@@ -137,4 +144,47 @@ test("the cap is a stated presentational constant, not a threshold on the data",
       { name: "Board wipes", count: 0, target: 3, leaves: [] },
     ],
   }))).toHaveLength(4);
+});
+
+/** THE ONE FINDING THAT COMES FROM THE SYNERGY ENGINE. Before it, every source in this file was
+ *  printed-data arithmetic and the product's differentiator never reached the focal surface. */
+const demand = (rows: { key: string; consumers: number; suppliers: number; available: number | null }[]) =>
+  ({ demand: rows.map((r) => ({ ...r, fromCommandZone: false })) }) as DeckReport["deckMath"];
+
+test("a demand nothing supplies becomes a finding, ranked by how much of the deck is idle", () => {
+  const [f] = findings(report({
+    cards: Array.from({ length: 100 }, (_, i) => ({ name: `c${i}` })) as DeckReport["cards"],
+    deckMath: demand([{ key: "dies:type:creature", consumers: 4, suppliers: 0, available: 0.2 }]),
+  }));
+  expect(f.kind).toBe("synergy");
+  expect(f.figure).toBe("4");
+  expect(f.shortfall).toBeCloseTo(0.04);
+});
+
+/** A SELF TRIGGER NEEDS NO SUPPLIER, and reading it as an unmet demand is how the panel printed
+ *  "a creature entering the battlefield — 4 want · 0 supply" over a 51-creature deck.
+ *  `available === null` is the engine's own refusal and must not become a finding. */
+test("a self-supplied row is never a finding, however many cards want it", () => {
+  expect(findings(report({
+    cards: Array.from({ length: 100 }, (_, i) => ({ name: `c${i}` })) as DeckReport["cards"],
+    deckMath: demand([{ key: "enters:type:creature", consumers: 40, suppliers: 0, available: null }]),
+  }))).toEqual([]);
+});
+
+test("a demand WITH a supplier is not a finding", () => {
+  expect(findings(report({
+    cards: [{ name: "x" }] as DeckReport["cards"],
+    deckMath: demand([{ key: "dies:type:creature", consumers: 4, suppliers: 2, available: 0.3 }]),
+  }))).toEqual([]);
+});
+
+/** IT MUST NOT AUTOMATICALLY TOP THE LIST. One orphaned trigger is not worse than being eight cards
+ *  short of card draw, which is what ranking it at "1.0, nothing supplies it" would have claimed. */
+test("one idle card ranks below a large build shortfall", () => {
+  const rows = findings(report({
+    cards: Array.from({ length: 100 }, (_, i) => ({ name: `c${i}` })) as DeckReport["cards"],
+    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: [] }],
+    deckMath: demand([{ key: "attacks:any", consumers: 1, suppliers: 0, available: 0.1 }]),
+  }));
+  expect(rows.map((r) => r.kind)).toEqual(["build", "synergy"]);
 });

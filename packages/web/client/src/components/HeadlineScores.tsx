@@ -15,17 +15,30 @@ const TONE_CLASS: Record<ScoreTone, string> = {
 const BANDS = "0–1.5 unfocused · 1.5–3 developing · 3–4 focused · 4–5 tuned";
 
 function ScoreTile({
-  label, score, sub, children,
-}: { label: string; score: number; sub?: string; children?: React.ReactNode }) {
+  label, score, sub, children, partial,
+}: { label: string; score: number; sub?: string; children?: React.ReactNode;
+  /** The score is computed over less than the whole deck. See `HeadlineScores`. */
+  partial?: { derived: number; resolved: number } }) {
   const band = scoreBand(score);
+  // A MEASUREMENT KEEPS ITS NUMBER; A VERDICT DOES NOT SURVIVE A HALF-READ DECK. See the component
+  // comment below: the tone colour and the band word are the JUDGEMENT half, and they are the two
+  // things a partially-read deck has not earned.
+  const tone = partial ? "" : TONE_CLASS[band.tone];
   return (
     <div className="flex-1 min-w-0 flex flex-col gap-0.5 rounded-lg border border-(--separator) p-4">
       <span className="eyebrow">{label}</span>
       <span className="flex items-baseline gap-1">
-        <span className={`text-3xl font-semibold stat-num ${TONE_CLASS[band.tone]}`}>{score.toFixed(1)}</span>
+        <span className={`text-3xl font-semibold stat-num ${tone}`}>{score.toFixed(1)}</span>
         <span className="text-sm text-(--muted) stat-num">/5</span>
       </span>
-      <span className={`text-sm ${TONE_CLASS[band.tone]}`}>{band.label}</span>
+      {partial ? (
+        <span className="text-sm text-(--muted)">
+          over the {partial.derived} of {partial.resolved} cards read — too little to call this
+          focused or not
+        </span>
+      ) : (
+        <span className={`text-sm ${TONE_CLASS[band.tone]}`}>{band.label}</span>
+      )}
       {/* "breadth 4.2 · anchor 5.0" is a sentence, not a table cell -- stays the body face, tabular
         *  only so the two figures don't shift the "·" between them on re-render. */}
       {sub ? <span className="text-xs text-(--muted) tabular-nums">{sub}</span> : null}
@@ -34,6 +47,21 @@ function ScoreTile({
   );
 }
 
+/** THE GATE AND THE VERDICT USED TO CONTRADICT EACH OTHER, AND THE VERDICT WON.
+ *
+ *  The top of the report says the engine read 52 of 100 cards. Three screens later this tile printed
+ *  `SYNERGY 0.8 / 5` in DANGER RED under the word "Unfocused" — a figure computed entirely from
+ *  edges, on a deck where 48 cards form no edge by construction. An adversarial IA review named it
+ *  (2026-08-27): that is the engine's blindness rendered as the player's failure, and it is this
+ *  repo's own rule — a silent wrong answer is worse than a missing one — broken at the most
+ *  judgemental spot on the page.
+ *
+ *  THE SPLIT IS THE ONE THE GATE ALREADY DRAWS, so no threshold is invented. `synergyOverall` is
+ *  EDGE-derived and loses its judgement rendering the moment any card is unread; `buildScore` counts
+ *  ROLES off printed text and type lines, which an unread card still has, so it keeps its band.
+ *
+ *  THE NUMBER STAYS. Refusing to show it would be a second wrong answer — it is a real measurement
+ *  over the cards the engine could read, and the tile now says exactly that instead of grading it. */
 export function HeadlineScores({ report }: { report: DeckReport }) {
   const { synergyOverall, buildScore, positiveCoherence, anchoring, cards } = report;
   if (synergyOverall === undefined && buildScore === undefined) return null;
@@ -49,7 +77,14 @@ export function HeadlineScores({ report }: { report: DeckReport }) {
   return (
     <div className="flex flex-col sm:flex-row gap-3">
       {synergyOverall !== undefined ? (
-        <ScoreTile label="SYNERGY" score={synergyOverall} sub={sub}>
+        <ScoreTile
+          label="SYNERGY"
+          score={synergyOverall}
+          sub={sub}
+          partial={report.coverage
+            ? { derived: report.coverage.derived, resolved: report.coverage.resolved }
+            : undefined}
+        >
           <Explain label="what this measures">
             The mean of two halves, each 0–5. <span className="text-(--foreground)">Breadth</span> is
             how much of the deck sits on its main theme, counting each nonland card by its strongest

@@ -1,4 +1,5 @@
 import type { AnalyzeResponse } from "../types.js";
+import { findings } from "./findings.js";
 
 /** WHAT MOVED SINCE YOUR LAST RUN.
  *
@@ -20,6 +21,14 @@ export interface RunSnapshot {
   build?: number;
   theme?: string;
   categories: Record<string, number>;
+  /** The RANKED DIAGNOSIS, keyed by finding id -> its printed figure ("6/14").
+   *
+   *  The strip already carried scores, theme and leaf category counts, but not the thing the report
+   *  now LEADS with — so a tuner who cut for card draw and re-pasted got a re-ranked list and no
+   *  statement that the number they were chasing had moved. Worse, the ranking makes a fixed finding
+   *  DISAPPEAR and promotes everything below it, so the surface most changed by a good edit was the
+   *  one with no memory of it (IA review, 2026-08-27). */
+  findings?: Record<string, string>;
 }
 
 export interface RunDiff {
@@ -29,6 +38,9 @@ export interface RunDiff {
   build?: { from: number; to: number };
   theme?: { from: string; to: string };
   categories: { category: string; from: number; to: number }[];
+  /** Findings whose figure moved, plus the ones that appeared or went away entirely. A finding that
+   *  is GONE is the strongest thing this strip can say about an edit. */
+  findings: { id: string; label: string; from?: string; to?: string }[];
 }
 
 export function snapshotRun(data: AnalyzeResponse): RunSnapshot {
@@ -39,6 +51,7 @@ export function snapshotRun(data: AnalyzeResponse): RunSnapshot {
     build: r.buildScore,
     theme: r.cohesion?.theme,
     categories: Object.fromEntries((r.buildCategories ?? []).map((c) => [c.category, c.count])),
+    findings: Object.fromEntries(findings(r).map((f) => [f.id, `${f.figureLabel} ${f.figure}`])),
   };
 }
 
@@ -71,9 +84,24 @@ export function diffRuns(prev: RunSnapshot, next: RunSnapshot): RunDiff | null {
   const moved = (a?: number, b?: number): { from: number; to: number } | undefined =>
     a !== undefined && b !== undefined && a.toFixed(1) !== b.toFixed(1) ? { from: a, to: b } : undefined;
 
+  const prevF = prev.findings ?? {};
+  const nextF = next.findings ?? {};
+  const findingMoves = [...new Set([...Object.keys(prevF), ...Object.keys(nextF)])]
+    .filter((id) => prevF[id] !== nextF[id])
+    .map((id) => ({
+      id,
+      // The label is the figure's own name ("Consistency 6/14"), so the strip needs no second copy
+      // of the finding vocabulary.
+      label: (nextF[id] ?? prevF[id] ?? id).replace(/ [^ ]*$/, ""),
+      ...(prevF[id] !== undefined ? { from: prevF[id] } : {}),
+      ...(nextF[id] !== undefined ? { to: nextF[id] } : {}),
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+
   const diff: RunDiff = {
     added,
     removed,
+    findings: findingMoves,
     synergy: moved(prev.synergy, next.synergy),
     build: moved(prev.build, next.build),
     theme: prev.theme && next.theme && prev.theme !== next.theme ? { from: prev.theme, to: next.theme } : undefined,
@@ -81,7 +109,7 @@ export function diffRuns(prev: RunSnapshot, next: RunSnapshot): RunDiff | null {
   };
   const empty =
     diff.added.length === 0 && diff.removed.length === 0 && !diff.synergy && !diff.build
-    && !diff.theme && diff.categories.length === 0;
+    && !diff.theme && diff.categories.length === 0 && diff.findings.length === 0;
   return empty ? null : diff;
 }
 

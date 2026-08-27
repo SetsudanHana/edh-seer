@@ -93,7 +93,14 @@ export function Findings({ report }: { report: DeckReport }) {
           onClick={() => setExpanded(!expanded)}
           className="eyebrow self-start text-(--muted) hover:text-(--accent)"
         >
-          {expanded ? "Show fewer" : `Show ${all.length - FINDING_CAP} smaller ${all.length - FINDING_CAP === 1 ? "gap" : "gaps"}`}
+          {/* THE FOLD NAMES WHAT IS BEHIND IT. "Show 2 smaller gaps" told a reader nothing they
+            *  could act on and nothing they could use to decide whether to expand — and the fold is
+            *  positional, so a rank-4 row is not necessarily trivial. Listing the figures lets the
+            *  decision happen without the click. */}
+          {expanded
+            ? "Show fewer"
+            : `Show ${all.length - FINDING_CAP} smaller: ${all.slice(FINDING_CAP)
+                .map((f) => `${f.figureLabel} ${f.figure}`).join(" · ")}`}
         </button>
       ) : null}
       {/* WHERE THE SLOTS COME FROM. A surplus is not a fault, so it sits beside the list rather than

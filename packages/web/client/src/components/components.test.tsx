@@ -1600,6 +1600,7 @@ test("the run-diff strip names the cards, the moved scores and the moved categor
         build: undefined,
         theme: undefined,
         categories: [{ category: "ramp", from: 6, to: 7 }],
+        findings: [],
       }}
     />,
   );

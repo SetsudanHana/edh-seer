@@ -1,4 +1,5 @@
 import type { DeckReport } from "../types.js";
+import { demandSentence } from "./demand-sentence.js";
 
 /** WHAT IS WRONG WITH THIS DECK — the report's eight diagnostic panels, ranked.
  *
@@ -32,7 +33,7 @@ import type { DeckReport } from "../types.js";
  *  constant in this file. */
 export const FINDING_CAP = 3;
 
-export type FindingKind = "build" | "answers" | "colour" | "lands";
+export type FindingKind = "build" | "answers" | "colour" | "lands" | "synergy";
 
 export interface Finding {
   kind: FindingKind;
@@ -126,17 +127,23 @@ function answerFinding(report: DeckReport): Finding | null {
     : absent.length > 0
       ? `You have no answer at all for ${names(absent)}.`
       : `Your answers outside creatures are thin.`;
+  // THE HEADLINE, THE FIGURE AND THE DETAIL MUST MEASURE THE SAME THING. The figure was
+  // `worst.available` — the single worst class, LAND at 13% — under a headline about four classes
+  // whose other three read 25%, and a detail that switched subject mid-sentence ("2 for artifacts …
+  // about a 13% chance of holding the LAND answer"). A reader cannot check a claim whose number is
+  // about a different quantity from its sentence, which is the one thing this surface owes them.
+  // The figure now counts the classes the headline is about.
   return {
     kind: "answers",
     id: "answers",
     headline,
     detail: `${short.map((a) => `${a.count} for ${a.class}s`).join(", ")}`
-      + `${turn ? ` — about a ${pct(worst.available)}% chance of holding the ${worst.class} answer by turn ${turn}` : ""}`
-      + `, against the ${worst.required} copies it takes to call an answer reliable.`,
+      + `, against the ${worst.required} copies it takes to call an answer reliable`
+      + `${turn ? ` — the thinnest is ${worst.class}, about a ${pct(worst.available)}% chance of holding one by turn ${turn}` : ""}.`,
     action: "Two or three pieces that hit a permanent of any type.",
-    figure: `${pct(worst.available)}%`,
-    figureLabel: turn ? `by turn ${turn}` : "available",
-    filled: worst.available,
+    figure: `${permanent.length - short.length}/${permanent.length}`,
+    figureLabel: "answer types covered",
+    filled: (permanent.length - short.length) / permanent.length,
     shortfall,
   };
 }
@@ -168,6 +175,60 @@ function colourFindings(report: DeckReport): Finding[] {
 }
 
 const NAME: Record<string, string> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", C: "Colourless" };
+
+/** A DEMAND NOTHING IN THE DECK SUPPLIES — the one finding that comes from the synergy engine
+ *  rather than from printed data, and the reason it exists.
+ *
+ *  **THE DIAGNOSIS CONTAINED NO SYNERGY FINDINGS AT ALL.** An adversarial IA review put it plainly
+ *  (2026-08-27): every other source in this file is build/answers/colour/lands arithmetic, all of it
+ *  computable by any hypergeometric deck calculator with a role tagger — so the focal surface of a
+ *  product whose whole positioning is "we explain WHY cards work together" was a generic
+ *  deckbuilding calculator, and the engine's own output was quarantined below the fold under a
+ *  heading that framed it as bookkeeping. That is a defect in the slot inventory, not in the code
+ *  that implements it.
+ *
+ *  `deckMath.demand` already carries the fact: N cards trigger on an event and nothing in the deck
+ *  produces it. It shipped as the last block of an evidence panel ("WANTS VS SUPPLIES"), which is
+ *  where the strongest claim this engine can make was sitting.
+ *
+ *  **SELF-SUPPLIED ROWS ARE NOT DEMANDS**, and reading them as such is how this panel printed
+ *  "a creature entering the battlefield — 4 want · 0 supply" over a 51-creature deck. A trigger
+ *  watching its OWN entry needs no supplier; `available === null` is the engine saying so.
+ *
+ *  **IT IS RANKED BY HOW MUCH OF THE DECK IS IDLE**, which is the same shape every other finding
+ *  uses: a fraction with a real denominator. Not by "1.0, nothing supplies it" — that would top the
+ *  list on every deck with one orphaned trigger, and one dead card is not worse than being eight
+ *  cards short of card draw. */
+function synergyFinding(report: DeckReport): Finding | null {
+  const demand = report.deckMath?.demand ?? [];
+  // `available === null` is the engine's own refusal: the game supplies it (a phase), or the card
+  // supplies it itself. Only a row with a real probability and no supplier is an unmet demand.
+  const unmet = demand.filter((d) => d.available !== null && d.suppliers === 0 && d.consumers > 0);
+  if (unmet.length === 0) return null;
+  const cards = report.cards?.length ?? 0;
+  if (cards === 0) return null;
+  const idle = unmet.reduce((n, d) => n + d.consumers, 0);
+  const worst = unmet.reduce((a, b) => (a.consumers >= b.consumers ? a : b));
+  return {
+    kind: "synergy",
+    id: "synergy:unmet",
+    headline: unmet.length === 1
+      ? `${worst.consumers} ${worst.consumers === 1 ? "card is" : "cards are"} waiting for something the deck never does.`
+      : `${idle} cards are waiting for things the deck never does.`,
+    // HUMANISED THROUGH THE ONE MAP, never the raw census key. The first cut printed
+    // "enters:type:land" in a finding's own sentence — an internal identifier rendered as English,
+    // the same defect as the `targetedRemoval` that escaped into prose one review earlier. The
+    // vocabulary moved to `lib/` rather than being copied so the two surfaces cannot disagree.
+    detail: `${unmet.length === 1 ? "One trigger" : `${unmet.length} triggers`} in this deck `
+      + `${unmet.length === 1 ? "waits" : "wait"} on `
+      + `${unmet.map((d) => demandSentence(d.key)).join(", ")} — and nothing in the deck does it.`,
+    action: "Add a source for it, or cut the cards waiting on it.",
+    figure: `${idle}`,
+    figureLabel: idle === 1 ? "idle card" : "idle cards",
+    filled: Math.max(0, 1 - idle / cards),
+    shortfall: idle / cards,
+  };
+}
 
 /** LANDS AGAINST THE REGRESSION'S OWN TARGET. Both directions are a finding — a deck four lands
  *  under floods out on spells it cannot cast, and one four over draws lands instead of action —
@@ -201,6 +262,7 @@ export function findings(report: DeckReport): Finding[] {
     ...buildFindings(report),
     ...colourFindings(report),
     ...(answerFinding(report) ? [answerFinding(report)!] : []),
+    ...(synergyFinding(report) ? [synergyFinding(report)!] : []),
     ...(landFinding(report) ? [landFinding(report)!] : []),
   ];
   all.sort((a, b) => b.shortfall - a.shortfall || a.id.localeCompare(b.id));
