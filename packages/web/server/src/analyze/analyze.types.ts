@@ -14,8 +14,10 @@ export interface WireGraphNode {
    *  single-face card -- see `ProjectedNode.face`. The board rims the two faces of one card as a
    *  pair and seeds the inspector's open face from whichever one was clicked. */
   face?: number;
-  /** The PHYSICAL card this node is a face of, present only when `face` is. A name is not an
-   *  identity for a face node -- its own `id`/`label` are the face's, this is the card's. */
+  /** The PHYSICAL card this node is a face of, present on EVERY face of a multi-face card --
+   *  `faceDeckCards` stamps it on the front too, so this is what pairs the two faces' rims. `face`
+   *  is the field the front lacks: absent there, 1 or more on a back face. A name is not an
+   *  identity for a face node -- its own `id`/`label` are the face's, `cardName` is the card's. */
   cardName?: string;
   /** How many copies the deck holds. Every copy collapses into one node, so a deck's 24 basic
    *  Mountains are one disc; this is where the count survives so the node can say so. */

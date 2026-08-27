@@ -52,13 +52,14 @@ export function attachRolesAndArt(
   }
 
   const nodes = graph.nodes.map((n) => {
-    // A FACE IS A NODE (Task 5), and its id carries the `face:<n>:` prefix so it never collides
-    // with the physical card's own node -- which means it also never matches a doc by NAME. Key on
-    // `cardName` (the physical card) when the node has one; every other node -- ordinary card, front
-    // face, or token -- keeps its own id, which is already the name the doc/roles maps are keyed on.
-    // `n.id`, never `n.label`: a token's label is its bare name ("Treasure") with the `token:` prefix
-    // stripped, and keying on it would rejoin a token to a same-named real card's doc -- the exact
-    // collision `TOKEN_ID_PREFIX` exists to prevent (see the artCrop comment below).
+    // A FACE IS A NODE (Task 5). A BACK face's id carries the `face:<n>:` prefix so it never
+    // collides with the physical card's node, which means it also never matches a doc by NAME --
+    // `cardName` is the fallback for that case (it's set on the FRONT face too, but there it equals
+    // `n.id` already, so the fallback is a no-op rather than a special case). A token has no
+    // `cardName`, so it keeps its own id: `n.id`, never `n.label` -- a token's label is its bare
+    // name ("Treasure") with the `token:` prefix stripped, and keying on it would rejoin a token to
+    // a same-named real card's doc, the exact collision `TOKEN_ID_PREFIX` exists to prevent (see the
+    // artCrop comment below).
     const key = normalize(n.cardName ?? n.id);
     const doc = docByName.get(key);
     // THE DOCUMENT IS THE PHYSICAL CARD; THE PICTURE, TYPE LINE AND TEXT ARE THE FACE'S. Without
@@ -251,15 +252,25 @@ export function attachRolesAndArt(
             // carries the true per-name count (computed upstream, before dedup); it's used here to
             // re-expand the array projectDeckGraph counts from, not forwarded into
             // attachRolesAndArt, which no longer needs it.
+            // AFTER the copy-expansion, BEFORE the tokens: `faceDeckCards` reads `dc.card.name` to
+            // decide whether a card has more than one printed face, and a split entry's `card.name`
+            // becomes the FACE's name ("Fell Mire"), which is not a key in `copiesByName` -- doing
+            // this before the expansion would silently zero out every multi-face card's copy count.
+            // A single-face card and a token pass through unchanged (`faceDeckCards`'s own contract).
             const projectionDeck = deckCards.flatMap((dc) =>
               Array(copiesByName.get(dc.card.name) ?? 1).fill(dc),
-            );
+            ).flatMap((dc) => matcher.faceDeckCards(dc as never));
             // The SAME node list the edges above were formed over -- `projectDeckGraph` builds its
             // nodes off this array and counts a reason naming anything else as `offDeckReasons`, so
             // without the tokens here every token edge would be silently dropped from the view.
             // One copy each: a token is not a card slot. A token whose name collides with a real
             // card in the deck stays its OWN node -- `projectDeckGraph` keys on `nodeId`, not on the
             // name, because 92 of the corpus's 661 token names are also a real card.
+            //
+            // `collectTokenNodes` reads the UNSPLIT `deckCards`, not `projectionDeck`: it works off
+            // card-level `allParts`, `faceDeckCards` is a no-op on a token, and feeding it the
+            // post-split array would buy nothing while inviting a future reader to think token
+            // collection needs face-awareness.
             const tokenNodes = matcher.collectTokenNodes(deckCards as never, tokenTags).nodes;
             projectionDeck.push(...tokenNodes);
             // TOKEN ART, joined on the token's ORACLE id -- `tags.oracleId` on a token node IS the
