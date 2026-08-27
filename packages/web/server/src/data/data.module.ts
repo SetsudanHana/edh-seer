@@ -52,8 +52,19 @@ export function attachRolesAndArt(
   }
 
   const nodes = graph.nodes.map((n) => {
-    const key = normalize(n.id);
+    // A FACE IS A NODE (Task 5), and its id carries the `face:<n>:` prefix so it never collides
+    // with the physical card's own node -- which means it also never matches a doc by NAME. Key on
+    // `cardName` (the physical card) when the node has one; every other node -- ordinary card, front
+    // face, or token -- keeps its own id, which is already the name the doc/roles maps are keyed on.
+    // `n.id`, never `n.label`: a token's label is its bare name ("Treasure") with the `token:` prefix
+    // stripped, and keying on it would rejoin a token to a same-named real card's doc -- the exact
+    // collision `TOKEN_ID_PREFIX` exists to prevent (see the artCrop comment below).
+    const key = normalize(n.cardName ?? n.id);
     const doc = docByName.get(key);
+    // THE DOCUMENT IS THE PHYSICAL CARD; THE PICTURE, TYPE LINE AND TEXT ARE THE FACE'S. Without
+    // this a back-face node draws with the front face's art and the flip is invisible -- two circles
+    // for one card that look like duplicates. Undefined on every node that is not a face.
+    const face = n.face !== undefined ? doc?.faces?.[n.face] : undefined;
     // Lands is a TYPE room, not a role room: a card is in it because it IS a land. The engine's
     // role field deliberately excludes basics (build.ts's !isBasicLand guard) because it answers
     // "does this pull double duty?", where "Island fills the lands role" is noise -- and that same
@@ -74,13 +85,21 @@ export function attachRolesAndArt(
     // prevent. A token with no row in the map keeps the blank dashed disc, which is honest.
     const artCrop = n.isToken
       ? tokenArtById.get(n.id)
-      : doc?.artCrop ?? doc?.imageUris?.art_crop ?? doc?.faces?.find((f) => f.artCrop)?.artCrop;
+      // The face's own picture wins first. Falls back to the card level, then the front-face
+      // finder below, for a face whose doc row has no `faces` entry (a stale or unrefreshed doc) --
+      // a fallback beats a blank disc.
+      : face?.artCrop ?? doc?.artCrop ?? doc?.imageUris?.art_crop ?? doc?.faces?.find((f) => f.artCrop)?.artCrop;
     return {
       id: n.id,
       label: n.label,
       // A token node joins no card doc by design (its id is `token:<name>`, and there is no corpus
       // row for a token) -- so it carries no roles. Its ART comes from `tokenArtById` above.
       ...(n.isToken ? { isToken: true as const } : {}),
+      // FACE AND CARDNAME RIDE THE WIRE TOO (Task 8): the board rims the two faces of one card as a
+      // pair and the inspector opens on the face that was clicked, both of which need these on the
+      // client, not just here where the doc join uses them.
+      ...(n.face !== undefined ? { face: n.face } : {}),
+      ...(n.cardName !== undefined ? { cardName: n.cardName } : {}),
       copies: n.copies,
       types: n.types,
       subtypes: n.subtypes,
@@ -94,8 +113,9 @@ export function attachRolesAndArt(
       //
       // The projection's copy wins and the doc is the fallback: a TOKEN node joins no doc at all
       // (see the roles comment above), so reading `doc` alone would leave every token without one.
-      ...(n.typeLine ?? doc?.typeLine ? { typeLine: n.typeLine ?? doc?.typeLine } : {}),
-      ...(n.oracleText ? { oracleText: n.oracleText } : {}),
+      ...(face?.typeLine ?? n.typeLine ?? doc?.typeLine
+        ? { typeLine: face?.typeLine ?? n.typeLine ?? doc?.typeLine } : {}),
+      ...(face?.oracleText ?? n.oracleText ? { oracleText: face?.oracleText ?? n.oracleText } : {}),
       // EVERY FACE, so the panel can show the back. Taken from the DOC rather than the projection:
       // faces are printing data the matcher has no use for, and threading them through
       // `ProjectedNode` would put them in the CLI's graph export too. Only when there is more than

@@ -293,3 +293,25 @@ test("every printed face survives the wire join, and only when there is more tha
   // A single-face card carries none: an array of one is a flip control that does nothing.
   expect(out.nodes.find((n) => n.id === "Sol Ring")?.faces).toBeUndefined();
 });
+
+// A FACE NODE MUST NOT WEAR THE FRONT FACE'S PICTURE. Task 5 gives a back face its own node, id
+// `face:<n>:<name>`, `cardName` set to the physical card. The board draws two circles for one card;
+// if both take the card-level (front) art the flip is invisible and the two read as duplicates.
+test("a back-face node takes its own face's art, type line and oracle text", () => {
+  const graph = emptyGraph([
+    node({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" }),
+  ]);
+  const docs = [{
+    _id: "1", name: "A // B", typeLine: "Artifact // Land", artCrop: "front.jpg",
+    faces: [
+      { name: "A", typeLine: "Artifact", oracleText: "front text", artCrop: "front.jpg" },
+      { name: "B", typeLine: "Land", oracleText: "back text", artCrop: "back.jpg" },
+    ],
+  }];
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize);
+
+  expect(out.nodes[0]?.artCrop).toBe("back.jpg");
+  expect(out.nodes[0]?.typeLine).toBe("Land");
+  expect(out.nodes[0]?.oracleText).toBe("back text");
+});

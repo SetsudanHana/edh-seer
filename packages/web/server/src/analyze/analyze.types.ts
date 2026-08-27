@@ -10,6 +10,13 @@ export interface WireGraphNode {
   label: string;
   /** True on a token node: a permanent the deck MAKES rather than a card it holds. */
   isToken?: boolean;
+  /** Which printed face this node is, 1 or more for a back face. Absent on a front face and on a
+   *  single-face card -- see `ProjectedNode.face`. The board rims the two faces of one card as a
+   *  pair and seeds the inspector's open face from whichever one was clicked. */
+  face?: number;
+  /** The PHYSICAL card this node is a face of, present only when `face` is. A name is not an
+   *  identity for a face node -- its own `id`/`label` are the face's, this is the card's. */
+  cardName?: string;
   /** How many copies the deck holds. Every copy collapses into one node, so a deck's 24 basic
    *  Mountains are one disc; this is where the count survives so the node can say so. */
   copies: number;
