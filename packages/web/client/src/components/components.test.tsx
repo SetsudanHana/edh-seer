@@ -1091,8 +1091,11 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   // The game supplies a combat trigger: 0% would invent a hole, 100% would claim a board state
   // this layer does not model. And the VISIBLE row must not say "0 supply" either -- a zero next
   // to a dash reads as a hole in the deck.
-  expect(screen.getByLabelText(/anything attacking, 3 cards want it, the game supplies it/i)).toBeInTheDocument();
-  expect(screen.getByText(/3 want · the game supplies it/i)).toBeInTheDocument();
+  // "the game supplies it" was true of a phase and false of a SELF trigger, which became
+  // self-supplied on 2026-08-27. One wording now covers a phase, combat and a card that triggers
+  // itself — and the row still must not be counted as an unmet want.
+  expect(screen.getByLabelText(/anything attacking, 3 cards want it, and nothing has to supply it/i)).toBeInTheDocument();
+  expect(screen.getByText(/3 want · nothing has to supply it/i)).toBeInTheDocument();
 });
 
 test("demandSentence says the true ugly thing rather than a plausible wrong one", () => {
@@ -1395,7 +1398,23 @@ test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)
   expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
   expect(screen.getByText(/Build benchmarks/i)).toBeInTheDocument();
   expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
-  expect(screen.getByText("Ramp")).toBeInTheDocument(); // BuildBenchmarks category
+  // `getAllBy`: "Ramp" is a BuildBenchmarks category AND, on a deck short of it, a finding's own
+  // figure label. Two elements is the SEQUENCING working — the finding states the conclusion, the
+  // benchmark below it is the evidence — so the assertion is that it is present, not unique.
+  expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
+});
+
+/** THE SEQUENCE, pinned. Four persona reviews (2026-08-26) found the page led with its weakest
+ *  answer; the fix is an ORDER, so an order is what the test asserts — the diagnosis must come
+ *  before the scores in document order, not merely both exist. Proven to fire by moving `Findings`
+ *  below `HeadlineScores` in `OverviewTab`. */
+test("OverviewTab leads with the diagnosis and demotes the scores below it", () => {
+  const { container } = render(<OverviewTab data={SAMPLE} />);
+  const text = container.textContent ?? "";
+  const diagnosis = text.indexOf("What is wrong with this deck");
+  const scores = text.indexOf("How the engine read it");
+  expect(diagnosis).toBeGreaterThanOrEqual(0);
+  expect(scores).toBeGreaterThan(diagnosis);
 });
 
 test("HeadlineScores uses semantic tokens, not raw Tailwind palette classes", () => {

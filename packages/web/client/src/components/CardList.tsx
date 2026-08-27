@@ -1,13 +1,14 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { DeckReport } from "../types.js";
-import { CardName } from "./card-drawer.js";
+import { CardName, useCardDrawer } from "./card-drawer.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 // ONE RENDERER ACROSS THE SURFACES (roadmap N6): this file printed "0%" where the CLI floored
 // the same cell at "1%". A measured zero is a measurement; the floor belongs on the refusal path.
 import { policyBand } from "@mtg/engine/percent";
+import { cardImageUrl } from "./card-node.js";
 
 type Category =
   | "ramp" | "draw" | "cardSelection" | "impulseDraw" | "targetedRemoval" | "stackInteraction"
@@ -37,6 +38,85 @@ const selectedChipStyle: CSSProperties = {
   backgroundClip: "padding-box, border-box",
 };
 
+
+/** THE CARD, NOT ITS NAME. `DESIGN.md` bans illustrated MTG-card CHROME — a frame, foil or
+ *  parchment WE draw — and the real printed card is not that: it is the object itself, and all
+ *  three named craft peers (Scryfall, Archidekt, Moxfield) show it. The deck graph already carries
+ *  this exact override for this exact reason, and its three conditions carry over here:
+ *
+ *  - **Lazy**, so a 100-row table does not open 100 connections on mount.
+ *  - **Never load-bearing**: the name is always present as text beside it, so a reader who never
+ *    receives an image loses nothing but recognition speed.
+ *  - **A failed fetch degrades to the row, not to a hole** — `onError` removes the element, which
+ *    is the same rule `art-loader.ts` keeps for the board.
+ *
+ *  The crop is `object-position: 50% 22%` because a Magic art crop puts its subject high; centring
+ *  it lands on the middle of a torso on most cards. */
+function Thumb({ art, alt }: { art?: string; alt: string }) {
+  if (!art) return null;
+  return (
+    <img
+      src={art}
+      alt={alt}
+      loading="lazy"
+      width={56}
+      height={40}
+      className="w-10 h-7 sm:w-14 sm:h-10 shrink-0 rounded-[4px] border border-(--border) object-cover bg-(--surface-secondary)"
+      style={{ objectPosition: "50% 22%" }}
+      onError={(e) => e.currentTarget.remove()}
+    />
+  );
+}
+
+/** THE GRID — the whole printed card at its own 488:680 ratio, no frame of ours, one hairline so a
+ *  dark card still has an edge.
+ *
+ *  A TOGGLE AND NEVER THE DEFAULT, which is the measured part. At 175px a printed card's own text
+ *  is already unreadable and at 107px on a phone only the art survives, so a grid cannot carry the
+ *  rank, the cost, the roles and the connection count the tuner's cut decision is actually made
+ *  from. It answers "which cards are these" faster than any table and "which one do I cut" slower
+ *  than any table, and the panel says so rather than leaving the reader to find out.
+ *
+ *  ONE DATUM SURVIVES: the connection count, as a corner pill. Not the name — the card prints its
+ *  own — so the caption strip exists only because a 107px card's printed name is illegible. */
+function GridCard({
+  name, art, count, dim, onOpen,
+}: { name: string; art?: string; count?: number; dim?: boolean; onOpen: () => void }) {
+  return (
+    <figure className="relative m-0 rounded-[7px] overflow-hidden border border-(--border) bg-(--surface-secondary) aspect-[488/680]">
+      <button type="button" onClick={onOpen} className="block w-full h-full text-left" aria-label={name}>
+        {art ? (
+          <img
+            src={cardImageUrl(art)}
+            alt={name}
+            loading="lazy"
+            className={`w-full h-full object-cover transition-[opacity,filter] duration-200 ${
+              dim ? "opacity-40 saturate-50 hover:opacity-90 hover:saturate-100" : ""}`}
+            onError={(e) => e.currentTarget.remove()}
+          />
+        ) : null}
+      </button>
+      {count !== undefined ? (
+        <span
+          // A BARE NUMBER IN A CORNER IS NOT A DATUM. Every persona who reached the grid on
+          // 2026-08-27 asked what it counted, because the only legend sat BELOW the grid where
+          // nobody scrolled to it. The label travels with the badge now, and the legend moved above.
+          title={`${count} other ${count === 1 ? "card connects" : "cards connect"} to ${name}`}
+          aria-label={`${count} connected cards`}
+          className={`absolute top-1.5 right-1.5 min-w-[22px] h-[22px] px-1.5 grid place-items-center
+          rounded-full border stat-num text-[11px] bg-(--background)/80 backdrop-blur-[2px] ${
+          dim ? "border-(--border) text-(--muted)" : "border-(--accent) text-(--accent)"}`}
+        >
+          {count}
+        </span>
+      ) : null}
+      <figcaption className="absolute inset-x-0 bottom-0 px-2 pt-5 pb-1.5 pointer-events-none
+        bg-gradient-to-t from-(--background) to-transparent">
+        <span className="block truncate stat-num text-[11px]">{name}</span>
+      </figcaption>
+    </figure>
+  );
+}
 
 /** A column header that sorts. Marked with `aria-sort` on the header cell's own button rather than
  *  a caret glyph alone, so the state is available to a reader who cannot see the accent colour. */
@@ -73,10 +153,25 @@ const SCALE_NOTE =
   "Rated against this deck's best synergy card, so a low number is a comparison and not a verdict — "
   + "lands and cards whose job is a role (ramp, removal, protection) score low by design.";
 
-export function CardList({ cards }: { cards: DeckReport["cards"] }) {
+export function CardList({ cards, artByName, coverage }: {
+  cards: DeckReport["cards"];
+  /** Card name to Scryfall `art_crop` URL, from the graph nodes the analyze response already
+   *  carries. Absent for a card the graph has no node for; every consumer treats that as "no
+   *  image", never as an error. */
+  artByName?: ReadonlyMap<string, string>;
+  /** Present only when the engine could not read the whole deck — the split below is suppressed
+   *  entirely when it read everything, so a fully covered paste sees exactly one table. */
+  coverage?: DeckReport["coverage"];
+}) {
   const [filter, setFilter] = useState<Category | "all">("all");
   const [sort, setSort] = useState<SortKey>("synergy");
   const [query, setQuery] = useState("");
+  // TABLE OR GRID. The table is the default and stays the default: it is where the cut decision is
+  // made. See `GridCard` for the measurement behind that.
+  const [view, setView] = useState<"table" | "grid">("table");
+  // A grid card has no text to hang `<CardName>` on, so it opens the same drawer directly. A name
+  // the graph does not carry is a no-op there, exactly as it is for `<CardName>`.
+  const { open: openCard } = useCardDrawer();
   const present = new Set(cards.flatMap((c) => (c.roles ?? []) as Category[]));
   const categories = CATEGORY_ORDER.filter((c) => present.has(c));
   // ONE MECHANISM, SAID ONCE. Measured on the review deck: 94 rows carry 12 distinct reason
@@ -87,7 +182,13 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
   const names = new Set(cards.map((c) => c.name));
   const needle = query.trim().toLowerCase();
   const byName = (a: DeckReport["cards"][number], b: DeckReport["cards"][number]) => a.name.localeCompare(b.name);
-  const visible = cards
+  // A ROW WITH NOTHING TO SAY IS NOT A ROW SAYING ZERO. Measured on `precon-party-time`, 59 of 82
+  // rated rows read `0.0` — a column with no variance is not data, and the reader could not tell
+  // "we read it and it connects to nothing" from "we never read it". Splitting the table turns the
+  // dead column into the report's most useful admission.
+  const unread = cards.filter((c) => c.derived === false);
+  const readable = unread.length > 0 ? cards.filter((c) => c.derived !== false) : cards;
+  const visible = readable
     .filter((c) => (filter === "all" ? true : (c.roles ?? []).includes(filter)))
     .filter((c) => needle === "" || c.name.toLowerCase().includes(needle))
     .slice()
@@ -155,11 +256,54 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
           onChange={(e) => setQuery(e.target.value)}
           className="ml-auto text-sm rounded-(--radius) border border-(--separator) bg-(--field-background) px-2 py-1"
         />
+        <div className="flex rounded-(--radius) border border-(--border) overflow-hidden" role="group" aria-label="View">
+          {(["table", "grid"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              aria-pressed={view === v}
+              onClick={() => setView(v)}
+              className={`eyebrow px-3 py-1 ${view === v ? "bg-(--surface-secondary) text-(--accent)" : "text-(--muted)"}`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
       </div>
       {visible.length === 0 ? (
         <p className="text-(--muted) text-sm">No cards match this filter.</p>
+      ) : view === "grid" ? (
+        <>
+          {/* THE LEGEND LEADS THE GRID. It used to close it, and the personas who reached the grid
+            *  never got there — a number with no legend is not data. */}
+          <p className="text-xs text-(--muted) max-w-[65ch]">
+            <span className="inline-grid place-items-center align-middle min-w-[22px] h-[22px] px-1.5 mr-1.5
+              rounded-full border border-(--accent) text-(--accent) stat-num text-[11px]">n</span>
+            is how many other cards in the deck connect to it.{" "}
+            <span className="text-(--foreground)">Grid trades the rank, the roles and the cost for
+            recognition</span> — the faster way to answer &ldquo;which cards are these&rdquo;, the
+            slower way to answer &ldquo;which one do I cut&rdquo;.
+          </p>
+          <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))" }}>
+            {visible.map((c) => (
+              <GridCard
+                key={c.name}
+                name={c.name}
+                art={artByName?.get(c.name)}
+                count={c.partnerCount}
+                onOpen={() => openCard(c.name)}
+              />
+            ))}
+          </div>
+        </>
       ) : (
-        <table className="w-full text-sm border-collapse">
+        // THE TABLE SCROLLS, THE PAGE DOES NOT. Measured in a real browser at 390px: this table
+        // pushed `documentElement.scrollWidth` to 810px, so the whole report — gate, tabs, every
+        // other panel — slid sideways under the thumb. The phone persona reported it as "the numbers
+        // are off the right edge" (2026-08-27) and only a live measurement showed it was the entire
+        // page rather than the table.
+        <div className="overflow-x-auto -mx-1 px-1">
+        <table className="w-full min-w-[46rem] text-sm border-collapse">
           <thead>
             <tr className="border-b border-(--border)">
               <th className="eyebrow text-left font-normal py-2 pr-2 w-10">#</th>
@@ -186,8 +330,13 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
                 <tr key={c.name} className="border-b border-(--separator) align-top">
                   <td className="py-2 pr-2 stat-num text-(--muted)">{String(i + 1).padStart(2, "0")}</td>
                   <td className="py-2 pr-2 min-w-0">
-                    <CardName name={c.name} className="block truncate max-w-full" />
-                    {reason ? <span className="block text-xs text-(--muted) truncate">{reason}</span> : null}
+                    <span className="flex items-center gap-3 min-w-0">
+                      <Thumb art={artByName?.get(c.name)} alt="" />
+                      <span className="flex flex-col min-w-0">
+                        <CardName name={c.name} className="block truncate max-w-full" />
+                        {reason ? <span className="block text-xs text-(--muted) truncate">{reason}</span> : null}
+                      </span>
+                    </span>
                   </td>
                   <td className="py-2 pr-2">
                     <span className="flex flex-wrap gap-1">
@@ -216,7 +365,30 @@ export function CardList({ cards }: { cards: DeckReport["cards"] }) {
             })}
           </tbody>
         </table>
+        </div>
       )}
+      {/* NOT READ YET — a grid, because this list has NO DATA TO LOSE. It exists purely to be
+        *  recognised: every synergy figure on these cards is a structural zero, so a table of them
+        *  is five columns of em dashes. Rendered at reduced presence and brightening on hover:
+        *  present enough to recognise, quiet enough to read as visibly outside the judged set. */}
+      {unread.length > 0 ? (
+        <section className="flex flex-col gap-3 mt-6 pt-6 border-t border-(--border)">
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <h3 className="text-base font-bold tracking-[-0.01em]">Not read yet</h3>
+            <span className="text-xs text-(--muted) stat-num">{unread.length} cards</span>
+          </div>
+          <p className="text-sm text-(--muted) max-w-[65ch]">
+            {coverage?.caveat
+              ?? "These resolved fine and count toward the mana, the curve, the land maths and legality. "
+                + "They carry no synergy reading, so nothing above speaks for them."}
+          </p>
+          <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))" }}>
+            {unread.map((c) => (
+              <GridCard key={c.name} name={c.name} art={artByName?.get(c.name)} dim onOpen={() => openCard(c.name)} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

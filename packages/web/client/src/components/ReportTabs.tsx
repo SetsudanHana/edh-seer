@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AnalyzeResponse } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
@@ -38,6 +38,18 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
   // Owned here rather than made a module singleton so its lifetime is the REPORT's. A singleton
   // would accumulate decoded images for every deck analysed in a session, with nothing to say when
   // they stop mattering.
+  // CARD NAME TO ART, for every surface that is not the board. The URLs already arrive with the
+  // analyze response (`graph.nodes[].artCrop`) and the loader above is already warming them, so a
+  // table thumbnail and a grid card cost no request the board was not going to make anyway.
+  //
+  // A TOKEN NEVER WINS A NAME COLLISION — 92 of 661 distinct token names are also a real card, and
+  // every consumer of this map is naming a card from the DECK. Same rule `CardDrawerProvider`
+  // keeps two files over.
+  const artByName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of data.graph?.nodes ?? []) if (!n.isToken && n.artCrop && !m.has(n.label)) m.set(n.label, n.artCrop);
+    return m;
+  }, [data.graph]);
   const artLoaderRef = useRef<ArtLoader>(undefined);
   artLoaderRef.current ??= createArtLoader({ load: cachedImageLoad() });
   useEffect(() => {
@@ -107,7 +119,9 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
       <div role="tabpanel">
         {active === "overview" && <OverviewTab data={data} />}
         {active === "archetypes" && <ArchetypeBoard strategies={data.report.strategies} archetypes={data.report.archetypes} />}
-        {active === "cards" && <CardList cards={data.report.cards} />}
+        {active === "cards" && (
+          <CardList cards={data.report.cards} artByName={artByName} coverage={data.report.coverage} />
+        )}
         {active === "combos" && <ComboList combos={data.report.combos} />}
         {active === "graph" && (narrow
           ? <GraphList graph={data.graph} />

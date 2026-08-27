@@ -9,16 +9,28 @@ import { CardName } from "./card-drawer.js";
  *  same way: a relation it cannot express looks exactly like a card doing nothing (see matcher's
  *  `cut-list.ts`). The caption is not decoration — it is the difference between a tool that helps
  *  and one that confidently deletes a player's best card. */
-export function CutList({ cutList, slack, trim }:
-  { cutList: DeckReport["cutList"]; slack: DeckReport["slack"]; trim?: DeckReport["trim"] }) {
+export function CutList({ cutList, unjudged, coverage, slack, trim }:
+  {
+    cutList: DeckReport["cutList"];
+    /** Cards the engine REFUSED to judge because it never read them. See `report.unjudged`. */
+    unjudged?: DeckReport["unjudged"];
+    /** Only to say "12 OF THE 48". The tuner persona asked outright why twelve, when the gate at the
+     *  top of the page says forty-eight are unread (2026-08-27) — both lists are about the same
+     *  unread set, and this one is the subset that would OTHERWISE have been cut candidates. A
+     *  number without its denominator invites exactly that question. */
+    coverage?: DeckReport["coverage"];
+    slack: DeckReport["slack"];
+    trim?: DeckReport["trim"];
+  }) {
   // TRIM MODE is opt-in and client-side. The server ships the WHOLE ranked order, so changing N is
   // a slice and never a round trip; and it stays behind a click because a list that always has an
   // answer reads as a verdict when nobody asked for it.
   const [trimN, setTrimN] = useState(0);
   const hasTrim = !!trim && trim.length > 0;
   const hasCuts = !!cutList && cutList.length > 0;
+  const hasUnjudged = !!unjudged && unjudged.length > 0;
   const hasSlack = !!slack && slack.length > 0;
-  if (!hasCuts && !hasSlack && !hasTrim) return null;
+  if (!hasCuts && !hasSlack && !hasTrim && !hasUnjudged) return null;
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">Where the room is</h3>
@@ -46,6 +58,45 @@ export function CutList({ cutList, slack, trim }:
             ))}
           </ul>
         </>
+      )}
+      {/* AN EMPTY CUT LIST IS AN ANSWER AND HAS TO SAY SO. It used to render nothing at all, which
+        *  reads as a missing panel rather than as "nothing here is dead weight" — and once the
+        *  underived gate landed this became the COMMON case on a partly-read deck. */}
+      {!hasCuts && (hasUnjudged || hasTrim) ? (
+        <div className="rounded-(--radius) border border-dashed border-(--separator) px-4 py-5 text-center">
+          <p className="text-sm">Nothing here is safe to call dead weight.</p>
+          <p className="text-xs text-(--muted) mt-1">
+            Every card the engine could read has at least one connection or fills a role it is measured on.
+          </p>
+        </div>
+      ) : null}
+      {/* THE REFUSAL, NAMED. Measured 2026-08-27 on a real precon: 12 of 12 shipped cut candidates
+        *  were cards the engine had never read, so every row of that list was the corpus's own gap
+        *  wearing a dead card's clothes. The gate now removes them — and removing them SILENTLY
+        *  would tell the reader less than this does, because these really are the cards a player is
+        *  eyeing. They arrive with the correct sentence attached instead of the wrong one. */}
+      {hasUnjudged && (
+        <div className="flex gap-3 items-start rounded-(--radius) border border-dashed border-(--separator) px-3 py-2.5">
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor"
+            strokeWidth="1.5" className="text-(--warning) shrink-0 mt-0.5">
+            <path d="M1.6 12.4h11.8L7.5 2.1z" /><path d="M7.5 6.2v3" />
+            <circle cx="7.5" cy="10.9" r=".7" fill="currentColor" stroke="none" />
+          </svg>
+          <p className="text-xs text-(--muted)">
+            <span className="text-(--foreground)">
+              {unjudged!.length}{coverage ? ` of the ${coverage.resolved - coverage.derived} unread` : ""}{" "}
+              {unjudged!.length === 1 ? "card looks" : "cards look"} unconnected and{" "}
+              {unjudged!.length === 1 ? "is" : "are"} not judged.
+            </span>{" "}
+            {unjudged!.map((n, i) => (
+              <span key={n}>{i > 0 && ", "}<CardName name={n} /></span>
+            ))}
+            {" "}— the engine has not read {unjudged!.length === 1 ? "it" : "them"} yet.
+            &ldquo;Nothing connects to it&rdquo; and &ldquo;we could not read it&rdquo; are different
+            sentences, and only the first is a reason to cut.
+            {coverage ? " The rest of the unread fill a role, or are lands, so they were never cut candidates anyway." : ""}
+          </p>
+        </div>
       )}
       {hasTrim && (
         <>
