@@ -1265,6 +1265,22 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       // A LAND IS PLAYED, NOT CAST (CR 305.1). "Spells you cast cost {1} less" reaches no land, and
       // the type union keeps a modal DFC's castable face.
       if (isLandOnly(c.tags)) continue;
+      // AND A TOKEN IS PUT ONTO THE BATTLEFIELD, NEVER CAST (CR 111.1) — the same rule as the land
+      // one above, one object over. Found on the Jodah deck 2026-08-27: Serah Farron prints "the
+      // first legendary creature SPELL you cast each turn costs {2} less", and the engine claimed it
+      // discounted **Ravage**, a `Token Legendary Artifact Creature — Robot` that Soundwave creates.
+      //
+      // IT SURVIVES BECAUSE `hasGenericMana`'s LENIENT DEFAULT MEETS A CASE WHERE ABSENCE IS A FACT.
+      // That guard answers `true` for a missing cost on purpose — "not recorded, refuse nothing",
+      // which is right for a card whose cost the corpus failed to store. A token has no mana cost
+      // because it is never cast, so the same silence means the opposite thing and the lenient
+      // branch turns a missing answer into a wrong one. Gated HERE rather than in `hasGenericMana`,
+      // which is also read by the ACTIVATED side, where a token's abilities really can be discounted.
+      //
+      // THE PAIR OFTEN SURVIVES, AND ONLY THIS REASON GOES. Serah Farron also prints "Legendary
+      // creatures you control get +2/+2", and Ravage is one — so the edge keeps its `static:pump`
+      // and loses only the claim that was false.
+      if (c.isToken) continue;
       // "Spells your OPPONENTS cast cost less" is not a relation to a card you chose to run — it is
       // the tax family pointing the other way, and tax stays in ROLE_NOT_SYNERGY.
       if (a.effect.subject.control === "opp") continue;

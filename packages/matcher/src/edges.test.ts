@@ -2142,6 +2142,37 @@ describe("cost reduction forms edges, gated by what can actually be cast", () =>
     expect(reasons.map((r: Reason) => r.tag)).not.toContain("static:cost-reduction");
   });
 
+  // A TOKEN IS PUT ONTO THE BATTLEFIELD, NEVER CAST (CR 111.1) — the same rule as the land case
+  // above. Found on the Jodah deck 2026-08-27: Serah Farron prints "the first legendary creature
+  // SPELL you cast each turn costs {2} less" and the engine claimed it discounted Ravage, a token.
+  // 414 reasons over 51 decks, 247 distinct pairs — Jet Medallion -> Zombie, Foundry Inspector ->
+  // Treasure. It survived because `hasGenericMana` answers TRUE for a missing cost on purpose
+  // ("not recorded, refuse nothing"), and on a token the absence is a FACT rather than a gap.
+  test("a token is never cast (CR 111.1), so it is never reduced", () => {
+    const token = spell("Zombie", ["creature"]);
+    (token as unknown as Record<string, unknown>).isToken = true;
+    const reasons = directedReasons(
+      reducer({ type: "creature", colors: ["B"], control: "you", token: null, scope: "all" }),
+      token, H,
+    );
+    expect(reasons.map((r: Reason) => r.tag)).not.toContain("static:cost-reduction");
+  });
+
+  // AND ONLY THAT REASON GOES. Serah Farron reduces AND anthems; Ravage is a legendary creature, so
+  // the pump half is real and the edge survives carrying it. A card-level refusal would have deleted
+  // a true claim to remove a false one.
+  test("a card that reduces AND anthems keeps the anthem on a token", () => {
+    const serah = base("Serah Farron", [
+      { kind: "static", effect: { kind: "cost-reduction", subject: { type: "creature", control: "you", token: null, scope: "all" } }, emits: [] },
+      { kind: "static", effect: { kind: "pump", subject: { type: "creature", control: "you", token: null, scope: "all" } }, emits: [] },
+    ] as never);
+    const token = spell("Ravage", ["creature"]);
+    (token as unknown as Record<string, unknown>).isToken = true;
+    const tags = directedReasons(serah, token, H).map((r: Reason) => r.tag);
+    expect(tags).not.toContain("static:cost-reduction");
+    expect(tags).toContain("static:pump");
+  });
+
   test("a reducer aimed at OPPONENTS' spells is tax pointing the other way, and forms nothing", () => {
     const reasons = directedReasons(
       reducer({ type: "creature", control: "opp", token: null, scope: "all" }),
