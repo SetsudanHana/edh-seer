@@ -1,3 +1,19 @@
+/** One printed face of a card. STRUCTURALLY DUPLICATED from `@mtg/data`'s `CardFace` rather than
+ *  imported, for the same reason `allParts` is read off an untyped cast: the engine cannot depend on
+ *  the data package. A plain data shape is cheap to restate and a dependency edge is not. */
+export interface CardFace {
+  name: string;
+  typeLine: string;
+  oracleText: string;
+  manaCost?: string;
+  power?: string;
+  toughness?: string;
+  colors: string[];
+  /** Present on faces with no mana cost, where colour cannot be read off the cost. */
+  colorIndicator?: string[];
+  artCrop?: string;
+}
+
 export interface Card {
   /** Card name, e.g. "Krenko, Mob Boss". */
   name: string;
@@ -8,6 +24,12 @@ export interface Card {
    *  what separates a two-faced card you may cast from either side from one whose back face is only
    *  reached by transforming a permanent already in play — the type line alone cannot say. */
   layout?: string;
+  /** The card's PRINTED faces, in printed order — every layout, including `transform`, whose back
+   *  face is never cast. A FACE IS A NODE: this is what says how many nodes a card draws, and it is
+   *  a different question from what each face SUPPLIES, which `Characteristics.faces` answers (that
+   *  one lists only the PLAYABLE faces, so a transform back is absent from it by design).
+   *  Absent on a single-face card. */
+  faces?: CardFace[];
   /** Scryfall oracle_text; empty string when the card has none. */
   oracleText: string;
   /** Scryfall keywords, e.g. ["Flying"]. */
