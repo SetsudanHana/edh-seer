@@ -9,7 +9,7 @@ import { SAMPLE } from "../fixtures.js";
 import type { CardGraph, GraphNode } from "../types.js";
 import { zoomIdentity, type ZoomTransform } from "d3-zoom";
 import { CARD_MODE_Z } from "./card-node.js";
-import { FLOW_DASH, FLOW_HUE, IDENTITY_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE } from "./presets.js";
+import { FLOW_DASH, FLOW_EVENT_HUES, FLOW_HUE, IDENTITY_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE } from "./presets.js";
 import { createBoardSimulation, DEFAULT_PARAMS, LINK_DIST_MIN } from "./board-force.js";
 import sorinFixture from "../fixtures/sorin-graph.json" with { type: "json" };
 
@@ -1227,7 +1227,7 @@ describe("the inspector", () => {
 // consumption were indistinguishable -- owner-reported from real use. The canvas spy records
 // `set:strokeStyle=` calls, so the assertion is that both flow hues reach the context.
 describe("flow view", () => {
-  test("a clicked card paints its edges in the two direction hues", () => {
+  test("a clicked card paints its edges by MECHANISM, not by direction", () => {
     const calls: string[] = [];
     const graph = graphOf(
       [card({ id: "A" }), card({ id: "B" }), card({ id: "X" })],
@@ -1259,8 +1259,40 @@ describe("flow view", () => {
       if (c.startsWith("set:strokeStyle=")) lastStroke = c.slice("set:strokeStyle=".length);
       else if (c.startsWith("moveTo:") && lastStroke) edgeStrokeColors.add(lastStroke);
     }
-    expect(edgeStrokeColors).toContain(FLOW_HUE.down);
-    expect(edgeStrokeColors).toContain(FLOW_HUE.up);
+    // HUE IS THE MECHANISM NOW (owner, 2026-08-27: "I can see all the events flowing... I cannot
+    // distinguish them"). Both edges here carry the same tag `t`, so both take the FIRST palette
+    // hue -- and the old assertion, that the two DIRECTIONS painted different colours, is exactly
+    // the encoding that told a reader nothing about what was flowing.
+    // BOTH edges carry the same tag `t`, so both take the SAME hue -- which is the proof that hue
+    // no longer encodes direction. (The palette deliberately opens with `FLOW_HUE`'s own pair, so
+    // the first hue and the old "up" hue are the same value; the assertion that matters is that
+    // there is exactly ONE edge colour across an upstream and a downstream edge, where the old
+    // encoding guaranteed two.)
+    expect([...edgeStrokeColors]).toEqual([FLOW_EVENT_HUES[0]]);
+  });
+
+  /** DIRECTION MUST SURVIVE A STILL FRAME. Hue moved to the mechanism, so the dash crawl became the
+   *  only direction channel -- and it is zeroed under `prefers-reduced-motion` and absent from any
+   *  screenshot. The arrowhead is the static encoding; without it those readers have none, which is
+   *  the task-5 brief's own finding (a judge could not tell producer from consumer) returning. */
+  test("a flow edge carries an arrowhead, so direction reads without motion", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "B" })],
+      [{ from: "A", to: "B", weight: 2, tags: ["t"], reasonTexts: ["A feeds B"] }],
+    );
+    const { canvas, tick } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "A")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    calls.length = 0;
+    tick();
+    // The head is the only place two `lineTo`s follow a single `moveTo`; a plain edge is one each.
+    let heads = 0;
+    for (let i = 0; i < calls.length - 2; i++) {
+      if (calls[i].startsWith("moveTo:") && calls[i + 1].startsWith("lineTo:") && calls[i + 2].startsWith("lineTo:")) heads++;
+    }
+    expect(heads).toBeGreaterThan(0);
   });
 
   test("with nothing selected the board paints no flow hue", () => {
@@ -1278,7 +1310,7 @@ describe("flow view", () => {
   // task-5 brief: a blind judge shown the two flow hues with no key could not tell producer from
   // consumer (confidence 2/5). The legend must name the DIRECTION in words, using the selected
   // card's own name, and must fall back to the ordinary paint-mode legend when nothing is selected.
-  test("selecting a card replaces the paint legend with the two flow directions, named", () => {
+  test("selecting a card adds the flow's own EVENTS to the legend, named and counted", () => {
     const graph = graphOf(
       [card({ id: "A" }), card({ id: "B" }), card({ id: "X" })],
       [
@@ -1295,26 +1327,34 @@ describe("flow view", () => {
     const node = probe.find((n) => n.id === "A")!;
     act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
 
+    // The rows name the MECHANISMS in this flow rather than the two directions, because two hues
+    // meaning up/down is what left a reader unable to tell one event from another. Direction is
+    // carried by the arrowhead and by the inspector's own Feeds / Fed by split.
     const legend = screen.getByTestId("paint-legend");
-    expect(legend).toHaveTextContent("A feeds");
-    expect(legend).toHaveTextContent("feeds A");
+    expect(legend).toHaveTextContent("T");
+    expect(legend).not.toHaveTextContent("A feeds");
     // THE FLOW ROWS STACK ON TOP, THEY DO NOT REPLACE (roadmap H3). The two legends answer different
     // questions -- the flow rows name the EDGE hues, the paint rows name the card RIMS, and both are
     // on screen at once. Replacing them meant a facet switch mid-selection repainted every rim with
     // no key anywhere.
     const rows = [...legend.querySelectorAll('[data-testid="paint-legend-row"]')];
-    expect(rows.map((r) => r.getAttribute("data-value")).slice(0, 2)).toEqual(["down", "up"]);
+    // The flow's own events lead; the paint mode's values follow. The fixture's one tag is `t`, and
+    // `creature` is the Type paint mode still keying the rims underneath.
+    expect(rows.map((r) => r.getAttribute("data-value"))).toEqual(["t", "creature"]);
     expect(legend).toHaveTextContent("creature");
-    expect(rows.length).toBeGreaterThan(2);
-    // The colour named "A feeds" (downstream: A -> other) is the same hue the edges themselves
-    // draw in for that direction, per FLOW_HUE -- the legend cannot invent its own mapping. jsdom
-    // normalises an inline hex background to rgb(), so both sides go through the same normalising
-    // element rather than comparing a literal hex string against jsdom's rgb() rendering.
-    const probeEl = document.createElement("span");
-    probeEl.style.background = FLOW_HUE.down;
-    expect((rows[0].querySelector("span") as HTMLElement).style.background).toBe(probeEl.style.background);
-    probeEl.style.background = FLOW_HUE.up;
-    expect((rows[1].querySelector("span") as HTMLElement).style.background).toBe(probeEl.style.background);
+    // The swatch is the hue the EDGES draw in for that event -- the legend cannot invent its own
+    // mapping. It is a DASHED ARROW and not a disc, which is what separates it from the paint
+    // legend sharing the same strip; asserting the mark's shape as well as its hue is what keeps
+    // the two legends distinguishable, since a disc here would name a line with a node's swatch.
+    const swatch = rows[0].querySelector("svg") as SVGElement;
+    expect(swatch).not.toBeNull();
+    const [dash, head] = [...swatch.querySelectorAll("path")];
+    expect(dash.getAttribute("stroke")).toBe(FLOW_EVENT_HUES[0]);
+    expect(dash.getAttribute("stroke-dasharray")).toBeTruthy();
+    expect(head.getAttribute("fill")).toBe(FLOW_EVENT_HUES[0]);
+    // AND IT IS A BUTTON, because isolating one mechanism is the other half of the same complaint.
+    expect(rows[0].tagName).toBe("BUTTON");
+    expect(rows[0]).toHaveAttribute("aria-pressed", "false");
   });
 
   // DIRECTION AS MOTION. The flow view's blind judge scored 4/5 and withheld the fifth point for

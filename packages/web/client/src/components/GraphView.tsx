@@ -8,7 +8,7 @@ import {
   CARD_MODE_Z, MAX_Z, cardImageUrl, isOnScreen, renderModeFor, shouldPrefetchCard,
 } from "./card-node.js";
 import {
-  FLOW_DASH, FLOW_HUE, PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
+  FLOW_DASH, FLOW_EVENT_HUES, FLOW_HUE, OVERFLOW_HUE, PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
 } from "./presets.js";
 import { computeFlow, type Flow, type FlowEdge } from "./flow.js";
 import { eventLabel } from "../lib/demand-sentence.js";
@@ -364,6 +364,14 @@ export function GraphView(
     [graph, eventVerb, edgeHasEvent],
   );
 
+  /** Tag lookup at component scope, for the flow legend below. The paint loop keeps its own
+   *  effect-scoped copy: this one is read during render, that one every frame. */
+  const tagsByPairBody = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const e of graph.edges) m.set(`${e.from}>${e.to}`, e.tags);
+    return m;
+  }, [graph]);
+
   const paint = PAINT_MODES.find((m) => m.id === paintId) ?? PAINT_MODES[0];
   /** What the current paint mode's colours mean, for this deck. */
   const legend = useMemo(() => paintLegend(paint, graph.nodes), [paint, graph]);
@@ -646,23 +654,38 @@ export function GraphView(
         // itself as the answer — not a hover, and not the direction hues of a flow that walked only
         // matching edges anyway. Dimmed rather than hidden, the same grammar the search uses, so the
         // deck keeps its shape and the traced chain reads AGAINST it rather than in a vacuum.
-        const offEvent = !edgeHasEventRef.current({ tags: tagsByPair.get(`${l.source.id}>${l.target.id}`) ?? [] });
+        const edgeTags = tagsByPair.get(`${l.source.id}>${l.target.id}`) ?? [];
+        const offEvent = !edgeHasEventRef.current({ tags: edgeTags });
+        // WHICH MECHANISM THIS EDGE IS, and whether the reader has isolated a different one. Hue
+        // used to mean up/down and nothing else, so a forty-edge flow was one mesh; it means the
+        // EVENT now, and direction moved to the dash crawl below.
+        const edgeVerbs = edgeTags.map((t) => t.split(":")[0]);
+        const flowVerb = fe ? edgeVerbs.find((v) => flowHueRef.current.has(v)) : undefined;
+        const focus = flowFocusRef.current;
+        const offFocus = fe !== undefined && focus !== null && !edgeVerbs.includes(focus);
         ctx.globalAlpha = offEvent ? 0.06
+          : offFocus ? 0.12
           : fe ? 1
           : activeFlow ? 0.15
           : hoverDir ? 1
           : hoverActive ? edgeAlpha(l.weight, maxWeight) * HOVER_EDGE_DIM
           : edgeAlpha(l.weight, maxWeight);
-        ctx.strokeStyle = offEvent ? paintColors.edge
-          : fe ? FLOW_HUE[fe.dir]
+        ctx.strokeStyle = offEvent || offFocus ? paintColors.edge
+          // The event's hue, falling back to the direction pair only when this edge carries no verb
+          // the legend named -- which is the >7-event tail the legend calls "everything else".
+          : fe ? (flowVerb ? flowHueRef.current.get(flowVerb)! : OVERFLOW_HUE)
           : hoverDir ? FLOW_HUE[hoverDir]
           : paintColors.edge;
         ctx.lineWidth = edgeWidth(l.weight, maxWeight) / cam.z;
         // Sticky context state: the else branch is not optional. Without it the pattern set by the
         // last flow edge would dash every rim, border and card frame drawn after this loop.
-        if (fe && !offEvent) {
+        if (fe && !offEvent && !offFocus) {
           ctx.setLineDash([FLOW_DASH.on / cam.z, FLOW_DASH.off / cam.z]);
-          ctx.lineDashOffset = -crawl / cam.z;
+          // DIRECTION IS THE CRAWL NOW THAT HUE CARRIES THE MECHANISM. Dashes travel AWAY from the
+          // clicked card on what it feeds and TOWARD it on what feeds it, so the two channels are
+          // independent: colour says which event, motion says which way. `FLOW_DASH`'s own comment
+          // already called the motion the encoding -- it just was not being used as one.
+          ctx.lineDashOffset = (fe.dir === "down" ? -crawl : crawl) / cam.z;
         } else {
           ctx.setLineDash([]);
         }
@@ -688,6 +711,26 @@ export function GraphView(
         ctx.moveTo(l.source.x + tx * ART_RADIUS, l.source.y + ty * ART_RADIUS);
         ctx.lineTo(l.target.x - tx * ART_RADIUS, l.target.y - ty * ART_RADIUS);
         ctx.stroke();
+        // DIRECTION MUST SURVIVE A STILL FRAME. Hue carries the MECHANISM now, so the crawl became
+        // the only direction channel -- and `stillMotion` zeroes the crawl under
+        // `prefers-reduced-motion`, which left those readers with no direction encoding at all. It
+        // is also invisible in a screenshot, and the task-5 brief already recorded a blind judge
+        // unable to tell producer from consumer from the hues alone.
+        //
+        // An arrowhead is the conventional answer for a directed graph and is static by
+        // construction. Drawn only on a flow edge: the resting board is undirected to the eye and
+        // ninety arrowheads would be noise on top of the mesh this whole change exists to thin.
+        if (fe && !offEvent && !offFocus) {
+          const hx = l.target.x - tx * ART_RADIUS;
+          const hy = l.target.y - ty * ART_RADIUS;
+          const head = 5 / cam.z;
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(hx - tx * head - ty * head * 0.55, hy - ty * head + tx * head * 0.55);
+          ctx.lineTo(hx, hy);
+          ctx.lineTo(hx - tx * head + ty * head * 0.55, hy - ty * head - tx * head * 0.55);
+          ctx.stroke();
+        }
       }
       ctx.globalAlpha = 1;
       ctx.setLineDash([]);
@@ -1316,6 +1359,40 @@ export function GraphView(
     () => (inspectingNode ? computeFlow(flowEdges, inspectingNode.id) : null),
     [graph, inspectingNode],
   );
+  /** THE EVENTS INSIDE THIS FLOW, ranked by how many of its edges each explains, with a hue each.
+   *
+   *  This is what makes a flow readable: the board used to paint every edge in one of two colours
+   *  that meant only up/down, so a token's forty-edge fan was one undifferentiated mesh. Hue carries
+   *  the MECHANISM now and direction moves to the dash crawl. Scoped to the selected card's own
+   *  flow, which is why a palette is possible at all -- see `FLOW_EVENT_HUES`. */
+  const flowEvents = useMemo(() => {
+    if (!flow) return [] as { verb: string; count: number; hue: string }[];
+    const n = new Map<string, number>();
+    for (const fe of flow.edges) {
+      for (const verb of new Set((tagsByPairBody.get(`${fe.from}>${fe.to}`) ?? []).map((t) => t.split(":")[0]))) {
+        n.set(verb, (n.get(verb) ?? 0) + 1);
+      }
+    }
+    return [...n]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([verb, count], i) => ({ verb, count, hue: FLOW_EVENT_HUES[i] ?? OVERFLOW_HUE }));
+  }, [flow, tagsByPairBody]);
+
+  /** Which of the flow's own events the reader has isolated, or null for all of them. Cleared
+   *  whenever the selection changes: an isolate is about THIS flow and would be a stale filter on
+   *  the next one. */
+  const [flowFocus, setFlowFocus] = useState<string | null>(null);
+  useEffect(() => { setFlowFocus(null); }, [inspectingId]);
+
+  const flowHueByVerb = useMemo(
+    () => new Map(flowEvents.map((e) => [e.verb, e.hue])),
+    [flowEvents],
+  );
+  const flowHueRef = useRef(flowHueByVerb);
+  flowHueRef.current = flowHueByVerb;
+  const flowFocusRef = useRef(flowFocus);
+  flowFocusRef.current = flowFocus;
+
   const flowRef = useRef<Flow | null>(null);
   flowRef.current = flow;
 
@@ -1328,11 +1405,19 @@ export function GraphView(
   // answer DIFFERENT questions: the flow rows say what the EDGE hues mean, the paint rows say what
   // the card RIMS mean, and both are painted at once. Replacing meant switching TYPE -> ROLE while a
   // card was selected repainted every rim with no key anywhere on screen.
+  //
+  // HUE NOW NAMES THE MECHANISM, NOT THE DIRECTION (owner, 2026-08-27: "cool that I can see all the
+  // events flowing, but even as an experienced Magic player this tells me nothing, I cannot
+  // distinguish them"). Two hues meaning up/down told a reader nothing about WHAT was flowing, so
+  // the rows list the flow's own events with their counts, and direction moved to the dash crawl --
+  // which `FLOW_DASH`'s comment already called the encoding.
   const flowLegend = inspectingNode
-    ? [
-        { value: "down", label: `${inspectingNode.label} feeds`, hue: FLOW_HUE.down, count: undefined },
-        { value: "up", label: `feeds ${inspectingNode.label}`, hue: FLOW_HUE.up, count: undefined },
-      ]
+    ? flowEvents.map((e) => ({
+        value: e.verb,
+        label: eventLabel(e.verb),
+        hue: e.hue,
+        count: e.count,
+      }))
     : null;
 
   /** Reshapes __graphProbe()'s node array (with its `edges` property riding along) into what
@@ -1533,12 +1618,44 @@ export function GraphView(
           aria-label="Paint legend"
           className="pointer-events-none flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--muted)"
         >
-          {[...(flowLegend ?? []), ...legend].map((row) => (
+          {/* A FLOW ROW IS A BUTTON AND A PAINT ROW IS NOT, because only the first has something to
+            *  isolate: clicking an event dims the rest of the flow, which is the "and filter them"
+            *  half of the same complaint. Clicking it again clears. The paint rows stay inert, so
+            *  the group keeps `pointer-events-none` off only where a target exists. */}
+          {(flowLegend ?? []).map((row) => (
+            <button
+              key={`flow:${row.value}`}
+              type="button"
+              data-testid="paint-legend-row"
+              data-value={row.value}
+              aria-pressed={flowFocus === row.value}
+              onClick={() => setFlowFocus((v) => (v === row.value ? null : row.value))}
+              // THE CONTAINER STAYS `pointer-events-none` AND THE BUTTON OPTS BACK IN. The legend
+              // can overlay the canvas, and a group that swallows drags puts a dead zone on the
+              // board -- a standing constraint with its own test. Only the rows that have something
+              // to isolate become targets.
+              className={`pointer-events-auto flex items-center gap-1.5 ${
+                flowFocus === row.value ? "text-(--foreground)" : ""}`}
+            >
+              {/* A DASHED ARROW, NOT A DISC, AND THAT IS THE WHOLE SEPARATION FROM THE PAINT
+                *  LEGEND BESIDE IT. Both legends sit on one strip and both used a filled circle,
+                *  so a reader could not tell which dots named a LINE and which named a NODE. A
+                *  swatch that looks like the mark it labels needs no label to say so -- and this
+                *  one is the painted edge exactly: same dash, same arrowhead, same hue. */}
+              <svg aria-hidden="true" width="18" height="8" viewBox="0 0 18 8" className="shrink-0">
+                <path d="M0 4h11" stroke={row.hue} strokeWidth="2" strokeDasharray="3 2.5" />
+                <path d="M11 1.2 15.5 4 11 6.8z" fill={row.hue} />
+              </svg>
+              <span>{row.label}</span>
+              <span className="stat-num opacity-70">{row.count}</span>
+            </button>
+          ))}
+          {legend.map((row) => (
             <div
               key={row.value}
               data-testid="paint-legend-row"
               data-value={row.value}
-              className="flex items-center gap-1.5"
+              className="pointer-events-none flex items-center gap-1.5"
             >
               {/* A graphic object next to text, so it carries the 3:1 floor the palette was
                *  validated against. The text beside it is the page's normal foreground. */}
@@ -1548,8 +1665,6 @@ export function GraphView(
                 className="inline-block size-2.5 shrink-0 rounded-full"
               />
               <span className="whitespace-nowrap">{row.label}</span>
-              {/* Flow rows carry no count -- a direction is a fact about the graph shape, not a
-               *  quantity of cards, unlike a paint-mode value. */}
               {row.count !== undefined ? <span className="stat-num text-(--muted)">{row.count}</span> : null}
             </div>
           ))}
