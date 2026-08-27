@@ -43,6 +43,13 @@ export interface ProjectedNode {
   oracleText?: string;
   colors: string[];
   cmc: number;
+  /** Which printed face this node is, 1 or more for a back face. Absent on a front face and on a
+   *  single-face card. The view marks the faces of one card with a matching rim; nothing is drawn
+   *  between them (owner's ruling -- no new edge kind in the legend or in any count). */
+  face?: number;
+  /** The PHYSICAL card this node is a face of, present only when it is one. The rim pairs on this,
+   *  and the cut list names it, because you cannot cut half a card. */
+  cardName?: string;
   /** Attached by the server from the deck report; absent here. */
   roles?: string[];
   artCrop?: string;
@@ -85,11 +92,16 @@ const DEFAULT_FLOOR = 0;
  *  reads node ids and a caller comparing an id against a card name has to know the shape. */
 export const TOKEN_ID_PREFIX = "token:";
 
-/** A node's identity. Tokens are prefixed; cards keep their bare name, so every id that existed
- *  before tokens were nodes still reads exactly as it did -- including `pairs.json`'s panel keys and
- *  every fixture. */
-export function nodeId(name: string, isToken?: boolean): string {
-  return isToken ? `${TOKEN_ID_PREFIX}${name}` : name;
+/** The prefix that separates a BACK face from the card it is a face of. Exported for the same reason
+ *  `TOKEN_ID_PREFIX` is: the view reads node ids. */
+export const FACE_ID_PREFIX = "face:";
+
+/** A node's identity. Tokens are prefixed; a BACK face is prefixed with its index; the FRONT face and
+ *  every single-face card keep the bare card name, so every id that existed before faces were nodes
+ *  still reads exactly as it did -- `pairs.json`'s 895 panel keys and every fixture included. */
+export function nodeId(name: string, isToken?: boolean, face?: number): string {
+  if (isToken) return `${TOKEN_ID_PREFIX}${name}`;
+  return face ? `${FACE_ID_PREFIX}${face}:${name}` : name;
 }
 
 export function projectDeckGraph(
@@ -102,12 +114,15 @@ export function projectDeckGraph(
   const floor = opts.floor ?? DEFAULT_FLOOR;
 
   const copies = new Map<string, number>();
-  for (const d of deck) copies.set(nodeId(d.card.name, d.isToken), (copies.get(nodeId(d.card.name, d.isToken)) ?? 0) + 1);
+  for (const d of deck) {
+    const id = nodeId(d.parentName ?? d.card.name, d.isToken, d.face);
+    copies.set(id, (copies.get(id) ?? 0) + 1);
+  }
 
   const nodes: ProjectedNode[] = [];
   const seen = new Set<string>();
   for (const d of deck) {
-    const id = nodeId(d.card.name, d.isToken);
+    const id = nodeId(d.parentName ?? d.card.name, d.isToken, d.face);
     if (seen.has(id)) continue;
     seen.add(id);
     // EVERY face, because a node is the whole card. `parseTypeLine` takes one face and leaves "//"
@@ -124,6 +139,8 @@ export function projectDeckGraph(
       oracleText: d.card.oracleText,
       colors: d.card.colors,
       cmc: d.card.manaValue,
+      ...(d.face ? { face: d.face } : {}),
+      ...(d.parentName ? { cardName: d.parentName } : {}),
     });
   }
 
@@ -134,9 +151,11 @@ export function projectDeckGraph(
     if (!r.producer || !r.consumer) { undirectedReasons++; continue; }
     // `producerIsToken`/`consumerIsToken` are what make a token and a same-named card two nodes
     // here instead of one -- see `nodeId`. A reason from the flat engine carries neither, which
-    // reads as "both sides are cards", the only thing that engine can produce.
-    const from = nodeId(r.producer, r.producerIsToken);
-    const to = nodeId(r.consumer, r.consumerIsToken);
+    // reads as "both sides are cards", the only thing that engine can produce. `producerFace`/
+    // `consumerFace` do the same for a face: `stampSides` already rewrote `producer`/`consumer` to
+    // the PHYSICAL card's name, so the face index is what routes the reason to its own node.
+    const from = nodeId(r.producer, r.producerIsToken, r.producerFace);
+    const to = nodeId(r.consumer, r.consumerIsToken, r.consumerFace);
     if (!seen.has(from) || !seen.has(to)) { offDeckReasons++; continue; }
     const key = `${from}->${to}`;
     const g = grouped.get(key) ?? { from, to, reasons: [] };

@@ -1,14 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import type { Reason } from "@mtg/engine";
-import { projectDeckGraph } from "./graph-projection.js";
+import { nodeId, projectDeckGraph } from "./graph-projection.js";
+import { faceDeckCards } from "./faces.js";
 import type { DeckCard } from "./types.js";
 
 const W = { kinds: {}, repeatability: {}, scaling: {}, damping: 1 };
+const WEIGHTS = W;
 
 function card(name: string, typeLine = "Creature — Human", manaValue = 2): DeckCard {
   return {
     card: {
       name, typeLine, oracleText: "", keywords: [], colors: ["B"], manaValue,
+    } as DeckCard["card"],
+    tags: null,
+  };
+}
+
+function plainCard(name: string): DeckCard {
+  return card(name);
+}
+
+// The two-faced fixture edges.test.ts/faces.test.ts already use -- an Instant front, a Land back.
+function mdfcDeckCard(): DeckCard {
+  return {
+    card: {
+      name: "Fell the Profane // Fell Mire", typeLine: "Instant // Land", oracleText: "a\nb",
+      keywords: [], colors: ["B"], manaValue: 4, layout: "modal_dfc",
+      faces: [
+        { name: "Fell the Profane", typeLine: "Instant", oracleText: "a", manaCost: "{3}{B}", colors: ["B"] },
+        { name: "Fell Mire", typeLine: "Land", oracleText: "b", colors: [] },
+      ],
     } as DeckCard["card"],
     tags: null,
   };
@@ -135,4 +156,43 @@ describe("a token that shares its name with a real card", () => {
     expect(g.edges).toEqual([]);
     expect(g.offDeckReasons).toBe(1);
   });
+});
+
+// THE RATCHET THAT PROTECTS THE FROZEN PANEL. `pairs.json` keys 895 judged pairs on the producer and
+// consumer NAMES, and every fixture in this repo reads a node id that is a bare card name. A front
+// face keeps that id exactly; only a BACK face gets a new one.
+test("the front face's node id is the bare card name", () => {
+  expect(nodeId("Fell the Profane // Fell Mire", false, 0)).toBe("Fell the Profane // Fell Mire");
+  expect(nodeId("Sol Ring")).toBe("Sol Ring");
+});
+
+test("a back face gets its own node id", () => {
+  expect(nodeId("Fell the Profane // Fell Mire", false, 1)).toBe("face:1:Fell the Profane // Fell Mire");
+});
+
+test("a two-faced card draws two nodes, each with its own printed fields", () => {
+  const g = projectDeckGraph(faceDeckCards(mdfcDeckCard()), [], WEIGHTS);
+  expect(g.nodes.map((n) => n.id)).toEqual([
+    "Fell the Profane // Fell Mire",
+    "face:1:Fell the Profane // Fell Mire",
+  ]);
+  expect(g.nodes.map((n) => n.label)).toEqual(["Fell the Profane", "Fell Mire"]);
+  expect(g.nodes[0].typeLine).toBe("Instant");
+  expect(g.nodes[1].typeLine).toBe("Land");
+  expect(g.nodes.map((n) => n.cardName)).toEqual([
+    "Fell the Profane // Fell Mire",
+    "Fell the Profane // Fell Mire",
+  ]);
+});
+
+test("a reason carrying a face lands on that face's node", () => {
+  const deck = [...faceDeckCards(mdfcDeckCard()), plainCard("Lotus Cobra")];
+  const reasons = [{
+    tag: "enters:land", text: "…",
+    producer: "Fell the Profane // Fell Mire", producerFace: 1,
+    consumer: "Lotus Cobra",
+  }];
+  const g = projectDeckGraph(deck, reasons, WEIGHTS);
+  expect(g.offDeckReasons).toBe(0);
+  expect(g.edges[0].from).toBe("face:1:Fell the Profane // Fell Mire");
 });
