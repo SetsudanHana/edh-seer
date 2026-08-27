@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { analyzeDeckStructured } from "./analyze.js";
+import { analyzeDeckStructured, collectTokenNodes } from "./analyze.js";
 import { SEED_IMPACT_WEIGHTS, loadImpactWeights } from "@mtg/engine";
 import type { TagStats } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
@@ -1234,4 +1234,175 @@ test("a commander that is a multi-face card is still the commander on its front 
     H,
   );
   expect(report.cards.find((c) => c.name === "Ajani, Nacatl Pariah")?.isCommander).toBe(true);
+});
+
+
+// ============================================================================
+// REVIEW FIXES (2026-08-27) -- Task 4 quality review found four defects in the first cut of
+// face-splitting. Covering tests below, one block per fix.
+// ============================================================================
+
+// CRITICAL: two faces of one physical card must not partner with each other -- they are never
+// both on the battlefield (CR 712.4a for a transform, one chosen face for an MDFC). Reproduced on
+// the reviewer's own probe shape: a front face with a landfall-caring trigger, a back face that is
+// itself a Land. Pre-fix, the back face's own implied `enters` (a land entering) satisfied the
+// front face's trigger, reading as a genuine synergy -- the board's ruling is "shared rim, no
+// link".
+const selfLandfall = (): DeckCard => ({
+  card: {
+    name: "Landfall Front // Landfall Back",
+    typeLine: "Sorcery // Land",
+    oracleText: "a\n// b",
+    keywords: [], colors: ["G"], manaValue: 2,
+    faces: [
+      { name: "Landfall Front", typeLine: "Sorcery", oracleText: "a", manaCost: "{1}{G}", colors: ["G"] },
+      { name: "Landfall Back", typeLine: "Land", oracleText: "b", colors: [] },
+    ],
+  } as never,
+  tags: {
+    oracleId: "landfall-front", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["sorcery", "land"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [],
+      faces: [
+        { types: ["sorcery"], subtypes: [] },
+        { types: ["land"], subtypes: [] },
+      ],
+    },
+    abilities: [
+      // Face 0 (front, default) only: watches a land entering.
+      { kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: ["land"] } }, effect: { kind: "add-mana" } },
+    ],
+  } as CardTags,
+});
+
+test("CRITICAL: two faces of one physical card form no edge with each other", () => {
+  const filler = dc("Filler", []);
+  const report = analyzeDeckStructured([selfLandfall(), filler], undefined, H);
+  const selfEdge = report.edges.find(
+    (e) =>
+      (e.a === "Landfall Front" && e.b === "Landfall Back") ||
+      (e.a === "Landfall Back" && e.b === "Landfall Front"),
+  );
+  expect(selfEdge).toBeUndefined();
+  const front = report.cards.find((c) => c.name === "Landfall Front");
+  expect(front?.topPartners.some((p) => p.name === "Landfall Back")).toBe(false);
+  expect(front?.partnerCount).toBe(0);
+});
+
+// IMPORTANT: nine joins built off `resolved` (keyed by PHYSICAL card) were being read with a FACE
+// name, silently missing every time. `manaValue`/`derived` are the two with the clearest,
+// deterministic assertions: a physical card's manaValue must reach both its face rows, and an
+// UNDERIVED two-faced card must report `derived: false`, never silently default to read.
+test("IMPORTANT: a rated face row carries its physical card's mana value and cost", () => {
+  const beater = dc("Vanilla Beater", []);
+  const report = analyzeDeckStructured([beater, fellTheProfane()], undefined, H);
+  const front = report.cards.find((c) => c.name === "Fell the Profane")!;
+  const back = report.cards.find((c) => c.name === "Fell Mire")!;
+  // The card-level manaValue (2), not the (absent) per-face one -- faces don't split cmc (E4).
+  expect(front.manaValue).toBe(2);
+  expect(back.manaValue).toBe(2);
+  expect(front.derived).toBe(true);
+  expect(back.derived).toBe(true);
+});
+
+test("IMPORTANT: an underived two-faced card is reported as underived, not silently read", () => {
+  const underivedMdfc: DeckCard = {
+    card: {
+      name: "Underived Front // Underived Back",
+      typeLine: "Sorcery // Land",
+      oracleText: "a\n// b",
+      keywords: [], colors: [], manaValue: 2,
+      faces: [
+        { name: "Underived Front", typeLine: "Sorcery", oracleText: "a", manaCost: "{1}{G}", colors: ["G"] },
+        { name: "Underived Back", typeLine: "Land", oracleText: "b", colors: [] },
+      ],
+    } as never,
+    tags: null,
+  };
+  const filler = dc("Filler", []);
+  const report = analyzeDeckStructured([underivedMdfc, filler], undefined, H);
+  const front = report.cards.find((c) => c.name === "Underived Front");
+  // The `?? true` default is for a name genuinely absent from `resolved`, which cannot happen for
+  // a rated card once the lookup goes through the PHYSICAL name -- this card really has no tags.
+  expect(front?.derived).toBe(false);
+});
+
+// IMPORTANT: `tokenCreators` is a CARD-scoped Scryfall fact (`allParts`); `faceDeckCards` copies it
+// onto BOTH faces of a two-faced maker, so registering the raw `dc.card.name` (a FACE name) split
+// one physical maker into two "creators". Directly exercises the changed line in
+// `collectTokenNodes`, independent of the (unchanged, by design) `partneredOracles` outcome for a
+// maker's own faces -- see the fix commit for why that consumer cannot observe the difference.
+test("IMPORTANT: collectTokenNodes registers a two-faced maker's creator by its PHYSICAL name", () => {
+  const parentName = "Probe Front // Probe Back";
+  const allParts = [{ component: "token", name: "Treasure", typeLine: "Token Artifact — Treasure", printingId: "treasure-printing-id" }];
+  const front: DeckCard = {
+    card: { name: "Probe Front", typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 2, allParts } as never,
+    parentName, face: 0, tags: null,
+  };
+  const back: DeckCard = {
+    card: { name: "Probe Back", typeLine: "Land", oracleText: "", keywords: [], colors: [], manaValue: 2, allParts } as never,
+    parentName, face: 1, tags: null,
+  };
+  const treasureTags: CardTags = {
+    oracleId: "token-treasure-probe-oracle", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["token", "artifact"], subtypes: ["treasure"], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: true, keywords: [] },
+    abilities: [],
+  };
+  const { tokenCreators } = collectTokenNodes(
+    [front, back],
+    (ref) => (ref.printingId === "treasure-printing-id" ? treasureTags : null),
+  );
+  expect(tokenCreators.get("token-treasure-probe-oracle")).toEqual(new Set([parentName]));
+});
+
+// MINOR: pin the commander ruling. Both faces of a two-faced commander read `isCommander: true`
+// (the card is the commander whichever face is up), and `COMMANDER_BOOST` therefore applies to
+// EITHER face's partners through the same shared `isCommanderNode` helper -- nothing pinned that
+// before this fix.
+test("MINOR: COMMANDER_BOOST reaches partners of either face of a two-faced commander", () => {
+  const dfcCommander = (): DeckCard => ({
+    card: {
+      name: "Ajani, Nacatl Pariah // Ajani, Nacatl Avenger",
+      typeLine: "Legendary Creature — Cat Cleric // Legendary Planeswalker — Ajani",
+      oracleText: "a\n// b",
+      keywords: [], colors: ["W"], manaValue: 2,
+      faces: [
+        { name: "Ajani, Nacatl Pariah", typeLine: "Legendary Creature — Cat Cleric", oracleText: "a", manaCost: "{1}{W}", colors: ["W"] },
+        { name: "Ajani, Nacatl Avenger", typeLine: "Legendary Planeswalker — Ajani", oracleText: "b", colors: ["W", "G"] },
+      ],
+    } as never,
+    tags: {
+      oracleId: "ajani-nacatl-pariah", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: {
+        types: ["creature"], subtypes: ["cat", "cleric"], colors: ["W"], identity: ["W", "G"], cmc: 2,
+        power: "1", toughness: "1", token: false, keywords: [],
+        faces: [{ types: ["creature"], subtypes: ["cat", "cleric"] }, { types: ["planeswalker"], subtypes: ["ajani"] }],
+      },
+      abilities: [
+        // Face 0 (front, default): the same Wizard-token maker the standalone commander-boost test
+        // above uses -- proves the boost reaches the FRONT face's partner.
+        ...inallaAbility,
+        // Face 1 (back): an unrelated static pump on goblins -- proves the boost reaches the BACK
+        // face's partner too, through the SAME shared `isCommanderNode` helper.
+        { face: 1, kind: "static", effect: { kind: "pump", subject: { subtype: "goblin", control: "you", token: null } } },
+      ] as unknown as CardTags["abilities"],
+    },
+  });
+  const wizardPayoff = dc("Kindred Discovery", kindredDiscoveryAbility);
+  const goblinPayoff = dc("Goblin Grunt", [], ["goblin"]);
+  const names = ["Ajani, Nacatl Pariah // Ajani, Nacatl Avenger"];
+  const withoutBoost = analyzeDeckStructured([dfcCommander(), wizardPayoff, goblinPayoff], undefined, H);
+  const withBoost = analyzeDeckStructured([dfcCommander(), wizardPayoff, goblinPayoff], names, H);
+
+  expect(withBoost.cards.find((c) => c.name === "Ajani, Nacatl Pariah")?.isCommander).toBe(true);
+  expect(withBoost.cards.find((c) => c.name === "Ajani, Nacatl Avenger")?.isCommander).toBe(true);
+
+  const wizardNoBoost = withoutBoost.cards.find((c) => c.name === "Kindred Discovery")!;
+  const wizardBoosted = withBoost.cards.find((c) => c.name === "Kindred Discovery")!;
+  expect(wizardBoosted.score).toBeGreaterThan(wizardNoBoost.score); // front-face boost
+
+  const goblinNoBoost = withoutBoost.cards.find((c) => c.name === "Goblin Grunt")!;
+  const goblinBoosted = withBoost.cards.find((c) => c.name === "Goblin Grunt")!;
+  expect(goblinBoosted.score).toBeGreaterThan(goblinNoBoost.score); // back-face boost
 });
