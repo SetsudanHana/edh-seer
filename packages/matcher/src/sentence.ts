@@ -108,6 +108,23 @@ export function eventVerbPhrase(key: string): string {
 export function reasonSentence(input: {
   producer: string; consumer: string; eventKey: string;
   effectKind?: string; amount?: string; self?: boolean;
+  /** WHAT THE EVENT HAPPENS TO, when it does not happen to the producer.
+   *
+   *  **A SORCERY CANNOT DIE.** Austere Command emits four `dies` events whose subjects are CLASSES
+   *  it destroys (`{type: creature, scope: all}`), not itself — and this function rendered every one
+   *  as *"When Austere Command dies, Grim Haruspex draws you 1 card"*, about a `{4}{W}{W}` Sorcery.
+   *  It was the deck's four highest-rated rows, and the skeptic, the tuner and the precon player
+   *  each flagged it independently on 2026-08-27. The same shape made *"When Grim Hireling dies"*
+   *  out of an emit about its TREASURES.
+   *
+   *  **THE EDGE WAS ALWAYS RIGHT AND ONLY THE SENTENCE WAS WRONG** — a board wipe really does make
+   *  creatures die, and that really does feed a death payoff. What the prose did was name the wrong
+   *  dying object, which on a product whose whole pitch is "we tell you WHY" is the failure mode
+   *  that matters most: the relation looks plausible and the mechanism is fiction.
+   *
+   *  Absent when the producer's emit is about ITSELF (every implied event, and any authored emit
+   *  carrying `subject.self`), which is the case the old wording was written for and still fits. */
+  subjectNoun?: string;
 }): string {
   const verb = eventVerbPhrase(input.eventKey);
   const phrase = effectPhrase(input.effectKind, input.amount);
@@ -115,8 +132,30 @@ export function reasonSentence(input: {
     const effect = phrase ? `it ${phrase}` : "it triggers";
     return `When ${input.consumer} ${verb} thanks to ${input.producer}, ${effect}`;
   }
-  const cause = `When ${input.producer} ${verb}`;
+  // ONE GRAMMAR FOR BOTH CAUSED CASES. "thanks to <producer>" is the same construction the self
+  // branch above already uses, so the producer stays named as the cause while the SUBJECT of the
+  // event is named as the thing it happens to.
+  const cause = input.subjectNoun
+    ? `When ${input.subjectNoun} ${verb} thanks to ${input.producer}`
+    : `When ${input.producer} ${verb}`;
   return phrase ? `${cause}, ${input.consumer} ${phrase}` : `${cause}, ${input.consumer} triggers`;
+}
+
+/** The noun for a producer emit's subject — "a creature", "a Treasure", "a permanent".
+ *
+ *  Returns undefined when the event is about the PRODUCER ITSELF, which is what keeps every
+ *  correct sentence in the corpus ("When Grim Haruspex dies…" about a creature that really can die)
+ *  reading exactly as it did. A subtype is preferred over a card type because it is what a reader
+ *  recognises — "a Treasure dies" says more than "an artifact dies" — and an untyped subject falls
+ *  back to "a permanent" rather than to nothing, since the event still happened to SOMETHING. */
+export function emitSubjectNoun(subject: {
+  self?: boolean; subtype?: string | string[]; type?: string | string[];
+} | undefined): string | undefined {
+  if (!subject || subject.self === true) return undefined;
+  const first = (v: string | string[] | undefined): string | undefined =>
+    Array.isArray(v) ? v[0] : v;
+  const noun = first(subject.subtype) ?? first(subject.type) ?? "permanent";
+  return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
 }
 
 /** A card that can end up in the graveyard is the raw material a recursion ability needs. Not a

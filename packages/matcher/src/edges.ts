@@ -12,7 +12,7 @@ import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, counterPresenceSentence, createsSentence, fetchSentence,
-  graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
+  emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   staticGrantSentence, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
@@ -851,6 +851,25 @@ function copySubject(p: DeckCard): { subject: SubjectFilter; enters: boolean } |
   return { subject: { ...strip(raw), control: "any", token: null } as SubjectFilter, enters };
 }
 
+/** Could the producer ITSELF be the object its own emit describes?
+ *
+ *  A creature emitting `dies: {type: creature}` might well be the creature that dies, so
+ *  "When <producer> dies" is true and stays. A Sorcery emitting the same thing is describing the
+ *  creatures it destroys, and that sentence becomes a claim that a sorcery dies.
+ *
+ *  Reuses `characteristicsSubject` + `subjectMatches` — the same pair the self-trigger gate uses —
+ *  and strips the same event-only fields for the same reason: `zone`, `counter` and `entersTapped`
+ *  describe the EVENT, not the card, and comparing them against a type line is the mistake this file
+ *  has now recorded four times. An UNTYPED subject matches anything and therefore keeps the old
+ *  wording, which is the conservative direction: no noun is invented for an emit naming no class. */
+function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy): boolean {
+  // No derived tags means no characteristics to compare, so nothing can be ruled out — keep the
+  // old wording rather than invent a noun on a card the engine has not read.
+  if (!p.tags) return true;
+  const { zone: _z, counter: _c, entersTapped: _t, self: _s, ...printed } = subject;
+  return subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h);
+}
+
 export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
   if (!p.tags || !c.tags) return [];
   const reasons: Reason[] = [];
@@ -954,6 +973,27 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           text: reasonSentence({
             producer: p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
+            // CAN THE PRODUCER BE THE THING THIS HAPPENS TO? That is the whole question, and
+            // naming the class unconditionally was the wrong answer to it.
+            //
+            // "When Austere Command dies" is a sentence about a `{4}{W}{W}` SORCERY, printed on the
+            // deck's four highest-rated rows and flagged independently by three personas on
+            // 2026-08-27. Austere Command emits four `dies` events whose subjects are classes it
+            // DESTROYS; it is not, and can never be, the thing that dies.
+            //
+            // BUT NAMING THE CLASS EVERY TIME BREAKS A DELIBERATE INVARIANT. `sentence.ts` drops the
+            // subject on purpose so Scrap Trawler's `dies:creature` and `dies:artifact` rows read as
+            // one line, and so a producer satisfying one trigger by BOTH its baseline and an
+            // authored emit collapses to a single claim — `claimCount` keys on (tag, text), so prose
+            // that varies by type silently double-counts and inflates the score. Both are covered by
+            // tests, and both failed the first cut of this fix.
+            //
+            // So the noun appears only when the producer's own printed characteristics CANNOT
+            // satisfy its own emit. A Reanimator creature whose emit is `{type: creature}` really
+            // might be the creature entering, and keeps the old wording; a Sorcery whose emit is
+            // `{type: creature}` cannot, and gets the class named instead. Same predicate the
+            // self-trigger gate above uses, so the two cannot disagree about what a card can be.
+            subjectNoun: producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject),
           }),
           effectKind: a.effect.kind,
           repeatability: triggerRepeatability(t.subject),

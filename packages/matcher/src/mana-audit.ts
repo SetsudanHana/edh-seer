@@ -1,4 +1,5 @@
 import { minCopies } from "@mtg/engine";
+import { castableManaCost } from "./split-cost.js";
 import { minSources } from "./mulligan.js";
 import type { DeckCard } from "./types.js";
 
@@ -138,7 +139,12 @@ export function manaAudit(
     // Group by (pips, deadline): "12 cards want {B}{B} by T3" is one row, not twelve.
     const groups = new Map<string, ColorDemand>();
     for (const dc of library) {
-      const pips = pipsByColor(dc.card.manaCost)[color];
+      // THE SAME SPLIT-CARD FICTION, AND IT SURFACED HERE FIRST. `Dusk // Dawn`'s joined
+      // "{2}{W}{W} // {3}{W}{W}" read as a FOUR-white-pip demand on turn nine, which was the entire
+      // content of the precon's only colour warning — a requirement for 31 white sources generated
+      // by a cost no player pays. Two readers of one string produced the same fiction independently,
+      // which is why the correction lives in `split-cost.ts` rather than in either of them.
+      const pips = pipsByColor(castableManaCost(dc.card))[color];
       if (!pips) continue;
       // A 0-drop still has to be castable on turn 1 -- there is no turn 0 to draw into.
       const turn = Math.max(1, Math.round(dc.card.manaValue));

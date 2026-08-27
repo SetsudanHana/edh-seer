@@ -31,6 +31,14 @@ test("event edge: a token-maker's emit matches a wizard-ETB payoff trigger", () 
   expect(reasons.some((r) => r.text.includes("Inalla") && r.text.includes("Kindred Discovery"))).toBe(true);
 });
 
+/** `base()` types every card as a creature, which is fine for most fixtures and wrong for any test
+ *  whose point is what a card CAN be. */
+const artifact = (name: string, abilities: CardTags["abilities"]) => {
+  const c = base(name, abilities);
+  (c.tags.characteristics as { types: string[] }).types = ["artifact"];
+  return c;
+};
+
 test("reason text is human-readable — no raw tag tokens leak", () => {
   const maker = base("Inalla", [{
     kind: "triggered",
@@ -46,9 +54,11 @@ test("reason text is human-readable — no raw tag tokens leak", () => {
   const reasons = pairReasons(maker, etbPayoff, H);
   const etb = reasons.find((r) => r.tag === "enters:creature")!;
   expect(etb.text).not.toMatch(/:/); // no "enters:creature" style token
-  // Cause first, naming the producer card rather than its class (sentence.ts) -- no engine
-  // vocabulary and no raw tag either.
-  expect(etb.text).toBe("When Inalla enters, Kindred Discovery draws you cards");
+  // Cause first, and the SUBJECT is named because Inalla is not the thing entering: its emit is a
+  // token COPY (`token: true`), and Inalla is not a token. Saying "When Inalla enters" described the
+  // wrong event — the same defect that made a Sorcery die (roadmap, 2026-08-27 persona run).
+  // Still no engine vocabulary and no raw tag.
+  expect(etb.text).toBe("When a wizard enters thanks to Inalla, Kindred Discovery draws you cards");
   // both card names still present (CLI + engine rely on this)
   expect(etb.text).toContain(maker.card.name);
   expect(etb.text).toContain(etbPayoff.card.name);
@@ -1044,14 +1054,20 @@ test("a payoff watching OTHER casts is untouched", () => {
 
 test("a dying artifact and a dying creature keep distinct tags even though the prose now matches", () => {
   // Scrap Trawler watches its own death AND another artifact hitting the graveyard, so a sac outlet
-  // supplies both `dies:creature` and `dies:artifact`. humanizeEvent USED TO hardcode "a creature
-  // dying" for every dies event, rendering the two reasons as identical lines -- an artifact told
-  // to the reader as a creature. sentence.ts's fix is structural rather than a second case: the
-  // cause now names the specific PRODUCER CARD ("When Executioner's Capsule dies") and drops the
-  // subject/type entirely, so the two rows read identically ON PURPOSE -- a reader does not need to
-  // be told which of Scrap Trawler's two typed triggers fired, only that a death happened and it
-  // responded. What must still be distinct is the TAG, which `claimCount`/`dedupeReasons` key on.
-  const outlet = base("Executioner's Capsule", [{
+  // supplies both `dies:creature` and `dies:artifact`.
+  //
+  // THE TWO ROWS USED TO READ IDENTICALLY ON PURPOSE, and that was right while the prose named the
+  // producer as the thing that died. It stopped being right once the producer could be a card that
+  // CANNOT die the way its own emit describes: Executioner's Capsule is an ARTIFACT that sacrifices
+  // ITSELF (`dies:artifact`) and DESTROYS a creature (`dies:creature`) — two different events, one
+  // of which is not about the Capsule at all. The tag stays the thing `claimCount`/`dedupeReasons`
+  // key on; the prose now separates them because they are separate.
+  //
+  // THE FIXTURE SAID `types: ["creature"]` VIA `base()`, which is not what this card is — the third
+  // time this repo has recorded a fixture that does not resemble the card it names (C4's fetchland,
+  // `commander-ramp-core`'s Sol Ring). Typed correctly here, or the artifact row would be tested
+  // against a card that cannot be an artifact.
+  const outlet = artifact("Executioner\u0027s Capsule", [{
     kind: "activated",
     effect: { kind: "" },
     emits: [
@@ -1075,8 +1091,11 @@ test("a dying artifact and a dying creature keep distinct tags even though the p
   const tags = reasons.map((r) => r.tag);
   expect(new Set(tags)).toEqual(new Set(["dies:creature", "dies:artifact"]));
   const texts = reasons.map((r) => r.text);
-  expect(new Set(texts).size).toBe(1); // prose collapses on purpose; the tag is what stays distinct
-  expect(texts[0]).toBe("When Executioner's Capsule dies, Scrap Trawler brings a card back");
+  // The Capsule really can be the dying ARTIFACT, and really cannot be the dying CREATURE.
+  expect(new Set(texts)).toEqual(new Set([
+    "When Executioner's Capsule dies, Scrap Trawler brings a card back",
+    "When a creature dies thanks to Executioner's Capsule, Scrap Trawler brings a card back",
+  ]));
 });
 
 test("directedReasons does not repeat a reason it has already made", () => {
@@ -1810,8 +1829,10 @@ test("a non-self trigger still reads as the class it watches", () => {
     emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }],
   }]);
   const etb = pairReasons(maker, payoff, H).find((r) => r.tag === "enters:creature")!;
-  // No "thanks to" -- a class trigger's cause is the producer's own event, not the consumer's.
-  expect(etb.text).toBe("When Bitterblossom enters, Impact Tremors triggers");
+  // "thanks to" names Bitterblossom as the CAUSE without claiming it is the thing that entered —
+  // its emit is a TOKEN (`token: true`), which Bitterblossom is not. The consumer is still not the
+  // subject either, which is what separates this from the self-trigger wording.
+  expect(etb.text).toBe("When a creature enters thanks to Bitterblossom, Impact Tremors triggers");
   expect(etb.text).not.toContain("its own entry");
 });
 

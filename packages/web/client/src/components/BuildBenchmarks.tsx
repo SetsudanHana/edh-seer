@@ -974,7 +974,12 @@ function DeckMathRows({
     const sentence = demandSentence(d.key);
     const label =
       d.available === null
-        ? `${sentence}, ${d.consumers} cards want it, the game supplies it`
+        // "THE GAME SUPPLIES IT" WAS WRITTEN FOR AN UPKEEP AND IS FALSE OF A SELF TRIGGER. Since
+        // 2026-08-27 a trigger watching its OWN entry is self-supplied too — it fires when you play
+        // the card — so the wording has to be true of all three cases (a phase, combat, and a card
+        // triggering itself). "Nothing has to supply it" is the component's own phrasing from the
+        // comment above, and it covers every one.
+        ? `${sentence}, ${d.consumers} cards want it, and nothing has to supply it`
         : `${sentence}, ${d.consumers} cards want it, ${d.suppliers} supply it`;
     return (
       <li key={d.key} className="flex items-center gap-3 text-sm" aria-label={label}>
@@ -983,7 +988,7 @@ function DeckMathRows({
         <span className="flex-1 truncate" title={d.key}>{sentence}</span>
         <span className={`shrink-0 stat-num ${d.available !== null && d.suppliers === 0 ? "text-(--warning)" : "text-(--muted)"}`}>
           {d.available === null
-            ? `${d.consumers} want · the game supplies it`
+            ? `${d.consumers} want · nothing has to supply it`
             : `${d.consumers} want · ${d.suppliers} supply`}
         </span>
       </li>

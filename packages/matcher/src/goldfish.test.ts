@@ -948,3 +948,24 @@ test("the sequencing rule is reached THROUGH simulate, not only as a pure functi
   // Hand order 50.8%, colour-aware 92.5% — the gap is every hand holding both colours.
   expect(t2).toBeGreaterThan(0.85);
 });
+
+test("a split card is gated on the cost it pays, not on its combined mana value", async () => {
+  const { manaModel } = await import("./goldfish.js");
+  const land = (n: number) => Array.from({ length: n }, (_, i) => ({
+    card: { name: `Plains ${i}`, typeLine: "Basic Land — Plains", oracleText: "", manaValue: 0,
+      producedMana: ["W"], keywords: [] },
+    tags: null,
+  })) as never[];
+  const splitCard = {
+    card: {
+      name: "Dusk // Dawn", typeLine: "Sorcery // Sorcery", oracleText: "", manaValue: 9,
+      manaCost: "{2}{W}{W} // {3}{W}{W}", layout: "split", keywords: ["Aftermath"],
+    },
+    tags: null,
+  } as never;
+  const res = manaModel([...land(36), splitCard]);
+  const curve = res.curves.get("Dusk // Dawn")!;
+  // Turn 4 is when {2}{W}{W} becomes payable off four Plains. Under the old gate the card was not
+  // even considered until the board made NINE mana.
+  expect(curve.castable[3].high).toBeGreaterThan(0.5);
+});
