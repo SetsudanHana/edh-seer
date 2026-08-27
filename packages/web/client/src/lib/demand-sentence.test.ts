@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { eventLabel, STATIC_KIND, MECHANISM, DEMAND_VERB, DEMAND_SUBJECTLESS, DEMAND_PHASE } from "./demand-sentence.js";
+import { eventLabel, tagLabel, STATIC_KIND, MECHANISM, DEMAND_VERB, DEMAND_SUBJECTLESS, DEMAND_PHASE } from "./demand-sentence.js";
 
 /** The graph's trace-event chips label a census key's VERB half. It reuses `DEMAND_VERB` rather
  *  than adding a second vocabulary — this repo has twice shipped an internal identifier rendered as
@@ -62,4 +62,24 @@ test("a mechanism is labelled by exactly one map, so precedence never silently p
     if (found.length > 1) twice.push(`${mechanism}: ${found.join(" + ")}`);
   }
   expect(twice).toEqual([]);
+});
+
+/** THE CARD INSPECTOR'S TAG CHIPS. It rendered the raw tag inside an uppercasing chip, so a
+ *  relationship read "ENTERS:CREATURE  GRAVEYARD-RECURSION:ANY" directly above the sentences that
+ *  already said the same thing in words -- the third surface in this repo to ship an internal
+ *  identifier as English, and it survived the previous sweep only because it sits in a panel the
+ *  persona screenshots had cropped. */
+test("a whole reason tag reads as English, keeping the subject that narrows it", () => {
+  // The subject is what discriminates: same mechanism, two different claims.
+  expect(tagLabel("enters:creature")).toBe("Entering the battlefield · creature");
+  expect(tagLabel("enters:land")).toBe("Entering the battlefield · land");
+  expect(tagLabel("enters:creature")).not.toBe(tagLabel("enters:land"));
+  // `any` narrows nothing, so printing it would add a word and no fact.
+  expect(tagLabel("graveyard-recursion:any")).toBe("Bringing cards back from a graveyard");
+  // A static tag's second component IS the mechanism, so it has no subject half to append.
+  expect(tagLabel("static:pump")).toBe("Boosting power and toughness");
+  // And nothing reaches a reader as its own key.
+  for (const t of ["enters:creature", "graveyard-recursion:any", "static:pump", "ramp-target:basic"]) {
+    expect(tagLabel(t).toLowerCase()).not.toContain(":");
+  }
 });

@@ -278,3 +278,25 @@ export const STATIC_KIND: Record<string, string> = {
 export function mechanismKey(tag: string): string {
   return tag.startsWith("static:") ? tag : tag.split(":")[0];
 }
+
+/** A whole reason tag as English -- the mechanism, plus the subject that narrows it.
+ *
+ *  The card inspector rendered the raw tag inside an uppercasing chip, so a relationship read
+ *  "ENTERS:CREATURE  GRAVEYARD-RECURSION:ANY" directly above the sentences that already say the
+ *  same thing in words. That is the third surface in this repo to ship an internal identifier as
+ *  English, after `targetedRemoval` and `enters:type:land`, and it survived the last sweep only
+ *  because it sits in a panel the persona screenshots had cropped.
+ *
+ *  THE SUBJECT IS KEPT, because it is what discriminates: `enters:creature` and `enters:land` are
+ *  the same mechanism narrowed two ways, and a chip reading only "Entering the battlefield" on both
+ *  would make two different claims look identical -- the same collapse the static split just
+ *  undid one surface over. `any` is dropped: it narrows nothing, so printing it adds a word and no
+ *  fact. A `static:` tag has no subject half at all (its second component IS the mechanism), which
+ *  `mechanismKey` already encodes, so it correctly yields the bare label. */
+export function tagLabel(tag: string): string {
+  const mechanism = mechanismKey(tag);
+  const label = eventLabel(mechanism);
+  if (mechanism === tag) return label;
+  const subject = tag.slice(mechanism.length + 1);
+  return subject && subject !== "any" ? `${label} · ${subject}` : label;
+}

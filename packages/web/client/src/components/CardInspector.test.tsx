@@ -119,3 +119,64 @@ describe("CardInspector", () => {
     expect(fedBySection?.textContent).toMatch(/strongest 6.*all 8 are listed/i);
   });
 });
+
+/** THE PRINTED TYPE LINE, NOT ONE RECOMPOSED FROM THE UNION OVER FACES.
+ *
+ *  A node's `types`/`subtypes` are the union across every face -- right for the paint legend, where
+ *  a node shows a hue per type it can be. Joining them back into a type line names an object no
+ *  face is: a skeptic review, 2026-08-27, read "legendary artifact creature — robot vehicle" under
+ *  a card image printing "Legendary Artifact Creature — Robot" and said "merging them describes an
+ *  object that neither face is". */
+describe("CardInspector type line", () => {
+  const twoFaced = {
+    id: "Megatron, Tyrant // Megatron, Destructive Force",
+    label: "Megatron, Tyrant // Megatron, Destructive Force",
+    copies: 1,
+    types: ["artifact", "creature"],
+    // One subtype from EACH face -- no single face is a Robot AND a Vehicle.
+    subtypes: ["robot", "vehicle"],
+    supertypes: ["legendary"],
+    typeLine: "Legendary Artifact Creature — Robot // Legendary Artifact Creature — Robot Vehicle",
+    colors: ["B"], cmc: 6,
+  };
+
+  it("shows what the card prints, not the union over its faces", () => {
+    render(<CardInspector node={twoFaced as never} edges={[]} onClose={() => {}} />);
+    expect(screen.getByText(twoFaced.typeLine)).toBeInTheDocument();
+    // The union recomposed -- "legendary artifact creature — robot vehicle" -- must NOT appear.
+    // Asserted against that exact string and not against /robot vehicle/, because the BACK face
+    // really is a Robot Vehicle and the printed line rightly says so; what was wrong was flattening
+    // both faces into ONE line that no face prints.
+    expect(screen.queryByText("legendary artifact creature — robot vehicle")).toBeNull();
+  });
+
+  it("falls back to the union when a graph predates the field", () => {
+    const { typeLine: _dropped, ...older } = twoFaced;
+    render(<CardInspector node={older as never} edges={[]} onClose={() => {}} />);
+    // Worse, and better than nothing -- an older cached graph must still render.
+    expect(screen.getByText("legendary artifact creature — robot vehicle")).toBeInTheDocument();
+  });
+});
+
+/** AND THE PANEL MUST ACTUALLY USE IT. `demand-sentence.test.ts` pins `tagLabel` itself, and
+ *  mutating the inspector back to `{t}` left that test green -- the recorded trap in this repo:
+ *  a probe that calls the inner function does not test the gate that selects it. This asserts the
+ *  rendered CHIP, so the raw key cannot come back through the call site. */
+describe("CardInspector tag chips", () => {
+  const node = {
+    id: "Grim Haruspex", label: "Grim Haruspex", copies: 1,
+    types: ["creature"], subtypes: ["human"], supertypes: [],
+    typeLine: "Creature — Human Wizard", colors: ["B"], cmc: 3,
+  };
+  const edges = [{
+    from: "Grim Haruspex", to: "Samwise Gamgee", weight: 1.6,
+    tags: ["enters:creature"],
+    reasonTexts: ["When Grim Haruspex enters, Samwise Gamgee makes a token"],
+  }];
+
+  it("labels a relationship's tags instead of printing the raw key", () => {
+    render(<CardInspector node={node as never} edges={edges as never} onClose={() => {}} />);
+    expect(screen.getByText("Entering the battlefield · creature")).toBeInTheDocument();
+    expect(screen.queryByText("enters:creature")).toBeNull();
+  });
+});

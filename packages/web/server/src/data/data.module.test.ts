@@ -242,3 +242,26 @@ test("identical reason sentences are collapsed on the wire, however many effect 
     "B fills the graveyard, enabling A's recursion",
   ]);
 });
+
+/** THE JOIN DROPS ANY FIELD IT DOES NOT NAME, and has now done so five times (`producedMana`,
+ *  `allParts`, `gameChanger`, `faces`, and this one). Every unit test passed on fixtures carrying
+ *  `typeLine` while a live run read it as undefined on 103 of 103 nodes, because the projection's
+ *  field never survived this rebuild. */
+test("the printed type line survives the wire join", () => {
+  const graph = {
+    nodes: [
+      { id: "Megatron", label: "Megatron", copies: 1, types: ["artifact", "creature"],
+        subtypes: ["robot", "vehicle"], supertypes: ["legendary"],
+        typeLine: "Legendary Artifact Creature — Robot // Legendary Artifact Creature — Robot Vehicle",
+        colors: ["B"], cmc: 6 },
+      // A token joins no doc, so the projection's copy is the only source it can have.
+      { id: "token:Treasure", label: "Treasure", isToken: true as const, copies: 1,
+        types: ["artifact"], subtypes: ["treasure"], supertypes: [],
+        typeLine: "Token Artifact — Treasure", colors: [], cmc: 0 },
+    ],
+    edges: [], undirectedReasons: 0, offDeckReasons: 0,
+  };
+  const out = attachRolesAndArt(graph as never, [], new Map(), (n: string) => n.toLowerCase());
+  expect(out.nodes[0].typeLine).toBe(graph.nodes[0].typeLine);
+  expect(out.nodes[1].typeLine).toBe("Token Artifact — Treasure");
+});

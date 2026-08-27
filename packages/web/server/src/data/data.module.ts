@@ -84,6 +84,16 @@ export function attachRolesAndArt(
       types: n.types,
       subtypes: n.subtypes,
       supertypes: n.supertypes,
+      // THE PRINTED TYPE LINE, AND THE FIFTH FIELD THIS JOIN HAS BEEN CAUGHT DROPPING -- after
+      // `producedMana`, `allParts`, `gameChanger` and `faces`. This function rebuilds every wire
+      // node from an EXPLICIT field list, so a field added to `ProjectedNode` reaches the client
+      // only if it is named here; the projection set it, every unit test passed on a fixture that
+      // carried it, and a live run read `typeLine: undefined` on 103 of 103 nodes.
+      // ADD A FIELD HERE WHEN YOU ADD ONE TO `ProjectedNode`.
+      //
+      // The projection's copy wins and the doc is the fallback: a TOKEN node joins no doc at all
+      // (see the roles comment above), so reading `doc` alone would leave every token without one.
+      ...(n.typeLine ?? doc?.typeLine ? { typeLine: n.typeLine ?? doc?.typeLine } : {}),
       colors: n.colors,
       cmc: n.cmc,
       ...(roles && roles.length > 0 ? { roles } : {}),

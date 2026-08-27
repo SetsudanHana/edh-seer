@@ -20,6 +20,22 @@ export interface ProjectedNode {
   types: string[];
   subtypes: string[];
   supertypes: string[];
+  /** The card's PRINTED type line, faces and all -- "Legendary Creature — Human Citizen //
+   *  Legendary Artifact".
+   *
+   *  Carried BESIDE the three lists above rather than instead of them, because they answer
+   *  different questions and both answers are needed. The lists are the UNION over every face,
+   *  which is right for painting (a node shows a hue per type it can be) and is deliberately not
+   *  the printed line -- see `parseTypeLineAllFaces`'s call site. But recomposing a type line FROM
+   *  that union invents an object no face is: a skeptic review, 2026-08-27, read
+   *  "legendary artifact creature — robot vehicle" under a card image printing
+   *  "Legendary Artifact Creature — Robot" and said "merging them describes an object that neither
+   *  face is". A surface that shows the card should show what the card says.
+   *
+   *  OPTIONAL, because a graph built before this field existed has none and a surface must not
+   *  break on one -- the inspector falls back to the recomposed line, which is worse and is still
+   *  better than nothing. Every graph this function builds carries it. */
+  typeLine?: string;
   colors: string[];
   cmc: number;
   /** Attached by the server from the deck report; absent here. */
@@ -99,6 +115,7 @@ export function projectDeckGraph(
       ...(d.isToken ? { isToken: true } : {}),
       copies: copies.get(id) ?? 1,
       types, subtypes, supertypes,
+      typeLine: d.card.typeLine,
       colors: d.card.colors,
       cmc: d.card.manaValue,
     });

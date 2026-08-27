@@ -1,4 +1,5 @@
 import type { CardGraph, GraphNode } from "../types.js";
+import { tagLabel } from "../lib/demand-sentence.js";
 import { cardImageUrl } from "./card-node.js";
 import { routesThrough } from "../lib/routes.js";
 import { demandSentence } from "../lib/demand-sentence.js";
@@ -26,8 +27,22 @@ export function CardInspector({
   flow?: { truncated: Map<string, { up?: { total: number; shown: number }; down?: { total: number; shown: number } }> } | null;
   onClose: () => void;
 }) {
-  const typeLine = [...node.supertypes, ...node.types].join(" ")
-    + (node.subtypes.length > 0 ? ` — ${node.subtypes.join(" ")}` : "");
+  /** THE PRINTED LINE, NOT A LINE RECOMPOSED FROM THE UNION.
+   *
+   *  `node.types`/`subtypes`/`supertypes` are the union over EVERY face -- correct for the paint
+   *  legend, where a node really does show a hue per type it can be. Joining them back into a type
+   *  line invents an object no face is: a skeptic review, 2026-08-27, read
+   *  "legendary artifact creature — robot vehicle" under a card image printing "Legendary Artifact
+   *  Creature — Robot" and said "merging them describes an object that neither face is". Megatron's
+   *  node genuinely carries `subtypes: ["robot", "vehicle"]`, one from each face.
+   *
+   *  The printed line keeps its faces ("… — Human Citizen // Legendary Artifact"), which agrees with
+   *  the name line directly above it -- that already prints both halves -- and with the card image.
+   *  The union is kept as the fallback rather than deleted: an older cached graph carries no
+   *  `typeLine`, and a recomposed line is still better than none. */
+  const typeLine = node.typeLine
+    ?? [...node.supertypes, ...node.types].join(" ")
+      + (node.subtypes.length > 0 ? ` — ${node.subtypes.join(" ")}` : "");
   // Strongest first -- the same ordering `edgeWidth`/`linkDistanceFor` already give the board
   // itself, so the panel agrees with what the geometry is claiming.
   const sorted = [...edges].sort((a, b) => b.weight - a.weight);
@@ -69,7 +84,7 @@ export function CardInspector({
                       key={t}
                       className="eyebrow px-1 py-0.5 rounded-(--radius) border border-(--separator) text-(--muted)"
                     >
-                      {t}
+                      {tagLabel(t)}
                     </span>
                   ))}
                 </div>

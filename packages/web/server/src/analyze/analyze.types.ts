@@ -16,6 +16,10 @@ export interface WireGraphNode {
   types: string[];
   subtypes: string[];
   supertypes: string[];
+  /** The card's PRINTED type line, faces and all. The three lists above are the UNION over faces
+   *  (right for painting, wrong to recompose a type line from -- it names an object no face is),
+   *  so a surface showing the card shows this instead. */
+  typeLine?: string;
   colors: string[];
   cmc: number;
   /** Functional BUILD roles the report gave this card. Absent when it had none -- not the same as
