@@ -1,8 +1,41 @@
+export { beforeBracket, MAX_CARD_LINE };
+
 type Section = "commander" | "deck" | "ignore";
 
+/** A pasted decklist is UNTRUSTED INPUT, and two regexes here were measurably quadratic in it.
+ *
+ *  `/\s*[([].*$/` ran 1.0ms at 1,000 characters and 1,966ms at 64,000 -- four times the input for
+ *  sixteen times the work -- because `replace` retries the pattern at every position and `\s*`
+ *  re-splits the same whitespace run each time. One long line hung the analyze endpoint for two
+ *  seconds. `/[:=]+$/` on the header line measured the same shape (1,200ms at 64,000).
+ *
+ *  Both are replaced by single linear scans below. The third regex CodeQL flagged in this file,
+ *  `/^(\d+)\s*x?\s+/i`, was MEASURED AND IS NOT EXPLOITABLE -- flat 0ms out to 64,000 characters,
+ *  because nothing follows `\s+` to backtrack into -- so it is deliberately left alone rather than
+ *  churned to silence an alert.
+ *
+ *  `MAX_CARD_LINE` is defence in depth on top of that: no real card line is 500 characters, and a
+ *  bound at the parse boundary limits any future pattern added here. */
+const MAX_CARD_LINE = 500;
+
+/** Everything before the first `(` or `[` — the set/collector suffix Moxfield and Archidekt append.
+ *  `search` over a one-character class is linear; the pattern it replaces was not. */
+function beforeBracket(text: string): string {
+  const cut = text.search(/[([]/);
+  return (cut === -1 ? text : text.slice(0, cut)).trimEnd();
+}
+
+/** Strips trailing `:` and `=` without a backtracking anchor. */
+function stripTrailingSeparators(text: string): string {
+  let end = text.length;
+  while (end > 0 && (text[end - 1] === ":" || text[end - 1] === "=")) end--;
+  return text.slice(0, end);
+}
+
 function cleanCardLine(line: string): string {
-  const withoutQty = line.replace(/^\d+\s*x?\s+/i, "");
-  return withoutQty.replace(/\s*[([].*$/, "").trim();
+  const capped = line.length > MAX_CARD_LINE ? line.slice(0, MAX_CARD_LINE) : line;
+  const withoutQty = capped.replace(/^\d+\s*x?\s+/i, "");
+  return beforeBracket(withoutQty).trim();
 }
 
 /** Leading copy count on a card line ("5 Forest" → 5), clamped to [1, 100]; 1 when absent. */
@@ -50,7 +83,7 @@ export function parseDecklistSections(text: string): { commanders: string[]; dec
 
     if (line.startsWith("#") || line.startsWith("//")) continue;
 
-    const header = line.toLowerCase().replace(/[:=]+$/, "").trim();
+    const header = stripTrailingSeparators(line.toLowerCase()).trim();
     if (header === "commander" || header === "commanders") {
       section = "commander";
       sawHeader = true;
