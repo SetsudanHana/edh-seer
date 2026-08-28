@@ -1,3 +1,4 @@
+import { isMoxfieldUrl } from "./moxfield-url.js";
 import { readFileSync } from "node:fs";
 import { analyzeDeck, ComboIndex, type Card, type Combo } from "@edh-seer/engine";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
@@ -26,10 +27,11 @@ function reportFromJson(path: string, trim: number): string {
   return formatReport(analyzeDeck(deck.cards, combos, deck.commanders), trim);
 }
 
+
 async function reportFromDecklist(input: string, trim: number): Promise<string> {
   let commanderNamesTyped: string[] = [];
   let deckNames: string[];
-  if (input.includes("moxfield.com")) {
+  if (isMoxfieldUrl(input)) {
     const id = parseMoxfieldId(input);
     if (!id) throw new Error(`Could not parse Moxfield deck id from: ${input}`);
     deckNames = await fetchMoxfieldDeck(id); // Moxfield path: no commander split (API blocked anyway)
