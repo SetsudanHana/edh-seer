@@ -159,7 +159,33 @@ export function linkStrengthFor(
  *  measured room escapes and intrusions, which no longer exist -- the value survives as the one
  *  that produced a readable board at these node sizes, and Task 6 re-brackets it against the
  *  drawing-quality metrics (overlaps, crossings, link-distance error) instead. */
-export const REPULSION = 25;
+/** RAISED 25 -> 60 (2026-08-28). Owner, on a Jodah board: "cards are pulling each other too much
+ *  which makes them clutter". Measured, and they are right — the springs were winning against the
+ *  charge, so a dense deck settled as one clump with its edges crossing each other.
+ *
+ *  Six fixtures x ten seeds, at the shipped ALPHA_DECAY:
+ *
+ *    fixture       crossings 25 -> 60      rms link-dist error     nearest-neighbour gap
+ *    sorin          40940 -> 36435 (-11%)      80 -> 80
+ *    inalla         40679 -> 26347 (-35%)      60 -> 63                  49 -> 51
+ *    fairdrazi      35913 -> 27767 (-23%)      65 -> 73                  50 -> 52
+ *    changelings     7768 ->  6664 (-14%)      43 -> 57
+ *    braids         26517 -> 17030 (-36%)      50 -> 63
+ *    mdfc           77695 -> 62644 (-19%)      60 -> 66                  76 -> 91
+ *
+ *  Card overlaps stay 0 on all six and the board still parks (motion under 0.3 px/tick).
+ *
+ *  WHAT IT COSTS IS THE ENCODING, and that is the reason not to go further. Link-distance error is
+ *  how well "closer means stronger synergy" holds, and a stronger charge pushes every pair off its
+ *  spring's rest length: +3 to +14 rms here. Weakening the springs instead (`linkStrengthK` x0.6 or
+ *  x0.35, both measured) buys a little more space and costs far more of it — x0.6 with this charge
+ *  reads distErr 82 on inalla against 63 — so the charge moved and the springs did not.
+ *
+ *  Bracketed originally on the ten-trial room harness (`2026-08-08-d3-migration-measurements.md`),
+ *  whose room escapes and intrusions no longer exist; this re-bracket is against the drawing-quality
+ *  metrics Task 6 replaced them with. The unit note below still applies: forceManyBody's law is
+ *  inverse-LINEAR, so this number does not compare to the pre-d3 loop's 2200. */
+export const REPULSION = 60;
 /** How far repulsion reaches, in world units. Ported from the old loop's `d2 > 220000` cutoff.
  *  Wider than the board is across, so every card repels every other one -- with rooms gone, this
  *  and the link springs are the whole layout, and a short range would let unconnected components
