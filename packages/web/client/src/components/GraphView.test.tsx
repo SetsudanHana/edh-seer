@@ -1892,7 +1892,9 @@ describe("face pair nodes", () => {
     // class as the "you clicked this" rim and painted invisibly under it whenever a face node was
     // also the clicked node; a real `setLineDash` call with a non-empty pattern is what makes the
     // two distinguishable regardless of which one draws on top.
-    expect(calls.filter((c) => c.startsWith("setLineDash:") && c !== "setLineDash:").length).toBe(2);
+    // THREE dashed strokes now, not two: one rim per face, plus the hairline TETHER between them
+    // (drawn in the edge pass, so it is the first of the three).
+    expect(calls.filter((c) => c.startsWith("setLineDash:") && c !== "setLineDash:").length).toBe(3);
     // AND AT `r + 5`, which is the half that does the work -- review fix, 2026-08-27. The click rim
     // is 2.5px SOLID in the same `--foreground` at `r + 3`, and this rim is 1.5px drawn AFTER it, so
     // at an equal radius a thinner stroke of an identical colour is buried whether or not it is
@@ -1900,7 +1902,18 @@ describe("face pair nodes", () => {
     // assertion the one that pins the fix rather than decorating it.
     expect(calls.filter((c) => c.startsWith("arc:") && Number(c.split(",")[2]) === ART_RADIUS + 5).length).toBe(2);
 
-    const edges = canvas.__graphProbe!().edges;
+    // THE TETHER IS A STROKE, NOT AN EDGE. It runs centre to centre between the two face nodes --
+    // asserted against the simulation's own coordinates, so this fails if it is drawn between the
+    // wrong pair -- while the EDGE set still holds only the real edge. Owner, 2026-08-28: adjacency
+    // and a rim still left "I can not distinguish if card is the same thing" on a board of ten.
+    const probe = canvas.__graphProbe!();
+    const f = probe.find((n) => n.id === "A // B")!;
+    const b = probe.find((n) => n.id === "face:1:A // B")!;
+    const tether = calls.indexOf(`moveTo:${f.x},${f.y}`);
+    expect(tether).toBeGreaterThan(-1);
+    expect(calls[tether + 1]).toBe(`lineTo:${b.x},${b.y}`);
+
+    const edges = probe.edges;
     expect(edges.some((e) => e.from === "A // B" && e.to === "C")).toBe(true);
     expect(edges.some((e) => e.from.includes("A // B") && e.to.includes("A // B"))).toBe(false);
   });
@@ -1960,8 +1973,10 @@ describe("face pair nodes", () => {
     // Both faces' shared rim turns ACCENT -- the answer to "which two of these twenty faces are the
     // card I clicked". jsdom returns "" for a custom property, so this is GraphView's own default.
     // Exactly two: the front face and its sibling, and nothing else on the board.
-    const accentRims = calls.flatMap((c, i) => (c === "set:strokeStyle=#5b8dee" ? [i] : []));
-    expect(accentRims).toHaveLength(2);
+    // THREE accent strokes: the TETHER (drawn in the edge pass, so first) and then one rim per
+    // face. Everything else on the board keeps its neutral.
+    const accents = calls.flatMap((c, i) => (c === "set:strokeStyle=#5b8dee" ? [i] : []));
+    expect(accents).toHaveLength(3);
 
     // AND THE SIBLING IS NOT DIMMED. Read the alpha in force when its rim was painted, rather than
     // counting 0.15s: `D` (outside the flow) and the label pass both emit one, so a bare count says
@@ -1971,7 +1986,7 @@ describe("face pair nodes", () => {
       for (let i = index; i >= 0; i--) if (calls[i].startsWith("set:globalAlpha=")) return calls[i];
       return "set:globalAlpha=1";
     };
-    const siblingRim = accentRims[1]; // the back face draws after the front
+    const siblingRim = accents[2]; // tether, front rim, back rim -- the sibling's is last
     // 0.4 is GraphView's own EDGELESS_ALPHA, which is module-private -- the literal is here rather
     // than exporting a constant just for a test, and a change to it fails this loudly.
     expect(alphaWhen(siblingRim)).toBe("set:globalAlpha=0.4");

@@ -882,6 +882,47 @@ export function GraphView(
       ctx.globalAlpha = 1;
       ctx.setLineDash([]);
 
+      // THE TETHER: A HAIRLINE BETWEEN THE TWO FACES OF ONE CARD, AND IT IS NOT AN EDGE.
+      //
+      // Adjacency plus the shared rim was not enough on a board holding ten flip cards (owner,
+      // 2026-08-28): a rim says "this node is half of something" and leaves the reader to guess
+      // WHICH other node. The tether says it outright.
+      //
+      // It states exactly what the rim states -- one physical card, two printed faces -- so it must
+      // not be mistakeable for a synergy edge, and it is separated from one on every channel an
+      // edge uses: no arrowhead (a face is not a producer of its other face), never a flow hue, no
+      // weight and so no width, a hairline at 1px against an edge's 1-2px, DASHED with the rim's own
+      // `[6,2]` pattern rather than an edge's crawl, and drawn in `--separator` rather than any
+      // colour the legend assigns a meaning to. It reaches no count: it is not in `links`, so the
+      // legend, `__graphProbe`, the flow walk and the hover set are all blind to it, exactly as
+      // before.
+      //
+      // Drawn HERE, in the edge pass, so the node discs paint over both ends a moment later -- the
+      // same reason the edge pass trims to the rim, one mechanism cheaper.
+      if (facePairLinks.length > 0) {
+        ctx.save();
+        ctx.setLineDash([6 / cam.z, 2 / cam.z]);
+        ctx.lineWidth = 1 / cam.z;
+        for (const l of facePairLinks) {
+          // ACCENT WHEN THE CARD IS SELECTED, matching the rim it belongs to, and dimmed with the
+          // rest of the board when a flow is running elsewhere. `sameCardIds` holds both faces of
+          // the clicked card, so one test covers the pair.
+          //
+          // `muted` and not `sep`: --separator is #1d2126, which is a hairline nobody can see on
+          // this background, and not `edge`, which is the colour an actual relationship is drawn in.
+          // Half alpha at rest keeps it under the mesh rather than competing with it.
+          const selected = sameCardIds?.has(l.source.id) === true;
+          ctx.globalAlpha = selected ? 1 : activeFlow ? 0.15 : 0.5;
+          ctx.strokeStyle = selected ? paintColors.accent : paintColors.muted;
+          ctx.beginPath();
+          ctx.moveTo(l.source.x, l.source.y);
+          ctx.lineTo(l.target.x, l.target.y);
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+
       // A search dims what does not match rather than hiding it, so the deck keeps its shape and
       // you can see WHERE the match sits. `matchIds` null means no active search: dim nothing.
       // Read through the ref (see matchesRef above), never `matches` directly -- this closure is
