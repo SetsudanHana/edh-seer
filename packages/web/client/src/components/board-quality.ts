@@ -43,7 +43,7 @@ export function hubFreedom(nodes: readonly { id: string; kind?: string }[]): str
   return nodes.filter((n) => n.kind !== undefined).map((n) => n.id);
 }
 
-export const FIXTURES = ["sorin", "inalla", "fairdrazi", "changelings", "braids"];
+export const FIXTURES = ["sorin", "inalla", "fairdrazi", "changelings", "braids", "mdfc"];
 
 /** One fixture's measured drawing quality. Wider than `Caps` on purpose: `hubFreedom` is measured
  *  but never capped -- a facet value appearing as a node is not a budget to spend down, it is the
@@ -158,6 +158,19 @@ export const QUALITY_CAPS: Record<string, Caps> = {
   fairdrazi: { nodeOverlaps: 0, cardOverlaps: 1, edgeCrossings: 35195, linkDistError: 62 },
   changelings: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 7413, linkDistError: 42 },
   braids: { nodeOverlaps: 0, cardOverlaps: 1, edgeCrossings: 23686, linkDistError: 48 },
+  // THE ONLY FACE-CARRYING FIXTURE, captured 2026-08-28 from `taking-crew-to-the-town` — 21 of its
+  // 100 cards are multi-face, so it draws 130 nodes where the other five draw 75-95. Added because
+  // faces-as-nodes shipped 2026-08-27 and every fixture here predates it: the ratchet was measuring
+  // a board shape the app no longer produces for half its decks.
+  //
+  // ITS CROSSINGS ARE THE OWNER'S "compact and cluttered" QUANTIFIED: 74,877 against sorin's 40,163
+  // at 84 cards. Capped where it measures rather than where anyone would like it to be — a cap is a
+  // ratchet against regression, not a target.
+  //
+  // Measured BOTH ARMS while capping it, which is the only reason the face spring's cost is known:
+  // without the spring the same fixture reads 69,766 crossings, so joining a card's faces costs
+  // about 7% more crossings and buys a median face-to-face gap of 78 world units against 311.
+  mdfc: { nodeOverlaps: 0, cardOverlaps: 1, edgeCrossings: 74877, linkDistError: 59 },
 };
 
 /** RE-CAPPED AGAIN, same day, for the de-drift ORDER fix (board-force.ts). `forceDeDrift` ran LAST

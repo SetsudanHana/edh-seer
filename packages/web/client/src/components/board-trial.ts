@@ -21,6 +21,11 @@ export interface TrialOptions {
   ticks?: number;
   /** Further ticks to sample motion over once settled; 0 skips the sampling entirely. */
   motionTicks?: number;
+  /** The force-only spring between the two printed faces of one card (GraphView, 2026-08-28).
+   *  Defaults TRUE, because this file exists to tick the board the app draws. `false` is the
+   *  counterfactual arm — what the spring costs — and is what measured it: on a 21-MDFC deck it
+   *  pulls the mean node radius 509 -> 431 and the median gap between a card's two faces 311 -> 78. */
+  facePairs?: boolean;
 }
 
 /** A seeded LCG, so a trial is reproducible from its seed. d3-force is itself deterministic (it
@@ -37,7 +42,7 @@ function mean(xs: readonly number[]) { return xs.reduce((a, b) => a + b, 0) / (x
 /** Everything derived from the fixture is hoisted out of the returned closure -- it is the same for
  *  every seed, and rebuilding it per trial is pure cost. */
 export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
-  const { params, ticks = 800, motionTicks = 0 } = opts;
+  const { params, ticks = 800, motionTicks = 0, facePairs = true } = opts;
   const graph = fx.graph;
 
   return (seed: number) => {
@@ -60,7 +65,27 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
     // than a wrong board.
     const maxWeight = links.reduce((m, l) => Math.max(m, l.weight), 0);
 
-    const simulation = createBoardSimulation({ nodes, links, params });
+    // THE FACE SPRINGS, MIRRORED FROM GraphView — see this file's header: the two had a copy each
+    // once and the copies drifted, so the gate measured a board the app no longer drew. Kept OUT of
+    // `links`, exactly as in the app, so `linkDistError` and `edgeCrossings` still measure real
+    // relationships only and a fixture with no face nodes is byte-identical either way.
+    const facesOfCard = new Map<string, Sim[]>();
+    if (facePairs) {
+      for (const n of nodes) {
+        if (n.cardName === undefined || n.isToken) continue;
+        const group = facesOfCard.get(n.cardName);
+        if (group) group.push(n);
+        else facesOfCard.set(n.cardName, [n]);
+      }
+    }
+    const facePairLinks: SimLink[] = [];
+    for (const group of facesOfCard.values()) {
+      for (let i = 1; i < group.length; i++) {
+        facePairLinks.push({ source: group[i - 1], target: group[i], weight: maxWeight });
+      }
+    }
+
+    const simulation = createBoardSimulation({ nodes, links: [...links, ...facePairLinks], params });
     for (let i = 0; i < ticks; i++) simulation.tick();
 
     // Motion on the SETTLED board, over the same window the measurements doc sampled in Chrome
