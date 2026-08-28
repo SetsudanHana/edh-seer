@@ -1,4 +1,4 @@
-import type { Ability, Characteristics, GameEvent, SubjectFilter } from "@mtg/tagger";
+import type { Ability, CardTags, Characteristics, GameEvent, SubjectFilter } from "@mtg/tagger";
 import { parseSubject } from "@mtg/tagger";
 import { parseStat } from "./stats.js";
 
@@ -498,4 +498,44 @@ export function impliedCounterEvents(emits: GameEvent[]): GameEvent[] {
     }
   }
   return out;
+}
+
+/** WHAT A PROLIFERATE ASKS FOR. `impliedCounterEvents` above is the supply half and has shipped
+ *  since proliferate became a first-class event; the demand half had no path at all, so Radstorm
+ *  ("Proliferate.") and Virulent Silencer ("that player gets two poison counters") were two
+ *  PRODUCERS with nothing between them — spec 26.3's "proliferate -> poison counters" miss, still
+ *  open when it was re-measured on 2026-08-28.
+ *
+ *  Proliferate gives each chosen permanent and player another counter of each kind ALREADY THERE
+ *  (CR 701.29), so a board with no counter on it makes the card do nothing. That is a demand for a
+ *  counter SOURCE, and it is the same shape `keywordAbilities` gives a printed keyword: a synthetic
+ *  triggered ability in the form `directedReasons` already reads.
+ *
+ *  MEASURED BEFORE BUILDING: 24 derived cards emit `proliferate` (102 print the word corpus-wide),
+ *  they sit in 14 of the 71 decks, and the (proliferate x counter-source) pairs across those decks
+ *  number 766. Max fan-out per producer is 16 (`venser`), against the mesh cap of 50 — so this
+ *  cannot manufacture a mesh, and MESHED holding at 332 is the acceptance test.
+ *
+ *  THE SUBJECT IS DELIBERATELY UNTYPED AND `control: "any"`:
+ *   - no counter KIND, because proliferate takes another of EVERY kind already there, so naming one
+ *     would refuse the other eleven kinds the corpus emits (time 23, charge 21, stun 14, ...);
+ *   - `any`, because a proliferate may choose an OPPONENT's permanent or player and Virulent
+ *     Silencer's poison counters are exactly that. On a DEMAND, `any` means "accepts either", which
+ *     is what the card says — the reading C6 established when it fixed the SUPPLY side.
+ *
+ *  ONE ability however many times the card proliferates: the demand is "is there a counter on the
+ *  board", which two proliferate abilities do not ask twice. `claimCount` would collapse the
+ *  duplicate rows anyway; not minting them is cheaper and says the right thing.
+ *
+ *  CEILING, the same one `keywordAbilities` carries: only edge formation reads this. Theme,
+ *  archetype and mechanism detection read `tags.abilities` directly, so a proliferate card still
+ *  does not count as a counter payoff for `cardCaresTags`. */
+export function proliferateAbilities(tags: CardTags): Ability[] {
+  const proliferates = tags.abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "proliferate"));
+  if (!proliferates) return [];
+  return [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject: { control: "any", token: null } },
+    effect: { kind: "proliferate" },
+  }];
 }

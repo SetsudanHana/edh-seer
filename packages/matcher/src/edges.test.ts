@@ -3070,3 +3070,87 @@ test("pairReasonsAcrossFaces matches a two-faced card FACE BY FACE, as the engin
   const zombie = base("Gravecrawler", [], ["zombie"]);
   expect(pairReasonsAcrossFaces(lord, zombie, H)).toEqual(pairReasons(lord, zombie, H));
 });
+
+/** A PROLIFERATE HAS A DEMAND, NOT ONLY A SUPPLY (spec 26.3's "proliferate -> poison counters",
+ *  re-measured still-open on 2026-08-28). `impliedCounterEvents` makes a proliferate SUPPLY an
+ *  untyped counter-added; nothing made it ASK for one, so a proliferate card and a counter source
+ *  were two producers with nothing between them. */
+const proliferator = (name: string) => base(name, [{
+  kind: "on-cast",
+  effect: { kind: "proliferate" },
+  emits: [{ verb: "proliferate", subject: { control: "any", token: null } }],
+}] as unknown as CardTags["abilities"]);
+
+test("a counter source feeds a card that proliferates", () => {
+  // "Whenever a nontoken artifact creature you control deals combat damage to a player, that player
+  // gets two poison counters." — an OPPONENT-facing counter, which is why the demand is control:any.
+  const source = base("Virulent Silencer", [{
+    kind: "triggered",
+    trigger: { verbs: ["combat-damage"], subject: { type: "creature", control: "you", token: false } },
+    effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { control: "any", token: null, counter: "poison" } }],
+  }] as unknown as CardTags["abilities"]);
+  const reasons = pairReasons(source, proliferator("Radstorm"), H);
+  expect(reasons.some((r) => r.tag.startsWith("counter-added"))).toBe(true);
+});
+
+test("a proliferate is not the ORIGIN of a counter, so two of them do not feed each other", () => {
+  // CR 701.29: proliferate gives another counter of each kind ALREADY THERE. Without the
+  // implied-minus-authored exclusion in `directedReasons`, the producer's own proliferate-implied
+  // counter-added satisfies the consumer's proliferate demand and the two edge over a counter
+  // neither of them made.
+  expect(pairReasons(proliferator("Karn's Bastion"), proliferator("Flux Channeler"), H)).toEqual([]);
+});
+
+test("a card that BOTH proliferates and authors a counter is still a real origin", () => {
+  // 6 of the 24 proliferate cards in the corpus do both — Sword of Truth and Justice puts a +1/+1
+  // counter and THEN proliferates. Excluding by CARD rather than by EVENT would delete all six.
+  const both = base("Sword of Truth and Justice", [{
+    kind: "triggered",
+    trigger: { verbs: ["combat-damage"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "counter-placement" },
+    emits: [
+      { verb: "counter-added", subject: { control: "you", token: null, counter: "+1/+1" } },
+      { verb: "proliferate", subject: { control: "any", token: null } },
+    ],
+  }] as unknown as CardTags["abilities"]);
+  expect(pairReasons(both, proliferator("Radstorm"), H).some((r) => r.tag.startsWith("counter-added"))).toBe(true);
+});
+
+/** IMPLIED MINUS AUTHORED, and this is the arm that proves the difference. When a card's AUTHORED
+ *  counter-added is byte-identical to the one its own proliferate implies, `producerEvents` dedupes
+ *  the two into one event — so an exclusion set built from the implied events ALONE would drop a
+ *  real, printed origin along with the synthetic one.
+ *
+ *  NO CORPUS WITNESS TODAY: measured 0 of the 24 proliferate cards collide this way, so this guard
+ *  changes no number in the 71 decks. It is kept, and said so here rather than left to be
+ *  rediscovered, because the shape is plainly printable ("put a counter on any permanent, then
+ *  proliferate") and the failure direction is a DELETED true claim. */
+test("an authored counter-added identical to the card's own implied one survives", () => {
+  const collides = base("Untyped Origin", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "counter-placement" },
+    emits: [
+      // exactly what `impliedCounterEvents` synthesizes for the proliferate below
+      { verb: "counter-added", subject: { control: "any", token: null } },
+      { verb: "proliferate", subject: { control: "any", token: null } },
+    ],
+  }] as unknown as CardTags["abilities"]);
+  expect(pairReasons(collides, proliferator("Radstorm"), H).some((r) => r.tag.startsWith("counter-added"))).toBe(true);
+});
+
+test("a proliferate edge says what actually happens, not that the producer got a counter", () => {
+  // "When Virulent Silencer gets a counter, Radstorm triggers" is false twice: the Silencer puts
+  // poison counters on a PLAYER, and Radstorm is a sorcery, which never triggers.
+  const source = base("Virulent Silencer", [{
+    kind: "triggered",
+    trigger: { verbs: ["combat-damage"], subject: { type: "creature", control: "you", token: false } },
+    effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { control: "any", token: null, counter: "poison" } }],
+  }] as unknown as CardTags["abilities"]);
+  const r = pairReasons(source, proliferator("Radstorm"), H).find((x) => x.tag.startsWith("counter-added"))!;
+  expect(r.text).toBe("Virulent Silencer puts counters on the board, and Radstorm proliferates them");
+  expect(r.text).not.toContain("gets a counter");
+  expect(r.text).not.toContain("triggers");
+});

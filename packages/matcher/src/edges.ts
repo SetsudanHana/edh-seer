@@ -6,12 +6,13 @@ import { LAND_SUBTYPES } from "@mtg/tagger";
 const SUPERTYPES: ReadonlySet<string> = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, selfFillTypes } from "./implied.js";
+import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, proliferateAbilities, selfFillTypes } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, counterPresenceSentence, createsSentence, fetchSentence,
+  proliferateSentence,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   staticGrantSentence, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
@@ -321,13 +322,21 @@ function characteristicsSubject(tags: CardTags, name?: string): SubjectFilter {
   };
 }
 
-/** A producer card's canonical events: authored emits + self-implied cast/enters, all zone-
- *  normalized and deduped, then unioned with the graveyard-fill events those emits imply. */
-export function producerEvents(tags: CardTags): GameEvent[] {
-  const base = [
+/** A producer's events BEFORE anything is derived from them -- authored emits plus the card's own
+ *  implied cast/enters, zone-normalized. Split out of `producerEvents` so the proliferate demand
+ *  below can ask `impliedCounterEvents` the same question over the same input, rather than rebuilding
+ *  the list and drifting from it. */
+function baseEvents(tags: CardTags): GameEvent[] {
+  return [
     ...tags.abilities.flatMap((a) => a.emits ?? []),
     ...impliedEvents(tags.characteristics),
   ].map(normalizeZoneEvent);
+}
+
+/** A producer card's canonical events: authored emits + self-implied cast/enters, all zone-
+ *  normalized and deduped, then unioned with the graveyard-fill events those emits imply. */
+export function producerEvents(tags: CardTags): GameEvent[] {
+  const base = baseEvents(tags);
   const derived = [
     ...selfFillTypes(impliedGraveyardEvents(base), tags.characteristics),
     ...impliedCounterEvents(base),
@@ -931,10 +940,42 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
   // A printed KEYWORD can be a triggered ability too, and its reminder text is inert at the clause
   // layer, so `tags.abilities` never holds it — see `keywordAbilities`. The demand half of the same
   // channel `keywordEvents` supplies.
-  const cAbilities = [...c.tags.abilities, ...keywordAbilities(c.tags.characteristics)];
+  // A PROLIFERATE HAS A DEMAND AS WELL AS A SUPPLY. `impliedCounterEvents` has made a proliferate
+  // SUPPLY an untyped counter-added since it shipped, and nothing made it ASK for one -- so Radstorm
+  // and Virulent Silencer were two producers with no edge between them. Same channel shape as the
+  // keyword line above: a synthetic consumer ability this loop already knows how to read.
+  const cAbilities = [
+    ...c.tags.abilities,
+    ...keywordAbilities(c.tags.characteristics),
+    ...proliferateAbilities(c.tags),
+  ];
+  // A PROLIFERATE MULTIPLIES A COUNTER THAT IS ALREADY THERE (CR 701.29); IT CANNOT BE THE ORIGIN OF
+  // ONE. Without this, the producer's own proliferate-implied counter-added satisfies the consumer's
+  // proliferate demand and two proliferate cards edge to each other over a counter neither of them
+  // made. Computed only when the consumer actually asks, so an ordinary pair pays nothing.
+  //
+  // IMPLIED MINUS AUTHORED, not implied alone: 6 of the 24 proliferate cards ALSO author a real
+  // counter-added (Sword of Truth and Justice, Yawgmoth, Lulu, Tidus, Tromell, Patrolling
+  // Peacemaker), and those are genuine origins another proliferate should reach. No authored emit
+  // collides with its own card's implied one in today's corpus (measured: 0 of 24) -- but the shape
+  // is printable, `producerEvents` dedupes identical events, and a rule that is right only by luck
+  // would delete a real origin the first time one is printed.
+  const asksToProliferate = cAbilities.some(
+    (a) => a.effect.kind === "proliferate" && (a.trigger?.verbs ?? []).includes("counter-added"),
+  );
+  const notAnOrigin = new Set<string>();
+  if (asksToProliferate) {
+    const base = baseEvents(p.tags);
+    const authored = new Set(base.filter((e) => e.verb === "counter-added").map((e) => JSON.stringify(e)));
+    for (const e of impliedCounterEvents(base)) {
+      const k = JSON.stringify(e);
+      if (!authored.has(k)) notAnOrigin.add(k);
+    }
+  }
   for (const e of pEvents) {
     for (const a of cAbilities) {
       if (!a.trigger) continue;
+      if (a.effect.kind === "proliferate" && notAnOrigin.has(JSON.stringify(e))) continue;
       for (const rawVerb of a.trigger.verbs) {
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
         if (!eventMatches(e, t, h)) continue;
@@ -1020,9 +1061,14 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) continue;
         }
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
+        // A PROLIFERATE DEMAND NEEDS ITS OWN PROSE. The generic grammar below would render this as
+        // "When <producer> gets a counter, <consumer> triggers" — the producer does not get the
+        // counter, it MAKES one, and a sorcery that proliferates never triggers. See
+        // `proliferateSentence`.
+        const proliferateDemand = a.effect.kind === "proliferate" && t.verb === "counter-added";
         reasons.push({
           tag: key,
-          text: reasonSentence({
+          text: proliferateDemand ? proliferateSentence(p.card.name, c.card.name) : reasonSentence({
             producer: p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
             // CAN THE PRODUCER BE THE THING THIS HAPPENS TO? That is the whole question, and

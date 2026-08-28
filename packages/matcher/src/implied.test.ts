@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import type { Characteristics, GameEvent } from "@mtg/tagger";
-import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, keywordAbilities, selfFillTypes } from "./implied.js";
+import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, keywordAbilities, proliferateAbilities, selfFillTypes } from "./implied.js";
+import type { CardTags } from "@mtg/tagger";
 
 const chars = (types: string[], subtypes: string[] = []): Characteristics => ({
   types, subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [],
@@ -536,4 +537,39 @@ test("a self graveyard fill carries historic even when the clause named a differ
   const [saga] = selfFillTypes([fill({})], chars(["enchantment"], ["saga"]));
   expect(saga.subject.historic).toBe(true);
   expect(saga.subject.subtype).toEqual(["saga"]);
+});
+
+// A PROLIFERATE HAS A DEMAND, NOT ONLY A SUPPLY. `impliedCounterEvents` has made a proliferate
+// SUPPLY an untyped counter-added since it shipped; nothing made it ASK for one, so Radstorm and
+// Virulent Silencer were two producers with no edge between them (recall miss, spec 26.3).
+const tags = (abilities: unknown[]): CardTags => ({
+  oracleId: "x", schemaVersion: 1, promptVersion: 1, model: "t",
+  characteristics: { types: ["instant"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+  abilities: abilities as CardTags["abilities"],
+});
+const PROLIFERATES = tags([{ kind: "on-cast", effect: { kind: "proliferate" }, emits: [{ verb: "proliferate", subject: { control: "any", token: null } }] }]);
+
+test("a card that proliferates DEMANDS a counter source", () => {
+  const a = proliferateAbilities(PROLIFERATES);
+  expect(a).toHaveLength(1);
+  expect(a[0].trigger?.verbs).toEqual(["counter-added"]);
+  expect(a[0].effect.kind).toBe("proliferate");
+  // Untyped on purpose: proliferate takes another of EACH kind already there, and it may choose an
+  // OPPONENT's permanent or player -- Virulent Silencer's poison counters are a real target.
+  expect(a[0].trigger?.subject.counter).toBeUndefined();
+  expect(a[0].trigger?.subject.control).toBe("any");
+});
+
+test("a card that does not proliferate demands nothing", () => {
+  expect(proliferateAbilities(tags([
+    { kind: "triggered", effect: { kind: "counter-placement" }, emits: [{ verb: "counter-added", subject: { control: "any", token: null, counter: "+1/+1" } }] },
+  ]))).toHaveLength(0);
+});
+
+test("one demand however many times the card proliferates", () => {
+  const twice = tags([
+    { kind: "on-cast", effect: { kind: "proliferate" }, emits: [{ verb: "proliferate", subject: { control: "any", token: null } }] },
+    { kind: "activated", effect: { kind: "proliferate" }, emits: [{ verb: "proliferate", subject: { control: "any", token: null } }] },
+  ]);
+  expect(proliferateAbilities(twice)).toHaveLength(1);
 });

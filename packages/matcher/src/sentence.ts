@@ -265,6 +265,21 @@ export function counterPresenceSentence(producer: string, consumer: string, coun
   return `${consumer} benefits from ${counterKind} counters being on the board; ${producer} puts them there`;
 }
 
+/** THE DEMAND SIDE OF THE SAME FAMILY `counterPresenceSentence` states the supply side of.
+ *
+ *  The generic `reasonSentence` grammar reads "When <producer> <verb>, <consumer> triggers", which
+ *  on a `counter-added` edge renders as *"When Virulent Silencer gets a counter, Radstorm
+ *  triggers"* — false twice over. Virulent Silencer does not GET a counter; it puts poison counters
+ *  on a PLAYER. And Radstorm is a sorcery you cast, which never triggers. `subjectNoun` cannot
+ *  rescue it: a counter-added emit is routinely UNTYPED, so `producerCanBeSubject` cannot refuse a
+ *  producer that really could carry a counter, which is the residual its own comment records.
+ *
+ *  Same failure the Austere Command fix named on 2026-08-27 — the edge is right and the prose names
+ *  the wrong object — so it gets the same treatment: name what actually happens. */
+export function proliferateSentence(producer: string, consumer: string): string {
+  return `${producer} puts counters on the board, and ${consumer} proliferates them`;
+}
+
 export function meldSentence(a: string, b: string): string {
   return `${a} and ${b} meld together`;
 }
