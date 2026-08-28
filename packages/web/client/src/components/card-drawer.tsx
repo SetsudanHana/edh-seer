@@ -40,6 +40,18 @@ export function CardDrawerProvider({ graph, children }: { graph?: CardGraph; chi
   const byName = useMemo(() => {
     const m = new Map<string, string>();
     for (const n of graph?.nodes ?? []) if (!n.isToken && !m.has(n.label)) m.set(n.label, n.id);
+    // THE PHYSICAL CARD OPENS ITS FRONT FACE. A node's label is one printed FACE's name
+    // (faces-as-nodes), so a caller naming the whole card — the cut list and the trim order, which
+    // merge a card's faces back together because you cannot cut half a card — asked for a name no
+    // node carried and `CardName` correctly rendered plain text. Review fix, 2026-08-28. The FRONT
+    // face is the target (`face === undefined`), because it is the side the card is played from and
+    // the side the board draws. Added second and guarded on `has`, so a real card whose name happens
+    // to equal some other card's face name keeps its own node.
+    for (const n of graph?.nodes ?? []) {
+      if (!n.isToken && n.cardName !== undefined && n.face === undefined && !m.has(n.cardName)) {
+        m.set(n.cardName, n.id);
+      }
+    }
     return m;
   }, [graph]);
   const open = useCallback(

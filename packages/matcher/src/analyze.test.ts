@@ -1165,7 +1165,10 @@ const fellTheProfane = (): DeckCard => ({
     name: "Fell the Profane // Fell Mire",
     typeLine: "Instant // Land",
     oracleText: "Destroy target creature or planeswalker.\n// Fell Mire enters the battlefield tapped.",
-    keywords: [], colors: ["B"], manaValue: 2,
+    // A CARD-LEVEL COST THE FRONT FACE OWNS. `docToCard` fills `manaCost` from `faces[0]` when the
+    // document has none, which is every modal DFC -- so a fixture without it cannot show the row
+    // that used to print "{1}{B}" beside a Land.
+    keywords: [], colors: ["B"], manaValue: 2, manaCost: "{1}{B}",
     faces: [
       { name: "Fell the Profane", typeLine: "Instant", oracleText: "Destroy target creature or planeswalker.", manaCost: "{1}{B}", colors: ["B"] },
       { name: "Fell Mire", typeLine: "Land", oracleText: "Fell Mire enters the battlefield tapped.", colors: [] },
@@ -1314,6 +1317,10 @@ test("IMPORTANT: a rated face row carries its physical card's mana value and cos
   expect(back.cardName).toBe("Fell the Profane // Fell Mire");
   expect(front.face).toBeUndefined();
   expect(back.face).toBe(1);
+  // THE COST IS THE FACE'S OWN, unlike the mana value. Fell Mire is a Land and prints none, and the
+  // card-level cost it used to inherit is the FRONT face's -- review fix, 2026-08-28.
+  expect(front.manaCost).toBe("{1}{B}");
+  expect(back.manaCost).toBeUndefined();
 });
 
 test("IMPORTANT: an underived two-faced card is reported as underived, not silently read", () => {

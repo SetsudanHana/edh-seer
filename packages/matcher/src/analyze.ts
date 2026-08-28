@@ -671,8 +671,23 @@ export function analyzeDeckStructured(
     // this, a consumer joining `report.cards` by `name` against physical-keyed data (a commander
     // set, `quantities`, `unmeasurablePayoffs`) silently missed every back face.
     const faceIdx = uniqueByName.get(c.name)?.face;
+    // THE COST IS THE FACE'S OWN; THE MANA VALUE IS THE CARD'S. `docToCard` fills a card-level
+    // `manaCost` from `faces[0]` when the document has none (every modal DFC), so the physical
+    // card's cost IS the front face's -- and printing it on the back row told a reader that Fell
+    // Mire, a Land, costs {1}{B}. Review fix, 2026-08-28. `manaValue` deliberately stays the card's:
+    // faces do not split cmc, and E4 prices a land-back MDFC as a fraction of a land rather than as
+    // two objects. A face with no printed cost renders the em dash a land already renders, which is
+    // the N6 rule (a refusal is a dash, never a zero).
+    //
+    // Only when the faces are AUTHORED (`Card.faces`, from the document). `printedFaces` also
+    // synthesizes faces by splitting a combined type line, and those carry no cost -- a split card's
+    // combined cost lives at the card level and still wins there, the ruling `split-cost.ts` keeps.
+    const isFaceRow = faceIdx !== undefined || physical !== c.name;
+    const faceCost = isFaceRow && card?.faces?.length
+      ? card.faces[faceIdx ?? 0]?.manaCost
+      : card?.manaCost;
     const cost = {
-      ...(card?.manaCost !== undefined ? { manaCost: card.manaCost } : {}),
+      ...(faceCost !== undefined ? { manaCost: faceCost } : {}),
       ...(card !== undefined ? { manaValue: card.manaValue } : {}),
       ...(castByName.has(physical) ? { castability: castByName.get(physical)! } : {}),
       derived: derivedByName.get(physical) ?? true,

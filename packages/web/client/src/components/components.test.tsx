@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, within, cleanup } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { CardDrawerProvider, CardName } from "./card-drawer.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
@@ -1883,4 +1884,26 @@ test("an unread two-faced card is one tile in Not read yet, not one per face", (
   expect(screen.getByText("2 cards")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Fell the Profane" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Fell Mire" })).toBeNull();
+});
+
+/** A merged cut-list row names the PHYSICAL card ("you cannot cut half a card"), while every graph
+ *  node's label is one printed FACE's name. Unjoined, `CardName` rendered those rows as plain text
+ *  and the reader could not open the card the tool was telling them to cut. Review fix, 2026-08-28. */
+test("a card named by the whole card, not by a face, still opens its front face", () => {
+  const graph = {
+    nodes: [
+      { id: "A // B", label: "A", cardName: "A // B", types: [], subtypes: [], supertypes: [], colors: [], cmc: 1, copies: 1 },
+      { id: "face:1:A // B", label: "B", face: 1, cardName: "A // B", types: [], subtypes: [], supertypes: [], colors: [], cmc: 1, copies: 1 },
+    ],
+    edges: [],
+  } as any;
+  render(
+    <CardDrawerProvider graph={graph}>
+      <CardName name="A // B" />
+      <CardName name="Never in the deck" />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByRole("button", { name: "A // B" })).toBeInTheDocument();
+  // A name no node carries is still plain text: the drawer must not offer to open what it cannot.
+  expect(screen.queryByRole("button", { name: "Never in the deck" })).toBeNull();
 });
