@@ -98,7 +98,7 @@ async function main(): Promise<void> {
   let g = buildGraph(docs);
 
   if (events) {
-    // O(n^2) reason calls -- see the ponytail note in graph-events.ts. Warn rather than cap, since
+    // O(n^2) reason calls -- see the CEILING note in graph-events.ts. Warn rather than cap, since
     // the honest answer for a big selection is "this will take a while", not a silently smaller graph.
     if (docs.length > 300) console.warn(`--events on ${docs.length} cards: ~${docs.length ** 2} pair evaluations, this will take a moment`);
     const tagsFor = async (d: CardDoc): Promise<CardTags | null> =>

@@ -127,7 +127,7 @@ let alpha = 1, cam = { x: 0, y: 0, z: 1 };
 
 function tick() {
   const live = N.filter(vis);
-  // Repulsion, every visible pair. See the ponytail note in graph-html.ts on the O(n^2) ceiling.
+  // Repulsion, every visible pair. See the CEILING note in graph-html.ts on the O(n^2) ceiling.
   for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
     const a = live[i], b = live[j];
     let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy || 1;
