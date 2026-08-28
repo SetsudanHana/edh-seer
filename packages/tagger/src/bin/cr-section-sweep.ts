@@ -12,7 +12,7 @@
  *
  *  Reads the committed `cr-keywords.json`; regenerate it with `gen-cr-keywords.ts` after a rules
  *  update. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import crKeywords from "../derive/cr-keywords.json" with { type: "json" };
 
 type Verdict = "MODELLED" | "PARTIAL" | "OPEN" | "N/A";

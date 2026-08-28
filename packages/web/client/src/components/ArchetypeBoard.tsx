@@ -72,7 +72,7 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
                     only in `effectKind` -- and the objects survive on purpose, because `effectKind`
                     is load-bearing for archetype detection. So the dedupe belongs at the reader, as
                     it already does on the graph wire (`data.module.ts`). Inline rather than shared:
-                    the client value-imports nothing from `@mtg/engine` today, and pulling the engine
+                    the client value-imports nothing from `@edh-seer/engine` today, and pulling the engine
                     into the browser bundle for four lines is a worse trade than repeating them. */}
                 {pairReasons(pair).map((text, j) => (
                   <li key={j} className="text-(--muted) border-l border-(--separator) pl-2">{text}</li>

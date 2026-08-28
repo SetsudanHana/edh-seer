@@ -11,7 +11,7 @@
  *  Owner's framing 2026-08-15: this is research to make the corpus complete BEFORE money is spent on
  *  it, so an unclaimed action is exactly the thing worth finding now rather than after a 34k-card
  *  normalization. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, DERIVED_COLLECTION, type CardClausesDoc } from "../clause-store.js";
 import { deriveAbilities } from "../derive/derive.js";
 import { EFFECT_KINDS } from "../schema.js";

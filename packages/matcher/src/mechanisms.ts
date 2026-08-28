@@ -1,4 +1,4 @@
-import type { Reason, ArchetypeGroup } from "@mtg/engine";
+import type { Reason, ArchetypeGroup } from "@edh-seer/engine";
 
 /** Closed set of synergy mechanism categories, derived from EDHREC's most popular themes with
  *  kindred/tribal dropped (kindred is a "same creature type" axis, not a synergy mechanism this

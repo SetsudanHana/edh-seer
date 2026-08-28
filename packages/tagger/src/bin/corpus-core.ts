@@ -1,6 +1,6 @@
-import type { CardDoc } from "@mtg/data";
-import { docToCard } from "@mtg/data";
-import type { Card } from "@mtg/engine";
+import type { CardDoc } from "@edh-seer/data";
+import { docToCard } from "@edh-seer/data";
+import type { Card } from "@edh-seer/engine";
 import type { CardTags } from "../schema.js";
 import { SCHEMA_VERSION } from "../schema.js";
 import { buildAbilityMessages, PROMPT_VERSION } from "../llm/prompt.js";

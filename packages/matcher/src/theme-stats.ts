@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import type { TagStats } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import type { TagStats } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import { cardThemeTags } from "./edges.js";
 
 /** Empty corpus stats: globalIDF degrades to a constant, so the axis falls back to the old

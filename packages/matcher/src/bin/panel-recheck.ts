@@ -3,9 +3,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import {
   connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
-} from "@mtg/data";
-import { ComboIndex } from "@mtg/engine";
-import { createTagsLookup } from "@mtg/tagger";
+} from "@edh-seer/data";
+import { ComboIndex } from "@edh-seer/engine";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
 import type { PanelVerdict } from "./panel-core.js";
 

@@ -1,6 +1,6 @@
-import { normalizeName, type CardLookup } from "@mtg/data";
-import type { Card } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import { normalizeName, type CardLookup } from "@edh-seer/data";
+import type { Card } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 
 export interface CardTagsLookup {

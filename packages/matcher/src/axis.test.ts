@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { buildAxis, maxAxisWeight, axisFactor } from "./axis.js";
-import type { TagStats } from "@mtg/engine";
+import type { TagStats } from "@edh-seer/engine";
 
 // 'draw:any' is universal (on ~all N cards → idf≈0); 'dies:creature' is distinctive (rare).
 const stats: TagStats = { N: 1000, counts: { "draw:any": 990, "dies:creature": 40 } };

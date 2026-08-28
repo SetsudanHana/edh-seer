@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 
 /**
  * Print sample cards for otag slugs, so classifications are checked against real cards.

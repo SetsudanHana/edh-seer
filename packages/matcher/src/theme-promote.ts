@@ -1,4 +1,4 @@
-import { SUBTYPE_TYPES } from "@mtg/tagger";
+import { SUBTYPE_TYPES } from "@edh-seer/tagger";
 import { ALL_CARD_TYPES } from "./hierarchy.js";
 import { PHASE_VERBS } from "./availability.js";
 import type { ThemeMembership } from "./themes.js";

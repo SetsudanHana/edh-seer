@@ -11,7 +11,7 @@
  *
  *  Free, read-only. Counts are corpus-wide, per the vocabulary ruling: the derived corpus is 2,541
  *  cards of the owner's own decks and a slot is sized against every card we hold. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION } from "../clause-store.js";
 
 const store = await connect(loadConfig());

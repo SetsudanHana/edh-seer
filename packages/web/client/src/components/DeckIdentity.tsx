@@ -1,6 +1,6 @@
 import type { DeckReport } from "../types.js";
 import { identityGradient, identityLabel } from "../lib/color-identity.js";
-import { percent, policyBand } from "@mtg/engine/percent";
+import { percent, policyBand } from "@edh-seer/engine/percent";
 
 /** WHAT IS THIS DECK — answered by the instrument built to answer it.
  *
@@ -140,7 +140,7 @@ export function DeckIdentity({
           {/* "EVERY GAME" IS TRUE ONCE (CR 903.8, roadmap J5). The line invites being read as free
               and repeatable; the tax is what makes the second and third casts expensive. The
               sentence arrives as DATA rather than being written here, because no subpath of
-              `@mtg/matcher` is safe to value-import from client code — a recorded regression — and a
+              `@edh-seer/matcher` is safe to value-import from client code — a recorded regression — and a
               second copy of a sentence is how two surfaces start disagreeing. */}
           {thing.fromCommandZone.length > 0 && commanderTax ? (
             <span className="block text-xs text-(--muted)">{commanderTax.caveat}</span>

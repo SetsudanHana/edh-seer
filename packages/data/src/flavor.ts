@@ -5,7 +5,7 @@ import type { CardDoc } from "./docs.js";
 export type FetchFn = typeof fetch;
 
 const SCRYFALL_HEADERS = {
-  "User-Agent": "mtg-synergy-engine/0.1",
+  "User-Agent": "edh-seer/0.1",
   Accept: "application/json",
 };
 

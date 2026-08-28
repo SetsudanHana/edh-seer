@@ -1,4 +1,4 @@
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 import { SCHEMA_VERSION, type Ability, type CardTags } from "./schema.js";
 import { extractCharacteristics } from "./characteristics.js";
 import type { ChatMessage, LlmProvider } from "./llm/provider.js";

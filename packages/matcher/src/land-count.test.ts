@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { Card } from "@mtg/engine";
-import { karstenLands } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
+import { karstenLands } from "@edh-seer/engine";
 import { landInputs, recommendedLands } from "./land-count.js";
 import type { DeckCard } from "./types.js";
 

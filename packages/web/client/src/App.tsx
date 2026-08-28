@@ -73,7 +73,7 @@ export default function App() {
       <header className="flex flex-col gap-3">
         <div className="flex items-end justify-between gap-4 flex-wrap">
           <div className="flex items-baseline gap-3">
-            <h1 className="text-2xl font-bold tracking-tight">MTG Synergy</h1>
+            <h1 className="text-2xl font-bold tracking-tight">EDH Seer</h1>
             <span className="text-sm text-(--muted)">Oracle-level deck reading</span>
           </div>
           <ColorIdentityPicker value={manualPick} onChange={setManualPick} />

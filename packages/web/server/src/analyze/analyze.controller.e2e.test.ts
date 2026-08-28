@@ -4,7 +4,7 @@ import { Test } from "@nestjs/testing";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import { AnalyzeController } from "./analyze.controller.js";
 import { AnalyzeService, ANALYZE_DEPS, type AnalyzeDeps } from "./analyze.service.js";
-import type { DeckReport } from "@mtg/engine";
+import type { DeckReport } from "@edh-seer/engine";
 
 const report: DeckReport = {
   commanders: [],

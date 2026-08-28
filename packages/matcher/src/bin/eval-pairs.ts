@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { connect, loadConfig, mongoLookup, normalizeName, docToCard } from "@mtg/data";
-import type { CardTags } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, normalizeName, docToCard } from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "../index.js";
 import type { DeckCard } from "../types.js";
 import { classifyPair, type GoldPair } from "./eval-pairs-core.js";

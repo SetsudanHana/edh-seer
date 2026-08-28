@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 import { createdTokenRefs } from "./tokens.js";
 
 const card = (allParts: unknown): Card => ({ name: "X", typeLine: "Artifact", allParts } as unknown as Card);

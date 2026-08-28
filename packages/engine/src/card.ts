@@ -1,4 +1,4 @@
-/** One printed face of a card. STRUCTURALLY DUPLICATED from `@mtg/data`'s `CardFace` rather than
+/** One printed face of a card. STRUCTURALLY DUPLICATED from `@edh-seer/data`'s `CardFace` rather than
  *  imported, for the same reason `allParts` is read off an untyped cast: the engine cannot depend on
  *  the data package. A plain data shape is cheap to restate and a dependency edge is not. */
 export interface CardFace {

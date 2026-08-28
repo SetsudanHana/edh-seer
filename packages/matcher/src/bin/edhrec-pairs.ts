@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { normalizeName } from "@mtg/data";
+import { normalizeName } from "@edh-seer/data";
 import { pairKey } from "../otag-edges.js";
 import { CATEGORY_EDHREC_TAG, tagUrl, parseHighSynergy } from "./edhrec-core.js";
 
@@ -37,7 +37,7 @@ export async function edhrecPairSet(opts: EdhrecOpts = {}): Promise<Set<string> 
         payload = JSON.parse(readFileSync(cacheFile, "utf8"));
       } else {
         const res = await fetchImpl(tagUrl(slug), {
-          headers: { "User-Agent": "mtg-synergy-engine/1.0 (otag measurement)" },
+          headers: { "User-Agent": "edh-seer/1.0 (otag measurement)" },
         });
         if (!res.ok) { console.error(`  EDHREC ${slug}: HTTP ${res.status}`); continue; }
         payload = await res.json();

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { CardDoc } from "@mtg/data";
+import type { CardDoc } from "@edh-seer/data";
 import { buildGraph, type CardGraph } from "./graph.js";
 
 const doc = (over: Partial<CardDoc> & { _id: string; name: string; typeLine: string }): CardDoc => ({

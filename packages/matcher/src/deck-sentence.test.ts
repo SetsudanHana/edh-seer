@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { deckSentence } from "./deck-sentence.js";
-import type { Cohesion } from "@mtg/engine";
+import type { Cohesion } from "@edh-seer/engine";
 
 const coh = (over: Partial<Cohesion> = {}): Cohesion => ({
   theme: "creatures dying", tag: "dies:creature", secondary: null, secondaryTag: null,

@@ -1,19 +1,19 @@
 // @vitest-environment node
 //
 // The rest of this component's tests live in `components.test.tsx`, which runs under
-// `environment: "jsdom"` (client/vitest.config.ts) so React components can render. `@mtg/tagger`
-// and `@mtg/matcher`'s barrels both eagerly `readFileSync(new URL(..., import.meta.url))` at
-// import time (tagger's otag loader, matcher's `@mtg/engine` dependency reading its tag-weight
+// `environment: "jsdom"` (client/vitest.config.ts) so React components can render. `@edh-seer/tagger`
+// and `@edh-seer/matcher`'s barrels both eagerly `readFileSync(new URL(..., import.meta.url))` at
+// import time (tagger's otag loader, matcher's `@edh-seer/engine` dependency reading its tag-weight
 // corpus) -- fine under a real node process, but under jsdom's module environment
 // `import.meta.url` does not resolve to a `file:` URL and the read throws ("The URL must be of
 // scheme file"), taking the whole test FILE down with it, not just the import. This file's own
 // `// @vitest-environment node` docblock (Vitest's per-file override) runs it as plain node, so
 // the engine's own vocabulary can be imported freely -- which is what the task 8 brief means by
-// "the test runs in node, so it may import from `@mtg/tagger` / `@mtg/matcher` freely": that is
+// "the test runs in node, so it may import from `@edh-seer/tagger` / `@edh-seer/matcher` freely": that is
 // true of a real node environment, not of this package's default jsdom one.
 import { expect, test } from "vitest";
-import { VERB_VOCAB } from "@mtg/tagger";
-import { PHASE_VERBS } from "@mtg/matcher";
+import { VERB_VOCAB } from "@edh-seer/tagger";
+import { PHASE_VERBS } from "@edh-seer/matcher";
 import { DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS } from "./BuildBenchmarks.js";
 
 // A completeness-AND-disjointness ratchet, derived from the engine's own vocabulary rather than

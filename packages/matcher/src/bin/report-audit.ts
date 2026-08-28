@@ -3,9 +3,9 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import {
   connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@mtg/data";
-import type { CardTags } from "@mtg/tagger";
-import { ComboIndex } from "@mtg/engine";
+} from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
+import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured } from "../analyze.js";
 import type { DeckCard } from "../types.js";
 

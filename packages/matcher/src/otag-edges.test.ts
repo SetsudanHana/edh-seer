@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { SlugSemantics } from "@mtg/tagger";
+import type { SlugSemantics } from "@edh-seer/tagger";
 import { buildOtagEdges, pairKey, undirectedPairs } from "./otag-edges.js";
 
 const sem = new Map<string, SlugSemantics>([

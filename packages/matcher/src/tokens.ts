@@ -1,4 +1,4 @@
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 
 /** A token a card can make, identified the way the `tokens` collection is indexed.
  *

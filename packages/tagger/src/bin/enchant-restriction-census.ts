@@ -4,7 +4,7 @@
  *
  *  Counts only the cards where the two lines DISAGREE, since an aura whose Enchant line and subject
  *  both say "creature" loses nothing today. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION } from "../clause-store.js";
 import type { Ability } from "../schema.js";
 

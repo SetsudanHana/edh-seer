@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { joinMultiWordSubtypes } from "@mtg/tagger";
+import { joinMultiWordSubtypes } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 
 const CARD_TYPES = [

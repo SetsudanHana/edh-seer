@@ -1,4 +1,4 @@
-import type { DeckCoverage } from "@mtg/engine";
+import type { DeckCoverage } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 
 /** Names listed before the rest become a count. The legality report caps its lists at eight for the

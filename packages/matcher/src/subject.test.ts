@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { counterAddMatches, graveyardFillMatches, subjectMatches } from "./subject.js";
 import { isOutlaw } from "./implied.js";
-import type { SubjectFilter } from "@mtg/tagger";
+import type { SubjectFilter } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 
 const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"], treasure: ["artifact"], pirate: ["creature"], bear: ["creature"], dragon: ["creature"], ogre: ["creature"], demon: ["creature"], land: ["land"] };

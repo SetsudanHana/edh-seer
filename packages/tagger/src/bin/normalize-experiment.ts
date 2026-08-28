@@ -12,7 +12,7 @@
  *  Usage: tsx src/bin/normalize-experiment.ts [outDir]   (needs ANTHROPIC_API_KEY) */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { canonicalize, type ClauseRecord } from "../canonicalize.js";

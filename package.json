@@ -1,5 +1,5 @@
 {
-  "name": "mtg-deckbuilder",
+  "name": "edh-seer",
   "private": true,
   "workspaces": [
     "packages/*"

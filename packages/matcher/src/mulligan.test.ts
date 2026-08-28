@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pAtLeast } from "@mtg/engine";
+import { pAtLeast } from "@edh-seer/engine";
 import { landsForDrops, pLandDrops, STANDARD_KEEP } from "./mulligan.js";
 
 describe("mulligan policy", () => {

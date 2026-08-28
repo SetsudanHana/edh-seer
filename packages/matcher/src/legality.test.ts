@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 import { deckLegality } from "./legality.js";
 import { commanderDamage } from "./commander-damage.js";
 

@@ -4,7 +4,7 @@
  *  and emits one record per threshold anchor. Pure -- no store, no I/O.
  *  Design: docs/superpowers/specs/2026-08-14-threshold-lines-design.md */
 
-import type { GameEvent } from "@mtg/tagger";
+import type { GameEvent } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { producerEvents, eventMatches } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";

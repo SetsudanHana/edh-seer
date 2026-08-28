@@ -10,7 +10,7 @@
  *
  *    npx tsx --env-file=packages/tagger/.env packages/tagger/src/bin/intervening-if-audit.ts */
 import { writeFileSync } from "node:fs";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, DERIVED_COLLECTION, type CardClausesDoc } from "../clause-store.js";
 import { conditionFamily, interveningIfOf, type ConditionFamily } from "../derive/intervening-if.js";
 import { normalizeTriggerVerb } from "../derive/derive.js";

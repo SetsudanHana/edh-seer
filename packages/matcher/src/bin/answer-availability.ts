@@ -19,8 +19,8 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import {
   connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@mtg/data";
-import type { CardTags } from "@mtg/tagger";
+} from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
 import { computeDeckMath } from "../deck-math.js";
 import { loadHierarchy } from "../hierarchy.js";
 import type { DeckCard } from "../types.js";

@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
-import type { Characteristics, GameEvent } from "@mtg/tagger";
+import type { Characteristics, GameEvent } from "@edh-seer/tagger";
 import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, enterAsCopyAbilities, keywordAbilities, proliferateAbilities, selfFillTypes } from "./implied.js";
-import type { CardTags } from "@mtg/tagger";
+import type { CardTags } from "@edh-seer/tagger";
 
 const chars = (types: string[], subtypes: string[] = []): Characteristics => ({
   types, subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [],

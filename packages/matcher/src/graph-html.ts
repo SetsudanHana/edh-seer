@@ -38,7 +38,7 @@ const DIM_BY_DEFAULT: NodeKind[] = ["layout", "cmc", "mana", "color"];
  *  So the physics differing is not a divergence between two views of one thing. This loop is
  *  inverse-SQUARE repulsion (`900/d²`, rest 70, damping 0.86, gravity 0.0016) against d3's
  *  inverse-LINEAR `forceManyBody`, and unifying them was considered and refused: there is nothing to
- *  match, `d3-force` is a dependency of `@mtg/web` rather than this package, and the kind checkboxes
+ *  match, `d3-force` is a dependency of `@edh-seer/web` rather than this package, and the kind checkboxes
  *  below deliberately RE-SETTLE the layout (`alpha = 0.5`), so a pre-settled static export would be
  *  a behaviour change rather than a simplification.
  *

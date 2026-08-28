@@ -47,7 +47,7 @@ export function effectPhrase(kind: string | undefined, amount: string | undefine
  *  `dedupeReasons` key on tag, so nothing collapses), and a reader does not need to be told which of
  *  Scrap Trawler's two typed triggers fired, only that Executioner's Capsule caused a death and
  *  Scrap Trawler responded to it. */
-// Exported only so a completeness test can walk it against @mtg/tagger's VERB_VOCAB -- this table
+// Exported only so a completeness test can walk it against @edh-seer/tagger's VERB_VOCAB -- this table
 // grows every time this project adds a verb, and the naive fallback below is wrong for every
 // noun-shaped one, so a forgotten entry must fail a test rather than ship silently.
 export const VERB_PHRASES: Record<string, string> = {

@@ -1,4 +1,4 @@
-import type { StatPredicate } from "@mtg/tagger";
+import type { StatPredicate } from "@edh-seer/tagger";
 
 /** Printed power/toughness may be "*", "1+*", "X", or null. A pure-integer string uses its value;
  *  anything else reads as 0 (matches printed base; deterministic). */

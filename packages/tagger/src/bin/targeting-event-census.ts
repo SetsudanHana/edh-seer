@@ -6,7 +6,7 @@
  *  Splits supply from demand, because they are answered differently: who TARGETS (every removal
  *  spell in the game — supply is not scarce) versus who PAYS OFF being targeted (the question that
  *  decides whether a verb is worth adding). */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION } from "../clause-store.js";
 
 const store = await connect(loadConfig());

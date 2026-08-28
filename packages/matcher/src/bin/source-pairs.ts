@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { connect, loadConfig, mongoLookup, normalizeName } from "@mtg/data";
+import { connect, loadConfig, mongoLookup, normalizeName } from "@edh-seer/data";
 import { MECHANISM_CATEGORIES, type MechanismCategory } from "../mechanisms.js";
 import { CATEGORY_EDHREC_TAG, parseHighSynergy, pairsFromCards, tagUrl } from "./edhrec-core.js";
 import { dedupeAndBuild } from "./propose-pairs-core.js";

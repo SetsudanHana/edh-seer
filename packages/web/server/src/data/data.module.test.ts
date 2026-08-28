@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
-import type { DeckCard, ProjectedGraph } from "@mtg/matcher";
-import { faceDeckCards, projectDeckGraph } from "@mtg/matcher";
+import type { DeckCard, ProjectedGraph } from "@edh-seer/matcher";
+import { faceDeckCards, projectDeckGraph } from "@edh-seer/matcher";
 import { attachRolesAndArt } from "./data.module.js";
 
 afterEach(() => {

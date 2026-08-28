@@ -1,5 +1,5 @@
-import { pAtLeast, seen } from "@mtg/engine";
-import type { Cohesion } from "@mtg/engine";
+import { pAtLeast, seen } from "@edh-seer/engine";
+import type { Cohesion } from "@edh-seer/engine";
 
 /** THE TURN AND THE COUNT THE PROBABILITY IS ASKED AT, and both are DOCTRINE rather than fits.
  *

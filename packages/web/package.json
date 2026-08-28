@@ -1,5 +1,5 @@
 {
-  "name": "@mtg/web",
+  "name": "@edh-seer/web",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -17,10 +17,10 @@
   "dependencies": {
     "@heroui/react": "^3.0.0",
     "@heroui/styles": "^3.0.0",
-    "@mtg/data": "*",
-    "@mtg/engine": "*",
-    "@mtg/matcher": "*",
-    "@mtg/tagger": "*",
+    "@edh-seer/data": "*",
+    "@edh-seer/engine": "*",
+    "@edh-seer/matcher": "*",
+    "@edh-seer/tagger": "*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-fastify": "^11.0.0",

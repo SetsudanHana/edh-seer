@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import {
   connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@mtg/data";
-import { createTagsLookup } from "@mtg/tagger";
+} from "@edh-seer/data";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { detectBuildCategories, gatedLandsTarget } from "../build.js";
 import { landInputs, recommendedLands } from "../land-count.js";
 import { STANDARD_KEEP, pLandDrops } from "../mulligan.js";

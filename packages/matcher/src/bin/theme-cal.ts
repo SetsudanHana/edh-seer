@@ -4,9 +4,9 @@
  *  The IDF floor this replaces was trusted for exactly that reason (2.2 and 2.5 were identical)
  *  and was still overfit, so also print the per-deck answers for eyeballing. */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, resolveNames, parseDecklistSections, normalizeName } from "@mtg/data";
-import { ComboIndex } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, resolveNames, parseDecklistSections, normalizeName } from "@edh-seer/data";
+import { ComboIndex } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
 import { themeMembership, themeCandidates } from "../themes.js";
 

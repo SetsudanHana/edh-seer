@@ -1,4 +1,4 @@
-import { mechanicCoverageSummary } from "@mtg/engine";
+import { mechanicCoverageSummary } from "@edh-seer/engine";
 
 const s = mechanicCoverageSummary();
 console.log("Mechanic coverage:");

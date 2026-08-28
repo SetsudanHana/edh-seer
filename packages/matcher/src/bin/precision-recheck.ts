@@ -10,9 +10,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
-} from "@mtg/data";
-import { ComboIndex } from "@mtg/engine";
-import { createTagsLookup } from "@mtg/tagger";
+} from "@edh-seer/data";
+import { ComboIndex } from "@edh-seer/engine";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
 import { readdirSync } from "node:fs";
 import { beatsBeyondNoise, score, type Judgment, type Source } from "./precision-core.js";

@@ -1,5 +1,5 @@
-import { minCopies, pAtLeast, seen } from "@mtg/engine";
-import type { DeckMath } from "@mtg/engine";
+import { minCopies, pAtLeast, seen } from "@edh-seer/engine";
+import type { DeckMath } from "@edh-seer/engine";
 import { loadAnswerPool, identityKey, POOL_CLASSES, commanderIdentity } from "./answer-pool.js";
 import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";

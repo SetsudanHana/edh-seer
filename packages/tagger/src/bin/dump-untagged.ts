@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig, type CardDoc } from "@mtg/data";
+import { connect, loadConfig, type CardDoc } from "@edh-seer/data";
 import { needsRetag } from "../store.js";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";

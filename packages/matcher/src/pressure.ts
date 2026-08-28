@@ -1,4 +1,4 @@
-import { seen } from "@mtg/engine";
+import { seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 
 /** A Commander player's starting life. The clock is measured against ONE opponent: a deck that can

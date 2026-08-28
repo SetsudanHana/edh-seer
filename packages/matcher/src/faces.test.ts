@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import type { CardTags } from "@mtg/tagger";
+import type { CardTags } from "@edh-seer/tagger";
 import { faceDeckCards, printedFaces } from "./faces.js";
 import type { DeckCard } from "./types.js";
 

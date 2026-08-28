@@ -21,7 +21,7 @@ import { useIsNarrow } from "../lib/use-narrow.js";
  *  combo detection all read PRINTED data — so the whole DIAGNOSIS is sound on a half-read deck and
  *  only the VERIFICATION half is limited.
  *
- *  THE SENTENCE COMES FROM THE REPORT, not from here. No subpath of `@mtg/matcher` is safe to
+ *  THE SENTENCE COMES FROM THE REPORT, not from here. No subpath of `@edh-seer/matcher` is safe to
  *  value-import from client code, and a second copy of a claim is how two surfaces start disagreeing
  *  — which this repo has now measured twice (N6's number format, `DeckIdentity`'s stale caveat).
  *

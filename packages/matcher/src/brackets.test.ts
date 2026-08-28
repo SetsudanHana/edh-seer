@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { Card, Combo } from "@mtg/engine";
+import type { Card, Combo } from "@edh-seer/engine";
 import { CHEAP_COMBO_MV, deckBracket } from "./brackets.js";
 
 const card = (name: string, manaValue: number, gameChanger?: boolean): Card => ({

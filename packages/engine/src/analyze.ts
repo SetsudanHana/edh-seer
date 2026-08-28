@@ -21,7 +21,7 @@ export interface SynergyEdge {
 
 export interface CardSynergy {
   /** The FACE this row rates -- a back face's own name, distinct from the physical card's. Set
-   *  only by @mtg/matcher's analyzeDeckStructured (Task 7, faces-as-nodes): a modal DFC or
+   *  only by @edh-seer/matcher's analyzeDeckStructured (Task 7, faces-as-nodes): a modal DFC or
    *  transform card rates each printed face as its own row, so `name` alone can no longer answer
    *  "which physical card is this" -- see `cardName`. Undefined on the flat engine and on a
    *  single-faced card, where `name` already IS the physical card. */
@@ -52,14 +52,14 @@ export interface CardSynergy {
   partnerCount: number;
   topPartners: { name: string; score: number; reasons: Reason[] }[];
   /** Per-card classification into non-synergy "job" buckets (consistency/efficiency/
-   *  win-condition), computed from the card's own abilities by @mtg/matcher's
+   *  win-condition), computed from the card's own abilities by @edh-seer/matcher's
    *  analyzeDeckStructured. Absent when the card qualifies for none of the three, or when
    *  produced by the flat (retired-from-web/CLI) analyzeDeck below. */
   bucketScores?: { consistency: number; efficiency: number; "win-condition": number };
   /** 1-4: how many of the 4 UI buckets (the 3 above + Synergy via score>0) this card
    *  qualifies for. Absent (not 0) when the card qualifies for none. */
   bucketCount?: number;
-  /** 0–5 deck-relative, axis-weighted synergy rating. Set only by @mtg/matcher's
+  /** 0–5 deck-relative, axis-weighted synergy rating. Set only by @edh-seer/matcher's
    *  analyzeDeckStructured (needs structured theme tags); undefined on the flat engine. */
   synergyRating?: number;
   /** Directional authority: the card's payoff support (√ of the summed weight of edges that FEED
@@ -101,11 +101,11 @@ export interface CardSynergy {
     mana: { low: number; high: number };
   };
   /** True when the card fills a functional BUILD role AND has an on-axis synergy edge — one card,
-   *  two jobs. Set only by @mtg/matcher's analyzeDeckStructured; the card also carries a small
+   *  two jobs. Set only by @edh-seer/matcher's analyzeDeckStructured; the card also carries a small
    *  capped synergyRating premium. Undefined on the flat engine. */
   doubleDuty?: boolean;
   /** The functional role name(s) the double-duty card fills (BuildCategory values like "ramp"),
-   *  for the UI marker. Plain string[] — this package must not depend on @mtg/matcher. Matcher-only. */
+   *  for the UI marker. Plain string[] — this package must not depend on @edh-seer/matcher. Matcher-only. */
   doubleDutyRoles?: string[];
   /** Every functional BUILD role this card fills (BuildCategory values like "ramp", "draw").
    *  Superset of doubleDutyRoles — present on all cards with a role, not only double-duty ones.
@@ -113,11 +113,11 @@ export interface CardSynergy {
   roles?: string[];
 }
 
-/** Populated only by @mtg/matcher's analyzeDeckStructured (see that package's
+/** Populated only by @edh-seer/matcher's analyzeDeckStructured (see that package's
  *  mechanisms.ts) — stays undefined on this flat engine's analyzeDeck, same
  *  convention as CardSynergy.bucketScores/bucketCount. `category` is a plain string
  *  here (not the matcher-only MechanismCategory union) because this package must not
- *  depend on @mtg/matcher. */
+ *  depend on @edh-seer/matcher. */
 export interface ArchetypeGroup {
   category: string;
   label: string;
@@ -125,10 +125,10 @@ export interface ArchetypeGroup {
   pairs: { a: string; b: string; reasons: Reason[] }[];
 }
 
-/** Layer-1 archetype (strategy) ranking. Populated only by @mtg/matcher's
+/** Layer-1 archetype (strategy) ranking. Populated only by @edh-seer/matcher's
  *  analyzeDeckStructured (see that package's archetypes.ts). `name` is a plain string
  *  here (not the matcher-only Archetype union) because this package must not depend on
- *  @mtg/matcher — same convention as ArchetypeGroup.category. */
+ *  @edh-seer/matcher — same convention as ArchetypeGroup.category. */
 export interface ArchetypeRanking {
   name: string;
   label: string;
@@ -233,7 +233,7 @@ export interface DeckMath {
   lands: {
     actual: number;
     /** What `buildScore` is actually scored against -- the regression's own rounded answer (via
-     *  `@mtg/matcher`'s `gatedLandsTarget`, the flat convention on a fallback) PLUS any archetype
+     *  `@edh-seer/matcher`'s `gatedLandsTarget`, the flat convention on a fallback) PLUS any archetype
      *  delta folded in by `adjustedTargets` (landfall's `+4`, task 9 fix F1). Equal to
      *  `rawTarget + archetypeDelta` always -- the same call `computeBuild` makes on the identical
      *  input, so the panel and the score can never again disagree about this number. */
@@ -351,7 +351,7 @@ export interface DeckCoverage {
   /** Whether the list above was cut. */
   more: number;
   /** The sentence itself, built ONCE here rather than in each renderer. No subpath of
-   *  `@mtg/matcher` is safe to value-import from client code (the 2026-08-21 regression), and a
+   *  `@edh-seer/matcher` is safe to value-import from client code (the 2026-08-21 regression), and a
    *  second copy of a sentence is how two surfaces start disagreeing — the same ruling the
    *  commander-tax caveat ships under. */
   caveat: string;
@@ -459,7 +459,7 @@ export interface DeckReport {
    *  share, never a target) and stays real only for `lands` (and the always-0 `burn`/`stax`, which
    *  are win-plan/tax signals and were never folded into a parent). Matcher-only. `category` is a
    *  plain string (not the matcher-only BuildCategory union) because this package must not depend
-   *  on @mtg/matcher — same convention as ArchetypeGroup.category. */
+   *  on @edh-seer/matcher — same convention as ArchetypeGroup.category. */
   buildCategories?: { category: string; count: number; target: number }[];
   /** The four Command-Zone template groups (Consistency, Ramp, Interaction, Board wipes), each
    *  carrying its OWN archetype-adjusted target and the UNION of its leaves' member counts (never
@@ -496,7 +496,7 @@ export interface DeckReport {
   /** Cards the deck is not using, weakest first, each carrying its own reasons in plain words.
    *  CANDIDATES, never a verdict -- a missing edge looks exactly like a useless card, and the
    *  build layer counts a category's members without ranking them. Matcher-only; structural here
-   *  for the same reason `buildCategories` is (this package must not depend on @mtg/matcher). */
+   *  for the same reason `buildCategories` is (this package must not depend on @edh-seer/matcher). */
   cutList?: { name: string; rating: number; partners: number; manaValue: number; reasons: string[] }[];
   /** Cards that would have been cut candidates if the engine had READ them — names only, in the
    *  order the cut list would have ranked them.
@@ -517,7 +517,7 @@ export interface DeckReport {
   slack?: { category: string; count: number; target: number; over: number }[];
   /** Deck math: what the deck demands of itself and what it can answer, priced by when you draw
    *  it. Matcher-only, and structural here for the same reason `buildCategories` is -- this package
-   *  must not depend on @mtg/matcher. */
+   *  must not depend on @edh-seer/matcher. */
   deckMath?: DeckMath;
   /** 0–5 Anchoring facet: does the deck have strong, well-supported payoffs? From absolute
    *  authority. Matcher-only. */

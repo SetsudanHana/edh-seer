@@ -5,7 +5,7 @@
  *  residual and dumps every card in it, so the bucket is auditable rather than merely reported.
  *
  *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/land-conditions-census.ts */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { classifyLand, type LandTemplate } from "../land-conditions.js";
 
 const store = await connect(loadConfig());

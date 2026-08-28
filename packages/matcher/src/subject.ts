@@ -1,4 +1,4 @@
-import type { SubjectFilter } from "@mtg/tagger";
+import type { SubjectFilter } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 import { expandTypes, PSEUDO_TYPE_SETS } from "./hierarchy.js";
 import { evalStatPredicate } from "./stats.js";

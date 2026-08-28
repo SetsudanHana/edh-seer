@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { selectUntagged, renderPreamble, cardTagsFromRawAbilities, missingOracleIds, coverageReport, sample, expectsAbilities } from "./corpus-core.js";
-import type { CardDoc } from "@mtg/data";
+import type { CardDoc } from "@edh-seer/data";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";
 

@@ -1,4 +1,4 @@
-import type { CardDoc, CardFace } from "@mtg/data";
+import type { CardDoc, CardFace } from "@edh-seer/data";
 import { parseTypeLine } from "./typeline.js";
 
 export type NodeKind =

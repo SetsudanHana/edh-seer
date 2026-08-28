@@ -1,4 +1,4 @@
-import { OTAG_EVENT_TO_VERB, type SlugSemantics } from "@mtg/tagger";
+import { OTAG_EVENT_TO_VERB, type SlugSemantics } from "@edh-seer/tagger";
 
 /** A directed otag edge: `a` produces `verb`, `b` triggers on it. */
 export interface OtagEdge {

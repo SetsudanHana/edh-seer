@@ -1,4 +1,4 @@
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 
 /** DECK LEGALITY AS A REPORT, NEVER A GATE (roadmap J4, CR 903.3 and 903.5a-d).
  *

@@ -15,7 +15,7 @@ import {
   scoreCategory,
 } from "./cs-categories.js";
 import type { SaltPayload } from "./calibrate-core.js";
-import { loadOtagSemantics } from "@mtg/tagger";
+import { loadOtagSemantics } from "@edh-seer/tagger";
 import { ARCHETYPE_SIGNATURE } from "../archetypes.js";
 
 const CACHE_DIR = new URL("../../.cs-cache/", import.meta.url);

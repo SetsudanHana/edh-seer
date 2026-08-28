@@ -1,6 +1,6 @@
 import { Module, type OnModuleDestroy, Inject } from "@nestjs/common";
 import type { Db } from "mongodb";
-import type { CardTagsLookup, ProjectedGraph } from "@mtg/matcher";
+import type { CardTagsLookup, ProjectedGraph } from "@edh-seer/matcher";
 import { ANALYZE_DEPS, type AnalyzeDeps } from "../analyze/analyze.service.js";
 import { CALIBRATE_DEPS, type CalibrateDeps } from "../calibrate/calibrate.service.js";
 import { makeCalibrateDeps } from "../calibrate/calibrate.deps.js";
@@ -19,7 +19,7 @@ export const STORE = "MONGO_STORE";
  *  doesn't carry: `typeLine` (for the lands room) and the art crop.
  *
  *  `normalize` is injected rather than imported so this stays a plain, deterministic function of
- *  its arguments, testable without touching `@mtg/data` -- it does `console.warn` on an unjoined
+ *  its arguments, testable without touching `@edh-seer/data` -- it does `console.warn` on an unjoined
  *  roles count, so not literally pure. A miss there is a data gap (stale report, name drift), not
  *  a caller bug worth failing the whole request over.
  *
@@ -173,7 +173,7 @@ export function attachRolesAndArt(
     {
       provide: STORE,
       useFactory: async () => {
-        const data = await import("@mtg/data");
+        const data = await import("@edh-seer/data");
         return data.connect(data.loadConfig());
       },
     },
@@ -190,10 +190,10 @@ export function attachRolesAndArt(
       provide: ANALYZE_DEPS,
       inject: [STORE],
       useFactory: async (store: { cards: unknown; combos: unknown; db: unknown }): Promise<AnalyzeDeps> => {
-        const data = await import("@mtg/data");
-        const engine = await import("@mtg/engine");
-        const matcher = await import("@mtg/matcher");
-        const tagger = await import("@mtg/tagger");
+        const data = await import("@edh-seer/data");
+        const engine = await import("@edh-seer/engine");
+        const matcher = await import("@edh-seer/matcher");
+        const tagger = await import("@edh-seer/tagger");
         return {
           parseDecklistSections: data.parseDecklistSections,
           parseLines: data.parseDecklistText,

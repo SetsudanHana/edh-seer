@@ -3,16 +3,16 @@ import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
-import { policyBand } from "@mtg/engine/percent";
-// NOTHING IS VALUE-IMPORTED FROM @mtg/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
-// prior deep import of `GRAVEYARD_HATE_SHARE` from `@mtg/matcher/src/answer-coverage.js` (reasoned
+import { policyBand } from "@edh-seer/engine/percent";
+// NOTHING IS VALUE-IMPORTED FROM @edh-seer/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
+// prior deep import of `GRAVEYARD_HATE_SHARE` from `@edh-seer/matcher/src/answer-coverage.js` (reasoned
 // as skipping the barrel's node:fs-touching re-export of `analyze.js`) was itself fatal: that file
 // imports `poolShare`/`POOL_CLASSES` from `./answer-pool.js`, which reads `answer-pool.json` via a
 // MODULE-SCOPE `readFileSync("node:fs")` -- not lazy, not inside `loadAnswerPool`'s function body as
 // the removed comment claimed. Vite externalises `node:fs` for the browser, so the module graph died
 // on load and the app never mounted (white screen, "Cannot access node:fs.readFileSync in client
-// code"). No subpath of `@mtg/matcher` is safe to value-import from client code; see `HATE_COUNTS`
-// below for the hand-copy this now falls back to, and `land-math.ts` for the one library (`@mtg/
+// code"). No subpath of `@edh-seer/matcher` is safe to value-import from client code; see `HATE_COUNTS`
+// below for the hand-copy this now falls back to, and `land-math.ts` for the one library (`@edh-seer/
 // engine/hypergeometric`) that genuinely has no fs dependency and can be reached this way.
 
 /** Scored here and NOT listed as a benchmark row: the land count is reported once, by the block
@@ -61,8 +61,8 @@ const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n =
 // without a lib -> component import. Re-exported here because this file is where every existing
 // caller and the completeness test already look for it.
 /** `DEMAND_VERB`/`DEMAND_PHASE`/`DEMAND_SUBJECTLESS` are re-exported ONLY for the completeness test
- *  (`components.test.tsx`), which walks them against `@mtg/tagger`'s `VERB_VOCAB` and
- *  `@mtg/matcher`'s `PHASE_VERBS` — the two engine lists that define what a census key's verb half
+ *  (`components.test.tsx`), which walks them against `@edh-seer/tagger`'s `VERB_VOCAB` and
+ *  `@edh-seer/matcher`'s `PHASE_VERBS` — the two engine lists that define what a census key's verb half
  *  can ever be. Not a public API otherwise; read `demandSentence` if you want the rendering. */
 import { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS } from "../lib/demand-sentence.js";
 export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };

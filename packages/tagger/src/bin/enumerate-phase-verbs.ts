@@ -16,7 +16,7 @@
  *  reconstructed text on a card where that could have happened, each card's stored `canonical.length`
  *  is compared against the fresh count and a mismatch is marked `MISALIGNED` on its rows — refuse to
  *  guess, per this repo's standing rule, rather than print a text that may belong to a different id. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { segment } from "../segment.js";
 import { CLAUSES_COLLECTION, DERIVED_COLLECTION, type CardClausesDoc } from "../clause-store.js";
 import type { Ability } from "../schema.js";

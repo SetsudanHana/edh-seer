@@ -1,5 +1,5 @@
-import { dedupeReasonsByText, type DeckReport } from "@mtg/engine";
-import { percent, policyBand } from "@mtg/engine/percent";
+import { dedupeReasonsByText, type DeckReport } from "@edh-seer/engine";
+import { percent, policyBand } from "@edh-seer/engine/percent";
 
 /** SHARED WITH THE WEB, one copy (roadmap N6). This file floored a probability at 1% and
  *  `CardList.tsx` did not, so a measured-impossible cast read "1%" here and "0%" there. The floor

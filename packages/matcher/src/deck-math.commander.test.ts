@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { manaModel } from "./goldfish.js";
 import { computeDeckMath } from "./deck-math.js";
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 
 const card = (name: string, over: Partial<Card> = {}): DeckCard => ({

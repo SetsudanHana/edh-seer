@@ -1,4 +1,4 @@
-import { karstenLands, type KarstenInputs } from "@mtg/engine";
+import { karstenLands, type KarstenInputs } from "@edh-seer/engine";
 import { detectBuildCategories } from "./build.js";
 import type { DeckCard } from "./types.js";
 

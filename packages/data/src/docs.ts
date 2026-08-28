@@ -1,4 +1,4 @@
-import { extractTags, type Card } from "@mtg/engine";
+import { extractTags, type Card } from "@edh-seer/engine";
 import { normalizeName } from "./names.js";
 import type { CardFace, NormalizedCard, RelatedPart } from "./scryfall.js";
 

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { rankTable } from "./compare-core.js";
-import type { DeckReport } from "@mtg/engine";
+import type { DeckReport } from "@edh-seer/engine";
 
 const report = (order: string[]): DeckReport => ({
   commanders: [],

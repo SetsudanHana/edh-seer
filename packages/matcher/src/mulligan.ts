@@ -1,4 +1,4 @@
-import { pAtLeast, seen } from "@mtg/engine";
+import { pAtLeast, seen } from "@edh-seer/engine";
 
 /** EDH MULLIGAN POLICY, IN CLOSED FORM. No simulation is needed for a land-count question, and
  *  that is the whole point of this module.

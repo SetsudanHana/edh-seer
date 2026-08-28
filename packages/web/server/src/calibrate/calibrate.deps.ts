@@ -6,7 +6,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Db } from "mongodb";
-import type * as matcherTypes from "@mtg/matcher";
+import type * as matcherTypes from "@edh-seer/matcher";
 import type { CalibrateDeps, CalibratePair, CalibrateCard, VerdictRequest } from "./calibrate.service.js";
 
 /** Where the judged data lives. Relative to the repo root, because the verdicts are source. */
@@ -51,8 +51,8 @@ function renderTags(tags: { abilities?: unknown[] } | null): string[] {
 }
 
 export async function makeCalibrateDeps(store: { db: Db }, repoRoot: string): Promise<CalibrateDeps> {
-  const data = await import("@mtg/data");
-  const matcher = await import("@mtg/matcher");
+  const data = await import("@edh-seer/data");
+  const matcher = await import("@edh-seer/matcher");
   const hierarchy = matcher.loadHierarchy();
 
   /** Built once: the derived corpus is the sampling universe, and re-reading it per request would
@@ -136,7 +136,7 @@ export async function makeCalibrateDeps(store: { db: Db }, repoRoot: string): Pr
       // action when the clause names an actor the object does not carry ("its controller creates a
       // 3/3 Ape"). The gate has no database and so no oracle text to segment; without this the
       // fixture would derive different tags from the ones the judge was shown.
-      const tagger = await import("@mtg/tagger");
+      const tagger = await import("@edh-seer/tagger");
       const cardDocs = await store.db.collection("cards")
         .find({ name: { $in: [v.a, v.b] } }).toArray();
       const textsFor = (name: string): Record<number, string> => {

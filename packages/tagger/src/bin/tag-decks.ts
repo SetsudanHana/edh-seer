@@ -7,8 +7,8 @@ import {
   normalizeName,
   parseDecklistText,
   docToCard,
-} from "@mtg/data";
-import type { Card } from "@mtg/engine";
+} from "@edh-seer/data";
+import type { Card } from "@edh-seer/engine";
 import { createProvider } from "../llm/factory.js";
 import { extractCardTags } from "../extract.js";
 import { upsertCardTags, needsRetag, type TagCollection } from "../store.js";

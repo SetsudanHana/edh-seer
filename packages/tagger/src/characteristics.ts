@@ -1,4 +1,4 @@
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 import type { Characteristics } from "./schema.js";
 import { CREATURE_SUBTYPES, joinMultiWordSubtypes } from "./derive/subtypes.js";
 

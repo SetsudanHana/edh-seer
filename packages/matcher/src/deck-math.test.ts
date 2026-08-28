@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { Card } from "@mtg/engine";
-import { seen } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
+import { seen } from "@edh-seer/engine";
 import { computeDeckMath, CORPUS_MEDIAN_CLOCK } from "./deck-math.js";
 import { computeBuild } from "./build.js";
 import type { LandRecommendation } from "./land-count.js";

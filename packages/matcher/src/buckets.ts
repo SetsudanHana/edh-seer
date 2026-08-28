@@ -1,6 +1,6 @@
-import type { Reason, ImpactWeights } from "@mtg/engine";
-import { impactWeightOf } from "@mtg/engine";
-import type { CardTags, Ability } from "@mtg/tagger";
+import type { Reason, ImpactWeights } from "@edh-seer/engine";
+import { impactWeightOf } from "@edh-seer/engine";
+import type { CardTags, Ability } from "@edh-seer/tagger";
 
 export const CARD_BUCKETS = ["consistency", "efficiency", "win-condition"] as const;
 export type CardBucket = (typeof CARD_BUCKETS)[number];

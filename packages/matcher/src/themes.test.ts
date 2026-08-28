@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { themeCandidates, themeMembership } from "./themes.js";
-import type { Reason } from "@mtg/engine";
+import type { Reason } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 
 const card = (name: string, abilities: NonNullable<DeckCard["tags"]>["abilities"]): DeckCard => ({

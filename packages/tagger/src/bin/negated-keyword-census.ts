@@ -2,7 +2,7 @@
  *  flying" — and how many of them sit in the derived corpus as real consumers. `SubjectFilter.keyword`
  *  (2026-08-14) is anchored on a preceding "with" and has no negated form, so these subjects derive
  *  WIDER than printed. Free, read-only. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { KEYWORD_ABILITIES } from "../derive/subtypes.js";
 import { DERIVED_COLLECTION } from "../clause-store.js";
 import type { Ability } from "../schema.js";

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { Card } from "@mtg/engine";
-import { minCopies } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
+import { minCopies } from "@edh-seer/engine";
 import { manaAudit, pipsByColor } from "./mana-audit.js";
 import { minSources } from "./mulligan.js";
 import type { DeckCard } from "./types.js";

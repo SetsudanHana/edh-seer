@@ -19,7 +19,7 @@
 import { writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { connect, docToCard, loadConfig } from "@mtg/data";
+import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { answerClassesOf, loadRules } from "../rules.js";
 import { POOL_CLASSES, identityKey, type AnswerPool } from "../answer-pool.js";
 import { ANSWER_BASELINE, GRAVEYARD_HATE_SHARE } from "../answer-coverage.js";

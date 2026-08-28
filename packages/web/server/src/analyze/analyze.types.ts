@@ -1,4 +1,4 @@
-import type { DeckReport } from "@mtg/engine";
+import type { DeckReport } from "@edh-seer/engine";
 
 /** A deck card. Facet values are FIELDS, never nodes -- see
  *  docs/superpowers/specs/2026-08-13-deck-graph-presentation-design.md §1. */
@@ -38,7 +38,7 @@ export interface WireGraphNode {
   colors: string[];
   cmc: number;
   /** Functional BUILD roles the report gave this card. Absent when it had none -- not the same as
-   *  an empty array. Kept as plain strings so this file need not depend on @mtg/matcher. */
+   *  an empty array. Kept as plain strings so this file need not depend on @edh-seer/matcher. */
   roles?: string[];
   artCrop?: string;
 }

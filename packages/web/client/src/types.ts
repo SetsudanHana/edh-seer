@@ -1,12 +1,12 @@
-import type { DeckReport } from "@mtg/engine";
-import type { GraphEdge, NodeKind, EdgeKind } from "@mtg/matcher";
+import type { DeckReport } from "@edh-seer/engine";
+import type { GraphEdge, NodeKind, EdgeKind } from "@edh-seer/matcher";
 import type {
   AnalyzeResponse as WireAnalyzeResponse,
   WireGraph,
   WireGraphNode,
 } from "../../server/src/analyze/analyze.types.js";
 
-/** `CardGraph`/`GraphNode` used to re-export straight from `@mtg/matcher`, which still advertises
+/** `CardGraph`/`GraphNode` used to re-export straight from `@edh-seer/matcher`, which still advertises
  *  `props?` and knows nothing of `roles`/`artCrop`. That's not what the server actually sends --
  *  `WireGraph`/`WireGraphNode` in the server's own `analyze.types.ts` is the true wire shape (see
  *  that file's doc comment for what gets stripped and why). Reconciled here by aliasing to the

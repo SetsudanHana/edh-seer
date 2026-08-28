@@ -1,4 +1,4 @@
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 import { EFFECT_KINDS, SCALING_BASES, VERB_VOCAB } from "../schema.js";
 import type { ChatMessage } from "./provider.js";
 

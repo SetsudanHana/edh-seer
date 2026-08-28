@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE } from "./edges.js";
 import { faceDeckCards } from "./faces.js";
-import type { Reason } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import type { Reason } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"] };

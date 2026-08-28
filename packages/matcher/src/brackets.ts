@@ -1,4 +1,4 @@
-import type { Card, Combo } from "@mtg/engine";
+import type { Card, Combo } from "@edh-seer/engine";
 
 /** WHAT COUNTS AS A CHEAP COMBO, as a total mana value across both pieces.
  *

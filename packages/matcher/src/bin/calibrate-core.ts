@@ -1,4 +1,4 @@
-import type { ImpactWeights } from "@mtg/engine";
+import type { ImpactWeights } from "@edh-seer/engine";
 
 export interface SaltPayload {
   /** Full commander card name(s), e.g. ["Inalla, Archmage Ritualist"]. */

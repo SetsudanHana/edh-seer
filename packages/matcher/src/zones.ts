@@ -1,4 +1,4 @@
-import type { GameEvent } from "@mtg/tagger";
+import type { GameEvent } from "@edh-seer/tagger";
 
 /** Canonicalize a zone-transition event. The `enters` verb ALWAYS means "enters the battlefield",
  *  so its zone is forced to battlefield (some tags erroneously put a source zone on an enters

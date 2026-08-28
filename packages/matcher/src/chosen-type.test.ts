@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
-import type { CardTags } from "@mtg/tagger";
+import type { CardTags } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 
 const chars = (subtypes: string[]) => ({

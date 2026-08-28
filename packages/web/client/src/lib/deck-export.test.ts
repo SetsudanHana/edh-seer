@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { deckExportText } from "./deck-export.js";
 
 // The header words are asserted literally rather than round-tripped through `parseDecklistSections`:
-// importing `@mtg/data` here drags the engine's file-reading module graph into jsdom. "Commander"
+// importing `@edh-seer/data` here drags the engine's file-reading module graph into jsdom. "Commander"
 // and "Deck" are Moxfield's own section names, which is what both that parser and the next tool read.
 describe("deckExportText", () => {
   it("names the commander section and keeps copy counts verbatim", () => {

@@ -1,5 +1,5 @@
-import { connect, loadConfig } from "@mtg/data";
-import type { CardTags } from "@mtg/tagger";
+import { connect, loadConfig } from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
 import { buildCensus, type CensusRow } from "../census.js";
 import { loadHierarchy } from "../hierarchy.js";
 

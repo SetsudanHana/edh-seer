@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { topdeckPayoffs } from "./topdeck.js";
-import type { CardTags } from "@mtg/tagger";
+import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 
 const card = (name: string, typeLine: string, manaValue: number, oracleText = "", abilities: CardTags["abilities"] = []): DeckCard => ({

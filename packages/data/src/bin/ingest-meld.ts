@@ -8,12 +8,12 @@
  *  Usage: tsx src/bin/ingest-meld.ts [--dry-run]
  */
 import { fileURLToPath } from "node:url";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { buildMeld, type ScryfallMeldCard } from "./ingest-meld-core.js";
 
 const SEARCH = "https://api.scryfall.com/cards/search?q=layout%3Ameld&unique=cards";
 /** Scryfall rejects requests without these — the same pair `scryfall.ts` already sends. */
-const HEADERS = { "User-Agent": "mtg-synergy-engine/0.1", Accept: "application/json" };
+const HEADERS = { "User-Agent": "edh-seer/0.1", Accept: "application/json" };
 
 async function main(): Promise<void> {
   const dryRun = process.argv.includes("--dry-run");

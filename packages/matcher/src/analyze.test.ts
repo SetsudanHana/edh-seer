@@ -1,9 +1,9 @@
 import { describe, expect, it, test } from "vitest";
 import { analyzeDeckStructured, collectTokenNodes } from "./analyze.js";
 import { faceDeckCards } from "./faces.js";
-import { SEED_IMPACT_WEIGHTS, loadImpactWeights } from "@mtg/engine";
-import type { TagStats } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import { SEED_IMPACT_WEIGHTS, loadImpactWeights } from "@edh-seer/engine";
+import type { TagStats } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { directedReasons } from "./edges.js";
 
@@ -300,7 +300,7 @@ test("a glutted shape's feeder credit falls when the magnitude term is on, and i
   expect(payoffOn.score).toBe(payoffOff.score); // the scarce side's RAW score never moves
 });
 
-import { ComboIndex } from "@mtg/engine";
+import { ComboIndex } from "@edh-seer/engine";
 
 const rampAbility: CardTags["abilities"] = [{
   kind: "static",
@@ -1197,7 +1197,7 @@ test("a multi-face card is rated once per face and counted once as a card", () =
   expect(rated).toContain("Fell the Profane");
   expect(rated).toContain("Fell Mire");
   expect(rated).not.toContain("Fell the Profane // Fell Mire");
-  // `DeckReport` has no `stats.totalCards` field (checked -- @mtg/engine's DeckReport carries
+  // `DeckReport` has no `stats.totalCards` field (checked -- @edh-seer/engine's DeckReport carries
   // `manaCurve`/`landCount` directly, both from `computeDeckStats(resolved.map(dc => dc.card))`).
   // Same invariant, real fields: the library stayed 3 PHYSICAL cards. A face split that leaked past
   // `unique` into `resolved` would count the DFC's Instant face AND its Land face separately here,

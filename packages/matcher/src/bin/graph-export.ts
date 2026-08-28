@@ -1,6 +1,6 @@
 import { writeFileSync, readFileSync } from "node:fs";
-import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistText, type CardDoc } from "@mtg/data";
-import type { CardTags } from "@mtg/tagger";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistText, type CardDoc } from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
 import { buildGraph, type CardGraph } from "../graph.js";
 import { toHtml } from "../graph-html.js";
 import { addEventEdges, orphanCards } from "../graph-events.js";

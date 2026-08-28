@@ -19,11 +19,11 @@
  *  Usage: tsx src/bin/ingest-tokens.ts [--dry-run]
  */
 import { fileURLToPath } from "node:url";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { mergeTokenDocs, tokenDoc, tokenKey, type ScryfallToken } from "./ingest-tokens-core.js";
 
 const SEARCH = "https://api.scryfall.com/cards/search?q=is%3Atoken&unique=prints&order=name";
-const HEADERS = { "User-Agent": "mtg-synergy-engine/0.1", Accept: "application/json" };
+const HEADERS = { "User-Agent": "edh-seer/0.1", Accept: "application/json" };
 const sleep = (ms: number): Promise<void> => new Promise((r) => { setTimeout(r, ms); });
 
 async function fetchAll(): Promise<ScryfallToken[]> {

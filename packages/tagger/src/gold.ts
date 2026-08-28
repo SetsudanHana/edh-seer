@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 import type { CardTags } from "./schema.js";
 
 export interface GoldCard {

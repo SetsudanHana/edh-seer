@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { SEED_IMPACT_WEIGHTS } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import { SEED_IMPACT_WEIGHTS } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import { computeCardBuckets } from "./buckets.js";
 
 const tags = (abilities: CardTags["abilities"]): CardTags => ({

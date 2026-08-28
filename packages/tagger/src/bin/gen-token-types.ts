@@ -11,7 +11,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { buildTokenTypes } from "../derive/token-types.js";
 
 async function main(): Promise<void> {

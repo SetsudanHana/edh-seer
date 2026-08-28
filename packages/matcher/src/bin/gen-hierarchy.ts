@@ -2,7 +2,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { Collection } from "mongodb";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { buildHierarchy } from "../hierarchy.js";
 
 /** Pull every non-empty typeLine out of the cards collection. Exported for testing against a fake collection. */

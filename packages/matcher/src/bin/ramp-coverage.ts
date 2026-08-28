@@ -15,9 +15,9 @@
  *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/ramp-coverage.ts [deck.txt] */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@mtg/data";
-import type { CardTags } from "@mtg/tagger";
-import { ComboIndex } from "@mtg/engine";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
+import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured } from "../index.js";
 import type { DeckCard } from "../types.js";
 

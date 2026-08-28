@@ -3,7 +3,7 @@
  *
  *  Usage: tsx src/bin/repeats-report.ts [--sample N] [--refused <path.json>] */
 import { writeFileSync } from "node:fs";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import type { Ability, CardTags } from "../schema.js";
 import { segment } from "../segment.js";
 import { deriveAbilities } from "../derive/derive.js";

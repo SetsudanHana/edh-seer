@@ -10,7 +10,7 @@
  *  the wrong direction and would have made this a cycle the first time a component needed a finding.
  */
 /** The event half of a census key (`enters`, `dies`, `cast`, `end-step`…) as the words a player
- *  would use, for every verb `@mtg/tagger`'s `VERB_VOCAB` can put in a consumer's trigger EXCEPT
+ *  would use, for every verb `@edh-seer/tagger`'s `VERB_VOCAB` can put in a consumer's trigger EXCEPT
  *  the three `availability.ts` calls `PHASE_VERBS` (those live in `DEMAND_PHASE` below, because a
  *  phase carries no subject to glue this onto) AND the five `DEMAND_SUBJECTLESS` below (a player
  *  action has no permanent subject either). The completeness test below this component walks all
@@ -246,7 +246,7 @@ export const MECHANISM: Record<string, string> = {
  *
  *  THE ENGINE ALREADY HAS ENGLISH FOR THESE and it is deliberately not imported: `sentence.ts`'s
  *  `GRANT_PHRASES` fits the slot "<producer> gives <consumer> ___" ("bigger stats", "an extra
- *  ability"), which is a different grammar from a legend LABEL, and no subpath of `@mtg/matcher` is
+ *  ability"), which is a different grammar from a legend LABEL, and no subpath of `@edh-seer/matcher` is
  *  safe to value-import from client code anyway (the 2026-08-21 regression). Same reason
  *  `DEMAND_VERB` and the engine's own `VERB_PHRASES` coexist.
  *

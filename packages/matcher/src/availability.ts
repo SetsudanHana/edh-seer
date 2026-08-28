@@ -1,4 +1,4 @@
-import { pAtLeast, seen } from "@mtg/engine";
+import { pAtLeast, seen } from "@edh-seer/engine";
 import { buildCensus } from "./census.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 

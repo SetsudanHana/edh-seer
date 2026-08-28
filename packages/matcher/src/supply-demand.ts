@@ -27,10 +27,10 @@
  *  Shapes with no supply at all are therefore ABSENT rather than zero — that is an availability
  *  question, and `deckAvailability` already answers it.
  */
-import { seen } from "@mtg/engine";
-import type { Reason } from "@mtg/engine";
-import { VERB_VOCAB } from "@mtg/tagger";
-import type { Ability, CardTags } from "@mtg/tagger";
+import { seen } from "@edh-seer/engine";
+import type { Reason } from "@edh-seer/engine";
+import { VERB_VOCAB } from "@edh-seer/tagger";
+import type { Ability, CardTags } from "@edh-seer/tagger";
 import { nodeId } from "./graph-projection.js";
 import { DEFAULT_POD_SIZE } from "./format.js";
 

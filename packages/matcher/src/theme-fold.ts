@@ -1,5 +1,5 @@
-import { tagFamily } from "@mtg/engine";
-import { SUBTYPE_TYPES } from "@mtg/tagger";
+import { tagFamily } from "@edh-seer/engine";
+import { SUBTYPE_TYPES } from "@edh-seer/tagger";
 import { ALL_CARD_TYPES } from "./hierarchy.js";
 import type { Hierarchy } from "./types.js";
 

@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig, type CardDoc } from "@mtg/data";
+import { connect, loadConfig, type CardDoc } from "@edh-seer/data";
 import { renderPreamble } from "./corpus-core.js";
 
 // Usage: dump-suspects [--size N] [--out DIR]

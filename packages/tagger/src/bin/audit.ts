@@ -1,4 +1,4 @@
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { needsRetag } from "../store.js";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";

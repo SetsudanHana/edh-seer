@@ -13,7 +13,7 @@
  *  in `goldfish.ts` before quoting any number here. */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@mtg/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";
 import { classifyAccelerant, pAtLeastMana, quantiles, simulate } from "../goldfish.js";
 import type { DeckCard } from "../types.js";
 

@@ -1,5 +1,5 @@
 import type { DeckReport } from "../types.js";
-import { policyBand } from "@mtg/engine/percent";
+import { policyBand } from "@edh-seer/engine/percent";
 
 /** MANA AVAILABILITY — a seeded goldfish simulation, not a formula (roadmap I11's report wiring).
  *

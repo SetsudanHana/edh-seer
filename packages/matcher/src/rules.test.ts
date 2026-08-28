@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { detectWincons } from "./wincon.js";
 import { answerClassesOf, loadRules, ruleMatches, RULES_VERSION } from "./rules.js";

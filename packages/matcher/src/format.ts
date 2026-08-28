@@ -51,7 +51,7 @@ export function commanderTax(castNumber: number): number {
 }
 
 /** The sentence that goes beside the P = 1 figure. Shipped as DATA on the report rather than written
- *  into each renderer: **no subpath of `@mtg/matcher` is safe to value-import from client code** — a
+ *  into each renderer: **no subpath of `@edh-seer/matcher` is safe to value-import from client code** — a
  *  recorded critical regression (BuildBenchmarks.tsx, 2026-08-21) — so a shared constant is the only
  *  way both surfaces can say the same thing without one of them drifting. */
 export const COMMANDER_TAX_CAVEAT =

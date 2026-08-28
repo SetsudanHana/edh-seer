@@ -1,4 +1,4 @@
-import { impactEdgeWeight, type ImpactWeights, type Reason } from "@mtg/engine";
+import { impactEdgeWeight, type ImpactWeights, type Reason } from "@edh-seer/engine";
 import { parseTypeLineAllFaces } from "./typeline.js";
 import type { DeckCard } from "./types.js";
 

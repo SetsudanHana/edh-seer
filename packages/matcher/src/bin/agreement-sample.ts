@@ -32,9 +32,9 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
-} from "@mtg/data";
-import { ComboIndex } from "@mtg/engine";
-import { createTagsLookup } from "@mtg/tagger";
+} from "@edh-seer/data";
+import { ComboIndex } from "@edh-seer/engine";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
 import { claimFor } from "./precision-core.js";
 import { sample, seededRng } from "./precision-core.js";

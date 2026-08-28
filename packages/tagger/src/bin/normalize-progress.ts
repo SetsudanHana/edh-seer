@@ -7,7 +7,7 @@
  *    tsx src/bin/normalize-progress.ts --watch 5  # refresh every 5s */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig, normalizeName, parseDecklistText } from "@mtg/data";
+import { connect, loadConfig, normalizeName, parseDecklistText } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, type CardClausesDoc } from "../clause-store.js";
 import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE } from "../normalize-prompt.js";
 

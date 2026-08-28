@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { Reason } from "@mtg/engine";
-import { EFFECT_KINDS, VERB_VOCAB } from "@mtg/tagger";
+import type { Reason } from "@edh-seer/engine";
+import { EFFECT_KINDS, VERB_VOCAB } from "@edh-seer/tagger";
 import { CATEGORY_MATCH, MECHANISM_CATEGORIES, MECHANISM_LABELS, categoryDefines, categoryMatches, groupEdgesByArchetype, type MechanismCategory } from "./mechanisms.js";
 
 const reason = (over: Partial<Reason>): Reason => ({ tag: "", text: "", ...over });

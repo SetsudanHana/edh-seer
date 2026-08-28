@@ -1,5 +1,5 @@
-import type { Ability, CardTags, Characteristics, GameEvent, SubjectFilter } from "@mtg/tagger";
-import { parseSubject } from "@mtg/tagger";
+import type { Ability, CardTags, Characteristics, GameEvent, SubjectFilter } from "@edh-seer/tagger";
+import { parseSubject } from "@edh-seer/tagger";
 import { parseStat } from "./stats.js";
 
 const PERMANENT_TYPES = new Set(["creature", "artifact", "enchantment", "planeswalker", "battle", "land"]);

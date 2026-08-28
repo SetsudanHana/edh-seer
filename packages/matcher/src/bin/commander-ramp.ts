@@ -27,8 +27,8 @@
  *    commander-ramp.ts --criteria      R1-R4, the registered criteria that need the corpus */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@mtg/data";
-import { createTagsLookup } from "@mtg/tagger";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { detectBuildCategories } from "../build.js";
 import { costRefusal } from "../castability.js";
 import { quantiles, simulate, type SimulateResult } from "../goldfish.js";

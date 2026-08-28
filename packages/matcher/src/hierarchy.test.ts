@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { buildHierarchy, impliesType, expandTypes, PSEUDO_TYPE_SETS, ALL_CARD_TYPES } from "./hierarchy.js";
-import { CARD_TYPES, UMBRELLA_TYPES } from "@mtg/tagger";
+import { CARD_TYPES, UMBRELLA_TYPES } from "@edh-seer/tagger";
 
 test("buildHierarchy maps each subtype after the dash to its card types", () => {
   const h = buildHierarchy([

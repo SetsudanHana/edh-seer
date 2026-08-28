@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
 import { buildDeckCards, type CardTagsLookup } from "./deck-cards.js";
-import type { CardLookup } from "@mtg/data";
-import type { CardDoc } from "@mtg/data";
-import type { Card } from "@mtg/engine";
+import type { CardLookup } from "@edh-seer/data";
+import type { CardDoc } from "@edh-seer/data";
+import type { Card } from "@edh-seer/engine";
 
 const fakeLookup: CardLookup = {
   findByName: async (n: string) =>

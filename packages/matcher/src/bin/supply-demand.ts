@@ -27,9 +27,9 @@
  */
 import { readFileSync, readdirSync, writeFileSync, readFileSync as readJson } from "node:fs";
 import { isAbsolute, join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
-import { ComboIndex } from "@mtg/engine";
-import { createTagsLookup } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { ComboIndex } from "@edh-seer/engine";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
 import { countInversions, diffInversions, ratingsFor, type InversionReport } from "../rank-inversions.js";
 import { buildSupplyDemand, ratio, type SupplyDemandRow } from "../supply-demand.js";

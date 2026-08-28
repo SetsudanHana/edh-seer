@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { CardTags } from "@mtg/tagger";
+import type { CardTags } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 import { buildCensus } from "./census.js";
 

@@ -5,9 +5,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard } from "@mtg/data";
-import { SEED_IMPACT_WEIGHTS, loadImpactWeights, impactEdgeWeight, dampByAlpha, COMMANDER_BOOST, type ImpactWeights } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard } from "@edh-seer/data";
+import { SEED_IMPACT_WEIGHTS, loadImpactWeights, impactEdgeWeight, dampByAlpha, COMMANDER_BOOST, type ImpactWeights } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured } from "../analyze.js";
 import { saltCardScores, spearman, meanSpearman, looCV, type SaltPayload, type ScoreDeck } from "./calibrate-core.js";
 import type { DeckCard } from "../types.js";

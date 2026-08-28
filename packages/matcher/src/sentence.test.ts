@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { VERB_VOCAB } from "@mtg/tagger";
+import { VERB_VOCAB } from "@edh-seer/tagger";
 import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
@@ -72,7 +72,7 @@ describe("eventVerbPhrase", () => {
   // The fallback above is unreachable today only because every VERB_VOCAB member has a table entry;
   // nothing enforced that, and this project adds verbs often (F3, review round 1). A future verb
   // added to schema.ts without a matching entry here would silently ship the naive plural.
-  test("every @mtg/tagger VERB_VOCAB member has a VERB_PHRASES entry", () => {
+  test("every @edh-seer/tagger VERB_VOCAB member has a VERB_PHRASES entry", () => {
     const missing = VERB_VOCAB.filter((v) => !(v in VERB_PHRASES));
     expect(missing).toEqual([]);
   });

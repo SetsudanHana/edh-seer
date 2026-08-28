@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { Reason } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import type { Reason } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import { buildSupplyDemand, cardRate, ratio, type SupplyDemandInput } from "./supply-demand.js";
 
 const card = (id: string, abilities: CardTags["abilities"]): CardTags => ({

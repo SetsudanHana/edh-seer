@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { needsRetag, type TagCollection } from "../store.js";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";

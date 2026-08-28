@@ -1,4 +1,4 @@
-import { globalIDF, type Reason, type TagStats } from "@mtg/engine";
+import { globalIDF, type Reason, type TagStats } from "@edh-seer/engine";
 
 /** Extra TF mass given to the commander's own theme tags so the commander anchors the axis —
  *  but the weight is still × globalIDF, so a generic commander ability (near-zero idf) can't

@@ -1,4 +1,4 @@
-import type { Reason } from "@mtg/engine";
+import type { Reason } from "@edh-seer/engine";
 import type { DeckCard } from "../types.js";
 import { cardThemeTags } from "../edges.js";
 import { categoryMatches, type MechanismCategory } from "../mechanisms.js";

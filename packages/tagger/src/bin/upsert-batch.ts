@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { connect, loadConfig, docToCard } from "@mtg/data";
+import { connect, loadConfig, docToCard } from "@edh-seer/data";
 import { upsertCardTags, type TagCollection } from "../store.js";
 import { cardTagsFromRawAbilities, expectsAbilities } from "./corpus-core.js";
 

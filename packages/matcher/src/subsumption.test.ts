@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { computeCohesion } from "@mtg/engine";
+import { computeCohesion } from "@edh-seer/engine";
 import { keyDenotes, subsumptionMap } from "./hierarchy.js";
 
 test("a cast: family drops land, because a land is played and not cast", () => {

@@ -1,5 +1,5 @@
-import { LAND_SUBTYPES } from "@mtg/tagger";
-import type { Card } from "@mtg/engine";
+import { LAND_SUBTYPES } from "@edh-seer/tagger";
+import type { Card } from "@edh-seer/engine";
 
 /** WHAT A CONDITIONAL LAND DEMANDS, read off printed text. Free — no derivation, no clause layer,
  *  no spend, the `sagaEvents` shape (a printed cue the matcher reads directly).

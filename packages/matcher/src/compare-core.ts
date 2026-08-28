@@ -1,4 +1,4 @@
-import type { DeckReport } from "@mtg/engine";
+import type { DeckReport } from "@edh-seer/engine";
 
 const pad = (s: string, n: number): string => (s.length >= n ? s.slice(0, n) : s.padEnd(n));
 

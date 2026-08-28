@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
-import { analyzeDeck, ComboIndex, type Card, type Combo } from "@mtg/engine";
-import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@mtg/matcher";
-import { createTagsLookup } from "@mtg/tagger";
+import { analyzeDeck, ComboIndex, type Card, type Combo } from "@edh-seer/engine";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
+import { createTagsLookup } from "@edh-seer/tagger";
 import {
   loadConfig,
   connect,
@@ -11,7 +11,7 @@ import {
   normalizeName,
   parseMoxfieldId,
   fetchMoxfieldDeck,
-} from "@mtg/data";
+} from "@edh-seer/data";
 import { formatReport } from "./report.js";
 
 interface DeckFile {

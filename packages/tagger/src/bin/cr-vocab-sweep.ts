@@ -21,7 +21,7 @@
  *
  *  Requires the cached rules text: `tsx src/bin/fetch-comp-rules.ts` first. */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { TRIGGERS } from "../normalize-prompt.js";
 import { VERB_VOCAB } from "../schema.js";
 import { KEYWORD_ABILITIES } from "../derive/subtypes.js";

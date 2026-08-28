@@ -11,7 +11,7 @@
  *  READ THE OBJECTS BEFORE RANKING A GAP. This file exists because counting the cards says only how
  *  big the hole is, never what shape it is — and this project has three separate records of a
  *  vocabulary item being mis-ranked by counting instead of reading. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION } from "../clause-store.js";
 
 const store = await connect(loadConfig());

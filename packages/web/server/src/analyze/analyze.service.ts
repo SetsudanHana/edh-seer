@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { DeckReport } from "@mtg/engine";
+import type { DeckReport } from "@edh-seer/engine";
 import type { AnalyzeResponse, WireGraph } from "./analyze.types.js";
 
 export const ANALYZE_DEPS = "ANALYZE_DEPS";
@@ -43,7 +43,7 @@ export class AnalyzeService {
     );
     const report = await this.deps.analyze(cards, combos, commanderResolved);
     // Keyed by raw report name, not a normalized one: the dep already normalizes both sides of
-    // this join off its own `docs` array (the ESM `@mtg/data` it dynamically imports), so doing
+    // this join off its own `docs` array (the ESM `@edh-seer/data` it dynamically imports), so doing
     // it again here would just be a second, easy-to-drift copy of the same normalization.
     //
     // KEYED ON THE PHYSICAL CARD, because `attachRolesAndArt` looks a node's roles up under

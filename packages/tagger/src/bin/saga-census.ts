@@ -4,7 +4,7 @@
  *
  *  "Count the consumers, not the printed cards" — the keyword sweep's lesson, 2026-08-14. */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
 import { DERIVED_COLLECTION } from "../clause-store.js";
 import type { Ability, SubjectFilter } from "../schema.js";
 

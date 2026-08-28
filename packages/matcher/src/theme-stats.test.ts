@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { computeThemeStats, UNIFORM_STATS } from "./theme-stats.js";
-import type { CardTags } from "@mtg/tagger";
+import type { CardTags } from "@edh-seer/tagger";
 
 const doc = (abilities: CardTags["abilities"]): CardTags => ({
   oracleId: "x", schemaVersion: 1, promptVersion: 1, model: "t",

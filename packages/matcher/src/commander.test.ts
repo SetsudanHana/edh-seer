@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { CardTags, SubjectFilter } from "@mtg/tagger";
+import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 import { commanderMatches, markCommander } from "./commander.js";
 
 const sub = (o: Partial<SubjectFilter> = {}): SubjectFilter => ({ control: "you", token: null, ...o });

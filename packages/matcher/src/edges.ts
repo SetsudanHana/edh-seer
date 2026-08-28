@@ -1,6 +1,6 @@
-import type { Reason } from "@mtg/engine";
-import type { CardTags, GameEvent, SubjectFilter } from "@mtg/tagger";
-import { LAND_SUBTYPES } from "@mtg/tagger";
+import type { Reason } from "@edh-seer/engine";
+import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
+import { LAND_SUBTYPES } from "@edh-seer/tagger";
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
 const SUPERTYPES: ReadonlySet<string> = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);

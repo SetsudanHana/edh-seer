@@ -1,5 +1,5 @@
 {
-  "name": "@mtg/matcher",
+  "name": "@edh-seer/matcher",
   "version": "0.0.0",
   "type": "module",
   "main": "src/index.ts",
@@ -12,9 +12,9 @@
     "theme-cal": "tsx src/bin/theme-cal.ts"
   },
   "dependencies": {
-    "@mtg/data": "*",
-    "@mtg/engine": "*",
-    "@mtg/tagger": "*",
+    "@edh-seer/data": "*",
+    "@edh-seer/engine": "*",
+    "@edh-seer/tagger": "*",
     "mongodb": "^6.8.0"
   },
   "devDependencies": {

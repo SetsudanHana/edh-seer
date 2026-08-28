@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { SEED_IMPACT_WEIGHTS, UNKNOWN_KIND_WEIGHT, impactWeightOf } from "./impact.js";
 import { loadImpactWeights, impactEdgeWeight, dampByAlpha } from "./impact.js";
 import type { Reason } from "./synergy.js";
-import { EFFECT_KINDS } from "@mtg/tagger";
+import { EFFECT_KINDS } from "@edh-seer/tagger";
 
 const r = (over: Partial<Reason>): Reason => ({ tag: "t", text: "", ...over });
 

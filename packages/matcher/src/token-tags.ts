@@ -1,5 +1,5 @@
 import type { Db } from "mongodb";
-import { DERIVED_COLLECTION, SCHEMA_VERSION, extractCharacteristics, type CardTags } from "@mtg/tagger";
+import { DERIVED_COLLECTION, SCHEMA_VERSION, extractCharacteristics, type CardTags } from "@edh-seer/tagger";
 import type { TokenRef } from "./tokens.js";
 
 /** The `tokens` collection's own shape (packages/data/src/bin/ingest-tokens-core.ts's `TokenDoc`),

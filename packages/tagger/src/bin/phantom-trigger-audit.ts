@@ -10,7 +10,7 @@
  *  The test is deliberately GENEROUS — one cue anywhere in the card's text clears the whole card, so
  *  this under-reports and never invents a defect. Verbs whose cue is unwritable (`cast` is implied
  *  for every nonland, phase triggers are structural) are skipped rather than guessed at. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, hasPhantomTrigger, type CardClausesDoc } from "../clause-store.js";
 
 const store = await connect(loadConfig());

@@ -1,5 +1,5 @@
 {
-  "name": "@mtg/cli",
+  "name": "@edh-seer/cli",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -8,10 +8,10 @@
     "start": "tsx src/main.ts"
   },
   "dependencies": {
-    "@mtg/engine": "*",
-    "@mtg/data": "*",
-    "@mtg/matcher": "*",
-    "@mtg/tagger": "*"
+    "@edh-seer/engine": "*",
+    "@edh-seer/data": "*",
+    "@edh-seer/matcher": "*",
+    "@edh-seer/tagger": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

@@ -7,7 +7,7 @@
  *
  *  Ranked by CARDS, and each row prints the clause text, because "count the consumers, not the
  *  printed cards" cuts both ways: a word worth adding is one several cards actually reach for. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, type CardClausesDoc } from "../clause-store.js";
 import { TRIGGERS } from "../normalize-prompt.js";
 import { normalizeTriggerVerb } from "../derive/derive.js";

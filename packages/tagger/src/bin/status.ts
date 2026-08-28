@@ -1,4 +1,4 @@
-import { connect, loadConfig, type CardDoc } from "@mtg/data";
+import { connect, loadConfig, type CardDoc } from "@edh-seer/data";
 import { needsRetag, type TagCollection } from "../store.js";
 import { SCHEMA_VERSION } from "../schema.js";
 import { PROMPT_VERSION } from "../llm/prompt.js";

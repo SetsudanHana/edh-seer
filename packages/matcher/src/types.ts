@@ -1,5 +1,5 @@
-import type { Card } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import type { Card } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 
 /** A deck card paired with its structured tags (null when the card was never tagged). */
 export interface DeckCard {

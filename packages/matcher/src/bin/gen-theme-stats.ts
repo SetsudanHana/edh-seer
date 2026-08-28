@@ -2,8 +2,8 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { Collection } from "mongodb";
-import { connect, loadConfig } from "@mtg/data";
-import type { CardTags } from "@mtg/tagger";
+import { connect, loadConfig } from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
 import { computeThemeStats } from "../theme-stats.js";
 
 /** Pull every cardTags document. Exported for testing against a fake collection. */

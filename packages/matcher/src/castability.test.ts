@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 import { cardCastability, costRefusal, deckCastability } from "./castability.js";
 import { manaModel } from "./goldfish.js";
 import type { DeckCard } from "./types.js";

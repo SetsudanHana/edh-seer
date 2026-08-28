@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { expect, test } from "vitest";
-import { VERB_VOCAB } from "@mtg/tagger";
+import { VERB_VOCAB } from "@edh-seer/tagger";
 
 /** THE COMMITTED IDF ARTIFACT GOES STALE SILENTLY, AND IT DECIDES EVERY DECK'S THEME.
  *

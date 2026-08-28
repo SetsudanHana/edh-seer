@@ -1,5 +1,5 @@
 {
-  "name": "@mtg/data",
+  "name": "@edh-seer/data",
   "version": "0.0.0",
   "type": "module",
   "main": "src/index.ts",
@@ -11,7 +11,7 @@
     "mechanic-coverage": "tsx src/bin/mechanic-coverage.ts"
   },
   "dependencies": {
-    "@mtg/engine": "*",
+    "@edh-seer/engine": "*",
     "mongodb": "^6.8.0",
     "stream-json": "^1.8.0"
   },

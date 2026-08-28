@@ -3,9 +3,9 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import {
   connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@mtg/data";
-import type { CardTags } from "@mtg/tagger";
-import { createTagsLookup } from "@mtg/tagger";
+} from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, BUILD_PARENTS } from "../build.js";
 import { recommendedLands } from "../land-count.js";
 import { winconReport } from "../wincon.js";

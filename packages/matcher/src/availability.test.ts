@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
-import type { CardTags } from "@mtg/tagger";
-import type { Card } from "@mtg/engine";
-import { pAtLeast, seen } from "@mtg/engine";
+import type { CardTags } from "@edh-seer/tagger";
+import type { Card } from "@edh-seer/engine";
+import { pAtLeast, seen } from "@edh-seer/engine";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { deckAvailability } from "./availability.js";
 

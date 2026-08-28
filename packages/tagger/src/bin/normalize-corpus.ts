@@ -31,7 +31,7 @@
  *  to Ollama and every card returns `ERROR: fetch failed`. */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText } from "@mtg/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText } from "@edh-seer/data";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { buildRequest, codeAnsweredCard, needsModel, normalizeCard, parseNormalizedCard, type NormalizedCard } from "../normalize-card.js";

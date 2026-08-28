@@ -1,6 +1,6 @@
 import { Readable } from "node:stream";
 import { createRequire } from "node:module";
-import type { Combo } from "@mtg/engine";
+import type { Combo } from "@edh-seer/engine";
 
 // stream-json is CommonJS; Node's native ESM loader (used by tsx at runtime)
 // cannot statically resolve its named exports, so load it via createRequire.
@@ -39,7 +39,7 @@ export function normalizeVariant(raw: SpellbookVariant): NormalizedCombo | null 
 export type FetchFn = typeof fetch;
 
 const SPELLBOOK_HEADERS = {
-  "User-Agent": "mtg-synergy-engine/0.1",
+  "User-Agent": "edh-seer/0.1",
   Accept: "application/json",
 };
 

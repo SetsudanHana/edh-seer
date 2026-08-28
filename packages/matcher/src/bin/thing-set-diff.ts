@@ -18,9 +18,9 @@
  *
  *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/thing-set-diff.ts [--verbose] */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
-import { createTagsLookup } from "@mtg/tagger";
-import { ComboIndex } from "@mtg/engine";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { createTagsLookup } from "@edh-seer/tagger";
+import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
 import { cardThemeTags } from "../edges.js";
 import { themeMembership, themeCandidates } from "../themes.js";

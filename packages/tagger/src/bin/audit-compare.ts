@@ -5,7 +5,7 @@
  *  Usage: tsx src/bin/audit-compare.ts <dir> [--only name-substring] */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 
 const dir = process.argv[2];
 const onlyIdx = process.argv.indexOf("--only");

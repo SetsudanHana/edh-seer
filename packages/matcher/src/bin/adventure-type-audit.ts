@@ -9,9 +9,9 @@
  *  This asks whether the union actually COSTS anything: across the 71 decks, does an adventurer card
  *  satisfy a consumer that demands an instant or sorcery? Free, read-only. */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
-import { ComboIndex } from "@mtg/engine";
-import { createTagsLookup } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { ComboIndex } from "@edh-seer/engine";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
 
 const DIR = "packages/cli/decks/calibration";

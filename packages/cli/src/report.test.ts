@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import type { DeckReport } from "@mtg/engine";
+import type { DeckReport } from "@edh-seer/engine";
 import { formatReport } from "./report.js";
 
 const report: DeckReport = {
@@ -201,7 +201,7 @@ describe("ramp resilience", () => {
 // N6. A REFUSAL AND A MEASURED ZERO ARE DIFFERENT ANSWERS AND MUST READ DIFFERENTLY. The test above
 // covers the refusal; this covers the measurement. The CLI floored every probability at 1% while the
 // web `CardList` floored nothing, so the same impossible cast read "1%" in one surface and "0%" in
-// the other -- both now render through `@mtg/engine/percent`.
+// the other -- both now render through `@edh-seer/engine/percent`.
 test("a measured-impossible cast prints 0%, and a chance that merely rounds to zero prints <1%", () => {
   const row = (castable: { low: number; high: number }) => formatReport({
     ...report,

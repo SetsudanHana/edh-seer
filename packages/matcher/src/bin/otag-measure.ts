@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, docToCard, parseDecklistText } from "@mtg/data";
-import { loadOtagSemantics } from "@mtg/tagger";
-import type { CardTags, Verb } from "@mtg/tagger";
-import type { Reason } from "@mtg/engine";
+import { connect, loadConfig, mongoLookup, normalizeName, docToCard, parseDecklistText } from "@edh-seer/data";
+import { loadOtagSemantics } from "@edh-seer/tagger";
+import type { CardTags, Verb } from "@edh-seer/tagger";
+import type { Reason } from "@edh-seer/engine";
 import { loadHierarchy, pairReasons } from "../index.js";
 import { producerEvents } from "../edges.js";
 import { normalizeZoneEvent } from "../zones.js";

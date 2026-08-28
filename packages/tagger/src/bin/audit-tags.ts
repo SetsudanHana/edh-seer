@@ -11,7 +11,7 @@
  *  against exactly the cards that were judged rather than a fresh draw. */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 
 const N = Number(process.argv[2] ?? 50);
 const SEED = Number(process.argv[3] ?? 7);

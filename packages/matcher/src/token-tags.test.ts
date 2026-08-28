@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Db } from "mongodb";
-import { DERIVED_COLLECTION, type CardTags } from "@mtg/tagger";
+import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags, synthesizeTokenTags, type TokenDocShape } from "./token-tags.js";
 
 // Finding 3 (owner review, 2026-08-16): Task 5 only bought derived tags for the 94 tokens carrying

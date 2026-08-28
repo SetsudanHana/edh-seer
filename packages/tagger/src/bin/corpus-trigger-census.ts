@@ -8,7 +8,7 @@
  *
  *  Owner's ruling, 2026-08-15. Every "N derived" figure quoted before this bin existed understates
  *  the case for a word, sometimes by two orders of magnitude. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { TRIGGERS } from "../normalize-prompt.js";
 
 const store = await connect(loadConfig());

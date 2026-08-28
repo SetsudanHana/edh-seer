@@ -9,7 +9,7 @@ const CATALOGS = {
 } as const;
 
 const HEADERS = {
-  "User-Agent": "mtg-synergy-engine/0.0 (setsudan.hana@gmail.com)",
+  "User-Agent": "edh-seer/0.0 (setsudan.hana@gmail.com)",
   Accept: "application/json",
 };
 

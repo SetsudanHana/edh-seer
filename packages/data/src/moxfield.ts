@@ -12,7 +12,7 @@ export async function fetchMoxfieldDeck(
   fetchImpl: FetchFn = fetch,
 ): Promise<string[]> {
   const res = await fetchImpl(`https://api.moxfield.com/v2/decks/all/${id}`, {
-    headers: { "User-Agent": "mtg-synergy-engine" },
+    headers: { "User-Agent": "edh-seer" },
   });
   if (!res.ok) throw new Error(`Moxfield fetch failed: ${res.status}`);
   const json = (await res.json()) as {

@@ -8,8 +8,8 @@
  *
  *  Usage: tsx src/bin/line-report.ts */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames } from "@mtg/data";
-import { createTagsLookup } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { buildDeckCards, detectLines, loadHierarchy, type CardTagsLookup } from "../index.js";
 
 const DIR = "packages/cli/decks/calibration";

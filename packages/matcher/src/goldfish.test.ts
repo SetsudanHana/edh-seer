@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { pAtLeast, seen } from "@mtg/engine";
+import { pAtLeast, seen } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 import { classifyAccelerant, colorMask, fetchMask, isEveryLandType, manaAvailability, manaOutput, parseCost, payable, pAtLeastMana, quantiles, rng, simulate, takeRandomLand, pickLand} from "./goldfish.js";
 

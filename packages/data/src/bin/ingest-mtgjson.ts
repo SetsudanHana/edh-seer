@@ -22,7 +22,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { buildMerge, type AtomicFace } from "./ingest-mtgjson-core.js";
 
 const URL = "https://mtgjson.com/api/v5/AtomicCards.json.gz";

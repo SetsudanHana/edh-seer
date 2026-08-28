@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { Card } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import type { Card } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import { detectWincons, focusIndex, winconReport } from "./wincon.js";
 import type { DeckCard } from "./types.js";
 

@@ -2,8 +2,8 @@
  *  calibration decks. Free: Mongo reads only. */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@mtg/data";
-import type { CardTags } from "@mtg/tagger";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured } from "../index.js";
 import { ANSWER_BASELINE } from "../answer-coverage.js";
 import { loadHierarchy } from "../hierarchy.js";

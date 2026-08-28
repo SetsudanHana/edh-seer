@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Reason } from "@mtg/engine";
+import type { Reason } from "@edh-seer/engine";
 import { meshReport, MESH_CAP } from "./mesh.js";
 
 const r = (tag: string, producer: string, consumer: string): Reason =>

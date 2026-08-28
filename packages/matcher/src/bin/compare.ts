@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard } from "@mtg/data";
-import { analyzeDeck } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard } from "@edh-seer/data";
+import { analyzeDeck } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured } from "../analyze.js";
 import { rankTable } from "../compare-core.js";
 import type { DeckCard } from "../types.js";

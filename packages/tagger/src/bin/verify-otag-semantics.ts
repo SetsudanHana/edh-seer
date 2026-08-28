@@ -1,4 +1,4 @@
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import type { CardTags } from "../schema.js";
 import { OTAG_EVENT_TO_VERB, loadOtagSemantics } from "../otags/semantics.js";
 

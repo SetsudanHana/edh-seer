@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { CardDoc } from "@mtg/data";
-import type { CardTags } from "@mtg/tagger";
+import type { CardDoc } from "@edh-seer/data";
+import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { buildGraph } from "./graph.js";
 import { addEventEdges, orphanCards } from "./graph-events.js";

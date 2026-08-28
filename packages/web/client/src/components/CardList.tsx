@@ -7,7 +7,7 @@ import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 // ONE RENDERER ACROSS THE SURFACES (roadmap N6): this file printed "0%" where the CLI floored
 // the same cell at "1%". A measured zero is a measurement; the floor belongs on the refusal path.
-import { policyBand } from "@mtg/engine/percent";
+import { policyBand } from "@edh-seer/engine/percent";
 import { cardImageUrl } from "./card-node.js";
 
 type Category =

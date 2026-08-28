@@ -3,7 +3,7 @@
  *
  *  LOCAL DEV TOOL. It writes into the repository, has no auth, and must never be exposed. */
 import { Inject, Injectable } from "@nestjs/common";
-import type { Stratum, TagDefect, Verdict } from "@mtg/matcher";
+import type { Stratum, TagDefect, Verdict } from "@edh-seer/matcher";
 
 export const CALIBRATE_DEPS = "CALIBRATE_DEPS";
 

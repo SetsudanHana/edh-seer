@@ -1,4 +1,4 @@
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 
 /** Whether a card is legal as a commander on its own: a legendary creature, or any
  *  card whose rules text explicitly grants it (planeswalkers that "can be your

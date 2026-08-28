@@ -1,5 +1,5 @@
 import type { AnyBulkWriteOperation } from "mongodb";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { loadDescriptorOtags, loadFunctionalOtags } from "../otags/functional.js";
 import { buildCardOtags } from "../otags/build.js";
 
@@ -23,7 +23,7 @@ async function fetchTagOracleIds(slug: string): Promise<string[]> {
       try {
         const res = await fetch(url, {
           headers: {
-            "User-Agent": "mtg-synergy-engine/1.0 (otag ingest)",
+            "User-Agent": "edh-seer/1.0 (otag ingest)",
             "Accept": "application/json",
           },
         });

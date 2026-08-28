@@ -1,4 +1,4 @@
-import type { Cohesion } from "@mtg/engine";
+import type { Cohesion } from "@edh-seer/engine";
 import type { WinconReport } from "./wincon.js";
 
 /** "WHAT IS THIS DECK" IS A THREE-SLOT SENTENCE, NOT A WORD (roadmap A16, Fable's framing after the

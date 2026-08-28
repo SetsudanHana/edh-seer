@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import type { Reason } from "@mtg/engine";
+import type { Reason } from "@edh-seer/engine";
 import { nodeId, projectDeckGraph } from "./graph-projection.js";
 import { faceDeckCards } from "./faces.js";
 import type { DeckCard } from "./types.js";

@@ -1,4 +1,4 @@
-import { connect, loadConfig, type CardDoc } from "@mtg/data";
+import { connect, loadConfig, type CardDoc } from "@edh-seer/data";
 import { upsertCardTags, type TagCollection } from "../store.js";
 import type { CardTags } from "../schema.js";
 import { augmentKeywordAbilities } from "../keyword-augment.js";

@@ -3,7 +3,7 @@
  *
  *  Usage: TAGGER_PROVIDER=anthropic tsx src/bin/build-gold-fixture.ts */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { splitTypeLine } from "../characteristics.js";
 import { segment } from "../segment.js";
 import { loadTaggerConfig } from "../config.js";

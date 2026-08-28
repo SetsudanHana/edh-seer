@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { normalizeName } from "@mtg/data";
+import { normalizeName } from "@edh-seer/data";
 import { edhrecPairSet, seededRandom } from "./edhrec-pairs.js";
 import { pairKey } from "../otag-edges.js";
 

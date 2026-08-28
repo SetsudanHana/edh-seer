@@ -24,9 +24,9 @@
  *  Free: no API calls. Needs Mongo and the committed gold fixture.
  *  Usage: tsx src/bin/mixed-population.ts */
 import { readFileSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, docToCard } from "@mtg/data";
-import { deriveCardTags } from "@mtg/tagger";
-import type { CardTags, Characteristics, ClauseRecord } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, normalizeName, docToCard } from "@edh-seer/data";
+import { deriveCardTags } from "@edh-seer/tagger";
+import type { CardTags, Characteristics, ClauseRecord } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "../index.js";
 import type { DeckCard } from "../types.js";
 import { classifyPair, type GoldPair } from "./eval-pairs-core.js";

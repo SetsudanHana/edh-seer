@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 import { expectedPower, pressureCurve, measuredClock, STARTING_LIFE } from "./pressure.js";
 import type { DeckCard } from "./types.js";
 

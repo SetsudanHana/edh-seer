@@ -1,4 +1,4 @@
-import type { CardTags, GameEvent, SubjectFilter, Verb } from "@mtg/tagger";
+import type { CardTags, GameEvent, SubjectFilter, Verb } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 import { COMBAT_VERBS, combatNarrowsByType, combatSelfSupplied, eventMatches, producerEvents } from "./edges.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";

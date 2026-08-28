@@ -8,7 +8,7 @@
  *
  *  Found because the persist gate REFUSED that card and the refusal was worth reading rather than
  *  retrying. Free, read-only. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 
 const store = await connect(loadConfig());
 

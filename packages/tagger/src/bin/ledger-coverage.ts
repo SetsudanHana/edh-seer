@@ -1,7 +1,7 @@
 /** FREE. Reports resource-ledger coverage and checks the spec's witnesses against the corpus.
  *
  *  Read-only: opens the corpus, counts, prints. Nothing here writes. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import type { Ability } from "../schema.js";
 import { segment } from "../segment.js";
 import { tallyThresholds, type ThresholdTally } from "../derive/threshold.js";

@@ -1,4 +1,4 @@
-import { ComboIndex, type Card, type Combo } from "@mtg/engine";
+import { ComboIndex, type Card, type Combo } from "@edh-seer/engine";
 import { normalizeName } from "./names.js";
 import { docToCard, type CardDoc, type ComboDoc } from "./docs.js";
 

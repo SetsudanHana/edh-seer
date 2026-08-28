@@ -17,7 +17,7 @@
  *  Usage: set -a && source .env && set +a && TAGGER_PROVIDER=anthropic \
  *           npx tsx src/bin/fixture-check.ts */
 import { readFileSync } from "node:fs";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { canonicalSignature, type ClauseRecord } from "../canonicalize.js";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";

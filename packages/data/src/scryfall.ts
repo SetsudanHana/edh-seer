@@ -1,5 +1,5 @@
 import { gunzipSync } from "node:zlib";
-import type { Card } from "@mtg/engine";
+import type { Card } from "@edh-seer/engine";
 
 export interface RelatedPart {
   /** "token" | "combo_piece" | "meld_part". */
@@ -171,7 +171,7 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
 export type FetchFn = typeof fetch;
 
 const SCRYFALL_HEADERS = {
-  "User-Agent": "mtg-synergy-engine/0.1",
+  "User-Agent": "edh-seer/0.1",
   Accept: "application/json",
 };
 

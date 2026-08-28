@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { Cohesion } from "@mtg/engine";
+import type { Cohesion } from "@edh-seer/engine";
 import { deckThing, THING_K, THING_TURN } from "./thing.js";
 
 const coh = (over: Partial<Cohesion> = {}): Cohesion => ({

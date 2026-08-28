@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, docToCard, parseDecklistText } from "@mtg/data";
-import { loadOtagSemantics } from "@mtg/tagger";
-import type { CardTags } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, normalizeName, docToCard, parseDecklistText } from "@edh-seer/data";
+import { loadOtagSemantics } from "@edh-seer/tagger";
+import type { CardTags } from "@edh-seer/tagger";
 import { cardThemeTags } from "../index.js";
 import { ARCHETYPE_SIGNATURE, type Archetype } from "../archetypes.js";
 import type { SaltPayload } from "./calibrate-core.js";
@@ -31,7 +31,7 @@ async function fetchSalt(saltId: string): Promise<SaltPayload> {
   const cacheFile = `${CACHE_DIR}${saltId}.json`;
   if (existsSync(cacheFile)) return JSON.parse(readFileSync(cacheFile, "utf8")) as SaltPayload;
   const res = await fetch(`https://api.commandersalt.com/decks?id=${encodeURIComponent(saltId)}`, {
-    headers: { "User-Agent": "mtg-synergy-engine/1.0 (category comparison)" },
+    headers: { "User-Agent": "edh-seer/1.0 (category comparison)" },
   });
   if (!res.ok) throw new Error(`CommanderSalt ${saltId}: HTTP ${res.status}`);
   const payload = (await res.json()) as SaltPayload;

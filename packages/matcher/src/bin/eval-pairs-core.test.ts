@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { Reason, Card } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import type { Reason, Card } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard } from "../types.js";
 import { classifyPair, type GoldPair } from "./eval-pairs-core.js";
 

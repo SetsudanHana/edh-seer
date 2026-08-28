@@ -27,7 +27,7 @@ Two-part, both confirmed by the user:
 
 ## Operating Context
 
-Flow: user pastes a decklist and commander name(s) into a text form → server resolves cards (`@mtg/data`), tags oracle text (`@mtg/tagger`), matches synergy via a rule-based matcher (`@mtg/matcher`), computes deck-level analysis (`@mtg/engine`) → client renders a tabbed report (Overview / Archetypes / Cards / Combos) with mana curve, land math, deck identity/cohesion, and missing-card flags.
+Flow: user pastes a decklist and commander name(s) into a text form → server resolves cards (`@edh-seer/data`), tags oracle text (`@edh-seer/tagger`), matches synergy via a rule-based matcher (`@edh-seer/matcher`), computes deck-level analysis (`@edh-seer/engine`) → client renders a tabbed report (Overview / Archetypes / Cards / Combos) with mana curve, land math, deck identity/cohesion, and missing-card flags.
 
 No accounts, no saved decks, no persistence yet — each analysis is a one-shot paste-and-read session.
 

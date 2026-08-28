@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { loadConfig, connect, docToCard } from "@mtg/data";
+import { loadConfig, connect, docToCard } from "@edh-seer/data";
 import { extractTags } from "../src/tags.js";
 import type { TagStats } from "../src/weights.js";
 

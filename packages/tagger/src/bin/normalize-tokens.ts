@@ -23,7 +23,7 @@
  *
  *  Needs `set -a && source .env && set +a` and TAGGER_PROVIDER=anthropic, or it silently falls back
  *  to Ollama and every token returns `ERROR: fetch failed`. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { buildRequest, normalizeCard } from "../normalize-card.js";

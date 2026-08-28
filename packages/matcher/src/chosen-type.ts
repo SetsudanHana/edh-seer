@@ -1,4 +1,4 @@
-import type { CardTags, SubjectFilter } from "@mtg/tagger";
+import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { impliesType } from "./hierarchy.js";
 

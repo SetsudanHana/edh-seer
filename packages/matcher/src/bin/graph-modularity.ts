@@ -19,9 +19,9 @@
  *  the standard first answer to "does this graph split". Q is the usual scale: below ~0.3 the
  *  structure is weak, 0.3-0.7 is a genuinely modular graph. */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
-import { ComboIndex, loadImpactWeights } from "@mtg/engine";
-import { createTagsLookup } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { ComboIndex, loadImpactWeights } from "@edh-seer/engine";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, collectTokenNodes, faceDeckCards, loadTokenTags } from "../index.js";
 import { projectDeckGraph } from "../graph-projection.js";
 

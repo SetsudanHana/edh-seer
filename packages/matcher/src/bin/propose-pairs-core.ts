@@ -1,4 +1,4 @@
-import { normalizeName } from "@mtg/data";
+import { normalizeName } from "@edh-seer/data";
 import type { MechanismCategory } from "../mechanisms.js";
 import type { GoldPair } from "./eval-pairs-core.js";
 

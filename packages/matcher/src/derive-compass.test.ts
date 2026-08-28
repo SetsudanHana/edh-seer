@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
-import { deriveCardTags } from "@mtg/tagger";
-import type { Characteristics } from "@mtg/tagger";
-import type { ClauseRecord } from "@mtg/tagger";
+import { deriveCardTags } from "@edh-seer/tagger";
+import type { Characteristics } from "@edh-seer/tagger";
+import type { ClauseRecord } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "./index.js";
 import { classifyPair, type GoldPair } from "./bin/eval-pairs-core.js";
 import type { DeckCard } from "./types.js";

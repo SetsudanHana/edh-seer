@@ -8,7 +8,7 @@
  *
  *  Usage: tsx src/bin/tag-vs-otag.ts   (writes /tmp/otag-vs-tags.txt) */
 import { writeFileSync } from "node:fs";
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { expectsAbilities } from "./corpus-core.js";
 
 const s = await connect(loadConfig());

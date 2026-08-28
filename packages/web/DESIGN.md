@@ -1,5 +1,5 @@
 ---
-name: MTG Synergy
+name: EDH Seer
 description: Oracle-level deck reading for Commander players — a dark analytics dashboard held to Scryfall/Archidekt's craft bar
 colors:
   background:
@@ -68,7 +68,7 @@ components:
     typography: "{typography.label}"
 ---
 
-# Design System: MTG Synergy
+# Design System: EDH Seer
 
 ## Overview
 

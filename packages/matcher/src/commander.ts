@@ -1,4 +1,4 @@
-import type { CardTags, SubjectFilter } from "@mtg/tagger";
+import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 
 /** BEING A COMMANDER IS A DECK FACT, NOT A PRINTED ONE.
  *

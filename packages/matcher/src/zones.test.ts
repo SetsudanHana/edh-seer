@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { GameEvent } from "@mtg/tagger";
+import type { GameEvent } from "@edh-seer/tagger";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 
 test("enters forces battlefield, overriding any tagged source zone", () => {

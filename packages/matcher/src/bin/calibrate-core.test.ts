@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { SEED_IMPACT_WEIGHTS, type ImpactWeights } from "@mtg/engine";
+import { SEED_IMPACT_WEIGHTS, type ImpactWeights } from "@edh-seer/engine";
 import { saltCardScores, spearman, meanSpearman, fitWeights, looCV, type SaltPayload } from "./calibrate-core.js";
 
 test("saltCardScores recursively sums every conditionScoring.total in a card's entry", () => {

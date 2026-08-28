@@ -15,8 +15,8 @@ import {
   type Reason,
   type TagStats,
   type ImpactWeights,
-} from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+} from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { faceDeckCards } from "./faces.js";
 import { deckCoverage } from "./coverage.js";
@@ -52,7 +52,7 @@ import { deckLegality } from "./legality.js";
 import { COMMANDER_TAX_CAVEAT, COMMANDER_TAX_PER_CAST } from "./format.js";
 
 /**
- * Structured-engine counterpart of `@mtg/engine`'s `analyzeDeck`: same `DeckReport` shape,
+ * Structured-engine counterpart of `@edh-seer/engine`'s `analyzeDeck`: same `DeckReport` shape,
  * but edges come from oracle-text-derived structured tags (producer emits / consumer
  * triggers, static-effect subjects) instead of the flat produces/cares tag vocabulary.
  *
@@ -1000,7 +1000,7 @@ export function analyzeDeckStructured(
     }),
     // CR 903.8 (roadmap J5), a CAVEAT and never a number: the tax is a function of how many times
     // the commander has DIED and nothing here simulates a game. Shipped as data because no subpath
-    // of `@mtg/matcher` is safe to value-import from client code, so this is the only way the CLI
+    // of `@edh-seer/matcher` is safe to value-import from client code, so this is the only way the CLI
     // and the panel can say the same thing without one of them drifting.
     ...(commanderSet.size > 0
       ? { commanderTax: { perCast: COMMANDER_TAX_PER_CAST, caveat: COMMANDER_TAX_CAVEAT } }

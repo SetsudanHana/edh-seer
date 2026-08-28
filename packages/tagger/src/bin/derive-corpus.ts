@@ -5,7 +5,7 @@
  *  token. If this ever needs the network, the layering has been broken.
  *
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { extractCharacteristics } from "../characteristics.js";
 import { grantedToOwnToken, segment } from "../segment.js";
 import { DERIVE_VERSION } from "../derive/derive.js";

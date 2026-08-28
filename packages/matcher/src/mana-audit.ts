@@ -1,4 +1,4 @@
-import { minCopies } from "@mtg/engine";
+import { minCopies } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { minSources } from "./mulligan.js";
 import type { DeckCard } from "./types.js";

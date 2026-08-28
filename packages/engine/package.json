@@ -1,5 +1,5 @@
 {
-  "name": "@mtg/engine",
+  "name": "@edh-seer/engine",
   "version": "0.0.0",
   "type": "module",
   "main": "src/index.ts",
@@ -15,7 +15,7 @@
     "gen:weights": "tsx scripts/gen-tag-weights.ts"
   },
   "devDependencies": {
-    "@mtg/data": "*",
+    "@edh-seer/data": "*",
     "@types/node": "^20.0.0",
     "tsx": "^4.15.0",
     "typescript": "^5.4.0",

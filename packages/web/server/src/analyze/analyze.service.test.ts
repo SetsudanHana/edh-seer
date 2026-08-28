@@ -2,7 +2,7 @@ import "reflect-metadata";
 import { expect, test } from "vitest";
 import { AnalyzeService } from "./analyze.service.js";
 import type { AnalyzeDeps } from "./analyze.service.js";
-import type { DeckReport } from "@mtg/engine";
+import type { DeckReport } from "@edh-seer/engine";
 
 const fakeReport: DeckReport = {
   commanders: ["Krenko, Mob Boss"],

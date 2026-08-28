@@ -1,4 +1,4 @@
-# edh-seer
+# EDH Seer
 
 Oracle-text deck analysis for Magic: The Gathering Commander (EDH).
 
@@ -58,12 +58,12 @@ changed and re-measured cheaply.
 
 | package | what it does |
 |---|---|
-| `@mtg/data` | Scryfall + MTGJSON ingestion, MongoDB corpus, name resolution |
-| `@mtg/tagger` | oracle text → clauses (the paid step) → derived tags (free) |
-| `@mtg/matcher` | edges, reasons, archetypes, mana math, build benchmarks, combos |
-| `@mtg/engine` | scoring, ratings, per-card impact |
-| `@mtg/cli` | terminal deck report |
-| `@mtg/web` | NestJS API + React/Vite UI, including an interactive synergy graph |
+| `@edh-seer/data` | Scryfall + MTGJSON ingestion, MongoDB corpus, name resolution |
+| `@edh-seer/tagger` | oracle text → clauses (the paid step) → derived tags (free) |
+| `@edh-seer/matcher` | edges, reasons, archetypes, mana math, build benchmarks, combos |
+| `@edh-seer/engine` | scoring, ratings, per-card impact |
+| `@edh-seer/cli` | terminal deck report |
+| `@edh-seer/web` | NestJS API + React/Vite UI, including an interactive synergy graph |
 
 ## Running it
 

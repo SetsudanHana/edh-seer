@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { rankThemes, themeWeights, computeCohesion } from "@mtg/engine";
+import { rankThemes, themeWeights, computeCohesion } from "@edh-seer/engine";
 import type { DeckCard, Hierarchy } from "./index.js";
 
 test("engine weights helpers are importable and matcher types are exported", () => {

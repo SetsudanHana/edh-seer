@@ -13,10 +13,10 @@
  *  Prints the label spread (how many decks share a headline) because THAT is the failure mode this
  *  family keeps producing: a theme true of every deck carries no information. */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
-import { ComboIndex } from "@mtg/engine";
-import { createTagsLookup } from "@mtg/tagger";
-import { SUBTYPE_TYPES } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { ComboIndex } from "@edh-seer/engine";
+import { createTagsLookup } from "@edh-seer/tagger";
+import { SUBTYPE_TYPES } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.js";
 import { ALL_CARD_TYPES } from "../hierarchy.js";
 

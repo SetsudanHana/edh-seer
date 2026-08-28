@@ -7,7 +7,7 @@
  *  gate at all. */
 import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
-import { deriveCardTags } from "@mtg/tagger";
+import { deriveCardTags } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasonsAcrossFaces } from "./index.js";
 import type { DeckCard } from "./types.js";
 import type { ClauseFixture, PairRecord } from "./bin/pair-calibrate-core.js";

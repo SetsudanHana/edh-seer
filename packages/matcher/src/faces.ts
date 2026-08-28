@@ -1,5 +1,5 @@
-import type { Card, CardFace } from "@mtg/engine";
-import type { CardTags } from "@mtg/tagger";
+import type { Card, CardFace } from "@edh-seer/engine";
+import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 
 /** The printed faces of a card. `Card.faces` when the document carries it; otherwise the combined

@@ -27,9 +27,9 @@
  *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/thing-sheet.ts --score /tmp/thing-draw.jsonl
  */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
-import { ComboIndex } from "@mtg/engine";
-import { createTagsLookup } from "@mtg/tagger";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { ComboIndex } from "@edh-seer/engine";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.js";
 import { renderThingSheet } from "./thing-sheet-html.js";
 

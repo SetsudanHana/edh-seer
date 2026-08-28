@@ -1,6 +1,6 @@
 /** Runs the mechanical segmenter over the whole corpus and reports where it looks wrong.
  *  Free — no LLM. Catches segmentation bugs before any tagging spend. */
-import { connect, loadConfig } from "@mtg/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { segment } from "../segment.js";
 
 const s = await connect(loadConfig());
