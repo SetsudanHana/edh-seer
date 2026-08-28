@@ -15,14 +15,14 @@
  *    Estimated cost for all arms on haiku plus one sonnet arm: well under $2. */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig } from "@edh-seer/data";
+import { connect, loadConfig, scratchDir } from "@edh-seer/data";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { buildAbilityMessages } from "../llm/prompt.js";
 import type { ChatMessage } from "../llm/provider.js";
 import { docToCard } from "@edh-seer/data";
 
-const OUT = process.argv[2] ?? "/tmp/schema-exp";
+const OUT = process.argv[2] ?? scratchDir("schema-exp");
 const ONLY = process.argv[3] ? new Set(process.argv[3].split(",")) : null;
 
 const CARDS = [

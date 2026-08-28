@@ -1,3 +1,4 @@
+import { scratchDir } from "@edh-seer/data";
 /** Scores normalize-experiment output against the acceptance gates. No judgment calls — every
  *  number here is mechanical, so the decision to re-tag rests on measurement rather than opinion. */
 import { readFileSync } from "node:fs";
@@ -5,7 +6,7 @@ import { join } from "node:path";
 import { canonicalSignature, type ClauseRecord } from "../canonicalize.js";
 import type { Clause } from "../segment.js";
 
-const dir = process.argv[2] ?? "/tmp/normalize-exp";
+const dir = process.argv[2] ?? scratchDir("normalize-exp");
 interface Row { name: string; clauses: Clause[]; output: { clauses?: ClauseRecord[]; ERROR?: string } }
 interface Rec { id: number; abilityType?: string; trigger?: { event?: string } | null; actions?: { verb?: string; fromZone?: string | null; toZone?: string | null }[] }
 

@@ -1,3 +1,4 @@
+import { join } from "node:path";
 /** Compares Scryfall's otag vocabulary against our LLM-authored cardTags, per otag slug.
  *
  *  For each slug: how many of its cards we ATTEMPTED to tag and recorded nothing for (the defect),
@@ -8,7 +9,7 @@
  *
  *  Usage: tsx src/bin/tag-vs-otag.ts   (writes /tmp/otag-vs-tags.txt) */
 import { writeFileSync } from "node:fs";
-import { connect, loadConfig } from "@edh-seer/data";
+import { connect, loadConfig, scratchDir } from "@edh-seer/data";
 import { expectsAbilities } from "./corpus-core.js";
 
 const s = await connect(loadConfig());
@@ -90,7 +91,7 @@ for (const r of rows.filter((x) => attempted(x) >= 200).sort((a, b) => a.empty /
   lines.push(`${((r.empty / attempted(r)) * 100).toFixed(0).padStart(4)}%  ${String(attempted(r)).padStart(5)} attempted  ${r.slug.padEnd(30)} we say: ${r.topKinds || "-"}`);
 }
 const out = lines.join("\n");
-writeFileSync("/tmp/otag-vs-tags.txt", out);
+writeFileSync(join(scratchDir("bins"), "otag-vs-tags.txt"), out);
 console.log(out.slice(0, 4200));
 console.log(`\n[full report: /tmp/otag-vs-tags.txt]`);
 await s.close();

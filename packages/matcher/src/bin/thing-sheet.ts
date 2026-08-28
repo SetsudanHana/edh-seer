@@ -1,3 +1,4 @@
+import { join } from "node:path";
 /** A JUDGING SHEET FOR "DOES THIS CARD DO THE DECK'S THING" — a NEW CLAIM TYPE. Free: Mongo reads
  *  only, no model. Roadmap K3.
  *
@@ -27,7 +28,7 @@
  *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/thing-sheet.ts --score /tmp/thing-draw.jsonl
  */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.js";
@@ -38,7 +39,7 @@ const arg = (f: string): string | undefined => {
   return i > 0 ? process.argv[i + 1] : undefined;
 };
 const DECKS = "packages/cli/decks/calibration";
-const OUT = arg("--out") ?? "/tmp/thing-draw";
+const OUT = arg("--out") ?? scratchDir("thing-draw");
 const SCORE = arg("--score");
 const SEED = Number(arg("--seed") ?? 20260822);
 const N_DECKS = Number(arg("--decks") ?? 10);

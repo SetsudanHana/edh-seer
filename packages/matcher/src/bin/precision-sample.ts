@@ -15,8 +15,7 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
-} from "@edh-seer/data";
+  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
@@ -29,7 +28,7 @@ const arg = (flag: string, fallback: string): string => {
 };
 const N = Number(arg("--n", "150"));
 const SEED = Number(arg("--seed", "20260805"));
-const OUT = arg("--out", "/tmp/precision");
+const OUT = arg("--out", scratchDir("precision"));
 
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);

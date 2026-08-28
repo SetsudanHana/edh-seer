@@ -1,3 +1,4 @@
+import { join } from "node:path";
 /** A JUDGING SHEET FOR ONE FAMILY, with the facts that family's verdict actually turns on. Free.
  *
  *  `panel-score.ts --worksheet` writes producer/consumer/tag/claim plus ORACLE TEXT only, and that
@@ -22,7 +23,7 @@
  *      --out /tmp/cost-reduction-rejudge
  */
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.js";
@@ -35,7 +36,7 @@ const arg = (f: string): string | undefined => {
 };
 const TAG = arg("--tag");
 const WANT = arg("--verdict") ?? "false";
-const OUT = arg("--out") ?? "/tmp/rejudge-sheet";
+const OUT = arg("--out") ?? scratchDir("rejudge-sheet");
 const PANEL = "docs/measurements/panel";
 const DECKS = "packages/cli/decks/calibration";
 

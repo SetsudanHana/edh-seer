@@ -20,3 +20,4 @@ export {
   type FlavorPair,
   type FlavorCounts,
 } from "./flavor.js";
+export { scratchDir } from "./scratch.js";

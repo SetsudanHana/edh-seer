@@ -12,14 +12,14 @@
  *  Usage: tsx src/bin/normalize-experiment.ts [outDir]   (needs ANTHROPIC_API_KEY) */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig } from "@edh-seer/data";
+import { connect, loadConfig, scratchDir } from "@edh-seer/data";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { canonicalize, type ClauseRecord } from "../canonicalize.js";
 import { SYSTEM, listClauses } from "../normalize-prompt.js";
 import { segment, type Clause } from "../segment.js";
 
-const OUT = process.argv[2] ?? "/tmp/normalize-exp";
+const OUT = process.argv[2] ?? scratchDir("normalize-exp");
 /** `--random N seed` draws a HELD-OUT sample instead of the curated list below. The curated cards
  *  were chosen because they were broken and the prompt was then tuned against them, so they cannot
  *  demonstrate generalisation — only a fresh draw can. The curated 20 are excluded from it. */
