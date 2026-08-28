@@ -592,3 +592,23 @@ test("the cost grammar is unchanged by the linear rewrite", () => {
   expect(long.abilityType).toBe("activated");
   expect(long.cost).toBe(`Sacrifice ${"a".repeat(70)}, {T}`);
 });
+
+/** REMINDER-STRIPPING EXCLUDES THE OPENING PAREN AND DROPS THE SURROUNDING `\s*` — the second
+ *  `js/polynomial-redos` shape. `\s*\([^)]*\)\s*` rescans a run of spaces at every position before
+ *  failing on "(", and `[^)]*` does the same for a run of "(": 1,106ms on 50,000 characters
+ *  against 0.1ms. The two `\s*` are redundant anyway — the `\s+` collapse on the next call already
+ *  does their work, which is why removing them changes nothing.
+ *
+ *  MEASURED COST OF THE PAREN CLASS, stated rather than claimed byte-identical: five corpus cards
+ *  nest parentheses inside reminder text — Just Desserts, Punctuate, Xerex Squire, Devoted Mardu
+ *  and Rocket-Powered Turbo Slug — and their clauses move. All five are `commander=not_legal` joke
+ *  cards that no EDH decklist can contain. The other 34,076 cards segment byte-identically. */
+test("reminder stripping is linear, and still strips a reminder", () => {
+  const started = performance.now();
+  const c = segment(`Flying ${"(".repeat(50_000)}`, ["Flying"]);
+  expect(performance.now() - started).toBeLessThan(500);
+  expect(c).toHaveLength(1);
+
+  // The ordinary case is unchanged: the reminder goes and the spacing around it closes up.
+  expect(segment("You get {E}{E} (two energy counters).")[0].text).toBe("You get {E}{E} .");
+});

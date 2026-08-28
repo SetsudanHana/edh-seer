@@ -243,7 +243,7 @@ const LINE_BUILDER = `    function line(i) {
 
 /** Mana symbols as readable pips. The corpus writes them `{2}{G/U}`; a hybrid keeps its slash. */
 const pips = (cost: string): string =>
-  cost ? [...cost.matchAll(/\{([^}]+)\}/g)].map((m) => `<span class="pip">${esc(m[1])}</span>`).join("") : `<span class="pip pip-none">no cost</span>`;
+  cost ? [...cost.matchAll(/\{([^{}]+)\}/g)].map((m) => `<span class="pip">${esc(m[1])}</span>`).join("") : `<span class="pip pip-none">no cost</span>`;
 
 const cardPanel = (c: SheetCard, role: string): string => `
       <div class="card" data-role="${role}">

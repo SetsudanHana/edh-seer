@@ -45,7 +45,7 @@ const has = (keywords: readonly string[] | undefined, kw: string): boolean =>
  *  price anyway) simply counts as one. */
 function convertedTotal(cost: string): number {
   let total = 0;
-  for (const symbol of cost.match(/\{[^}]+\}/g) ?? []) {
+  for (const symbol of cost.match(/\{[^{}]+\}/g) ?? []) {
     const inner = symbol.slice(1, -1);
     const n = Number(inner);
     total += Number.isFinite(n) ? n : 1;

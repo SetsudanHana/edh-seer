@@ -243,7 +243,7 @@ const GRANTED = /"([^"]{12,})"/g;
 function extractGranted(text: string): { body: string; granted: string[] } {
   const granted: string[] = [];
   const body = text.replace(GRANTED, (m, inner: string) =>
-    /^(When|Whenever|At\b)|^\{[^}]*\}[^:]*:/.test(inner.trim()) ? (granted.push(inner.trim()), "that ability") : m);
+    /^(When|Whenever|At\b)|^\{[^{}]*\}[^:]*:/.test(inner.trim()) ? (granted.push(inner.trim()), "that ability") : m);
   return { body, granted };
 }
 
@@ -370,13 +370,15 @@ const ABILITY_WORD = /^([A-Z][A-Za-z' ]{2,24})\s*—\s*/;
  *  Flashback, Equip, Morph, Buyback, Echo), while every ability word takes a spaced dash. The label
  *  must end in a letter so "Void — Whenever ..." cannot match by absorbing the space. */
 const KEYWORD_COST = /^([A-Z][A-Za-z' ]{1,23}[A-Za-z])—/;
-const LEVEL = /^(\{[^}]*\}(?:\s*\{[^}]*\})*)\s*:\s*(Level\s+\d+)/i;
+const LEVEL = /^(\{[^{}]*\}(?:\s*\{[^{}]*\})*)\s*:\s*(Level\s+\d+)/i;
 /** A planeswalker loyalty cost: "+1:", "-3:", "0:", "+X:", using either hyphen or minus sign. */
 const LOYALTY = /^([+\u2212-]?(?:\d+|X))\s*:\s+/;
 
 /** Strip reminder text but remember whether anything else remained. */
 function stripReminder(line: string): string {
-  return line.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+  // NO SURROUNDING `\s*`: the collapse on the next call already makes them redundant, and they were
+  // the quadratic half — a run of spaces was rescanned at every position before failing on "(".
+  return line.replace(/\([^()]*\)/g, " ").replace(/\s+/g, " ").trim();
 }
 
 /** Is every comma-separated part of this line a printed keyword of the card? Keywords take

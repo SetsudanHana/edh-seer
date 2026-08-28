@@ -33,7 +33,7 @@ export const SOURCE_CONFIDENCE = 0.9;
 export function pipsByColor(manaCost: string | undefined): Partial<Record<Color, number>> {
   const out: Partial<Record<Color, number>> = {};
   if (!manaCost) return out;
-  for (const symbol of manaCost.match(/\{[^}]+\}/g) ?? []) {
+  for (const symbol of manaCost.match(/\{[^{}]+\}/g) ?? []) {
     const inner = symbol.slice(1, -1).toUpperCase();
     // `{2/B}` (monocolour hybrid) and `{B/P}` (Phyrexian) both reach the colour they name; a plain
     // `{X}`, `{C}` or a number reaches none.

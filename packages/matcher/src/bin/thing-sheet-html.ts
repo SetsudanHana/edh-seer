@@ -22,7 +22,7 @@ const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 const pips = (cost: string): string =>
-  cost ? [...cost.matchAll(/\{([^}]+)\}/g)].map((m) => `<span class="pip">${esc(m[1])}</span>`).join("")
+  cost ? [...cost.matchAll(/\{([^{}]+)\}/g)].map((m) => `<span class="pip">${esc(m[1])}</span>`).join("")
        : `<span class="pip pip-none">no cost</span>`;
 
 /** The record a filled sheet emits — the same shape `thing-sheet.ts --score` reads, minus the

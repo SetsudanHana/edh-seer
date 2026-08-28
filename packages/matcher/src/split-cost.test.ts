@@ -47,3 +47,23 @@ test("a malformed joined cost falls back to the whole string rather than to a fr
  *  `Dusk // Dawn` needed nine mana on board to be considered for a `{2}{W}{W}` cost. Measured: with
  *  `cost` corrected but this gate still on `manaValue`, its turn-9 castability moved 13% -> 16.5%;
  *  with both, it reads what a four-mana spell reads. */
+
+/** EVERY MANA-SYMBOL SCAN IN THIS REPO EXCLUDES THE OPENING BRACE — `js/polynomial-redos`, twelve
+ *  alerts across `edges`, `goldfish`, `graph`, `mana-audit`, `rules`, `split-cost` and `segment`.
+ *  `\{[^}]+\}` lets a run of "{" be rescanned from every position, so a cost that never closes is
+ *  quadratic: 790ms on 50,000 braces against 0.1ms with `[^{}]`.
+ *
+ *  A PROVEN NO-OP, not a judgement call: across all 34,433 corpus cards, oracle text and mana cost
+ *  alike, there are ZERO nested braces and ZERO unclosed ones — so no real string can tell the two
+ *  classes apart. One test stands for the family because one edit does.
+ *
+ *  MUST BE A SPLIT CARD: `castableManaCost` returns a non-split cost untouched and never reaches
+ *  `convertedTotal`, so the first version of this test passed against the quadratic pattern too. */
+test("a mana-symbol scan is linear on a cost whose braces never close", () => {
+  const started = performance.now();
+  // The unclosed half prices at ZERO symbols and so wins the cheaper-half reduce; what this test
+  // watches is the time the scan took to find nothing, not which half came back.
+  const cost = castableManaCost({ manaCost: `${"{".repeat(50_000)} // {G}`, layout: "split" });
+  expect(cost).toHaveLength(50_000);
+  expect(performance.now() - started).toBeLessThan(200);
+});

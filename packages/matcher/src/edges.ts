@@ -528,7 +528,7 @@ const reducesAnAbility = (oracleText: string | undefined): boolean =>
  *  In the two-card case there is nothing to reduce. */
 const hasGenericMana = (manaCost: string | undefined): boolean => {
   if (!manaCost) return true; // not recorded — refuse nothing
-  for (const m of manaCost.matchAll(/\{([^}]+)\}/g)) {
+  for (const m of manaCost.matchAll(/\{([^{}]+)\}/g)) {
     // THE AMOUNT, NOT THE SHAPE. `{0}` is a numeric symbol carrying ZERO generic mana, and a
     // reduction cannot take it below zero either — the first cut tested for a digit and kept
     // Mishra's Bauble, Urza's Bauble and Everflowing Chalice, 19 claims the guard exists to refuse.
@@ -552,7 +552,7 @@ const activationCosts = (tags: CardTags | undefined): (string | undefined)[] =>
  *  survives the floor — a wrong refusal deletes a real claim, a wrong keep costs one. */
 const manaInCost = (cost: string | undefined): number => {
   let n = 0;
-  for (const m of cost?.matchAll(/\{([^}]+)\}/g) ?? []) {
+  for (const m of cost?.matchAll(/\{([^{}]+)\}/g) ?? []) {
     if (/^\d+$/.test(m[1])) n += Number(m[1]);
     else if (m[1].toUpperCase() !== "T" && m[1].toUpperCase() !== "Q") n += 1;
   }

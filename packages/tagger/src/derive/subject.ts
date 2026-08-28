@@ -437,7 +437,7 @@ function parseCounter(t: string): string | undefined {
  *  ("those counters", "target creature") yields undefined, leaving the untyped counter-added the
  *  matcher already wildcards on purpose. */
 export function counterKindOf(object: string): string | undefined {
-  const t = object.trim().toLowerCase().replace(/\s+counters?$/, "").trim();
+  const t = object.trim().toLowerCase().replace(/\s{1,4}counters?$/, "").trim();
   return (COUNTER_KINDS as readonly string[]).includes(t) ? t : undefined;
 }
 
@@ -463,18 +463,18 @@ const KEYWORD_ALT = [...KEYWORD_ABILITIES]
   .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
   .join("|");
 const KEYWORD_PHRASE = new RegExp(
-  `\\bwith ((?:${KEYWORD_ALT})(?:\\s+and\\s+(?:${KEYWORD_ALT}))*)\\b(?!\\s+(?:cost|counters?))`, "gi");
+  `\\bwith ((?:${KEYWORD_ALT})(?:\\s{1,4}and\\s{1,4}(?:${KEYWORD_ALT}))*)\\b(?!\\s{1,4}(?:cost|counters?))`, "gi");
 /** The negated form — "a creature you control without flying". Distinct from KEYWORD_PHRASE by the
  *  space: `with ` cannot match inside "without", so the two never fight over the same words. Only
  *  the "without X" spelling exists in the corpus; "non-flying" is an older template that survives on
  *  no current oracle text (0 of 238 matches). */
 const NOT_KEYWORD_PHRASE = new RegExp(
-  `\\bwithout ((?:${KEYWORD_ALT})(?:\\s+and\\s+(?:${KEYWORD_ALT}))*)\\b(?!\\s+(?:cost|counters?))`, "gi");
+  `\\bwithout ((?:${KEYWORD_ALT})(?:\\s{1,4}and\\s{1,4}(?:${KEYWORD_ALT}))*)\\b(?!\\s{1,4}(?:cost|counters?))`, "gi");
 
 function keywordsFrom(t: string, re: RegExp): string[] | undefined {
   const found = new Set<string>();
   for (const m of t.matchAll(re)) {
-    for (const k of m[1].split(/\s+and\s+/)) found.add(k.trim().toLowerCase());
+    for (const k of m[1].split(/\s{1,4}and\s{1,4}/)) found.add(k.trim().toLowerCase());
   }
   // Sorted so the same demand written in either order is the same filter, and so a tag key built
   // from it is stable across cards.
@@ -500,7 +500,15 @@ const ORIGIN_ZONE = /\bfrom (?:a|an|your|their|the)?\s*(graveyard|exile|library|
  *  ends up inside the name. */
 /** "…creature token named X" — the name belongs to the token being created, not to a card. */
 const TOKEN_CREATION = /\btokens?\s+named\b/i;
-const NAMED = /\bnamed\s+([^,.]+?)(?=\s+(?:in|on|from|under|with|that|you|an?\b|to)\s|[,.]|$)/i;
+/** BOUNDED, not because a name is short but because `\s+` and a lazy `[^,.]+?` overlap: the class
+ *  matches the space the lookahead also wants, so each space was a fork. Measured over the corpus,
+ *  every one of 993,681 whitespace runs in printed oracle text is a SINGLE character, and the
+ *  longest capture this pattern takes corpus-wide is 61 — Grandeur's "Tarox Bladewing: Tarox
+ *  Bladewing gets +X/+X until end of turn", which is a name swallowing a whole ability and is a
+ *  DEFECT this change deliberately preserves rather than quietly fixes. 60 was tried first and
+ *  moved that card, which is why the bound is measured and not guessed. Same reasoning for every
+ *  other `\s{1,4}` in this file. */
+const NAMED = /\bnamed\s{1,4}([^,.]{1,80}?)(?=\s{1,4}(?:in|on|from|under|with|that|you|an?\b|to)\s|[,.]|$)/i;
 
 /** A TARGETING RESTRICTION, WHICH NOTHING HERE MODELS. "an instant or sorcery spell that targets
  *  only a single creature you control". Anchored on "targets only", the printed template — 24 corpus
