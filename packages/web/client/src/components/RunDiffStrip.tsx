@@ -60,6 +60,26 @@ export function RunDiffStrip({ diff }: { diff: RunDiff | null }) {
       </span>,
     );
   }
+  // THE FINDINGS COME FIRST, because they are what the report now LEADS with — and because a
+  // finding that is GONE is the strongest thing this strip can say about an edit. Ranking makes a
+  // fixed finding vanish and promotes everything under it, so without this the surface most changed
+  // by a good edit had no memory of it.
+  for (const f of (diff.findings ?? []).slice(0, 3)) {
+    parts.push(
+      <span key={f.id}>
+        {f.to === undefined ? (
+          <>
+            <span className="text-(--success)">fixed</span> {f.label}{" "}
+            <span className="stat-num">{f.from}</span>
+          </>
+        ) : f.from === undefined ? (
+          <><span className="text-(--warning)">new</span> {f.label} <span className="text-(--foreground) stat-num">{f.to}</span></>
+        ) : (
+          <>{f.label} <span className="text-(--foreground) stat-num">{f.from.split(" ").pop()} → {f.to.split(" ").pop()}</span></>
+        )}
+      </span>,
+    );
+  }
   for (const c of diff.categories.slice(0, 3)) {
     parts.push(
       <span key={c.category}>

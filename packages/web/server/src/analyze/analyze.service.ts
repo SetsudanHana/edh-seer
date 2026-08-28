@@ -45,7 +45,19 @@ export class AnalyzeService {
     // Keyed by raw report name, not a normalized one: the dep already normalizes both sides of
     // this join off its own `docs` array (the ESM `@mtg/data` it dynamically imports), so doing
     // it again here would just be a second, easy-to-drift copy of the same normalization.
-    const rolesByName = new Map(report.cards.filter((c) => c.roles && c.roles.length > 0).map((c) => [c.name, c.roles!] as const));
+    //
+    // KEYED ON THE PHYSICAL CARD, because `attachRolesAndArt` looks a node's roles up under
+    // `normalize(n.cardName ?? n.id)` -- physical on BOTH faces. `report.cards[].name` is a FACE
+    // name (Task 7, faces-as-nodes), so keying on it put every multi-face card's roles under a key
+    // no node ever asks for: both faces counted as `unjoined`, dropping their role chips, their
+    // role rooms and the role paint mode, announced only by a `console.warn`. Review fix,
+    // 2026-08-27 (the ninth consumer of this family, after the eight the 08-27 wave fixed).
+    // Collapsing the two face rows onto one key is safe rather than lossy: `roles` is read from
+    // `buildRoles.get(physical)` in analyze.ts, so both of a card's face rows carry the identical
+    // array.
+    const rolesByName = new Map(
+      report.cards.filter((c) => c.roles && c.roles.length > 0).map((c) => [c.cardName ?? c.name, c.roles!] as const),
+    );
     // resolveDeck returns one entry per COPY, so this is where multiplicity still exists -- the
     // graph builder keys nodes by card id and collapses it. Count before it is lost.
     const names = (cards as Array<{ name: string }>).map((c) => c.name);

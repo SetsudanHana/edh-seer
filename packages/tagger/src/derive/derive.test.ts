@@ -1683,3 +1683,28 @@ describe("entersUnderAnotherPlayer", () => {
     )).toBe(false);
   });
 });
+
+/** THE FACE REACHES THE ABILITY. `segment.ts` records which face prints each clause; this threads
+ *  that through `DeriveInput` the same way `clauseTexts` and `clauseCosts` already travel -- free,
+ *  recomputed rather than stored, because segmentation is deterministic.
+ *
+ *  Nothing READS the field yet, and that is deliberate: the population is byte-identical with it
+ *  (33,862 edges / 43,376 reasons / MESHED 287), and the defect it would let the matcher fix has no
+ *  witness in this corpus -- ZERO back-face abilities make a self-referential claim on a card whose
+ *  faces differ in type. The fact is recorded so the split can be built on data when one appears. */
+test("an ability carries the face its clause is printed on, and the front face carries none", () => {
+  const tags = deriveCardTags({
+    oracleId: "test-face",
+    clauses: [
+      { id: 1, abilityType: "static", actions: [{ verb: "draw", object: "you" }] },
+      { id: 2, abilityType: "activated", actions: [{ verb: "add-mana", object: "{B}" }] },
+    ],
+    characteristics: MINIMAL_CHARACTERISTICS,
+    clauseTexts: { 1: "Draw a card.", 2: "Add {B}." },
+    // Clause 2 sits on the back face; clause 1 on the front.
+    clauseFaces: { 2: 1 },
+  });
+  expect(tags.abilities).toHaveLength(2);
+  expect(tags.abilities[0].face).toBeUndefined();
+  expect(tags.abilities[1].face).toBe(1);
+});

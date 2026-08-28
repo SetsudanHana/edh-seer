@@ -8,7 +8,7 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import { deriveCardTags } from "@mtg/tagger";
-import { loadHierarchy, pairReasons } from "./index.js";
+import { loadHierarchy, pairReasonsAcrossFaces } from "./index.js";
 import type { DeckCard } from "./types.js";
 import type { ClauseFixture, PairRecord } from "./bin/pair-calibrate-core.js";
 
@@ -47,8 +47,14 @@ function deckCard(name: string): DeckCard {
   };
 }
 
+// THE SAME QUESTION THE TOOL ASKED, THROUGH THE SAME FUNCTION. `calibrate.deps.ts` calls
+// `pairReasonsAcrossFaces` when it shows a pair to be judged, so this must too -- the tool writes
+// the fixture this gate reads, and the two asking different questions about one pair is a ratchet
+// that fails on a card nobody touched. A no-op on today's fixture rows (a fixture card's type line
+// is rebuilt from its types and subtypes and carries no " // ", so nothing splits), which is the
+// point: it costs nothing now and cannot drift later. Review fix, 2026-08-28.
 const links = (p: PairRecord): boolean =>
-  pairReasons(deckCard(p.a), deckCard(p.b), hierarchy).length > 0;
+  pairReasonsAcrossFaces(deckCard(p.a), deckCard(p.b), hierarchy).length > 0;
 
 test("every judged card is in the fixture, so the gate can run without a database", () => {
   const needed = [...new Set(PAIRS.flatMap((p) => [p.a, p.b]))];

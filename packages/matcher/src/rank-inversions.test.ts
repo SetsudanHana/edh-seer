@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { countInversions, diffInversions } from "./rank-inversions.js";
+import { countInversions, diffInversions, ratingsFor } from "./rank-inversions.js";
 import type { SupplyDemandRow } from "./supply-demand.js";
 
 const side = (names: string[], avail: number) =>
@@ -85,4 +85,39 @@ test("diffing against a pre-per-role snapshot throws instead of silently passing
   const fresh = { shapes: 1, inversions: 1, payoffs: [{ tag: "t", name: "payoff", rating: 2, headline: 2.8, protectedPayoff: true, feedersAbove: 1 }], unmeasurablePayoffs: 0, unmeasurableFeederPairs: 0 };
   expect(() => diffInversions(stale, fresh)).toThrow(/per-role/);
   expect(() => diffInversions(fresh, stale)).toThrow(/per-role/);
+});
+
+/** THE FACE FOLD. `report.cards` is one row per printed FACE; every key `countInversions` looks up
+ *  is a PHYSICAL card name. The whole row is chosen once, on `score`, so the four facts a payoff is
+ *  judged by can never come from two different faces. */
+test("a two-faced card folds to ONE row -- the stronger face -- and all four facts come from it", () => {
+  const r = ratingsFor([
+    { name: "Solo", score: 1, authority: 0.9, synergyRating: 1.1, payoffRating: 1.2, feederRating: 0.3 },
+    // The front is weaker and majority-PAYOFF. A per-field fold would take protection from here and
+    // the headline from the back face -- one card judged by two rows.
+    { name: "Fell the Profane", cardName: "F // M", score: 1, authority: 0.9, synergyRating: 2, payoffRating: 3, feederRating: 0.1 },
+    // The BACK face is the stronger half: higher score, and it is majority-FEEDER (2*0.2 < 1.8).
+    { name: "Fell Mire", cardName: "F // M", score: 1.8, authority: 0.2, synergyRating: 4, payoffRating: 0.5, feederRating: 4.5 },
+  ]);
+  expect(r.headline.get("F // M")).toBe(4);
+  expect(r.payoff.get("F // M")).toBe(0.5); // the back face's, NOT the front's higher 3
+  expect(r.feeder.get("F // M")).toBe(4.5);
+  expect(r.majorityPayoff.has("F // M")).toBe(false); // the chosen row's classification, not an OR
+  // A single-faced card is untouched, and a missing rating stays MISSING rather than becoming 0.
+  expect(r.headline.get("Solo")).toBe(1.1);
+  expect(r.majorityPayoff.has("Solo")).toBe(true);
+  expect(r.payoff.has("nobody")).toBe(false);
+});
+
+/** Absent `authority` means NOT CLASSIFIED. Defaulting it to 0 would make `0 >= 0` true and put
+ *  every unmeasured card into the protected set, which is the gate failing open. */
+test("a row with no authority is not protected, and ties break on name so the fold is deterministic", () => {
+  const r = ratingsFor([
+    { name: "Unmeasured", score: 2, synergyRating: 2 },
+    { name: "B face", cardName: "A // B", score: 1, authority: 1, synergyRating: 2 },
+    { name: "A face", cardName: "A // B", score: 1, authority: 0.1, synergyRating: 3 },
+  ]);
+  expect(r.majorityPayoff.has("Unmeasured")).toBe(false);
+  // Equal scores -> the alphabetically first name wins, whatever order the rows arrived in.
+  expect(r.headline.get("A // B")).toBe(3);
 });

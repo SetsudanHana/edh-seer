@@ -12,11 +12,12 @@ import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, counterPresenceSentence, createsSentence, fetchSentence,
-  graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
+  emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   staticGrantSentence, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { parseTypeLineAllFaces } from "./typeline.js";
+import { faceDeckCards } from "./faces.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -714,6 +715,24 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
     return graveyardFillMatches(producer.subject, consumer.subject, h);
   }
   if (producer.verb === "counter-added") return counterAddMatches(producer.subject, consumer.subject, h);
+  // A DAMAGE EVENT HAS TWO PARTICIPANTS, AND A DEALER MUST BE COMPARED AGAINST A DEALER.
+  //
+  // A damage TRIGGER always names the source — "whenever another source you control deals exactly 1
+  // damage" — because the receiving direction ("is dealt damage") is routed to `unknownTriggers` in
+  // derive and never reaches here. The emit side was inconsistent: the IMPLIED combat event's
+  // subject is the creature (the dealer), while an AUTHORED damage emit's subject is
+  // `parseSubject(action.object)` — the victim, "each opponent". So the authored half was checking a
+  // victim against a dealer and could never match.
+  //
+  // MEASURED WITNESS (owner's own case, 2026-08-27): Impact Tremors "deals 1 damage to each
+  // opponent" takes 10 incoming `enters:creature` edges and formed ZERO outgoing ones in a deck
+  // holding six cards that trigger on damage, Ghyrson Starn among them.
+  //
+  // `dealer ?? subject` is what makes this additive: only an authored damage emit sets `dealer`, so
+  // the implied combat case falls back to exactly the comparison it makes today.
+  if (producer.verb === "non-combat-damage" || producer.verb === "combat-damage") {
+    return subjectMatches(producer.dealer ?? producer.subject, consumer.subject, h);
+  }
   return subjectMatches(producer.subject, consumer.subject, h);
 }
 
@@ -784,6 +803,16 @@ function stampSides(r: Reason, producer: DeckCard, consumer: DeckCard): Reason {
     ...r,
     ...(producer.isToken ? { producerIsToken: true } : {}),
     ...(consumer.isToken ? { consumerIsToken: true } : {}),
+    // A FACE NODE CARRIES THE FACE'S NAME so the by-name maps in `analyze.ts` stay collision-free —
+    // two faces of one card would otherwise share a `dir` key. The REASON carries the physical
+    // card's name, because the panel keys on it. Rewritten here, in the one place every reason
+    // literal already passes through, rather than at the fifteen sites that build one.
+    ...(producer.parentName ? { producer: producer.parentName } : {}),
+    ...(consumer.parentName ? { consumer: consumer.parentName } : {}),
+    // `producer.face` rather than `!== undefined`: face 0 is the front and stamps nothing, which
+    // keeps a front-face reason byte-identical to what this engine produced before faces were nodes.
+    ...(producer.face ? { producerFace: producer.face } : {}),
+    ...(consumer.face ? { consumerFace: consumer.face } : {}),
   };
 }
 
@@ -803,6 +832,20 @@ const COPY_REPLACES_TYPE_CUE = /loses all other card types|except (?:it|they)(?:
 /** A populate effect copies a TOKEN, never the commander -- refused rather than claimed, on the
  *  same rule as everything else here: a wrong claim costs more than a missing one. */
 const COPY_OF_TOKEN_CUE = /copy of (?:a |an |another |target |that )*(?:\w+ )?token/i;
+/** "Another target NONLEGENDARY creature you control" -- a copy ability that explicitly excludes
+ *  legendary permanents from what it copies. CR gives no way around a printed restriction, so a
+ *  legendary consumer can never be the thing this ability copies.
+ *
+ *  This is the reopening condition `copySubject`'s own CEILING comment named on 2026-08-19
+ *  (`8831688d`): "gate on control only if a measurement finds the family bigger than that." It just
+ *  did -- Reflection of Kiki-Jiki's back-face copy ability reaching Kardur, Doomscourge (a
+ *  legendary creature) once face-scoping (2026-08-27) let `typed[0]` resolve to the RIGHT ability
+ *  instead of an unrelated earlier one. MEASURED 2026-08-27: 12 corpus cards print a copy cue
+ *  alongside the literal word "nonlegendary", 3 in the derived corpus.
+ *
+ *  Read off the printed cue, not a derived field -- none records it, and adding one is a schema and
+ *  re-derive question this fix does not need to answer for three cards. */
+const COPY_EXCLUDES_LEGENDARY_CUE = /\bnonlegendary\b/i;
 
 /** Board state and provenance a copy claim must not carry into the type test: `token` means opposite
  *  things on the two shapes of the family, and `control`/`zone`/`counter` describe the object being
@@ -822,10 +865,13 @@ const strip = (s: Partial<SubjectFilter>): Partial<SubjectFilter> => {
  *  populate effect what is COPIED, and only the printed cue tells them apart.
  *
  *  CEILING (`ponytail:` -- read before trusting a claim): `control` is ignored, so a card making an
- *  OPPONENT copy something over-claims, and Coiling Rebirth's copy is conditioned on the creature
- *  NOT being legendary, which no derived field records. Both are single cards; gate on control only
- *  if a measurement finds the family bigger than that. */
-function copySubject(p: DeckCard): { subject: SubjectFilter; enters: boolean } | undefined {
+ *  OPPONENT copy something over-claims, and Coiling Rebirth's copy is conditioned on "that creature
+ *  isn't legendary" -- an intervening-if the engine has refused generally, not the literal word
+ *  `notLegendary` catches. Both single cards; gate on control only if a measurement finds the
+ *  family bigger than that. */
+function copySubject(
+  p: DeckCard,
+): { subject: SubjectFilter; enters: boolean; notLegendary: boolean } | undefined {
   const oracle = p.card.oracleText ?? "";
   if (COPY_OF_TOKEN_CUE.test(oracle)) return undefined;
   const enters = COPY_ENTERS_CUE.test(oracle);
@@ -848,7 +894,32 @@ function copySubject(p: DeckCard): { subject: SubjectFilter; enters: boolean } |
   const raw: Partial<SubjectFilter> | undefined = typed[0]
     ?? (abilities.some((a) => a.effect.kind === "clone") ? { type: "creature" } : undefined);
   if (raw === undefined) return undefined;
-  return { subject: { ...strip(raw), control: "any", token: null } as SubjectFilter, enters };
+  // SCOPED TO THE EXPLICIT TYPED ABILITY ONLY (`typed.length > 0`), never the untyped `clone`-static
+  // fallback -- Naga Fleshcrafter is why. Its "nonlegendary" sits on a SEPARATE ability (Renew, kind
+  // `copy-spell`, never a `typed` candidate) from the one that actually supplies this card's copy
+  // subject ("may have this creature enter as a copy of ANY creature", genuinely unrestricted, read
+  // through the fallback). A card-wide test with no such scoping would have refused that real claim.
+  const notLegendary = typed.length > 0 && COPY_EXCLUDES_LEGENDARY_CUE.test(oracle);
+  return { subject: { ...strip(raw), control: "any", token: null } as SubjectFilter, enters, notLegendary };
+}
+
+/** Could the producer ITSELF be the object its own emit describes?
+ *
+ *  A creature emitting `dies: {type: creature}` might well be the creature that dies, so
+ *  "When <producer> dies" is true and stays. A Sorcery emitting the same thing is describing the
+ *  creatures it destroys, and that sentence becomes a claim that a sorcery dies.
+ *
+ *  Reuses `characteristicsSubject` + `subjectMatches` — the same pair the self-trigger gate uses —
+ *  and strips the same event-only fields for the same reason: `zone`, `counter` and `entersTapped`
+ *  describe the EVENT, not the card, and comparing them against a type line is the mistake this file
+ *  has now recorded four times. An UNTYPED subject matches anything and therefore keeps the old
+ *  wording, which is the conservative direction: no noun is invented for an emit naming no class. */
+function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy): boolean {
+  // No derived tags means no characteristics to compare, so nothing can be ruled out — keep the
+  // old wording rather than invent a noun on a card the engine has not read.
+  if (!p.tags) return true;
+  const { zone: _z, counter: _c, entersTapped: _t, self: _s, ...printed } = subject;
+  return subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h);
 }
 
 export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
@@ -954,6 +1025,27 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
           text: reasonSentence({
             producer: p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
+            // CAN THE PRODUCER BE THE THING THIS HAPPENS TO? That is the whole question, and
+            // naming the class unconditionally was the wrong answer to it.
+            //
+            // "When Austere Command dies" is a sentence about a `{4}{W}{W}` SORCERY, printed on the
+            // deck's four highest-rated rows and flagged independently by three personas on
+            // 2026-08-27. Austere Command emits four `dies` events whose subjects are classes it
+            // DESTROYS; it is not, and can never be, the thing that dies.
+            //
+            // BUT NAMING THE CLASS EVERY TIME BREAKS A DELIBERATE INVARIANT. `sentence.ts` drops the
+            // subject on purpose so Scrap Trawler's `dies:creature` and `dies:artifact` rows read as
+            // one line, and so a producer satisfying one trigger by BOTH its baseline and an
+            // authored emit collapses to a single claim — `claimCount` keys on (tag, text), so prose
+            // that varies by type silently double-counts and inflates the score. Both are covered by
+            // tests, and both failed the first cut of this fix.
+            //
+            // So the noun appears only when the producer's own printed characteristics CANNOT
+            // satisfy its own emit. A Reanimator creature whose emit is `{type: creature}` really
+            // might be the creature entering, and keeps the old wording; a Sorcery whose emit is
+            // `{type: creature}` cannot, and gets the class named instead. Same predicate the
+            // self-trigger gate above uses, so the two cannot disagree about what a card can be.
+            subjectNoun: producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject),
           }),
           effectKind: a.effect.kind,
           repeatability: triggerRepeatability(t.subject),
@@ -1207,6 +1299,22 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       // A LAND IS PLAYED, NOT CAST (CR 305.1). "Spells you cast cost {1} less" reaches no land, and
       // the type union keeps a modal DFC's castable face.
       if (isLandOnly(c.tags)) continue;
+      // AND A TOKEN IS PUT ONTO THE BATTLEFIELD, NEVER CAST (CR 111.1) — the same rule as the land
+      // one above, one object over. Found on the Jodah deck 2026-08-27: Serah Farron prints "the
+      // first legendary creature SPELL you cast each turn costs {2} less", and the engine claimed it
+      // discounted **Ravage**, a `Token Legendary Artifact Creature — Robot` that Soundwave creates.
+      //
+      // IT SURVIVES BECAUSE `hasGenericMana`'s LENIENT DEFAULT MEETS A CASE WHERE ABSENCE IS A FACT.
+      // That guard answers `true` for a missing cost on purpose — "not recorded, refuse nothing",
+      // which is right for a card whose cost the corpus failed to store. A token has no mana cost
+      // because it is never cast, so the same silence means the opposite thing and the lenient
+      // branch turns a missing answer into a wrong one. Gated HERE rather than in `hasGenericMana`,
+      // which is also read by the ACTIVATED side, where a token's abilities really can be discounted.
+      //
+      // THE PAIR OFTEN SURVIVES, AND ONLY THIS REASON GOES. Serah Farron also prints "Legendary
+      // creatures you control get +2/+2", and Ravage is one — so the edge keeps its `static:pump`
+      // and loses only the claim that was false.
+      if (c.isToken) continue;
       // "Spells your OPPONENTS cast cost less" is not a relation to a card you chose to run — it is
       // the tax family pointing the other way, and tax stays in ROLE_NOT_SYNERGY.
       if (a.effect.subject.control === "opp") continue;
@@ -1432,30 +1540,34 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
   const copy = copySubject(p);
   if (copy && !c.isToken) {
     const legendary = c.tags.characteristics.types.includes("legendary");
-    for (const a of c.tags.abilities) {
-      if (!a.trigger?.subject.self) continue;
-      for (const rawVerb of a.trigger.verbs) {
-        // The RAW verb, not the normalized one: `normalizeZoneEvent` rewrites `dies` to
-        // `leaves`@battlefield, which a plain "when this leaves the battlefield" trigger also
-        // becomes -- and a bounce is not a death the legend rule causes.
-        if (rawVerb !== "enters" && rawVerb !== "dies") continue;
-        // ENTERS is claimed only by the cues that put a NEW object onto the battlefield. "Becomes a
-        // copy" (Sakashima's Will) rewrites a permanent already in play -- no entry, still two
-        // legends. DIES needs the legend rule, so it needs a legendary consumer and nothing else.
-        if (rawVerb === "enters" && !copy.enters) continue;
-        if (rawVerb === "dies" && !legendary) continue;
-        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
-        if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) continue;
-        const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
-        reasons.push({
-          tag: key,
-          text: copySentence(p.card.name, c.card.name, key, rawVerb === "dies"),
-          effectKind: a.effect.kind,
-          repeatability: triggerRepeatability(t.subject),
-          scaling: a.effect.scaling,
-          consumer: c.card.name,
-          producer: p.card.name,
-        });
+    // A copy ability that prints "nonlegendary" cannot ever copy a legendary consumer, by ANY verb
+    // -- CR gives no way around a printed restriction. See `COPY_EXCLUDES_LEGENDARY_CUE`.
+    if (!(copy.notLegendary && legendary)) {
+      for (const a of c.tags.abilities) {
+        if (!a.trigger?.subject.self) continue;
+        for (const rawVerb of a.trigger.verbs) {
+          // The RAW verb, not the normalized one: `normalizeZoneEvent` rewrites `dies` to
+          // `leaves`@battlefield, which a plain "when this leaves the battlefield" trigger also
+          // becomes -- and a bounce is not a death the legend rule causes.
+          if (rawVerb !== "enters" && rawVerb !== "dies") continue;
+          // ENTERS is claimed only by the cues that put a NEW object onto the battlefield. "Becomes
+          // a copy" (Sakashima's Will) rewrites a permanent already in play -- no entry, still two
+          // legends. DIES needs the legend rule, so it needs a legendary consumer and nothing else.
+          if (rawVerb === "enters" && !copy.enters) continue;
+          if (rawVerb === "dies" && !legendary) continue;
+          const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
+          if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) continue;
+          const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
+          reasons.push({
+            tag: key,
+            text: copySentence(p.card.name, c.card.name, key, rawVerb === "dies"),
+            effectKind: a.effect.kind,
+            repeatability: triggerRepeatability(t.subject),
+            scaling: a.effect.scaling,
+            consumer: c.card.name,
+            producer: p.card.name,
+          });
+        }
       }
     }
   }
@@ -1605,4 +1717,42 @@ export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
     ...directedReasons(b, a, h),
     ...meldReason(a, b),
   ]);
+}
+
+/** TWO CARDS AS THE SHIPPED ENGINE SEES THEM: every printed FACE of one against every printed face
+ *  of the other.
+ *
+ *  `pairReasons` takes two `DeckCard`s and reads whatever type line, text and ability list they
+ *  carry -- which for a multi-face card is the COMBINED card. `analyzeDeckStructured` has not asked
+ *  it that question since faces-as-nodes (2026-08-27): it splits every card with `faceDeckCards`
+ *  first, so each face is matched with only the abilities IT prints and its own type line. The
+ *  difference is not cosmetic -- CLAUDE.md records `copySubject`'s `typed[0]` picking a different
+ *  ability once the list is face-scoped, which changed a real claim.
+ *
+ *  So any caller asking "what does the engine say about these two cards" must ask through here, or
+ *  it describes an engine that no longer ships. Both such callers do: the pair-judging tool, and the
+ *  offline ratchet that gates its verdicts -- and those two disagreeing is the specific failure this
+ *  exists to prevent, since one writes the fixture the other reads.
+ *
+ *  A pair of single-faced cards takes the plain path, so the overwhelmingly common case is exactly
+ *  `pairReasons` and nothing here can change it. Reasons are deduped on (tag, text): two faces of
+ *  one card can produce the same sentence, and `stampSides` has already rewritten both endpoints to
+ *  the PHYSICAL card name (`parentName`), so such rows really are one claim said twice. */
+export function pairReasonsAcrossFaces(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
+  const fa = faceDeckCards(a);
+  const fb = faceDeckCards(b);
+  if (fa.length === 1 && fb.length === 1) return pairReasons(a, b, h);
+  const out: Reason[] = [];
+  const seen = new Set<string>();
+  for (const x of fa) {
+    for (const y of fb) {
+      for (const r of pairReasons(x, y, h)) {
+        const key = `${r.tag} ${r.text}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(r);
+      }
+    }
+  }
+  return out;
 }

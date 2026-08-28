@@ -140,3 +140,27 @@ test("a double-faced card carries its FRONT face's mana cost (CR 712.4a)", () =>
   const backOnly = { ...doc, faces: [{ name: "b", typeLine: "t", manaCost: "" }] } as unknown as Parameters<typeof docToCard>[0];
   expect(docToCard(backOnly).manaCost).toBeUndefined();
 });
+
+// A FACE IS A NODE (2026-08-27). `faces` was on `CardDoc` and dropped here, the FOURTH field this
+// join has been caught dropping. The graph cannot draw a node per face without the printed faces.
+test("docToCard carries the printed faces", () => {
+  const doc = {
+    _id: "x", name: "Fell the Profane // Fell Mire", typeLine: "Instant // Land",
+    oracleText: "", keywords: [], colors: ["B"], manaValue: 4, layout: "modal_dfc",
+    faces: [
+      { name: "Fell the Profane", typeLine: "Instant", oracleText: "Destroy target creature.", manaCost: "{3}{B}", colors: ["B"] },
+      { name: "Fell Mire", typeLine: "Land", oracleText: "Fell Mire enters tapped.", colors: [] },
+    ],
+  } as unknown as Parameters<typeof docToCard>[0];
+  const card = docToCard(doc);
+  expect(card.faces?.map((f) => f.name)).toEqual(["Fell the Profane", "Fell Mire"]);
+  expect(card.faces?.[1].typeLine).toBe("Land");
+});
+
+test("docToCard leaves faces absent on a single-face card", () => {
+  const doc = {
+    _id: "y", name: "Sol Ring", typeLine: "Artifact", oracleText: "{T}: Add {C}{C}.",
+    keywords: [], colors: [], manaValue: 1,
+  } as unknown as Parameters<typeof docToCard>[0];
+  expect(docToCard(doc).faces).toBeUndefined();
+});

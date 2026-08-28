@@ -31,7 +31,7 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
 import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
-import { countInversions, diffInversions, type InversionReport } from "../rank-inversions.js";
+import { countInversions, diffInversions, ratingsFor, type InversionReport } from "../rank-inversions.js";
 import { buildSupplyDemand, ratio, type SupplyDemandRow } from "../supply-demand.js";
 
 const DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
@@ -110,24 +110,12 @@ for (const path of files) {
   );
   if (INVERSIONS || SAVE || AGAINST) {
     // Absent means UNMEASURABLE, never zero: a card with no rating must be skipped and counted,
-    // not scored 0 against real feeders (the `?? 0` defect the fix wave removed for tokens).
-    const has = <T,>(v: T | undefined): v is T => v !== undefined;
-    const ratings = {
-      payoff: new Map(report.cards.filter((c) => has(c.payoffRating)).map((c) => [c.name, c.payoffRating!] as const)),
-      feeder: new Map(report.cards.filter((c) => has(c.feederRating)).map((c) => [c.name, c.feederRating!] as const)),
-      headline: new Map(report.cards.filter((c) => has(c.synergyRating)).map((c) => [c.name, c.synergyRating!] as const)),
-      // The protected set is defined on SCORES, not on the rounded ratings, so a card sitting near
-      // the boundary is not misclassified by a 0.05 rounding step.
-      //
-      // Deliberately NOT `authority >= roleBlend * feederLift`, the formula in analyze.ts:417 — that
-      // would be a second copy of the formula reading a second `loadImpactWeights()` call, and both
-      // `?? 0` defaults fire together on any `CardSynergy` lacking the fields (`0 >= 0` -> true),
-      // defaulting an unmeasured card INTO the protected set. `score = authority + roleBlend *
-      // feederLift` makes protected <=> `authority >= score - authority` <=> `2 * authority >=
-      // score`, using only shipped fields with no re-read of `roleBlend` and no default-in trap:
-      // absent `authority` now means NOT classified, never protected.
-      majorityPayoff: new Set(report.cards.filter((c) => c.authority !== undefined && 2 * c.authority >= c.score).map((c) => c.name)),
-    };
+    // not scored 0 against real feeders (the `?? 0` defect the fix wave removed for tokens). The
+    // face fold — a two-faced card rates one row per printed FACE while every key here is a
+    // PHYSICAL card name — lives in `ratingsFor`, with its own tests and its reasons written down
+    // there. The protected set is defined on SCORES, not on the rounded ratings, so a card sitting
+    // near the boundary is not misclassified by a 0.05 rounding step.
+    const ratings = ratingsFor(report.cards);
     const rep = countInversions(rows, ratings, { glut: GLUT });
     inversionTotals.shapes += rep.shapes;
     inversionTotals.inversions += rep.inversions;

@@ -1,9 +1,9 @@
 import { expect, test } from "vitest";
-import { cutCandidates, deckSlack, trimOrder, CUT_RATING_MAX, CUT_AXIS_MAX, type CutInput, type SlackParent } from "./cut-list.js";
+import { cutCandidates, deckSlack, trimOrder, unjudgedCandidates, CUT_RATING_MAX, CUT_AXIS_MAX, type CutInput, type SlackParent } from "./cut-list.js";
 
 const card = (over: Partial<CutInput> & { name: string }): CutInput => ({
   rating: 0, axisWeight: 0, partnerCount: 0, manaValue: 0, roles: [], isLand: false,
-  isCommander: false, isComboPiece: false, fillsDeckRole: false, ...over,
+  isCommander: false, isComboPiece: false, fillsDeckRole: false, derived: true, ...over,
 });
 // FIX F2 (controller review, 2026-08-21): `deckSlack`/`trimOrder` read `buildParents` now, not
 // leaf `buildCategories` -- a leaf's own target is permanently 0 since Task 7, so it could never
@@ -97,7 +97,7 @@ test("weakest first, ties broken by fewest partners then name, and the list is c
  *  different cut candidates when one costs 9 and the other 1 -- which is the only sense in which
  *  cost belongs here, since nothing in this repo models card quality. */
 test("mana value breaks a tie, expensive first, and gates nothing", () => {
-  const base = { rating: 0.3, axisWeight: 0, partnerCount: 0, roles: [], fillsDeckRole: false, isLand: false, isCommander: false, isComboPiece: false };
+  const base = { rating: 0.3, axisWeight: 0, partnerCount: 0, roles: [], fillsDeckRole: false, isLand: false, isCommander: false, isComboPiece: false, derived: true };
   const rows = cutCandidates([
     { ...base, name: "Cheap", manaValue: 1 },
     { ...base, name: "Expensive", manaValue: 9 },
@@ -109,7 +109,7 @@ test("mana value breaks a tie, expensive first, and gates nothing", () => {
 test("a costly card the deck DOES use is still not a candidate", () => {
   const rows = cutCandidates([{
     name: "Expensive engine", rating: 3.0, axisWeight: 0.8, partnerCount: 12, manaValue: 9,
-    roles: [], fillsDeckRole: false, isLand: false, isCommander: false, isComboPiece: false,
+    roles: [], fillsDeckRole: false, isLand: false, isCommander: false, isComboPiece: false, derived: true,
   }]);
   expect(rows).toEqual([]);
 });
@@ -232,4 +232,87 @@ test("a universe too small to have a middle keeps the plain wording", () => {
   const [row] = trimOrder([card({ name: "Alone", partnerCount: 2, rating: 0.5 })]);
   expect(row!.reasons[0]).toBe("only 2 cards connect to it");
   expect(row!.protections.join(" ")).not.toContain("more than half");
+});
+
+/** THE DEFECT THIS GATE CLOSES, pinned in both directions. Measured 2026-08-27 on
+ *  `precon-party-time`: 12 of 12 shipped cut candidates were cards the engine had never read, so
+ *  every row of that list was the corpus's own gap presented as a dead card. */
+test("a card the engine never read is not a cut candidate", () => {
+  const rows = cutCandidates([card({ name: "Calculating Lich", derived: false })]);
+  expect(rows).toEqual([]);
+});
+
+test("an unread card that would have qualified is reported as unjudged instead", () => {
+  const inputs = [
+    card({ name: "Calculating Lich", derived: false, manaValue: 6 }),
+    card({ name: "Solemn Doomguide", derived: false, manaValue: 5 }),
+    // Read, dead, and therefore a real candidate — it must NOT appear here.
+    card({ name: "Dead Weight" }),
+  ];
+  expect(unjudgedCandidates(inputs)).toEqual(["Calculating Lich", "Solemn Doomguide"]);
+  expect(cutCandidates(inputs).map((r) => r.name)).toEqual(["Dead Weight"]);
+});
+
+/** The protection that keeps Sol Ring off the passive list must keep it off this one too, or the
+ *  refusal re-introduces the very defect it was written beside. */
+test("an unread card with a role is not unjudged either — its role still protects it", () => {
+  expect(unjudgedCandidates([card({ name: "Sol Ring", derived: false, roles: ["ramp"] })])).toEqual([]);
+  expect(unjudgedCandidates([card({ name: "Bojuka Bog", derived: false, isLand: true })])).toEqual([]);
+});
+
+// REVIEW FIX (2026-08-27): a two-faced card rates two face rows, both unread, and this ran over
+// the raw rows without merging them -- an unread two-faced card printed BOTH its face names, and
+// `CutList.tsx`'s "N of the M unread" line could read "2 of the 1 unread" against a coverage count
+// of one slot. Merged like `cutCandidates`, it names the card once.
+test("a two-faced unread card is reported once, by its physical name, not once per face", () => {
+  const inputs = [
+    card({ name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", derived: false, manaValue: 3 }),
+    card({ name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", derived: false, manaValue: 3 }),
+  ];
+  expect(unjudgedCandidates(inputs)).toEqual(["Fell the Profane // Fell Mire"]);
+});
+
+/** Trim must always have an Nth row, so an unread card is RANKED rather than refused — with the
+ *  true clause and a protection, never "nothing connects to it". */
+test("trim keeps an unread card and says why it cannot judge it", () => {
+  const [row] = trimOrder([card({ name: "Calculating Lich", derived: false })]);
+  expect(row.name).toBe("Calculating Lich");
+  expect(row.reasons.join(" ")).toContain("has not read this card");
+  expect(row.reasons.join(" ")).not.toContain("nothing in the deck connects to it");
+  expect(row.protections.join(" ")).toContain("not read yet");
+});
+
+// YOU CANNOT CUT HALF A CARD. A modal DFC whose land back does nothing and whose front does nothing
+// is ONE cut, not two, and the row has to name the card a reader would physically remove.
+test("two face rows for one card collapse to a single candidate naming the card", () => {
+  const rows = cutCandidates([
+    { name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", rating: 0.2, axisWeight: 0, partnerCount: 0, manaValue: 4, roles: [], isLand: false, isCommander: false, isComboPiece: false, fillsDeckRole: false, derived: true, unmetConditions: [] },
+    { name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", rating: 0.4, axisWeight: 0, partnerCount: 1, manaValue: 4, roles: [], isLand: false, isCommander: false, isComboPiece: false, fillsDeckRole: false, derived: true, unmetConditions: [] },
+  ]);
+  expect(rows).toHaveLength(1);
+  expect(rows[0].name).toBe("Fell the Profane // Fell Mire");
+});
+
+// A card is protected by ANY of its faces doing work — cutting it takes both away.
+test("a face that fills a role protects the whole card", () => {
+  const rows = cutCandidates([
+    { name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", rating: 0.2, axisWeight: 0, partnerCount: 0, manaValue: 4, roles: [], isLand: false, isCommander: false, isComboPiece: false, fillsDeckRole: false, derived: true, unmetConditions: [] },
+    { name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", rating: 0.2, axisWeight: 0, partnerCount: 0, manaValue: 4, roles: ["ramp"], isLand: false, isCommander: false, isComboPiece: false, fillsDeckRole: false, derived: true, unmetConditions: [] },
+  ]);
+  expect(rows).toHaveLength(0);
+});
+
+// trimOrder must merge too -- it ranks every cuttable card and hands a reader its own N off the
+// top, so a two-faced card appearing twice there is the identical defect one surface over. The
+// merge keeps the STRONGEST face's numbers, so the row reads "connects to 1 card" (Fell Mire's
+// number), not "connects to 0" (Fell the Profane's) -- the merged row must not under-state a card
+// by quoting its weaker half.
+test("trimOrder merges a card's two faces into one ranked row", () => {
+  const rows = trimOrder([
+    card({ name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", partnerCount: 0 }),
+    card({ name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", partnerCount: 1 }),
+  ]);
+  expect(rows).toHaveLength(1);
+  expect(rows[0]!.name).toBe("Fell the Profane // Fell Mire");
+  expect(rows[0]!.partners).toBe(1);
 });

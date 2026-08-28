@@ -31,6 +31,7 @@ export function DeckIdentity({
   commanderCast,
   manaAvailability,
   commanderTax,
+  coverage,
 }: {
   cohesion: DeckReport["cohesion"];
   colorIdentity?: string[];
@@ -43,12 +44,22 @@ export function DeckIdentity({
   manaAvailability?: DeckReport["manaAvailability"];
   /** CR 903.8's caveat, shipped as data so this file and the CLI cannot drift apart. */
   commanderTax?: DeckReport["commanderTax"];
+  /** Present only when the engine could NOT read the whole deck. The theme, its share and the
+   *  "no dominant theme" verdict are all EDGE-derived, so on a partly-read deck they are computed
+   *  over a fraction of the cards — and "No dominant theme · unfocused · 0.08" reads as a judgement
+   *  on the deck rather than a statement about what the engine could see. Same correction as
+   *  `HeadlineScores`, and the same split: this is the synergy half, so it declines to grade. */
+  coverage?: DeckReport["coverage"];
 }) {
   if (!cohesion) return null;
   // The share is printed beside the label because the label alone is a bucket boundary: "focused"
   // spans 0.3 to 0.6, and 0.31 and 0.59 are different decks. Two decimals, since the whole scale
   // lives inside one unit.
-  const focus = `${cohesion.label} · ${cohesion.score.toFixed(2)}`;
+  // THE SHARE IS A MEASUREMENT AND THE LABEL IS A VERDICT. On a partly-read deck the number stays
+  // and the word goes — "unfocused" is not a thing the engine can say about a deck it read half of.
+  const focus = coverage
+    ? `${cohesion.score.toFixed(2)} over the ${coverage.derived} cards read`
+    : `${cohesion.label} · ${cohesion.score.toFixed(2)}`;
   // The WIDER FAMILY, and only when it differs — the same rule the CLI settled on (A10). A specific
   // primary measures itself, so "daleks entering · 0.08" is true and reads as a broken deck until
   // you are also told the family it sits inside is 0.46.
@@ -67,7 +78,12 @@ export function DeckIdentity({
             wrong answer is worse than a missing one, and this heading was the loudest place it did
             not hold. */}
         {cohesion.dominant === false ? (
-          <h2 className="text-2xl font-bold leading-none text-(--muted)">No dominant theme</h2>
+          <h2 className="text-2xl font-bold leading-none text-(--muted)">
+            {/* "No dominant theme" is a verdict about the DECK; on a partly-read deck the true
+              *  statement is about the ENGINE, and printing the first over the second is what made
+              *  a Party-themed precon read as themeless. */}
+            {coverage ? "No theme found in the cards read" : "No dominant theme"}
+          </h2>
         ) : (
           <h2 className="text-2xl font-bold leading-none text-(--accent) capitalize">{cohesion.theme}</h2>
         )}

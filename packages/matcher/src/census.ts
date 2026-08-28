@@ -199,7 +199,22 @@ export function buildCensus(
     for (const p of prodByVerb.get(c.event.verb) ?? []) {
       if (eventMatches(p.event, c.event, h)) for (const card of p.cards) counterpart.add(card);
     }
-    const selfSupplied = combatSelfSupplied(impliedCombatProducer(c.event.verb), c.event);
+    // A SELF TRIGGER IS SELF-SUPPLIED, for the same reason combat and phases are: there is no card
+    // to draw. "When THIS creature enters, draw a card" fires when you play the card; nothing else
+    // in the deck has to supply it, and counting it as an unmet demand is a false alarm.
+    //
+    // MEASURED ON THE PRECON: the availability panel printed "a creature entering the battlefield —
+    // 4 want · 0 supply" over a deck the tool's own graph counts as 51 creatures, and the skeptic
+    // persona checked it against that legend and called it broken (2026-08-27). All four consumers
+    // were `enters {type: creature, self: true}` — Dire Fleet Ravager, Irregular Cohort and
+    // Puppeteer Clique twice, every one a card whose OWN entry triggers. The count was right and the
+    // sentence around it was wrong: 0 was the number of external suppliers such a trigger needs.
+    //
+    // `consumerKey` marks only COMBAT verbs, so no key moves here — the flag changes what the row
+    // MEANS to `deckAvailability` (`available: null`, a refusal rather than a probability), not
+    // which row it is.
+    const selfSupplied = c.event.subject.self === true
+      || combatSelfSupplied(impliedCombatProducer(c.event.verb), c.event);
     return { key: consumerKey(c.event, selfSupplied), cards: c.cards, counterpart, selfSupplied, authored: true };
   });
 

@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, within, cleanup } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { CardDrawerProvider, CardName } from "./card-drawer.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
@@ -1091,8 +1092,11 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   // The game supplies a combat trigger: 0% would invent a hole, 100% would claim a board state
   // this layer does not model. And the VISIBLE row must not say "0 supply" either -- a zero next
   // to a dash reads as a hole in the deck.
-  expect(screen.getByLabelText(/anything attacking, 3 cards want it, the game supplies it/i)).toBeInTheDocument();
-  expect(screen.getByText(/3 want · the game supplies it/i)).toBeInTheDocument();
+  // "the game supplies it" was true of a phase and false of a SELF trigger, which became
+  // self-supplied on 2026-08-27. One wording now covers a phase, combat and a card that triggers
+  // itself — and the row still must not be counted as an unmet want.
+  expect(screen.getByLabelText(/anything attacking, 3 cards want it, and nothing has to supply it/i)).toBeInTheDocument();
+  expect(screen.getByText(/3 want · nothing has to supply it/i)).toBeInTheDocument();
 });
 
 test("demandSentence says the true ugly thing rather than a plausible wrong one", () => {
@@ -1395,7 +1399,23 @@ test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)
   expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
   expect(screen.getByText(/Build benchmarks/i)).toBeInTheDocument();
   expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
-  expect(screen.getByText("Ramp")).toBeInTheDocument(); // BuildBenchmarks category
+  // `getAllBy`: "Ramp" is a BuildBenchmarks category AND, on a deck short of it, a finding's own
+  // figure label. Two elements is the SEQUENCING working — the finding states the conclusion, the
+  // benchmark below it is the evidence — so the assertion is that it is present, not unique.
+  expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
+});
+
+/** THE SEQUENCE, pinned. Four persona reviews (2026-08-26) found the page led with its weakest
+ *  answer; the fix is an ORDER, so an order is what the test asserts — the diagnosis must come
+ *  before the scores in document order, not merely both exist. Proven to fire by moving `Findings`
+ *  below `HeadlineScores` in `OverviewTab`. */
+test("OverviewTab leads with the diagnosis and demotes the scores below it", () => {
+  const { container } = render(<OverviewTab data={SAMPLE} />);
+  const text = container.textContent ?? "";
+  const diagnosis = text.indexOf("What is wrong with this deck");
+  const scores = text.indexOf("How the engine read it");
+  expect(diagnosis).toBeGreaterThanOrEqual(0);
+  expect(scores).toBeGreaterThan(diagnosis);
 });
 
 test("HeadlineScores uses semantic tokens, not raw Tailwind palette classes", () => {
@@ -1581,6 +1601,7 @@ test("the run-diff strip names the cards, the moved scores and the moved categor
         build: undefined,
         theme: undefined,
         categories: [{ category: "ramp", from: 6, to: 7 }],
+        findings: [],
       }}
     />,
   );
@@ -1845,4 +1866,44 @@ test("the legality panel reports and never gates, and says how many rules it che
   // which would be a claim these five rules cannot make.
   const { container } = render(<LegalityPanel legality={[]} />);
   expect(container).toBeEmptyDOMElement();
+});
+
+/** ONE PHYSICAL CARD, ONE TILE IN "Not read yet". A two-faced card rates one row per printed FACE
+ *  (Task 7, faces-as-nodes) with `derived` identical on both, so an unread modal DFC drew two tiles
+ *  and the count said "2 cards" directly under a caveat that counts SLOTS and says one. Review fix,
+ *  2026-08-27: the same "2 of the 1 unread" defect the 08-27 wave fixed in `ReportView` and in
+ *  `unjudgedCandidates`. The FRONT row survives, because the art map and the card drawer are both
+ *  keyed on the face name. */
+test("an unread two-faced card is one tile in Not read yet, not one per face", () => {
+  const cards = [
+    { name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", derived: false, synergyRating: 0, topPartners: [] },
+    { name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", face: 1, derived: false, synergyRating: 0, topPartners: [] },
+    { name: "Sol Ring", derived: false, synergyRating: 0, topPartners: [] },
+  ] as any;
+  render(<CardList cards={cards} />);
+  expect(screen.getByText("2 cards")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Fell the Profane" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Fell Mire" })).toBeNull();
+});
+
+/** A merged cut-list row names the PHYSICAL card ("you cannot cut half a card"), while every graph
+ *  node's label is one printed FACE's name. Unjoined, `CardName` rendered those rows as plain text
+ *  and the reader could not open the card the tool was telling them to cut. Review fix, 2026-08-28. */
+test("a card named by the whole card, not by a face, still opens its front face", () => {
+  const graph = {
+    nodes: [
+      { id: "A // B", label: "A", cardName: "A // B", types: [], subtypes: [], supertypes: [], colors: [], cmc: 1, copies: 1 },
+      { id: "face:1:A // B", label: "B", face: 1, cardName: "A // B", types: [], subtypes: [], supertypes: [], colors: [], cmc: 1, copies: 1 },
+    ],
+    edges: [],
+  } as any;
+  render(
+    <CardDrawerProvider graph={graph}>
+      <CardName name="A // B" />
+      <CardName name="Never in the deck" />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByRole("button", { name: "A // B" })).toBeInTheDocument();
+  // A name no node carries is still plain text: the drawer must not offer to open what it cannot.
+  expect(screen.queryByRole("button", { name: "Never in the deck" })).toBeNull();
 });

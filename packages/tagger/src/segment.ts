@@ -46,6 +46,22 @@ export interface Clause {
   /** Actions the EFFECT states, derived mechanically from the text. Handed to the model so it
    *  cannot answer a clause with the `other` escape hatch that the vocabulary does cover. */
   effectActions?: string[];
+  /** WHICH FACE THIS CLAUSE IS PRINTED ON — 0 for the front, 1 for the next, and so on.
+   *
+   *  The loop below has always tracked this in order to CLASSIFY each clause against its own face's
+   *  type line (a card whose back is an instant was making the FRONT face's lines read as spell
+   *  abilities). It then threw the number away, so downstream nothing could tell a front-face
+   *  ability from a back-face one, and both matched against the card's UNION of types.
+   *
+   *  Owner, 2026-08-27: "we should split the edges between front and back of a card ... they
+   *  produce separate events so front should not be linked to what back ability is". MEASURED over
+   *  the derived corpus: 113 of 2,767 cards are multi-face and carry 224 clauses on a face after
+   *  the first -- transform 51 - modal_dfc 31 - adventure 18 - prepare 10 - split 3.
+   *
+   *  Not persisted, and it does not need to be: `segment()` is deterministic and derive already
+   *  recomputes `clauseTexts`, clause costs and `grantedToOwnToken` from it for exactly this reason.
+   *  Absent on a single-face card, where there is nothing to distinguish. */
+  face?: number;
 }
 
 /** True when the card itself is an instant or sorcery — its text is a spell ability by default. */
@@ -380,6 +396,7 @@ export function segment(oracleText: string, keywords: string[] = [], typeLine = 
     const ea = effectActions(body, c.kind);
     const clause: Clause = {
       id: ++id, ...c, text: body,
+      ...(face > 0 ? { face } : {}),
       ...(abilityType ? { abilityType } : {}), ...(cost ? { cost } : {}),
       ...(TWO_CONDITIONS.test(body) ? { multiTrigger: true as const } : {}),
       ...(ca.length ? { costActions: ca } : {}),

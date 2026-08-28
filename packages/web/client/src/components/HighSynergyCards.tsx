@@ -1,6 +1,7 @@
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
+import { CATEGORY_LABELS } from "./CardList.js";
 
 const ANCHOR_SHARE = 0.75; // tunable: a card is an "anchor" if its authority ≥ this share of the deck max.
 
@@ -35,10 +36,27 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
               <span className="flex-1 min-w-0">
                 <span className="block truncate">
                   <CardName name={c.name} />
-                  {isAnchor ? <span className="ml-2 text-xs text-(--warning)">⚡ anchor</span> : null}
+                  {/* AN AUTHORED SVG, NEVER A GLYPH. `⚡` is an emoji, which `DESIGN.md` bans as an
+                    *  icon outright ("draw a small SVG in one consistent stroke"), and it rendered
+                    *  at whatever weight the reader's emoji font chose. */}
+                  {isAnchor ? (
+                    <span className="ml-2 text-xs text-(--warning) inline-flex items-center gap-1 align-baseline">
+                      <svg aria-hidden="true" width="9" height="11" viewBox="0 0 9 11" fill="none"
+                        stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round">
+                        <path d="M5.2 1 1.4 6.2h2.6L3.8 10l3.8-5.2H5z" />
+                      </svg>
+                      anchor
+                    </span>
+                  ) : null}
+                  {/* THE FIELD NAME ESCAPED INTO THE SENTENCE. This printed "pulls double duty
+                    *  (ramp, targetedRemoval)" — the brief's own "single clearest nobody-read-this-
+                    *  out-loud tell" — while the human label for the same value was rendering
+                    *  "Removal" in the Cards table on the same screen. One map, one file over. */}
                   {c.doubleDuty ? (
                     <span className="ml-2 text-xs text-(--success)">
-                      pulls double duty{c.doubleDutyRoles?.length ? ` (${c.doubleDutyRoles.join(", ")})` : ""}
+                      pulls double duty{c.doubleDutyRoles?.length
+                        ? ` (${c.doubleDutyRoles.map((r) => CATEGORY_LABELS[r as keyof typeof CATEGORY_LABELS] ?? r).join(", ")})`
+                        : ""}
                     </span>
                   ) : null}
                 </span>

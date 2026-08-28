@@ -8,9 +8,10 @@ import {
   CARD_MODE_Z, MAX_Z, cardImageUrl, isOnScreen, renderModeFor, shouldPrefetchCard,
 } from "./card-node.js";
 import {
-  FLOW_DASH, FLOW_HUE, PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
+  FLOW_DASH, FLOW_EVENT_HUES, FLOW_HUE, OVERFLOW_HUE, PAINT_MODES, paintHues, paintLegend, rimArcs, subcategoryLabel,
 } from "./presets.js";
 import { computeFlow, type Flow, type FlowEdge } from "./flow.js";
+import { eventLabel, mechanismKey } from "../lib/demand-sentence.js";
 import {
   ART_RADIUS,
   EDIT_REHEAT_ALPHA, CARD_H, CARD_W, createBoardSimulation, DEFAULT_PARAMS, linkDistanceFor, nodeRadius,
@@ -197,6 +198,19 @@ export function GraphView(
   /** Which facet the board is PAINTED by. It moves no node: geometry is synergy and only synergy,
    *  so switching this is a restyle of a layout that never re-simulates. */
   const [paintId, setPaintId] = useState(PAINT_MODES[0].id);
+  /** WHICH EVENT THE READER IS TRACING, or null for all of them.
+   *
+   *  Owner-reported 2026-08-27: "when I click a card this shows me the flow of events, but I cannot
+   *  distinguish them, or filter them — say I am interested in the flow of a specific event through
+   *  the deck". The board could say WHAT connects to what and never WHICH MECHANISM did it, so a
+   *  deck's `dies` chain and its `enters` chain were one indistinguishable mesh.
+   *
+   *  A FILTER RATHER THAN A COLOUR, and that is the design decision. Colouring edges by event needs
+   *  one hue per verb; this corpus has ~20 and a categorical palette holds 6-8 before the colours
+   *  stop being tellable apart — the rainbow would be less legible than the mesh it replaced. Naming
+   *  one event and dimming the rest scales to any number of them, and it is the same
+   *  dim-rather-than-hide grammar the search already uses, so the deck keeps its shape. */
+  const [eventVerb, setEventVerb] = useState<string | null>(null);
   // Capability check rather than a user-agent sniff: iOS Safari on iPhone has no element
   // fullscreen, and a button that silently does nothing is worse than no button.
   const canFullscreen = typeof Element !== "undefined" && "requestFullscreen" in Element.prototype;
@@ -309,6 +323,17 @@ export function GraphView(
     [fullGraph],
   );
 
+  /** Land SLOTS, not land nodes -- the toggle read "lands (35)" beside a type legend reading
+   *  "land 40" on the same screen, five apart, and three reviews flagged it ("for a mana-base job
+   *  this is the first number I'd want to trust"). Both were right and neither said which it was:
+   *  35 distinct land NAMES, 40 land CARDS, because this deck's five basics run two copies each.
+   *  The legend counts copies, and "how many lands does this deck run" means copies to a player, so
+   *  the toggle counts copies too and the two numbers agree. */
+  const landSlots = useMemo(
+    () => fullGraph.nodes.filter((n) => landNodes.has(n.id)).reduce((n, x) => n + (x.copies ?? 1), 0),
+    [fullGraph, landNodes],
+  );
+
   /** What the board actually draws. Identical object when nothing is hidden, so the layout effect
    *  below (which keys on `graph`) does not re-simulate for decks with nothing to hide. */
   const graph = useMemo(() => {
@@ -323,9 +348,96 @@ export function GraphView(
     };
   }, [fullGraph, loneTokens, showLoneTokens, landNodes, showLands]);
 
+  /** The events this deck's edges actually carry, commonest first, with the number of edges each
+   *  one explains. Derived from the drawn graph rather than the full one, so hiding lands changes
+   *  the counts a reader is choosing between. An edge carries several tags and therefore counts
+   *  once per distinct verb — the question is "how many connections would naming this event show
+   *  me", and an edge that carries `dies` is one of those whether or not it also carries `cast`. */
+  const eventCounts = useMemo(() => {
+    const n = new Map<string, number>();
+    for (const e of graph.edges) {
+      for (const verb of new Set(e.tags.map(mechanismKey))) n.set(verb, (n.get(verb) ?? 0) + 1);
+    }
+    return [...n].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [graph]);
+
+  /** True when this edge carries the traced event. One predicate, used by the paint loop AND by the
+   *  flow walk, so what is drawn and what is walked cannot disagree about what an edge is. */
+  const edgeHasEvent = useCallback(
+    (e: { tags: string[] }) => eventVerb === null || e.tags.some((t) => mechanismKey(t) === eventVerb),
+    [eventVerb],
+  );
+
+  /** The edges a flow may walk. Filtering HERE rather than inside `computeFlow` keeps that module
+   *  about traversal and this one about what the reader asked to see. */
+  const flowEdges = useMemo(
+    () => (eventVerb === null ? graph.edges : graph.edges.filter(edgeHasEvent)),
+    [graph, eventVerb, edgeHasEvent],
+  );
+
+  /** Tag lookup at component scope, for the flow legend below. The paint loop keeps its own
+   *  effect-scoped copy: this one is read during render, that one every frame. */
+  const tagsByPairBody = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const e of graph.edges) m.set(`${e.from}>${e.to}`, e.tags);
+    return m;
+  }, [graph]);
+
   const paint = PAINT_MODES.find((m) => m.id === paintId) ?? PAINT_MODES[0];
   /** What the current paint mode's colours mean, for this deck. */
   const legend = useMemo(() => paintLegend(paint, graph.nodes), [paint, graph]);
+  /** THE COUNTS CAN EXCEED THE DECK, AND SAYING SO IS THE FIX RATHER THAN CHANGING THEM.
+   *  `paintLegend` counts a node once per VALUE it paints, which is correct -- a Legendary Artifact
+   *  Creature really does show two hues -- but it reads as a card census, and three of four persona
+   *  reviews stopped to do the arithmetic: "57 + 24 + 6 + 1 is 88, plus 35 lands is 123, which is
+   *  more than 100... I had to guess and I'm not sure." All three landed on double-counting and
+   *  none was confident, which is a caveat's whole job left undone.
+   *
+   *  CONDITIONAL, LIKE EVERY OTHER ADMISSION THIS REPORT MAKES. A mana-value legend cannot
+   *  overcount (one bucket per card) and neither can a single-type deck, so a note there would be
+   *  noise claiming a defect that is not present. It appears when the sum genuinely exceeds the
+   *  slots on the board, and is silent otherwise. */
+  /** WHAT THE BOARD IS CURRENTLY HIDING, in the reader's words, or null when it hides nothing.
+   *
+   *  Both mechanism rows count over `graph`, which the lands and lone-token toggles filter -- and
+   *  lands are hidden BY DEFAULT, so the deck-wide row was making a false claim on nearly every
+   *  deck the moment it was labelled. Three persona reviews caught it by pressing the toggle:
+   *  "ENTERING THE BATTLEFIELD 79" became 91, "BRINGING CARDS BACK" 18 became 26, and a mechanism
+   *  absent from the default row (FETCHING A LAND 78) appeared. One wrote: "the default screen is a
+   *  ranking of a subset presented as a ranking." A skeptic found the PER-CARD row moves too --
+   *  the same selected card read "Bringing cards back from a graveyard 2" and then 3.
+   *
+   *  So the label changes with the state rather than a caveat being bolted onto a false one: with
+   *  nothing hidden the row really is across the deck, and with something hidden it is across the
+   *  board and says what is missing. */
+  const hiddenFromBoard = useMemo(() => {
+    const parts: string[] = [];
+    if (!showLands && landNodes.size > 0) parts.push(`${landSlots} lands`);
+    if (!showLoneTokens && loneTokens.size > 0) parts.push(`${loneTokens.size} lone tokens`);
+    return parts.length > 0 ? parts.join(" and ") : null;
+  }, [showLands, landNodes, landSlots, showLoneTokens, loneTokens]);
+
+  /** True when one card pair carries more than one mechanism, so the chips sum past the number of
+   *  pairs. Same shape and same reason as `legendOvercounts` below: a reviewer added the chips up,
+   *  got a number bigger than the deck, and had no way to know whether that was a bug. */
+  const mechanismOvercounts = useMemo(
+    () => graph.edges.some((e) => new Set(e.tags.map(mechanismKey)).size > 1),
+    [graph],
+  );
+
+  /** Printed text by node id, for the panel's per-relationship evidence. Built from the FULL graph
+   *  rather than the filtered one: hiding a land from the BOARD must not hide the text of a card a
+   *  relationship names. */
+  const textById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of fullGraph.nodes) if (n.oracleText) m.set(n.id, n.oracleText);
+    return (id: string) => m.get(id);
+  }, [fullGraph]);
+
+  const legendOvercounts = useMemo(() => {
+    const slots = graph.nodes.reduce((n, x) => n + (x.copies ?? 1), 0);
+    return legend.reduce((n, r) => n + r.count, 0) > slots;
+  }, [legend, graph]);
 
   /** Card id -> the hues it paints, under the CURRENT mode. Rebuilt when the mode changes and read
    *  by the draw loop through a ref, so a mode switch repaints without touching the simulation. */
@@ -337,13 +449,25 @@ export function GraphView(
   const huesRef = useRef<Map<string, string[]>>(new Map());
   huesRef.current = huesById;
 
-  // Card names in the command zone. Node ids ARE card names (labels.ts's brief), so this is a
-  // direct Set of ids. `report` is otherwise unread by this component -- this is its first real
-  // consumer. Read through a ref by the label pass, same reason as huesRef: it runs inside the rAF
-  // loop, and `report` is not a dependency of the layout effect below.
-  const commanders = useMemo(
-    () => new Set(report.cards.filter((c) => c.isCommander).map((c) => c.name)),
+  // `labelCandidates`/`labelPriority` (labels.ts) both key on the raw NODE ID, so `commanders`
+  // stays a Set of ids -- but a single-faced card's node id is no longer always `report.cards[i]
+  // .name` (Task 7, faces-as-nodes gave every printed face its own row and its own node: a front
+  // face's id is its own name, a back face's is `face:<n>:<name>`). The join is `n.cardName ??
+  // n.id` on the graph side against `c.cardName ?? c.name` on the report side -- both fall back to
+  // the SAME physical-card fact, `WireGraphNode.cardName` set on BOTH faces the same way
+  // `CardSynergy.cardName` is. `report` is otherwise unread by this component -- this is its first
+  // real consumer.
+  //
+  // Review fix, 2026-08-27: pre-fix this Set held raw `c.name` (face names) and was compared
+  // directly against `n.id`, so a two-faced commander's back-face node id (`face:1:<name>`) never
+  // matched -- its always-show label and label priority silently stopped working.
+  const commanderCardNames = useMemo(
+    () => new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name)),
     [report],
+  );
+  const commanders = useMemo(
+    () => new Set(graph.nodes.filter((n) => commanderCardNames.has(n.cardName ?? n.id)).map((n) => n.id)),
+    [graph, commanderCardNames],
   );
   const commandersRef = useRef<Set<string>>(new Set());
   commandersRef.current = commanders;
@@ -382,6 +506,11 @@ export function GraphView(
   // whole layout on every keystroke, moving the board under the user while they type.
   const matchesRef = useRef<Set<string> | null>(null);
   matchesRef.current = matches;
+  /** The event predicate, read by the paint loop. Assigned in the COMPONENT BODY like every other
+   *  ref here, which is exactly what the catch-all invalidation effect above relies on: changing it
+   *  implies a render, and that effect wakes the parked rAF so the board repaints. */
+  const edgeHasEventRef = useRef(edgeHasEvent);
+  edgeHasEventRef.current = edgeHasEvent;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -435,6 +564,12 @@ export function GraphView(
     const links: SimLink[] = graph.edges
       .map((e) => ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight }))
       .filter((l): l is SimLink => Boolean(l.source && l.target));
+    // WHICH TAGS EACH DRAWN EDGE CARRIES, keyed the way `flowEdgeByPair` already keys. `SimLink`
+    // deliberately does not carry them: it is the SIMULATION's type and the force layout has no
+    // business knowing what a mechanism is. Graph-scoped, so it is rebuilt when the board's edges
+    // change and never per frame.
+    const tagsByPair = new Map<string, string[]>();
+    for (const e of graph.edges) tagsByPair.set(`${e.from}>${e.to}`, e.tags);
     // Sum of weight over every link touching a node -- NOT `deg` (a partner COUNT) a few lines
     // below. An edge is binary but synergy has magnitude (CLAUDE.md): a card with six weak partners
     // must not outrank one with two strong ones for a label. Built once here, read every frame by
@@ -589,24 +724,113 @@ export function GraphView(
         const hoverDir = hoverActive && l.source.id === hoveredId ? "down"
           : hoverActive && l.target.id === hoveredId ? "up"
           : null;
-        ctx.globalAlpha = fe ? 1
+        // AN EDGE THAT DOES NOT CARRY THE TRACED EVENT IS SCENERY, and it outranks every other
+        // alpha rule here: the reader named one mechanism, so nothing else on the board may present
+        // itself as the answer — not a hover, and not the direction hues of a flow that walked only
+        // matching edges anyway. Dimmed rather than hidden, the same grammar the search uses, so the
+        // deck keeps its shape and the traced chain reads AGAINST it rather than in a vacuum.
+        const edgeTags = tagsByPair.get(`${l.source.id}>${l.target.id}`) ?? [];
+        const offEvent = !edgeHasEventRef.current({ tags: edgeTags });
+        // WHICH MECHANISM THIS EDGE IS, and whether the reader has isolated a different one. Hue
+        // used to mean up/down and nothing else, so a forty-edge flow was one mesh; it means the
+        // EVENT now, and direction moved to the dash crawl below.
+        const edgeVerbs = edgeTags.map(mechanismKey);
+        const focus = flowFocusRef.current;
+        // AN ISOLATED MECHANISM PAINTS IN ITS OWN HUE, even on an edge that carries another one
+        // first. 29 of the Jodah deck's 335 edges span more than one verb (8.7%), so without this
+        // an edge kept by `offFocus` below could stay lit in a DIFFERENT mechanism's colour --
+        // the reader isolates "Attacking" and sees a green line, which is the exact confusion the
+        // hue change exists to remove. Ranked order still decides an unfocused edge.
+        const flowVerb = fe
+          ? (focus !== null && edgeVerbs.includes(focus) ? focus : edgeVerbs.find((v) => flowHueRef.current.has(v)))
+          : undefined;
+        const offFocus = fe !== undefined && focus !== null && !edgeVerbs.includes(focus);
+        ctx.globalAlpha = offEvent ? 0.06
+          : offFocus ? 0.12
+          : fe ? 1
           : activeFlow ? 0.15
           : hoverDir ? 1
           : hoverActive ? edgeAlpha(l.weight, maxWeight) * HOVER_EDGE_DIM
           : edgeAlpha(l.weight, maxWeight);
-        ctx.strokeStyle = fe ? FLOW_HUE[fe.dir] : hoverDir ? FLOW_HUE[hoverDir] : paintColors.edge;
+        ctx.strokeStyle = offEvent || offFocus ? paintColors.edge
+          // The event's hue, falling back to the direction pair only when this edge carries no verb
+          // the legend named -- which is the >7-event tail the legend calls "everything else".
+          : fe ? (flowVerb ? flowHueRef.current.get(flowVerb)! : OVERFLOW_HUE)
+          : hoverDir ? FLOW_HUE[hoverDir]
+          : paintColors.edge;
         ctx.lineWidth = edgeWidth(l.weight, maxWeight) / cam.z;
         // Sticky context state: the else branch is not optional. Without it the pattern set by the
         // last flow edge would dash every rim, border and card frame drawn after this loop.
-        if (fe) {
+        if (fe && !offEvent && !offFocus) {
           ctx.setLineDash([FLOW_DASH.on / cam.z, FLOW_DASH.off / cam.z]);
+          // DIRECTION IS THE CRAWL NOW THAT HUE CARRIES THE MECHANISM: colour says which event,
+          // motion says which way. `FLOW_DASH`'s own comment already called the motion the encoding
+          // -- it just was not being used as one.
+          //
+          // ALWAYS TOWARD THE TARGET, AND `fe.dir` IS DELIBERATELY NOT CONSULTED. It shipped as
+          // `dir === "down" ? -crawl : crawl`, which makes the dashes radiate AWAY from the clicked
+          // card in both fans -- while the arrowhead below is drawn at `l.target` in both fans. On
+          // every UPSTREAM edge the two encodings therefore pointed opposite ways. `dir` records
+          // which WALK found the edge, not which way the event travels; the event always goes
+          // `from -> to`, the line is always drawn source-to-target, so one constant sign is the
+          // only reading that agrees with the arrowhead and with the graph. Caught on the Jodah
+          // deck 2026-08-27. What is lost is the "radiating outward" reading, which the arrowhead's
+          // orientation relative to the clicked card already states.
           ctx.lineDashOffset = -crawl / cam.z;
         } else {
           ctx.setLineDash([]);
         }
+        // TRIMMED TO THE RIM, NOT DRAWN TO THE CENTRE. A centre-to-centre line runs UNDER both
+        // discs, and once the discs carry card art the line reads as sliding beneath the card and
+        // out the other side — owner-reported, 2026-08-27. It also makes an edge that merely PASSES
+        // a third card look like it terminates there. Ending the stroke at the rim leaves the
+        // relationship legible and the disc unbroken.
+        //
+        // ART_RADIUS is the disc, which is what the miniature and dot modes draw. CARD mode draws a
+        // larger rectangle, so a line still enters the card frame there — that view is one card
+        // filling the screen with its neighbours off it, so the case is cosmetic rather than the one
+        // reported. Stated rather than silently approximated.
+        const ex = l.target.x - l.source.x;
+        const ey = l.target.y - l.source.y;
+        const elen = Math.hypot(ex, ey);
+        // Two overlapping discs have no visible span between them; drawing anyway would paint a
+        // backwards stub poking out of both.
+        if (elen <= ART_RADIUS * 2) continue;
+        const tx = ex / elen;
+        const ty = ey / elen;
         ctx.beginPath();
-        ctx.moveTo(l.source.x, l.source.y); ctx.lineTo(l.target.x, l.target.y);
+        ctx.moveTo(l.source.x + tx * ART_RADIUS, l.source.y + ty * ART_RADIUS);
+        ctx.lineTo(l.target.x - tx * ART_RADIUS, l.target.y - ty * ART_RADIUS);
         ctx.stroke();
+        // DIRECTION MUST SURVIVE A STILL FRAME. Hue carries the MECHANISM now, so the crawl became
+        // the only direction channel -- and `stillMotion` zeroes the crawl under
+        // `prefers-reduced-motion`, which left those readers with no direction encoding at all. It
+        // is also invisible in a screenshot, and the task-5 brief already recorded a blind judge
+        // unable to tell producer from consumer from the hues alone.
+        //
+        // An arrowhead is the conventional answer for a directed graph and is static by
+        // construction. Drawn only on a flow edge: the resting board is undirected to the eye and
+        // ninety arrowheads would be noise on top of the mesh this whole change exists to thin.
+        if (fe && !offEvent && !offFocus) {
+          const hx = l.target.x - tx * ART_RADIUS;
+          const hy = l.target.y - ty * ART_RADIUS;
+          // FILLED AND BIGGER, BECAUSE THE STROKED ONE DID NOT DO ITS JOB. It shipped as a 5px
+          // three-point STROKE at the edge's own 1-2px line width, which is a chevron a reader has
+          // to already be looking for. The tuner review -- given a still, which is exactly the case
+          // this mark exists for -- reported "I cannot resolve an arrowhead on any of the ~30
+          // painted dashes", and lost the task it needed direction for. A filled triangle at 8px
+          // reads as a solid shape rather than three thin lines, and its area does not depend on
+          // the edge's weight.
+          const head = 8 / cam.z;
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(hx - tx * head - ty * head * 0.5, hy - ty * head + tx * head * 0.5);
+          ctx.lineTo(hx, hy);
+          ctx.lineTo(hx - tx * head + ty * head * 0.5, hy - ty * head - tx * head * 0.5);
+          ctx.closePath();
+          ctx.fillStyle = ctx.strokeStyle;
+          ctx.fill();
+        }
       }
       ctx.globalAlpha = 1;
       ctx.setLineDash([]);
@@ -831,6 +1055,31 @@ export function GraphView(
           ctx.textAlign = "center";
           ctx.fillStyle = paintColors.muted;
           ctx.fillText("token", n.x, n.y + ART_RADIUS + 11 / cam.z);
+        }
+
+        // SHARED RIM, NO LINK (owner's ruling, 2026-08-27). The two faces of one card -- Task 7's
+        // front (bare id) and back (`face:<n>:<name>`) -- both carry `cardName`, so a rim marks
+        // them as one card without an edge drawn between them: no new edge kind, no legend entry,
+        // nothing for a count to see. `cardName` is the test, never `face` -- it is present on
+        // BOTH faces, while `face` is absent on the front.
+        //
+        // DASHED, WIDER RADIUS, review fix 2026-08-27: the first cut painted this SOLID at `fg`,
+        // `r + 3` -- byte-identical to the "you clicked this" rim just above except for line width
+        // (2.5 vs 1.5), so on the face IS the clicked node the thinner stroke painted entirely
+        // inside the thicker one and vanished. Dashing it and pushing it out to `r + 5` keeps it
+        // visible under a solid `r + 3` click rim in EITHER draw order, and the dash pattern
+        // (`[6,2]`) is deliberately wider than the token rim's (`[4,3]`) so the two dashed rims
+        // read as different facts even where they might otherwise coincide.
+        if (n.cardName !== undefined) {
+          ctx.save();
+          ctx.setLineDash([6 / cam.z, 2 / cam.z]);
+          ctx.lineWidth = 1.5 / cam.z;
+          ctx.strokeStyle = paintColors.fg;
+          ctx.beginPath();
+          if (mode === "card") ctx.strokeRect(n.x - cardW / 2 - 5, n.y - cardH / 2 - 5, cardW + 10, cardH + 10);
+          else ctx.arc(n.x, n.y, r + 5, 0, TAU);
+          ctx.stroke();
+          ctx.restore();
         }
       }
       // Canvas state is global and persistent, so a search left dimming on would leak into the
@@ -1232,9 +1481,78 @@ export function GraphView(
   // the id alone left `flow` non-null with empty fans (the id still "selected", just resolving to
   // nothing), which dims every node with no inspector and no legend open to explain why.
   const flow = useMemo(
-    () => (inspectingNode ? computeFlow(graph.edges, inspectingNode.id) : null),
+    () => (inspectingNode ? computeFlow(flowEdges, inspectingNode.id) : null),
     [graph, inspectingNode],
   );
+  /** THE EVENTS INSIDE THIS FLOW, ranked by how many of its edges each explains, with a hue each.
+   *
+   *  This is what makes a flow readable: the board used to paint every edge in one of two colours
+   *  that meant only up/down, so a token's forty-edge fan was one undifferentiated mesh. Hue carries
+   *  the MECHANISM now and direction moves to the dash crawl. Scoped to the selected card's own
+   *  flow, which is why a palette is possible at all -- see `FLOW_EVENT_HUES`. */
+  /** How many pairs in the flow do NOT touch the selected card. The flow walks TWO hops, so the
+   *  per-card row counts relationships between two OTHER cards -- while the panel below lists only
+   *  this card's DIRECT edges. Two different sets, one screen, nothing saying so:
+   *
+   *    - Round one, a tuner: "Creating a token 3" on a card whose printed text creates nothing.
+   *      (Checked: all three of those edges were two hops out, none touched the card.)
+   *    - Round three, a skeptic: "Creating a token 3 does not reconcile -- the two rows whose
+   *      sentences say 'makes a token' carry no CREATING A TOKEN chip."
+   *
+   *  Both read the row as the card's own tally and found it contradicting the panel. It is not a
+   *  tally; it is what the board LIT UP, which is the thing the row sits above. Saying how much of
+   *  it is indirect is what makes the two lists reconcilable. */
+  const flowIndirect = useMemo(() => {
+    if (!flow) return 0;
+    const seen = new Set<string>();
+    let n = 0;
+    for (const fe of flow.edges) {
+      const pair = `${fe.from}>${fe.to}`;
+      if (seen.has(pair)) continue;
+      seen.add(pair);
+      if (fe.from !== flow.root && fe.to !== flow.root) n++;
+    }
+    return n;
+  }, [flow]);
+
+  const flowEvents = useMemo(() => {
+    if (!flow) return [] as { verb: string; count: number; hue: string }[];
+    const n = new Map<string, number>();
+    // COUNTED PER PAIR, NOT PER WALK. A card that both feeds and is fed by the same neighbour sits
+    // in a CYCLE, and the two direction-pure walks each reach that edge -- so `flow.edges` holds it
+    // twice and the legend counted it twice. Measured on the Jodah deck 2026-08-27: 5 of 103 flows
+    // contain such a pair, 21 pairs in all, and the busiest flow double-counted 6 of its 55 edges.
+    // The paint loop was already immune (`flowEdgeByPair` is a Map), so this was a defect in the
+    // NUMBERS on screen and nowhere else -- which is the harder kind to notice.
+    const counted = new Set<string>();
+    for (const fe of flow.edges) {
+      const pair = `${fe.from}>${fe.to}`;
+      if (counted.has(pair)) continue;
+      counted.add(pair);
+      for (const verb of new Set((tagsByPairBody.get(pair) ?? []).map(mechanismKey))) {
+        n.set(verb, (n.get(verb) ?? 0) + 1);
+      }
+    }
+    return [...n]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([verb, count], i) => ({ verb, count, hue: FLOW_EVENT_HUES[i] ?? OVERFLOW_HUE }));
+  }, [flow, tagsByPairBody]);
+
+  /** Which of the flow's own events the reader has isolated, or null for all of them. Cleared
+   *  whenever the selection changes: an isolate is about THIS flow and would be a stale filter on
+   *  the next one. */
+  const [flowFocus, setFlowFocus] = useState<string | null>(null);
+  useEffect(() => { setFlowFocus(null); }, [inspectingId]);
+
+  const flowHueByVerb = useMemo(
+    () => new Map(flowEvents.map((e) => [e.verb, e.hue])),
+    [flowEvents],
+  );
+  const flowHueRef = useRef(flowHueByVerb);
+  flowHueRef.current = flowHueByVerb;
+  const flowFocusRef = useRef(flowFocus);
+  flowFocusRef.current = flowFocus;
+
   const flowRef = useRef<Flow | null>(null);
   flowRef.current = flow;
 
@@ -1247,11 +1565,19 @@ export function GraphView(
   // answer DIFFERENT questions: the flow rows say what the EDGE hues mean, the paint rows say what
   // the card RIMS mean, and both are painted at once. Replacing meant switching TYPE -> ROLE while a
   // card was selected repainted every rim with no key anywhere on screen.
+  //
+  // HUE NOW NAMES THE MECHANISM, NOT THE DIRECTION (owner, 2026-08-27: "cool that I can see all the
+  // events flowing, but even as an experienced Magic player this tells me nothing, I cannot
+  // distinguish them"). Two hues meaning up/down told a reader nothing about WHAT was flowing, so
+  // the rows list the flow's own events with their counts, and direction moved to the dash crawl --
+  // which `FLOW_DASH`'s comment already called the encoding.
   const flowLegend = inspectingNode
-    ? [
-        { value: "down", label: `${inspectingNode.label} feeds`, hue: FLOW_HUE.down, count: undefined },
-        { value: "up", label: `feeds ${inspectingNode.label}`, hue: FLOW_HUE.up, count: undefined },
-      ]
+    ? flowEvents.map((e) => ({
+        value: e.verb,
+        label: eventLabel(e.verb),
+        hue: e.hue,
+        count: e.count,
+      }))
     : null;
 
   /** Reshapes __graphProbe()'s node array (with its `edges` property riding along) into what
@@ -1308,6 +1634,76 @@ export function GraphView(
             </>
           ) : null}
 
+          {/* TRACE ONE EVENT THROUGH THE DECK. Owner-reported: a click showed the flow but every
+            *  mechanism in it looked alike, so a `dies` chain and an `enters` chain were one mesh.
+            *
+            *  A SEPARATE ROW FROM THE PAINT CHIPS, because they answer different questions and
+            *  sitting them together implied they were alternatives: paint colours the CARDS by a
+            *  facet, this filters the EDGES by a mechanism, and the two compose — trace `dies` while
+            *  painting by role and the board says which roles the death chain runs through.
+            *
+            *  THE LABEL NAMES THE SCOPE, AND THAT IS A CORRECTION. It read "Trace event", which said
+            *  neither what the numbers count nor what they count it over -- and the flow legend four
+            *  lines below uses the SAME mechanism words with per-card numbers, so a reader met
+            *  "Being cast 90" here and "Being cast 10" there with nothing to reconcile them. Three
+            *  of four persona reviews guessed deck-wide-versus-one-card and none was confident;
+            *  one wrote "if I'm wrong about this, I'm wrong about the whole screen". Naming the
+            *  UNIT (connections) and the SCOPE (this deck / this card) on each row is the whole fix.
+            *
+            *  NO CAP, AND THE OLD ONE WAS A SILENT TRUNCATION. It rendered the eight commonest with
+            *  no ellipsis and no "more", so the row read as the complete menu of what can be traced
+            *  -- a skeptic reviewer spotted a mechanism on the board with no chip and concluded "I
+            *  stopped trusting the chip counts as a census of anything". MEASURED over the 71 decks:
+            *  distinct mechanisms per deck run min 5 - p50 11 - p90 14 - MAX 15, and **59 of 71
+            *  decks (83%) exceeded the cap of 8**, so it was hiding three to seven mechanisms on
+            *  nearly every deck. Fifteen chips wrap to two rows; that is a control, and a menu that
+            *  lies about its own contents is not. This repo's own rule: no silent caps.
+            *
+            *  Absent entirely on a deck whose edges carry one event, where naming it changes
+            *  nothing. */}
+          {eventCounts.length > 1 ? (
+            <div className="basis-full flex flex-wrap gap-2 items-baseline">
+              <span className="eyebrow text-(--muted)">
+                {/* THE UNIT, NOT JUST THE SCOPE. Naming the scope last round left three of four
+                  *  reviewers unable to say WHAT was counted -- "whether 'BEING CAST 90' is 90
+                  *  cards, 90 card-pairs, or 90 written reasons decides whether a card with
+                  *  'Being cast 10' is well-connected or just noisy". A chip counts card PAIRS
+                  *  whose relationship includes that mechanism. */}
+                {hiddenFromBoard ? "Card pairs on the board" : "Card pairs across the deck"}
+              </span>
+              {hiddenFromBoard ? (
+                <span data-testid="graph-hidden-note" className="eyebrow text-(--muted) opacity-70">
+                  {hiddenFromBoard} hidden
+                </span>
+              ) : null}
+              <button
+                type="button"
+                aria-pressed={eventVerb === null}
+                onClick={() => setEventVerb(null)}
+                className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                  eventVerb === null ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                }`}
+              >
+                All
+              </button>
+              {eventCounts.map(([verb, count]) => (
+                <button
+                  key={verb}
+                  type="button"
+                  aria-pressed={verb === eventVerb}
+                  // Clicking the active chip clears it: the reader who wants out of a trace should
+                  // not have to find "All".
+                  onClick={() => setEventVerb((v) => (v === verb ? null : verb))}
+                  className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                    verb === eventVerb ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                  }`}
+                >
+                  {eventLabel(verb)} <span className="opacity-60">{count}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           {/* Only when the deck HAS one: a chip that can never change anything is worse than no
             *  chip, and most decks make no unpartnered token at all. */}
           {landNodes.size > 0 ? (
@@ -1319,7 +1715,7 @@ export function GraphView(
                 showLands ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
               }`}
             >
-              lands ({landNodes.size})
+              lands ({landSlots})
             </button>
           ) : null}
 
@@ -1336,16 +1732,24 @@ export function GraphView(
             </button>
           ) : null}
 
-          <button
-            type="button"
-            aria-pressed={debug}
-            onClick={() => setDebug((d) => !d)}
-            className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
-              debug ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
-            }`}
-          >
-            debug
-          </button>
+          {/* DEV ONLY. It sat between "lands (35)" and "fullscreen", where every neighbour is
+            *  English about the deck and this one is English about the PROGRAM. Two persona reviews
+            *  flagged it and both declined to press it -- "I didn't press it in case it did
+            *  something I couldn't undo" -- so it was costing trust on a surface it cannot help.
+            *  The panel it opens is already `import.meta.env.DEV`-gated further down; only the
+            *  toggle was reachable in a production build. */}
+          {import.meta.env.DEV ? (
+            <button
+              type="button"
+              aria-pressed={debug}
+              onClick={() => setDebug((d) => !d)}
+              className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                debug ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+              }`}
+            >
+              debug
+            </button>
+          ) : null}
 
           {canFullscreen ? (
             <button
@@ -1409,12 +1813,60 @@ export function GraphView(
           aria-label="Paint legend"
           className="pointer-events-none flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--muted)"
         >
-          {[...(flowLegend ?? []), ...legend].map((row) => (
+          {/* THE SCOPE, NAMED. These rows use the same mechanism words as the chip row above and
+            *  count something different -- connections through ONE card rather than across the
+            *  deck. Every persona review asked what the numbers counted and none could tell:
+            *  "is 62 cards or 62 separate interactions?", "ten edges, ten other cards, or ten
+            *  reason sentences?". A count with no unit is not evidence, and two counts that share
+            *  a vocabulary without sharing a scope are worse than either alone. */}
+          {flowLegend && flowLegend.length > 0 ? (
+            <span className="eyebrow shrink-0">
+              Card pairs in this card&apos;s flow
+              {flowIndirect > 0 ? (
+                <span data-testid="flow-indirect-note" className="opacity-70">
+                  {" "}&middot; {flowIndirect} reached through it
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+          {/* A FLOW ROW IS A BUTTON AND A PAINT ROW IS NOT, because only the first has something to
+            *  isolate: clicking an event dims the rest of the flow, which is the "and filter them"
+            *  half of the same complaint. Clicking it again clears. The paint rows stay inert, so
+            *  the group keeps `pointer-events-none` off only where a target exists. */}
+          {(flowLegend ?? []).map((row) => (
+            <button
+              key={`flow:${row.value}`}
+              type="button"
+              data-testid="paint-legend-row"
+              data-value={row.value}
+              aria-pressed={flowFocus === row.value}
+              onClick={() => setFlowFocus((v) => (v === row.value ? null : row.value))}
+              // THE CONTAINER STAYS `pointer-events-none` AND THE BUTTON OPTS BACK IN. The legend
+              // can overlay the canvas, and a group that swallows drags puts a dead zone on the
+              // board -- a standing constraint with its own test. Only the rows that have something
+              // to isolate become targets.
+              className={`pointer-events-auto flex items-center gap-1.5 ${
+                flowFocus === row.value ? "text-(--foreground)" : ""}`}
+            >
+              {/* A DASHED ARROW, NOT A DISC, AND THAT IS THE WHOLE SEPARATION FROM THE PAINT
+                *  LEGEND BESIDE IT. Both legends sit on one strip and both used a filled circle,
+                *  so a reader could not tell which dots named a LINE and which named a NODE. A
+                *  swatch that looks like the mark it labels needs no label to say so -- and this
+                *  one is the painted edge exactly: same dash, same arrowhead, same hue. */}
+              <svg aria-hidden="true" width="18" height="8" viewBox="0 0 18 8" className="shrink-0">
+                <path d="M0 4h11" stroke={row.hue} strokeWidth="2" strokeDasharray="3 2.5" />
+                <path d="M11 1.2 15.5 4 11 6.8z" fill={row.hue} />
+              </svg>
+              <span>{row.label}</span>
+              <span className="stat-num opacity-70">{row.count}</span>
+            </button>
+          ))}
+          {legend.map((row) => (
             <div
               key={row.value}
               data-testid="paint-legend-row"
               data-value={row.value}
-              className="flex items-center gap-1.5"
+              className="pointer-events-none flex items-center gap-1.5"
             >
               {/* A graphic object next to text, so it carries the 3:1 floor the palette was
                *  validated against. The text beside it is the page's normal foreground. */}
@@ -1424,11 +1876,22 @@ export function GraphView(
                 className="inline-block size-2.5 shrink-0 rounded-full"
               />
               <span className="whitespace-nowrap">{row.label}</span>
-              {/* Flow rows carry no count -- a direction is a fact about the graph shape, not a
-               *  quantity of cards, unlike a paint-mode value. */}
               {row.count !== undefined ? <span className="stat-num text-(--muted)">{row.count}</span> : null}
             </div>
           ))}
+          {mechanismOvercounts ? (
+            <span data-testid="mechanism-overcount" className="opacity-70">
+              a pair doing two things is counted in both
+            </span>
+          ) : null}
+          {legendOvercounts ? (
+            <span data-testid="paint-legend-overcount" className="opacity-70">
+              {/* "a card in TWO ROWS" was unreadable to a beginner -- "I don't know what 'rows'
+                *  means here; there are two rows of coloured labels on screen and also rows of
+                *  buttons". The fact is about TYPES, so the sentence names types. */}
+              a card with two types is counted in both
+            </span>
+          ) : null}
         </div>
 
         <div
@@ -1472,6 +1935,7 @@ export function GraphView(
               node={inspectingNode}
               edges={inspectingEdges}
               flow={flow}
+              textOf={textById}
               onClose={() => setInspectingId(null)}
             />
           ) : null}

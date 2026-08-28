@@ -185,3 +185,32 @@ test("rows come back with the biggest demand first", () => {
 test("an empty deck produces no rows rather than dividing by zero", () => {
   expect(deckAvailability([], H, { turn: 5 })).toEqual([]);
 });
+
+/** THE FALSE ALARM THE 2026-08-27 PERSONA RUN CAUGHT, pinned.
+ *
+ *  "a creature entering the battlefield — 4 want · 0 supply" printed over a deck the tool's own
+ *  graph counts as 51 creatures. Every one of those four consumers was a SELF trigger, so 0 was the
+ *  number of external suppliers such a trigger needs — a correct count under a sentence that made
+ *  it read as a hole. A self trigger fires when you play the card; there is no card to draw. */
+test("a self trigger is self-supplied, not an unmet demand", () => {
+  const selfEtb = deckCard("Dire Fleet Ravager", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, self: true } },
+    effect: { kind: "damage" },
+  }]);
+  const row = deckAvailability([selfEtb], H).find((r) => r.key.startsWith("enters"));
+  expect(row).toBeDefined();
+  expect(row!.selfSupplied).toBe(true);
+  // A refusal, never a probability: there is nothing to draw, so there is no chance to quote.
+  expect(row!.available).toBeNull();
+});
+
+test("a trigger watching OTHER cards is still a real demand", () => {
+  const classEtb = deckCard("Impact Tremors", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+  }]);
+  const row = deckAvailability([classEtb], H).find((r) => r.key.startsWith("enters"));
+  expect(row!.selfSupplied).toBe(false);
+});

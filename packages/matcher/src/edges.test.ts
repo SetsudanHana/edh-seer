@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE } from "./edges.js";
+import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE } from "./edges.js";
+import { faceDeckCards } from "./faces.js";
 import type { Reason } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -31,6 +32,14 @@ test("event edge: a token-maker's emit matches a wizard-ETB payoff trigger", () 
   expect(reasons.some((r) => r.text.includes("Inalla") && r.text.includes("Kindred Discovery"))).toBe(true);
 });
 
+/** `base()` types every card as a creature, which is fine for most fixtures and wrong for any test
+ *  whose point is what a card CAN be. */
+const artifact = (name: string, abilities: CardTags["abilities"]) => {
+  const c = base(name, abilities);
+  (c.tags.characteristics as { types: string[] }).types = ["artifact"];
+  return c;
+};
+
 test("reason text is human-readable — no raw tag tokens leak", () => {
   const maker = base("Inalla", [{
     kind: "triggered",
@@ -46,9 +55,11 @@ test("reason text is human-readable — no raw tag tokens leak", () => {
   const reasons = pairReasons(maker, etbPayoff, H);
   const etb = reasons.find((r) => r.tag === "enters:creature")!;
   expect(etb.text).not.toMatch(/:/); // no "enters:creature" style token
-  // Cause first, naming the producer card rather than its class (sentence.ts) -- no engine
-  // vocabulary and no raw tag either.
-  expect(etb.text).toBe("When Inalla enters, Kindred Discovery draws you cards");
+  // Cause first, and the SUBJECT is named because Inalla is not the thing entering: its emit is a
+  // token COPY (`token: true`), and Inalla is not a token. Saying "When Inalla enters" described the
+  // wrong event — the same defect that made a Sorcery die (roadmap, 2026-08-27 persona run).
+  // Still no engine vocabulary and no raw tag.
+  expect(etb.text).toBe("When a wizard enters thanks to Inalla, Kindred Discovery draws you cards");
   // both card names still present (CLI + engine rely on this)
   expect(etb.text).toContain(maker.card.name);
   expect(etb.text).toContain(etbPayoff.card.name);
@@ -1044,14 +1055,20 @@ test("a payoff watching OTHER casts is untouched", () => {
 
 test("a dying artifact and a dying creature keep distinct tags even though the prose now matches", () => {
   // Scrap Trawler watches its own death AND another artifact hitting the graveyard, so a sac outlet
-  // supplies both `dies:creature` and `dies:artifact`. humanizeEvent USED TO hardcode "a creature
-  // dying" for every dies event, rendering the two reasons as identical lines -- an artifact told
-  // to the reader as a creature. sentence.ts's fix is structural rather than a second case: the
-  // cause now names the specific PRODUCER CARD ("When Executioner's Capsule dies") and drops the
-  // subject/type entirely, so the two rows read identically ON PURPOSE -- a reader does not need to
-  // be told which of Scrap Trawler's two typed triggers fired, only that a death happened and it
-  // responded. What must still be distinct is the TAG, which `claimCount`/`dedupeReasons` key on.
-  const outlet = base("Executioner's Capsule", [{
+  // supplies both `dies:creature` and `dies:artifact`.
+  //
+  // THE TWO ROWS USED TO READ IDENTICALLY ON PURPOSE, and that was right while the prose named the
+  // producer as the thing that died. It stopped being right once the producer could be a card that
+  // CANNOT die the way its own emit describes: Executioner's Capsule is an ARTIFACT that sacrifices
+  // ITSELF (`dies:artifact`) and DESTROYS a creature (`dies:creature`) — two different events, one
+  // of which is not about the Capsule at all. The tag stays the thing `claimCount`/`dedupeReasons`
+  // key on; the prose now separates them because they are separate.
+  //
+  // THE FIXTURE SAID `types: ["creature"]` VIA `base()`, which is not what this card is — the third
+  // time this repo has recorded a fixture that does not resemble the card it names (C4's fetchland,
+  // `commander-ramp-core`'s Sol Ring). Typed correctly here, or the artifact row would be tested
+  // against a card that cannot be an artifact.
+  const outlet = artifact("Executioner\u0027s Capsule", [{
     kind: "activated",
     effect: { kind: "" },
     emits: [
@@ -1075,8 +1092,11 @@ test("a dying artifact and a dying creature keep distinct tags even though the p
   const tags = reasons.map((r) => r.tag);
   expect(new Set(tags)).toEqual(new Set(["dies:creature", "dies:artifact"]));
   const texts = reasons.map((r) => r.text);
-  expect(new Set(texts).size).toBe(1); // prose collapses on purpose; the tag is what stays distinct
-  expect(texts[0]).toBe("When Executioner's Capsule dies, Scrap Trawler brings a card back");
+  // The Capsule really can be the dying ARTIFACT, and really cannot be the dying CREATURE.
+  expect(new Set(texts)).toEqual(new Set([
+    "When Executioner's Capsule dies, Scrap Trawler brings a card back",
+    "When a creature dies thanks to Executioner's Capsule, Scrap Trawler brings a card back",
+  ]));
 });
 
 test("directedReasons does not repeat a reason it has already made", () => {
@@ -1810,8 +1830,10 @@ test("a non-self trigger still reads as the class it watches", () => {
     emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }],
   }]);
   const etb = pairReasons(maker, payoff, H).find((r) => r.tag === "enters:creature")!;
-  // No "thanks to" -- a class trigger's cause is the producer's own event, not the consumer's.
-  expect(etb.text).toBe("When Bitterblossom enters, Impact Tremors triggers");
+  // "thanks to" names Bitterblossom as the CAUSE without claiming it is the thing that entered —
+  // its emit is a TOKEN (`token: true`), which Bitterblossom is not. The consumer is still not the
+  // subject either, which is what separates this from the self-trigger wording.
+  expect(etb.text).toBe("When a creature enters thanks to Bitterblossom, Impact Tremors triggers");
   expect(etb.text).not.toContain("its own entry");
 });
 
@@ -2121,6 +2143,37 @@ describe("cost reduction forms edges, gated by what can actually be cast", () =>
     expect(reasons.map((r: Reason) => r.tag)).not.toContain("static:cost-reduction");
   });
 
+  // A TOKEN IS PUT ONTO THE BATTLEFIELD, NEVER CAST (CR 111.1) — the same rule as the land case
+  // above. Found on the Jodah deck 2026-08-27: Serah Farron prints "the first legendary creature
+  // SPELL you cast each turn costs {2} less" and the engine claimed it discounted Ravage, a token.
+  // 414 reasons over 51 decks, 247 distinct pairs — Jet Medallion -> Zombie, Foundry Inspector ->
+  // Treasure. It survived because `hasGenericMana` answers TRUE for a missing cost on purpose
+  // ("not recorded, refuse nothing"), and on a token the absence is a FACT rather than a gap.
+  test("a token is never cast (CR 111.1), so it is never reduced", () => {
+    const token = spell("Zombie", ["creature"]);
+    (token as unknown as Record<string, unknown>).isToken = true;
+    const reasons = directedReasons(
+      reducer({ type: "creature", colors: ["B"], control: "you", token: null, scope: "all" }),
+      token, H,
+    );
+    expect(reasons.map((r: Reason) => r.tag)).not.toContain("static:cost-reduction");
+  });
+
+  // AND ONLY THAT REASON GOES. Serah Farron reduces AND anthems; Ravage is a legendary creature, so
+  // the pump half is real and the edge survives carrying it. A card-level refusal would have deleted
+  // a true claim to remove a false one.
+  test("a card that reduces AND anthems keeps the anthem on a token", () => {
+    const serah = base("Serah Farron", [
+      { kind: "static", effect: { kind: "cost-reduction", subject: { type: "creature", control: "you", token: null, scope: "all" } }, emits: [] },
+      { kind: "static", effect: { kind: "pump", subject: { type: "creature", control: "you", token: null, scope: "all" } }, emits: [] },
+    ] as never);
+    const token = spell("Ravage", ["creature"]);
+    (token as unknown as Record<string, unknown>).isToken = true;
+    const tags = directedReasons(serah, token, H).map((r: Reason) => r.tag);
+    expect(tags).not.toContain("static:cost-reduction");
+    expect(tags).toContain("static:pump");
+  });
+
   test("a reducer aimed at OPPONENTS' spells is tax pointing the other way, and forms nothing", () => {
     const reasons = directedReasons(
       reducer({ type: "creature", control: "opp", token: null, scope: "all" }),
@@ -2344,6 +2397,15 @@ test("copy: an untyped token-generation ability does not widen a card that also 
   const p = copyFixture("Court of Vantress", "At the beginning of your upkeep, choose up to one other target enchantment or artifact. If you're the monarch, you may create a token that's a copy of it.", { control: "any", token: null });
   p.tags.abilities.push({ kind: "triggered", effect: { kind: "token-generation", subject: { type: ["artifact", "enchantment"], token: true, scope: "target" } } } as never);
   expect(directedReasons(p, selfTriggerLegend("Hidetsugu and Kairi"), H).length).toBe(0);
+});
+
+// Reopening condition (2026-08-27): CR gives no way around a printed "nonlegendary" restriction, so
+// a copy ability naming one can never reach a legendary consumer -- but it must still reach the
+// nonlegendary one it genuinely can copy. Both directions proven to fire.
+test("copy: a NONLEGENDARY-restricted copy ability never reaches a legendary consumer, and still reaches a nonlegendary one", () => {
+  const p = copyFixture("Reflection of Kiki-Jiki", "Create a token that's a copy of another target nonlegendary creature you control, except it has haste.");
+  expect(directedReasons(p, selfTriggerLegend("Kardur, Doomscourge", true), H).length).toBe(0);
+  expect(directedReasons(p, selfTriggerLegend("Solemn Simulacrum", false), H).some((x) => x.tag === "enters:any")).toBe(true);
 });
 
 // PANEL FAMILY E (2026-08-20): a DEBUFF forms no applies-to edge, and an ABILITY discount needs an
@@ -2821,4 +2883,190 @@ test("a planeswalker's own entry advertises its card type as well as its charact
   expect(creatureTags).toContain("enters:human");
   expect(creatureTags).toContain("enters:wizard");
   expect(creatureTags).not.toContain("enters:creature");
+});
+
+/** A DAMAGE EVENT HAS TWO PARTICIPANTS, AND A DEALER MUST BE COMPARED AGAINST A DEALER.
+ *
+ *  Owner's witness, 2026-08-27: Impact Tremors "deals 1 damage to each opponent"; Ghyrson Starn
+ *  triggers on "another source YOU CONTROL deals exactly 1 damage to a permanent or player". The
+ *  emit's subject is the VICTIM and the trigger's subject is the DEALER, and comparing them meant
+ *  the authored damage channel formed no edges at all — measured, Impact Tremors took 10 incoming
+ *  edges and zero outgoing in a deck holding six cards that trigger on damage.
+ *
+ *  Ghyrson is unconstrained on the victim, which is the owner's own correction and the reason the
+ *  roles must be separated rather than merged: it triggers on damage to ANY permanent or player,
+ *  including yourself. */
+test("a damage emit's dealer satisfies a trigger that names the dealer", () => {
+  const tremors = base("Impact Tremors", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+    // The victim is an opponent; the dealer is this card, which its controller controls.
+    emits: [{
+      verb: "non-combat-damage",
+      subject: { control: "opp", token: null, scope: "each" },
+      dealer: { control: "you", token: null },
+    }],
+  }]);
+  const ghyrson = base("Ghyrson Starn", [{
+    kind: "triggered",
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null } },
+    effect: { kind: "damage" },
+  }]);
+  const tags = directedReasons(tremors, ghyrson, H).map((r) => r.tag);
+  expect(tags).toContain("non-combat-damage:any");
+});
+
+/** The fix must be ADDITIVE. An implied combat emit carries no `dealer` — its subject IS the
+ *  creature dealing the damage — so it falls back to exactly the comparison it made before. */
+test("an emit with no dealer still matches on its subject, as implied combat damage does", () => {
+  const dealer = base("Attacker", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "damage" },
+    emits: [{ verb: "combat-damage", subject: { type: "creature", control: "you", token: null } }],
+  }]);
+  const payoff = base("Damage Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["combat-damage"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(directedReasons(dealer, payoff, H).map((r) => r.tag)).toContain("combat-damage:creature");
+});
+
+/** And it must not become a wildcard: a trigger demanding an OPPONENT's source is not satisfied by
+ *  damage YOUR card deals. */
+test("a dealer demand still discriminates on control", () => {
+  const mine = base("My Pinger", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
+    effect: { kind: "damage" },
+    emits: [{
+      verb: "non-combat-damage",
+      subject: { control: "opp", token: null },
+      dealer: { control: "you", token: null },
+    }],
+  }]);
+  const wantsTheirs = base("Watches Opponents", [{
+    kind: "triggered",
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "opp", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(directedReasons(mine, wantsTheirs, H).map((r) => r.tag)).not.toContain("non-combat-damage:opp");
+});
+
+// A FACE IS A NODE (2026-08-27, Task 3). `mdfcProducer` is an Instant // Land modal DFC: front
+// face casts as an Instant, back face is a Land that enters. `faceDeckCards` splits it into two
+// DeckCards, each carrying only its own face's implied events -- see `faces.ts`.
+const mdfcProducer = (): DeckCard => ({
+  card: {
+    name: "Fell the Profane // Fell Mire",
+    typeLine: "Instant // Land",
+    oracleText: "Destroy target creature or planeswalker.\n// Fell Mire enters the battlefield tapped.",
+    keywords: [], colors: ["B"], manaValue: 2,
+    faces: [
+      { name: "Fell the Profane", typeLine: "Instant", oracleText: "Destroy target creature or planeswalker.", manaCost: "{1}{B}", colors: ["B"] },
+      { name: "Fell Mire", typeLine: "Land", oracleText: "Fell Mire enters the battlefield tapped.", colors: [] },
+    ],
+  } as never,
+  tags: {
+    oracleId: "fell-the-profane", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["instant", "land"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [],
+      faces: [
+        { types: ["instant"], subtypes: [] },
+        { types: ["land"], subtypes: [] },
+      ],
+    },
+    abilities: [],
+  } as CardTags,
+});
+
+const landfallConsumer = (): DeckCard => base("Lotus Cobra", [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: ["land"] } },
+  effect: { kind: "add-mana" },
+}]);
+
+const castConsumer = (): DeckCard => base("Guttersnipe", [{
+  kind: "triggered",
+  trigger: { verbs: ["cast"], subject: { control: "you", token: null, type: ["instant"] } },
+  effect: { kind: "damage" },
+}]);
+
+// A FACE IS A NODE, AND THE PANEL MUST NOT NOTICE. `pairs.json` keys 895 frozen pairs on
+// `producer|consumer|tag`, so the NAME stays the physical card's and the face rides beside it.
+test("a reason from a back-face ability names the card and stamps the face", () => {
+  const [, back] = faceDeckCards(mdfcProducer());
+  const consumer = landfallConsumer();
+  const reasons = directedReasons(back, consumer, {});
+  expect(reasons.length).toBeGreaterThan(0);
+  expect(reasons[0].producer).toBe("Fell the Profane // Fell Mire");
+  expect(reasons[0].producerFace).toBe(1);
+});
+
+test("a reason from the front face names the card and stamps no face", () => {
+  const [front] = faceDeckCards(mdfcProducer());
+  const consumer = castConsumer();
+  const reasons = directedReasons(front, consumer, {});
+  expect(reasons.length).toBeGreaterThan(0);
+  expect(reasons[0].producer).toBe("Fell the Profane // Fell Mire");
+  expect(reasons[0].producerFace).toBeUndefined();
+});
+
+/** `pairReasons` reads the card it is handed. The shipped engine never hands it a multi-face card
+ *  whole -- `analyzeDeckStructured` splits with `faceDeckCards` first, so a face is matched with
+ *  only the abilities IT prints. `pairReasonsAcrossFaces` is that same question for the two callers
+ *  that ask it about a bare pair: the pair-judging tool and the ratchet that gates its verdicts. */
+test("pairReasonsAcrossFaces matches a two-faced card FACE BY FACE, as the engine does", () => {
+  const payoff = base("Kindred Discovery", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const mdfc: DeckCard = {
+    card: {
+      name: "Front Half // Back Half", typeLine: "Sorcery // Creature — Wizard", oracleText: "a\nb",
+      keywords: [], colors: [], manaValue: 2,
+      faces: [
+        { name: "Front Half", typeLine: "Sorcery", oracleText: "a", colors: [] },
+        { name: "Back Half", typeLine: "Creature — Wizard", oracleText: "b", colors: [] },
+      ],
+    } as never,
+    tags: {
+      oracleId: "o", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: {
+        types: ["sorcery", "creature"], subtypes: ["wizard"], colors: [], identity: [], cmc: 2,
+        power: null, toughness: null, token: false, keywords: [],
+        faces: [{ types: ["sorcery"], subtypes: [] }, { types: ["creature"], subtypes: ["wizard"] }],
+      },
+      // Printed on the BACK face only, which is the whole point: the unsplit read hangs it on a
+      // card whose name is "Front Half // Back Half".
+      abilities: [{
+        face: 1,
+        kind: "triggered",
+        trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: false } },
+        effect: { kind: "token-generation", subject: { subtype: "wizard", control: "you", token: true } },
+        emits: [{ verb: "enters", subject: { subtype: "wizard", control: "you", token: true } }],
+      }],
+    } as unknown as CardTags,
+  };
+
+  const across = pairReasonsAcrossFaces(mdfc, payoff, H);
+  const etb = across.find((r) => r.tag === "enters:creature")!;
+  expect(etb).toBeDefined();
+  // The SENTENCE names the face that prints the ability; the endpoint names the physical card
+  // (`stampSides`, off `parentName`). The unsplit read can say neither -- it only knows the
+  // combined name, which is what makes this assertion fire on the fix.
+  expect(etb.text).toContain("Back Half");
+  expect(etb.text).not.toContain("Front Half // Back Half");
+  expect(etb.producer).toBe("Front Half // Back Half");
+
+  // A pair of single-faced cards takes the plain path unchanged.
+  const lord = base("Death Baron", [{
+    kind: "static", effect: { kind: "pump", subject: { subtype: "zombie", control: "you", token: null } },
+  }]);
+  const zombie = base("Gravecrawler", [], ["zombie"]);
+  expect(pairReasonsAcrossFaces(lord, zombie, H)).toEqual(pairReasons(lord, zombie, H));
 });

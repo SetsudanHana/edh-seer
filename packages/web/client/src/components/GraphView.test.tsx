@@ -1,5 +1,6 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { StrictMode } from "react";
+import { eventLabel } from "../lib/demand-sentence.js";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { EDIT_REHEAT_ALPHA, PARK_ALPHA } from "./board-force.js";
@@ -9,7 +10,7 @@ import { SAMPLE } from "../fixtures.js";
 import type { CardGraph, GraphNode } from "../types.js";
 import { zoomIdentity, type ZoomTransform } from "d3-zoom";
 import { CARD_MODE_Z } from "./card-node.js";
-import { FLOW_DASH, FLOW_HUE, IDENTITY_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE } from "./presets.js";
+import { FLOW_DASH, FLOW_EVENT_HUES, FLOW_HUE, IDENTITY_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE } from "./presets.js";
 import { createBoardSimulation, DEFAULT_PARAMS, LINK_DIST_MIN } from "./board-force.js";
 import sorinFixture from "../fixtures/sorin-graph.json" with { type: "json" };
 
@@ -399,7 +400,12 @@ describe("the paint legend", () => {
     // LANDS ARE OFF BY DEFAULT: 37 of the review deck's 101 nodes are lands, nearly all edgeless,
     // and the board's own caption says position means synergy — which is false of them.
     expect(legend).not.toHaveTextContent("land");
-    await userEvent.click(screen.getByRole("button", { name: /^lands \(1\)/ }));
+    // THE TOGGLE AND THE LEGEND COUNT THE SAME THING NOW, and this fixture was the defect in
+    // miniature: ONE Mountain node with 24 copies read "lands (1)" beside a legend reading "24",
+    // and this test asserted both numbers without noticing they disagree. Three persona reviews hit
+    // the live version -- "lands (35)" against "land 40" -- and called it the first number they
+    // would want to trust for a mana-base job. A player means COPIES by "how many lands".
+    await userEvent.click(screen.getByRole("button", { name: /^lands \(24\)/ }));
     expect(screen.getByTestId("paint-legend")).toHaveTextContent("land");
     expect(screen.getByTestId("paint-legend")).toHaveTextContent("24");
   });
@@ -1227,7 +1233,7 @@ describe("the inspector", () => {
 // consumption were indistinguishable -- owner-reported from real use. The canvas spy records
 // `set:strokeStyle=` calls, so the assertion is that both flow hues reach the context.
 describe("flow view", () => {
-  test("a clicked card paints its edges in the two direction hues", () => {
+  test("a clicked card paints its edges by MECHANISM, not by direction", () => {
     const calls: string[] = [];
     const graph = graphOf(
       [card({ id: "A" }), card({ id: "B" }), card({ id: "X" })],
@@ -1259,8 +1265,40 @@ describe("flow view", () => {
       if (c.startsWith("set:strokeStyle=")) lastStroke = c.slice("set:strokeStyle=".length);
       else if (c.startsWith("moveTo:") && lastStroke) edgeStrokeColors.add(lastStroke);
     }
-    expect(edgeStrokeColors).toContain(FLOW_HUE.down);
-    expect(edgeStrokeColors).toContain(FLOW_HUE.up);
+    // HUE IS THE MECHANISM NOW (owner, 2026-08-27: "I can see all the events flowing... I cannot
+    // distinguish them"). Both edges here carry the same tag `t`, so both take the FIRST palette
+    // hue -- and the old assertion, that the two DIRECTIONS painted different colours, is exactly
+    // the encoding that told a reader nothing about what was flowing.
+    // BOTH edges carry the same tag `t`, so both take the SAME hue -- which is the proof that hue
+    // no longer encodes direction. (The palette deliberately opens with `FLOW_HUE`'s own pair, so
+    // the first hue and the old "up" hue are the same value; the assertion that matters is that
+    // there is exactly ONE edge colour across an upstream and a downstream edge, where the old
+    // encoding guaranteed two.)
+    expect([...edgeStrokeColors]).toEqual([FLOW_EVENT_HUES[0]]);
+  });
+
+  /** DIRECTION MUST SURVIVE A STILL FRAME. Hue moved to the mechanism, so the dash crawl became the
+   *  only direction channel -- and it is zeroed under `prefers-reduced-motion` and absent from any
+   *  screenshot. The arrowhead is the static encoding; without it those readers have none, which is
+   *  the task-5 brief's own finding (a judge could not tell producer from consumer) returning. */
+  test("a flow edge carries an arrowhead, so direction reads without motion", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "B" })],
+      [{ from: "A", to: "B", weight: 2, tags: ["t"], reasonTexts: ["A feeds B"] }],
+    );
+    const { canvas, tick } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "A")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    calls.length = 0;
+    tick();
+    // The head is the only place two `lineTo`s follow a single `moveTo`; a plain edge is one each.
+    let heads = 0;
+    for (let i = 0; i < calls.length - 2; i++) {
+      if (calls[i].startsWith("moveTo:") && calls[i + 1].startsWith("lineTo:") && calls[i + 2].startsWith("lineTo:")) heads++;
+    }
+    expect(heads).toBeGreaterThan(0);
   });
 
   test("with nothing selected the board paints no flow hue", () => {
@@ -1278,7 +1316,7 @@ describe("flow view", () => {
   // task-5 brief: a blind judge shown the two flow hues with no key could not tell producer from
   // consumer (confidence 2/5). The legend must name the DIRECTION in words, using the selected
   // card's own name, and must fall back to the ordinary paint-mode legend when nothing is selected.
-  test("selecting a card replaces the paint legend with the two flow directions, named", () => {
+  test("selecting a card adds the flow's own EVENTS to the legend, named and counted", () => {
     const graph = graphOf(
       [card({ id: "A" }), card({ id: "B" }), card({ id: "X" })],
       [
@@ -1295,26 +1333,34 @@ describe("flow view", () => {
     const node = probe.find((n) => n.id === "A")!;
     act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
 
+    // The rows name the MECHANISMS in this flow rather than the two directions, because two hues
+    // meaning up/down is what left a reader unable to tell one event from another. Direction is
+    // carried by the arrowhead and by the inspector's own Feeds / Fed by split.
     const legend = screen.getByTestId("paint-legend");
-    expect(legend).toHaveTextContent("A feeds");
-    expect(legend).toHaveTextContent("feeds A");
+    expect(legend).toHaveTextContent("T");
+    expect(legend).not.toHaveTextContent("A feeds");
     // THE FLOW ROWS STACK ON TOP, THEY DO NOT REPLACE (roadmap H3). The two legends answer different
     // questions -- the flow rows name the EDGE hues, the paint rows name the card RIMS, and both are
     // on screen at once. Replacing them meant a facet switch mid-selection repainted every rim with
     // no key anywhere.
     const rows = [...legend.querySelectorAll('[data-testid="paint-legend-row"]')];
-    expect(rows.map((r) => r.getAttribute("data-value")).slice(0, 2)).toEqual(["down", "up"]);
+    // The flow's own events lead; the paint mode's values follow. The fixture's one tag is `t`, and
+    // `creature` is the Type paint mode still keying the rims underneath.
+    expect(rows.map((r) => r.getAttribute("data-value"))).toEqual(["t", "creature"]);
     expect(legend).toHaveTextContent("creature");
-    expect(rows.length).toBeGreaterThan(2);
-    // The colour named "A feeds" (downstream: A -> other) is the same hue the edges themselves
-    // draw in for that direction, per FLOW_HUE -- the legend cannot invent its own mapping. jsdom
-    // normalises an inline hex background to rgb(), so both sides go through the same normalising
-    // element rather than comparing a literal hex string against jsdom's rgb() rendering.
-    const probeEl = document.createElement("span");
-    probeEl.style.background = FLOW_HUE.down;
-    expect((rows[0].querySelector("span") as HTMLElement).style.background).toBe(probeEl.style.background);
-    probeEl.style.background = FLOW_HUE.up;
-    expect((rows[1].querySelector("span") as HTMLElement).style.background).toBe(probeEl.style.background);
+    // The swatch is the hue the EDGES draw in for that event -- the legend cannot invent its own
+    // mapping. It is a DASHED ARROW and not a disc, which is what separates it from the paint
+    // legend sharing the same strip; asserting the mark's shape as well as its hue is what keeps
+    // the two legends distinguishable, since a disc here would name a line with a node's swatch.
+    const swatch = rows[0].querySelector("svg") as SVGElement;
+    expect(swatch).not.toBeNull();
+    const [dash, head] = [...swatch.querySelectorAll("path")];
+    expect(dash.getAttribute("stroke")).toBe(FLOW_EVENT_HUES[0]);
+    expect(dash.getAttribute("stroke-dasharray")).toBeTruthy();
+    expect(head.getAttribute("fill")).toBe(FLOW_EVENT_HUES[0]);
+    // AND IT IS A BUTTON, because isolating one mechanism is the other half of the same complaint.
+    expect(rows[0].tagName).toBe("BUTTON");
+    expect(rows[0]).toHaveAttribute("aria-pressed", "false");
   });
 
   // DIRECTION AS MOTION. The flow view's blind judge scored 4/5 and withheld the fifth point for
@@ -1418,6 +1464,284 @@ describe("flow view", () => {
     calls.length = 0;
     tick();
     expect(offsetsThisFrame()).not.toEqual(first);
+  });
+
+  // FOUR PERSONA REVIEWS ASKED WHAT THE NUMBERS COUNT AND NONE COULD TELL. The chip row and the
+  // flow legend share a mechanism vocabulary and count different things over different scopes, so
+  // each states its own -- "if I'm wrong about this, I'm wrong about the whole screen".
+  test("both mechanism rows say what they count and over what", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "R" }), card({ id: "X" }), card({ id: "Y" })],
+      [
+        { from: "R", to: "X", weight: 2, tags: ["enters:creature"], reasonTexts: ["R feeds X"] },
+        { from: "R", to: "Y", weight: 2, tags: ["cast:spell"], reasonTexts: ["R feeds Y"] },
+      ],
+    );
+    const { canvas } = frames(graph, calls);
+    // THE UNIT IS NAMED, NOT JUST THE SCOPE. Naming the scope alone still left three of four
+    // reviewers unable to say what was counted; a chip counts card PAIRS.
+    // This fixture hides nothing, so the deck-wide claim is true and the row makes it.
+    expect(document.body.textContent).toContain("Card pairs across the deck");
+    expect(document.querySelector('[data-testid="graph-hidden-note"]')).toBeNull();
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    // "in this card's FLOW", not "through this card": the flow walks two hops, so the row counts
+    // pairs between two OTHER cards while the panel lists only direct edges -- two reviewers read
+    // the old wording as the card's own tally and reported it contradicting the panel.
+    expect(document.body.textContent).toContain("Card pairs in this card's flow");
+  });
+
+  // THE FLOW WALKS TWO HOPS, so the per-card row counts pairs between two OTHER cards while the
+  // panel below lists only direct edges. Two reviewers read the row as the card's own tally and
+  // reported it contradicting the panel -- "Creating a token 3" on a card that creates nothing, and
+  // "does not reconcile: the rows whose sentences say 'makes a token' carry no such chip". Saying
+  // how much of the flow is indirect is what makes the two lists reconcilable.
+  test("the per-card row says how many of its pairs are reached through the card", () => {
+    const calls: string[] = [];
+    // R -> M -> F: the M->F edge is in R's flow and touches R at neither end.
+    // Take the canvas from `frames`, as every other probe test does: querying the DOM for it loses
+    // the typed handle and the probe's own node type with it.
+    const { canvas } = frames(graphOf(
+      [card({ id: "R" }), card({ id: "M" }), card({ id: "F" })],
+      [
+        { from: "R", to: "M", weight: 2, tags: ["enters:creature"], reasonTexts: ["R feeds M"] },
+        { from: "M", to: "F", weight: 2, tags: ["cast:spell"], reasonTexts: ["M feeds F"] },
+      ],
+    ), calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+    expect(document.body.textContent).toContain("Card pairs in this card's flow");
+    expect(screen.getByTestId("flow-indirect-note").textContent).toContain("1 reached through it");
+  });
+
+  // A COUNT OVER THE VISIBLE BOARD MUST NOT CLAIM TO BE A COUNT OVER THE DECK. Lands are hidden by
+  // DEFAULT, so the deck-wide label was false on nearly every deck the moment it shipped. Three
+  // reviewers caught it by pressing the toggle and watching the numbers move -- "the default screen
+  // is a ranking of a subset presented as a ranking". The label follows the state rather than a
+  // caveat being bolted onto a false one.
+  test("the deck-wide row says 'on the board' and names what is hidden, and only then", async () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "Mountain", types: ["land"], copies: 3 }), card({ id: "A" }), card({ id: "B" }), card({ id: "C" })],
+      [
+        // TWO non-land mechanisms, because the row is gated on the board carrying more than one --
+        // with the land hidden, a single-mechanism board renders no row at all to make a claim with.
+        { from: "A", to: "B", weight: 2, tags: ["enters:creature"], reasonTexts: ["A feeds B"] },
+        { from: "A", to: "C", weight: 2, tags: ["cast:spell"], reasonTexts: ["A feeds C"] },
+        { from: "Mountain", to: "A", weight: 2, tags: ["ramp-target:basic"], reasonTexts: ["M feeds A"] },
+      ],
+    );
+    frames(graph, calls);
+    // Lands off by default: the row must not claim the deck, and must say what is missing.
+    expect(document.body.textContent).toContain("Card pairs on the board");
+    expect(document.body.textContent).not.toContain("Card pairs across the deck");
+    // SLOTS, not nodes -- one Mountain node, three copies.
+    expect(screen.getByTestId("graph-hidden-note").textContent).toContain("3 lands");
+
+    await userEvent.click(screen.getByRole("button", { name: /^lands \(3\)/ }));
+    // Nothing hidden now, so the deck-wide claim is true and the row makes it.
+    expect(document.body.textContent).toContain("Card pairs across the deck");
+    expect(document.querySelector('[data-testid="graph-hidden-note"]')).toBeNull();
+  });
+
+  // A PAIR CAN DO TWO THINGS, so the chips sum past the number of pairs -- the same arithmetic
+  // complaint the type legend already pre-empts, one row up. Conditional for the same reason: a
+  // caveat claiming a defect that is not present is noise.
+  test("the mechanism rows admit double-counting only when a pair carries two mechanisms", () => {
+    const calls: string[] = [];
+    frames(graphOf([card({ id: "A" }), card({ id: "B" })], [
+      { from: "A", to: "B", weight: 2, tags: ["enters:creature", "attacks:creature"], reasonTexts: ["A feeds B"] },
+    ]), calls);
+    expect(document.querySelector('[data-testid="mechanism-overcount"]')).not.toBeNull();
+
+    cleanup();
+    const calls2: string[] = [];
+    frames(graphOf([card({ id: "C" }), card({ id: "D" })], [
+      { from: "C", to: "D", weight: 2, tags: ["enters:creature"], reasonTexts: ["C feeds D"] },
+    ]), calls2);
+    expect(document.querySelector('[data-testid="mechanism-overcount"]')).toBeNull();
+  });
+
+  // A SILENT CAP READS AS A COMPLETE MENU. The chip row rendered the eight commonest with no
+  // ellipsis, and 59 of 71 calibration decks carry MORE than eight mechanisms (p50 11, max 15) --
+  // so on 83% of decks it hid three to seven and said nothing. A skeptic reviewer found a mechanism
+  // on the board with no chip and stopped trusting the counts as a census of anything.
+  test("every mechanism on the board gets a chip, with no silent truncation", () => {
+    const calls: string[] = [];
+    const verbs = ["enters", "cast", "dies", "attacks", "leaves", "taps", "untaps", "discard", "mill", "sacrifice"];
+    const nodes = [card({ id: "R" }), ...verbs.map((v, i) => card({ id: `N${i}` }))];
+    const edges = verbs.map((v, i) => ({
+      from: "R", to: `N${i}`, weight: 2, tags: [`${v}:creature`], reasonTexts: [`R ${v} N${i}`],
+    }));
+    frames(graphOf(nodes, edges), calls);
+    // Ten distinct mechanisms, all ten named -- the old cap would have shown eight.
+    const text = document.body.textContent ?? "";
+    for (const v of verbs) expect(text).toContain(eventLabel(v));
+  });
+
+  // THE PAINT COUNTS CAN EXCEED THE DECK, and three of four persona reviews stopped to do the
+  // arithmetic without reaching a confident answer. A node paints one hue per value it carries, so
+  // an artifact creature is counted twice -- correct, and unreadable without being said.
+  test("the paint legend admits double-counting only when it actually double-counts", () => {
+    const twoTypes = card({ id: "A" });
+    (twoTypes as unknown as Record<string, unknown>).types = ["artifact", "creature"];
+    const oneType = card({ id: "B" });
+    (oneType as unknown as Record<string, unknown>).types = ["creature"];
+
+    const calls: string[] = [];
+    frames(graphOf([twoTypes, oneType], [
+      { from: "A", to: "B", weight: 2, tags: ["enters:creature"], reasonTexts: ["A feeds B"] },
+    ]), calls);
+    expect(document.querySelector('[data-testid="paint-legend-overcount"]')).not.toBeNull();
+
+    cleanup();
+    const calls2: string[] = [];
+    const plain1 = card({ id: "C" }); (plain1 as unknown as Record<string, unknown>).types = ["creature"];
+    const plain2 = card({ id: "D" }); (plain2 as unknown as Record<string, unknown>).types = ["creature"];
+    frames(graphOf([plain1, plain2], [
+      { from: "C", to: "D", weight: 2, tags: ["enters:creature"], reasonTexts: ["C feeds D"] },
+    ]), calls2);
+    // Silent when nothing is double-counted: a caveat claiming a defect that is not present is noise.
+    expect(document.querySelector('[data-testid="paint-legend-overcount"]')).toBeNull();
+  });
+
+  // A STATIC IS A CLASS, NOT A MECHANISM. A reason tag is `<mechanism>:<subject>` everywhere except
+  // the static family, where it is `static:<mechanism>` -- so splitting on the colon threw the
+  // mechanism away and called a cost cut and an anthem the same thing. 6,829 of 43,376 reasons
+  // (15.7%) across the 71 decks are `static:`, over eight distinct mechanisms.
+  test("the static family splits into its own mechanisms, each named and hued", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "R" }), card({ id: "X" }), card({ id: "Y" })],
+      [
+        { from: "R", to: "X", weight: 2, tags: ["static:cost-reduction"], reasonTexts: ["R reduces what X costs"] },
+        { from: "R", to: "Y", weight: 2, tags: ["static:pump"], reasonTexts: ["R gives Y bigger stats"] },
+      ],
+    );
+    const { canvas } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+
+    const rows = [...document.querySelectorAll('[data-testid="paint-legend-row"]')]
+      .filter((r) => r.tagName === "BUTTON");
+    const values = rows.map((r) => r.getAttribute("data-value"));
+    expect(values).toContain("static:cost-reduction");
+    expect(values).toContain("static:pump");
+    // TWO ROWS, NOT ONE COLLAPSED "static".
+    expect(values).not.toContain("static");
+    // AND IN A PLAYER'S WORDS, never the raw kind -- an internal identifier rendered as English is
+    // the defect `demand-sentence.ts` exists to prevent. Asserted as "not the raw key, and the two
+    // differ" rather than as exact strings: `demand-sentence.test.ts` already ratchets the raw-key
+    // fallback, and pinning wording here made a persona-driven reword fail a test about SPLITTING.
+    const labels = rows.map((r) => (r.textContent ?? "").replace(/\d+$/, "").trim());
+    expect(labels.some((l) => /static/i.test(l))).toBe(false);
+    expect(new Set(labels).size).toBe(labels.length);
+    // Distinct hues: the whole point is that they stop looking alike.
+    const strokes = rows.map((r) => r.querySelector("path")?.getAttribute("stroke"));
+    expect(new Set(strokes).size).toBe(strokes.length);
+  });
+
+  // ISOLATING A MECHANISM PAINTS IT IN ITS OWN HUE. 29 of the Jodah deck's 335 edges carry more
+  // than one verb (8.7%), and `offFocus` correctly KEEPS such an edge lit when either verb is the
+  // isolated one -- so without this it stayed lit in the other verb's colour, and the reader who
+  // clicked "attacks" saw the "enters" hue.
+  test("an edge carrying two mechanisms takes the ISOLATED one's hue", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "R" }), card({ id: "X" }), card({ id: "Y" })],
+      [
+        // Ranked first by count, so `enters` owns hue 0 and `attacks` hue 1.
+        { from: "R", to: "Y", weight: 2, tags: ["enters:creature"], reasonTexts: ["R feeds Y"] },
+        { from: "R", to: "X", weight: 2, tags: ["enters:creature", "attacks:creature"], reasonTexts: ["R feeds X"] },
+      ],
+    );
+    const { canvas, tick } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+
+    const attacks = [...document.querySelectorAll('[data-testid="paint-legend-row"]')]
+      .find((r) => r.getAttribute("data-value") === "attacks") as HTMLElement;
+    act(() => { attacks.click(); });
+    calls.length = 0;
+    tick();
+    // The multi-verb edge is still drawn (offFocus keeps it) and now carries the attacks hue.
+    // SCOPED TO THE EDGE PASS, never to the raw call list: `FLOW_EVENT_HUES` reuses `ROLE_HUE`, so
+    // a node rim can stroke the same hex and an unscoped assertion passes in both arms.
+    const edgeStrokes = new Set<string>();
+    let last: string | null = null;
+    for (const c of calls) {
+      if (c.startsWith("set:strokeStyle=")) last = c.slice("set:strokeStyle=".length);
+      else if (c.startsWith("moveTo:") && last !== null) edgeStrokes.add(last);
+    }
+    expect(edgeStrokes.has(FLOW_EVENT_HUES[1])).toBe(true);
+    // And the mechanism it is NOT isolated on must not be painting any edge this frame.
+    expect(edgeStrokes.has(FLOW_EVENT_HUES[0])).toBe(false);
+  });
+
+  // A CYCLE IS ONE EDGE, NOT TWO. Both direction-pure walks reach an edge that sits in a loop, so
+  // `flow.edges` holds that pair twice -- and the legend counted it twice. Measured on the Jodah
+  // deck 2026-08-27: 5 of 103 flows, 21 pairs, and the busiest double-counted 6 of its 55 edges.
+  // The paint loop was already immune (it keys a Map by pair), so the defect was in the NUMBERS
+  // alone, which is the harder kind to see.
+  test("an edge in a cycle is counted once in the legend, not once per walk", () => {
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "R" }), card({ id: "X" })],
+      [
+        { from: "R", to: "X", weight: 2, tags: ["enters:creature"], reasonTexts: ["R feeds X"] },
+        { from: "X", to: "R", weight: 2, tags: ["enters:creature"], reasonTexts: ["X feeds R"] },
+      ],
+    );
+    const { canvas } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+
+    const rows = [...document.querySelectorAll('[data-testid="paint-legend-row"]')]
+      .filter((r) => r.tagName === "BUTTON");
+    const enters = rows.find((r) => r.getAttribute("data-value") === "enters");
+    expect(enters).toBeDefined();
+    // Two distinct pairs, each counted once -- never four.
+    expect(enters!.textContent).toContain("2");
+  });
+
+  // THE CRAWL AND THE ARROWHEAD MUST AGREE, AND NOTHING ASSERTED IT UNTIL THE JODAH DECK.
+  // The test above pins only that the offset MOVES, which is direction-agnostic -- so it stayed
+  // green while upstream edges crawled one way and their arrowheads pointed the other. `fe.dir`
+  // records which WALK found an edge, not which way the event travels; the event always goes
+  // `from -> to` and the arrowhead is always drawn at the target, so one constant sign is the only
+  // reading that agrees. A root with one edge in each fan must show ONE current, not two.
+  test("both fans crawl the same way, so motion and the arrowheads cannot disagree", () => {
+    vi.spyOn(performance, "now").mockReturnValue(100);
+    const calls: string[] = [];
+    const graph = graphOf(
+      [card({ id: "A" }), card({ id: "R" }), card({ id: "B" })],
+      [
+        { from: "A", to: "R", weight: 2, tags: ["t"], reasonTexts: ["A feeds R"] },
+        { from: "R", to: "B", weight: 2, tags: ["t"], reasonTexts: ["R feeds B"] },
+      ],
+    );
+    const { canvas, tick } = frames(graph, calls);
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "R")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
+
+    calls.length = 0;
+    tick();
+    const offsets = new Set<string>();
+    let last: string | null = null;
+    for (const c of calls) {
+      if (c.startsWith("set:lineDashOffset=")) last = c.slice("set:lineDashOffset=".length);
+      else if (c.startsWith("moveTo:") && last !== null && last !== "0") offsets.add(last);
+    }
+    expect(offsets.size).toBe(1);
+    // Negative, i.e. travelling toward the TARGET -- the end the arrowhead is drawn at.
+    expect(Number([...offsets][0])).toBeLessThan(0);
   });
 
   // prefers-reduced-motion is not a preference to weigh against how good the crawl looks. A reader
@@ -1527,6 +1851,58 @@ describe("token nodes", () => {
     tick();
     expect(calls.some((c) => c.startsWith("fillText:token,"))).toBe(true);
     expect(calls.some((c) => c.startsWith("setLineDash:"))).toBe(true);
+  });
+});
+
+describe("face pair nodes", () => {
+  // SHARED RIM, NO LINK (owner's ruling, 2026-08-27). The two faces of one card are marked as one
+  // card by a matching outline, the way a token is marked by its dashed rim. Nothing is drawn
+  // between them, so no new edge kind reaches the legend or any count. `cardName` is present on
+  // BOTH faces (Task 7); `face` is absent on the front, so `cardName` is the test that fires on
+  // both nodes and `face` is not.
+  //
+  // A THIRD, UNRELATED NODE with a real edge to the front face, review fix 2026-08-27: the
+  // original fixture had NO edges at all, so "no edge joins the faces" could never fail -- an
+  // edgeless graph passes that assertion whether or not the rule holds. With a real edge present,
+  // the assertion is checking something: that edge exists AND no edge connects the two face ids.
+  test("both faces of one card paint the same-card rim, and no edge joins them", () => {
+    const calls: string[] = [];
+    const front = card({ id: "A // B", label: "A", cardName: "A // B" });
+    const back = card({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" });
+    const other = card({ id: "C" });
+    // BOTH faces get an edge to `C`, not just the front: an edgeless node draws at
+    // `ART_RADIUS * EDGELESS_RADIUS_SCALE` (the `demote` branch), so a half-connected fixture gives
+    // the two rims different radii and the radius assertion below could not be a single number.
+    const { canvas, tick } = frames(graphOf([front, back, other], [
+      { from: "A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["A // B feeds C"] },
+      { from: "face:1:A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["B feeds C"] },
+    ]), calls);
+    // The mount itself already ran one draw pass before this test can see it (the layout effect
+    // calls `loop()` once directly, ahead of ever scheduling a frame -- see `loop`'s own comment).
+    // Clearing here isolates the ONE pass this `tick()` triggers, the same convention the paint-mode
+    // hue test above uses for the identical reason.
+    calls.length = 0;
+    tick();
+
+    // A stroke in `--foreground`, once per face node -- distinct from the token rim just above,
+    // which is drawn in `--muted`. jsdom's getComputedStyle returns "" for a custom property, so
+    // both fall back to the literal default GraphView.tsx ships when the CSS variable is absent.
+    expect(calls.filter((c) => c === "set:strokeStyle=#e6e8eb").length).toBe(2);
+    // DASHED, once per face node -- the review fix. Pre-fix this rim was solid at the same width
+    // class as the "you clicked this" rim and painted invisibly under it whenever a face node was
+    // also the clicked node; a real `setLineDash` call with a non-empty pattern is what makes the
+    // two distinguishable regardless of which one draws on top.
+    expect(calls.filter((c) => c.startsWith("setLineDash:") && c !== "setLineDash:").length).toBe(2);
+    // AND AT `r + 5`, which is the half that does the work -- review fix, 2026-08-27. The click rim
+    // is 2.5px SOLID in the same `--foreground` at `r + 3`, and this rim is 1.5px drawn AFTER it, so
+    // at an equal radius a thinner stroke of an identical colour is buried whether or not it is
+    // dashed. Reverting the radius alone passed all 106 tests in this file, which is what makes this
+    // assertion the one that pins the fix rather than decorating it.
+    expect(calls.filter((c) => c.startsWith("arc:") && Number(c.split(",")[2]) === ART_RADIUS + 5).length).toBe(2);
+
+    const edges = canvas.__graphProbe!().edges;
+    expect(edges.some((e) => e.from === "A // B" && e.to === "C")).toBe(true);
+    expect(edges.some((e) => e.from.includes("A // B") && e.to.includes("A // B"))).toBe(false);
   });
 });
 
@@ -1752,5 +2128,42 @@ describe("paint parking", () => {
     const before = calls.length;
     tick(5);
     expect(calls.length).toBeGreaterThan(before);
+  });
+});
+
+/** TRACE ONE EVENT THROUGH THE DECK — owner-reported 2026-08-27: a click showed the flow but every
+ *  mechanism in it looked alike, so a deck's `dies` chain and its `enters` chain were one mesh.
+ *
+ *  The chips are DOM and testable here; the dimming itself is canvas and is verified in a live
+ *  browser, which is the standing rule for this component. */
+describe("trace-event filter", () => {
+  test("names the events this deck's edges carry, commonest first, with counts", () => {
+    render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+    const verbs = new Map<string, number>();
+    for (const e of SAMPLE.graph.edges) {
+      for (const v of new Set(e.tags.map((t) => t.split(":")[0]))) verbs.set(v, (verbs.get(v) ?? 0) + 1);
+    }
+    if (verbs.size < 2) return; // the row is absent by design when naming an event changes nothing
+    const [topVerb, topCount] = [...verbs].sort((a, b) => b[1] - a[1])[0];
+    expect(screen.getByText(/Trace event/i)).toBeInTheDocument();
+    const chip = screen.getByRole("button", { name: new RegExp(`${topCount}$`) });
+    expect(chip).toBeInTheDocument();
+    expect(topVerb.length).toBeGreaterThan(0);
+  });
+
+  test("a chip toggles, and clicking the active one clears the trace rather than stranding it", async () => {
+    const user = userEvent.setup();
+    render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+    const all = screen.queryByRole("button", { name: "All" });
+    if (!all) return; // single-event deck: no row
+    const chips = screen.getAllByRole("button").filter((b) => /\s\d+$/.test(b.textContent ?? ""));
+    const first = chips[0]!;
+    expect(all).toHaveAttribute("aria-pressed", "true");
+    await user.click(first);
+    expect(first).toHaveAttribute("aria-pressed", "true");
+    expect(all).toHaveAttribute("aria-pressed", "false");
+    await user.click(first);
+    expect(first).toHaveAttribute("aria-pressed", "false");
+    expect(all).toHaveAttribute("aria-pressed", "true");
   });
 });

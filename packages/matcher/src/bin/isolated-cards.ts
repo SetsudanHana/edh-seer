@@ -54,8 +54,20 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
     deck.push({ card: docToCard(doc as never), tags });
   }
   const report = analyzeDeckStructured(deck, sections.commanders, undefined, undefined, new ComboIndex([]), undefined, tokenTags);
+  // `e.a`/`e.b` are FACE names now (Task 7, faces-as-nodes split every multi-face card's edges
+  // across its printed faces), and `meta` below is keyed on the doc's PHYSICAL name -- so filling
+  // `connected` from the edge endpoints silently read every multi-face card as isolated, connected
+  // or not. `Reason.producer`/`.consumer` name the physical card BY CONSTRUCTION (see
+  // engine/synergy.ts's own doc comment: the face is a field, `producerFace`/`consumerFace`, never
+  // folded into the name), so reading connectivity off the reasons instead of the edge pair is both
+  // the cheap fix and the correct join. Review fix, 2026-08-27.
   const connected = new Set<string>();
-  for (const e of report.edges) { connected.add(e.a); connected.add(e.b); }
+  for (const e of report.edges) {
+    for (const r of e.reasons) {
+      if (r.producer) connected.add(r.producer);
+      if (r.consumer) connected.add(r.consumer);
+    }
+  }
 
   // THE SUSPICIOUS SET. An isolated card whose VERB has a counterpart elsewhere in the same deck —
   // it emits `enters` and something there triggers on `enters` — was refused by a SUBJECT or a GATE,

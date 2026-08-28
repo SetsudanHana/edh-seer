@@ -44,6 +44,10 @@ export const CUT_RATING_MAX = 1.0;
 
 export interface CutInput {
   name: string;
+  /** The physical card this row's face belongs to ("Fell the Profane // Fell Mire"), present only
+   *  when `name` is one face of a multi-face card. See `mergeFaces` -- a reader cuts the CARD, not
+   *  a face, so two rows sharing a `cardName` collapse to one before anything is proposed. */
+  cardName?: string;
   /** 0-5, deck-relative. */
   rating: number;
   /** 0-1: how far the card's best synergy edge sits on the deck's axis. */
@@ -63,6 +67,16 @@ export interface CutInput {
   isLand: boolean;
   isCommander: boolean;
   isComboPiece: boolean;
+  /** THE ENGINE READ THIS CARD'S ORACLE TEXT. False when the card resolved but carries no derived
+   *  tags, which is a DIFFERENT fact from "nothing connects to it" and the one this list must not
+   *  confuse with it. An underived card forms no edge BY CONSTRUCTION — the same reason
+   *  `fillsDeckRole` protects a Jet Medallion, arriving from the corpus rather than from the rules.
+   *
+   *  MEASURED 2026-08-27 on `precon-party-time`: **12 of 12 cut candidates were cards the engine
+   *  had never read**, so every row of the shipped list was the corpus's own gap wearing the
+   *  clothes of a dead card. Reading a deliberate silence as evidence of uselessness is the worst
+   *  mistake this list can make, and this was the largest source of it. */
+  derived: boolean;
   /** DEMANDS THE DECK CANNOT MEET, already humanised ("planeswalkers entering"). An intervening-if
    *  condition names something the deck must provide — "if a creature died this turn", "if a
    *  planeswalker entered under your control" — and a deck that provides none makes the card dead
@@ -151,12 +165,45 @@ function connectionReason(partnerCount: number, median: number | null): string {
   return `only ${partnerCount} card${partnerCount === 1 ? " connects" : "s connect"} to it`;
 }
 
+/** A CARD IS THE UNIT OF A CUT. A face node is rated on its own -- that is the whole point of faces
+ *  as nodes -- but a reader removes a CARD from a sleeve, so the two faces are merged back before
+ *  anything is proposed. The merged row takes the STRONGEST face's protections (a role, a combo
+ *  slot or a commander designation on either face protects the card, because cutting takes both
+ *  away) and the strongest face's numbers, so a card is never proposed on the strength of its
+ *  weaker half alone. */
+function mergeFaces(rows: readonly CutInput[]): CutInput[] {
+  const out = new Map<string, CutInput>();
+  for (const r of rows) {
+    const key = r.cardName ?? r.name;
+    const prev = out.get(key);
+    if (!prev) { out.set(key, { ...r, name: key }); continue; }
+    out.set(key, {
+      ...prev,
+      rating: Math.max(prev.rating, r.rating),
+      axisWeight: Math.max(prev.axisWeight, r.axisWeight),
+      partnerCount: Math.max(prev.partnerCount, r.partnerCount),
+      roles: [...new Set([...prev.roles, ...r.roles])],
+      isLand: prev.isLand && r.isLand,
+      isCommander: prev.isCommander || r.isCommander,
+      isComboPiece: prev.isComboPiece || r.isComboPiece,
+      fillsDeckRole: prev.fillsDeckRole || r.fillsDeckRole,
+      derived: prev.derived || r.derived,
+      unmetConditions: [...new Set([...(prev.unmetConditions ?? []), ...(r.unmetConditions ?? [])])],
+    });
+  }
+  return [...out.values()];
+}
+
 /** Cards the deck is not using, weakest first. Never more than `limit` rows -- the question is
- *  "which few go", and a 30-row list is the same as no list. */
+ *  "which few go", and a 30-row list is the same as no list.
+ *
+ *  A CARD THE ENGINE NEVER READ IS NOT A CANDIDATE. It is reported separately by `unjudged` below,
+ *  because the two sentences differ and only one of them is a reason to cut. */
 export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandidate[] {
-  const median = medianPartnerCount(cards);
+  const merged = mergeFaces(cards);
+  const median = medianPartnerCount(merged);
   const out: CutCandidate[] = [];
-  for (const c of cards) {
+  for (const c of merged) {
     if (c.isLand || c.isCommander || c.isComboPiece) continue;
     // A functional role protects the card outright -- see the header. This is the gate that keeps
     // Sol Ring off the list.
@@ -168,6 +215,9 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
     // Reading a deliberate silence as evidence of uselessness is the worst mistake this list can
     // make, because the silence is the engine's own.
     if (c.fillsDeckRole) continue;
+    // See `CutInput.derived`. Every other gate here refuses a card the engine UNDERSTANDS and has
+    // decided against naming; this one refuses a card it never opened.
+    if (!c.derived) continue;
     if (c.rating > CUT_RATING_MAX) continue;
     if (c.axisWeight >= CUT_AXIS_MAX) continue;
 
@@ -195,6 +245,36 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
   return out.slice(0, limit);
 }
 
+
+/** THE CARDS THAT WOULD HAVE BEEN CANDIDATES IF THE ENGINE HAD READ THEM — names only, in the
+ *  order the cut list would have ranked them.
+ *
+ *  It exists so the removal of those rows is VISIBLE rather than silent. A cut list that quietly
+ *  shrank from twelve rows to zero tells the reader nothing; one that says "twelve cards look
+ *  unconnected and are not judged, here they are" hands them the same twelve with the correct
+ *  sentence attached. Capped at the same `limit`, for the same reason.
+ *
+ *  ONLY THE CARDS THAT WOULD HAVE QUALIFIED, never every underived card: a Sol Ring the engine
+ *  cannot read is still protected by its role, and listing it here would re-introduce the defect
+ *  `fillsDeckRole` exists to prevent one column over.
+ *
+ *  MERGED LIKE `cutCandidates`, for the same reason -- a reader cuts a CARD, and a two-faced card
+ *  rates two rows (Task 7, faces-as-nodes). Review fix, 2026-08-27: this ran over the raw face rows
+ *  and printed BOTH of an unread two-faced card's names, which is also why `CutList.tsx`'s "N of
+ *  the M unread cards" line could read "2 of the 1 unread" -- `coverage` counts SLOTS (one) and this
+ *  counted face rows (two). `mergeFaces`'s `derived: prev.derived || r.derived` looked like it could
+ *  launder a half-read card into "read" here, but it cannot: `derived` is set from
+ *  `derivedByName.get(physical)` in analyze.ts, IDENTICAL on both of a card's face rows, so the OR
+ *  is a no-op -- both sides already agree. */
+export function unjudgedCandidates(cards: readonly CutInput[], limit = 12): string[] {
+  const merged = mergeFaces(cards);
+  const out = merged.filter(
+    (c) => !c.derived && !c.isLand && !c.isCommander && !c.isComboPiece
+      && c.roles.length === 0 && !c.fillsDeckRole,
+  );
+  out.sort((a, b) => b.manaValue - a.manaValue || a.name.localeCompare(b.name));
+  return out.slice(0, limit).map((c) => c.name);
+}
 
 /** ONE ROW OF TRIM MODE. Same weakness clauses the cut list prints, plus what argues the card
  *  STAYS — so the reader is handed a trade rather than a verdict. */
@@ -245,19 +325,31 @@ export function trimOrder(
     if (!slack) continue;
     for (const leaf of p.leaves) surplusByLeaf.set(leaf, { name: p.name, count: slack.count, target: slack.target });
   }
-  const median = medianPartnerCount(cards);
+  // A two-faced card is one seat at the table, same as in `cutCandidates` -- see `mergeFaces`.
+  const merged = mergeFaces(cards);
+  const median = medianPartnerCount(merged);
   const rows: TrimRow[] = [];
-  for (const c of cards) {
+  for (const c of merged) {
     if (c.isLand || c.isCommander) continue;
     const reasons: string[] = [];
     const protections: string[] = [];
 
     const wellConnected = median !== null && c.partnerCount > 0 && c.partnerCount >= median;
-    reasons.push(connectionReason(c.partnerCount, median));
-    if (c.axisWeight < CUT_AXIS_MAX) {
-      reasons.push(c.axisWeight === 0 ? "no edge on your main theme" : "its edges point away from your main theme");
+    // AN UNREAD CARD IS RANKED, NOT REFUSED, AND THE DIFFERENCE FROM `cutCandidates` IS THE
+    // QUESTION. The passive list asks "is anything doing nothing" and must not answer with a card
+    // it never opened; trim asks "I must cut five" and always owes an Nth row. So the card stays in
+    // the order and its clauses tell the truth: the zero connections are the corpus's silence, and
+    // that is an argument for caution, hence a PROTECTION rather than a weakness.
+    if (!c.derived) {
+      reasons.push("the engine has not read this card, so its connections are unknown");
+      protections.push("not read yet — nothing here has judged it");
     } else {
-      protections.push("its best edge is on your main theme");
+      reasons.push(connectionReason(c.partnerCount, median));
+      if (c.axisWeight < CUT_AXIS_MAX) {
+        reasons.push(c.axisWeight === 0 ? "no edge on your main theme" : "its edges point away from your main theme");
+      } else {
+        protections.push("its best edge is on your main theme");
+      }
     }
     if (c.rating > CUT_RATING_MAX) protections.push(`rates ${c.rating.toFixed(1)} of 5 in this deck`);
 

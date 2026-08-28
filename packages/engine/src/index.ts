@@ -1,5 +1,5 @@
 export const ENGINE_VERSION = "0.0.0";
-export type { Card } from "./card.js";
+export type { Card, CardFace } from "./card.js";
 export type { Tag } from "./tags.js";
 export { extractTags, tagFamily, describeTag } from "./tags.js";
 export { synergyScore, dedupeReasonsByText, type Reason, type SynergyResult } from "./synergy.js";

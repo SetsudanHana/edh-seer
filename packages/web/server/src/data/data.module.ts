@@ -8,10 +8,15 @@ import type { WireGraph } from "../analyze/analyze.types.js";
 
 export const STORE = "MONGO_STORE";
 
-/** The projection keys every node by card NAME (`ProjectedNode.id`), the same key the report's
- *  `rolesByName` arrives under -- so joining roles no longer needs the oracleId indirection the
- *  old `card:<uuid>`-keyed graph required. `docs` still earns its keep for two facts the
- *  projection doesn't carry: `typeLine` (for the lands room) and the art crop.
+/** The projection keys a node by the card NAME it belongs to -- `ProjectedNode.id` for a front face
+ *  or a single-faced card, `face:<n>:<name>` for a BACK face, whose physical name is carried
+ *  separately as `cardName` (Task 7, faces-as-nodes). So the roles join is on `cardName ?? id`, and
+ *  `rolesByName` has to arrive keyed on the PHYSICAL card to match -- see `analyze.service.ts`,
+ *  which is where that key is built. Stale note corrected 2026-08-27: this said node ids ARE card
+ *  names and that `rolesByName` already arrives under the same key, and both halves went false with
+ *  faces-as-nodes -- it is the sentence that made the join below look safe while every multi-face
+ *  card's roles were being dropped. `docs` still earns its keep for two facts the projection
+ *  doesn't carry: `typeLine` (for the lands room) and the art crop.
  *
  *  `normalize` is injected rather than imported so this stays a plain, deterministic function of
  *  its arguments, testable without touching `@mtg/data` -- it does `console.warn` on an unjoined
@@ -25,8 +30,9 @@ export function attachRolesAndArt(
   docs: Array<{
     _id: string; name: string; typeLine?: string; artCrop?: string;
     imageUris?: { art_crop?: string };
-    /** Per-face art, which is where a transform or modal_dfc card's images actually live. */
-    faces?: Array<{ artCrop?: string }>;
+    /** Per-face art, which is where a transform or modal_dfc card's images actually live -- and the
+     *  rest of each face, so the panel can show the side the board is not drawing. */
+    faces?: Array<{ name?: string; typeLine?: string; manaCost?: string; oracleText?: string; artCrop?: string }>;
   }>,
   rolesByName: Map<string, string[]>,
   normalize: (name: string) => string,
@@ -51,14 +57,33 @@ export function attachRolesAndArt(
   }
 
   const nodes = graph.nodes.map((n) => {
-    const key = normalize(n.id);
+    // A FACE IS A NODE (Task 5). A BACK face's id carries the `face:<n>:` prefix so it never
+    // collides with the physical card's node, which means it also never matches a doc by NAME --
+    // `cardName` is the fallback for that case (it's set on the FRONT face too, but there it equals
+    // `n.id` already, so the fallback is a no-op rather than a special case). A token has no
+    // `cardName`, so it keeps its own id: `n.id`, never `n.label` -- a token's label is its bare
+    // name ("Treasure") with the `token:` prefix stripped, and keying on it would rejoin a token to
+    // a same-named real card's doc, the exact collision `TOKEN_ID_PREFIX` exists to prevent (see the
+    // artCrop comment below).
+    const key = normalize(n.cardName ?? n.id);
     const doc = docByName.get(key);
+    // THE DOCUMENT IS THE PHYSICAL CARD; THE PICTURE, TYPE LINE AND TEXT ARE THE FACE'S. Without
+    // this a back-face node draws with the front face's art and the flip is invisible -- two circles
+    // for one card that look like duplicates. Undefined on every node that is not a face.
+    const face = n.face !== undefined ? doc?.faces?.[n.face] : undefined;
     // Lands is a TYPE room, not a role room: a card is in it because it IS a land. The engine's
     // role field deliberately excludes basics (build.ts's !isBasicLand guard) because it answers
     // "does this pull double duty?", where "Island fills the lands role" is noise -- and that same
     // field drives doubleDutyRating's 1.15x synergy multiplier, so it must not be widened there.
     // The board asks a different question, and answers it here, where the full doc is in hand.
-    const isLand = (doc?.typeLine ?? "").toLowerCase().includes("land");
+    //
+    // THE FACE'S OWN TYPE LINE, NOT THE CARD'S. `doc` is the PHYSICAL card, so its line reads
+    // "Instant // Land" for BOTH faces of a modal DFC -- which filed the Instant face in the lands
+    // room while the node rendered its type line as "Instant", one node contradicting itself.
+    // Review fix, 2026-08-27: `face` is already resolved three lines up for exactly this reason.
+    // The card-level line stays the fallback for a node with no face row (a token, a single-faced
+    // card, or a stale doc carrying no `faces`).
+    const isLand = (face?.typeLine ?? n.typeLine ?? doc?.typeLine ?? "").toLowerCase().includes("land");
     const base = rolesByNormalizedName.get(key);
     const roles = isLand && !(base ?? []).includes("lands") ? [...(base ?? []), "lands"] : base;
     // A GENUINELY TWO-FACED CARD HAS NO CARD-LEVEL ART. Scryfall puts `image_uris` on each FACE for
@@ -73,17 +98,51 @@ export function attachRolesAndArt(
     // prevent. A token with no row in the map keeps the blank dashed disc, which is honest.
     const artCrop = n.isToken
       ? tokenArtById.get(n.id)
-      : doc?.artCrop ?? doc?.imageUris?.art_crop ?? doc?.faces?.find((f) => f.artCrop)?.artCrop;
+      // The face's own picture wins first. Falls back to the card level, then the front-face
+      // finder below, for a face whose doc row has no `faces` entry (a stale or unrefreshed doc) --
+      // a fallback beats a blank disc.
+      : face?.artCrop ?? doc?.artCrop ?? doc?.imageUris?.art_crop ?? doc?.faces?.find((f) => f.artCrop)?.artCrop;
     return {
       id: n.id,
       label: n.label,
       // A token node joins no card doc by design (its id is `token:<name>`, and there is no corpus
       // row for a token) -- so it carries no roles. Its ART comes from `tokenArtById` above.
       ...(n.isToken ? { isToken: true as const } : {}),
+      // FACE AND CARDNAME RIDE THE WIRE TOO (Task 8): the board rims the two faces of one card as a
+      // pair and the inspector opens on the face that was clicked, both of which need these on the
+      // client, not just here where the doc join uses them.
+      ...(n.face !== undefined ? { face: n.face } : {}),
+      ...(n.cardName !== undefined ? { cardName: n.cardName } : {}),
       copies: n.copies,
       types: n.types,
       subtypes: n.subtypes,
       supertypes: n.supertypes,
+      // THE PRINTED TYPE LINE, AND THE FIFTH FIELD THIS JOIN HAS BEEN CAUGHT DROPPING -- after
+      // `producedMana`, `allParts`, `gameChanger` and `faces`. This function rebuilds every wire
+      // node from an EXPLICIT field list, so a field added to `ProjectedNode` reaches the client
+      // only if it is named here; the projection set it, every unit test passed on a fixture that
+      // carried it, and a live run read `typeLine: undefined` on 103 of 103 nodes.
+      // ADD A FIELD HERE WHEN YOU ADD ONE TO `ProjectedNode`.
+      //
+      // The projection's copy wins and the doc is the fallback: a TOKEN node joins no doc at all
+      // (see the roles comment above), so reading `doc` alone would leave every token without one.
+      ...(face?.typeLine ?? n.typeLine ?? doc?.typeLine
+        ? { typeLine: face?.typeLine ?? n.typeLine ?? doc?.typeLine } : {}),
+      ...(face?.oracleText ?? n.oracleText ? { oracleText: face?.oracleText ?? n.oracleText } : {}),
+      // EVERY FACE, so the panel can show the back. Taken from the DOC rather than the projection:
+      // faces are printing data the matcher has no use for, and threading them through
+      // `ProjectedNode` would put them in the CLI's graph export too. Only when there is more than
+      // one -- a single-face card has nothing to flip to, and an array of one is a control that
+      // does nothing.
+      ...((doc?.faces?.length ?? 0) > 1
+        ? { faces: doc!.faces!.map((f) => ({
+            name: f.name ?? "",
+            ...(f.typeLine ? { typeLine: f.typeLine } : {}),
+            ...(f.manaCost ? { manaCost: f.manaCost } : {}),
+            ...(f.oracleText ? { oracleText: f.oracleText } : {}),
+            ...(f.artCrop ? { artCrop: f.artCrop } : {}),
+          })) }
+        : {}),
       colors: n.colors,
       cmc: n.cmc,
       ...(roles && roles.length > 0 ? { roles } : {}),
@@ -205,15 +264,25 @@ export function attachRolesAndArt(
             // carries the true per-name count (computed upstream, before dedup); it's used here to
             // re-expand the array projectDeckGraph counts from, not forwarded into
             // attachRolesAndArt, which no longer needs it.
+            // AFTER the copy-expansion, BEFORE the tokens: `faceDeckCards` reads `dc.card.name` to
+            // decide whether a card has more than one printed face, and a split entry's `card.name`
+            // becomes the FACE's name ("Fell Mire"), which is not a key in `copiesByName` -- doing
+            // this before the expansion would silently zero out every multi-face card's copy count.
+            // A single-face card and a token pass through unchanged (`faceDeckCards`'s own contract).
             const projectionDeck = deckCards.flatMap((dc) =>
               Array(copiesByName.get(dc.card.name) ?? 1).fill(dc),
-            );
+            ).flatMap((dc) => matcher.faceDeckCards(dc as never));
             // The SAME node list the edges above were formed over -- `projectDeckGraph` builds its
             // nodes off this array and counts a reason naming anything else as `offDeckReasons`, so
             // without the tokens here every token edge would be silently dropped from the view.
             // One copy each: a token is not a card slot. A token whose name collides with a real
             // card in the deck stays its OWN node -- `projectDeckGraph` keys on `nodeId`, not on the
             // name, because 92 of the corpus's 661 token names are also a real card.
+            //
+            // `collectTokenNodes` reads the UNSPLIT `deckCards`, not `projectionDeck`: it works off
+            // card-level `allParts`, `faceDeckCards` is a no-op on a token, and feeding it the
+            // post-split array would buy nothing while inviting a future reader to think token
+            // collection needs face-awareness.
             const tokenNodes = matcher.collectTokenNodes(deckCards as never, tokenTags).nodes;
             projectionDeck.push(...tokenNodes);
             // TOKEN ART, joined on the token's ORACLE id -- `tags.oracleId` on a token node IS the

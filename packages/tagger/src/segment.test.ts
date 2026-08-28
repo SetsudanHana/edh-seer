@@ -527,3 +527,26 @@ test("a token named only inside the granted ability does not select the grant", 
   expect(kaito.some((c) => c.kind === "granted")).toBe(true);
   expect(grantedToOwnToken(kaito).size).toBe(0);
 });
+
+/** WHICH FACE A CLAUSE IS PRINTED ON. The loop has always tracked this in order to classify each
+ *  clause against its OWN face's type line, and then dropped it -- so downstream a back-face ability
+ *  and a front-face one were indistinguishable and both matched the card's UNION of types.
+ *
+ *  Owner, 2026-08-27: "we should split the edges between front and back of a card ... they produce
+ *  separate events". Measured over the derived corpus: 113 of 2,767 cards are multi-face, carrying
+ *  224 clauses and 171 derived abilities on a face after the first. */
+test("a clause records which face prints it, and only when there is more than one", () => {
+  const dfc = segment(
+    "Malakir Rebirth deals no damage.\n//\nMalakir Mire enters tapped.\n{T}: Add {B}.",
+    [],
+    "Instant // Land",
+  );
+  // The front face carries no marker: absent means "the only face", which is every ordinary card.
+  expect(dfc[0].face).toBeUndefined();
+  expect(dfc[1].face).toBe(1);
+  expect(dfc[2].face).toBe(1);
+
+  // A single-face card is untouched, so nothing about the common case changes.
+  const plain = segment("Draw a card.\nGain 2 life.", [], "Sorcery");
+  expect(plain.every((c) => c.face === undefined)).toBe(true);
+});

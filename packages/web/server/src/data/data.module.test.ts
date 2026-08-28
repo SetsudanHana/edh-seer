@@ -1,5 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
-import type { ProjectedGraph } from "@mtg/matcher";
+import type { DeckCard, ProjectedGraph } from "@mtg/matcher";
+import { faceDeckCards, projectDeckGraph } from "@mtg/matcher";
 import { attachRolesAndArt } from "./data.module.js";
 
 afterEach(() => {
@@ -241,4 +242,157 @@ test("identical reason sentences are collapsed on the wire, however many effect 
     "A triggers on entry; B supplies it",
     "B fills the graveyard, enabling A's recursion",
   ]);
+});
+
+/** THE JOIN DROPS ANY FIELD IT DOES NOT NAME, and has now done so five times (`producedMana`,
+ *  `allParts`, `gameChanger`, `faces`, and this one). Every unit test passed on fixtures carrying
+ *  `typeLine` while a live run read it as undefined on 103 of 103 nodes, because the projection's
+ *  field never survived this rebuild. */
+test("the printed type line survives the wire join", () => {
+  const graph = {
+    nodes: [
+      { id: "Megatron", label: "Megatron", copies: 1, types: ["artifact", "creature"],
+        subtypes: ["robot", "vehicle"], supertypes: ["legendary"],
+        typeLine: "Legendary Artifact Creature — Robot // Legendary Artifact Creature — Robot Vehicle",
+        colors: ["B"], cmc: 6 },
+      // A token joins no doc, so the projection's copy is the only source it can have.
+      { id: "token:Treasure", label: "Treasure", isToken: true as const, copies: 1,
+        types: ["artifact"], subtypes: ["treasure"], supertypes: [],
+        typeLine: "Token Artifact — Treasure", colors: [], cmc: 0 },
+    ],
+    edges: [], undirectedReasons: 0, offDeckReasons: 0,
+  };
+  const out = attachRolesAndArt(graph as never, [], new Map(), (n: string) => n.toLowerCase());
+  expect(out.nodes[0].typeLine).toBe(graph.nodes[0].typeLine);
+  expect(out.nodes[1].typeLine).toBe("Token Artifact — Treasure");
+});
+
+/** AND THE FACES, for the same reason and through the same join that has now eaten seven fields.
+ *  A double-faced card's panel drew only its front; the corpus carries every face's name, type
+ *  line, cost, text and art, and none of it reached the client until it was named here. */
+test("every printed face survives the wire join, and only when there is more than one", () => {
+  const graph = {
+    nodes: [
+      { id: "Megatron", label: "Megatron", copies: 1, types: ["artifact", "creature"],
+        subtypes: ["robot", "vehicle"], supertypes: ["legendary"], colors: ["B"], cmc: 6 },
+      { id: "Sol Ring", label: "Sol Ring", copies: 1, types: ["artifact"],
+        subtypes: [], supertypes: [], colors: [], cmc: 1 },
+    ],
+    edges: [], undirectedReasons: 0, offDeckReasons: 0,
+  };
+  const docs = [
+    { _id: "m", name: "Megatron", faces: [
+      { name: "Megatron, Tyrant", typeLine: "Legendary Artifact Creature — Robot", artCrop: "http://a" },
+      { name: "Megatron, Destructive Force", typeLine: "Legendary Artifact — Vehicle", artCrop: "http://b" },
+    ] },
+    { _id: "s", name: "Sol Ring" },
+  ];
+  const out = attachRolesAndArt(graph as never, docs as never, new Map(), (n: string) => n.toLowerCase());
+  const meg = out.nodes.find((n) => n.id === "Megatron");
+  expect(meg?.faces).toHaveLength(2);
+  expect(meg?.faces?.[1].name).toBe("Megatron, Destructive Force");
+  // A single-face card carries none: an array of one is a flip control that does nothing.
+  expect(out.nodes.find((n) => n.id === "Sol Ring")?.faces).toBeUndefined();
+});
+
+// A FACE NODE MUST NOT WEAR THE FRONT FACE'S PICTURE. Task 5 gives a back face its own node, id
+// `face:<n>:<name>`, `cardName` set to the physical card. The board draws two circles for one card;
+// if both take the card-level (front) art the flip is invisible and the two read as duplicates.
+test("a back-face node takes its own face's art, type line and oracle text", () => {
+  const graph = emptyGraph([
+    node({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" }),
+  ]);
+  const docs = [{
+    _id: "1", name: "A // B", typeLine: "Artifact // Land", artCrop: "front.jpg",
+    faces: [
+      { name: "A", typeLine: "Artifact", oracleText: "front text", artCrop: "front.jpg" },
+      { name: "B", typeLine: "Land", oracleText: "back text", artCrop: "back.jpg" },
+    ],
+  }];
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize);
+
+  expect(out.nodes[0]?.artCrop).toBe("back.jpg");
+  expect(out.nodes[0]?.typeLine).toBe("Land");
+  expect(out.nodes[0]?.oracleText).toBe("back text");
+});
+
+// THE LANDS ROOM READS THE FACE, NOT THE CARD. Review fix, 2026-08-27: this asked the PHYSICAL
+// doc's type line, which is "Instant // Land" for BOTH faces of a modal DFC -- so the Instant face
+// rendered its own type line as "Instant" and simultaneously carried the `lands` role, one node
+// contradicting itself. A face's roles must describe the face the board is drawing.
+test("only the land face of a modal DFC is filed in the lands room", () => {
+  const graph = emptyGraph([
+    node({ id: "A // B", label: "A", cardName: "A // B", typeLine: "Instant" }),
+    node({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B", typeLine: "Land" }),
+  ]);
+  const docs = [{
+    _id: "1", name: "A // B", typeLine: "Instant // Land",
+    faces: [{ name: "A", typeLine: "Instant" }, { name: "B", typeLine: "Land" }],
+  }];
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize);
+
+  expect(out.nodes.find((n) => n.id === "A // B")?.roles).toBeUndefined();
+  expect(out.nodes.find((n) => n.id === "face:1:A // B")?.roles).toEqual(["lands"]);
+});
+
+// A face with no `faces` entry on the doc (a stale, unrefreshed row) falls back to the card level
+// rather than rendering nothing -- a fallback beats a blank disc.
+test("a face index with no matching doc.faces entry falls back to the card-level art and type line", () => {
+  const graph = emptyGraph([
+    node({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" }),
+  ]);
+  const docs = [{ _id: "1", name: "A // B", typeLine: "Artifact // Land", artCrop: "card.jpg" }];
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize);
+
+  expect(out.nodes[0]?.artCrop).toBe("card.jpg");
+  expect(out.nodes[0]?.typeLine).toBe("Artifact // Land");
+});
+
+// THE `graph` DEP CANNOT BE UNIT-TESTED DIRECTLY: it is a closure inside a NestJS provider factory
+// in this same file, reachable only through a live Mongo connection. This pins the composition it
+// depends on at the closest seam that needs no database -- the exact expression the dep now runs,
+// `deckCards.flatMap(copy-expand).flatMap(faceDeckCards)` -- through the same `projectDeckGraph` the
+// dep feeds it to.
+test("copy-expanding before splitting into faces keeps the copy count; splitting first would silently drop it", () => {
+  const twoFace: DeckCard = {
+    card: {
+      name: "A // B", typeLine: "Artifact // Land", oracleText: "front\nback",
+      keywords: [], colors: [], manaValue: 2, layout: "modal_dfc",
+      faces: [
+        { name: "A", typeLine: "Artifact", oracleText: "front", colors: [] },
+        { name: "B", typeLine: "Land", oracleText: "back", colors: [] },
+      ],
+    } as DeckCard["card"],
+    tags: null,
+  };
+  const lotusCobra: DeckCard = {
+    card: {
+      name: "Lotus Cobra", typeLine: "Creature — Snake", oracleText: "",
+      keywords: [], colors: ["G"], manaValue: 2,
+    } as DeckCard["card"],
+    tags: null,
+  };
+  const copiesByName = new Map([["A // B", 2], ["Lotus Cobra", 1]]);
+
+  // THE EXACT COMPOSITION `data.module.ts`'s `graph` dep now runs.
+  const projectionDeck = [twoFace, lotusCobra].flatMap((dc) =>
+    Array(copiesByName.get(dc.card.name) ?? 1).fill(dc),
+  ).flatMap((dc) => faceDeckCards(dc));
+
+  const g = projectDeckGraph(projectionDeck, [
+    // A face-stamped reason: if the LAND face's node never joined `seen` under its face id, this
+    // would land in `offDeckReasons` instead of forming an edge -- exactly what swallowed every
+    // face-stamped reason before the split was wired in.
+    { tag: "landfall", text: "B feeds Lotus Cobra", producer: "A // B", consumer: "Lotus Cobra", producerFace: 1 },
+  ], { kinds: {}, repeatability: {}, scaling: {}, damping: 1 });
+
+  expect(g.nodes.map((n) => n.id).sort()).toEqual(["A // B", "Lotus Cobra", "face:1:A // B"]);
+  // The wrong order (split, then copy-expand-by-name) would look `copiesByName` up by the FACE
+  // name ("A" / "B"), miss, and fall back to 1 -- both faces reading 2 is what proves the order.
+  expect(g.nodes.find((n) => n.id === "A // B")?.copies).toBe(2);
+  expect(g.nodes.find((n) => n.id === "face:1:A // B")?.copies).toBe(2);
+  expect(g.offDeckReasons).toBe(0);
 });

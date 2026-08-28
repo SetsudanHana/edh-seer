@@ -65,8 +65,21 @@ async function main(): Promise<void> {
     // Edges/reasons are WEIGHT-INDEPENDENT — form them once here, not on every optimizer eval.
     // (Re-running analyzeDeckStructured per candidate weight re-does O(n²) edge formation
     //  ~1.7M times over a full LOO fit; precomputing collapses that to one analysis per deck.)
-    const edges = analyzeDeckStructured(inputs).edges;
+    const analysis = analyzeDeckStructured(inputs);
+    const edges = analysis.edges;
     const allNames = inputs.map((i) => i.card.name);
+    // AN EDGE ENDPOINT IS A FACE NAME; EVERY OTHER NAME HERE IS THE PHYSICAL CARD. Task 7
+    // (faces-as-nodes) gave each printed face its own node, so `e.a`/`e.b` name a FACE while
+    // `allNames`, `names` and CommanderSalt's `commanders` all name the card. Unfolded, every
+    // multi-face card's weight accumulated under a key `names` never asks for and the card scored
+    // ZERO in the fit — the same defect the 08-27 review found in `isolated-cards.ts` and
+    // `graph-modularity.ts`, in a third instrument. Review fix, 2026-08-28. `report.cards` is the
+    // cheapest place to read the mapping: it carries `cardName` on both faces of a multi-face card
+    // and omits it entirely on a single-faced one, so this Map is empty for most decks.
+    const physicalOf = new Map(
+      analysis.cards.filter((c) => c.cardName !== undefined).map((c) => [c.name, c.cardName!] as const),
+    );
+    const phys = (name: string): string => physicalOf.get(name) ?? name;
     // Cheap re-scorer over the fixed edges: mirrors analyzeDeckStructured's aggregation, including
     // COMMANDER_BOOST (a card's edge to the commander is boosted — CS ranks the commander high).
     scoreDecks.push((w: ImpactWeights) => {
@@ -74,12 +87,18 @@ async function main(): Promise<void> {
       const partners = new Map<string, number>(allNames.map((n) => [n, 0]));
       for (const e of edges) {
         const ew = impactEdgeWeight(e.reasons, w);
-        const boostA = commanderSet.has(e.b) ? COMMANDER_BOOST : 1;
-        const boostB = commanderSet.has(e.a) ? COMMANDER_BOOST : 1;
-        weighted.set(e.a, (weighted.get(e.a) ?? 0) + ew * boostA);
-        weighted.set(e.b, (weighted.get(e.b) ?? 0) + ew * boostB);
-        partners.set(e.a, (partners.get(e.a) ?? 0) + 1);
-        partners.set(e.b, (partners.get(e.b) ?? 0) + 1);
+        // Both endpoints folded to the physical card, so a two-faced card's two nodes accumulate
+        // onto the one name the fit scores -- and so the commander test sees a commander whichever
+        // face the edge landed on (a card is the commander regardless of which side is up, the
+        // ruling `isCommanderNode` already ships).
+        const a = phys(e.a);
+        const b = phys(e.b);
+        const boostA = commanderSet.has(b) ? COMMANDER_BOOST : 1;
+        const boostB = commanderSet.has(a) ? COMMANDER_BOOST : 1;
+        weighted.set(a, (weighted.get(a) ?? 0) + ew * boostA);
+        weighted.set(b, (weighted.get(b) ?? 0) + ew * boostB);
+        partners.set(a, (partners.get(a) ?? 0) + 1);
+        partners.set(b, (partners.get(b) ?? 0) + 1);
       }
       return names.map((n) => dampByAlpha(weighted.get(n) ?? 0, partners.get(n) ?? 0, w.damping));
     });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { CardInspector } from "./CardInspector.js";
 
 const node = {
@@ -117,5 +118,175 @@ describe("CardInspector", () => {
     const fedBySection = screen.getByText(/^Fed by$/).closest("div");
     expect(feedsSection?.textContent).toMatch(/strongest 6.*all 10 are listed/i);
     expect(fedBySection?.textContent).toMatch(/strongest 6.*all 8 are listed/i);
+  });
+});
+
+/** THE PRINTED TYPE LINE, NOT ONE RECOMPOSED FROM THE UNION OVER FACES.
+ *
+ *  A node's `types`/`subtypes` are the union across every face -- right for the paint legend, where
+ *  a node shows a hue per type it can be. Joining them back into a type line names an object no
+ *  face is: a skeptic review, 2026-08-27, read "legendary artifact creature — robot vehicle" under
+ *  a card image printing "Legendary Artifact Creature — Robot" and said "merging them describes an
+ *  object that neither face is". */
+describe("CardInspector type line", () => {
+  const twoFaced = {
+    id: "Megatron, Tyrant // Megatron, Destructive Force",
+    label: "Megatron, Tyrant // Megatron, Destructive Force",
+    copies: 1,
+    types: ["artifact", "creature"],
+    // One subtype from EACH face -- no single face is a Robot AND a Vehicle.
+    subtypes: ["robot", "vehicle"],
+    supertypes: ["legendary"],
+    typeLine: "Legendary Artifact Creature — Robot // Legendary Artifact Creature — Robot Vehicle",
+    colors: ["B"], cmc: 6,
+  };
+
+  it("shows what the card prints, not the union over its faces", () => {
+    render(<CardInspector node={twoFaced as never} edges={[]} onClose={() => {}} />);
+    expect(screen.getByText(twoFaced.typeLine)).toBeInTheDocument();
+    // The union recomposed -- "legendary artifact creature — robot vehicle" -- must NOT appear.
+    // Asserted against that exact string and not against /robot vehicle/, because the BACK face
+    // really is a Robot Vehicle and the printed line rightly says so; what was wrong was flattening
+    // both faces into ONE line that no face prints.
+    expect(screen.queryByText("legendary artifact creature — robot vehicle")).toBeNull();
+  });
+
+  it("falls back to the union when a graph predates the field", () => {
+    const { typeLine: _dropped, ...older } = twoFaced;
+    render(<CardInspector node={older as never} edges={[]} onClose={() => {}} />);
+    // Worse, and better than nothing -- an older cached graph must still render.
+    expect(screen.getByText("legendary artifact creature — robot vehicle")).toBeInTheDocument();
+  });
+});
+
+/** AND THE PANEL MUST ACTUALLY USE IT. `demand-sentence.test.ts` pins `tagLabel` itself, and
+ *  mutating the inspector back to `{t}` left that test green -- the recorded trap in this repo:
+ *  a probe that calls the inner function does not test the gate that selects it. This asserts the
+ *  rendered CHIP, so the raw key cannot come back through the call site. */
+describe("CardInspector tag chips", () => {
+  const node = {
+    id: "Grim Haruspex", label: "Grim Haruspex", copies: 1,
+    types: ["creature"], subtypes: ["human"], supertypes: [],
+    typeLine: "Creature — Human Wizard", colors: ["B"], cmc: 3,
+  };
+  const edges = [{
+    from: "Grim Haruspex", to: "Samwise Gamgee", weight: 1.6,
+    tags: ["enters:creature"],
+    reasonTexts: ["When Grim Haruspex enters, Samwise Gamgee makes a token"],
+  }];
+
+  it("labels a relationship's tags instead of printing the raw key", () => {
+    render(<CardInspector node={node as never} edges={edges as never} onClose={() => {}} />);
+    expect(screen.getByText("Entering the battlefield · creature")).toBeInTheDocument();
+    expect(screen.queryByText("enters:creature")).toBeNull();
+  });
+});
+
+/** THE IMAGE IS CAPPED SO THE RELATIONSHIPS CLEAR THE FOLD.
+ *
+ *  jsdom has no layout, so the real check is a MEASUREMENT and not this test: on the review deck
+ *  the panel is 500px tall with 1,415px of content, and FEEDS began 49px BELOW its own bottom edge
+ *  -- two thirds of the panel reachable only by scrolling a box with no affordance. Three persona
+ *  reads across two rounds reported the panel tells them nothing. After the cap, measured live:
+ *  content 1,259px, and both FEEDS and the first relationship row sit above the fold.
+ *
+ *  What this test can pin is that the constraint EXISTS and that the aspect ratio is preserved --
+ *  an uncapped `w-full` image is what ate the panel, and a capped one without `object-contain`
+ *  would stretch a portrait card, which is worse than a small one. */
+describe("CardInspector card image", () => {
+  it("caps the card image and keeps its aspect ratio", () => {
+    const node = {
+      id: "Grim Haruspex", label: "Grim Haruspex", copies: 1,
+      types: ["creature"], subtypes: ["human"], supertypes: [],
+      typeLine: "Creature — Human Wizard", colors: ["B"], cmc: 3,
+      artCrop: "https://example.com/a.jpg",
+    };
+    render(<CardInspector node={node as never} edges={[]} onClose={() => {}} />);
+    const img = screen.getByAltText("Grim Haruspex");
+    expect(img.className).toMatch(/max-h-/);
+    expect(img.className).toContain("object-contain");
+  });
+});
+
+/** THE EVIDENCE FOR A CLAIM, BESIDE THE CLAIM. Every sentence in this panel is about a card whose
+ *  text the panel did not show. A skeptic review could audit only the two pairs it believed it knew
+ *  and misremembered BOTH -- calling the engine wrong where oracle text says it is right -- and
+ *  concluded "a right answer and a wrong answer are the same pixels". */
+describe("CardInspector partner text", () => {
+  const node = {
+    id: "Megatron", label: "Megatron", copies: 1,
+    types: ["creature"], subtypes: [], supertypes: ["legendary"],
+    typeLine: "Legendary Artifact Creature — Robot", colors: ["B"], cmc: 6,
+  };
+  const edges = [{
+    from: "Megatron", to: "Samwise Gamgee", weight: 1.6,
+    tags: ["enters:creature"],
+    reasonTexts: ["When Megatron enters, Samwise Gamgee makes a token"],
+  }];
+  const text = (id: string) =>
+    id === "Samwise Gamgee"
+      ? "Whenever another nontoken creature you control enters, create a Food token."
+      : undefined;
+
+  it("offers the PARTNER's printed text, not the selected card's", async () => {
+    render(<CardInspector node={node as never} edges={edges as never} textOf={text} onClose={() => {}} />);
+    // Collapsed by default: sixty-two rows of oracle text would bury the relationships.
+    const d = screen.getByText("Samwise Gamgee's text");
+    await userEvent.click(d);
+    expect(screen.getByText(/Whenever another nontoken creature you control enters/)).toBeInTheDocument();
+  });
+
+  it("shows no disclosure when the partner's text is unknown", () => {
+    render(<CardInspector node={node as never} edges={edges as never} onClose={() => {}} />);
+    expect(screen.queryByText(/'s text$/)).toBeNull();
+  });
+});
+
+/** A DOUBLE-FACED CARD DREW ONLY ITS FRONT. Owner, 2026-08-27: "for double faced cards we need a
+ *  way to present them, cause right now you see only front". The corpus carries every face's name,
+ *  type line, cost, text and art; none of it reached the panel. */
+describe("CardInspector faces", () => {
+  const twoFaced = {
+    id: "Megatron", label: "Megatron, Tyrant // Megatron, Destructive Force", copies: 1,
+    types: ["artifact", "creature"], subtypes: ["robot", "vehicle"], supertypes: ["legendary"],
+    typeLine: "Legendary Artifact Creature — Robot // Legendary Artifact — Vehicle",
+    colors: ["B"], cmc: 6,
+    faces: [
+      { name: "Megatron, Tyrant", typeLine: "Legendary Artifact Creature — Robot",
+        manaCost: "{3}{R}{W}{B}", oracleText: "Your opponents can't cast spells during combat." },
+      { name: "Megatron, Destructive Force", typeLine: "Legendary Artifact — Vehicle",
+        oracleText: "Living metal (During your turn, this Vehicle is also a creature.)" },
+    ],
+  };
+
+  it("opens on the front face and can flip to the back", async () => {
+    render(<CardInspector node={twoFaced as never} edges={[]} onClose={() => {}} />);
+    // The front is the default: it is the side the card is played from and the side the board draws.
+    expect(screen.getByText("Legendary Artifact Creature — Robot")).toBeInTheDocument();
+    expect(screen.getByText(/Your opponents can't cast spells during combat/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Megatron, Destructive Force" }));
+    // The BACK's own type line, not the joined one -- once the panel describes a face, the joined
+    // line names an object you are not looking at.
+    expect(screen.getByText("Legendary Artifact — Vehicle")).toBeInTheDocument();
+    expect(screen.getByText(/Living metal/)).toBeInTheDocument();
+  });
+
+  // Task 8: the board rims both faces of one card, and clicking the back-face circle passes the
+  // BACK face's own node -- carrying `face: 1`, its index into this same `faces` array (Task 8's
+  // server comment: both nodes join the same doc, so the index means the same thing on either).
+  // The click already told the panel which side was meant, so it must not reopen on the front.
+  it("opens on the back face when the clicked node is the back face's own node", () => {
+    render(<CardInspector node={{ ...twoFaced, face: 1 } as never} edges={[]} onClose={() => {}} />);
+    expect(screen.getByText("Legendary Artifact — Vehicle")).toBeInTheDocument();
+    expect(screen.getByText(/Living metal/)).toBeInTheDocument();
+    expect(screen.queryByText("Legendary Artifact Creature — Robot")).toBeNull();
+  });
+
+  it("shows no flip control on a single-face card", () => {
+    const { faces: _dropped, ...single } = twoFaced;
+    render(<CardInspector node={single as never} edges={[]} onClose={() => {}} />);
+    // A control that cannot change anything is worse than no control.
+    expect(screen.queryByTestId("face-flip")).toBeNull();
   });
 });

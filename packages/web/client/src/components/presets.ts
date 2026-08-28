@@ -78,6 +78,34 @@ export const ROLE_HUE: Record<string, string> = {
  *  flow). */
 export const FLOW_HUE = { up: ROLE_HUE.lands, down: ROLE_HUE.wincons } as const;
 
+/** HUE CARRIES THE MECHANISM INSIDE A FLOW, and direction moves to the dash.
+ *
+ *  Owner, 2026-08-27, looking at a selected token's flow: "cool that I can see all the events
+ *  flowing, but even as an experienced Magic player this tells me nothing, I cannot distinguish
+ *  them." Forty edges lit in TWO colours, and those two encoded only up/down — so every mechanism
+ *  in the flow looked alike and the board read as "everything connects to everything".
+ *
+ *  A CATEGORICAL PALETTE WORKS HERE AND DOES NOT WORK GLOBALLY, which is the measurement that
+ *  decides it. The corpus has ~20 event verbs and a categorical scale holds 6-8 before the colours
+ *  stop being tellable apart — so a deck-wide hue-per-event really would be a rainbow. But inside
+ *  ONE card's flow, measured over four decks: **p50 2-7 distinct events, p90 3-9, max 9.** The
+ *  typical flow needs two to seven hues, which is exactly what a validated palette can give.
+ *
+ *  THE SAME SEVEN, NOT A FRESH PICK. `ROLE_HUE` is the output of a farthest-point search over an
+ *  OKLCH grid scored by worst colour-vision-deficient deltaE, under a hard 3:1 contrast floor
+ *  against the surface — so these are already known to separate for a CVD viewer and to clear the
+ *  contrast floor as strokes. Choosing new hues would mean asserting both properties without
+ *  re-running that search. The first two are `FLOW_HUE`'s own pair, so the common two-event flow
+ *  looks like it always did.
+ *
+ *  BEYOND SEVEN IS NEUTRAL AND SAID SO. The p90 flow on the busiest deck carries nine, and a hue
+ *  nobody can name is worse than an admitted "everything else" — the legend labels the remainder
+ *  rather than minting two more colours the eye cannot separate. */
+export const FLOW_EVENT_HUES: readonly string[] = [
+  ROLE_HUE.lands, ROLE_HUE.wincons, ROLE_HUE.cardAdvantage, ROLE_HUE.interaction,
+  ROLE_HUE.boardWipes, ROLE_HUE.strategy, ROLE_HUE.ramp,
+];
+
 /** The crawling dash on a flow edge: `on`/`off` in SCREEN pixels, `speed` in screen pixels per
  *  second. Direction is carried by the motion, so these three numbers are the whole encoding --
  *  they live here, beside the hues, so tuning never touches the paint loop. Starting values were

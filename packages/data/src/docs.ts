@@ -129,5 +129,8 @@ export function docToCard(d: CardDoc): Card {
     // there as "stored, unused", and unused because it never reached `Card`. The bracket rule is
     // its first consumer.
     ...(d.gameChanger !== undefined ? { gameChanger: d.gameChanger } : {}),
+    // FOURTH field found on `CardDoc` and dropped here, after `producedMana`, `allParts` and
+    // `gameChanger`. A FACE IS A NODE (2026-08-27) and the graph cannot count faces without it.
+    ...(d.faces !== undefined ? { faces: d.faces } : {}),
   };
 }

@@ -90,7 +90,7 @@ The system is sans throughout (Inter for every heading and body word, JetBrains 
 Near-monochrome dark graphite with one accent and a small set of semantic/category colors — Restrained strategy, unchanged by which hue the accent resolves to.
 
 ### Primary
-- **Accent** (`#5b8dee` at rest, identity-driven otherwise): the system's one accent. Deck-identity heading, active tab underline + text, focus ring, filter-chip selected state, combo-connector icon. Never a fill or background. When a deck is analyzed, this resolves to that deck's own color identity (`identityColor()` — same saturation/lightness, hue rotated per color, circular mean for multicolor); otherwise it's the player's pinned pick or this neutral blue default.
+- **Accent** (`#5b8dee` at rest, identity-driven otherwise): the system's one accent. Deck-identity heading, active tab underline + text, focus ring, filter-chip selected state, combo-connector icon. When a deck is analyzed, this resolves to that deck's own color identity (`identityColor()` — same saturation/lightness, hue rotated per color, circular mean for multicolor); otherwise it's the player's pinned pick or this neutral blue default.
 
 ### Neutral
 - **Background** (`#0b0d10`): page background, near-black graphite.
@@ -115,6 +115,20 @@ Four jewel hues were reserved for card-role buckets (Consistency / Efficiency / 
 - **Win Condition** — red (`#e5484d`, shared with Danger)
 
 ### Named Rules
+**The Solid-vs-Gradient Rule.** The identity resolves to TWO variables and they have different
+jobs. `--accent` is the SOLID colour and is the only one text, icons and focus rings ever use —
+gradient text stays off the table. `--accent-gradient` (and `--accent-gradient-y`, for a bar whose
+dominant dimension is height) is the full identity across its colours, and it is used ONLY on a
+fillable shape whose whole job is to carry the identity: the primary action, a proportion bar, a
+selected chip's border, the active tab's underline. It is never a surface fill behind content and
+never a page background.
+
+This line previously read *"never a fill or background"*, which the build has not matched since the
+gradient variables were introduced — caught by an adversarial craft review 2026-08-27. The doc was
+the stale half: `use-accent-identity.ts` carries the real policy in its own comment and the shipped
+uses are all bounded shapes. Corrected here rather than by changing shipped visuals, which is a
+product decision and not a documentation one.
+
 **The Identity-Driven Accent Rule.** `--accent` is computed, not fixed. It is never hand-set to a literal hex in a component; it resolves from `identityColor()` (analyzed deck) or the player's `localStorage` pick, falling back to the neutral blue. Any new UI referencing "the accent" reads the CSS variable, never a literal color.
 
 **The No-Kicker Rule.** No page or section heading gets a small label stacked directly above it. A label pairs inline with its value (`DECK IDENTITY  Tokens`, `# / CARD / ROLES / SYNERGY` as table headers) or is the heading itself (small-caps section titles like "Mana curve"), never a two-line kicker-then-title stack.

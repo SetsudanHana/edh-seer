@@ -1,4 +1,5 @@
 import type { DeckCard } from "./types.js";
+import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
@@ -682,8 +683,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_CREATURE.test(text) ? { tapBonus: "creature" as const } : {}),
       ...(!isLand && landfallMana(text) > 0 ? { landfall: landfallMana(text) } : {}),
       ...(fetches && FETCH_UNTAPS.test(text) ? { fetchUntapsAt: 3 } : {}),
-      cost: isLand ? null : parseCost(dc.card.manaCost),
-      costKey: dc.card.manaCost ?? "",
+      // A SPLIT CARD'S JOINED COST IS NOT A COST ANYONE PAYS — see `split-cost.ts`. Identical to
+      // `manaCost` for every other card, and `costKey` follows it so the memo cannot key two
+      // different costs to one answer.
+      cost: isLand ? null : parseCost(castableManaCost(dc.card)),
+      costKey: castableManaCost(dc.card) ?? "",
       ...(isLand ? { land: classifyLand(dc.card) } : { accelerant: classifyAccelerant(dc) }),
     };
   });
@@ -704,8 +708,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       everyLandType: false,
       colors: colorMask(dc.card.producedMana),
       fetches: false,
-      cost: parseCost(dc.card.manaCost),
-      costKey: dc.card.manaCost ?? "",
+      cost: parseCost(castableManaCost(dc.card)),
+      costKey: castableManaCost(dc.card) ?? "",
       accelerant: classifyAccelerant(dc),
       ...(TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
       ...(TAP_REPLACEMENT.test(text) && BONUS_CREATURE.test(text) ? { tapBonus: "creature" as const } : {}),
@@ -907,7 +911,15 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       let affordable = 0;
       for (let i = 0; i < priced.length; i++) {
         const s = priced[i];
-        if (s.manaValue > made) continue;
+        // WHAT YOU PAY, NOT WHAT THE CARD'S MANA VALUE IS. These are the same number for every card
+        // except a non-Fuse split, where CR 202.3b makes the mana value the SUM of both halves while
+        // the cost you actually pay is one half — so `Dusk // Dawn` was gated at nine mana on the
+        // board before `payable` was ever asked about its `{2}{W}{W}`. Correcting `cost` alone moved
+        // its figure by 3.5pp, because this line was the binding constraint and still read 9.
+        //
+        // `cost` is null for a land (skipped below anyway) and for an `{X}` cost this model refuses,
+        // and for those the mana value stays the gate.
+        if ((s.cost?.total ?? s.manaValue) > made) continue;
         if (!s.isExtra) affordable++;
         if (countsForByCard[i]) byCardHits.get(s.name)![turn - 1]++;
         if (s.cost === null) continue;

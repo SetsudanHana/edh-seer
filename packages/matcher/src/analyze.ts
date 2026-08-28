@@ -18,6 +18,7 @@ import {
 } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
+import { faceDeckCards } from "./faces.js";
 import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
@@ -33,7 +34,7 @@ import { magnitudeMultipliers } from "./magnitude.js";
 import { buildSupplyDemand } from "./supply-demand.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
-import { cutCandidates, deckSlack, trimOrder } from "./cut-list.js";
+import { cutCandidates, deckSlack, trimOrder, unjudgedCandidates } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
 import { recommendedLands } from "./land-count.js";
 import { commanderIdentity } from "./answer-pool.js";
@@ -112,9 +113,13 @@ export function collectTokenNodes(
   tokenTags: (ref: TokenRef) => CardTags | null,
 ): {
   nodes: DeckCard[];
-  /** card name -> the oracleIds of the tokens it structurally creates. */
+  /** FACE name (Task 7, faces-as-nodes: `deck`'s own entries, one per printed face) -> the
+   *  oracleIds of the tokens it structurally creates. Keyed by face because its only reader,
+   *  `pairPool`'s creates-edge check, is asking "did THIS face author the token" (review fix,
+   *  2026-08-27: see the comment on `creators.add` below for why the reverse map is physical). */
   producerTokenOracles: Map<string, Set<string>>;
-  /** token oracleId -> the card name(s) that make it. */
+  /** token oracleId -> the PHYSICAL card name(s) that make it (never a face name — see
+   *  `creators.add` below). */
   tokenCreators: Map<string, Set<string>>;
 } {
   const nodes: DeckCard[] = [];
@@ -135,7 +140,12 @@ export function collectTokenNodes(
       oracles.add(tags.oracleId);
       let creators = tokenCreators.get(tags.oracleId);
       if (!creators) tokenCreators.set(tags.oracleId, (creators = new Set()));
-      creators.add(dc.card.name);
+      // The token link is a CARD-scoped Scryfall fact (`allParts`), not a per-face one -- `dc.card`
+      // carries it on BOTH faces of a two-faced maker (faceDeckCards spreads the parent's fields), so
+      // registering the FACE name here would make every reader of this set treat "the OTHER face
+      // also independently cares about the token" as "the maker's own edge" and never a partner.
+      // The physical name is the one identity both faces agree on (review fix, 2026-08-27).
+      creators.add(dc.parentName ?? dc.card.name);
     }
   }
   return { nodes, producerTokenOracles, tokenCreators };
@@ -156,6 +166,27 @@ export function analyzeDeckStructured(
   tokenTags?: (ref: TokenRef) => CardTags | null,
 ): DeckReport {
   const commanderSet = new Set(commanderNames ?? []);
+  // A face node carries the FACE's name, and the decklist designated the CARD. Every commander test
+  // over a `unique` entry goes through this; the ones over `resolved` keep using the name directly,
+  // because `resolved` holds physical cards. BOTH faces of a two-faced commander read `true` here,
+  // by ruling (2026-08-27, the board's own reviewer): the card is the commander whichever face is
+  // up, so `COMMANDER_BOOST` applies to either face's edges -- pinned by the "still the commander on
+  // its front face" test above and a partner-boost test below.
+  const isCommanderNode = (dc: DeckCard): boolean => commanderSet.has(dc.parentName ?? dc.card.name);
+  // A CARD IS NOT ITS OWN PARTNER. Two faces are one physical object and never both on the
+  // battlefield (CR 712.4a for a transform, one chosen face for an MDFC), so a relation between
+  // them is the self-reference family with a new door -- and the board's own ruling is
+  // "shared rim, no link" (2026-08-27).
+  // CORRECTED FROM THE REVIEW'S LITERAL PREDICATE (`(a.parentName ?? a.card.name) === (b.parentName
+  // ?? b.card.name)`), which regressed `analyze.test.ts`'s "a real card whose name collides with the
+  // token it creates" test: a maker and a same-NAMED token both have `parentName === undefined`, so
+  // the fallback to `card.name` made two DIFFERENT nodes ("Twin" the card, "Twin" the token) read as
+  // the SAME card and silently dropped their real edge -- exactly the name-collision bug Findings 1/2
+  // (2026-08-16) already fixed once by keying identity off `isToken`, never off a name string. A face
+  // relation is only real when BOTH sides carry the SAME DEFINED `parentName`; an undefined
+  // `parentName` never counts as a match, however the two `card.name`s compare.
+  const sameCard = (a: DeckCard, b: DeckCard): boolean =>
+    a.parentName !== undefined && a.parentName === b.parentName;
 
   // Deck-aware passes, applied once before any edge formation. Chosen types resolve against what the
   // deck actually runs; the commander stamp marks WHICH cards the list designated, which is the only
@@ -182,8 +213,27 @@ export function analyzeDeckStructured(
     if (seen) seen.copies++;
     else byName.set(dc.card.name, { card: dc, copies: 1 });
   }
-  const unique = [...byName.values()].map((v) => v.card);
+  // A FACE IS A NODE (2026-08-27, owner's ruling): "if you flip the card it can care about different
+  // events and produce different ones". Expanded HERE and nowhere above -- `resolved` above stays the
+  // physical cards, so `computeDeckMath`, `deckFreq`, `computeRoles`, `detectBuildCategories` and
+  // `land-count.ts` keep counting a two-faced card once. E4 already prices an "Instant // Land" as a
+  // FRACTION of a land; turning 100 slots into 105 entries there would break `lands 37/36`, the mana
+  // simulation and castability at once.
+  const unique = [...byName.values()].flatMap((v) => faceDeckCards(v.card));
   const quantities = Object.fromEntries([...byName].filter(([, v]) => v.copies > 1).map(([n, v]) => [n, v.copies]));
+  // A rated row / an edge endpoint / a two-hop maker name is keyed by FACE name once `unique` is
+  // face-split; every join below that reads `resolved` (built from PHYSICAL cards, one entry per
+  // copy, never split) needs a way back. `derived` in particular defaults TRUE on a miss, so an
+  // UNDERIVED two-faced card would silently report as read without this -- "a silent wrong answer
+  // is worse than a missing one" (review fix, 2026-08-27).
+  // ponytail: a face name can collide with a real, unrelated card's name (CLAUDE.md's I3 family --
+  // split cards whose front face equals a whole card's own name, e.g. Bind, Smelt, Armed). `byName`
+  // dedupes on the PHYSICAL name and never checks a face name against a different real card's, so
+  // this Map (keyed on the post-split face name) silently keeps whichever of the two was built
+  // last. Left as a known ceiling rather than guarded -- narrow (3 corpus cards per the 2026-08-25
+  // sweep) and every reader here already treats a name collision as "the same node" by design.
+  const uniqueByName = new Map(unique.map((dc) => [dc.card.name, dc] as const));
+  const physicalName = (n: string): string => uniqueByName.get(n)?.parentName ?? n;
 
   // TOKEN NODES (Task 6, tokens-as-nodes). Structural, not inferred: `createdTokenRefs` is the EXACT
   // card->token link (a printing id against `tokens.printingIds`, Task 3/4a), so which token a card
@@ -226,6 +276,7 @@ export function analyzeDeckStructured(
   for (let i = 0; i < pairPool.length; i++) {
     for (let j = i + 1; j < pairPool.length; j++) {
       const a = pairPool[i], b = pairPool[j];
+      if (sameCard(a, b)) continue; // a face never partners with its own other face
       const reasons = pairReasons(a, b, hierarchy);
       if (b.isToken && producerTokenOracles.get(a.card.name)?.has(b.tags!.oracleId)) {
         reasons.push(...createsReasons(a, b, hierarchy));
@@ -250,9 +301,12 @@ export function analyzeDeckStructured(
   const partneredOracles = new Set<string>();
   for (const edge of edges) {
     const aOracle = tokenOracleByName.get(edge.a);
-    if (aOracle && !tokenCreators.get(aOracle)?.has(edge.b)) partneredOracles.add(aOracle);
+    // `tokenCreators` is keyed by PHYSICAL name (see collectTokenNodes); `edge.a`/`edge.b` are FACE
+    // names, so the comparison has to go through the same translation or a maker's own face-split
+    // name would never match its own entry (review fix, 2026-08-27).
+    if (aOracle && !tokenCreators.get(aOracle)?.has(physicalName(edge.b))) partneredOracles.add(aOracle);
     const bOracle = tokenOracleByName.get(edge.b);
-    if (bOracle && !tokenCreators.get(bOracle)?.has(edge.a)) partneredOracles.add(bOracle);
+    if (bOracle && !tokenCreators.get(bOracle)?.has(physicalName(edge.a))) partneredOracles.add(bOracle);
   }
   const tokenNodesReport = tokenNodes.map((dc) => ({
     name: dc.card.name,
@@ -367,7 +421,10 @@ export function analyzeDeckStructured(
   // graph, only the census.
   const twoHopCensusReasons: Reason[] = [];
   const addHop = (p: string, c: string, reasons: Reason[]): void => {
-    if (reasons.length === 0 || p === c) return; // a card does not feed itself through its own token
+    // `p === c` alone is defeated by a face split: front -> token -> back is two DIFFERENT names
+    // for the same physical card, so the guard has to compare PHYSICAL identity (`physicalName`),
+    // not the face-name strings this function is called with (review fix, 2026-08-27).
+    if (reasons.length === 0 || physicalName(p) === physicalName(c)) return; // a card does not feed itself through its own token
     const existing = twoHopReasons.get(hopKey(p, c));
     if (existing) existing.push(...reasons);
     else twoHopReasons.set(hopKey(p, c), [...reasons]);
@@ -385,7 +442,6 @@ export function analyzeDeckStructured(
       });
     }
   };
-  const uniqueByName = new Map(unique.map((dc) => [dc.card.name, dc] as const));
   for (const t of tokenNodes) {
     const makers = tokenCreators.get(t.tags!.oracleId);
     if (!makers) continue;
@@ -394,10 +450,19 @@ export function analyzeDeckStructured(
     // control", so crediting them would state a synergy the card cannot supply. Caught by measuring:
     // the first cut lifted Beast Within and Generous Gift from 0 to 2.0 in `naya-spellslinger`, which
     // is exactly the case CLAUDE.md already flags as why `isolated-cards.ts` reads as an upper bound.
-    const ourMakers = [...makers].filter((m) => {
-      const maker = uniqueByName.get(m);
-      return maker !== undefined && createsForYou(maker, t, hierarchy);
-    });
+    // `makers` is keyed by PHYSICAL name (collectTokenNodes, finding 3, 2026-08-27); `addHop`
+    // and `twoHopReasons` are keyed by FACE name, and `createsForYou` reads a face's OWN
+    // (face-filtered) abilities -- a two-faced maker's non-creating face must not pass just
+    // because its sibling does. So this resolves each physical maker name back to whichever of
+    // its OWN faces are present in `unique` (one, for a single-face card) and keeps only the
+    // face(s) that individually pass `createsForYou` -- fixing the regression finding 3's own fix
+    // introduced: `uniqueByName.get(m)` was always `undefined` for a two-faced maker, since
+    // `uniqueByName` has no entry under a combined "Front // Back" string, so `ourMakers` was
+    // always empty and the whole hop was silently skipped for every two-faced maker.
+    const ourMakers = unique
+      .filter((dc) => makers.has(physicalName(dc.card.name)))
+      .filter((dc) => createsForYou(dc, t, hierarchy))
+      .map((dc) => dc.card.name);
     if (ourMakers.length === 0) continue;
     for (const other of unique) {
       const name = other.card.name;
@@ -440,6 +505,7 @@ export function analyzeDeckStructured(
     for (let j = 0; j < unique.length; j++) {
       if (i === j) continue;
       const p = unique[i], c = unique[j];
+      if (sameCard(p, c)) continue; // a face never feeds its own other face
       const hop = twoHopReasons.get(hopKey(p.card.name, c.card.name));
       const direct = directedReasons(p, c, hierarchy); // p feeds c
       const reasons = hop ? [...direct, ...hop] : direct;
@@ -453,8 +519,8 @@ export function analyzeDeckStructured(
       const wFeeder = impactEdgeWeight(reasons, impactWeights, (tag) => mag.feeder.get(tag) ?? 1) * axisBoost;
       // Commander boost: credit is amplified when the OTHER endpoint is the commander (mirrors the
       // old boostForA/boostForB semantics).
-      const payoffBoost = commanderSet.has(p.card.name) ? COMMANDER_BOOST : 1;
-      const feederBoost = commanderSet.has(c.card.name) ? COMMANDER_BOOST : 1;
+      const payoffBoost = isCommanderNode(p) ? COMMANDER_BOOST : 1;
+      const feederBoost = isCommanderNode(c) ? COMMANDER_BOOST : 1;
       const cAgg = dir.get(c.card.name)!;
       const pAgg = dir.get(p.card.name)!;
       cAgg.support += wPayoff * payoffBoost;
@@ -488,10 +554,13 @@ export function analyzeDeckStructured(
       // in a scarce-PAYOFF role nothing discounted -- the measured reason the magnitude term ships
       // off. `roleBlend: 1` is the historical behaviour exactly; absent reads as 1.
       const score = authority + ROLE_BLEND * feederLift;
-      const tags = tagsByName.get(name);
+      // `name` is a `dir` key -- a FACE name once `unique` is face-split -- and `tagsByName`/
+      // `comboCardNames` are built from `resolved`, keyed by the PHYSICAL card (review fix,
+      // 2026-08-27: pre-fix a two-faced card's buckets and combo bonus were silently lost).
+      const tags = tagsByName.get(physicalName(name));
       const raw = tags ? computeCardBuckets(tags, impactWeights) : { consistency: 0, efficiency: 0, "win-condition": 0 };
       const authorityNorm = maxAuthority > 0 ? authority / maxAuthority : 0;
-      const winCondition = raw["win-condition"] + (comboCardNames.has(name) ? COMBO_BONUS : 0) + WIN_CON_AUTHORITY_WEIGHT * authorityNorm;
+      const winCondition = raw["win-condition"] + (comboCardNames.has(physicalName(name)) ? COMBO_BONUS : 0) + WIN_CON_AUTHORITY_WEIGHT * authorityNorm;
       const bucketCount =
         (score > 0 ? 1 : 0) + (raw.consistency > 0 ? 1 : 0) + (raw.efficiency > 0 ? 1 : 0) + (winCondition > 0 ? 1 : 0);
       const versatilityMult = 1 + VERSATILITY_STEP * Math.max(0, bucketCount - 1);
@@ -506,7 +575,10 @@ export function analyzeDeckStructured(
       const distinctPartners = [...dedupedPartners.values()];
       const base = {
         name,
-        isCommander: commanderSet.has(name),
+        // `name` is a `dir` key, i.e. a FACE name once `unique` is face-split -- `uniqueByName`
+        // (built off the same `unique` array) is the way back to the DeckCard `isCommanderNode`
+        // needs. Every name in `dir` came from `unique`, so the lookup is never absent.
+        isCommander: isCommanderNode(uniqueByName.get(name)!),
         score,
         authority,
         feederLift,
@@ -529,7 +601,7 @@ export function analyzeDeckStructured(
       score: c.score,
       payoffScore: c.authority ?? 0,
       feederScore: c.feederLift ?? 0,
-      isNonland: nonlandByName.get(c.name) ?? true,
+      isNonland: nonlandByName.get(physicalName(c.name)) ?? true,
       axisWeight: bestAxisWeight.get(c.name) ?? 0,
     })),
   );
@@ -570,8 +642,19 @@ export function analyzeDeckStructured(
       .map((r: CardCastability) => [r.name, { turn: r.turn, castable: r.castable!, mana: r.mana! }] as const),
   );
   const printedCost = new Map(resolved.map((dc) => [dc.card.name, dc.card] as const));
+  // WHICH CARDS THE ENGINE ACTUALLY READ, read from the same fact `deckCoverage` reports as a
+  // headline: a resolved card carrying no derived tags. It rides on every rated row and on the cut
+  // list, so a surface can tell "reads zero" apart from "was never opened".
+  const derivedByName = new Map(resolved.map((dc) => [dc.card.name, dc.tags !== null && dc.tags !== undefined]));
   const ratedCards: CardSynergy[] = cards.map((c) => {
-    const roles = buildRoles.get(c.name);
+    // `c.name` is a FACE name (from `cards`, built off `dir`); `buildRoles`/`printedCost`/
+    // `castByName`/`derivedByName` are all keyed by the PHYSICAL card (built from `resolved`).
+    // ONE translation, reused below -- review fix, 2026-08-27: pre-fix a two-faced card's row
+    // silently lost its roles, cost, castability AND its derived flag defaulted to `true` on the
+    // miss, which is the exact "a silent wrong answer is worse than a missing one" failure for an
+    // UNDERIVED two-faced card (it would report as read when it was not).
+    const physical = physicalName(c.name);
+    const roles = buildRoles.get(physical);
     const base = ratingByName.get(c.name) ?? 0;
     const doubleDuty = !!roles && roles.length > 0 && onAxisCards.has(c.name);
     const axisWeight = bestAxisWeight.get(c.name) ?? 0;
@@ -580,11 +663,36 @@ export function analyzeDeckStructured(
     // the additive identity breaks for those cards by design.
     const payoffRating = payoffRatingByName.get(c.name) ?? 0;
     const feederRating = feederRatingByName.get(c.name) ?? 0;
-    const card = printedCost.get(c.name);
+    const card = printedCost.get(physical);
+    // `cardName`/`face` -- the same fields `cutInputs` already computes below and `WireGraphNode`
+    // already carries -- so a reader can join THIS row back to the physical card and to its other
+    // face. Face index 0 (the front) is left unmarked, matching `graph-projection.ts`'s
+    // `...(d.face ? ...)` and `DeckCard.face`'s own convention. Review fix, 2026-08-27: without
+    // this, a consumer joining `report.cards` by `name` against physical-keyed data (a commander
+    // set, `quantities`, `unmeasurablePayoffs`) silently missed every back face.
+    const faceIdx = uniqueByName.get(c.name)?.face;
+    // THE COST IS THE FACE'S OWN; THE MANA VALUE IS THE CARD'S. `docToCard` fills a card-level
+    // `manaCost` from `faces[0]` when the document has none (every modal DFC), so the physical
+    // card's cost IS the front face's -- and printing it on the back row told a reader that Fell
+    // Mire, a Land, costs {1}{B}. Review fix, 2026-08-28. `manaValue` deliberately stays the card's:
+    // faces do not split cmc, and E4 prices a land-back MDFC as a fraction of a land rather than as
+    // two objects. A face with no printed cost renders the em dash a land already renders, which is
+    // the N6 rule (a refusal is a dash, never a zero).
+    //
+    // Only when the faces are AUTHORED (`Card.faces`, from the document). `printedFaces` also
+    // synthesizes faces by splitting a combined type line, and those carry no cost -- a split card's
+    // combined cost lives at the card level and still wins there, the ruling `split-cost.ts` keeps.
+    const isFaceRow = faceIdx !== undefined || physical !== c.name;
+    const faceCost = isFaceRow && card?.faces?.length
+      ? card.faces[faceIdx ?? 0]?.manaCost
+      : card?.manaCost;
     const cost = {
-      ...(card?.manaCost !== undefined ? { manaCost: card.manaCost } : {}),
+      ...(faceCost !== undefined ? { manaCost: faceCost } : {}),
       ...(card !== undefined ? { manaValue: card.manaValue } : {}),
-      ...(castByName.has(c.name) ? { castability: castByName.get(c.name)! } : {}),
+      ...(castByName.has(physical) ? { castability: castByName.get(physical)! } : {}),
+      derived: derivedByName.get(physical) ?? true,
+      ...(physical !== c.name ? { cardName: physical } : {}),
+      ...(faceIdx ? { face: faceIdx } : {}),
     };
     return doubleDuty
       ? { ...c, ...cost, synergyRating: doubleDutyRating(base), payoffRating, feederRating, axisWeight, doubleDuty: true, doubleDutyRoles: roles, roles }
@@ -692,6 +800,11 @@ export function analyzeDeckStructured(
 
   const deckStats = computeDeckStats(resolved.map((dc) => dc.card));
 
+  // ponytail: `cardEdges` carries FACE names (it is built from `pairPool`, which is face-split), so
+  // `report.archetypes[].cards` can list a face name that is not, itself, a line on the decklist --
+  // e.g. "Fell Mire" rather than "Fell the Profane // Fell Mire". Comment only, not a guard: the
+  // physical-name translation this file already carries (`physicalName`) is for JOINS back onto
+  // `resolved`-keyed maps, and rewriting a RENDERED list is a presentation concern, not this one.
   const archetypes = groupEdgesByArchetype(cardEdges);
 
   const cardSignals = resolved
@@ -748,20 +861,38 @@ export function analyzeDeckStructured(
       .map((dc) => dc.card.name),
   );
   const manaValueByName = new Map(resolved.map((dc) => [dc.card.name, dc.card.manaValue]));
-  const cutInputs = ratedCards.map((c) => ({
-    name: c.name,
-    rating: c.synergyRating ?? 0,
-    axisWeight: c.axisWeight ?? 0,
-    partnerCount: c.partnerCount,
-    manaValue: manaValueByName.get(c.name) ?? 0,
-    roles: c.roles ?? [],
-    isLand: !(nonlandByName.get(c.name) ?? true),
-    isCommander: c.isCommander,
-    isComboPiece: comboCardNames.has(c.name),
-    fillsDeckRole: deckRoleCards.has(c.name),
-    unmetConditions: (unmetByCard.get(c.name) ?? []).map((t) => describeTag(t as never)),
-  }));
+  const cutInputs = ratedCards.map((c) => {
+    // Same PHYSICAL-name translation as the `ratedCards` map above: `c.name` is a FACE name,
+    // `manaValueByName`/`nonlandByName`/`comboCardNames`/`deckRoleCards`/`derivedByName`/
+    // `unmetByCard` are all keyed on `resolved`'s physical cards.
+    const physical = physicalName(c.name);
+    return {
+      name: c.name,
+      // Present only when `c.name` is one face of a multi-face card, so `mergeFaces` (cut-list.ts)
+      // can collapse the deck's two rated faces back into the one card a reader would cut.
+      ...(physical !== c.name ? { cardName: physical } : {}),
+      rating: c.synergyRating ?? 0,
+      axisWeight: c.axisWeight ?? 0,
+      partnerCount: c.partnerCount,
+      manaValue: manaValueByName.get(physical) ?? 0,
+      roles: c.roles ?? [],
+      isLand: !(nonlandByName.get(physical) ?? true),
+      isCommander: c.isCommander,
+      isComboPiece: comboCardNames.has(physical),
+      fillsDeckRole: deckRoleCards.has(physical),
+      // Absent from the map means the PHYSICAL card is not in `resolved` at all, which cannot
+      // happen for a rated card (review fix, 2026-08-27: this comment previously said the opposite
+      // -- a FACE name would always miss a map keyed by physical name, and the `?? true` default
+      // silently reported an underived card as read).
+      derived: derivedByName.get(physical) ?? true,
+      unmetConditions: (unmetByCard.get(physical) ?? []).map((t) => describeTag(t as never)),
+    };
+  });
   const cutList = cutCandidates(cutInputs);
+  // The rows the cut list REFUSED because it could not read the card. Reported so the refusal is
+  // visible: a list that silently shrinks to nothing tells the reader less than one that names the
+  // cards and the reason.
+  const unjudged = unjudgedCandidates(cutInputs);
   const slack = deckSlack(buildParents);
   // HOISTED OUT OF THE RETURN OBJECT so the identity sentence below can read its wincons. The
   // guard is unchanged and its reasoning still applies: a deck of only commanders makes
@@ -858,6 +989,7 @@ export function analyzeDeckStructured(
     answerCoverage: coverage,
     rampResilience,
     cutList,
+    unjudged,
     slack,
     trim,
     // No turn override: the deck's own clock sets the horizon. Passing a 5 here is what kept the

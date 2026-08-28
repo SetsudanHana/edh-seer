@@ -12,6 +12,18 @@ export interface DeckCard {
    *  `ratedCards` -- every figure those produce is a probability over a 100-card library, and a
    *  token is never drawn. */
   isToken?: boolean;
+  /** WHICH PRINTED FACE this node is, 0 for the front. Absent on a single-face card and on a token,
+   *  so `dc.face !== undefined` is "this is one face of a multi-face card". A FACE IS A NODE
+   *  (2026-08-27): two faces watch different events and supply different ones, so they are two
+   *  entries in the pair pool and two nodes on the board. Face nodes ride in `unique` and must stay
+   *  OUT of `resolved` — every figure built from that list is a statement about a 100-card library,
+   *  and a face is not an extra card. */
+  face?: number;
+  /** The PHYSICAL card's full name ("A // B") when this node is one face of it. `card.name` holds
+   *  the FACE's name so the by-name maps in `analyze.ts` stay collision-free; `stampSides` rewrites
+   *  a reason's `producer`/`consumer` back to this, because `pairs.json` keys the whole judged panel
+   *  on `producer|consumer|tag`. */
+  parentName?: string;
 }
 
 /** Lowercased subtype -> lowercased supertypes it belongs to, e.g. { wizard: ["creature"] }. */
