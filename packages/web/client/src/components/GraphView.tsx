@@ -542,6 +542,17 @@ export function GraphView(
       const dpr = devicePixelRatio;
       const r = canvas.getBoundingClientRect();
       canvas.width = r.width * dpr; canvas.height = r.height * dpr;
+      // WRITING canvas.width WIPES THE BACKING STORE, so measuring is also erasing and the frame
+      // after it is not an optimisation -- it is the only thing between the reader and a black
+      // board. Owner-reported 2026-08-28: focus a node (a real gesture, which claims the camera),
+      // then anything that resizes the canvas, and the board goes black until a pointer move
+      // happens to CHANGE the hovered node. `onResize` repainted only via `fitToView()`, which it
+      // deliberately skips once the camera is the user's -- so the one path that repainted was the
+      // one path a user who had touched the board could no longer take, and the parked loop then
+      // never drew again. Reproduced live: painted pixels 3,417 -> 0 across a resize.
+      // Marked HERE rather than in `onResize` because `size()` is what clears; a future caller
+      // gets the repaint for free instead of rediscovering this.
+      invalidate();
       return { w: r.width, h: r.height, dpr };
     };
     let dim = size();

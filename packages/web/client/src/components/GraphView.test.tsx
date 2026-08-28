@@ -2259,6 +2259,37 @@ describe("paint parking", () => {
     expect(calls.length).toBeGreaterThan(quiet);
   });
 
+  /** A RESIZE CLEARS THE CANVAS, SO IT MUST ALSO REPAINT IT. `size()` writes `canvas.width`, and
+   *  writing that attribute wipes the backing store to transparent black — so the frame that
+   *  follows a resize is not an optimisation, it is the only thing standing between the reader and
+   *  a black board. `onResize` used to repaint only through `fitToView()`, which it skips once a
+   *  real gesture has claimed the camera; with the loop parked, nothing else ever painted again.
+   *  Owner-reported 2026-08-28 and reproduced in a live browser: painted pixels 3,417 -> 0 across a
+   *  resize, recovering only when a pointer move happened to CHANGE the hovered node.
+   *
+   *  Counts `setTransform` rather than every context call, because a resize pushes its own
+   *  `set:width=` entries — a raw `calls.length` grows on the clear alone and passes in both arms. */
+  test("a resize repaints a settled board whose camera the user owns", () => {
+    vi.mocked(createBoardSimulation).mockReturnValue(settled());
+    const ro = stubResizeObserver();
+    const calls: string[] = [];
+    const { canvas, tick } = frames(SAMPLE.graph, calls);
+    const draws = () => calls.filter((c) => c.startsWith("setTransform")).length;
+
+    // A REAL gesture claims the camera, which is what takes `onResize`'s fitToView() branch away.
+    act(() => {
+      canvas.__graphProbe!().endGesture({ type: "mouseup", clientX: 10, clientY: 10, sourceEvent: {} } as never);
+    });
+    tick(3);
+    const quiet = draws();
+    tick(10);
+    expect(draws()).toBe(quiet); // parked, as it should be
+
+    act(() => { ro.fire(); });
+    tick(1);
+    expect(draws()).toBeGreaterThan(quiet);
+  });
+
   test("a board still settling paints every frame regardless of the dirty flag", () => {
     // The guard must never park a board that is still MOVING -- that is the frozen-board failure,
     // and it is worse than any amount of wasted paint. Its own stub rather than the real
