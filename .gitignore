@@ -51,6 +51,8 @@ persona-shots/
 # The files still live on disk and in ~/projects/mtg-synergy-engine-backup-20260828.
 docs/superpowers/
 docs/measurements/
+docs/ROADMAP.md
+CLAUDE.md
 .superpowers/
 .claude/worktrees/
 CLAUDE.local.md
@@ -75,3 +77,9 @@ secrets.json
 # stray screenshots dropped at the repo root are always accidents
 /*.png
 /*.jpg
+
+# JetBrains IDE config
+.idea/
+
+# saved web pages and their asset folders
+*_files/
