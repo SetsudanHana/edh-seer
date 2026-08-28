@@ -1904,6 +1904,78 @@ describe("face pair nodes", () => {
     expect(edges.some((e) => e.from === "A // B" && e.to === "C")).toBe(true);
     expect(edges.some((e) => e.from.includes("A // B") && e.to.includes("A // B"))).toBe(false);
   });
+
+  // THE FACES ARE JOINED IN THE SIMULATION AND NOWHERE ELSE. A rim that says "these two are one
+  // card" cannot say it from across the board, and the layout positions purely by links -- owner,
+  // on a Jodah deck: "I can see just some random faces right now, not next to each other". The
+  // spring is force-only, so the "shared rim, no link" ruling still holds in the DATA: nothing is
+  // drawn, nothing is counted, nothing reaches the legend.
+  test("the two faces of a card are sprung together in the simulation, with no edge drawn", () => {
+    makeContextSpy();
+    const front = card({ id: "A // B", label: "A", cardName: "A // B" });
+    const back = card({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" });
+    const other = card({ id: "C" });
+    render(<GraphView graph={graphOf([front, back, other], [
+      { from: "A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["A // B feeds C"] },
+    ])} report={SAMPLE.report} />);
+
+    const passed = vi.mocked(createBoardSimulation).mock.lastCall![0];
+    const pair = passed.links.filter(
+      (l) => [l.source.id, l.target.id].sort().join("|") === ["A // B", "face:1:A // B"].sort().join("|"),
+    );
+    expect(pair).toHaveLength(1);
+    // The board's own maximum weight, which is the SHORTEST rest length `linkDistanceFor` returns --
+    // a weaker one would let the pair drift exactly as it did before.
+    expect(pair[0].weight).toBe(2);
+    // ...and it is not an edge: the drawn set still holds only the real one.
+    expect(passed.links.filter((l) => l.weight === 2)).toHaveLength(2); // the real edge + the pair
+    expect(graphOf([front, back, other], []).edges).toHaveLength(0);
+  });
+
+  // A FACE IS A NODE, BUT A SELECTION IS A CARD. Clicking one face lit that node's flow and dimmed
+  // the card's other half to 0.15 with the rest of the board -- owner: "if I click on one side only
+  // that side highlights not both of them".
+  test("selecting one face keeps its sibling lit and marks both rims in accent", () => {
+    const calls: string[] = [];
+    const front = card({ id: "A // B", label: "A", cardName: "A // B" });
+    const back = card({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" });
+    const other = card({ id: "C" });
+    // A FOURTH NODE THE FLOW DOES NOT REACH, or nothing on this board would dim and the assertion
+    // below would pass without the fix: `C` is the selected face's own partner, so it is IN the
+    // flow. `D` is what 0.15 is supposed to look like.
+    const outsider = card({ id: "D" });
+    const { canvas, tick } = frames(graphOf([front, back, other, outsider], [
+      { from: "A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["A // B feeds C"] },
+    ]), calls);
+
+    // Select the FRONT face through the same seam the inspector tests use: `endGesture` is the
+    // click-vs-pan decision, and the probe hands over the simulation's own coordinates so the click
+    // is aimed rather than guessed at.
+    const probe = canvas.__graphProbe!();
+    const target = probe.find((n) => n.id === "A // B")!;
+    act(() => { probe.endGesture({ type: "mouseup", clientX: target.x, clientY: target.y }); });
+    calls.length = 0;
+    tick();
+
+    // Both faces' shared rim turns ACCENT -- the answer to "which two of these twenty faces are the
+    // card I clicked". jsdom returns "" for a custom property, so this is GraphView's own default.
+    // Exactly two: the front face and its sibling, and nothing else on the board.
+    const accentRims = calls.flatMap((c, i) => (c === "set:strokeStyle=#5b8dee" ? [i] : []));
+    expect(accentRims).toHaveLength(2);
+
+    // AND THE SIBLING IS NOT DIMMED. Read the alpha in force when its rim was painted, rather than
+    // counting 0.15s: `D` (outside the flow) and the label pass both emit one, so a bare count says
+    // nothing about which node was dark. Pre-fix this read 0.15; it is EDGELESS_ALPHA now, because
+    // the back face has no edge of its own in this fixture -- lit, and correctly still demoted.
+    const alphaWhen = (index: number): string => {
+      for (let i = index; i >= 0; i--) if (calls[i].startsWith("set:globalAlpha=")) return calls[i];
+      return "set:globalAlpha=1";
+    };
+    const siblingRim = accentRims[1]; // the back face draws after the front
+    // 0.4 is GraphView's own EDGELESS_ALPHA, which is module-private -- the literal is here rather
+    // than exporting a constant just for a test, and a change to it fails this loudly.
+    expect(alphaWhen(siblingRim)).toBe("set:globalAlpha=0.4");
+  });
 });
 
 // WEIGHT NOW BUYS OPACITY AS WELL AS WIDTH. Width alone cannot separate 300 edges: at board zoom the

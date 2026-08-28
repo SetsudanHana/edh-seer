@@ -582,7 +582,42 @@ export function GraphView(
     }
     const maxWeight = links.reduce((m, l) => Math.max(m, l.weight), 0);
 
-    const simulation = createBoardSimulation({ nodes, links, params });
+    // THE TWO FACES OF ONE CARD SIT TOGETHER — a FORCE-ONLY link, never a drawn edge.
+    //
+    // "Shared rim, no link" (owner's ruling, 2026-08-27) is a statement about the DATA: a permanent
+    // is one face at a time (CR 712.3a), so an edge between the faces would claim a relation that
+    // does not exist. But the layout positions purely by links, so with none the two faces landed
+    // wherever their own partners pulled them, and a rim that says "these are one card" cannot say
+    // it from across the board. Owner, testing a Jodah deck: "I can see just some random faces
+    // right now, not next to each other ... if I have 10 cards which have flip side, I can not
+    // distinguish if card is the same thing."
+    //
+    // So the pair is joined in the SIMULATION only. `links` — what the draw loop iterates, what the
+    // legend counts, what `__graphProbe` reports — is untouched, so no edge is drawn, no arrow, no
+    // hue, nothing for a count to see. Weight is the board's own maximum, which is the SHORTEST rest
+    // length `linkDistanceFor` can return and the strongest spring `linkStrengthFor` can give,
+    // without changing `maxWeight` itself and rescaling every real edge's distance.
+    //
+    // Ceiling: on a board whose every edge weighs 0 (or which has no edges at all) `maxWeight` is 0
+    // and the spring is inert, so the faces scatter as before. That deck has no layout to speak of
+    // anyway.
+    const facesOfCard = new Map<string, Sim[]>();
+    for (const n of nodes) {
+      if (n.cardName === undefined || n.isToken) continue;
+      const group = facesOfCard.get(n.cardName);
+      if (group) group.push(n);
+      else facesOfCard.set(n.cardName, [n]);
+    }
+    const facePairLinks: SimLink[] = [];
+    for (const group of facesOfCard.values()) {
+      // Consecutive pairs, not every combination: three faces chained 0-1-2 seat as a run, and a
+      // clique would fight the collide force on a card nothing else in the deck touches.
+      for (let i = 1; i < group.length; i++) {
+        facePairLinks.push({ source: group[i - 1], target: group[i], weight: maxWeight });
+      }
+    }
+
+    const simulation = createBoardSimulation({ nodes, links: [...links, ...facePairLinks], params });
     // A from-scratch graph gets full energy to organize; a graph that already has settled
     // positions only needs enough to let what changed find its place -- and how much that is, is
     // measured rather than guessed now. See EDIT_REHEAT_ALPHA (board-force.ts) for the table.
@@ -687,6 +722,18 @@ export function GraphView(
       if (activeFlow) {
         for (const fe of activeFlow.edges) flowEdgeByPair.set(`${fe.from}>${fe.to}`, fe);
       }
+      // CLICKING ONE FACE SELECTS THE CARD, SO BOTH FACES ANSWER. A face is its own node, so a
+      // selection lit that node's flow and dimmed the card's OTHER half to 0.15 along with the rest
+      // of the board -- owner, testing a Jodah deck: "if I click on one side only that side
+      // highlights not both of them". The two faces have no edge between them and must not get one
+      // (a permanent is one face at a time, CR 712.3a), so the sibling is not in the flow and is not
+      // being claimed to be: it stays at full strength and its shared rim turns ACCENT, which says
+      // "this is the card you clicked" rather than "this participates in the flow".
+      // Empty for a single-faced selection, which is every selection on most boards.
+      const rootNode = activeFlow ? byId.get(activeFlow.root) : undefined;
+      const sameCardIds = rootNode?.cardName !== undefined
+        ? new Set(nodes.filter((n) => n.cardName === rootNode.cardName).map((n) => n.id))
+        : null;
       // Direction as motion: flow edges are dashed, and the pattern crawls from producer to
       // consumer. Read ONCE per frame, not per edge -- every edge in a frame must share a phase or
       // the flow reads as noise instead of as one current.
@@ -862,6 +909,9 @@ export function GraphView(
         // not just its rim -- rather than the art staying bright while only the ring goes faint.
         const flowNode = activeFlow?.nodes.get(n.id);
         const isRoot = activeFlow?.root === n.id;
+        // The clicked card's OTHER printed face. Not in the flow and not claimed to be — see
+        // `sameCardIds` above.
+        const sameCardAsRoot = sameCardIds?.has(n.id) === true;
         // A SEARCH HIT OUTRANKS THE FLOW DIM (roadmap H3). `searchHit` guarded only `demote`, so a
         // card the user went looking for, sitting outside the selected card's flow, fell into the
         // flow branch and dimmed to 0.15 -- accent ring included, since the ring below is drawn
@@ -870,7 +920,7 @@ export function GraphView(
         // asked for and is never dimmed by anything; only then does the flow decide.
         ctx.globalAlpha = searchDim ? 0.15
           : searchHit ? 1
-          : activeFlow && !flowNode && !isRoot ? 0.15
+          : activeFlow && !flowNode && !isRoot && !sameCardAsRoot ? 0.15
           : hoverActive && !hoveredSet.has(n.id) ? HOVER_NODE_DIM
           : demote ? EDGELESS_ALPHA : 1;
         // The draw-time radius for this node's circle/rim/clip -- ART_RADIUS everywhere except a
@@ -1073,8 +1123,11 @@ export function GraphView(
         if (n.cardName !== undefined) {
           ctx.save();
           ctx.setLineDash([6 / cam.z, 2 / cam.z]);
-          ctx.lineWidth = 1.5 / cam.z;
-          ctx.strokeStyle = paintColors.fg;
+          // ACCENT ON BOTH FACES OF THE SELECTED CARD, so a board holding ten flip cards says which
+          // two of the twenty faces are the one you clicked. At rest every pair's rim is the same
+          // neutral, which is correct -- the rim is a fact about the card, not about attention.
+          ctx.lineWidth = (sameCardAsRoot ? 2 : 1.5) / cam.z;
+          ctx.strokeStyle = sameCardAsRoot ? paintColors.accent : paintColors.fg;
           ctx.beginPath();
           if (mode === "card") ctx.strokeRect(n.x - cardW / 2 - 5, n.y - cardH / 2 - 5, cardW + 10, cardH + 10);
           else ctx.arc(n.x, n.y, r + 5, 0, TAU);
