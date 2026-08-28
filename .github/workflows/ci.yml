@@ -30,6 +30,11 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
+      # BEFORE the suite, because a green suite is NOT a compiling one -- `vitest` transpiles per
+      # file and never typechecks, so the matcher once carried two type errors 2,706 passing tests
+      # could not see. Run on both legs even though tsc is Node-agnostic: it is one line and it
+      # keeps the two required status checks the only ones branch protection has to know about.
+      - run: npm run typecheck
       # The suite is pure: no MongoDB, no network, no API key. Anything needing a live corpus lives
       # in a bin rather than a test, and the one test backed by a gitignored cache skips itself with
       # a reason instead of failing a clean checkout.

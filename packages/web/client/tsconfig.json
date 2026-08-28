@@ -8,7 +8,20 @@
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
+    // "node" IS HERE FOR THE TYPE-ONLY IMPORTS, NOT FOR THE BROWSER. `types.ts` imports `DeckReport`
+    // and `GraphEdge` from the `@edh-seer/engine` and `@edh-seer/matcher` BARRELS, whose `main` is
+    // `src/index.ts` -- raw TypeScript, not a built `.d.ts` -- so tsc compiles that whole source
+    // graph and reported 32 errors about `node:fs` and `process` that say nothing about this
+    // package. `skipLibCheck` cannot reach them: they are source, not declarations.
+    //
+    // CEILING: this also makes `process`, `Buffer` and `node:fs` typecheck INSIDE client code,
+    // which they must never be. `client-browser-safe.test.ts` is the replacement guard, and it is
+    // the honest one -- the recorded 2026-08-21 regression (a value import of
+    // `GRAVEYARD_HATE_SHARE` from `@edh-seer/matcher/src/answer-coverage.js`) typechecked perfectly
+    // WITHOUT node types, so this config was never what stood between the client and Node code.
+    // The real fix is emitted declarations for the Node-side packages; that is a build step for
+    // five packages and buys nothing else today.
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom", "node"],
     "noEmit": true
   },
   "include": ["src"],
