@@ -17,6 +17,7 @@ import {
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { parseTypeLineAllFaces } from "./typeline.js";
+import { faceDeckCards } from "./faces.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -1716,4 +1717,42 @@ export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
     ...directedReasons(b, a, h),
     ...meldReason(a, b),
   ]);
+}
+
+/** TWO CARDS AS THE SHIPPED ENGINE SEES THEM: every printed FACE of one against every printed face
+ *  of the other.
+ *
+ *  `pairReasons` takes two `DeckCard`s and reads whatever type line, text and ability list they
+ *  carry -- which for a multi-face card is the COMBINED card. `analyzeDeckStructured` has not asked
+ *  it that question since faces-as-nodes (2026-08-27): it splits every card with `faceDeckCards`
+ *  first, so each face is matched with only the abilities IT prints and its own type line. The
+ *  difference is not cosmetic -- CLAUDE.md records `copySubject`'s `typed[0]` picking a different
+ *  ability once the list is face-scoped, which changed a real claim.
+ *
+ *  So any caller asking "what does the engine say about these two cards" must ask through here, or
+ *  it describes an engine that no longer ships. Both such callers do: the pair-judging tool, and the
+ *  offline ratchet that gates its verdicts -- and those two disagreeing is the specific failure this
+ *  exists to prevent, since one writes the fixture the other reads.
+ *
+ *  A pair of single-faced cards takes the plain path, so the overwhelmingly common case is exactly
+ *  `pairReasons` and nothing here can change it. Reasons are deduped on (tag, text): two faces of
+ *  one card can produce the same sentence, and `stampSides` has already rewritten both endpoints to
+ *  the PHYSICAL card name (`parentName`), so such rows really are one claim said twice. */
+export function pairReasonsAcrossFaces(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
+  const fa = faceDeckCards(a);
+  const fb = faceDeckCards(b);
+  if (fa.length === 1 && fb.length === 1) return pairReasons(a, b, h);
+  const out: Reason[] = [];
+  const seen = new Set<string>();
+  for (const x of fa) {
+    for (const y of fb) {
+      for (const r of pairReasons(x, y, h)) {
+        const key = `${r.tag} ${r.text}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(r);
+      }
+    }
+  }
+  return out;
 }

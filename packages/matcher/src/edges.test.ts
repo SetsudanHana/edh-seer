@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE } from "./edges.js";
+import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE } from "./edges.js";
 import { faceDeckCards } from "./faces.js";
 import type { Reason } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
@@ -3013,4 +3013,60 @@ test("a reason from the front face names the card and stamps no face", () => {
   expect(reasons.length).toBeGreaterThan(0);
   expect(reasons[0].producer).toBe("Fell the Profane // Fell Mire");
   expect(reasons[0].producerFace).toBeUndefined();
+});
+
+/** `pairReasons` reads the card it is handed. The shipped engine never hands it a multi-face card
+ *  whole -- `analyzeDeckStructured` splits with `faceDeckCards` first, so a face is matched with
+ *  only the abilities IT prints. `pairReasonsAcrossFaces` is that same question for the two callers
+ *  that ask it about a bare pair: the pair-judging tool and the ratchet that gates its verdicts. */
+test("pairReasonsAcrossFaces matches a two-faced card FACE BY FACE, as the engine does", () => {
+  const payoff = base("Kindred Discovery", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  const mdfc: DeckCard = {
+    card: {
+      name: "Front Half // Back Half", typeLine: "Sorcery // Creature — Wizard", oracleText: "a\nb",
+      keywords: [], colors: [], manaValue: 2,
+      faces: [
+        { name: "Front Half", typeLine: "Sorcery", oracleText: "a", colors: [] },
+        { name: "Back Half", typeLine: "Creature — Wizard", oracleText: "b", colors: [] },
+      ],
+    } as never,
+    tags: {
+      oracleId: "o", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: {
+        types: ["sorcery", "creature"], subtypes: ["wizard"], colors: [], identity: [], cmc: 2,
+        power: null, toughness: null, token: false, keywords: [],
+        faces: [{ types: ["sorcery"], subtypes: [] }, { types: ["creature"], subtypes: ["wizard"] }],
+      },
+      // Printed on the BACK face only, which is the whole point: the unsplit read hangs it on a
+      // card whose name is "Front Half // Back Half".
+      abilities: [{
+        face: 1,
+        kind: "triggered",
+        trigger: { verbs: ["enters"], subject: { subtype: "wizard", control: "you", token: false } },
+        effect: { kind: "token-generation", subject: { subtype: "wizard", control: "you", token: true } },
+        emits: [{ verb: "enters", subject: { subtype: "wizard", control: "you", token: true } }],
+      }],
+    } as unknown as CardTags,
+  };
+
+  const across = pairReasonsAcrossFaces(mdfc, payoff, H);
+  const etb = across.find((r) => r.tag === "enters:creature")!;
+  expect(etb).toBeDefined();
+  // The SENTENCE names the face that prints the ability; the endpoint names the physical card
+  // (`stampSides`, off `parentName`). The unsplit read can say neither -- it only knows the
+  // combined name, which is what makes this assertion fire on the fix.
+  expect(etb.text).toContain("Back Half");
+  expect(etb.text).not.toContain("Front Half // Back Half");
+  expect(etb.producer).toBe("Front Half // Back Half");
+
+  // A pair of single-faced cards takes the plain path unchanged.
+  const lord = base("Death Baron", [{
+    kind: "static", effect: { kind: "pump", subject: { subtype: "zombie", control: "you", token: null } },
+  }]);
+  const zombie = base("Gravecrawler", [], ["zombie"]);
+  expect(pairReasonsAcrossFaces(lord, zombie, H)).toEqual(pairReasons(lord, zombie, H));
 });

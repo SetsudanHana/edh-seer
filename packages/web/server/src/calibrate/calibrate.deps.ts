@@ -77,8 +77,15 @@ export async function makeCalibrateDeps(store: { db: Db }, repoRoot: string): Pr
     card: data.docToCard(cardByName.get(name) as never),
     tags: tagsByName.get(name),
   });
+  // ACROSS FACES, because that is what the engine ships. `pairReasons` reads whatever type line and
+  // ability list the `DeckCard` carries -- the COMBINED card for a multi-face one -- while
+  // `analyzeDeckStructured` splits with `faceDeckCards` first and matches each face with only the
+  // abilities it prints. Judging against the unsplit read means the owner is judging an engine that
+  // no longer exists, and the verdict is then frozen into the ratchet. Review fix, 2026-08-28. The
+  // offline gate (`pair-calibration.test.ts`) calls the same function, so the tool and the gate
+  // cannot disagree about a pair.
   const reasonsFor = (a: string, b: string): string[] =>
-    matcher.pairReasons(deckCard(a) as never, deckCard(b) as never, hierarchy).map((r) => r.text);
+    matcher.pairReasonsAcrossFaces(deckCard(a) as never, deckCard(b) as never, hierarchy).map((r) => r.text);
 
   const card = (name: string): CalibrateCard => {
     const doc = cardByName.get(name) as unknown as { name: string; typeLine?: string; oracleText?: string };
