@@ -153,11 +153,15 @@ export interface Caps {
  *  it ("I would prefer having bigger cards cause they should be readable"). One line to revert —
  *  `ALPHA_FLOOR` in board-force.ts. */
 export const QUALITY_CAPS: Record<string, Caps> = {
-  sorin: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 40163, linkDistError: 77 },
-  inalla: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 36211, linkDistError: 59 },
-  fairdrazi: { nodeOverlaps: 0, cardOverlaps: 1, edgeCrossings: 35195, linkDistError: 62 },
-  changelings: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 7413, linkDistError: 42 },
-  braids: { nodeOverlaps: 0, cardOverlaps: 1, edgeCrossings: 23686, linkDistError: 48 },
+  // RE-CAPPED 2026-08-28 for ALPHA_DECAY 0.005 -> 0.010 (board-force.ts, with the table). The board
+  // now parks in ~11.5 s instead of ~23, so it stops visibly drifting under the reader; crossings
+  // and rms link-distance error pay 2-12% for it and CARD OVERLAPS GO TO ZERO ON ALL SIX, because a
+  // board that keeps creeping keeps re-forming them.
+  sorin: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 40940, linkDistError: 80 },
+  inalla: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 40679, linkDistError: 60 },
+  fairdrazi: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 35913, linkDistError: 65 },
+  changelings: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 7768, linkDistError: 43 },
+  braids: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 26517, linkDistError: 50 },
   // THE ONLY FACE-CARRYING FIXTURE, captured 2026-08-28 from `taking-crew-to-the-town` — 21 of its
   // 100 cards are multi-face, so it draws 130 nodes where the other five draw 75-95. Added because
   // faces-as-nodes shipped 2026-08-27 and every fixture here predates it: the ratchet was measuring
@@ -170,7 +174,7 @@ export const QUALITY_CAPS: Record<string, Caps> = {
   // Measured BOTH ARMS while capping it, which is the only reason the face spring's cost is known:
   // without the spring the same fixture reads 69,766 crossings, so joining a card's faces costs
   // about 7% more crossings and buys a median face-to-face gap of 78 world units against 311.
-  mdfc: { nodeOverlaps: 0, cardOverlaps: 1, edgeCrossings: 74877, linkDistError: 59 },
+  mdfc: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 77695, linkDistError: 60 },
 };
 
 /** RE-CAPPED AGAIN, same day, for the de-drift ORDER fix (board-force.ts). `forceDeDrift` ran LAST

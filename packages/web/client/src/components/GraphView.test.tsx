@@ -604,8 +604,10 @@ describe("fit to view", () => {
         n.types.includes("land") ? { ...n, types: ["artifact"] } : n),
     };
     const { canvas, tick } = frames(cloud);
-    // FIT_SETTLE_ALPHA (GraphView.tsx) sits just past 800 ticks under the shipped ALPHA_DECAY; 1000
-    // clears it with margin rather than chasing the exact crossing point.
+    // Long enough to reach PARK_ALPHA under the shipped ALPHA_DECAY (~690 ticks), which is when the
+    // FINAL frame is taken. The first fit, at FIT_SETTLE_ALPHA, is mid-settle on purpose and the
+    // board still spreads after it -- before the re-frame landed, this assertion failed by 11 world
+    // units on exactly that (2026-08-28).
     tick(1000);
     const probe = canvas.__graphProbe!();
     // The visible WORLD rectangle: the canvas's own corners, inverted through whatever camera the

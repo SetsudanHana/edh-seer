@@ -191,7 +191,38 @@ export const REPULSION_RANGE = 469;
 export const CENTER_PULL = 0.0004;
 /** d3's setter stores `1 - _`, so this yields the 0.86 retention the old VELOCITY_DAMPING had. */
 export const VELOCITY_DECAY = 0.14;
-export const ALPHA_DECAY = 0.005;
+/** THE BOARD SETTLES IN SEVEN SECONDS, NOT TWENTY-THREE (2026-08-28). At 0.005 the simulation
+ *  reaches PARK_ALPHA (0.001) after ln(0.001)/ln(0.995) ~ 1,380 ticks -- 23 seconds at 60fps of
+ *  visible drift after every analyze, which the owner reported as "you can see cards constantly
+ *  shaking sometimes". At 0.010 it parks after ~690 ticks, about 11.5 s, and the last seconds of
+ *  that are already under a pixel.
+ *
+ *  MEASURED, six fixtures x ten seeds, motion sampled over 180 ticks after an 800-tick settle
+ *  (motion is mean px/tick, worst-case max in brackets; crossings summed over the ten trials):
+ *
+ *    fixture       motion 0.005      motion 0.010     crossings 0.005 -> 0.010
+ *    sorin         19.72 (56.5)      0.32 (0.9)         40163 -> 40940   (+2%)
+ *    inalla         6.55 (14.6)      0.10 (0.3)         36211 -> 40679  (+12%)
+ *    fairdrazi         -             0.12 (0.3)         35195 -> 35913   (+2%)
+ *    changelings       -             0.05 (0.2)          7413 ->  7768   (+5%)
+ *    braids            -             0.05 (0.3)         23686 -> 26517  (+12%)
+ *    mdfc           8.10 (25.1)      0.14 (0.4)         74877 -> 77695   (+4%)
+ *
+ *  Under a pixel of drift over three seconds on every fixture, against 56 px on sorin. Card
+ *  overlaps go to 0 on all six -- a board that never stops creeping re-forms overlaps as it goes,
+ *  the same effect ALPHA_FLOOR's own table below records. Crossings and rms link-distance error pay
+ *  for it (+2% to +12%, distErr +1 to +4) and the caps are re-measured for exactly that.
+ *
+ *  0.015 was measured too and is NOT what ships: it stills the board no more visibly (0.00 against
+ *  0.10-0.32 px/tick, both invisible) and costs twice as much -- braids +21% crossings against
+ *  +12%, mdfc +11% against +4%.
+ *
+ *  NOT the levers, and both were measured before this one was picked: `velocityDecay` 0.14 -> 0.55
+ *  also stills the board but costs +27% crossings on mdfc and +53% on inalla, and a `linkDistScale`
+ *  knob (built, swept, deleted) did not widen the nearest-neighbour gap AT ALL -- 77-83 world units
+ *  at every value -- while adding 18-35% crossings, because collide already sets local spacing and
+ *  longer springs only fold the layout. */
+export const ALPHA_DECAY = 0.010;
 /** THE BOARD IS ALLOWED TO STOP (2026-08-20). This was 0.02 -- an `alphaTarget`, so alpha never
  *  decayed to rest and the board crept forever under a paint loop that never idled. The value was
  *  ported from the pre-d3 hand-rolled loop, whose own comment said "it FLOORS alpha and keeps

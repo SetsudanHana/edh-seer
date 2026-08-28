@@ -1293,6 +1293,9 @@ export function GraphView(
     // cards on screen at zoom 1; with StrictMode off, zoom 0.235 and 84 of 84. Every jsdom test
     // passed throughout, because they drive alpha down by hand instead of letting it decay.
     let fitted = fittedGraphRef.current === graph;
+    // A graph already framed on a previous mount does not get the final re-frame either: its
+    // camera is where the reader last saw it, and moving it would be the board acting on its own.
+    let refitted = fitted;
     const loop = () => {
       // Rescheduled FIRST, so no early return below can end the loop. See `invalidate`'s comment:
       // the rAF is deliberately immortal, because a missed wake is a frozen board.
@@ -1316,6 +1319,18 @@ export function GraphView(
           fitToView();
           fitted = true;
           fittedGraphRef.current = graph;
+        } else if (!refitted && simulation.alpha() <= PARK_ALPHA && cameraOwnedByUserRef.current !== graph) {
+          // AND ONCE MORE WHEN IT STOPS. The first fit fires at FIT_SETTLE_ALPHA, which is
+          // mid-settle by design -- a frame that arrives seconds after the board appears reads as
+          // the board moving on its own. But the layout keeps SPREADING after that, so the cards
+          // that end up outermost can finish outside the framed rectangle: measured on the sorin
+          // cloud at ALPHA_DECAY 0.010, a connected card settled at y=448 against a visible bound
+          // of 437. Framing again at PARK_ALPHA -- when the simulation has actually stopped -- costs
+          // one camera move at the moment nothing else is moving, and is the frame that is
+          // guaranteed to hold. Never against a camera the USER has claimed, which is the same
+          // guard the one-time fit keeps.
+          fitToView();
+          refitted = true;
         }
       }
       draw();
