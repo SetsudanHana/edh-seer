@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Characteristics, GameEvent } from "@mtg/tagger";
-import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, keywordAbilities, proliferateAbilities, selfFillTypes } from "./implied.js";
+import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, enterAsCopyAbilities, keywordAbilities, proliferateAbilities, selfFillTypes } from "./implied.js";
 import type { CardTags } from "@mtg/tagger";
 
 const chars = (types: string[], subtypes: string[] = []): Characteristics => ({
@@ -572,4 +572,42 @@ test("one demand however many times the card proliferates", () => {
     { kind: "activated", effect: { kind: "proliferate" }, emits: [{ verb: "proliferate", subject: { control: "any", token: null } }] },
   ]);
   expect(proliferateAbilities(twice)).toHaveLength(1);
+});
+
+// AN ENTER-AS-A-COPY REPLACEMENT IS A REASON TO BE BLINKED, and the card carried no demand for it.
+// Sakashima the Impostor derives exactly `{kind: static, effect: {kind: clone}}` -- no subject, no
+// emit -- so a flicker that makes it re-enter (and re-choose what it copies) formed no edge.
+test("a card that enters as a copy asks to be made to enter", () => {
+  const a = enterAsCopyAbilities("You may have Sakashima the Impostor enter as a copy of any creature on the battlefield, except its name is Sakashima the Impostor.", chars(["creature"], ["shapeshifter"]));
+  expect(a).toHaveLength(1);
+  expect(a[0].trigger?.verbs).toEqual(["enters"]);
+  expect(a[0].trigger?.subject.self).toBe(true);
+  expect(a[0].effect.kind).toBe("clone");
+});
+
+test("a class recipient is NOT this card's own demand", () => {
+  // Essence of the Wild: "Creatures you control enter as a copy of this creature." Infinite
+  // Reflection: "Nontoken creatures you control enter as a copy of enchanted creature." The
+  // replacement applies to OTHER permanents; this card's own entry copies nothing, so a self
+  // demand here would be a false claim. Exactly 2 of the 66 corpus cards printing the cue.
+  expect(enterAsCopyAbilities("Creatures you control enter as a copy of this creature.", chars(["creature"], ["shapeshifter"]))).toHaveLength(0);
+  expect(enterAsCopyAbilities("Nontoken creatures you control enter as a copy of enchanted creature.", chars(["creature"], ["shapeshifter"]))).toHaveLength(0);
+});
+
+test("a card with no copy replacement asks for nothing", () => {
+  expect(enterAsCopyAbilities("When this creature enters, draw a card.", chars(["creature"], ["shapeshifter"]))).toHaveLength(0);
+  expect(enterAsCopyAbilities("", chars(["creature"], ["shapeshifter"]))).toHaveLength(0);
+  // "create a token that's a copy of" is a DIFFERENT family -- the token enters as the copy, not
+  // this card, and it already has its own pass (`copySubject`).
+  expect(enterAsCopyAbilities("Create a token that's a copy of target creature you control.", chars(["creature"], ["shapeshifter"]))).toHaveLength(0);
+});
+
+test("one demand however the template is dressed", () => {
+  // Protean Raider wears an ability word; Copy Enchantment is not a creature; Imposter Mech says
+  // "this Vehicle". All three are the same printed replacement.
+  for (const t of [
+    "Raid — If you attacked this turn, you may have this creature enter as a copy of any creature on the battlefield.",
+    "You may have this enchantment enter as a copy of any enchantment on the battlefield.",
+    "You may have this Vehicle enter as a copy of a creature an opponent controls, except it's a Vehicle artifact.",
+  ]) expect(enterAsCopyAbilities(t, chars(["creature"], ["shapeshifter"])), t).toHaveLength(1);
 });

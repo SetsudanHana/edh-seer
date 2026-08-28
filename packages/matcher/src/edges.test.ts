@@ -3154,3 +3154,54 @@ test("a proliferate edge says what actually happens, not that the producer got a
   expect(r.text).not.toContain("gets a counter");
   expect(r.text).not.toContain("triggers");
 });
+
+/** AN ENTER-AS-A-COPY REPLACEMENT IS A REASON TO BE BLINKED (spec 26.3's "flicker + enters-as-copy",
+ *  re-measured still-open 2026-08-28). Sakashima derives `{static, clone}` with no subject and no
+ *  emit, so a flicker that makes it re-enter had nothing to satisfy. */
+const cloneCard = (name: string, oracleText: string): DeckCard => ({
+  card: { name, typeLine: "Creature — Shapeshifter", oracleText, keywords: [], colors: [], manaValue: 3 } as never,
+  tags: {
+    oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["creature"], subtypes: ["shapeshifter"], colors: [], identity: [], cmc: 3, power: 0, toughness: 0, token: false, keywords: [] },
+    abilities: [{ kind: "static", effect: { kind: "clone" } }],
+  } as unknown as CardTags,
+});
+const blinker = () => base("Waterbender's Restoration", [{
+  kind: "on-cast",
+  effect: { kind: "flicker", subject: { control: "any", token: null } },
+  emits: [{ verb: "enters", subject: { control: "you", token: null, type: "creature", scope: "target", fromZone: "exile" } }],
+}] as unknown as CardTags["abilities"]);
+
+test("a flicker feeds a card that enters as a copy", () => {
+  const sakashima = cloneCard("Sakashima the Impostor",
+    "You may have Sakashima the Impostor enter as a copy of any creature on the battlefield, except its name is Sakashima the Impostor.");
+  const r = pairReasons(blinker(), sakashima, H).find((x) => x.tag.startsWith("enters"));
+  expect(r).toBeDefined();
+  // A replacement effect never TRIGGERS (CR 614.1c); what it does is choose again.
+  expect(r!.text).toBe("Waterbender's Restoration makes Sakashima the Impostor enter again, and it copies something new as it does");
+  expect(r!.text).not.toContain("triggers");
+});
+
+test("a copy replacement applied to a CLASS is not this card's own demand", () => {
+  // Essence of the Wild: "Creatures you control enter as a copy of this creature." Its OWN entry
+  // copies nothing, so the blink edge would be a claim the card does not make. 2 of the 66 corpus
+  // cards printing the cue are this shape.
+  const essence = cloneCard("Essence of the Wild", "Creatures you control enter as a copy of this creature.");
+  expect(pairReasons(blinker(), essence, H).some((x) => x.tag.startsWith("enters"))).toBe(false);
+});
+
+test("an UNTYPED enters emit does not reach a clone, because a real self-ETB trigger refuses it too", () => {
+  // Reality Shift emits a bare `{verb: "enters", control: "any"}` — its target manifests an unknown
+  // top card, face down, as a 2/2 with no abilities (CR 708.2), so no copy replacement applies.
+  // Verified against the committed tree: that emit reaches an ordinary self-ETB creature ZERO times.
+  // An untyped clone demand accepted it 21 times, which made this demand WIDER than the channel it
+  // is joining. The card's own printed type is what closes the gap.
+  const manifest = base("Reality Shift", [{
+    kind: "on-cast",
+    effect: { kind: "" },
+    emits: [{ verb: "enters", subject: { control: "any", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+  const sakashima = cloneCard("Sakashima the Impostor",
+    "You may have Sakashima the Impostor enter as a copy of any creature on the battlefield.");
+  expect(pairReasons(manifest, sakashima, H).some((r) => r.tag.startsWith("enters"))).toBe(false);
+});

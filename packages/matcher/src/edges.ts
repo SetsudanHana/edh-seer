@@ -6,13 +6,13 @@ import { LAND_SUBTYPES } from "@mtg/tagger";
 const SUPERTYPES: ReadonlySet<string> = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, proliferateAbilities, selfFillTypes } from "./implied.js";
+import { enterAsCopyAbilities, impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, proliferateAbilities, selfFillTypes } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
-  copySentence, costReductionSentence, counterPresenceSentence, createsSentence, fetchSentence,
-  proliferateSentence,
+  copySentence, costReductionSentence, counterPresenceSentence, createsSentence,
+  enterAsCopySentence, fetchSentence, proliferateSentence,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   staticGrantSentence, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
@@ -944,10 +944,14 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
   // SUPPLY an untyped counter-added since it shipped, and nothing made it ASK for one -- so Radstorm
   // and Virulent Silencer were two producers with no edge between them. Same channel shape as the
   // keyword line above: a synthetic consumer ability this loop already knows how to read.
+  // AN ENTER-AS-A-COPY REPLACEMENT IS A REASON TO BE BLINKED. Read off the FACE's own printed text
+  // (`faceDeckCards` gives each face its own `oracleText`), so a modal DFC's land back is not handed
+  // a clone demand. See `enterAsCopyAbilities`.
   const cAbilities = [
     ...c.tags.abilities,
     ...keywordAbilities(c.tags.characteristics),
     ...proliferateAbilities(c.tags),
+    ...enterAsCopyAbilities(c.card.oracleText, c.tags.characteristics),
   ];
   // A PROLIFERATE MULTIPLIES A COUNTER THAT IS ALREADY THERE (CR 701.29); IT CANNOT BE THE ORIGIN OF
   // ONE. Without this, the producer's own proliferate-implied counter-added satisfies the consumer's
@@ -1066,9 +1070,15 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         // counter, it MAKES one, and a sorcery that proliferates never triggers. See
         // `proliferateSentence`.
         const proliferateDemand = a.effect.kind === "proliferate" && t.verb === "counter-added";
+        // A CLONE DOES NOT TRIGGER ON ENTERING, IT REPLACES ITS OWN ENTRY (CR 614.1c). The generic
+        // self grammar would say "it triggers", which is the wrong mechanism for the one thing this
+        // demand exists to state. See `enterAsCopySentence`.
+        const clonesOnEntry = a.effect.kind === "clone" && t.verb === "enters" && t.subject.self === true;
         reasons.push({
           tag: key,
-          text: proliferateDemand ? proliferateSentence(p.card.name, c.card.name) : reasonSentence({
+          text: proliferateDemand ? proliferateSentence(p.card.name, c.card.name)
+            : clonesOnEntry ? enterAsCopySentence(p.card.name, c.card.name)
+            : reasonSentence({
             producer: p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
             // CAN THE PRODUCER BE THE THING THIS HAPPENS TO? That is the whole question, and

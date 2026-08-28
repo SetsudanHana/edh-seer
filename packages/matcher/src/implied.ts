@@ -539,3 +539,65 @@ export function proliferateAbilities(tags: CardTags): Ability[] {
     effect: { kind: "proliferate" },
   }];
 }
+
+/** "You may have this creature enter as a copy of any creature on the battlefield" is a replacement
+ *  effect on the card's OWN entry (CR 614.1c), which makes every blink, flicker and reanimation in
+ *  the deck a way to re-use it — and the card carried no demand for one. Sakashima the Impostor
+ *  derives exactly `{kind: "static", effect: {kind: "clone"}}`: no subject, no emit, nothing for a
+ *  producer's `enters` to satisfy. Spec 26.3's "flicker + enters-as-copy" miss, re-measured still
+ *  open on 2026-08-28.
+ *
+ *  MATCHED ON THE PRINTED CUE, NOT THE DERIVED KIND, which is the ruling the C4 copy work already
+ *  made for this same family: the kinds do not separate it. 31 derived cards print the cue and they
+ *  arrive as `static/clone` (27) and `static/copy-spell` (4) indifferently, while `clone` is also
+ *  the kind a card gets for copying something else.
+ *
+ *  ALL 66 CORPUS CARDS PRINTING THE CUE WERE READ, not sampled, and 2 of them are a FALSE POSITIVE
+ *  the naive cue would take:
+ *   - **Essence of the Wild** — "CREATURES YOU CONTROL enter as a copy of this creature"
+ *   - **Infinite Reflection** — "NONTOKEN CREATURES YOU CONTROL enter as a copy of enchanted creature"
+ *  Both are replacements applied to OTHER permanents; this card's own entry copies nothing, so a
+ *  self demand would be a claim the card does not make. Anchoring on the printed self template
+ *  ("you may have <something> enter as a copy", 62 of the 66) refuses both.
+ *
+ *  IT UNDER-CLAIMS ON TWO, STATED RATHER THAN STRETCHED FOR. The Mimeoplasm says "if you do, IT
+ *  enters as a copy" in a second sentence, and The Playful Winners names itself with no "may have".
+ *  A cue loose enough to reach them would have to read a bare pronoun, and "it" routinely means a
+ *  TOKEN elsewhere in this corpus — a missing edge beats a wrong one.
+ *
+ *  SCOPED TO ONE SENTENCE (`[^.]*`), so the "you may have" of one ability cannot license a copy
+ *  clause in the next. Face-safe for free: `faceDeckCards` gives every face its own `oracleText`,
+ *  so Glasspool Shore (the LAND back of Glasspool Mimic) is not handed a clone demand.
+ *
+ *  WHAT FEEDS IT IS ALREADY GATED. A `self` enters trigger is refused an implied or token producer
+ *  by `selfEtbSelfSupplied`, and the self-trigger identity gate in `directedReasons` then requires
+ *  the producer's emit to be something this card could BE. So the suppliers are authored, non-token
+ *  `enters` emits — the flicker and reanimation class — which is the same channel every self-ETB
+ *  creature already draws on. Measured: 17 of the 71 decks hold one, 548 candidate pairs, max
+ *  fan-out 16 (`can-i-copy-your-homework`, `everything-is-a-land`) against the mesh cap of 50.
+ *
+ *  CEILING, the one `keywordAbilities` and `proliferateAbilities` both carry: only edge formation
+ *  reads this, so a clone still does not count as a blink payoff for `cardCaresTags`. */
+const ENTERS_AS_A_COPY = /\byou may have\b[^.]*\benters? as a copy\b/i;
+
+export function enterAsCopyAbilities(oracleText: string | undefined, chars: Characteristics): Ability[] {
+  if (!oracleText || !ENTERS_AS_A_COPY.test(oracleText)) return [];
+  return [{
+    kind: "triggered",
+    // THE CARD'S OWN PRINTED TYPE, so this demand is no wider than the one a self-ETB creature
+    // already derives. Left untyped, it was WIDER: Reality Shift's emit is a bare
+    // `{verb: "enters", control: "any"}` — the manifest of an unknown top card — and an untyped
+    // demand accepted it, 21 rows, while the same emit reaches an ordinary self-ETB creature ZERO
+    // times today (verified against the committed tree). A face-down manifested permanent is a 2/2
+    // with no abilities (CR 708.2), so its copy replacement does not even apply.
+    //
+    // TYPE ONLY, NEVER SUBTYPE. A blink emits "a creature you control", which cannot promise a
+    // Shapeshifter, so demanding the subtype would refuse the whole flicker class this exists for.
+    // `selfSubject` above carries both because it is SUPPLY, where naming more is naming truth.
+    trigger: {
+      verbs: ["enters"],
+      subject: { control: "you", token: null, self: true, type: collapse(chars.types) },
+    },
+    effect: { kind: "clone" },
+  }];
+}

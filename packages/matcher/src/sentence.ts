@@ -280,6 +280,14 @@ export function proliferateSentence(producer: string, consumer: string): string 
   return `${producer} puts counters on the board, and ${consumer} proliferates them`;
 }
 
+/** WHY A CLONE WANTS TO BE BLINKED. The generic grammar renders a self trigger as "When <consumer>
+ *  enters thanks to <producer>, it triggers" — and an enter-as-a-copy replacement (CR 614.1c) never
+ *  triggers, it REPLACES. The value is that the copy choice is made again, against whatever is on
+ *  the board now, which is the whole reason a blink deck runs one. */
+export function enterAsCopySentence(producer: string, consumer: string): string {
+  return `${producer} makes ${consumer} enter again, and it copies something new as it does`;
+}
+
 export function meldSentence(a: string, b: string): string {
   return `${a} and ${b} meld together`;
 }
