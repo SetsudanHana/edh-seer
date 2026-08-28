@@ -357,9 +357,13 @@ describe("the board does not drift off screen", () => {
     expect(centroidDistance(800)).toBeLessThan(100);
   });
 
+  // EXPLICIT TIMEOUT, because this test asserts DRIFT and vitest's 5s default asserts SPEED.
+  // 10,000 force ticks take about a second on a fast machine and comfortably over five on a slow
+  // one -- it timed out on the CI matrix's Node 20 leg while passing on 22, which measured the
+  // runner rather than the layout. 30s is far above the real cost and still fails a genuine hang.
   test("the centroid stays near the origin at 10,000 ticks, not just slower to drift", () => {
     expect(centroidDistance(10000)).toBeLessThan(100);
-  });
+  }, 30_000);
 });
 
 // CARD MODE MUST NOT OVERLAP. Two axis-aligned rectangles miss each other only when |dx| >= w or
