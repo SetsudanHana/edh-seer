@@ -79,7 +79,35 @@ function isSpellCard(typeLine: string): boolean {
  *  49 — which lost the cost (the aristocrats signal) and gave each card the wildcard-lord shape that
  *  false-edge meshes are made of. The cap was also the only thing keeping a whole sentence out:
  *  excluding the period is a tighter bound than any number, because no cost part ever spans one. */
-const ACTIVATED = /^((?:(?:\{[^}]*\})+|[^:{}.]{1,80}?)(?:\s*,\s*(?:(?:\{[^}]*\})+|[^:{}.]{1,80}?))*)\s*:\s+/;
+/** A SCAN, not a regex, and the grammar above is unchanged — this is the same language read
+ *  left to right once. The pattern it replaces was AMBIGUOUS: a phrase part could itself contain
+ *  the comma and the whitespace that separate parts, so every comma offered the engine a choice and
+ *  a line that ultimately FAILED to match cost 2^parts. Measured on the pattern it replaces:
+ *  10 parts 2.9ms · 14 parts 19ms · 16 parts 154ms · 18 parts 1.4s · 20 parts 13s, on 59 characters.
+ *  Real oracle lines reach 18 comma-separated parts, and segmenting the 34,081-card corpus took
+ *  32.7 SECONDS against 1.5 with this scan — the input is trusted, so this was never a request-path
+ *  exposure, it was the normalizer paying for its own backtracking. → issue #19.
+ *
+ *  Splitting on EVERY comma is what makes one pass enough. A phrase part may legally span a comma,
+ *  but splitting there only ever shortens the parts, so a head that parses at all parses when cut
+ *  at every comma — which is why the ambiguity was free to remove rather than something to model. */
+function activatedCost(text: string): { cost: string; length: number } | null {
+  // Parts exclude ':', so a match can only ever end at the FIRST colon; there is no later one to try.
+  const colon = text.indexOf(":");
+  if (colon < 0) return null;
+  let end = colon + 1;
+  while (end < text.length && /\s/.test(text[end] as string)) end++;
+  if (end === colon + 1) return null;             // "\s+" — the colon must be followed by whitespace
+  for (const raw of text.slice(0, colon).split(",")) {
+    const part = raw.trim();
+    if (part === "") return null;
+    // A part is a RUN of mana symbols or a phrase, never a mixture: "Pay {2}" is not a cost part,
+    // and it was not one under the pattern either.
+    if (/[{}]/.test(part)) { if (!/^(?:\{[^{}]*\})+$/.test(part)) return null; }
+    else if (part.length > 80 || part.includes(".")) return null;
+  }
+  return { cost: text.slice(0, colon).trim(), length: end };
+}
 
 /** Actions a cost performs that another card can trigger on. Extracted here rather than left to
  *  the model, which recorded a sacrifice cost on one run and dropped it the next. Paying mana and
@@ -284,10 +312,10 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
   if (TRIGGER_CUE.test(text) || TRIGGER_CUE.test(text.replace(LABEL, ""))) {
     return { abilityType: "triggered", body: text };
   }
-  const act = text.match(ACTIVATED);
+  const act = activatedCost(text);
   // Require the prefix to look like a cost: it must contain a mana symbol, {T}, or a cost word.
-  if (act && /\{|sacrifice|discard|pay|remove|exile|tap\b/i.test(act[1])) {
-    return { abilityType: "activated", cost: act[1].trim(), body: text.slice(act[0].length) };
+  if (act && /\{|sacrifice|discard|pay|remove|exile|tap\b/i.test(act.cost)) {
+    return { abilityType: "activated", cost: act.cost, body: text.slice(act.length) };
   }
   if (kind === "chapter") return { abilityType: "triggered", body: text };
   return { abilityType: isSpellCard(typeLine) ? "spell" : "static", body: text };

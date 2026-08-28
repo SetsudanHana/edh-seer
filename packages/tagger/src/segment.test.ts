@@ -550,3 +550,45 @@ test("a clause records which face prints it, and only when there is more than on
   const plain = segment("Draw a card.\nGain 2 life.", [], "Sorcery");
   expect(plain.every((c) => c.face === undefined)).toBe(true);
 });
+
+/** THE COST PREFIX IS READ BY A LINEAR SCAN — issue #19, `js/redos`.
+ *
+ *  The pattern this replaced let a phrase part contain the comma and the whitespace that separate
+ *  parts, so every comma was a fork and a line that ultimately FAILED cost 2^parts:
+ *  16 parts 154ms · 18 parts 1.4s · 20 parts 13s, on 59 characters. Real oracle lines reach 18
+ *  comma-separated parts, and the whole 34,081-card corpus segmented in 32.7s against 206ms after.
+ *
+ *  A TIME BUDGET rather than an implementation, so any linear rewrite passes. 20 parts costs the old
+ *  pattern roughly 13 seconds against this budget of one, and costs this scan ~0ms.
+ *
+ *  THE INPUT MUST FAIL TO MATCH, and that is the whole test. Given a well-formed cost the old
+ *  pattern succeeded immediately; the blowup lives only in the failing case, so a trailing "{"
+ *  (a brace that never closes, which no part can accept) is what separates the two. */
+test("the activated-cost scan is linear on a line that cannot be a cost", () => {
+  const line = `${Array(20).fill("a").join(", ")}{`;
+  const started = performance.now();
+  const c = segment(line, [], "Artifact");
+  expect(performance.now() - started).toBeLessThan(1_000);
+  expect(c[0].abilityType).toBe("static");
+});
+
+/** The grammar the scan keeps, one case per rule, because a faster wrong answer is still wrong.
+ *  Every one of these was verified byte-identical against the pattern over the whole corpus. */
+test("the cost grammar is unchanged by the linear rewrite", () => {
+  // A colon with no whitespace after it is not a cost — Level up's "Level 2" reads the same way.
+  expect(segment("{T}:Add {G}.", [], "Land")[0].abilityType).toBe("static");
+  // A part that mixes a phrase and a brace run is not a cost part.
+  expect(segment("Pay {2}: Draw a card.", [], "Artifact")[0].abilityType).toBe("static");
+  // A period cannot sit inside a cost, which is what keeps a whole sentence out.
+  expect(segment("Sacrifice a creature. Then tap: Draw a card.", [], "Artifact")[0].abilityType).toBe("static");
+  // An empty part is not a part — a leading or doubled comma is not a cost list. NO PRINTED
+  // WITNESS: the whole corpus segments byte-identically with this guard removed, so it is stated
+  // here rather than left as decoration nothing exercises.
+  expect(segment(", {T}: Draw a card.", [], "Artifact")[0].abilityType).toBe("static");
+  // A phrase part over 80 characters is not a cost.
+  expect(segment(`${"a".repeat(81)}, {T}: Draw a card.`, [], "Artifact")[0].abilityType).toBe("static");
+  // ...and at 80 it still is, so the bound is the one the pattern carried.
+  const long = segment(`Sacrifice ${"a".repeat(70)}, {T}: Draw a card.`, [], "Artifact")[0];
+  expect(long.abilityType).toBe("activated");
+  expect(long.cost).toBe(`Sacrifice ${"a".repeat(70)}, {T}`);
+});
