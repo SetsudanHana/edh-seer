@@ -43,7 +43,7 @@ export const ANSWER_BASELINE: Record<string, number> = {
  *  hate pieces and cannot RANK them. Rest in Peace and Scavenging Ooze are both one row of the 66,
  *  though the first turns a reanimator deck off completely and the second eats one card a turn.
  *  Nothing derived separates a total shutoff from incremental exile.
- *  ponytail: count-weighted, upgrade when a severity field exists.
+ *  CEILING: count-weighted, upgrade when a severity field exists.
  *
  *  A HAND-COPY OF THESE COUNTS ALSO LIVES IN THE CLIENT, `BuildBenchmarks.tsx`'s `HATE_COUNTS`
  *  (whole-branch review IMPORTANT 2), for the sentence that says "19 artifacts and 8 enchantments

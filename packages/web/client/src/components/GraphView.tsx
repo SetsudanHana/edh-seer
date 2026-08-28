@@ -244,7 +244,7 @@ export function GraphView(
   // Layout continuity: positions of every node as of the last time this effect tore down, keyed by
   // id. Persists across `graph` changes for the life of this component so a re-render moves only
   // what actually changed instead of re-throwing the whole layout.
-  // ponytail: never pruned of ids that drop out of the graph, so it grows unbounded for the life
+  // CEILING: never pruned of ids that drop out of the graph, so it grows unbounded for the life
   // of a mounted GraphView. Fine at one deck's worth of nodes per mount; add pruning on teardown
   // (drop ids not in the latest `graph.nodes`) if this component ever stays mounted across many
   // distinct decks in one session.

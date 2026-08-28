@@ -256,7 +256,7 @@ export interface LandsTarget {
  *  disagreement -- the score scoring flat 36 while the panel showed the regression's own answer --
  *  is the defect this task closes.
  *
- *  ponytail: THIS GATES THE REGRESSION'S OUTPUT, NOT ITS INPUTS -- and the two are not the same
+ *  CEILING: THIS GATES THE REGRESSION'S OUTPUT, NOT ITS INPUTS -- and the two are not the same
  *  refusal (fix F2, controller review 2026-08-21). With `commanders=1, rampPlusDraw=0, fastMana=0,
  *  mdfcUntapped=0, mdfcTapped=0`, `karstenLands`'s arithmetic reduces to
  *  `raw = 31.419 + 3.135*avgManaValue`, so avgManaValue alone stays inside [28, 39] only up to
@@ -375,7 +375,7 @@ export interface RampResilience {
  *  is a creature, it dies to every wipe, and the land it fetched is still there afterwards. What
  *  survives is the mana, not the body that bought it.
  *
- *  ponytail: A RITUAL IS NOT A ROCK and is counted as one here -- Dark Ritual has no durability at
+ *  CEILING: A RITUAL IS NOT A ROCK and is counted as one here -- Dark Ritual has no durability at
  *  all, and also nothing to destroy, so it sits on a different axis (one-shot vs permanent) that
  *  this three-tier read cannot express. Same for a Treasure, which is consumed on use. Upgrade path
  *  if it matters: a fourth `oneShot` tier off `effectKind: ritual` plus the token rule, which is a
@@ -471,7 +471,7 @@ export function computeBuild(
 
   // BREADTH, beside the count. `detectAnswerClasses` already lives in this file, so unlike the
   // Karsten land target this needs no threading from `computeDeckMath` and no call reordering.
-  // ponytail: the `.size > 0` filter is UNREACHABLE against `detectAnswerClasses`'s own
+  // CEILING: the `.size > 0` filter is UNREACHABLE against `detectAnswerClasses`'s own
   // implementation today (whole-branch review criterion 5, design §10) -- a Map entry for a class
   // is only ever created in the same branch that immediately adds a card to it, so no entry can
   // exist with `cards.size === 0`. Left in rather than deleted: it is one cheap line documenting an

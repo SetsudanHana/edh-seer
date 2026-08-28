@@ -242,7 +242,7 @@ export async function fetchOracleCards(
   }
   const res = await fetchImpl(entry.jsonl_download_uri, { headers: SCRYFALL_HEADERS });
   if (!res.ok) throw new Error(`Scryfall bulk download failed: ${res.status}`);
-  // ponytail: whole file in memory (~24MB gzipped). Stream through createGunzip + readline if it OOMs.
+  // CEILING: whole file in memory (~24MB gzipped). Stream through createGunzip + readline if it OOMs.
   const buf = Buffer.from(await res.arrayBuffer());
   const text = gunzipSync(buf).toString("utf8");
   return text

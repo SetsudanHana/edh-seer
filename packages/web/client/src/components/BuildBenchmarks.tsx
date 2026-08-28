@@ -742,7 +742,7 @@ function DeckMathRows({
   // `draguns` (mono-blue, one colour row wanting 37 against 36 lands), where the message fired on a
   // one-land margin and said "which no deck can hold" about a deck that plainly could.
   //
-  // ponytail: the comparison is still loose for two or more colours -- `totalRequired` counts
+  // CEILING: the comparison is still loose for two or more colours -- `totalRequired` counts
   // SOURCES, which include rocks and dorks, against LANDS, and a dual land answers two rows at once.
   // Tightening that needs a per-colour supply ceiling this component does not have; the guard here
   // only removes the case where the sentence is self-evidently false.

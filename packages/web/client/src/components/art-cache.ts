@@ -23,7 +23,7 @@ const MAX_ENTRIES = 500;
  *  `Cache.keys()` resolves in INSERTION order, which is what makes oldest-first possible without
  *  storing timestamps alongside every entry. It is insertion order and not use order, so this is
  *  FIFO rather than a true LRU: re-viewing a card does not refresh its place in the queue.
- *  ponytail: FIFO, not LRU — a card viewed once on day one is evicted before one never viewed
+ *  CEILING: FIFO, not LRU — a card viewed once on day one is evicted before one never viewed
  *  since, which only matters if a user works far past 500 cards in one profile; store a `put`
  *  timestamp per entry and sort on it if that shows up in practice.
  *

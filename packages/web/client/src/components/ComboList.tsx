@@ -29,7 +29,7 @@ function ArrowIcon() {
  *  array at INGEST — so this splits what was joined. Lossless for every result in the corpus today
  *  (a feature name is a phrase like "Infinite creature tokens with haste"); a name that contained a
  *  comma would render as two shorter clauses, which is cosmetic rather than a wrong claim.
- *  ponytail: the honest fix is keeping the array through the pipeline, which costs a re-ingest.
+ *  CEILING: the honest fix is keeping the array through the pipeline, which costs a re-ingest.
  *  → `specs/2026-08-20-report-usability-review.md` §3 F10 */
 const RESULTS_SHOWN = 3;
 

@@ -31,7 +31,7 @@ import { ANSWER_BASELINE, GRAVEYARD_HATE_SHARE } from "../answer-coverage.js";
 // same `hateCounts` this sweep already measures: the smallest thing that can catch the two
 // disagreeing, and disagreeing silently is exactly how `answer-coverage.ts`'s own comment above
 // `GRAVEYARD_HATE_SHARE` used to describe this gap.
-// ponytail: regex over a TSX file's source text, not an AST read -- upgrade if `HATE_COUNTS`'s
+// CEILING: regex over a TSX file's source text, not an AST read -- upgrade if `HATE_COUNTS`'s
 // shape ever gets more complex than `{ creature: N, artifact: N, enchantment: N }`.
 const CLIENT_HATE_FILE = join(
   dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "web", "client", "src", "components", "BuildBenchmarks.tsx",

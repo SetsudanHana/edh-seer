@@ -250,7 +250,7 @@ export function analyzeDeckStructured(
   // copy, never split) needs a way back. `derived` in particular defaults TRUE on a miss, so an
   // UNDERIVED two-faced card would silently report as read without this -- "a silent wrong answer
   // is worse than a missing one" (review fix, 2026-08-27).
-  // ponytail: a face name can collide with a real, unrelated card's name (CLAUDE.md's I3 family --
+  // CEILING: a face name can collide with a real, unrelated card's name (CLAUDE.md's I3 family --
   // split cards whose front face equals a whole card's own name, e.g. Bind, Smelt, Armed). `byName`
   // dedupes on the PHYSICAL name and never checks a face name against a different real card's, so
   // this Map (keyed on the post-split face name) silently keeps whichever of the two was built
@@ -407,7 +407,7 @@ export function analyzeDeckStructured(
   // full edge weight (it is the sink); the feeder accrues a β share. Both are √-damped (concave):
   // an anchor rises with its support instead of being flattened toward the mean of its feeders (the
   // old dampByAlpha ÷partnerCount behavior). A card that both feeds and is fed earns both terms.
-  // ponytail: directedReasons(p,c) re-runs the O(n²) reason computation vs. the undirected `edges`
+  // CEILING: directedReasons(p,c) re-runs the O(n²) reason computation vs. the undirected `edges`
   // build above — acceptable at deck scale (~100 cards); a future pass could build directed and
   // undirected reasons together in one O(n²) sweep instead of two.
   interface Dir { support: number; feederSum: number; partnerCount: number; partners: { name: string; contribution: number; reasons: Reason[] }[] }
@@ -649,7 +649,7 @@ export function analyzeDeckStructured(
   );
   // Double-duty: a card that fills a functional BUILD role AND sits on the deck's synergy axis is
   // efficient — one card, two jobs — so it gets a small capped rating premium and a marker.
-  // ponytail: detectBuildCategories also runs inside computeBuild below; the second linear scan is
+  // CEILING: detectBuildCategories also runs inside computeBuild below; the second linear scan is
   // negligible and keeps computeBuild's signature untouched.
   const buildRoles = rolesByCard(detectBuildCategories(resolved));
   // What each card costs and when you can cast it, carried onto the card row so the reader can
@@ -825,7 +825,7 @@ export function analyzeDeckStructured(
 
   const deckStats = computeDeckStats(resolved.map((dc) => dc.card));
 
-  // ponytail: `cardEdges` carries FACE names (it is built from `pairPool`, which is face-split), so
+  // CEILING: `cardEdges` carries FACE names (it is built from `pairPool`, which is face-split), so
   // `report.archetypes[].cards` can list a face name that is not, itself, a line on the decklist --
   // e.g. "Fell Mire" rather than "Fell the Profane // Fell Mire". Comment only, not a guard: the
   // physical-name translation this file already carries (`physicalName`) is for JOINS back onto

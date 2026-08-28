@@ -374,7 +374,7 @@ function syntheticEvent(chars: Characteristics, spec: EmitSpec): GameEvent {
  *  multi-face ⟺ says "transform" is EXACT (44 of 44), and single-face ⟺ states its own sacrifice
  *  holds for 186 of 190.
  *
- *  ponytail: the 4 single-face exceptions are read as dying. Three of them really do die — The Legend
+ *  CEILING: the 4 single-face exceptions are read as dying. Three of them really do die — The Legend
  *  of Arena, The Many Deeds of Belzenlok and Saga of Krark Losing His Thumb simply print no
  *  "Sacrifice after" reminder, and 704.5s applies to them regardless. The one genuine miss is **The
  *  Aesir Escape Valhalla**, whose chapter III returns itself to its owner's HAND; it is not in the

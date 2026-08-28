@@ -12,7 +12,7 @@
  *  and in how densely their synergies mesh (137-313 edges), which is the axis this board is now
  *  sensitive to.
  *
- *  ponytail: QUALITY_CAPS is empty until Task 6 fills it FROM these measurements, so every case
+ *  CEILING: QUALITY_CAPS is empty until Task 6 fills it FROM these measurements, so every case
  *  reports NO CAP RECORDED and the exit code is non-zero. That is the intended pre-Task-6 state --
  *  a cap invented before anything was measured is a guess wearing a number.
  */

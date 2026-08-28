@@ -86,7 +86,7 @@ export const VERB_PHRASES: Record<string, string> = {
  *  card's name. Unlike `humanizeEvent`, the subject half is dropped: the sentence names the
  *  PRODUCER CARD as the cause, not a class of card, so "a creature" would be redundant at best and
  *  wrong once the class doesn't describe the actual producer (an artifact creature dying still
- *  satisfies `dies:creature`). ponytail: a verb this map has never seen gets `verb + "s"`, which is
+ *  satisfies `dies:creature`). CEILING: a verb this map has never seen gets `verb + "s"`, which is
  *  wrong for the noun-shaped verbs above but is why they are all listed explicitly instead. */
 export function eventVerbPhrase(key: string): string {
   const verb = key.split(":")[0] ?? key;

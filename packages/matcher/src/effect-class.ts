@@ -1,4 +1,4 @@
-/** ponytail: unread. This classification has no consumer — the themeMembership branch that read
+/** CEILING: unread. This classification has no consumer — the themeMembership branch that read
  *  it was deleted (2026-08-04) because it fired on the wrong thing: `r.effectKind` is the
  *  CONSUMER's effect kind and `r.tag` is what the consumer triggers on, so `classifyEffect`
  *  answered "does this kind modify an event" instead of "does it modify THIS event," and it never

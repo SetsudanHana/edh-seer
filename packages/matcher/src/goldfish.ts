@@ -403,7 +403,7 @@ const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const
 
 /** What a fetchland can find in THIS deck, as a colour mask.
  *
- *  ponytail: computed once off the whole deck, not per trial off the remaining library, so it
+ *  CEILING: computed once off the whole deck, not per trial off the remaining library, so it
  *  over-claims slightly as the library empties. The alternative is recomputing a mask every crack. */
 export function fetchMask(oracleText: string, deck: readonly { typeLine: string; producedMana?: readonly string[] }[]): number {
   const text = oracleText.toLowerCase();

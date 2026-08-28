@@ -43,7 +43,7 @@ const KNOWN_VERBS: ReadonlySet<string> = new Set(VERB_VOCAB);
  *  `once` is the honest ceiling here — it fires once per GAME, not once per round, and a single
  *  number cannot say both. It is given 1 so a one-shot never outweighs a repeatable engine; the
  *  cost is that a 60-round game and a 3-round game read the same.
- *  ponytail: flat per-round reading, replace with a game-length integral if the census says the
+ *  CEILING: flat per-round reading, replace with a game-length integral if the census says the
  *  once/per-cycle collision is actually deciding rows. */
 export const EVENTS_PER_ROUND: Record<string, number> = {
   once: 1,
@@ -65,7 +65,7 @@ export const IMPLIED_RATE = 1;
 
 /** Ceiling on a parsed `amount`. "Create X tokens" is unbounded and "create twenty" is a real
  *  card; without a cap one outlier decides its deck's whole ratio.
- *  ponytail: flat cap, revisit if the census shows rows hitting it. */
+ *  CEILING: flat cap, revisit if the census shows rows hitting it. */
 const AMOUNT_CAP = 10;
 
 export interface SupplyDemandInput {
@@ -91,7 +91,7 @@ export interface SideTotals {
   /** Token NODES on this side. A token is not a deck card and has no draw probability of its own —
    *  it is as available as whatever makes it — so it is counted at the implied rate and reported
    *  separately rather than folded in silently.
-   *  ponytail: tokens at implied rate, join `loadTokenTags` here if the tails turn out to be token
+   *  CEILING: tokens at implied rate, join `loadTokenTags` here if the tails turn out to be token
    *  rows. */
   tokens: number;
   /** `repeats` label → cards, plus `implied` for a card supplying the shape merely by existing and

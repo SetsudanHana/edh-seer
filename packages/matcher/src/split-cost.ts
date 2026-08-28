@@ -28,7 +28,7 @@
  *  **THE DISCRIMINATOR IS STORED AND NEEDS NO PARSING**: `keywords` carries `["Fuse"]` and
  *  `["Aftermath"]` on the card document, and `docToCard` copies both it and `layout`.
  *
- *  ponytail: "cheaper" is the lower converted total, ties to the front half. Two halves of the same
+ *  CEILING: "cheaper" is the lower converted total, ties to the front half. Two halves of the same
  *  total in different colours (`{1}{U}` // `{1}{B}`) pick the front rather than whichever colour the
  *  board can actually make — a per-board choice this helper has no access to, and the two halves of
  *  a split are almost always different totals. Make `cost` a list of alternatives if that changes.

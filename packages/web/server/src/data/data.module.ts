@@ -289,7 +289,7 @@ export function attachRolesAndArt(
             // `tokens` row's `_id` (that is what `loadTokenTags` keys its synthesis on), so this is
             // the exact join, not the (name, typeLine) guess Task 3/4a retired. Keyed OUT by node id
             // because that is what `attachRolesAndArt` sees.
-            // ponytail: two DIFFERENT tokens sharing a name collapse to one node id already (that is
+            // CEILING: two DIFFERENT tokens sharing a name collapse to one node id already (that is
             // `nodeId`'s granularity, not this join's) -- last one wins here; give a node its oracle
             // id if that ever needs separating.
             const tokenArtById = new Map<string, string>();

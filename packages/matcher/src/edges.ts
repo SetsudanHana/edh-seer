@@ -486,7 +486,7 @@ export const ROLE_NOT_SYNERGY: ReadonlySet<string> = new Set([
  *  cheaper, so the Henge is a `scales:`-family CONSUMER of power, not a producer of discounts.
  *  Refusing the wrong direction beats stating it backwards; the reverse edge is its own item.
  *
- *  ponytail: card-scoped cue, so a card printing BOTH a self reduction and a real other-reduction
+ *  CEILING: card-scoped cue, so a card printing BOTH a self reduction and a real other-reduction
  *  loses the real one. None of the 64 does today. Clause scoping would need the clause text at
  *  match time, which the matcher does not carry. */
 const reducesItself = (oracleText: string | undefined): boolean =>
@@ -873,7 +873,7 @@ const strip = (s: Partial<SubjectFilter>): Partial<SubjectFilter> => {
  *  shapes: on "create a token that's a copy of target creature" it describes what is CREATED, on a
  *  populate effect what is COPIED, and only the printed cue tells them apart.
  *
- *  CEILING (`ponytail:` -- read before trusting a claim): `control` is ignored, so a card making an
+ *  CEILING (`CEILING:` -- read before trusting a claim): `control` is ignored, so a card making an
  *  OPPONENT copy something over-claims, and Coiling Rebirth's copy is conditioned on "that creature
  *  isn't legendary" -- an intervening-if the engine has refused generally, not the literal word
  *  `notLegendary` catches. Both single cards; gate on control only if a measurement finds the
@@ -1309,7 +1309,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
   // Crystallized Serah, which prints a reducer on each face) -- and cost-reduction is exempt from
   // the mesh census, so it moves no gate. Left alone deliberately.
   //
-  // ponytail: re-splits the parent per claim rather than caching the faces. Only runs for a
+  // CEILING: re-splits the parent per claim rather than caching the faces. Only runs for a
   // multi-face consumer past face 0 that already formed a claim, which is 217 rows in 45,246.
   // The parameter SHADOWS the pair's own `c` on purpose: every guard below must judge the FACE it
   // is asked about, and a body that reached past it to the pair's consumer would answer the

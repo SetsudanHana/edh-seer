@@ -83,3 +83,6 @@ secrets.json
 
 # saved web pages and their asset folders
 *_files/
+
+# AI design-tool sidecars
+.impeccable/

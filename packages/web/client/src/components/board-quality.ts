@@ -10,7 +10,7 @@ function crosses(p: Pt, q: Pt, r: Pt, s: Pt): boolean {
   return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
 }
 
-/** ponytail: O(n^2) over edge pairs -- 200 edges is 20k tests, microseconds. If the projection ever
+/** CEILING: O(n^2) over edge pairs -- 200 edges is 20k tests, microseconds. If the projection ever
  *  ships thousands of edges, sweep-line (Bentley-Ottmann) is the upgrade. */
 export function edgeCrossings(edges: readonly QEdge[], nodes: Record<string, Pt>): number {
   let n = 0;

@@ -16,7 +16,7 @@ import { directedReasons } from "./edges.js";
  *  Edges come from `directedReasons`, so they are exactly the engine's edges -- the same function
  *  the deck analysis and the compass regression run on. A graph that computed its own would drift.
  *
- *  ponytail: O(n^2) calls to `directedReasons`, one per ordered pair. Fine for the few-hundred-card
+ *  CEILING: O(n^2) calls to `directedReasons`, one per ordered pair. Fine for the few-hundred-card
  *  subgraphs the exporter produces (a 100-card deck is ~10k calls, well under a second) and the
  *  reason `--events` warns above a few hundred cards. Batch by event key if that ever binds. */
 export function addEventEdges(g: CardGraph, deck: DeckCard[], h: Hierarchy): CardGraph {

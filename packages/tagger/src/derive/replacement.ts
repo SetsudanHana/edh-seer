@@ -58,7 +58,7 @@ const TEMPLATES: {
   // "If one or more +1/+1 counters would be put on a creature you control, ... instead."
   // The kind stays `counter-placement`: the closed EFFECT_KINDS list has no counter-doubling, and
   // inventing one costs a matcher change for a label nothing reads yet.
-  // ponytail: reuses counter-placement; give it its own kind when a consumer needs to tell a
+  // CEILING: reuses counter-placement; give it its own kind when a consumer needs to tell a
   // doubler from a placer.
   {
     re: /\bif\s+(?:one or more|a|an)\s+([^.]{0,20}?)\s+counters?\s+would be (?:put|placed)\s+on\s+([^,.]+)/i,

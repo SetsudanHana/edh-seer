@@ -42,7 +42,7 @@ const DIM_BY_DEFAULT: NodeKind[] = ["layout", "cmc", "mana", "color"];
  *  below deliberately RE-SETTLE the layout (`alpha = 0.5`), so a pre-settled static export would be
  *  a behaviour change rather than a simplification.
  *
- *  ponytail: O(n^2) repulsion every tick, which is fine for the few-hundred-node subgraphs the
+ *  CEILING: O(n^2) repulsion every tick, which is fine for the few-hundred-node subgraphs the
  *  exporter produces (a deck is ~330 nodes = ~54k pairs) and would need Barnes-Hut past a few
  *  thousand. The exporter caps card count anyway, so that ceiling is not reachable today. */
 const escapeHtml = (s: string): string =>
