@@ -157,14 +157,15 @@ export const QUALITY_CAPS: Record<string, Caps> = {
   // now parks in ~11.5 s instead of ~23, so it stops visibly drifting under the reader; crossings
   // and rms link-distance error pay 2-12% for it and CARD OVERLAPS GO TO ZERO ON ALL SIX, because a
   // board that keeps creeping keeps re-forming them.
-  // RE-CAPPED AGAIN 2026-08-28 for REPULSION 25 -> 60 (board-force.ts, with the table). Crossings
-  // fall 11-36% on every fixture and rms link-distance error rises 0-14: the trade is a board that
-  // clumps less against a distance that encodes synergy strength slightly less exactly.
-  sorin: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 36435, linkDistError: 80 },
-  inalla: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 26347, linkDistError: 63 },
-  fairdrazi: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 27767, linkDistError: 73 },
-  changelings: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 6664, linkDistError: 57 },
-  braids: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 17030, linkDistError: 63 },
+  // RE-CAPPED AGAIN 2026-08-28, twice in one day: first for REPULSION 25 -> 60 (crossings -11% to
+  // -36%, rms error +0 to +14), then for SPACING_EASE 1.25 -- the collide floor 48.2 -> 53.2, which
+  // is the ONLY knob measured to move the gap between two adjacent cards at all. Crossings barely
+  // move for it (-7% to +5%) and rms error pays 1-17. Both tables live in board-force.ts.
+  sorin: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 35486, linkDistError: 97 },
+  inalla: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 27443, linkDistError: 71 },
+  fairdrazi: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 27607, linkDistError: 76 },
+  changelings: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 6214, linkDistError: 56 },
+  braids: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 17295, linkDistError: 64 },
   // THE ONLY FACE-CARRYING FIXTURE, captured 2026-08-28 from `taking-crew-to-the-town` — 21 of its
   // 100 cards are multi-face, so it draws 130 nodes where the other five draw 75-95. Added because
   // faces-as-nodes shipped 2026-08-27 and every fixture here predates it: the ratchet was measuring
@@ -183,7 +184,7 @@ export const QUALITY_CAPS: Record<string, Caps> = {
   // 338 edges to sorin's 246: the edge-PAIR ratio is 1.888 and the crossings ratio 1.864, so the
   // excess is edges almost exactly and the 130-vs-84 node count explains none of it. What the extra
   // nodes really cost is 130 discs and 130 LABELS, which no metric here measures.
-  mdfc: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 62644, linkDistError: 66 },
+  mdfc: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 65665, linkDistError: 75 },
 };
 
 /** RE-CAPPED AGAIN, same day, for the de-drift ORDER fix (board-force.ts). `forceDeDrift` ran LAST

@@ -41,7 +41,43 @@ export const CARD_H = CARD_W * CARD_ASPECT;
  *
  *  Derived, never typed twice: the card's size decides the gap, so the two cannot drift apart --
  *  the exact failure `nodeRadius`'s comment above records. */
-export const COLLISION_PAD = Math.hypot(CARD_W, CARD_H) - 2 * ART_RADIUS;
+export const CARD_CLEARANCE = Math.hypot(CARD_W, CARD_H) - 2 * ART_RADIUS;
+
+/** HOW MUCH AIR ON TOP OF THE CLEARANCE, and it is the only knob on this board that moves the gap
+ *  between two adjacent cards at all.
+ *
+ *  The owner asked twice for cards that are not "too close together", and the answer turned out to
+ *  be a constant rather than a negotiation: the MEDIAN nearest-neighbour distance sits at exactly
+ *  SETTLED_SPACING under every force setting swept -- repulsion 60, 80 and 100, and link strength
+ *  x1, x0.6 and x0.35, ten seeds each, all read 48.2 world units on inalla, fairdrazi and mdfc
+ *  alike (Fable review, 2026-08-28). The forces decide WHICH cards sit near each other; the collide
+ *  radius decides how near "near" is, and nothing else does.
+ *
+ *  1.25, so the floor moves 48.2 -> 53.2: a tenth more air between every adjacent pair, guaranteed
+ *  by construction rather than fitted. Six fixtures x ten seeds, against the pad it replaces:
+ *
+ *    fixture       crossings            rms link-dist error
+ *    sorin          36435 -> 35486 (-3%)    80 -> 97
+ *    inalla         26347 -> 27443 (+4%)    63 -> 71
+ *    fairdrazi      27767 -> 27607 (-1%)    73 -> 76
+ *    changelings     6664 ->  6214 (-7%)    57 -> 56
+ *    braids         17030 -> 17295 (+2%)    63 -> 64
+ *    mdfc           62644 -> 65665 (+5%)    66 -> 75
+ *
+ *  Card overlaps stay 0 on all six and the board still parks. Crossings barely move in either
+ *  direction, which is the point: this buys SPACING, where repulsion 60 -> 100 buys crossings and
+ *  moves the median gap by exactly zero.
+ *
+ *  1.5 WAS MEASURED AND HELD BACK, not refused: the floor goes to 58.3 (+21%) and the cost is
+ *  mostly rms -- sorin 80 -> 117, mdfc 66 -> 86, inalla 63 -> 81, crossings -5% to +23%. A hard
+ *  floor stops a dense mesh compressing, which is the same cost this constant's own comment above
+ *  already records from the last time it moved. Raise the ease if the board still reads tight; the
+ *  numbers for the next step are already here.
+ *
+ *  Below 1 this would let a card-mode rectangle overlap its neighbour, which is what `CARD_CLEARANCE`
+ *  exists to prevent -- the ease multiplies a floor and must never divide it. */
+export const SPACING_EASE = 1.25;
+export const COLLISION_PAD = CARD_CLEARANCE * SPACING_EASE;
 
 /** The centre-to-centre distance two settled nodes end up at. */
 export const SETTLED_SPACING = 2 * (ART_RADIUS + COLLISION_PAD / 2);
