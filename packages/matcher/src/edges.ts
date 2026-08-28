@@ -1288,10 +1288,38 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
   // measured, admitting every clone subject added 7,622 derived edges, a `clone:any` mesh 99 cards
   // wide on Mizzix's Mastery and Lithoform Engine. "Copy target instant" names no permanent it
   // applies to, and an untyped subject matches the whole deck.
-  for (const a of p.tags.abilities) {
+  // ONE CLAIM PER PHYSICAL CARD, AND THE FIRST FACE THAT SATISFIES KEEPS IT. A permanent shows one
+  // face at a time (CR 712.3a), so a card-wide static relates to it ONCE -- but faces-as-nodes
+  // (2026-08-27) pairs the producer with each printed face separately, and `stampSides` rewrites
+  // both rows back to the same physical name. Measured on the 71 decks: 217 duplicate rows
+  // (cost-reduction 154, pump 60, type-grant 3), and MESHED 287 -> 332 sat ENTIRELY inside five
+  // (deck, producer, tag) groups whose FAN-OUT never moved -- the extra rows were one claim said
+  // twice, not a wider claim.
+  //
+  // NEITHER ROW IS FALSE, which is why this is a collapse and not a refusal: each is true of the
+  // face it names. What is wrong is counting them as two claims about one card.
+  //
+  // KEPT ON THE FIRST SATISFYING FACE, never on face 0 unconditionally -- a modal DFC with a
+  // Sorcery front and a Creature back is reached only by its back face, and anchoring on the front
+  // would DELETE that claim rather than collapse it.
+  //
+  // THE CONSUMER SIDE ONLY. Two producer faces printing their own statics are two distinct printed
+  // abilities, and collapsing those would be an under-claim of a different kind. Measured after this
+  // fix, that residue is 75 rows, ALL `static:cost-reduction` and ALL one card (Serah Farron //
+  // Crystallized Serah, which prints a reducer on each face) -- and cost-reduction is exempt from
+  // the mesh census, so it moves no gate. Left alone deliberately.
+  //
+  // ponytail: re-splits the parent per claim rather than caching the faces. Only runs for a
+  // multi-face consumer past face 0 that already formed a claim, which is 217 rows in 45,246.
+  // The parameter SHADOWS the pair's own `c` on purpose: every guard below must judge the FACE it
+  // is asked about, and a body that reached past it to the pair's consumer would answer the
+  // sibling-face question with the original face's answer.
+  const staticClaim = (c: DeckCard, a: CardTags["abilities"][number]): Reason | undefined => {
+    if (!c.tags) return undefined;
+
     const appliesTo = a.kind === "static"
       || (a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined);
-    if (!appliesTo || !a.effect.subject) continue;
+    if (!appliesTo || !a.effect.subject) return undefined;
     // DECK ROLES ARE NOT PAIRWISE SYNERGIES (user rulings, 2026-08-06) — WITH `cost-reduction`
     // REMOVED FROM THAT SET BY THE OWNER, 2026-08-18: "your cost reducing card is as good as many
     // cards it can reduce."
@@ -1314,14 +1342,14 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     //
     // Both still DERIVE: the kinds remain on the card and stay available as role signals for
     // `build.ts`. They simply stop claiming an edge.
-    if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
+    if (ROLE_NOT_SYNERGY.has(a.effect.kind)) return undefined;
     // A DEBUFF IS NOT AN ANTHEM, and this pass says "P's static applies to C" — a sentence that
     // claims C is IMPROVED. A negative modifier never improves the card it reaches, so relabelling
     // `pump` -> `debuff` at derive is only half the fix: measured, it left Curse of Death's Hold ->
     // Entity Tracker standing with a new tag and turned a judged FALSE into judging debt. The claim
     // has to go, not get renamed. What these cards really relate to is the OPPONENT'S board, which
     // is not in the deck and has no node.
-    if (a.effect.kind === "debuff") continue;
+    if (a.effect.kind === "debuff") return undefined;
     // A STATIC THAT DESCRIBES THE CARD ITSELF CLAIMS NO OTHER CARD. Planar Nexus prints "This land
     // is every nonbasic land type", derives `{type: land, scope: each, self: true}` -- the
     // self-reference recorded CORRECTLY -- and this pass rendered "Planar Nexus's type grant applies
@@ -1342,19 +1370,19 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     // DO NOT TEACH `subjectMatches` ABOUT `self` INSTEAD. It is the identity predicate the
     // self-trigger gate depends on, and widening it there is exactly how the `entersTapped` strip
     // silently deleted 29 real claims.
-    if (a.effect.subject.self === true) continue;
+    if (a.effect.subject.self === true) return undefined;
     // A counter-presence condition ("creatures you control WITH a +1/+1 counter") is a BOARD STATE,
     // not a printed characteristic, and this pass matches against the type line. Demanding it here
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated
     // counter-presence pass below is what supplies that state.
     const { counter: _stateOnly, ...printedMatchable } = a.effect.subject;
-    if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) continue;
+    if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) return undefined;
     if (a.effect.kind === "cost-reduction") {
       // A SELF REDUCTION'S SUBJECT IS WHAT MEASURES IT, NOT WHAT IT DISCOUNTS — see `reducesItself`.
-      if (reducesItself(p.card.oracleText)) continue;
+      if (reducesItself(p.card.oracleText)) return undefined;
       // A LAND IS PLAYED, NOT CAST (CR 305.1). "Spells you cast cost {1} less" reaches no land, and
       // the type union keeps a modal DFC's castable face.
-      if (isLandOnly(c.tags)) continue;
+      if (isLandOnly(c.tags)) return undefined;
       // AND A TOKEN IS PUT ONTO THE BATTLEFIELD, NEVER CAST (CR 111.1) — the same rule as the land
       // one above, one object over. Found on the Jodah deck 2026-08-27: Serah Farron prints "the
       // first legendary creature SPELL you cast each turn costs {2} less", and the engine claimed it
@@ -1370,10 +1398,10 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       // THE PAIR OFTEN SURVIVES, AND ONLY THIS REASON GOES. Serah Farron also prints "Legendary
       // creatures you control get +2/+2", and Ravage is one — so the edge keeps its `static:pump`
       // and loses only the claim that was false.
-      if (c.isToken) continue;
+      if (c.isToken) return undefined;
       // "Spells your OPPONENTS cast cost less" is not a relation to a card you chose to run — it is
       // the tax family pointing the other way, and tax stays in ROLE_NOT_SYNERGY.
-      if (a.effect.subject.control === "opp") continue;
+      if (a.effect.subject.control === "opp") return undefined;
       if (reducesAnAbility(p.card.oracleText)) {
         // AN ABILITY DISCOUNT IS ABOUT THE ABILITY'S COST AND NEVER THE CARD'S. The two are
         // different strings and reading the wrong one is wrong in BOTH directions: Thought Vessel
@@ -1382,11 +1410,11 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         // Sacrifice this artifact`, so the card looks undiscountable and the ability is not.
         const costs = activationCosts(c.tags);
         // An ability discount needs an ability to discount — see `reducesAnAbility`.
-        if (!costs.length) continue;
+        if (!costs.length) return undefined;
         // CR 118.7 ON THE ACTIVATED SIDE. Owner's ruling 2026-08-23, OVERTURNING a cached REAL:
         // "the consumer has activated abilities" is necessary and not sufficient. `{T}: Add {C}` has
         // no mana in its cost at all, so `{1} less to activate` removes nothing.
-        if (!costs.some(hasGenericMana) && !reducesColouredMana(p.card.oracleText)) continue;
+        if (!costs.some(hasGenericMana) && !reducesColouredMana(p.card.oracleText)) return undefined;
         // AND THE PRINTED FLOOR, which BOTH derived reducers carry: "can't reduce the mana in that
         // cost to less than one mana". An ability costing one mana cannot be reduced at all, so a
         // Signet (`{1}, {T}: Add …`) is not discounted however much generic it prints. Gated on the
@@ -1394,15 +1422,15 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         // zero. Read as "some ability survives the floor", so Executioner's Capsule (`{1}{B}` = two
         // mana, reduced to one) keeps its claim and its owner-era verdict with it.
         if (reducesToAFloor(p.card.oracleText)
-          && !costs.some((cost) => hasGenericMana(cost) && manaInCost(cost) >= 2)) continue;
+          && !costs.some((cost) => hasGenericMana(cost) && manaInCost(cost) >= 2)) return undefined;
       } else if (!hasGenericMana(c.card.manaCost)
         // A REDUCTION CANNOT TAKE GENERIC MANA BELOW ZERO (CR 118.7) — see `hasGenericMana`. Both
         // exemptions are checked because both are real: a coloured-pip reduction discounts a `{U}`
         // spell, and an ADDITIONAL COST adds to the total before reductions subtract from it.
         && !reducesColouredMana(p.card.oracleText)
-        && !hasAdditionalCost(c.tags)) continue;
+        && !hasAdditionalCost(c.tags)) return undefined;
     }
-    reasons.push({
+    return {
       // A non-static ability keeps the `${kind}:${subject}` shape the graveyard-recursion and
       // counter-presence passes use; `static:` stays reserved for what cardThemeTags calls static.
       tag: a.kind === "static"
@@ -1418,8 +1446,16 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
       hasStatPredicate: (a.effect.subject?.stats?.length ?? 0) > 0 || undefined,
       consumer: c.card.name,
       producer: p.card.name,
-    });
+    };
+  };
+  for (const a of p.tags.abilities) {
+    const claim = staticClaim(c, a);
+    if (!claim) continue;
+    const earlier = c.face && c.parent ? faceDeckCards(c.parent).slice(0, c.face) : [];
+    if (earlier.some((f) => staticClaim(f, a))) continue;
+    reasons.push(claim);
   }
+
   // TRIGGER-DOUBLING edges: P makes C's triggered ability fire twice. Panharmonicon + Solemn
   // Simulacrum is the relation; Panharmonicon + a vanilla creature is not.
   //

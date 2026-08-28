@@ -24,6 +24,12 @@ export interface DeckCard {
    *  a reason's `producer`/`consumer` back to this, because `pairs.json` keys the whole judged panel
    *  on `producer|consumer|tag`. */
   parentName?: string;
+  /** The UNSPLIT node this face was cut from, so a pass can ask what the card's OTHER faces are.
+   *  Set by `faceDeckCards` only, alongside `face`/`parentName`, and read by the static applies-to
+   *  pass: a permanent shows one face at a time (CR 712.3a), so a card-wide static relates to the
+   *  physical card ONCE, and the pass has to see the sibling faces to know which one keeps the
+   *  claim. Absent on a single-face card and on a token. */
+  parent?: DeckCard;
 }
 
 /** Lowercased subtype -> lowercased supertypes it belongs to, e.g. { wizard: ["creature"] }. */

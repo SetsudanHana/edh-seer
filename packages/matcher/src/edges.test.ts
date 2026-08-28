@@ -3205,3 +3205,56 @@ test("an UNTYPED enters emit does not reach a clone, because a real self-ETB tri
     "You may have Sakashima the Impostor enter as a copy of any creature on the battlefield.");
   expect(pairReasons(manifest, sakashima, H).some((r) => r.tag.startsWith("enters"))).toBe(false);
 });
+
+/** ONE CLAIM PER PHYSICAL CARD. A permanent shows one face at a time (CR 712.3a), so a card-wide
+ *  static relates to it ONCE — but faces-as-nodes pairs the anthem with each face separately, and
+ *  both rows stamp back to the same physical name. Measured on the 71 decks: 217 such rows, and
+ *  MESHED 287 -> 332 entirely inside five (deck, producer, tag) groups whose FAN-OUT never moved. */
+const twoFacedCreature = (frontTypeLine: string): DeckCard => ({
+  card: {
+    name: "Optimus Prime, Hero // Optimus Prime, Autobot Leader",
+    typeLine: `${frontTypeLine} // Creature — Robot`, oracleText: "a\nb",
+    keywords: [], colors: [], manaValue: 4,
+    faces: [
+      { name: "Optimus Prime, Hero", typeLine: frontTypeLine, oracleText: "a", colors: [] },
+      { name: "Optimus Prime, Autobot Leader", typeLine: "Creature — Robot", oracleText: "b", colors: [] },
+    ],
+  } as never,
+  tags: {
+    oracleId: "o", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["creature"], subtypes: ["robot"], colors: [], identity: [], cmc: 4,
+      power: null, toughness: null, token: false, keywords: [],
+      faces: [
+        { types: frontTypeLine.startsWith("Creature") ? ["creature"] : ["sorcery"], subtypes: [] },
+        { types: ["creature"], subtypes: ["robot"] },
+      ],
+    },
+    abilities: [],
+  } as unknown as CardTags,
+});
+
+const anthem = () => base("Serah Farron", [{
+  kind: "static",
+  effect: { kind: "pump", subject: { type: "creature", control: "you", token: null } },
+}] as unknown as CardTags["abilities"]);
+
+test("a wide static claims a two-faced creature ONCE, on its front face", () => {
+  const faces = faceDeckCards(twoFacedCreature("Creature — Robot"));
+  expect(faces).toHaveLength(2);
+  const pumps = faces.flatMap((f) => directedReasons(anthem(), f, H)).filter((r) => r.tag === "static:pump");
+  expect(pumps).toHaveLength(1);
+  // The front face is the one kept, and the sentence names it.
+  expect(pumps[0].consumerFace).toBeUndefined();
+  expect(pumps[0].text).toContain("Optimus Prime, Hero");
+});
+
+test("...and on the BACK face when the front does not satisfy the static at all", () => {
+  // Under-claiming is the failure this must not make: a Sorcery front face is not a creature, so the
+  // claim belongs to the back face and the pair must keep it.
+  const faces = faceDeckCards(twoFacedCreature("Sorcery"));
+  const pumps = faces.flatMap((f) => directedReasons(anthem(), f, H)).filter((r) => r.tag === "static:pump");
+  expect(pumps).toHaveLength(1);
+  expect(pumps[0].consumerFace).toBe(1);
+  expect(pumps[0].text).toContain("Autobot Leader");
+});

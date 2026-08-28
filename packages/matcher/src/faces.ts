@@ -53,6 +53,7 @@ export function faceDeckCards(dc: DeckCard): DeckCard[] {
     ...dc,
     face: i,
     parentName: dc.card.name,
+    parent: dc,
     card: {
       ...dc.card,
       name: f.name,
