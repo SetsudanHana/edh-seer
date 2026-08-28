@@ -28,7 +28,7 @@ import crKeywords from "../derive/cr-keywords.json" with { type: "json" };
 function crKeywordAbilities(): string[] {
   return crKeywords.abilities.flatMap((heading) =>
     heading
-      .replace(/\s*\([^)]*\)\s*$/, "")
+      .replace(/\s*\([^()]*\)\s*$/, "")
       .split(/\s+and\s+/)
       .map((k) => k.trim().toLowerCase())
       .filter((k) => k.length > 0));

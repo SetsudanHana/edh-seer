@@ -390,11 +390,15 @@ function countTruncated(object: string): string {
  *  The clause text still has it, on the left of the verb that hands the ability over. A leading
  *  trigger or cost is stripped first, so "{T}: Creatures you control gain haste" does not read the
  *  cost as the recipient. */
-const GRANTED_TO = /^(.*?)\s+\b(?:have|has|gain|gains)\b/i;
+/** `(.*?\S)` rather than `(.*?)`: a lazy `.` matches a space and so does the `\s+` after it, so
+ *  every space was a fork the engine paid for on a clause that never reaches "have". Forcing the
+ *  recipient to end on a non-space removes the overlap. The capture is unchanged — lazy already
+ *  preferred the shortest recipient, which is the one ending on a non-space. */
+const GRANTED_TO = /^(.*?\S)\s+\b(?:have|has|gain|gains)\b/i;
 /** The same defect one verb over. `copy` records the copy SOURCE as its object -- Shapesharer's
  *  "Target Shapeshifter becomes a copy of TARGET CREATURE" -- so the recipient, the half that names
  *  the subtype, is lost the way a grant's was. 122 corpus clauses carry a `copy` action. */
-const COPIED_INTO = /^(.*?)\s+\bbecomes?\s+(?:a\s+copy|copies)\s+of\b/i;
+const COPIED_INTO = /^(.*?\S)\s+\bbecomes?\s+(?:a\s+copy|copies)\s+of\b/i;
 const CLAUSE_PREAMBLE = /^(?:when|whenever|at)\b[^,]*,\s*|^[^:.]{1,60}:\s*/i;
 
 /** A leading SUBORDINATE clause, which states a condition or a setup and never the recipient.

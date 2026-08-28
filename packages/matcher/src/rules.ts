@@ -183,12 +183,12 @@ const NUMBER_WORD: Record<string, number> = {
  *  move reason text and threshold lines with it. → roadmap I4's own note. */
 function manaAdded(oracle: string): number | undefined {
   let best: number | undefined;
-  for (const m of oracle.matchAll(/\badd\s+((?:\{[^}]+\}\s*)+|\w+ mana\b)/gi)) {
+  for (const m of oracle.matchAll(/\badd\s+((?:\{[^{}]+\}\s*)+|\w+ mana\b)/gi)) {
     const frag = m[1];
     let n: number | undefined;
     if (frag.trimStart().startsWith("{")) {
       n = 0;
-      for (const sym of frag.matchAll(/\{([^}]+)\}/g)) {
+      for (const sym of frag.matchAll(/\{([^{}]+)\}/g)) {
         if (/^\d+$/.test(sym[1])) n += Number(sym[1]);
         // A chosen amount is not a fixed one, and neither is what follows a "for each".
         else if (/^[XYZ]$/i.test(sym[1])) return undefined;

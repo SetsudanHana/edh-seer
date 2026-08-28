@@ -45,7 +45,9 @@ const PART_EDGE: Record<string, { edge: EdgeKind; kind: NodeKind }> = {
   meld_result: { edge: "MELD_RESULT", kind: "related" },
 };
 
-const slug = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+/** `[^a-z0-9]+` has already COLLAPSED every run to a single "-", so at most one hyphen can sit at
+ *  each end: `-+$` was scanning for a run that cannot exist, and paying quadratically to do it. */
+const slug = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 /** Printed power/toughness that is a plain integer. `*`, `X` and `1+*` have no fixed value and
  *  get no node at all -- `parseStat` flattens them to 0 elsewhere, which is a wrong answer we do
@@ -58,7 +60,7 @@ function numericStat(v: string | null | undefined): number | null {
 /** Mana symbols in a cost string: "{2}{R}{R}" -> ["2","R"] (deduped, order preserved). */
 function manaSymbols(cost: string | undefined): string[] {
   if (!cost) return [];
-  return [...new Set([...cost.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]))];
+  return [...new Set([...cost.matchAll(/\{([^{}]+)\}/g)].map((m) => m[1]))];
 }
 
 /** Project cards and their printed characteristics into nodes and edges.

@@ -62,7 +62,7 @@ export function scalingSubject(action: Action): SubjectFilter | undefined {
   const counted = COUNTED.exec(text);
   if (!counted) return undefined;
   const noun = counted[1];
-  const subject = parseSubject(noun.split(/\s+in\s+/i)[0]);
+  const subject = parseSubject(noun.split(/\s{1,4}in\s{1,4}/i)[0]);
   subject.zone = "graveyard";
   subject.control = /\btheir\b/i.test(noun) ? "opp"
     : /\ball graveyards?\b|\beach graveyard\b/i.test(noun) ? "any"
@@ -76,7 +76,7 @@ export function actionScaling(action: Action): ScalingBasis | undefined {
   if (/^x$/i.test(amount.trim())) return "x-cost";
   const counted = COUNTED.exec(`${amount} ${action.object ?? ""}`);
   if (!counted) return undefined;
-  const noun = counted[1].split(/\s+on\s+/i)[0];
+  const noun = counted[1].split(/\s{1,4}on\s{1,4}/i)[0];
   for (const [re, basis] of BASES) if (re.test(noun)) return basis;
   return undefined;
 }
