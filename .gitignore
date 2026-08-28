@@ -2,87 +2,39 @@ node_modules/
 dist/
 *.log
 .DS_Store
+
+# secrets — never commit any of these
 .env
-.superpowers/
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.json
+.npmrc
 .claude/settings.local.json
+
+# generated / downloaded caches, all re-fetchable on demand
+.cs-cache/
+.edhrec-cache/
+packages/data/.mtgjson-cache/
+
+# scratch output
 packages/tagger/score-debug*.json
 packages/tagger/_*.mts
-.gstack/
-.edhrec-cache/
-.cs-cache/
+persona-shots/
 
-# Playwright
+# test + browser automation output
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-/.playwright-mcp/
 
-# impeccable skill scratch
-packages/web/.impeccable/critique/
-# critique snapshots resolve against the repo root when the target is given as a repo-relative path
-/.impeccable/
-
-# MTGJSON bulk download cache (50MB), re-fetched on demand by ingest-mtgjson.ts
-packages/data/.mtgjson-cache/
-
-# Claude Code worktrees and session state (git worktrees live under .claude/worktrees/).
-# `.claude/*` rather than `.claude/`, because git does not descend into an excluded
-# DIRECTORY -- a negation inside one can never re-include anything. Excluding the
-# contents instead leaves the directory itself visible, so `!` works below.
-.claude/*
-# TRACKED ON PURPOSE: the player-persona reviewer agents and their harness. They are a
-# measuring instrument with a validated track record, they carry the fixtures and the
-# scoring rules, and the last time these personas lived only in a session the prompt text
-# was lost and every round had to be re-improvised.
-!.claude/agents/
-.cr-cache/
-
-# Serena MCP project cache
-.serena/
-
-# Persona-review screenshots
-persona-shots/
-
-# --- AI context, scopes and plans: local only, never pushed (owner's call 2026-08-28) ---
-# Stripped from history with git-filter-repo in the same pass, together with the
-# Claude-Session / Co-Authored-By trailers and the "Claude" commit authorship.
-# The files still live on disk and in ~/projects/mtg-synergy-engine-backup-20260828.
-docs/superpowers/
-docs/measurements/
-docs/ROADMAP.md
-CLAUDE.md
-.superpowers/
-.claude/worktrees/
-CLAUDE.local.md
-AGENTS.md
-GEMINI.md
-.cursor/
-.aider*
-.continue/
-.windsurfrules
-.github/copilot-instructions.md
-
-# --- secrets: belt and braces. .env is already above; these are the shapes that leak ---
-.env.*
-!.env.example
-*.pem
-*.key
-!packages/**/*.key.ts
-credentials.json
-secrets.json
-.npmrc
-
-# stray screenshots dropped at the repo root are always accidents
-/*.png
-/*.jpg
-
-# JetBrains IDE config
+# IDE
 .idea/
 
-# saved web pages and their asset folders
+# saved web pages and stray root screenshots are always accidents
 *_files/
-
-# AI design-tool sidecars
-.impeccable/
+/*.png
+/*.jpg
