@@ -122,10 +122,12 @@ export function formatReport(report: DeckReport, trim = 0): string {
   for (const c of report.cards.slice(0, 20)) {
     const tag = c.isCommander ? " [commander]" : "";
     const plural = c.partnerCount === 1 ? "" : "s";
-    // ONE ROW PER CARD, with its count: the analyzer collapses copies into a single node so six
-    // basics are one relation and not six identical ones, and the count is how the row still says
-    // the deck runs six. The graph has shown this as a "x6" badge since it shipped.
-    const copies = report.quantities?.[c.name];
+    // ONE ROW PER FACE now (Task 7, faces-as-nodes) -- a two-faced card rates twice, once per
+    // printed face -- but `quantities` is still keyed on the PHYSICAL card (built before the
+    // split), so the lookup has to translate back with `cardName`. Review fix, 2026-08-27: without
+    // it, a multi-face card in multiples silently lost its "x6" badge on both rows. The analyzer
+    // still collapses copies of one physical card into one relation, which is what the count says.
+    const copies = report.quantities?.[c.cardName ?? c.name];
     const qty = copies ? ` x${copies}` : "";
     lines.push(`[${c.score.toFixed(2)}] ${c.name}${qty}${tag} — synergizes with ${c.partnerCount} card${plural}`);
     for (const p of c.topPartners.slice(0, 3)) {

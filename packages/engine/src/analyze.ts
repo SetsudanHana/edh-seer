@@ -20,7 +20,24 @@ export interface SynergyEdge {
 }
 
 export interface CardSynergy {
+  /** The FACE this row rates -- a back face's own name, distinct from the physical card's. Set
+   *  only by @mtg/matcher's analyzeDeckStructured (Task 7, faces-as-nodes): a modal DFC or
+   *  transform card rates each printed face as its own row, so `name` alone can no longer answer
+   *  "which physical card is this" -- see `cardName`. Undefined on the flat engine and on a
+   *  single-faced card, where `name` already IS the physical card. */
   name: string;
+  /** The physical card `name` is one face of ("Fell the Profane // Fell Mire"). Present on EVERY
+   *  face of a multi-face card, including the front, so a consumer never has to special-case which
+   *  face it is looking at to find the card -- absent entirely on a single-faced card, where `name`
+   *  already answers the question. `face` (below) is what tells the two rows apart. Review fix,
+   *  2026-08-27: without this field four readers joined `report.cards` by `name` against data keyed
+   *  on the physical card (a commander set, `quantities`, `unmeasurablePayoffs`) and silently missed
+   *  every back face. */
+  cardName?: string;
+  /** 1-based index of the printed face this row is, when `cardName` is set and this is not the
+   *  front. Absent on the front face and on a single-faced card -- mirrors `WireGraphNode.face` and
+   *  `Reason.producerFace`/`consumerFace`, the same "front is unmarked" convention. */
+  face?: number;
   isCommander: boolean;
   /** THE ENGINE READ THIS CARD'S ORACLE TEXT. False when the card resolved against the corpus but
    *  carries no derived tags — it forms no edge, carries no theme and reaches no archetype, so

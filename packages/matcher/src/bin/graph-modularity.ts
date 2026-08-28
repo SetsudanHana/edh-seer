@@ -22,7 +22,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@mtg/data";
 import { ComboIndex, loadImpactWeights } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
-import { analyzeDeckStructured, buildDeckCards, collectTokenNodes, loadTokenTags } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, collectTokenNodes, faceDeckCards, loadTokenTags } from "../index.js";
 import { projectDeckGraph } from "../graph-projection.js";
 
 interface Edge { from: string; to: string; weight: number }
@@ -115,9 +115,16 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
   const deckCards = await buildDeckCards(cards, lookup, tags);
   const r = analyzeDeckStructured(deckCards, commanderNames, undefined, undefined, new ComboIndex(combos), undefined, tokenTags);
   // The SAME construction the server uses (data.module.ts): reasons off the report's edges, and the
-  // deck array extended with token nodes, or every token edge is counted as off-deck and dropped.
+  // deck array split into its printed FACES and extended with token nodes -- either omission drops
+  // real reasons into `offDeckReasons`, because `projectDeckGraph` builds its node set off this
+  // array and nothing else. Review fix, 2026-08-27: this comment already claimed the SAME
+  // construction while missing `faceDeckCards` entirely, so a face-stamped reason (Task 7,
+  // faces-as-nodes) named a `face:<n>:<name>` id absent from this deck's nodes and every one of
+  // them fell into `offDeckReasons`. `buildDeckCards` already returns one entry per physical copy
+  // (unlike the server's deduped-then-re-expanded `deckCards`), so no copy-expansion step is needed
+  // here -- only the face split.
   const reasons = r.edges.flatMap((e) => e.reasons);
-  const projectionDeck = [...deckCards, ...collectTokenNodes(deckCards, tokenTags).nodes];
+  const projectionDeck = [...deckCards.flatMap((dc) => faceDeckCards(dc)), ...collectTokenNodes(deckCards, tokenTags).nodes];
   const projected = projectDeckGraph(projectionDeck, reasons, weights);
   const { q, sizes } = communities(projected.nodes.map((n) => n.id), projected.edges);
   rows.push({ deck: file.replace(/\.txt$/, ""), nodes: projected.nodes.length, edges: projected.edges.length, q, sizes });

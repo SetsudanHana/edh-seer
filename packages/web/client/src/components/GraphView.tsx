@@ -449,13 +449,25 @@ export function GraphView(
   const huesRef = useRef<Map<string, string[]>>(new Map());
   huesRef.current = huesById;
 
-  // Card names in the command zone. Node ids ARE card names (labels.ts's brief), so this is a
-  // direct Set of ids. `report` is otherwise unread by this component -- this is its first real
-  // consumer. Read through a ref by the label pass, same reason as huesRef: it runs inside the rAF
-  // loop, and `report` is not a dependency of the layout effect below.
-  const commanders = useMemo(
-    () => new Set(report.cards.filter((c) => c.isCommander).map((c) => c.name)),
+  // `labelCandidates`/`labelPriority` (labels.ts) both key on the raw NODE ID, so `commanders`
+  // stays a Set of ids -- but a single-faced card's node id is no longer always `report.cards[i]
+  // .name` (Task 7, faces-as-nodes gave every printed face its own row and its own node: a front
+  // face's id is its own name, a back face's is `face:<n>:<name>`). The join is `n.cardName ??
+  // n.id` on the graph side against `c.cardName ?? c.name` on the report side -- both fall back to
+  // the SAME physical-card fact, `WireGraphNode.cardName` set on BOTH faces the same way
+  // `CardSynergy.cardName` is. `report` is otherwise unread by this component -- this is its first
+  // real consumer.
+  //
+  // Review fix, 2026-08-27: pre-fix this Set held raw `c.name` (face names) and was compared
+  // directly against `n.id`, so a two-faced commander's back-face node id (`face:1:<name>`) never
+  // matched -- its always-show label and label priority silently stopped working.
+  const commanderCardNames = useMemo(
+    () => new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name)),
     [report],
+  );
+  const commanders = useMemo(
+    () => new Set(graph.nodes.filter((n) => commanderCardNames.has(n.cardName ?? n.id)).map((n) => n.id)),
+    [graph, commanderCardNames],
   );
   const commandersRef = useRef<Set<string>>(new Set());
   commandersRef.current = commanders;
@@ -1049,15 +1061,25 @@ export function GraphView(
         // front (bare id) and back (`face:<n>:<name>`) -- both carry `cardName`, so a rim marks
         // them as one card without an edge drawn between them: no new edge kind, no legend entry,
         // nothing for a count to see. `cardName` is the test, never `face` -- it is present on
-        // BOTH faces, while `face` is absent on the front. Solid, not dashed, and `fg` not `muted`,
-        // so it reads as a different fact from the token's dashed rim just above.
+        // BOTH faces, while `face` is absent on the front.
+        //
+        // DASHED, WIDER RADIUS, review fix 2026-08-27: the first cut painted this SOLID at `fg`,
+        // `r + 3` -- byte-identical to the "you clicked this" rim just above except for line width
+        // (2.5 vs 1.5), so on the face IS the clicked node the thinner stroke painted entirely
+        // inside the thicker one and vanished. Dashing it and pushing it out to `r + 5` keeps it
+        // visible under a solid `r + 3` click rim in EITHER draw order, and the dash pattern
+        // (`[6,2]`) is deliberately wider than the token rim's (`[4,3]`) so the two dashed rims
+        // read as different facts even where they might otherwise coincide.
         if (n.cardName !== undefined) {
+          ctx.save();
+          ctx.setLineDash([6 / cam.z, 2 / cam.z]);
           ctx.lineWidth = 1.5 / cam.z;
           ctx.strokeStyle = paintColors.fg;
           ctx.beginPath();
-          if (mode === "card") ctx.strokeRect(n.x - cardW / 2 - 3, n.y - cardH / 2 - 3, cardW + 6, cardH + 6);
-          else ctx.arc(n.x, n.y, r + 3, 0, TAU);
+          if (mode === "card") ctx.strokeRect(n.x - cardW / 2 - 5, n.y - cardH / 2 - 5, cardW + 10, cardH + 10);
+          else ctx.arc(n.x, n.y, r + 5, 0, TAU);
           ctx.stroke();
+          ctx.restore();
         }
       }
       // Canvas state is global and persistent, so a search left dimming on would leak into the

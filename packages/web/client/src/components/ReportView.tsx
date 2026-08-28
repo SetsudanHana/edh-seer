@@ -9,9 +9,14 @@ export function ReportView({ data, diff }: { data: AnalyzeResponse; diff?: RunDi
   // row, so this is a read and not a new field — and it is the single thing all four personas
   // reached independently on 2026-08-27, because the gate's name list is alphabetical and capped at
   // eight, which put `Nalia de'Arnise` inside "and 40 more".
-  const commanderUnread = data.report.cards
-    .filter((c) => c.isCommander && c.derived === false)
-    .map((c) => c.name);
+  // A two-faced commander rates two rows -- one per face -- and both carry the SAME `derived`
+  // flag (it is read off the physical card). Dedupe on the physical name (`cardName ?? name`) so
+  // an unread two-faced commander names itself once, not twice. Review fix, 2026-08-27.
+  const commanderUnread = [...new Set(
+    data.report.cards
+      .filter((c) => c.isCommander && c.derived === false)
+      .map((c) => c.cardName ?? c.name),
+  )];
   return (
     <div className="flex flex-col gap-4">
       {/* ABOVE THE TABS, because what your edit did is not a property of any one section -- and it

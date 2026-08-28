@@ -1860,11 +1860,19 @@ describe("face pair nodes", () => {
   // between them, so no new edge kind reaches the legend or any count. `cardName` is present on
   // BOTH faces (Task 7); `face` is absent on the front, so `cardName` is the test that fires on
   // both nodes and `face` is not.
+  //
+  // A THIRD, UNRELATED NODE with a real edge to the front face, review fix 2026-08-27: the
+  // original fixture had NO edges at all, so "no edge joins the faces" could never fail -- an
+  // edgeless graph passes that assertion whether or not the rule holds. With a real edge present,
+  // the assertion is checking something: that edge exists AND no edge connects the two face ids.
   test("both faces of one card paint the same-card rim, and no edge joins them", () => {
     const calls: string[] = [];
     const front = card({ id: "A // B", label: "A", cardName: "A // B" });
     const back = card({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" });
-    const { canvas, tick } = frames(graphOf([front, back]), calls);
+    const other = card({ id: "C" });
+    const { canvas, tick } = frames(graphOf([front, back, other], [
+      { from: "A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["A // B feeds C"] },
+    ]), calls);
     // The mount itself already ran one draw pass before this test can see it (the layout effect
     // calls `loop()` once directly, ahead of ever scheduling a frame -- see `loop`'s own comment).
     // Clearing here isolates the ONE pass this `tick()` triggers, the same convention the paint-mode
@@ -1872,13 +1880,18 @@ describe("face pair nodes", () => {
     calls.length = 0;
     tick();
 
-    // A solid stroke in `--foreground`, once per face node -- distinct from the token rim just
-    // above, which is dashed and drawn in `--muted`. jsdom's getComputedStyle returns "" for a
-    // custom property, so both fall back to the literal default GraphView.tsx ships when the CSS
-    // variable is absent.
+    // A stroke in `--foreground`, once per face node -- distinct from the token rim just above,
+    // which is drawn in `--muted`. jsdom's getComputedStyle returns "" for a custom property, so
+    // both fall back to the literal default GraphView.tsx ships when the CSS variable is absent.
     expect(calls.filter((c) => c === "set:strokeStyle=#e6e8eb").length).toBe(2);
+    // DASHED, once per face node -- the review fix. Pre-fix this rim was solid at the same width
+    // class as the "you clicked this" rim and painted invisibly under it whenever a face node was
+    // also the clicked node; a real `setLineDash` call with a non-empty pattern is what makes the
+    // two distinguishable regardless of which one draws on top.
+    expect(calls.filter((c) => c.startsWith("setLineDash:") && c !== "setLineDash:").length).toBe(2);
 
     const edges = canvas.__graphProbe!().edges;
+    expect(edges.some((e) => e.from === "A // B" && e.to === "C")).toBe(true);
     expect(edges.some((e) => e.from.includes("A // B") && e.to.includes("A // B"))).toBe(false);
   });
 });

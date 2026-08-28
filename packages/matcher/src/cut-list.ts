@@ -256,9 +256,19 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
  *
  *  ONLY THE CARDS THAT WOULD HAVE QUALIFIED, never every underived card: a Sol Ring the engine
  *  cannot read is still protected by its role, and listing it here would re-introduce the defect
- *  `fillsDeckRole` exists to prevent one column over. */
+ *  `fillsDeckRole` exists to prevent one column over.
+ *
+ *  MERGED LIKE `cutCandidates`, for the same reason -- a reader cuts a CARD, and a two-faced card
+ *  rates two rows (Task 7, faces-as-nodes). Review fix, 2026-08-27: this ran over the raw face rows
+ *  and printed BOTH of an unread two-faced card's names, which is also why `CutList.tsx`'s "N of
+ *  the M unread cards" line could read "2 of the 1 unread" -- `coverage` counts SLOTS (one) and this
+ *  counted face rows (two). `mergeFaces`'s `derived: prev.derived || r.derived` looked like it could
+ *  launder a half-read card into "read" here, but it cannot: `derived` is set from
+ *  `derivedByName.get(physical)` in analyze.ts, IDENTICAL on both of a card's face rows, so the OR
+ *  is a no-op -- both sides already agree. */
 export function unjudgedCandidates(cards: readonly CutInput[], limit = 12): string[] {
-  const out = cards.filter(
+  const merged = mergeFaces(cards);
+  const out = merged.filter(
     (c) => !c.derived && !c.isLand && !c.isCommander && !c.isComboPiece
       && c.roles.length === 0 && !c.fillsDeckRole,
   );

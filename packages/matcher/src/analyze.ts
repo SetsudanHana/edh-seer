@@ -113,9 +113,13 @@ export function collectTokenNodes(
   tokenTags: (ref: TokenRef) => CardTags | null,
 ): {
   nodes: DeckCard[];
-  /** card name -> the oracleIds of the tokens it structurally creates. */
+  /** FACE name (Task 7, faces-as-nodes: `deck`'s own entries, one per printed face) -> the
+   *  oracleIds of the tokens it structurally creates. Keyed by face because its only reader,
+   *  `pairPool`'s creates-edge check, is asking "did THIS face author the token" (review fix,
+   *  2026-08-27: see the comment on `creators.add` below for why the reverse map is physical). */
   producerTokenOracles: Map<string, Set<string>>;
-  /** token oracleId -> the card name(s) that make it. */
+  /** token oracleId -> the PHYSICAL card name(s) that make it (never a face name — see
+   *  `creators.add` below). */
   tokenCreators: Map<string, Set<string>>;
 } {
   const nodes: DeckCard[] = [];
@@ -660,11 +664,20 @@ export function analyzeDeckStructured(
     const payoffRating = payoffRatingByName.get(c.name) ?? 0;
     const feederRating = feederRatingByName.get(c.name) ?? 0;
     const card = printedCost.get(physical);
+    // `cardName`/`face` -- the same fields `cutInputs` already computes below and `WireGraphNode`
+    // already carries -- so a reader can join THIS row back to the physical card and to its other
+    // face. Face index 0 (the front) is left unmarked, matching `graph-projection.ts`'s
+    // `...(d.face ? ...)` and `DeckCard.face`'s own convention. Review fix, 2026-08-27: without
+    // this, a consumer joining `report.cards` by `name` against physical-keyed data (a commander
+    // set, `quantities`, `unmeasurablePayoffs`) silently missed every back face.
+    const faceIdx = uniqueByName.get(c.name)?.face;
     const cost = {
       ...(card?.manaCost !== undefined ? { manaCost: card.manaCost } : {}),
       ...(card !== undefined ? { manaValue: card.manaValue } : {}),
       ...(castByName.has(physical) ? { castability: castByName.get(physical)! } : {}),
       derived: derivedByName.get(physical) ?? true,
+      ...(physical !== c.name ? { cardName: physical } : {}),
+      ...(faceIdx ? { face: faceIdx } : {}),
     };
     return doubleDuty
       ? { ...c, ...cost, synergyRating: doubleDutyRating(base), payoffRating, feederRating, axisWeight, doubleDuty: true, doubleDutyRoles: roles, roles }

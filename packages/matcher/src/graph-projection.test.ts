@@ -5,7 +5,6 @@ import { faceDeckCards } from "./faces.js";
 import type { DeckCard } from "./types.js";
 
 const W = { kinds: {}, repeatability: {}, scaling: {}, damping: 1 };
-const WEIGHTS = W;
 
 function card(name: string, typeLine = "Creature — Human", manaValue = 2): DeckCard {
   return {
@@ -14,10 +13,6 @@ function card(name: string, typeLine = "Creature — Human", manaValue = 2): Dec
     } as DeckCard["card"],
     tags: null,
   };
-}
-
-function plainCard(name: string): DeckCard {
-  return card(name);
 }
 
 // The two-faced fixture edges.test.ts/faces.test.ts already use -- an Instant front, a Land back.
@@ -171,7 +166,7 @@ test("a back face gets its own node id", () => {
 });
 
 test("a two-faced card draws two nodes, each with its own printed fields", () => {
-  const g = projectDeckGraph(faceDeckCards(mdfcDeckCard()), [], WEIGHTS);
+  const g = projectDeckGraph(faceDeckCards(mdfcDeckCard()), [], W);
   expect(g.nodes.map((n) => n.id)).toEqual([
     "Fell the Profane // Fell Mire",
     "face:1:Fell the Profane // Fell Mire",
@@ -186,13 +181,13 @@ test("a two-faced card draws two nodes, each with its own printed fields", () =>
 });
 
 test("a reason carrying a face lands on that face's node", () => {
-  const deck = [...faceDeckCards(mdfcDeckCard()), plainCard("Lotus Cobra")];
+  const deck = [...faceDeckCards(mdfcDeckCard()), card("Lotus Cobra")];
   const reasons = [{
     tag: "enters:land", text: "…",
     producer: "Fell the Profane // Fell Mire", producerFace: 1,
     consumer: "Lotus Cobra",
   }];
-  const g = projectDeckGraph(deck, reasons, WEIGHTS);
+  const g = projectDeckGraph(deck, reasons, W);
   expect(g.offDeckReasons).toBe(0);
   expect(g.edges[0].from).toBe("face:1:Fell the Profane // Fell Mire");
 });

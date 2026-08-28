@@ -260,6 +260,18 @@ test("an unread card with a role is not unjudged either — its role still prote
   expect(unjudgedCandidates([card({ name: "Bojuka Bog", derived: false, isLand: true })])).toEqual([]);
 });
 
+// REVIEW FIX (2026-08-27): a two-faced card rates two face rows, both unread, and this ran over
+// the raw rows without merging them -- an unread two-faced card printed BOTH its face names, and
+// `CutList.tsx`'s "N of the M unread" line could read "2 of the 1 unread" against a coverage count
+// of one slot. Merged like `cutCandidates`, it names the card once.
+test("a two-faced unread card is reported once, by its physical name, not once per face", () => {
+  const inputs = [
+    card({ name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", derived: false, manaValue: 3 }),
+    card({ name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", derived: false, manaValue: 3 }),
+  ];
+  expect(unjudgedCandidates(inputs)).toEqual(["Fell the Profane // Fell Mire"]);
+});
+
 /** Trim must always have an Nth row, so an unread card is RANKED rather than refused — with the
  *  true clause and a protection, never "nothing connects to it". */
 test("trim keeps an unread card and says why it cannot judge it", () => {

@@ -111,11 +111,29 @@ for (const path of files) {
   if (INVERSIONS || SAVE || AGAINST) {
     // Absent means UNMEASURABLE, never zero: a card with no rating must be skipped and counted,
     // not scored 0 against real feeders (the `?? 0` defect the fix wave removed for tokens).
-    const has = <T,>(v: T | undefined): v is T => v !== undefined;
+    //
+    // A two-faced card rates TWICE, once per printed face (Task 7, faces-as-nodes) — but `rows`
+    // (built from `reasons`, which name the PHYSICAL card) and `deckCards` are both keyed on the
+    // physical card. Joining these maps on `c.name` alone missed every back face, AND every front
+    // face whose face name differs from the physical name, so a multi-face card's rows fell
+    // straight into `unmeasurablePayoffs`. Keyed on `cardName ?? name` and merged like
+    // `cut-list.ts`'s `mergeFaces` — the STRONGER face's number stands for the physical card, since
+    // a reason names the card and not the face it happened to derive from. Review fix, 2026-08-27.
+    const maxByPhysical = (get: (c: (typeof report.cards)[number]) => number | undefined) => {
+      const m = new Map<string, number>();
+      for (const c of report.cards) {
+        const v = get(c);
+        if (v === undefined) continue;
+        const key = c.cardName ?? c.name;
+        const cur = m.get(key);
+        if (cur === undefined || v > cur) m.set(key, v);
+      }
+      return m;
+    };
     const ratings = {
-      payoff: new Map(report.cards.filter((c) => has(c.payoffRating)).map((c) => [c.name, c.payoffRating!] as const)),
-      feeder: new Map(report.cards.filter((c) => has(c.feederRating)).map((c) => [c.name, c.feederRating!] as const)),
-      headline: new Map(report.cards.filter((c) => has(c.synergyRating)).map((c) => [c.name, c.synergyRating!] as const)),
+      payoff: maxByPhysical((c) => c.payoffRating),
+      feeder: maxByPhysical((c) => c.feederRating),
+      headline: maxByPhysical((c) => c.synergyRating),
       // The protected set is defined on SCORES, not on the rounded ratings, so a card sitting near
       // the boundary is not misclassified by a 0.05 rounding step.
       //
@@ -125,8 +143,11 @@ for (const path of files) {
       // defaulting an unmeasured card INTO the protected set. `score = authority + roleBlend *
       // feederLift` makes protected <=> `authority >= score - authority` <=> `2 * authority >=
       // score`, using only shipped fields with no re-read of `roleBlend` and no default-in trap:
-      // absent `authority` now means NOT classified, never protected.
-      majorityPayoff: new Set(report.cards.filter((c) => c.authority !== undefined && 2 * c.authority >= c.score).map((c) => c.name)),
+      // absent `authority` now means NOT classified, never protected. Either face protecting the
+      // physical card is enough — the same "strongest face wins" rule the numeric maps use above.
+      majorityPayoff: new Set(
+        report.cards.filter((c) => c.authority !== undefined && 2 * c.authority >= c.score).map((c) => c.cardName ?? c.name),
+      ),
     };
     const rep = countInversions(rows, ratings, { glut: GLUT });
     inversionTotals.shapes += rep.shapes;

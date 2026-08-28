@@ -125,9 +125,15 @@ export function projectDeckGraph(
     const id = nodeId(d.parentName ?? d.card.name, d.isToken, d.face);
     if (seen.has(id)) continue;
     seen.add(id);
-    // EVERY face, because a node is the whole card. `parseTypeLine` takes one face and leaves "//"
-    // visible; passing the combined line here painted a literal "//" swatch in the Type legend and,
-    // worse, dropped the back face's type on any card whose front face has subtypes.
+    // Stale note, corrected 2026-08-27: this predates Task 7 (faces-as-nodes), when `deck` held one
+    // entry per PHYSICAL card and `d.card.typeLine` was the combined "A // B" line -- `parseTypeLine`
+    // takes one face and leaves "//" visible, painting a literal "//" swatch in the Type legend and
+    // dropping the back face's type on any card whose front face has subtypes, which is why
+    // `parseTypeLineAllFaces` was built to split it. Both callers now hand this function one FACE
+    // per `d` (`faceDeckCards`), so `d.card.typeLine` is already that face's own line and this call
+    // is a no-op split -- kept rather than swapped for the plain parser because it stays correct for
+    // a caller that has not split, and a node is still one CARD's identity even though it is now
+    // built one face at a time.
     const { types, subtypes, supertypes } = parseTypeLineAllFaces(d.card.typeLine);
     nodes.push({
       id,
