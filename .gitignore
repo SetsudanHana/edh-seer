@@ -44,3 +44,30 @@ packages/data/.mtgjson-cache/
 
 # Persona-review screenshots
 persona-shots/
+
+# --- AI context, scopes and plans: local only, never pushed (owner's call 2026-08-28) ---
+# Stripped from history with git-filter-repo in the same pass, together with the
+# Claude-Session / Co-Authored-By trailers and the "Claude" commit authorship.
+# The files still live on disk and in ~/projects/mtg-synergy-engine-backup-20260828.
+docs/superpowers/
+docs/measurements/
+.superpowers/
+.claude/worktrees/
+CLAUDE.local.md
+AGENTS.md
+GEMINI.md
+.cursor/
+.aider*
+.continue/
+.windsurfrules
+.github/copilot-instructions.md
+
+# --- secrets: belt and braces. .env is already above; these are the shapes that leak ---
+.env.*
+!.env.example
+*.pem
+*.key
+!packages/**/*.key.ts
+credentials.json
+secrets.json
+.npmrc
