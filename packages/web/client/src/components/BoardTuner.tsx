@@ -81,6 +81,11 @@ const CONSTANT_NAME: Record<NumericParam, string> = {
   alphaDecay: "ALPHA_DECAY",
   alphaFloor: "ALPHA_FLOOR",
   collideIterations: "COLLIDE_ITERATIONS",
+  // Added to `BoardParams` after this map was written and never added here -- `Record<NumericParam,
+  // string>` is exhaustive, so it was a type error the whole time and 2,712 green tests could not
+  // see it. It is why `typecheck` is a CI gate now. `KNOBS` still has no collidePad SLIDER, which
+  // is a separate gap: that list is curated by hand and choosing a range is a judgement.
+  collidePad: "COLLISION_PAD",
 };
 
 /** Four readings a second, not one a frame: these numbers are for reading, and countOverlaps is
