@@ -31,8 +31,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
-} from "@edh-seer/data";
+  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
@@ -52,7 +51,7 @@ const SCORE = arg("--score", "");
 const N_REAL = Number(arg("--real", "45"));
 const N_FALSE = Number(arg("--false", "35"));
 const SEED = Number(arg("--seed", "20260806"));
-const OUT = arg("--out", "/tmp/agreement");
+const OUT = arg("--out", scratchDir("agreement"));
 const ROUND = arg("--round", "round 4");
 const EXCLUDE = arg("--exclude", "");
 const KEEP_OWNER = process.argv.includes("--keep-owner");

@@ -9,8 +9,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
-} from "@edh-seer/data";
+  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
@@ -22,7 +21,7 @@ const arg = (flag: string, fallback: string): string => {
   const i = process.argv.indexOf(flag);
   return i > 0 ? process.argv[i + 1] : fallback;
 };
-const OUT = arg("--dir", "/tmp/precision");
+const OUT = arg("--dir", scratchDir("precision"));
 
 const lines = (f: string): unknown[] =>
   readFileSync(join(OUT, f), "utf8").split("\n").filter((l) => l.trim()).map((l) => JSON.parse(l));

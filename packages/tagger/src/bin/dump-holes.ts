@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig, type CardDoc } from "@edh-seer/data";
+import { connect, loadConfig, type CardDoc, scratchDir } from "@edh-seer/data";
 import { expectsAbilities, renderPreamble } from "./corpus-core.js";
 
 /** Dumps the cards `dump-untagged` structurally cannot see: those that DO have a cardTags document
@@ -18,7 +18,7 @@ async function main(): Promise<void> {
   for (let i = 2; i < process.argv.length; i += 2) args.set(process.argv[i].replace(/^--/, ""), process.argv[i + 1]);
   const batches = Number(args.get("batches") ?? 6);
   const size = Number(args.get("size") ?? 40);
-  const outDir = args.get("out") ?? "/tmp/mtg-tag-holes";
+  const outDir = args.get("out") ?? scratchDir("mtg-tag-holes");
 
   const store = await connect(loadConfig());
   const emptyIds = new Set<string>();

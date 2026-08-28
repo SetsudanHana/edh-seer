@@ -1,3 +1,4 @@
+import { scratchDir } from "@edh-seer/data";
 /** Scores the arms written by schema-experiment.ts.
  *
  *  Prints two things: mechanical metrics that need no judgment (parse failures, dropped cards,
@@ -8,7 +9,7 @@
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-const dir = process.argv[2] ?? "/tmp/schema-exp";
+const dir = process.argv[2] ?? scratchDir("schema-exp");
 const cardIdx = process.argv.indexOf("--card");
 const onlyCard = cardIdx > 0 ? process.argv[cardIdx + 1].toLowerCase() : null;
 

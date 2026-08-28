@@ -1,3 +1,4 @@
+import { scratchDir } from "@edh-seer/data";
 /** Scores a judged worksheet and prints the verdict on flat vs derived.
  *  Spec: `docs/superpowers/specs/2026-08-05-edge-precision-measurement-design.md` §6.
  *
@@ -17,7 +18,7 @@ const arg = (flag: string, fallback: string): string => {
   const i = process.argv.indexOf(flag);
   return i > 0 ? process.argv[i + 1] : fallback;
 };
-const DIR = arg("--dir", "/tmp/precision");
+const DIR = arg("--dir", scratchDir("precision"));
 
 const lines = (f: string): unknown[] =>
   readFileSync(join(DIR, f), "utf8").split("\n").filter((l) => l.trim()).map((l) => JSON.parse(l));

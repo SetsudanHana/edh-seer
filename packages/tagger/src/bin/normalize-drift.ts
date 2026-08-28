@@ -1,3 +1,4 @@
+import { scratchDir } from "@edh-seer/data";
 /** Groups the drift between two normalizer runs into categories, so a large sample stays readable.
  *  Reports WHICH field disagrees and, for actions, which verb pairs are being swapped — the shape
  *  that tells you whether the residual is a few enumerable ambiguities or a long tail.
@@ -6,7 +7,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const dir = process.argv[2] ?? "/tmp/normalize-held100";
+const dir = process.argv[2] ?? scratchDir("normalize-held100");
 interface Rec { id: number; abilityType?: string; trigger?: { event?: string } | null; actions?: { verb?: string; fromZone?: string | null; toZone?: string | null; object?: string }[] }
 interface Row { name: string; clauses: { id: number; kind: string; text: string }[]; output: { clauses?: Rec[] } }
 

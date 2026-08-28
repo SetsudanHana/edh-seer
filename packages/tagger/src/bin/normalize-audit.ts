@@ -1,3 +1,4 @@
+import { scratchDir } from "@edh-seer/data";
 /** Dumps a judgeable sample of clauses for an ACCURACY read against oracle text.
  *
  *  Self-consistency and accuracy are different questions and only the first is automatic. A
@@ -9,7 +10,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const dir = process.argv[2] ?? "/tmp/normalize-held100";
+const dir = process.argv[2] ?? scratchDir("normalize-held100");
 const N = Number(process.argv[3] ?? 30);
 const SEED = Number(process.argv[4] ?? 5);
 const WANT_DISAGREED = process.argv.includes("--disagreed");

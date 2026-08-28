@@ -1,3 +1,4 @@
+import { scratchDir } from "@edh-seer/data";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -91,7 +92,7 @@ async function main(): Promise<void> {
   assertDeprecatedGrindAllowed();
   const args = new Map<string, string>();
   for (let i = 2; i < process.argv.length; i += 2) args.set(process.argv[i].replace(/^--/, ""), process.argv[i + 1]);
-  const dir = args.get("dir") ?? "/tmp/mtg-tag-batches";
+  const dir = args.get("dir") ?? scratchDir("mtg-tag-batches");
   const batches = Number(args.get("batches") ?? 6);
 
   const files: [string, string][] = [];

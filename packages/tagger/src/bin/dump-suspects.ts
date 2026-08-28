@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig, type CardDoc } from "@edh-seer/data";
+import { connect, loadConfig, type CardDoc, scratchDir } from "@edh-seer/data";
 import { renderPreamble } from "./corpus-core.js";
 
 // Usage: dump-suspects [--size N] [--out DIR]
@@ -22,7 +22,7 @@ async function main(): Promise<void> {
   const args = new Map<string, string>();
   for (let i = 2; i < process.argv.length; i += 2) args.set(process.argv[i].replace(/^--/, ""), process.argv[i + 1]);
   const size = Number(args.get("size") ?? 40);
-  const outDir = args.get("out") ?? "/tmp/mtg-tag-batches";
+  const outDir = args.get("out") ?? scratchDir("mtg-tag-batches");
 
   const store = await connect(loadConfig());
   const cards = (await store.db.collection("cards").find({}).toArray()) as unknown as CardDoc[];
