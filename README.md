@@ -102,6 +102,11 @@ Working, measured, and under active development. It began as a proof of concept 
 deterministic engine with a regression panel, several ratchets, and a habit of recording the
 measurement beside every change.
 
+## Documentation
+
+[How it works](docs/HOW-IT-WORKS.md) — the full pipeline from a printed card to a synergy graph,
+stage by stage, with diagrams and a real worked example.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
