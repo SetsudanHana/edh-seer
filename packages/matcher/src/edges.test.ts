@@ -3258,3 +3258,46 @@ test("...and on the BACK face when the front does not satisfy the static at all"
   expect(pumps[0].consumerFace).toBe(1);
   expect(pumps[0].text).toContain("Autobot Leader");
 });
+
+/** A `type-grant` reaches lands as readily as creatures, and the phrase said "creature" about both:
+ *  Omo, Queen of Vesuva prints one static for each ("each land with an everything counter is every
+ *  land type", "each nonland creature ... is every creature type") and its LAND grant rendered
+ *  "Omo gives Glasspool Shore an extra creature type" — a wrong noun on a true claim. */
+const landGranter = () => base("Omo, Queen of Vesuva", [{
+  kind: "static",
+  effect: { kind: "type-grant", subject: { type: "land", control: "you", token: null } },
+}] as unknown as CardTags["abilities"]);
+
+test("a type-grant aimed at lands says LAND type, not creature type", () => {
+  const land = base("Glasspool Shore", []);
+  (land.tags.characteristics as { types: string[] }).types = ["land"];
+  const grant = pairReasons(landGranter(), land, H).find((r) => r.tag === "static:type-grant")!;
+  expect(grant.text).toBe("Omo, Queen of Vesuva gives Glasspool Shore an extra land type");
+});
+
+test("...and still says CREATURE type when that is what it reaches", () => {
+  const nexus = base("Maskwood Nexus", [{
+    kind: "static",
+    effect: { kind: "type-grant", subject: { type: "creature", control: "you", token: null } },
+  }] as unknown as CardTags["abilities"]);
+  const grant = pairReasons(nexus, base("Shapeshifter", []), H).find((r) => r.tag === "static:type-grant")!;
+  expect(grant.text).toBe("Maskwood Nexus gives Shapeshifter an extra creature type");
+});
+
+test("a type-grant that names neither drops the noun rather than guessing it", () => {
+  // Eluge's "lands with a flood counter are Islands" derives `{subtype: island}` with no card type,
+  // and 6 of the 13 derived type-grants carry no type or subtype at all. The consumer's own type
+  // line settles it when it names exactly one of the two; a card that is BOTH cannot be settled.
+  const untyped = base("Eluge, the Shoreless Sea", [{
+    kind: "static",
+    effect: { kind: "type-grant", subject: { control: "you", token: null } },
+  }] as unknown as CardTags["abilities"]);
+  const both = base("Dryad Arbor", []);
+  (both.tags.characteristics as { types: string[] }).types = ["land", "creature"];
+  const grant = pairReasons(untyped, both, H).find((r) => r.tag === "static:type-grant")!;
+  expect(grant.text).toBe("Eluge, the Shoreless Sea gives Dryad Arbor an extra type");
+  // ...and the SUBJECT outranks the consumer, which is the only thing that can settle a card that
+  // is both: Omo's land static aimed at Dryad Arbor grants LAND types to a land creature.
+  const fromSubject = pairReasons(landGranter(), both, H).find((r) => r.tag === "static:type-grant")!;
+  expect(fromSubject.text).toBe("Omo, Queen of Vesuva gives Dryad Arbor an extra land type");
+});

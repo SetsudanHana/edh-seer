@@ -199,7 +199,12 @@ const GRANT_PHRASES: Record<string, string> = {
   // narrower word was a false sentence about it. The wider one is true of both: CR 702 makes a
   // keyword an ability, so nothing is lost on the cards the old phrase described correctly.
   "keyword-grant": "an extra ability",
-  "type-grant": "an extra creature type",
+  // "an extra TYPE", with the kind of type supplied by the caller (`typeGrantNoun`). The table
+  // cannot say it: a `type-grant` reaches lands as readily as creatures, and this row read
+  // "an extra creature type" about both -- Omo, Queen of Vesuva prints one static for each, so its
+  // LAND grant said "Omo gives Glasspool Shore an extra creature type", a wrong noun on a true
+  // claim (found 2026-08-28 while collapsing the MESHED double-count).
+  "type-grant": "an extra type",
   "speed-increase": "haste",
   animate: "life as a creature",
   clone: "a copy of what it targets",
@@ -210,9 +215,35 @@ const GRANT_PHRASES: Record<string, string> = {
 
 /** Replaces the ternary's non-cost-reduction branch, whose old text — "P's <kind> applies to C" —
  *  was the third of the three phrases the design named for removal ("'s static applies to"). */
-export function staticGrantSentence(producer: string, consumer: string, kind: string): string {
-  const phrase = GRANT_PHRASES[kind] ?? `its ${kind.replace(/-/g, " ")}`;
+export function staticGrantSentence(
+  producer: string, consumer: string, kind: string, noun?: string,
+): string {
+  const phrase = kind === "type-grant" && noun
+    ? `an extra ${noun} type`
+    : GRANT_PHRASES[kind] ?? `its ${kind.replace(/-/g, " ")}`;
   return `${producer} gives ${consumer} ${phrase}`;
+}
+
+/** WHICH KIND OF TYPE a `type-grant` hands out, for the sentence only -- never for matching.
+ *
+ *  The SUBJECT decides when it names exactly one of the two card types this family reaches (Omo's
+ *  two statics are `{type: land}` and `{type: creature}`). Otherwise the CONSUMER'S OWN type line
+ *  does, which is the fact the sentence is about anyway: 6 of the 13 derived type-grants carry no
+ *  type at all (Glasspool Mimic, Copy Land, Minas Morgul), and Eluge's derives a bare
+ *  `{subtype: island}`.
+ *
+ *  UNDECIDED MEANS NO NOUN, never a guess. A consumer that is BOTH a land and a creature (Dryad
+ *  Arbor) cannot be settled from either side, and "an extra type" is true of every card here. */
+export function typeGrantNoun(
+  subjectType: string | string[] | undefined, consumerTypes: readonly string[],
+): string | undefined {
+  const list = (v: string | string[] | undefined): string[] =>
+    v === undefined ? [] : Array.isArray(v) ? v : [v];
+  const only = (from: readonly string[]): string | undefined => {
+    const hit = ["creature", "land"].filter((t) => from.includes(t));
+    return hit.length === 1 ? hit[0] : undefined;
+  };
+  return only(list(subjectType)) ?? only(consumerTypes);
 }
 
 /** "Panharmonicon doubles Solemn Simulacrum's enters trigger". Says WHICH trigger, because the whole

@@ -14,7 +14,7 @@ import {
   copySentence, costReductionSentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, fetchSentence, proliferateSentence,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
+  staticGrantSentence, typeGrantNoun, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { parseTypeLineAllFaces } from "./typeline.js";
@@ -1438,7 +1438,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         : `${a.effect.kind}:${themeSubjectKey(a.effect.subject)}`,
       text: a.effect.kind === "cost-reduction"
         ? costReductionSentence(p.card.name, c.card.name)
-        : staticGrantSentence(p.card.name, c.card.name, a.effect.kind),
+        : staticGrantSentence(p.card.name, c.card.name, a.effect.kind,
+          typeGrantNoun(a.effect.subject?.type, c.tags.characteristics.types)),
       effectKind: a.effect.kind,
       repeatability:
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
