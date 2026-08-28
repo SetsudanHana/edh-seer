@@ -103,6 +103,27 @@ function tokenDeckCard(ref: TokenRef, tags: CardTags): DeckCard {
   };
 }
 
+/** WHICH FACE OF A MULTI-FACE CARD MAKES THIS TOKEN. `allParts` is a CARD-scoped Scryfall fact and
+ *  `faceDeckCards` spreads it onto every face, so both faces of a transforming maker claimed to
+ *  create everything the card can make. Two consequences, both measured on the 71 decks: a
+ *  non-creating face drew a FALSE `creates:` edge (6 rows, all Reflection of Kiki-Jiki claiming the
+ *  Goblin Shaman that Fable's Chapter I makes), and the token could never be read as PARTNERED off
+ *  that face's genuine payoff, since the partner scan treats a maker's own edge as no partner.
+ *
+ *  THE FACE'S OWN PRINTED TEXT IS THE FACT: a `create` sentence naming the token. The sentence test
+ *  matters -- a payoff face routinely says the token's name ("Sacrifice a Treasure:") and saying it
+ *  is not making it.
+ *
+ *  A CARD-SCOPED FALLBACK WHEN NO FACE NAMES IT, and it is the conservative direction. Scryfall's
+ *  typeless "Copy" row is never named in printed text, and a face whose text the corpus never stored
+ *  names nothing either; attributing the token to no face at all would make it read PARTNERED off
+ *  its own maker, which is the over-claim this scan exists to avoid. */
+function facesCreating(faces: DeckCard[], tokenName: string): DeckCard[] {
+  const named = new RegExp(`\\bcreate[sd]?\\b[^.]*${tokenName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i");
+  const printers = faces.filter((f) => named.test(f.card.oracleText ?? ""));
+  return printers.length > 0 ? printers : faces;
+}
+
 /** Every token node a deck can make, plus the two directions of the maker relation. Exported
  *  because the GRAPH PROJECTION needs the identical node list: `projectDeckGraph` builds its nodes
  *  off the deck array it is given and drops a reason naming anything else as `offDeckReasons`, so a
@@ -115,11 +136,12 @@ export function collectTokenNodes(
   nodes: DeckCard[];
   /** FACE name (Task 7, faces-as-nodes: `deck`'s own entries, one per printed face) -> the
    *  oracleIds of the tokens it structurally creates. Keyed by face because its only reader,
-   *  `pairPool`'s creates-edge check, is asking "did THIS face author the token" (review fix,
-   *  2026-08-27: see the comment on `creators.add` below for why the reverse map is physical). */
+   *  `pairPool`'s creates-edge check, is asking "did THIS face author the token" -- and since
+   *  2026-08-28 the answer is per face rather than per card (`facesCreating`). */
   producerTokenOracles: Map<string, Set<string>>;
-  /** token oracleId -> the PHYSICAL card name(s) that make it (never a face name — see
-   *  `creators.add` below). */
+  /** token oracleId -> the FACE name(s) that make it. Physical until 2026-08-28, when
+   *  `facesCreating` made the attribution real: a face that does not print the token is not its
+   *  maker, so its edge to that token is a PARTNER. A single-face card's face name is its own. */
   tokenCreators: Map<string, Set<string>>;
 } {
   const nodes: DeckCard[] = [];
@@ -127,6 +149,9 @@ export function collectTokenNodes(
   const tokenCreators = new Map<string, Set<string>>();
   const byOracle = new Map<string, DeckCard>();
   for (const dc of deck) {
+    // The sibling faces, so a face can ask whether ANY face prints the token before falling back.
+    // `dc.parent` is set by `faceDeckCards` and absent on a single-face card and on a token.
+    const siblings = dc.parent ? faceDeckCards(dc.parent) : [dc];
     for (const ref of createdTokenRefs(dc.card)) {
       const tags = tokenTags(ref);
       if (!tags) continue; // unresolved -- refuse, never fall back to a (name, typeLine) lookup
@@ -135,17 +160,16 @@ export function collectTokenNodes(
         byOracle.set(tags.oracleId, node);
         nodes.push(node);
       }
+      // THE NODE EXISTS FOR THE CARD AND THE CREATION BELONGS TO A FACE. A token the deck can make
+      // is on the graph whichever face makes it, so node building above is card-scoped; only the
+      // maker relation below asks which face.
+      if (!facesCreating(siblings, ref.name).some((f) => f.card.name === dc.card.name)) continue;
       let oracles = producerTokenOracles.get(dc.card.name);
       if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
       oracles.add(tags.oracleId);
       let creators = tokenCreators.get(tags.oracleId);
       if (!creators) tokenCreators.set(tags.oracleId, (creators = new Set()));
-      // The token link is a CARD-scoped Scryfall fact (`allParts`), not a per-face one -- `dc.card`
-      // carries it on BOTH faces of a two-faced maker (faceDeckCards spreads the parent's fields), so
-      // registering the FACE name here would make every reader of this set treat "the OTHER face
-      // also independently cares about the token" as "the maker's own edge" and never a partner.
-      // The physical name is the one identity both faces agree on (review fix, 2026-08-27).
-      creators.add(dc.parentName ?? dc.card.name);
+      creators.add(dc.card.name);
     }
   }
   return { nodes, producerTokenOracles, tokenCreators };
@@ -301,12 +325,13 @@ export function analyzeDeckStructured(
   const partneredOracles = new Set<string>();
   for (const edge of edges) {
     const aOracle = tokenOracleByName.get(edge.a);
-    // `tokenCreators` is keyed by PHYSICAL name (see collectTokenNodes); `edge.a`/`edge.b` are FACE
-    // names, so the comparison has to go through the same translation or a maker's own face-split
-    // name would never match its own entry (review fix, 2026-08-27).
-    if (aOracle && !tokenCreators.get(aOracle)?.has(physicalName(edge.b))) partneredOracles.add(aOracle);
+    // `tokenCreators` and `edge.a`/`edge.b` are both FACE names since the attribution became per
+    // face (2026-08-28), so the comparison is direct. It went through `physicalName` while the map
+    // was physical-keyed, which is exactly what made a non-creating face's payoff read as the
+    // maker's own edge.
+    if (aOracle && !tokenCreators.get(aOracle)?.has(edge.b)) partneredOracles.add(aOracle);
     const bOracle = tokenOracleByName.get(edge.b);
-    if (bOracle && !tokenCreators.get(bOracle)?.has(physicalName(edge.a))) partneredOracles.add(bOracle);
+    if (bOracle && !tokenCreators.get(bOracle)?.has(edge.a)) partneredOracles.add(bOracle);
   }
   const tokenNodesReport = tokenNodes.map((dc) => ({
     name: dc.card.name,
@@ -460,7 +485,7 @@ export function analyzeDeckStructured(
     // `uniqueByName` has no entry under a combined "Front // Back" string, so `ourMakers` was
     // always empty and the whole hop was silently skipped for every two-faced maker.
     const ourMakers = unique
-      .filter((dc) => makers.has(physicalName(dc.card.name)))
+      .filter((dc) => makers.has(dc.card.name))
       .filter((dc) => createsForYou(dc, t, hierarchy))
       .map((dc) => dc.card.name);
     if (ourMakers.length === 0) continue;

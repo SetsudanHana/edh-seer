@@ -1,5 +1,6 @@
 import { describe, expect, it, test } from "vitest";
 import { analyzeDeckStructured, collectTokenNodes } from "./analyze.js";
+import { faceDeckCards } from "./faces.js";
 import { SEED_IMPACT_WEIGHTS, loadImpactWeights } from "@mtg/engine";
 import type { TagStats } from "@mtg/engine";
 import type { CardTags } from "@mtg/tagger";
@@ -1345,12 +1346,13 @@ test("IMPORTANT: an underived two-faced card is reported as underived, not silen
   expect(front?.derived).toBe(false);
 });
 
-// IMPORTANT: `tokenCreators` is a CARD-scoped Scryfall fact (`allParts`); `faceDeckCards` copies it
-// onto BOTH faces of a two-faced maker, so registering the raw `dc.card.name` (a FACE name) split
-// one physical maker into two "creators". Directly exercises the changed line in
-// `collectTokenNodes`, independent of the (unchanged, by design) `partneredOracles` outcome for a
-// maker's own faces -- see the fix commit for why that consumer cannot observe the difference.
-test("IMPORTANT: collectTokenNodes registers a two-faced maker's creator by its PHYSICAL name", () => {
+// SUPERSEDED 2026-08-28 by `facesCreating`, and kept as the FALLBACK case it now tests. `allParts`
+// is a CARD-scoped Scryfall fact that `faceDeckCards` copies onto both faces, so the 2026-08-27 fix
+// registered the PHYSICAL name to stop one maker splitting into two "creators". The attribution is
+// real now -- the face whose printed text creates the token -- and this fixture stores NO oracle
+// text on either face, so no face names it and both stay creators, which is the same answer the
+// physical name gave: a maker's own edge is still not a partner.
+test("collectTokenNodes keeps BOTH faces as creators when neither face's text names the token", () => {
   const parentName = "Probe Front // Probe Back";
   const allParts = [{ component: "token", name: "Treasure", typeLine: "Token Artifact — Treasure", printingId: "treasure-printing-id" }];
   const front: DeckCard = {
@@ -1370,7 +1372,7 @@ test("IMPORTANT: collectTokenNodes registers a two-faced maker's creator by its 
     [front, back],
     (ref) => (ref.printingId === "treasure-printing-id" ? treasureTags : null),
   );
-  expect(tokenCreators.get("token-treasure-probe-oracle")).toEqual(new Set([parentName]));
+  expect(tokenCreators.get("token-treasure-probe-oracle")).toEqual(new Set(["Probe Front", "Probe Back"]));
 });
 
 // MINOR: pin the commander ruling. Both faces of a two-faced commander read `isCommander: true`
@@ -1476,4 +1478,73 @@ test("END-TO-END: a two-faced maker's token creation reaches a payoff through th
   expect(front.topPartners.some((p) => p.name === "Treasure Payoff")).toBe(true);
   const payoff = report.cards.find((c) => c.name === "Treasure Payoff")!;
   expect(payoff.topPartners.some((p) => p.name === "Maker Front")).toBe(true);
+});
+
+// ============================================================================
+// WHICH FACE MAKES THE TOKEN. `allParts` is a CARD-scoped Scryfall fact, so before this both faces
+// of a two-faced maker counted as creators: the non-creating face drew a false `creates:` edge, and
+// the token could never read `hasPartner` off that face's genuine payoff. Attribution is the face's
+// own printed text -- the fact the card states -- with a card-scoped FALLBACK when no face names it.
+// ============================================================================
+
+const twoFacedNamedMaker = (frontText: string, backText: string): DeckCard => ({
+  card: {
+    name: "Named Front // Named Back",
+    typeLine: "Creature // Creature",
+    oracleText: `${frontText}\n${backText}`,
+    keywords: [], colors: [], manaValue: 2,
+    faces: [
+      { name: "Named Front", typeLine: "Creature", oracleText: frontText, manaCost: "{2}", colors: [] },
+      { name: "Named Back", typeLine: "Creature", oracleText: backText, colors: [] },
+    ],
+    allParts: [{ component: "token", name: "Treasure", typeLine: "Token Artifact — Treasure", printingId: "treasure-printing-id" }],
+  } as never,
+  tags: {
+    oracleId: "named-front", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: {
+      types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [],
+      faces: [{ types: ["creature"], subtypes: [] }, { types: ["creature"], subtypes: [] }],
+    },
+    abilities: [
+      ...treasureMakerAbility,
+      // The PAYOFF, printed on the back face: a token supplies its own `enters` and no `sacrifice`,
+      // so an outlet-shaped trigger would form no edge and the test would pass vacuously.
+      { kind: "triggered", trigger: { verbs: ["enters"], subject: { subtype: "treasure", control: "you", token: null } }, effect: { kind: "draw-card" }, face: 1 },
+    ] as unknown as CardTags["abilities"],
+  } as CardTags,
+});
+
+test("only the FACE that prints the token creates it", () => {
+  const { producerTokenOracles, tokenCreators } = collectTokenNodes(
+    faceDeckCards(twoFacedNamedMaker("When this creature enters, create a Treasure token.", "Sacrifice an artifact: draw a card.")),
+    (ref) => (ref.printingId === "treasure-printing-id" ? treasureTags : null),
+  );
+  expect(producerTokenOracles.get("Named Front")).toEqual(new Set(["token-treasure-oracle"]));
+  expect(producerTokenOracles.get("Named Back")).toBeUndefined();
+  // Keyed by FACE now that the attribution is per face: the partner scan asks "is this endpoint the
+  // maker", and the maker is a face.
+  expect(tokenCreators.get("token-treasure-oracle")).toEqual(new Set(["Named Front"]));
+});
+
+test("...and when NO face names it, every face stays a creator — the conservative fallback", () => {
+  // Scryfall's typeless "Copy" row is never named in printed text, and a card whose text was never
+  // stored names nothing either. Refusing every face would make the token read partnered off its
+  // own maker, which is the over-claim this scan exists to avoid.
+  const { tokenCreators } = collectTokenNodes(
+    faceDeckCards(twoFacedNamedMaker("When this creature enters, do nothing.", "Sacrifice an artifact: draw a card.")),
+    (ref) => (ref.printingId === "treasure-printing-id" ? treasureTags : null),
+  );
+  expect(tokenCreators.get("token-treasure-oracle")).toEqual(new Set(["Named Front", "Named Back"]));
+});
+
+test("END-TO-END: a token read as unpartnered because its maker's OTHER face is the payoff", () => {
+  const report = analyzeDeckStructured(
+    [twoFacedNamedMaker("When this creature enters, create a Treasure token.", "Whenever a Treasure enters, draw a card."), dc("Filler", [])],
+    undefined, H, undefined, undefined, undefined,
+    (ref) => (ref.printingId === "treasure-printing-id" ? treasureTags : null),
+  );
+  const treasure = report.tokenNodes?.find((t) => t.name === "Treasure");
+  expect(treasure).toBeDefined();
+  expect(treasure!.hasPartner).toBe(true);
 });
