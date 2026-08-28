@@ -648,6 +648,7 @@ export function GraphView(
           // camRef.current.z from outside this effect, and this closure must see that write on its
           // next call rather than a value frozen when the probe was first built.
           camZ: camRef.current.z,
+          fits,
           edges: links.map((l) => ({
             from: l.source.id, to: l.target.id, weight: l.weight,
             target: linkDistanceFor(l.weight, maxWeight),
@@ -1293,6 +1294,12 @@ export function GraphView(
     // cards on screen at zoom 1; with StrictMode off, zoom 0.235 and 84 of 84. Every jsdom test
     // passed throughout, because they drive alpha down by hand instead of letting it decay.
     let fitted = fittedGraphRef.current === graph;
+    // HOW MANY TIMES THIS BOARD HAS BEEN FRAMED. Reported through `__graphProbe` because the fit is
+    // otherwise observable only through the camera, and only when the layout happens to have moved
+    // between the two fits -- which is how the re-frame's own test stopped firing within the hour
+    // (REPULSION 25 -> 60 respread the fixture until the first frame already held). A count is what
+    // the behaviour IS; the geometry was a proxy for it.
+    let fits = 0;
     // A graph already framed on a previous mount does not get the final re-frame either: its
     // camera is where the reader last saw it, and moving it would be the board acting on its own.
     let refitted = fitted;
@@ -1317,6 +1324,7 @@ export function GraphView(
         // it without ever going strictly below.
         if (!fitted && simulation.alpha() <= FIT_SETTLE_ALPHA) {
           fitToView();
+          fits++;
           fitted = true;
           fittedGraphRef.current = graph;
         } else if (!refitted && simulation.alpha() <= PARK_ALPHA && cameraOwnedByUserRef.current !== graph) {
@@ -1330,6 +1338,7 @@ export function GraphView(
           // guaranteed to hold. Never against a camera the USER has claimed, which is the same
           // guard the one-time fit keeps.
           fitToView();
+          fits++;
           refitted = true;
         }
       }

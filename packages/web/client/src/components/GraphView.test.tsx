@@ -660,6 +660,43 @@ describe("fit to view", () => {
   // camera never moved in the real app while every test here passed, because they all drive alpha
   // down by hand on a single mount. Measured in the browser at the time: 74 of 84 cards on screen
   // at zoom 1, versus 84 of 84 at zoom 0.235 with StrictMode off.
+  // THE SECOND FRAME, TAKEN WHEN THE BOARD PARKS. Its first test asserted geometry -- that every
+  // connected card ends up inside the framed rectangle -- and that assertion stopped firing within
+  // the hour, when REPULSION 25 -> 60 respread the fixture until the FIRST frame already held it
+  // (found by an adversarial review, 2026-08-28: deleting the whole re-frame branch left all 108
+  // tests in this file green). A count is what the behaviour IS; the geometry was a proxy for it,
+  // and the proxy is at the mercy of every constant in board-force.ts.
+  test("the board is framed twice: once mid-settle, once when it parks", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    const { canvas, tick } = frames(SAMPLE.graph);
+    expect(canvas.__graphProbe!().fits).toBe(0);
+    // Past FIT_SETTLE_ALPHA but not yet parked: exactly one frame taken.
+    tick(400);
+    expect(canvas.__graphProbe!().fits).toBe(1);
+    // Past PARK_ALPHA: the final frame, and only one more however long it runs.
+    tick(600);
+    expect(canvas.__graphProbe!().fits).toBe(2);
+    tick(400);
+    expect(canvas.__graphProbe!().fits).toBe(2);
+  });
+
+  // A camera the reader moved is theirs. The re-frame must respect that the same way the one-time
+  // fit does -- otherwise a zoom performed during the settle is silently undone when the board
+  // stops, which is worse than the original defect because it happens later.
+  test("the park re-frame never overwrites a camera the user has moved", () => {
+    const { canvas, tick } = frames(SAMPLE.graph);
+    tick(400);
+    expect(canvas.__graphProbe!().fits).toBe(1);
+    const probe = canvas.__graphProbe!();
+    // `sourceEvent` is what marks a REAL gesture -- the fit's own programmatic transform leaves it
+    // null, which is why it cannot claim the camera on its own behalf.
+    act(() => { probe.endGesture({ type: "mouseup", clientX: 10, clientY: 10, sourceEvent: {} } as never); });
+    tick(600);
+    expect(canvas.__graphProbe!().fits).toBe(1);
+  });
+
   test("still fits when the effect is torn down and re-run for the same deck", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),

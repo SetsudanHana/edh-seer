@@ -175,9 +175,16 @@ export function linkStrengthFor(
  *
  *  Card overlaps stay 0 on all six and the board still parks (motion under 0.3 px/tick).
  *
- *  WHAT IT COSTS IS THE ENCODING, and that is the reason not to go further. Link-distance error is
- *  how well "closer means stronger synergy" holds, and a stronger charge pushes every pair off its
- *  spring's rest length: +3 to +14 rms here. Weakening the springs instead (`linkStrengthK` x0.6 or
+ *  WHAT IT COSTS IS HALF THE ENCODING, and the half it cannot see may improve. Link-distance error
+ *  scores LINKED pairs only, and a stronger charge pushes every linked pair off its spring's rest
+ *  length: +3 to +14 rms here. The misreading this board has actually been caught making runs the
+ *  other way -- `EDGELESS_ALPHA` exists because a blind judge read two UNRELATED cards as the deck's
+ *  strongest pair from proximity alone -- and a stronger charge separates unlinked pairs, which this
+ *  metric is blind to. Deciding these trades honestly needs a two-sided measure (rank correlation of
+ *  distance against weight over ALL pairs, or a count of unlinked pairs inside LINK_DIST_MIN); until
+ *  one exists, read "+14 rms" as one side of a ledger rather than a verdict. Note the scale too:
+ *  rms 63-80 against rest lengths of 60-260 means the typical error already spans the whole strong
+ *  half of the range. Weakening the springs instead (`linkStrengthK` x0.6 or
  *  x0.35, both measured) buys a little more space and costs far more of it — x0.6 with this charge
  *  reads distErr 82 on inalla against 63 — so the charge moved and the springs did not.
  *
@@ -239,15 +246,27 @@ export const VELOCITY_DECAY = 0.14;
  *  the same effect ALPHA_FLOOR's own table below records. Crossings and rms link-distance error pay
  *  for it (+2% to +12%, distErr +1 to +4) and the caps are re-measured for exactly that.
  *
- *  0.015 was measured too and is NOT what ships: it stills the board no more visibly (0.00 against
- *  0.10-0.32 px/tick, both invisible) and costs twice as much -- braids +21% crossings against
- *  +12%, mdfc +11% against +4%.
+ *  0.015 was measured too and is NOT what ships -- ON ONE LEG ONLY, after a review struck the other.
+ *  What it costs is real: braids +21% crossings against +12%, mdfc +11% against +4%. What was
+ *  claimed and is FALSE is that it stills the board no more visibly. Both arms' motion figures were
+ *  sampled at ticks 800-980, which is after PARK_ALPHA under either setting -- the app has stopped
+ *  painting by then, so that comparison describes ticks nobody sees. The visible difference is the
+ *  SETTLE: 0.015 parks in ~7.6 s against ~11.5 s, and four fewer seconds of moving board is exactly
+ *  the axis the complaint named. It stays at 0.010 because of the crossings, not because 0.015
+ *  buys nothing.
  *
  *  NOT the levers, and both were measured before this one was picked: `velocityDecay` 0.14 -> 0.55
  *  also stills the board but costs +27% crossings on mdfc and +53% on inalla, and a `linkDistScale`
  *  knob (built, swept, deleted) did not widen the nearest-neighbour gap AT ALL -- 77-83 world units
  *  at every value -- while adding 18-35% crossings, because collide already sets local spacing and
- *  longer springs only fold the layout. */
+ *  longer springs only fold the layout.
+ *
+ *  A REFUSAL OF REPULSION WAS ALSO RECORDED HERE AND IT WAS MEASURED ON THIS DEFECT. Before this
+ *  change, at decay 0.005, raising the charge read the board getting SMALLER (mdfc radius 431 ->
+ *  412) and sorin gaining card overlaps -- both artifacts of a board sampled mid-creep at tick 800.
+ *  At the shipped decay the sign flips (348 -> 355 over the same charge range) and overlaps stay 0,
+ *  which is why REPULSION did move, a few commits later, on numbers taken here. A measurement is
+ *  only as alive as the regime it was taken in. */
 export const ALPHA_DECAY = 0.010;
 /** THE BOARD IS ALLOWED TO STOP (2026-08-20). This was 0.02 -- an `alphaTarget`, so alpha never
  *  decayed to rest and the board crept forever under a paint loop that never idled. The value was

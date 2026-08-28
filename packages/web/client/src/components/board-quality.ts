@@ -170,13 +170,19 @@ export const QUALITY_CAPS: Record<string, Caps> = {
   // faces-as-nodes shipped 2026-08-27 and every fixture here predates it: the ratchet was measuring
   // a board shape the app no longer produces for half its decks.
   //
-  // ITS CROSSINGS ARE THE OWNER'S "compact and cluttered" QUANTIFIED: 74,877 against sorin's 40,163
-  // at 84 cards. Capped where it measures rather than where anyone would like it to be — a cap is a
-  // ratchet against regression, not a target.
+  // Capped where it measures rather than where anyone would like it to be — a cap is a ratchet
+  // against regression, not a target.
   //
-  // Measured BOTH ARMS while capping it, which is the only reason the face spring's cost is known:
-  // without the spring the same fixture reads 69,766 crossings, so joining a card's faces costs
-  // about 7% more crossings and buys a median face-to-face gap of 78 world units against 311.
+  // THE FACE SPRING'S COST, re-measured at the CURRENT constants (2026-08-28): 62,626 crossings with
+  // the spring against 57,292 without, so joining a card's faces costs about 9% more crossings and
+  // buys a median face-to-face gap of 77 world units against 330. The figures this comment carried
+  // first (74,877 / 69,766, +7%) were taken at ALPHA_DECAY 0.005 and REPULSION 25 and are dead --
+  // a review found them sitting un-flagged above a cap from a third regime.
+  //
+  // AND ITS CROSSINGS ARE NOT A NODE-COUNT FACT, which is how they were first written up. mdfc has
+  // 338 edges to sorin's 246: the edge-PAIR ratio is 1.888 and the crossings ratio 1.864, so the
+  // excess is edges almost exactly and the 130-vs-84 node count explains none of it. What the extra
+  // nodes really cost is 130 discs and 130 LABELS, which no metric here measures.
   mdfc: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 62644, linkDistError: 66 },
 };
 
@@ -250,7 +256,9 @@ export const QUALITY_CAPS: Record<string, Caps> = {
  *    braids       crossings 19796 -> 19335 (-2.3%)   distErr 42 -> 43 (+2.4%)
  *  nodeOverlaps stayed 0 -> 0 on every fixture. Every move is under 3%, nowhere near the brief's 10%
  *  stop-and-diagnose line, so this is capped from the new measurement rather than investigated as a
- *  regression. motionMean (uncapped, diagnostic only -- the 180-tick sample taken after the 800
+ *  regression. motionMean -- RENAMED `driftMean` 2026-08-28, and the historical tables above keep the
+ *  old name because that is what they were printed under -- (uncapped, diagnostic only, the 180-tick
+ *  sample taken after the 800
  *  settling ticks) also dropped, before -> after the de-drift force: sorin 13.75 -> 4.41, inalla
  *  23.20 -> 8.83, fairdrazi 9.81 -> 3.76, changelings 4.60 -> 4.36, braids 9.17 -> 4.06. That drop is
  *  the de-drift force doing its actual job, but it is NOT the instrument that caught DEFECT 1 --

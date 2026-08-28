@@ -92,6 +92,15 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
     // (180 ticks ~ 3 s at 60 fps). The quality metrics do not need it and do not pay for it.
     const before = nodes.map((n) => ({ x: n.x, y: n.y }));
     for (let i = 0; i < motionTicks; i++) simulation.tick();
+    // NET DISPLACEMENT OVER THE WHOLE WINDOW, not per tick. Named for what it is after a review
+    // (2026-08-28) found it written up as "px/tick" in two places -- at which sorin's 19.72 would
+    // have been 3,548 px of travel in three seconds on a ~1,000-unit board.
+    //
+    // It measures DRIFT and it cannot see JITTER: a node oscillating a few px about its rest point
+    // returns here to where it started and reads ~0. The owner's complaint that prompted the
+    // ALPHA_DECAY change was "cards constantly shaking", which is the oscillation this is blind to
+    // -- the fix works because it removes ALL the energy, so it takes the jitter with the drift,
+    // but the instrument only ever watched the drift. Path length over the window would see both.
     const moved = nodes.map((n, i) => Math.hypot(n.x - before[i].x, n.y - before[i].y));
 
     const at = Object.fromEntries(nodes.map((n) => [n.id, { x: n.x, y: n.y }]));
@@ -112,8 +121,8 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
       nodes,
       cards: nodes.length,
       edges: links.length,
-      motionMean: mean(moved),
-      motionMax: moved.length ? Math.max(...moved) : 0,
+      driftMean: mean(moved),
+      driftMax: moved.length ? Math.max(...moved) : 0,
     };
   };
 }

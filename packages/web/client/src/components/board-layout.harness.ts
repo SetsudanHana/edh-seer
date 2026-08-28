@@ -83,15 +83,15 @@ for (const name of fixtures) {
       String(got.cardOverlaps).padStart(9),
       String(got.edgeCrossings).padStart(9),
       got.linkDistError.toFixed(0).padStart(9),
-      mean(t.map((x) => x.motionMean)).toFixed(2).padStart(10),
-      mean(t.map((x) => x.motionMax)).toFixed(2).padStart(9),
+      mean(t.map((x) => x.driftMean)).toFixed(2).padStart(10),
+      mean(t.map((x) => x.driftMax)).toFixed(2).padStart(9),
     ].filter((s) => s !== "").join(" "));
   }
 }
 
 console.log([
   "fixture     ", ...(ARMS.length > 1 ? ["arm      "] : []), "cards", "edges",
-  "overlaps", "cardOverlap", "crossings", "distError", "motionMean", "motionMax",
+  "overlaps", "cardOverlap", "crossings", "distError", "driftMean", "driftMax",
 ].join(" "));
 console.log(rows.join("\n"));
 
