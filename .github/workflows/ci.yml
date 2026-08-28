@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # The suite is pure: no MongoDB, no network, no API key. Anything that needs a live corpus
+      # lives in a bin, not a test, and anything needing a gitignored cache skips itself with a
+      # reason rather than failing a clean checkout.
+      - run: npm test

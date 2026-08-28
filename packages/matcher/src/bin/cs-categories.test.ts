@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import {
   CS_CATEGORIES,
@@ -100,9 +100,15 @@ test("csDeckArchetype returns null when the payload carries no archetype block",
 // addition (or a stale cache with fewer categories than CS_CATEGORIES now expects) fails loudly
 // instead of the constant silently drifting out of sync with reality, the exact failure mode
 // that let CS_CATEGORIES sit at 30 while the payloads emitted 44.
-test("CS_CATEGORIES lists every category observed in the cached payloads", () => {
-  const files = readdirSync(CACHE_DIR).filter((f) => f.endsWith(".json"));
-  expect(files.length, "no cached CS payloads found -- run cs-compare.ts once to populate .cs-cache/").toBeGreaterThan(0);
+// SKIPS RATHER THAN FAILS WITHOUT THE CACHE. `.cs-cache/` is gitignored and populated by running
+// `cs-compare.ts` against a live CommanderSalt API, so it does not exist in a fresh clone or a new
+// worktree. This assertion used to FAIL there, which meant `npm test` was red on checkout for
+// everyone but the one machine holding the cache -- a test that cannot run is not a failing test,
+// and a red suite on clone teaches a reader to ignore the suite. It still fails loudly the moment
+// the cache IS present and the constant has drifted, which is the drift it exists to catch.
+const cachedPayloads = existsSync(CACHE_DIR) ? readdirSync(CACHE_DIR).filter((f) => f.endsWith(".json")) : [];
+test.skipIf(cachedPayloads.length === 0)("CS_CATEGORIES lists every category observed in the cached payloads", () => {
+  const files = cachedPayloads;
   const observed = new Set<string>();
   for (const f of files) {
     const p = JSON.parse(readFileSync(new URL(f, CACHE_DIR), "utf8")) as SaltPayload;
