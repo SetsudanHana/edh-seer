@@ -31,7 +31,7 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
 import { ComboIndex } from "@mtg/engine";
 import { createTagsLookup } from "@mtg/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
-import { countInversions, diffInversions, type InversionReport } from "../rank-inversions.js";
+import { countInversions, diffInversions, ratingsFor, type InversionReport } from "../rank-inversions.js";
 import { buildSupplyDemand, ratio, type SupplyDemandRow } from "../supply-demand.js";
 
 const DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
@@ -110,45 +110,12 @@ for (const path of files) {
   );
   if (INVERSIONS || SAVE || AGAINST) {
     // Absent means UNMEASURABLE, never zero: a card with no rating must be skipped and counted,
-    // not scored 0 against real feeders (the `?? 0` defect the fix wave removed for tokens).
-    //
-    // A two-faced card rates TWICE, once per printed face (Task 7, faces-as-nodes) — but `rows`
-    // (built from `reasons`, which name the PHYSICAL card) and `deckCards` are both keyed on the
-    // physical card. Joining these maps on `c.name` alone missed every back face, AND every front
-    // face whose face name differs from the physical name, so a multi-face card's rows fell
-    // straight into `unmeasurablePayoffs`. Keyed on `cardName ?? name` and merged like
-    // `cut-list.ts`'s `mergeFaces` — the STRONGER face's number stands for the physical card, since
-    // a reason names the card and not the face it happened to derive from. Review fix, 2026-08-27.
-    const maxByPhysical = (get: (c: (typeof report.cards)[number]) => number | undefined) => {
-      const m = new Map<string, number>();
-      for (const c of report.cards) {
-        const v = get(c);
-        if (v === undefined) continue;
-        const key = c.cardName ?? c.name;
-        const cur = m.get(key);
-        if (cur === undefined || v > cur) m.set(key, v);
-      }
-      return m;
-    };
-    const ratings = {
-      payoff: maxByPhysical((c) => c.payoffRating),
-      feeder: maxByPhysical((c) => c.feederRating),
-      headline: maxByPhysical((c) => c.synergyRating),
-      // The protected set is defined on SCORES, not on the rounded ratings, so a card sitting near
-      // the boundary is not misclassified by a 0.05 rounding step.
-      //
-      // Deliberately NOT `authority >= roleBlend * feederLift`, the formula in analyze.ts:417 — that
-      // would be a second copy of the formula reading a second `loadImpactWeights()` call, and both
-      // `?? 0` defaults fire together on any `CardSynergy` lacking the fields (`0 >= 0` -> true),
-      // defaulting an unmeasured card INTO the protected set. `score = authority + roleBlend *
-      // feederLift` makes protected <=> `authority >= score - authority` <=> `2 * authority >=
-      // score`, using only shipped fields with no re-read of `roleBlend` and no default-in trap:
-      // absent `authority` now means NOT classified, never protected. Either face protecting the
-      // physical card is enough — the same "strongest face wins" rule the numeric maps use above.
-      majorityPayoff: new Set(
-        report.cards.filter((c) => c.authority !== undefined && 2 * c.authority >= c.score).map((c) => c.cardName ?? c.name),
-      ),
-    };
+    // not scored 0 against real feeders (the `?? 0` defect the fix wave removed for tokens). The
+    // face fold — a two-faced card rates one row per printed FACE while every key here is a
+    // PHYSICAL card name — lives in `ratingsFor`, with its own tests and its reasons written down
+    // there. The protected set is defined on SCORES, not on the rounded ratings, so a card sitting
+    // near the boundary is not misclassified by a 0.05 rounding step.
+    const ratings = ratingsFor(report.cards);
     const rep = countInversions(rows, ratings, { glut: GLUT });
     inversionTotals.shapes += rep.shapes;
     inversionTotals.inversions += rep.inversions;
