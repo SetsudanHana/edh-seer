@@ -119,7 +119,7 @@ const BONUS_CREATURE = /tap a creature for mana/i;
  *  A LAND THAT FAILS THIS IS STILL A LAND — Myriad Landscape taps for `{C}` and enters tapped — it
  *  simply neither fixes colours nor thins until someone pays. That is the under-claiming direction,
  *  and it is 63 land slots plus 25 spell slots across the 71 decks. */
-const MANA_IN_COST = /\{(?!t\}|q\})[^}]+\}/i;
+const MANA_IN_COST = /\{(?!t\}|q\})[^{}]+\}/i;
 function fetchCostsMana(text: string): boolean {
   const line = text.split("\n").find((l) => LAND_FETCH.test(l)) ?? "";
   return line.includes(":") && MANA_IN_COST.test(line.slice(0, line.indexOf(":")));
@@ -221,7 +221,7 @@ export interface ManaOutput {
  *  is ONE mana and reading the Add run alone prices it at two. The first count over this corpus made
  *  exactly that mistake and reported 27 lands where the answer is 9. */
 const TAP_ONLY = /^\{t\}:\s*add\s/i;
-const ADD_RUN = /add ((?:\{[^}]+\}\s*)+)/i;
+const ADD_RUN = /add ((?:\{[^{}]+\}\s*)+)/i;
 /** THE SAME AMOUNT IN WORDS, which the symbol reader cannot see: "Add three mana of any one color"
  *  (roadmap N10). **Sceptre of Eternal Glory is in 11 decks and was priced at one.** `X` is
  *  deliberately absent -- it is a RATE and not an amount, the ruling I4 already made one subsystem
@@ -230,7 +230,7 @@ const ADD_WORDS = /add (one|two|three|four|five|six|seven|eight|nine|ten) mana\b
 /** A TAP-REPLACEMENT: the mana arrives when some OTHER permanent is tapped, so there is no `{T}:` to
  *  read and the amount sits in a sentence the tap reader never looks at (roadmap O2). Overgrowth adds
  *  `{G}{G}`, Wild Growth one, Fertile Ground "an additional one mana of any color". */
-const ADD_ADDITIONAL = /adds? an additional (?:((?:\{[^}]+\}\s*)+)|(one|two|three) mana)/i;
+const ADD_ADDITIONAL = /adds? an additional (?:((?:\{[^{}]+\}\s*)+)|(one|two|three) mana)/i;
 /** A PHASE TRIGGER: mana that arrives every turn without tapping anything, so again there is no
  *  `{T}:` to read (roadmap O2). **The GUARDS are most of this rule.** Of 32 corpus cards printing the
  *  shape, nearly all add a RATE -- "for each Raccoon you control", "for each charge counter" -- which
@@ -238,7 +238,7 @@ const ADD_ADDITIONAL = /adds? an additional (?:((?:\{[^}]+\}\s*)+)|(one|two|thre
  *  this model cannot check; and two are ONE-SHOTS wearing a trigger, where "your NEXT main phase"
  *  (Mana Drain) and "first main phase OF THE GAME" (Chancellor of the Tangle) each fire once. A
  *  one-shot is not a source at any confidence -- `isManaSource`'s own ruling. */
-const PHASE_ADD = /at the beginning of[^.]{0,80}?\badds? ((?:\{[^}]+\}\s*)+|(?:one|two|three|four) mana)/i;
+const PHASE_ADD = /at the beginning of[^.]{0,80}?\badds? ((?:\{[^{}]+\}\s*)+|(?:one|two|three|four) mana)/i;
 /** THE ONE RESTRICTION THIS MODEL CAN CHECK (roadmap O1). Every other "spend this mana only to cast
  *  X" names a colour or a type the module is blind to, so it refuses them; a MANA VALUE threshold is
  *  different, because it knows every card's. **`iz-it-izzet` is built so it binds nothing -- all 62 of
@@ -253,13 +253,13 @@ const PHASE_ONE_SHOT = /at the beginning of your next|first main phase of the ga
  *  a BOARD EVENT (Carnival of Souls, Rose), and YOU CAST A SPELL (Birgi), where rule 3 casts only
  *  ACCELERANTS, so pricing off that stream would read a fraction of a real deck's spells AND feed
  *  back into the casting loop it came from. */
-const LANDFALL_ADD = /whenever a land (?:you control |)enters(?: the battlefield under your control|)[^.]{0,30}?adds? ((?:\{[^}]+\}\s*)+|one mana|two mana)/i;
+const LANDFALL_ADD = /whenever a land (?:you control |)enters(?: the battlefield under your control|)[^.]{0,30}?adds? ((?:\{[^{}]+\}\s*)+|one mana|two mana)/i;
 const PHASE_RATE = /\bfor each\b|\bwhere x is\b|equal to/i;
 /** UNREACHABLE ON TODAY'S CORPUS AND KEPT ANYWAY, recorded rather than quietly shipped as decoration:
  *  `PHASE_ADD` demands a symbol run, and NO corpus card prints a multi-symbol rate ("add {G}{G} for
  *  each Elf"). Every rate in the family adds ONE symbol per unit, so refusing it changes no number
  *  today -- the guard exists because the shape is printable and the failure would be an over-claim. */
-const SYMBOLS = /\{[^}]+\}/g;
+const SYMBOLS = /\{[^{}]+\}/g;
 /** Mana this model cannot spend correctly. It is COLOUR-BLIND (C10), so a restriction it cannot
  *  check must not be counted at face value — Jegantha taps for five that pay no generic cost. */
 const RESTRICTED = /spend this mana only|can't be spent|this mana can't/i;
@@ -270,7 +270,7 @@ const LAND_GATE = /activate only if you control (\w+) or more lands/i;
 /** "If you control an Urza's Power-Plant and an Urza's Tower, add {C}{C}{C} instead." Matched on the
  *  SUBTYPE as printed inside the sentence, which is what the board carries — and the subtype is
  *  `Urza's Power-Plant` with a hyphen while the CARD is `Urza's Power Plant` without one. */
-const TRON = /if you control (?:an?|the) ([^,]+?) and (?:an?|the) ([^,]+?), add ((?:\{[^}]+\})+) instead/i;
+const TRON = /if you control (?:an?|the) ([^,]{1,40}?) and (?:an?|the) ([^,]{1,40}?), add ((?:\{[^{}]+\})+) instead/i;
 /** A land that IS every land type, so it answers any subtype check on the board by itself — Planar
  *  Nexus, and Omo's everything counter one layer out of reach. BASIC-ONLY IS REFUSED: Prismatic
  *  Omen's "every basic land type" does not include Urza's, which is the whole point of the check. */
@@ -452,7 +452,7 @@ export function parseCost(manaCost: string | undefined): Cost | null {
   if (!manaCost) return null;
   let total = 0;
   const pips: number[] = [];
-  for (const symbol of manaCost.match(/\{[^}]+\}/g) ?? []) {
+  for (const symbol of manaCost.match(/\{[^{}]+\}/g) ?? []) {
     const inner = symbol.slice(1, -1).toUpperCase();
     if (inner.includes("X")) return null; // an X cost is not a number; `castability.ts` refuses it too
     const parts = inner.split("/");

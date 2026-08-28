@@ -33,7 +33,7 @@ const cards = await store.cards.find({ keywords: { $exists: true, $ne: [] } } as
 const hits: { name: string; line: string; kw: string[] }[] = [];
 for (const c of cards) {
   for (const raw of (c.oracleText ?? "").split("\n")) {
-    const line = raw.replace(/\s*\([^)]*\)\s*$/, "").trim();
+    const line = raw.replace(/\s*\([^()]*\)\s*$/, "").trim();
     if (!isKeywordLine(line, c.keywords ?? [])) continue;
     if (!looksLikeSentence(line)) continue;
     hits.push({ name: c.name, line: line.slice(0, 110), kw: c.keywords ?? [] });

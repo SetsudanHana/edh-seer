@@ -30,7 +30,7 @@ const esc = (s: string): string =>
 
 const pips = (cost: string): string =>
   cost
-    ? [...cost.matchAll(/\{([^}]+)\}/g)].map((m) => `<span class="pip">${esc(m[1])}</span>`).join("")
+    ? [...cost.matchAll(/\{([^{}]+)\}/g)].map((m) => `<span class="pip">${esc(m[1])}</span>`).join("")
     : `<span class="pip pip-none">no cost</span>`;
 
 const cardPanel = (c: SheetCard, role: string): string => `

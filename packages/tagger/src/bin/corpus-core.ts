@@ -31,7 +31,7 @@ export function expectsAbilities(card: { oracleText?: string; keywords?: string[
     // on the part STARTING WITH a keyword, not equalling it. Requiring equality mis-read
     // french-vanilla cards like Baneslayer Angel as holes, and this predicate gates upsert-batch:
     // over-firing there rejects a legitimately empty tagging instead of persisting it.
-    const bare = line.replace(/\s*\([^)]*\)\s*/g, "").trim().toLowerCase();
+    const bare = line.replace(/\s*\([^()]*\)\s*/g, "").trim().toLowerCase();
     if (bare === "") return false;
     return !bare
       .split(/,\s*/)
