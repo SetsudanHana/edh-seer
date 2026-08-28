@@ -901,7 +901,13 @@ export function GraphView(
       // same reason the edge pass trims to the rim, one mechanism cheaper.
       if (facePairLinks.length > 0) {
         ctx.save();
-        ctx.setLineDash([6 / cam.z, 2 / cam.z]);
+        // DOTTED, NOT DASHED, AND THE DIFFERENCE IS THE POINT. The rim's `[6,2]` is a MARK on a
+        // node and can afford to be seen; the tether crosses open board between two nodes, where the
+        // same pattern read as a line someone drew for a reason. `[1,4]` is mostly gap -- a trail of
+        // dots that resolves into "these two belong together" when you look at it and disappears
+        // into the background when you are reading the mesh. Owner, 2026-08-28: "make the tether
+        // more subtle."
+        ctx.setLineDash([1 / cam.z, 4 / cam.z]);
         ctx.lineWidth = 1 / cam.z;
         for (const l of facePairLinks) {
           // ACCENT WHEN THE CARD IS SELECTED, matching the rim it belongs to, and dimmed with the
@@ -912,7 +918,10 @@ export function GraphView(
           // this background, and not `edge`, which is the colour an actual relationship is drawn in.
           // Half alpha at rest keeps it under the mesh rather than competing with it.
           const selected = sameCardIds?.has(l.source.id) === true;
-          ctx.globalAlpha = selected ? 1 : activeFlow ? 0.15 : 0.5;
+          // 0.28 at rest, against an edge's own alpha floor: the tether must be findable when
+          // looked for and invisible when not. Selected, it goes to 0.85 rather than 1 -- it is
+          // still not a relationship, and the accent rim is what carries the selection.
+          ctx.globalAlpha = selected ? 0.85 : activeFlow ? 0.12 : 0.28;
           ctx.strokeStyle = selected ? paintColors.accent : paintColors.muted;
           ctx.beginPath();
           ctx.moveTo(l.source.x, l.source.y);
