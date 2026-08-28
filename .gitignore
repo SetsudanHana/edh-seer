@@ -71,3 +71,7 @@ GEMINI.md
 credentials.json
 secrets.json
 .npmrc
+
+# stray screenshots dropped at the repo root are always accidents
+/*.png
+/*.jpg
