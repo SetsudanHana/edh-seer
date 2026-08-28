@@ -1857,50 +1857,57 @@ describe("token nodes", () => {
 });
 
 describe("face pair nodes", () => {
-  const front = () => card({ id: "A // B", label: "A", cardName: "A // B" });
-  const back = () => card({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" });
-  const other = () => card({ id: "C" });
-  // BOTH faces edged to `C`: an edgeless node draws demoted (a smaller radius), which would make
-  // every radius assertion below read two different numbers for one pair.
-  const pairGraph = () => graphOf([front(), back(), other()], [
-    { from: "A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["A // B feeds C"] },
-    { from: "face:1:A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["B feeds C"] },
-  ]);
-
-  /** One frame in CARD mode, where the two faces draw as themselves. The `frames` helper mounts at
-   *  board zoom, where they fold into one disc — which is the test after these two. */
-  const cardModeFrames = (graph: CardGraph, calls: string[]) => {
-    const f = frames(graph, calls);
-    fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
-    calls.length = 0;
-    return f;
-  };
-
-  // A CARD IS ONE OBJECT AND ITS FACES ARE TWO NODES. The rim says so without an edge between them:
-  // a permanent is one face at a time (CR 712.3a), so an edge would claim a relation that does not
-  // exist. `cardName` is the test, never `face` — it is on BOTH faces, `face` only on the back.
-  test("in card mode both faces paint the same-card rim, and no edge joins them", () => {
+  // SHARED RIM, NO LINK (owner's ruling, 2026-08-27). The two faces of one card are marked as one
+  // card by a matching outline, the way a token is marked by its dashed rim. Nothing is drawn
+  // between them, so no new edge kind reaches the legend or any count. `cardName` is present on
+  // BOTH faces (Task 7); `face` is absent on the front, so `cardName` is the test that fires on
+  // both nodes and `face` is not.
+  //
+  // A THIRD, UNRELATED NODE with a real edge to the front face, review fix 2026-08-27: the
+  // original fixture had NO edges at all, so "no edge joins the faces" could never fail -- an
+  // edgeless graph passes that assertion whether or not the rule holds. With a real edge present,
+  // the assertion is checking something: that edge exists AND no edge connects the two face ids.
+  test("both faces of one card paint the same-card rim, and no edge joins them", () => {
     const calls: string[] = [];
-    const { canvas, tick } = cardModeFrames(pairGraph(), calls);
+    const front = card({ id: "A // B", label: "A", cardName: "A // B" });
+    const back = card({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" });
+    const other = card({ id: "C" });
+    // BOTH faces get an edge to `C`, not just the front: an edgeless node draws at
+    // `ART_RADIUS * EDGELESS_RADIUS_SCALE` (the `demote` branch), so a half-connected fixture gives
+    // the two rims different radii and the radius assertion below could not be a single number.
+    const { canvas, tick } = frames(graphOf([front, back, other], [
+      { from: "A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["A // B feeds C"] },
+      { from: "face:1:A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["B feeds C"] },
+    ]), calls);
+    // The mount itself already ran one draw pass before this test can see it (the layout effect
+    // calls `loop()` once directly, ahead of ever scheduling a frame -- see `loop`'s own comment).
+    // Clearing here isolates the ONE pass this `tick()` triggers, the same convention the paint-mode
+    // hue test above uses for the identical reason.
+    calls.length = 0;
     tick();
 
-    // Card mode paints the rim as a RECTANGLE at -5/+10 — outside the click rim's -3/+6, which is
-    // the whole point: at equal insets a 1.5px stroke under a 2.5px one of the same colour is
-    // invisible. One per face.
-    const rimRects = calls.filter((c) => {
-      if (!c.startsWith("strokeRect:")) return false;
-      const [, , w] = c.slice("strokeRect:".length).split(",").map(Number);
-      return w === CARD_W + 10;
-    });
-    expect(rimRects).toHaveLength(2);
-    // Dashed, and in `--foreground` — jsdom returns "" for a custom property, so this is
-    // GraphView's own default. Three dashed strokes: one rim per face, plus the tether.
-    expect(calls.filter((c) => c === "set:strokeStyle=#e6e8eb").length).toBeGreaterThanOrEqual(2);
+    // A stroke in `--foreground`, once per face node -- distinct from the token rim just above,
+    // which is drawn in `--muted`. jsdom's getComputedStyle returns "" for a custom property, so
+    // both fall back to the literal default GraphView.tsx ships when the CSS variable is absent.
+    expect(calls.filter((c) => c === "set:strokeStyle=#e6e8eb").length).toBe(2);
+    // DASHED, once per face node -- the review fix. Pre-fix this rim was solid at the same width
+    // class as the "you clicked this" rim and painted invisibly under it whenever a face node was
+    // also the clicked node; a real `setLineDash` call with a non-empty pattern is what makes the
+    // two distinguishable regardless of which one draws on top.
+    // THREE dashed strokes now, not two: one rim per face, plus the hairline TETHER between them
+    // (drawn in the edge pass, so it is the first of the three).
     expect(calls.filter((c) => c.startsWith("setLineDash:") && c !== "setLineDash:").length).toBe(3);
+    // AND AT `r + 5`, which is the half that does the work -- review fix, 2026-08-27. The click rim
+    // is 2.5px SOLID in the same `--foreground` at `r + 3`, and this rim is 1.5px drawn AFTER it, so
+    // at an equal radius a thinner stroke of an identical colour is buried whether or not it is
+    // dashed. Reverting the radius alone passed all 106 tests in this file, which is what makes this
+    // assertion the one that pins the fix rather than decorating it.
+    expect(calls.filter((c) => c.startsWith("arc:") && Number(c.split(",")[2]) === ART_RADIUS + 5).length).toBe(2);
 
-    // THE TETHER IS A STROKE, NOT AN EDGE: centre to centre between the two faces, asserted against
-    // the simulation's own coordinates so it fails if drawn between the wrong pair.
+    // THE TETHER IS A STROKE, NOT AN EDGE. It runs centre to centre between the two face nodes --
+    // asserted against the simulation's own coordinates, so this fails if it is drawn between the
+    // wrong pair -- while the EDGE set still holds only the real edge. Owner, 2026-08-28: adjacency
+    // and a rim still left "I can not distinguish if card is the same thing" on a board of ten.
     const probe = canvas.__graphProbe!();
     const f = probe.find((n) => n.id === "A // B")!;
     const b = probe.find((n) => n.id === "face:1:A // B")!;
@@ -1908,98 +1915,83 @@ describe("face pair nodes", () => {
     expect(tether).toBeGreaterThan(-1);
     expect(calls[tether + 1]).toBe(`lineTo:${b.x},${b.y}`);
 
-    expect(probe.edges.some((e) => e.from === "A // B" && e.to === "C")).toBe(true);
-    expect(probe.edges.some((e) => e.from.includes("A // B") && e.to.includes("A // B"))).toBe(false);
+    const edges = probe.edges;
+    expect(edges.some((e) => e.from === "A // B" && e.to === "C")).toBe(true);
+    expect(edges.some((e) => e.from.includes("A // B") && e.to.includes("A // B"))).toBe(false);
+  });
+
+  // THE FACES ARE JOINED IN THE SIMULATION AND NOWHERE ELSE. A rim that says "these two are one
+  // card" cannot say it from across the board, and the layout positions purely by links -- owner,
+  // on a Jodah deck: "I can see just some random faces right now, not next to each other". The
+  // spring is force-only, so the "shared rim, no link" ruling still holds in the DATA: nothing is
+  // drawn, nothing is counted, nothing reaches the legend.
+  test("the two faces of a card are sprung together in the simulation, with no edge drawn", () => {
+    makeContextSpy();
+    const front = card({ id: "A // B", label: "A", cardName: "A // B" });
+    const back = card({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" });
+    const other = card({ id: "C" });
+    render(<GraphView graph={graphOf([front, back, other], [
+      { from: "A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["A // B feeds C"] },
+    ])} report={SAMPLE.report} />);
+
+    const passed = vi.mocked(createBoardSimulation).mock.lastCall![0];
+    const pair = passed.links.filter(
+      (l) => [l.source.id, l.target.id].sort().join("|") === ["A // B", "face:1:A // B"].sort().join("|"),
+    );
+    expect(pair).toHaveLength(1);
+    // The board's own maximum weight, which is the SHORTEST rest length `linkDistanceFor` returns --
+    // a weaker one would let the pair drift exactly as it did before.
+    expect(pair[0].weight).toBe(2);
+    // ...and it is not an edge: the drawn set still holds only the real one.
+    expect(passed.links.filter((l) => l.weight === 2)).toHaveLength(2); // the real edge + the pair
+    expect(graphOf([front, back, other], []).edges).toHaveLength(0);
   });
 
   // A FACE IS A NODE, BUT A SELECTION IS A CARD. Clicking one face lit that node's flow and dimmed
-  // the card's other half to 0.15 with the rest of the board — owner: "if i click on one side only
+  // the card's other half to 0.15 with the rest of the board -- owner: "if I click on one side only
   // that side highlights not both of them".
   test("selecting one face keeps its sibling lit and marks both rims in accent", () => {
     const calls: string[] = [];
-    // A fourth node the flow does not reach, or nothing would dim and the alpha assertion would
-    // pass without the fix: `C` is the selected face's own partner, so it is IN the flow.
-    const graph = graphOf([front(), back(), other(), card({ id: "D" })], [
+    const front = card({ id: "A // B", label: "A", cardName: "A // B" });
+    const back = card({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" });
+    const other = card({ id: "C" });
+    // A FOURTH NODE THE FLOW DOES NOT REACH, or nothing on this board would dim and the assertion
+    // below would pass without the fix: `C` is the selected face's own partner, so it is IN the
+    // flow. `D` is what 0.15 is supposed to look like.
+    const outsider = card({ id: "D" });
+    const { canvas, tick } = frames(graphOf([front, back, other, outsider], [
       { from: "A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["A // B feeds C"] },
-      { from: "face:1:A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["B feeds C"] },
-    ]);
-    const { canvas, tick } = frames(graph, calls);
-    // Selected at BOARD zoom, through the same `endGesture` seam the inspector tests use, and only
-    // then switched to card mode -- at card zoom the camera is scaled, so a probe's world
-    // coordinates are not the client coordinates a gesture carries.
+    ]), calls);
+
+    // Select the FRONT face through the same seam the inspector tests use: `endGesture` is the
+    // click-vs-pan decision, and the probe hands over the simulation's own coordinates so the click
+    // is aimed rather than guessed at.
     const probe = canvas.__graphProbe!();
     const target = probe.find((n) => n.id === "A // B")!;
     act(() => { probe.endGesture({ type: "mouseup", clientX: target.x, clientY: target.y }); });
-    fireEvent.click(screen.getByRole("button", { name: /^debug$/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^card$/i }));
     calls.length = 0;
     tick();
 
-    // Three accent strokes: the TETHER (drawn in the edge pass, so first) and one rim per face.
+    // Both faces' shared rim turns ACCENT -- the answer to "which two of these twenty faces are the
+    // card I clicked". jsdom returns "" for a custom property, so this is GraphView's own default.
+    // Exactly two: the front face and its sibling, and nothing else on the board.
+    // THREE accent strokes: the TETHER (drawn in the edge pass, so first) and then one rim per
+    // face. Everything else on the board keeps its neutral.
     const accents = calls.flatMap((c, i) => (c === "set:strokeStyle=#5b8dee" ? [i] : []));
     expect(accents).toHaveLength(3);
 
-    // AND THE SIBLING IS NOT DIMMED. Read the alpha in force when its rim was painted rather than
-    // counting 0.15s: `D` and the label pass both emit one, so a bare count says nothing about
-    // which node was dark. Pre-fix this read 0.15.
+    // AND THE SIBLING IS NOT DIMMED. Read the alpha in force when its rim was painted, rather than
+    // counting 0.15s: `D` (outside the flow) and the label pass both emit one, so a bare count says
+    // nothing about which node was dark. Pre-fix this read 0.15; it is EDGELESS_ALPHA now, because
+    // the back face has no edge of its own in this fixture -- lit, and correctly still demoted.
     const alphaWhen = (index: number): string => {
       for (let i = index; i >= 0; i--) if (calls[i].startsWith("set:globalAlpha=")) return calls[i];
       return "set:globalAlpha=1";
     };
-    expect(alphaWhen(accents[2])).not.toBe("set:globalAlpha=0.15");
-  });
-
-  // AT BOARD ZOOM THE PAIR IS ONE DISC. 130 discs for a 100-card deck is what the owner reported as
-  // "very compact and cluttered"; the faces are still two nodes in the simulation, so nothing about
-  // the layout moves — only what is painted.
-  test("at board zoom a card's faces fold into one disc, keeping both faces' edges", () => {
-    const calls: string[] = [];
-    const { canvas, tick } = frames(pairGraph(), calls);
-    calls.length = 0;
-    tick();
-
-    const probe = canvas.__graphProbe!();
-    const f = probe.find((n) => n.id === "A // B")!;
-    const b = probe.find((n) => n.id === "face:1:A // B")!;
-    // Two discs drawn, not three: the front face and `C`. Nothing is painted at the back face's
-    // own coordinates at all.
-    // A node paints several arcs at ART_RADIUS (the art clip, then its border), so the count that
-    // means "how many cards are on the board" is of distinct CENTRES.
-    const discCentres = new Set(calls
-      .filter((c) => c.startsWith("arc:") && Number(c.split(",")[2]) === ART_RADIUS)
-      .map((c) => c.split(",").slice(0, 2).join(",")));
-    expect(discCentres.size).toBe(2);
-    expect(calls.filter((c) => c.startsWith("arc:") && c.startsWith(`arc:${b.x},${b.y},`))).toEqual([]);
-    expect(calls.filter((c) => c.startsWith(`arc:${f.x},${f.y},`)).length).toBeGreaterThan(0);
-
-    // ONE dashed stroke — the surviving disc's shared rim, which is what still says "this card has
-    // another side". No tether, because there is nothing to tether to.
-    expect(calls.filter((c) => c.startsWith("setLineDash:") && c !== "setLineDash:").length).toBe(1);
-    expect(calls.some((c) => c === `moveTo:${f.x},${f.y}` && calls[calls.indexOf(c) + 1] === `lineTo:${b.x},${b.y}`)).toBe(false);
-
-    // BOTH faces' edges survive the fold, and both are drawn from the FRONT face's disc — owner's
-    // call: a collapsed card shows the connectivity of both its halves. An edge is trimmed to the
-    // rim, so its endpoint sits exactly ART_RADIUS from the centre it belongs to; the test is that
-    // NO line endpoint sits on the folded face's own disc, while two do sit on the front's.
-    const ends = calls
-      .filter((c) => c.startsWith("moveTo:") || c.startsWith("lineTo:"))
-      .map((c) => c.slice(c.indexOf(":") + 1).split(",").map(Number))
-      .map(([x, y]) => ({ x, y }));
-    const near = (p: { x: number; y: number }, n: { x: number; y: number }) =>
-      Math.abs(Math.hypot(p.x - n.x, p.y - n.y) - ART_RADIUS) < 0.001;
-    expect(ends.filter((p) => near(p, b))).toHaveLength(0);
-    expect(ends.filter((p) => near(p, f)).length).toBeGreaterThanOrEqual(2);
-  });
-
-  // A folded face paints nothing, so it must answer no pointer either: the click belongs to the
-  // card's one visible disc, which opens the FRONT face's panel and its flip control.
-  test("a folded back face is not clickable at board zoom", () => {
-    const { canvas } = frames(pairGraph());
-    const probe = canvas.__graphProbe!();
-    const b = probe.find((n) => n.id === "face:1:A // B")!;
-    act(() => { probe.endGesture({ type: "mouseup", clientX: b.x, clientY: b.y }); });
-    // Either nothing opened, or the FRONT face's panel did -- never the folded face's own.
-    expect(screen.queryByText("B")).toBeNull();
+    const siblingRim = accents[2]; // tether, front rim, back rim -- the sibling's is last
+    // 0.4 is GraphView's own EDGELESS_ALPHA, which is module-private -- the literal is here rather
+    // than exporting a constant just for a test, and a change to it fails this loudly.
+    expect(alphaWhen(siblingRim)).toBe("set:globalAlpha=0.4");
   });
 });
 

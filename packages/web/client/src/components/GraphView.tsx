@@ -100,50 +100,6 @@ const FIT_SETTLE_ALPHA = 0.05;
 
 type Point = { x: number; y: number };
 
-/** WHICH FACE NODES ARE FOLDED AWAY AT BOARD ZOOM, and what each one draws as instead.
- *
- *  A card's two printed faces are two nodes (faces-as-nodes, 2026-08-27) and that is the right
- *  model — they care about different events and produce different ones. It is the wrong DRAWING at
- *  board zoom: a deck with 21 multi-face cards paints 130 discs and 130 labels where it holds 100
- *  cards, which the owner reported as the board being "very compact and cluttered".
- *
- *  So above card zoom the pair paints as ONE disc: the FRONT face's node, with the back face hidden
- *  and every edge either face carries drawn to it. Nothing else moves — the simulation still holds
- *  two nodes and the layout is untouched, so this cannot reflow the board or change what sits near
- *  what. It is the front's own position rather than the pair's midpoint because they are already
- *  sprung adjacent (a median 78 world units apart, measured), so the two land within half a disc of
- *  each other and the front is where the card's art already is.
- *
- *  A card that prints THREE faces folds onto its front the same way. A token is never folded: it has
- *  no `cardName` and no sibling.
- *
- *  Returns empty maps when `collapsed` is false, so a caller can hold one object and branch on its
- *  contents rather than on the zoom. */
-export function collapsedFaces(nodes: readonly { id: string; cardName?: string; face?: number; isToken?: boolean }[], collapsed: boolean) {
-  const primaryOf = new Map<string, string>();
-  const hidden = new Set<string>();
-  if (!collapsed) return { primaryOf, hidden };
-  const byCard = new Map<string, { id: string; face?: number }[]>();
-  for (const n of nodes) {
-    if (n.cardName === undefined || n.isToken) continue;
-    const group = byCard.get(n.cardName);
-    if (group) group.push(n);
-    else byCard.set(n.cardName, [n]);
-  }
-  for (const group of byCard.values()) {
-    if (group.length < 2) continue;
-    // The FRONT face is the one with no index -- the same "front is unmarked" convention
-    // `WireGraphNode.face` and `Reason.producerFace` keep. Falls back to the first node rather than
-    // dropping the group, so a graph that somehow carries only back faces still draws.
-    const front = group.find((n) => n.face === undefined) ?? group[0];
-    for (const n of group) {
-      primaryOf.set(n.id, front.id);
-      if (n.id !== front.id) hidden.add(n.id);
-    }
-  }
-  return { primaryOf, hidden };
-}
-
 /** Screen pixels of camera translation between a zoom gesture's start and its end, below which the
  *  gesture still counts as a click rather than a pan. Not zero: real hardware never reports an
  *  intended click as exactly stationary -- and on a trackpad, essentially no click is. */
@@ -774,12 +730,6 @@ export function GraphView(
       // being claimed to be: it stays at full strength and its shared rim turns ACCENT, which says
       // "this is the card you clicked" rather than "this participates in the flow".
       // Empty for a single-faced selection, which is every selection on most boards.
-      // The face fold for THIS frame (see `collapsedFaces`). `renderModeFor` is the same function
-      // the node pass and `pickAt` read, so the three cannot disagree about which zoom this is.
-      const fold = collapsedFaces(nodes, renderModeFor(cam.z) !== "card");
-      /** Where a node DRAWS, which is its own position unless it is folded into its front face. */
-      const foldedTo = (n: Sim): Sim => byId.get(fold.primaryOf.get(n.id) ?? n.id) ?? n;
-
       const rootNode = activeFlow ? byId.get(activeFlow.root) : undefined;
       const sameCardIds = rootNode?.cardName !== undefined
         ? new Set(nodes.filter((n) => n.cardName === rootNode.cardName).map((n) => n.id))
@@ -887,13 +837,8 @@ export function GraphView(
         // larger rectangle, so a line still enters the card frame there — that view is one card
         // filling the screen with its neighbours off it, so the case is cosmetic rather than the one
         // reported. Stated rather than silently approximated.
-        // FOLDED ENDPOINTS. At board zoom an edge to a back face is drawn to the card's one disc --
-        // the owner's call: the collapsed card shows the connectivity of BOTH faces, so nothing
-        // disappears at board zoom and only WHICH face carries what waits for the reader to zoom in.
-        const src = foldedTo(l.source);
-        const tgt = foldedTo(l.target);
-        const ex = tgt.x - src.x;
-        const ey = tgt.y - src.y;
+        const ex = l.target.x - l.source.x;
+        const ey = l.target.y - l.source.y;
         const elen = Math.hypot(ex, ey);
         // Two overlapping discs have no visible span between them; drawing anyway would paint a
         // backwards stub poking out of both.
@@ -901,8 +846,8 @@ export function GraphView(
         const tx = ex / elen;
         const ty = ey / elen;
         ctx.beginPath();
-        ctx.moveTo(src.x + tx * ART_RADIUS, src.y + ty * ART_RADIUS);
-        ctx.lineTo(tgt.x - tx * ART_RADIUS, tgt.y - ty * ART_RADIUS);
+        ctx.moveTo(l.source.x + tx * ART_RADIUS, l.source.y + ty * ART_RADIUS);
+        ctx.lineTo(l.target.x - tx * ART_RADIUS, l.target.y - ty * ART_RADIUS);
         ctx.stroke();
         // DIRECTION MUST SURVIVE A STILL FRAME. Hue carries the MECHANISM now, so the crawl became
         // the only direction channel -- and `stillMotion` zeroes the crawl under
@@ -914,8 +859,8 @@ export function GraphView(
         // construction. Drawn only on a flow edge: the resting board is undirected to the eye and
         // ninety arrowheads would be noise on top of the mesh this whole change exists to thin.
         if (fe && !offEvent && !offFocus) {
-          const hx = tgt.x - tx * ART_RADIUS;
-          const hy = tgt.y - ty * ART_RADIUS;
+          const hx = l.target.x - tx * ART_RADIUS;
+          const hy = l.target.y - ty * ART_RADIUS;
           // FILLED AND BIGGER, BECAUSE THE STROKED ONE DID NOT DO ITS JOB. It shipped as a 5px
           // three-point STROKE at the edge's own 1-2px line width, which is a chevron a reader has
           // to already be looking for. The tuner review -- given a still, which is exactly the case
@@ -954,7 +899,7 @@ export function GraphView(
       //
       // Drawn HERE, in the edge pass, so the node discs paint over both ends a moment later -- the
       // same reason the edge pass trims to the rim, one mechanism cheaper.
-      if (facePairLinks.length > 0 && fold.hidden.size === 0) {
+      if (facePairLinks.length > 0) {
         ctx.save();
         // DOTTED, NOT DASHED, AND THE DIFFERENCE IS THE POINT. The rim's `[6,2]` is a MARK on a
         // node and can afford to be seen; the tether crosses open board between two nodes, where the
@@ -1000,10 +945,6 @@ export function GraphView(
       // recomputed in the label pass so "did this node draw art?" has ONE answer per frame.
       const placeholderIds = new Set<string>();
       for (const n of nodes) {
-        // FOLDED AWAY: the back face of a two-faced card at board zoom. Its edges were drawn to the
-        // front face's disc above, and the front face keeps the shared rim, so the card still says
-        // it has another side.
-        if (fold.hidden.has(n.id)) continue;
         // See EDGELESS_ALPHA's comment. Two things narrow when the demotion actually applies:
         // a search match wins over it (if the user went looking for this exact card, it must show
         // at full strength even though it's edgeless), and CARD mode is left alone -- that view
@@ -1258,14 +1199,7 @@ export function GraphView(
       // art prints that name larger and better. Above the ceiling only the cards with NO art drawn
       // keep a label: a placeholder is a blank coloured rectangle, and suppressing its name would
       // leave nothing on screen identifying it. Paint only — no candidate set has ever fed layout.
-      // ONE LABEL PER DRAWN DISC, AND IT NAMES THE CARD. A folded-away face must not compete for a
-      // label slot, and the disc that survives is showing a whole card rather than its front face --
-      // so at board zoom it is labelled "Fell the Profane // Fell Mire", not "Fell the Profane".
-      // Rebuilt only while the fold is active; every other frame this is the same `nodes` array.
-      const labelNodes = fold.hidden.size === 0 ? nodes : nodes
-        .filter((n) => !fold.hidden.has(n.id))
-        .map((n) => (n.cardName !== undefined ? { ...n, label: n.cardName } : n));
-      const candidates = labelCandidates(labelNodes, cam.z, {
+      const candidates = labelCandidates(nodes, cam.z, {
         zoomFloor: LABEL_ZOOM_FLOOR,
         cardModeZoom: CARD_MODE_Z,
         eligibleBelowFloor: new Set([...commandersRef.current, ...hoveredSet]),
@@ -1287,9 +1221,8 @@ export function GraphView(
         // card's own half-height, so a label clears the printed card rather than the disc that is
         // not being drawn.
         const nodeHalfH = (mode === "card" ? cardH / 2 : nodeRadius()) * cam.z;
-        const labelById = new Map(labelNodes.map((n) => [n.id, n]));
         const boxes = order.map((id) => {
-          const n = labelById.get(id)!;
+          const n = byId.get(id)!;
           const wScreen = ctx.measureText(n.label).width * cam.z;
           const sx = n.x * cam.z + cam.x, sy = n.y * cam.z + cam.y;
           const common = {
@@ -1310,7 +1243,7 @@ export function GraphView(
         // at a zoom below LABEL_ZOOM_FLOOR most nodes carry no label of their own while still being
         // very much in the way.
         const halfW = (mode === "card" ? cardW : nodeRadius() * 2) * cam.z / 2;
-        const nodeBoxes = labelNodes.map((n) => ({
+        const nodeBoxes = nodes.map((n) => ({
           id: n.id,
           x: n.x * cam.z + cam.x - halfW,
           y: n.y * cam.z + cam.y - nodeHalfH,
@@ -1322,7 +1255,7 @@ export function GraphView(
         // read as clearly as its ring does. `matchIds` (not `matches`) -- see the node pass's own
         // comment on why this reads the ref.
         for (const { id, slot } of placeLabels(boxes, nodeBoxes)) {
-          const n = labelById.get(id)!;
+          const n = byId.get(id)!;
           // An edgeless card's NAME is demoted with its disc. Without this the demotion half-lands:
           // a faint, shrunken, colourless dot under a full-brightness label, which is a card
           // ANNOUNCING itself while the drawing says it is not participating. `demote` from the node
@@ -1445,13 +1378,8 @@ export function GraphView(
       // Hit-testing the inscribed circle there left the top/bottom bands and all four corners dead
       // to the pointer. Computed once per pick rather than per node: it depends only on cam.z.
       const cardMode = renderModeFor(cam.z) === "card";
-      // WHAT IS DRAWN IS WHAT IS CLICKABLE. A face folded into its front at board zoom paints no
-      // disc, so it must not answer a pointer either -- the click belongs to the card's one visible
-      // disc, which opens the FRONT face's panel, where the flip control already reaches the back.
-      const folded = collapsedFaces(nodes, !cardMode).hidden;
       let best: Sim | null = null, bd = Infinity;
       for (const n of nodes) {
-        if (folded.has(n.id)) continue;
         const dx = n.x - wx, dy = n.y - wy;
         const inside = cardMode
           ? Math.abs(dx) <= CARD_W / 2 && Math.abs(dy) <= CARD_H / 2
