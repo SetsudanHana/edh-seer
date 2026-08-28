@@ -20,6 +20,6 @@
     "@types/stream-json": "^1.7.0",
     "tsx": "^4.15.0",
     "typescript": "^5.4.0",
-    "vitest": "^1.6.0"
+    "vitest": "^4.1.11"
   }
 }
