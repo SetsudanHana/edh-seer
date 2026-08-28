@@ -7,7 +7,10 @@ import type { DeckCard, Hierarchy } from "./types.js";
 
 const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"] };
 const base = (name: string, abilities: CardTags["abilities"], subtypes: string[] = []) => ({
-  card: { name, typeLine: "", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+  // `as DeckCard["card"]` rather than `as never`: casting the fixture to `never` also erased
+  // `maker.card.name` for every reader below, which tsc flagged while vitest ran happily -- the
+  // recorded "a green suite is not a compiling one" trap.
+  card: { name, typeLine: "", oracleText: "", keywords: [], colors: [], manaValue: 0 } as unknown as DeckCard["card"],
   tags: {
     oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
     characteristics: { types: ["creature"], subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },

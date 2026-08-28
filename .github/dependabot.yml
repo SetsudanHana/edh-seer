@@ -1,0 +1,26 @@
+version: 2
+updates:
+  # One npm ecosystem entry covers the whole workspace: the lockfile is at the root and every
+  # packages/* manifest resolves through it, so per-package entries would open duplicate PRs for
+  # the same bump.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Patch and minor bumps land as ONE pull request per week. Ungrouped, a 60-package dev
+      # dependency tree produces more review than it is worth, and the security updates that
+      # actually matter arrive through Dependabot alerts regardless of this schedule.
+      dev-minor-and-patch:
+        dependency-type: development
+        update-types: [minor, patch]
+      prod-minor-and-patch:
+        dependency-type: production
+        update-types: [minor, patch]
+    # A major bump gets its own PR: it is the one that breaks a build and deserves to be read alone.
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
