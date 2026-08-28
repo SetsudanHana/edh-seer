@@ -95,6 +95,32 @@ test("passes the graph dep a rolesByName map built from the report's cards, role
   expect(capture.rolesByName).toEqual(new Map([["Sol Ring", ["ramp"]]]));
 });
 
+// REVIEW FIX (2026-08-27): this map is keyed on the PHYSICAL card, not on the face name the report
+// row carries -- `attachRolesAndArt` looks a node's roles up under `normalize(n.cardName ?? n.id)`,
+// which is physical on both faces, so a face key joined to nothing and every multi-face card lost
+// its roles on the served board (no role chips, no role rooms, no role paint) with only a
+// `console.warn` to say so. Both face rows carry the identical `roles` array by construction, so
+// collapsing them onto one key loses nothing.
+test("a two-faced card's roles are keyed on the physical card, the key the graph joins on", async () => {
+  const capture: { rolesByName?: Map<string, string[]> } = {};
+  const deps = fakeDeps(capture);
+  deps.analyze = async () => ({
+    ...fakeReport,
+    cards: [
+      {
+        name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire",
+        isCommander: false, score: 0, partnerCount: 0, topPartners: [], roles: ["targetedRemoval"],
+      },
+      {
+        name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", face: 1,
+        isCommander: false, score: 0, partnerCount: 0, topPartners: [], roles: ["targetedRemoval"],
+      },
+    ],
+  });
+  await new AnalyzeService(deps).analyze("1 Fell the Profane // Fell Mire");
+  expect(capture.rolesByName).toEqual(new Map([["Fell the Profane // Fell Mire", ["targetedRemoval"]]]));
+});
+
 test("tells the graph dep how many copies of each card the deck holds", async () => {
   const capture: { copies?: Map<string, number> } = {};
   const deps = fakeDeps(capture);

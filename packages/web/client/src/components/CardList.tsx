@@ -196,6 +196,17 @@ export function CardList({ cards, artByName, coverage }: {
   // dead column into the report's most useful admission.
   const unread = cards.filter((c) => c.derived === false);
   const readable = unread.length > 0 ? cards.filter((c) => c.derived !== false) : cards;
+  // ONE PHYSICAL CARD, ONE TILE. A two-faced card rates one row per printed FACE (Task 7,
+  // faces-as-nodes) and `derived` is identical on both, so an unread modal DFC produced two rows
+  // and this list showed it twice -- and the count above the grid, which sits directly under
+  // `coverage.caveat`, then disagreed with the caveat's own figure, since `coverage` counts SLOTS.
+  // Review fix, 2026-08-27: the same "2 of the 1 unread" defect the wave fixed in `ReportView` and
+  // in `unjudgedCandidates`, in the third file of the family. The FRONT row is what survives, on
+  // purpose -- `artByName` and the card drawer are both keyed on `ProjectedNode.label`, which is
+  // the FACE name, so the physical name would render a tile with no art and no click.
+  const unreadCards = unread.filter(
+    (c, i) => c.cardName === undefined || unread.findIndex((o) => (o.cardName ?? o.name) === c.cardName) === i,
+  );
   const visible = readable
     .filter((c) => (filter === "all" ? true : (c.roles ?? []).includes(filter)))
     .filter((c) => needle === "" || c.name.toLowerCase().includes(needle))
@@ -397,7 +408,7 @@ export function CardList({ cards, artByName, coverage }: {
         <section className="flex flex-col gap-3 mt-6 pt-6 border-t border-(--border)">
           <div className="flex items-baseline gap-3 flex-wrap">
             <h3 className="text-base font-bold tracking-[-0.01em]">Not read yet</h3>
-            <span className="text-xs text-(--muted) stat-num">{unread.length} cards</span>
+            <span className="text-xs text-(--muted) stat-num">{unreadCards.length} cards</span>
           </div>
           <p className="text-sm text-(--muted) max-w-[65ch]">
             {coverage?.caveat
@@ -405,7 +416,7 @@ export function CardList({ cards, artByName, coverage }: {
                 + "They carry no synergy reading, so nothing above speaks for them."}
           </p>
           <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))" }}>
-            {unread.map((c) => (
+            {unreadCards.map((c) => (
               <GridCard key={c.name} name={c.name} art={artByName?.get(c.name)} dim onOpen={() => openCard(c.name)} />
             ))}
           </div>

@@ -317,6 +317,26 @@ test("a back-face node takes its own face's art, type line and oracle text", () 
   expect(out.nodes[0]?.oracleText).toBe("back text");
 });
 
+// THE LANDS ROOM READS THE FACE, NOT THE CARD. Review fix, 2026-08-27: this asked the PHYSICAL
+// doc's type line, which is "Instant // Land" for BOTH faces of a modal DFC -- so the Instant face
+// rendered its own type line as "Instant" and simultaneously carried the `lands` role, one node
+// contradicting itself. A face's roles must describe the face the board is drawing.
+test("only the land face of a modal DFC is filed in the lands room", () => {
+  const graph = emptyGraph([
+    node({ id: "A // B", label: "A", cardName: "A // B", typeLine: "Instant" }),
+    node({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B", typeLine: "Land" }),
+  ]);
+  const docs = [{
+    _id: "1", name: "A // B", typeLine: "Instant // Land",
+    faces: [{ name: "A", typeLine: "Instant" }, { name: "B", typeLine: "Land" }],
+  }];
+
+  const out = attachRolesAndArt(graph, docs, new Map(), normalize);
+
+  expect(out.nodes.find((n) => n.id === "A // B")?.roles).toBeUndefined();
+  expect(out.nodes.find((n) => n.id === "face:1:A // B")?.roles).toEqual(["lands"]);
+});
+
 // A face with no `faces` entry on the doc (a stale, unrefreshed row) falls back to the card level
 // rather than rendering nothing -- a fallback beats a blank disc.
 test("a face index with no matching doc.faces entry falls back to the card-level art and type line", () => {

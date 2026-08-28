@@ -8,10 +8,15 @@ import type { WireGraph } from "../analyze/analyze.types.js";
 
 export const STORE = "MONGO_STORE";
 
-/** The projection keys every node by card NAME (`ProjectedNode.id`), the same key the report's
- *  `rolesByName` arrives under -- so joining roles no longer needs the oracleId indirection the
- *  old `card:<uuid>`-keyed graph required. `docs` still earns its keep for two facts the
- *  projection doesn't carry: `typeLine` (for the lands room) and the art crop.
+/** The projection keys a node by the card NAME it belongs to -- `ProjectedNode.id` for a front face
+ *  or a single-faced card, `face:<n>:<name>` for a BACK face, whose physical name is carried
+ *  separately as `cardName` (Task 7, faces-as-nodes). So the roles join is on `cardName ?? id`, and
+ *  `rolesByName` has to arrive keyed on the PHYSICAL card to match -- see `analyze.service.ts`,
+ *  which is where that key is built. Stale note corrected 2026-08-27: this said node ids ARE card
+ *  names and that `rolesByName` already arrives under the same key, and both halves went false with
+ *  faces-as-nodes -- it is the sentence that made the join below look safe while every multi-face
+ *  card's roles were being dropped. `docs` still earns its keep for two facts the projection
+ *  doesn't carry: `typeLine` (for the lands room) and the art crop.
  *
  *  `normalize` is injected rather than imported so this stays a plain, deterministic function of
  *  its arguments, testable without touching `@mtg/data` -- it does `console.warn` on an unjoined
@@ -71,7 +76,14 @@ export function attachRolesAndArt(
     // "does this pull double duty?", where "Island fills the lands role" is noise -- and that same
     // field drives doubleDutyRating's 1.15x synergy multiplier, so it must not be widened there.
     // The board asks a different question, and answers it here, where the full doc is in hand.
-    const isLand = (doc?.typeLine ?? "").toLowerCase().includes("land");
+    //
+    // THE FACE'S OWN TYPE LINE, NOT THE CARD'S. `doc` is the PHYSICAL card, so its line reads
+    // "Instant // Land" for BOTH faces of a modal DFC -- which filed the Instant face in the lands
+    // room while the node rendered its type line as "Instant", one node contradicting itself.
+    // Review fix, 2026-08-27: `face` is already resolved three lines up for exactly this reason.
+    // The card-level line stays the fallback for a node with no face row (a token, a single-faced
+    // card, or a stale doc carrying no `faces`).
+    const isLand = (face?.typeLine ?? n.typeLine ?? doc?.typeLine ?? "").toLowerCase().includes("land");
     const base = rolesByNormalizedName.get(key);
     const roles = isLand && !(base ?? []).includes("lands") ? [...(base ?? []), "lands"] : base;
     // A GENUINELY TWO-FACED CARD HAS NO CARD-LEVEL ART. Scryfall puts `image_uris` on each FACE for

@@ -1870,8 +1870,12 @@ describe("face pair nodes", () => {
     const front = card({ id: "A // B", label: "A", cardName: "A // B" });
     const back = card({ id: "face:1:A // B", label: "B", face: 1, cardName: "A // B" });
     const other = card({ id: "C" });
+    // BOTH faces get an edge to `C`, not just the front: an edgeless node draws at
+    // `ART_RADIUS * EDGELESS_RADIUS_SCALE` (the `demote` branch), so a half-connected fixture gives
+    // the two rims different radii and the radius assertion below could not be a single number.
     const { canvas, tick } = frames(graphOf([front, back, other], [
       { from: "A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["A // B feeds C"] },
+      { from: "face:1:A // B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["B feeds C"] },
     ]), calls);
     // The mount itself already ran one draw pass before this test can see it (the layout effect
     // calls `loop()` once directly, ahead of ever scheduling a frame -- see `loop`'s own comment).
@@ -1889,6 +1893,12 @@ describe("face pair nodes", () => {
     // also the clicked node; a real `setLineDash` call with a non-empty pattern is what makes the
     // two distinguishable regardless of which one draws on top.
     expect(calls.filter((c) => c.startsWith("setLineDash:") && c !== "setLineDash:").length).toBe(2);
+    // AND AT `r + 5`, which is the half that does the work -- review fix, 2026-08-27. The click rim
+    // is 2.5px SOLID in the same `--foreground` at `r + 3`, and this rim is 1.5px drawn AFTER it, so
+    // at an equal radius a thinner stroke of an identical colour is buried whether or not it is
+    // dashed. Reverting the radius alone passed all 106 tests in this file, which is what makes this
+    // assertion the one that pins the fix rather than decorating it.
+    expect(calls.filter((c) => c.startsWith("arc:") && Number(c.split(",")[2]) === ART_RADIUS + 5).length).toBe(2);
 
     const edges = canvas.__graphProbe!().edges;
     expect(edges.some((e) => e.from === "A // B" && e.to === "C")).toBe(true);

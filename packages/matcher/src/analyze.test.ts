@@ -1304,6 +1304,16 @@ test("IMPORTANT: a rated face row carries its physical card's mana value and cos
   expect(back.manaValue).toBe(2);
   expect(front.derived).toBe(true);
   expect(back.derived).toBe(true);
+  // `cardName`/`face` themselves -- the fields every consumer of a face row joins BACK through
+  // (`c.cardName ?? c.name`). Untested until 2026-08-27: because that join degrades silently and
+  // exactly to pre-fix behaviour when the producer field is absent, deleting the two lines that
+  // set them in `analyze.ts` passed all 2,667 tests. `cardName` on BOTH faces, `face` absent on
+  // the front and 1 on the back -- the "front is unmarked" convention `WireGraphNode.face` and
+  // `Reason.producerFace` already keep.
+  expect(front.cardName).toBe("Fell the Profane // Fell Mire");
+  expect(back.cardName).toBe("Fell the Profane // Fell Mire");
+  expect(front.face).toBeUndefined();
+  expect(back.face).toBe(1);
 });
 
 test("IMPORTANT: an underived two-faced card is reported as underived, not silently read", () => {

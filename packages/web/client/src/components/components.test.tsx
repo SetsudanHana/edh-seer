@@ -1866,3 +1866,21 @@ test("the legality panel reports and never gates, and says how many rules it che
   const { container } = render(<LegalityPanel legality={[]} />);
   expect(container).toBeEmptyDOMElement();
 });
+
+/** ONE PHYSICAL CARD, ONE TILE IN "Not read yet". A two-faced card rates one row per printed FACE
+ *  (Task 7, faces-as-nodes) with `derived` identical on both, so an unread modal DFC drew two tiles
+ *  and the count said "2 cards" directly under a caveat that counts SLOTS and says one. Review fix,
+ *  2026-08-27: the same "2 of the 1 unread" defect the 08-27 wave fixed in `ReportView` and in
+ *  `unjudgedCandidates`. The FRONT row survives, because the art map and the card drawer are both
+ *  keyed on the face name. */
+test("an unread two-faced card is one tile in Not read yet, not one per face", () => {
+  const cards = [
+    { name: "Fell the Profane", cardName: "Fell the Profane // Fell Mire", derived: false, synergyRating: 0, topPartners: [] },
+    { name: "Fell Mire", cardName: "Fell the Profane // Fell Mire", face: 1, derived: false, synergyRating: 0, topPartners: [] },
+    { name: "Sol Ring", derived: false, synergyRating: 0, topPartners: [] },
+  ] as any;
+  render(<CardList cards={cards} />);
+  expect(screen.getByText("2 cards")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Fell the Profane" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Fell Mire" })).toBeNull();
+});
