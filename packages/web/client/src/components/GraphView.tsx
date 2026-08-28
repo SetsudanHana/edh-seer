@@ -98,6 +98,15 @@ const FIT_MARGIN = 0.9;
  *  pending fit when it sees a real gesture, or the fit would overwrite their camera. */
 const FIT_SETTLE_ALPHA = 0.05;
 
+/** How much of the board is culled from label eligibility at board zoom, by weighted degree.
+ *
+ *  0.25 — the weakest quarter of the cards carry no name unless they are a commander or under the
+ *  pointer. Measured (see `labelCandidates`): it takes a 130-node board from 61 placed labels to
+ *  32, and 0.5 would take it to 14, which is a board that names almost nothing. The complaint this
+ *  answers is the owner's "cluttered", which had a metric for its edges and none at all for its
+ *  text. */
+const LABEL_DEGREE_QUANTILE = 0.25;
+
 type Point = { x: number; y: number };
 
 /** Screen pixels of camera translation between a zoom gesture's start and its end, below which the
@@ -1205,6 +1214,11 @@ export function GraphView(
         cardModeZoom: CARD_MODE_Z,
         eligibleBelowFloor: new Set([...commandersRef.current, ...hoveredSet]),
         placeholders: placeholderIds,
+        // Cull the weakest quarter at board zoom — see `labelCandidates` for why a quarter of the
+        // candidates costs half the labels. Passing the map is what turns the cull on; it is the
+        // same one `labelPriority` orders by two lines down, so what survives the cull and what
+        // wins a slot cannot disagree about which card matters.
+        cull: { weightedDegree, degreeQuantile: LABEL_DEGREE_QUANTILE },
       });
       if (candidates.length > 0) {
         // World-unit font size so it renders at a constant LABEL_PX screen px -- the formula the

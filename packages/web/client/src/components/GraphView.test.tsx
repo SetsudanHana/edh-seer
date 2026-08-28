@@ -101,6 +101,8 @@ function frames(graph: CardGraph, calls?: string[]) {
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => Array<{ id: string; x: number; y: number; r: number; deg: number }> & {
       camZ: number;
+      /** How many times this board has been framed -- see GraphView's `fits`. */
+      fits: number;
       edges: Array<{ from: string; to: string; weight: number; target: number }>;
       toWorld: (ev: { clientX: number; clientY: number }) => { x: number; y: number };
       endGesture: (
@@ -972,6 +974,27 @@ test("a card in card mode shows its paint hues as bars, not rim arcs", () => {
 test("a card mode placeholder keeps its label, having no art to name it", () => {
   const calls = cardModeFrame(graphOf([card({ id: "Bojuka Bog" })]));
   expect(calls.filter((c) => c.startsWith("fillText:Bojuka Bog")).length).toBeGreaterThan(0);
+});
+
+// THE LABEL CULL IS WIRED, and this is what pins the wiring: the type in labels.ts guards passing
+// the degree map without a quantile, but nothing stops a caller dropping BOTH and quietly labelling
+// the whole board again — which is the state a review found the board in on 2026-08-28, when 130
+// nodes sent 130 names into a greedy placer.
+test("at board zoom a weakly-connected card carries no label while a hub does", () => {
+  const calls: string[] = [];
+  // A hub with three partners and a leaf with one: the leaf is under the quartile bar, so it is
+  // culled, while the hub is the last thing that would be.
+  frames(graphOf(
+    [card({ id: "Hub" }), card({ id: "P1" }), card({ id: "P2" }), card({ id: "P3" }), card({ id: "Leaf" })],
+    [
+      { from: "Hub", to: "P1", weight: 9, tags: ["enters:creature"], reasonTexts: ["a"] },
+      { from: "Hub", to: "P2", weight: 9, tags: ["enters:creature"], reasonTexts: ["b"] },
+      { from: "Hub", to: "P3", weight: 9, tags: ["enters:creature"], reasonTexts: ["c"] },
+      { from: "P1", to: "Leaf", weight: 1, tags: ["enters:creature"], reasonTexts: ["d"] },
+    ],
+  ), calls).tick(400);
+  expect(calls.some((c) => c.startsWith("fillText:Hub,"))).toBe(true);
+  expect(calls.some((c) => c.startsWith("fillText:Leaf,"))).toBe(false);
 });
 
 test("the search-match ring in card mode is a rectangle around the card box", () => {

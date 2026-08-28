@@ -23,6 +23,40 @@ describe("labelCandidates", () => {
     expect(labelCandidates(nodes, 3.99, opts).map((n) => n.id)).toEqual(["a", "b", "c"]);
   });
 
+  // THE CULL. Between the floor and card zoom the board used to make every node a candidate, so a
+  // 130-node deck sent 130 names into a greedy placer and the reader got whichever ones won a
+  // rectangle fight. Passing the degree map is what turns the cull on -- omitting it keeps the old
+  // behaviour, which the test above still pins.
+  it("labels the better-connected half between the floor and card mode", () => {
+    const five = [{ id: "a" }, { id: "b" }, { id: "c" }, { id: "d" }, { id: "e" }];
+    const weightedDegree = new Map([["a", 0], ["b", 1], ["c", 5], ["d", 9], ["e", 12]]);
+    // Median of [0,1,5,9,12] is 5, so c/d/e clear it -- and "a" rides in on the commander set,
+    // which is never culled however unconnected the card is.
+    expect(labelCandidates(five, 1, { ...opts, cull: { weightedDegree, degreeQuantile: 0.5 } }).map((n) => n.id))
+      .toEqual(["a", "c", "d", "e"]);
+    // The shipped quantile keeps three quarters: the bar is [0,1,5,9,12][1] = 1.
+    expect(labelCandidates(five, 1, { ...opts, cull: { weightedDegree, degreeQuantile: 0.25 } }).map((n) => n.id))
+      .toEqual(["a", "b", "c", "d", "e"]);
+  });
+
+  it("culls nothing at all when no degree map is given", () => {
+    expect(labelCandidates(nodes, 1, { ...opts, cull: undefined }).map((n) => n.id))
+      .toEqual(["a", "b", "c"]);
+  });
+
+  // A node absent from the map reads 0, not "unknown" -- an unconnected card really does have no
+  // weighted degree, and the map is built by summing over links.
+  it("treats a node with no degree entry as unconnected", () => {
+    const weightedDegree = new Map([["b", 4], ["c", 4]]);
+    expect(labelCandidates(nodes, 1, { ...opts, cull: { weightedDegree, degreeQuantile: 0.5 } }).map((n) => n.id))
+      .toEqual(["a", "b", "c"]);
+    const weightedDegree2 = new Map([["b", 0], ["c", 9]]);
+    // Median of [0,0,9] is 0, so everything clears it: the cull cannot fire on a board where most
+    // cards are unconnected, which is the honest answer -- there is nothing to prioritise.
+    expect(labelCandidates(nodes, 1, { ...opts, cull: { weightedDegree: weightedDegree2, degreeQuantile: 0.5 } }).map((n) => n.id))
+      .toEqual(["a", "b", "c"]);
+  });
+
   it("suppresses labels in card mode, where the art carries the name", () => {
     // Only "c", which drew as a placeholder and so has no art naming it.
     expect(labelCandidates(nodes, 4, opts).map((n) => n.id)).toEqual(["c"]);

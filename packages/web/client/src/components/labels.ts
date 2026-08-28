@@ -78,11 +78,58 @@ export function labelCandidates<T extends { id: string }>(
     cardModeZoom: number;
     eligibleBelowFloor: ReadonlySet<string>;
     placeholders: ReadonlySet<string>;
+    /** Weighted degree per node — the same map the priority order below reads — and the quantile of
+     *  it a node must clear to stay eligible between the floor and card zoom. 0.25 culls the weakest
+     *  quarter; 0.5 is the median.
+     *
+     *  THE TWO TRAVEL TOGETHER, and that is a type rather than a convention: the quantile decides
+     *  how much of the board goes quiet, so a caller that passes the map and forgets the number
+     *  would silently get some default's idea of it. Omit BOTH and nothing is culled, which is what
+     *  this function did before 2026-08-28 and what every caller outside the board still wants. */
+    cull?: { weightedDegree: ReadonlyMap<string, number>; degreeQuantile: number };
   },
 ): T[] {
   if (z < opts.zoomFloor) return nodes.filter((n) => opts.eligibleBelowFloor.has(n.id));
   if (z >= opts.cardModeZoom) return nodes.filter((n) => opts.placeholders.has(n.id));
-  return [...nodes];
+  if (!opts.cull) return [...nodes];
+  // THE BETTER-CONNECTED CARDS, AND WHATEVER THE READER IS POINTING AT.
+  //
+  // Between the floor and card zoom every node was eligible, so a 130-node board sent 130 names
+  // into a greedy placer that then dropped most of them on collision — the reader got whichever
+  // names happened to win a rectangle fight, and the loser was usually the card next to the one
+  // they were reading. A review (2026-08-28) named this as the un-measured half of "the board is
+  // cluttered": crossings had a metric and a cap, labels had neither.
+  //
+  // A QUANTILE, not a fixed count: a number of labels would be wrong at both ends (an 80-card board
+  // and a 130-card one need different answers) while a share is the same claim at every size.
+  // Weighted degree, not partner count, for the reason `weightedDegree` exists at all: an edge is
+  // binary but synergy has magnitude, so a card with six weak partners must not outrank one with
+  // two strong ones.
+  //
+  // MEASURED, and the cull bites HARDER than its share, which is the part worth knowing before
+  // moving the number. Labels actually PLACED at zoom 1.2, five seeds (0.6em width approximation,
+  // as in the placeLabels table above — read the ratios):
+  //
+  //    fixture   nodes   q=0 (before)   q=0.25 (ships)   q=0.5
+  //    mdfc       130         61              32           14
+  //    inalla      94         37              27           14
+  //    sorin       84         39              18            9
+  //
+  // Cutting a QUARTER of the candidates costs about HALF the labels, because the cards it removes
+  // are the weakly-connected ones out on the rim — which are exactly the ones with empty space
+  // around them, so they were winning slots the dense middle can never win. The cull therefore
+  // trades away labels that were legible to reduce the total count; at q=0.5 a 130-card board keeps
+  // 14 names, which is nearly nothing. 0.25 is the setting that halves the text and still names
+  // about a quarter of the board.
+  //
+  // Commanders and the hovered neighbourhood are never culled — they are the two sets the floor
+  // below already exempts, and a board that hides the commander's name to save room has answered
+  // the wrong question.
+  const { weightedDegree, degreeQuantile } = opts.cull;
+  const degrees = nodes.map((n) => weightedDegree.get(n.id) ?? 0).sort((a, b) => a - b);
+  const bar = degrees.length === 0 ? 0 : degrees[Math.floor(degrees.length * degreeQuantile)]!;
+  return nodes.filter((n) =>
+    opts.eligibleBelowFloor.has(n.id) || (weightedDegree.get(n.id) ?? 0) >= bar);
 }
 
 /** Commander first, then weighted degree, then the hovered neighbourhood, then everything else.
