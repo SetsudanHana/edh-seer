@@ -105,7 +105,26 @@ function activatedCost(text: string): { cost: string; length: number } | null {
     // A part is a RUN of mana symbols or a phrase, never a mixture: "Pay {2}" is not a cost part,
     // and it was not one under the pattern either.
     if (/[{}]/.test(part)) { if (!/^(?:\{[^{}]*\})+$/.test(part)) return null; }
-    else if (part.length > 80 || part.includes(".")) return null;
+    // A QUOTE MEANS THE COLON IS INSIDE AN ABILITY THIS CARD GRANTS, NOT A COST THIS CARD PAYS, and
+    // this was banking WRONG STRUCTURE rather than merely refusing a card: Basal Sliver's whole text
+    // is `All Slivers have "Sacrifice this permanent: Add {B}{B}."` -- one static grant -- and it
+    // typed ACTIVATED with the cost `All Slivers have "Sacrifice this permanent`, so the engine
+    // believed the Sliver ITSELF had a mana ability. 13 cards, all persisted, all wrong the same way
+    // (Sporoloth Ancient, Eldrazi Confluence, Fallen Ideal, Consecrated by Blood ...).
+    //
+    // `extractGranted` pulls most granted abilities into their own clause, and its own comment
+    // records why some are left inline -- a cost that is not a mana symbol. This is the guard for
+    // exactly the ones it leaves behind.
+    else if (part.includes('"') || part.includes("\u201c")) return null;
+    // NO CHARACTER CAP. THE PERIOD IS THE BOUND, which this function's own header already argued:
+    // "excluding the period is a tighter bound than any number, because no cost part ever spans
+    // one." The 40-char cap it replaced typed 583 cards static; the 80 that survived it still typed
+    // SIX, and five are genuinely long costs -- Baron Helmut Zemo at 114 ("Exile any number of black
+    // cards from your graveyard with fifteen or more black mana symbols among them"), Mossbridge
+    // Troll at 104, The Filigree Sylex at 90, The Capitoline Triad and The Book of Vile Darkness.
+    // The sixth, Kylem All-Star, is the one thing the cap was accidentally protecting against, and
+    // it is a quoted grant refused by the line above on its own merits.
+    else if (part.includes(".")) return null;
   }
   return { cost: text.slice(0, colon).trim(), length: end };
 }
