@@ -22,6 +22,9 @@
  *    tsx src/bin/normalize-corpus.ts --run              # spends
  *    tsx src/bin/normalize-corpus.ts --run --limit 3    # smallest useful end-to-end check
  *    tsx src/bin/normalize-corpus.ts --refresh-other    # re-ask only the cards stuck on `other`
+ *    tsx src/bin/normalize-corpus.ts --commander-legal  # scope every commander-legal card, not the 71 decks
+ *    tsx src/bin/normalize-corpus.ts --commander-legal --max-rank 20000
+ *                                                       # ... but only the ones EDHREC ranks that high
  *    tsx src/bin/normalize-corpus.ts --run --batch      # submit to the Batch API at HALF PRICE
  *    tsx src/bin/normalize-corpus.ts --collect <file>   # poll + persist a submitted batch
  *    tsx src/bin/normalize-corpus.ts --card "Isshin, Two Heavens as One" --run
@@ -98,6 +101,27 @@ const BELOW_VERSION = Number(arg("--below-version") ?? 0);
  *  a card is often a DEFECT rather than a word — 14 of the 15 trigger-doublers derive no subject,
  *  and checking whether Isshin joins them should not require it to be in someone's deck first. */
 const CARDS = process.argv.reduce<string[]>((acc, a, i) => (a === "--card" && process.argv[i + 1] ? [...acc, process.argv[i + 1]] : acc), []);
+/** EVERY COMMANDER-LEGAL CARD, not the 71 calibration decks. The static-hosting plan needs whatever
+ *  ships to BE the whole answer -- no server means no lazy normalization, so a card outside the
+ *  bought scope is one a stranger's deck can never read.
+ *
+ *  SCOPED ON LEGALITY, which is the same ruling the vocabulary work took: no plane, scheme,
+ *  Attraction, conspiracy or un-card is ever in an EDH decklist, so buying one is money spent on a
+ *  card the product cannot be handed. 31,829 of the corpus's 34,433 are commander-legal.
+ *
+ *  Cards with no printed oracle text are IN, deliberately, and they are free: an all-inert card is
+ *  answered in code, and the doc it gets is what stops the report calling a vanilla bear "unread". */
+const COMMANDER_LEGAL = process.argv.includes("--commander-legal");
+/** Buy the corpus by how often the format actually plays a card. EDHREC's rank is the only
+ *  popularity signal on the documents, and it is dense here: only 56 of the 27,529 unbought
+ *  commander-legal cards carry no rank at all, so a cutoff drops PLAYED cards rather than junk —
+ *  it buys a tranche, it does not filter noise. Priced at the batch rate: <=20,000 is 16,948 cards
+ *  and $38.93 against $63.17 for the lot.
+ *
+ *  A CARD ANSWERED IN CODE IGNORES THE CUTOFF, because it is free and because the doc it gets is
+ *  what stops the report calling a vanilla creature "unread". Buying the tranche should not leave a
+ *  Grizzly Bears looking unanalysed when analysing it costs nothing. */
+const MAX_RANK = Number(arg("--max-rank") ?? 0);
 const BATCH = process.argv.includes("--batch");
 const COLLECT = arg("--collect");
 
@@ -177,6 +201,10 @@ interface BatchState {
   jobs: { oracleId: string; name: string; hash: string }[];
 }
 const BATCH_DIR = new URL("../../.batches/", import.meta.url).pathname;
+/** Anthropic caps a batch at 100,000 requests OR 256 MB of request body. 200 MB leaves room for the
+ *  count of a JSON estimate that is close rather than exact, and for the envelope around the
+ *  requests array; the whole corpus needs ~2 batches either way, so a tighter bound costs nothing. */
+const CHUNK_BYTES = 200 * 1024 * 1024;
 
 if (COLLECT) {
   const state = JSON.parse(readFileSync(COLLECT, "utf8")) as BatchState;
@@ -230,12 +258,34 @@ interface Job {
   hash: string;
 }
 
+type ScopeDoc = { _id: string; name: string; oracleText?: string; keywords?: string[]; typeLine?: string; edhrecRank?: number };
+
 const jobs: Job[] = [];
 const unresolved: string[] = [];
-const exemplars = await exemplarNames();
+const exemplars = COMMANDER_LEGAL ? [] : await exemplarNames();
 const scope = CARDS.length
   ? [...new Set(CARDS.map(normalizeName))]
-  : [...new Set([...calibrationNames(), ...exemplars])];
+  : COMMANDER_LEGAL
+    ? []
+    : [...new Set([...calibrationNames(), ...exemplars])];
+
+/** The scope as CARDS rather than as names. `--commander-legal` reads the collection directly: at
+ *  31,829 cards a per-name `findByName` is 31,829 round trips to answer a question one query
+ *  answers, and there is no name to be unresolved in the first place. */
+async function* scopeDocs(): AsyncGenerator<ScopeDoc> {
+  if (COMMANDER_LEGAL) {
+    const cursor = store.cards
+      .find({ "legalities.commander": "legal" } as never)
+      .project({ name: 1, oracleText: 1, keywords: 1, typeLine: 1, edhrecRank: 1 });
+    for await (const doc of cursor) yield doc as unknown as ScopeDoc;
+    return;
+  }
+  for (const name of scope) {
+    const doc = (await lookup.findByName(name)) as ScopeDoc | null;
+    if (!doc) { unresolved.push(name); continue; }
+    yield doc;
+  }
+}
 /** THE SCOPE IS DEDUPED BY NAME AND THAT IS NOT THE SAME AS DEDUPED BY CARD. A card reachable by
  *  two names — its real one and a flavor name, since `searchNames` merged those on 2026-07-12 —
  *  arrives twice. Measured: 2,544 scope names resolve to 2,541 distinct cards, the three being
@@ -246,10 +296,7 @@ const scope = CARDS.length
  *  and the custom_id is the oracle id. Fixed here rather than in the batch submitter so the live
  *  path stops paying for three cards twice as well. */
 const seenIds = new Set<string>();
-for (const name of scope) {
-  const doc = (await lookup.findByName(name)) as
-    { _id: string; name: string; oracleText?: string; keywords?: string[]; typeLine?: string } | null;
-  if (!doc) { unresolved.push(name); continue; }
+for await (const doc of scopeDocs()) {
   if (seenIds.has(doc._id)) continue;
   seenIds.add(doc._id);
   const hash = segmentHash(doc.oracleText ?? "", doc.typeLine ?? "", doc.keywords ?? []);
@@ -264,6 +311,10 @@ for (const name of scope) {
       || carriesOtherTrigger(existing, TRIGGERS, TRIGGER_VOCAB_VERSION));
   const stale = BELOW_VERSION > 0 && existing !== null && existing.normalizeVersion < BELOW_VERSION;
   if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable && !stale) continue;
+  // Tested AFTER `needsModel`, never before it: an all-inert card costs nothing, so excluding it
+  // would buy no money back and would leave it reading as unread. An UNRANKED card is out — EDHREC
+  // has no record of the format playing it, which is the same claim the cutoff makes.
+  if (MAX_RANK > 0 && needsModel(segmented) && !(doc.edhrecRank !== undefined && doc.edhrecRank <= MAX_RANK)) continue;
   jobs.push({ oracleId: doc._id, name: doc.name, oracleText: doc.oracleText, keywords: doc.keywords, typeLine: doc.typeLine, hash });
 }
 
@@ -286,7 +337,9 @@ const usd = (inputTokens / 1e6) * USD_PER_M_INPUT + (outputTokens / 1e6) * USD_P
 const cfg = loadTaggerConfig();
 console.log(CARDS.length
   ? `scope: ${scope.length} named card(s) — ${CARDS.join(", ")}`
-  : `scope: calibration corpus + ${exemplars.length} keyword exemplars (${scope.length} cards)`);
+  : COMMANDER_LEGAL
+    ? `scope: every commander-legal card (${seenIds.size} cards)${MAX_RANK ? `, model calls capped at EDHREC rank ${MAX_RANK.toLocaleString()}` : ""}`
+    : `scope: calibration corpus + ${exemplars.length} keyword exemplars (${scope.length} cards)`);
 console.log(`  cards needing normalization: ${jobs.length}${LIMIT ? ` (limited to ${LIMIT})` : ""}`);
 console.log(`  of those, answered in code (no model call): ${freeCards}`);
 if (unresolved.length) console.log(`  unresolved names: ${unresolved.length} (${unresolved.slice(0, 3).join(", ")}...)`);
@@ -352,19 +405,44 @@ if (BATCH) {
   const prefill = (provider as { prefill?: boolean }).prefill ?? false;
 
   const client = { apiKey: cfg.anthropicApiKey ?? "", baseUrl: cfg.anthropicBaseUrl, model: provider.model, maxTokens: 3000 };
-  const batchId = await submitBatch(client, send, prefill);
-  const state: BatchState = {
-    batchId, model: provider.model, prefill, submittedAt: new Date().toISOString(),
-    jobs: queue.map((j) => ({ oracleId: j.oracleId, name: j.name, hash: j.hash })),
-  };
-  mkdirSync(BATCH_DIR, { recursive: true });
-  const statePath = join(BATCH_DIR, `${batchId}.json`);
-  writeFileSync(statePath, JSON.stringify(state, null, 2));
 
-  console.log(`\nSUBMITTED batch ${batchId}: ${send.length} cards to the model, ${ok} answered in code and already written.`);
-  console.log(`state: ${statePath}`);
-  console.log(`\nResults are ready within 24h and are kept for 29 days. Collect with:`);
-  console.log(`  npx tsx packages/tagger/src/bin/normalize-corpus.ts --collect ${statePath}`);
+  // ONE POST PER CHUNK, because a batch has a SIZE limit as well as a count one and the whole
+  // corpus blows through it: 27,529 cards is ~285 MB of request JSON against Anthropic's 256 MB,
+  // and the system prompt is 97.6% of that (2,531 tokens, repeated once per card, against a 59-token
+  // card). Sized against the BYTES it will serialize to rather than a card count, so a future prompt
+  // that grows re-chunks itself instead of silently crossing the line.
+  const chunks: typeof send[] = [];
+  let chunk: typeof send = [];
+  let bytes = 0;
+  for (const r of send) {
+    // `send` already carries the system block as a message, so the stringified request IS the
+    // payload; `anthropicBody` only re-shapes it. Measured, not assumed: ~10.4 KB per card.
+    const size = JSON.stringify(r).length;
+    if (chunk.length && bytes + size > CHUNK_BYTES) { chunks.push(chunk); chunk = []; bytes = 0; }
+    chunk.push(r); bytes += size;
+  }
+  if (chunk.length) chunks.push(chunk);
+
+  const byId = new Map(queue.map((j) => [j.oracleId, j] as const));
+  mkdirSync(BATCH_DIR, { recursive: true });
+  const statePaths: string[] = [];
+  for (const [i, part] of chunks.entries()) {
+    const batchId = await submitBatch(client, part, prefill);
+    const state: BatchState = {
+      batchId, model: provider.model, prefill, submittedAt: new Date().toISOString(),
+      // ONLY this chunk's jobs. A state file naming cards another chunk answered would have
+      // `--collect` report them as never returned, every time, forever.
+      jobs: part.map((r) => byId.get(r.customId)!).map((j) => ({ oracleId: j.oracleId, name: j.name, hash: j.hash })),
+    };
+    const statePath = join(BATCH_DIR, `${batchId}.json`);
+    writeFileSync(statePath, JSON.stringify(state, null, 2));
+    statePaths.push(statePath);
+    console.log(`SUBMITTED batch ${i + 1}/${chunks.length} ${batchId}: ${part.length} cards -> ${statePath}`);
+  }
+
+  console.log(`\n${send.length} cards sent to the model over ${chunks.length} batch(es); ${ok} answered in code and already written.`);
+  console.log(`\nResults are ready within 24h and are kept for 29 days. Collect EACH with:`);
+  for (const sp of statePaths) console.log(`  npx tsx packages/tagger/src/bin/normalize-corpus.ts --collect ${sp}`);
   await store.close();
   process.exit(0);
 }
