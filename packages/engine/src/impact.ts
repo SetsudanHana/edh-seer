@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import impactWeights from "./impact-weights.json" with { type: "json" };
 import type { Reason } from "./synergy.js";
 
 export interface ImpactWeights {
@@ -130,13 +130,15 @@ export function impactWeightOf(reason: Reason, w: ImpactWeights): number {
   return k * r * s;
 }
 
-/** Read the committed impact-weights.json; fall back to seed defaults if unreadable/absent. */
+/** The committed impact-weights.json -- THIS is what scores production, not `SEED_IMPACT_WEIGHTS`,
+ *  and a kind present in SEED and absent here scores `UNKNOWN_KIND_WEIGHT` rather than falling back
+ *  (measured 2026-08-18: the file was missing seven kinds and 3.48% of reasons were mis-weighted).
+ *
+ *  IMPORTED RATHER THAN READ FROM DISK so the analysis path bundles for a browser (roadmap P2).
+ *  The old `try`/`catch` fell back to SEED when the file was unreadable; a static import makes an
+ *  absent or malformed artifact a BUILD failure instead, which is the louder direction. */
 export function loadImpactWeights(): ImpactWeights {
-  try {
-    return JSON.parse(readFileSync(new URL("./impact-weights.json", import.meta.url), "utf8")) as ImpactWeights;
-  } catch {
-    return SEED_IMPACT_WEIGHTS;
-  }
+  return impactWeights as ImpactWeights;
 }
 
 /** Sum impact over DISTINCT reason tags, keeping the MAX-impact reason per tag: when a mutual

@@ -1,6 +1,4 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import pool from "./answer-pool.json" with { type: "json" };
 import type { DeckCard } from "./types.js";
 
 /** Every answer class the pool counts. `graveyard` is counted and stored even though
@@ -20,13 +18,10 @@ export function identityKey(colorIdentity: string[]): string {
 
 export type AnswerPool = Record<string, Record<string, number>>;
 
-let cached: AnswerPool | undefined;
-
+/** IMPORTED RATHER THAN READ FROM DISK so the analysis path bundles for a browser (roadmap P2).
+ *  The cache went with the read -- there is nothing left to cache. */
 export function loadAnswerPool(): AnswerPool {
-  if (cached) return cached;
-  const here = dirname(fileURLToPath(import.meta.url));
-  cached = JSON.parse(readFileSync(join(here, "answer-pool.json"), "utf8")) as AnswerPool;
-  return cached;
+  return pool as AnswerPool;
 }
 
 /** How much of the format's answer supply for this class is legal in this identity, as a share of

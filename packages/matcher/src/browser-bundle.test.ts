@@ -16,29 +16,29 @@ import { expect, test } from "vitest";
  *  the static build got bigger. A missing entry means P2 landed one and the win has to be BANKED
  *  here, or the list quietly stops meaning anything.
  *
- *  MEASURED 2026-08-29: this was TEN modules until eight value-imports of the `@edh-seer/tagger`
- *  BARREL were pointed at `@edh-seer/tagger/{subtypes,subject,schema}` instead. The barrel drags
- *  `otags/functional.ts` and `otags/semantics.ts`, which `readFileSync` AT MODULE LOAD rather than
- *  lazily, plus `clause-store.ts` (`node:crypto`) and `derive/token-types.ts` — four modules
- *  reached for two constants. */
-const REMAINING = [
-  // Each loads a JSON artifact from disk at call time. P2 turns these into JSON imports.
-  "packages/engine/src/analyze.ts", //     tag-weights.json
-  "packages/engine/src/impact.ts", //      impact-weights.json
-  "packages/matcher/src/answer-pool.ts", //answer-pool.json
-  "packages/matcher/src/hierarchy.ts", //  hierarchy.json
-  "packages/matcher/src/rules.ts", //      rules.json
-  "packages/matcher/src/theme-stats.ts", //theme-stats.json
-];
+ *  THE LIST IS EMPTY AND THAT IS THE POINT — measured 2026-08-29, in two steps.
+ *  TEN modules -> SIX when eight value-imports of the `@edh-seer/tagger` BARREL were pointed at
+ *  `@edh-seer/tagger/{subtypes,subject,schema}` instead (the barrel drags `otags/functional.ts` and
+ *  `otags/semantics.ts`, which `readFileSync` AT MODULE LOAD, plus `clause-store.ts` and
+ *  `derive/token-types.ts` — four modules reached for two constants).
+ *  SIX -> ZERO when the six JSON artifacts became static imports: `tag-weights` · `impact-weights`
+ *  · `answer-pool` · `hierarchy` · `rules` · `theme-stats`. */
+const REMAINING: string[] = [];
 
 /** `absWorkingDir` is PINNED to the repo root, and it is load-bearing rather than tidy: esbuild
- *  reports every path relative to its working directory, so without it this list reads
+ *  reports every path relative to its working directory, so this list would read
  *  `packages/matcher/src/...` under `vitest --root packages/matcher` and `src/...` under
  *  `npm test -w @edh-seer/matcher` — the test passed alone and failed in the suite. */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 
-test("only the six known JSON-loading modules keep the analysis engine out of a browser", async () => {
-  const errors = await build({
+/** A bundle that produced almost nothing would satisfy an EMPTY offender list while checking
+ *  nothing at all — the vacuous-pass shape `client-browser-safe.test.ts` guards with its
+ *  "found more than 20 files" assertion. Measured at 350 KB on 2026-08-29; the floor is set well
+ *  under that so ordinary growth or shrinkage does not fail it, and a resolution failure does. */
+const MIN_BUNDLE_BYTES = 200_000;
+
+test("the analysis engine bundles for a browser with no Node-only modules left on its graph", async () => {
+  const result = await build({
     entryPoints: [fileURLToPath(new URL("./analyze.ts", import.meta.url))],
     bundle: true,
     platform: "browser",
@@ -47,13 +47,14 @@ test("only the six known JSON-loading modules keep the analysis engine out of a 
     logLevel: "silent",
     absWorkingDir: ROOT,
   }).then(
-    () => [] as { location?: { file?: string } | null }[],
-    (e: { errors?: { location?: { file?: string } | null }[] }) => e.errors ?? [],
+    (r) => ({ errors: [] as { location?: { file?: string } | null }[], bytes: r.outputFiles[0]?.contents.byteLength ?? 0 }),
+    (e: { errors?: { location?: { file?: string } | null }[] }) => ({ errors: e.errors ?? [], bytes: 0 }),
   );
 
   const offenders = [...new Set(
-    errors.map((e) => e.location?.file).filter((f): f is string => typeof f === "string"),
+    result.errors.map((e) => e.location?.file).filter((f): f is string => typeof f === "string"),
   )].sort();
 
   expect(offenders).toEqual(REMAINING);
+  expect(result.bytes).toBeGreaterThan(MIN_BUNDLE_BYTES);
 });
