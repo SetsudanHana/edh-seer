@@ -288,6 +288,11 @@ function splitEmbeddedTriggers(text: string): string[] {
   return parts.map((p) => p.trim()).filter((p) => p !== "");
 }
 
+/** "<name> can be your commander." — CR 903.3, a deckbuilding permission rather than an ability.
+ *  Anchored on the whole phrase and not on "commander", because plenty of real abilities name one
+ *  ("Whenever a commander you control deals combat damage"). */
+const COMMANDER_PERMISSION = /\bcan be your commander\b/i;
+
 function classify(text: string, kind: ClauseKind, typeLine: string): { abilityType?: Clause["abilityType"]; cost?: string; body: string } {
   // Inert clauses state no game action: a printed keyword, reminder text, a Class level divider,
   // and the "Choose two —" line that introduces modes. The modes and the levelled-up abilities
@@ -296,6 +301,17 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
   // A planeswalker loyalty ability is activated (CR 606); its cost is the loyalty symbol. Without
   // this, Aminatou's "+1: Draw a card" was typed static — the loyalty cost is not a mana symbol,
   // so the general cost pattern never matched it.
+  // A DECKBUILDING PERMISSION IS NOT AN ABILITY, and typing it as one was the single biggest
+  // ability-type-mismatch bucket: 19 of 44 refused cards, the model answering "none" and being
+  // RIGHT. CR 903.3 says the commander designation "is not a characteristic of the object
+  // represented by the card", and the line does nothing on the battlefield — it is a rule about
+  // what may go in the deck, which `legality.ts` already reads off printed text for J4 and which
+  // 49 corpus cards print. Lord Windgrace and Minsc & Boo are the witnesses.
+  //
+  // NO abilityType RATHER THAN A NEW INERT KIND, deliberately: `validateOne` only checks the type
+  // where the segmenter assigned one, so this is the whole fix, and the clause still reaches the
+  // model instead of being silently dropped from a card's text.
+  if (COMMANDER_PERMISSION.test(text)) return { body: text };
   const loyalty = text.match(LOYALTY);
   if (loyalty) return { abilityType: "activated", cost: loyalty[1].trim(), body: text.slice(loyalty[0].length) };
   // The trigger cue is tested BEFORE the cost, because no activated ability's cost begins
@@ -346,7 +362,26 @@ const EVENT_VERB = String.raw`(?:is put|is turned|attacks|blocks|becomes blocked
   // a two-event trigger head whose verbs are all outside the original list, and the segmenter
   // flagged 0 -- "cycle or discard" (6), "play a land from exile or cast a spell from exile" (3),
   // "create or sacrifice", "gain or lose life", "cast or cycle".
-  + String.raw`|cycles?|discards?|creates?|sacrifices?|casts?|plays?|mills?|exiles?)`;
+  + String.raw`|cycles?|discards?|creates?|sacrifices?|casts?|plays?|mills?|exiles?`
+  // ADDED 2026-08-29, and the same lesson a third time: this list was extended once for the verbs a
+  // player performs and `copy` was missed, though `copy` has been a TRIGGERS member since
+  // 2026-08-15 and was added for precisely this reason. "Whenever you cast OR COPY an instant or
+  // sorcery spell" is 30 cards, and every one refused — the model splits the clause to record both
+  // events (which is right), the segmenter never marked it twoConditions, so the overflow record
+  // had no parent to be absorbed against and the gate read it as an invented or duplicate id.
+  // THAT IS WHY ONE MISSING WORD SHOWED UP AS THREE SEPARATE REFUSAL FAMILIES.
+  //
+  // MEASURED OVER SEGMENTED CLAUSE TEXT, NOT RAW ORACLE LINES — the first sweep used lines and
+  // undercounted, because a clause's text is not its printed line. 43 clauses over 43 cards newly
+  // flag, and ALL 43 WERE READ: 30 "cast or copy", 11 "enters or transforms into <name>", plus
+  // Corruption of Towashi and Blightreaper Thallid. Zero false positives.
+  //
+  // NARROW ON PURPOSE. A sweep for any "when ... or ..." head finds 1,341 more, and they are `or`
+  // inside a NOUN PHRASE — "an instant or sorcery spell" (177), "two or more creatures" (465),
+  // "creature or planeswalker" (76). Marking those twoConditions would invite a second record for
+  // an event that does not exist, which is the over-claim direction. The narrow verb list is doing
+  // the work; this adds two verbs to it and does not loosen the shape.
+  + String.raw`|copies|copy|transforms?)`;
 const TWO_CONDITIONS = new RegExp(
   String.raw`^(?:when|whenever|at the beginning)[^,]*?\b(?:and (?:when|whenever|at the beginning)\b`
   + String.raw`|${EVENT_VERB}[^,]*?\bor (?:[a-z' ]{1,40}\s)?${EVENT_VERB}\b)`,

@@ -78,6 +78,26 @@ test("a trigger belongs on a triggered clause and nowhere else", () => {
   expect(validateClauses(seg, noneEvent)).toEqual([]);
 });
 
+test("a REDUNDANT implied zone warns instead of refusing the card", () => {
+  // 10 of the 15 zone violations in the 2026-08-29 tranche were fromZone/toZone on `draw`, and
+  // drawing really does move a card library -> hand. The model was being more explicit than the
+  // schema wants and the whole card was thrown away for it; canonicalize nulls implied zones one
+  // step later anyway.
+  const seg: Clause[] = [{ id: 1, kind: "ability", abilityType: "spell", text: "Draw a card." }];
+  const redundant: ClauseRecord[] = [{ id: 1, abilityType: "spell", actions: [{ verb: "draw", fromZone: "library", toZone: "hand" }] }];
+  const v = validateClauses(seg, redundant);
+  expect(kinds(v)).toContain("zone-on-unzoned-verb");
+  expect(rejections(v)).toEqual([]);            // recorded, but the card persists
+});
+
+test("a WRONG zone on the same verb still refuses the card", () => {
+  // The bound. Downgrading redundancy must not downgrade a disagreement: a draw from the GRAVEYARD
+  // is not a draw, and reading it as one would bank a false zone.
+  const seg: Clause[] = [{ id: 1, kind: "ability", abilityType: "spell", text: "Draw a card." }];
+  const wrong: ClauseRecord[] = [{ id: 1, abilityType: "spell", actions: [{ verb: "draw", fromZone: "graveyard" }] }];
+  expect(rejections(validateClauses(seg, wrong))).toHaveLength(1);
+});
+
 test("zones are legal only on the verbs whose zones actually vary", () => {
   // Every other verb already fixes its own zones, and recording them twice is what made two runs
   // disagree over a fact neither of them chose.
