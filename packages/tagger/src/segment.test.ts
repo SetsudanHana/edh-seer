@@ -492,8 +492,38 @@ test("a Station threshold does not hide the trigger behind it", () => {
   const uthros = segment("Station\n3+ | Whenever you cast an artifact spell, draw a card.\n12+ | Flying", [], "Artifact — Spacecraft");
   const trig = uthros.find((c) => c.text.includes("Whenever you cast"));
   expect(trig?.abilityType).toBe("triggered");
-  // The keyword-only threshold line stays what it was.
-  expect(uthros.find((c) => c.text.includes("Flying"))?.abilityType).toBe("static");
+  // CHANGED 2026-08-29, and this expectation was pinning the incumbent rather than asserting a
+  // rule -- its own comment said "stays what it was". A keyword-only threshold row now gets NO
+  // abilityType, because an UNBARRED printed keyword already gets none (kind "keyword" returns
+  // early), so `static` here was an inconsistency between the barred and unbarred forms of the same
+  // thing. It cost 27 cards: the model answers "none" for a bare keyword and the gate refused it.
+  expect(uthros.find((c) => c.text.includes("Flying"))?.abilityType).toBeUndefined();
+});
+
+test("a station bar does not hide an ACTIVATED cost behind it either", () => {
+  // LABEL has known the "N+ |" frame since Uthros Research Craft, but it was consulted on ONE line,
+  // the trigger cue. So Kavaron and Adagia typed static while the model correctly said activated.
+  const kavaron = segment("Station\n12+ | {1}{R}, {T}, Sacrifice a land: Create a 2/2 colorless Robot artifact creature token.", [], "Artifact — Spacecraft");
+  const row = kavaron.find((c) => c.text.includes("Robot"));
+  expect(row?.abilityType).toBe("activated");
+  expect(row?.cost).toBe("{1}{R}, {T}, Sacrifice a land");
+  // The threshold is KEPT in the body rather than silently dropped -- what the trigger branch does.
+  expect(row?.text.startsWith("12+ |")).toBe(true);
+});
+
+test("a REAL static behind a station bar stays static", () => {
+  // The bound, and it is why this asks the keyword list rather than blanketing the frame: 27 bare
+  // keyword rows against 3 genuine statics printed behind the same bar.
+  const frigate = segment("Station\n2+ | Other creatures you control get +1/+1.", [], "Artifact — Spacecraft");
+  expect(frigate.find((c) => c.text.includes("+1/+1"))?.abilityType).toBe("static");
+});
+
+test("the OTHER deckbuilding permission is not an ability either", () => {
+  // CR 100.2a, the twin of "can be your commander". Persistent Petitioners and Tempest Hawk were
+  // refused over an answer of "none" that was right -- and SubjectFilter.named exists because of
+  // these very cards.
+  const petitioners = segment("A deck can have any number of cards named Persistent Petitioners.", [], "Creature — Human Advisor");
+  expect(petitioners[0].abilityType).toBeUndefined();
 });
 
 test("two conditions joined through a second subject still count as two", () => {
