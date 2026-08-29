@@ -9,6 +9,7 @@
  *  This also gives a completeness check we have never had. A clause that produces no record is an
  *  error rather than silence, which is the class of bug that let Bitterblossom sit in the corpus
  *  with zero abilities, indistinguishable from a vanilla bear. */
+import { KEYWORD_ABILITIES } from "./derive/subtypes.js";
 
 export type ClauseKind =
   | "ability"        // ordinary rules text
@@ -293,6 +294,34 @@ function splitEmbeddedTriggers(text: string): string[] {
  *  ("Whenever a commander you control deals combat damage"). */
 const COMMANDER_PERMISSION = /\bcan be your commander\b/i;
 
+/** "A deck can have any number of cards named X." — CR 100.2a, the OTHER deckbuilding permission,
+ *  and the twin of the commander line above. Same reasoning, same fix: it grants no ability and does
+ *  nothing on the battlefield, so typing it `static` made the gate refuse Persistent Petitioners and
+ *  Tempest Hawk over an answer of "none" that was right. `SubjectFilter.named` exists BECAUSE of
+ *  these 13 cards, and two of them were stuck at the gate. */
+const DECK_LIMIT_PERMISSION = /\bdeck can have any number of cards named\b/i;
+
+/** A Spacecraft prints its station-threshold abilities behind "N+ |". The bar is a LABEL, not part
+ *  of the ability, and `LABEL` has known that since Uthros Research Craft — but it was consulted on
+ *  ONE line, the trigger cue, so the cost scan and the keyword test never saw it stripped. 40 cards,
+ *  48 clauses: a whole printed frame the segmenter had learned only a third of. */
+const STATION_BAR = /^\d+\+\s*\|\s*/;
+
+/** Is everything after the bar just printed keywords? "10+ | Flying", "9+ | Flying, first strike".
+ *  MEASURED SPLIT: 27 such rows against 3 real statics behind the same bar — Lumen-Class Frigate's
+ *  "2+ | Other creatures you control get +1/+1" and Exploration Broodship's extra land drop must
+ *  STAY static, which is why this asks the keyword list rather than blanketing the frame.
+ *
+ *  Asks the GENERATED CR list and NOT the card's own `keywords` field: a Spacecraft grants flying
+ *  only at its threshold, so Scryfall does not list it there, and a check against that field reads
+ *  0 — measured, and it is how the first cut of this split silently found nothing. */
+const KEYWORD_SET = new Set(KEYWORD_ABILITIES.map((k) => k.toLowerCase()));
+function isBareKeywordRow(afterBar: string): boolean {
+  const body = afterBar.trim().replace(/\.$/, "");
+  if (!body) return false;
+  return body.split(/,\s*/).every((p) => KEYWORD_SET.has(p.trim().toLowerCase()));
+}
+
 function classify(text: string, kind: ClauseKind, typeLine: string): { abilityType?: Clause["abilityType"]; cost?: string; body: string } {
   // Inert clauses state no game action: a printed keyword, reminder text, a Class level divider,
   // and the "Choose two —" line that introduces modes. The modes and the levelled-up abilities
@@ -311,7 +340,10 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
   // NO abilityType RATHER THAN A NEW INERT KIND, deliberately: `validateOne` only checks the type
   // where the segmenter assigned one, so this is the whole fix, and the clause still reaches the
   // model instead of being silently dropped from a card's text.
-  if (COMMANDER_PERMISSION.test(text)) return { body: text };
+  if (COMMANDER_PERMISSION.test(text) || DECK_LIMIT_PERMISSION.test(text)) return { body: text };
+  // A bare keyword row behind a station bar is a printed keyword, exactly like an unbarred one.
+  const bar = STATION_BAR.exec(text);
+  if (bar && isBareKeywordRow(text.slice(bar[0].length))) return { body: text };
   const loyalty = text.match(LOYALTY);
   if (loyalty) return { abilityType: "activated", cost: loyalty[1].trim(), body: text.slice(loyalty[0].length) };
   // The trigger cue is tested BEFORE the cost, because no activated ability's cost begins
@@ -328,10 +360,15 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
   if (TRIGGER_CUE.test(text) || TRIGGER_CUE.test(text.replace(LABEL, ""))) {
     return { abilityType: "triggered", body: text };
   }
-  const act = activatedCost(text);
+  // Scan for a cost with the station bar removed, or "12+ | {1}{R}, {T}, Sacrifice a land: ..." never
+  // parses and Kavaron and Adagia type static while the model correctly answers activated. The bar
+  // is KEPT on the body so the threshold is not silently dropped from the text the model reads —
+  // the same thing the trigger branch above does with its label.
+  const scanText = bar ? text.slice(bar[0].length) : text;
+  const act = activatedCost(scanText);
   // Require the prefix to look like a cost: it must contain a mana symbol, {T}, or a cost word.
   if (act && /\{|sacrifice|discard|pay|remove|exile|tap\b/i.test(act.cost)) {
-    return { abilityType: "activated", cost: act.cost, body: text.slice(act.length) };
+    return { abilityType: "activated", cost: act.cost, body: (bar?.[0] ?? "") + scanText.slice(act.length) };
   }
   if (kind === "chapter") return { abilityType: "triggered", body: text };
   return { abilityType: isSpellCard(typeLine) ? "spell" : "static", body: text };
@@ -381,10 +418,35 @@ const EVENT_VERB = String.raw`(?:is put|is turned|attacks|blocks|becomes blocked
   // "creature or planeswalker" (76). Marking those twoConditions would invite a second record for
   // an event that does not exist, which is the over-claim direction. The narrow verb list is doing
   // the work; this adds two verbs to it and does not loosen the shape.
-  + String.raw`|copies|copy|transforms?)`;
+  + String.raw`|copies|copy|transforms?`
+  // SECOND-POSITION VERBS, 2026-08-29. The `copy` addition above closed one word; an audit of the
+  // token after " or " in every trigger head corpus-wide showed WHY it was missing, and that it was
+  // not alone: THIS LIST WAS SEEDED FROM VERBS THAT *LEAD* A TRIGGER, so every verb that only ever
+  // appears as the SECOND condition was never observed. `becomes` is the biggest single miss at 62
+  // corpus cards -- "blocks or becomes blocked", "day becomes night or night becomes day", "enters
+  // or becomes monstrous" -- and it had only ever been present as the phrase `becomes blocked`.
+  //
+  // +40 clauses over the shipped pattern. EVERY distinct head was read, all 23 shapes: 10 day/night,
+  // 5 "enters or specializes", 3 "enters or deals combat damage", 3 "scry or surveil", 2 "gain or
+  // lose life", and singletons.
+  //
+  // BARE `tap`/`untap`/`attack`/`block` STEMS ARE DELIBERATELY ABSENT. They were measured and they
+  // produce false positives, because those words are also nouns and participles: "Whenever you
+  // untap one OR MORE permanents during your untap step" and "Whenever a goaded ATTACKING OR
+  // BLOCKING creature dies" are one event each, and the `[a-z' ]{1,40}` bridge lets a stem skip
+  // ahead to a later occurrence. Two-name legendaries ("Krang & Shredder enter or attack") are the
+  // real cost of leaving them out, and an unflagged card refuses honestly where a wrongly-flagged
+  // one invents an event.
+  + String.raw`|becomes|specializes|deals|surveils?|scries|scry|gains?|loses?)`;
 const TWO_CONDITIONS = new RegExp(
   String.raw`^(?:when|whenever|at the beginning)[^,]*?\b(?:and (?:when|whenever|at the beginning)\b`
-  + String.raw`|${EVENT_VERB}[^,]*?\bor (?:[a-z' ]{1,40}\s)?${EVENT_VERB}\b)`,
+  // THE `\b` AFTER THE FIRST VERB IS LOAD-BEARING and its absence was a live defect: `plays?`
+  // matched the "play" inside "PLAYER", so "Whenever a player or permanent becomes the target of an
+  // ability you control" -- one event, a noun-phrase `or` -- read as two. The second occurrence has
+  // always been bounded; the first never was. Bounding it costs nothing real: the only two clauses
+  // that lose their accidental match (Park Heights Maverick, Millicent) are genuine two-event heads
+  // that now match legitimately through `deals`.
+  + String.raw`|${EVENT_VERB}\b[^,]*?\bor (?:[a-z' ]{1,40}\s)?${EVENT_VERB}\b)`,
   "i",
 );
 /** Any leading label ending in a spaced em dash, however it is spelled. Deliberately wider than

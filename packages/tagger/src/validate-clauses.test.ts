@@ -78,6 +78,54 @@ test("a trigger belongs on a triggered clause and nowhere else", () => {
   expect(validateClauses(seg, noneEvent)).toEqual([]);
 });
 
+test("a sequentially-renumbered twoConditions overflow is accepted", () => {
+  // Carrot Cake, verbatim. Clause 1 states two events; clause 2 is an activated ability. The model
+  // answers the split correctly but numbers the second half id 2 IN TEXT ORDER, shifting the real
+  // clause 2 to id 3. The gate only accepted the overflow at max+1, so it absorbed the wrong record
+  // and refused three ways: two type mismatches and a missing trigger.
+  const seg: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", multiTrigger: true, text: "When this artifact enters and when you sacrifice it, create a Rabbit and scry 1." },
+    { id: 2, kind: "ability", abilityType: "activated", cost: "{2}, {T}, Sacrifice this artifact", text: "You gain 3 life." },
+  ];
+  const got: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters" }, actions: [{ verb: "draw" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "sacrificed" }, actions: [{ verb: "draw" }] },
+    { id: 3, abilityType: "activated", actions: [{ verb: "gain-life" }] },
+  ];
+  expect(rejections(validateClauses(seg, got))).toEqual([]);
+});
+
+test("realignment is CHECKED, not assumed -- a genuinely wrong answer still refuses", () => {
+  // The bound, and the whole reason this is not banking a guess. Same shape, but the third record
+  // contradicts clause 2's type. The alternate pairing does not validate cleanly, so it is
+  // discarded and the card is refused exactly as before.
+  const seg: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", multiTrigger: true, text: "When this enters and when you sacrifice it, draw a card." },
+    { id: 2, kind: "ability", abilityType: "activated", cost: "{T}", text: "You gain 3 life." },
+  ];
+  const got: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters" }, actions: [{ verb: "draw" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "sacrificed" }, actions: [{ verb: "draw" }] },
+    { id: 3, abilityType: "static", actions: [{ verb: "gain-life" }] },
+  ];
+  expect(rejections(validateClauses(seg, got)).length).toBeGreaterThan(0);
+});
+
+test("realignment does not fire without exactly one marked clause and one extra record", () => {
+  // Two marked clauses make the pairing ambiguous; more than one extra record is hallucination.
+  const seg: Clause[] = [
+    { id: 1, kind: "ability", abilityType: "triggered", multiTrigger: true, text: "a" },
+    { id: 2, kind: "ability", abilityType: "triggered", multiTrigger: true, text: "b" },
+  ];
+  const got: ClauseRecord[] = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters" }, actions: [] },
+    { id: 2, abilityType: "triggered", trigger: { event: "dies" }, actions: [] },
+    { id: 3, abilityType: "triggered", trigger: { event: "leaves" }, actions: [] },
+  ];
+  // Falls through to the incumbent path rather than realigning; it must not throw or silently pass.
+  expect(() => validateClauses(seg, got)).not.toThrow();
+});
+
 test("a REDUNDANT implied zone warns instead of refusing the card", () => {
   // 10 of the 15 zone violations in the 2026-08-29 tranche were fromZone/toZone on `draw`, and
   // drawing really does move a card library -> hand. The model was being more explicit than the

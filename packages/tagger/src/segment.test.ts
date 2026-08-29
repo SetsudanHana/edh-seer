@@ -426,6 +426,43 @@ test("`cast or copy` and `enters or transforms` are two conditions", () => {
   expect(thallid[0].multiTrigger).toBe(true);
 });
 
+test("a verb that only ever appears SECOND still marks two conditions", () => {
+  // EVENT_VERB was seeded from verbs that LEAD a trigger, so every verb appearing only as the
+  // second condition was never observed. `becomes` alone is 62 corpus cards and had been present
+  // only as the phrase `becomes blocked`.
+  const slagwurm = segment("Whenever Engulfing Slagwurm blocks or becomes blocked, destroy target creature.", [], "Creature");
+  expect(slagwurm[0].multiTrigger).toBe(true);
+
+  const daybound = segment("Whenever day becomes night or night becomes day, draw a card.", [], "Enchantment");
+  expect(daybound[0].multiTrigger).toBe(true);
+
+  const tivit = segment("Whenever Tivit enters or deals combat damage to a player, draw a card.", [], "Legendary Creature");
+  expect(tivit[0].multiTrigger).toBe(true);
+
+  const specialize = segment("When this creature enters or specializes, create two 1/1 white Soldier creature tokens.", [], "Creature");
+  expect(specialize[0].multiTrigger).toBe(true);
+});
+
+test("`plays?` must not match inside PLAYER", () => {
+  // A live defect the `becomes` addition exposed: the first EVENT_VERB was unbounded at its end, so
+  // `plays?` matched the "play" in "player" and this ONE-event head read as two.
+  const target = segment("Whenever a player or permanent becomes the target of an ability you control, draw a card.", [], "Enchantment");
+  expect(target[0].multiTrigger).toBeUndefined();
+
+  // ...and bounding it must not cost the genuine heads that had been matching by that accident.
+  const maverick = segment("Whenever this creature deals combat damage to a player or dies, create a Treasure token.", [], "Creature");
+  expect(maverick[0].multiTrigger).toBe(true);
+});
+
+test("a bare tap/attack stem is deliberately NOT an event verb", () => {
+  // Measured false positives, and the reason those stems stay out: both of these are ONE event.
+  const untap = segment("Whenever you untap one or more permanents during your untap step, draw a card.", [], "Enchantment");
+  expect(untap[0].multiTrigger).toBeUndefined();
+
+  const goaded = segment("Whenever a goaded attacking or blocking creature dies, you create a Treasure token.", [], "Enchantment");
+  expect(goaded[0].multiTrigger).toBeUndefined();
+});
+
 test("a noun-phrase `or` after a copy/transform verb is still ONE condition", () => {
   // The bound this addition had to respect. A sweep for any "when ... or ..." head finds 1,341
   // clauses beyond the ones flagged, and they are `or` joining NOUNS -- "an instant or sorcery
@@ -455,8 +492,38 @@ test("a Station threshold does not hide the trigger behind it", () => {
   const uthros = segment("Station\n3+ | Whenever you cast an artifact spell, draw a card.\n12+ | Flying", [], "Artifact — Spacecraft");
   const trig = uthros.find((c) => c.text.includes("Whenever you cast"));
   expect(trig?.abilityType).toBe("triggered");
-  // The keyword-only threshold line stays what it was.
-  expect(uthros.find((c) => c.text.includes("Flying"))?.abilityType).toBe("static");
+  // CHANGED 2026-08-29, and this expectation was pinning the incumbent rather than asserting a
+  // rule -- its own comment said "stays what it was". A keyword-only threshold row now gets NO
+  // abilityType, because an UNBARRED printed keyword already gets none (kind "keyword" returns
+  // early), so `static` here was an inconsistency between the barred and unbarred forms of the same
+  // thing. It cost 27 cards: the model answers "none" for a bare keyword and the gate refused it.
+  expect(uthros.find((c) => c.text.includes("Flying"))?.abilityType).toBeUndefined();
+});
+
+test("a station bar does not hide an ACTIVATED cost behind it either", () => {
+  // LABEL has known the "N+ |" frame since Uthros Research Craft, but it was consulted on ONE line,
+  // the trigger cue. So Kavaron and Adagia typed static while the model correctly said activated.
+  const kavaron = segment("Station\n12+ | {1}{R}, {T}, Sacrifice a land: Create a 2/2 colorless Robot artifact creature token.", [], "Artifact — Spacecraft");
+  const row = kavaron.find((c) => c.text.includes("Robot"));
+  expect(row?.abilityType).toBe("activated");
+  expect(row?.cost).toBe("{1}{R}, {T}, Sacrifice a land");
+  // The threshold is KEPT in the body rather than silently dropped -- what the trigger branch does.
+  expect(row?.text.startsWith("12+ |")).toBe(true);
+});
+
+test("a REAL static behind a station bar stays static", () => {
+  // The bound, and it is why this asks the keyword list rather than blanketing the frame: 27 bare
+  // keyword rows against 3 genuine statics printed behind the same bar.
+  const frigate = segment("Station\n2+ | Other creatures you control get +1/+1.", [], "Artifact — Spacecraft");
+  expect(frigate.find((c) => c.text.includes("+1/+1"))?.abilityType).toBe("static");
+});
+
+test("the OTHER deckbuilding permission is not an ability either", () => {
+  // CR 100.2a, the twin of "can be your commander". Persistent Petitioners and Tempest Hawk were
+  // refused over an answer of "none" that was right -- and SubjectFilter.named exists because of
+  // these very cards.
+  const petitioners = segment("A deck can have any number of cards named Persistent Petitioners.", [], "Creature — Human Advisor");
+  expect(petitioners[0].abilityType).toBeUndefined();
 });
 
 test("two conditions joined through a second subject still count as two", () => {
