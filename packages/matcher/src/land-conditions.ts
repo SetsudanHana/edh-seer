@@ -1,4 +1,4 @@
-import { LAND_SUBTYPES } from "@edh-seer/tagger";
+import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import type { Card } from "@edh-seer/engine";
 
 /** WHAT A CONDITIONAL LAND DEMANDS, read off printed text. Free — no derivation, no clause layer,
