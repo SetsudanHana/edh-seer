@@ -44,6 +44,32 @@ export function anthropicBody(
   return {
     model,
     max_tokens: maxTokens,
+    // MEASURED 2026-08-29: THIS MARKER IS INERT AND HAS BEEN FOR THE PROJECT'S WHOLE LIFE. The
+    // normalize system block is ~2,700 tokens and Claude Haiku 4.5's minimum cacheable prompt is
+    // 4,096 -- and Anthropic's own docs say a request under the minimum is "processed without
+    // caching, and NO ERROR IS RETURNED", which is exactly why nobody noticed.
+    //
+    // Proven three ways rather than argued. (1) The whole 2026-08-22 batch, all 1,408 cards:
+    // cache_creation_input_tokens 0 AND cache_read_input_tokens 0. (2) A live call, same prompt,
+    // same zero -- so it is not the Batch API's best-effort caching missing. (3) The threshold
+    // bracketed by doubling the block: at 2,788 tokens write 0 / read 0, at 5,466 tokens write
+    // 5,466 then read 5,466 on the next call. 4,096 sits between the two.
+    //
+    // WHAT IT COSTS, because the number is the reason to care: the system block is 97.6% of the
+    // input bill (one copy ~2,531 tok against a ~59-token card, repeated once per card), and a
+    // cache read bills at 0.1x. On a whole-corpus buy that is ~$63 against ~$13.
+    //
+    // NOT FIXED HERE, DELIBERATELY. Clearing 4,096 means ENLARGING the system prompt, which changes
+    // what the model answers on every card -- a NORMALIZE_VERSION question with corpus-wide blast
+    // radius, not a tuning knob. Padding it with inert filler to game the threshold is the same
+    // change wearing a disguise: the prompt is the specification, and 1,400 tokens of nothing in it
+    // is 1,400 tokens the model reads. Left set so the day the prompt legitimately grows past the
+    // minimum, the discount arrives on its own.
+    //
+    // AND IT IS TWO CHANGES, NOT ONE: batches routinely run longer than the default 5-minute
+    // entry, so a fix wants ttl "1h" as well or the entry expires mid-batch. Anthropic puts batch
+    // hit rates at 30-98%, best-effort. Cache pre-warming (max_tokens 0) is NOT supported inside a
+    // batch, so the warm has to come from the batch's own first requests.
     system: [{ type: "text", text: systemText, cache_control: { type: "ephemeral" } }],
     messages: convo,
   };
@@ -64,10 +90,12 @@ export function anthropicText(json: AnthropicResponse, prefill: boolean, maxToke
   return `{${text}`;
 }
 
-/** Claude behind the shared LlmProvider interface. The static system block is marked
- *  cache_control:ephemeral so repeated calls read it from cache instead of re-billing full
- *  input; an assistant "{" prefill forces the reply to start as a JSON object (Anthropic has no
- *  format:"json" flag), which parseAbilities then consumes. */
+/** Claude behind the shared LlmProvider interface. An assistant "{" prefill forces the reply to
+ *  start as a JSON object (Anthropic has no format:"json" flag), which parseAbilities then
+ *  consumes.
+ *
+ *  THE cache_control BELOW HAS NEVER ONCE FIRED, AND THIS COMMENT USED TO CLAIM IT DID. See
+ *  anthropicBody. */
 export class AnthropicProvider implements LlmProvider {
   readonly model: string;
   private readonly apiKey: string;
