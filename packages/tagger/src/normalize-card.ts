@@ -16,6 +16,8 @@ import { validateClauses, rejections, type ClauseViolation } from "./validate-cl
  *  here and never sent. Their slots are still filled, so the completeness invariant holds. */
 const INERT = new Set(["keyword", "reminder", "level", "modal"]);
 
+import { unwaivedViolations, type ManualEntry } from "./manual-clauses.js";
+
 export interface NormalizedCard {
   clauses: ClauseRecord[];
   canonical: ClauseRecord[];
@@ -58,6 +60,21 @@ export function parseNormalizedCard(segmented: Clause[], raw: string): Normalize
 export function codeAnsweredCard(segmented: Clause[]): NormalizedCard {
   const clauses = synthesize(segmented);
   return { clauses, canonical: canonicalize(clauses), violations: [], rejected: [] };
+}
+
+/** A hand-authored answer, put through the same canonicalisation and the same gate as a bought one.
+ *
+ *  Its declared waivers are subtracted from `rejected` and kept in `violations`, so the entry
+ *  persists while the record of WHAT it was allowed to carry stays on the document. Anything it did
+ *  not declare still refuses it — see `manual-clauses.ts` for why that bound is the whole design. */
+export function manualCard(segmented: Clause[], entry: ManualEntry): NormalizedCard {
+  const violations = validateClauses(segmented, entry.clauses);
+  return {
+    clauses: entry.clauses,
+    canonical: canonicalize(entry.clauses),
+    violations,
+    rejected: unwaivedViolations(entry, segmented),
+  };
 }
 
 /** Inert clauses answered without the model, keeping their slot ids filled. */
