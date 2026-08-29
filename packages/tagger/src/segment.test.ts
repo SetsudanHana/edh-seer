@@ -426,6 +426,43 @@ test("`cast or copy` and `enters or transforms` are two conditions", () => {
   expect(thallid[0].multiTrigger).toBe(true);
 });
 
+test("a verb that only ever appears SECOND still marks two conditions", () => {
+  // EVENT_VERB was seeded from verbs that LEAD a trigger, so every verb appearing only as the
+  // second condition was never observed. `becomes` alone is 62 corpus cards and had been present
+  // only as the phrase `becomes blocked`.
+  const slagwurm = segment("Whenever Engulfing Slagwurm blocks or becomes blocked, destroy target creature.", [], "Creature");
+  expect(slagwurm[0].multiTrigger).toBe(true);
+
+  const daybound = segment("Whenever day becomes night or night becomes day, draw a card.", [], "Enchantment");
+  expect(daybound[0].multiTrigger).toBe(true);
+
+  const tivit = segment("Whenever Tivit enters or deals combat damage to a player, draw a card.", [], "Legendary Creature");
+  expect(tivit[0].multiTrigger).toBe(true);
+
+  const specialize = segment("When this creature enters or specializes, create two 1/1 white Soldier creature tokens.", [], "Creature");
+  expect(specialize[0].multiTrigger).toBe(true);
+});
+
+test("`plays?` must not match inside PLAYER", () => {
+  // A live defect the `becomes` addition exposed: the first EVENT_VERB was unbounded at its end, so
+  // `plays?` matched the "play" in "player" and this ONE-event head read as two.
+  const target = segment("Whenever a player or permanent becomes the target of an ability you control, draw a card.", [], "Enchantment");
+  expect(target[0].multiTrigger).toBeUndefined();
+
+  // ...and bounding it must not cost the genuine heads that had been matching by that accident.
+  const maverick = segment("Whenever this creature deals combat damage to a player or dies, create a Treasure token.", [], "Creature");
+  expect(maverick[0].multiTrigger).toBe(true);
+});
+
+test("a bare tap/attack stem is deliberately NOT an event verb", () => {
+  // Measured false positives, and the reason those stems stay out: both of these are ONE event.
+  const untap = segment("Whenever you untap one or more permanents during your untap step, draw a card.", [], "Enchantment");
+  expect(untap[0].multiTrigger).toBeUndefined();
+
+  const goaded = segment("Whenever a goaded attacking or blocking creature dies, you create a Treasure token.", [], "Enchantment");
+  expect(goaded[0].multiTrigger).toBeUndefined();
+});
+
 test("a noun-phrase `or` after a copy/transform verb is still ONE condition", () => {
   // The bound this addition had to respect. A sweep for any "when ... or ..." head finds 1,341
   // clauses beyond the ones flagged, and they are `or` joining NOUNS -- "an instant or sorcery

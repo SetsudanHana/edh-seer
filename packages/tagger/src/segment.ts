@@ -381,10 +381,35 @@ const EVENT_VERB = String.raw`(?:is put|is turned|attacks|blocks|becomes blocked
   // "creature or planeswalker" (76). Marking those twoConditions would invite a second record for
   // an event that does not exist, which is the over-claim direction. The narrow verb list is doing
   // the work; this adds two verbs to it and does not loosen the shape.
-  + String.raw`|copies|copy|transforms?)`;
+  + String.raw`|copies|copy|transforms?`
+  // SECOND-POSITION VERBS, 2026-08-29. The `copy` addition above closed one word; an audit of the
+  // token after " or " in every trigger head corpus-wide showed WHY it was missing, and that it was
+  // not alone: THIS LIST WAS SEEDED FROM VERBS THAT *LEAD* A TRIGGER, so every verb that only ever
+  // appears as the SECOND condition was never observed. `becomes` is the biggest single miss at 62
+  // corpus cards -- "blocks or becomes blocked", "day becomes night or night becomes day", "enters
+  // or becomes monstrous" -- and it had only ever been present as the phrase `becomes blocked`.
+  //
+  // +40 clauses over the shipped pattern. EVERY distinct head was read, all 23 shapes: 10 day/night,
+  // 5 "enters or specializes", 3 "enters or deals combat damage", 3 "scry or surveil", 2 "gain or
+  // lose life", and singletons.
+  //
+  // BARE `tap`/`untap`/`attack`/`block` STEMS ARE DELIBERATELY ABSENT. They were measured and they
+  // produce false positives, because those words are also nouns and participles: "Whenever you
+  // untap one OR MORE permanents during your untap step" and "Whenever a goaded ATTACKING OR
+  // BLOCKING creature dies" are one event each, and the `[a-z' ]{1,40}` bridge lets a stem skip
+  // ahead to a later occurrence. Two-name legendaries ("Krang & Shredder enter or attack") are the
+  // real cost of leaving them out, and an unflagged card refuses honestly where a wrongly-flagged
+  // one invents an event.
+  + String.raw`|becomes|specializes|deals|surveils?|scries|scry|gains?|loses?)`;
 const TWO_CONDITIONS = new RegExp(
   String.raw`^(?:when|whenever|at the beginning)[^,]*?\b(?:and (?:when|whenever|at the beginning)\b`
-  + String.raw`|${EVENT_VERB}[^,]*?\bor (?:[a-z' ]{1,40}\s)?${EVENT_VERB}\b)`,
+  // THE `\b` AFTER THE FIRST VERB IS LOAD-BEARING and its absence was a live defect: `plays?`
+  // matched the "play" inside "PLAYER", so "Whenever a player or permanent becomes the target of an
+  // ability you control" -- one event, a noun-phrase `or` -- read as two. The second occurrence has
+  // always been bounded; the first never was. Bounding it costs nothing real: the only two clauses
+  // that lose their accidental match (Park Heights Maverick, Millicent) are genuine two-event heads
+  // that now match legitimately through `deals`.
+  + String.raw`|${EVENT_VERB}\b[^,]*?\bor (?:[a-z' ]{1,40}\s)?${EVENT_VERB}\b)`,
   "i",
 );
 /** Any leading label ending in a spaced em dash, however it is spelled. Deliberately wider than

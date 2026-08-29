@@ -102,7 +102,43 @@ function fitScore(clause: Clause, rec: ClauseRecord): number {
   return score;
 }
 
+/** THE MODEL RENUMBERS SEQUENTIALLY AND THE GATE ONLY EVER ACCEPTED max+1.
+ *
+ *  A `twoConditions` clause is answered with two records. The prompt asks for the second to carry an
+ *  id larger than every id sent; the model instead numbers it IN TEXT ORDER, which shifts every
+ *  later clause up by one. Carrot Cake: clause 1 is the twoConditions trigger and clause 2 the
+ *  activated ability, and the model sent 1 (enters), 2 (the sacrifice half) and 3 (gain 3 life) --
+ *  a perfectly correct answer, refused three ways because id 2 was read as clause 2.
+ *
+ *  So the overflow convention only ever worked when the marked clause was LAST. Every card where it
+ *  is not was refused, including four of the magecraft family the EVENT_VERB fix was meant to close.
+ *
+ *  THIS IS NOT BANKING A GUESS. "Second record at max+1" and "second record adjacent" are the same
+ *  answer under a bijection the harness can compute, so the alternate pairing is CHECKED rather than
+ *  assumed: it is accepted only when every realigned record passes every existing check. If it does
+ *  not validate perfectly, it is discarded and the card is refused exactly as before -- so the gate
+ *  can only ever get stricter about what it accepts, never looser.
+ *
+ *  Deliberately narrow: exactly one marked clause, and exactly one extra record. Two marked clauses
+ *  make the pairing ambiguous, and more than one extra record is the hallucination case again. */
+function sequentialAlignment(segmented: Clause[], got: ClauseRecord[]): ClauseViolation[] | null {
+  if (got.length !== segmented.length + 1) return null;
+  if (segmented.filter((c) => c.multiTrigger).length !== 1) return null;
+  const markedAt = segmented.findIndex((c) => c.multiTrigger);
+  // Records in the order the model sent them; the marked clause consumes two consecutive ones.
+  const ordered = [...got].sort((a, b) => a.id - b.id);
+  const pairs: [Clause, ClauseRecord][] = [];
+  for (let i = 0, r = 0; i < segmented.length; i++) {
+    pairs.push([segmented[i]!, ordered[r++]!]);
+    if (i === markedAt) pairs.push([segmented[i]!, ordered[r++]!]);
+  }
+  const violations = pairs.flatMap(([c, rec]) => validateOne(c, rec));
+  return rejections(violations).length === 0 ? violations : null;
+}
+
 export function validateClauses(segmented: Clause[], got: ClauseRecord[]): ClauseViolation[] {
+  const realigned = sequentialAlignment(segmented, got);
+  if (realigned) return realigned;
   const out: ClauseViolation[] = [];
   const expected = new Map(segmented.map((c) => [c.id, c]));
   const seen = new Set<number>();
