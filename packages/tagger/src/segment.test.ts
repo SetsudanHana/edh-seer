@@ -701,12 +701,36 @@ test("the cost grammar is unchanged by the linear rewrite", () => {
   // WITNESS: the whole corpus segments byte-identically with this guard removed, so it is stated
   // here rather than left as decoration nothing exercises.
   expect(segment(", {T}: Draw a card.", [], "Artifact")[0].abilityType).toBe("static");
-  // A phrase part over 80 characters is not a cost.
-  expect(segment(`${"a".repeat(81)}, {T}: Draw a card.`, [], "Artifact")[0].abilityType).toBe("static");
-  // ...and at 80 it still is, so the bound is the one the pattern carried.
-  const long = segment(`Sacrifice ${"a".repeat(70)}, {T}: Draw a card.`, [], "Artifact")[0];
+  // THE 80-CHARACTER CAP IS GONE, 2026-08-29, and this is the ONE rule where the grammar is
+  // deliberately no longer the pattern's. Kept as an equivalence test for everything above it.
+  //
+  // This function's own header already argued the number was the wrong bound -- "excluding the
+  // period is a tighter bound than any number, because no cost part ever spans one" -- and the 40
+  // it replaced had typed 583 cards static. The 80 that survived still typed SIX, and FIVE are
+  // genuinely long costs: Baron Helmut Zemo at 114 characters, Mossbridge Troll 104, The Book of
+  // Vile Darkness 94, The Filigree Sylex 90, The Capitoline Triad 90.
+  //
+  // The sixth was Kylem All-Star, the only thing the cap was protecting against, and it is a QUOTED
+  // GRANT now refused on its own merits by the rule below. So the cap guarded nothing once that
+  // rule exists. Measured over the whole corpus, not argued.
+  const long = segment(`Sacrifice ${"a".repeat(120)}, {T}: Draw a card.`, [], "Artifact")[0];
   expect(long.abilityType).toBe("activated");
-  expect(long.cost).toBe(`Sacrifice ${"a".repeat(70)}, {T}`);
+  expect(long.cost).toBe(`Sacrifice ${"a".repeat(120)}, {T}`);
+});
+
+test("a colon inside a QUOTED granted ability is not this card's cost", () => {
+  // This was banking wrong STRUCTURE, not refusing a card. Basal Sliver's whole text is one static
+  // grant, and it typed activated with the cost `All Slivers have "Sacrifice this permanent` -- so
+  // the engine believed the Sliver itself had a mana ability. 13 cards, all persisted, all wrong
+  // the same way.
+  const sliver = segment('All Slivers have "Sacrifice this permanent: Add {B}{B}."', [], "Creature — Sliver")[0];
+  expect(sliver.abilityType).not.toBe("activated");
+  expect(sliver.cost).toBeUndefined();
+
+  // The bound: an ORDINARY cost with no quote in it still parses.
+  const plain = segment("Sacrifice a creature, {T}: Draw a card.", [], "Artifact")[0];
+  expect(plain.abilityType).toBe("activated");
+  expect(plain.cost).toBe("Sacrifice a creature, {T}");
 });
 
 /** REMINDER-STRIPPING EXCLUDES THE OPENING PAREN AND DROPS THE SURROUNDING `\s*` — the second
