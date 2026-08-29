@@ -29,7 +29,7 @@
  */
 import { seen } from "@edh-seer/engine";
 import type { Reason } from "@edh-seer/engine";
-import { VERB_VOCAB } from "@edh-seer/tagger";
+import { VERB_VOCAB } from "@edh-seer/tagger/schema";
 import type { Ability, CardTags } from "@edh-seer/tagger";
 import { nodeId } from "./graph-projection.js";
 import { DEFAULT_POD_SIZE } from "./format.js";

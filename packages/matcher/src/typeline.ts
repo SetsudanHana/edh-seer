@@ -1,4 +1,4 @@
-import { joinMultiWordSubtypes } from "@edh-seer/tagger";
+import { joinMultiWordSubtypes } from "@edh-seer/tagger/subtypes";
 
 /** Card supertypes, per the comprehensive rules (plus the un-set `host`/`elite`). Everything else
  *  left of the em dash is a card type. */
