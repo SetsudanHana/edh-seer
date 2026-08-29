@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { anthropicBody } from "./anthropic.js";
-import { batchResults, submitBatch } from "./anthropic-batch.js";
+import { batchResults, safeBatchId, submitBatch } from "./anthropic-batch.js";
 
 const client = (impl: typeof fetch) => ({
   apiKey: "k", baseUrl: "https://api.example", model: "claude-haiku-4-5", maxTokens: 3000, fetchImpl: impl,
@@ -58,4 +58,17 @@ test("results parse by custom_id, not position, and non-succeeded rows survive",
 test("a failed call names the endpoint rather than throwing a bare status", async () => {
   const c = client((async () => new Response("nope", { status: 429 })) as unknown as typeof fetch);
   await expect(batchResults(c, "msgbatch_01")).rejects.toThrow(/batches\/msgbatch_01\/results failed: 429/);
+});
+
+test("safeBatchId accepts the shape Anthropic actually returns", () => {
+  expect(safeBatchId("msgbatch_012Kx6enxFaennjwjmfQoUK3")).toBe("msgbatch_012Kx6enxFaennjwjmfQoUK3");
+});
+
+// The whole point: a batch id is network data on its way into a file path, and `join` RESOLVES
+// "..", so the first two of these land outside `.batches/` rather than in it. Nothing about a
+// remote response is a promise about the local filesystem.
+test("safeBatchId refuses anything that is not a plain filename", () => {
+  for (const bad of ["../../../../tmp/pwned", "/etc/cron.d/x", "msgbatch/../x", "msg batch", "msgbatch.json", "", "a".repeat(129)]) {
+    expect(() => safeBatchId(bad), bad).toThrow(/not a safe filename/);
+  }
 });

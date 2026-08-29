@@ -39,7 +39,7 @@ import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { buildRequest, codeAnsweredCard, needsModel, normalizeCard, parseNormalizedCard, type NormalizedCard } from "../normalize-card.js";
 import { anthropicText, type AnthropicResponse } from "../llm/anthropic.js";
-import { batchResults, batchStatus, submitBatch } from "../llm/anthropic-batch.js";
+import { batchResults, batchStatus, safeBatchId, submitBatch } from "../llm/anthropic-batch.js";
 import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE, VOCAB_VERSION, TRIGGER_VOCAB_VERSION, TRIGGERS, EXEMPLAR_TERMS } from "../normalize-prompt.js";
 import { segment } from "../segment.js";
 import {
@@ -52,8 +52,13 @@ const CALIBRATION = new URL("../../../cli/decks/calibration/", import.meta.url);
 /** Haiku 4.5 list price. Recorded here because the estimate is the whole point of the dry run. */
 const USD_PER_M_INPUT = 1;
 const USD_PER_M_OUTPUT = 5;
-/** Output is not knowable in advance; 400 is the per-card average measured on the gold fixture. */
-const EST_OUTPUT_TOKENS = 400;
+/** Output is not knowable in advance. 226 is the per-card average MEASURED on the 2026-08-29
+ *  top-20,000 batch — 16,949 cards, a broad draw of the real corpus — replacing a 400 taken from the
+ *  gold fixture, which overpriced every dry run by ~77%%. Read off the results' own usage blocks
+ *  (they are retained 29 days), so it is the billed figure rather than an estimate of it. The
+ *  2026-08-22 refresh-other batch reads 254, and it is NOT the number to use: cards stuck on the
+ *  `other` escape hatch are not a sample of the corpus. */
+const EST_OUTPUT_TOKENS = 226;
 
 const arg = (flag: string): string | undefined => {
   const i = process.argv.indexOf(flag);
@@ -201,6 +206,7 @@ interface BatchState {
   jobs: { oracleId: string; name: string; hash: string }[];
 }
 const BATCH_DIR = new URL("../../.batches/", import.meta.url).pathname;
+
 /** Anthropic caps a batch at 100,000 requests OR 256 MB of request body. 200 MB leaves room for the
  *  count of a JSON estimate that is close rather than exact, and for the envelope around the
  *  requests array; the whole corpus needs ~2 batches either way, so a tighter bound costs nothing. */
@@ -434,7 +440,7 @@ if (BATCH) {
       // `--collect` report them as never returned, every time, forever.
       jobs: part.map((r) => byId.get(r.customId)!).map((j) => ({ oracleId: j.oracleId, name: j.name, hash: j.hash })),
     };
-    const statePath = join(BATCH_DIR, `${batchId}.json`);
+    const statePath = join(BATCH_DIR, `${safeBatchId(batchId)}.json`);
     writeFileSync(statePath, JSON.stringify(state, null, 2));
     statePaths.push(statePath);
     console.log(`SUBMITTED batch ${i + 1}/${chunks.length} ${batchId}: ${part.length} cards -> ${statePath}`);

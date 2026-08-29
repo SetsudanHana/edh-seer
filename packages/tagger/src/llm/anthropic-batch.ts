@@ -56,6 +56,23 @@ async function call(c: Client, path: string, init?: RequestInit): Promise<Respon
   return res;
 }
 
+/** A batch id is NETWORK DATA and it is used to build a file path, so it is checked before it is
+ *  joined rather than trusted for coming from Anthropic. `join` resolves `..`, so an id containing
+ *  one writes outside `.batches/`; a leading `/` replaces the directory outright. Nothing about a
+ *  remote response is a promise about the local filesystem.
+ *
+ *  An ALLOW-list, never a strip: rejecting an id we cannot name is the right failure direction here,
+ *  because the alternative is silently writing the state file somewhere the operator will not look
+ *  for it — and losing the state file means losing every card the batch was paid for. Anthropic's
+ *  ids are `msgbatch_` plus alphanumerics; the length bound keeps a pathological one out of a
+ *  filename. */
+export function safeBatchId(id: string): string {
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(id)) {
+    throw new Error(`Refusing to write a state file for a batch id that is not a safe filename: ${JSON.stringify(id.slice(0, 80))}`);
+  }
+  return id;
+}
+
 /** Submit one batch. Returns its id. */
 export async function submitBatch(c: Client, requests: BatchRequest[], prefill: boolean): Promise<string> {
   const body = {
