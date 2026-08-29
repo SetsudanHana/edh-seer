@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import ruleSet from "./rules.json" with { type: "json" };
 import type { DeckCard } from "./types.js";
 
 /** A single test against one card. The operator set is CLOSED on purpose: `oracle`, `effectKind`,
@@ -70,27 +70,20 @@ export interface RuleSet {
   rules: Rule[];
 }
 
-let cached: RuleSet | undefined;
-
-/** Loads and caches `rules.json`. Read through `import.meta.url` rather than a bundler import so
- *  the file stays a plain editable artifact. */
+/** `rules.json`, IMPORTED RATHER THAN READ FROM DISK so the analysis path bundles for a browser
+ *  (roadmap P2). It stays a plain editable artifact either way -- what changes is that an edit is
+ *  picked up at build time rather than at the next process start. The cache went with the read. */
 export function loadRules(): RuleSet {
-  if (!cached) {
-    cached = JSON.parse(
-      readFileSync(new URL("./rules.json", import.meta.url), "utf8"),
-    ) as RuleSet;
-  }
-  return cached;
+  return ruleSet as RuleSet;
 }
 
 /** The rule set's version, bumped when `rules.json` changes semantics. Free to bump -- build
  *  categories are computed at analysis time and never stored, so there is no cache to invalidate
  *  and nothing to re-buy.
  *
- *  Declared AFTER `loadRules` and its `cached` binding, not beside the other exports: a `const`
- *  initialised at module load that calls a function reading a `let` declared further down hits the
- *  temporal dead zone, and every consumer of this module dies with "Cannot access 'cached' before
- *  initialization". */
+ *  Declared AFTER `loadRules`, not beside the other exports. The temporal-dead-zone hazard this
+ *  guarded against is gone with the `let cached` binding it named -- a JSON import is hoisted -- but
+ *  the order costs nothing and the next `let` added above this line brings the hazard back. */
 export const RULES_VERSION: number = loadRules().version;
 
 const compiled = new Map<string, RegExp>();

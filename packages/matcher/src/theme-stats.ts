@@ -1,6 +1,4 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import themeStats from "../theme-stats.json" with { type: "json" };
 import type { TagStats } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import { cardThemeTags } from "./edges.js";
@@ -19,12 +17,14 @@ export function computeThemeStats(tagDocs: CardTags[]): TagStats {
   return { N: tagDocs.length, counts };
 }
 
-/** Read the committed theme-stats.json; fall back to UNIFORM_STATS if unreadable/absent. */
+/** The committed theme-stats.json, IMPORTED RATHER THAN READ FROM DISK so the analysis path bundles
+ *  for a browser (roadmap P2).
+ *
+ *  The old `try`/`catch` fell back to `UNIFORM_STATS` when the file was unreadable; a static import
+ *  makes an absent or malformed artifact a BUILD failure instead. That is the louder direction and
+ *  it matters here specifically: an ABSENT tag scores the MAXIMUM idf, so a silently-degraded
+ *  artifact does not weaken the ranking, it lets a missing tag WIN (measured 2026-08-18).
+ *  `UNIFORM_STATS` is still exported and still the right value for a caller with no corpus. */
 export function loadThemeStats(): TagStats {
-  try {
-    const path = join(dirname(fileURLToPath(import.meta.url)), "..", "theme-stats.json");
-    return JSON.parse(readFileSync(path, "utf8")) as TagStats;
-  } catch {
-    return UNIFORM_STATS;
-  }
+  return themeStats as TagStats;
 }

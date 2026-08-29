@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import tagWeights from "./tag-weights.json" with { type: "json" };
 import type { Card } from "./card.js";
 import { synergyScore, type Reason } from "./synergy.js";
 import { extractTags, type Tag } from "./tags.js";
@@ -6,9 +6,7 @@ import type { Combo, ComboIndex } from "./combos.js";
 import { themeWeights, rankThemes, weightedEdge, dampedScore, computeCohesion, type TagStats, type Cohesion } from "./weights.js";
 import { computeDeckStats, type ManaCurveBucket } from "./deck-stats.js";
 
-const TAG_STATS: TagStats = JSON.parse(
-  readFileSync(new URL("./tag-weights.json", import.meta.url), "utf8"),
-) as TagStats;
+const TAG_STATS: TagStats = tagWeights as TagStats;
 
 export const COMMANDER_BOOST = 3;
 

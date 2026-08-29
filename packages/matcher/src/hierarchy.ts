@@ -1,6 +1,4 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import hierarchy from "../hierarchy.json" with { type: "json" };
 import { joinMultiWordSubtypes } from "@edh-seer/tagger/subtypes";
 import type { Hierarchy } from "./types.js";
 
@@ -79,10 +77,19 @@ export function expandTypes(tokens: string[], subtypes: string[], h: Hierarchy):
   return out;
 }
 
-/** Load the bundled hierarchy.json produced by `gen-hierarchy`. */
+/** The bundled hierarchy.json produced by `gen-hierarchy`.
+ *
+ *  IMPORTED RATHER THAN READ FROM DISK so the analysis path bundles for a browser (roadmap P2).
+ *  It used to re-read on every call, so a bin regenerating the artifact mid-process saw the new
+ *  file; now it does not. Nothing does that — `gen-hierarchy` writes and exits.
+ *
+ *  ponytail: THIS ARTIFACT HAS NO STALENESS GUARD, and that is unchanged by the import — it sat at
+ *  16 of 527 subtypes for the project's whole life with every test green. `theme-stats.json` got
+ *  `theme-stats-drift.test.ts` after the same failure; `gen-hierarchy` has no `--check` and nothing
+ *  asserts coverage here. The upgrade is that test's shape: assert every `SUBTYPE_TYPES` key
+ *  appears, which is free and needs no database. */
 export function loadHierarchy(): Hierarchy {
-  const path = join(dirname(fileURLToPath(import.meta.url)), "..", "hierarchy.json");
-  return JSON.parse(readFileSync(path, "utf8")) as Hierarchy;
+  return hierarchy as Hierarchy;
 }
 
 /** What a THEME TAG's subject key can denote, as concrete card types — or `undefined` when the key
