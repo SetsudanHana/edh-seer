@@ -389,6 +389,55 @@ test("a clause stating two trigger conditions is marked as such", () => {
   expect(sovereign[0].multiTrigger).toBe(true);
 });
 
+test("a deckbuilding permission is not an ability", () => {
+  // 19 of 44 ability-type-mismatch refusals were this, with the model answering "none" and being
+  // RIGHT: CR 903.3 says the commander designation is not a characteristic of the card, and the
+  // line does nothing on the battlefield. Typed `static`, it made the gate refuse the whole card.
+  const windgrace = segment("Lord Windgrace can be your commander.", [], "Legendary Planeswalker — Windgrace");
+  expect(windgrace[0].abilityType).toBeUndefined();
+
+  // Still SENT to the model rather than dropped -- only untyped, so the gate stops checking it.
+  expect(windgrace[0].text).toContain("can be your commander");
+});
+
+test("an ability that merely MENTIONS a commander keeps its type", () => {
+  // The bound: "commander" alone is not the cue, or every commander-damage trigger loses its type.
+  const dmg = segment("Whenever a commander you control deals combat damage to a player, draw a card.", [], "Creature");
+  expect(dmg[0].abilityType).toBe("triggered");
+});
+
+test("`cast or copy` and `enters or transforms` are two conditions", () => {
+  // ONE MISSING WORD SHOWED UP AS THREE REFUSAL FAMILIES. `copy` has been a TRIGGERS member since
+  // 2026-08-15 and was absent from EVENT_VERB, so the model split the clause to record both events
+  // (correctly), the segmenter never marked it, and the overflow record had no parent -- surfacing
+  // as invented-id, duplicate-id AND ability-type-mismatch depending on how the model numbered it.
+  // 43 clauses over 43 cards, of which 30 are this exact spellslinger template.
+  const zaffai = segment("Whenever you cast or copy an instant or sorcery spell, scry 1.", [], "Legendary Creature");
+  expect(zaffai[0].multiTrigger).toBe(true);
+
+  const mageHunter = segment("Whenever an opponent casts or copies an instant or sorcery spell, they lose 1 life.", [], "Creature");
+  expect(mageHunter[0].multiTrigger).toBe(true);
+
+  const huntmaster = segment("Whenever this creature enters or transforms into Huntmaster of the Fells, create a 2/2 green Wolf creature token.", [], "Creature");
+  expect(huntmaster[0].multiTrigger).toBe(true);
+
+  // The other direction of the same head: transforming OR dying.
+  const thallid = segment("When this creature transforms into Blightsower Thallid or dies, create a 1/1 green Phyrexian Saproling creature token.", [], "Creature");
+  expect(thallid[0].multiTrigger).toBe(true);
+});
+
+test("a noun-phrase `or` after a copy/transform verb is still ONE condition", () => {
+  // The bound this addition had to respect. A sweep for any "when ... or ..." head finds 1,341
+  // clauses beyond the ones flagged, and they are `or` joining NOUNS -- "an instant or sorcery
+  // spell" alone is 177. Marking those would hand the model a free second record for an event that
+  // does not exist, so the verb list stays narrow and these must not flag.
+  const nounOr = segment("Whenever you copy an instant or sorcery spell, draw a card.", [], "Creature");
+  expect(nounOr[0].multiTrigger).toBeUndefined();
+
+  const permanentOr = segment("Whenever a creature or planeswalker you control transforms, draw a card.", [], "Creature");
+  expect(permanentOr[0].multiTrigger).toBeUndefined();
+});
+
 test("an ordinary trigger, and an `or` in the EFFECT, are not two conditions", () => {
   // The bound only holds if this stays tight: every clause wrongly marked here buys the model one
   // free unchallenged clause on that card.

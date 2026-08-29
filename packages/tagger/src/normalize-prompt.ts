@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 14;
+export const NORMALIZE_VERSION = 15;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -60,7 +60,7 @@ export const VOCAB_VERSION = 13;
  *  whole trigger list, so a doc answered at v13+ genuinely had every word and is correctly skipped,
  *  while everything below is still selected. No doc is de-selected by the change -- none exists at
  *  13 or above.  */
-export const TRIGGER_VOCAB_VERSION = 14;
+export const TRIGGER_VOCAB_VERSION = 15;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -317,6 +317,49 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   "cycled",
   // 32 and 18 cards. Both are printed events with no other spelling available.
   "mutates", "becomes-monstrous",
+  // ADDED 2026-08-29, and NOT by whack-a-mole: the top-20,000 buy's persist gate refused 50 clauses
+  // with `unknown-trigger-event`, so the whole 69-entry CR keyword-action list was swept against
+  // TRIGGERS rather than only the words that happened to refuse. Each word below is a legal VERB
+  // already — the exact `copy` asymmetry this list records twice: the engine can express the
+  // ACTION and could not express a card watching it. Counts are corpus-wide / already-normalized,
+  // per the 2026-08-15 ruling that a word is sized against what the GAME can express.
+  //
+  // NAMING FOLLOWS THE LIST'S OWN SPLIT: a passive form for something done TO an object
+  // (`sacrificed`, `exiled`, `milled` were already here), an active one for a keyword action a
+  // player performs (`connive`, `goad`, `explore`).
+  //
+  // CR 305/601 `Play`, 35 / 6, and it is the biggest single residue. `enters` DOES NOT COVER IT and
+  // that is the whole reason it is here: a land put onto the battlefield by Cultivate ENTERS without
+  // being PLAYED, so a "whenever you play a land" trigger is a strictly narrower event.
+  "play",
+  // CR 701.12 `Fight`, 31 / 22. CR 701.44 `Amass`, 30 / 26.
+  "fight", "amass",
+  // CR 702.111 `Exploit` is a keyword ABILITY rather than an action, and it is here on the
+  // `search`/`scry`/`becomes-target` precedent: no engine verb, forms no edge, but 23 cards print
+  // "whenever this creature exploits a creature" and one unnameable clause should not throw away
+  // the whole card. 23 / 5.
+  "exploit",
+  // CR 701.20 `Shuffle`, 15 / 6. CR 701.3 `Attach`, 9 / 2. CR 615 damage prevention, 9 / 5.
+  "shuffled", "attached", "prevented",
+  // `loses-control` has been here since the 2026-08-20 CR sweep and its MIRROR was missed — the
+  // same shape as `phases-out` shipping without `phases-in`, which that sweep's own comment calls
+  // out as the kind of gap only a rule-by-rule walk finds. 13 / 11.
+  "gains-control",
+  // CR 701.5 `Counter`, 3 / 0. NAMED `countered` AND NOT `counter` DELIBERATELY: `counter-added` is
+  // already in this list and means a +1/+1 counter being PUT ON a permanent. The two are homonyms,
+  // not variants, and a model choosing between them by name alone would pick wrong — the near-miss
+  // family this whole addition exists to stop.
+  "countered",
+  // REFUSED ON MEASUREMENT, recorded so it is not re-proposed: `destroyed` reads ZERO corpus cards.
+  // Destruction is not an event a card watches, because destroying a creature makes it DIE (CR
+  // 701.7) and `dies` already IS that event. Also refused, on LEGALITY rather than on count:
+  // `assemble` (Contraptions), `planeswalk`, `set-in-motion`, `abandon`, `open-an-attraction` and
+  // `roll-to-visit-your-attractions` — no plane, scheme or Attraction is ever in an EDH decklist.
+  //
+  // NONE OF THE NINE MAPS TO AN ENGINE VERB, so they form no edges and surface in
+  // `unknownTriggers`. `play` is the one worth stating: mapping it to `enters` would make EVERY
+  // land entering satisfy a play trigger, which is the over-claim the narrower event exists to
+  // avoid. A visible refusal beats a banked near-miss.
   // DELIBERATELY EXCLUDED, so the next reader does not "complete" the list: Planechase
   // (chaos ensues / planeswalk, 238 cards), Archenemy (scheme, 84) and Contraptions (crank, 45) are
   // the largest residue families in the corpus and NONE of them is an EDH event — no plane, scheme

@@ -45,6 +45,16 @@ export interface ClauseViolation {
  *  the model has started dropping actions for real. */
 const WARN_ONLY: ReadonlySet<ViolationKind> = new Set<ViolationKind>(["dropped-prefilled-action"]);
 
+/** The zones a verb ALREADY implies, so restating them is noise rather than a disagreement. Kept
+ *  deliberately small and exact — only verbs whose movement is fixed by the rules every time.
+ *  `reveal` is absent on purpose: a card can be revealed from hand, library or exile, so a stated
+ *  zone there is real information the gate has no business assuming. */
+const REDUNDANT_ZONE: Record<string, { fromZone?: string; toZone?: string }> = {
+  draw: { fromZone: "library", toZone: "hand" },
+  mill: { fromZone: "library", toZone: "graveyard" },
+  discard: { fromZone: "hand", toZone: "graveyard" },
+};
+
 const VERB_SET = new Set<string>(VERBS);
 const ZONE_SET = new Set<string>(ZONES);
 const TRIGGER_SET = new Set<string>(TRIGGERS);
@@ -201,7 +211,17 @@ function validateOne(clause: Clause, rec: ClauseRecord): ClauseViolation[] {
       if (zone === null || zone === undefined) continue;
       if (!ZONE_SET.has(zone)) at("unknown-zone", `${field} "${zone}" is not in ZONES`);
       // Every other verb already fixes its own zones; stating them twice is drift, not data.
-      else if (!ZONED.has(verb)) at("zone-on-unzoned-verb", `${field} set on "${verb}"`);
+      // DRIFT IS NOT A REASON TO REFUSE A CARD, though, and it was: 10 of the 15 zone violations in
+      // the 2026-08-29 tranche were `fromZone`/`toZone` on `draw`, and drawing really does move a
+      // card from library to hand. The model was stating the truth more explicitly than the schema
+      // wants, `canonicalize` nulls implied zones one step later anyway, and the whole card was
+      // being thrown away over it. Redundant-but-correct warns; anything else still rejects, so a
+      // model claiming `draw` from a GRAVEYARD is refused exactly as before.
+      else if (!ZONED.has(verb)) {
+        const redundant = REDUNDANT_ZONE[verb]?.[field] === zone;
+        at("zone-on-unzoned-verb", `${field} set on "${verb}"${redundant ? " (redundant, not wrong)" : ""}`,
+          redundant ? "warn" : undefined);
+      }
     }
   }
 
