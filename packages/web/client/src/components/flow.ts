@@ -19,8 +19,11 @@ export interface FlowEdge { from: string; to: string; dir: "up" | "down"; depth:
 export interface FlowNode { upstreamDepth?: number; downstreamDepth?: number }
 
 export interface Flow {
-  root: string;
-  /** Every card in either fan, excluding the root. */
+  /** EVERY CARD THE READER HAS SELECTED, not one. Selection is additive: clicking a second card
+   *  adds its fans to the first card's rather than replacing them, so a reader can build a path up
+   *  one card at a time and take it apart the same way. A single click is just the one-root case. */
+  roots: ReadonlySet<string>;
+  /** Every card in either fan, excluding the roots. */
   nodes: Map<string, FlowNode>;
   edges: FlowEdge[];
   /** Cycles found while walking. Not rendered today; recorded so a later loop detector starts from
@@ -35,14 +38,16 @@ export interface Flow {
 
 export interface FlowOptions { fanoutCap?: number; nodeBudget?: number }
 
-/** The flow of events through one card: everything it feeds, and everything that feeds it.
+/** The flow of events through the selected cards: everything they feed, and everything that feeds
+ *  them.
  *
  *  TWO DIRECTION-PURE WALKS. Downstream follows `from -> to`; upstream follows `to -> from`; neither
  *  consults the other's adjacency. That is the whole feature: measured over six calibration decks, a
  *  walk allowed to turn around reaches 50-76% of a deck by depth 3, against 3-12% for a pure one. A
  *  path that goes forward then backward is not a flow anyway -- it says "these two share a
  *  neighbour", which is not a claim worth drawing. */
-export function computeFlow(edges: readonly Edge[], rootId: string, opts: FlowOptions = {}): Flow {
+export function computeFlow(edges: readonly Edge[], rootIds: readonly string[], opts: FlowOptions = {}): Flow {
+  const roots = new Set(rootIds);
   const fanoutCap = opts.fanoutCap ?? FLOW_FANOUT_CAP;
   const nodeBudget = opts.nodeBudget ?? FLOW_NODE_BUDGET;
 
@@ -56,7 +61,7 @@ export function computeFlow(edges: readonly Edge[], rootId: string, opts: FlowOp
   }
 
   const flow: Flow = {
-    root: rootId,
+    roots,
     nodes: new Map(),
     edges: [],
     cycles: [],
@@ -64,9 +69,14 @@ export function computeFlow(edges: readonly Edge[], rootId: string, opts: FlowOp
   };
 
   const walk = (adj: Map<string, Edge[]>, dir: "up" | "down"): void => {
-    const seen = new Set<string>([rootId]);
+    // ONE WALK FROM ALL ROOTS AT ONCE, not one walk per root merged afterwards, and the difference
+    // is the budget: merging N per-root flows would light up to N x FLOW_NODE_BUDGET cards, so the
+    // fourth click could put 160 nodes on a 100-card board. A shared frontier expands nearest-first
+    // across every root together, so the budget still cuts the farthest ring — which is the part of
+    // any chain with the weakest claim on attention, whichever root it hangs off.
+    const seen = new Set<string>(roots);
     const parent = new Map<string, string>();
-    let frontier = [rootId];
+    let frontier = [...roots];
     let depth = 1;
 
     while (frontier.length > 0 && flow.nodes.size < nodeBudget) {
