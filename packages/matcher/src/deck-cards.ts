@@ -1,4 +1,5 @@
-import { normalizeName, type CardLookup } from "@edh-seer/data";
+import { normalizeName } from "@edh-seer/data/names";
+import type { CardLookup } from "@edh-seer/data/resolve";
 import type { Card } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
