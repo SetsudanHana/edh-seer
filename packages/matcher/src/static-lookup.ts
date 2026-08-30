@@ -37,6 +37,27 @@ const CACHE_NAME = "edh-seer-cards-v2";
  * called. */
 export class StaticLookup implements CardLookup, CardTagsLookup {
   private readonly byName = new Map<string, CardDoc | null>();
+  /** EVERY OTHER NAME A FETCHED CARD ANSWERS TO, consulted only when `byName` misses.
+   *
+   *  THE DEFECT THIS CLOSES, owner-reported on a Jodah deck: "98 of 100 cards read · all 100 lines
+   *  matched a card", with Command Tower and the commander itself listed as unread. A card that
+   *  resolves but carries no tags forms no edges and reaches no archetype, so two of the deck's
+   *  cards were silently outside every synergy number on the page.
+   *
+   *  `buildDeckCards` re-looks each resolved card up by its CANONICAL name
+   *  (`normalizeName(card.name)`) to recover its oracle id, while `prefetch` was handed the names
+   *  the DECKLIST used. Those differ whenever a line names an alternate printing: the corpus maps
+   *  `spongebob squarepants` and `warrior of light` to Jodah, the Unifier, and SIX names to Command
+   *  Tower (`tower of rasmodius`, `cybertron`, `summoners rift`, …). The alternate was fetched and
+   *  cached; the canonical name was never requested, so the second lookup missed the map and the
+   *  card came back untagged. Mongo re-queries and never noticed — which is also why 71/71 parity
+   *  is silent on it: every calibration deck is written in canonical names.
+   *
+   *  SEPARATE MAP, NOT MERGED INTO `byName`, because 53 names in the corpus resolve to more than
+   *  one card. An alias learned from a card we happened to fetch must never pre-empt a later
+   *  explicit `prefetch` of that same name, whose answer is the one the build resolved. `byName`
+   *  always wins; this only answers what it does not. */
+  private readonly byAlias = new Map<string, CardDoc>();
   private readonly byId = new Map<string, CardTags | null>();
   private readonly combos: ComboDoc[] = [];
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
@@ -102,6 +123,12 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
         const entry = file[n];
         if (!entry) { this.byName.set(n, null); continue; }
         this.byName.set(n, entry.card);
+        // Every name this card answers to, so a later lookup by any of them hits without a second
+        // request. The entry is the same object under every one of its names in the build, so the
+        // card, its tags and its combos are all already here.
+        for (const alias of entry.card.searchNames ?? []) {
+          if (!this.byAlias.has(alias)) this.byAlias.set(alias, entry.card);
+        }
         this.byId.set(entry.card._id, entry.tags ?? null);
         for (const c of entry.combos ?? []) this.combos.push(c);
       }
@@ -109,7 +136,9 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
   }
 
   async findByName(normalized: string): Promise<CardDoc | null> {
-    return this.byName.get(normalized) ?? null;
+    const fetched = this.byName.get(normalized);
+    if (fetched !== undefined) return fetched;
+    return this.byAlias.get(normalized) ?? null;
   }
 
   /** The accumulated union of every fetched card's anchored combos — empty before `prefetch`. */
