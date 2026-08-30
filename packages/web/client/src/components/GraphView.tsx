@@ -203,7 +203,19 @@ export function GraphView(
   // unlike hoveredIdRef/matchesRef this DOES need to drive a render (the panel is real DOM, not a
   // canvas draw), and a click is a discrete event, not a per-frame or per-keystroke one, so there
   // is no reheating-the-simulation cost to worry about here.
-  const [inspectingId, setInspectingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<readonly string[]>([]);
+  /** The card the PANEL is about: the most recently clicked one. Selection is a set and the panel
+   *  is a single card, so one of them has to be chosen — and the last click is the one the reader
+   *  just made, which is the only choice that never surprises them. */
+  const inspectingId = selectedIds.length > 0 ? selectedIds[selectedIds.length - 1] : null;
+  /** ADDITIVE, AND CLICKING A LIT CARD PUTS IT OUT. A click used to replace the selection, so a
+   *  reader tracing a chain could hold exactly one link of it at a time and lost the previous card
+   *  the moment they asked about the next. Toggling is what lets a path be assembled and taken
+   *  apart one card at a time. Clicking empty board space still clears the whole set — the escape
+   *  hatch has to stay one gesture. */
+  const toggleSelected = useCallback((id: string | null) => {
+    setSelectedIds((ids) => (id === null ? [] : ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  }, []);
   /** Which facet the board is PAINTED by. It moves no node: geometry is synergy and only synergy,
    *  so switching this is a restyle of a layout that never re-simulates. */
   const [paintId, setPaintId] = useState(PAINT_MODES[0].id);
@@ -219,7 +231,14 @@ export function GraphView(
    *  stop being tellable apart — the rainbow would be less legible than the mesh it replaced. Naming
    *  one event and dimming the rest scales to any number of them, and it is the same
    *  dim-rather-than-hide grammar the search already uses, so the deck keeps its shape. */
-  const [eventVerb, setEventVerb] = useState<string | null>(null);
+  const [hiddenVerbs, setHiddenVerbs] = useState<ReadonlySet<string>>(() => new Set());
+  const toggleVerb = useCallback((verb: string) => {
+    setHiddenVerbs((hidden) => {
+      const next = new Set(hidden);
+      if (!next.delete(verb)) next.add(verb);
+      return next;
+    });
+  }, []);
   // Capability check rather than a user-agent sniff: iOS Safari on iPhone has no element
   // fullscreen, and a button that silently does nothing is worse than no button.
   const canFullscreen = typeof Element !== "undefined" && "requestFullscreen" in Element.prototype;
@@ -373,15 +392,18 @@ export function GraphView(
   /** True when this edge carries the traced event. One predicate, used by the paint loop AND by the
    *  flow walk, so what is drawn and what is walked cannot disagree about what an edge is. */
   const edgeHasEvent = useCallback(
-    (e: { tags: string[] }) => eventVerb === null || e.tags.some((t) => mechanismKey(t) === eventVerb),
-    [eventVerb],
+    // KEPT WHEN ANY OF ITS EVENTS IS STILL SHOWN. An edge carries several tags, so the alternative
+    // — hide it the moment one of its events is switched off — would let a reader turn off `cast`
+    // and lose a `dies` connection they never asked to lose.
+    (e: { tags: string[] }) => e.tags.some((t) => !hiddenVerbs.has(mechanismKey(t))),
+    [hiddenVerbs],
   );
 
   /** The edges a flow may walk. Filtering HERE rather than inside `computeFlow` keeps that module
    *  about traversal and this one about what the reader asked to see. */
   const flowEdges = useMemo(
-    () => (eventVerb === null ? graph.edges : graph.edges.filter(edgeHasEvent)),
-    [graph, eventVerb, edgeHasEvent],
+    () => (hiddenVerbs.size === 0 ? graph.edges : graph.edges.filter(edgeHasEvent)),
+    [graph, hiddenVerbs, edgeHasEvent],
   );
 
   /** Tag lookup at component scope, for the flow legend below. The paint loop keeps its own
@@ -751,9 +773,17 @@ export function GraphView(
       // being claimed to be: it stays at full strength and its shared rim turns ACCENT, which says
       // "this is the card you clicked" rather than "this participates in the flow".
       // Empty for a single-faced selection, which is every selection on most boards.
-      const rootNode = activeFlow ? byId.get(activeFlow.root) : undefined;
-      const sameCardIds = rootNode?.cardName !== undefined
-        ? new Set(nodes.filter((n) => n.cardName === rootNode.cardName).map((n) => n.id))
+      // Every selected card's own name, so the sibling-face rule holds for each of them once
+      // selection became a set rather than one id.
+      const rootCardNames = new Set<string>();
+      if (activeFlow) {
+        for (const id of activeFlow.roots) {
+          const name = byId.get(id)?.cardName;
+          if (name !== undefined) rootCardNames.add(name);
+        }
+      }
+      const sameCardIds = rootCardNames.size > 0
+        ? new Set(nodes.filter((n) => n.cardName !== undefined && rootCardNames.has(n.cardName)).map((n) => n.id))
         : null;
       // Direction as motion: flow edges are dashed, and the pattern crawls from producer to
       // consumer. Read ONCE per frame, not per edge -- every edge in a frame must share a phase or
@@ -979,7 +1009,7 @@ export function GraphView(
         // ahead of the alpha decision, so a card outside the flow dims as a whole -- art included,
         // not just its rim -- rather than the art staying bright while only the ring goes faint.
         const flowNode = activeFlow?.nodes.get(n.id);
-        const isRoot = activeFlow?.root === n.id;
+        const isRoot = activeFlow?.roots.has(n.id) === true;
         // The clicked card's OTHER printed face. Not in the flow and not claimed to be — see
         // `sameCardIds` above.
         const sameCardAsRoot = sameCardIds?.has(n.id) === true;
@@ -1292,7 +1322,7 @@ export function GraphView(
           // -- without this a non-flow card kept a full-brightness NAME over a 0.15 disc, which is
           // exactly the half-landed demotion that comment warns about.
           const labelFlowNode = activeFlow?.nodes.get(id);
-          const labelIsRoot = activeFlow?.root === id;
+          const labelIsRoot = activeFlow?.roots.has(id) === true;
           ctx.globalAlpha = matchIds && !matchIds.has(id) ? 0.15
             : activeFlow && !labelFlowNode && !labelIsRoot ? 0.15
             : labelDemote ? EDGELESS_ALPHA : 1;
@@ -1563,7 +1593,7 @@ export function GraphView(
       // hit test `onMove` already uses for the hover tooltip -- one geometry, two consumers.
       const w = toWorld(point);
       const hit = pickAt(w.x, w.y);
-      setInspectingId(hit?.id ?? null);
+      toggleSelected(hit?.id ?? null);
     });
 
     const onMove = (e: PointerEvent) => {
@@ -1632,9 +1662,16 @@ export function GraphView(
   // the id no longer resolves to a node, `inspectingNode` goes null and so must `flow` -- keying on
   // the id alone left `flow` non-null with empty fans (the id still "selected", just resolving to
   // nothing), which dims every node with no inspector and no legend open to explain why.
+  /** Every selected card that still resolves in the current graph. The flow walks from all of them
+   *  at once (see `computeFlow`), so the board lights the union of their fans and the edges BETWEEN
+   *  two selected cards draw as well. */
+  const flowRoots = useMemo(
+    () => selectedIds.filter((id) => graph.nodes.some((n) => n.id === id)),
+    [graph, selectedIds],
+  );
   const flow = useMemo(
-    () => (inspectingNode ? computeFlow(flowEdges, inspectingNode.id) : null),
-    [graph, inspectingNode],
+    () => (flowRoots.length > 0 ? computeFlow(flowEdges, flowRoots) : null),
+    [flowEdges, flowRoots],
   );
   /** THE EVENTS INSIDE THIS FLOW, ranked by how many of its edges each explains, with a hue each.
    *
@@ -1662,7 +1699,7 @@ export function GraphView(
       const pair = `${fe.from}>${fe.to}`;
       if (seen.has(pair)) continue;
       seen.add(pair);
-      if (fe.from !== flow.root && fe.to !== flow.root) n++;
+      if (!flow.roots.has(fe.from) && !flow.roots.has(fe.to)) n++;
     }
     return n;
   }, [flow]);
@@ -1694,7 +1731,7 @@ export function GraphView(
    *  whenever the selection changes: an isolate is about THIS flow and would be a stale filter on
    *  the next one. */
   const [flowFocus, setFlowFocus] = useState<string | null>(null);
-  useEffect(() => { setFlowFocus(null); }, [inspectingId]);
+  useEffect(() => { setFlowFocus(null); }, [selectedIds]);
 
   const flowHueByVerb = useMemo(
     () => new Map(flowEvents.map((e) => [e.verb, e.hue])),
@@ -1828,12 +1865,16 @@ export function GraphView(
                   {hiddenFromBoard} hidden
                 </span>
               ) : null}
+              {/* SHOW EVERYTHING AGAIN. Not a filter of its own any more -- with per-event toggles
+                *  the reader can reach the same state by switching every chip back on, and this is
+                *  the one gesture that does it. Pressed when nothing is hidden, which is also the
+                *  state the board starts in. */}
               <button
                 type="button"
-                aria-pressed={eventVerb === null}
-                onClick={() => setEventVerb(null)}
+                aria-pressed={hiddenVerbs.size === 0}
+                onClick={() => setHiddenVerbs(new Set())}
                 className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
-                  eventVerb === null ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                  hiddenVerbs.size === 0 ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
                 }`}
               >
                 All
@@ -1842,18 +1883,38 @@ export function GraphView(
                 <button
                   key={verb}
                   type="button"
-                  aria-pressed={verb === eventVerb}
-                  // Clicking the active chip clears it: the reader who wants out of a trace should
-                  // not have to find "All".
-                  onClick={() => setEventVerb((v) => (v === verb ? null : verb))}
+                  // A SWITCH, NOT A RADIO BUTTON. This chip row used to isolate: naming one event
+                  // hid the other fourteen, so "show me dies AND enters" was not expressible and
+                  // "hide the one event that is meshing this board" took naming everything else.
+                  // Every chip is now its own on/off, all of them start on, and isolating one is
+                  // still available -- it is just switching the others off rather than a mode.
+                  aria-pressed={!hiddenVerbs.has(verb)}
+                  onClick={() => toggleVerb(verb)}
                   className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
-                    verb === eventVerb ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                    hiddenVerbs.has(verb)
+                      ? "border-(--separator) text-(--muted) line-through opacity-60"
+                      : "border-(--accent) text-(--accent)"
                   }`}
                 >
                   {eventLabel(verb)} <span className="opacity-60">{count}</span>
                 </button>
               ))}
             </div>
+          ) : null}
+
+          {/* HOW MANY CARDS ARE LIT, AND THE WAY OUT. Additive selection can strand a reader: the
+            *  panel names one card, the board is dimmed around several, and clicking empty space is
+            *  not a gesture anyone guesses. One chip says how many and clears them. Absent at a
+            *  single selection, where the panel's own close button already says it. */}
+          {selectedIds.length > 1 ? (
+            <button
+              type="button"
+              data-testid="graph-selection-clear"
+              onClick={() => setSelectedIds([])}
+              className="eyebrow rounded-(--radius) border border-(--accent) text-(--accent) px-2.5 py-1"
+            >
+              {selectedIds.length} cards lit — clear
+            </button>
           ) : null}
 
           {/* Only when the deck HAS one: a chip that can never change anything is worse than no
@@ -1973,10 +2034,15 @@ export function GraphView(
             *  a vocabulary without sharing a scope are worse than either alone. */}
           {flowLegend && flowLegend.length > 0 ? (
             <span className="eyebrow shrink-0">
-              Card pairs in this card&apos;s flow
+              {/* THE SCOPE CHANGES WITH THE SELECTION, so the sentence has to. "This card's flow"
+                *  was written when a click could only select one; with two lit it names a scope
+                *  half the size of what the numbers count. */}
+              {selectedIds.length > 1
+                ? `Card pairs in these ${selectedIds.length} cards' flow`
+                : "Card pairs in this card's flow"}
               {flowIndirect > 0 ? (
                 <span data-testid="flow-indirect-note" className="opacity-70">
-                  {" "}&middot; {flowIndirect} reached through it
+                  {" "}&middot; {flowIndirect} reached through {selectedIds.length > 1 ? "them" : "it"}
                 </span>
               ) : null}
             </span>
@@ -2088,7 +2154,10 @@ export function GraphView(
               edges={inspectingEdges}
               flow={flow}
               textOf={textById}
-              onClose={() => setInspectingId(null)}
+              // Closes the panel AND clears the board: with an additive selection there is no single card
+              // to "go back to", and leaving a lit set behind a closed panel would strand the reader
+              // with a filtered board and nothing on screen saying what filtered it.
+              onClose={() => setSelectedIds([])}
             />
           ) : null}
         </div>

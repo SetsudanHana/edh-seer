@@ -1289,6 +1289,42 @@ describe("the inspector", () => {
     });
     expect(screen.queryByText("Krenko, Mob Boss")).toBeNull();
   });
+
+  // SELECTION IS ADDITIVE, and this is the whole reason the flow's root became a set. A click used
+  // to replace the selection, so tracing a chain meant holding one link at a time: asking about the
+  // next card put out the previous one. Owner-reported from real use.
+  test("a second click adds a card to the selection instead of replacing it, and a third click on a lit card puts it out", () => {
+    const { canvas } = frames(SAMPLE.graph);
+    const probe = canvas.__graphProbe!();
+    const krenko = probe.find((n) => n.id === "Krenko, Mob Boss")!;
+    const tremors = probe.find((n) => n.id === "Impact Tremors")!;
+
+    act(() => { probe.endGesture({ type: "mouseup", clientX: krenko.x, clientY: krenko.y }); });
+    // One card lit: no count chip, because the panel's own close button already says how to get out.
+    expect(screen.queryByTestId("graph-selection-clear")).toBeNull();
+
+    act(() => { probe.endGesture({ type: "mouseup", clientX: tremors.x, clientY: tremors.y }); });
+    // The panel follows the LAST click -- one panel, a set of selections, and the newest is the one
+    // the reader just asked about.
+    expect(screen.getByTestId("graph-selection-clear")).toHaveTextContent("2 cards lit");
+
+    // Clicking a lit card again takes it back out, which is what makes a path assemblable BOTH ways.
+    act(() => { probe.endGesture({ type: "mouseup", clientX: krenko.x, clientY: krenko.y }); });
+    expect(screen.queryByTestId("graph-selection-clear")).toBeNull();
+    expect(screen.getByText("Impact Tremors")).toBeInTheDocument();
+  });
+
+  test("the count chip clears every selected card at once", () => {
+    const { canvas } = frames(SAMPLE.graph);
+    const probe = canvas.__graphProbe!();
+    for (const id of ["Krenko, Mob Boss", "Impact Tremors"]) {
+      const n = probe.find((p) => p.id === id)!;
+      act(() => { probe.endGesture({ type: "mouseup", clientX: n.x, clientY: n.y }); });
+    }
+    fireEvent.click(screen.getByTestId("graph-selection-clear"));
+    expect(screen.queryByTestId("graph-selection-clear")).toBeNull();
+    expect(screen.queryByText("Impact Tremors")).toBeNull();
+  });
 });
 
 // CLICKING A CARD PAINTS THE FLOW. The board drew every edge in one colour, so production and
@@ -2331,19 +2367,62 @@ describe("trace-event filter", () => {
     expect(topVerb.length).toBeGreaterThan(0);
   });
 
-  test("a chip toggles, and clicking the active one clears the trace rather than stranding it", async () => {
+  /** EVERY CHIP IS ITS OWN SWITCH, and this replaces an isolate. Naming one event used to hide the
+   *  other fourteen, so "show me dies AND enters" was not expressible at all and hiding the single
+   *  event that was meshing a board meant naming every other event instead. Owner-reported.
+   *
+   *  Built on a two-verb fixture rather than SAMPLE, which carries one event and renders no chip
+   *  row by design — the old version of this test read `if (!all) return` and had been asserting
+   *  nothing on this fixture since the day it was written. */
+  const twoVerbGraph = () => graphOf(
+    [card({ id: "A" }), card({ id: "B" }), card({ id: "C" })],
+    [
+      { from: "A", to: "B", weight: 2, tags: ["dies:creature"], reasonTexts: ["A feeds B"] },
+      { from: "B", to: "C", weight: 2, tags: ["enters:creature"], reasonTexts: ["B feeds C"] },
+    ],
+  );
+  const eventChips = () =>
+    screen.getAllByRole("button").filter((b) => /\s\d+$/.test(b.textContent ?? ""));
+
+  test("every event starts shown, and a chip switches its own event off without touching the others", async () => {
     const user = userEvent.setup();
-    render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
-    const all = screen.queryByRole("button", { name: "All" });
-    if (!all) return; // single-event deck: no row
-    const chips = screen.getAllByRole("button").filter((b) => /\s\d+$/.test(b.textContent ?? ""));
-    const first = chips[0]!;
+    render(<GraphView graph={twoVerbGraph()} report={SAMPLE.report} />);
+    const all = screen.getByRole("button", { name: "All" });
+    const [dies, enters] = eventChips();
+
+    // The board starts showing everything, so every chip starts pressed. This is the half the old
+    // isolate got backwards: there, a chip was pressed only while it was the one event surviving.
     expect(all).toHaveAttribute("aria-pressed", "true");
-    await user.click(first);
-    expect(first).toHaveAttribute("aria-pressed", "true");
+    expect(dies).toHaveAttribute("aria-pressed", "true");
+    expect(enters).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(dies!);
+    expect(dies).toHaveAttribute("aria-pressed", "false");
+    expect(enters).toHaveAttribute("aria-pressed", "true");
     expect(all).toHaveAttribute("aria-pressed", "false");
-    await user.click(first);
-    expect(first).toHaveAttribute("aria-pressed", "false");
+
+    // Two events off at once — the state an isolate could not reach.
+    await user.click(enters!);
+    expect(dies).toHaveAttribute("aria-pressed", "false");
+    expect(enters).toHaveAttribute("aria-pressed", "false");
+  });
+
+  test("a chip switches its event back on, and All restores every one of them", async () => {
+    const user = userEvent.setup();
+    render(<GraphView graph={twoVerbGraph()} report={SAMPLE.report} />);
+    const all = screen.getByRole("button", { name: "All" });
+    const [dies, enters] = eventChips();
+
+    await user.click(dies!);
+    await user.click(dies!);
+    expect(dies).toHaveAttribute("aria-pressed", "true");
+    expect(all).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(dies!);
+    await user.click(enters!);
+    await user.click(all);
+    expect(dies).toHaveAttribute("aria-pressed", "true");
+    expect(enters).toHaveAttribute("aria-pressed", "true");
     expect(all).toHaveAttribute("aria-pressed", "true");
   });
 });
