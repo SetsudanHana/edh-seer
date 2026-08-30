@@ -81,6 +81,8 @@ export async function buildWireGraph(
   copiesByName: Map<string, number>,
   sources: AnalysisSources,
 ): Promise<WireGraph> {
+  // Re-reads the card DOCUMENTS: resolveDeck hands back engine `Card`s, and the wire node
+  // needs the full CardDoc (typeLine, artCrop) that only the corpus row carries.
   const lookup = sources.lookup;
   // Goes through the SAME composed lookup as `analyzeResolvedDeck` above. It used to query
   // cardTags directly, which meant TAGS_SOURCE could not reach it -- the graph view and the
