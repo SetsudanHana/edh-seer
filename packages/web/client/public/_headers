@@ -1,0 +1,23 @@
+# Cloudflare Pages reads this file at deploy time and applies it to static asset responses. It is
+# parsed, not served. Max 100 rules; this uses three.
+
+# VITE'S OWN OUTPUT IS CONTENT-HASHED (`index-B_kCz-LY.js`), so its name changes whenever its bytes
+# do. That is the one thing here that is genuinely immutable.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# THE CARD SHARDS ARE NOT IMMUTABLE, AND THIS IS THE TRAP THIS COMMENT EXISTS TO NAME. A shard's
+# filename is a hash of the CARD NAMES inside it, not of its contents, so `1be5.json` is still
+# `1be5.json` after a corpus rebuild that changed every card in it. Marking these immutable would
+# strand a returning reader on last month's oracle text with no way to notice.
+#
+# An hour of freshness with a week of stale-while-revalidate: a repeat analysis inside the hour
+# costs no requests, a reader who comes back later gets the cached copy instantly and the new one
+# in the background. The upgrade, when the corpus starts changing often enough to care, is a
+# version segment in the path (`/static/v3/cards/...`) written by the build and read by
+# `StaticLookup`'s baseUrl — then this can be immutable and correct.
+/static/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=604800
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate

@@ -9,6 +9,8 @@
     "dev:client": "vite --config client/vite.config.ts",
     "dev": "concurrently -n server,client -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
     "build:client": "vite --config client/vite.config.ts build",
+    "build:static-site": "VITE_STATIC_DATA=1 vite --config client/vite.config.ts build && node scripts/assemble-deploy.mjs",
+    "deploy": "npm run build:static-site && npx -y wrangler@4 pages deploy client/dist --project-name edh-seer",
     "test": "npm run test:server && npm run test:client",
     "test:server": "vitest run --config server/vitest.config.ts",
     "test:client": "vitest run --config client/vitest.config.ts",
