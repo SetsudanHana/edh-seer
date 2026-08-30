@@ -3,20 +3,28 @@ import type { CardDoc, ComboDoc } from "@edh-seer/data/docs";
 import type { CardLookup } from "@edh-seer/data/resolve";
 import type { CardTagsLookup } from "./deck-cards.js";
 import type { AnalysisSources } from "./orchestrate.js";
-import { cardFileName } from "./bin/build-static-core.js";
+import { shardOf } from "./bin/build-static-core.js";
 
-/** One card's file, as `build-static.ts` writes it: the card, its derived tags (absent when the
- *  card was never tagged) and every combo anchored on it. */
-interface CardFile {
+/** Re-exported so a consumer of this module can address a shard the way it does -- the client's
+ *  own tests build their fixture files from it, which is what keeps them honest when the layout
+ *  changes. `build-static-core.ts` stays the single definition. */
+export { shardOf };
+
+/** One card's entry inside a shard, as `build-static.ts` writes it: the card, its derived tags
+ *  (absent when the card was never tagged) and every combo anchored on it. */
+interface CardEntry {
   card: CardDoc;
   tags: CardTags | null;
   combos: ComboDoc[];
 }
 
+/** A shard file: every card name that hashes into it, keyed by name. */
+type ShardFile = Record<string, CardEntry>;
+
 /** Bump on a shape change to the files under `<baseUrl>/cards/`, `token-tags.json` or
  *  `token-art.json` — an old cached response under the previous name is simply never read again
  *  rather than served stale. */
-const CACHE_NAME = "edh-seer-cards-v1";
+const CACHE_NAME = "edh-seer-cards-v2";
 
 /** The client's data plane: `CardLookup` + `CardTagsLookup` + the two token facts
  * `AnalysisSources` needs, all answered over `fetch` against the artifacts `build-static.ts`
@@ -62,20 +70,41 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     return res;
   }
 
-  /** Fetch every name in parallel and fill the map. MUST be awaited before `findByName`. */
+  /** Fetch every shard the deck touches, in parallel, and fill the maps. MUST be awaited before
+   *  `findByName`.
+   *
+   *  ONE FETCH PER SHARD, NOT PER NAME. Two names in the same shard used to be two requests; a
+   *  100-card deck now pulls the ~100 DISTINCT shards its names hash into, and a deck with two
+   *  cards in one shard pulls it once.
+   *
+   *  ONLY THE REQUESTED NAMES ARE READ OUT OF A SHARD, which is not an optimisation but a
+   *  correctness rule: a shard carries ~2 unrelated cards, and taking their combos too would put
+   *  combos in `allCombos()` for cards the deck does not contain. */
   async prefetch(names: string[]): Promise<void> {
-    await Promise.all([...new Set(names)].map(async (n) => {
-      if (this.byName.has(n)) return;
-      // THE SAME RULE AS THE BUILD, IMPORTED RATHER THAN COPIED: `cardFileName` lives in
+    const wanted = [...new Set(names)].filter((n) => !this.byName.has(n));
+    const byShard = new Map<string, string[]>();
+    for (const n of wanted) {
+      // THE SAME RULE AS THE BUILD, IMPORTED RATHER THAN COPIED: `shardOf` lives in
       // `build-static-core.ts`, which the build split out precisely so it is importable (it has
       // zero imports of its own — nothing Node-hostile rides along) — one rule, one copy, so the
-      // build and the client cannot drift.
-      const res = await this.fetchCached(`/cards/${cardFileName(n)}.json`);
-      if (!res.ok) { this.byName.set(n, null); return; } // a 404 IS "no such card"
-      const file = await res.json() as CardFile;
-      this.byName.set(n, file.card);
-      this.byId.set(file.card._id, file.tags ?? null);
-      for (const c of file.combos ?? []) this.combos.push(c);
+      // build and the client cannot drift about where a card lives.
+      const shard = shardOf(n);
+      const bucket = byShard.get(shard);
+      if (bucket) bucket.push(n);
+      else byShard.set(shard, [n]);
+    }
+    await Promise.all([...byShard].map(async ([shard, shardNames]) => {
+      const res = await this.fetchCached(`/cards/${shard}.json`);
+      // A 404 IS "no such card" for every name in this shard — the same answer the missing file
+      // used to give one name at a time.
+      const file = res.ok ? await res.json() as ShardFile : {};
+      for (const n of shardNames) {
+        const entry = file[n];
+        if (!entry) { this.byName.set(n, null); continue; }
+        this.byName.set(n, entry.card);
+        this.byId.set(entry.card._id, entry.tags ?? null);
+        for (const c of entry.combos ?? []) this.combos.push(c);
+      }
     }));
   }
 

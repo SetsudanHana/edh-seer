@@ -46,11 +46,11 @@ async function runOne(
   prefetch?: (names: string[]) => Promise<void>,
 ): Promise<unknown> {
   const sections = parseDecklistSections(text);
-  // `StaticLookup.prefetch` builds its fetch URL straight off each name (`cardFileName(n)`, no
-  // normalization inside it -- pinned by its own test using already-lowercased names), while
-  // every OTHER caller resolves through `findByName(normalizeName(name))`. Prefetching the raw
-  // decklist strings would fetch a path that never exists on disk (`Felothar%20the%20Steadfast`
-  // vs the file `felothar%20the%20steadfast.json`) and silently cache every name as missing.
+  // `StaticLookup.prefetch` hashes each name STRAIGHT INTO A SHARD (`shardOf(n)`, no normalization
+  // inside it -- pinned by its own test using already-lowercased names), while every OTHER caller
+  // resolves through `findByName(normalizeName(name))`. Prefetching the raw decklist strings would
+  // hash `Felothar the Steadfast` into a different shard than the `felothar the steadfast` the
+  // build wrote, and silently cache every name as missing.
   const names = [...sections.commanders, ...sections.deck].map(normalizeName);
   if (prefetch) await prefetch(names);
   const { cards, combos, missing, commanderResolved, commanderColorIdentity } =
