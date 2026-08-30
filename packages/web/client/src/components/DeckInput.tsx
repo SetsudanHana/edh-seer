@@ -43,7 +43,7 @@ export function DeckInput({
         <div className="flex gap-2 shrink-0">
           <button type="button" onClick={() => void onCopy()} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">{copied ? "Copied" : "Copy decklist"}</button>
           <button type="button" onClick={onEdit} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">Edit</button>
-          <Button variant="primary" isDisabled={loading} onPress={onAnalyze} style={{ backgroundImage: "var(--accent-gradient)" }}>
+          <Button variant="primary" isDisabled={loading} onPress={onAnalyze}>
             {loading ? "Analyzing…" : "Re-analyze"}
           </Button>
         </div>
@@ -84,7 +84,6 @@ export function DeckInput({
         variant="primary"
         isDisabled={loading || value.trim() === ""}
         onPress={onAnalyze}
-        style={{ backgroundImage: "var(--accent-gradient)" }}
       >
         {loading ? "Analyzing…" : "Analyze deck"}
       </Button>

@@ -27,15 +27,11 @@ export const CATEGORY_ORDER: Category[] = [
   "boardWipe", "burn", "stax", "protection", "tutor", "lands",
 ];
 
-// Paints the identity gradient into a 1px border by layering two backgrounds: the
-// inner rectangle (padding-box) matches the page so it reads as empty, the outer
-// rectangle (border-box) carries the gradient — a plain `border` can't take a
-// gradient directly.
+// A PLAIN ACCENT BORDER, because there is no gradient any more. This layered two backgrounds to
+// paint the identity gradient into a 1px border (a `border` cannot take one directly); with the
+// accent a flat literal, the trick has nothing left to carry and a border does the job.
 const selectedChipStyle: CSSProperties = {
-  border: "1px solid transparent",
-  backgroundImage: "linear-gradient(var(--background), var(--background)), var(--accent-gradient)",
-  backgroundOrigin: "border-box",
-  backgroundClip: "padding-box, border-box",
+  border: "1px solid var(--accent)",
 };
 
 

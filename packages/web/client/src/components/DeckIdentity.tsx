@@ -120,7 +120,7 @@ export function DeckIdentity({
         *  its own heading. When the theme ABSTAINS the heading says so and there is no engine clause
         *  to drop, so nothing is lost. */}
       {identity && (identity.win || identity.means) ? (
-        <p className="text-sm text-(--fg) tabular-nums">
+        <p className="text-sm text-(--foreground) tabular-nums">
           {[identity.win, identity.means].filter(Boolean).join(" · ")}
         </p>
       ) : null}
@@ -133,7 +133,7 @@ export function DeckIdentity({
         *  is not is the failure this whole layer is built to avoid, so the caveat is a title on the
         *  figure rather than a footnote somewhere else. */}
       {thing ? (
-        <p className="text-sm text-(--fg) tabular-nums">
+        <p className="text-sm text-(--foreground) tabular-nums">
           <strong>{thing.count} cards</strong> do it · {percent(thing.probability)} to have{" "}
           {thing.k} of them by turn {thing.turn}
           {thing.fromCommandZone.length > 0 ? `, plus ${thing.fromCommandZone.join(", ")} every game` : ""}

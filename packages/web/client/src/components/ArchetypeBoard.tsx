@@ -13,7 +13,7 @@ function StrategyRow({ s, max }: { s: Strategy; max: number }) {
     <div className="flex items-center gap-3 py-2 border-b border-(--separator)">
       <span className="w-40 shrink-0 truncate">{s.label}</span>
       <div className="flex-1 h-2 bg-(--separator) rounded-full overflow-hidden">
-        <div className="h-full rounded-full" style={{ width: `${widthPct}%`, backgroundImage: "var(--accent-gradient)" }} />
+        <div className="h-full rounded-full bg-(--fill)" style={{ width: `${widthPct}%` }} />
       </div>
       <span className="stat-num text-xs text-(--muted) w-12 text-right shrink-0">{pct}%</span>
     </div>
@@ -45,7 +45,7 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
           {group.label}
         </span>
         <div className="flex-1 h-2 bg-(--separator) rounded-full overflow-hidden">
-          <div className="h-full rounded-full" style={{ width: `${widthPct}%`, backgroundImage: "var(--accent-gradient)" }} />
+          <div className="h-full rounded-full bg-(--fill)" style={{ width: `${widthPct}%` }} />
         </div>
         <span className="stat-num text-xs text-(--muted) w-28 text-right shrink-0">
           {group.pairs.length} pair{group.pairs.length === 1 ? "" : "s"} · {group.cards.length} cards

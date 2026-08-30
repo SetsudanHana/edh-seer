@@ -715,7 +715,7 @@ function DeckMathRows({
                 <span className="w-40 shrink-0 truncate">{t.card}</span>
                 <span className="flex-1 text-xs text-(--muted) tabular-nums">
                   a random card off your library is worth{" "}
-                  <span className="text-(--fg)">{t.meanManaValue}</span> mana —{" "}
+                  <span className="text-(--foreground)">{t.meanManaValue}</span> mana —{" "}
                   {t.nonlandMeanManaValue} when it is not a land, and {Math.round(t.landShare * 100)}% of the
                   time it is one
                   {t.castable
