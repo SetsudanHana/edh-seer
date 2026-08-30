@@ -3,6 +3,16 @@
   "version": "0.0.0",
   "type": "module",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./analyze": "./src/analyze.ts",
+    "./graph-projection": "./src/graph-projection.ts",
+    "./faces": "./src/faces.ts",
+    "./deck-cards": "./src/deck-cards.ts",
+    "./wire-graph": "./src/wire-graph.ts",
+    "./orchestrate": "./src/orchestrate.ts",
+    "./static-lookup": "./src/static-lookup.ts"
+  },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

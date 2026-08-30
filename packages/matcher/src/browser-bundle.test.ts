@@ -4,12 +4,18 @@ import { expect, test } from "vitest";
 
 /** DOES THE ANALYSIS ENGINE BUNDLE FOR A BROWSER? — the ratchet for roadmap P2.
  *
- *  Static-first hosting means `analyzeDeckStructured` runs in the client, so every module on its
- *  graph has to survive a browser bundle. This asks esbuild directly, which is the only thing that
- *  actually answers it: a green `tsc` does NOT, and stopped being evidence entirely on 2026-08-29
- *  when `"node"` went into `web/client`'s `types` to clear 32 errors that said nothing about this
- *  repo. Reading imports does not answer it either — `edges.ts` is one of the modules that used to
- *  pull the Node-side barrel and it does NOT appear in a plain `grep`, only in `grep -a`.
+ *  Points at `orchestrate.ts`, not `analyze.ts` (Task 3, static-build-data-plane): the client
+ *  imports the ORCHESTRATION — `resolveDeck` / `analyzeResolvedDeck` / `buildWireGraph`, the whole
+ *  commander-fallback-through-token-art pipeline the Nest server used to be the only copy of — not
+ *  the bare analysis function. `analyze.ts` bundling clean says nothing about whether the code path
+ *  a browser actually calls does.
+ *
+ *  Static-first hosting means that pipeline runs in the client, so every module on its graph has to
+ *  survive a browser bundle. This asks esbuild directly, which is the only thing that actually
+ *  answers it: a green `tsc` does NOT, and stopped being evidence entirely on 2026-08-29 when
+ *  `"node"` went into `web/client`'s `types` to clear 32 errors that said nothing about this repo.
+ *  Reading imports does not answer it either — `edges.ts` is one of the modules that used to pull
+ *  the Node-side barrel and it does NOT appear in a plain `grep`, only in `grep -a`.
  *
  *  AN EXACT SET, NOT A CAP, and it fails in BOTH directions on purpose — the same shape as
  *  `KNOWN_DEFECT_CAP`. A new entry means someone put a Node builtin back on the analysis path and
@@ -39,7 +45,7 @@ const MIN_BUNDLE_BYTES = 200_000;
 
 test("the analysis engine bundles for a browser with no Node-only modules left on its graph", async () => {
   const result = await build({
-    entryPoints: [fileURLToPath(new URL("./analyze.ts", import.meta.url))],
+    entryPoints: [fileURLToPath(new URL("./orchestrate.ts", import.meta.url))],
     bundle: true,
     platform: "browser",
     format: "esm",

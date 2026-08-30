@@ -24,6 +24,9 @@ packages/tagger/score-debug*.json
 packages/tagger/_*.mts
 persona-shots/
 
+# static build artifacts (build-static.ts) — one JSON file per card name, tens of thousands of them
+static-out/
+
 # test + browser automation output
 /test-results/
 /playwright-report/
