@@ -37,7 +37,8 @@ import { join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText } from "@edh-seer/data";
 import { loadTaggerConfig } from "../config.js";
 import { createProvider } from "../llm/factory.js";
-import { buildRequest, codeAnsweredCard, needsModel, normalizeCard, parseNormalizedCard, type NormalizedCard } from "../normalize-card.js";
+import { buildRequest, codeAnsweredCard, manualCard, needsModel, normalizeCard, parseNormalizedCard, type NormalizedCard } from "../normalize-card.js";
+import { loadManualEntries } from "../manual-clauses.js";
 import { anthropicText, type AnthropicResponse } from "../llm/anthropic.js";
 import { batchResults, batchStatus, safeBatchId, submitBatch } from "../llm/anthropic-batch.js";
 import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE, VOCAB_VERSION, TRIGGER_VOCAB_VERSION, TRIGGERS, EXEMPLAR_TERMS } from "../normalize-prompt.js";
@@ -326,6 +327,9 @@ for await (const doc of scopeDocs()) {
 
 // Price the ACTUAL prompts rather than a remembered average, so the bill cannot drift from the
 // request. ~4 chars per token is the usual rough conversion; this is an estimate, not a promise.
+const MANUAL_BY_ID = new Map(loadManualEntries().map((e) => [e.oracleId, e] as const));
+const manualCount = jobs.filter((j) => MANUAL_BY_ID.has(j.oracleId)).length;
+
 let inputTokens = 0;
 let freeCards = 0;
 const INERT_KINDS = new Set(["keyword", "reminder", "level", "modal"]);
@@ -333,10 +337,13 @@ for (const j of jobs) {
   const segmented = segment(j.oracleText ?? "", j.keywords ?? [], j.typeLine ?? "");
   // All-inert cards are answered in code and never reach the model, so they must not be billed.
   if (!segmented.some((c) => !INERT_KINDS.has(c.kind))) { freeCards++; continue; }
+  // Nor is a hand-authored one. The dry run's bill is the thing read before every --run, so a card
+  // that will never be sent must not appear in it.
+  if (MANUAL_BY_ID.has(j.oracleId)) continue;
   const { system, user } = buildRequest(j.name, segmented);
   inputTokens += Math.ceil((system.length + user.length) / 4);
 }
-const billable = jobs.length - freeCards;
+const billable = jobs.length - freeCards - manualCount;
 const outputTokens = billable * EST_OUTPUT_TOKENS;
 const usd = (inputTokens / 1e6) * USD_PER_M_INPUT + (outputTokens / 1e6) * USD_PER_M_OUTPUT;
 
@@ -348,6 +355,7 @@ console.log(CARDS.length
     : `scope: calibration corpus + ${exemplars.length} keyword exemplars (${scope.length} cards)`);
 console.log(`  cards needing normalization: ${jobs.length}${LIMIT ? ` (limited to ${LIMIT})` : ""}`);
 console.log(`  of those, answered in code (no model call): ${freeCards}`);
+if (manualCount) console.log(`  of those, hand-authored in manual-clauses.json: ${manualCount}`);
 if (unresolved.length) console.log(`  unresolved names: ${unresolved.length} (${unresolved.slice(0, 3).join(", ")}...)`);
 console.log(`  model: ${cfg.model} | provider: ${cfg.provider}`);
 console.log(`  est. input ${inputTokens.toLocaleString()} tok, output ~${outputTokens.toLocaleString()} tok`);
@@ -384,7 +392,18 @@ Pass --allow-provider only if you genuinely mean to normalize with ${cfg.model}.
   process.exit(1);
 }
 
-const queue = LIMIT ? jobs.slice(0, LIMIT) : jobs;
+// HAND-AUTHORED CARDS ARE WRITTEN FIRST AND NEVER SENT TO THE MODEL. Free, idempotent, and
+// re-applied on every run -- which is what stops a manual answer being stranded by a
+// NORMALIZE_VERSION bump the way a row inserted straight into Mongo would be. Stamped
+// `model: "manual"` so no coverage figure can quietly start counting authored data as measured.
+const manualJobs = jobs.filter((j) => MANUAL_BY_ID.has(j.oracleId));
+for (const job of manualJobs) {
+  const entry = MANUAL_BY_ID.get(job.oracleId)!;
+  await persistCard(job, manualCard(segment(job.oracleText ?? "", job.keywords ?? [], job.typeLine ?? ""), entry), "manual");
+}
+if (manualJobs.length) console.log(`applied ${manualJobs.length} hand-authored card(s) from manual-clauses.json`);
+
+const queue = (LIMIT ? jobs.slice(0, LIMIT) : jobs).filter((j) => !MANUAL_BY_ID.has(j.oracleId));
 const provider = createProvider({ ...cfg, maxTokens: 3000 });
 
 if (BATCH) {
