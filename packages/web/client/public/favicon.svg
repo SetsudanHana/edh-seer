@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="EDH Seer">
+  <!-- THE MARK, WITH ITS OWN GROUND. LogoMark in the app is transparent and inherits its colour
+       from the page; a favicon renders outside the document, on a tab strip that is light in one
+       browser and dark in the next, so it carries the app's own background as a tile instead.
+       Colours are LITERALS here for the same reason: no CSS custom property reaches this file.
+       Keep them in step with the background and muted tokens in src/index.css.
+
+       An XML comment cannot contain a double hyphen, which is why those tokens are named in prose
+       here rather than written the way CSS writes them. The first draft of this file did write
+       them that way, and every browser refused the image without a word about why.
+
+       BOTH CIRCLES ARE SOLID. The app's mark outlines the larger one, but the same rule that makes
+       it solid below 24px applies with more force here: at a 16px render a ring on this circle is
+       under a pixel and closes into a smudge. Size alone carries the distinction. -->
+  <rect width="32" height="32" rx="7" fill="#0d0912"/>
+  <line x1="11.75" y1="16" x2="15.25" y2="16" stroke="#948ba6" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="8.25" cy="16" r="3.5" fill="#948ba6"/>
+  <circle cx="21.25" cy="16" r="6" fill="#948ba6"/>
+</svg>

@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- SVG only, and deliberately no .ico: every browser this app targets reads an SVG favicon,
+         and the .ico's whole job is a fallback for ones that do not. `theme-color` matches the page
+         background so a mobile browser's chrome does not frame a near-black app in white. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#0d0912" />
     <title>EDH Seer — Commander Deck Analysis</title>
   </head>
   <body>
