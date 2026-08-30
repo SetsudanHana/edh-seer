@@ -10,7 +10,8 @@
     "./faces": "./src/faces.ts",
     "./deck-cards": "./src/deck-cards.ts",
     "./wire-graph": "./src/wire-graph.ts",
-    "./orchestrate": "./src/orchestrate.ts"
+    "./orchestrate": "./src/orchestrate.ts",
+    "./static-lookup": "./src/static-lookup.ts"
   },
   "scripts": {
     "test": "vitest run",

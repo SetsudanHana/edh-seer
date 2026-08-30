@@ -33,9 +33,10 @@ test("the browser-safe subpaths of @edh-seer/data and @edh-seer/matcher bundle w
     `import { faceDeckCards } from "@edh-seer/matcher/faces";`,
     `import { buildDeckCards } from "@edh-seer/matcher/deck-cards";`,
     `import { attachRolesAndArt } from "@edh-seer/matcher/wire-graph";`,
+    `import { StaticLookup } from "@edh-seer/matcher/static-lookup";`,
     `export { resolveNames, normalizeName, docToCard, detectCommanders, parseDecklistText,`,
     `  parseDecklistSections, analyzeDeckStructured, projectDeckGraph, faceDeckCards, buildDeckCards,`,
-    `  attachRolesAndArt };`,
+    `  attachRolesAndArt, StaticLookup };`,
   ].join("\n"));
 
   // ponytail: the entry lives outside the repo tree on purpose (it stands in for a real
