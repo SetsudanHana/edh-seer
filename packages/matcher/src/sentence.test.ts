@@ -14,6 +14,34 @@ describe("effectPhrase — the fallback ladder", () => {
     expect(effectPhrase("drain", "1")).toBe("drains for 1");
   });
 
+  /** REPORTED FROM A REAL DECK: "Samut, the Driving Force + Enduring Courage — When Samut enters,
+   *  Enduring Courage gives ++2/+0/++2/+0". The template was `+${n}/+${n}` over an amount the
+   *  corpus writes as a P/T pair. Measured over the derived corpus: 1,893 pump abilities carry a
+   *  pair, 2 carry a bare number. */
+  test("a pump amount is a P/T delta and goes through as one", () => {
+    expect(effectPhrase("pump", "+2/+0")).toBe("gives +2/+0");
+    expect(effectPhrase("pump", "+1/+1")).toBe("gives +1/+1");
+    // X forms and conditional ones read as English without special-casing either.
+    expect(effectPhrase("pump", "+X/+X")).toBe("gives +X/+X");
+    expect(effectPhrase("pump", "+1/+1 for each creature you control"))
+      .toBe("gives +1/+1 for each creature you control");
+    // The two cards that carry a bare number keep the old reading.
+    expect(effectPhrase("pump", "1")).toBe("gives +1/+1");
+    // An amount with no pair in it cannot be stated, so the sentence stops claiming one.
+    expect(effectPhrase("pump", "X")).toBe("makes your creatures bigger");
+  });
+
+  /** A COST REDUCTION IS ALREADY NEGATIVE: 138 abilities carry `"-1"`, and `costs ${n} less`
+   *  rendered "costs -1 less" — a double negative saying the opposite of the card. */
+  test("a cost reduction never reads as a double negative, and never says less twice", () => {
+    expect(effectPhrase("cost-reduction", "-1")).toBe("costs 1 less");
+    expect(effectPhrase("cost-reduction", "\u22122")).toBe("costs 2 less"); // the Unicode minus, also in the corpus
+    expect(effectPhrase("cost-reduction", "-{1}")).toBe("costs {1} less");
+    expect(effectPhrase("cost-reduction", "{1} less")).toBe("costs {1} less");
+    expect(effectPhrase("cost-reduction", "X is the amount of life you lost this turn"))
+      .toBe("costs less");
+  });
+
   test("rung 2: kind only", () => {
     expect(effectPhrase("draw-card", undefined)).toBe("draws you cards");
   });
