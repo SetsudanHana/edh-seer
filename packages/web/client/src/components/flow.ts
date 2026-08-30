@@ -2,17 +2,16 @@ import type { CardGraph } from "../types.js";
 
 type Edge = CardGraph["edges"][number];
 
-/** Edges kept per node, per hop, strongest first. MEASURED, not guessed: over all 71 calibration
- *  decks (6,224 node-directions on the projected graph), direct fan size runs p50 3 · p90 7 · p95 15
- *  · p99 41 · max 80. At 6 the cap truncates 10.5% of node-directions and the resulting flow has a
- *  worst case of 47 cards; at 8 it truncates 8.5% but the worst case is 59 -- half a 90-card board
- *  lit up, which is the outcome the cap exists to prevent. */
+/** Edges kept per selected card, per direction, strongest first. MEASURED, not guessed: over all 71
+ *  calibration decks (6,224 node-directions on the projected graph), direct fan size runs p50 3 ·
+ *  p90 7 · p95 15 · p99 41 · max 80. At 6 the cap truncates 10.5% of node-directions; the panel
+ *  says so per card ("feeds 32, showing 6") rather than the board quietly drawing a different
+ *  number than the deck contains. */
 export const FLOW_FANOUT_CAP = 6;
 
-/** Total cards a flow may draw, both fans together. A per-node cap cannot bound the tail on its own:
- *  six per node compounds across hops, which is why even a cap of 4 still reaches 37. BFS expands
- *  nearest-first, so this always cuts the FARTHEST ring -- the part of a chain with the weakest
- *  claim on attention. Binds on roughly the top 1% of clicks and never on a typical one (mean 7.7). */
+/** Total cards a flow may draw, every selected card's fans together. One card's fans cannot exceed
+ *  2 x FLOW_FANOUT_CAP, so this binds only on a multi-card selection -- which is exactly where it
+ *  is needed, since selection is additive and nothing else bounds a reader who keeps clicking. */
 export const FLOW_NODE_BUDGET = 40;
 
 export interface FlowEdge { from: string; to: string; dir: "up" | "down"; depth: number }
@@ -26,26 +25,30 @@ export interface Flow {
   /** Every card in either fan, excluding the roots. */
   nodes: Map<string, FlowNode>;
   edges: FlowEdge[];
-  /** Cycles found while walking. Not rendered today; recorded so a later loop detector starts from
-   *  data rather than a rediscovery (spec §7). */
-  cycles: Array<{ nodes: string[]; edges: FlowEdge[] }>;
-  /** Nodes whose fan was cut, and by how much -- keyed by direction as well as id, since a card can
-   *  sit as the root of BOTH walks at once and each has its own fanout to report. Keying by id alone
-   *  let the upstream walk's entry silently overwrite the downstream walk's for the root, so "feeds
-   *  10, shown 6" printed as "8 in total" when the same root also had 8 upstream. */
+  /** Cards whose fan was cut, and by how much -- keyed by direction as well as id, since a card
+   *  has its own fanout in each and each has its own number to report. Keying by id alone let the
+   *  upstream entry silently overwrite the downstream one, so "feeds 10, shown 6" printed as "8 in
+   *  total" when the same card was also fed by 8. */
   truncated: Map<string, { up?: { total: number; shown: number }; down?: { total: number; shown: number } }>;
 }
 
 export interface FlowOptions { fanoutCap?: number; nodeBudget?: number }
 
-/** The flow of events through the selected cards: everything they feed, and everything that feeds
- *  them.
+/** The events a selected card produces and consumes, and the cards on the other end of them.
  *
- *  TWO DIRECTION-PURE WALKS. Downstream follows `from -> to`; upstream follows `to -> from`; neither
- *  consults the other's adjacency. That is the whole feature: measured over six calibration decks, a
- *  walk allowed to turn around reaches 50-76% of a deck by depth 3, against 3-12% for a pure one. A
- *  path that goes forward then backward is not a flow anyway -- it says "these two share a
- *  neighbour", which is not a claim worth drawing. */
+ *  ONE HOP, DELIBERATELY. This walked the graph breadth-first to a budget of 40 cards, and the
+ *  owner's verdict on it was "I can still see too much": at two hops a neighbour brought its OWN
+ *  fan along, so clicking one card lit edges between two cards the reader had not asked about and
+ *  whose relationship the selection said nothing about. A card's other events are suppressed until
+ *  the reader selects it and makes them relevant -- which selection being additive is what makes
+ *  practical, since extending the view is now one click on the card whose events you want next.
+ *
+ *  So an edge is drawn if and only if one of its ends is selected. Two hops are still reachable:
+ *  select both ends.
+ *
+ *  TWO DIRECTION-PURE FANS. Downstream is `from -> to`, upstream is `to -> from`, and a card can
+ *  legitimately sit in both -- it feeds a selected card and is fed by it. That is one node carrying
+ *  two depths, not two nodes. */
 export function computeFlow(edges: readonly Edge[], rootIds: readonly string[], opts: FlowOptions = {}): Flow {
   const roots = new Set(rootIds);
   const fanoutCap = opts.fanoutCap ?? FLOW_FANOUT_CAP;
@@ -60,81 +63,38 @@ export function computeFlow(edges: readonly Edge[], rootIds: readonly string[], 
     (up.get(e.to) ?? up.set(e.to, []).get(e.to)!).push(e);
   }
 
-  const flow: Flow = {
-    roots,
-    nodes: new Map(),
-    edges: [],
-    cycles: [],
-    truncated: new Map(),
-  };
+  const flow: Flow = { roots, nodes: new Map(), edges: [], truncated: new Map() };
 
-  const walk = (adj: Map<string, Edge[]>, dir: "up" | "down"): void => {
-    // ONE WALK FROM ALL ROOTS AT ONCE, not one walk per root merged afterwards, and the difference
-    // is the budget: merging N per-root flows would light up to N x FLOW_NODE_BUDGET cards, so the
-    // fourth click could put 160 nodes on a 100-card board. A shared frontier expands nearest-first
-    // across every root together, so the budget still cuts the farthest ring — which is the part of
-    // any chain with the weakest claim on attention, whichever root it hangs off.
-    const seen = new Set<string>(roots);
-    const parent = new Map<string, string>();
-    let frontier = [...roots];
-    let depth = 1;
-
-    while (frontier.length > 0 && flow.nodes.size < nodeBudget) {
-      const next: string[] = [];
-      for (const id of frontier) {
-        const all = adj.get(id) ?? [];
-        const kept = [...all].sort((a, b) => b.weight - a.weight).slice(0, fanoutCap);
-        if (all.length > kept.length) {
-          const entry = flow.truncated.get(id) ?? {};
-          entry[dir] = { total: all.length, shown: kept.length };
-          flow.truncated.set(id, entry);
-        }
-
-        for (const edge of kept) {
-          const other = dir === "down" ? edge.to : edge.from;
-          const flowEdge: FlowEdge = { from: edge.from, to: edge.to, dir, depth };
-
-          if (seen.has(other)) {
-            // Still a genuine direction-pure edge between two nodes already in this fan (e.g.
-            // A->B, A->C, B->C: B->C reaches C, already seen via A->C) -- draw it before deciding
-            // whether it ALSO closes a loop. Dropping it here used to silently erase a real edge
-            // between two lit cards.
-            flow.edges.push(flowEdge);
-            // A cycle only when `other` is an ANCESTOR of `id` on this walk -- i.e. walking `id`'s
-            // parent chain actually reaches `other`. A node reached a second time via a sibling
-            // path (the B->C case above) is a convergence, not a loop, and must not be recorded
-            // as one.
-            let isCycle = false;
-            for (let at: string | undefined = id; !isCycle && at !== undefined; at = parent.get(at)) {
-              if (at === other) isCycle = true;
-            }
-            if (isCycle) {
-              const loop: string[] = [other];
-              for (let at: string | undefined = id; at !== undefined && at !== other; at = parent.get(at)) {
-                loop.push(at);
-              }
-              flow.cycles.push({ nodes: loop, edges: [flowEdge] });
-            }
-            continue;
-          }
-          if (flow.nodes.size >= nodeBudget) break;
-
-          seen.add(other);
-          parent.set(other, id);
-          const node = flow.nodes.get(other) ?? {};
-          if (dir === "down") node.downstreamDepth = depth;
-          else node.upstreamDepth = depth;
-          flow.nodes.set(other, node);
-          flow.edges.push(flowEdge);
-          next.push(other);
-        }
+  const fanOut = (adj: Map<string, Edge[]>, dir: "up" | "down"): void => {
+    for (const root of roots) {
+      const all = adj.get(root) ?? [];
+      const kept = [...all].sort((a, b) => b.weight - a.weight).slice(0, fanoutCap);
+      if (all.length > kept.length) {
+        const entry = flow.truncated.get(root) ?? {};
+        entry[dir] = { total: all.length, shown: kept.length };
+        flow.truncated.set(root, entry);
       }
-      frontier = next;
-      depth++;
+
+      for (const edge of kept) {
+        const other = dir === "down" ? edge.to : edge.from;
+        // THE EDGE IS ALWAYS RECORDED, even when the card on the other end is another selected one
+        // or is over budget. It touches something the reader selected, which is the whole test for
+        // whether it belongs on screen -- and an edge between two selected cards is the single most
+        // deliberate thing a reader can ask this board for.
+        flow.edges.push({ from: edge.from, to: edge.to, dir, depth: 1 });
+        // Roots draw as roots and are not listed as fan members; anything else joins the fan, and
+        // a card already in the other direction's fan KEEPS that depth rather than losing it.
+        if (roots.has(other)) continue;
+        if (!flow.nodes.has(other) && flow.nodes.size >= nodeBudget) continue;
+        const node = flow.nodes.get(other) ?? {};
+        if (dir === "down") node.downstreamDepth = 1;
+        else node.upstreamDepth = 1;
+        flow.nodes.set(other, node);
+      }
     }
   };
 
-  walk(down, "down");
-  walk(up, "up");
+  fanOut(down, "down");
+  fanOut(up, "up");
   return flow;
 }

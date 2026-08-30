@@ -1596,23 +1596,37 @@ describe("flow view", () => {
   // reported it contradicting the panel -- "Creating a token 3" on a card that creates nothing, and
   // "does not reconcile: the rows whose sentences say 'makes a token' carry no such chip". Saying
   // how much of the flow is indirect is what makes the two lists reconcilable.
-  test("the per-card row says how many of its pairs are reached through the card", () => {
-    const calls: string[] = [];
-    // R -> M -> F: the M->F edge is in R's flow and touches R at neither end.
-    // Take the canvas from `frames`, as every other probe test does: querying the DOM for it loses
-    // the typed handle and the probe's own node type with it.
-    const { canvas } = frames(graphOf(
+  // A NEIGHBOUR'S OWN EDGES STAY DARK UNTIL THE READER SELECTS IT. Owner-reported: "if I click one
+  // node I can still see too much" -- the flow walked two hops, so selecting R drew the M->F edge,
+  // a claim about two cards R has nothing to do with. The suppressed edge is not gone; selecting M
+  // is what makes it relevant, which is the whole reason selection became additive.
+  test("selecting a card does not light its neighbour's other edges, and selecting the neighbour does", () => {
+    const graph = graphOf(
       [card({ id: "R" }), card({ id: "M" }), card({ id: "F" })],
       [
         { from: "R", to: "M", weight: 2, tags: ["enters:creature"], reasonTexts: ["R feeds M"] },
         { from: "M", to: "F", weight: 2, tags: ["cast:spell"], reasonTexts: ["M feeds F"] },
       ],
-    ), calls);
+    );
+    const { canvas } = frames(graph);
     const probe = canvas.__graphProbe!();
-    const node = probe.find((n) => n.id === "R")!;
-    act(() => { probe.endGesture({ type: "mouseup", clientX: node.x, clientY: node.y }); });
-    expect(document.body.textContent).toContain("Card pairs in this card's flow");
-    expect(screen.getByTestId("flow-indirect-note").textContent).toContain("1 reached through it");
+    const at = (id: string) => {
+      const n = probe.find((p) => p.id === id)!;
+      return { type: "mouseup" as const, clientX: n.x, clientY: n.y };
+    };
+
+    act(() => { probe.endGesture(at("R")); });
+    // The flow legend names the events the board LIT. R's own edge carries `enters`; the M->F edge
+    // carries `cast`, and naming it here would mean it had been drawn.
+    // The flow rows are the ones carrying a `data-value` inside the legend group; the paint rows
+    // beside them describe the CURRENT PAINT MODE (card type here) and never name an event.
+    const legend = () => [...screen.getByTestId("paint-legend").querySelectorAll("[data-value]")]
+      .map((el) => el.textContent ?? "").join(" ");
+    expect(legend()).toContain(eventLabel("enters"));
+    expect(legend()).not.toContain(eventLabel("cast"));
+
+    act(() => { probe.endGesture(at("M")); });
+    expect(legend()).toContain(eventLabel("cast"));
   });
 
   // A COUNT OVER THE VISIBLE BOARD MUST NOT CLAIM TO BE A COUNT OVER THE DECK. Lands are hidden by
