@@ -13,8 +13,9 @@ interface CardFile {
   combos: ComboDoc[];
 }
 
-/** Bump on a shape change to the files under `<baseUrl>/cards/` or `token-tags.json` — an old
- *  cached response under the previous name is simply never read again rather than served stale. */
+/** Bump on a shape change to the files under `<baseUrl>/cards/`, `token-tags.json` or
+ *  `token-art.json` — an old cached response under the previous name is simply never read again
+ *  rather than served stale. */
 const CACHE_NAME = "edh-seer-cards-v1";
 
 /** The client's data plane: `CardLookup` + `CardTagsLookup` + the two token facts
@@ -31,6 +32,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
   private readonly byId = new Map<string, CardTags | null>();
   private readonly combos: ComboDoc[] = [];
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
+  private tokenArtPromise: Promise<Record<string, string>> | null = null;
 
   constructor(
     private readonly baseUrl: string,
@@ -81,24 +83,27 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     return this.byId.get(oracleId) ?? null;
   }
 
-  /** NOT SHIPPED BY THE BUILD, SO THIS IS ALWAYS EMPTY TODAY. `build-static.ts` writes
-   * `token-tags.json` from `loadTokenTags`'s resolved `printingId -> CardTags` map, and neither
-   * that map nor the `CardTags` shape carries an `artCrop` — the `tokens` collection's own field
-   * the Mongo path's `tokenArt` reads never made it into a static artifact. Wired against
-   * `token-tags.json` anyway, defensively: if that file grows an `artCrop` per entry, this starts
-   * returning real art with no further code change, rather than needing a second endpoint
-   * invented later. A missing answer here is the correct failure direction (CLAUDE.md: "a silent
-   * wrong answer is worse than a missing one") — a token node simply renders with no art crop,
-   * exactly as it already does for any token this build has no printing id for. */
+  /** Reads `token-art.json` — `{ [oracleId]: artCrop }` over every token the `tokens` collection
+   * carries art for, written by `build-static.ts` from the SAME documents `loadTokenTags` reads
+   * for `token-tags.json` (a `CardTags` resolver, which carries no art). Filtered to the requested
+   * ids, mirroring the Mongo path's `{_id: {$in: oracleIds}}, {projection: {artCrop: 1}}` — an id
+   * with no art (or not in the file at all) is simply absent from the returned Map, never
+   * present with `undefined`. */
   async tokenArt(oracleIds: string[]): Promise<Map<string, string>> {
-    const byPrintingId = await this.loadTokenTagsFile();
+    const byOracleId = await this.loadTokenArtFile();
     const out = new Map<string, string>();
-    const wanted = new Set(oracleIds);
-    for (const tags of Object.values(byPrintingId)) {
-      const art = (tags as CardTags & { artCrop?: string }).artCrop;
-      if (art && wanted.has(tags.oracleId)) out.set(tags.oracleId, art);
+    for (const id of oracleIds) {
+      const art = byOracleId[id];
+      if (art) out.set(id, art);
     }
     return out;
+  }
+
+  private loadTokenArtFile(): Promise<Record<string, string>> {
+    return (this.tokenArtPromise ??= (async () => {
+      const res = await this.fetchCached("/token-art.json");
+      return res.ok ? (await res.json() as Record<string, string>) : {};
+    })());
   }
 
   /** Same resolver shape `loadTokenTags(db)` produces on the Mongo path, over the one file the

@@ -50,3 +50,15 @@ test("allCombos before prefetch is empty, not stale", async () => {
   const l = new StaticLookup("/static", fetchOf({}));
   expect(await l.allCombos()).toEqual([]);
 });
+
+/** Pins the wiring against silently regressing to the empty Map `tokenArt` returned before
+ *  `build-static.ts` grew `token-art.json` — a known id must resolve to its real crop, and an
+ *  unknown id must be OMITTED rather than present with `undefined`. */
+test("tokenArt reads token-art.json, filtered to the requested ids", async () => {
+  const l = new StaticLookup("/static", fetchOf({
+    "/static/token-art.json": { "oracle-goblin": "https://example/goblin.jpg" },
+  }));
+  const art = await l.tokenArt(["oracle-goblin", "oracle-unknown"]);
+  expect(art.get("oracle-goblin")).toBe("https://example/goblin.jpg");
+  expect(art.has("oracle-unknown")).toBe(false);
+});

@@ -1,6 +1,7 @@
 /** Writes one JSON file per card name under `<out>/cards/`, each carrying the card, its derived
  *  tags and every combo anchored on it (see `build-static-core.ts`), plus the resolved token-tags
- *  map the browser needs for token nodes. Free — Mongo reads only, no model call.
+ *  map and the token-art map the browser needs for token nodes. Free — Mongo reads only, no model
+ *  call.
  *
  *  THE CLI IS SPLIT FROM ITS LOGIC ON PURPOSE: importing a bin RUNS it (the recorded
  *  `isMoxfieldUrl` trap), so everything testable lives in `build-static-core.ts` and this file is
@@ -88,7 +89,9 @@ for (const [name, winner] of winners) {
 }
 
 const resolveToken = await loadTokenTags(store.db);
-const tokens = await store.db.collection<{ printingIds: string[] }>("tokens").find({}).toArray();
+const tokens = await store.db.collection<{ _id: string; artCrop?: string; printingIds: string[] }>(
+  "tokens",
+).find({}).toArray();
 const tokenTags: Record<string, CardTags> = {};
 for (const t of tokens) {
   for (const pid of t.printingIds) {
@@ -98,11 +101,27 @@ for (const t of tokens) {
 }
 writeFileSync(join(outDir, "token-tags.json"), JSON.stringify(tokenTags));
 
+// KEYED ON THE COLLECTION'S OWN `_id` — that IS the oracle id, and `AnalysisSources.tokenArt`
+// takes oracle ids on both sides (`orchestrate.ts` does the ONLY node-id translation, on purpose,
+// so neither caller has to). Small enough to ship whole (995 tokens): sharding it the way `cards/`
+// is sharded would buy nothing and cost a second lookup for something the browser wants in one
+// shot alongside `token-tags.json`.
+//
+// FOUND MISSING 2026-08-30, after Task 5 shipped `StaticLookup.tokenArt` against what
+// `build-static.ts` actually wrote and it was an empty `Map` on every deck: this bin called
+// `loadTokenTags` for the `CardTags` resolver and never touched the SAME `tokens` documents' own
+// `artCrop` field, which the Mongo path's `tokenArt` reads directly
+// (`{_id: {$in: oracleIds}}, {projection: {artCrop: 1}}`).
+const tokenArt: Record<string, string> = {};
+for (const t of tokens) if (t.artCrop) tokenArt[t._id] = t.artCrop;
+writeFileSync(join(outDir, "token-art.json"), JSON.stringify(tokenArt));
+
 await store.close();
 
 let totalBytes = 0;
 for (const f of readdirSync(cardsDir)) totalBytes += statSync(join(cardsDir, f)).size;
 totalBytes += statSync(join(outDir, "token-tags.json")).size;
+totalBytes += statSync(join(outDir, "token-art.json")).size;
 
 const actualFiles = readdirSync(cardsDir).length;
 console.log(`cards: ${cards.length}`);
@@ -117,4 +136,5 @@ console.log(
     (parityMismatches.length ? `; MISMATCHES: ${parityMismatches.join(", ")}` : ""),
 );
 console.log(`token-tags entries: ${Object.keys(tokenTags).length}`);
+console.log(`token-art entries: ${Object.keys(tokenArt).length} (of ${tokens.length} tokens)`);
 console.log(`bytes on disk: ${totalBytes} (${(totalBytes / 1024 / 1024).toFixed(1)} MB)`);
