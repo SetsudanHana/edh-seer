@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { anchorOf, comboIndex, cardFileName } from "./build-static-core.js";
+import { anchorOf, comboIndex, SHARD_COUNT, shardOf } from "./build-static-core.js";
 
 /** THE ANCHOR IS WHY THE INDEX IS EXACT RATHER THAN APPROXIMATE. A combo is contained in a deck
  *  only if EVERY one of its cards is present, so it can only ever match if its alphabetically-first
@@ -24,12 +24,41 @@ test("every combo lands in exactly one bucket", () => {
   expect([...idx.values()].flat()).toHaveLength(combos.length);
 });
 
-/** A CARD NAME IS NOT A FILENAME. Slashes in a split card's name would write outside the output
- *  directory, and a colon or a question mark is illegal on some filesystems. Percent-encoding is
- *  what `fetch` does to a URL anyway, so the client needs no separate rule. */
-test("a name with a slash, a comma and an apostrophe survives the round trip as one path segment", () => {
-  const n = cardFileName("fell the profane // fell mire");
-  expect(n).not.toContain("/");
-  expect(decodeURIComponent(n)).toBe("fell the profane // fell mire");
-  expect(cardFileName("krenko, mob boss")).toBe(encodeURIComponent("krenko, mob boss"));
+/** A CARD NAME IS NOT A FILENAME, and the previous layout learned that the expensive way: it named
+ *  each file `encodeURIComponent(name)`, so `sol ring` lived in a file literally called
+ *  `sol%20ring.json` — and a static host decodes a request path once before matching it, looked for
+ *  `sol ring.json`, and served a 404. A shard name is hex and survives any number of decodes. */
+test("a shard name is four hex digits, whatever the card name contains", () => {
+  for (const name of ["fell the profane // fell mire", "krenko, mob boss", "ach! hans, run!", "æther vial", "question elemental?"]) {
+    const shard = shardOf(name);
+    expect(shard).toMatch(/^[0-9a-f]{4}$/);
+    expect(decodeURIComponent(shard)).toBe(shard);
+    expect(shard).not.toContain("/");
+  }
+});
+
+test("the same name always lands in the same shard, and the shard is inside the count", () => {
+  expect(shardOf("krenko, mob boss")).toBe(shardOf("krenko, mob boss"));
+  for (let i = 0; i < 2000; i++) {
+    expect(parseInt(shardOf(`card ${i}`), 16)).toBeLessThan(SHARD_COUNT);
+  }
+});
+
+/** THE POINT OF THE COUNT IS THE HOST'S CAP: Cloudflare's free tier rejects a deployment over
+ *  20,000 files, and one file per card name was 35,713. A test on the constant is what stops it
+ *  being raised past the cap by someone who only sees the byte cost. */
+test("the shard count stays under the 20,000-file free-tier cap", () => {
+  expect(SHARD_COUNT).toBe(16_384);
+  expect(SHARD_COUNT).toBeLessThan(20_000);
+});
+
+/** A HASH THAT PILES NAMES INTO ONE SHARD COSTS EVERY DECK THAT TOUCHES IT. This is not a
+ *  uniformity proof; it is the cheap check that would have failed loudly if the mask, the wrap or
+ *  the seed were wrong -- e.g. dropping `Math.imul` for `*`, which loses precision past 2^53 and
+ *  collapses the low bits. */
+test("spreads names across shards rather than piling them into a few", () => {
+  const names = Array.from({ length: 20_000 }, (_, i) => `card number ${i}`);
+  const used = new Set(names.map(shardOf));
+  // 20,000 names into 16,384 shards fills roughly 1 - e^-1.22 = 70% of them under a uniform hash.
+  expect(used.size).toBeGreaterThan(SHARD_COUNT * 0.6);
 });

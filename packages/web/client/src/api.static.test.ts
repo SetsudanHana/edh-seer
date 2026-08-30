@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { analyzeDeckStatic } from "./api.static.js";
+import { shardOf } from "@edh-seer/matcher/static-lookup";
 
 const card = (id: string, name: string, typeLine: string, colorIdentity: string[]) => ({
   card: { _id: id, name, typeLine, oracleText: "", keywords: [], colors: colorIdentity,
@@ -8,6 +9,19 @@ const card = (id: string, name: string, typeLine: string, colorIdentity: string[
   tags: null,
   combos: [],
 });
+
+/** Shard files the way `build-static.ts` writes them and `StaticLookup` asks for them. The test
+ *  names CARDS and the layout is derived, so this cannot drift from `shardOf` — the first version
+ *  hard-coded `/static/cards/krenko.json` and went red the day the layout changed, which is the
+ *  right kind of red but only once. */
+function shardsOf(cards: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, Record<string, unknown>> = {};
+  for (const [name, entry] of Object.entries(cards)) {
+    const path = `/static/cards/${shardOf(name)}.json`;
+    out[path] = { ...(out[path] ?? {}), [name]: entry };
+  }
+  return out;
+}
 
 function fetchOf(files: Record<string, unknown>): typeof fetch {
   return (async (url: string) => {
@@ -23,8 +37,10 @@ function fetchOf(files: Record<string, unknown>): typeof fetch {
  *  output to the next one. */
 test("a deck analyses end to end against static files alone", async () => {
   const f = fetchOf({
-    "/static/cards/krenko.json": card("id-krenko", "Krenko", "Legendary Creature — Goblin", ["R"]),
-    "/static/cards/mountain.json": card("id-mountain", "Mountain", "Basic Land — Mountain", []),
+    ...shardsOf({
+      krenko: card("id-krenko", "Krenko", "Legendary Creature — Goblin", ["R"]),
+      mountain: card("id-mountain", "Mountain", "Basic Land — Mountain", []),
+    }),
     "/static/token-tags.json": {},
   });
   const r = await analyzeDeckStatic("Krenko\n\nMountain", undefined, "/static", f);
@@ -38,7 +54,7 @@ test("a deck analyses end to end against static files alone", async () => {
  *  null, and the report still has to render for the rest of the deck. */
 test("a card with no file lands in missing and the rest still analyses", async () => {
   const f = fetchOf({
-    "/static/cards/krenko.json": card("id-krenko", "Krenko", "Legendary Creature — Goblin", ["R"]),
+    ...shardsOf({ krenko: card("id-krenko", "Krenko", "Legendary Creature — Goblin", ["R"]) }),
     "/static/token-tags.json": {},
   });
   const r = await analyzeDeckStatic("Krenko\n\nNot A Real Card", undefined, "/static", f);

@@ -14,12 +14,13 @@ const staticOut = {
     const root = join(process.cwd().replace(/\/packages\/.*$/, ""), "static-out");
     server.middlewares.use((req, res, next) => {
       if (!req.url?.startsWith("/static/")) return next();
-      // NOT decoded: `cardFileName` (`build-static-core.ts`) writes each file's name as
-      // `encodeURIComponent(normalizedName)` and the client fetches that SAME encoded string as
-      // the URL segment (`StaticLookup.prefetch`) -- so the raw request-target already matches
-      // the on-disk filename character for character (`sol%20ring.json`, literal `%`,`2`,`0`).
-      // Decoding here turns `%20` back into a real space, which is not a file that exists.
-      const file = join(root, req.url.slice("/static/".length).split("?")[0]);
+      // DECODED, LIKE EVERY REAL HOST. This middleware used to skip the decode to match a layout
+      // that wrote `sol%20ring.json` as a literal filename -- an arrangement only this middleware
+      // and the parity bin's filesystem shim agreed with, while Pages, R2, nginx and even
+      // `python3 -m http.server` decode a request path once before matching it and served a 404 for
+      // every card. Shard names are hex now, so decoding is a no-op on them and this line no longer
+      // has an opinion that can be wrong.
+      const file = join(root, decodeURIComponent(req.url.slice("/static/".length).split("?")[0]));
       // A 404 IS THE ANSWER, not an error: `StaticLookup` turns it into `findByName` -> null, which
       // `resolveNames` turns into `missing`. Serving a 500 here would break that contract.
       if (!file.startsWith(root) || !existsSync(file)) { res.statusCode = 404; return res.end("{}"); }
