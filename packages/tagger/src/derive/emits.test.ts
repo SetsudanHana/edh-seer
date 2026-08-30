@@ -42,6 +42,36 @@ test("manifest enters the battlefield without being marked a token", () => {
   expect(e[0].subject.token).not.toBe(true);
 });
 
+/** A CARD WITH A LAND TYPE IS A LAND (CR 205.3i). Farseek's emit named four basic land types and no
+ *  card type, and `subjectMatches` resolves a typeless subtype through the CARD hierarchy — which is
+ *  built from real type lines and so answers that a basic land type can belong to a CREATURE, because
+ *  Dryad Arbor is "Land Creature — Forest Dryad". The board therefore claimed "when a plains enters
+ *  thanks to Farseek, Enduring Courage gives +2/+0", off a trigger that watches creatures.
+ *  Owner-reported. Measured: 152 emits across 116 cards named only land subtypes; 187 pairs and 241
+ *  reasons across the 71 calibration decks were resting on them. */
+test("an emit that names only land types says it is a land", () => {
+  const e = actionEmits({ verb: "put", object: "a Plains, Island, Swamp, or Mountain card", toZone: "battlefield" });
+  expect(e[0].subject.type).toBe("land");
+  expect(e[0].subject.subtype).toEqual(["plains", "island", "swamp", "mountain"]);
+});
+
+/** THE LIMIT IS THE POINT. The same fill from a creature subtype would be wrong: a Kindred card
+ *  carries a creature subtype without being a creature, so `elf` does not imply `creature` the way
+ *  `plains` implies `land`. There is no Kindred Land — a land type appears on lands and nowhere
+ *  else — which is what makes one direction safe and the other not. */
+test("a creature subtype is left untyped, because a Kindred card carries one without being a creature", () => {
+  const e = actionEmits({ verb: "create", object: "a 1/1 green Elf Warrior creature token" });
+  const elfOnly = actionEmits({ verb: "put", object: "an Elf card", toZone: "battlefield" });
+  expect(e[0].subject.type).toBe("creature"); // authored by the text itself, not filled
+  expect(elfOnly[0].subject.type).toBeUndefined();
+});
+
+/** An AUTHORED type wins: the fill only ever supplies what the sentence did not say. */
+test("a stated type is never overwritten by the land fill", () => {
+  const e = actionEmits({ verb: "put", object: "a basic land card", toZone: "battlefield" });
+  expect(e[0].subject.type).toBe("land");
+});
+
 test("life change emits with the affected player as subject", () => {
   expect(actionEmits({ verb: "lose-life", object: "each opponent" })[0])
     .toEqual({ verb: "lose-life", subject: { control: "opp", token: null, scope: "each" } });
