@@ -106,6 +106,53 @@ test("allCombos before prefetch is empty, not stale", async () => {
   expect(await l.allCombos()).toEqual([]);
 });
 
+/** THE JODAH DEFECT. A decklist line can name an alternate printing -- the corpus maps
+ *  `spongebob squarepants` to Jodah, the Unifier and six names to Command Tower -- and
+ *  `buildDeckCards` then re-looks the resolved card up by its CANONICAL name to recover its oracle
+ *  id. That name was never prefetched, so the map missed and the card came back UNTAGGED: it
+ *  resolved, it counted as a matched line, and it silently formed no edges. Reported from a real
+ *  deck as "98 of 100 cards read" with the commander among the unread.
+ *
+ *  Mongo re-queries and never had the problem, and every calibration deck is written in canonical
+ *  names, so 71/71 parity is silent on it. This test is the instrument that was missing. */
+test("a card fetched under one of its names answers to its canonical name too", async () => {
+  const jodah = {
+    card: { ...CARD.card, _id: "id-jodah", name: "Jodah, the Unifier",
+      searchNames: ["jodah the unifier", "spongebob squarepants", "warrior of light"] },
+    tags: { oracleId: "id-jodah", abilities: [] },
+    combos: [],
+  };
+  const l = new StaticLookup("/static", fetchOf(shardsOf({ "spongebob squarepants": jodah })));
+  await l.prefetch(["spongebob squarepants"]);
+
+  // The line the reader wrote resolves, as it always did.
+  expect((await l.findByName("spongebob squarepants"))?.name).toBe("Jodah, the Unifier");
+  // And so does the name `buildDeckCards` asks for, WITHOUT a second request -- which is what
+  // carries the tags through to the report.
+  expect((await l.findByName("jodah the unifier"))?._id).toBe("id-jodah");
+  expect((await l.findOne("id-jodah"))?.oracleId).toBe("id-jodah");
+});
+
+/** AN ALIAS MUST NOT PRE-EMPT THE BUILD'S OWN ANSWER. 53 names in the corpus resolve to more than
+ *  one card, and `build-static.ts` re-queries each of them through the live `findOne` so the file
+ *  holds the same winner the Mongo path picks. A card learned incidentally must never shadow that.
+ */
+test("an explicitly fetched name wins over an alias learned from another card", async () => {
+  const claimant = {
+    card: { ...CARD.card, _id: "id-claimant", name: "Claimant", searchNames: ["claimant", "smelt"] },
+    tags: null, combos: [],
+  };
+  const winner = {
+    card: { ...CARD.card, _id: "id-winner", name: "Smelt", searchNames: ["smelt"] },
+    tags: null, combos: [],
+  };
+  const l = new StaticLookup("/static", fetchOf(shardsOf({ claimant, smelt: winner })));
+  await l.prefetch(["claimant"]);
+  expect((await l.findByName("smelt"))?._id).toBe("id-claimant"); // only the alias is known so far
+  await l.prefetch(["smelt"]);
+  expect((await l.findByName("smelt"))?._id).toBe("id-winner"); // the build's own answer replaces it
+});
+
 /** Pins the wiring against silently regressing to the empty Map `tokenArt` returned before
  *  `build-static.ts` grew `token-art.json` — a known id must resolve to its real crop, and an
  *  unknown id must be OMITTED rather than present with `undefined`. */
