@@ -34,10 +34,19 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
   private tokenArtPromise: Promise<Record<string, string>> | null = null;
 
+  private readonly fetchImpl: typeof fetch;
+
+  /** `fetchImpl` is BOUND here, not stored bare: `fetchCached` calls it as `this.fetchImpl(url)`, a
+   *  property access, and native `fetch` brand-checks its receiver — called through any other
+   *  object it throws `Illegal invocation`. `new StaticLookup(baseUrl)` (the default parameter)
+   *  hands it the bare global, which is exactly the shape that breaks. Node's global `fetch` does
+   *  NOT enforce this check, which is why no unit test caught it — only a real browser does. */
   constructor(
     private readonly baseUrl: string,
-    private readonly fetchImpl: typeof fetch = fetch,
-  ) {}
+    fetchImpl: typeof fetch = fetch,
+  ) {
+    this.fetchImpl = fetchImpl.bind(globalThis);
+  }
 
   /** Reads-through the Cache API when it exists (a real browser), and falls straight to
    * `fetchImpl` when it does not (jsdom, a plain `fetch` shim, Node) — so this module works

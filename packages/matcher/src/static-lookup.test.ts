@@ -62,3 +62,26 @@ test("tokenArt reads token-art.json, filtered to the requested ids", async () =>
   expect(art.get("oracle-goblin")).toBe("https://example/goblin.jpg");
   expect(art.has("oracle-unknown")).toBe(false);
 });
+
+/** THE DEFECT THIS PINS: a real browser's `fetch` brand-checks its receiver, so calling it as
+ *  `this.fetchImpl(url)` (a property access) with the BARE global assigned throws
+ *  `Illegal invocation` -- Node's global `fetch` does not enforce this, which is why every earlier
+ *  test above passed against the bug and none of them could have caught it. This stub simulates
+ *  the real browser's check by throwing unless invoked with `this === globalThis`, and constructs
+ *  `StaticLookup` with the ZERO-ARGUMENT default -- `new StaticLookup(baseUrl)`, the exact call the
+ *  type signature invites and the one that broke in `api.static.ts`'s live-browser check. */
+test("the default fetchImpl survives a native receiver brand-check", async () => {
+  const original = globalThis.fetch;
+  const brandChecked = function (this: unknown, url: string) {
+    if (this !== globalThis) throw new TypeError("Failed to execute 'fetch' on 'Window': Illegal invocation");
+    return Promise.resolve({ ok: true, status: 200, json: async () => CARD } as Response);
+  } as unknown as typeof fetch;
+  globalThis.fetch = brandChecked;
+  try {
+    const l = new StaticLookup("/static"); // no fetchImpl argument -- the constructor default
+    await l.prefetch(["krenko"]);
+    expect((await l.findByName("krenko"))?.name).toBe("Krenko");
+  } finally {
+    globalThis.fetch = original;
+  }
+});

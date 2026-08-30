@@ -13,12 +13,9 @@ export async function analyzeDeckStatic(
   const sections = parseDecklistSections(decklist);
   const commanderNames = commanders?.trim() ? parseDecklistText(commanders) : sections.commanders;
 
-  // BOUND, not the bare reference: `StaticLookup` calls it as `this.fetchImpl(url)`, and native
-  // `fetch` requires its receiver to be the real global object -- called through a property access
-  // on any other object it rejects with "Illegal invocation". Only found by running this in a real
-  // browser: jsdom's fetch and every unit test's mock tolerate a detached receiver, so nothing
-  // short of Step 6 could have caught it.
-  const lookup = new StaticLookup(baseUrl, fetchImpl.bind(globalThis));
+  // `StaticLookup` binds `fetchImpl` itself now (see its constructor) -- the receiver-check defect
+  // this fixed lives at the one place every caller routes through, not at each call site.
+  const lookup = new StaticLookup(baseUrl, fetchImpl);
   await lookup.prefetch([...commanderNames, ...sections.deck].map(normalizeName));
 
   const sources: AnalysisSources = {
