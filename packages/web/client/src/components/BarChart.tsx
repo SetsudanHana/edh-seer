@@ -134,7 +134,7 @@ export function BarChart({
                 {...{
                   "data-testid": "bar",
                   d: columnPath(mid - barW / 2, y(b.value), barW, h),
-                  fill: "var(--accent)", title: b.title,
+                  fill: "var(--fill)", title: b.title,
                 }}
               >
                 <title>{b.title}</title>

@@ -3,9 +3,7 @@ import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
 import { ReportView } from "./components/ReportView.js";
-import { ColorIdentityPicker } from "./components/ColorIdentityPicker.js";
-import { useAccentIdentity } from "./lib/use-accent-identity.js";
-import { identityGradient } from "./lib/color-identity.js";
+import { Logotype } from "./components/Logotype.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { diffRuns, loadLastRun, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
 
@@ -19,7 +17,6 @@ export default function App() {
   // What the last Re-analyze moved. Held in state rather than derived on render because it is a
   // fact about a TRANSITION -- once the snapshot is written, the same `data` no longer implies it.
   const [diff, setDiff] = useState<RunDiff | null>(null);
-  const { manualPick, setManualPick, active } = useAccentIdentity(data?.commanderColorIdentity);
 
   async function onAnalyze() {
     setLoading(true);
@@ -56,13 +53,14 @@ export default function App() {
         /*
         THESIS: The category standard, taken on purpose — a plain dark analytics
         dashboard, not an illustrated MTG-card pastiche or a cross-domain metaphor.
-        OWN-WORLD: near-black graphite, off-white text, one identity-driven accent
-        (client/src/lib/color-identity.ts); Inter throughout, JetBrains Mono for
-        every number/label; flat, border-driven surfaces; ranked data reads as tables.
+        OWN-WORLD: a near-black VIOLET ground, off-white text with the same cast, one
+        FIXED magenta accent that no deck can change (DESIGN.md v2); Inter throughout,
+        JetBrains Mono for every number/label; flat, border-driven surfaces; ranked
+        data reads as tables.
         STORY: paste a decklist, get a dense report that reads like the reference
         tools this player already trusts daily.
-        FIRST VIEWPORT: wordmark + color-identity picker, input panel, then (post-
-        analysis) tabbed report — stat tiles, a ranked card table, archetypes, combos.
+        FIRST VIEWPORT: wordmark, input panel, then (post-analysis) tabbed report —
+        stat tiles, a ranked card table, archetypes, combos.
         FORM: canon, chosen over two rolled alternates (seed-catalog, tournament-
         standings) at the user's decision; craft bar = Scryfall, Archidekt/Moxfield.
         Seed chain: 508515db -> 913b3f8c -> canon.
@@ -70,15 +68,21 @@ export default function App() {
         finish review, the verdict, and DESIGN.md.
         */
       }
+      {/* The picker that used to sit at the right of this row, and the identity gradient that ran
+          under it, are gone with v2: they let the deck repaint the chrome, which reads as a
+          decoration the user cannot switch off and says nothing a mana pip does not say better.
+          The rule under the header is now a plain --border hairline, the same one every panel
+          uses, so the header stops being the one element with its own colour system. */}
       <header className="flex flex-col gap-3">
         <div className="flex items-end justify-between gap-4 flex-wrap">
           <div className="flex items-baseline gap-3">
-            <h1 className="text-2xl font-bold tracking-tight">EDH Seer</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              <Logotype />
+            </h1>
             <span className="text-sm text-(--muted)">Oracle-level deck reading</span>
           </div>
-          <ColorIdentityPicker value={manualPick} onChange={setManualPick} />
         </div>
-        <div className="h-[3px] rounded-full" style={{ background: identityGradient(active) }} />
+        <div className="h-px bg-(--border)" />
       </header>
       <DeckInput
         commanders={commanders}

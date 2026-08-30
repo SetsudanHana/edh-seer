@@ -34,7 +34,7 @@ function Figure({ f }: { f: Finding }) {
       <span className="text-2xl font-semibold stat-num leading-none">{f.figure}</span>
       <span className="eyebrow">{f.figureLabel}</span>
       <span aria-hidden="true" className="hidden sm:block h-1 w-16 rounded-full bg-(--surface-tertiary) overflow-hidden">
-        <span className="block h-full bg-(--accent)" style={{ width: `${Math.round(Math.min(1, f.filled) * 100)}%` }} />
+        <span className="block h-full bg-(--fill)" style={{ width: `${Math.round(Math.min(1, f.filled) * 100)}%` }} />
       </span>
     </div>
   );

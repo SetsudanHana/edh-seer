@@ -93,7 +93,7 @@ export function CoveragePanel({ coverage, resolved, total, commanderUnread }: {
           {/* The share as a bar, because "52 of 100" and "97 of 100" are different situations and a
             *  reader scanning past the number should still see which one this is. */}
           <span aria-hidden="true" className="block h-1.5 max-w-[330px] rounded-full bg-(--surface-tertiary) overflow-hidden">
-            <span className="block h-full rounded-full bg-(--accent)" style={{ width: `${Math.round(share * 100)}%` }} />
+            <span className="block h-full rounded-full bg-(--fill)" style={{ width: `${Math.round(share * 100)}%` }} />
           </span>
           {/* THE COMMANDER IS NAMED, ALWAYS, when it is one of the unread. Everything below — the
             *  theme, the synergy score, the graph — is then computed without the card the deck is
