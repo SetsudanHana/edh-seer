@@ -4,6 +4,7 @@
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { counterKindOf, parseSubject, COUNT_PHRASE } from "./subject.js";
+import { LAND_SUBTYPES } from "./subtypes.js";
 import { tokenTypeFor } from "./token-types.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
@@ -244,6 +245,23 @@ export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
     && typeof subject.subtype === "string"
     ? tokenTypeFor(subject.subtype)
     : undefined;
+  // A CARD WITH A LAND TYPE IS A LAND (CR 205.3i), and an emit that named only the subtype left the
+  // type to be guessed downstream. `subjectMatches` resolves a typeless subtype through the CARD
+  // hierarchy, which is built from real type lines and therefore answers that a basic land type can
+  // belong to a CREATURE — Dryad Arbor is "Land Creature — Forest Dryad". So Farseek's "search for a
+  // Plains, Island, Swamp or Mountain card, put it onto the battlefield" satisfied Enduring
+  // Courage's "whenever another CREATURE you control enters". Owner-reported off the board.
+  //
+  // LAND TYPES ONLY, AND THAT LIMIT IS THE POINT. The same fill from a CREATURE subtype would be
+  // wrong: a Kindred card carries a creature subtype without being a creature, so `elf` does not
+  // imply `creature` the way `plains` implies `land`. There is no Kindred Land — a land type appears
+  // on lands and nowhere else — which is what makes this direction safe and the other not.
+  const subtypeList = Array.isArray(subject.subtype) ? subject.subtype
+    : typeof subject.subtype === "string" ? [subject.subtype] : [];
+  const landType = subject.type === undefined && subtypeList.length > 0
+    && subtypeList.every((st) => LAND_SUBTYPES.has(st))
+    ? "land" as const
+    : undefined;
   // See `CONTROLLER_DEFAULT`: an unstated controller on one of these verbs is the ability's
   // controller, not a wildcard that satisfies an opponent-facing trigger.
   // READ THE SENTENCE, NOT THE OBJECT — the first cut tested `action.object` alone and it cost two
@@ -306,6 +324,7 @@ export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
       ...(tokenType ? { type: tokenType } : {}),
+      ...(landType ? { type: landType } : {}),
     },
     // WHO DEALT IT. A damage action's `object` is the VICTIM ("each opponent"), so `subject` above
     // cannot also be the source — and a damage TRIGGER names the source ("whenever another source
