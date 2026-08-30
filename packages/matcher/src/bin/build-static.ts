@@ -9,7 +9,8 @@
  *
  *    set -a && source packages/tagger/.env && set +a
  *    npx tsx packages/matcher/src/bin/build-static.ts [--out <dir>] */
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
@@ -18,7 +19,16 @@ import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-stat
 
 const outIdx = process.argv.indexOf("--out");
 const outDir = outIdx >= 0 ? process.argv[outIdx + 1] : "static-out";
-const cardsDir = join(outDir, "cards");
+
+// THE ARTIFACTS ARE WRITTEN TWICE: once to a staging directory to find out what they hash to, then
+// moved under `v-<hash>/`. A shard's filename hashes the card NAMES inside it, so `1be5.json` is
+// still `1be5.json` after a rebuild that changed every card in it -- the URL cannot say which build
+// it came from, which makes every cache between here and a reader a guess between stale and slow.
+// Under a content-addressed directory a shard URL changes exactly when its bytes do, so it can be
+// cached forever and correctly, and only `manifest.json` has to stay fresh.
+const stagingDir = join(outDir, ".staging");
+rmSync(stagingDir, { recursive: true, force: true });
+const cardsDir = join(stagingDir, "cards");
 mkdirSync(cardsDir, { recursive: true });
 
 const store = await connect(loadConfig());
@@ -115,7 +125,7 @@ for (const t of tokens) {
     if (tt) tokenTags[pid] = tt;
   }
 }
-writeFileSync(join(outDir, "token-tags.json"), JSON.stringify(tokenTags));
+writeFileSync(join(stagingDir, "token-tags.json"), JSON.stringify(tokenTags));
 
 // KEYED ON THE COLLECTION'S OWN `_id` — that IS the oracle id, and `AnalysisSources.tokenArt`
 // takes oracle ids on both sides (`orchestrate.ts` does the ONLY node-id translation, on purpose,
@@ -130,16 +140,42 @@ writeFileSync(join(outDir, "token-tags.json"), JSON.stringify(tokenTags));
 // (`{_id: {$in: oracleIds}}, {projection: {artCrop: 1}}`).
 const tokenArt: Record<string, string> = {};
 for (const t of tokens) if (t.artCrop) tokenArt[t._id] = t.artCrop;
-writeFileSync(join(outDir, "token-art.json"), JSON.stringify(tokenArt));
+writeFileSync(join(stagingDir, "token-art.json"), JSON.stringify(tokenArt));
 
 await store.close();
 
-let totalBytes = 0;
-for (const f of readdirSync(cardsDir)) totalBytes += statSync(join(cardsDir, f)).size;
-totalBytes += statSync(join(outDir, "token-tags.json")).size;
-totalBytes += statSync(join(outDir, "token-art.json")).size;
+// THE VERSION IS THE CONTENT, so a rebuild that changes nothing produces the same directory and a
+// reader's cache stays warm, while any change to any card moves every URL. Names go into the hash
+// alongside bytes: two files swapping contents is a different corpus and must not hash the same.
+const hash = createHash("sha256");
+for (const f of readdirSync(cardsDir).sort()) {
+  hash.update(f);
+  hash.update(readFileSync(join(cardsDir, f)));
+}
+for (const f of ["token-tags.json", "token-art.json"]) {
+  hash.update(f);
+  hash.update(readFileSync(join(stagingDir, f)));
+}
+const version = `v-${hash.digest("hex").slice(0, 12)}`;
 
-const actualFiles = readdirSync(cardsDir).length;
+// EXACTLY ONE VERSION SURVIVES IN THE OUTPUT. Leaving the old directory beside the new one would
+// double the file count against a 20,000-file deploy cap for artifacts nothing points at any more.
+for (const entry of readdirSync(outDir)) {
+  if (entry !== ".staging") rmSync(join(outDir, entry), { recursive: true, force: true });
+}
+const versionDir = join(outDir, version);
+renameSync(stagingDir, versionDir);
+// The one file that is not content-addressed, and so the only one a cache must revalidate.
+writeFileSync(join(outDir, "manifest.json"), JSON.stringify({ version }));
+
+const versionedCards = join(versionDir, "cards");
+let totalBytes = 0;
+for (const f of readdirSync(versionedCards)) totalBytes += statSync(join(versionedCards, f)).size;
+totalBytes += statSync(join(versionDir, "token-tags.json")).size;
+totalBytes += statSync(join(versionDir, "token-art.json")).size;
+
+const actualFiles = readdirSync(versionedCards).length;
+console.log(`version: ${version}`);
 console.log(`cards: ${cards.length}`);
 console.log(`searchNames occurrences (pre-collision): ${occurrences}`);
 console.log(`names: ${entryByName.size}`);

@@ -14,13 +14,15 @@ const card = (id: string, name: string, typeLine: string, colorIdentity: string[
  *  names CARDS and the layout is derived, so this cannot drift from `shardOf` — the first version
  *  hard-coded `/static/cards/krenko.json` and went red the day the layout changed, which is the
  *  right kind of red but only once. */
+const VERSION = "v-abc123def456";
+
 function shardsOf(cards: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, Record<string, unknown>> = {};
   for (const [name, entry] of Object.entries(cards)) {
-    const path = `/static/cards/${shardOf(name)}.json`;
+    const path = `/static/${VERSION}/cards/${shardOf(name)}.json`;
     out[path] = { ...(out[path] ?? {}), [name]: entry };
   }
-  return out;
+  return { "/static/manifest.json": { version: VERSION }, ...out };
 }
 
 function fetchOf(files: Record<string, unknown>): typeof fetch {
@@ -41,7 +43,7 @@ test("a deck analyses end to end against static files alone", async () => {
       krenko: card("id-krenko", "Krenko", "Legendary Creature — Goblin", ["R"]),
       mountain: card("id-mountain", "Mountain", "Basic Land — Mountain", []),
     }),
-    "/static/token-tags.json": {},
+    [`/static/${VERSION}/token-tags.json`]: {},
   });
   const r = await analyzeDeckStatic("Krenko\n\nMountain", undefined, "/static", f);
   expect(r.missing).toEqual([]);
@@ -55,7 +57,7 @@ test("a deck analyses end to end against static files alone", async () => {
 test("a card with no file lands in missing and the rest still analyses", async () => {
   const f = fetchOf({
     ...shardsOf({ krenko: card("id-krenko", "Krenko", "Legendary Creature — Goblin", ["R"]) }),
-    "/static/token-tags.json": {},
+    [`/static/${VERSION}/token-tags.json`]: {},
   });
   const r = await analyzeDeckStatic("Krenko\n\nNot A Real Card", undefined, "/static", f);
   expect(r.missing).toEqual(["Not A Real Card"]);
