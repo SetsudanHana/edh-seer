@@ -10,16 +10,20 @@ const CARD = {
   combos: [{ cards: ["Krenko", "Ashnod's Altar"], result: "Infinite" }],
 };
 
+/** The version directory a build writes under. Any string does; the client learns it from the
+ *  manifest and never parses it. */
+const VERSION = "v-abc123def456";
+
 /** Shard files as `build-static.ts` writes them, addressed the way the client asks for them: the
- *  test states the CARDS it is serving and the shard layout is derived, so a change to `shardOf`
- *  cannot leave these fixtures quietly serving 404s. */
-function shardsOf(cards: Record<string, unknown>): Record<string, Record<string, unknown>> {
+ *  test states the CARDS it is serving and both the manifest and the shard layout are derived, so
+ *  a change to `shardOf` or to the version path cannot leave these fixtures quietly serving 404s. */
+function shardsOf(cards: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, Record<string, unknown>> = {};
   for (const [name, entry] of Object.entries(cards)) {
-    const path = `/static/cards/${shardOf(name)}.json`;
+    const path = `/static/${VERSION}/cards/${shardOf(name)}.json`;
     out[path] = { ...(out[path] ?? {}), [name]: entry };
   }
-  return out;
+  return { "/static/manifest.json": { version: VERSION }, ...out };
 }
 
 function fetchOf(files: Record<string, unknown>): typeof fetch {
@@ -43,7 +47,9 @@ test("a prefetched card resolves, and an absent one is null rather than an error
 test("tags come from the same file as the card, so no second request is made", async () => {
   let calls = 0;
   const f = fetchOf(shardsOf({ krenko: CARD }));
-  const counting = (async (u: string) => { calls++; return f(u as never); }) as unknown as typeof fetch;
+  // The manifest is one fixed request per instance and is not what this test is about; count the
+  // CARD requests, which is the number a second name in the same shard must not increase.
+  const counting = (async (u: string) => { if (String(u).includes("/cards/")) calls++; return f(u as never); }) as unknown as typeof fetch;
   const l = new StaticLookup("/static", counting);
   await l.prefetch(["krenko"]);
   expect((await l.findOne("id-krenko"))?.oracleId).toBe("id-krenko");
@@ -71,7 +77,8 @@ test("a shard-mate the deck did not ask for contributes nothing", async () => {
     combos: [{ cards: ["Stranger", "Ashnod's Altar"], result: "Infinite strangers" }],
   };
   const l = new StaticLookup("/static", fetchOf({
-    [`/static/cards/${shard}.json`]: { krenko: CARD, stranger },
+    "/static/manifest.json": { version: VERSION },
+    [`/static/${VERSION}/cards/${shard}.json`]: { krenko: CARD, stranger },
   }));
   await l.prefetch(["krenko"]);
   expect(await l.allCombos()).toEqual([{ cards: ["Krenko", "Ashnod's Altar"], result: "Infinite" }]);
@@ -92,8 +99,11 @@ test("two names in the same shard cost one request", async () => {
 
   const twin = { ...CARD, card: { ...CARD.card, _id: "id-twin", name: "Twin", searchNames: [mate] } };
   let calls = 0;
-  const f = fetchOf({ [`/static/cards/${shard}.json`]: { krenko: CARD, [mate]: twin } });
-  const counting = (async (u: string) => { calls++; return f(u as never); }) as unknown as typeof fetch;
+  const f = fetchOf({
+    "/static/manifest.json": { version: VERSION },
+    [`/static/${VERSION}/cards/${shard}.json`]: { krenko: CARD, [mate]: twin },
+  });
+  const counting = (async (u: string) => { if (String(u).includes("/cards/")) calls++; return f(u as never); }) as unknown as typeof fetch;
   const l = new StaticLookup("/static", counting);
   await l.prefetch(["krenko", mate]);
   expect((await l.findByName("krenko"))?.name).toBe("Krenko");
@@ -153,12 +163,38 @@ test("an explicitly fetched name wins over an alias learned from another card", 
   expect((await l.findByName("smelt"))?._id).toBe("id-winner"); // the build's own answer replaces it
 });
 
+/** A DEPLOY IS NOT ATOMIC, and a bundle can outlive the artifacts beside it. With no manifest to
+ *  read, the client asks for the flat paths the previous build wrote rather than 404ing on every
+ *  card — the version is an optimisation for caching, and losing it must cost freshness, not the
+ *  deck. */
+test("with no manifest, the flat layout still answers", async () => {
+  const l = new StaticLookup("/static", fetchOf({ [`/static/cards/${shardOf("krenko")}.json`]: { krenko: CARD } }));
+  await l.prefetch(["krenko"]);
+  expect((await l.findByName("krenko"))?.name).toBe("Krenko");
+});
+
+/** The manifest is read ONCE per instance, not once per shard: a 100-card deck touches ~90 shards
+ *  and each of those calls `fetchCached`. */
+test("the manifest is fetched once however many shards a deck touches", async () => {
+  let manifests = 0;
+  const f = fetchOf(shardsOf({ krenko: CARD, mountain: CARD, forest: CARD }));
+  const counting = (async (u: string) => {
+    if (String(u).endsWith("manifest.json")) manifests++;
+    return f(u as never);
+  }) as unknown as typeof fetch;
+  const l = new StaticLookup("/static", counting);
+  await l.prefetch(["krenko", "mountain", "forest"]);
+  await l.tokenTags();
+  expect(manifests).toBe(1);
+});
+
 /** Pins the wiring against silently regressing to the empty Map `tokenArt` returned before
  *  `build-static.ts` grew `token-art.json` — a known id must resolve to its real crop, and an
  *  unknown id must be OMITTED rather than present with `undefined`. */
 test("tokenArt reads token-art.json, filtered to the requested ids", async () => {
   const l = new StaticLookup("/static", fetchOf({
-    "/static/token-art.json": { "oracle-goblin": "https://example/goblin.jpg" },
+    "/static/manifest.json": { version: VERSION },
+    [`/static/${VERSION}/token-art.json`]: { "oracle-goblin": "https://example/goblin.jpg" },
   }));
   const art = await l.tokenArt(["oracle-goblin", "oracle-unknown"]);
   expect(art.get("oracle-goblin")).toBe("https://example/goblin.jpg");
@@ -176,7 +212,11 @@ test("the default fetchImpl survives a native receiver brand-check", async () =>
   const original = globalThis.fetch;
   const brandChecked = function (this: unknown, url: string) {
     if (this !== globalThis) throw new TypeError("Failed to execute 'fetch' on 'Window': Illegal invocation");
-    return Promise.resolve({ ok: true, status: 200, json: async () => ({ krenko: CARD }) } as Response);
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: async () => (String(url).endsWith("manifest.json") ? { version: VERSION } : { krenko: CARD }),
+    } as Response);
   } as unknown as typeof fetch;
   globalThis.fetch = brandChecked;
   try {

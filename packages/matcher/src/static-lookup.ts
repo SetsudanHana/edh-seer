@@ -21,10 +21,12 @@ interface CardEntry {
 /** A shard file: every card name that hashes into it, keyed by name. */
 type ShardFile = Record<string, CardEntry>;
 
-/** Bump on a shape change to the files under `<baseUrl>/cards/`, `token-tags.json` or
- *  `token-art.json` — an old cached response under the previous name is simply never read again
- *  rather than served stale. */
-const CACHE_NAME = "edh-seer-cards-v2";
+/** What `manifest.json` says: the directory the current artifacts live in. */
+interface StaticManifest { version: string }
+
+/** The one URL under `<baseUrl>` that is NOT content-addressed, and so the only one that must not
+ *  be cached hard. Everything else hangs off the version it names. */
+const MANIFEST_PATH = "/manifest.json";
 
 /** The client's data plane: `CardLookup` + `CardTagsLookup` + the two token facts
  * `AnalysisSources` needs, all answered over `fetch` against the artifacts `build-static.ts`
@@ -60,6 +62,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
   private readonly byAlias = new Map<string, CardDoc>();
   private readonly byId = new Map<string, CardTags | null>();
   private readonly combos: ComboDoc[] = [];
+  private manifestPromise: Promise<string> | null = null;
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
   private tokenArtPromise: Promise<Record<string, string>> | null = null;
 
@@ -77,18 +80,67 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     this.fetchImpl = fetchImpl.bind(globalThis);
   }
 
+  /** THE ARTIFACTS' VERSION DIRECTORY, fetched once and remembered.
+   *
+   *  WHY THE DATA IS ADDRESSED BY CONTENT AND THE MANIFEST IS NOT. A shard's filename hashes the
+   *  card NAMES inside it, so `1be5.json` is still `1be5.json` after a corpus rebuild that changed
+   *  every card in it — the URL cannot say which build it came from, which makes every cache along
+   *  the way a guess between stale and slow. Under a version directory the shard URL changes
+   *  whenever its bytes do, so it can be cached forever and correctly, and exactly one small file
+   *  has to stay fresh.
+   *
+   *  That is also the precondition for a service worker: cache-first on a shard URL is safe now and
+   *  would have frozen a reader on last month's oracle text before.
+   *
+   *  A MISSING MANIFEST FALLS BACK TO THE FLAT LAYOUT rather than failing. A deploy mid-upload, or
+   *  a cached bundle newer than the artifacts beside it, would otherwise 404 on every card; the
+   *  unversioned paths are what the previous build wrote and are still there. */
+  private version(): Promise<string> {
+    return (this.manifestPromise ??= (async () => {
+      try {
+        const res = await this.fetchImpl(`${this.baseUrl}${MANIFEST_PATH}`);
+        if (!res.ok) return "";
+        const manifest = await res.json() as StaticManifest;
+        return typeof manifest.version === "string" ? manifest.version : "";
+      } catch {
+        return "";
+      }
+    })());
+  }
+
   /** Reads-through the Cache API when it exists (a real browser), and falls straight to
    * `fetchImpl` when it does not (jsdom, a plain `fetch` shim, Node) — so this module works
-   * identically under every test environment and under `static-parity.ts`'s filesystem shim. */
+   * identically under every test environment and under `static-parity.ts`'s filesystem shim.
+   *
+   * THE CACHE IS NAMED AFTER THE VERSION, so a corpus rebuild does not have to invalidate anything:
+   * the new build reads a new cache and `caches.delete` drops the old one whole. */
   private async fetchCached(path: string): Promise<Response> {
-    const url = `${this.baseUrl}${path}`;
+    const version = await this.version();
+    const prefix = version ? `${this.baseUrl}/${version}` : this.baseUrl;
+    const url = `${prefix}${path}`;
     if (typeof caches === "undefined") return this.fetchImpl(url);
-    const cache = await caches.open(CACHE_NAME);
+    const cacheName = `edh-seer-cards-${version || "flat"}`;
+    void this.evictOtherVersions(cacheName);
+    const cache = await caches.open(cacheName);
     const hit = await cache.match(url);
     if (hit) return hit;
     const res = await this.fetchImpl(url);
     if (res.ok) await cache.put(url, res.clone());
     return res;
+  }
+
+  /** Drops every cache this app opened for a DIFFERENT version. Fire-and-forget and once per
+   *  instance: a browser that has analysed decks across two corpus builds would otherwise carry
+   *  the older one's shards forever, and storage pressure evicts by origin, not by usefulness. */
+  private evictedOthers = false;
+  private async evictOtherVersions(keep: string): Promise<void> {
+    if (this.evictedOthers || typeof caches === "undefined" || !("keys" in caches)) return;
+    this.evictedOthers = true;
+    try {
+      for (const name of await caches.keys()) {
+        if (name.startsWith("edh-seer-cards-") && name !== keep) await caches.delete(name);
+      }
+    } catch { /* a browser that refuses cache enumeration keeps its old entries; harmless */ }
   }
 
   /** Fetch every shard the deck touches, in parallel, and fill the maps. MUST be awaited before
