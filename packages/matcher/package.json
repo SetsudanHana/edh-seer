@@ -9,7 +9,8 @@
     "./graph-projection": "./src/graph-projection.ts",
     "./faces": "./src/faces.ts",
     "./deck-cards": "./src/deck-cards.ts",
-    "./wire-graph": "./src/wire-graph.ts"
+    "./wire-graph": "./src/wire-graph.ts",
+    "./orchestrate": "./src/orchestrate.ts"
   },
   "scripts": {
     "test": "vitest run",
