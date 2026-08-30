@@ -120,7 +120,11 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     const url = `${prefix}${path}`;
     if (typeof caches === "undefined") return this.fetchImpl(url);
     const cacheName = `edh-seer-cards-${version || "flat"}`;
-    void this.evictOtherVersions(cacheName);
+    // ONLY EVICT WHEN WE KNOW WHICH VERSION IS CURRENT. Measured while testing offline: a manifest
+    // read that failed sent this down the flat fallback, and evicting from there threw away a
+    // correctly-cached corpus on the strength of a request that did not answer. An unknown version
+    // keeps everything; the next successful read cleans up.
+    if (version) void this.evictOtherVersions(cacheName);
     const cache = await caches.open(cacheName);
     const hit = await cache.match(url);
     if (hit) return hit;

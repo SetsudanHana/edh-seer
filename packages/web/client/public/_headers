@@ -22,3 +22,9 @@
 
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
+
+# THE WORKER MUST NEVER BE CACHED HARD. It is the thing that decides what everything else is allowed
+# to serve, so a stale copy is the one failure that cannot fix itself on the next load. Browsers cap
+# it at 24h on their own; this says the truth out loud.
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate

@@ -13,9 +13,11 @@
  *  rather than from a git push, and it is a fact about the data plane, not a preference.
  *
  *  Usage: `npm run deploy -w @edh-seer/web` (see that script; this runs after the client build). */
-import { cpSync, existsSync, readdirSync, rmSync, statSync } from "node:fs";
+import { cpSync, existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { serviceWorkerSource } from "./sw-template.mjs";
 
 const repoRoot = fileURLToPath(new URL("../../../", import.meta.url));
 const staticOut = join(repoRoot, "static-out");
@@ -43,6 +45,38 @@ if (!existsSync(join(dist, "index.html"))) {
 
 rmSync(target, { recursive: true, force: true });
 cpSync(staticOut, target, { recursive: true });
+
+// THE SERVICE WORKER IS WRITTEN HERE because only now do the shell's filenames exist: Vite content-
+// hashes its output, so the precache list cannot be typed into a file checked into `public/`. The
+// worker's own cache name is derived from that same list, which makes a deploy that changed nothing
+// reuse the cache and a deploy that changed the bundle drop it.
+// EVERYTHING THE APP IS, MINUS ITS DATA. The 99 MB of card shards under `static/` are cached on
+// demand as decks are analysed; the shell is small enough to take whole (~700 KB) and is what makes
+// a cold offline start work at all.
+//
+// `_headers` is Cloudflare's own config and is never served. `sw.js` must not precache ITSELF: the
+// worker is the thing that decides what everything else may serve, so a cached copy is the one
+// failure that cannot fix itself on the next load.
+const shellFiles = (dir, prefix = "") => readdirSync(dir).flatMap((entry) => {
+  if (prefix === "" && (entry === "static" || entry === "sw.js" || entry === "_headers")) return [];
+  const path = join(dir, entry);
+  return statSync(path).isDirectory()
+    ? shellFiles(path, `${prefix}/${entry}`)
+    : [`${prefix}/${entry}`];
+});
+// AND THE DATA MANIFEST, which lives under `static/` but is not data: it names the version
+// directory every card URL hangs off, so a client that cannot read it falls back to a layout the
+// build no longer writes. Measured offline before this line existed: the fallback turned one
+// missing 30-byte file into 91 failed shard requests and an unanalysable deck, with every shard
+// still sitting correctly in the cache beside it.
+const shell = [...shellFiles(dist), "/static/manifest.json"];
+if (!shell.includes("/index.html") || !shell.some((f) => f.startsWith("/assets/"))) {
+  console.error("no built shell found — refusing to write a service worker that precaches nothing.");
+  process.exit(1);
+}
+const swVersion = createHash("sha256").update(shell.join("\n")).digest("hex").slice(0, 12);
+writeFileSync(join(dist, "sw.js"), serviceWorkerSource({ version: swVersion, shell }));
+console.log(`service worker: precaches ${shell.length} shell files (${shell.filter((f) => !f.startsWith("/assets/")).join(", ")}), cache edh-seer-shell-${swVersion}`);
 
 const countFiles = (dir) =>
   readdirSync(dir).reduce(
