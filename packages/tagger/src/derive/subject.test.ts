@@ -616,3 +616,24 @@ test("a count phrase with nothing before it is left alone rather than emptied", 
   // Cutting to an empty head would throw away the only text there is.
   expect(parseSubject("for each opponent you attacked").control).toBe("opp");
 });
+
+/** WHAT COMES AFTER "ATTACHED TO" IS THE ATTACHMENT TARGET, never the subject. The Rani creates "a
+ *  red Aura enchantment token named Mark of the Rani attached to another target creature", and both
+ *  halves were read: the token derived `type: [creature, enchantment]` against a printed line of
+ *  `Token Enchantment — Aura`. A token that claims to be a creature is a creature ENTERING, so it
+ *  satisfied every "whenever a creature you control enters" in the deck. Owner-reported.
+ *
+ *  Measured: 61 objects in the corpus say "attached to", and the head is the subject in all of them;
+ *  33 carry a type word in the tail that the head does not. */
+test("the phrase after 'attached to' describes the target, not the subject", () => {
+  const token = parseSubject("a red Aura enchantment token named Mark of the Rani attached to another target creature");
+  expect(token.type).toBe("enchantment");
+  expect(token.subtype).toBe("aura");
+  // "another target creature" is the thing being enchanted; none of it belongs to the token.
+  expect(token.scope).toBeUndefined();
+
+  // The other shape the corpus uses it in: the head is the Equipment being described.
+  const equipment = parseSubject("all Equipment attached to that creature");
+  expect(equipment.subtype).toBe("equipment");
+  expect(equipment.type).toBeUndefined();
+});

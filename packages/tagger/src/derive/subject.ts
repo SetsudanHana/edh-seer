@@ -517,8 +517,22 @@ const NAMED = /\bnamed\s{1,4}([^,.]{1,80}?)(?=\s{1,4}(?:in|on|from|under|with|th
  *  deliberately out. */
 const TARGETS_ONLY = /\btargets? only\b/i;
 
+/** What comes after "attached to" is what the subject is attached TO, never the subject.
+ *
+ *  "Create a red Aura enchantment token named Mark of the Rani ATTACHED TO ANOTHER TARGET CREATURE"
+ *  read both halves and derived `type: [creature, enchantment]` for a token whose printed line is
+ *  `Token Enchantment — Aura`. A token that claims to be a creature is a creature entering: it
+ *  satisfied every "whenever a creature you control enters" in the deck. Owner-reported off the
+ *  board, on the same card as the investigate defect.
+ *
+ *  THE CUT IS SAFE IN BOTH DIRECTIONS THE CORPUS USES IT. 61 objects say "attached to", and the
+ *  head is the subject in all of them -- the token being created ("a Monster Role token attached to
+ *  target creature"), or the Equipment being described ("all Equipment attached to that creature").
+ *  33 of the 61 carry a type word in the tail that the head does not. */
+const ATTACHED_TO = /\battached to\b/i;
+
 export function parseSubject(text: string): SubjectFilter {
-  const t = text.toLowerCase().trim();
+  const t = text.toLowerCase().trim().split(ATTACHED_TO)[0].trim();
   const { type, notType, umbrella, plural } = parseTypes(t);
   const { subtype, plural: subtypePlural } = parseSubtypes(t);
   const scope = parseScope(t, plural || subtypePlural);

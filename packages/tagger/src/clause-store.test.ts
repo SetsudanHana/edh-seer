@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+import { triggerHasCue } from "./clause-store.js";
 import type { Clause } from "./segment.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import {
@@ -335,4 +336,26 @@ test("vocabulary gate versions cannot exceed the prompt version", () => {
   // selector can never fire at all.
   expect(VOCAB_VERSION).toBeGreaterThanOrEqual(NORMALIZE_MIN_COMPATIBLE);
   expect(TRIGGER_VOCAB_VERSION).toBeGreaterThanOrEqual(NORMALIZE_MIN_COMPATIBLE);
+});
+
+/** `damage-dealt` is what the clause layer spells; `combat-damage` and `non-combat-damage` are what
+ *  derive turns it into. With no row of its own the cue answered TRUE for every text, which made
+ *  `textForClause`'s disambiguating fallback useless — a clause orphaned by the model renumbering
+ *  its siblings matched every sentence, "exactly one" never held, and the clause got no text at all.
+ *  Nine clauses lost their trigger outright that way, The Rani's among them, because the
+ *  `damage-dealt` branch refuses rather than guess a direction it cannot read. */
+test("damage-dealt has a cue, so an orphaned clause can be matched to its own sentence", () => {
+  const rani = "Whenever The Rani enters or attacks, create a red Aura enchantment token.";
+  const damage = "Whenever a goaded creature deals combat damage to one of your opponents, investigate.";
+  expect(triggerHasCue("damage-dealt", damage)).toBe(true);
+  expect(triggerHasCue("damage-dealt", rani)).toBe(false);
+});
+
+/** THE CUE IS THE WORD, IN EITHER VOICE, because its only job is to say WHICH SENTENCE — the
+ *  direction is decided afterwards against that sentence. A cue demanding "deals ... damage" would
+ *  have marked ten real cards phantom, every one of which prints the word and means it. */
+test("the damage cue reads the passive voice too", () => {
+  expect(triggerHasCue("damage-dealt", "Whenever your opponents are dealt combat damage, ...")).toBe(true);
+  expect(triggerHasCue("damage-dealt", "Whenever you're dealt damage, you may create that many tokens.")).toBe(true);
+  expect(triggerHasCue("damage-dealt", "Whenever combat damage is dealt to you or a planeswalker you control, ...")).toBe(true);
 });
