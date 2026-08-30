@@ -109,8 +109,7 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
             {active === t.id ? (
               <span
                 aria-hidden="true"
-                className="absolute left-0 right-0 bottom-0 h-[2px]"
-                style={{ backgroundImage: "var(--accent-gradient)" }}
+                className="absolute left-0 right-0 bottom-0 h-[2px] bg-(--accent)"
               />
             ) : null}
           </button>
