@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 16;
+export const NORMALIZE_VERSION = 17;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -60,7 +60,7 @@ export const VOCAB_VERSION = 13;
  *  whole trigger list, so a doc answered at v13+ genuinely had every word and is correctly skipped,
  *  while everything below is still selected. No doc is de-selected by the change -- none exists at
  *  13 or above.  */
-export const TRIGGER_VOCAB_VERSION = 15;
+export const TRIGGER_VOCAB_VERSION = 17;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -364,6 +364,39 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // (chaos ensues / planeswalk, 238 cards), Archenemy (scheme, 84) and Contraptions (crank, 45) are
   // the largest residue families in the corpus and NONE of them is an EDH event — no plane, scheme
   // or contraption is ever in a decklist. `specializes` (42) is Alchemy-only and digital.
+  // CR 702.189b `Firebending`, ADDED 2026-08-30, AND THE 08-29 SWEEP COULD NOT HAVE FOUND IT:
+  // that sweep walked the 69 CR 701 keyword ACTIONS, and firebending is a 702 keyword ABILITY. The
+  // instrument that does find it is a sweep for the rule text that GRANTS a trigger --
+  // `grep "triggers whenever a player"` over the CR -- which returns eleven clauses and exactly one
+  // gap. `exploit` sits four entries above on the identical CR-702 footing; this is that precedent,
+  // reached by rule rather than by a refusal.
+  //
+  // NOT IN `VERBS`, AND THE ASYMMETRY WITH THE OTHER THREE BENDS IS CORRECT RATHER THAN AN
+  // OVERSIGHT. Airbend (701.65), earthbend (701.66) and waterbend (701.67) are things a card
+  // INSTRUCTS you to do, so they are actions and triggers both. Firebending is a triggered ability
+  // printed on a creature -- 702.189a is "whenever this creature attacks, add N {R}" -- so no card
+  // ever instructs "firebend", and a VERB entry would be a word with no printed witness.
+  //
+  // IT FIXES NOTHING TODAY AND SHIPS ANYWAY, WHICH IS THE COMPLETENESS RATCHET DOING ITS JOB.
+  // 36 corpus cards print the keyword and exactly ONE prints the trigger head -- Avatar Aang,
+  // "whenever you waterbend, earthbend, firebend, or airbend, draw a card". Aang is already bought
+  // (v15, 5 clauses, persisted) and answered that head `other`, and THE PROOF THE WORD WAS NEVER
+  // THE BLOCKER IS THAT THE OTHER THREE BENDS ARE ALL ALREADY IN THIS LIST: the model still could
+  // not answer, because the head names FOUR events and `trigger.event` holds ONE. That is a schema
+  // limit, not a vocabulary gap, and no word closes it.
+  //
+  // MEASURED BEFORE THE BUMP, so nobody runs the refresh expecting this to pay for it: of the 175
+  // clause docs carrying an `other` trigger, ONE names firebend and it is Aang -- zero docs where
+  // firebend is the sole named event. `TRIGGER_VOCAB_VERSION` still moves to 17 because its
+  // invariant is "a doc at or above this version had every word" and a v16 doc does not; the
+  // constant is a SELECTOR INPUT, not a spend, and `--refresh-other` is deliberately not run.
+  //
+  // MAPS TO NO ENGINE VERB, on the `exploit`/`search`/`becomes-target` precedent. Mapping it to
+  // `attacks` was considered and refused: only a creature WITH firebending firing makes you
+  // firebend, so an `attacks` mapping would let every attacker satisfy Aang. `SubjectFilter.keyword`
+  // could state that narrowing exactly (`firebending` is already in KEYWORD_ABILITIES) -- an emit
+  // row is the follow-up, not this word.
+  "firebend",
   // The same escape hatch VERBS has always had. Its absence was pure asymmetry: the model, told to
   // pick EXACTLY one member, invented "other" anyway on 9 cards and lost all of them.
   "other",
