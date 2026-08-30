@@ -256,6 +256,22 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   "land-play": /\bland\b/i,
   proliferate: /\bproliferate/i,
   "combat-damage": /\bcombat damage|\bdeals? damage/i,
+  // THE EVENT THE CLAUSE LAYER SPELLS, as distinct from the two verbs derive turns it into. Without
+  // a row here `triggerHasCue` answered TRUE for every text, which made `textForClause`'s
+  // disambiguating fallback useless: a clause orphaned by the model renumbering its siblings
+  // matched every sentence on the card, so "exactly one" never held and the clause got no text at
+  // all. Nine clauses were losing their trigger outright that way -- The Rani's "whenever a goaded
+  // creature deals combat damage to one of your opponents", Millicent, Tomebound Lich -- because
+  // the `damage-dealt` branch refuses rather than guess a direction it cannot read.
+  //
+  // DELIBERATELY JUST THE WORD, IN EITHER VOICE. This cue's only job is to say WHICH SENTENCE a
+  // clause came from; the direction is decided afterwards by `DAMAGE_RECEIVED` and `COMBAT_DAMAGE`
+  // against that sentence. A first cut demanded "deals ... damage" and would have marked ten real
+  // cards phantom -- Mindblade Render ("your opponents ARE DEALT combat damage"), Darien, Sun
+  // Droplet ("whenever YOU'RE DEALT damage"), Vengeful Pharaoh ("combat damage IS DEALT to you") --
+  // every one of which prints the word and means it. Measured against the corpus: the loose cue
+  // recovers all 9 orphans with none ambiguous, and marks ZERO additional cards phantom.
+  "damage-dealt": /\bdamage\b/i,
   "non-combat-damage": /\bdamage/i,
 };
 
