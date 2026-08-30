@@ -1214,6 +1214,46 @@ test("a self-recursion is only enabled by a fill that could contain the card its
   expect(artifact.length).toBeGreaterThan(0);
 });
 
+/** THE RANI AND SAREVOK'S TOME, reported off the board. A self-ETB consumer whose subject names no
+ *  type has nothing for the identity gate to check, so the gate leans on `selfEtbSelfSupplied`,
+ *  which refuses implied and TOKEN producers. The Rani's investigate emitted a token entry that did
+ *  not say `token: true` — fixed in the tagger's `actionEmits` — and the untyped emit that resulted
+ *  is the one shape neither half can refuse.
+ *
+ *  This test pins the MATCHER half: given the emit the tagger now derives, no edge forms. It is
+ *  here as well as in `emits.test.ts` because the two halves can regress independently. */
+test("a token entry does not satisfy a consumer's own ETB, however untyped either side is", () => {
+  const tokenMaker: DeckCard = {
+    card: { name: "The Rani", typeLine: "Legendary Creature — Time Lord Scientist", oracleText: "", keywords: [], colors: ["R"], manaValue: 4, colorIdentity: ["R"], power: "3", toughness: "4" },
+    tags: {
+      oracleId: "rani", schemaVersion: 1, promptVersion: 0, model: "derived",
+      characteristics: { types: ["creature"], subtypes: [], colors: ["R"], identity: ["R"], cmc: 4, power: "3", toughness: "4", token: false, keywords: [] },
+      abilities: [{
+        kind: "triggered",
+        effect: { kind: "token-generation" },
+        // The shape investigate derives: a token is created, nothing else is known about it.
+        emits: [
+          { verb: "create-token", subject: { control: "you", token: true } },
+          { verb: "enters", subject: { control: "you", token: true } },
+        ],
+      }],
+    },
+  };
+  const selfEtbArtifact: DeckCard = {
+    card: { name: "Sarevok's Tome", typeLine: "Artifact — Book", oracleText: "", keywords: [], colors: [], manaValue: 3, colorIdentity: [], power: null, toughness: null },
+    tags: {
+      oracleId: "tome", schemaVersion: 1, promptVersion: 0, model: "derived",
+      characteristics: { types: ["artifact"], subtypes: ["book"], colors: [], identity: [], cmc: 3, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{
+        kind: "triggered",
+        trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
+        effect: { kind: "" },
+      }],
+    },
+  };
+  expect(directedReasons(tokenMaker, selfEtbArtifact, H).filter((r) => r.tag.startsWith("enters"))).toEqual([]);
+});
+
 test("a self-ETB is only supplied by an event that could be that card entering", () => {
   // The gate `selfEtbSelfSupplied` excludes IMPLIED and TOKEN producers only, so an AUTHORED emit
   // that puts some OTHER object onto the battlefield still satisfied a consumer's own ETB: Windswept

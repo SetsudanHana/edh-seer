@@ -13,6 +13,35 @@ test("a token maker emits both the creation and the entry", () => {
   expect(e.map((x) => x.verb)).toEqual(["create-token", "enters"]);
 });
 
+/** A CREATED TOKEN IS A TOKEN (CR 111.1), even when the sentence never says so. `investigate` names
+ *  no object at all — CR 701.36 supplies the Clue — so the emit read a blank string and described
+ *  nothing, and an emit that names nothing matches everything.
+ *
+ *  REPORTED FROM THE BOARD: The Rani's investigate emitted a bare `enters: any`, which is the one
+ *  shape `selfEtbSelfSupplied` cannot refuse, so it satisfied Sarevok's Tome's "when THIS artifact
+ *  enters" — a permanent The Rani never puts onto the battlefield. Measured: 170 emits across 161
+ *  cards carried a create-token without saying it was one; 58 pairs and 82 reasons across the 71
+ *  calibration decks were resting on them. */
+test("a keyword that creates a token says the thing entering is a token, even with no object", () => {
+  const e = actionEmits({ verb: "investigate", object: "" });
+  expect(e.map((x) => x.verb)).toEqual(["create-token", "enters"]);
+  for (const emit of e) expect(emit.subject.token).toBe(true);
+});
+
+test("a token maker whose object DOES name the token still says token", () => {
+  const e = actionEmits({ verb: "create", object: "a 1/1 white Soldier creature token" });
+  for (const emit of e) expect(emit.subject.token).toBe(true);
+});
+
+/** MANIFEST IS A CARD, NOT A TOKEN (CR 701.34a), which is why it emits `enters` and no
+ *  `create-token`. Keying the stamp on the emitted verbs is what keeps it out — a second exclusion
+ *  list would be one more thing to forget. */
+test("manifest enters the battlefield without being marked a token", () => {
+  const e = actionEmits({ verb: "manifest", object: "" });
+  expect(e.map((x) => x.verb)).toEqual(["enters"]);
+  expect(e[0].subject.token).not.toBe(true);
+});
+
 test("life change emits with the affected player as subject", () => {
   expect(actionEmits({ verb: "lose-life", object: "each opponent" })[0])
     .toEqual({ verb: "lose-life", subject: { control: "opp", token: null, scope: "each" } });
