@@ -18,9 +18,38 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   "token-generation": [(n) => (n === "1" ? "makes a token" : `makes ${n} tokens`), "makes a token"],
   "mana-generation": [(n) => `adds ${n} mana`, "adds mana"],
   "graveyard-recursion": [() => "brings a card back", "brings a card back"],
-  pump: [(n) => `gives +${n}/+${n}`, "makes your creatures bigger"],
-  "cost-reduction": [(n) => `costs ${n} less`, "costs less"],
+  // A PUMP AMOUNT IS A P/T DELTA, NOT A NUMBER, and this table read it as a number for as long as
+  // it has existed: `+${n}/+${n}` over the corpus's own `"+2/+0"` renders `gives ++2/+0/++2/+0`,
+  // which shipped to the Archetypes tab and was reported from a real deck. Measured over the
+  // derived corpus: 1,893 pump abilities carry a P/T pair and TWO carry a bare number, so the
+  // shape this was written for is the rounding error and the one it mangled is the rule.
+  //
+  // Anything with a slash goes through verbatim, which also carries the X forms and the
+  // conditional ones as English -- `gives +X/+X`, `gives +1/+1 for each creature you control`. A
+  // bare number keeps the old reading for the two cards that use it. Anything else (a lone `X`,
+  // prose with no pair in it) falls back to the amountless phrase: the amount is the part we
+  // cannot state, not the fact that it pumps.
+  pump: [
+    (n) => (n.includes("/") ? `gives ${n}` : /^\d+$/.test(n) ? `gives +${n}/+${n}` : "makes your creatures bigger"),
+    "makes your creatures bigger",
+  ],
+  // A COST REDUCTION IS ALREADY NEGATIVE. 138 of these carry `"-1"` and the template said
+  // `costs ${n} less`, so the sentence read "costs -1 less" -- a double negative that states the
+  // opposite of the card. Another 36 carry a mana symbol (`"-{1}"`, `"{1} less"`), where the
+  // template also doubled the word "less".
+  "cost-reduction": [costsLess, "costs less"],
 };
+
+/** `-1` and `-{1}` are the same reduction written two ways, and `{1} less` already carries the
+ *  word. Strips the sign (ASCII and the Unicode minus the corpus also holds), refuses prose it
+ *  cannot place inside the sentence, and never says "less" twice. */
+function costsLess(amount: string): string {
+  const n = amount.replace(/^[-\u2212]/, "").trim();
+  if (/\bless\b/.test(n)) return `costs ${n}`;
+  // A number or a mana symbol reads inside the sentence; a clause ("X is the amount of life you
+  // lost this turn") does not, and the amountless phrase is the honest answer for it.
+  return /^\{?[0-9WUBRGC]+\}?$/.test(n) ? `costs ${n} less` : "costs less";
+}
 
 export function effectPhrase(kind: string | undefined, amount: string | undefined): string | null {
   if (!kind) return null;
