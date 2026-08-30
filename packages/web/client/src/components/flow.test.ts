@@ -7,13 +7,26 @@ const e = (from: string, to: string, weight = 1): Edge =>
   ({ from, to, weight, tags: [], reasonTexts: [] });
 
 describe("computeFlow", () => {
-  // A -> B -> C, and X -> A. Clicking A: C is downstream at depth 2, X is upstream at depth 1.
+  // A -> B -> C, and X -> A. Selecting A: B is what A feeds, X is what feeds A, and C is B's
+  // business rather than A's.
   const chain = [e("A", "B"), e("B", "C"), e("X", "A")];
 
-  it("follows the chain downstream and records depth", () => {
+  // ONE HOP. This used to walk breadth-first to a budget of 40 and the owner's verdict was "I can
+  // still see too much" -- a neighbour brought its own fan along, so one click lit edges between
+  // two cards the reader had never asked about.
+  it("shows what the selected card feeds, and stops there", () => {
     const flow = computeFlow(chain, ["A"]);
     expect(flow.nodes.get("B")?.downstreamDepth).toBe(1);
-    expect(flow.nodes.get("C")?.downstreamDepth).toBe(2);
+    expect(flow.nodes.has("C")).toBe(false);
+    expect(flow.edges.some((fe) => fe.from === "B" && fe.to === "C")).toBe(false);
+  });
+
+  // AND SELECTING THE NEIGHBOUR IS HOW YOU GET THE SECOND HOP. The suppressed edge is not gone,
+  // it is waiting for the reader to say the card it hangs off is interesting.
+  it("reveals a neighbour's own edges once that neighbour is selected too", () => {
+    const flow = computeFlow(chain, ["A", "B"]);
+    expect(flow.edges.some((fe) => fe.from === "B" && fe.to === "C")).toBe(true);
+    expect(flow.nodes.get("C")?.downstreamDepth).toBe(1);
   });
 
   // SELECTION IS A SET. Two roots walk together rather than as two flows merged afterwards, which
@@ -36,10 +49,12 @@ describe("computeFlow", () => {
     expect(flow.edges.some((fe) => fe.from === "A" && fe.to === "B")).toBe(true);
   });
 
+  // The budget binds on a MULTI-CARD selection now, which is the only place it can: one card's two
+  // fans cannot exceed 2 x fanoutCap on their own.
   it("shares one node budget across the roots rather than one budget each", () => {
-    const long = Array.from({ length: 20 }, (_, i) => e(`n${i}`, `n${i + 1}`));
-    const other = Array.from({ length: 20 }, (_, i) => e(`m${i}`, `m${i + 1}`));
-    const flow = computeFlow([...long, ...other], ["n0", "m0"], { nodeBudget: 5 });
+    const roots = Array.from({ length: 6 }, (_, i) => `r${i}`);
+    const edges = roots.flatMap((r) => Array.from({ length: 3 }, (_, i) => e(r, `${r}-x${i}`)));
+    const flow = computeFlow(edges, roots, { nodeBudget: 5 });
     expect(flow.nodes.size).toBeLessThanOrEqual(5);
   });
 
@@ -54,23 +69,19 @@ describe("computeFlow", () => {
   // OTHER consumer, a sibling of B, and nothing B feeds or is fed by. Measured over six calibration
   // decks, a walk that may turn around reaches 50-76% of a deck by depth 3 against 3-12% for a pure
   // one, which is the difference between a readable flow and the whole board lighting up.
-  it("never turns around: an upstream walk does not continue downstream from what it reaches", () => {
+  it("never turns around: the card that feeds the selection does not bring its other consumers", () => {
     const flow = computeFlow([e("A", "B"), e("A", "C")], ["B"]);
     expect(flow.nodes.get("A")?.upstreamDepth).toBe(1);
     expect(flow.nodes.has("C")).toBe(false);
   });
 
   it("marks a card that both produces and consumes with both depths", () => {
-    // A 3-cycle: X -> B -> Y -> X. Clicking X, the downstream walk reaches Y (via B, depth 2) and
-    // the upstream walk reaches Y directly (Y -> X, depth 1) -- Y is fed by X's own chain AND
-    // feeds X, so it genuinely carries both depths on ONE node. The old fixture asserted two
-    // different single-depth nodes and never exercised the `flow.nodes.get(other) ?? {}` merge
-    // that lets a node keep an earlier-set depth when the other walk visits it -- deleting that
-    // merge (so the second walk clobbers the first) kept the old test green.
-    const cycle = [e("X", "B"), e("B", "Y"), e("Y", "X")];
-    const flow = computeFlow(cycle, ["X"]);
+    // X and Y feed each other. Y is in both of X's fans, and that is ONE node carrying two depths,
+    // not two nodes -- the second fan must merge into the first entry rather than clobber it.
+    // Deleting the `flow.nodes.get(other) ?? {}` merge is what this catches.
+    const flow = computeFlow([e("X", "Y"), e("Y", "X")], ["X"]);
     const y = flow.nodes.get("Y");
-    expect(y?.downstreamDepth).toBe(2);
+    expect(y?.downstreamDepth).toBe(1);
     expect(y?.upstreamDepth).toBe(1);
   });
 
@@ -98,36 +109,23 @@ describe("computeFlow", () => {
     });
   });
 
-  it("caps the whole walk with the node budget, cutting the farthest ring", () => {
-    // A chain 10 long. A budget of 3 keeps the nearest three and stops.
-    const long = Array.from({ length: 10 }, (_, i) => e(`n${i}`, `n${i + 1}`));
-    const flow = computeFlow(long, ["n0"], { nodeBudget: 3 });
-    expect(flow.nodes.size).toBe(3);
-    expect(flow.nodes.has("n1")).toBe(true);
-    expect(flow.nodes.has("n9")).toBe(false);
-  });
-
-  // A -> B -> A is real: two cards that feed each other. The walk must terminate AND keep the
-  // closing edge, because a cycle whose every edge is repeatable is the infinite-combo shape and a
-  // later detector needs the evidence (spec §7).
-  it("terminates on a cycle and records it rather than dropping the closing edge", () => {
+  // A -> B -> A is real: two cards that feed each other, and both directions are the selection's
+  // own edges. `cycles` is gone with the walk that could find one -- at one hop the only loop
+  // reachable is this pair, and it is already two ordinary edges.
+  it("keeps both directions when two cards feed each other", () => {
     const flow = computeFlow([e("A", "B"), e("B", "A")], ["A"]);
-    expect(flow.nodes.get("B")?.downstreamDepth).toBe(1);
-    expect(flow.cycles.length).toBeGreaterThan(0);
-    expect(flow.cycles[0].nodes).toContain("A");
-    expect(flow.cycles[0].nodes).toContain("B");
+    expect(flow.edges).toContainEqual({ from: "A", to: "B", dir: "down", depth: 1 });
+    expect(flow.edges).toContainEqual({ from: "B", to: "A", dir: "up", depth: 1 });
   });
 
-  // A GENUINE EDGE BETWEEN TWO FLOW NODES MUST NOT BE DROPPED AS A "CYCLE". A -> B, A -> C, B -> C:
-  // from A, B and C are both downstream at depth 1 and 1... wait, B->C is a real direction-pure
-  // edge reaching an already-seen node via a DIFFERENT path (convergence), not a loop back onto an
-  // ancestor. It has to be drawn -- on the board it's a neutral, dimmed line between two lit cards
-  // if it's missing, which reads as though B and C have no relationship at all.
-  it("keeps a genuine edge into an already-seen node when it is not a loop back to an ancestor", () => {
+  // TWO CARDS THE SELECTION ONLY INTRODUCED TO EACH OTHER ARE NOT RELATED BY IT. A -> B, A -> C,
+  // B -> C: selecting A lights B and C, and the B->C edge stays dark. It is a claim about B and C,
+  // and the reader asked about A -- drawing it is how the board used to say more than it knew.
+  it("suppresses an edge between two neighbours when neither of them is selected", () => {
     const flow = computeFlow([e("A", "B"), e("A", "C"), e("B", "C")], ["A"]);
-    expect(flow.edges).toContainEqual({ from: "B", to: "C", dir: "down", depth: 2 });
-    // And it must NOT be misfiled as a cycle: C is not an ancestor of B on this walk.
-    expect(flow.cycles.some((c) => c.nodes.includes("B") && c.nodes.includes("C"))).toBe(false);
+    expect(flow.edges.some((fe) => fe.from === "B" && fe.to === "C")).toBe(false);
+    expect(flow.nodes.has("B")).toBe(true);
+    expect(flow.nodes.has("C")).toBe(true);
   });
 
   it("returns empty fans for a root with no edges", () => {

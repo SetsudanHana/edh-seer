@@ -1679,31 +1679,6 @@ export function GraphView(
    *  that meant only up/down, so a token's forty-edge fan was one undifferentiated mesh. Hue carries
    *  the MECHANISM now and direction moves to the dash crawl. Scoped to the selected card's own
    *  flow, which is why a palette is possible at all -- see `FLOW_EVENT_HUES`. */
-  /** How many pairs in the flow do NOT touch the selected card. The flow walks TWO hops, so the
-   *  per-card row counts relationships between two OTHER cards -- while the panel below lists only
-   *  this card's DIRECT edges. Two different sets, one screen, nothing saying so:
-   *
-   *    - Round one, a tuner: "Creating a token 3" on a card whose printed text creates nothing.
-   *      (Checked: all three of those edges were two hops out, none touched the card.)
-   *    - Round three, a skeptic: "Creating a token 3 does not reconcile -- the two rows whose
-   *      sentences say 'makes a token' carry no CREATING A TOKEN chip."
-   *
-   *  Both read the row as the card's own tally and found it contradicting the panel. It is not a
-   *  tally; it is what the board LIT UP, which is the thing the row sits above. Saying how much of
-   *  it is indirect is what makes the two lists reconcilable. */
-  const flowIndirect = useMemo(() => {
-    if (!flow) return 0;
-    const seen = new Set<string>();
-    let n = 0;
-    for (const fe of flow.edges) {
-      const pair = `${fe.from}>${fe.to}`;
-      if (seen.has(pair)) continue;
-      seen.add(pair);
-      if (!flow.roots.has(fe.from) && !flow.roots.has(fe.to)) n++;
-    }
-    return n;
-  }, [flow]);
-
   const flowEvents = useMemo(() => {
     if (!flow) return [] as { verb: string; count: number; hue: string }[];
     const n = new Map<string, number>();
@@ -2040,11 +2015,11 @@ export function GraphView(
               {selectedIds.length > 1
                 ? `Card pairs in these ${selectedIds.length} cards' flow`
                 : "Card pairs in this card's flow"}
-              {flowIndirect > 0 ? (
-                <span data-testid="flow-indirect-note" className="opacity-70">
-                  {" "}&middot; {flowIndirect} reached through {selectedIds.length > 1 ? "them" : "it"}
-                </span>
-              ) : null}
+              {/* The "N reached through it" note is gone with the second hop that made it
+                *  necessary: every pair in a flow now touches a selected card by construction, so
+                *  the number it reported is always zero and the reconciliation it existed to
+                *  provide -- between a row counting two-hop pairs and a panel listing direct edges
+                *  -- is one the reader no longer has to make. */}
             </span>
           ) : null}
           {/* A FLOW ROW IS A BUTTON AND A PAINT ROW IS NOT, because only the first has something to
