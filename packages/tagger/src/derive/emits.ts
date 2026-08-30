@@ -280,11 +280,28 @@ export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
   // the word sits — the object is just "it".
   const arrivesTapped = verbs.includes("enters")
     && /\b(?:battlefield|enters?|play)\b[^.]{0,30}?\btapped\b|\btapped\b[^.]{0,20}?\bunder\b/i.test(clauseText ?? "");
+  // A CREATED TOKEN IS A TOKEN (CR 111.1), and 170 emits across 161 cards did not say so, because
+  // the fact was never in the object text to read: `investigate` names no object at all (CR 701.36
+  // supplies the Clue), and `incubate`, `populate` and the plain `create` on an unreadable phrase
+  // are the same shape.
+  //
+  // AN EMIT THAT NAMES NOTHING MATCHES EVERYTHING, which is what made this worth fixing rather than
+  // tidying: The Rani's investigate emitted a bare `enters: any`, and a bare enters is the one
+  // shape `selfEtbSelfSupplied` cannot refuse -- so it satisfied Sarevok's Tome's "when THIS
+  // artifact enters", a permanent The Rani never puts onto the battlefield. Owner-reported off the
+  // board. Saying `token: true` is enough on its own: that gate already excludes token producers
+  // from a self-ETB, and a token payoff that demands one now correctly sees these.
+  //
+  // ONLY WHERE THE ABILITY REALLY CREATES ONE. `manifest` and `cloak` emit `enters` and no
+  // `create-token` precisely because a manifested permanent is a CARD, not a token (CR 701.34a) --
+  // keying on the emitted verbs keeps them out rather than needing a second exclusion list.
+  const createsAToken = verbs.includes("create-token");
   return verbs.map((verb) => ({
     verb,
     subject: {
       ...subject,
       control,
+      ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
