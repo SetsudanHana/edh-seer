@@ -7,61 +7,86 @@
   — see App.tsx's direction contract): a conventional dark analytics
   dashboard, held to the craft bar of Scryfall and Archidekt/Moxfield. No
   illustrated conceit, no card-frame cosplay — plain category convention,
-  executed with real polish. Sans throughout; the accent is identity-driven
-  (client/src/lib/color-identity.ts), not fixed.
+  executed with real polish. Sans throughout.
+
+  THE GROUND IS VIOLET, NOT GREY (DESIGN.md v2). Every neutral step shares one hue (~272°) held
+  at low chroma and stepped by lightness, so a pure grey or a pure #fff anywhere in this ladder
+  reads as a mistake — it breaks the cast that makes the ground look chosen rather than like a
+  purple theme bolted onto a grey app. The accent is a FIXED literal and sits off that hue; it
+  is never derived from deck contents (v1's identity-driven accent, and the picker that pinned
+  it, are deleted — a user comparing eight decks must see eight identities at once, which a
+  themed interface cannot express).
 */
 :root,
 .light,
 .default {
-  --background: #0b0d10;
-  --foreground: #e6e8eb;
+  --background: #0d0912;
+  --foreground: #e9e4ef;
 
-  --surface: #14171b;
+  --surface: #16111f;
   --surface-foreground: var(--foreground);
-  --surface-secondary: #191d22;
-  --surface-tertiary: #20242a;
+  --surface-secondary: #1b1526;
+  --surface-tertiary: #231b30;
 
-  --overlay: #14171b;
+  --overlay: #16111f;
   --overlay-foreground: var(--foreground);
 
-  --muted: #8b93a1;
+  --muted: #948ba6;
 
-  --default: #191d22;
+  --default: #1b1526;
   --default-foreground: var(--foreground);
 
-  --accent: #5b8dee;
-  --accent-foreground: #0b0d10;
+  /* MAGENTA BECAUSE THE GROUND IS VIOLET. An accent sharing its substrate's hue stops reading as
+     an accent, which is why this could not stay at the old `bucket-synergy` violet once the
+     ladder was recast. It is also deliberately OUTSIDE WUBRG, so an accent underline can never
+     be misread as mana. */
+  --accent: #c64bc6;
+  --accent-foreground: #0d0912;
+  /* BARS ARE NOT ACCENTS. Progress fills, proportion bars and chart bars are large areas and the
+     accent is meant to be scarce, so they take this mid-violet from the ladder's own hue and
+     read as substrate rather than as an alert. Never text, never a border, never a surface
+     behind content. */
+  --fill: #55397a;
 
-  --field-background: #101317;
+  --field-background: #120d1a;
   --field-foreground: var(--foreground);
   --field-placeholder: var(--muted);
-  --field-border: #262b31;
+  --field-border: #2c2338;
 
   --warning: #d99a3d;
-  --warning-foreground: #0b0d10;
+  --warning-foreground: #0d0912;
   --danger: #e5484d;
   --danger-foreground: #fff5f5;
   --success: #34c77b;
-  --success-foreground: #0b0d10;
+  --success-foreground: #0d0912;
 
-  --border: #262b31;
-  --separator: #1d2126;
+  --border: #2c2338;
+  --separator: #1f1829;
   /* THE SYNERGY EDGE. Its own token because the board used to stroke every relation in
-     --separator -- a hairline BORDER colour, #1d2126 on a #14171b surface -- which drew the
-     product's entire output in near-background. Sits between separator and --muted: visible as a
-     mesh, still quiet enough that 300 of them are not a sheet. Opacity carries WEIGHT (edgeAlpha,
-     GraphView.tsx), so this is the colour of a strong edge and the weak ones fade from it. */
-  --edge: #6b7688;
+     --separator -- a hairline BORDER colour -- which drew the product's entire output in
+     near-background. Sits between separator and --muted: visible as a mesh, still quiet enough
+     that 300 of them are not a sheet. Opacity carries WEIGHT (edgeAlpha, GraphView.tsx), so this
+     is the colour of a strong edge and the weak ones fade from it. Recast onto the ladder's hue
+     with v2; the old #6b7688 was a blue-grey and read as a second, colder neutral system. */
+  --edge: #6b5f7d;
   --focus: var(--accent);
 
   --radius: 0.5rem;
   --field-radius: 0.5rem;
 
-  /* Bucket accents — restrained jewel hues, not literal WUBRG */
-  --bucket-consistency: #6e8fb5;
-  --bucket-efficiency: #d99a3d;
-  --bucket-synergy: #9b7fd4;
-  --bucket-win-condition: #e5484d;
+  /* MANA RAMP — DATA VISUALISATION ONLY, never UI. Identity in the interface uses real mana
+     symbols in Wizards' own colours; this ramp exists only where an identity has to become a
+     fill or a stroke and a symbol cannot be placed (the graph's colour-identity mode, chart
+     series). Tuned for THIS ground, not copied from the cards: U is brighter and cooler than the
+     card blue, which sat too close to the violet ladder and muddied against panel fills, and B
+     is a true neutral grey rather than a charcoal-violet, which on this ground would read as
+     "slightly darker substrate" instead of as a colour. That grey is the one place a pure
+     neutral is correct here, precisely because it is the absence of the cast around it. */
+  --mana-w: #ddd6c4;
+  --mana-u: #6ba0f5;
+  --mana-b: #7e7a85;
+  --mana-r: #d9544f;
+  --mana-g: #55a86a;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
