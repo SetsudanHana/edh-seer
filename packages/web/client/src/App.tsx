@@ -36,13 +36,23 @@ export default function App() {
       setData(next);
       setEditing(false);
       // THE ADDRESS BAR BECOMES THE SHARE LINK, which is what makes this get used: a reader who
-      // analyses a deck can copy the URL without knowing the feature exists. `replaceState` rather
-      // than a navigation, so re-analysing does not fill the back button with near-identical
-      // entries. A deck too long to encode leaves the URL alone rather than writing a broken one.
+      // analyses a deck can copy the URL without knowing the feature exists. A deck too long to
+      // encode leaves the URL alone rather than writing a broken one.
+      //
+      // PUSH THE FIRST, REPLACE THE REST, and the distinction is the whole fix. This was
+      // `replaceState` unconditionally, so that re-analysing would not fill the back button with
+      // near-identical entries -- correct for the second analysis onward, and it meant the FIRST
+      // one created no entry either. Back then left the site: the reader had gone from a paste box
+      // to a full report without the browser recording that anything happened. Owner report,
+      // 2026-08-31: "after we added the url there is no easy way to go back from the analysis".
+      // Pushing only when the URL does not already carry a deck keeps both properties -- one entry
+      // for "I analysed something", none for the re-runs, and none for opening a shared link, whose
+      // hash is already there when the page loads.
       const payload = await encodeShare({ commanders: commanderText, decklist: deckText });
       setLink(payload ? shareUrl(window.location.origin, window.location.pathname, payload) : null);
       if (payload) {
-        window.history.replaceState(null, "", `#deck=${payload}`);
+        const write = payloadFromHash(window.location.hash) ? "replaceState" : "pushState";
+        window.history[write](null, "", `#deck=${payload}`);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -71,6 +81,42 @@ export default function App() {
       setDecklist(deck.decklist);
       void analyse(deck.decklist, deck.commanders);
     });
+  }, []);
+
+  /** BACK AND FORWARD, now that an analysis is a history entry.
+   *
+   *  Without this the entry exists and does nothing when you reach it: the URL would change and the
+   *  page would keep showing whatever it was showing. Landing on a deck hash re-opens that analysis;
+   *  landing on a URL with no deck leaves the report for the paste box.
+   *
+   *  THE DECKLIST SURVIVES A BACK. "Out of the report" is what the reader asked for, not "start
+   *  over" -- clearing the boxes would throw away the list they pasted, and the report is one click
+   *  away again. A reload of that same clean URL does start empty, which is the honest reading of an
+   *  address bar with no deck in it.
+   *
+   *  The listener is registered once and reaches the current `analyse` through a ref: re-subscribing
+   *  on every render would be a new listener per keystroke in the decklist box. */
+  const analyseRef = useRef(analyse);
+  analyseRef.current = analyse;
+  useEffect(() => {
+    const onPop = () => {
+      const payload = payloadFromHash(window.location.hash);
+      if (!payload) {
+        setData(null);
+        setDiff(null);
+        setLink(null);
+        setEditing(true);
+        return;
+      }
+      void decodeShare(payload).then((deck) => {
+        if (!deck) return;
+        setCommanders(deck.commanders);
+        setDecklist(deck.decklist);
+        void analyseRef.current(deck.decklist, deck.commanders);
+      });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   return (
