@@ -120,3 +120,47 @@ test("the structured data parses and claims only what is true", () => {
   expect(data.aggregateRating).toBeUndefined();
   expect(data.review).toBeUndefined();
 });
+
+/** THE HEADER IS STATIC ON BOTH PAGES, which is what lets a crawler read the site's name and reach
+ *  its other page without running the bundle — and what stops the two pages growing different
+ *  headers. The nav also fills a header whose right half was empty at every width. */
+const PAGES = { "/": "index.html", "/how-it-works": "how-it-works/index.html" } as const;
+
+test.each(Object.entries(PAGES))("%s carries the site header and the same nav", (_url, file) => {
+  const page = readFileSync(join(CLIENT, file), "utf8");
+  expect(page).toContain('class="site-header"');
+  expect(page).toContain('class="site-nav"');
+  for (const href of [
+    "https://github.com/SetsudanHana/edh-seer",
+    "https://github.com/SetsudanHana/edh-seer/issues/new",
+  ]) {
+    expect(page, `${file} links ${href}`).toContain(`href="${href}"`);
+  }
+});
+
+/** ONE `h1` PER PAGE, and it has to be the one that says what the page is about. The app page's is
+ *  the brand; the prose page's is its own title, which is why the brand is a link there — two `h1`s
+ *  is two answers to the same question. */
+test.each(Object.entries(PAGES))("%s has exactly one h1", (_url, file) => {
+  const page = readFileSync(join(CLIENT, file), "utf8");
+  expect([...page.matchAll(/<h1\b/g)]).toHaveLength(1);
+});
+
+test("the app page's h1 is the brand, and the prose page's is its title", () => {
+  expect(html).toMatch(/<h1 class="brand">/);
+  const prose = readFileSync(join(CLIENT, PAGES["/how-it-works"]), "utf8");
+  expect(prose).toMatch(/<h1>How it works<\/h1>/);
+  expect(prose).toMatch(/<a class="brand" href="\/">/);
+});
+
+/** THE FIGURES ARE THE PAGE. It was a wall of text; these three blocks are what make the method
+ *  legible, and they are HTML rather than images so they wrap, scale and are read aloud. A future
+ *  edit that drops one should fail rather than quietly return the page to prose. */
+test("the prose page carries its three figures", () => {
+  const prose = readFileSync(join(CLIENT, PAGES["/how-it-works"]), "utf8");
+  for (const block of ["figures", "pipeline", "edge-demo"]) {
+    expect(prose, `the ${block} block is present`).toContain(`class="${block}"`);
+  }
+  // The worked edge shows both outcomes: the ordinary case and a refusal.
+  expect(prose).toContain("edge-row-refused");
+});
