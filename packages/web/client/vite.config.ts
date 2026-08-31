@@ -33,6 +33,19 @@ const staticOut = {
 export default defineConfig({
   root: "client",
   plugins: [react(), tailwindcss(), staticOut],
+  build: {
+    rollupOptions: {
+      // TWO HTML ENTRIES. `how-it-works/` is prose, not an app route: listing it here makes Vite
+      // rewrite its stylesheet href to the same content-hashed CSS the app ships, so the two cannot
+      // drift, and emits it as `dist/how-it-works/index.html` — a directory index, which is why the
+      // URL has no extension. It pulls in no JavaScript, so a reader with JS off, and every crawler
+      // that does not run it, gets the whole page.
+      input: {
+        main: "client/index.html",
+        howItWorks: "client/how-it-works/index.html",
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: { "/api": "http://localhost:3001" },

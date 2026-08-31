@@ -60,6 +60,54 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- REAL TEXT, IN THE STATIC HTML, AND OUTSIDE `#root` ON PURPOSE.
+         Until this existed the entire body was `<div id="root"></div>`: a crawler that does not run
+         JavaScript — most social scrapers, most LLM crawlers, Bing more often than Google — saw an
+         empty page, and there was nothing for a search result to quote but the meta description.
+         React never owns this markup, so it survives hydration and needs no prerender step; it is
+         plain CSS on the same tokens rather than utility classes, so it does not depend on
+         Tailwind scanning this file.
+         It is BELOW the app because the paste box is what a returning reader wants first, and the
+         explanation is what a first-time one needs — the same order the page already reads in. -->
+    <section class="intro" aria-label="About EDH Seer">
+      <h2>What this does</h2>
+      <p>
+        EDH Seer reads the oracle text of every card in a Commander decklist and reports which pairs
+        actually work together — with the reason printed next to each one. It is not a popularity
+        list: nothing here is derived from how many decks run a card.
+      </p>
+
+      <h2>How it reads a card</h2>
+      <p>
+        A language model is used <strong>once, offline</strong>, to turn printed card text into
+        structured clauses — a trigger, an effect, a subject. Everything after that is ordinary
+        code: deterministic rules match what one card <em>produces</em> against what another
+        <em>cares about</em>. No model runs when you analyse a deck, which is why the same decklist
+        always gives the same answer and why the whole analysis happens in your browser.
+      </p>
+
+      <h2>What an edge is</h2>
+      <p>
+        One card supplies an event, another card triggers on it. Impact Tremors cares about
+        creatures entering; Krenko, Mob Boss makes Goblin tokens; the edge between them is that
+        supply meeting that demand, and the report says so in a sentence you can check against the
+        two cards. A claim with no sentence behind it is a claim this engine will not make.
+      </p>
+
+      <h2>What it refuses to claim</h2>
+      <p>
+        Ramp, removal and card draw are <em>roles</em>, not synergies — they make a deck work
+        without pairing with anything, so they are counted as slots rather than drawn as edges. A
+        card that refers to itself ("this creature", "this spell") is read as itself and not as a
+        class. Where the rules cannot say something, the report says nothing: a missing claim is
+        better than a confident wrong one.
+      </p>
+
+      <p class="intro-more">
+        <a href="/how-it-works">How the engine works in more detail</a> ·
+        <a href="https://github.com/SetsudanHana/edh-seer">Source on GitHub</a>
+      </p>
+    </section>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

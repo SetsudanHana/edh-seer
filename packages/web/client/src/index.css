@@ -93,8 +93,16 @@
   --text-2xs: 0.625rem; /* 10px — chart axis labels only; documented micro step */
 }
 
+/* THE PAGE'S OWN GROUND, and it was `main`'s until the static intro moved content outside it: below
+   `main` the body showed the browser default, so the explainer sat on white. A background painted by
+   a layout element only covers what that element covers. */
 body {
   font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+  /* Tells the browser to render its own chrome — scrollbars, form controls, the overscroll gutter —
+     against a dark page rather than a light one. */
+  color-scheme: dark;
 }
 
 h1,
@@ -224,4 +232,147 @@ h3 {
   .reveal {
     animation: none;
   }
+}
+
+/* THE STATIC INTRO (index.html). Plain CSS and semantic class names rather than utility classes:
+   this markup lives in `index.html`, which React never renders, so it must not depend on Tailwind
+   having scanned that file for classes. Same tokens as everything else, so it cannot drift from the
+   app's own colours.
+
+   It sits inside the page's own 2rem padding by matching `main`'s box: the app is a centred column
+   and a full-bleed band under it would read as a different site. */
+/* MATCHES `main`'S BOX EXACTLY, because a column that does not line up with the app above it reads
+   as a different site: 64rem (Tailwind's `max-w-5xl`) with the same 2rem padding, and uncapped above
+   `xl` where `main` is `xl:max-w-none`. */
+.intro {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0 2rem 3rem;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.intro h2 {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 2rem 0 0.5rem;
+}
+
+/* The first heading sits under the app's own last panel, so it needs the separation a section break
+   carries and the ones after it do not. */
+.intro h2:first-of-type {
+  margin-top: 0;
+  padding-top: 2rem;
+  border-top: 1px solid var(--separator);
+}
+
+.intro p {
+  max-width: 68ch;
+  margin: 0 0 0.75rem;
+}
+
+/* Prose emphasis, not chrome: `strong` is the one word in a paragraph that carries the claim, and
+   at this size a colour change reads better than a weight change on a muted ground. */
+.intro strong { color: var(--foreground); font-weight: 400; }
+.intro em { color: var(--foreground); font-style: normal; }
+
+.intro a {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 2px;
+}
+
+.intro a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+
+.intro-more { margin-top: 1.5rem; }
+
+@media (min-width: 80rem) {
+  .intro { max-width: none; }
+}
+
+/* THE PROSE PAGE (how-it-works/index.html). A second HTML entry, no JavaScript, sharing this
+   stylesheet so it cannot drift from the app's own colours. Semantic class names for the same
+   reason `.intro` uses them: Tailwind never scans that file. */
+.prose {
+  max-width: 68ch;
+  margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+/* The one h1 on the page, and the only place this app sets display-sized type. */
+.prose h1 {
+  color: var(--foreground);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 1rem;
+}
+
+.prose h2 {
+  color: var(--foreground);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  /* More space above a heading than below it: the gap belongs to the section starting, not to the
+     paragraph that follows. */
+  margin: 2.75rem 0 0.75rem;
+}
+
+.prose p { margin: 0 0 1rem; }
+.prose strong { color: var(--foreground); font-weight: 600; }
+.prose em { color: var(--foreground); font-style: normal; }
+
+/* The standfirst, one step up from body text and the only paragraph that gets the foreground. */
+.prose-lead { color: var(--foreground); font-size: 1.0625rem; margin-bottom: 2rem; }
+
+.prose ul { margin: 0 0 1rem; padding-left: 1.1rem; }
+.prose li { margin: 0 0 0.6rem; }
+.prose li::marker { color: var(--fill); }
+
+/* A NAME FROM THE DATA MODEL, set in the data face. The page names real keys — `enters`,
+   `token-generation`, `+2/+0` — and mono is what this system already uses for a value rather than a
+   word. Not a code block: these sit inside sentences. */
+.tok {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--foreground);
+  background: var(--surface-secondary);
+  border-radius: 0.25rem;
+  padding: 0.05em 0.35em;
+}
+
+.prose a {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 2px;
+}
+
+.prose a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+
+.prose-back {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.prose-back a { text-decoration: none; color: var(--muted); }
+.prose-back a:hover { color: var(--accent); }
+
+.prose-cta {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--separator);
 }
