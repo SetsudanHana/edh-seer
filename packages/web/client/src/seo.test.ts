@@ -76,7 +76,11 @@ test("the sitemap lists the pages that exist and nothing that does not", () => {
 test("the page ships real text without running JavaScript", () => {
   const body = html.split("<body>")[1] ?? "";
   const readable = body
-    .replace(/<script[\s\S]*?<\/script>/g, " ")
+    // CASE-INSENSITIVE, flagged by CodeQL: `<SCRIPT>` is the same tag to a parser and this regex
+    // did not match it. Nothing here sanitises anything — it strips our own file down to what a
+    // crawler reads — but a filter that misses a legal spelling of the thing it filters is wrong
+    // whatever it is used for, and the fix is one character.
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<!--[\s\S]*?-->/g, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
@@ -92,7 +96,7 @@ test("the page ships real text without running JavaScript", () => {
 test("the how-it-works page is a page, not an app route", () => {
   const page = readFileSync(join(CLIENT, "how-it-works", "index.html"), "utf8");
   // No script tag at all: the prose is the whole page, so JS-off readers and crawlers get all of it.
-  expect(page).not.toMatch(/<script/);
+  expect(page).not.toMatch(/<script/i);
   expect(page).toContain('<link rel="canonical" href="' + canonical + 'how-it-works"');
   expect(page).toMatch(/<h1>How it works<\/h1>/);
   // It explains the thing it promises to explain, in its own words rather than by linking away.
