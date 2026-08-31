@@ -74,13 +74,15 @@ test("the sitemap lists the pages that exist and nothing that does not", () => {
  *  had no text to read and a search result had nothing to quote but the meta description. This
  *  counts what such a crawler actually receives. */
 test("the page ships real text without running JavaScript", () => {
-  const body = html.split("<body>")[1] ?? "";
-  const readable = body
-    .replace(/<script[\s\S]*?<\/script>/g, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  // PARSED, NOT PATTERN-MATCHED. This stripped tags with regexes and CodeQL was right twice in a
+  // row: the first missed `<SCRIPT>`, and the fix missed `</script >`, which browsers also accept as
+  // an end tag. A third patch would have been a third guess about a grammar this file does not own.
+  // The client's tests run in jsdom, so a real parser is already here — it costs nothing, it cannot
+  // be circumvented by a spelling, and `textContent` skips comment nodes for free.
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  for (const el of doc.querySelectorAll("script, style")) el.remove();
+  const readable = (doc.body.textContent ?? "").replace(/\s+/g, " ").trim();
+
   expect(readable.length).toBeGreaterThan(800);
   // The claims the product is actually made of, in the words a reader would search for.
   expect(readable).toMatch(/oracle text/i);
@@ -91,8 +93,10 @@ test("the page ships real text without running JavaScript", () => {
 
 test("the how-it-works page is a page, not an app route", () => {
   const page = readFileSync(join(CLIENT, "how-it-works", "index.html"), "utf8");
-  // No script tag at all: the prose is the whole page, so JS-off readers and crawlers get all of it.
-  expect(page).not.toMatch(/<script/);
+  // No script at all: the prose is the whole page, so JS-off readers and crawlers get all of it.
+  // Asked of the parsed document rather than the source text, for the reason above.
+  const parsed = new DOMParser().parseFromString(page, "text/html");
+  expect(parsed.querySelectorAll("script")).toHaveLength(0);
   expect(page).toContain('<link rel="canonical" href="' + canonical + 'how-it-works"');
   expect(page).toMatch(/<h1>How it works<\/h1>/);
   // It explains the thing it promises to explain, in its own words rather than by linking away.
@@ -105,7 +109,10 @@ test("the how-it-works page is a page, not an app route", () => {
  *  carry the fields this product has no evidence for — an invented rating is the schema equivalent
  *  of a synergy claim with no reason behind it. */
 test("the structured data parses and claims only what is true", () => {
-  const raw = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html)?.[1] ?? "";
+  // The last regex over this HTML, gone for the same reason as the others: a parser knows where a
+  // script tag ends and a pattern only guesses.
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const raw = doc.querySelector('script[type="application/ld+json"]')?.textContent ?? "";
   const data = JSON.parse(raw);
   expect(data["@type"]).toBe("WebApplication");
   expect(data.url).toBe(canonical);
