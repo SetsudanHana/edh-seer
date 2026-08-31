@@ -11,6 +11,7 @@ export function DeckInput({
   loading,
   collapsed,
   onEdit,
+  shareLink,
 }: {
   commanders: string;
   onCommandersChange: (v: string) => void;
@@ -20,15 +21,26 @@ export function DeckInput({
   loading: boolean;
   collapsed?: boolean;
   onEdit?: () => void;
+  /** The URL that reproduces the analysis on screen, or null when the deck is too long to encode.
+   *  Absent rather than disabled in that case: a button that cannot do its job is worse than none. */
+  shareLink?: string | null;
 }) {
   // Label doubles as the confirmation. A clipboard write has no visible result of its own, and a
   // separate toast is a second surface for a fact that fits on the control that caused it.
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   async function onCopy() {
     await navigator.clipboard.writeText(deckExportText(commanders, value));
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  }
+
+  async function copyLink() {
+    if (!shareLink) return;
+    await navigator.clipboard.writeText(shareLink);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 1500);
   }
 
   if (collapsed) {
@@ -41,6 +53,18 @@ export function DeckInput({
           {cmdName ? <> · {cmdName}</> : null}
         </span>
         <div className="flex gap-2 shrink-0">
+          {/* THE LINK IS THE ANALYSIS, not the decklist: it reopens this exact report rather than
+            *  handing someone a list to paste themselves. The address bar already carries it — this
+            *  is for the reader who does not think to look there. */}
+          {shareLink ? (
+            <button
+              type="button"
+              onClick={() => void copyLink()}
+              className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)"
+            >
+              {linkCopied ? "Link copied" : "Copy link"}
+            </button>
+          ) : null}
           <button type="button" onClick={() => void onCopy()} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">{copied ? "Copied" : "Copy decklist"}</button>
           <button type="button" onClick={onEdit} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">Edit</button>
           <Button variant="primary" isDisabled={loading} onPress={onAnalyze}>
