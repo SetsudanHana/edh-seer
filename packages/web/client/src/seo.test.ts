@@ -26,6 +26,24 @@ test("the page states one canonical origin, and every absolute URL agrees with i
   for (const u of ownOrigin) expect(u.startsWith(canonical) || u === canonical.slice(0, -1)).toBe(true);
 });
 
+/** THE SECOND PAGE HAS ITS OWN ABSOLUTE URLS, and until this existed nothing checked them against
+ *  the canonical. The test above reads `index.html` only, and `how-it-works` was covered for its
+ *  canonical tag alone -- so a domain change applied to one file and not the other would leave
+ *  `og:url` and `og:image` pointing at the old origin, and the suite would stay green while every
+ *  shared link from that page resolved somewhere else. Written when the pages.dev origin was about
+ *  to be replaced, which is exactly the change that would have slipped through. */
+test("the how-it-works page's absolute URLs agree with the canonical origin too", () => {
+  const page = readFileSync(join(CLIENT, "how-it-works", "index.html"), "utf8");
+  const origin = new URL(canonical).origin;
+  const ours = [...page.matchAll(/(?:content|href)="(https:\/\/[^"]+)"/g)]
+    .map((m) => m[1])
+    .filter((u) => u.startsWith(origin));
+  // canonical, og:url and og:image at minimum -- an empty list would pass this vacuously, which is
+  // the failure mode the floor exists to catch.
+  expect(ours.length).toBeGreaterThanOrEqual(3);
+  for (const u of ours) expect(new URL(u).origin).toBe(origin);
+});
+
 test("the description is present and the length a search result actually shows", () => {
   const description = /<meta name="description" content="([^"]+)"/.exec(html)?.[1] ?? "";
   // Under ~160 characters is what survives a result snippet; over 50 is what makes it worth having.
