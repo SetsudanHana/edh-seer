@@ -49,7 +49,11 @@ export default function App() {
     // safe to give away because nothing here stretches with it: the report flows into columns
     // (`OverviewTab`) and every run of prose carries its own measure cap, so growing the container
     // adds columns rather than 200-character lines. Below `xl` the reading column is unchanged.
-    <main className="min-h-screen bg-background text-foreground p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
+    // `min-h-screen` and the background moved to `body` (index.css) when the static intro in
+    // `index.html` put real content outside this element: a short analysis left `main` filling the
+    // viewport, so the explainer started a full screen below the fold with a band of unpainted page
+    // between them.
+    <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
       {
         /*
         THESIS: The category standard, taken on purpose — a plain dark analytics
