@@ -22,15 +22,40 @@
     <link rel="stylesheet" href="/src/index.css" />
   </head>
   <body>
-    <article class="prose">
-      <p class="prose-back"><a href="/">← EDH Seer</a></p>
+    <!-- The same header, with the brand as a LINK rather than the heading: this page's `h1` is its
+         own title, and two `h1`s on one page is two answers to what the page is about. -->
+    <header class="site-header">
+      <a class="brand" href="/">
+        <svg class="brand-mark" width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true" focusable="false">
+          <line x1="11.75" y1="16" x2="15.25" y2="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="8.25" cy="16" r="3.5" fill="currentColor"/>
+          <circle cx="21.25" cy="16" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span class="brand-word"><span class="brand-edh">edh</span><span class="brand-seer">seer</span></span>
+      </a>
+      <nav class="site-nav" aria-label="Site">
+        <a href="/">Analyse a deck</a>
+        <a href="https://github.com/SetsudanHana/edh-seer" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Report an edge</a>
+      </nav>
+    </header>
 
+    <article class="prose">
       <h1>How it works</h1>
       <p class="prose-lead">
         EDH Seer claims that two cards work together only when it can print the sentence that says
         why. This page is how that sentence gets made, and what the engine refuses to say when it
         cannot make one.
       </p>
+
+      <!-- THE SCALE, IN THREE NUMBERS. Every one is measured rather than rounded for effect: the
+           corpus size and clause count come from the build, the deck count from the calibration set.
+           The third is the one that matters and is not a size at all. -->
+      <dl class="figures">
+        <div><dt>34,433</dt><dd>cards read from oracle text</dd></div>
+        <div><dt>71</dt><dd>real decks it is calibrated against</dd></div>
+        <div><dt>0</dt><dd>model calls when you analyse a deck</dd></div>
+      </dl>
 
       <h2>The model runs once, offline</h2>
       <p>
@@ -44,6 +69,23 @@
         The structuring pass is deliberately narrow. It is asked to say what a sentence <em>is</em> —
         a trigger, an effect, a subject — never whether two cards are good together. It is a parser,
         not a judge.
+      </p>
+
+      <!-- THE PIPELINE AS BOXES, and the point of drawing it is the MONEY LINE: one step costs and
+           the rest are free to re-run, which is why the engine can be corrected at all. HTML and CSS
+           rather than an SVG so it is real text that wraps on a phone and can be read aloud. -->
+      <ol class="pipeline" aria-label="The pipeline, from printed card to report">
+        <li><span class="pipeline-step">Oracle text</span><span class="pipeline-note">what is printed on the card</span></li>
+        <li><span class="pipeline-step">Segment</span><span class="pipeline-note">one sentence at a time</span></li>
+        <li class="pipeline-paid"><span class="pipeline-step">Normalize</span><span class="pipeline-note">the model, once per card</span></li>
+        <li><span class="pipeline-step">Derive</span><span class="pipeline-note">clauses become events</span></li>
+        <li><span class="pipeline-step">Match</span><span class="pipeline-note">supply meets demand</span></li>
+        <li><span class="pipeline-step">Report</span><span class="pipeline-note">a sentence per claim</span></li>
+      </ol>
+      <p class="pipeline-key">
+        <span class="key-swatch"></span> The one step that costs money, and the only one a model
+        touches. Everything after it is deterministic and free to run again — which is what makes a
+        wrong claim fixable rather than permanent.
       </p>
 
       <h2>What a clause looks like</h2>
@@ -68,6 +110,53 @@
         you control enters, and it is a token"; Impact Tremors demands "a creature you control
         enters"; the demand is satisfied, so the edge exists and the report writes the sentence.
       </p>
+      <!-- THE CONCEPT THE WHOLE TOOL RESTS ON, drawn once. The matched row is the ordinary case; the
+           refused row is a REAL defect this engine shipped and had reported from the board, which is
+           why it is here rather than an invented counterexample. -->
+      <div class="edge-demo">
+        <div class="edge-row">
+          <div class="edge-card">
+            <span class="edge-name">Krenko, Mob Boss</span>
+            <span class="edge-side">produces</span>
+          </div>
+          <div class="edge-link">
+            <span class="edge-event">enters · creature · token</span>
+            <svg class="edge-arrow" viewBox="0 0 120 12" aria-hidden="true" focusable="false">
+              <line x1="0" y1="6" x2="108" y2="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4"/>
+              <path d="M108 1.5 L118 6 L108 10.5 Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="edge-card">
+            <span class="edge-name">Impact Tremors</span>
+            <span class="edge-side">cares about</span>
+          </div>
+          <p class="edge-verdict edge-ok">
+            Edge. <em>When a creature enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage.</em>
+          </p>
+        </div>
+
+        <div class="edge-row edge-row-refused">
+          <div class="edge-card">
+            <span class="edge-name">Farseek</span>
+            <span class="edge-side">produces</span>
+          </div>
+          <div class="edge-link">
+            <span class="edge-event">enters · <strong>land</strong></span>
+            <svg class="edge-arrow" viewBox="0 0 120 12" aria-hidden="true" focusable="false">
+              <line x1="0" y1="6" x2="108" y2="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4"/>
+              <path d="M108 1.5 L118 6 L108 10.5 Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="edge-card">
+            <span class="edge-name">Enduring Courage</span>
+            <span class="edge-side">cares about</span>
+          </div>
+          <p class="edge-verdict edge-no">
+            No edge. It wants a <strong>creature</strong> entering, and a fetched land is not one.
+          </p>
+        </div>
+      </div>
+
       <p>
         The filters are where the engine earns its keep, and where it is most often wrong in an
         interesting way. A card that fetches "a Plains, Island, Swamp or Mountain card" produces a
@@ -130,7 +219,43 @@
         <a href="https://github.com/SetsudanHana/edh-seer">open source</a>.
       </p>
 
-      <p class="prose-back"><a href="/">← Analyse a deck</a></p>
     </article>
+
+    <!-- THE SAME NOTICE, ON EVERY PAGE THAT NAMES A CARD. This page names Krenko, Impact Tremors and
+         a handful of others in its prose, so the Fan Content notice belongs here for the same reason
+         it belongs on the app: it is the condition under which any of this may be shown.
+         `footer.test.ts` asserts the required wording on BOTH files, so the copy cannot drift
+         between them. -->
+    <footer class="site-footer">
+      <p>
+        EDH Seer is unofficial Fan Content permitted under the
+        <a href="https://company.wizards.com/en/legal/fancontentpolicy" target="_blank" rel="noopener noreferrer">Wizards of the Coast Fan Content Policy</a>.
+        Not approved or endorsed by Wizards. Portions of the materials used are property of Wizards
+        of the Coast. ©Wizards of the Coast LLC.
+      </p>
+      <p>
+        Wizards of the Coast, Magic: The Gathering, and their logos are trademarks of Wizards of the
+        Coast LLC in the United States and other countries. © 1993–2026 Wizards. All Rights Reserved.
+        EDH Seer is not affiliated with, endorsed, sponsored, or specifically approved by Wizards of
+        the Coast LLC — see
+        <a href="https://company.wizards.com/" target="_blank" rel="noopener noreferrer">company.wizards.com</a>.
+      </p>
+      <!-- The one thing a reader might want to do that the app cannot do for them. Every synergy
+           claim carries a stated reason, which is exactly what makes a WRONG one reportable: a
+           reader can name the pair and quote the sentence. -->
+      <p>
+        A wrong edge, a missing one, or a card read badly?
+        <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Open an issue</a>
+        with the two card names and the sentence it printed. The engine is rule-based and open
+        source, so a bad claim is a fixable bug rather than an opinion.
+      </p>
+      <p>
+        Card data, card images and mana symbols are provided by
+        <a href="https://scryfall.com/" target="_blank" rel="noopener noreferrer">Scryfall</a>, which
+        is unaffiliated with this site. Combo data is provided by
+        <a href="https://commanderspellbook.com/" target="_blank" rel="noopener noreferrer">Commander Spellbook</a>.
+        This site shows no card prices.
+      </p>
+    </footer>
   </body>
 </html>

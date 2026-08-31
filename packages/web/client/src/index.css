@@ -291,7 +291,11 @@ h3 {
 
 .intro a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 
+/* A CONTINUATION, NOT A NAV ITEM, and it is styled as one: no underline, the accent on hover, and
+   the arrow saying which direction the reading goes. */
 .intro-more { margin-top: 1.5rem; }
+.intro-more a { text-decoration: none; color: var(--foreground); }
+.intro-more a:hover { color: var(--accent); }
 
 @media (min-width: 80rem) {
   .intro { max-width: none; }
@@ -375,4 +379,294 @@ h3 {
   margin-top: 1.5rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--separator);
+}
+
+/* THE FOOTER (index.html). Static markup, so plain CSS: the same four-column band the React
+   component drew, on the same measure as `.intro` so the page has one column and not two. */
+.site-footer {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 2rem 3rem;
+  border-top: 1px solid var(--separator);
+  display: grid;
+  gap: 1.5rem 3rem;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.65;
+}
+
+.site-footer p { margin: 0; max-width: 46ch; }
+
+/* NOT THE ACCENT. These were magenta once and put the three brightest marks on the page inside its
+   least important block; a link here separates from the muted text by LIGHTNESS and takes the
+   accent only on hover, where the reader has already chosen it. */
+.site-footer a {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 2px;
+}
+
+.site-footer a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+
+@media (min-width: 48rem) { .site-footer { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 64rem) { .site-footer { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 80rem) { .site-footer { max-width: none; } }
+
+/* THE HEADER (index.html and how-it-works/index.html). Static on both pages, so plain CSS, and one
+   rule set for the two so the site cannot have two headers that disagree. */
+.site-header {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 2rem 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+/* WEIGHT IS THE SEAM, colour reinforces it: in a monochrome context the weight difference alone
+   still separates the two words. See DESIGN.md, Logotype. */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  margin: 0;
+  font-weight: 400;
+  text-decoration: none;
+  /* Never the accent: the header is the fixed point the rest of the page moves against. */
+  color: var(--muted);
+  font-synthesis: none;
+}
+
+.brand-mark { flex-shrink: 0; }
+.brand-edh { color: var(--muted); font-weight: 400; }
+.brand-seer { color: var(--foreground); font-weight: 700; }
+
+.brand-tagline {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0;
+  margin-left: 0.5rem;
+}
+
+/* THE RIGHT-HAND SIDE OF THE HEADER WAS EMPTY, on every width, on every screen. The nav is the
+   product's own vocabulary rather than a menu: where the method is written down, where the code is,
+   and where a wrong claim goes. */
+.site-nav {
+  display: flex;
+  gap: 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.site-nav a {
+  color: var(--muted);
+  text-decoration: none;
+  /* A hairline that only appears on hover: at 11px an always-on underline reads as a row of dashes
+     rather than as three links. */
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+}
+
+.site-nav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+@media (min-width: 80rem) { .site-header { max-width: none; } }
+
+/* The tagline is the first thing to go on a phone: the mark and the nav are what a reader needs at
+   that width, and the sentence under the paste box says the same thing at more length. */
+@media (max-width: 30rem) {
+  .brand-tagline { display: none; }
+  .site-nav { gap: 0.9rem; }
+}
+
+/* ── how-it-works: the three figures ──────────────────────────────────────────────────────────
+   All three are HTML and CSS rather than SVG, on purpose: they are made of REAL TEXT, so they wrap
+   on a phone, survive a font size change, can be read aloud, and are indexed like the prose around
+   them. The only SVG is the arrow, which is the one part carrying no words. */
+
+/* THE SCALE, IN THREE NUMBERS. `dl` because each is a term and its definition, not a list of
+   equals — and the third is not a size at all, which is the joke the block is built around. */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin: 2rem 0 2.5rem;
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--separator);
+  border-bottom: 1px solid var(--separator);
+}
+
+.figures dt {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+  line-height: 1.1;
+}
+
+.figures dd {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* THE PIPELINE. A grid of equal boxes rather than a flex row: with `flex` the last row stretched its
+   two survivors to double width, which read as two bigger, more important steps. Three columns give
+   two clean rows of three at any width that fits them.
+
+   THE ORDER IS CARRIED BY A NUMBER, not by chevrons between boxes. A separator drawn by the box on
+   its right becomes a stray mark at the start of every wrapped row, and there is no CSS selector for
+   "first in its row" — the number is correct wherever a box lands. */
+.pipeline {
+  list-style: none;
+  counter-reset: step;
+  margin: 1.5rem 0 0.75rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.pipeline li {
+  counter-increment: step;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.85rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  position: relative;
+}
+
+.pipeline li::after {
+  content: counter(step);
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--separator);
+}
+
+.pipeline-step {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--foreground);
+}
+
+.pipeline-note { font-size: 0.75rem; line-height: 1.35; color: var(--muted); }
+
+/* THE MONEY LINE. One step costs and the rest are free, which is the whole reason the engine can be
+   corrected without buying the corpus again. */
+.pipeline-paid { border-color: var(--accent); }
+.pipeline-paid .pipeline-step { color: var(--accent); }
+.pipeline-paid::after { color: var(--accent); opacity: 0.6; }
+
+.pipeline-key {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  margin-bottom: 2rem;
+}
+
+.key-swatch {
+  flex-shrink: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.2rem;
+  transform: translateY(1px);
+}
+
+/* THE EDGE, WORKED TWICE: the ordinary case and a refusal. The refused row is a real defect this
+   engine shipped, which is why the page can afford to be concrete about it. */
+.edge-demo { margin: 1.5rem 0 2rem; display: grid; gap: 0.75rem; }
+
+.edge-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.edge-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.edge-name { color: var(--foreground); font-size: 0.875rem; }
+
+.edge-side {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.edge-link { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; color: var(--fill); }
+
+/* The event key, in the data face, because that is the string the engine actually matches on. */
+.edge-event {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--foreground);
+  background: var(--surface-secondary);
+  border-radius: 0.25rem;
+  padding: 0.15em 0.45em;
+  white-space: nowrap;
+}
+
+.edge-arrow { width: 100%; max-width: 7.5rem; height: 0.75rem; }
+
+/* The verdict spans the whole row: it is the sentence the report would print, which is the thing
+   the diagram exists to explain. */
+.edge-verdict {
+  grid-column: 1 / -1;
+  margin: 0.35rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--separator);
+  font-size: 0.8125rem;
+}
+
+.edge-ok { color: var(--foreground); }
+.edge-ok em { color: var(--muted); font-style: normal; }
+.edge-no { color: var(--muted); }
+.edge-no strong { color: var(--foreground); }
+.edge-row-refused { border-style: dashed; }
+.edge-row-refused .edge-link { color: var(--separator); }
+
+@media (max-width: 40rem) {
+  .figures { grid-template-columns: 1fr; gap: 1rem; }
+  .edge-row { grid-template-columns: 1fr; }
+  .edge-link { flex-direction: row; gap: 0.6rem; }
+  /* Pointing DOWN once the row stacks, because the arrow now separates two things above and below
+     each other rather than left and right. */
+  .edge-arrow { max-width: 3rem; transform: rotate(90deg); }
+  .pipeline { grid-template-columns: repeat(2, 1fr); }
 }

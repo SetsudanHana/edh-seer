@@ -3,8 +3,6 @@ import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
 import { ReportView } from "./components/ReportView.js";
-import { Logotype } from "./components/Logotype.js";
-import { Footer } from "./components/Footer.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { diffRuns, loadLastRun, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
 
@@ -73,22 +71,10 @@ export default function App() {
         finish review, the verdict, and DESIGN.md.
         */
       }
-      {/* The picker that used to sit at the right of this row, and the identity gradient that ran
-          under it, are gone with v2: they let the deck repaint the chrome, which reads as a
-          decoration the user cannot switch off and says nothing a mana pip does not say better.
-          The rule under the header is now a plain --border hairline, the same one every panel
-          uses, so the header stops being the one element with its own colour system. */}
-      <header className="flex flex-col gap-3">
-        <div className="flex items-end justify-between gap-4 flex-wrap">
-          <div className="flex items-baseline gap-3">
-            <h1 className="text-2xl font-bold tracking-tight">
-              <Logotype />
-            </h1>
-            <span className="text-sm text-(--muted)">Oracle-level deck reading</span>
-          </div>
-        </div>
-        <div className="h-px bg-(--border)" />
-      </header>
+      {/* The header is static HTML in `index.html` now, above `#root`: it is the site's name and
+          its nav, neither of which should wait for a bundle, and it carries the page's `h1` where a
+          crawler can read it. The identity picker that used to sit at its right, and the gradient
+          rule under it, went with DESIGN.md v2. */}
       <DeckInput
         commanders={commanders}
         onCommandersChange={setCommanders}
@@ -119,9 +105,10 @@ export default function App() {
           <ReportView data={data} diff={diff} />
         </div>
       )}
-      {/* LAST, AND ON EVERY STATE. The fan-content notice is a condition of showing Wizards'
-          property at all, so it cannot hang off a report the reader may never run. */}
-      <Footer />
+      {/* The fan-content notice used to render here. It is static HTML in `index.html` now, after
+          the intro section: a footer inside `main` stopped being at the foot the moment any content
+          lived outside it, and a notice that is a CONDITION of showing Wizards' property should not
+          depend on the bundle loading at all. */}
     </main>
   );
 }
