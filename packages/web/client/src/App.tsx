@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
 import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { diffRuns, loadLastRun, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
+import { decodeShare, encodeShare, payloadFromHash, shareUrl } from "./lib/share-link.js";
 
 export default function App() {
   const [commanders, setCommanders] = useState("");
@@ -17,17 +18,31 @@ export default function App() {
   // fact about a TRANSITION -- once the snapshot is written, the same `data` no longer implies it.
   const [diff, setDiff] = useState<RunDiff | null>(null);
 
-  async function onAnalyze() {
+  /** THE ANALYSIS THIS PAGE IS SHOWING, AS A LINK. Written after a successful run and kept in state
+   *  so the copy button hands out what is on screen rather than what is in the boxes -- those differ
+   *  the moment someone edits the decklist without re-analysing. */
+  const [link, setLink] = useState<string | null>(null);
+
+  async function analyse(deckText: string, commanderText: string) {
     setLoading(true);
     setError(null);
     try {
-      const next = await analyzeDeck(decklist, commanders);
+      const next = await analyzeDeck(deckText, commanderText);
       const previous = loadLastRun();
       const snapshot = snapshotRun(next);
       setDiff(previous ? diffRuns(previous, snapshot) : null);
       saveLastRun(snapshot);
       setData(next);
       setEditing(false);
+      // THE ADDRESS BAR BECOMES THE SHARE LINK, which is what makes this get used: a reader who
+      // analyses a deck can copy the URL without knowing the feature exists. `replaceState` rather
+      // than a navigation, so re-analysing does not fill the back button with near-identical
+      // entries. A deck too long to encode leaves the URL alone rather than writing a broken one.
+      const payload = await encodeShare({ commanders: commanderText, decklist: deckText });
+      setLink(payload ? shareUrl(window.location.origin, window.location.pathname, payload) : null);
+      if (payload) {
+        window.history.replaceState(null, "", `#deck=${payload}`);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
       setData(null);
@@ -35,6 +50,27 @@ export default function App() {
       setLoading(false);
     }
   }
+
+  const onAnalyze = () => void analyse(decklist, commanders);
+
+  /** A SHARED LINK IS A DECK THAT ANALYSES ITSELF. Anything else -- filling the boxes and waiting for
+   *  a click -- makes the recipient do the work the sender already did.
+   *
+   *  Runs once. The ref is not defensiveness about StrictMode's double invocation alone: `analyse`
+   *  writes the hash it just read, so without it this effect is its own trigger. */
+  const openedFromLink = useRef(false);
+  useEffect(() => {
+    if (openedFromLink.current) return;
+    openedFromLink.current = true;
+    const payload = payloadFromHash(window.location.hash);
+    if (!payload) return;
+    void decodeShare(payload).then((deck) => {
+      if (!deck) return; // a link that does not decode leaves an empty paste box, as if it were absent
+      setCommanders(deck.commanders);
+      setDecklist(deck.decklist);
+      void analyse(deck.decklist, deck.commanders);
+    });
+  }, []);
 
   return (
     // THE COLUMN USED TO STOP AT 1024px. On a 1920 screen that left 448px of empty gutter on each
@@ -84,6 +120,7 @@ export default function App() {
         loading={loading}
         collapsed={!editing && !!data}
         onEdit={() => setEditing(true)}
+        shareLink={link}
       />
       {!data && !loading && decklist.trim() === "" && (
         <div className="flex flex-col gap-2 text-sm text-(--muted)">
