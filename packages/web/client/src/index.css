@@ -473,7 +473,13 @@ h3 {
   text-transform: uppercase;
 }
 
-.site-nav a {
+/* THE INSTALL BUTTON IS THE FOURTH NAV ITEM AND LOOKS LIKE THE OTHER THREE. It is a `button` and
+   not a link because it opens the browser's install dialog rather than going anywhere, so it needs
+   the element's semantics and the links' appearance -- hence one selector list and a reset for the
+   three properties a UA stylesheet gives a button that an anchor does not. It is absent from the
+   markup until the browser offers the prompt; see `InstallButton.tsx`. */
+.site-nav a,
+.site-nav-install {
   color: var(--muted);
   text-decoration: none;
   /* A hairline that only appears on hover: at 11px an always-on underline reads as a row of dashes
@@ -482,7 +488,22 @@ h3 {
   padding-bottom: 2px;
 }
 
-.site-nav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.site-nav-install {
+  background: none;
+  border-width: 0 0 1px 0;
+  border-style: solid;
+  /* `font: inherit` is not enough -- the nav's family, size, weight, letter-spacing and casing all
+     live on `.site-nav` itself, and a button does not inherit them from a UA default. */
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  padding-left: 0;
+  padding-right: 0;
+  cursor: pointer;
+}
+
+.site-nav a:hover,
+.site-nav-install:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 @media (min-width: 80rem) { .site-header { max-width: none; } }
 
