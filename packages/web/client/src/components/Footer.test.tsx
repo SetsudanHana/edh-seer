@@ -44,3 +44,17 @@ test("every outbound link opens away from the app and leaks no referrer", () => 
     expect(a.getAttribute("href")).toMatch(/^https:\/\//);
   }
 });
+
+/** A WRONG EDGE IS A REPORTABLE BUG, and this is the only route to reporting it: the site has no
+ *  server, no account and no contact form. Every claim the engine prints carries a stated reason,
+ *  which is exactly what makes one refutable — a reader can name the pair and quote the sentence. */
+test("points a reader at the repository when a claim is wrong", () => {
+  render(<Footer />);
+  const text = document.body.textContent ?? "";
+  expect(text).toMatch(/wrong edge/i);
+  const hrefs = [...document.querySelectorAll("a")].map((a) => a.getAttribute("href") ?? "");
+  expect(hrefs).toContain("https://github.com/SetsudanHana/edh-seer/issues/new");
+  expect(hrefs).toContain("https://github.com/SetsudanHana/edh-seer");
+  // Asking for the two names and the sentence is what makes a report actionable without a repro.
+  expect(text).toMatch(/two card names/i);
+});
