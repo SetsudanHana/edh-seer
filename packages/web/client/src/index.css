@@ -291,7 +291,11 @@ h3 {
 
 .intro a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 
+/* A CONTINUATION, NOT A NAV ITEM, and it is styled as one: no underline, the accent on hover, and
+   the arrow saying which direction the reading goes. */
 .intro-more { margin-top: 1.5rem; }
+.intro-more a { text-decoration: none; color: var(--foreground); }
+.intro-more a:hover { color: var(--accent); }
 
 @media (min-width: 80rem) {
   .intro { max-width: none; }

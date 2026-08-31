@@ -125,10 +125,11 @@
         better than a confident wrong one.
       </p>
 
-      <p class="intro-more">
-        <a href="/how-it-works">How the engine works in more detail</a> ·
-        <a href="https://github.com/SetsudanHana/edh-seer">Source on GitHub</a>
-      </p>
+      <!-- ONE LINK, NOT TWO. The GitHub one went: the header nav and the footer both carry it, which
+           made three copies of the same destination on one page. This one stays because it is not
+           navigation — it is the next sentence of what the reader has just read, and the header is
+           several screens up by the time they reach it. -->
+      <p class="intro-more"><a href="/how-it-works">Read how the engine decides &rarr;</a></p>
     </section>
 
     <!-- THE FOOTER IS STATIC NOW, AND IT IS LAST. It was a React component inside `main`, which put
@@ -159,8 +160,7 @@
         A wrong edge, a missing one, or a card read badly?
         <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Open an issue</a>
         with the two card names and the sentence it printed. The engine is rule-based and open
-        source, so a bad claim is a fixable bug —
-        <a href="https://github.com/SetsudanHana/edh-seer" target="_blank" rel="noopener noreferrer">github.com/SetsudanHana/edh-seer</a>.
+        source, so a bad claim is a fixable bug rather than an opinion.
       </p>
       <p>
         Card data, card images and mana symbols are provided by
