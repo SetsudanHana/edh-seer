@@ -48,12 +48,14 @@ export function landInputs(
 ): Required<KarstenInputs> {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
-  // AN MDFC IS A SPELL YOU MAY PLAY AS A LAND, and Karsten's convention is to count it as a spell
-  // and then discount the land requirement by its own coefficient. `isLand` is a type-line test, so
-  // "Instant // Land" reads as a land everywhere else in this repo -- correct for the graph and the
-  // matcher, wrong here, where counting it as a full land AND applying the coefficient would pay
-  // for the same card twice. Local to the regression; no other reader's notion of a land moves.
-  const nonland = library.filter((dc) => !isLand(dc) || mdfcLandBack(dc) !== null);
+  // AN MDFC IS A LAND (owner ruling 2026-08-31), so it is NOT in the spell pool. Karsten's own
+  // convention is the opposite -- count it as a spell and discount the requirement by 0.74/0.38 --
+  // and `recommendedLands` below records why this repo departs from it. What matters here is that
+  // the two halves move together: a card counted as a land must also leave the pool that sets
+  // `avgManaValue`, the regression's dominant term, or its mana value pushes the target back up by
+  // part of what the count just gained. That is the same double count this change exists to remove,
+  // pointing the other way.
+  const nonland = library.filter((dc) => !isLand(dc));
 
   const avgManaValue = nonland.length > 0
     ? nonland.reduce((sum, dc) => sum + dc.card.manaValue, 0) / nonland.length
@@ -79,18 +81,15 @@ export function landInputs(
       .map((dc) => dc.card.name),
   ]);
   const mdfc = library.map(mdfcLandBack);
-  const mdfcNames = new Set(
-    library.filter((_, i) => mdfc[i] !== null).map((dc) => dc.card.name),
-  );
 
+  // An MDFC cannot reach this filter at all now -- `nonland` excludes every land, and an MDFC is
+  // one. It used to need an explicit `!mdfcNames.has(...)` guard here, because it sat in the spell
+  // pool and `producedMana` carries the BACK face's colour, so Silundi Vision looked like cheap
+  // ramp and was paid for twice. Counting it as a land removes the guard's reason to exist rather
+  // than the guard's effect: a land is not ramp under either convention.
   const rampPlusDraw = nonland.filter(
     (dc) => accelerants.has(dc.card.name) && dc.card.manaValue <= CHEAP
-      && !fastNames.has(dc.card.name)
-      // An MDFC is priced by its own coefficient below; counting Silundi Vision as cheap ramp as
-      // well would pay for the same card twice, which is the exact error the fast-mana split exists
-      // to avoid. It reaches the accelerant net at all only because `producedMana` carries the BACK
-      // face's colour.
-      && !mdfcNames.has(dc.card.name),
+      && !fastNames.has(dc.card.name),
   ).length;
 
   return {
@@ -123,11 +122,25 @@ export function recommendedLands(
   const commanders = new Set(opts.commanderNames ?? []);
   return {
     ...inputs,
-    // MDFCs are OUT of the land count for the same reason they are in `nonland` above: the target
-    // they are measured against already prices them, at 0.74 of a land untapped and 0.38 tapped.
-    actual: deck.filter(
-      (dc) => !commanders.has(dc.card.name) && isLand(dc) && mdfcLandBack(dc) === null,
-    ).length,
-    target: Math.round(karstenLands(inputs)),
+    // MDFCs ARE IN THE LAND COUNT, which makes this the same type-line test `build.ts` uses --
+    // deliberately, because the two disagreeing is the defect this replaced. Before 2026-08-31
+    // `actual` excluded them while `build.ts`'s count did not, and BOTH were compared against a
+    // target already discounted for them, so the build row read a phantom surplus (enchanting-rani:
+    // 38 against 33, where the honest pair is 38 against 36).
+    actual: deck.filter((dc) => !commanders.has(dc.card.name) && isLand(dc)).length,
+    // THE COEFFICIENTS ARE DELIBERATELY OFF, AND THIS IS A DEPARTURE FROM THE PUBLISHED REGRESSION.
+    // Karsten counts a land-back MDFC as a spell and discounts the land requirement by 0.74
+    // (untapped) or 0.38 (tapped). Owner's ruling 2026-08-31: you play these as lands primarily and
+    // cast the front half only once you have enough real lands, so they belong in the count at full
+    // weight. Measured across the 55 calibration decks that run one, mean delta against target:
+    // **+1.56 as it was (discount applied, card still counted) · -1.40 all-Karsten · -0.36 here**,
+    // with 12 decks outside the +-3 band against 17 and 16, and only this arm's misses symmetric
+    // (6 high / 6 low). All-Karsten reads real decks 1.4 lands SHORT, which is the signature of
+    // players already treating these as lands and running fewer real ones.
+    // COST, NAMED: 0.74-vs-0.38 was the model's way of saying a tapped land-back is worth half an
+    // untapped one, and counting both at 1.0 throws that away. `mdfcUntapped`/`mdfcTapped` are still
+    // reported above so a future refinement has its input; inventing a third coefficient to split
+    // the difference would be fitting to 55 decks.
+    target: Math.round(karstenLands({ ...inputs, mdfcUntapped: 0, mdfcTapped: 0 })),
   };
 }

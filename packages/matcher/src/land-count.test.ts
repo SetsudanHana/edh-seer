@@ -101,20 +101,47 @@ const mdfc = (name: string, back: string, layout = "modal_dfc") =>
     layout, producedMana: ["B"],
   });
 
-/** Karsten prices a land-back MDFC as a fraction of a land: 0.74 untapped, 0.38 tapped. Both were
- *  hardcoded 0 until 2026-08-19, and the card was ALSO counted as a full land by the type-line
- *  test -- paying for it twice, in the wrong direction. */
-test("a modal DFC with a land back is a spell priced as a fraction of a land", () => {
+/** A LAND-BACK MDFC IS A LAND, AND THE TARGET IS NOT DISCOUNTED FOR IT (owner ruling 2026-08-31).
+ *  Karsten's convention was the opposite -- count it as a spell, then discount the requirement by
+ *  0.74 untapped / 0.38 tapped -- and this repo half-applied it: the discount landed on the target
+ *  while `build.ts`'s type-line count still added the card back as a land, so the same card was paid
+ *  for twice. Measured on the 55 calibration decks that run one, mean delta against the target:
+ *  **+1.56 half-applied · -1.40 all-Karsten · -0.36 counting them as lands**, with 12 decks outside
+ *  the +-3 band against 17 and 16, and it is the only one of the three whose misses are symmetric
+ *  (6 high / 6 low). All-Karsten reads decks 1.4 lands SHORT, which is what it looks like when
+ *  players already treat these as lands and run fewer real ones to compensate. */
+test("a modal DFC with a land back is counted as a land, and does not discount the target", () => {
   const deck = [
     mdfc("Hagra Mauling", "This land enters tapped. {T}: Add {B}."),
     mdfc("Blackbloom Rogue", "As this land enters, you may pay 3 life. If you don't, it enters tapped. {T}: Add {B}."),
     ...Array.from({ length: 30 }, (_, i) => land(`Swamp-${i}`)),
   ];
   const rec = recommendedLands(deck);
+  // The census survives the ruling -- the panel still names how many of the lands are MDFCs, and
+  // the tapped/untapped split is what a future refinement would need. It just no longer moves the
+  // target.
   expect(rec.mdfcTapped).toBe(1);
   expect(rec.mdfcUntapped).toBe(1); // the pay-3-life cycle is the untapped one
-  // Counted as spells, not as lands, so the 30 Swamps are the whole land count.
-  expect(rec.actual).toBe(30);
+  // Both MDFCs are lands, so 30 Swamps + 2.
+  expect(rec.actual).toBe(32);
+  // ...and the target is the regression's answer with the coefficients OFF. Asserted against
+  // `karstenLands` directly so this fails if the discount is ever wired back in silently.
+  expect(rec.target).toBe(
+    Math.round(karstenLands({ ...landInputs(deck), mdfcUntapped: 0, mdfcTapped: 0 })),
+  );
+});
+
+/** THE SAME DOUBLE COUNT IN THE OTHER DIRECTION. `avgManaValue` is the regression's dominant term,
+ *  and it averages over the NONLAND pool -- so a card counted as a land has to leave that pool too,
+ *  or its mana value inflates the average and pushes the target back up by part of what the count
+ *  just gained. Small in practice (~0.03 across the calibration decks) and wrong in principle. */
+test("an MDFC counted as a land leaves the nonland pool that sets avgManaValue", () => {
+  const deck = [
+    mdfc("Hagra Mauling", "This land enters tapped. {T}: Add {B}."),
+    ...Array.from({ length: 30 }, (_, i) => land(`Swamp-${i}`)),
+  ];
+  // The MDFC costs 3 and it is the only nonland-shaped card here, so the old pool averaged 3.
+  expect(landInputs(deck).avgManaValue).toBe(0);
 });
 
 /** A TRANSFORM card's land back is reached by transforming a permanent already in play -- you can
