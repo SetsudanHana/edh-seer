@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
+import { InstallButton } from "./components/InstallButton.js";
 import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { diffRuns, loadLastRun, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
@@ -88,6 +89,11 @@ export default function App() {
     // viewport, so the explainer started a full screen below the fold with a band of unpainted page
     // between them.
     <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
+      {/* RENDERS NOTHING HERE. It portals into the static header's nav, and only once the browser
+        *  has said the app can be installed -- see `InstallButton` for why the event is the whole
+        *  gate. Mounted from the app rather than from `index.html` because the decision is stateful
+        *  and the header is not. */}
+      <InstallButton />
       {
         /*
         THESIS: The category standard, taken on purpose — a plain dark analytics
