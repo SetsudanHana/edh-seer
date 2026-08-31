@@ -1,0 +1,11 @@
+# The app is one page; everything a crawler wants is on it.
+User-agent: *
+Allow: /
+
+# THE CARD ARTIFACTS ARE NOT CONTENT. `/static/` holds 16,384 JSON shards and two token maps — 98 MB
+# of data the app fetches for itself. Crawling them costs a crawler its budget and this site its
+# bandwidth to index files no human will ever read, and the card text in them is Wizards' property
+# rather than ours to publish as pages.
+Disallow: /static/
+
+Sitemap: https://edhseer.pages.dev/sitemap.xml

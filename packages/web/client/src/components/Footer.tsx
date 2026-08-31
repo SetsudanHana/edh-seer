@@ -16,15 +16,15 @@
  *  unbounded page: 46ch of legal text against 1,900px of viewport, so two thirds of the band was
  *  empty and the notice read as body copy that happened to be last. Columns are this system's own
  *  answer to width (a wide viewport buys columns, never longer lines), and they group what is
- *  actually three separate statements — the required wording, the trademark disclaimer, the data
- *  credits — instead of running them together as one wall.
+ *  actually four separate statements — the required wording, the trademark disclaimer, where to
+ *  report a bad claim, and the data credits — instead of running them together as one wall.
  *
  *  DESIGN.md's own note applies: if EDH Seer ever takes money, this is one of the things that has
  *  to be revisited, because the Fan Content Policy stops covering it. */
 export function Footer() {
   return (
     <footer className="mt-6 border-t border-(--separator) pt-8 pb-2">
-      <div className="grid gap-x-12 gap-y-6 md:grid-cols-2 lg:grid-cols-3 text-xs leading-relaxed text-(--muted)">
+      <div className="grid gap-x-12 gap-y-6 md:grid-cols-2 lg:grid-cols-4 text-xs leading-relaxed text-(--muted)">
         <p className="max-w-[46ch]">
           EDH Seer is unofficial Fan Content permitted under the{" "}
           <FooterLink href="https://company.wizards.com/en/legal/fancontentpolicy">
@@ -39,6 +39,22 @@ export function Footer() {
           Reserved. EDH Seer is not affiliated with, endorsed, sponsored, or specifically approved
           by Wizards of the Coast LLC — see{" "}
           <FooterLink href="https://company.wizards.com/">company.wizards.com</FooterLink>.
+        </p>
+        {/* THE ONE THING A READER MIGHT WANT TO DO THAT THE APP CANNOT DO FOR THEM. Every synergy
+          *  claim here carries a stated reason, which is exactly what makes a WRONG one reportable:
+          *  a reader can name the pair and quote the sentence. That belongs where the engine's other
+          *  admissions live rather than behind a contact form this site has no server to run. */}
+        <p className="max-w-[46ch]">
+          A wrong edge, a missing one, or a card read badly?{" "}
+          <FooterLink href="https://github.com/SetsudanHana/edh-seer/issues/new">
+            Open an issue
+          </FooterLink>{" "}
+          with the two card names and the sentence it printed. The engine is rule-based and open
+          source, so a bad claim is a fixable bug —{" "}
+          <FooterLink href="https://github.com/SetsudanHana/edh-seer">
+            github.com/SetsudanHana/edh-seer
+          </FooterLink>
+          .
         </p>
         <p className="max-w-[46ch]">
           Card data, card images and mana symbols are provided by{" "}

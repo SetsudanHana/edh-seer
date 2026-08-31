@@ -18,6 +18,45 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EDH Seer" />
     <title>EDH Seer — Commander Deck Analysis</title>
+    <!-- THE ONE ABSOLUTE URL IN THE APP. Open Graph needs absolute URLs, so the canonical origin has
+         to be written down somewhere; this is that somewhere, and it is the one string to change on
+         the day a custom domain replaces the pages.dev one. Everything else on this page is
+         root-relative and moves with the site. -->
+    <link rel="canonical" href="https://edhseer.pages.dev/" />
+    <meta name="description" content="Paste a Commander decklist and get an oracle-text synergy read: which cards work together and why, plus mana curve, land math and combo detection. No account, no sign-up." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="EDH Seer" />
+    <meta property="og:title" content="EDH Seer — Commander Deck Analysis" />
+    <meta property="og:description" content="Why two cards work together, from the oracle text itself. Paste a decklist, get the synergy edges with a stated reason for each one." />
+    <meta property="og:url" content="https://edhseer.pages.dev/" />
+    <meta property="og:image" content="https://edhseer.pages.dev/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="EDH Seer — why two cards work together, from the oracle text itself" />
+    <!-- `summary_large_image` and not `summary`: the card is 1200x630 and a `summary` crop would
+         take a square out of the middle of it, cutting the wordmark off its own image. -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="EDH Seer — Commander Deck Analysis" />
+    <meta name="twitter:description" content="Why two cards work together, from the oracle text itself." />
+    <meta name="twitter:image" content="https://edhseer.pages.dev/og-image.png" />
+    <!-- WHAT THIS ACTUALLY IS, in the vocabulary a crawler reads. Kept to facts the product can
+         stand behind: it is a free web application, it needs no account, and it is not a store. No
+         rating, no review count, no `aggregateRating` — inventing those is the schema equivalent of
+         a claim with no reason behind it. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "EDH Seer",
+        "url": "https://edhseer.pages.dev/",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "description": "Oracle-text synergy analysis for Magic: The Gathering Commander decks.",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
