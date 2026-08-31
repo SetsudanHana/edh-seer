@@ -8,4 +8,4 @@ Allow: /
 # rather than ours to publish as pages.
 Disallow: /static/
 
-Sitemap: https://edhseer.pages.dev/sitemap.xml
+Sitemap: https://edhseer.cards/sitemap.xml

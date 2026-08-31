@@ -18,18 +18,27 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EDH Seer" />
     <title>EDH Seer — Commander Deck Analysis</title>
-    <!-- THE ONE ABSOLUTE URL IN THE APP. Open Graph needs absolute URLs, so the canonical origin has
-         to be written down somewhere; this is that somewhere, and it is the one string to change on
-         the day a custom domain replaces the pages.dev one. Everything else on this page is
+    <!-- THE CANONICAL ORIGIN. Open Graph needs absolute URLs, so it has to be written down
+         somewhere; this tag is where, and it is the one every test reads.
+
+         IT IS NOT "the one string to change", WHICH IS WHAT THIS COMMENT USED TO CLAIM. The origin
+         appears ELEVEN times across FOUR source files -- five here, three in
+         `how-it-works/index.html`, two in `public/sitemap.xml`, one in `public/robots.txt` -- and
+         believing the old sentence is how a rename ships half-applied. What makes that safe is not
+         a count in a comment but `seo.test.ts`, which derives the origin from THIS tag and asserts
+         every other absolute URL on both pages, the sitemap and robots agree with it. All four
+         checks were proven to fail on a rename applied here alone. Everything else on this page is
          root-relative and moves with the site. -->
-    <link rel="canonical" href="https://edhseer.pages.dev/" />
+    <!-- Changed from edhseer.pages.dev on 2026-08-31. Keep the pages.dev origin alive and 301 it:
+         analysis share links carry the origin they were copied from. -->
+    <link rel="canonical" href="https://edhseer.cards/" />
     <meta name="description" content="Paste a Commander decklist and get an oracle-text synergy read: which cards work together and why, plus mana curve, land math and combo detection. No account, no sign-up." />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="EDH Seer" />
     <meta property="og:title" content="EDH Seer — Commander Deck Analysis" />
     <meta property="og:description" content="Why two cards work together, from the oracle text itself. Paste a decklist, get the synergy edges with a stated reason for each one." />
-    <meta property="og:url" content="https://edhseer.pages.dev/" />
-    <meta property="og:image" content="https://edhseer.pages.dev/og-image.png" />
+    <meta property="og:url" content="https://edhseer.cards/" />
+    <meta property="og:image" content="https://edhseer.cards/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="EDH Seer — why two cards work together, from the oracle text itself" />
@@ -38,7 +47,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="EDH Seer — Commander Deck Analysis" />
     <meta name="twitter:description" content="Why two cards work together, from the oracle text itself." />
-    <meta name="twitter:image" content="https://edhseer.pages.dev/og-image.png" />
+    <meta name="twitter:image" content="https://edhseer.cards/og-image.png" />
     <!-- WHAT THIS ACTUALLY IS, in the vocabulary a crawler reads. Kept to facts the product can
          stand behind: it is a free web application, it needs no account, and it is not a store. No
          rating, no review count, no `aggregateRating` — inventing those is the schema equivalent of
@@ -48,7 +57,7 @@
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "EDH Seer",
-        "url": "https://edhseer.pages.dev/",
+        "url": "https://edhseer.cards/",
         "applicationCategory": "GameApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
