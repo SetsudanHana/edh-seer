@@ -271,10 +271,12 @@ export function computeDeckMath(
     avgManaValue: Math.round(rec.avgManaValue * 100) / 100,
     rampPlusDraw: rec.rampPlusDraw,
     fastMana: rec.fastMana,
-    // Carried so the panel can say why this land count differs from the build row's: a modal DFC
-    // with a land back is a LAND to the type-line test the build categories use and a SPELL to this
-    // regression, which prices it at 0.74 or 0.38 of one. Two numbers on one screen with no
-    // explanation reads as a defect in the report.
+    // COMPOSITION, NOT RECONCILIATION ANY MORE. This carried the explanation for why `actual`
+    // disagreed with the build row's land count -- an MDFC was a LAND to the type-line test the
+    // build categories use and a SPELL to this regression, which priced it at 0.74 or 0.38 of one.
+    // The owner ruled that split away on 2026-08-31 and the two counts are the same number now, so
+    // what this reports is what the lands are MADE of: a reader looking at 38 should know 4 of them
+    // are cards they may cast instead.
     mdfc: rec.mdfcUntapped + rec.mdfcTapped,
   };
 

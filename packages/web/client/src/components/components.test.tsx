@@ -1351,20 +1351,23 @@ test("BuildBenchmarks never prints a range whose two ends are the same figure", 
   expect(document.body.textContent).not.toMatch(/(\d+)% – \1%/);
 });
 
-/** Two land numbers reach one panel -- this regression's (an MDFC is a spell worth a fraction of a
- *  land) and the build category's (an MDFC is a land, by type line). Unexplained, that reads as a
- *  defect in the report, so the row says which it is counting. */
-test("the land row explains an MDFC count, and says nothing when there is none", () => {
+/** Two land numbers used to reach one panel -- this regression's (an MDFC is a spell worth a
+ *  fraction of a land) and the build category's (an MDFC is a land, by type line) -- and the row
+ *  existed to reconcile them. The owner ruled the split away on 2026-08-31: an MDFC is a land, both
+ *  readers count it, and no target is discounted for it. What the row says now is COMPOSITION, and
+ *  the assertion below is the guard against the old sentence coming back with the old arithmetic. */
+test("the land row names how many lands are MDFCs, and says nothing when there is none", () => {
   const { unmount } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   expect(screen.queryByText(/modal DFC/i)).not.toBeInTheDocument();
   unmount();
   const withMdfc = { ...DECK_MATH, lands: { ...DECK_MATH.lands, mdfc: 4 } };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withMdfc} />);
-  expect(screen.getByText(/4 modal DFCs priced as spells, discounting the target/i)).toBeInTheDocument();
-  // AND THE DECK'S OWN LAND COUNT IS PRINTED BESIDE IT (owner, 2026-08-23): a reader who counts the
-  // lands in front of them gets `actual + mdfc`, which is what the build `lands` chip shows, so the
-  // row states both rather than leaving the discrepancy to be found. DECK_MATH.lands.actual is 37.
-  expect(screen.getByText(/\(41 with MDFCs\)/)).toBeInTheDocument();
+  expect(screen.getByText(/4 modal DFCs counted as lands, at full weight and with no discount/i)).toBeInTheDocument();
+  // THE BRACKET IS COMPOSITION, NOT A SECOND TOTAL. `actual` already includes the MDFCs, so adding
+  // `mdfc` to it -- which is what this row printed until the ruling -- counts them twice.
+  // DECK_MATH.lands.actual is 37.
+  expect(screen.getByText(/\(4 MDFC\)/)).toBeInTheDocument();
+  expect(screen.queryByText(/41/)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks says where its turn came from, because it varies per deck", () => {
