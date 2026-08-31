@@ -46,13 +46,20 @@ export function DeckInput({
   if (collapsed) {
     const count = value.split("\n").filter((l) => l.trim()).length;
     const cmdName = commanders.split("\n")[0]?.replace(/^\d+\s+/, "").trim();
+    // IT WRAPS, AND AT 390px IT HAS TO. Four controls plus the summary ran 409px wide inside a
+    // 390px viewport -- measured `document.body.scrollWidth` 466 against a 390 client width, so 76px
+    // of the row sat off-screen and took the whole page's horizontal scroll with it. The cause was
+    // `shrink-0` on the button group: correct on a desktop, where it stops the buttons squashing
+    // before the summary truncates, and an instruction never to fit on a phone. Wrapping to a second
+    // line is what a phone has room for; `justify-between` still puts the summary and the buttons on
+    // opposite ends whenever one line is enough.
     return (
-      <div className="flex items-center justify-between gap-3 border border-(--border) rounded-(--radius) p-3 bg-(--surface) text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border border-(--border) rounded-(--radius) p-3 bg-(--surface) text-sm">
         <span className="text-(--muted) truncate">
           <span className="stat-num text-(--foreground)">{count}</span> lines
           {cmdName ? <> · {cmdName}</> : null}
         </span>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex flex-wrap gap-2">
           {/* THE LINK IS THE ANALYSIS, not the decklist: it reopens this exact report rather than
             *  handing someone a list to paste themselves. The address bar already carries it — this
             *  is for the reader who does not think to look there. */}
