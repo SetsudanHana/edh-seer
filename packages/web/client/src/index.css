@@ -376,3 +376,36 @@ h3 {
   padding-top: 1.25rem;
   border-top: 1px solid var(--separator);
 }
+
+/* THE FOOTER (index.html). Static markup, so plain CSS: the same four-column band the React
+   component drew, on the same measure as `.intro` so the page has one column and not two. */
+.site-footer {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 2rem 3rem;
+  border-top: 1px solid var(--separator);
+  display: grid;
+  gap: 1.5rem 3rem;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.65;
+}
+
+.site-footer p { margin: 0; max-width: 46ch; }
+
+/* NOT THE ACCENT. These were magenta once and put the three brightest marks on the page inside its
+   least important block; a link here separates from the muted text by LIGHTNESS and takes the
+   accent only on hover, where the reader has already chosen it. */
+.site-footer a {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 2px;
+}
+
+.site-footer a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+
+@media (min-width: 48rem) { .site-footer { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 64rem) { .site-footer { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 80rem) { .site-footer { max-width: none; } }

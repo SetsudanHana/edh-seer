@@ -4,7 +4,6 @@ import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
 import { ReportView } from "./components/ReportView.js";
 import { Logotype } from "./components/Logotype.js";
-import { Footer } from "./components/Footer.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { diffRuns, loadLastRun, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
 
@@ -119,9 +118,10 @@ export default function App() {
           <ReportView data={data} diff={diff} />
         </div>
       )}
-      {/* LAST, AND ON EVERY STATE. The fan-content notice is a condition of showing Wizards'
-          property at all, so it cannot hang off a report the reader may never run. */}
-      <Footer />
+      {/* The fan-content notice used to render here. It is static HTML in `index.html` now, after
+          the intro section: a footer inside `main` stopped being at the foot the moment any content
+          lived outside it, and a notice that is a CONDITION of showing Wizards' property should not
+          depend on the bundle loading at all. */}
     </main>
   );
 }
