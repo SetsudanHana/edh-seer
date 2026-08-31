@@ -8,6 +8,15 @@
          background so a mobile browser's chrome does not frame a near-black app in white. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="theme-color" content="#0d0912" />
+    <!-- INSTALLABLE. The manifest names the icons and asks for a standalone window; the two
+         `apple-*` tags are iOS's older equivalent, which Safari still reads for a home-screen
+         launch. iOS has no `beforeinstallprompt`, so installing there is the user's own
+         "Add to Home Screen" — these only decide what it looks like once they do. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="EDH Seer" />
     <title>EDH Seer — Commander Deck Analysis</title>
   </head>
   <body>

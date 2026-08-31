@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "EDH Seer",
+  "short_name": "EDH Seer",
+  "description": "Oracle-level deck reading for Commander: paste a decklist, get the synergy edges, the mana math and the combos.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0912",
+  "theme_color": "#0d0912",
+  "categories": ["games", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import { StaticLookup } from "./static-lookup.js";
 import { shardOf } from "./bin/build-static-core.js";
@@ -186,6 +187,15 @@ test("the manifest is fetched once however many shards a deck touches", async ()
   await l.prefetch(["krenko", "mountain", "forest"]);
   await l.tokenTags();
   expect(manifests).toBe(1);
+});
+
+/** A CACHE IS ONLY SAFE TO DROP WHEN WE KNOW WHAT REPLACED IT. Found offline: a manifest read that
+ *  failed put this on the flat fallback, and evicting from there deleted a correctly-cached corpus
+ *  on the strength of a request that never answered — 91 shards thrown away over one 30-byte file.
+ *  The eviction is a `caches` operation, so this test only asserts the guard that precedes it. */
+test("an unknown version evicts nothing", async () => {
+  const src = readFileSync(new URL("./static-lookup.ts", import.meta.url), "utf8");
+  expect(src).toContain("if (version) void this.evictOtherVersions(cacheName);");
 });
 
 /** Pins the wiring against silently regressing to the empty Map `tokenArt` returned before
