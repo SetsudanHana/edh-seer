@@ -108,6 +108,46 @@
         <a href="https://github.com/SetsudanHana/edh-seer">Source on GitHub</a>
       </p>
     </section>
+
+    <!-- THE FOOTER IS STATIC NOW, AND IT IS LAST. It was a React component inside `main`, which put
+         it ABOVE the intro section the moment that section existed — a footer that is not at the
+         foot. Moving it here fixes the order, and buys the better argument for free: the Fan Content
+         notice is a CONDITION of showing Wizards' property, so it should not depend on a 700 KB
+         bundle loading. It renders now with JavaScript off, and every crawler reads it.
+         Plain CSS classes rather than utilities, for the same reason `.intro` uses them: Tailwind
+         does not scan this file. -->
+    <footer class="site-footer">
+      <p>
+        EDH Seer is unofficial Fan Content permitted under the
+        <a href="https://company.wizards.com/en/legal/fancontentpolicy" target="_blank" rel="noopener noreferrer">Wizards of the Coast Fan Content Policy</a>.
+        Not approved or endorsed by Wizards. Portions of the materials used are property of Wizards
+        of the Coast. ©Wizards of the Coast LLC.
+      </p>
+      <p>
+        Wizards of the Coast, Magic: The Gathering, and their logos are trademarks of Wizards of the
+        Coast LLC in the United States and other countries. © 1993–2026 Wizards. All Rights Reserved.
+        EDH Seer is not affiliated with, endorsed, sponsored, or specifically approved by Wizards of
+        the Coast LLC — see
+        <a href="https://company.wizards.com/" target="_blank" rel="noopener noreferrer">company.wizards.com</a>.
+      </p>
+      <!-- The one thing a reader might want to do that the app cannot do for them. Every synergy
+           claim carries a stated reason, which is exactly what makes a WRONG one reportable: a
+           reader can name the pair and quote the sentence. -->
+      <p>
+        A wrong edge, a missing one, or a card read badly?
+        <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Open an issue</a>
+        with the two card names and the sentence it printed. The engine is rule-based and open
+        source, so a bad claim is a fixable bug —
+        <a href="https://github.com/SetsudanHana/edh-seer" target="_blank" rel="noopener noreferrer">github.com/SetsudanHana/edh-seer</a>.
+      </p>
+      <p>
+        Card data, card images and mana symbols are provided by
+        <a href="https://scryfall.com/" target="_blank" rel="noopener noreferrer">Scryfall</a>, which
+        is unaffiliated with this site. Combo data is provided by
+        <a href="https://commanderspellbook.com/" target="_blank" rel="noopener noreferrer">Commander Spellbook</a>.
+        This site shows no card prices.
+      </p>
+    </footer>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
