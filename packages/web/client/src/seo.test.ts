@@ -87,6 +87,11 @@ test("the page ships real text without running JavaScript", () => {
   expect(readable).toMatch(/commander/i);
   expect(readable).toMatch(/synerg/i);
   expect(html).toContain('href="/how-it-works"');
+  // ONE route to GitHub per region, not three. The header nav and the footer both carry it, so the
+  // intro must not: a page that repeats the same destination in three places is a page that has not
+  // decided where it lives.
+  const intro = html.slice(html.indexOf('class="intro"'), html.indexOf("</section>"));
+  expect(intro).not.toContain("github.com");
 });
 
 test("the how-it-works page is a page, not an app route", () => {

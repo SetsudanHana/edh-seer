@@ -52,7 +52,11 @@ test("points a reader at the repository when a claim is wrong", () => {
   expect(text).toMatch(/wrong edge/i);
   expect(text).toMatch(/two card names/i);
   expect(footer).toContain('href="https://github.com/SetsudanHana/edh-seer/issues/new"');
-  expect(footer).toContain('href="https://github.com/SetsudanHana/edh-seer"');
+  // ONE ROUTE, NOT TWO. The paragraph used to end with a bare repository URL as well, which made
+  // three links to the same organisation on one page once the header nav existed. The actionable
+  // one — where a wrong claim goes — is the one worth keeping in a sentence.
+  const repoLinks = [...footer.matchAll(/href="https:\/\/github\.com\/SetsudanHana\/edh-seer"/g)];
+  expect(repoLinks).toHaveLength(0);
 });
 
 test("every outbound link opens away from the app and leaks no referrer", () => {
