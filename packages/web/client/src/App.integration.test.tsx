@@ -34,6 +34,16 @@ test("the static explainer stops rendering once an analysis is on screen", async
   await waitFor(() => expect(screen.getByText("Tokens")).toBeInTheDocument()); // Overview tab, default active
   expect(document.documentElement.dataset.report).toBe("1");
   expect(spy).toHaveBeenCalledWith("1 Impact Tremors", "1 Krenko, Mob Boss");
+
+  // THE OTHER HALF: a reader who clears the analysis gets the explainer back. The UI's own way to
+  // clear it is Back -- see "the first analysis is a history entry" below -- which lands on a URL
+  // with no deck hash, and `onPop` responds with `setData(null)`. Reused rather than invented.
+  await act(async () => {
+    window.history.replaceState(null, "", "/");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+  await screen.findByLabelText("Decklist");
+  expect(document.documentElement.dataset.report).toBeUndefined();
 });
 
 test("shows an error banner when the api throws", async () => {
