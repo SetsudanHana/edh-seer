@@ -43,9 +43,7 @@ export function TypeBar({ slices }: { slices: readonly TypeSlice[] }) {
             data-testid={`type-segment-${s.type}`}
             className="block h-full first:rounded-l-(--radius) last:rounded-r-(--radius)"
             style={{ width: `${(s.count / total) * 100}%`, background: TYPE_SEGMENT_HUE[s.type] }}
-          >
-            <title>{`${s.count} ${s.type}`}</title>
-          </span>
+          />
         ))}
       </div>
       {/* The counts in text. On a six-segment bar the two smallest segments are too narrow for an
