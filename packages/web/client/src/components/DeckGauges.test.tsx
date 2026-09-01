@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { DeckGauges } from "./DeckGauges.js";
+import { floorState } from "../lib/deck-gauge.js";
 
 const DATA = {
   report: {
@@ -23,14 +24,33 @@ test("draws one dial per role, plus lands and the two scores", () => {
   }
 });
 
-/** THE DIAL AND THE SCORE MUST NOT DISAGREE. `build.ts:517` gives a parent past its target full
- *  credit, so no input may make the dial say a deck is failing where the score says it is perfect.
- *  This is the contradiction the whole asymmetry exists to prevent; pinned so it cannot come back. */
+/** THE RATCHET FOR THE ONE CLAIM THIS WHOLE PANEL ARGUES FROM. `build.ts:520` is
+ *  `Math.min(p.count / p.target, 1) // exceeding a floor never penalizes`, so a parent past its target
+ *  scores FULL CREDIT and the trim chips call the same overshoot "where the room is". A dial reddening
+ *  the over side would tell the reader the opposite of the score and the cut list on one screen.
+ *
+ *  IT ASSERTS THE TONE, NOT THE WORDING. The first version of this test checked only the label text,
+ *  which `Dial` renders identically whatever the tone is -- so flipping `floorState`'s over side to
+ *  danger would have passed it silently, which is precisely the regression it exists to catch. */
 test("no over-target role ever renders as a fault", () => {
-  render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
-  expect(screen.getByText("9 over target")).toBeInTheDocument();
-  expect(screen.getByText("7 over target")).toBeInTheDocument();
-  expect(screen.queryByText(/far over/)).toBeNull();
+  const { container } = render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
+  const tones = [...container.querySelectorAll("[data-tone]")].map((el) => ({
+    label: el.textContent,
+    tone: el.getAttribute("data-tone"),
+  }));
+  // Interaction 19/10 and Ramp 17/10 are both far past their floors.
+  expect(tones).toContainEqual({ label: "9 over target", tone: "neutral" });
+  expect(tones).toContainEqual({ label: "7 over target", tone: "neutral" });
+  // And nothing anywhere in the panel reds out for being over.
+  expect(tones.filter((t) => /over target/.test(t.label ?? ""))
+    .every((t) => t.tone === "neutral")).toBe(true);
+});
+
+/** Proves the guard above is not vacuous: the tone it pins comes from `floorState`, so if that ever
+ *  reds the over side this assertion fails first and names the reason. */
+test("floorState is what makes the over side neutral", () => {
+  expect(floorState(19, 10).tone).toBe("neutral");
+  expect(floorState(7, 10).tone).toBe("danger");
 });
 
 test("a multi-leaf role opens its group on Build", () => {

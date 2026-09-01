@@ -139,7 +139,10 @@ export function Dial({
       </svg>
       <span className="eyebrow">{name}</span>
       <span className="text-2xl font-semibold stat-num">{value}</span>
-      <span className={`text-xs ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
+      {/* data-tone: the tone alone, so a test can pin it independent of the wording -- a colour-only
+        * flip of `floorState`/`bandState`/`scoreState` would otherwise leave every text assertion
+        * on this span passing. Not read at runtime; don't delete it as unused. */}
+      <span data-tone={reading.tone} className={`text-xs ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
     </>
   );
 
