@@ -121,10 +121,19 @@ export function Dial({
   /** `lead` is a score dial standing for the group beneath it (Synergy, Build); `input` is one of
    *  that group's own inputs. Both sizes reuse the existing type scale -- `text-4xl` is the same
    *  class `HeadlineScores` gives its lead tile, `text-2xl` is this dial's own size from before this
-   *  prop existed -- and Tailwind's own width steps (`max-w-56`/`max-w-[9rem]`, the latter equal to
-   *  Tailwind's own `36` step written literally because that's how this file already had it). No new
-   *  size value is introduced. The zone logic, the needle, `data-tone`, `aria-label` and the
-   *  button/div split below are all unchanged by this prop. */
+   *  prop existed -- and Tailwind's own width steps. No new size value is introduced. The zone
+   *  logic, the needle, `data-tone`, `aria-label` and the button/div split below are all unchanged
+   *  by this prop.
+   *
+   *  `input`'s arc is narrower below `sm` (`max-w-28` = 7rem = 112px) than from `sm` up
+   *  (`max-w-[9rem]` = 144px, this dial's own size from before the fix round below). Measured
+   *  (task 9 fix round 1, whole-branch review): `App.tsx`'s `<main class="p-8">` leaves 326px of
+   *  content at a 390px viewport; two input dials in a 2-column grid with `gap-3` (12px) get a
+   *  157px track each, and a 144px-capped arc plus this shell's own `p-4` (32px) and 1px border
+   *  each side needs 178px -- wider than the track, which would force the SAME track-vs-content
+   *  fight the narrow-width defences in `components.md` name. 112px plus that same 34px of
+   *  chrome is 146px, comfortably under 157px, so two sit side by side with room left over. The
+   *  lead dial is untouched -- it never shares a row with another dial. */
   size?: "lead" | "input";
 }) {
   // The needle reaches the ring's inner edge (RING_INNER, not a second literal) so it points
@@ -132,7 +141,7 @@ export function Dial({
   const [nx, ny] = pointAt(angle(reading.position), RING_INNER);
   const body = (
     <>
-      <svg viewBox="0 0 100 56" aria-hidden="true" className={`w-full ${size === "lead" ? "max-w-56" : "max-w-[9rem]"}`}>
+      <svg viewBox="0 0 100 56" aria-hidden="true" className={`w-full ${size === "lead" ? "max-w-56" : "max-w-28 sm:max-w-[9rem]"}`}>
         {ZONES[zones].map((z) => (
           <path
             key={`${z.from}`}

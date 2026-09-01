@@ -141,27 +141,79 @@ test("renders nothing rather than an empty shell when the engine computed no bui
   expect(container).toBeEmptyDOMElement();
 });
 
-/** THE ORPHAN-CELL DEFECT (finding 2, whole-branch review, 2026-09-01) was a property of a fixed-
- *  column CSS GRID: a lone last dial landed in its own column beside an empty one, reading as a
- *  tile that failed to load. Task 9 replaced the single flat grid with one `flex flex-wrap` row of
- *  inputs per group -- a wrapping flex row has no column tracks, so there is no empty cell for a
- *  lone last item to sit beside AT ANY WIDTH: it simply centres on its own line, same as a short
- *  paragraph's last word. Proven structurally (no grid class present) rather than by re-deriving the
- *  old `:last-child:nth-child(Cn+1)` selector math for a grid that no longer exists. */
-test("no width leaves a single input dial alone beside a blank cell: input rows wrap, they don't grid", () => {
-  // Board wipes alone (one parent, no lands): the smallest possible non-empty Build input row.
-  const oneInput = {
-    report: {
-      buildParents: [{ name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] }],
-      buildScore: 3.4,
-    },
-  };
-  const { container } = render(<DeckGauges data={oneInput as never} onOpen={() => {}} />);
-  const group = screen.getByRole("group", { name: "Build, and the five measures behind it" });
-  const inputRow = group.lastElementChild as HTMLElement;
-  expect(inputRow.children).toHaveLength(1); // the lone Board wipes dial
-  expect(inputRow.className).toMatch(/\bflex-wrap\b/);
-  expect(inputRow.className).not.toMatch(/\bgrid\b/);
-  // And the container's own class name confirms it, panel-wide -- no `.deck-gauges-grid` survives.
-  expect(container.querySelector(".deck-gauges-grid")).toBeNull();
+/** TASK 9 FIX ROUND 1 (whole-branch review, 2026-09-01): `flex flex-wrap` measured out as TWO
+ *  defects, not zero -- a flex item sizes to its own content and does not shrink across a wrap
+ *  point, which stranded Lands alone at 1440px (4+1) and, at 390px, wrapped NOTHING at all (55%
+ *  longer Summary page). Reverted to CSS grid, split per group because the two groups have
+ *  different counts:
+ *
+ *  jsdom does not run layout, so this cannot measure pixels -- it can only prove the CLASS NAMES
+ *  that drive the grid are the ones the math below assumes, and that the orphan-span selector
+ *  matches the DOM shapes it is meant to catch. The arithmetic itself (confirmed against the
+ *  actual compiled Tailwind CSS, not assumed) is:
+ *
+ *  `App.tsx`'s `<main class="p-8 max-w-5xl xl:max-w-none">` leaves content width
+ *  390->326px, 768->704px, 1024->960px, 1440->1376px (p-8 = 32px/side; max-w-5xl = 1024px, dropped
+ *  at xl/1280px). `gap-3` = 12px. The INPUT dial's arc is `max-w-28` (112px) below `sm`/640px and
+ *  `max-w-[9rem]` (144px) from `sm` up; its shell is `p-4` (32px) plus a 1px border each side, so
+ *  each dial needs at most 112+32+2=146px narrow or 144+32+2=178px from `sm` up.
+ *
+ *  | width | Synergy (always 2 col) | Build (2 / sm:3 / xl:5 col) |
+ *  |---|---|---|
+ *  | 390  | track (326-12)/2=157, needs 146 -- 2/row            | same track/need -- 2,2,1(spanned) |
+ *  | 768  | track (704-12)/2=346, needs 178 -- 2/row            | 3 col: track (704-24)/3=227, needs 178 -- 3,2 |
+ *  | 1024 | track (960-12)/2=474, needs 178 -- 2/row            | 3 col: track (960-24)/3=312, needs 178 -- 3,2 |
+ *  | 1440 | track (1376-12)/2=682, needs 178 -- 2/row           | 5 col: track (1376-48)/5=266, needs 178 -- 5/row |
+ *
+ *  Every track clears its need with room to spare -- confirmed via `vite build` and grepping the
+ *  compiled CSS for `.max-w-28`, `.p-4`, `.gap-3`, `.grid-cols-2/3/5` and the `40rem`/`80rem` media
+ *  queries, not assumed from the Tailwind scale by memory. `grid-cols-N` also compiles to
+ *  `repeat(N, minmax(0, 1fr))` -- the `0` minimum is what lets a track shrink below its content's
+ *  natural size at all, which a `flex-wrap` row never had. */
+test("the input grids carry the classes the measured layout table above depends on", () => {
+  const { container } = render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
+  const synergyGrid = container.querySelector(".synergy-inputs-grid")!;
+  const buildGrid = container.querySelector(".build-inputs-grid")!;
+  expect(synergyGrid.className).toMatch(/\bgrid\b/);
+  expect(synergyGrid.className).toMatch(/\bgrid-cols-2\b/);
+  expect(buildGrid.className).toMatch(/\bgrid-cols-2\b/);
+  expect(buildGrid.className).toMatch(/\bsm:grid-cols-3\b/);
+  expect(buildGrid.className).toMatch(/\bxl:grid-cols-5\b/);
+  // No stray flex-wrap row survives from the reverted attempt.
+  expect(container.querySelector(".flex-wrap")).toBeNull();
+});
+
+/** The orphan-span selector itself, proven the same way the pre-task-9 flat-grid version was:
+ *  jsdom implements `:nth-child`/`:last-child` structurally, so `Element.matches` proves the exact
+ *  predicate the CSS applies without needing jsdom to run the stylesheet's own `@media` cascade.
+ *  Five Build inputs (4 parents + lands) leave the last one at position 5 -- odd, so the 2-column
+ *  tier's rule spans it; four (drop lands) leave it at position 4 -- even, no span needed, because
+ *  4 items in 2 columns is a clean 2+2. */
+test("build-inputs-grid's last-dial-alone selector matches only when the count is odd", () => {
+  const { container: five } = render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
+  const fiveGrid = five.querySelector(".build-inputs-grid")!;
+  expect(fiveGrid.children).toHaveLength(5);
+  expect(fiveGrid.lastElementChild!.matches(":last-child:nth-child(2n+1)")).toBe(true);
+
+  const fourReport = { report: { ...DATA.report, deckMath: undefined } };
+  const { container: four } = render(<DeckGauges data={fourReport as never} onOpen={() => {}} />);
+  const fourGrid = four.querySelector(".build-inputs-grid")!;
+  expect(fourGrid.children).toHaveLength(4);
+  expect(fourGrid.lastElementChild!.matches(":last-child:nth-child(2n+1)")).toBe(false);
+});
+
+/** Synergy's grid is always 2 columns, so 2 items (the ordinary case) never orphan -- but the
+ *  span rule is kept for the near-impossible case of only one of Breadth/Anchor existing, so a
+ *  lone dial doesn't sit alone in the LEFT cell beside a blank right one. */
+test("synergy-inputs-grid's span rule protects the near-impossible one-measure case too", () => {
+  const { container: two } = render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
+  const twoGrid = two.querySelector(".synergy-inputs-grid")!;
+  expect(twoGrid.children).toHaveLength(2);
+  expect(twoGrid.lastElementChild!.matches(":last-child:nth-child(2n+1)")).toBe(false);
+
+  const onlyBreadth = { report: { ...DATA.report, anchoring: undefined } };
+  const { container: one } = render(<DeckGauges data={onlyBreadth as never} onOpen={() => {}} />);
+  const oneGrid = one.querySelector(".synergy-inputs-grid")!;
+  expect(oneGrid.children).toHaveLength(1);
+  expect(oneGrid.lastElementChild!.matches(":last-child:nth-child(2n+1)")).toBe(true);
 });

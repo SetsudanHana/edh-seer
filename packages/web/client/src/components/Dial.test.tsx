@@ -41,6 +41,16 @@ test("size=lead draws a bigger arc and a bigger figure than the default input si
   expect(screen.getAllByText("0.8")[0].className).toContain("text-4xl");
 });
 
+/** The input arc is narrower below `sm` (task 9 fix round 1: `max-w-[9rem]` alone left two input
+ *  dials too wide to sit side by side in the 326px of content a 390px viewport has, per
+ *  `App.tsx`'s `p-8`). The lead dial shares no width class with input at all, so it is untouched. */
+test("the input arc is narrower below sm, so two fit beside each other on a phone", () => {
+  const { container } = render(<Dial name="Breadth" value="0.6" reading={scoreState(0.6)} zones="score" />);
+  const cls = container.querySelector("svg")!.className.baseVal;
+  expect(cls).toContain("max-w-28");
+  expect(cls).toContain("sm:max-w-[9rem]");
+});
+
 test("the arc itself is hidden from screen readers", () => {
   const { container } = render(<Dial name="Build" value="3.4" reading={scoreState(3.4)} zones="score" />);
   const svg = container.querySelector("svg");

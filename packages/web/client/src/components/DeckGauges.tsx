@@ -57,8 +57,16 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
             />
             {/* Breadth and anchor are both edge-derived, same as synergy itself, so they take the
               * same partly-read flag for the same reason `HeadlineScores` gives its own sub-line --
-              * see the comment on `partial` above. No new rule is derived for them. */}
-            <div className="flex flex-wrap justify-center gap-3">
+              * see the comment on `partial` above. No new rule is derived for them.
+              *
+              * GRID, NOT FLEX-WRAP (task 9 fix round 1, whole-branch review, 2026-09-01): a flex
+              * item sizes to its content and does not shrink across a wrap, which measured out as
+              * two real defects -- a stranded Build input at 1440px and NOTHING wrapping at 390px,
+              * a 55% longer Summary page. A CSS grid's explicit column count is not content-
+              * dependent: `grid-cols-2` is always exactly two columns, at any width, and the
+              * column TRACKS shrink to fit rather than the items refusing to. `w-full` makes this
+              * div, not its flex-centred parent, own the available width the columns divide. */}
+            <div className="synergy-inputs-grid grid grid-cols-2 gap-3 w-full">
               {report.positiveCoherence !== undefined ? (
                 <Dial
                   name="Breadth"
@@ -96,7 +104,14 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
               onOpen={() => onOpen("build", undefined)}
               openLabel="Build"
             />
-            <div className="flex flex-wrap justify-center gap-3">
+            {/* Two columns narrow, three from `sm` (640px), five from `xl` (1280px) -- one clean
+              * row of five at wide widths, with nothing stranded (measured: `xl:grid-cols-5` needs
+              * 938px for five 144px-capped dials plus gaps, and even the `sm`/`lg` band's 1376px
+              * content width at 1440px clears that easily). `.build-inputs-grid` (index.css) spans
+              * a lone last dial across the row only at the 2-column tier, where 5 items give 2+2+1
+              * -- the 3-column tier gives 3+2 and the 5-column tier is a single row, neither of
+              * which strands anything. */}
+            <div className="build-inputs-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 w-full">
               {parents.map((p) => (
                 <Dial
                   key={p.name}

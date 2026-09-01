@@ -57,9 +57,18 @@ export function TypeBar({ slices, lands, mdfc }: { slices: readonly TypeSlice[];
               *  reinvented -- a modal DFC with a land back is a land to the mana model and a spell
               *  to this census, on purpose, and the gap between the two counts is named rather than
               *  left for a reader to sum two numbers that don't add up. Silent at zero: a
-              *  parenthetical about nothing is noise. */}
+              *  parenthetical about nothing is noise.
+              *
+              *  THE WHOLE PARENTHETICAL IS ONE `whitespace-nowrap` SPAN (task 9 fix round 1,
+              *  whole-branch review, 2026-09-01): at 390px the four separate inline pieces this
+              *  used to be -- the text "(", the count span, and the text " with MDFCs)" -- could
+              *  each wrap onto their own line, stranding the "(" away from the number it opens.
+              *  Grouping them means the browser can still break the LINE before the parenthetical,
+              *  just never inside it. */}
             {mdfc !== undefined && mdfc > 0 ? (
-              <> (<span className="stat-num text-(--foreground)">{lands + mdfc}</span> with MDFCs)</>
+              <>{" "}<span className="whitespace-nowrap">
+                (<span className="stat-num text-(--foreground)">{lands + mdfc}</span> with MDFCs)
+              </span></>
             ) : null}
           </>
         ) : null}
