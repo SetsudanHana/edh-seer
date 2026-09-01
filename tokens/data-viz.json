@@ -1,0 +1,50 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "EDH Seer's chart and graph colours, extracted from the shipped theme. The categorical palette is NOT an abstract eight-series ramp: this product visualises Magic, so its categories are the five colours of mana, and a sixth series does not exist to be coloured.",
+
+  "mana": {
+    "$description": "DATA VISUALISATION ONLY, never UI. Identity in the interface uses real mana symbols in Wizards' own colours; this ramp exists only where an identity has to become a fill or a stroke and a symbol cannot be placed (the graph's colour-identity mode, chart series). Tuned for THIS ground, not copied from the cards.",
+    "w": { "$type": "color", "$value": "#ddd6c4", "$description": "L 87.7% C 0.025 H 89.2" },
+    "u": { "$type": "color", "$value": "#6ba0f5", "$description": "L 70.6% C 0.138 H 259.5 - brighter and cooler than the card blue, which sat too close to the violet ladder and muddied against panel fills" },
+    "b": { "$type": "color", "$value": "#7e7a85", "$description": "L 58.7% C 0.017 - a TRUE NEUTRAL GREY, not a charcoal-violet, which on this ground would read as 'slightly darker substrate' instead of as a colour. The one place a pure neutral is correct here, precisely because it is the absence of the cast around it." },
+    "r": { "$type": "color", "$value": "#d9544f", "$description": "L 62.0% C 0.168 H 25.4" },
+    "g": { "$type": "color", "$value": "#55a86a", "$description": "L 66.3% C 0.123 H 150.1" }
+  },
+
+  "categorical": {
+    "$description": "The default series order when a chart's categories are not identities. Five steps, because five is what the game has.",
+    "1": { "$type": "color", "$value": "{mana.u}" },
+    "2": { "$type": "color", "$value": "{mana.g}" },
+    "3": { "$type": "color", "$value": "{mana.r}" },
+    "4": { "$type": "color", "$value": "{mana.w}" },
+    "5": { "$type": "color", "$value": "{mana.b}" }
+  },
+
+  "series": {
+    "$description": "A single-series chart takes the fill, not a categorical step: the bar IS the substrate. See colors.json semantic.data.",
+    "bar":  { "$type": "color", "$value": "{../colors.semantic.data.fill}" },
+    "edge": { "$type": "color", "$value": "{../colors.semantic.data.edge}", "$description": "opacity carries edge WEIGHT, so this is the strong end and weak edges fade from it" }
+  },
+
+  "diverging": {
+    "$description": "Signed synergy runs -5..+5, so a diverging scale is the one this product actually needs. Neutral is a ladder step, not a grey.",
+    "negative": { "$type": "color", "$value": "{../colors.primitive.feedback.danger}" },
+    "neutral":  { "$type": "color", "$value": "{../colors.primitive.ground.500}" },
+    "positive": { "$type": "color", "$value": "{../colors.primitive.feedback.success}" }
+  },
+
+  "axis": {
+    "line":  { "$type": "color", "$value": "{../colors.semantic.border.default}" },
+    "label": { "$type": "color", "$value": "{../colors.semantic.text.secondary}", "$description": "set at tokens/typography.json fontSize.2xs (10px), the documented micro step" }
+  },
+
+  "grid": {
+    "line": { "$type": "color", "$value": "{../colors.semantic.border.separator}" }
+  },
+
+  "surface": {
+    "plot":        { "$type": "color", "$value": "{../colors.semantic.surface.card}" },
+    "tooltip-bg":  { "$type": "color", "$value": "{../colors.semantic.surface.raised-2}" },
+    "tooltip-text":{ "$type": "color", "$value": "{../colors.semantic.text.primary}" }
+  }
+}

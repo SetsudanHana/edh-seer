@@ -1,0 +1,31 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "The widths the client actually branches on. `2xl` (1536px) is absent because nothing uses it, and 480px is present because the phone round is load-bearing: the graph is ABSENT on a phone by construction, so narrow is a different layout and not a squeezed one.",
+
+  "breakpoint": {
+    "xs": { "$type": "dimension", "$value": "480px", "$description": "30rem - the collapsed header. Below this the product is a report, not a board." },
+    "sm": { "$type": "dimension", "$value": "640px", "$description": "40rem - also Tailwind's `sm:`, the client's most-used prefix" },
+    "md": { "$type": "dimension", "$value": "768px", "$description": "48rem - the footer goes to two columns" },
+    "lg": { "$type": "dimension", "$value": "1024px", "$description": "64rem - the footer goes to four" },
+    "xl": { "$type": "dimension", "$value": "1280px", "$description": "80rem - the column cap comes OFF; above this the app is uncapped, not centred wider" }
+  },
+
+  "container": {
+    "$description": "One measure for the whole page: the app column, the static intro and the footer all match `main`'s box, because a column that does not line up with the app above it reads as a different site.",
+    "app":     { "$type": "dimension", "$value": "1024px", "$description": "64rem, Tailwind `max-w-5xl`; uncapped above the xl breakpoint" },
+    "prose":   { "$type": "dimension", "$value": "68ch" },
+    "gutter":  { "$type": "dimension", "$value": "32px", "$description": "2rem, the page's own padding, held at every width" }
+  },
+
+  "test-width": {
+    "$description": "The width narrow-layout work is proved at. Not a breakpoint - a measurement target.",
+    "phone": { "$type": "dimension", "$value": "390px" }
+  },
+
+  "z-index": {
+    "base":     { "$type": "number", "$value": 0 },
+    "sticky":   { "$type": "number", "$value": 20 },
+    "overlay":  { "$type": "number", "$value": 40 },
+    "modal":    { "$type": "number", "$value": 50 }
+  }
+}

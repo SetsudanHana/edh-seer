@@ -39,3 +39,15 @@ jobs:
       # in a bin rather than a test, and the one test backed by a gitignored cache skips itself with
       # a reason instead of failing a clean checkout.
       - run: npm test
+      # The design system in tokens/ is EXTRACTED from the shipped packages/web/client/src/index.css,
+      # so it can drift from what actually renders. Three gates, all python3 stdlib (no pip step):
+      #   validate_tokens   - every tokens/*.json parses as DTCG and every alias resolves
+      #   validate_contrast - the required WCAG 2.2 pairs still pass on the real hex values
+      #   validate_theme_refs - no component reaches for a var() no token defines (a "floating token",
+      #                         the defect css-tokens.test.ts was written for)
+      # Inside the existing job, not a new one: `test (node 20|22)` are the only two checks branch
+      # protection knows about, and a separate job would gate nothing until someone adds it there.
+      - run: npm run tokens:check
+      # tokens/theme.css is GENERATED. Editing tokens/*.json without rebuilding it is the drift the
+      # gates above cannot see, because they would both read the same stale pair.
+      - run: npm run tokens:build && git diff --exit-code -- tokens/theme.css

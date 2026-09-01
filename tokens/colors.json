@@ -1,0 +1,122 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "EDH Seer's colour system, EXTRACTED from the shipped theme (packages/web/client/src/index.css, DESIGN.md v2) rather than generated. The renderer is still index.css; this file is the machine-readable statement of what it holds, so the contrast gate measures the real product. Values are the app's own hex; the OKLCH figures in each $description are measured, not targets. ONE THEME, DARK: `:root`, `.light` and `.default` in index.css all carry the same values and `color-scheme: dark` is set, so there is no `dark` override map here — a second palette would be a token this product does not ship.",
+
+  "primitive": {
+    "$description": "Raw values. Never referenced from a component — go through `semantic`.",
+
+    "ground": {
+      "$description": "THE VIOLET LADDER. One hue held across every neutral (measured OKLCH H 299.7-306.4 deg, ~261 deg in CSS hsl(), which is the ~272 deg the stylesheet comment names) at low chroma (C 0.016-0.049, peaking mid-ladder as a neutral ramp should) and stepped by lightness. A pure grey or a pure #fff anywhere in this ladder is a defect: it breaks the cast that makes the ground look chosen. Slots are DENSE IN THE DARK (750/850/925 half-steps) because the product is — nine of the ten steps sit below L 30%, and dropping steps to fit a 50-950 convention would delete surfaces that exist.",
+      "50":  { "$type": "color", "$value": "#e9e4ef", "$description": "L 92.6% C 0.016 - the only light step; all reading text" },
+      "300": { "$type": "color", "$value": "#948ba6", "$description": "L 65.4% C 0.041 - muted/secondary text" },
+      "500": { "$type": "color", "$value": "#6b5f7d", "$description": "L 50.8% C 0.049 - the synergy edge, and the one border strong enough to identify a control (3.34:1 on the page)" },
+      "700": { "$type": "color", "$value": "#2c2338", "$description": "L 27.6% C 0.040 - card edges and dividers; decorative only at 1.32:1" },
+      "750": { "$type": "color", "$value": "#231b30", "$description": "L 24.2% C 0.041 - third surface step" },
+      "800": { "$type": "color", "$value": "#1f1829", "$description": "L 22.6% C 0.034 - separator hairline" },
+      "850": { "$type": "color", "$value": "#1b1526", "$description": "L 21.2% C 0.034 - raised surface" },
+      "900": { "$type": "color", "$value": "#16111f", "$description": "L 19.1% C 0.029 - card and overlay surface" },
+      "925": { "$type": "color", "$value": "#120d1a", "$description": "L 17.2% C 0.027 - sunken: input fields, cut into the page" },
+      "950": { "$type": "color", "$value": "#0d0912", "$description": "L 15.0% C 0.020 - the page itself" }
+    },
+
+    "magenta": {
+      "$description": "THE ACCENT, and it is a FIXED LITERAL: never derived from deck contents (v1's identity-driven accent and its picker were deleted, because a user comparing eight decks must see eight identities at once, which a themed interface cannot express). Sits OFF the ladder's hue (H 327.7 vs ~301) because an accent sharing its substrate's hue stops reading as an accent, and deliberately OUTSIDE WUBRG so an accent underline can never be misread as mana.",
+      "500": { "$type": "color", "$value": "#c64bc6", "$description": "L 62.3% C 0.211 - the single accent step. The app defines no hover or active shade: hover changes ROLE (muted becomes accent), it does not darken the accent." }
+    },
+
+    "violet": {
+      "$description": "THE CHROMATIC MID-VIOLET, on the ladder's hue but at 2.6x its chroma. BARS ARE NOT ACCENTS: progress fills, proportion bars and chart bars are large areas and the accent is meant to be scarce, so they take this and read as substrate rather than as an alert. Never text, never a border, never a surface behind content.",
+      "600": { "$type": "color", "$value": "#55397a", "$description": "L 40.8% C 0.108" }
+    },
+
+    "feedback": {
+      "$description": "The three status hues, each tuned to sit on the violet ground rather than lifted from a stock palette.",
+      "success": { "$type": "color", "$value": "#34c77b", "$description": "L 73.6% C 0.164 H 155.4" },
+      "warning": { "$type": "color", "$value": "#d99a3d", "$description": "L 73.1% C 0.130 H 73.3" },
+      "danger":  { "$type": "color", "$value": "#e5484d", "$description": "L 62.6% C 0.193 H 23.0" },
+      "danger-tint": { "$type": "color", "$value": "#fff5f5", "$description": "L 97.8% - the near-white that sits ON danger. The one near-#fff in the system, and it is a foreground, never a ground." }
+    }
+  },
+
+  "semantic": {
+    "$description": "Purpose-based aliases. This is the layer a design or a component reasons about.",
+
+    "text": {
+      "$description": "TWO TIERS, NOT THREE. The product reads with exactly two text colours: the foreground and the muted. `tertiary` is deliberately absent rather than aliased to a stroke colour - a token for a tier nothing renders is the drift this file exists to remove. There is no disabled text colour either: disabled dims with opacity (tokens/opacity.json), which is how the HeroUI controls actually do it.",
+      "primary":   { "$type": "color", "$value": "{primitive.ground.50}",  "$description": "15.78:1 on the page" },
+      "secondary": { "$type": "color", "$value": "{primitive.ground.300}", "$description": "6.11:1 on the page, 5.50:1 on a raised surface" },
+      "on-action": { "$type": "color", "$value": "{primitive.ground.950}", "$description": "the page's own colour, on the accent: 4.90:1" },
+      "link":      { "$type": "color", "$value": "{primitive.ground.50}",  "$description": "a link is foreground text with a muted underline; the ACCENT is what hover moves it to, so the accent never has to carry link contrast" },
+      "link-hover":{ "$type": "color", "$value": "{primitive.magenta.500}" }
+    },
+
+    "surface": {
+      "$description": "ELEVATION IS A LADDER STEP, NOT A SHADOW. The app draws no box-shadow anywhere (BuildBenchmarks.tsx states it outright: 'steps, never shadow'); a panel is raised by moving up the ground ladder.",
+      "page":    { "$type": "color", "$value": "{primitive.ground.950}" },
+      "card":    { "$type": "color", "$value": "{primitive.ground.900}" },
+      "raised":  { "$type": "color", "$value": "{primitive.ground.850}" },
+      "raised-2":{ "$type": "color", "$value": "{primitive.ground.750}", "$description": "the third step, for a panel inside a raised panel" },
+      "sunken":  { "$type": "color", "$value": "{primitive.ground.925}", "$description": "input fields: cut INTO the page, below it" },
+      "overlay": { "$type": "color", "$value": "{primitive.ground.900}", "$description": "modals take the card surface, not a scrim tint" }
+    },
+
+    "border": {
+      "default":   { "$type": "color", "$value": "{primitive.ground.700}", "$description": "DECORATIVE ONLY at 1.32:1 - card edges, dividers. Never the boundary that identifies a control." },
+      "separator": { "$type": "color", "$value": "{primitive.ground.800}", "$description": "the quieter hairline, below border.default" },
+      "strong":    { "$type": "color", "$value": "{primitive.ground.500}", "$description": "3.34:1 on the page - the only step that satisfies WCAG 1.4.11 for an essential control border" },
+      "focus":     { "$type": "color", "$value": "{primitive.magenta.500}", "$description": "index.css implements this as a 2px :focus-visible outline at 2px offset; keyboard only, so a mouse click never paints a ring" },
+      "error":     { "$type": "color", "$value": "{primitive.feedback.danger}" }
+    },
+
+    "action": {
+      "$description": "The accent is SCARCE by design, so `primary` here means the one accent-bearing control on a screen, not every button. Most controls are a surface step with a border. No `-hover`/`-active` shade exists: see primitive.magenta.",
+      "primary":     { "$type": "color", "$value": "{primitive.magenta.500}" },
+      "secondary":   { "$type": "color", "$value": "{primitive.ground.850}", "$description": "neutral fill, foreground text - never a coloured fill" },
+      "destructive": { "$type": "color", "$value": "{primitive.feedback.danger}" }
+    },
+
+    "feedback": {
+      "success-text": { "$type": "color", "$value": "{primitive.feedback.success}", "$description": "9.02:1 on the page" },
+      "success-on":   { "$type": "color", "$value": "{primitive.ground.950}", "$description": "text laid ON the success fill" },
+      "warning-text": { "$type": "color", "$value": "{primitive.feedback.warning}", "$description": "8.11:1 on the page" },
+      "warning-on":   { "$type": "color", "$value": "{primitive.ground.950}" },
+      "error-text":   { "$type": "color", "$value": "{primitive.feedback.danger}", "$description": "5.04:1 on the page" },
+      "error-on":     { "$type": "color", "$value": "{primitive.feedback.danger-tint}", "$description": "3.66:1 on the danger fill - BELOW the 4.5:1 normal-text minimum. See the finding in DESIGN notes; it is recorded here rather than silently corrected because fixing it changes a shipped colour." }
+    },
+
+    "data": {
+      "$description": "THE PRODUCT'S OUTPUT IS DATA, so it gets its own semantic group rather than being smuggled into border/surface. Neither of these is ever text.",
+      "fill": { "$type": "color", "$value": "{primitive.violet.600}", "$description": "every bar, progress fill and proportion area" },
+      "edge": { "$type": "color", "$value": "{primitive.ground.500}", "$description": "THE SYNERGY EDGE. Its own token because the board once stroked every relation in a hairline BORDER colour, drawing the product's entire output in near-background. Opacity carries WEIGHT (edgeAlpha, GraphView.tsx), so this is the colour of a STRONG edge and the weak ones fade from it." }
+    },
+
+    "interactive": {
+      "hover-text":  { "$type": "color", "$value": "{primitive.magenta.500}", "$description": "the app's whole hover vocabulary: text and its underline move to the accent (`hover:text-(--accent)`)" },
+      "focus-ring":  { "$type": "color", "$value": "{primitive.magenta.500}" }
+    }
+  },
+
+  "component": {
+    "$description": "Only the components whose colours index.css actually pins. Anything not here takes the semantic layer directly.",
+    "pip": {
+      "$description": "The report's one recurring signature: every numeric score, count or tally renders inside this circle, echoing a standings-board rank marker. Border and text are the SAME colour - a ring, not a fill.",
+      "border": { "$type": "color", "$value": "{semantic.action.primary}" },
+      "text":   { "$type": "color", "$value": "{semantic.action.primary}" }
+    },
+    "eyebrow": {
+      "$description": "Mono, uppercase, tracked-out section label.",
+      "text": { "$type": "color", "$value": "{semantic.text.secondary}" }
+    },
+    "field": {
+      "background":  { "$type": "color", "$value": "{semantic.surface.sunken}" },
+      "text":        { "$type": "color", "$value": "{semantic.text.primary}" },
+      "placeholder": { "$type": "color", "$value": "{semantic.text.secondary}" },
+      "border":      { "$type": "color", "$value": "{semantic.border.default}", "$description": "1.32:1. WCAG 1.4.11 wants 3:1 for a control boundary; this is the shipped value and the known gap. semantic.border.strong is the fix." }
+    },
+    "code": {
+      "$description": "`.tok` - a name from the data model set inside a sentence, not a code block.",
+      "background": { "$type": "color", "$value": "{semantic.surface.raised}" },
+      "text":       { "$type": "color", "$value": "{semantic.text.primary}" }
+    }
+  }
+}

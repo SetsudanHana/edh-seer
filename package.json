@@ -9,7 +9,9 @@
   },
   "scripts": {
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "tokens:build": "node scripts/build_tokens.mjs --out tokens/theme.css && cat tokens/app-surface.css >> tokens/theme.css",
+    "tokens:check": "python3 scripts/validate_tokens.py && python3 scripts/validate_contrast.py && python3 scripts/validate_theme_refs.py tokens/theme.css packages/web/client/src"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

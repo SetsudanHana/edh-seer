@@ -1,0 +1,17 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "EDH Seer DRAWS NO SHADOWS. Not one box-shadow exists in the client (BuildBenchmarks.tsx says it in as many words: 'steps, never shadow'), so an elevation scale here would be five tokens nothing renders. Depth is a step up the ground ladder instead - see tokens/colors.json semantic.surface. The focus ring is the one thing in this file that ships, and it is an outline, not a shadow.",
+
+  "elevation": {
+    "$description": "Deliberately a single value. A raised element changes SURFACE (surface.card -> surface.raised -> surface.raised-2); it does not float.",
+    "none": { "$type": "shadow", "$value": "none" }
+  },
+
+  "focus-ring": {
+    "$description": "index.css: `:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }`. Keyboard-only, so a mouse click never paints it. Inside the report's horizontally scrolling tab strip the offset flips to -2px, because `overflow-x` clips anything drawn outside a child's box - including its ring.",
+    "width":  { "$type": "dimension", "$value": "2px" },
+    "offset": { "$type": "dimension", "$value": "2px" },
+    "offset-inset": { "$type": "dimension", "$value": "-2px", "$description": "for a control inside an overflow-x container" },
+    "color":  { "$type": "color", "$value": "{../colors.semantic.border.focus}" }
+  }
+}
