@@ -1,0 +1,7 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "ONE BLUR, AND IT IS TINY. The client uses `backdrop-blur-[2px]` in exactly one place (CardList.tsx, a count chip floating over card art at 80% ground) - just enough to stop the art reading through the digits. There is no frosted-glass layer in this product and a 4/8/16/24px scale here described none.",
+
+  "none":  { "$type": "dimension", "$value": "0px" },
+  "chip":  { "$type": "dimension", "$value": "2px", "$description": "the only blur rendered: a stat chip over card art" }
+}

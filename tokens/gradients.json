@@ -1,0 +1,19 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "EDH SEER PAINTS NO GRADIENTS, and this is the one refusal in the token set with a bug attached to it. v1 had an identity-derived `--accent-gradient`; deleting the identity accent took the hook that SET it, while six components still asked for it. CSS resolves an undefined custom property to nothing SILENTLY, so the Archetypes tab shipped percentage bars with no bar in them - green suite, clean typecheck, owner-reported from a screenshot. `packages/web/client/src/css-tokens.test.ts` exists because of it. A gradient palette here would be an invitation to reintroduce exactly that class of ghost.",
+
+  "refused": {
+    "brand":   { "$type": "string", "$value": "refused: the accent is a flat literal (tokens/colors.json primitive.magenta) and is meant to be scarce" },
+    "surface": { "$type": "string", "$value": "refused: depth is a step up the ground ladder, never a wash - see colors.json semantic.surface" },
+    "data":    { "$type": "string", "$value": "refused: a bar takes semantic.data.fill flat; a gradient inside a bar makes its length ambiguous" }
+  },
+
+  "scrim": {
+    "$description": "The one graded value the product may legitimately need: a fade over content, carrying no colour of its own. Not currently rendered.",
+    "$type": "gradient",
+    "$value": [
+      { "color": "rgba(13, 9, 18, 0)", "position": 0 },
+      { "color": "rgba(13, 9, 18, 0.6)", "position": 1 }
+    ]
+  }
+}

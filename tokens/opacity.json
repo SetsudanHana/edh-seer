@@ -1,0 +1,17 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "The alpha steps the client actually uses (Tailwind `opacity-*` utilities), plus the one place opacity carries DATA rather than state.",
+
+  "disabled": { "$type": "number", "$value": 0.5, "$description": "`opacity-50`. Disabled has no colour token: it dims. WCAG exempts disabled controls from the contrast minimum." },
+  "muted":    { "$type": "number", "$value": 0.6, "$description": "`opacity-60` - a de-emphasised mark that is not text" },
+  "secondary":{ "$type": "number", "$value": 0.7, "$description": "`opacity-70` - the most-used step" },
+  "subtle":   { "$type": "number", "$value": 0.9, "$description": "`opacity-90`" },
+  "faint":    { "$type": "number", "$value": 0.4, "$description": "`opacity-40`" },
+  "scrim":    { "$type": "number", "$value": 0.6 },
+
+  "edge-weight": {
+    "$description": "NOT A STATE. `edgeAlpha` in GraphView.tsx maps a synergy edge's WEIGHT onto opacity, so the strong end is semantic.data.edge at full strength and weak edges fade from it. This is the only place in the product where opacity encodes a value rather than an interaction.",
+    "min": { "$type": "number", "$value": 0.15 },
+    "max": { "$type": "number", "$value": 1 }
+  }
+}

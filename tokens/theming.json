@@ -1,0 +1,20 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "EDH Seer SHIPS ONE THEME AND REFUSES MORE. This file used to carry four brand themes and three density modes; none of them existed in the product. The refusal is a design decision with a reason, so it is recorded here rather than left as an empty file.",
+
+  "theme": {
+    "$description": "One theme, dark, named for the ground it is built on. `:root`, `.light` and `.default` in index.css all resolve to it and `color-scheme: dark` is set, so there is no light variant to override and no `dark` map in colors.json.",
+    "standings-desk": {
+      "$description": "A conventional dark analytics dashboard held to the craft bar of Scryfall and Archidekt/Moxfield. No illustrated conceit, no card-frame cosplay - plain category convention, executed with real polish. Sans throughout.",
+      "ground":  { "$type": "color", "$value": "{../colors.semantic.surface.page}" },
+      "accent":  { "$type": "color", "$value": "{../colors.semantic.action.primary}" }
+    }
+  },
+
+  "refused": {
+    "$description": "WHY THERE IS NO SECOND THEME. v1 derived the accent from the deck's colour identity and shipped a picker to pin it. Both were deleted: a user comparing eight decks must see eight identities at once, which a themed interface cannot express - the chrome would claim a colour the content needs. A per-brand or per-deck palette would reintroduce exactly that. Identity belongs in the DATA layer (tokens/data-viz.json mana ramp), never in the chrome.",
+    "brand-themes":  { "$type": "string", "$value": "refused: the accent is a fixed literal, off-hue and outside WUBRG, so it can never be read as mana" },
+    "light-mode":    { "$type": "string", "$value": "not shipped: index.css sets color-scheme dark and points .light at the same values" },
+    "density-modes": { "$type": "string", "$value": "not shipped: one spacing scale, Tailwind's 4px base (tokens/spacing.json)" }
+  }
+}

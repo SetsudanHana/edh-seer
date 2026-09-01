@@ -1,0 +1,31 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "EDH Seer MOVES ALMOST NOTHING. The client defines exactly one animation - a panel revealing on entry - plus the force simulation the graph runs, which is physics rather than choreography. The five-duration, five-easing, six-keyframe library that used to sit here described no shipped motion.",
+
+  "duration": {
+    "instant": { "$type": "duration", "$value": "0ms", "$description": "the reduced-motion value" },
+    "reveal":  { "$type": "duration", "$value": "350ms", "$description": "the one animation's own duration. Above the 300ms UI-transition ceiling because it is an entrance for a whole panel, not a state change on a control." }
+  },
+
+  "easing": {
+    "ease-out": { "$type": "cubicBezier", "$value": [0, 0, 0.2, 1], "$description": "the only curve the product uses - entrances decelerate" }
+  },
+
+  "keyframes": {
+    "reveal-up": {
+      "$description": "`@keyframes reveal-up` / `.reveal`. Opacity 0 to 1 with a 6px rise: enough to read as arriving, small enough that a page of panels does not lurch.",
+      "from": { "$type": "string", "$value": "opacity: 0; transform: translateY(6px)" },
+      "to":   { "$type": "string", "$value": "opacity: 1; transform: translateY(0)" }
+    }
+  },
+
+  "transition": {
+    "enter": { "$type": "transition", "$value": { "duration": "{duration.reveal}", "timingFunction": "{easing.ease-out}", "delay": "0ms" }, "$description": "`animation: reveal-up 0.35s ease-out both`" }
+  },
+
+  "reducedMotion": {
+    "$description": "`@media (prefers-reduced-motion: reduce) { .reveal { animation: none } }` - the animation is removed outright, not shortened. It carries no information, so there is nothing to preserve as a fade.",
+    "strategy": { "$type": "string", "$value": "animation: none" },
+    "duration": { "$type": "duration", "$value": "{duration.instant}" }
+  }
+}

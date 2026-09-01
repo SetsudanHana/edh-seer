@@ -1,0 +1,32 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "EDH Seer's radii and border widths, extracted from the shipped stylesheet. THREE RADII, NOT EIGHT: index.css sets one `--radius: 0.5rem` for every panel and control, a full round for the pip, and a small round for inline code. A 6px/12px/16px/24px ladder existed here and nothing rendered it.",
+
+  "radius": {
+    "sm":   { "$type": "dimension", "$value": "4px",   "$description": "0.25rem - .tok only" },
+    "md":   { "$type": "dimension", "$value": "8px",   "$description": "0.5rem - `--radius` and `--field-radius`: panels, cards, buttons, inputs. One value on purpose; a card and the input inside it sharing a corner is what makes the surfaces read as one system." },
+    "full": { "$type": "dimension", "$value": "9999px", "$description": "the pip, and only the pip" }
+  },
+
+  "radius-semantic": {
+    "card":   { "$type": "dimension", "$value": "{radius.md}" },
+    "panel":  { "$type": "dimension", "$value": "{radius.md}" },
+    "button": { "$type": "dimension", "$value": "{radius.md}" },
+    "input":  { "$type": "dimension", "$value": "{radius.md}" },
+    "pip":    { "$type": "dimension", "$value": "{radius.full}" },
+    "code":   { "$type": "dimension", "$value": "{radius.sm}" }
+  },
+
+  "width": {
+    "thin":   { "$type": "dimension", "$value": "1px", "$description": "every border and hairline in the product" },
+    "medium": { "$type": "dimension", "$value": "2px", "$description": "the focus outline, and nothing else" }
+  },
+
+  "style": {
+    "default":   { "$type": "border", "$value": { "width": "{width.thin}", "style": "solid", "color": "{../colors.semantic.border.default}" }, "$description": "DECORATIVE - card edges, dividers. 1.32:1 on the page." },
+    "separator": { "$type": "border", "$value": { "width": "{width.thin}", "style": "solid", "color": "{../colors.semantic.border.separator}" } },
+    "strong":    { "$type": "border", "$value": { "width": "{width.thin}", "style": "solid", "color": "{../colors.semantic.border.strong}" }, "$description": "the only one that identifies a control at WCAG 1.4.11 (3.34:1)" },
+    "focus":     { "$type": "border", "$value": { "width": "{width.medium}", "style": "solid", "color": "{../colors.semantic.border.focus}" }, "$description": "drawn as an OUTLINE at 2px offset, not a border - so it never reflows the control it rings" },
+    "error":     { "$type": "border", "$value": { "width": "{width.medium}", "style": "solid", "color": "{../colors.semantic.border.error}" } }
+  }
+}

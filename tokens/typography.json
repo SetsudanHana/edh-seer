@@ -1,0 +1,105 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "EDH Seer's type, extracted from the shipped stylesheet. TWO FACES AND NO SERIF: Inter for sentences, JetBrains Mono for data. The file previously carried a Major Third scale and a serif stack; neither renders anywhere in this product, and the real steps below are not a ratio scale - they are the sizes the app sets, several of them half-steps a ratio would not produce.",
+
+  "fontFamily": {
+    "sans": { "$type": "fontFamily", "$value": ["Inter", "ui-sans-serif", "system-ui", "sans-serif"], "$description": "everything that is a sentence" },
+    "mono": { "$type": "fontFamily", "$value": ["JetBrains Mono", "ui-monospace", "monospace"], "$description": "THE DATA FACE. A distinct face for data is what separates it from the sentences describing it - the stylesheet's own 'standings-desk' framing. Used by eyebrow, pip, stat-num and .tok." }
+  },
+
+  "fontSize": {
+    "$description": "The steps index.css actually sets, in px. No 48/60/72 display sizes: this app's largest type is 32px, on one h1, on one page.",
+    "2xs":  { "$type": "dimension", "$value": "10px", "$description": "0.625rem - chart axis labels ONLY; the documented micro step" },
+    "xs":   { "$type": "dimension", "$value": "11px", "$description": "0.6875rem - eyebrow and the back link; mono, uppercase, tracked out" },
+    "sm":   { "$type": "dimension", "$value": "12px", "$description": "0.75rem - pip digits, footer" },
+    "md":   { "$type": "dimension", "$value": "13px", "$description": "0.8125rem - .tok, a model key set inside a sentence" },
+    "base": { "$type": "dimension", "$value": "14px", "$description": "0.875rem - the intro's body" },
+    "lg":   { "$type": "dimension", "$value": "15px", "$description": "0.9375rem - the prose page's body" },
+    "xl":   { "$type": "dimension", "$value": "17px", "$description": "1.0625rem - prose h2 and the standfirst" },
+    "3xl":  { "$type": "dimension", "$value": "32px", "$description": "2rem - the prose h1. The ONLY display-sized type in the product; at 2.13x the 15px body it sits under the 2.5x bar the component rules set." }
+  },
+
+  "fontWeight": {
+    "regular":  { "$type": "fontWeight", "$value": 400 },
+    "medium":   { "$type": "fontWeight", "$value": 500, "$description": "eyebrow" },
+    "semibold": { "$type": "fontWeight", "$value": 600, "$description": "pip digits, prose emphasis" },
+    "bold":     { "$type": "fontWeight", "$value": 700, "$description": "every heading" }
+  },
+
+  "lineHeight": {
+    "none":    { "$type": "number", "$value": 1,    "$description": "pip - a digit centred in a circle" },
+    "tight":   { "$type": "number", "$value": 1.35, "$description": "pipeline notes" },
+    "normal":  { "$type": "number", "$value": 1.65, "$description": "the intro and the footer" },
+    "relaxed": { "$type": "number", "$value": 1.7,  "$description": "the prose page - longest measure, loosest leading" }
+  },
+
+  "letterSpacing": {
+    "tight":  { "$type": "dimension", "$value": "-0.01em", "$description": "headings; the only negative tracking in the system" },
+    "normal": { "$type": "dimension", "$value": "0em" },
+    "widest": { "$type": "dimension", "$value": "0.1em", "$description": "eyebrow and the back link - uppercase mono needs the air" }
+  },
+
+  "measure": {
+    "$description": "Line length, held per surface rather than globally: the prose page reads long-form, the footer reads in a column.",
+    "prose":  { "$type": "dimension", "$value": "68ch" },
+    "intro":  { "$type": "dimension", "$value": "68ch" },
+    "footer": { "$type": "dimension", "$value": "46ch" }
+  },
+
+  "textStyle": {
+    "$description": "The composite styles index.css defines by name. Each is a real class in the shipped stylesheet, not a proposal.",
+
+    "eyebrow": {
+      "$type": "typography",
+      "$description": ".eyebrow - the section label. Lives in Tailwind's `components` layer so a utility class can override its colour; written unlayered it silently beat every `text-(--...)` a caller passed.",
+      "$value": { "fontFamily": "{fontFamily.mono}", "fontSize": "{fontSize.xs}", "fontWeight": "{fontWeight.medium}", "letterSpacing": "{letterSpacing.widest}", "textTransform": "uppercase" }
+    },
+
+    "pip": {
+      "$type": "typography",
+      "$description": ".pip - THE ONE RECURRING SIGNATURE. Every numeric score, count or tally renders inside this circle, echoing a standings-board rank marker. `tabular-nums` lives in the class, not at the call site, because every pip is a number by definition and a per-caller utility was silently missing on some.",
+      "$value": { "fontFamily": "{fontFamily.mono}", "fontSize": "{fontSize.sm}", "fontWeight": "{fontWeight.semibold}", "lineHeight": "{lineHeight.none}", "fontVariantNumeric": "tabular-nums" }
+    },
+
+    "stat-num": {
+      "$type": "typography",
+      "$description": ".stat-num - THE ONE FACE FOR EVERY STATISTIC (owner ruling, 2026-08-21). Anything that is itself the fact a row exists to report renders here. Sets ONLY family and alignment: size, weight and colour stay the caller's utilities. NOT for a number merely named inside a sentence - switching faces mid-sentence reads worse than the inconsistency it fixes.",
+      "$value": { "fontFamily": "{fontFamily.mono}", "fontVariantNumeric": "tabular-nums" }
+    },
+
+    "heading": {
+      "$type": "typography",
+      "$description": "h1/h2/h3 in the app shell.",
+      "$value": { "fontFamily": "{fontFamily.sans}", "fontWeight": "{fontWeight.bold}", "letterSpacing": "{letterSpacing.tight}" }
+    },
+
+    "display": {
+      "$type": "typography",
+      "$description": ".prose h1 - the one h1 on the one prose page.",
+      "$value": { "fontFamily": "{fontFamily.sans}", "fontSize": "{fontSize.3xl}", "fontWeight": "{fontWeight.bold}", "letterSpacing": "{letterSpacing.tight}" }
+    },
+
+    "body-prose": {
+      "$type": "typography",
+      "$value": { "fontFamily": "{fontFamily.sans}", "fontSize": "{fontSize.lg}", "fontWeight": "{fontWeight.regular}", "lineHeight": "{lineHeight.relaxed}" }
+    },
+
+    "body-app": {
+      "$type": "typography",
+      "$description": ".intro - the static explainer under the app, on the same measure as `main` so it cannot read as a different site.",
+      "$value": { "fontFamily": "{fontFamily.sans}", "fontSize": "{fontSize.base}", "fontWeight": "{fontWeight.regular}", "lineHeight": "{lineHeight.normal}" }
+    },
+
+    "lead": {
+      "$type": "typography",
+      "$description": ".prose-lead - the standfirst, and the only paragraph that gets the foreground colour.",
+      "$value": { "fontFamily": "{fontFamily.sans}", "fontSize": "{fontSize.xl}", "fontWeight": "{fontWeight.regular}", "lineHeight": "{lineHeight.relaxed}" }
+    },
+
+    "code-inline": {
+      "$type": "typography",
+      "$description": ".tok - a name from the data model (`enters`, `token-generation`, `+2/+0`) set inside a sentence. Not a code block.",
+      "$value": { "fontFamily": "{fontFamily.mono}", "fontSize": "{fontSize.md}" }
+    }
+  }
+}
