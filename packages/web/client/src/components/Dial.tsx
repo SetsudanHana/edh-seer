@@ -110,7 +110,7 @@ const TONE_TEXT: Record<GaugeTone, string> = {
 };
 
 export function Dial({
-  name, value, reading, zones, onOpen, openLabel,
+  name, value, reading, zones, onOpen, openLabel, size = "input",
 }: {
   name: string;
   value: string;
@@ -118,13 +118,21 @@ export function Dial({
   zones: "floor" | "band" | "score";
   onOpen?: () => void;
   openLabel?: string;
+  /** `lead` is a score dial standing for the group beneath it (Synergy, Build); `input` is one of
+   *  that group's own inputs. Both sizes reuse the existing type scale -- `text-4xl` is the same
+   *  class `HeadlineScores` gives its lead tile, `text-2xl` is this dial's own size from before this
+   *  prop existed -- and Tailwind's own width steps (`max-w-56`/`max-w-[9rem]`, the latter equal to
+   *  Tailwind's own `36` step written literally because that's how this file already had it). No new
+   *  size value is introduced. The zone logic, the needle, `data-tone`, `aria-label` and the
+   *  button/div split below are all unchanged by this prop. */
+  size?: "lead" | "input";
 }) {
   // The needle reaches the ring's inner edge (RING_INNER, not a second literal) so it points
   // INTO the coloured band it names rather than stopping short of it.
   const [nx, ny] = pointAt(angle(reading.position), RING_INNER);
   const body = (
     <>
-      <svg viewBox="0 0 100 56" aria-hidden="true" className="w-full max-w-[9rem]">
+      <svg viewBox="0 0 100 56" aria-hidden="true" className={`w-full ${size === "lead" ? "max-w-56" : "max-w-[9rem]"}`}>
         {ZONES[zones].map((z) => (
           <path
             key={`${z.from}`}
@@ -142,11 +150,11 @@ export function Dial({
         <circle cx={CX} cy={CY} r={3} fill="var(--foreground)" />
       </svg>
       <span className="eyebrow">{name}</span>
-      <span className="text-2xl font-semibold stat-num">{value}</span>
+      <span className={`${size === "lead" ? "text-4xl" : "text-2xl"} font-semibold stat-num`}>{value}</span>
       {/* data-tone: the tone alone, so a test can pin it independent of the wording -- a colour-only
         * flip of `floorState`/`bandState`/`scoreState` would otherwise leave every text assertion
         * on this span passing. Not read at runtime; don't delete it as unused. */}
-      <span data-tone={reading.tone} className={`text-xs ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
+      <span data-tone={reading.tone} className={`${size === "lead" ? "text-sm" : "text-xs"} ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
     </>
   );
 

@@ -786,27 +786,10 @@ summary {
   .pipeline { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* DECK GAUGES: the last dial spans the whole row when it would otherwise sit alone on it -- a
-   lone half-width tile beside empty space reads as a card that failed to load, not as the end of
-   a set (finding 2, whole-branch review, 2026-09-01). `DeckGauges` renders one dial per
-   `buildParents` row plus up to three conditional extras, so the count seen here is never fixed --
-   a rule tuned to exactly seven would break the first time a deck has no land model.
-
-   `:last-child:nth-child(Cn+1)` is true exactly when the total child count leaves a remainder of
-   1 against C, which is "alone in the last row" for ANY total against a C-column grid, not just
-   seven. Each breakpoint's own rule is reset (`grid-column: auto`) before the next column count's
-   rule is added -- without that, a rule fitted to a narrower grid keeps matching once a wider one
-   takes over and can misfire. `xl:grid-cols-7` gets no rule of its own on purpose: with at most
-   seven dials rendered today, every count from one to seven already fits in that single row. */
-.deck-gauges-grid > :last-child:nth-child(2n+1) { grid-column: 1 / -1; }
-@media (min-width: 40rem) {
-  .deck-gauges-grid > :last-child:nth-child(2n+1) { grid-column: auto; }
-  .deck-gauges-grid > :last-child:nth-child(3n+1) { grid-column: 1 / -1; }
-}
-@media (min-width: 64rem) {
-  .deck-gauges-grid > :last-child:nth-child(3n+1) { grid-column: auto; }
-  .deck-gauges-grid > :last-child:nth-child(4n+1) { grid-column: 1 / -1; }
-}
-@media (min-width: 80rem) {
-  .deck-gauges-grid > :last-child:nth-child(4n+1) { grid-column: auto; }
-}
+/* DECK GAUGES ORPHAN RULE: REMOVED (task 9, 2026-09-01). It existed because a single flat CSS grid
+   of up to seven dials could leave the last one alone in a column beside an empty grid cell -- a
+   blank cell being the actual defect, not aloneness itself. `DeckGauges` now renders each score's
+   inputs in their own `flex flex-wrap` row instead of a grid, so there is no column track to leave
+   empty: a lone last input just sits centred on its own line, which reads as the end of a short
+   list, not as a tile that failed to load. Re-add a rule like this one only if a group's inputs
+   move back onto a fixed-column grid. */

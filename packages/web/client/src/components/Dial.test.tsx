@@ -29,6 +29,18 @@ test("renders as plain content when there is nothing to open", () => {
   expect(screen.getByText("Ramp")).toBeInTheDocument();
 });
 
+/** `size="lead"` draws a bigger arc and a bigger figure (task 9: the two score dials lead their own
+ *  group); everything else about the dial -- zones, needle, `data-tone`, the button/div split -- is
+ *  untouched by the prop, which the other tests in this file keep proving without ever passing it. */
+test("size=lead draws a bigger arc and a bigger figure than the default input size", () => {
+  const { container: input } = render(<Dial name="Breadth" value="0.6" reading={scoreState(0.6)} zones="score" />);
+  const { container: lead } = render(<Dial name="Synergy" value="0.8" reading={scoreState(0.8)} zones="score" size="lead" />);
+  expect(input.querySelector("svg")!.className.baseVal).toContain("max-w-[9rem]");
+  expect(lead.querySelector("svg")!.className.baseVal).toContain("max-w-56");
+  expect(screen.getAllByText("0.6")[0].className).toContain("text-2xl");
+  expect(screen.getAllByText("0.8")[0].className).toContain("text-4xl");
+});
+
 test("the arc itself is hidden from screen readers", () => {
   const { container } = render(<Dial name="Build" value="3.4" reading={scoreState(3.4)} zones="score" />);
   const svg = container.querySelector("svg");

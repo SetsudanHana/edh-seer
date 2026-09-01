@@ -16,8 +16,9 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
   const { report } = data;
   const parents = report.buildParents ?? [];
   const lands = report.deckMath?.lands;
-  const hasScores = report.synergyOverall !== undefined || report.buildScore !== undefined;
-  if (parents.length === 0 && !lands && !hasScores) return null;
+  const hasSynergy = report.synergyOverall !== undefined;
+  const hasBuild = report.buildScore !== undefined;
+  if (parents.length === 0 && !lands && !hasSynergy && !hasBuild) return null;
 
   // THE SAME PARTLY-READ TEST `HeadlineScores` APPLIES, read from the same field and by the same rule:
   // the presence of `coverage` IS the signal. `RecognitionPanel` states why in its own comment -- the
@@ -27,63 +28,102 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
   // avoid.
   const partial = report.coverage !== undefined;
 
+  // GROUPED, NOT FLAT (owner ruling, 2026-09-01): the five build-parent/lands dials are inputs to
+  // `buildScore` (`build.ts:520-532`, the weighted mean of parent attainments plus lands) and breadth
+  // (`positiveCoherence`) and anchor (`anchoring`) are the two inputs `synergyOverall` blends
+  // (`analyze.ts:446,522-523`) -- `HeadlineScores` already prints them as its muted sub-line. Seven
+  // equal dials in one row said none of that; two lead dials over their own inputs do. A group
+  // renders only when its OWN lead score exists, so a report with just one of the two scores shows
+  // just that group -- there is no case today where `buildParents`/`lands` exist without `buildScore`
+  // (`build.ts` computes all three together), so gating Build's inputs on `buildScore` costs nothing.
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-lg font-bold tracking-[-0.01em]">Where this deck stands</h2>
-      {/* `deck-gauges-grid` (index.css) SPANS THE LAST DIAL WHEN IT WOULD OTHERWISE SIT ALONE ON
-        *  ITS OWN ROW -- a lone half-width tile beside empty space reads as a card that failed to
-        *  load, not as the end of a set (finding 2, whole-branch review, 2026-09-01). The dial
-        *  count here is never fixed at seven -- one per `buildParents` row plus up to three
-        *  conditional extras -- so the rule is CSS driving off the actual child count at each
-        *  breakpoint's own column count, not a check for a specific total. */}
-      <div className="deck-gauges-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-        {parents.map((p) => (
-          <Dial
-            key={p.name}
-            name={p.name}
-            value={String(p.count)}
-            reading={floorState(p.count, p.target)}
-            zones="floor"
-            // A SINGLE-LEAF PARENT HAS NO DETAIL TO OPEN. `BuildBenchmarks` renders a group only
-            // for a parent with more than one leaf -- Ramp's single leaf would restate the parent's
-            // own count as "100% of Ramp", the duplicate the folded shape exists to avoid. So those
-            // dials are content, not controls.
-            onOpen={p.leaves.length > 1 ? () => onOpen("build", p.name) : undefined}
-            openLabel="Build"
-          />
-        ))}
-        {lands ? (
-          <Dial
-            name="Lands"
-            value={String(lands.actual)}
-            reading={bandState(lands.actual, lands.target)}
-            zones="band"
-            onOpen={() => onOpen("mana", undefined)}
-            openLabel="Mana"
-          />
+      <div className="flex flex-col lg:flex-row gap-6">
+        {hasSynergy ? (
+          <div
+            role="group"
+            aria-label="Synergy, and the two measures behind it"
+            className="flex-1 flex flex-col items-center gap-3"
+          >
+            <Dial
+              name="Synergy"
+              value={report.synergyOverall!.toFixed(1)}
+              reading={scoreState(report.synergyOverall!, partial)}
+              zones="score"
+              size="lead"
+              onOpen={() => onOpen("engine", undefined)}
+              openLabel="Engine"
+            />
+            {/* Breadth and anchor are both edge-derived, same as synergy itself, so they take the
+              * same partly-read flag for the same reason `HeadlineScores` gives its own sub-line --
+              * see the comment on `partial` above. No new rule is derived for them. */}
+            <div className="flex flex-wrap justify-center gap-3">
+              {report.positiveCoherence !== undefined ? (
+                <Dial
+                  name="Breadth"
+                  value={report.positiveCoherence.toFixed(1)}
+                  reading={scoreState(report.positiveCoherence, partial)}
+                  zones="score"
+                />
+              ) : null}
+              {report.anchoring !== undefined ? (
+                <Dial
+                  name="Anchor"
+                  value={report.anchoring.toFixed(1)}
+                  reading={scoreState(report.anchoring, partial)}
+                  zones="score"
+                />
+              ) : null}
+            </div>
+          </div>
         ) : null}
-        {report.synergyOverall !== undefined ? (
-          <Dial
-            name="Synergy"
-            value={report.synergyOverall.toFixed(1)}
-            reading={scoreState(report.synergyOverall, partial)}
-            zones="score"
-            onOpen={() => onOpen("engine", undefined)}
-            openLabel="Engine"
-          />
-        ) : null}
-        {report.buildScore !== undefined ? (
-          <Dial
-            name="Build"
-            value={report.buildScore.toFixed(1)}
-            /* `buildScore` counts ROLES off printed text and type lines, which an unread card still
-             * has, so it keeps its band on a partly-read deck where synergy loses its own. The split
-             * is the one the coverage gate already draws; no threshold is invented here. */
-            reading={scoreState(report.buildScore)}
-            zones="score"
-            onOpen={() => onOpen("build", undefined)}
-            openLabel="Build"
-          />
+        {hasBuild ? (
+          <div
+            role="group"
+            aria-label="Build, and the five measures behind it"
+            className="flex-1 flex flex-col items-center gap-3"
+          >
+            <Dial
+              name="Build"
+              value={report.buildScore!.toFixed(1)}
+              /* `buildScore` counts ROLES off printed text and type lines, which an unread card still
+               * has, so it keeps its band on a partly-read deck where synergy loses its own. The split
+               * is the one the coverage gate already draws; no threshold is invented here. */
+              reading={scoreState(report.buildScore!)}
+              zones="score"
+              size="lead"
+              onOpen={() => onOpen("build", undefined)}
+              openLabel="Build"
+            />
+            <div className="flex flex-wrap justify-center gap-3">
+              {parents.map((p) => (
+                <Dial
+                  key={p.name}
+                  name={p.name}
+                  value={String(p.count)}
+                  reading={floorState(p.count, p.target)}
+                  zones="floor"
+                  // A SINGLE-LEAF PARENT HAS NO DETAIL TO OPEN. `BuildBenchmarks` renders a group only
+                  // for a parent with more than one leaf -- Ramp's single leaf would restate the parent's
+                  // own count as "100% of Ramp", the duplicate the folded shape exists to avoid. So those
+                  // dials are content, not controls.
+                  onOpen={p.leaves.length > 1 ? () => onOpen("build", p.name) : undefined}
+                  openLabel="Build"
+                />
+              ))}
+              {lands ? (
+                <Dial
+                  name="Lands"
+                  value={String(lands.actual)}
+                  reading={bandState(lands.actual, lands.target)}
+                  zones="band"
+                  onOpen={() => onOpen("mana", undefined)}
+                  openLabel="Mana"
+                />
+              ) : null}
+            </div>
+          </div>
         ) : null}
       </div>
     </section>
