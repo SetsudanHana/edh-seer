@@ -1,4 +1,4 @@
-import type { DeckReport, GraphNode } from "../types.js";
+import type { GraphNode } from "../types.js";
 
 /** THE SLICE ORDER, FIXED, AND IT IS THE VALIDATED COLOUR ORDER.
  *
@@ -17,7 +17,6 @@ export const TYPE_ORDER = [
 const PRECEDENCE = ["creature", "planeswalker", "artifact", "enchantment", "instant", "sorcery"] as const;
 
 export interface TypeSlice { type: string; count: number }
-export interface RoleBar { role: string; count: number }
 
 /** The one type a card counts as, or null when it is not on this chart.
  *
@@ -58,13 +57,4 @@ export function typeSlices(nodes: readonly GraphNode[]): TypeSlice[] {
     const count = counts.get(type);
     return count ? [{ type, count }] : [];
   });
-}
-
-/** The deck's four Command-Zone role groups, as counts.
- *
- *  NO TARGETS. Recognition says what the deck IS; whether that is enough is the diagnosis, and it
- *  is already stated as sentences by `Findings`. Printing "17/10" here would put the judgement
- *  back into the step whose whole job is showing the reader we understood their deck. */
-export function roleBars(parents: DeckReport["buildParents"] | undefined): RoleBar[] {
-  return (parents ?? []).map((p) => ({ role: p.name, count: p.count }));
 }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { primaryType, roleBars, typeSlices, TYPE_ORDER } from "./deck-shape.js";
+import { primaryType, typeSlices, TYPE_ORDER } from "./deck-shape.js";
 
 const node = (over: Partial<Parameters<typeof typeSlices>[0][number]> = {}) => ({
   id: "n", label: "n", copies: 1, types: ["creature"], subtypes: [], supertypes: [], ...over,
@@ -72,19 +72,5 @@ describe("typeSlices", () => {
 
   test("an empty deck is an empty array, not a zero slice", () => {
     expect(typeSlices([])).toEqual([]);
-  });
-});
-
-describe("roleBars", () => {
-  test("carries counts and drops targets", () => {
-    const out = roleBars([
-      { name: "Ramp", count: 17, target: 10, leaves: [] },
-      { name: "Interaction", count: 19, target: 10, leaves: [] },
-    ]);
-    expect(out).toEqual([{ role: "Ramp", count: 17 }, { role: "Interaction", count: 19 }]);
-  });
-
-  test("missing parents is an empty array, not a throw", () => {
-    expect(roleBars(undefined)).toEqual([]);
   });
 });

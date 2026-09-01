@@ -549,6 +549,17 @@ test("HeadlineScores explains its scale and names the anchor card", async () => 
   expect(screen.getByText(/Krenko, Mob Boss/)).toBeInTheDocument(); // the deck's best-fed card
 });
 
+// PINNED, BYTE FOR BYTE (MINOR G, whole-branch review, 2026-09-01). `BANDS` moved from a literal
+// string to one built from `SCORE_BREAKS` and `scoreBand`'s own labels -- this proves the rendered
+// text a reader sees did not change even though the source moved from a transcription to a
+// derivation.
+test("the printed band scale is exactly the four SCORE_BREAKS bands, unchanged by the derivation", () => {
+  render(<HeadlineScores report={SAMPLE.report} />);
+  expect(
+    screen.getAllByText(/0–1\.5 unfocused · 1\.5–3 developing · 3–4 focused · 4–5 tuned/).length,
+  ).toBe(2);
+});
+
 // TASK 5 (2026-09-01): the parent's own count-against-target row (CONSISTENCY 15/14, RAMP 17/10,
 // INTERACTION 19/10, BOARD WIPES 1/1) moved to Recognition -- it is what the deck IS, and printing
 // it here too put the same four numbers on one screen twice. `RecognitionPanel.test.tsx` covers
@@ -1541,7 +1552,7 @@ test("no sub-tab's heading outline skips a level", async () => {
   render(<OverviewTab data={data} />);
   const levels = (): number[] =>
     [...document.querySelectorAll("h1,h2,h3,h4,h5,h6")].map((h) => Number(h.tagName[1]));
-  for (const tab of ["Build", "Mana", "Engine"]) {
+  for (const tab of ["Summary", "Fixes", "Build", "Mana", "Engine"]) {
     await user.click(screen.getByRole("tab", { name: tab }));
     const seen = levels();
     expect(seen.length, `${tab} has no headings`).toBeGreaterThan(0);
@@ -2207,4 +2218,17 @@ test("arriving on Build without a dial marks nothing", () => {
   render(<OverviewTab data={SAMPLE as never} />);
   fireEvent.click(screen.getByRole("tab", { name: "Build" }));
   expect(screen.getByTestId("role-group-Interaction")).not.toHaveAttribute("data-focused");
+});
+
+/** CLICKING A DIAL UNMOUNTS SUMMARY, so the button that had keyboard focus disappears with it and
+ *  focus silently falls to `document.body` -- a keyboard or screen-reader user gets no
+ *  announcement of where they landed and has to Tab from the top of the page (IMPORTANT D,
+ *  whole-branch review, 2026-09-01). `scrollIntoView` is not implemented in jsdom, so it is stubbed
+ *  rather than skipped -- the point is proving the group receives DOM focus, which jsdom can check
+ *  even though it cannot lay anything out. */
+test("opening a role from its dial moves keyboard focus to the marked group", () => {
+  Element.prototype.scrollIntoView = vi.fn();
+  render(<OverviewTab data={SAMPLE as never} />);
+  fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
+  expect(screen.getByTestId("role-group-Interaction")).toHaveFocus();
 });

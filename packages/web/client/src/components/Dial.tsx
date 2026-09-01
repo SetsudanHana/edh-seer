@@ -92,7 +92,11 @@ function buildScoreZones(): { from: number; to: number; tone: GaugeTone }[] {
  *  rather than reasserted as separate literals. */
 export const SCORE_ZONES = buildScoreZones();
 
-const ZONES: Record<"floor" | "band" | "score", { from: number; to: number; tone: GaugeTone }[]> = {
+/** Exported for the dial's own test: proof that a `position` `floorState`/`bandState`/`scoreState`
+ *  can emit always lands inside the zone whose TONE matches that reading's tone -- nothing else
+ *  enforces that the hand-written `FLOOR_ZONES`/`BAND_ZONES` boundaries agree with `deck-gauge.ts`'s
+ *  positions, so a changed position could silently put the needle in a zone of the wrong tone. */
+export const ZONES: Record<"floor" | "band" | "score", { from: number; to: number; tone: GaugeTone }[]> = {
   floor: FLOOR_ZONES,
   band: BAND_ZONES,
   score: SCORE_ZONES,

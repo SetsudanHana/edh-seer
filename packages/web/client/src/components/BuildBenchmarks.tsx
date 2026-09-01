@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment, type ReactNode, useEffect, useRef } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
@@ -77,12 +77,12 @@ export function BuildBenchmarks({
 }: {
   categories: DeckReport["buildCategories"];
   /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). The parent's OWN
-   *  count-against-target row moved to Recognition (task 5, see the comment where it used to
-   *  render, below) — this prop stays because it is still what GROUPS the leaf rows under their
-   *  parent's name and gates which leaves render at all (a leaf under a parent whose own target is
-   *  <= 0 is unscored and stays hidden, the same treatment a zero-target ungrouped leaf already
-   *  gets). The engine owns the grouping; there is no local `PARENTS` const to fall out of sync
-   *  with it any more. */
+   *  count-against-target row moved to `DeckGauges`, as a floor dial (whole-branch review fix,
+   *  2026-09-01; see the group-header comment where it used to render, below) — this prop stays
+   *  because it is still what GROUPS the leaf rows under their parent's name and gates which
+   *  leaves render at all (a leaf under a parent whose own target is <= 0 is unscored and stays
+   *  hidden, the same treatment a zero-target ungrouped leaf already gets). The engine owns the
+   *  grouping; there is no local `PARENTS` const to fall out of sync with it any more. */
   parents?: DeckReport["buildParents"];
   deckMath?: DeckReport["deckMath"];
   /** Carries `graveyardVulnerability` (task 5) down to the answers block — the only reason this
@@ -112,6 +112,25 @@ export function BuildBenchmarks({
    *  because the comparison between them is half of what this block is for. */
   focus?: string;
 }) {
+  // FOCUS FOLLOWS THE DIAL, NOT JUST THE OUTLINE (IMPORTANT D, whole-branch review, 2026-09-01).
+  // Clicking a `DeckGauges` dial unmounts Summary and switches to this sub-tab, so the button that
+  // had focus is gone and focus silently falls to `document.body` -- a keyboard or screen-reader
+  // user gets no announcement of where they landed and has to tab from the top of the page. The
+  // design's own §5 promised the focused group is "scrolled to and marked"; only the mark (the
+  // outline/`aria-current` below) ever shipped. One ref per rendered group, keyed by parent name,
+  // so the effect can find the one `focus` names without a DOM query -- and it has to sit above
+  // every early return below: hooks cannot follow a conditional `return`.
+  const groupRefs = useRef(new Map<string, HTMLLIElement>());
+  useEffect(() => {
+    if (focus === undefined) return;
+    const el = groupRefs.current.get(focus);
+    // NO `behavior: "smooth"`, PER `prefers-reduced-motion` (fix round, whole-branch review,
+    // 2026-09-01). Omitting `behavior` entirely takes the browser's default, which is instant --
+    // simpler than gating a media query, and it is what a reduced-motion reader needs anyway.
+    el?.scrollIntoView({ block: "center" });
+    el?.focus();
+  }, [focus]);
+
   if (!categories || categories.length === 0) return null;
   const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
   const groupedLeaves = new Set((parents ?? []).flatMap((p) => p.leaves));
@@ -121,14 +140,14 @@ export function BuildBenchmarks({
   const ungrouped = showBenchmarks
     ? categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category) && !groupedLeaves.has(c.category))
     : [];
-  // FIX F2 (controller review, 2026-08-21), REVISED (fix round 2, 2026-09-01): the parent's own
-  // ratio bar is gone (moved to Recognition, see the group-header comment below), so this no
-  // longer guards a divide-by-zero -- there is no `count / target` left at the parent level to
-  // divide. What it still gates is WHICH parents get a header and leaves at all: `build.ts`'s own
-  // scoring loop skips a parent whose target is <= 0 outright ("neutral, unscored"), and this
-  // mirrors that skip so a reader never sees a group of leaves reporting share of a parent the
-  // score itself ignored -- the same "not scored, so not shown" convention `ungrouped` above
-  // already applies to a leaf.
+  // FIX F2 (controller review, 2026-08-21), REVISED (whole-branch review fix, 2026-09-01): the
+  // parent's own ratio bar is gone (moved to `DeckGauges` as a floor dial, see the group-header
+  // comment below), so this no longer guards a divide-by-zero -- there is no `count / target` left
+  // at the parent level to divide. What it still gates is WHICH parents get a header and leaves at
+  // all: `build.ts`'s own scoring loop skips a parent whose target is <= 0 outright ("neutral,
+  // unscored"), and this mirrors that skip so a reader never sees a group of leaves reporting share
+  // of a parent the score itself ignored -- the same "not scored, so not shown" convention
+  // `ungrouped` above already applies to a leaf.
   const scoredParents = showBenchmarks ? (parents ?? []).filter((p) => p.target > 0) : [];
   // NOTHING TO SHOW, NOT AN EMPTY SHELL (fix round 1, 2026-09-01): when the benchmark block is
   // suppressed, `scoredParents`/`ungrouped` are already forced empty above, so this collapses to
@@ -136,7 +155,7 @@ export function BuildBenchmarks({
   //
   // IT HAS TO TEST WHAT ACTUALLY RENDERS (MINOR 7, whole-branch review, 2026-09-01). A scored
   // parent draws NOTHING unless it has more than one leaf -- a single-leaf parent's group header
-  // and its one leaf row would just restate the count Recognition already prints -- so
+  // and its one leaf row would just restate the count its `DeckGauges` dial already prints -- so
   // `scoredParents.length > 0` was guarding a different thing than it claimed: a `buildParents` of
   // only single-leaf parents (Ramp, Board wipes) passed the guard and produced the heading over an
   // empty `<ul>`, the exact broken-heading shape the comments around it exist to prevent.
@@ -153,10 +172,11 @@ export function BuildBenchmarks({
 
   /** ONE BAR SHAPE, geometry and `TARGET_MARK` unchanged since before grouping existed. The parent's
    *  OWN ratio bar (the thing this shape was built to draw for four rows -- CONSISTENCY 15/14 ✓ and
-   *  the like) moved to Recognition (task 5, see the group-header comment below) and never came
-   *  back, so the only caller left is `ungrouped` -- a leaf with no parent at all. `forceFlag` and
-   *  `suffix` were parameters only the deleted parent row ever passed (the Interaction coverage-dock
-   *  tick and its on-screen note) and are gone with it (I4, fix round 2, 2026-09-01) --
+   *  the like) moved to `DeckGauges` as a floor dial (whole-branch review fix, 2026-09-01; see the
+   *  group-header comment below) and never came back, so the only caller left is `ungrouped` -- a
+   *  leaf with no parent at all. `forceFlag` and `suffix` were parameters only the deleted parent
+   *  row ever passed (the Interaction coverage-dock tick and its on-screen note) and are gone with
+   *  it (I4, fix round 2, 2026-09-01) --
    *  `ungrouped`'s one caller has never needed either.
    *
    *  KEPT, AND ITS TEST WITH IT (IMPORTANT 6, whole-branch review, 2026-09-01). `ungrouped` is
@@ -209,11 +229,12 @@ export function BuildBenchmarks({
    *
    *  AND THE DENOMINATOR IS ON THE SCREEN (C1, whole-branch review, 2026-09-01). Fix round 2 moved
    *  the parent row to Recognition and took the leaf sum and the overlap note with it, which left
-   *  "Draw 6 · 67%" sitting under no visible whole -- and the only number a reader could find,
-   *  Recognition's "Consistency 8", is the parent's UNION rather than this sum, so 8 x 67% = 5.4
-   *  and not 6. A share whose whole is missing invites exactly that arithmetic, and a silently
-   *  wrong answer is the one thing this repo ranks below a missing one. The group header above
-   *  these rows prints `sumOfLeaves`, and says why it can exceed the union. */
+   *  "Draw 6 · 67%" sitting under no visible whole -- and the only number a reader could find, the
+   *  "Consistency" dial's value of 8 on `DeckGauges` (Recognition itself carries no role counts at
+   *  all any more, see the group-header comment below), is the parent's UNION rather than this sum,
+   *  so 8 x 67% = 5.4 and not 6. A share whose whole is missing invites exactly that arithmetic, and
+   *  a silently wrong answer is the one thing this repo ranks below a missing one. The group header
+   *  above these rows prints `sumOfLeaves`, and says why it can exceed the union. */
   const leafRow = (category: string, parentName: string, sumOfLeaves: number) => {
     const name = LABEL[category] ?? category;
     const count = countByLeaf.get(category) ?? 0;
@@ -251,12 +272,14 @@ export function BuildBenchmarks({
         <>
           {/* RENAMED FROM "Build benchmarks" (C1, whole-branch review, 2026-09-01). A benchmark is
             *  a figure against a LIMIT, and there is no longer a limit anywhere under this heading:
-            *  the four parent counts-against-target moved to Recognition, which is forbidden to
-            *  show a target, and what is left is group headers over `count · share%` rows. The word
+            *  the four parent counts-against-target moved to `DeckGauges`, as a floor dial per
+            *  parent -- the whole point of that move is that `DeckGauges` is the panel now allowed
+            *  to make that judgement, where Recognition never was -- and what is left under THIS
+            *  heading is group headers over `count · share%` rows with no target in sight. The word
             *  labelled nothing it still contained. The heading now describes what the block
             *  actually is -- the four role groups and how this deck's cards are distributed inside
             *  each -- and the verdict on whether a group is big enough stays where it became a
-            *  sentence, in `Findings`.
+            *  sentence, in `Findings` (now on the Fixes tab).
             *
             *  It is the parent of a variable number of h4s: one per multi-leaf parent group (the
             *  header just below). The four deck-math question sections further down are h3s of
@@ -265,19 +288,21 @@ export function BuildBenchmarks({
             *  difference from a child heading; the children keep the muted eyebrow. */}
           <h3 className="eyebrow text-(--foreground)">How the roles are spent</h3>
           <ul className="flex flex-col gap-1.5">
-            {/* THE FOUR PARENT COUNTS-AGAINST-TARGET MOVED TO RECOGNITION. They are what the deck
-              *  IS, so they belong in the panel that says so, and printing them here as well would
-              *  put the same four numbers on one screen twice. The TARGETS did not move: whether 17
-              *  ramp is enough is a diagnosis, and `Findings` states it as a sentence.
+            {/* THE FOUR PARENT COUNTS-AGAINST-TARGET MOVED TO `DeckGauges`, one floor dial per
+              *  parent, on the Summary sub-tab. That is where a reader now sees Interaction's 19
+              *  against its target of 10 as a mark; printing the same ratio here as well would put
+              *  the same four numbers on one screen twice. The TARGETS did not move in the sense of
+              *  changing what they gate: whether 17 ramp is enough is still a diagnosis, and
+              *  `Findings` (now on the Fixes tab) states it as a sentence.
               *
               *  THE NAME DID NOT MOVE WITH THEM, and C1 (whole-branch review, 2026-09-01) is why it
               *  is back below as a header -- with the LEAF SUM beside it and still no target, tick
               *  or bar. Two rounds of that review said the same thing twice: without the name a
               *  multi-leaf parent's leaves had no on-screen label, and without the sum their SHARE
-              *  figures had no on-screen whole. Recognition carries the parent's UNION count; this
-              *  header carries the sum the shares below it are shares OF, and the two differ
-              *  whenever a card fills two leaves, which is why the header says so out loud rather
-              *  than leaving a reader to reconcile 8 against 9 across two sub-tabs. */}
+              *  figures had no on-screen whole. `DeckGauges` carries the parent's UNION count, as
+              *  the dial's value; this header carries the sum the shares below it are shares OF, and
+              *  the two differ whenever a card fills two leaves, which is why the header says so out
+              *  loud rather than leaving a reader to reconcile 8 against 9 across two sub-tabs. */}
             {scoredParents.map((p) => {
               // Still shared by every leaf beneath this parent (the share denominator) -- see the
               // doc comment on `leafRow` for why it reads this.
@@ -298,7 +323,15 @@ export function BuildBenchmarks({
                     *  `listitem`s should still see only leaf rows. The `h4` inside keeps its own
                     *  heading semantics regardless. */}
                   <li
+                    ref={(el) => {
+                      if (el) groupRefs.current.set(p.name, el);
+                      else groupRefs.current.delete(p.name);
+                    }}
                     role="presentation"
+                    // Focusable PROGRAMMATICALLY ONLY -- -1 keeps it out of the page's Tab order
+                    // (it is not a control) while letting the effect above call `.focus()` on it
+                    // the way a heading landed on from an in-page jump link would be.
+                    tabIndex={-1}
                     data-testid={`role-group-${p.name}`}
                     data-focused={focus === p.name ? "true" : undefined}
                     // The outline below is visual only -- a screen-reader user gets nothing from it.

@@ -1,5 +1,5 @@
 import type { DeckReport } from "../types.js";
-import { scoreBand, type ScoreTone } from "../lib/score-band.js";
+import { scoreBand, SCORE_BREAKS, type ScoreTone } from "../lib/score-band.js";
 import { Explain } from "./Explain.js";
 
 const TONE_CLASS: Record<ScoreTone, string> = {
@@ -14,8 +14,18 @@ const TONE_CLASS: Record<ScoreTone, string> = {
  *
  *  This used to end "— which is the page's lead", and that has been false since 2026-08-27: the
  *  tiles were DEMOTED into the Verify movement on the owner's call, because four of four personas
- *  could not read them. See `OverviewTab`. The reason for printing the bands is unchanged. */
-const BANDS = "0–1.5 unfocused · 1.5–3 developing · 3–4 focused · 4–5 tuned";
+ *  could not read them. See `OverviewTab`. The reason for printing the bands is unchanged.
+ *
+ *  BUILT FROM `SCORE_BREAKS`, NOT RETYPED (MINOR G, whole-branch review, 2026-09-01). This was a
+ *  third hand-copy of the same four thresholds `scoreBand` and the score dial's arc already carry
+ *  as data -- exactly the drift risk `Dial.tsx`'s `SCORE_ZONES` comment names for the arc. Deriving
+ *  the range strings from `SCORE_BREAKS` and the label for each range from `scoreBand` itself means
+ *  a moved threshold shows up here with no second edit; `HeadlineScores.test.tsx` pins the rendered
+ *  text so this stays byte-identical to the string it replaces. */
+const SCORE_EDGES = [0, ...SCORE_BREAKS, 5];
+const BANDS = SCORE_EDGES.slice(0, -1)
+  .map((from, i) => `${from}–${SCORE_EDGES[i + 1]} ${scoreBand(from).label.toLowerCase()}`)
+  .join(" · ");
 
 function ScoreTile({
   label, score, sub, children, partial, lead,
