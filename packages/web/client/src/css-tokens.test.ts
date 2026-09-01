@@ -60,3 +60,41 @@ test("every CSS custom property a component names is defined in index.css", () =
     "these custom properties are referenced but never defined, so they render as nothing",
   ).toEqual([]);
 });
+
+/** THE DISCLOSURE CONTROLS ARE A FINGERTIP TALL, AND STAY THAT WAY.
+ *
+ *  Every `<summary>` in the app rendered 326x17 at 390px -- eight of them on the Overview alone --
+ *  against WCAG 2.2 SC 2.5.8's 24x24. They are the report's only mechanism for saying what a number
+ *  means, so on a phone the least reachable control was the one that explains the page. The 17px
+ *  came from `.eyebrow`'s 11px font and nothing else; these are standalone controls on their own
+ *  line, so unlike the card names inside a combo row they get no help from the Inline exception.
+ *
+ *  A SOURCE ASSERTION, NOT A MEASUREMENT, and that limit is the point of writing it down: the suite
+ *  runs in jsdom, which computes no layout, so `getBoundingClientRect()` here would return zeros and
+ *  pass no matter what the rule said. This catches the regression that actually happened elsewhere
+ *  in this file's history -- someone deletes the rule -- and cannot catch a rule that is present but
+ *  overridden. The real 25px was verified in the browser at 390px when the rule landed.
+ *  CEILING: a Playwright assertion would measure it properly; this repo has the config but no
+ *  browser-side a11y suite to hang it on yet.
+ */
+test("summary and the explainer link keep a 24px minimum target height", () => {
+  const css = readFileSync(INDEX_CSS, "utf8");
+  const rule = (selector: string) => {
+    const m = css.match(new RegExp(`(^|\\})\\s*${selector}\\s*\\{([^}]*)\\}`, "m"));
+    return m?.[2] ?? "";
+  };
+  // rem, because the criterion is in CSS px and this app's root font size is the default 16.
+  const minBlockRem = (body: string) => {
+    const m = body.match(/min-block-size:\s*([\d.]+)rem/);
+    return m ? Number(m[1]) : 0;
+  };
+
+  const summaryRule = rule("summary");
+  expect(summaryRule, "the bare `summary` rule is gone from index.css").not.toBe("");
+  expect(minBlockRem(summaryRule) * 16).toBeGreaterThanOrEqual(24);
+  // `display` must stay `list-item`: a flex summary drops its own disclosure marker in Chrome, so
+  // the triangle that says the block opens would vanish while every test stayed green.
+  expect(summaryRule).not.toMatch(/display:\s*(flex|grid|inline-flex)/);
+
+  expect(minBlockRem(rule("\\.intro-more a")) * 16).toBeGreaterThanOrEqual(24);
+});
