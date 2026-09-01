@@ -295,9 +295,33 @@ function DeckMathRows({
     (c) => (answers.find((a) => a.class === c)?.count ?? 0) === 0,
   );
   const graveyardVulnerability = answerCoverage?.graveyardVulnerability ?? 0;
+  // MOVED HERE FROM THE REMOVED INTERACTION PARENT ROW (task 5 fix round 1, 2026-09-01). That row
+  // used to carry two disclosures as a suffix on its own ratio; deleting the row along with its
+  // tests silently deleted the disclosures too -- the engine still docks Interaction's attainment
+  // by `answerCoverage.coverage` and still refuses the colour-pool weight with no commander
+  // detected (both in `build.ts`), and until this fix nothing on any screen said either. "A silent
+  // wrong answer is worse than a missing one" -- this table is where both belong now: it is the
+  // one place on the panel that already states, per class, what this deck answers.
+  const coverageCovered = answerCoverage?.rows.filter((r) => r.covered).length ?? 0;
+  const coverageClasses = answerCoverage?.rows.length ?? 0;
+  const coverageDocked = answerCoverage !== undefined && answerCoverage.coverage < 1;
+  const poolUnweighted = answerCoverage?.source === "unweighted";
   const answersBlock = (
       <div className="flex flex-col gap-1.5">
         <h5 className="eyebrow">Answers by turn {turn}</h5>
+        {coverageDocked ? (
+          <p className="text-xs text-(--muted) max-w-[65ch]">
+            Docked for coverage: this deck's Interaction score counts at{" "}
+            {pct(answerCoverage!.coverage)} of full credit -- {coverageCovered} of{" "}
+            {coverageClasses} answer classes are covered, not every one these colours could reach.
+          </p>
+        ) : null}
+        {poolUnweighted ? (
+          <p className="text-xs text-(--muted) max-w-[65ch]">
+            Colour pool unweighted — no commander detected, so every colour was scored as if it
+            could supply every class.
+          </p>
+        ) : null}
         <ul className="flex flex-col gap-1">
           {answers.map((a) => {
             const none = a.count === 0;

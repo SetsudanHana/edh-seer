@@ -578,6 +578,37 @@ test("leaf shares total 100% even when a card fills two leaves", () => {
   expect(screen.getByLabelText(/^Card selection 3, 33% of Consistency/)).toBeInTheDocument();
 });
 
+// FIX F2 (controller review, 2026-08-21): `build.ts`'s own scoring loop skips a parent whose
+// target is <= 0 outright ("neutral, unscored" -- `if (p.target <= 0) continue;`), and
+// `scoredParents` (`BuildBenchmarks.tsx`) mirrors that skip for which leaves render at all -- a
+// leaf under an unscored parent stays hidden, the same "not scored, so not shown" treatment a
+// zero-target ungrouped leaf already gets. BOTH parents here are MULTI-leaf (task 5 fix round 1):
+// the original version of this test used two single-leaf fixtures, which render no leaf row
+// either way post-task-5 and so no longer exercise the gate at all, only the fixture's shape.
+const ZERO_TARGET_MULTI_LEAF_CATEGORIES = [
+  { category: "draw", count: 6, target: 0 },
+  { category: "cardSelection", count: 2, target: 0 },
+  { category: "targetedRemoval", count: 3, target: 0 },
+  { category: "stackInteraction", count: 1, target: 0 },
+] as unknown as typeof SAMPLE.report.buildCategories;
+const ZERO_TARGET_MULTI_LEAF_PARENTS = [
+  { name: "Consistency", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
+  // count > 0 against target 0 is deliberate, mirroring the original fixture's own reasoning: a
+  // parent can be unscored while its cards still exist in the deck.
+  { name: "Interaction", count: 4, target: 0, leaves: ["targetedRemoval", "stackInteraction"] },
+] as unknown as typeof SAMPLE.report.buildParents;
+
+test("a zero-target parent's leaves stay hidden, while a scored sibling's leaves render", () => {
+  render(<BuildBenchmarks categories={ZERO_TARGET_MULTI_LEAF_CATEGORIES} parents={ZERO_TARGET_MULTI_LEAF_PARENTS} />);
+  // The scored parent's leaves render normally.
+  expect(screen.getByText(/^Draw$/)).toBeInTheDocument();
+  expect(screen.getByText(/^Card selection$/)).toBeInTheDocument();
+  // The zero-target parent's leaves are entirely absent -- not present with a broken/zero row,
+  // absent outright.
+  expect(screen.queryByText(/^Removal$/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/^Stack interaction$/)).not.toBeInTheDocument();
+});
+
 // A scrambled category order (not the array order BUILD_PARENTS.leaves lists, not the order the
 // fixture above happens to use) so the test can only pass if the component actually GROUPS rather
 // than coincidentally rendering in input order. `parents` is authored by hand here, mirroring what
@@ -839,6 +870,70 @@ test("BuildBenchmarks says nothing about hate when the deck has no graveyard pla
     />,
   );
   expect(screen.queryByText(/plan runs through the graveyard/i)).not.toBeInTheDocument();
+});
+
+// TASK 5 FIX ROUND 1 (2026-09-01): the coverage dock and the colour-pool-unweighted refusal used
+// to be a suffix on the removed Interaction PARENT row; deleting that row silently deleted these
+// two disclosures from the product, not just from tests -- `build.ts` still docks Interaction's
+// attainment by `answerCoverage.coverage` and still refuses the pool weight with no commander
+// detected, and nothing said so. They now live on the `Answers by turn N` header instead, since
+// that table is what "N of M classes" is a statement about.
+test("the Answers header docks for coverage when the score is docked, naming the classes covered", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{
+        coverage: 0.816,
+        source: "weighted",
+        graveyardVulnerability: 0,
+        rows: [
+          { class: "creature", poolShare: 1, demand: 0.3, weight: 0.3, covered: true },
+          { class: "artifact", poolShare: 1, demand: 0.24, weight: 0.24, covered: false },
+          { class: "enchantment", poolShare: 1, demand: 0.21, weight: 0.21, covered: true },
+          { class: "planeswalker", poolShare: 1, demand: 0.03, weight: 0.03, covered: false },
+          { class: "land", poolShare: 1, demand: 0.21, weight: 0.21, covered: true },
+        ],
+      }}
+    />,
+  );
+  expect(screen.getByText(/docked for coverage/i)).toBeInTheDocument();
+  expect(screen.getByText(/3 of 5 answer classes are covered/i)).toBeInTheDocument();
+});
+
+test("the Answers header says nothing about coverage when it is fully covered", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/docked for coverage/i)).not.toBeInTheDocument();
+});
+
+test("the Answers header admits the colour pool was unweighted when no commander was detected", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 1, source: "unweighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/colour pool unweighted/i)).toBeInTheDocument();
+  expect(screen.getByText(/no commander detected/i)).toBeInTheDocument();
+  expect(screen.queryByText(/docked for coverage/i)).not.toBeInTheDocument();
+});
+
+test("the Answers header says nothing about the pool when a commander WAS detected", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/colour pool unweighted/i)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows demand against supply, and refuses a number where none applies", () => {
