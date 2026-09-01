@@ -1,13 +1,7 @@
-// @vitest-environment node
-//
-// The tagger and matcher packages both eagerly readFileSync(new URL(..., import.meta.url))
-// at import time; fine under node, but under jsdom import.meta.url does not resolve to a
-// file: URL and the read throws.
-
 import { expect, test } from "vitest";
 import { floorState, bandState, scoreState } from "./deck-gauge.js";
 
-/** THE FLOOR DIAL IS ASYMMETRIC ON PURPOSE, and it is derived rather than styled: `build.ts:517`
+/** THE FLOOR DIAL IS ASYMMETRIC ON PURPOSE, and it is derived rather than styled: `build.ts:520`
  *  reads `Math.min(p.count / p.target, 1) // exceeding a floor never penalizes`. Interaction 19
  *  against a target of 10 is FULL CREDIT, and the trim chips call the same +9 "where the room is".
  *  A dial reddening the over side would contradict buildScore and the cut list on one screen. */
@@ -82,4 +76,17 @@ test("the needle stays on the arc at every extreme", () => {
 test("a target of zero never divides by zero", () => {
   expect(floorState(4, 0).state).toBe("on-target");
   expect(bandState(4, 0).state).toBe("on-band");
+});
+
+/** THE MODULE MUST BE IMPORTABLE FROM A COMPONENT TEST. It first shipped importing the matcher root
+ *  barrel, which transitively runs `readFileSync(new URL(..., import.meta.url))` in the tagger and
+ *  throws `TypeError: The URL must be of scheme file` under jsdom -- so every consumer that renders
+ *  React (Dial, DeckGauges) would have failed on the import alone. The narrow `@edh-seer/matcher/build`
+ *  subpath is what keeps that out. This test runs in the config's default jsdom environment and asserts
+ *  the DOM is really there, so re-adding a node pragma or widening the import fails it. */
+test("is usable from a jsdom environment, not only from node", () => {
+  expect(typeof document).toBe("object");
+  const el = document.createElement("span");
+  el.textContent = bandState(48, 36).state;
+  expect(el.textContent).toBe("far-over");
 });

@@ -1,4 +1,4 @@
-import { LAND_BAND, LAND_FALLOFF } from "@edh-seer/matcher";
+import { LAND_BAND, LAND_FALLOFF } from "@edh-seer/matcher/build";
 import { scoreBand, type ScoreTone } from "./score-band.js";
 
 export type GaugeTone = "danger" | "warning" | "success" | "neutral";
@@ -27,7 +27,7 @@ const TONE_OF_SCORE: Record<ScoreTone, GaugeTone> = {
 
 /** A FLOOR, NOT A TARGET, and the asymmetry below is that fact rendered.
  *
- *  `build.ts:517` is `Math.min(p.count / p.target, 1) // exceeding a floor never penalizes`, so a
+ *  `build.ts:520` is `Math.min(p.count / p.target, 1) // exceeding a floor never penalizes`, so a
  *  parent past its target scores full credit; the trim chips call the same overshoot "where the
  *  room is" and the cut list is built from it. A symmetric dial would tell the reader the opposite
  *  of the score and the cut list on the same screen. Making over a genuine fault means making

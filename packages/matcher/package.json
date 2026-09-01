@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./analyze": "./src/analyze.ts",
+    "./build": "./src/build.ts",
     "./graph-projection": "./src/graph-projection.ts",
     "./faces": "./src/faces.ts",
     "./deck-cards": "./src/deck-cards.ts",
