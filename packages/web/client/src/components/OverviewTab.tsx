@@ -41,25 +41,35 @@ function Movement({
   );
 }
 
-/** THE OVERVIEW, SEQUENCED — diagnose, then prescribe, then verify.
+/** THE OVERVIEW, SEQUENCED — recognise, then diagnose, then prescribe, then verify.
  *
  *  It used to be fifteen self-contained blocks flowing through a two-column layout in roughly the
  *  order they were built. Four persona reviews of the live page (2026-08-26) converged on one
  *  structural finding: **the page leads with its weakest answer and buries its strongest.** Two
  *  scores out of five and three unexplained decimals owned screen one; the diagnostic panels, which
- *  were the only thing either expert persona acted on, started on screen two and ran to four.
+ *  were the only thing either expert persona acted on, started on screen two and ran to four. That
+ *  first fix round put `Findings` first and demoted the scores — RIGHT, but not the whole answer.
  *
- *  So the order is the player's own, from `specs/2026-08-27-report-slot-inventory.md`:
+ *  So the order below is the player's own, from `specs/2026-08-27-report-slot-inventory.md`, with
+ *  one further move the owner made on 2026-09-01: **recognition now leads even `Findings`.**
+ *  "Did it understand my deck" is the reader's first question before "what is wrong with it" can
+ *  mean anything to them — a criticism only lands once the reader trusts the tool read the same
+ *  deck they built — and generic-before-specific is the same ordering rule the rest of this file
+ *  already applies within a movement. `RecognitionPanel` carries NO score and NO target for exactly
+ *  this reason: a tool that grades a deck before showing it understood it has not earned the
+ *  criticism.
  *
- *  1. **Gate** — how much of this did you read. Lives ABOVE the tabs (`ReportView`), because it
- *     qualifies every tab rather than this one.
- *  2. **Diagnose** — what is wrong, ranked. `Findings` leads, and the panels it ranks follow as its
- *     evidence rather than competing with it.
+ *  1. **Recognise** — what this deck IS: theme, colours, shape. `RecognitionPanel`, no score.
+ *  2. **Diagnose** — what is wrong, ranked. `Findings` leads this movement, and the panels it ranks
+ *     follow as its evidence rather than competing with it.
  *  3. **Prescribe** — what to change. Adds and cuts side by side, because they are one decision.
- *  4. **Verify** — how the engine read the deck, and the scores. DEMOTED here on the owner's call
- *     (2026-08-27): four of four personas, including the experienced player, could not read
- *     `SYNERGY 0.8/5`, breadth or anchor, and they were the first thing on the page. Nothing is
- *     deleted and no engine number changed.
+ *  4. **Verify** — how the engine read the deck, and the scores. Still last: four of four personas,
+ *     including the experienced player, could not read `SYNERGY 0.8/5`, breadth or anchor, and they
+ *     were the first thing on the page before 2026-08-27. Nothing is deleted and no engine number
+ *     changed.
+ *
+ *  The GATE — how much of this did you read — is none of the four above: it lives ABOVE the tabs
+ *  (`ReportView`), because it qualifies every tab rather than this one.
  *
  *  THE COLUMN FLOW SURVIVES ONLY INSIDE A MOVEMENT. `columns-1 xl:columns-2` was doing real work —
  *  a wide viewport should buy columns, never longer lines — but applied to the WHOLE tab it put a

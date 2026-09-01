@@ -1107,9 +1107,9 @@ test("BuildBenchmarks says so when the land target falls back to the flat conven
   };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={fallback} />);
   expect(
-    screen.getByLabelText(/37 lands in the deck, this curve wants 36 -- the flat convention, because this curve's own regression asks for 50, outside the tested range/i),
+    screen.getByLabelText(/37 lands in the deck, this curve wants 36 — the flat convention, because this curve's own regression asks for 50, outside the tested range/i),
   ).toBeInTheDocument();
-  expect(screen.getByText(/flat convention -- this curve's own regression asks for 50, outside the tested range/i)).toBeInTheDocument();
+  expect(screen.getByText(/flat convention — this curve's own regression asks for 50, outside the tested range/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks says so when an archetype delta is folded into the land target (fix F1, task 9)", () => {
@@ -1122,7 +1122,7 @@ test("BuildBenchmarks says so when an archetype delta is folded into the land ta
   };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={landfall} />);
   expect(
-    screen.getByLabelText(/37 lands in the deck, this curve wants 43 -- 39 from the curve plus 4 because this is a landfall deck/i),
+    screen.getByLabelText(/37 lands in the deck, this curve wants 43 — 39 from the curve plus 4 because this is a landfall deck/i),
   ).toBeInTheDocument();
   expect(screen.getByText(/39 from the curve plus 4 because this is a landfall deck/i)).toBeInTheDocument();
   // Never the flat-convention wording on a purely-derived-plus-delta row.
@@ -1269,13 +1269,22 @@ test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)
 /** THE SEQUENCE, pinned. Four persona reviews (2026-08-26) found the page led with its weakest
  *  answer; the fix is an ORDER, so an order is what the test asserts — the diagnosis must come
  *  before the scores in document order, not merely both exist. Proven to fire by moving `Findings`
- *  below `HeadlineScores` in `OverviewTab`. */
+ *  below `HeadlineScores` in `OverviewTab`.
+ *
+ *  I2 (whole-branch review, 2026-09-01): the branch's whole point — recognition before diagnosis —
+ *  had NOTHING pinning it. `RecognitionPanel` ("What this deck is") sitting above `Findings` ("What
+ *  is wrong with this deck") in `OverviewTab.tsx` was true only by inspection; nothing here failed
+ *  if the two sections were swapped back. Extended, not a new test, so the one assertion that
+ *  reordering the page breaks stays in one place next to the pattern it was proven against. */
 test("OverviewTab leads with the diagnosis and demotes the scores below it", () => {
   const { container } = render(<OverviewTab data={SAMPLE} />);
   const text = container.textContent ?? "";
+  const recognition = text.indexOf("What this deck is");
   const diagnosis = text.indexOf("What is wrong with this deck");
   const scores = text.indexOf("How the engine read it");
+  expect(recognition).toBeGreaterThanOrEqual(0);
   expect(diagnosis).toBeGreaterThanOrEqual(0);
+  expect(diagnosis).toBeGreaterThan(recognition);
   expect(scores).toBeGreaterThan(diagnosis);
 });
 

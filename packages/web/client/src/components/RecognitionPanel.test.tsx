@@ -80,3 +80,76 @@ test("names the cohesion theme, never the top archetype", () => {
   expect(screen.getByTestId("recognition-identity")).toHaveTextContent("draw");
   expect(screen.getByTestId("recognition-identity")).not.toHaveTextContent("Tokens");
 });
+
+/** C2 (whole-branch review, 2026-09-01). This used to read `resolvedCount`/`totalCount` -- NAME
+ *  RESOLUTION, how many decklist lines matched a card -- which on a partly-read deck can both sit
+ *  at 100/100 while `report.coverage` (how many of those the synergy engine could actually read)
+ *  says 52/100. `CoveragePanel` above this panel prints the coverage figure; this test proves the
+ *  two counters at the top of the page cannot disagree about the same question again. */
+test("reads coverage.derived/resolved, not resolvedCount/totalCount, when coverage is present", () => {
+  const partlyRead = {
+    ...DATA,
+    report: {
+      ...DATA.report,
+      coverage: { resolved: 100, derived: 52, underivedNames: [], more: 0, caveat: "" },
+    },
+  } as typeof DATA;
+  render(<RecognitionPanel data={partlyRead} />);
+  expect(screen.getByTestId("recognition-coverage")).toHaveTextContent("read 52 of 100 cards");
+});
+
+test("falls back to resolvedCount/totalCount when the report carries no coverage", () => {
+  render(<RecognitionPanel data={DATA} />);
+  expect(screen.getByTestId("recognition-coverage")).toHaveTextContent("read 100 of 100 cards");
+});
+
+/** I1 (whole-branch review, 2026-09-01). `DeckIdentity` prints "No theme found in the cards read"
+ *  on a partly-read deck rather than the unqualified "No dominant theme" -- the first is a
+ *  statement about the ENGINE, the second a verdict about the DECK, and Recognition printed only
+ *  the unqualified string, above DeckIdentity's own qualified one. */
+test("qualifies the no-theme sentence on a partly-read deck, same as DeckIdentity", () => {
+  const noThemePartlyRead = {
+    ...DATA,
+    report: {
+      ...DATA.report,
+      cohesion: { theme: "tokens", dominant: false, score: 0.1, label: "unfocused" },
+      coverage: { resolved: 100, derived: 52, underivedNames: [], more: 0, caveat: "" },
+    },
+  } as unknown as typeof DATA;
+  render(<RecognitionPanel data={noThemePartlyRead} />);
+  const el = screen.getByTestId("recognition-identity");
+  expect(el).toHaveTextContent("No theme found in the cards read");
+  expect(el).not.toHaveTextContent("No dominant theme · strongest");
+  // The engine's best-supported (if not dominant) theme still gets named.
+  expect(el).toHaveTextContent("strongest: tokens");
+});
+
+/** I3 (whole-branch review, 2026-09-01). The spec's own ordering is "theme · commander · colour
+ *  identity" -- for an EDH player the commander is the recognition anchor, and it was missing
+ *  entirely. Also proves the colour identity reads as a name ("Esper"), not bare letters ("WUB"),
+ *  matching `DeckIdentity`'s own `identityLabel` twenty lines below on the same page. */
+test("names the commander and the colour identity, not bare letters", () => {
+  const withCommander = {
+    ...DATA,
+    report: {
+      ...DATA.report,
+      deckMath: {
+        castability: {
+          commanders: [
+            { name: "Krenko, Mob Boss", turn: 4, castable: { low: 0.5, high: 0.7 }, mana: { low: 0.5, high: 0.7 } },
+          ],
+        },
+      },
+    },
+  } as typeof DATA;
+  render(<RecognitionPanel data={withCommander} />);
+  const el = screen.getByTestId("recognition-identity");
+  expect(el).toHaveTextContent("Krenko, Mob Boss");
+  expect(el).toHaveTextContent("Esper");
+  expect(el).not.toHaveTextContent("WUB");
+});
+
+test("names no commander when deckMath was never computed", () => {
+  render(<RecognitionPanel data={DATA} />);
+  expect(screen.getByTestId("recognition-identity")).not.toHaveTextContent("Krenko");
+});
