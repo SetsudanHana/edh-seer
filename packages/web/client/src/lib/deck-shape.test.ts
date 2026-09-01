@@ -16,9 +16,16 @@ describe("primaryType", () => {
     expect(primaryType(["enchantment", "artifact"])).toBe("artifact");
   });
 
-  test("instant and sorcery both fold into spells", () => {
-    expect(primaryType(["instant"])).toBe("spells");
-    expect(primaryType(["sorcery"])).toBe("spells");
+  // NOT "spells". Creature, artifact and enchantment are TYPES; every nonland card is a spell when
+  // it is cast, so a slice called "spells" sitting beside "creature" is a category error. It was
+  // introduced to fit a pie's colour budget -- a chart constraint dictating a taxonomy.
+  test("instant and sorcery are their own types", () => {
+    expect(primaryType(["instant"])).toBe("instant");
+    expect(primaryType(["sorcery"])).toBe("sorcery");
+  });
+
+  test("planeswalker is a type of its own", () => {
+    expect(primaryType(["planeswalker"])).toBe("planeswalker");
   });
 
   // Lands are excluded from this chart entirely -- they are 38% of a deck and have their own
@@ -55,9 +62,12 @@ describe("typeSlices", () => {
   });
 
   test("returns slices in the fixed order, omitting empty ones", () => {
-    const out = typeSlices([node({ types: ["instant"] }), node({ types: ["creature"] })]);
-    expect(out.map((s) => s.type)).toEqual(["creature", "spells"]);
-    expect(TYPE_ORDER.indexOf("creature")).toBeLessThan(TYPE_ORDER.indexOf("spells"));
+    const out = typeSlices([node({ types: ["sorcery"] }), node({ types: ["creature"] })]);
+    expect(out.map((s) => s.type)).toEqual(["creature", "sorcery"]);
+    // The order is the validated colour order, not alphabetical and not by size -- see TYPE_ORDER.
+    expect(TYPE_ORDER).toEqual(
+      ["creature", "enchantment", "artifact", "instant", "planeswalker", "sorcery"],
+    );
   });
 
   test("an empty deck is an empty array, not a zero slice", () => {

@@ -1,9 +1,15 @@
 import type { DeckReport, GraphNode } from "../types.js";
 
-/** THE SLICE ORDER, FIXED. A categorical palette is assigned in a fixed order and never cycled,
- *  so a creature is the same colour in every deck -- the same reasoning `TYPE_HUE` in
- *  `presets.ts` already carries. Anything not on this list is not a slice. */
-export const TYPE_ORDER = ["creature", "planeswalker", "artifact", "enchantment", "spells"] as const;
+/** THE SLICE ORDER, FIXED, AND IT IS THE VALIDATED COLOUR ORDER.
+ *
+ *  Not alphabetical, not by size. `enchantment` and `sorcery` are both blues and sit at dE 12.5 in
+ *  normal vision -- below the floor where a full-colour reader can tell a pair apart. They pass the
+ *  categorical validator ONLY because this order never places them adjacent. A caller that sorts
+ *  these segments by value breaks that guarantee silently, which is why `TypeBar` renders them in
+ *  this order and a test pins it. */
+export const TYPE_ORDER = [
+  "creature", "enchantment", "artifact", "instant", "planeswalker", "sorcery",
+] as const;
 
 /** Precedence for a card that prints several types. An artifact creature is a CREATURE: that is
  *  what it is on the board and what a player names it by. Lands are absent on purpose -- see
@@ -26,8 +32,7 @@ export function primaryType(types: readonly string[]): string | null {
   if (types.some((t) => t.toLowerCase() === "land")) return null;
   const lower = types.map((t) => t.toLowerCase());
   const hit = PRECEDENCE.find((p) => lower.includes(p));
-  if (hit === undefined) return null;
-  return hit === "instant" || hit === "sorcery" ? "spells" : hit;
+  return hit ?? null;
 }
 
 /** Card types as part-to-whole slices over the deck's NONLAND cards.
