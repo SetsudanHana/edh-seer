@@ -1,6 +1,6 @@
 import type { AnalyzeResponse } from "../types.js";
 import { roleBars, typeSlices } from "../lib/deck-shape.js";
-import { TypeDonut } from "./TypeDonut.js";
+import { TypeBar } from "./TypeBar.js";
 import { RoleBars } from "./RoleBars.js";
 import { identityLabel } from "../lib/color-identity.js";
 
@@ -81,7 +81,7 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
       </p>
 
       <div className="flex flex-wrap items-start gap-8">
-        <TypeDonut slices={slices} />
+        <TypeBar slices={slices} />
         <RoleBars bars={bars} />
       </div>
     </section>

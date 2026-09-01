@@ -39,10 +39,10 @@ test("states how much of the deck it could read", () => {
   expect(screen.getByTestId("recognition-coverage")).toHaveTextContent("100");
 });
 
-test("the donut counts nonlands only, weighted by copies", () => {
+test("the bar counts nonlands only, weighted by copies", () => {
   render(<RecognitionPanel data={DATA} />);
   // 4 creatures + 2 enchantments; the 38 lands are not on this chart.
-  expect(screen.getByTestId("donut-total")).toHaveTextContent("6");
+  expect(screen.getByTestId("type-total")).toHaveTextContent("6");
 });
 
 test("carries no 0-5 score: recognition is not a judgement", () => {
