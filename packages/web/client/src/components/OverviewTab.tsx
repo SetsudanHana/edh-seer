@@ -6,6 +6,7 @@ import { SuggestionsList } from "./SuggestionsList.js";
 import { CutList } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
 import { LegalityPanel } from "./LegalityPanel.js";
+import { RecognitionPanel } from "./RecognitionPanel.js";
 import { UnmetConditions } from "./UnmetConditions.js";
 import { ManaAvailability } from "./ManaAvailability.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
@@ -79,6 +80,14 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         *  legality still precedes everything. It renders nothing when the deck is clean, which is
         *  every one of the 71 calibration decks. */}
       <LegalityPanel legality={report.legality} />
+
+      {/* ── 1 · RECOGNISE ────────────────────────────────────────────────────────────────────
+        *  What this deck IS, before anything says what is wrong with it. The August ordering put
+        *  Findings here and this at the bottom; the brief that ordering came from actually placed
+        *  this question SECOND, ahead of the diagnosis, and it was demoted only because its
+        *  answer at the time was two unreadable decimals. Owner ruling 2026-09-01: generic before
+        *  specific, recognition before criticism. */}
+      <RecognitionPanel data={data} />
 
       {/* ── 2 · DIAGNOSE ─────────────────────────────────────────────────────────────────────
         *  The page's focal element. Everything below it in this movement is the evidence for a
