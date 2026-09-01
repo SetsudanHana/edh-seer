@@ -652,7 +652,9 @@ h3 {
   color: var(--muted);
 }
 
-.edge-link { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; color: var(--fill); }
+/* `color` here reaches ONE thing: the arrow, which strokes in currentColor. The event chip sets
+   its own foreground. --edge is the token for a synergy edge, which is what the arrow draws. */
+.edge-link { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; color: var(--edge); }
 
 /* The event key, in the data face, because that is the string the engine actually matches on. */
 .edge-event {
@@ -682,7 +684,12 @@ h3 {
 .edge-no { color: var(--muted); }
 .edge-no strong { color: var(--foreground); }
 .edge-row-refused { border-style: dashed; }
-.edge-row-refused .edge-link { color: var(--separator); }
+/* A refusal is QUIETER than a match, not absent. This was --separator, the 1.15:1 hairline: the
+   arrow vanished outright, so the row read as a figure that failed to draw rather than as a link
+   that does not hold. --fill is the step down from --edge (2.12:1 against 3.34:1) and the arrow
+   is the only place either is read. The refusal is still carried in three other ways -- the
+   dashed row border, the bolded mismatch in the chip, and the verdict sentence. */
+.edge-row-refused .edge-link { color: var(--fill); }
 
 @media (max-width: 40rem) {
   .figures { grid-template-columns: 1fr; gap: 1rem; }
