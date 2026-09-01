@@ -171,6 +171,30 @@ export const TYPE_HUE: Record<string, string> = {
   battle: "#a3446e",
 };
 
+/** THE DONUT'S OWN STEPS, and it is not `TYPE_HUE`. That table is correct for the board, where a
+ *  node carries card art, a label and a position, and colour is one cue among four. A donut has
+ *  colour and nothing else, and `TYPE_HUE` fails three checks as a donut palette when run through
+ *  the categorical validator against this app's dark surface: `artifact #8d949f` has chroma 0.018
+ *  and reads grey; artifact against land is dE 2.6 for a deuteranope; enchantment against land is
+ *  dE 10.1 for NORMAL colour vision, which is below the floor where a full-colour reader can tell
+ *  a pair apart.
+ *
+ *  Dropping land removes both land pairs (it is not a slice -- see `deck-shape.ts`), and artifact
+ *  is re-stepped to a rose that clears every check. Verified all-pairs, dark, surface #16111f:
+ *  lightness band, chroma floor, CVD separation (worst 11.6 protan), normal-vision floor (worst
+ *  18.3) and contrast all PASS.
+ *
+ *  CEILING: this leaves `artifact` two colours in one product -- rose here, grey on the board.
+ *  Re-stepping `TYPE_HUE` globally would fix the board's own failing pairs too, and is the better
+ *  end state, but it changes how every existing graph looks and is the owner's call. */
+export const DONUT_HUE: Record<string, string> = {
+  creature: "#277310",
+  planeswalker: "#b08e1d",
+  artifact: "#c05a72",
+  enchantment: "#1c8db7",
+  spells: "#5b40f6",
+};
+
 /** WUBRG, by the game's own convention rather than by the palette search above: a blue card has to
  *  read as blue. Black is the one that cannot be literal -- a black disc on a #14171b surface is
  *  invisible -- so it takes the purple-grey that Magic's own dark-mode UIs use. `C` is colourless,
