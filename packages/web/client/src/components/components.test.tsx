@@ -737,6 +737,25 @@ test("a section whose blocks are all absent renders no heading at all", () => {
   expect(screen.getByText("Can you deal with theirs")).toBeInTheDocument();
 });
 
+/** THE FOUR GROUPS ARE ADDRESSABLE, BY ID AND NOT BY TITLE. `DeckMathRows` already grouped itself
+ *  into four named sections; the sub-tabs need to route them to three different places. Selecting
+ *  on the visible title would mean a copy edit silently unwires a tab -- the same
+ *  rename-breaks-the-wiring defect `coverageWeighted` exists to avoid. */
+test("BuildBenchmarks renders only the deck-math sections it is asked for", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories}
+    deckMath={DECK_MATH} sections={["cast"]} />);
+  expect(screen.getByText("Can you cast your cards")).toBeInTheDocument();
+  expect(screen.queryByText("Can you deal with theirs")).toBeNull();
+  expect(screen.queryByText("How you win")).toBeNull();
+});
+
+test("BuildBenchmarks renders every deck-math section when none is specified", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  for (const title of ["Can you cast your cards", "Can you deal with theirs", "How you win"]) {
+    expect(screen.getByText(title)).toBeInTheDocument();
+  }
+});
+
 test("BuildBenchmarks shows answer coverage, including the classes the deck cannot answer", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   expect(screen.getByText(/answers by turn 5/i)).toBeInTheDocument();

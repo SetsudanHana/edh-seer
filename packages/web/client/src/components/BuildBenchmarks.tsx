@@ -67,8 +67,13 @@ const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n =
 import { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS } from "../lib/demand-sentence.js";
 export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 
+/** Stable ids for the four deck-math groups. The sub-tabs route these to three different panels,
+ *  and they select by ID rather than by the visible title so a copy edit cannot silently unwire a
+ *  tab. */
+export type DeckMathSectionId = "cast" | "answers" | "win" | "waiting";
+
 export function BuildBenchmarks({
-  categories, parents, deckMath, answerCoverage,
+  categories, parents, deckMath, answerCoverage, sections,
 }: {
   categories: DeckReport["buildCategories"];
   /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). The parent's OWN
@@ -84,6 +89,9 @@ export function BuildBenchmarks({
    *  panel needs it is to decide whether the graveyard-hate sentence below is a finding about THIS
    *  deck or noise on every deck. */
   answerCoverage?: DeckReport["answerCoverage"];
+  /** Which of the four deck-math groups to render, by id. Omitted renders all four -- the current
+   *  single call site relies on that. */
+  sections?: readonly DeckMathSectionId[];
 }) {
   if (!categories || categories.length === 0) return null;
   const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
@@ -223,7 +231,7 @@ export function BuildBenchmarks({
         {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
       </ul>
 
-      {deckMath ? <DeckMathRows deckMath={deckMath} answerCoverage={answerCoverage} /> : null}
+      {deckMath ? <DeckMathRows deckMath={deckMath} answerCoverage={answerCoverage} only={sections} /> : null}
     </div>
   );
 }
@@ -270,10 +278,14 @@ const VULNERABLE = 0.3;
  *
  *  A benchmark says "6 ramp, want 10". These say what that means in a game you actually play. */
 function DeckMathRows({
-  deckMath, answerCoverage,
+  deckMath, answerCoverage, only,
 }: {
   deckMath: NonNullable<DeckReport["deckMath"]>;
   answerCoverage?: DeckReport["answerCoverage"];
+  /** Renamed from the `sections` prop `BuildBenchmarks` receives -- this function already has its
+   *  own local `sections` array (the four groups themselves), so the incoming selector gets the
+   *  boundary-local name instead of shadowing it. */
+  only?: readonly DeckMathSectionId[];
 }) {
   const { turn, seen, demand } = deckMath;
   // WORST FIRST, in both ranked blocks. The doctrine's order (creature, artifact, enchantment,
@@ -885,8 +897,9 @@ function DeckMathRows({
   // basis for -- so a section leads simply because something inside it is already painted as a
   // problem. Flagged sections sort first and `sort` is stable, so everything else holds the fixed
   // order below: the four headings never change, only which of them you meet first.
-  const sections: { title: string; flagged: boolean; blocks: ReactNode[] }[] = [
+  const sections: { id: DeckMathSectionId; title: string; flagged: boolean; blocks: ReactNode[] }[] = [
     {
+      id: "cast",
       title: "Can you cast your cards",
       // A row nobody can close does not lead the panel either — same ruling as the colour it paints.
       flagged:
@@ -895,6 +908,7 @@ function DeckMathRows({
       blocks: [landsBlock, coloursBlock, castsBlock],
     },
     {
+      id: "answers",
       title: "Can you deal with theirs",
       // FLAG WHAT IS PAINTED. A class with NO answers is a fact about the deck, and so are the two
       // findings below it; "3 short of 5" is a convention's opinion and is rendered muted, so it no
@@ -902,11 +916,12 @@ function DeckMathRows({
       flagged: answers.some((a) => a.count === 0) || noneExile || noneRecurring,
       blocks: [answersBlock],
     },
-    { title: "How you win", flagged: false, blocks: [clockBlock, winBlock, topdeckBlock] },
+    { id: "win", title: "How you win", flagged: false, blocks: [clockBlock, winBlock, topdeckBlock] },
     // Not a question a player arrives with -- it describes the deck's own internal engine -- so it
     // is named plainly and sits last whatever else is wrong.
-    { title: "What your cards are waiting for", flagged: false, blocks: [demandBlock] },
+    { id: "waiting", title: "What your cards are waiting for", flagged: false, blocks: [demandBlock] },
   ];
+  const shown = only === undefined ? sections : sections.filter((s) => only.includes(s.id));
 
   return (
     // Rhythm at two levels: blocks inside a section sit closer (gap-5) than the sections do to each
@@ -939,7 +954,7 @@ function DeckMathRows({
         </Caveat>
       </div>
 
-      {[...sections]
+      {[...shown]
         .sort((a, b) => Number(b.flagged) - Number(a.flagged))
         // A section whose every block is absent renders nothing at all: a colourless deck has no
         // Colours block, an alt-win deck may have no win plans, and an empty heading is a promise
