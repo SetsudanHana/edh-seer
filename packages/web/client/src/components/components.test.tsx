@@ -68,10 +68,10 @@ test("the commander's cast odds are a RANGE, and a refused cost is an em dash an
   expect(screen.getByText(/0% by turn 10/)).toBeInTheDocument();
 });
 
-test("DeckIdentity shows the headline theme", () => {
-  render(<DeckIdentity cohesion={SAMPLE.report.cohesion} />);
-  expect(screen.getByText("Tokens")).toBeInTheDocument();
-});
+// DELETED: "DeckIdentity shows the headline theme" asserted only that DeckIdentity renders
+// cohesion.theme as its own <h2>. That contract moved to RecognitionPanel (round 2 of the
+// Overview reorder) so the page names the deck once, not twice; DeckIdentity no longer prints
+// the theme at all, so the assertion had nothing left to trim down to.
 
 // A NAMING LAYER MAY DECLINE (roadmap A15). Under `THEME_NAME_FLOOR` the headline is carried by one
 // or two cards -- `venser` reads 0.02 across the calibration corpus -- so the title says so and the
@@ -97,13 +97,12 @@ test("DeckIdentity declines to name a deck whose theme is not dominant", () => {
   expect(screen.getByText(/strongest: proliferate/)).toBeTruthy();
 });
 
-// An ABSENT `dominant` is a caller that predates the field, never a negative opinion -- the CLI
-// defaulting the other way made a 0.50-cohesion fixture abstain.
-test("DeckIdentity names the deck when dominant is absent", () => {
-  const { dominant: _drop, ...older } = SAMPLE.report.cohesion!;
-  render(<DeckIdentity cohesion={older as typeof SAMPLE.report.cohesion} />);
-  expect(screen.getByRole("heading", { level: 2 }).textContent).toBe(SAMPLE.report.cohesion!.theme);
-});
+// MOVED, NOT DELETED (I4, whole-branch review, 2026-09-01). "DeckIdentity names the deck when
+// dominant is absent" pinned a real TRI-STATE -- an ABSENT `dominant` field means a caller written
+// before the field existed, never a negative opinion -- and the behaviour is alive at
+// `RecognitionPanel.tsx` (`cohesion.dominant !== false`), which is exactly what a future
+// `!cohesion.dominant` "simplification" would break. The assertion now lives in
+// `RecognitionPanel.test.tsx`, with the headline it follows.
 
 test("DeckIdentity renders nothing when there's no cohesion", () => {
   const { container } = render(<DeckIdentity cohesion={null} />);
@@ -119,17 +118,18 @@ const cohesionDraw = {
   label: "focused",
 } as NonNullable<typeof SAMPLE.report.cohesion>;
 
-// THE HEADLINE FLIPPED, 2026-08-20, and the test it replaces was right when it was written.
-// `strategies[0]` led from 8de3c72 (2026-08-01) because a cohesion theme was then routinely a bare
-// functional role -- `UNIFORM_STATS` collapsed the theme ranking to raw frequency and seven of
-// eight decks themed "draw". That was fixed on 2026-08-18 (0c59087, 38e5248) and A1-A11 rebuilt the
-// ranking on top of it; the guard outlived its defect, and on a wizard deck it printed "Tokens".
-test("DeckIdentity headlines the cohesion theme, not the top archetype", () => {
+// THE HEADLINE FLIPPED, 2026-08-20: `strategies[0]` led from 8de3c72 (2026-08-01) because a
+// cohesion theme was then routinely a bare functional role -- `UNIFORM_STATS` collapsed the theme
+// ranking to raw frequency and seven of eight decks themed "draw" -- and on a wizard deck the
+// headline printed "Tokens" while cohesion.theme read "wizards entering". THE HEADLINE ITSELF, and
+// the regression guard for that defect, moved to `RecognitionPanel.test.tsx` ("names the cohesion
+// theme, never the top archetype") now that RecognitionPanel owns the theme headline. What is left
+// here is DeckIdentity's own surviving behaviour: the archetype still prints as CONTEXT under the
+// cohesion figures, never as a title.
+test("DeckIdentity keeps the archetype as context, not as a title", () => {
   render(
     <DeckIdentity cohesion={cohesionDraw} strategies={[{ name: "tokens", label: "Tokens", confidence: 0.4 }]} />,
   );
-  expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Draw");
-  // The archetype survives as context, with its share -- not as the title.
   expect(screen.getByText(/signals Tokens 40%/)).toBeInTheDocument();
 });
 
@@ -173,9 +173,14 @@ test("MissingCards renders nothing when empty", () => {
 // THE AVG CMC TILE IS GONE, and its test with it: a one-tile "grid" printed 2.9 while the Lands
 // row four blocks above already read "avg mana value 2.92", where the figure is doing work (it is
 // what sets the land target). One number, one place.
-test("OverviewTab renders the deck identity, and avg mana value only where it is load-bearing", () => {
+// MINOR 9 (whole-branch review, 2026-09-01): renamed. It says "the deck identity", but what it
+// reads is RecognitionPanel's theme on Summary -- `DeckIdentity` is on the Engine sub-tab and this
+// render never reaches it.
+test("OverviewTab names the theme on Summary, and avg mana value only where it is load-bearing", () => {
   render(<OverviewTab data={SAMPLE} />);
-  expect(screen.getByText("Tokens")).toBeInTheDocument(); // DeckIdentity theme
+  // Task 5 (2026-09-01): DeckIdentity itself moved to the Engine sub-tab; the theme it used to
+  // print here is RecognitionPanel's, on Summary -- the sub-tab OverviewTab opens on by default.
+  expect(screen.getByText("Tokens")).toBeInTheDocument();
   // The tile is gone; the figure survives in the Lands row, where it is what sets the land target
   // (asserted in the deck-math tests, which are the ones carrying a `deckMath` fixture).
   expect(screen.queryByText("Avg CMC")).not.toBeInTheDocument();
@@ -410,7 +415,7 @@ test("Cards tab shows the top-partner reason under the card name", () => {
 
 test("ReportTabs defaults to the Overview tab and switches on click", async () => {
   render(<ReportTabs data={SAMPLE} />);
-  expect(screen.getByText("Tokens")).toBeInTheDocument(); // Overview's DeckIdentity theme, visible by default
+  expect(screen.getByText("Tokens")).toBeInTheDocument(); // Overview's Summary sub-tab, RecognitionPanel's theme, visible by default
   await userEvent.click(screen.getByRole("tab", { name: "Archetypes" }));
   expect(screen.getByText("Tokens Go Wide")).toBeInTheDocument(); // ArchetypeBoard content
   await userEvent.click(screen.getByRole("tab", { name: "Cards" }));
@@ -544,57 +549,19 @@ test("HeadlineScores explains its scale and names the anchor card", async () => 
   expect(screen.getByText(/Krenko, Mob Boss/)).toBeInTheDocument(); // the deck's best-fed card
 });
 
-// TASK 7 (owner, 2026-08-21): a target now lives on the PARENT, and the shape below is the one
-// this superseded — "benchmarks group under parents, and a parent shows no target of its own"
-// (2026-08-20) asserted the exact opposite of what ships now. Kept only as history in the ledger;
-// the live tests assert the new contract.
-test("BuildBenchmarks renders a bar per PARENT, flags under-target; a leaf shows count and share, never a ratio", () => {
+// TASK 5 (2026-09-01): the parent's own count-against-target row (CONSISTENCY 15/14, RAMP 17/10,
+// INTERACTION 19/10, BOARD WIPES 1/1) moved to Recognition -- it is what the deck IS, and printing
+// it here too put the same four numbers on one screen twice. `RecognitionPanel.test.tsx` covers
+// the parent counts now; what is left to prove here is the LEAF math, which never carried a ratio
+// of its own even before this task.
+test("BuildBenchmarks: a leaf shows count and share, never a ratio", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
-  expect(screen.getByText("Ramp")).toBeInTheDocument();
-  expect(screen.getByText("6/10")).toBeInTheDocument();      // Ramp PARENT, under its own target
-  expect(screen.getByText("14/10")).toBeInTheDocument();     // Consistency PARENT, over its own target
   // Tutors is a Consistency LEAF: it renders (owner's ruling: every leaf shows, including a zero),
   // but never as a "x/y" ratio -- only its count and share of Consistency's own total.
   expect(screen.getByText(/^Tutors$/)).toBeInTheDocument();
   const tutors = screen.getByText(/^Tutors$/).closest("li")!;
   expect(tutors.textContent).not.toMatch(/\d+\s*\/\s*\d+/);
   expect(tutors.textContent).toMatch(/0\s*·\s*0%/);
-  // Only a PARENT carries the under-target flag.
-  expect(screen.getByLabelText(/^Ramp 6 of 10, under target/i)).toBeInTheDocument();
-});
-
-test("a benchmark bar is read against a fixed target mark, so over-target does not paint as full", () => {
-  const { container } = render(
-    <BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />,
-  );
-  // The FILL specifically — a two-sided category also paints a satisfied band, and matching on
-  // "any span with a width" would silently read that instead.
-  const width = (label: RegExp): string =>
-    (screen.getByLabelText(label).querySelector('[class*="bg-(--success)"], [class*="bg-(--warning)"]') as HTMLElement)
-      .style.width;
-  // The target sits at 70% of every track. Ramp 6/10 stops short of it, Consistency 14/10 runs
-  // past it -- the old `min(1, count/target)` clamp painted BOTH at the same width as 4/4 and 1/1.
-  expect(width(/^Ramp 6 of 10/i)).toBe("42%");
-  expect(width(/^Consistency 14 of 10/i)).toBe("98%");
-  // The mark itself is on screen once per PARENT row (leaf rows carry no target, so no mark) --
-  // four parents in this fixture, none ungrouped.
-  expect(container.querySelectorAll('span[style*="left: 70%"]').length).toBe(SAMPLE.report.buildParents!.length);
-});
-
-// A PARENT CARRIES ITS OWN TARGET NOW (owner, 2026-08-21, overriding the 2026-08-20 shape this
-// test used to pin -- "a parent shows no target of its own"). A floor declared ONCE at the parent,
-// with leaves showing only how the deck spent it, is a different object from the summed-leaves
-// shape the spec refused, and it is what ships.
-test("a parent DOES carry its own target and ratio; a leaf beneath it never restates one", () => {
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
-  expect(screen.getByText("Consistency")).toBeInTheDocument();
-  expect(screen.getByText("Interaction")).toBeInTheDocument();
-  const consistency = screen.getByText("Consistency").closest("li")!;
-  expect(consistency.textContent).toMatch(/14\s*\/\s*10/); // the PARENT's own ratio
-  // Draw is a Consistency LEAF: count and share of the parent's own 14, never a "x/y" of its own.
-  const draw = screen.getByText(/^Draw$/).closest("li")!;
-  expect(draw.textContent).not.toMatch(/\d+\s*\/\s*\d+/);
-  expect(draw.textContent).toMatch(/12\s*·\s*86%/); // 12 of Consistency's 14 = 86%
 });
 
 // FIX F4 (controller review, 2026-08-21, found live on `burakos-crashing-the-party`): Interaction's
@@ -611,47 +578,83 @@ const OVERLAP_PARENTS = [
   { name: "Consistency", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
 ] as unknown as typeof SAMPLE.report.buildParents;
 
-test("leaf shares total 100% even when a card fills two leaves, and the parent's own row says so", () => {
+test("leaf shares total 100% even when a card fills two leaves, and the header says why", () => {
   render(<BuildBenchmarks categories={OVERLAP_CATEGORIES} parents={OVERLAP_PARENTS} />);
   // Divided by the LEAF SUM (9), never the parent's union (8): 6/9 = 67%, 3/9 = 33%. These total
   // 100% by construction -- 6/8 + 3/8 would have been 112%.
   expect(screen.getByLabelText(/^Draw 6, 67% of Consistency/)).toBeInTheDocument();
   expect(screen.getByLabelText(/^Card selection 3, 33% of Consistency/)).toBeInTheDocument();
-  // The overlap is a REAL FACT ABOUT THE DECK, stated once on the parent row, rather than left for
-  // a reader to notice the leaves summing past the parent's own count.
-  expect(screen.getByLabelText(/^Consistency 8 of 10, under target; its leaves sum to 9/)).toBeInTheDocument();
+  // C1 (whole-branch review, 2026-09-01), RESTORED after fix round 2 deleted it with the parent
+  // row: the denominator those shares are OF has to be on the same screen as the shares. It is 9,
+  // and Recognition's "Consistency 8" is the UNION -- so without this line a reader who does the
+  // only arithmetic available to them gets 8 x 67% = 5.4 for a leaf that holds 6 cards. The
+  // overlap is a real fact about the deck and is stated, not left to be inferred.
+  const header = screen.getByTestId("role-group-total-Consistency");
+  expect(header).toHaveTextContent("9 counted across 8 cards");
+  expect(header).toHaveTextContent(/some fill two of these roles/);
+});
+
+// The overlap clause is a disclosure, not decoration: with no overlap there is nothing to disclose
+// and the header states the whole and stops.
+test("a parent whose leaves do not overlap states the whole and nothing else", () => {
+  const parents = [
+    { name: "Consistency", count: 9, target: 10, leaves: ["draw", "cardSelection"] },
+  ] as unknown as typeof SAMPLE.report.buildParents;
+  render(<BuildBenchmarks categories={OVERLAP_CATEGORIES} parents={parents} />);
+  const header = screen.getByTestId("role-group-total-Consistency");
+  expect(header).toHaveTextContent("9 cards");
+  expect(header).not.toHaveTextContent(/fill two/);
+});
+
+/** MINOR 7 (whole-branch review, 2026-09-01). `hasBenchmarkContent` tested `scoredParents.length >
+ *  0`, but a scored parent draws nothing at all unless it has more than one leaf -- so a
+ *  `buildParents` of only single-leaf parents produced the heading over an empty list, the exact
+ *  broken-heading shape the guard exists to prevent. */
+test("single-leaf parents alone render no heading, because they render no rows", () => {
+  const singles = [
+    { name: "Ramp", count: 8, target: 10, leaves: ["ramp"] },
+    { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
+  ] as unknown as typeof SAMPLE.report.buildParents;
+  const { container } = render(
+    <BuildBenchmarks categories={SCRAMBLED_CATEGORIES} parents={singles} />,
+  );
+  expect(container).toBeEmptyDOMElement();
 });
 
 // FIX F2 (controller review, 2026-08-21): `build.ts`'s own scoring loop skips a parent whose
-// target is <= 0 outright ("neutral, unscored" -- `if (p.target <= 0) continue;`), but `bar()`'s
-// fill was a bare `count / target` with no matching guard. Unreachable through today's
-// `ARCHETYPE_TARGET_DELTAS` (nothing zeroes a parent's floor -- re-cutting those deltas is the
-// owner's call, not this fix round's), but the day one does, a NONZERO count against a zero
-// target divides to Infinity and a zero count against a zero target divides to NaN -- either
-// paints a bar with a nonsense width. Mirrored here directly, the same "not scored, so not shown"
-// treatment the `ungrouped` leaf filter already gives a zero-target leaf.
-const ZERO_TARGET_CATEGORIES = [
-  { category: "ramp", count: 6, target: 0 },
-  { category: "boardWipe", count: 2, target: 0 },
+// target is <= 0 outright ("neutral, unscored" -- `if (p.target <= 0) continue;`), and
+// `scoredParents` (`BuildBenchmarks.tsx`) mirrors that skip for which leaves render at all -- a
+// leaf under an unscored parent stays hidden, the same "not scored, so not shown" treatment a
+// zero-target ungrouped leaf already gets. BOTH parents here are MULTI-leaf (task 5 fix round 1):
+// the original version of this test used two single-leaf fixtures, which render no leaf row
+// either way post-task-5 and so no longer exercise the gate at all, only the fixture's shape.
+const ZERO_TARGET_MULTI_LEAF_CATEGORIES = [
+  { category: "draw", count: 6, target: 0 },
+  { category: "cardSelection", count: 2, target: 0 },
+  { category: "targetedRemoval", count: 3, target: 0 },
+  { category: "stackInteraction", count: 1, target: 0 },
 ] as unknown as typeof SAMPLE.report.buildCategories;
-const ZERO_TARGET_PARENTS = [
-  { name: "Ramp", count: 6, target: 10, leaves: ["ramp"] },
-  // count > 0 against target 0 is deliberate -- it is the Infinity-producing case (2/0), the more
-  // dangerous of the two since `Math.min(1, Infinity)` still used to read as a full-width bar.
-  { name: "Board wipes", count: 2, target: 0, leaves: ["boardWipe"] },
+const ZERO_TARGET_MULTI_LEAF_PARENTS = [
+  { name: "Consistency", count: 8, target: 10, leaves: ["draw", "cardSelection"] },
+  // count > 0 against target 0 is deliberate, mirroring the original fixture's own reasoning: a
+  // parent can be unscored while its cards still exist in the deck.
+  { name: "Interaction", count: 4, target: 0, leaves: ["targetedRemoval", "stackInteraction"] },
 ] as unknown as typeof SAMPLE.report.buildParents;
 
-test("a zero-target parent renders no bar at all, mirroring build.ts's own 'not scored' skip", () => {
-  const { container } = render(
-    <BuildBenchmarks categories={ZERO_TARGET_CATEGORIES} parents={ZERO_TARGET_PARENTS} />,
-  );
-  // The scored parent still renders normally.
-  expect(screen.getByText("Ramp")).toBeInTheDocument();
-  // The zero-target parent is entirely absent -- not present with a broken/NaN bar, absent outright,
-  // the same treatment a zero-target LEAF already gets from the `ungrouped` filter above.
-  expect(screen.queryByText("Board wipes")).not.toBeInTheDocument();
-  expect(screen.queryByLabelText(/^Board wipes/)).not.toBeInTheDocument();
-  // No element anywhere carries a NaN- or Infinity-derived width.
+test("a zero-target parent's leaves stay hidden, while a scored sibling's leaves render", () => {
+  const { container } = render(<BuildBenchmarks categories={ZERO_TARGET_MULTI_LEAF_CATEGORIES} parents={ZERO_TARGET_MULTI_LEAF_PARENTS} />);
+  // The scored parent's leaves render normally.
+  expect(screen.getByText(/^Draw$/)).toBeInTheDocument();
+  expect(screen.getByText(/^Card selection$/)).toBeInTheDocument();
+  // The zero-target parent's leaves are entirely absent -- not present with a broken/zero row,
+  // absent outright.
+  expect(screen.queryByText(/^Removal$/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/^Stack interaction$/)).not.toBeInTheDocument();
+  // RESTORED (IMPORTANT 6, whole-branch review, 2026-09-01), deleted as collateral when the parent
+  // bar went. A zero target is what produces the nonsense widths -- 2/0 is Infinity, 0/0 is NaN --
+  // and BOTH filters that stand between a zero target and a rendered width (`scoredParents` here,
+  // `ungrouped` for a parentless leaf) exist to stop it. One assertion covers whichever of them
+  // someone loosens.
   expect(container.innerHTML).not.toMatch(/NaN/);
   expect(container.innerHTML).not.toMatch(/Infinity/);
 });
@@ -675,191 +678,66 @@ const SCRAMBLED_PARENTS = [
   { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
 ] as unknown as typeof SAMPLE.report.buildParents;
 
-test("every leaf still renders under exactly one parent", () => {
-  const { container } = render(<BuildBenchmarks categories={SCRAMBLED_CATEGORIES} parents={SCRAMBLED_PARENTS} />);
+test("every leaf still renders grouped under its own parent, in the parent's own order", () => {
+  render(<BuildBenchmarks categories={SCRAMBLED_CATEGORIES} parents={SCRAMBLED_PARENTS} />);
   // DOM order follows BUILD_PARENTS, never the input array: Consistency's own leaves (draw, card
-  // selection, tutor) before Ramp's, before Interaction's (removal, stack interaction, graveyard
-  // hate, protection), before Board wipes' -- which the scrambled input above does not hold in
-  // either order.
-  //
-  // EVERY PARENT NESTS ITS OWN `<h4>` NOW (Task 7 simplification -- there is no more single/multi
-  // fold split, because every parent has a ratio of its own to show): its `<li>` (the `aria-label`)
-  // therefore always precedes its own nested `<h4>` (the `textContent`) in document order. A
-  // single-leaf parent (Ramp, Board wipes) stops there; a multi-leaf one is followed by its leaf
-  // rows, each a count+share `<li>` with no nested heading of its own.
-  const text = [...container.querySelectorAll("h4, li[aria-label]")]
-    .map((el) => el.getAttribute("aria-label") ?? el.textContent);
-  expect(text).toEqual([
-    "Consistency 8 of 10, under target",
-    "Consistency",
+  // selection, tutor) before Interaction's (removal, stack interaction, graveyard hate,
+  // protection) -- which the scrambled input above does not hold in either order. Ramp and Board
+  // wipes are single-leaf parents (task 5): their own row moved to Recognition, and their one leaf
+  // would just repeat that same count, so neither renders anything here.
+  const leaves = screen.getAllByRole("listitem").map((li) => li.getAttribute("aria-label"));
+  expect(leaves).toEqual([
     expect.stringMatching(/^Draw 6, 75% of Consistency/),
     expect.stringMatching(/^Card selection 2, 25% of Consistency/),
     expect.stringMatching(/^Tutors 0, 0% of Consistency/), // absent from SCRAMBLED_CATEGORIES entirely -- still renders, at 0
-    "Ramp 8 of 10, under target",
-    "Ramp",
-    "Interaction 4 of 10, under target",
-    "Interaction",
     expect.stringMatching(/^Removal 3, 75% of Interaction/),
     expect.stringMatching(/^Stack interaction 0, 0% of Interaction/),
     expect.stringMatching(/^Graveyard hate 1, 25% of Interaction/),
     expect.stringMatching(/^Protection 0, 0% of Interaction/),
-    "Board wipes 1 of 3, under target",
-    "Board wipes",
   ]);
-  // Grouping must not drop a PARENT's own ratio -- each parent row still carries its count/target.
-  expect(screen.getByLabelText(/^Consistency 8 of 10/)).toBeInTheDocument();
-  expect(screen.getByLabelText(/^Ramp 8 of 10/)).toBeInTheDocument();
-  expect(screen.getByLabelText(/^Interaction 4 of 10/)).toBeInTheDocument();
-  expect(screen.getByLabelText(/^Board wipes 1 of 3/)).toBeInTheDocument(); // CONFLICT 9's label survives
-  // CONFLICT 8 (now unconditional, not a fold): a parent's name renders exactly once, nested inside
-  // its own row's label span rather than duplicated by a leaf whose label happens to match it.
-  expect(screen.getAllByText("Ramp")).toHaveLength(1);
-  expect(screen.getAllByText("Board wipes")).toHaveLength(1);
-  // The label slot must never be blank -- Task 7 keeps that guarantee for every parent, not only a
-  // folded single-leaf one, since every parent now nests its `<h4>` in exactly this slot.
-  //
-  // ONE LEVEL DEEPER THAN BEFORE (whole-branch review MINOR 7): the `<li>`'s first child is now a
-  // flex row `<div>` (the suffix note moved to its own line below it, so the row and the note no
-  // longer fight over one line's width on a narrow viewport), and the label span sits inside THAT.
-  const labelSlot = (label: RegExp) => screen.getByLabelText(label).firstElementChild?.firstElementChild;
-  expect(labelSlot(/^Ramp 8 of 10/)?.textContent?.trim()).toBe("Ramp");
-  expect(labelSlot(/^Board wipes 1 of 3/)?.textContent?.trim()).toBe("Board wipes");
-  expect(labelSlot(/^Consistency 8 of 10/)?.textContent?.trim()).toBe("Consistency");
 });
 
-// Controller finding 1 (task 6 fix round): the score multiplies Interaction's count attainment by
-// `answerCoverage.coverage`, so a row reading "11/10" (met on count alone) can still be the reason
-// the headline is under 5. Live on `sarevok-lord-of-pain` the panel ticked Interaction while the
-// score docked it by 0.816 -- nothing on screen explained the gap. Same defect class 7714d91
-// rejected for the land count: a panel number the score does not use at face value must not render
-// as if it does.
-// `coverageWeighted: true` is required here (whole-branch review IMPORTANT 4): the row is now
-// selected by that flag, not by `name === "Interaction"`, so a fixture missing it would silently
-// stop exercising the coverage dock these tests exist to check.
-const INTERACTION_MET_PARENTS = [
-  { name: "Interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
-] as unknown as typeof SAMPLE.report.buildParents;
+/** IMPORTANT 6 (whole-branch review, 2026-09-01). `bar()` and `TARGET_MARK` render on no screen
+ *  today and the test that pinned their geometry was deleted outright with the parent row. The
+ *  controller's ruling was to KEEP the code and RESTORE the test: `ungrouped` is empty because of
+ *  DATA -- `build.ts`'s `BASE_TARGETS` gives burn and stax a target of 0 -- and one target change
+ *  puts this shape back on the screen with nothing measuring it. The fixture below is what a
+ *  nonzero target for an unparented category looks like.
+ *
+ *  A category is ungrouped when no `buildParents` entry names it as a leaf, so passing no parents
+ *  at all is the smallest fixture that produces two of them. */
+const UNGROUPED_CATEGORIES = [
+  { category: "ramp", count: 6, target: 10 },   // under: 6/10 of a mark at 70% = 42%
+  { category: "draw", count: 14, target: 10 },  // over: 14/10 x 70% = 98%, clamped only at 100%
+] as unknown as typeof SAMPLE.report.buildCategories;
 
-test("the Interaction row shows the coverage dock when coverage is under 1, even though the count alone is met", () => {
-  render(
-    <BuildBenchmarks
-      categories={SAMPLE.report.buildCategories}
-      parents={INTERACTION_MET_PARENTS}
-      answerCoverage={{
-        coverage: 0.816,
-        source: "weighted",
-        graveyardVulnerability: 0,
-        rows: [
-          { class: "creature", poolShare: 1, demand: 0.3, weight: 0.3, covered: true },
-          { class: "artifact", poolShare: 1, demand: 0.24, weight: 0.24, covered: false },
-          { class: "enchantment", poolShare: 1, demand: 0.21, weight: 0.21, covered: true },
-          { class: "planeswalker", poolShare: 1, demand: 0.03, weight: 0.03, covered: false },
-          { class: "land", poolShare: 1, demand: 0.21, weight: 0.21, covered: true },
-        ],
-      }}
-    />,
-  );
-  expect(screen.getByText(/but answers 3 of 5 classes/i)).toBeInTheDocument();
-  // Ratio and count still read as authored -- the dock is an EXPLANATION beside 11/10, not a
-  // replacement of it.
-  expect(screen.getByLabelText(/^Interaction 11 of 10/)).toBeInTheDocument();
-  // The flag reads as NOT fully met, because it is not -- 11/10 * 0.816 < 1, same threshold the
-  // score itself scores against. A tick here would be the exact defect being fixed.
-  expect(screen.getByLabelText(/^Interaction 11 of 10, under target/)).toBeInTheDocument();
+test("a benchmark bar is read against a fixed target mark, so over-target does not paint as full", () => {
+  const { container } = render(<BuildBenchmarks categories={UNGROUPED_CATEGORIES} />);
+  // The FILL specifically -- matching "any span with a width" would read the track or the mark.
+  const width = (label: RegExp): string =>
+    (screen.getByLabelText(label).querySelector('[class*="bg-(--success)"], [class*="bg-(--warning)"]') as HTMLElement)
+      .style.width;
+  // The target sits at 70% of every track. Ramp 6/10 stops short of it, Draw 14/10 runs past it --
+  // the old `min(1, count/target)` clamp painted BOTH at the same full width, which is what made
+  // five of six rows carry no information at all.
+  expect(width(/^Ramp 6 of 10/i)).toBe("42%");
+  expect(width(/^Draw 14 of 10/i)).toBe("98%");
+  // One mark per bar, all at the same x: that shared landmark is what makes rows with different
+  // targets comparable at a glance.
+  expect(container.querySelectorAll('span[style*="left: 70%"]').length).toBe(UNGROUPED_CATEGORIES!.length);
 });
 
-test("the Interaction row says nothing about coverage when it is fully covered", () => {
-  render(
-    <BuildBenchmarks
-      categories={SAMPLE.report.buildCategories}
-      parents={INTERACTION_MET_PARENTS}
-      answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
-    />,
-  );
-  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
-  expect(screen.getByLabelText(/^Interaction 11 of 10, on target/)).toBeInTheDocument();
+test("an ungrouped bar flags under target and ticks on target", () => {
+  render(<BuildBenchmarks categories={UNGROUPED_CATEGORIES} />);
+  expect(screen.getByLabelText(/^Ramp 6 of 10, under target/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/^Draw 14 of 10, on target/i)).toBeInTheDocument();
 });
 
-test("the Interaction row says nothing about coverage when no answerCoverage was supplied", () => {
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={INTERACTION_MET_PARENTS} />);
-  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
-  expect(screen.getByLabelText(/^Interaction 11 of 10, on target/)).toBeInTheDocument();
-});
-
-// A non-Interaction parent is never coverage-weighted, even when it happens to be under-covered
-// class-wise -- the multiplier only ever applies to Interaction (`build.ts`'s `coverageWeighted`).
-test("a coverage dock never appears on a parent other than Interaction", () => {
-  const ramp = [{ name: "Ramp", count: 6, target: 10, leaves: ["ramp"] }] as unknown as typeof SAMPLE.report.buildParents;
-  render(
-    <BuildBenchmarks
-      categories={SAMPLE.report.buildCategories}
-      parents={ramp}
-      answerCoverage={{ coverage: 0.5, source: "weighted", graveyardVulnerability: 0, rows: [] }}
-    />,
-  );
-  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
-});
-
-// Whole-branch review IMPORTANT 4: the dock is selected by `p.coverageWeighted`, not by matching
-// the parent's name, so it must survive a rename AND must not fire on a same-named row that lacks
-// the flag -- both directions of the guarantee the flag exists to make.
-test("the coverage dock follows the flag through a parent rename, not the name 'Interaction'", () => {
-  const renamed = [
-    { name: "Board control", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
-  ] as unknown as typeof SAMPLE.report.buildParents;
-  render(
-    <BuildBenchmarks
-      categories={SAMPLE.report.buildCategories}
-      parents={renamed}
-      answerCoverage={{ coverage: 0.816, source: "weighted", graveyardVulnerability: 0, rows: [] }}
-    />,
-  );
-  expect(screen.getByText(/but answers 0 of 0 classes/i)).toBeInTheDocument();
-});
-
-test("a parent named 'Interaction' without the flag gets no coverage dock", () => {
-  const unflagged = [
-    { name: "Interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] },
-  ] as unknown as typeof SAMPLE.report.buildParents;
-  render(
-    <BuildBenchmarks
-      categories={SAMPLE.report.buildCategories}
-      parents={unflagged}
-      answerCoverage={{ coverage: 0.816, source: "weighted", graveyardVulnerability: 0, rows: [] }}
-    />,
-  );
-  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
-});
-
-// Whole-branch review IMPORTANT 3: design §3's own promise -- "every poolShare is set to 1 and the
-// panel says so" -- reached the wire (`answerCoverage.source`) and never reached the screen. An
-// identity-less deck (no commander detected) is scored as though every colour could supply every
-// class, and until this the panel said nothing about it.
-test("the Interaction row admits the colour pool was unweighted when no commander was detected", () => {
-  render(
-    <BuildBenchmarks
-      categories={SAMPLE.report.buildCategories}
-      parents={INTERACTION_MET_PARENTS}
-      answerCoverage={{ coverage: 1, source: "unweighted", graveyardVulnerability: 0, rows: [] }}
-    />,
-  );
-  expect(screen.getByText(/colour pool unweighted/i)).toBeInTheDocument();
-  expect(screen.getByText(/no commander detected/i)).toBeInTheDocument();
-  // Coverage is 1 here -- no docking note is owed, only the unweighted one.
-  expect(screen.queryByText(/but answers/i)).not.toBeInTheDocument();
-});
-
-test("the Interaction row says nothing about the pool when a commander WAS detected", () => {
-  render(
-    <BuildBenchmarks
-      categories={SAMPLE.report.buildCategories}
-      parents={INTERACTION_MET_PARENTS}
-      answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
-    />,
-  );
-  expect(screen.queryByText(/colour pool unweighted/i)).not.toBeInTheDocument();
-});
-
+// TASK 5 (2026-09-01): every test that lived in this block asserted the Interaction row's
+// coverage-dock note or its "colour pool unweighted" caveat -- both suffixes on the PARENT row
+// this task removes (that row carried them, and only that row). The dock note has no other home
+// on this panel; it was collateral to the row it was attached to, not a separate feature. Deleted
+// with the row rather than kept as tests of a suffix nothing renders any more.
 const DECK_MATH = {
   topdeck: [],
   turn: 5,
@@ -901,10 +779,11 @@ const DECK_MATH = {
 };
 
 test("deck-math blocks are grouped under the question they answer, worst section first", () => {
-  // Scoped to `<section> > h4` -- T6's parent-category headings are h4 too (same rank, sibling
-  // concern), and this test is about the four deck-math QUESTION sections specifically.
+  // Scoped to `<section> > h3` -- I3 (whole-branch review, 2026-09-01) promoted these from h4 so
+  // they stop skipping a level under the sub-tab's own h2 and stop inverting against the h3 panels
+  // beside them. T6's parent-category group headers are the h4s now, one rank below.
   const headings = (): string[] =>
-    [...document.querySelectorAll("section > h4")].map((h) => h.textContent ?? "");
+    [...document.querySelectorAll("section > h3")].map((h) => h.textContent ?? "");
 
   // Both sections carry a flag on this fixture (colour B is short, artifact has no answers), so the
   // fixed order stands and "cast" leads.
@@ -943,6 +822,25 @@ test("a section whose blocks are all absent renders no heading at all", () => {
   );
   expect(screen.queryByText("How you win")).not.toBeInTheDocument();
   expect(screen.getByText("Can you deal with theirs")).toBeInTheDocument();
+});
+
+/** THE FOUR GROUPS ARE ADDRESSABLE, BY ID AND NOT BY TITLE. `DeckMathRows` already grouped itself
+ *  into four named sections; the sub-tabs need to route them to three different places. Selecting
+ *  on the visible title would mean a copy edit silently unwires a tab -- the same
+ *  rename-breaks-the-wiring defect `coverageWeighted` exists to avoid. */
+test("BuildBenchmarks renders only the deck-math sections it is asked for", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories}
+    deckMath={DECK_MATH} sections={["cast"]} />);
+  expect(screen.getByText("Can you cast your cards")).toBeInTheDocument();
+  expect(screen.queryByText("Can you deal with theirs")).toBeNull();
+  expect(screen.queryByText("How you win")).toBeNull();
+});
+
+test("BuildBenchmarks renders every deck-math section when none is specified", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  for (const title of ["Can you cast your cards", "Can you deal with theirs", "How you win"]) {
+    expect(screen.getByText(title)).toBeInTheDocument();
+  }
 });
 
 test("BuildBenchmarks shows answer coverage, including the classes the deck cannot answer", () => {
@@ -1078,6 +976,111 @@ test("BuildBenchmarks says nothing about hate when the deck has no graveyard pla
     />,
   );
   expect(screen.queryByText(/plan runs through the graveyard/i)).not.toBeInTheDocument();
+});
+
+// TASK 5 FIX ROUND 1 (2026-09-01): the coverage dock and the colour-pool-unweighted refusal used
+// to be a suffix on the removed Interaction PARENT row; deleting that row silently deleted these
+// two disclosures from the product, not just from tests -- `build.ts` still docks Interaction's
+// attainment by `answerCoverage.coverage` and still refuses the pool weight with no commander
+// detected, and nothing said so. They now live on the `Answers by turn N` header instead, since
+// that table is what "N of M classes" is a statement about.
+test("the Answers header docks for coverage when the score is docked, naming the classes covered", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{
+        coverage: 0.816,
+        source: "weighted",
+        graveyardVulnerability: 0,
+        rows: [
+          { class: "creature", poolShare: 1, demand: 0.3, weight: 0.3, covered: true },
+          { class: "artifact", poolShare: 1, demand: 0.24, weight: 0.24, covered: false },
+          { class: "enchantment", poolShare: 1, demand: 0.21, weight: 0.21, covered: true },
+          { class: "planeswalker", poolShare: 1, demand: 0.03, weight: 0.03, covered: false },
+          { class: "land", poolShare: 1, demand: 0.21, weight: 0.21, covered: true },
+        ],
+      }}
+    />,
+  );
+  expect(screen.getByText(/docked for coverage/i)).toBeInTheDocument();
+  expect(screen.getByText(/3 of 5 answer classes are covered/i)).toBeInTheDocument();
+});
+
+/** I2 (whole-branch review, 2026-09-01). The dock note used to spell "Interaction" into its prose,
+ *  which is worse than an unwired selector: after a rename in `build.ts` it would go on rendering
+ *  and go on asserting the OLD name. The four tests pinning both directions of that guarantee were
+ *  deleted as collateral to the removed parent row -- but the NOTE survived the row, so only its
+ *  selector died. The name now travels with `coverageWeighted`, and these are the two directions. */
+test("the coverage dock names the parent the flag is on, surviving a rename", () => {
+  const renamed = [
+    { name: "Board control", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction"], coverageWeighted: true },
+  ] as unknown as typeof SAMPLE.report.buildParents;
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={renamed}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 0.816, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/this deck's Board control score counts at/i)).toBeInTheDocument();
+  expect(screen.queryByText(/this deck's Interaction score/i)).not.toBeInTheDocument();
+});
+
+/** The other direction: a parent that merely happens to be CALLED "Interaction" is not the one the
+ *  score docks, so it must never be named by this note. The note itself still renders -- the dock is
+ *  a fact about what the engine did to the score, true whether or not this panel was handed the
+ *  `parents` that identify the row -- but it names nobody. */
+test("a parent named Interaction without the flag is never named by the dock", () => {
+  const unflagged = [
+    { name: "Interaction", count: 11, target: 10, leaves: ["targetedRemoval", "stackInteraction"] },
+  ] as unknown as typeof SAMPLE.report.buildParents;
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      parents={unflagged}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 0.816, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/docked for coverage/i)).toBeInTheDocument();
+  expect(screen.queryByText(/Interaction score counts at/i)).not.toBeInTheDocument();
+});
+
+test("the Answers header says nothing about coverage when it is fully covered", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/docked for coverage/i)).not.toBeInTheDocument();
+});
+
+test("the Answers header admits the colour pool was unweighted when no commander was detected", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 1, source: "unweighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.getByText(/colour pool unweighted/i)).toBeInTheDocument();
+  expect(screen.getByText(/no commander detected/i)).toBeInTheDocument();
+  expect(screen.queryByText(/docked for coverage/i)).not.toBeInTheDocument();
+});
+
+test("the Answers header says nothing about the pool when a commander WAS detected", () => {
+  render(
+    <BuildBenchmarks
+      categories={SAMPLE.report.buildCategories}
+      deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
+    />,
+  );
+  expect(screen.queryByText(/colour pool unweighted/i)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows demand against supply, and refuses a number where none applies", () => {
@@ -1251,9 +1254,9 @@ test("BuildBenchmarks says so when the land target falls back to the flat conven
   };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={fallback} />);
   expect(
-    screen.getByLabelText(/37 lands in the deck, this curve wants 36 -- the flat convention, because this curve's own regression asks for 50, outside the tested range/i),
+    screen.getByLabelText(/37 lands in the deck, this curve wants 36 — the flat convention, because this curve's own regression asks for 50, outside the tested range/i),
   ).toBeInTheDocument();
-  expect(screen.getByText(/flat convention -- this curve's own regression asks for 50, outside the tested range/i)).toBeInTheDocument();
+  expect(screen.getByText(/flat convention — this curve's own regression asks for 50, outside the tested range/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks says so when an archetype delta is folded into the land target (fix F1, task 9)", () => {
@@ -1266,7 +1269,7 @@ test("BuildBenchmarks says so when an archetype delta is folded into the land ta
   };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={landfall} />);
   expect(
-    screen.getByLabelText(/37 lands in the deck, this curve wants 43 -- 39 from the curve plus 4 because this is a landfall deck/i),
+    screen.getByLabelText(/37 lands in the deck, this curve wants 43 — 39 from the curve plus 4 because this is a landfall deck/i),
   ).toBeInTheDocument();
   expect(screen.getByText(/39 from the curve plus 4 because this is a landfall deck/i)).toBeInTheDocument();
   // Never the flat-convention wording on a purely-derived-plus-delta row.
@@ -1393,32 +1396,230 @@ test("BuildBenchmarks carries the caveat that makes the numbers readable", () =>
 
 test("BuildBenchmarks renders without deck math at all", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
-  expect(screen.getByText("Ramp")).toBeInTheDocument();
+  // Ramp is a single-leaf parent, so it renders nothing (task 5) -- Draw is a Consistency leaf
+  // and still renders without any deckMath present.
+  expect(screen.getByText(/^Draw$/)).toBeInTheDocument();
   expect(screen.queryByText(/answers by turn/i)).not.toBeInTheDocument();
 });
 
-test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)", () => {
+/** RESIDUAL FIX (2026-09-01). "single-leaf parents alone render no heading" (above) only proved the
+ *  heading-over-nothing case where the WHOLE component bails out (`!hasBenchmarkContent && !deckMath`
+ *  is true with no `deckMath`, so `return null` fires before the heading is ever reached). The Build
+ *  sub-tab -- this component's one real call site with `parents` at all -- always passes `deckMath`
+ *  too, and with `deckMath` present that early return does not fire: `showBenchmarks && (...)` used
+ *  to render "How the roles are spent" regardless, over the empty `<ul>` a `buildParents` of only
+ *  single-leaf parents leaves behind. The old fixture's assertion (`container` empty) could not have
+ *  caught this, because `deckMath`'s own rows mean the container is never empty either way. */
+test("a single-leaf-parents deck with deckMath present still hides the role-spend heading", () => {
+  const singles = [
+    { name: "Ramp", count: 8, target: 10, leaves: ["ramp"] },
+    { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
+  ] as unknown as typeof SAMPLE.report.buildParents;
+  render(<BuildBenchmarks categories={SCRAMBLED_CATEGORIES} parents={singles} deckMath={DECK_MATH} />);
+  expect(screen.queryByText(/How the roles are spent/i)).toBeNull();
+  // Confirms the DOM isn't merely empty for an unrelated reason -- deckMath's own rows are why the
+  // component didn't bail out to `return null` altogether, and they're expected to render normally.
+  expect(screen.getByText(/answers by turn/i)).toBeInTheDocument();
+});
+
+// TASK 5 (2026-09-01): the health dashboard used to be one render -- SYNERGY, the role-spend block
+// and Suggestions all on screen together. The sub-tabs split them: Suggestions and the findings' own
+// figures (Ramp, under target) live on Summary; the scores live on Engine. Same signals, now
+// reached by a click instead of a scroll. (The role-spend block itself -- "How the roles are spent"
+// -- is pinned to the Build sub-tab specifically by the isolation tests below, fix round 1.)
+test("OverviewTab shows the health dashboard, across its sub-tabs", async () => {
+  const user = userEvent.setup();
   render(<OverviewTab data={SAMPLE} />);
-  expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
-  expect(screen.getByText(/Build benchmarks/i)).toBeInTheDocument();
   expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
-  // `getAllBy`: "Ramp" is a BuildBenchmarks category AND, on a deck short of it, a finding's own
-  // figure label. Two elements is the SEQUENCING working — the finding states the conclusion, the
-  // benchmark below it is the evidence — so the assertion is that it is present, not unique.
+  // "Ramp" is a finding's own figure label (Summary is under target on it) -- present, not unique.
   expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
+  expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
+});
+
+/** FIX ROUND 1 (controller ruling, 2026-09-01): FINDING 1 -- `sections`/`only` only ever filtered
+ *  `DeckMathRows`, so the category/parent block (the role-spend heading, `scoredParents`'
+ *  group headers, their leaf rows, and any `ungrouped` bar) rendered identically on Build, Mana AND
+ *  Engine, three copies of the same Consistency/Interaction groups. `BuildBenchmarks`'
+ *  `showBenchmarks` prop (default `true`, `false` on the Mana and Engine call sites) fixes it; this
+ *  is the isolation test that would have caught it, per FINDING 2. */
+test("the role-spend block (heading, groups, leaf rows) renders on Build, not on Mana or Engine", async () => {
+  const user = userEvent.setup();
+  render(<OverviewTab data={SAMPLE} />);
+  await user.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.getByText(/How the roles are spent/i)).toBeInTheDocument();
+  // A multi-leaf parent's group header (`h4`) -- present with the heading, not just it.
+  expect(screen.getByText("Consistency")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("tab", { name: "Mana" }));
+  expect(screen.queryByText(/How the roles are spent/i)).toBeNull();
+  expect(screen.queryByText("Consistency")).toBeNull();
+
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
+  expect(screen.queryByText(/How the roles are spent/i)).toBeNull();
+  expect(screen.queryByText("Consistency")).toBeNull();
+});
+
+/** FINDING 2 (fix round 1): the deck-math sections `BuildBenchmarks` routes to the Build sub-tab
+ *  (`sections={["answers", "win"]}`) need their own presence/absence pins -- nothing previously
+ *  asserted Build's OWN content, which is exactly the gap that let Finding 1 through unnoticed. */
+test("Build's own deck-math sections (answers, win) show on Build, not on Mana or Engine", async () => {
+  const user = userEvent.setup();
+  // Needs `deckMath` -- see the comment on the Mana test below for why it's layered on locally.
+  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
+  render(<OverviewTab data={data} />);
+  await user.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.getByText("Can you deal with theirs")).toBeInTheDocument();
+  expect(screen.getByText("How you win")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("tab", { name: "Mana" }));
+  expect(screen.queryByText("Can you deal with theirs")).toBeNull();
+  expect(screen.queryByText("How you win")).toBeNull();
+
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
+  expect(screen.queryByText("Can you deal with theirs")).toBeNull();
+  expect(screen.queryByText("How you win")).toBeNull();
+});
+
+/** MINOR 9 (whole-branch review, 2026-09-01). `sections={["waiting"]}` is the ENTIRE deck-math
+ *  contribution of the Engine sub-tab, and nothing asserted it: dropping the prop, or changing it
+ *  to `["cast"]`, failed no test. Build and Mana each already had this pin; Engine did not. */
+test("Engine's own deck-math section (waiting) shows on Engine, not on Build or Mana", async () => {
+  const user = userEvent.setup();
+  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
+  render(<OverviewTab data={data} />);
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
+  expect(screen.getByText("What your cards are waiting for")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.queryByText("What your cards are waiting for")).toBeNull();
+
+  await user.click(screen.getByRole("tab", { name: "Mana" }));
+  expect(screen.queryByText("What your cards are waiting for")).toBeNull();
+});
+
+/** I3 (whole-branch review, 2026-09-01): Build and Mana shipped with no title element at all, so
+ *  each opened on a heading with no parent and the sentence saying these panels are the EVIDENCE
+ *  for Summary's findings was gone from the product. Both halves are pinned -- the `h2` and the
+ *  link back -- because the deleted `Movement` carried both. */
+test("Build and Mana each open on an h2 naming them, and say what they are evidence for", async () => {
+  const user = userEvent.setup();
+  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
+  render(<OverviewTab data={data} />);
+
+  await user.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.getByRole("heading", { level: 2, name: /What this deck plays/ })).toBeInTheDocument();
+  expect(screen.getByText(/evidence behind each build finding on Summary/i)).toBeInTheDocument();
+
+  await user.click(screen.getByRole("tab", { name: "Mana" }));
+  expect(screen.getByRole("heading", { level: 2, name: /Whether the mana delivers it/ })).toBeInTheDocument();
+  expect(screen.getByText(/evidence behind each mana finding on Summary/i)).toBeInTheDocument();
+});
+
+/** The outline must not skip or invert on any sub-tab (WCAG 1.3.1). Asserted as a PROPERTY of the
+ *  rendered document rather than as a list of expected headings, so it keeps holding as panels are
+ *  added: every heading is at most one level below the one before it. */
+test("no sub-tab's heading outline skips a level", async () => {
+  const user = userEvent.setup();
+  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
+  render(<OverviewTab data={data} />);
+  const levels = (): number[] =>
+    [...document.querySelectorAll("h1,h2,h3,h4,h5,h6")].map((h) => Number(h.tagName[1]));
+  for (const tab of ["Build", "Mana", "Engine"]) {
+    await user.click(screen.getByRole("tab", { name: tab }));
+    const seen = levels();
+    expect(seen.length, `${tab} has no headings`).toBeGreaterThan(0);
+    expect(seen[0], `${tab} opens below h2`).toBeLessThanOrEqual(2);
+    for (let i = 1; i < seen.length; i++) {
+      expect(seen[i]! - seen[i - 1]!, `${tab}: h${seen[i - 1]} -> h${seen[i]}`).toBeLessThanOrEqual(1);
+    }
+  }
+});
+
+/** FINDING 3 (fix round 1): the Mana isolation test below already proves Summary unmounts when you
+ *  leave it (Summary -> Mana). Nothing proved the same for the other two sub-tabs it can also
+ *  reach directly from Summary's default render. */
+test("Summary's content is not mounted on Build or Engine", async () => {
+  const user = userEvent.setup();
+  render(<OverviewTab data={SAMPLE} />);
+  expect(screen.getByText("What this deck is")).toBeInTheDocument(); // sanity: mounted on Summary
+  expect(screen.getByText("What is wrong with this deck")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.queryByText("What this deck is")).toBeNull();
+  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
+  expect(screen.queryByText("What this deck is")).toBeNull();
+  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
 });
 
 /** THE SEQUENCE, pinned. Four persona reviews (2026-08-26) found the page led with its weakest
  *  answer; the fix is an ORDER, so an order is what the test asserts — the diagnosis must come
  *  before the scores in document order, not merely both exist. Proven to fire by moving `Findings`
- *  below `HeadlineScores` in `OverviewTab`. */
-test("OverviewTab leads with the diagnosis and demotes the scores below it", () => {
+ *  below `HeadlineScores` in `OverviewTab`.
+ *
+ *  I2 (whole-branch review, 2026-09-01): the branch's whole point — recognition before diagnosis —
+ *  had NOTHING pinning it. `RecognitionPanel` ("What this deck is") sitting above `Findings` ("What
+ *  is wrong with this deck") in `OverviewTab.tsx` was true only by inspection; nothing here failed
+ *  if the two sections were swapped back. Extended, not a new test, so the one assertion that
+ *  reordering the page breaks stays in one place next to the pattern it was proven against.
+ *
+ *  TASK 5 (2026-09-01): the scores moved to their own Engine sub-tab, so "demotes the scores below
+ *  it" is no longer one render's document order -- it is which sub-tab you are on. Split in two:
+ *  recognition-before-diagnosis stays a same-render ordering assertion on Summary (the guarantee
+ *  this test exists to pin), and the scores get their own Engine-tab assertion below. */
+test("OverviewTab leads recognition before diagnosis, on Summary", () => {
   const { container } = render(<OverviewTab data={SAMPLE} />);
   const text = container.textContent ?? "";
+  const recognition = text.indexOf("What this deck is");
   const diagnosis = text.indexOf("What is wrong with this deck");
-  const scores = text.indexOf("How the engine read it");
+  expect(recognition).toBeGreaterThanOrEqual(0);
   expect(diagnosis).toBeGreaterThanOrEqual(0);
-  expect(scores).toBeGreaterThan(diagnosis);
+  expect(diagnosis).toBeGreaterThan(recognition);
+});
+
+test("the scores are not on Summary, and switching to Engine reveals them", async () => {
+  const user = userEvent.setup();
+  render(<OverviewTab data={SAMPLE} />);
+  expect(screen.queryByText("How the engine read it")).toBeNull();
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
+  expect(screen.getByText("How the engine read it")).toBeInTheDocument();
+});
+
+/** SUMMARY IS THE WHOLE PAGE'S FIRST SCREEN. The Overview ran 5,202px -- about nine screens -- and
+ *  a reader scrolling it had nothing named to steer by. Four sub-tabs give the length somewhere to
+ *  go and give the reader a word to aim at. */
+test("OverviewTab opens on Summary, which carries recognition and the findings", () => {
+  render(<OverviewTab data={SAMPLE} />);
+  expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByText("What this deck is")).toBeInTheDocument();
+  expect(screen.getByText("What is wrong with this deck")).toBeInTheDocument();
+});
+
+test("the mana detail is not on Summary, and switching to Mana reveals it", async () => {
+  const user = userEvent.setup();
+  // SAMPLE carries no `deckMath` -- most of this suite pins BuildBenchmarks against bare
+  // `categories`/`parents`, and giving the shared fixture one risked every other SAMPLE consumer
+  // (GraphView, GraphList, run-diff) picking up a field none of them asked for. Layered on locally
+  // instead (`DECK_MATH`, below), just for the one sub-tab whose "cast" section has nothing to
+  // show without it.
+  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
+  render(<OverviewTab data={data} />);
+  expect(screen.queryByText("Can you cast your cards")).toBeNull();
+  await user.click(screen.getByRole("tab", { name: "Mana" }));
+  expect(screen.getByText("Can you cast your cards")).toBeInTheDocument();
+  // and recognition is no longer mounted -- the point is a smaller page, not a taller one
+  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+});
+
+test("every sub-tab is reachable and names itself", async () => {
+  const user = userEvent.setup();
+  render(<OverviewTab data={SAMPLE} />);
+  for (const name of ["Summary", "Build", "Mana", "Engine"]) {
+    await user.click(screen.getByRole("tab", { name }));
+    expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
+  }
 });
 
 test("HeadlineScores uses semantic tokens, not raw Tailwind palette classes", () => {

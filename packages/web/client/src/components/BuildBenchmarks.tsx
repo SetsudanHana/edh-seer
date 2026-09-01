@@ -67,19 +67,46 @@ const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n =
 import { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS } from "../lib/demand-sentence.js";
 export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 
+/** Stable ids for the four deck-math groups. The sub-tabs route these to three different panels,
+ *  and they select by ID rather than by the visible title so a copy edit cannot silently unwire a
+ *  tab. */
+export type DeckMathSectionId = "cast" | "answers" | "win" | "waiting";
+
 export function BuildBenchmarks({
-  categories, parents, deckMath, answerCoverage,
+  categories, parents, deckMath, answerCoverage, sections, showBenchmarks = true,
 }: {
   categories: DeckReport["buildCategories"];
-  /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). This is what carries
-   *  a target now — see the doc comment on `parentRow` below. The engine owns the grouping; there
-   *  is no local `PARENTS` const to fall out of sync with it any more. */
+  /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). The parent's OWN
+   *  count-against-target row moved to Recognition (task 5, see the comment where it used to
+   *  render, below) — this prop stays because it is still what GROUPS the leaf rows under their
+   *  parent's name and gates which leaves render at all (a leaf under a parent whose own target is
+   *  <= 0 is unscored and stays hidden, the same treatment a zero-target ungrouped leaf already
+   *  gets). The engine owns the grouping; there is no local `PARENTS` const to fall out of sync
+   *  with it any more. */
   parents?: DeckReport["buildParents"];
   deckMath?: DeckReport["deckMath"];
   /** Carries `graveyardVulnerability` (task 5) down to the answers block — the only reason this
    *  panel needs it is to decide whether the graveyard-hate sentence below is a finding about THIS
    *  deck or noise on every deck. */
   answerCoverage?: DeckReport["answerCoverage"];
+  /** Which of the four deck-math groups to render, by id. Omitted renders all four -- the current
+   *  single call site relies on that. */
+  sections?: readonly DeckMathSectionId[];
+  /** Suppresses the WHOLE category/parent block -- the "How the roles are spent" heading, the
+   *  `scoredParents` group headers and their leaf rows, and the `ungrouped` bars -- not just the
+   *  rows inside it. Default `true` so every call site before task 5's fix round is unchanged.
+   *
+   *  WHY THIS EXISTS (controller ruling, fix round 1, 2026-09-01): the Overview sub-tabs
+   *  (`OverviewTab.tsx`) call this component three times -- Build, Mana, Engine -- and until this
+   *  prop existed, `sections`/`only` only filtered `DeckMathRows`, so the category/parent block
+   *  (Consistency, Interaction, their leaves, any ungrouped bar) rendered identically on all three,
+   *  three times over. Only Build owns those leaves now; Mana and Engine pass `false` so this
+   *  component contributes just its `sections`-filtered `DeckMathRows` there.
+   *
+   *  A heading over nothing is the same broken-heading shape C1 (whole-branch review, 2026-09-01)
+   *  found and fixed elsewhere in this file, so this suppresses the heading along with the rows —
+   *  see the `hasBenchmarkContent` guard below for the render-nothing-not-an-empty-shell case. */
+  showBenchmarks?: boolean;
 }) {
   if (!categories || categories.length === 0) return null;
   const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
@@ -87,34 +114,58 @@ export function BuildBenchmarks({
   // Anything no parent names (burn, stax) renders after them, exactly as before this task -- those
   // are win-plan and tax signals, never build roles, and each still carries its OWN target (today
   // always 0, per `build.ts`'s `BASE_TARGETS`, so nothing renders here in practice).
-  const ungrouped = categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category) && !groupedLeaves.has(c.category));
-  // FIX F2 (controller review, 2026-08-21): `build.ts`'s own scoring loop skips a parent whose
-  // target is <= 0 outright ("neutral, unscored") -- a bare `count / target` here has no such
-  // guard, so the day an archetype delta zeroes a parent's floor this would divide by zero and
-  // paint a NaN/Infinity-width bar. Unreachable today (no delta takes a parent below 1; re-cutting
-  // `ARCHETYPE_TARGET_DELTAS` is the owner's call, not this fix round's) but mirrored here anyway,
-  // the same "not scored, so not shown" convention `ungrouped` above already applies to a leaf.
-  const scoredParents = (parents ?? []).filter((p) => p.target > 0);
-  if (scoredParents.length === 0 && ungrouped.length === 0 && !deckMath) return null;
+  const ungrouped = showBenchmarks
+    ? categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category) && !groupedLeaves.has(c.category))
+    : [];
+  // FIX F2 (controller review, 2026-08-21), REVISED (fix round 2, 2026-09-01): the parent's own
+  // ratio bar is gone (moved to Recognition, see the group-header comment below), so this no
+  // longer guards a divide-by-zero -- there is no `count / target` left at the parent level to
+  // divide. What it still gates is WHICH parents get a header and leaves at all: `build.ts`'s own
+  // scoring loop skips a parent whose target is <= 0 outright ("neutral, unscored"), and this
+  // mirrors that skip so a reader never sees a group of leaves reporting share of a parent the
+  // score itself ignored -- the same "not scored, so not shown" convention `ungrouped` above
+  // already applies to a leaf.
+  const scoredParents = showBenchmarks ? (parents ?? []).filter((p) => p.target > 0) : [];
+  // NOTHING TO SHOW, NOT AN EMPTY SHELL (fix round 1, 2026-09-01): when the benchmark block is
+  // suppressed, `scoredParents`/`ungrouped` are already forced empty above, so this collapses to
+  // "no deckMath either" -- exactly the "render nothing" case the controller ruling asked for.
+  //
+  // IT HAS TO TEST WHAT ACTUALLY RENDERS (MINOR 7, whole-branch review, 2026-09-01). A scored
+  // parent draws NOTHING unless it has more than one leaf -- a single-leaf parent's group header
+  // and its one leaf row would just restate the count Recognition already prints -- so
+  // `scoredParents.length > 0` was guarding a different thing than it claimed: a `buildParents` of
+  // only single-leaf parents (Ramp, Board wipes) passed the guard and produced the heading over an
+  // empty `<ul>`, the exact broken-heading shape the comments around it exist to prevent.
+  const hasBenchmarkContent = scoredParents.some((p) => p.leaves.length > 1) || ungrouped.length > 0;
+  if (!hasBenchmarkContent && !deckMath) return null;
+  /** WHICH PARENT THE SCORE'S COVERAGE MULTIPLIER APPLIES TO, BY FLAG AND NEVER BY NAME (I2,
+   *  whole-branch review, 2026-09-01). The dock note in `DeckMathRows` below used to spell
+   *  "Interaction" into its prose, which is worse than an unwired selector: after a rename in
+   *  `build.ts` the note would still render and would still assert the OLD name, so the reader is
+   *  told a confident falsehood rather than shown a gap. `coverageWeighted` is the engine's own
+   *  marker for the one parent whose attainment it multiplies by `answerCoverage.coverage`; the
+   *  name travels with the flag, so renaming the parent renames the sentence. */
+  const coverageWeightedName = (parents ?? []).find((p) => p.coverageWeighted)?.name;
 
-  /** ONE BAR SHAPE, geometry and `TARGET_MARK` unchanged from before grouping existed — only WHO
-   *  gets a bar changed. Owner's 2026-08-21 ruling overrides the shape shipped 2026-08-20 ("a parent
-   *  carries no target of its own"): a target declared ONCE at the parent, with leaves showing only
-   *  how the deck spent it, is a different object, and that is what a parent's own row draws here. */
+  /** ONE BAR SHAPE, geometry and `TARGET_MARK` unchanged since before grouping existed. The parent's
+   *  OWN ratio bar (the thing this shape was built to draw for four rows -- CONSISTENCY 15/14 ✓ and
+   *  the like) moved to Recognition (task 5, see the group-header comment below) and never came
+   *  back, so the only caller left is `ungrouped` -- a leaf with no parent at all. `forceFlag` and
+   *  `suffix` were parameters only the deleted parent row ever passed (the Interaction coverage-dock
+   *  tick and its on-screen note) and are gone with it (I4, fix round 2, 2026-09-01) --
+   *  `ungrouped`'s one caller has never needed either.
+   *
+   *  KEPT, AND ITS TEST WITH IT (IMPORTANT 6, whole-branch review, 2026-09-01). `ungrouped` is
+   *  empty on every deck today because `build.ts`'s `BASE_TARGETS` gives burn and stax a target of
+   *  0 -- that is DATA, not an unreachable code path, and one target change brings this shape
+   *  straight back onto the screen. The defect the review found was the deleted geometry test, not
+   *  the geometry: `components.test.tsx` pins the 42%/98% fills and the target mark's position
+   *  against a fixture that produces an ungrouped category, so an unrendered path is still a
+   *  measured one. */
   const bar = (
     key: string, label: ReactNode, ariaName: string, count: number, target: number, note = "",
-    /** Flags the row even though `count >= target` — the ONE caller that needs this is the
-     *  Interaction parent, whose score multiplies count attainment by answer coverage (design §3).
-     *  Without it this tick could read "met" while the headline it feeds is not, which is the exact
-     *  defect 7714d91 rejected for the land count: a panel number the score does not use at face
-     *  value must not render as if it does. */
-    forceFlag = false,
-    /** Rendered ON SCREEN, after the flag icon — the aria-label's `note` already said this in
-     *  words for a screen reader, but that alone left a sighted reader with no way to see it; same
-     *  mistake this task's own pool annotation made and fixed the same way. */
-    suffix: ReactNode = null,
   ) => {
-    const flagged = count < target || forceFlag;
+    const flagged = count < target;
     const state = flagged ? "under target" : "on target";
     const fill = Math.max(0, Math.min(1, (count / target) * TARGET_MARK));
     return (
@@ -137,82 +188,28 @@ export function BuildBenchmarks({
           <span className="w-14 shrink-0 text-right text-sm stat-num">{count}/{target}</span>
           <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
         </div>
-        {/* ON ITS OWN LINE, NOT CROWDED INTO THE FLEX ROW (whole-branch review MINOR 7) -- the row
-          *  above already spends `w-24 + flex-1 + w-14 + w-4` plus three `gap-3`s, and this text can
-          *  run to ~150px (the Interaction coverage note); at 390px the flex row had nothing left to
-          *  give it and either overflowed or crushed the bar to nothing. A second line wraps freely
-          *  at any width instead. */}
-        {suffix ? <p className="pl-24 text-xs text-(--muted)">{suffix}</p> : null}
       </li>
-    );
-  };
-
-  /** THE PARENT'S OWN ROW — target, ratio and flag, exactly the bar a leaf used to draw. Its `<h4>`
-   *  rides inside the label span (same slot a leaf's name would sit in), so the column is never
-   *  blank and there is exactly one heading in the DOM whether the parent has one leaf or four —
-   *  the single/multi-leaf branch this used to need (CONFLICT 8, F2) is gone: every parent has a
-   *  ratio of its own now, so there is no more "no separate heading" special case to make.
-   *
-   *  `sumOfLeaves` is passed in rather than recomputed -- the caller already has it, because the
-   *  leaf rows below need the identical number for F4's share fix. When it exceeds the parent's own
-   *  UNION count, a card fills more than one of this parent's leaves (Grave Researcher: cardSelection
-   *  AND draw-adjacent) -- said in the aria-label rather than left for a reader to notice the leaf
-   *  shares summing past 100% of a total they can't see (fix F4, controller review 2026-08-21). */
-  const parentRow = (p: NonNullable<typeof parents>[number], sumOfLeaves: number) => {
-    const overlapNote = sumOfLeaves > p.count
-      ? `; its leaves sum to ${sumOfLeaves} because some cards fill more than one`
-      : "";
-    // INTERACTION IS THE ONE COVERAGE-WEIGHTED PARENT, selected by `p.coverageWeighted`
-    // (whole-branch review IMPORTANT 4) -- NOT by matching `p.name === "Interaction"`, the exact
-    // string match `BuildParentSpec.coverageWeighted` was built to make unnecessary. A prior draft
-    // of this row used the name match; a rename of the parent would have silently unwired this note
-    // while the score kept docking it, the identical panel/score disagreement this branch already
-    // fixed twice elsewhere. The score multiplies this parent's count attainment by
-    // `answerCoverage.coverage`, so 11/10 can score under 1 even though the ratio alone reads "met"
-    // -- the row has to say so, or it disagrees with the headline it feeds.
-    const interactionCoverage = p.coverageWeighted ? answerCoverage : undefined;
-    const dockedByCoverage = interactionCoverage !== undefined && interactionCoverage.coverage < 1;
-    const covered = interactionCoverage?.rows.filter((r) => r.covered).length ?? 0;
-    const total = interactionCoverage?.rows.length ?? 0;
-    // THE POOL WEIGHT'S OWN REFUSAL NOW REACHES THE SCREEN (whole-branch review IMPORTANT 3).
-    // `answerCoverage.source` was computed and typed all the way to the client and never read here
-    // -- design §3's own promise ("the panel says so") stopped one field short. Refusing the pool
-    // weight sets every `poolShare` to 1, which is the UNIFORM reading this whole feature exists to
-    // reject, so an identity-less deck (no commander detected -- most often a pasted list with a
-    // typo'd or unresolved commander line) is charged as though every colour could supply every
-    // class, silently. Follows the same "a fallback must say so" precedent `lands.targetSource`
-    // already ships (see that block's own comment).
-    const unweighted = interactionCoverage?.source === "unweighted";
-    const coverageNote =
-      (dockedByCoverage ? `, but answers ${covered} of ${total} classes` : "") +
-      (unweighted ? ", colour pool unweighted -- no commander detected" : "");
-    const suffix =
-      dockedByCoverage || unweighted ? (
-        <>
-          {dockedByCoverage ? <>but answers {covered} of {total} classes</> : null}
-          {dockedByCoverage && unweighted ? " · " : null}
-          {unweighted ? "colour pool unweighted — no commander detected" : null}
-        </>
-      ) : null;
-    return bar(
-      p.name, <h4 className="eyebrow">{p.name}</h4>, p.name, p.count, p.target,
-      overlapNote + coverageNote,
-      dockedByCoverage,
-      suffix,
     );
   };
 
   /** A LEAF UNDER A MULTI-LEAF PARENT — count and SHARE, never a target, ratio or flag (owner's
    *  ruling: "only a parent can be under target"). A single-leaf parent (Ramp, Board wipes) never
-   *  calls this: its leaf row would just repeat the parent's own bar as "100%", which is the exact
-   *  duplicate the folded shape exists to avoid.
+   *  calls this: its one leaf row would restate its group header's own total as "100%", which is
+   *  the exact duplicate the folded shape exists to avoid.
    *
    *  SHARE IS OF THE LEAF SUM, NOT THE PARENT'S UNION (fix F4). Interaction's leaves summed to 9
    *  against a union of 8 (one card fills two), so dividing by the union read 114% across the row
    *  -- a distribution that doesn't total 100% reads as a broken number on a panel whose whole
    *  argument is that its numbers mean what they say. Dividing by the leaf sum instead makes every
-   *  row's shares total 100% ALWAYS, by construction; the overlap is reported once, on the parent
-   *  row above, rather than smeared invisibly across every leaf's percentage. */
+   *  row's shares total 100% ALWAYS, by construction.
+   *
+   *  AND THE DENOMINATOR IS ON THE SCREEN (C1, whole-branch review, 2026-09-01). Fix round 2 moved
+   *  the parent row to Recognition and took the leaf sum and the overlap note with it, which left
+   *  "Draw 6 · 67%" sitting under no visible whole -- and the only number a reader could find,
+   *  Recognition's "Consistency 8", is the parent's UNION rather than this sum, so 8 x 67% = 5.4
+   *  and not 6. A share whose whole is missing invites exactly that arithmetic, and a silently
+   *  wrong answer is the one thing this repo ranks below a missing one. The group header above
+   *  these rows prints `sumOfLeaves`, and says why it can exceed the union. */
   const leafRow = (category: string, parentName: string, sumOfLeaves: number) => {
     const name = LABEL[category] ?? category;
     const count = countByLeaf.get(category) ?? 0;
@@ -234,31 +231,106 @@ export function BuildBenchmarks({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* The parent of eight headings, and until now indistinguishable from the seven beneath it --
-        *  the rank was correct in the DOM (one h3, seven h4s) and invisible in pixels, so a screen
-        *  reader got a structure a sighted reader could not see. Foreground weight is the whole
-        *  difference; the children keep the muted eyebrow they already had. */}
-      <h3 className="eyebrow text-(--foreground)">Build benchmarks</h3>
-      <ul className="flex flex-col gap-1.5">
-        {scoredParents.map((p) => {
-          // Computed once per parent and shared by its own row (the overlap note) and every leaf
-          // beneath it (the share denominator) -- see the two doc comments above for why each reads it.
-          const sumOfLeaves = p.leaves.reduce((s, l) => s + (countByLeaf.get(l) ?? 0), 0);
-          return (
-            <Fragment key={p.name}>
-              {parentRow(p, sumOfLeaves)}
-              {/* Ordered by the parent's own `leaves` list, never re-sorted -- a parent groups its
-                *  leaves together on the page regardless of what order the engine happened to report
-                *  them in. Every leaf renders, including a zero-count one (tutor at 0 IS the finding
-                *  a combo deck's Consistency group is thin on). */}
-              {p.leaves.length > 1 ? p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves)) : null}
-            </Fragment>
-          );
-        })}
-        {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
-      </ul>
+      {/* Suppressed on the Mana and Engine sub-tabs (`showBenchmarks={false}`) -- see the prop's
+        *  own doc comment above for why. The heading is suppressed WITH the rows, never left over
+        *  it, for the same "no empty shell" reason `hasBenchmarkContent` guards the whole
+        *  component's early return.
+        *
+        *  AND GATED ON `hasBenchmarkContent` TOO (residual fix, 2026-09-01): the early return above
+        *  only skips the WHOLE component when there is neither benchmark content nor `deckMath` --
+        *  so a call with `deckMath` present (the Build sub-tab, always) and a `buildParents` of only
+        *  single-leaf parents used to clear that return and then render this heading over the empty
+        *  `<ul>` the single-leaf filter leaves behind. `hasBenchmarkContent` is exactly the flag that
+        *  already knows the list will be empty; the heading needs the same guard the list itself
+        *  effectively has. */}
+      {showBenchmarks && hasBenchmarkContent && (
+        <>
+          {/* RENAMED FROM "Build benchmarks" (C1, whole-branch review, 2026-09-01). A benchmark is
+            *  a figure against a LIMIT, and there is no longer a limit anywhere under this heading:
+            *  the four parent counts-against-target moved to Recognition, which is forbidden to
+            *  show a target, and what is left is group headers over `count · share%` rows. The word
+            *  labelled nothing it still contained. The heading now describes what the block
+            *  actually is -- the four role groups and how this deck's cards are distributed inside
+            *  each -- and the verdict on whether a group is big enough stays where it became a
+            *  sentence, in `Findings`.
+            *
+            *  It is the parent of a variable number of h4s: one per multi-leaf parent group (the
+            *  header just below). The four deck-math question sections further down are h3s of
+            *  their own, siblings of this one rather than children -- they answer a different
+            *  question and are routed to different sub-tabs. Foreground weight is the whole
+            *  difference from a child heading; the children keep the muted eyebrow. */}
+          <h3 className="eyebrow text-(--foreground)">How the roles are spent</h3>
+          <ul className="flex flex-col gap-1.5">
+            {/* THE FOUR PARENT COUNTS-AGAINST-TARGET MOVED TO RECOGNITION. They are what the deck
+              *  IS, so they belong in the panel that says so, and printing them here as well would
+              *  put the same four numbers on one screen twice. The TARGETS did not move: whether 17
+              *  ramp is enough is a diagnosis, and `Findings` states it as a sentence.
+              *
+              *  THE NAME DID NOT MOVE WITH THEM, and C1 (whole-branch review, 2026-09-01) is why it
+              *  is back below as a header -- with the LEAF SUM beside it and still no target, tick
+              *  or bar. Two rounds of that review said the same thing twice: without the name a
+              *  multi-leaf parent's leaves had no on-screen label, and without the sum their SHARE
+              *  figures had no on-screen whole. Recognition carries the parent's UNION count; this
+              *  header carries the sum the shares below it are shares OF, and the two differ
+              *  whenever a card fills two leaves, which is why the header says so out loud rather
+              *  than leaving a reader to reconcile 8 against 9 across two sub-tabs. */}
+            {scoredParents.map((p) => {
+              // Still shared by every leaf beneath this parent (the share denominator) -- see the
+              // doc comment on `leafRow` for why it reads this.
+              const sumOfLeaves = p.leaves.reduce((s, l) => s + (countByLeaf.get(l) ?? 0), 0);
+              // Ordered by the parent's own `leaves` list, never re-sorted -- a parent groups its
+              // leaves together on the page regardless of what order the engine happened to report
+              // them in. Every leaf renders, including a zero-count one (tutor at 0 IS the finding
+              // a combo deck's Consistency group is thin on). A single-leaf parent (Ramp, Board
+              // wipes) renders nothing here, header included: its one leaf would just repeat the
+              // parent's own count as "100% of Ramp", the exact duplicate the folded shape already
+              // avoided before this task, and a header over nothing would be the same broken-
+              // heading shape C1 found.
+              return p.leaves.length > 1 ? (
+                <Fragment key={p.name}>
+                  {/* `role="presentation"` so this stays a real `<li>` (a `<ul>`'s only valid
+                    *  child) without being counted as a list ITEM -- it groups the leaves after it,
+                    *  it is not one of them, and every existing test walking this list's
+                    *  `listitem`s should still see only leaf rows. The `h4` inside keeps its own
+                    *  heading semantics regardless. */}
+                  <li role="presentation" className="flex items-baseline gap-3 flex-wrap pt-1">
+                    <h4 className="eyebrow text-(--muted)">{p.name}</h4>
+                    {/* THE WHOLE, IN A PLAYER'S WORDS AND NOT AS A FORMULA. "sum of leaves = 9" is
+                      *  what the code calls it; what a reader needs is "these rows are shares of
+                      *  nine cards, and nine is more than the eight cards you own because one of
+                      *  them does two of these jobs". Stated only when the two figures actually
+                      *  differ -- on a parent with no overlap the second clause would be a
+                      *  disclosure about nothing. */}
+                    <span data-testid={`role-group-total-${p.name}`} className="text-xs text-(--muted)">
+                      {sumOfLeaves > p.count ? (
+                        <>
+                          <span className="stat-num">{sumOfLeaves}</span>
+                          {" counted across "}
+                          <span className="tabular-nums">{plural(p.count, "card")}</span>
+                          {" — some fill two of these roles"}
+                        </>
+                      ) : (
+                        <span className="tabular-nums">{plural(sumOfLeaves, "card")}</span>
+                      )}
+                    </span>
+                  </li>
+                  {p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves))}
+                </Fragment>
+              ) : null;
+            })}
+            {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
+          </ul>
+        </>
+      )}
 
-      {deckMath ? <DeckMathRows deckMath={deckMath} answerCoverage={answerCoverage} /> : null}
+      {deckMath ? (
+        <DeckMathRows
+          deckMath={deckMath}
+          answerCoverage={answerCoverage}
+          only={sections}
+          coverageWeightedName={coverageWeightedName}
+        />
+      ) : null}
     </div>
   );
 }
@@ -305,10 +377,22 @@ const VULNERABLE = 0.3;
  *
  *  A benchmark says "6 ramp, want 10". These say what that means in a game you actually play. */
 function DeckMathRows({
-  deckMath, answerCoverage,
+  deckMath, answerCoverage, only, coverageWeightedName,
 }: {
   deckMath: NonNullable<DeckReport["deckMath"]>;
   answerCoverage?: DeckReport["answerCoverage"];
+  /** Renamed from the `sections` prop `BuildBenchmarks` receives -- this function already has its
+   *  own local `sections` array (the four groups themselves), so the incoming selector gets the
+   *  boundary-local name instead of shadowing it. */
+  only?: readonly DeckMathSectionId[];
+  /** The name of the parent the score's coverage multiplier applies to, found by
+   *  `coverageWeighted` and never by matching a string (I2, whole-branch review, 2026-09-01).
+   *  Absent means no parent carries the flag -- typically because this call site was handed no
+   *  `parents` at all -- and the dock sentence then omits the name rather than guessing one. It
+   *  still RENDERS: `answerCoverage.coverage < 1` is a fact about what the engine did to the score,
+   *  true whether or not this panel happens to know which row wears it, and suppressing a true
+   *  disclosure over a missing prop is how the disclosure got lost in the first place. */
+  coverageWeightedName?: string;
 }) {
   const { turn, seen, demand } = deckMath;
   // WORST FIRST, in both ranked blocks. The doctrine's order (creature, artifact, enchantment,
@@ -340,9 +424,37 @@ function DeckMathRows({
     (c) => (answers.find((a) => a.class === c)?.count ?? 0) === 0,
   );
   const graveyardVulnerability = answerCoverage?.graveyardVulnerability ?? 0;
+  // MOVED HERE FROM THE REMOVED INTERACTION PARENT ROW (task 5 fix round 1, 2026-09-01). That row
+  // used to carry two disclosures as a suffix on its own ratio; deleting the row along with its
+  // tests silently deleted the disclosures too -- the engine still docks Interaction's attainment
+  // by `answerCoverage.coverage` and still refuses the colour-pool weight with no commander
+  // detected (both in `build.ts`), and until this fix nothing on any screen said either. "A silent
+  // wrong answer is worse than a missing one" -- this table is where both belong now: it is the
+  // one place on the panel that already states, per class, what this deck answers.
+  const coverageCovered = answerCoverage?.rows.filter((r) => r.covered).length ?? 0;
+  const coverageClasses = answerCoverage?.rows.length ?? 0;
+  const coverageDocked = answerCoverage !== undefined && answerCoverage.coverage < 1;
+  const poolUnweighted = answerCoverage?.source === "unweighted";
   const answersBlock = (
       <div className="flex flex-col gap-1.5">
-        <h5 className="eyebrow">Answers by turn {turn}</h5>
+        <h4 className="eyebrow">Answers by turn {turn}</h4>
+        {coverageDocked ? (
+          <p className="text-xs text-(--muted) max-w-[65ch]">
+            {/* THE PARENT IS NAMED FROM THE FLAG, NOT SPELLED INTO THE PROSE (I2, whole-branch
+              *  review, 2026-09-01). "Interaction" was a literal here, which is worse than an
+              *  unwired selector: rename the parent in `build.ts` and this sentence goes on
+              *  confidently naming the old one. */}
+            Docked for coverage: this deck's{coverageWeightedName ? ` ${coverageWeightedName}` : ""}{" "}
+            score counts at {pct(answerCoverage!.coverage)} of full credit — {coverageCovered} of{" "}
+            {coverageClasses} answer classes are covered, not every one these colours could reach.
+          </p>
+        ) : null}
+        {poolUnweighted ? (
+          <p className="text-xs text-(--muted) max-w-[65ch]">
+            Colour pool unweighted — no commander detected, so every colour was scored as if it
+            could supply every class.
+          </p>
+        ) : null}
         <ul className="flex flex-col gap-1">
           {answers.map((a) => {
             const none = a.count === 0;
@@ -469,7 +581,7 @@ function DeckMathRows({
 
   const castsBlock = castability && castability.cards.length > 0 ? (
         <div className="flex flex-col gap-1.5">
-          <h5 className="eyebrow">Hardest casts</h5>
+          <h4 className="eyebrow">Hardest casts</h4>
           {/* GROUPED BY COST, because the mana figure is a property of the cost and not of the card:
             *  four cards that all cost 5 print the same percentage four times, which three of four
             *  player reviews read as a broken readout. Said once per group, it becomes what it
@@ -563,7 +675,7 @@ function DeckMathRows({
             *  availability, `required` and castability figure at this turn, so removing it drops all
             *  71 decks onto the flat corpus median with no instrument saying that is an improvement.
             *  This is a rename and a demotion in the reading order, nothing more. */}
-          <h5 className="eyebrow">Combat pressure</h5>
+          <h4 className="eyebrow">Combat pressure</h4>
           <div
             className="flex items-center gap-3 text-sm"
             aria-label={
@@ -604,7 +716,7 @@ function DeckMathRows({
   // is in the sentence and the apology is unnecessary.
   const winBlock = wincons && wincons.classes.length > 0 ? (
         <div className="flex flex-col gap-1">
-          <h5 className="eyebrow">Win plans</h5>
+          <h4 className="eyebrow">Win plans</h4>
           <p
             className="text-sm"
             aria-label={`win plans: ${wincons.classes.map((w) => `${w.class} ${w.count} cards`).join(", ")}, focus ${wincons.focus.toFixed(2)} of 1.00`}
@@ -635,12 +747,12 @@ function DeckMathRows({
     ? `${lands.archetypeDelta > 0 ? "plus" : "minus"} ${Math.abs(lands.archetypeDelta)} because this is a ${lands.archetypeLabel?.toLowerCase()} deck`
     : undefined;
   const deltaRaw = lands.targetSource === "flat" ? "" : `${lands.rawTarget} from the curve `;
-  const landsAriaDelta = deltaAmount ? `${lands.targetSource === "flat" ? ", plus" : " --"} ${deltaRaw}${deltaAmount}` : "";
+  const landsAriaDelta = deltaAmount ? `${lands.targetSource === "flat" ? ", plus" : " —"} ${deltaRaw}${deltaAmount}` : "";
   const landsVisibleDelta = deltaAmount ? ` · ${deltaRaw}${deltaAmount}` : "";
 
   const landsBlock = lands ? (
         <div className="flex flex-col gap-1.5">
-          <h5 className="eyebrow">Lands</h5>
+          <h4 className="eyebrow">Lands</h4>
           {/* THE ONLY LAND VERDICT ON THE PANEL now that the benchmark row is gone. Its target is
             *  derived from this deck's own average mana value and acceleration rather than the flat
             *  36 every deck used to be measured against, and the inputs are shown because "34" with
@@ -662,7 +774,7 @@ function DeckMathRows({
               lands.mdfc > 0 ? `, ${lands.mdfc} of them modal DFCs with a land back` : ""
             }, this curve wants ${lands.target}${
               lands.targetSource === "flat"
-                ? ` -- the flat convention, because this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
+                ? ` — the flat convention, because this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
                 : ""
             }${landsAriaDelta}`}
           >
@@ -687,7 +799,7 @@ function DeckMathRows({
                 ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as lands, at full weight and with no discount to the target`
                 : ""}
               {lands.targetSource === "flat"
-                ? ` · flat convention -- this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
+                ? ` · flat convention — this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
                 : ""}
               {landsVisibleDelta}
             </span>
@@ -709,7 +821,7 @@ function DeckMathRows({
   // them equally (`topdeck.ts` carries the refusal in full).
   const topdeckBlock = deckMath.topdeck.length > 0 ? (
         <div className="flex flex-col gap-1.5">
-          <h5 className="eyebrow">Off the top</h5>
+          <h4 className="eyebrow">Off the top</h4>
           <ul className="flex flex-col gap-1">
             {deckMath.topdeck.map((t) => (
               <li key={t.card} className="flex items-baseline gap-3 text-sm">
@@ -750,7 +862,7 @@ function DeckMathRows({
   const overcommitted = colors.filter((c) => c.worst).length > 1 && totalRequired > landRoom;
   const coloursBlock = colors.length > 0 ? (
         <div className="flex flex-col gap-1.5">
-          <h5 className="eyebrow">Colours</h5>
+          <h4 className="eyebrow">Colours</h4>
           <ul className="flex flex-col gap-1">
             {colors.map((c) => {
               // The deadline is the CARD's own mana value, not a chosen turn: a 3-drop wants its
@@ -864,7 +976,7 @@ function DeckMathRows({
   const unmet = demand.filter((d) => d.available !== null && d.suppliers === 0);
   const demandBlock = (
       <div className="flex flex-col gap-1.5">
-        <h5 className="eyebrow">Wants vs supplies</h5>
+        <h4 className="eyebrow">Wants vs supplies</h4>
         {unmet.length > 0 ? (
           <>
             <p className="text-sm text-(--muted)">
@@ -896,8 +1008,9 @@ function DeckMathRows({
   // basis for -- so a section leads simply because something inside it is already painted as a
   // problem. Flagged sections sort first and `sort` is stable, so everything else holds the fixed
   // order below: the four headings never change, only which of them you meet first.
-  const sections: { title: string; flagged: boolean; blocks: ReactNode[] }[] = [
+  const sections: { id: DeckMathSectionId; title: string; flagged: boolean; blocks: ReactNode[] }[] = [
     {
+      id: "cast",
       title: "Can you cast your cards",
       // A row nobody can close does not lead the panel either — same ruling as the colour it paints.
       flagged:
@@ -906,6 +1019,7 @@ function DeckMathRows({
       blocks: [landsBlock, coloursBlock, castsBlock],
     },
     {
+      id: "answers",
       title: "Can you deal with theirs",
       // FLAG WHAT IS PAINTED. A class with NO answers is a fact about the deck, and so are the two
       // findings below it; "3 short of 5" is a convention's opinion and is rendered muted, so it no
@@ -913,11 +1027,12 @@ function DeckMathRows({
       flagged: answers.some((a) => a.count === 0) || noneExile || noneRecurring,
       blocks: [answersBlock],
     },
-    { title: "How you win", flagged: false, blocks: [clockBlock, winBlock, topdeckBlock] },
+    { id: "win", title: "How you win", flagged: false, blocks: [clockBlock, winBlock, topdeckBlock] },
     // Not a question a player arrives with -- it describes the deck's own internal engine -- so it
     // is named plainly and sits last whatever else is wrong.
-    { title: "What your cards are waiting for", flagged: false, blocks: [demandBlock] },
+    { id: "waiting", title: "What your cards are waiting for", flagged: false, blocks: [demandBlock] },
   ];
+  const shown = only === undefined ? sections : sections.filter((s) => only.includes(s.id));
 
   return (
     // Rhythm at two levels: blocks inside a section sit closer (gap-5) than the sections do to each
@@ -950,7 +1065,7 @@ function DeckMathRows({
         </Caveat>
       </div>
 
-      {[...sections]
+      {[...shown]
         .sort((a, b) => Number(b.flagged) - Number(a.flagged))
         // A section whose every block is absent renders nothing at all: a colourless deck has no
         // Colours block, an alt-win deck may have no win plans, and an empty heading is a promise
@@ -965,7 +1080,15 @@ function DeckMathRows({
             key={s.title}
             className={`flex flex-col gap-5 ${i > 0 ? "border-t border-(--separator) pt-6" : ""}`}
           >
-            <h4 className="eyebrow">{s.title}</h4>
+            {/* h3, PROMOTED FROM h4 (I3, whole-branch review, 2026-09-01). Each sub-tab now opens
+              *  with an `h2` naming it, and the panels sitting beside these on Mana and Engine
+              *  (`ManaAvailability`, `LandMathChart`, `UnmetConditions`, `HighSynergyCards`,
+              *  `BracketPanel`) have always been `h3`s -- so an `h4` here both skipped h3 under the
+              *  sub-tab's own title and inverted against its own siblings on the same screen. At h3
+              *  these sections are siblings of "How the roles are spent" above and of the mana
+              *  panels beside them, which is what they are, and the blocks inside them are the h4s.
+              *  WCAG 1.3.1, and this repo's own "headings never skip levels". */}
+            <h3 className="eyebrow">{s.title}</h3>
             {s.blocks.filter(Boolean).map((block, i) => (
               // Keyed by position within its section: these are fixed, authored blocks, never a
               // list that reorders inside a section.

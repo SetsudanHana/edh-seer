@@ -139,7 +139,7 @@ summary {
    source order or specificity. Written unlayered (as they were before), they sat in the implicit
    final layer, which beats even the `utilities` layer outright -- so `className="eyebrow
    text-(--foreground)"` silently kept rendering `--muted`, the colour below, no matter which
-   colour utility was added alongside it. Confirmed in the browser: the "Build benchmarks" h3 and a
+   colour utility was added alongside it. Confirmed in the browser: the role-spend block's h3 (then titled "Build benchmarks") and a
    parent h4, both `eyebrow text-(--foreground)`, computed to the IDENTICAL `rgb(139, 147, 161)`
    (`--muted`) before this fix. Every OTHER `.eyebrow`/`.pip` caller passes no colour utility at
    all, so nothing here competes with `--muted`/`--pip-color` and they keep rendering exactly as
@@ -262,6 +262,10 @@ summary {
 
    It sits inside the page's own 2rem padding by matching `main`'s box: the app is a centred column
    and a full-bleed band under it would read as a different site. */
+/* HIDDEN ONCE A REPORT IS ON SCREEN. See `App.tsx` for why this is an attribute rather than an
+   unmount, and why it cannot affect what a crawler reads. */
+:root[data-report] .intro { display: none; }
+
 /* MATCHES `main`'S BOX EXACTLY, because a column that does not line up with the app above it reads
    as a different site: 64rem (Tailwind's `max-w-5xl`) with the same 2rem padding, and uncapped above
    `xl` where `main` is `xl:max-w-none`. */

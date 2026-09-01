@@ -85,7 +85,14 @@ export function DeckIdentity({
             {coverage ? "No theme found in the cards read" : "No dominant theme"}
           </h2>
         ) : (
-          <h2 className="text-2xl font-bold leading-none text-(--accent) capitalize">{cohesion.theme}</h2>
+          // THE THEME HEADLINE MOVED TO `RecognitionPanel`, at the top of the Overview, so the
+          // page names the deck ONCE and not twice -- this file printing `cohesion.theme` here
+          // AND RecognitionPanel printing the same string above it is exactly the duplication
+          // this whole redesign exists to remove, and it is what "Found multiple elements with
+          // the text: Tokens" was catching. This panel keeps the half recognition deliberately
+          // does not carry: the focus score, the coverage qualifier and the wider-family share
+          // printed just below.
+          null
         )}
         <span className="text-sm text-(--muted) tabular-nums">
           {cohesion.dominant === false ? `strongest: ${cohesion.theme} · ` : ""}
