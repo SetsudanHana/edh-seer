@@ -222,7 +222,12 @@ export function CardList({ cards, artByName, coverage }: {
   );
 
   return (
-    <div className="flex flex-col gap-3">
+    // THE WHOLE PANEL IS BOUNDED, NOT JUST ITS TABLE. Capping the table alone fixed the rows and
+    // broke the header: the filter chips, the "find a card" box and the table/grid toggle live in a
+    // `w-full` flex row with `ml-auto`, so at 1920 they stayed pinned to a 1,856px edge while the
+    // table they control ended 448px to their left. Controls have to sit inside the thing they
+    // control. One cap on the panel keeps every part of it on the same right edge.
+    <div className="flex flex-col gap-3 max-w-[88rem]">
       <h3 className="eyebrow">Cards</h3>
       <p className="text-xs text-(--muted) max-w-[65ch]">{SCALE_NOTE}</p>
       {/* THE COST COLUMN'S OWN SCALE. "49% – 69% by T5" was explained in a footnote on a different
@@ -317,6 +322,25 @@ export function CardList({ cards, artByName, coverage }: {
         // `min-w-[46rem]` fits a desktop container), so the container stops existing above `sm` and
         // the sticky header works where a 52-row scan actually happens.
         <div className="overflow-x-auto sm:overflow-x-visible -mx-1 px-1">
+        {/* THE CARD COLUMN GREW WITHOUT BOUND AND ITS CONTENT DID NOT. Every other column here is
+          *  pinned (`w-10`, `w-56`, `w-32`, `w-20`), so the Card column absorbs the whole slack of a
+          *  `w-full` table inside a container that is `xl:max-w-none` -- the viewport. Measured over
+          *  all 100 rows of the example deck: the widest row's ink is 837px and the median is 410px,
+          *  and that ceiling does not move with the viewport because a card name and a one-line
+          *  reason are as long as they are. At 1440 the column is 904px, which is about right. At
+          *  1920 it is 1,384px: 547px of empty cell in the WORST row and 974px in the median one,
+          *  between a card's reason and its roles, on every row of a 100-row table.
+          *
+          *  88rem IS DERIVED, NOT PICKED. 837px of ink plus the 472px of pinned columns is 1,309px,
+          *  and the cap has to clear the 1,376px this table already gets at 1440 so that no width
+          *  which renders fine today starts truncating. 88rem (1,408px) is the smallest round step
+          *  above both, so the cap binds ONLY where the runaway is -- nothing at or below 1440
+          *  changes by a pixel, and the reason sentence can never truncate in a case where it
+          *  currently fits. The cap itself lives on the PANEL (see the root element above) so the
+          *  filter chips and the search box share this table's right edge.
+          *
+          *  The leftover width goes to the page margin rather than into the rows. Dead space outside
+          *  a bounded table reads as layout; the same pixels inside every row read as a broken one. */}
         <table className="w-full min-w-[46rem] text-sm border-collapse">
           {/* STICKY, because scanning a 52-row table BY COLUMN is exactly what a tuner does and the
             *  labels used to scroll away — the brief's own sentence, "the precon player did not know
