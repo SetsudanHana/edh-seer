@@ -351,6 +351,26 @@ summary {
   line-height: 1.7;
 }
 
+/* THE FIGURES LEAVE THE MEASURE; THE PROSE DOES NOT. `.prose` is 68ch because that is a readable
+   line, and at 1440 that left 399px empty on each side of a 642px column -- including under the
+   pipeline and the two worked edges, which are diagrams and gain from width that a paragraph
+   loses by. A negative inline margin is the whole technique: the element's containing block is
+   `.prose`'s 642px content box, so `(100% - 65rem) / 2` is the amount to pull out on each side.
+
+   NOT A GRID, and that was the first design. Making `.prose` a grid container stops its children's
+   margins collapsing -- `.prose p`'s 1rem bottom against `.prose h2`'s 2.75rem top would start
+   SUMMING to 3.75rem -- so every paragraph-to-heading gap on the page would shift and the whole
+   vertical rhythm would need re-tuning to look unchanged. This keeps `.prose` a block.
+
+   It degrades to zero on its own: below about 69rem the `min()` picks the viewport term, the two
+   sides match, and the margin computes to 0. No media query, and nothing to overflow at 390px. */
+.prose > .figures,
+.prose > .pipeline,
+.prose > .edge-demo {
+  width: min(65rem, calc(100vw - 4rem));
+  margin-inline: calc((100% - min(65rem, calc(100vw - 4rem))) / 2);
+}
+
 /* The one h1 on the page, and the only place this app sets display-sized type. */
 .prose h1 {
   color: var(--foreground);
