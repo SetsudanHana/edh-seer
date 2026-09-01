@@ -115,6 +115,25 @@ h3 {
   letter-spacing: -0.01em;
 }
 
+/* EVERY DISCLOSURE IN THE APP IS 24px TALL, because at 390px they measured 326x17 and WCAG 2.2
+   SC 2.5.8 wants 24x24. Eight of them render on the Overview alone -- `Explain`'s "what this
+   measures", the benchmark caveats, "the whole distribution" -- and they are the report's only
+   mechanism for saying what a number means, so on a phone the least reachable control was the one
+   that explains the page.
+
+   THEY DO NOT QUALIFY FOR THE INLINE EXCEPTION. That exception covers a target inside a sentence,
+   whose size is constrained by the line-height of the non-target text around it; these are
+   standalone controls on their own line, and the 17px came only from `.eyebrow`'s 11px font. So
+   the height is a real defect rather than a measurement artefact.
+
+   HERE, NOT ON `.eyebrow`: that class also labels things that are not controls, and padding a
+   static label is how the report's vertical rhythm drifts. `display` is left alone on purpose --
+   a `flex` summary drops its own disclosure marker in Chrome, which needs `list-item`. */
+summary {
+  min-block-size: 1.5rem;
+  padding-block: 0.25rem;
+}
+
 /* Both rules below live in `components` -- a layer Tailwind's own `@layer theme, base, components,
    utilities` declares BELOW `utilities`, so any utility class always wins over these regardless of
    source order or specificity. Written unlayered (as they were before), they sat in the implicit
@@ -301,7 +320,18 @@ h3 {
 /* A CONTINUATION, NOT A NAV ITEM, and it is styled as one: no underline, the accent on hover, and
    the arrow saying which direction the reading goes. */
 .intro-more { margin-top: 1.5rem; }
-.intro-more a { text-decoration: none; color: var(--foreground); }
+/* 24px TALL, not the 17px a 14px line box gives it. This one is alone in its paragraph, so unlike
+   the card names in a combo row it gets no help from SC 2.5.8's Inline exception; it passes on the
+   Spacing exception (127px to the nearest other target) but it is the explainer's call to action
+   and the house bar for those is a fingertip, not the letter of the criterion. `inline-flex` is
+   safe precisely because it is the only thing in its block. */
+.intro-more a {
+  text-decoration: none;
+  color: var(--foreground);
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 1.5rem;
+}
 .intro-more a:hover { color: var(--accent); }
 
 @media (min-width: 80rem) {
