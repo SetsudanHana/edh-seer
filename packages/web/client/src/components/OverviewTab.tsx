@@ -17,8 +17,13 @@ import { Findings } from "./Findings.js";
 import { findings } from "../lib/findings.js";
 import { DerivedMark } from "./CoveragePanel.js";
 
-/** A movement, not a panel. Three registers exist on this page and this is the middle one: a
- *  heading with an optional count beside it, then whatever the movement contains.
+/** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
+ *
+ *  IT IS THE TOP REGISTER OF A SUB-TAB, and every sub-tab gets one (MINOR 8, whole-branch review,
+ *  2026-09-01 — this comment used to say "three registers exist on this page and this is the middle
+ *  one", which described the single-scroll Overview that the four sub-tabs replaced, and quoted a
+ *  `count` string this branch had already deleted). The panels below a movement carry `h3`s of
+ *  their own, so the movement's `h2` is what stops each sub-tab opening on a heading with no parent.
  *
  *  THE HEADING CARRIES ITS OWN WEIGHT AND TAKES NO KICKER. The design system's No-Kicker Rule, and
  *  the shipped Overview broke it fifteen times: every block was `MONO EYEBROW` → numbers → muted
@@ -33,8 +38,9 @@ function Movement({
         <h2 className="text-lg font-bold tracking-[-0.01em]">
           {title}{mark}
         </h2>
-        {/* A SENTENCE, NOT A FIGURE. "the panels each finding is read from" was set in mono, which
-          *  is the costume use `index.css` explicitly rules out. */}
+        {/* A SENTENCE, NOT A FIGURE — it is where a movement says what its panels are FOR, and on
+          *  Build and Mana that is the link back to the findings they are evidence for. Set in the
+          *  body face, never mono: `index.css` rules out the costume use. */}
         {count ? <span className="text-xs text-(--muted)">{count}</span> : null}
       </div>
       {children}
@@ -169,21 +175,34 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         </div>
       )}
 
+      {/* I3 (whole-branch review, 2026-09-01): Build and Mana shipped with NO title element at all
+        *  — the `Movement` wrapper that used to carry "The numbers behind that · the panels each
+        *  finding is read from" was deleted with the single-scroll layout rather than relocated to
+        *  the sub-tabs that inherited its panels. Two things went with it. The heading outline both
+        *  skipped and inverted (Build opened on an `h3`, Mana on an `h4`, followed by `h3`s from
+        *  `ManaAvailability` and friends — WCAG 1.3.1, and this repo's own "headings never skip
+        *  levels"); and the SENTENCE saying these panels are the evidence for Summary's findings
+        *  left the product entirely, so a reader arriving on Build met a wall of numbers with no
+        *  statement of what they were for. Both `count` strings below restore that link, worded for
+        *  the half of the split each tab owns. */}
       {active === "build" && (
-        <BuildBenchmarks
-          categories={report.buildCategories}
-          parents={report.buildParents}
-          deckMath={report.deckMath}
-          answerCoverage={report.answerCoverage}
-          sections={["answers", "win"]}
-        />
+        <Movement title="What this deck plays" count="the evidence behind each build finding on Summary">
+          <BuildBenchmarks
+            categories={report.buildCategories}
+            parents={report.buildParents}
+            deckMath={report.deckMath}
+            answerCoverage={report.answerCoverage}
+            sections={["answers", "win"]}
+          />
+        </Movement>
       )}
 
       {active === "mana" && (
+        <Movement title="Whether the mana delivers it" count="the evidence behind each mana finding on Summary">
         <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
           {/* FIX ROUND 1 (controller ruling, 2026-09-01): `showBenchmarks={false}` -- the Build
-            *  sub-tab is the only one that owns the category/parent block (the "Build benchmarks"
-            *  heading, its group headers and leaf rows, the ungrouped bars). Without this, that
+            *  sub-tab is the only one that owns the category/parent block ("How the roles are spent",
+            *  its group headers and leaf rows, the ungrouped bars). Without this, that
             *  block rendered identically here AND on Engine, three copies of the same Consistency/
             *  Interaction groups across the sub-tabs the split was supposed to separate. */}
           <BuildBenchmarks
@@ -199,6 +218,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
           <LandMathChart landCount={report.landCount} deckSize={data.resolvedCount} />
           <UnmetConditions landConditions={report.landConditions} />
         </div>
+        </Movement>
       )}
 
       {active === "engine" && (

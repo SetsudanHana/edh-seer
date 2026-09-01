@@ -189,6 +189,38 @@ export const TYPE_SEGMENT_HUE: Record<string, string> = {
   sorcery: "#3d7ed6",
 };
 
+/** THE TEXT COLOUR THAT CAN SIT ON A GIVEN FILL, or `null` when neither can.
+ *
+ *  COMPUTED, NOT TABULATED, and that is the point. The six segment hues above were picked for
+ *  separation from EACH OTHER, and nothing in that search asked whether a number would be legible
+ *  ON one of them — so the answer differs per hue, and a hand-written table of "white here, black
+ *  there" would go stale the first time a hue is re-tuned, silently, in the direction of an
+ *  unreadable label. WCAG 1.4.3 relative luminance, the same arithmetic `scripts/contrast.py` runs
+ *  over the token theme; measured on today's `TYPE_SEGMENT_HUE` it returns white for creature
+ *  (5.9:1) and instant (6.0:1), and black for enchantment (5.5:1), artifact (4.9:1), planeswalker
+ *  (6.7:1) and sorcery (5.1:1). Pure #ffffff/#000000 rather than a surface token because the
+ *  measurement is against the FILL, not against the page.
+ *
+ *  `null` IS UNREACHABLE AT THIS FLOOR, AND THAT IS WORTH KNOWING RATHER THAN ASSUMING. White and
+ *  black contrast move in opposite directions as a fill lightens, and they cross at 4.58:1 — so the
+ *  worst fill that exists (luminance 0.179, about #757575) still clears 4.5 on one of them, and no
+ *  colour can fail both. The branch stays because it is the contract the caller already honours and
+ *  because raising `CONTRAST_FLOOR` to AAA's 7:1 makes it live immediately; the alternative, always
+ *  returning an ink, would quietly start returning a failing one that day. */
+const CONTRAST_FLOOR = 4.5;
+const linear = (c: number): number => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+export function relativeLuminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((i) => linear(parseInt(hex.slice(i, i + 2), 16) / 255));
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+export function segmentInk(fill: string): string | null {
+  const l = relativeLuminance(fill);
+  const onWhite = 1.05 / (l + 0.05);
+  const onBlack = (l + 0.05) / 0.05;
+  const [ink, ratio] = onBlack >= onWhite ? ["#000000", onBlack] : ["#ffffff", onWhite];
+  return ratio! >= CONTRAST_FLOOR ? ink! : null;
+}
+
 /** WUBRG, by the game's own convention rather than by the palette search above: a blue card has to
  *  read as blue. Black is the one that cannot be literal -- a black disc on a #14171b surface is
  *  invisible -- so it takes the purple-grey that Magic's own dark-mode UIs use. `C` is colourless,

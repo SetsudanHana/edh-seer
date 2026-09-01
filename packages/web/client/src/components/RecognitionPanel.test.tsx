@@ -62,6 +62,29 @@ test("says so when the engine found no dominant theme, rather than hiding it", (
   expect(screen.getByTestId("recognition-identity")).toHaveTextContent("No dominant theme");
 });
 
+/** I4 (whole-branch review, 2026-09-01). MOVED HERE, not deleted: `components.test.tsx` had
+ *  "DeckIdentity names the deck when dominant is absent" and struck it as cleanup when the theme
+ *  headline left `DeckIdentity`. It was pinning a TRI-STATE, and the tri-state came here with the
+ *  headline. `dominant: true` is the engine saying it found one, `false` is the engine saying it
+ *  looked and did not, and ABSENT is a caller written before the field existed -- which is not an
+ *  opinion at all, so the theme is named rather than refused. `RecognitionPanel.tsx` spells that as
+ *  `cohesion.dominant !== false`, and the "simplification" this test exists to fail is
+ *  `!cohesion.dominant`, which silently collapses absent into false. */
+test("an absent `dominant` field names the theme: it is a caller predating the field, not a refusal", () => {
+  const noField = {
+    ...DATA,
+    report: {
+      ...DATA.report,
+      cohesion: { theme: "wizards entering", tag: "enters:wizard", score: 0.4, label: "focused" },
+    },
+  } as unknown as typeof DATA;
+  render(<RecognitionPanel data={noField} />);
+  const el = screen.getByTestId("recognition-identity");
+  expect(el).toHaveTextContent("wizards entering");
+  expect(el).not.toHaveTextContent("No dominant theme");
+  expect(el).not.toHaveTextContent("strongest:");
+});
+
 /** THE GUARD THAT MOVED HERE FROM `DeckIdentity`. The theme headline used `strategies[0].label`
  *  for three weeks, which read "Tokens" on a wizard tribal deck while `cohesion.theme` read
  *  "wizards entering" -- the stronger answer was computed and discarded. `DeckIdentity` carries

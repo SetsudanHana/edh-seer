@@ -1,9 +1,23 @@
 import { TYPE_ORDER } from "../lib/deck-shape.js";
-import { TYPE_SEGMENT_HUE } from "./presets.js";
+import { TYPE_SEGMENT_HUE, segmentInk } from "./presets.js";
 import type { TypeSlice } from "../lib/deck-shape.js";
 
 /** The surface gap between adjacent fills. Never a stroke -- a border is ink that is not data. */
 const GAP = 2;
+
+/** How wide a segment has to be, as a share of the bar, before its count is printed INSIDE it.
+ *
+ *  WHY A THRESHOLD EXISTS AT ALL: a segment is sized by its own value, so the label and the space
+ *  available for it move in opposite directions from the same number. Below some width the digits
+ *  either spill across the gap onto the NEIGHBOURING fill -- where their contrast is a different
+ *  measurement entirely, and may be one of the failing ones -- or get clipped mid-digit, and a
+ *  half-visible "1" of "12" is worse than no label. 8% is where a two-digit `text-xs` number plus
+ *  its padding (~26px) still fits the narrowest track this panel renders on: a 390px viewport
+ *  leaves the bar about 330px after gutters. Segments under it are named by the legend only.
+ *
+ *  IT IS A FLOOR ON WIDTH, NOT A CHOICE ABOUT IMPORTANCE. A 3% segment is not less worth labelling;
+ *  there is simply nowhere to put the label. */
+const IN_PLACE_LABEL_MIN_SHARE = 0.08;
 
 /** WHAT THE DECK IS MADE OF, as part-to-whole.
  *
@@ -37,17 +51,43 @@ export function TypeBar({ slices }: { slices: readonly TypeSlice[] }) {
         role="img"
         aria-label={`Card types: ${ordered.map((s) => `${s.count} ${s.type}`).join(", ")}. ${total} nonland cards.`}
       >
-        {ordered.map((s) => (
-          <span
-            key={s.type}
-            data-testid={`type-segment-${s.type}`}
-            className="block h-full first:rounded-l-(--radius) last:rounded-r-(--radius)"
-            style={{ width: `${(s.count / total) * 100}%`, background: TYPE_SEGMENT_HUE[s.type] }}
-          />
-        ))}
+        {/* DIRECT IN-PLACE LABELS, which design §4 makes a REQUIREMENT and not a nicety (I5,
+          *  whole-branch review, 2026-09-01). The palette's own stated limit is that enchantment
+          *  #1c8db7 and sorcery #3d7ed6 sit at dE 12.5 in normal vision, below the separation floor;
+          *  the segment ORDER protects them inside the bar by never placing them adjacent, but a
+          *  legend undoes that protection — it asks the reader to match a 10px swatch back to a
+          *  segment by hue, which is precisely the judgement those two hues cannot support. A number
+          *  printed on the segment itself needs no match. */}
+        {ordered.map((s) => {
+          const fill = TYPE_SEGMENT_HUE[s.type]!;
+          // Both conditions are hard gates, for different reasons: too narrow and the digits
+          // overflow onto a neighbouring fill, no legible ink and they are unreadable where they
+          // land. Either way the legend below is still carrying this segment.
+          const ink = s.count / total >= IN_PLACE_LABEL_MIN_SHARE ? segmentInk(fill) : null;
+          return (
+            <span
+              key={s.type}
+              data-testid={`type-segment-${s.type}`}
+              className="flex h-full items-center justify-center overflow-hidden first:rounded-l-(--radius) last:rounded-r-(--radius)"
+              style={{ width: `${(s.count / total) * 100}%`, background: fill }}
+            >
+              {/* `aria-hidden`, because the bar's own `aria-label` already reads every count in
+                *  order. Two announcements of the same figure is the defect this panel's siblings
+                *  keep being fixed for. */}
+              {ink ? (
+                <span aria-hidden className="stat-num text-xs leading-none" style={{ color: ink }}>
+                  {s.count}
+                </span>
+              ) : null}
+            </span>
+          );
+        })}
       </div>
-      {/* The counts in text. On a six-segment bar the two smallest segments are too narrow for an
-        *  in-place number, and identity may never rest on colour alone. */}
+      {/* THE LEGEND STAYS COMPLETE, including the segments that now carry their own count. It is
+        *  what NAMES each type: the in-place label is a bare number, so dropping a wide segment's
+        *  legend row would leave its identity resting on colour alone — the one thing the
+        *  accessibility floor here forbids. The two encodings answer different questions ("which
+        *  type is this band" against "how many"), so both earn their place. */}
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
         {ordered.map((s) => (
           <li key={s.type} data-testid={`type-legend-${s.type}`} className="flex items-center gap-1.5">

@@ -139,7 +139,7 @@ summary {
    source order or specificity. Written unlayered (as they were before), they sat in the implicit
    final layer, which beats even the `utilities` layer outright -- so `className="eyebrow
    text-(--foreground)"` silently kept rendering `--muted`, the colour below, no matter which
-   colour utility was added alongside it. Confirmed in the browser: the "Build benchmarks" h3 and a
+   colour utility was added alongside it. Confirmed in the browser: the role-spend block's h3 (then titled "Build benchmarks") and a
    parent h4, both `eyebrow text-(--foreground)`, computed to the IDENTICAL `rgb(139, 147, 161)`
    (`--muted`) before this fix. Every OTHER `.eyebrow`/`.pip` caller passes no colour utility at
    all, so nothing here competes with `--muted`/`--pip-color` and they keep rendering exactly as

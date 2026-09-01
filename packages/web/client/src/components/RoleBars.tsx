@@ -2,10 +2,12 @@ import type { RoleBar } from "../lib/deck-shape.js";
 
 /** WHAT THE DECK'S CARDS DO, as magnitude.
  *
- *  BARS AND NOT A SECOND DONUT, because roles do not partition the deck: a card can carry
+ *  BARS AND NOT A PART-TO-WHOLE CHART, because roles do not partition the deck: a card can carry
  *  REMOVAL and DRAW both, and the sub-role shares are shares OF a parent rather than of the deck.
- *  A pie would assert a whole that does not exist. A bar claims magnitude only, so overlap is
- *  honest.
+ *  (Written as "not a second donut" when `TypeBar` beside it was a ring; the ring is now a stacked
+ *  bar, and the distinction that matters was never the FORM but the claim — a stacked bar asserts a
+ *  whole just as a pie does, and here there is no whole to assert.) A bar claims magnitude only, so
+ *  overlap is honest.
  *
  *  ONE HUE, not five. These four are one measure at four points, not four identities -- a
  *  categorical palette here would imply a difference in kind that is not in the data. Length

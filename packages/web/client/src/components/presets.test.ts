@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   FLOW_HUE, IDENTITY_HUE, OVERFLOW_HUE, PAINT_MODES, ROLE_HUE, TYPE_HUE, cmcBucket, cmcRamp, paintHues,
-  paintLegend, rimArcs, rimHues, subcategoryLabel, type PaintMode,
+  paintLegend, rimArcs, rimHues, subcategoryLabel, relativeLuminance, segmentInk,
+  TYPE_SEGMENT_HUE, type PaintMode,
 } from "./presets.js";
 import type { GraphNode } from "../types.js";
 
@@ -189,4 +190,44 @@ it("the flow hues come from the validated palette and are distinct", () => {
   expect(validated).toContain(FLOW_HUE.up);
   expect(validated).toContain(FLOW_HUE.down);
   expect(FLOW_HUE.up).not.toBe(FLOW_HUE.down);
+});
+
+/** I5 (whole-branch review, 2026-09-01). `TypeBar` prints a count INSIDE each wide segment, on that
+ *  segment's own fill, and the six fills were chosen for separation from each other with nothing in
+ *  that search asking whether text would be legible on them. This is the assertion that keeps the
+ *  requirement true after a hue is re-tuned: every fill must have SOME ink clearing WCAG 1.4.3's
+ *  4.5:1 for body text, or the label is not drawn at all. */
+describe("segmentInk", () => {
+  it("gives every card-type fill an ink that clears 4.5:1 on it", () => {
+    for (const [type, fill] of Object.entries(TYPE_SEGMENT_HUE)) {
+      const ink = segmentInk(fill);
+      expect(ink, `${type} ${fill} has no legible ink`).not.toBeNull();
+      const l = relativeLuminance(fill);
+      const ratio = ink === "#ffffff" ? 1.05 / (l + 0.05) : (l + 0.05) / 0.05;
+      expect(ratio, `${type} ${fill} on ${ink}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  // Neither ink is the answer everywhere -- which is the whole reason this is computed rather than
+  // a constant. #1c8db7 is light enough to need black; #277310 is dark enough to need white.
+  it("picks per fill, not once for the palette", () => {
+    expect(segmentInk("#1c8db7")).toBe("#000000");
+    expect(segmentInk("#277310")).toBe("#ffffff");
+  });
+
+  // THE WORST FILL THAT EXISTS still clears the floor, and that is a property of 4.5 rather than of
+  // this palette: white and black contrast cross at 4.58:1, at luminance 0.179 (about #757575). So
+  // no hue anyone picks later can fail both inks, and `TypeBar`'s "omit the label" branch is
+  // unreachable until someone raises the floor to AAA. Pinned so that fact is measured, not assumed.
+  it("clears the floor even at the crossover, where both inks are at their worst", () => {
+    const l = relativeLuminance("#757575");
+    expect(Math.max(1.05 / (l + 0.05), (l + 0.05) / 0.05)).toBeGreaterThanOrEqual(4.5);
+    expect(segmentInk("#757575")).not.toBeNull();
+  });
+
+  // The endpoints, so a sign error in the luminance maths cannot pass the checks above.
+  it("measures luminance on the WCAG curve", () => {
+    expect(relativeLuminance("#ffffff")).toBeCloseTo(1, 5);
+    expect(relativeLuminance("#000000")).toBeCloseTo(0, 5);
+  });
 });

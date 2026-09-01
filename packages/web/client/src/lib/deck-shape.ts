@@ -21,7 +21,9 @@ export interface RoleBar { role: string; count: number }
 
 /** The one type a card counts as, or null when it is not on this chart.
  *
- *  A PIE ASSERTS PART-TO-WHOLE, so every card must land in exactly one slice. The graph counts a
+ *  A STACKED BAR ASSERTS PART-TO-WHOLE, so every card must land in exactly one segment. (The noun
+ *  changed and the argument did not, 2026-09-01: the ring this rule was written for became a
+ *  stacked bar, which makes the same claim on a shared baseline.) The graph counts a
  *  card in BOTH its types and says so in its legend; summing that gives 125 for a 100-card deck,
  *  which is a chart a reader catches by counting. Hence a precedence rather than a fan-out.
  *

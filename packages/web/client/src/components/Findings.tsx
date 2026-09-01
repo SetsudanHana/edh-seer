@@ -8,8 +8,11 @@ import { useState } from "react";
  *  The Overview used to render fifteen panels at identical weight: a mono eyebrow, a block of
  *  numbers, a muted paragraph, fifteen times. Nothing was dominant, so the eye had no entry point
  *  and the page read as a wall — and the two expert personas used the diagnostic panels and nothing
- *  else, from screen two onward. This puts those panels' conclusions first, ranked, and lets the
- *  panels themselves become the evidence underneath.
+ *  else, from screen two onward. This puts those panels' conclusions first, ranked, and leaves the
+ *  panels themselves as the evidence a reader goes to next — no longer UNDERNEATH this list (MINOR
+ *  8, whole-branch review, 2026-09-01: they moved onto the Build and Mana sub-tabs when the
+ *  single-scroll Overview was split), which is why each of those tabs opens on a sentence naming
+ *  itself as the evidence behind a finding here.
  *
  *  THE ORDER IS ARITHMETIC, NOT EDITORIAL. See `lib/findings.ts`: every source already carries its
  *  own target, and the rank is the fraction of that target missing. No weight was chosen.
