@@ -64,6 +64,11 @@ export default function App() {
 
   const onAnalyze = () => void analyse(decklist, commanders);
 
+  /** NOTHING PASTED, NOTHING ANALYSED, NOTHING IN FLIGHT — the only state in which the page has to
+   *  introduce itself. Named once because the lead above the form and the example-deck button below
+   *  it are two halves of the same empty state and must appear and vanish together. */
+  const firstVisit = !data && !loading && decklist.trim() === "";
+
   /** A SHARED LINK IS A DECK THAT ANALYSES ITSELF. Anything else -- filling the boxes and waiting for
    *  a click -- makes the recipient do the work the sender already did.
    *
@@ -140,6 +145,34 @@ export default function App() {
         *  gate. Mounted from the app rather than from `index.html` because the decision is stateful
         *  and the header is not. */}
       <InstallButton />
+      {/* THE PAGE SAID WHAT IT WAS IN 14px MUTED BODY, UNDER THE FORM. The only display-weight
+        *  heading on the landing was the static header's wordmark at 24px, against 14px prose — a
+        *  1.71x ratio where the house bar is 2.5x, which is bold body text and not a heading. A
+        *  first-time reader met a two-box form with no statement above it of what the form is for.
+        *
+        *  THE COPY IS THE SENTENCE THAT WAS ALREADY THERE, split at its own full stop: the claim
+        *  becomes the heading, the list of what you get stays prose. Nothing new is asserted.
+        *
+        *  IT IS AN `h2`, NOT AN `h1`. `index.html` carries the page's one `h1` on the static header
+        *  deliberately — it is the heading a crawler reads without running the bundle, and
+        *  `seo.test.ts` asserts it — so a second `h1` here would be the defect, not the fix.
+        *
+        *  ABOVE THE FORM, and it replaces nothing: the "load example deck" button stays below,
+        *  where it is an action on the form rather than part of the pitch. Both are gated on the
+        *  same `firstVisit`, so a reader who has pasted anything sees neither. */}
+      {firstVisit && (
+        <div className="flex flex-col gap-3">
+          <h2 className="max-w-[22ch] text-3xl sm:text-4xl font-bold tracking-[-0.02em] text-(--foreground)">
+            Paste a decklist to get an oracle-text synergy read.
+          </h2>
+          {/* 65ch, and the cap is the whole point: this ran the full width of the container, which
+            *  above `xl` is the viewport — 1,376px at 1440, or 156 characters a line against the
+            *  45–75 the type rules allow. `.intro p` already caps at 68ch; this one never did. */}
+          <p className="max-w-[65ch] text-sm text-(--muted)">
+            Mana curve, land math, build benchmarks, per-card roles, and combos. No account needed.
+          </p>
+        </div>
+      )}
       {
         /*
         THESIS: The category standard, taken on purpose — a plain dark analytics
@@ -174,9 +207,8 @@ export default function App() {
         onEdit={() => setEditing(true)}
         shareLink={link}
       />
-      {!data && !loading && decklist.trim() === "" && (
+      {firstVisit && (
         <div className="flex flex-col gap-2 text-sm text-(--muted)">
-          <p>Paste a decklist to get an oracle-text synergy read — mana curve, land math, build benchmarks, per-card roles, and combos. No account needed.</p>
           <button
             type="button"
             className="self-start eyebrow px-3 py-1 rounded-(--radius) border border-(--separator) text-(--accent)"
