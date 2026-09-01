@@ -49,11 +49,18 @@
       </p>
 
       <!-- THE SCALE, IN THREE NUMBERS. Every one is measured rather than rounded for effect: the
-           corpus size and clause count come from the build, the deck count from the calibration set.
-           The third is the one that matters and is not a size at all. -->
+           corpus size comes from the build; the edge figure from
+           `npx tsx packages/matcher/src/bin/population-compare.ts` (free, no API, no writes),
+           measured 2026-09-01 on the shipped `derived` population -- 35,165 edges across the 71
+           calibration decks, so ~495 a deck. It is written with a tilde because it is an average
+           and not a count of anything.
+           The deck count itself is deliberately NOT shown as a headline figure here: it is method
+           detail, not a reason for a reader to trust the tool, so it appears below in "How it is
+           checked" instead ("calibrated against 71 real Commander decks").
+           The third number is the one that matters and is not a size at all. -->
       <dl class="figures">
         <div><dt>34,433</dt><dd>cards read from oracle text</dd></div>
-        <div><dt>71</dt><dd>real decks it is calibrated against</dd></div>
+        <div><dt>~495</dt><dd>synergy edges in an average Commander deck</dd></div>
         <div><dt>0</dt><dd>model calls when you analyse a deck</dd></div>
       </dl>
 
@@ -187,6 +194,11 @@
           <strong>An unreadable trigger is reported, not guessed.</strong> When a card's text names an
           event the vocabulary cannot spell, it is recorded as unknown rather than matched to the
           nearest thing that fits. A missing claim is better than a confident wrong one.
+        </li>
+        <li>
+          <strong>Popularity is not synergy.</strong> Nothing here is derived from how many decks run
+          a card. Two cards are related because their printed text says so, or they are not related
+          at all — a card no one plays and a staple in every deck are read the same way.
         </li>
       </ul>
 
