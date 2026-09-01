@@ -220,9 +220,12 @@ export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<B
   counters: { boardWipe: -1 },
 };
 
-/** Full credit within ±3 of the land target, linear falloff to 0 at ±12 (24 or 48 lands). */
-const LAND_BAND = 3;
-const LAND_FALLOFF = 9;
+/** Full credit within ±3 of the land target, linear falloff to 0 at ±12 (24 or 48 lands).
+ *
+ *  EXPORTED FOR THE CLIENT'S LANDS DIAL. The dial's green band is this band; importing it means a
+ *  change here fails the client's test rather than leaving two tolerances that silently disagree. */
+export const LAND_BAND = 3;
+export const LAND_FALLOFF = 9;
 
 /** THE REGRESSION'S OWN TESTED RANGE (task 9, owner's ruling 2026-08-21) --
  *  `packages/engine/src/karsten.test.ts`'s four published arms: avgManaValue 1.8 -> 3.5 yielding

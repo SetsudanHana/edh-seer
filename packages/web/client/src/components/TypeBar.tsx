@@ -28,7 +28,7 @@ const IN_PLACE_LABEL_MIN_SHARE = 0.08;
  *
  *  SEGMENTS RENDER IN `TYPE_ORDER` AND ARE NEVER SORTED. That order is the colour guarantee --
  *  see `TYPE_SEGMENT_HUE`. */
-export function TypeBar({ slices }: { slices: readonly TypeSlice[] }) {
+export function TypeBar({ slices, lands, mdfc }: { slices: readonly TypeSlice[]; lands?: number; mdfc?: number }) {
   if (slices.length === 0) return null;
   const byType = new Map(slices.map((s) => [s.type, s.count]));
   const ordered = TYPE_ORDER.flatMap((t) => {
@@ -44,6 +44,34 @@ export function TypeBar({ slices }: { slices: readonly TypeSlice[] }) {
           {total}
         </span>
         <span className="text-sm text-(--muted)">nonland cards</span>
+        {/* A COUNT, NOT A VERDICT. Whether 38 is the right number for this curve is the lands dial in
+          *  `DeckGauges`; this panel describes. Lands are deliberately not a SLICE -- see
+          *  `primaryType`, which excludes them because at ~38% of the deck they would drown the
+          *  composition question the bar exists to answer. */}
+        {lands !== undefined ? (
+          <>
+            {" · "}
+            <span className="stat-num text-(--foreground)">{lands}</span>{" lands"}
+            {/* THE RECONCILIATION `docs/engineering-log/2026-08-31.md` ALREADY ESTABLISHED
+              *  (`BuildBenchmarks.tsx`'s own "34 (38 with MDFCs)"), reused here rather than
+              *  reinvented -- a modal DFC with a land back is a land to the mana model and a spell
+              *  to this census, on purpose, and the gap between the two counts is named rather than
+              *  left for a reader to sum two numbers that don't add up. Silent at zero: a
+              *  parenthetical about nothing is noise.
+              *
+              *  THE WHOLE PARENTHETICAL IS ONE `whitespace-nowrap` SPAN (task 9 fix round 1,
+              *  whole-branch review, 2026-09-01): at 390px the four separate inline pieces this
+              *  used to be -- the text "(", the count span, and the text " with MDFCs)" -- could
+              *  each wrap onto their own line, stranding the "(" away from the number it opens.
+              *  Grouping them means the browser can still break the LINE before the parenthetical,
+              *  just never inside it. */}
+            {mdfc !== undefined && mdfc > 0 ? (
+              <>{" "}<span className="whitespace-nowrap">
+                (<span className="stat-num text-(--foreground)">{lands + mdfc}</span> with MDFCs)
+              </span></>
+            ) : null}
+          </>
+        ) : null}
       </p>
       <div
         className="flex w-full h-6 rounded-(--radius) overflow-hidden"

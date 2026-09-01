@@ -785,3 +785,28 @@ summary {
   .edge-arrow { max-width: 3rem; transform: rotate(90deg); }
   .pipeline { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* DECK GAUGES ORPHAN RULE: BACK, PER GROUP, NOT REMOVED (task 9 fix round 1, whole-branch review,
+   2026-09-01). The flat seven-dial version of this rule was deleted the same day it was written,
+   on the theory that swapping the grid for `flex flex-wrap` per group made it structurally
+   impossible to strand anything. Measured wrong: a flex item sizes to its own content and refuses
+   to shrink across a wrap point, which produced two real defects instead of the one this rule used
+   to prevent -- a stranded Lands dial at 1440px, and NOTHING wrapping at 390px at all (content
+   width there is 326px, `App.tsx`'s `<main class="p-8">`, and one dial alone needs ~178px, so two
+   never fit and the panel became a 55%-longer plain list). The grid is back, split into two rules
+   because the two groups have different counts and item sizes:
+
+   `.synergy-inputs-grid` is always 2 columns (Breadth, Anchor -- two items that never strand at
+   two columns) but is spanned anyway for the near-impossible case of only one of the two existing.
+
+   `.build-inputs-grid` is 2 columns narrow, 3 from `sm` (640px), 5 from `xl` (1280px). Five items
+   give 2+2+1 at the 2-column tier (needs the span), 3+2 at the 3-column tier (fine, no span), and
+   one row at the 5-column tier (fine). Only the 2-column tier's rule is written and it resets at
+   `sm`, because the item counts this panel actually renders (0-5 parents plus lands) never orphan
+   at 3 or 5 columns; if that changes, extend this the way the original seven-dial rule did -- one
+   `nth-child(Cn+1)` per column count, each reset before the next takes over. */
+.synergy-inputs-grid > :last-child:nth-child(2n+1) { grid-column: 1 / -1; }
+.build-inputs-grid > :last-child:nth-child(2n+1) { grid-column: 1 / -1; }
+@media (min-width: 40rem) {
+  .build-inputs-grid > :last-child:nth-child(2n+1) { grid-column: auto; }
+}

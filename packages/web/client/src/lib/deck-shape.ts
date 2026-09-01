@@ -1,4 +1,4 @@
-import type { DeckReport, GraphNode } from "../types.js";
+import type { GraphNode } from "../types.js";
 
 /** THE SLICE ORDER, FIXED, AND IT IS THE VALIDATED COLOUR ORDER.
  *
@@ -17,7 +17,6 @@ export const TYPE_ORDER = [
 const PRECEDENCE = ["creature", "planeswalker", "artifact", "enchantment", "instant", "sorcery"] as const;
 
 export interface TypeSlice { type: string; count: number }
-export interface RoleBar { role: string; count: number }
 
 /** The one type a card counts as, or null when it is not on this chart.
  *
@@ -45,6 +44,27 @@ export function primaryType(types: readonly string[]): string | null {
  *  - A multi-face card is TWO nodes. `face` is absent on a front face and on a single-face card,
  *    so `face === undefined` takes each physical card exactly once. `card-drawer.tsx` selects the
  *    front face by the same test. */
+/** Land cards, on the EXACT same basis `typeSlices` uses for nonlands: skip `n.isToken`, skip
+ *  `n.face !== undefined`, sum `copies`. Deriving both figures from the identical traversal is what
+ *  makes "nonland + land == the deck" true by construction rather than by luck.
+ *
+ *  MUST NOT read `report.landCount` or `deckMath.lands.actual` -- both are MDFC-INCLUSIVE (a modal
+ *  DFC with a land back is priced as a land there, per the 2026-08-31 ruling), while this reads the
+ *  type line of the FRONT face, where the same card is a spell. The two are supposed to disagree by
+ *  exactly `deckMath.lands.mdfc`: this is the census, that is the mana model, and
+ *  `docs/engineering-log/2026-08-31.md` is the record of what happens when their outputs are
+ *  summed as if they were one number. */
+export function landCount(nodes: readonly GraphNode[]): number {
+  let count = 0;
+  for (const n of nodes) {
+    if (n.isToken) continue;
+    if (n.face !== undefined) continue;
+    if (!n.types.some((t) => t.toLowerCase() === "land")) continue;
+    count += n.copies ?? 1;
+  }
+  return count;
+}
+
 export function typeSlices(nodes: readonly GraphNode[]): TypeSlice[] {
   const counts = new Map<string, number>();
   for (const n of nodes) {
@@ -58,13 +78,4 @@ export function typeSlices(nodes: readonly GraphNode[]): TypeSlice[] {
     const count = counts.get(type);
     return count ? [{ type, count }] : [];
   });
-}
-
-/** The deck's four Command-Zone role groups, as counts.
- *
- *  NO TARGETS. Recognition says what the deck IS; whether that is enough is the diagnosis, and it
- *  is already stated as sentences by `Findings`. Printing "17/10" here would put the judgement
- *  back into the step whose whole job is showing the reader we understood their deck. */
-export function roleBars(parents: DeckReport["buildParents"] | undefined): RoleBar[] {
-  return (parents ?? []).map((p) => ({ role: p.name, count: p.count }));
 }

@@ -549,6 +549,17 @@ test("HeadlineScores explains its scale and names the anchor card", async () => 
   expect(screen.getByText(/Krenko, Mob Boss/)).toBeInTheDocument(); // the deck's best-fed card
 });
 
+// PINNED, BYTE FOR BYTE (MINOR G, whole-branch review, 2026-09-01). `BANDS` moved from a literal
+// string to one built from `SCORE_BREAKS` and `scoreBand`'s own labels -- this proves the rendered
+// text a reader sees did not change even though the source moved from a transcription to a
+// derivation.
+test("the printed band scale is exactly the four SCORE_BREAKS bands, unchanged by the derivation", () => {
+  render(<HeadlineScores report={SAMPLE.report} />);
+  expect(
+    screen.getAllByText(/0–1\.5 unfocused · 1\.5–3 developing · 3–4 focused · 4–5 tuned/).length,
+  ).toBe(2);
+});
+
 // TASK 5 (2026-09-01): the parent's own count-against-target row (CONSISTENCY 15/14, RAMP 17/10,
 // INTERACTION 19/10, BOARD WIPES 1/1) moved to Recognition -- it is what the deck IS, and printing
 // it here too put the same four numbers on one screen twice. `RecognitionPanel.test.tsx` covers
@@ -1423,15 +1434,17 @@ test("a single-leaf-parents deck with deckMath present still hides the role-spen
 });
 
 // TASK 5 (2026-09-01): the health dashboard used to be one render -- SYNERGY, the role-spend block
-// and Suggestions all on screen together. The sub-tabs split them: Suggestions and the findings' own
-// figures (Ramp, under target) live on Summary; the scores live on Engine. Same signals, now
-// reached by a click instead of a scroll. (The role-spend block itself -- "How the roles are spent"
-// -- is pinned to the Build sub-tab specifically by the isolation tests below, fix round 1.)
+// and Suggestions all on screen together. The sub-tabs split them: the scores live on Engine.
+// (The role-spend block itself -- "How the roles are spent" -- is pinned to the Build sub-tab
+// specifically by the isolation tests below, fix round 1.)
+// TASK 6 (2026-09-01): Suggestions and the findings' own figures (Ramp, under target) moved again,
+// off Summary onto Fixes -- see the Fixes-tab tests below.
 test("OverviewTab shows the health dashboard, across its sub-tabs", async () => {
   const user = userEvent.setup();
   render(<OverviewTab data={SAMPLE} />);
+  await user.click(screen.getByRole("tab", { name: "Fixes" }));
   expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
-  // "Ramp" is a finding's own figure label (Summary is under target on it) -- present, not unique.
+  // "Ramp" is a finding's own figure label (Fixes is under target on it) -- present, not unique.
   expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
   await user.click(screen.getByRole("tab", { name: "Engine" }));
   expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
@@ -1500,8 +1513,11 @@ test("Engine's own deck-math section (waiting) shows on Engine, not on Build or 
 
 /** I3 (whole-branch review, 2026-09-01): Build and Mana shipped with no title element at all, so
  *  each opened on a heading with no parent and the sentence saying these panels are the EVIDENCE
- *  for Summary's findings was gone from the product. Both halves are pinned -- the `h2` and the
- *  link back -- because the deleted `Movement` carried both. */
+ *  for the findings was gone from the product. Both halves are pinned -- the `h2` and the
+ *  link back -- because the deleted `Movement` carried both.
+ *
+ *  FIX ROUND 1 (task 6, 2026-09-01): the findings moved off Summary onto Fixes; the sentence's
+ *  wording moved with them (see the dedicated regression test below, which pins this specifically). */
 test("Build and Mana each open on an h2 naming them, and say what they are evidence for", async () => {
   const user = userEvent.setup();
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
@@ -1509,11 +1525,22 @@ test("Build and Mana each open on an h2 naming them, and say what they are evide
 
   await user.click(screen.getByRole("tab", { name: "Build" }));
   expect(screen.getByRole("heading", { level: 2, name: /What this deck plays/ })).toBeInTheDocument();
-  expect(screen.getByText(/evidence behind each build finding on Summary/i)).toBeInTheDocument();
+  expect(screen.getByText(/evidence behind each build finding on Fixes/i)).toBeInTheDocument();
 
   await user.click(screen.getByRole("tab", { name: "Mana" }));
   expect(screen.getByRole("heading", { level: 2, name: /Whether the mana delivers it/ })).toBeInTheDocument();
-  expect(screen.getByText(/evidence behind each mana finding on Summary/i)).toBeInTheDocument();
+  expect(screen.getByText(/evidence behind each mana finding on Fixes/i)).toBeInTheDocument();
+});
+
+/** THE MOVEMENT COPY NAMES THE TAB THE FINDINGS ARE ACTUALLY ON. Build and Mana call themselves the
+ *  evidence behind the findings, and when the diagnosis moved to Fixes these two sentences kept
+ *  pointing at Summary -- rendered text telling the reader to look where nothing is. */
+test("Build and Mana point at the tab the findings actually live on", () => {
+  render(<OverviewTab data={SAMPLE as never} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.getByText(/evidence behind each build finding on Fixes/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("tab", { name: "Mana" }));
+  expect(screen.getByText(/evidence behind each mana finding on Fixes/)).toBeInTheDocument();
 });
 
 /** The outline must not skip or invert on any sub-tab (WCAG 1.3.1). Asserted as a PROPERTY of the
@@ -1525,7 +1552,7 @@ test("no sub-tab's heading outline skips a level", async () => {
   render(<OverviewTab data={data} />);
   const levels = (): number[] =>
     [...document.querySelectorAll("h1,h2,h3,h4,h5,h6")].map((h) => Number(h.tagName[1]));
-  for (const tab of ["Build", "Mana", "Engine"]) {
+  for (const tab of ["Summary", "Fixes", "Build", "Mana", "Engine"]) {
     await user.click(screen.getByRole("tab", { name: tab }));
     const seen = levels();
     expect(seen.length, `${tab} has no headings`).toBeGreaterThan(0);
@@ -1538,20 +1565,23 @@ test("no sub-tab's heading outline skips a level", async () => {
 
 /** FINDING 3 (fix round 1): the Mana isolation test below already proves Summary unmounts when you
  *  leave it (Summary -> Mana). Nothing proved the same for the other two sub-tabs it can also
- *  reach directly from Summary's default render. */
+ *  reach directly from Summary's default render.
+ *
+ *  TASK 6 (2026-09-01): "What is wrong with this deck" moved off Summary entirely, onto Fixes --
+ *  swapped for "Where this deck stands", the gauges' own heading, which is what Summary carries now. */
 test("Summary's content is not mounted on Build or Engine", async () => {
   const user = userEvent.setup();
   render(<OverviewTab data={SAMPLE} />);
   expect(screen.getByText("What this deck is")).toBeInTheDocument(); // sanity: mounted on Summary
-  expect(screen.getByText("What is wrong with this deck")).toBeInTheDocument();
+  expect(screen.getByText("Where this deck stands")).toBeInTheDocument();
 
   await user.click(screen.getByRole("tab", { name: "Build" }));
   expect(screen.queryByText("What this deck is")).toBeNull();
-  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+  expect(screen.queryByText("Where this deck stands")).toBeNull();
 
   await user.click(screen.getByRole("tab", { name: "Engine" }));
   expect(screen.queryByText("What this deck is")).toBeNull();
-  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+  expect(screen.queryByText("Where this deck stands")).toBeNull();
 });
 
 /** THE SEQUENCE, pinned. Four persona reviews (2026-08-26) found the page led with its weakest
@@ -1568,15 +1598,20 @@ test("Summary's content is not mounted on Build or Engine", async () => {
  *  TASK 5 (2026-09-01): the scores moved to their own Engine sub-tab, so "demotes the scores below
  *  it" is no longer one render's document order -- it is which sub-tab you are on. Split in two:
  *  recognition-before-diagnosis stays a same-render ordering assertion on Summary (the guarantee
- *  this test exists to pin), and the scores get their own Engine-tab assertion below. */
-test("OverviewTab leads recognition before diagnosis, on Summary", () => {
+ *  this test exists to pin), and the scores get their own Engine-tab assertion below.
+ *
+ *  TASK 6 (2026-09-01): the diagnosis itself ("What is wrong with this deck") moved off Summary
+ *  onto Fixes, so there is no longer a same-render diagnosis to order against. `DeckGauges`
+ *  ("Where this deck stands") is what replaced it on Summary, so the ordering guarantee this test
+ *  exists to pin -- recognition leads whatever follows it -- now runs against that instead. */
+test("OverviewTab leads recognition before the gauges, on Summary", () => {
   const { container } = render(<OverviewTab data={SAMPLE} />);
   const text = container.textContent ?? "";
   const recognition = text.indexOf("What this deck is");
-  const diagnosis = text.indexOf("What is wrong with this deck");
+  const gauges = text.indexOf("Where this deck stands");
   expect(recognition).toBeGreaterThanOrEqual(0);
-  expect(diagnosis).toBeGreaterThanOrEqual(0);
-  expect(diagnosis).toBeGreaterThan(recognition);
+  expect(gauges).toBeGreaterThanOrEqual(0);
+  expect(gauges).toBeGreaterThan(recognition);
 });
 
 test("the scores are not on Summary, and switching to Engine reveals them", async () => {
@@ -1588,13 +1623,35 @@ test("the scores are not on Summary, and switching to Engine reveals them", asyn
 });
 
 /** SUMMARY IS THE WHOLE PAGE'S FIRST SCREEN. The Overview ran 5,202px -- about nine screens -- and
- *  a reader scrolling it had nothing named to steer by. Four sub-tabs give the length somewhere to
- *  go and give the reader a word to aim at. */
-test("OverviewTab opens on Summary, which carries recognition and the findings", () => {
+ *  a reader scrolling it had nothing named to steer by. Five sub-tabs give the length somewhere to
+ *  go and give the reader a word to aim at.
+ *
+ *  TASK 6 (2026-09-01): Summary stopped carrying the findings -- they moved to Fixes -- so what it
+ *  carries now, besides recognition, is the gauges. */
+test("OverviewTab opens on Summary, which carries recognition and the gauges", () => {
   render(<OverviewTab data={SAMPLE} />);
   expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute("aria-selected", "true");
   expect(screen.getByText("What this deck is")).toBeInTheDocument();
+  expect(screen.getByText("Where this deck stands")).toBeInTheDocument();
+});
+
+/** TASK 6 (2026-09-01): SUMMARY IS A SUMMARY AGAIN. It carried the entire diagnosis and the entire
+ *  prescription -- several screens of it -- on the tab a reader lands on first. Those two are one
+ *  thought, what is wrong then what to do about it, so they move together to their own tab rather
+ *  than being split across tabs where a finding would sit apart from its own remedy. */
+test("Summary carries recognition and the gauges, not the findings", () => {
+  render(<OverviewTab data={SAMPLE} />);
+  expect(screen.getByText("What this deck is")).toBeInTheDocument();
+  expect(screen.getByText("Where this deck stands")).toBeInTheDocument();
+  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+  expect(screen.queryByText("What to change")).toBeNull();
+});
+
+test("the Fixes tab carries both the diagnosis and the prescription", () => {
+  render(<OverviewTab data={SAMPLE} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Fixes" }));
   expect(screen.getByText("What is wrong with this deck")).toBeInTheDocument();
+  expect(screen.getByText("What to change")).toBeInTheDocument();
 });
 
 test("the mana detail is not on Summary, and switching to Mana reveals it", async () => {
@@ -1616,7 +1673,7 @@ test("the mana detail is not on Summary, and switching to Mana reveals it", asyn
 test("every sub-tab is reachable and names itself", async () => {
   const user = userEvent.setup();
   render(<OverviewTab data={SAMPLE} />);
-  for (const name of ["Summary", "Build", "Mana", "Engine"]) {
+  for (const name of ["Summary", "Fixes", "Build", "Mana", "Engine"]) {
     await user.click(screen.getByRole("tab", { name }));
     expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
   }
@@ -2141,4 +2198,37 @@ test("the trim buttons announce which count is open", async () => {
   // Clicking the open count closes it, so the state goes back down.
   await userEvent.click(three);
   expect(three).toHaveAttribute("aria-pressed", "false");
+});
+
+/** A DIAL THAT OPENS A TAB AND LEAVES THE READER TO FIND THE ROW IS HALF A DRILL-DOWN. The gauge
+ *  names one parent; Build has four groups; landing on the tab without marking which one was asked
+ *  about makes the reader repeat the search they just clicked to avoid. */
+test("opening a role from its dial marks that group on Build", () => {
+  render(<OverviewTab data={SAMPLE as never} />);
+  fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
+  expect(screen.getByRole("tab", { name: "Build" })).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByTestId("role-group-Interaction")).toHaveAttribute("data-focused", "true");
+  // AND ONLY THAT GROUP. Without this line the test passes for an implementation that marks every
+  // group whenever any focus is set (`focus !== undefined` rather than `focus === p.name`) -- which
+  // is precisely the bug the mark exists to avoid, since marking everything marks nothing.
+  expect(screen.getByTestId("role-group-Consistency")).not.toHaveAttribute("data-focused");
+});
+
+test("arriving on Build without a dial marks nothing", () => {
+  render(<OverviewTab data={SAMPLE as never} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.getByTestId("role-group-Interaction")).not.toHaveAttribute("data-focused");
+});
+
+/** CLICKING A DIAL UNMOUNTS SUMMARY, so the button that had keyboard focus disappears with it and
+ *  focus silently falls to `document.body` -- a keyboard or screen-reader user gets no
+ *  announcement of where they landed and has to Tab from the top of the page (IMPORTANT D,
+ *  whole-branch review, 2026-09-01). `scrollIntoView` is not implemented in jsdom, so it is stubbed
+ *  rather than skipped -- the point is proving the group receives DOM focus, which jsdom can check
+ *  even though it cannot lay anything out. */
+test("opening a role from its dial moves keyboard focus to the marked group", () => {
+  Element.prototype.scrollIntoView = vi.fn();
+  render(<OverviewTab data={SAMPLE as never} />);
+  fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
+  expect(screen.getByTestId("role-group-Interaction")).toHaveFocus();
 });

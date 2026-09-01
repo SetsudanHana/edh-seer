@@ -22,6 +22,16 @@ if (typeof globalThis.ResizeObserver === "undefined") {
   } as unknown as typeof ResizeObserver;
 }
 
+// jsdom implements no `scrollIntoView` at all (unlike most DOM methods it fakes), so any effect
+// that calls it -- `BuildBenchmarks`' focus-follows-the-dial effect, whole-branch review fix,
+// 2026-09-01 -- throws `scrollIntoView is not a function` at mount under every test that renders a
+// focused group, not just the ones about scrolling. A harmless no-op default here, same pattern as
+// the ResizeObserver stub above; a test asserting scrollIntoView was called overrides this with its
+// own `vi.fn()`.
+if (typeof Element !== "undefined" && typeof Element.prototype.scrollIntoView !== "function") {
+  Element.prototype.scrollIntoView = () => {};
+}
+
 // Node's own experimental global `localStorage` shadows jsdom's window.localStorage in
 // this environment and resolves to undefined, so components/hooks that read it at module
 // or effect time crash under test. Stub a minimal in-memory implementation.

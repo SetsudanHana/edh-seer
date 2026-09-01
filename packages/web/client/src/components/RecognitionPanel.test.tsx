@@ -45,6 +45,40 @@ test("the bar counts nonlands only, weighted by copies", () => {
   expect(screen.getByTestId("type-total")).toHaveTextContent("6");
 });
 
+/** Finding 1 (Critical, whole-branch review, 2026-09-01): `RecognitionPanel` printed
+ *  `deckMath.lands.actual` (38, MDFC-inclusive) beside the type-line nonland total (66), which do
+ *  not sum to the 100-card deck the coverage line beneath them reports -- the exact defect
+ *  `docs/engineering-log/2026-08-31.md` diagnosed on `BuildBenchmarks`, reintroduced here.
+ *  `RecognitionPanel` must derive both the nonland AND the land figure from the same graph
+ *  traversal (`typeSlices`/`landCount`) and name the mana model's MDFC-inclusive count as a
+ *  parenthetical, not as the headline land figure. */
+test("the nonland and land totals sum to the deck, with the MDFC gap named rather than summed in", () => {
+  const nodes = [
+    { id: "c", label: "C", copies: 62, types: ["creature"], subtypes: [], supertypes: [] },
+    { id: "l", label: "L", copies: 34, types: ["land"], subtypes: [], supertypes: [] },
+    // Four modal DFCs: a spell front (counted as nonland, like `typeSlices` counts any front
+    // face) and a land back (`face: 1`, skipped by both traversals).
+    { id: "m", label: "M", cardName: "M", copies: 4, types: ["sorcery"], subtypes: [], supertypes: [] },
+    { id: "m-back", label: "M //", cardName: "M", face: 1, copies: 4, types: ["land"], subtypes: [], supertypes: [] },
+  ];
+  const data = {
+    ...DATA,
+    graph: { nodes, edges: [] },
+    report: {
+      ...DATA.report,
+      deckMath: {
+        castability: { commanders: [] },
+        lands: { actual: 38, target: 36, mdfc: 4 },
+      },
+    },
+  } as unknown as typeof DATA;
+  render(<RecognitionPanel data={data} />);
+  // 62 creatures + 4 MDFC fronts (sorcery) = 66 nonland; 34 real lands; 66 + 34 = 100.
+  expect(screen.getByTestId("type-total")).toHaveTextContent("66");
+  const line = screen.getByTestId("type-total").closest("p")!;
+  expect(line).toHaveTextContent("34 lands (38 with MDFCs)");
+});
+
 test("carries no 0-5 score: recognition is not a judgement", () => {
   render(<RecognitionPanel data={DATA} />);
   expect(screen.queryByText(/\/\s*5\b/)).toBeNull();
@@ -162,6 +196,9 @@ test("names the commander and the colour identity, not bare letters", () => {
             { name: "Krenko, Mob Boss", turn: 4, castable: { low: 0.5, high: 0.7 }, mana: { low: 0.5, high: 0.7 } },
           ],
         },
+        // `lands` is never actually optional on a real `deckMath` -- only this mock omitted it,
+        // which the fixture predates `TypeBar`'s `lands` prop reading `deckMath.lands.actual`.
+        lands: { actual: 38, target: 36 },
       },
     },
   } as typeof DATA;
@@ -175,4 +212,46 @@ test("names the commander and the colour identity, not bare letters", () => {
 test("names no commander when deckMath was never computed", () => {
   render(<RecognitionPanel data={DATA} />);
   expect(screen.getByTestId("recognition-identity")).not.toHaveTextContent("Krenko");
+});
+
+/** THE THEME IS THE ANSWER, SO IT LOOKS LIKE ONE (owner review, 2026-09-01). "enchantments
+ *  entering" shipped as the first word of a 14px muted metadata run, typographically identical to
+ *  the coverage counter beside it -- the panel asked "What this deck is" and then whispered the
+ *  answer at the same weight as its own footnotes. The theme now owns its own display line; the
+ *  metadata that qualifies it stays small beneath. `recognition-identity` still wraps both, so the
+ *  guards above (theme, commander, colours, coverage) keep reading one element. */
+test("the theme is a display line of its own, not a word inside the metadata run", () => {
+  render(<RecognitionPanel data={DATA} />);
+  const theme = screen.getByTestId("recognition-theme");
+  expect(theme).toHaveTextContent("enchantments entering");
+  // The metadata paragraph carries the counter and never the theme.
+  const meta = screen.getByTestId("recognition-coverage").closest("p");
+  expect(meta).not.toHaveTextContent("enchantments entering");
+});
+
+/** COLOUR PIPS BESIDE THE IDENTITY NAME (owner review, 2026-09-01). "Grixis" is a name a player has
+ *  to know to read; the three mana symbols are the same fact rendered in the game's own vocabulary,
+ *  and index.css has said "identity in the interface uses real mana symbols" since the ramp was
+ *  written. Reuses `ManaSymbols` (Scryfall symbology SVGs) rather than a second symbol path, and
+ *  the pips are aria-hidden because the word next to them already says it. */
+test("draws the colour identity as mana pips beside its name", () => {
+  const grixis = { ...DATA, commanderColorIdentity: ["R", "B", "U"] } as typeof DATA;
+  const { container } = render(<RecognitionPanel data={grixis} />);
+  const pips = container.querySelectorAll("img[src*='card-symbols']");
+  expect([...pips].map((p) => p.getAttribute("src"))).toEqual([
+    "https://svgs.scryfall.io/card-symbols/U.svg",
+    "https://svgs.scryfall.io/card-symbols/B.svg",
+    "https://svgs.scryfall.io/card-symbols/R.svg",
+  ]);
+  expect(screen.getByTestId("recognition-identity")).toHaveTextContent("Grixis");
+});
+
+/** THE ROLE BARS MOVED TO `DeckGauges` (owner review, 2026-09-01). `deck-shape.ts` already said why
+ *  they could not stay: "NO TARGETS. Recognition says what the deck IS; whether that is enough is
+ *  the diagnosis." Counts with no floor beside them were the compromise that fell out of that rule.
+ *  The judgement now lives in a panel allowed to make it. */
+test("no longer carries the role bars", () => {
+  render(<RecognitionPanel data={DATA} />);
+  expect(screen.queryByTestId("role-row-Consistency")).toBeNull();
+  expect(screen.queryByTestId("role-row-Interaction")).toBeNull();
 });
