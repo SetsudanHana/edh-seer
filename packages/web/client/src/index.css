@@ -256,13 +256,18 @@ h3 {
   line-height: 1.65;
 }
 
+/* A HEADING, NOT AN EYEBROW. These four were `--font-mono` 0.6875rem uppercase `--muted`: 11px,
+   which is SMALLER than the 14px prose they head and smaller than the 12px footer legal text below
+   them, so the section headings were the smallest type on the page and the hierarchy read
+   inverted. The mono-uppercase micro-label is a real register in this app -- `.eyebrow` -- but its
+   job is to sit ABOVE a heading, never to BE one. Sized to match `.prose h2` on how-it-works, which
+   is the same content at the same level and already had this right. */
 .intro h2 {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
   margin: 2rem 0 0.5rem;
 }
 

@@ -10,25 +10,36 @@ const TONE_CLASS: Record<ScoreTone, string> = {
 };
 
 /** The four bands, printed rather than hidden in a `title`. A tooltip does not exist on touch at
- *  all, and a reader who cannot see where 4.1 sits on the scale cannot read the tile — which is the
- *  page's lead. */
+ *  all, and a reader who cannot see where 4.1 sits on the scale cannot read the tile.
+ *
+ *  This used to end "— which is the page's lead", and that has been false since 2026-08-27: the
+ *  tiles were DEMOTED into the Verify movement on the owner's call, because four of four personas
+ *  could not read them. See `OverviewTab`. The reason for printing the bands is unchanged. */
 const BANDS = "0–1.5 unfocused · 1.5–3 developing · 3–4 focused · 4–5 tuned";
 
 function ScoreTile({
-  label, score, sub, children, partial,
+  label, score, sub, children, partial, lead,
 }: { label: string; score: number; sub?: string; children?: React.ReactNode;
   /** The score is computed over less than the whole deck. See `HeadlineScores`. */
-  partial?: { derived: number; resolved: number } }) {
+  partial?: { derived: number; resolved: number };
+  /** THE ONE OF THE PAIR THAT LEADS. Both tiles were `flex-1` with an identical `text-3xl` figure,
+   *  which is the "two equal cards, the eye lands nowhere" shape the composition rules name — and
+   *  between these two it is not a toss-up: this product measures SYNERGY, and BUILD is a
+   *  deckbuilding convention the tile itself admits "says nothing about how the cards work
+   *  together". Size follows that. */
+  lead?: boolean }) {
   const band = scoreBand(score);
   // A MEASUREMENT KEEPS ITS NUMBER; A VERDICT DOES NOT SURVIVE A HALF-READ DECK. See the component
   // comment below: the tone colour and the band word are the JUDGEMENT half, and they are the two
   // things a partially-read deck has not earned.
   const tone = partial ? "" : TONE_CLASS[band.tone];
   return (
-    <div className="flex-1 min-w-0 flex flex-col gap-0.5 rounded-lg border border-(--separator) p-4">
+    <div className={`min-w-0 flex flex-col gap-0.5 rounded-lg border border-(--separator) p-4 ${
+      lead ? "sm:basis-3/5 sm:grow" : "sm:basis-2/5 sm:grow"
+    }`}>
       <span className="eyebrow">{label}</span>
       <span className="flex items-baseline gap-1">
-        <span className={`text-3xl font-semibold stat-num ${tone}`}>{score.toFixed(1)}</span>
+        <span className={`${lead ? "text-4xl" : "text-3xl"} font-semibold stat-num ${tone}`}>{score.toFixed(1)}</span>
         <span className="text-sm text-(--muted) stat-num">/5</span>
       </span>
       {partial ? (
@@ -81,6 +92,7 @@ export function HeadlineScores({ report }: { report: DeckReport }) {
           label="SYNERGY"
           score={synergyOverall}
           sub={sub}
+          lead
           partial={report.coverage
             ? { derived: report.coverage.derived, resolved: report.coverage.resolved }
             : undefined}
