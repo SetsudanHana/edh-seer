@@ -38,13 +38,13 @@ function CardPanel({
   onNote: (v: string) => void;
 }) {
   return (
-    <section className="flex-1 border border-white/15 p-4 flex flex-col gap-3 min-w-0">
+    <section className="flex-1 border border-(--separator) p-4 flex flex-col gap-3 min-w-0">
       <header>
         <h2 className="text-lg font-semibold">{card.name}</h2>
         <p className="text-xs opacity-60">{card.typeLine}</p>
       </header>
       <p className="text-sm whitespace-pre-wrap opacity-90">{card.oracleText}</p>
-      <div className="text-xs font-mono opacity-70 flex flex-col gap-1 border-t border-white/10 pt-2">
+      <div className="text-xs font-mono opacity-70 flex flex-col gap-1 border-t border-(--separator) pt-2">
         {card.tags.map((t, i) => <span key={i}>{t}</span>)}
       </div>
       <label className="text-xs flex items-center gap-2 mt-auto pt-2">
@@ -53,7 +53,7 @@ function CardPanel({
       </label>
       {flagged && (
         <input
-          className="text-xs bg-transparent border border-white/20 px-2 py-1"
+          className="text-xs bg-transparent border border-(--field-border) px-2 py-1"
           placeholder="what's wrong with it?"
           value={note}
           onChange={(e) => onNote(e.target.value)}
@@ -121,8 +121,8 @@ export function Calibrate() {
   if (error) {
     return (
       <div className="p-8 flex flex-col gap-3">
-        <p className="text-red-400 text-sm">{error}</p>
-        <button className="border border-white/20 px-3 py-1 text-sm w-fit" onClick={() => void load()}>retry</button>
+        <p className="text-(--danger) text-sm">{error}</p>
+        <button className="border border-(--separator) px-3 py-1 text-sm w-fit" onClick={() => void load()}>retry</button>
       </div>
     );
   }
@@ -156,28 +156,28 @@ export function Calibrate() {
       </div>
 
       <input
-        className="text-sm bg-transparent border border-white/20 px-3 py-2"
+        className="text-sm bg-transparent border border-(--field-border) px-3 py-2"
         placeholder="note about the pair (optional)"
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
 
       <div className="flex gap-3">
-        <button className="border border-emerald-400/50 text-emerald-300 px-4 py-2 text-sm" onClick={() => void judge("synergy")}>
+        <button className="border border-(--success) text-(--success) px-4 py-2 text-sm" onClick={() => void judge("synergy")}>
           synergy
         </button>
-        <button className="border border-white/25 px-4 py-2 text-sm" onClick={() => void judge("neutral")}>
+        <button className="border border-(--separator) px-4 py-2 text-sm" onClick={() => void judge("neutral")}>
           neutral
         </button>
-        <button className="border border-red-400/50 text-red-300 px-4 py-2 text-sm" onClick={() => void judge("anti-synergy")}>
+        <button className="border border-(--danger) text-(--danger) px-4 py-2 text-sm" onClick={() => void judge("anti-synergy")}>
           anti-synergy
         </button>
-        <button className="border border-white/15 px-4 py-2 text-sm ml-auto opacity-70" onClick={() => void load()}>
+        <button className="border border-(--separator) px-4 py-2 text-sm ml-auto opacity-70" onClick={() => void load()}>
           skip
         </button>
       </div>
 
-      <section className="border-t border-white/10 pt-3">
+      <section className="border-t border-(--separator) pt-3">
         {showReasons ? (
           <div className="text-xs font-mono opacity-70 flex flex-col gap-1">
             {pair.engineReasons.length === 0

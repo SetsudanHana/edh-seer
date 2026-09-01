@@ -41,8 +41,12 @@ PAIRS = [
 # repointed at the decorative token fails the build instead of earning a warning nobody reads.
 # There is exactly ONE decorative border token: border.default was the same job at 1.32:1 vs
 # 1.15:1, a difference no eye resolves, and the two were used interchangeably across 66 sites.
+# There is no `text.tertiary` pair. The system has TWO text tiers and colors.json says so in
+# writing; the client bears it out -- 160 uses of the muted token, 28 of the foreground, and
+# nothing dimmer. The pair used to sit here and print "token missing" on every run, which reads
+# like an unfinished job rather than a kept decision. A pair for a tier nothing renders measures
+# nothing; if a third tier is ever introduced, it arrives with its own pair.
 ADVISORY = [
-    ("semantic.text.tertiary",  "semantic.surface.page", 4.5, "tertiary/incidental text on page"),
     # Found by an eval run: secondary text on a RAISED surface (table headers, chips,
     # selected rows) is a very common pairing and is tighter than on the page. It is
     # advisory rather than required only because tightening it moves a shared token.
