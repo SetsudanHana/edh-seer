@@ -147,7 +147,7 @@ export function BoardTuner({
   return (
     <details
       open
-      className="absolute top-2 right-2 w-64 rounded-(--radius) border border-(--border) bg-(--surface) p-2 text-xs"
+      className="absolute top-2 right-2 w-64 rounded-(--radius) border border-(--separator) bg-(--surface) p-2 text-xs"
     >
       <summary className="eyebrow cursor-pointer">tune</summary>
 

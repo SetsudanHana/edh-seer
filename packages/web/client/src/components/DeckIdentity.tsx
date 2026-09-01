@@ -69,7 +69,7 @@ export function DeckIdentity({
       : null;
   const top = (strategies ?? []).slice(0, 3);
   return (
-    <div className="border border-(--border) rounded-(--radius) p-5 bg-(--surface) flex flex-col gap-2">
+    <div className="border border-(--separator) rounded-(--radius) p-5 bg-(--surface) flex flex-col gap-2">
       <div className="flex items-baseline gap-3 flex-wrap">
         <span className="eyebrow shrink-0">Deck identity</span>
         {/* NAMING A DECK IS A CLAIM, AND IT CAN BE DECLINED (roadmap A15). Under the floor the
@@ -100,7 +100,7 @@ export function DeckIdentity({
           <span className="flex items-center gap-1.5 ml-auto">
             <span
               aria-hidden="true"
-              className="w-10 h-5 rounded-[4px] border border-(--border)"
+              className="w-10 h-5 rounded-[4px] border border-(--separator)"
               style={{ background: identityGradient(colorIdentity) }}
             />
             <span className="text-xs text-(--muted) font-mono">{identityLabel(colorIdentity)}</span>

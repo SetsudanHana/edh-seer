@@ -36,16 +36,18 @@ PAIRS = [
 ]
 
 # ADVISORY pairs — intentionally de-emphasized text/decoration. Reported, not failed:
-# tertiary is for incidental non-essential text; border.default is decorative, and that is now
+# tertiary is for incidental non-essential text; border.separator is decorative, and that is now
 # ENFORCED rather than advised — component.field.border is a required pair above, so a control
 # repointed at the decorative token fails the build instead of earning a warning nobody reads.
+# There is exactly ONE decorative border token: border.default was the same job at 1.32:1 vs
+# 1.15:1, a difference no eye resolves, and the two were used interchangeably across 66 sites.
 ADVISORY = [
     ("semantic.text.tertiary",  "semantic.surface.page", 4.5, "tertiary/incidental text on page"),
     # Found by an eval run: secondary text on a RAISED surface (table headers, chips,
     # selected rows) is a very common pairing and is tighter than on the page. It is
     # advisory rather than required only because tightening it moves a shared token.
     ("semantic.text.secondary", "semantic.surface.raised", 4.5, "secondary text on raised surface"),
-    ("semantic.border.default", "semantic.surface.page", 3.0, "default border on page (decorative)"),
+    ("semantic.border.separator", "semantic.surface.page", 3.0, "decorative hairline on page"),
 ]
 
 

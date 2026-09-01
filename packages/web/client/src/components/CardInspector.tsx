@@ -142,7 +142,7 @@ export function CardInspector({
   return (
     <div
       data-testid="card-inspector"
-      className="absolute inset-y-2 right-2 w-72 max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--border) bg-(--surface) p-3 text-sm flex flex-col gap-3"
+      className="absolute inset-y-2 right-2 w-72 max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm flex flex-col gap-3"
     >
       <button type="button" onClick={onClose} className="eyebrow self-end text-(--muted)">
         close
@@ -166,7 +166,7 @@ export function CardInspector({
         <img
           src={cardImageUrl((face?.artCrop ?? node.artCrop)!)}
           alt={face?.name ?? node.label}
-          className="w-full max-h-52 object-contain shrink-0 rounded-(--radius) border border-(--border)"
+          className="w-full max-h-52 object-contain shrink-0 rounded-(--radius) border border-(--separator)"
         />
       ) : null}
 

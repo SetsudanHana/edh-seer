@@ -1999,7 +1999,7 @@ describe("face pair nodes", () => {
     // A stroke in `--foreground`, once per face node -- distinct from the token rim just above,
     // which is drawn in `--muted`. jsdom's getComputedStyle returns "" for a custom property, so
     // both fall back to the literal default GraphView.tsx ships when the CSS variable is absent.
-    expect(calls.filter((c) => c === "set:strokeStyle=#e6e8eb").length).toBe(2);
+    expect(calls.filter((c) => c === "set:strokeStyle=#e9e4ef").length).toBe(2);
     // DASHED, once per face node -- the review fix. Pre-fix this rim was solid at the same width
     // class as the "you clicked this" rim and painted invisibly under it whenever a face node was
     // also the clicked node; a real `setLineDash` call with a non-empty pattern is what makes the
@@ -2087,7 +2087,7 @@ describe("face pair nodes", () => {
     // Exactly two: the front face and its sibling, and nothing else on the board.
     // THREE accent strokes: the TETHER (drawn in the edge pass, so first) and then one rim per
     // face. Everything else on the board keeps its neutral.
-    const accents = calls.flatMap((c, i) => (c === "set:strokeStyle=#5b8dee" ? [i] : []));
+    const accents = calls.flatMap((c, i) => (c === "set:strokeStyle=#c64bc6" ? [i] : []));
     expect(accents).toHaveLength(3);
 
     // AND THE SIBLING IS NOT DIMMED. Read the alpha in force when its rim was painted, rather than
@@ -2150,7 +2150,7 @@ test("a search match outside the active flow still paints at full strength", () 
   calls.length = 0;
   tick(1);
 
-  const ringAt = calls.indexOf("set:strokeStyle=#5b8dee");
+  const ringAt = calls.indexOf("set:strokeStyle=#c64bc6");
   expect(ringAt).toBeGreaterThan(-1); // the match ring was drawn at all
   const alphaBefore = calls.slice(0, ringAt).filter((c) => c.startsWith("set:globalAlpha=")).at(-1);
   expect(alphaBefore).toBe("set:globalAlpha=1");

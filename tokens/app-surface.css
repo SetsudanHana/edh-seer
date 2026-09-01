@@ -45,7 +45,6 @@
   --success: var(--color-feedback-success-text);
   --success-foreground: var(--color-feedback-success-on);
 
-  --border: var(--color-border-default);
   --separator: var(--color-border-separator);
   --focus: var(--color-border-focus);
 
