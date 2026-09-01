@@ -131,6 +131,9 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         ))}
       </div>
 
+      {/* Matches `ReportTabs`' own panel wrapper exactly -- one `role="tabpanel"` around whichever
+        *  branch is active, no `aria-controls`/`id` wiring, because `ReportTabs` itself has none. */}
+      <div role="tabpanel">
       {active === "summary" && (
         <div className="flex flex-col gap-14">
           {/* A deck the format would not let you play is not a deck this report can diagnose, so
@@ -178,12 +181,18 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
 
       {active === "mana" && (
         <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
+          {/* FIX ROUND 1 (controller ruling, 2026-09-01): `showBenchmarks={false}` -- the Build
+            *  sub-tab is the only one that owns the category/parent block (the "Build benchmarks"
+            *  heading, its group headers and leaf rows, the ungrouped bars). Without this, that
+            *  block rendered identically here AND on Engine, three copies of the same Consistency/
+            *  Interaction groups across the sub-tabs the split was supposed to separate. */}
           <BuildBenchmarks
             categories={report.buildCategories}
             parents={report.buildParents}
             deckMath={report.deckMath}
             answerCoverage={report.answerCoverage}
             sections={["cast"]}
+            showBenchmarks={false}
           />
           <ManaAvailability manaAvailability={report.manaAvailability} />
           <ManaCurveChart curve={report.manaCurve} />
@@ -206,12 +215,15 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
             coverage={report.coverage}
           />
           <HeadlineScores report={report} />
+          {/* Same `showBenchmarks={false}` reasoning as Mana, above -- Build alone owns the
+            *  category/parent block. */}
           <BuildBenchmarks
             categories={report.buildCategories}
             parents={report.buildParents}
             deckMath={report.deckMath}
             answerCoverage={report.answerCoverage}
             sections={["waiting"]}
+            showBenchmarks={false}
           />
           <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
             <HighSynergyCards cards={report.cards} />
@@ -219,6 +231,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
           </div>
         </Movement>
       )}
+      </div>
     </div>
   );
 }

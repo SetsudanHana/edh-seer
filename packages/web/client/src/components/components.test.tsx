@@ -1278,8 +1278,9 @@ test("BuildBenchmarks renders without deck math at all", () => {
 
 // TASK 5 (2026-09-01): the health dashboard used to be one render -- SYNERGY, Build benchmarks and
 // Suggestions all on screen together. The sub-tabs split them: Suggestions and the findings' own
-// figures (Ramp, under target) live on Summary; the scores and the benchmark detail behind them
-// moved to Engine. Same three signals, now reached by a click instead of a scroll.
+// figures (Ramp, under target) live on Summary; the scores live on Engine. Same signals, now
+// reached by a click instead of a scroll. (The benchmark block itself -- "Build benchmarks" -- is
+// pinned to the Build sub-tab specifically by the isolation tests below, fix round 1.)
 test("OverviewTab shows the health dashboard, across its sub-tabs", async () => {
   const user = userEvent.setup();
   render(<OverviewTab data={SAMPLE} />);
@@ -1288,7 +1289,68 @@ test("OverviewTab shows the health dashboard, across its sub-tabs", async () => 
   expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
   await user.click(screen.getByRole("tab", { name: "Engine" }));
   expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
+});
+
+/** FIX ROUND 1 (controller ruling, 2026-09-01): FINDING 1 -- `sections`/`only` only ever filtered
+ *  `DeckMathRows`, so the category/parent block (the "Build benchmarks" heading, `scoredParents`'
+ *  group headers, their leaf rows, and any `ungrouped` bar) rendered identically on Build, Mana AND
+ *  Engine, three copies of the same Consistency/Interaction groups. `BuildBenchmarks`'
+ *  `showBenchmarks` prop (default `true`, `false` on the Mana and Engine call sites) fixes it; this
+ *  is the isolation test that would have caught it, per FINDING 2. */
+test("the benchmark block (heading, groups, leaf rows) renders on Build, not on Mana or Engine", async () => {
+  const user = userEvent.setup();
+  render(<OverviewTab data={SAMPLE} />);
+  await user.click(screen.getByRole("tab", { name: "Build" }));
   expect(screen.getByText(/Build benchmarks/i)).toBeInTheDocument();
+  // A multi-leaf parent's name-only group header (`h4`) -- present with the heading, not just it.
+  expect(screen.getByText("Consistency")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("tab", { name: "Mana" }));
+  expect(screen.queryByText(/Build benchmarks/i)).toBeNull();
+  expect(screen.queryByText("Consistency")).toBeNull();
+
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
+  expect(screen.queryByText(/Build benchmarks/i)).toBeNull();
+  expect(screen.queryByText("Consistency")).toBeNull();
+});
+
+/** FINDING 2 (fix round 1): the deck-math sections `BuildBenchmarks` routes to the Build sub-tab
+ *  (`sections={["answers", "win"]}`) need their own presence/absence pins -- nothing previously
+ *  asserted Build's OWN content, which is exactly the gap that let Finding 1 through unnoticed. */
+test("Build's own deck-math sections (answers, win) show on Build, not on Mana or Engine", async () => {
+  const user = userEvent.setup();
+  // Needs `deckMath` -- see the comment on the Mana test below for why it's layered on locally.
+  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
+  render(<OverviewTab data={data} />);
+  await user.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.getByText("Can you deal with theirs")).toBeInTheDocument();
+  expect(screen.getByText("How you win")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("tab", { name: "Mana" }));
+  expect(screen.queryByText("Can you deal with theirs")).toBeNull();
+  expect(screen.queryByText("How you win")).toBeNull();
+
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
+  expect(screen.queryByText("Can you deal with theirs")).toBeNull();
+  expect(screen.queryByText("How you win")).toBeNull();
+});
+
+/** FINDING 3 (fix round 1): the Mana isolation test below already proves Summary unmounts when you
+ *  leave it (Summary -> Mana). Nothing proved the same for the other two sub-tabs it can also
+ *  reach directly from Summary's default render. */
+test("Summary's content is not mounted on Build or Engine", async () => {
+  const user = userEvent.setup();
+  render(<OverviewTab data={SAMPLE} />);
+  expect(screen.getByText("What this deck is")).toBeInTheDocument(); // sanity: mounted on Summary
+  expect(screen.getByText("What is wrong with this deck")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.queryByText("What this deck is")).toBeNull();
+  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
+  expect(screen.queryByText("What this deck is")).toBeNull();
+  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
 });
 
 /** THE SEQUENCE, pinned. Four persona reviews (2026-08-26) found the page led with its weakest

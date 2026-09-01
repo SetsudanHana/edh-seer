@@ -73,7 +73,7 @@ export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 export type DeckMathSectionId = "cast" | "answers" | "win" | "waiting";
 
 export function BuildBenchmarks({
-  categories, parents, deckMath, answerCoverage, sections,
+  categories, parents, deckMath, answerCoverage, sections, showBenchmarks = true,
 }: {
   categories: DeckReport["buildCategories"];
   /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). The parent's OWN
@@ -92,6 +92,21 @@ export function BuildBenchmarks({
   /** Which of the four deck-math groups to render, by id. Omitted renders all four -- the current
    *  single call site relies on that. */
   sections?: readonly DeckMathSectionId[];
+  /** Suppresses the WHOLE category/parent block -- the "Build benchmarks" heading, the
+   *  `scoredParents` group headers and their leaf rows, and the `ungrouped` bars -- not just the
+   *  rows inside it. Default `true` so every call site before task 5's fix round is unchanged.
+   *
+   *  WHY THIS EXISTS (controller ruling, fix round 1, 2026-09-01): the Overview sub-tabs
+   *  (`OverviewTab.tsx`) call this component three times -- Build, Mana, Engine -- and until this
+   *  prop existed, `sections`/`only` only filtered `DeckMathRows`, so the category/parent block
+   *  (Consistency, Interaction, their leaves, any ungrouped bar) rendered identically on all three,
+   *  three times over. Only Build owns those leaves now; Mana and Engine pass `false` so this
+   *  component contributes just its `sections`-filtered `DeckMathRows` there.
+   *
+   *  A heading over nothing is the same broken-heading shape C1 (whole-branch review, 2026-09-01)
+   *  found and fixed elsewhere in this file, so this suppresses the heading along with the rows —
+   *  see the `hasBenchmarkContent` guard below for the render-nothing-not-an-empty-shell case. */
+  showBenchmarks?: boolean;
 }) {
   if (!categories || categories.length === 0) return null;
   const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
@@ -99,7 +114,9 @@ export function BuildBenchmarks({
   // Anything no parent names (burn, stax) renders after them, exactly as before this task -- those
   // are win-plan and tax signals, never build roles, and each still carries its OWN target (today
   // always 0, per `build.ts`'s `BASE_TARGETS`, so nothing renders here in practice).
-  const ungrouped = categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category) && !groupedLeaves.has(c.category));
+  const ungrouped = showBenchmarks
+    ? categories.filter((c) => c.target > 0 && !REPORTED_ELSEWHERE.has(c.category) && !groupedLeaves.has(c.category))
+    : [];
   // FIX F2 (controller review, 2026-08-21), REVISED (fix round 2, 2026-09-01): the parent's own
   // ratio bar is gone (moved to Recognition, see the group-header comment below), so this no
   // longer guards a divide-by-zero -- there is no `count / target` left at the parent level to
@@ -108,8 +125,12 @@ export function BuildBenchmarks({
   // mirrors that skip so a reader never sees a group of leaves reporting share of a parent the
   // score itself ignored -- the same "not scored, so not shown" convention `ungrouped` above
   // already applies to a leaf.
-  const scoredParents = (parents ?? []).filter((p) => p.target > 0);
-  if (scoredParents.length === 0 && ungrouped.length === 0 && !deckMath) return null;
+  const scoredParents = showBenchmarks ? (parents ?? []).filter((p) => p.target > 0) : [];
+  // NOTHING TO SHOW, NOT AN EMPTY SHELL (fix round 1, 2026-09-01): when the benchmark block is
+  // suppressed, `scoredParents`/`ungrouped` are already forced empty above, so this collapses to
+  // "no deckMath either" -- exactly the "render nothing" case the controller ruling asked for.
+  const hasBenchmarkContent = scoredParents.length > 0 || ungrouped.length > 0;
+  if (!hasBenchmarkContent && !deckMath) return null;
 
   /** ONE BAR SHAPE, geometry and `TARGET_MARK` unchanged since before grouping existed. The parent's
    *  OWN ratio bar (the thing this shape was built to draw for four rows -- CONSISTENCY 15/14 ✓ and
@@ -183,53 +204,64 @@ export function BuildBenchmarks({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* The parent of this panel's own headings, and, below `h3`, of a variable number of h4s: one
-        *  per multi-leaf parent group (the name-only header just below) plus the four deck-math
-        *  question sections further down (`sections`, "Can you cast your cards" and its three
-        *  siblings) when `deckMath` is present. Not a fixed count any more -- REVISED (fix round 2,
-        *  2026-09-01) from the "one h3, seven h4s" this used to claim, which described the shape
-        *  before the four parent ROWS (h4s of their own) were cut and before this group header
-        *  existed to replace them. Foreground weight on the h3 is still the whole difference from a
-        *  child heading; the children keep the muted eyebrow they already had. */}
-      <h3 className="eyebrow text-(--foreground)">Build benchmarks</h3>
-      <ul className="flex flex-col gap-1.5">
-        {/* THE FOUR PARENT COUNTS-AGAINST-TARGET MOVED TO RECOGNITION. They are what the deck IS,
-          *  so they belong in the panel that says so, and printing them here as well would put the
-          *  same four numbers on one screen twice. The TARGETS did not move: whether 17 ramp is
-          *  enough is a diagnosis, and `Findings` states it as a sentence.
-          *
-          *  THE NAME DID NOT MOVE WITH THEM, and C1 (whole-branch review, 2026-09-01) is why it is
-          *  back below as a header with no count, target, tick or bar of its own: without it, a
-          *  multi-leaf parent's leaves lost their only on-screen label, and their SHARE figures --
-          *  each a percentage of that parent's own leaf sum, see `leafRow` -- sat under no visible
-          *  whole. Recognition carries the count; this line exists only so a reader knows what the
-          *  shares below it are shares OF. */}
-        {scoredParents.map((p) => {
-          // Still shared by every leaf beneath this parent (the share denominator) -- see the
-          // doc comment on `leafRow` for why it reads this.
-          const sumOfLeaves = p.leaves.reduce((s, l) => s + (countByLeaf.get(l) ?? 0), 0);
-          // Ordered by the parent's own `leaves` list, never re-sorted -- a parent groups its
-          // leaves together on the page regardless of what order the engine happened to report
-          // them in. Every leaf renders, including a zero-count one (tutor at 0 IS the finding a
-          // combo deck's Consistency group is thin on). A single-leaf parent (Ramp, Board wipes)
-          // renders nothing here, header included: its one leaf would just repeat the parent's own
-          // count as "100% of Ramp", the exact duplicate the folded shape already avoided before
-          // this task, and a header over nothing would be the same broken-heading shape C1 found.
-          return p.leaves.length > 1 ? (
-            <Fragment key={p.name}>
-              {/* `role="presentation"` so this stays a real `<li>` (a `<ul>`'s only valid child)
-                *  without being counted as a list ITEM -- it groups the leaves after it, it is not
-                *  one of them, and every existing test walking this list's `listitem`s should still
-                *  see only leaf rows. The `h4` inside keeps its own heading semantics regardless. */}
-              <li role="presentation">
-                <h4 className="eyebrow text-(--muted)">{p.name}</h4>
-              </li>
-              {p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves))}
-            </Fragment>
-          ) : null;
-        })}
-        {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
-      </ul>
+      {/* Suppressed on the Mana and Engine sub-tabs (`showBenchmarks={false}`) -- see the prop's
+        *  own doc comment above for why. The heading is suppressed WITH the rows, never left over
+        *  it, for the same "no empty shell" reason `hasBenchmarkContent` guards the whole
+        *  component's early return. */}
+      {showBenchmarks && (
+        <>
+          {/* The parent of this panel's own headings, and, below `h3`, of a variable number of h4s:
+            *  one per multi-leaf parent group (the name-only header just below) plus the four
+            *  deck-math question sections further down (`sections`, "Can you cast your cards" and
+            *  its three siblings) when `deckMath` is present. Not a fixed count any more -- REVISED
+            *  (fix round 2, 2026-09-01) from the "one h3, seven h4s" this used to claim, which
+            *  described the shape before the four parent ROWS (h4s of their own) were cut and
+            *  before this group header existed to replace them. Foreground weight on the h3 is
+            *  still the whole difference from a child heading; the children keep the muted eyebrow
+            *  they already had. */}
+          <h3 className="eyebrow text-(--foreground)">Build benchmarks</h3>
+          <ul className="flex flex-col gap-1.5">
+            {/* THE FOUR PARENT COUNTS-AGAINST-TARGET MOVED TO RECOGNITION. They are what the deck
+              *  IS, so they belong in the panel that says so, and printing them here as well would
+              *  put the same four numbers on one screen twice. The TARGETS did not move: whether 17
+              *  ramp is enough is a diagnosis, and `Findings` states it as a sentence.
+              *
+              *  THE NAME DID NOT MOVE WITH THEM, and C1 (whole-branch review, 2026-09-01) is why it
+              *  is back below as a header with no count, target, tick or bar of its own: without
+              *  it, a multi-leaf parent's leaves lost their only on-screen label, and their SHARE
+              *  figures -- each a percentage of that parent's own leaf sum, see `leafRow` -- sat
+              *  under no visible whole. Recognition carries the count; this line exists only so a
+              *  reader knows what the shares below it are shares OF. */}
+            {scoredParents.map((p) => {
+              // Still shared by every leaf beneath this parent (the share denominator) -- see the
+              // doc comment on `leafRow` for why it reads this.
+              const sumOfLeaves = p.leaves.reduce((s, l) => s + (countByLeaf.get(l) ?? 0), 0);
+              // Ordered by the parent's own `leaves` list, never re-sorted -- a parent groups its
+              // leaves together on the page regardless of what order the engine happened to report
+              // them in. Every leaf renders, including a zero-count one (tutor at 0 IS the finding
+              // a combo deck's Consistency group is thin on). A single-leaf parent (Ramp, Board
+              // wipes) renders nothing here, header included: its one leaf would just repeat the
+              // parent's own count as "100% of Ramp", the exact duplicate the folded shape already
+              // avoided before this task, and a header over nothing would be the same broken-
+              // heading shape C1 found.
+              return p.leaves.length > 1 ? (
+                <Fragment key={p.name}>
+                  {/* `role="presentation"` so this stays a real `<li>` (a `<ul>`'s only valid
+                    *  child) without being counted as a list ITEM -- it groups the leaves after it,
+                    *  it is not one of them, and every existing test walking this list's
+                    *  `listitem`s should still see only leaf rows. The `h4` inside keeps its own
+                    *  heading semantics regardless. */}
+                  <li role="presentation">
+                    <h4 className="eyebrow text-(--muted)">{p.name}</h4>
+                  </li>
+                  {p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves))}
+                </Fragment>
+              ) : null;
+            })}
+            {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
+          </ul>
+        </>
+      )}
 
       {deckMath ? <DeckMathRows deckMath={deckMath} answerCoverage={answerCoverage} only={sections} /> : null}
     </div>
