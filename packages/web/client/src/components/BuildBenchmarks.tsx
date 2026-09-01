@@ -73,7 +73,7 @@ export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 export type DeckMathSectionId = "cast" | "answers" | "win" | "waiting";
 
 export function BuildBenchmarks({
-  categories, parents, deckMath, answerCoverage, sections, showBenchmarks = true,
+  categories, parents, deckMath, answerCoverage, sections, showBenchmarks = true, focus,
 }: {
   categories: DeckReport["buildCategories"];
   /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). The parent's OWN
@@ -107,6 +107,10 @@ export function BuildBenchmarks({
    *  found and fixed elsewhere in this file, so this suppresses the heading along with the rows —
    *  see the `hasBenchmarkContent` guard below for the render-nothing-not-an-empty-shell case. */
   showBenchmarks?: boolean;
+  /** The parent the reader clicked a dial for, if they arrived from `DeckGauges`. Marks that group
+   *  so the drill-down lands on a row rather than on a tab. Never a filter: the other groups stay,
+   *  because the comparison between them is half of what this block is for. */
+  focus?: string;
 }) {
   if (!categories || categories.length === 0) return null;
   const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
@@ -293,7 +297,14 @@ export function BuildBenchmarks({
                     *  it is not one of them, and every existing test walking this list's
                     *  `listitem`s should still see only leaf rows. The `h4` inside keeps its own
                     *  heading semantics regardless. */}
-                  <li role="presentation" className="flex items-baseline gap-3 flex-wrap pt-1">
+                  <li
+                    role="presentation"
+                    data-testid={`role-group-${p.name}`}
+                    data-focused={focus === p.name ? "true" : undefined}
+                    className={`flex items-baseline gap-3 flex-wrap pt-1 ${
+                      focus === p.name ? "outline-2 outline-(--accent) rounded-(--radius)" : ""
+                    }`}
+                  >
                     <h4 className="eyebrow text-(--muted)">{p.name}</h4>
                     {/* THE WHOLE, IN A PLAYER'S WORDS AND NOT AS A FORMULA. "sum of leaves = 9" is
                       *  what the code calls it; what a reader needs is "these rows are shares of

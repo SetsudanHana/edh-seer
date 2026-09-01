@@ -2188,3 +2188,19 @@ test("the trim buttons announce which count is open", async () => {
   await userEvent.click(three);
   expect(three).toHaveAttribute("aria-pressed", "false");
 });
+
+/** A DIAL THAT OPENS A TAB AND LEAVES THE READER TO FIND THE ROW IS HALF A DRILL-DOWN. The gauge
+ *  names one parent; Build has four groups; landing on the tab without marking which one was asked
+ *  about makes the reader repeat the search they just clicked to avoid. */
+test("opening a role from its dial marks that group on Build", () => {
+  render(<OverviewTab data={SAMPLE as never} />);
+  fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
+  expect(screen.getByRole("tab", { name: "Build" })).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByTestId("role-group-Interaction")).toHaveAttribute("data-focused", "true");
+});
+
+test("arriving on Build without a dial marks nothing", () => {
+  render(<OverviewTab data={SAMPLE as never} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.getByTestId("role-group-Interaction")).not.toHaveAttribute("data-focused");
+});

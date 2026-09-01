@@ -117,6 +117,14 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
     .filter((f) => f.kind === "build")
     .map((f) => f.figureLabel);
   const [active, setActive] = useState<SubTabId>("summary");
+  /** WHICH ROW THE READER ASKED ABOUT, when they arrived by clicking a dial rather than a tab.
+   *  Component-local and deliberately NOT in the URL, for the same reason the sub-tab already is:
+   *  a shared analysis link carries the deck, and a second axis of state in that hash is scope this
+   *  does not need. Cleared on a manual tab click -- a reader who navigated by hand did not ask
+   *  about any particular row. */
+  const [focus, setFocus] = useState<string | undefined>(undefined);
+
+  const openTab = (id: SubTabId) => { setActive(id); setFocus(undefined); };
 
   return (
     <div className="flex flex-col gap-8">
@@ -134,7 +142,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
             type="button"
             role="tab"
             aria-selected={active === t.id}
-            onClick={() => setActive(t.id)}
+            onClick={() => openTab(t.id)}
             className={`eyebrow relative pb-2 -mb-px ${active === t.id ? "text-(--accent)" : ""}`}
           >
             {t.label}
@@ -166,7 +174,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
           {/* ── WHERE IT STANDS ────────────────────────────────────────────────────────────────
             *  Every measured thing as a state, and a route into the detail behind each. The full
             *  diagnosis this used to carry lives on the Fixes tab now. */}
-          <DeckGauges data={data} onOpen={(tab) => setActive(tab)} />
+          <DeckGauges data={data} onOpen={(tab, f) => { setActive(tab); setFocus(f); }} />
         </div>
       )}
 
@@ -212,6 +220,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
             deckMath={report.deckMath}
             answerCoverage={report.answerCoverage}
             sections={["answers", "win"]}
+            focus={focus}
           />
         </Movement>
       )}
