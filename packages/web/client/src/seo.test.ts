@@ -187,3 +187,16 @@ test("the prose page carries its three figures", () => {
   // The worked edge shows both outcomes: the ordinary case and a refusal.
   expect(prose).toContain("edge-row-refused");
 });
+
+/** THE LANDING SHOWS, THE PROSE PAGE EXPLAINS. The landing used to restate how-it-works in four
+ *  headed paragraphs and no devices -- 94% prose, zero figures -- which is the same argument told
+ *  worse, first. These two blocks are what replaced them, and a future edit that quietly returns
+ *  the page to prose should fail here rather than ship. */
+test("the landing carries the devices that replaced its prose", () => {
+  for (const block of ["figures", "edge-demo"]) {
+    expect(html, `the ${block} block is present`).toContain(`class="${block}"`);
+  }
+  // The refusal is the half that differentiates this from a popularity list, so it is the half
+  // most worth asserting: an edge that forms is unsurprising, one the engine declines is not.
+  expect(html).toContain("edge-row-refused");
+});

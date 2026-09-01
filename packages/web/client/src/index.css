@@ -338,6 +338,17 @@ summary {
   .intro { max-width: none; }
 }
 
+/* THE DEVICES USE THE WIDTH; THE PROSE KEEPS ITS MEASURE. `.intro p` is capped at 68ch and should
+   stay there, but the stat row and the worked edges are not prose and were sitting in the same
+   600px column with 808px empty to their right at 1440.
+   LEFT-ALIGNED, not centred like `.prose`'s equivalent: this section matches `main`'s box, and the
+   form panel directly above it runs the full width, so a centred block here would step away from
+   the edge every other element on the page shares. */
+.intro > .figures,
+.intro > .edge-demo {
+  width: min(65rem, 100%);
+}
+
 /* THE PROSE PAGE (how-it-works/index.html). A second HTML entry, no JavaScript, sharing this
    stylesheet so it cannot drift from the app's own colours. Semantic class names for the same
    reason `.intro` uses them: Tailwind never scans that file. */
