@@ -25,7 +25,7 @@ export {
 } from "./availability.js";
 export {
   detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, type BuildCategory,
-  type AnswerClassMembers,
+  type AnswerClassMembers, LAND_BAND, LAND_FALLOFF,
 } from "./build.js";
 export {
   manaAudit, pipsByColor, COLORS, SOURCE_CONFIDENCE,

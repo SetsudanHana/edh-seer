@@ -621,3 +621,13 @@ describe("rampResilience", () => {
     expect(rampResilience([mk("Grizzly Bears", "", "Creature — Bear")]).landShare).toBeUndefined();
   });
 });
+
+import { LAND_BAND, LAND_FALLOFF } from "./index.js";
+
+/** The client's lands dial draws its green band from these. They are exported so the client
+ *  IMPORTS the engine's tolerance instead of copying it -- a copied constant drifting from its
+ *  source is the GRAVEYARD_HATE_SHARE defect (36/16/6 shipped against a source measuring 39/19/8). */
+test("the land tolerance is exported for the client to import", () => {
+  expect(LAND_BAND).toBe(3);
+  expect(LAND_FALLOFF).toBe(9);
+});
