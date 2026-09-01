@@ -275,6 +275,14 @@ summary {
   line-height: 1.65;
 }
 
+/* The section's one claim, set above its evidence. Foreground rather than `--muted` because it is
+   a proposition and the devices under it are the support. */
+.intro-thesis {
+  color: var(--foreground);
+  max-width: 65ch;
+  margin: 0 0 2rem;
+}
+
 /* A HEADING, NOT AN EYEBROW. These four were `--font-mono` 0.6875rem uppercase `--muted`: 11px,
    which is SMALLER than the 14px prose they head and smaller than the 12px footer legal text below
    them, so the section headings were the smallest type on the page and the hierarchy read
@@ -290,9 +298,12 @@ summary {
   margin: 2rem 0 0.5rem;
 }
 
-/* The first heading sits under the app's own last panel, so it needs the separation a section break
-   carries and the ones after it do not. */
-.intro h2:first-of-type {
+/* Only fires when a heading genuinely OPENS the section. `.intro`'s first child is now the stat row
+   (`<dl class="figures">`), which already carries its own top and bottom border -- so the heading
+   right after it needs no second hairline of its own. `:first-child`, not `:first-of-type`, is what
+   makes that conditional: `:first-of-type` matched the first h2 regardless of what precedes it, so it
+   kept drawing this rule's border-top even with the figures sitting between the two. */
+.intro > h2:first-child {
   margin-top: 0;
   padding-top: 2rem;
   border-top: 1px solid var(--separator);
@@ -338,9 +349,10 @@ summary {
   .intro { max-width: none; }
 }
 
-/* THE DEVICES USE THE WIDTH; THE PROSE KEEPS ITS MEASURE. `.intro p` is capped at 68ch and should
-   stay there, but the stat row and the worked edges are not prose and were sitting in the same
-   600px column with 808px empty to their right at 1440.
+/* THE DEVICES USE THE WIDTH; THE PROSE KEEPS ITS MEASURE. `.intro`'s block children are otherwise
+   unconstrained -- only `.intro p` is capped, at 68ch -- so without this rule the stat row and the
+   worked edges would run the full 1376px band at 1440. This caps them at 65rem (1040px) instead,
+   which also puts them on the same width as the identical devices on how-it-works.
    LEFT-ALIGNED, not centred like `.prose`'s equivalent: this section matches `main`'s box, and the
    form panel directly above it runs the full width, so a centred block here would step away from
    the edge every other element on the page shares. */
@@ -366,7 +378,8 @@ summary {
    line, and at 1440 that left 399px empty on each side of a 642px column -- including under the
    pipeline and the two worked edges, which are diagrams and gain from width that a paragraph
    loses by. A negative inline margin is the whole technique: the element's containing block is
-   `.prose`'s 642px content box, so `(100% - 65rem) / 2` is the amount to pull out on each side.
+   `.prose`'s 578px content box (642px border box minus 2rem padding each side), so
+   `(100% - 65rem) / 2` is the amount to pull out on each side.
 
    NOT A GRID, and that was the first design. Making `.prose` a grid container stops its children's
    margins collapsing -- `.prose p`'s 1rem bottom against `.prose h2`'s 2.75rem top would start
@@ -582,10 +595,12 @@ summary {
   .site-nav { gap: 0.9rem; }
 }
 
-/* ── how-it-works: the three figures ──────────────────────────────────────────────────────────
+/* ── figures, pipeline, edge-demo: shared by both pages ──────────────────────────────────────────
    All three are HTML and CSS rather than SVG, on purpose: they are made of REAL TEXT, so they wrap
-   on a phone, survive a font size change, can be read aloud, and are indexed like the prose around
-   them. The only SVG is the arrow, which is the one part carrying no words. */
+   on a phone, survive a font size change, can be read aloud, and are indexed like the surrounding
+   text. `.figures` and `.edge-demo` render on BOTH pages -- how-it-works' `.prose` and index.html's
+   `.intro` -- so an edit made here for one page changes the other too. `.pipeline` is how-it-works
+   only. The only SVG is the arrow, which is the one part carrying no words. */
 
 /* THE SCALE, IN THREE NUMBERS. `dl` because each is a term and its definition, not a list of
    equals — and the third is not a size at all, which is the joke the block is built around. */

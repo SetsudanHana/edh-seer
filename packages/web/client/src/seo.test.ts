@@ -199,4 +199,12 @@ test("the landing carries the devices that replaced its prose", () => {
   // The refusal is the half that differentiates this from a popularity list, so it is the half
   // most worth asserting: an edge that forms is unsurprising, one the engine declines is not.
   expect(html).toContain("edge-row-refused");
+  // THE WORKED EXAMPLE IS DELIBERATELY DUPLICATED, so a reader who follows the link to how-it-works
+  // recognises where they are -- but nothing enforces the two copies stay identical. This is the
+  // drift check: the same four values have to appear on both pages.
+  const prose = readFileSync(join(CLIENT, PAGES["/how-it-works"]), "utf8");
+  for (const shared of ["34,433", "~495", "Krenko, Mob Boss", "Enduring Courage"]) {
+    expect(html, `the landing has ${shared}`).toContain(shared);
+    expect(prose, `how-it-works has ${shared}`).toContain(shared);
+  }
 });

@@ -93,15 +93,6 @@
     <div id="root"></div>
     <!-- REAL TEXT, IN THE STATIC HTML, AND OUTSIDE `#root` ON PURPOSE.
          Until this existed the entire body was `<div id="root"></div>`: a crawler that does not run
-         JavaScript — most social scrapers, most LLM crawlers, Bing more often than Google — saw an
-         empty page, and there was nothing for a search result to quote but the meta description.
-         React never owns this markup, so it survives hydration and needs no prerender step; it is
-         plain CSS on the same tokens rather than utility classes, so it does not depend on
-         Tailwind scanning this file.
-         It is BELOW the app because the paste box is what a returning reader wants first, and the
-         explanation is what a first-time one needs — the same order the page already reads in. -->
-    <!-- REAL TEXT, IN THE STATIC HTML, AND OUTSIDE `#root` ON PURPOSE.
-         Until this existed the entire body was `<div id="root"></div>`: a crawler that does not run
          JavaScript -- most social scrapers, most LLM crawlers, Bing more often than Google -- saw an
          empty page. React never owns this markup, so it survives hydration and needs no prerender
          step; it is plain CSS on the same tokens rather than utility classes, so it does not depend
@@ -116,8 +107,21 @@
 
          The crawler still gets substantive text: the figures, the card names, the event labels and
          the two verdict sentences are all real HTML. `seo.test.ts` holds the floor at 800 readable
-         characters and this section alone clears it. -->
+         characters and this section alone clears it.
+
+         It is BELOW the app because the paste box is what a returning reader wants first, and the
+         explanation is what a first-time one needs -- the same order the page already reads in. -->
     <section class="intro" aria-label="About EDH Seer">
+      <!-- THE CLAIM THE TWO DEVICES BELOW ARE EVIDENCE FOR. Without it the section opened on three
+           bare numbers: a reader who does not already know what this tool is got evidence and no
+           proposition. It is also the only place the static HTML says what the product does -- the
+           sentence that used to do that went with the old "What this does" section, and its
+           replacement lives in React, which a crawler with JavaScript off never runs. -->
+      <p class="intro-thesis">
+        EDH Seer reads the oracle text of every card in a Commander decklist and reports which pairs
+        actually work together, with the reason printed next to each one.
+      </p>
+
       <!-- THE SCALE, IN THREE NUMBERS, and the same three the prose page shows -- one product, one
            set of claims. Sourcing for each is documented in `how-it-works/index.html`; if you change
            a number here, change it there. -->
