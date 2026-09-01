@@ -45,6 +45,40 @@ test("the bar counts nonlands only, weighted by copies", () => {
   expect(screen.getByTestId("type-total")).toHaveTextContent("6");
 });
 
+/** Finding 1 (Critical, whole-branch review, 2026-09-01): `RecognitionPanel` printed
+ *  `deckMath.lands.actual` (38, MDFC-inclusive) beside the type-line nonland total (66), which do
+ *  not sum to the 100-card deck the coverage line beneath them reports -- the exact defect
+ *  `docs/engineering-log/2026-08-31.md` diagnosed on `BuildBenchmarks`, reintroduced here.
+ *  `RecognitionPanel` must derive both the nonland AND the land figure from the same graph
+ *  traversal (`typeSlices`/`landCount`) and name the mana model's MDFC-inclusive count as a
+ *  parenthetical, not as the headline land figure. */
+test("the nonland and land totals sum to the deck, with the MDFC gap named rather than summed in", () => {
+  const nodes = [
+    { id: "c", label: "C", copies: 62, types: ["creature"], subtypes: [], supertypes: [] },
+    { id: "l", label: "L", copies: 34, types: ["land"], subtypes: [], supertypes: [] },
+    // Four modal DFCs: a spell front (counted as nonland, like `typeSlices` counts any front
+    // face) and a land back (`face: 1`, skipped by both traversals).
+    { id: "m", label: "M", cardName: "M", copies: 4, types: ["sorcery"], subtypes: [], supertypes: [] },
+    { id: "m-back", label: "M //", cardName: "M", face: 1, copies: 4, types: ["land"], subtypes: [], supertypes: [] },
+  ];
+  const data = {
+    ...DATA,
+    graph: { nodes, edges: [] },
+    report: {
+      ...DATA.report,
+      deckMath: {
+        castability: { commanders: [] },
+        lands: { actual: 38, target: 36, mdfc: 4 },
+      },
+    },
+  } as unknown as typeof DATA;
+  render(<RecognitionPanel data={data} />);
+  // 62 creatures + 4 MDFC fronts (sorcery) = 66 nonland; 34 real lands; 66 + 34 = 100.
+  expect(screen.getByTestId("type-total")).toHaveTextContent("66");
+  const line = screen.getByTestId("type-total").closest("p")!;
+  expect(line).toHaveTextContent("34 lands (38 with MDFCs)");
+});
+
 test("carries no 0-5 score: recognition is not a judgement", () => {
   render(<RecognitionPanel data={DATA} />);
   expect(screen.queryByText(/\/\s*5\b/)).toBeNull();

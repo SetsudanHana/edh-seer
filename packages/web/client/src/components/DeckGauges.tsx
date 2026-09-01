@@ -30,7 +30,13 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-lg font-bold tracking-[-0.01em]">Where this deck stands</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+      {/* `deck-gauges-grid` (index.css) SPANS THE LAST DIAL WHEN IT WOULD OTHERWISE SIT ALONE ON
+        *  ITS OWN ROW -- a lone half-width tile beside empty space reads as a card that failed to
+        *  load, not as the end of a set (finding 2, whole-branch review, 2026-09-01). The dial
+        *  count here is never fixed at seven -- one per `buildParents` row plus up to three
+        *  conditional extras -- so the rule is CSS driving off the actual child count at each
+        *  breakpoint's own column count, not a check for a specific total. */}
+      <div className="deck-gauges-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
         {parents.map((p) => (
           <Dial
             key={p.name}

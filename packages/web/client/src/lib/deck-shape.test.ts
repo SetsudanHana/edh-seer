@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { primaryType, typeSlices, TYPE_ORDER } from "./deck-shape.js";
+import { primaryType, typeSlices, landCount, TYPE_ORDER } from "./deck-shape.js";
 
 const node = (over: Partial<Parameters<typeof typeSlices>[0][number]> = {}) => ({
   id: "n", label: "n", copies: 1, types: ["creature"], subtypes: [], supertypes: [], ...over,
@@ -72,5 +72,56 @@ describe("typeSlices", () => {
 
   test("an empty deck is an empty array, not a zero slice", () => {
     expect(typeSlices([])).toEqual([]);
+  });
+});
+
+/** Finding 1 (Critical, whole-branch review, 2026-09-01): `RecognitionPanel` printed
+ *  `deckMath.lands.actual` (MDFC-inclusive) beside `typeSlices`' nonland total (front-face-only),
+ *  so the two figures did not sum to the deck -- the same defect diagnosed in
+ *  `docs/engineering-log/2026-08-31.md`, reintroduced on a different panel. `landCount` exists so
+ *  both halves of the census come from one traversal. */
+describe("landCount", () => {
+  test("counts COPIES of land nodes, on the same basis typeSlices uses for nonlands", () => {
+    const lands = node({ id: "l", types: ["land"], copies: 34 });
+    const nonlands = node({ id: "c", copies: 66 });
+    expect(landCount([lands, nonlands])).toBe(34);
+  });
+
+  test("excludes token nodes", () => {
+    const lands = node({ id: "l", types: ["land"], copies: 34 });
+    const tokenLand = node({ id: "t", types: ["land"], isToken: true, copies: 5 });
+    expect(landCount([lands, tokenLand])).toBe(34);
+  });
+
+  // A modal double-faced card's LAND back is a second node with `face: 1` -- it must not be
+  // double-counted, and its FRONT face (a spell) must not be counted as a land either: that
+  // front/back split is exactly what makes this figure disagree with `deckMath.lands.actual`,
+  // which counts the same card as a land. See the module doc comment on `landCount`.
+  test("a modal DFC's land back is not counted -- only its front, which is a spell here", () => {
+    const spellFront = node({ id: "m", cardName: "M", copies: 1, types: ["sorcery"] });
+    const landBack = node({ id: "m-back", cardName: "M", face: 1, copies: 1, types: ["land"] });
+    const realLand = node({ id: "l", types: ["land"], copies: 33 });
+    expect(landCount([spellFront, landBack, realLand])).toBe(33);
+    expect(typeSlices([spellFront, landBack, realLand])).toEqual([{ type: "sorcery", count: 1 }]);
+  });
+
+  // The invariant this whole finding is about: nonland + land sums to the deck, by construction,
+  // because both traversals apply the identical skip rules to the identical node list.
+  test("nonland total plus land total equals the deck, including a token and an MDFC", () => {
+    const nodes = [
+      node({ id: "c", copies: 66 }),
+      node({ id: "l", types: ["land"], copies: 34 }),
+      node({ id: "t", isToken: true, copies: 9 }),
+      node({ id: "m", cardName: "M", copies: 4, types: ["sorcery"] }),
+      node({ id: "m-back", cardName: "M", face: 1, copies: 4, types: ["land"] }),
+    ];
+    const nonlandTotal = typeSlices(nodes).reduce((a, s) => a + s.count, 0);
+    // The 4 MDFCs count as spells here (front face), which is why this deck's honest total is
+    // 66 + 4 = 70 nonland / 34 land, not 100 -- the fixture proves the SUM, not a specific deck.
+    expect(nonlandTotal + landCount(nodes)).toBe(70 + 34);
+  });
+
+  test("an empty deck has no lands", () => {
+    expect(landCount([])).toBe(0);
   });
 });

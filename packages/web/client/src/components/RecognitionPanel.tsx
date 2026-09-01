@@ -1,5 +1,5 @@
 import type { AnalyzeResponse } from "../types.js";
-import { typeSlices } from "../lib/deck-shape.js";
+import { typeSlices, landCount } from "../lib/deck-shape.js";
 import { TypeBar } from "./TypeBar.js";
 import { identityKey, identityLabel } from "../lib/color-identity.js";
 import { ManaSymbols } from "./ManaSymbols.js";
@@ -17,7 +17,9 @@ import { ManaSymbols } from "./ManaSymbols.js";
  *  has not earned the criticism. Everything on this panel is a description. */
 export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
   const { report } = data;
-  const slices = typeSlices(data.graph?.nodes ?? []);
+  const nodes = data.graph?.nodes ?? [];
+  const slices = typeSlices(nodes);
+  const lands = landCount(nodes);
   const colourIdentity = data.commanderColorIdentity ?? [];
   // NAMED, NOT SPELLED (I3, whole-branch review, 2026-09-01). Bare letters ("WUB") shipped here
   // while `DeckIdentity`, twenty lines below on the same page, already ran the same identity
@@ -116,15 +118,15 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
         </p>
       </div>
 
-      {/* THE LANDS COUNT, NOT `report.landCount` (owner correction, 2026-09-01). `landCount` comes
-        *  from `deck-stats.ts` (`cards.length - nonland.length`, over everything printed); this is
-        *  `deckMath.lands.actual` from `matcher/land-count.ts`, which excludes the commanders. They
-        *  are different measurements of "how many lands", and the lands DIAL in `DeckGauges` -- plus
-        *  `findings.ts`'s own sentence ("38 lands against a modelled 36") -- both read `deckMath.lands`.
-        *  Printing `landCount` here would risk a second, disagreeing land number on the same screen,
-        *  the exact contradiction this redesign exists to remove. Absent, and silent, when `deckMath`
-        *  was never computed -- the same rule this panel already applies to the commander above. */}
-      <TypeBar slices={slices} lands={report.deckMath?.lands.actual} />
+      {/* THE TYPE-LINE LAND COUNT, NOT `report.landCount` OR `deckMath.lands.actual` (Critical
+        *  finding, whole-branch review, 2026-09-01 -- this regresses the exact defect diagnosed in
+        *  `docs/engineering-log/2026-08-31.md`). Both of those are MDFC-INCLUSIVE: a modal DFC with
+        *  a land back prices as a land there, on purpose, per the 2026-08-31 ruling. `landCount`
+        *  reads the FRONT face, where the same card is a spell -- the same basis `typeSlices` counts
+        *  it under -- so nonland + land sums to the deck by construction. `deckMath.lands.mdfc` is
+        *  the gap between the two counts, named rather than silently summed: `TypeBar` prints it as
+        *  "(N with MDFCs)" beside the census figure. */}
+      <TypeBar slices={slices} lands={lands} mdfc={report.deckMath?.lands.mdfc} />
     </section>
   );
 }

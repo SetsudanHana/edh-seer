@@ -94,3 +94,25 @@ test("says nothing about lands when the count is unknown", () => {
   render(<TypeBar slices={[{ type: "creature", count: 21 }]} />);
   expect(screen.queryByText(/lands/)).toBeNull();
 });
+
+/** Finding 1 (Critical, whole-branch review, 2026-09-01) -- the reconciliation
+ *  `docs/engineering-log/2026-08-31.md` already established for `BuildBenchmarks` ("34 (38 with
+ *  MDFCs)"), reused here so Recognition's census sums to the deck instead of double-counting four
+ *  modal DFCs against the type bar in one direction and the mana model in the other. */
+test("prints the MDFC reconciliation beside the land count", () => {
+  render(<TypeBar slices={SLICES} lands={34} mdfc={4} />);
+  const line = screen.getByTestId("type-total").closest("p")!;
+  expect(line).toHaveTextContent("34 lands (38 with MDFCs)");
+});
+
+test("says nothing about MDFCs when there are none, rather than a parenthetical about nothing", () => {
+  render(<TypeBar slices={SLICES} lands={34} mdfc={0} />);
+  const line = screen.getByTestId("type-total").closest("p")!;
+  expect(line).toHaveTextContent("34 lands");
+  expect(line).not.toHaveTextContent("MDFC");
+});
+
+test("says nothing about MDFCs when the count is unknown", () => {
+  render(<TypeBar slices={SLICES} lands={34} />);
+  expect(screen.queryByText(/MDFC/)).toBeNull();
+});
