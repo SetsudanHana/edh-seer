@@ -106,6 +106,7 @@ export function CutList({ cutList, unjudged, coverage, slack, trim }:
               <button
                 key={n}
                 type="button"
+                aria-pressed={trimN === n}
                 onClick={() => setTrimN(trimN === n ? 0 : n)}
                 className={`text-xs rounded-full border px-3 py-1 ${
                   trimN === n ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"}`}

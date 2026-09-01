@@ -1910,3 +1910,34 @@ test("a card named by the whole card, not by a face, still opens its front face"
   // A name no node carries is still plain text: the drawer must not offer to open what it cannot.
   expect(screen.queryByRole("button", { name: "Never in the deck" })).toBeNull();
 });
+
+// Seven of the nine toggle groups in this client already say aria-pressed; these two did not, so
+// the same widget announced its state in the graph controls and stayed silent in the report. A
+// screen-reader user could hear "Ramp, button" with no way to know Ramp was the active filter.
+// WCAG 4.1.2. Both directions are asserted so a regression to a static attribute also fails.
+test("the card filter chips announce which one is active", async () => {
+  // The chip row is built from the roles the cards actually carry, so the fixture has to name one.
+  const cards = SAMPLE.report.cards.map((c, i) => (i === 0 ? { ...c, roles: ["ramp"] } : c)) as any;
+  render(<CardList cards={cards} />);
+  const all = screen.getByRole("button", { name: "All" });
+  const ramp = screen.getByRole("button", { name: "Ramp" });
+  expect(all).toHaveAttribute("aria-pressed", "true");
+  expect(ramp).toHaveAttribute("aria-pressed", "false");
+
+  await userEvent.click(ramp);
+  expect(ramp).toHaveAttribute("aria-pressed", "true");
+  expect(all).toHaveAttribute("aria-pressed", "false");
+});
+
+test("the trim buttons announce which count is open", async () => {
+  render(<CutList cutList={[]} slack={[]} trim={TRIM} />);
+  const three = screen.getByRole("button", { name: "3" });
+  expect(three).toHaveAttribute("aria-pressed", "false");
+
+  await userEvent.click(three);
+  expect(three).toHaveAttribute("aria-pressed", "true");
+
+  // Clicking the open count closes it, so the state goes back down.
+  await userEvent.click(three);
+  expect(three).toHaveAttribute("aria-pressed", "false");
+});
