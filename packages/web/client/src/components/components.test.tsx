@@ -172,7 +172,9 @@ test("MissingCards renders nothing when empty", () => {
 // what sets the land target). One number, one place.
 test("OverviewTab renders the deck identity, and avg mana value only where it is load-bearing", () => {
   render(<OverviewTab data={SAMPLE} />);
-  expect(screen.getByText("Tokens")).toBeInTheDocument(); // DeckIdentity theme
+  // Task 5 (2026-09-01): DeckIdentity itself moved to the Engine sub-tab; the theme it used to
+  // print here is RecognitionPanel's, on Summary -- the sub-tab OverviewTab opens on by default.
+  expect(screen.getByText("Tokens")).toBeInTheDocument();
   // The tile is gone; the figure survives in the Lands row, where it is what sets the land target
   // (asserted in the deck-math tests, which are the ones carrying a `deckMath` fixture).
   expect(screen.queryByText("Avg CMC")).not.toBeInTheDocument();
@@ -407,7 +409,7 @@ test("Cards tab shows the top-partner reason under the card name", () => {
 
 test("ReportTabs defaults to the Overview tab and switches on click", async () => {
   render(<ReportTabs data={SAMPLE} />);
-  expect(screen.getByText("Tokens")).toBeInTheDocument(); // Overview's DeckIdentity theme, visible by default
+  expect(screen.getByText("Tokens")).toBeInTheDocument(); // Overview's Summary sub-tab, RecognitionPanel's theme, visible by default
   await userEvent.click(screen.getByRole("tab", { name: "Archetypes" }));
   expect(screen.getByText("Tokens Go Wide")).toBeInTheDocument(); // ArchetypeBoard content
   await userEvent.click(screen.getByRole("tab", { name: "Cards" }));
@@ -1274,15 +1276,19 @@ test("BuildBenchmarks renders without deck math at all", () => {
   expect(screen.queryByText(/answers by turn/i)).not.toBeInTheDocument();
 });
 
-test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)", () => {
+// TASK 5 (2026-09-01): the health dashboard used to be one render -- SYNERGY, Build benchmarks and
+// Suggestions all on screen together. The sub-tabs split them: Suggestions and the findings' own
+// figures (Ramp, under target) live on Summary; the scores and the benchmark detail behind them
+// moved to Engine. Same three signals, now reached by a click instead of a scroll.
+test("OverviewTab shows the health dashboard, across its sub-tabs", async () => {
+  const user = userEvent.setup();
   render(<OverviewTab data={SAMPLE} />);
+  expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
+  // "Ramp" is a finding's own figure label (Summary is under target on it) -- present, not unique.
+  expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
   expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
   expect(screen.getByText(/Build benchmarks/i)).toBeInTheDocument();
-  expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
-  // `getAllBy`: "Ramp" is a BuildBenchmarks category AND, on a deck short of it, a finding's own
-  // figure label. Two elements is the SEQUENCING working — the finding states the conclusion, the
-  // benchmark below it is the evidence — so the assertion is that it is present, not unique.
-  expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
 });
 
 /** THE SEQUENCE, pinned. Four persona reviews (2026-08-26) found the page led with its weakest
@@ -1294,17 +1300,63 @@ test("OverviewTab shows the health dashboard (headline, benchmarks, suggestions)
  *  had NOTHING pinning it. `RecognitionPanel` ("What this deck is") sitting above `Findings` ("What
  *  is wrong with this deck") in `OverviewTab.tsx` was true only by inspection; nothing here failed
  *  if the two sections were swapped back. Extended, not a new test, so the one assertion that
- *  reordering the page breaks stays in one place next to the pattern it was proven against. */
-test("OverviewTab leads with the diagnosis and demotes the scores below it", () => {
+ *  reordering the page breaks stays in one place next to the pattern it was proven against.
+ *
+ *  TASK 5 (2026-09-01): the scores moved to their own Engine sub-tab, so "demotes the scores below
+ *  it" is no longer one render's document order -- it is which sub-tab you are on. Split in two:
+ *  recognition-before-diagnosis stays a same-render ordering assertion on Summary (the guarantee
+ *  this test exists to pin), and the scores get their own Engine-tab assertion below. */
+test("OverviewTab leads recognition before diagnosis, on Summary", () => {
   const { container } = render(<OverviewTab data={SAMPLE} />);
   const text = container.textContent ?? "";
   const recognition = text.indexOf("What this deck is");
   const diagnosis = text.indexOf("What is wrong with this deck");
-  const scores = text.indexOf("How the engine read it");
   expect(recognition).toBeGreaterThanOrEqual(0);
   expect(diagnosis).toBeGreaterThanOrEqual(0);
   expect(diagnosis).toBeGreaterThan(recognition);
-  expect(scores).toBeGreaterThan(diagnosis);
+});
+
+test("the scores are not on Summary, and switching to Engine reveals them", async () => {
+  const user = userEvent.setup();
+  render(<OverviewTab data={SAMPLE} />);
+  expect(screen.queryByText("How the engine read it")).toBeNull();
+  await user.click(screen.getByRole("tab", { name: "Engine" }));
+  expect(screen.getByText("How the engine read it")).toBeInTheDocument();
+});
+
+/** SUMMARY IS THE WHOLE PAGE'S FIRST SCREEN. The Overview ran 5,202px -- about nine screens -- and
+ *  a reader scrolling it had nothing named to steer by. Four sub-tabs give the length somewhere to
+ *  go and give the reader a word to aim at. */
+test("OverviewTab opens on Summary, which carries recognition and the findings", () => {
+  render(<OverviewTab data={SAMPLE} />);
+  expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByText("What this deck is")).toBeInTheDocument();
+  expect(screen.getByText("What is wrong with this deck")).toBeInTheDocument();
+});
+
+test("the mana detail is not on Summary, and switching to Mana reveals it", async () => {
+  const user = userEvent.setup();
+  // SAMPLE carries no `deckMath` -- most of this suite pins BuildBenchmarks against bare
+  // `categories`/`parents`, and giving the shared fixture one risked every other SAMPLE consumer
+  // (GraphView, GraphList, run-diff) picking up a field none of them asked for. Layered on locally
+  // instead (`DECK_MATH`, below), just for the one sub-tab whose "cast" section has nothing to
+  // show without it.
+  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
+  render(<OverviewTab data={data} />);
+  expect(screen.queryByText("Can you cast your cards")).toBeNull();
+  await user.click(screen.getByRole("tab", { name: "Mana" }));
+  expect(screen.getByText("Can you cast your cards")).toBeInTheDocument();
+  // and recognition is no longer mounted -- the point is a smaller page, not a taller one
+  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+});
+
+test("every sub-tab is reachable and names itself", async () => {
+  const user = userEvent.setup();
+  render(<OverviewTab data={SAMPLE} />);
+  for (const name of ["Summary", "Build", "Mana", "Engine"]) {
+    await user.click(screen.getByRole("tab", { name }));
+    expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
+  }
 });
 
 test("HeadlineScores uses semantic tokens, not raw Tailwind palette classes", () => {
