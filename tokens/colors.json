@@ -33,8 +33,7 @@
       "$description": "The three status hues, each tuned to sit on the violet ground rather than lifted from a stock palette.",
       "success": { "$type": "color", "$value": "#34c77b", "$description": "L 73.6% C 0.164 H 155.4" },
       "warning": { "$type": "color", "$value": "#d99a3d", "$description": "L 73.1% C 0.130 H 73.3" },
-      "danger":  { "$type": "color", "$value": "#e5484d", "$description": "L 62.6% C 0.193 H 23.0" },
-      "danger-tint": { "$type": "color", "$value": "#fff5f5", "$description": "L 97.8% - the near-white that sits ON danger. The one near-#fff in the system, and it is a foreground, never a ground." }
+      "danger":  { "$type": "color", "$value": "#e5484d", "$description": "L 62.6% C 0.193 H 23.0" }
     }
   },
 
@@ -81,7 +80,7 @@
       "warning-text": { "$type": "color", "$value": "{primitive.feedback.warning}", "$description": "8.11:1 on the page" },
       "warning-on":   { "$type": "color", "$value": "{primitive.ground.950}" },
       "error-text":   { "$type": "color", "$value": "{primitive.feedback.danger}", "$description": "5.04:1 on the page" },
-      "error-on":     { "$type": "color", "$value": "{primitive.feedback.danger-tint}", "$description": "3.66:1 on the danger fill - BELOW the 4.5:1 normal-text minimum. See the finding in DESIGN notes; it is recorded here rather than silently corrected because fixing it changes a shipped colour." }
+      "error-on":     { "$type": "color", "$value": "{primitive.ground.950}", "$description": "5.04:1 on the danger fill. Dark ink, matching success-on and warning-on; the near-white tint it used to carry was 3.66:1, below the 4.5:1 normal-text minimum." }
     },
 
     "data": {
@@ -111,7 +110,7 @@
       "background":  { "$type": "color", "$value": "{semantic.surface.sunken}" },
       "text":        { "$type": "color", "$value": "{semantic.text.primary}" },
       "placeholder": { "$type": "color", "$value": "{semantic.text.secondary}" },
-      "border":      { "$type": "color", "$value": "{semantic.border.default}", "$description": "1.32:1. WCAG 1.4.11 wants 3:1 for a control boundary; this is the shipped value and the known gap. semantic.border.strong is the fix." }
+      "border":      { "$type": "color", "$value": "{semantic.border.strong}", "$description": "3.14:1 on a card, 3.24:1 on the field ground. WCAG 1.4.11 wants 3:1 for a control boundary; border.default (1.32:1) shipped here until the three search fields were pointed at this token." }
     },
     "code": {
       "$description": "`.tok` - a name from the data model set inside a sentence, not a code block.",

@@ -51,12 +51,12 @@
   --field-background: #120d1a;
   --field-foreground: var(--foreground);
   --field-placeholder: var(--muted);
-  --field-border: #2c2338;
+  --field-border: #6b5f7d;  /* WCAG 1.4.11: a control boundary needs 3:1. Was #2c2338, 1.32:1. */
 
   --warning: #d99a3d;
   --warning-foreground: #0d0912;
   --danger: #e5484d;
-  --danger-foreground: #fff5f5;
+  --danger-foreground: #0d0912;  /* dark ink on the fill, as success/warning already are. The near-white was 3.66:1. */
   --success: #34c77b;
   --success-foreground: #0d0912;
 

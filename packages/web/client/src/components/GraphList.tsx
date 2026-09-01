@@ -55,7 +55,7 @@ export function GraphList({ graph }: { graph: CardGraph }) {
         placeholder="Find a card…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="rounded-(--radius) border border-(--separator) bg-transparent px-2.5 py-1 text-sm"
+        className="rounded-(--radius) border border-(--field-border) bg-transparent px-2.5 py-1 text-sm"
       />
       <p className="text-(--muted) text-sm">
         {graph.nodes.length} cards, {graph.edges.length} synergies. Tap a card for what it feeds and
