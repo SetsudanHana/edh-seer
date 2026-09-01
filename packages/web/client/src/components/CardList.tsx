@@ -1,5 +1,4 @@
 import { useState } from "react";
-import type { CSSProperties } from "react";
 import type { DeckReport } from "../types.js";
 import { CardName, useCardDrawer } from "./card-drawer.js";
 import { ManaSymbols } from "./ManaSymbols.js";
@@ -26,14 +25,6 @@ export const CATEGORY_ORDER: Category[] = [
   "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction",
   "boardWipe", "burn", "stax", "protection", "tutor", "lands",
 ];
-
-// A PLAIN ACCENT BORDER, because there is no gradient any more. This layered two backgrounds to
-// paint the identity gradient into a 1px border (a `border` cannot take one directly); with the
-// accent a flat literal, the trick has nothing left to carry and a border does the job.
-const selectedChipStyle: CSSProperties = {
-  border: "1px solid var(--accent)",
-};
-
 
 /** THE CARD, NOT ITS NAME. `DESIGN.md` bans illustrated MTG-card CHROME — a frame, foil or
  *  parchment WE draw — and the real printed card is not that: it is the object itself, and all
@@ -220,9 +211,11 @@ export function CardList({ cards, artByName, coverage }: {
     <button
       key={key}
       type="button"
+      aria-pressed={filter === key}
       onClick={() => setFilter(key)}
-      className={`eyebrow px-2 py-1 rounded-(--radius) border ${filter === key ? "text-(--accent)" : "border-(--separator)"}`}
-      style={filter === key ? selectedChipStyle : undefined}
+      className={`eyebrow px-2 py-1 rounded-(--radius) border ${
+        filter === key ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+      }`}
     >
       {label}
     </button>
