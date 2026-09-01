@@ -71,9 +71,13 @@ export function BuildBenchmarks({
   categories, parents, deckMath, answerCoverage,
 }: {
   categories: DeckReport["buildCategories"];
-  /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). This is what carries
-   *  a target now — see the doc comment on `parentRow` below. The engine owns the grouping; there
-   *  is no local `PARENTS` const to fall out of sync with it any more. */
+  /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). The parent's OWN
+   *  count-against-target row moved to Recognition (task 5, see the comment where it used to
+   *  render, below) — this prop stays because it is still what GROUPS the leaf rows under their
+   *  parent's name and gates which leaves render at all (a leaf under a parent whose own target is
+   *  <= 0 is unscored and stays hidden, the same treatment a zero-target ungrouped leaf already
+   *  gets). The engine owns the grouping; there is no local `PARENTS` const to fall out of sync
+   *  with it any more. */
   parents?: DeckReport["buildParents"];
   deckMath?: DeckReport["deckMath"];
   /** Carries `graveyardVulnerability` (task 5) down to the answers block — the only reason this
@@ -147,61 +151,6 @@ export function BuildBenchmarks({
     );
   };
 
-  /** THE PARENT'S OWN ROW — target, ratio and flag, exactly the bar a leaf used to draw. Its `<h4>`
-   *  rides inside the label span (same slot a leaf's name would sit in), so the column is never
-   *  blank and there is exactly one heading in the DOM whether the parent has one leaf or four —
-   *  the single/multi-leaf branch this used to need (CONFLICT 8, F2) is gone: every parent has a
-   *  ratio of its own now, so there is no more "no separate heading" special case to make.
-   *
-   *  `sumOfLeaves` is passed in rather than recomputed -- the caller already has it, because the
-   *  leaf rows below need the identical number for F4's share fix. When it exceeds the parent's own
-   *  UNION count, a card fills more than one of this parent's leaves (Grave Researcher: cardSelection
-   *  AND draw-adjacent) -- said in the aria-label rather than left for a reader to notice the leaf
-   *  shares summing past 100% of a total they can't see (fix F4, controller review 2026-08-21). */
-  const parentRow = (p: NonNullable<typeof parents>[number], sumOfLeaves: number) => {
-    const overlapNote = sumOfLeaves > p.count
-      ? `; its leaves sum to ${sumOfLeaves} because some cards fill more than one`
-      : "";
-    // INTERACTION IS THE ONE COVERAGE-WEIGHTED PARENT, selected by `p.coverageWeighted`
-    // (whole-branch review IMPORTANT 4) -- NOT by matching `p.name === "Interaction"`, the exact
-    // string match `BuildParentSpec.coverageWeighted` was built to make unnecessary. A prior draft
-    // of this row used the name match; a rename of the parent would have silently unwired this note
-    // while the score kept docking it, the identical panel/score disagreement this branch already
-    // fixed twice elsewhere. The score multiplies this parent's count attainment by
-    // `answerCoverage.coverage`, so 11/10 can score under 1 even though the ratio alone reads "met"
-    // -- the row has to say so, or it disagrees with the headline it feeds.
-    const interactionCoverage = p.coverageWeighted ? answerCoverage : undefined;
-    const dockedByCoverage = interactionCoverage !== undefined && interactionCoverage.coverage < 1;
-    const covered = interactionCoverage?.rows.filter((r) => r.covered).length ?? 0;
-    const total = interactionCoverage?.rows.length ?? 0;
-    // THE POOL WEIGHT'S OWN REFUSAL NOW REACHES THE SCREEN (whole-branch review IMPORTANT 3).
-    // `answerCoverage.source` was computed and typed all the way to the client and never read here
-    // -- design §3's own promise ("the panel says so") stopped one field short. Refusing the pool
-    // weight sets every `poolShare` to 1, which is the UNIFORM reading this whole feature exists to
-    // reject, so an identity-less deck (no commander detected -- most often a pasted list with a
-    // typo'd or unresolved commander line) is charged as though every colour could supply every
-    // class, silently. Follows the same "a fallback must say so" precedent `lands.targetSource`
-    // already ships (see that block's own comment).
-    const unweighted = interactionCoverage?.source === "unweighted";
-    const coverageNote =
-      (dockedByCoverage ? `, but answers ${covered} of ${total} classes` : "") +
-      (unweighted ? ", colour pool unweighted -- no commander detected" : "");
-    const suffix =
-      dockedByCoverage || unweighted ? (
-        <>
-          {dockedByCoverage ? <>but answers {covered} of {total} classes</> : null}
-          {dockedByCoverage && unweighted ? " · " : null}
-          {unweighted ? "colour pool unweighted — no commander detected" : null}
-        </>
-      ) : null;
-    return bar(
-      p.name, <h4 className="eyebrow">{p.name}</h4>, p.name, p.count, p.target,
-      overlapNote + coverageNote,
-      dockedByCoverage,
-      suffix,
-    );
-  };
-
   /** A LEAF UNDER A MULTI-LEAF PARENT — count and SHARE, never a target, ratio or flag (owner's
    *  ruling: "only a parent can be under target"). A single-leaf parent (Ramp, Board wipes) never
    *  calls this: its leaf row would just repeat the parent's own bar as "100%", which is the exact
@@ -240,20 +189,26 @@ export function BuildBenchmarks({
         *  difference; the children keep the muted eyebrow they already had. */}
       <h3 className="eyebrow text-(--foreground)">Build benchmarks</h3>
       <ul className="flex flex-col gap-1.5">
+        {/* THE FOUR PARENT COUNTS MOVED TO RECOGNITION. They are what the deck IS, so they belong
+          *  in the panel that says so, and printing them here as well would put the same four
+          *  numbers on one screen twice. The TARGETS did not move: whether 17 ramp is enough is a
+          *  diagnosis, and `Findings` states it as a sentence. The leaf rows below stay -- they
+          *  are detail recognition does not carry. */}
         {scoredParents.map((p) => {
-          // Computed once per parent and shared by its own row (the overlap note) and every leaf
-          // beneath it (the share denominator) -- see the two doc comments above for why each reads it.
+          // Still shared by every leaf beneath this parent (the share denominator) -- see the
+          // doc comment on `leafRow` for why it reads this.
           const sumOfLeaves = p.leaves.reduce((s, l) => s + (countByLeaf.get(l) ?? 0), 0);
-          return (
+          // Ordered by the parent's own `leaves` list, never re-sorted -- a parent groups its
+          // leaves together on the page regardless of what order the engine happened to report
+          // them in. Every leaf renders, including a zero-count one (tutor at 0 IS the finding a
+          // combo deck's Consistency group is thin on). A single-leaf parent (Ramp, Board wipes)
+          // renders nothing here: its one leaf would just repeat the parent's own count as "100%
+          // of Ramp", the exact duplicate the folded shape already avoided before this task.
+          return p.leaves.length > 1 ? (
             <Fragment key={p.name}>
-              {parentRow(p, sumOfLeaves)}
-              {/* Ordered by the parent's own `leaves` list, never re-sorted -- a parent groups its
-                *  leaves together on the page regardless of what order the engine happened to report
-                *  them in. Every leaf renders, including a zero-count one (tutor at 0 IS the finding
-                *  a combo deck's Consistency group is thin on). */}
-              {p.leaves.length > 1 ? p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves)) : null}
+              {p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves))}
             </Fragment>
-          );
+          ) : null;
         })}
         {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
       </ul>
