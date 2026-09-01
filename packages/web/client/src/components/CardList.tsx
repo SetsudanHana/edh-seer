@@ -48,7 +48,7 @@ function Thumb({ art, alt }: { art?: string; alt: string }) {
       loading="lazy"
       width={56}
       height={40}
-      className="w-10 h-7 sm:w-14 sm:h-10 shrink-0 rounded-[4px] border border-(--border) object-cover bg-(--surface-secondary)"
+      className="w-10 h-7 sm:w-14 sm:h-10 shrink-0 rounded-[4px] border border-(--separator) object-cover bg-(--surface-secondary)"
       style={{ objectPosition: "50% 22%" }}
       onError={(e) => e.currentTarget.remove()}
     />
@@ -70,7 +70,7 @@ function GridCard({
   name, art, count, dim, onOpen,
 }: { name: string; art?: string; count?: number; dim?: boolean; onOpen: () => void }) {
   return (
-    <figure className="relative m-0 rounded-[7px] overflow-hidden border border-(--border) bg-(--surface-secondary) aspect-[488/680]">
+    <figure className="relative m-0 rounded-[7px] overflow-hidden border border-(--separator) bg-(--surface-secondary) aspect-[488/680]">
       <button type="button" onClick={onOpen} className="block w-full h-full text-left" aria-label={name}>
         {art ? (
           <img
@@ -92,7 +92,7 @@ function GridCard({
           aria-label={`${count} connected cards`}
           className={`absolute top-1.5 right-1.5 min-w-[22px] h-[22px] px-1.5 grid place-items-center
           rounded-full border stat-num text-[11px] bg-(--background)/80 backdrop-blur-[2px] ${
-          dim ? "border-(--border) text-(--muted)" : "border-(--accent) text-(--accent)"}`}
+          dim ? "border-(--separator) text-(--muted)" : "border-(--accent) text-(--accent)"}`}
         >
           {count}
         </span>
@@ -264,7 +264,7 @@ export function CardList({ cards, artByName, coverage }: {
           onChange={(e) => setQuery(e.target.value)}
           className="ml-auto text-sm rounded-(--radius) border border-(--field-border) bg-(--field-background) px-2 py-1"
         />
-        <div className="flex rounded-(--radius) border border-(--border) overflow-hidden" role="group" aria-label="View">
+        <div className="flex rounded-(--radius) border border-(--separator) overflow-hidden" role="group" aria-label="View">
           {(["table", "grid"] as const).map((v) => (
             <button
               key={v}
@@ -327,7 +327,7 @@ export function CardList({ cards, artByName, coverage }: {
             *  number: at 44px an 11px band of scrolling rows showed between the strip and the
             *  header and read as a rendering glitch. */}
           <thead className="sticky top-[33px] z-[5] bg-(--background)">
-            <tr className="border-b border-(--border)">
+            <tr className="border-b border-(--separator)">
               <th className="eyebrow text-left font-normal py-2 pr-2 w-10">#</th>
               <th className="eyebrow text-left font-normal py-2 pr-2">
                 <SortButton label="Card" active={sort === "name"} onClick={() => setSort("name")} />
@@ -394,7 +394,7 @@ export function CardList({ cards, artByName, coverage }: {
         *  is five columns of em dashes. Rendered at reduced presence and brightening on hover:
         *  present enough to recognise, quiet enough to read as visibly outside the judged set. */}
       {unread.length > 0 ? (
-        <section className="flex flex-col gap-3 mt-6 pt-6 border-t border-(--border)">
+        <section className="flex flex-col gap-3 mt-6 pt-6 border-t border-(--separator)">
           <div className="flex items-baseline gap-3 flex-wrap">
             <h3 className="text-base font-bold tracking-[-0.01em]">Not read yet</h3>
             <span className="text-xs text-(--muted) stat-num">{unreadCards.length} cards</span>

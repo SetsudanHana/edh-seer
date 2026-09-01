@@ -23,7 +23,7 @@
   },
 
   "style": {
-    "default":   { "$type": "border", "$value": { "width": "{width.thin}", "style": "solid", "color": "{../colors.semantic.border.default}" }, "$description": "DECORATIVE - card edges, dividers. 1.32:1 on the page." },
+    "default":   { "$type": "border", "$value": { "width": "{width.thin}", "style": "solid", "color": "{../colors.semantic.border.separator}" }, "$description": "DECORATIVE - card edges, dividers. 1.32:1 on the page." },
     "separator": { "$type": "border", "$value": { "width": "{width.thin}", "style": "solid", "color": "{../colors.semantic.border.separator}" } },
     "strong":    { "$type": "border", "$value": { "width": "{width.thin}", "style": "solid", "color": "{../colors.semantic.border.strong}" }, "$description": "the only one that identifies a control at WCAG 1.4.11 (3.34:1)" },
     "focus":     { "$type": "border", "$value": { "width": "{width.medium}", "style": "solid", "color": "{../colors.semantic.border.focus}" }, "$description": "drawn as an OUTLINE at 2px offset, not a border - so it never reflows the control it rings" },

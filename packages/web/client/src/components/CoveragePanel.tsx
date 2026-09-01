@@ -78,7 +78,7 @@ export function CoveragePanel({ coverage, resolved, total, commanderUnread }: {
     // NO NEGATIVE MARGINS. Bleeding a strip into the page padding made three ancestors wider than
     // their own content box and read on a real screen as content cropped off the right edge — a
     // recorded defect from the tab bar one component over. The strip stays inside the box.
-    <div className="rounded-(--radius) border border-(--border) bg-(--surface) px-4 sm:px-5 py-4">
+    <div className="rounded-(--radius) border border-(--separator) bg-(--surface) px-4 sm:px-5 py-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 min-w-0">
           <p className="flex items-baseline gap-2.5 flex-wrap">

@@ -550,14 +550,17 @@ export function GraphView(
     if (!ctx) return;
 
     const css = getComputedStyle(canvas);
+    // The fallbacks are the CURRENT literals from index.css. They were the pre-violet blue-greys
+    // (#5b8dee, #e6e8eb, #8b93a1, #1d2126, #6b7688, #14171b), so the one situation they exist for
+    // -- a token that stopped resolving -- would have painted the board in the old palette and
+    // looked like a theme bug rather than a missing token.
     const paintColors = {
-      accent: css.getPropertyValue("--accent").trim() || "#5b8dee",
-      fg: css.getPropertyValue("--foreground").trim() || "#e6e8eb",
-      muted: css.getPropertyValue("--muted").trim() || "#8b93a1",
-      sep: css.getPropertyValue("--separator").trim() || "#1d2126",
-      edge: css.getPropertyValue("--edge").trim() || "#6b7688",
-      border: css.getPropertyValue("--border").trim() || "#262b31",
-      surface: css.getPropertyValue("--surface").trim() || "#14171b",
+      accent: css.getPropertyValue("--accent").trim() || "#c64bc6",
+      fg: css.getPropertyValue("--foreground").trim() || "#e9e4ef",
+      muted: css.getPropertyValue("--muted").trim() || "#948ba6",
+      sep: css.getPropertyValue("--separator").trim() || "#1f1829",
+      edge: css.getPropertyValue("--edge").trim() || "#6b5f7d",
+      surface: css.getPropertyValue("--surface").trim() || "#16111f",
     };
 
     const size = () => {
@@ -1060,7 +1063,7 @@ export function GraphView(
         // Relentless Rats do not read as one Rat, and badge the count.
         const copies = n.copies ?? 1;
         if (copies > 1) {
-          ctx.strokeStyle = paintColors.border;
+          ctx.strokeStyle = paintColors.sep;
           ctx.lineWidth = 1 / cam.z;
           for (const offset of [4, 2]) {
             if (mode === "card") {
@@ -1142,7 +1145,7 @@ export function GraphView(
           });
           if (paintHuesForNode.length === 0) {
             ctx.lineWidth = 1 / cam.z;
-            ctx.strokeStyle = paintColors.border;
+            ctx.strokeStyle = paintColors.sep;
             ctx.strokeRect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
           }
         } else {
@@ -1155,7 +1158,7 @@ export function GraphView(
           }
           if (paintHuesForNode.length === 0) {
             ctx.lineWidth = 1 / cam.z;
-            ctx.strokeStyle = paintColors.border;
+            ctx.strokeStyle = paintColors.sep;
             ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, TAU); ctx.stroke();
           }
         }
@@ -2088,7 +2091,7 @@ export function GraphView(
         </div>
 
         <div
-          className={`relative rounded-(--radius) border border-(--border) overflow-hidden ${
+          className={`relative rounded-(--radius) border border-(--separator) overflow-hidden ${
             isFullscreen ? "flex-1 min-h-0" : "h-[380px] sm:h-[520px]"
           }`}
         >
@@ -2099,7 +2102,7 @@ export function GraphView(
           />
           {hover ? (
             <div
-              className="pointer-events-none absolute rounded-(--radius) border border-(--border) bg-(--background) px-2 py-1 text-xs whitespace-nowrap"
+              className="pointer-events-none absolute rounded-(--radius) border border-(--separator) bg-(--background) px-2 py-1 text-xs whitespace-nowrap"
               style={{ left: hover.x + 12, top: hover.y + 12 }}
             >
               {hover.label}{" "}

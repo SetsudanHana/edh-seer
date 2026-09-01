@@ -10,7 +10,6 @@
       "50":  { "$type": "color", "$value": "#e9e4ef", "$description": "L 92.6% C 0.016 - the only light step; all reading text" },
       "300": { "$type": "color", "$value": "#948ba6", "$description": "L 65.4% C 0.041 - muted/secondary text" },
       "500": { "$type": "color", "$value": "#6b5f7d", "$description": "L 50.8% C 0.049 - the synergy edge, and the one border strong enough to identify a control (3.34:1 on the page)" },
-      "700": { "$type": "color", "$value": "#2c2338", "$description": "L 27.6% C 0.040 - card edges and dividers; decorative only at 1.32:1" },
       "750": { "$type": "color", "$value": "#231b30", "$description": "L 24.2% C 0.041 - third surface step" },
       "800": { "$type": "color", "$value": "#1f1829", "$description": "L 22.6% C 0.034 - separator hairline" },
       "850": { "$type": "color", "$value": "#1b1526", "$description": "L 21.2% C 0.034 - raised surface" },
@@ -60,8 +59,7 @@
     },
 
     "border": {
-      "default":   { "$type": "color", "$value": "{primitive.ground.700}", "$description": "DECORATIVE ONLY at 1.32:1 - card edges, dividers. Never the boundary that identifies a control." },
-      "separator": { "$type": "color", "$value": "{primitive.ground.800}", "$description": "the quieter hairline, below border.default" },
+      "separator": { "$type": "color", "$value": "{primitive.ground.800}", "$description": "THE decorative hairline, 1.15:1 - card edges, dividers, table rules. Never the boundary that identifies a control; that is border.strong. Absorbed border.default (ground.700, 1.32:1), which named the same job at an indistinguishable value." },
       "strong":    { "$type": "color", "$value": "{primitive.ground.500}", "$description": "3.34:1 on the page - the only step that satisfies WCAG 1.4.11 for an essential control border" },
       "focus":     { "$type": "color", "$value": "{primitive.magenta.500}", "$description": "index.css implements this as a 2px :focus-visible outline at 2px offset; keyboard only, so a mouse click never paints a ring" },
       "error":     { "$type": "color", "$value": "{primitive.feedback.danger}" }

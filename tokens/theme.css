@@ -11,7 +11,6 @@
   --color-surface-raised-2: #231b30;
   --color-surface-sunken: #120d1a;
   --color-surface-overlay: #16111f;
-  --color-border-default: #2c2338;
   --color-border-separator: #1f1829;
   --color-border-strong: #6b5f7d;
   --color-border-focus: #c64bc6;
@@ -89,7 +88,6 @@
   --success: var(--color-feedback-success-text);
   --success-foreground: var(--color-feedback-success-on);
 
-  --border: var(--color-border-default);
   --separator: var(--color-border-separator);
   --focus: var(--color-border-focus);
 

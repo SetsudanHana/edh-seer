@@ -34,7 +34,7 @@
   },
 
   "axis": {
-    "line":  { "$type": "color", "$value": "{../colors.semantic.border.default}" },
+    "line":  { "$type": "color", "$value": "{../colors.semantic.border.separator}" },
     "label": { "$type": "color", "$value": "{../colors.semantic.text.secondary}", "$description": "set at tokens/typography.json fontSize.2xs (10px), the documented micro step" }
   },
 

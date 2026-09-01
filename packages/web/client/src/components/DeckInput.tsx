@@ -54,7 +54,7 @@ export function DeckInput({
     // line is what a phone has room for; `justify-between` still puts the summary and the buttons on
     // opposite ends whenever one line is enough.
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 border border-(--border) rounded-(--radius) p-3 bg-(--surface) text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border border-(--separator) rounded-(--radius) p-3 bg-(--surface) text-sm">
         <span className="text-(--muted) truncate">
           <span className="stat-num text-(--foreground)">{count}</span> lines
           {cmdName ? <> · {cmdName}</> : null}
@@ -83,7 +83,7 @@ export function DeckInput({
   }
 
   return (
-    <div className="flex flex-col gap-3 border border-(--border) rounded-(--radius) p-4 bg-(--surface)">
+    <div className="flex flex-col gap-3 border border-(--separator) rounded-(--radius) p-4 bg-(--surface)">
       <div className="flex flex-col gap-1">
         <label className="eyebrow" htmlFor="commanders-input">
           Commander

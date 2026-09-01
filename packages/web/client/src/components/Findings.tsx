@@ -59,7 +59,7 @@ export function Findings({ report }: { report: DeckReport }) {
           {all.length === 1 ? "finding" : "findings"}, worst first
         </span>
       </div>
-      <ul className="flex flex-col border-t border-(--border)">
+      <ul className="flex flex-col border-t border-(--separator)">
         {shown.map((f, i) => (
           <li
             key={f.id}
@@ -68,7 +68,7 @@ export function Findings({ report }: { report: DeckReport }) {
             <span aria-hidden="true" className="hidden sm:block stat-num text-sm text-(--muted) pt-1.5">{i + 1}</span>
             <div className="flex flex-col gap-2.5 min-w-0 order-2 sm:order-none">
               <h3 className="text-xl sm:text-2xl font-bold leading-tight tracking-[-0.02em] flex gap-3">
-                <span aria-hidden="true" className="w-[3px] shrink-0 rounded-full self-stretch bg-(--border)" />
+                <span aria-hidden="true" className="w-[3px] shrink-0 rounded-full self-stretch bg-(--separator)" />
                 <span>{f.headline}</span>
               </h3>
               <p className="text-sm text-(--muted) max-w-[62ch] tabular-nums">{f.detail}</p>
@@ -107,7 +107,7 @@ export function Findings({ report }: { report: DeckReport }) {
         *  competing for a rank inside it — and it names the CATEGORY, never a member, because
         *  nothing in this engine ranks two ramp cards against each other. */}
       {trade ? (
-        <div className="flex gap-3.5 items-start rounded-(--radius) border border-(--border) bg-(--surface) px-4 py-3.5">
+        <div className="flex gap-3.5 items-start rounded-(--radius) border border-(--separator) bg-(--surface) px-4 py-3.5">
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
             strokeWidth="1.5" className="text-(--muted) shrink-0 mt-0.5">
             <path d="M2 5.5h9L8.5 3M14 10.5H5L7.5 13" />
