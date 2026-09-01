@@ -15,14 +15,23 @@ const DATA = {
     edges: [],
   },
   report: {
-    identity: "Enchantments Entering",
+    cohesion: {
+      theme: "enchantments entering",
+      tag: "enters:enchantment",
+      secondary: null,
+      secondaryTag: null,
+      score: 0.47,
+      familyScore: 0.47,
+      label: "focused",
+      dominant: true,
+    },
     buildParents: [{ name: "Ramp", count: 17, target: 10, leaves: [] }],
   },
 } as unknown as Parameters<typeof RecognitionPanel>[0]["data"];
 
 test("names the theme, so a reader can check it read the same deck they built", () => {
   render(<RecognitionPanel data={DATA} />);
-  expect(screen.getByTestId("recognition-identity")).toHaveTextContent("Enchantments Entering");
+  expect(screen.getByTestId("recognition-identity")).toHaveTextContent("enchantments entering");
 });
 
 test("states how much of the deck it could read", () => {
@@ -39,4 +48,16 @@ test("the donut counts nonlands only, weighted by copies", () => {
 test("carries no 0-5 score: recognition is not a judgement", () => {
   render(<RecognitionPanel data={DATA} />);
   expect(screen.queryByText(/\/\s*5\b/)).toBeNull();
+});
+
+test("says so when the engine found no dominant theme, rather than hiding it", () => {
+  const noTheme = {
+    ...DATA,
+    report: {
+      ...DATA.report,
+      cohesion: { theme: "tokens", dominant: false, score: 0.1, label: "unfocused" },
+    },
+  } as typeof DATA;
+  render(<RecognitionPanel data={noTheme} />);
+  expect(screen.getByTestId("recognition-identity")).toHaveTextContent("No dominant theme");
 });

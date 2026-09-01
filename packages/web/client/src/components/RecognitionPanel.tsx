@@ -19,19 +19,23 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
   const slices = typeSlices(data.graph?.nodes ?? []);
   const bars = roleBars(report.buildParents);
   const colours = (data.commanderColorIdentity ?? []).join("");
-  // `DeckReport["identity"]` is `{ win, engine, means }`, not a headline string -- rendering it
-  // directly is a real "[object Object]" bug, not just a type error. `means` (or `win` when a
-  // deck has no stated win condition) is the closest single-sentence stand-in for a theme name.
-  const identityRaw: unknown = report.identity;
-  const identityLabel =
-    typeof identityRaw === "string" ? identityRaw : (report.identity?.means ?? report.identity?.win ?? null);
+  /** THE THEME, FROM `cohesion` AND NOT FROM `identity`. `identity` is three prose slots built by
+   *  `deckSentence`, and none of them is a theme: `win` is a win condition, `means` is
+   *  "N interaction cards against a target of N" -- an explicit target, which this panel is not
+   *  allowed to show -- and only `engine` mentions the theme, wrapped in a sentence.
+   *  `cohesion.theme` is the bare thing itself, and it is what `DeckIdentity` prints as its own
+   *  headline, so using it here makes the two panels agree instead of contradicting each other.
+   *  `dominant === false` is the engine saying it found no dominant theme; that is a real answer
+   *  and gets said, not hidden. */
+  const cohesion = report.cohesion;
+  const theme = cohesion && cohesion.dominant !== false ? cohesion.theme : null;
 
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-lg font-bold tracking-[-0.01em]">What this deck is</h2>
 
       <p data-testid="recognition-identity" className="text-sm text-(--muted)">
-        <span className="text-(--foreground)">{identityLabel ?? "No dominant theme"}</span>
+        <span className="text-(--foreground)">{theme ?? "No dominant theme"}</span>
         {colours ? <> · {colours}</> : null}
         {" · "}
         <span data-testid="recognition-coverage">
