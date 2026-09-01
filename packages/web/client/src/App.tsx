@@ -88,6 +88,21 @@ export default function App() {
     });
   }, []);
 
+  /** THE EXPLAINER IS FOR SOMEONE WHO HAS NOT PASTED A DECK YET, and it lives in `index.html`
+   *  outside `#root`, so React cannot unmount it. An attribute on the document element lets CSS
+   *  hide it instead.
+   *
+   *  SAFE FOR CRAWLERS BY CONSTRUCTION, which is the whole reason that markup is static: a reader
+   *  with JavaScript off never runs this effect, never sets the attribute, and still gets the full
+   *  explainer. `seo.test.ts` parses the source FILE and never runs React, so its 800-character
+   *  readable-text floor cannot be affected by this at all. */
+  useEffect(() => {
+    const root = document.documentElement;
+    if (data) root.dataset.report = "1";
+    else delete root.dataset.report;
+    return () => { delete root.dataset.report; };
+  }, [data]);
+
   /** BACK AND FORWARD, now that an analysis is a history entry.
    *
    *  Without this the entry exists and does nothing when you reach it: the URL would change and the

@@ -262,6 +262,10 @@ summary {
 
    It sits inside the page's own 2rem padding by matching `main`'s box: the app is a centred column
    and a full-bleed band under it would read as a different site. */
+/* HIDDEN ONCE A REPORT IS ON SCREEN. See `App.tsx` for why this is an attribute rather than an
+   unmount, and why it cannot affect what a crawler reads. */
+:root[data-report] .intro { display: none; }
+
 /* MATCHES `main`'S BOX EXACTLY, because a column that does not line up with the app above it reads
    as a different site: 64rem (Tailwind's `max-w-5xl`) with the same 2rem padding, and uncapped above
    `xl` where `main` is `xl:max-w-none`. */
