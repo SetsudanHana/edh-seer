@@ -8,6 +8,7 @@ import { CutList } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
 import { LegalityPanel } from "./LegalityPanel.js";
 import { RecognitionPanel } from "./RecognitionPanel.js";
+import { DeckGauges } from "./DeckGauges.js";
 import { UnmetConditions } from "./UnmetConditions.js";
 import { ManaAvailability } from "./ManaAvailability.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
@@ -48,16 +49,17 @@ function Movement({
   );
 }
 
-type SubTabId = "summary" | "build" | "mana" | "engine";
+type SubTabId = "summary" | "fixes" | "build" | "mana" | "engine";
 
 const SUB_TABS: { id: SubTabId; label: string }[] = [
   { id: "summary", label: "Summary" },
+  { id: "fixes", label: "Fixes" },
   { id: "build", label: "Build" },
   { id: "mana", label: "Mana" },
   { id: "engine", label: "Engine" },
 ];
 
-/** THE OVERVIEW, IN FOUR NAMED SCREENS instead of one 5,202px scroll — about nine screens, with
+/** THE OVERVIEW, IN FIVE NAMED SCREENS instead of one 5,202px scroll — about nine screens, with
  *  nothing named to steer by, since nothing in it was named until a reader reached it.
  *
  *  It used to be fifteen self-contained blocks flowing through a two-column layout in roughly the
@@ -66,22 +68,31 @@ const SUB_TABS: { id: SubTabId; label: string }[] = [
  *  scores out of five and three unexplained decimals owned screen one; the diagnostic panels, which
  *  were the only thing either expert persona acted on, started on screen two and ran to four. That
  *  first fix round put `Findings` first and demoted the scores, and a later one put recognition
- *  ahead of even `Findings` (below) — both RIGHT, but neither fixed the length itself: nine screens
- *  of correctly-ordered content is still nine screens with no signposts.
+ *  ahead of even `Findings` — both RIGHT, but neither fixed the length itself: nine screens of
+ *  correctly-ordered content is still nine screens with no signposts.
  *
- *  So the same sequencing that used to run top-to-bottom on one page now names four sub-tabs and
+ *  So the same sequencing that used to run top-to-bottom on one page now names five sub-tabs and
  *  routes to them, each still internally ordered by the player's own questions from
  *  `specs/2026-08-27-report-slot-inventory.md`:
  *
- *  - **Summary** — recognise, then diagnose, then prescribe. "Did it understand my deck" leads
- *    even the diagnosis (owner ruling 2026-09-01): a criticism only lands once the reader trusts
- *    the tool read the same deck they built. `RecognitionPanel` carries NO score and NO target for
- *    exactly this reason. `Findings` follows it, then the adds-and-cuts movement — one decision,
- *    so the two lists sit side by side.
- *  - **Build** and **Mana** — the evidence a Summary finding is read from, split by what a
- *    deckbuilder actually asks: whether the deck plays enough of each role (Build) versus whether
- *    its mana can deliver them on curve (Mana). Both draw from the same `BuildBenchmarks` panel,
- *    filtered to different `DeckMathSectionId`s (task 4) so neither repeats the other's questions.
+ *  - **Summary** — recognise, then read the state of every measured thing. "Did it understand my
+ *    deck" leads (owner ruling 2026-09-01): a criticism only lands once the reader trusts the tool
+ *    read the same deck they built. `RecognitionPanel` carries NO score and NO target for exactly
+ *    this reason. `DeckGauges` follows it — the dial for every role, the land count and the two
+ *    top-line scores, each a state (`floorState`/`bandState`/`scoreState`) with a route into the
+ *    sub-tab that explains it, so Summary answers "where do I stand" without also carrying the
+ *    full diagnosis behind each answer.
+ *  - **Fixes** — the full diagnosis and the full prescription, MOVED here from Summary (owner
+ *    review, 2026-09-01) because they carried several screens of content on the tab a reader lands
+ *    on first. They travel together rather than being split across tabs, because they are one
+ *    thought — what is wrong, then what to do about it — and a reader should never find a finding
+ *    on one tab and its own remedy on another. `Findings` first, then the adds-and-cuts movement —
+ *    one decision, so the two lists sit side by side.
+ *  - **Build** and **Mana** — the evidence a Fixes finding (or a Summary dial) is read from, split
+ *    by what a deckbuilder actually asks: whether the deck plays enough of each role (Build) versus
+ *    whether its mana can deliver them on curve (Mana). Both draw from the same `BuildBenchmarks`
+ *    panel, filtered to different `DeckMathSectionId`s (task 4) so neither repeats the other's
+ *    questions.
  *  - **Engine** — how the engine read the deck, and the scores. Still last: four of four personas,
  *    including the experienced player, could not read `SYNERGY 0.8/5`, breadth or anchor, and they
  *    were the first thing on the page before 2026-08-27. Nothing is deleted and no engine number
@@ -149,16 +160,24 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
           <LegalityPanel legality={report.legality} />
 
           {/* ── RECOGNISE ──────────────────────────────────────────────────────────────────────
-            *  What this deck IS, before anything says what is wrong with it. */}
+            *  What this deck IS, before anything judges it. */}
           <RecognitionPanel data={data} />
 
-          {/* ── DIAGNOSE ───────────────────────────────────────────────────────────────────────
-            *  The page's focal element. Everything below it is evidence for a row above, on the
-            *  Build and Mana sub-tabs. */}
+          {/* ── WHERE IT STANDS ────────────────────────────────────────────────────────────────
+            *  Every measured thing as a state, and a route into the detail behind each. The full
+            *  diagnosis this used to carry lives on the Fixes tab now. */}
+          <DeckGauges data={data} onOpen={(tab) => setActive(tab)} />
+        </div>
+      )}
+
+      {/* ── DIAGNOSE, THEN PRESCRIBE ─────────────────────────────────────────────────────────────
+        *  One tab, because they are one thought: what is wrong, then what to do about it. Splitting
+        *  them across tabs would put a finding on one and its own remedy on another. */}
+      {active === "fixes" && (
+        <div className="flex flex-col gap-14">
           <Findings report={report} />
 
-          {/* ── PRESCRIBE ──────────────────────────────────────────────────────────────────────
-            *  Adds and cuts are ONE decision — "which five come out for the eight that go in" — so
+          {/* Adds and cuts are ONE decision — "which five come out for the eight that go in" — so
             *  they sit beside each other rather than eight panels apart. */}
           <Movement title="What to change">
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">

@@ -1423,15 +1423,17 @@ test("a single-leaf-parents deck with deckMath present still hides the role-spen
 });
 
 // TASK 5 (2026-09-01): the health dashboard used to be one render -- SYNERGY, the role-spend block
-// and Suggestions all on screen together. The sub-tabs split them: Suggestions and the findings' own
-// figures (Ramp, under target) live on Summary; the scores live on Engine. Same signals, now
-// reached by a click instead of a scroll. (The role-spend block itself -- "How the roles are spent"
-// -- is pinned to the Build sub-tab specifically by the isolation tests below, fix round 1.)
+// and Suggestions all on screen together. The sub-tabs split them: the scores live on Engine.
+// (The role-spend block itself -- "How the roles are spent" -- is pinned to the Build sub-tab
+// specifically by the isolation tests below, fix round 1.)
+// TASK 6 (2026-09-01): Suggestions and the findings' own figures (Ramp, under target) moved again,
+// off Summary onto Fixes -- see the Fixes-tab tests below.
 test("OverviewTab shows the health dashboard, across its sub-tabs", async () => {
   const user = userEvent.setup();
   render(<OverviewTab data={SAMPLE} />);
+  await user.click(screen.getByRole("tab", { name: "Fixes" }));
   expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
-  // "Ramp" is a finding's own figure label (Summary is under target on it) -- present, not unique.
+  // "Ramp" is a finding's own figure label (Fixes is under target on it) -- present, not unique.
   expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
   await user.click(screen.getByRole("tab", { name: "Engine" }));
   expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
@@ -1538,20 +1540,23 @@ test("no sub-tab's heading outline skips a level", async () => {
 
 /** FINDING 3 (fix round 1): the Mana isolation test below already proves Summary unmounts when you
  *  leave it (Summary -> Mana). Nothing proved the same for the other two sub-tabs it can also
- *  reach directly from Summary's default render. */
+ *  reach directly from Summary's default render.
+ *
+ *  TASK 6 (2026-09-01): "What is wrong with this deck" moved off Summary entirely, onto Fixes --
+ *  swapped for "Where this deck stands", the gauges' own heading, which is what Summary carries now. */
 test("Summary's content is not mounted on Build or Engine", async () => {
   const user = userEvent.setup();
   render(<OverviewTab data={SAMPLE} />);
   expect(screen.getByText("What this deck is")).toBeInTheDocument(); // sanity: mounted on Summary
-  expect(screen.getByText("What is wrong with this deck")).toBeInTheDocument();
+  expect(screen.getByText("Where this deck stands")).toBeInTheDocument();
 
   await user.click(screen.getByRole("tab", { name: "Build" }));
   expect(screen.queryByText("What this deck is")).toBeNull();
-  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+  expect(screen.queryByText("Where this deck stands")).toBeNull();
 
   await user.click(screen.getByRole("tab", { name: "Engine" }));
   expect(screen.queryByText("What this deck is")).toBeNull();
-  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+  expect(screen.queryByText("Where this deck stands")).toBeNull();
 });
 
 /** THE SEQUENCE, pinned. Four persona reviews (2026-08-26) found the page led with its weakest
@@ -1568,15 +1573,20 @@ test("Summary's content is not mounted on Build or Engine", async () => {
  *  TASK 5 (2026-09-01): the scores moved to their own Engine sub-tab, so "demotes the scores below
  *  it" is no longer one render's document order -- it is which sub-tab you are on. Split in two:
  *  recognition-before-diagnosis stays a same-render ordering assertion on Summary (the guarantee
- *  this test exists to pin), and the scores get their own Engine-tab assertion below. */
-test("OverviewTab leads recognition before diagnosis, on Summary", () => {
+ *  this test exists to pin), and the scores get their own Engine-tab assertion below.
+ *
+ *  TASK 6 (2026-09-01): the diagnosis itself ("What is wrong with this deck") moved off Summary
+ *  onto Fixes, so there is no longer a same-render diagnosis to order against. `DeckGauges`
+ *  ("Where this deck stands") is what replaced it on Summary, so the ordering guarantee this test
+ *  exists to pin -- recognition leads whatever follows it -- now runs against that instead. */
+test("OverviewTab leads recognition before the gauges, on Summary", () => {
   const { container } = render(<OverviewTab data={SAMPLE} />);
   const text = container.textContent ?? "";
   const recognition = text.indexOf("What this deck is");
-  const diagnosis = text.indexOf("What is wrong with this deck");
+  const gauges = text.indexOf("Where this deck stands");
   expect(recognition).toBeGreaterThanOrEqual(0);
-  expect(diagnosis).toBeGreaterThanOrEqual(0);
-  expect(diagnosis).toBeGreaterThan(recognition);
+  expect(gauges).toBeGreaterThanOrEqual(0);
+  expect(gauges).toBeGreaterThan(recognition);
 });
 
 test("the scores are not on Summary, and switching to Engine reveals them", async () => {
@@ -1588,13 +1598,35 @@ test("the scores are not on Summary, and switching to Engine reveals them", asyn
 });
 
 /** SUMMARY IS THE WHOLE PAGE'S FIRST SCREEN. The Overview ran 5,202px -- about nine screens -- and
- *  a reader scrolling it had nothing named to steer by. Four sub-tabs give the length somewhere to
- *  go and give the reader a word to aim at. */
-test("OverviewTab opens on Summary, which carries recognition and the findings", () => {
+ *  a reader scrolling it had nothing named to steer by. Five sub-tabs give the length somewhere to
+ *  go and give the reader a word to aim at.
+ *
+ *  TASK 6 (2026-09-01): Summary stopped carrying the findings -- they moved to Fixes -- so what it
+ *  carries now, besides recognition, is the gauges. */
+test("OverviewTab opens on Summary, which carries recognition and the gauges", () => {
   render(<OverviewTab data={SAMPLE} />);
   expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute("aria-selected", "true");
   expect(screen.getByText("What this deck is")).toBeInTheDocument();
+  expect(screen.getByText("Where this deck stands")).toBeInTheDocument();
+});
+
+/** TASK 6 (2026-09-01): SUMMARY IS A SUMMARY AGAIN. It carried the entire diagnosis and the entire
+ *  prescription -- several screens of it -- on the tab a reader lands on first. Those two are one
+ *  thought, what is wrong then what to do about it, so they move together to their own tab rather
+ *  than being split across tabs where a finding would sit apart from its own remedy. */
+test("Summary carries recognition and the gauges, not the findings", () => {
+  render(<OverviewTab data={SAMPLE} />);
+  expect(screen.getByText("What this deck is")).toBeInTheDocument();
+  expect(screen.getByText("Where this deck stands")).toBeInTheDocument();
+  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+  expect(screen.queryByText("What to change")).toBeNull();
+});
+
+test("the Fixes tab carries both the diagnosis and the prescription", () => {
+  render(<OverviewTab data={SAMPLE} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Fixes" }));
   expect(screen.getByText("What is wrong with this deck")).toBeInTheDocument();
+  expect(screen.getByText("What to change")).toBeInTheDocument();
 });
 
 test("the mana detail is not on Summary, and switching to Mana reveals it", async () => {
@@ -1616,7 +1648,7 @@ test("the mana detail is not on Summary, and switching to Mana reveals it", asyn
 test("every sub-tab is reachable and names itself", async () => {
   const user = userEvent.setup();
   render(<OverviewTab data={SAMPLE} />);
-  for (const name of ["Summary", "Build", "Mana", "Engine"]) {
+  for (const name of ["Summary", "Fixes", "Build", "Mana", "Engine"]) {
     await user.click(screen.getByRole("tab", { name }));
     expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
   }
