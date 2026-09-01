@@ -269,7 +269,7 @@ export function CardList({ cards, artByName, coverage }: {
           placeholder="Find a card…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="ml-auto text-sm rounded-(--radius) border border-(--separator) bg-(--field-background) px-2 py-1"
+          className="ml-auto text-sm rounded-(--radius) border border-(--field-border) bg-(--field-background) px-2 py-1"
         />
         <div className="flex rounded-(--radius) border border-(--border) overflow-hidden" role="group" aria-label="View">
           {(["table", "grid"] as const).map((v) => (

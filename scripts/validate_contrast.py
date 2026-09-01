@@ -26,11 +26,19 @@ PAIRS = [
     ("semantic.text.link",      "semantic.surface.page", 4.5, "link on page"),
     ("semantic.text.on-action", "semantic.action.primary", 4.5, "text on primary action"),
     ("semantic.border.strong",  "semantic.surface.page", 3.0, "essential control border (WCAG 1.4.11)"),
+    # Promoted from advisory once the three search fields were pointed at this token. Gated
+    # against the CARD, not the page: it is the tightest surface a field actually sits on
+    # (3.14:1 vs 3.34:1 on the page), so passing here passes everywhere a field is used.
+    ("component.field.border",  "semantic.surface.card", 3.0, "field border on card (WCAG 1.4.11)"),
+    # Promoted from a recorded defect. The ink laid ON the danger fill is normal-size text,
+    # so 4.5:1 applies -- the near-white tint that shipped here was 3.66:1.
+    ("semantic.feedback.error-on", "semantic.action.destructive", 4.5, "text on destructive fill"),
 ]
 
 # ADVISORY pairs — intentionally de-emphasized text/decoration. Reported, not failed:
-# tertiary is for incidental non-essential text; border.default is decorative (use border.strong
-# for any boundary that identifies a control).
+# tertiary is for incidental non-essential text; border.default is decorative, and that is now
+# ENFORCED rather than advised — component.field.border is a required pair above, so a control
+# repointed at the decorative token fails the build instead of earning a warning nobody reads.
 ADVISORY = [
     ("semantic.text.tertiary",  "semantic.surface.page", 4.5, "tertiary/incidental text on page"),
     # Found by an eval run: secondary text on a RAISED surface (table headers, chips,

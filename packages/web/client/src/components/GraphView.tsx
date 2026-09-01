@@ -1959,7 +1959,7 @@ export function GraphView(
             placeholder="Find a card…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="rounded-(--radius) border border-(--separator) bg-transparent px-2.5 py-1 text-sm"
+            className="rounded-(--radius) border border-(--field-border) bg-transparent px-2.5 py-1 text-sm"
           />
           {matches ? (
             <span data-testid="graph-search-count" className="eyebrow text-(--muted)">
