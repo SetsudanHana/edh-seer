@@ -1,5 +1,7 @@
 import { scaleLinear } from "d3-scale";
 import type { GaugeReading, GaugeTone } from "../lib/deck-gauge.js";
+import { TONE_OF_SCORE } from "../lib/deck-gauge.js";
+import { scoreBand, SCORE_BREAKS } from "../lib/score-band.js";
 
 /** ONE SEMICIRCLE, drawn from trig rather than from `d3-shape`.
  *
@@ -8,6 +10,7 @@ import type { GaugeReading, GaugeTone } from "../lib/deck-gauge.js";
  *  to emit six lines of arc path for one fixed geometry buys nothing -- there is no stacking, no
  *  layout, no interpolation here, only a constant-radius sweep. */
 const R = 46;
+const RING_INNER = R - 9;
 const CX = 50;
 const CY = 50;
 
@@ -37,30 +40,62 @@ const TONE_FILL: Record<GaugeTone, string> = {
 
 /** THE ZONES OF EACH KIND OF DIAL, in needle-space (-1 … 1).
  *
- *  They mirror `deck-gauge.ts`'s buckets exactly and carry no thresholds of their own -- the module
- *  owns every number, this owns only how wide each band is drawn. `floor` is asymmetric because the
- *  measurement is (see `floorState`); `band` is symmetric because lands genuinely are; `score` is
- *  one-directional because 5 is a ceiling and there is no over side to draw. */
+ *  `floor` and `band` mirror `deck-gauge.ts`'s buckets exactly and carry no thresholds of their own
+ *  -- the module owns every number, this owns only how wide each band is drawn. `floor` is
+ *  asymmetric because the measurement is (see `floorState`); `band` is symmetric because lands
+ *  genuinely are. `score` is built below, not written down, because its thresholds are
+ *  `SCORE_BREAKS` and a hand-copied literal would go stale the day that array moves. */
+const FLOOR_ZONES: { from: number; to: number; tone: GaugeTone }[] = [
+  { from: -1, to: -0.6, tone: "danger" },
+  { from: -0.6, to: -0.2, tone: "warning" },
+  { from: -0.2, to: 0.4, tone: "success" },
+  { from: 0.4, to: 1, tone: "neutral" },
+];
+
+const BAND_ZONES: { from: number; to: number; tone: GaugeTone }[] = [
+  { from: -1, to: -0.6, tone: "danger" },
+  { from: -0.6, to: -0.2, tone: "warning" },
+  { from: -0.2, to: 0.2, tone: "success" },
+  { from: 0.2, to: 0.6, tone: "warning" },
+  { from: 0.6, to: 1, tone: "danger" },
+];
+
+/** The same `(score / 5) * 2 - 1` map `scoreState` uses, applied to `SCORE_BREAKS` so the arc's
+ *  boundaries move with the bands instead of copying their positions by hand. */
+function scorePosition(score: number): number {
+  return (score / 5) * 2 - 1;
+}
+
+/** `SCORE_BREAKS` cuts [0, 5] into four bands (Unfocused/Developing/Focused/Tuned). Mapped to
+ *  needle-space that is four spans; `Focused` and `Tuned` both carry `success` (`TONE_OF_SCORE`),
+ *  so drawn as four arcs the dial would show an invisible boundary -- one band pretending to be
+ *  two. Adjacent spans sharing a tone are merged here, which is what makes the score dial draw
+ *  three zones for four bands. */
+function buildScoreZones(): { from: number; to: number; tone: GaugeTone }[] {
+  const edges = [-1, ...SCORE_BREAKS.map(scorePosition), 1];
+  const spans = edges.slice(0, -1).map((from, i) => {
+    const to = edges[i + 1];
+    const midScore = ((from + to) / 2 + 1) / 2 * 5;
+    return { from, to, tone: TONE_OF_SCORE[scoreBand(midScore).tone] };
+  });
+  return spans.reduce<{ from: number; to: number; tone: GaugeTone }[]>((merged, span) => {
+    const last = merged[merged.length - 1];
+    if (last && last.tone === span.tone) {
+      last.to = span.to;
+      return merged;
+    }
+    return [...merged, span];
+  }, []);
+}
+
+/** Exported for the dial's own test: proof that the boundaries are derived from `SCORE_BREAKS`
+ *  rather than reasserted as separate literals. */
+export const SCORE_ZONES = buildScoreZones();
+
 const ZONES: Record<"floor" | "band" | "score", { from: number; to: number; tone: GaugeTone }[]> = {
-  floor: [
-    { from: -1, to: -0.6, tone: "danger" },
-    { from: -0.6, to: -0.2, tone: "warning" },
-    { from: -0.2, to: 0.4, tone: "success" },
-    { from: 0.4, to: 1, tone: "neutral" },
-  ],
-  band: [
-    { from: -1, to: -0.6, tone: "danger" },
-    { from: -0.6, to: -0.2, tone: "warning" },
-    { from: -0.2, to: 0.2, tone: "success" },
-    { from: 0.2, to: 0.6, tone: "warning" },
-    { from: 0.6, to: 1, tone: "danger" },
-  ],
-  score: [
-    { from: -1, to: -0.4, tone: "danger" },
-    { from: -0.4, to: 0.2, tone: "warning" },
-    { from: 0.2, to: 0.6, tone: "success" },
-    { from: 0.6, to: 1, tone: "success" },
-  ],
+  floor: FLOOR_ZONES,
+  band: BAND_ZONES,
+  score: SCORE_ZONES,
 };
 
 const TONE_TEXT: Record<GaugeTone, string> = {
@@ -80,7 +115,9 @@ export function Dial({
   onOpen?: () => void;
   openLabel?: string;
 }) {
-  const [nx, ny] = pointAt(angle(reading.position), R - 12);
+  // The needle reaches the ring's inner edge (RING_INNER, not a second literal) so it points
+  // INTO the coloured band it names rather than stopping short of it.
+  const [nx, ny] = pointAt(angle(reading.position), RING_INNER);
   const body = (
     <>
       <svg viewBox="0 0 100 56" aria-hidden="true" className="w-full max-w-[9rem]">
@@ -88,7 +125,7 @@ export function Dial({
           <path
             key={`${z.from}`}
             data-zone={z.tone}
-            d={ringPath(angle(z.from), angle(z.to), R - 9, R)}
+            d={ringPath(angle(z.from), angle(z.to), RING_INNER, R)}
             fill={TONE_FILL[z.tone]}
             /* The band a reading is NOT in stays present but quiet: a gauge whose other zones
              * vanish stops being a scale and becomes a bar. */
@@ -106,18 +143,22 @@ export function Dial({
     </>
   );
 
-  const shell = "flex flex-col items-center gap-0.5 min-w-0 rounded-lg border border-(--separator) p-4";
+  const shell = "flex flex-col items-center gap-0.5 rounded-lg border border-(--separator) p-4";
 
   // A DIAL WITH NOWHERE TO GO IS NOT A BUTTON. Offering the affordance for a gauge whose detail
   // does not exist is a control that does nothing, which is worse than no control.
-  if (!onOpen) return <div className={shell}>{body}</div>;
+  // `min-w-0` here lets the card shrink inside its grid cell; there is no target-size rule to
+  // satisfy because there is no control.
+  if (!onOpen) return <div className={`${shell} min-w-0`}>{body}</div>;
 
+  // The 44px target-size floor (WCAG 2.5.8) is stated explicitly on both axes rather than left to
+  // inherit from the SVG's content width, which is what `min-w-0` would have done.
   return (
     <button
       type="button"
       onClick={onOpen}
       aria-label={`${name}, ${value}, ${reading.label} — open ${openLabel}`}
-      className={`${shell} min-h-[44px] text-left hover:border-(--accent) focus-visible:outline-2 focus-visible:outline-(--accent)`}
+      className={`${shell} min-w-[44px] min-h-[44px] text-left hover:border-(--accent) focus-visible:outline-2 focus-visible:outline-(--accent)`}
     >
       {body}
     </button>

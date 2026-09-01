@@ -21,7 +21,9 @@ export interface GaugeReading {
   position: number;
 }
 
-const TONE_OF_SCORE: Record<ScoreTone, GaugeTone> = {
+/** Exported so the score dial's arc can colour its derived zones with the same mapping
+ *  `scoreState` uses for the reading itself -- one tone table, not two. */
+export const TONE_OF_SCORE: Record<ScoreTone, GaugeTone> = {
   low: "danger", mid: "warning", good: "success", high: "success",
 };
 
