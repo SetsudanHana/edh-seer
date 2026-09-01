@@ -123,7 +123,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
       <div
         role="tablist"
         aria-label="Overview sections"
-        // `overflow-x-auto`, same reason `ReportTabs` scrolls its own strip: four labels plus the
+        // `overflow-x-auto`, same reason `ReportTabs` scrolls its own strip: five labels plus the
         // strip's own padding can run past a 390px row, and a clipped tab is a sub-tab you cannot
         // reach.
         className="flex gap-4 border-b border-(--separator) overflow-x-auto"
@@ -200,12 +200,12 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
         *  the sub-tabs that inherited its panels. Two things went with it. The heading outline both
         *  skipped and inverted (Build opened on an `h3`, Mana on an `h4`, followed by `h3`s from
         *  `ManaAvailability` and friends — WCAG 1.3.1, and this repo's own "headings never skip
-        *  levels"); and the SENTENCE saying these panels are the evidence for Summary's findings
+        *  levels"); and the SENTENCE saying these panels are the evidence for Fixes' findings
         *  left the product entirely, so a reader arriving on Build met a wall of numbers with no
         *  statement of what they were for. Both `count` strings below restore that link, worded for
         *  the half of the split each tab owns. */}
       {active === "build" && (
-        <Movement title="What this deck plays" count="the evidence behind each build finding on Summary">
+        <Movement title="What this deck plays" count="the evidence behind each build finding on Fixes">
           <BuildBenchmarks
             categories={report.buildCategories}
             parents={report.buildParents}
@@ -217,7 +217,7 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
       )}
 
       {active === "mana" && (
-        <Movement title="Whether the mana delivers it" count="the evidence behind each mana finding on Summary">
+        <Movement title="Whether the mana delivers it" count="the evidence behind each mana finding on Fixes">
         <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
           {/* FIX ROUND 1 (controller ruling, 2026-09-01): `showBenchmarks={false}` -- the Build
             *  sub-tab is the only one that owns the category/parent block ("How the roles are spent",

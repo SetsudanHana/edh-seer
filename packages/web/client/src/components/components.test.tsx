@@ -1502,8 +1502,11 @@ test("Engine's own deck-math section (waiting) shows on Engine, not on Build or 
 
 /** I3 (whole-branch review, 2026-09-01): Build and Mana shipped with no title element at all, so
  *  each opened on a heading with no parent and the sentence saying these panels are the EVIDENCE
- *  for Summary's findings was gone from the product. Both halves are pinned -- the `h2` and the
- *  link back -- because the deleted `Movement` carried both. */
+ *  for the findings was gone from the product. Both halves are pinned -- the `h2` and the
+ *  link back -- because the deleted `Movement` carried both.
+ *
+ *  FIX ROUND 1 (task 6, 2026-09-01): the findings moved off Summary onto Fixes; the sentence's
+ *  wording moved with them (see the dedicated regression test below, which pins this specifically). */
 test("Build and Mana each open on an h2 naming them, and say what they are evidence for", async () => {
   const user = userEvent.setup();
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
@@ -1511,11 +1514,22 @@ test("Build and Mana each open on an h2 naming them, and say what they are evide
 
   await user.click(screen.getByRole("tab", { name: "Build" }));
   expect(screen.getByRole("heading", { level: 2, name: /What this deck plays/ })).toBeInTheDocument();
-  expect(screen.getByText(/evidence behind each build finding on Summary/i)).toBeInTheDocument();
+  expect(screen.getByText(/evidence behind each build finding on Fixes/i)).toBeInTheDocument();
 
   await user.click(screen.getByRole("tab", { name: "Mana" }));
   expect(screen.getByRole("heading", { level: 2, name: /Whether the mana delivers it/ })).toBeInTheDocument();
-  expect(screen.getByText(/evidence behind each mana finding on Summary/i)).toBeInTheDocument();
+  expect(screen.getByText(/evidence behind each mana finding on Fixes/i)).toBeInTheDocument();
+});
+
+/** THE MOVEMENT COPY NAMES THE TAB THE FINDINGS ARE ACTUALLY ON. Build and Mana call themselves the
+ *  evidence behind the findings, and when the diagnosis moved to Fixes these two sentences kept
+ *  pointing at Summary -- rendered text telling the reader to look where nothing is. */
+test("Build and Mana point at the tab the findings actually live on", () => {
+  render(<OverviewTab data={SAMPLE as never} />);
+  fireEvent.click(screen.getByRole("tab", { name: "Build" }));
+  expect(screen.getByText(/evidence behind each build finding on Fixes/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("tab", { name: "Mana" }));
+  expect(screen.getByText(/evidence behind each mana finding on Fixes/)).toBeInTheDocument();
 });
 
 /** The outline must not skip or invert on any sub-tab (WCAG 1.3.1). Asserted as a PROPERTY of the
