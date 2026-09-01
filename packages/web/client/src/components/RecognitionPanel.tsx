@@ -2,7 +2,8 @@ import type { AnalyzeResponse } from "../types.js";
 import { roleBars, typeSlices } from "../lib/deck-shape.js";
 import { TypeBar } from "./TypeBar.js";
 import { RoleBars } from "./RoleBars.js";
-import { identityLabel } from "../lib/color-identity.js";
+import { identityKey, identityLabel } from "../lib/color-identity.js";
+import { ManaSymbols } from "./ManaSymbols.js";
 
 /** DID IT READ THE DECK I BUILT?
  *
@@ -26,6 +27,18 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
   // how to say it. `identityLabel` already handles the empty/colorless case, so no bare-letter
   // fallback is needed here either.
   const colours = colourIdentity.length > 0 ? identityLabel(colourIdentity) : "";
+  /** AND DRAWN IN THE GAME'S OWN VOCABULARY BESIDE THE NAME (owner review, 2026-09-01). "Grixis" is
+   *  a name a player has to have learnt; the three pips are the same fact, readable by anyone who
+   *  has held a card. `index.css` has said "identity in the interface uses real mana symbols in
+   *  Wizards' own colours" since the `--mana-*` ramp was written -- that ramp is for fills where a
+   *  symbol CANNOT be placed, and this is not one of those places. Built through `identityKey` so
+   *  the pips come out in WUBRG order whatever order the API sent, and rendered by `ManaSymbols`
+   *  (Scryfall's own symbology SVGs, already loaded elsewhere on this page) rather than a second
+   *  symbol path. */
+  const pipCost = identityKey(colourIdentity)
+    .split("")
+    .map((c) => `{${c}}`)
+    .join("");
   /** THE THEME, FROM `cohesion` AND NOT FROM `identity`. `identity` is three prose slots built by
    *  `deckSentence`, and none of them is a theme: `win` is a win condition, `means` is
    *  "N interaction cards against a target of N" -- an explicit target, which this panel is not
@@ -61,13 +74,37 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
     <section className="flex flex-col gap-4">
       <h2 className="text-lg font-bold tracking-[-0.01em]">What this deck is</h2>
 
-      <p data-testid="recognition-identity" className="text-sm text-(--muted)">
-        <span className="text-(--foreground)">{theme ?? noThemeLabel}</span>
-        {strongestTheme ? <> · strongest: {strongestTheme}</> : null}
-        {commanders.length > 0 ? <> · {commanders.join(" / ")}</> : null}
-        {colours ? <> · {colours}</> : null}
-        {" · "}
-        {/* CARDS READ, NOT LINES RESOLVED (C2, whole-branch review, 2026-09-01). `resolvedCount`/
+      {/* THE ANSWER LOOKS LIKE AN ANSWER (owner review, 2026-09-01). The theme shipped as the first
+        *  word of a 14px muted metadata run -- "enchantments entering · The Rani · Grixis · read 100
+        *  of 100 cards" -- so the panel asked "What this deck is" and then answered it at the same
+        *  weight as its own footnotes. It is the one thing this panel exists to say, and the house
+        *  rule is that a display line is a different SIZE, not a bolder body: 30px against the 14px
+        *  beneath it. The metadata that qualifies the theme stays where it was, small, below.
+        *  `recognition-identity` still wraps both, so every guard that reads "the identity" -- theme,
+        *  commander, colours, coverage -- keeps reading one element. */}
+      <div data-testid="recognition-identity" className="flex flex-col gap-1">
+        <p
+          data-testid="recognition-theme"
+          className="text-2xl sm:text-3xl font-bold leading-tight tracking-[-0.02em] text-(--foreground)"
+        >
+          {theme ?? noThemeLabel}
+        </p>
+
+        <p className="text-sm text-(--muted)">
+          {strongestTheme ? <>strongest: {strongestTheme} · </> : null}
+          {commanders.length > 0 ? <>{commanders.join(" / ")} · </> : null}
+          {colours ? (
+            <>
+              {/* The word beside them already says "Grixis", so the pips are decoration to a screen
+                *  reader -- hidden rather than read out a second time as "one blue mana, one black
+                *  mana, one red mana". */}
+              <span aria-hidden="true" className="inline-flex items-center align-[-0.15em]">
+                <ManaSymbols cost={pipCost} />
+              </span>{" "}
+              {colours} ·{" "}
+            </>
+          ) : null}
+          {/* CARDS READ, NOT LINES RESOLVED (C2, whole-branch review, 2026-09-01). `resolvedCount`/
           *  `totalCount` are NAME RESOLUTION -- how many decklist LINES matched a card -- and on a
           *  partly-read deck they can both read 100/100 while the gate strip above this panel
           *  (`CoveragePanel`) truthfully says "52 of 100 cards read". Those are two different
@@ -75,10 +112,11 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
           *  shows, so the two counters at the top of the page agree instead of contradicting each
           *  other. Falls back to the resolution counts only when `coverage` is absent (a fully-read
           *  deck, where the engine never computed it and the two figures would coincide anyway). */}
-        <span data-testid="recognition-coverage">
-          read {report.coverage?.derived ?? data.resolvedCount} of {report.coverage?.resolved ?? data.totalCount} cards
-        </span>
-      </p>
+          <span data-testid="recognition-coverage">
+            read {report.coverage?.derived ?? data.resolvedCount} of {report.coverage?.resolved ?? data.totalCount} cards
+          </span>
+        </p>
+      </div>
 
       <div className="flex flex-wrap items-start gap-8">
         <TypeBar slices={slices} />

@@ -176,3 +176,35 @@ test("names no commander when deckMath was never computed", () => {
   render(<RecognitionPanel data={DATA} />);
   expect(screen.getByTestId("recognition-identity")).not.toHaveTextContent("Krenko");
 });
+
+/** THE THEME IS THE ANSWER, SO IT LOOKS LIKE ONE (owner review, 2026-09-01). "enchantments
+ *  entering" shipped as the first word of a 14px muted metadata run, typographically identical to
+ *  the coverage counter beside it -- the panel asked "What this deck is" and then whispered the
+ *  answer at the same weight as its own footnotes. The theme now owns its own display line; the
+ *  metadata that qualifies it stays small beneath. `recognition-identity` still wraps both, so the
+ *  guards above (theme, commander, colours, coverage) keep reading one element. */
+test("the theme is a display line of its own, not a word inside the metadata run", () => {
+  render(<RecognitionPanel data={DATA} />);
+  const theme = screen.getByTestId("recognition-theme");
+  expect(theme).toHaveTextContent("enchantments entering");
+  // The metadata paragraph carries the counter and never the theme.
+  const meta = screen.getByTestId("recognition-coverage").closest("p");
+  expect(meta).not.toHaveTextContent("enchantments entering");
+});
+
+/** COLOUR PIPS BESIDE THE IDENTITY NAME (owner review, 2026-09-01). "Grixis" is a name a player has
+ *  to know to read; the three mana symbols are the same fact rendered in the game's own vocabulary,
+ *  and index.css has said "identity in the interface uses real mana symbols" since the ramp was
+ *  written. Reuses `ManaSymbols` (Scryfall symbology SVGs) rather than a second symbol path, and
+ *  the pips are aria-hidden because the word next to them already says it. */
+test("draws the colour identity as mana pips beside its name", () => {
+  const grixis = { ...DATA, commanderColorIdentity: ["R", "B", "U"] } as typeof DATA;
+  const { container } = render(<RecognitionPanel data={grixis} />);
+  const pips = container.querySelectorAll("img[src*='card-symbols']");
+  expect([...pips].map((p) => p.getAttribute("src"))).toEqual([
+    "https://svgs.scryfall.io/card-symbols/U.svg",
+    "https://svgs.scryfall.io/card-symbols/B.svg",
+    "https://svgs.scryfall.io/card-symbols/R.svg",
+  ]);
+  expect(screen.getByTestId("recognition-identity")).toHaveTextContent("Grixis");
+});
