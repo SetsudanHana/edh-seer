@@ -1402,6 +1402,26 @@ test("BuildBenchmarks renders without deck math at all", () => {
   expect(screen.queryByText(/answers by turn/i)).not.toBeInTheDocument();
 });
 
+/** RESIDUAL FIX (2026-09-01). "single-leaf parents alone render no heading" (above) only proved the
+ *  heading-over-nothing case where the WHOLE component bails out (`!hasBenchmarkContent && !deckMath`
+ *  is true with no `deckMath`, so `return null` fires before the heading is ever reached). The Build
+ *  sub-tab -- this component's one real call site with `parents` at all -- always passes `deckMath`
+ *  too, and with `deckMath` present that early return does not fire: `showBenchmarks && (...)` used
+ *  to render "How the roles are spent" regardless, over the empty `<ul>` a `buildParents` of only
+ *  single-leaf parents leaves behind. The old fixture's assertion (`container` empty) could not have
+ *  caught this, because `deckMath`'s own rows mean the container is never empty either way. */
+test("a single-leaf-parents deck with deckMath present still hides the role-spend heading", () => {
+  const singles = [
+    { name: "Ramp", count: 8, target: 10, leaves: ["ramp"] },
+    { name: "Board wipes", count: 1, target: 3, leaves: ["boardWipe"] },
+  ] as unknown as typeof SAMPLE.report.buildParents;
+  render(<BuildBenchmarks categories={SCRAMBLED_CATEGORIES} parents={singles} deckMath={DECK_MATH} />);
+  expect(screen.queryByText(/How the roles are spent/i)).toBeNull();
+  // Confirms the DOM isn't merely empty for an unrelated reason -- deckMath's own rows are why the
+  // component didn't bail out to `return null` altogether, and they're expected to render normally.
+  expect(screen.getByText(/answers by turn/i)).toBeInTheDocument();
+});
+
 // TASK 5 (2026-09-01): the health dashboard used to be one render -- SYNERGY, the role-spend block
 // and Suggestions all on screen together. The sub-tabs split them: Suggestions and the findings' own
 // figures (Ramp, under target) live on Summary; the scores live on Engine. Same signals, now

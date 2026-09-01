@@ -184,7 +184,7 @@ export default function App() {
             *  above `xl` is the viewport — 1,376px at 1440, or 156 characters a line against the
             *  45–75 the type rules allow. `.intro p` already caps at 68ch; this one never did. */}
           <p className="max-w-[65ch] text-sm text-(--muted)">
-            Mana curve, land math, build benchmarks, per-card roles, and combos. No account needed.
+            Mana curve, land math, role spend, per-card roles, and combos. No account needed.
           </p>
         </div>
       )}

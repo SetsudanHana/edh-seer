@@ -234,8 +234,16 @@ export function BuildBenchmarks({
       {/* Suppressed on the Mana and Engine sub-tabs (`showBenchmarks={false}`) -- see the prop's
         *  own doc comment above for why. The heading is suppressed WITH the rows, never left over
         *  it, for the same "no empty shell" reason `hasBenchmarkContent` guards the whole
-        *  component's early return. */}
-      {showBenchmarks && (
+        *  component's early return.
+        *
+        *  AND GATED ON `hasBenchmarkContent` TOO (residual fix, 2026-09-01): the early return above
+        *  only skips the WHOLE component when there is neither benchmark content nor `deckMath` --
+        *  so a call with `deckMath` present (the Build sub-tab, always) and a `buildParents` of only
+        *  single-leaf parents used to clear that return and then render this heading over the empty
+        *  `<ul>` the single-leaf filter leaves behind. `hasBenchmarkContent` is exactly the flag that
+        *  already knows the list will be empty; the heading needs the same guard the list itself
+        *  effectively has. */}
+      {showBenchmarks && hasBenchmarkContent && (
         <>
           {/* RENAMED FROM "Build benchmarks" (C1, whole-branch review, 2026-09-01). A benchmark is
             *  a figure against a LIMIT, and there is no longer a limit anywhere under this heading:
@@ -298,11 +306,11 @@ export function BuildBenchmarks({
                         <>
                           <span className="stat-num">{sumOfLeaves}</span>
                           {" counted across "}
-                          <span className="stat-num">{plural(p.count, "card")}</span>
+                          <span className="tabular-nums">{plural(p.count, "card")}</span>
                           {" — some fill two of these roles"}
                         </>
                       ) : (
-                        <span className="stat-num">{plural(sumOfLeaves, "card")}</span>
+                        <span className="tabular-nums">{plural(sumOfLeaves, "card")}</span>
                       )}
                     </span>
                   </li>
