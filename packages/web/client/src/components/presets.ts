@@ -195,6 +195,24 @@ export const DONUT_HUE: Record<string, string> = {
   spells: "#5b40f6",
 };
 
+/** THE SIX CARD TYPES, IN SEGMENT ORDER. Not `TYPE_HUE`: that table is correct for the board,
+ *  where a node carries card art, a label and a position and colour is one cue among four. A bar
+ *  segment has colour and an in-place label, and `TYPE_HUE` fails the categorical validator
+ *  outright -- `artifact #8d949f` has chroma 0.018 and reads grey.
+ *
+ *  THE ORDER IS PART OF THE PALETTE. `enchantment` and `sorcery` are both blues at dE 12.5 in
+ *  normal vision, below the floor; they pass only because nothing places them adjacent. Sorting
+ *  segments by value at runtime would break that silently, so `TypeBar` renders `TYPE_ORDER` and
+ *  a test pins it. Verified all five checks on adjacent pairs, dark, surface #16111f. */
+export const TYPE_SEGMENT_HUE: Record<string, string> = {
+  creature: "#277310",
+  enchantment: "#1c8db7",
+  artifact: "#c05a72",
+  instant: "#5b40f6",
+  planeswalker: "#b08e1d",
+  sorcery: "#3d7ed6",
+};
+
 /** WUBRG, by the game's own convention rather than by the palette search above: a blue card has to
  *  read as blue. Black is the one that cannot be literal -- a black disc on a #14171b surface is
  *  invisible -- so it takes the purple-grey that Magic's own dark-mode UIs use. `C` is colourless,
