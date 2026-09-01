@@ -18,7 +18,7 @@
  * --in takes a directory of DTCG files (default: tokens/) or a single self-contained
  * file, which is what a product repo scaffolded from templates/product-design/ has.
  */
-import { readFileSync, readdirSync, statSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 
 const ROOT = resolve(dirname(new URL(import.meta.url).pathname), '..');
@@ -26,14 +26,20 @@ const arg = (name) => (process.argv.find(a => a.startsWith(`--${name}=`)) || '')
   || (process.argv.includes(`--${name}`) ? process.argv[process.argv.indexOf(`--${name}`) + 1] : null);
 const out = arg('out');
 const IN = resolve(arg('in') || join(ROOT, 'tokens'));
-const SINGLE = statSync(IN).isFile();
+// `statSync(IN).isFile()` and then `readFileSync(IN)` is a check-then-use race
+// (CodeQL js/file-system-race): the path can change between the two calls. Read it
+// instead -- a directory throws EISDIR, which IS the "not a single file" answer the
+// stat was asking for, and the text is reused below rather than read a second time.
+let SINGLE_TEXT = null;
+try { SINGLE_TEXT = readFileSync(IN, 'utf8'); } catch { /* EISDIR: --in is a token directory */ }
+const SINGLE = SINGLE_TEXT !== null;
 const TOKENS = SINGLE ? dirname(IN) : IN;
 
 // 1) load every token file into a global path->value map (file-namespaced + bare)
 const all = {};
 const SOURCES = SINGLE ? [IN.split('/').pop()] : readdirSync(TOKENS).filter(n => n.endsWith('.json'));
 for (const f of SOURCES) {
-  const data = JSON.parse(readFileSync(join(TOKENS, f)));
+  const data = JSON.parse(SINGLE ? SINGLE_TEXT : readFileSync(join(TOKENS, f)));
   const stem = f.replace(/\.json$/, '');
   (function walk(o, p) {
     if (o && typeof o === 'object') {
@@ -65,7 +71,7 @@ function res(v, depth = 0, dark = null) {
 }
 
 // 3) emit semantic + component color tokens as --color-* ; dark section as overrides
-const colors = JSON.parse(readFileSync(SINGLE ? IN : join(TOKENS, 'colors.json')));
+const colors = JSON.parse(SINGLE ? SINGLE_TEXT : readFileSync(join(TOKENS, 'colors.json')));
 const lines = { light: [], dark: [] };
 function emit(obj, prefix, bucket, dark = null) {
   for (const [k, v] of Object.entries(obj || {})) {
