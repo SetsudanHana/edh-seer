@@ -61,3 +61,22 @@ test("says so when the engine found no dominant theme, rather than hiding it", (
   render(<RecognitionPanel data={noTheme} />);
   expect(screen.getByTestId("recognition-identity")).toHaveTextContent("No dominant theme");
 });
+
+/** THE GUARD THAT MOVED HERE FROM `DeckIdentity`. The theme headline used `strategies[0].label`
+ *  for three weeks, which read "Tokens" on a wizard tribal deck while `cohesion.theme` read
+ *  "wizards entering" -- the stronger answer was computed and discarded. `DeckIdentity` carries
+ *  the full story in its file comment. Recognition owns the theme now, so the guard lives here:
+ *  the archetype is context, never the title. */
+test("names the cohesion theme, never the top archetype", () => {
+  const withArchetype = {
+    ...DATA,
+    report: {
+      ...DATA.report,
+      cohesion: { ...DATA.report.cohesion, theme: "draw", dominant: true },
+      strategies: [{ name: "tokens", label: "Tokens", confidence: 0.4 }],
+    },
+  } as typeof DATA;
+  render(<RecognitionPanel data={withArchetype} />);
+  expect(screen.getByTestId("recognition-identity")).toHaveTextContent("draw");
+  expect(screen.getByTestId("recognition-identity")).not.toHaveTextContent("Tokens");
+});

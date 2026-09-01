@@ -68,10 +68,10 @@ test("the commander's cast odds are a RANGE, and a refused cost is an em dash an
   expect(screen.getByText(/0% by turn 10/)).toBeInTheDocument();
 });
 
-test("DeckIdentity shows the headline theme", () => {
-  render(<DeckIdentity cohesion={SAMPLE.report.cohesion} />);
-  expect(screen.getByText("Tokens")).toBeInTheDocument();
-});
+// DELETED: "DeckIdentity shows the headline theme" asserted only that DeckIdentity renders
+// cohesion.theme as its own <h2>. That contract moved to RecognitionPanel (round 2 of the
+// Overview reorder) so the page names the deck once, not twice; DeckIdentity no longer prints
+// the theme at all, so the assertion had nothing left to trim down to.
 
 // A NAMING LAYER MAY DECLINE (roadmap A15). Under `THEME_NAME_FLOOR` the headline is carried by one
 // or two cards -- `venser` reads 0.02 across the calibration corpus -- so the title says so and the
@@ -97,13 +97,9 @@ test("DeckIdentity declines to name a deck whose theme is not dominant", () => {
   expect(screen.getByText(/strongest: proliferate/)).toBeTruthy();
 });
 
-// An ABSENT `dominant` is a caller that predates the field, never a negative opinion -- the CLI
-// defaulting the other way made a 0.50-cohesion fixture abstain.
-test("DeckIdentity names the deck when dominant is absent", () => {
-  const { dominant: _drop, ...older } = SAMPLE.report.cohesion!;
-  render(<DeckIdentity cohesion={older as typeof SAMPLE.report.cohesion} />);
-  expect(screen.getByRole("heading", { level: 2 }).textContent).toBe(SAMPLE.report.cohesion!.theme);
-});
+// DELETED: "DeckIdentity names the deck when dominant is absent" asserted only that an absent
+// `dominant` field still renders cohesion.theme in DeckIdentity's own <h2>. That heading is gone
+// -- the theme now lives in RecognitionPanel -- so the assertion had nothing left to trim down to.
 
 test("DeckIdentity renders nothing when there's no cohesion", () => {
   const { container } = render(<DeckIdentity cohesion={null} />);
@@ -119,17 +115,18 @@ const cohesionDraw = {
   label: "focused",
 } as NonNullable<typeof SAMPLE.report.cohesion>;
 
-// THE HEADLINE FLIPPED, 2026-08-20, and the test it replaces was right when it was written.
-// `strategies[0]` led from 8de3c72 (2026-08-01) because a cohesion theme was then routinely a bare
-// functional role -- `UNIFORM_STATS` collapsed the theme ranking to raw frequency and seven of
-// eight decks themed "draw". That was fixed on 2026-08-18 (0c59087, 38e5248) and A1-A11 rebuilt the
-// ranking on top of it; the guard outlived its defect, and on a wizard deck it printed "Tokens".
-test("DeckIdentity headlines the cohesion theme, not the top archetype", () => {
+// THE HEADLINE FLIPPED, 2026-08-20: `strategies[0]` led from 8de3c72 (2026-08-01) because a
+// cohesion theme was then routinely a bare functional role -- `UNIFORM_STATS` collapsed the theme
+// ranking to raw frequency and seven of eight decks themed "draw" -- and on a wizard deck the
+// headline printed "Tokens" while cohesion.theme read "wizards entering". THE HEADLINE ITSELF, and
+// the regression guard for that defect, moved to `RecognitionPanel.test.tsx` ("names the cohesion
+// theme, never the top archetype") now that RecognitionPanel owns the theme headline. What is left
+// here is DeckIdentity's own surviving behaviour: the archetype still prints as CONTEXT under the
+// cohesion figures, never as a title.
+test("DeckIdentity keeps the archetype as context, not as a title", () => {
   render(
     <DeckIdentity cohesion={cohesionDraw} strategies={[{ name: "tokens", label: "Tokens", confidence: 0.4 }]} />,
   );
-  expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Draw");
-  // The archetype survives as context, with its share -- not as the title.
   expect(screen.getByText(/signals Tokens 40%/)).toBeInTheDocument();
 });
 
