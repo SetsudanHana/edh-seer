@@ -28,7 +28,7 @@ const IN_PLACE_LABEL_MIN_SHARE = 0.08;
  *
  *  SEGMENTS RENDER IN `TYPE_ORDER` AND ARE NEVER SORTED. That order is the colour guarantee --
  *  see `TYPE_SEGMENT_HUE`. */
-export function TypeBar({ slices }: { slices: readonly TypeSlice[] }) {
+export function TypeBar({ slices, lands }: { slices: readonly TypeSlice[]; lands?: number }) {
   if (slices.length === 0) return null;
   const byType = new Map(slices.map((s) => [s.type, s.count]));
   const ordered = TYPE_ORDER.flatMap((t) => {
@@ -44,6 +44,16 @@ export function TypeBar({ slices }: { slices: readonly TypeSlice[] }) {
           {total}
         </span>
         <span className="text-sm text-(--muted)">nonland cards</span>
+        {/* A COUNT, NOT A VERDICT. Whether 38 is the right number for this curve is the lands dial in
+          *  `DeckGauges`; this panel describes. Lands are deliberately not a SLICE -- see
+          *  `primaryType`, which excludes them because at ~38% of the deck they would drown the
+          *  composition question the bar exists to answer. */}
+        {lands !== undefined ? (
+          <>
+            {" · "}
+            <span className="stat-num text-(--foreground)">{lands}</span>{" lands"}
+          </>
+        ) : null}
       </p>
       <div
         className="flex w-full h-6 rounded-(--radius) overflow-hidden"

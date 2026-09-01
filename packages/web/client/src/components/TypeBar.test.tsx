@@ -78,3 +78,19 @@ test("an empty deck renders nothing rather than an empty track", () => {
   const { container } = render(<TypeBar slices={[]} />);
   expect(container.firstChild).toBeNull();
 });
+
+/** A COMMANDER PLAYER READS THE LAND COUNT FIRST (owner review, 2026-09-01), and the panel printed
+ *  only "66 nonland cards" -- the one number the reader had to leave the page to find. It is a
+ *  COUNT here, a description; whether 38 is right is the lands dial's job. Lands stay out of the
+ *  SLICES: `primaryType` excludes them because they are ~38% of the deck and would drown the
+ *  composition question this bar exists to answer. */
+test("prints the land count beside the nonland total", () => {
+  render(<TypeBar slices={[{ type: "creature", count: 21 }]} lands={38} />);
+  expect(screen.getByText("38")).toBeInTheDocument();
+  expect(screen.getByText(/lands/)).toBeInTheDocument();
+});
+
+test("says nothing about lands when the count is unknown", () => {
+  render(<TypeBar slices={[{ type: "creature", count: 21 }]} />);
+  expect(screen.queryByText(/lands/)).toBeNull();
+});

@@ -1,7 +1,6 @@
 import type { AnalyzeResponse } from "../types.js";
-import { roleBars, typeSlices } from "../lib/deck-shape.js";
+import { typeSlices } from "../lib/deck-shape.js";
 import { TypeBar } from "./TypeBar.js";
-import { RoleBars } from "./RoleBars.js";
 import { identityKey, identityLabel } from "../lib/color-identity.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 
@@ -19,7 +18,6 @@ import { ManaSymbols } from "./ManaSymbols.js";
 export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
   const { report } = data;
   const slices = typeSlices(data.graph?.nodes ?? []);
-  const bars = roleBars(report.buildParents);
   const colourIdentity = data.commanderColorIdentity ?? [];
   // NAMED, NOT SPELLED (I3, whole-branch review, 2026-09-01). Bare letters ("WUB") shipped here
   // while `DeckIdentity`, twenty lines below on the same page, already ran the same identity
@@ -118,10 +116,15 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-start gap-8">
-        <TypeBar slices={slices} />
-        <RoleBars bars={bars} />
-      </div>
+      {/* THE LANDS COUNT, NOT `report.landCount` (owner correction, 2026-09-01). `landCount` comes
+        *  from `deck-stats.ts` (`cards.length - nonland.length`, over everything printed); this is
+        *  `deckMath.lands.actual` from `matcher/land-count.ts`, which excludes the commanders. They
+        *  are different measurements of "how many lands", and the lands DIAL in `DeckGauges` -- plus
+        *  `findings.ts`'s own sentence ("38 lands against a modelled 36") -- both read `deckMath.lands`.
+        *  Printing `landCount` here would risk a second, disagreeing land number on the same screen,
+        *  the exact contradiction this redesign exists to remove. Absent, and silent, when `deckMath`
+        *  was never computed -- the same rule this panel already applies to the commander above. */}
+      <TypeBar slices={slices} lands={report.deckMath?.lands.actual} />
     </section>
   );
 }

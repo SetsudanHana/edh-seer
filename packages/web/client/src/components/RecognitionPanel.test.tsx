@@ -162,6 +162,9 @@ test("names the commander and the colour identity, not bare letters", () => {
             { name: "Krenko, Mob Boss", turn: 4, castable: { low: 0.5, high: 0.7 }, mana: { low: 0.5, high: 0.7 } },
           ],
         },
+        // `lands` is never actually optional on a real `deckMath` -- only this mock omitted it,
+        // which the fixture predates `TypeBar`'s `lands` prop reading `deckMath.lands.actual`.
+        lands: { actual: 38, target: 36 },
       },
     },
   } as typeof DATA;
@@ -207,4 +210,14 @@ test("draws the colour identity as mana pips beside its name", () => {
     "https://svgs.scryfall.io/card-symbols/R.svg",
   ]);
   expect(screen.getByTestId("recognition-identity")).toHaveTextContent("Grixis");
+});
+
+/** THE ROLE BARS MOVED TO `DeckGauges` (owner review, 2026-09-01). `deck-shape.ts` already said why
+ *  they could not stay: "NO TARGETS. Recognition says what the deck IS; whether that is enough is
+ *  the diagnosis." Counts with no floor beside them were the compromise that fell out of that rule.
+ *  The judgement now lives in a panel allowed to make it. */
+test("no longer carries the role bars", () => {
+  render(<RecognitionPanel data={DATA} />);
+  expect(screen.queryByTestId("role-row-Consistency")).toBeNull();
+  expect(screen.queryByTestId("role-row-Interaction")).toBeNull();
 });
