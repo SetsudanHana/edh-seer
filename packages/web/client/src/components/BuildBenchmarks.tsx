@@ -301,6 +301,12 @@ export function BuildBenchmarks({
                     role="presentation"
                     data-testid={`role-group-${p.name}`}
                     data-focused={focus === p.name ? "true" : undefined}
+                    // The outline below is visual only -- a screen-reader user gets nothing from it.
+                    // `aria-current` is the announced half of the same mark: present (never "false",
+                    // a different and confusing announcement) only on the group the reader navigated
+                    // to. `role="presentation"` does not hide it -- an element removed from the
+                    // accessibility tree's structural roles still exposes its other ARIA attributes.
+                    aria-current={focus === p.name ? "true" : undefined}
                     className={`flex items-baseline gap-3 flex-wrap pt-1 ${
                       focus === p.name ? "outline-2 outline-(--accent) rounded-(--radius)" : ""
                     }`}

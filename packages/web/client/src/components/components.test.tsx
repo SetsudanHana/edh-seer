@@ -2197,6 +2197,10 @@ test("opening a role from its dial marks that group on Build", () => {
   fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
   expect(screen.getByRole("tab", { name: "Build" })).toHaveAttribute("aria-selected", "true");
   expect(screen.getByTestId("role-group-Interaction")).toHaveAttribute("data-focused", "true");
+  // AND ONLY THAT GROUP. Without this line the test passes for an implementation that marks every
+  // group whenever any focus is set (`focus !== undefined` rather than `focus === p.name`) -- which
+  // is precisely the bug the mark exists to avoid, since marking everything marks nothing.
+  expect(screen.getByTestId("role-group-Consistency")).not.toHaveAttribute("data-focused");
 });
 
 test("arriving on Build without a dial marks nothing", () => {
