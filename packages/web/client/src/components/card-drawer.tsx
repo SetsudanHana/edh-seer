@@ -160,7 +160,13 @@ export function CardDrawerProvider({ graph, children }: { graph?: CardGraph; chi
         ? createPortal(
             // The inspector positions itself `absolute inset-y-2 right-2` against this element.
             <div className="fixed inset-y-0 right-0 z-30 w-80 max-w-[90vw]">
-              <CardInspector node={node} edges={edges} onClose={() => setOpenId(null)} />
+              <CardInspector
+                node={node}
+                edges={edges}
+                onClose={() => setOpenId(null)}
+                pinned={pinned.has(node.cardName ?? node.label)}
+                onTogglePin={() => togglePin(node.cardName ?? node.label)}
+              />
             </div>,
             document.body,
           )
