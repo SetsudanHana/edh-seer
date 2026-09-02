@@ -85,6 +85,19 @@ test("a new report routes back to the chapters", async () => {
   expect(screen.getByRole("navigation", { name: "Report chapters" })).toBeInTheDocument();
 });
 
+/** A CHAPTER ANCHOR HAS TO CLEAR BOTH PINNED BARS. Below `lg` the rail is a second sticky strip
+ *  under the header, and the first version of this offset counted only the header: a phone judge
+ *  sent to chapter 6 read its heading as the single word "do?" -- the rest was behind the rail --
+ *  and could not tell which chapter they were in. Both heights are measured; neither is a
+ *  constant. */
+test("each chapter's scroll offset clears the header and the rail", () => {
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+  for (const c of CHAPTERS) {
+    const section = document.getElementById(c.id)!;
+    expect(section.className, c.id).toContain("var(--report-header-h,0px)+var(--report-rail-h,0px)");
+  }
+});
+
 /** THE DECK LIVES IN THE HASH, AND A SURFACE LINK MAY NOT DROP IT. Measured on the live page: a
  *  router `Link to="/cards"` replaced the whole location, so the URL became `/cards` with no
  *  `#deck=` on it -- the report stayed on screen (it is in memory) while a reload or a copied link

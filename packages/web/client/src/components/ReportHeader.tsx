@@ -112,7 +112,14 @@ function HeaderScore({ name, value, partial }: { name: string; value: number; pa
   return (
     <span className="flex items-baseline gap-1.5 whitespace-nowrap">
       <span className="eyebrow text-(--muted)">{name}</span>
-      <span className="text-base font-semibold stat-num leading-none">{value.toFixed(1)}</span>
+      {/* THE SCALE IS PART OF THE NUMBER. A phone judge followed these two figures down fourteen
+        *  screens and said "nothing I can reach tells me what scale 3.3 and 5.0 are on … I would
+        *  just ignore both numbers" -- and the one place that says so, `HeadlineScores`' own
+        *  `/5`, is a chapter away and off screen for most of the report. Two characters, no new
+        *  claim: the bound is the same one the dial and the tile already print. */}
+      <span className="text-base font-semibold stat-num leading-none">
+        {value.toFixed(1)}<span className="text-(--muted) text-xs font-normal">/5</span>
+      </span>
       <span data-tone={reading.tone} className={`text-xs ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
     </span>
   );

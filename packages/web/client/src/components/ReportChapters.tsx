@@ -62,7 +62,11 @@ function Chapter({ id, title, mark, children }: {
     <section
       id={id}
       aria-labelledby={`${id}-title`}
-      className="flex flex-col gap-8 scroll-mt-[calc(var(--report-header-h,0px)+1rem)]"
+      // CLEARS BOTH PINNED BARS. Below `lg` the rail is a second sticky strip under the header, and
+      // an offset that counted only the header left a chapter's own title behind the rail -- a
+      // phone judge landing on chapter 6 read its heading as the single word "do?" and could not
+      // tell which chapter they were in. Both are measured, neither is a constant.
+      className="flex flex-col gap-8 scroll-mt-[calc(var(--report-header-h,0px)+var(--report-rail-h,0px)+1rem)]"
     >
       <h2 id={`${id}-title`} className="text-2xl sm:text-3xl font-bold tracking-[-0.02em]">
         {title}{mark}

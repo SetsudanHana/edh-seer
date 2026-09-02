@@ -30,6 +30,12 @@
      and hid the first row of the table behind the strip it was guessing at. 0 until measured. */
   --report-header-h: 0px;
 
+  /* The chapter rail's own height, written by `ChapterRail` on the same terms: below `lg` it is a
+     SECOND pinned bar under the header, and 0 above it, where the rail sits beside the column.
+     Anything scrolled to has to clear both -- an offset that counted only the header left each
+     chapter's title behind the rail on a phone. */
+  --report-rail-h: 0px;
+
   --surface: #16111f;
   --surface-foreground: var(--foreground);
   --surface-secondary: #1b1526;
