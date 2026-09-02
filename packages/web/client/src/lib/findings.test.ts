@@ -29,7 +29,7 @@ test("findings rank by fraction of target missing, across different kinds", () =
   const rows = findings(report({
     buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: [] }],
     deckMath: {
-      colors: [{ color: "W", supplied: 21, worst: { pips: 4, turn: 9, required: 31, requiredRaw: 36, cards: 1 } }],
+      colors: [{ color: "W", supplied: 21, worst: { pips: 4, turn: 9, required: 31, requiredRaw: 36, cards: 1, available: 18 } }],
     } as DeckReport["deckMath"],
   }));
   expect(rows.map((r) => r.kind)).toEqual(["build", "colour"]);
@@ -39,7 +39,7 @@ test("findings rank by fraction of target missing, across different kinds", () =
 test("a colour that meets its own worst requirement is not a finding", () => {
   expect(findings(report({
     deckMath: {
-      colors: [{ color: "B", supplied: 40, worst: { pips: 2, turn: 4, required: 22, requiredRaw: 24, cards: 3 } }],
+      colors: [{ color: "B", supplied: 40, worst: { pips: 2, turn: 4, required: 22, requiredRaw: 24, cards: 3, available: 34 } }],
     } as DeckReport["deckMath"],
   }))).toEqual([]);
 });
@@ -260,7 +260,7 @@ test("colour and synergy findings never enter the scored group", () => {
     cards: Array.from({ length: 100 }, (_, i) => ({ name: `c${i}` })) as DeckReport["cards"],
     deckMath: {
       ...demand([{ key: "dies:type:creature", consumers: 4, suppliers: 0, available: 0.2 }]),
-      colors: [{ color: "B", supplied: 21, worst: { pips: 4, turn: 9, required: 31, requiredRaw: 36, cards: 1 } }],
+      colors: [{ color: "B", supplied: 21, worst: { pips: 4, turn: 9, required: 31, requiredRaw: 36, cards: 1, available: 18 } }],
     } as DeckReport["deckMath"],
   }));
   expect(scored.every((f) => f.kind === "build" || f.kind === "lands" || f.kind === "answers")).toBe(true);

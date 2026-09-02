@@ -969,3 +969,48 @@ test("a split card is gated on the cost it pays, not on its combined mana value"
   // even considered until the board made NINE mana.
   expect(curve.castable[3].high).toBeGreaterThan(0.5);
 });
+
+/** T18b. THE PER-CARD FIGURE IS CONDITIONAL ON HAVING DRAWN THE CARD, and the denominator that
+ *  makes it so is the thing worth pinning: it used to be every trial, including the ones where the
+ *  card was never seen, so a one-drop's "40% to cast it on turn 1" was mostly counting games in
+ *  which it was still in the library.
+ *
+ *  "DRAWN", NEVER "STILL IN HAND". The first attempt asked whether the card was in hand at the
+ *  moment the cell was scored, and rule 3 casts accelerants greedily -- so `Sol Ring` had already
+ *  left the hand and read as drawn in 5 trials of 2,000 instead of ~8% of them, and a zero-mana rock
+ *  read 0 and would have printed 0%. A card that the deck reliably CASTS is the last one that should
+ *  read as never drawn. */
+test("a card's castability denominator counts the trials that drew it, cast or not", () => {
+  // `manaCost` matters here and nowhere else in this file: `parseCost` returns null without it and
+  // the card would be skipped by the colour-aware half entirely.
+  const solRing: DeckCard = {
+    card: {
+      name: "Sol Ring", typeLine: "Artifact", manaCost: "{1}", manaValue: 1,
+      oracleText: "{T}: Add {C}{C}.", keywords: [], colors: [], producedMana: ["C"],
+    } as never,
+    tags: null,
+  };
+  const deck = [...basics(37), solRing, ...spells(61, 3)];
+  const r = simulate(deck, { trials: TRIALS, turns: 4, seed: 23 });
+
+  // A singleton is drawn by turn 1 in (7 opening + 1 draw) of 99 cards. It is CAST on turn 1 in most
+  // of those, which is exactly why "still in hand" got this wrong.
+  const held = r.byCardHeld.get("Sol Ring")!;
+  expect(held[0] / TRIALS).toBeCloseTo(8 / 99, 2);
+  // And it keeps growing with the extra draws, rather than collapsing as the card gets played.
+  expect(held[3]).toBeGreaterThan(held[0]);
+
+  // The rate is over THAT denominator: one mana off 37 lands is close to certain once you hold it,
+  // and would read near 8% if the divisor were still every trial.
+  expect(r.byCardCastable.get("Sol Ring")![0]).toBeGreaterThan(0.9);
+});
+
+/** A commander is priced from the command zone and was never shuffled in, so "did you draw it" does
+ *  not apply -- it is available in every game. Its denominator has to be every trial, or the one row
+ *  a reader looks for by name is computed off a few hundred. */
+test("a commander is held in every trial, because the command zone is not the library", () => {
+  const deck = [...basics(37), ...spells(62, 3)];
+  const commander = card("Commander", "Legendary Creature — Human", 4);
+  const r = simulate(deck, { trials: 500, turns: 5, seed: 29, alsoPrice: [commander] });
+  expect(r.byCardHeld.get("Commander")).toEqual(Array(5).fill(500));
+});

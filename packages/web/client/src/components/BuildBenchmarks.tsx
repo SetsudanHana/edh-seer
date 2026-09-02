@@ -949,7 +949,7 @@ function DeckMathRows({
               // The deadline is the CARD's own mana value, not a chosen turn: a 3-drop wants its
               // pips on turn 3. That is why this row can name a turn without guessing one.
               const label = c.worst
-                ? `${c.color}, ${c.supplied} sources, ${c.worst.cards} card${c.worst.cards === 1 ? "" : "s"} want ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} by turn ${c.worst.turn}, which needs ${c.worst.required}`
+                ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${c.worst.cards} card${c.worst.cards === 1 ? "" : "s"} want ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
                 : `${c.color}, ${c.supplied} sources, enough for every card that costs it`;
               return (
                 <li key={c.color} className="flex items-center gap-3 text-sm" aria-label={label}>
@@ -984,7 +984,12 @@ function DeckMathRows({
                           : "text-(--warning)"
                     }`}
                   >
-                    {c.worst ? `${c.supplied} of ${c.worst.required} sources` : `${c.supplied} sources, enough`}
+                    {/* THE SHORTFALL IS AGAINST WHAT COULD BE PRODUCING BY THAT TURN, never the
+                      *  deck total: printing `supplied` here said "25 of 17 sources" on a row the
+                      *  model had just called SHORT, and it read as a contradiction because it was
+                      *  one. `supplied` counts two-mana rocks and lands that enter tapped on the
+                      *  very turn the demand is due. */}
+                    {c.worst ? `${c.worst.available} of ${c.worst.required} by turn ${c.worst.turn}` : `${c.supplied} sources, enough`}
                   </span>
                 </li>
               );
