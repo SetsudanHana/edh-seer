@@ -975,6 +975,28 @@ const DECK_MATH = {
   ],
 };
 
+/** S8. The castability rows are already one per card, so this is the same accent outline the Cards
+ *  table and the matrix carry. `DECK_MATH.castability.cards` holds Ulamog and Damnation. */
+test("a pinned card's castability row is ringed and says so", async () => {
+  function Pinner() {
+    const { togglePin } = usePinned();
+    return <button onClick={() => togglePin("Ulamog")}>pin it</button>;
+  }
+  render(
+    <CardDrawerProvider graph={SAMPLE.graph}>
+      <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />
+      <Pinner />
+    </CardDrawerProvider>,
+  );
+  expect(document.querySelector('li[data-pinned="1"]')).toBeNull();
+  await userEvent.click(screen.getByText("pin it"));
+  const row = document.querySelector('li[data-pinned="1"]')!;
+  expect(row).not.toBeNull();
+  // The row already carries a full aria-label, so "pinned" joins that sentence.
+  expect(row.getAttribute("aria-label")).toContain("Ulamog");
+  expect(row.getAttribute("aria-label")).toContain("pinned");
+});
+
 test("deck-math blocks are grouped under the question they answer, worst section first", () => {
   // Scoped to `<section> > h3` -- I3 (whole-branch review, 2026-09-01) promoted these from h4 so
   // they stop skipping a level under the sub-tab's own h2 and stop inverting against the h3 panels

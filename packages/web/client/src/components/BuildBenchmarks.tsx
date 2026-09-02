@@ -3,7 +3,7 @@ import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
-import { CardName } from "./card-drawer.js";
+import { CardName, usePinned } from "./card-drawer.js";
 import { policyBand } from "@edh-seer/engine/percent";
 // NOTHING IS VALUE-IMPORTED FROM @edh-seer/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
 // prior deep import of `GRAVEYARD_HATE_SHARE` from `@edh-seer/matcher/src/answer-coverage.js` (reasoned
@@ -445,6 +445,7 @@ function DeckMathRows({
    *  disclosure over a missing prop is how the disclosure got lost in the first place. */
   coverageWeightedName?: string;
 }) {
+  const { isPinned } = usePinned();
   const { turn, seen, demand } = deckMath;
   // WORST FIRST, in both ranked blocks. The doctrine's order (creature, artifact, enchantment,
   // planeswalker, land, graveyard) is a fixed list, so the rows a reader can act on landed wherever
@@ -675,12 +676,20 @@ function DeckMathRows({
                       return (
                         <li
                           key={c.name}
+                          data-pinned={isPinned(c.name) ? "1" : undefined}
                           // STACKED AT NARROW. Side by side, the fixed figures kept their full width
                           // while the card name truncated -- "Inalla, Archmage Ritualist" wants
                           // 163px and had 110 -- so the row lost the one thing identifying which
                           // card it is about. On its own line the name always fits.
-                          className="flex flex-col sm:flex-row sm:items-baseline gap-x-3 text-sm"
-                          aria-label={`${c.name}, ${castText} to cast by turn ${c.turn}` + (note ? `, ${note}` : "")}
+                          //
+                          // PINNED RINGS IT (roadmap S8), the same accent outline the Cards table
+                          // and the matrix use. The row already carries a full `aria-label`, so
+                          // "pinned" joins that sentence rather than adding a second node beside it.
+                          className={`flex flex-col sm:flex-row sm:items-baseline gap-x-3 text-sm ${
+                            isPinned(c.name) ? "outline outline-1 outline-(--accent) outline-offset-[-1px]" : ""
+                          }`}
+                          aria-label={`${c.name}, ${castText} to cast by turn ${c.turn}`
+                            + (note ? `, ${note}` : "") + (isPinned(c.name) ? ", pinned" : "")}
                         >
                           <span className="flex-1 sm:truncate text-(--muted)">{c.name}</span>
                           <span className="shrink-0 sm:text-right stat-num text-(--muted) text-xs">
