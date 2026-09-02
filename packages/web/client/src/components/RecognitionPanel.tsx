@@ -49,7 +49,11 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
    *  `dominant === false` is the engine saying it found no dominant theme; that is a real answer
    *  and gets said, not hidden. */
   const cohesion = report.cohesion;
-  const theme = cohesion && cohesion.dominant !== false ? cohesion.theme : null;
+  // THE PLAYER'S NAME FOR IT, NOT THE MECHANISM (roadmap T2). `theme` reads "enchantments entering";
+  // `name` reads "Enchantress", which is the word the deck is known by. They are equal wherever no
+  // name is known, so this is never a blank. The mechanical phrase is still what every edge reason
+  // is built from -- see `theme-names.ts`.
+  const theme = cohesion && cohesion.dominant !== false ? (cohesion.name ?? cohesion.theme) : null;
   /** THE SAME COVERAGE QUALIFIER `DeckIdentity` PRINTS (I1, whole-branch review, 2026-09-01). "No
    *  dominant theme" is a verdict about the DECK; on a partly-read deck the true statement is about
    *  the ENGINE, and printing the unqualified string here — ABOVE `DeckIdentity`'s own qualified one
@@ -60,7 +64,7 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
   // `DeckIdentity`'s fallback for an unfocused deck ("strongest: {theme}") carried over too — without
   // it this panel would lead with a bare "No dominant theme" and name nothing at all, while the
   // panel one movement down still names the deck's best-supported (if not dominant) theme.
-  const strongestTheme = !theme && cohesion?.dominant === false ? cohesion.theme : null;
+  const strongestTheme = !theme && cohesion?.dominant === false ? (cohesion.name ?? cohesion.theme) : null;
   /** THE COMMANDER (I3). The spec's own ordering is "theme · commander · colour identity" -- for an
    *  EDH player the commander IS the recognition anchor, the first thing checked to see whether the
    *  tool read their deck, and it was missing here entirely. Read from the priced castability row

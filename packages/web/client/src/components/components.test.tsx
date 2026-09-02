@@ -27,7 +27,8 @@ test("DeckIdentity counts the deck's thing under the heading that names it", () 
     theme: "creatures entering", tag: "enters:creature", count: 39, cards: [],
     fromCommandZone: ["Samut, the Driving Force"], turn: 3, k: 2, probability: 0.96,
   }} />);
-  expect(screen.getByText(/39 cards/)).toBeInTheDocument();
+  // T7: the count moved into the share line above, which has the denominator this one lacked.
+  // What is left here is the half a share cannot say -- whether you will have drawn them in time.
   expect(screen.getByText(/96% to have 2 of them by turn 3/)).toBeInTheDocument();
   // A command-zone member is available every game, so it is named beside the count and never
   // folded into a draw probability.
@@ -111,11 +112,15 @@ test("DeckIdentity renders nothing when there's no cohesion", () => {
 
 const cohesionDraw = {
   theme: "Draw", // a functional role, deliberately NOT an archetype
+  name: "Card draw",
   tag: "draw",
   secondary: null,
+  secondaryName: null,
   secondaryTag: null,
   score: 0.4,
-  label: "focused",
+  onThemeCount: 25,
+  nonlandCount: 63,
+  label: "concentrated",
 } as NonNullable<typeof SAMPLE.report.cohesion>;
 
 // THE HEADLINE FLIPPED, 2026-08-20: `strategies[0]` led from 8de3c72 (2026-08-01) because a
@@ -133,9 +138,13 @@ test("DeckIdentity keeps the archetype as context, not as a title", () => {
   expect(screen.getByText(/signals Tokens 40%/)).toBeInTheDocument();
 });
 
-test("DeckIdentity prints the focus label with its share", () => {
+/** T4: "focused · 0.47" was a bucket label beside a bare ratio, and the owner asked what it meant.
+ *  It is a SHARE, so both numbers it is the ratio of are printed and a reader can check the fraction
+ *  against their own decklist. The word is no longer "focused" either -- the 0-5 deck score one
+ *  panel over has its own "Focused" band, and the two scales are unrelated. */
+test("DeckIdentity prints the share with the two numbers it is a ratio of", () => {
   render(<DeckIdentity cohesion={cohesionDraw} strategies={undefined} />);
-  expect(screen.getByText("focused · 0.40")).toBeInTheDocument();
+  expect(screen.getByText("25 of 63 nonlands work with it (40%, concentrated)")).toBeInTheDocument();
 });
 
 // A10's rule: a SPECIFIC primary measures itself, so the family share is the difference between

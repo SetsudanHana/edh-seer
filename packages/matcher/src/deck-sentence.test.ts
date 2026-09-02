@@ -3,8 +3,9 @@ import { deckSentence } from "./deck-sentence.js";
 import type { Cohesion } from "@edh-seer/engine";
 
 const coh = (over: Partial<Cohesion> = {}): Cohesion => ({
-  theme: "creatures dying", tag: "dies:creature", secondary: null, secondaryTag: null,
-  score: 0.46, familyScore: 0.46, label: "focused", dominant: true, ...over,
+  theme: "creatures dying", name: "Aristocrats", tag: "dies:creature", secondary: null,
+  secondaryName: null,
+  secondaryTag: null, score: 0.46, onThemeCount: 29, nonlandCount: 63, familyScore: 0.46, label: "concentrated", dominant: true, ...over,
 });
 const wins = (cls: string, count: number) => ({
   classes: [{ class: cls, count, share: 1 }], focus: 1, primary: cls,

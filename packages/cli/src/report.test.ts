@@ -39,6 +39,10 @@ const report: DeckReport = {
   roles: { ramp: 1, draw: 0, removal: 0 },
   cohesion: {
     theme: "Goblins",
+    name: "Goblins",
+    onThemeCount: 0,
+    nonlandCount: 0,
+    secondaryName: null,
     tag: "tribe:goblin",
     // `dominant` is REQUIRED and this fixture never had it -- `vitest` does not typecheck, so the
     // suite stayed green while `tsc -p packages/cli` failed at HEAD. The recorded trap, again.

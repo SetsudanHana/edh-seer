@@ -95,7 +95,9 @@ export function formatReport(report: DeckReport, trim = 0): string {
   }
   lines.push("=== Deck cohesion ===");
   if (report.cohesion) {
-    const secondary = report.cohesion.secondary ? ` / ${report.cohesion.secondary}` : "";
+    const secondary = report.cohesion.secondary
+      ? ` / ${report.cohesion.secondaryName ?? report.cohesion.secondary}`
+      : "";
     // NAMING A DECK IS A CLAIM, AND THIS ONE CAN BE DECLINED (roadmap A15). Below the floor the
     // theme is carried by one or two cards -- `venser` reads 0.02 -- and leading with it tells a
     // player their deck is about something nothing in it does twice. The tag is still printed,
@@ -104,8 +106,12 @@ export function formatReport(report: DeckReport, trim = 0): string {
     // EXPLICIT `false` ONLY. An absent field is a caller that predates it (the flat engine builds a
     // Cohesion by hand), and an absent opinion must not read as a negative one -- defaulting the
     // other way made a 0.50-cohesion fixture abstain, which the CLI test caught.
-    if (report.cohesion.dominant === false) lines.push(`  Theme: no dominant theme (strongest: ${report.cohesion.theme})`);
-    else lines.push(`  Theme: ${report.cohesion.theme}${secondary}`);
+    // The player's name, with the mechanism beside it -- the CLI has the width the report panel does
+    // not, and here the mechanical phrase is the thing a reader checks the name against.
+    const named = report.cohesion.name ?? report.cohesion.theme;
+    const mechanism = named === report.cohesion.theme ? "" : ` (${report.cohesion.theme})`;
+    if (report.cohesion.dominant === false) lines.push(`  Theme: no dominant theme (strongest: ${named}${mechanism})`);
+    else lines.push(`  Theme: ${named}${mechanism}${secondary}`);
     lines.push(`  Cohesion: ${report.cohesion.score.toFixed(2)} (${report.cohesion.label})`);
     // A NAME CAN BE SPECIFIC WHILE THE PLAN IS BROAD, and one number cannot say both (roadmap A10).
     // Printed only when they differ, i.e. only when the primary is a specific tag inside a wider
