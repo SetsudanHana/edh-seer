@@ -84,18 +84,25 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
         *  overflow needs a visible cue, and an `aria-label` mentioning it serves screen readers
         *  while sighted users simply lose the columns. Six columns plus a name fit 390px today;
         *  this is the guard for a deck the engine finds more mechanisms in. */}
-      {/* CAPPED, because a row read across 1,400px is not read. The table sized to `min-w-full`
-        *  and at 1440 the six columns spread to the far edge, leaving a card's name and its own
-        *  dots a screen apart -- the tracking problem a matrix exists to avoid. Natural width
-        *  inside a cap: columns sit against the names, and the scroller below still catches a deck
-        *  the engine finds more mechanisms in. */}
+      {/* CAPPED, AND THE CAP WAS SET FOR A PROBLEM THAT NO LONGER EXISTS (roadmap T11). The
+        *  original defect was the table sizing to `min-w-full`: at 1440 six columns spread to the
+        *  far edge and a card's name sat a screen away from its own dots, which is the tracking
+        *  problem a matrix exists to avoid. THAT was fixed by `w-auto` on the table itself -- it
+        *  takes its NATURAL width now and cannot stretch -- and the 44rem cap kept guarding the
+        *  stretch anyway. On a 1960px screen the effect was a horizontal scrollbar on a table with
+        *  a thousand pixels of room beside it.
+        *
+        *  So the cap rises to a width a deck's columns can actually use and stays a cap: a
+        *  pathological deck with a dozen mechanisms still scrolls rather than running off the
+        *  screen, and the fade below still says so. Because the table is `w-auto`, a WIDER cap
+        *  cannot reintroduce empty stretch -- it only stops truncating what fits. */}
       {/* A HIDDEN OVERFLOW NEEDS A VISIBLE CUE (`components.md` rule 7): an `aria-label` mentioning
         *  it serves screen readers only, and sighted users simply lose the columns. At 390px the
         *  table is 662px inside a 334px region, so five of six columns are off the edge with
         *  nothing on screen saying so. The fade is the cue, and it appears only when there is
         *  really something past it. */}
       <div className="relative">
-        <div ref={scrollerRef} className="overflow-x-auto -mx-1 px-1 max-w-[44rem]">
+        <div ref={scrollerRef} className="overflow-x-auto -mx-1 px-1 max-w-[76rem]">
         <table className="text-sm border-collapse w-auto">
           <thead>
             <tr>
