@@ -2604,8 +2604,12 @@ test("the mana panel shows a policy range, its spread, and says what it is not",
   expect(screen.getByText(/30% – 67%/)).toBeInTheDocument();
   // C10 reaches the reader: colour blindness is stated on screen.
   expect(screen.getByText(/never castability/i)).toBeInTheDocument();
-  // C7: the spread is beside every median.
-  expect(screen.getAllByText(/\(40%–60%\)/).length).toBe(3);
+  // C7: THE SPREAD TRAVELS WITH EVERY MEDIAN, and after T17 that happens on the chart rather than
+  // in a table -- one <title> per plotted turn. This assertion kept passing across that change
+  // because the fixture has three rows and the tooltips matched the same text the table cells used
+  // to, which is a coincidence and not a check; it names the marks now.
+  const spreads = document.querySelectorAll("svg title");
+  expect([...spreads].filter((t) => /40%–60%/.test(t.textContent ?? ""))).toHaveLength(3);
   unmount();
 
   const { container } = render(<ManaAvailability manaAvailability={undefined} />);
@@ -2807,4 +2811,90 @@ test("the convention disclaimer is stated once, and the provenance survives ever
 
   // And the phrasing it replaced is gone entirely -- "someone typed" was the tell.
   expect(text).not.toMatch(/someone typed/);
+});
+
+/** T17 (owner): *"mana availability is just a table with numbers, it can be presented better"*.
+ *
+ *  THE MANA COLUMN IS DELETED RATHER THAN CHARTED. `ManaTimeline`, in the same chapter and off the
+ *  same `manaAvailability.rows`, already draws median mana per turn with the same p25-p75 band --
+ *  drawing it again here would have been a third picture of one number. What was never drawn is the
+ *  share of the deck this turn's mana can pay for. */
+test("the mana panel charts the payable share and stops repeating the mana curve", () => {
+  const rows = [1, 2, 3, 4].map((turn) => ({
+    turn,
+    mana: { median: turn, p25: turn - 1, p75: turn + 1 },
+    payableShare: { median: turn / 10, p25: turn / 20, p75: turn / 8 },
+  }));
+  const { container } = render(<ManaAvailability manaAvailability={{
+    trials: 2000, accelerants: 4, rows, headline: { mana: 6, turn: 6, low: 0.5, high: 0.6 },
+  }} />);
+
+  expect(container.querySelector("table")).toBeNull();
+  // The figures stay reachable where there is no pointer: this IS the table view.
+  const chart = screen.getByRole("img", { name: /Share of the deck payable, by turn/ });
+  expect(chart.getAttribute("aria-label")).toMatch(/turn 4, 40% \(20% to 50%\)/);
+  // One plotted point per row, and a turn label under each.
+  expect(chart.querySelectorAll("circle")).toHaveLength(4);
+  expect(chart.querySelectorAll("text")).toHaveLength(4);
+});
+
+/** T20 (owner): *"section like Does it play enough of each role? is ugly numbers and text and
+ *  contradicts our dataviz rule"*. The leaf rows printed "12 · 86%" into a `flex-1` of empty space.
+ *
+ *  THE BAR AND THE PERCENTAGE ARE ONE VALUE RENDERED TWICE, which is the only safe way to show both
+ *  -- so the pin is that they cannot disagree, not merely that a bar exists. */
+test("a role leaf draws its share, at the width it prints", () => {
+  const { container } = render(
+    <BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />,
+  );
+  const rows = [...container.querySelectorAll("li[aria-label]")]
+    .filter((li) => /\d+, \d+% of /.test(li.getAttribute("aria-label") ?? ""));
+  expect(rows.length, "the fixture renders leaf rows").toBeGreaterThan(0);
+
+  let withBar = 0;
+  for (const li of rows) {
+    const printed = /(\d+)% of /.exec(li.getAttribute("aria-label") ?? "")?.[1];
+    const fill = li.querySelector<HTMLElement>("span[style*='width']");
+    if (Number(printed) === 0) {
+      // A zero-count leaf draws NO bar: a 4px stub would read as "some".
+      expect(fill, li.getAttribute("aria-label") ?? "").toBeNull();
+      continue;
+    }
+    expect(fill, li.getAttribute("aria-label") ?? "").not.toBeNull();
+    expect(fill!.style.width).toBe(`${printed}%`);
+    withBar++;
+  }
+  expect(withBar).toBeGreaterThan(0);
+});
+
+/** T5 and T18a (owner call 2026-09-03: mana pips everywhere). Three surfaces spelled a colour where
+ *  Magic prints a symbol: the identity swatch was a two-tone GRADIENT, the colour rows led with a
+ *  bare letter, and the hardest-to-cast rows named a card without ever saying what it costs. */
+test("the colour identity is pips, not a gradient", () => {
+  const { container } = render(
+    <DeckIdentity cohesion={cohesionDraw} colorIdentity={["U", "B", "R"]} />,
+  );
+  // The gradient swatch is gone; no element paints a linear-gradient background any more.
+  expect(container.querySelector('[style*="gradient"]')).toBeNull();
+  expect(container.querySelectorAll('[role="img"][aria-label*="mana"]').length).toBeGreaterThan(0);
+});
+
+test("a hardest-to-cast row shows what the card costs", () => {
+  const deckMath = {
+    ...DECK_MATH,
+    castability: {
+      ...DECK_MATH.castability,
+      cards: [{
+        name: "Curse of Opulence",
+        manaCost: "{R}",
+        turn: 1,
+        castable: { low: 0.42, high: 0.43 },
+        mana: { low: 0.81, high: 0.81 },
+      }],
+    },
+  };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={deckMath as never} />);
+  // THE COST IS THE SUBJECT of this panel: "42% to cast by turn 1" cannot be read without it.
+  const row = screen.getByLabelText(/Curse of Opulence \{R\}/);
+  expect(within(row).getAllByRole("img", { name: /mana/i }).length).toBeGreaterThan(0);
 });

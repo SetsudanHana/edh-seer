@@ -63,6 +63,11 @@ const REFUSALS: { test: (dc: DeckCard) => boolean; reason: string }[] = [
 
 export interface CardCastability {
   name: string;
+  /** THE PRINTED COST, so a renderer can draw pips without joining back on the NAME (roadmap T18a).
+   *  A name join is the defect class this repo fixed in eleven sites on 2026-08-27: a face and its
+   *  physical card do not share a name, so `Fable of the Mirror-Breaker` misses
+   *  `Fable of the Mirror-Breaker // Reflection of Kiki-Jiki`. Carried, not looked up. */
+  manaCost?: string;
   manaValue: number;
   /** The turn this is priced at: the card's own mana value, the same deadline rule the mana audit
    *  uses. You want to cast a 3-drop on turn 3. */
@@ -101,7 +106,9 @@ export function cardCastability(
 ): CardCastability {
   const manaValue = card.card.manaValue;
   const turn = Math.max(1, Math.round(manaValue));
-  const blank = { name: card.card.name, manaValue, turn, castable: null, mana: null };
+  const blank = {
+    name: card.card.name, manaCost: card.card.manaCost, manaValue, turn, castable: null, mana: null,
+  };
 
   const refusal = costRefusal(card);
   if (refusal) return { ...blank, refused: refusal };

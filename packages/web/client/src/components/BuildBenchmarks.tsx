@@ -250,7 +250,22 @@ export function BuildBenchmarks({
           *  missing bar/ratio/flag and the muted colour already mark a leaf row as subordinate, so
           *  the indent was decorative, not load-bearing, and it was the thing costing the width. */}
         <span className="w-36 shrink-0 truncate">{name}</span>
-        <span className="flex-1 stat-num">{count} · {share}%</span>
+        {/* THE SHARE IS DRAWN, NOT ONLY SPELLED (roadmap T20). Owner: *"section like Does it play
+          *  enough of each role? is ugly numbers and text and contradicts our dataviz rule"* -- and
+          *  the `flex-1` these numbers sat in was empty space the length of the row. The track is
+          *  the same one the PARENT rows above already use, at half the height: a leaf is
+          *  subordinate to its group and reads that way without inventing a second bar vocabulary.
+          *
+          *  ONE HUE, and a share of the group rather than of the deck. `sumOfLeaves` is the
+          *  denominator the number beside it already uses, so the bar and the percentage cannot
+          *  disagree -- they are one value rendered twice, which is the only safe way to do both.
+          *  A zero-count leaf draws NO bar rather than a sliver: a 4px stub reads as "some". */}
+        <span className="flex-1 h-1 bg-(--separator) rounded-full overflow-hidden" aria-hidden="true">
+          {share > 0 ? (
+            <span className="block h-full rounded-full bg-(--fill)" style={{ width: `${share}%` }} />
+          ) : null}
+        </span>
+        <span className="w-20 shrink-0 text-right stat-num">{count} · {share}%</span>
       </li>
     );
   };
@@ -687,10 +702,21 @@ function DeckMathRows({
                           className={`flex flex-col sm:flex-row sm:items-baseline gap-x-3 text-sm ${
                             isPinned(c.name) ? "outline outline-1 outline-(--accent) outline-offset-[-1px]" : ""
                           }`}
-                          aria-label={`${c.name}, ${castText} to cast by turn ${c.turn}`
+                          aria-label={`${c.name}${c.manaCost ? ` ${c.manaCost}` : ""}, ${castText} to cast by turn ${c.turn}`
                             + (note ? `, ${note}` : "") + (isPinned(c.name) ? ", pinned" : "")}
                         >
-                          <span className="flex-1 sm:truncate text-(--muted)">{c.name}</span>
+                          {/* THE COST, BESIDE THE CARD IT BELONGS TO (roadmap T18a). Owner: *"the
+                            *  section with hardest to cast does not show pips for some reason"* --
+                            *  and it is the one panel where the cost IS the subject: a row saying
+                            *  "42% to cast by turn 1" is unreadable without knowing the card costs
+                            *  {R}. Carried on the report rather than joined back on the name, which
+                            *  is the MDFC defect this repo has already fixed in eleven places. */}
+                          <span className="flex-1 sm:truncate text-(--muted)">
+                            {c.name}
+                            {c.manaCost ? (
+                              <span className="ml-1.5 align-baseline"><ManaSymbols cost={c.manaCost} /></span>
+                            ) : null}
+                          </span>
                           <span className="shrink-0 sm:text-right stat-num text-(--muted) text-xs">
                             {note}
                           </span>
@@ -952,9 +978,16 @@ function DeckMathRows({
                 : `${c.color}, ${c.supplied} sources, enough for every card that costs it`;
               return (
                 <li key={c.color} className="flex items-center gap-3 text-sm" aria-label={label}>
-                  {/* One letter in a 96px cell is affordable at 1440 and not at 390, where the
-                    *  spelled-out demand and "of N sources" both need the room. */}
-                  <span className="w-6 sm:w-24 shrink-0 font-mono">{c.color}</span>
+                  {/* A PIP, NOT A LETTER (roadmap T18a). Owner's call: mana pips everywhere. The
+                    *  row already renders its DEMAND as pips ("2 cards want {B}{B}"), so the letter
+                    *  beside them was the one place this panel spelled a colour instead of showing
+                    *  it. Same renderer, so the two cannot disagree.
+                    *
+                    *  THE CELL KEEPS ITS WIDTH RULE: one glyph is affordable at 1440 and not at
+                    *  390, where the spelled-out demand and "of N by turn" both need the room. */}
+                  <span className="w-6 sm:w-24 shrink-0">
+                    <ManaSymbols cost={`{${c.color}}`} />
+                  </span>
                   {/* The subject of this row is the card that sets the DEADLINE, not the colour in
                     *  general — "1 card wants {U}{U} on turn 2" is what makes the shortfall beside
                     *  it a fact about one early double-pip spell rather than about the mana base. */}
