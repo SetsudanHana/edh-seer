@@ -20,6 +20,8 @@ export type Archetype =
   | "voltron"
   | "combo"
   | "superfriends"
+  | "enchantress"
+  | "artifacts"
   | "goodstuff";
 
 export const ARCHETYPE_LABELS: Record<Archetype, string> = {
@@ -33,6 +35,8 @@ export const ARCHETYPE_LABELS: Record<Archetype, string> = {
   voltron: "Voltron",
   combo: "Combo",
   superfriends: "Superfriends",
+  enchantress: "Enchantress",
+  artifacts: "Artifacts",
   goodstuff: "Goodstuff / Midrange",
 };
 
@@ -137,6 +141,25 @@ export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, ArchetypeSignature>>
   // already separates them by a factor of eight. The A11 tripwire — cap how many of the 71 it may
   // top, then measure — is satisfied with the widest margin any archetype here has.
   superfriends: { cardTypes: ["planeswalker"] },
+  // ENCHANTRESS AND ARTIFACTS ARE TYPE COUNTS WITH A PAYOFF ROW (roadmap T2c, owner-reported
+  // 2026-09-03). This file's header has deferred both since it was written -- "the heuristic ones
+  // (tribal, enchantress, artifacts, group slug/hug) ... land in follow-on plans" -- and the cost of
+  // that gap is that on an Enchantress deck the panel ranks the six things the deck ALSO does while
+  // the one thing it IS cannot appear at any percentage. The owner hit exactly that.
+  //
+  // DEMAND-DEFINED, which is what keeps them from being type counts alone. The payoff -- a card that
+  // CARES about an enchantment entering, i.e. Enchantress's Presence, Setessan Champion, Sythis --
+  // counts full; a card that is merely an enchantment counts at `PRODUCER_SHARE`. Without that a
+  // deck holding a dozen incidental enchantments would read as an Enchantress deck, which is the
+  // universal-bucket failure this file has refused four times on the theme line.
+  enchantress: {
+    cardTypes: ["enchantment"], tags: ["enters:enchantment"],
+    demandDefined: true, requiresDemand: true,
+  },
+  artifacts: {
+    cardTypes: ["artifact"], tags: ["enters:artifact"],
+    demandDefined: true, requiresDemand: true,
+  },
 };
 
 /** A token that is MANA OR A CARD, not a board presence. Making a Treasure is ramp: the go-wide
@@ -192,6 +215,21 @@ export interface ArchetypeSignature {
    *  the recursion) and `create-token` is not even a trigger event anywhere in the corpus, so
    *  `tokens` is 0 cares-backed by construction and could never be gated this way. */
   demandDefined?: boolean;
+  /** THE ARCHETYPE DOES NOT EXIST WITHOUT A PAYOFF IN THE DECK (roadmap T2c, owner's correction
+   *  2026-09-03): *"if you have 30 enchantments and no cards that actually care about enchantments
+   *  you are not Enchantress deck"*.
+   *
+   *  `demandDefined` alone cannot say that. It only WEIGHTS the supply side down to
+   *  `PRODUCER_SHARE`, and a type count is large enough to clear `ARCHETYPE_FLOOR` on weight
+   *  0.35 by itself: thirty enchantments in a sixty-card nonland deck is 0.17, twice the floor,
+   *  with not one card caring. This gate drops the row outright unless at least one card in the
+   *  deck matches on the DEMAND side, so the type count can only ever amplify a payoff that is
+   *  really there.
+   *
+   *  NOT SET ON `superfriends`, and the difference is the point: a deck running 21 planeswalkers IS
+   *  a superfriends deck whether or not anything pays them off. Thirty enchantments is not an
+   *  Enchantress deck; it is a deck with enchantments in it. */
+  requiresDemand?: boolean;
 }
 
 function matchesSignature(signal: CardSignal, sig: ArchetypeSignature): boolean {
@@ -226,11 +264,16 @@ export function detectArchetypes(
   nonlandCount: number,
 ): ArchetypeRanking[] {
   const weightByArchetype = new Map<Archetype, Map<string, number>>();
+  // WHICH ARCHETYPES THE DECK ACTUALLY PAYS OFF, for the `requiresDemand` rows below. A type count
+  // amplifies a payoff; it never stands in for one.
+  const hasPayoff = new Set<Archetype>();
   for (const signal of cardSignals) {
     for (const [archetype, sig] of Object.entries(ARCHETYPE_SIGNATURE) as [Archetype, ArchetypeSignature][]) {
       if (!matchesSignature(signal, sig)) continue;
       if (archetype === "tokens" && makesOnlyResourceTokens(signal)) continue;
-      const weight = sig.demandDefined && !matchesDemand(signal, sig) ? PRODUCER_SHARE : 1;
+      const demand = matchesDemand(signal, sig);
+      if (demand) hasPayoff.add(archetype);
+      const weight = sig.demandDefined && !demand ? PRODUCER_SHARE : 1;
       const byCard = weightByArchetype.get(archetype) ?? new Map<string, number>();
       byCard.set(signal.name, Math.max(byCard.get(signal.name) ?? 0, weight));
       weightByArchetype.set(archetype, byCard);
@@ -239,6 +282,8 @@ export function detectArchetypes(
 
   // Signal-derived archetypes must independently clear ARCHETYPE_FLOOR to be listed.
   const ranked = [...weightByArchetype.entries()]
+    // A deck with thirty enchantments and nothing caring about them is not an Enchantress deck.
+    .filter(([name]) => !ARCHETYPE_SIGNATURE[name]?.requiresDemand || hasPayoff.has(name))
     .map(([name, byCard]) => ({
       name,
       label: ARCHETYPE_LABELS[name],

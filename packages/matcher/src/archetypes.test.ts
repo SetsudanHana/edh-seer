@@ -3,7 +3,7 @@ import { detectArchetypes, dominantArchetype, type CardSignal } from "./archetyp
 
 const sig = (name: string, opts: {
   themeTags?: string[]; effectKinds?: string[]; subtypes?: string[]; cardTypes?: string[];
-  tokenKinds?: string[];
+  tokenKinds?: string[]; caresTags?: string[];
 }): CardSignal => ({
   name,
   themeTags: opts.themeTags ?? [],
@@ -11,6 +11,11 @@ const sig = (name: string, opts: {
   subtypes: opts.subtypes ?? [],
   ...(opts.cardTypes ? { cardTypes: opts.cardTypes } : {}),
   ...(opts.tokenKinds ? { tokenKinds: opts.tokenKinds } : {}),
+  // PASSED ONLY WHEN THE TEST MEANS IT. `matchesDemand` reads an ABSENT `caresTags` as "the caller
+  // computed no demand side" and answers true, which is the documented old behaviour several tests
+  // below rely on -- so a default of `[]` here would quietly hand every `requiresDemand` row a
+  // payoff it never had, and would change what those tests are asserting.
+  ...(opts.caresTags ? { caresTags: opts.caresTags } : {}),
 });
 
 test("a card with its own token-generation effect kind maps to tokens as primary", () => {
@@ -268,4 +273,35 @@ test("a Role or Aura token is not a go-wide plan", () => {
     sig("The Rani", { effectKinds: ["token-generation"], tokenKinds: ["aura"] }),
   ];
   expect(detectArchetypes(signals, [], 10).some((r) => r.name === "tokens")).toBe(false);
+});
+
+/** T2c, and the owner's correction on it (2026-09-03): *"if you have 30 enchantments and no cards
+ *  that actually care about enchantments you are not Enchantress deck"*.
+ *
+ *  `demandDefined` alone could not say that -- it weights the supply side to `PRODUCER_SHARE` and
+ *  nothing more, and a type count clears `ARCHETYPE_FLOOR` on 0.35 by itself: thirty enchantments
+ *  in sixty nonlands is 0.17, twice the floor, with not one card caring. `requiresDemand` drops the
+ *  row unless a payoff is really in the deck. */
+test("enchantments without a payoff are not an Enchantress deck", () => {
+  // `caresTags: []` and not omitted: absent means "no demand side computed", which answers true.
+  const shrine = Array.from({ length: 30 }, (_, i) =>
+    sig(`Enchantment ${i}`, { cardTypes: ["enchantment"], caresTags: [] }));
+  expect(detectArchetypes(shrine, [], 60).some((r) => r.name === "enchantress")).toBe(false);
+
+  // One card that CARES, and the same thirty enchantments become what they were always meant to
+  // amplify.
+  const withPayoff = [
+    ...shrine,
+    sig("Enchantress's Presence", { themeTags: ["enters:enchantment"], caresTags: ["enters:enchantment"] }),
+  ];
+  const out = detectArchetypes(withPayoff, [], 60);
+  expect(out[0]!.name).toBe("enchantress");
+});
+
+/** THE GATE IS NOT ON `superfriends`, and the difference is the whole reason it is a per-row flag. A
+ *  deck running 21 planeswalkers IS a superfriends deck whether or not anything pays them off. */
+test("a type count with no payoff still names superfriends", () => {
+  const walkers = Array.from({ length: 20 }, (_, i) =>
+    sig(`Planeswalker ${i}`, { cardTypes: ["planeswalker"], caresTags: [] }));
+  expect(detectArchetypes(walkers, [], 60)[0]!.name).toBe("superfriends");
 });
