@@ -285,6 +285,63 @@ const LANDS_WEIGHT = 1;
 
 const clamp01 = (x: number): number => Math.max(0, Math.min(1, x));
 
+/** THE BUILD SCORE'S ARITHMETIC, AS A PURE FUNCTION OF ITS INPUTS (roadmap S10).
+ *
+ *  Lifted out of `computeBuild` unchanged so an IMPACT -- what closing a gap is worth to the score --
+ *  can be MEASURED by calling this twice rather than differentiating the formula by hand. A
+ *  hand-derived derivative is a second copy of the weights, and a second copy is how two surfaces
+ *  start disagreeing; this way the impact and the shipped number are produced by the same lines and
+ *  cannot drift. It is also why the impact is free: a few extra calls to arithmetic that already
+ *  runs once per analysis. */
+export interface ScoreableParent {
+  count: number;
+  target: number;
+  weight: number;
+  coverageWeighted?: true;
+}
+
+export interface BuildScoreInputs {
+  parents: readonly ScoreableParent[];
+  landCount: number;
+  landsTarget: number;
+  /** `answerCoverage(...).coverage` -- the multiplier applied to the coverage-weighted parent. */
+  coverage: number;
+}
+
+export function scoreBuild({ parents, landCount, landsTarget, coverage }: BuildScoreInputs): number {
+  let weightSum = 0;
+  let attainSum = 0;
+  for (const p of parents) {
+    if (p.target <= 0) continue; // same "neutral, unscored" convention every zero-target category used
+    // COVERAGE MULTIPLIES, IT DOES NOT REPLACE. Ten creature-removal spells and nothing else is
+    // both enough cards and one answer; the product is the only reading that says so.
+    //
+    // THE SEAM: `p.count` is the union of ALL FOUR Interaction leaves (targetedRemoval,
+    // stackInteraction, graveyardHate, protection), but `coverage` can only ever be lifted by the
+    // five PERMANENT answer classes `detectAnswerClasses` tracks -- no counterspell and no
+    // protection spell can ever set a `covered` bit, so a deck can max this parent's count on cards
+    // structurally incapable of moving the multiplier applied to it. MEASURED (whole-branch review
+    // finding IMPORTANT 1): mean 10.38 Interaction-counted cards per deck carry no coverage class at
+    // all across the 71 calibration decks, 65 of 71 decks carry >= 5, max 24 (`voltron-mill`: 26
+    // counted, 24 coverage-blind -- 7 stack, 12 protection -- coverage cut to 0.520). DELIBERATELY
+    // NOT FIXED HERE: dropping `stackInteraction`/`protection` from the count would re-scope what
+    // `Interaction` means and re-open its target of 10, calibrated on the union of all four leaves --
+    // a bigger change than this multiply, needing its own before/after. See design §9 for the full
+    // measurement and the ruling not to re-litigate it in a fix wave.
+    const counted = Math.min(p.count / p.target, 1); // exceeding a floor never penalizes
+    const attainment = p.coverageWeighted ? counted * coverage : counted;
+    weightSum += p.weight;
+    attainSum += p.weight * attainment;
+  }
+  // Lands scores exactly as before, on its own two-sided band, outside every parent.
+  if (landsTarget > 0) {
+    const attainment = clamp01(1 - Math.max(0, Math.abs(landCount - landsTarget) - LAND_BAND) / LAND_FALLOFF);
+    weightSum += LANDS_WEIGHT;
+    attainSum += LANDS_WEIGHT * attainment;
+  }
+  return weightSum > 0 ? (attainSum / weightSum) * 5 : 0;
+}
+
 /** Leaf-level targets: `lands` (and, always at 0, `burn`/`stax`) for their own scoring/reporting,
  *  and every grouped leaf for the `buildCategories` per-leaf `target` field a leaf shows nothing
  *  meaningful in any more. A grouped leaf IGNORES `ARCHETYPE_TARGET_DELTAS` here on purpose -- its
@@ -498,38 +555,13 @@ export function computeBuild(
     return { ...p, count: union.size };
   });
 
-  let weightSum = 0;
-  let attainSum = 0;
-  for (const p of parentsWithCount) {
-    if (p.target <= 0) continue; // same "neutral, unscored" convention every zero-target category used
-    // COVERAGE MULTIPLIES, IT DOES NOT REPLACE. Ten creature-removal spells and nothing else is
-    // both enough cards and one answer; the product is the only reading that says so.
-    //
-    // THE SEAM: `p.count` is the union of ALL FOUR Interaction leaves (targetedRemoval,
-    // stackInteraction, graveyardHate, protection), but `coverage` can only ever be lifted by the
-    // five PERMANENT answer classes `detectAnswerClasses` tracks -- no counterspell and no
-    // protection spell can ever set a `covered` bit, so a deck can max this parent's count on cards
-    // structurally incapable of moving the multiplier applied to it. MEASURED (whole-branch review
-    // finding IMPORTANT 1): mean 10.38 Interaction-counted cards per deck carry no coverage class at
-    // all across the 71 calibration decks, 65 of 71 decks carry >= 5, max 24 (`voltron-mill`: 26
-    // counted, 24 coverage-blind -- 7 stack, 12 protection -- coverage cut to 0.520). DELIBERATELY
-    // NOT FIXED HERE: dropping `stackInteraction`/`protection` from the count would re-scope what
-    // `Interaction` means and re-open its target of 10, calibrated on the union of all four leaves --
-    // a bigger change than this multiply, needing its own before/after. See design §9 for the full
-    // measurement and the ruling not to re-litigate it in a fix wave.
-    const counted = Math.min(p.count / p.target, 1); // exceeding a floor never penalizes
-    const attainment = p.coverageWeighted ? counted * coverage.coverage : counted;
-    weightSum += p.weight;
-    attainSum += p.weight * attainment;
-  }
-  // Lands scores exactly as before, on its own two-sided band, outside every parent.
-  const landsTarget = targets.lands;
-  if (landsTarget > 0) {
-    const attainment = clamp01(1 - Math.max(0, Math.abs(landCount - landsTarget) - LAND_BAND) / LAND_FALLOFF);
-    weightSum += LANDS_WEIGHT;
-    attainSum += LANDS_WEIGHT * attainment;
-  }
-  const buildScore = weightSum > 0 ? (attainSum / weightSum) * 5 : 0;
+  const scoreInputs: BuildScoreInputs = {
+    parents: parentsWithCount,
+    landCount,
+    landsTarget: targets.lands,
+    coverage: coverage.coverage,
+  };
+  const buildScore = scoreBuild(scoreInputs);
 
   // `coverageWeighted` rides along ONLY when true (whole-branch review IMPORTANT 4) -- the client
   // was selecting this parent with `p.name === "Interaction"`, the exact string match this flag

@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { detectBuildCategories, computeBuild, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT } from "./build.js";
+import { detectBuildCategories, computeBuild, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT, scoreBuild } from "./build.js";
 import type { DeckCard } from "./types.js";
 import type { CardTags } from "@edh-seer/tagger";
 
@@ -630,4 +630,40 @@ import { LAND_BAND, LAND_FALLOFF } from "./index.js";
 test("the land tolerance is exported for the client to import", () => {
   expect(LAND_BAND).toBe(3);
   expect(LAND_FALLOFF).toBe(9);
+});
+
+/** THE EXTRACTION'S ONLY REAL GUARANTEE (roadmap S10). `scoreBuild` exists so an IMPACT can be
+ *  measured by calling the same arithmetic twice instead of differentiating it by hand -- which is
+ *  worth nothing if the extracted copy can drift from the shipped score. Hand-computed from the
+ *  shipped table: Consistency 14/14 and Ramp 10/10 attain 1, Interaction 10/10 attains 1 x 0.6
+ *  coverage, Board wipes 0/3 attains 0 at weight 0.5, lands 38 against 36 is inside LAND_BAND and
+ *  attains 1. attainSum = 1 + 1 + 0.6 + 0 + 1 = 3.6 over weightSum 4.5, x5 = 4.0. */
+test("scoreBuild is the shipped arithmetic, to the digit", () => {
+  const score = scoreBuild({
+    parents: [
+      { count: 14, target: 14, weight: 1 },
+      { count: 10, target: 10, weight: 1 },
+      { count: 10, target: 10, weight: 1, coverageWeighted: true },
+      { count: 0, target: 3, weight: 0.5 },
+    ],
+    landCount: 38, landsTarget: 36, coverage: 0.6,
+  });
+  expect(score).toBeCloseTo(4.0, 10);
+});
+
+/** Exceeding a floor never penalizes -- `min(count / target, 1)`. This is also what makes the S10
+ *  swap legal: a cut taken from a parent already over target costs the score nothing. */
+test("scoreBuild caps a parent at its target", () => {
+  const base = { landCount: 36, landsTarget: 36, coverage: 1 };
+  const at = scoreBuild({ ...base, parents: [{ count: 10, target: 10, weight: 1 }] });
+  const over = scoreBuild({ ...base, parents: [{ count: 17, target: 10, weight: 1 }] });
+  expect(over).toBe(at);
+});
+
+/** A zero-target parent is neutral and unscored -- the convention every zero-target category uses. */
+test("scoreBuild excludes a zero-target parent from both sums", () => {
+  const base = { landCount: 36, landsTarget: 36, coverage: 1 };
+  const withZero = scoreBuild({ ...base, parents: [{ count: 5, target: 10, weight: 1 }, { count: 0, target: 0, weight: 1 }] });
+  const without = scoreBuild({ ...base, parents: [{ count: 5, target: 10, weight: 1 }] });
+  expect(withZero).toBe(without);
 });
