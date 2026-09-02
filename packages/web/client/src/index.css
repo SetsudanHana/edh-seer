@@ -120,6 +120,36 @@ body {
   color-scheme: dark;
 }
 
+/* THE APP RESERVES ITS OWN SPACE, AND THAT IS THE WHOLE CLS FIX.
+ *
+ * `#root` is EMPTY in `index.html` and `<section class="intro">` sits below it carrying real
+ * pre-rendered text -- deliberately, so a crawler that runs no JavaScript still gets substantive
+ * content. The cost of that was invisible until it was measured: at first paint the intro renders at
+ * the TOP of the viewport, then React mounts and fills `#root` with the whole entry screen, shoving
+ * the intro down by its full height.
+ *
+ * MEASURED ON THE PRODUCTION BUILD, AND THE DEV SERVER LIES ABOUT IT. Against `vite preview`:
+ * CLS **0.4278 before, 0.0003 after**, the whole of it one 0.4275 shift at 66ms naming
+ * `section.intro` as its source. Google's "good" threshold is 0.1, so this was four times a
+ * failing score; Cloudflare's field data is what reported it.
+ *
+ * The dev server measured 1.2006 for the same page, because Vite injects the stylesheet as a
+ * `<style>` tag AFTER first paint and the whole body reflows when it lands -- an artifact that does
+ * not exist in the build, where the CSS is a render-blocking `<link>`. A dev-server CLS number is
+ * not a CLS number.
+ *
+ * A MINIMUM, NOT A GUESS AT THE APP'S HEIGHT. Reserving an approximate number trades a big shift for
+ * a smaller one in whichever direction the guess is wrong. One viewport is exact by construction:
+ * the intro starts below the fold and STAYS there when React mounts, so the two layouts agree and
+ * there is nothing to shift. It also puts the intro where this page already says it belongs --
+ * "BELOW the app because the paste box is what a returning reader wants first".
+ *
+ * `svh`, NOT `vh`: on a phone `vh` is the tallest the viewport ever gets, so the reserve would
+ * overshoot by the address bar's height and reintroduce the shift it exists to remove. */
+#root {
+  min-block-size: 100svh;
+}
+
 h1,
 h2,
 h3 {

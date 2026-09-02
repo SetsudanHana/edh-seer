@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
@@ -9,7 +9,15 @@ import { ReportHeader } from "./ReportHeader.js";
 import { CardList } from "./CardList.js";
 import { MissingCards } from "./MissingCards.js";
 import { ComboList } from "./ComboList.js";
-import { GraphView } from "./GraphView.js";
+/** THE BOARD IS A ROUTE, SO IT LOADS LIKE ONE. `GraphView` is the largest module in the client --
+ *  145kB of source on its own, plus `board-force.ts` and d3-selection, d3-transition and d3-zoom
+ *  behind it, about 250kB of the 2.4MB the build's sourcemap maps -- and it mounts ONLY on `/graph`.
+ *  Every reader who never opened the board was still paying for it in the first byte of the report.
+ *
+ *  `GraphList` stays eager: it is the narrow-width fallback that renders INSTEAD of the board on a
+ *  phone, so lazy-loading it would trade a bundle saving for a spinner on the surface that exists
+ *  because the board cannot be used there at all. */
+const GraphView = lazy(() => import("./GraphView.js").then((m) => ({ default: m.GraphView })));
 import { GraphList } from "./GraphList.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 import { CardDrawerProvider } from "./card-drawer.js";
@@ -118,7 +126,19 @@ export function ReportShell({ data }: { data: AnalyzeResponse }) {
               <Reference>
                 {narrow
                   ? <GraphList graph={data.graph} unread={unread} />
-                  : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />}
+                  : (
+                    // A HEIGHT, NOT A SPINNER. The board is the tallest thing this app draws, and a
+                    // fallback shorter than what replaces it is a layout shift on arrival -- the
+                    // exact defect the `#root` reserve one file over exists to remove. The message
+                    // says what is happening, because a blank box of this size reads as a failure.
+                    <Suspense fallback={
+                      <div className="flex items-center justify-center min-h-[70svh] text-(--muted) eyebrow">
+                        loading the board
+                      </div>
+                    }>
+                      <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />
+                    </Suspense>
+                  )}
               </Reference>
             }
           />
