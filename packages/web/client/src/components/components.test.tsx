@@ -296,6 +296,41 @@ test("ArchetypeBoard counts pairs beside cards and previews a pair without a cli
   expect(screen.getByText(/pays off tokens/)).toBeInTheDocument();
 });
 
+// S13, and the point of the whole item: this board was the ONE coverage-limited surface with
+// neither a worded caveat nor the hatch, while the `°` that was supposed to name it rendered on a
+// chapter heading. The `°` is retired; these two pin what replaced it. The floor claim is not
+// decoration -- `detectArchetypes` takes derived-only signals against a denominator of every
+// nonland, so an unread card divides without ever signalling.
+test("ArchetypeBoard says the strategies are a floor when the deck is partly read", () => {
+  render(<ArchetypeBoard
+    strategies={SAMPLE.report.strategies}
+    archetypes={SAMPLE.report.archetypes}
+    coverage={{ resolved: 100, derived: 52, underivedNames: ["Ash Barrens"], more: 0, caveat: "x" }}
+  />);
+  expect(screen.getByText(/cards of/)).toBeInTheDocument();
+  expect(screen.getByText(/48 cards signal no strategy and still count in the share below/)).toBeInTheDocument();
+  expect(screen.getByText(/is a floor/)).toBeInTheDocument();
+});
+
+test("ArchetypeBoard's floor caveat agrees with its own count", () => {
+  // Written plural-only and caught on screen for the SECOND time in one session -- `coverage.ts`
+  // had the identical defect an hour earlier ("1 card of 103 are not in the read corpus"). A deck
+  // one card short of fully read is the common shape now that the corpus covers the rest.
+  render(<ArchetypeBoard
+    strategies={SAMPLE.report.strategies}
+    archetypes={SAMPLE.report.archetypes}
+    coverage={{ resolved: 103, derived: 102, underivedNames: ["Aboroth"], more: 0, caveat: "x" }}
+  />);
+  expect(screen.getByText(/1 card signals no strategy and still counts in the share below/)).toBeInTheDocument();
+});
+
+test("ArchetypeBoard says nothing about coverage on a fully-read deck", () => {
+  // A caveat that is always present qualifies nothing -- the same rule the retired mark had, and
+  // the reason `deckCoverage` returns undefined rather than a 100% object.
+  render(<ArchetypeBoard strategies={SAMPLE.report.strategies} archetypes={SAMPLE.report.archetypes} />);
+  expect(screen.queryByText(/is a floor/)).toBeNull();
+});
+
 test("ArchetypeBoard shows an empty-state message when there are no groups", () => {
   render(<ArchetypeBoard archetypes={[]} />);
   expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();

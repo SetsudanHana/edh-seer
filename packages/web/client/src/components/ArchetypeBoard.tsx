@@ -88,13 +88,20 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
   );
 }
 
-export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [] }: {
+export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], coverage }: {
   strategies?: DeckReport["strategies"];
   archetypes: DeckReport["archetypes"];
   /** Nonland card names, for the matrix's rows. Supplied by the caller because the land rule is
    *  `primaryType`'s and reads TYPES, which this component is never given -- one copy of that rule,
    *  the same one `DeckWaffle` uses. */
   nonlandNames?: readonly string[];
+  /** THE COVERAGE LIMIT, IN WORDS (S13, 2026-09-02). Everything this component draws is
+   *  derived-only: `cardSignals` (`matcher/src/analyze.ts:835`) filters on `dc.tags`, and the
+   *  groups are built from edges. This was the ONE coverage-limited surface on the page carrying
+   *  neither a worded caveat nor the hatch -- the synergy dial prints "too little of the deck read
+   *  to call this", `CutList` names the unjudged, the graph hatches its nodes, and the board said
+   *  nothing. Absent on a fully-read deck, like every other coverage-keyed line. */
+  coverage?: DeckReport["coverage"];
 }) {
   const hasStrategies = !!strategies && strategies.length > 0;
   const hasGroups = !!archetypes && archetypes.length > 0;
@@ -103,8 +110,25 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [] }: {
   }
   const sMax = hasStrategies ? Math.max(...strategies!.map((s) => s.confidence)) : 1;
   const gMax = hasGroups ? Math.max(1, ...archetypes!.map((g) => g.pairs.length)) : 1;
+  const unread = coverage ? coverage.resolved - coverage.derived : 0;
   return (
     <div className="flex flex-col gap-6">
+      {/* A FLOOR, NOT A READING, and the asymmetry is the reason it has to be said. The numerator
+        *  is derived-only and the denominator is not: `detectArchetypes` is handed `cardSignals`
+        *  (cards with tags) against `nonlandCount` (`nonlands.length`, every nonland whether read
+        *  or not). So an unread card contributes no signal and still divides -- a plan the unread
+        *  cards actually run reads LOWER here than it is, which is the silent-wrong-answer shape
+        *  rather than a missing one. */}
+      {coverage && unread > 0 ? (
+        <p className="text-xs text-(--muted) max-w-[62ch]">
+          Read from the{" "}
+          <span className="stat-num text-(--foreground)">{coverage.derived}</span> cards of{" "}
+          <span className="stat-num">{coverage.resolved}</span> the engine could read. The other{" "}
+          {unread} card{unread === 1 ? "" : "s"} {unread === 1 ? "signals" : "signal"} no strategy
+          and still {unread === 1 ? "counts" : "count"} in the share below, so every percentage here
+          is a floor.
+        </p>
+      ) : null}
       {hasStrategies ? (
         <div className="flex flex-col gap-2">
           <h3 className="eyebrow">Strategies</h3>

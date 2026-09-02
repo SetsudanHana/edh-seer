@@ -133,7 +133,7 @@ export function ReportHeader({ data }: { data: AnalyzeResponse }) {
                 style={{ width: `${Math.round((coverage.resolved > 0 ? coverage.derived / coverage.resolved : 0) * 100)}%` }}
               />
             </span>
-            {/* The chapter-1 panel carries the caveat, the names and the ° legend. This is the
+            {/* The chapter-1 panel carries the caveat, the names and the hatch legend. This is the
               *  figure alone, so a reader deep in the cards table still knows which denominator
               *  every synergy number on this report was computed over. */}
             <span className="text-xs text-(--muted) stat-num whitespace-nowrap">
