@@ -624,14 +624,29 @@ export interface SimulateResult {
    *  `castableShare`: the model is colour-blind, and a field name is exactly where a banned word
    *  creeps back in. */
   payableShareAt: number[][];
-  /** Per card, per turn: P(the board could pay this card's WHOLE cost, colours included. This one IS
-   *  castability: the two axes `castability.ts` refuses to multiply are asked of the same board in
-   *  the same trial, so the correlation between them is handled by construction. A card with an X
-   *  cost reads 0 and is refused upstream, exactly as `castability.ts` refuses it. */
+  /** Per card, per turn: P(the board could pay this card's WHOLE cost, colours included) GIVEN THAT
+   *  YOU HOLD IT. This one IS castability: the two axes `castability.ts` refuses to multiply are
+   *  asked of the same board in the same trial, so the correlation between them is handled by
+   *  construction. A card with an X cost reads 0 and is refused upstream.
+   *
+   *  CONDITIONAL, AND IT WAS NOT (T18b). The denominator was every trial, including the ~92% where
+   *  the card was never drawn, so the figure answered "how often is this deck's turn-N board able to
+   *  produce this cost" and was labelled as the card's own chance to be cast. It also read a board
+   *  built by a land policy that was not trying to cast this card, because the card was not in hand
+   *  to ask. Conditioning fixes both at once: `pickLand` sees the card's own pips exactly in the
+   *  trials that now count. Measured on `Curse of Opulence`: 40.0% unconditional, 47.1% held.
+   *
+   *  THE DENOMINATOR IS SMALL AND `byCardHeld` CARRIES IT, because a singleton is in hand in roughly
+   *  (6 + turn)/99 of trials. `castability.ts` refuses a card whose denominator is too thin rather
+   *  than printing a percentage drawn from a hundred shuffles. */
   byCardCastable: Map<string, number[]>;
-  /** Per card, per turn: P(the board could tap at least that card's mana value by then). Still not
-   *  "castable" — see the colour ceiling. */
+  /** Per card, per turn: P(the board could tap at least that card's mana value by then), on the same
+   *  held denominator. Still not "castable" — see the colour ceiling. */
   byCard: Map<string, number[]>;
+  /** Per card, per turn: the TRIALS THAT COUNTED -- those where the card was in hand. The
+   *  denominator behind the two maps above, and the only thing that says whether they are worth
+   *  printing. A commander is priced from the command zone and is held in every trial. */
+  byCardHeld: Map<string, number[]>;
 }
 
 /** Lands on the battlefield, as a conditional land reads them at the moment it would enter. */
@@ -730,9 +745,11 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   const payableShareAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const byCardHits = new Map<string, number[]>();
   const byCardCastHits = new Map<string, number[]>();
+  const heldHits = new Map<string, number[]>();
   for (const s of priced) {
     if (!byCardHits.has(s.name)) byCardHits.set(s.name, Array(turns).fill(0));
     if (!byCardCastHits.has(s.name)) byCardCastHits.set(s.name, Array(turns).fill(0));
+    if (!heldHits.has(s.name)) heldHits.set(s.name, Array(turns).fill(0));
   }
 
   for (let t = 0; t < trials; t++) {
@@ -743,6 +760,13 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       [library[i], library[j]] = [library[j], library[i]];
     }
     const hand: DeckSlot[] = library.splice(0, 7);
+    // EVERY CARD THIS TRIAL HAS SEEN, and it never forgets one (T18b). "Still in hand" is the wrong
+    // condition and it inverted the answer on exactly the cards a deck is happiest to draw: rule 3
+    // casts accelerants greedily, so `Sol Ring` had already LEFT the hand by the time the cell below
+    // was scored and read as held in 5 trials of 2,000 -- not 8% of them, which is what a singleton
+    // in an opening seven actually is. A zero-mana rock read 0 and would have printed 0%.
+    const drawn = new Set<string>();
+    for (const c of hand) drawn.add(c.name);
     // A COMMANDER THAT MAKES MANA STARTS IN HAND, because the command zone is not the library: it is
     // available every game with no draw, which makes it the most reliable accelerant a deck has, and
     // rule 3 was never able to cast it (roadmap O1). 6 of the 71 decks have one and every one was
@@ -762,8 +786,8 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     for (let turn = 1; turn <= turns; turn++) {
       // Rule 1: one card per turn, INCLUDING turn 1. On the play there is no turn-1 draw; modelling
       // the draw is the flattering direction by one card and is stated rather than hidden.
-      const drawn = library.shift();
-      if (drawn) hand.push(drawn);
+      const pulled = library.shift();
+      if (pulled) { hand.push(pulled); drawn.add(pulled.name); }
 
       // Rule 2: one land per turn, preferring whichever enters UNTAPPED given the board right now —
       // and never a land whose own gate is unmet, because that is not a land drop, it is a blank.
@@ -911,6 +935,12 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       let affordable = 0;
       for (let i = 0; i < priced.length; i++) {
         const s = priced[i];
+        // A commander is always one of them: it is priced from the command zone and was never
+        // shuffled in, so "did you draw it" is not a question that applies to it.
+        const held = s.isExtra === true || drawn.has(s.name);
+        // The DENOMINATOR is counted before the mana gate: a turn where you held the card and could
+        // not pay for it is exactly the case the figure exists to report.
+        if (countsForByCard[i] && held) heldHits.get(s.name)![turn - 1]++;
         // WHAT YOU PAY, NOT WHAT THE CARD'S MANA VALUE IS. These are the same number for every card
         // except a non-Fuse split, where CR 202.3b makes the mana value the SUM of both halves while
         // the cost you actually pay is one half — so `Dusk // Dawn` was gated at nine mana on the
@@ -921,21 +951,25 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
         // and for those the mana value stays the gate.
         if ((s.cost?.total ?? s.manaValue) > made) continue;
         if (!s.isExtra) affordable++;
-        if (countsForByCard[i]) byCardHits.get(s.name)![turn - 1]++;
+        if (countsForByCard[i] && held) byCardHits.get(s.name)![turn - 1]++;
         if (s.cost === null) continue;
         let ok = castableByCost.get(s.costKey);
         if (ok === undefined) { ok = payable(untapped, s.cost); castableByCost.set(s.costKey, ok); }
-        if (ok && countsForByCard[i]) byCardCastHits.get(s.name)![turn - 1]++;
+        if (ok && countsForByCard[i] && held) byCardCastHits.get(s.name)![turn - 1]++;
       }
       payableShareAt[turn - 1].push(nonlands.length > 0 ? affordable / nonlands.length : 0);
     }
   }
 
+  // OVER THE TRIALS THAT HELD THE CARD, never over every trial. A zero denominator reads 0 and
+  // `castability.ts` refuses it on the count rather than on the value.
+  const rate = (name: string, hits: readonly number[]): number[] =>
+    hits.map((h, i) => { const d = heldHits.get(name)![i]; return d === 0 ? 0 : h / d; });
   const byCard = new Map<string, number[]>();
-  for (const [name, hits] of byCardHits) byCard.set(name, hits.map((h) => h / trials));
+  for (const [name, hits] of byCardHits) byCard.set(name, rate(name, hits));
   const byCardCastable = new Map<string, number[]>();
-  for (const [name, hits] of byCardCastHits) byCardCastable.set(name, hits.map((h) => h / trials));
-  return { trials, turns, manaAt, payableShareAt, byCard, byCardCastable };
+  for (const [name, hits] of byCardCastHits) byCardCastable.set(name, rate(name, hits));
+  return { trials, turns, manaAt, payableShareAt, byCard, byCardCastable, byCardHeld: heldHits };
 }
 
 /** P(at least `m` mana by turn `t`) straight off a run. */
@@ -964,7 +998,15 @@ export function quantiles(values: readonly number[]): { p25: number; median: num
  *  sentence did not. A figure that prints as a whole percent inside a 7pp band can carry a 1pp SE;
  *  raising the trial count on this alone would buy accuracy nothing reads.
  *  Measured cost: about 24ms per policy arm on a 99-card deck, so ~48ms on an analyze request. */
-export const REPORT_TRIALS = 2_000;
+/** TEN THOUSAND, AND IT WAS TWO (T18b). The per-card castability is conditional on having DRAWN the
+ *  card, and a singleton is drawn by turn N in roughly (6 + N)/99 of trials -- so at 2,000 the
+ *  headline cell on a one-drop rested on about 160 shuffles, a sampling error near +-9pp at 95%,
+ *  while the row printed a policy band one point wide. Precision the sample did not support.
+ *
+ *  MEASURED COST: a full deck analysis goes 1.01s -> 1.70s (`packages/cli`, `enchanting-rani`,
+ *  best of two). The smallest denominator across the 71 calibration decks goes 120 -> 600. One
+ *  constant, and reverting it costs only precision on the thinnest rows. */
+export const REPORT_TRIALS = 10_000;
 
 /** The availability TABLE is eight rows. The simulation may run longer to price a big card. */
 const ROW_TURNS = 8;
@@ -1031,6 +1073,10 @@ export interface CastCurve {
   /** Indexed by `turn - 1`. */
   castable: { low: number; high: number }[];
   mana: { low: number; high: number }[];
+  /** Trials the two rates above were computed over: the ones where the card was in hand (T18b).
+   *  A singleton reaches roughly (6 + turn)/99 of them, so this is a couple of hundred out of two
+   *  thousand and `castability.ts` refuses a card whose count is thinner than that. */
+  held: number[];
 }
 
 export interface ManaModel {
@@ -1090,6 +1136,9 @@ export function manaModel(
     curves.set(name, {
       castable: g.map((p, i) => band(p, h[i] ?? p)),
       mana: gm.map((p, i) => band(p, hm[i] ?? p)),
+      // Both arms shuffle from the same seed, so they hold the card in the same trials; one count
+      // describes the pair.
+      held: greedy.byCardHeld.get(name) ?? [],
     });
   }
   return {
