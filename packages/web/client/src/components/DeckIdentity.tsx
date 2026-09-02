@@ -30,7 +30,6 @@ export function DeckIdentity({
   thing,
   commanderCast,
   manaAvailability,
-  commanderTax,
   coverage,
 }: {
   cohesion: DeckReport["cohesion"];
@@ -42,8 +41,6 @@ export function DeckIdentity({
   /** Only to reconcile the two readouts of the same cell — never to render a second figure of its
    *  own; the mana-availability panel owns that. */
   manaAvailability?: DeckReport["manaAvailability"];
-  /** CR 903.8's caveat, shipped as data so this file and the CLI cannot drift apart. */
-  commanderTax?: DeckReport["commanderTax"];
   /** Present only when the engine could NOT read the whole deck. The theme, its share and the
    *  "no dominant theme" verdict are all EDGE-derived, so on a partly-read deck they are computed
    *  over a fraction of the cards — and "No dominant theme · unfocused · 0.08" reads as a judgement
@@ -57,9 +54,15 @@ export function DeckIdentity({
   // lives inside one unit.
   // THE SHARE IS A MEASUREMENT AND THE LABEL IS A VERDICT. On a partly-read deck the number stays
   // and the word goes — "unfocused" is not a thing the engine can say about a deck it read half of.
-  const focus = coverage
-    ? `${cohesion.score.toFixed(2)} over the ${coverage.derived} cards read`
-    : `${cohesion.label} · ${cohesion.score.toFixed(2)}`;
+  // A SHARE WITH ITS DENOMINATOR, WHICH IS WHAT IT NEVER HAD (roadmap T4). This read
+  // "focused · 0.47", and the owner's question about it was "what does it even mean" -- the two
+  // numbers 0.47 is the ratio of were computed and thrown away. It also collided with the 0-5 deck
+  // score's own "Focused" band one panel over; `cohesionLabel` no longer uses that word.
+  const pct = Math.round(cohesion.score * 100);
+  const share = cohesion.nonlandCount > 0
+    ? `${cohesion.onThemeCount} of ${cohesion.nonlandCount} nonlands work with it (${pct}%, ${cohesion.label})`
+    : `${pct}% of nonlands (${cohesion.label})`;
+  const focus = coverage ? `${share}, over the ${coverage.derived} cards read` : share;
   // The WIDER FAMILY, and only when it differs — the same rule the CLI settled on (A10). A specific
   // primary measures itself, so "daleks entering · 0.08" is true and reads as a broken deck until
   // you are also told the family it sits inside is 0.46.
@@ -141,17 +144,23 @@ export function DeckIdentity({
         *  figure rather than a footnote somewhere else. */}
       {thing ? (
         <p className="text-sm text-(--foreground) tabular-nums">
-          <strong>{thing.count} cards</strong> do it · {percent(thing.probability)} to have{" "}
-          {thing.k} of them by turn {thing.turn}
+          {/* "28 cards DO IT" (roadmap T7). Owner: *"we have to stop with this 'do it', it does not
+            *  make any sense and is confusing"* -- and the reason it stopped making sense is that
+            *  its antecedent MOVED: the theme headline went to `RecognitionPanel`, two panels up, so
+            *  "it" pointed at nothing on this line. The count is also the same fact as the share
+            *  directly above (29 of 62 at 47%), printed a second time with a different denominator,
+            *  because this one drops the commander into its own clause. So the share carries the
+            *  count and this line carries only what the share cannot say: how likely you are to
+            *  have drawn enough of them in time. */}
+          {percent(thing.probability)} to have {thing.k} of them by turn {thing.turn}
           {thing.fromCommandZone.length > 0 ? `, plus ${thing.fromCommandZone.join(", ")} every game` : ""}
-          {/* "EVERY GAME" IS TRUE ONCE (CR 903.8, roadmap J5). The line invites being read as free
-              and repeatable; the tax is what makes the second and third casts expensive. The
-              sentence arrives as DATA rather than being written here, because no subpath of
-              `@edh-seer/matcher` is safe to value-import from client code — a recorded regression — and a
-              second copy of a sentence is how two surfaces start disagreeing. */}
-          {thing.fromCommandZone.length > 0 && commanderTax ? (
-            <span className="block text-xs text-(--muted)">{commanderTax.caveat}</span>
-          ) : null}
+          {/* THE COMMANDER-TAX SENTENCE IS GONE FROM HERE (roadmap T6). It read *"free the first
+            *  time only — each recast from the command zone costs {2} more (CR 903.8), and nothing
+            *  here models how often it dies"*, and the owner's note on it was simply that Magic
+            *  players know that. It was written for a reader who might take "every game" as free
+            *  and repeatable; a commander player is not that reader. `commanderTax` stays on the
+            *  report and the CLI still prints it -- this is a decision about THIS line, not about
+            *  the data. */}
           <span className="block text-xs text-(--muted)">
             owner-judged 95% precise on what it lists; it misses roughly one in six a player would count
           </span>

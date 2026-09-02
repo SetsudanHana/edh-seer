@@ -1,3 +1,4 @@
+import { themeName } from "./theme-names.js";
 import { describeTag, tagFamily, type Tag } from "./tags.js";
 
 // Re-exported for callers that historically imported it from here (e.g. this file's own test)
@@ -20,12 +21,25 @@ export interface Cohesion {
   /** Share of nonland cards touching the PRIMARY THEME ITSELF, in [0,1]. Hand-checkable against the
    *  decklist: for `enters:wizard` it is the deck's Wizard count over its nonland count. */
   score: number;
+  /** THE TWO NUMBERS `score` IS THE RATIO OF (roadmap T4). A share with no denominator on screen is
+   *  not a figure -- the owner read "focused · 0.47" and asked what it even meant, and the answer
+   *  was never printed. Both halves ship so a reader can check the fraction against their own list,
+   *  and `onThemeCount` counts the commander when the commander is on theme, exactly as `score`
+   *  does. */
+  onThemeCount: number;
+  nonlandCount: number;
   /** Share of nonland cards touching the primary's folded FAMILY. Equals `score` when the primary is
    *  already general — `enters:creature` IS its family. The pair is the point (roadmap A10): a name
    *  can be specific while the plan is broad, and one number cannot say both. `cult-of-clones` reads
    *  "daleks entering" at theme 0.08 and family 0.46 — five Daleks inside a creature deck, which is
    *  a real and actionable thing to be told. */
   familyScore: number;
+  /** THE PLAYER'S NAME FOR THE THEME (roadmap T2): "Enchantress" where `theme` says "enchantments
+   *  entering". Equal to `theme` when no name is known, so a reader is never shown a blank and a
+   *  caller never has to choose. */
+  name: string;
+  /** The secondary theme's player name, null exactly when `secondary` is. */
+  secondaryName: string | null;
   label: string;
   /** Whether this theme is strong enough to NAME the deck (roadmap A15). False when the primary
    *  touches less than `THEME_NAME_FLOOR` of the nonlands: the tag is still the deck's
@@ -179,10 +193,16 @@ export function dampedScore(totalWeighted: number, partnerCount: number): number
   return partnerCount > 0 ? totalWeighted / Math.sqrt(partnerCount) : 0;
 }
 
+/** HOW CONCENTRATED THE DECK IS ON ITS THEME, and the words are deliberately NOT "focused" any more
+ *  (roadmap T4). `scoreBand` in the client labels the 0-5 deck score "Focused" at 3.0, and this
+ *  labelled the 0-1 theme share "focused" at 0.30 -- two unrelated scales, one word, both printed on
+ *  the same screen. The owner read them together and asked which one the deck was. This scale is a
+ *  SHARE of the nonlands, so it says how concentrated they are; the 0-5 ladder keeps "Focused",
+ *  where it reads as build quality. */
 export function cohesionLabel(score: number): string {
-  if (score >= 0.6) return "highly focused";
-  if (score >= 0.3) return "focused";
-  return "unfocused";
+  if (score >= 0.6) return "highly concentrated";
+  if (score >= 0.3) return "concentrated";
+  return "scattered";
 }
 
 /**
@@ -269,12 +289,26 @@ export function computeCohesion(
   };
   const score = share(onTheme);
   const familyScore = share(inFamily);
+  // The numerator behind `score`, recovered from the share rather than counted a second way: two
+  // counts of one thing is how this repo has produced disagreeing numbers before.
+  const onThemeCount = Math.round(score * nonlandCount);
+  const theme = describeTag(primary);
+  const secondaryTheme = secondary ? describeTag(secondary) : null;
   return {
-    theme: describeTag(primary),
+    theme,
+    /** The player's name for the same thing -- see `theme-names.ts`. Carried BESIDE the mechanical
+     *  phrase, never instead of it: every edge reason still needs the mechanism. */
+    name: themeName(primary, theme),
     tag: primary,
-    secondary: secondary ? describeTag(secondary) : null,
+    secondary: secondaryTheme,
+    /** The secondary's player name, on the same rule as `name`. Both halves of the theme line are
+     *  named or neither is; naming one and leaving "re-firing entry triggers" beside it was the
+     *  version of this that shipped for an hour. */
+    secondaryName: secondary && secondaryTheme ? themeName(secondary, secondaryTheme) : null,
     secondaryTag: secondary,
     score,
+    onThemeCount,
+    nonlandCount,
     familyScore,
     label: cohesionLabel(score),
     dominant: score >= THEME_NAME_FLOOR,

@@ -88,12 +88,16 @@ export const SAMPLE: AnalyzeResponse = {
     roles: { ramp: 4, draw: 10, removal: 6 },
     cohesion: {
       theme: "Tokens",
+      name: "Tokens",
       tag: "token",
       secondary: "Goblins",
+      secondaryName: "Goblins",
       secondaryTag: "tribe:goblin",
       score: 0.65,
+      onThemeCount: 41,
+      nonlandCount: 63,
     familyScore: 0.65,
-      label: "highly focused", dominant: true,
+      label: "highly concentrated", dominant: true,
     },
     strategies: [
       { name: "tokens", label: "Tokens", confidence: 0.42 },

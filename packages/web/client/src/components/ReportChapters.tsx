@@ -176,7 +176,6 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
             thing={report.thing}
             commanderCast={report.deckMath?.castability.commanders}
             manaAvailability={report.manaAvailability}
-            commanderTax={report.commanderTax}
             coverage={report.coverage}
           />
           {/* THE TWO SCORES, ONCE (roadmap S15, owner call 2026-09-02). `HeadlineScores`' tiles
