@@ -1,5 +1,9 @@
+import { scaleBand, scaleLinear } from "d3-scale";
 import type { DeckReport } from "../types.js";
 import { policyBand } from "@edh-seer/engine/percent";
+
+const W = 320;
+const H = 88;
 
 /** MANA AVAILABILITY — a seeded goldfish simulation, not a formula (roadmap I11's report wiring).
  *
@@ -19,6 +23,19 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
   if (!manaAvailability || manaAvailability.rows.length === 0) return null;
   const m = manaAvailability;
   const pct = (v: number): string => `${Math.round(v * 100)}%`;
+  const x = scaleBand<number>().domain(m.rows.map((r) => r.turn)).range([0, W]).paddingInner(0.25);
+  const mid = (turn: number): number => (x(turn) ?? 0) + x.bandwidth() / 2;
+  // A SHARE IS ALWAYS 0-1, so the axis is the whole range and not the data's own maximum: a deck
+  // that peaks at 40% must LOOK like it peaks at 40%, which a fitted axis would hide.
+  const y = scaleLinear().domain([0, 1]).range([H - 12, 4]);
+  const bandArea =
+    m.rows.map((r, i) => `${i === 0 ? "M" : "L"}${mid(r.turn)},${y(r.payableShare.p75)}`).join(" ")
+    + " "
+    + [...m.rows].reverse().map((r) => `L${mid(r.turn)},${y(r.payableShare.p25)}`).join(" ")
+    + " Z";
+  const medianLine = m.rows
+    .map((r, i) => `${i === 0 ? "M" : "L"}${mid(r.turn)},${y(r.payableShare.median)}`)
+    .join(" ");
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">Mana availability</h3>
@@ -40,35 +57,54 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
         on acceleration and is a ceiling no real deck plays to.
       </p>
 
-      <table className="text-xs tabular-nums w-full">
-        <thead className="text-(--muted)">
-          <tr>
-            <th className="text-left font-normal py-1">turn</th>
-            <th className="text-left font-normal py-1">mana</th>
-            <th className="text-left font-normal py-1">spells you could pay for</th>
-          </tr>
-        </thead>
-        <tbody>
-          {m.rows.map((r) => (
-            <tr key={r.turn} className="border-t border-(--separator)">
-              <td className="py-1 stat-num">{r.turn}</td>
-              {/* THE SPREAD BESIDE EVERY MEDIAN, never the median alone — a distribution shown as one
-                *  number invites the reader to treat it as certain. */}
-              <td className="py-1">
-                <span className="stat-num">{r.mana.median}</span>
-                <span className="text-(--muted)"> ({r.mana.p25}–{r.mana.p75})</span>
-              </td>
-              <td className="py-1">
-                <span className="stat-num">{pct(r.payableShare.median)}</span>
-                <span className="text-(--muted)"> ({pct(r.payableShare.p25)}–{pct(r.payableShare.p75)})</span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* THE TABLE WAS TWO SERIES OF NUMBERS AND ONE OF THEM WAS ALREADY DRAWN (roadmap T17).
+        *  Owner: *"mana availability is just a table with numbers, it can be presented better"*.
+        *
+        *  THE MANA COLUMN IS DELETED RATHER THAN CHARTED, because `ManaTimeline` in this same
+        *  chapter already draws median mana per turn with the same p25-p75 band, off the same
+        *  `manaAvailability.rows`. Charting it here would have been a third picture of one number.
+        *
+        *  WHAT WAS NEVER DRAWN is the share of the deck this turn's mana can pay for, and that is
+        *  the series below. Same idiom as the supply band four panels up -- area for p25-p75,
+        *  2px median line on top -- so a reader meets one visual grammar and not two. One series,
+        *  so no legend: the heading names it. The numbers stay reachable in the `aria-label`, which
+        *  is the table view this replaces. */}
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full h-auto"
+        role="img"
+        aria-label={
+          "Share of the deck payable, by turn: "
+          + m.rows.map((r) => `turn ${r.turn}, ${pct(r.payableShare.median)} (${pct(r.payableShare.p25)} to ${pct(r.payableShare.p75)})`).join("; ")
+        }
+      >
+        <path d={bandArea} fill="var(--fill)" opacity={0.18} />
+        <path d={medianLine} fill="none" stroke="var(--fill)" strokeWidth={2} strokeLinejoin="round" />
+        {m.rows.map((r) => (
+          <circle key={r.turn} cx={mid(r.turn)} cy={y(r.payableShare.median)} r={2.5} fill="var(--fill)">
+            {/* A per-mark tooltip, which an SVG title gives for free on pointer devices. The
+              *  `aria-label` above is what carries the same figures where there is no pointer. */}
+            <title>{`turn ${r.turn}: ${pct(r.payableShare.median)} payable (${pct(r.payableShare.p25)}–${pct(r.payableShare.p75)})`}</title>
+          </circle>
+        ))}
+        {/* TURN NUMBERS ONLY, and the ends of the value range -- never a label on every point. */}
+        {m.rows.map((r) => (
+          <text
+            key={r.turn}
+            x={mid(r.turn)}
+            y={H - 2}
+            textAnchor="middle"
+            className="fill-(--muted)"
+            style={{ fontSize: 9 }}
+          >
+            {r.turn}
+          </text>
+        ))}
+      </svg>
 
       <p className="text-xs text-(--muted)">
-        Rows are the spend-everything policy, median with p25–p75 beside it. Colour is ignored
+        The line is the median share of your nonlands this turn's mana can pay for, under the
+        spend-everything policy; the band is p25–p75. Colour is ignored
         entirely, so this is <strong>mana</strong> and never castability — a {"{3}{R}{G}{W}"} spell
         needs three specific colours nothing here checks.
       </p>

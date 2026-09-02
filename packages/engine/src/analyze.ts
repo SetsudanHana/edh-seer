@@ -274,6 +274,8 @@ export interface DeckMath {
   castability: {
     cards: {
       name: string;
+      /** The printed cost, carried so a renderer draws pips without a name join (T18a). */
+      manaCost?: string;
       turn: number;
       /** P(you can cast it) — mana and colours together. The interval is the PLAY POLICY: the low
        *  end holds up two mana before casting an accelerant, the high end spends everything on

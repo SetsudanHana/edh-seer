@@ -1,5 +1,6 @@
 import type { DeckReport } from "../types.js";
-import { identityGradient, identityLabel } from "../lib/color-identity.js";
+import { identityLabel } from "../lib/color-identity.js";
+import { ManaSymbols } from "./ManaSymbols.js";
 import { percent, policyBand } from "@edh-seer/engine/percent";
 
 /** WHAT IS THIS DECK — answered by the instrument built to answer it.
@@ -107,12 +108,14 @@ export function DeckIdentity({
           // commander). A deck with no commander reports [] here — showing a
           // "Colorless" swatch for a deck full of colored cards is misleading, so
           // suppress it rather than claim the deck is colorless.
+          //
+          // PIPS, NOT A GRADIENT (roadmap T5). Owner: "where does it stand section still uses
+          // gradient and not mana pips". A two-tone swatch is this tool's own invention for a thing
+          // Magic has printed on every card since 1993, and a three-colour identity blurred into a
+          // smear that named none of them. `ManaSymbols` is the renderer the Cards table and the
+          // colour rows already use, so a pip means one thing everywhere.
           <span className="flex items-center gap-1.5 ml-auto">
-            <span
-              aria-hidden="true"
-              className="w-10 h-5 rounded-[4px] border border-(--separator)"
-              style={{ background: identityGradient(colorIdentity) }}
-            />
+            <ManaSymbols cost={colorIdentity.map((c) => `{${c}}`).join("")} />
             <span className="text-xs text-(--muted) font-mono">{identityLabel(colorIdentity)}</span>
           </span>
         ) : null}
