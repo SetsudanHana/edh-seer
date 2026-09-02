@@ -3,6 +3,7 @@ import { TYPE_ORDER } from "../lib/deck-shape.js";
 import { hatchImage } from "../lib/unread.js";
 import { TYPE_SEGMENT_HUE } from "./presets.js";
 import type { WaffleSquare } from "../lib/waffle.js";
+import { useCardDrawer, usePinned } from "./card-drawer.js";
 
 /** WHAT THE DECK IS MADE OF, AND HOW MUCH OF IT THE ENGINE COULD READ, as one picture the reader
  *  can COUNT (roadmap S3, journey chapter 1).
@@ -32,13 +33,25 @@ const LAND_FILL = "var(--surface-tertiary)";
  *  width. */
 function Square({ sq }: { sq: WaffleSquare }) {
   const fill = sq.state === "unresolved" ? "transparent" : sq.type ? TYPE_SEGMENT_HUE[sq.type]! : LAND_FILL;
+  const { open } = useCardDrawer();
+  const { isPinned } = usePinned();
+  const pinned = isPinned(sq.name);
   return (
-    <span
+    /* A CONTROL, NOT A TOOLTIP (roadmap S8). This carried `title={sq.name}` and nothing else, and a
+     * `title` does not exist on touch at all -- so on a phone the grid was a hundred unlabelled
+     * cells, which is Section R's complaint about it. Measured before making it tappable: the grid
+     * is `repeat(10, ...)` inside `max-w-[420px]` with a 3px gap, so a square is about 39px on
+     * desktop and about 30px inside a 390px viewport -- both over the 24px target floor (WCAG
+     * 2.5.8). */
+    <button
+      type="button"
       data-testid="waffle-square"
       data-state={sq.state}
       data-type={sq.type ?? "land"}
       data-commander={sq.isCommander ? "1" : undefined}
-      title={sq.name}
+      data-pinned={pinned ? "1" : undefined}
+      onClick={() => open(sq.name)}
+      aria-label={`${sq.name}${sq.isCommander ? ", commander" : ""}${pinned ? ", pinned" : ""}`}
       className={`w-full aspect-square rounded-[2px] ${
         // ONE CARD, ONE CELL, AND THE COMMANDER IS NOT AN EXCEPTION. It shipped as a 2x2 span, and
         // a tuner counting the grid to check the deck's size got 103 for a hundred-card deck: one
@@ -46,7 +59,11 @@ function Square({ sq }: { sq: WaffleSquare }) {
         // "this one is the commander" without spending a cell to say it. The identity pips it used
         // to carry are already three lines above in the panel's own byline, so they were a third
         // copy of the same fact and are gone with the span.
-        sq.isCommander ? "outline outline-2 outline-(--foreground) outline-offset-[-2px] " : ""
+        // PINNED WINS THE OUTLINE (S8). One square cannot carry two inset rings, and no fact is
+        // lost: the commander is already named in the panel's byline three lines above -- which is
+        // exactly why its identity pips were deleted when this ring shipped.
+        pinned ? "outline outline-2 outline-(--accent) outline-offset-[-2px] "
+          : sq.isCommander ? "outline outline-2 outline-(--foreground) outline-offset-[-2px] " : ""
       }${
         // A HOLLOW SQUARE IS A DASHED OUTLINE, not a faint fill: "we never found this card" has to
         // read as an absence, and a low-alpha fill reads as a quiet presence.
