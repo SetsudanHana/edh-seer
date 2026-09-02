@@ -21,7 +21,19 @@ export interface MatrixRow {
 }
 
 export interface ThemeMatrix {
-  columns: { category: string; label: string }[];
+  /** ONE DEFINITION OF "IN THIS GROUP", AND IT LIVES HERE (T15). `ArchetypeBoard` ranked and sized
+   *  its groups on `cards.length`, which counts a card that joined by being played -- every nonland
+   *  is cast, every permanent enters -- so on an Enchantress deck `Spellslinger` read 61 of 99 cards
+   *  and led the panel. `earned` is the same split this grid already ranks its rows on. */
+  columns: {
+    category: string;
+    label: string;
+    /** Cards that DO something about this group: the consumer side, or a producer the card really
+     *  authored rather than the synthesised baseline. */
+    earned: number;
+    /** Every member, earned or implied. `cards.length` restricted to nonlands. */
+    total: number;
+  }[];
   /** Cards in at least one group, most-connected first. */
   rows: MatrixRow[];
   /** THE HONEST REGION: cards in no group at all. Names, not a number, because a reader deciding
@@ -63,7 +75,6 @@ export function themeMatrix(
   const groups: Group[] = archetypes ?? [];
   if (groups.length === 0 || nonlandNames.length === 0) return null;
 
-  const columns = groups.map((g) => ({ category: g.category, label: g.label }));
   const sets = groups.map((g) => new Set(g.cards));
   // WHICH SIDE OF THE PAIR THE CARD WAS. A consumer CARES about the event -- an authored trigger or
   // static -- so it always earned its place. A producer earned it only when the supply was
@@ -92,7 +103,14 @@ export function themeMatrix(
   });
 
   return {
-    columns,
+    // Counted over the NONLAND rows, so the figure matches the grid a reader is looking at rather
+    // than a group's raw `cards`, which can name a land.
+    columns: groups.map((g, i) => ({
+      category: g.category,
+      label: g.label,
+      earned: nonlandNames.filter((n) => sets[i]!.has(n) && earnedSets[i]!.has(n)).length,
+      total: nonlandNames.filter((n) => sets[i]!.has(n)).length,
+    })),
     // EARNED FIRST, and that is a change of meaning rather than of taste. Ranking on total
     // memberships put `Mystic Remora` -- implied in all seven of its groups, earning none of them
     // -- above cards doing three things on purpose. What a reader is looking for at the top of this

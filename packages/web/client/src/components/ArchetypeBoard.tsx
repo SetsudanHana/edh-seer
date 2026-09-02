@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { DeckReport } from "../types.js";
 import { Explain } from "./Explain.js";
 import { ThemeMatrix } from "./ThemeMatrix.js";
+import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardName } from "./card-drawer.js";
 
 type Group = NonNullable<DeckReport["archetypes"]>[number];
@@ -26,13 +27,14 @@ function StrategyRow({ s, max }: { s: Strategy; max: number }) {
 const pairReasons = (pair: Group["pairs"][number]): string[] =>
   [...new Map(pair.reasons.map((r) => [r.text, r] as const)).values()].map((r) => r.text);
 
-function GroupRow({ group, max }: { group: Group; max: number }) {
+function GroupRow({ group, size }: { group: Group; size?: { earned: number; total: number } }) {
   const [open, setOpen] = useState(false);
-  // SIZED BY PAIRS, NOT CARDS. Card count is what a group REACHES; pairs are what it CLAIMS, and
-  // the two disagree wildly — on the review deck four groups all read "70 cards" while their pair
-  // counts ran 334 to 440, so the bars were four identical full-width tracks over four different
-  // findings. The engine ranks by pairs now (`mechanisms.ts`); this makes the bar agree with it.
-  const widthPct = Math.max(4, Math.round((group.pairs.length / max) * 100));
+  // NO BAR (T15). A bar scaled to the biggest group IS a ranking, and it was read as one: on an
+  // Enchantress deck the widest track said `Spellslinger`, against a chapter-1 headline saying
+  // "enchantments entering". Group size is not an identity claim under ANY key -- ranking these on
+  // earned membership instead was measured over the 71 decks and is WORSE, making `Ramp Payoff` the
+  // modal winner on 41 of them against `Spellslinger`'s 19 today. The theme leads; these are
+  // membership. Roadmap T15.
   const shown = group.pairs.slice(0, PAIR_CAP);
   const extra = group.pairs.length - shown.length;
   // TWO PAIRS IN THE OPEN, because a collapsed row is a label and a number, and a label is exactly
@@ -46,11 +48,15 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
           <span aria-hidden className="text-(--muted) text-xs">{open ? "▾" : "▸"}</span>
           {group.label}
         </span>
-        <div className="flex-1 h-2 bg-(--separator) rounded-full overflow-hidden">
-          <div className="h-full rounded-full bg-(--fill)" style={{ width: `${widthPct}%` }} />
-        </div>
-        <span className="stat-num text-xs text-(--muted) w-28 text-right shrink-0">
-          {group.pairs.length} pair{group.pairs.length === 1 ? "" : "s"} · {group.cards.length} cards
+        <span className="flex-1" />
+        {/* WHAT THE CARD COUNT MEANT, BESIDE IT. `cards.length` counts a card that joined by being
+          *  PLAYED -- the matcher synthesises "any nonland is cast" and "any permanent enters" so a
+          *  payoff has something to feed on -- which is how 61 of 99 cards became `Spellslinger`.
+          *  The earned half is the one that means the card does something about the group, and it
+          *  is the same split the matrix above draws its dots from. */}
+        <span className="stat-num text-xs text-(--muted) w-44 text-right shrink-0">
+          {group.pairs.length} pair{group.pairs.length === 1 ? "" : "s"}
+          {size ? ` · ${size.earned} of ${size.total} cards earn it` : ` · ${group.cards.length} cards`}
         </span>
       </button>
       {open ? null : (
@@ -113,8 +119,14 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
     return <p className="text-(--muted) text-sm">No recognizable archetype patterns — try adding more synergy pieces.</p>;
   }
   const sMax = hasStrategies ? Math.max(...strategies!.map((s) => s.confidence)) : 1;
-  const gMax = hasGroups ? Math.max(1, ...archetypes!.map((g) => g.pairs.length)) : 1;
   const unread = coverage ? coverage.resolved - coverage.derived : 0;
+  // THE SAME SPLIT THE MATRIX DRAWS, asked once. `themeMatrix` is pure and its column stats are the
+  // only definition of "earned" on the page -- deriving a second one here is how two counts of one
+  // thing start disagreeing.
+  const groupSize = useMemo(() => {
+    const m = themeMatrix(archetypes, nonlandNames);
+    return new Map((m?.columns ?? []).map((c) => [c.category, { earned: c.earned, total: c.total }] as const));
+  }, [archetypes, nonlandNames]);
   return (
     <div className="flex flex-col gap-6">
       {/* A FLOOR, NOT A READING, and the asymmetry is the reason it has to be said. The numerator
@@ -133,9 +145,26 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
           is a floor.
         </p>
       ) : null}
+      {/* ONE PANEL, ONE IDENTITY CLAIM (T15). These were two panels, "Strategies" and the groups,
+        *  and a reader met three answers to "what is this deck" on one screen: the chapter-1 theme
+        *  said enchantments entering, Strategies said Tokens, and the groups' widest bar said
+        *  Spellslinger. None of them was lying and nothing on the page said they were different
+        *  questions. The theme is the identity -- it is the EDGE-derived reading, and `DeckIdentity`
+        *  has said since it was written that "the strategies are which named archetypes its cards
+        *  signal" and are context. So they share a heading and the sentence that separates them,
+        *  and neither sub-list claims a winner. */}
+      <div className="flex flex-col gap-2">
+        <h3 className="eyebrow">What this deck is made of</h3>
+        <Explain label="how this relates to the theme at the top">
+          The theme at the top of the report is this deck&rsquo;s identity: what its own card-to-card
+          connections turned out to be about. Nothing below competes with it. These are two
+          membership readings — which named plans your cards signal, and which mechanisms their
+          pairs land in — and neither is ranked to name the deck.
+        </Explain>
+      </div>
       {hasStrategies ? (
         <div className="flex flex-col gap-2">
-          <h3 className="eyebrow">Strategies</h3>
+          <h4 className="eyebrow">Named plans your cards signal</h4>
           {/* A PERCENTAGE WITH NO DENOMINATOR IS NOT A FIGURE. "Tokens 22%" was 22% of something the
             *  page never named — and the bars are scaled to the leader, not to 100%, so the widest
             *  one says "most" and not "all". */}
@@ -150,9 +179,8 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
               *  whatever this deck's own EDGES turned out to be about. Both judges who read both
               *  chapters filed it, the beginner as *"I now feel like I don't know what I own."*
               *  Saying it is the fix; renaming either classifier is not this item's. */}
-            {" "}These are named archetypes from a fixed list. The theme at the top of the report is
-            a different reading — what this deck&rsquo;s own card-to-card connections turned out to
-            be about — so it will often not be one of these names.
+            {" "}These are named archetypes from a fixed list, so the deck&rsquo;s own theme will
+            often not be one of these names.
           </Explain>
           <div className="flex flex-col">{strategies!.map((s) => <StrategyRow key={s.name} s={s} max={sMax} />)}</div>
         </div>
@@ -170,13 +198,20 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
       {hasGroups ? <ThemeMatrix archetypes={archetypes} nonlandNames={nonlandNames} /> : null}
       {hasGroups ? (
         <div className="flex flex-col gap-2">
-          <h3 className="eyebrow">The pairs behind each group</h3>
+          <h4 className="eyebrow">The pairs behind each group</h4>
           <Explain label="what a group counts">
             Pairs of cards whose synergy matches a known mechanism, and the cards those pairs touch.
-            One pair can belong to several groups, a group ranks by PAIRS rather than by cards, and a
-            group saying nothing a bigger one has not already said is dropped.
+            One pair can belong to several groups, and a group saying nothing a bigger one has not
+            already said is dropped. These are not ranked, because a card can join a group just by
+            being played — every nonland counts as cast, every permanent as entering. The card count
+            says how far a group reaches, never how much the deck is about it; the earned figure is
+            the members that do something about it.
           </Explain>
-          <div className="flex flex-col">{archetypes!.map((g) => <GroupRow key={g.category} group={g} max={gMax} />)}</div>
+          <div className="flex flex-col">
+            {archetypes!.map((g) => (
+              <GroupRow key={g.category} group={g} size={groupSize.get(g.category)} />
+            ))}
+          </div>
         </div>
       ) : null}
     </div>
