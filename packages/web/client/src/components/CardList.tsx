@@ -349,15 +349,30 @@ export function CardList({ cards, artByName, coverage }: {
             *  what the last column was". The background is opaque or the rows show through as it
             *  passes over them.
             *
-            *  THE OFFSET IS MEASURED, NOT GUESSED (R2, fixed with S7). It used to be `top-[33px]`,
-            *  the tab strip's height in one browser at one width — and the strip carried
-            *  `overflow-x-auto` precisely because at 390px its own content runs 32px past the row,
-            *  so its real height was never the 33 this assumed and the top row scrolled underneath
-            *  it on a phone. `--report-header-h` is written by `ReportHeader` from its own
+            *  THE OFFSET IS MEASURED, NOT GUESSED. It used to be `top-[33px]`, the tab strip's
+            *  height in one browser at one width — and the strip carried `overflow-x-auto` precisely
+            *  because at 390px its own content runs 32px past the row, so its real height was never
+            *  the 33 this assumed. `--report-header-h` is written by `ReportHeader` from its own
             *  `getBoundingClientRect().height`, at mount and on every resize; the magic number is
             *  deleted rather than re-tuned, because a re-tuned constant is the same bug with a
-            *  different number in it. */}
-          <thead className="sticky top-[var(--report-header-h,0px)] z-[5] bg-(--background)">
+            *  different number in it.
+            *
+            *  AND IT IS STILL NOT STICKY ON A PHONE, because there it CANNOT BE (R2, measured
+            *  2026-09-02). This comment used to end "R2, fixed with S7" and R2 was not fixed: the
+            *  right value was being measured from the wrong thing. Below `sm` the wrapper below is
+            *  `overflow-x-auto`, which makes it a scroll container — CSS forces `overflow-y` to
+            *  `auto` alongside `overflow-x` — and a sticky `<thead>` inside a scroll container
+            *  resolves `top` against THAT container rather than the viewport. The container's top
+            *  already sits at the page header's bottom, so the offset landed twice: 95 + 95 put the
+            *  thead at 190 and it painted a 48px band across row 1, with 3 of 8 sample points down
+            *  that row returning a `TH` from `elementFromPoint`. At 1440 the wrapper is
+            *  `sm:overflow-x-visible`, not a scrollport, and the thead sat at 49 against a
+            *  `--report-header-h` of 49 — exact.
+            *
+            *  No offset value fixes it, so this turns the sticky off where it cannot work instead of
+            *  re-tuning a constant into the same bug a third time. STOPGAP: the real fix takes the
+            *  header out of the horizontal scroller and belongs to R1's mobile round. */}
+          <thead className="static sm:sticky sm:top-[var(--report-header-h,0px)] z-[5] bg-(--background)">
             <tr className="border-b border-(--separator)">
               <th className="eyebrow text-left font-normal py-2 pr-2 w-10">#</th>
               <th className="eyebrow text-left font-normal py-2 pr-2">
