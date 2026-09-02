@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "@heroui/styles";
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 
 /*
@@ -195,6 +194,87 @@ summary {
    the muted h4s used to recede behind the data. Only the block h3 keeps the override now; see that
    file for the corrected tiering. */
 @layer components {
+  /** THE PRIMARY ACTION AND THE PASTE FIELDS, ON THIS APP'S OWN TOKENS.
+   *
+   *  These replace `@heroui/react`'s `Button` and `TextArea`, which were imported by ONE component
+   *  for three buttons and two fields and dragged `react-aria` (194kB), `react-aria-components`
+   *  (21kB) and `tailwind-variants` (140kB) behind them -- about 15% of the client's mapped source,
+   *  plus `@heroui/styles` into the CSS. Every other control in this app is already a plain element
+   *  on these tokens, including three in the very same file.
+   *
+   *  MEASURED OFF THE RENDERED HeroUI CONTROLS so the replacement is not a redesign: accent fill,
+   *  `--background` for the label (4.9:1, over the 4.5 normal text owes), 36px tall, a 24px pill,
+   *  14px/500; the field recessed BELOW its `--surface` container rather than raised, 8px radius.
+   *
+   *  THE FOCUS RING IS THE GLOBAL ONE. `:focus-visible` already paints `--accent` at 2px with a 2px
+   *  offset for every control in the app, so these inherit it and no state is invented here. */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 2.25rem;
+    padding-inline: 1rem;
+    border-radius: 9999px;
+    background: var(--accent);
+    color: var(--background);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.2;
+    border: 0;
+    cursor: pointer;
+    transition: filter 120ms ease-out;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.12);
+  }
+
+  /* Pressed reads as a push, not a colour change: the fill IS the accent and there is no second
+     accent to move to. */
+  .btn-primary:active:not(:disabled) {
+    filter: brightness(0.94);
+  }
+
+  /* DISABLED IS "YOU CANNOT DO THIS" AND IN-FLIGHT IS NOT THAT (components.md rule 8). A button
+     waiting on the analysis keeps its full strength and says so in its label; only a genuinely
+     unavailable action -- an empty decklist -- dims. `aria-busy` is what carries the difference to
+     a screen reader, and it is what this rule keys on rather than `:disabled` alone. */
+  .btn-primary:disabled:not([aria-busy="true"]) {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primary[aria-busy="true"] {
+    cursor: progress;
+  }
+
+  /** A PASTE FIELD: recessed below its container, which is what says "type here" without a border
+   *  doing it. `--background` inside a `--surface` card is the same well the HeroUI field drew. */
+  .field {
+    inline-size: 100%;
+    /* Cause 1 in the narrow-width rules: an `<input>`/`<textarea>` keeps an intrinsic width of about
+       twenty characters, and in a grid or flex parent that intrinsic width sizes the column. */
+    min-inline-size: 0;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--separator);
+    background: var(--background);
+    color: var(--foreground);
+    font-family: inherit;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    resize: vertical;
+  }
+
+  .field::placeholder {
+    color: var(--muted);
+  }
+
+  .field:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .eyebrow {
     font-family: var(--font-mono);
     font-size: 0.6875rem;

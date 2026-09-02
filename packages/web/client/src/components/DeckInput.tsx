@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Button, TextArea } from "@heroui/react";
 import { deckExportText } from "../lib/deck-export.js";
 
 export function DeckInput({
@@ -74,9 +73,19 @@ export function DeckInput({
           ) : null}
           <button type="button" onClick={() => void onCopy()} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">{copied ? "Copied" : "Copy decklist"}</button>
           <button type="button" onClick={onEdit} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">Edit</button>
-          <Button variant="primary" isDisabled={loading} onPress={onAnalyze}>
+          {/* IN-FLIGHT IS NOT DISABLED (components.md rule 8): a button waiting on the analysis
+            *  keeps its full strength and says so, because dimming it reads as "you cannot do this"
+            *  rather than "this is happening". It still refuses a second submit -- `aria-busy` is
+            *  what tells the styling and a screen reader which of the two states this is. */}
+          <button
+            type="button"
+            className="btn-primary"
+            disabled={loading}
+            aria-busy={loading}
+            onClick={onAnalyze}
+          >
             {loading ? "Analyzing…" : "Re-analyze"}
-          </Button>
+          </button>
         </div>
       </div>
     );
@@ -88,8 +97,9 @@ export function DeckInput({
         <label className="eyebrow" htmlFor="commanders-input">
           Commander
         </label>
-        <TextArea
+        <textarea
           id="commanders-input"
+          className="field"
           aria-label="Commander(s)"
           placeholder={"1 Krenko, Mob Boss  (optional — or use a 'Commander' section in the decklist)"}
           rows={2}
@@ -101,23 +111,27 @@ export function DeckInput({
         <label className="eyebrow" htmlFor="decklist-input">
           Decklist
         </label>
-        <TextArea
+        <textarea
           id="decklist-input"
+          className="field font-mono"
           aria-label="Decklist"
           placeholder={"1 Impact Tremors\n1 Sol Ring\n..."}
           rows={10}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="font-mono"
         />
       </div>
-      <Button
-        variant="primary"
-        isDisabled={loading || value.trim() === ""}
-        onPress={onAnalyze}
+      {/* DISABLED HERE MEANS UNAVAILABLE -- there is no decklist to analyse -- and that is the one
+        *  case that earns the dimming. Loading keeps full strength; see the collapsed bar above. */}
+      <button
+        type="button"
+        className="btn-primary"
+        disabled={loading || value.trim() === ""}
+        aria-busy={loading}
+        onClick={onAnalyze}
       >
         {loading ? "Analyzing…" : "Analyze deck"}
-      </Button>
+      </button>
     </div>
   );
 }

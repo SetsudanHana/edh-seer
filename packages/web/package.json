@@ -21,8 +21,6 @@
     "@edh-seer/engine": "*",
     "@edh-seer/matcher": "*",
     "@edh-seer/tagger": "*",
-    "@heroui/react": "^3.2.4",
-    "@heroui/styles": "^3.0.0",
     "@nestjs/common": "^11.2.3",
     "@nestjs/core": "^11.2.3",
     "@nestjs/platform-fastify": "^11.2.3",
