@@ -133,3 +133,32 @@ export function saveLastRun(snapshot: RunSnapshot): void {
     /* no store, no strip — see above */
   }
 }
+
+const DECK_KEY = "mtg-synergy:last-deck";
+
+export interface LastDeck {
+  commanders: string;
+  decklist: string;
+}
+
+/** THE TEXT THE READER PASTED, so run two starts with it still in the box (roadmap S9).
+ *
+ *  Same store and same lifetime as the run snapshot above, deliberately: the box and the diff it
+ *  will be measured against have to die together, or the reader gets their deck back with no
+ *  statement of what their edit did. Same try/catch too -- a missing store means an empty box. */
+export function saveLastDeck(deck: LastDeck): void {
+  try {
+    window.sessionStorage.setItem(DECK_KEY, JSON.stringify(deck));
+  } catch {
+    /* no store, no memory -- see `saveLastRun` */
+  }
+}
+
+export function loadLastDeck(): LastDeck | null {
+  try {
+    const raw = window.sessionStorage.getItem(DECK_KEY);
+    return raw ? (JSON.parse(raw) as LastDeck) : null;
+  } catch {
+    return null;
+  }
+}

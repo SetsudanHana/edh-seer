@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { diffRuns, snapshotRun, type RunSnapshot } from "./run-diff.js";
+import { diffRuns, loadLastDeck, saveLastDeck, snapshotRun, type RunSnapshot } from "./run-diff.js";
 import { SAMPLE } from "../fixtures.js";
 
 const base: RunSnapshot = {
@@ -77,4 +77,25 @@ test("a snapshot with no findings field is tolerated", () => {
   const prev = { cards: ["a", "b"], categories: {} };
   const next = { cards: ["a", "b"], categories: {}, findings: { x: "Ramp 9/10" } };
   expect(diffRuns(prev, next)!.findings).toEqual([{ id: "x", label: "Ramp", to: "Ramp 9/10" }]);
+});
+
+/** RUN TWO STARTS WITH THE TEXT IN THE BOX (roadmap S9). Session-scoped, matching the snapshot it
+ *  will be diffed against: there is no state where the text comes back but the run it would be
+ *  measured against is gone. */
+test("the last pasted deck round-trips through session storage", () => {
+  saveLastDeck({ commanders: "Kess, Dissident Mage", decklist: "1 Sol Ring\n1 Brainstorm" });
+  expect(loadLastDeck()).toEqual({
+    commanders: "Kess, Dissident Mage",
+    decklist: "1 Sol Ring\n1 Brainstorm",
+  });
+  window.sessionStorage.clear();
+});
+
+/** Same posture as `loadLastRun`: Safari private mode throws on access and the test environment may
+ *  not provide a store at all. A missing store means an empty box, never a crash. */
+test("a store that throws yields no remembered deck", () => {
+  const original = window.sessionStorage.getItem;
+  window.sessionStorage.getItem = () => { throw new Error("denied"); };
+  expect(loadLastDeck()).toBeNull();
+  window.sessionStorage.getItem = original;
 });

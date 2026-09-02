@@ -6,12 +6,21 @@ import { InstallButton } from "./components/InstallButton.js";
 import { BrowserRouter } from "react-router";
 import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
-import { diffRuns, loadLastRun, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
+import { diffRuns, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
 import { decodeShare, encodeShare, payloadFromHash, shareUrl } from "./lib/share-link.js";
 
 export default function App() {
-  const [commanders, setCommanders] = useState("");
-  const [decklist, setDecklist] = useState("");
+  /** WHAT WAS IN THE BOX LAST TIME (roadmap S9). Read once, before anything else, because it feeds
+   *  two initialisers.
+   *
+   *  A SHARED LINK WINS. The hash effect below would overwrite these anyway, but reading the hash
+   *  here means a recipient never sees the sender's deck flash to the recipient's own last paste
+   *  and back. */
+  const [remembered] = useState(() =>
+    payloadFromHash(window.location.hash) ? null : loadLastDeck(),
+  );
+  const [commanders, setCommanders] = useState(remembered?.commanders ?? "");
+  const [decklist, setDecklist] = useState(remembered?.decklist ?? "");
   const [data, setData] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,6 +43,7 @@ export default function App() {
       const snapshot = snapshotRun(next);
       setDiff(previous ? diffRuns(previous, snapshot) : null);
       saveLastRun(snapshot);
+      saveLastDeck({ commanders: commanderText, decklist: deckText });
       setData(next);
       setEditing(false);
       // THE ADDRESS BAR BECOMES THE SHARE LINK, which is what makes this get used: a reader who
