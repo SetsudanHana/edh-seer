@@ -39,8 +39,8 @@ export function CoveragePanel({ coverage, resolved, total, commanderUnread }: {
   total?: number;
   /** Commanders the engine could not read. The deck's defining card being unread is the single fact
    *  a reader most needs and the one this panel buried: the name list is alphabetical and capped at
-   *  eight, so on the precon `Nalia de'Arnise` sat inside "and 40 more" while every ° figure below
-   *  was computed without her. All four personas reached it independently (2026-08-27). */
+   *  eight, so on the precon `Nalia de'Arnise` sat inside "and 40 more" while the synergy score,
+   *  the themes and the graph below were all computed without her. All four personas reached it independently (2026-08-27). */
   commanderUnread?: readonly string[];
 }) {
   // The gate qualifies every tab, so it is always on screen — which on a phone meant Cards and
@@ -61,32 +61,39 @@ export function CoveragePanel({ coverage, resolved, total, commanderUnread }: {
       {coverage.more > 0 && ` and ${coverage.more} more`}.
     </p>
   );
+  /* ONE CONVENTION, NOT TWO (S13, owner call 2026-09-02). This paragraph used to open with a `°`
+    *  and promise that the same glyph named four figures -- synergy, themes, cut candidates and the
+    *  graph. It rendered on ONE thing, a chapter heading, and a judge went looking for it beside
+    *  `SYNERGY` and found the only `°` on the page was the one OPENING this sentence.
+    *
+    *  Checking the four is what retired the mark rather than spreading it. Three already carried a
+    *  STRONGER signal than a glyph could: the synergy dial prints "too little of the deck read to
+    *  call this" under the number (`scoreState(score, partial)`), `CutList` takes `coverage` and
+    *  refuses to rank the unread by name, and the graph draws the hatch per node. Only themes was
+    *  silent, and `ArchetypeBoard` now says it in words like the other three. A second glyph
+    *  convention beside sentences that already say more was the thing to delete. */
   const legend = (
-    <div className="flex gap-2.5 items-start">
-      <span aria-hidden="true" className="text-(--accent) font-mono text-base leading-none pt-0.5">°</span>
-      <p className="text-xs text-(--muted) leading-relaxed max-w-[52ch]">
-        {/* THE REPORT'S OWN SENTENCE, VERBATIM. It already says both halves of the claim, so
-          *  paraphrasing it here would be the second copy that starts the drift. */}
-        {coverage.caveat}{" "}
-        {/* The only thing added is what this SURFACE contributes: which glyph marks which figures.
-          *  The engine has no view on that. */}
-        <span className="text-(--foreground)">The ° mark names those figures</span> — synergy,
-        themes, cut candidates and the graph.{" "}
-        {/* THE CARD-LEVEL HALF OF THE SAME CLAIM, and it needs its own mark because it answers a
-          *  different question. `°` says A FIGURE is computed over a subset; the hatch says THIS
-          *  CARD is one of the ones left out of it. A reader meets both on the graph, where an
-          *  unread card is a disc like any other and its zero is a structural one. */}
-        <span className="text-(--foreground)">
-          The hatch marks the cards themselves
-        </span>{" "}
-        <span
-          aria-hidden="true"
-          className="inline-block align-middle h-3 w-3 rounded-[2px] border border-(--separator) bg-(--surface-tertiary)"
-          style={{ backgroundImage: hatchImage("var(--background)") }}
-        />{" "}
-        wherever one is drawn.
-      </p>
-    </div>
+    /* THE SPECIMEN SITS IN THE SENTENCE THAT NAMES IT, which is how S1 shipped it and it was worth
+     * not losing: with the `°` gone I first moved the swatch into the glyph's old lead position,
+     * and on screen it read as a bullet two lines away from the words "The hatch", leaving a reader
+     * to connect them. A key is only a key next to its claim. */
+    <p className="text-xs text-(--muted) leading-relaxed max-w-[52ch]">
+      {/* THE REPORT'S OWN SENTENCE, VERBATIM. It already says both halves of the claim, so
+        *  paraphrasing it here would be the second copy that starts the drift. */}
+      {coverage.caveat}{" "}
+      {/* What this SURFACE contributes: the hatch is now the page's only coverage mark, so the
+        *  legend explains it and says where the FIGURE-level limit is stated instead -- in the
+        *  figure's own words, beside the figure. */}
+      <span className="text-(--foreground)">The hatch</span>{" "}
+      <span
+        aria-hidden="true"
+        className="inline-block align-middle h-3 w-3 rounded-[2px] border border-(--separator) bg-(--surface-tertiary)"
+        style={{ backgroundImage: hatchImage("var(--background)") }}
+      />{" "}
+      <span className="text-(--foreground)">marks those cards</span> wherever one is drawn.{" "}
+      <span className="text-(--foreground)">A figure computed without them says so in its own
+      words</span>, beside the figure.
+    </p>
   );
   return (
     // NO NEGATIVE MARGINS. Bleeding a strip into the page padding made three ancestors wider than
@@ -131,7 +138,7 @@ export function CoveragePanel({ coverage, resolved, total, commanderUnread }: {
               {commanderUnread.map((n, i) => (
                 <span key={n}>{i > 0 && ", "}<CardName name={n} /></span>
               ))}
-              . Every ° figure below is computed without{" "}
+              . The synergy score, the themes and the graph below are all computed without{" "}
               {commanderUnread.length === 1 ? "it" : "them"}.
             </p>
           ) : null}
@@ -139,7 +146,7 @@ export function CoveragePanel({ coverage, resolved, total, commanderUnread }: {
         {narrow ? (
           <details>
             <summary className="eyebrow cursor-pointer text-(--muted)">
-              which cards, and what the ° mark means
+              which cards, and what the hatch means
             </summary>
             <div className="flex flex-col gap-3 pt-3">{names}{legend}</div>
           </details>
@@ -151,20 +158,5 @@ export function CoveragePanel({ coverage, resolved, total, commanderUnread }: {
         )}
       </div>
     </div>
-  );
-}
-
-/** THE MARK ITSELF, so every figure limited by coverage carries the same glyph and the legend above
- *  explains all of them at once. Absent when the engine read the whole deck — a mark that is always
- *  present marks nothing. */
-export function DerivedMark({ coverage }: { coverage: DeckReport["coverage"] }) {
-  if (!coverage) return null;
-  return (
-    <span
-      className="text-(--accent) font-mono align-super text-[0.7em] leading-none"
-      title={`computed over the ${coverage.derived} cards the engine could read, not all ${coverage.resolved}`}
-    >
-      °
-    </span>
   );
 }

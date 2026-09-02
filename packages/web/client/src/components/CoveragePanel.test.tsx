@@ -16,7 +16,7 @@ describe("CoveragePanel", () => {
     // Two copies of a claim is how two surfaces start disagreeing — measured twice in this repo
     // (N6's number format, DeckIdentity's stale caveat), so the sentence ships as data.
     show({ resolved: 100, derived: 52, underivedNames: ["Ash Barrens"], more: 40, caveat: "48 cards of 100 are not in the read corpus yet." });
-    // A substring matcher, because the paragraph also carries the ° legend — the one thing this
+    // A substring matcher, because the paragraph also carries the hatch legend — the one thing this
     // SURFACE contributes that the engine has no view on. The assertion is unchanged in intent:
     // the claim itself is the report's words, not a paraphrase.
     expect(screen.getByText(/48 cards of 100 are not in the read corpus yet\./)).toBeTruthy();
@@ -45,6 +45,20 @@ describe("CoveragePanel — persona-run fixes", () => {
   // S12: the resolution counter said "lines" while `DeckInput` said "lines" about a different
   // quantity -- text lines of the paste, 87 against this 100. This counts CARD SLOTS, so it says
   // cards; the word is the fix and a regression here is a word, which is why it is pinned.
+  // S13, owner call 2026-09-02: the `°` promised four figures and rendered on one, a chapter
+  // heading. Three of the four already carried a stronger signal than a glyph; the mark is retired
+  // and the hatch is the page's only coverage mark. A glyph coming back would come back HERE, in
+  // the legend that used to promise it.
+  test("the legend carries no ° mark, and explains the hatch instead", () => {
+    render(<CardDrawerProvider><CoveragePanel coverage={coverage} /></CardDrawerProvider>);
+    expect(document.body.textContent).not.toContain("°");
+    // Two nodes, because the swatch itself sits between them -- the specimen is IN the sentence
+    // that names it, which is the placement S13 briefly lost and put back.
+    expect(screen.getByText(/The hatch/)).toBeTruthy();
+    expect(screen.getByText(/marks those cards/)).toBeTruthy();
+    expect(screen.getByText(/says so in its own/)).toBeTruthy();
+  });
+
   test("the resolution counter never says 'lines' -- it counts card slots", () => {
     render(<CardDrawerProvider><CoveragePanel coverage={coverage} resolved={95} total={100} /></CardDrawerProvider>);
     expect(screen.queryByText(/lines/)).toBeNull();

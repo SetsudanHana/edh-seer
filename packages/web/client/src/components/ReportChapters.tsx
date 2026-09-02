@@ -17,7 +17,7 @@ import { ManaTimeline } from "./ManaTimeline.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
-import { CoveragePanel, DerivedMark } from "./CoveragePanel.js";
+import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
 import { findings } from "../lib/findings.js";
 import { unreadCardNames } from "../lib/unread.js";
@@ -54,8 +54,8 @@ function Movement({
  *  `scroll-mt` is `--report-header-h`, measured by `ReportHeader` — the anchor is what an in-page
  *  link lands on, and without it every chapter title parks UNDER the header, which is the same
  *  defect class as R2's hardcoded `top-[33px]` one component over. */
-function Chapter({ id, title, mark, children }: {
-  id: ChapterId; title: string; mark?: React.ReactNode; children: React.ReactNode;
+function Chapter({ id, title, children }: {
+  id: ChapterId; title: string; children: React.ReactNode;
 }) {
   return (
     <section
@@ -68,7 +68,7 @@ function Chapter({ id, title, mark, children }: {
       className="flex flex-col gap-8 scroll-mt-[calc(var(--report-header-h,0px)+var(--report-rail-h,0px)+1rem)]"
     >
       <h2 id={`${id}-title`} className="text-2xl sm:text-3xl font-bold tracking-[-0.02em]">
-        {title}{mark}
+        {title}
       </h2>
       {children}
     </section>
@@ -152,7 +152,7 @@ export function ReportChapters({ data }: { data: AnalyzeResponse }) {
           <RecognitionPanel data={data} />
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
             *  scroll there is no "above the tabs" left, so the FIGURE rides the sticky header on
-            *  every surface and the caveat, the names and the ° legend live here, in the chapter
+            *  every surface and the caveat, the names and the hatch legend live here, in the chapter
             *  whose question they answer. */}
           <CoveragePanel
             coverage={report.coverage}
@@ -167,11 +167,12 @@ export function ReportChapters({ data }: { data: AnalyzeResponse }) {
           )}
         </Chapter>
 
-        {/* THE ° MARK KEEPS ITS CALL SITE. It used to ride the dissolved Engine tab's heading; the
-          *  figures it qualifies -- the two scores -- are this chapter's, so the mark moves with
-          *  them rather than leaving the product. (That the legend promises it on four things and
-          *  it renders on one is S13's, and is not made worse here.) */}
-        <Chapter id="stand" title={title("stand")} mark={<DerivedMark coverage={report.coverage} />}>
+        {/* THE ° MARK IS GONE (S13, owner call 2026-09-02). It rode this heading, which was both
+          *  too narrow -- the legend promised it on four figures -- and too WIDE: `BracketPanel`
+          *  below reads printed data and is not coverage-limited at all, so a mark on the chapter
+          *  qualified it too. Every figure that IS limited now says so in its own words next to
+          *  itself, which is what the three unmarked ones were already doing. */}
+        <Chapter id="stand" title={title("stand")}>
           <DeckIdentity
             cohesion={report.cohesion}
             colorIdentity={data.commanderColorIdentity}
@@ -193,10 +194,16 @@ export function ReportChapters({ data }: { data: AnalyzeResponse }) {
         </Chapter>
 
         <Chapter id="plan" title={title("plan")}>
+          {/* THE ONE FIGURE THAT SAID NOTHING (S13). `cardSignals` in `matcher/src/analyze.ts`
+            *  filters on `dc.tags`, so strategies, the groups and the membership matrix are all
+            *  derived-only -- and this was the only coverage-limited surface on the page with
+            *  neither a worded caveat nor the hatch. It gets `coverage` for the same reason
+            *  `CutList` has it. */}
           <ArchetypeBoard
             strategies={report.strategies}
             archetypes={report.archetypes}
             nonlandNames={nonlandNames}
+            coverage={report.coverage}
           />
         </Chapter>
 
