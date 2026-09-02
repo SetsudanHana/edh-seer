@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { CardGraph } from "../types.js";
+import { reasonSegments } from "../lib/reason-text.js";
 import { CardInspector } from "./CardInspector.js";
 
 /** THE INSPECTOR, REACHABLE FROM ANY CARD NAME IN THE REPORT.
@@ -23,9 +24,13 @@ interface CardDrawerApi {
   open: (name: string) => void;
   /** Names the graph carries, so a caller can ask BEFORE rendering an affordance. */
   known: ReadonlySet<string>;
+  /** Token names this deck's cards make, each mapped to the card that makes it (the first such
+   *  card, when several do). A token is NOT in `known` -- the drawer indexes card nodes only, and
+   *  deliberately so -- but a reason sentence naming one has to be able to say what it is. */
+  tokens: ReadonlyMap<string, string | undefined>;
 }
 
-const CardDrawerContext = createContext<CardDrawerApi>({ open: () => {}, known: new Set() });
+const CardDrawerContext = createContext<CardDrawerApi>({ open: () => {}, known: new Set(), tokens: new Map() });
 
 export function useCardDrawer(): CardDrawerApi {
   return useContext(CardDrawerContext);
@@ -61,7 +66,26 @@ export function CardDrawerProvider({ graph, children }: { graph?: CardGraph; chi
     },
     [byName],
   );
-  const api = useMemo<CardDrawerApi>(() => ({ open, known: new Set(byName.keys()) }), [open, byName]);
+  /** WHICH CARD MAKES EACH TOKEN, read off the graph's own create edges (`The Rani creates Mark of
+   *  the Rani`). A token name in a reason sentence was dead text saying nothing -- see
+   *  `reason-text.ts` -- and "the token your commander makes" is the whole answer a reader needed
+   *  before they could judge the claim around it. */
+  const tokens = useMemo(() => {
+    const byId = new Map((graph?.nodes ?? []).map((n) => [n.id, n]));
+    const m = new Map<string, string | undefined>();
+    for (const n of graph?.nodes ?? []) if (n.isToken) m.set(n.label, undefined);
+    for (const e of graph?.edges ?? []) {
+      const to = byId.get(e.to);
+      if (!to?.isToken || m.get(to.label) !== undefined) continue;
+      const from = byId.get(e.from);
+      if (from && !from.isToken) m.set(to.label, from.label);
+    }
+    return m;
+  }, [graph]);
+  const api = useMemo<CardDrawerApi>(
+    () => ({ open, known: new Set(byName.keys()), tokens }),
+    [open, byName, tokens],
+  );
 
   // Escape closes it. The panel has a close button of its own, but this drawer floats over a
   // ~3,000px report and the button can be off screen after the reader scrolls.
@@ -97,6 +121,34 @@ export function CardDrawerProvider({ graph, children }: { graph?: CardGraph; chi
           )
         : null}
     </CardDrawerContext.Provider>
+  );
+}
+
+/** A REASON SENTENCE WITH ITS NOUNS MADE CHECKABLE (roadmap S18). Every card it names opens that
+ *  card's text in the drawer, and every TOKEN it names says it is one and whose it is — which is
+ *  the half the reader could not look up at all, since a token is not in the decklist and the
+ *  drawer indexes cards only. See `reason-text.ts` for why both halves were needed. */
+export function ReasonText({ text, className }: { text: string; className?: string }) {
+  const { known, tokens } = useCardDrawer();
+  const segments = reasonSegments(text, known, tokens);
+  return (
+    <span className={className}>
+      {segments.map((seg, i) =>
+        seg.kind === "card" ? <CardName key={i} name={seg.text} />
+          : seg.kind === "token" ? (
+            <span key={i} className="whitespace-nowrap">
+              {seg.text}
+              {/* THE WORD, NOT A GLYPH: a coloured pill saying nothing is what the bracket pips
+                *  were before S2 gave them words. `title` is not enough -- it does not exist on
+                *  touch at all, which is the same reason `Explain` exists. */}
+              <span className="ml-1 text-[0.9em] text-(--muted)">
+                (token{seg.maker ? <> from {seg.maker}</> : null})
+              </span>
+            </span>
+          )
+            : <span key={i}>{seg.text}</span>,
+      )}
+    </span>
   );
 }
 

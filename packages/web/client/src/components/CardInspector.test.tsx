@@ -242,6 +242,33 @@ describe("CardInspector partner text", () => {
   });
 });
 
+/** S18, AND IT IS THE ITEM'S WHOLE ASK. The skeptic could not check one synergy claim on nine
+ *  screens: "the page asserts a relationship between two named cards and never prints either
+ *  card's text, so a right answer and a wrong one look identical on my screen." The roadmap line
+ *  recorded this panel as already showing the partner's text one click away -- it did not, for any
+ *  card with one face. `face` is set only when `faces.length > 1`, so a single-face card fell
+ *  through the condition while `node.oracleText` sat on the wire unused. */
+describe("CardInspector card text", () => {
+  const oneFaced = {
+    id: "Arcane Signet", label: "Arcane Signet", copies: 1,
+    types: ["artifact"], subtypes: [], supertypes: [], typeLine: "Artifact",
+    colors: [], cmc: 2,
+    oracleText: "{T}: Add one mana of any color in your commander's color identity.",
+  };
+
+  it("prints a single-face card's own text, which is the evidence for every claim about it", () => {
+    render(<CardInspector node={oneFaced as never} edges={[]} onClose={() => {}} />);
+    expect(screen.getByText(/Add one mana of any color in your commander's color identity/))
+      .toBeInTheDocument();
+  });
+
+  it("says nothing rather than an empty line when the card carries no text", () => {
+    const vanilla = { ...oneFaced, oracleText: undefined };
+    const { container } = render(<CardInspector node={vanilla as never} edges={[]} onClose={() => {}} />);
+    expect(container.querySelector(".whitespace-pre-line")).toBeNull();
+  });
+});
+
 /** A DOUBLE-FACED CARD DREW ONLY ITS FRONT. Owner, 2026-08-27: "for double faced cards we need a
  *  way to present them, cause right now you see only front". The corpus carries every face's name,
  *  type line, cost, text and art; none of it reached the panel. */

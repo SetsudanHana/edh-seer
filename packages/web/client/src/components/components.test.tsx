@@ -557,6 +557,74 @@ test("HighSynergyCards shows the card's top reason text", () => {
   expect(screen.getAllByText("Krenko makes tokens; Impact Tremors pays off tokens.").length).toBeGreaterThan(0);
 });
 
+/** S18. The skeptic could not check a single synergy claim on nine screens: "the page asserts a
+ *  relationship between two named cards and never prints either card's text, so a right answer and
+ *  a wrong one look identical on my screen". The row's own title opened the drawer; the OTHER card
+ *  in every sentence was dead text. Both names are live now. */
+test("HighSynergyCards makes both cards in the sentence checkable", () => {
+  render(
+    <CardDrawerProvider graph={SAMPLE.graph}>
+      <HighSynergyCards cards={SAMPLE.report.cards} />
+    </CardDrawerProvider>,
+  );
+  // "Krenko makes tokens; Impact Tremors pays off tokens." -- the partner is a button, not prose.
+  const partners = screen.getAllByRole("button", { name: "Impact Tremors" });
+  expect(partners.length).toBeGreaterThan(0);
+});
+
+/** FIVE OF THE EXAMPLE DECK'S EIGHT reasons begin "When Mark of the Rani enters", and that is the
+ *  commander's TOKEN -- not in the decklist, so `CardName` correctly refuses to link it and the
+ *  page said nothing at all. The tuner and the skeptic both stopped on it, unable to tell whether
+ *  it was a card, a token or a typo. */
+test("a token named in a reason says it is one, and whose", () => {
+  const graph = {
+    ...SAMPLE.graph,
+    nodes: [
+      ...SAMPLE.graph.nodes,
+      { id: "token:Goblin", label: "Goblin", isToken: true, kind: "token" },
+    ],
+    edges: [
+      ...SAMPLE.graph.edges,
+      { from: "Krenko, Mob Boss", to: "token:Goblin", weight: 1, tags: ["creates:creature"], reasonTexts: [] },
+    ],
+  } as never;
+  render(
+    <CardDrawerProvider graph={graph}>
+      <HighSynergyCards cards={[{
+        name: "Impact Tremors", isCommander: false, score: 1, synergyRating: 4, partnerCount: 3,
+        topPartners: [{ name: "Krenko, Mob Boss", score: 1, reasons: [{ tag: "t", text: "When Goblin enters, Impact Tremors triggers" }] }],
+      }] as never} />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByText(/\(token from Krenko, Mob Boss\)/)).toBeInTheDocument();
+});
+
+/** THREE IDENTICAL SENTENCES, THREE DIFFERENT NUMBERS was the tuner's other stop. The score is not
+ *  computed from the printed sentence -- it aggregates every partner -- and the row never said so.
+ *  The count is NOT offered as the explanation, because it is not one: on the example deck those
+ *  three cards carry 36, 38 and 38 partners and score 4.1 / 3.8 / 3.5, so the number does not order
+ *  them either. It stops one sentence from reading as the whole case. */
+test("the printed sentence says it is one of several connections", () => {
+  render(
+    <CardDrawerProvider graph={SAMPLE.graph}>
+      <HighSynergyCards cards={SAMPLE.report.cards} />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getAllByText(/connections behind this/).length).toBeGreaterThan(0);
+});
+
+test("a card with a single connection claims no plurality", () => {
+  render(
+    <CardDrawerProvider graph={SAMPLE.graph}>
+      <HighSynergyCards cards={[{
+        name: "Solo Card", isCommander: false, score: 1, synergyRating: 4, partnerCount: 1,
+        topPartners: [{ name: "Krenko, Mob Boss", score: 1, reasons: [{ tag: "t", text: "Krenko, Mob Boss feeds Solo Card" }] }],
+      }] as never} />
+    </CardDrawerProvider>,
+  );
+  expect(screen.queryByText(/connections behind this/)).toBeNull();
+});
+
 test("HighSynergyCards renders no reason line when the card has none", () => {
   render(
     <HighSynergyCards

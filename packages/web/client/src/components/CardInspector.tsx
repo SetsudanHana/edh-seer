@@ -208,8 +208,21 @@ export function CardInspector({
         {face?.manaCost ? (
           <p className="text-(--muted) text-xs">{face.manaCost}</p>
         ) : null}
-        {face?.oracleText ? (
-          <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">{face.oracleText}</p>
+        {/* THE CARD'S OWN TEXT, AND IT WAS ONLY EVER DRAWN FOR MULTI-FACE CARDS (roadmap S18).
+          *  `face` is set only when `faces.length > 1`, so a single-face card fell through this
+          *  condition and printed no text at all -- while `node.oracleText` sat on the wire beside
+          *  it, carrying the comment "so the panel can show the evidence for a claim about it".
+          *  The type line one row up had the fallback (`face?.typeLine ?? typeLine`); this did not.
+          *
+          *  IT IS THE WHOLE OF S18'S ASK. The skeptic could not check a single synergy claim on
+          *  nine screens -- "the page asserts a relationship between two named cards and never
+          *  prints either card's text, so a right answer and a wrong one look identical on my
+          *  screen" -- and the roadmap line recorded this panel as already showing the partner's
+          *  text one click away. It did not, for any card with one face. */}
+        {(face?.oracleText ?? node.oracleText) ? (
+          <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">
+            {face?.oracleText ?? node.oracleText}
+          </p>
         ) : null}
       </div>
 
