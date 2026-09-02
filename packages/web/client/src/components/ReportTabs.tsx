@@ -13,6 +13,7 @@ import { GraphList } from "./GraphList.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 import { unreadCardNames } from "../lib/unread.js";
+import { primaryType } from "../lib/deck-shape.js";
 
 type TabId = "overview" | "archetypes" | "cards" | "combos" | "graph";
 
@@ -33,6 +34,15 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
   // want it and only one of them (`GraphView`) is handed the report — see `lib/unread.ts` for why
   // the rule lives in one place.
   const unread = useMemo(() => unreadCardNames(data.report.cards), [data.report]);
+  // NONLAND CARDS, BY THE ONE LAND RULE THIS APP HAS. `primaryType` returns null for a land on
+  // purpose, and reading it off the graph's front-face nodes is the same basis `DeckWaffle` counts
+  // on -- so the matrix's row count and the waffle's nonland total cannot disagree.
+  const nonlandNames = useMemo(
+    () => (data.graph?.nodes ?? [])
+      .filter((n) => n.face === undefined && n.isToken !== true && primaryType(n.types) !== null)
+      .map((n) => n.cardName ?? n.id),
+    [data.graph],
+  );
   // THE ART LOADER OUTLIVES THE GRAPH TAB, and that is the whole point of it living here.
   //
   // `<GraphView>` is mounted by `active === "graph"` below, so nothing requested a single image
@@ -122,7 +132,7 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
       </div>
       <div role="tabpanel">
         {active === "overview" && <OverviewTab data={data} />}
-        {active === "archetypes" && <ArchetypeBoard strategies={data.report.strategies} archetypes={data.report.archetypes} />}
+        {active === "archetypes" && <ArchetypeBoard strategies={data.report.strategies} archetypes={data.report.archetypes} nonlandNames={nonlandNames} />}
         {active === "cards" && (
           <CardList cards={data.report.cards} artByName={artByName} coverage={data.report.coverage} />
         )}

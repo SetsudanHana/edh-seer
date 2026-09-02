@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { DeckReport } from "../types.js";
 import { Explain } from "./Explain.js";
+import { ThemeMatrix } from "./ThemeMatrix.js";
 
 type Group = NonNullable<DeckReport["archetypes"]>[number];
 type Strategy = NonNullable<DeckReport["strategies"]>[number];
@@ -87,7 +88,14 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
   );
 }
 
-export function ArchetypeBoard({ strategies, archetypes }: { strategies?: DeckReport["strategies"]; archetypes: DeckReport["archetypes"] }) {
+export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [] }: {
+  strategies?: DeckReport["strategies"];
+  archetypes: DeckReport["archetypes"];
+  /** Nonland card names, for the matrix's rows. Supplied by the caller because the land rule is
+   *  `primaryType`'s and reads TYPES, which this component is never given -- one copy of that rule,
+   *  the same one `DeckWaffle` uses. */
+  nonlandNames?: readonly string[];
+}) {
   const hasStrategies = !!strategies && strategies.length > 0;
   const hasGroups = !!archetypes && archetypes.length > 0;
   if (!hasStrategies && !hasGroups) {
@@ -111,9 +119,20 @@ export function ArchetypeBoard({ strategies, archetypes }: { strategies?: DeckRe
           <div className="flex flex-col">{strategies!.map((s) => <StrategyRow key={s.name} s={s} max={sMax} />)}</div>
         </div>
       ) : null}
+      {/* THE MATRIX IS THE GROUPS' MEMBERSHIP, drawn per CARD (roadmap S6). It goes above the
+        *  group rows rather than replacing them: a group row's expanded PAIRS are the evidence for
+        *  a membership -- "Krenko + Impact Tremors, and the sentence why" -- and the matrix has
+        *  room for a dot and not for a reason. Same posture as the waffle over `MissingCards` and
+        *  the bracket band over its named list.
+        *
+        *  THE TOP-LEVEL ARCHETYPES TAB STAYS FOR NOW, though S6's line says the matrix absorbs it.
+        *  `strategies` above is not group data and the matrix does not carry it, and removing a tab
+        *  is a NAVIGATION change -- S7's, and it wants every chapter visible at once before
+        *  deciding. Same call as leaving `CoveragePanel` above the tabs in S3. */}
+      {hasGroups ? <ThemeMatrix archetypes={archetypes} nonlandNames={nonlandNames} /> : null}
       {hasGroups ? (
         <div className="flex flex-col gap-2">
-          <h3 className="eyebrow">Synergy groups</h3>
+          <h3 className="eyebrow">The pairs behind each group</h3>
           <Explain label="what a group counts">
             Pairs of cards whose synergy matches a known mechanism, and the cards those pairs touch.
             One pair can belong to several groups, a group ranks by PAIRS rather than by cards, and a
