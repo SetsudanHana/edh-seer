@@ -307,6 +307,47 @@ test("a blink exiles a creature but is not a recursion-proof answer, and a real 
  *  and Slip On the Ring is scoped to the exile-mode rule only, exactly to avoid excluding this card
  *  from `count`: population-gated, this card left all five answer classes the first time the guard
  *  was written generically, which is the regression this test pins against. */
+/** S19, 2026-09-02. A SELF-BLINK IS NOT REMOVAL, and it was reaching the report's front page:
+ *  `Displacer Kitten` printed "pulls double duty (Removal)" in High synergy cards for
+ *  *"exile up to one target nonland permanent you control, then return that card to the
+ *  battlefield"*. `targetedRemoval`'s clause is `(destroy|exile) … target … <noun>` and never
+ *  looked at what followed the noun.
+ *
+ *  THE GUARD IS ON THE EXILE BRANCH ONLY, and that boundary is the recorded decision one test
+ *  below: written generically it also drops `Staff of Compleation` ("destroy target permanent you
+ *  own"), which left all five answer classes the first time this was tried. `destroy` keeps its
+ *  old pattern character for character.
+ *
+ *  MEASURED with `build-population.ts` over the 71 calibration decks: `targetedRemoval` 210 -> 196,
+ *  **14 memberships removed and none added**, no other category moved, and every one of the 14 is a
+ *  blink — Blur, Conjurer's Closet, Displace, Displacer Kitten, Essence Flux, Illusionist's
+ *  Stratagem, Siren's Ruse, Skycoach Conductor, Sword of Hearth and Home, Teferi's Time Twist,
+ *  Thassa Deep-Dwelling, The Mind Stone, Waterbender's Restoration, Y'shtola Rhul. Corpus-wide
+ *  2,985 -> 2,894. On the example deck the interaction count reads 19 -> 13 against a target of 10. */
+test("a self-blink is not removal, however many permanents it exiles", () => {
+  const cats = detectBuildCategories([
+    mk("Displacer Kitten", "Avoidance — Whenever you cast a noncreature spell, exile up to one target nonland permanent you control, then return that card to the battlefield under its owner's control.", "Creature"),
+    mk("Conjurer's Closet", "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.", "Artifact"),
+    mk("Sword of Hearth and Home", "Whenever equipped creature deals combat damage to a player, exile up to one target creature you own, then search your library for a basic land card.", "Artifact"),
+    // The control case: same verb, an opponent's permanent, still removal.
+    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power.", "Instant"),
+  ]);
+  const removal = cats.get("targetedRemoval") ?? new Set<string>();
+  expect(removal.has("Displacer Kitten")).toBe(false);
+  expect(removal.has("Conjurer's Closet")).toBe(false);
+  expect(removal.has("Sword of Hearth and Home")).toBe(false);
+  expect(removal.has("Swords to Plowshares")).toBe(true);
+});
+
+/** A CARD THAT DOES BOTH KEEPS ITS REMOVAL, which is why the guard is on the CLAUSE and not on the
+ *  card: a `not` rule would have dropped this one wholesale. */
+test("a card that blinks its own and kills theirs is still removal", () => {
+  const cats = detectBuildCategories([
+    mk("Both Ways", "Exile target creature you control, then return it. Destroy target artifact.", "Instant"),
+  ]);
+  expect(cats.get("targetedRemoval")?.has("Both Ways")).toBe(true);
+});
+
 test("a self-destroy with no return clause keeps its count, even though it says 'you own'", () => {
   const classes = detectAnswerClasses([
     mk("Staff of Compleation", "{T}, Pay 1 life: Destroy target permanent you own.\n{T}, Pay 2 life: Add one mana of any color.\n{T}, Pay 3 life: Proliferate.\n{T}, Pay 4 life: Draw a card.\n{5}: Untap this artifact.", "Artifact"),
