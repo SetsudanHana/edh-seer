@@ -39,7 +39,17 @@ describe("CoveragePanel — persona-run fixes", () => {
     // "52 of 100 cards read" over "Resolved 100/100" — two counters, two meanings, the same
     // denominator, four inches apart. Three of four personas stopped on the pair.
     render(<CardDrawerProvider><CoveragePanel coverage={coverage} resolved={100} total={100} /></CardDrawerProvider>);
-    expect(screen.getByText(/all 100 of 100 lines matched a card/)).toBeTruthy();
+    expect(screen.getByText(/100 of 100 cards matched a name/)).toBeTruthy();
+  });
+
+  // S12: the resolution counter said "lines" while `DeckInput` said "lines" about a different
+  // quantity -- text lines of the paste, 87 against this 100. This counts CARD SLOTS, so it says
+  // cards; the word is the fix and a regression here is a word, which is why it is pinned.
+  test("the resolution counter never says 'lines' -- it counts card slots", () => {
+    render(<CardDrawerProvider><CoveragePanel coverage={coverage} resolved={95} total={100} /></CardDrawerProvider>);
+    expect(screen.queryByText(/lines/)).toBeNull();
+    // And no unconditional "all" in front of a partial count.
+    expect(screen.getByText(/95 of 100 cards matched a name/).textContent).not.toMatch(/all/);
   });
 
   test("an unread COMMANDER is named outright, never left inside 'and 40 more'", () => {

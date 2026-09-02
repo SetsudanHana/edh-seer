@@ -98,9 +98,19 @@ export function CoveragePanel({ coverage, resolved, total, commanderUnread }: {
           <p className="flex items-baseline gap-2.5 flex-wrap">
             <span className="text-2xl font-semibold stat-num leading-none">{coverage.derived}</span>
             <span className="text-sm text-(--muted)">of {coverage.resolved} cards read</span>
+            {/* "CARDS", NOT "LINES", AND THE WORD WAS THE WHOLE DEFECT (S12, filed from S1's
+              *  judging round). `DeckInput`'s collapsed summary counts non-blank TEXT LINES of the
+              *  paste and prints "87 lines"; this counted CARD SLOTS -- `parseDecklistSections`
+              *  pushes one entry per copy, so `3 Plains` is one line and three of them -- and said
+              *  "lines" too. Both facts were right and eleven hundred pixels apart, 87 against 100,
+              *  and the judge could not tell which quantity "100 of 100 lines matched" was a
+              *  statement about. It is the sentence carrying the report's only 100%, so the one
+              *  that was using the word wrongly is the one that stopped. "all" went with it: it was
+              *  printed unconditionally and would have read "all 95 of 100" on a deck with five
+              *  unresolved names. */}
             {resolved !== undefined && total !== undefined ? (
               <span className="text-xs text-(--muted) stat-num">
-                · all {resolved} of {total} lines matched a card
+                · {resolved} of {total} cards matched a name
               </span>
             ) : null}
           </p>

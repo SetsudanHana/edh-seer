@@ -26,15 +26,22 @@ export function deckCoverage(deck: readonly DeckCard[]): { coverage: DeckCoverag
   const names = [...new Set(underived.map((dc) => dc.card.name))].sort();
   const shown = names.slice(0, NAME_CAP);
   const card = (n: number): string => `${n} card${n === 1 ? "" : "s"}`;
+  const one = underived.length === 1;
   return {
     coverage: {
       resolved: deck.length,
       derived: deck.length - underived.length,
       underivedNames: shown,
       more: names.length - shown.length,
-      caveat: `${card(underived.length)} of ${deck.length} are not in the read corpus yet, so they`
-        + " form no synergy edges and carry no theme. Their mana cost, type and text still count"
-        + " everywhere else in this report.",
+      // THE VERBS AGREE WITH THE COUNT. `card()` already singularised the noun and nothing else
+      // did, so a one-card deficit printed "1 card of 103 are not in the read corpus yet, so they
+      // form no synergy edges" -- seen on screen the first time a nearly-complete deck reached this
+      // panel (S12's live check, 2026-09-02). The last sentence drops the possessive rather than
+      // carry a third agreement.
+      caveat: `${card(underived.length)} of ${deck.length} ${one ? "is" : "are"} not in the read`
+        + ` corpus yet, so ${one ? "it forms" : "they form"} no synergy edges and`
+        + ` ${one ? "carries" : "carry"} no theme. Mana cost, type and text still count everywhere`
+        + " else in this report.",
     },
   };
 }
