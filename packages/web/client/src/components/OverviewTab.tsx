@@ -12,6 +12,7 @@ import { DeckGauges } from "./DeckGauges.js";
 import { UnmetConditions } from "./UnmetConditions.js";
 import { ManaAvailability } from "./ManaAvailability.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
+import { ManaTimeline } from "./ManaTimeline.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { Findings } from "./Findings.js";
@@ -241,6 +242,12 @@ export function OverviewTab({ data }: { data: AnalyzeResponse }) {
             sections={["cast"]}
             showBenchmarks={false}
           />
+          {/* THE INTERSECTION LEADS; the two panels under it are its evidence. Neither is
+            *  redundant: `ManaAvailability` carries the policy interval and the colour caveat the
+            *  chart does not draw, and the raw curve is the only place a per-COST count survives
+            *  once two costs share a turn on a ramping deck. Same posture as the waffle over
+            *  `MissingCards` and the bracket band over its named list. */}
+          <ManaTimeline curve={report.manaCurve} manaAvailability={report.manaAvailability} />
           <ManaAvailability manaAvailability={report.manaAvailability} />
           <ManaCurveChart curve={report.manaCurve} />
           <LandMathChart landCount={report.landCount} deckSize={data.resolvedCount} />
