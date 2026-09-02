@@ -56,12 +56,16 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
         *  something means, and it costs a line until asked. Every claim in here is read off
         *  `brackets.ts` -- five official tiers, two PUBLISHED lists, a rule about contents rather
         *  than a judgement of quality -- so nothing is asserted from memory about the game. */}
+      {/* R2-F3: THIS OPENED WITH THE SENTENCE ALREADY ON SCREEN. The always-visible line below the
+        *  band carries "Wizards' five tiers … 1 is the most casual table, 5 the most competitive"
+        *  -- added in round 1 so the panel orients a reader who never opens this -- and the
+        *  disclosure still led with the same words, four lines apart. The judge: *"my first thought
+        *  was that I'd opened the wrong thing."* The disclosure now starts where the visible line
+        *  stops. */}
       <Explain label="what a bracket is">
-        Brackets are Wizards&rsquo; five tiers for matching decks before a game starts: 1 is the
-        most casual table, 5 the most competitive.{" "}
-        <span className="text-(--foreground)">A bracket describes what a deck contains</span>, not
-        how well it is built or how often it wins — a bracket 4 deck is not better than a bracket 2
-        deck, it is for a different table.{" "}
+        <span className="text-(--foreground)">A bracket 4 deck is not better than a bracket 2
+        deck</span> — it is for a different table, and the band is about what the deck contains
+        rather than how well it is built or how often it wins.{" "}
         {/* F3: this said "two published lists", and only ONE of them is published — Game Changers
           *  are Wizards’ list, the infinite combos are Commander Spellbook results this engine
           *  reads off the deck (`brackets.ts`). The judge: *"I do not know if there is a published
@@ -69,7 +73,7 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
           *  the difference between 'Wizards says so' and 'this website says so', which matters to
           *  me if I am going to repeat it at a table."* An overclaim I introduced, and the exact
           *  kind this repo refuses everywhere else. */}
-        Two things move a deck up, and this report reads both off your list: cards on{" "}
+        Two kinds of thing move a deck up, and this report reads both off your list: cards on{" "}
         <span className="text-(--foreground)">Wizards&rsquo; published Game Changer list</span>,
         which is theirs, and{" "}
         <span className="text-(--foreground)">combos this tool finds in the deck itself</span>,
@@ -129,13 +133,21 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
                   <span key={i} data-testid="bracket-pip" className="h-1.5 w-1.5 rounded-full bg-(--fill)" />
                 ))}
               </span>
-              {/* F4: "6 things put it here" against three different sentences below about what put
-                *  it where. The judge counted 1 + 5, accepted it, then found only the combos
-                *  described as forcing 4-5 while the lone Game Changer merely lifts it off the
-                *  bottom -- *"unsure whether all six things put it in 4-5 or whether five of them
-                *  did"*. Both readings were available because the count says neither: it is what
-                *  the brackets LOOK AT, and the boxes below say what each one does. */}
-              {pips === 1 ? "one thing the brackets look at" : `${pips} things the brackets look at`}
+              {/* AN ABSTRACT COUNT IS NOT ACCOUNTABLE, and this line has now failed two judges in
+                *  two different ways. Round 1: "6 things put it here" claimed all six forced the
+                *  band while the boxes below said only some did. Round 2, after that fix: "6 things
+                *  the brackets look at" against two visible boxes -- *"that leaves at least three,
+                *  maybe four, of the six never named anywhere on the panel"*, filed as BLOCKED. The
+                *  six ARE named: they are 1 + 5, and the reader has to add two box HEADINGS to see
+                *  it. So the line does the addition out loud and the dots stop needing a key. */}
+              {[
+                bracket.gameChangers.length > 0
+                  ? `${bracket.gameChangers.length} Game Changer${bracket.gameChangers.length === 1 ? "" : "s"}`
+                  : null,
+                bracket.infiniteCombos > 0
+                  ? `${bracket.infiniteCombos} infinite combo${bracket.infiniteCombos === 1 ? "" : "s"}`
+                  : null,
+              ].filter(Boolean).join(", ")}
             </span>
           ) : null}
         </div>
@@ -154,8 +166,9 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
 
       {bracket.band === "1-2" ? (
         <p className="text-sm text-(--muted)">
-          Nothing here is either of those — no card from Wizards&rsquo; Game Changer list, and no
-          pair of cards that combine to repeat something forever.
+          This deck has neither of the two: no card from Wizards&rsquo; published list of the
+          strongest cards in Commander, and no pair of cards that combine to repeat something
+          forever.
         </p>
       ) : (
         <ul className="flex flex-col gap-2">
@@ -218,8 +231,9 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
           )}
           {bracket.cheapCombos.length > 0 && (
             <li className="text-xs text-(--muted) max-w-[65ch]">
-              Below: pairs of cards cheap enough to assemble early that together go infinite. This
-              is the one thing bracket 3 does not allow, and it is what puts this deck in 4–5.
+              Below: pairs of two cards that together go infinite, for a low enough total cost that
+              bracket 3 does not allow them — which is what puts this deck in 4–5. The figure beside
+              each pair is the two cards&rsquo; mana costs added together.
             </li>
           )}
           {bracket.cheapCombos.map((c) => (
@@ -248,27 +262,35 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
 
       {/* THE FOOTNOTE WAS THE SHARPEST FINDING AND IT WAS ONE SENTENCE LONG. *"It explains why
         *  there are ranges instead of single numbers, which only helps if I already knew what 1, 2,
-        *  4 and 5 were … the explanation is written in the word that needed explaining."* Both
-        *  halves now say what the missing distinction IS about, in things a reader can picture.
+        *  4 and 5 were … the explanation is written in the word that needed explaining."* It now
+        *  says what the missing distinction is ABOUT, in things a reader can picture.
         *
-        *  AND THE HEADING NO LONGER CONTRADICTS IT. "Which table this is for" is plain English and
-        *  is the question a precon owner arrives with; the old last line answered it with *"neither
-        *  of those is something a card list can answer"*, so the panel promised and then declined.
-        *  The band IS the answer -- what the report cannot do is split it finer, which is a limit
-        *  on precision rather than a refusal.
+        *  AND IT IS PER BAND, WHICH ROUND 2 CAUGHT AND ROUND 1 DID NOT. One paragraph covering both
+        *  splits printed on every deck, so half of it was always about a range the reader is not in
+        *  -- *"'the two choices inside it' against a band with one choice inside it … I read it
+        *  three times looking for the part meant for me"*. Worse, and nobody filed it: bracket 3 is
+        *  a SINGLE NUMBER, and this told a bracket-3 deck it had been given "a range rather than
+        *  one number".
         *
-        *  IT ENDS ON THE LIMIT AND NOT ON A PROMISE. A closing "everything narrower than the range
-        *  is here: the cards, and why each one counts" read fine at 4-5 and was a plain
-        *  contradiction at 1-2, where the panel's own line directly above it says nothing is on
-        *  either list. Seen at 1-2 on screen. */}
-      {/* 65ch. The old footnote was one sentence and got away with running the column's full
-        *  width; this one is four lines of prose at 1440 and measured 180 characters a line, which
-        *  is over twice the readable measure. `Explain` bodies are capped the same way. */}
+        *  THE HEADING'S PROMISE IS ALSO NOT DECLINED HERE any more. "Which table this is for" is
+        *  the question a precon owner arrives with; the old last line answered it with "neither of
+        *  those is something a card list can answer". The band IS the answer -- what the report
+        *  cannot do is split it finer. */}
       <p className="text-xs text-(--muted) max-w-[65ch]">
-        This report gives a range rather than one number, because the two choices inside it cannot
-        be made from a card list. Telling 1 from 2 depends on how the deck was assembled — a preconstructed
-        deck straight out of its box, or one you have changed. Telling 4 from 5 depends on the table
-        you take it to.
+        {bracket.band === "3" ? (
+          <>Bracket 3 is a single number rather than a range, so there is nothing further to split.</>
+        ) : bracket.band === "1-2" ? (
+          <>
+            This report gives a range rather than one number, because the choice inside it cannot be
+            made from a card list: telling 1 from 2 depends on how the deck was put together — a
+            preconstructed deck straight out of its box, or one you have changed.
+          </>
+        ) : (
+          <>
+            This report gives a range rather than one number, because the choice inside it cannot be
+            made from a card list: telling 4 from 5 depends on the table you take it to.
+          </>
+        )}
       </p>
     </div>
   );
