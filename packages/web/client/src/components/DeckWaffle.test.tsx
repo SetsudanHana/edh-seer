@@ -16,12 +16,41 @@ const sq = (s: Partial<WaffleSquare>): WaffleSquare =>
   ({ name: "x", type: "creature", state: "read", isCommander: false, ...s });
 
 const SOME = [sq({}), sq({ type: "sorcery" }), sq({ type: null })];
+/** THE GRID ONLY EXISTS WHERE THERE IS COVERAGE TO MAP (S15), so every test about the grid's
+ *  geometry needs a deck with something to mark. One unread square is the smallest such deck, and
+ *  it is added rather than the rule being relaxed -- the geometry tests are about the grid, and a
+ *  fixture that no longer renders one would pass for the wrong reason. */
+const withUnread = (squares: WaffleSquare[]): WaffleSquare[] => [...squares, sq({ state: "unread" })];
 
 // ONE SQUARE PER CARD IS THE WHOLE CONCEIT. The grid is a picture of the deck's real size, so the
 // count of squares is the count of cards -- a reader who doubts any number here can count them.
 test("draws one square per card it was given", () => {
-  render(<DeckWaffle squares={SOME} slices={SLICES} />);
-  expect(screen.getAllByTestId("waffle-square")).toHaveLength(3);
+  render(<DeckWaffle squares={withUnread(SOME)} slices={SLICES} />);
+  expect(screen.getAllByTestId("waffle-square")).toHaveLength(4);
+});
+
+/** THE GRID IS A COVERAGE MAP AND NOTHING ELSE (roadmap S15, owner call 2026-09-02). With every
+ *  card read and resolved there is no hatch and no hollow square, so the 465px of squares are a
+ *  picture of the counts its own legend prints three lines below -- ahead of every verdict on the
+ *  page, on the ~99%-derived decks that are the common case. The CENSUS is not what goes: the
+ *  total line and the per-type legend both stay, which is where those numbers were readable. */
+test("the grid renders only when something is unread or unresolved", () => {
+  const { rerender } = render(<DeckWaffle squares={SOME} slices={SLICES} lands={34} />);
+  expect(screen.queryByTestId("waffle-grid")).toBeNull();
+  expect(screen.queryAllByTestId("waffle-square")).toHaveLength(0);
+  // ...and the census survives in full.
+  expect(screen.getByTestId("type-total")).toHaveTextContent("66");
+  expect(screen.getByTestId("type-legend-creature")).toBeInTheDocument();
+  expect(screen.getByTestId("type-legend-land")).toHaveTextContent("34");
+
+  // A COLOUR CHIP WITH NO GRID KEYS NOTHING, which is the same defect as a key for a state
+  // nothing on screen is in. The counts stay; the swatches go with the squares they point at.
+  expect(screen.getByTestId("type-legend-creature").querySelector("span[aria-hidden]")).toBeNull();
+
+  rerender(<DeckWaffle squares={withUnread(SOME)} slices={SLICES} lands={34} />);
+  expect(screen.getByTestId("waffle-grid")).toBeInTheDocument();
+  expect(screen.getAllByTestId("waffle-square")).toHaveLength(4);
+  expect(screen.getByTestId("type-legend-creature").querySelector("span[aria-hidden]")).not.toBeNull();
 });
 
 /** A SQUARE SIZES ITSELF FROM ITS COLUMN, NEVER FROM ITS ROW, and this is a regression test for a
@@ -36,7 +65,7 @@ test("draws one square per card it was given", () => {
  *  above (11 rows, 0 zero-height squares, 39x39 squares, an 82x82 commander spanning exactly two
  *  columns plus the gap). This only stops the one property whose removal caused it. */
 test("every square sizes from its column, so no grid row can collapse", () => {
-  render(<DeckWaffle squares={SOME} slices={SLICES} />);
+  render(<DeckWaffle squares={withUnread(SOME)} slices={SLICES} />);
   for (const el of screen.getAllByTestId("waffle-square")) {
     expect(el.className).toContain("aspect-square");
     expect(el.style.blockSize).toBe("");
@@ -48,9 +77,9 @@ test("every square sizes from its column, so no grid row can collapse", () => {
 // for a hundred-card deck, then had to reconcile against the header: "I only knew to do that
 // subtraction because the caption says the large square is one card".
 test("the commander is one cell like every other card, ringed rather than enlarged", () => {
-  render(<DeckWaffle squares={[sq({ name: "Krenko, Mob Boss", isCommander: true }), sq({})]} slices={SLICES} />);
+  render(<DeckWaffle squares={withUnread([sq({ name: "Krenko, Mob Boss", isCommander: true }), sq({})])} slices={SLICES} />);
   const cells = screen.getAllByTestId("waffle-square");
-  expect(cells).toHaveLength(2);
+  expect(cells).toHaveLength(3);
   for (const c of cells) {
     expect(c.className).not.toContain("col-span");
     expect(c.className).not.toContain("row-span");
@@ -64,7 +93,7 @@ test("the commander is one cell like every other card, ringed rather than enlarg
 // COUNTING THE CELLS HAS TO GIVE THE DECK'S SIZE. The one property everything above rests on,
 // asserted with a commander present because that is the case that broke it.
 test("the cell count is the card count, commander included", () => {
-  const deck = [sq({ isCommander: true }), ...Array.from({ length: 99 }, () => sq({}))];
+  const deck = [sq({ isCommander: true }), sq({ state: "unread" }), ...Array.from({ length: 98 }, () => sq({}))];
   render(<DeckWaffle squares={deck} slices={SLICES} />);
   expect(screen.getAllByTestId("waffle-square")).toHaveLength(100);
 });

@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types.js";
 import { scoreState } from "../lib/deck-gauge.js";
 import { TONE_TEXT } from "./Dial.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { findings } from "../lib/findings.js";
 import { identityKey } from "../lib/color-identity.js";
 
 /** THE REPORT'S SUMMARY, ON EVERY SURFACE — sticky above the chapters AND above the graph, the
@@ -28,6 +30,8 @@ import { identityKey } from "../lib/color-identity.js";
  *  cannot be off by a re-tuned constant. */
 export function ReportHeader({ data }: { data: AnalyzeResponse }) {
   const ref = useRef<HTMLElement>(null);
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -52,6 +56,13 @@ export function ReportHeader({ data }: { data: AnalyzeResponse }) {
   // coverage panel's "your commander is one of them" line. A two-faced commander rates one row per
   // face, so dedupe on the physical card exactly as that read does.
   const commanders = [...new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name))];
+  // WHAT THE READER CAME FOR, ONE PRESS AWAY FROM ANYWHERE (roadmap S15, owner call 2026-09-02).
+  // Both expert judges of the scrolling report went straight to the diagnosis -- one assembled the
+  // deck's whole plan out of chapter 6 rather than chapter 3 -- and chapter 6 is ~7,000px down a
+  // 9.6-screen page. The narrative order survives for a first-time reader, who is who it was
+  // ordered for; the returning tuner stops paying for it. `findings` is pure and cheap, and
+  // `Findings` calls it too, so the count here and the list there cannot disagree.
+  const findingCount = findings(report).length;
   const pipCost = identityKey(data.commanderColorIdentity ?? [])
     .split("")
     .map((c) => `{${c}}`)
@@ -82,6 +93,37 @@ export function ReportHeader({ data }: { data: AnalyzeResponse }) {
           // `buildScore` counts roles off printed text, which an unread card still has, so it keeps
           // its band where synergy loses its own. The split is the gate's, not a new one.
           <HeaderScore name="Build" value={report.buildScore} />
+        ) : null}
+        {findingCount > 0 ? (
+          <button
+            type="button"
+            // FROM A REFERENCE SURFACE IT HAS TO TRAVEL FIRST. `#fix` does not exist on `/cards`,
+            // so the chapters are routed to and the scroll happens on the next frame, once the
+            // section it names is in the document.
+            onClick={() => {
+              // ONE FRAME IS NOT ENOUGH, measured on the live page: the navigation returns, the
+              // next frame runs before React has committed the chapters, `getElementById` is null
+              // and the reader lands at the top of the report having pressed "2 findings". So it
+              // waits for the section to EXIST, capped at ~30 frames so a route that never mounts
+              // one cannot spin.
+              const go = (tries = 0): void => {
+                const el = document.getElementById("fix");
+                if (el) return el.scrollIntoView({ behavior: "smooth", block: "start" });
+                if (tries < 30) requestAnimationFrame(() => go(tries + 1));
+              };
+              if (pathname === "/") return go();
+              navigate({ pathname: "/", hash: window.location.hash });
+              go();
+            }}
+            /* 32px on the block axis, not 44. The 44px recommendation is for a PRIMARY action;
+             * this is a shortcut to something the rail also reaches, and at 44 it forced its own
+             * line in the pinned bar -- 85px of header plus a 58px rail is 143px of an 844px phone
+             * viewport, on a bar a judge already called too expensive at 117. Comfortably over the
+             * 24px WCAG 2.5.8 floor, and the horizontal padding gives it real width. */
+            className="eyebrow text-(--accent) whitespace-nowrap min-h-[32px] px-2 -mx-1"
+          >
+            {findingCount} {findingCount === 1 ? "finding" : "findings"} &darr;
+          </button>
         ) : null}
         {coverage ? (
           <span className="flex items-center gap-2 min-w-0">

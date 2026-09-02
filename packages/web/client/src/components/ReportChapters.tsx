@@ -3,7 +3,6 @@ import type { AnalyzeResponse } from "../types.js";
 import { CHAPTERS, CHAPTER_FOR_GAUGE, type ChapterId } from "../lib/chapters.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
 import { DeckIdentity } from "./DeckIdentity.js";
-import { HeadlineScores } from "./HeadlineScores.js";
 import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { SuggestionsList } from "./SuggestionsList.js";
 import { CutList } from "./CutList.js";
@@ -184,10 +183,12 @@ export function ReportChapters({ data }: { data: AnalyzeResponse }) {
             commanderTax={report.commanderTax}
             coverage={report.coverage}
           />
+          {/* THE TWO SCORES, ONCE (roadmap S15, owner call 2026-09-02). `HeadlineScores`' tiles
+            *  used to sit directly under these dials printing the same two figures a third time,
+            *  counting the sticky header — S7 made that visible and this is the call it was made
+            *  for. The tiles were the only place either score said what it MEASURES, so those two
+            *  `Explain` blocks moved onto the dials themselves and the component retired. */}
           <DeckGauges data={data} onOpen={openChapter} />
-          {/* The two scores again, as tiles — the only place either carries an `Explain` saying what
-            *  it measures. Redundant with the dials above by construction; see the file comment. */}
-          <HeadlineScores report={report} />
           <BracketPanel bracket={report.bracket} />
         </Chapter>
 
@@ -221,7 +222,19 @@ export function ReportChapters({ data }: { data: AnalyzeResponse }) {
               *  three earn a place in ONE column is S15's question, not this item's. */}
             <ManaTimeline curve={report.manaCurve} manaAvailability={report.manaAvailability} />
             <ManaAvailability manaAvailability={report.manaAvailability} />
-            <ManaCurveChart curve={report.manaCurve} />
+            {/* PER-COST COUNTS, BEHIND A DISCLOSURE (roadmap S15, owner call 2026-09-02). Chapter
+              *  4 ran three pictures of the same mana in one column and no judge mentioned this
+              *  one. It is not deleted, because it is the only place a per-COST count survives once
+              *  two costs share a turn on a ramping deck -- the timeline above is indexed by TURN
+              *  and cannot say that. Reachable, not first. */}
+            <details className="rounded-(--radius) border border-(--separator) bg-(--surface) px-4 py-3">
+              <summary className="eyebrow cursor-pointer text-(--muted)">
+                the curve by mana cost, not by turn
+              </summary>
+              <div className="pt-3">
+                <ManaCurveChart curve={report.manaCurve} />
+              </div>
+            </details>
             <LandMathChart landCount={report.landCount} deckSize={data.resolvedCount} />
             <UnmetConditions landConditions={report.landConditions} />
           </div>

@@ -13,3 +13,19 @@ export function scoreBand(score: number): { label: string; tone: ScoreTone } {
   if (score >= SCORE_BREAKS[0]) return { label: "Developing", tone: "mid" };
   return { label: "Unfocused", tone: "low" };
 }
+
+/** THE FOUR BANDS AS A SENTENCE, printed rather than hidden in a `title` — a tooltip does not exist
+ *  on touch at all, and a reader who cannot see where 4.1 sits on the scale cannot read the figure.
+ *
+ *  BUILT FROM `SCORE_BREAKS`, NOT RETYPED (MINOR G, whole-branch review, 2026-09-01). It was a
+ *  third hand-copy of the same four thresholds `scoreBand` and the score dial's arc already carry
+ *  as data — exactly the drift risk `Dial.tsx`'s `SCORE_ZONES` comment names for the arc. It lives
+ *  beside the thresholds now (it was in `HeadlineScores`, which S15 retired into the dials), so a
+ *  moved break shows up in the printed scale with no second edit. */
+export const bandLegend = (): string => {
+  const edges = [0, ...SCORE_BREAKS, 5];
+  return edges
+    .slice(0, -1)
+    .map((from, i) => `${from}–${edges[i + 1]} ${scoreBand(from).label.toLowerCase()}`)
+    .join(" · ");
+};

@@ -112,7 +112,7 @@ export const TONE_TEXT: Record<GaugeTone, string> = {
 };
 
 export function Dial({
-  name, value, reading, zones, onOpen, openLabel, size = "input",
+  name, value, reading, zones, onOpen, openLabel, size = "input", explain,
 }: {
   name: string;
   value: string;
@@ -137,6 +137,15 @@ export function Dial({
    *  chrome is 146px, comfortably under 157px, so two sit side by side with room left over. The
    *  lead dial is untouched -- it never shares a row with another dial. */
   size?: "lead" | "input";
+  /** WHAT THIS FIGURE MEASURES, as a disclosure under the dial (roadmap S15, owner call
+   *  2026-09-02). It used to be a second copy of the same score — `HeadlineScores`' tile, which
+   *  printed `SYNERGY 3.3 /5` directly beneath this dial's own `SYNERGY 3.3`, so chapter 2 said
+   *  the number three times counting the sticky header. The tile was the only place either score
+   *  said what it measures, so the words moved here and the duplicate went.
+   *
+   *  RENDERED OUTSIDE THE BUTTON. A `<details>` inside a `<button>` is not operable — nested
+   *  interactive content — so the dial and its explanation are siblings, never parent and child. */
+  explain?: React.ReactNode;
 }) {
   // The needle reaches the ring's inner edge (RING_INNER, not a second literal) so it points
   // INTO the coloured band it names rather than stopping short of it.
@@ -175,11 +184,16 @@ export function Dial({
   // does not exist is a control that does nothing, which is worse than no control.
   // `min-w-0` here lets the card shrink inside its grid cell; there is no target-size rule to
   // satisfy because there is no control.
-  if (!onOpen) return <div className={`${shell} min-w-0`}>{body}</div>;
+  const wrap = (control: React.ReactNode): React.JSX.Element =>
+    (explain
+      ? <div className="flex flex-col gap-2 min-w-0 w-full">{control}{explain}</div>
+      : <>{control}</>);
+
+  if (!onOpen) return wrap(<div className={`${shell} min-w-0`}>{body}</div>);
 
   // The 44px target-size floor (WCAG 2.5.8) is stated explicitly on both axes rather than left to
   // inherit from the SVG's content width, which is what `min-w-0` would have done.
-  return (
+  return wrap(
     <button
       type="button"
       onClick={onOpen}
@@ -187,6 +201,6 @@ export function Dial({
       className={`${shell} min-w-[44px] min-h-[44px] text-left hover:border-(--accent) focus-visible:outline-2 focus-visible:outline-(--accent)`}
     >
       {body}
-    </button>
+    </button>,
   );
 }

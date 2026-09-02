@@ -15,10 +15,10 @@ import { BracketPanel } from "./BracketPanel.js";
 import { LegalityPanel } from "./LegalityPanel.js";
 import { ManaAvailability } from "./ManaAvailability.js";
 import { ReportShell } from "./ReportShell.js";
+import { DeckGauges } from "./DeckGauges.js";
 import { MemoryRouter } from "react-router";
 import { CHAPTERS } from "../lib/chapters.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
-import { HeadlineScores } from "./HeadlineScores.js";
 import { BuildBenchmarks, demandSentence } from "./BuildBenchmarks.js";
 import { SuggestionsList } from "./SuggestionsList.js";
 import { SAMPLE } from "../fixtures.js";
@@ -542,43 +542,67 @@ test("HighSynergyCards marks the top-authority anchor and double-duty cards", ()
   expect(screen.getByText(/pulls double duty/i)).toBeInTheDocument(); // double-duty badge (Impact Tremors)
 });
 
-test("HeadlineScores shows SYNERGY and BUILD with band labels and sub-facets", () => {
-  render(<HeadlineScores report={SAMPLE.report} />);
-  // Exact, not a regex: both words now also occur inside the glosses that say what each tile
-  // measures, and a loose match would find those instead of the labels.
-  expect(screen.getByText("SYNERGY")).toBeInTheDocument();
-  expect(screen.getByText("4.0")).toBeInTheDocument();      // synergyOverall
-  expect(screen.getByText("BUILD")).toBeInTheDocument();
-  expect(screen.getByText("3.7")).toBeInTheDocument();      // buildScore
-  expect(screen.getAllByText(/Tuned|Focused/).length).toBeGreaterThan(0); // band labels (both tiles have one)
-  // "breadth" now appears twice: the sub-facet line and the gloss that says what it measures.
-  expect(screen.getAllByText(/breadth/i).length).toBeGreaterThan(0); // sub-facet
+
+/** THE TWO SCORES ARE THE DIALS NOW (roadmap S15). `HeadlineScores`' tiles printed the same two
+ *  figures directly beneath them — a third copy counting the sticky header — so the tiles retired
+ *  and their `Explain` glosses, which were the only place either score said what it measures,
+ *  moved onto the dials. These are the tile's assertions, re-aimed at where the words live. */
+test("the score dials name each score, its value and its band", () => {
+  render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
+  expect(screen.getByText("Synergy")).toBeInTheDocument();
+  expect(screen.getByText("Build")).toBeInTheDocument();
+  // `getAllBy` on the figures: SAMPLE's Lands bullet also reads 4.0, and this test is about the
+  // dial naming its score, not about which other row happens to share a number.
+  expect(screen.getAllByText("4.0").length).toBeGreaterThan(0);   // synergyOverall
+  expect(screen.getAllByText("3.7").length).toBeGreaterThan(0);   // buildScore
+  // The dial prints its band in the gauge's own lower case ("tuned"), where the retired tile
+  // capitalised it -- the word is the same one `scoreBand` gives both.
+  expect(screen.getAllByText(/tuned|focused/i).length).toBeGreaterThan(0);
+  // Breadth and anchor are the two inputs, printed as their own bullets under the Synergy dial.
+  expect(screen.getAllByText(/breadth/i).length).toBeGreaterThan(0);
 });
 
 // THE BANDS WERE IN A `title` TOOLTIP, which does not exist on touch and is undiscoverable with a
 // mouse — on the page's own lead figure. They are printed now, one click down, beside a gloss that
 // says what the two halves of SYNERGY actually measure and which card the anchor is.
-test("HeadlineScores explains its scale and names the anchor card", async () => {
+
+// THE BANDS WERE IN A `title` TOOLTIP, which does not exist on touch and is undiscoverable with a
+// mouse — on the page's own lead figure. They are printed now, one click down, beside a gloss that
+// says what the two halves of SYNERGY actually measure and which card the anchor is.
+test("each dial explains its scale, and Synergy names the anchor card", async () => {
   const user = userEvent.setup();
-  render(<HeadlineScores report={SAMPLE.report} />);
+  render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
   const gloss = screen.getAllByText("what this measures");
-  expect(gloss).toHaveLength(2); // SYNERGY and BUILD each say what they mean
+  expect(gloss).toHaveLength(2); // Synergy and Build each say what they mean
   await user.click(gloss[0]!);
-  // Both tiles carry the band scale, so both copies are in the DOM; what matters is that it is
-  // printed at all rather than hidden in a `title`.
-  expect(screen.getAllByText(/0–1.5 unfocused/).length).toBe(2);
+  expect(screen.getAllByText(/0–1.5 unfocused/).length).toBeGreaterThan(0);
   expect(screen.getByText(/Krenko, Mob Boss/)).toBeInTheDocument(); // the deck's best-fed card
+});
+
+/** A `<details>` INSIDE A `<button>` IS NOT OPERABLE — nested interactive content, and the dial is
+ *  a button whenever it has somewhere to open. The gloss is a SIBLING of the dial, never a child,
+ *  and this is what stops a later refactor folding it back inside. */
+test("the dial's explanation is not nested inside the dial's own button", () => {
+  render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
+  for (const summary of screen.getAllByText("what this measures")) {
+    expect(summary.closest("button")).toBeNull();
+  }
 });
 
 // PINNED, BYTE FOR BYTE (MINOR G, whole-branch review, 2026-09-01). `BANDS` moved from a literal
 // string to one built from `SCORE_BREAKS` and `scoreBand`'s own labels -- this proves the rendered
 // text a reader sees did not change even though the source moved from a transcription to a
 // derivation.
+
+// PINNED, BYTE FOR BYTE (MINOR G, whole-branch review, 2026-09-01; moved with `bandLegend` into
+// `lib/score-band.ts` by S15). `BANDS` moved from a literal string to one built from `SCORE_BREAKS`
+// and `scoreBand`'s own labels -- this proves the rendered text a reader sees did not change even
+// though the source moved from a transcription to a derivation, and then moved file.
 test("the printed band scale is exactly the four SCORE_BREAKS bands, unchanged by the derivation", () => {
-  render(<HeadlineScores report={SAMPLE.report} />);
+  render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
   expect(
     screen.getAllByText(/0–1\.5 unfocused · 1\.5–3 developing · 3–4 focused · 4–5 tuned/).length,
-  ).toBe(2);
+  ).toBeGreaterThan(0);
 });
 
 // TASK 5 (2026-09-01): the parent's own count-against-target row (CONSISTENCY 15/14, RAMP 17/10,
@@ -1466,7 +1490,7 @@ test("OverviewTab shows the health dashboard, across its sub-tabs", async () => 
   expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
   // "Ramp" is a finding's own figure label (Fixes is under target on it) -- present, not unique.
   expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
-  expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
+  expect(screen.getAllByText("Synergy").length).toBeGreaterThan(0); // the lead dial
 });
 
 /** FIX ROUND 1 (controller ruling, 2026-09-01): FINDING 1 -- `sections`/`only` only ever filtered
@@ -1641,10 +1665,16 @@ test("the report leads with recognition, then the gauges, and ends on the fixes"
  *  score carries an `Explain` saying what it measures, and the tab it lived on no longer exists --
  *  so the pin is that it is mounted, once, in the chapter that draws the same two numbers as
  *  dials. */
-test("the two score tiles ride the chapter that carries the dials, once", () => {
+/** ONE COPY OF EACH SCORE IN THE CHAPTER (roadmap S15). The dials print it; `HeadlineScores`'
+ *  tiles used to print it again immediately below, which with the sticky header made three copies
+ *  of `3.3` in one viewport. The tiles are gone and their words are on the dials, so what is pinned
+ *  now is that the chapter draws each score exactly once. */
+test("chapter 2 draws each score once, and still says what it measures", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
-  expect(screen.getAllByText("SYNERGY")).toHaveLength(1);
-  expect(screen.getAllByText("BUILD")).toHaveLength(1);
+  const stand = document.getElementById("stand")!;
+  expect(within(stand).getAllByText("Synergy")).toHaveLength(1);
+  expect(within(stand).getAllByText("Build")).toHaveLength(1);
+  expect(within(stand).getAllByText("what this measures")).toHaveLength(2);
 });
 
 /** SUMMARY IS THE WHOLE PAGE'S FIRST SCREEN. The Overview ran 5,202px -- about nine screens -- and
@@ -1714,8 +1744,12 @@ test("every chapter is mounted in one render, in rail order", () => {
   expect(ids).toEqual(CHAPTERS.map((c) => c.id));
 });
 
-test("HeadlineScores uses semantic tokens, not raw Tailwind palette classes", () => {
-  const { container } = render(<HeadlineScores report={{ synergyOverall: 1.2, buildScore: 1.0 } as any} />);
+// Inherited from `HeadlineScores`, which carried the two scores before S15 moved them onto the
+// dials: the tone of a score is a semantic token, never a raw palette class.
+test("the score dials use semantic tokens, not raw Tailwind palette classes", () => {
+  const { container } = render(
+    <DeckGauges data={{ report: { synergyOverall: 1.2, buildScore: 1.0 } } as never} onOpen={() => {}} />,
+  );
   expect(container.innerHTML).not.toMatch(/text-(red|amber|emerald)-\d{3}/);
 });
 
