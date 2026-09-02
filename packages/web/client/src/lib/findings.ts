@@ -321,14 +321,24 @@ export function findings(report: DeckReport): Finding[] {
  *
  *  `findings()` above is UNCHANGED and still returns everything worst-shortfall first -- the sticky
  *  header counts it and `ReportChapters` reads its labels, and neither wants a ranking claim. */
+/** WHICH KINDS `buildScore` CAN EXPRESS AT ALL. Membership is a property of the KIND, never of
+ *  whether an `impact` number happened to arrive.
+ *
+ *  Splitting on `impact !== undefined` was the first version and it was wrong in a way the S9 tests
+ *  caught immediately: `impact` is optional on the wire, so a report from before it existed -- or any
+ *  fixture without it -- put every build finding under "what the build score cannot see", which is a
+ *  false claim about the engine rather than a missing number. A build parent is a term in that score
+ *  whether or not this report priced it. */
+const SCORED_KINDS: ReadonlySet<FindingKind> = new Set<FindingKind>(["build", "lands", "answers"]);
+
 export function rankedFindings(report: DeckReport): { scored: Finding[]; unseen: Finding[] } {
   const all = findings(report);
   const scored = all
-    .filter((f) => f.impact !== undefined)
-    // The id tiebreak keeps the order stable where two impacts are equal, which two zero-impact
-    // findings are.
-    .sort((a, b) => (b.impact ?? 0) - (a.impact ?? 0) || a.id.localeCompare(b.id));
-  const unseen = all.filter((f) => f.impact === undefined);
+    .filter((f) => SCORED_KINDS.has(f.kind))
+    // Unpriced rows sort last rather than first, and the id tiebreak keeps the order stable where
+    // two impacts are equal -- which two zero-impact findings are.
+    .sort((a, b) => (b.impact ?? -1) - (a.impact ?? -1) || a.id.localeCompare(b.id));
+  const unseen = all.filter((f) => !SCORED_KINDS.has(f.kind));
   return { scored, unseen };
 }
 
