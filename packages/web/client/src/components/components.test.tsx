@@ -2729,3 +2729,43 @@ test("opening a role from its dial moves keyboard focus to the marked group", ()
   fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
   expect(screen.getByTestId("role-group-Interaction")).toHaveFocus();
 });
+
+/** T19 (owner call 2026-09-02): *"LANDS IN YOUR OPENING 7 is right now hidden and to be honest this
+ *  is important from the data point of view"*. The distribution was behind a `<details>`, so the
+ *  eight bars existed and a reader had to know to look for them. The SENTENCE still leads -- one
+ *  number is what a player acts on -- but the shape is no longer a click away. */
+test("the opening-hand distribution renders without opening anything", () => {
+  const { container } = render(<LandMathChart landCount={38} deckSize={99} />);
+  expect(container.querySelector("details")).toBeNull();
+  expect(screen.getByLabelText(/Lands in your opening seven, full distribution/)).toBeInTheDocument();
+});
+
+/** T21 (owner): *"why high synergy table is in the fix chapter? It does not make any sense"*. A list
+ *  of what is WORKING is not a repair. It belongs with the chapter that asks what the deck is trying
+ *  to do, beside the groups that say the same thing in aggregate. */
+test("the high-synergy list sits in the plan chapter, not in the fix chapter", () => {
+  const { container } = render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
+  const heading = screen.getByRole("heading", { name: /highest synergy|high synergy/i });
+  const plan = container.querySelector("#plan");
+  const fix = container.querySelector("#fix");
+  expect(plan, "the plan chapter renders").not.toBeNull();
+  expect(plan!.contains(heading)).toBe(true);
+  expect(fix?.contains(heading) ?? false).toBe(false);
+});
+
+/** T16 (owner): *"THE CURVE BY MANA COST, NOT BY TURN when I click it components jump around and
+ *  they should not"*. A CSS multi-column BALANCES its children across the columns, so a disclosure
+ *  opening inside one changes the total height and every other panel is redistributed -- panels the
+ *  reader was not looking at move. Outside the columns it can only push what is below it.
+ *
+ *  ASSERTED ON CONTAINMENT, not on a screenshot: the jump is a layout consequence and the only thing
+ *  a DOM test can pin is the cause. */
+test("the mana-cost disclosure sits outside the multi-column, so opening it cannot re-balance it", () => {
+  const { container } = render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
+  const summary = screen.getByText(/the curve by mana cost, not by turn/);
+  const details = summary.closest("details");
+  expect(details).not.toBeNull();
+  const columns = container.querySelector('[class*="columns-1"]');
+  expect(columns, "the mana chapter still uses a multi-column").not.toBeNull();
+  expect(columns!.contains(details!)).toBe(false);
+});

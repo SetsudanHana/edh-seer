@@ -199,6 +199,13 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
             nonlandNames={nonlandNames}
             coverage={report.coverage}
           />
+          {/* WHICH CARDS CARRY THE PLAN, IN THE CHAPTER THAT ASKS WHAT THE PLAN IS (roadmap T21).
+            *  It used to sit in chapter 6, "What's wrong, and what do I do?", beside the cut list --
+            *  and the owner's note was the whole argument: *"why high synergy table is in the fix
+            *  chapter? It does not make any sense"*. A list of what is WORKING is not a repair. It
+            *  is the other half of what `ArchetypeBoard` above says in aggregate: the groups say
+            *  which mechanisms the deck runs, this says which cards are doing the running. */}
+          <HighSynergyCards cards={report.cards} />
         </Chapter>
 
         <Chapter id="mana" title={title("mana")}>
@@ -223,22 +230,29 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               *  three earn a place in ONE column is S15's question, not this item's. */}
             <ManaTimeline curve={report.manaCurve} manaAvailability={report.manaAvailability} />
             <ManaAvailability manaAvailability={report.manaAvailability} />
-            {/* PER-COST COUNTS, BEHIND A DISCLOSURE (roadmap S15, owner call 2026-09-02). Chapter
-              *  4 ran three pictures of the same mana in one column and no judge mentioned this
-              *  one. It is not deleted, because it is the only place a per-COST count survives once
-              *  two costs share a turn on a ramping deck -- the timeline above is indexed by TURN
-              *  and cannot say that. Reachable, not first. */}
-            <details className="rounded-(--radius) border border-(--separator) bg-(--surface) px-4 py-3">
-              <summary className="eyebrow cursor-pointer text-(--muted)">
-                the curve by mana cost, not by turn
-              </summary>
-              <div className="pt-3">
-                <ManaCurveChart curve={report.manaCurve} />
-              </div>
-            </details>
             <LandMathChart landCount={report.landCount} deckSize={data.resolvedCount} />
             <UnmetConditions landConditions={report.landConditions} />
           </div>
+          {/* PER-COST COUNTS, BEHIND A DISCLOSURE (roadmap S15, owner call 2026-09-02). Chapter
+            *  4 ran three pictures of the same mana in one column and no judge mentioned this
+            *  one. It is not deleted, because it is the only place a per-COST count survives once
+            *  two costs share a turn on a ramping deck -- the timeline above is indexed by TURN
+            *  and cannot say that. Reachable, not first.
+            *
+            *  OUTSIDE THE MULTI-COLUMN, AND THAT IS THE WHOLE OF T16. Owner: *"when I click it
+            *  components jump around and they should not"*. A CSS multi-column BALANCES its
+            *  children across the columns, so a disclosure opening inside one changes the total
+            *  height and every other panel is redistributed -- panels the reader was not looking at
+            *  move, in a chapter they had already read. Full width, below the columns, it can only
+            *  push what is under it. */}
+          <details className="mt-8 rounded-(--radius) border border-(--separator) bg-(--surface) px-4 py-3">
+            <summary className="eyebrow cursor-pointer text-(--muted)">
+              the curve by mana cost, not by turn
+            </summary>
+            <div className="pt-3">
+              <ManaCurveChart curve={report.manaCurve} />
+            </div>
+          </details>
           </Movement>
         </Chapter>
 
@@ -272,9 +286,6 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               />
             </div>
           </Movement>
-          {/* The other end of the same decision: which cards the engine says are carrying the deck.
-            *  Off the dissolved Engine tab, and the journey doc's chapter 6. */}
-          <HighSynergyCards cards={report.cards} />
         </Chapter>
       </div>
     </div>
