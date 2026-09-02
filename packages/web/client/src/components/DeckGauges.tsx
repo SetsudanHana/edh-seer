@@ -4,6 +4,7 @@ import { Bullet, TARGET_MARK } from "./Bullet.js";
 import { floorState, bandState, scoreState } from "../lib/deck-gauge.js";
 import { bandLegend } from "../lib/score-band.js";
 import { Explain } from "./Explain.js";
+import type { RunDiff } from "../lib/run-diff.js";
 
 /** A COUNT AGAINST ITS REFERENCE, AS A FRACTION OF THE TRACK. The target parks at `TARGET_MARK`,
  *  so the bar runs past it when the count clears it and stops short when it does not -- and every
@@ -47,7 +48,14 @@ export type GaugeTab = "build" | "mana" | "engine";
  *  target rows left `BuildBenchmarks` for Recognition, and then the target was stripped on the way
  *  in. The result was that nowhere on the page showed a role against its floor as a mark -- only as
  *  a sentence inside `Findings`. This panel is where that judgement is allowed to live. */
-export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (tab: GaugeTab, focus?: string) => void }) {
+export function DeckGauges({ data, onOpen, diff }: {
+  data: AnalyzeResponse;
+  onOpen: (tab: GaugeTab, focus?: string) => void;
+  /** WHERE THESE TWO NUMBERS WERE LAST RUN (roadmap S9). Only the two LEAD dials take a tick: the
+   *  run snapshot carries `synergyOverall` and `buildScore` and nothing else, and giving the input
+   *  dials one would mean new snapshot fields for a comparison nobody asked for. */
+  diff?: RunDiff | null;
+}) {
   const { report } = data;
   // WHICH CARD THE ANCHOR IS. The figure is computed from the single best-fed card's authority, and
   // that card is sitting elsewhere on the page wearing an "anchor" tag with nothing connecting the
@@ -90,6 +98,11 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
               name="Synergy"
               value={report.synergyOverall!.toFixed(1)}
               reading={scoreState(report.synergyOverall!, partial)}
+              /* Read on the SAME basis as the live reading above -- `partial` and all -- so the tick
+               * and the needle are two points on one scale rather than two scales. */
+              previous={diff?.synergy
+                ? { value: diff.synergy.from.toFixed(1), reading: scoreState(diff.synergy.from, partial) }
+                : undefined}
               zones="score"
               size="lead"
               onOpen={() => onOpen("engine", undefined)}
@@ -156,6 +169,10 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
                * has, so it keeps its band on a partly-read deck where synergy loses its own. The split
                * is the one the coverage gate already draws; no threshold is invented here. */
               reading={scoreState(report.buildScore!)}
+              /* No `partial`, matching the live reading immediately above and for its reason. */
+              previous={diff?.build
+                ? { value: diff.build.from.toFixed(1), reading: scoreState(diff.build.from) }
+                : undefined}
               zones="score"
               size="lead"
               onOpen={() => onOpen("build", undefined)}

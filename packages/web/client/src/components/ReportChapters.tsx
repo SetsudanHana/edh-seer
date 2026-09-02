@@ -190,7 +190,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
             *  counting the sticky header — S7 made that visible and this is the call it was made
             *  for. The tiles were the only place either score said what it MEASURES, so those two
             *  `Explain` blocks moved onto the dials themselves and the component retired. */}
-          <DeckGauges data={data} onOpen={openChapter} />
+          <DeckGauges data={data} onOpen={openChapter} diff={diff} />
           <BracketPanel bracket={report.bracket} />
         </Chapter>
 
