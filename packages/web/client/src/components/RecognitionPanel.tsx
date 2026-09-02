@@ -1,6 +1,7 @@
 import type { AnalyzeResponse } from "../types.js";
 import { typeSlices, landCount } from "../lib/deck-shape.js";
-import { TypeBar } from "./TypeBar.js";
+import { DeckWaffle } from "./DeckWaffle.js";
+import { waffleSquares } from "../lib/waffle.js";
 import { identityKey, identityLabel } from "../lib/color-identity.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 
@@ -125,8 +126,18 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
         *  reads the FRONT face, where the same card is a spell -- the same basis `typeSlices` counts
         *  it under -- so nonland + land sums to the deck by construction. `deckMath.lands.mdfc` is
         *  the gap between the two counts, named rather than silently summed: `TypeBar` prints it as
-        *  "(N with MDFCs)" beside the census figure. */}
-      <TypeBar slices={slices} lands={lands} mdfc={report.deckMath?.lands.mdfc} />
+        *  "(N with MDFCs)" beside the census figure -- `DeckWaffle` carries that line now, verbatim.
+        *
+        *  AND THE BAR BECAME A WAFFLE (roadmap S3). The stacked bar's own argument was that a
+        *  shared baseline beats a ring because creature 21 against enchantment 19 is 11 degrees of
+        *  arc; one square per card wins the same argument outright, and it is the only shape that
+        *  can also carry WHICH cards the engine failed to read. Same `slices` and same counts. */}
+      <DeckWaffle
+        squares={waffleSquares(nodes, report.cards, data.missing)}
+        slices={slices}
+        lands={lands}
+        mdfc={report.deckMath?.lands.mdfc}
+      />
     </section>
   );
 }
