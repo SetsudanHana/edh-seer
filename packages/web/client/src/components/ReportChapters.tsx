@@ -265,7 +265,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="fix" title={title("fix")}>
-          <Findings report={report} />
+          <Findings report={report} diff={diff} />
           {/* Adds and cuts are ONE decision — "which five come out for the eight that go in" — so
             *  they sit beside each other rather than eight panels apart. */}
           <Movement title="What to change">

@@ -1,6 +1,7 @@
 import type { DeckReport } from "../types.js";
 import { findings, slotTrade, FINDING_CAP, type Finding } from "../lib/findings.js";
 import { useState } from "react";
+import type { RunDiff } from "../lib/run-diff.js";
 
 /** WHAT IS WRONG WITH THIS DECK — the report's focal element, and the one structural change the
  *  2026-08-26 persona reviews asked for.
@@ -43,8 +44,19 @@ function Figure({ f }: { f: Finding }) {
   );
 }
 
-export function Findings({ report }: { report: DeckReport }) {
+export function Findings({ report, diff }: {
+  report: DeckReport;
+  /** WHAT THIS EDIT DID TO THE DIAGNOSIS (roadmap S9). Two marks, and only two: a finding that went
+   *  away, and one that appeared. A figure that merely MOVED gets nothing -- the header line states
+   *  the move, and a third statement of one fact is what this ranked list was built to remove. */
+  diff?: RunDiff | null;
+}) {
   const all = findings(report);
+  // `to === undefined` means it was in the last run's diagnosis and is not in this one. It is not in
+  // `all` either -- both read `findings(report)` -- so it is counted neither here nor in the header,
+  // and it disappears by itself next run, when the diff stops naming it. No "shown once" state.
+  const resolved = (diff?.findings ?? []).filter((f) => f.to === undefined);
+  const isNew = new Set((diff?.findings ?? []).filter((f) => f.from === undefined).map((f) => f.id));
   // Every shortfall is computed; the cap is what SHOWS. The rest are reachable rather than dropped
   // — a diagnosis that silently truncates is the same failure as one that never ranked.
   const [expanded, setExpanded] = useState(false);
@@ -73,6 +85,13 @@ export function Findings({ report }: { report: DeckReport }) {
               <h3 className="text-xl sm:text-2xl font-bold leading-tight tracking-[-0.02em] flex gap-3">
                 <span aria-hidden="true" className="w-[3px] shrink-0 rounded-full self-stretch bg-(--separator)" />
                 <span>{f.headline}</span>
+                {/* CAUSED BY THE EDIT YOU JUST MADE, which is a different fact from "worst first" and
+                  * the only one the ranking cannot carry. */}
+                {isNew.has(f.id) ? (
+                  <span className="self-center shrink-0 eyebrow text-(--warning) border border-(--warning) rounded-full px-2 py-0.5">
+                    since your edit
+                  </span>
+                ) : null}
               </h3>
               <p className="text-sm text-(--muted) max-w-[62ch] tabular-nums">{f.detail}</p>
               {f.action ? (
@@ -90,6 +109,20 @@ export function Findings({ report }: { report: DeckReport }) {
           </li>
         ))}
       </ul>
+      {/* GONE, SAID ONCE. Below the live rows because it is not one of them: it answers "did my edit
+        *  work", which is a different question from "what is wrong now". */}
+      {resolved.length > 0 ? (
+        <ul className="flex flex-col">
+          {resolved.map((f) => (
+            <li key={f.id} className="line-through text-(--muted) text-sm py-1.5 flex items-baseline gap-2">
+              {/* The WORD carries it, not the strike-through -- a line through text is a visual
+                * treatment a screen reader does not announce (WCAG 1.4.1). */}
+              <span className="text-(--success) no-underline">fixed</span>
+              <span className="stat-num">{f.from}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {all.length > FINDING_CAP ? (
         <button
           type="button"
