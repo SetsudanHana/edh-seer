@@ -3,6 +3,7 @@ import { select } from "d3-selection";
 import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
 import type { CardGraph, DeckReport } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
+import { usePinned } from "./card-drawer.js";
 import { cachedImageLoad } from "./art-cache.js";
 import {
   CARD_MODE_Z, MAX_Z, cardImageUrl, isOnScreen, renderModeFor, shouldPrefetchCard,
@@ -211,6 +212,10 @@ export function GraphView(
   // unlike hoveredIdRef/matchesRef this DOES need to drive a render (the panel is real DOM, not a
   // canvas draw), and a click is a discrete event, not a per-frame or per-keystroke one, so there
   // is no reheating-the-simulation cost to worry about here.
+  /** THE READER'S PINNED SET (roadmap S8). Destructured so this component re-renders when it
+   *  changes; the no-deps `useEffect(() => { dirtyRef.current = true; })` below then repaints. The
+   *  simulation lives in a ref, so a repaint is NOT a re-layout and the nodes do not jump. */
+  const { pinned: pinnedNames, togglePin } = usePinned();
   const [selectedIds, setSelectedIds] = useState<readonly string[]>([]);
   /** The card the PANEL is about: the most recently clicked one. Selection is a set and the panel
    *  is a single card, so one of them has to be chosen — and the last click is the one the reader
@@ -1278,6 +1283,21 @@ export function GraphView(
           }
         }
 
+        // PINNED, ONE RADIUS OUTSIDE THE MATCH RING (roadmap S8). The search-match ring above
+        // already uses the accent at r + 3, so a card that is both matched and pinned would
+        // otherwise show one ring and silently lose a fact. Same colour, same idiom, its own
+        // radius. `pinnedNames` is read from the reader's set rather than any engine field: this
+        // is the one mark on the board the reader made.
+        if (pinnedNames.has(n.cardName ?? n.label)) {
+          ctx.lineWidth = 2.5 / cam.z;
+          ctx.strokeStyle = paintColors.accent;
+          if (mode === "card") {
+            ctx.strokeRect(n.x - cardW / 2 - 6, n.y - cardH / 2 - 6, cardW + 12, cardH + 12);
+          } else {
+            ctx.beginPath(); ctx.arc(n.x, n.y, r + 6, 0, TAU); ctx.stroke();
+          }
+        }
+
         if (copies > 1) {
           ctx.font = `500 ${10 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
           ctx.textAlign = "center";
@@ -2289,6 +2309,12 @@ export function GraphView(
               // to "go back to", and leaving a lit set behind a closed panel would strand the reader
               // with a filtered board and nothing on screen saying what filtered it.
               onClose={() => setSelectedIds([])}
+              // PINNABLE FROM THE BOARD TOO (roadmap S8). The board is one of the surfaces a pin
+              // lights up, so being unable to pin FROM it is the kind of gap that reads as the
+              // feature half-working. Found by looking, not by a test: the drawer's inspector had
+              // the control and this one -- the same component, a second render site -- did not.
+              pinned={pinnedNames.has(inspectingNode.cardName ?? inspectingNode.label)}
+              onTogglePin={() => togglePin(inspectingNode.cardName ?? inspectingNode.label)}
             />
           ) : null}
         </div>

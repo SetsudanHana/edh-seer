@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { DeckReport } from "../types.js";
-import { CardName, useCardDrawer } from "./card-drawer.js";
+import { CardName, useCardDrawer, usePinned } from "./card-drawer.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
@@ -159,6 +159,7 @@ export function CardList({ cards, artByName, coverage }: {
    *  entirely when it read everything, so a fully covered paste sees exactly one table. */
   coverage?: DeckReport["coverage"];
 }) {
+  const { isPinned } = usePinned();
   const [filter, setFilter] = useState<Category | "all">("all");
   const [sort, setSort] = useState<SortKey>("synergy");
   const [query, setQuery] = useState("");
@@ -378,14 +379,31 @@ export function CardList({ cards, artByName, coverage }: {
             {visible.map((c, i) => {
               const reason = distinctiveReason(c, shapes.shared, names);
               const roles = (c.roles ?? []) as Category[];
+              /* PINNED RINGS THE ROW (roadmap S8). `--accent`, because every other mark on this
+               * page is engine-derived and uses --fill or --muted -- the accent is reserved as
+               * scarce, and a pinned set is the one thing on screen the READER made. Measured:
+               * --accent 4.9:1 against the page ground, over the 3:1 a graphical object owes;
+               * --fill is 2.12:1, which is the defect S17 had to fix. An OUTLINE rather than a
+               * tint, so the mark is not colour-only. */
               return (
-                <tr key={c.name} className="border-b border-(--separator) align-top">
+                <tr
+                  key={c.name}
+                  data-pinned={isPinned(c.cardName ?? c.name) ? "1" : undefined}
+                  className={`border-b border-(--separator) align-top ${
+                    isPinned(c.cardName ?? c.name)
+                      ? "outline outline-1 outline-(--accent) outline-offset-[-1px]"
+                      : ""
+                  }`}
+                >
                   <td className="py-2 pr-2 stat-num text-(--muted)">{String(i + 1).padStart(2, "0")}</td>
                   <td className="py-2 pr-2 min-w-0">
                     <span className="flex items-center gap-3 min-w-0">
                       <Thumb art={artByName?.get(c.name)} alt="" />
                       <span className="flex flex-col min-w-0">
                         <CardName name={c.name} className="block truncate max-w-full" />
+                        {/* A MARK IS NEVER THE ONLY CARRIER: a ring says nothing to a screen
+                          *  reader, and this table is the surface the header's count travels to. */}
+                        {isPinned(c.cardName ?? c.name) ? <span className="sr-only">pinned</span> : null}
                         {reason ? <span className="block text-xs text-(--muted) truncate">{reason}</span> : null}
                       </span>
                     </span>

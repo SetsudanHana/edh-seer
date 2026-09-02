@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { expect, test } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { ThemeMatrix } from "./ThemeMatrix.js";
-import { CardDrawerProvider } from "./card-drawer.js";
+import { CardDrawerProvider, usePinned } from "./card-drawer.js";
 import { SAMPLE } from "../fixtures.js";
 
 /** A pair carrying one reason, in the shape `groupEdgesByArchetype` emits. `implied` is
@@ -110,4 +110,40 @@ test("it states why it is a grid: more memberships than cards", () => {
 test("no groups means no matrix at all", () => {
   const { container } = show(["Sol Ring"], []);
   expect(container).toBeEmptyDOMElement();
+});
+
+/** S8, AND THIS IS THE SURFACE THAT PROVES THE FACE RULE. The matrix's rows are FACE names while
+ *  the waffle's squares are PHYSICAL names, so a card pinned on one surface has to light on the
+ *  other. Pinned here by the PHYSICAL name; the row is the FACE name. Getting this wrong is the
+ *  join the 2026-08-27 wave fixed in eleven places and S17 found a twelfth of. */
+test("a pinned card's row is ringed, even though the row is a face name", async () => {
+  const graph = {
+    nodes: [{
+      id: "Fable of the Mirror-Breaker", label: "Fable of the Mirror-Breaker",
+      cardName: "Fable of the Mirror-Breaker // Reflection of Kiki-Jiki",
+      copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 3,
+    }],
+    edges: [],
+  } as never;
+  function Pinner() {
+    const { togglePin } = usePinned();
+    return <button onClick={() => togglePin("Fable of the Mirror-Breaker // Reflection of Kiki-Jiki")}>pin it</button>;
+  }
+  const groups = [{
+    category: "draw", label: "Draw Engine", cards: ["Fable of the Mirror-Breaker"],
+    pairs: [{ a: "Fable of the Mirror-Breaker", b: "X",
+      reasons: [{ producer: "Fable of the Mirror-Breaker", consumer: "X", tag: "t", text: "x" }] }],
+  }] as never;
+  render(
+    <CardDrawerProvider graph={graph}>
+      <ThemeMatrix archetypes={groups} nonlandNames={["Fable of the Mirror-Breaker"]} />
+      <Pinner />
+    </CardDrawerProvider>,
+  );
+  expect(document.querySelector('tr[data-pinned="1"]')).toBeNull();
+  await userEvent.click(screen.getByText("pin it"));
+  const row = document.querySelector('tr[data-pinned="1"]');
+  expect(row).not.toBeNull();
+  // A mark is never the only carrier.
+  expect(row!.textContent).toContain("pinned");
 });

@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { DeckWaffle } from "./DeckWaffle.js";
+import { CardDrawerProvider, usePinned } from "./card-drawer.js";
 import { TYPE_ORDER } from "../lib/deck-shape.js";
 import type { WaffleSquare } from "../lib/waffle.js";
 
@@ -86,7 +88,9 @@ test("the commander is one cell like every other card, ringed rather than enlarg
   }
   const cmd = cells.find((c) => c.dataset.commander === "1")!;
   expect(cmd.className).toContain("outline");
-  expect(cmd).toHaveAttribute("title", "Krenko, Mob Boss");
+  // A REAL NAME, NOT A TOOLTIP (S8). `title` does not exist on touch at all, so on a phone this
+  // grid was a hundred unlabelled cells -- Section R's complaint about it.
+  expect(cmd).toHaveAccessibleName("Krenko, Mob Boss, commander");
   expect(screen.getByText(/The ringed square is/)).toHaveTextContent("Krenko, Mob Boss");
 });
 
@@ -223,4 +227,41 @@ test("the grid reads out its own census and both coverage states", () => {
   expect(label).toContain("34 lands");
   expect(label).toContain("1 the engine could not read");
   expect(label).toContain("1 not found at all");
+});
+
+/** S8 FOLD-IN. The square carried a tooltip and nothing else; it becomes a control that opens the
+ *  card, which is also the only way to reach the pin. Measured before making it tappable: the grid
+ *  is `repeat(10, ...)` inside max-w-[420px] with a 3px gap, so a square is about 39px on desktop
+ *  and about 30px inside a 390px viewport -- both over the 24px target floor (WCAG 2.5.8). */
+test("a waffle square is a named control, not a tooltip", () => {
+  render(<DeckWaffle squares={withUnread([sq({ name: "Sol Ring" })])} slices={SLICES} />);
+  const cell = screen.getAllByTestId("waffle-square").find((c) => c.getAttribute("aria-label") === "Sol Ring")!;
+  expect(cell.tagName).toBe("BUTTON");
+  expect(cell).not.toHaveAttribute("title");
+});
+
+/** THE COMMANDER ALREADY WORE A RING, and one square cannot carry two inset outlines. Pinned wins;
+ *  no fact is lost, because the panel's byline three lines above already names the commander --
+ *  which is exactly why its identity pips were deleted when that ring shipped. */
+test("a pinned square rings in the accent, and a pinned commander shows only that ring", async () => {
+  const graph = {
+    nodes: [{ id: "Krenko, Mob Boss", label: "Krenko, Mob Boss", copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 4 }],
+    edges: [],
+  } as never;
+  function Pinner() {
+    const { togglePin } = usePinned();
+    return <button onClick={() => togglePin("Krenko, Mob Boss")}>pin it</button>;
+  }
+  render(
+    <CardDrawerProvider graph={graph}>
+      <DeckWaffle squares={withUnread([sq({ name: "Krenko, Mob Boss", isCommander: true }), sq({})])} slices={SLICES} />
+      <Pinner />
+    </CardDrawerProvider>,
+  );
+  await userEvent.click(screen.getByText("pin it"));
+  const cell = document.querySelector('[data-testid="waffle-square"][data-pinned="1"]')!;
+  expect(cell.className).toContain("outline-(--accent)");
+  expect(cell.className).not.toContain("outline-(--foreground)");
+  // The mark is never the only carrier.
+  expect(cell.getAttribute("aria-label")).toContain("pinned");
 });

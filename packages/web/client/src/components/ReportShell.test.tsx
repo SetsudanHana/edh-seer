@@ -8,6 +8,7 @@ import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
 import { CHAPTERS } from "../lib/chapters.js";
 import { findings } from "../lib/findings.js";
 import { SAMPLE } from "../fixtures.js";
+import { CardDrawerProvider, usePinned } from "./card-drawer.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -207,4 +208,32 @@ test("the rail marks the topmost visible chapter, in document order", () => {
   // AND A GAP BETWEEN TWO CHAPTERS' BANDS KEEPS THE LAST ANSWER, rather than blinking off.
   act(() => fire([{ target: { id: "roles" }, isIntersecting: false }]));
   expect(screen.getByRole("button", { name: "Roles" })).toHaveAttribute("aria-current", "true");
+});
+
+/** S8. A set the reader builds up over a 3,000px scroll is invisible unless something says how big
+ *  it is, and the header is the one bar present in all six chapters. Absent at zero, because a mark
+ *  that is always present marks nothing. The count travels to /cards -- a separate SURFACE, not a
+ *  chapter anchor -- which is the one place a pinned card is lit AND named. */
+test("the header says how many cards are pinned, and only when some are", async () => {
+  function Pinner() {
+    const { togglePin } = usePinned();
+    return <button onClick={() => togglePin(SAMPLE.graph.nodes[0]!.label)}>pin it</button>;
+  }
+  render(
+    <MemoryRouter>
+      <CardDrawerProvider graph={SAMPLE.graph}>
+        <ReportHeader data={SAMPLE} />
+        <Pinner />
+      </CardDrawerProvider>
+    </MemoryRouter>,
+  );
+  expect(screen.queryByText(/pinned/)).toBeNull();
+
+  await userEvent.click(screen.getByText("pin it"));
+  const link = screen.getByRole("link", { name: /1 pinned/ });
+  // The deck lives in the hash and a plain `<Link>` drops it; `SurfaceLink` is what carries it.
+  expect(link.getAttribute("href")).toContain("/cards");
+
+  await userEvent.click(screen.getByRole("button", { name: /clear pinned/i }));
+  expect(screen.queryByText(/pinned/)).toBeNull();
 });

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { DeckReport } from "../types.js";
 import { Explain } from "./Explain.js";
 import { ThemeMatrix } from "./ThemeMatrix.js";
+import { CardName } from "./card-drawer.js";
 
 type Group = NonNullable<DeckReport["archetypes"]>[number];
 type Strategy = NonNullable<DeckReport["strategies"]>[number];
@@ -56,7 +57,10 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
         <ul className="flex flex-col pl-6 text-xs text-(--muted)">
           {preview.map((pair, i) => (
             <li key={`${pair.a}-${pair.b}-${i}`} className="truncate">
-              {pair.a} + {pair.b}
+              {/* THE NAMES OPEN THE CARDS (roadmap S8). This list is the evidence behind a group --
+                *  the one surface naming the pair a membership rests on -- and it was the one
+                *  surface you could not open a card from, because it printed raw text. */}
+              <CardName name={pair.a} /> + <CardName name={pair.b} />
               {pairReasons(pair)[0] ? <span> — {pairReasons(pair)[0]}</span> : null}
             </li>
           ))}
@@ -66,7 +70,7 @@ function GroupRow({ group, max }: { group: Group; max: number }) {
         <ul className="flex flex-col gap-2 pl-4 pt-1">
           {shown.map((pair, i) => (
             <li key={`${pair.a}-${pair.b}-${i}`} className="text-sm">
-              <span className="font-semibold">{pair.a} + {pair.b}</span>
+              <span className="font-semibold"><CardName name={pair.a} /> + <CardName name={pair.b} /></span>
               <ul className="mt-0.5 flex flex-col gap-0.5">
                 {/* ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE SENTENCE TO A READER. Archon of
                     Cruelty's entry trigger derives six reasons identical in tag and text, differing

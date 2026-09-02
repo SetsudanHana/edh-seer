@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { GraphNode } from "../types.js";
 import { CardInspector } from "./CardInspector.js";
+import { CardDrawerProvider, useCardDrawer } from "./card-drawer.js";
 
 const node = {
   id: "Bitterblossom", label: "Bitterblossom", copies: 1,
@@ -315,5 +317,58 @@ describe("CardInspector faces", () => {
     render(<CardInspector node={single as never} edges={[]} onClose={() => {}} />);
     // A control that cannot change anything is worse than no control.
     expect(screen.queryByTestId("face-flip")).toBeNull();
+  });
+});
+
+/** S8. Click already opens this drawer, and S18 made that gesture load-bearing -- it is how a reader
+ *  checks a synergy claim against the card's own text. So the pin is a control INSIDE the thing the
+ *  click opened, rather than a second gesture on the name: one interaction, identical on touch and
+ *  desktop, nothing undiscoverable. `aria-pressed` carries the state, because a screen reader gets
+ *  no ring. */
+describe("CardInspector pin", () => {
+  const solRing = {
+    id: "Sol Ring", label: "Sol Ring", copies: 1, types: ["artifact"], subtypes: [],
+    supertypes: [], colors: [], cmc: 1, oracleText: "{T}: Add {C}{C}.",
+  } as never as GraphNode;
+
+  it("reads its pressed state from the prop and reports the toggle", async () => {
+    const calls: number[] = [];
+    const { rerender } = render(
+      <CardInspector node={solRing} edges={[]} onClose={() => {}} pinned={false}
+        onTogglePin={() => calls.push(1)} />,
+    );
+    const pin = screen.getByRole("button", { name: /pin across the report/i });
+    expect(pin).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(pin);
+    expect(calls).toHaveLength(1);
+    rerender(
+      <CardInspector node={solRing} edges={[]} onClose={() => {}} pinned
+        onTogglePin={() => calls.push(1)} />,
+    );
+    expect(screen.getByRole("button", { name: /unpin across the report/i }))
+      .toHaveAttribute("aria-pressed", "true");
+  });
+
+  /** THE PANEL IS PRESENTATIONAL BY NECESSITY, not by taste: `card-drawer.tsx` imports this module
+   *  to render the drawer, so importing `usePinned` back would close an import cycle. Which makes
+   *  the WIRING the thing worth testing -- a panel that renders perfectly and is handed nothing is
+   *  the failure this pins. */
+  it("is wired to the real pinned set when the drawer opens it", async () => {
+    const graph = { nodes: [solRing], edges: [] } as never;
+    function Opener() {
+      const { open } = useCardDrawer();
+      return <button onClick={() => open("Sol Ring")}>open it</button>;
+    }
+    render(<CardDrawerProvider graph={graph}><Opener /></CardDrawerProvider>);
+    await userEvent.click(screen.getByText("open it"));
+    await userEvent.click(screen.getByRole("button", { name: /pin across the report/i }));
+    expect(screen.getByRole("button", { name: /unpin across the report/i })).toBeInTheDocument();
+  });
+
+  /** ABSENT WHERE THERE IS NOTHING TO PIN INTO -- the graph board renders this panel too, and a
+   *  control that reports to nobody is worse than no control. */
+  it("renders no pin control when no handler is given", () => {
+    render(<CardInspector node={solRing} edges={[]} onClose={() => {}} />);
+    expect(screen.queryByRole("button", { name: /pin across the report/i })).toBeNull();
   });
 });

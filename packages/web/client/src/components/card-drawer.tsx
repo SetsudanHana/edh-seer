@@ -28,9 +28,21 @@ interface CardDrawerApi {
    *  card, when several do). A token is NOT in `known` -- the drawer indexes card nodes only, and
    *  deliberately so -- but a reason sentence naming one has to be able to say what it is. */
   tokens: ReadonlyMap<string, string | undefined>;
+  /** Physical card names the reader has pinned (roadmap S8). Session-only: a shared analysis link
+   *  carries the deck, and a second axis of state in that hash is scope this does not need -- the
+   *  same call `ReportChapters` recorded for `focus`. */
+  pinned: ReadonlySet<string>;
+  /** Accepts a face OR a physical name and answers about the PHYSICAL card, so no panel needs to
+   *  know which kind it holds -- the matrix's rows are faces, the waffle's squares are physical. */
+  isPinned: (name: string) => boolean;
+  togglePin: (name: string) => void;
+  clearPins: () => void;
 }
 
-const CardDrawerContext = createContext<CardDrawerApi>({ open: () => {}, known: new Set(), tokens: new Map() });
+const CardDrawerContext = createContext<CardDrawerApi>({
+  open: () => {}, known: new Set(), tokens: new Map(),
+  pinned: new Set(), isPinned: () => false, togglePin: () => {}, clearPins: () => {},
+});
 
 export function useCardDrawer(): CardDrawerApi {
   return useContext(CardDrawerContext);
@@ -82,9 +94,42 @@ export function CardDrawerProvider({ graph, children }: { graph?: CardGraph; chi
     }
     return m;
   }, [graph]);
+  /** A PIN IS THE PHYSICAL CARD, NEVER A FACE (roadmap S8). `byName` already maps both spellings
+   *  onto one node id and the front face's node carries `cardName`, so resolving through it REUSES
+   *  the join instead of writing a thirteenth copy of it -- eleven were fixed on 2026-08-27 and S17
+   *  found the twelfth. A name the graph does not carry resolves to itself, so a token or an
+   *  off-deck name is still a stable key rather than a crash. */
+  const physicalName = useCallback((name: string): string => {
+    const id = byName.get(name);
+    const node = id === undefined ? undefined : (graph?.nodes ?? []).find((n) => n.id === id);
+    return node?.cardName ?? node?.label ?? name;
+  }, [byName, graph]);
+
+  const [pinned, setPinned] = useState<ReadonlySet<string>>(() => new Set());
+
+  /** THE SET DIES WITH THE ANALYSIS. `graph` is a new object per analyze, so this clears exactly
+   *  when the deck under the report changes -- without it a pin made on deck A survives into deck
+   *  B, where the name either lights nothing or lights a different card. */
+  useEffect(() => { setPinned(new Set()); }, [graph]);
+
+  const togglePin = useCallback((name: string) => {
+    const key = physicalName(name);
+    setPinned((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+  }, [physicalName]);
+
+  const isPinned = useCallback(
+    (name: string) => pinned.has(physicalName(name)),
+    [pinned, physicalName],
+  );
+  const clearPins = useCallback(() => setPinned(new Set()), []);
+
   const api = useMemo<CardDrawerApi>(
-    () => ({ open, known: new Set(byName.keys()), tokens }),
-    [open, byName, tokens],
+    () => ({ open, known: new Set(byName.keys()), tokens, pinned, isPinned, togglePin, clearPins }),
+    [open, byName, tokens, pinned, isPinned, togglePin, clearPins],
   );
 
   // Escape closes it. The panel has a close button of its own, but this drawer floats over a
@@ -115,13 +160,27 @@ export function CardDrawerProvider({ graph, children }: { graph?: CardGraph; chi
         ? createPortal(
             // The inspector positions itself `absolute inset-y-2 right-2` against this element.
             <div className="fixed inset-y-0 right-0 z-30 w-80 max-w-[90vw]">
-              <CardInspector node={node} edges={edges} onClose={() => setOpenId(null)} />
+              <CardInspector
+                node={node}
+                edges={edges}
+                onClose={() => setOpenId(null)}
+                pinned={pinned.has(node.cardName ?? node.label)}
+                onTogglePin={() => togglePin(node.cardName ?? node.label)}
+              />
             </div>,
             document.body,
           )
         : null}
     </CardDrawerContext.Provider>
   );
+}
+
+/** THE ONE WAY A PANEL ASKS ABOUT PINS (roadmap S8). Every surface imports this and nothing else,
+ *  so the face/physical rule stays in `physicalName` above rather than spreading across six
+ *  components -- which is how eleven join sites drifted apart in the first place. */
+export function usePinned(): Pick<CardDrawerApi, "pinned" | "isPinned" | "togglePin" | "clearPins"> {
+  const { pinned, isPinned, togglePin, clearPins } = useCardDrawer();
+  return { pinned, isPinned, togglePin, clearPins };
 }
 
 /** A REASON SENTENCE WITH ITS NOUNS MADE CHECKABLE (roadmap S18). Every card it names opens that

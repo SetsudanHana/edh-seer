@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, within, cleanup } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { CardDrawerProvider, CardName } from "./card-drawer.js";
+import { CardDrawerProvider, CardName, usePinned } from "./card-drawer.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
@@ -331,6 +331,20 @@ test("ArchetypeBoard says nothing about coverage on a fully-read deck", () => {
   expect(screen.queryByText(/is a floor/)).toBeNull();
 });
 
+/** S8 FOLD-IN. The pairs list printed "{pair.a} + {pair.b}" as raw text, so the one surface that
+ *  names the evidence behind a group was the one surface you could not open a card from -- and
+ *  therefore the one place a reader could not pin from either. */
+test("the pairs behind a group name cards you can open", () => {
+  render(
+    <CardDrawerProvider graph={SAMPLE.graph}>
+      <ArchetypeBoard archetypes={SAMPLE.report.archetypes} />
+    </CardDrawerProvider>,
+  );
+  // `fixtures.ts:102` -- the one pair is a: "Krenko, Mob Boss", b: "Impact Tremors".
+  expect(screen.getAllByRole("button", { name: "Krenko, Mob Boss" }).length).toBeGreaterThan(0);
+  expect(screen.getAllByRole("button", { name: "Impact Tremors" }).length).toBeGreaterThan(0);
+});
+
 test("ArchetypeBoard shows an empty-state message when there are no groups", () => {
   render(<ArchetypeBoard archetypes={[]} />);
   expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();
@@ -389,6 +403,30 @@ test("Cards tab shows what a card costs and when you can cast it, beside the rat
 /** The precon persona listed "{3}{B}{B} and the rest of the cost symbols" among words it could not
  *  understand. Brace notation must not survive anywhere in this table -- widened past a single
  *  colour letter, since a generic-mana token like "{3}" carries no letter at all. */
+/** S8. The ring is `--accent` because every OTHER mark on this page is engine-derived and uses
+ *  --fill or --muted; the accent is reserved as scarce, and a pinned set is the one thing on screen
+ *  the READER made. Measured: --accent 4.9:1 against the page ground, over the 3:1 a graphical
+ *  object owes -- --fill is 2.12:1 and must not carry it, which is the defect S17 had to fix. */
+test("a pinned card's row is ringed and says so to a screen reader", async () => {
+  const name = SAMPLE.graph.nodes[0]!.label;
+  function Pinner() {
+    const { togglePin } = usePinned();
+    return <button onClick={() => togglePin(name)}>pin it</button>;
+  }
+  render(
+    <CardDrawerProvider graph={SAMPLE.graph}>
+      <CardList cards={SAMPLE.report.cards} />
+      <Pinner />
+    </CardDrawerProvider>,
+  );
+  expect(document.querySelector('tr[data-pinned="1"]')).toBeNull();
+  await userEvent.click(screen.getByText("pin it"));
+  const row = document.querySelector('tr[data-pinned="1"]');
+  expect(row).not.toBeNull();
+  expect(row!.textContent).toContain(name);
+  expect(row!.textContent).toContain("pinned");
+});
+
 test("the Cards table renders costs as symbols, not as brace notation", () => {
   const cards = [{
     name: "Breach the Multiverse", synergyRating: 3.7, topPartners: [], manaCost: "{3}{B}{B}",
@@ -936,6 +974,28 @@ const DECK_MATH = {
     { key: "attacks:any", consumers: 3, suppliers: 0, available: null, fromCommandZone: false },
   ],
 };
+
+/** S8. The castability rows are already one per card, so this is the same accent outline the Cards
+ *  table and the matrix carry. `DECK_MATH.castability.cards` holds Ulamog and Damnation. */
+test("a pinned card's castability row is ringed and says so", async () => {
+  function Pinner() {
+    const { togglePin } = usePinned();
+    return <button onClick={() => togglePin("Ulamog")}>pin it</button>;
+  }
+  render(
+    <CardDrawerProvider graph={SAMPLE.graph}>
+      <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />
+      <Pinner />
+    </CardDrawerProvider>,
+  );
+  expect(document.querySelector('li[data-pinned="1"]')).toBeNull();
+  await userEvent.click(screen.getByText("pin it"));
+  const row = document.querySelector('li[data-pinned="1"]')!;
+  expect(row).not.toBeNull();
+  // The row already carries a full aria-label, so "pinned" joins that sentence.
+  expect(row.getAttribute("aria-label")).toContain("Ulamog");
+  expect(row.getAttribute("aria-label")).toContain("pinned");
+});
 
 test("deck-math blocks are grouped under the question they answer, worst section first", () => {
   // Scoped to `<section> > h3` -- I3 (whole-branch review, 2026-09-01) promoted these from h4 so
