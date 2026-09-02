@@ -417,7 +417,11 @@ test("ReportTabs defaults to the Overview tab and switches on click", async () =
   render(<ReportTabs data={SAMPLE} />);
   expect(screen.getByText("Tokens")).toBeInTheDocument(); // Overview's Summary sub-tab, RecognitionPanel's theme, visible by default
   await userEvent.click(screen.getByRole("tab", { name: "Archetypes" }));
-  expect(screen.getByText("Tokens Go Wide")).toBeInTheDocument(); // ArchetypeBoard content
+  // A group's label now appears TWICE on this tab -- once as a matrix column header and once on
+  // its own pair row -- so the assertion names which one it means rather than being loosened to
+  // `getAllByText`, which would pass on either alone.
+  expect(screen.getByRole("columnheader", { name: "Tokens Go Wide" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Tokens Go Wide/ })).toBeInTheDocument();
   await userEvent.click(screen.getByRole("tab", { name: "Cards" }));
   expect(screen.getByText("Krenko, Mob Boss")).toBeInTheDocument(); // CardList content
   await userEvent.click(screen.getByRole("tab", { name: "Combos" }));
