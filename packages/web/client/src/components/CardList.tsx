@@ -19,7 +19,7 @@ type Category =
 // these same categories into the six a deck is read by) -- these are plain internal exports again.
 export const CATEGORY_LABELS: Record<Category, string> = {
   ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", impulseDraw: "Impulse draw", targetedRemoval: "Removal",
-  stackInteraction: "Stack interaction", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
+  stackInteraction: "Counterspells", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
   protection: "Protection", tutor: "Tutors", lands: "Lands",
 };
 export const CATEGORY_ORDER: Category[] = [

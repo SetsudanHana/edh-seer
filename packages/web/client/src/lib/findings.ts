@@ -93,8 +93,11 @@ function buildFindings(report: DeckReport): Finding[] {
       headline: p.name === "Consistency"
         ? "You will run out of cards before you run out of turns."
         : `You are ${missing} short on ${p.name.toLowerCase()}.`,
-      detail: `${p.count} ${p.count === 1 ? "card fills" : "cards fill"} this role against a target of ${p.target}.`
-        + " The target is a deckbuilding convention, not a number measured from any deck.",
+      // THE HEDGE IS SHORT HERE AND LONG ON THE TICK LEGEND (T1). It was the same twenty words in
+      // five places, which is what made the page read as machine-written -- but a finding read on
+      // its own still has to say where its target came from, so the provenance stays and the
+      // disclaimer goes.
+      detail: `${p.count} in the deck; the template asks for ${p.target}.`,
       // Strip the leading "Name 6/14 — " the CLI sentence carries, since the figure is rendered
       // beside the row already.
       action: suggestion

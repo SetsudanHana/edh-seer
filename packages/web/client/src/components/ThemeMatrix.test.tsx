@@ -72,8 +72,10 @@ test("the legend counts both kinds, because the implied half can be the larger o
   // Measured on the example deck: 177 of 295 memberships are implied, so a reader taking every dot
   // at face value reads a deck twice as connected as it is.
   show(["Skullclamp", "Grim Haruspex"]);
-  expect(screen.getByText(/of them are\s+something the card does/)).toBeInTheDocument();
-  expect(screen.getByText(/are the card merely being there/)).toBeInTheDocument();
+  // T1: "payoff" and "enabler" are the words a player uses for this split; the report was spelling
+  // both out. The passive half keeps its honesty and loses the engine internals.
+  expect(screen.getByText(/are payoffs or\s+enablers for their theme/)).toBeInTheDocument();
+  expect(screen.getByText(/only qualify incidentally/)).toBeInTheDocument();
 });
 
 /** THE CARDS IN NO GROUP ARE NAMED, not counted: this is the region a cut conversation starts from
@@ -102,9 +104,13 @@ test("rows past the fold are one click away, and the count says how many", async
 });
 
 // THE ARGUMENT AGAINST A TREEMAP, said with this deck's own arithmetic rather than asserted.
-test("it states why it is a grid: more memberships than cards", () => {
+/** T13/T1: the grid-versus-pie DEFENCE went -- the reader wants the finding, not the tool arguing
+ *  its own chart choice. What has to survive is the fact the grid exists for: a card is in several
+ *  themes at once, which is why it is not one card one slice. */
+test("it says a card sits in more than one theme", () => {
   show(["Skullclamp", "Grim Haruspex"]);
-  expect(screen.getByText(/3 memberships do not fit in 2 cells/)).toBeInTheDocument();
+  expect(screen.getByText(/fit at least one theme, and\s+most fit several/)).toBeInTheDocument();
+  expect(screen.queryByText(/grid and not a\s+pie/)).toBeNull();
 });
 
 test("no groups means no matrix at all", () => {

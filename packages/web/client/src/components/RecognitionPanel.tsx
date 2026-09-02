@@ -77,8 +77,8 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-bold tracking-[-0.01em]">What this deck is</h2>
-
+      {/* The chapter above is titled "Deck at a glance"; an h2 reading "What this deck is" under
+        *  it was the same heading twice (T1). The theme line below IS the answer. */}
       {/* THE ANSWER LOOKS LIKE AN ANSWER (owner review, 2026-09-01). The theme shipped as the first
         *  word of a 14px muted metadata run -- "enchantments entering · The Rani · Grixis · read 100
         *  of 100 cards" -- so the panel asked "What this deck is" and then answered it at the same

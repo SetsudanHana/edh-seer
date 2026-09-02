@@ -32,13 +32,19 @@ import { primaryType } from "../lib/deck-shape.js";
  *  the shipped Overview broke it fifteen times: every block was `MONO EYEBROW` -> numbers -> muted
  *  paragraph at identical size and spacing, which is the visual signature of generated content and
  *  was named as such by all four personas on 2026-08-26. */
+/** `title` IS OPTIONAL, AND MOST MOVEMENTS NO LONGER HAVE ONE (roadmap T1). Every chapter used to
+ *  open with a question and then restate it as a declarative one line down -- "Can the mana deliver
+ *  it?" over "Whether the mana delivers it" -- which the copy review named as the strongest
+ *  machine-written tell on the page: *"no human writes a title twice, and the nominalised echo is
+ *  pure LLM cadence."* The `count` sentence is not an echo and stays: it says what the panels below
+ *  are evidence FOR, and on Mana and Roles it is the link back to the findings. */
 function Movement({
   title, count, children,
-}: { title: string; count?: string; children: React.ReactNode }) {
+}: { title?: string; count?: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-baseline gap-3 flex-wrap">
-        <h3 className="text-lg font-bold tracking-[-0.01em]">{title}</h3>
+        {title ? <h3 className="text-lg font-bold tracking-[-0.01em]">{title}</h3> : null}
         {/* A SENTENCE, NOT A FIGURE — it is where a movement says what its panels are FOR, and on
           *  Mana and Roles that is the link back to the findings they are evidence for. Set in the
           *  body face, never mono: `index.css` rules out the costume use. */}
@@ -157,7 +163,10 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
           />
           {report.coverage ? null : (
             <p className="eyebrow">
-              Resolved <span className="pip">{data.resolvedCount}/{data.totalCount}</span>
+              {/* "RESOLVED" IS A RULES WORD (T1): a spell resolves, and a player scanning
+                *  "Resolved 99/100" reads a simulation stat rather than how many names this tool
+                *  recognised. Nothing about the figure changed. */}
+              Recognized <span className="pip">{data.resolvedCount}/{data.totalCount}</span>
             </p>
           )}
         </Chapter>
@@ -209,7 +218,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="mana" title={title("mana")}>
-          <Movement title="Whether the mana delivers it" count="the evidence behind each mana finding in What's wrong, below">
+          <Movement count="the evidence behind each mana finding in What's wrong, below">
           <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
             {/* `showBenchmarks={false}`: the Roles chapter alone owns the category/parent block
               *  ("How the roles are spent", its group headers and leaf rows). Without this, that
@@ -257,7 +266,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="roles" title={title("roles")}>
-          <Movement title="What this deck plays" count="the evidence behind each build finding in What's wrong, below">
+          <Movement count="the evidence behind each build finding in What's wrong, below">
             <BuildBenchmarks
               categories={report.buildCategories}
               parents={report.buildParents}

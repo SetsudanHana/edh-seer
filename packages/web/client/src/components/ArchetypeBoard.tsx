@@ -153,18 +153,16 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
         *  has said since it was written that "the strategies are which named archetypes its cards
         *  signal" and are context. So they share a heading and the sentence that separates them,
         *  and neither sub-list claims a winner. */}
-      <div className="flex flex-col gap-2">
-        <h3 className="eyebrow">What this deck is made of</h3>
-        <Explain label="how this relates to the theme at the top">
-          The theme at the top of the report is this deck&rsquo;s identity: what its own card-to-card
-          connections turned out to be about. Nothing below competes with it. These are two
-          membership readings — which named plans your cards signal, and which mechanisms their
-          pairs land in — and neither is ranked to name the deck.
-        </Explain>
-      </div>
+      {/* NOT A HEADING AND NOT A DISCLOSURE (T1). The h3 restated the chapter title one line above
+        *  it, and the sentence under it was the whole of T15 -- which is exactly the thing that must
+        *  not sit behind a toggle a reader never opens. It is one visible line now. */}
+      <p className="text-xs text-(--muted) max-w-[65ch]">
+        The theme at the top of the report is what this deck is. Nothing here competes with it —
+        these are two ways of showing which cards belong to which theme, and neither is ranked.
+      </p>
       {hasStrategies ? (
         <div className="flex flex-col gap-2">
-          <h4 className="eyebrow">Named plans your cards signal</h4>
+          <h3 className="eyebrow">Archetypes</h3>
           {/* A PERCENTAGE WITH NO DENOMINATOR IS NOT A FIGURE. "Tokens 22%" was 22% of something the
             *  page never named — and the bars are scaled to the leader, not to 100%, so the widest
             *  one says "most" and not "all". */}
@@ -198,7 +196,7 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
       {hasGroups ? <ThemeMatrix archetypes={archetypes} nonlandNames={nonlandNames} /> : null}
       {hasGroups ? (
         <div className="flex flex-col gap-2">
-          <h4 className="eyebrow">The pairs behind each group</h4>
+          <h3 className="eyebrow">The pairs behind each group</h3>
           <Explain label="what a group counts">
             Pairs of cards whose synergy matches a known mechanism, and the cards those pairs touch.
             One pair can belong to several groups, and a group saying nothing a bigger one has not
