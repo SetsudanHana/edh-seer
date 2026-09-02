@@ -847,6 +847,14 @@ export function analyzeDeckStructured(
       // their cards do -- see `ARCHETYPE_SIGNATURE`'s `demandDefined`.
       caresTags: [...cardCaresTags(dc.tags!), ...dc.tags!.abilities.flatMap((a) => a.conditionCares ?? [])],
       effectKinds: dc.tags!.abilities.map((a) => a.effect.kind),
+      // WHAT each token-generation ability MAKES, so the Tokens row can tell a Zombie from a
+      // Treasure (roadmap T2b). `type: "creature"` is the outright answer where the clause carries
+      // it; otherwise the subtype is the only identity there is, and a token with neither
+      // contributes nothing rather than a guess.
+      tokenKinds: dc.tags!.abilities
+        .filter((a) => a.effect.kind === "token-generation")
+        .map((a) => (a.effect.subject?.type === "creature" ? "creature" : a.effect.subject?.subtype))
+        .filter((k): k is string => typeof k === "string"),
       subtypes: (dc.tags!.characteristics?.subtypes ?? []).filter(
         (s) => s === "equipment" || (s === "aura" && /enchant creature/i.test(dc.card.oracleText)),
       ),

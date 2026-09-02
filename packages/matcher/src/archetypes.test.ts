@@ -1,12 +1,16 @@
 import { expect, test } from "vitest";
 import { detectArchetypes, dominantArchetype, type CardSignal } from "./archetypes.js";
 
-const sig = (name: string, opts: { themeTags?: string[]; effectKinds?: string[]; subtypes?: string[]; cardTypes?: string[] }): CardSignal => ({
+const sig = (name: string, opts: {
+  themeTags?: string[]; effectKinds?: string[]; subtypes?: string[]; cardTypes?: string[];
+  tokenKinds?: string[];
+}): CardSignal => ({
   name,
   themeTags: opts.themeTags ?? [],
   effectKinds: opts.effectKinds ?? [],
   subtypes: opts.subtypes ?? [],
   ...(opts.cardTypes ? { cardTypes: opts.cardTypes } : {}),
+  ...(opts.tokenKinds ? { tokenKinds: opts.tokenKinds } : {}),
 });
 
 test("a card with its own token-generation effect kind maps to tokens as primary", () => {
@@ -222,4 +226,46 @@ test("a deck of planeswalkers is superfriends, and one or two walkers is not", (
 test("a signal with no cardTypes matches no type-defined archetype", () => {
   const out = detectArchetypes(Array.from({ length: 20 }, (_, i) => sig(`X ${i}`, {})), [], 64);
   expect(out.map((r) => r.name)).not.toContain("superfriends");
+});
+
+/** T2b, owner on their own Enchantress deck: the archetype list led with "Tokens 18%".
+ *
+ *  The Tokens row matches on the EFFECT KIND `token-generation`, which says a token was made and
+ *  cannot say what it was. The guard that drops resource tokens read only `create-token:<subtype>`
+ *  theme tags -- and `Curse of Opulence`, `Shiny Impetus`, `An Offer You Can't Refuse` and
+ *  `Charming Scoundrel` carry no such tag at all, so four Treasure-and-Gold makers voted the deck a
+ *  Tokens deck. The identity was one field away: `ability.effect.subject.subtype`. */
+test("a Treasure maker is not a Tokens deck, even with no create-token tag", () => {
+  const signals = [
+    sig("Curse of Opulence", { effectKinds: ["token-generation"], tokenKinds: ["gold"] }),
+    sig("Shiny Impetus", { effectKinds: ["token-generation"], tokenKinds: ["treasure"] }),
+  ];
+  expect(detectArchetypes(signals, [], 10).some((r) => r.name === "tokens")).toBe(false);
+});
+
+/** EXCLUDING ONLY WHAT IT CAN NAME is the whole safety of this. Measured over the 71 calibration
+ *  decks: of 477 token-generation abilities only 262 say `type: "creature"` outright, and the 166
+ *  carrying a bare subtype are a real tribe as often as not -- thopter, servo, myr, construct. A
+ *  "creature tokens only" rule would have silently dropped every one of those. */
+test("a body still counts, whether the clause names the type or only the tribe", () => {
+  const named = [sig("Aphemia", { effectKinds: ["token-generation"], tokenKinds: ["creature"] })];
+  expect(detectArchetypes(named, [], 10)[0]!.name).toBe("tokens");
+
+  const tribeOnly = [sig("Sai", { effectKinds: ["token-generation"], tokenKinds: ["thopter"] })];
+  expect(detectArchetypes(tribeOnly, [], 10)[0]!.name).toBe("tokens");
+
+  // And a card the clause layer could not read at all keeps its vote rather than being dropped on
+  // evidence nobody has -- the documented direction of this guard since it was written.
+  const unknown = [sig("Mystery", { effectKinds: ["token-generation"] })];
+  expect(detectArchetypes(unknown, [], 10)[0]!.name).toBe("tokens");
+});
+
+/** A Role is an Aura the token layer attaches to a creature -- "Cursed Role" is a debuff you put on
+ *  THEIRS -- and an Aura token is the same shape. Neither is a body. */
+test("a Role or Aura token is not a go-wide plan", () => {
+  const signals = [
+    sig("Asinine Antics", { effectKinds: ["token-generation"], tokenKinds: ["role"] }),
+    sig("The Rani", { effectKinds: ["token-generation"], tokenKinds: ["aura"] }),
+  ];
+  expect(detectArchetypes(signals, [], 10).some((r) => r.name === "tokens")).toBe(false);
 });
