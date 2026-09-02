@@ -170,3 +170,25 @@ test("an anthem does not join voltron, and a constellation counter still does", 
   // a category up for a whole deck.
   expect(categoryDefines(reason("enters:enchantment", "counter-placement"), "voltron-auras")).toBe(false);
 });
+
+/** T2d, the third place the owner's deck could not be named. The report headline learned
+ *  "Enchantress" from `theme-names.ts`, the strategy list learned it in T2c, and the membership grid
+ *  still had no column for it -- because its columns are `MECHANISM_CATEGORIES` and that list had
+ *  none either. Three classifiers, one gap, found one layer at a time. */
+test("an enchantment entering is its own mechanism, not Voltron", () => {
+  expect(categoryMatches(reason({ tag: "enters:enchantment" }), "enchantress")).toBe(true);
+  // `voltron-auras` already existed and is a DIFFERENT plan: an Aura suiting up one creature is not
+  // a deck that draws every time an enchantment lands. If this ever passes, the two have merged.
+  expect(categoryMatches(reason({ tag: "enters:enchantment" }), "voltron-auras")).toBe(false);
+  // And it DEFINES the category rather than merely joining it, so it counts toward the rank.
+  expect(categoryDefines(reason({ tag: "enters:enchantment" }), "enchantress")).toBe(true);
+});
+
+/** Every category needs a label and an EDHREC slug, and a new one is exactly where that gets
+ *  forgotten -- the slug map is a `Record` over this union, so `tsc` catches the omission, and this
+ *  catches a label added as an empty string to silence it. */
+test("every mechanism category carries a non-empty label", () => {
+  for (const c of MECHANISM_CATEGORIES) {
+    expect(MECHANISM_LABELS[c as MechanismCategory], c).toBeTruthy();
+  }
+});

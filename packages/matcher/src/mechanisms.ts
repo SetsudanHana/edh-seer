@@ -20,6 +20,7 @@ export const MECHANISM_CATEGORIES = [
   "wheels-draw",
   "toughness-matters",
   "power-matters",
+  "enchantress",
 ] as const;
 
 export type MechanismCategory = (typeof MECHANISM_CATEGORIES)[number];
@@ -59,6 +60,16 @@ export interface CategoryMatchEntry {
  *  for another three weeks because nothing measured it.
  *  → `specs/2026-08-20-report-usability-review.md` §3 F2 */
 export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
+  // THE THIRD PLACE THIS DECK COULD NOT BE NAMED (roadmap T2d, owner-reported 2026-09-03). The
+  // headline learned "Enchantress" from `theme-names.ts` and the strategy list learned it in T2c --
+  // and the membership grid still had no column for it, because its columns are THIS list and this
+  // list had none either. Three classifiers, one gap, found one layer at a time.
+  //
+  // `enters:enchantment` IS the trigger, and it is the same tag the deck's own theme is keyed on:
+  // Enchantress's Presence, Sythis and Setessan Champion all derive it. `voltron-auras` already
+  // exists and is NOT this -- an Aura suiting up one creature is a different plan from a deck that
+  // draws every time an enchantment lands.
+  enchantress: { tags: ["enters:enchantment", "cast:enchantment"] },
   aristocrats: { effectKinds: ["drain", "player-life-loss", "forced-sacrifice"] },
   // `damage` AND `pump` STAY HERE, and the compass is why. Narrowing this entry to the token
   // signals alone costs THREE gold pairs — Purphoros / Krenko, Impact Tremors / Jetmir, Mirkwood
@@ -179,6 +190,7 @@ export const MECHANISM_LABELS: Record<MechanismCategory, string> = {
   "blink-etb": "Blink / ETB",
   "mill-self": "Self-Mill",
   "wheels-draw": "Draw Engine",
+  enchantress: "Enchantress",
   "toughness-matters": "Toughness Matters",
   "power-matters": "Power Matters",
 };

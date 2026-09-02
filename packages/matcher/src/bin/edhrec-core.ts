@@ -19,6 +19,9 @@ export const CATEGORY_EDHREC_TAG: Record<MechanismCategory, string> = {
   "blink-etb": "blink",
   "mill-self": "mill",
   "wheels-draw": "wheels",
+  // Confirmed live on 2026-09-03 (`json.edhrec.com/pages/tags/enchantress.json`, "High Synergy
+  // Cards" present), same check as the rest of this map rather than a slug typed from memory.
+  enchantress: "enchantress",
   // Confirmed live (200, "High Synergy Cards" present) on 2026-07-28.
   "toughness-matters": "toughness-matters",
   "power-matters": "power-matters",
