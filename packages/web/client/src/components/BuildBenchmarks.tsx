@@ -1207,11 +1207,31 @@ function DeckMathRows({
               *  panels beside them, which is what they are, and the blocks inside them are the h4s.
               *  WCAG 1.3.1, and this repo's own "headings never skip levels". */}
             <h3 className="eyebrow">{s.title}</h3>
-            {s.blocks.filter(Boolean).map((block, i) => (
-              // Keyed by position within its section: these are fixed, authored blocks, never a
-              // list that reorders inside a section.
-              <Fragment key={i}>{block}</Fragment>
-            ))}
+            {/* TWO ACROSS WHERE THERE ARE TWO TO PLACE (roadmap T11). Measured on the deployed page
+              *  at 1960px: these blocks are full-width containers holding narrow content, and the
+              *  ink stopped at 27% of the row on "Win plans", 36% on "Combat pressure" and "How you
+              *  win". They stacked in one column because that is what a column does, not because
+              *  anything about them is wide.
+              *
+              *  A GRID AND NOT A MULTI-COLUMN, deliberately: T16 was a disclosure inside a CSS
+              *  multi-column re-balancing every sibling when it opened, and these blocks carry
+              *  `Caveat` disclosures of their own. A grid track only pushes what is below it.
+              *
+              *  ONLY WHEN THERE ARE TWO. A one-child two-column grid reserves half a row for
+              *  nothing, which is the exact defect this same item found in the Fixes chapter. */}
+            {(() => {
+              const blocks = s.blocks.filter(Boolean);
+              if (blocks.length < 2) return blocks.map((block, i) => <Fragment key={i}>{block}</Fragment>);
+              return (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-5 items-start [&>*]:min-w-0">
+                  {blocks.map((block, i) => (
+                    // Keyed by position within its section: these are fixed, authored blocks, never
+                    // a list that reorders inside a section.
+                    <Fragment key={i}>{block}</Fragment>
+                  ))}
+                </div>
+              );
+            })()}
           </section>
         ))}
     </div>

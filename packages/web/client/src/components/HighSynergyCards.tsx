@@ -33,7 +33,10 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
           <span className="text-(--foreground)">{sh.sample}</span>.
         </p>
       ))}
-      <ul className="flex flex-col">
+      {/* TWO ACROSS AT xl (roadmap T11). Measured at 1960px: the ink stopped at 567px of a 1782px
+        *  row. The rows are short by nature -- a score, a name, one reason -- so the fix is to place
+        *  more of them per row rather than to stretch any of them. */}
+      <ul className="flex flex-col xl:grid xl:grid-cols-2 xl:gap-x-8 [&>*]:min-w-0">
         {ranked.map((c) => {
           const topReason = distinctiveReason(c, shapes.shared, names);
           const isAnchor = maxAuthority > 0 && (c.authority ?? 0) >= ANCHOR_SHARE * maxAuthority;

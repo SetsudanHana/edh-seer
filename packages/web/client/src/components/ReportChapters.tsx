@@ -284,16 +284,20 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
           <Findings report={report} diff={diff} />
           {/* Adds and cuts are ONE decision — "which five come out for the eight that go in" — so
             *  they sit beside each other rather than eight panels apart. */}
+          {/* THE GRID HAD ONE CHILD AND STILL RESERVED TWO COLUMNS (roadmap T11). It was built to
+            *  sit the cut list beside the high-synergy list -- "which five come out for the eight
+            *  that go in" -- and T21 moved that other list to the Game plan chapter, where a list of
+            *  what is WORKING belongs. What was left was a two-column grid holding one panel, so
+            *  half the row was reserved for nothing at every width above 1280px. A defect I
+            *  introduced two commits ago and did not look at. */}
           <Movement title="What to change">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-              <CutList
-                cutList={report.cutList}
-                unjudged={report.unjudged}
-                coverage={report.coverage}
-                slack={report.slack}
-                trim={report.trim}
-              />
-            </div>
+            <CutList
+              cutList={report.cutList}
+              unjudged={report.unjudged}
+              coverage={report.coverage}
+              slack={report.slack}
+              trim={report.trim}
+            />
           </Movement>
         </Chapter>
       </div>

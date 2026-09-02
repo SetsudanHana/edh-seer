@@ -69,9 +69,13 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
         *  2px median line on top -- so a reader meets one visual grammar and not two. One series,
         *  so no legend: the heading names it. The numbers stay reachable in the `aria-label`, which
         *  is the table view this replaces. */}
+      {/* CAPPED LIKE ITS SIBLING (T11). A `viewBox` scales height with width, so left at `w-full` in
+        *  a 950px column this 320x88 chart renders about 260px tall -- a band chart that tall is a
+        *  different picture. `ManaTimeline` four panels up carries the same cap, so the two read as
+        *  a pair rather than as two unrelated sizes. */}
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full h-auto"
+        className="w-full max-w-[520px] h-auto"
         role="img"
         aria-label={
           "Share of the deck payable, by turn: "
