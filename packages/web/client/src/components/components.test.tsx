@@ -2170,21 +2170,84 @@ test("the bracket panel names what put the deck there, and never reads as a grad
     cheapCombos: [{ cards: ["Isochron Scepter", "Dramatic Reversal"], result: "Infinite untap", manaValue: 4 }],
     reasons: [],
   }} />);
-  expect(screen.getByText(/Bracket 4-5/)).toBeInTheDocument();
+  // The EN DASH: this line prints `CELL_LABEL[band]`, not the wire key, so it matches the cells
+  // above it. It was rendering "Bracket 4-5" beside a cell reading "4–5" (S14).
+  expect(screen.getByText(/Bracket 4–5/)).toBeInTheDocument();
   expect(screen.getByText(/by what the deck contains, not how good it is/i)).toBeInTheDocument();
   expect(screen.getByText(/Rhystic Study/)).toBeInTheDocument();
   expect(screen.getByText(/2 infinite combos/)).toBeInTheDocument();
-  expect(screen.getByText(/4 mana total/)).toBeInTheDocument();
+  // S14: the figure carries what it is the total OF. "4 mana total" floated with no label and a
+  // beginner read it as a quantity of something unnamed.
+  expect(screen.getByText(/4 mana for the pair/)).toBeInTheDocument();
   unmount();
 
   // 1-2 states the absence rather than rendering an empty list.
   const two = render(<BracketPanel bracket={{ band: "1-2", gameChangers: [], infiniteCombos: 0, cheapCombos: [], reasons: [] }} />);
-  expect(screen.getByText(/No Game Changers and no infinite combo/i)).toBeInTheDocument();
+  expect(screen.getByText(/no card from Wizards’ Game Changer list, and no\s+pair of cards that combine to repeat something forever/i)).toBeInTheDocument();
   two.unmount();
 
   // An analysis with no bracket renders nothing at all, never a heading over an empty panel.
   const { container } = render(<BracketPanel bracket={undefined} />);
   expect(container).toBeEmptyDOMElement();
+});
+
+// S14 (filed from S2's judging round, 2026-09-02). S2 fixed the panel's FORM and the beginner then
+// could not use it at all: every term was undefined. These pin the four words the judge listed by
+// name -- bracket, Game Changer, infinite combo, and the unlabelled mana figure -- plus the footnote,
+// which explained the ranges in the words that needed explaining and contradicted its own heading.
+test("the bracket panel defines its own vocabulary", () => {
+  render(<BracketPanel bracket={{
+    band: "4-5",
+    gameChangers: ["Rhystic Study"],
+    infiniteCombos: 2,
+    cheapCombos: [{ cards: ["Isochron Scepter", "Dramatic Reversal"], result: "Infinite untap", manaValue: 4 }],
+    reasons: [],
+  }} />);
+  // "I don't know what a bracket is in this game" -- one disclosure, not a paragraph.
+  expect(screen.getByText(/what a bracket is/i)).toBeInTheDocument();
+  expect(screen.getByText(/five tiers for matching decks before a game starts/i)).toBeInTheDocument();
+  // Capitalised and counted, with nothing saying what puts a card on the list.
+  // "the format" was jargon the beginner could not decode -- named outright (S14 judge round, F2).
+  expect(screen.getByText(/published list of the strongest cards in Commander/i)).toBeInTheDocument();
+  // "I know 'combo' only as ordinary English for a combination."
+  expect(screen.getByText(/repeat something over and over with no/i)).toBeInTheDocument();
+  // THE FOOTNOTE, which the judge read three times: the ranges are now explained by what the
+  // missing split is ABOUT, and the heading's promise is no longer declined in the last line.
+  expect(screen.getByText(/preconstructed\s+deck straight out of its box/i)).toBeInTheDocument();
+  expect(screen.queryByText(/is not something a card list can answer/i)).toBeNull();
+});
+
+// S14 JUDGE ROUND. The rewrite met its objective and the beginner filed eight findings against it,
+// two of them defects the rewrite itself introduced. These pin the two that blocked or misled.
+test("the panel orients the reader with the disclosure still CLOSED", () => {
+  // F1, and it was this item's own defect: the definition went behind a dim, closed toggle and
+  // every word under it assumed the reader had opened it. Read closed, the strip is three number
+  // pairs with no end named, and the footnote's "Telling 1 from 2" lands on undefined terms --
+  // "the old problem has not gone; it has moved behind a toggle". `Explain` renders its body in a
+  // closed `<details>`, so this asserts on the paragraph OUTSIDE it.
+  render(<BracketPanel bracket={{ band: "1-2", gameChangers: [], infiniteCombos: 0, cheapCombos: [], reasons: [] }} />);
+  // Both the disclosure body and this line say "five tiers"; the one that matters is the one NOT
+  // inside a <details>, because that is the only one a reader meets without acting.
+  const outside = screen.getAllByText(/five tiers for matching decks/i)
+    .filter((el) => el.closest("details") === null);
+  expect(outside).toHaveLength(1);
+  expect(outside[0].textContent).toMatch(/1 is the most casual table, 5 the most/);
+  expect(outside[0].textContent).toMatch(/not how good it is/);
+});
+
+test("a 4-5 deck with no cheap combo still says what put it there", () => {
+  // `brackets.ts` reaches 4-5 either on a cheap combo or on more Game Changers than bracket 3
+  // allows, and only the first had a sentence -- so a deck in the second case read its band with
+  // nothing explaining it. Derived from the band and the empty list, never from the matcher's
+  // ceiling constant.
+  render(<BracketPanel bracket={{
+    band: "4-5",
+    gameChangers: ["Rhystic Study", "Mana Crypt", "Jeska's Will", "Fierce Guardianship"],
+    infiniteCombos: 0,
+    cheapCombos: [],
+    reasons: [],
+  }} />);
+  expect(screen.getByText(/More Game Changers than bracket 3 allows/)).toBeInTheDocument();
 });
 
 // JOURNEY RULE 7: a deck-relative dial and a WotC band must not read as the same scale. `Bracket 4-5`
@@ -2234,7 +2297,10 @@ test("the band carries one pip per piece of evidence that put the deck there", (
   expect(screen.getAllByTestId("bracket-pip")).toHaveLength(3);
   // AND THEY CARRY A WORD. Bare pips carried nothing: a judge did not see them until asked, then
   // could not decode them -- "two marks, no legend, no text, I'd have to guess what they count".
-  expect(screen.getByText(/3 things put it here/)).toBeInTheDocument();
+  // S14 judge round, F4: "N things put it here" claimed all N forced this band, while the boxes
+  // below said only some of them did -- the reader could not tell which. The count is what the
+  // brackets LOOK AT; the boxes say what each one does.
+  expect(screen.getByText(/3 things the brackets look at/)).toBeInTheDocument();
   unmount();
 
   // THE SUBSET RULE, PINNED ON ITS OWN: five infinite combos that are all cheap are five things,
@@ -2249,7 +2315,7 @@ test("the band carries one pip per piece of evidence that put the deck there", (
     reasons: [],
   }} />);
   expect(screen.getAllByTestId("bracket-pip")).toHaveLength(6);
-  expect(screen.getByText(/6 things put it here/)).toBeInTheDocument();
+  expect(screen.getByText(/6 things the brackets look at/)).toBeInTheDocument();
   subset.unmount();
 
   // Singular reads as a sentence, not as "1 things".
@@ -2257,7 +2323,7 @@ test("the band carries one pip per piece of evidence that put the deck there", (
     band: "3", gameChangers: ["Rhystic Study"], infiniteCombos: 0, cheapCombos: [], reasons: [],
   }} />);
   expect(screen.getAllByTestId("bracket-pip")).toHaveLength(1);
-  expect(screen.getByText(/one thing puts it here/)).toBeInTheDocument();
+  expect(screen.getByText(/one thing the brackets look at/)).toBeInTheDocument();
   one.unmount();
 
   // A MARK THAT IS ALWAYS PRESENT MARKS NOTHING -- the same rule `DerivedMark` and the unread hatch
