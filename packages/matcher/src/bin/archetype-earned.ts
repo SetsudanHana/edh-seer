@@ -52,7 +52,12 @@ async function main(): Promise<void> {
   const winBefore = new Map<string, number>();
   const winAfter = new Map<string, number>();
 
-  for (const file of readdirSync(DECK_DIR).filter((f) => f.endsWith(".txt")).sort()) {
+  // ONE DECK, EVERY COLUMN. The sweep answers "does the ranking move"; a single deck is how the
+  // question that started T2d is checked -- whether this deck's grid has a column for what the deck
+  // actually is.
+  const only = process.argv[2];
+  for (const file of readdirSync(DECK_DIR).filter((f) => f.endsWith(".txt")).sort()
+    .filter((f) => only === undefined || f.replace(/\.txt$/, "") === only)) {
     const sections = parseDecklistSections(readFileSync(join(DECK_DIR, file), "utf8"));
     const inputs: DeckCard[] = [];
     for (const name of [...sections.commanders, ...sections.deck]) {
@@ -70,6 +75,10 @@ async function main(): Promise<void> {
     const m = themeMatrix(r.archetypes, nonland);
     if (!m) continue;
     decks++;
+    if (only !== undefined) {
+      console.log(`${file.replace(/\.txt$/, "")} columns, in the engine's own order:`);
+      for (const c of m.columns) console.log(`  ${c.label.padEnd(20)} ${c.earned} of ${c.total} cards earn it`);
+    }
     earned += m.earnedTotal;
     implied += m.impliedTotal;
 
