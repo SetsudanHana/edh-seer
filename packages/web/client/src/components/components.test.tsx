@@ -2060,6 +2060,69 @@ test("the bracket panel names what put the deck there, and never reads as a grad
   expect(container).toBeEmptyDOMElement();
 });
 
+// JOURNEY RULE 7: a deck-relative dial and a WotC band must not read as the same scale. `Bracket 4-5`
+// shipped as a 24px `stat-num` one column from SYNERGY and BUILD, both genuinely out of five -- so
+// the one number on the page that is NOT a score was the one wearing a score's clothes. Three cells
+// cannot be read as "x out of 5"; a big numeral can.
+test("the bracket draws as a three-cell band with the deck's own cell filled", () => {
+  const { unmount } = render(<BracketPanel bracket={{
+    band: "3", gameChangers: [], infiniteCombos: 1, cheapCombos: [], reasons: [],
+  }} />);
+  const cells = screen.getAllByTestId("bracket-cell");
+  // THREE, AND STAYING THREE. Owner ruling 2026-09-01: "1 and 5 are player choice, the rest are
+  // rules" -- a five-cell band asks the client to print a number nothing can check.
+  expect(cells).toHaveLength(3);
+  expect(cells.map((c) => c.textContent)).toEqual(["1–2", "3", "4–5"]);
+  expect(cells.map((c) => c.getAttribute("data-here"))).toEqual([null, "1", null]);
+  // A BAND REPORTS; A TAB STRIP INVITES. Three separately bordered, separately rounded cells with
+  // one filled are built exactly like this app's own tab strip, and a judge read them that way --
+  // "I can't tell whether the panel is reporting a result or offering me a choice". The radius and
+  // the outer border belong to the TRACK, so no cell can wear a pill's shape.
+  for (const cell of cells) expect(cell.className).not.toMatch(/rounded/);
+  unmount();
+
+  const high = render(<BracketPanel bracket={{
+    band: "4-5", gameChangers: ["Rhystic Study"], infiniteCombos: 0, cheapCombos: [], reasons: [],
+  }} />);
+  expect(screen.getAllByTestId("bracket-cell").map((c) => c.getAttribute("data-here")))
+    .toEqual([null, null, "1"]);
+  high.unmount();
+});
+
+// THE EVIDENCE, AS PIPS, so the eye goes band -> why without reading. The named list underneath is
+// what a reader CHECKS; this is what they see first.
+test("the band carries one pip per piece of evidence that put the deck there", () => {
+  const { unmount } = render(<BracketPanel bracket={{
+    band: "4-5",
+    gameChangers: ["Rhystic Study", "Mana Crypt"],
+    infiniteCombos: 1,
+    cheapCombos: [{ cards: ["Isochron Scepter", "Dramatic Reversal"], result: "Infinite untap", manaValue: 4 }],
+    reasons: [],
+  }} />);
+  // Two Game Changers, one infinite combo, one cheap combo -- every pip stands for something the
+  // list below names.
+  expect(screen.getAllByTestId("bracket-pip")).toHaveLength(4);
+  // AND THEY CARRY A WORD. Bare pips carried nothing: a judge did not see them until asked, then
+  // could not decode them -- "two marks, no legend, no text, I'd have to guess what they count".
+  expect(screen.getByText(/4 things put it here/)).toBeInTheDocument();
+  unmount();
+
+  // Singular reads as a sentence, not as "1 things".
+  const one = render(<BracketPanel bracket={{
+    band: "3", gameChangers: ["Rhystic Study"], infiniteCombos: 0, cheapCombos: [], reasons: [],
+  }} />);
+  expect(screen.getAllByTestId("bracket-pip")).toHaveLength(1);
+  expect(screen.getByText(/one thing puts it here/)).toBeInTheDocument();
+  one.unmount();
+
+  // A MARK THAT IS ALWAYS PRESENT MARKS NOTHING -- the same rule `DerivedMark` and the unread hatch
+  // ship under. A 1-2 deck has no evidence and gets no pips; the panel states the absence in words.
+  render(<BracketPanel bracket={{
+    band: "1-2", gameChangers: [], infiniteCombos: 0, cheapCombos: [], reasons: [],
+  }} />);
+  expect(screen.queryAllByTestId("bracket-pip")).toHaveLength(0);
+});
+
 // I11's REPORT WIRING. This panel is where the model's refused quantities could leak into a headline,
 // so the copy is asserted, not just the numbers: the range must be named as the PLAY POLICY and the
 // colour blindness must be on screen rather than in a tooltip.
