@@ -8,6 +8,8 @@ import { findings } from "../lib/findings.js";
 import { usePinned } from "./card-drawer.js";
 import { SurfaceLink } from "./ReportShell.js";
 import { identityKey } from "../lib/color-identity.js";
+import type { RunDiff } from "../lib/run-diff.js";
+import { RunDiffLine, signed } from "./RunDiffLine.js";
 
 /** THE REPORT'S SUMMARY, ON EVERY SURFACE — sticky above the chapters AND above the graph, the
  *  cards table and the combo list.
@@ -30,7 +32,7 @@ import { identityKey } from "../lib/color-identity.js";
  *  hardcoded `top-[33px]` "offset by the tab strip", the strip's real height depended on type
  *  metrics and the viewport, and the top row scrolled underneath it on a phone. A measured variable
  *  cannot be off by a re-tuned constant. */
-export function ReportHeader({ data }: { data: AnalyzeResponse }) {
+export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
   const ref = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -90,12 +92,18 @@ export function ReportHeader({ data }: { data: AnalyzeResponse }) {
           </span>
         ) : null}
         {report.synergyOverall !== undefined ? (
-          <HeaderScore name="Synergy" value={report.synergyOverall} partial={partial} />
+          <HeaderScore
+            name="Synergy" value={report.synergyOverall} partial={partial}
+            delta={diff?.synergy ? signed(diff.synergy.from, diff.synergy.to) : undefined}
+          />
         ) : null}
         {report.buildScore !== undefined ? (
           // `buildScore` counts roles off printed text, which an unread card still has, so it keeps
           // its band where synergy loses its own. The split is the gate's, not a new one.
-          <HeaderScore name="Build" value={report.buildScore} />
+          <HeaderScore
+            name="Build" value={report.buildScore}
+            delta={diff?.build ? signed(diff.build.from, diff.build.to) : undefined}
+          />
         ) : null}
         {/* THE PINNED SET SAYS HOW BIG IT IS (roadmap S8), in the one bar on screen in all six
           *  chapters. A set the reader builds up over a 3,000px scroll is otherwise invisible.
@@ -171,6 +179,14 @@ export function ReportHeader({ data }: { data: AnalyzeResponse }) {
           </span>
         ) : null}
       </div>
+      {/* WHAT YOUR EDIT DID, ON EVERY SURFACE (roadmap S9). Its own line rather than a seventh item
+        *  in the row above: that row already wraps at 390px, and an item of variable length would
+        *  push the scores onto a second line on a phone.
+        *
+        *  Absent on run one and on any run whose diff is null, so a first-time reader pays nothing.
+        *  `--report-header-h` is written by a ResizeObserver, so everything sticky below re-clears
+        *  the header when this line appears or is dismissed -- no second constant to keep in step. */}
+      <RunDiffLine diff={diff ?? null} />
     </header>
   );
 }
@@ -178,7 +194,14 @@ export function ReportHeader({ data }: { data: AnalyzeResponse }) {
 /** One score, one line: the name, the number and the word `scoreState` gives it. The tone colour is
  *  `Dial`'s own `TONE_TEXT` map rather than a second table, so the header and the dial two screens
  *  down cannot come to disagree about what 3.4 is called. */
-function HeaderScore({ name, value, partial }: { name: string; value: number; partial?: boolean }) {
+function HeaderScore({ name, value, partial, delta }: {
+  name: string;
+  value: number;
+  partial?: boolean;
+  /** ALREADY FORMATTED, by `RunDiffLine`'s `signed` -- one formatter, so the header and the line
+   *  under it cannot come to print the same move two ways. */
+  delta?: string;
+}) {
   const reading = scoreState(value, partial);
   return (
     <span className="flex items-baseline gap-1.5 whitespace-nowrap">
@@ -191,6 +214,14 @@ function HeaderScore({ name, value, partial }: { name: string; value: number; pa
       <span className="text-base font-semibold stat-num leading-none">
         {value.toFixed(1)}<span className="text-(--muted) text-xs font-normal">/5</span>
       </span>
+      {/* THE DIRECTION IS THE SIGN, and the tone only agrees with it (WCAG 1.4.1). Both of these
+        *  scores are ones where higher is better, so up is success and down is danger -- never
+        *  `--muted`, which would make the delta the number a second time. */}
+      {delta ? (
+        <span className={`text-xs stat-num ${delta.startsWith("+") ? "text-(--success)" : "text-(--danger)"}`}>
+          {delta}
+        </span>
+      ) : null}
       <span data-tone={reading.tone} className={`text-xs ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
     </span>
   );

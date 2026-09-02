@@ -21,6 +21,7 @@ const GraphView = lazy(() => import("./GraphView.js").then((m) => ({ default: m.
 import { GraphList } from "./GraphList.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 import { CardDrawerProvider } from "./card-drawer.js";
+import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
 
 /** THE REPORT'S SHELL: the sticky header, the scroll, and the three reference surfaces that are
@@ -37,7 +38,15 @@ import { unreadCardNames } from "../lib/unread.js";
  *  server can be asked for by name.
  *  CEILING: a static host with no SPA rewrite 404s on a direct `/graph` load. Every SHARED link is
  *  `/` plus the deck hash, so this only bites a reader who bookmarks a reference surface. */
-export function ReportShell({ data }: { data: AnalyzeResponse }) {
+/** HOW MANY ADDED CARDS ARE WORTH PRE-PINNING (roadmap S9). `diffRuns` calls a run "the same deck"
+ *  down to 50% overlap, which admits a 40-card swap -- and 40 pinned cards light most of the report,
+ *  contradicting the rule this header already follows in two places: a mark that is always present
+ *  marks nothing. Over the cap nothing is seeded and the header line still says "+14". */
+export const SEED_CAP = 8;
+
+export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
+  // THE CARDS THIS EDIT ADDED, LIT IN EVERY CHAPTER without the reader hunting for them.
+  const seedPins = diff && diff.added.length > 0 && diff.added.length <= SEED_CAP ? diff.added : undefined;
   // Under `sm`, the Graph surface ships the graph's DATA as a list instead of its LAYOUT as a
   // canvas — see `GraphList` for why the board is the part that fails at that width.
   const narrow = useIsNarrow();
@@ -107,19 +116,19 @@ export function ReportShell({ data }: { data: AnalyzeResponse }) {
 
   return (
     // Every card name under here can open the inspector; the graph keeps its own in-canvas one.
-    <CardDrawerProvider graph={data.graph}>
+    <CardDrawerProvider graph={data.graph} seedPins={seedPins}>
       <div className="flex flex-col">
         {/* THE SUMMARY ON EVERY SURFACE, chapters and reference alike — the split where
           *  `HeadlineScores` lived inside one tab and the coverage gate above the strip is what
           *  this resolves. */}
-        <ReportHeader data={data} />
+        <ReportHeader data={data} diff={diff} />
         {/* OUTSIDE THE CHAPTERS, ON EVERY SURFACE. A line the engine never matched to a card is not
           *  a property of any one chapter — the report simply does not contain those cards — and it
           *  is the one failure the reader can fix by editing their paste. It stayed visible across
           *  every tab before the tabs died; it stays visible across every route now. */}
         {data.missing.length > 0 ? <div className="pt-4"><MissingCards missing={data.missing} /></div> : null}
         <Routes>
-          <Route index element={<ReportChapters data={data} />} />
+          <Route index element={<ReportChapters data={data} diff={diff} />} />
           <Route
             path="graph"
             element={
@@ -153,7 +162,7 @@ export function ReportShell({ data }: { data: AnalyzeResponse }) {
           <Route path="combos" element={<Reference><ComboList combos={data.report.combos} /></Reference>} />
           {/* A path this app does not have is the REPORT, not an error page: the deck is in the
             *  hash and the chapters are what it is for. */}
-          <Route path="*" element={<ReportChapters data={data} />} />
+          <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
         </Routes>
       </div>
     </CardDrawerProvider>

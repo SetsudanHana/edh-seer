@@ -19,6 +19,7 @@ import { HighSynergyCards } from "./HighSynergyCards.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
+import type { RunDiff } from "../lib/run-diff.js";
 import { findings } from "../lib/findings.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
@@ -94,7 +95,7 @@ function Chapter({ id, title, children }: {
  *
  *  Chapter membership lives in `lib/chapters.ts` so the rail and the sections cannot disagree about
  *  what exists. */
-export function ReportChapters({ data }: { data: AnalyzeResponse }) {
+export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
   const { report } = data;
   const current = useCurrentChapter();
   // Which prescriptions a finding already printed as its own action line, so the Prescribe movement

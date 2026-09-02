@@ -2,12 +2,13 @@ import { render, screen, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
-import { ReportShell } from "./ReportShell.js";
+import { ReportShell, SEED_CAP } from "./ReportShell.js";
 import { ReportHeader } from "./ReportHeader.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
 import { CHAPTERS } from "../lib/chapters.js";
 import { findings } from "../lib/findings.js";
 import { SAMPLE } from "../fixtures.js";
+import type { RunDiff } from "../lib/run-diff.js";
 import { CardDrawerProvider, usePinned } from "./card-drawer.js";
 
 afterEach(() => {
@@ -236,4 +237,52 @@ test("the header says how many cards are pinned, and only when some are", async 
 
   await userEvent.click(screen.getByRole("button", { name: /clear pinned/i }));
   expect(screen.queryByText(/pinned/)).toBeNull();
+});
+
+/** THE SECOND RUN IS THE REAL PRODUCT (roadmap S9). `SAMPLE.report` carries synergy 4 and build 3.7,
+ *  so both `HeaderScore`s render and both can take a delta. */
+const runDiff: RunDiff = {
+  added: ["Rhystic Study"],
+  removed: [],
+  synergy: { from: 3.7, to: 4 },
+  build: { from: 3.9, to: 3.7 },
+  categories: [],
+  findings: [],
+};
+
+/** THE DELTA SITS BESIDE THE NUMBER IT QUALIFIES, on the line that is on screen at every scroll
+ *  position and on every surface -- which is the whole of roadmap S9. */
+test("the header prints a signed delta beside each score", () => {
+  render(<MemoryRouter><ReportShell data={SAMPLE} diff={runDiff} /></MemoryRouter>);
+  expect(screen.getByText("+0.3")).toBeInTheDocument();
+  expect(screen.getByText("-0.2")).toBeInTheDocument();
+});
+
+/** WCAG 1.4.1: the direction is a sign, never a tone alone. */
+test("a delta states its direction in text, not only in tone", () => {
+  render(<MemoryRouter><ReportShell data={SAMPLE} diff={runDiff} /></MemoryRouter>);
+  expect(screen.getByText("+0.3").textContent).toMatch(/^\+/);
+});
+
+test("run one prints no delta and no diff line", () => {
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+  expect(screen.queryByText(/^[+-]0\./)).toBeNull();
+  expect(screen.queryByText("Since your edit")).toBeNull();
+});
+
+/** A 50%-overlap swap is still "the same deck" to `diffRuns`, so a 40-card edit would light most of
+ *  the report -- and a mark that is always present marks nothing, the rule this header already
+ *  follows in two places. */
+test("a seed over the cap pins nothing", () => {
+  const many = Array.from({ length: SEED_CAP + 1 }, (_, i) => `Card ${i}`);
+  render(<MemoryRouter><ReportShell data={SAMPLE} diff={{ ...runDiff, added: many }} /></MemoryRouter>);
+  expect(screen.queryByText(/pinned/)).toBeNull();
+});
+
+test("a seed within the cap pins the added cards", () => {
+  render(<MemoryRouter><ReportShell data={SAMPLE} diff={runDiff} /></MemoryRouter>);
+  // `physicalName` falls back to the name itself for a card the graph does not carry, so the count
+  // is 1 whether or not the fixture's graph knows "Rhystic Study" -- which is the point: a seeded
+  // name is a stable key, never a crash.
+  expect(screen.getByText("1 pinned")).toBeInTheDocument();
 });
