@@ -51,6 +51,7 @@ const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
 interface Row {
   deck: string;
   byImpact: string[];
+  unseen: string[];
   byShortfall: string[];
   topChanged: boolean;
   setChanged: boolean;
@@ -83,7 +84,7 @@ async function main(): Promise<void> {
       inputs, commanderNames, undefined, undefined, new ComboIndex([]), undefined, tokenTags,
     ) as unknown as DeckReport;
 
-    const { scored } = rankedFindings(report);
+    const { scored, unseen } = rankedFindings(report);
     // The OLD rule, applied to the same set: `findings` already returns worst-shortfall first, so
     // this is that order restricted to the rows the new one ranks.
     const byShortfall = findings(report).filter((f) => scored.some((s) => s.id === f.id));
@@ -105,6 +106,7 @@ async function main(): Promise<void> {
       deck: file.replace(/\.txt$/, ""),
       byImpact: ids(scored),
       byShortfall: ids(byShortfall),
+      unseen: [...new Set(unseen.map((f) => f.kind))].sort(),
       topChanged: scored[0]?.id !== byShortfall[0]?.id,
       setChanged: sorted(scored) !== sorted(byShortfall),
     });
@@ -126,6 +128,9 @@ async function main(): Promise<void> {
       // If this is small the figure does not discriminate and the ranking claim is not supported.
       spread: at(0.999) - at(0),
     },
+    // WHICH DECKS HAVE A PROBLEM THE BUILD SCORE CANNOT EXPRESS -- the second group's population.
+    // Empty on most decks, which is why the heading only renders when it has rows.
+    unseenDecks: rows.filter((r) => r.unseen.length > 0).map((r) => `${r.deck}: ${r.unseen.join(",")}`),
     zeroImpact: Object.fromEntries(
       [...byKind].map(([k, n]) => [k, `${zeroByKind.get(k) ?? 0} of ${n}`]).sort(),
     ),
