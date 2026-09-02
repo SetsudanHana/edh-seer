@@ -2491,6 +2491,19 @@ describe("the cards the engine could not read", () => {
     expect(canvas.__graphProbe!().fits).toBeGreaterThan(parked);
   });
 
+  // THE CAPTION IS FALSE OF EXACTLY THESE TEN. "Position is synergy" is asserted about the whole
+  // board and the unread have no edges at all, so a judge reading it straight concluded the one
+  // flung furthest from the mesh was the deck's least synergistic card -- when what the tool knows
+  // about it is nothing.
+  test("the caption stops claiming position means synergy while they are the subject", async () => {
+    makeContextSpy();
+    render(<GraphView graph={unreadGraph()} report={reportWith(["Nest of Scarabs"])} />);
+    expect(screen.getByText(/position is synergy/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /^not read \(1\)/ }));
+    expect(screen.queryByText(/position is synergy/)).toBeNull();
+    expect(screen.getByText(/position means/)).toBeInTheDocument();
+  });
+
   test("pressing it spotlights them, and pressing again lets the board go", async () => {
     makeContextSpy();
     render(<GraphView graph={unreadGraph()} report={reportWith(["Nest of Scarabs"])} />);

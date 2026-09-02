@@ -1180,7 +1180,22 @@ export function GraphView(
         // gradient, and a convention drawn at two pitches is two conventions.
         if (unreadRef.current.has(n.id)) {
           const half = mode === "card" ? Math.hypot(cardW, cardH) / 2 : r;
-          const pitch = HATCH.pitch / cam.z;
+          // AT LEAST FOUR STRIPES, ALWAYS, AND THE WHOLE HATCH SCALES TOGETHER TO GET THEM.
+          // `HATCH.pitch` is 8 screen px, which is right on a node you are looking at and wrong on
+          // the one the spotlight zooms out to frame: at z 0.43 a disc is ~12px across, two stripes
+          // over a ring, and a judge read that as the international PROHIBITION sign -- "a verdict
+          // the tool has passed on the card, excluded, disallowed, rather than an absence of data
+          // on the tool's side", which inverts whose failure this mark is about.
+          //
+          // ONE SCALE FOR BOTH, and the first attempt is why this is spelled out: shrinking the
+          // pitch alone left the 3px stripe width untouched, so at a 3px pitch the dark lines
+          // touched, filled the disc solid, and the mark became an EMPTY RING -- less legible than
+          // the slash it was fixing. The duty cycle (3 on, 5 off) is what makes it read as hatching
+          // rather than as a fill, so it is the thing that must survive every size.
+          const pitchPx = Math.min(HATCH.pitch, (2 * r * cam.z) / 4);
+          const shrink = pitchPx / HATCH.pitch;
+          const pitch = pitchPx / cam.z;
+          const strokeW = (HATCH.width * shrink) / cam.z;
           ctx.save();
           ctx.beginPath();
           if (mode === "card") ctx.rect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
@@ -1199,12 +1214,12 @@ export function GraphView(
           };
           for (let d = -2 * half; d <= 2 * half; d += pitch) {
             ctx.strokeStyle = paintColors.bg;
-            ctx.lineWidth = HATCH.width / cam.z;
+            ctx.lineWidth = strokeW;
             line(d, 0);
             ctx.globalAlpha = 0.45;
             ctx.strokeStyle = paintColors.fg;
-            ctx.lineWidth = 1 / cam.z;
-            line(d, HATCH.width / cam.z);
+            ctx.lineWidth = Math.min(1, shrink * 1.5) / cam.z;
+            line(d, strokeW);
             ctx.globalAlpha = 1;
           }
           ctx.restore();
@@ -2281,9 +2296,27 @@ export function GraphView(
          *  so a caption left as a sibling vanishes in exactly the mode where the board is largest --
          *  and it is the one sentence that says what the geometry MEANS. Three blind judges asked
          *  "what is this organised by?"; the two who could not see this line answered "card type". */}
+        {/* AND IT IS FALSE OF THE CARDS THE SPOTLIGHT SHOWS, so it does not get to stand while
+          *  they are the subject. "Position is synergy" is asserted about the whole board and the
+          *  unread have no edges at all: they are wherever the layout put nodes it could not
+          *  place, flung to the rim. A judge read the pair straight (2026-09-02) and named the
+          *  consequence -- `Wernog, Rider's Chaplain`, alone at the bottom edge and furthest from
+          *  everything, reads as the least synergistic card in the deck, when what the tool
+          *  actually knows about it is nothing. The caption and the spotlight contradicted each
+          *  other and the caption was the confident one. */}
         <p className="text-(--muted) text-sm">
-          Drag to pan, scroll to zoom. Two cards sit close because they do something for each other —
-          position is synergy, and colour is what the cards are.
+          {spotlightUnread ? (
+            <>
+              Drag to pan, scroll to zoom. These are the cards the engine has not read — they have
+              no synergies, so their <em className="not-italic text-(--foreground)">position means
+              nothing</em>. Every other card is dimmed, not excluded.
+            </>
+          ) : (
+            <>
+              Drag to pan, scroll to zoom. Two cards sit close because they do something for each
+              other — position is synergy, and colour is what the cards are.
+            </>
+          )}
         </p>
       </div>
     </div>
