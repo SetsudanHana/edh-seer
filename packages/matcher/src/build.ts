@@ -1,7 +1,7 @@
 import type { DeckCard } from "./types.js";
 import type { Archetype } from "./archetypes.js";
 import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
-import { answerCoverage, type CoverageResult } from "./answer-coverage.js";
+import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
 export type BuildCategory =
@@ -342,6 +342,57 @@ export function scoreBuild({ parents, landCount, landsTarget, coverage }: BuildS
   return weightSum > 0 ? (attainSum / weightSum) * 5 : 0;
 }
 
+/** WHAT CLOSING A GAP IS WORTH TO THE BUILD SCORE (roadmap S10).
+ *
+ *  THE UNIT IS THE WHOLE GAP, NOT ONE CARD, because that is what the finding's own action line
+ *  prescribes ("add ~8") and what the ranking heading claims ("by what fixing it is worth"). The two
+ *  units order the list differently and it is not a rounding difference: Consistency 6/14 is +0.635
+ *  filled against +0.079 per card, Board wipes 0/3 is +0.556 against +0.185 -- per card Board wipes
+ *  ranks first, filled it ranks second.
+ *
+ *  EVERY IMPACT IS A LOWER BOUND. A real card often carries two of a parent's leaves, so the card
+ *  that closes one gap may raise another parent too. The report says "or better" and never claims a
+ *  point. */
+export function parentImpact(base: BuildScoreInputs, index: number): number {
+  const p = base.parents[index];
+  if (!p || p.target <= 0 || p.count >= p.target) return 0;
+  const parents = base.parents.map((q, i) => (i === index ? { ...q, count: q.target } : q));
+  return scoreBuild({ ...base, parents }) - scoreBuild(base);
+}
+
+/** Lands is the one term with a two-sided band, so its fix is the count REACHING the target from
+ *  whichever side it sits on. Inside `LAND_BAND` there is nothing to gain and this reads 0. */
+export function landsImpactOf(base: BuildScoreInputs): number {
+  if (base.landsTarget <= 0) return 0;
+  return scoreBuild({ ...base, landCount: base.landsTarget }) - scoreBuild(base);
+}
+
+/** Covering every ABSENT permanent answer class, priced through the multiplier it moves.
+ *
+ *  `COVERAGE_CLASSES` already excludes `graveyard`, which is exactly the set the answers finding
+ *  calls `permanent` -- so this and the finding are about the same classes without either restating
+ *  the exclusion. ABSENT, not short: `answerCoverage` reads a Set, so a class held at one copy
+ *  against a `required` of three is already covered and raising it moves the multiplier by nothing.
+ *  The finding is about both; this is the part the score can see, which makes it a lower bound
+ *  rather than a wrong number. */
+export function answersImpactOf(
+  parents: readonly ScoreableParent[],
+  landCount: number,
+  landsTarget: number,
+  colorIdentity: string[] | undefined,
+  answered: ReadonlySet<string>,
+  graveyardVulnerability: number,
+): number {
+  const absent = COVERAGE_CLASSES.filter((c) => !answered.has(c));
+  if (absent.length === 0) return 0;
+  const base: BuildScoreInputs = {
+    parents, landCount, landsTarget,
+    coverage: answerCoverage(colorIdentity, new Set(answered), graveyardVulnerability).coverage,
+  };
+  const lifted = answerCoverage(colorIdentity, new Set([...answered, ...absent]), graveyardVulnerability);
+  return scoreBuild({ ...base, coverage: lifted.coverage }) - scoreBuild(base);
+}
+
 /** Leaf-level targets: `lands` (and, always at 0, `burn`/`stax`) for their own scoring/reporting,
  *  and every grouped leaf for the `buildCategories` per-leaf `target` field a leaf shows nothing
  *  meaningful in any more. A grouped leaf IGNORES `ARCHETYPE_TARGET_DELTAS` here on purpose -- its
@@ -486,7 +537,16 @@ export interface BuildResult {
    *  `coverageWeighted` is present (always `true`) only on the parent `BuildParentSpec` marked so --
    *  absent everywhere else, so a client can select the coverage-weighted parent by flag instead of
    *  matching its name (whole-branch review IMPORTANT 4). */
-  buildParents: { name: string; count: number; target: number; leaves: string[]; coverageWeighted?: true }[];
+  /** `impact` is WHAT CLOSING THIS PARENT'S GAP IS WORTH to `buildScore` (roadmap S10) -- the whole
+   *  gap, not one card, and a LOWER BOUND, since a real card can carry two of a parent's leaves. 0
+   *  for a parent at or over its target, which never surfaces as a finding anyway. */
+  buildParents: { name: string; count: number; target: number; leaves: string[]; impact: number; coverageWeighted?: true }[];
+  /** WHAT MOVING THE LAND COUNT TO ITS TARGET IS WORTH to `buildScore` (roadmap S10). 0 inside
+   *  `LAND_BAND`, where there is nothing to gain. */
+  landsImpact: number;
+  /** WHAT COVERING EVERY ABSENT PERMANENT ANSWER CLASS IS WORTH, through the coverage multiplier the
+   *  Interaction parent is scored by. 0 when no class is absent. */
+  answersImpact: number;
   /** Which target `buildScore` actually scored the land count against (task 9) -- 'derived' when
    *  `karstenLandsTarget` landed inside `gatedLandsTarget`'s tested range, 'flat' when it fell
    *  outside (an extrapolation) or was never supplied. Exists so a caller (the panel, a test) can
@@ -562,19 +622,24 @@ export function computeBuild(
     coverage: coverage.coverage,
   };
   const buildScore = scoreBuild(scoreInputs);
+  const landsImpact = landsImpactOf(scoreInputs);
+  const answersImpact = answersImpactOf(
+    parentsWithCount, landCount, targets.lands, colorIdentity, answered, graveyardVulnerability,
+  );
 
   // `coverageWeighted` rides along ONLY when true (whole-branch review IMPORTANT 4) -- the client
   // was selecting this parent with `p.name === "Interaction"`, the exact string match this flag
   // exists to make unnecessary (see `BuildParentSpec.coverageWeighted`'s own comment). A rename of
   // this parent can no longer silently unwire the panel's coverage note while the score keeps
   // docking it, the panel/score disagreement class this branch already closed twice.
-  const buildParents = parentsWithCount.map((p) => ({
+  const buildParents = parentsWithCount.map((p, i) => ({
     name: p.name, count: p.count, target: p.target, leaves: p.leaves as string[],
+    impact: parentImpact(scoreInputs, i),
     ...(p.coverageWeighted ? { coverageWeighted: true } as const : {}),
   }));
 
   return {
-    buildScore, buildCategories, buildParents,
+    buildScore, buildCategories, buildParents, landsImpact, answersImpact,
     landsTargetSource: landsGate.source,
     suggestions: buildSuggestions(parentsWithCount, countOf, targets),
     answerCoverage: coverage,

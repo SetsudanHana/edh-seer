@@ -1,7 +1,8 @@
 import { describe, expect, it, test } from "vitest";
-import { detectBuildCategories, computeBuild, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT, scoreBuild } from "./build.js";
+import { detectBuildCategories, computeBuild, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT, scoreBuild, parentImpact, landsImpactOf, answersImpactOf } from "./build.js";
 import type { DeckCard } from "./types.js";
 import type { CardTags } from "@edh-seer/tagger";
+import { COVERAGE_CLASSES } from "./answer-coverage.js";
 
 /** Minimal DeckCard: oracleText + typeLine drive the heuristics; abilities drive ramp/draw. */
 const mk = (
@@ -666,4 +667,55 @@ test("scoreBuild excludes a zero-target parent from both sums", () => {
   const withZero = scoreBuild({ ...base, parents: [{ count: 5, target: 10, weight: 1 }, { count: 0, target: 0, weight: 1 }] });
   const without = scoreBuild({ ...base, parents: [{ count: 5, target: 10, weight: 1 }] });
   expect(withZero).toBe(without);
+});
+
+/** THE UNIT IS FILLING THE GAP, NOT ONE CARD (roadmap S10, and the two order the list differently).
+ *  Consistency 6/14 raised to 14/14: attainment 0.4286 -> 1, delta 0.5714 at weight 1, over weightSum
+ *  4.5, x5 = +0.635. Board wipes 0/3 raised to 3/3: delta 1 at weight 0.5 = +0.556. Per CARD those
+ *  read +0.079 and +0.185 and Board wipes would rank FIRST -- which is why the unit is written down
+ *  here and not left to a reader of the call site. */
+test("a parent's impact is what raising it to its target is worth", () => {
+  const parents = [
+    { count: 6, target: 14, weight: 1 },
+    { count: 10, target: 10, weight: 1 },
+    { count: 10, target: 10, weight: 1, coverageWeighted: true as const },
+    { count: 0, target: 3, weight: 0.5 },
+  ];
+  const base = { parents, landCount: 36, landsTarget: 36, coverage: 1 };
+  expect(parentImpact(base, 0)).toBeCloseTo(0.635, 3);
+  expect(parentImpact(base, 3)).toBeCloseTo(0.556, 3);
+});
+
+/** A parent already at or over its target has nothing to close, so its impact is 0 -- and in the
+ *  report it never surfaces at all, because `findings` names shortfalls only. */
+test("a parent at its target has no impact", () => {
+  const base = {
+    parents: [{ count: 10, target: 10, weight: 1 }, { count: 17, target: 10, weight: 1 }],
+    landCount: 36, landsTarget: 36, coverage: 1,
+  };
+  expect(parentImpact(base, 0)).toBe(0);
+  expect(parentImpact(base, 1)).toBe(0);
+});
+
+/** Lands moves in BOTH directions: the finding is "you are 4 short" or "you are running 4 too many",
+ *  and the fix is the land count reaching its target either way. */
+test("the lands impact is signed toward the target from both sides", () => {
+  const parents = [{ count: 10, target: 10, weight: 1 }];
+  expect(landsImpactOf({ parents, landCount: 30, landsTarget: 38, coverage: 1 })).toBeGreaterThan(0);
+  expect(landsImpactOf({ parents, landCount: 46, landsTarget: 38, coverage: 1 })).toBeGreaterThan(0);
+  // Inside the band there is nothing to gain -- LAND_BAND is 3.
+  expect(landsImpactOf({ parents, landCount: 40, landsTarget: 38, coverage: 1 })).toBe(0);
+});
+
+/** THE ANSWERS IMPACT COVERS THE ABSENT CLASSES, NOT THE SHORT ONES, and the distinction is real:
+ *  `answerCoverage` reads a SET, so a class held at 1 copy against a `required` of 3 is already
+ *  covered and moving it to 3 changes the multiplier by nothing. The finding is about both; the
+ *  impact is about the part the score can see, which makes it a lower bound rather than a wrong
+ *  number. */
+test("the answers impact is what covering the absent classes is worth", () => {
+  const parents = [{ count: 10, target: 10, weight: 1, coverageWeighted: true as const }];
+  const withGap = answersImpactOf(parents, 36, 36, undefined, new Set(["creature"]), 0);
+  const covered = answersImpactOf(parents, 36, 36, undefined, new Set(COVERAGE_CLASSES), 0);
+  expect(withGap).toBeGreaterThan(0);
+  expect(covered).toBe(0);
 });

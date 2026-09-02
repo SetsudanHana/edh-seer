@@ -474,7 +474,13 @@ export interface DeckReport {
    *  flag instead of matching `name === "Interaction"` (whole-branch review IMPORTANT 4: a rename of
    *  that parent would otherwise silently unwire the panel's coverage note while the score kept
    *  docking it). */
-  buildParents?: { name: string; count: number; target: number; leaves: string[]; coverageWeighted?: true }[];
+  buildParents?: { name: string; count: number; target: number; leaves: string[]; impact?: number; coverageWeighted?: true }[];
+  /** WHAT MOVING THE LAND COUNT TO ITS TARGET IS WORTH to `buildScore` (roadmap S10). 0 inside the
+   *  land band, where there is nothing to gain. */
+  landsImpact?: number;
+  /** WHAT COVERING EVERY ABSENT PERMANENT ANSWER CLASS IS WORTH, through the coverage multiplier the
+   *  Interaction parent is scored by. 0 when no class is absent. */
+  answersImpact?: number;
   /** Concrete, few, actionable BUILD gap suggestions in the deck's own language. Matcher-only. */
   suggestions?: string[];
   /** The coverage multiplier `Interaction` was scored with, its per-class weights, and the
