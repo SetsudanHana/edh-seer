@@ -25,7 +25,11 @@ test("draws two groups, each with its lead dial and its inputs", () => {
     "Synergy", "Breadth", "Anchor",
     "Build", "Consistency", "Ramp", "Interaction", "Board wipes", "Lands",
   ]) {
-    expect(screen.getByText(name)).toBeInTheDocument();
+    // `getAllBy`, because S15 moved each score's gloss onto its own dial and those sentences name
+    // Breadth and Anchor in prose ("Breadth is how much of the deck sits on its main theme"). The
+    // assertion is that the label is drawn, not that the word occurs once on a panel that now
+    // explains itself.
+    expect(screen.getAllByText(name).length, name).toBeGreaterThan(0);
   }
 });
 
@@ -53,6 +57,7 @@ test("a report with only buildScore renders only the Build group", () => {
   render(<DeckGauges data={onlyBuild as never} onOpen={() => {}} />);
   expect(screen.queryByRole("group", { name: "Synergy, and the two measures behind it" })).toBeNull();
   expect(screen.getByRole("group", { name: "Build, and the five measures behind it" })).toBeInTheDocument();
+  // The Synergy group is absent, so its gloss is too -- nothing names Breadth or Anchor anywhere.
   expect(screen.queryByText("Breadth")).toBeNull();
   expect(screen.queryByText("Anchor")).toBeNull();
 });

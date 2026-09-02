@@ -6,6 +6,7 @@ import { ReportShell } from "./ReportShell.js";
 import { ReportHeader } from "./ReportHeader.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
 import { CHAPTERS } from "../lib/chapters.js";
+import { findings } from "../lib/findings.js";
 import { SAMPLE } from "../fixtures.js";
 
 afterEach(() => {
@@ -48,7 +49,8 @@ test("the header writes its measured height into --report-header-h", () => {
     unobserve() {}
     disconnect() {}
   });
-  const { unmount } = render(<ReportHeader data={SAMPLE} />);
+  // The header routes to chapter 6 from a reference surface, so it reads the router's location.
+  const { unmount } = render(<MemoryRouter><ReportHeader data={SAMPLE} /></MemoryRouter>);
   expect(document.documentElement.style.getPropertyValue("--report-header-h")).toMatch(/^\d+px$/);
   // AND IT IS CLEANED UP: a stale offset outlasting the report would push the entry screen's own
   // sticky content down by a header that is no longer on the page.
@@ -83,6 +85,33 @@ test("a new report routes back to the chapters", async () => {
   const second = { ...SAMPLE, report: { ...SAMPLE.report } };
   rerender(<MemoryRouter initialEntries={["/combos"]}><ReportShell data={second} /></MemoryRouter>);
   expect(screen.getByRole("navigation", { name: "Report chapters" })).toBeInTheDocument();
+});
+
+/** THE DIAGNOSIS IS ONE PRESS FROM ANYWHERE (roadmap S15). Chapter 6 sits ~7,000px down a
+ *  9.6-screen report and both expert judges went straight to it; one built the deck's whole plan
+ *  out of it rather than out of chapter 3. The narrative order stays for a first-time reader and
+ *  the returning tuner stops paying for it.
+ *
+ *  The count comes from `findings`, which `Findings` itself calls -- so the header and the list
+ *  cannot disagree about how many there are. */
+test("the header carries the finding count, and reaches chapter 6 from a reference surface", async () => {
+  const scrollIntoView = vi.fn();
+  Element.prototype.scrollIntoView = scrollIntoView;
+  const expected = findings(SAMPLE.report).length;
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+
+  screen.getByRole("button", { name: new RegExp(`^${expected} finding`) });
+  await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
+  expect(document.getElementById("fix")).toBeNull(); // the chapters are not mounted here
+
+  await userEvent.click(screen.getByRole("button", { name: new RegExp(`^${expected} finding`) }));
+  await vi.waitFor(() => expect(document.getElementById("fix")).not.toBeNull());
+  // ON THE SECTION ITSELF, not on whatever happened to be scrolled. Measured on the live page:
+  // scrolling one frame after the navigation ran before React had committed the chapters, so the
+  // reader pressed "2 findings" and landed at the top of the report.
+  await vi.waitFor(() => {
+    expect(scrollIntoView.mock.instances).toContain(document.getElementById("fix"));
+  });
 });
 
 /** A CHAPTER ANCHOR HAS TO CLEAR BOTH PINNED BARS. Below `lg` the rail is a second sticky strip

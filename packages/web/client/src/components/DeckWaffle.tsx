@@ -79,6 +79,9 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
   const unread = squares.filter((s) => s.state === "unread").length;
   const unresolved = squares.filter((s) => s.state === "unresolved").length;
   const commander = squares.find((s) => s.isCommander);
+  // Whether the grid is drawn at all — see the block comment on it below. Everything that keys the
+  // grid (the colour swatches, the ringed-commander sentence) is conditional on the same fact.
+  const grid = unread + unresolved > 0;
 
   return (
     <div className="flex flex-col gap-3 min-w-0">
@@ -103,10 +106,25 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
         ) : null}
       </p>
 
-      {/* ONE ROW PER TEN, so the grid reads as a deck of about a hundred and a reader counting
-        *  rows is counting tens. `auto-fill` with a minimum instead of a fixed ten would make the
-        *  row length a function of the viewport, and then the picture means something different on
-        *  every screen. */}
+      {/* THE GRID IS A COVERAGE MAP, AND IT RENDERS ONLY WHEN THERE IS COVERAGE TO MAP (roadmap
+        *  S15, owner call 2026-09-02).
+        *
+        *  The one thing no bar can do is name WHICH cards the engine failed to read and show that
+        *  they cluster by type: a judge counted the hatch (5 creatures, 3 enchantments, 1 artifact,
+        *  1 instant) and concluded unprompted that a cut verdict on those enchantments would be the
+        *  tool being blind rather than the card being weak. That is the grid earning 465px.
+        *
+        *  With nothing unread and nothing unresolved there is no hatch and no hollow square, and
+        *  the grid is a picture of the seven counts printed in its own legend three lines below --
+        *  measured at 646px for the panel, ahead of every verdict on the page, on the ~99%-derived
+        *  decks that are the common case. The CENSUS survives in full: the line above and the
+        *  legend below both stay, which is where those numbers were readable anyway.
+        *
+        *  ONE ROW PER TEN when it does render, so the grid reads as a deck of about a hundred and a
+        *  reader counting rows is counting tens. `auto-fill` with a minimum instead of a fixed ten
+        *  would make the row length a function of the viewport, and then the picture means
+        *  something different on every screen. */}
+      {grid ? (
       <div
         data-testid="waffle-grid"
         className="grid gap-[3px] w-full max-w-[420px]"
@@ -122,22 +140,28 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
       >
         {squares.map((sq, i) => <Square key={i} sq={sq} />)}
       </div>
+      ) : null}
 
       {/* THE LEGEND NAMES EVERY TYPE, for the reason `TypeBar`'s did: enchantment #1c8db7 and
         *  sorcery #3d7ed6 sit at dE 12.5 in normal vision, so a square's identity must never rest
         *  on hue alone. The two coverage keys join it only when the deck HAS one -- a key for a
-        *  state nothing on screen is in explains nothing. */}
+        *  state nothing on screen is in explains nothing.
+        *
+        *  AND THE SWATCHES GO WHEN THE GRID DOES (S15). With no grid drawn, a colour chip keys
+        *  nothing: it points at squares that are not on the page, which is the same defect as a
+        *  key for an absent state one line up. The COUNTS stay -- they are the census, and they
+        *  are what a reader was reading anyway -- so this becomes a list of types and numbers. */}
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
         {ordered.map((s) => (
           <li key={s.type} data-testid={`type-legend-${s.type}`} className="flex items-center gap-1.5">
-            <span aria-hidden className="inline-block w-2.5 h-2.5 rounded-[2px] shrink-0" style={{ background: TYPE_SEGMENT_HUE[s.type] }} />
+            {grid ? <span aria-hidden className="inline-block w-2.5 h-2.5 rounded-[2px] shrink-0" style={{ background: TYPE_SEGMENT_HUE[s.type] }} /> : null}
             <span className="text-(--muted)">{s.type}</span>
             <span className="stat-num text-(--foreground)">{s.count}</span>
           </li>
         ))}
         {lands !== undefined && lands > 0 ? (
           <li data-testid="type-legend-land" className="flex items-center gap-1.5">
-            <span aria-hidden className="inline-block w-2.5 h-2.5 rounded-[2px] shrink-0" style={{ background: LAND_FILL }} />
+            {grid ? <span aria-hidden className="inline-block w-2.5 h-2.5 rounded-[2px] shrink-0" style={{ background: LAND_FILL }} /> : null}
             <span className="text-(--muted)">land</span>
             <span className="stat-num text-(--foreground)">{lands}</span>
           </li>
@@ -161,7 +185,8 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
           </li>
         ) : null}
       </ul>
-      {commander ? (
+      {/* The ring is only on the grid, so this sentence goes with it. */}
+      {commander && grid ? (
         <p className="text-xs text-(--muted)">
           The ringed square is <span className="text-(--foreground)">{commander.name}</span>.
         </p>

@@ -2,6 +2,8 @@ import type { AnalyzeResponse } from "../types.js";
 import { Dial } from "./Dial.js";
 import { Bullet, TARGET_MARK } from "./Bullet.js";
 import { floorState, bandState, scoreState } from "../lib/deck-gauge.js";
+import { bandLegend } from "../lib/score-band.js";
+import { Explain } from "./Explain.js";
 
 /** A COUNT AGAINST ITS REFERENCE, AS A FRACTION OF THE TRACK. The target parks at `TARGET_MARK`,
  *  so the bar runs past it when the count clears it and stops short when it does not -- and every
@@ -47,6 +49,11 @@ export type GaugeTab = "build" | "mana" | "engine";
  *  a sentence inside `Findings`. This panel is where that judgement is allowed to live. */
 export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (tab: GaugeTab, focus?: string) => void }) {
   const { report } = data;
+  // WHICH CARD THE ANCHOR IS. The figure is computed from the single best-fed card's authority, and
+  // that card is sitting elsewhere on the page wearing an "anchor" tag with nothing connecting the
+  // two. Recomputed here on the same basis the engine uses (max authority) rather than shipped as a
+  // new field. Moved from `HeadlineScores` with the gloss it belongs to (roadmap S15).
+  const anchorCard = [...(report.cards ?? [])].sort((a, b) => (b.authority ?? 0) - (a.authority ?? 0))[0];
   const parents = report.buildParents ?? [];
   const lands = report.deckMath?.lands;
   const hasSynergy = report.synergyOverall !== undefined;
@@ -87,6 +94,21 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
               size="lead"
               onOpen={() => onOpen("engine", undefined)}
               openLabel="Engine"
+              /* THE ONLY PLACE EITHER SCORE SAYS WHAT IT MEASURES, moved here verbatim when S15
+               * retired the second copy of the number it used to sit in. Four of four personas
+               * (2026-08-26) could not read `SYNERGY 0.8/5`; the words are what fixed that, not the
+               * tile around them. */
+              explain={
+                <Explain label="what this measures">
+                  The mean of two halves, each 0–5. <span className="text-(--foreground)">Breadth</span> is
+                  how much of the deck sits on its main theme, counting each nonland card by its strongest
+                  on-theme edge — a card connected to nothing still counts, and drags it down.{" "}
+                  <span className="text-(--foreground)">Anchor</span> is how heavily the deck's best-fed
+                  card is supported
+                  {anchorCard ? <> — here that is {anchorCard.name}</> : null}; it tops out at 5, so two
+                  decks with very different engines can both read 5.0. {bandLegend()}.
+                </Explain>
+              }
             />
             {/* Breadth and anchor are both edge-derived, same as synergy itself, so they take the
               * same partly-read flag for the same reason `HeadlineScores` gives its own sub-line --
@@ -138,6 +160,16 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
               size="lead"
               onOpen={() => onOpen("build", undefined)}
               openLabel="Build"
+              /* Same move, and the wording follows the panel it points at: the category targets are
+               * the Roles chapter's, not "the benchmarks below" — that phrase was true of a
+               * single-scroll Overview two layouts ago. */
+              explain={
+                <Explain label="what this measures">
+                  How close the deck sits to the category targets in Roles — ramp, draw, removal and the
+                  rest. It says nothing about how the cards work together, and the targets are a
+                  deckbuilding convention rather than a number measured from any deck. {bandLegend()}.
+                </Explain>
+              }
             />
             {/* Two columns narrow, three from `sm` (640px), five from `xl` (1280px) -- one clean
               * row of five at wide widths, with nothing stranded (measured: `xl:grid-cols-5` needs
