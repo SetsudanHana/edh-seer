@@ -5,7 +5,7 @@ import { CardDrawerProvider, CardName } from "./card-drawer.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
-import { OverviewTab } from "./OverviewTab.js";
+import { ReportChapters } from "./ReportChapters.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
@@ -14,7 +14,9 @@ import { CutList } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
 import { LegalityPanel } from "./LegalityPanel.js";
 import { ManaAvailability } from "./ManaAvailability.js";
-import { ReportTabs } from "./ReportTabs.js";
+import { ReportShell } from "./ReportShell.js";
+import { MemoryRouter } from "react-router";
+import { CHAPTERS } from "../lib/chapters.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { HeadlineScores } from "./HeadlineScores.js";
 import { BuildBenchmarks, demandSentence } from "./BuildBenchmarks.js";
@@ -176,11 +178,12 @@ test("MissingCards renders nothing when empty", () => {
 // MINOR 9 (whole-branch review, 2026-09-01): renamed. It says "the deck identity", but what it
 // reads is RecognitionPanel's theme on Summary -- `DeckIdentity` is on the Engine sub-tab and this
 // render never reaches it.
-test("OverviewTab names the theme on Summary, and avg mana value only where it is load-bearing", () => {
-  render(<OverviewTab data={SAMPLE} />);
-  // Task 5 (2026-09-01): DeckIdentity itself moved to the Engine sub-tab; the theme it used to
-  // print here is RecognitionPanel's, on Summary -- the sub-tab OverviewTab opens on by default.
-  expect(screen.getByText("Tokens")).toBeInTheDocument();
+
+test("the report names the theme, and avg mana value only where it is load-bearing", () => {
+  render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
+  // RecognitionPanel's theme, in chapter 1. `getAllBy` because in one scroll `DeckIdentity`
+  // (chapter 2) prints the same theme -- which is the redundancy S7 makes visible on purpose.
+  expect(screen.getAllByText("Tokens").length).toBeGreaterThan(0);
   // The tile is gone; the figure survives in the Lands row, where it is what sets the land target
   // (asserted in the deck-math tests, which are the ones carrying a `deckMath` fixture).
   expect(screen.queryByText("Avg CMC")).not.toBeInTheDocument();
@@ -413,19 +416,30 @@ test("Cards tab shows the top-partner reason under the card name", () => {
   expect(screen.getByText(/triggers on a creature entering/)).toBeInTheDocument();
 });
 
-test("ReportTabs defaults to the Overview tab and switches on click", async () => {
-  render(<ReportTabs data={SAMPLE} />);
-  expect(screen.getByText("Tokens")).toBeInTheDocument(); // Overview's Summary sub-tab, RecognitionPanel's theme, visible by default
-  await userEvent.click(screen.getByRole("tab", { name: "Archetypes" }));
-  // A group's label now appears TWICE on this tab -- once as a matrix column header and once on
-  // its own pair row -- so the assertion names which one it means rather than being loosened to
+
+/** THE REPORT IS THE CHAPTERS; the three reference surfaces are routes off it (S7). What used to be
+ *  five tabs is now one scroll, so the assertion that used to prove "switching reveals it" proves
+ *  the opposite here: chapter 3's matrix is on screen WITH chapter 1's theme, and only a reference
+ *  surface replaces them. */
+test("the shell opens on the chapters and routes to the reference surfaces", async () => {
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+  expect(screen.getAllByText("Tokens").length).toBeGreaterThan(0); // chapter 1
+  // A group's label appears TWICE in chapter 3 -- once as a matrix column header and once on its
+  // own pair row -- so the assertion names which one it means rather than being loosened to
   // `getAllByText`, which would pass on either alone.
   expect(screen.getByRole("columnheader", { name: "Tokens Go Wide" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /^Tokens Go Wide/ })).toBeInTheDocument();
-  await userEvent.click(screen.getByRole("tab", { name: "Cards" }));
-  expect(screen.getByText("Krenko, Mob Boss")).toBeInTheDocument(); // CardList content
-  await userEvent.click(screen.getByRole("tab", { name: "Combos" }));
+
+  await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
+  // Twice: the sticky header names the commander on every surface, and the table lists it.
+  expect(screen.getAllByText("Krenko, Mob Boss").length).toBeGreaterThan(1); // CardList content
+  expect(screen.queryByRole("columnheader", { name: "Tokens Go Wide" })).toBeNull(); // the scroll is gone
+
+  await userEvent.click(screen.getAllByRole("link", { name: /^Combos/ })[0]!);
   expect(screen.getByText(/Infinite loop/)).toBeInTheDocument(); // ComboList content
+
+  await userEvent.click(screen.getByRole("link", { name: /Report/ }));
+  expect(screen.getByRole("columnheader", { name: "Tokens Go Wide" })).toBeInTheDocument();
 });
 
 // ART WARMS BEFORE THE GRAPH TAB IS EVER OPENED. `<GraphView>` is mounted by `active === "graph"`,
@@ -433,7 +447,8 @@ test("ReportTabs defaults to the Overview tab and switches on click", async () =
 // 75ms apart, while they waited. Every artCrop URL arrives with the analyze response and the user
 // reads Overview for seconds first, so that time was being thrown away. Owner-reported: "why dont we
 // start loading the images even before we land on the graph?".
-test("ReportTabs starts fetching card art on the Overview tab, before Graph is opened", async () => {
+
+test("ReportShell starts fetching card art on the chapters, before the graph is opened", async () => {
   const fetchSpy = vi.fn((_url: unknown) => Promise.reject(new Error("no network in this test")));
   vi.stubGlobal("fetch", fetchSpy);
   const withArt = {
@@ -445,10 +460,10 @@ test("ReportTabs starts fetching card art on the Overview tab, before Graph is o
     },
   };
 
-  render(<ReportTabs data={withArt} />);
+  render(<MemoryRouter><ReportShell data={withArt} /></MemoryRouter>);
 
-  // Never clicked Graph; the request is already out.
-  expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");
+  // Never opened the graph route; the request is already out.
+  expect(screen.queryByTestId("graph-canvas")).toBeNull();
   await vi.waitFor(() => {
     expect(fetchSpy.mock.calls.some((c) => String(c[0]).includes("/art_crop/"))).toBe(true);
   });
@@ -469,23 +484,25 @@ test("ReportTabs warms the full card images too, not just the discs", async () =
     },
   };
 
-  render(<ReportTabs data={withArt} />);
+  render(<MemoryRouter><ReportShell data={withArt} /></MemoryRouter>);
 
   await vi.waitFor(() => {
     expect(fetchSpy.mock.calls.some((c) => String(c[0]).includes("/normal/"))).toBe(true);
   }, { timeout: 3000 });
 });
 
-test("ReportTabs shows the unresolved banner outside the tab body, regardless of active tab", async () => {
-  render(<ReportTabs data={SAMPLE} />);
+
+test("ReportShell shows the unresolved banner on every surface, chapters and reference alike", async () => {
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
   expect(screen.getByText(/Beholder's Death Ray/)).toBeInTheDocument();
-  await userEvent.click(screen.getByRole("tab", { name: "Cards" }));
+  await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
   expect(screen.getByText(/Beholder's Death Ray/)).toBeInTheDocument(); // still visible
 });
 
-test("ReportTabs hides the unresolved banner when nothing is missing", () => {
+
+test("ReportShell hides the unresolved banner when nothing is missing", () => {
   const noMissing = { ...SAMPLE, missing: [] };
-  render(<ReportTabs data={noMissing} />);
+  render(<MemoryRouter><ReportShell data={noMissing} /></MemoryRouter>);
   expect(screen.queryByText(/Unresolved/)).not.toBeInTheDocument();
 });
 
@@ -1445,12 +1462,10 @@ test("a single-leaf-parents deck with deckMath present still hides the role-spen
 // off Summary onto Fixes -- see the Fixes-tab tests below.
 test("OverviewTab shows the health dashboard, across its sub-tabs", async () => {
   const user = userEvent.setup();
-  render(<OverviewTab data={SAMPLE} />);
-  await user.click(screen.getByRole("tab", { name: "Fixes" }));
+  render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
   expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
   // "Ramp" is a finding's own figure label (Fixes is under target on it) -- present, not unique.
   expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
-  await user.click(screen.getByRole("tab", { name: "Engine" }));
   expect(screen.getByText("SYNERGY")).toBeInTheDocument(); // HeadlineScores tile (exact, not "High synergy cards")
 });
 
@@ -1460,59 +1475,45 @@ test("OverviewTab shows the health dashboard, across its sub-tabs", async () => 
  *  Engine, three copies of the same Consistency/Interaction groups. `BuildBenchmarks`'
  *  `showBenchmarks` prop (default `true`, `false` on the Mana and Engine call sites) fixes it; this
  *  is the isolation test that would have caught it, per FINDING 2. */
-test("the role-spend block (heading, groups, leaf rows) renders on Build, not on Mana or Engine", async () => {
-  const user = userEvent.setup();
-  render(<OverviewTab data={SAMPLE} />);
-  await user.click(screen.getByRole("tab", { name: "Build" }));
-  expect(screen.getByText(/How the roles are spent/i)).toBeInTheDocument();
-  // A multi-leaf parent's group header (`h4`) -- present with the heading, not just it.
-  expect(screen.getByText("Consistency")).toBeInTheDocument();
 
-  await user.click(screen.getByRole("tab", { name: "Mana" }));
-  expect(screen.queryByText(/How the roles are spent/i)).toBeNull();
-  expect(screen.queryByText("Consistency")).toBeNull();
-
-  await user.click(screen.getByRole("tab", { name: "Engine" }));
-  expect(screen.queryByText(/How the roles are spent/i)).toBeNull();
-  expect(screen.queryByText("Consistency")).toBeNull();
+/** THE ISOLATION TESTS BECOME COUNTING TESTS (S7). `sections`/`showBenchmarks` exist because the
+ *  category/parent block once rendered identically on Build, Mana AND Engine -- three copies of the
+ *  same Consistency/Interaction groups. Under sub-tabs the defect was invisible (you saw one copy
+ *  per tab) and the pin was "not on the other tab". In one scroll a reader meets every copy, so the
+ *  pin is EXACTLY ONCE in the whole report, which is a strictly stronger statement than the pair of
+ *  absence assertions it replaces. */
+test("the role-spend block renders exactly once in the whole scroll", () => {
+  render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
+  expect(screen.getAllByText(/How the roles are spent/i)).toHaveLength(1);
+  // A multi-leaf parent's group header (`h4`) -- present with the heading, not just it. By ROLE,
+  // because the parent's NAME also appears as a `DeckGauges` bullet in chapter 2, which is the
+  // dial the group is the detail behind and not a second copy of the group.
+  expect(screen.getAllByRole("heading", { level: 4, name: "Consistency" })).toHaveLength(1);
 });
 
 /** FINDING 2 (fix round 1): the deck-math sections `BuildBenchmarks` routes to the Build sub-tab
  *  (`sections={["answers", "win"]}`) need their own presence/absence pins -- nothing previously
  *  asserted Build's OWN content, which is exactly the gap that let Finding 1 through unnoticed. */
-test("Build's own deck-math sections (answers, win) show on Build, not on Mana or Engine", async () => {
-  const user = userEvent.setup();
+
+test("the Roles chapter's deck-math sections (answers, win) render exactly once", () => {
   // Needs `deckMath` -- see the comment on the Mana test below for why it's layered on locally.
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
-  render(<OverviewTab data={data} />);
-  await user.click(screen.getByRole("tab", { name: "Build" }));
-  expect(screen.getByText("Can you deal with theirs")).toBeInTheDocument();
-  expect(screen.getByText("How you win")).toBeInTheDocument();
-
-  await user.click(screen.getByRole("tab", { name: "Mana" }));
-  expect(screen.queryByText("Can you deal with theirs")).toBeNull();
-  expect(screen.queryByText("How you win")).toBeNull();
-
-  await user.click(screen.getByRole("tab", { name: "Engine" }));
-  expect(screen.queryByText("Can you deal with theirs")).toBeNull();
-  expect(screen.queryByText("How you win")).toBeNull();
+  render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
+  expect(screen.getAllByText("Can you deal with theirs")).toHaveLength(1);
+  expect(screen.getAllByText("How you win")).toHaveLength(1);
 });
 
 /** MINOR 9 (whole-branch review, 2026-09-01). `sections={["waiting"]}` is the ENTIRE deck-math
  *  contribution of the Engine sub-tab, and nothing asserted it: dropping the prop, or changing it
  *  to `["cast"]`, failed no test. Build and Mana each already had this pin; Engine did not. */
-test("Engine's own deck-math section (waiting) shows on Engine, not on Build or Mana", async () => {
-  const user = userEvent.setup();
+
+/** `waiting` CAME OFF THE DISSOLVED ENGINE TAB and landed in Roles, the one chapter whose question
+ *  it answers. Nothing else may pick it up, and it may not be dropped on the way: without this pin,
+ *  deleting the section from the `sections` array fails no test. */
+test("the waiting section rides the Roles chapter, exactly once", () => {
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
-  render(<OverviewTab data={data} />);
-  await user.click(screen.getByRole("tab", { name: "Engine" }));
-  expect(screen.getByText("What your cards are waiting for")).toBeInTheDocument();
-
-  await user.click(screen.getByRole("tab", { name: "Build" }));
-  expect(screen.queryByText("What your cards are waiting for")).toBeNull();
-
-  await user.click(screen.getByRole("tab", { name: "Mana" }));
-  expect(screen.queryByText("What your cards are waiting for")).toBeNull();
+  render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
+  expect(screen.getAllByText("What your cards are waiting for")).toHaveLength(1);
 });
 
 /** I3 (whole-branch review, 2026-09-01): Build and Mana shipped with no title element at all, so
@@ -1522,48 +1523,56 @@ test("Engine's own deck-math section (waiting) shows on Engine, not on Build or 
  *
  *  FIX ROUND 1 (task 6, 2026-09-01): the findings moved off Summary onto Fixes; the sentence's
  *  wording moved with them (see the dedicated regression test below, which pins this specifically). */
-test("Build and Mana each open on an h2 naming them, and say what they are evidence for", async () => {
-  const user = userEvent.setup();
+
+/** Both halves are pinned -- the movement heading and the link back -- because the deleted
+ *  `Movement` carried both, and the evidence chapters shipped once with neither.
+ *
+ *  S7: the movement heading is an `h3` now. The chapter's own question is the `h2` above it, so a
+ *  movement that stayed at `h2` would leave the outline flat rather than nested. */
+test("the Mana and Roles chapters each carry a movement heading, and say what they are evidence for", () => {
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
-  render(<OverviewTab data={data} />);
+  render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
 
-  await user.click(screen.getByRole("tab", { name: "Build" }));
-  expect(screen.getByRole("heading", { level: 2, name: /What this deck plays/ })).toBeInTheDocument();
-  expect(screen.getByText(/evidence behind each build finding on Fixes/i)).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 3, name: /What this deck plays/ })).toBeInTheDocument();
+  expect(screen.getByText(/evidence behind each build finding/i)).toBeInTheDocument();
 
-  await user.click(screen.getByRole("tab", { name: "Mana" }));
-  expect(screen.getByRole("heading", { level: 2, name: /Whether the mana delivers it/ })).toBeInTheDocument();
-  expect(screen.getByText(/evidence behind each mana finding on Fixes/i)).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 3, name: /Whether the mana delivers it/ })).toBeInTheDocument();
+  expect(screen.getByText(/evidence behind each mana finding/i)).toBeInTheDocument();
 });
 
 /** THE MOVEMENT COPY NAMES THE TAB THE FINDINGS ARE ACTUALLY ON. Build and Mana call themselves the
  *  evidence behind the findings, and when the diagnosis moved to Fixes these two sentences kept
  *  pointing at Summary -- rendered text telling the reader to look where nothing is. */
-test("Build and Mana point at the tab the findings actually live on", () => {
-  render(<OverviewTab data={SAMPLE as never} />);
-  fireEvent.click(screen.getByRole("tab", { name: "Build" }));
-  expect(screen.getByText(/evidence behind each build finding on Fixes/)).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("tab", { name: "Mana" }));
-  expect(screen.getByText(/evidence behind each mana finding on Fixes/)).toBeInTheDocument();
+
+/** THE MOVEMENT COPY NAMES WHERE THE FINDINGS ACTUALLY ARE. These two sentences have now been
+ *  wrong twice -- they pointed at Summary after the diagnosis moved to Fixes, and at "Fixes" after
+ *  the sub-tabs became chapters. In one scroll the honest word is a direction, not a tab name. */
+test("the evidence movements point at the chapter the findings actually live in", () => {
+  render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
+  expect(screen.getByText(/evidence behind each build finding in What's wrong, below/)).toBeInTheDocument();
+  expect(screen.getByText(/evidence behind each mana finding in What's wrong, below/)).toBeInTheDocument();
+  expect(screen.queryByText(/on Fixes/)).toBeNull();
 });
 
 /** The outline must not skip or invert on any sub-tab (WCAG 1.3.1). Asserted as a PROPERTY of the
  *  rendered document rather than as a list of expected headings, so it keeps holding as panels are
  *  added: every heading is at most one level below the one before it. */
-test("no sub-tab's heading outline skips a level", async () => {
-  const user = userEvent.setup();
+
+/** The outline must not skip or invert anywhere in the report (WCAG 1.3.1). Asserted as a PROPERTY
+ *  of the rendered document rather than as a list of expected headings, so it keeps holding as
+ *  panels are added: every heading is at most one level below the one before it.
+ *
+ *  S7 makes this a stronger test than it was: the whole report is ONE document now, so a chapter
+ *  whose panels open on an `h4` is caught against the chapter before it rather than being measured
+ *  in isolation on its own tab. */
+test("the report's heading outline never skips a level", () => {
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
-  render(<OverviewTab data={data} />);
-  const levels = (): number[] =>
-    [...document.querySelectorAll("h1,h2,h3,h4,h5,h6")].map((h) => Number(h.tagName[1]));
-  for (const tab of ["Summary", "Fixes", "Build", "Mana", "Engine"]) {
-    await user.click(screen.getByRole("tab", { name: tab }));
-    const seen = levels();
-    expect(seen.length, `${tab} has no headings`).toBeGreaterThan(0);
-    expect(seen[0], `${tab} opens below h2`).toBeLessThanOrEqual(2);
-    for (let i = 1; i < seen.length; i++) {
-      expect(seen[i]! - seen[i - 1]!, `${tab}: h${seen[i - 1]} -> h${seen[i]}`).toBeLessThanOrEqual(1);
-    }
+  render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
+  const seen = [...document.querySelectorAll("h1,h2,h3,h4,h5,h6")].map((h) => Number(h.tagName[1]));
+  expect(seen.length).toBeGreaterThan(0);
+  expect(seen[0], "the report opens below h2").toBeLessThanOrEqual(2);
+  for (let i = 1; i < seen.length; i++) {
+    expect(seen[i]! - seen[i - 1]!, `h${seen[i - 1]} -> h${seen[i]}`).toBeLessThanOrEqual(1);
   }
 });
 
@@ -1573,19 +1582,20 @@ test("no sub-tab's heading outline skips a level", async () => {
  *
  *  TASK 6 (2026-09-01): "What is wrong with this deck" moved off Summary entirely, onto Fixes --
  *  swapped for "Where this deck stands", the gauges' own heading, which is what Summary carries now. */
-test("Summary's content is not mounted on Build or Engine", async () => {
-  const user = userEvent.setup();
-  render(<OverviewTab data={SAMPLE} />);
-  expect(screen.getByText("What this deck is")).toBeInTheDocument(); // sanity: mounted on Summary
-  expect(screen.getByText("Where this deck stands")).toBeInTheDocument();
 
-  await user.click(screen.getByRole("tab", { name: "Build" }));
-  expect(screen.queryByText("What this deck is")).toBeNull();
-  expect(screen.queryByText("Where this deck stands")).toBeNull();
-
-  await user.click(screen.getByRole("tab", { name: "Engine" }));
-  expect(screen.queryByText("What this deck is")).toBeNull();
-  expect(screen.queryByText("Where this deck stands")).toBeNull();
+/** THE CHAPTERS ARE ALL MOUNTED, AND EACH BLOCK APPEARS ONCE. The sub-tabs' guarantee was that
+ *  leaving a tab unmounted its content; the scroll's guarantee is that nothing is duplicated across
+ *  chapters, which is the failure mode a single column actually has. */
+test("each chapter's own heading appears exactly once in the scroll", () => {
+  render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
+  for (const heading of [
+    "What this deck is",
+    "Where this deck stands",
+    "What is wrong with this deck",
+    "What to change",
+  ]) {
+    expect(screen.getAllByText(heading), heading).toHaveLength(1);
+  }
 });
 
 /** THE SEQUENCE, pinned. Four persona reviews (2026-08-26) found the page led with its weakest
@@ -1608,22 +1618,33 @@ test("Summary's content is not mounted on Build or Engine", async () => {
  *  onto Fixes, so there is no longer a same-render diagnosis to order against. `DeckGauges`
  *  ("Where this deck stands") is what replaced it on Summary, so the ordering guarantee this test
  *  exists to pin -- recognition leads whatever follows it -- now runs against that instead. */
-test("OverviewTab leads recognition before the gauges, on Summary", () => {
-  const { container } = render(<OverviewTab data={SAMPLE} />);
+
+/** THE SEQUENCE, pinned. Four persona reviews (2026-08-26) found the page led with its weakest
+ *  answer; the fix is an ORDER, so an order is what the test asserts. Proven to fire by moving
+ *  `Findings` above `RecognitionPanel`.
+ *
+ *  S7: the order is document order again, across the whole report, which is what the sub-tabs took
+ *  away -- under tabs "before" only meant "on an earlier tab", and nothing pinned the tab order. */
+test("the report leads with recognition, then the gauges, and ends on the fixes", () => {
+  const { container } = render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
   const text = container.textContent ?? "";
   const recognition = text.indexOf("What this deck is");
   const gauges = text.indexOf("Where this deck stands");
+  const fixes = text.indexOf("What is wrong with this deck");
   expect(recognition).toBeGreaterThanOrEqual(0);
-  expect(gauges).toBeGreaterThanOrEqual(0);
   expect(gauges).toBeGreaterThan(recognition);
+  expect(fixes).toBeGreaterThan(gauges);
 });
 
-test("the scores are not on Summary, and switching to Engine reveals them", async () => {
-  const user = userEvent.setup();
-  render(<OverviewTab data={SAMPLE} />);
-  expect(screen.queryByText("How the engine read it")).toBeNull();
-  await user.click(screen.getByRole("tab", { name: "Engine" }));
-  expect(screen.getByText("How the engine read it")).toBeInTheDocument();
+
+/** THE SCORES SURVIVED THE ENGINE TAB'S DISSOLUTION. `HeadlineScores` is the only place either
+ *  score carries an `Explain` saying what it measures, and the tab it lived on no longer exists --
+ *  so the pin is that it is mounted, once, in the chapter that draws the same two numbers as
+ *  dials. */
+test("the two score tiles ride the chapter that carries the dials, once", () => {
+  render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
+  expect(screen.getAllByText("SYNERGY")).toHaveLength(1);
+  expect(screen.getAllByText("BUILD")).toHaveLength(1);
 });
 
 /** SUMMARY IS THE WHOLE PAGE'S FIRST SCREEN. The Overview ran 5,202px -- about nine screens -- and
@@ -1632,55 +1653,65 @@ test("the scores are not on Summary, and switching to Engine reveals them", asyn
  *
  *  TASK 6 (2026-09-01): Summary stopped carrying the findings -- they moved to Fixes -- so what it
  *  carries now, besides recognition, is the gauges. */
-test("OverviewTab opens on Summary, which carries recognition and the gauges", () => {
-  render(<OverviewTab data={SAMPLE} />);
-  expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute("aria-selected", "true");
-  expect(screen.getByText("What this deck is")).toBeInTheDocument();
-  expect(screen.getByText("Where this deck stands")).toBeInTheDocument();
+
+/** THE RAIL IS THE TABLE OF CONTENTS, and every chapter it names has to exist as a scroll target:
+ *  a rail link pointing at no section is a navigation that silently does nothing. */
+test("the rail names six chapters and each one is a section on the page", () => {
+  render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
+  const rail = screen.getByRole("navigation", { name: "Report chapters" });
+  for (const c of CHAPTERS) {
+    // A BUTTON, NOT AN ANCHOR -- `#<id>` would overwrite the deck payload the hash carries; see
+    // `ChapterRail`. What is pinned here is that the rail names it and the section exists to
+    // scroll to, which is the navigation actually being offered.
+    expect(within(rail).getByRole("button", { name: c.rail })).toBeInTheDocument();
+    expect(document.getElementById(c.id), c.id).not.toBeNull();
+  }
 });
 
 /** TASK 6 (2026-09-01): SUMMARY IS A SUMMARY AGAIN. It carried the entire diagnosis and the entire
  *  prescription -- several screens of it -- on the tab a reader lands on first. Those two are one
  *  thought, what is wrong then what to do about it, so they move together to their own tab rather
  *  than being split across tabs where a finding would sit apart from its own remedy. */
-test("Summary carries recognition and the gauges, not the findings", () => {
-  render(<OverviewTab data={SAMPLE} />);
-  expect(screen.getByText("What this deck is")).toBeInTheDocument();
-  expect(screen.getByText("Where this deck stands")).toBeInTheDocument();
-  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
-  expect(screen.queryByText("What to change")).toBeNull();
+
+/** THE THREE ESCAPE HATCHES ARE NOT CHAPTERS, and the rail has to say so: they leave the scroll,
+ *  so they are links to a route rather than anchors into it. */
+test("the rail's reference links route away from the scroll, unlike the chapter anchors", () => {
+  render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
+  const rail = screen.getByRole("navigation", { name: "Report chapters" });
+  for (const label of ["Graph", "Cards", "Combos"]) {
+    expect(within(rail).getByRole("link", { name: new RegExp(`^${label}`) }))
+      .toHaveAttribute("href", `/${label.toLowerCase()}`);
+  }
+  // ...and the chapters are not links at all, so the two kinds cannot be confused for each other.
+  expect(within(rail).queryByRole("link", { name: "Mana" })).toBeNull();
 });
 
 test("the Fixes tab carries both the diagnosis and the prescription", () => {
-  render(<OverviewTab data={SAMPLE} />);
-  fireEvent.click(screen.getByRole("tab", { name: "Fixes" }));
+  render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
   expect(screen.getByText("What is wrong with this deck")).toBeInTheDocument();
   expect(screen.getByText("What to change")).toBeInTheDocument();
 });
 
-test("the mana detail is not on Summary, and switching to Mana reveals it", async () => {
-  const user = userEvent.setup();
+
+test("the mana chapter carries the castability section, exactly once", () => {
   // SAMPLE carries no `deckMath` -- most of this suite pins BuildBenchmarks against bare
   // `categories`/`parents`, and giving the shared fixture one risked every other SAMPLE consumer
   // (GraphView, GraphList, run-diff) picking up a field none of them asked for. Layered on locally
-  // instead (`DECK_MATH`, below), just for the one sub-tab whose "cast" section has nothing to
+  // instead (`DECK_MATH`, below), just for the one chapter whose "cast" section has nothing to
   // show without it.
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
-  render(<OverviewTab data={data} />);
-  expect(screen.queryByText("Can you cast your cards")).toBeNull();
-  await user.click(screen.getByRole("tab", { name: "Mana" }));
-  expect(screen.getByText("Can you cast your cards")).toBeInTheDocument();
-  // and recognition is no longer mounted -- the point is a smaller page, not a taller one
-  expect(screen.queryByText("What is wrong with this deck")).toBeNull();
+  render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
+  expect(screen.getAllByText("Can you cast your cards")).toHaveLength(1);
 });
 
-test("every sub-tab is reachable and names itself", async () => {
-  const user = userEvent.setup();
-  render(<OverviewTab data={SAMPLE} />);
-  for (const name of ["Summary", "Fixes", "Build", "Mana", "Engine"]) {
-    await user.click(screen.getByRole("tab", { name }));
-    expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
-  }
+
+/** EVERY CHAPTER IS ON THE PAGE AT ONCE -- that is the whole item. The sub-tabs' version of this
+ *  test clicked five tabs to prove each was reachable; the scroll's version proves no click is
+ *  needed, which is the guarantee that replaced it. */
+test("every chapter is mounted in one render, in rail order", () => {
+  const { container } = render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
+  const ids = [...container.querySelectorAll("section[id]")].map((el) => el.id);
+  expect(ids).toEqual(CHAPTERS.map((c) => c.id));
 });
 
 test("HeadlineScores uses semantic tokens, not raw Tailwind palette classes", () => {
@@ -1772,10 +1803,11 @@ test("the slack chip names its category in words, not the raw camelCase key", ()
 
 // --- The card drawer (F8): the inspector, reachable from any card name in the report. ---
 
+
 test("clicking a card name in the Cards table opens the inspector on that card", async () => {
   const user = userEvent.setup();
-  render(<ReportTabs data={SAMPLE} />);
-  await user.click(screen.getByRole("tab", { name: "Cards" }));
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+  await user.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
   await user.click(screen.getByRole("button", { name: "Krenko, Mob Boss" }));
   const panel = screen.getByTestId("card-inspector");
   expect(within(panel).getByRole("heading", { level: 3 })).toHaveTextContent("Krenko, Mob Boss");
@@ -1786,6 +1818,7 @@ test("clicking a card name in the Cards table opens the inspector on that card",
 // One combo, two pieces: one the deck holds and one it does not. The first opens the inspector;
 // the second stays plain text, because a click that does nothing is worse than no affordance --
 // and a combo really can name a card outside the deck.
+
 test("a combo piece opens the inspector, Escape closes it, and an unknown piece stays text", async () => {
   const user = userEvent.setup();
   const withStranger = {
@@ -1795,8 +1828,8 @@ test("a combo piece opens the inspector, Escape closes it, and an unknown piece 
       combos: [{ cards: ["Krenko, Mob Boss", "Not In This Deck"], result: "Infinite loop" }],
     },
   };
-  render(<ReportTabs data={withStranger} />);
-  await user.click(screen.getByRole("tab", { name: "Combos" }));
+  render(<MemoryRouter><ReportShell data={withStranger} /></MemoryRouter>);
+  await user.click(screen.getAllByRole("link", { name: /^Combos/ })[0]!);
   expect(screen.getByText("Not In This Deck")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Not In This Deck" })).not.toBeInTheDocument();
 
@@ -2270,10 +2303,10 @@ test("the trim buttons announce which count is open", async () => {
 /** A DIAL THAT OPENS A TAB AND LEAVES THE READER TO FIND THE ROW IS HALF A DRILL-DOWN. The gauge
  *  names one parent; Build has four groups; landing on the tab without marking which one was asked
  *  about makes the reader repeat the search they just clicked to avoid. */
-test("opening a role from its dial marks that group on Build", () => {
-  render(<OverviewTab data={SAMPLE as never} />);
+
+test("opening a role from its dial marks that group in the Roles chapter", () => {
+  render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
   fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
-  expect(screen.getByRole("tab", { name: "Build" })).toHaveAttribute("aria-selected", "true");
   expect(screen.getByTestId("role-group-Interaction")).toHaveAttribute("data-focused", "true");
   // AND ONLY THAT GROUP. Without this line the test passes for an implementation that marks every
   // group whenever any focus is set (`focus !== undefined` rather than `focus === p.name`) -- which
@@ -2281,9 +2314,9 @@ test("opening a role from its dial marks that group on Build", () => {
   expect(screen.getByTestId("role-group-Consistency")).not.toHaveAttribute("data-focused");
 });
 
-test("arriving on Build without a dial marks nothing", () => {
-  render(<OverviewTab data={SAMPLE as never} />);
-  fireEvent.click(screen.getByRole("tab", { name: "Build" }));
+
+test("arriving in the Roles chapter without a dial marks nothing", () => {
+  render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
   expect(screen.getByTestId("role-group-Interaction")).not.toHaveAttribute("data-focused");
 });
 
@@ -2295,7 +2328,7 @@ test("arriving on Build without a dial marks nothing", () => {
  *  even though it cannot lay anything out. */
 test("opening a role from its dial moves keyboard focus to the marked group", () => {
   Element.prototype.scrollIntoView = vi.fn();
-  render(<OverviewTab data={SAMPLE as never} />);
+  render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
   fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
   expect(screen.getByTestId("role-group-Interaction")).toHaveFocus();
 });

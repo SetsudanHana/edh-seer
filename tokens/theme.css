@@ -107,4 +107,15 @@
 
   /* Set per-instance by .pip; declared here so the theme is self-contained. */
   --pip-color: var(--color-pip-border);
+
+  /* Written at runtime by `ReportHeader` from its own measured height, and read by everything
+     sticky or anchored below it (the chapter rail, each chapter's scroll-margin, the cards
+     table's header). Declared here for the same reason --pip-color is: the theme has to be
+     self-contained, and a layout offset that resolves to nothing puts content under the header. */
+  --report-header-h: 0px;
+
+  /* The chapter rail's own measured height, written the same way and by the same rule -- it is a
+     SECOND pinned bar below `lg`, and 0px above it, where the rail sits beside the column. A
+     chapter anchor has to clear both or it parks its own heading behind one of them. */
+  --report-rail-h: 0px;
 }

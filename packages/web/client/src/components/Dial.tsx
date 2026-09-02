@@ -102,7 +102,9 @@ export const ZONES: Record<"floor" | "band" | "score", { from: number; to: numbe
   score: SCORE_ZONES,
 };
 
-const TONE_TEXT: Record<GaugeTone, string> = {
+/** Exported so the sticky `ReportHeader` colours its one-line readouts from the same map this
+ *  dial uses, rather than a second table that can drift from it. */
+export const TONE_TEXT: Record<GaugeTone, string> = {
   danger: "text-(--danger)",
   warning: "text-(--warning)",
   success: "text-(--success)",

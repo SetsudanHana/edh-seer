@@ -1,0 +1,181 @@
+import { render, screen, act, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
+import { afterEach, expect, test, vi } from "vitest";
+import { ReportShell } from "./ReportShell.js";
+import { ReportHeader } from "./ReportHeader.js";
+import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
+import { CHAPTERS } from "../lib/chapters.js";
+import { SAMPLE } from "../fixtures.js";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  document.documentElement.style.removeProperty("--report-header-h");
+});
+
+/** THE HEADER IS THE REPORT'S SUMMARY ON EVERY SURFACE — the split it resolves is that
+ *  `HeadlineScores` lived inside one sub-tab and the coverage gate above the strip, so a reader on
+ *  the graph had neither. */
+test("the header carries both scores and the coverage figure, on every surface", async () => {
+  // COVERAGE IS ABSENT ON A FULLY-READ DECK, by the same rule every other panel follows: the engine
+  // computes the field only for a deck it could not read in full, so `SAMPLE` has none. Layered on
+  // here rather than shipped in the fixture, exactly as the deck-math tests do.
+  const partly = {
+    ...SAMPLE,
+    report: {
+      ...SAMPLE.report,
+      coverage: { derived: 1, resolved: 2, underivedNames: ["Impact Tremors"], more: 0, caveat: "half of it" },
+    },
+  } as typeof SAMPLE;
+  render(<MemoryRouter><ReportShell data={partly} /></MemoryRouter>);
+  const header = screen.getByRole("region", { name: "Deck summary" });
+  expect(header).toHaveTextContent("Synergy");
+  expect(header).toHaveTextContent("Build");
+  // The figure, not the panel: `SAMPLE`'s coverage is 1 of 2 read.
+  expect(header).toHaveTextContent(/\d+ of \d+ read/);
+
+  await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
+  expect(screen.getByRole("region", { name: "Deck summary" })).toHaveTextContent(/\d+ of \d+ read/);
+});
+
+/** EVERYTHING STICKY BELOW THE HEADER OFFSETS BY ITS MEASURED HEIGHT. R2 was the previous attempt
+ *  at this offset — a hardcoded `top-[33px]` that hid the cards table's first row on a phone — so
+ *  the variable existing is the fix, and its absence is the regression. */
+test("the header writes its measured height into --report-header-h", () => {
+  vi.stubGlobal("ResizeObserver", class {
+    constructor(private cb: () => void) {}
+    observe() { this.cb(); }
+    unobserve() {}
+    disconnect() {}
+  });
+  const { unmount } = render(<ReportHeader data={SAMPLE} />);
+  expect(document.documentElement.style.getPropertyValue("--report-header-h")).toMatch(/^\d+px$/);
+  // AND IT IS CLEANED UP: a stale offset outlasting the report would push the entry screen's own
+  // sticky content down by a header that is no longer on the page.
+  unmount();
+  expect(document.documentElement.style.getPropertyValue("--report-header-h")).toBe("");
+});
+
+/** THE ONE THING ROUTES WERE CHOSEN FOR. React Router changes the DOM without touching scroll, so
+ *  without this a reader who opened the graph from chapter 5 came back to chapter 1. */
+test("returning from a reference surface restores the scroll offset", async () => {
+  const scrollTo = vi.fn();
+  vi.stubGlobal("scrollTo", scrollTo);
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+
+  Object.defineProperty(window, "scrollY", { value: 2400, configurable: true });
+  await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
+  // A reference surface opens at ITS top; it is a new surface, not a continuation.
+  expect(scrollTo).toHaveBeenCalledWith(0, 0);
+
+  await userEvent.click(screen.getByRole("link", { name: /Report/ }));
+  expect(scrollTo).toHaveBeenCalledWith(0, 2400);
+});
+
+/** A NEW ANALYSIS OPENS ON THE CHAPTERS. Without this a reader who left the graph open, edited
+ *  their list and re-analysed came back to the graph — the one surface that answers none of the six
+ *  questions a fresh report is for. */
+test("a new report routes back to the chapters", async () => {
+  const { rerender } = render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+  await userEvent.click(screen.getAllByRole("link", { name: /^Combos/ })[0]!);
+  expect(screen.getByText(/Infinite loop/)).toBeInTheDocument();
+
+  const second = { ...SAMPLE, report: { ...SAMPLE.report } };
+  rerender(<MemoryRouter initialEntries={["/combos"]}><ReportShell data={second} /></MemoryRouter>);
+  expect(screen.getByRole("navigation", { name: "Report chapters" })).toBeInTheDocument();
+});
+
+/** A CHAPTER ANCHOR HAS TO CLEAR BOTH PINNED BARS. Below `lg` the rail is a second sticky strip
+ *  under the header, and the first version of this offset counted only the header: a phone judge
+ *  sent to chapter 6 read its heading as the single word "do?" -- the rest was behind the rail --
+ *  and could not tell which chapter they were in. Both heights are measured; neither is a
+ *  constant. */
+test("each chapter's scroll offset clears the header and the rail", () => {
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+  for (const c of CHAPTERS) {
+    const section = document.getElementById(c.id)!;
+    expect(section.className, c.id).toContain("var(--report-header-h,0px)+var(--report-rail-h,0px)");
+  }
+});
+
+/** THE DECK LIVES IN THE HASH, AND A SURFACE LINK MAY NOT DROP IT. Measured on the live page: a
+ *  router `Link to="/cards"` replaced the whole location, so the URL became `/cards` with no
+ *  `#deck=` on it -- the report stayed on screen (it is in memory) while a reload or a copied link
+ *  had lost the analysis. */
+test("a reference link carries the deck hash into the new surface", async () => {
+  window.location.hash = "#deck=abc123";
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+  const link = screen.getAllByRole("link", { name: /^Cards/ })[0]!;
+  expect(link).toHaveAttribute("href", "/cards#deck=abc123");
+  window.location.hash = "";
+});
+
+/** AND A CHAPTER LINK IS NOT AN ANCHOR AT ALL, for the same reason: `href="#stand"` REPLACES the
+ *  deck payload in the hash. On the live page one click on the rail rewrote the URL to `/#stand`,
+ *  which lost the decklist and made Back close the report. */
+test("the rail's chapter links are buttons, not hash anchors", () => {
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+  const rail = screen.getByRole("navigation", { name: "Report chapters" });
+  for (const c of CHAPTERS) {
+    const control = within(rail).getByRole("button", { name: c.rail });
+    expect(control.tagName).toBe("BUTTON");
+  }
+  expect(within(rail).queryByRole("link", { name: "Stand" })).toBeNull();
+});
+
+/** A HIDDEN OVERFLOW NEEDS A VISIBLE CUE, and a cue for an overflow that is not there is the same
+ *  lie pointing the other way -- so the rail's fade is driven by the measured width, exactly as the
+ *  theme matrix's is (they share `useClipped`). jsdom reports every width as 0, so the widths are
+ *  stubbed: what is asserted is that the cue follows the measurement. */
+test("the rail shows an edge cue only when its labels are actually cut off", () => {
+  const widths = { scrollWidth: 900, clientWidth: 390 };
+  Object.defineProperty(HTMLUListElement.prototype, "scrollWidth", { configurable: true, get() { return widths.scrollWidth; } });
+  Object.defineProperty(HTMLUListElement.prototype, "clientWidth", { configurable: true, get() { return widths.clientWidth; } });
+  const { unmount } = render(<MemoryRouter><ChapterRail current={null} /></MemoryRouter>);
+  expect(screen.getByTestId("rail-edge-fade")).toBeInTheDocument();
+  unmount();
+
+  widths.scrollWidth = 390;
+  render(<MemoryRouter><ChapterRail current={null} /></MemoryRouter>);
+  expect(screen.queryByTestId("rail-edge-fade")).toBeNull();
+
+  Reflect.deleteProperty(HTMLUListElement.prototype, "scrollWidth");
+  Reflect.deleteProperty(HTMLUListElement.prototype, "clientWidth");
+});
+
+/** THE RAIL REFLECTS POSITION — that is what makes it a table of contents rather than a second tab
+ *  bar. jsdom lays nothing out, so the observer is driven by hand: what is asserted is the RULE
+ *  (topmost intersecting chapter wins, in document order), which is the part that can be wrong. */
+test("the rail marks the topmost visible chapter, in document order", () => {
+  let fire: (entries: { target: { id: string }; isIntersecting: boolean }[]) => void = () => {};
+  vi.stubGlobal("IntersectionObserver", class {
+    constructor(cb: typeof fire) { fire = cb; }
+    observe() {}
+    disconnect() {}
+  });
+  function Harness() {
+    return (
+      <>
+        <ChapterRail current={useCurrentChapter()} />
+        {CHAPTERS.map((c) => <section key={c.id} id={c.id} />)}
+      </>
+    );
+  }
+  render(<MemoryRouter><Harness /></MemoryRouter>);
+
+  // Two chapters intersect at once (a tall screen); the earlier one is the one you are reading.
+  act(() => fire([
+    { target: { id: "mana" }, isIntersecting: true },
+    { target: { id: "roles" }, isIntersecting: true },
+  ]));
+  expect(screen.getByRole("button", { name: "Mana" })).toHaveAttribute("aria-current", "true");
+  expect(screen.getByRole("button", { name: "Roles" })).not.toHaveAttribute("aria-current");
+
+  // Scrolling past Mana promotes Roles rather than clearing the rail.
+  act(() => fire([{ target: { id: "mana" }, isIntersecting: false }]));
+  expect(screen.getByRole("button", { name: "Roles" })).toHaveAttribute("aria-current", "true");
+
+  // AND A GAP BETWEEN TWO CHAPTERS' BANDS KEEPS THE LAST ANSWER, rather than blinking off.
+  act(() => fire([{ target: { id: "roles" }, isIntersecting: false }]));
+  expect(screen.getByRole("button", { name: "Roles" })).toHaveAttribute("aria-current", "true");
+});
