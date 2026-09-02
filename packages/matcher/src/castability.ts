@@ -24,6 +24,26 @@ const REFUSALS: { test: (dc: DeckCard) => boolean; reason: string }[] = [
     reason: "affinity/improvise — the cost depends on the board",
   },
   {
+    // THE CARD'S OWN COST REDUCTION, and it is the same lie the four refusals above name: the
+    // printed mana value is not what you pay. `Blasphemous Act` is {8}{R} and "costs {1} less to
+    // cast for each creature on the battlefield", and the report called it the deck's hardest cast
+    // at "9-drop, 31% by turn 9" -- a figure that is wrong in the direction that matters, because
+    // the card is trivially castable on exactly the board state that makes you want it.
+    //
+    // "THIS SPELL", NOT A BARE "costs {N} less": measured corpus-wide, 333 cards say "this spell
+    // costs {N} less to cast" and 377 match the loose phrase -- the extra 44 reduce OTHER spells
+    // (Kaza, Roil Chaser; God-Eternal Kefnet; Hardened Berserker), whose own printed cost is honest
+    // and which the owner's "cost reduction is ramp, not a synergy" ruling already covers. Refusing
+    // those would blank a correct number on 44 cards to fix 333.
+    //
+    // MEASURED on the 71 calibration decks before it was written: 38 of them hold at least one, 72
+    // instances in all, and they are exactly the cards that dominate a hardest-cast list --
+    // Emrakul, the Promised End (13), Metalwork Colossus (11), The Dawning Archaic (10),
+    // Blasphemous Act (9), The Great Henge (9).
+    test: (dc) => /this spell costs \{[^}]+\} less to cast/i.test(dc.card.oracleText ?? ""),
+    reason: "costs less than it prints — the reduction depends on the board, which nothing here models",
+  },
+  {
     // ONLY WHEN *THIS* CARD IS THE ONE CAST FREE, AND ONLY IF IT IS FREE ON THE FIRST CAST.
     // The bare phrase refuses 540 corpus cards where 19 deserve it (roadmap K5a, found by K5
     // reporting the commander's own row):
@@ -126,6 +146,13 @@ export interface DeckCastability {
   cards: CardCastability[];
   /** How many cards the model refused to price. */
   refused: number;
+  /** WHICH ONES, AND WHY — a list and never just a number, the same call `cheatsIntoPlay` below
+   *  makes and for the same reason. Measured on screen (S19): once `Blasphemous Act` stopped being
+   *  priced it left the hardest-cast list and appeared NOWHERE on the report, leaving "2 cards
+   *  refused" as the only trace. A reader who wondered what happened to their 9-drop had no way to
+   *  find out, which trades a wrong number for an unlocatable one. Deduped and ordered by mana
+   *  value, biggest first: the expensive ones are the ones a reader misses from the list. */
+  refusedCards: { name: string; manaValue: number; reason: string }[];
   /** The two biases, in the order they are meant to be read. Ships WITH the number, because the
    *  number reads plausible on its own and is not. */
   biases: string;
@@ -168,6 +195,9 @@ export function deckCastability(
     cards: [...byName.values()]
       .sort((a, b) => (a.castable?.high ?? 1) - (b.castable?.high ?? 1) || b.manaValue - a.manaValue),
     refused: rows.filter((r) => r.castable === null).length,
+    refusedCards: [...new Map(rows.filter((r) => r.castable === null && r.refused !== undefined)
+      .map((r) => [r.name, { name: r.name, manaValue: r.manaValue, reason: r.refused! }])).values()]
+      .sort((a, b) => b.manaValue - a.manaValue || a.name.localeCompare(b.name)),
     biases:
       "A range, not a number, and the range is the PLAY POLICY: the low end holds up two mana before "
       + "casting an accelerant, the high end spends everything on acceleration and is a ceiling no "

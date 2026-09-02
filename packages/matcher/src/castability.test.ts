@@ -69,6 +69,56 @@ test("a cost the model cannot represent is refused, not guessed", () => {
   expect(costRefusal(spell("Plain", "{1}{R}", 2))).toBeUndefined();
 });
 
+/** S19, 2026-09-02. `Blasphemous Act` is {8}{R} and "this spell costs {1} less to cast for each
+ *  creature on the battlefield", and the report called it the example deck's HARDEST CAST at
+ *  "9-drop, 31% by turn 9". That is wrong in the direction that matters: the card is trivially
+ *  castable on exactly the board state that makes you want it. Same lie as {X}, delve and convoke,
+ *  and the same house answer -- refuse it rather than guess.
+ *
+ *  MEASURED before it was written: 333 corpus cards carry the phrase, and 38 of the 71 calibration
+ *  decks hold at least one (72 instances), led by the cards that dominate a hardest-cast list --
+ *  Emrakul the Promised End (13), Metalwork Colossus (11), The Dawning Archaic (10). */
+test("a card that costs less than it prints is refused, not priced at its printed value", () => {
+  const act = spell("Blasphemous Act", "{8}{R}", 9,
+    "This spell costs {1} less to cast for each creature on the battlefield. Blasphemous Act deals 13 damage to each creature.");
+  expect(costRefusal(act)).toMatch(/costs less than it prints/);
+  const deck = deckOf([act], 37);
+  const row = rowFor(deck, "Blasphemous Act");
+  expect(row.castable).toBeNull();
+  expect(row.refused).toMatch(/depends on the board/);
+});
+
+/** A REFUSED CARD LEAVES THE LIST, so if nothing names it the reader loses the card entirely.
+ *  Measured on screen: once `Blasphemous Act` stopped being priced it appeared NOWHERE on the
+ *  report, with "2 cards refused" inside a collapsed caveat as its only trace. That trades a wrong
+ *  number for an unlocatable one, which is the failure S1 and S13 both landed on. */
+test("the refused cards are named with their reason, not just counted", () => {
+  const act = spell("Blasphemous Act", "{8}{R}", 9, "This spell costs {1} less to cast for each creature on the battlefield.");
+  const fireball = spell("Fireball", "{X}{R}", 1);
+  // The filler in `deckOf` is unpriced too (no curves are supplied), so this asserts on the two
+  // cards under test rather than on the total -- the point is that each is NAMED with its reason.
+  const out = deckCastability(deckOf([act, fireball], 37), new Map());
+  const named = new Map(out.refusedCards.map((c) => [c.name, c]));
+  expect(named.get("Blasphemous Act")?.reason).toMatch(/costs less than it prints/);
+  expect(named.get("Fireball")?.reason).toMatch(/X cost/);
+  // Biggest mana value first: the expensive ones are the ones a reader misses from the list.
+  expect(out.refusedCards[0]!.name).toBe("Blasphemous Act");
+  // Named once, however many copies the list holds.
+  expect(out.refusedCards.filter((c) => c.name === "Blasphemous Act")).toHaveLength(1);
+});
+
+/** THE BOUNDARY, and it is 44 cards wide. A card that makes OTHER spells cheaper prints an honest
+ *  cost of its own, and the owner's "cost reduction is ramp, not a synergy" ruling already covers
+ *  it. Refusing on the loose phrase "costs {N} less to cast" would blank a correct number on those
+ *  44 to fix the 333 that say "this spell". */
+test("a card that makes OTHER spells cheaper keeps its own honest number", () => {
+  const kaza = spell("Kaza, Roil Chaser", "{1}{U}{R}", 3,
+    "Instant and sorcery spells you cast cost {X} less to cast, where X is the number of Wizards you control.");
+  expect(costRefusal(kaza)).toBeUndefined();
+  const deck = deckOf([kaza], 37);
+  expect(rowFor(deck, "Kaza, Roil Chaser").castable).not.toBeNull();
+});
+
 test("a card past the simulated horizon is refused rather than priced at a nearer turn", () => {
   const deck = deckOf([spell("Emrakul", "{15}", 15)], 37);
   const row = rowFor(deck, "Emrakul");
