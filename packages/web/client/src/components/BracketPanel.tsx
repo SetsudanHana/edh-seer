@@ -1,6 +1,5 @@
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
-import { Explain } from "./Explain.js";
 
 /** WHICH TABLE THIS DECK IS FOR — WotC's official Commander Brackets, read off two published lists
  *  the engine already carries (roadmap L3).
@@ -52,33 +51,41 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
         *  counted with no statement of what puts a card on the list, `infinite combo` as a named
         *  category (*"I know 'combo' only as ordinary English for a combination"*).
         *
-        *  ONE DISCLOSURE, NOT A PARAGRAPH: `Explain` is this report's one mechanism for saying what
-        *  something means, and it costs a line until asked. Every claim in here is read off
-        *  `brackets.ts` -- five official tiers, two PUBLISHED lists, a rule about contents rather
-        *  than a judgement of quality -- so nothing is asserted from memory about the game. */}
+        *  THAT EXPLANATION NOW LIVES AT WIZARDS (T10, below). What stays is read off `brackets.ts`
+        *  -- five official tiers, a rule about contents rather than a judgement of quality -- so
+        *  nothing is asserted from memory about the game. */}
       {/* R2-F3: THIS OPENED WITH THE SENTENCE ALREADY ON SCREEN. The always-visible line below the
         *  band carries "Wizards' five tiers … 1 is the most casual table, 5 the most competitive"
         *  -- added in round 1 so the panel orients a reader who never opens this -- and the
         *  disclosure still led with the same words, four lines apart. The judge: *"my first thought
         *  was that I'd opened the wrong thing."* The disclosure now starts where the visible line
         *  stops. */}
-      <Explain label="what a bracket is">
-        <span className="text-(--foreground)">A bracket 4 deck is not better than a bracket 2
-        deck</span> — it is for a different table, and the band is about what the deck contains
-        rather than how well it is built or how often it wins.{" "}
-        {/* F3: this said "two published lists", and only ONE of them is published — Game Changers
-          *  are Wizards’ list, the infinite combos are Commander Spellbook results this engine
-          *  reads off the deck (`brackets.ts`). The judge: *"I do not know if there is a published
-          *  list of infinite combos somewhere or whether the tool worked them out itself … it is
-          *  the difference between 'Wizards says so' and 'this website says so', which matters to
-          *  me if I am going to repeat it at a table."* An overclaim I introduced, and the exact
-          *  kind this repo refuses everywhere else. */}
+      {/* WHAT A BRACKET IS BELONGS TO WIZARDS, AND SO DOES ITS DEFINITION (roadmap T10, owner call
+        *  2026-09-03): *"what bracket is and anything about brackets should just link to wizards
+        *  brackets guide"*. This panel used to carry the definition itself, grown over two judging
+        *  rounds; keeping our own copy of someone else's spec means maintaining it, and the brackets
+        *  are still in beta and still moving.
+        *
+        *  ONE SENTENCE STAYS AND IT IS NOT ABOUT BRACKETS. Which half of the input is Wizards' and
+        *  which half is ours is a disclosure about THIS TOOL, and the judging round that produced it
+        *  filed the missing version as an overclaim -- *"it is the difference between 'Wizards says
+        *  so' and 'this website says so', which matters to me if I am going to repeat it at a
+        *  table."* A link cannot answer that, because the answer is not on Wizards' page. */}
+      <p className="text-xs text-(--muted) max-w-[65ch]">
         Two kinds of thing move a deck up, and this report reads both off your list: cards on{" "}
         <span className="text-(--foreground)">Wizards&rsquo; published Game Changer list</span>,
         which is theirs, and{" "}
         <span className="text-(--foreground)">combos this tool finds in the deck itself</span>,
-        which is ours.
-      </Explain>
+        which is ours.{" "}
+        <a
+          className="text-(--accent) underline underline-offset-2"
+          href="https://magic.wizards.com/en/news/announcements/introducing-commander-brackets-beta"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          Wizards&rsquo; bracket guide
+        </a>
+      </p>
       {/* The text form stays, at label size rather than display size: it is what a screen reader
         *  reads and what a reader copies into a pod chat, and the band above cannot be either. */}
       <div className="flex flex-col gap-1.5">

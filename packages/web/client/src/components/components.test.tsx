@@ -2361,11 +2361,16 @@ test("the bracket panel defines its own vocabulary", () => {
     cheapCombos: [{ cards: ["Isochron Scepter", "Dramatic Reversal"], result: "Infinite untap", manaValue: 4 }],
     reasons: [],
   }} />);
-  // "I don't know what a bracket is in this game" -- one disclosure, not a paragraph.
-  expect(screen.getByText(/what a bracket is/i)).toBeInTheDocument();
-  // The disclosure starts where the always-visible line stops -- it used to repeat that line's
-  // opening sentence word for word, four lines apart (R2-F3).
-  expect(screen.getByText(/A bracket 4 deck is not better than a bracket 2/i)).toBeInTheDocument();
+  // T10 (owner, 2026-09-03): *"what bracket is and anything about brackets should just link to
+  // wizards brackets guide"*. The definition is Wizards' to maintain and the brackets are still in
+  // beta, so the panel points at the source instead of carrying a copy of it. The always-visible
+  // orienting line stays -- a reader who never follows a link still has to know which end is which.
+  expect(screen.getByText(/five tiers for matching decks/i)).toBeInTheDocument();
+  const guide = screen.getByRole("link", { name: /bracket guide/i });
+  expect(guide).toHaveAttribute("href", "https://magic.wizards.com/en/news/announcements/introducing-commander-brackets-beta");
+  expect(guide).toHaveAttribute("rel", expect.stringContaining("noopener"));
+  // WHAT A LINK CANNOT ANSWER stays on the panel: which half of the input is Wizards' and which is
+  // ours. The judging round that produced this sentence filed its absence as an overclaim.
   expect(screen.getByText(/Two kinds of thing move a deck up/i)).toBeInTheDocument();
   // Capitalised and counted, with nothing saying what puts a card on the list.
   // "the format" was jargon the beginner could not decode -- named outright (S14 judge round, F2).

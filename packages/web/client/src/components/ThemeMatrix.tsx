@@ -195,13 +195,20 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
         ) : null}
       </div>
 
-      {hidden > 0 ? (
+      {/* A ONE-WAY DOOR (roadmap T14). Owner: *"there is option to show more, but there is no option
+        *  to go back to show less"*. `setExpanded(true)` could not be undone, and the control then
+        *  DISAPPEARED -- `hidden` falls to 0 once every row is out, so the only affordance for
+        *  collapsing removed itself. A reader who opened a 60-row grid to check one card was left
+        *  scrolling past all sixty for the rest of the session. Same shape `Findings` already ships,
+        *  where the toggle reads "Show fewer" on the way back. */}
+      {m.rows.length > VISIBLE_ROWS ? (
         <button
           type="button"
-          onClick={() => setExpanded(true)}
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
           className="eyebrow self-start text-(--muted) hover:text-(--accent) py-1"
         >
-          show the other {hidden} rows
+          {expanded ? `show fewer rows` : `show the other ${hidden} rows`}
         </button>
       ) : null}
 

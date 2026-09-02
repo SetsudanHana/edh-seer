@@ -147,3 +147,29 @@ test("a pinned card's row is ringed, even though the row is a face name", async 
   // A mark is never the only carrier.
   expect(row!.textContent).toContain("pinned");
 });
+
+/** T14 (owner): *"there is option to show more, but there is no option to go back to show less"*.
+ *  The control called `setExpanded(true)` and was rendered on `hidden > 0`, so opening it removed
+ *  the only affordance for closing it -- a reader who opened a long grid to check one card scrolled
+ *  past every row for the rest of the session. */
+test("the row fold opens and closes again", async () => {
+  const user = userEvent.setup();
+  const groups = [{
+    category: "x",
+    label: "Group X",
+    cards: Array.from({ length: 24 }, (_, i) => `Card ${i}`),
+    pairs: [] as never[],
+  }];
+  const names = Array.from({ length: 24 }, (_, i) => `Card ${i}`);
+  render(<ThemeMatrix archetypes={groups as never} nonlandNames={names} />);
+
+  const open = screen.getByRole("button", { name: /show the other 6 rows/ });
+  expect(open).toHaveAttribute("aria-expanded", "false");
+  await user.click(open);
+
+  // The control survives the click, now pointing the other way.
+  const close = screen.getByRole("button", { name: /show fewer rows/ });
+  expect(close).toHaveAttribute("aria-expanded", "true");
+  await user.click(close);
+  expect(screen.getByRole("button", { name: /show the other 6 rows/ })).toBeInTheDocument();
+});
