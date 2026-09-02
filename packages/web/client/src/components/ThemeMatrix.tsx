@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useClipped } from "../lib/use-clipped.js";
 import type { DeckReport } from "../types.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
-import { CardName } from "./card-drawer.js";
+import { CardName, usePinned } from "./card-drawer.js";
 
 /** How many rows show before the rest fold away. The matrix's JOB is the pattern at the top -- the
  *  cards carrying several mechanisms at once -- and 57 rows of it is a chapter that scrolls past
@@ -25,6 +25,7 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
   archetypes: DeckReport["archetypes"];
   nonlandNames: readonly string[];
 }) {
+  const { isPinned } = usePinned();
   const [expanded, setExpanded] = useState(false);
   /** WHETHER THE TABLE IS ACTUALLY CUT OFF, measured rather than assumed -- see `useClipped`,
    *  which the chapter rail shares. Re-checked when the row count changes, since expanding can
@@ -107,10 +108,22 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
             </tr>
           </thead>
           <tbody>
+            {/* THE SAME RING AS THE CARDS TABLE, and this is the surface that proves the face rule:
+              *  these rows are FACE names ("Fable of the Mirror-Breaker") while the waffle's squares
+              *  are PHYSICAL ones, so a card pinned on either has to light on both. `isPinned`
+              *  resolves before comparing -- the rule lives in one place. */}
             {shown.map((r) => (
-              <tr key={r.name} data-testid="matrix-row" className="border-t border-(--separator)">
+              <tr
+                key={r.name}
+                data-testid="matrix-row"
+                data-pinned={isPinned(r.name) ? "1" : undefined}
+                className={`border-t border-(--separator) ${
+                  isPinned(r.name) ? "outline outline-1 outline-(--accent) outline-offset-[-1px]" : ""
+                }`}
+              >
                 <th scope="row" className="text-left font-normal py-1 pr-3 sticky left-0 bg-(--background) whitespace-nowrap">
                   <CardName name={r.name} />
+                  {isPinned(r.name) ? <span className="sr-only">pinned</span> : null}
                 </th>
                 {/* `relative` ON THE CELL IS LOAD-BEARING. The `sr-only` span inside is absolutely
                   *  positioned; with no positioned ancestor it resolves against the INITIAL
