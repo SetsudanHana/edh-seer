@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useClipped } from "../lib/use-clipped.js";
 import type { DeckReport } from "../types.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardName } from "./card-drawer.js";
@@ -25,20 +26,11 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
   nonlandNames: readonly string[];
 }) {
   const [expanded, setExpanded] = useState(false);
-  /** WHETHER THE TABLE IS ACTUALLY CUT OFF, measured rather than assumed. A fade painted over a
-   *  table that fits is a cue for scrolling that is not there -- the same lie as no cue at all,
-   *  pointing the other way -- so it is driven by the real overflow and re-checked on resize. */
+  /** WHETHER THE TABLE IS ACTUALLY CUT OFF, measured rather than assumed -- see `useClipped`,
+   *  which the chapter rail shares. Re-checked when the row count changes, since expanding can
+   *  widen the name column. */
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const [clipped, setClipped] = useState(false);
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const check = () => setClipped(el.scrollWidth > el.clientWidth + 1);
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [expanded]);
+  const clipped = useClipped(scrollerRef, [expanded]);
   const m = themeMatrix(archetypes, nonlandNames);
   if (!m) return null;
   const shown = expanded ? m.rows : m.rows.slice(0, VISIBLE_ROWS);

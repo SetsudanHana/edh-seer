@@ -3,6 +3,7 @@ import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
 import { InstallButton } from "./components/InstallButton.js";
+import { BrowserRouter } from "react-router";
 import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { diffRuns, loadLastRun, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
@@ -140,6 +141,13 @@ export default function App() {
   }, []);
 
   return (
+    /* THE REPORT IS ROUTED (S7): `/graph`, `/cards` and `/combos` are its three reference surfaces,
+     * so the browser's back button returns a reader to the scroll offset they left instead of
+     * leaving the report. The router wraps the whole app rather than the report alone so a reader
+     * who backs out to the paste box and analyses again does not re-mount it under a stale path.
+     *
+     * The DECK stays in the HASH. A shared link is still `/` plus `#deck=<payload>`; the path says
+     * which surface, the hash says which deck, and the two never collide. */
     // THE COLUMN USED TO STOP AT 1024px. On a 1920 screen that left 448px of empty gutter on each
     // side -- 47% of the viewport -- while the report ran 3,092px tall, i.e. 2.9 screens of
     // scrolling past dead space. The reference tools this product is measured against (Moxfield,
@@ -148,12 +156,13 @@ export default function App() {
     // Above `xl` the cap comes off entirely -- a centred 1600px column on a 1920 screen still left
     // 160px of dead margin each side, which is the same complaint one step smaller. The width is
     // safe to give away because nothing here stretches with it: the report flows into columns
-    // (`OverviewTab`) and every run of prose carries its own measure cap, so growing the container
+    // (`ReportChapters`) and every run of prose carries its own measure cap, so growing the container
     // adds columns rather than 200-character lines. Below `xl` the reading column is unchanged.
     // `min-h-screen` and the background moved to `body` (index.css) when the static intro in
     // `index.html` put real content outside this element: a short analysis left `main` filling the
     // viewport, so the explainer started a full screen below the fold with a band of unpainted page
     // between them.
+    <BrowserRouter>
     <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
       {/* RENDERS NOTHING HERE. It portals into the static header's nav, and only once the browser
         *  has said the app can be installed -- see `InstallButton` for why the event is the whole
@@ -246,5 +255,6 @@ export default function App() {
           lived outside it, and a notice that is a CONDITION of showing Wizards' property should not
           depend on the bundle loading at all. */}
     </main>
+    </BrowserRouter>
   );
 }

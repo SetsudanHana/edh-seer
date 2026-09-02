@@ -23,6 +23,13 @@
   --background: #0d0912;
   --foreground: #e9e4ef;
 
+  /* THE STICKY REPORT HEADER'S MEASURED HEIGHT, written by `ReportHeader` at mount and on every
+     resize. Declared here so it always resolves: everything sticky or anchored below the header
+     offsets by it (the chapter rail, each chapter's `scroll-mt`, the cards table's own header),
+     and the previous attempt at that offset was a hardcoded `top-[33px]` that was wrong at 390px
+     and hid the first row of the table behind the strip it was guessing at. 0 until measured. */
+  --report-header-h: 0px;
+
   --surface: #16111f;
   --surface-foreground: var(--foreground);
   --surface-secondary: #1b1526;

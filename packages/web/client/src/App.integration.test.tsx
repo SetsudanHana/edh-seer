@@ -11,10 +11,11 @@ test("typing commander + decklist and clicking Analyze renders the ranked report
   await userEvent.type(screen.getByRole("textbox", { name: /commander/i }), "1 Krenko, Mob Boss");
   await userEvent.type(screen.getByRole("textbox", { name: /decklist/i }), "1 Impact Tremors");
   await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
-  await waitFor(() => expect(screen.getByText("Tokens")).toBeInTheDocument()); // Overview tab, default active
+  await waitFor(() => expect(screen.getByTestId("recognition-theme")).toHaveTextContent("Tokens")); // chapter 1, in the scroll
   expect(screen.getByText(/Beholder's Death Ray/)).toBeInTheDocument(); // unresolved banner
-  await userEvent.click(screen.getByRole("tab", { name: "Cards" }));
-  // "Krenko, Mob Boss" appears in the commander textarea value and in the Cards tab's list.
+  await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
+  // "Krenko, Mob Boss" appears in the commander textarea value, in the sticky header and in the
+  // Cards surface's list.
   expect(screen.getAllByText(/Krenko, Mob Boss/).length).toBeGreaterThan(1);
   // commanders passed as the 2nd arg
   expect(spy).toHaveBeenCalledWith("1 Impact Tremors", "1 Krenko, Mob Boss");
@@ -31,7 +32,7 @@ test("the static explainer stops rendering once an analysis is on screen", async
   await userEvent.type(screen.getByRole("textbox", { name: /commander/i }), "1 Krenko, Mob Boss");
   await userEvent.type(screen.getByRole("textbox", { name: /decklist/i }), "1 Impact Tremors");
   await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
-  await waitFor(() => expect(screen.getByText("Tokens")).toBeInTheDocument()); // Overview tab, default active
+  await waitFor(() => expect(screen.getByTestId("recognition-theme")).toHaveTextContent("Tokens")); // chapter 1, in the scroll
   expect(document.documentElement.dataset.report).toBe("1");
   expect(spy).toHaveBeenCalledWith("1 Impact Tremors", "1 Krenko, Mob Boss");
 

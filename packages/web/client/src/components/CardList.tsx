@@ -345,13 +345,18 @@ export function CardList({ cards, artByName, coverage }: {
         <table className="w-full min-w-[46rem] text-sm border-collapse">
           {/* STICKY, because scanning a 52-row table BY COLUMN is exactly what a tuner does and the
             *  labels used to scroll away — the brief's own sentence, "the precon player did not know
-            *  what the last column was". Offset by the tab strip, which is itself sticky at top-0.
-            *  The background is opaque or the rows show through as it passes over them.
+            *  what the last column was". The background is opaque or the rows show through as it
+            *  passes over them.
             *
-            *  THE OFFSET IS THE TAB STRIP'S MEASURED HEIGHT (33px in a live browser), not a round
-            *  number: at 44px an 11px band of scrolling rows showed between the strip and the
-            *  header and read as a rendering glitch. */}
-          <thead className="sticky top-[33px] z-[5] bg-(--background)">
+            *  THE OFFSET IS MEASURED, NOT GUESSED (R2, fixed with S7). It used to be `top-[33px]`,
+            *  the tab strip's height in one browser at one width — and the strip carried
+            *  `overflow-x-auto` precisely because at 390px its own content runs 32px past the row,
+            *  so its real height was never the 33 this assumed and the top row scrolled underneath
+            *  it on a phone. `--report-header-h` is written by `ReportHeader` from its own
+            *  `getBoundingClientRect().height`, at mount and on every resize; the magic number is
+            *  deleted rather than re-tuned, because a re-tuned constant is the same bug with a
+            *  different number in it. */}
+          <thead className="sticky top-[var(--report-header-h,0px)] z-[5] bg-(--background)">
             <tr className="border-b border-(--separator)">
               <th className="eyebrow text-left font-normal py-2 pr-2 w-10">#</th>
               <th className="eyebrow text-left font-normal py-2 pr-2">

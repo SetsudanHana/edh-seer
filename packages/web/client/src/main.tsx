@@ -4,8 +4,9 @@ import App from "./App.js";
 import { Calibrate } from "./components/Calibrate.js";
 import "./index.css";
 
-// A hash view rather than a router: the app has exactly two screens and adding routing to reach the
-// second one would be more machinery than the feature. `#calibrate` is a local dev tool.
+// `#calibrate` STAYS A HASH VIEW, and stays outside the router: it is a local dev tool (mounted
+// only under `MTG_CALIBRATE=1`), not a surface of the product, and it has nothing under it to
+// route to. The report's own router lives inside `App`, over the report only.
 const view = window.location.hash === "#calibrate" ? <Calibrate /> : <App />;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
