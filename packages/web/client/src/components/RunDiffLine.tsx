@@ -15,6 +15,15 @@ const inlineLabel = (category: string): string =>
 export const signed = (from: number, to: number): string =>
   `${to > from ? "+" : ""}${(to - from).toFixed(1)}`;
 
+/** THE FIGURE OUT OF A SNAPSHOT ENTRY, which stores it as `"Board wipes 0/1"` -- the label and the
+ *  number together, because `RunSnapshot.findings` is keyed by id and has to be readable on its own.
+ *
+ *  This line prints the label itself, so without the split the `fixed` and `new` branches read
+ *  "new Board wipes Board wipes 0/1" -- observed on the live page, 2026-09-02. The moved branch had
+ *  always split; the other two had not, and had simply never been looked at with a finding that
+ *  appeared or went away. */
+const figure = (entry: string | undefined): string | undefined => entry?.split(" ").pop();
+
 /** A list of card names, capped -- the line is one glance, and a 20-card paste is a new deck being
  *  described rather than an edit being reported. */
 function Names({ verb, names }: { verb: string; names: string[] }) {
@@ -65,12 +74,12 @@ export function RunDiffLine({ diff }: { diff: RunDiff | null }) {
         {f.to === undefined ? (
           <>
             <span className="text-(--success)">fixed</span> {f.label}{" "}
-            <span className="stat-num">{f.from}</span>
+            <span className="stat-num">{figure(f.from)}</span>
           </>
         ) : f.from === undefined ? (
-          <><span className="text-(--warning)">new</span> {f.label} <span className="text-(--foreground) stat-num">{f.to}</span></>
+          <><span className="text-(--warning)">new</span> {f.label} <span className="text-(--foreground) stat-num">{figure(f.to)}</span></>
         ) : (
-          <>{f.label} <span className="text-(--foreground) stat-num">{f.from.split(" ").pop()} &rarr; {f.to.split(" ").pop()}</span></>
+          <>{f.label} <span className="text-(--foreground) stat-num">{figure(f.from)} &rarr; {figure(f.to)}</span></>
         )}
       </span>,
     );
@@ -82,6 +91,12 @@ export function RunDiffLine({ diff }: { diff: RunDiff | null }) {
       </span>,
     );
   }
+  // THE CARDS COME BEFORE THE CATEGORY COUNTS, which is a change from the strip's order and the one
+  // ordering claim here that is mine rather than inherited. A category count is a CONSEQUENCE of the
+  // edit ("draw 12 -> 14"); the card names ARE the edit. When the tail is cut for a phone, the parts
+  // that survive should be the ones the reader can attribute.
+  if (diff.added.length > 0) parts.push(<Names key="added" verb={`+${diff.added.length}`} names={diff.added} />);
+  if (diff.removed.length > 0) parts.push(<Names key="removed" verb={`−${diff.removed.length}`} names={diff.removed} />);
   for (const c of diff.categories.slice(0, 3)) {
     parts.push(
       <span key={c.category}>
@@ -90,17 +105,34 @@ export function RunDiffLine({ diff }: { diff: RunDiff | null }) {
       </span>,
     );
   }
-  if (diff.added.length > 0) parts.push(<Names key="added" verb={`+${diff.added.length}`} names={diff.added} />);
-  if (diff.removed.length > 0) parts.push(<Names key="removed" verb={`−${diff.removed.length}`} names={diff.removed} />);
   if (parts.length === 0) return null;
 
   return (
-    <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs text-(--muted) pt-1">
+    /* ONE ROW ON A PHONE, WRAPPING FROM `sm` UP -- and the nowrap is what actually bought the height
+     * back. Measured at 390px on a real edit: the wrapping version put the eyebrow, the part and the
+     * dismiss control on three rows of their own for 63px, and cutting the line from nine parts to
+     * one did not move that number at all, because the cost was the WRAP, not the content. */
+    <p className="flex flex-nowrap sm:flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs text-(--muted) pt-1 overflow-hidden sm:overflow-visible">
       <span className="eyebrow shrink-0">Since your edit</span>
+      {/* A PHONE GETS THE FIRST TWO, AND THAT IS A MEASURED CAP, not a taste one. The full line ran
+        *  to nine parts on a real edit and wrapped to SEVEN rows at 390px: `--report-header-h` read
+        *  235px, 28% of an 844px viewport, sticky on every surface -- worse than the ~150px of dials
+        *  S15 refused from this same header, and paid before the reader can reach `dismiss`. Cut in
+        *  CSS rather than in the loop because the cut is a VIEWPORT fact, and a JS media query here
+        *  would be a second source of truth for one Tailwind breakpoint. Nothing is lost above `sm`,
+        *  and what a phone keeps is the two most attributable parts (see the ordering above). */}
       {parts.map((p, i) => (
-        <span key={i} className="flex items-baseline gap-2">
+        <span
+          key={i}
+          /* `min-w-0` and `truncate` are what let the single row SHRINK rather than widen the page:
+           * a flex item keeps `min-width:auto` and a long finding name would otherwise set the
+           * line's min-content width and take the whole document's horizontal scroll with it -- the
+           * first of the narrow-width causes in `components.md`. The ellipsis is the visible cue
+           * that something was cut. */
+          className={`${i >= 1 ? "hidden sm:flex" : "flex"} items-baseline gap-2 min-w-0`}
+        >
           {i > 0 ? <span aria-hidden className="text-(--separator)">&middot;</span> : null}
-          {p}
+          <span className="truncate sm:whitespace-normal sm:overflow-visible">{p}</span>
         </span>
       ))}
       <button
@@ -110,7 +142,7 @@ export function RunDiffLine({ diff }: { diff: RunDiff | null }) {
         /* 24px on the block axis: the WCAG 2.5.8 floor, not the 44px recommendation, for the same
          * reason the findings shortcut beside it is 32 -- this dismisses a line the next run brings
          * back, and every pixel here is charged to every surface at 390px. */
-        className="ml-auto eyebrow text-(--muted) hover:text-(--accent) min-h-[24px] px-1"
+        className="sm:ml-auto shrink-0 eyebrow text-(--muted) hover:text-(--accent) min-h-[24px] px-1"
       >
         dismiss
       </button>
