@@ -70,7 +70,8 @@ export function Findings({ report, diff }: {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline gap-3 flex-wrap">
-        <h2 className="text-lg font-bold tracking-[-0.01em]">What is wrong with this deck</h2>
+        {/* "What is wrong with this deck" under a chapter titled "Fixes" was the same heading
+          *  twice (T1). The count beside it is what this line is actually for. */}
         {/* A SENTENCE, SO IT KEEPS INTER. `index.css`'s own comment reserves `.stat-num` for a
           *  figure and says prose keeps Inter; only the count is tabular. */}
         <span className="text-xs text-(--muted)">

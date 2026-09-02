@@ -40,11 +40,14 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
   return (
     <div className="flex flex-col gap-3 min-w-0">
       <h3 className="eyebrow">What each card is doing</h3>
+      {/* THE GRID-VERSUS-PIE DEFENCE IS GONE (roadmap T13/T1). It argued the tool's own chart
+        *  choice to the reader -- *"which is why this is a grid and not a pie: a card would have to
+        *  be assigned to exactly one slice"* -- which the copy review filed as UI apologia: the
+        *  reader wants the finding, not the methodology defended inline. The fact that survives is
+        *  the one the grid exists for, that a card sits in several themes at once. */}
       <p className="text-sm text-(--muted) max-w-[60ch]">
-        {m.rows.length} of {m.rows.length + m.unaffiliated.length} cards carry at least one of this
-        deck&rsquo;s mechanisms, and most carry more than one — which is why this is a grid and not a
-        pie: a card would have to be assigned to exactly one slice, and{" "}
-        {m.earnedTotal + m.impliedTotal} memberships do not fit in {m.rows.length} cells.
+        {m.rows.length} of {m.rows.length + m.unaffiliated.length} cards fit at least one theme, and
+        most fit several — so a card appears in more than one column.
       </p>
       {/* THE SPLIT IS THE HEADLINE, not a footnote to the grid: on the example deck the implied
         *  half is the LARGER one (177 of 295), so a reader taking every dot at face value is
@@ -59,17 +62,20 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
         <p className="flex items-baseline gap-1.5">
           <span aria-hidden="true" className="inline-block shrink-0 w-2 h-2 rounded-full bg-(--muted)" />
           <span>
-            <span className="stat-num text-(--foreground)">{m.earnedTotal}</span> of them are
-            something the card does — it pays the group off, or it causes the group&rsquo;s event
-            with an effect of its own.
+            {/* PAYOFF AND ENABLER ARE THE TABLE WORDS for this exact split, and the report was
+              *  spelling both out as "something the card does". */}
+            <span className="stat-num text-(--foreground)">{m.earnedTotal}</span> are payoffs or
+            enablers for their theme.
           </span>
         </p>
         <p className="flex items-baseline gap-1.5">
           <span aria-hidden="true" className="inline-block shrink-0 w-2 h-2 rounded-full border border-(--muted)" />
           <span>
-            <span className="stat-num">{m.impliedTotal}</span> are the card merely being there: the
-            engine counts every nonland as cast and every permanent as entering, so a card can join
-            a group without doing anything about it. Rows are ordered by the first kind.
+            {/* THE HONESTY SURVIVES AND THE ENGINE INTERNALS DO NOT. A reader has to know these
+              *  dots are passive -- the implied half is the LARGER one on a real deck -- but not
+              *  that "the engine counts every nonland as cast". */}
+            <span className="stat-num">{m.impliedTotal}</span> only qualify incidentally — any spell
+            counts as cast, any permanent as entering. Payoffs and enablers sort first.
           </span>
         </p>
       </div>

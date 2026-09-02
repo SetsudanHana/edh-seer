@@ -10,13 +10,21 @@
  *  reader with no JavaScript still gets a working table of contents. */
 export type ChapterId = "read" | "stand" | "plan" | "mana" | "roles" | "fix";
 
+/** NOT QUESTIONS ANY MORE (roadmap T1). Each of these was phrased as the question a reader asks --
+ *  and then the panel under it restated the same words as a declarative heading, four lines down.
+ *  The copy review called the doubling the page's strongest machine-written tell, and the fix it
+ *  argued for is the register this rail was already using: *"the nav rail already uses six terse
+ *  labels — that is the register the owner keeps asking for. Match it."*
+ *
+ *  THE SEQUENCE IS UNCHANGED and so is `docs/ANALYZER-JOURNEY.md`'s reasoning for it: trust,
+ *  verdict, plan, mana, roles, action. Only the words on screen changed. */
 export const CHAPTERS: readonly { id: ChapterId; rail: string; title: string }[] = [
-  { id: "read", rail: "Read", title: "Did it read my deck?" },
-  { id: "stand", rail: "Stand", title: "Where does it stand?" },
-  { id: "plan", rail: "Plan", title: "What is this deck trying to do?" },
-  { id: "mana", rail: "Mana", title: "Can the mana deliver it?" },
-  { id: "roles", rail: "Roles", title: "Does it play enough of each role?" },
-  { id: "fix", rail: "Fix", title: "What's wrong, and what do I do?" },
+  { id: "read", rail: "Read", title: "Deck at a glance" },
+  { id: "stand", rail: "Stand", title: "Scores and bracket" },
+  { id: "plan", rail: "Plan", title: "Game plan" },
+  { id: "mana", rail: "Mana", title: "Manabase" },
+  { id: "roles", rail: "Roles", title: "Roles" },
+  { id: "fix", rail: "Fix", title: "Fixes" },
 ];
 
 /** WHERE A DIAL SENDS YOU. `DeckGauges` used to name a sub-tab (`build`/`mana`/`engine`); the

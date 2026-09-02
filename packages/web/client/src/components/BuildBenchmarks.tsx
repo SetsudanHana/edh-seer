@@ -623,9 +623,8 @@ function DeckMathRows({
           <Caveat label={'what "short" is measured against'}>
             "Short" counts the cards this deck would have to add before it holds an answer of that
             class more often than not by turn {turn}. The COUNT is this deck's own; that it should
-            hold one of every class is a deckbuilding convention someone typed, not a number
-            measured from any deck — and nobody has calibrated the floor for land or graveyard
-            answers at all.
+            hold one of every class is the template&rsquo;s convention, not measured — and nobody has
+            calibrated the floor for land or graveyard answers at all.
           </Caveat>
         ) : null}
       </div>

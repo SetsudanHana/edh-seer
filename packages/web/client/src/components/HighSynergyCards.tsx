@@ -4,6 +4,8 @@ import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 import { CATEGORY_LABELS } from "./CardList.js";
 
 const ANCHOR_SHARE = 0.75; // tunable: a card is an "anchor" if its authority ≥ this share of the deck max.
+/** What the badge means, said once where it is first used rather than left to be guessed. */
+const ANCHOR_GLOSS = "anchor — most of this deck's synergy runs through it";
 
 export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
   const ranked = cards
@@ -17,9 +19,14 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
   // these eight rows used to print one sentence with the names swapped.
   const shapes = reasonShapes(ranked);
   const names = new Set(cards.map((c) => c.name));
+  const anyAnchor = ranked.some((c) => maxAuthority > 0 && (c.authority ?? 0) >= ANCHOR_SHARE * maxAuthority);
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">High synergy cards</h3>
+      {/* THE GLOSS IS PRINTED, NOT HOVERED (T1). A `title` does not exist on touch at all, and this
+        *  badge is guessable-WRONG unglossed: beside the commander at the top of a synergy list,
+        *  "anchor" reads as "this is your commander". Shown only when a row actually carries one. */}
+      {anyAnchor ? <p className="text-xs text-(--muted) max-w-[65ch]">{ANCHOR_GLOSS}</p> : null}
       {shapes.shared.map((sh) => (
         <p key={sh.template} className="text-xs text-(--muted) max-w-[65ch]">
           <span className="tabular-nums">{sh.count}</span> of these connect the same way —{" "}
@@ -45,6 +52,10 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                         stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round">
                         <path d="M5.2 1 1.4 6.2h2.6L3.8 10l3.8-5.2H5z" />
                       </svg>
+                      {/* GLOSSED, BECAUSE IT IS NOT A MAGIC WORD (T1). Sitting beside the
+                        *  commander at the top of a synergy list, a bare "anchor" is read as
+                        *  "this is your commander" -- a guessable-wrong meaning, which is worse
+                        *  than an unknown one. */}
                       anchor
                     </span>
                   ) : null}
@@ -79,7 +90,7 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                   *  What it does is stop the single sentence from reading as the whole case. */}
                 {(c.partnerCount ?? 0) > 1 ? (
                   <span className="block text-xs text-(--muted)">
-                    one of <span className="stat-num">{c.partnerCount}</span> connections behind this
+                    one of <span className="stat-num">{c.partnerCount}</span> pairs behind this
                     score
                   </span>
                 ) : null}

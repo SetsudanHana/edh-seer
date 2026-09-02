@@ -135,7 +135,7 @@ test("DeckIdentity keeps the archetype as context, not as a title", () => {
   render(
     <DeckIdentity cohesion={cohesionDraw} strategies={[{ name: "tokens", label: "Tokens", confidence: 0.4 }]} />,
   );
-  expect(screen.getByText(/signals Tokens 40%/)).toBeInTheDocument();
+  expect(screen.getByText(/themes Tokens 40%/)).toBeInTheDocument();
 });
 
 /** T4: "focused · 0.47" was a bucket label beside a bare ratio, and the owner asked what it meant.
@@ -371,8 +371,11 @@ test("the board states that the theme leads and nothing under it competes", () =
     strategies={[{ name: "tokens", label: "Tokens", confidence: 0.74 }] as any}
     archetypes={[]}
   />);
-  expect(screen.getByText("What this deck is made of")).toBeInTheDocument();
-  expect(screen.getByText("Named plans your cards signal")).toBeInTheDocument();
+  // T1 removed the wrapping heading (it restated the chapter title) and moved the sentence out
+  // from behind a disclosure -- which is stronger for T15, not weaker: the line a reader needs is
+  // now the one they cannot miss.
+  expect(screen.getByText(/Nothing here competes with it/)).toBeInTheDocument();
+  expect(screen.getByText("Archetypes")).toBeInTheDocument();
   expect(screen.getByText("Tokens")).toBeInTheDocument();
   expect(screen.getByText("74%")).toBeInTheDocument();
 });
@@ -538,7 +541,7 @@ test("Cards tab renders the new functional roles as readable chips", () => {
   // Each role is the only card in its category, so it renders both as the filter
   // chip and the row chip (see the single-category note above) — assert presence.
   expect(screen.getAllByText("Card selection").length).toBeGreaterThan(0);
-  expect(screen.getAllByText("Stack interaction").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Counterspells").length).toBeGreaterThan(0);
   expect(screen.getAllByText("Burn & drain").length).toBeGreaterThan(0);
   expect(screen.getAllByText("Stax").length).toBeGreaterThan(0);
 });
@@ -703,13 +706,13 @@ test("a token named in a reason says it is one, and whose", () => {
  *  The count is NOT offered as the explanation, because it is not one: on the example deck those
  *  three cards carry 36, 38 and 38 partners and score 4.1 / 3.8 / 3.5, so the number does not order
  *  them either. It stops one sentence from reading as the whole case. */
-test("the printed sentence says it is one of several connections", () => {
+test("the printed sentence says it is one of several pairs", () => {
   render(
     <CardDrawerProvider graph={SAMPLE.graph}>
       <HighSynergyCards cards={SAMPLE.report.cards} />
     </CardDrawerProvider>,
   );
-  expect(screen.getAllByText(/connections behind this/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/pairs behind this/).length).toBeGreaterThan(0);
 });
 
 test("a card with a single connection claims no plurality", () => {
@@ -907,7 +910,7 @@ test("a zero-target parent's leaves stay hidden, while a scored sibling's leaves
   // The zero-target parent's leaves are entirely absent -- not present with a broken/zero row,
   // absent outright.
   expect(screen.queryByText(/^Removal$/)).not.toBeInTheDocument();
-  expect(screen.queryByText(/^Stack interaction$/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/^Counterspells$/)).not.toBeInTheDocument();
   // RESTORED (IMPORTANT 6, whole-branch review, 2026-09-01), deleted as collateral when the parent
   // bar went. A zero target is what produces the nonsense widths -- 2/0 is Infinity, 0/0 is NaN --
   // and BOTH filters that stand between a zero target and a rendered width (`scoredParents` here,
@@ -1782,15 +1785,18 @@ test("the waiting section rides the Roles chapter, exactly once", () => {
  *
  *  S7: the movement heading is an `h3` now. The chapter's own question is the `h2` above it, so a
  *  movement that stayed at `h2` would leave the outline flat rather than nested. */
-test("the Mana and Roles chapters each carry a movement heading, and say what they are evidence for", () => {
+/** T1: the movement HEADINGS are gone -- each restated its own chapter title one line above it --
+ *  and the sentence that is not a restatement stays. That sentence is the cross-reference telling a
+ *  reader these panels are the evidence behind the findings further down, which no heading said. */
+test("the Mana and Roles chapters say what they are evidence for, without restating their title", () => {
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
   render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
 
-  expect(screen.getByRole("heading", { level: 3, name: /What this deck plays/ })).toBeInTheDocument();
   expect(screen.getByText(/evidence behind each build finding/i)).toBeInTheDocument();
-
-  expect(screen.getByRole("heading", { level: 3, name: /Whether the mana delivers it/ })).toBeInTheDocument();
   expect(screen.getByText(/evidence behind each mana finding/i)).toBeInTheDocument();
+
+  expect(screen.queryByText("What this deck plays")).toBeNull();
+  expect(screen.queryByText("Whether the mana delivers it")).toBeNull();
 });
 
 /** THE MOVEMENT COPY NAMES THE TAB THE FINDINGS ARE ACTUALLY ON. Build and Mana call themselves the
@@ -1841,10 +1847,15 @@ test("the report's heading outline never skips a level", () => {
  *  chapters, which is the failure mode a single column actually has. */
 test("each chapter's own heading appears exactly once in the scroll", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
+  // The chapter titles themselves (T1 renamed them off the question form). "Roles" is deliberately
+  // not in this list: it is a common word that the role table below it uses as ordinary prose, and
+  // an exact-text count would be asserting something about that table instead.
   for (const heading of [
-    "What this deck is",
-    "Where this deck stands",
-    "What is wrong with this deck",
+    "Deck at a glance",
+    "Scores and bracket",
+    "Game plan",
+    "Manabase",
+    "Fixes",
     "What to change",
   ]) {
     expect(screen.getAllByText(heading), heading).toHaveLength(1);
@@ -1880,13 +1891,12 @@ test("each chapter's own heading appears exactly once in the scroll", () => {
  *  away -- under tabs "before" only meant "on an earlier tab", and nothing pinned the tab order. */
 test("the report leads with recognition, then the gauges, and ends on the fixes", () => {
   const { container } = render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
-  const text = container.textContent ?? "";
-  const recognition = text.indexOf("What this deck is");
-  const gauges = text.indexOf("Where this deck stands");
-  const fixes = text.indexOf("What is wrong with this deck");
-  expect(recognition).toBeGreaterThanOrEqual(0);
-  expect(gauges).toBeGreaterThan(recognition);
-  expect(fixes).toBeGreaterThan(gauges);
+  // DOCUMENT ORDER OF THE CHAPTERS THEMSELVES, not of three heading strings that T1 removed. The
+  // sections carry the ids the rail links to, so this asserts the sequence rather than the wording.
+  const ids = [...container.querySelectorAll("section[id]")].map((el) => el.id);
+  expect(ids.indexOf("read")).toBeGreaterThanOrEqual(0);
+  expect(ids.indexOf("stand")).toBeGreaterThan(ids.indexOf("read"));
+  expect(ids.indexOf("fix")).toBeGreaterThan(ids.indexOf("stand"));
 });
 
 
@@ -1947,7 +1957,9 @@ test("the rail's reference links route away from the scroll, unlike the chapter 
 
 test("the Fixes tab carries both the diagnosis and the prescription", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
-  expect(screen.getByText("What is wrong with this deck")).toBeInTheDocument();
+  // The diagnosis is the findings list; its heading restated the chapter title and went with T1, so
+  // the pin is the count sentence that heading sat beside.
+  expect(screen.getByText(/by what fixing it is worth/i)).toBeInTheDocument();
   expect(screen.getByText("What to change")).toBeInTheDocument();
 });
 
@@ -2773,4 +2785,26 @@ test("the mana-cost disclosure sits outside the multi-column, so opening it cann
   const columns = container.querySelector('[class*="columns-1"]');
   expect(columns, "the mana chapter still uses a multi-column").not.toBeNull();
   expect(columns!.contains(details!)).toBe(false);
+});
+
+/** T1: THE SAME TWENTY-WORD DISCLAIMER WAS IN FIVE PLACES. "a deckbuilding convention someone
+ *  typed, not a number measured from any deck" appeared on the gauges' tick legend, the gauges'
+ *  Explain, the cut list, the benchmarks caveat and every role finding — and repetition at that
+ *  length is most of what makes a page read as machine-written.
+ *
+ *  THE CLAIM IS LOAD-BEARING AND IS NOT DELETED. It is stated in full ONCE, where the ticks it
+ *  describes are first drawn, and everywhere else shortens to a pointer that still says where the
+ *  number came from ("the template asks for 3"). This is the ratchet against it creeping back:
+ *  a reader meets the long form once or the page is padding again. */
+test("the convention disclaimer is stated once, and the provenance survives everywhere else", () => {
+  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
+  const { container } = render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
+  const text = (container.textContent ?? "").replace(/\s+/g, " ");
+
+  // The long form, once.
+  const long = text.match(/a convention, not measured from real decks/g) ?? [];
+  expect(long).toHaveLength(1);
+
+  // And the phrasing it replaced is gone entirely -- "someone typed" was the tell.
+  expect(text).not.toMatch(/someone typed/);
 });

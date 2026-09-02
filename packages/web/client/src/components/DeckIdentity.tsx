@@ -222,7 +222,10 @@ export function DeckIdentity({
           {cohesion.secondary && top.length > 0 ? <span> · </span> : null}
           {top.length > 0 ? (
             <span>
-              signals {top.map((s) => `${s.label} ${Math.round(s.confidence * 100)}%`).join(" · ")}
+              {/* "signals Tokens 42%" (T1). The verb is the engine's, and the bare percentage reads
+                *  as confidence -- "42% sure it is tokens" -- rather than as a share of the deck,
+                *  which is what it is. `ArchetypeBoard`'s disclosure carries the denominator. */}
+              themes {top.map((s) => `${s.label} ${Math.round(s.confidence * 100)}%`).join(" · ")}
             </span>
           ) : null}
         </p>

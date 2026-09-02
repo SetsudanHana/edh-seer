@@ -86,7 +86,7 @@ export function DeckGauges({ data, onOpen, diff }: {
   // (`build.ts` computes all three together), so gating Build's inputs on `buildScore` costs nothing.
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-bold tracking-[-0.01em]">Where this deck stands</h2>
+      {/* Restated the chapter title one line above it; removed with the other doubles (T1). */}
       <div className="flex flex-col lg:flex-row gap-6">
         {hasSynergy ? (
           <div
@@ -183,8 +183,8 @@ export function DeckGauges({ data, onOpen, diff }: {
               explain={
                 <Explain label="what this measures">
                   How close the deck sits to the category targets in Roles — ramp, draw, removal and the
-                  rest. It says nothing about how the cards work together, and the targets are a
-                  deckbuilding convention rather than a number measured from any deck. {bandLegend()}.
+                  rest. It says nothing about how the cards work together, and the targets are the
+                  template&rsquo;s, not measured. {bandLegend()}.
                 </Explain>
               }
             />
@@ -233,8 +233,8 @@ export function DeckGauges({ data, onOpen, diff }: {
               *  because it genuinely is measured: `deckMath.lands.target` comes from a regression
               *  over real decks, which is also why it is the one two-sided reading here. */}
             <p className="text-xs text-(--muted) max-w-[52ch]">
-              Each tick is the Command Zone template&rsquo;s floor — a deckbuilding convention
-              someone typed, not a number measured from decks. Over it is not a fault
+              Ticks are the Command Zone template&rsquo;s minimums — a convention, not measured
+              from real decks. Being over is fine
               {lands ? <> · the land tick is the exception, modelled from this deck&rsquo;s own curve</> : null}.
             </p>
           </div>

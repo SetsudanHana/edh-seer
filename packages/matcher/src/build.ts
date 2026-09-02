@@ -670,7 +670,10 @@ function buildSuggestions(
     if (p.target <= 0 || p.count >= p.target) continue;
     // The cost band is the SHAPE half of the answer (F14), appended to whichever sentence the gap
     // produced. `lands` below gets none on purpose: a land is mana value 0.
-    const band = `, typically ${p.costBand[0]}–${p.costBand[1]} mana`;
+    // ATTACHED TO THE CARDS, NOT LEFT DANGLING (T1). ", typically 2-4 mana" hanging off "add ~3"
+    // reads three different ways -- add 2-4 mana of wipes, add wipes costing 2-4, add 2-4 cards --
+    // and those are three different edits. The band describes what the cards COST.
+    const band = `; most cost ${p.costBand[0]}–${p.costBand[1]} mana`;
     const text =
       p.count === 0 && p.name === "Board wipes"
         ? `No board wipe (target ${p.target})${band}`

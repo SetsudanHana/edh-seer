@@ -564,14 +564,17 @@ test("a gap names a cost BAND, and a land gap does not", () => {
   // thirds of the time, which is the `thinnest: tutors` defect one rung along.
   const { suggestions } = computeBuild([mk("Lonely", "Vanilla.", "Creature")], "goodstuff");
   const ramp = suggestions.find((s) => /^Ramp /.test(s));
-  expect(ramp).toMatch(/typically 2–3 mana/);
+  // T1: the band is attached to what the CARDS cost. ", typically 2-4 mana" hanging off "add ~3"
+  // reads three ways -- add 2-4 mana of wipes, add wipes costing 2-4, add 2-4 cards -- and those are
+  // three different edits.
+  expect(ramp).toMatch(/most cost 2–3 mana/);
   // Every parent gap carries one, whichever four the gap ranking happens to surface.
-  for (const gap of suggestions.filter((s) => !/^Lands /.test(s))) expect(gap).toMatch(/typically \d–\d mana/);
+  for (const gap of suggestions.filter((s) => !/^Lands /.test(s))) expect(gap).toMatch(/most cost \d–\d mana/);
   // A LAND IS MANA VALUE 0, so its gap gets no band -- the number would be nonsense.
   const flood = Array.from({ length: 48 }, (_, i) => mk(`Land ${i}`, "", "Land"));
   const landGap = computeBuild(flood, "goodstuff").suggestions.find((s) => /^Lands /.test(s));
   expect(landGap).toBeDefined();
-  expect(landGap).not.toMatch(/typically/);
+  expect(landGap).not.toMatch(/most cost/);
 });
 
 describe("rampResilience", () => {
