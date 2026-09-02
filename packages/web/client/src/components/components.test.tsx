@@ -370,6 +370,34 @@ test("an expanded synergy group caps its pair list", () => {
   expect(screen.getByText(/\+4 more/)).toBeInTheDocument();
 });
 
+/** R2 STOPGAP (2026-09-02): THE COLUMN HEADER IS NOT STICKY ON A PHONE, BECAUSE IT CANNOT BE.
+ *
+ *  Measured at 390px on the live page: the table's wrapper is `overflow-x-auto` below `sm`, which
+ *  makes it a SCROLL CONTAINER -- and CSS forces `overflow-y` to `auto` alongside `overflow-x`. A
+ *  `position: sticky` `<thead>` inside a scroll container resolves `top` against THAT container, not
+ *  the viewport, and the container's own top already sits at the sticky page header's bottom. So
+ *  `top: var(--report-header-h)` landed a SECOND time -- container top 95 plus 95 put the thead at
+ *  190 -- and it painted a 48px band across row 1, where 3 of 8 sample points down that row returned
+ *  a `TH` from `elementFromPoint`. At 1440, where `sm:overflow-x-visible` stops the wrapper being a
+ *  scrollport, the thead sat at 49 against a `--report-header-h` of 49: exact.
+ *
+ *  NO OFFSET VALUE FIXES IT -- sticky cannot reach the viewport from inside that scroller at all, so
+ *  a re-tuned constant would be the same bug again, which is the trap S7's own fix fell into. This
+ *  turns the sticky OFF where it cannot work rather than pretending it does. The real fix takes the
+ *  header out of the scroller and belongs to R1's mobile round (roadmap R2).
+ *
+ *  A class assertion, because jsdom cannot measure a sticky offset. The pixels are in the roadmap. */
+test("the column header is sticky only where sticky can reach the viewport", () => {
+  const { container } = render(<CardList cards={SAMPLE.report.cards} />);
+  const thead = container.querySelector("thead")!;
+  expect(thead.className).toContain("static");
+  expect(thead.className).toContain("sm:sticky");
+  // And the offset rides the same breakpoint: an offset applied below `sm` is the double-application
+  // this stopgap exists to remove.
+  expect(thead.className).toContain("sm:top-[var(--report-header-h,0px)]");
+  expect(thead.className).not.toMatch(/(^|\s)top-\[/);
+});
+
 test("CardList sorts by synergyRating descending, then name", () => {
   render(<CardList cards={SAMPLE.report.cards} />);
   // Row 0 is the header; data rows start at index 1.
