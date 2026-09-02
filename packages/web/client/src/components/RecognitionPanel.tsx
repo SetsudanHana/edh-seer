@@ -106,8 +106,9 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
             </>
           ) : null}
           {/* CARDS READ, NOT LINES RESOLVED (C2, whole-branch review, 2026-09-01). `resolvedCount`/
-          *  `totalCount` are NAME RESOLUTION -- how many decklist LINES matched a card -- and on a
-          *  partly-read deck they can both read 100/100 while the gate strip above this panel
+          *  `totalCount` are NAME RESOLUTION -- how many CARD SLOTS matched a name, one entry per
+          *  copy, so a `3 Plains` line counts three (S12) -- and on a partly-read deck they can
+          *  both read 100/100 while the gate strip above this panel
           *  (`CoveragePanel`) truthfully says "52 of 100 cards read". Those are two different
           *  denominators; `report.coverage.derived`/`.resolved` is the SAME figure `CoveragePanel`
           *  shows, so the two counters at the top of the page agree instead of contradicting each

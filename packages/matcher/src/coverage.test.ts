@@ -50,6 +50,19 @@ test("the claim is narrow, because the loss is narrow", () => {
   // bracket and combo detection — all of which read PRINTED data. Over-stating the loss would be
   // its own wrong answer, so the sentence says which half survives.
   const c = deckCoverage([card("a", true), card("b", false)]);
-  expect(c?.coverage.caveat).toContain("form no synergy edges");
+  expect(c?.coverage.caveat).toContain("no synergy edges");
   expect(c?.coverage.caveat).toContain("still count everywhere else");
+});
+
+test("the sentence agrees with its own count, in both directions", () => {
+  // Found by reading it on screen, not by a test: `card()` singularised the noun and the three
+  // verbs around it stayed plural, so one unread card printed "1 card of 103 are not in the read
+  // corpus yet, so they form no synergy edges". A deck one card short of fully read is the common
+  // case now that the corpus covers the calibration decks.
+  const one = deckCoverage([card("a", true), card("b", false)])!.coverage.caveat;
+  expect(one).toContain("1 card of 2 is not in the read corpus yet");
+  expect(one).toContain("it forms no synergy edges and carries no theme");
+  const many = deckCoverage([card("a", false), card("b", false)])!.coverage.caveat;
+  expect(many).toContain("2 cards of 2 are not in the read corpus yet");
+  expect(many).toContain("they form no synergy edges and carry no theme");
 });
