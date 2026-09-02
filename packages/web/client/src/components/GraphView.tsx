@@ -21,6 +21,7 @@ import {
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
 import { CardInspector } from "./CardInspector.js";
 import { labelCandidates, labelPriority, placeLabels } from "./labels.js";
+import { HATCH, unreadCardNames } from "../lib/unread.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
 // uses, while board-force.ts owns the values.
 export { ART_RADIUS, nodeRadius };
@@ -194,9 +195,16 @@ export function GraphView(
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<
-    { label: string; copies: number; deg: number; detail: string; x: number; y: number } | null
+    { label: string; copies: number; deg: number; detail: string; unread: boolean; x: number; y: number } | null
   >(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  /** THE BOARD'S ANSWER TO "SHOW ME THE ONES YOU COULD NOT READ". The hatch says WHICH card is
+   *  unread once your eye is on it; it cannot be surveyed. A blind judge given a 90-of-100 deck
+   *  and told the mark exists found FOUR of the ten, and only after a tooltip named the first one
+   *  — the unread are edgeless, so the force layout exiles them to the rim as 24px specks among 92
+   *  nodes, and the board pans, so "I see four" can never become "there are four". The panel
+   *  states the count; this is what lets the board be checked against it. */
+  const [spotlightUnread, setSpotlightUnread] = useState(false);
   const [query, setQuery] = useState("");
   // Which card the provenance inspector is open on, or null when it's closed. Set by the click
   // path (zoomBehavior's "end" handler, below) and by the panel's own close button. Not a ref --
@@ -326,6 +334,14 @@ export function GraphView(
   // buttons render before that effect runs and must survive it re-running without going stale,
   // hence a ref rather than a plain closure.
   const jumpZoomRef = useRef<(z: number) => void>(() => {});
+  /** Frame a NAMED SUBSET of the board. `fitToView` deliberately frames the CONNECTED cluster --
+   *  an orphan far from the deck's synergies used to set the bounding box and crush the cluster
+   *  into a corner -- which means it excludes every unread card BY CONSTRUCTION, since an unread
+   *  card is edgeless. So the one state that exists to show the unread was framed by the rule that
+   *  throws them away: a judge counted SIX of ten with the chip beside it saying ten, and the other
+   *  four were off the panel's edge. A stated number the picture under it cannot corroborate is the
+   *  tool asserting a fact where showing one was the entire point. */
+  const fitSubsetRef = useRef<(ids: ReadonlySet<string>) => void>(() => {});
   // The card id under the pointer, read by the label pass inside the rAF loop -- a ref rather than
   // `hover` (React state) for the same reason matchesRef/huesRef are refs: reading state there
   // would either be stale between renders or force the layout effect to re-run on every
@@ -503,16 +519,36 @@ export function GraphView(
   const commandersRef = useRef<Set<string>>(new Set());
   commandersRef.current = commanders;
 
+  /** Nodes for cards THE SYNERGY ENGINE NEVER READ. This board is the deck's synergy, drawn — and
+   *  an unread card painted here is indistinguishable from a card that was read and connects to
+   *  nothing, which is the report's most misleading pair of sentences (`CardList` splits its table
+   *  for exactly this reason, `CutList` refuses to rank them). They stay in place and carry the
+   *  hatch instead: the card IS in the deck and its printed facts are still true, it is only the
+   *  edges that are missing.
+   *
+   *  Same join as `commanders` above — `unreadCardNames` is keyed on the physical card, so both
+   *  faces of an unread modal DFC are marked from one name. */
+  const unread = useMemo(() => {
+    const names = unreadCardNames(report.cards);
+    return new Set(graph.nodes.filter((n) => names.has(n.cardName ?? n.id)).map((n) => n.id));
+  }, [graph, report]);
+  const unreadRef = useRef<Set<string>>(new Set());
+  unreadRef.current = unread;
+
   /** Card node ids matching the current search, or null when the box is empty. Null and "the
    *  empty set" mean different things to the draw pass: null dims nothing, an empty set (a query
    *  that hits zero cards) dims everything. */
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return null;
+    // The spotlight is the same GESTURE as a search — light these, dim the rest — so it reuses the
+    // same channel rather than inventing a second dimming rule the draw pass would have to merge.
+    // A typed query wins: the box is the more specific request, and two highlights at once say
+    // nothing.
+    if (!q) return spotlightUnread ? unread : null;
     const hit = new Set<string>();
     for (const n of graph.nodes) if (n.label.toLowerCase().includes(q)) hit.add(n.id);
     return hit;
-  }, [graph, query]);
+  }, [graph, query, spotlightUnread, unread]);
 
   /** Matches the board is not drawing, because a filter hides them. `matches` above searches the
    *  DRAWN graph, which is correct for the dimming pass and a false sentence on its own: with lands
@@ -535,6 +571,8 @@ export function GraphView(
   // directly, and `matches` is deliberately absent from that effect's dependency array below --
   // the effect owns the force simulation, and adding `matches` there would reheat and re-seed the
   // whole layout on every keystroke, moving the board under the user while they type.
+  const spotlightRef = useRef(false);
+  spotlightRef.current = spotlightUnread;
   const matchesRef = useRef<Set<string> | null>(null);
   matchesRef.current = matches;
   /** The event predicate, read by the paint loop. Assigned in the COMPONENT BODY like every other
@@ -561,6 +599,9 @@ export function GraphView(
       sep: css.getPropertyValue("--separator").trim() || "#1f1829",
       edge: css.getPropertyValue("--edge").trim() || "#6b5f7d",
       surface: css.getPropertyValue("--surface").trim() || "#16111f",
+      // The page ground, and it is the hatch's stripe: art crops are every hue there is, so the
+      // one colour that reads as "struck through" over all of them is the board's own darkness.
+      bg: css.getPropertyValue("--background").trim() || "#0d0912",
     };
 
     const size = () => {
@@ -1131,6 +1172,59 @@ export function GraphView(
           }
         }
 
+        // THE ENGINE NEVER READ THIS CARD, SAID WITHOUT WORDS. Over the art rather than instead
+        // of it: the card is really in the deck and its printed facts still hold, so hiding the
+        // picture would overstate the gap. Stripes in SCREEN pixels (divided by the camera scale)
+        // so the pitch a reader learns at one zoom is the pitch they meet at every other, and the
+        // geometry itself comes from `lib/unread.ts` — the graph list paints the same mark as a CSS
+        // gradient, and a convention drawn at two pitches is two conventions.
+        if (unreadRef.current.has(n.id)) {
+          const half = mode === "card" ? Math.hypot(cardW, cardH) / 2 : r;
+          // AT LEAST FOUR STRIPES, ALWAYS, AND THE WHOLE HATCH SCALES TOGETHER TO GET THEM.
+          // `HATCH.pitch` is 8 screen px, which is right on a node you are looking at and wrong on
+          // the one the spotlight zooms out to frame: at z 0.43 a disc is ~12px across, two stripes
+          // over a ring, and a judge read that as the international PROHIBITION sign -- "a verdict
+          // the tool has passed on the card, excluded, disallowed, rather than an absence of data
+          // on the tool's side", which inverts whose failure this mark is about.
+          //
+          // ONE SCALE FOR BOTH, and the first attempt is why this is spelled out: shrinking the
+          // pitch alone left the 3px stripe width untouched, so at a 3px pitch the dark lines
+          // touched, filled the disc solid, and the mark became an EMPTY RING -- less legible than
+          // the slash it was fixing. The duty cycle (3 on, 5 off) is what makes it read as hatching
+          // rather than as a fill, so it is the thing that must survive every size.
+          const pitchPx = Math.min(HATCH.pitch, (2 * r * cam.z) / 4);
+          const shrink = pitchPx / HATCH.pitch;
+          const pitch = pitchPx / cam.z;
+          const strokeW = (HATCH.width * shrink) / cam.z;
+          ctx.save();
+          ctx.beginPath();
+          if (mode === "card") ctx.rect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
+          else ctx.arc(n.x, n.y, r, 0, TAU);
+          ctx.clip();
+          // EVERY STRIPE IS CASED, and that is not decoration. A dark stripe alone measured 15/255
+          // of luminance range over `Nest of Scarabs` — art already at the page's own darkness —
+          // against 55-58 over the two lighter unread cards on the same board. Art crops run the
+          // whole range, so no single stripe colour reads on all of them; a dark line with a light
+          // hairline beside it has one half showing whichever way the art goes.
+          const line = (d: number, dx: number) => {
+            ctx.beginPath();
+            ctx.moveTo(n.x + d + dx - half, n.y - half);
+            ctx.lineTo(n.x + d + dx + half, n.y + half);
+            ctx.stroke();
+          };
+          for (let d = -2 * half; d <= 2 * half; d += pitch) {
+            ctx.strokeStyle = paintColors.bg;
+            ctx.lineWidth = strokeW;
+            line(d, 0);
+            ctx.globalAlpha = 0.45;
+            ctx.strokeStyle = paintColors.fg;
+            ctx.lineWidth = Math.min(1, shrink * 1.5) / cam.z;
+            line(d, strokeW);
+            ctx.globalAlpha = 1;
+          }
+          ctx.restore();
+        }
+
         // What this card IS, under the current paint mode. Drawn for both the art and the fallback
         // branch: a card whose art failed to load must not lose its facet signal along with its
         // picture. Hue rides the rim, never a fill over the art -- a translucent wash over this
@@ -1256,12 +1350,22 @@ export function GraphView(
       const candidates = labelCandidates(nodes, cam.z, {
         zoomFloor: LABEL_ZOOM_FLOOR,
         cardModeZoom: CARD_MODE_Z,
-        eligibleBelowFloor: new Set([...commandersRef.current, ...hoveredSet]),
+        // THE SPOTLIGHT'S OWN MATCHES ARE ALWAYS ELIGIBLE. Without this the state that exists to
+        // show the unread named none of them: every label on screen belonged to a dimmed READ card,
+        // because an unread card is edgeless and the degree cull drops it first. "How many" without
+        // "which" is not enough to decide whether the cards you just added are worth keeping.
+        eligibleBelowFloor: new Set([
+          ...commandersRef.current, ...hoveredSet,
+          ...(spotlightRef.current ? matchesRef.current ?? [] : []),
+        ]),
         placeholders: placeholderIds,
         // Cull the weakest quarter at board zoom — see `labelCandidates` for why a quarter of the
         // candidates costs half the labels. Passing the map is what turns the cull on; it is the
         // same one `labelPriority` orders by two lines down, so what survives the cull and what
         // wins a slot cannot disagree about which card matters.
+        // No `exempt` needed: labelCandidates' cull already spares everything in
+        // `eligibleBelowFloor`, which is where the spotlight's matches were just added -- and the
+        // cull is exactly what would drop them, since it ranks by weighted degree and theirs is 0.
         cull: { weightedDegree, degreeQuantile: LABEL_DEGREE_QUANTILE },
       });
       if (candidates.length > 0) {
@@ -1275,7 +1379,10 @@ export function GraphView(
         ctx.font = `500 ${LABEL_PX / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
         ctx.textAlign = "center";
         ctx.fillStyle = paintColors.fg;
-        const order = labelPriority(candidates, weightedDegree, commandersRef.current, hoveredSet);
+        // Spotlit matches rank with the hovered neighbourhood: when a reader has asked to see one
+        // set of cards, that set wins the scarce slots over whatever the degree ordering prefers.
+        const order = labelPriority(candidates, weightedDegree, commandersRef.current,
+          spotlightRef.current && matchesRef.current ? new Set([...hoveredSet, ...matchesRef.current]) : hoveredSet);
         // TWO SLOTS PER LABEL, above then below -- see placeLabels. `mode === "card"` uses the
         // card's own half-height, so a label clears the printed card rather than the disc that is
         // not being drawn.
@@ -1518,15 +1625,16 @@ export function GraphView(
     // the same reason jumpZoomRef is, just above: a raw cam.x/y/z write would leave d3-zoom's own
     // `__zoom` bookkeeping stale, and the next wheel event would jump. gestureStart is reset here
     // too, so the click that follows a fit is not misread as the tail end of a pan.
-    fitToView = () => {
-      if (nodes.length === 0) return;
+    // The framing itself, over whichever nodes it is handed. Split out so the unread spotlight
+    // frames its own ten through the same padding, clamping and transform convention rather than a
+    // second camera path that would drift from this one.
+    const frame = (framed: readonly typeof nodes[number][]) => {
+      if (framed.length === 0) return;
       // Frame the CONNECTED cluster, not the whole node cloud -- an orphan (no synergy edge at
       // all, e.g. a land) sitting far from the deck's actual synergies used to set the bounding box
       // and crush the cluster into a fraction of the frame (task-11 brief, Defect 1). Falls back to
       // every node when nothing is connected (a zero-edge deck), so the box is never taken over an
       // empty array -- that divides by nothing and leaves the camera at k = NaN.
-      const connected = nodes.filter((n) => n.deg > 0);
-      const framed = connected.length > 0 ? connected : nodes;
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
       for (const n of framed) {
         minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x);
@@ -1544,6 +1652,24 @@ export function GraphView(
       const t = zoomIdentity.translate(dim.w / 2 - cx * k, dim.h / 2 - cy * k).scale(k);
       selection.call(zoomBehavior.transform, t);
       gestureStart = t;
+    };
+
+    fitToView = () => {
+      if (nodes.length === 0) return;
+      // Frame the CONNECTED cluster, not the whole node cloud -- an orphan (no synergy edge at
+      // all, e.g. a land) sitting far from the deck's actual synergies used to set the bounding box
+      // and crush the cluster into a fraction of the frame (task-11 brief, Defect 1). Falls back to
+      // every node when nothing is connected (a zero-edge deck), so the box is never taken over an
+      // empty array -- that divides by nothing and leaves the camera at k = NaN.
+      const connected = nodes.filter((n) => n.deg > 0);
+      frame(connected.length > 0 ? connected : nodes);
+    };
+
+    fitSubsetRef.current = (ids) => {
+      frame(nodes.filter((n) => ids.has(n.id)));
+      // Through the SAME counter as the two settle fits: this is a frame, not a second camera path,
+      // and `__graphProbe` is where that is observable. See the fits comment above.
+      fits++;
     };
 
     // THE FRAME LOOP STARTS HERE, AFTER fitToView IS REAL. It used to start twelve lines above this
@@ -1622,6 +1748,7 @@ export function GraphView(
       setHover(n
         ? {
             label: n.label, copies: n.copies ?? 1, deg: n.deg, detail,
+            unread: unreadRef.current.has(n.id),
             x: e.clientX - r.left, y: e.clientY - r.top,
           }
         : null);
@@ -1910,6 +2037,28 @@ export function GraphView(
             </button>
           ) : null}
 
+          {/* ONLY WHEN THE DECK HAS ONE, same rule as its neighbours — and on the 71 calibration
+            *  decks, which are ~99% derived, it is absent. The count is the point: it is the board
+            *  saying the same ten the panel above says, in the one place a reader can check it. */}
+          {unread.size > 0 ? (
+            <button
+              type="button"
+              aria-pressed={spotlightUnread}
+              onClick={() => {
+                const on = !spotlightUnread;
+                setSpotlightUnread(on);
+                // FRAME THEM ON THE WAY IN. Turning the light on without moving the camera left
+                // four of ten off the panel's edge with a chip beside them saying ten.
+                if (on) fitSubsetRef.current(unread);
+              }}
+              className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                spotlightUnread ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+              }`}
+            >
+              not read ({unread.size})
+            </button>
+          ) : null}
+
           {loneTokens.size > 0 ? (
             <button
               type="button"
@@ -2106,8 +2255,12 @@ export function GraphView(
               style={{ left: hover.x + 12, top: hover.y + 12 }}
             >
               {hover.label}{" "}
+              {/* "0 partners" AND "NOT READ" ARE DIFFERENT SENTENCES, and only the first is a
+                *  fact about the deck. The hatch says which one this is; the tooltip is where the
+                *  reader who has not learned the mark yet finds out what it means. */}
               <span className="text-(--muted) stat-num">
-                {hover.copies > 1 ? `×${hover.copies} · ` : ""}{hover.deg} partners
+                {hover.copies > 1 ? `×${hover.copies} · ` : ""}
+                {hover.unread ? "not read — no synergy measured" : `${hover.deg} partners`}
               </span>
               {hover.detail ? <span className="text-(--muted)"> · {hover.detail}</span> : null}
             </div>
@@ -2143,9 +2296,27 @@ export function GraphView(
          *  so a caption left as a sibling vanishes in exactly the mode where the board is largest --
          *  and it is the one sentence that says what the geometry MEANS. Three blind judges asked
          *  "what is this organised by?"; the two who could not see this line answered "card type". */}
+        {/* AND IT IS FALSE OF THE CARDS THE SPOTLIGHT SHOWS, so it does not get to stand while
+          *  they are the subject. "Position is synergy" is asserted about the whole board and the
+          *  unread have no edges at all: they are wherever the layout put nodes it could not
+          *  place, flung to the rim. A judge read the pair straight (2026-09-02) and named the
+          *  consequence -- `Wernog, Rider's Chaplain`, alone at the bottom edge and furthest from
+          *  everything, reads as the least synergistic card in the deck, when what the tool
+          *  actually knows about it is nothing. The caption and the spotlight contradicted each
+          *  other and the caption was the confident one. */}
         <p className="text-(--muted) text-sm">
-          Drag to pan, scroll to zoom. Two cards sit close because they do something for each other —
-          position is synergy, and colour is what the cards are.
+          {spotlightUnread ? (
+            <>
+              Drag to pan, scroll to zoom. These are the cards the engine has not read — they have
+              no synergies, so their <em className="not-italic text-(--foreground)">position means
+              nothing</em>. Every other card is dimmed, not excluded.
+            </>
+          ) : (
+            <>
+              Drag to pan, scroll to zoom. Two cards sit close because they do something for each
+              other — position is synergy, and colour is what the cards are.
+            </>
+          )}
         </p>
       </div>
     </div>

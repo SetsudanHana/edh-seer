@@ -30,7 +30,7 @@ test("GraphList ranks cards by how many partners they have, name breaking the ti
 
 test("GraphList states the shape of the graph it is standing in for", () => {
   renderList();
-  expect(screen.getByText(/2 cards, 1 synergies/)).toBeInTheDocument();
+  expect(screen.getByText(/2 cards, 1 synergies\./)).toBeInTheDocument();
   expect(screen.getByText(/the board itself needs a wider screen/)).toBeInTheDocument();
 });
 
@@ -52,4 +52,45 @@ test("GraphList opens the card inspector on tap", async () => {
   const panel = screen.getByTestId("card-inspector");
   expect(within(panel).getByRole("heading", { level: 3 })).toHaveTextContent("Krenko, Mob Boss");
   expect(within(panel).getByText(/pays off tokens/)).toBeInTheDocument();
+});
+
+// AN UNREAD CARD AND A READ LONER BOTH SAT AT "0 partners" AND LOOKED IDENTICAL. They are
+// different sentences and only one of them is about the deck: "nothing connects to it" is a
+// finding, "we could not read it" is the engine's own gap. The row says which, and carries the
+// hatch so the mark is learnable here and recognisable on the board.
+test("GraphList says an unread card was not read, instead of counting its partners", () => {
+  render(
+    <CardDrawerProvider graph={graph}>
+      <GraphList graph={graph} unread={new Set(["Impact Tremors"])} />
+    </CardDrawerProvider>,
+  );
+  const rows = screen.getAllByRole("listitem");
+  // Matched on the row's OPENING text: every reason sentence in this fixture names both cards,
+  // so `includes` would pick whichever row it reached first.
+  const unreadRow = rows.find((r) => r.textContent?.startsWith("Impact Tremors"))!;
+  expect(unreadRow.textContent).toContain("not read");
+  expect(unreadRow.textContent).not.toContain("partner");
+  expect(within(unreadRow).getByTestId("unread-hatch")).toBeInTheDocument();
+  const readRow = rows.find((r) => r.textContent?.startsWith("Krenko"))!;
+  expect(readRow.textContent).toContain("partner");
+  expect(within(readRow).queryByTestId("unread-hatch")).toBeNull();
+});
+
+// A FULLY READ DECK MARKS NOTHING. A mark that is always present marks nothing -- the same rule
+// `DerivedMark` and `CoveragePanel` are both built on.
+test("GraphList marks nothing when the engine read the whole deck", () => {
+  renderList();
+  expect(screen.queryByTestId("unread-hatch")).toBeNull();
+});
+
+// AND IT COUNTS THEM, because a mark on a row cannot be surveyed: counting "not read" down 92 rows
+// by scrolling is not counting. The board states the same total in a chip; this list has no chip
+// row to put it in.
+test("GraphList states how many cards were not read", () => {
+  render(
+    <CardDrawerProvider graph={graph}>
+      <GraphList graph={graph} unread={new Set(["Impact Tremors"])} />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByText(/2 cards, 1 synergies, 1 not read\./)).toBeInTheDocument();
 });

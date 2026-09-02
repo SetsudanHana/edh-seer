@@ -3,6 +3,7 @@ import type { RunDiff } from "../lib/run-diff.js";
 import { ReportTabs } from "./ReportTabs.js";
 import { RunDiffStrip } from "./RunDiffStrip.js";
 import { CoveragePanel } from "./CoveragePanel.js";
+import { unreadCardNames } from "../lib/unread.js";
 
 export function ReportView({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
   // WHETHER THE DECK'S DEFINING CARD IS ONE OF THE UNREAD. Both facts are already on every rated
@@ -12,11 +13,7 @@ export function ReportView({ data, diff }: { data: AnalyzeResponse; diff?: RunDi
   // A two-faced commander rates two rows -- one per face -- and both carry the SAME `derived`
   // flag (it is read off the physical card). Dedupe on the physical name (`cardName ?? name`) so
   // an unread two-faced commander names itself once, not twice. Review fix, 2026-08-27.
-  const commanderUnread = [...new Set(
-    data.report.cards
-      .filter((c) => c.isCommander && c.derived === false)
-      .map((c) => c.cardName ?? c.name),
-  )];
+  const commanderUnread = [...unreadCardNames(data.report.cards.filter((c) => c.isCommander))];
   return (
     <div className="flex flex-col gap-4">
       {/* ABOVE THE TABS, because what your edit did is not a property of any one section -- and it

@@ -77,8 +77,19 @@ test("the first analysis is a history entry, so Back returns to the paste box", 
   render(<App />);
   fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: "1 Sol Ring" } });
   fireEvent.click(screen.getByRole("button", { name: /analyze/i }));
-  await screen.findByRole("button", { name: /edit/i });
-  expect(window.location.hash).toMatch(/^#deck=/);
+  // WAIT FOR THE HASH, NOT FOR THE BUTTON, because the button is not evidence the hash exists.
+  // Read `analyse` (App.tsx): `setEditing(false)` -- which paints Edit -- happens BEFORE
+  // `await encodeShare(...)`, and the history write happens after it. So the Edit button resolving
+  // says nothing about whether the hash has been written; the ordering this assertion depended on
+  // does not exist in the code.
+  //
+  // FOUND AS A FLAKE, AND THE SCHEDULE THAT TRIPS IT IS UNREPRODUCED LOCALLY. It failed both node
+  // legs on main at d0d1797, before the branch that hit it existed, and passed on two pushes of
+  // that same branch -- so it is nondeterministic on CI. Delaying `encodeShare` by 50ms here did
+  // NOT reproduce it, because testing-library's async act flushes the timer inside `findByRole`.
+  // The fix does not depend on knowing which schedule wins: waiting for the thing being asserted
+  // is correct under all of them.
+  await waitFor(() => expect(window.location.hash).toMatch(/^#deck=/));
 
   // What a browser does on Back: the URL changes first, then `popstate` fires.
   await act(async () => {
@@ -99,7 +110,9 @@ test("popstate onto a deck hash re-opens that analysis", async () => {
   render(<App />);
   fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: "1 Sol Ring" } });
   fireEvent.click(screen.getByRole("button", { name: /analyze/i }));
-  await screen.findByRole("button", { name: /edit/i });
+  // Same race as the test above -- this one READS the hash it is about to navigate back to, so a
+  // premature read left `withDeck` empty and the final assertion passed for the wrong reason.
+  await waitFor(() => expect(window.location.hash).toMatch(/^#deck=/));
   const withDeck = window.location.hash;
 
   await act(async () => {
