@@ -115,6 +115,16 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [] }: {
             The share of the deck's nonland cards whose own text signals that plan. A card can
             signal several, so these do not add to 100% — and the bars are drawn against the
             strongest plan rather than against the whole deck.
+            {/* WHY THE DECK'S OWN HEADLINE IS NOT IN THIS LIST (S16, 2026-09-02). Chapter 1 prints
+              *  the theme in the largest type on the page -- "enchantments entering" -- and none of
+              *  these six bars says enchantment, because they are two different classifiers: this
+              *  is a FIXED list of named archetypes a card's text signals, and the theme is
+              *  whatever this deck's own EDGES turned out to be about. Both judges who read both
+              *  chapters filed it, the beginner as *"I now feel like I don't know what I own."*
+              *  Saying it is the fix; renaming either classifier is not this item's. */}
+            {" "}These are named archetypes from a fixed list. The theme at the top of the report is
+            a different reading — what this deck&rsquo;s own card-to-card connections turned out to
+            be about — so it will often not be one of these names.
           </Explain>
           <div className="flex flex-col">{strategies!.map((s) => <StrategyRow key={s.name} s={s} max={sMax} />)}</div>
         </div>

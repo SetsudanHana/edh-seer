@@ -1,3 +1,4 @@
+import { LAND_BAND } from "@edh-seer/matcher/build";
 import type { DeckReport } from "../types.js";
 import { demandSentence } from "./demand-sentence.js";
 
@@ -101,6 +102,12 @@ function answerFinding(report: DeckReport): Finding | null {
   // The classes a permanent-agnostic answer would cover at once. `graveyard` is excluded: it is
   // hate rather than removal, and a Naturalize does not answer it.
   const permanent = answers.filter((a) => a.class !== "graveyard");
+  // AND THE FIGURE SAYS SO (S16, 2026-09-02). `0/5 answer types covered` sat beside a Roles table
+  // listing SIX rows, graveyard among them at `none · 5 short` — so the skeptic found the thinnest
+  // class on the page excluded from the finding that calls land the thinnest, and read the pair as
+  // an off-by-one: *"either graveyard is an answer type or it is not, and the page takes both
+  // positions on the same scroll."* The exclusion is deliberate and defensible; what was missing is
+  // that it was never said where the figure is read.
   if (permanent.length === 0) return null;
   const short = permanent.filter((a) => a.count < a.required);
   if (short.length === 0) return null;
@@ -139,10 +146,11 @@ function answerFinding(report: DeckReport): Finding | null {
     headline,
     detail: `${short.map((a) => `${a.count} for ${a.class}s`).join(", ")}`
       + `, against the ${worst.required} copies it takes to call an answer reliable`
-      + `${turn ? ` — the thinnest is ${worst.class}, about a ${pct(worst.available)}% chance of holding one by turn ${turn}` : ""}.`,
+      + `${turn ? ` — the thinnest is ${worst.class}, about a ${pct(worst.available)}% chance of holding one by turn ${turn}` : ""}.`
+      + " Graveyard hate is counted separately: it is hate rather than removal, and a Naturalize does not answer it.",
     action: "Two or three pieces that hit a permanent of any type.",
     figure: `${permanent.length - short.length}/${permanent.length}`,
-    figureLabel: "answer types covered",
+    figureLabel: "permanent answer types covered",
     filled: (permanent.length - short.length) / permanent.length,
     shortfall,
   };
@@ -232,12 +240,23 @@ function synergyFinding(report: DeckReport): Finding | null {
 
 /** LANDS AGAINST THE REGRESSION'S OWN TARGET. Both directions are a finding — a deck four lands
  *  under floods out on spells it cannot cast, and one four over draws lands instead of action —
- *  which is why this is the one source whose shortfall is an ABSOLUTE distance from target. */
+ *  which is why this is the one source whose shortfall is an ABSOLUTE distance from target.
+ *
+ *  AND IT USES THE SAME BAND THE DIAL DOES (S16, 2026-09-02). It used to fire on any non-zero
+ *  delta while `bandState` called anything within `LAND_BAND` "on the modelled count" — so a deck
+ *  at 38 against a target of 36 was BOTH on the modelled count (chapter 2's tile) and running two
+ *  more lands than its curve needs (chapter 6's finding). Three of three judges filed it, one as
+ *  *"same deck, same model, opposite verdicts"*.
+ *
+ *  The band wins, and this finding's own body is the argument for it: the published formulas
+ *  disagree with each other by about four lands on the same deck, so a one-land deviation is not a
+ *  finding, it is the instrument's resolution. One threshold, imported from the same constant the
+ *  dial reads, so the two cannot drift apart again. */
 function landFinding(report: DeckReport): Finding | null {
   const lands = report.deckMath?.lands;
   if (!lands || lands.target <= 0) return null;
   const delta = lands.actual - lands.target;
-  if (delta === 0) return null;
+  if (Math.abs(delta) <= LAND_BAND) return null;
   const over = delta > 0;
   return {
     kind: "lands",
@@ -279,10 +298,26 @@ export function findings(report: DeckReport): Finding[] {
 export function slotTrade(report: DeckReport, shortfalls: readonly Finding[]): string | null {
   const top = (report.slack ?? [])[0];
   if (!top || shortfalls.length === 0) return null;
+  /** WHEN THE SURPLUS IS THE THING A FINDING ASKS FOR MORE OF, SAY SO (S16, 2026-09-02).
+   *
+   *  On the example deck the top finding asks for "two or three pieces that hit a permanent of any
+   *  type" and the surplus is `Interaction 19/10 (+9)` — the same category, 300px apart, one asking
+   *  for more and the other calling it spare room. Two judges filed it; the tuner: *"both are
+   *  instructions and neither defers."*
+   *
+   *  Both are true and they are ONE instruction: the deck has plenty of interaction and all of it
+   *  answers creatures, so the move is a swap inside the category, never an addition to it. The
+   *  answers finding is the interaction one — `detectBuildRules` counts removal under Interaction —
+   *  and a build finding names its own category in `figureLabel`. */
+  const asksForSame = shortfalls.some((f) =>
+    (f.kind === "answers" && top.category === "Interaction") || f.figureLabel === top.category);
   // "N of those slots are the ones you need" said the OPPOSITE of what it meant — the N are the
   // SURPLUS, which is where the room comes from. The skeptic persona read it three times and stayed
   // unsure (2026-08-27). It names the surplus as a surplus now.
   return `${top.category} sits at ${top.count} against a target of ${top.target}`
     + ` — ${top.over} more ${top.over === 1 ? "slot" : "slots"} than it needs.`
-    + " That is where the room is: the deck is not short of space, it is spending it in one place.";
+    + " That is where the room is: the deck is not short of space, it is spending it in one place."
+    + (asksForSame
+      ? ` And it is the same category the finding above asks for: the count is not the problem, what those ${top.count} cards can answer is. Swap inside ${top.category}, do not add to it.`
+      : "");
 }

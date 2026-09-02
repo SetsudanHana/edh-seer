@@ -1753,6 +1753,27 @@ test("the score dials use semantic tokens, not raw Tailwind palette classes", ()
   expect(container.innerHTML).not.toMatch(/text-(red|amber|emerald)-\d{3}/);
 });
 
+/** S16 — THE SEVEN CROSS-CHAPTER CONTRADICTIONS, pinned where they are wording rather than
+ *  arithmetic. Each was true before the report became one scroll and unmeetable while the two
+ *  halves sat on different sub-tabs; each was filed by at least one blind judge reading the page
+ *  end to end. */
+test("the strategy list says why the deck's own theme need not appear in it", async () => {
+  const user = userEvent.setup();
+  render(<ArchetypeBoard strategies={SAMPLE.report.strategies} archetypes={SAMPLE.report.archetypes} />);
+  await user.click(screen.getByText("what the percentages count"));
+  expect(screen.getByText(/named archetypes from a fixed list/)).toBeInTheDocument();
+  expect(screen.getByText(/will often not be one of these names/)).toBeInTheDocument();
+});
+
+test("the cut list's empty state says what the trim control ranks by instead", () => {
+  render(<CutList cutList={[]} slack={[]} trim={[{ category: "Interaction", card: "Murder", reason: "over target" }] as never} />);
+  expect(screen.getByText("No card here is unconnected.")).toBeInTheDocument();
+  // The pair a tuner and a beginner both stopped on: "nothing is dead weight" over a Trim control.
+  // They rank different things, and the panel now says which.
+  expect(screen.getByText(/ranks by which category is/)).toBeInTheDocument();
+  expect(screen.getByText(/over its target/)).toBeInTheDocument();
+});
+
 test("SuggestionsList renders each suggestion; hidden when empty", () => {
   const { rerender } = render(<SuggestionsList suggestions={SAMPLE.report.suggestions} />);
   expect(screen.getByText("No board wipe (target 3), typically 3–5 mana")).toBeInTheDocument();
@@ -2170,13 +2191,31 @@ test("the band carries one pip per piece of evidence that put the deck there", (
     cheapCombos: [{ cards: ["Isochron Scepter", "Dramatic Reversal"], result: "Infinite untap", manaValue: 4 }],
     reasons: [],
   }} />);
-  // Two Game Changers, one infinite combo, one cheap combo -- every pip stands for something the
-  // list below names.
-  expect(screen.getAllByTestId("bracket-pip")).toHaveLength(4);
+  // Two Game Changers and ONE combo -- the cheap combo IS the infinite one. `brackets.ts` derives
+  // `cheapCombos` by filtering `infinite`, so it is a subset by construction and adding both counts
+  // every cheap combo twice. Measured on the example deck (S16): 1 Game Changer and 5 infinite
+  // combos, all five cheap, painted ELEVEN pips over a list of six things, and a skeptic counted
+  // the list and could not reconcile it.
+  expect(screen.getAllByTestId("bracket-pip")).toHaveLength(3);
   // AND THEY CARRY A WORD. Bare pips carried nothing: a judge did not see them until asked, then
   // could not decode them -- "two marks, no legend, no text, I'd have to guess what they count".
-  expect(screen.getByText(/4 things put it here/)).toBeInTheDocument();
+  expect(screen.getByText(/3 things put it here/)).toBeInTheDocument();
   unmount();
+
+  // THE SUBSET RULE, PINNED ON ITS OWN: five infinite combos that are all cheap are five things,
+  // not ten. This is the shape the live deck had.
+  const subset = render(<BracketPanel bracket={{
+    band: "4-5",
+    gameChangers: ["Jeska's Will"],
+    infiniteCombos: 5,
+    cheapCombos: Array.from({ length: 5 }, (_, i) => ({
+      cards: ["Dualcaster Mage", `Flicker ${i}`], result: "Infinite", manaValue: 4,
+    })),
+    reasons: [],
+  }} />);
+  expect(screen.getAllByTestId("bracket-pip")).toHaveLength(6);
+  expect(screen.getByText(/6 things put it here/)).toBeInTheDocument();
+  subset.unmount();
 
   // Singular reads as a sentence, not as "1 things".
   const one = render(<BracketPanel bracket={{
