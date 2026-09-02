@@ -1,5 +1,5 @@
 import type { DeckReport } from "../types.js";
-import { CardName } from "./card-drawer.js";
+import { CardName, ReasonText } from "./card-drawer.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 import { CATEGORY_LABELS } from "./CardList.js";
 
@@ -60,7 +60,29 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                     </span>
                   ) : null}
                 </span>
-                {topReason ? <span className="block text-xs text-(--muted) truncate">{topReason}</span> : null}
+                {/* THE SENTENCE IS EVIDENCE ONLY IF ITS NOUNS CAN BE CHECKED (roadmap S18). Both
+                  *  names are live now: a card opens its own text in the drawer, and a token says
+                  *  it is one and whose. NOT `truncate` any more -- a claim cut off mid-sentence is
+                  *  the same unverifiable line, and the row already earns two lines. */}
+                {topReason ? (
+                  <ReasonText text={topReason} className="block text-xs text-(--muted)" />
+                ) : null}
+                {/* AND THE SENTENCE IS ONE OF MANY, which is what made three identical lines with
+                  *  three different numbers read as a contradiction. Measured on the example deck:
+                  *  Protean Thaumaturge, Fear of Sleep Paralysis and Doomwake Giant all print
+                  *  "When Mark of the Rani enters, X triggers" and score 4.1 / 3.8 / 3.5. The
+                  *  scores are not computed from THIS sentence -- they aggregate every partner --
+                  *  and the row never said so.
+                  *
+                  *  THE COUNT IS NOT OFFERED AS THE EXPLANATION, because it is not one: those three
+                  *  cards have 36, 38 and 38 partners, so the number does not order them either.
+                  *  What it does is stop the single sentence from reading as the whole case. */}
+                {(c.partnerCount ?? 0) > 1 ? (
+                  <span className="block text-xs text-(--muted)">
+                    one of <span className="stat-num">{c.partnerCount}</span> connections behind this
+                    score
+                  </span>
+                ) : null}
               </span>
             </li>
           );
