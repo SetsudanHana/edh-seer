@@ -5,9 +5,21 @@ import { ThemeMatrix } from "./ThemeMatrix.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 import { SAMPLE } from "../fixtures.js";
 
+/** A pair carrying one reason, in the shape `groupEdgesByArchetype` emits. `implied` is
+ *  `Reason.impliedProducer` -- the producer supplied the event merely by existing (S17). */
+const pair = (producer: string, consumer: string, implied?: boolean) =>
+  ({ a: producer, b: consumer, reasons: [{ producer, consumer, tag: "t", text: "x", ...(implied ? { impliedProducer: true } : {}) }] });
+
 const groups = [
-  { category: "draw", label: "Draw Engine", cards: ["Skullclamp", "Grim Haruspex"], pairs: [] },
-  { category: "gy", label: "Graveyard Matters", cards: ["Grim Haruspex"], pairs: [] },
+  {
+    category: "draw", label: "Draw Engine", cards: ["Skullclamp", "Grim Haruspex"],
+    pairs: [pair("Skullclamp", "Grim Haruspex")],
+  },
+  {
+    category: "gy", label: "Graveyard Matters", cards: ["Grim Haruspex"],
+    // IMPLIED: Grim Haruspex is here by being a creature that dies, not by an authored effect.
+    pairs: [pair("Grim Haruspex", "Bojuka Bog", true)],
+  },
 ] as never;
 
 const show = (names: string[], g: unknown = groups) =>
@@ -33,6 +45,35 @@ test("every cell says in words whether it is a member", () => {
   show(["Skullclamp"]);
   expect(screen.getByText("in Draw Engine")).toBeInTheDocument();
   expect(screen.getByText("not in Graveyard Matters")).toBeInTheDocument();
+});
+
+/** S17: ONE DOT WAS MAKING TWO CLAIMS. A filled dot is a card doing something the group is about; a
+ *  hollow ring is a card whose supply was synthesised -- present when the thing happens rather than
+ *  causing it. Three of four judges called this grid suspected-wrong; it was two claims drawn
+ *  identically. The distinction is SHAPE, not colour, so it survives a colour-blind reader, and it
+ *  is in the sentence too, because a mark is never the only carrier. */
+test("an implied membership is drawn, and said, differently from an earned one", () => {
+  show(["Skullclamp", "Grim Haruspex"]);
+  const rows = screen.getAllByTestId("matrix-row");
+  const haruspex = rows.find((r) => r.textContent?.startsWith("Grim Haruspex"))!;
+  const marks = within(haruspex).getAllByTestId("matrix-dot");
+  expect(marks.map((d) => d.getAttribute("data-membership"))).toEqual(["earned", "implied"]);
+  // The filled mark has no border and the ring has no fill -- a colour-only difference would be
+  // invisible in forced-colours mode.
+  // `--muted` (6.11:1 against the page ground), not `--fill` (2.12:1, under the 3:1 a graphical
+  // object owes). Measured in the browser; S6's dot had been below the floor since it shipped.
+  expect(marks[0]!.className).toMatch(/bg-\(--muted\)/);
+  expect(marks[1]!.className).toMatch(/border-\(--muted\)/);
+  expect(marks[1]!.className).not.toMatch(/bg-\(--muted\)/);
+  expect(screen.getByText(/in Graveyard Matters, by being played rather than by doing anything/)).toBeInTheDocument();
+});
+
+test("the legend counts both kinds, because the implied half can be the larger one", () => {
+  // Measured on the example deck: 177 of 295 memberships are implied, so a reader taking every dot
+  // at face value reads a deck twice as connected as it is.
+  show(["Skullclamp", "Grim Haruspex"]);
+  expect(screen.getByText(/of them are\s+something the card does/)).toBeInTheDocument();
+  expect(screen.getByText(/are the card merely being there/)).toBeInTheDocument();
 });
 
 /** THE CARDS IN NO GROUP ARE NAMED, not counted: this is the region a cut conversation starts from

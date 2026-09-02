@@ -43,8 +43,35 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
         {m.rows.length} of {m.rows.length + m.unaffiliated.length} cards carry at least one of this
         deck&rsquo;s mechanisms, and most carry more than one — which is why this is a grid and not a
         pie: a card would have to be assigned to exactly one slice, and{" "}
-        {m.rows.reduce((s, r) => s + r.count, 0)} memberships do not fit in {m.rows.length} cells.
+        {m.earnedTotal + m.impliedTotal} memberships do not fit in {m.rows.length} cells.
       </p>
+      {/* THE SPLIT IS THE HEADLINE, not a footnote to the grid: on the example deck the implied
+        *  half is the LARGER one (177 of 295), so a reader taking every dot at face value is
+        *  reading a deck twice as connected as it is. Rows rank on the earned count for the same
+        *  reason. */}
+      {/* ONE ROW PER MARK, NOT ONE WRAPPING PARAGRAPH. As a single flex-wrap line the two swatches
+        *  and their clauses reflowed independently, and at 1440 the hollow ring ended the FIRST line
+        *  while the 145 it labels began the second -- a key whose mark and number are on different
+        *  lines is not a key. Each row is its own flex item now, so a swatch cannot separate from
+        *  its own sentence at any width. Seen on screen; no gate catches this. */}
+      <div className="text-xs text-(--muted) max-w-[60ch] flex flex-col gap-1">
+        <p className="flex items-baseline gap-1.5">
+          <span aria-hidden="true" className="inline-block shrink-0 w-2 h-2 rounded-full bg-(--muted)" />
+          <span>
+            <span className="stat-num text-(--foreground)">{m.earnedTotal}</span> of them are
+            something the card does — it pays the group off, or it causes the group&rsquo;s event
+            with an effect of its own.
+          </span>
+        </p>
+        <p className="flex items-baseline gap-1.5">
+          <span aria-hidden="true" className="inline-block shrink-0 w-2 h-2 rounded-full border border-(--muted)" />
+          <span>
+            <span className="stat-num">{m.impliedTotal}</span> are the card merely being there: the
+            engine counts every nonland as cast and every permanent as entering, so a card can join
+            a group without doing anything about it. Rows are ordered by the first kind.
+          </span>
+        </p>
+      </div>
 
       {/* THE TABLE SCROLLS SIDEWAYS INSIDE ITS OWN REGION AND SAYS SO. `components.md`: a hidden
         *  overflow needs a visible cue, and an `aria-label` mentioning it serves screen readers
@@ -93,18 +120,48 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
                   *  report scrolling sideways while everything visible sat inside it. The exact
                   *  defect `components.md`'s narrow-width defences name, and it hides from
                   *  screenshots. */}
-                {r.member.map((isMember, i) => (
+                {r.cells.map((cell, i) => (
                   <td key={m.columns[i]!.category} className="relative py-1 px-1 text-center">
-                    {/* THE DOT IS NEVER THE ONLY CARRIER. Every cell states its own membership to a
-                      *  screen reader, because a grid of coloured dots read as "blank blank blank"
-                      *  is the exact colour-only failure this repo keeps fixing. */}
+                    {/* TWO MARKS, BECAUSE ONE DOT WAS MAKING TWO DIFFERENT CLAIMS (roadmap S17).
+                      *  A FILLED dot is a card that does something the group is about; a HOLLOW
+                      *  ring is a card whose supply of the event was synthesised -- it is present
+                      *  when the thing happens rather than causing it. Three of four judges called
+                      *  this grid SUSPECTED-WRONG and the skeptic said outright *"I believe this
+                      *  claim is false"*; it was not false, it was two claims drawn identically.
+                      *  Measured on the example deck: 177 of 295 memberships are implied, and
+                      *  `Mystic Remora` is implied in all SEVEN of its groups -- it earns a dot by
+                      *  BEING an enchantment that enters, which in an enchantments-entering deck
+                      *  makes nearly every enchantment a member of nearly every group. That is why
+                      *  four different cards rendered four identical rows.
+                      *
+                      *  SHAPE, NOT COLOUR: fill versus ring survives a colour-blind reader and a
+                      *  forced-colours mode, where two tints of the same violet would not.
+                      *
+                      *  AND `--muted`, NOT `--fill`, MEASURED: the S6 dot was `--fill`, which is
+                      *  **2.12:1** against the page ground -- under the 3:1 floor a graphical object
+                      *  owes. It went unnoticed while the dot was decoration on top of a row a
+                      *  reader could parse anyway; now the mark carries a DISTINCTION, which is the
+                      *  S1 hatch failure exactly (measured fine, found by 4 of 10 judges). `--muted`
+                      *  is **6.11:1** and stays quiet. Not `--accent` (4.9:1): index.css keeps the
+                      *  accent scarce, and 241 accent dots is the large-fill rule S2 recorded. */}
                     <span
-                      data-testid={isMember ? "matrix-dot" : undefined}
-                      className={isMember ? "inline-block w-2 h-2 rounded-full bg-(--fill)" : ""}
-                      aria-hidden={!isMember}
+                      data-testid={cell ? "matrix-dot" : undefined}
+                      data-membership={cell ?? undefined}
+                      className={
+                        cell === "earned" ? "inline-block w-2 h-2 rounded-full bg-(--muted)"
+                          : cell === "implied" ? "inline-block w-2 h-2 rounded-full border border-(--muted)"
+                            : ""
+                      }
+                      aria-hidden={!cell}
                     />
+                    {/* THE MARK IS NEVER THE ONLY CARRIER. Every cell states its own membership to a
+                      *  screen reader, because a grid of marks read as "blank blank blank" is the
+                      *  exact non-text failure this repo keeps fixing -- and the two marks now say
+                      *  different things, so the sentence has to as well. */}
                     <span className="sr-only">
-                      {isMember ? `in ${m.columns[i]!.label}` : `not in ${m.columns[i]!.label}`}
+                      {cell === "earned" ? `in ${m.columns[i]!.label}`
+                        : cell === "implied" ? `in ${m.columns[i]!.label}, by being played rather than by doing anything`
+                          : `not in ${m.columns[i]!.label}`}
                     </span>
                   </td>
                 ))}
