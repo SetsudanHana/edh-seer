@@ -215,7 +215,7 @@ export function GraphView(
   /** THE READER'S PINNED SET (roadmap S8). Destructured so this component re-renders when it
    *  changes; the no-deps `useEffect(() => { dirtyRef.current = true; })` below then repaints. The
    *  simulation lives in a ref, so a repaint is NOT a re-layout and the nodes do not jump. */
-  const { pinned: pinnedNames } = usePinned();
+  const { pinned: pinnedNames, togglePin } = usePinned();
   const [selectedIds, setSelectedIds] = useState<readonly string[]>([]);
   /** The card the PANEL is about: the most recently clicked one. Selection is a set and the panel
    *  is a single card, so one of them has to be chosen — and the last click is the one the reader
@@ -2309,6 +2309,12 @@ export function GraphView(
               // to "go back to", and leaving a lit set behind a closed panel would strand the reader
               // with a filtered board and nothing on screen saying what filtered it.
               onClose={() => setSelectedIds([])}
+              // PINNABLE FROM THE BOARD TOO (roadmap S8). The board is one of the surfaces a pin
+              // lights up, so being unable to pin FROM it is the kind of gap that reads as the
+              // feature half-working. Found by looking, not by a test: the drawer's inspector had
+              // the control and this one -- the same component, a second render site -- did not.
+              pinned={pinnedNames.has(inspectingNode.cardName ?? inspectingNode.label)}
+              onTogglePin={() => togglePin(inspectingNode.cardName ?? inspectingNode.label)}
             />
           ) : null}
         </div>
