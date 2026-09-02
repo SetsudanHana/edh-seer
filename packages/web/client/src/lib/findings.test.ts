@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { findings, slotTrade, FINDING_CAP } from "./findings.js";
+import { findings, rankedFindings, slotTrade, FINDING_CAP } from "./findings.js";
 import type { DeckReport } from "../types.js";
 
 const report = (over: Partial<DeckReport>): DeckReport => ({ ...over } as DeckReport);
@@ -232,4 +232,73 @@ test("the slot trade says so when the surplus is the category a finding asks for
   const other = slotTrade(elsewhere, findings(elsewhere))!;
   expect(other).toContain("Ramp sits at 17");
   expect(other).not.toContain("Swap inside");
+});
+
+// --- S10: ranked by what fixing it is worth ---
+
+/** RANKED BY WHAT FIXING IT IS WORTH, not by the size of the hole (roadmap S10). Board wipes is the
+ *  known mover: weight 0.5 means a 0/3 gap is 100% missing and still worth less than Consistency's,
+ *  so it leads under the old rule and does not under this one. */
+test("the scored group is ordered by impact, not by shortfall", () => {
+  const { scored } = rankedFindings(report({
+    buildParents: [
+      { name: "Consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 },
+      { name: "Board wipes", count: 0, target: 3, leaves: ["boardWipe"], impact: 0.556 },
+    ],
+  }));
+  expect(scored.map((f) => f.figureLabel)).toEqual(["Consistency", "Board wipes"]);
+  // And the old rule would have put them the other way round: 1.0 missing beats 0.571.
+  expect(scored[1]!.shortfall).toBeGreaterThan(scored[0]!.shortfall);
+});
+
+/** COLOUR AND SYNERGY ARE NOT IN `buildScore` AT ALL -- colour is its own axis, synergy is
+ *  `synergyOverall`. They carry no impact and rank in their own group rather than being interleaved
+ *  by a conversion factor, which is exactly the invented constant this module refuses. */
+test("colour and synergy findings never enter the scored group", () => {
+  const { scored, unseen } = rankedFindings(report({
+    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: [], impact: 0.635 }],
+    cards: Array.from({ length: 100 }, (_, i) => ({ name: `c${i}` })) as DeckReport["cards"],
+    deckMath: {
+      ...demand([{ key: "dies:type:creature", consumers: 4, suppliers: 0, available: 0.2 }]),
+      colors: [{ color: "B", supplied: 21, worst: { pips: 4, turn: 9, required: 31, requiredRaw: 36, cards: 1 } }],
+    } as DeckReport["deckMath"],
+  }));
+  expect(scored.every((f) => f.kind === "build" || f.kind === "lands" || f.kind === "answers")).toBe(true);
+  expect([...new Set(unseen.map((f) => f.kind))].sort()).toEqual(["colour", "synergy"]);
+  expect(unseen.every((f) => f.impact === undefined)).toBe(true);
+});
+
+/** AN IMPACT OF 0 IS A STATEMENT, NOT A GAP. It arises for the answers finding when every class is
+ *  covered but some are held under `required`, so the multiplier cannot move. Dropping it would make
+ *  the scored group mean "findings that happen to score well". */
+test("a zero impact stays in the scored group", () => {
+  const { scored } = rankedFindings(report({
+    deckMath: answers({ creature: 2, artifact: 2, enchantment: 2, planeswalker: 2, land: 2 }),
+    answersImpact: 0,
+  }));
+  const f = scored.find((x) => x.kind === "answers");
+  expect(f).toBeDefined();
+  expect(f!.impact).toBe(0);
+});
+
+/** A 100-CARD DECK CANNOT ADD WITHOUT CUTTING, so the action names the donor. `slack` is the same
+ *  source `slotTrade` already reads, and a cut from a parent over its target costs the score nothing
+ *  because attainment caps -- which is what makes the +1 side the whole delta. */
+test("the action line names the cut when the deck has slack", () => {
+  const { scored } = rankedFindings(report({
+    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 }],
+    suggestions: ["Consistency 6/14 — add ~8, typically 2–4 mana"],
+    slack: [{ category: "ramp", count: 17, target: 10, over: 7 }],
+  }));
+  expect(scored[0]!.action).toContain("cutting from ramp (17/10)");
+});
+
+/** No surplus, no donor. Nothing is invented to fill the sentence. */
+test("the action line names no cut when the deck has no slack", () => {
+  const { scored } = rankedFindings(report({
+    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: ["draw"], impact: 0.635 }],
+    suggestions: ["Consistency 6/14 — add ~8, typically 2–4 mana"],
+    slack: [],
+  }));
+  expect(scored[0]!.action).not.toContain("cutting from");
 });

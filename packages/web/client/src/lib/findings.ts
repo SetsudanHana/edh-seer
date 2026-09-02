@@ -52,8 +52,16 @@ export interface Finding {
   figureLabel: string;
   /** 0–1: how much of the target is present. Drives the row's bar. */
   filled: number;
-  /** 0–1: the fraction of the target that is MISSING. The sort key. */
+  /** 0–1: the fraction of the target that is MISSING. The sort key for the UNSCORED group, and the
+   *  figure `slotTrade` and the header count still read. */
   shortfall: number;
+  /** WHAT FIXING THIS IS WORTH TO THE BUILD SCORE (roadmap S10) -- the whole gap, not one card, and
+   *  a LOWER BOUND, because a real card often carries two of a parent's leaves.
+   *
+   *  ABSENT, never 0, on the kinds `buildScore` cannot express: colour is its own axis and synergy
+   *  is `synergyOverall`. The distinction is load-bearing -- 0 means "fixing this does not move
+   *  Build", which is a claim, and `undefined` means the score has nothing to say. */
+  impact?: number;
 }
 
 const pct = (n: number): number => Math.round(n * 100);
@@ -72,6 +80,13 @@ function buildFindings(report: DeckReport): Finding[] {
     // The engine's own sentence for this parent, if it wrote one. It carries the cost band
     // (`typically 2–4 mana`) that this module has no business recomputing.
     const suggestion = suggestions.find((s) => s.startsWith(`${p.name} `));
+    // THE DONOR, NAMED. A 100-card deck cannot add without cutting, so a bare "add ~8" is a move no
+    // reader can make. `report.slack` is the same surplus `slotTrade` reads for "where the slots come
+    // from", and a cut from a parent over its target costs the score NOTHING -- attainment is
+    // `min(count / target, 1)` and stays capped all the way down to the target. That is what makes
+    // the add side the whole delta, and what makes the impact figure true of a legal deck.
+    const donor = (report.slack ?? [])[0];
+    const cut = donor ? `, cutting from ${donor.category} (${donor.count}/${donor.target})` : "";
     out.push({
       kind: "build",
       id: `build:${p.name}`,
@@ -82,11 +97,14 @@ function buildFindings(report: DeckReport): Finding[] {
         + " The target is a deckbuilding convention, not a number measured from any deck.",
       // Strip the leading "Name 6/14 — " the CLI sentence carries, since the figure is rendered
       // beside the row already.
-      action: suggestion ? suggestion.replace(/^[^—]*—\s*/, "").replace(/^add/, "Add") : undefined,
+      action: suggestion
+        ? `${suggestion.replace(/^[^—]*—\s*/, "").replace(/^add/, "Add")}${cut}`
+        : undefined,
       figure: `${p.count}/${p.target}`,
       figureLabel: p.name,
       filled: p.count / p.target,
       shortfall: missing / p.target,
+      impact: p.impact,
     });
   }
   return out;
@@ -153,6 +171,7 @@ function answerFinding(report: DeckReport): Finding | null {
     figureLabel: "permanent answer types covered",
     filled: (permanent.length - short.length) / permanent.length,
     shortfall,
+    impact: report.answersImpact,
   };
 }
 
@@ -271,6 +290,7 @@ function landFinding(report: DeckReport): Finding | null {
     figureLabel: "lands",
     filled: Math.min(1, lands.actual / lands.target),
     shortfall: Math.abs(delta) / lands.target,
+    impact: report.landsImpact,
   };
 }
 
@@ -286,6 +306,30 @@ export function findings(report: DeckReport): Finding[] {
   ];
   all.sort((a, b) => b.shortfall - a.shortfall || a.id.localeCompare(b.id));
   return all;
+}
+
+/** THE TWO GROUPS (roadmap S10).
+ *
+ *  `scored` is every finding `buildScore` can price, ordered by what closing it is worth. `unseen` is
+ *  colour and synergy, which are not terms in that score at all, kept in the order they always had --
+ *  by the fraction of their own target that is missing.
+ *
+ *  THEY ARE NOT INTERLEAVED, and that is the point. Placing an unpriced finding inside a priced list
+ *  needs a conversion from shortfall to score points, which is exactly the constant this module's
+ *  own header refuses to introduce. Two headings say the true thing instead: the second group is
+ *  real problems the number is structurally blind to.
+ *
+ *  `findings()` above is UNCHANGED and still returns everything worst-shortfall first -- the sticky
+ *  header counts it and `ReportChapters` reads its labels, and neither wants a ranking claim. */
+export function rankedFindings(report: DeckReport): { scored: Finding[]; unseen: Finding[] } {
+  const all = findings(report);
+  const scored = all
+    .filter((f) => f.impact !== undefined)
+    // The id tiebreak keeps the order stable where two impacts are equal, which two zero-impact
+    // findings are.
+    .sort((a, b) => (b.impact ?? 0) - (a.impact ?? 0) || a.id.localeCompare(b.id));
+  const unseen = all.filter((f) => f.impact === undefined);
+  return { scored, unseen };
 }
 
 /** WHERE THE SLOTS COME FROM — the biggest surplus, phrased as the trade it is rather than as a
