@@ -1,6 +1,39 @@
 import type { AnalyzeResponse } from "../types.js";
 import { Dial } from "./Dial.js";
+import { Bullet, TARGET_MARK } from "./Bullet.js";
 import { floorState, bandState, scoreState } from "../lib/deck-gauge.js";
+
+/** A COUNT AGAINST ITS REFERENCE, AS A FRACTION OF THE TRACK. The target parks at `TARGET_MARK`,
+ *  so the bar runs past it when the count clears it and stops short when it does not -- and every
+ *  input's tick lands at the same x, which is what lets a reader compare rows whose targets
+ *  differ. Guarded at 0: a parent with no floor (`BASE_TARGETS` gives burn and stax a target of 0)
+ *  would divide by nothing, and `floorState` already reports that case as "no floor set".
+ *
+ *  OVERSHOOT IS COMPRESSED, NOT CLAMPED, and the live screen is why. A plain
+ *  `min((count/target) * 0.7, 1)` saturates the moment a count is ~43% past its floor, so on a real
+ *  deck `Interaction 15/10` ("5 over target") and `Board wipes 4/2` ("on target") both painted a
+ *  full-width bar -- two different states drawn identically, which is the EXACT defect
+ *  `TARGET_MARK`'s own comment exists to prevent. It never bit before because the only caller was
+ *  a code path that renders for no deck; on the report's first screen it bit immediately.
+ *
+ *  The excess maps through `over / (over + 1)` into the track's remaining 30%: monotonic in the
+ *  count, so more over is always visibly further right, and asymptotic to the end, so no bar can
+ *  reach it and "full" never means "done". CEILING: the curve is a rendering choice, not a
+ *  measurement -- it makes the ORDER readable, not the magnitude. The exact figure is printed
+ *  beside the bar and the words say "N over target", which is what a reader acts on. Same posture
+ *  as `GaugeReading.position`'s own bucket-centre ceiling. */
+const countFill = (count: number, target: number): number => {
+  if (target <= 0) return 0;
+  const ratio = count / target;
+  if (ratio <= 1) return Math.max(0, ratio * TARGET_MARK);
+  const over = ratio - 1;
+  return TARGET_MARK + (1 - TARGET_MARK) * (over / (over + 1));
+};
+
+/** A 0-5 SCORE HAS NO TARGET, ONLY BANDS. `position` is already the -1..1 the zones are drawn in
+ *  (`scoreState` interpolates it, unlike the bucket-centre readings), so the bar is that mapped
+ *  into the track and there is no tick -- inventing one would be inventing a number. */
+const scoreFill = (reading: { position: number }): number => (reading.position + 1) / 2;
 
 export type GaugeTab = "build" | "mana" | "engine";
 
@@ -68,18 +101,20 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
               * div, not its flex-centred parent, own the available width the columns divide. */}
             <div className="synergy-inputs-grid grid grid-cols-2 gap-3 w-full">
               {report.positiveCoherence !== undefined ? (
-                <Dial
+                <Bullet
                   name="Breadth"
                   value={report.positiveCoherence.toFixed(1)}
                   reading={scoreState(report.positiveCoherence, partial)}
+                  fill={scoreFill(scoreState(report.positiveCoherence, partial))}
                   zones="score"
                 />
               ) : null}
               {report.anchoring !== undefined ? (
-                <Dial
+                <Bullet
                   name="Anchor"
                   value={report.anchoring.toFixed(1)}
                   reading={scoreState(report.anchoring, partial)}
+                  fill={scoreFill(scoreState(report.anchoring, partial))}
                   zones="score"
                 />
               ) : null}
@@ -113,31 +148,46 @@ export function DeckGauges({ data, onOpen }: { data: AnalyzeResponse; onOpen: (t
               * which strands anything. */}
             <div className="build-inputs-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 w-full">
               {parents.map((p) => (
-                <Dial
+                <Bullet
                   key={p.name}
                   name={p.name}
                   value={String(p.count)}
                   reading={floorState(p.count, p.target)}
-                  zones="floor"
-                  // A SINGLE-LEAF PARENT HAS NO DETAIL TO OPEN. `BuildBenchmarks` renders a group only
-                  // for a parent with more than one leaf -- Ramp's single leaf would restate the parent's
-                  // own count as "100% of Ramp", the duplicate the folded shape exists to avoid. So those
-                  // dials are content, not controls.
+                  fill={countFill(p.count, p.target)}
+                  mark={p.target > 0 ? TARGET_MARK : undefined}
+                  // A SINGLE-LEAF PARENT HAS NO DETAIL TO OPEN. `BuildBenchmarks` renders a group
+                  // only for a parent with more than one leaf -- Ramp's single leaf would restate
+                  // the parent's own count as "100% of Ramp", the duplicate the folded shape
+                  // exists to avoid. So those are content, not controls.
                   onOpen={p.leaves.length > 1 ? () => onOpen("build", p.name) : undefined}
                   openLabel="Build"
                 />
               ))}
               {lands ? (
-                <Dial
+                <Bullet
                   name="Lands"
                   value={String(lands.actual)}
                   reading={bandState(lands.actual, lands.target)}
-                  zones="band"
+                  fill={countFill(lands.actual, lands.target)}
+                  mark={lands.target > 0 ? TARGET_MARK : undefined}
                   onOpen={() => onOpen("mana", undefined)}
                   openLabel="Mana"
                 />
               ) : null}
             </div>
+            {/* WHOSE FLOOR IT IS, SAID WHERE THE FLOOR IS DRAWN (roadmap S4). Every tick above is
+              *  the Command Zone template's number, and the panel now marks a deck against it on
+              *  the report's first screen -- so the one thing a reader needs before acting on a
+              *  "3 short" is that nobody measured it. The sentence already existed twice on this
+              *  site (`CutList`'s slack section, `BuildBenchmarks`'s hate classes) and in neither
+              *  place did it sit beside the mark it qualifies. `Lands` is excepted IN THE WORDS
+              *  because it genuinely is measured: `deckMath.lands.target` comes from a regression
+              *  over real decks, which is also why it is the one two-sided reading here. */}
+            <p className="text-xs text-(--muted) max-w-[52ch]">
+              Each tick is the Command Zone template&rsquo;s floor — a deckbuilding convention
+              someone typed, not a number measured from decks. Over it is not a fault
+              {lands ? <> · the land tick is the exception, modelled from this deck&rsquo;s own curve</> : null}.
+            </p>
           </div>
         ) : null}
       </div>
