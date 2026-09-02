@@ -3,6 +3,7 @@ import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { CardName } from "./card-drawer.js";
 import { policyBand } from "@edh-seer/engine/percent";
 // NOTHING IS VALUE-IMPORTED FROM @edh-seer/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
 // prior deep import of `GRAVEYARD_HATE_SHARE` from `@edh-seer/matcher/src/answer-coverage.js` (reasoned
@@ -693,9 +694,30 @@ function DeckMathRows({
               );
             })}
           </ul>
+          {/* WHICH CARDS WERE REFUSED, NOT JUST HOW MANY (S19). A refused card leaves the list
+            *  above entirely, so before this the only trace of it was a count inside a collapsed
+            *  caveat -- measured on the example deck, `Blasphemous Act` stopped being called a
+            *  9-drop and then appeared nowhere on the report at all. A reader looking for their
+            *  most expensive card could not find out what happened to it. Named with the reason,
+            *  biggest first, the same call `cheatsIntoPlay` makes one paragraph down. */}
+          {castability.refusedCards && castability.refusedCards.length > 0 ? (
+            <p className="text-xs text-(--muted) max-w-[65ch]">
+              <span className="text-(--foreground)">Not priced:</span>{" "}
+              {castability.refusedCards.map((c, i) => (
+                <span key={c.name}>
+                  {i > 0 ? "; " : ""}<CardName name={c.name} /> — {c.reason}
+                </span>
+              ))}
+              .
+            </p>
+          ) : null}
           <Caveat label="how these are priced">
             {castability.refused > 0
-              ? `${plural(castability.refused, "card")} refused — X costs, delve, convoke and free casts are not priced rather than guessed. `
+              // The list names every refusal kind `castability.ts` carries; a kind missing here reads
+              // as an unexplained blank on the card's own row. "Costs less than it prints" joined
+              // them in S19 and is the most common of them on real decks -- 38 of the 71
+              // calibration decks hold at least one.
+              ? `${plural(castability.refused, "card")} refused — X costs, delve, convoke, free casts and cards that cost less than they print are not priced rather than guessed. `
               : ""}
             {castability.biases}
             {/* ROADMAP I6. Putting a permanent onto the battlefield is not casting it, so it uses no

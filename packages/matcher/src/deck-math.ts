@@ -232,6 +232,12 @@ export function computeDeckMath(
       name: c.name, turn: c.turn, castable: c.castable!, mana: c.mana!,
     })),
     refused: cast.refused,
+    // NAMED, NOT JUST COUNTED (S19). `cards` above is the hardest few, and a refused card is in
+    // NEITHER -- so a bare count was the only trace it existed. Measured on the example deck:
+    // `Blasphemous Act` stopped being priced at its printed 9 and then appeared nowhere on the
+    // report, which trades a wrong number for one a reader cannot locate. Same call as
+    // `cheatsIntoPlay` below, and omitted entirely when the model priced everything.
+    ...(cast.refusedCards.length > 0 ? { refusedCards: cast.refusedCards } : {}),
     biases: cast.biases,
     // ROADMAP I6: cards that put a nonland permanent onto the battlefield FROM HAND. Every figure
     // above prices CASTING, and putting is not casting -- so on a deck holding one of these the

@@ -283,6 +283,12 @@ export interface DeckMath {
       mana: { low: number; high: number };
     }[];
     refused: number;
+    /** WHICH ONES, AND WHY. A refused card leaves `cards` entirely, so a bare count was the only
+     *  trace it ever existed -- measured on the example deck (S19), `Blasphemous Act` stopped being
+     *  priced and then appeared nowhere on the report at all. A LIST AND NEVER JUST A NUMBER, the
+     *  same call `cheatsIntoPlay` below makes. Biggest mana value first: the expensive ones are the
+     *  ones a reader misses from the list. */
+    refusedCards?: { name: string; manaValue: number; reason: string }[];
     biases: string;
     /** Cards that put a nonland permanent onto the battlefield FROM HAND (roadmap I6): the printed
      *  cost is never paid and the stack is never used, so none of the figures above apply to what
