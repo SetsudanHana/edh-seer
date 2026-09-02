@@ -32,7 +32,15 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
   // ONE PIP PER PIECE OF EVIDENCE THE LIST BELOW NAMES, so the eye goes band -> why without
   // reading. Counted, never summed from `reasons`: that field is a second rendering of these same
   // facts and the panel already prints the more checkable one (named cards, per-combo rows).
-  const pips = bracket.gameChangers.length + bracket.infiniteCombos + bracket.cheapCombos.length;
+  /** EVERY CHEAP COMBO IS ALREADY AN INFINITE ONE, so adding both counts each of them twice.
+   *  `brackets.ts` derives `cheapCombos` by FILTERING `infinite` (two cards or fewer, mana value at
+   *  or under `CHEAP_COMBO_MV`) — it is a subset by construction, never a separate set.
+   *
+   *  Measured on the example deck (S16, 2026-09-02): 1 Game Changer + 5 infinite combos, all five
+   *  of them cheap, painted **11 pips over a list of six things**. A skeptic counted the list,
+   *  found six, and could not reconcile it: *"eleven dots are painted, so the count is deliberate;
+   *  nothing names the other five."* The count was simply wrong. */
+  const pips = bracket.gameChangers.length + bracket.infiniteCombos;
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">Which table this is for</h3>

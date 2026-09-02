@@ -97,9 +97,17 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
           <>
             {" · "}
             <span className="stat-num text-(--foreground)">{lands}</span>{" lands"}
+            {/* THE OTHER FRAME, NAMED AS THE ONE THE REST OF THE REPORT USES (S16, 2026-09-02).
+              *  This line counts FRONT FACES, where a modal DFC is a spell; the mana model counts
+              *  it as a land, per the 2026-08-31 ruling. Both are right and the report used to say
+              *  "34" here and "38" everywhere after it, with only "(38 with MDFCs)" to bridge them
+              *  — a beginner read 34 first and said "if I had gone by the first number I'd have
+              *  thought I was two UNDER", and the phone judge said 34 out loud at a table and had
+              *  to take it back. The parenthetical says WHOSE number the bigger one is now. */}
             {mdfc !== undefined && mdfc > 0 ? (
               <>{" "}<span className="whitespace-nowrap">
-                (<span className="stat-num text-(--foreground)">{lands + mdfc}</span> with MDFCs)
+                (<span className="stat-num text-(--foreground)">{lands + mdfc}</span> counting MDFC backs,
+                which is the figure the mana model uses)
               </span></>
             ) : null}
           </>

@@ -82,7 +82,7 @@ test("the nonland and land totals sum to the deck, with the MDFC gap named rathe
   // 62 creatures + 4 MDFC fronts (sorcery) = 66 nonland; 34 real lands; 66 + 34 = 100.
   expect(screen.getByTestId("type-total")).toHaveTextContent("66");
   const line = screen.getByTestId("type-total").closest("p")!;
-  expect(line).toHaveTextContent("34 lands (38 with MDFCs)");
+  expect(line).toHaveTextContent("34 lands (38 counting MDFC backs, which is the figure the mana model uses)");
 });
 
 test("carries no 0-5 score: recognition is not a judgement", () => {

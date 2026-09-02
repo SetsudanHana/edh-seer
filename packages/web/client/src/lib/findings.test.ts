@@ -67,8 +67,14 @@ test("thin answer classes collapse into a single finding", () => {
   // availability (LAND, 13%) under a headline about four classes — a number a reader cannot check
   // against the sentence above it. It counts the classes covered now.
   expect(rows[0].figure).toBe("1/5");
-  expect(rows[0].figureLabel).toBe("answer types covered");
-  expect(rows[0].detail).not.toContain("graveyard");
+  // AND THE FIGURE SAYS WHAT IT COUNTS (S16). `0/5 answer types covered` sat beside a Roles table
+  // of SIX rows including graveyard, so a judge read the pair as an off-by-one and could not tell
+  // whether graveyard is an answer type. The exclusion is right; it just was not stated.
+  expect(rows[0].figureLabel).toBe("permanent answer types covered");
+  // Graveyard is still out of the COUNTS -- it is hate, not removal -- and the detail now says so
+  // rather than leaving its absence to be discovered.
+  expect(rows[0].detail).not.toContain("1 for graveyards");
+  expect(rows[0].detail).toContain("Graveyard hate is counted separately");
   // The thinnest class is still named, but as the DETAIL's own clause rather than as the headline
   // figure, so the two cannot disagree.
   expect(rows[0].detail).toContain("the thinnest is land");
@@ -117,6 +123,15 @@ test("lands are a finding in BOTH directions", () => {
   expect(findings(report({ deckMath: lands(30) }))[0].headline).toContain("short");
   expect(findings(report({ deckMath: lands(42) }))[0].headline).toContain("more");
   expect(findings(report({ deckMath: lands(36) }))).toEqual([]);
+  // AND THE SAME BAND THE DIAL USES, or the two surfaces contradict each other (S16). `bandState`
+  // calls anything within `LAND_BAND` "on the modelled count"; this used to fire on any non-zero
+  // delta, so a deck at 38 against 36 was simultaneously on the modelled count and two lands over.
+  // Three of three judges filed it. The band wins, and this finding's own body is the argument:
+  // the published formulas disagree by about four lands on the same deck.
+  expect(findings(report({ deckMath: lands(38) })), "38 vs 36 is inside the band").toEqual([]);
+  expect(findings(report({ deckMath: lands(39) })), "39 vs 36 is on the band edge").toEqual([]);
+  expect(findings(report({ deckMath: lands(40) }))[0].headline).toContain("more");
+  expect(findings(report({ deckMath: lands(32) }))[0].headline).toContain("short");
 });
 
 test("the slot trade names the category and never a card, and stays silent with nothing short", () => {
@@ -187,4 +202,34 @@ test("one idle card ranks below a large build shortfall", () => {
     deckMath: demand([{ key: "attacks:any", consumers: 1, suppliers: 0, available: 0.1 }]),
   }));
   expect(rows.map((r) => r.kind)).toEqual(["build", "synergy"]);
+});
+
+/** S16, 2026-09-02: THE ASK AND THE SURPLUS WERE THE SAME CATEGORY AND NEITHER DEFERRED. The top
+ *  finding asked for "two or three pieces that hit a permanent of any type" while the callout 300px
+ *  below called Interaction 19/10 the deck's spare room. Both true, and they are one instruction:
+ *  the count is fine and what those cards can answer is not, so it is a swap inside the category. */
+test("the slot trade says so when the surplus is the category a finding asks for", () => {
+  const withAnswers = report({
+    slack: [{ category: "Interaction", count: 19, target: 10, over: 9 }] as DeckReport["slack"],
+    deckMath: {
+      turn: 8,
+      answers: [
+        { class: "creature", count: 4, required: 5, available: 0.5, exiling: 0, recurring: 0, fromCommandZone: false, pool: 1 },
+        { class: "artifact", count: 3, required: 5, available: 0.4, exiling: 0, recurring: 0, fromCommandZone: false, pool: 1 },
+      ],
+    } as DeckReport["deckMath"],
+  });
+  const trade = slotTrade(withAnswers, findings(withAnswers))!;
+  expect(trade).toContain("Interaction sits at 19 against a target of 10");
+  expect(trade).toContain("Swap inside Interaction, do not add to it");
+
+  // AND STAYS QUIET WHEN THEY ARE DIFFERENT CATEGORIES, where "add" and "the room is elsewhere" do
+  // not conflict and the extra clause would be noise.
+  const elsewhere = report({
+    slack: [{ category: "Ramp", count: 17, target: 10, over: 7 }] as DeckReport["slack"],
+    buildParents: [{ name: "Consistency", count: 6, target: 14, leaves: [] }],
+  });
+  const other = slotTrade(elsewhere, findings(elsewhere))!;
+  expect(other).toContain("Ramp sits at 17");
+  expect(other).not.toContain("Swap inside");
 });

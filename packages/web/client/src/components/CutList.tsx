@@ -64,9 +64,17 @@ export function CutList({ cutList, unjudged, coverage, slack, trim }:
         *  underived gate landed this became the COMMON case on a partly-read deck. */}
       {!hasCuts && (hasUnjudged || hasTrim) ? (
         <div className="rounded-(--radius) border border-dashed border-(--separator) px-4 py-5 text-center">
-          <p className="text-sm">Nothing here is safe to call dead weight.</p>
+          <p className="text-sm">No card here is unconnected.</p>
           <p className="text-xs text-(--muted) mt-1">
-            Every card the engine could read has at least one connection or fills a role it is measured on.
+            Every card the engine could read has at least one connection or fills a role it is measured on
+            {/* AND THE TRIM CONTROL BELOW IS NOT A CONTRADICTION OF THAT (S16, 2026-09-02). The
+              *  panel used to say "Nothing here is safe to call dead weight" directly above a
+              *  `Trim 3 5 10` control and three over-quota chips; both a tuner and a beginner
+              *  stopped on the pair, and it was the tuner's whole job ("stopped my job"). They
+              *  answer DIFFERENT questions -- this list ranks by CONNECTION, trim ranks by
+              *  category SURPLUS -- and saying so is the whole fix. */}
+            {hasTrim ? <> — so the trim list below ranks by which category is
+              <span className="text-(--foreground)"> over its target</span>, not by which card is weak</> : null}.
           </p>
         </div>
       ) : null}

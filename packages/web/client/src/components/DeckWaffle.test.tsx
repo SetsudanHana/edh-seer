@@ -140,7 +140,11 @@ test("says nothing about lands when the count is unknown", () => {
  *  this census, on purpose, and the gap is named rather than left for a reader to sum. */
 test("prints the MDFC reconciliation beside the land count", () => {
   render(<DeckWaffle squares={SOME} slices={SLICES} lands={34} mdfc={4} />);
-  expect(screen.getByTestId("type-total").closest("p")!).toHaveTextContent("34 lands (38 with MDFCs)");
+  // S16: the parenthetical says WHOSE number the bigger one is. The report printed 34 here and 38
+  // in every later chapter, and a beginner who read 34 first said they would have thought the deck
+  // was two lands UNDER rather than two over.
+  expect(screen.getByTestId("type-total").closest("p")!)
+    .toHaveTextContent("34 lands (38 counting MDFC backs, which is the figure the mana model uses)");
 });
 
 test("says nothing about MDFCs when there are none, rather than a parenthetical about nothing", () => {
