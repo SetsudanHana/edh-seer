@@ -145,6 +145,12 @@ test("prints the MDFC reconciliation beside the land count", () => {
   // was two lands UNDER rather than two over.
   expect(screen.getByTestId("type-total").closest("p")!)
     .toHaveTextContent("34 lands (38 counting MDFC backs, which is the figure the mana model uses)");
+  // AND IT MUST BE ABLE TO WRAP. This clause carried `whitespace-nowrap` from when it read
+  // "(38 with MDFCs)"; S16 grew it to a full sentence and the nowrap turned it into one unbreakable
+  // 200px+ run -- the whole report scrolled sideways at 390 (`scrollWidth` 526 against a 390 client
+  // width, measured on the example deck while verifying S14). jsdom cannot measure it, so the class
+  // itself is what gets pinned.
+  expect(screen.getByText(/counting MDFC backs/).className).not.toMatch(/nowrap/);
 });
 
 test("says nothing about MDFCs when there are none, rather than a parenthetical about nothing", () => {

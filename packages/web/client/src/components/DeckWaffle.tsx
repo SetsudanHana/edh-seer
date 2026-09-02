@@ -104,8 +104,14 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
               *  — a beginner read 34 first and said "if I had gone by the first number I'd have
               *  thought I was two UNDER", and the phone judge said 34 out loud at a table and had
               *  to take it back. The parenthetical says WHOSE number the bigger one is now. */}
+              {/* NOT `whitespace-nowrap`, AND IT WAS THE PAGE'S ONLY 390px OVERFLOW. The class fit
+                *  when the parenthetical was "(38 with MDFCs)"; S16 grew it to a full clause and the
+                *  nowrap made that clause one unbreakable 200px+ run, so the whole report scrolled
+                *  sideways on a phone -- `documentElement.scrollWidth` 526 against a 390 client
+                *  width, measured on the example deck. Cause 4 in the narrow-width rules: a nowrap
+                *  span has no upper bound. Found while verifying S14 at 390. */}
             {mdfc !== undefined && mdfc > 0 ? (
-              <>{" "}<span className="whitespace-nowrap">
+              <>{" "}<span>
                 (<span className="stat-num text-(--foreground)">{lands + mdfc}</span> counting MDFC backs,
                 which is the figure the mana model uses)
               </span></>
