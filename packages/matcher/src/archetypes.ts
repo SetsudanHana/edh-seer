@@ -89,6 +89,11 @@ export interface CardSignal {
   caresTags?: string[];
   /** The card's own ability effect kinds (ability.effect.kind). */
   effectKinds: string[];
+  /** WHAT the card's `token-generation` abilities actually make, one entry per ability: the token's
+   *  subtype, or `"creature"` when the subject says so outright. `effectKinds` says a card makes a
+   *  token and cannot say whether it is a Zombie or a Treasure, which is the whole of T2b. Optional:
+   *  a caller that does not compute it gets the old tag-only behaviour. */
+  tokenKinds?: string[];
   /** Voltron-relevant card subtypes: "equipment" always; "aura" only when it enchants a creature. */
   subtypes: string[];
   /** The card's own CARD TYPES, lowercased. The one archetype defined by a type COUNT rather than by
@@ -141,15 +146,35 @@ export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, ArchetypeSignature>>
  *  member of the signature, so an untyped token maker still counts. */
 export const RESOURCE_TOKENS: ReadonlySet<string> = new Set([
   "treasure", "clue", "food", "blood", "map", "gold", "powerstone", "incubator", "junk",
+  // NOT RESOURCES, AND NOT A GO-WIDE PLAN EITHER (roadmap T2b). A Role is an Aura the token layer
+  // attaches to a creature -- "Cursed Role" is a debuff you put on THEIR creature -- and an Aura
+  // token is the same shape. Neither is a body, and a deck making them is not a Tokens deck.
+  "role", "aura",
 ]);
 
-/** True when every token this card is known to create is a resource. A card with no
- *  `create-token:` tag at all is NOT excluded -- the kind fired on evidence this function cannot
- *  see, and a silent exclusion would be the wrong failure direction. */
+/** True when every token this card is known to create is one we can identify as NOT a body.
+ *
+ *  IT READS TWO SOURCES, AND FOR MOST CARDS ONLY THE SECOND ONE EXISTS (roadmap T2b). The guard used
+ *  to look only at `create-token:<subtype>` theme tags -- and the Tokens row matches on the EFFECT
+ *  KIND as well, which carries no token identity. Measured on the owner's Enchantress deck: `Curse
+ *  of Opulence`, `Shiny Impetus`, `An Offer You Can't Refuse` and `Charming Scoundrel` carry no
+ *  `create-token:` tag at all, matched on `token-generation`, and voted the deck 18% Tokens on the
+ *  strength of Treasure and Gold. The identity was one field away the whole time:
+ *  `ability.effect.subject.subtype`.
+ *
+ *  IT EXCLUDES ONLY WHAT IT CAN NAME, which is the direction this file already takes. Measured over
+ *  the 71 calibration decks: of 477 token-generation abilities, 262 say `type: "creature"` outright
+ *  and 166 carry a subtype alone -- and that subtype is a real tribe as often as not (thopter,
+ *  servo, myr, construct, dalek). A "creature tokens only" rule would drop every one of those, so
+ *  the test is the other way round: a card is excluded when every token it makes is on the
+ *  non-creature list, and a token this cannot identify keeps its vote. */
 function makesOnlyResourceTokens(signal: CardSignal): boolean {
-  const made = signal.themeTags
-    .filter((t) => t.startsWith("create-token:"))
-    .map((t) => t.slice("create-token:".length));
+  const made = [
+    ...signal.themeTags
+      .filter((t) => t.startsWith("create-token:"))
+      .map((t) => t.slice("create-token:".length)),
+    ...(signal.tokenKinds ?? []),
+  ];
   return made.length > 0 && made.every((m) => RESOURCE_TOKENS.has(m));
 }
 
