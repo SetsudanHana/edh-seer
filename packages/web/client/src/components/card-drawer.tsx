@@ -48,7 +48,14 @@ export function useCardDrawer(): CardDrawerApi {
   return useContext(CardDrawerContext);
 }
 
-export function CardDrawerProvider({ graph, children }: { graph?: CardGraph; children: ReactNode }) {
+export function CardDrawerProvider({ graph, seedPins, children }: {
+  graph?: CardGraph;
+  /** THE CARDS THIS RUN ADDED (roadmap S9), pinned on arrival so they light in every chapter without
+   *  the reader hunting for them. Resolved through `physicalName` exactly as a hand-made pin is, so
+   *  a two-faced addition pins the physical card. The CALLER caps the list -- see `ReportShell`. */
+  seedPins?: readonly string[];
+  children: ReactNode;
+}) {
   const [openId, setOpenId] = useState<string | null>(null);
   // A TOKEN NEVER WINS A NAME COLLISION HERE. `nodeId` gives a token its own id precisely because
   // 92 of 661 distinct token names collide with a real card's, and every caller of this drawer is
@@ -107,10 +114,18 @@ export function CardDrawerProvider({ graph, children }: { graph?: CardGraph; chi
 
   const [pinned, setPinned] = useState<ReadonlySet<string>>(() => new Set());
 
-  /** THE SET DIES WITH THE ANALYSIS. `graph` is a new object per analyze, so this clears exactly
-   *  when the deck under the report changes -- without it a pin made on deck A survives into deck
-   *  B, where the name either lights nothing or lights a different card. */
-  useEffect(() => { setPinned(new Set()); }, [graph]);
+  /** THE SET DIES WITH THE ANALYSIS, AND IS BORN WITH IT. `graph` is a new object per analyze, so
+   *  this runs exactly when the deck under the report changes -- without it a pin made on deck A
+   *  survives into deck B, where the name either lights nothing or lights a different card.
+   *
+   *  The S9 seed rides the same effect rather than a second one, which is what keeps that
+   *  guarantee: there is no frame in which yesterday's pins and today's seed are both in the set.
+   *
+   *  Keyed on `graph` ALONE on purpose. `seedPins` is derived from the same analysis, so it changes
+   *  with `graph`; listing it would only add a re-seed on an unrelated re-render, which would undo
+   *  the reader's own unpinning. */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setPinned(new Set((seedPins ?? []).map(physicalName))); }, [graph]);
 
   const togglePin = useCallback((name: string) => {
     const key = physicalName(name);

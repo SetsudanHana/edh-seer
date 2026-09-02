@@ -22,7 +22,6 @@ import { HighSynergyCards } from "./HighSynergyCards.js";
 import { BuildBenchmarks, demandSentence } from "./BuildBenchmarks.js";
 import { SuggestionsList } from "./SuggestionsList.js";
 import { SAMPLE } from "../fixtures.js";
-import { RunDiffStrip } from "./RunDiffStrip.js";
 
 test("DeckIdentity counts the deck's thing under the heading that names it", () => {
   render(<DeckIdentity cohesion={SAMPLE.report.cohesion} thing={{
@@ -2103,37 +2102,6 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   expect(screen.getByText("18 of 21 sources")).toHaveClass("text-(--warning)");
   expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
-});
-
-// --- The run diff (F13): what your last edit did. ---
-
-test("the run-diff strip names the cards, the moved scores and the moved categories", () => {
-  render(
-    <RunDiffStrip
-      diff={{
-        added: ["Arcane Signet"],
-        removed: ["Mountain"],
-        synergy: { from: 3.4, to: 3.9 },
-        build: undefined,
-        theme: undefined,
-        categories: [{ category: "ramp", from: 6, to: 7 }],
-        findings: [],
-      }}
-    />,
-  );
-  expect(screen.getByText("Since your last run")).toBeInTheDocument();
-  expect(screen.getByText("3.4 → 3.9")).toBeInTheDocument();
-  expect(screen.getByText("(+0.5)", { exact: false })).toBeInTheDocument();
-  expect(screen.getByText("6 → 7")).toBeInTheDocument();
-  expect(screen.getByText("Arcane Signet")).toBeInTheDocument();
-  expect(screen.getByText("Mountain")).toBeInTheDocument();
-});
-
-// Nothing to say renders NOTHING. A strip reading "no change" after a no-op re-analyse is the same
-// noise the strip exists to remove.
-test("the run-diff strip renders nothing without a diff", () => {
-  const { container } = render(<RunDiffStrip diff={null} />);
-  expect(container).toBeEmptyDOMElement();
 });
 
 // --- Overview weight (F12). ---

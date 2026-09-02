@@ -127,3 +127,41 @@ test("the score zones are derived from SCORE_BREAKS, not hand-written", () => {
     expect(zone!.tone).toBe(TONE_OF_SCORE[scoreBand(score).tone]);
   }
 });
+
+/** THE SECOND RUN IS THE REAL PRODUCT (roadmap S9). A dial that shows only today's value makes the
+ *  reader remember yesterday's; the tick is where the needle was, drawn on the same scale. */
+test("draws a ghost tick at the previous reading's position, and says so to a screen reader", () => {
+  render(
+    <Dial
+      name="Synergy" value="3.4" reading={scoreState(3.4)} zones="score" size="lead"
+      previous={{ value: "3.1", reading: scoreState(3.1) }}
+    />,
+  );
+  const tick = screen.getByTestId("ghost-tick");
+  expect(tick).toBeInTheDocument();
+  // Drawn from the scale, not from a literal: the same `angle()` the needle uses, so a change to the
+  // dial's geometry moves both or neither.
+  expect(tick.getAttribute("stroke")).toBe("var(--muted)");
+  expect(screen.getByText("previously 3.1")).toBeInTheDocument();
+});
+
+/** A dial with nothing to compare against draws no tick. A mark that is always present marks
+ *  nothing -- the rule the coverage gate and the bracket pips already follow. */
+test("draws no ghost tick when there is no previous run", () => {
+  render(<Dial name="Synergy" value="3.4" reading={scoreState(3.4)} zones="score" size="lead" />);
+  expect(screen.queryByTestId("ghost-tick")).toBeNull();
+});
+
+/** An explicit `aria-label` overrides an element's contents, so the button variant announces the
+ *  label and the `.sr-only` span inside the body is silent. Both exist because the plain-`div`
+ *  variant has no label to extend -- they can never both reach the user. */
+test("the button variant names the previous value in its label", () => {
+  render(
+    <Dial
+      name="Synergy" value="3.4" reading={scoreState(3.4)} zones="score" size="lead"
+      onOpen={() => {}} openLabel="Engine"
+      previous={{ value: "3.1", reading: scoreState(3.1) }}
+    />,
+  );
+  expect(screen.getByRole("button", { name: /previously 3\.1/ })).toBeInTheDocument();
+});

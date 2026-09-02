@@ -19,6 +19,7 @@ import { HighSynergyCards } from "./HighSynergyCards.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
+import type { RunDiff } from "../lib/run-diff.js";
 import { findings } from "../lib/findings.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
@@ -94,7 +95,7 @@ function Chapter({ id, title, children }: {
  *
  *  Chapter membership lives in `lib/chapters.ts` so the rail and the sections cannot disagree about
  *  what exists. */
-export function ReportChapters({ data }: { data: AnalyzeResponse }) {
+export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
   const { report } = data;
   const current = useCurrentChapter();
   // Which prescriptions a finding already printed as its own action line, so the Prescribe movement
@@ -189,7 +190,7 @@ export function ReportChapters({ data }: { data: AnalyzeResponse }) {
             *  counting the sticky header — S7 made that visible and this is the call it was made
             *  for. The tiles were the only place either score said what it MEASURES, so those two
             *  `Explain` blocks moved onto the dials themselves and the component retired. */}
-          <DeckGauges data={data} onOpen={openChapter} />
+          <DeckGauges data={data} onOpen={openChapter} diff={diff} />
           <BracketPanel bracket={report.bracket} />
         </Chapter>
 
@@ -264,7 +265,7 @@ export function ReportChapters({ data }: { data: AnalyzeResponse }) {
         </Chapter>
 
         <Chapter id="fix" title={title("fix")}>
-          <Findings report={report} />
+          <Findings report={report} diff={diff} />
           {/* Adds and cuts are ONE decision — "which five come out for the eight that go in" — so
             *  they sit beside each other rather than eight panels apart. */}
           <Movement title="What to change">

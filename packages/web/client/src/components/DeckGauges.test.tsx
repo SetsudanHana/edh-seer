@@ -222,3 +222,29 @@ test("synergy-inputs-grid's span rule protects the near-impossible one-measure c
   expect(oneGrid.children).toHaveLength(1);
   expect(oneGrid.lastElementChild!.matches(":last-child:nth-child(2n+1)")).toBe(true);
 });
+
+/** THE SECOND RUN IS THE REAL PRODUCT (roadmap S9). Chapter 2 is where the full dials live, so it is
+ *  where "where was this last time" is answerable at a glance. */
+test("the two score dials tick at their previous values", () => {
+  const { container } = render(<DeckGauges data={DATA as never} onOpen={vi.fn()} diff={{
+    added: [], removed: [], categories: [], findings: [],
+    synergy: { from: 0.5, to: 0.8 }, build: { from: 3.6, to: 3.4 },
+  }} />);
+  expect(container.querySelectorAll('[data-testid="ghost-tick"]')).toHaveLength(2);
+  expect(screen.getByText("previously 0.5")).toBeInTheDocument();
+  expect(screen.getByText("previously 3.6")).toBeInTheDocument();
+});
+
+/** A score that did not move past its PRINTED precision carries no `from`/`to` at all -- `diffRuns`
+ *  rounds to one decimal before comparing -- so its dial gets no tick. */
+test("a score that did not move draws no tick", () => {
+  const { container } = render(<DeckGauges data={DATA as never} onOpen={vi.fn()} diff={{
+    added: [], removed: [], categories: [], findings: [], synergy: { from: 0.5, to: 0.8 },
+  }} />);
+  expect(container.querySelectorAll('[data-testid="ghost-tick"]')).toHaveLength(1);
+});
+
+test("run one draws no ticks", () => {
+  const { container } = render(<DeckGauges data={DATA as never} onOpen={vi.fn()} />);
+  expect(container.querySelectorAll('[data-testid="ghost-tick"]')).toHaveLength(0);
+});

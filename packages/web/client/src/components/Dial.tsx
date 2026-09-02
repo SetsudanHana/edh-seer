@@ -112,7 +112,7 @@ export const TONE_TEXT: Record<GaugeTone, string> = {
 };
 
 export function Dial({
-  name, value, reading, zones, onOpen, openLabel, size = "input", explain,
+  name, value, reading, zones, onOpen, openLabel, size = "input", explain, previous,
 }: {
   name: string;
   value: string;
@@ -146,10 +146,21 @@ export function Dial({
    *  RENDERED OUTSIDE THE BUTTON. A `<details>` inside a `<button>` is not operable — nested
    *  interactive content — so the dial and its explanation are siblings, never parent and child. */
   explain?: React.ReactNode;
+  /** WHERE THIS NUMBER WAS LAST RUN (roadmap S9). A tick on the same arc, in the same needle-space
+   *  the zones and the needle are drawn in -- `deck-gauge.ts` owns every number and this dial owns
+   *  only how one is drawn, so the CALLER computes the reading, and the printed figure travels with
+   *  it because the dial never formats a figure either.
+   *
+   *  Absent on the first run and on any run whose diff is null: a mark that is always present marks
+   *  nothing, the rule the coverage gate and the bracket pips already follow. */
+  previous?: { value: string; reading: GaugeReading };
 }) {
   // The needle reaches the ring's inner edge (RING_INNER, not a second literal) so it points
   // INTO the coloured band it names rather than stopping short of it.
   const [nx, ny] = pointAt(angle(reading.position), RING_INNER);
+  // The tick spans the ring's own thickness at the OLD angle, so it reads as a mark on the scale
+  // rather than a second needle competing with the first.
+  const ghostAngle = previous ? angle(previous.reading.position) : null;
   const body = (
     <>
       <svg viewBox="0 0 100 56" aria-hidden="true" className={`w-full ${size === "lead" ? "max-w-56" : "max-w-28 sm:max-w-[9rem]"}`}>
@@ -164,8 +175,17 @@ export function Dial({
             opacity={z.tone === reading.tone ? 1 : 0.22}
           />
         ))}
-        {/* The needle. No transition: `prefers-reduced-motion` would have to suppress it and a
-          * dial that animates on every re-render is motion with no message. */}
+        {ghostAngle !== null ? (
+          <line
+            data-testid="ghost-tick"
+            x1={pointAt(ghostAngle, RING_INNER)[0]} y1={pointAt(ghostAngle, RING_INNER)[1]}
+            x2={pointAt(ghostAngle, R)[0]} y2={pointAt(ghostAngle, R)[1]}
+            stroke="var(--muted)" strokeWidth={2} strokeLinecap="round"
+          />
+        ) : null}
+        {/* The needle, painted AFTER the ghost so today's value is never the one obscured. No
+          * transition: `prefers-reduced-motion` would have to suppress it and a dial that animates
+          * on every re-render is motion with no message. */}
         <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="var(--foreground)" strokeWidth={2.5} strokeLinecap="round" />
         <circle cx={CX} cy={CY} r={3} fill="var(--foreground)" />
       </svg>
@@ -175,6 +195,10 @@ export function Dial({
         * flip of `floorState`/`bandState`/`scoreState` would otherwise leave every text assertion
         * on this span passing. Not read at runtime; don't delete it as unused. */}
       <span data-tone={reading.tone} className={`${size === "lead" ? "text-sm" : "text-xs"} ${TONE_TEXT[reading.tone]}`}>{reading.label}</span>
+      {/* The tick is inside an `aria-hidden` svg, so the comparison needs saying in words (WCAG
+        * 1.4.1). Silent in the button variant below, whose explicit `aria-label` overrides its own
+        * contents -- which is why both exist and neither is a duplicate announcement. */}
+      {previous ? <span className="sr-only">previously {previous.value}</span> : null}
     </>
   );
 
@@ -197,7 +221,7 @@ export function Dial({
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${name}, ${value}, ${reading.label} — open ${openLabel}`}
+      aria-label={`${name}, ${value}, ${reading.label}${previous ? `, previously ${previous.value}` : ""} — open ${openLabel}`}
       className={`${shell} min-w-[44px] min-h-[44px] text-left hover:border-(--accent) focus-visible:outline-2 focus-visible:outline-(--accent)`}
     >
       {body}
