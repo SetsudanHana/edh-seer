@@ -7,6 +7,7 @@ import { EDIT_REHEAT_ALPHA, PARK_ALPHA } from "./board-force.js";
 import { ART_RADIUS, GraphView, edgeAlpha, edgeWidth, jitterFromId, nodeRadius, seedPosition, traveledAsPan } from "./GraphView.js";
 import { CARD_H, CARD_W } from "./board-force.js";
 import { SAMPLE } from "../fixtures.js";
+import { CardDrawerProvider, usePinned } from "./card-drawer.js";
 import type { CardGraph, GraphNode } from "../types.js";
 import { zoomIdentity, type ZoomTransform } from "d3-zoom";
 import { CARD_MODE_Z } from "./card-node.js";
@@ -2514,4 +2515,28 @@ describe("the cards the engine could not read", () => {
     await userEvent.click(chip);
     expect(chip).toHaveAttribute("aria-pressed", "false");
   });
+});
+
+/** S8. The paint is canvas and jsdom draws nothing, so this pins the SEAM rather than the pixels:
+ *  the board subscribes to the pinned set, survives a pin, and keeps its canvas. The ring itself is
+ *  verified in the browser -- which is the gate that matters for this component, and the reason the
+ *  plan ends with a live task.
+ *
+ *  THE THING THAT WOULD ACTUALLY BREAK is the simulation restarting on every pin. It cannot: the
+ *  sim lives in a ref and `dirtyRef` only marks the canvas for a repaint. Checked with pixels in
+ *  the live task, because no assertion here can see it. */
+test("the board survives a pin without losing its canvas", async () => {
+  function Pinner() {
+    const { togglePin } = usePinned();
+    return <button onClick={() => togglePin(SAMPLE.graph.nodes[0]!.label)}>pin it</button>;
+  }
+  const { container } = render(
+    <CardDrawerProvider graph={SAMPLE.graph}>
+      <GraphView graph={SAMPLE.graph} report={SAMPLE.report} />
+      <Pinner />
+    </CardDrawerProvider>,
+  );
+  expect(container.querySelector("canvas")).not.toBeNull();
+  await userEvent.click(screen.getByText("pin it"));
+  expect(container.querySelector("canvas")).not.toBeNull();
 });
