@@ -21,6 +21,7 @@ import {
 import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
 import { CardInspector } from "./CardInspector.js";
 import { labelCandidates, labelPriority, placeLabels } from "./labels.js";
+import { HATCH, unreadCardNames } from "../lib/unread.js";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
 // uses, while board-force.ts owns the values.
 export { ART_RADIUS, nodeRadius };
@@ -194,7 +195,7 @@ export function GraphView(
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<
-    { label: string; copies: number; deg: number; detail: string; x: number; y: number } | null
+    { label: string; copies: number; deg: number; detail: string; unread: boolean; x: number; y: number } | null
   >(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [query, setQuery] = useState("");
@@ -503,6 +504,22 @@ export function GraphView(
   const commandersRef = useRef<Set<string>>(new Set());
   commandersRef.current = commanders;
 
+  /** Nodes for cards THE SYNERGY ENGINE NEVER READ. This board is the deck's synergy, drawn — and
+   *  an unread card painted here is indistinguishable from a card that was read and connects to
+   *  nothing, which is the report's most misleading pair of sentences (`CardList` splits its table
+   *  for exactly this reason, `CutList` refuses to rank them). They stay in place and carry the
+   *  hatch instead: the card IS in the deck and its printed facts are still true, it is only the
+   *  edges that are missing.
+   *
+   *  Same join as `commanders` above — `unreadCardNames` is keyed on the physical card, so both
+   *  faces of an unread modal DFC are marked from one name. */
+  const unread = useMemo(() => {
+    const names = unreadCardNames(report.cards);
+    return new Set(graph.nodes.filter((n) => names.has(n.cardName ?? n.id)).map((n) => n.id));
+  }, [graph, report]);
+  const unreadRef = useRef<Set<string>>(new Set());
+  unreadRef.current = unread;
+
   /** Card node ids matching the current search, or null when the box is empty. Null and "the
    *  empty set" mean different things to the draw pass: null dims nothing, an empty set (a query
    *  that hits zero cards) dims everything. */
@@ -561,6 +578,9 @@ export function GraphView(
       sep: css.getPropertyValue("--separator").trim() || "#1f1829",
       edge: css.getPropertyValue("--edge").trim() || "#6b5f7d",
       surface: css.getPropertyValue("--surface").trim() || "#16111f",
+      // The page ground, and it is the hatch's stripe: art crops are every hue there is, so the
+      // one colour that reads as "struck through" over all of them is the board's own darkness.
+      bg: css.getPropertyValue("--background").trim() || "#0d0912",
     };
 
     const size = () => {
@@ -1131,6 +1151,44 @@ export function GraphView(
           }
         }
 
+        // THE ENGINE NEVER READ THIS CARD, SAID WITHOUT WORDS. Over the art rather than instead
+        // of it: the card is really in the deck and its printed facts still hold, so hiding the
+        // picture would overstate the gap. Stripes in SCREEN pixels (divided by the camera scale)
+        // so the pitch a reader learns at one zoom is the pitch they meet at every other, and the
+        // geometry itself comes from `lib/unread.ts` — the graph list paints the same mark as a CSS
+        // gradient, and a convention drawn at two pitches is two conventions.
+        if (unreadRef.current.has(n.id)) {
+          const half = mode === "card" ? Math.hypot(cardW, cardH) / 2 : r;
+          const pitch = HATCH.pitch / cam.z;
+          ctx.save();
+          ctx.beginPath();
+          if (mode === "card") ctx.rect(n.x - cardW / 2, n.y - cardH / 2, cardW, cardH);
+          else ctx.arc(n.x, n.y, r, 0, TAU);
+          ctx.clip();
+          // EVERY STRIPE IS CASED, and that is not decoration. A dark stripe alone measured 15/255
+          // of luminance range over `Nest of Scarabs` — art already at the page's own darkness —
+          // against 55-58 over the two lighter unread cards on the same board. Art crops run the
+          // whole range, so no single stripe colour reads on all of them; a dark line with a light
+          // hairline beside it has one half showing whichever way the art goes.
+          const line = (d: number, dx: number) => {
+            ctx.beginPath();
+            ctx.moveTo(n.x + d + dx - half, n.y - half);
+            ctx.lineTo(n.x + d + dx + half, n.y + half);
+            ctx.stroke();
+          };
+          for (let d = -2 * half; d <= 2 * half; d += pitch) {
+            ctx.strokeStyle = paintColors.bg;
+            ctx.lineWidth = HATCH.width / cam.z;
+            line(d, 0);
+            ctx.globalAlpha = 0.45;
+            ctx.strokeStyle = paintColors.fg;
+            ctx.lineWidth = 1 / cam.z;
+            line(d, HATCH.width / cam.z);
+            ctx.globalAlpha = 1;
+          }
+          ctx.restore();
+        }
+
         // What this card IS, under the current paint mode. Drawn for both the art and the fallback
         // branch: a card whose art failed to load must not lose its facet signal along with its
         // picture. Hue rides the rim, never a fill over the art -- a translucent wash over this
@@ -1622,6 +1680,7 @@ export function GraphView(
       setHover(n
         ? {
             label: n.label, copies: n.copies ?? 1, deg: n.deg, detail,
+            unread: unreadRef.current.has(n.id),
             x: e.clientX - r.left, y: e.clientY - r.top,
           }
         : null);
@@ -2106,8 +2165,12 @@ export function GraphView(
               style={{ left: hover.x + 12, top: hover.y + 12 }}
             >
               {hover.label}{" "}
+              {/* "0 partners" AND "NOT READ" ARE DIFFERENT SENTENCES, and only the first is a
+                *  fact about the deck. The hatch says which one this is; the tooltip is where the
+                *  reader who has not learned the mark yet finds out what it means. */}
               <span className="text-(--muted) stat-num">
-                {hover.copies > 1 ? `×${hover.copies} · ` : ""}{hover.deg} partners
+                {hover.copies > 1 ? `×${hover.copies} · ` : ""}
+                {hover.unread ? "not read — no synergy measured" : `${hover.deg} partners`}
               </span>
               {hover.detail ? <span className="text-(--muted)"> · {hover.detail}</span> : null}
             </div>

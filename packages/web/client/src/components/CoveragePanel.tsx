@@ -1,6 +1,7 @@
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
+import { hatchImage } from "../lib/unread.js";
 
 /** HOW MUCH OF THE DECK THE SYNERGY ENGINE COULD READ — the gate, and it sits ABOVE THE TABS
  *  because it qualifies every one of them.
@@ -70,7 +71,20 @@ export function CoveragePanel({ coverage, resolved, total, commanderUnread }: {
         {/* The only thing added is what this SURFACE contributes: which glyph marks which figures.
           *  The engine has no view on that. */}
         <span className="text-(--foreground)">The ° mark names those figures</span> — synergy,
-        themes, cut candidates and the graph.
+        themes, cut candidates and the graph.{" "}
+        {/* THE CARD-LEVEL HALF OF THE SAME CLAIM, and it needs its own mark because it answers a
+          *  different question. `°` says A FIGURE is computed over a subset; the hatch says THIS
+          *  CARD is one of the ones left out of it. A reader meets both on the graph, where an
+          *  unread card is a disc like any other and its zero is a structural one. */}
+        <span className="text-(--foreground)">
+          The hatch marks the cards themselves
+        </span>{" "}
+        <span
+          aria-hidden="true"
+          className="inline-block align-middle h-3 w-3 rounded-[2px] border border-(--separator) bg-(--surface-tertiary)"
+          style={{ backgroundImage: hatchImage("var(--background)") }}
+        />{" "}
+        wherever one is drawn.
       </p>
     </div>
   );

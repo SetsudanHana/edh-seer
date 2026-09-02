@@ -12,6 +12,7 @@ import { GraphView } from "./GraphView.js";
 import { GraphList } from "./GraphList.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 import { CardDrawerProvider } from "./card-drawer.js";
+import { unreadCardNames } from "../lib/unread.js";
 
 type TabId = "overview" | "archetypes" | "cards" | "combos" | "graph";
 
@@ -28,6 +29,10 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
   // Under `sm`, the Graph tab ships the graph's DATA as a list instead of its LAYOUT as a canvas —
   // see `GraphList` for why the board is the part that fails at that width.
   const narrow = useIsNarrow();
+  // Which cards the synergy engine could not read. Computed once here because BOTH graph surfaces
+  // want it and only one of them (`GraphView`) is handed the report — see `lib/unread.ts` for why
+  // the rule lives in one place.
+  const unread = useMemo(() => unreadCardNames(data.report.cards), [data.report]);
   // THE ART LOADER OUTLIVES THE GRAPH TAB, and that is the whole point of it living here.
   //
   // `<GraphView>` is mounted by `active === "graph"` below, so nothing requested a single image
@@ -123,7 +128,7 @@ export function ReportTabs({ data }: { data: AnalyzeResponse }) {
         )}
         {active === "combos" && <ComboList combos={data.report.combos} />}
         {active === "graph" && (narrow
-          ? <GraphList graph={data.graph} />
+          ? <GraphList graph={data.graph} unread={unread} />
           : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />)}
       </div>
     </div>

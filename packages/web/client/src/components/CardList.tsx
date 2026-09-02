@@ -8,6 +8,7 @@ import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 // the same cell at "1%". A measured zero is a measurement; the floor belongs on the refusal path.
 import { policyBand } from "@edh-seer/engine/percent";
 import { cardImageUrl } from "./card-node.js";
+import { isUnread } from "../lib/unread.js";
 
 type Category =
   | "ramp" | "draw" | "cardSelection" | "impulseDraw" | "targetedRemoval" | "stackInteraction"
@@ -181,8 +182,8 @@ export function CardList({ cards, artByName, coverage }: {
   // rated rows read `0.0` — a column with no variance is not data, and the reader could not tell
   // "we read it and it connects to nothing" from "we never read it". Splitting the table turns the
   // dead column into the report's most useful admission.
-  const unread = cards.filter((c) => c.derived === false);
-  const readable = unread.length > 0 ? cards.filter((c) => c.derived !== false) : cards;
+  const unread = cards.filter(isUnread);
+  const readable = unread.length > 0 ? cards.filter((c) => !isUnread(c)) : cards;
   // ONE PHYSICAL CARD, ONE TILE. A two-faced card rates one row per printed FACE (Task 7,
   // faces-as-nodes) and `derived` is identical on both, so an unread modal DFC produced two rows
   // and this list showed it twice -- and the count above the grid, which sits directly under

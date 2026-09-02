@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { CardGraph } from "../types.js";
 import { CardName } from "./card-drawer.js";
+import { hatchImage } from "../lib/unread.js";
 
 /** THE GRAPH'S DATA WITHOUT THE GRAPH, for a screen the board cannot use.
  *
@@ -15,7 +16,15 @@ import { CardName } from "./card-drawer.js";
  *  drawer that already exists for the rest of the report.
  *  → `specs/2026-08-20-report-usability-review.md` §6
  */
-export function GraphList({ graph }: { graph: CardGraph }) {
+export function GraphList({ graph, unread }: {
+  graph: CardGraph;
+  /** Physical card names the synergy engine could not read (`unreadCardNames`). A row for one of
+   *  these read "0 partners" -- the same thing a fully read card nothing connects to reads -- and
+   *  those are different sentences: the first is a finding about the deck, the second is the
+   *  engine's own gap. Absent, or empty, on a deck the engine read whole, and then nothing here
+   *  is marked at all. */
+  unread?: ReadonlySet<string>;
+}) {
   const [query, setQuery] = useState("");
 
   const rows = useMemo(() => {
@@ -36,13 +45,17 @@ export function GraphList({ graph }: { graph: CardGraph }) {
         id: n.id,
         label: n.label,
         isToken: n.isToken === true,
+        // The physical card, not the face: both faces of a multi-face card carry the same
+        // `derived` flag, and `unreadCardNames` is keyed on `cardName ?? name` for exactly this
+        // join -- the one `GraphView`'s commander set already makes.
+        unread: unread?.has(n.cardName ?? n.id) === true,
         partners: partners.get(n.id)?.size ?? 0,
         reason: strongest.get(n.id)?.text ?? "",
       }))
       // Most connected first: on a list there is no geometry to carry "this is the middle of the
       // deck", so the ordering has to say it.
       .sort((a, b) => b.partners - a.partners || a.label.localeCompare(b.label));
-  }, [graph]);
+  }, [graph, unread]);
 
   const needle = query.trim().toLowerCase();
   const visible = needle === "" ? rows : rows.filter((r) => r.label.toLowerCase().includes(needle));
@@ -72,9 +85,24 @@ export function GraphList({ graph }: { graph: CardGraph }) {
                 {r.isToken ? <span>{r.label}</span> : <CardName name={r.label} />}
                 {r.isToken ? <span className="ml-2 text-xs text-(--muted)">token</span> : null}
               </span>
-              <span className="shrink-0 stat-num text-xs text-(--muted)">
-                {r.partners} partner{r.partners === 1 ? "" : "s"}
-              </span>
+              {r.unread ? (
+                <span className="shrink-0 flex items-center gap-1.5 text-xs text-(--muted)">
+                  {/* THE MARK ITSELF, at the size a swatch can carry it, so a reader meets the
+                    *  hatch beside its own words here and recognises it on the board where there
+                    *  is no room for a sentence. */}
+                  <span
+                    data-testid="unread-hatch"
+                    aria-hidden="true"
+                    className="h-3 w-3 rounded-[2px] border border-(--separator) bg-(--surface-tertiary)"
+                    style={{ backgroundImage: hatchImage("var(--background)") }}
+                  />
+                  not read
+                </span>
+              ) : (
+                <span className="shrink-0 stat-num text-xs text-(--muted)">
+                  {r.partners} partner{r.partners === 1 ? "" : "s"}
+                </span>
+              )}
             </span>
             {r.reason ? <span className="text-xs text-(--muted) line-clamp-2">{r.reason}</span> : null}
           </li>
