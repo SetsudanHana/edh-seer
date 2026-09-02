@@ -57,6 +57,7 @@ export function GraphList({ graph, unread }: {
       .sort((a, b) => b.partners - a.partners || a.label.localeCompare(b.label));
   }, [graph, unread]);
 
+  const unreadCount = rows.filter((r) => r.unread).length;
   const needle = query.trim().toLowerCase();
   const visible = needle === "" ? rows : rows.filter((r) => r.label.toLowerCase().includes(needle));
 
@@ -71,7 +72,11 @@ export function GraphList({ graph, unread }: {
         className="rounded-(--radius) border border-(--field-border) bg-transparent px-2.5 py-1 text-sm"
       />
       <p className="text-(--muted) text-sm">
-        {graph.nodes.length} cards, {graph.edges.length} synergies. Tap a card for what it feeds and
+        {graph.nodes.length} cards, {graph.edges.length} synergies
+        {/* THE COUNT, BECAUSE A ROW-BY-ROW MARK CANNOT BE SURVEYED. The board says the same thing
+          *  in a chip; this list has no chip row, and counting "not read" across 92 rows by
+          *  scrolling is not counting. Silent on a deck the engine read whole. */}
+        {unreadCount > 0 ? `, ${unreadCount} not read` : ""}. Tap a card for what it feeds and
         what feeds it — the board itself needs a wider screen.
       </p>
       <ul className="flex flex-col">

@@ -30,7 +30,7 @@ test("GraphList ranks cards by how many partners they have, name breaking the ti
 
 test("GraphList states the shape of the graph it is standing in for", () => {
   renderList();
-  expect(screen.getByText(/2 cards, 1 synergies/)).toBeInTheDocument();
+  expect(screen.getByText(/2 cards, 1 synergies\./)).toBeInTheDocument();
   expect(screen.getByText(/the board itself needs a wider screen/)).toBeInTheDocument();
 });
 
@@ -81,4 +81,16 @@ test("GraphList says an unread card was not read, instead of counting its partne
 test("GraphList marks nothing when the engine read the whole deck", () => {
   renderList();
   expect(screen.queryByTestId("unread-hatch")).toBeNull();
+});
+
+// AND IT COUNTS THEM, because a mark on a row cannot be surveyed: counting "not read" down 92 rows
+// by scrolling is not counting. The board states the same total in a chip; this list has no chip
+// row to put it in.
+test("GraphList states how many cards were not read", () => {
+  render(
+    <CardDrawerProvider graph={graph}>
+      <GraphList graph={graph} unread={new Set(["Impact Tremors"])} />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByText(/2 cards, 1 synergies, 1 not read\./)).toBeInTheDocument();
 });

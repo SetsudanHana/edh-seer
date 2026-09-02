@@ -92,12 +92,12 @@ function graphOf(nodes: GraphNode[], edges: CardGraph["edges"] = []): CardGraph 
 
 /** Renders and hands back the callback requestAnimationFrame was given, so a test drives the exact
  *  frame it needs instead of racing real timers. */
-function frames(graph: CardGraph, calls?: string[]) {
+function frames(graph: CardGraph, calls?: string[], report = SAMPLE.report) {
   let nextFrame: FrameRequestCallback | null = null;
   vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
   vi.stubGlobal("cancelAnimationFrame", () => {});
   makeContextSpy(calls);
-  const { container } = render(<GraphView graph={graph} report={SAMPLE.report} />);
+  const { container } = render(<GraphView graph={graph} report={report} />);
   const canvas = container.querySelector("canvas") as HTMLCanvasElement & {
     __graphProbe?: () => Array<{ id: string; x: number; y: number; r: number; deg: number }> & {
       camZ: number;
@@ -2438,5 +2438,67 @@ describe("trace-event filter", () => {
     expect(dies).toHaveAttribute("aria-pressed", "true");
     expect(enters).toHaveAttribute("aria-pressed", "true");
     expect(all).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
+// THE BOARD HAS TO STATE THE COUNT, because the hatch alone cannot be surveyed. A blind judge given
+// a 90-of-100 deck and told the mark exists found FOUR of the ten and only after a tooltip named the
+// first: the unread are edgeless, so the layout exiles them to the rim as ~24px specks among 92
+// nodes, and the board pans, so "I see four" never becomes "there are four".
+describe("the cards the engine could not read", () => {
+  const unreadGraph = () => graphOf([
+    card({ id: "Goblin", types: ["creature"] }),
+    card({ id: "Nest of Scarabs", types: ["enchantment"] }),
+  ]);
+  const reportWith = (unread: string[]) => ({
+    ...SAMPLE.report,
+    cards: [
+      { name: "Goblin", isCommander: false, score: 1, partnerCount: 1, topPartners: [], derived: true },
+      ...unread.map((name) => ({ name, isCommander: false, score: 0, partnerCount: 0, topPartners: [], derived: false })),
+    ],
+  }) as typeof SAMPLE.report;
+
+  test("says how many there are, in the chip row beside lands and lone tokens", () => {
+    makeContextSpy();
+    render(<GraphView graph={unreadGraph()} report={reportWith(["Nest of Scarabs"])} />);
+    expect(screen.getByRole("button", { name: /^not read \(1\)/ })).toBeInTheDocument();
+  });
+
+  // A CHIP THAT CAN NEVER CHANGE ANYTHING IS WORSE THAN NO CHIP -- the same rule its two neighbours
+  // ship under, and on the 71 calibration decks (~99% derived) this is the normal case.
+  test("says nothing at all when the engine read the whole deck", () => {
+    makeContextSpy();
+    render(<GraphView graph={unreadGraph()} report={reportWith([])} />);
+    expect(screen.queryByRole("button", { name: /not read/ })).toBeNull();
+  });
+
+  // THE CAMERA HAS TO MOVE, and `fitToView` cannot do it: it frames the CONNECTED cluster on
+  // purpose, which excludes every unread card by construction, because an unread card is edgeless.
+  // A judge counted SIX of ten with the chip beside them saying ten -- the other four were off the
+  // panel's edge, and a stated number the picture cannot corroborate is the tool asserting a fact
+  // where showing one was the whole point. Measured in the browser on the 90-of-100 deck: pressing
+  // the chip takes the camera from z 0.857 to 0.433 and all ten land inside the panel.
+  test("pressing it frames the cards it is spotlighting", () => {
+    const { canvas, tick } = frames(unreadGraph(), undefined, reportWith(["Nest of Scarabs"]));
+    // Park the board first, so the settle fits are spent and the only thing that can move the
+    // camera afterwards is the chip.
+    tick(1200);
+    const parked = canvas.__graphProbe!().fits;
+    const before = canvas.__graphProbe!().camZ;
+    act(() => { fireEvent.click(screen.getByRole("button", { name: /^not read \(1\)/ })); });
+    expect(canvas.__graphProbe!().camZ).not.toBe(before);
+    // ...and it is a FRAME, not some second camera path: it goes through the same counter.
+    expect(canvas.__graphProbe!().fits).toBeGreaterThan(parked);
+  });
+
+  test("pressing it spotlights them, and pressing again lets the board go", async () => {
+    makeContextSpy();
+    render(<GraphView graph={unreadGraph()} report={reportWith(["Nest of Scarabs"])} />);
+    const chip = screen.getByRole("button", { name: /^not read \(1\)/ });
+    expect(chip).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(chip);
+    expect(chip).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(chip);
+    expect(chip).toHaveAttribute("aria-pressed", "false");
   });
 });
