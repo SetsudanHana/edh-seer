@@ -991,7 +991,7 @@ const DECK_MATH = {
     biases: "Ignores ramp, so it under-states; ignores tapped lands and colour coupling, so it over-states.",
   },
   colors: [
-    { color: "B", supplied: 18, worst: { pips: 2, turn: 3, required: 21, requiredRaw: 33, cards: 12 } },
+    { color: "B", supplied: 18, worst: { pips: 2, turn: 3, required: 21, requiredRaw: 33, cards: 12, available: 13 } },
     { color: "U", supplied: 30 },
   ],
   demand: [
@@ -1527,7 +1527,9 @@ test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () =
   // want {B}{B} by T3, that needs 21 sources, you run 18. The raw figure this row used to show was
   // 33 -- and at 26 sources, the count the fixture carried until 2026-08-25, the corrected model
   // says the colour is fine, which is the over-claim the correction removes.
-  const bRow = screen.getByLabelText(/B, 18 sources, 12 cards want 2 pips by turn 3, which needs 21/i);
+  // T18b: the label names BOTH counts, because they are different questions -- 18 sources in the
+  // deck, 13 of them able to produce by the turn the demand is due.
+  const bRow = screen.getByLabelText(/B, 18 sources, 13 of them by turn 3, when 12 cards want 2 pips and that needs 21/i);
   expect(bRow).toBeInTheDocument();
   // The label above is spelled in words on purpose (screen readers), but the VISIBLE pip phrase
   // ("2 cards want {B}{B} on turn 3") must render as symbols, never brace text -- that line has no
@@ -1554,7 +1556,7 @@ test("the colour caveat names BOTH models, not just the one in the row", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={{
     ...DECK_MATH,
     colors: ["U", "B", "R"].map((color) => ({
-      color, supplied: 11, worst: { pips: 1, turn: 3, required: 15, requiredRaw: 20, cards: 1 },
+      color, supplied: 11, worst: { pips: 1, turn: 3, required: 15, requiredRaw: 20, cards: 1, available: 9 },
     })),
   }} />);
   expect(screen.getByText(/without it the same rows would ask for/i)).toHaveTextContent(/ask for 20 instead/i);
@@ -2095,16 +2097,16 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
     ...DECK_MATH,
     lands: { ...DECK_MATH.lands, actual: 34, target: 35 },
     colors: [
-      { color: "U", supplied: 22, worst: { pips: 2, turn: 2, required: 22, requiredRaw: 36, cards: 1 } },
-      { color: "B", supplied: 20, worst: { pips: 2, turn: 3, required: 21, requiredRaw: 33, cards: 2 } },
-      { color: "R", supplied: 21, worst: { pips: 2, turn: 3, required: 21, requiredRaw: 33, cards: 1 } },
+      { color: "U", supplied: 22, worst: { pips: 2, turn: 2, required: 22, requiredRaw: 36, cards: 1, available: 12 } },
+      { color: "B", supplied: 20, worst: { pips: 2, turn: 3, required: 21, requiredRaw: 33, cards: 2, available: 15 } },
+      { color: "R", supplied: 21, worst: { pips: 2, turn: 3, required: 21, requiredRaw: 33, cards: 1, available: 16 } },
     ],
   };
   const { unmount } = render(
     <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={overcommitted} />,
   );
   expect(screen.getByText(/want 64 sources from 34 lands, which no\s+deck can hold/)).toBeInTheDocument();
-  expect(screen.getByText("22 of 22 sources")).toHaveClass("text-(--muted)");
+  expect(screen.getByText("12 of 22 by turn 2")).toHaveClass("text-(--muted)");
   unmount();
 
   // ONE ROW CANNOT OVERCOMMIT TOGETHER WITH ITSELF. Found in a live browser on `draguns`: one
@@ -2113,17 +2115,17 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
   const single = {
     ...DECK_MATH,
     lands: { ...DECK_MATH.lands, actual: 36, target: 37 },
-    colors: [{ color: "U", supplied: 33, worst: { pips: 3, turn: 3, required: 37, requiredRaw: 44, cards: 1 } }],
+    colors: [{ color: "U", supplied: 33, worst: { pips: 3, turn: 3, required: 37, requiredRaw: 44, cards: 1, available: 28 } }],
   };
   const solo = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={single} />);
   expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
-  expect(screen.getByText("33 of 37 sources")).toBeInTheDocument();
+  expect(screen.getByText("28 of 37 by turn 3")).toBeInTheDocument();
   solo.unmount();
 
   // And it still fires where the gap IS closable: one colour, wanting fewer sources than the deck
   // holds lands.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByText("18 of 21 sources")).toHaveClass("text-(--warning)");
+  expect(screen.getByText("13 of 21 by turn 3")).toHaveClass("text-(--warning)");
   expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
 });
 

@@ -1,6 +1,7 @@
 import { minCopies } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { minSources } from "./mulligan.js";
+import { classifyLand, entersTapped } from "./land-conditions.js";
 import type { DeckCard } from "./types.js";
 
 /** The five colours, in WUBRG order. Colourless is deliberately absent HERE, and the reason the old
@@ -19,6 +20,10 @@ export type Color = (typeof COLORS)[number];
  *  one its reference table is computed at, so a different value here would quietly invalidate every
  *  number that table anchors. */
 export const SOURCE_CONFIDENCE = 0.9;
+
+/** The five basic land types, lowercased, as `classifyLand` reports them in `subtypes`. */
+const BASIC_LAND_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
+const EMPTY_TYPES: ReadonlySet<string> = new Set<string>();
 
 /** Coloured pips per colour in a mana cost, e.g. `{2}{B}{B}` -> `{ B: 2 }`.
  *
@@ -78,16 +83,25 @@ export interface ColorDemand {
   requiredRaw: number;
   /** How many cards in the deck carry exactly this demand. */
   cards: number;
-  /** Read against `required`, so the report UNDER-claims a shortfall rather than over-claiming one.
-   *  Anchoring on `requiredRaw` instead told 62 of the 71 calibration decks they were short by a
-   *  median of ten sources, off a model measured to over-state by up to fourteen. */
+  /** THE SOURCES THAT COULD ACTUALLY BE PRODUCING BY `turn`, which is the number `met` is read
+   *  against. `supplied` on the row is every source in the deck and is a true DECK fact; holding a
+   *  turn-1 demand to it counted mana rocks that cost two and lands that enter tapped exactly then.
+   *  Never greater than `supplied`. */
+  available: number;
+  /** `available >= required`. Read against `required` rather than `requiredRaw`, so the report
+   *  UNDER-claims a shortfall rather than over-claiming one: anchoring on `requiredRaw` instead told
+   *  62 of the 71 calibration decks they were short by a median of ten sources, off a model measured
+   *  to over-state by up to fourteen. */
   met: boolean;
 }
 
 export interface ManaAuditRow {
   color: Color;
-  /** Cards in the LIBRARY that can produce this colour. Excludes commanders: `required` is computed
-   *  against a library that does not contain them either. */
+  /** Cards in the LIBRARY that can produce this colour, on ANY turn. Excludes commanders:
+   *  `required` is computed against a library that does not contain them either.
+   *
+   *  A DECK FACT, AND THE WRONG NUMBER TO HOLD AN EARLY DEMAND TO -- see `ColorDemand.available`,
+   *  which is what `met` reads. */
   supplied: number;
   demands: ColorDemand[];
   /** The demand that misses by the most sources, absent when every demand is met. This is the row
@@ -101,13 +115,18 @@ export interface ManaAuditRow {
  *  This is the thing a land-count regression fundamentally cannot do -- Karsten has no colour term
  *  at all, which is correct for COUNT and silent about COMPOSITION.
  *
- *  THREE THINGS IT DOES NOT MODEL, and each makes it read better on paper than in play:
- *  - **Tapped lands.** A land that enters tapped counts as a full source here, so a deck full of
- *    taplands looks like it makes its turn-3 double-black when it does not.
+ *  TWO OF THE THREE THINGS IT DID NOT MODEL ARE MODELLED NOW, per demand, in `available` (T18b).
+ *  They were found because the panel printed *"R, 25 sources, enough"* beside the simulator's *"Curse
+ *  of Opulence, turn 1, 40%"* -- one card, one turn, one screen, two models that never met:
+ *  - **Tapped lands.** A land that enters tapped is not a source for a demand due the turn it would
+ *    arrive. Asked of `land-conditions.ts`, the same classifier the simulator uses, so a slow land
+ *    is tapped for a turn-1 demand and untapped for a turn-3 one rather than flatly one or the other.
+ *  - **Rocks are sources but not ramp.** A Signet is a source on the turn AFTER it is cast, never on
+ *    turn one, and a nonland source now counts only for a demand due later than its own mana value.
+ *
+ *  ONE REMAINS, and it is the one no turn number fixes:
  *  - **Conditional production.** `producedMana` is what a card CAN add: "any color" lists all five,
  *    and a source gated behind a condition counts the same as a basic.
- *  - **Rocks are counted as sources but not as ramp.** A Signet is a source on the turn it is cast,
- *    not on turn one, and nothing here knows that.
  *
  *  ONE THING IT NO LONGER GETS WRONG: the requirement is priced WITH the free mulligan. `required`
  *  was `minCopies` alone until 2026-08-25 -- raw hypergeometric, the same model that read 37 lands
@@ -130,11 +149,53 @@ export function manaAudit(
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
 
+  // The basic land types the deck's own lands carry, lowercased to match `classifyLand`'s subtypes.
+  // A check land ("unless you control a Mountain") is satisfiable only if the deck runs something
+  // with that type at all, so this is the ceiling on the optimistic board below.
+  const deckBasicTypes = new Set<string>();
+  for (const dc of library) {
+    if (!/\bland\b/i.test(dc.card.typeLine)) continue;
+    for (const t of BASIC_LAND_TYPES) if (dc.card.typeLine.toLowerCase().includes(t)) deckBasicTypes.add(t);
+  }
+
   const rows: ManaAuditRow[] = [];
   for (const color of COLORS) {
-    const supplied = library.filter(
+    const sources = library.filter(
       (dc) => isManaSource(dc) && (dc.card.producedMana ?? []).includes(color),
-    ).length;
+    );
+    const supplied = sources.length;
+
+    // WHAT COULD BE PRODUCING BY TURN N, asked once per deadline and cached, because a deck's
+    // demands share very few distinct turns.
+    //
+    // THE BOARD IS THE OPTIMISTIC ONE, deliberately: on turn N you have made N-1 earlier land drops,
+    // and this assumes every one of them was the land a conditional wanted. That is the same
+    // under-claiming direction `met` already takes with `required` over `requiredRaw` -- the report
+    // would rather miss a shortfall than invent one.
+    //
+    // CEILING: a nonland source counts from the turn after its own mana value, which assumes it was
+    // cast on curve. Pricing how often that actually happens needs the simulator, and the simulator
+    // is the other half of this pair; a turn number is the cheap half that closes the contradiction.
+    const availableAt = new Map<number, number>();
+    const availableBy = (turn: number): number => {
+      const hit = availableAt.get(turn);
+      if (hit !== undefined) return hit;
+      // The lands already down when the turn-N drop is made. Empty on turn 1, which is what makes a
+      // slow land tapped exactly then.
+      const board = {
+        lands: turn - 1,
+        basics: turn - 1,
+        types: turn > 1 ? deckBasicTypes : EMPTY_TYPES,
+        opponents: 3,
+      };
+      const n = sources.filter((dc) => {
+        if (/\bland\b/i.test(dc.card.typeLine)) return !entersTapped(classifyLand(dc.card), board);
+        // A rock cast on turn M taps for mana from turn M+1: you spent the turn's mana casting it.
+        return dc.card.manaValue < turn;
+      }).length;
+      availableAt.set(turn, n);
+      return n;
+    };
 
     // Group by (pips, deadline): "12 cards want {B}{B} by T3" is one row, not twelve.
     const groups = new Map<string, ColorDemand>();
@@ -160,7 +221,8 @@ export function manaAudit(
       // figure is the conservative end, so the corrected one is clamped never to exceed it rather
       // than allowed to read HIGHER than the model it corrects (criterion S2).
       const required = Math.min(requiredRaw, minSources(pips, turn, SOURCE_CONFIDENCE) ?? requiredRaw);
-      groups.set(key, { pips, turn, required, requiredRaw, cards: 1, met: supplied >= required });
+      const available = availableBy(turn);
+      groups.set(key, { pips, turn, required, requiredRaw, cards: 1, available, met: available >= required });
     }
     if (groups.size === 0) continue;
 
@@ -173,8 +235,9 @@ export function manaAudit(
       supplied,
       demands,
       // Ranked by the SHORTFALL, not by pip count: a 2-pip demand met with room to spare matters
-      // less than a 1-pip demand the deck misses by ten sources.
-      worst: unmet.sort((a, b) => (b.required - supplied) - (a.required - supplied))[0],
+      // less than a 1-pip demand the deck misses by ten sources. Each demand's shortfall is read
+      // against its OWN `available`, since two demands on one colour no longer share a supply.
+      worst: unmet.sort((a, b) => (b.required - b.available) - (a.required - a.available))[0],
     });
   }
   return rows;

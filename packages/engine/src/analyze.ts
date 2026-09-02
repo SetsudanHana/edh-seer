@@ -320,8 +320,10 @@ export interface DeckMath {
   /** Per-colour feasibility: what the deck's own pips demand by each card's own mana value,
    *  against how many sources it runs. Absent colours are colours nothing in the deck costs.
    *
-   *  Composition only -- this says nothing about how many lands to run, and a land that enters
-   *  tapped counts as a full source. */
+   *  Composition only -- this says nothing about how many lands to run. A demand is held to the
+   *  sources that could be PRODUCING by its own deadline (`worst.available`), not to the deck's
+   *  whole source count: a turn-1 demand does not count a two-mana rock or a land that enters
+   *  tapped that turn. */
   colors: {
     color: string;
     supplied: number;
@@ -330,7 +332,12 @@ export interface DeckMath {
      *  LAND count, so applied to one colour the first over-states the mulligan's help exactly as the
      *  second under-states it — the pair is an interval and a renderer showing one alone picks a
      *  model silently (roadmap L5). */
-    worst?: { pips: number; turn: number; required: number; requiredRaw: number; cards: number };
+    worst?: {
+      pips: number; turn: number; required: number; requiredRaw: number; cards: number;
+      /** Of `supplied`, the ones that could be producing by `turn`. This is the number `required`
+       *  is missed by; `supplied` is the deck total and is not comparable to it. */
+      available: number;
+    };
   }[];
   /** The deck's biggest demand shapes: how many cards want the event, how many supply it, and
    *  whether you will have a supplier. */

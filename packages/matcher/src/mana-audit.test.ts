@@ -203,3 +203,85 @@ test("a permanent source is still counted", () => {
   ]);
   expect(manaAudit(deck).find((r) => r.color === "B")!.supplied).toBe(21);
 });
+
+/** T18b. THE PANEL SAID "25 SOURCES, ENOUGH" AND THE SIMULATOR SAID 40% ABOUT THE SAME CARD ON THE
+ *  SAME TURN, and both were printed on one screen. `supplied` counted every repeatable producer in
+ *  the deck against a turn-1 demand: mana rocks that cost two, and lands that enter tapped exactly
+ *  then. Two of the three ceilings this module has documented since it was written.
+ *
+ *  A demand now carries its OWN `available` -- the sources that could be producing by ITS deadline
+ *  -- and `met` reads that. `supplied` is unchanged and still means what it says: every source in
+ *  the deck, which is a true deck fact and the wrong number to hold a turn-1 demand to. */
+test("a turn-1 demand does not count a two-mana rock as a source", () => {
+  const rock = (name: string): DeckCard => ({
+    card: {
+      name, typeLine: "Artifact", manaCost: "{2}", manaValue: 2, oracleText: "{T}: Add {R}.",
+      keywords: [], colors: [], producedMana: ["R"],
+    } as Card,
+    tags: null,
+  });
+  const deck = fillTo(100, [
+    card("Curse of Opulence", "{R}", 1),
+    ...Array.from({ length: 12 }, () => source("Mountain", ["R"])),
+    ...Array.from({ length: 8 }, (_, i) => rock(`Signet ${i}`)),
+  ]);
+  const row = manaAudit(deck).find((r) => r.color === "R")!;
+  // The deck fact is unchanged: 20 cards in the library can produce red.
+  expect(row.supplied).toBe(20);
+  const turn1 = row.demands.find((d) => d.turn === 1 && d.pips === 1)!;
+  // A {2} rock cannot pay for a turn-1 spell. Twelve Mountains can.
+  expect(turn1.available).toBe(12);
+});
+
+test("a turn-1 demand does not count a land that enters tapped on turn 1", () => {
+  const tapland = (name: string): DeckCard => ({
+    card: {
+      name, typeLine: "Land", manaValue: 0, keywords: [], colors: [], producedMana: ["R"],
+      oracleText: `${name} enters the battlefield tapped.`,
+    } as Card,
+    tags: null,
+  });
+  const slow = (name: string): DeckCard => ({
+    card: {
+      name, typeLine: "Land", manaValue: 0, keywords: [], colors: [], producedMana: ["R"],
+      oracleText: `${name} enters the battlefield tapped unless you control two or more other lands.`,
+    } as Card,
+    tags: null,
+  });
+  const deck = fillTo(100, [
+    card("Curse of Opulence", "{R}", 1),
+    card("Three Drop", "{2}{R}", 3),
+    ...Array.from({ length: 10 }, () => source("Mountain", ["R"])),
+    ...Array.from({ length: 5 }, (_, i) => tapland(`Tapland ${i}`)),
+    ...Array.from({ length: 4 }, (_, i) => slow(`Slow Land ${i}`)),
+  ]);
+  const row = manaAudit(deck).find((r) => r.color === "R")!;
+  expect(row.supplied).toBe(19);
+  // Turn 1: no other lands, so the slow lands are tapped too. Ten Mountains only.
+  expect(row.demands.find((d) => d.turn === 1)!.available).toBe(10);
+  // Turn 3: two other lands are already down, which is exactly what a slow land asks for.
+  // The unconditional taplands are still tapped the turn they arrive.
+  expect(row.demands.find((d) => d.turn === 3)!.available).toBe(14);
+});
+
+test("met and worst read the deadline-aware count, not the deck total", () => {
+  const rock = (name: string): DeckCard => ({
+    card: {
+      name, typeLine: "Artifact", manaCost: "{2}", manaValue: 2, oracleText: "{T}: Add {B}.",
+      keywords: [], colors: [], producedMana: ["B"],
+    } as Card,
+    tags: null,
+  });
+  // Enough sources on paper, none of them able to pay on turn one.
+  const deck = fillTo(100, [
+    card("One Drop", "{B}", 1),
+    ...Array.from({ length: 30 }, (_, i) => rock(`Rock ${i}`)),
+  ]);
+  const row = manaAudit(deck).find((r) => r.color === "B")!;
+  expect(row.supplied).toBe(30);
+  const turn1 = row.demands.find((d) => d.turn === 1)!;
+  expect(turn1.available).toBe(0);
+  expect(turn1.met).toBe(false);
+  expect(row.worst).toBeDefined();
+  expect(row.worst!.turn).toBe(1);
+});

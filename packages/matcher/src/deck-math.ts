@@ -192,6 +192,8 @@ export function computeDeckMath(
           // not; the keep band is a LAND band, so the first over-states the help for a colour and
           // the second under-states it. A renderer showing one number alone picks a model silently.
           requiredRaw: r.worst.requiredRaw, cards: r.worst.cards,
+          // The count the shortfall is actually against: sources able to produce by this deadline.
+          available: r.worst.available,
         },
       }
       : {}),
