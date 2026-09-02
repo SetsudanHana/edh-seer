@@ -4,7 +4,6 @@ import { CHAPTERS, CHAPTER_FOR_GAUGE, type ChapterId } from "../lib/chapters.js"
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { BuildBenchmarks } from "./BuildBenchmarks.js";
-import { SuggestionsList } from "./SuggestionsList.js";
 import { CutList } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
 import { LegalityPanel } from "./LegalityPanel.js";
@@ -98,11 +97,6 @@ function Chapter({ id, title, children }: {
 export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
   const { report } = data;
   const current = useCurrentChapter();
-  // Which prescriptions a finding already printed as its own action line, so the Prescribe movement
-  // stops restating them. `findings` is pure and cheap; `Findings` calls it too.
-  const prescribedByFinding = findings(report)
-    .filter((f) => f.kind === "build")
-    .map((f) => f.figureLabel);
   /** WHICH ROW THE READER ASKED ABOUT, when they arrived by pressing a dial rather than scrolling.
    *  Component-local and deliberately NOT in the URL, same reason the sub-tab state was: a shared
    *  analysis link carries the deck, and a second axis of state in that hash is scope this does not
@@ -270,7 +264,6 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
             *  they sit beside each other rather than eight panels apart. */}
           <Movement title="What to change">
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-              <SuggestionsList suggestions={report.suggestions} shownAsFindings={prescribedByFinding} />
               <CutList
                 cutList={report.cutList}
                 unjudged={report.unjudged}

@@ -1,5 +1,5 @@
 import type { DeckReport } from "../types.js";
-import { findings, slotTrade, FINDING_CAP, type Finding } from "../lib/findings.js";
+import { findings, rankedFindings, slotTrade, FINDING_CAP, type Finding } from "../lib/findings.js";
 import { useState } from "react";
 import type { RunDiff } from "../lib/run-diff.js";
 
@@ -51,7 +51,11 @@ export function Findings({ report, diff }: {
    *  the move, and a third statement of one fact is what this ranked list was built to remove. */
   diff?: RunDiff | null;
 }) {
-  const all = findings(report);
+  // THE TWO GROUPS (roadmap S10). `scored` is what `buildScore` can price, ordered by what closing it
+  // is worth; `unseen` is colour and synergy, which are not terms in that score at all. The cap, the
+  // count sentence, the disclosure and the slot trade all key off `scored` -- the second group is at
+  // most two rows and renders whole.
+  const { scored: all, unseen } = rankedFindings(report);
   // `to === undefined` means it was in the last run's diagnosis and is not in this one. It is not in
   // `all` either -- both read `findings(report)` -- so it is counted neither here nor in the header,
   // and it disappears by itself next run, when the diff stops naming it. No "shown once" state.
@@ -71,7 +75,7 @@ export function Findings({ report, diff }: {
           *  figure and says prose keeps Inter; only the count is tabular. */}
         <span className="text-xs text-(--muted)">
           <span className="tabular-nums">{all.length}</span>{" "}
-          {all.length === 1 ? "finding" : "findings"}, worst first
+          {all.length === 1 ? "finding" : "findings"}, by what fixing it is worth
         </span>
       </div>
       <ul className="flex flex-col border-t border-(--separator)">
@@ -94,6 +98,22 @@ export function Findings({ report, diff }: {
                 ) : null}
               </h3>
               <p className="text-sm text-(--muted) max-w-[62ch] tabular-nums">{f.detail}</p>
+              {/* WHAT THE RANKING IS BY, stated on the row it ranks -- a ranked list whose order the
+                *  reader cannot check from the screen it appears on is the skeptic persona's standing
+                *  test. Not an arrow and not a predicted new score.
+                *
+                *  "or better" because a real card often carries two of a parent's leaves, so every
+                *  one of these is a LOWER BOUND. An impact of exactly 0 is a CLAIM -- "fixing this
+                *  does not move Build" -- and printing it as "+0.00" would read as a rounding error
+                *  instead. In the prose column, not beside the figure: the figure block is
+                *  `shrink-0`, and a sentence in it would set the row's width at 390px. */}
+              {f.impact !== undefined ? (
+                <p className="text-sm text-(--muted) tabular-nums">
+                  {f.impact > 0
+                    ? <>worth <span className="text-(--foreground) stat-num">+{f.impact.toFixed(2)}</span> to Build or better</>
+                    : "does not move Build"}
+                </p>
+              ) : null}
               {f.action ? (
                 <p className="text-sm flex items-center gap-2">
                   {/* An authored SVG, never a glyph — the design system's own rule. */}
@@ -152,6 +172,24 @@ export function Findings({ report, diff }: {
             <span className="text-(--foreground) font-medium">Where the slots come from.</span> {trade}
           </p>
         </div>
+      ) : null}
+      {/* NOT A LESSER LIST. Colour is its own axis and synergy is `synergyOverall`; neither is a term
+        *  in the number above, so neither can be priced in it, and inventing a conversion to
+        *  interleave them is the constant `findings.ts` refuses. Rendered in full rather than capped
+        *  -- it is at most two rows, and a fold over two rows is chrome. */}
+      {unseen.length > 0 ? (
+        <section className="flex flex-col gap-3 pt-2">
+          <h3 className="text-base font-bold tracking-[-0.01em]">What the build score cannot see</h3>
+          <ul className="flex flex-col border-t border-(--separator)">
+            {unseen.map((f) => (
+              <li key={f.id} className="flex flex-col gap-2 py-4 border-b border-(--separator)">
+                <h4 className="text-base font-semibold leading-tight">{f.headline}</h4>
+                <p className="text-sm text-(--muted) max-w-[62ch] tabular-nums">{f.detail}</p>
+                {f.action ? <p className="text-sm">{f.action}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
     </section>
   );

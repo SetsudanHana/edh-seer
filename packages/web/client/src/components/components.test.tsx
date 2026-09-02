@@ -20,7 +20,6 @@ import { MemoryRouter } from "react-router";
 import { CHAPTERS } from "../lib/chapters.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { BuildBenchmarks, demandSentence } from "./BuildBenchmarks.js";
-import { SuggestionsList } from "./SuggestionsList.js";
 import { SAMPLE } from "../fixtures.js";
 
 test("DeckIdentity counts the deck's thing under the heading that names it", () => {
@@ -1645,11 +1644,14 @@ test("a single-leaf-parents deck with deckMath present still hides the role-spen
 // (The role-spend block itself -- "How the roles are spent" -- is pinned to the Build sub-tab
 // specifically by the isolation tests below, fix round 1.)
 // TASK 6 (2026-09-01): Suggestions and the findings' own figures (Ramp, under target) moved again,
-// off Summary onto Fixes -- see the Fixes-tab tests below.
+// off Summary onto Fixes -- see the Fixes-tab tests below. (S10, 2026-09-02: the Suggestions panel
+// itself is gone; the findings' figures stayed.)
 test("OverviewTab shows the health dashboard, across its sub-tabs", async () => {
   const user = userEvent.setup();
   render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
-  expect(screen.getByText(/Suggestions/i)).toBeInTheDocument();
+  // S10 (2026-09-02): the `Suggestions` assertion that stood here went with the panel. Every
+  // suggestion it could show is already a finding's action line -- which is what its own comment
+  // recorded, and why deleting it lost no content.
   // "Ramp" is a finding's own figure label (Fixes is under target on it) -- present, not unique.
   expect(screen.getAllByText("Ramp").length).toBeGreaterThan(0);
   expect(screen.getAllByText("Synergy").length).toBeGreaterThan(0); // the lead dial
@@ -1934,13 +1936,6 @@ test("the cut list's empty state says what the trim control ranks by instead", (
   // They rank different things, and the panel now says which.
   expect(screen.getByText(/ranks by which category is/)).toBeInTheDocument();
   expect(screen.getByText(/over its target/)).toBeInTheDocument();
-});
-
-test("SuggestionsList renders each suggestion; hidden when empty", () => {
-  const { rerender } = render(<SuggestionsList suggestions={SAMPLE.report.suggestions} />);
-  expect(screen.getByText("No board wipe (target 3), typically 3–5 mana")).toBeInTheDocument();
-  rerender(<SuggestionsList suggestions={[]} />);
-  expect(screen.queryByText(/board wipe/)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks states what a random card off the library is worth, and stays silent without one", () => {
