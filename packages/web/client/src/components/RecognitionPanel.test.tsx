@@ -6,6 +6,11 @@ const DATA = {
   resolvedCount: 100,
   totalCount: 100,
   commanderColorIdentity: ["W", "U", "B"],
+  // BOTH REQUIRED ON THE WIRE (`AnalyzeResponse.missing`, `DeckReport.cards`), and the waffle that
+  // replaced the type bar is the first consumer here to read them. Added to the fixture rather
+  // than guarded with `?? []` in the panel: a fallback for a shape the type guarantees hides the
+  // day it stops being guaranteed.
+  missing: [] as string[],
   graph: {
     nodes: [
       { id: "a", label: "A", copies: 4, types: ["creature"], subtypes: [], supertypes: [] },
@@ -26,6 +31,7 @@ const DATA = {
       dominant: true,
     },
     buildParents: [{ name: "Ramp", count: 17, target: 10, leaves: [] }],
+    cards: [],
   },
 } as unknown as Parameters<typeof RecognitionPanel>[0]["data"];
 
