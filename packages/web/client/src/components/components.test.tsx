@@ -331,6 +331,20 @@ test("ArchetypeBoard says nothing about coverage on a fully-read deck", () => {
   expect(screen.queryByText(/is a floor/)).toBeNull();
 });
 
+/** S8 FOLD-IN. The pairs list printed "{pair.a} + {pair.b}" as raw text, so the one surface that
+ *  names the evidence behind a group was the one surface you could not open a card from -- and
+ *  therefore the one place a reader could not pin from either. */
+test("the pairs behind a group name cards you can open", () => {
+  render(
+    <CardDrawerProvider graph={SAMPLE.graph}>
+      <ArchetypeBoard archetypes={SAMPLE.report.archetypes} />
+    </CardDrawerProvider>,
+  );
+  // `fixtures.ts:102` -- the one pair is a: "Krenko, Mob Boss", b: "Impact Tremors".
+  expect(screen.getAllByRole("button", { name: "Krenko, Mob Boss" }).length).toBeGreaterThan(0);
+  expect(screen.getAllByRole("button", { name: "Impact Tremors" }).length).toBeGreaterThan(0);
+});
+
 test("ArchetypeBoard shows an empty-state message when there are no groups", () => {
   render(<ArchetypeBoard archetypes={[]} />);
   expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();
