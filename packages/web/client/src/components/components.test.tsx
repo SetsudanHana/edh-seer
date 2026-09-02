@@ -353,14 +353,40 @@ test("ArchetypeBoard shows the empty-state message when archetypes is undefined"
   expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();
 });
 
-test("Archetypes tab leads with ranked strategies", () => {
+/** T15: one panel, one identity claim. The board used to head its two lists "Strategies" and the
+ *  group rows separately, and a reader met three answers to "what is this deck" on one screen --
+ *  the chapter-1 theme, the widest Strategies bar, and the widest group bar. They now share a
+ *  heading and the sentence that separates them from the theme. */
+test("the board states that the theme leads and nothing under it competes", () => {
   render(<ArchetypeBoard
     strategies={[{ name: "tokens", label: "Tokens", confidence: 0.74 }] as any}
     archetypes={[]}
   />);
-  expect(screen.getByText("Strategies")).toBeInTheDocument();
+  expect(screen.getByText("What this deck is made of")).toBeInTheDocument();
+  expect(screen.getByText("Named plans your cards signal")).toBeInTheDocument();
   expect(screen.getByText("Tokens")).toBeInTheDocument();
   expect(screen.getByText("74%")).toBeInTheDocument();
+});
+
+/** T15: the card count was the whole defect. `cards.length` counts a card that joined by being
+ *  PLAYED -- the matcher synthesises "any nonland is cast" and "any permanent enters" so a payoff
+ *  has something to feed on -- and that is how 61 of 99 cards became `Spellslinger` on an
+ *  Enchantress deck, at the top of the panel. The row says how many of them EARN it. */
+test("a group row splits the members that earn it from the ones merely played", () => {
+  const group = {
+    category: "x",
+    label: "Group X",
+    cards: ["A", "B"],
+    // A consumer always earns its place; a producer earns it only when the supply was authored
+    // rather than synthesised, which `impliedProducer` marks.
+    pairs: [{ a: "A", b: "B", reasons: [{ text: "r", consumer: "A", producer: "B", impliedProducer: true }] }],
+  };
+  render(<ArchetypeBoard strategies={[]} archetypes={[group] as any} nonlandNames={["A", "B"]} />);
+  // Scoped through the size cell, because the matrix above renders the same label as a column head.
+  const size = screen.getByText(/1 of 2 cards earn it/);
+  expect(size).toBeInTheDocument();
+  // NO BAR. A track scaled to the biggest group is a ranking, and it was read as one.
+  expect(size.closest("button")!.querySelector(".rounded-full")).toBeNull();
 });
 
 test("an expanded synergy group caps its pair list", () => {
