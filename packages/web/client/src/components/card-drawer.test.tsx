@@ -92,3 +92,34 @@ test("the set clears when a new analysis arrives", async () => {
   rerender(<CardDrawerProvider graph={otherGraph}><Probe name="Sol Ring" /></CardDrawerProvider>);
   expect(screen.getByTestId("size")).toHaveTextContent("0");
 });
+
+/** THE CARDS YOU CHANGED ARE PRE-PINNED (roadmap S9). The seed rides the effect that already clears
+ *  the set on a new deck, so a seeded pin cannot outlive its analysis any more than a hand-made one
+ *  can. */
+test("seeded names arrive pinned", () => {
+  render(
+    <CardDrawerProvider graph={graph} seedPins={["Sol Ring"]}>
+      <Probe name="Sol Ring" />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByTestId("lit")).toHaveTextContent("yes");
+  expect(screen.getByTestId("size")).toHaveTextContent("1");
+});
+
+/** A PIN IS THE PHYSICAL CARD, NEVER A FACE (the S8 identity rule). A seeded front-face name has to
+ *  light the matrix's face row and the waffle's physical square alike, which it does only if the
+ *  seed resolves through the same `physicalName` a hand-made pin does. */
+test("a seeded face name pins the physical card", () => {
+  render(
+    <CardDrawerProvider graph={graph} seedPins={["Fable of the Mirror-Breaker"]}>
+      <Probe name="Fable of the Mirror-Breaker // Reflection of Kiki-Jiki" />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByTestId("lit")).toHaveTextContent("yes");
+});
+
+/** Nothing seeded is the ordinary case -- run one, and every run whose diff is null. */
+test("no seed leaves the set empty", () => {
+  render(<CardDrawerProvider graph={graph}><Probe name="Sol Ring" /></CardDrawerProvider>);
+  expect(screen.getByTestId("size")).toHaveTextContent("0");
+});
