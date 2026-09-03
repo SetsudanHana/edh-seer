@@ -2,8 +2,14 @@ import { Pacer, type PacerEnv } from "./pacer.js";
 
 export { Pacer };
 
+interface RateLimiter {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
 export interface Env extends PacerEnv {
   PACER: DurableObjectNamespace;
+  /** Optional so `wrangler dev` and the tests run without it; absent means unthrottled. */
+  RATE_LIMITER?: RateLimiter;
   /** Set to "1" to stop all imports without a deploy. A lever that needs a build is a lever that
    *  arrives too late. */
   IMPORT_DISABLED?: string;
@@ -56,6 +62,17 @@ export default {
 
     // ONE INSTANCE, and no location hint. A hint, or a name that varies per colo, would give us one
     // pacer per datacentre — which is exactly the thing the pacer exists to prevent.
+    // AFTER THE CACHE, ON PURPOSE. A cache hit costs nothing and must not count against a reader who
+    // re-analyses the same deck; the limit exists to protect the one expensive path, which is the
+    // queue behind the pacer. Keyed on the connecting IP, and an absent header keys everyone together
+    // rather than exempting them -- failing closed on the anonymous case is the safer direction.
+    if (env.RATE_LIMITER) {
+      const key = request.headers.get("CF-Connecting-IP") ?? "unknown";
+      const { success } = await env.RATE_LIMITER.limit({ key });
+      // Same 429 the pacer's own queue cap returns, so the client already has copy for it.
+      if (!success) return json({ error: "importer busy" }, 429);
+    }
+
     const stub = env.PACER.get(env.PACER.idFromName(source));
     const res = await stub.fetch("https://pacer.invalid/", {
       method: "POST",

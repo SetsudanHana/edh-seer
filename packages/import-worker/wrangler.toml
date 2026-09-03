@@ -18,3 +18,19 @@ new_sqlite_classes = ["Pacer"]
 
 # MOXFIELD_UA is a SECRET and is deliberately absent from this file.
 #   npx wrangler secret put MOXFIELD_UA
+
+# PER-IP THROTTLE, because the WAF's rate limiting rules are not on this plan. Per-Cloudflare-location
+# rather than global, which is the right amount of accuracy for what this defends: NOT the deck sites
+# -- the pacer already makes exceeding one request a second impossible at any inbound rate -- but our
+# own queue, and the Durable Object's daily request budget. A script that eats those denies the
+# feature to real readers.
+#
+# 20 a minute is generous for a person importing several decks and hostile to a loop. The period may
+# only be 10 or 60.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+
+[ratelimits.simple]
+limit = 20
+period = 60
