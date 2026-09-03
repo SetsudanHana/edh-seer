@@ -1,6 +1,7 @@
 import type { DeckReport } from "../types.js";
 import { identityLabel } from "../lib/color-identity.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { Explain } from "./Explain.js";
 import { percent, policyBand } from "@edh-seer/engine/percent";
 
 /** WHAT IS THIS DECK — answered by the instrument built to answer it.
@@ -187,8 +188,11 @@ export function DeckIdentity({
               : `${policyBand(c.castable.low, c.castable.high)} by turn ${c.turn}`;
             return `${commanderCast.length > 1 ? `${c.name}: ` : ""}${odds}`;
           }).join(" · ")}
-          {/* THE CAVEAT IS VISIBLE, NOT A TOOLTIP. It was a `title` first, and a tooltip is not a
-              caveat on a touch device or for anyone who never hovers.
+          {/* THE CAVEAT LEAVES THE BODY BUT NOT THE PAGE (roadmap T8). Owner: it *"belongs in a
+              tooltip"* -- and a `title` is exactly what this line WAS, refused here on the record
+              because a tooltip is not a caveat on a touch device or for anyone who never hovers.
+              `Explain` is the report's standing answer to that: a `<details>`, one click, works the
+              same on a phone. The words survive verbatim; only their cost in vertical space goes.
               WHAT IT SAYS IS THE PLAY POLICY, because that is what the interval now IS. It used to
               read "lands and mana rocks only -- land-fetch ramp like Cultivate is not counted, so
               this reads low", which L4a deleted from the CLI when the figure became a SIMULATION that
@@ -196,9 +200,9 @@ export function DeckIdentity({
               FOUND IN A LIVE BROWSER, and it is the N6 shape one panel over: two copies of a
               sentence, one of them updated. */}
           {commanderCast.some((c) => c.mana !== null) ? (
-            <span className="block text-xs text-(--muted)">
+            <Explain label="what the range means">
               simulated: the low end holds up two mana, the high end spends everything on ramp
-            </span>
+            </Explain>
           ) : null}
           {/* …AND THE ENGINE NOW KNOWS BY HOW MUCH, so the caveat names the better number instead of
               gesturing at it. Two readouts of the SAME cell on one page is the trap this repo
