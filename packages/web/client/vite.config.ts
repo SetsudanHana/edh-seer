@@ -48,6 +48,14 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    proxy: { "/api": "http://localhost:3001" },
+    // `/api/import` FIRST, because vite matches proxy prefixes in insertion order and `/api` would
+    // otherwise swallow it. Nest has no import route -- the importer is a Cloudflare Worker with a
+    // Durable Object pacer -- so dev points at `wrangler dev` and exercises the real thing, pacing
+    // included. Without it running, an import fails with the "could not reach" message, which is the
+    // honest outcome rather than a stub that behaves better than production.
+    proxy: {
+      "/api/import": "http://127.0.0.1:8788",
+      "/api": "http://localhost:3001",
+    },
   },
 });

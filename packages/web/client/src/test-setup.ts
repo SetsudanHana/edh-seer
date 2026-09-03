@@ -1,4 +1,4 @@
-import { afterEach, expect } from "vitest";
+import { afterEach, expect, vi } from "vitest";
 import * as matchers from "@testing-library/jest-dom/matchers";
 
 // Import matchers/expect explicitly (rather than the "@testing-library/jest-dom/vitest"
@@ -88,6 +88,27 @@ console.error = (...args: unknown[]) => {
  *  flake and it is not one. Cleared here rather than in each file, because every test that mounts a
  *  component routes through this setup and none of them should inherit another one's session. */
 afterEach(() => {
+  // SPIES AND STUBS OUTLIVE THE TEST AS WELL, and the comment above this file's ResizeObserver stub
+  // already claimed this call existed -- it did not, which is the kind of stale note that makes a
+  // reader trust a mechanism that is not there.
+  //
+  // `vi.spyOn` on an already-spied method returns the EXISTING mock, call history included. Eleven
+  // tests never noticed, because asserting "was called" is true either way; the first test to assert
+  // "was NOT called" saw ten calls from its predecessors.
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+
+  // THE URL OUTLIVES THE TEST TOO, and for the same reason: jsdom keeps one Location and one history
+  // per FILE. `App` decides it was opened from a share link by reading `#deck=` at mount, and several
+  // tests `pushState` exactly that -- so every test after one of them started as "arrived from a
+  // link" and rendered the collapsed summary instead of the paste box. Same failure as the storage
+  // leak below, one global over.
+  try {
+    window.history.replaceState(null, "", "/");
+  } catch {
+    /* no history in this environment */
+  }
+
   for (const storage of [globalThis.sessionStorage, globalThis.localStorage]) {
     // Safari private mode throws on access and `run-diff.ts` already tolerates that, so a test
     // environment without storage must not fail here either.

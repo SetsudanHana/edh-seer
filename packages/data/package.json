@@ -12,6 +12,7 @@
     "./decklist": "./src/decklist.ts",
     "./sections": "./src/sections.ts",
     "./deck-source": "./src/deck-source.ts",
+    "./deck-url": "./src/deck-url.ts",
     "./moxfield": "./src/moxfield.ts",
     "./archidekt": "./src/archidekt.ts"
   },
