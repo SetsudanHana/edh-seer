@@ -1,4 +1,4 @@
-import { isMoxfieldUrl } from "./moxfield-url.js";
+import { isArchidektUrl, isMoxfieldUrl } from "./deck-url.js";
 import { readFileSync } from "node:fs";
 import { analyzeDeck, ComboIndex, type Card, type Combo } from "@edh-seer/engine";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
@@ -12,6 +12,9 @@ import {
   normalizeName,
   parseMoxfieldId,
   fetchMoxfieldDeck,
+  parseArchidektId,
+  fetchArchidektDeck,
+  type DeckSections,
 } from "@edh-seer/data";
 import { formatReport } from "./report.js";
 
@@ -28,18 +31,34 @@ function reportFromJson(path: string, trim: number): string {
 }
 
 
-async function reportFromDecklist(input: string, trim: number): Promise<string> {
-  let commanderNamesTyped: string[] = [];
-  let deckNames: string[];
+/** A URL on a known host, or a path to a decklist file. Both sides return the same split, so the
+ *  commander section is real for an imported deck too -- the Moxfield path used to hand back one
+ *  flat list, which left `SubjectFilter.commander` with nothing to fire on. */
+async function readDeck(input: string): Promise<DeckSections> {
   if (isMoxfieldUrl(input)) {
     const id = parseMoxfieldId(input);
     if (!id) throw new Error(`Could not parse Moxfield deck id from: ${input}`);
-    deckNames = await fetchMoxfieldDeck(id); // Moxfield path: no commander split (API blocked anyway)
-  } else {
-    const sections = parseDecklistSections(readFileSync(input, "utf8"));
-    commanderNamesTyped = sections.commanders;
-    deckNames = sections.deck;
+    const ua = process.env.MOXFIELD_UA ?? "";
+    if (!ua.trim()) {
+      throw new Error(
+        "MOXFIELD_UA is not set. Moxfield issues a per-consumer User-Agent and rate-limits us to " +
+          "1 request/second; importing without it is the thing we agreed not to do.",
+      );
+    }
+    return fetchMoxfieldDeck(id, ua);
   }
+  if (isArchidektUrl(input)) {
+    const id = parseArchidektId(input);
+    if (!id) throw new Error(`Could not parse Archidekt deck id from: ${input}`);
+    return fetchArchidektDeck(id);
+  }
+  return parseDecklistSections(readFileSync(input, "utf8"));
+}
+
+async function reportFromDecklist(input: string, trim: number): Promise<string> {
+  const sections = await readDeck(input);
+  const commanderNamesTyped = sections.commanders;
+  const deckNames = sections.deck;
 
   const store = await connect(loadConfig());
   try {
