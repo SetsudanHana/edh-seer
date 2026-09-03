@@ -1042,7 +1042,14 @@ function DeckMathRows({
                           : "text-(--warning)"
                     }`}
                   >
-                    {/* THE NUMBERS HAVE A NOUN NOW, and they lost a turn they were saying twice.
+                    {/* AND A VERB, NOT JUST A NOUN. `13 of 22 sources` named the unit and left the
+                      *  DIRECTION open -- the judge's fourth run: *"I can't tell whether 13 is what
+                      *  I have out of 22 wanted, or 13 wanted out of 22 I have."* A fraction cannot
+                      *  say which end is the deck; a verb can, and `wants` is the one the lands row
+                      *  three blocks up already uses for exactly this ("38 in deck ... wants 36"),
+                      *  which is the row the same judge reads without trouble every run.
+                      *
+                      *  THE NUMBERS HAVE A NOUN, and they lost a turn they were saying twice.
                       *  This read `13 of 22 by turn 2` beside `1 card wants {U}{U} on turn 2`, and
                       *  the phone judge's third run stopped at exactly that: *"the moment I hit `12
                       *  of 17 by turn 1` and realised the noun for 17 lives behind a closed grey
@@ -1057,7 +1064,7 @@ function DeckMathRows({
                       *  model had just called SHORT, and it read as a contradiction because it was
                       *  one. `supplied` counts two-mana rocks and lands that enter tapped on the
                       *  very turn the demand is due. */}
-                    {c.worst ? `${c.worst.available} of ${c.worst.required} sources` : `${c.supplied} sources, enough`}
+                    {c.worst ? `${c.worst.available} sources, wants ${c.worst.required}` : `${c.supplied} sources, enough`}
                   </span>
                 </li>
               );

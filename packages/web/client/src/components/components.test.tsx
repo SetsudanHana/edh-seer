@@ -179,14 +179,18 @@ test("the theme share names the modal DFCs its denominator does not count, and o
  *  with no noun, and a turn printed twice in one row. The phone judge's third run stopped there:
  *  *"the moment I hit `12 of 17 by turn 1` and realised the noun for 17 lives behind a closed grey
  *  line below all three rows"*. It was the only finding in that run that cost a whole section
- *  rather than seconds. `worst.turn` is the same value on both halves, so the unit is free. */
-test("a colour row names its sources and prints its turn exactly once", () => {
+ *  rather than seconds. `worst.turn` is the same value on both halves, so the unit is free.
+ *
+ *  THE UNIT ALONE WAS NOT ENOUGH. `13 of 22 sources` still left the DIRECTION open -- the fourth
+ *  run: *"I can't tell whether 13 is what I have out of 22 wanted, or 13 wanted out of 22 I have."*
+ *  A fraction cannot say which end is the deck; the verb the lands row already uses can. */
+test("a colour row says which end of the fraction the deck is, and prints its turn once", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   const rows = screen.getAllByLabelText(/sources.*by turn/i);
   expect(rows.length).toBeGreaterThan(0);
   for (const row of rows) {
     const text = (row.textContent ?? "").replace(/\s+/g, " ");
-    expect(text, "the row never says what its numbers count").toMatch(/\d+ of \d+ sources/);
+    expect(text, "the row never says which end of the fraction the deck is").toMatch(/\d+ sources, wants \d+/);
     expect(text.match(/turn/g) ?? [], `the turn is said twice in "${text}"`).toHaveLength(1);
   }
 });
@@ -2262,7 +2266,7 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
   expect(screen.getByText(/want 64 sources from 34 lands, which no\s+deck can hold/)).toBeInTheDocument();
   // THE ROW NAMES ITS UNIT NOW and drops the turn its left half already prints once -- the phone
   // judge's third run gave up on this row for want of a noun. Same element, same muted tone.
-  expect(screen.getByText("12 of 22 sources")).toHaveClass("text-(--muted)");
+  expect(screen.getByText("12 sources, wants 22")).toHaveClass("text-(--muted)");
   unmount();
 
   // ONE ROW CANNOT OVERCOMMIT TOGETHER WITH ITSELF. Found in a live browser on `draguns`: one
@@ -2275,13 +2279,13 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
   };
   const solo = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={single} />);
   expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
-  expect(screen.getByText("28 of 37 sources")).toBeInTheDocument();
+  expect(screen.getByText("28 sources, wants 37")).toBeInTheDocument();
   solo.unmount();
 
   // And it still fires where the gap IS closable: one colour, wanting fewer sources than the deck
   // holds lands.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByText("13 of 21 sources")).toHaveClass("text-(--warning)");
+  expect(screen.getByText("13 sources, wants 21")).toHaveClass("text-(--warning)");
   expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
 });
 
