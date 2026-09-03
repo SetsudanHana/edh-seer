@@ -1,0 +1,11 @@
+# EDH Seer — how to report a security problem.
+#
+# Private disclosure first, please: GitHub Security Advisories open a channel only the maintainer can
+# read, unlike an issue, which is public the moment it is filed. The repository is public and the
+# engine is rule-based, so most defects are ordinary bugs and belong in the issue tracker — this is
+# for the ones that should not be read by everyone before they are fixed.
+
+Contact: https://github.com/SetsudanHana/edh-seer/security/advisories/new
+Expires: 2027-09-03T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://edhseer.cards/.well-known/security.txt

@@ -69,3 +69,13 @@
 
 /manifest.webmanifest
   Cache-Control: public, max-age=3600
+
+# RFC 9116 disclosure contact. An hour, like the other machine-readable files: long enough that a
+# scanner re-reading it costs nothing, short enough that a corrected contact address is live the same
+# afternoon.
+
+# RFC 9116 disclosure contact. An hour, like the other machine-readable files: long enough that a
+# scanner re-reading it costs nothing, short enough that a corrected contact address is live the same
+# afternoon.
+/.well-known/security.txt
+  Cache-Control: public, max-age=3600
