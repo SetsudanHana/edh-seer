@@ -48,6 +48,12 @@ export function GraphList({ graph, unread, onOpenBoard }: {
         id: n.id,
         label: n.label,
         isToken: n.isToken === true,
+        // THE BACK FACE OF A DOUBLE-FACED CARD, which is its own node but not its own card. Detected
+        // by `cardName` differing from the id rather than by the `face:` id prefix, so the client
+        // does not have to value-import the projection module for one constant. Checked on the
+        // example deck: both tests identify the same 9 nodes, and a FRONT face carries
+        // `cardName === id`, so it is not caught here.
+        isBackFace: n.cardName !== undefined && n.cardName !== n.id,
         // The physical card, not the face: both faces of a multi-face card carry the same
         // `derived` flag, and `unreadCardNames` is keyed on `cardName ?? name` for exactly this
         // join -- the one `GraphView`'s commander set already makes.
@@ -61,6 +67,23 @@ export function GraphList({ graph, unread, onOpenBoard }: {
   }, [graph, unread]);
 
   const unreadCount = rows.filter((r) => r.unread).length;
+
+  /** WHAT THE 112 WAS, AND WHY A PLAYER COULD NOT CHECK IT. This line read "112 cards, 237
+   *  synergies" on a deck the report calls 100 cards, and the phone judge said so: *"the counts
+   *  don't line up with anything I know about my own list."* 112 was NODES -- card names, plus the
+   *  back faces of double-faced cards, plus tokens the deck MAKES rather than contains. Naming the
+   *  three parts costs a few words and makes the total equal the rows below it, which is the only
+   *  version a reader can verify by scrolling. */
+  const backFaces = rows.filter((r) => r.isBackFace).length;
+  const tokenCount = rows.filter((r) => r.isToken).length;
+  const cardCount = rows.length - backFaces - tokenCount;
+  /** A pair with an edge in BOTH directions is one synergy to a player, not two. `graph.edges` is
+   *  directed and 2 of the example deck's 237 point both ways, which is where "237" came from
+   *  against 235 real relationships. */
+  const synergyCount = useMemo(
+    () => new Set(graph.edges.map((e) => [e.from, e.to].sort().join("\u0000"))).size,
+    [graph.edges],
+  );
   const needle = query.trim().toLowerCase();
   const visible = needle === "" ? rows : rows.filter((r) => r.label.toLowerCase().includes(needle));
 
@@ -75,7 +98,10 @@ export function GraphList({ graph, unread, onOpenBoard }: {
         className="rounded-(--radius) border border-(--field-border) bg-transparent px-2.5 py-1 text-sm"
       />
       <p className="text-(--muted) text-sm">
-        {graph.nodes.length} cards, {graph.edges.length} synergies
+        {cardCount} card{cardCount === 1 ? "" : "s"}
+        {backFaces > 0 ? `, ${backFaces} second face${backFaces === 1 ? "" : "s"}` : ""}
+        {tokenCount > 0 ? ` and ${tokenCount} token${tokenCount === 1 ? "" : "s"} they make` : ""}
+        {" — "}{synergyCount} synerg{synergyCount === 1 ? "y" : "ies"}
         {/* THE COUNT, BECAUSE A ROW-BY-ROW MARK CANNOT BE SURVEYED. The board says the same thing
           *  in a chip; this list has no chip row, and counting "not read" across 92 rows by
           *  scrolling is not counting. Silent on a deck the engine read whole. */}

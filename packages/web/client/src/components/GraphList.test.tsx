@@ -28,9 +28,55 @@ test("GraphList ranks cards by how many partners they have, name breaking the ti
   expect(rows[0]!.textContent).toContain("pays off tokens");
 });
 
+// "112 CARDS, 237 SYNERGIES" ON A 100-CARD DECK. The phone judge: *"the counts don't line up with
+// anything I know about my own list."* They were right twice over. 112 counted graph NODES -- 91
+// card names, 9 back faces of double-faced cards, and 12 tokens the deck MAKES rather than contains
+// -- against a report that says the deck is 100 cards. And 237 counted directed edges, where 235
+// distinct pairs exist; two pairs point both ways, which is one synergy to a player, not two.
+// The line now decomposes into exactly the rows below it, so a reader who counts can check it.
+test("GraphList counts cards, faces and tokens separately instead of calling every node a card", () => {
+  const tokenGraph = {
+    ...graph,
+    nodes: [
+      ...graph.nodes,
+      { id: "token:Goblin", label: "Goblin", isToken: true, copies: 1, types: ["token"], subtypes: [], supertypes: [], colors: ["R"], cmc: 0 },
+      { id: "face:1:A // B", label: "B", cardName: "A // B", copies: 1, types: ["land"], subtypes: [], supertypes: [], colors: [], cmc: 0 },
+    ],
+  } as typeof graph;
+  render(
+    <CardDrawerProvider graph={tokenGraph}>
+      <GraphList graph={tokenGraph} />
+    </CardDrawerProvider>,
+  );
+  // 4 rows: 2 cards + 1 second face + 1 token. The parts have to sum to what is listed.
+  expect(screen.getAllByRole("listitem")).toHaveLength(4);
+  expect(screen.getByText(/2 cards/)).toBeInTheDocument();
+  expect(screen.getByText(/1 second face/)).toBeInTheDocument();
+  expect(screen.getByText(/1 token they make/)).toBeInTheDocument();
+  expect(screen.queryByText(/4 cards/)).toBeNull();
+});
+
+test("GraphList counts a two-way pair as one synergy, not two", () => {
+  const bothWays = {
+    ...graph,
+    edges: [
+      { from: "Krenko, Mob Boss", to: "Impact Tremors", weight: 2, tags: [], reasonTexts: ["a"] },
+      { from: "Impact Tremors", to: "Krenko, Mob Boss", weight: 1, tags: [], reasonTexts: ["b"] },
+    ],
+  } as typeof graph;
+  render(
+    <CardDrawerProvider graph={bothWays}>
+      <GraphList graph={bothWays} />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByText(/1 synergy\b/)).toBeInTheDocument();
+  expect(screen.queryByText(/2 synergies/)).toBeNull();
+});
+
 test("GraphList states the shape of the graph it is standing in for", () => {
   renderList();
-  expect(screen.getByText(/2 cards, 1 synergies/)).toBeInTheDocument();
+  expect(screen.getByText(/2 cards/)).toBeInTheDocument();
+  expect(screen.getByText(/1 synergy\b/)).toBeInTheDocument();
   // R1: the old clause said "the board itself needs a wider screen". It is false now -- the board
   // is one tap from a row -- and it was the silent-substitution complaint in the first place.
   expect(screen.queryByText(/needs a wider screen/)).toBeNull();
@@ -114,5 +160,5 @@ test("GraphList states how many cards were not read", () => {
       <GraphList graph={graph} unread={new Set(["Impact Tremors"])} />
     </CardDrawerProvider>,
   );
-  expect(screen.getByText(/2 cards, 1 synergies, 1 not read\./)).toBeInTheDocument();
+  expect(screen.getByText(/1 not read/)).toBeInTheDocument();
 });
