@@ -3,7 +3,8 @@ import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
 import { InstallButton } from "./components/InstallButton.js";
-import { BrowserRouter } from "react-router";
+import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
+import { BrowserRouter, Route, Routes } from "react-router";
 import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { clearLastRun, diffRuns, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
@@ -242,6 +243,15 @@ export default function App() {
     // viewport, so the explainer started a full screen below the fold with a band of unpainted page
     // between them.
     <BrowserRouter>
+    {/* SHARE LINKS COPIED BEFORE THE SURFACES MOVED. `/graph`, `/cards` and `/combos` used to BE the
+      * report; they carry `#deck=<payload>` and the hash never reaches the server, so this cannot be
+      * a Cloudflare redirect -- see `LegacyDeckRedirect`. Renders nothing when there is no deck in
+      * the hash, which is why it can sit above the app rather than replacing it. */}
+    <Routes>
+      <Route path="/graph" element={<LegacyDeckRedirect to="/analysis/graph" />} />
+      <Route path="/cards" element={<LegacyDeckRedirect to="/analysis/cards" />} />
+      <Route path="/combos" element={<LegacyDeckRedirect to="/analysis/combos" />} />
+    </Routes>
     <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
       {/* RENDERS NOTHING HERE. It portals into the static header's nav, and only once the browser
         *  has said the app can be installed -- see `InstallButton` for why the event is the whole

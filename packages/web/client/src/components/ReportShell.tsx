@@ -139,52 +139,62 @@ export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunD
           *  is the one failure the reader can fix by editing their paste. It stayed visible across
           *  every tab before the tabs died; it stays visible across every route now. */}
         {data.missing.length > 0 ? <div className="pt-4"><MissingCards missing={data.missing} /></div> : null}
+        {/* NESTED UNDER `/analysis` (2026-09-03). The child paths are UNCHANGED -- `graph`,
+          *  `cards`, `combos` are relative, so moving the parent moves all three and the
+          *  `<Route path="*">` fallback inside keeps meaning "a path under /analysis this app
+          *  does not have is the report".
+          *  THE OUTER `*` IS WHY A BARE `/#deck=...` STILL RENDERS. A share link's path is only a
+          *  hint about which surface to open; the deck is in the hash, so any path that is not an
+          *  /analysis surface is still the chapters. */}
         <Routes>
-          <Route index element={<ReportChapters data={data} diff={diff} />} />
-          <Route
-            path="graph"
-            element={
-              <Reference>
-                {/* A HEIGHT, NOT A SPINNER. The board is the tallest thing this app draws, and a
-                  * fallback shorter than what replaces it is a layout shift on arrival -- the exact
-                  * defect the `#root` reserve one file over exists to remove. The message says what
-                  * is happening, because a blank box of this size reads as a failure.
-                  * One boundary over both branches: `GraphList` suspends on nothing, and the ego
-                  * board and the whole-deck board are the same wait for the same chunk. */}
-                <Suspense fallback={
-                  <div className="flex items-center justify-center min-h-[70svh] text-(--muted) eyebrow">
-                    loading the board
-                  </div>
-                }>
-                  {boardMode === "ego"
-                    ? (focusId
-                      ? (
-                        <EgoView
-                          graph={data.graph}
-                          report={data.report}
-                          focusId={focusId}
-                          onFocus={setFocusId}
-                          onBack={() => setFocusId(null)}
-                          artLoader={artLoaderRef.current}
-                        />
-                      )
-                      : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
-                    : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />}
-                </Suspense>
-              </Reference>
-            }
-          />
-          <Route
-            path="cards"
-            element={
-              <Reference>
-                <CardList cards={data.report.cards} artByName={artByName} coverage={data.report.coverage} />
-              </Reference>
-            }
-          />
-          <Route path="combos" element={<Reference><ComboList combos={data.report.combos} /></Reference>} />
-          {/* A path this app does not have is the REPORT, not an error page: the deck is in the
-            *  hash and the chapters are what it is for. */}
+          <Route path="/analysis">
+            <Route index element={<ReportChapters data={data} diff={diff} />} />
+            <Route
+              path="graph"
+              element={
+                <Reference>
+                  {/* A HEIGHT, NOT A SPINNER. The board is the tallest thing this app draws, and a
+                    * fallback shorter than what replaces it is a layout shift on arrival -- the exact
+                    * defect the `#root` reserve one file over exists to remove. The message says what
+                    * is happening, because a blank box of this size reads as a failure.
+                    * One boundary over both branches: `GraphList` suspends on nothing, and the ego
+                    * board and the whole-deck board are the same wait for the same chunk. */}
+                  <Suspense fallback={
+                    <div className="flex items-center justify-center min-h-[70svh] text-(--muted) eyebrow">
+                      loading the board
+                    </div>
+                  }>
+                    {boardMode === "ego"
+                      ? (focusId
+                        ? (
+                          <EgoView
+                            graph={data.graph}
+                            report={data.report}
+                            focusId={focusId}
+                            onFocus={setFocusId}
+                            onBack={() => setFocusId(null)}
+                            artLoader={artLoaderRef.current}
+                          />
+                        )
+                        : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
+                      : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />}
+                  </Suspense>
+                </Reference>
+              }
+            />
+            <Route
+              path="cards"
+              element={
+                <Reference>
+                  <CardList cards={data.report.cards} artByName={artByName} coverage={data.report.coverage} />
+                </Reference>
+              }
+            />
+            <Route path="combos" element={<Reference><ComboList combos={data.report.combos} /></Reference>} />
+            {/* A path this app does not have is the REPORT, not an error page: the deck is in the
+              *  hash and the chapters are what it is for. */}
+            <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
+          </Route>
           <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
         </Routes>
       </div>
@@ -223,7 +233,8 @@ function Reference({ children }: { children: React.ReactNode }) {
 /** A LINK BETWEEN SURFACES THAT KEEPS THE DECK IN THE URL.
  *
  *  The deck lives in the hash (`#deck=<payload>`), and React Router replaces the whole location on
- *  a navigation — so a plain `<Link to="/cards">` left the URL as `/cards` with no deck on it.
+ *  a navigation — so a plain `<Link to="/analysis/cards">` left the URL as `/analysis/cards`
+ *  with no deck on it.
  *  Measured on the live page: the report still rendered (it is in memory), but a reload or a copied
  *  link had lost the analysis, which is the one thing this app's URL exists to carry.
  *
@@ -251,10 +262,19 @@ export function SurfaceLink({ to, className, children }: {
   );
 }
 
+/** UNDER `/analysis` SINCE 2026-09-03, because `/cards` now means the site's card SEARCH page and
+ *  the report's Cards table is a different thing entirely. The three consumers -- `ChapterRail`
+ *  renders this table, `SurfaceLink` navigates to it, `ReportHeader` links `/analysis/cards`
+ *  directly -- all move together, and `ReportShell.test.tsx` asserts the paths so a half-applied
+ *  rename cannot ship.
+ *
+ *  A STALE SHARE LINK STILL WORKS: `LegacyDeckRedirect` catches `/graph`, `/cards` and `/combos`
+ *  with a `#deck=` hash and replaces to the matching surface here. The hash never reaches the
+ *  server, so that check cannot live in a Cloudflare redirect. */
 export const REFERENCE_SURFACES: readonly { path: string; label: string }[] = [
-  { path: "/graph", label: "Graph" },
-  { path: "/cards", label: "Cards" },
-  { path: "/combos", label: "Combos" },
+  { path: "/analysis/graph", label: "Graph" },
+  { path: "/analysis/cards", label: "Cards" },
+  { path: "/analysis/combos", label: "Combos" },
 ];
 
 /** BACK RETURNS YOU TO WHERE YOU WERE IN THE SCROLL — the one thing routes were chosen FOR, and the

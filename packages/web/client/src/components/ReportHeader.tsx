@@ -118,7 +118,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
           *  here: S15 fought this header down to 73px and a list of names would grow it unbounded. */}
         {pinned.size > 0 ? (
           <span className="flex items-center gap-1.5">
-            <SurfaceLink to="/cards" className="eyebrow text-(--accent) hover:underline underline-offset-2">
+            <SurfaceLink to="/analysis/cards" className="eyebrow text-(--accent) hover:underline underline-offset-2">
               {pinned.size} pinned
             </SurfaceLink>
             <button

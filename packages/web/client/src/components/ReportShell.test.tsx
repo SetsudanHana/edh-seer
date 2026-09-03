@@ -2,7 +2,7 @@ import { render, screen, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
-import { ReportShell, SEED_CAP } from "./ReportShell.js";
+import { REFERENCE_SURFACES, ReportShell, SEED_CAP } from "./ReportShell.js";
 import { ReportHeader } from "./ReportHeader.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
 import { CHAPTERS } from "../lib/chapters.js";
@@ -14,6 +14,19 @@ import { CardDrawerProvider, usePinned } from "./card-drawer.js";
 afterEach(() => {
   vi.unstubAllGlobals();
   document.documentElement.style.removeProperty("--report-header-h");
+});
+
+/** `/cards` IS ABOUT TO MEAN SOMETHING ELSE. It becomes the site's card SEARCH page, so the report's
+ *  three reference surfaces move under `/analysis` to get out of its way. Asserted on the exported
+ *  table because `ChapterRail` renders from it and `SurfaceLink` navigates to it -- one list, three
+ *  consumers, and a half-applied move would leave two of them pointing at a page that is no longer
+ *  the report. */
+test("the reference surfaces live under /analysis", () => {
+  expect(REFERENCE_SURFACES.map((s) => s.path)).toEqual([
+    "/analysis/graph",
+    "/analysis/cards",
+    "/analysis/combos",
+  ]);
 });
 
 /** THE HEADER IS THE REPORT'S SUMMARY ON EVERY SURFACE — the split it resolves is that
@@ -85,7 +98,7 @@ test("a new report routes back to the chapters", async () => {
   expect(screen.getByText(/Infinite loop/)).toBeInTheDocument();
 
   const second = { ...SAMPLE, report: { ...SAMPLE.report } };
-  rerender(<MemoryRouter initialEntries={["/combos"]}><ReportShell data={second} /></MemoryRouter>);
+  rerender(<MemoryRouter initialEntries={["/analysis/combos"]}><ReportShell data={second} /></MemoryRouter>);
   expect(screen.getByRole("navigation", { name: "Report chapters" })).toBeInTheDocument();
 });
 
@@ -130,14 +143,15 @@ test("each chapter's scroll offset clears the header and the rail", () => {
 });
 
 /** THE DECK LIVES IN THE HASH, AND A SURFACE LINK MAY NOT DROP IT. Measured on the live page: a
- *  router `Link to="/cards"` replaced the whole location, so the URL became `/cards` with no
+ *  router `Link to="/analysis/cards"` replaced the whole location, so the URL became that path
+ *  with no
  *  `#deck=` on it -- the report stayed on screen (it is in memory) while a reload or a copied link
  *  had lost the analysis. */
 test("a reference link carries the deck hash into the new surface", async () => {
   window.location.hash = "#deck=abc123";
   render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
   const link = screen.getAllByRole("link", { name: /^Cards/ })[0]!;
-  expect(link).toHaveAttribute("href", "/cards#deck=abc123");
+  expect(link).toHaveAttribute("href", "/analysis/cards#deck=abc123");
   window.location.hash = "";
 });
 
