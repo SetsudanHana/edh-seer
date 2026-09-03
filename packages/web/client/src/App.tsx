@@ -39,11 +39,17 @@ export default function App() {
     setError(null);
     try {
       const next = await analyzeDeck(deckText, commanderText);
+      // WAS THAT A DECKLIST? `resolvedCount` counts cards the engine actually found, and a real list
+      // finds at least one. Everything that outlives the page view is gated on it.
+      const looksLikeDeck = next.resolvedCount > 0;
       const previous = loadLastRun();
       const snapshot = snapshotRun(next);
       setDiff(previous ? diffRuns(previous, snapshot) : null);
       saveLastRun(snapshot);
-      saveLastDeck({ commanders: commanderText, decklist: deckText });
+      // NOR DOES IT COME BACK ON THE NEXT VISIT. `loadLastDeck` refills the paste box from here, so
+      // storing text that resolved nothing both keeps it around and quietly re-analyses it -- caught
+      // while verifying the URL guard below, when a run of pasted notes came back on the next load.
+      if (looksLikeDeck) saveLastDeck({ commanders: commanderText, decklist: deckText });
       setData(next);
       setEditing(false);
       // THE ADDRESS BAR BECOMES THE SHARE LINK, which is what makes this get used: a reader who
@@ -59,7 +65,17 @@ export default function App() {
       // Pushing only when the URL does not already carry a deck keeps both properties -- one entry
       // for "I analysed something", none for the re-runs, and none for opening a shared link, whose
       // hash is already there when the page loads.
-      const payload = await encodeShare({ commanders: commanderText, decklist: deckText });
+      //
+      // AND WHAT WAS NEVER A DECK NEVER BECOMES A URL. Owner-reported, 2026-09-03: "if I paste
+      // something that is not decklist to areabox, it is still hashed in the url". The fragment is
+      // never sent to a host, so nothing leaks outward -- but it does reach the address bar, the
+      // browser history, and whatever the reader pastes that link into next believing it to be a
+      // deck. `resolvedCount` is the honest test of "was that a decklist": it counts cards the
+      // engine actually found, and a real list finds at least one. The paste box still keeps the
+      // text and the report still renders; only the shareable surfaces refuse it.
+      const payload = looksLikeDeck
+        ? await encodeShare({ commanders: commanderText, decklist: deckText })
+        : null;
       setLink(payload ? shareUrl(window.location.origin, window.location.pathname, payload) : null);
       if (payload) {
         const write = payloadFromHash(window.location.hash) ? "replaceState" : "pushState";

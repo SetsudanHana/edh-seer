@@ -105,6 +105,12 @@ export async function encodeShare(deck: { commanders: string; decklist: string }
 }
 
 export async function decodeShare(payload: string): Promise<{ commanders: string; decklist: string } | null> {
+  // THE CAP GUARDS THE READING END TOO, and that is the end where it matters. Nothing this app
+  // writes is ever longer -- `encodeShare` refuses -- so a payload over the cap was hand-written,
+  // and `deflate-raw` reaches 1029:1 on repeated bytes (measured in a browser, not assumed): a
+  // 43,000 character hash inflates to 32MB in whoever opened the link, linearly worse from there.
+  // Checked BEFORE any decoding, so the bytes are never allocated.
+  if (payload.length > MAX_PAYLOAD) return null;
   try {
     const kind = payload[0];
     const body = fromBase64Url(payload.slice(1));
