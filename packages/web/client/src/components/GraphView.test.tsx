@@ -115,6 +115,18 @@ function frames(graph: CardGraph, calls?: string[], report = SAMPLE.report) {
   return { container, canvas, tick: (n = 1) => { for (let i = 0; i < n; i++) nextFrame!(0); } };
 }
 
+/** `frames` with props threaded through. Repeated rather than folded into `frames` so the 122 tests
+ *  written against that helper keep the exact signature they were written against. */
+function framesWith(graph: CardGraph, props: { chrome?: "full" | "bare"; onNodeTap?: (id: string | null) => void }, report = SAMPLE.report) {
+  let nextFrame: FrameRequestCallback | null = null;
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+  makeContextSpy();
+  const { container } = render(<GraphView graph={graph} report={report} {...props} />);
+  const canvas = container.querySelector("canvas") as ReturnType<typeof frames>["canvas"];
+  return { container, canvas, tick: (n = 1) => { for (let i = 0; i < n; i++) nextFrame!(0); } };
+}
+
 test("seedPosition centres a new node on the previous positions of its known neighbours", () => {
   const prev = new Map([["a", { x: 0, y: 0 }], ["b", { x: 10, y: 0 }]]);
   expect(seedPosition(["a", "b"], prev, { x: 999, y: 999 })).toEqual({ x: 5, y: 0 });
@@ -2553,4 +2565,53 @@ test("the board survives a pin without losing its canvas", async () => {
   expect(container.querySelector("canvas")).not.toBeNull();
   await userEvent.click(screen.getByText("pin it"));
   expect(container.querySelector("canvas")).not.toBeNull();
+});
+
+// THE BARE BOARD (roadmap R1). The phone surface needs the canvas and nothing else: at 390 the
+// chrome above the board measured 902px on an 844px viewport, so the first screenful of the graph
+// route contained no graph at all. Bare mode is how the ego view gets the viewport.
+describe("bare chrome", () => {
+  test("renders the canvas and none of the whole-deck controls", () => {
+    const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} chrome="bare" />);
+    expect(container.querySelector("canvas")).not.toBeNull();
+    expect(screen.queryByLabelText("Find a card")).toBeNull();
+    expect(screen.queryByText(/fullscreen/i)).toBeNull();
+    expect(screen.queryByText(/Drag to pan/)).toBeNull();
+    expect(screen.queryByTestId("paint-legend")).toBeNull();
+    // The paint-mode chips are the primary whole-deck control and there is no whole deck here.
+    expect(screen.queryByRole("button", { name: PAINT_MODES[0].label })).toBeNull();
+  });
+
+  test("the default is unchanged, so desktop keeps every control", () => {
+    const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+    expect(container.querySelector("canvas")).not.toBeNull();
+    expect(screen.getByLabelText("Find a card")).toBeInTheDocument();
+    expect(screen.getByTestId("paint-legend")).toBeInTheDocument();
+  });
+
+  test("the canvas fills its container instead of taking a fixed height", () => {
+    const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} chrome="bare" />);
+    const shell = container.querySelector("canvas")!.parentElement!;
+    // `h-[380px]` is the in-page board's own height; on a surface that OWNS the viewport it is the
+    // thing standing between the board and the screen.
+    expect(shell.className).not.toMatch(/h-\[380px\]/);
+    expect(shell.className).toMatch(/flex-1/);
+  });
+
+  test("onNodeTap replaces selection, so a tap can re-root instead of opening a panel", () => {
+    const taps: (string | null)[] = [];
+    // Through `framesWith`, not a bare `render`: `__graphProbe` is only attached once the layout
+    // effect gets a 2d context, which jsdom does not provide without the spy.
+    const { canvas } = framesWith(SAMPLE.graph, { chrome: "bare", onNodeTap: (id) => taps.push(id) });
+    const probe = canvas.__graphProbe!();
+    const node = probe.find((n) => n.id === "Krenko, Mob Boss") ?? probe[0];
+    act(() => {
+      probe.endGesture({
+        type: "mouseup", clientX: node.x * probe.camZ, clientY: node.y * probe.camZ, sourceEvent: {},
+      } as never);
+    });
+    expect(taps).toEqual([node.id]);
+    // And the inspector did NOT open over the board -- that is the whole point of the callback.
+    expect(screen.queryByText(/Synergy edges|Feeds/)).toBeNull();
+  });
 });

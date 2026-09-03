@@ -179,9 +179,29 @@ export function edgeAlpha(weight: number, maxWeight: number): number {
 }
 
 export function GraphView(
-  { graph: fullGraph, report, artLoader: injectedArtLoader }:
-  { graph: CardGraph; report: DeckReport; artLoader?: ArtLoader },
+  { graph: fullGraph, report, artLoader: injectedArtLoader, chrome = "full", onNodeTap }:
+  {
+    graph: CardGraph;
+    report: DeckReport;
+    artLoader?: ArtLoader;
+    /** "bare" draws the canvas and nothing else -- no paint chips, no facet chips, no search, no
+     *  legend, no caption, no fullscreen. The phone surface (roadmap R1) needs the viewport, and
+     *  measured at 390 the chrome above the board was 902px of an 844px one, so the first screenful
+     *  of the graph route contained no graph. Every control it hides operates on the WHOLE-DECK
+     *  cloud, which is not what that surface draws. */
+    chrome?: "full" | "bare";
+    /** Called with the tapped card's id, or null for empty board space, INSTEAD of toggling the
+     *  selection. The ego view re-roots on a tap rather than opening a panel over the board -- at
+     *  390 that panel measured 288px over a 324px canvas, which is 89% of the board it describes. */
+    onNodeTap?: (id: string | null) => void;
+  },
 ) {
+  const bare = chrome === "bare";
+  /** The tap callback, held in a ref so a caller passing an inline arrow does not land in the layout
+   *  effect's deps and re-throw the whole simulation on every render. Same reason `hoveredIdRef` and
+   *  `matchesRef` are refs: the draw/gesture path reads it, React does not need to re-render for it. */
+  const onNodeTapRef = useRef(onNodeTap);
+  onNodeTapRef.current = onNodeTap;
   /** Reveal the tokens nothing but their own maker relates to. Off by default: a deck that makes
    *  Clues nobody cares about would otherwise scatter disconnected discs across the board. The data
    *  carries them either way -- that isolation IS a deckbuilding signal, which is why this is a view
@@ -1742,7 +1762,10 @@ export function GraphView(
       // hit test `onMove` already uses for the hover tooltip -- one geometry, two consumers.
       const w = toWorld(point);
       const hit = pickAt(w.x, w.y);
-      toggleSelected(hit?.id ?? null);
+      // THE TAP MEANS SOMETHING DIFFERENT ON THE EGO VIEW: there it re-roots the graph on the card
+      // rather than opening a panel over a board only 324px wide.
+      if (onNodeTapRef.current) onNodeTapRef.current(hit?.id ?? null);
+      else toggleSelected(hit?.id ?? null);
     });
 
     const onMove = (e: PointerEvent) => {
@@ -1919,7 +1942,9 @@ export function GraphView(
   }, []);
 
   return (
-    <div className="flex flex-col gap-6">
+    // `h-full` only when bare: the canvas wrapper takes `flex-1`, which needs an ancestor with a
+    // height to divide. In page flow the board has its own fixed height and must NOT stretch.
+    <div className={`flex flex-col gap-6 ${bare ? "h-full" : ""}`}>
       {/* The fullscreen element (and its opaque ::backdrop) obscure every sibling in the
        *  document while active -- Escape would otherwise be the only way out, since the exit
        *  button would render behind the backdrop. shellRef therefore wraps the button row AND
@@ -1927,8 +1952,9 @@ export function GraphView(
       <div
         ref={shellRef}
         data-testid="graph-fullscreen-shell"
-        className={`flex flex-col gap-6 ${isFullscreen ? "h-screen bg-(--background)" : ""}`}
+        className={`flex flex-col gap-6 ${isFullscreen ? "h-screen bg-(--background)" : ""} ${bare ? "h-full" : ""}`}
       >
+        {bare ? null : (
         <div className="flex flex-wrap gap-2">
           {/* Which facet paints the board. Chips, not a <select>: this is the primary control on
            *  this view and the one thing a reader changes on purpose. */}
@@ -2135,7 +2161,9 @@ export function GraphView(
             </button>
           ) : null}
         </div>
+        )}
 
+        {bare ? null : (
         <div className="flex items-center gap-3">
           <input
             type="search"
@@ -2168,7 +2196,10 @@ export function GraphView(
             </button>
           ) : null}
         </div>
+        )}
 
+        {bare ? null : (
+        <>
         {/* What the colours mean. In the DOM rather than on the canvas: a canvas label's measured
          *  box does not scale with zoom the way the board does, so which labels collided -- and
          *  therefore where they got pushed -- was zoom-dependent.
@@ -2271,10 +2302,12 @@ export function GraphView(
             </span>
           ) : null}
         </div>
+        </>
+        )}
 
         <div
           className={`relative rounded-(--radius) border border-(--separator) overflow-hidden ${
-            isFullscreen ? "flex-1 min-h-0" : "h-[380px] sm:h-[520px]"
+            isFullscreen || bare ? "flex-1 min-h-0" : "h-[380px] sm:h-[520px]"
           }`}
         >
           <canvas
@@ -2343,6 +2376,13 @@ export function GraphView(
           *  everything, reads as the least synergistic card in the deck, when what the tool
           *  actually knows about it is nothing. The caption and the spotlight contradicted each
           *  other and the caption was the confident one. */}
+        {/* THE GESTURE HALF IS DESKTOP INSTRUCTION and the bare surface drops the whole line
+          *  (roadmap R1, finding G): on a phone "scroll" is what a thumb does to the page, and here
+          *  it pans -- the phone judge read the sentence as telling them to do a thing that
+          *  demonstrably does not work, and nearly skipped the useful half stapled to it. The ego
+          *  view says what the geometry means in its own sheet, where 13 labelled discs make the
+          *  claim checkable rather than asserted. */}
+        {bare ? null : (
         <p className="text-(--muted) text-sm">
           {spotlightUnread ? (
             <>
@@ -2357,6 +2397,7 @@ export function GraphView(
             </>
           )}
         </p>
+        )}
       </div>
     </div>
   );
