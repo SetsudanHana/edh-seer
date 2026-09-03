@@ -8,7 +8,17 @@ export {
 export { parseDecklistText } from "./decklist.js";
 export { parseDecklistSections } from "./sections.js";
 export { detectCommanders } from "./commander.js";
-export { parseMoxfieldId, fetchMoxfieldDeck } from "./moxfield.js";
+export {
+  parseMoxfieldId,
+  fetchMoxfieldDeck,
+  moxfieldDeckToSections,
+  type DeckSections,
+} from "./moxfield.js";
+export {
+  parseArchidektId,
+  fetchArchidektDeck,
+  archidektDeckToSections,
+} from "./archidekt.js";
 export { normalizeName } from "./names.js";
 export { toCardDoc, docToCard, type CardDoc, type ComboDoc } from "./docs.js";
 export { normalizeScryfallCard, NON_GAMEPLAY_LAYOUTS, type ScryfallCard, type NormalizedCard, type CardFace, type RelatedPart } from "./scryfall.js";
