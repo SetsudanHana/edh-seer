@@ -482,32 +482,40 @@ test("an expanded synergy group caps its pair list", () => {
   expect(screen.getByText(/\+4 more/)).toBeInTheDocument();
 });
 
-/** R2 STOPGAP (2026-09-02): THE COLUMN HEADER IS NOT STICKY ON A PHONE, BECAUSE IT CANNOT BE.
+/** R2, FIXED 2026-09-03: THE HEADER IS STICKY AT EVERY WIDTH, BECAUSE NOTHING SCROLLS AROUND IT.
  *
- *  Measured at 390px on the live page: the table's wrapper is `overflow-x-auto` below `sm`, which
- *  makes it a SCROLL CONTAINER -- and CSS forces `overflow-y` to `auto` alongside `overflow-x`. A
- *  `position: sticky` `<thead>` inside a scroll container resolves `top` against THAT container, not
- *  the viewport, and the container's own top already sits at the sticky page header's bottom. So
- *  `top: var(--report-header-h)` landed a SECOND time -- container top 95 plus 95 put the thead at
- *  190 -- and it painted a 48px band across row 1, where 3 of 8 sample points down that row returned
- *  a `TH` from `elementFromPoint`. At 1440, where `sm:overflow-x-visible` stops the wrapper being a
- *  scrollport, the thead sat at 49 against a `--report-header-h` of 49: exact.
+ *  It shipped `static sm:sticky` on 2026-09-02 as a stopgap. The table's wrapper was
+ *  `overflow-x-auto` below `sm`, which makes it a SCROLL CONTAINER -- CSS forces `overflow-y` to
+ *  `auto` alongside `overflow-x` -- and a sticky `<thead>` inside one resolves `top` against THAT
+ *  container, not the viewport. The container's own top already sat at the page header's bottom, so
+ *  `top: var(--report-header-h)` landed a SECOND time: container top 95 plus 95 put the thead at
+ *  190, painting a 48px band across row 1, with 3 of 8 sample points down that row returning a `TH`
+ *  from `elementFromPoint`. Turning the sticky off cost what S7 built it for -- on a phone the
+ *  column labels scrolled away.
  *
- *  NO OFFSET VALUE FIXES IT -- sticky cannot reach the viewport from inside that scroller at all, so
- *  a re-tuned constant would be the same bug again, which is the trap S7's own fix fell into. This
- *  turns the sticky OFF where it cannot work rather than pretending it does. The real fix takes the
- *  header out of the scroller and belongs to R1's mobile round (roadmap R2).
+ *  THE SCROLL CONTAINER IS WHAT LEFT. No `overflow-x` ancestor at any width, so `top` resolves
+ *  against the viewport everywhere and the offset is applied once. Two things hold that: the table
+ *  is `table-fixed` (so a nowrap cell cannot push its column past the container) and no `min-w-*`
+ *  demands a width the container has not got.
  *
  *  A class assertion, because jsdom cannot measure a sticky offset. The pixels are in the roadmap. */
-test("the column header is sticky only where sticky can reach the viewport", () => {
+test("the column header is sticky at every width, with the offset applied once", () => {
   const { container } = render(<CardList cards={SAMPLE.report.cards} />);
   const thead = container.querySelector("thead")!;
-  expect(thead.className).toContain("static");
-  expect(thead.className).toContain("sm:sticky");
-  // And the offset rides the same breakpoint: an offset applied below `sm` is the double-application
-  // this stopgap exists to remove.
-  expect(thead.className).toContain("sm:top-[var(--report-header-h,0px)]");
-  expect(thead.className).not.toMatch(/(^|\s)top-\[/);
+  expect(thead.className).toContain("sticky");
+  expect(thead.className).toContain("top-[var(--report-header-h,0px)]");
+  // The stopgap's own shape must not come back: a breakpoint on the sticky means a width where the
+  // labels scroll away again.
+  expect(thead.className).not.toContain("static");
+  expect(thead.className).not.toContain("sm:sticky");
+  // AND NOTHING AROUND IT MAY BE A SCROLLPORT, which is the whole mechanism: an `overflow-x` on any
+  // ancestor puts the offset back on the container and the header back over row 1.
+  const table = container.querySelector("table")!;
+  expect(table.className).toContain("table-fixed");
+  expect(table.className).not.toMatch(/min-w-/);
+  for (let el = table.parentElement; el && el !== document.body; el = el.parentElement) {
+    expect(el.className, el.className).not.toMatch(/overflow-x-(auto|scroll)/);
+  }
 });
 
 test("CardList sorts by synergyRating descending, then name", () => {
@@ -529,12 +537,21 @@ test("Cards tab shows what a card costs and when you can cast it, beside the rat
   }] as any;
   render(<CardList cards={cards} />);
   const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Breach"))!;
+  // THE COST RENDERS TWICE, ONCE PER HALF OF THE BREAKPOINT (R2): as its own column from `sm`, and
+  // inside the card cell below it, where that column is `hidden`. Exactly one is displayed at any
+  // width; jsdom applies no media queries, so both are in the DOM here and each is asserted by name.
+  const cost = row.querySelector('[data-cell="cost"]')!;
+  const inline = row.querySelector('[data-cell="cost-inline"]')!;
+  expect(cost.closest("td")!.className).toContain("hidden sm:table-cell");
+  expect(inline.className).toContain("sm:hidden");
   // Pins the actual symbol set "{5}{B}{B}" decodes to, not merely "some image rendered" -- a
   // dropped pip (e.g. only one black symbol) would still pass a bare non-empty check.
-  expect(within(row).getAllByAltText(/mana/i).map((img) => img.getAttribute("alt"))).toEqual([
-    "5 generic mana", "one black mana", "one black mana",
-  ]);
-  expect(within(row).getByText("22% – 40% by T7")).toBeInTheDocument();
+  for (const where of [cost, inline]) {
+    expect([...where.querySelectorAll("img")].map((img) => img.getAttribute("alt"))).toEqual([
+      "5 generic mana", "one black mana", "one black mana",
+    ]);
+    expect(where.textContent).toContain("22% – 40% by T7");
+  }
   expect(within(row).getByText("3.7")).toBeInTheDocument();
 });
 
@@ -580,7 +597,11 @@ test("a land or an unpriced cost renders a dash, never a zero", () => {
   const cards = [{ name: "Island", synergyRating: 0, topPartners: [] }] as any;
   render(<CardList cards={cards} />);
   const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Island"))!;
-  expect(within(row).getByText("—")).toBeInTheDocument();
+  // Both halves of the breakpoint pair refuse the same way -- a dash that only one of them printed
+  // would be a 0% waiting to happen at the other width.
+  for (const sel of ['[data-cell="cost"]', '[data-cell="cost-inline"]']) {
+    expect(row.querySelector(sel)!.textContent).toContain("—");
+  }
   expect(within(row).queryByText(/%/)).not.toBeInTheDocument();
 });
 
@@ -590,7 +611,10 @@ test("Cards tab shows a card's functional role as a readable chip", () => {
   // Scope to the data row — with only one category present, "Ramp" also renders as
   // the filter chip, so an unscoped query would find two matches.
   const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Sol Ring"))!;
-  expect(within(row).getByText("Ramp")).toBeInTheDocument();
+  // And twice WITHIN the row since R2: the roles column from `lg`, the same chips inside the card
+  // cell below it. Both are asserted, because a chip missing from one is a role invisible at a width.
+  expect(row.querySelector('[data-cell="roles"]')!.textContent).toContain("Ramp");
+  expect(row.querySelector('[data-cell="roles-inline"]')!.textContent).toContain("Ramp");
 });
 
 test("Cards tab filters by functional category matching the Overview vocabulary", () => {
