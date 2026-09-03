@@ -2506,6 +2506,14 @@ describe("the cards the engine could not read", () => {
   // where showing one was the whole point. Measured in the browser on the 90-of-100 deck: pressing
   // the chip takes the camera from z 0.857 to 0.433 and all ten land inside the panel.
   test("pressing it frames the cards it is spotlighting", () => {
+    // A REAL CANVAS SIZE. This assertion used to pass on a camera CLAMPED to the 0.15 scale floor:
+    // jsdom reports 0x0, so the fit's `min(dim.w/w, dim.h/h)` collapsed and the only reason camZ
+    // differed from 1 was the clamp. `fitToView` now declines to frame against a canvas that has no
+    // size, so the test has to give it one -- and then it exercises the framing this comment's own
+    // browser numbers (z 0.857 -> 0.433) describe, rather than the floor.
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue(
+      { width: 1374, height: 518, top: 0, left: 0, right: 1374, bottom: 518, x: 0, y: 0, toJSON: () => ({}) } as DOMRect,
+    );
     const { canvas, tick } = frames(unreadGraph(), undefined, reportWith(["Nest of Scarabs"]));
     // Park the board first, so the settle fits are spent and the only thing that can move the
     // camera afterwards is the chip.
@@ -2629,6 +2637,40 @@ describe("bare chrome", () => {
     cleanup();
     const full = framesWith(graph, {});
     expect(full.canvas.__graphProbe!().map((n) => n.id)).not.toContain("Some Land");
+  });
+
+  // THE TWO-FIT SCHEDULE IS TUNED FOR A CLOUD THAT SPREADS, AND A SMALL GRAPH CONTRACTS. The early
+  // fit fires at FIT_SETTLE_ALPHA on the assumption the layout only grows after it, which holds for
+  // 73 nodes. Measured on an 8-node ego graph at 390: the cloud was ~847 world units at that fit and
+  // 150 by the time it settled, so the camera framed something that no longer existed -- 11.5px
+  // discs for the ~6 seconds until the PARK_ALPHA refit corrected them to 65.3px. A reader's first
+  // impression was the broken one. Bare mode reframes while the layout is still moving; at <= 40
+  // nodes a camera write per tick costs nothing.
+  test("bare mode keeps reframing while the layout moves, instead of framing it once too early", () => {
+    // A REAL CANVAS SIZE, because a fit is now guarded on having one -- see MIN_FIT_PX. jsdom
+    // reports 0x0, which is the same shape as the unlaid-out canvas the guard exists for.
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue(
+      { width: 388, height: 747, top: 0, left: 0, right: 388, bottom: 747, x: 0, y: 0, toJSON: () => ({}) } as DOMRect,
+    );
+    const bareView = framesWith(SAMPLE.graph, { chrome: "bare" });
+    bareView.tick(400);
+    expect(bareView.canvas.__graphProbe!().fits).toBeGreaterThan(2);
+    cleanup();
+    // The whole-deck board keeps its two-fit schedule exactly: one at settle, one at park.
+    const full = framesWith(SAMPLE.graph, {});
+    full.tick(400);
+    expect(full.canvas.__graphProbe!().fits).toBeLessThanOrEqual(2);
+    vi.restoreAllMocks();
+  });
+
+  // The guard itself, stated as its own fact: jsdom's 0x0 canvas is the same shape as a canvas the
+  // browser has not laid out, and framing against it clamps to the scale floor rather than failing.
+  test("no canvas size means no camera move, rather than one clamped to the zoom floor", () => {
+    const bareView = framesWith(SAMPLE.graph, { chrome: "bare" });
+    bareView.tick(50);
+    // `fits` counts ATTEMPTS, so it still climbs; what must not happen is the camera taking a value
+    // computed from a canvas that has no size. Unguarded this clamped to the 0.15 scale floor.
+    expect(bareView.canvas.__graphProbe!().camZ).toBe(1);
   });
 
   test("onNodeTap replaces selection, so a tap can re-root instead of opening a panel", () => {
