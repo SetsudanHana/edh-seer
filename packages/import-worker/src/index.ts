@@ -22,12 +22,12 @@ const ID_PATTERN: Record<string, RegExp> = {
  *  reader's refresh gesture: they edited the deck upstream and expect to see it. */
 const CACHE_SECONDS = 60;
 
-function json(body: unknown, status: number, cacheSeconds = 0): Response {
+function json(body: unknown, status: number, cacheControl = "no-store"): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": cacheSeconds > 0 ? `public, max-age=${cacheSeconds}` : "no-store",
+      "Cache-Control": cacheControl,
     },
   });
 }
@@ -51,7 +51,8 @@ export default {
     const cacheKey = new Request(`https://import.invalid/${source}/${id}`, { method: "GET" });
     const cache = caches.default;
     const hit = await cache.match(cacheKey);
-    if (hit) return hit;
+    // Re-headered on the way out: the stored copy carries the edge TTL, the reader gets `no-store`.
+    if (hit) return json(await hit.json(), 200);
 
     // ONE INSTANCE, and no location hint. A hint, or a name that varies per colo, would give us one
     // pacer per datacentre — which is exactly the thing the pacer exists to prevent.
@@ -66,10 +67,22 @@ export default {
 
     if (outcome.kind === "rejected") return json({ error: outcome.message }, outcome.status);
 
-    const ok = json(outcome.sections, 200, CACHE_SECONDS);
+    // TWO COPIES OF THE SAME BODY, WITH DIFFERENT HEADERS ON PURPOSE.
+    //
+    // The edge copy carries `max-age=60`, which is what the Cache API reads to set its TTL. The copy
+    // the reader gets carries `no-store`, because a browser has no business holding an import at all:
+    // the client turns it into decklist text immediately and throws the URL away, and from then on the
+    // share link carries the deck. Nothing ever re-reads this response.
+    //
+    // It also removes a dependency on a zone setting. Browser Cache TTL overrides the origin whenever
+    // the origin's value is LOWER -- so a 4-hour zone default rewrote our `max-age=60` to 14400 and a
+    // reader who edited their deck upstream would be served a four-hour-old list by their own browser,
+    // with nothing to indicate it. `no-store` has no number to raise.
+    //
     // Only a successful read is cached. Caching a 404 would keep telling a reader their deck is
     // private for a minute after they made it public.
-    ctx.waitUntil(cache.put(cacheKey, ok.clone()));
-    return ok;
+    const cached = json(outcome.sections, 200, `public, max-age=${CACHE_SECONDS}`);
+    ctx.waitUntil(cache.put(cacheKey, cached));
+    return json(outcome.sections, 200);
   },
 };

@@ -39,14 +39,29 @@ const get = (path: string) => new Request(`https://edhseer.cards${path}`);
 
 const DECK = { kind: "deck", sections: { commanders: ["Teysa Karlov"], deck: ["Sol Ring"] } };
 
-test("serves a deck and caches it for 60 seconds", async () => {
+test("the reader gets no-store while the EDGE copy carries the 60s TTL", async () => {
   const { env, stubFetch } = envWith(DECK);
   const res = await worker.fetch(get("/api/import/archidekt/26039486"), env, ctx);
   expect(res.status).toBe(200);
   expect(await res.json()).toEqual(DECK.sections);
-  expect(res.headers.get("Cache-Control")).toBe("public, max-age=60");
-  expect(stubFetch).toHaveBeenCalledTimes(1);
+  // A zone-wide Browser Cache TTL raises any max-age LOWER than its own, so `max-age=60` became four
+  // hours in production. `no-store` has no number to raise, and a browser has no reason to hold an
+  // import: the client converts it to decklist text and the share link carries the deck from then on.
+  expect(res.headers.get("Cache-Control")).toBe("no-store");
+
   expect(cache.put).toHaveBeenCalledTimes(1);
+  const stored = cache.put.mock.calls[0][1] as Response;
+  expect(stored.headers.get("Cache-Control")).toBe("public, max-age=60");
+  expect(await stored.clone().json()).toEqual(DECK.sections);
+  expect(stubFetch).toHaveBeenCalledTimes(1);
+});
+
+test("a cache HIT is re-headered on the way out, not handed over as stored", async () => {
+  const { env } = envWith(DECK);
+  await worker.fetch(get("/api/import/archidekt/26039486"), env, ctx);
+  const second = await worker.fetch(get("/api/import/archidekt/26039486"), env, ctx);
+  expect(second.headers.get("Cache-Control")).toBe("no-store");
+  expect(await second.json()).toEqual(DECK.sections);
 });
 
 test("a cache hit never reaches the pacer", async () => {
