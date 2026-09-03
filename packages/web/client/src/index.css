@@ -157,8 +157,16 @@ h3 {
   letter-spacing: -0.01em;
 }
 
-/* EVERY DISCLOSURE IN THE APP IS 24px TALL, because at 390px they measured 326x17 and WCAG 2.2
-   SC 2.5.8 wants 24x24. Eight of them render on the Overview alone -- `Explain`'s "what this
+/* EVERY DISCLOSURE IN THE APP IS 44px TALL. It was 24 -- WCAG 2.2 SC 2.5.8's floor, cleared by a
+   pixel -- and a phone judge shown the finished report said of them *"I would risk it, but I would
+   expect to miss once"*, then reported having never seen inside any of the fourteen on the page.
+   Breadth, anchor, focused, tuned: the whole vocabulary the same judge could not understand sits
+   behind these, which makes them PRIMARY by the house rule (24 is the minimum, 44 the
+   recommendation for a primary action) rather than incidental. Meeting a floor is not the same as
+   being usable, and this is the measured difference between the two.
+
+   ORIGINAL NOTE, KEPT, because the reasoning still holds and only the number moved: at 390px they
+   measured 326x17 and WCAG 2.2 SC 2.5.8 wants 24x24. Eight of them render on the Overview alone -- `Explain`'s "what this
    measures", the benchmark caveats, "the whole distribution" -- and they are the report's only
    mechanism for saying what a number means, so on a phone the least reachable control was the one
    that explains the page.
@@ -172,8 +180,8 @@ h3 {
    static label is how the report's vertical rhythm drifts. `display` is left alone on purpose --
    a `flex` summary drops its own disclosure marker in Chrome, which needs `list-item`. */
 summary {
-  min-block-size: 1.5rem;
-  padding-block: 0.25rem;
+  min-block-size: 2.75rem;
+  padding-block: 0.75rem;
 }
 
 /* Both rules below live in `components` -- a layer Tailwind's own `@layer theme, base, components,
