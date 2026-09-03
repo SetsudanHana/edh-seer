@@ -32,8 +32,10 @@ test("a two-faced card is one square, not two", () => {
     [],
   );
   expect(squares).toHaveLength(1);
-  // The FRONT face decides the type, the same basis `typeSlices` counts it under.
-  expect(squares[0]!.type).toBe("sorcery");
+  // AND IT IS A LAND SQUARE, because its other face is a land (roadmap T3, applying the
+  // 2026-08-31 ruling). The grid exists to be COUNTED, so it has to agree with the census line
+  // above it, which counts this card as one of the deck's 38 lands rather than one of its spells.
+  expect(squares[0]!.type).toBeNull();
 });
 
 // THREE STATES, AND THEY ARE DIFFERENT FAILURES. Unresolved never reached the corpus; unread

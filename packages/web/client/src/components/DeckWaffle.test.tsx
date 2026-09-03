@@ -139,23 +139,35 @@ test("says nothing about lands when the count is unknown", () => {
   expect(screen.queryByText(/lands/)).toBeNull();
 });
 
-/** The reconciliation `docs/engineering-log/2026-08-31.md` established for `BuildBenchmarks`
- *  ("34 (38 with MDFCs)"): a modal DFC with a land back is a land to the mana model and a spell to
- *  this census, on purpose, and the gap is named rather than left for a reader to sum. */
-test("prints the MDFC reconciliation beside the land count", () => {
-  render(<DeckWaffle squares={SOME} slices={SLICES} lands={34} mdfc={4} />);
-  // T3, OWNER 2026-09-02, READING THE S16 VERSION: *"(38 counting MDFC backs, which is the figure
-  // the mana model uses)" is over-explained. "38 with MDFCs" is enough.* S16's job survives the cut
-  // — the bigger number is still ON this line, which is what stopped a reader meeting 34 here and
-  // 38 in every later chapter with nothing to bridge them. What goes is the clause naming WHOSE
-  // figure it is, and the owner ruled that after reading the long form on the deployed site.
-  expect(screen.getByTestId("type-total").closest("p")!).toHaveTextContent("34 lands (38 with MDFCs)");
-  expect(screen.getByTestId("type-total").closest("p")!).not.toHaveTextContent("mana model uses");
-  // AND IT MUST STILL BE ABLE TO WRAP. The clause carried `whitespace-nowrap` back when it was this
-  // short, and it was the page's only 390px overflow once S16 grew it (`scrollWidth` 526 against a
-  // 390 client width, on the example deck). It is short again — the class does NOT come back, since
-  // nothing measured it as needed and cause 4 in the narrow-width rules is exactly this span.
-  expect(screen.getByText(/with MDFCs/).className).not.toMatch(/nowrap/);
+/** ONE LAND COUNT, AND NO RECONCILIATION LEFT TO PRINT (roadmap T3, 2026-09-03).
+ *
+ *  This line reconciled two figures twice -- "(38 counting MDFC backs, which is the figure the mana
+ *  model uses)" (S16), then "(38 with MDFCs)" (T3) -- and four phone-judge runs still failed "how
+ *  many lands does this deck have", the fourth naming it as the moment it would put the tool down.
+ *  `landCount` now counts a card with a land back as a land, so the figure here IS the figure the
+ *  rest of the report prints and the second number is gone. What is left is COMPOSITION: 4 of
+ *  these 38 are cards you may cast instead, the same clause `BuildBenchmarks` prints beside its
+ *  own copy of the count.
+ *
+ *  THE ABSENCE ASSERTION IS THE POINT -- it fails against the version this replaced. */
+test("prints one land count, with the modal DFCs named as composition", () => {
+  render(<DeckWaffle squares={SOME} slices={SLICES} lands={38} mdfc={4} />);
+  const line = screen.getByTestId("type-total").closest("p")!;
+  expect(line).toHaveTextContent("38 lands (4 modal DFCs)");
+  expect(line).not.toHaveTextContent("with MDFCs");
+  expect(line).not.toHaveTextContent("mana model uses");
+  // AND IT MUST STILL BE ABLE TO WRAP. The clause carried `whitespace-nowrap` back when it was
+  // this short, and it was the page's only 390px overflow once S16 grew it (`scrollWidth` 526
+  // against a 390 client width, on the example deck). The class does NOT come back: nothing
+  // measured it as needed and cause 4 in the narrow-width rules is exactly this span.
+  expect(screen.getByText(/modal DFCs/).className).not.toMatch(/nowrap/);
+});
+
+// SINGULAR WHEN THERE IS ONE. A "(1 modal DFCs)" is the kind of detail a reader trusts a tool less
+// for, and this line is the first number on the report.
+test("says one modal DFC in the singular", () => {
+  render(<DeckWaffle squares={SOME} slices={SLICES} lands={35} mdfc={1} />);
+  expect(screen.getByTestId("type-total").closest("p")!).toHaveTextContent("35 lands (1 modal DFC)");
 });
 
 test("says nothing about MDFCs when there are none, rather than a parenthetical about nothing", () => {

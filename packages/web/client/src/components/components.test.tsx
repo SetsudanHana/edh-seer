@@ -152,25 +152,20 @@ test("DeckIdentity prints the share with the two numbers it is a ratio of", () =
   expect(screen.getByText("25 of 63 nonlands work with it (40%, concentrated)")).toBeInTheDocument();
 });
 
-/** AND IT SAYS WHY ITS DENOMINATOR IS NOT THE ONE ON THE GLANCE LINE.
+/** AND IT NO LONGER EXPLAINS A GAP THAT IS GONE (roadmap T3, 2026-09-03).
  *
- *  The census counts FRONT faces, where a modal DFC is a spell (66 on the example deck); this
- *  counts any card whose type line says land as a land, per the 2026-08-31 ruling (62). Both are
- *  right and the gap is exactly the MDFCs -- 66 - 62 = 4 = `lands.mdfc`, verified in the browser.
- *  The phone judge hit it on all three runs and never got past guessing: *"the denominator changed
- *  from 66 to 62 with nothing in between saying why. I can guess the 4 MDFCs moved sides, but
- *  that's me inventing it."*
+ *  This line carried "(4 modal DFCs count as lands)" because the census above it counted FRONT
+ *  faces, where a modal DFC is a spell (66 on the example deck), while `cohesion.nonlandCount`
+ *  applies the 2026-08-31 ruling that an MDFC is a land (62). `landCount`/`typeSlices` now apply
+ *  the same ruling, so the census says 62 too -- and an explanation of a difference the reader can
+ *  no longer see is a third wording of one fact. The composition is stated ONCE, by `DeckWaffle`,
+ *  on the line that prints the land count.
  *
- *  ABSENT AT ZERO, because a note about no modal DFCs is a note about nothing -- the same rule the
- *  pinned-set counter and the bracket pips already follow. */
-test("the theme share names the modal DFCs its denominator does not count, and only when there are any", () => {
-  const { rerender } = render(<DeckIdentity cohesion={cohesionDraw} mdfc={4} />);
-  expect(
-    screen.getByText("25 of 63 nonlands (4 modal DFCs count as lands) work with it (40%, concentrated)"),
-  ).toBeInTheDocument();
-
-  rerender(<DeckIdentity cohesion={cohesionDraw} mdfc={0} />);
+ *  ASSERTS THE ABSENCE, which is what makes this fail against the version it replaced. */
+test("the theme share states its denominator and nothing about modal DFCs", () => {
+  render(<DeckIdentity cohesion={cohesionDraw} />);
   expect(screen.getByText("25 of 63 nonlands work with it (40%, concentrated)")).toBeInTheDocument();
+  expect(screen.queryByText(/modal DFC/)).not.toBeInTheDocument();
 });
 
 /** A COLOUR ROW NAMES ITS UNIT, AND STATES ITS TURN ONCE.

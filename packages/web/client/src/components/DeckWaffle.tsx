@@ -102,9 +102,10 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
 
   return (
     <div className="flex flex-col gap-3 min-w-0">
-      {/* THE CENSUS LINE, CARRIED OVER FROM `TypeBar` VERBATIM. It is checked data -- the
-        *  MDFC reconciliation below is the 2026-08-31 ruling, and its `whitespace-nowrap` is a
-        *  measured 390px fix -- so it moved rather than being rewritten. */}
+      {/* THE CENSUS LINE, CARRIED OVER FROM `TypeBar`. Both of its figures come from ONE traversal
+        *  of the graph nodes (`typeSlices` and `landCount`), which is what makes "nonland + land ==
+        *  the deck" true by construction; the MDFC clause below is composition, not the
+        *  reconciliation of two counts it used to be (roadmap T3). */}
       <p className="flex items-baseline gap-2 flex-wrap">
         <span data-testid="type-total" className="text-2xl font-semibold stat-num text-(--foreground)">
           {total}
@@ -114,27 +115,29 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
           <>
             {" · "}
             <span className="stat-num text-(--foreground)">{lands}</span>{" lands"}
-            {/* THE OTHER FRAME. This line counts FRONT FACES, where a modal DFC is a spell; the
-              *  mana model counts it as a land, per the 2026-08-31 ruling. Both are right, and the
-              *  report used to print "34" here and "38" everywhere after it with nothing to bridge
-              *  them — a beginner read 34 first and said "if I had gone by the first number I'd have
-              *  thought I was two UNDER", and the phone judge said 34 out loud at a table and had to
-              *  take it back. THE BRIDGE IS THE BIGGER NUMBER BEING ON THIS LINE, and it stays.
+            {/* ONE LAND COUNT, AND THIS IS NOT THE PLACE IT IS RECONCILED ANY MORE (roadmap T3,
+              *  2026-09-03). This line printed the FRONT-FACE census -- 34 on the example deck --
+              *  while `deckMath.lands.actual`, `report.landCount`, the build row and the
+              *  opening-hand chart all printed 38, and the gap was papered over first with
+              *  "(38 counting MDFC backs, which is the figure the mana model uses)" (S16) and then
+              *  with the shorter "(38 with MDFCs)" (T3). FOUR PHONE-JUDGE RUNS FAILED "how many
+              *  lands does this deck have" ANYWAY, and the fourth named this as the moment it would
+              *  stop reading. `landCount` now counts a land back as a land, so the number here IS
+              *  the number everywhere else and there is no second figure to bridge.
               *
-              *  S16 also spelled out WHOSE figure 38 is; the owner read that on the deployed site
-              *  and called it over-explained (roadmap T3), naming this exact wording as enough. The
-              *  attribution is what the cut costs — recorded here rather than argued, because the
-              *  ruling was made with the long version in front of them.
+              *  WHAT SURVIVES IS THE COMPOSITION, not a reconciliation: a reader looking at 38
+              *  should know 4 of them are cards they may cast instead, which is the same clause
+              *  `BuildBenchmarks` prints beside its own copy of this figure. It is why the grid
+              *  below paints four spells as land squares.
               *
-              *  STILL NOT `whitespace-nowrap`. The class fit at this length and was the page's only
-              *  390px overflow once S16 grew the clause -- one unbreakable 200px+ run, report
+              *  STILL NOT `whitespace-nowrap`. The class fit at the short length and was the page's
+              *  only 390px overflow once S16 grew the clause -- one unbreakable 200px+ run, report
               *  scrolling sideways, `documentElement.scrollWidth` 526 against a 390 client width on
               *  the example deck. Cause 4 in the narrow-width rules: a nowrap span has no upper
-              *  bound. Nothing has measured it as needed at this length either, so it does not
-              *  come back. */}
+              *  bound. */}
             {mdfc !== undefined && mdfc > 0 ? (
-              <>{" "}<span>
-                (<span className="stat-num text-(--foreground)">{lands + mdfc}</span> with MDFCs)
+              <>{" "}<span className="text-xs">
+                ({mdfc} modal {mdfc === 1 ? "DFC" : "DFCs"})
               </span></>
             ) : null}
           </>

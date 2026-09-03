@@ -186,7 +186,6 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
             commanderCast={report.deckMath?.castability.commanders}
             manaAvailability={report.manaAvailability}
             coverage={report.coverage}
-            mdfc={report.deckMath?.lands.mdfc}
           />
           {/* THE TWO SCORES, ONCE (roadmap S15, owner call 2026-09-02). `HeadlineScores`' tiles
             *  used to sit directly under these dials printing the same two figures a third time,

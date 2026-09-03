@@ -1,13 +1,14 @@
 import type { DeckReport, GraphNode } from "../types.js";
-import { TYPE_ORDER, primaryType } from "./deck-shape.js";
+import { TYPE_ORDER, primaryType, landBackCards } from "./deck-shape.js";
 import { isUnread } from "./unread.js";
 
 /** One square of the deck waffle: one COPY of one physical card. */
 export interface WaffleSquare {
   /** The physical card. Repeated across a card's copies -- the key is the index, not this. */
   name: string;
-  /** Its composition type, or `null` for a land. Lands are not a slice (`primaryType`): they are
-   *  ~38% of a Commander deck and would drown the composition question, and the owner already
+  /** Its composition type, or `null` for a land -- INCLUDING a card whose other face is a land,
+   *  per `landBackCards` and the 2026-08-31 ruling. Lands are not a slice (`primaryType`): they
+   *  are ~38% of a Commander deck and would drown the composition question, and the owner already
    *  ruled that deck statistics run over nonlands. The waffle keeps that ruling by giving a land a
    *  neutral square instead of adding a seventh hue to `TYPE_SEGMENT_HUE`. */
   type: string | null;
@@ -47,9 +48,14 @@ export function waffleSquares(
   // back face's id is `face:<n>:<name>`, and its own `face` field is what marks it.
   const physical = nodes.filter((n) => n.face === undefined && n.isToken !== true);
 
+  // A CARD WITH A LAND BACK GETS A LAND SQUARE (roadmap T3, and it is the same rule the census
+  // line above the grid now counts by). The grid's whole claim is that a doubter can COUNT it, so
+  // a census reading "38 lands" over a grid holding 34 grey squares would be the contradiction
+  // moved rather than fixed -- the number and the picture have to say the same thing.
+  const landBacks = landBackCards(nodes);
   const cardSquares = physical.map((n) => ({
     name: n.cardName ?? n.id,
-    type: primaryType(n.types),
+    type: n.cardName !== undefined && landBacks.has(n.cardName) ? null : primaryType(n.types),
     copies: n.copies ?? 1,
   }));
 

@@ -124,14 +124,16 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
         </p>
       </div>
 
-      {/* THE TYPE-LINE LAND COUNT, NOT `report.landCount` OR `deckMath.lands.actual` (Critical
-        *  finding, whole-branch review, 2026-09-01 -- this regresses the exact defect diagnosed in
-        *  `docs/engineering-log/2026-08-31.md`). Both of those are MDFC-INCLUSIVE: a modal DFC with
-        *  a land back prices as a land there, on purpose, per the 2026-08-31 ruling. `landCount`
-        *  reads the FRONT face, where the same card is a spell -- the same basis `typeSlices` counts
-        *  it under -- so nonland + land sums to the deck by construction. `deckMath.lands.mdfc` is
-        *  the gap between the two counts, named rather than silently summed: `TypeBar` prints it as
-        *  "(N with MDFCs)" beside the census figure -- `DeckWaffle` carries that line now, verbatim.
+      {/* COMPUTED FROM THE NODES, NOT READ OFF `report.landCount` (Critical finding, whole-branch
+        *  review, 2026-09-01, and the defect diagnosed in `docs/engineering-log/2026-08-31.md`):
+        *  both halves of a census that claims "nonland + land == the deck" have to come from ONE
+        *  traversal, or the page prints two figures from two different rules and sums them.
+        *  `typeSlices` and `landCount` are that traversal.
+        *  IT NO LONGER DISAGREES WITH THE REPORT (roadmap T3, 2026-09-03). `landCount` counts a
+        *  card with a land back as a land, so this figure EQUALS `deckMath.lands.actual` and
+        *  `report.landCount` rather than trailing them by `deckMath.lands.mdfc` -- one land count
+        *  on every surface, after four phone-judge runs failed "how many lands does this deck
+        *  have" against 34 here and 38 everywhere after it. `mdfc` below is composition now.
         *
         *  AND THE BAR BECAME A WAFFLE (roadmap S3). The stacked bar's own argument was that a
         *  shared baseline beats a ring because creature 21 against enchantment 19 is 11 degrees of
