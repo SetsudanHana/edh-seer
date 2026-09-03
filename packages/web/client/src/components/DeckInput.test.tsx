@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { DeckInput } from "./DeckInput.js";
 
 const props = {
@@ -60,4 +60,31 @@ test("pressing the primary action runs the analysis once", async () => {
   render(<DeckInput {...props} value="1 Sol Ring" onAnalyze={() => { runs += 1; }} />);
   await userEvent.click(screen.getByRole("button", { name: "Analyze deck" }));
   expect(runs).toBe(1);
+});
+
+
+/** A WAY OUT OF A REPORT (owner, 2026-09-03: "we do not have way to clear and start from the
+ *  beginning").
+ *
+ *  The collapsed bar had `Copy link`, `Copy decklist`, `Edit` and `Re-analyze` -- and every one of
+ *  them keeps the deck you are already looking at. `Edit` reopens THIS list; the deck is in the
+ *  hash, so a reload brings it back too. There was no door.
+ *
+ *  It sits beside `Edit` rather than at the far end: the two are the same question -- change this
+ *  deck, or leave it -- and the primary action stays last. */
+test("the collapsed bar offers a way back to an empty page, and it is not the edit button", async () => {
+  const onStartOver = vi.fn();
+  const onEdit = vi.fn();
+  render(<DeckInput {...props} value={"1 Sol Ring"} collapsed onEdit={onEdit} onStartOver={onStartOver} />);
+  await userEvent.click(screen.getByRole("button", { name: /start over/i }));
+  expect(onStartOver).toHaveBeenCalledTimes(1);
+  // The two are distinct doors, and wiring one to the other is the defect this pins.
+  expect(onEdit).not.toHaveBeenCalled();
+});
+
+/** AND IT IS NOT OFFERED WHERE THERE IS NOTHING TO CLEAR. The expanded form IS the empty page --
+ *  a "start over" on it either does nothing or throws away a paste in progress. */
+test("the open form does not offer to start over", () => {
+  render(<DeckInput {...props} onStartOver={() => {}} />);
+  expect(screen.queryByRole("button", { name: /start over/i })).toBeNull();
 });
