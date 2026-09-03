@@ -152,6 +152,45 @@ test("DeckIdentity prints the share with the two numbers it is a ratio of", () =
   expect(screen.getByText("25 of 63 nonlands work with it (40%, concentrated)")).toBeInTheDocument();
 });
 
+/** AND IT SAYS WHY ITS DENOMINATOR IS NOT THE ONE ON THE GLANCE LINE.
+ *
+ *  The census counts FRONT faces, where a modal DFC is a spell (66 on the example deck); this
+ *  counts any card whose type line says land as a land, per the 2026-08-31 ruling (62). Both are
+ *  right and the gap is exactly the MDFCs -- 66 - 62 = 4 = `lands.mdfc`, verified in the browser.
+ *  The phone judge hit it on all three runs and never got past guessing: *"the denominator changed
+ *  from 66 to 62 with nothing in between saying why. I can guess the 4 MDFCs moved sides, but
+ *  that's me inventing it."*
+ *
+ *  ABSENT AT ZERO, because a note about no modal DFCs is a note about nothing -- the same rule the
+ *  pinned-set counter and the bracket pips already follow. */
+test("the theme share names the modal DFCs its denominator does not count, and only when there are any", () => {
+  const { rerender } = render(<DeckIdentity cohesion={cohesionDraw} mdfc={4} />);
+  expect(
+    screen.getByText("25 of 63 nonlands (4 modal DFCs count as lands) work with it (40%, concentrated)"),
+  ).toBeInTheDocument();
+
+  rerender(<DeckIdentity cohesion={cohesionDraw} mdfc={0} />);
+  expect(screen.getByText("25 of 63 nonlands work with it (40%, concentrated)")).toBeInTheDocument();
+});
+
+/** A COLOUR ROW NAMES ITS UNIT, AND STATES ITS TURN ONCE.
+ *
+ *  It read `13 of 22 by turn 2` beside `1 card wants {U}{U} on turn 2` -- a bare pair of numbers
+ *  with no noun, and a turn printed twice in one row. The phone judge's third run stopped there:
+ *  *"the moment I hit `12 of 17 by turn 1` and realised the noun for 17 lives behind a closed grey
+ *  line below all three rows"*. It was the only finding in that run that cost a whole section
+ *  rather than seconds. `worst.turn` is the same value on both halves, so the unit is free. */
+test("a colour row names its sources and prints its turn exactly once", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  const rows = screen.getAllByLabelText(/sources.*by turn/i);
+  expect(rows.length).toBeGreaterThan(0);
+  for (const row of rows) {
+    const text = (row.textContent ?? "").replace(/\s+/g, " ");
+    expect(text, "the row never says what its numbers count").toMatch(/\d+ of \d+ sources/);
+    expect(text.match(/turn/g) ?? [], `the turn is said twice in "${text}"`).toHaveLength(1);
+  }
+});
+
 // A10's rule: a SPECIFIC primary measures itself, so the family share is the difference between
 // "this deck is broken" and "five Daleks inside a creature deck".
 test("DeckIdentity shows the wider family only when it differs from the primary", () => {
@@ -2221,7 +2260,9 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
     <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={overcommitted} />,
   );
   expect(screen.getByText(/want 64 sources from 34 lands, which no\s+deck can hold/)).toBeInTheDocument();
-  expect(screen.getByText("12 of 22 by turn 2")).toHaveClass("text-(--muted)");
+  // THE ROW NAMES ITS UNIT NOW and drops the turn its left half already prints once -- the phone
+  // judge's third run gave up on this row for want of a noun. Same element, same muted tone.
+  expect(screen.getByText("12 of 22 sources")).toHaveClass("text-(--muted)");
   unmount();
 
   // ONE ROW CANNOT OVERCOMMIT TOGETHER WITH ITSELF. Found in a live browser on `draguns`: one
@@ -2234,13 +2275,13 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
   };
   const solo = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={single} />);
   expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
-  expect(screen.getByText("28 of 37 by turn 3")).toBeInTheDocument();
+  expect(screen.getByText("28 of 37 sources")).toBeInTheDocument();
   solo.unmount();
 
   // And it still fires where the gap IS closable: one colour, wanting fewer sources than the deck
   // holds lands.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByText("13 of 21 by turn 3")).toHaveClass("text-(--warning)");
+  expect(screen.getByText("13 of 21 sources")).toHaveClass("text-(--warning)");
   expect(screen.queryByText(/which no\s+deck can hold/)).not.toBeInTheDocument();
 });
 

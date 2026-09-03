@@ -996,7 +996,7 @@ function DeckMathRows({
               // The deadline is the CARD's own mana value, not a chosen turn: a 3-drop wants its
               // pips on turn 3. That is why this row can name a turn without guessing one.
               const label = c.worst
-                ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${c.worst.cards} card${c.worst.cards === 1 ? "" : "s"} want ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
+                ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${c.worst.cards} card${c.worst.cards === 1 ? " wants" : "s want"} ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
                 : `${c.color}, ${c.supplied} sources, enough for every card that costs it`;
               return (
                 <li key={c.color} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" aria-label={label}>
@@ -1042,12 +1042,22 @@ function DeckMathRows({
                           : "text-(--warning)"
                     }`}
                   >
-                    {/* THE SHORTFALL IS AGAINST WHAT COULD BE PRODUCING BY THAT TURN, never the
+                    {/* THE NUMBERS HAVE A NOUN NOW, and they lost a turn they were saying twice.
+                      *  This read `13 of 22 by turn 2` beside `1 card wants {U}{U} on turn 2`, and
+                      *  the phone judge's third run stopped at exactly that: *"the moment I hit `12
+                      *  of 17 by turn 1` and realised the noun for 17 lives behind a closed grey
+                      *  line below all three rows. That's the point where the screen has stopped
+                      *  talking to me in words."* It was the one finding that cost a whole section
+                      *  rather than seconds. `worst.turn` is the same value the left half already
+                      *  prints, so naming the unit costs nothing: the turn is stated once, on the
+                      *  line that says whose deadline it is.
+                      *
+                      *  THE SHORTFALL IS AGAINST WHAT COULD BE PRODUCING BY THAT TURN, never the
                       *  deck total: printing `supplied` here said "25 of 17 sources" on a row the
                       *  model had just called SHORT, and it read as a contradiction because it was
                       *  one. `supplied` counts two-mana rocks and lands that enter tapped on the
                       *  very turn the demand is due. */}
-                    {c.worst ? `${c.worst.available} of ${c.worst.required} by turn ${c.worst.turn}` : `${c.supplied} sources, enough`}
+                    {c.worst ? `${c.worst.available} of ${c.worst.required} sources` : `${c.supplied} sources, enough`}
                   </span>
                 </li>
               );

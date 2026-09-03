@@ -33,6 +33,7 @@ export function DeckIdentity({
   commanderCast,
   manaAvailability,
   coverage,
+  mdfc,
 }: {
   cohesion: DeckReport["cohesion"];
   colorIdentity?: string[];
@@ -49,6 +50,10 @@ export function DeckIdentity({
    *  on the deck rather than a statement about what the engine could see. Same correction as
    *  `HeadlineScores`, and the same split: this is the synergy half, so it declines to grade. */
   coverage?: DeckReport["coverage"];
+  /** How many cards this deck counts as BOTH -- the gap between this component's nonland
+   *  denominator and the census line's. Absent on a deck with none, where the two agree and a note
+   *  about zero modal DFCs would be noise. */
+  mdfc?: number;
 }) {
   if (!cohesion) return null;
   // The share is printed beside the label because the label alone is a bucket boundary: "focused"
@@ -61,8 +66,19 @@ export function DeckIdentity({
   // numbers 0.47 is the ratio of were computed and thrown away. It also collided with the 0-5 deck
   // score's own "Focused" band one panel over; `cohesionLabel` no longer uses that word.
   const pct = Math.round(cohesion.score * 100);
+  // WHY THIS DENOMINATOR IS NOT THE ONE ON THE GLANCE LINE. That line counts FRONT faces, where a
+  // modal DFC is a spell (66 on the example deck); this one excludes any card whose type line says
+  // land at all, which is the 2026-08-31 ruling that an MDFC is a land (62). Both are right and the
+  // gap is exactly the MDFCs -- verified on the example deck, 66 - 62 = 4 = `lands.mdfc`.
+  //
+  // The phone judge hit this on all three runs and never got past guessing: *"the denominator
+  // changed from 66 to 62 with nothing in between saying why. I can guess the 4 MDFCs moved sides,
+  // but that's me inventing it."* The bridge is stated HERE rather than on the glance line because
+  // that line's wording is an owner ruling (roadmap T3, "(N with MDFCs)" called enough after a
+  // longer version was cut), and growing it again would reverse a call rather than add one.
+  const mdfcNote = mdfc && mdfc > 0 ? ` (${mdfc} modal DFCs count as lands)` : "";
   const share = cohesion.nonlandCount > 0
-    ? `${cohesion.onThemeCount} of ${cohesion.nonlandCount} nonlands work with it (${pct}%, ${cohesion.label})`
+    ? `${cohesion.onThemeCount} of ${cohesion.nonlandCount} nonlands${mdfcNote} work with it (${pct}%, ${cohesion.label})`
     : `${pct}% of nonlands (${cohesion.label})`;
   const focus = coverage ? `${share}, over the ${coverage.derived} cards read` : share;
   // The WIDER FAMILY, and only when it differs — the same rule the CLI settled on (A10). A specific
