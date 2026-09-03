@@ -1,0 +1,20 @@
+name = "edhseer-import"
+main = "src/index.ts"
+compatibility_date = "2026-09-03"
+
+# Same origin as the site, so the client fetches a relative path and there is no CORS to configure
+# and nothing to allowlist.
+routes = [{ pattern = "edhseer.cards/api/import/*", zone_name = "edhseer.cards" }]
+
+[[durable_objects.bindings]]
+name = "PACER"
+class_name = "Pacer"
+
+# SQLITE-BACKED, because that is the only Durable Object class available on the Workers Free plan.
+# The Pacer stores nothing; the migration exists to satisfy the platform, not to keep state.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Pacer"]
+
+# MOXFIELD_UA is a SECRET and is deliberately absent from this file.
+#   npx wrangler secret put MOXFIELD_UA

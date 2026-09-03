@@ -1,0 +1,20 @@
+{
+  "name": "@edh-seer/import-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@edh-seer/data": "*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250801.0",
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.0",
+    "wrangler": "^4.0.0"
+  }
+}

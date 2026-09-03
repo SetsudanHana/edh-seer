@@ -41,3 +41,6 @@ static-out/
 *_files/
 /*.png
 /*.jpg
+
+# Wrangler local dev state (miniflare caches, local DO/KV/D1 sqlite).
+.wrangler/

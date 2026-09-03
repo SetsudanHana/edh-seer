@@ -8,11 +8,11 @@ export {
 export { parseDecklistText } from "./decklist.js";
 export { parseDecklistSections } from "./sections.js";
 export { detectCommanders } from "./commander.js";
+export { DeckFetchError, type DeckSections, type FetchFn } from "./deck-source.js";
 export {
   parseMoxfieldId,
   fetchMoxfieldDeck,
   moxfieldDeckToSections,
-  type DeckSections,
 } from "./moxfield.js";
 export {
   parseArchidektId,
