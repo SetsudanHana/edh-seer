@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  // "lib" MUST stay DOM-free. Unset, TypeScript loads lib.es2022.full, whose DOM `CacheStorage`
+  // shadows the Workers one and has no `default` -- so `caches.default` stops typechecking.
+  "compilerOptions": {
+    "types": [
+      "@cloudflare/workers-types"
+    ],
+    "noEmit": true,
+    "lib": [
+      "ES2022"
+    ]
+  },
+  "include": [
+    "src"
+  ]
+}

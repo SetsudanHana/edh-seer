@@ -10,7 +10,10 @@
     "./docs": "./src/docs.ts",
     "./commander": "./src/commander.ts",
     "./decklist": "./src/decklist.ts",
-    "./sections": "./src/sections.ts"
+    "./sections": "./src/sections.ts",
+    "./deck-source": "./src/deck-source.ts",
+    "./moxfield": "./src/moxfield.ts",
+    "./archidekt": "./src/archidekt.ts"
   },
   "scripts": {
     "test": "vitest run",

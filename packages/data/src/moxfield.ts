@@ -1,12 +1,7 @@
-/** A deck split the way `parseDecklistSections` splits a pasted list, so an imported deck and a
- *  pasted one are the same thing by the time anything downstream sees them. Names repeat by
- *  quantity: four Forests are four entries. */
-export interface DeckSections {
-  commanders: string[];
-  deck: string[];
-}
+import { DeckFetchError } from "./deck-source.js";
 
-export type FetchFn = typeof fetch;
+export type { DeckSections, FetchFn } from "./deck-source.js";
+import type { DeckSections, FetchFn } from "./deck-source.js";
 
 interface MoxfieldEntry {
   quantity?: unknown;
@@ -64,9 +59,9 @@ export function moxfieldDeckToSections(json: unknown): DeckSections {
   };
 }
 
-/** `userAgent` has no default ON PURPOSE. Moxfield issues a per-consumer User-Agent and the terms
- *  attached to ours are a named, permanent ban if we misbehave; a default would let a fresh clone
- *  fire anonymous traffic under our IP and burn a string we cannot get back. Absent = refuse. */
+/** `userAgent` has no default ON PURPOSE. Moxfield issues the string per consumer and it cannot be
+ *  rotated, so a default would let a fresh clone send unidentified traffic under it. Absent = refuse
+ *  before opening a socket. */
 export async function fetchMoxfieldDeck(
   id: string,
   userAgent: string,
@@ -79,6 +74,6 @@ export async function fetchMoxfieldDeck(
     `https://api2.moxfield.com/v3/decks/all/${encodeURIComponent(id)}`,
     { headers: { "User-Agent": userAgent, Accept: "application/json" } },
   );
-  if (!res.ok) throw new Error(`Moxfield fetch failed: ${res.status}`);
+  if (!res.ok) throw new DeckFetchError("Moxfield", res.status);
   return moxfieldDeckToSections(await res.json());
 }

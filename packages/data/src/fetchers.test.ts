@@ -3,6 +3,7 @@ import { expect, test, vi } from "vitest";
 import { fetchOracleCards } from "./scryfall.js";
 import { streamVariants } from "./spellbook.js";
 import { parseMoxfieldId, fetchMoxfieldDeck, moxfieldDeckToSections } from "./moxfield.js";
+import { DeckFetchError } from "./deck-source.js";
 import {
   parseArchidektId,
   fetchArchidektDeck,
@@ -264,4 +265,19 @@ test("parseArchidektId extracts the integer id from a URL or a bare id", () => {
   expect(parseArchidektId("https://archidekt.com/decks/26039486/teysa-karlov")).toBe("26039486");
   expect(parseArchidektId("26039486")).toBe("26039486");
   expect(parseArchidektId("https://archidekt.com/decks/abc")).toBeNull();
+});
+
+test("a non-ok status arrives as a DeckFetchError that says whether upstream is in distress", async () => {
+  const notFound = vi.fn().mockResolvedValue(jsonResponse({}, false, 404));
+  const err = await fetchMoxfieldDeck("abc", "ua", notFound as unknown as typeof fetch).catch((e) => e);
+  expect(err).toBeInstanceOf(DeckFetchError);
+  // A private or deleted deck is the reader's mistake. Treating it as upstream distress would
+  // silence the importer for everyone for a minute.
+  expect(err.status).toBe(404);
+  expect(err.isUpstreamDistress).toBe(false);
+
+  const limited = vi.fn().mockResolvedValue(jsonResponse({}, false, 429));
+  const stop = await fetchArchidektDeck("1", limited as unknown as typeof fetch).catch((e) => e);
+  expect(stop).toBeInstanceOf(DeckFetchError);
+  expect(stop.isUpstreamDistress).toBe(true);
 });

@@ -1,4 +1,5 @@
-import type { DeckSections, FetchFn } from "./moxfield.js";
+import { DeckFetchError } from "./deck-source.js";
+import type { DeckSections, FetchFn } from "./deck-source.js";
 
 /** Archidekt asks for no key and no whitelisted agent, but it does ask for one request a second,
  *  so identify ourselves anyway: an anonymous client is the one they cannot warn before blocking. */
@@ -81,6 +82,6 @@ export async function fetchArchidektDeck(
   const res = await fetchImpl(`https://archidekt.com/api/decks/${encodeURIComponent(id)}/`, {
     headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
   });
-  if (!res.ok) throw new Error(`Archidekt fetch failed: ${res.status}`);
+  if (!res.ok) throw new DeckFetchError("Archidekt", res.status);
   return archidektDeckToSections(await res.json());
 }
