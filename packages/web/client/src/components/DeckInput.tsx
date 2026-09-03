@@ -10,6 +10,7 @@ export function DeckInput({
   loading,
   collapsed,
   onEdit,
+  onStartOver,
   shareLink,
 }: {
   commanders: string;
@@ -20,6 +21,8 @@ export function DeckInput({
   loading: boolean;
   collapsed?: boolean;
   onEdit?: () => void;
+  /** Clears the remembered deck and returns to the empty analyser. See the button below. */
+  onStartOver?: () => void;
   /** The URL that reproduces the analysis on screen, or null when the deck is too long to encode.
    *  Absent rather than disabled in that case: a button that cannot do its job is worse than none. */
   shareLink?: string | null;
@@ -73,6 +76,15 @@ export function DeckInput({
           ) : null}
           <button type="button" onClick={() => void onCopy()} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">{copied ? "Copied" : "Copy decklist"}</button>
           <button type="button" onClick={onEdit} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">Edit</button>
+          {/* A WAY BACK TO AN EMPTY PAGE (owner, 2026-09-03: "we do not have way to clear and start
+            *  from the beginning"). `Edit` reopens THIS deck; nothing offered a different one, and
+            *  the report has no other exit -- the deck is in the hash, so even reloading brings it
+            *  back.
+            *  NO CONFIRMATION, BECAUSE IT IS NOT LOST: this navigates, so Back returns to the
+            *  address the report was at and the hash rebuilds it. `Copy decklist` is also two
+            *  buttons to the left. A modal on an action the browser already undoes is a modal that
+            *  teaches readers to dismiss modals. */}
+          <button type="button" onClick={onStartOver} className="eyebrow px-3 py-1 rounded-(--radius) border border-(--separator)">Start over</button>
           {/* IN-FLIGHT IS NOT DISABLED (components.md rule 8): a button waiting on the analysis
             *  keeps its full strength and says so, because dimming it reads as "you cannot do this"
             *  rather than "this is happening". It still refuses a second submit -- `aria-busy` is

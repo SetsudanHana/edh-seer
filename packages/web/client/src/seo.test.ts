@@ -88,6 +88,35 @@ test("the sitemap lists the pages that exist and nothing that does not", () => {
   }
 });
 
+/** THE WORDMARK GOES HOME, ON BOTH PAGES (owner, 2026-09-03).
+ *
+ *  `how-it-works` has had `<a class="brand" href="/">` since it was written; the home page's header
+ *  was a bare `h1` with no link in it. So from `/cards`, `/graph` or `/combos` the one affordance
+ *  every reader on the web already believes in did nothing, and the app has no other way back to
+ *  the analyser.
+ *
+ *  THE `h1` HAS TO SURVIVE THE CHANGE. It is the page's one heading and the one a crawler reads
+ *  without running the bundle -- the test below asserts exactly that -- so the anchor wraps the
+ *  mark and the word INSIDE the heading rather than replacing it. Parsed, not pattern-matched, for
+ *  the same reason the JS-free text test is. */
+test("the wordmark links home on every page, and stays the page's h1", () => {
+  const page = readFileSync(join(CLIENT, "how-it-works", "index.html"), "utf8");
+  for (const [name, markup] of [["index", html], ["how-it-works", page]] as const) {
+    const doc = new DOMParser().parseFromString(markup, "text/html");
+    const brand = doc.querySelector(".brand")!;
+    expect(brand, `${name} has a wordmark`).not.toBeNull();
+    const link = brand.matches("a") ? brand : brand.querySelector("a");
+    expect(link?.getAttribute("href"), `${name}'s wordmark points home`).toBe("/");
+    // The name itself is inside the link, not merely near it: a linked icon with the word outside
+    // it is a 24px target for the thing the reader is aiming at.
+    expect(link?.textContent?.replace(/\s+/g, ""), `${name}'s wordmark reads edhseer`).toContain("edhseer");
+  }
+  // And the home page's heading is still the heading.
+  const home = new DOMParser().parseFromString(html, "text/html");
+  expect(home.querySelectorAll("h1")).toHaveLength(1);
+  expect(home.querySelector("h1")!.classList.contains("brand")).toBe(true);
+});
+
 /** WHAT AN LLM CRAWLER GETS TOLD, in the one file the convention has agreed on (llmstxt.org, and
  *  the file is `llms.txt` — `llm.txt` is not the name anything looks for).
  *

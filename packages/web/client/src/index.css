@@ -689,6 +689,23 @@ summary {
   font-synthesis: none;
 }
 
+/* THE LINK INSIDE THE `h1` IS THE WORDMARK, so it inherits everything and adds nothing: an
+   underline or a colour of its own would make the site's own name look like body copy with a link
+   in it. `inline-flex` and the same gap keep the mark beside the word exactly as they sat when the
+   heading held them directly. Focus is the exception -- a keyboard reader has to see it, and the
+   ring is the page's own. */
+.brand-home {
+  display: inline-flex;
+  align-items: center;
+  gap: inherit;
+  color: inherit;
+  text-decoration: none;
+}
+/* Both pages hover the same: `how-it-works` makes `.brand` itself the anchor, the home page wraps
+   one inside its `h1`, and a wordmark that lights up on one page and not the other is two brands. */
+.brand-home:hover .brand-edh,
+a.brand:hover .brand-edh { color: var(--foreground); }
+
 .brand-mark { flex-shrink: 0; }
 .brand-edh { color: var(--muted); font-weight: 400; }
 .brand-seer { color: var(--foreground); font-weight: 700; }

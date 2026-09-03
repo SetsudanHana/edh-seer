@@ -6,7 +6,7 @@ import { InstallButton } from "./components/InstallButton.js";
 import { BrowserRouter } from "react-router";
 import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
-import { diffRuns, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
+import { clearLastRun, diffRuns, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
 import { decodeShare, encodeShare, payloadFromHash, shareUrl } from "./lib/share-link.js";
 
 export default function App() {
@@ -255,6 +255,14 @@ export default function App() {
         loading={loading}
         collapsed={!editing && !!data}
         onEdit={() => setEditing(true)}
+        // START OVER IS A NAVIGATION, NOT A STATE RESET, and that is the lazy half of the fix. The
+        // deck lives in `location.hash`, the report lives at `/cards`, `/graph` or `/combos`, and
+        // the paste box is refilled from `sessionStorage` on the next visit -- so unwinding this in
+        // state means clearing four things and getting the URL right by hand. `/` with no hash IS
+        // the empty app, so the store is cleared and the browser is asked for it.
+        // AND IT IS RECOVERABLE: `assign` leaves a history entry, so Back returns to the report's
+        // own address and the hash rebuilds it. That is why there is no confirmation.
+        onStartOver={() => { clearLastRun(); window.location.assign("/"); }}
         shareLink={link}
       />
       {firstVisit && (
