@@ -205,14 +205,24 @@ export function GraphView(
   /** Reveal the tokens nothing but their own maker relates to. Off by default: a deck that makes
    *  Clues nobody cares about would otherwise scatter disconnected discs across the board. The data
    *  carries them either way -- that isolation IS a deckbuilding signal, which is why this is a view
-   *  filter and not an omission upstream. */
-  const [showLoneTokens, setShowLoneTokens] = useState(false);
-  // LANDS ARE OFF BY DEFAULT, and it is the caption below that makes this a correctness fix rather
+   *  filter and not an omission upstream.
+   *
+   *  ON IN BARE MODE, AND THAT IS A CORRECTNESS FIX RATHER THAN A PREFERENCE. "Lone" means no partner
+   *  OTHER THAN ITS MAKER -- the right judgement across 73 nodes, and exactly backwards inside one
+   *  card's own context, where the token that card makes is the most relevant thing on screen. Found
+   *  on Shark Typhoon: the ego graph held 8 nodes, the board drew 7, and the one it dropped was
+   *  `token:Shark`. Worse than a miscount, because bare mode also hides the chip that says something
+   *  is hidden and the search's "+N hidden -- show" -- a silent wrong answer with its own detector
+   *  removed. Nothing is filtered on a surface the reader reached by naming one card. */
+  const [showLoneTokens, setShowLoneTokens] = useState(bare);
+  // ON IN BARE MODE, same reason as the tokens above: a land this card actually connects to is its
+  // context, and there is no chip on that surface to reveal it with.
+  // LANDS ARE OFF BY DEFAULT ON THE WHOLE-DECK BOARD, and it is the caption below that makes this a correctness fix rather
   // than a preference: "two cards sit close because they do something for each other". 37 of this
   // deck's 101 nodes are lands, nearly all of them edgeless, so a third of the board was a ring of
   // discs the sentence is false about — and the cluster the sentence IS about got the middle third
   // of the canvas to fit in.
-  const [showLands, setShowLands] = useState(false);
+  const [showLands, setShowLands] = useState(bare);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<

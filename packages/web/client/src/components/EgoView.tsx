@@ -57,6 +57,16 @@ export function EgoView(
 
   const partners = ego.nodes.length - 1;
   const edges = graph.edges.filter((e) => e.from === node.id || e.to === node.id);
+  /** EVERY distinct partner, both directions -- the same count `GraphList`'s row prints, which is
+   *  the number the reader has just been shown and tapped. The view draws at most
+   *  `FLOW_FANOUT_CAP` per direction, so the two differ on any hub, and the line below has to say
+   *  so: Shark Typhoon's row reads 43 and its view drew 7, with nothing on screen reconciling them
+   *  until the sheet was opened. Counted here rather than taken from `flow.truncated`, which is
+   *  per-direction EDGES ("all 42 are listed here" is the FED BY total alone) and would put a third
+   *  number on one card. */
+  const totalPartners = new Set(
+    edges.map((e) => (e.from === node.id ? e.to : e.from)),
+  ).size;
 
   return (
     <div className="flex flex-col h-[100svh]">
@@ -76,7 +86,9 @@ export function EgoView(
         title={node.label}
         subtitle={partners === 0
           ? "No synergy edges — nothing else in the deck connects to this card."
-          : `${partners} partner${partners === 1 ? "" : "s"} on screen. Tap one to centre on it.`}
+          : partners < totalPartners
+            ? `${partners} of ${totalPartners} partners — the strongest. Tap one to centre on it.`
+            : `${partners} partner${partners === 1 ? "" : "s"}. Tap one to centre on it.`}
         onBack={onBack}
       >
         <CardInspector

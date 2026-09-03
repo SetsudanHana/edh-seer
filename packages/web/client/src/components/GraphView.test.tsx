@@ -2598,6 +2598,39 @@ describe("bare chrome", () => {
     expect(shell.className).toMatch(/flex-1/);
   });
 
+  // THE FILTERS ARE A WHOLE-DECK JUDGEMENT AND THE EGO VIEW IS NOT A WHOLE DECK. A token counts as
+  // "lone" when it has no partner OTHER THAN ITS MAKER, which is the right call for a 73-node cloud
+  // -- a rim of edgeless Clues is noise -- and exactly backwards inside its maker's own context,
+  // where the token it makes is the most relevant thing on screen. Found on Shark Typhoon: its ego
+  // graph had 8 nodes, the board drew 7, and the one it dropped was `token:Shark`. With the chips
+  // gone in bare mode there was no count, no chip and no way to reveal it -- a silent wrong answer
+  // with its own detector removed.
+  test("bare mode hides nothing: a lone token its maker is the focus of still draws", () => {
+    const graph = graphOf(
+      [card({ id: "Maker" }), card({ id: "token:Shark", label: "Shark", isToken: true })],
+      [{ from: "Maker", to: "token:Shark", weight: 1, tags: ["token"], reasonTexts: ["makes it"] } as CardGraph["edges"][number]],
+    );
+    const report = { ...SAMPLE.report, tokenNodes: [{ name: "Shark", hasPartner: false }] } as typeof SAMPLE.report;
+    const lone = framesWith(graph, { chrome: "bare" }, report);
+    expect(lone.canvas.__graphProbe!().map((n) => n.id)).toContain("token:Shark");
+    cleanup();
+    // The whole-deck board still hides it, and still says so in a chip. Unchanged on purpose.
+    const full = framesWith(graph, {}, report);
+    expect(full.canvas.__graphProbe!().map((n) => n.id)).not.toContain("token:Shark");
+  });
+
+  test("bare mode draws a land partner too, for the same reason", () => {
+    const graph = graphOf(
+      [card({ id: "Maker" }), card({ id: "Some Land", types: ["land"] })],
+      [{ from: "Maker", to: "Some Land", weight: 1, tags: ["ramp"], reasonTexts: ["fetches it"] } as CardGraph["edges"][number]],
+    );
+    const bareView = framesWith(graph, { chrome: "bare" });
+    expect(bareView.canvas.__graphProbe!().map((n) => n.id)).toContain("Some Land");
+    cleanup();
+    const full = framesWith(graph, {});
+    expect(full.canvas.__graphProbe!().map((n) => n.id)).not.toContain("Some Land");
+  });
+
   test("onNodeTap replaces selection, so a tap can re-root instead of opening a panel", () => {
     const taps: (string | null)[] = [];
     // Through `framesWith`, not a bare `render`: `__graphProbe` is only attached once the layout
