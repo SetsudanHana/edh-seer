@@ -133,6 +133,37 @@ function SortButton({ label, active, onClick }: { label: string; active: boolean
 /** P(you can cast it) as the interval it is, and the interval is the PLAY POLICY: the low end holds
  *  up two mana before casting an accelerant, the high end spends everything on acceleration.
  *  Collapsed to a single figure when the two ends round the same, so a row never reads "31% - 31%". */
+/** THE ROLE CHIPS AND THE COST, AS ONE DEFINITION EACH (R2). Both render either as their own
+ *  column or, where the table is too narrow to hold that column, inside the card cell -- and two
+ *  copies of the same markup is how a fact starts being true in one place and stale in the other,
+ *  which this repo has now recorded three times. */
+function RoleChips({ roles, cell }: { roles: Category[]; cell: string }) {
+  return (
+    <span data-cell={cell} className="flex flex-wrap gap-1">
+      {roles.map((r) => (
+        <span key={r} className="eyebrow px-1.5 py-0.5 rounded-(--radius) border border-(--separator) text-(--muted)">
+          {CATEGORY_LABELS[r]}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** An em dash for a land or an unpriced cost -- a refusal must never render as 0%, which a reader
+ *  would take as "you cannot cast this". */
+function Cost({ card, cell, className }: { card: DeckReport["cards"][number]; cell: string; className?: string }) {
+  return (
+    <span data-cell={cell} className={className}>
+      <ManaSymbols cost={card.manaCost ?? ""} />
+      {card.castability ? (
+        <span className="text-xs text-(--muted) stat-num">
+          {castRange(card.castability)} by T{card.castability.turn}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 export const castRange = (c: { castable: { low: number; high: number } }): string =>
   policyBand(c.castable.low, c.castable.high);
 
@@ -317,13 +348,19 @@ export function CardList({ cards, artByName, coverage }: {
         // other panel — slid sideways under the thumb. The phone persona reported it as "the numbers
         // are off the right edge" (2026-08-27) and only a live measurement showed it was the entire
         // page rather than the table.
-        // THE SCROLL BOX EXISTS ONLY WHERE THE TABLE OVERFLOWS. `overflow-x: auto` makes this div a
-        // scroll container, and a `position: sticky` header inside a scroll container sticks to THAT
-        // box rather than the viewport — measured: the header sat 728px above the fold while
-        // "stuck". The horizontal scroll was only ever needed at phone widths (the table's
-        // `min-w-[46rem]` fits a desktop container), so the container stops existing above `sm` and
-        // the sticky header works where a 52-row scan actually happens.
-        <div className="overflow-x-auto sm:overflow-x-visible -mx-1 px-1">
+        // NO SCROLL BOX, AT ANY WIDTH (R2, 2026-09-03). It had one below `sm` and none above, and
+        // BOTH HALVES WERE BROKEN. `overflow-x: auto` makes a div a scroll container, and a sticky
+        // `<thead>` inside one resolves `top` against THAT box rather than the viewport, so the
+        // measured `--report-header-h` landed a second time and the column header painted 95px INTO
+        // the table. Above `sm` the box stopped existing and nothing replaced it: measured at 700px,
+        // the table was 1093px wide and `documentElement.scrollWidth` read 1125 against a 700 client
+        // width -- THE WHOLE REPORT slid sideways, which is the defect the scroll box was added to
+        // fix, reappearing one breakpoint up.
+        // SO THE TABLE FITS ITS CONTAINER INSTEAD, and then neither half is needed: `table-fixed`
+        // below, and the columns a phone cannot hold move INTO the card cell rather than off the
+        // right edge. With no overflow ancestor the sticky header resolves against the viewport
+        // again, at every width, which is what R2 asked for.
+        <div className="-mx-1 px-1">
         {/* THE CARD COLUMN GREW WITHOUT BOUND AND ITS CONTENT DID NOT. Every other column here is
           *  pinned (`w-10`, `w-56`, `w-32`, `w-20`), so the Card column absorbs the whole slack of a
           *  `w-full` table inside a container that is `xl:max-w-none` -- the viewport. Measured over
@@ -343,7 +380,7 @@ export function CardList({ cards, artByName, coverage }: {
           *
           *  The leftover width goes to the page margin rather than into the rows. Dead space outside
           *  a bounded table reads as layout; the same pixels inside every row read as a broken one. */}
-        <table className="w-full min-w-[46rem] text-sm border-collapse">
+        <table className="w-full table-fixed text-sm border-collapse">
           {/* STICKY, because scanning a 52-row table BY COLUMN is exactly what a tuner does and the
             *  labels used to scroll away — the brief's own sentence, "the precon player did not know
             *  what the last column was". The background is opaque or the rows show through as it
@@ -357,32 +394,36 @@ export function CardList({ cards, artByName, coverage }: {
             *  deleted rather than re-tuned, because a re-tuned constant is the same bug with a
             *  different number in it.
             *
-            *  AND IT IS STILL NOT STICKY ON A PHONE, because there it CANNOT BE (R2, measured
-            *  2026-09-02). This comment used to end "R2, fixed with S7" and R2 was not fixed: the
-            *  right value was being measured from the wrong thing. Below `sm` the wrapper below is
-            *  `overflow-x-auto`, which makes it a scroll container — CSS forces `overflow-y` to
-            *  `auto` alongside `overflow-x` — and a sticky `<thead>` inside a scroll container
+            *  AND IT IS STICKY AT EVERY WIDTH AGAIN (R2, fixed 2026-09-03 -- and this comment has
+            *  now claimed victory once before, so here is the measurement instead of the claim).
+            *  It shipped `static sm:sticky` on 2026-09-02 as a STOPGAP: below `sm` the wrapper was
+            *  `overflow-x-auto`, which makes it a scroll container -- CSS forces `overflow-y` to
+            *  `auto` alongside `overflow-x` -- and a sticky `<thead>` inside a scroll container
             *  resolves `top` against THAT container rather than the viewport. The container's top
-            *  already sits at the page header's bottom, so the offset landed twice: 95 + 95 put the
-            *  thead at 190 and it painted a 48px band across row 1, with 3 of 8 sample points down
-            *  that row returning a `TH` from `elementFromPoint`. At 1440 the wrapper is
-            *  `sm:overflow-x-visible`, not a scrollport, and the thead sat at 49 against a
-            *  `--report-header-h` of 49 — exact.
-            *
-            *  No offset value fixes it, so this turns the sticky off where it cannot work instead of
-            *  re-tuning a constant into the same bug a third time. STOPGAP: the real fix takes the
-            *  header out of the horizontal scroller and belongs to R1's mobile round. */}
-          <thead className="static sm:sticky sm:top-[var(--report-header-h,0px)] z-[5] bg-(--background)">
+            *  already sat at the page header's bottom, so the offset landed twice: 95 + 95 put the
+            *  thead at 190 and it painted a 48px band across row 1, 3 of 8 sample points down that
+            *  row returning a `TH` from `elementFromPoint`. No offset value could fix it, so the
+            *  sticky was turned OFF where it could not reach the viewport, and the cost was the
+            *  thing S7's sticky existed to prevent: on a phone the column labels scrolled away.
+            *  The scroll box is gone now (see the wrapper above), so there is no overflow ancestor
+            *  at any width and `top` resolves against the viewport everywhere. */}
+          <thead className="sticky top-[var(--report-header-h,0px)] z-[5] bg-(--background)">
             <tr className="border-b border-(--separator)">
-              <th className="eyebrow text-left font-normal py-2 pr-2 w-10">#</th>
+              {/* THE COLUMNS A NARROW TABLE CANNOT HOLD MOVE INTO THE CARD CELL, they do not move
+                *  off the right edge. Pinned widths are 40 + 224 + 128 + 80 = 472px, which is more
+                *  than the 334px this panel gets at 390 before the card column has anything at all
+                *  -- so the ordinal and the cost appear from `sm`, the roles from `lg` (at `sm` the
+                *  card column would be left 104px), and below each of those the same values render
+                *  inside the card cell instead. Nothing is dropped; it is re-laid. */}
+              <th className="eyebrow text-left font-normal py-2 pr-2 w-10 hidden sm:table-cell">#</th>
               <th className="eyebrow text-left font-normal py-2 pr-2">
                 <SortButton label="Card" active={sort === "name"} onClick={() => setSort("name")} />
               </th>
-              <th className="eyebrow text-left font-normal py-2 pr-2 w-56">Roles</th>
+              <th className="eyebrow text-left font-normal py-2 pr-2 w-56 hidden lg:table-cell">Roles</th>
               {/* COST BESIDE THE RATING, NEVER MULTIPLIED INTO IT. What a card does and what it
                 *  costs are two facts, and a reader weighing "is this 9-drop worth it" needs both
                 *  in view -- the same never-multiply ruling the castability axes already ship. */}
-              <th className="eyebrow text-right font-normal py-2 pr-2 w-32">
+              <th className="eyebrow text-right font-normal py-2 pr-2 w-32 hidden sm:table-cell">
                 <SortButton label="Cost" active={sort === "cost"} onClick={() => setSort("cost")} />
               </th>
               <th className="eyebrow text-right font-normal py-2 w-20">
@@ -410,7 +451,7 @@ export function CardList({ cards, artByName, coverage }: {
                       : ""
                   }`}
                 >
-                  <td className="py-2 pr-2 stat-num text-(--muted)">{String(i + 1).padStart(2, "0")}</td>
+                  <td className="py-2 pr-2 stat-num text-(--muted) hidden sm:table-cell">{String(i + 1).padStart(2, "0")}</td>
                   <td className="py-2 pr-2 min-w-0">
                     <span className="flex items-center gap-3 min-w-0">
                       <Thumb art={artByName?.get(c.name)} alt="" />
@@ -420,27 +461,20 @@ export function CardList({ cards, artByName, coverage }: {
                           *  reader, and this table is the surface the header's count travels to. */}
                         {isPinned(c.cardName ?? c.name) ? <span className="sr-only">pinned</span> : null}
                         {reason ? <span className="block text-xs text-(--muted) truncate">{reason}</span> : null}
+                        {/* WHERE THE COLUMN IS NOT (R2). Each of these appears exactly where its own
+                          *  `<td>` does not: the cost below `sm`, the roles below `lg`. */}
+                        <Cost card={c} cell="cost-inline" className="sm:hidden flex items-center gap-2 mt-0.5" />
+                        {roles.length > 0 ? (
+                          <span className="lg:hidden mt-1"><RoleChips roles={roles} cell="roles-inline" /></span>
+                        ) : null}
                       </span>
                     </span>
                   </td>
-                  <td className="py-2 pr-2">
-                    <span className="flex flex-wrap gap-1">
-                      {roles.map((r) => (
-                        <span key={r} className="eyebrow px-1.5 py-0.5 rounded-(--radius) border border-(--separator) text-(--muted)">
-                          {CATEGORY_LABELS[r]}
-                        </span>
-                      ))}
-                    </span>
+                  <td className="py-2 pr-2 hidden lg:table-cell">
+                    <RoleChips roles={roles} cell="roles" />
                   </td>
-                  <td className="py-2 pr-2 text-right">
-                    {/* An em dash for a land or an unpriced cost -- a refusal must never render as
-                      *  0%, which a reader would take as "you cannot cast this". */}
-                    <span className="block"><ManaSymbols cost={c.manaCost ?? ""} /></span>
-                    {c.castability ? (
-                      <span className="block text-xs text-(--muted) stat-num">
-                        {castRange(c.castability)} by T{c.castability.turn}
-                      </span>
-                    ) : null}
+                  <td className="py-2 pr-2 text-right hidden sm:table-cell">
+                    <Cost card={c} cell="cost" className="flex flex-col items-end" />
                   </td>
                   <td className="py-2 text-right stat-num text-(--accent)">
                     {c.synergyRating !== undefined ? c.synergyRating.toFixed(1) : "—"}
