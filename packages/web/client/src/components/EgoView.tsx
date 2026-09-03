@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { createPortal } from "react-dom";
 import type { ArtLoader } from "./art-loader.js";
 import type { CardGraph, DeckReport } from "../types.js";
 import { CardInspector } from "./CardInspector.js";
@@ -68,8 +69,20 @@ export function EgoView(
     edges.map((e) => (e.from === node.id ? e.to : e.from)),
   ).size;
 
-  return (
-    <div className="flex flex-col h-[100svh]">
+  // PORTALLED TO `document.body`, AND THAT IS NOT TIDINESS -- IT IS THE ONLY THING THAT MAKES
+  // `fixed` MEAN THE VIEWPORT HERE. `App` wraps the report in `.reveal`, which carries a transform,
+  // and a transformed ancestor becomes the containing block for every `position: fixed` descendant.
+  // Measured before the portal: the fixed root resolved to 326x114 -- its transformed ancestor's own
+  // box -- the canvas collapsed to 1px tall, the fit clamped to its 0.15 floor, and the discs drew
+  // at 4.2px. A class name alone could not have caught it, which is why the test asserts the parent.
+  return createPortal(
+    // FIXED, NOT `h-[100svh]` IN PAGE FLOW. The height was honoured and bought nothing: measured at
+    // 390, the view still began 451px down, under the shell's header, deck-input card and route
+    // tabs, so the canvas ran 452->1199 on an 844px screen and the page was 1856px tall. A surface
+    // whose whole justification is owning the viewport has to leave the flow to own it -- and doing
+    // so is also what makes the canvas's `touch-action: none` correct rather than a scroll trap,
+    // since there is no longer a page behind it that the reader was trying to scroll.
+    <div data-testid="ego-view" className="fixed inset-0 z-40 bg-(--background) flex flex-col">
       <div className="flex-1 min-h-0">
         <GraphView
           graph={ego}
@@ -104,6 +117,7 @@ export function EgoView(
           onTogglePin={() => togglePin(node.cardName ?? node.label)}
         />
       </CardSheet>
-    </div>
+    </div>,
+    document.body,
   );
 }
