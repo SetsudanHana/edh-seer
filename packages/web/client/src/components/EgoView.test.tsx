@@ -19,10 +19,12 @@ function loneGraph(): CardGraph {
 }
 
 test("draws the focus card's own graph, not the whole deck", () => {
-  const { container } = render(
+  render(
     <EgoView graph={SAMPLE.graph} report={SAMPLE.report} focusId="Krenko, Mob Boss" onFocus={() => {}} onBack={() => {}} />,
   );
-  expect(container.querySelector("canvas")).not.toBeNull();
+  // Queried off the portal root, not the render container: this surface deliberately lives outside
+  // the tree it was rendered from.
+  expect(screen.getByTestId("ego-view").querySelector("canvas")).not.toBeNull();
   // Bare chrome: the whole-deck controls are absent, which is what buys the viewport.
   expect(screen.queryByLabelText("Find a card")).toBeNull();
   expect(screen.getByText("Krenko, Mob Boss")).toBeInTheDocument();
@@ -59,10 +61,31 @@ test("a card with no partners says so rather than drawing an empty box", () => {
 });
 
 test("a focus that does not resolve renders nothing rather than an invented card", () => {
-  const { container } = render(
+  render(
     <EgoView graph={loneGraph()} report={SAMPLE.report} focusId="Not In This Deck" onFocus={() => {}} onBack={() => {}} />,
   );
-  expect(container.querySelector("canvas")).toBeNull();
+  expect(screen.queryByTestId("ego-view")).toBeNull();
+});
+
+// IT OWNS THE VIEWPORT OR IT IS NOT THE SURFACE THIS DESIGN DESCRIBED. Measured at 390 before this:
+// the view began 451px down the page, inside the shell's header, deck-input card and route tabs, so
+// the canvas ran 452->1199 on an 844px screen and the document was 1856px tall. `h-[100svh]` was
+// honoured and bought nothing, because the element it sized still sat in page flow.
+test("takes the whole viewport rather than a slot in the page", () => {
+  const { container } = render(
+    <EgoView graph={SAMPLE.graph} report={SAMPLE.report} focusId="Krenko, Mob Boss" onFocus={() => {}} onBack={() => {}} />,
+  );
+  const root = screen.getByTestId("ego-view");
+  // jsdom reports no layout, so the positioning contract is what gets pinned.
+  expect(root.className).toMatch(/\bfixed\b/);
+  expect(root.className).toMatch(/inset-0/);
+  // AND IT MUST ESCAPE THE TREE, which is the half a class name cannot express. `App` wraps the
+  // report in `.reveal`, which carries a TRANSFORM, and a transformed ancestor becomes the
+  // containing block for its `position: fixed` descendants. Measured: the fixed root resolved to
+  // 326x114 -- the size of that ancestor -- which collapsed the canvas to 1px tall and clamped the
+  // zoom to its 0.15 floor, drawing 4.2px discs.
+  expect(container.contains(root)).toBe(false);
+  expect(root.parentElement).toBe(document.body);
 });
 
 test("back leaves the view", async () => {
