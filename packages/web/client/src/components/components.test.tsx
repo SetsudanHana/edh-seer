@@ -14,7 +14,7 @@ import { CutList } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
 import { LegalityPanel } from "./LegalityPanel.js";
 import { ManaAvailability } from "./ManaAvailability.js";
-import { ReportShell } from "./ReportShell.js";
+import { REFERENCE_SURFACES, ReportShell } from "./ReportShell.js";
 import { DeckGauges } from "./DeckGauges.js";
 import { MemoryRouter } from "react-router";
 import { CHAPTERS } from "../lib/chapters.js";
@@ -2131,9 +2131,12 @@ test("the rail names six chapters and each one is a section on the page", () => 
 test("the rail's reference links route away from the scroll, unlike the chapter anchors", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
   const rail = screen.getByRole("navigation", { name: "Report chapters" });
-  for (const label of ["Graph", "Cards", "Combos"]) {
-    expect(within(rail).getByRole("link", { name: new RegExp(`^${label}`) }))
-      .toHaveAttribute("href", `/${label.toLowerCase()}`);
+  // DERIVED FROM THE TABLE THE RAIL RENDERS, not spelled out again. Written out, this test asserted
+  // `/graph` and friends and went red on its own when the surfaces moved under `/analysis` -- a
+  // second copy of a list that already exists in one place.
+  for (const surface of REFERENCE_SURFACES) {
+    expect(within(rail).getByRole("link", { name: new RegExp(`^${surface.label}`) }))
+      .toHaveAttribute("href", surface.path);
   }
   // ...and the chapters are not links at all, so the two kinds cannot be confused for each other.
   expect(within(rail).queryByRole("link", { name: "Mana" })).toBeNull();
