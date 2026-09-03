@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
@@ -19,7 +19,8 @@ import { ComboList } from "./ComboList.js";
  *  because the board cannot be used there at all. */
 const GraphView = lazy(() => import("./GraphView.js").then((m) => ({ default: m.GraphView })));
 import { GraphList } from "./GraphList.js";
-import { useIsNarrow } from "../lib/use-narrow.js";
+import { useBoardMode } from "../lib/use-board-mode.js";
+import { EgoView } from "./EgoView.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
@@ -47,9 +48,16 @@ export const SEED_CAP = 8;
 export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
   // THE CARDS THIS EDIT ADDED, LIT IN EVERY CHAPTER without the reader hunting for them.
   const seedPins = diff && diff.added.length > 0 && diff.added.length <= SEED_CAP ? diff.added : undefined;
-  // Under `sm`, the Graph surface ships the graph's DATA as a list instead of its LAYOUT as a
-  // canvas — see `GraphList` for why the board is the part that fails at that width.
-  const narrow = useIsNarrow();
+  // WHICH GRAPH SURFACE THIS DEVICE GETS (roadmap R1). Not a width: see `use-board-mode.ts` for why
+  // the pointer term is load-bearing and why 639px was a lucky guess. On a coarse pointer the
+  // Graph surface is the LIST, and the board is one tap from a row -- one card's local graph
+  // owning the viewport, rather than the whole-deck cloud at 14.7px a disc.
+  const boardMode = useBoardMode(data.graph?.nodes.length ?? 0);
+  /** The card whose local graph is open, or null for the list.
+   *  CEILING: component state, so it does not survive a reload and the browser back button leaves
+   *  the report rather than leaving this view -- the same cost S7 paid to make Graph a route.
+   *  Upgrade path is `/graph/:cardName`, which is also what a breadcrumb would need. */
+  const [focusId, setFocusId] = useState<string | null>(null);
   // Which cards the synergy engine could not read. Computed once here because BOTH graph surfaces
   // want it and only one of them (`GraphView`) is handed the report — see `lib/unread.ts` for why
   // the rule lives in one place.
@@ -133,8 +141,19 @@ export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunD
             path="graph"
             element={
               <Reference>
-                {narrow
-                  ? <GraphList graph={data.graph} unread={unread} />
+                {boardMode === "ego"
+                  ? (focusId
+                    ? (
+                      <EgoView
+                        graph={data.graph}
+                        report={data.report}
+                        focusId={focusId}
+                        onFocus={setFocusId}
+                        onBack={() => setFocusId(null)}
+                        artLoader={artLoaderRef.current}
+                      />
+                    )
+                    : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
                   : (
                     // A HEIGHT, NOT A SPINNER. The board is the tallest thing this app draws, and a
                     // fallback shorter than what replaces it is a layout shift on arrival -- the

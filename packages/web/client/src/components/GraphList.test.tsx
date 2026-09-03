@@ -7,10 +7,10 @@ import { SAMPLE } from "../fixtures.js";
 
 const graph = SAMPLE.graph;
 
-const renderList = () =>
+const renderList = (props: { onOpenBoard?: (id: string) => void } = {}) =>
   render(
     <CardDrawerProvider graph={graph}>
-      <GraphList graph={graph} />
+      <GraphList graph={graph} {...props} />
     </CardDrawerProvider>,
   );
 
@@ -30,8 +30,30 @@ test("GraphList ranks cards by how many partners they have, name breaking the ti
 
 test("GraphList states the shape of the graph it is standing in for", () => {
   renderList();
-  expect(screen.getByText(/2 cards, 1 synergies\./)).toBeInTheDocument();
-  expect(screen.getByText(/the board itself needs a wider screen/)).toBeInTheDocument();
+  expect(screen.getByText(/2 cards, 1 synergies/)).toBeInTheDocument();
+  // R1: the old clause said "the board itself needs a wider screen". It is false now -- the board
+  // is one tap from a row -- and it was the silent-substitution complaint in the first place.
+  expect(screen.queryByText(/needs a wider screen/)).toBeNull();
+});
+
+// THE LIST IS THE SEARCH STEP, AND IT HAS TO SAY THE BOARD EXISTS (roadmap R1). Without a way
+// through, this surface was a substitution nothing announced: the phone judge tapped GRAPH, got a
+// screen of chips and a list, and never learned a picture of their deck was reachable at all.
+test("GraphList offers the board on rows that have one, and nowhere else", async () => {
+  const user = userEvent.setup();
+  const opened: string[] = [];
+  renderList({ onOpenBoard: (id: string) => opened.push(id) });
+  const buttons = screen.getAllByRole("button", { name: /see what it connects to/i });
+  // Both fixture cards have a partner; a card with none would have a one-disc graph, which the
+  // sheet says in words instead.
+  expect(buttons).toHaveLength(2);
+  await user.click(buttons[0]!);
+  expect(opened).toHaveLength(1);
+});
+
+test("GraphList offers no board when there is none to offer", () => {
+  renderList();
+  expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
 });
 
 test("GraphList filters by name", async () => {
