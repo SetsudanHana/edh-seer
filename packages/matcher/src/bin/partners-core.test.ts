@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { eventKey, resolveSlugs, slugOf } from "./partners-core.js";
+import { countEvents, eventKey, resolveSlugs, slugOf, specificity } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
   expect(slugOf("Krenko, Mob Boss")).toBe("krenko-mob-boss");
@@ -57,4 +57,44 @@ test("an array-valued type is order-independent", () => {
   const b = eventKey({ verb: "cast", subject: { control: "you", token: null, type: ["sorcery", "instant"] } } as never);
   expect(a).toBe(b);
   expect(a).toBe("cast|instant,sorcery|-");
+});
+
+/** SPECIFICITY IS THE WHOLE RANKING. A rare event is a precise interaction; a universal one is
+ *  noise. The numbers here are the measured corpus frequencies, so this test would notice a scoring
+ *  change that reordered the two cases the design was argued from. */
+test("a rarer event scores higher than a common one", () => {
+  const freq = { "enters|creature|-": 1909, "enters|creature|goblin": 41 };
+  expect(specificity("enters|creature|goblin", freq))
+    .toBeGreaterThan(specificity("enters|creature|-", freq));
+});
+
+/** AN UNSEEN KEY SCORES AS ONE MEMBER, NOT AS MAXIMALLY RARE. `gen-theme-stats` recorded exactly
+ *  this trap: an absent tag scored `log(N+1)`, the maximum, so every tag the derived layer invented
+ *  after the artifact was built looked rarest and took the axis. One member is the floor. */
+test("an event the table has never seen scores as if it had one member", () => {
+  expect(specificity("never|seen|-", {})).toBe(specificity("x", { x: 1 }));
+});
+
+test("a key with one member outranks a key with a thousand", () => {
+  const freq = { rare: 1, common: 1000 };
+  expect(specificity("rare", freq)).toBeGreaterThan(specificity("common", freq));
+});
+
+test("counting is over distinct cards, both sides of the edge", () => {
+  const freq = countEvents([
+    { emits: ["enters|creature|-"], demands: [] },
+    { emits: ["enters|creature|-"], demands: ["dies|creature|-"] },
+  ]);
+  expect(freq["enters|creature|-"]).toBe(2);
+  expect(freq["dies|creature|-"]).toBe(1);
+});
+
+/** ONE CARD COUNTS ONCE PER KEY however many of its abilities touch that event. Krenko emits
+ *  `enters` from a single ability; a card with three token-making abilities is still one card that
+ *  supplies the event, and counting it three times would make the event look commoner than it is. */
+test("a card touching one key from several abilities counts once", () => {
+  const freq = countEvents([
+    { emits: ["enters|creature|-", "enters|creature|-"], demands: ["enters|creature|-"] },
+  ]);
+  expect(freq["enters|creature|-"]).toBe(1);
 });

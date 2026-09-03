@@ -74,3 +74,40 @@ export function eventKey(e: GameEvent): string {
     v === undefined ? "-" : Array.isArray(v) ? [...v].sort().join(",") : v;
   return `${e.verb}|${one(s.type)}|${one(s.subtype)}`;
 }
+
+export type EventFrequency = Record<string, number>;
+
+/** HOW MUCH ONE MATCHED EVENT IS WORTH.
+ *
+ *  Inverse log of how many cards in the corpus touch that event, so `enters|creature|goblin` (41
+ *  cards) outranks `enters|creature|-` (1,909) without any appeal to how often either card is
+ *  PLAYED. Popularity is not synergy: `cards.edhrecRank` exists, and is deliberately not consulted
+ *  here or anywhere downstream of it.
+ *
+ *  WHAT THIS DOES AND DOES NOT CLAIM. It ranks how PRECISELY two cards interact, not how good
+ *  either one is. A rare event can belong to a bad card, and the pages say so in those words rather
+ *  than presenting the list as a recommendation.
+ *
+ *  AN UNSEEN KEY SCORES AS EXACTLY ONE MEMBER. `gen-theme-stats` recorded the alternative as a real
+ *  defect: an absent tag scored `log(N+1)`, the maximum, so every tag the derived layer invented
+ *  after the artifact was built looked maximally rare and dominated its axis -- `lose-life:opp` was
+ *  absent, and an orzhov-spellslinger deck themed as "lose life". One member is the floor here, not
+ *  the ceiling. */
+export function specificity(key: string, freq: EventFrequency): number {
+  return 1 / Math.log((freq[key] ?? 1) + 1);
+}
+
+/** DISTINCT CARDS per event key, counting a card ONCE per key however many of its abilities touch
+ *  that event -- a card with three token-making abilities is still one card that supplies `enters`,
+ *  and counting it three times would make the event look commoner than it is, which moves every
+ *  score that key appears in.
+ *
+ *  Emits and demands are counted into the SAME table on purpose: specificity asks how crowded an
+ *  event is, and a card is part of that crowd whichever side of the edge it stands on. */
+export function countEvents(rows: Iterable<{ emits: string[]; demands: string[] }>): EventFrequency {
+  const out: EventFrequency = {};
+  for (const row of rows) {
+    for (const k of new Set([...row.emits, ...row.demands])) out[k] = (out[k] ?? 0) + 1;
+  }
+  return out;
+}
