@@ -2673,6 +2673,22 @@ describe("bare chrome", () => {
     expect(bareView.canvas.__graphProbe!().camZ).toBe(1);
   });
 
+  // TOUCH HAS NO HOVER, so the tooltip is dead weight on the one surface bare mode exists for -- and
+  // with a mouse it rendered anyway, clipped off the right edge of a 390px board (seen in a browser
+  // 2026-09-03). The design said hover is deleted at narrow width; this is that, finally done.
+  test("bare mode has no hover tooltip at all", () => {
+    const { canvas } = framesWith(SAMPLE.graph, { chrome: "bare" });
+    const node = canvas.__graphProbe!()[0];
+    fireEvent(canvas, new MouseEvent("pointermove", { clientX: node.x, clientY: node.y, bubbles: true }));
+    expect(screen.queryByText(/partners/)).toBeNull();
+    cleanup();
+    // The whole-deck board keeps its tooltip, unchanged.
+    const full = frames(SAMPLE.graph);
+    const n2 = full.canvas.__graphProbe!().find((n) => n.id === "Krenko, Mob Boss")!;
+    fireEvent(full.canvas, new MouseEvent("pointermove", { clientX: n2.x, clientY: n2.y, bubbles: true }));
+    expect(screen.getByText(/partners/)).toBeInTheDocument();
+  });
+
   test("onNodeTap replaces selection, so a tap can re-root instead of opening a panel", () => {
     const taps: (string | null)[] = [];
     // Through `framesWith`, not a bare `render`: `__graphProbe` is only attached once the layout

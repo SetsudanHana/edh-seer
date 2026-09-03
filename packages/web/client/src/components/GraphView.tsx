@@ -184,7 +184,7 @@ export function edgeAlpha(weight: number, maxWeight: number): number {
 }
 
 export function GraphView(
-  { graph: fullGraph, report, artLoader: injectedArtLoader, chrome = "full", onNodeTap }:
+  { graph: fullGraph, report, artLoader: injectedArtLoader, chrome = "full", onNodeTap, emphasisId = null }:
   {
     graph: CardGraph;
     report: DeckReport;
@@ -199,6 +199,12 @@ export function GraphView(
      *  selection. The ego view re-roots on a tap rather than opening a panel over the board -- at
      *  390 that panel measured 288px over a 324px canvas, which is 89% of the board it describes. */
     onNodeTap?: (id: string | null) => void;
+    /** The card to paint as if it were hovered -- its neighbourhood lit, its edges in the flow's own
+     *  direction hues. TOUCH HAS NO HOVER, so on the ego view the emphasis has to come from the tap
+     *  instead, or a reader reading an edge in the strip has nothing on the board telling them WHICH
+     *  edge it is. Routed through the same `hoveredIdRef` the pointer path uses, so this is the
+     *  existing paint, driven from somewhere else -- not a second highlight vocabulary. */
+    emphasisId?: string | null;
   },
 ) {
   const bare = chrome === "bare";
@@ -387,6 +393,14 @@ export function GraphView(
   // would either be stale between renders or force the layout effect to re-run on every
   // pointermove, reheating the whole simulation as the user just moves the mouse.
   const hoveredIdRef = useRef<string | null>(null);
+  /** THE TAP-DRIVEN EMPHASIS, written into the same ref the pointer path uses. `dirtyRef` rather
+   *  than a re-render: the simulation lives in a ref, so this repaints the next frame without
+   *  re-throwing the layout -- the same reason the paint mode is a ref read and not state. */
+  useEffect(() => {
+    if (chrome !== "bare") return;
+    hoveredIdRef.current = emphasisId;
+    dirtyRef.current = true;
+  }, [chrome, emphasisId]);
 
   /** Node ids of the tokens the default view hides. Matched on `isToken` + label, never on the name
    *  alone: a token can share its name with a real card in the same deck (92 corpus token names do),
@@ -1843,8 +1857,13 @@ export function GraphView(
       setHover(null);
     };
 
-    canvas.addEventListener("pointermove", onMove);
-    canvas.addEventListener("pointerleave", onLeave);
+    // NO HOVER IN BARE MODE, WHICH IS THE DESIGN AND ALSO A DEFECT FIX. Touch has no hover, so the
+    // tooltip is dead weight on the surface it was kept for -- and with a mouse it rendered anyway,
+    // clipped off the right edge of a 390px board. Emphasis there comes from `emphasisId` instead.
+    if (!bare) {
+      canvas.addEventListener("pointermove", onMove);
+      canvas.addEventListener("pointerleave", onLeave);
+    }
     return () => {
       // Snapshot final positions so the next effect run can reuse them instead of re-throwing
       // everything.
@@ -1852,8 +1871,10 @@ export function GraphView(
       simulation.stop();
       cancelAnimationFrame(raf);
       resizeObserver.disconnect();
-      canvas.removeEventListener("pointermove", onMove);
-      canvas.removeEventListener("pointerleave", onLeave);
+      if (!bare) {
+        canvas.removeEventListener("pointermove", onMove);
+        canvas.removeEventListener("pointerleave", onLeave);
+      }
       selection.on(".zoom", null);
       delete (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe;
     };

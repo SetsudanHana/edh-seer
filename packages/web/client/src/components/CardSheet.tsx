@@ -16,7 +16,15 @@ import { useState, type ReactNode } from "react";
  *  tap outside it landed on the canvas, which pans. */
 export function CardSheet(
   { title, subtitle, children, onBack }:
-  { title: string; subtitle: string; children: ReactNode; onBack: () => void },
+  {
+    title: string;
+    /** A NODE, NOT A STRING: the ego view puts a whole edge here -- the pair, its direction and its
+     *  reason -- so a reader can read why two cards are joined without the panel covering the board
+     *  those two cards are on. */
+    subtitle: ReactNode;
+    children: ReactNode;
+    onBack: () => void;
+  },
 ) {
   const [open, setOpen] = useState(false);
   return (
