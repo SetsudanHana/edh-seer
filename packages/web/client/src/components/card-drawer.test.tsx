@@ -1,7 +1,9 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test } from "vitest";
-import { CardDrawerProvider, usePinned } from "./card-drawer.js";
+import { CardDrawerProvider, useCardDrawer, usePinned } from "./card-drawer.js";
 
 const graph = {
   nodes: [
@@ -122,4 +124,43 @@ test("a seeded face name pins the physical card", () => {
 test("no seed leaves the set empty", () => {
   render(<CardDrawerProvider graph={graph}><Probe name="Sol Ring" /></CardDrawerProvider>);
   expect(screen.getByTestId("size")).toHaveTextContent("0");
+});
+
+
+/** THE DRAWER DOCKS FROM `xl` INSTEAD OF COVERING THE PAGE (owner's call, 2026-09-03).
+ *
+ *  Measured at 1920: the Cards panel caps at 88rem and left-aligns, so 448px of page sat empty on
+ *  the right while the drawer covered the rows on the left. The reserve is a `padding-inline-end`
+ *  on `body`, not on the provider's children -- the first attempt did the latter and left the
+ *  static site nav (`index.html`, outside the React root) and the app's own toolbar underneath the
+ *  panel. This asserts the SIGNAL; the CSS test below asserts the rule behind it, because a class
+ *  with no rule is silent and a rule with no class is dead. */
+function Opener({ id }: { id: string }) {
+  const { open } = useCardDrawer();
+  return <button onClick={() => open(id)}>open it</button>;
+}
+
+test("opening the drawer tells the page to make room, and closing gives it back", async () => {
+  render(<CardDrawerProvider graph={graph}><Opener id="Sol Ring" /></CardDrawerProvider>);
+  expect(document.body.classList.contains("drawer-docked")).toBe(false);
+  await userEvent.click(screen.getByText("open it"));
+  expect(document.body.classList.contains("drawer-docked")).toBe(true);
+  // Closed through the panel's own control, not a test-only hook: the class has to come back off
+  // the way a reader takes it off.
+  await userEvent.click(screen.getByRole("button", { name: /close/i }));
+  expect(document.body.classList.contains("drawer-docked")).toBe(false);
+});
+
+/** AND THE RESERVE IS THE DRAWER'S OWN WIDTH. `w-80` on the fixed container is 20rem; a reserve
+ *  that disagrees either leaves a strip of page under the panel or a gap beside it, and neither is
+ *  visible in jsdom. Read off the source so the two cannot drift apart silently. */
+test("the reserve matches the drawer's width, at the breakpoint where there is room", () => {
+  const css = readFileSync(join(process.cwd(), "client", "src", "index.css"), "utf8");
+  const rule = /@media \(min-width: 80rem\) \{\s*body\.drawer-docked \{ padding-inline-end: (\d+)rem; \}/.exec(css);
+  expect(rule, "body.drawer-docked rule at min-width: 80rem").not.toBeNull();
+  const source = readFileSync(join(process.cwd(), "client", "src", "components", "card-drawer.tsx"), "utf8");
+  const width = /className="fixed inset-y-0 right-0 z-30 w-(\d+)/.exec(source);
+  expect(width, "the fixed drawer container's width").not.toBeNull();
+  // Tailwind's spacing scale is 0.25rem per step, so `w-80` is 20rem.
+  expect(Number(rule![1]) * 4).toBe(Number(width![1]));
 });

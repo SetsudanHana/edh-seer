@@ -156,6 +156,30 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
     return () => window.removeEventListener("keydown", onKey);
   }, [openId]);
 
+  /** THE DRAWER IS DOCKED FROM `xl`, NOT LAID OVER THE PAGE (owner's call, 2026-09-03).
+   *
+   *  IT IS THE ANSWER TO A GAP, NOT A NEW IDEA. At 1920 the Cards panel caps at 88rem and
+   *  left-aligns, so 448px of the page sat empty on the right -- measured -- while the drawer
+   *  covered the rows on the left. The cap is not the thing to remove: the widest row's ink is
+   *  837px, so lifting it puts the same blank INSIDE every row instead. The width had no job, and
+   *  the drawer needed one.
+   *
+   *  ON `body`, AND THE FIRST ATTEMPT PROVED WHY. Reserving the width on the provider's own
+   *  children padded the report and nothing else -- so the static site nav (which lives in
+   *  `index.html`, outside the React root entirely) and `App`'s own "COPY DECKLIST" toolbar were
+   *  still underneath the panel. Seen in a 1920 screenshot, not reasoned about. The drawer is
+   *  `fixed` to the VIEWPORT, so what has to get out of its way is the page, not one subtree.
+   *
+   *  A CLASS AND A STYLESHEET RULE, because the breakpoint has to be CSS. `matchMedia` in a JS
+   *  branch reads false in this repo's own harness (`playwright-max-width-matchmedia-false`), which
+   *  would render the docked tree in every screenshot that is supposed to show the overlay.
+   *  `index.css` carries the `@media (min-width: 80rem)` and the transition; this only says WHEN. */
+  useEffect(() => {
+    if (openId === null) return;
+    document.body.classList.add("drawer-docked");
+    return () => document.body.classList.remove("drawer-docked");
+  }, [openId]);
+
   const node = openId ? graph?.nodes.find((n) => n.id === openId) ?? null : null;
   const edges = useMemo(
     () => (node ? (graph?.edges ?? []).filter((e) => e.from === node.id || e.to === node.id) : []),

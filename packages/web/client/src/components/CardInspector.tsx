@@ -192,7 +192,7 @@ export function CardInspector({
         close
       </button>
 
-      {/* CAPPED, BECAUSE THE IMAGE WAS EATING THE WHOLE PANEL AND THE RELATIONSHIPS ARE THE PRODUCT.
+      {/* BOUNDED, BECAUSE THE IMAGE WAS EATING THE WHOLE PANEL AND THE RELATIONSHIPS ARE THE PRODUCT.
         *  MEASURED on the review deck: the panel is 500px tall with 1,415px of content, and FEEDS
         *  began 49px BELOW its own bottom edge -- so two thirds of it was reachable only by
         *  scrolling a box with no affordance, and nothing above the fold hinted there was more.
@@ -202,15 +202,29 @@ export function CardInspector({
         *  I twice wrote this off as a screenshot crop; it is the panel's own layout.
         *
         *  The image STAYS and stays first -- a reader who clicked an art disc needs to know which
-        *  card they hit, and the name alone does not do that at a glance. It is capped so the first
-        *  relationship clears the fold, which is what tells them the panel continues.
-        *  `object-contain` keeps the card's aspect ratio: a portrait card in a wide box letterboxes
-        *  rather than stretching, and a stretched card face is worse than a small one. */}
+        *  card they hit, and the name alone does not do that at a glance.
+        *
+        *  IT IS SIZED BY ITS WIDTH NOW, NOT CAPPED BY ITS HEIGHT (owner, 2026-09-03: *"the card
+        *  should be bigger, it is very small in comparison to the width of the drawer"*). `max-h-52`
+        *  put a 208px ceiling on a 262px-wide box, and a Magic card is 488x680 -- so `object-contain`
+        *  letterboxed it to 208 tall by **149 wide inside a 262 box**, painting the card at 52% of
+        *  the panel's width with 113px of empty box beside it. Measured in the browser, not inferred.
+        *  `aspect-[488/680]` makes the BOX the card's own shape, so `w-full` fills the panel edge to
+        *  edge and nothing letterboxes; the box is also reserved before the image loads, which the
+        *  height cap never did.
+        *
+        *  THE HEIGHT CAP'S REASON SURVIVES AS `max-w-[32vh]`. It existed so the first relationship
+        *  clears the fold -- three reviewers across two persona rounds clicked a card and reported
+        *  the panel told them nothing, because the image filled it. A height ceiling is the wrong
+        *  instrument for that (it letterboxes at every width); bounding the WIDTH bounds the height
+        *  through the aspect, at 0.718 x 32vh = about 45vh, and keeps the box aspect-correct while
+        *  doing it. On a short viewport the card shrinks and stays centred; on a tall one it fills
+        *  the panel. `object-contain` stays as the guarantee that a card face is never stretched. */}
       {face?.artCrop ?? node.artCrop ? (
         <img
           src={cardImageUrl((face?.artCrop ?? node.artCrop)!)}
           alt={face?.name ?? node.label}
-          className="w-full max-h-52 object-contain shrink-0 rounded-(--radius) border border-(--separator)"
+          className="w-full max-w-[32vh] mx-auto aspect-[488/680] object-contain shrink-0 rounded-(--radius) border border-(--separator)"
         />
       ) : null}
 

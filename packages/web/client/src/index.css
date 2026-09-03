@@ -119,6 +119,27 @@ body {
   color-scheme: dark;
 }
 
+/* THE PAGE MAKES ROOM FOR A DOCKED CARD DRAWER, from `xl` up (owner's call, 2026-09-03).
+   At 1920 the Cards panel caps at 88rem and left-aligns, so 448px of page sat empty on the right
+   while the drawer covered the rows on the left. The cap is not the thing to remove -- the widest
+   row's ink is 837px, so lifting it puts the same blank inside every row instead. The width had no
+   job and the drawer needed one.
+
+   ON `body`, BECAUSE THE DRAWER IS FIXED TO THE VIEWPORT. A first attempt padded the provider's own
+   children and left the static site nav (which lives in `index.html`, outside the React root) and
+   the app's own toolbar underneath the panel -- seen in a 1920 screenshot. Everything the drawer can
+   cover is inside `body`, so `body` is where the reserve belongs.
+
+   20rem IS THE DRAWER'S OWN BOX: `w-80` on the fixed container in `card-drawer.tsx`. Below `xl` the
+   viewport has no width to give and the overlay is the honest shape -- that is what a phone drawer
+   IS -- so this rule starts where the room does. The transition keeps the reflow from reading as a
+   jump, and the reduced-motion block below turns it off -- that block covered `.reveal` only, so
+   the transition had to be added to it rather than assumed into it. */
+@media (min-width: 80rem) {
+  body.drawer-docked { padding-inline-end: 20rem; }
+}
+body { transition: padding-inline-end 200ms ease-out; }
+
 /* THE APP RESERVES ITS OWN SPACE, AND THAT IS THE WHOLE CLS FIX.
  *
  * `#root` is EMPTY in `index.html` and `<section class="intro">` sits below it carrying real
@@ -383,6 +404,11 @@ summary {
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     animation: none;
+  }
+  /* The docked drawer's reserve still applies -- the reflow is the layout, not the motion. What goes
+     is the 200ms it takes: the padding lands at once. */
+  body {
+    transition: none;
   }
 }
 
