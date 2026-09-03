@@ -18,7 +18,7 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, flow, textOf, onClose, pinned, onTogglePin,
+  node, edges, flow, textOf, nameOf, onClose, pinned, onTogglePin,
 }: {
   node: GraphNode;
   /** Whether the card this panel is showing is in the reader's pinned set (roadmap S8).
@@ -40,6 +40,21 @@ export function CardInspector({
    *  Optional so every existing caller and fixture keeps working; a row with no text simply shows
    *  no disclosure rather than an empty one. */
   textOf?: (id: string) => string | undefined;
+  /** A partner node's DISPLAY NAME by id, and whether that node is a token.
+   *
+   *  The rows print edge endpoints, and an endpoint is a node ID -- which for a token is
+   *  `token:<name>`, so a row read "Shark Typhoon → token:Shark". The phone judge called it what it
+   *  is: *"reads like an internal name rather than something I'd say out loud."*
+   *
+   *  NOT SOLVED BY STRIPPING THE PREFIX. That prefix is load-bearing: 92 of the corpus's 661 token
+   *  names are also a real card, which is the whole reason token nodes have their own id space, and
+   *  a bare "Shark" would present a token as a card. So the resolver returns the label AND the
+   *  token flag, and the row keeps saying which it is -- the same rule `GraphList` follows two files
+   *  over, where a token renders as plain text with a "token" marker rather than as an openable card.
+   *
+   *  Optional, so every existing caller and fixture keeps working; unresolved ids fall back to the
+   *  id itself rather than to an invented name. */
+  nameOf?: (id: string) => { label: string; isToken: boolean } | undefined;
   /** The drawn flow, when a flow is active. Only `truncated` is read: the panel states what the
    *  board had to leave out -- direction-keyed, since the root can have its own fanout cut on
    *  BOTH walks and each has to report its own count under its own heading. */
@@ -105,10 +120,31 @@ export function CardInspector({
       <ul className="flex flex-col gap-2">
         {list.map((e) => {
           const partner = isOutgoing ? e.to : e.from;
+          // The id is the FALLBACK, never an invented name: an unresolved node prints exactly what
+          // the graph called it, which is checkable, rather than a guess that reads like a card.
+          const named = nameOf?.(partner);
+          const partnerName = named?.label ?? partner;
+          const partnerCell = (
+            <>
+              {partnerName}
+              {named?.isToken === true ? (
+                <span
+                  data-testid="partner-token"
+                  className="ml-1.5 eyebrow text-(--muted)"
+                >
+                  token
+                </span>
+              ) : null}
+            </>
+          );
           return (
             <li key={`${e.from}->${e.to}`} className="flex flex-col gap-0.5">
               <div className="flex justify-between gap-2">
-                <span>{isOutgoing ? `${node.label} → ${partner}` : `${partner} → ${node.label}`}</span>
+                <span>
+                  {isOutgoing
+                    ? <>{node.label} → {partnerCell}</>
+                    : <>{partnerCell} → {node.label}</>}
+                </span>
                 <span className="stat-num text-(--muted) shrink-0">
                   {e.weight.toFixed(1)}
                 </span>

@@ -521,6 +521,15 @@ export function GraphView(
     return (id: string) => m.get(id);
   }, [fullGraph]);
 
+  /** A partner node's display name and token-ness by id, for the inspector's edge rows. Same source
+   *  and same reason as `textById` above: built from the FULL graph, because a node hidden from the
+   *  BOARD can still be named by a relationship the panel lists. */
+  const nameById = useMemo(() => {
+    const m = new Map<string, { label: string; isToken: boolean }>();
+    for (const n of fullGraph.nodes) m.set(n.id, { label: n.label, isToken: n.isToken === true });
+    return (id: string) => m.get(id);
+  }, [fullGraph]);
+
   const legendOvercounts = useMemo(() => {
     const slots = graph.nodes.reduce((n, x) => n + (x.copies ?? 1), 0);
     return legend.reduce((n, r) => n + r.count, 0) > slots;
@@ -2386,6 +2395,7 @@ export function GraphView(
               edges={inspectingEdges}
               flow={flow}
               textOf={textById}
+              nameOf={nameById}
               // Closes the panel AND clears the board: with an additive selection there is no single card
               // to "go back to", and leaving a lit set behind a closed panel would strand the reader
               // with a filtered board and nothing on screen saying what filtered it.

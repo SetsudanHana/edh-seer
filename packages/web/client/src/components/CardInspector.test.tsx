@@ -97,6 +97,35 @@ describe("CardInspector", () => {
   // say which. It used to read "32 in total · strongest 6 shown" as a header over this panel's own
   // list, which renders EVERY edge; a reviewer reading it concluded the other 26 relations were
   // unreachable. Both facts, in one sentence: the board draws 6, the panel lists all 32.
+  // A NODE ID IS NOT A CARD NAME. The rows printed the raw endpoint id, so a token edge read
+  // "Shark Typhoon -> token:Shark" -- the phone judge: *"reads like an internal name rather than
+  // something I'd say out loud."* The `token:` prefix is real and load-bearing (92 of the corpus's
+  // 661 token names are also a real card, which is why token nodes get their own id space), so the
+  // fix resolves the id to its label AND keeps saying it is a token -- not a prefix strip, which
+  // would silently turn a token into what looks like a card.
+  it("names the partner instead of printing its node id, and still says it is a token", () => {
+    const tokenEdge = [
+      { from: "Bitterblossom", to: "token:Faerie Rogue", weight: 1, tags: [], reasonTexts: ["makes it"] },
+    ];
+    render(
+      <CardInspector
+        node={node} edges={tokenEdge} onClose={() => {}}
+        nameOf={(id) => (id === "token:Faerie Rogue" ? { label: "Faerie Rogue", isToken: true } : undefined)}
+      />,
+    );
+    expect(screen.getByText(/Bitterblossom → Faerie Rogue/)).toBeInTheDocument();
+    expect(screen.queryByText(/token:Faerie Rogue/)).toBeNull();
+    expect(screen.getByTestId("partner-token")).toBeInTheDocument();
+  });
+
+  it("falls back to the id when nothing resolves it, rather than inventing a name", () => {
+    const tokenEdge = [
+      { from: "Bitterblossom", to: "token:Faerie Rogue", weight: 1, tags: [], reasonTexts: ["makes it"] },
+    ];
+    render(<CardInspector node={node} edges={tokenEdge} onClose={() => {}} />);
+    expect(screen.getByText(/Bitterblossom → token:Faerie Rogue/)).toBeInTheDocument();
+  });
+
   // ONE TOTAL PER DIRECTION, AND IT LIVES IN THE HEADING. The phone judge met three numbers for one
   // card in two taps -- 43 on the surface, then "the strongest 6 -- all 42 are listed here" -- and
   // could not reconcile them: *"I worked that out by staring, and I'm not sure. At the table I'd
