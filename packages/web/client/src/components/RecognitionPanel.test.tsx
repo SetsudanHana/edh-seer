@@ -56,14 +56,18 @@ test("the bar counts nonlands only, weighted by copies", () => {
  *  not sum to the 100-card deck the coverage line beneath them reports -- the exact defect
  *  `docs/engineering-log/2026-08-31.md` diagnosed on `BuildBenchmarks`, reintroduced here.
  *  `RecognitionPanel` must derive both the nonland AND the land figure from the same graph
- *  traversal (`typeSlices`/`landCount`) and name the mana model's MDFC-inclusive count as a
- *  parenthetical, not as the headline land figure. */
-test("the nonland and land totals sum to the deck, with the MDFC gap named rather than summed in", () => {
+ *  traversal (`typeSlices`/`landCount`), which is still the rule.
+ *
+ *  AND SINCE ROADMAP T3 (2026-09-03) THAT TRAVERSAL COUNTS AN MDFC AS A LAND, so the census line
+ *  no longer needs a parenthetical to reconcile itself with the rest of the report: this asserts
+ *  the printed land figure EQUALS `deckMath.lands.actual`, which is the whole point of the change
+ *  and what four phone-judge runs failed on. */
+test("the nonland and land totals sum to the deck, and the land figure is the report's own", () => {
   const nodes = [
     { id: "c", label: "C", copies: 62, types: ["creature"], subtypes: [], supertypes: [] },
     { id: "l", label: "L", copies: 34, types: ["land"], subtypes: [], supertypes: [] },
-    // Four modal DFCs: a spell front (counted as nonland, like `typeSlices` counts any front
-    // face) and a land back (`face: 1`, skipped by both traversals).
+    // Four modal DFCs: a spell front and a land back (`face: 1`). The back is skipped by both
+    // traversals, and the FRONT counts as a land because the back is one -- roadmap T3.
     { id: "m", label: "M", cardName: "M", copies: 4, types: ["sorcery"], subtypes: [], supertypes: [] },
     { id: "m-back", label: "M //", cardName: "M", face: 1, copies: 4, types: ["land"], subtypes: [], supertypes: [] },
   ];
@@ -79,10 +83,14 @@ test("the nonland and land totals sum to the deck, with the MDFC gap named rathe
     },
   } as unknown as typeof DATA;
   render(<RecognitionPanel data={data} />);
-  // 62 creatures + 4 MDFC fronts (sorcery) = 66 nonland; 34 real lands; 66 + 34 = 100.
-  expect(screen.getByTestId("type-total")).toHaveTextContent("66");
+  // 62 creatures = 62 nonland; 34 real lands + 4 MDFCs = 38; 62 + 38 = 100.
+  expect(screen.getByTestId("type-total")).toHaveTextContent("62");
   const line = screen.getByTestId("type-total").closest("p")!;
-  expect(line).toHaveTextContent("34 lands (38 with MDFCs)");
+  expect(line).toHaveTextContent("38 lands (4 modal DFCs)");
+  // THE CLAIM THAT CLOSES T3: one land count, and it is the report's own. Not a hardcoded 38 --
+  // read back off the fixture's `deckMath`, so this fails if the two ever diverge again.
+  expect(line).toHaveTextContent(`${data.report.deckMath!.lands.actual} lands`);
+  expect(line).not.toHaveTextContent("with MDFCs");
 });
 
 test("carries no 0-5 score: recognition is not a judgement", () => {
