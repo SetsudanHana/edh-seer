@@ -2,11 +2,33 @@ import type { CardGraph } from "../types.js";
 
 type Edge = CardGraph["edges"][number];
 
-/** Edges kept per selected card, per direction, strongest first. MEASURED, not guessed: over all 71
- *  calibration decks (6,224 node-directions on the projected graph), direct fan size runs p50 3 ·
- *  p90 7 · p95 15 · p99 41 · max 80. At 6 the cap truncates 10.5% of node-directions; the panel
- *  says so per card ("feeds 32, showing 6") rather than the board quietly drawing a different
- *  number than the deck contains. */
+/** Edges kept per selected card, per direction, strongest first. The panel says what was cut, per
+ *  card ("feeds 32, showing 6"), rather than the board quietly drawing a different number than the
+ *  deck contains.
+ *
+ *  RE-MEASURED 2026-09-03 over the 71 calibration decks, 8,573 node-directions
+ *  (`matcher/src/bin/fanout-cap.ts`), and the old figures had drifted: p95 was 15 and reads 12,
+ *  p99 was 41 and reads 37, max 80 and reads 81. Current distribution:
+ *
+ *    fan size, all:    p50 3 · p90 7  · p95 12 · p99 37 · max 81
+ *
+ *  THE "10.5% TRUNCATED" THIS CONSTANT USED TO BE DEFENDED WITH IS THE WRONG POPULATION. It
+ *  reproduces (10.1%), but it weights every node-direction equally and readers do not open cards
+ *  uniformly -- every surface that lists cards ranks them by partner count, so the ones a reader
+ *  opens are the ones the cap bites hardest. Over the top ten by partners in each deck the fan runs
+ *  p50 9 · p90 34, and this cap truncates **61.2%** of their node-directions, six times the figure
+ *  it was justified with. A hub's median direction keeps 67% of its fan.
+ *
+ *  KEPT AT 6 FOR THE BOARD ANYWAY, and the reason is the board, not the number: everything cut is
+ *  still reachable there. The inspector lists every partner, the sentence above it says how many
+ *  were dropped, and the rest of the deck stays on screen around the flow. The cap is buying visual
+ *  density on an already-dense canvas, not deciding what the reader may know.
+ *
+ *  A SURFACE WHERE THE CAP IS THE WHOLE SCREEN MUST NOT REUSE IT. On the phone ego view there is no
+ *  board around the flow and no second list, so the cap there is set by how many discs clear the
+ *  touch-target floor (`disc-fit.ts`), not by this constant. Raising a cap costs almost nothing in
+ *  size -- ego node counts run p50 5 and p90 11 at EVERY cap from 6 to 20, because a bigger cap
+ *  changes hubs only -- so that surface should take what geometry allows rather than a percentile. */
 export const FLOW_FANOUT_CAP = 6;
 
 /** Total cards a flow may draw, every selected card's fans together. One card's fans cannot exceed
