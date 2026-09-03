@@ -237,7 +237,21 @@ describe("CardInspector tag chips", () => {
  *  an uncapped `w-full` image is what ate the panel, and a capped one without `object-contain`
  *  would stretch a portrait card, which is worse than a small one. */
 describe("CardInspector card image", () => {
-  it("caps the card image and keeps its aspect ratio", () => {
+  /** SIZED BY ITS WIDTH, BOUNDED BY THE VIEWPORT'S HEIGHT (owner, 2026-09-03: *"the card should be
+   *  bigger, it is very small in comparison to the width of the drawer"*).
+   *
+   *  It carried `max-h-52` -- a 208px ceiling on a 262px-wide box -- and a Magic card is 488x680,
+   *  so `object-contain` letterboxed it to **149px wide inside a 262px box**: the card painted at
+   *  52% of the panel's width with 113px of empty box beside it. Measured in the browser.
+   *
+   *  `aspect-[488/680]` makes the BOX the card's shape, so `w-full` fills the panel and nothing
+   *  letterboxes at any width; it also reserves the box before the image loads, which a height cap
+   *  never did. `max-w-[32vh]` keeps the reason the height cap existed for -- the first
+   *  relationship must clear the fold, which three reviewers across two persona rounds reported --
+   *  by bounding the height THROUGH the aspect (0.718 x 32vh, about 45vh) instead of letterboxing
+   *  to get there. Verified live: 262x365 at 1080 tall with the first edge at y=628 against a panel
+   *  bottom of 1072, and 224x312 at 700 tall with the first edge at 575 against 692. */
+  it("sizes the card image by its width and bounds it against the viewport", () => {
     const node = {
       id: "Grim Haruspex", label: "Grim Haruspex", copies: 1,
       types: ["creature"], subtypes: ["human"], supertypes: [],
@@ -246,7 +260,13 @@ describe("CardInspector card image", () => {
     };
     render(<CardInspector node={node as never} edges={[]} onClose={() => {}} />);
     const img = screen.getByAltText("Grim Haruspex");
-    expect(img.className).toMatch(/max-h-/);
+    // No height ceiling: that is what letterboxed it. The aspect box is what makes the height right.
+    expect(img.className).not.toMatch(/max-h-/);
+    expect(img.className).toContain("w-full");
+    expect(img.className).toContain("aspect-[488/680]");
+    // The bound that keeps the first relationship above the fold on a short viewport.
+    expect(img.className).toMatch(/max-w-\[\d+vh\]/);
+    // A card face is never stretched, whatever the box turns out to be.
     expect(img.className).toContain("object-contain");
   });
 });
