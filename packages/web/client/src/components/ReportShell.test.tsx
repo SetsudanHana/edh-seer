@@ -286,3 +286,67 @@ test("a seed within the cap pins the added cards", () => {
   // name is a stable key, never a crash.
   expect(screen.getByText("1 pinned")).toBeInTheDocument();
 });
+
+/** Both media conditions `useBoardMode` reads, stubbed together -- `matchMedia` is the only input,
+ *  and stubbing one query without the other silently answers `false` for the missing one. */
+function stubPointer(coarse: boolean, anyFine: boolean, width: number) {
+  vi.stubGlobal("matchMedia", (q: string) => ({
+    matches: q.includes("any-pointer: fine") ? anyFine : q.includes("pointer: coarse") ? coarse : false,
+    media: q, onchange: null,
+    addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+    dispatchEvent: () => false,
+  }));
+  vi.stubGlobal("innerWidth", width);
+  vi.stubGlobal("innerHeight", 844);
+}
+
+/** SAMPLE.graph is two nodes, which clears the disc floor on any screen -- the whole point of the
+ *  constraint is that a small graph keeps the board. A phone test needs a graph big enough to fail
+ *  it, so the nodes are padded out; the EDGES stay as they are, so Krenko is still the one card
+ *  with a partner and therefore the one row that offers to open a board. */
+function phoneSizedDeck() {
+  const filler = Array.from({ length: 80 }, (_, i) => ({
+    id: `Filler ${i}`, label: `Filler ${i}`, copies: 1,
+    types: ["creature"], subtypes: [], supertypes: [], colors: ["R"], cmc: 2,
+  }));
+  return {
+    ...SAMPLE,
+    graph: { ...SAMPLE.graph, nodes: [...SAMPLE.graph.nodes, ...filler] },
+  } as typeof SAMPLE;
+}
+
+// R1: on a thumb the Graph surface is the list, and the BOARD is one tap from a row -- not absent,
+// which is what it has been since this surface was built. The phone judge tapped GRAPH, got a
+// screen of chips, and read "board" as jargon for the card list.
+/** NAVIGATED BY CLICKING, NOT BY `initialEntries`: the shell sends a fresh analysis to the chapters
+ *  on mount, deliberately, so a route handed in at render time is navigated away from before a test
+ *  can assert on it. Every other test in this file reaches a surface the same way. */
+async function openGraph(data: typeof SAMPLE) {
+  const user = userEvent.setup();
+  render(<MemoryRouter><ReportShell data={data} /></MemoryRouter>);
+  await user.click(screen.getAllByRole("link", { name: /^Graph/ })[0]!);
+  return user;
+}
+
+test("a coarse pointer gets the list with the board reachable from a row", async () => {
+  stubPointer(true, false, 390);
+  await openGraph(phoneSizedDeck());
+  expect(screen.getByLabelText("Find a card")).toBeInTheDocument();
+  // The sentence that said the board "needs a wider screen" is false as of this change.
+  expect(screen.queryByText(/needs a wider screen/i)).toBeNull();
+  expect(screen.getAllByRole("button", { name: /see what it connects to/i }).length).toBeGreaterThan(0);
+});
+
+test("tapping a row opens that card's graph", async () => {
+  stubPointer(true, false, 390);
+  const user = await openGraph(phoneSizedDeck());
+  await user.click(screen.getAllByRole("button", { name: /see what it connects to/i })[0]!);
+  expect(screen.getByRole("button", { name: /back to the card list/i })).toBeInTheDocument();
+});
+
+test("a precise pointer still gets the board", async () => {
+  stubPointer(false, true, 1440);
+  await openGraph(phoneSizedDeck());
+  expect(screen.queryByRole("button", { name: /back to the card list/i })).toBeNull();
+  expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
+});

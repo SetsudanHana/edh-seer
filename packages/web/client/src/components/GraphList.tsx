@@ -16,7 +16,7 @@ import { hatchImage } from "../lib/unread.js";
  *  drawer that already exists for the rest of the report.
  *  → `specs/2026-08-20-report-usability-review.md` §6
  */
-export function GraphList({ graph, unread }: {
+export function GraphList({ graph, unread, onOpenBoard }: {
   graph: CardGraph;
   /** Physical card names the synergy engine could not read (`unreadCardNames`). A row for one of
    *  these read "0 partners" -- the same thing a fully read card nothing connects to reads -- and
@@ -24,6 +24,9 @@ export function GraphList({ graph, unread }: {
    *  engine's own gap. Absent, or empty, on a deck the engine read whole, and then nothing here
    *  is marked at all. */
   unread?: ReadonlySet<string>;
+  /** Opens this card's own graph (roadmap R1). Absent on a surface with no board to open, and then
+   *  no control renders -- a button that goes nowhere is worse than no button. */
+  onOpenBoard?: (id: string) => void;
 }) {
   const [query, setQuery] = useState("");
 
@@ -77,7 +80,11 @@ export function GraphList({ graph, unread }: {
           *  in a chip; this list has no chip row, and counting "not read" across 92 rows by
           *  scrolling is not counting. Silent on a deck the engine read whole. */}
         {unreadCount > 0 ? `, ${unreadCount} not read` : ""}. Tap a card for what it feeds and
-        what feeds it — the board itself needs a wider screen.
+        what feeds it{onOpenBoard ? ", or open its own graph" : ""}.
+        {/* THE OLD CLAUSE SAID THE BOARD "NEEDS A WIDER SCREEN" AND IT IS FALSE NOW (roadmap R1).
+          *  It was also the silent-substitution complaint in the first place: this list arrived
+          *  instead of the board with no way to reach one, which is why the feature read as broken
+          *  rather than adapted. */}
       </p>
       <ul className="flex flex-col">
         {visible.map((r) => (
@@ -110,6 +117,18 @@ export function GraphList({ graph, unread }: {
               )}
             </span>
             {r.reason ? <span className="text-xs text-(--muted) line-clamp-2">{r.reason}</span> : null}
+            {/* THE SEARCH STEP'S OWN DOOR TO THE BOARD. A token is not openable for the same reason
+              *  it is not a link above, and a card with no partners has no graph worth a screen --
+              *  its ego view would be one disc, which the sheet says in words instead. */}
+            {onOpenBoard && !r.isToken && r.partners > 0 ? (
+              <button
+                type="button"
+                onClick={() => onOpenBoard(r.id)}
+                className="self-start min-h-11 eyebrow text-(--accent)"
+              >
+                See what it connects to
+              </button>
+            ) : null}
           </li>
         ))}
       </ul>
