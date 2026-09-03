@@ -185,7 +185,13 @@ export function DeckIdentity({
         *  A refused cost prints an em dash and never 0%, because a reader treats 0% as
         *  "cannot happen". */}
       {commanderCast && commanderCast.length > 0 ? (
-        <p className="text-sm text-(--muted) tabular-nums">
+        /* A `<div>`, NOT A `<p>` (roadmap U2). This line holds an `Explain`, which is a
+         * `<details>` -- flow content, and a paragraph may hold phrasing content only, so the
+         * browser CLOSED the paragraph early and reparented the disclosure as its sibling. Six
+         * React errors on every report load, and the DOM the tests queried was not the DOM that
+         * shipped. The classes are the paragraph's, unchanged: nothing here needed `<p>` semantics
+         * -- it is a labelled readout, and it already contained a `block` span. */
+        <div className="text-sm text-(--muted) tabular-nums">
           {/* SUBJECT FIRST. The first cut read "21-72% by turn 6 to cast your commander", which makes
               a reader hold a number before knowing what it is about -- seen on the live page, not in
               any test. */}
@@ -226,7 +232,7 @@ export function DeckIdentity({
                 {" "}for the same cell
               </span>
             ) : null}
-        </p>
+        </div>
       ) : null}
       {/* The second theme and the archetype shares, on one muted line. A percentage is printed for
         *  each strategy because the list is ranked and the gaps matter — "Tokens 22% · Aristocrats
