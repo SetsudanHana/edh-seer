@@ -52,7 +52,12 @@ test("the commander's cast odds are a RANGE, and a refused cost is an em dash an
   expect(screen.getByText(/55% by turn 6/)).toBeInTheDocument();
   expect(screen.queryByText(/55% – 62%/)).not.toBeInTheDocument();
   expect(screen.queryByText(/is not counted/)).not.toBeInTheDocument();
-  expect(screen.getByText(/holds up two mana/)).toBeInTheDocument();
+  // T8: THE PLAY POLICY IS ONE CLICK AWAY, NOT BODY PROSE -- and `Explain` is a `<details>`, so it
+  // survives on touch, which is the reason a `title` was refused here in the first place. jsdom
+  // renders a closed `<details>`'s children, so presence alone would pass either way: the assertion
+  // that MATTERS is that the sentence has a `<details>` ancestor.
+  expect(screen.getByText("what the range means")).toBeInTheDocument();
+  expect(screen.getByText(/holds up two mana/).closest("details")).not.toBeNull();
   // ONE commander needs no name prefix; a partner pair does, or the two rows cannot be told apart.
   expect(screen.queryByText(/Samut, the Driving Force: /)).not.toBeInTheDocument();
   rerender(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
