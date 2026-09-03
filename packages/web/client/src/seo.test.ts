@@ -10,6 +10,7 @@ const CLIENT = join(process.cwd(), "client");
 const html = readFileSync(join(CLIENT, "index.html"), "utf8");
 const robots = readFileSync(join(CLIENT, "public", "robots.txt"), "utf8");
 const sitemap = readFileSync(join(CLIENT, "public", "sitemap.xml"), "utf8");
+const llms = readFileSync(join(CLIENT, "public", "llms.txt"), "utf8");
 
 /** The one absolute origin in the app, written down once. Every assertion below reads it from the
  *  canonical tag rather than repeating it, so the day a custom domain replaces this one, the tests
@@ -85,6 +86,48 @@ test("the sitemap lists the pages that exist and nothing that does not", () => {
     const file = path === "" ? join(CLIENT, "index.html") : join(CLIENT, path, "index.html");
     expect(existsSync(file), `${loc} has a file`).toBe(true);
   }
+});
+
+/** WHAT AN LLM CRAWLER GETS TOLD, in the one file the convention has agreed on (llmstxt.org, and
+ *  the file is `llms.txt` — `llm.txt` is not the name anything looks for).
+ *
+ *  It is not decoration on a site like this one. The whole product is a claim about cards, and the
+ *  two things a model quoting it can get wrong are the two things this file states outright: what
+ *  the engine REFUSES to say (a role is not a synergy, a self-reference means the card itself,
+ *  popularity is nothing), and whose text the cards are. A summariser that misses the first
+ *  reports the tool as saying more than it does; one that misses the second republishes Wizards'
+ *  property as ours.
+ *
+ *  Same promise-keeping rule the sitemap is held to: every URL it names has a file behind it. */
+test("llms.txt names the pages that exist, on the canonical origin", () => {
+  const origin = new URL(canonical).origin;
+  const ours = [...llms.matchAll(/\((https:\/\/[^)]+)\)/g)]
+    .map((m) => m[1]!)
+    .filter((u) => u.startsWith(origin));
+  expect(ours).toEqual([canonical, `${canonical}how-it-works`]);
+  for (const url of ours) {
+    const path = url.slice(canonical.length);
+    const file = path === "" ? join(CLIENT, "index.html") : join(CLIENT, path, "index.html");
+    expect(existsSync(file), `${url} has a file`).toBe(true);
+  }
+});
+
+/** THE FORMAT, and the claims that are the reason for writing it at all. A file that parses but
+ *  says nothing is the failure mode here -- it would pass a "the file exists" check and still let a
+ *  model report roles as synergies. */
+test("llms.txt carries the refusals and the attribution, not just a title", () => {
+  // llmstxt.org: an H1, then a blockquote summary. Everything after is free-form.
+  expect(llms).toMatch(/^# EDH Seer\n/);
+  expect(llms).toMatch(/\n> /);
+  for (const claim of [/no language model at analysis time/i, /roles are not synergies/i,
+    /names itself means itself/i, /popularity is not synergy/i, /missing claim is better/i]) {
+    expect(llms, claim.source).toMatch(claim);
+  }
+  // Whose text the cards are. This site does not own it and must not read as if it does.
+  expect(llms).toMatch(/Wizards of the Coast/);
+  expect(llms).toMatch(/Scryfall/);
+  // The same exclusion robots.txt states, for readers that never fetch robots.txt.
+  expect(llms).toContain("/static/");
 });
 
 /** THE DEFECT THIS CLOSES: the body was `<div id="root"></div>` and nothing else, so a crawler that
