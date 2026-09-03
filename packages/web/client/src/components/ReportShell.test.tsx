@@ -461,9 +461,22 @@ test("tapping a row opens that card's graph", async () => {
   stubPointer(true, false, 390);
   const user = await openGraph(phoneSizedDeck());
   await user.click(screen.getAllByRole("button", { name: /see what it connects to/i })[0]!);
-  // `find`, not `get`: EgoView is lazy (it imports GraphView, and a static importer would undo that
-  // split), so the ego board arrives one microtask after the tap.
-  expect(await screen.findByRole("button", { name: /back to the card list/i })).toBeInTheDocument();
+  // `find`, not `get`, AND NOT ON THE DEFAULT BUDGET. The comment here used to say the ego board
+  // "arrives one microtask after the tap", which stopped being true at #142 (`cae07fe`): EgoView
+  // became a DYNAMIC IMPORT, so this waits on a module load, not on a microtask.
+  //
+  // `findByRole` allows 1000ms by default and a cold CI runner can miss it -- measured on PR #150,
+  // where `test (node 20)` failed here alone, `test (node 22)` passed on the same commit, and a
+  // rerun with no code change passed. That is the signature of a budget, not of a defect.
+  //
+  // 4000ms rather than a round 5000: vitest's own `testTimeout` default is 5000 and is not
+  // configured in this package, so an assertion allowed the whole budget would race its own test
+  // and report the timeout against the wrong thing. This is the ONLY test that reaches the board
+  // through the router -- EgoView.test, GraphView.test and components.test import the views
+  // directly and never cross the lazy boundary, so this is one site, not a pattern to sweep.
+  expect(await screen.findByRole(
+    "button", { name: /back to the card list/i }, { timeout: 4000 },
+  )).toBeInTheDocument();
 });
 
 test("a precise pointer still gets the board", async () => {
