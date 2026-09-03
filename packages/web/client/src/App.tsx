@@ -24,7 +24,25 @@ export default function App() {
   const [data, setData] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [editing, setEditing] = useState(true);
+  /** A DECK IS ALREADY ON ITS WAY, AND THE FIRST PAINT HAS TO KNOW IT. Read from the URL during the
+   *  initial render rather than in the effect below, because that effect runs AFTER a paint and
+   *  `decodeShare` is async on top of it: for those frames a shared link renders the empty state,
+   *  and when the deck lands the whole page jumps up by the height of the hero.
+   *
+   *  MEASURED, on the production build at 390x844: that single shift was **0.1386** of a 0.1771 CLS,
+   *  the largest of three, and Google's "good" threshold for the whole page is 0.1. Cloudflare's
+   *  field data named `DeckInput`'s own two divs as the moving elements; they move because what is
+   *  above them disappears.
+   *
+   *  IT CLEARS ON A LINK THAT DOES NOT DECODE, so a malformed hash gets the ordinary empty page
+   *  instead of a permanently hidden introduction. */
+  const [fromLink, setFromLink] = useState(() => payloadFromHash(window.location.hash) !== null);
+
+  /** SEEDED FROM THE LINK, because `editing` gates the collapse below and a link the reader never
+   *  typed into is not being edited. Left at `true` here, the paste box rendered EXPANDED for the
+   *  whole round trip and then collapsed on the response -- the second measured shift, and the one
+   *  the `collapsed` prop alone could not remove. */
+  const [editing, setEditing] = useState(!fromLink);
   // What the last Re-analyze moved. Held in state rather than derived on render because it is a
   // fact about a TRANSITION -- once the snapshot is written, the same `data` no longer implies it.
   const [diff, setDiff] = useState<RunDiff | null>(null);
@@ -37,6 +55,12 @@ export default function App() {
   async function analyse(deckText: string, commanderText: string) {
     setLoading(true);
     setError(null);
+    // THE BOX CLOSES ON THE CLICK, NOT ON THE ANSWER. This used to sit next to `setData` below, so
+    // the ~420px paste box became a ~128px bar seconds later and shoved the page up by 290px --
+    // outside the 500ms `hadRecentInput` window, which is what makes a shift count against CLS.
+    // Here it lands in the same task as the click, so the browser attributes it to the reader. The
+    // catch below reopens it, because an error is the one case where the boxes are wanted back.
+    setEditing(false);
     try {
       const next = await analyzeDeck(deckText, commanderText);
       // WAS THAT A DECKLIST? `resolvedCount` counts cards the engine actually found, and a real list
@@ -84,6 +108,7 @@ export default function App() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
       setData(null);
+      setEditing(true);
     } finally {
       setLoading(false);
     }
@@ -94,7 +119,7 @@ export default function App() {
   /** NOTHING PASTED, NOTHING ANALYSED, NOTHING IN FLIGHT — the only state in which the page has to
    *  introduce itself. Named once because the lead above the form and the example-deck button below
    *  it are two halves of the same empty state and must appear and vanish together. */
-  const firstVisit = !data && !loading && decklist.trim() === "";
+  const firstVisit = !data && !loading && !fromLink && decklist.trim() === "";
 
   /** A SHARED LINK IS A DECK THAT ANALYSES ITSELF. Anything else -- filling the boxes and waiting for
    *  a click -- makes the recipient do the work the sender already did.
@@ -108,7 +133,9 @@ export default function App() {
     const payload = payloadFromHash(window.location.hash);
     if (!payload) return;
     void decodeShare(payload).then((deck) => {
-      if (!deck) return; // a link that does not decode leaves an empty paste box, as if it were absent
+      // a link that does not decode leaves an empty paste box, as if it were absent -- including
+      // the two things `fromLink` turned off on its behalf: the introduction, and the open box.
+      if (!deck) { setFromLink(false); setEditing(true); return; }
       setCommanders(deck.commanders);
       setDecklist(deck.decklist);
       void analyse(deck.decklist, deck.commanders);
@@ -253,7 +280,13 @@ export default function App() {
         onChange={setDecklist}
         onAnalyze={onAnalyze}
         loading={loading}
-        collapsed={!editing && !!data}
+        // COLLAPSED THE MOMENT A RUN STARTS, not when it finishes. The expanded box is ~420px tall
+        // and the collapsed bar is ~128px, so swapping them on the response shoves everything below
+        // up by 290px seconds after the click -- outside the 500ms `hadRecentInput` window, so CLS
+        // counts it (0.0211 measured). Collapsing on submit puts the shift inside that window on a
+        // click, and removes it entirely on a shared link, where there is no click at all. The bar
+        // already renders `Analyzing...` with `aria-busy`, so it is also the better in-flight state.
+        collapsed={!editing && (!!data || loading || fromLink)}
         onEdit={() => setEditing(true)}
         // START OVER IS A NAVIGATION, NOT A STATE RESET, and that is the lazy half of the fix. The
         // deck lives in `location.hash`, the report lives at `/cards`, `/graph` or `/combos`, and

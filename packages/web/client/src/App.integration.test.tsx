@@ -67,6 +67,48 @@ test("input collapses to a summary after a successful analysis", async () => {
   expect(screen.queryByLabelText("Decklist")).not.toBeInTheDocument();
 });
 
+/** BOTH OF THE NEXT TWO ARE CLS RATCHETS, and they assert a MOMENT rather than an end state, which
+ *  is the only thing that separates them from the test above.
+ *
+ *  Cumulative Layout Shift ignores anything that moves within 500ms of a real interaction, and
+ *  counts everything else. So WHEN the ~420px paste box becomes a ~128px bar decides whether the
+ *  290px it drags the page by is charged to the page or to the reader. Measured on the production
+ *  build at 390x844: shared link 0.1771 -> 0.0201, paste-and-click 0.0385 -> 0.0201, and the
+ *  remaining 0.0174 in both is the webfont, not this. */
+test("the paste box closes on the click, not on the answer", async () => {
+  // The response never arrives: what is on screen while it is in flight is the whole assertion.
+  vi.spyOn(api, "analyzeDeck").mockReturnValue(new Promise(() => {}));
+  window.history.replaceState(null, "", "/");
+  render(<App />);
+  fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: "1 Sol Ring" } });
+  fireEvent.click(screen.getByRole("button", { name: /analyze/i }));
+  expect(await screen.findByRole("button", { name: /edit/i })).toBeInTheDocument();
+  expect(screen.queryByLabelText("Decklist")).not.toBeInTheDocument();
+});
+
+/** ...and the same box is never OPEN on a shared link, where there is no click to charge the shift
+ *  to. `decodeShare` is async, so this asserts the very first render -- no `await` before it. */
+test("a shared link renders no empty state and no open paste box", () => {
+  vi.spyOn(api, "analyzeDeck").mockReturnValue(new Promise(() => {}));
+  window.history.replaceState(null, "", "/#deck=whatever");
+  render(<App />);
+  expect(screen.queryByLabelText("Decklist")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /example deck/i })).toBeNull();
+  window.history.replaceState(null, "", "/");
+});
+
+/** THE OTHER DIRECTION, because `fromLink` hides the introduction on nothing more than the presence
+ *  of a hash. A link that does not decode has to give the ordinary page back rather than leave a
+ *  reader on a summary bar for a deck that was never loaded. */
+test("a shared link that does not decode falls back to the empty state", async () => {
+  vi.spyOn(api, "analyzeDeck").mockReturnValue(new Promise(() => {}));
+  window.history.replaceState(null, "", "/#deck=not-a-real-payload");
+  render(<App />);
+  expect(await screen.findByLabelText("Decklist")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /example deck/i })).toBeInTheDocument();
+  window.history.replaceState(null, "", "/");
+});
+
 /** THERE WAS NO WAY BACK. `analyse` wrote the share hash with `replaceState`, chosen so that
  *  re-analysing does not fill the back button with near-identical entries -- but that also meant the
  *  FIRST analysis created no entry either, so Back left the site entirely. Owner report,
