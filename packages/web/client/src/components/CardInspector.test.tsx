@@ -77,8 +77,8 @@ describe("CardInspector", () => {
     render(<CardInspector node={node} edges={both} onClose={() => {}} />);
     // Both headings existing is not enough -- a mis-split that put both partners under ONE heading
     // would still pass that assertion. Each partner must appear under its OWN heading's section.
-    const feedsSection = screen.getByText(/^Feeds$/).closest("div");
-    const fedBySection = screen.getByText(/^Fed by$/).closest("div");
+    const feedsSection = screen.getByText(/^Feeds \d+$/).closest("div");
+    const fedBySection = screen.getByText(/^Fed by \d+$/).closest("div");
     expect(feedsSection?.textContent).toContain("Zulaport Cutthroat");
     expect(feedsSection?.textContent).not.toContain("Intangible Virtue");
     expect(fedBySection?.textContent).toContain("Intangible Virtue");
@@ -89,7 +89,7 @@ describe("CardInspector", () => {
   // card with only outgoing edges left "Fed by" printed with nothing beneath it.
   it("says 'None' rather than nothing under a heading with no edges in that direction", () => {
     render(<CardInspector node={node} edges={edges} onClose={() => {}} />);
-    const fedBySection = screen.getByText(/^Fed by$/).closest("div");
+    const fedBySection = screen.getByText(/^Fed by \d+$/).closest("div");
     expect(fedBySection?.textContent).toMatch(/none/i);
   });
 
@@ -97,11 +97,19 @@ describe("CardInspector", () => {
   // say which. It used to read "32 in total · strongest 6 shown" as a header over this panel's own
   // list, which renders EVERY edge; a reviewer reading it concluded the other 26 relations were
   // unreachable. Both facts, in one sentence: the board draws 6, the panel lists all 32.
-  it("says the BOARD draws the strongest few, and that the panel lists them all", () => {
+  // ONE TOTAL PER DIRECTION, AND IT LIVES IN THE HEADING. The phone judge met three numbers for one
+  // card in two taps -- 43 on the surface, then "the strongest 6 -- all 42 are listed here" -- and
+  // could not reconcile them: *"I worked that out by staring, and I'm not sure. At the table I'd
+  // just say about forty."* 43 and 42 were both correct (distinct partners across both directions,
+  // against the FED-BY count alone), which is exactly why the collision was invisible to us. The
+  // sentence no longer prints a second bare total; the heading carries it, once.
+  it("puts each direction's total in its heading and never repeats it as a bare number", () => {
     const flow = { truncated: new Map([["Bitterblossom", { down: { total: 32, shown: 6 } }]]) };
     render(<CardInspector node={node} edges={edges} flow={flow} onClose={() => {}} />);
     expect(screen.getByText(/board draws the strongest 6/i)).toBeInTheDocument();
-    expect(screen.getByText(/all 32 are listed here/i)).toBeInTheDocument();
+    // The old wording, which read as a competing total for the whole card.
+    expect(screen.queryByText(/all 32 are listed here/i)).toBeNull();
+    expect(screen.getByRole("heading", { name: /^Feeds \d+$/ })).toBeInTheDocument();
   });
 
   // THE ROOT CAN BE TRUNCATED ON BOTH WALKS AT ONCE -- keying by id alone let the upstream walk's
@@ -116,10 +124,14 @@ describe("CardInspector", () => {
       { from: "Intangible Virtue", to: "Bitterblossom", weight: 1, tags: [], reasonTexts: ["fed by"] },
     ];
     render(<CardInspector node={node} edges={both} flow={flow} onClose={() => {}} />);
-    const feedsSection = screen.getByText(/^Feeds$/).closest("div");
-    const fedBySection = screen.getByText(/^Fed by$/).closest("div");
-    expect(feedsSection?.textContent).toMatch(/strongest 6.*all 10 are listed/i);
-    expect(fedBySection?.textContent).toMatch(/strongest 6.*all 8 are listed/i);
+    const feedsSection = screen.getByText(/^Feeds \d+$/).closest("div");
+    const fedBySection = screen.getByText(/^Fed by \d+$/).closest("div");
+    // Each heading counts the rows ITS OWN section lists, and each sentence names only what the
+    // board drew of them. The keying bug this test was written for is unchanged.
+    expect(feedsSection?.textContent).toMatch(/^Feeds 1(?!\d)/);
+    expect(fedBySection?.textContent).toMatch(/^Fed by 1(?!\d)/);
+    expect(feedsSection?.textContent).toMatch(/strongest 6/i);
+    expect(fedBySection?.textContent).toMatch(/strongest 6/i);
   });
 });
 

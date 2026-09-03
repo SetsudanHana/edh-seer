@@ -272,7 +272,17 @@ export function CardInspector({
           </>
         ) : (
           <>
-            <h4 className="eyebrow text-(--muted)">Feeds</h4>
+            {/* THE TOTAL LIVES IN THE HEADING, ONCE (roadmap R1, phone judge 2026-09-03). This
+              *  panel used to print "all 42 are listed here" under a surface line reading "7 of 43
+              *  partners", and both were right -- 43 is distinct partners across BOTH directions,
+              *  42 is the fed-by count alone -- which is precisely why the collision was invisible
+              *  to us and immediate to a reader. Three numbers for one card in two taps.
+              *
+              *  CEILING: `feeds + fed by` does NOT always equal the distinct-partner total. Measured
+              *  on the example deck, 4 of 88 cards have a partner in both directions, so a reader
+              *  who adds the two headings gets one more than the surface line. Each heading is
+              *  truthful about its own section; the sum is not advertised as a total anywhere. */}
+            <h4 className="eyebrow text-(--muted)">Feeds {outgoing.length}</h4>
             {/* THE SENTENCE IS ABOUT THE BOARD, AND IT HAS TO SAY SO. The flow caps at
              *  FLOW_FANOUT_CAP edges per card, so a hub with 67 consumers DRAWS 6 -- but this panel
              *  renders every one of them (`sorted` is unsliced, below). Sitting as a header over
@@ -281,7 +291,7 @@ export function CardInspector({
              *  unreachable. If the author of a truncation note can misread it, so can a player. */}
             {cutDown ? (
               <p className="text-(--muted) text-xs">
-                The board draws the strongest {cutDown.shown} — all {cutDown.total} are listed here
+                The board draws the strongest {cutDown.shown} of them; every one is below.
               </p>
             ) : null}
             {renderList(outgoing, true)}
@@ -291,10 +301,10 @@ export function CardInspector({
 
       {sorted.length > 0 ? (
         <div className="border-t border-(--separator) pt-2 flex flex-col gap-2">
-          <h4 className="eyebrow text-(--muted)">Fed by</h4>
+          <h4 className="eyebrow text-(--muted)">Fed by {incoming.length}</h4>
           {cutUp ? (
             <p className="text-(--muted) text-xs">
-              The board draws the strongest {cutUp.shown} — all {cutUp.total} are listed here
+              The board draws the strongest {cutUp.shown} of them; every one is below.
             </p>
           ) : null}
           {renderList(incoming, false)}
