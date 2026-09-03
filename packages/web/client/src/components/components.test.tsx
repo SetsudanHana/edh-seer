@@ -1515,6 +1515,37 @@ test("BuildBenchmarks names the win plans with their counts, and says which dire
   expect(screen.getByText(/Higher is better here/)).toBeInTheDocument();
 });
 
+/** THE MANA ROWS WRAP RATHER THAN OVERFLOWING THE COLUMN THEY ARE GIVEN.
+ *
+ *  Measured 2026-09-03 on the example deck, before this: the lands row's fixed columns (`w-52` plus
+ *  `w-16` plus two 12px gaps, 296px) sat in a row that gets 326px on a 390px phone and **292px at
+ *  1440**, where `xl:grid-cols-2` halves the panel. The sentence between them was left 60px -- a
+ *  272px-tall ribbon two words wide -- and `wants 36` was pushed 30px past the column on a phone
+ *  and 65px past it on the desktop, over the next grid column. The colour rows had the same shape,
+ *  and their `sm:w-24` gutter made it worse: a VIEWPORT query cannot see that the container it is
+ *  in is 292px, so the wide gutter arrived exactly where there was no room for it.
+ *
+ *  jsdom lays nothing out, so what is asserted here is the CONTRACT that made the layout wrong: no
+ *  fixed-width column in a row whose width is not a viewport. The numbers above came from the
+ *  browser and are repeated in the commit. */
+test("no mana row pins a fixed-width column it cannot fit", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
+  const rows = [
+    screen.getByLabelText(/lands in the deck/i),
+    ...screen.getAllByLabelText(/sources.*by turn|sources, enough/i),
+  ];
+  expect(rows.length).toBeGreaterThan(1);
+  for (const row of rows) {
+    expect(row.className, row.getAttribute("aria-label") ?? "").toContain("flex-wrap");
+    // `w-6` on the pip cell is allowed: one glyph is one glyph at every width. What is refused is a
+    // column sized in rems against a container the class cannot see.
+    expect(row.className).not.toMatch(/\b(sm:)?w-(16|24|40|52)\b/);
+    for (const cell of row.children) {
+      expect(cell.className, (cell.textContent ?? "").slice(0, 30)).not.toMatch(/\b(sm:)?w-(16|24|40|52)\b/);
+    }
+  }
+});
+
 test("BuildBenchmarks shows the land count the deck's own curve asks for", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // Deck-derived, and now the SAME number buildScore is scored against (task 9) -- and it shows the
