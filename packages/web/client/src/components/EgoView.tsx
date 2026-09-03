@@ -90,6 +90,13 @@ export function EgoView(
     for (const n of graph.nodes) if (n.oracleText) m.set(n.id, n.oracleText);
     return (id: string) => m.get(id);
   }, [graph]);
+  /** Partner display names by id, so an edge row says "Shark" and marks it a token rather than
+   *  printing the node id `token:Shark`. Full graph, same reason `textById` uses it. */
+  const nameById = useMemo(() => {
+    const m = new Map<string, { label: string; isToken: boolean }>();
+    for (const n of graph.nodes) m.set(n.id, { label: n.label, isToken: n.isToken === true });
+    return (id: string) => m.get(id);
+  }, [graph]);
   const { pinned, togglePin } = usePinned();
   /** The partner whose edge the strip is currently reading, or null. Cleared whenever the focus
    *  moves, because an edge to the card you just left is not a fact about the card you are on. */
@@ -187,6 +194,7 @@ export function EgoView(
           edges={edges}
           flow={flow}
           textOf={textById}
+          nameOf={nameById}
           // The sheet's own Back is the way out of this surface, and it is always on screen. Closing
           // the panel from inside it would leave the reader on a graph with no detail and no
           // explanation of what changed, so this collapses to a no-op by design.
