@@ -28,3 +28,44 @@
 # it at 24h on their own; this says the truth out loud.
 /sw.js
   Cache-Control: public, max-age=0, must-revalidate
+
+# EVERYTHING BELOW USED TO FREE-RIDE ON A ZONE SETTING, which is a bad place for a cache policy to
+# live: it is not in this repo, it is not reviewed, and it silently rewrote the two rules above it.
+#
+# Cloudflare's Browser Cache TTL overrides the origin whenever the ORIGIN'S VALUE IS LOWER (documented
+# behaviour, and measured on this site 2026-09-03). Pages sends `max-age=0, must-revalidate` for any
+# file no rule names, so the zone's 4-hour default was raising all of these to 14400 -- and raising
+# `/sw.js` from 0 to 14400 with it, pinning readers to a four-hour-old service worker, which the note
+# above says is the one failure that cannot fix itself.
+#
+# With the zone set to "Respect Existing Headers" these files would revalidate on EVERY page load, so
+# they get explicit rules instead. Same caching as before, stated here where it can be read.
+
+# Content-addressed by neither name nor bytes, but they change roughly never and a stale one is
+# cosmetic.
+/favicon.svg
+  Cache-Control: public, max-age=604800
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800
+
+/icons/*
+  Cache-Control: public, max-age=604800
+
+# The social preview. A crawler re-reads it on its own schedule; a week is generous and harmless.
+/og-image.png
+  Cache-Control: public, max-age=604800
+
+# Machine-readable metadata. An hour keeps a crawler from re-reading it every hit without making a
+# correction wait a day.
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+
+/llms.txt
+  Cache-Control: public, max-age=3600
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=3600
