@@ -874,8 +874,23 @@ function DeckMathRows({
             *  swap between two numbers that mean different things is the same defect as the silent
             *  extrapolation it replaces. AND SO MUST AN ARCHETYPE DELTA (fix F1, above) -- see
             *  `landsAriaDelta`/`landsVisibleDelta`. */}
+          {/* IT WRAPS, BECAUSE THE THREE FIXED COLUMNS ASSUMED A WIDTH THIS ROW RARELY GETS.
+            *  Measured 2026-09-03 on the example deck: `w-52` (208px) plus `w-16` (64px) plus two
+            *  12px gaps is 296px of a row that gets 326px on a 390px phone and **292px on a 1440px
+            *  desktop**, where the `xl:grid-cols-2` above halves it. The middle sentence was left
+            *  60px -- a twenty-line ribbon two words wide, 272px tall -- and `wants 36` was pushed
+            *  30px past the column edge on a phone and 65px past it on the desktop, over whatever
+            *  sits in the next grid column. A phone judge read it as a number running off the
+            *  screen; it was worse on the machine it was designed on.
+            *
+            *  So the row wraps instead of overflowing, and it wraps only when it must: the sentence
+            *  keeps a 16rem flex-basis, so wherever 16rem plus the two figures fits (768px and up)
+            *  this is still one line, and below that the sentence drops to its own full-width line
+            *  under `38 in deck ... wants 36`. No breakpoint: the row responds to the space it is
+            *  actually given, which is the whole defect -- a media query would still have been
+            *  wrong inside the two-column grid. */}
           <div
-            className="flex items-center gap-3 text-sm"
+            className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm"
             aria-label={`${lands.actual} lands in the deck${
               lands.mdfc > 0 ? `, ${lands.mdfc} of them modal DFCs with a land back` : ""
             }, this curve wants ${lands.target}${
@@ -892,14 +907,28 @@ function DeckMathRows({
               *  an MDFC is a land, `actual` counts it, and the two readers agree. What survives is
               *  the composition, because a reader looking at 38 should know 4 of them are cards
               *  they may cast instead. */}
-            <span className="w-52 shrink-0 stat-num">
+            <span className="shrink-0 stat-num">
               {lands.actual} in deck
               {lands.mdfc > 0 ? <span className="text-xs text-(--muted)"> ({lands.mdfc} MDFC)</span> : ""}
             </span>
+            {/* `ml-auto` rather than a fixed column: on one line it sits at the right edge, and on
+              *  the wrapped line it is still the right-hand end of "38 in deck ... wants 36". */}
+            <span
+              className={`ml-auto shrink-0 text-right stat-num ${
+                Math.abs(lands.actual - lands.target) > 2 ? "text-(--warning)" : "text-(--success)"
+              }`}
+            >
+              wants {lands.target}
+            </span>
             {/* A sentence, not a table cell -- "avg mana value 2.6 · 4 cheap ramp/draw · 0 fast
               *  mana" stays the body face and only picks up plain tabular alignment so its three
-              *  figures don't shift the "·"s between them. */}
-            <span className="flex-1 text-xs text-(--muted) tabular-nums">
+              *  figures don't shift the "·"s between them.
+              *
+              *  AFTER the verdict in the DOM, not between the two figures. That is the order a
+              *  reader says it in -- "38 in deck, wants 36, and here is the working" -- so the
+              *  wrapped layout and the screen-reader order are the same order, with no `order-*`
+              *  class pulling them apart. */}
+            <span className="min-w-0 flex-1 basis-64 text-xs text-(--muted) tabular-nums">
               avg mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap ramp/draw · {lands.fastMana} fast mana
               {lands.mdfc > 0
                 ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as lands, at full weight and with no discount to the target`
@@ -908,13 +937,6 @@ function DeckMathRows({
                 ? ` · flat convention — this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
                 : ""}
               {landsVisibleDelta}
-            </span>
-            <span
-              className={`w-16 shrink-0 text-right stat-num ${
-                Math.abs(lands.actual - lands.target) > 2 ? "text-(--warning)" : "text-(--success)"
-              }`}
-            >
-              wants {lands.target}
             </span>
           </div>
         </div>
@@ -977,21 +999,25 @@ function DeckMathRows({
                 ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${c.worst.cards} card${c.worst.cards === 1 ? "" : "s"} want ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
                 : `${c.color}, ${c.supplied} sources, enough for every card that costs it`;
               return (
-                <li key={c.color} className="flex items-center gap-3 text-sm" aria-label={label}>
+                <li key={c.color} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" aria-label={label}>
                   {/* A PIP, NOT A LETTER (roadmap T18a). Owner's call: mana pips everywhere. The
                     *  row already renders its DEMAND as pips ("2 cards want {B}{B}"), so the letter
                     *  beside them was the one place this panel spelled a colour instead of showing
                     *  it. Same renderer, so the two cannot disagree.
                     *
-                    *  THE CELL KEEPS ITS WIDTH RULE: one glyph is affordable at 1440 and not at
-                    *  390, where the spelled-out demand and "of N by turn" both need the room. */}
-                  <span className="w-6 sm:w-24 shrink-0">
+                    *  IT NO LONGER KEEPS A `sm:` WIDTH RULE, and that rule was the same defect the
+                    *  lands row above had: `sm:w-24` is a VIEWPORT query, and at 1440 the two-column
+                    *  grid gives this list a 292px column. So the wide gutter arrived exactly where
+                    *  there was no room for it -- measured, the demand beside it was left 12px and
+                    *  wrapped one word per line. One glyph is affordable at every width; the space
+                    *  around it was not. */}
+                  <span className="w-6 shrink-0">
                     <ManaSymbols cost={`{${c.color}}`} />
                   </span>
                   {/* The subject of this row is the card that sets the DEADLINE, not the colour in
                     *  general — "1 card wants {U}{U} on turn 2" is what makes the shortfall beside
                     *  it a fact about one early double-pip spell rather than about the mana base. */}
-                  <span className="flex-1 text-(--muted) text-xs">
+                  <span className="min-w-0 flex-1 basis-48 text-(--muted) text-xs">
                     {c.worst
                       // Colour demand now renders in the same notation as a printed cost, so the
                       // reader meets one convention instead of two ("4 W" here, "{3}{B}{B}" in the
@@ -1008,7 +1034,7 @@ function DeckMathRows({
                     *  The pair survives as one cell, coloured: the reader can see the gap and its
                     *  size in one place. */}
                   <span
-                    className={`w-40 shrink-0 text-right stat-num ${
+                    className={`ml-auto shrink-0 text-right stat-num ${
                       !c.worst
                         ? "text-(--success)"
                         : overcommitted || c.worst.required > landRoom
