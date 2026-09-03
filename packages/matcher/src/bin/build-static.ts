@@ -16,6 +16,8 @@ import { connect, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-static-core.js";
+import { buildPartnerArtifact } from "./partners-core.js";
+import { loadHierarchy } from "../hierarchy.js";
 
 const outIdx = process.argv.indexOf("--out");
 const outDir = outIdx >= 0 ? process.argv[outIdx + 1] : "static-out";
@@ -142,6 +144,27 @@ const tokenArt: Record<string, string> = {};
 for (const t of tokens) if (t.artCrop) tokenArt[t._id] = t.artCrop;
 writeFileSync(join(stagingDir, "token-art.json"), JSON.stringify(tokenArt));
 
+// THE PARTNER ARTIFACT: one record per substantive card -- its derived events and its most specific
+// partners, each with the sentence `directedReasons` wrote for it. Free, like everything else here:
+// Mongo reads and pure functions, no model call.
+//
+// WRITTEN INTO STAGING, BEFORE THE HASH, and hashed with everything else. A partner list that
+// changed without moving the version would be served from an `immutable` cache for a year, which is
+// the one failure `/static/v-*` exists to make impossible.
+//
+// NO CARD RULES TEXT IN THESE RECORDS (spec D2, reversed 2026-09-04): name, type line and mana cost
+// are metadata, and the evidence a reader checks a claim against is the engine's reason sentence,
+// not the card's printed text.
+const partnerDeckCards = cards.map((card) => ({ card, tags: tagsByOracle.get(card._id) ?? null }));
+const partners = buildPartnerArtifact(partnerDeckCards as never, loadHierarchy());
+const partnersDir = join(stagingDir, "partners");
+mkdirSync(partnersDir, { recursive: true });
+for (const [name, shard] of partners.shards) {
+  writeFileSync(join(partnersDir, `${name}.json`), JSON.stringify(shard));
+}
+writeFileSync(join(stagingDir, "event-frequency.json"), JSON.stringify(partners.freq));
+writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify(partners.index));
+
 await store.close();
 
 // THE VERSION IS THE CONTENT, so a rebuild that changes nothing produces the same directory and a
@@ -152,9 +175,15 @@ for (const f of readdirSync(cardsDir).sort()) {
   hash.update(f);
   hash.update(readFileSync(join(cardsDir, f)));
 }
-for (const f of ["token-tags.json", "token-art.json"]) {
+for (const f of ["token-tags.json", "token-art.json", "event-frequency.json", "name-index.json"]) {
   hash.update(f);
   hash.update(readFileSync(join(stagingDir, f)));
+}
+// The partner shards hash the same way the card shards do: name then bytes, sorted, so two files
+// swapping contents is a different corpus and cannot hash the same.
+for (const f of readdirSync(partnersDir).sort()) {
+  hash.update(f);
+  hash.update(readFileSync(join(partnersDir, f)));
 }
 const version = `v-${hash.digest("hex").slice(0, 12)}`;
 

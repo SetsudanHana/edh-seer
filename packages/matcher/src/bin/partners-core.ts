@@ -99,38 +99,66 @@ export function specificity(key: string, freq: EventFrequency): number {
   return 1 / Math.log((freq[key] ?? 1) + 1);
 }
 
-/** DISTINCT CARDS per event key, counting a card ONCE per key however many of its abilities touch
- *  that event -- a card with three token-making abilities is still one card that supplies `enters`,
- *  and counting it three times would make the event look commoner than it is, which moves every
- *  score that key appears in.
- *
- *  Emits and demands are counted into the SAME table on purpose: specificity asks how crowded an
- *  event is, and a card is part of that crowd whichever side of the edge it stands on. */
-export function countEvents(rows: Iterable<{ emits: string[]; demands: string[] }>): EventFrequency {
-  const out: EventFrequency = {};
-  for (const row of rows) {
-    for (const k of new Set([...row.emits, ...row.demands])) out[k] = (out[k] ?? 0) + 1;
+/** THE FORMS AN EMIT CAN SATISFY. A type or subtype LIST is a disjunction, so it splits; then each
+ *  split form also stands for its coarser shapes, because a goblin creature entering satisfies a
+ *  demand for a creature entering, for a goblin entering, and for anything entering. */
+export function supplyForms(key: string): string[] {
+  const out = new Set<string>();
+  for (const [verb, type, subtype] of splitList(key)) {
+    out.add(`${verb}|${type}|${subtype}`);
+    out.add(`${verb}|${type}|-`);
+    out.add(`${verb}|-|${subtype}`);
+    out.add(`${verb}|-|-`);
   }
-  return out;
+  return [...out];
 }
 
-/** THE COARSER FORMS OF ONE EVENT KEY, widest last: `enters|creature|goblin` also stands for
- *  `enters|creature|-` and for `enters|-|-`.
+/** THE FORMS A DEMAND ACCEPTS -- the list split, and NOTHING ELSE.
  *
- *  WHY THIS HAS TO EXIST. A goblin token entering IS a creature entering, so Krenko's
- *  `enters|creature|goblin` emit satisfies Impact Tremors' `enters|creature|-` trigger -- the engine
- *  knows that through the type hierarchy, and a string comparison cannot. Without generalisation the
- *  index rejected the pair the whole design was argued from, which is what the test caught.
+ *  A demand is NEVER generalised upward. `enters|-|goblin` means a goblin entering; widening it to
+ *  `enters|-|-` would count every permanent in the game as satisfying it, which is precisely the
+ *  bug this file was rewritten to remove. */
+export function demandForms(key: string): string[] {
+  return [...new Set(splitList(key).map(([v, t, st]) => `${v}|${t}|${st}`))];
+}
+
+const splitList = (key: string): [string, string, string][] => {
+  const [verb = "", type = "-", subtype = "-"] = key.split("|");
+  const out: [string, string, string][] = [];
+  for (const t of type.split(",")) for (const st of subtype.split(",")) out.push([verb, t, st]);
+  return out;
+};
+
+/** HOW MANY CARDS IN THE CORPUS CAN ACTUALLY SATISFY EACH DEMAND.
  *
- *  IT IS DELIBERATELY OVER-PERMISSIVE, and that is safe because this is a SELECTOR, not a matcher.
- *  Its only job is to decide who is worth handing to `directedReasons`; every false candidate it
- *  admits is rejected one phase later, and `VERIFY_LIMIT` bounds what that costs. Being too strict
- *  here loses a real edge silently, which is the failure that cannot be recovered downstream. */
-export function keyVariants(key: string): string[] {
-  const [verb, type, subtype] = key.split("|");
-  const out = [key];
-  if (subtype !== "-") out.push(`${verb}|${type}|-`);
-  if (type !== "-") out.push(`${verb}|-|-`);
+ *  THIS REPLACED A COUNT OF IDENTICAL KEY STRINGS, WHICH WAS MEASURABLY WRONG. Key-string rarity is
+ *  an artifact of how a demand was WRITTEN, not of how narrow it is:
+ *  `enters|battle,creature,enchantment,land,planeswalker|-` fires on essentially any permanent, yet
+ *  that exact string appears almost nowhere, so it scored maximally and won the #1 slot for 1,402
+ *  cards. `counter-added|enchantment|incarnation` won for 1,995. Measured over the real corpus
+ *  2026-09-04, which is the only reason it was caught.
+ *
+ *  Counting SUPPLIERS fixes both, and fixes a third thing for free: every permanent implicitly emits
+ *  "I enter", so a "when a permanent enters" demand is satisfied by nearly the whole corpus, scores
+ *  near zero, and stops crowding out real interactions -- without a special case. That is the
+ *  engine's own "playing Magic is not a synergy" rule falling out of the arithmetic. */
+export function supplyCounts(rows: Iterable<{ emits: string[]; demands: string[] }>): EventFrequency {
+  const list = [...rows];
+  const suppliersOf = new Map<string, Set<number>>();
+  list.forEach((r, i) => {
+    for (const form of new Set(r.emits.flatMap(supplyForms))) {
+      const set = suppliersOf.get(form);
+      if (set) set.add(i); else suppliersOf.set(form, new Set([i]));
+    }
+  });
+  const out: EventFrequency = {};
+  for (const demand of new Set(list.flatMap((r) => r.demands))) {
+    const union = new Set<number>();
+    for (const form of demandForms(demand)) {
+      for (const i of suppliersOf.get(form) ?? []) union.add(i);
+    }
+    out[demand] = union.size;
+  }
   return out;
 }
 
@@ -159,6 +187,19 @@ export const VERIFY_LIMIT = 200;
  *  finish. Tunable. */
 export const KEEP = 24;
 
+/** HOW MANY ROWS ONE EVENT MAY OCCUPY.
+ *
+ *  MEASURED, 2026-09-04: ~2,000 cards demand `enters|creature|-`. They score IDENTICALLY, because
+ *  they are identically specific, so which of them reached a page was decided by corpus iteration
+ *  order -- Impact Tremors lost a slot to Diregraf Horde for no reason a reader could name.
+ *
+ *  Capping is the fix rather than a tie-break, because there is no honest tie-break available: the
+ *  cards really are equally specific, and the only orderings that would separate them are quality
+ *  or popularity, neither of which this engine will assert. Twenty rows that all say "triggers when
+ *  a creature enters" are ONE fact printed twenty times; three of them plus a count says the same
+ *  thing and leaves room for the card's other interactions. `pool` carries the count. */
+export const PER_EVENT_CAP = 3;
+
 /** THE PARTNER LIST FOR ONE CARD: rank by specificity, then verify with the engine.
  *
  *  TWO PHASES, AND THE SPLIT IS THE POINT. `eventKey` decides who is worth ASKING about;
@@ -170,19 +211,29 @@ export const KEEP = 24;
  *  Computing the join here instead would be a SECOND matcher, drifting from the first. That is the
  *  failure `graph-events.ts` names when it says a graph that computed its own edges would drift,
  *  and this artifact would drift the same way for the same reason. */
+export interface PartnerResult {
+  rows: PartnerRow[];
+  /** Per event key, how many cards in the corpus demand something this card supplies. The rows are
+   *  capped; this is what the page says instead of padding -- "and 1,974 more trigger on a creature
+   *  entering". A CANDIDATE count, not a verified-edge count, and the page must word it that way. */
+  pool: Record<string, number>;
+}
+
 export function partnersFor(
   subject: DeckCard,
   candidates: DeckCard[],
   freq: EventFrequency,
   slugs: Map<string, string>,
   h: Hierarchy,
-): PartnerRow[] {
+): PartnerResult {
+  // EVERY DEMAND SHAPE THIS CARD'S EMITS CAN SATISFY. `supplyForms` splits type lists and adds the
+  // coarser shapes, so a goblin-token emit is found by a demand for a creature entering.
   const subjectEmits = new Set(
     (subject.tags?.abilities ?? [])
       .flatMap((a) => (a.emits ?? []).map(eventKey))
-      .flatMap(keyVariants),
+      .flatMap(supplyForms),
   );
-  if (subjectEmits.size === 0) return [];
+  if (subjectEmits.size === 0) return { rows: [], pool: {} };
 
   const ranked = candidates
     // A CARD IS NEVER ITS OWN PARTNER. `directedReasons(x, x)` can return reasons, and
@@ -195,11 +246,10 @@ export function partnersFor(
       for (const a of c.tags?.abilities ?? []) {
         for (const verb of a.trigger?.verbs ?? []) {
           const key = eventKey({ verb, subject: a.trigger!.subject } as GameEvent);
-          // BOTH SIDES GENERALISE, because either can be the more specific one: a goblin-token emit
-          // meeting a creature demand, or a creature emit meeting a goblin demand. The SCORE stays
-          // on the demand's EXACT key -- generalising that too would price every event as its
-          // widest form and flatten the ranking this whole module is for.
-          if (!keyVariants(key).some((v) => subjectEmits.has(v))) continue;
+          // THE DEMAND ONLY SPLITS, IT NEVER WIDENS -- the same asymmetry `supplyCounts` relies on.
+          // Widening it here would admit every permanent as a candidate for a goblin demand, and the
+          // score is taken on the demand's own key, so a widened match would also be mispriced.
+          if (!demandForms(key).some((f) => subjectEmits.has(f))) continue;
           const s = specificity(key, freq);
           if (s > score) { score = s; best = key; }
         }
@@ -207,21 +257,166 @@ export function partnersFor(
       return { card: c, score, event: best };
     })
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, VERIFY_LIMIT);
+    .sort((a, b) => b.score - a.score);
+
+  // COUNTED BEFORE THE CUT, so the page can say how many it is not showing.
+  const pool: Record<string, number> = {};
+  for (const r of ranked) pool[r.event] = (pool[r.event] ?? 0) + 1;
 
   const rows: PartnerRow[] = [];
-  for (const r of ranked) {
+  const shown: Record<string, number> = {};
+  for (const r of ranked.slice(0, VERIFY_LIMIT)) {
+    if ((shown[r.event] ?? 0) >= PER_EVENT_CAP) continue;
     const reasons = directedReasons(subject, r.card, h);
     if (reasons.length === 0) continue;
+    shown[r.event] = (shown[r.event] ?? 0) + 1;
     rows.push({
       name: r.card.card.name,
       slug: slugs.get(r.card.card.name) ?? slugOf(r.card.card.name),
       score: r.score,
       event: r.event,
-      reason: reasons[0]!.text,
+      reason: pickReason(reasons),
     });
     if (rows.length === KEEP) break;
   }
-  return rows;
+  return { rows, pool };
+}
+
+/** WHICH OF THE ENGINE'S SENTENCES TO STORE.
+ *
+ *  MEASURED, 2026-09-04: Krenko's row read "When Krenko, Mob Boss enters, Quest for the Goblin Lord
+ *  puts counters on it" -- Krenko entering ONCE, as a body. His actual engine, tapping to make
+ *  goblins repeatedly, satisfies the same trigger and is the half worth printing. `reasons[0]` was
+ *  simply whichever the engine emitted first.
+ *
+ *  A REPEATABLE REASON BEATS A ONE-SHOT, and nothing else is reordered: this picks between sentences
+ *  the engine already wrote, it never composes one and never promotes a pair the engine refused. */
+function pickReason(reasons: { text: string; repeatability?: string }[]): string {
+  return (reasons.find((r) => r.repeatability && r.repeatability !== "oneshot") ?? reasons[0]!).text;
+}
+
+/** SMALLER THAN THE CARD SHARDS ON PURPOSE. The deploy is 16,407 files against a 20,000 cap, so the
+ *  partner artifact has ~3,500 to spend; 2,048 leaves real headroom at ~7 records per shard.
+ *  `assemble-deploy.mjs` asserts the cap, so an artifact that overran would fail at build rather
+ *  than minutes into an upload. */
+export const PARTNER_SHARD_COUNT = 2_048;
+
+/** WHICH SHARD A SLUG LIVES IN. Same FNV-1a as `shardOf`, different modulus -- one rule, imported by
+ *  both the build and the browser, so they cannot drift about where a page lives. */
+export function partnerShardOf(slug: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < slug.length; i++) {
+    h ^= slug.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return ((h >>> 0) % PARTNER_SHARD_COUNT).toString(16).padStart(3, "0");
+}
+
+export const emitKeysOf = (d: DeckCard): string[] =>
+  (d.tags?.abilities ?? []).flatMap((a) => (a.emits ?? []).map(eventKey));
+
+export const demandKeysOf = (d: DeckCard): string[] =>
+  (d.tags?.abilities ?? []).flatMap((a) =>
+    (a.trigger?.verbs ?? []).map((v) => eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)));
+
+/** SUBSTANTIVE = at least one emit or one trigger.
+ *
+ *  This one predicate decides three things at once: which cards get a partner record, which get an
+ *  indexable page, and what the sitemap promises. A card with abilities but neither an emit nor a
+ *  trigger -- a static, a keyword-only body -- forms no edge, so its page makes no promise to a
+ *  crawler even though it still renders. */
+export const isSubstantive = (d: DeckCard): boolean =>
+  emitKeysOf(d).length > 0 || demandKeysOf(d).length > 0;
+
+/** NO CARD RULES TEXT (spec D2, reversed 2026-09-04). Name, type line and mana cost are card
+ *  METADATA and the page is unusable without them; the RULES text is absent entirely.
+ *
+ *  The evidence a reader checks a claim against is `PartnerRow.reason` -- the engine's own sentence,
+ *  naming both cards -- not the card's printed text. Quoting the card would add nothing to that
+ *  argument and would only make the page resemble a card database, which is what Scryfall's
+ *  "may not simply repackage, republish, or proxy" clause is about. */
+export interface CardPageRecord {
+  name: string;
+  typeLine: string;
+  manaCost: string | null;
+  identity: string[];
+  commander: boolean;
+  emits: string[];
+  demands: string[];
+  partners: PartnerRow[];
+  /** Per event key, how many cards demand something this card supplies -- what the page says in
+   *  place of the rows `PER_EVENT_CAP` withheld. */
+  pool: Record<string, number>;
+}
+
+export interface NameIndexEntry {
+  slug: string;
+  name: string;
+  identity: string[];
+  commander: boolean;
+}
+
+export interface PartnerArtifact {
+  shards: Map<string, Record<string, CardPageRecord>>;
+  freq: EventFrequency;
+  index: NameIndexEntry[];
+}
+
+/** A COMMANDER, for the purposes of the `/commanders` pages. Legendary creatures only: the
+ *  "can be your commander" planeswalkers and backgrounds are a larger question than this artifact
+ *  needs, and shipping a wrong commander list is worse than shipping a short one.
+ *  CEILING: no planeswalker commanders, no backgrounds. Upgrade path: read the rules text for the
+ *  "can be your commander" line, which the corpus has. */
+const isCommander = (d: DeckCard): boolean =>
+  /Legendary Creature/.test(d.card.typeLine ?? "")
+  && (d.card as { legalities?: Record<string, string> }).legalities?.commander === "legal";
+
+/** THE WHOLE ARTIFACT, PURELY. Mongo reads and fs writes stay in `build-static.ts`; everything
+ *  decidable is here so it can be tested without either. */
+export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArtifact {
+  const substantive = all.filter(isSubstantive);
+  const slugs = resolveSlugs(substantive.map((d) => d.card.name));
+  const freq = supplyCounts(
+    substantive.map((d) => ({ emits: emitKeysOf(d), demands: demandKeysOf(d) })),
+  );
+
+  // CANDIDATES BY DEMAND KEY, INCLUDING THE COARSER FORMS. Without this index every card would be
+  // compared against all ~14,900 and the build is quadratic before `partnersFor` can bound it. A
+  // card is filed under every variant of every demand it has, so a subject emitting the specific
+  // form finds it and so does one emitting the general form.
+  const byDemand = new Map<string, DeckCard[]>();
+  for (const d of substantive) {
+    for (const k of new Set(demandKeysOf(d).flatMap(demandForms))) {
+      const b = byDemand.get(k);
+      if (b) b.push(d); else byDemand.set(k, [d]);
+    }
+  }
+
+  const shards = new Map<string, Record<string, CardPageRecord>>();
+  const index: NameIndexEntry[] = [];
+
+  for (const d of substantive) {
+    const slug = slugs.get(d.card.name)!;
+    const emits = emitKeysOf(d);
+    const candidates = [...new Set(emits.flatMap(supplyForms).flatMap((k) => byDemand.get(k) ?? []))];
+    const commander = isCommander(d);
+
+    const shardName = partnerShardOf(slug);
+    const shard = shards.get(shardName) ?? {};
+    shard[slug] = {
+      name: d.card.name,
+      typeLine: d.card.typeLine ?? "",
+      manaCost: (d.card as { manaCost?: string }).manaCost ?? null,
+      identity: d.card.colorIdentity ?? [],
+      commander,
+      emits: [...new Set(emits)],
+      demands: [...new Set(demandKeysOf(d))],
+      ...(() => { const { rows, pool } = partnersFor(d, candidates, freq, slugs, h);
+        return { partners: rows, pool }; })(),
+    };
+    shards.set(shardName, shard);
+    index.push({ slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander });
+  }
+
+  return { shards, freq, index };
 }

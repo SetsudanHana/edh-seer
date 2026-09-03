@@ -1,7 +1,11 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "../types.js";
-import { KEEP, countEvents, eventKey, keyVariants, partnersFor, resolveSlugs, slugOf, specificity } from "./partners-core.js";
+import {
+  KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
+  partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts,
+  supplyForms,
+} from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
   expect(slugOf("Krenko, Mob Boss")).toBe("krenko-mob-boss");
@@ -82,23 +86,44 @@ test("a key with one member outranks a key with a thousand", () => {
   expect(specificity("rare", freq)).toBeGreaterThan(specificity("common", freq));
 });
 
-test("counting is over distinct cards, both sides of the edge", () => {
-  const freq = countEvents([
-    { emits: ["enters|creature|-"], demands: [] },
-    { emits: ["enters|creature|-"], demands: ["dies|creature|-"] },
-  ]);
-  expect(freq["enters|creature|-"]).toBe(2);
-  expect(freq["dies|creature|-"]).toBe(1);
+/** COUNTING SUPPLIERS, NOT KEY STRINGS. The old metric counted how many cards shared an identical
+ *  key; measured over the real corpus it put `enters|battle,creature,enchantment,land,planeswalker|-`
+ *  -- a demand that fires on essentially any permanent -- at the TOP for 1,402 cards, because that
+ *  exact string is rare even though the demand is not. */
+test("a demand naming many types is counted as broad, not as rare", () => {
+  const rows = [
+    { emits: ["enters|creature|goblin"], demands: [] },
+    { emits: ["enters|land|-"], demands: [] },
+    { emits: ["enters|enchantment|-"], demands: [] },
+    { emits: [], demands: ["enters|creature,land,enchantment|-", "enters|creature|goblin"] },
+  ];
+  const freq = supplyCounts(rows);
+  expect(freq["enters|creature,land,enchantment|-"]).toBe(3);
+  expect(freq["enters|creature|goblin"]).toBe(1);
+  expect(specificity("enters|creature|goblin", freq))
+    .toBeGreaterThan(specificity("enters|creature,land,enchantment|-", freq));
 });
 
-/** ONE CARD COUNTS ONCE PER KEY however many of its abilities touch that event. Krenko emits
- *  `enters` from a single ability; a card with three token-making abilities is still one card that
- *  supplies the event, and counting it three times would make the event look commoner than it is. */
-test("a card touching one key from several abilities counts once", () => {
-  const freq = countEvents([
-    { emits: ["enters|creature|-", "enters|creature|-"], demands: ["enters|creature|-"] },
+/** A DEMAND IS NEVER WIDENED. `enters|-|goblin` means a goblin entering; counting every permanent as
+ *  satisfying it would rebuild the bug this replaced. */
+test("a subtype demand is satisfied only by that subtype", () => {
+  const freq = supplyCounts([
+    { emits: ["enters|creature|goblin"], demands: [] },
+    { emits: ["enters|creature|elf"], demands: [] },
+    { emits: ["enters|artifact|-"], demands: [] },
+    { emits: [], demands: ["enters|-|goblin", "enters|-|-"] },
   ]);
-  expect(freq["enters|creature|-"]).toBe(1);
+  expect(freq["enters|-|goblin"]).toBe(1);
+  // The bare form IS satisfied by everything that enters, and must score accordingly.
+  expect(freq["enters|-|-"]).toBe(3);
+});
+
+test("a supply form covers the coarser demands it satisfies, a demand form only splits", () => {
+  expect(supplyForms("enters|creature|goblin").sort())
+    .toEqual(["enters|-|-", "enters|-|goblin", "enters|creature|-", "enters|creature|goblin"]);
+  expect(demandForms("enters|creature,land|-").sort())
+    .toEqual(["enters|creature|-", "enters|land|-"]);
+  expect(demandForms("enters|-|goblin")).toEqual(["enters|-|goblin"]);
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -149,7 +174,7 @@ const FREQ = { "enters|creature|goblin": 41, "enters|creature|-": 1909, "create-
 const SLUGS = resolveSlugs(["Impact Tremors", "Millstone", "Krenko, Mob Boss"]);
 
 test("a verified partner carries the engine's own reason sentence", () => {
-  const rows = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+  const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
   expect(rows).toHaveLength(1);
   expect(rows[0]!.name).toBe("Impact Tremors");
   expect(rows[0]!.slug).toBe("impact-tremors");
@@ -161,7 +186,7 @@ test("a verified partner carries the engine's own reason sentence", () => {
 /** THE RANKING SELECTS, THE ENGINE DECIDES. A card sharing no event key never even reaches
  *  verification, so it cannot appear at any score. */
 test("a card that demands nothing the subject supplies is absent, not ranked low", () => {
-  expect(partnersFor(krenko, [millstone], FREQ, SLUGS, H)).toEqual([]);
+  expect(partnersFor(krenko, [millstone], FREQ, SLUGS, H).rows).toEqual([]);
 });
 
 /** THE POINT OF VERIFYING. A key match is necessary and NOT sufficient -- if `directedReasons`
@@ -175,34 +200,37 @@ test("a key match with no engine reason is dropped", () => {
     effect: { kind: "draw-card" },
   }] as unknown as CardTags["abilities"]);
   const slugs = resolveSlugs(["Shape Sharer"]);
-  expect(partnersFor(krenko, [noReason], FREQ, slugs, H)).toEqual([]);
+  expect(partnersFor(krenko, [noReason], FREQ, slugs, H).rows).toEqual([]);
 });
 
-test("the list is cut at KEEP", () => {
+/** THE CAP THAT ACTUALLY BINDS on a crowd of identical demands. All 34 payoffs here share
+ *  `enters|creature|-` and score identically, so PER_EVENT_CAP cuts before KEEP ever does -- and
+ *  `pool` reports the full crowd so the page can say what it withheld. */
+test("one event may occupy only PER_EVENT_CAP rows, and pool counts the rest", () => {
   const many = Array.from({ length: KEEP + 10 }, (_, i) => base(`Payoff ${i}`, [{
     kind: "triggered",
     trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
     effect: { kind: "draw-card" },
   }] as unknown as CardTags["abilities"]));
   const slugs = resolveSlugs(many.map((m) => m.card.name));
-  expect(partnersFor(krenko, many, FREQ, slugs, H).length).toBe(KEEP);
+  const { rows, pool } = partnersFor(krenko, many, FREQ, slugs, H);
+  expect(rows.length).toBe(PER_EVENT_CAP);
+  expect(pool["enters|creature|-"]).toBe(KEEP + 10);
 });
 
 /** A CARD IS NEVER ITS OWN PARTNER. `directedReasons(x, x)` can return reasons -- self-reference is
  *  the biggest defect family this engine has had -- so the exclusion is explicit. */
 test("the subject is not its own partner", () => {
-  expect(partnersFor(krenko, [krenko], FREQ, SLUGS, H)).toEqual([]);
+  expect(partnersFor(krenko, [krenko], FREQ, SLUGS, H).rows).toEqual([]);
 });
 
-/** THE BUG THIS FILE FOUND, PINNED. Krenko emits `enters|creature|goblin`; Impact Tremors demands
- *  `enters|creature|-`. A goblin token entering IS a creature entering, so the pair the whole design
- *  was argued from formed no edge until the index generalised. A string comparison cannot see what
- *  the type hierarchy does. */
-test("a key stands for its own coarser forms", () => {
-  expect(keyVariants("enters|creature|goblin"))
-    .toEqual(["enters|creature|goblin", "enters|creature|-", "enters|-|-"]);
-  expect(keyVariants("enters|creature|-")).toEqual(["enters|creature|-", "enters|-|-"]);
-  expect(keyVariants("draw|-|-")).toEqual(["draw|-|-"]);
+/** THE BUG THE FIXTURES FOUND, PINNED. Krenko emits `enters|creature|goblin`; Impact Tremors demands
+ *  `enters|creature|-`. A goblin token entering IS a creature entering, so the pair this whole design
+ *  was argued from formed no edge until the supply side generalised. A string comparison cannot see
+ *  what the type hierarchy does. */
+test("an emit is found by a demand for its coarser form", () => {
+  expect(supplyForms("enters|creature|goblin")).toContain("enters|creature|-");
+  expect(demandForms("enters|creature|-")).toEqual(["enters|creature|-"]);
 });
 
 /** THE SCORE STAYS ON THE DEMAND'S EXACT KEY. Generalising the score too would price every event as
@@ -215,8 +243,93 @@ test("a subtype-specific payoff outranks a generic one for the same emit", () =>
     effect: { kind: "draw-card" },
   }] as unknown as CardTags["abilities"]);
   const slugs = resolveSlugs(["Goblin Bushwhacker", "Impact Tremors"]);
-  const rows = partnersFor(krenko, [impactTremors, goblinPayoff], FREQ, slugs, H);
+  const { rows } = partnersFor(krenko, [impactTremors, goblinPayoff], FREQ, slugs, H);
   expect(rows.map((r) => r.name)).toEqual(["Goblin Bushwhacker", "Impact Tremors"]);
   expect(rows[0]!.event).toBe("enters|creature|goblin");
   expect(rows[1]!.event).toBe("enters|creature|-");
+});
+
+// ---------------------------------------------------------------------------------------------
+// The artifact.
+// ---------------------------------------------------------------------------------------------
+
+test("a partner shard name is stable and inside the count", () => {
+  const a = partnerShardOf("krenko-mob-boss");
+  expect(a).toBe(partnerShardOf("krenko-mob-boss"));
+  expect(parseInt(a, 16)).toBeLessThan(PARTNER_SHARD_COUNT);
+  expect(a).toMatch(/^[0-9a-f]{3}$/);
+});
+
+/** SUBSTANTIVE IS ONE PREDICATE DECIDING THREE THINGS: who gets a record, who gets an indexable
+ *  page, and what the sitemap promises. A card with abilities but neither an emit nor a trigger is
+ *  NOT substantive -- it forms no edge -- and an earlier draft of the spec enumerated the excluded
+ *  groups instead of defining them and silently left that one out. */
+test("substantive means at least one emit or one trigger, nothing else", () => {
+  expect(isSubstantive(krenko)).toBe(true);
+  expect(isSubstantive(impactTremors)).toBe(true);
+  const vanilla = base("Grizzly Bears", [] as unknown as CardTags["abilities"]);
+  expect(isSubstantive(vanilla)).toBe(false);
+  const staticOnly = base("Static Only", [{
+    kind: "static", effect: { kind: "pump" },
+  }] as unknown as CardTags["abilities"]);
+  expect(isSubstantive(staticOnly)).toBe(false);
+});
+
+test("the artifact shards every substantive card and skips the rest", () => {
+  const vanilla = base("Grizzly Bears", [] as unknown as CardTags["abilities"]);
+  const { shards, index } = buildPartnerArtifact([krenko, impactTremors, vanilla], H);
+  const all = [...shards.values()].flatMap((s) => Object.keys(s));
+  expect(all.sort()).toEqual(["impact-tremors", "krenko-mob-boss"]);
+  expect(index.map((e) => e.slug).sort()).toEqual(["impact-tremors", "krenko-mob-boss"]);
+});
+
+/** NO CARD RULES TEXT ON THE RECORD (spec D2, reversed 2026-09-04). The evidence a reader checks a
+ *  claim against is the engine's reason sentence, not the card's printed text -- so `oracleText`
+ *  must not be able to creep back in through a future field. */
+test("a page record carries metadata and derivation, never card rules text", () => {
+  const { shards } = buildPartnerArtifact([krenko, impactTremors], H);
+  const rec = [...shards.values()].flatMap((s) => Object.entries(s))
+    .find(([slug]) => slug === "krenko-mob-boss")![1];
+  expect(Object.keys(rec).sort()).toEqual(
+    ["commander", "demands", "emits", "identity", "manaCost", "name", "partners", "pool", "typeLine"],
+  );
+  expect(JSON.stringify(rec)).not.toContain("Create X 1/1 red Goblin");
+});
+
+test("the artifact wires the partner list through the engine", () => {
+  const { shards } = buildPartnerArtifact([krenko, impactTremors], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s))
+    .find((r) => r.name === "Krenko, Mob Boss")!;
+  expect(rec.partners.map((p) => p.name)).toEqual(["Impact Tremors"]);
+  expect(rec.partners[0]!.reason).toContain("Krenko");
+});
+
+/** `pickReason` PREFERS A REPEATABLE SENTENCE, proven here because the corpus cannot prove it: on
+ *  the Krenko/Quest pair the engine returns exactly ONE reason, so there is nothing to choose
+ *  between and the preference is invisible. It still has to be correct for the pairs where the
+ *  engine returns several -- a function nobody has tested is decoration.
+ *
+ *  Driven through `partnersFor` rather than by exporting the helper: the behaviour under test is
+ *  which sentence reaches the artifact, not the shape of a private function. */
+test("a repeatable reason is preferred over a one-shot", async () => {
+  const edges = await import("../edges.js");
+  const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
+    { tag: "enters:creature", text: "ONE SHOT", repeatability: "oneshot" },
+    { tag: "enters:creature", text: "REPEATABLE", repeatability: "triggered" },
+  ] as never);
+  try {
+    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    expect(rows[0]!.reason).toBe("REPEATABLE");
+  } finally { spy.mockRestore(); }
+});
+
+test("with only a one-shot on offer, that is what is stored", async () => {
+  const edges = await import("../edges.js");
+  const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
+    { tag: "enters:creature", text: "ONLY ONE SHOT", repeatability: "oneshot" },
+  ] as never);
+  try {
+    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    expect(rows[0]!.reason).toBe("ONLY ONE SHOT");
+  } finally { spy.mockRestore(); }
 });
