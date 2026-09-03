@@ -29,9 +29,15 @@ test("a real deck's whole board cannot clear the 24px floor at phone width", () 
   }
 });
 
-test("a depth-1 ego view clears the floor with room to spare", () => {
-  expect(predictDiscDiameter(13, 374, 600)).toBeGreaterThan(MIN_DISC_PX);
-});
+// DELETED RATHER THAN RE-ANCHORED, and the deletion is the finding. This asserted that the model
+// predicts a comfortable depth-1 ego view, which it does -- but the model does not describe small
+// graphs at all. Measured 2026-09-03 across three widths and five focus cards, the implied spread
+// constant varies 2.1x (52.9 to 112.7) and not with node count: 5 nodes span 252 world units where
+// 8 span 150, because `linkDistanceFor` is weight-dependent. A test that passes on a model known
+// not to apply is worse than no test. The real ego sizes are measured in the browser and recorded
+// in `disc-fit.ts`; the smallest observed was 27.2px, above the floor at every width.
+// (No replacement test. The scoping is a fact about where the model applies, not a behaviour, and a
+// test that asserted the comment text would be noise pretending to be evidence.)
 
 test("an empty or single-node view is not a division by zero", () => {
   expect(Number.isFinite(predictDiscDiameter(0, 374, 600))).toBe(true);
