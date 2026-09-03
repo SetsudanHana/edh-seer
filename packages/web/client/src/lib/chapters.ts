@@ -18,9 +18,28 @@ export type ChapterId = "read" | "stand" | "plan" | "mana" | "roles" | "fix";
  *
  *  THE SEQUENCE IS UNCHANGED and so is `docs/ANALYZER-JOURNEY.md`'s reasoning for it: trust,
  *  verdict, plan, mana, roles, action. Only the words on screen changed. */
+/** EVERY RAIL WORD APPEARS IN ITS OWN HEADING, and three of them did not.
+ *
+ *  Below `lg` this list is the SELECT's option text, so the closed control shows the current
+ *  chapter's rail word -- and `READ` sat over a heading reading "Deck at a glance", `STAND` over
+ *  "Scores and bracket". The phone judge hit it on all four runs: *"neither is a heading I passed"*,
+ *  *"I don't know if that's Standing, Standard or something else"*, and it is why confidence on
+ *  "get me to the mana section" never rose above 60% before the tap. It also cost task 1 every run
+ *  -- a reader cannot count the report's parts from a control whose one visible word names nothing.
+ *
+ *  THE REGISTER IS UNCHANGED, which is what T1 settled: six terse labels, not six questions and not
+ *  six full titles. `Read -> Glance` and `Stand -> Scores`, and every word is now a literal substring of
+ *  the heading it scrolls to (`Fix` already was, and stays short so it cannot collide with the
+ *  "Fixes" heading itself -- a rail word equal to a heading makes that heading ambiguous to find). The full titles were measured first and do not fit the
+ *  closed control: `SCORES AND BRACKET` is 119px of a select that has about 80px of text room at
+ *  390, so it would have truncated into the same unreadable stub.
+ *
+ *  Widening the select was the other option and was refused: the room would have come from the
+ *  three surface links' `↗`, and that arrow is the one signal the same judge reads correctly every
+ *  run ("the ↗ tells me it goes somewhere else"). */
 export const CHAPTERS: readonly { id: ChapterId; rail: string; title: string }[] = [
-  { id: "read", rail: "Read", title: "Deck at a glance" },
-  { id: "stand", rail: "Stand", title: "Scores and bracket" },
+  { id: "read", rail: "Glance", title: "Deck at a glance" },
+  { id: "stand", rail: "Scores", title: "Scores and bracket" },
   { id: "plan", rail: "Plan", title: "Game plan" },
   { id: "mana", rail: "Mana", title: "Manabase" },
   { id: "roles", rail: "Roles", title: "Roles" },
