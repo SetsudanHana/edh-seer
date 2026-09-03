@@ -35,6 +35,12 @@ import { REFERENCE_SURFACES, SurfaceLink } from "./ReportShell.js";
  *  behind this one: a phone reader landing on chapter 6 saw the title clipped to the word "do?"
  *  and could not tell which chapter they were in. `--report-rail-h` is 0 at `lg`, where the rail
  *  is beside the column and pins nothing. */
+/** HOW BIG A SCROLL COUNTS AS A GESTURE, and how far down the rail stops being pinned. Both are
+ *  the smallest numbers that behaved on the live page at 390: below 8px a resting thumb toggles the
+ *  bar, and 120px is roughly the header plus the rail, so the two arrive and leave together. */
+const SCROLL_TWITCH = 8;
+const RAIL_PINNED_ABOVE = 120;
+
 export function ChapterRail({ current }: { current: ChapterId | null }) {
   const nav = useRef<HTMLElement>(null);
   // Below `lg` the rail is pinned under the header and anything scrolled to has to clear BOTH.
@@ -42,6 +48,37 @@ export function ChapterRail({ current }: { current: ChapterId | null }) {
   const stacked = useIsNarrow(1023);
   const go = (id: string): void =>
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  /** AND THE BAR GETS OUT OF THE WAY WHILE YOU READ DOWN (owner-reported, 2026-09-03).
+   *
+   *  Even as a select the rail is 53px on top of the header's 73 -- 126px, 14.9% of an 844px
+   *  phone, spent permanently on chrome while the reader is doing the one thing this page is for.
+   *  Scrolling DOWN is the gesture that means "I am reading"; scrolling UP is the one that means
+   *  "I want to get somewhere", which is when a table of contents is worth its space.
+   *
+   *  It slides UNDER the header rather than fading: the header is `z-20` and opaque, this is
+   *  `z-10`, so there is nothing to see through and nothing to reflow. `--report-rail-h` is left at
+   *  the measured height either way, so a chapter anchor over-reserves by 53px at worst -- a gap,
+   *  never a heading clipped behind a bar that came back mid-scroll. */
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    if (!stacked) {
+      setHidden(false);
+      return;
+    }
+    let last = window.scrollY;
+    const onScroll = (): void => {
+      const y = window.scrollY;
+      const dy = y - last;
+      // A thumb wobbles. Under the threshold nothing is a gesture and nothing moves.
+      if (Math.abs(dy) < SCROLL_TWITCH) return;
+      last = y;
+      // Near the top the header and the rail are one block, and half of it arriving late reads as
+      // a glitch rather than as a bar that got out of the way.
+      setHidden(y > RAIL_PINNED_ABOVE && dy > 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [stacked]);
   useEffect(() => {
     const el = nav.current;
     if (!el) return;
@@ -76,7 +113,13 @@ export function ChapterRail({ current }: { current: ChapterId | null }) {
     <nav
       ref={nav}
       aria-label="Report chapters"
-      className="sticky top-[var(--report-header-h,0px)] z-10 bg-(--background) lg:top-[calc(var(--report-header-h,0px)+1.5rem)] lg:bg-transparent lg:self-start"
+      data-hidden={hidden ? "true" : undefined}
+      // A HIDDEN BAR IS STILL IN THE TAB ORDER, and a keyboard reader whose focus lands on a
+      // control parked behind the header has no way to know where it went.
+      onFocusCapture={() => setHidden(false)}
+      className={`sticky top-[var(--report-header-h,0px)] z-10 bg-(--background) transition-transform duration-200 ease-out motion-reduce:transition-none lg:top-[calc(var(--report-header-h,0px)+1.5rem)] lg:bg-transparent lg:self-start ${
+        hidden ? "-translate-y-full" : "translate-y-0"
+      }`}
     >
       {stacked ? (
         <div className="flex items-center gap-3 border-b border-(--separator) py-1">
