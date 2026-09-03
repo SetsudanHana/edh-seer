@@ -211,6 +211,75 @@ test("choosing a chapter in the select scrolls to that section", async () => {
   expect(scrollIntoView.mock.instances).toContain(document.getElementById("mana"));
 });
 
+/** AND THE WHOLE BAR GETS OUT OF THE WAY WHILE YOU READ DOWN (owner-reported, 2026-09-03).
+ *
+ *  After the select the rail is 53px of an 844px phone, on top of the header's 73 -- 126px, 14.9%
+ *  of the viewport, permanently spent on chrome while the reader is doing the one thing this page
+ *  is for. Scrolling DOWN is the gesture that means "I am reading"; scrolling UP is the one that
+ *  means "I want to get somewhere", and that is when the rail comes back.
+ *
+ *  jsdom lays nothing out and never scrolls, so `scrollY` is set by hand and the event dispatched:
+ *  what is asserted is the RULE, which is the part that can be wrong. */
+function atScroll(y: number): void {
+  Object.defineProperty(window, "scrollY", { configurable: true, value: y });
+}
+function scrollTo(y: number): void {
+  atScroll(y);
+  act(() => { window.dispatchEvent(new Event("scroll")); });
+}
+
+test("the rail hides while you read down and comes back when you scroll up", () => {
+  stubNarrow();
+  // An earlier test in this file leaves `scrollY` at 2400, and the rail reads its starting point at
+  // mount -- so every rail test says where the reader is BEFORE it renders one.
+  atScroll(0);
+  render(<MemoryRouter><ChapterRail current="read" /></MemoryRouter>);
+  const rail = screen.getByRole("navigation", { name: "Report chapters" });
+  expect(rail).not.toHaveAttribute("data-hidden");
+
+  scrollTo(400);
+  expect(rail).toHaveAttribute("data-hidden", "true");
+
+  // A twitch is not a gesture: under the threshold nothing moves, which is what keeps the bar from
+  // flickering on the wobble of a thumb.
+  scrollTo(396);
+  expect(rail).toHaveAttribute("data-hidden", "true");
+
+  scrollTo(340);
+  expect(rail).not.toHaveAttribute("data-hidden");
+
+  // NEAR THE TOP IT IS ALWAYS THERE, whichever way the last gesture went -- the header and the rail
+  // are one block at the top of the report and half of it arriving late reads as a glitch.
+  scrollTo(600);
+  expect(rail).toHaveAttribute("data-hidden", "true");
+  scrollTo(40);
+  expect(rail).not.toHaveAttribute("data-hidden");
+});
+
+/** A HIDDEN BAR IS STILL IN THE TAB ORDER, and a keyboard reader who tabs into a control parked
+ *  behind the header has no idea where their focus went. Focus brings it back. */
+test("focusing anything in the rail brings it back", () => {
+  stubNarrow();
+  atScroll(0);
+  render(<MemoryRouter><ChapterRail current="read" /></MemoryRouter>);
+  const rail = screen.getByRole("navigation", { name: "Report chapters" });
+  scrollTo(400);
+  expect(rail).toHaveAttribute("data-hidden", "true");
+
+  act(() => { screen.getByRole("combobox", { name: "Jump to chapter" }).focus(); });
+  expect(rail).not.toHaveAttribute("data-hidden");
+});
+
+/** AT `lg` THE RAIL IS A COLUMN BESIDE THE REPORT, costing no vertical space at all -- so there is
+ *  nothing to reclaim and hiding it on scroll would only make the table of contents flicker. */
+test("the rail never hides at lg, where it costs no vertical space", () => {
+  atScroll(0);
+  render(<MemoryRouter><ChapterRail current="read" /></MemoryRouter>);
+  const rail = screen.getByRole("navigation", { name: "Report chapters" });
+  scrollTo(400);
+  expect(rail).not.toHaveAttribute("data-hidden");
+});
+
 /** THE RAIL REFLECTS POSITION — that is what makes it a table of contents rather than a second tab
  *  bar. jsdom lays nothing out, so the observer is driven by hand: what is asserted is the RULE
  *  (topmost intersecting chapter wins, in document order), which is the part that can be wrong. */
