@@ -12,7 +12,19 @@ import type { ReactNode } from "react";
 export function Explain({ label, children }: { label: string; children: ReactNode }) {
   return (
     <details className="max-w-[65ch]">
-      <summary className="eyebrow cursor-pointer text-(--muted)">{label}</summary>
+      {/* THE HEIGHT IS NOT SET HERE, and an earlier attempt at this fix put `py-3.5` on this line
+        *  and measured no change at all: `index.css` carries an UNLAYERED `summary` rule, and an
+        *  unlayered rule beats Tailwind's `utilities` layer outright -- the same trap that file
+        *  already documents for `.eyebrow`. So the 44px lives there, where it covers every
+        *  disclosure in the app rather than only this component's.
+        *
+        *  WHAT DOES BELONG HERE IS THE AFFORDANCE. Size was half of why the phone judge never
+        *  opened one; the other half is that a grey 11px line with a triangle reads as a caption.
+        *  The accent on hover is what every other disclosure in this app already does
+        *  (`CardInspector`), and a colour utility DOES win over the rule above. */}
+      <summary className="eyebrow cursor-pointer text-(--muted) hover:text-(--accent)">
+        {label}
+      </summary>
       {/* Explain bodies are prose (a caveat, a scale, a "what this means"), and several name a
         *  number that can shift on re-render ("by turn 7", "10 points higher") -- `tabular-nums`
         *  here once covers every caller rather than each Caveat/Explain instance needing its own. */}
