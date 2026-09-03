@@ -1774,7 +1774,19 @@ export function GraphView(
         : null);
     };
 
+    // A pointer that leaves the canvas sends no further pointermove, so `onMove` never gets to clear
+    // anything and the last card's tooltip stays painted over a board the pointer is no longer on.
+    // On touch this is the ONLY exit: a touch pointer never moves away, it ENDS. The spec has the UA
+    // fire pointerleave after pointerup and after pointercancel for a direct-manipulation device, so
+    // this one listener covers the finger lifting as well as the mouse crossing the edge.
+    const onLeave = () => {
+      if (hoveredIdRef.current !== null) invalidate();
+      hoveredIdRef.current = null;
+      setHover(null);
+    };
+
     canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("pointerleave", onLeave);
     return () => {
       // Snapshot final positions so the next effect run can reuse them instead of re-throwing
       // everything.
@@ -1783,6 +1795,7 @@ export function GraphView(
       cancelAnimationFrame(raf);
       resizeObserver.disconnect();
       canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerleave", onLeave);
       selection.on(".zoom", null);
       delete (canvas as unknown as { __graphProbe?: () => unknown }).__graphProbe;
     };

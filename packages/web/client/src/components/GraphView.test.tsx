@@ -1046,6 +1046,20 @@ describe("hover", () => {
     expect(screen.queryByText(/extra mana/)).toBeNull();
   });
 
+  // The pointer that LEAVES the canvas stops sending pointermove, so nothing above ever runs again
+  // and the last card's tooltip stays painted over a board the pointer is no longer on. On touch it
+  // is the only exit that exists: a touch pointer never moves away, it ENDS -- and the spec has the
+  // UA fire pointerout/pointerleave after pointerup and after pointercancel, so this one listener
+  // covers the finger lifting as well as the mouse crossing the edge.
+  test("clears when the pointer leaves the canvas", () => {
+    const { canvas } = frames(graphOf([card({ id: "Sol Ring", roles: ["ramp"] })]));
+    const node = canvas.__graphProbe!()[0];
+    fireEvent(canvas, new MouseEvent("pointermove", { clientX: node.x, clientY: node.y, bubbles: true }));
+    expect(screen.getByText(/extra mana/)).toBeInTheDocument();
+    fireEvent(canvas, new MouseEvent("pointerleave", { clientX: node.x, clientY: node.y, bubbles: true }));
+    expect(screen.queryByText(/extra mana/)).toBeNull();
+  });
+
   // THE WHOLE POINT OF PREFETCHING ON HOVER rather than fetching `normal` for every card: at
   // whole-deck zoom it must cost NOTHING. The rejected alternative (one `normal` per card, cropped
   // for the disc) added ~2.5MB to a 100-card deck's opening load to save ~75KB per card actually
