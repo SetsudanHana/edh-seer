@@ -154,24 +154,61 @@ test("the rail's chapter links are buttons, not hash anchors", () => {
   expect(within(rail).queryByRole("link", { name: "Stand" })).toBeNull();
 });
 
-/** A HIDDEN OVERFLOW NEEDS A VISIBLE CUE, and a cue for an overflow that is not there is the same
- *  lie pointing the other way -- so the rail's fade is driven by the measured width, exactly as the
- *  theme matrix's is (they share `useClipped`). jsdom reports every width as 0, so the widths are
- *  stubbed: what is asserted is that the cue follows the measurement. */
-test("the rail shows an edge cue only when its labels are actually cut off", () => {
-  const widths = { scrollWidth: 900, clientWidth: 390 };
-  Object.defineProperty(HTMLUListElement.prototype, "scrollWidth", { configurable: true, get() { return widths.scrollWidth; } });
-  Object.defineProperty(HTMLUListElement.prototype, "clientWidth", { configurable: true, get() { return widths.clientWidth; } });
-  const { unmount } = render(<MemoryRouter><ChapterRail current={null} /></MemoryRouter>);
-  expect(screen.getByTestId("rail-edge-fade")).toBeInTheDocument();
-  unmount();
+/** BELOW `lg` THE RAIL IS A SELECT, NOT A STRIP THAT SCROLLS SIDEWAYS.
+ *
+ *  Measured at 390 on the example deck: the strip's scrollport is 326px and the three reference
+ *  surfaces, pinned to its right edge because they are the only route to their pages, hold 214 of
+ *  it -- 66%. The six chapters scrolled through the remaining 112px, about two labels, sideways,
+ *  while the page scrolled vertically under the same finger. Owner-reported: *"3 buttons are
+ *  always visible and you have very small space to scroll the rest down."*
+ *
+ *  A native `<select>` is the platform's own answer: it always spells out the chapter you are in
+ *  (the scroller could not -- it showed two of six), it opens the operating system's full-height
+ *  picker showing all six at once, and it costs no sideways gesture. It also DELETES the edge
+ *  fade, the `useClipped` measurement, the screen-reader overflow sentence and the effect that
+ *  scrolled the strip to keep the marked chip on it -- none of which a select can need. */
+function stubNarrow(): void {
+  vi.stubGlobal("matchMedia", (q: string) => ({
+    matches: /max-width:\s*1023px/.test(q),
+    media: q, onchange: null,
+    addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+    dispatchEvent: () => false,
+  }));
+}
 
-  widths.scrollWidth = 390;
-  render(<MemoryRouter><ChapterRail current={null} /></MemoryRouter>);
-  expect(screen.queryByTestId("rail-edge-fade")).toBeNull();
+test("below lg the chapters are a select naming the current one, and the surfaces keep their links", () => {
+  stubNarrow();
+  render(<MemoryRouter><ChapterRail current="roles" /></MemoryRouter>);
+  const rail = screen.getByRole("navigation", { name: "Report chapters" });
 
-  Reflect.deleteProperty(HTMLUListElement.prototype, "scrollWidth");
-  Reflect.deleteProperty(HTMLUListElement.prototype, "clientWidth");
+  const select = within(rail).getByRole("combobox", { name: "Jump to chapter" });
+  expect((select as HTMLSelectElement).value).toBe("roles");
+  expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual(
+    CHAPTERS.map((c) => c.rail),
+  );
+  // The strip is gone, not merely restyled: no chip to scroll off an edge.
+  for (const c of CHAPTERS) expect(within(rail).queryByRole("button", { name: c.rail })).toBeNull();
+  expect(within(rail).queryByTestId("rail-edge-fade")).toBeNull();
+
+  // The three that are the ONLY route to their surfaces stay visible, which is why they were
+  // pinned in the first place.
+  for (const label of ["Graph", "Cards", "Combos"]) {
+    expect(within(rail).getByRole("link", { name: new RegExp(label) })).toBeInTheDocument();
+  }
+});
+
+test("choosing a chapter in the select scrolls to that section", async () => {
+  stubNarrow();
+  const scrollIntoView = vi.fn();
+  Element.prototype.scrollIntoView = scrollIntoView;
+  render(
+    <MemoryRouter>
+      <ChapterRail current="read" />
+      {CHAPTERS.map((c) => <section key={c.id} id={c.id} />)}
+    </MemoryRouter>,
+  );
+  await userEvent.selectOptions(screen.getByRole("combobox", { name: "Jump to chapter" }), "mana");
+  expect(scrollIntoView.mock.instances).toContain(document.getElementById("mana"));
 });
 
 /** THE RAIL REFLECTS POSITION — that is what makes it a table of contents rather than a second tab

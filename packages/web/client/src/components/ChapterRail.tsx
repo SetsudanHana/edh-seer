@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useClipped } from "../lib/use-clipped.js";
 import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 import { REFERENCE_SURFACES, SurfaceLink } from "./ReportShell.js";
@@ -19,9 +18,17 @@ import { REFERENCE_SURFACES, SurfaceLink } from "./ReportShell.js";
  *  no-JavaScript case, which this app does not have (the report only exists after a fetch), and
  *  they cost nothing else.
  *
- *  Vertical beside the column from `lg`, a horizontal scroll strip below it — where it is sticky
- *  under the header (`--report-header-h`, measured by `ReportHeader`) rather than at `top-0`, which
- *  would park it behind the header.
+ *  Vertical beside the column from `lg`, and BELOW IT A SELECT plus the three reference surfaces —
+ *  sticky under the header (`--report-header-h`, measured by `ReportHeader`) rather than at
+ *  `top-0`, which would park it behind the header.
+ *
+ *  IT USED TO BE A HORIZONTAL SCROLLER AND THAT WAS MEASURED WRONG AT 390 (owner-reported,
+ *  2026-09-03: *"3 buttons are always visible and you have very small space to scroll the rest
+ *  down"*). The scrollport is 326px; the three surfaces, pinned right because they are the only
+ *  route to their pages, held 214 of it — 66% — leaving the six chapters a 112px window, about two
+ *  labels, scrolled sideways under a finger that was also scrolling the page. So the group that
+ *  folds is the one the page itself can reach: the chapters. A select always spells out the
+ *  chapter you are in, which the strip could not, and its picker shows all six at once.
  *
  *  AND IT MEASURES ITSELF TOO, for the same reason the header does. As a horizontal strip it is a
  *  SECOND pinned bar, so a chapter anchor that cleared only the header parked its own heading
@@ -29,29 +36,12 @@ import { REFERENCE_SURFACES, SurfaceLink } from "./ReportShell.js";
  *  and could not tell which chapter they were in. `--report-rail-h` is 0 at `lg`, where the rail
  *  is beside the column and pins nothing. */
 export function ChapterRail({ current }: { current: ChapterId | null }) {
-  // Under `lg` the rail is a horizontal scroller, and nine labels do not fit a 390px row -- so it
-  // needs the cue every hidden overflow on this site needs, measured the same way the theme
-  // matrix's is. A rail whose last chapters are off the edge is a table of contents hiding
-  // entries, which is worse than a table of contents that scrolls.
-  const scroller = useRef<HTMLUListElement>(null);
-  const clipped = useClipped(scroller);
   const nav = useRef<HTMLElement>(null);
   // Below `lg` the rail is pinned under the header and anything scrolled to has to clear BOTH.
   // At `lg` it is beside the column, so it costs no vertical space and the variable is 0.
   const stacked = useIsNarrow(1023);
-  /** THE MARKED CHAPTER HAS TO BE ON THE STRIP IT IS MARKED ON. As a horizontal scroller the rail
-   *  shows about two labels at 390px, so a reader in chapter 6 saw `READ STAND` with the accent
-   *  nowhere on screen -- a position indicator pointing off its own edge, which is worse than none.
-   *
-   *  The SCROLLER is scrolled, never the element (`scrollIntoView` on a horizontal strip also
-   *  scrolls the PAGE vertically, which would fight the reader mid-scroll). Left as a no-op above
-   *  `lg`, where the whole column is visible anyway. */
-  useEffect(() => {
-    const box = scroller.current;
-    if (!box || !stacked || !current) return;
-    const chip = box.querySelector<HTMLElement>(`[data-chapter="${current}"]`);
-    if (chip) box.scrollTo({ left: Math.max(0, chip.offsetLeft - 12), behavior: "smooth" });
-  }, [current, stacked]);
+  const go = (id: string): void =>
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   useEffect(() => {
     const el = nav.current;
     if (!el) return;
@@ -68,77 +58,67 @@ export function ChapterRail({ current }: { current: ChapterId | null }) {
       document.documentElement.style.removeProperty("--report-rail-h");
     };
   }, [stacked]);
+  /** THE THREE ESCAPE HATCHES, kept apart from the chapters because they are not chapters: they
+   *  are surfaces you explore rather than read in order, they LEAVE the scroll, and back brings
+   *  you to the offset you left from. They are also the ONLY route to their pages, which is why
+   *  they hold their space at every width while the chapters -- reachable by scrolling the page
+   *  itself -- are the ones that fold into a control. */
+  const surfaces = REFERENCE_SURFACES.map((s) => (
+    <SurfaceLink
+      key={s.path}
+      to={s.path}
+      className="eyebrow block whitespace-nowrap py-3 text-(--muted) lg:py-2 lg:pl-3"
+    >
+      {s.label} <span aria-hidden="true">&#8599;</span>
+    </SurfaceLink>
+  ));
   return (
     <nav
       ref={nav}
       aria-label="Report chapters"
-      className="relative sticky top-[var(--report-header-h,0px)] z-10 bg-(--background) lg:top-[calc(var(--report-header-h,0px)+1.5rem)] lg:bg-transparent lg:self-start"
+      className="sticky top-[var(--report-header-h,0px)] z-10 bg-(--background) lg:top-[calc(var(--report-header-h,0px)+1.5rem)] lg:bg-transparent lg:self-start"
     >
-      <ul ref={scroller} className="relative flex gap-3 lg:gap-4 overflow-x-auto border-b border-(--separator) py-2 lg:flex-col lg:gap-1 lg:border-b-0 lg:py-0 lg:overflow-visible">
-        {CHAPTERS.map((c) => (
-          <li key={c.id}>
-            <button
-              type="button"
-              data-chapter={c.id}
-              onClick={() => document.getElementById(c.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              aria-current={current === c.id ? "true" : undefined}
-              // 44px on the block axis (WCAG 2.5.8's recommended target, not just its 24px floor)
-              // comes from the padding plus the eyebrow's line box; stated here so a later type
-              // change cannot quietly shrink it.
-              className={`eyebrow block whitespace-nowrap py-3 lg:py-2 lg:border-l-2 lg:pl-3 ${
-                current === c.id
-                  ? "text-(--accent) lg:border-(--accent)"
-                  : "text-(--muted) lg:border-(--separator)"
-              }`}
-            >
-              {c.rail}
-            </button>
-          </li>
-        ))}
-        {/* THE THREE ESCAPE HATCHES, kept visually apart from the chapters because they are not
-          *  chapters: they are surfaces you explore rather than read in order, they LEAVE the
-          *  scroll, and back brings you to the offset you left from. */}
-        <li aria-hidden="true" className="hidden lg:block h-px bg-(--separator) my-3" />
-        {/* PINNED TO THE RIGHT EDGE OF THE STRIP, not queued behind the six chapters.
-          *
-          *  Measured on a phone: nine labels do not fit a 390px row, so `Cards` and `Combos` sat
-          *  off the right edge — and a reader who wants them has to swipe a 58px strip sideways
-          *  while the page under it scrolls vertically. A judge given "open the card list" gave up
-          *  on it: *"I would risk it once, and if it scrolled the page I would stop."*
-          *
-          *  The chapters are the ones that can afford to scroll out of the strip, because the page
-          *  itself reaches them. These three are the only way to their surfaces, so they are the
-          *  ones that stay. `sticky right-0` inside the scroller pins them to the scrollport edge;
-          *  above `lg` the rail is a vertical column and this is inert. */}
-        <li className="sticky right-0 flex gap-4 bg-(--background) pl-3 lg:static lg:flex-col lg:gap-1 lg:pl-0">
-          {/* The chapters passing underneath need an edge to pass under, or the two groups read as
-            *  one list that happens to be cut. */}
-          <span aria-hidden="true" className="absolute -left-6 inset-y-0 w-6 bg-gradient-to-l from-(--background) to-transparent lg:hidden" />
-          {REFERENCE_SURFACES.map((s) => (
-            <SurfaceLink
-              key={s.path}
-              to={s.path}
-              className="eyebrow block whitespace-nowrap py-3 text-(--muted) lg:py-2 lg:pl-3"
-            >
-              {s.label} <span aria-hidden="true">&#8599;</span>
-            </SurfaceLink>
+      {stacked ? (
+        <div className="flex items-center gap-3 border-b border-(--separator) py-1">
+          {/* A NATIVE SELECT, NOT A MENU. The platform's own picker is full height, thumb-sized
+            *  and already keyboard- and screen-reader-complete; a custom listbox in a 96px slot
+            *  would be a worse version of it for thirty lines. `min-w-0` because a select keeps an
+            *  intrinsic width and would otherwise size this row (narrow-width cause 1). */}
+          <select
+            aria-label="Jump to chapter"
+            value={current ?? CHAPTERS[0].id}
+            onChange={(e) => go(e.target.value)}
+            className="eyebrow min-h-[44px] min-w-0 flex-1 rounded border border-(--separator) bg-(--background) px-2 text-(--accent)"
+          >
+            {CHAPTERS.map((c) => (
+              <option key={c.id} value={c.id}>{c.rail}</option>
+            ))}
+          </select>
+          <span className="flex shrink-0 gap-4">{surfaces}</span>
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {CHAPTERS.map((c) => (
+            <li key={c.id}>
+              <button
+                type="button"
+                data-chapter={c.id}
+                onClick={() => go(c.id)}
+                aria-current={current === c.id ? "true" : undefined}
+                className={`eyebrow block whitespace-nowrap border-l-2 py-2 pl-3 ${
+                  current === c.id
+                    ? "text-(--accent) border-(--accent)"
+                    : "text-(--muted) border-(--separator)"
+                }`}
+              >
+                {c.rail}
+              </button>
+            </li>
           ))}
-        </li>
-      </ul>
-      {clipped ? (
-        <>
-          <span
-            aria-hidden
-            data-testid="rail-edge-fade"
-            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-(--background) to-transparent lg:hidden"
-          />
-          {/* POSITIONED ANCESTOR REQUIRED. An absolutely positioned `.sr-only` span with none
-            *  resolves against the initial containing block; inside a horizontal scroller that
-            *  lands outside the viewport and inflates `documentElement.scrollWidth`, which this
-            *  app has already paid for once (the mobile scroll bug, 2026-09-02). */}
-          <span className="sr-only">This rail scrolls sideways; more chapters are off the edge.</span>
-        </>
-      ) : null}
+          <li aria-hidden="true" className="my-3 h-px bg-(--separator)" />
+          <li className="flex flex-col gap-1">{surfaces}</li>
+        </ul>
+      )}
     </nav>
   );
 }
