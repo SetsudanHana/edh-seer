@@ -2,7 +2,7 @@ import type { AnalyzeResponse } from "../types.js";
 import { Dial } from "./Dial.js";
 import { Bullet, TARGET_MARK } from "./Bullet.js";
 import { floorState, bandState, scoreState } from "../lib/deck-gauge.js";
-import { bandLegend } from "../lib/score-band.js";
+import { bandScale } from "../lib/score-band.js";
 import { Explain } from "./Explain.js";
 import type { RunDiff } from "../lib/run-diff.js";
 
@@ -48,6 +48,45 @@ export type GaugeTab = "build" | "mana" | "engine";
  *  target rows left `BuildBenchmarks` for Recognition, and then the target was stripped on the way
  *  in. The result was that nowhere on the page showed a role against its floor as a mark -- only as
  *  a sentence inside `Findings`. This panel is where that judgement is allowed to live. */
+/** THE SCALE, ON THE SCREEN, NEXT TO THE NEEDLE THAT USES IT.
+ *
+ *  It was inside `Explain`, and the phone judge's re-run (2026-09-03) is what moved it out. That
+ *  run put the phone down at one exact place -- *"shot 3, the second I hit Breadth 2.3 developing
+ *  next to Anchor 4.3 tuned. That's four invented words and two numbers stacked on a gauge that
+ *  already gave me two more."* -- and then named the fix itself: *"knowing, WITHOUT TAPPING, that
+ *  Breadth and Anchor mean what that paragraph says. That one paragraph is the whole report's key,
+ *  and it was invisible until I gambled a thumb on it."*
+ *
+ *  The previous round had already made the disclosure a 44px target, and the same judge confirmed
+ *  that bought the miss (*"there's nothing near it to hit by mistake"*) and did not buy the find
+ *  (*"I just wouldn't have known to spend it"*). A target you cannot see is not reached by being
+ *  bigger, so the four words a reader has to decode stop being folded.
+ *
+ *  ONLY THE SCALE COMES OUT. The prose behind it -- what breadth counts, what anchor tops out at --
+ *  stays folded, because a paragraph of 11px grey under every block is what `Explain` exists to
+ *  avoid and cost about a quarter of the Overview's height when the panel last tried it. And it is
+ *  DELETED from the disclosure rather than copied: an always-visible line and a disclosure's first
+ *  line reading word-for-word the same is a defect this report has already filed against itself. */
+function BandScale() {
+  return (
+    // INLINE, NOT FLEX, and one `whitespace-nowrap` span per band. As a single string this wrapped
+    // at 390 INSIDE a band -- first between the range and its word, and then, once a non-breaking
+    // space fixed that, inside the range itself: `· 3-` / `4 focused ·`. An en dash is a break
+    // opportunity, so the only thing that holds a band together is a box around it. Flex would do
+    // that too, but flex drops the whitespace BETWEEN items, and the separators are real text here
+    // so the strip reads as one sentence to a screen reader and to the byte-for-byte pin on it.
+    <p className="eyebrow text-center text-(--muted) tabular-nums normal-case">
+      {bandScale().map((band, i) => (
+        <span key={band}>
+          {i > 0 ? " · " : null}
+          <span className="whitespace-nowrap">{band}</span>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+
 export function DeckGauges({ data, onOpen, diff }: {
   data: AnalyzeResponse;
   onOpen: (tab: GaugeTab, focus?: string) => void;
@@ -112,6 +151,8 @@ export function DeckGauges({ data, onOpen, diff }: {
                * (2026-08-26) could not read `SYNERGY 0.8/5`; the words are what fixed that, not the
                * tile around them. */
               explain={
+                <>
+                <BandScale />
                 <Explain label="what this measures">
                   The mean of two halves, each 0–5. <span className="text-(--foreground)">Breadth</span> is
                   how much of the deck sits on its main theme, counting each nonland card by its strongest
@@ -119,8 +160,9 @@ export function DeckGauges({ data, onOpen, diff }: {
                   <span className="text-(--foreground)">Anchor</span> is how heavily the deck's best-fed
                   card is supported
                   {anchorCard ? <> — here that is {anchorCard.name}</> : null}; it tops out at 5, so two
-                  decks with very different engines can both read 5.0. {bandLegend()}.
+                  decks with very different engines can both read 5.0.
                 </Explain>
+                </>
               }
             />
             {/* Breadth and anchor are both edge-derived, same as synergy itself, so they take the
@@ -181,11 +223,14 @@ export function DeckGauges({ data, onOpen, diff }: {
                * the Roles chapter's, not "the benchmarks below" — that phrase was true of a
                * single-scroll Overview two layouts ago. */
               explain={
+                <>
+                <BandScale />
                 <Explain label="what this measures">
                   How close the deck sits to the category targets in Roles — ramp, draw, removal and the
                   rest. It says nothing about how the cards work together, and the targets are the
-                  template&rsquo;s, not measured. {bandLegend()}.
+                  template&rsquo;s, not measured.
                 </Explain>
+                </>
               }
             />
             {/* Two columns narrow, three from `sm` (640px), five from `xl` (1280px) -- one clean

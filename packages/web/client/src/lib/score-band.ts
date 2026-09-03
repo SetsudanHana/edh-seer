@@ -22,10 +22,12 @@ export function scoreBand(score: number): { label: string; tone: ScoreTone } {
  *  as data — exactly the drift risk `Dial.tsx`'s `SCORE_ZONES` comment names for the arc. It lives
  *  beside the thresholds now (it was in `HeadlineScores`, which S15 retired into the dials), so a
  *  moved break shows up in the printed scale with no second edit. */
-export const bandLegend = (): string => {
+export const bandScale = (): string[] => {
   const edges = [0, ...SCORE_BREAKS, 5];
   return edges
     .slice(0, -1)
-    .map((from, i) => `${from}–${edges[i + 1]} ${scoreBand(from).label.toLowerCase()}`)
-    .join(" · ");
+    .map((from, i) => `${from}–${edges[i + 1]} ${scoreBand(from).label.toLowerCase()}`);
 };
+
+/** The same four bands as one string, for anywhere that wants a sentence rather than a strip. */
+export const bandLegend = (): string => bandScale().join(" · ");
