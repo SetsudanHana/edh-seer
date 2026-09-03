@@ -8,6 +8,7 @@ import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { clearLastRun, diffRuns, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
 import { decodeShare, encodeShare, payloadFromHash, shareUrl } from "./lib/share-link.js";
+import { deckSourceOf, importDeck } from "./lib/deck-import.js";
 
 export default function App() {
   /** WHAT WAS IN THE BOX LAST TIME (roadmap S9). Read once, before anything else, because it feeds
@@ -55,6 +56,31 @@ export default function App() {
   async function analyse(deckText: string, commanderText: string) {
     setLoading(true);
     setError(null);
+    // A LINK IN THE DECKLIST BOX IS AN IMPORT, and it is the only interaction this feature has. A
+    // decklist never looks like a bare URL, so the two cannot be confused, and a second box that
+    // accepted only links would make the reader decide which one their clipboard belongs in.
+    //
+    // The imported deck goes into the FORM, both fields, and the link is thrown away. The share link
+    // then carries decklist text like any other run -- making the URL the deck's identity would send
+    // every viewer of a shared link through the deck site at once, which is the traffic the importer
+    // is rate-limited to avoid.
+    const remote = deckSourceOf(deckText);
+    if (remote) {
+      try {
+        const imported = await importDeck(remote.source, remote.id);
+        setCommanders(imported.commanders);
+        setDecklist(imported.decklist);
+        deckText = imported.decklist;
+        commanderText = imported.commanders;
+      } catch (e) {
+        // Its own catch: an import failure must leave the boxes OPEN with the link still in them, so
+        // the reader can retry or paste over it. Falling through to the analysis would ask the engine
+        // to resolve a URL as a card name and report "1 card not found".
+        setError(e instanceof Error ? e.message : "Could not import that deck");
+        setLoading(false);
+        return;
+      }
+    }
     // THE BOX CLOSES ON THE CLICK, NOT ON THE ANSWER. This used to sit next to `setData` below, so
     // the ~420px paste box became a ~128px bar seconds later and shoved the page up by 290px --
     // outside the 500ms `hadRecentInput` window, which is what makes a shift count against CLS.

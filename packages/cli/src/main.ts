@@ -1,4 +1,3 @@
-import { isArchidektUrl, isMoxfieldUrl } from "./deck-url.js";
 import { readFileSync } from "node:fs";
 import { analyzeDeck, ComboIndex, type Card, type Combo } from "@edh-seer/engine";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
@@ -14,6 +13,8 @@ import {
   fetchMoxfieldDeck,
   parseArchidektId,
   fetchArchidektDeck,
+  isMoxfieldUrl,
+  isArchidektUrl,
   type DeckSections,
 } from "@edh-seer/data";
 import { formatReport } from "./report.js";

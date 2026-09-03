@@ -127,7 +127,10 @@ export function DeckInput({
           id="decklist-input"
           className="field font-mono"
           aria-label="Decklist"
-          placeholder={"1 Impact Tremors\n1 Sol Ring\n..."}
+          // A LINK WORKS HERE TOO, and the placeholder is where that gets discovered: it is visible
+          // exactly when the box is empty, which is the moment a reader has something on their
+          // clipboard. A feature nobody knows about has not shipped.
+          placeholder={"1 Impact Tremors\n1 Sol Ring\n...\n\nor paste a Moxfield / Archidekt deck link"}
           rows={10}
           value={value}
           onChange={(e) => onChange(e.target.value)}

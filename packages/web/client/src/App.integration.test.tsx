@@ -203,3 +203,44 @@ test("text that resolved no cards never becomes a URL or a share link", async ()
   // AND IT DOES NOT COME BACK NEXT VISIT: `loadLastDeck` refills the box from what was saved here.
   expect(loadLastDeck()?.decklist).not.toBe(NOT_A_DECK);
 });
+
+test("a deck link in the decklist box imports into BOTH fields, then analyses", async () => {
+  const analyze = vi.spyOn(api, "analyzeDeck").mockResolvedValue(SAMPLE);
+  const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({ commanders: ["Teysa Karlov"], deck: ["Sol Ring", "Swamp", "Swamp"] }),
+  } as Response);
+  render(<App />);
+
+  await userEvent.type(
+    screen.getByLabelText("Decklist"),
+    "https://archidekt.com/decks/26039486/teysa",
+  );
+  await userEvent.click(screen.getByRole("button", { name: /analyze deck/i }));
+
+  await waitFor(() => expect(analyze).toHaveBeenCalled());
+  expect(fetchSpy).toHaveBeenCalledWith("/api/import/archidekt/26039486");
+  // The COMMANDER field is filled too. It is a separate box and an import that left it empty would
+  // make the engine infer a commander from sort order, which is our inference and not the deck's.
+  expect(analyze).toHaveBeenCalledWith("1 Sol Ring\n2 Swamp", "1 Teysa Karlov");
+  fetchSpy.mockRestore();
+});
+
+test("an import failure leaves the link in the box and says what to do", async () => {
+  const analyze = vi.spyOn(api, "analyzeDeck").mockResolvedValue(SAMPLE);
+  const fetchSpy = vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValue({ ok: false, status: 429, json: async () => ({}) } as Response);
+  render(<App />);
+
+  const box = screen.getByLabelText("Decklist");
+  await userEvent.type(box, "https://moxfield.com/decks/AbC-123");
+  await userEvent.click(screen.getByRole("button", { name: /analyze deck/i }));
+
+  expect(await screen.findByText(/importer is busy/i)).toBeInTheDocument();
+  // The engine was never asked to resolve a URL as a card name, and the link is still there to retry.
+  expect(analyze).not.toHaveBeenCalled();
+  expect(screen.getByLabelText("Decklist")).toHaveValue("https://moxfield.com/decks/AbC-123");
+  fetchSpy.mockRestore();
+});
