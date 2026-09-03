@@ -125,3 +125,47 @@ test("addresses one pacer per site, by a fixed name and with no location hint", 
   expect(env.PACER.idFromName).toHaveBeenCalledWith("moxfield");
   expect(env.PACER.get).toHaveBeenCalledWith("id:moxfield");
 });
+
+function limiter(success: boolean) {
+  return { limit: vi.fn(async () => ({ success })) };
+}
+
+test("a throttled caller gets 429 and never reaches the pacer", async () => {
+  const { env, stubFetch } = envWith(DECK);
+  const rl = limiter(false);
+  const res = await worker.fetch(
+    new Request("https://edhseer.cards/api/import/archidekt/26039486", {
+      headers: { "CF-Connecting-IP": "203.0.113.7" },
+    }),
+    { ...env, RATE_LIMITER: rl } as unknown as Env,
+    ctx,
+  );
+  expect(res.status).toBe(429);
+  expect(rl.limit).toHaveBeenCalledWith({ key: "203.0.113.7" });
+  // The whole point: the expensive path is never entered.
+  expect(stubFetch).not.toHaveBeenCalled();
+});
+
+test("a cache hit is not counted against the reader", async () => {
+  const { env } = envWith(DECK);
+  const rl = limiter(true);
+  const withRl = { ...env, RATE_LIMITER: rl } as unknown as Env;
+  await worker.fetch(get("/api/import/archidekt/26039486"), withRl, ctx);
+  await worker.fetch(get("/api/import/archidekt/26039486"), withRl, ctx);
+  // Two reads, one upstream. Re-analysing the same deck must not spend a reader's budget.
+  expect(rl.limit).toHaveBeenCalledTimes(1);
+});
+
+test("an absent IP header keys everyone together rather than exempting them", async () => {
+  const { env } = envWith(DECK);
+  const rl = limiter(true);
+  await worker.fetch(get("/api/import/moxfield/AbC"), { ...env, RATE_LIMITER: rl } as unknown as Env, ctx);
+  expect(rl.limit).toHaveBeenCalledWith({ key: "unknown" });
+});
+
+test("no limiter binding means unthrottled, so dev and tests still run", async () => {
+  const { env, stubFetch } = envWith(DECK);
+  const res = await worker.fetch(get("/api/import/archidekt/26039486"), env, ctx);
+  expect(res.status).toBe(200);
+  expect(stubFetch).toHaveBeenCalledTimes(1);
+});
