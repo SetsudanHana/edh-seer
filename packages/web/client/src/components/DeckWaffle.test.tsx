@@ -144,17 +144,18 @@ test("says nothing about lands when the count is unknown", () => {
  *  this census, on purpose, and the gap is named rather than left for a reader to sum. */
 test("prints the MDFC reconciliation beside the land count", () => {
   render(<DeckWaffle squares={SOME} slices={SLICES} lands={34} mdfc={4} />);
-  // S16: the parenthetical says WHOSE number the bigger one is. The report printed 34 here and 38
-  // in every later chapter, and a beginner who read 34 first said they would have thought the deck
-  // was two lands UNDER rather than two over.
-  expect(screen.getByTestId("type-total").closest("p")!)
-    .toHaveTextContent("34 lands (38 counting MDFC backs, which is the figure the mana model uses)");
-  // AND IT MUST BE ABLE TO WRAP. This clause carried `whitespace-nowrap` from when it read
-  // "(38 with MDFCs)"; S16 grew it to a full sentence and the nowrap turned it into one unbreakable
-  // 200px+ run -- the whole report scrolled sideways at 390 (`scrollWidth` 526 against a 390 client
-  // width, measured on the example deck while verifying S14). jsdom cannot measure it, so the class
-  // itself is what gets pinned.
-  expect(screen.getByText(/counting MDFC backs/).className).not.toMatch(/nowrap/);
+  // T3, OWNER 2026-09-02, READING THE S16 VERSION: *"(38 counting MDFC backs, which is the figure
+  // the mana model uses)" is over-explained. "38 with MDFCs" is enough.* S16's job survives the cut
+  // — the bigger number is still ON this line, which is what stopped a reader meeting 34 here and
+  // 38 in every later chapter with nothing to bridge them. What goes is the clause naming WHOSE
+  // figure it is, and the owner ruled that after reading the long form on the deployed site.
+  expect(screen.getByTestId("type-total").closest("p")!).toHaveTextContent("34 lands (38 with MDFCs)");
+  expect(screen.getByTestId("type-total").closest("p")!).not.toHaveTextContent("mana model uses");
+  // AND IT MUST STILL BE ABLE TO WRAP. The clause carried `whitespace-nowrap` back when it was this
+  // short, and it was the page's only 390px overflow once S16 grew it (`scrollWidth` 526 against a
+  // 390 client width, on the example deck). It is short again — the class does NOT come back, since
+  // nothing measured it as needed and cause 4 in the narrow-width rules is exactly this span.
+  expect(screen.getByText(/with MDFCs/).className).not.toMatch(/nowrap/);
 });
 
 test("says nothing about MDFCs when there are none, rather than a parenthetical about nothing", () => {

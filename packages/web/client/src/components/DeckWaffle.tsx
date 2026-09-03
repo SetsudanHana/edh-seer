@@ -114,23 +114,27 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
           <>
             {" · "}
             <span className="stat-num text-(--foreground)">{lands}</span>{" lands"}
-            {/* THE OTHER FRAME, NAMED AS THE ONE THE REST OF THE REPORT USES (S16, 2026-09-02).
-              *  This line counts FRONT FACES, where a modal DFC is a spell; the mana model counts
-              *  it as a land, per the 2026-08-31 ruling. Both are right and the report used to say
-              *  "34" here and "38" everywhere after it, with only "(38 with MDFCs)" to bridge them
-              *  — a beginner read 34 first and said "if I had gone by the first number I'd have
-              *  thought I was two UNDER", and the phone judge said 34 out loud at a table and had
-              *  to take it back. The parenthetical says WHOSE number the bigger one is now. */}
-              {/* NOT `whitespace-nowrap`, AND IT WAS THE PAGE'S ONLY 390px OVERFLOW. The class fit
-                *  when the parenthetical was "(38 with MDFCs)"; S16 grew it to a full clause and the
-                *  nowrap made that clause one unbreakable 200px+ run, so the whole report scrolled
-                *  sideways on a phone -- `documentElement.scrollWidth` 526 against a 390 client
-                *  width, measured on the example deck. Cause 4 in the narrow-width rules: a nowrap
-                *  span has no upper bound. Found while verifying S14 at 390. */}
+            {/* THE OTHER FRAME. This line counts FRONT FACES, where a modal DFC is a spell; the
+              *  mana model counts it as a land, per the 2026-08-31 ruling. Both are right, and the
+              *  report used to print "34" here and "38" everywhere after it with nothing to bridge
+              *  them — a beginner read 34 first and said "if I had gone by the first number I'd have
+              *  thought I was two UNDER", and the phone judge said 34 out loud at a table and had to
+              *  take it back. THE BRIDGE IS THE BIGGER NUMBER BEING ON THIS LINE, and it stays.
+              *
+              *  S16 also spelled out WHOSE figure 38 is; the owner read that on the deployed site
+              *  and called it over-explained (roadmap T3), naming this exact wording as enough. The
+              *  attribution is what the cut costs — recorded here rather than argued, because the
+              *  ruling was made with the long version in front of them.
+              *
+              *  STILL NOT `whitespace-nowrap`. The class fit at this length and was the page's only
+              *  390px overflow once S16 grew the clause -- one unbreakable 200px+ run, report
+              *  scrolling sideways, `documentElement.scrollWidth` 526 against a 390 client width on
+              *  the example deck. Cause 4 in the narrow-width rules: a nowrap span has no upper
+              *  bound. Nothing has measured it as needed at this length either, so it does not
+              *  come back. */}
             {mdfc !== undefined && mdfc > 0 ? (
               <>{" "}<span>
-                (<span className="stat-num text-(--foreground)">{lands + mdfc}</span> counting MDFC backs,
-                which is the figure the mana model uses)
+                (<span className="stat-num text-(--foreground)">{lands + mdfc}</span> with MDFCs)
               </span></>
             ) : null}
           </>
