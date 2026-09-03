@@ -77,7 +77,27 @@ console.error = (...args: unknown[]) => {
   passThroughError(...(args as Parameters<typeof console.error>));
 };
 
+/** STORAGE OUTLIVES THE TEST THAT WROTE IT, and jsdom keeps one Storage per FILE rather than per
+ *  test. So a test that runs a successful analysis leaves `mtg-synergy:last-deck` behind, and the
+ *  next test to mount `App` finds a previous run and renders the COLLAPSED paste box -- an empty
+ *  state that the test never asked for and cannot see the cause of.
+ *
+ *  Measured 2026-09-03: writing a key in one test and reading it in the next returns the value. It
+ *  only became a failure when a new test file shifted the order in `App.integration.test.tsx`, and
+ *  then on the Node 20 leg only, which is the worst shape of latent test pollution -- it looks like a
+ *  flake and it is not one. Cleared here rather than in each file, because every test that mounts a
+ *  component routes through this setup and none of them should inherit another one's session. */
 afterEach(() => {
+  for (const storage of [globalThis.sessionStorage, globalThis.localStorage]) {
+    // Safari private mode throws on access and `run-diff.ts` already tolerates that, so a test
+    // environment without storage must not fail here either.
+    try {
+      storage?.clear();
+    } catch {
+      /* no storage in this environment */
+    }
+  }
+
   const seen = nestingWarnings.splice(0);
   expect(
     seen,
