@@ -69,3 +69,52 @@ test("a hundred-card deck fits inside a shareable url", async () => {
   expect(payload).not.toBeNull();
   expect(shareUrl("https://edhseer.pages.dev", "/", payload).length).toBeLessThan(2_100);
 });
+
+/** THE CAP GUARDED ONLY THE WRITING END, AND THE DANGEROUS END IS THE READING ONE.
+ *
+ *  `encodeShare` refuses to hand out a payload over `MAX_PAYLOAD`, so nothing this app writes is
+ *  ever long. `decodeShare` inflated whatever it was handed. `deflate-raw` reaches 1029:1 on
+ *  repeated bytes -- measured in a real browser, not assumed -- so a hand-written link with a 43,000
+ *  character hash expands to 32MB in the recipient's tab, and the ratio is linear from there. The
+ *  fragment never reaches a server, so this costs nobody but the person who opened the link, which
+ *  is exactly the person the link was aimed at.
+ *
+ *  The guard is the constant that already existed, applied to the other direction. */
+/** A VALID payload, forged the way an attacker would rather than the way the app does -- the app
+ *  cannot produce one this long, which is the whole point. `random` garbage would compress badly;
+ *  a repeated byte is what makes the ratio, so the bomb is built from one. */
+async function forgeDeflated(text: string): Promise<string> {
+  const source = new ReadableStream<Uint8Array>({
+    start(c) { c.enqueue(new TextEncoder().encode(text)); c.close(); },
+  });
+  // The same cast the module documents: a compression stream's writable side is wider than the
+  // invariant pair `pipeThrough` asks for.
+  const reader = source
+    .pipeThrough(new CompressionStream("deflate-raw") as unknown as ReadableWritablePair<Uint8Array, Uint8Array>)
+    .getReader();
+  const chunks: Uint8Array[] = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  let binary = "";
+  for (const chunk of chunks) for (const b of chunk) binary += String.fromCharCode(b);
+  return "1" + btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+test("a payload longer than one this app would ever write is refused, uninflated", async () => {
+  // Deflates well enough to clear the cap while still being a payload that WOULD decode -- so what
+  // is asserted is the length guard and not `atob` throwing on nonsense.
+  // With the separator in it, so it is a payload that WOULD have decoded to a deck -- otherwise the
+  // test passes on the missing-separator refusal and proves nothing about the length.
+  const bomb = await forgeDeflated(`1 Krenko, Mob Boss\f${"1 Sol Ring\n".repeat(400_000)}`);
+  expect(bomb.length).toBeGreaterThan(MAX_PAYLOAD);
+  expect(await decodeShare(bomb)).toBeNull();
+});
+
+test("and the cap does not refuse a real deck", async () => {
+  const payload = await encodeShare(DECK);
+  expect(payload!.length).toBeLessThanOrEqual(MAX_PAYLOAD);
+  expect(await decodeShare(payload!)).toEqual(DECK);
+});

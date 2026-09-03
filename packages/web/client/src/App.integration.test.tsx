@@ -4,6 +4,8 @@ import { expect, test, vi } from "vitest";
 import App from "./App.js";
 import { SAMPLE } from "./fixtures.js";
 import * as api from "./api.js";
+import { decodeShare, payloadFromHash } from "./lib/share-link.js";
+import { loadLastDeck } from "./lib/run-diff.js";
 
 test("typing commander + decklist and clicking Analyze renders the ranked report", async () => {
   const spy = vi.spyOn(api, "analyzeDeck").mockResolvedValue(SAMPLE);
@@ -127,4 +129,35 @@ test("popstate onto a deck hash re-opens that analysis", async () => {
     window.dispatchEvent(new PopStateEvent("popstate"));
   });
   expect(await screen.findByRole("button", { name: /edit/i })).toBeInTheDocument();
+});
+
+/** WHAT YOU PASTED BECOMES THE URL, AND IT SHOULD NOT WHEN IT WAS NEVER A DECK.
+ *
+ *  Owner-reported, 2026-09-03: *"if I paste something that is not decklist to areabox, it is still
+ *  hashed in the url"*. Verified on the live page -- a paste box holding three lines of private
+ *  notes analysed, resolved nothing, and still produced `#deck=...` plus a Copy link button. The
+ *  fragment never reaches a server, so nothing leaked outward; what it does reach is the address
+ *  bar, browser history, and whatever the reader pastes that link into next, believing it to be a
+ *  deck.
+ *
+ *  `resolvedCount` is the honest test of "was that a decklist": it counts cards the engine actually
+ *  found, and a real list always finds at least one. */
+const NOT_A_DECK = "a private note, not a deck";
+
+test("text that resolved no cards never becomes a URL or a share link", async () => {
+  vi.spyOn(api, "analyzeDeck").mockResolvedValue({ ...SAMPLE, resolvedCount: 0 });
+  window.history.replaceState(null, "", "/");
+  render(<App />);
+  fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: NOT_A_DECK } });
+  fireEvent.click(screen.getByRole("button", { name: /analyze/i }));
+  expect(await screen.findByRole("button", { name: /edit/i })).toBeInTheDocument();
+
+  // NOT `hash === ""`: an earlier test in this file has an analysis still in flight whose own hash
+  // write lands here. What is asserted is that no hash on the bar is OURS.
+  const payload = payloadFromHash(window.location.hash);
+  const carried = payload ? await decodeShare(payload) : null;
+  expect(carried?.decklist).not.toBe(NOT_A_DECK);
+  expect(screen.queryByRole("button", { name: /copy link/i })).toBeNull();
+  // AND IT DOES NOT COME BACK NEXT VISIT: `loadLastDeck` refills the box from what was saved here.
+  expect(loadLastDeck()?.decklist).not.toBe(NOT_A_DECK);
 });
