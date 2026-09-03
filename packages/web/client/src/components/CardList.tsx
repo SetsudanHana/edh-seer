@@ -255,12 +255,18 @@ export function CardList({ cards, artByName, coverage }: {
   );
 
   return (
-    // THE WHOLE PANEL IS BOUNDED, NOT JUST ITS TABLE. Capping the table alone fixed the rows and
-    // broke the header: the filter chips, the "find a card" box and the table/grid toggle live in a
-    // `w-full` flex row with `ml-auto`, so at 1920 they stayed pinned to a 1,856px edge while the
-    // table they control ended 448px to their left. Controls have to sit inside the thing they
-    // control. One cap on the panel keeps every part of it on the same right edge.
-    <div className="flex flex-col gap-3 max-w-[88rem]">
+    // NO CAP: THE PANEL TAKES THE WIDTH IT IS GIVEN (owner's call, 2026-09-03). It was
+    // `max-w-[88rem]`, and the rule that put it on the PANEL rather than the table still holds --
+    // capping the table alone had left the filter chips, the search box and the table/grid toggle
+    // pinned to a 1,856px edge while the table they control ended 448px to their left, and controls
+    // have to sit inside the thing they control. With no cap at all they share an edge for free.
+    // WHAT THE CAP COST IS WHY IT WENT. It made this one panel narrower than every other surface on
+    // the page, so the report had two right edges; and once the drawer docks (`card-drawer.tsx`),
+    // the reader watches the nav and the toolbar make room while the table underneath them does
+    // not. Owner: *"it is more cohesive to have table on full width and drawer moving everything to
+    // the left."* The blank the cap bounded is named in the table's own comment below -- it is a
+    // known cost, not an oversight.
+    <div className="flex flex-col gap-3">
       <h3 className="eyebrow">Cards</h3>
       <p className="text-xs text-(--muted) max-w-[65ch]">{SCALE_NOTE}</p>
       {/* THE COST COLUMN'S OWN SCALE. "49% – 69% by T5" was explained in a footnote on a different
@@ -370,16 +376,18 @@ export function CardList({ cards, artByName, coverage }: {
           *  1920 it is 1,384px: 547px of empty cell in the WORST row and 974px in the median one,
           *  between a card's reason and its roles, on every row of a 100-row table.
           *
-          *  88rem IS DERIVED, NOT PICKED. 837px of ink plus the 472px of pinned columns is 1,309px,
-          *  and the cap has to clear the 1,376px this table already gets at 1440 so that no width
-          *  which renders fine today starts truncating. 88rem (1,408px) is the smallest round step
-          *  above both, so the cap binds ONLY where the runaway is -- nothing at or below 1440
-          *  changes by a pixel, and the reason sentence can never truncate in a case where it
-          *  currently fits. The cap itself lives on the PANEL (see the root element above) so the
-          *  filter chips and the search box share this table's right edge.
+          *  THE 88rem CAP THAT BOUNDED THIS IS GONE (owner's call, 2026-09-03), AND THE NUMBERS
+          *  ABOVE ARE NOW THE COST RATHER THAN THE ARGUMENT. They were measured and they still
+          *  stand: the card column runs to 1,384px at 1920, so the median row carries about 974px
+          *  between its reason and its roles. What outweighed them is that a capped panel gave the
+          *  report two right edges -- this table ended 448px short of every other surface -- and
+          *  once the drawer docks, the nav and the toolbar visibly make room for it while the table
+          *  underneath them does not. Owner: *"it is more cohesive to have table on full width and
+          *  drawer moving everything to the left."*
           *
-          *  The leftover width goes to the page margin rather than into the rows. Dead space outside
-          *  a bounded table reads as layout; the same pixels inside every row read as a broken one. */}
+          *  A REVERSAL WITH A KNOWN PRICE IS NOT A REGRESSION, but it is worth being able to undo:
+          *  the cap was one class on the panel root, and the ink figures it was derived from are
+          *  kept above so a future round does not have to re-measure them. */}
         <table className="w-full table-fixed text-sm border-collapse">
           {/* STICKY, because scanning a 52-row table BY COLUMN is exactly what a tuner does and the
             *  labels used to scroll away — the brief's own sentence, "the precon player did not know

@@ -158,11 +158,13 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
 
   /** THE DRAWER IS DOCKED FROM `xl`, NOT LAID OVER THE PAGE (owner's call, 2026-09-03).
    *
-   *  IT IS THE ANSWER TO A GAP, NOT A NEW IDEA. At 1920 the Cards panel caps at 88rem and
-   *  left-aligns, so 448px of the page sat empty on the right -- measured -- while the drawer
-   *  covered the rows on the left. The cap is not the thing to remove: the widest row's ink is
-   *  837px, so lifting it puts the same blank INSIDE every row instead. The width had no job, and
-   *  the drawer needed one.
+   *  IT IS THE ANSWER TO A GAP, NOT A NEW IDEA. At 1920 the Cards panel capped at 88rem and
+   *  left-aligned, so 448px of the page sat empty on the right -- measured -- while the drawer
+   *  covered the rows on the left. The width had no job, and the drawer needed one.
+   *  (THE CAP ITSELF THEN WENT TOO, same day, owner's call: with the drawer docking, a reader
+   *  watched the nav and the toolbar make room while the table underneath them did not. The table
+   *  now takes the full width and reflows with everything else -- see `CardList`, which records
+   *  what that costs. This reserve is what makes the reflow land somewhere sensible.)
    *
    *  ON `body`, AND THE FIRST ATTEMPT PROVED WHY. Reserving the width on the provider's own
    *  children padded the report and nothing else -- so the static site nav (which lives in

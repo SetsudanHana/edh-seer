@@ -482,6 +482,29 @@ test("an expanded synergy group caps its pair list", () => {
   expect(screen.getByText(/\+4 more/)).toBeInTheDocument();
 });
 
+/** THE PANEL TAKES THE WIDTH IT IS GIVEN (owner's call, 2026-09-03).
+ *
+ *  It was `max-w-[88rem]`, which made this one surface 448px narrower than every other one at 1920
+ *  -- the report had two right edges -- and once the drawer docks, the reader watches the nav and
+ *  the toolbar make room for it while the table underneath them does not. Owner: *"it is more
+ *  cohesive to have table on full width and drawer moving everything to the left."*
+ *
+ *  MEASURED at 1920 after the change: table 32-1888 closed, the same right edge as the toolbar
+ *  above it; 32-1568 with the drawer open, against a drawer left edge of 1624 -- overlap 0.
+ *
+ *  THE COST IS REAL AND IS KEPT IN THE COMPONENT: the card column runs to 1,384px at 1920, so the
+ *  median row carries about 974px between its reason and its roles. The figures the old cap was
+ *  derived from are still in `CardList`'s comment so a future round need not re-measure them. This
+ *  asserts the DECISION, so undoing it is a deliberate act rather than a drift. */
+test("the cards panel is not capped narrower than the page it sits on", () => {
+  const { container } = render(<CardList cards={SAMPLE.report.cards} />);
+  const panel = container.firstElementChild!;
+  expect(panel.className).toContain("flex flex-col");
+  expect(panel.className).not.toMatch(/max-w-\[\d+rem\]/);
+  // The table is what fills it, and `w-full` is what makes "full width" mean the container.
+  expect(container.querySelector("table")!.className).toContain("w-full");
+});
+
 /** R2, FIXED 2026-09-03: THE HEADER IS STICKY AT EVERY WIDTH, BECAUSE NOTHING SCROLLS AROUND IT.
  *
  *  It shipped `static sm:sticky` on 2026-09-02 as a stopgap. The table's wrapper was

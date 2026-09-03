@@ -129,8 +129,10 @@ test("no seed leaves the set empty", () => {
 
 /** THE DRAWER DOCKS FROM `xl` INSTEAD OF COVERING THE PAGE (owner's call, 2026-09-03).
  *
- *  Measured at 1920: the Cards panel caps at 88rem and left-aligns, so 448px of page sat empty on
- *  the right while the drawer covered the rows on the left. The reserve is a `padding-inline-end`
+ *  Measured at 1920: the Cards panel capped at 88rem and left-aligned, so 448px of page sat empty
+ *  on the right while the drawer covered the rows on the left. (That cap has since gone as well --
+ *  the table takes the full width and reflows with the rest of the page.) The reserve is a
+ *  `padding-inline-end`
  *  on `body`, not on the provider's children -- the first attempt did the latter and left the
  *  static site nav (`index.html`, outside the React root) and the app's own toolbar underneath the
  *  panel. This asserts the SIGNAL; the CSS test below asserts the rule behind it, because a class
