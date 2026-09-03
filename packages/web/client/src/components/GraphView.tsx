@@ -100,6 +100,11 @@ const FIT_MARGIN = 0.9;
  *  pending fit when it sees a real gesture, or the fit would overwrite their camera. */
 const FIT_SETTLE_ALPHA = 0.05;
 
+/** Smallest canvas edge, in CSS px, that `fitToView` will frame against. Below this the canvas has
+ *  not been laid out yet and the fit resolves to the scale extent's floor rather than to anything
+ *  about the board. Not a tuned number -- any canvas narrower than this is unusable regardless. */
+const MIN_FIT_PX = 24;
+
 /** How much of the board is culled from label eligibility at board zoom, by weighted degree.
  *
  *  0.25 — the weakest quarter of the cards carry no name unless they are a commander or under the
@@ -1537,7 +1542,19 @@ export function GraphView(
         simulation.tick();
         // <=, not <: an exactly-0.05 alpha is settled enough, and floating-point decay can land on
         // it without ever going strictly below.
-        if (!fitted && simulation.alpha() <= FIT_SETTLE_ALPHA) {
+        // A SMALL GRAPH CONTRACTS, AND THE SCHEDULE BELOW ASSUMES SPREADING. Measured on an 8-node
+        // ego graph at 390: ~847 world units at the FIT_SETTLE_ALPHA fit and 150 once settled, so
+        // that fit framed a cloud that no longer existed and the reader got 11.5px discs -- worse
+        // than the whole-deck board -- for the ~6s until the PARK_ALPHA refit made them 65.3px.
+        // Their first impression was the broken one. Reframing every tick costs one camera write on
+        // a graph the ego view caps at a couple of dozen nodes, and the user-owned guard is the same
+        // one both scheduled fits keep, so a gesture still ends it.
+        if (bare && cameraOwnedByUserRef.current !== graph) {
+          fitToView();
+          fits++;
+          fitted = true;
+          fittedGraphRef.current = graph;
+        } else if (!fitted && simulation.alpha() <= FIT_SETTLE_ALPHA) {
           fitToView();
           fits++;
           fitted = true;
@@ -1680,6 +1697,14 @@ export function GraphView(
     // second camera path that would drift from this one.
     const frame = (framed: readonly typeof nodes[number][]) => {
       if (framed.length === 0) return;
+      // A FIT AGAINST A CANVAS THE BROWSER HAS NOT LAID OUT YET IS NOT A FIT, IT IS A CLAMP.
+      // `k` below is `min(dim.w/w, dim.h/h)` clamped to the scale extent, so a canvas of zero or
+      // near-zero size does not fail -- it silently returns the 0.15 floor and frames nothing.
+      // Measured twice, both user-visible: the ego view inside a transformed ancestor gave a 1px-tall
+      // canvas and drew 4.2px discs, and the first fit after mount ran against a ~69px measurement of
+      // a canvas that is 388 wide, giving 11.5px discs until a later refit. Skipping leaves the
+      // camera where it is and the next tick or resize fits properly.
+      if (dim.w < MIN_FIT_PX || dim.h < MIN_FIT_PX) return;
       // Frame the CONNECTED cluster, not the whole node cloud -- an orphan (no synergy edge at
       // all, e.g. a land) sitting far from the deck's actual synergies used to set the bounding box
       // and crush the cluster into a fraction of the frame (task-11 brief, Defect 1). Falls back to
