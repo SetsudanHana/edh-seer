@@ -1,5 +1,7 @@
 import { expect, test } from "vitest";
-import { countEvents, eventKey, resolveSlugs, slugOf, specificity } from "./partners-core.js";
+import type { CardTags } from "@edh-seer/tagger";
+import type { DeckCard, Hierarchy } from "../types.js";
+import { KEEP, countEvents, eventKey, keyVariants, partnersFor, resolveSlugs, slugOf, specificity } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
   expect(slugOf("Krenko, Mob Boss")).toBe("krenko-mob-boss");
@@ -97,4 +99,124 @@ test("a card touching one key from several abilities counts once", () => {
     { emits: ["enters|creature|-", "enters|creature|-"], demands: ["enters|creature|-"] },
   ]);
   expect(freq["enters|creature|-"]).toBe(1);
+});
+
+// ---------------------------------------------------------------------------------------------
+// partnersFor: rank by specificity, VERIFY with the engine.
+// ---------------------------------------------------------------------------------------------
+
+const H: Hierarchy = { goblin: ["creature"] };
+
+/** Same shape as `edges.test.ts`'s own `base()`, including the cast it documents: `as
+ *  DeckCard["card"]` and not `as never`, because `as never` erases `card.name` for every reader
+ *  below -- tsc flags it while vitest runs happily, the recorded "a green suite is not a compiling
+ *  one" trap. */
+const base = (name: string, abilities: CardTags["abilities"], subtypes: string[] = []) => ({
+  card: { name, typeLine: "", oracleText: "", keywords: [], colors: [], manaValue: 0 } as unknown as DeckCard["card"],
+  tags: {
+    oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["creature"], subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+    abilities,
+  } as CardTags,
+});
+
+/** THE REAL DERIVED SHAPES, read out of `cardTagsDerived` on 2026-09-04 rather than invented -- an
+ *  invented fixture proves the function agrees with itself. */
+const krenko = base("Krenko, Mob Boss", [{
+  kind: "activated", cost: "{T}",
+  effect: { kind: "token-generation", subject: { control: "any", token: true, type: "creature", subtype: "goblin" } },
+  emits: [
+    { verb: "create-token", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } },
+    { verb: "enters", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } },
+  ],
+}] as unknown as CardTags["abilities"], ["goblin"]);
+
+const impactTremors = base("Impact Tremors", [{
+  kind: "triggered",
+  trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+  effect: { kind: "deal-damage" },
+}] as unknown as CardTags["abilities"]);
+
+/** A card that DEMANDS NOTHING KRENKO SUPPLIES. It shares no event key, so it never reaches the
+ *  verification phase at all. */
+const millstone = base("Millstone", [{
+  kind: "triggered",
+  trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } },
+  effect: { kind: "mill" },
+}] as unknown as CardTags["abilities"]);
+
+const FREQ = { "enters|creature|goblin": 41, "enters|creature|-": 1909, "create-token|creature|goblin": 63 };
+const SLUGS = resolveSlugs(["Impact Tremors", "Millstone", "Krenko, Mob Boss"]);
+
+test("a verified partner carries the engine's own reason sentence", () => {
+  const rows = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+  expect(rows).toHaveLength(1);
+  expect(rows[0]!.name).toBe("Impact Tremors");
+  expect(rows[0]!.slug).toBe("impact-tremors");
+  // NOT a sentence this module composed: `directedReasons` wrote it, and it names both cards.
+  expect(rows[0]!.reason).toContain("Impact Tremors");
+  expect(rows[0]!.reason).toContain("Krenko");
+});
+
+/** THE RANKING SELECTS, THE ENGINE DECIDES. A card sharing no event key never even reaches
+ *  verification, so it cannot appear at any score. */
+test("a card that demands nothing the subject supplies is absent, not ranked low", () => {
+  expect(partnersFor(krenko, [millstone], FREQ, SLUGS, H)).toEqual([]);
+});
+
+/** THE POINT OF VERIFYING. A key match is necessary and NOT sufficient -- if `directedReasons`
+ *  finds no reason the row is dropped, so this artifact can never claim an edge the deck report
+ *  would not also draw. */
+test("a key match with no engine reason is dropped", () => {
+  const noReason = base("Shape Sharer", [{
+    kind: "triggered",
+    // Same verb and type as Krenko's emit, but it wants a creature an OPPONENT controls.
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "opp", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  const slugs = resolveSlugs(["Shape Sharer"]);
+  expect(partnersFor(krenko, [noReason], FREQ, slugs, H)).toEqual([]);
+});
+
+test("the list is cut at KEEP", () => {
+  const many = Array.from({ length: KEEP + 10 }, (_, i) => base(`Payoff ${i}`, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]));
+  const slugs = resolveSlugs(many.map((m) => m.card.name));
+  expect(partnersFor(krenko, many, FREQ, slugs, H).length).toBe(KEEP);
+});
+
+/** A CARD IS NEVER ITS OWN PARTNER. `directedReasons(x, x)` can return reasons -- self-reference is
+ *  the biggest defect family this engine has had -- so the exclusion is explicit. */
+test("the subject is not its own partner", () => {
+  expect(partnersFor(krenko, [krenko], FREQ, SLUGS, H)).toEqual([]);
+});
+
+/** THE BUG THIS FILE FOUND, PINNED. Krenko emits `enters|creature|goblin`; Impact Tremors demands
+ *  `enters|creature|-`. A goblin token entering IS a creature entering, so the pair the whole design
+ *  was argued from formed no edge until the index generalised. A string comparison cannot see what
+ *  the type hierarchy does. */
+test("a key stands for its own coarser forms", () => {
+  expect(keyVariants("enters|creature|goblin"))
+    .toEqual(["enters|creature|goblin", "enters|creature|-", "enters|-|-"]);
+  expect(keyVariants("enters|creature|-")).toEqual(["enters|creature|-", "enters|-|-"]);
+  expect(keyVariants("draw|-|-")).toEqual(["draw|-|-"]);
+});
+
+/** THE SCORE STAYS ON THE DEMAND'S EXACT KEY. Generalising the score too would price every event as
+ *  its widest form and flatten the ranking this module exists for: a goblin-specific payoff and a
+ *  generic creature payoff would tie. */
+test("a subtype-specific payoff outranks a generic one for the same emit", () => {
+  const goblinPayoff = base("Goblin Bushwhacker", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", subtype: "goblin", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  const slugs = resolveSlugs(["Goblin Bushwhacker", "Impact Tremors"]);
+  const rows = partnersFor(krenko, [impactTremors, goblinPayoff], FREQ, slugs, H);
+  expect(rows.map((r) => r.name)).toEqual(["Goblin Bushwhacker", "Impact Tremors"]);
+  expect(rows[0]!.event).toBe("enters|creature|goblin");
+  expect(rows[1]!.event).toBe("enters|creature|-");
 });
