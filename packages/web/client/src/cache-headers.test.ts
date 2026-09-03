@@ -85,3 +85,18 @@ test("the content-addressed paths are the only immutable ones", () => {
 test("stays under Cloudflare's 100-rule limit", () => {
   expect(parseRules().length).toBeLessThanOrEqual(100);
 });
+
+test("security.txt has not expired", () => {
+  const text = readFileSync(join(PUBLIC, ".well-known", "security.txt"), "utf8");
+  const expires = /^Expires:\s*(.+)$/m.exec(text)?.[1]?.trim();
+  const contact = /^Contact:\s*(.+)$/m.exec(text)?.[1]?.trim();
+  // RFC 9116 requires both fields, and a reporter who follows an expired file has no idea whether
+  // anyone is still reading it.
+  expect(contact).toBeTruthy();
+  expect(expires).toBeTruthy();
+
+  const daysLeft = (Date.parse(expires!) - Date.now()) / 86_400_000;
+  // FAILS BEFORE IT ROTS, not after. A dated file nobody is reminded about is a dated file that goes
+  // stale silently; 30 days is enough warning to renew it without a rush.
+  expect(daysLeft).toBeGreaterThan(30);
+});
