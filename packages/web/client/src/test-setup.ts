@@ -1,4 +1,4 @@
-import { expect } from "vitest";
+import { afterEach, expect } from "vitest";
 import * as matchers from "@testing-library/jest-dom/matchers";
 
 // Import matchers/expect explicitly (rather than the "@testing-library/jest-dom/vitest"
@@ -48,3 +48,39 @@ if (typeof globalThis.localStorage === "undefined" || !globalThis.localStorage) 
     },
   } satisfies Storage;
 }
+
+/** INVALID DOM NESTING FAILS THE TEST, IN EVERY FILE (roadmap U2).
+ *
+ *  `DeckIdentity` put an `Explain` -- a `<details>`, which is flow content -- inside a `<p>`, which
+ *  may hold phrasing content only. The browser closes the paragraph early and reparents the
+ *  disclosure as its SIBLING, so **the DOM the tests queried was not the DOM that shipped**, and
+ *  the whole suite stayed green through six React errors on every report load. It was found by
+ *  reading a live browser console, which is not a place a defect should have to be found.
+ *
+ *  React reports it through `console.error` and nothing was listening. This listens, in the one
+ *  place every component's render routes through, so the next `<details>` in a `<p>` (or `<div>` in
+ *  a `<p>`, or `<tr>` outside a table) fails the test that renders it rather than waiting for
+ *  someone to open the console. Measured when it went in: exactly ONE offender in 907 tests.
+ *
+ *  Everything else console.error says is passed through untouched -- this is a filter, not a mute.
+ */
+const nestingWarnings: string[] = [];
+const passThroughError = console.error;
+console.error = (...args: unknown[]) => {
+  const message = args.map(String).join(" ");
+  if (/cannot be a descendant of|cannot contain a nested/.test(message)) {
+    // The first line plus the tag names React appends as format arguments -- enough to name the
+    // pair, without the component stack that follows it.
+    nestingWarnings.push(message.split("\n")[0]!.slice(0, 200));
+    return;
+  }
+  passThroughError(...(args as Parameters<typeof console.error>));
+};
+
+afterEach(() => {
+  const seen = nestingWarnings.splice(0);
+  expect(
+    seen,
+    "React reported invalid DOM nesting: the browser reparents these, so the shipped DOM is not the one this test queried",
+  ).toEqual([]);
+});
