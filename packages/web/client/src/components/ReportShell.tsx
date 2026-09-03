@@ -18,9 +18,13 @@ import { ComboList } from "./ComboList.js";
  *  phone, so lazy-loading it would trade a bundle saving for a spinner on the surface that exists
  *  because the board cannot be used there at all. */
 const GraphView = lazy(() => import("./GraphView.js").then((m) => ({ default: m.GraphView })));
+/** `EgoView` IMPORTS `GraphView` STATICALLY, so it has to load the same way or the split above is a
+ *  no-op: a static importer anywhere in the eager graph pulls the module back into the entry chunk,
+ *  which is exactly what vite's INEFFECTIVE_DYNAMIC_IMPORT warning was saying. Both are `/graph`
+ *  only, so both are lazy and `GraphView` becomes the chunk they share. */
+const EgoView = lazy(() => import("./EgoView.js").then((m) => ({ default: m.EgoView })));
 import { GraphList } from "./GraphList.js";
 import { useBoardMode } from "../lib/use-board-mode.js";
-import { EgoView } from "./EgoView.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
@@ -141,32 +145,32 @@ export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunD
             path="graph"
             element={
               <Reference>
-                {boardMode === "ego"
-                  ? (focusId
-                    ? (
-                      <EgoView
-                        graph={data.graph}
-                        report={data.report}
-                        focusId={focusId}
-                        onFocus={setFocusId}
-                        onBack={() => setFocusId(null)}
-                        artLoader={artLoaderRef.current}
-                      />
-                    )
-                    : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
-                  : (
-                    // A HEIGHT, NOT A SPINNER. The board is the tallest thing this app draws, and a
-                    // fallback shorter than what replaces it is a layout shift on arrival -- the
-                    // exact defect the `#root` reserve one file over exists to remove. The message
-                    // says what is happening, because a blank box of this size reads as a failure.
-                    <Suspense fallback={
-                      <div className="flex items-center justify-center min-h-[70svh] text-(--muted) eyebrow">
-                        loading the board
-                      </div>
-                    }>
-                      <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />
-                    </Suspense>
-                  )}
+                {/* A HEIGHT, NOT A SPINNER. The board is the tallest thing this app draws, and a
+                  * fallback shorter than what replaces it is a layout shift on arrival -- the exact
+                  * defect the `#root` reserve one file over exists to remove. The message says what
+                  * is happening, because a blank box of this size reads as a failure.
+                  * One boundary over both branches: `GraphList` suspends on nothing, and the ego
+                  * board and the whole-deck board are the same wait for the same chunk. */}
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-[70svh] text-(--muted) eyebrow">
+                    loading the board
+                  </div>
+                }>
+                  {boardMode === "ego"
+                    ? (focusId
+                      ? (
+                        <EgoView
+                          graph={data.graph}
+                          report={data.report}
+                          focusId={focusId}
+                          onFocus={setFocusId}
+                          onBack={() => setFocusId(null)}
+                          artLoader={artLoaderRef.current}
+                        />
+                      )
+                      : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
+                    : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />}
+                </Suspense>
               </Reference>
             }
           />

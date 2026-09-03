@@ -447,7 +447,9 @@ test("tapping a row opens that card's graph", async () => {
   stubPointer(true, false, 390);
   const user = await openGraph(phoneSizedDeck());
   await user.click(screen.getAllByRole("button", { name: /see what it connects to/i })[0]!);
-  expect(screen.getByRole("button", { name: /back to the card list/i })).toBeInTheDocument();
+  // `find`, not `get`: EgoView is lazy (it imports GraphView, and a static importer would undo that
+  // split), so the ego board arrives one microtask after the tap.
+  expect(await screen.findByRole("button", { name: /back to the card list/i })).toBeInTheDocument();
 });
 
 test("a precise pointer still gets the board", async () => {
