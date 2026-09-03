@@ -346,6 +346,37 @@ test("ArchetypeBoard counts pairs beside cards and previews a pair without a cli
   expect(screen.getByText(/pays off tokens/)).toBeInTheDocument();
 });
 
+/** THE 2px THE WHOLE REPORT SCROLLED SIDEWAYS AT 390 (roadmap U1).
+ *
+ *  This row pinned TWO fixed columns -- the label at `w-40` (160px) and the figures at `w-44`
+ *  (176px) -- either side of a 12px gap and a `flex-1` spacer, so it demanded 360px in a row that
+ *  is 326px wide inside the panel's gutters at 390. Both were `shrink-0`, so the figures ran 34px
+ *  past the row's own right edge and 2px past the VIEWPORT: `documentElement.scrollWidth` 392
+ *  against a 390 client width, seven rows deep.
+ *
+ *  AND `w-44` WAS NARROWER THAN ITS OWN SENTENCE, which is why removing it also fixed the desktop:
+ *  "233 pairs · 14 of 31 cards earn it" is 246px, so the figures wrapped inside their 176px box at
+ *  EVERY width, and the row measured 32px at 1440 where it now measures 24px.
+ *
+ *  jsdom lays nothing out, so what is asserted is the CONTRACT the browser measurements produced --
+ *  the same contract the mana rows one panel over already carry: the row wraps, and no cell in it
+ *  is sized in rems against a container the class cannot see. The numbers came from the browser and
+ *  are repeated in the commit. */
+test("the group row wraps rather than pinning a figures column it cannot fit", () => {
+  render(<ArchetypeBoard archetypes={SAMPLE.report.archetypes} />);
+  const row = screen.getByText("Tokens Go Wide").closest("button")!;
+  expect(row.className).toContain("flex-wrap");
+  // The FIGURES cell is the one that overflowed, and it is the last child by construction: with no
+  // width of its own, `ml-auto` is what still puts its right edge on the row's.
+  const figures = row.lastElementChild!;
+  expect(figures.textContent).toMatch(/pair/);
+  expect(figures.className).toContain("ml-auto");
+  expect(figures.className).not.toMatch(/\bw-\d/);
+  // AND THE SPACER IS GONE: a `flex-1` filler is a third fixed thing to fit on a line that could
+  // not fit two, and on a wrapped line it is a stray empty row.
+  expect([...row.children].some((c) => c.className === "flex-1")).toBe(false);
+});
+
 // S13, and the point of the whole item: this board was the ONE coverage-limited surface with
 // neither a worded caveat nor the hatch, while the `°` that was supposed to name it rendered on a
 // chapter heading. The `°` is retired; these two pin what replaced it. The floor claim is not

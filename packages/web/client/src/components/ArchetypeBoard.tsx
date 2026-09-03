@@ -43,18 +43,32 @@ function GroupRow({ group, size }: { group: Group; size?: { earned: number; tota
   const preview = group.pairs.slice(0, 2);
   return (
     <div className="flex flex-col gap-1 py-2 border-b border-(--separator)">
-      <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-3 text-left w-full" aria-expanded={open}>
+      {/* THE ROW WRAPS INSTEAD OF OVERFLOWING (roadmap U1). It pinned TWO fixed columns -- the
+        *  label at `w-40` (160px) and the figures at `w-44` (176px) -- with a 12px gap either side
+        *  of a `flex-1` spacer, so it demanded 360px in a row that is 326px wide inside the panel's
+        *  gutters at 390. Both were `shrink-0`, so the figures ran 34px past the row's own right
+        *  edge and 2px past the VIEWPORT: the whole report scrolled sideways,
+        *  `documentElement.scrollWidth` 392 against a 390 client width, seven rows deep.
+        *  The spacer is gone and `ml-auto` does its job on one line and on a wrapped one alike --
+        *  the same fix, for the same cause, that the mana rows in `BuildBenchmarks` already carry,
+        *  and it wraps only when it must: wherever the label and the figures both fit, this is
+        *  still one line. No breakpoint, because the row responds to the space it is given.
+        *  AND `w-44` GOES WITH IT, because it bought nothing and cost a second wrap. `text-right`
+        *  in a fixed 176px box and `text-right` under `ml-auto` put the figures' right edge in the
+        *  same place -- the column aligns either way -- but 176px is NARROWER than the sentence it
+        *  holds ("233 pairs - 14 of 31 cards earn it"), so once the row wrapped, the figures wrapped
+        *  again inside their own box and one row became three lines. Measured that way first. */}
+      <button type="button" onClick={() => setOpen((v) => !v)} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-left w-full" aria-expanded={open}>
         <span className="w-40 shrink-0 truncate flex items-center gap-1">
           <span aria-hidden className="text-(--muted) text-xs">{open ? "▾" : "▸"}</span>
           {group.label}
         </span>
-        <span className="flex-1" />
         {/* WHAT THE CARD COUNT MEANT, BESIDE IT. `cards.length` counts a card that joined by being
           *  PLAYED -- the matcher synthesises "any nonland is cast" and "any permanent enters" so a
           *  payoff has something to feed on -- which is how 61 of 99 cards became `Spellslinger`.
           *  The earned half is the one that means the card does something about the group, and it
           *  is the same split the matrix above draws its dots from. */}
-        <span className="stat-num text-xs text-(--muted) w-44 text-right shrink-0">
+        <span className="stat-num text-xs text-(--muted) text-right ml-auto">
           {group.pairs.length} pair{group.pairs.length === 1 ? "" : "s"}
           {size ? ` · ${size.earned} of ${size.total} cards earn it` : ` · ${group.cards.length} cards`}
         </span>
