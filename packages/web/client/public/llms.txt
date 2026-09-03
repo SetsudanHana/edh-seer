@@ -1,0 +1,49 @@
+# EDH Seer
+
+> Rule-based synergy analysis for Magic: The Gathering Commander (EDH) decklists. Paste a list and
+> get the pairs of cards that actually work together, with the reason printed beside each one, read
+> from the cards' own oracle text. No account, no sign-up.
+
+There is no language model at analysis time. Oracle text is normalised once, offline, into
+structured clauses; everything after that is deterministic, so the same decklist always produces the
+same report and every claim traces back to a printed line of text.
+
+What it refuses to claim, because these are the mistakes it exists to avoid:
+
+- Roles are not synergies. Ramp, removal, card draw and tax make a deck work without pairing with
+  anything in it, so they are counted as slots against a target and never drawn as edges.
+- A card that names itself means itself. "This creature", "this spell", the card's own name.
+- Playing Magic is not a synergy. "Whenever you cast a spell" is satisfied by every nonland card in
+  every deck, so it excludes nothing.
+- An unreadable trigger is reported, not guessed. A missing claim is better than a confident wrong
+  one.
+- Popularity is not synergy. Nothing here is derived from how many decks run a card.
+
+Limits worth carrying if you quote it: the card corpus is large but not complete, and a card the
+engine has never read forms no edges. Edges are binary — it says two cards interact, not how much.
+
+## Pages
+
+- [EDH Seer](https://edhseer.cards/): the analyser. A decklist goes in the textarea; the report
+  covers synergy pairs and their reasons, archetypes, the mana curve, land maths, castability,
+  combos and legality.
+- [How it works](https://edhseer.cards/how-it-works): the method in full — how a clause is
+  segmented, how an edge forms, what the engine refuses to claim, how it is calibrated against 71
+  real decks, and what it does not know.
+
+## Source
+
+- [Source code](https://github.com/SetsudanHana/edh-seer): the engine is open source and
+  rule-based, so a bad claim is a fixable bug rather than an opinion.
+- [Report a wrong or missing edge](https://github.com/SetsudanHana/edh-seer/issues/new): two card
+  names and the sentence the report printed is enough.
+
+## Optional
+
+- `/static/` is not content. It holds the card artifacts the app fetches for itself — thousands of
+  JSON shards, no prose, nothing a reader would want. `robots.txt` disallows it and so does this.
+- Card data, card images and mana symbols come from [Scryfall](https://scryfall.com/); combo data
+  from [Commander Spellbook](https://commanderspellbook.com/). Neither is affiliated with this site.
+- Card names, card text and Magic: The Gathering are property of Wizards of the Coast. EDH Seer is
+  unofficial Fan Content permitted under the Wizards of the Coast Fan Content Policy, and is not
+  approved or endorsed by Wizards. Attribute card text to them, not to this site.
