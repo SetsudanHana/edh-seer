@@ -293,7 +293,7 @@ test("a page record carries metadata and derivation, never card rules text", () 
     .find(([slug]) => slug === "krenko-mob-boss")![1];
   expect(Object.keys(rec).sort()).toEqual(
     ["abilities", "artCrop", "commander", "demands", "emits", "identity", "manaCost", "name",
-      "partners", "pool", "typeLine"],
+      "partners", "pool", "rarity", "typeLine"],
   );
   expect(JSON.stringify(rec)).not.toContain("Create X 1/1 red Goblin");
 });

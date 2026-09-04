@@ -40,7 +40,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
   // the one thing on this page that earns the extra width -- four columns squeezed into 68ch wrap
   // every cell. DESIGN.md's own rule: a wide viewport buys columns.
   return (
-    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-x-10 lg:items-start max-w-6xl">
+    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-x-10 lg:items-start max-w-7xl">
     <div className="flex flex-col gap-10 min-w-0">
       {/* THE CARD IS A RAIL, NOT A BLOCK. It sat beside a 68ch column with the other half of a
         * 2,000px viewport empty beside it (owner-reported 2026-09-04) -- and DESIGN.md's own rule is
@@ -79,8 +79,10 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         <AbilityTable rows={page.abilities} />
       </section>
 
-      <section className="flex flex-col gap-5 max-w-[68ch]">
-        <div className="flex flex-col gap-2">
+      {/* THE PROSE KEEPS ITS MEASURE, THE LIST DOES NOT: the intro is a paragraph and wraps at 68ch,
+        * the groups below it are columns. */}
+      <section className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2 max-w-[68ch]">
           <h3 className="text-2xl font-bold tracking-[-0.01em]">Most specific partners</h3>
           <p className="text-(--muted) max-w-[65ch]">
             Ranked by how rare the matched event is across the corpus — how precisely these two cards
@@ -91,6 +93,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         <PartnerList
           rows={page.partners}
           pool={page.pool}
+          rarity={page.rarity}
           empty="No partners. Every card this one could feed is fed by so many others that the pairing says nothing, or the engine refused each one on the merits."
         />
       </section>

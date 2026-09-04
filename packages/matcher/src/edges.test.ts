@@ -1879,7 +1879,9 @@ test("a self trigger says whose entry it is, without moving the tag", () => {
   }]);
   const etb = pairReasons(fetch, land, H).find((r) => r.tag.startsWith("enters"))!;
   expect(etb.tag).toBe("enters:any");
-  expect(etb.text).toBe("When Shadowy Backstreet enters thanks to Marsh Flats, it triggers");
+  expect(etb.text).toBe(// The land's effect kind is `top-manipulation`, and the sentence now says so rather than
+    // stopping at "triggers" -- see the nine kinds added to PHRASES.
+    "When Shadowy Backstreet enters thanks to Marsh Flats, it sets up the top of a library");
   expect(etb.text).toContain("Marsh Flats");
 });
 

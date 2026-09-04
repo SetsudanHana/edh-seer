@@ -14,6 +14,7 @@ import {
   copySentence, costReductionSentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, fetchSentence, proliferateSentence,
   boardCountFeedsScaling,
+  effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   staticGrantSentence, typeGrantNoun, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
@@ -1106,6 +1107,10 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
             : reasonSentence({
             producer: p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
+            // WHERE THE COUNTERS GO. "puts counters on it" had two live antecedents in every row --
+            // the entering creature the sentence opens with, and the enchantment the counters
+            // actually land on. The consumer's own effect subject knows which.
+            effectTarget: effectTargetNoun(a.effect.subject),
             // CAN THE PRODUCER BE THE THING THIS HAPPENS TO? That is the whole question, and
             // naming the class unconditionally was the wrong answer to it.
             //
@@ -1316,7 +1321,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)) continue;
     reasons.push({
       tag: `scales:${themeSubjectKey(counted)}`,
-      text: boardCountFeedsScaling(p.card.name, c.card.name),
+      text: boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind),
       effectKind: a.effect.kind,
       repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
       scaling: a.effect.scaling,

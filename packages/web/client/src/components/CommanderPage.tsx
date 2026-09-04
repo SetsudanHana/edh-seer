@@ -64,7 +64,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
   if (!page.commander) {
     return (
       <article className="flex flex-col gap-8 max-w-[68ch]">
-        {header}
+        <div className="max-w-[68ch]">{header}</div>
         <CardArt artCrop={page.artCrop} name={page.name} />
         <p className="text-(--muted) max-w-[65ch]">
           {page.name} cannot lead a deck. This page is for legendary creatures that can be a
@@ -79,8 +79,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
   const gaps = unmetDemands(page.emits, page.demands);
 
   return (
-    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-x-10 lg:items-start max-w-6xl">
-    <div className="flex flex-col gap-10 min-w-0 max-w-[68ch]">
+    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-x-10 lg:items-start max-w-7xl">
+    <div className="flex flex-col gap-10 min-w-0">
       {header}
 
       <section className="rounded-(--radius) border border-(--separator) bg-(--surface) p-5 grid gap-6 sm:grid-cols-2">
@@ -114,7 +114,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
       </section>
 
       <section className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 max-w-[68ch]">
           <h3 className="text-2xl font-bold tracking-[-0.01em]">Partners inside its colour identity</h3>
           <p className="text-(--muted) max-w-[65ch]">
             Ranked over the cards a deck led by {page.name} could legally contain — not the whole
@@ -124,6 +124,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         <PartnerList
           rows={page.commanderPartners ?? []}
           pool={page.commanderPool ?? {}}
+          rarity={page.commanderRarity ?? {}}
           empty="No partners inside this identity. Every card it could feed is fed by so many others that the pairing says nothing, or the engine refused each one on the merits."
         />
       </section>

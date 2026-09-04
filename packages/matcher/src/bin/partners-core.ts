@@ -269,6 +269,13 @@ export interface PartnerRow {
   event: string;
   /** The ENGINE'S sentence, naming both cards. Not composed here. */
   reason: string;
+  /** THE ENGINE DID NOT READ WHAT THIS CARD DOES, so its sentence ends at "triggers".
+   *
+   *  MEASURED 2026-09-04: 3,453 consumer abilities in the corpus carry no effect kind at all. Their
+   *  rows used to be indistinguishable from the informative ones -- same typeface, same shape, no
+   *  marker -- which a skeptic called a refusal that reads as a hole. A limit the page states is
+   *  honest; a limit it hides is not. */
+  unread?: true;
 }
 
 /** HOW MANY CANDIDATES ARE WORTH RUNNING THE ENGINE OVER.
@@ -316,6 +323,15 @@ export interface PartnerResult {
    *  capped; this is what the page says instead of padding -- "and 1,974 more trigger on a creature
    *  entering". A CANDIDATE count, not a verified-edge count, and the page must word it that way. */
   pool: Record<string, number>;
+  /** Per event key, how many cards in the corpus can CAUSE it -- which is the number the ranking is
+   *  computed from, and a different population from `pool`.
+   *
+   *  THE PAGE WAS SHOWING ONE NUMBER AND RANKING ON THE OTHER. A skeptic reconstructed the order
+   *  from the only figure on screen and found it non-monotonic -- 2, 263, 1, 3, 1863, 15 -- and
+   *  concluded the ranking was broken. It was not: in THIS number the same groups read 72, 264,
+   *  2159, 2159, 2879, 2963, descending exactly as claimed. The reasoning was sound and the evidence
+   *  was missing, which is the page's fault and not the reader's. */
+  rarity: Record<string, number>;
 }
 
 export function partnersFor(
@@ -395,12 +411,14 @@ export function partnersFor(
     if (!hit) continue;
     if ((shown[hit.event] ?? 0) >= PER_EVENT_CAP) continue;
     shown[hit.event] = (shown[hit.event] ?? 0) + 1;
+    const chosen = pickReason(hit.on);
     rows.push({
       name: r.card.card.name,
       slug: slugs.get(r.card.card.name) ?? slugOf(r.card.card.name),
       score: hit.score,
       event: hit.event,
-      reason: pickReason(hit.on),
+      reason: chosen.text,
+      ...(chosen.effectKind ? {} : { unread: true as const }),
     });
     if (rows.length === KEEP) break;
   }
@@ -426,7 +444,11 @@ export function partnersFor(
         .filter((r) => r.tag === `scales:${key.split("|")[2]}`);
       if (on.length === 0) continue;
       shown[key] = (shown[key] ?? 0) + 1;
-      rows.push({ name: f.card.name, slug, score, event: key, reason: pickReason(on) });
+      const chosen = pickReason(on);
+      rows.push({
+        name: f.card.name, slug, score, event: key, reason: chosen.text,
+        ...(chosen.effectKind ? {} : { unread: true as const }),
+      });
     }
     // COUNTED BEFORE THE CUT, like every other pool: how many cards in the corpus are one of these.
     pool[key] = usable.length;
@@ -437,7 +459,10 @@ export function partnersFor(
   // honest: `VERIFY_LIMIT` still cuts on the best-possible score, which is the only score known
   // before the engine runs.
   rows.sort((a, b) => b.score - a.score);
-  return { rows, pool };
+  // THE RANKING BASIS, FOR THE EVENTS THAT ACTUALLY EARNED A ROW.
+  const rarity: Record<string, number> = {};
+  for (const row of rows) rarity[row.event] = freq[row.event] ?? 1;
+  return { rows, pool, rarity };
 }
 
 /** WHICH OF THE ENGINE'S SENTENCES TO STORE.
@@ -457,7 +482,9 @@ export function partnersFor(
  *  A REPEATABLE REASON BEATS A ONE-SHOT, and nothing else is reordered: this picks between
  *  sentences the engine already wrote, it never composes one and never promotes a pair the engine
  *  refused. */
-function pickReason(reasons: { text: string; repeatability?: string; impliedProducer?: boolean }[]): string {
+function pickReason<T extends { text: string; repeatability?: string; impliedProducer?: boolean }>(
+  reasons: T[],
+): T {
   // AN AUTHORED SUPPLY OUTRANKS THE BASELINE ONE, and it outranks repeatability too. Krenko is a
   // Goblin AND he taps to make Goblins, so he satisfies `enters:goblin` twice; both sentences carry
   // the consumer's own repeatability, so that rule cannot separate them and the body's -- "When
@@ -466,7 +493,10 @@ function pickReason(reasons: { text: string; repeatability?: string; impliedProd
   // to the page for. MEASURED 2026-09-04: 6,407 rows on 1,714 cards printed the body's sentence.
   const rank = (r: { repeatability?: string; impliedProducer?: boolean }) =>
     (r.impliedProducer === true ? 2 : 0) + (r.repeatability && r.repeatability !== "oneshot" ? 0 : 1);
-  return reasons.reduce((best, r) => (rank(r) < rank(best) ? r : best)).text;
+  // RETURNS THE REASON, NOT ITS TEXT. The row needs to say whether the engine read the effect behind
+  // the sentence it printed, and that is a property of the CHOSEN reason -- asking whether every
+  // candidate lacked a kind marked 27 rows where roughly fifteen thousand qualified.
+  return reasons.reduce((best, r) => (rank(r) < rank(best) ? r : best));
 }
 
 
@@ -617,6 +647,11 @@ export interface CardPageRecord {
   /** Per event key, how many cards demand something this card supplies -- what the page says in
    *  place of the rows `PER_EVENT_CAP` withheld. */
   pool: Record<string, number>;
+  /** Per event key, how many cards in the corpus can CAUSE it -- the number the ranking is computed
+   *  from, and a DIFFERENT population from `pool`. Shipped because the page was showing one and
+   *  ranking on the other, and a reader who reconstructed the order from the visible figure
+   *  correctly concluded it was broken. */
+  rarity: Record<string, number>;
   /** THE SAME LIST OVER THE CARDS THIS COMMANDER'S DECK COULD LEGALLY CONTAIN, on commander records
    *  only. A deck led by a mono-red card can never play a Simic payoff, so a partner list that
    *  ignores colour identity is a list of cards that will never be in the same deck.
@@ -630,6 +665,7 @@ export interface CardPageRecord {
    *  record pays the bytes of every field it carries. */
   commanderPartners?: PartnerRow[];
   commanderPool?: Record<string, number>;
+  commanderRarity?: Record<string, number>;
 }
 
 export interface NameIndexEntry {
@@ -711,8 +747,8 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       commander,
       emits: [...new Set(emits)],
       demands: [...new Set(demandKeysOf(d))],
-      ...(() => { const { rows, pool } = partnersFor(d, candidates, feeders, freq, slugs, h);
-        return { partners: rows, pool }; })(),
+      ...(() => { const { rows, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h);
+        return { partners: rows, pool, rarity }; })(),
       // A CARD IS LEGAL IN A DECK WHEN ITS WHOLE IDENTITY SITS INSIDE THE COMMANDER'S -- the same
       // rule `legality.ts` reports a violation against. An empty identity is inside every one,
       // which is why a colourless card belongs in every deck and `every` over `[]` says so.
@@ -720,8 +756,8 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
         const identity = new Set(d.card.colorIdentity ?? []);
         const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
         const legalFeeders = feeders.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
-        const { rows, pool } = partnersFor(d, legal, legalFeeders, freq, slugs, h);
-        return { commanderPartners: rows, commanderPool: pool };
+        const { rows, pool, rarity } = partnersFor(d, legal, legalFeeders, freq, slugs, h);
+        return { commanderPartners: rows, commanderPool: pool, commanderRarity: rarity };
       })() : {}),
     };
     shards.set(shardName, shard);

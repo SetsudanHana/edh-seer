@@ -24,6 +24,7 @@ const KRENKO: CardPageData = {
   demands: ["dies|creature|-|-"],
   partners: [row("Simic Payoff", "simic-payoff"), row("Red Payoff", "red-payoff")],
   pool: { "enters|creature|-|-": 1909 },
+  rarity: { "enters|creature|-|-": 2879 },
   commanderPartners: [row("Red Payoff", "red-payoff")],
   commanderPool: { "enters|creature|-|-": 800 },
 };

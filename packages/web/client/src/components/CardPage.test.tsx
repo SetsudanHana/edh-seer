@@ -23,6 +23,7 @@ const KRENKO: CardPageData = {
     reason: "When a goblin enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage",
   }],
   pool: { "enters|creature|-|-": 1909 },
+  rarity: { "enters|creature|-|-": 2879 },
 };
 
 /** The loader is injected so the test needs no fetch and no artifact on disk. */
@@ -94,7 +95,7 @@ test("the page shows card metadata and the artifact carries no rules text to sho
 test("a capped event says how many candidates it is not showing, as candidates", async () => {
   at("krenko-mob-boss", async () => KRENKO);
   // The count sits under the event group it is about, not at the foot of the page.
-  const line = await screen.findByText(/more cards ask for this/);
+  const line = await screen.findByText(/other cards ask for it too/);
   expect(line.textContent).toMatch(/1,908/);
 });
 
@@ -141,4 +142,31 @@ test("a card with no image renders without one", async () => {
   at("krenko-mob-boss", async () => ({ ...KRENKO, artCrop: null }));
   await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
   expect(screen.queryByRole("img", { name: /the card/ })).toBeNull();
+});
+
+/** THE NUMBER THE ORDER IS COMPUTED FROM HAS TO BE ON SCREEN. The page showed only how many cards
+ *  ASK for an event and ranked on how many can CAUSE it -- two different populations. A skeptic
+ *  reconstructed the ranking from the visible figure, found it non-monotonic, and concluded the
+ *  ranking was broken. It was not; the evidence was missing. */
+test("a group states the rarity its ranking is computed from", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  const line = await screen.findByText(/cards in the corpus can cause this/);
+  expect(line.textContent).toMatch(/2,879/);
+});
+
+/** A LIMIT THE PAGE STATES IS HONEST; A LIMIT IT HIDES IS NOT. 3,453 consumer abilities carry no
+ *  effect kind, so their sentence ends at "triggers" -- and used to sit in the same typeface as the
+ *  rows that say something. */
+test("a row whose effect the engine could not read says so", async () => {
+  at("krenko-mob-boss", async () => ({
+    ...KRENKO,
+    partners: [{ ...KRENKO.partners[0]!, reason: "When a Goblin enters, X triggers", unread: true as const }],
+  }));
+  expect(await screen.findByText(/engine did not read what it does/)).toBeInTheDocument();
+});
+
+test("a row the engine did read carries no such marker", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
+  expect(screen.queryByText(/engine did not read/)).toBeNull();
 });
