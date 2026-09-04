@@ -29,6 +29,16 @@
      and hid the first row of the table behind the strip it was guessing at. 0 until measured. */
   --report-header-h: 0px;
 
+  /* THE SITE HEADER'S MEASURED HEIGHT, written by `main.tsx` at boot and on every resize. It is a
+     SEPARATE variable from `--report-header-h` and not folded into it, because the two are consumed
+     differently: a sticky `top` is a viewport-absolute offset and needs the WHOLE stack above it,
+     while a scroll target gets the site header's share from `scroll-padding-top` on `html` and only
+     its own share from `scroll-mt`. Fold them together and every anchored chapter over-scrolls by
+     the height of this header.
+     0 on `how-it-works`, which loads no bundle -- and correctly so: that page has no in-page anchor
+     and nothing sticky under the header, so nothing there reads this. */
+  --site-header-h: 0px;
+
   /* The chapter rail's own height, written by `ChapterRail` on the same terms: below `lg` it is a
      SECOND pinned bar under the header, and 0 above it, where the rail sits beside the column.
      Anything scrolled to has to clear both -- an offset that counted only the header left each
@@ -106,6 +116,13 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --text-2xs: 0.625rem; /* 10px — chart axis labels only; documented micro step */
 }
+
+/* EVERY SCROLL TARGET CLEARS THE STICKY HEADER (WCAG 2.4.11, Focus Not Obscured). An anchor jump
+   and the browser's own scroll-into-view on focus both honour this, so a keyboard reader tabbing
+   into something just off the top edge does not land underneath the bar. Chapters add their own
+   `scroll-mt` for the report header and rail ON TOP of this, which is exactly why the site header is
+   not in that calc. */
+html { scroll-padding-top: var(--site-header-h, 0px); }
 
 /* THE PAGE'S OWN GROUND, and it was `main`'s until the static intro moved content outside it: below
    `main` the body showed the browser default, so the explainer sat on white. A background painted by
@@ -658,10 +675,23 @@ summary {
 
 /* THE HEADER (index.html and how-it-works/index.html). Static on both pages, so plain CSS, and one
    rule set for the two so the site cannot have two headers that disagree. */
+/* STICKY, so the site's own name and the six links stay reachable from 9,000px down a report
+   (owner, 2026-09-04). Three things it needs that a bare `position: sticky` does not give:
+   AN OPAQUE BACKGROUND. Without one the report scrolls THROUGH the header -- the block had no
+   background of its own, because until now nothing ever passed behind it.
+   A PLACE IN THE STACK. The app's layers were already ordered: fullscreen graph 40, card drawer 30,
+   report header 20, chapter rail 10, table head 5. 25 is the gap that puts this above the report's
+   own sticky summary and below the two things meant to cover the whole page.
+   LESS HEIGHT ONCE IT NEVER LEAVES. The 2rem above the wordmark was the top of the page breathing;
+   in a bar that is now permanent it is dead space on every screen. */
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  background: var(--background);
   max-width: 64rem;
   margin: 0 auto;
-  padding: 2rem 2rem 0;
+  padding: 0.75rem 2rem 0;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -785,6 +815,47 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 @media (max-width: 30rem) {
   .brand-tagline { display: none; }
   .site-nav { gap: 0.9rem; }
+}
+
+/* WRAP IS THE COST, AND ON A PINNED BAR IT IS THE WHOLE COST. Measured at 390px with the header
+   sticky: six links plus the install button wrapped to three rows and the bar stood at 123px -- 18%
+   of a 664px viewport, permanently, above a report header (73px) and a chapter rail (53px) already
+   pinned under it. 249px of sticky furniture over 664px of screen is not navigation, it is a
+   ceiling.
+   ONE ROW THAT SCROLLS, rather than three that do not. `nowrap` on both the header and the nav puts
+   the brand and the links on one line and lets the links overflow their own box. NOTHING WAS CUT to
+   get there -- the same six destinations in the same order, which is the property `seo.test.ts`
+   compares byte for byte across the two pages.
+   THE OVERFLOW IS VISIBLE, because a scroller that does not look like one loses its own tail: the
+   mask fades the last 1.5rem so a partial word always sits at the right edge saying the row
+   continues. An `aria-label` would serve a screen reader and leave a sighted reader with nothing.
+   `min-inline-size: 0` is what lets it shrink at all -- a flex item keeps `min-width: auto`, so
+   without it the nav's full ~430px of content sizes the header and pushes the brand off the left. */
+@media (max-width: 47.99rem) {
+  .site-header {
+    align-items: center;
+    gap: 0.5rem 1rem;
+    padding-top: 0.6rem;
+    padding-bottom: 0.5rem;
+  }
+  .site-nav {
+    /* ITS OWN ROW, AND ALL OF IT. Sharing the brand's line left the scroller 121px of a 390px
+       screen -- one and a half links visible out of six, which is a menu you have to drag before
+       you can read it. A second row costs 20px and gives it the full 326px, where three items and
+       the fade sit on screen at once. Two rows, never three: this is `flex-basis: 100%`, not
+       `flex-wrap`. */
+    flex: 1 0 100%;
+    flex-wrap: nowrap;
+    min-inline-size: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+  }
+  .site-nav::-webkit-scrollbar { display: none; }
+  /* The links are the scroller's content, so they may not shrink to fit it -- that is exactly what
+     would make the row stop scrolling and start squashing. */
+  .site-nav a { white-space: nowrap; flex-shrink: 0; }
 }
 
 /* ── figures, pipeline, edge-demo: shared by both pages ──────────────────────────────────────────

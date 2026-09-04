@@ -27,6 +27,32 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 // their job.
 document.documentElement.dataset.appBooted = "1";
 
+/** THE STICKY SITE HEADER'S HEIGHT, INTO `--site-header-h`.
+ *
+ *  IT IS MEASURED AND NOT WRITTEN DOWN, for the reason the whole `--report-header-h` mechanism
+ *  exists: the header WRAPS. Six nav links plus the install button run to ~430px of content, so
+ *  below `30rem` the nav becomes two rows and the bar roughly doubles in height -- and where exactly
+ *  it breaks depends on font metrics, which differ per platform. A constant here is a constant that
+ *  is wrong on somebody's machine, and being wrong means the report header pins UNDER this one.
+ *
+ *  IT LIVES OUTSIDE REACT because the header does: it is static HTML in `index.html`, above
+ *  `#root`, so that the site's name and its nav do not wait for a 700 KB bundle. A component cannot
+ *  observe an element it does not own, and a second React root just to measure a `<header>` is a
+ *  root to keep alive forever.
+ *
+ *  NOT ON `how-it-works`, which loads no bundle at all. It does not need this: nothing on that page
+ *  is sticky under the header and it has no in-page anchor, so the `0px` default is the right
+ *  answer there rather than a missing one. */
+const siteHeader = document.querySelector<HTMLElement>(".site-header");
+if (siteHeader && typeof ResizeObserver !== "undefined") {
+  const writeSiteHeaderHeight = (): void =>
+    document.documentElement.style.setProperty(
+      "--site-header-h", `${Math.round(siteHeader.getBoundingClientRect().height)}px`,
+    );
+  writeSiteHeaderHeight();
+  new ResizeObserver(writeSiteHeaderHeight).observe(siteHeader);
+}
+
 /** OFFLINE, WHICH THIS APP IS UNUSUALLY CLOSE TO ALREADY: the analysis runs entirely in the browser
  *  and every card shard a deck touches is already kept in the Cache API by `StaticLookup`. What was
  *  missing is the shell — the HTML, the bundle, the CSS — which a service worker precaches.

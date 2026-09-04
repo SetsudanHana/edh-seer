@@ -65,6 +65,14 @@
   /* Set per-instance by .pip; declared here so the theme is self-contained. */
   --pip-color: var(--color-pip-border);
 
+  /* Written at runtime by `main.tsx` from the static site header's measured height, and read by
+     `scroll-padding-top` plus every sticky `top` in the app -- a sticky offset is viewport-absolute,
+     so each one names the whole stack above it. Declared here on the same terms as the two below:
+     the theme is self-contained, and an offset that resolves to nothing pins content BEHIND the bar
+     it was meant to sit under. 0px is also the right answer on `how-it-works`, which loads no
+     bundle, has no in-page anchor and nothing sticky of its own. */
+  --site-header-h: 0px;
+
   /* Written at runtime by `ReportHeader` from its own measured height, and read by everything
      sticky or anchored below it (the chapter rail, each chapter's scroll-margin, the cards
      table's header). Declared here for the same reason --pip-color is: the theme has to be

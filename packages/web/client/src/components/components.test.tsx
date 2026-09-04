@@ -526,7 +526,12 @@ test("the column header is sticky at every width, with the offset applied once",
   const { container } = render(<CardList cards={SAMPLE.report.cards} />);
   const thead = container.querySelector("thead")!;
   expect(thead.className).toContain("sticky");
-  expect(thead.className).toContain("top-[var(--report-header-h,0px)]");
+  // THE WHOLE STACK ABOVE IT, and it grew on 2026-09-04 when the site header went sticky. A sticky
+  // `top` is a viewport-absolute offset, so every bar pinned above this one has to be in the sum --
+  // count only the report header and the column labels pin BEHIND the site header instead of under
+  // it, which is the same class of defect as the hardcoded `top-[33px]` this test was written for.
+  expect(thead.className)
+    .toContain("top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px))]");
   // The stopgap's own shape must not come back: a breakpoint on the sticky means a width where the
   // labels scroll away again.
   expect(thead.className).not.toContain("static");

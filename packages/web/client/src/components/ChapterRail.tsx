@@ -117,7 +117,7 @@ export function ChapterRail({ current }: { current: ChapterId | null }) {
       // A HIDDEN BAR IS STILL IN THE TAB ORDER, and a keyboard reader whose focus lands on a
       // control parked behind the header has no way to know where it went.
       onFocusCapture={() => setHidden(false)}
-      className={`sticky top-[var(--report-header-h,0px)] z-10 bg-(--background) transition-transform duration-200 ease-out motion-reduce:transition-none lg:top-[calc(var(--report-header-h,0px)+1.5rem)] lg:bg-transparent lg:self-start ${
+      className={`sticky top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px))] z-10 bg-(--background) transition-transform duration-200 ease-out motion-reduce:transition-none lg:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1.5rem)] lg:bg-transparent lg:self-start ${
         hidden ? "-translate-y-full" : "translate-y-0"
       }`}
     >
@@ -191,7 +191,10 @@ export function useCurrentChapter(): ChapterId | null {
     const visible = new Set<string>();
     const px = (name: string): number =>
       Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue(name) || "0", 10) || 0;
-    const header = px("--report-header-h") + px("--report-rail-h");
+    // EVERY BAR ABOVE THE CHAPTER, not just the report's own. The site header went sticky on
+    // 2026-09-04 and it sits above these two, so a rootMargin counting only the report header
+    // reports the chapter that is CURRENTLY UNDERNEATH the site header as the one on screen.
+    const header = px("--site-header-h") + px("--report-header-h") + px("--report-rail-h");
     const observer = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
