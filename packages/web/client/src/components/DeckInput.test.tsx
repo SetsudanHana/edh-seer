@@ -88,3 +88,48 @@ test("the open form does not offer to start over", () => {
   render(<DeckInput {...props} onStartOver={() => {}} />);
   expect(screen.queryByRole("button", { name: /start over/i })).toBeNull();
 });
+
+/** CLEARING A FORM THAT CAME BACK FULL (owner, 2026-09-04).
+ *
+ *  `Analyse a deck` in the header is a link to `/`, and `/` refills both fields from the remembered
+ *  deck -- so a reader who has analysed one deck and wants to try another lands on the last one.
+ *  `Start over` does this from the report; nothing did it from the form. */
+test("Clear is offered beside Analyze, and is unavailable while there is nothing to clear", () => {
+  const { rerender } = render(<DeckInput {...props} />);
+  const clear = screen.getByRole("button", { name: "Clear" });
+  // BOTH fields count, not just the decklist: a reader who typed only a commander has something to
+  // clear, and a control that stays dim over a filled box reads as broken.
+  expect(clear).toBeDisabled();
+  rerender(<DeckInput {...props} commanders="1 Krenko, Mob Boss" />);
+  expect(screen.getByRole("button", { name: "Clear" })).toBeEnabled();
+  rerender(<DeckInput {...props} value="1 Sol Ring" />);
+  expect(screen.getByRole("button", { name: "Clear" })).toBeEnabled();
+});
+
+test("Clear calls its handler and never the analysis", async () => {
+  const onClear = vi.fn();
+  const onAnalyze = vi.fn();
+  render(<DeckInput {...props} value="1 Sol Ring" onClear={onClear} onAnalyze={onAnalyze} />);
+  await userEvent.click(screen.getByRole("button", { name: "Clear" }));
+  expect(onClear).toHaveBeenCalledTimes(1);
+  expect(onAnalyze).not.toHaveBeenCalled();
+});
+
+/** NEUTRAL, NOT DESTRUCTIVE, AND NOT A SECOND PRIMARY (tokens-and-color.md). One affirmative action
+ *  per screen wears the accent fill; a red Clear would put the loudest mark on the landing page on
+ *  the action nobody arrived to take. The class carries the whole rule, so the class is the
+ *  assertion -- and `validate_contrast.py` holds the border it uses to 3:1. */
+test("Clear is the neutral variant and Analyze keeps the accent", () => {
+  render(<DeckInput {...props} value="1 Sol Ring" />);
+  expect(screen.getByRole("button", { name: "Clear" }).className).toContain("btn-secondary");
+  expect(screen.getByRole("button", { name: "Clear" }).className).not.toContain("btn-primary");
+  expect(screen.getByRole("button", { name: "Analyze deck" }).className).toContain("btn-primary");
+});
+
+/** THE COLLAPSED BAR ALREADY HAS ITS OWN WAY OUT -- `Start over`, which navigates -- and two
+ *  controls for the same intent on one surface is how a reader learns neither is the real one. */
+test("the collapsed bar does not grow a second clear", () => {
+  render(<DeckInput {...props} value="1 Sol Ring" collapsed onClear={() => {}} />);
+  expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Start over" })).toBeInTheDocument();
+});

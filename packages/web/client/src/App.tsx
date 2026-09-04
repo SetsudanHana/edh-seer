@@ -360,6 +360,13 @@ export default function App() {
         // AND IT IS RECOVERABLE: `assign` leaves a history entry, so Back returns to the report's
         // own address and the hash rebuilds it. That is why there is no confirmation.
         onStartOver={() => { clearLastRun(); window.location.assign("/"); }}
+        // CLEAR IS A STATE RESET, WHICH IS THE OPPOSITE CALL FROM `Start over` ABOVE AND FOR THE
+        // OPPOSITE REASON. Start over is reached from a REPORT, where the deck is in the hash and
+        // the route is `/cards` or `/graph`, so navigating to `/` is the cheap way to unwind all of
+        // it. Clear is reached from the form itself, at `/` with no hash and nothing to unwind --
+        // reloading the page to empty two fields would be a flash and a lost scroll position for no
+        // gain. `clearLastRun` still runs, or the next visit refills what was just cleared.
+        onClear={() => { clearLastRun(); setCommanders(""); setDecklist(""); }}
         shareLink={link}
       />
       {firstVisit && (

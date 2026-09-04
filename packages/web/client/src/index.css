@@ -294,6 +294,51 @@ summary {
     cursor: progress;
   }
 
+  /** THE NEUTRAL HALF OF A BUTTON PAIR. One affirmative action per screen takes the accent fill;
+   *  everything beside it is this -- transparent, bordered, foreground text, never a second colour
+   *  (tokens-and-color.md: "secondary = neutral, never a colored fill"). It is not the destructive
+   *  variant either: clearing a form the reader filled is neutral, and painting it red would put the
+   *  loudest thing on the landing page on the action nobody came to take.
+   *
+   *  `--field-border` AND NOT `--separator`. This is a control boundary, so WCAG 1.4.11 wants 3:1 --
+   *  the separator is the decorative hairline at 1.15:1 and `validate_contrast.py` enforces the
+   *  difference. The same token the paste fields' own boundary would use.
+   *
+   *  IT SHARES `.btn-primary`'S BOX -- same min height, radius, type -- because the two sit on one
+   *  line and a pair of buttons at different heights is the first thing an eye finds wrong. */
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 2.25rem;
+    padding-inline: 1rem;
+    border-radius: 9999px;
+    background: transparent;
+    color: var(--foreground);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.2;
+    border: 1px solid var(--field-border);
+    cursor: pointer;
+    transition: background-color 120ms ease-out, border-color 120ms ease-out;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--surface-secondary);
+    border-color: var(--foreground);
+  }
+
+  .btn-secondary:active:not(:disabled) {
+    background: var(--surface);
+  }
+
+  /* Nothing to clear IS "you cannot do this", which is the one case that earns the dimming -- the
+     same rule `.btn-primary` states for an empty decklist. */
+  .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   /** A PASTE FIELD: recessed below its container, which is what says "type here" without a border
    *  doing it. `--background` inside a `--surface` card is the same well the HeroUI field drew. */
   .field {

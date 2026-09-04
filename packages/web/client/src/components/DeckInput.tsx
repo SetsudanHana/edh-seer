@@ -11,6 +11,7 @@ export function DeckInput({
   collapsed,
   onEdit,
   onStartOver,
+  onClear,
   shareLink,
 }: {
   commanders: string;
@@ -23,6 +24,9 @@ export function DeckInput({
   onEdit?: () => void;
   /** Clears the remembered deck and returns to the empty analyser. See the button below. */
   onStartOver?: () => void;
+  /** Empties both fields in place, and forgets the remembered deck with them. Distinct from
+   *  `onStartOver`, which NAVIGATES: this one is for a reader already looking at the form. */
+  onClear?: () => void;
   /** The URL that reproduces the analysis on screen, or null when the deck is too long to encode.
    *  Absent rather than disabled in that case: a button that cannot do its job is worse than none. */
   shareLink?: string | null;
@@ -136,17 +140,41 @@ export function DeckInput({
           onChange={(e) => onChange(e.target.value)}
         />
       </div>
-      {/* DISABLED HERE MEANS UNAVAILABLE -- there is no decklist to analyse -- and that is the one
-        *  case that earns the dimming. Loading keeps full strength; see the collapsed bar above. */}
-      <button
-        type="button"
-        className="btn-primary"
-        disabled={loading || value.trim() === ""}
-        aria-busy={loading}
-        onClick={onAnalyze}
-      >
-        {loading ? "Analyzing…" : "Analyze deck"}
-      </button>
+      {/* A WAY TO EMPTY A FORM THAT CAME BACK FULL (owner, 2026-09-04). `Analyse a deck` in the
+        *  header is a link to `/`, and `/` refills both fields from `sessionStorage` -- so a reader
+        *  who has analysed one deck and wants to try another lands on the last one and has to select
+        *  and delete two boxes by hand. `Start over` does this from the REPORT; nothing did it from
+        *  the form.
+        *  IT CLEARS THE STORE TOO, or it is a lie: emptying the boxes and leaving the remembered
+        *  deck behind means a reload puts it straight back.
+        *  SECONDARY, NOT DESTRUCTIVE. It is neutral by the token rule -- one affirmative action per
+        *  screen wears the accent, and this is not it -- and red would put the loudest mark on the
+        *  landing page on the action nobody arrived to take.
+        *  NO CONFIRMATION, AND THIS ONE IS NOT RECOVERABLE the way `Start over` is: that navigates,
+        *  so Back rebuilds the deck from the hash, and this does not. What stands in for it is the
+        *  disabled state -- there is nothing to clear until there is -- and the quiet treatment
+        *  beside a full-width primary, which is not a control a thumb finds by accident. */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="btn-secondary shrink-0"
+          disabled={loading || (value.trim() === "" && commanders.trim() === "")}
+          onClick={onClear}
+        >
+          Clear
+        </button>
+        {/* DISABLED HERE MEANS UNAVAILABLE -- there is no decklist to analyse -- and that is the one
+          *  case that earns the dimming. Loading keeps full strength; see the collapsed bar above. */}
+        <button
+          type="button"
+          className="btn-primary grow"
+          disabled={loading || value.trim() === ""}
+          aria-busy={loading}
+          onClick={onAnalyze}
+        >
+          {loading ? "Analyzing…" : "Analyze deck"}
+        </button>
+      </div>
     </div>
   );
 }
