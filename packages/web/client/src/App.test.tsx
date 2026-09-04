@@ -55,3 +55,20 @@ test("a card URL renders the card page and not the deck tool", async () => {
     window.history.pushState({}, "", "/");
   }
 });
+
+/** `/cards` IS A PAGE NOW, not the report's card list. The legacy handoff for a stale share link
+ *  moved inside `CardSearch`, which is the only place it can live once the path renders something:
+ *  covered there, because `window.location.replace` is not implemented in jsdom. */
+test("the /cards URL renders the card search and not the deck tool", async () => {
+  const fetchSpy = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) } as Response);
+  window.history.pushState({}, "", "/cards");
+  try {
+    render(<App />);
+    expect(await screen.findByRole("searchbox")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Analyze deck" })).toBeNull();
+  } finally {
+    fetchSpy.mockRestore();
+    window.history.pushState({}, "", "/");
+  }
+});
