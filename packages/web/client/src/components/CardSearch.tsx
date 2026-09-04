@@ -28,8 +28,9 @@ const COLOURS: [code: string, label: string][] = [
   ["W", "White"], ["U", "Blue"], ["B", "Black"], ["R", "Red"], ["G", "Green"],
   // COLOURLESS IS A REAL IDENTITY AND WAS UNREACHABLE (owner-reported 2026-09-04). 13 of the 2,428
   // commanders have an empty identity -- Ulamog, Kozilek, Emrakul, Galactus -- and no combination of
-  // the five colours could ask for them: an empty identity is a SUBSET of every filter, so they
-  // appeared under "Red" and under nothing of their own. `C` narrows to exactly them.
+  // the five colours could ask for them. `C` narrows to exactly them, and is EXCLUSIVE of the five:
+  // every identity already contains the colourless cards, so "Red and colourless" is either a
+  // redundant question or an empty one. Ticking a colour unticks it, and it unticks every colour.
   ["C", "Colorless"],
 ];
 
@@ -76,16 +77,20 @@ export function CardSearch({
     return index.filter((e) =>
       (!commanderMode || e.commander)
       && e.slug.includes(needle)
-      // WITHIN the chosen colours, not overlapping them: a Grixis commander cannot be built in a
-      // mono-red deck. Same subset rule the artifact ranks a commander's own partners by, so a
-      // colourless commander fits inside every identity.
-      // COLOURLESS IS EXACT; THE FIVE COLOURS ARE A CEILING. "Red" asks what a red deck may lead
-      // with, and an empty identity is inside every one of those -- the same subset rule the
-      // artifact ranks a commander's own partners by. "Colorless" asks for the cards that ARE
-      // colourless, which is a different question and the only way to reach those 13 commanders.
+      // THE FACETS NAME THE IDENTITY EXACTLY (owner ruling 2026-09-04). "Red, Green" asks for Gruul
+      // commanders -- not for the ones that merely CONTAIN Gruul, and not for the ones a Gruul deck
+      // could lead with. A colour pair is how a player names a deck, so the chips have to answer
+      // with that pair and nothing wider.
+      // TWO WIDER RULES WERE TRIED AND ARE BOTH WRONG HERE. A subset ceiling ("what may I lead with
+      // in these colours") answered every multi-colour question with mostly mono-coloured cards; a
+      // contains-all AND buried Gruul itself under the Jund, Naya and five-colour commanders that
+      // also happen to have both.
+      // COLOURLESS IS THE SAME QUESTION with an empty set, and it is why `C` is exclusive: it is
+      // the only way to name "no colours at all".
       && (!commanderMode || colours.length === 0
-        || (chosen.has("C") && e.identity.length === 0)
-        || (colours.some((c) => c !== "C") && e.identity.every((c) => chosen.has(c)))));
+        || (chosen.has("C")
+          ? e.identity.length === 0
+          : e.identity.length === colours.length && colours.every((c) => e.identity.includes(c)))));
   }, [index, needle, asked, colours, commanderMode]);
 
   return (
@@ -121,7 +126,12 @@ export function CardSearch({
               // active tab read as the same kind of state.
               <button
                 key={code} type="button" aria-pressed={on}
-                onClick={() => setColours((cs) => on ? cs.filter((c) => c !== code) : [...cs, code])}
+                // COLOURLESS UNTICKS THE COLOURS AND THEY UNTICK IT. Every identity already contains
+                // the colourless cards, so the two questions cannot be asked at once -- holding both
+                // selected would only ever draw an empty list.
+                onClick={() => setColours((cs) => on
+                  ? cs.filter((c) => c !== code)
+                  : code === "C" ? ["C"] : [...cs.filter((c) => c !== "C"), code])}
                 className={`inline-flex items-center gap-1.5 rounded-(--radius) border px-3 py-1.5 text-sm ${on
                   ? "border-(--accent) text-(--accent)"
                   : "border-(--separator) text-(--muted) hover:text-(--foreground)"}`}

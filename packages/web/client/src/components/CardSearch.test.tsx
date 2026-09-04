@@ -124,20 +124,25 @@ test("an identity facet lists commanders without anything typed", async () => {
   commanders();
   await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
-  // WITHIN the chosen colours, not overlapping them: a Grixis commander cannot be built in a
-  // mono-red deck, and this page answers "what can I lead with these colours".
+  // "Red" NAMES THE IDENTITY: mono-red, not everything with red in it. A Grixis commander is a
+  // Grixis commander, and it is the answer to "Blue, Black, Red".
   expect(screen.queryByRole("link", { name: /Kess, Dissident Mage/ })).not.toBeInTheDocument();
-  // A colourless commander fits inside every identity, the same rule the artifact ranks by.
-  expect(screen.getByRole("link", { name: /Kozilek/ })).toBeInTheDocument();
+  // A colourless commander has no red in it either.
+  expect(screen.queryByRole("link", { name: /Kozilek/ })).not.toBeInTheDocument();
 });
 
-test("two facets admit the commanders that need both, and the ones that need either", async () => {
+/** THE FACETS NAME THE IDENTITY EXACTLY (owner ruling 2026-09-04). "Red, Green" asks for Gruul, not
+ *  for the Jund and Naya commanders that also contain both — a colour pair is how a player names a
+ *  deck, and the chips answer with that pair and nothing wider. */
+test("the facets name an identity exactly, not the ones that contain it", async () => {
   commanders();
-  await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
-  await userEvent.click(screen.getByRole("button", { name: /^Blue$/ }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Blue$/ }));
   await userEvent.click(screen.getByRole("button", { name: /^Black$/ }));
+  // Two of Kess's three: Kess is Grixis, and Dimir is not Grixis.
+  expect(await screen.findByText(/No commander matches/)).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: /^Red$/ }));
   expect(await screen.findByRole("link", { name: /Kess, Dissident Mage/ })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Krenko, Mob Boss/ })).not.toBeInTheDocument();
 });
 
 test("a facet toggles off again", async () => {
@@ -197,14 +202,25 @@ test("a colourless facet reaches the commanders no colour can ask for", async ()
   expect(screen.queryByRole("link", { name: /Kess/ })).not.toBeInTheDocument();
 });
 
-/** AND THE FIVE COLOURS KEEP THE SUBSET RULE. "Red" asks what a red deck may lead with, and an
- *  empty identity is inside every one of those -- the same rule the artifact ranks a commander's own
- *  partners by. Both questions are true; they are just different questions. */
-test("a colour facet still admits the colourless, which is a subset of every identity", async () => {
+/** AND COLOURLESS IS EXCLUSIVE OF THE FIVE. Every identity already contains the colourless cards,
+ *  so the two questions cannot be asked at once -- holding both selected would only ever draw an
+ *  empty list. Ticking a colour unticks it, and it unticks every colour. */
+test("ticking a colour unticks colourless, and colourless unticks the colours", async () => {
   commanders();
-  await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
+  const colourless = await screen.findByRole("button", { name: /^Colorless$/ });
+  await userEvent.click(colourless);
+  expect(colourless).toHaveAttribute("aria-pressed", "true");
+
+  const red = screen.getByRole("button", { name: /^Red$/ });
+  await userEvent.click(red);
+  expect(colourless).toHaveAttribute("aria-pressed", "false");
+  expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Kozilek/ })).not.toBeInTheDocument();
+
+  await userEvent.click(colourless);
+  expect(red).toHaveAttribute("aria-pressed", "false");
   expect(await screen.findByRole("link", { name: /Kozilek/ })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Krenko, Mob Boss/ })).not.toBeInTheDocument();
 });
 
 /** AN EMPTY IDENTITY IS COLOURLESS, NOT ABSENT. Rendering nothing there made 1,354 cards look like
