@@ -91,3 +91,14 @@ test("the commander URLs render their own pages and not the deck tool", async ()
     window.history.pushState({}, "", "/");
   }
 });
+
+/** THE LEGACY-REDIRECT BLOCK MATCHES TWO PATHS AND THE APP HAS MANY. Without a catch-all in it,
+ *  React Router logs `No routes matched location` on every other page -- noise on the landing, on
+ *  every card page and on every commander page, which is how a real warning goes unread. */
+test("no router warning is logged on a page the legacy block does not match", async () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  try {
+    render(<App />);
+    expect(warn.mock.calls.flat().join(" ")).not.toContain("No routes matched");
+  } finally { warn.mockRestore(); }
+});

@@ -19,22 +19,46 @@ export async function renderCardPage(
 ): Promise<Response> {
   const origin = new URL(request.url).origin;
   const shell = await (await assets.fetch(`${origin}/index.html`)).text();
-  const fallback = () => new Response(shell, {
+
+  // DEGRADED IS NOT MISSING, and the two must not share an answer.
+  //
+  // A manifest that did not load, a shard caught mid-deploy, a body that would not parse: none of
+  // those are evidence about the CARD. They serve the shell at 200 and let the app try again from
+  // the browser -- answering "gone" while the artifact is briefly unreadable would be the same
+  // class of lie as the 200-with-HTML that cost two pull requests this week.
+  const degraded = () => new Response(shell, {
     headers: { "content-type": "text/html; charset=utf-8" },
   });
 
+  // A SLUG THE ARTIFACT DOES NOT HOLD IS A 404, and the shard loading is what makes that a fact
+  // rather than a guess. `/cards/<any string>` used to answer 200 with the site's generic title:
+  // an infinite space of soft 404s beside 17,814 real sitemap URLs, indexable, and carrying the
+  // home page's metadata. The BODY is unchanged -- the React route still explains that the engine
+  // has not read this card, which is the ordinary case for 38% of the corpus -- because a 404
+  // renders exactly like a 200 and only says something different to a crawler.
+  const notFound = () => new Response(injectPage(shell, {
+    title: "Not in the corpus — EDH Seer",
+    description: "The engine has not read this card, so it has no page.",
+    canonical: `${origin}/${kind === "commander" ? "commanders" : "cards"}/${slug}`,
+    indexable: false,
+    bodyHtml: "",
+  }), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
+
   try {
     const manifest = await assets.fetch(`${origin}/static/manifest.json`);
-    if (!manifest.ok) return fallback();
+    if (!manifest.ok) return degraded();
     const { version } = await manifest.json() as { version?: string };
-    if (!version) return fallback();
+    if (!version) return degraded();
 
     const shard = await assets.fetch(`${origin}/static/${version}/partners/${partnerShardOf(slug)}.json`);
-    if (!shard.ok) return fallback();
+    // A 404 ON THE SHARD IS STILL DEGRADED, not missing: shards are content-addressed under the
+    // version directory, so a miss here means the artifact is mid-upload, never that the slug is
+    // unknown. Only the shard's own CONTENTS can say that.
+    if (!shard.ok) return degraded();
     const record = (await shard.json() as Record<string, InjectableCard & {
       commanderPartners?: InjectableCard["partners"];
     }>)[slug];
-    if (!record) return fallback();
+    if (!record) return notFound();
 
     // A COMMANDER URL FOR A CARD THAT CANNOT LEAD A DECK IS NOT A PAGE. It still renders -- the
     // React route explains why the question is wrong -- but it makes no promise a crawler should
@@ -68,6 +92,6 @@ export async function renderCardPage(
       bodyHtml: cardPageHtml({ ...record, partners }, slug, kind),
     }), { headers: { "content-type": "text/html; charset=utf-8" } });
   } catch {
-    return fallback();
+    return degraded();
   }
 }

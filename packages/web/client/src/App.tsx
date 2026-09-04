@@ -256,6 +256,11 @@ export default function App() {
     <Routes>
       <Route path="/graph" element={<LegacyDeckRedirect to="/analysis/graph" />} />
       <Route path="/combos" element={<LegacyDeckRedirect to="/analysis/combos" />} />
+      {/* THIS BLOCK MATCHES TWO PATHS AND THE APP HAS MANY, so without a catch-all React Router
+        * warns `No routes matched location` on every OTHER page -- console noise on every card
+        * page, every commander page and the landing itself, which is how a real warning goes
+        * unread. It renders nothing, which is what it already did. */}
+      <Route path="*" element={null} />
     </Routes>
     {/* THE CARD PAGES REPLACE THE DECK TOOL RATHER THAN SITTING UNDER IT, which is why `main` is a
       * route element now instead of the component's whole body. `*` keeps every other path on the
