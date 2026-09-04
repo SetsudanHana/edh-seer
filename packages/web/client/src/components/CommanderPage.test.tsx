@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import { CommanderPage } from "./CommanderPage.js";
 import type { CardPageData } from "../lib/partners.js";
 
-const row = (name: string, slug: string, event = "enters|creature|-") => ({
+const row = (name: string, slug: string, event = "enters|creature|-|-") => ({
   name, slug, score: 0.126, event, reason: `When a goblin enters thanks to Krenko, Mob Boss, ${name} triggers`,
 });
 
@@ -14,12 +14,12 @@ const KRENKO: CardPageData = {
   manaCost: "{2}{R}{R}",
   identity: ["R"],
   commander: true,
-  emits: ["create-token|creature|goblin", "enters|creature|goblin"],
-  demands: ["dies|creature|-"],
+  emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
+  demands: ["dies|creature|-|-"],
   partners: [row("Simic Payoff", "simic-payoff"), row("Red Payoff", "red-payoff")],
-  pool: { "enters|creature|-": 1909 },
+  pool: { "enters|creature|-|-": 1909 },
   commanderPartners: [row("Red Payoff", "red-payoff")],
-  commanderPool: { "enters|creature|-": 800 },
+  commanderPool: { "enters|creature|-|-": 800 },
 };
 
 const at = (slug: string, load: () => Promise<CardPageData | null>) =>
@@ -55,7 +55,7 @@ test("the page names the archetypes this commander's own events point at", async
 /** WHAT THE DECK HAS TO BRING. Krenko wants creatures dying and kills none himself. */
 test("a demand the commander does not answer itself is listed as one the deck must cover", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  const gap = await screen.findByText(/dies\|creature\|-/);
+  const gap = await screen.findByText(/dies\|creature\|-\|-/);
   expect(gap).toBeInTheDocument();
 });
 
@@ -65,11 +65,11 @@ test("a demand the commander does not answer itself is listed as one the deck mu
  *  ASSERTED INSIDE THE SECTION, because the event key also appears on every partner row below --
  *  the first cut of this matched those and failed for the wrong reason. */
 test("a self-supplied demand is not listed as a gap", async () => {
-  at("krenko-mob-boss", async () => ({ ...KRENKO, demands: ["enters|creature|-"] }));
+  at("krenko-mob-boss", async () => ({ ...KRENKO, demands: ["enters|creature|-|-"] }));
   const heading = await screen.findByRole("heading", { name: /other 99 cards/i });
   const section = heading.parentElement!;
   expect(within(section).getByText(/answers every event it watches/i)).toBeInTheDocument();
-  expect(within(section).queryByText(/enters\|creature\|-/)).toBeNull();
+  expect(within(section).queryByText(/enters\|creature\|-\|-/)).toBeNull();
 });
 
 /** A CARD THAT CANNOT LEAD A DECK HAS NO COMMANDER PAGE, and saying so beats rendering an empty

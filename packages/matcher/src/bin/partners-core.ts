@@ -76,8 +76,19 @@ export function eventKey(e: GameEvent): string {
   const s = e.subject ?? {};
   const one = (v: string | string[] | undefined): string =>
     v === undefined ? "-" : Array.isArray(v) ? [...v].sort().join(",") : v;
-  return `${e.verb}|${one(s.type)}|${one(s.subtype)}`;
+  return `${e.verb}|${one(s.type)}|${one(s.subtype)}|${tokenOf(s.token)}`;
 }
+
+/** WHETHER THE EVENT IS ABOUT A TOKEN: `t` yes, `n` no, `-` not stated.
+ *
+ *  MEASURED 2026-09-04 and it is why this is a dimension rather than a footnote: 59 corpus cards
+ *  trigger specifically on a TOKEN entering (Xorn, Mirkwood Bats, Caretaker's Talent) and 206
+ *  triggers demand a NONTOKEN one. Without the flag both keyed as plain `enters|creature|-`, so a
+ *  token maker's page ranked "whenever a token enters" level with "whenever a creature enters" --
+ *  the payoff built for exactly this card, priced as though it were generic -- while the nontoken
+ *  payoffs it can never satisfy sat in its candidate list until the engine threw them out one by
+ *  one. */
+const tokenOf = (v: boolean | null | undefined): string => v === true ? "t" : v === false ? "n" : "-";
 
 export type EventFrequency = Record<string, number>;
 
@@ -106,11 +117,27 @@ export function specificity(key: string, freq: EventFrequency): number {
  *  demand for a creature entering, for a goblin entering, and for anything entering. */
 export function supplyForms(key: string): string[] {
   const out = new Set<string>();
-  for (const [verb, type, subtype] of splitList(key)) {
-    out.add(`${verb}|${type}|${subtype}`);
-    out.add(`${verb}|${type}|-`);
-    out.add(`${verb}|-|${subtype}`);
-    out.add(`${verb}|-|-`);
+  for (const [verb, type, subtype, token] of splitList(key)) {
+    // WHAT THIS SUPPLY CAN BE, and "not stated" is read as NOT A TOKEN.
+    //
+    // The alternative -- unspecified as a wildcard that satisfies a token demand too -- keeps every
+    // edge that exists today and buys nothing: a token demand would then be satisfiable by almost
+    // the whole corpus, score as broadly as an untyped one, and rank no higher than it does now,
+    // which is the defect this dimension exists to fix.
+    //
+    // MEASURED before choosing: of 27,653 authored emits, 6,810 say token and 84 say nontoken; on
+    // the `enters` verb specifically it is 3,309 token against 1,803 unstated. Token-making is
+    // derived EXPLICITLY, so an unstated `enters` is overwhelmingly a real card being put onto the
+    // battlefield -- a reanimation, a blink -- and reading it as "might be a token" would feed every
+    // token payoff from every reanimator. The cost of this reading is a missing edge wherever a
+    // token emit was derived without its flag, which is the direction this repo fails in.
+    const suffixes = token === "t" ? ["t", "-"] : ["n", "-"];
+    for (const tk of suffixes) {
+      out.add(`${verb}|${type}|${subtype}|${tk}`);
+      out.add(`${verb}|${type}|-|${tk}`);
+      out.add(`${verb}|-|${subtype}|${tk}`);
+      out.add(`${verb}|-|-|${tk}`);
+    }
   }
   return [...out];
 }
@@ -121,13 +148,17 @@ export function supplyForms(key: string): string[] {
  *  `enters|-|-` would count every permanent in the game as satisfying it, which is precisely the
  *  bug this file was rewritten to remove. */
 export function demandForms(key: string): string[] {
-  return [...new Set(splitList(key).map(([v, t, st]) => `${v}|${t}|${st}`))];
+  // THE TOKEN FLAG NEVER WIDENS EITHER. A trigger that says "a nontoken creature" is asking a
+  // narrower question than one that says "a creature", and answering it with a token is the wrong
+  // answer rather than a generous one -- 206 triggers in the corpus say exactly that, and every one
+  // of them used to sit in a token maker's candidate list waiting for the engine to refuse it.
+  return [...new Set(splitList(key).map(([v, t, st, tk]) => `${v}|${t}|${st}|${tk}`))];
 }
 
-const splitList = (key: string): [string, string, string][] => {
-  const [verb = "", type = "-", subtype = "-"] = key.split("|");
-  const out: [string, string, string][] = [];
-  for (const t of type.split(",")) for (const st of subtype.split(",")) out.push([verb, t, st]);
+const splitList = (key: string): [string, string, string, string][] => {
+  const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
+  const out: [string, string, string, string][] = [];
+  for (const t of type.split(",")) for (const st of subtype.split(",")) out.push([verb, t, st, token]);
   return out;
 };
 

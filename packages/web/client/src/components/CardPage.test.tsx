@@ -10,13 +10,13 @@ const KRENKO: CardPageData = {
   manaCost: "{2}{R}{R}",
   identity: ["R"],
   commander: true,
-  emits: ["create-token|creature|goblin", "enters|creature|goblin"],
+  emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
   demands: [],
   partners: [{
-    name: "Impact Tremors", slug: "impact-tremors", score: 0.126, event: "enters|creature|-",
+    name: "Impact Tremors", slug: "impact-tremors", score: 0.126, event: "enters|creature|-|-",
     reason: "When a goblin enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage",
   }],
-  pool: { "enters|creature|-": 1909 },
+  pool: { "enters|creature|-|-": 1909 },
 };
 
 /** The loader is injected so the test needs no fetch and no artifact on disk. */

@@ -51,9 +51,9 @@ test("collision resolution does not depend on input order", () => {
 
 test("an event key names the verb and the subject it is about", () => {
   expect(eventKey({ verb: "enters", subject: { control: "you", token: null, type: "creature", subtype: "goblin" } } as never))
-    .toBe("enters|creature|goblin");
+    .toBe("enters|creature|goblin|-");
   expect(eventKey({ verb: "draw", subject: { control: "you", token: null } } as never))
-    .toBe("draw|-|-");
+    .toBe("draw|-|-|-");
 });
 
 /** `type` AND `subtype` ARE `string | string[]` IN THE SCHEMA. An array is sorted before joining so
@@ -62,16 +62,16 @@ test("an array-valued type is order-independent", () => {
   const a = eventKey({ verb: "cast", subject: { control: "you", token: null, type: ["instant", "sorcery"] } } as never);
   const b = eventKey({ verb: "cast", subject: { control: "you", token: null, type: ["sorcery", "instant"] } } as never);
   expect(a).toBe(b);
-  expect(a).toBe("cast|instant,sorcery|-");
+  expect(a).toBe("cast|instant,sorcery|-|-");
 });
 
 /** SPECIFICITY IS THE WHOLE RANKING. A rare event is a precise interaction; a universal one is
  *  noise. The numbers here are the measured corpus frequencies, so this test would notice a scoring
  *  change that reordered the two cases the design was argued from. */
 test("a rarer event scores higher than a common one", () => {
-  const freq = { "enters|creature|-": 1909, "enters|creature|goblin": 41 };
-  expect(specificity("enters|creature|goblin", freq))
-    .toBeGreaterThan(specificity("enters|creature|-", freq));
+  const freq = { "enters|creature|-|-": 1909, "enters|creature|goblin|-": 41 };
+  expect(specificity("enters|creature|goblin|-", freq))
+    .toBeGreaterThan(specificity("enters|creature|-|-", freq));
 });
 
 /** AN UNSEEN KEY SCORES AS ONE MEMBER, NOT AS MAXIMALLY RARE. `gen-theme-stats` recorded exactly
@@ -92,38 +92,39 @@ test("a key with one member outranks a key with a thousand", () => {
  *  exact string is rare even though the demand is not. */
 test("a demand naming many types is counted as broad, not as rare", () => {
   const rows = [
-    { emits: ["enters|creature|goblin"], demands: [] },
-    { emits: ["enters|land|-"], demands: [] },
+    { emits: ["enters|creature|goblin|-"], demands: [] },
+    { emits: ["enters|land|-|-"], demands: [] },
     { emits: ["enters|enchantment|-"], demands: [] },
-    { emits: [], demands: ["enters|creature,land,enchantment|-", "enters|creature|goblin"] },
+    { emits: [], demands: ["enters|creature,land,enchantment|-|-", "enters|creature|goblin|-"] },
   ];
   const freq = supplyCounts(rows);
-  expect(freq["enters|creature,land,enchantment|-"]).toBe(3);
-  expect(freq["enters|creature|goblin"]).toBe(1);
-  expect(specificity("enters|creature|goblin", freq))
-    .toBeGreaterThan(specificity("enters|creature,land,enchantment|-", freq));
+  expect(freq["enters|creature,land,enchantment|-|-"]).toBe(3);
+  expect(freq["enters|creature|goblin|-"]).toBe(1);
+  expect(specificity("enters|creature|goblin|-", freq))
+    .toBeGreaterThan(specificity("enters|creature,land,enchantment|-|-", freq));
 });
 
 /** A DEMAND IS NEVER WIDENED. `enters|-|goblin` means a goblin entering; counting every permanent as
  *  satisfying it would rebuild the bug this replaced. */
 test("a subtype demand is satisfied only by that subtype", () => {
   const freq = supplyCounts([
-    { emits: ["enters|creature|goblin"], demands: [] },
-    { emits: ["enters|creature|elf"], demands: [] },
+    { emits: ["enters|creature|goblin|-"], demands: [] },
+    { emits: ["enters|creature|elf|-"], demands: [] },
     { emits: ["enters|artifact|-"], demands: [] },
-    { emits: [], demands: ["enters|-|goblin", "enters|-|-"] },
+    { emits: [], demands: ["enters|-|goblin|-", "enters|-|-|-"] },
   ]);
-  expect(freq["enters|-|goblin"]).toBe(1);
+  expect(freq["enters|-|goblin|-"]).toBe(1);
   // The bare form IS satisfied by everything that enters, and must score accordingly.
-  expect(freq["enters|-|-"]).toBe(3);
+  expect(freq["enters|-|-|-"]).toBe(3);
 });
 
 test("a supply form covers the coarser demands it satisfies, a demand form only splits", () => {
-  expect(supplyForms("enters|creature|goblin").sort())
-    .toEqual(["enters|-|-", "enters|-|goblin", "enters|creature|-", "enters|creature|goblin"]);
-  expect(demandForms("enters|creature,land|-").sort())
-    .toEqual(["enters|creature|-", "enters|land|-"]);
-  expect(demandForms("enters|-|goblin")).toEqual(["enters|-|goblin"]);
+  expect(supplyForms("enters|creature|goblin|-").sort())
+    .toEqual(["enters|-|-|-", "enters|-|-|n", "enters|-|goblin|-", "enters|-|goblin|n",
+      "enters|creature|-|-", "enters|creature|-|n", "enters|creature|goblin|-", "enters|creature|goblin|n"]);
+  expect(demandForms("enters|creature,land|-|-").sort())
+    .toEqual(["enters|creature|-|-", "enters|land|-|-"]);
+  expect(demandForms("enters|-|goblin|-")).toEqual(["enters|-|goblin|-"]);
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -170,7 +171,7 @@ const millstone = base("Millstone", [{
   effect: { kind: "mill" },
 }] as unknown as CardTags["abilities"]);
 
-const FREQ = { "enters|creature|goblin": 41, "enters|creature|-": 1909, "create-token|creature|goblin": 63 };
+const FREQ = { "enters|creature|goblin|-": 41, "enters|creature|-|-": 1909, "create-token|creature|goblin|-": 63 };
 const SLUGS = resolveSlugs(["Impact Tremors", "Millstone", "Krenko, Mob Boss"]);
 
 test("a verified partner carries the engine's own reason sentence", () => {
@@ -215,7 +216,7 @@ test("one event may occupy only PER_EVENT_CAP rows, and pool counts the rest", (
   const slugs = resolveSlugs(many.map((m) => m.card.name));
   const { rows, pool } = partnersFor(krenko, many, FREQ, slugs, H);
   expect(rows.length).toBe(PER_EVENT_CAP);
-  expect(pool["enters|creature|-"]).toBe(KEEP + 10);
+  expect(pool["enters|creature|-|-"]).toBe(KEEP + 10);
 });
 
 /** A CARD IS NEVER ITS OWN PARTNER. `directedReasons(x, x)` can return reasons -- self-reference is
@@ -229,8 +230,8 @@ test("the subject is not its own partner", () => {
  *  was argued from formed no edge until the supply side generalised. A string comparison cannot see
  *  what the type hierarchy does. */
 test("an emit is found by a demand for its coarser form", () => {
-  expect(supplyForms("enters|creature|goblin")).toContain("enters|creature|-");
-  expect(demandForms("enters|creature|-")).toEqual(["enters|creature|-"]);
+  expect(supplyForms("enters|creature|goblin|-")).toContain("enters|creature|-|-");
+  expect(demandForms("enters|creature|-|-")).toEqual(["enters|creature|-|-"]);
 });
 
 /** THE SCORE STAYS ON THE DEMAND'S EXACT KEY. Generalising the score too would price every event as
@@ -245,8 +246,8 @@ test("a subtype-specific payoff outranks a generic one for the same emit", () =>
   const slugs = resolveSlugs(["Goblin Bushwhacker", "Impact Tremors"]);
   const { rows } = partnersFor(krenko, [impactTremors, goblinPayoff], FREQ, slugs, H);
   expect(rows.map((r) => r.name)).toEqual(["Goblin Bushwhacker", "Impact Tremors"]);
-  expect(rows[0]!.event).toBe("enters|creature|goblin");
-  expect(rows[1]!.event).toBe("enters|creature|-");
+  expect(rows[0]!.event).toBe("enters|creature|goblin|-");
+  expect(rows[1]!.event).toBe("enters|creature|-|-");
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -403,8 +404,8 @@ test("a row carries the confirmed event, not the best-scoring one", async () => 
   try {
     const { rows } = partnersFor(krenko, [twoDemands], FREQ, slugs, H);
     expect(rows).toHaveLength(1);
-    expect(rows[0]!.event).toBe("enters|creature|-");
-    expect(rows[0]!.score).toBeCloseTo(specificity("enters|creature|-", FREQ));
+    expect(rows[0]!.event).toBe("enters|creature|-|-");
+    expect(rows[0]!.score).toBeCloseTo(specificity("enters|creature|-|-", FREQ));
   } finally { spy.mockRestore(); }
 });
 
@@ -432,7 +433,7 @@ test("a zone-renamed tag matches the demand key that kept the raw verb", async (
   try {
     const { rows } = partnersFor(outlet, [deathPayoff], FREQ, slugs, H);
     expect(rows).toHaveLength(1);
-    expect(rows[0]!.event).toBe("leaves|creature|-");
+    expect(rows[0]!.event).toBe("leaves|creature|-|-");
     expect(rows[0]!.reason).toBe("ON EVENT");
   } finally { spy.mockRestore(); }
 });
@@ -484,9 +485,9 @@ test("the engine is asked with token mediation off", async () => {
  *  deck-level and density-based (`ARCHETYPE_FLOOR` is 0.08 of the nonlands), so a single card has no
  *  density to measure. */
 test("a card's own events map onto the existing archetype labels", () => {
-  expect(themesOf(["create-token|creature|-"], [])).toEqual(["Tokens"]);
-  expect(themesOf(["counter-added|-|-"], [])).toEqual(["+1/+1 Counters"]);
-  expect(themesOf(["enters|land|-"], [])).toEqual(["Landfall"]);
+  expect(themesOf(["create-token|creature|-|-"], [])).toEqual(["Tokens"]);
+  expect(themesOf(["counter-added|-|-|-"], [])).toEqual(["+1/+1 Counters"]);
+  expect(themesOf(["enters|land|-|-"], [])).toEqual(["Landfall"]);
 });
 
 /** ARISTOCRATS IS DEMAND-DEFINED, and that is a measured owner ruling, not a preference: an
@@ -495,14 +496,14 @@ test("a card's own events map onto the existing archetype labels", () => {
  *  Aristocrats topped four decks the owner calls Control. `ARCHETYPE_SIGNATURE` carries the flag;
  *  this honours it rather than re-deciding it. */
 test("a card that only makes things die is not an aristocrats card; one that watches them is", () => {
-  expect(themesOf(["dies|creature|-"], [])).toEqual([]);
-  expect(themesOf([], ["dies|creature|-"])).toEqual(["Aristocrats"]);
+  expect(themesOf(["dies|creature|-|-"], [])).toEqual([]);
+  expect(themesOf([], ["dies|creature|-|-"])).toEqual(["Aristocrats"]);
 });
 
 /** NO SIGNATURE MEANS NO LABEL. The naming layers are the only code in this repo that cannot say
  *  "I don't know"; this one can, and does. */
 test("no signature means no label, never a guessed one", () => {
-  expect(themesOf(["draw|-|-"], [])).toEqual([]);
+  expect(themesOf(["draw|-|-|-"], [])).toEqual([]);
   expect(themesOf([], [])).toEqual([]);
 });
 
@@ -511,7 +512,7 @@ test("no signature means no label, never a guessed one", () => {
  *  inventing one is exactly the guess the layer above refuses to make. Two true labels beat one
  *  arbitrary label. */
 test("a card with two signatures is labelled with both, in signature order", () => {
-  expect(themesOf(["create-token|creature|-", "counter-added|-|-"], []))
+  expect(themesOf(["create-token|creature|-|-", "counter-added|-|-|-"], []))
     .toEqual(["Tokens", "+1/+1 Counters"]);
 });
 
@@ -520,10 +521,10 @@ test("a card with two signatures is labelled with both, in signature order", () 
  *  not list it as a gap. Same supply/demand predicate `partnersFor` ranks with, so the two cannot
  *  disagree about what satisfies what. */
 test("an unmet demand is one the card does not supply itself", () => {
-  expect(unmetDemands(["create-token|creature|goblin"], ["dies|creature|-"])).toEqual(["dies|creature|-"]);
+  expect(unmetDemands(["create-token|creature|goblin|-"], ["dies|creature|-|-"])).toEqual(["dies|creature|-|-"]);
   // A goblin token entering IS a creature entering, so this demand is self-supplied.
-  expect(unmetDemands(["enters|creature|goblin"], ["enters|creature|-"])).toEqual([]);
-  expect(unmetDemands([], ["dies|creature|-"])).toEqual(["dies|creature|-"]);
+  expect(unmetDemands(["enters|creature|goblin|-"], ["enters|creature|-|-"])).toEqual([]);
+  expect(unmetDemands([], ["dies|creature|-|-"])).toEqual(["dies|creature|-|-"]);
 });
 
 /** A COMMANDER'S DECK CANNOT CONTAIN AN OFF-IDENTITY CARD, so a partner list that ignores identity
@@ -567,7 +568,7 @@ test("a commander's own partner list holds only cards its deck could legally con
   // the correct reading rather than an accident of the predicate.
   expect(rec.commanderPartners!.map((p) => p.name).sort())
     .toEqual(["Colourless Payoff", "Red Payoff"]);
-  expect(rec.commanderPool!["enters|creature|-"]).toBe(2);
+  expect(rec.commanderPool!["enters|creature|-|-"]).toBe(2);
 });
 
 /** A NON-COMMANDER CARRIES NEITHER FIELD. Every record pays for the bytes of every field it has,
@@ -577,4 +578,46 @@ test("only a commander's record carries the commander partner list", () => {
   const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Krenko, Mob Boss")!;
   expect(rec).not.toHaveProperty("commanderPartners");
   expect(rec).not.toHaveProperty("commanderPool");
+});
+
+/** THE TOKEN LATTICE, WHICH IS THE WHOLE POINT OF THE FOURTH FIELD.
+ *
+ *  MEASURED 2026-09-04: 59 corpus cards trigger specifically on a TOKEN entering and 206 triggers
+ *  demand a NONTOKEN one. Keyed on three fields both keyed as `enters|creature|-`, so a token
+ *  maker's page priced "whenever a token enters" -- the payoff built for exactly that card -- level
+ *  with "whenever a creature enters", and carried every nontoken payoff it can never satisfy in its
+ *  candidate list until the engine refused them one at a time. */
+test("a token supply satisfies a token demand and an unstated one, never a nontoken demand", () => {
+  const supply = new Set(supplyForms("enters|creature|goblin|t"));
+  expect(demandForms("enters|creature|-|t").some((f) => supply.has(f))).toBe(true);
+  expect(demandForms("enters|creature|-|-").some((f) => supply.has(f))).toBe(true);
+  expect(demandForms("enters|creature|-|n").some((f) => supply.has(f))).toBe(false);
+});
+
+/** "NOT STATED" IS READ AS NOT A TOKEN, and the measurement is why: of 27,653 authored emits 6,810
+ *  say token and 84 say nontoken, and on `enters` it is 3,309 token against 1,803 unstated. Token
+ *  making is derived EXPLICITLY, so an unstated `enters` is overwhelmingly a real card arriving --
+ *  a reanimation, a blink -- and the wildcard reading would feed every token payoff from every
+ *  reanimator. */
+test("an unstated supply answers a nontoken demand, never a token one", () => {
+  const supply = new Set(supplyForms("enters|creature|-|-"));
+  expect(demandForms("enters|creature|-|n").some((f) => supply.has(f))).toBe(true);
+  expect(demandForms("enters|creature|-|-").some((f) => supply.has(f))).toBe(true);
+  expect(demandForms("enters|creature|-|t").some((f) => supply.has(f))).toBe(false);
+});
+
+/** AND THE RANKING MOVES BECAUSE OF IT. A token demand is satisfiable only by the cards that
+ *  actually make tokens, so it counts fewer suppliers than the untyped demand and scores above it --
+ *  which is the sentence "a token payoff is a better match for a token maker" as arithmetic. */
+test("a token demand is rarer than an untyped one, so it outranks it", () => {
+  const freq = supplyCounts([
+    { emits: ["enters|creature|goblin|t"], demands: [] },
+    { emits: ["enters|creature|-|-"], demands: [] },
+    { emits: ["enters|creature|-|-"], demands: [] },
+    { emits: [], demands: ["enters|creature|-|t", "enters|creature|-|-"] },
+  ]);
+  expect(freq["enters|creature|-|t"]).toBe(1);
+  expect(freq["enters|creature|-|-"]).toBe(3);
+  expect(specificity("enters|creature|-|t", freq))
+    .toBeGreaterThan(specificity("enters|creature|-|-", freq));
 });
