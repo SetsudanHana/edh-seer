@@ -1295,10 +1295,16 @@ export function GraphView(
         if (mode === "card") {
           // Equal-width bars along the card's bottom edge. Card mode paints a rectangle, so there
           // is no rim to stroke arcs onto.
+          //
+          // OUTSIDE THE CARD, NOT OVER IT (owner-reported 2026-09-04). Drawn INSIDE the bottom edge
+          // these bars sat exactly on the credit line -- the artist's name is printed bottom-left on
+          // every Magic card, and that credit is the reason this product may show the art at all.
+          // Covering it is both a licence problem and the rudest possible place to put a UI element.
+          // Below the card the bars still read as belonging to it and obscure nothing.
           const barW = cardW / Math.max(paintHuesForNode.length, 1);
           paintHuesForNode.forEach((hue, i) => {
             ctx.fillStyle = hue;
-            ctx.fillRect(n.x - cardW / 2 + i * barW, n.y + cardH / 2 - BAR_H, barW, BAR_H);
+            ctx.fillRect(n.x - cardW / 2 + i * barW, n.y + cardH / 2 + 1 / cam.z, barW, BAR_H);
           });
           if (paintHuesForNode.length === 0) {
             ctx.lineWidth = 1 / cam.z;

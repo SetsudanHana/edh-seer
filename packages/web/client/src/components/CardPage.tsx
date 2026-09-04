@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import { eventKeySentence } from "../lib/demand-sentence.js";
 import { loadCardPage, type CardPageData } from "../lib/partners.js";
+import { AbilityTable } from "./AbilityTable.js";
+import { CardArt } from "./CardArt.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { NotFound } from "./NotFound.js";
 import { PageFoot } from "./PageFoot.js";
@@ -34,13 +35,17 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
   if (page === undefined) return <p className="eyebrow text-(--muted)">reading the corpus</p>;
   if (page === null) return <NotFound slug={slug} kind="card" />;
 
-  // ONE READING MEASURE FOR THE WHOLE PAGE. The container is 1024px wide and the prose wrapped at
-  // 65ch inside it, so every hairline and panel edge ran a third of the viewport past the text it
-  // belonged to -- rules pointing at nothing. The measure belongs to the ARTICLE, not to each
-  // paragraph.
+  // THE MEASURE IS PER SECTION, NOT PER PAGE. Prose gets a reading width so hairlines stop running
+  // a third of the viewport past the text they belong to; the TABLE does not, because a table is
+  // the one thing on this page that earns the extra width -- four columns squeezed into 68ch wrap
+  // every cell. DESIGN.md's own rule: a wide viewport buys columns.
   return (
-    <article className="flex flex-col gap-10 max-w-[68ch]">
-      <header className="flex flex-col gap-3">
+    <article className="flex flex-col gap-10">
+      {/* THE CARD LEADS, AND NOW IT IS THE CARD. A page about a card that never showed the card was
+        * the first thing anyone asked about it. Beside the heading on a wide viewport, above it on a
+        * phone -- `flex-wrap` does both without a media query. */}
+      <div className="flex flex-wrap-reverse items-end gap-x-6 gap-y-4 max-w-[68ch]">
+      <header className="flex flex-col gap-3 flex-1 min-w-[16rem]">
         <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
           {page.name}
           {page.manaCost && (
@@ -60,30 +65,19 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           </p>
         )}
       </header>
+      <CardArt artCrop={page.artCrop} name={page.name} />
+      </div>
 
-      {/* THE DERIVATION, QUIET AND ON ONE PANEL. It is evidence rather than the argument: a reader
-        * checking a claim wants it, a reader browsing does not, and giving it the same weight as
-        * the partner list is what made the first version read as three equal lists. */}
-      <section className="rounded-(--radius) border border-(--separator) bg-(--surface) p-5 grid gap-6 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <h3 className="eyebrow text-(--muted)">supplies</h3>
-          {page.emits.length === 0
-            ? <p className="text-(--muted)">Nothing. It triggers on events but supplies none.</p>
-            : <ul className="flex flex-col gap-1">
-                {page.emits.map((e) => <li key={e}>{eventKeySentence(e)}</li>)}
-              </ul>}
-        </div>
-        <div className="flex flex-col gap-2">
-          <h3 className="eyebrow text-(--muted)">cares about</h3>
-          {page.demands.length === 0
-            ? <p className="text-(--muted)">Nothing. It supplies events but triggers on none.</p>
-            : <ul className="flex flex-col gap-1">
-                {page.demands.map((d) => <li key={d}>{eventKeySentence(d)}</li>)}
-              </ul>}
-        </div>
+      {/* HOW THE ENGINE READ THE CARD, ability by ability. The union of a card's events -- the panel
+        * below -- cannot say WHICH ability produced which claim, and that is the question a reader
+        * has when a row looks wrong. This publishes our derivation, never the card's own text: the
+        * words are on the image above, where the artist is credited too. */}
+      <section className="flex flex-col gap-3 max-w-4xl">
+        <h3 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h3>
+        <AbilityTable rows={page.abilities} />
       </section>
 
-      <section className="flex flex-col gap-5">
+      <section className="flex flex-col gap-5 max-w-[68ch]">
         <div className="flex flex-col gap-2">
           <h3 className="text-2xl font-bold tracking-[-0.01em]">Most specific partners</h3>
           <p className="text-(--muted) max-w-[65ch]">
@@ -99,7 +93,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         />
       </section>
 
-      <PageFoot />
+      <div className="max-w-[68ch]"><PageFoot /></div>
     </article>
   );
 }

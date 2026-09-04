@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router";
 import { themesOf, unmetDemands } from "@edh-seer/matcher/partners-core";
 import { eventKeySentence } from "../lib/demand-sentence.js";
 import { loadCardPage, type CardPageData } from "../lib/partners.js";
+import { CardArt } from "./CardArt.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { NotFound } from "./NotFound.js";
 import { PageFoot } from "./PageFoot.js";
@@ -42,8 +43,12 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
     </Link>
   );
 
+  // THE CARD LEADS, AND NOW IT IS THE CARD. A page about a card that never showed the card was the
+  // first thing anyone asked about it. Beside the heading on a wide viewport, above it on a phone --
+  // `flex-wrap-reverse` does both without a media query.
   const header = (
-    <header className="flex flex-col gap-3">
+    <div className="flex flex-wrap-reverse items-end gap-x-6 gap-y-4">
+    <header className="flex flex-col gap-3 flex-1 min-w-[16rem]">
       <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
         {page.name}
         {page.manaCost && (
@@ -53,6 +58,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
       <p className="text-(--muted)">{page.typeLine}</p>
       <p>{toCard}</p>
     </header>
+    <CardArt artCrop={page.artCrop} name={page.name} />
+    </div>
   );
 
   // THE URL IS GUESSABLE, so a reader will arrive here for Sol Ring. Saying what is wrong with the

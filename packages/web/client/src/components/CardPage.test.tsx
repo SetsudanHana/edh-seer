@@ -8,6 +8,12 @@ const KRENKO: CardPageData = {
   name: "Krenko, Mob Boss",
   typeLine: "Legendary Creature — Goblin Warrior",
   manaCost: "{2}{R}{R}",
+  artCrop: "https://cards.scryfall.io/art_crop/front/8/2/824b2d73.jpg",
+  abilities: [{
+    kind: "activated", cost: "{T}", when: [], effect: "token-generation",
+    scaling: "per-permanent", counts: "goblin",
+    emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
+  }],
   identity: ["R"],
   commander: true,
   emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
@@ -97,4 +103,42 @@ test("a capped event says how many candidates it is not showing, as candidates",
 test("a card with no partners says so", async () => {
   at("lonely-card", async () => ({ ...KRENKO, partners: [], pool: {} }));
   expect(await screen.findByText(/no partner/i)).toBeInTheDocument();
+});
+
+/** THE CARD ITSELF, WHOLE — and whole is a licence line, not a taste one. An art crop obliges the
+ *  site to credit the artist and the corpus has no artist field (0 of 34,433); the full card prints
+ *  that credit bottom-left, which is the branch spec D2a offers. It is also what let the pages stop
+ *  printing a second copy of the oracle text. */
+test("the page shows the whole card, at the /normal/ size and never the crop", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  const img = await screen.findByRole("img", { name: /Krenko, Mob Boss — the card/ });
+  expect(img).toHaveAttribute("src", expect.stringContaining("/normal/"));
+  expect(img.getAttribute("src")).not.toContain("art_crop");
+  expect(img).toHaveAttribute("loading", "lazy");
+});
+
+/** 491 CORPUS CARDS HAVE NO IMAGE. The page renders without one rather than reserving a hole. */
+test("a card with no image renders without one", async () => {
+  at("krenko-mob-boss", async () => ({ ...KRENKO, artCrop: null }));
+  await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
+  expect(screen.queryByRole("img", { name: /the card/ })).toBeNull();
+});
+
+/** THE CARD ITSELF, WHOLE — and whole is a licence line, not a taste one. An art crop obliges the
+ *  site to credit the artist and the corpus has no artist field (0 of 34,433 cards); the full card
+ *  prints that credit bottom-left, which is the branch spec D2a offers. It is also what lets the
+ *  pages around it stop printing a second copy of the oracle text. */
+test("the page shows the whole card, at the /normal/ size and never the crop", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  const img = await screen.findByRole("img", { name: /Krenko, Mob Boss — the card/ });
+  expect(img.getAttribute("src")).toContain("/normal/");
+  expect(img.getAttribute("src")).not.toContain("art_crop");
+  expect(img).toHaveAttribute("loading", "lazy");
+});
+
+/** 491 CORPUS CARDS HAVE NO IMAGE. The page renders without one rather than reserving a hole. */
+test("a card with no image renders without one", async () => {
+  at("krenko-mob-boss", async () => ({ ...KRENKO, artCrop: null }));
+  await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
+  expect(screen.queryByRole("img", { name: /the card/ })).toBeNull();
 });

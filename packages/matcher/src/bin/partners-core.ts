@@ -2,6 +2,10 @@ import type { GameEvent } from "@edh-seer/tagger";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
 import { directedReasons, themeSubjectKey } from "../edges.js";
+/** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
+ *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
+ *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
+export { effectPhrase } from "../sentence.js";
 import { normalizeZoneEvent, zoneEventKey } from "../zones.js";
 import type { DeckCard, Hierarchy } from "../types.js";
 
@@ -470,6 +474,25 @@ function pickReason(reasons: { text: string; repeatability?: string; impliedProd
  *  because the Pages Function needs the shard rule without `edges.ts` behind it. */
 export { PARTNER_SHARD_COUNT, partnerShardOf };
 
+/** THE DERIVED ABILITIES AS PAGE ROWS. Order is the derivation's own, which is the order the clauses
+ *  appear on the card -- so the table reads down the card the way a player does. */
+export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
+  (d.tags?.abilities ?? []).map((a) => {
+    const counted = a.effect?.scalingSubject;
+    const subtype = Array.isArray(counted?.subtype) ? counted?.subtype[0] : counted?.subtype;
+    return {
+      kind: a.kind,
+      ...(a.cost ? { cost: a.cost } : {}),
+      when: (a.trigger?.verbs ?? []).map((v) =>
+        eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)),
+      effect: a.effect?.kind ?? "",
+      ...(a.amount ? { amount: a.amount } : {}),
+      ...(a.effect?.scaling ? { scaling: a.effect.scaling } : {}),
+      ...(subtype ? { counts: subtype } : {}),
+      emits: (a.emits ?? []).map(eventKey),
+    };
+  });
+
 export const emitKeysOf = (d: DeckCard): string[] =>
   (d.tags?.abilities ?? []).flatMap((a) => (a.emits ?? []).map(eventKey));
 
@@ -537,10 +560,55 @@ export const isSubstantive = (d: DeckCard): boolean =>
  *  naming both cards -- not the card's printed text. Quoting the card would add nothing to that
  *  argument and would only make the page resemble a card database, which is what Scryfall's
  *  "may not simply repackage, republish, or proxy" clause is about. */
+/** ONE DERIVED ABILITY, PROJECTED DOWN TO WHAT A PAGE CAN SHOW.
+ *
+ *  "HOW THE ENGINE READS THIS CARD" IS THE PAGE'S REAL ARGUMENT, and until now the pages printed
+ *  only the union of a card's events -- two flat lines standing in for three abilities. A reader
+ *  checking a claim needs to see WHICH ability produced it: the tap ability that makes the tokens is
+ *  a different fact from the body that happens to be a Goblin.
+ *
+ *  THIS IS OUR DERIVATION AND NOT WIZARDS' TEXT, which is the whole reason it may be published where
+ *  the oracle text may not (spec D2, reversed). The card's own words are on the card image beside it.
+ *
+ *  PROJECTED, NOT COPIED. A derived ability carries clause ids, subject filters, recipients and
+ *  scaling internals; a page can show none of that without becoming a debugger. Each field here
+ *  earns its bytes across 15,384 records. */
+export interface AbilityRow {
+  /** `triggered`, `activated`, `static`, `on-cast` -- what makes this ability happen at all. */
+  kind: string;
+  /** The activation cost, where there is one: `{T}`, `{2}, {T}`. */
+  cost?: string;
+  /** The events that set it off, as event keys, so the page renders them with the same sentence
+   *  function every other event on the site uses. */
+  when: string[];
+  /** The effect's kind (`token-generation`, `draw-card`). Humanised at the edge, never here. */
+  effect: string;
+  amount?: string;
+  /** The basis a magnitude counts on (`per-permanent`), and what it counts, where both are known. */
+  scaling?: string;
+  counts?: string;
+  /** The events it puts into the game. */
+  emits: string[];
+}
+
 export interface CardPageRecord {
   name: string;
   typeLine: string;
   manaCost: string | null;
+  /** THE CARD'S OWN PICTURE, as Scryfall's `art_crop` URL -- the client rewrites the path segment
+   *  to `/normal/` for the whole card, which is what `cardImageUrl` already does for the graph.
+   *
+   *  THE FULL CARD, NEVER THE CROP, and that is a licence line rather than a taste one: an art crop
+   *  has to credit the artist and this corpus HAS NO ARTIST FIELD (measured 2026-09-04: 0 of 34,433
+   *  cards). The whole card prints the credit itself, bottom-left, which is the branch spec D2a
+   *  offers and the only one available here.
+   *
+   *  Present on 33,942 of 34,433 corpus cards; `null` where Scryfall has no image, and the pages
+   *  render without one rather than reserving a hole for it. */
+  artCrop: string | null;
+  /** How the engine read the card, one row per derived ability -- the page's real argument, and the
+   *  half of it that was missing while the record carried only the UNION of a card's events. */
+  abilities: AbilityRow[];
   identity: string[];
   commander: boolean;
   emits: string[];
@@ -637,6 +705,8 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       name: d.card.name,
       typeLine: d.card.typeLine ?? "",
       manaCost: (d.card as { manaCost?: string }).manaCost ?? null,
+      artCrop: (d.card as { artCrop?: string }).artCrop ?? null,
+      abilities: abilityRowsOf(d),
       identity: d.card.colorIdentity ?? [],
       commander,
       emits: [...new Set(emits)],

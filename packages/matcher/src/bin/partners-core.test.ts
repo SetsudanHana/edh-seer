@@ -4,7 +4,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts,
-  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf,
+  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -292,7 +292,8 @@ test("a page record carries metadata and derivation, never card rules text", () 
   const rec = [...shards.values()].flatMap((s) => Object.entries(s))
     .find(([slug]) => slug === "krenko-mob-boss")![1];
   expect(Object.keys(rec).sort()).toEqual(
-    ["commander", "demands", "emits", "identity", "manaCost", "name", "partners", "pool", "typeLine"],
+    ["abilities", "artCrop", "commander", "demands", "emits", "identity", "manaCost", "name",
+      "partners", "pool", "typeLine"],
   );
   expect(JSON.stringify(rec)).not.toContain("Create X 1/1 red Goblin");
 });
@@ -684,4 +685,42 @@ test("printed subtypes are a supply key but never a printed emit", () => {
   const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Goblin Assassin");
   // A card that only IS something, with no emit and no trigger, is still not substantive.
   expect(rec).toBeUndefined();
+});
+
+/** HOW THE ENGINE READ THE CARD, one row per ability -- the page's real argument, and the half that
+ *  was missing while a record carried only the UNION of a card's events. Krenko's tap ability and
+ *  his Goblin body are two different facts, and a reader checking a claim needs to see which one
+ *  produced it. */
+test("an ability row carries what fires it, what it does, and what it emits", () => {
+  const rows = abilityRowsOf(krenko);
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({
+    kind: "activated",
+    cost: "{T}",
+    when: [],
+    effect: "token-generation",
+    emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
+  });
+});
+
+/** A TRIGGER'S EVENTS COME THROUGH AS EVENT KEYS, so the page renders them with the same sentence
+ *  function every other event on the site uses rather than inventing a second vocabulary. */
+test("a triggered ability names what sets it off", () => {
+  const rows = abilityRowsOf(impactTremors);
+  expect(rows[0]!.kind).toBe("triggered");
+  expect(rows[0]!.when).toEqual(["enters|creature|-|-"]);
+  expect(rows[0]!.emits).toEqual([]);
+});
+
+/** A MAGNITUDE THAT COUNTS SOMETHING SAYS WHAT IT COUNTS. Without it "per-permanent" is a word with
+ *  no object, and the count is the whole reason a Goblin deck runs this card. */
+test("a scaling ability carries its basis and what it counts", () => {
+  const counter = base("Krenko, Mob Boss", [{
+    kind: "activated", cost: "{T}",
+    effect: {
+      kind: "token-generation", scaling: "per-permanent",
+      scalingSubject: { subtype: "goblin", zone: "battlefield", control: "you", token: null },
+    },
+  }] as unknown as CardTags["abilities"], ["goblin"]);
+  expect(abilityRowsOf(counter)[0]).toMatchObject({ scaling: "per-permanent", counts: "goblin" });
 });

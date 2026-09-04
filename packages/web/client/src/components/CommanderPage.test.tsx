@@ -12,6 +12,12 @@ const KRENKO: CardPageData = {
   name: "Krenko, Mob Boss",
   typeLine: "Legendary Creature — Goblin Warrior",
   manaCost: "{2}{R}{R}",
+  artCrop: "https://cards.scryfall.io/art_crop/front/8/2/824b2d73.jpg",
+  abilities: [{
+    kind: "activated", cost: "{T}", when: [], effect: "token-generation",
+    scaling: "per-permanent", counts: "goblin",
+    emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
+  }],
   identity: ["R"],
   commander: true,
   emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
