@@ -26,6 +26,11 @@ export const SEARCH_LIMIT = 50;
  *  the order a player reads without thinking about it. */
 const COLOURS: [code: string, label: string][] = [
   ["W", "White"], ["U", "Blue"], ["B", "Black"], ["R", "Red"], ["G", "Green"],
+  // COLOURLESS IS A REAL IDENTITY AND WAS UNREACHABLE (owner-reported 2026-09-04). 13 of the 2,428
+  // commanders have an empty identity -- Ulamog, Kozilek, Emrakul, Galactus -- and no combination of
+  // the five colours could ask for them: an empty identity is a SUBSET of every filter, so they
+  // appeared under "Red" and under nothing of their own. `C` narrows to exactly them.
+  ["C", "Colorless"],
 ];
 
 export function CardSearch({
@@ -74,7 +79,13 @@ export function CardSearch({
       // WITHIN the chosen colours, not overlapping them: a Grixis commander cannot be built in a
       // mono-red deck. Same subset rule the artifact ranks a commander's own partners by, so a
       // colourless commander fits inside every identity.
-      && (!commanderMode || colours.length === 0 || e.identity.every((c) => chosen.has(c))));
+      // COLOURLESS IS EXACT; THE FIVE COLOURS ARE A CEILING. "Red" asks what a red deck may lead
+      // with, and an empty identity is inside every one of those -- the same subset rule the
+      // artifact ranks a commander's own partners by. "Colorless" asks for the cards that ARE
+      // colourless, which is a different question and the only way to reach those 13 commanders.
+      && (!commanderMode || colours.length === 0
+        || (chosen.has("C") && e.identity.length === 0)
+        || (colours.some((c) => c !== "C") && e.identity.every((c) => chosen.has(c)))));
   }, [index, needle, asked, colours, commanderMode]);
 
   return (
@@ -181,11 +192,13 @@ export function CardSearch({
                     to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}
                   >
                     <span className="group-hover:underline underline-offset-2">{e.name}</span>
-                    {e.identity.length > 0 && (
-                      <span className="text-sm shrink-0">
-                        <ManaSymbols cost={e.identity.map((c) => `{${c}}`).join("")} />
-                      </span>
-                    )}
+                    {/* AN EMPTY IDENTITY IS COLOURLESS, NOT ABSENT. Rendering nothing there made
+                      * 1,354 cards look like rows whose identity had failed to load. */}
+                    <span className="text-sm shrink-0">
+                      <ManaSymbols cost={e.identity.length > 0
+                        ? e.identity.map((c) => `{${c}}`).join("")
+                        : "{C}"} />
+                    </span>
                     {!commanderMode && e.commander && (
                       <span className="eyebrow text-(--muted) shrink-0">commander</span>
                     )}

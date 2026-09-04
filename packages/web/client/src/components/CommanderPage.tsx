@@ -47,8 +47,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
   // first thing anyone asked about it. Beside the heading on a wide viewport, above it on a phone --
   // `flex-wrap-reverse` does both without a media query.
   const header = (
-    <div className="flex flex-wrap-reverse items-end gap-x-6 gap-y-4">
-    <header className="flex flex-col gap-3 flex-1 min-w-[16rem]">
+    <header className="flex flex-col gap-3">
       <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
         {page.name}
         {page.manaCost && (
@@ -58,8 +57,6 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
       <p className="text-(--muted)">{page.typeLine}</p>
       <p>{toCard}</p>
     </header>
-    <CardArt artCrop={page.artCrop} name={page.name} />
-    </div>
   );
 
   // THE URL IS GUESSABLE, so a reader will arrive here for Sol Ring. Saying what is wrong with the
@@ -68,6 +65,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
     return (
       <article className="flex flex-col gap-8 max-w-[68ch]">
         {header}
+        <CardArt artCrop={page.artCrop} name={page.name} />
         <p className="text-(--muted) max-w-[65ch]">
           {page.name} cannot lead a deck. This page is for legendary creatures that can be a
           commander; the card itself has one.
@@ -81,7 +79,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
   const gaps = unmetDemands(page.emits, page.demands);
 
   return (
-    <article className="flex flex-col gap-10 max-w-[68ch]">
+    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-x-10 lg:items-start max-w-6xl">
+    <div className="flex flex-col gap-10 min-w-0 max-w-[68ch]">
       {header}
 
       <section className="rounded-(--radius) border border-(--separator) bg-(--surface) p-5 grid gap-6 sm:grid-cols-2">
@@ -130,6 +129,10 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
       </section>
 
       <PageFoot />
+    </div>
+    <aside className="order-first lg:order-last lg:sticky lg:top-6">
+      <CardArt artCrop={page.artCrop} name={page.name} />
+    </aside>
     </article>
   );
 }

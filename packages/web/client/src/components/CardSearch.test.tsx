@@ -184,3 +184,36 @@ test("the count line agrees with itself when there is one result", async () => {
   );
   expect(await screen.findByText("1 card matches.")).toBeInTheDocument();
 });
+
+/** COLOURLESS IS A REAL IDENTITY AND WAS UNREACHABLE (owner-reported 2026-09-04). 13 of the 2,428
+ *  commanders have an empty identity -- Ulamog, Kozilek, Emrakul, Galactus -- and no combination of
+ *  the five colours could ASK for them: an empty identity is a subset of every filter, so they
+ *  appeared under "Red" and under nothing of their own. */
+test("a colourless facet reaches the commanders no colour can ask for", async () => {
+  commanders();
+  await userEvent.click(await screen.findByRole("button", { name: /^Colorless$/ }));
+  expect(await screen.findByRole("link", { name: /Kozilek/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Krenko, Mob Boss/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Kess/ })).not.toBeInTheDocument();
+});
+
+/** AND THE FIVE COLOURS KEEP THE SUBSET RULE. "Red" asks what a red deck may lead with, and an
+ *  empty identity is inside every one of those -- the same rule the artifact ranks a commander's own
+ *  partners by. Both questions are true; they are just different questions. */
+test("a colour facet still admits the colourless, which is a subset of every identity", async () => {
+  commanders();
+  await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
+  expect(await screen.findByRole("link", { name: /Kozilek/ })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+});
+
+/** AN EMPTY IDENTITY IS COLOURLESS, NOT ABSENT. Rendering nothing there made 1,354 cards look like
+ *  rows whose identity had failed to load. */
+test("a colourless row shows the colourless symbol rather than nothing", async () => {
+  commanders();
+  await userEvent.click(await screen.findByRole("button", { name: /^Colorless$/ }));
+  const row = (await screen.findByRole("link", { name: /Kozilek/ })).closest("li")!;
+  // `ManaSymbols` labels both the wrapper and the symbol itself, so this asserts presence rather
+  // than uniqueness.
+  expect(within(row).getAllByRole("img", { name: /colorless/i }).length).toBeGreaterThan(0);
+});

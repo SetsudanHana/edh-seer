@@ -40,11 +40,14 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
   // the one thing on this page that earns the extra width -- four columns squeezed into 68ch wrap
   // every cell. DESIGN.md's own rule: a wide viewport buys columns.
   return (
-    <article className="flex flex-col gap-10">
-      {/* THE CARD LEADS, AND NOW IT IS THE CARD. A page about a card that never showed the card was
-        * the first thing anyone asked about it. Beside the heading on a wide viewport, above it on a
-        * phone -- `flex-wrap` does both without a media query. */}
-      <div className="flex flex-wrap-reverse items-end gap-x-6 gap-y-4 max-w-[68ch]">
+    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-x-10 lg:items-start max-w-6xl">
+    <div className="flex flex-col gap-10 min-w-0">
+      {/* THE CARD IS A RAIL, NOT A BLOCK. It sat beside a 68ch column with the other half of a
+        * 2,000px viewport empty beside it (owner-reported 2026-09-04) -- and DESIGN.md's own rule is
+        * that width buys COLUMNS, never longer lines. The grid below puts the card in its own column
+        * on a wide screen and stacks it above the name on a narrow one; the reading column keeps its
+        * measure either way. */}
+      <div className="flex flex-wrap-reverse items-end gap-x-6 gap-y-4">
       <header className="flex flex-col gap-3 flex-1 min-w-[16rem]">
         <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
           {page.name}
@@ -65,7 +68,6 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           </p>
         )}
       </header>
-      <CardArt artCrop={page.artCrop} name={page.name} />
       </div>
 
       {/* HOW THE ENGINE READ THE CARD, ability by ability. The union of a card's events -- the panel
@@ -94,6 +96,14 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
       </section>
 
       <div className="max-w-[68ch]"><PageFoot /></div>
+    </div>
+    {/* ONE IMAGE, PLACED BY THE GRID. Rendering it twice behind media queries put two of the same
+      * card in the document -- invisible on screen, and two hits for anything reading the page,
+      * a screen reader and a test alike. Sticky on a wide viewport, because the partner list is
+      * long and the card is what every row on it is about. */}
+    <aside className="order-first lg:order-last lg:sticky lg:top-6">
+      <CardArt artCrop={page.artCrop} name={page.name} />
+    </aside>
     </article>
   );
 }

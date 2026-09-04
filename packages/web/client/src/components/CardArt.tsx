@@ -23,7 +23,7 @@ export function CardArt({ artCrop, name }: { artCrop: string | null; name: strin
       decoding="async"
       width={488}
       height={680}
-      className="w-40 sm:w-56 shrink-0 aspect-[488/680] rounded-[4.75%_/_3.5%] border border-(--separator)"
+      className="w-40 sm:w-56 lg:w-full shrink-0 aspect-[488/680] rounded-[4.75%_/_3.5%] border border-(--separator)"
     />
   );
 }
