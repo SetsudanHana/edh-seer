@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { stickyPx } from "../lib/sticky-px.js";
 import { useLocation, useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types.js";
 import { scoreState } from "../lib/deck-gauge.js";
@@ -40,7 +41,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
     const el = ref.current;
     if (!el) return;
     const write = (): void =>
-      document.documentElement.style.setProperty("--report-header-h", `${Math.round(el.getBoundingClientRect().height)}px`);
+      document.documentElement.style.setProperty("--report-header-h", stickyPx(el));
     write();
     const ro = new ResizeObserver(write);
     ro.observe(el);

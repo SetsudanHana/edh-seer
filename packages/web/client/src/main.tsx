@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App.js";
 import { Calibrate } from "./components/Calibrate.js";
 import "./index.css";
+import { stickyPx } from "./lib/sticky-px.js";
 
 // `#calibrate` STAYS A HASH VIEW, and stays outside the router: it is a local dev tool (mounted
 // only under `MTG_CALIBRATE=1`), not a surface of the product, and it has nothing under it to
@@ -47,7 +48,7 @@ const siteHeader = document.querySelector<HTMLElement>(".site-header");
 if (siteHeader && typeof ResizeObserver !== "undefined") {
   const writeSiteHeaderHeight = (): void =>
     document.documentElement.style.setProperty(
-      "--site-header-h", `${Math.round(siteHeader.getBoundingClientRect().height)}px`,
+      "--site-header-h", stickyPx(siteHeader),
     );
   writeSiteHeaderHeight();
   new ResizeObserver(writeSiteHeaderHeight).observe(siteHeader);

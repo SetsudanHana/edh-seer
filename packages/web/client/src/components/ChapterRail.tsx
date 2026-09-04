@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { stickyPx } from "../lib/sticky-px.js";
 import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 import { REFERENCE_SURFACES, SurfaceLink } from "./ReportShell.js";
@@ -85,7 +86,7 @@ export function ChapterRail({ current }: { current: ChapterId | null }) {
     const write = (): void =>
       document.documentElement.style.setProperty(
         "--report-rail-h",
-        stacked ? `${Math.round(el.getBoundingClientRect().height)}px` : "0px",
+        stacked ? stickyPx(el) : "0px",
       );
     write();
     const ro = new ResizeObserver(write);
