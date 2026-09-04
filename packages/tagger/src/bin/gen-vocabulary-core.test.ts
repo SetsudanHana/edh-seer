@@ -77,6 +77,23 @@ test("the rendered module is valid TypeScript exporting a Set of every permanent
   expect(src).toContain("GENERATED");
 });
 
+// A SPELL SUBTYPE IS A REAL DEMAND. Lucky Clover watches "an Adventure instant or sorcery spell"
+// and derived a bare `cast:instant` because the free-text set excluded every spell subtype, so it
+// claimed The Dawning Archaic's graveyard cast (2026-09-05). The six spell subtypes get their own
+// set, gated at the point of use on a spell head noun, and stay OUT of the free-text set.
+test("spell subtypes are rendered as their own set and stay out of the free-text one", () => {
+  const src = renderSubtypesModule(buildVocabulary(types, enums));
+  const spell = src.slice(src.indexOf("export const SPELL_SUBTYPES"), src.indexOf("export const LAND_SUBTYPES"));
+  expect(spell).toContain('"adventure"');
+  expect(spell).toContain('"arcane"');
+  expect(spell).toContain('"lesson"');
+  // The SET LITERAL only: the doc comment under it legitimately quotes the words it excludes.
+  const start = src.indexOf("export const SUBTYPES");
+  const freeText = src.slice(start, src.indexOf("]);", start));
+  expect(freeText).not.toContain('"adventure"');
+  expect(freeText).not.toContain('"lesson"');
+});
+
 // A land subtype is the one kind that means MANA BASE rather than typal — a fetchland naming Swamp
 // is ramp, not a Swamp-tribal payoff — so callers need to tell them apart without a hardcoded list.
 test("land subtypes are emitted separately as well as pooled", () => {
