@@ -122,7 +122,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
 
       <PageFoot />
     </div>
-    <aside className="order-first lg:order-last lg:sticky lg:top-6">
+    <aside className="order-first lg:order-last lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)]">
       <CardArt artCrop={page.artCrop} name={page.name} />
     </aside>
     </article>
