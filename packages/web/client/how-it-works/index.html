@@ -45,12 +45,34 @@
              while the header is the map and has to show the whole territory to stay still.
              THE TWO BROWSE SURFACES WERE REACHABLE ONLY FROM THE FOOT OF A CARD PAGE (owner,
              2026-09-04) -- which is to say, only from a page you had already found another way. -->
+        <!-- COMBO, NOT ALL-VISIBLE AND NOT A HAMBURGER (research 2026-09-04). NN/g's 179-participant
+             study measured three conditions on phones: navigation behind an icon was USED in 57% of
+             tasks, some-visible-plus-a-menu in 86%, and hidden was 15% slower with a >20% drop in
+             content discoverability. Their rule splits on our exact number -- four links or fewer,
+             show them all; more than four, hide SOME. We have six.
+             THE THREE THAT STAY ARE THE THREE THAT GO SOMEWHERE IN THE PRODUCT. `/how-it-works` is
+             prose, and the other two leave the site entirely; those are the ones a reader goes
+             looking for, which is what a menu is for. Cards and Commanders stay because they were
+             put in this nav yesterday for being unreachable, and burying them again the next day
+             would spend a measured usability penalty to undo that.
+             `<details>` AND NOT A BUTTON: the disclosure, its keyboard model and its screen-reader
+             semantics are the platform's, so this header still needs no JavaScript -- which is the
+             whole reason it is static HTML sitting above `#root`.
+             THE LABEL IS A WORD. The same study's companion found BBC's labelled bar reached 89%
+             usage while Bloomberg's small unlabelled icon reached 44%, because readers took it for
+             part of the logo it sat next to. Ours would sit next to a wordmark too, so it is a word,
+             and it is at the far end of the nav rather than beside the mark. -->
         <a href="/">Analyse a deck</a>
         <a href="/cards">Cards</a>
         <a href="/commanders">Commanders</a>
-        <a href="/how-it-works">How it works</a>
-        <a href="https://github.com/SetsudanHana/edh-seer" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Report an edge</a>
+        <details class="site-more">
+          <summary>More</summary>
+          <div class="site-more-panel">
+            <a href="/how-it-works">How it works</a>
+            <a href="https://github.com/SetsudanHana/edh-seer" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Report an edge</a>
+          </div>
+        </details>
       </nav>
     </header>
 

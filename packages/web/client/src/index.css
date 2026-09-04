@@ -754,6 +754,11 @@ a.brand:hover .brand-edh { color: var(--foreground); }
    and where a wrong claim goes. */
 .site-nav {
   display: flex;
+  /* The containing block for `.site-more-panel`, which hangs under the summary. */
+  position: relative;
+  /* Centred rather than stretched, so the menu's summary sits on the links' own line instead of
+     stretching to whatever the tallest item makes the flex line. */
+  align-items: center;
   /* FIVE ITEMS PLUS THE INSTALL BUTTON DO NOT FIT ON A PHONE. The nav measured ~430px of content
      against 326px of room at 390px wide once Cards and Commanders joined it, and `flex` does not
      wrap by default -- so the row ran off the right edge instead of becoming two. The header itself
@@ -767,12 +772,100 @@ a.brand:hover .brand-edh { color: var(--foreground); }
   text-transform: uppercase;
 }
 
+/* THE MENU IS A `<details>`, AND IT IS ONE AT EVERY WIDTH.
+   The first attempt made it a phone-only menu and flattened it back to six inline links above 48rem
+   with `display: contents` on the details and its panel. IT DOES NOT WORK, measured rather than
+   assumed: `<details>` renders its content through a slot in a UA shadow tree, so removing the
+   details box leaves the slot's, and the three links inside landed 11.8px below the other three
+   instead of joining their flex line. Forcing it would take an `open` attribute toggled by
+   JavaScript per breakpoint, in a header that is static HTML precisely so it needs none.
+   IT DOES NOT NEED TO BE FLATTENED. The NN/g study measures combo on the desktop too, where it took
+   50% against visible navigation's 48% -- a tie inside the noise, and both far above hidden's 27%.
+   The condition that loses on desktop is hiding EVERYTHING, which is not what this is. So one
+   behaviour at every width, no breakpoint, and no second copy of the link list for `seo.test.ts`'s
+   byte-for-byte comparison to catch drifting apart. */
+.site-more { position: relative; }
+
+.site-more > summary {
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  /* THE 44px TARGET STAYS, THE 44px BOX DOES NOT. The global `summary` rule above gives every
+     disclosure on the site a 2.75rem minimum block size, deliberately, because these are standalone
+     controls and WCAG 2.5.8 wants a real target under a thumb. Inside a nav row that is a layout
+     rule as well as a target rule, and it grew the desktop header from 57px to 69px -- one control
+     setting the height of the bar every other item sits in.
+     So the BOX joins the links' line and the TARGET is extended past it by a transparent
+     pseudo-element, which is the one thing that can be bigger than the box it belongs to. Measured
+     hit area 44px tall, visual height 17px, and the summary is still the only item in this nav that
+     meets 2.5.8 at all -- the six links are ~19px, which is a real finding and an older one. */
+  min-block-size: 0;
+  padding-block: 2px;
+}
+
+.site-more > summary::before {
+  content: "";
+  position: absolute;
+  inset-block: -0.8rem;
+  inset-inline: -0.5rem;
+}
+.site-more > summary::-webkit-details-marker { display: none; }
+
+/* THE CARET IS THE TAPPABILITY SIGNIFIER. A bare word in a row of words reads as a seventh link,
+   and the one thing the research is unambiguous about is that a menu has to look like one: an
+   unlabelled, unsignified control measured 44% usage against 89% for a menu a reader could tell
+   was a menu. It rotates on open, so the control also reports its own state to a sighted reader --
+   `aria-expanded` is the screen reader's copy of the same fact, and `<details>` supplies it. */
+.site-more > summary::after {
+  content: "";
+  display: inline-block;
+  width: 0.3rem;
+  height: 0.3rem;
+  margin-left: 0.4rem;
+  vertical-align: 0.1em;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(45deg) translate(-0.06em, -0.06em);
+  transition: transform 150ms ease-out;
+}
+.site-more[open] > summary::after { transform: rotate(-135deg) translate(-0.02em, -0.02em); }
+@media (prefers-reduced-motion: reduce) {
+  .site-more > summary::after { transition: none; }
+}
+
+/* IT HANGS, RATHER THAN PUSHING. An in-flow panel would grow the header, and the header's measured
+   height is what every sticky below it offsets by -- so opening a menu would shove the whole report
+   down and closing it would pull it back. Absolute keeps `--site-header-h` still.
+   `z-index` is local to the header's own stacking order and does not need to join the app-wide
+   ladder: the header is 25, and this rides inside it. */
+.site-more-panel {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  white-space: nowrap;
+}
+
+/* CEILING: the panel closes on its own summary and on Shift-Tab back out of it, and on nothing
+   else -- no Escape, no click-outside. Both would need a script in a header whose whole point is
+   that it works before the bundle does, and the panel is a small block at the top-right rather than
+   a scrim over the page, so a stuck-open one costs a reader nothing but the sight of it. Upgrade
+   path if that stops being true: ~10 lines inline in both shells, `keydown` on Escape and
+   `pointerdown` outside, clearing `open`. */
+
 /* THE INSTALL BUTTON LOOKS LIKE A NAV ITEM AND SITS BESIDE THE NAV. It is a `button` and not a
    link because it opens the browser's install dialog rather than going anywhere, so it needs the
    element's semantics and the links' appearance -- hence one selector list and a reset for the
    properties a UA stylesheet gives a button that an anchor does not. It is absent from the markup
    until the browser offers the prompt; see `InstallButton.tsx`. */
 .site-nav a,
+.site-more > summary,
 .site-nav-install {
   color: var(--muted);
   text-decoration: none;
@@ -806,6 +899,7 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 .site-nav { order: 2; }
 
 .site-nav a:hover,
+.site-more > summary:hover,
 .site-nav-install:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 @media (min-width: 80rem) { .site-header { max-width: none; } }
@@ -820,17 +914,14 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 /* WRAP IS THE COST, AND ON A PINNED BAR IT IS THE WHOLE COST. Measured at 390px with the header
    sticky: six links plus the install button wrapped to three rows and the bar stood at 123px -- 18%
    of a 664px viewport, permanently, above a report header (73px) and a chapter rail (53px) already
-   pinned under it. 249px of sticky furniture over 664px of screen is not navigation, it is a
-   ceiling.
-   ONE ROW THAT SCROLLS, rather than three that do not. `nowrap` on both the header and the nav puts
-   the brand and the links on one line and lets the links overflow their own box. NOTHING WAS CUT to
-   get there -- the same six destinations in the same order, which is the property `seo.test.ts`
-   compares byte for byte across the two pages.
-   THE OVERFLOW IS VISIBLE, because a scroller that does not look like one loses its own tail: the
-   mask fades the last 1.5rem so a partial word always sits at the right edge saying the row
-   continues. An `aria-label` would serve a screen reader and leave a sighted reader with nothing.
-   `min-inline-size: 0` is what lets it shrink at all -- a flex item keeps `min-width: auto`, so
-   without it the nav's full ~430px of content sizes the header and pushes the brand off the left. */
+   pinned under it. The nav takes its own row and stays on ONE line inside it.
+   THE ROW USED TO SCROLL SIDEWAYS, and that is what the `<details>` above replaced (research
+   2026-09-04). Six items in a 326px row meant three on screen and three behind a horizontal gesture;
+   Baymard's testing is that a sideways row reads as finished at its right edge, because the instinct
+   is to scroll vertically. Three items and a menu fit with room to spare, so the gesture is gone and
+   with it the mask that had to advertise it.
+   `overflow` HAD TO GO ANYWAY: a scroll container clips its absolutely positioned descendants, so
+   the menu panel would have been cut off at the nav's own right edge. */
 @media (max-width: 47.99rem) {
   .site-header {
     align-items: center;
@@ -839,23 +930,23 @@ a.brand:hover .brand-edh { color: var(--foreground); }
     padding-bottom: 0.5rem;
   }
   .site-nav {
-    /* ITS OWN ROW, AND ALL OF IT. Sharing the brand's line left the scroller 121px of a 390px
-       screen -- one and a half links visible out of six, which is a menu you have to drag before
-       you can read it. A second row costs 20px and gives it the full 326px, where three items and
-       the fade sit on screen at once. Two rows, never three: this is `flex-basis: 100%`, not
-       `flex-wrap`. */
+    /* ITS OWN ROW, AND ALL OF IT. Sharing the brand's line leaves ~121px of a 390px screen, which
+       is not enough for three labels and a menu. A second row costs 20px and fits all four.
+       IT WRAPS RATHER THAN CLIPS, and that is not the old three-row wrap coming back. Measured at
+       390px the four items come to 326px in 326px of room -- they fit, with nothing to spare, and
+       this project has a standing rule that a layout proven at one width on one machine is not
+       proven: font metrics differ per platform, and the same row is a few pixels wider somewhere
+       else. `wrap` makes that case a second line instead of a clipped one, and the header's measured
+       height is what every sticky below it offsets by, so the stack simply re-reads it. The
+       alternative, an `overflow-x` scroller, is ruled out for a second reason now: a scroll container
+       clips its absolutely positioned descendants, which is the menu panel. */
     flex: 1 0 100%;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     min-inline-size: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
   }
-  .site-nav::-webkit-scrollbar { display: none; }
-  /* The links are the scroller's content, so they may not shrink to fit it -- that is exactly what
-     would make the row stop scrolling and start squashing. */
-  .site-nav a { white-space: nowrap; flex-shrink: 0; }
+  /* A label may not break mid-word to save the row; the row wraps instead. */
+  .site-nav a,
+  .site-more > summary { white-space: nowrap; }
 }
 
 /* ── figures, pipeline, edge-demo: shared by both pages ──────────────────────────────────────────
