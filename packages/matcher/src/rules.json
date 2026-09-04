@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -16,7 +16,7 @@
   ],
 
   "patterns": {
-    "boardWipe": "destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all",
+    "boardWipe": "(?:destroy|exile) (?:all|each) (?!(?:other )?cards?\\b|graveyards?\\b|(?:target )?(?:player|opponent))(?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?|lands?|tokens?|\\w+s)\\b|each player sacrifices (?:all|each|every|any number|x\\b|\\w+teen|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty)|(?:each player|each opponent|opponents|players)[^.]{0,120}?sacrifices? all (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|lands?)|(?:all|each|every) (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?) (?:gets?|get) [-−]|deals? (?:\\d+|x) damage to [^.]{0,60}?each (?:[\\w'-]+ ){0,2}?(?:creature|permanent|planeswalker)|return (?:all|each) (?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?)|-1/-1 counters? on each (?:[\\w'-]+ ){0,2}?creature|(?=[\\s\\S]*\\boverload\\b)(?:destroy|exile|return|deals? (?:\\d+|x) damage to|gets? [-−]\\d)[^.]{0,20}?target (?:[\\w'-]+ ){0,3}?(?:creature|permanent|artifact|enchantment|planeswalker)\\b",
     "targetedRemoval": "destroy[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|exile[^.]{0,25}?target[^.]{0,25}?\\b(?:creature|permanent|artifact|enchantment|planeswalker|land)s?\\b(?!\\s+you\\s+(?:control|own))|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
     "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?(?<class>creature(?: or planeswalker)?)",
     "burn": "deals? \\d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\\d+|x) life",

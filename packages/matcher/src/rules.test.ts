@@ -517,3 +517,43 @@ test("the strip takes the SENTENCE, because one clause can name two words", () =
     "{1}: Permanents your opponents control lose hexproof and indestructible until end of turn.");
   expect(ruleMatches(protectionRule(), c)).toBe(false);
 });
+
+// THE WIPE PATTERN, MEASURED AGAINST COMMANDER SALT'S boardWipes ON THE SIX CACHED DECKS (2026-09-05):
+// the old five-shape regex found 7 of 16 with 0 false; this one finds 16 of 16 with 2 (Fiery
+// Confluence's each-creature mode and Chandra, Bold Pyromancer's ultimate, both defensible). The
+// old one also called every "each player sacrifices a creature" EDICT a wipe (Fleshbag Marauder,
+// Plaguecrafter, Szat's Will -- 15 cards in the 71 decks) and every "return all ... cards from your
+// graveyard" recursion one. Every quoted line is oracle text fetched from the corpus, not memory.
+test("a board wipe is a mass effect on the battlefield, in any of its printed shapes", () => {
+  const wipes: [string, string][] = [
+    ["Wrath of God", "Destroy all creatures. They can't be regenerated."],
+    ["Farewell", "Choose one or more —\n• Exile all artifacts.\n• Exile all creatures.\n• Exile all enchantments.\n• Exile all graveyards."],
+    ["Blasphemous Act", "This spell costs {1} less to cast for each creature on the battlefield.\nBlasphemous Act deals 13 damage to each creature."],
+    ["Toxic Deluge", "As an additional cost to cast this spell, pay X life.\nAll creatures get -X/-X until end of turn."],
+    ["The Meathook Massacre", "When The Meathook Massacre enters, each creature gets -X/-X until end of turn."],
+    ["Massacre Girl", "Menace\nWhen Massacre Girl enters, each other creature gets -1/-1 until end of turn."],
+    ["Living Death", "Each player exiles all creature cards from their graveyard, then sacrifices all creatures they control, then puts all cards they exiled this way onto the battlefield."],
+    ["Blasphemous Edict", "Each player sacrifices thirteen creatures of their choice."],
+    ["Cyclonic Rift", "Return target nonland permanent you don't control to its owner's hand.\nOverload {6}{U} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
+    ["Vandalblast", "Destroy target artifact you don't control.\nOverload {4}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
+    ["Black Sun's Zenith", "Put X -1/-1 counters on each creature. Shuffle Black Sun's Zenith into its owner's library."],
+    ["Delayed Blast Fireball", "Delayed Blast Fireball deals 2 damage to each opponent and each creature they control."],
+    ["Chandra Nalaar", "−8: Chandra Nalaar deals 10 damage to target player or planeswalker and each creature that player or that planeswalker's controller controls."],
+    ["Desynchronization", "Return each nonland permanent that's not historic to its owner's hand."],
+    ["Calamity of the Titans", "Exile each creature and planeswalker with mana value less than the revealed card's mana value."],
+  ];
+  const notWipes: [string, string][] = [
+    ["Fleshbag Marauder", "When this creature enters, each player sacrifices a creature of their choice."],
+    ["Rest in Peace", "When this enchantment enters, exile all graveyards.\nIf a card or token would be put into a graveyard from anywhere, exile it instead."],
+    ["Gallifrey Stands", "When Gallifrey Stands enters, return all Doctor cards from your graveyard to your hand."],
+    ["Emrakul, the World Anew", "When Emrakul leaves the battlefield, sacrifice all creatures you control."],
+    ["Eldritch Immunity", "Target creature you control gains protection from each color until end of turn.\nOverload {4}{C} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
+    ["Mizzix's Mastery", "Exile target card that's an instant or sorcery from your graveyard. For each card exiled this way, copy it, and you may cast the copy without paying its mana cost. Exile Mizzix's Mastery.\nOverload {5}{R}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
+    ["Coat of Arms", "Each creature gets +1/+1 for each other creature on the battlefield that shares at least one creature type with it."],
+    ["Wisdom of Ages", "Return all instant and sorcery cards from your graveyard to your hand. You have no maximum hand size for the rest of the game."],
+  ];
+  const m = detectBuildCategories([...wipes, ...notWipes].map(([n, t]) => mk(n, t, "Sorcery")));
+  const found = m.get("boardWipe") ?? new Set<string>();
+  expect(wipes.map(([n]) => n).filter((n) => !found.has(n))).toEqual([]);
+  expect(notWipes.map(([n]) => n).filter((n) => found.has(n))).toEqual([]);
+});
