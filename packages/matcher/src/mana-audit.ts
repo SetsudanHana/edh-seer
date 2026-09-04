@@ -87,6 +87,10 @@ export interface ColorDemand {
   requiredRaw: number;
   /** How many cards in the deck carry exactly this demand. */
   cards: number;
+  /** WHICH cards, so a reader can check the claim against a card they can hold. A count alone made
+   *  the finding a statement about the mana base ("Blue is short"), which is the wrong subject and
+   *  read as absurd on a mono-colour deck; the true subject is one early multi-pip spell. */
+  names: string[];
   /** THE SOURCES THAT COULD ACTUALLY BE PRODUCING BY `turn`, which is the number `met` is read
    *  against. `supplied` on the row is every source in the deck and is a true DECK fact; holding a
    *  turn-1 demand to it counted mana rocks that cost two and lands that enter tapped exactly then.
@@ -253,6 +257,7 @@ export function manaAudit(
       const existing = groups.get(key);
       if (existing) {
         existing.cards++;
+        existing.names.push(dc.card.name);
         continue;
       }
       const requiredRaw = minCopies(pips, turn, SOURCE_CONFIDENCE, library.length);
@@ -262,7 +267,10 @@ export function manaAudit(
       // than allowed to read HIGHER than the model it corrects (criterion S2).
       const required = Math.min(requiredRaw, minSources(pips, turn, SOURCE_CONFIDENCE) ?? requiredRaw);
       const available = availableBy(turn);
-      groups.set(key, { pips, turn, required, requiredRaw, cards: 1, available, met: available >= required });
+      groups.set(key, {
+        pips, turn, required, requiredRaw, cards: 1, names: [dc.card.name], available,
+        met: available >= required,
+      });
     }
     if (groups.size === 0) continue;
 
