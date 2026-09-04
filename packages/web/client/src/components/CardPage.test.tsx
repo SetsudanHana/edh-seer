@@ -55,7 +55,10 @@ test("an unread card says so rather than rendering an empty page", async () => {
   expect(await screen.findByRole("heading", { name: /No page for/ })).toBeInTheDocument();
   expect(screen.getByText(/black-lotus/)).toBeInTheDocument();
   expect(screen.getByText(/that name is wrong/i)).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /Search the cards/ })).toHaveAttribute("href", "/cards");
+  // THE SEARCH IS SEEDED WITH WHAT WAS ASKED FOR, hyphens back to spaces: a truncated or
+  // misremembered name is the likelier of the two cases, and this is the recovery from it.
+  expect(screen.getByRole("link", { name: /Search for/ }))
+    .toHaveAttribute("href", "/cards?q=black%20lotus");
 });
 
 /** NAME, TYPE LINE AND MANA COST ARE CARD METADATA AND THE PAGE IS UNUSABLE WITHOUT THEM. The

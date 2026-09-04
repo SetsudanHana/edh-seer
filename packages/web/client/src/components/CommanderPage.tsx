@@ -37,7 +37,10 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           card can answer.
         </p>
         <p>
-          <Link className="text-(--accent) hover:underline" to="/commanders">Search the commanders →</Link>
+          <Link className="text-(--accent) hover:underline"
+            to={`/commanders?q=${encodeURIComponent(slug.replace(/-/g, " "))}`}>
+            Search for “{slug.replace(/-/g, " ")}” →
+          </Link>
         </p>
       </section>
     );

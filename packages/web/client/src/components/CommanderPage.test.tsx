@@ -85,5 +85,8 @@ test("a card that is not a commander says so and points at its card page", async
 test("an unread card says so rather than rendering an empty page", async () => {
   at("black-lotus", async () => null);
   expect(await screen.findByRole("heading", { name: /No page for/ })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /Search the commanders/ })).toHaveAttribute("href", "/commanders");
+  // THE SEARCH IS SEEDED WITH WHAT WAS ASKED FOR, hyphens back to spaces: a truncated or
+  // misremembered name is the likelier of the two cases, and this is the recovery from it.
+  expect(screen.getByRole("link", { name: /Search for/ }))
+    .toHaveAttribute("href", "/commanders?q=black%20lotus");
 });

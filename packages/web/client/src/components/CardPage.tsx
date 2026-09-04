@@ -45,7 +45,10 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           card that just adds mana, or draws you a card, forms no edges and gets no page.
         </p>
         <p>
-          <Link className="text-(--accent) hover:underline" to="/cards">Search the cards →</Link>
+          <Link className="text-(--accent) hover:underline"
+            to={`/cards?q=${encodeURIComponent(slug.replace(/-/g, " "))}`}>
+            Search for “{slug.replace(/-/g, " ")}” →
+          </Link>
         </p>
         <p className="text-(--muted) text-sm">
           If you know this card and expected edges from it,{" "}
