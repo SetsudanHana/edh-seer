@@ -228,10 +228,20 @@ test("the page ships real text without running JavaScript", () => {
 
 test("the how-it-works page is a page, not an app route", () => {
   const page = readFileSync(join(CLIENT, "how-it-works", "index.html"), "utf8");
-  // No script at all: the prose is the whole page, so JS-off readers and crawlers get all of it.
+  // NO BUNDLE, which is what "not an app route" means and what this test has always been about: the
+  // prose is the whole page, so JS-off readers and crawlers get all of it.
+  //
+  // IT USED TO ASSERT ZERO SCRIPTS, which was the right proxy while there were zero and the wrong
+  // property to name. The page gained one on 2026-09-04 -- the ~15 lines that close the header menu
+  // on Escape and on a press outside it -- and that script adds nothing to this page and removes
+  // nothing from it: every word here is still in the HTML with JavaScript off, and the menu still
+  // opens and closes without it, because `<details>` supplies that itself. So the assertion is now
+  // the property rather than the proxy: nothing with a `src`, and no inline script but that one.
   // Asked of the parsed document rather than the source text, for the reason above.
   const parsed = new DOMParser().parseFromString(page, "text/html");
-  expect(parsed.querySelectorAll("script")).toHaveLength(0);
+  expect(parsed.querySelectorAll("script[src]")).toHaveLength(0);
+  const inline = [...parsed.querySelectorAll("script")].map((el) => el.textContent ?? "");
+  expect(inline.filter((body) => !body.includes(".site-more[open]"))).toEqual([]);
   expect(page).toContain('<link rel="canonical" href="' + canonical + 'how-it-works"');
   expect(page).toMatch(/<h1>How it works<\/h1>/);
   // It explains the thing it promises to explain, in its own words rather than by linking away.
