@@ -48,7 +48,7 @@ test("a card URL renders the card page and not the deck tool", async () => {
   window.history.pushState({}, "", "/cards/krenko-mob-boss");
   try {
     render(<App />);
-    expect(await screen.findByRole("heading", { name: /No page for/ })).toBeInTheDocument();
+    expect(await screen.findByText(/no such page/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Analyze deck" })).toBeNull();
   } finally {
     fetchSpy.mockRestore();
@@ -85,7 +85,7 @@ test("the commander URLs render their own pages and not the deck tool", async ()
 
     window.history.pushState({}, "", "/commanders/krenko-mob-boss");
     render(<App />);
-    expect(await screen.findByRole("heading", { name: /No page for/ })).toBeInTheDocument();
+    expect(await screen.findByText(/no such page/i)).toBeInTheDocument();
   } finally {
     fetchSpy.mockRestore();
     window.history.pushState({}, "", "/");

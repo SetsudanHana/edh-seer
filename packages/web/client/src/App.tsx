@@ -5,6 +5,7 @@ import { DeckInput } from "./components/DeckInput.js";
 import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
 import { CardPage } from "./components/CardPage.js";
+import { RouteMarker } from "./components/RouteMarker.js";
 import { CardSearch } from "./components/CardSearch.js";
 import { CommanderPage } from "./components/CommanderPage.js";
 import { BrowserRouter, Route, Routes } from "react-router";
@@ -268,13 +269,18 @@ export default function App() {
       * to open, and the deck itself is in the hash.
       * THE BLOCK BELOW IS UNCHANGED AND UNINDENTED ON PURPOSE -- re-indenting 100 lines to add two
       * would bury the actual change in the diff. */}
+    {/* ONE CONTAINER FOR EVERY ROUTE. `main` used to be the `*` element, so the card and commander
+      * pages rendered OUTSIDE it -- no padding, no max width, text starting hard against the left
+      * edge of the viewport. Caught on a screenshot, which is the only way that class of defect is
+      * ever caught: every test passed, because a test asks what is on the page and not where. */}
+    <RouteMarker />
+    <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
     <Routes>
       <Route path="/cards" element={<CardSearch />} />
       <Route path="/cards/:slug" element={<CardPage />} />
       <Route path="/commanders" element={<CardSearch mode="commanders" />} />
       <Route path="/commanders/:slug" element={<CommanderPage />} />
-      <Route path="*" element={
-    <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
+      <Route path="*" element={<>
       {/* RENDERS NOTHING HERE. It portals into the static header's nav, and only once the browser
         *  has said the app can be installed -- see `InstallButton` for why the event is the whole
         *  gate. Mounted from the app rather than from `index.html` because the decision is stateful
@@ -379,9 +385,9 @@ export default function App() {
           the intro section: a footer inside `main` stopped being at the foot the moment any content
           lived outside it, and a notice that is a CONDITION of showing Wizards' property should not
           depend on the bundle loading at all. */}
-    </main>
-      } />
+      </>} />
     </Routes>
+    </main>
     </BrowserRouter>
   );
 }

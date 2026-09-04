@@ -984,3 +984,15 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 @media (min-width: 40rem) {
   .build-inputs-grid > :last-child:nth-child(2n+1) { grid-column: auto; }
 }
+
+/* THE STATIC BLOCKS ARE FOR READERS WITHOUT THE BUNDLE, AND ONLY FOR THEM.
+   `index.html`'s `.intro` and the `.prerendered` section a Pages Function injects after `#root`
+   both live outside React on purpose: that is what lets a crawler -- and a browser with JavaScript
+   off -- read real content without a prerender step. The cost is that they stay on screen once the
+   app boots, which put the whole landing pitch and a second copy of the partner list under every
+   card page. `main.tsx` sets `data-app-booted` after the first render; from that moment the app IS
+   the content.
+   `.intro` is kept on the landing route, where it is the page's own argument rather than a
+   duplicate -- `data-route` says which. */
+html[data-app-booted] .prerendered { display: none; }
+html[data-app-booted][data-route="page"] .intro { display: none; }

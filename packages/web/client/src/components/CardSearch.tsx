@@ -3,6 +3,8 @@ import { Link, useSearchParams } from "react-router";
 import { slugOf } from "@edh-seer/matcher/partners-core";
 import { loadNameIndex, type NameIndexEntry } from "../lib/partners.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
+import { ManaSymbols } from "./ManaSymbols.js";
+import { PageFoot } from "./PageFoot.js";
 
 /** HOW MANY ROWS ONE QUERY MAY DRAW. A readability choice and a jank one at once: "a" matches most
  *  of the corpus, and 15,350 links is a page nobody scrolls and a frame nobody gets back. The count
@@ -76,16 +78,18 @@ export function CardSearch({
   }, [index, needle, asked, colours, commanderMode]);
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className="flex flex-col gap-6 max-w-[68ch]">
       {/* ONLY `/cards` EVER CARRIED A SHARE LINK. `/commanders` is a new path, so there is no
         * stale link to catch and nothing to redirect. */}
       {!commanderMode && (
         <LegacyDeckRedirect to="/analysis/cards" {...(hash !== undefined ? { hash } : {})}
           {...(replace !== undefined ? { replace } : {})} />
       )}
-      <header className="flex flex-col gap-1">
-        <h2 className="text-3xl font-semibold">{commanderMode ? "Commanders" : "Cards"}</h2>
-        <p className="text-(--muted)">
+      <header className="flex flex-col gap-3">
+        <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]">
+          {commanderMode ? "Commanders" : "Cards"}
+        </h2>
+        <p className="text-(--muted) max-w-[65ch]">
           {commanderMode
             ? "Every legendary creature the engine has read that can lead a deck, with the cards inside its colour identity it is most specifically connected to."
             : "Every card the engine has read, with what it produces, what it cares about, and the cards it is most specifically connected to."}
@@ -98,20 +102,30 @@ export function CardSearch({
           {COLOURS.map(([code, label]) => {
             const on = colours.includes(code);
             return (
+              // FILTER CHIP, the system's own: `--separator` border at rest, `--accent` border and
+              // text when selected -- the same grammar the tabs use, so a selected filter and an
+              // active tab read as the same kind of state.
               <button
                 key={code} type="button" aria-pressed={on}
                 onClick={() => setColours((cs) => on ? cs.filter((c) => c !== code) : [...cs, code])}
-                className={`rounded-md border px-3 py-1 ${on
+                className={`inline-flex items-center gap-1.5 rounded-(--radius) border px-3 py-1.5 text-sm ${on
                   ? "border-(--accent) text-(--accent)"
-                  : "border-(--field-border) text-(--foreground)"}`}
-              >{label}</button>
+                  : "border-(--separator) text-(--muted) hover:text-(--foreground)"}`}
+              >
+                {/* DECORATIVE HERE, and marked so: the chip's own word is its accessible name, and
+                  * letting the symbol contribute one turns "Red" into "one red mana Red". */}
+                <span aria-hidden="true" className="text-base leading-none">
+                  <ManaSymbols cost={`{${code}}`} />
+                </span>
+                {label}
+              </button>
             );
           })}
         </fieldset>
       )}
 
-      <label className="flex flex-col gap-1">
-        <span className="eyebrow">{commanderMode ? "Find a commander" : "Find a card"}</span>
+      <label className="flex flex-col gap-2">
+        <span className="eyebrow text-(--muted)">{commanderMode ? "find a commander" : "find a card"}</span>
         <input
           type="search" autoFocus value={query} onChange={(e) => setQuery(e.target.value)}
           placeholder={commanderMode ? "Kess, Dissident Mage" : "Krenko, Mob Boss"}
@@ -128,10 +142,18 @@ export function CardSearch({
         : !asked
         // AN EMPTY QUERY IS NOT AN EMPTY PAGE and not the whole corpus either: it says what is here
         // and waits. A bare box with nothing under it reads as a page that failed to load.
-        ? <p className="text-(--muted)">
-            {(commanderMode ? index.filter((e) => e.commander).length : index.length).toLocaleString("en-US")}{" "}
-            {commanderMode ? "commanders are indexed. Pick a colour or type a name." : "cards are indexed. Type a name to find one."}
-          </p>
+        // AN EMPTY QUERY OWNS THE SPACE IT IS IN rather than leaving a bare box above a screen of
+        // nothing. It says what is here, in the figure that makes the claim concrete.
+        ? <div className="min-h-[30svh] flex flex-col justify-center gap-2">
+            <p className="text-3xl font-bold tracking-[-0.01em] tabular-nums">
+              {(commanderMode ? index.filter((e) => e.commander).length : index.length).toLocaleString("en-US")}
+            </p>
+            <p className="text-(--muted) max-w-[55ch]">
+              {commanderMode
+                ? "commanders the engine has read. Pick a colour, or type a name."
+                : "cards the engine has read. Type a name to find one."}
+            </p>
+          </div>
         : matches.length === 0
         ? <p className="text-(--muted)">
             No {commanderMode ? "commander" : "card"} matches. The engine has read{" "}
@@ -146,17 +168,34 @@ export function CardSearch({
                 : (commanderMode ? "commanders match" : "cards match")}
               {matches.length > SEARCH_LIMIT ? `, showing the first ${SEARCH_LIMIT}` : ""}.
             </p>
-            <ul className="flex flex-col gap-1">
+            {/* IDENTITY IS THE ROW'S DIFFERENTIATOR. Fifty near-identical lines of blue text is a
+              * list nobody scans; the mana symbols give the eye something that varies, and they are
+              * the one thing a player reads before the name when choosing a card. Present colours
+              * only -- five fixed slots is the rule for a TABLE, and this list has no column to
+              * align to. */}
+            <ul aria-label="Results" className="flex flex-col">
               {matches.slice(0, SEARCH_LIMIT).map((e) => (
-                <li key={e.slug}>
-                  <Link className="text-(--accent) hover:underline"
-                    to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}>{e.name}</Link>
-                  {!commanderMode && e.commander && <span className="text-(--muted) text-sm"> · can lead a deck</span>}
+                <li key={e.slug} className="border-t border-(--separator) first:border-t-0">
+                  <Link
+                    className="flex items-baseline gap-3 py-2.5 hover:text-(--accent) group"
+                    to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}
+                  >
+                    <span className="group-hover:underline underline-offset-2">{e.name}</span>
+                    {e.identity.length > 0 && (
+                      <span className="text-sm shrink-0">
+                        <ManaSymbols cost={e.identity.map((c) => `{${c}}`).join("")} />
+                      </span>
+                    )}
+                    {!commanderMode && e.commander && (
+                      <span className="eyebrow text-(--muted) shrink-0">commander</span>
+                    )}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
         )}
+      <PageFoot />
     </section>
   );
 }

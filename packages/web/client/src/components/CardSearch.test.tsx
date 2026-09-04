@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { expect, test, vi } from "vitest";
@@ -68,8 +68,11 @@ test("the search box is labelled and holds focus on arrival", async () => {
  *  reads as a page that failed to load. */
 test("before anything is typed the page says what it holds, and lists nothing", async () => {
   at();
-  expect(await screen.findByText(/4 cards/)).toBeInTheDocument();
-  expect(screen.queryAllByRole("link")).toHaveLength(0);
+  // The figure leads and the sentence follows it, so they are two elements.
+  expect(await screen.findByText("4")).toBeInTheDocument();
+  expect(screen.getByText(/cards the engine has read/)).toBeInTheDocument();
+  // Scoped to the results list: the page foot carries links of its own.
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
 });
 
 test("a query matching more than the cap shows the cap and says how many it found", async () => {
@@ -79,7 +82,8 @@ test("a query matching more than the cap shows the cap and says how many it foun
   at(many);
   await userEvent.type(await screen.findByRole("searchbox"), "goblin");
   expect(await screen.findByText(new RegExp(`${SEARCH_LIMIT + 7} cards match`))).toBeInTheDocument();
-  expect(screen.getAllByRole("link")).toHaveLength(SEARCH_LIMIT);
+  expect(within(screen.getByRole("list", { name: "Results" })).getAllByRole("link"))
+    .toHaveLength(SEARCH_LIMIT);
 });
 
 test("a query that matches nothing says so", async () => {
@@ -142,7 +146,8 @@ test("a facet toggles off again", async () => {
   await userEvent.click(red);
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
   await userEvent.click(red);
-  expect(screen.queryAllByRole("link")).toHaveLength(0);
+  // Scoped to the results list: the page foot carries links of its own.
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
 });
 
 /** THE CARD SEARCH HAS NO FACETS. Colour identity is a question about a DECK, and the card page

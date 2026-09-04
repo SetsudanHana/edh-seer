@@ -52,8 +52,9 @@ test("an unread card says so rather than rendering an empty page", async () => {
   at("black-lotus", async () => null);
   // IT MUST NOT CLAIM A CARD EXISTS AT A URL THAT MAY NAME NOTHING. The slug is echoed back and
   // both possibilities are named, because this page cannot tell a real unread card from a typo.
-  expect(await screen.findByRole("heading", { name: /No page for/ })).toBeInTheDocument();
-  expect(screen.getByText(/black-lotus/)).toBeInTheDocument();
+  expect(await screen.findByText(/no such page/i)).toBeInTheDocument();
+  // De-slugged: a slug is not what anyone typed, and the heading is what they asked for.
+  expect(screen.getByRole("heading", { name: /black lotus/ })).toBeInTheDocument();
   expect(screen.getByText(/that name is wrong/i)).toBeInTheDocument();
   // THE SEARCH IS SEEDED WITH WHAT WAS ASKED FOR, hyphens back to spaces: a truncated or
   // misremembered name is the likelier of the two cases, and this is the recovery from it.
@@ -73,7 +74,9 @@ test("an unread card says so rather than rendering an empty page", async () => {
 test("the page shows card metadata and the artifact carries no rules text to show", async () => {
   at("krenko-mob-boss", async () => KRENKO);
   expect(await screen.findByText(/Legendary Creature — Goblin Warrior/)).toBeInTheDocument();
-  expect(screen.getByText(/\{2\}\{R\}\{R\}/)).toBeInTheDocument();
+  // THE COST IS MANA SYMBOLS, not a `{2}{R}{R}` string: real symbols are what a player reads, and
+  // DESIGN.md makes them the one place Wizards' own palette is used verbatim.
+  expect(screen.getByRole("img", { name: /2 generic mana, one red mana, one red mana/ })).toBeInTheDocument();
   for (const field of ["clauses", "oracleText", "text"]) {
     expect(KRENKO, `the artifact must not carry ${field}`).not.toHaveProperty(field);
   }
@@ -84,8 +87,9 @@ test("the page shows card metadata and the artifact carries no rules text to sho
  *  so the page has to word it as one -- these are cards that demand the event, not verified edges. */
 test("a capped event says how many candidates it is not showing, as candidates", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  const line = await screen.findByText(/1,908 more/);
-  expect(line.textContent).toMatch(/demand|trigger/i);
+  // The count sits under the event group it is about, not at the foot of the page.
+  const line = await screen.findByText(/more cards ask for this/);
+  expect(line.textContent).toMatch(/1,908/);
 });
 
 /** A CARD WITH NO PARTNERS IS A REAL ANSWER. 12.3% of substantive cards have none, and an empty
