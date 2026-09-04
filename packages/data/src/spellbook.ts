@@ -1,13 +1,15 @@
 import { Readable } from "node:stream";
-import { createRequire } from "node:module";
 import type { Combo } from "@edh-seer/engine";
-
-// stream-json is CommonJS; Node's native ESM loader (used by tsx at runtime)
-// cannot statically resolve its named exports, so load it via createRequire.
-const require = createRequire(import.meta.url);
-const { parser } = require("stream-json");
-const { pick } = require("stream-json/filters/Pick");
-const { streamArray } = require("stream-json/streamers/StreamArray");
+// stream-json 3.x is pure ESM and ships its own types, so the `createRequire` dance 1.x needed --
+// and the `@types/stream-json` package -- are both gone. THREE THINGS MOVED in the major:
+// the subpaths are kebab-case (`filters/pick.js`, not `filters/Pick`) and carry their extension,
+// because the package's `exports` map is `"./*": "./src/*"` with no extension resolution; the
+// index's stream maker is `parserStream`, since `parser` is now the generator underneath it; and
+// the filter and streamer default exports are generators too, whose `.asStream()` is the Duplex
+// this pipe chain wants. The emitted `{key, value}` items are unchanged.
+import { parserStream } from "stream-json";
+import pick from "stream-json/filters/pick.js";
+import streamArray from "stream-json/streamers/stream-array.js";
 
 export interface SpellbookVariant {
   id?: string;
@@ -57,7 +59,9 @@ export async function* streamVariants(
   if (!res.ok) throw new Error(`Spellbook fetch failed: ${res.status}`);
   if (!res.body) throw new Error("Spellbook response has no body");
   const nodeStream = Readable.fromWeb(res.body as any);
-  const pipeline = nodeStream.pipe(parser()).pipe(pick({ filter: "variants" })).pipe(streamArray());
+  const pipeline = nodeStream.pipe(parserStream())
+    .pipe(pick.asStream({ filter: "variants" }))
+    .pipe(streamArray.asStream());
   for await (const { value } of pipeline) {
     yield value as SpellbookVariant;
   }
