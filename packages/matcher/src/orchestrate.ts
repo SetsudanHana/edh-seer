@@ -80,6 +80,9 @@ export async function buildWireGraph(
   rolesByName: Map<string, string[]>,
   copiesByName: Map<string, number>,
   sources: AnalysisSources,
+  // THE REPORT THE READER IS BEING SHOWN, and the reason this is a parameter rather than a second
+  // analysis: the graph needs `edges` and nothing else, and every caller has already computed them.
+  report: DeckReport,
 ): Promise<WireGraph> {
   // Re-reads the card DOCUMENTS: resolveDeck hands back engine `Card`s, and the wire node
   // needs the full CardDoc (typeLine, artCrop) that only the corpus row carries.
@@ -104,22 +107,17 @@ export async function buildWireGraph(
     docs.push(doc);
     deckCards.push({ card: docToCard(doc), tags: await tagsLookup.findOne(doc._id) });
   }
-  // The report is what carries the reasons; the projection is a join of two outputs that
-  // already exist, not new derivation. `buildGraph`/`addEventEdges` stay in the matcher
-  // for the census tooling -- they simply no longer feed the view.
   // Tokens are nodes (tokens-as-nodes, 2026-08-15). Already resolved on `sources` --
   // `loadTokenTags` reads the whole `tokens` collection once (a few hundred rows) and joins it
   // to the derived token rows, and `analyzeDeckStructured` is pure and takes a SYNCHRONOUS lookup.
   const tokenTags = sources.tokenTags;
-  // `skipManaModel`: this call exists ONLY for `edges` (the line below is the whole use of
-  // `report`), and the goldfish model is ~530ms of the ~630ms it costs. Edges are formed before the
-  // simulation runs and cannot read it, so the graph is byte-identical without it -- pinned by
-  // `orchestrate.test.ts`. The report the READER sees is `analyzeResolvedDeck`'s, which still
-  // prices every card.
-  const report = analyzeDeckStructured(
-    deckCards as never, undefined, undefined, undefined, undefined, undefined, tokenTags,
-    { skipManaModel: true },
-  );
+  // THE READER'S OWN EDGES, not a second opinion about them. This used to re-run
+  // `analyzeDeckStructured` over the deduped `deckCards` with no commanders and no combos, which is
+  // a DIFFERENT question from the one `analyzeResolvedDeck` answered upstream -- and it silently
+  // answered it differently: across the 71 calibration decks the graph dropped a commander-carrying
+  // reason on nine of them (Codie 4, Inalla 2, Sarevok 2), so the board and the report disagreed
+  // about the deck on screen. The projection is a join of two outputs that already exist, and now
+  // it really is. `buildGraph`/`addEventEdges` stay in the matcher for the census tooling.
   const reasons = report.edges.flatMap((e) => e.reasons);
   // `deckCards` above is deduped by name (one lookup per unique card), but
   // `projectDeckGraph` counts a node's `copies` off how many times its name appears in

@@ -63,7 +63,7 @@ async function runOne(
     report.cards.filter((c) => c.roles && c.roles.length > 0)
       .map((c) => [c.cardName ?? c.name, c.roles!] as const),
   );
-  const graph = await buildWireGraph(cardNames, rolesByName, copiesByName, sources);
+  const graph = await buildWireGraph(cardNames, rolesByName, copiesByName, sources, report);
   return { report, graph, missing, commanderResolved, commanderColorIdentity };
 }
 

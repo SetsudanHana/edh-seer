@@ -36,7 +36,7 @@ export async function analyzeDeckStatic(
   const names = cards.map((c) => c.name);
   const copiesByName = new Map<string, number>();
   for (const n of names) copiesByName.set(n, (copiesByName.get(n) ?? 0) + 1);
-  const graph = await buildWireGraph(names, rolesByName, copiesByName, sources);
+  const graph = await buildWireGraph(names, rolesByName, copiesByName, sources, report);
   return { report, missing, resolvedCount: cards.length,
     totalCount: commanderNames.length + sections.deck.length, commanderColorIdentity, graph };
 }

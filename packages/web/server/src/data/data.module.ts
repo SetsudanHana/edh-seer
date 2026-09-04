@@ -55,8 +55,8 @@ export const STORE = "MONGO_STORE";
           makeLookup: () => data.mongoLookup(store as never),
           resolveDeck: (commanderNames, deckNames, lookup) =>
             orchestrate.resolveDeck(commanderNames, deckNames, lookup as never),
-          graph: (cardNames, rolesByName, copiesByName) =>
-            orchestrate.buildWireGraph(cardNames, rolesByName, copiesByName, sources),
+          graph: (cardNames, rolesByName, copiesByName, report) =>
+            orchestrate.buildWireGraph(cardNames, rolesByName, copiesByName, sources, report as never),
           analyze: (cards, combos, commanderNames) =>
             orchestrate.analyzeResolvedDeck(cards as never, combos as never, commanderNames, sources),
         };

@@ -1548,32 +1548,3 @@ test("END-TO-END: a token read as unpartnered because its maker's OTHER face is 
   expect(treasure).toBeDefined();
   expect(treasure!.hasPartner).toBe(true);
 });
-
-// `skipManaModel` is a PERFORMANCE refusal and must be nothing else. `buildWireGraph` sets it on
-// the second analysis it runs per request -- the one whose only output it reads is `edges` -- and
-// the model it drops is ~530ms of a ~1.3s deck analysis. The pin is that the edges do not move:
-// they are formed before the simulation runs, so if this ever fails the two are entangled and the
-// flag is no longer free.
-describe("skipManaModel", () => {
-  const deck = [
-    dc("Inalla, Archmage Ritualist", inallaAbility, ["wizard"]),
-    dc("Kindred Discovery", kindredDiscoveryAbility, [], "Enchantment"),
-    dcWithPT("Wizard Body", 2, 2),
-  ];
-
-  it("leaves the edges untouched and omits the three fields the model feeds", () => {
-    const full = analyzeDeckStructured(deck, ["Inalla, Archmage Ritualist"]);
-    const edgesOnly = analyzeDeckStructured(
-      deck, ["Inalla, Archmage Ritualist"], undefined, undefined, undefined, undefined, undefined,
-      { skipManaModel: true },
-    );
-
-    expect(edgesOnly.edges).toEqual(full.edges);
-    // Present without the flag, so the assertions below are about the flag and not about a deck
-    // this small never being priced in the first place.
-    expect(full.manaAvailability).toBeDefined();
-    expect(edgesOnly.manaAvailability).toBeUndefined();
-    expect(edgesOnly.deckMath).toBeUndefined();
-    expect(edgesOnly.cards.every((c) => c.castability === undefined)).toBe(true);
-  });
-});
