@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import App from "./App.js";
 import { saveLastDeck } from "./lib/run-diff.js";
 
@@ -34,4 +34,24 @@ test("a deck in the URL beats the remembered one", () => {
   expect(screen.queryByDisplayValue("1 Sol Ring")).toBeNull();
   window.location.hash = "";
   window.sessionStorage.clear();
+});
+
+/** THE CARD PAGE REPLACES THE DECK TOOL, IT DOES NOT SIT UNDER IT. `main` renders unconditionally
+ *  in this component, so mounting a route without this seam would have put a card page BELOW a full
+ *  deck form -- which every test above would still have passed, since they all render at `/`.
+ *
+ *  Driven with no artifact on disk: a 404 shard is the "not in the corpus" branch, which is enough
+ *  to prove which tree rendered. */
+test("a card URL renders the card page and not the deck tool", async () => {
+  const fetchSpy = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) } as Response);
+  window.history.pushState({}, "", "/cards/krenko-mob-boss");
+  try {
+    render(<App />);
+    expect(await screen.findByText(/has not been read/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Analyze deck" })).toBeNull();
+  } finally {
+    fetchSpy.mockRestore();
+    window.history.pushState({}, "", "/");
+  }
 });
