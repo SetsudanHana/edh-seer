@@ -111,8 +111,14 @@ export async function buildWireGraph(
   // `loadTokenTags` reads the whole `tokens` collection once (a few hundred rows) and joins it
   // to the derived token rows, and `analyzeDeckStructured` is pure and takes a SYNCHRONOUS lookup.
   const tokenTags = sources.tokenTags;
+  // `skipManaModel`: this call exists ONLY for `edges` (the line below is the whole use of
+  // `report`), and the goldfish model is ~530ms of the ~630ms it costs. Edges are formed before the
+  // simulation runs and cannot read it, so the graph is byte-identical without it -- pinned by
+  // `orchestrate.test.ts`. The report the READER sees is `analyzeResolvedDeck`'s, which still
+  // prices every card.
   const report = analyzeDeckStructured(
     deckCards as never, undefined, undefined, undefined, undefined, undefined, tokenTags,
+    { skipManaModel: true },
   );
   const reasons = report.edges.flatMap((e) => e.reasons);
   // `deckCards` above is deduped by name (one lookup per unique card), but
