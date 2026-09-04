@@ -275,12 +275,20 @@ export function partnersFor(
       slug: slugs.get(r.card.card.name) ?? slugOf(r.card.card.name),
       score: r.score,
       event: r.event,
-      reason: pickReason(reasons),
+      reason: pickReason(reasons, r.event),
     });
     if (rows.length === KEEP) break;
   }
   return { rows, pool };
 }
+
+/** THE SPELLINGS OF ONE VERB. `Reason.tag` comes from `zoneEventKey`, which renames two
+ *  zone-qualified events; `eventKey` drops the zone entirely. So a demand key spelled `enters` has
+ *  to accept a `enters-graveyard` tag, and `leaves` has to accept `dies`. */
+const eventVerbs = (event: string): Set<string> => {
+  const v = event.split("|")[0]!;
+  return new Set(v === "leaves" ? [v, "dies"] : v === "enters" ? [v, "enters-graveyard"] : [v]);
+};
 
 /** WHICH OF THE ENGINE'S SENTENCES TO STORE.
  *
@@ -289,10 +297,23 @@ export function partnersFor(
  *  goblins repeatedly, satisfies the same trigger and is the half worth printing. `reasons[0]` was
  *  simply whichever the engine emitted first.
  *
- *  A REPEATABLE REASON BEATS A ONE-SHOT, and nothing else is reordered: this picks between sentences
- *  the engine already wrote, it never composes one and never promotes a pair the engine refused. */
-function pickReason(reasons: { text: string; repeatability?: string }[]): string {
-  return (reasons.find((r) => r.repeatability && r.repeatability !== "oneshot") ?? reasons[0]!).text;
+ *  THE ROW'S OWN EVENT COMES FIRST, and preferring repeatability without it was measurably wrong:
+ *  **11,928 of 88,768 rows (13.4%) printed an event key beside a sentence about a different
+ *  channel** -- a row labelled `dies|-|-` reading "When Wild Magic Surge is cast, Sedgemoor Witch
+ *  makes a token". Both halves can be true and the page still contradicts itself, because `event`
+ *  is what earned the score and the sentence is what the reader checks it against. A pair usually
+ *  connects through several channels; only one of them is the row.
+ *
+ *  A REPEATABLE REASON BEATS A ONE-SHOT within that event, and nothing else is reordered: this
+ *  picks between sentences the engine already wrote, it never composes one and never promotes a
+ *  pair the engine refused. When NO sentence carries the row's event -- a reanimator row whose
+ *  reason is tagged `graveyard-recursion` -- the whole set stands rather than none of it, because a
+ *  sentence about the wrong channel still beats no sentence at all. */
+function pickReason(reasons: { tag: string; text: string; repeatability?: string }[], event: string): string {
+  const verbs = eventVerbs(event);
+  const onEvent = reasons.filter((r) => verbs.has(r.tag.split(":")[0]!));
+  const pool = onEvent.length > 0 ? onEvent : reasons;
+  return (pool.find((r) => r.repeatability && r.repeatability !== "oneshot") ?? pool[0]!).text;
 }
 
 /** SMALLER THAN THE CARD SHARDS ON PURPOSE. The deploy is 16,407 files against a 20,000 cap, so the

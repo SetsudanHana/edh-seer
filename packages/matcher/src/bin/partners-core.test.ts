@@ -333,3 +333,65 @@ test("with only a one-shot on offer, that is what is stored", async () => {
     expect(rows[0]!.reason).toBe("ONLY ONE SHOT");
   } finally { spy.mockRestore(); }
 });
+
+/** THE ROW'S OWN EVENT OUTRANKS REPEATABILITY. Measured 2026-09-04: 11,928 of 88,768 rows printed
+ *  an event key beside a sentence about some other channel, because `pickReason` only ever asked
+ *  which sentence repeated. The row is scored on ONE event and the reader checks it against ONE
+ *  sentence; they have to be the same event. */
+test("the sentence for the row's own event wins over a repeatable one for another", async () => {
+  const edges = await import("../edges.js");
+  const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
+    { tag: "cast:creature", text: "OFF EVENT, REPEATABLE", repeatability: "triggered" },
+    { tag: "enters:creature", text: "ON EVENT", repeatability: "oneshot" },
+  ] as never);
+  try {
+    // Impact Tremors demands `enters|creature|-`, so that is the row's event.
+    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    expect(rows[0]!.reason).toBe("ON EVENT");
+  } finally { spy.mockRestore(); }
+});
+
+/** WITHIN THE ROW'S EVENT, REPEATABILITY STILL DECIDES -- the two rules compose rather than one
+ *  replacing the other. */
+test("among sentences for the row's event, the repeatable one is still preferred", async () => {
+  const edges = await import("../edges.js");
+  const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
+    { tag: "enters:creature", text: "ON EVENT, ONE SHOT", repeatability: "oneshot" },
+    { tag: "cast:creature", text: "OFF EVENT, REPEATABLE", repeatability: "triggered" },
+    { tag: "enters:creature", text: "ON EVENT, REPEATABLE", repeatability: "triggered" },
+  ] as never);
+  try {
+    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    expect(rows[0]!.reason).toBe("ON EVENT, REPEATABLE");
+  } finally { spy.mockRestore(); }
+});
+
+/** A SENTENCE ABOUT THE WRONG CHANNEL BEATS NO SENTENCE. `graveyard-recursion` is a real tag with
+ *  no verb any demand key spells, and a reanimator row that stored "" would be worse than one that
+ *  states the other half of why the pair connects. */
+test("with no sentence for the row's event, the whole set stands", async () => {
+  const edges = await import("../edges.js");
+  const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
+    { tag: "graveyard-recursion:creature", text: "OTHER CHANNEL", repeatability: "triggered" },
+  ] as never);
+  try {
+    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    expect(rows[0]!.reason).toBe("OTHER CHANNEL");
+  } finally { spy.mockRestore(); }
+});
+
+/** ONE VERB, TWO SPELLINGS. `zoneEventKey` renames a graveyard entry and a battlefield departure;
+ *  `eventKey` drops the zone. Without the rename an `enters-graveyard` sentence never matches the
+ *  `enters` row it belongs to, and the fix would silently do nothing on the whole mill/reanimate
+ *  family. */
+test("a zone-renamed tag matches the demand key that dropped the zone", async () => {
+  const edges = await import("../edges.js");
+  const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
+    { tag: "cast:creature", text: "OFF EVENT, REPEATABLE", repeatability: "triggered" },
+    { tag: "enters-graveyard:creature", text: "ON EVENT", repeatability: "oneshot" },
+  ] as never);
+  try {
+    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    expect(rows[0]!.reason).toBe("ON EVENT");
+  } finally { spy.mockRestore(); }
+});
