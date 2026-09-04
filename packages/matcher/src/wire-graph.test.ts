@@ -176,12 +176,13 @@ test("edges are serialized to the wire shape: reasons collapse to their text", (
     edges: [{
       from: "A", to: "B", weight: 1.5, tags: ["ramp"],
       reasons: [{ tag: "ramp", text: "A ramps into B" } as never],
+      drawn: true,
     }],
     undirectedReasons: 0,
     offDeckReasons: 0,
   };
   const out = attachRolesAndArt(graph, [], new Map(), normalize);
-  expect(out.edges).toEqual([{ from: "A", to: "B", weight: 1.5, tags: ["ramp"], reasonTexts: ["A ramps into B"] }]);
+  expect(out.edges).toEqual([{ from: "A", to: "B", weight: 1.5, tags: ["ramp"], reasonTexts: ["A ramps into B"], drawn: true }]);
 });
 
 test("undirectedReasons and offDeckReasons pass straight through", () => {
