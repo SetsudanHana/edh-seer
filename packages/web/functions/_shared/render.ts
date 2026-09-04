@@ -37,8 +37,12 @@ export async function renderCardPage(
   // has not read this card, which is the ordinary case for 38% of the corpus -- because a 404
   // renders exactly like a 200 and only says something different to a crawler.
   const notFound = () => new Response(injectPage(shell, {
-    title: "Not in the corpus — EDH Seer",
-    description: "The engine has not read this card, so it has no page.",
+    // THE SAME SENTENCE THE PAGE ITSELF RENDERS. Two possibilities and neither asserted: this layer
+    // cannot tell a real card that produced no events from a name that is simply wrong, and a title
+    // claiming "the engine has not read this card" about a typo is the assertion the page copy was
+    // corrected for.
+    title: `No page for “${slug}” — EDH Seer`,
+    description: "Either that name is wrong, or the engine found nothing to say about the card.",
     canonical: `${origin}/${kind === "commander" ? "commanders" : "cards"}/${slug}`,
     indexable: false,
     bodyHtml: "",

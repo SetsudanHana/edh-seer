@@ -50,7 +50,12 @@ test("the card name does not claim the page's one h1", async () => {
  *  rendering an empty shell that reads as broken. */
 test("an unread card says so rather than rendering an empty page", async () => {
   at("black-lotus", async () => null);
-  expect(await screen.findByText(/has not been read/i)).toBeInTheDocument();
+  // IT MUST NOT CLAIM A CARD EXISTS AT A URL THAT MAY NAME NOTHING. The slug is echoed back and
+  // both possibilities are named, because this page cannot tell a real unread card from a typo.
+  expect(await screen.findByRole("heading", { name: /No page for/ })).toBeInTheDocument();
+  expect(screen.getByText(/black-lotus/)).toBeInTheDocument();
+  expect(screen.getByText(/that name is wrong/i)).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Search the cards/ })).toHaveAttribute("href", "/cards");
 });
 
 /** NAME, TYPE LINE AND MANA COST ARE CARD METADATA AND THE PAGE IS UNUSABLE WITHOUT THEM. The

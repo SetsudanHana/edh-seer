@@ -24,19 +24,34 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
 
   if (page === undefined) return <p className="text-(--muted)">Reading the corpus…</p>;
 
-  // A MISSING CLAIM IS BETTER THAN A CONFIDENT WRONG ONE, and a card the engine has not read is the
-  // ordinary case rather than the error case. The page says which of the two it is instead of
-  // rendering an empty shell that reads as a page that failed to load.
+  // TWO DIFFERENT THINGS LAND HERE AND THIS PAGE CANNOT TELL THEM APART, so it must not claim to.
+  //
+  // The artifact holds the 15,384 cards the engine could read. A slug missing from it is either a
+  // real card that produced no events -- Sol Ring, whose mana ability is neither an emit nor a
+  // trigger -- or a name that is simply wrong. Distinguishing them would need the whole 34,000-card
+  // corpus in the browser, which is not a download this page is worth.
+  //
+  // The first cut said "This card has not been read by the engine", which asserts a card exists at
+  // a URL that may name nothing, and then invited an issue about it -- owner-reported after reading
+  // it on a typo. Naming BOTH possibilities is the honest sentence, and the search link is the one
+  // that actually helps when the name is the problem.
   if (page === null) {
     return (
       <section className="flex flex-col gap-4">
-        <h2 className="text-3xl font-semibold">Not in the corpus</h2>
+        <h2 className="text-3xl font-semibold">No page for “{slug}”</h2>
         <p className="text-(--muted)">
-          This card has not been read by the engine, so it forms no edges and there is nothing here
-          to show.{" "}
+          Either that name is wrong, or the engine read the card and found nothing to say about it:
+          a page exists only where the oracle text produces an event some other card can answer. A
+          card that just adds mana, or draws you a card, forms no edges and gets no page.
+        </p>
+        <p>
+          <Link className="text-(--accent) hover:underline" to="/cards">Search the cards →</Link>
+        </p>
+        <p className="text-(--muted) text-sm">
+          If you know this card and expected edges from it,{" "}
           <a className="text-(--accent) hover:underline" href="https://github.com/SetsudanHana/edh-seer/issues/new"
-            target="_blank" rel="noopener noreferrer">Open an issue</a>{" "}
-          if you think it should have been.
+            target="_blank" rel="noopener noreferrer">open an issue</a>{" "}
+          with the card name — a card read badly is a fixable bug rather than an opinion.
         </p>
       </section>
     );

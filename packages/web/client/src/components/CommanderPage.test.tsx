@@ -84,5 +84,6 @@ test("a card that is not a commander says so and points at its card page", async
 
 test("an unread card says so rather than rendering an empty page", async () => {
   at("black-lotus", async () => null);
-  expect(await screen.findByText(/has not been read/i)).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: /No page for/ })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Search the commanders/ })).toHaveAttribute("href", "/commanders");
 });
