@@ -83,35 +83,25 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
     <div className="flex flex-col gap-10 min-w-0">
       {header}
 
-      <section className="rounded-(--radius) border border-(--separator) bg-(--surface) p-5 grid gap-6 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <h3 className="eyebrow text-(--muted)">its events point at</h3>
-          {/* EVERY LABEL THAT FITS, never one picked from several: a commander that makes tokens and
-            * watches creatures die is both, and choosing between them would need a priority order
-            * nothing here has measured. */}
+      {/* ONE LINE, NOT A PANEL. It was a ~1,000px surface holding two items and ~30px of content,
+        * and both of them were kickers -- "ITS EVENTS POINT AT" stacked above "Tokens" -- which is
+        * the one typographic rule this system names outright: a label pairs INLINE with its value or
+        * it is the heading. A design review called it "one sentence of information wearing a
+        * container". */}
+      <div className="flex flex-col gap-2 max-w-[68ch]">
+        <p>
+          <span className="eyebrow text-(--muted)">its events point at </span>
           {themes.length === 0
-            ? <p className="text-(--muted)">
-                No archetype signature — its events are the broad ones every deck runs.
-              </p>
-            : <ul className="flex flex-wrap gap-2">
-                {themes.map((t) => (
-                  <li key={t} className="rounded-(--radius) border border-(--separator) bg-(--surface-secondary) px-2.5 py-1 text-sm">
-                    {t}
-                  </li>
-                ))}
-              </ul>}
-        </div>
-        <div className="flex flex-col gap-2">
-          <h3 className="eyebrow text-(--muted)">the other 99 have to bring</h3>
+            ? <span className="text-(--muted)">no archetype — its events are the broad ones every deck runs</span>
+            : themes.join(" · ")}
+        </p>
+        <p>
+          <span className="eyebrow text-(--muted)">the other 99 have to bring </span>
           {gaps.length === 0
-            ? <p className="text-(--muted)">
-                Nothing: it answers every event it watches, or it watches none at all.
-              </p>
-            : <ul className="flex flex-col gap-1">
-                {gaps.map((d) => <li key={d}>{eventKeySentence(d)}</li>)}
-              </ul>}
-        </div>
-      </section>
+            ? <span className="text-(--muted)">nothing — it answers every event it watches</span>
+            : gaps.map(eventKeySentence).join(" · ")}
+        </p>
+      </div>
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
@@ -119,7 +109,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           <p className="text-(--muted) max-w-[65ch]">
             Ranked over the cards a deck led by {page.name} could legally contain — not the whole
             corpus, which is what the card page ranks over.
-          </p>
+          {" "}
+            The fewer cards can cause an event, the higher the pairing ranks.</p>
         </div>
         <PartnerList
           rows={page.commanderPartners ?? []}

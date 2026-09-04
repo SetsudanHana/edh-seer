@@ -150,7 +150,7 @@ test("a card with no image renders without one", async () => {
  *  ranking was broken. It was not; the evidence was missing. */
 test("a group states the rarity its ranking is computed from", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  const line = await screen.findByText(/cards in the corpus can cause this/);
+  const line = await screen.findByText(/cards can cause this/);
   expect(line.textContent).toMatch(/2,879/);
 });
 

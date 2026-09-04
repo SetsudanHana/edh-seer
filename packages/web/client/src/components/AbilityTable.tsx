@@ -24,11 +24,20 @@ const KIND_LABEL: Record<string, string> = {
   "on-cast": "on cast",
 };
 
-export function AbilityTable({ rows }: { rows: AbilityRow[] }) {
+export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: boolean }) {
   if (rows.length === 0) return null;
+  // A TABLE NEEDS TABLE WIDTH. In the card page's 320px rail the four columns crush exactly as they
+  // do on a phone -- "makes a token / once for every Goblin you control" over six lines -- so the
+  // caller says which form it has room for rather than a breakpoint guessing.
+  const rowsOnly = stacked ? "" : "hidden sm:table";
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse">
+      {/* A TABLE THAT SURVIVES 390px BY CRUSHING IS A FAILED RESPONSIVE FORM. At a phone width the
+        * four columns became 70-90px ribbons wrapping every cell three and four times -- "a Goblin
+        * creature token being created" over four lines -- which two reviewers independently called
+        * the one region that reads as developer output. Below `sm` the same data renders as stacked
+        * key/value rows; the table markup is kept for the widths where a table is readable. */}
+      <table className={`${stacked ? "hidden" : rowsOnly} w-full text-left border-collapse`}>
         <thead>
           {/* THE HEADER RULE IS HEAVIER THAN THE ROW RULES, which is DESIGN.md's table spec -- but
             * it names `--border`, and that token does not exist: it was absorbed into `--separator`
@@ -78,6 +87,34 @@ export function AbilityTable({ rows }: { rows: AbilityRow[] }) {
           ))}
         </tbody>
       </table>
+
+      <ul className={`${stacked ? "flex" : "sm:hidden flex"} flex-col gap-4`}>
+        {rows.map((a, i) => (
+          <li key={i} className="flex flex-col gap-1 border-t border-(--separator) pt-3 first:border-t-0 first:pt-0">
+            <p className="flex flex-wrap items-baseline gap-x-2">
+              <span className="eyebrow text-(--muted)">{KIND_LABEL[a.kind] ?? a.kind}</span>
+              {a.cost && <span className="font-mono text-sm">{a.cost}</span>}
+            </p>
+            {a.when.length > 0 && (
+              <p><span className="eyebrow text-(--muted)">when </span>{a.when.map(eventKeySentence).join(", ")}</p>
+            )}
+            <p>
+              {effectPhrase(a.effect, a.amount) ?? a.effect.replace(/-/g, " ") ?? "—"}
+              {a.counts && (
+                <span className="text-(--muted)">
+                  {" "}once for every {a.counts.charAt(0).toUpperCase() + a.counts.slice(1)} you control
+                </span>
+              )}
+            </p>
+            {a.emits.length > 0 && (
+              <p>
+                <span className="eyebrow text-(--muted)">puts into the game </span>
+                {a.emits.map(eventKeySentence).join(", ")}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

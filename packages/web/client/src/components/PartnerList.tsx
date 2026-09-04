@@ -63,7 +63,7 @@ export function PartnerList({ rows, pool, rarity, empty }: {
                   <span className="font-mono tabular-nums">
                     {rarity[group.event]!.toLocaleString("en-US")}
                   </span>{" "}
-                  cards in the corpus can cause this — the rarer, the higher this pairing ranks.
+                  cards can cause this
                 </p>
               )}
             </div>
@@ -71,9 +71,20 @@ export function PartnerList({ rows, pool, rarity, empty }: {
               {group.rows.map((p) => (
                 <li key={p.slug}
                   className="border-t border-(--separator) py-3 flex flex-col gap-1 first:border-t-0 first:pt-0">
-                  <Link className="font-semibold text-(--accent) hover:underline underline-offset-2"
-                    to={`/cards/${p.slug}`}>{p.name}</Link>
-                  <p className="text-(--muted) max-w-[65ch]">{p.reason}</p>
+                  {/* THE HEADING ALREADY SAID THE EVENT. Every row under one group opened with the
+                    * same 60 characters -- "When a Goblin enters thanks to Krenko, Mob Boss," ten
+                    * times over -- and a design review measured ~60% of this section as repetition
+                    * with the payoff, the only new information, pushed to the end of every line. The
+                    * row now leads with what the card DOES; the engine's full sentence is still in
+                    * the artifact and still what the deck report prints.
+                    * A feeder row has no payoff (its sentence describes the subject, not this card)
+                    * and keeps the sentence whole. */}
+                  <p className="flex flex-wrap items-baseline gap-x-2">
+                    <Link className="font-semibold text-(--accent) hover:underline underline-offset-2"
+                      to={`/cards/${p.slug}`}>{p.name}</Link>
+                    {p.payoff && <span className="text-(--muted)">— {p.payoff}</span>}
+                  </p>
+                  {!p.payoff && <p className="text-(--muted) max-w-[65ch]">{p.reason}</p>}
                   {/* A LIMIT THE PAGE STATES IS HONEST; A LIMIT IT HIDES IS NOT. 3,453 consumer
                     * abilities carry no effect kind, so their sentence ends at "triggers" -- in the
                     * same typeface as the informative rows, which a skeptic called a refusal that

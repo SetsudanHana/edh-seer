@@ -269,6 +269,22 @@ export interface PartnerRow {
   event: string;
   /** The ENGINE'S sentence, naming both cards. Not composed here. */
   reason: string;
+  /** THE HALF OF THE SENTENCE THE HEADING DOES NOT ALREADY SAY.
+   *
+   *  Every row under one group opened with the same 60 characters -- "When a Goblin enters thanks to
+   *  Krenko, Mob Boss," ten times over -- because the group heading states the event and then each
+   *  sentence restates it. A design review measured roughly 60% of the section as repetition, with
+   *  the only new information, the payoff, pushed to the end of every line.
+   *
+   *  COMPUTED FROM THE ENGINE'S OWN SENTENCE, never composed: the tail after ", <partner name> " is
+   *  what that card does, in the words the engine already chose. `reason` is kept in full because
+   *  the deck report prints it and because a reader who wants the whole claim should still be able
+   *  to get it.
+   *
+   *  ABSENT ON A FEEDER ROW. Those run the other way -- "While you control Taster of Wares, Krenko
+   *  counts it and makes more tokens" -- so the tail describes the SUBJECT, not the row's card, and
+   *  collapsing it would put Krenko's behaviour under Taster of Wares' name. */
+  payoff?: string;
   /** THE ENGINE DID NOT READ WHAT THIS CARD DOES, so its sentence ends at "triggers".
    *
    *  MEASURED 2026-09-04: 3,453 consumer abilities in the corpus carry no effect kind at all. Their
@@ -333,6 +349,15 @@ export interface PartnerResult {
    *  was missing, which is the page's fault and not the reader's. */
   rarity: Record<string, number>;
 }
+
+/** The tail of the engine's sentence after ", <name> " -- what the row's own card does. Returns
+ *  nothing when the sentence does not have that shape, which is the honest failure: a row with no
+ *  payoff keeps the full sentence rather than showing a guess at half of it. */
+const payoffOf = (reason: string, name: string): { payoff?: string } => {
+  const at = reason.indexOf(`, ${name} `);
+  if (at < 0) return {};
+  return { payoff: reason.slice(at + name.length + 3) };
+};
 
 export function partnersFor(
   subject: DeckCard,
@@ -418,6 +443,7 @@ export function partnersFor(
       score: hit.score,
       event: hit.event,
       reason: chosen.text,
+      ...payoffOf(chosen.text, r.card.card.name),
       ...(chosen.effectKind ? {} : { unread: true as const }),
     });
     if (rows.length === KEEP) break;

@@ -40,7 +40,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
   // the one thing on this page that earns the extra width -- four columns squeezed into 68ch wrap
   // every cell. DESIGN.md's own rule: a wide viewport buys columns.
   return (
-    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-x-10 lg:items-start max-w-7xl">
+    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start max-w-7xl">
     <div className="flex flex-col gap-10 min-w-0">
       {/* THE CARD IS A RAIL, NOT A BLOCK. It sat beside a 68ch column with the other half of a
         * 2,000px viewport empty beside it (owner-reported 2026-09-04) -- and DESIGN.md's own rule is
@@ -70,24 +70,19 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
       </header>
       </div>
 
-      {/* HOW THE ENGINE READ THE CARD, ability by ability. The union of a card's events -- the panel
-        * below -- cannot say WHICH ability produced which claim, and that is the question a reader
-        * has when a row looks wrong. This publishes our derivation, never the card's own text: the
-        * words are on the image above, where the artist is credited too. */}
-      <section className="flex flex-col gap-3 max-w-4xl">
+      <section className="lg:hidden flex flex-col gap-3">
         <h3 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h3>
         <AbilityTable rows={page.abilities} />
       </section>
 
-      {/* THE PROSE KEEPS ITS MEASURE, THE LIST DOES NOT: the intro is a paragraph and wraps at 68ch,
-        * the groups below it are columns. */}
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
           <h3 className="text-2xl font-bold tracking-[-0.01em]">Most specific partners</h3>
           <p className="text-(--muted) max-w-[65ch]">
             Ranked by how rare the matched event is across the corpus — how precisely these two cards
             interact, not how good either one is. Every row is an edge the engine drew, in its own
-            words.
+            words.{" "}
+            The fewer cards can cause an event, the higher the pairing ranks.
           </p>
         </div>
         <PartnerList
@@ -104,8 +99,17 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
       * card in the document -- invisible on screen, and two hits for anything reading the page,
       * a screen reader and a test alike. Sticky on a wide viewport, because the partner list is
       * long and the card is what every row on it is about. */}
-    <aside className="order-first lg:order-last lg:sticky lg:top-6">
+    {/* THE RAIL IS A COLUMN, NOT A GUTTER. MEASURED on the deployed preview: the card ended around
+      * y440 and below it ran ~400px of pure background for the whole ~1,300px length of the partner
+      * list -- a quarter of the viewport doing nothing on the densest page. The engine's reading is
+      * card-shaped metadata and belongs with the card; moving it here also demotes a diagnostic
+      * table out of the reader's first scroll and promotes the partners, which are the product. */}
+    <aside className="order-first lg:order-last lg:sticky lg:top-6 flex flex-col gap-6">
       <CardArt artCrop={page.artCrop} name={page.name} />
+      <div className="hidden lg:flex lg:flex-col gap-3">
+        <h3 className="eyebrow text-(--muted)">how the engine reads this card</h3>
+        <AbilityTable rows={page.abilities} stacked />
+      </div>
     </aside>
     </article>
   );

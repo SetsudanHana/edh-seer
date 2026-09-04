@@ -97,7 +97,10 @@ export function CardSearch({
           {...(replace !== undefined ? { replace } : {})} />
       )}
       <header className="flex flex-col gap-3">
-        <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em]">
+        {/* THE LABEL IS NOT THE PAGE. "Cards" at 48px was the largest thing on a screen whose real
+          * lead is the box you type in -- a generic noun out-ranking the only control that does
+          * anything. */}
+        <h2 className="text-2xl font-bold tracking-[-0.01em]">
           {commanderMode ? "Commanders" : "Cards"}
         </h2>
         <p className="text-(--muted) max-w-[65ch]">
@@ -135,7 +138,8 @@ export function CardSearch({
         </fieldset>
       )}
 
-      <label className="flex flex-col gap-2">
+      {/* NO KICKER: the label pairs INLINE with the field rather than stacking above it. */}
+      <label className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="eyebrow text-(--muted)">{commanderMode ? "find a commander" : "find a card"}</span>
         <input
           type="search" autoFocus value={query} onChange={(e) => setQuery(e.target.value)}
@@ -184,9 +188,11 @@ export function CardSearch({
               * the one thing a player reads before the name when choosing a card. Present colours
               * only -- five fixed slots is the rule for a TABLE, and this list has no column to
               * align to. */}
-            <ul aria-label="Results" className="flex flex-col">
+            {/* WIDTH BUYS COLUMNS HERE TOO: a single 685px column of names left the right half of a
+              * 1920px screen black and showed twelve results where two columns show twenty-four. */}
+            <ul aria-label="Results" className="flex flex-col lg:block lg:columns-2 lg:gap-x-10">
               {matches.slice(0, SEARCH_LIMIT).map((e) => (
-                <li key={e.slug} className="border-t border-(--separator) first:border-t-0">
+                <li key={e.slug} className="border-t border-(--separator) first:border-t-0 break-inside-avoid">
                   <Link
                     className="flex items-baseline gap-3 py-2.5 hover:text-(--accent) group"
                     to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}
