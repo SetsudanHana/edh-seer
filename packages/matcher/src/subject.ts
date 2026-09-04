@@ -55,6 +55,10 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // which UNDER-claims deliberately: "whenever a modified creature you control deals combat damage"
   // is false about an unmodified creature, and a missing answer beats a wrong one.
   if (consumer.modified === true && producer.modified !== true) return false;
+  // A COMBAT STATE, the same class: only a producer whose printed text names an attacking or a
+  // blocking creature can supply one. "Whenever an attacking creature dies" (Kardur) is false about
+  // a creature that died to a sorcery-speed edict, and under-claiming to 0 is the right answer.
+  if (consumer.combat !== undefined && producer.combat !== consumer.combat) return false;
   // Same shape as historic: a legendary-matters anthem reaches only legendary permanents.
   if (consumer.legendary === true && producer.legendary !== true) return false;
   // A DECK fact, not a printed one — see commander.ts. Same asymmetry as the two supertypes above:

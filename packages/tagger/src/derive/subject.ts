@@ -390,6 +390,10 @@ const HISTORIC = /\bhistoric\b/i;
 const OUTLAW = /\boutlaws?\b/i;
 const NOT_OUTLAW = /\bnon-?outlaws?\b/i;
 const MODIFIED = /\bmodified\b/i;
+/** A combat state, CR 506.4/509.1. "attacking" and "blocking" are participles of the state, never
+ *  of evasion: "aren't blocked" and "can't be blocked" say nothing about a blocker and match neither. */
+const ATTACKING = /\battacking\b/i;
+const BLOCKING = /\bblocking\b/i;
 const NOT_MODIFIED = /\b(?:un|non-?)modified\b|\bprotection from modified\b/i;
 
 /** The LEGENDARY supertype, and its negation. Helm of the Host, Quantum Misalignment and Vesuvan
@@ -579,6 +583,8 @@ export function parseSubject(text: string): SubjectFilter {
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;
   if (OUTLAW.test(t) && !NOT_OUTLAW.test(t)) out.outlaw = true;
   if (MODIFIED.test(t) && !NOT_MODIFIED.test(t)) out.modified = true;
+  if (ATTACKING.test(t)) out.combat = "attacking";
+  else if (BLOCKING.test(t)) out.combat = "blocking";
   // Set BEFORE anything reads the parsed types, because the two defects are independent: the type
   // list is ALSO wrong here (`parseTypes` sweeps the relative clause, so Vesuvan Duplimancy's "a
   // spell that targets only a single artifact or creature you control" derives `[creature,

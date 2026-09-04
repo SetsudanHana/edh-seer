@@ -145,6 +145,15 @@ export interface SubjectFilter {
    *  Kodama of the West Tree says "whenever a MODIFIED creature you control deals combat damage" and
    *  derives a subject of every creature you control. */
   modified?: true;
+  /** The subject demands a COMBAT STATE — an attacking or a blocking creature. A board state like
+   *  `modified`, so it is set on a CONSUMER by `parseSubject` ("whenever an attacking creature
+   *  dies", Kardur, Doomscourge) and on a PRODUCER only where the printed text names it ("exile
+   *  all attacking creatures", Settle the Wreckage). Without it Kardur derived a bare
+   *  `dies:creature` and Blasphemous Edict at sorcery speed fed it (owner, 2026-09-05).
+   *
+   *  Dropped on an `attacks` trigger, where the state IS the event. Corpus: 12 trigger subjects
+   *  name an attacking creature, 1 a blocking one; 272 action objects attacking, 34 blocking. */
+  combat?: "attacking" | "blocking";
   /** The subject demands the LEGENDARY supertype. "Legendary creatures you control get +2/+2"
    *  (Serah Farron) and Jodah's +X/+X derived a subject of EVERY creature without it, which were the
    *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:
@@ -362,6 +371,13 @@ export interface GameEvent {
    *  written solely by `packages/matcher/src/implied.ts`. Used to scope `combatSelfSupplied` to
    *  implied combat only, so authored combat emits (goad, Mage Slayer, Saskia) still form edges. */
   implied?: true;
+  /** The producer acts at INSTANT SPEED: an activated ability (loyalty and "activate only as a
+   *  sorcery" excepted), an instant, or a spell with flash. The smallest timing model that holds
+   *  the owner's ruling (2026-08-22, upheld): Ayara -> Death Tyrant is REAL because a sac outlet
+   *  can eat an ATTACKING creature in combat, while Blasphemous Edict at sorcery speed cannot. Read
+   *  by the matcher only where a consumer demands a combat state (`SubjectFilter.combat`). Set on
+   *  authored emits alone -- an implied event carries no ability to be fast. */
+  instantSpeed?: true;
   /** WHO DEALT THE DAMAGE — damage verbs only, and only on an AUTHORED emit.
    *
    *  A damage event has two participants and `subject` can only hold one of them. The engine had

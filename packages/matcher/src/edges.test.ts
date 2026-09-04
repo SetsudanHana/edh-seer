@@ -3452,3 +3452,54 @@ test("a count of what an opponent controls forms no edge", () => {
   expect(directedReasons(goblinBody(), countsTheirs, H).some((r) => r.tag.startsWith("scales:")))
     .toBe(false);
 });
+
+// KARDUR, DOOMSCOURGE <-> BLASPHEMOUS EDICT (owner, 2026-09-05). "Whenever an attacking creature
+// dies" is not "whenever a creature dies": an edict at sorcery speed kills nothing that is
+// attacking. The trigger now carries `combat: "attacking"`, and only a producer whose printed text
+// names an attacking creature can meet it.
+test("a dies trigger on an attacking creature refuses a plain sacrifice and accepts a combat-scoped death", () => {
+  const kardur = base("Kardur", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { control: "any", token: null, type: "creature", combat: "attacking" } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
+  }]);
+  const edict = base("Edict", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "any", token: null, type: "creature", scope: "all" } }],
+  }]);
+  const settle = base("Settle", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "any", token: null, type: "creature", scope: "all", combat: "attacking" } }],
+  }]);
+  expect(pairReasons(edict, kardur, H)).toEqual([]);
+  expect(pairReasons(settle, kardur, H).map((r) => r.tag)).toEqual(["dies:creature"]);
+});
+
+// ...and an INSTANT-SPEED producer meets it without naming the state: Ayara's sac outlet can eat an
+// attacking creature in combat (owner ruling, upheld 2026-08-22), the panel's one REAL claim on a
+// combat-state consumer, and the claim the first cut of this gate deleted.
+test("an instant-speed death satisfies an attacking-creature dies trigger", () => {
+  const kardur = base("Kardur", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { control: "any", token: null, type: "creature", combat: "attacking" } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
+  }]);
+  const ayara = base("Ayara", [{
+    kind: "activated", effect: { kind: "draw-card" }, cost: "{T}, Sacrifice another black creature",
+    emits: [{ verb: "dies", subject: { control: "you", token: null, type: "creature" }, instantSpeed: true }],
+  }]);
+  expect(pairReasons(ayara, kardur, H).map((r) => r.tag)).toEqual(["dies:creature"]);
+  // ...but not when the OPPONENT picks: an instant-speed edict lets them spare the attacker.
+  // Liliana's Triumph and Szat's Will -> Death Tyrant, owner-judged FALSE on the panel.
+  const triumph = base("Triumph", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", scope: "each" }, instantSpeed: true }],
+  }]);
+  expect(pairReasons(triumph, kardur, H)).toEqual([]);
+  // A targeted kill at instant speed aims at the attacker and counts.
+  const downfall = base("Downfall", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", scope: "target" }, instantSpeed: true }],
+  }]);
+  expect(pairReasons(downfall, kardur, H).map((r) => r.tag)).toEqual(["dies:creature"]);
+});
