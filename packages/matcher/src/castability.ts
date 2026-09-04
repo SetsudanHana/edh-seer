@@ -1,4 +1,5 @@
-import { MAX_PRICED_TURN, type CastCurve } from "./goldfish.js";
+import { POLICY_COLLAPSE } from "@edh-seer/engine/percent";
+import { MAX_PRICED_TURN, REPORT_TRIALS, type CastCurve } from "./goldfish.js";
 import type { DeckCard } from "./types.js";
 
 /** Costs this model cannot represent, and the reason each is refused.
@@ -61,6 +62,23 @@ const REFUSALS: { test: (dc: DeckCard) => boolean; reason: string }[] = [
   },
 ];
 
+/** HOW MANY TRIALS MUST HAVE HELD THE CARD before its percentage is worth printing.
+ *
+ *  DERIVED, NOT PICKED. `POLICY_COLLAPSE` is this project's own statement of the smallest gap
+ *  between two probabilities that means anything -- 8pp, below which two figures "say the same thing
+ *  twice". Sampling noise has to sit under that or the report is reading its own jitter, so the floor
+ *  is the sample size whose 95% interval is no wider than the collapse threshold at the worst case
+ *  p = 0.5: `2 * 1.96 * sqrt(0.25 / n) <= POLICY_COLLAPSE`, i.e. `n >= (1.96 / POLICY_COLLAPSE) ** 2`.
+ *
+ *  MEASURED with `bin/castability-conditional.ts` over the 71 calibration decks, 4,476 priced cells.
+ *  At `REPORT_TRIALS` = 10,000 the THINNEST cell holds 732 trials, so this gate refuses NOTHING today
+ *  and costs the report nothing. It is not decoration: `goldfish.ts` has claimed since T18b that
+ *  "castability.ts refuses a card whose denominator is too thin", and until now nothing did -- the
+ *  trial count was quietly doing the guard's job with no one watching it. At 2,000 trials the
+ *  FATTEST cell of all 4,476 holds 393, so the gate refuses every card in every deck, which is the
+ *  honest reading of what 2,000 buys: a per-card conditional figure drawn from ~160 shuffles. */
+export const MIN_HELD_TRIALS = Math.ceil((1.96 / POLICY_COLLAPSE) ** 2);
+
 export interface CardCastability {
   name: string;
   /** THE PRINTED COST, so a renderer can draw pips without joining back on the NAME (roadmap T18a).
@@ -103,6 +121,7 @@ export function costRefusal(card: DeckCard): string | undefined {
 export function cardCastability(
   card: DeckCard,
   curves: ReadonlyMap<string, CastCurve>,
+  minHeld: number = MIN_HELD_TRIALS,
 ): CardCastability {
   const manaValue = card.card.manaValue;
   const turn = Math.max(1, Math.round(manaValue));
@@ -119,6 +138,17 @@ export function cardCastability(
   const curve = curves.get(card.card.name);
   if (!curve || !curve.castable[turn - 1]) {
     return { ...blank, refused: "not priced — the card is not in the simulated library" };
+  }
+  // THE DENOMINATOR IS THE FIGURE'S RIGHT TO EXIST. Every percentage here is CONDITIONAL on holding
+  // the card, so a singleton's cell is drawn from the (6 + turn)/99 of trials that held it. Below
+  // `MIN_HELD_TRIALS` that is noise wearing a percent sign, and the house rule is the one the cost
+  // refusals above follow: refuse the card rather than guess it.
+  const held = curve.held[turn - 1] ?? 0;
+  if (held < minHeld) {
+    return {
+      ...blank,
+      refused: `held in only ${held} of the simulated shuffles — too thin to price`,
+    };
   }
   return { ...blank, castable: curve.castable[turn - 1], mana: curve.mana[turn - 1] };
 }
@@ -183,10 +213,11 @@ export interface DeckCastability {
 export function deckCastability(
   deck: readonly DeckCard[],
   curves: ReadonlyMap<string, CastCurve>,
+  minHeld: number = MIN_HELD_TRIALS,
 ): DeckCastability {
   const rows = deck
     .filter((dc) => !dc.card.typeLine.toLowerCase().includes("land"))
-    .map((dc) => cardCastability(dc, curves));
+    .map((dc) => cardCastability(dc, curves, minHeld));
 
   // Deduped by name: a decklist that names its commander in both the commander section and the
   // deck body arrives here with two identical entries, and the same card twice in a "hardest casts"
@@ -208,7 +239,8 @@ export function deckCastability(
     biases:
       "A range, not a number, and the range is the PLAY POLICY: the low end holds up two mana before "
       + "casting an accelerant, the high end spends everything on acceleration and is a ceiling no "
-      + "real deck plays to. Simulated over 2,000 shuffles with no opponent — nothing is countered, "
+      + `real deck plays to. Simulated over ${REPORT_TRIALS.toLocaleString("en-US")} shuffles with `
+      + "no opponent — nothing is countered, "
       + "killed or taxed — and with no cantrips cast, so a draw-heavy deck reads low. Colours are "
       + "modelled; mulligans are not.",
   };
