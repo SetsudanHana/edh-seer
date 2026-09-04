@@ -13,6 +13,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>{view}</React.StrictMode>,
 );
 
+// THE BOOT FLAG THE RECOVERY SCRIPT IN `index.html` WATCHES FOR. If the bundle never executes --
+// the failure of 2026-09-04, where a browser held an HTML response cached under the JavaScript URL
+// and the module was refused on its MIME type -- nothing in this file runs, so the page cannot heal
+// itself from here. The shell can, and it needs exactly one fact from us: that we got this far.
+(window as unknown as { __appBooted?: boolean }).__appBooted = true;
+
 /** OFFLINE, WHICH THIS APP IS UNUSUALLY CLOSE TO ALREADY: the analysis runs entirely in the browser
  *  and every card shard a deck touches is already kept in the Cache API by `StaticLookup`. What was
  *  missing is the shell — the HTML, the bundle, the CSS — which a service worker precaches.

@@ -102,6 +102,48 @@
       </nav>
     </header>
     <div id="root"></div>
+    <!-- SELF-HEALING FROM A POISONED ASSET CACHE, and it lives here because `index.html` is the one
+         file a browser always refetches. It cannot live in the bundle: the failure this recovers
+         from is the bundle never executing.
+
+         WHAT HAPPENED, 2026-09-04. Cloudflare Pages answers a missing path with this shell -- status
+         200, `text/html` -- and `_headers` stamps `/assets/*` with `immutable, max-age=31536000`.
+         A browser that asked for a hashed asset during the seconds before a deploy's files
+         propagated therefore cached HTML under a JavaScript URL FOR A YEAR, and `immutable` means a
+         normal reload never revalidates it. The module is refused on its MIME type, React never
+         mounts, and the page renders as this static shell with no app in it. Every visitor who
+         loaded the site in that window is stuck until their cache is cleared by hand.
+
+         THE FIX IS ONE FORCED REVALIDATION. `cache: "reload"` bypasses the HTTP cache AND replaces
+         the stored entry, so refetching each module script repairs the cache the reload then reads.
+         Service workers and Cache Storage are cleared too -- they were not the cause here (measured:
+         a fresh profile with neither reproduced it), but they can hold the same poisoned bytes.
+
+         ONCE PER SESSION, VIA `sessionStorage`. A reload loop is a worse failure than a broken page:
+         it burns the visitor's battery and hides the real error. If the second attempt also fails,
+         the page stays broken and visibly so. -->
+    <script>
+      window.addEventListener("load", function () {
+        if (window.__appBooted) return;
+        try {
+          if (sessionStorage.getItem("edh-boot-retry")) return;
+          sessionStorage.setItem("edh-boot-retry", "1");
+        } catch (e) { return; }
+        var scripts = [].slice.call(document.querySelectorAll('script[type="module"][src]'))
+          .map(function (s) { return s.src; });
+        Promise.all(
+          scripts.map(function (src) { return fetch(src, { cache: "reload" }).catch(function () {}); })
+            .concat(
+              typeof caches !== "undefined"
+                ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }).catch(function () {})
+                : [],
+              navigator.serviceWorker
+                ? navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); }).catch(function () {})
+                : [],
+            ),
+        ).then(function () { location.reload(); });
+      });
+    </script>
     <!-- REAL TEXT, IN THE STATIC HTML, AND OUTSIDE `#root` ON PURPOSE.
          Until this existed the entire body was `<div id="root"></div>`: a crawler that does not run
          JavaScript -- most social scrapers, most LLM crawlers, Bing more often than Google -- saw an
