@@ -57,8 +57,12 @@ cpSync(staticOut, target, { recursive: true });
 // `_headers` is Cloudflare's own config and is never served. `sw.js` must not precache ITSELF: the
 // worker is the thing that decides what everything else may serve, so a cached copy is the one
 // failure that cannot fix itself on the next load.
+// `sitemap.xml` IS EXCLUDED FOR THE SAME REASON `static/` IS: it is ~900 KB of URLs written for
+// crawlers, and no reader offline or online ever opens it. Precaching it would more than double the
+// shell a cold start pays for, to cache a file the app itself never reads.
 const shellFiles = (dir, prefix = "") => readdirSync(dir).flatMap((entry) => {
-  if (prefix === "" && (entry === "static" || entry === "sw.js" || entry === "_headers")) return [];
+  if (prefix === "" && (entry === "static" || entry === "sw.js" || entry === "_headers"
+    || entry === "sitemap.xml")) return [];
   const path = join(dir, entry);
   return statSync(path).isDirectory()
     ? shellFiles(path, `${prefix}/${entry}`)
@@ -77,6 +81,47 @@ if (!shell.includes("/index.html") || !shell.some((f) => f.startsWith("/assets/"
 const swVersion = createHash("sha256").update(shell.join("\n")).digest("hex").slice(0, 12);
 writeFileSync(join(dist, "sw.js"), serviceWorkerSource({ version: swVersion, shell }));
 console.log(`service worker: precaches ${shell.length} shell files (${shell.filter((f) => !f.startsWith("/assets/")).join(", ")}), cache edh-seer-shell-${swVersion}`);
+
+// THE SITEMAP IS GENERATED, NOT WRITTEN BY HAND. Two URLs were fine to maintain; 17,775 are not,
+// and a hand-written one drifts from the artifact the moment the corpus grows -- into promising
+// pages that 404, which is worse than having no sitemap at all.
+//
+// THE ORIGIN COMES FROM THE CANONICAL TAG, not from a constant here. `seo.test.ts` derives it the
+// same way on purpose, so the day a custom domain replaces this one it is changed in `index.html`
+// and nowhere else. A second copy in this file would be the one nobody remembers to edit.
+//
+// LISTS ONLY WHAT THE ARTIFACT HOLDS. `name-index.json` is every SUBSTANTIVE card -- one with at
+// least one emit or one trigger -- so a card the engine has never read is not promised a page here.
+// The index lives under the version directory, which `manifest.json` names.
+const canonical = /<link rel="canonical" href="([^"]+)"/.exec(readFileSync(join(dist, "index.html"), "utf8"))?.[1];
+if (!canonical) {
+  console.error("no canonical link in index.html — refusing to write a sitemap with a guessed origin.");
+  process.exit(1);
+}
+const origin = canonical.replace(/\/$/, "");
+const version = JSON.parse(readFileSync(join(target, "manifest.json"), "utf8")).version;
+const nameIndex = JSON.parse(readFileSync(join(target, version, "name-index.json"), "utf8"));
+const sitemapUrls = [
+  `${origin}/`,
+  `${origin}/how-it-works`,
+  ...nameIndex.map((e) => `${origin}/cards/${e.slug}`),
+  ...nameIndex.filter((e) => e.commander).map((e) => `${origin}/commanders/${e.slug}`),
+];
+const expectedUrls = 2 + nameIndex.length + nameIndex.filter((e) => e.commander).length;
+// ASSERTED HERE RATHER THAN TRUSTED: a half-built artifact should fail the deploy, not publish a
+// sitemap full of URLs with nothing behind them.
+if (sitemapUrls.length !== expectedUrls) {
+  console.error(`sitemap: built ${sitemapUrls.length} URLs, expected ${expectedUrls}`);
+  process.exit(1);
+}
+writeFileSync(
+  join(dist, "sitemap.xml"),
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
+  + sitemapUrls.map((u) => `  <url><loc>${u}</loc></url>`).join("\n")
+  + `\n</urlset>\n`,
+);
+console.log(`sitemap: ${sitemapUrls.length} URLs (${nameIndex.length} cards, `
+  + `${nameIndex.filter((e) => e.commander).length} commanders)`);
 
 const countFiles = (dir) =>
   readdirSync(dir).reduce(

@@ -9,7 +9,11 @@ import { expect, test } from "vitest";
 const CLIENT = join(process.cwd(), "client");
 const html = readFileSync(join(CLIENT, "index.html"), "utf8");
 const robots = readFileSync(join(CLIENT, "public", "robots.txt"), "utf8");
-const sitemap = readFileSync(join(CLIENT, "public", "sitemap.xml"), "utf8");
+/** THE SITEMAP IS BUILT, NOT CHECKED IN (Task 10). `assemble-deploy.mjs` writes it from
+ *  `name-index.json`, so the tests that read it only run where a build exists -- the same
+ *  `existsSync` guard the other dist-dependent tests here use. */
+const DIST = join(CLIENT, "dist");
+const builtSitemap = join(DIST, "sitemap.xml");
 const llms = readFileSync(join(CLIENT, "public", "llms.txt"), "utf8");
 
 /** The one absolute origin in the app, written down once. Every assertion below reads it from the
@@ -76,15 +80,36 @@ test("robots keeps crawlers out of the card artifacts and points at the sitemap"
   expect(robots).toContain(`Sitemap: ${canonical}sitemap.xml`);
 });
 
-test("the sitemap lists the pages that exist and nothing that does not", () => {
-  const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-  expect(locs).toEqual([canonical, `${canonical}how-it-works`]);
-  // Every listed URL has a file behind it. A sitemap entry for a page that 404s is worse than no
-  // sitemap: it is a promise the site does not keep.
-  for (const loc of locs) {
-    const path = loc.slice(canonical.length);
-    const file = path === "" ? join(CLIENT, "index.html") : join(CLIENT, path, "index.html");
-    expect(existsSync(file), `${loc} has a file`).toBe(true);
+/** A HAND-WRITTEN SITEMAP CANNOT STAY CORRECT AT THIS SIZE. Two URLs were maintainable; 17,775 are
+ *  not, and a checked-in copy would drift from the artifact the first time the corpus grew --
+ *  into promising pages that 404, which is worse than having no sitemap. */
+test("no hand-written sitemap survives in public/", () => {
+  expect(existsSync(join(CLIENT, "public", "sitemap.xml"))).toBe(false);
+});
+
+/** THE GENERATED ONE LISTS EXACTLY WHAT THE ARTIFACT HOLDS: the two static pages, one card URL per
+ *  substantive card, and a second URL for every card that can lead a deck. A card the engine has
+ *  never read is not in the index and so is never promised a page.
+ *
+ *  Skipped without a build, because `dist/` is produced by `npm run build` plus `assemble-deploy`
+ *  and a fresh checkout has neither. */
+test.skipIf(!existsSync(builtSitemap))("the sitemap lists every substantive card and commander, and nothing else", () => {
+  const version = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
+  const index = JSON.parse(
+    readFileSync(join(DIST, "static", version, "name-index.json"), "utf8"),
+  ) as { slug: string; commander: boolean }[];
+  const locs = [...readFileSync(builtSitemap, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
+
+  expect(locs).toHaveLength(2 + index.length + index.filter((e) => e.commander).length);
+  expect(locs.slice(0, 2)).toEqual([canonical, `${canonical}how-it-works`]);
+  // Every URL is on the canonical origin -- a sitemap that names another host is a sitemap for
+  // another site.
+  for (const loc of locs) expect(loc.startsWith(canonical.slice(0, -1))).toBe(true);
+  // THE PROMISE THIS FILE MAKES: a card the engine has not read has no page and is not listed.
+  const slugs = new Set(index.map((e) => e.slug));
+  for (const loc of locs.slice(2)) {
+    const slug = loc.slice(loc.lastIndexOf("/") + 1);
+    expect(slugs.has(slug), `${loc} is a card the index holds`).toBe(true);
   }
 });
 
