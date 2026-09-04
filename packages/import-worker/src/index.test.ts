@@ -146,6 +146,25 @@ test("a throttled caller gets 429 and never reaches the pacer", async () => {
   expect(stubFetch).not.toHaveBeenCalled();
 });
 
+/** THE LOG LINE MUST NOT CARRY THE IP. We throttle ON the connecting address, so it is right there
+ *  in scope, and the question the log has to answer later is "are we shedding traffic, and for which
+ *  site" -- which needs the source and nothing about who. A test, because "we did not log the IP" is
+ *  exactly the kind of thing a later edit adds back for debugging and nobody notices. */
+test("shedding traffic is logged by site, and never by IP", async () => {
+  const { env } = envWith(DECK);
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  await worker.fetch(
+    new Request("https://edhseer.cards/api/import/archidekt/26039486", {
+      headers: { "CF-Connecting-IP": "203.0.113.7" },
+    }),
+    { ...env, RATE_LIMITER: limiter(false) } as unknown as Env,
+    ctx,
+  );
+  expect(warn).toHaveBeenCalledWith({ event: "import.rate_limited", source: "archidekt" });
+  expect(JSON.stringify(warn.mock.calls)).not.toContain("203.0.113.7");
+  warn.mockRestore();
+});
+
 test("a cache hit is not counted against the reader", async () => {
   const { env } = envWith(DECK);
   const rl = limiter(true);
