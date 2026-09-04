@@ -1708,3 +1708,61 @@ test("an ability carries the face its clause is printed on, and the front face c
   expect(tags.abilities[0].face).toBeUndefined();
   expect(tags.abilities[1].face).toBe(1);
 });
+
+// ON AN `attacks` TRIGGER THE STATE IS THE EVENT. "Whenever a creature you control attacking causes
+// a triggered ability to trigger" (Firebender Ascension), "whenever a creature attacking one of your
+// opponents ..." (Seifer): the attacker IS attacking, and demanding the state from the implied
+// `attacks` producer -- which never states it -- would delete every real edge these have. Kept on
+// every other verb: "whenever an attacking creature DIES" is a narrowing the death alone lacks.
+test("a combat state on an attacks trigger is dropped; on a dies trigger it is kept", () => {
+  const seifer = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "attacks", subject: "a creature attacking one of your opponents" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }]).abilities;
+  expect(seifer[0].trigger?.subject.combat).toBeUndefined();
+  const kardur = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "an attacking creature" },
+    actions: [{ verb: "lose-life", object: "each opponent", amount: "1" }],
+  }]).abilities;
+  expect(kardur[0].trigger?.subject.combat).toBe("attacking");
+});
+
+// TIMING, THE SMALLEST MODEL THAT HOLDS A RULING. Owner (2026-08-22, upheld): Ayara -> Death Tyrant
+// is REAL because "a sac outlet can eat an attacking creature" -- an activated ability is used at
+// instant speed, in combat, and a sorcery is not. So an emit from an activated ability (loyalty and
+// "activate only as a sorcery" excepted), an instant, or a flash spell is stamped `instantSpeed`,
+// and a combat-state demand accepts such a producer. Blasphemous Edict stays refused.
+test("an emit from an activated ability, an instant or a flash spell is instant-speed; a sorcery is not", () => {
+  const outlet = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "another creature" }, { verb: "draw", object: "a card" }] }],
+    "Ayara", { 1: "{T}, Sacrifice another black creature: Draw a card." }, { 1: "{T}, Sacrifice another black creature" },
+  ).abilities;
+  expect(outlet.find((a) => a.emits?.some((e) => e.verb === "dies"))?.emits?.every((e) => e.instantSpeed === true)).toBe(true);
+  const sorcerySpeed = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "a creature" }] }],
+    "Altar", { 1: "{2}, Sacrifice a creature: Draw a card. Activate only as a sorcery." }, { 1: "{2}, Sacrifice a creature" },
+  ).abilities;
+  expect(sorcerySpeed[0].emits?.[0].instantSpeed).toBeUndefined();
+  const loyalty = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "destroy", object: "target creature" }] }],
+    "Walker", { 1: "−3: Destroy target creature." }, { 1: "−3" },
+  ).abilities;
+  expect(loyalty[0].emits?.[0].instantSpeed).toBeUndefined();
+  const edict = deriveCardTags({
+    oracleId: "edict", clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "sacrifice", object: "thirteen creatures" }] }],
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
+  });
+  expect(edict.abilities[0].emits?.[0].instantSpeed).toBeUndefined();
+  const instant = deriveCardTags({
+    oracleId: "rollick", clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "target creature" }] }],
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  expect(instant.abilities[0].emits?.[0].instantSpeed).toBe(true);
+  const flash = deriveCardTags({
+    oracleId: "flash", clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "target creature" }] }],
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"], keywords: ["Flash"] },
+  });
+  expect(flash.abilities[0].emits?.[0].instantSpeed).toBe(true);
+});

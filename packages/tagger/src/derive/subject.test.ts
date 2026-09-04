@@ -685,3 +685,20 @@ test("a spell subtype word without a spell head noun is not a subtype", () => {
   expect(parseSubject("a trap you control").subtype).toBeUndefined();
   expect(parseSubject("target creature").subtype).toBeUndefined();
 });
+
+// A COMBAT STATE IS A DEMAND THE VERB CANNOT CARRY. "Whenever an attacking creature dies" (Kardur,
+// Doomscourge) derived a bare dies:creature, so Blasphemous Edict at sorcery speed fed it three
+// reasons (owner, 2026-09-05). Same family as Death Tyrant. Corpus trigger subjects: attacking 12,
+// blocking 1; action objects naming an attacking creature 272, a blocking one 34.
+test("an attacking or blocking qualifier is recorded as a combat state", () => {
+  expect(parseSubject("an attacking creature").combat).toBe("attacking");
+  expect(parseSubject("an attacking creature you control").combat).toBe("attacking");
+  expect(parseSubject("a blocking creature an opponent controls").combat).toBe("blocking");
+  expect(parseSubject("all attacking creatures").combat).toBe("attacking");
+});
+
+test("blocked, unblocked and a bare creature carry no combat state", () => {
+  // "aren't blocked" (Coveted Jewel) is evasion, not a blocking creature.
+  expect(parseSubject("one or more creatures an opponent controls that aren't blocked").combat).toBeUndefined();
+  expect(parseSubject("target creature").combat).toBeUndefined();
+});

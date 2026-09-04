@@ -397,3 +397,14 @@ test("an enters-tapped demand needs a producer that says tapped", () => {
   expect(subjectMatches({ control: "you", token: null, type: "land", entersTapped: true }, wants, H)).toBe(true);
   expect(subjectMatches({ control: "you", token: null, type: "land" }, wants, H)).toBe(false);
 });
+
+// A COMBAT STATE IS A BOARD STATE, like `modified`: a consumer that demands it is satisfied only by
+// a producer whose printed text names it ("exile all attacking creatures"), never by a plain death.
+// Kardur, Doomscourge <-> Blasphemous Edict was 3 reasons and is 0.
+test("a combat-state demand is met only by a producer that states the same state", () => {
+  expect(subjectMatches(s({ type: "creature" }), s({ type: "creature", combat: "attacking" }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "creature", combat: "attacking" }), s({ type: "creature", combat: "attacking" }), H)).toBe(true);
+  expect(subjectMatches(s({ type: "creature", combat: "blocking" }), s({ type: "creature", combat: "attacking" }), H)).toBe(false);
+  // A consumer that does not ask is unaffected by a producer that states one.
+  expect(subjectMatches(s({ type: "creature", combat: "attacking" }), s({ type: "creature" }), H)).toBe(true);
+});

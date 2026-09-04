@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 92;
+export const DERIVE_VERSION = 94;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -575,6 +575,13 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
  *  the aristocrats edge this engine most wants to find. */
 const REMOVAL_VERBS = new Set(["destroy", "exile"]);
 
+/** "Activate only as a sorcery" (CR 307.5 timing on an activated ability) and its "only during
+ *  your turn" cousin: an activation that cannot happen in combat. */
+const SORCERY_SPEED = /\bactivate (?:this ability )?only as a sorcery\b|\bonly during your turn\b/i;
+/** A loyalty symbol as a cost — "+1", "−3", "0" — the shape `segment.ts` hands over for a
+ *  planeswalker ability, which CR 606.3 makes sorcery-speed. */
+const LOYALTY_COST = /^[+\u2212-]?(?:\d+|X)$/;
+
 /** "if none of them were cast", "if it wasn't cast", "no mana was spent to cast", "without being
  *  played" — the entry happened by some route other than casting. Card-scoped like every other
  *  printed cue here. */
@@ -671,6 +678,9 @@ export function deriveAbilities(
   /** Clause id -> which face prints it, from `segment()`. Stamped onto every ability the clause
    *  derives, so a back-face ability stops being indistinguishable from a front-face one. */
   clauseFaces?: Record<number, number>,
+  /** The card is cast at instant speed -- an Instant, or a spell with flash -- so its on-cast emits
+   *  are `instantSpeed`. Read off characteristics by `deriveCardTags`; absent means no. */
+  castAtInstantSpeed?: boolean,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -817,6 +827,11 @@ export function deriveAbilities(
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
+        // ON AN `attacks` TRIGGER THE STATE IS THE EVENT: "a creature you control attacking" (Arni
+        // Metalbrow, Seifer) is every attacker, and the implied `attacks` producer never states
+        // the state, so keeping it here would delete every real edge these have. Kept on every
+        // other verb -- "an attacking creature DIES" narrows a death the way the verb cannot.
+        if (verb === "attacks" && subject.combat === "attacking") delete subject.combat;
         selfLeavesTrigger = subject.self === true && verb === "leaves";
         // Read from the clause TEXT, not the trigger subject string: the count sits in the trigger
         // clause's prose ("when there are 1,000 or more time counters on ..."), which is the same
@@ -954,6 +969,14 @@ export function deriveAbilities(
         const doubles = doubledVerbs(text);
         if (doubles.length) ability.doubles = doubles;
       }
+      // TIMING, the smallest model that holds a ruling: an activated ability is used in combat, a
+      // sorcery is not, so "a sac outlet can eat an attacking creature" (owner, Ayara -> Death
+      // Tyrant, upheld 2026-08-22) and Blasphemous Edict -> Kardur is refused. Loyalty abilities
+      // (CR 606.3) and "activate only as a sorcery" are sorcery-speed activations.
+      const instantSpeed = kind === "activated"
+        ? !SORCERY_SPEED.test(clauseText ?? "") && !LOYALTY_COST.test(cost)
+        : kind === "on-cast" && castAtInstantSpeed === true;
+      if (instantSpeed) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
       if (face) ability.face = face;
       abilities.push(ability);
@@ -1061,9 +1084,12 @@ export interface DeriveInput {
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
  *  from the card document -- derivation never asks a model for what the database already knows. */
 export function deriveCardTags(input: DeriveInput): CardTags {
+  const chars = input.characteristics;
+  const castAtInstantSpeed = chars.types.some((t) => t.toLowerCase() === "instant")
+    || (chars.keywords ?? []).some((k) => k.toLowerCase() === "flash");
   const { abilities } = deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
-    input.clauseFaces);
+    input.clauseFaces, castAtInstantSpeed);
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,

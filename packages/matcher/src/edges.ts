@@ -718,6 +718,18 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // verdicts on these cards are FALSE against one REAL, and the REAL one is knowingly lost — see
   // `SubjectFilter.restricted`.
   if (consumer.subject.restricted === true) return false;
+  // AN INSTANT-SPEED PRODUCER MEETS A COMBAT-STATE DEMAND WITHOUT NAMING IT -- when ITS CONTROLLER
+  // PICKS THE VICTIM. Ayara's sac outlet eats your attacking creature in combat (owner ruling,
+  // upheld 2026-08-22); a targeted kill at instant speed aims at the attacker. An edict at instant
+  // speed does neither: "each opponent sacrifices a creature of their choice" lets the opponent
+  // spare their attacker, and the owner judged Liliana's Triumph and Szat's Will -> Death Tyrant
+  // FALSE on exactly that. So: your own permanent, or a target. The demand is dropped for this
+  // comparison only; `subjectMatches` itself stays strict.
+  const producerChooses = producer.subject.control === "you" || producer.subject.scope === "target";
+  if (producer.instantSpeed === true && producerChooses && consumer.subject.combat !== undefined) {
+    const { combat: _c, ...rest } = consumer.subject;
+    consumer = { ...consumer, subject: rest };
+  }
   if (!originMatches(producer.subject, consumer.subject)) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
   if (castSelfSupplied(producer, consumer)) return false;
