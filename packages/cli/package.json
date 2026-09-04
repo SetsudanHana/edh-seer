@@ -14,8 +14,8 @@
     "@edh-seer/tagger": "*"
   },
   "devDependencies": {
-    "@types/node": "^26.3.0",
-    "tsx": "^4.23.12",
+    "@types/node": "^26.4.0",
+    "tsx": "^4.23.13",
     "typescript": "^5.4.0",
     "vitest": "^4.0.0"
   }
