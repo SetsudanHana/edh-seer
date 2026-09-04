@@ -1,5 +1,4 @@
-import { POLICY_COLLAPSE } from "@edh-seer/engine/percent";
-import { MAX_PRICED_TURN, REPORT_TRIALS, type CastCurve } from "./goldfish.js";
+import { MAX_PRICED_TURN, MIN_HELD_TRIALS, REPORT_TRIALS, type CastCurve } from "./goldfish.js";
 import type { DeckCard } from "./types.js";
 
 /** Costs this model cannot represent, and the reason each is refused.
@@ -62,22 +61,10 @@ const REFUSALS: { test: (dc: DeckCard) => boolean; reason: string }[] = [
   },
 ];
 
-/** HOW MANY TRIALS MUST HAVE HELD THE CARD before its percentage is worth printing.
- *
- *  DERIVED, NOT PICKED. `POLICY_COLLAPSE` is this project's own statement of the smallest gap
- *  between two probabilities that means anything -- 8pp, below which two figures "say the same thing
- *  twice". Sampling noise has to sit under that or the report is reading its own jitter, so the floor
- *  is the sample size whose 95% interval is no wider than the collapse threshold at the worst case
- *  p = 0.5: `2 * 1.96 * sqrt(0.25 / n) <= POLICY_COLLAPSE`, i.e. `n >= (1.96 / POLICY_COLLAPSE) ** 2`.
- *
- *  MEASURED with `bin/castability-conditional.ts` over the 71 calibration decks, 4,476 priced cells.
- *  At `REPORT_TRIALS` = 10,000 the THINNEST cell holds 732 trials, so this gate refuses NOTHING today
- *  and costs the report nothing. It is not decoration: `goldfish.ts` has claimed since T18b that
- *  "castability.ts refuses a card whose denominator is too thin", and until now nothing did -- the
- *  trial count was quietly doing the guard's job with no one watching it. At 2,000 trials the
- *  FATTEST cell of all 4,476 holds 393, so the gate refuses every card in every deck, which is the
- *  honest reading of what 2,000 buys: a per-card conditional figure drawn from ~160 shuffles. */
-export const MIN_HELD_TRIALS = Math.ceil((1.96 / POLICY_COLLAPSE) ** 2);
+/** RE-EXPORTED from `goldfish.ts`, which owns it because it also has to SATISFY it -- the forced
+ *  top-up there tops every thin cell up to this number so this gate never fires on the sampler's own
+ *  arithmetic. Here it does the refusing. See the derivation beside the definition. */
+export { MIN_HELD_TRIALS };
 
 export interface CardCastability {
   name: string;
