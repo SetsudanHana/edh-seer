@@ -70,7 +70,13 @@ export default {
       const key = request.headers.get("CF-Connecting-IP") ?? "unknown";
       const { success } = await env.RATE_LIMITER.limit({ key });
       // Same 429 the pacer's own queue cap returns, so the client already has copy for it.
-      if (!success) return json({ error: "importer busy" }, 429);
+      // NO IP IN THE LOG LINE. The key is the connecting address and it is what we throttle on, but
+      // it is not what we need to READ later: "are we shedding traffic, and for which site" is the
+      // question, and it is answerable without recording who.
+      if (!success) {
+        console.warn({ event: "import.rate_limited", source });
+        return json({ error: "importer busy" }, 429);
+      }
     }
 
     const stub = env.PACER.get(env.PACER.idFromName(source));
