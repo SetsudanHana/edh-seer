@@ -72,3 +72,22 @@ test("the /cards URL renders the card search and not the deck tool", async () =>
     window.history.pushState({}, "", "/");
   }
 });
+
+test("the commander URLs render their own pages and not the deck tool", async () => {
+  const fetchSpy = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) } as Response);
+  try {
+    window.history.pushState({}, "", "/commanders");
+    const list = render(<App />);
+    expect(await screen.findByRole("heading", { name: "Commanders" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Analyze deck" })).toBeNull();
+    list.unmount();
+
+    window.history.pushState({}, "", "/commanders/krenko-mob-boss");
+    render(<App />);
+    expect(await screen.findByText(/has not been read/i)).toBeInTheDocument();
+  } finally {
+    fetchSpy.mockRestore();
+    window.history.pushState({}, "", "/");
+  }
+});

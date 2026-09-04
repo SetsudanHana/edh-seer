@@ -1,4 +1,5 @@
 import type { GameEvent } from "@edh-seer/tagger";
+import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { directedReasons, themeSubjectKey } from "../edges.js";
 import { normalizeZoneEvent, zoneEventKey } from "../zones.js";
 import type { DeckCard, Hierarchy } from "../types.js";
@@ -161,6 +162,67 @@ export function supplyCounts(rows: Iterable<{ emits: string[]; demands: string[]
     out[demand] = union.size;
   }
   return out;
+}
+
+/** ONE CARD'S OWN EVENTS, ONTO THE DECK-LEVEL ARCHETYPE NAMES.
+ *
+ *  `detectArchetypes` cannot answer this. It is deck-level and density-based -- `ARCHETYPE_FLOOR` is
+ *  0.08 of the nonlands -- and a single card has no density to measure. This is the same taxonomy
+ *  read at the only resolution a card page has.
+ *
+ *  KEYED ON THE VERB, AND ON THE TYPE ONLY WHERE THE SIGNATURE ALREADY DOES. `ARCHETYPE_SIGNATURE`
+ *  spells its tags as `verb:subject` while an event key is `verb|type|subtype`, and the two subject
+ *  halves are not the same string -- `create-token:any` against `create-token|creature|goblin`. The
+ *  verb is what actually carries the archetype in every row but two, and Landfall and Spellslinger
+ *  are the two, so they keep their type.
+ *
+ *  ARISTOCRATS IS DEMAND-DEFINED, honoured here rather than re-decided: an aristocrats deck is its
+ *  PAYOFFS, not the removal spell that emits `sacrifice:creature`. Measured over the 71 decks, 815
+ *  of 974 matches were supply-only and Aristocrats topped four decks the owner calls Control.
+ *
+ *  RETURNS EVERY LABEL THAT FITS, which is a deliberate deviation from the plan's `string | null`.
+ *  A commander that makes tokens AND puts counters on things is both; picking one would need a
+ *  priority order nothing here has measured, and inventing one is the guess this layer exists to
+ *  refuse. An empty array is "no signature", which is a real answer and the common one. */
+const SUPPLY_THEMES: [prefix: string, archetype: Archetype][] = [
+  ["create-token|", "tokens"],
+  ["gain-life|", "lifegain"],
+  ["enters|land|", "landfall"],
+  ["cast|instant", "spellslinger"],
+  ["cast|sorcery", "spellslinger"],
+  ["counter-added|", "counters"],
+  ["proliferate|", "counters"],
+];
+const DEMAND_THEMES: [prefix: string, archetype: Archetype][] = [
+  ["dies|", "aristocrats"],
+  ["sacrifice|", "aristocrats"],
+];
+
+export function themesOf(emits: string[], demands: string[]): string[] {
+  const hit = new Set<Archetype>();
+  for (const [prefix, archetype] of SUPPLY_THEMES) {
+    if (emits.some((e) => e.startsWith(prefix))) hit.add(archetype);
+  }
+  for (const [prefix, archetype] of DEMAND_THEMES) {
+    if (demands.some((d) => d.startsWith(prefix))) hit.add(archetype);
+  }
+  // Signature order, not insertion order: two cards with the same pair of labels must print them
+  // the same way round.
+  const order = [...SUPPLY_THEMES, ...DEMAND_THEMES].map(([, a]) => a);
+  return [...hit].sort((a, b) => order.indexOf(a) - order.indexOf(b)).map((a) => ARCHETYPE_LABELS[a]);
+}
+
+/** THE DEMANDS THE CARD DOES NOT ANSWER ITSELF -- what a deck built around it has to bring.
+ *
+ *  A commander that watches creatures die and kills none is stating a requirement. One that does
+ *  both is self-sufficient on that event, and listing it as a gap would be a page telling a reader
+ *  to go find something they already have.
+ *
+ *  THE SAME SUPPLY/DEMAND PREDICATE `partnersFor` RANKS WITH, so the two cannot disagree about what
+ *  satisfies what: a goblin token entering really is a creature entering. */
+export function unmetDemands(emits: string[], demands: string[]): string[] {
+  const supplied = new Set(emits.flatMap(supplyForms));
+  return demands.filter((d) => !demandForms(d).some((f) => supplied.has(f)));
 }
 
 export interface PartnerRow {
@@ -397,6 +459,19 @@ export interface CardPageRecord {
   /** Per event key, how many cards demand something this card supplies -- what the page says in
    *  place of the rows `PER_EVENT_CAP` withheld. */
   pool: Record<string, number>;
+  /** THE SAME LIST OVER THE CARDS THIS COMMANDER'S DECK COULD LEGALLY CONTAIN, on commander records
+   *  only. A deck led by a mono-red card can never play a Simic payoff, so a partner list that
+   *  ignores colour identity is a list of cards that will never be in the same deck.
+   *
+   *  RANKED OVER THE LEGAL POOL, NOT FILTERED AFTER RANKING. Filtering afterwards leaves a mono-red
+   *  commander showing eight of its twenty-four rows with nothing to fill the rest; re-ranking
+   *  fills them with legal cards, which is also what makes `/commanders/:slug` differ in SUBSTANCE
+   *  from `/cards/:slug` rather than being a thinner view of it (spec D5, duplicate content).
+   *
+   *  ABSENT ON EVERY OTHER RECORD: 12,927 of the 15,350 cards can never lead a deck, and every
+   *  record pays the bytes of every field it carries. */
+  commanderPartners?: PartnerRow[];
+  commanderPool?: Record<string, number>;
 }
 
 export interface NameIndexEntry {
@@ -463,6 +538,15 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       demands: [...new Set(demandKeysOf(d))],
       ...(() => { const { rows, pool } = partnersFor(d, candidates, freq, slugs, h);
         return { partners: rows, pool }; })(),
+      // A CARD IS LEGAL IN A DECK WHEN ITS WHOLE IDENTITY SITS INSIDE THE COMMANDER'S -- the same
+      // rule `legality.ts` reports a violation against. An empty identity is inside every one,
+      // which is why a colourless card belongs in every deck and `every` over `[]` says so.
+      ...(commander ? (() => {
+        const identity = new Set(d.card.colorIdentity ?? []);
+        const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
+        const { rows, pool } = partnersFor(d, legal, freq, slugs, h);
+        return { commanderPartners: rows, commanderPool: pool };
+      })() : {}),
     };
     shards.set(shardName, shard);
     index.push({ slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander });

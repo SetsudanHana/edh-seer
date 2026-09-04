@@ -4,7 +4,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts,
-  supplyForms,
+  supplyForms, themesOf, unmetDemands,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -478,4 +478,103 @@ test("the engine is asked with token mediation off", async () => {
     partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
     expect(spy).toHaveBeenCalledWith(krenko, impactTremors, H, { tokensMediate: false });
   } finally { spy.mockRestore(); }
+});
+
+/** THE ARCHETYPE LABELS, FROM ONE CARD'S OWN EVENTS. `detectArchetypes` cannot answer this: it is
+ *  deck-level and density-based (`ARCHETYPE_FLOOR` is 0.08 of the nonlands), so a single card has no
+ *  density to measure. */
+test("a card's own events map onto the existing archetype labels", () => {
+  expect(themesOf(["create-token|creature|-"], [])).toEqual(["Tokens"]);
+  expect(themesOf(["counter-added|-|-"], [])).toEqual(["+1/+1 Counters"]);
+  expect(themesOf(["enters|land|-"], [])).toEqual(["Landfall"]);
+});
+
+/** ARISTOCRATS IS DEMAND-DEFINED, and that is a measured owner ruling, not a preference: an
+ *  aristocrats deck is its PAYOFFS -- Zulaport Cutthroat, Blood Artist -- not the removal spell that
+ *  happens to emit `sacrifice:creature`. Over the 71 decks, 815 of 974 matches were supply-only, and
+ *  Aristocrats topped four decks the owner calls Control. `ARCHETYPE_SIGNATURE` carries the flag;
+ *  this honours it rather than re-deciding it. */
+test("a card that only makes things die is not an aristocrats card; one that watches them is", () => {
+  expect(themesOf(["dies|creature|-"], [])).toEqual([]);
+  expect(themesOf([], ["dies|creature|-"])).toEqual(["Aristocrats"]);
+});
+
+/** NO SIGNATURE MEANS NO LABEL. The naming layers are the only code in this repo that cannot say
+ *  "I don't know"; this one can, and does. */
+test("no signature means no label, never a guessed one", () => {
+  expect(themesOf(["draw|-|-"], [])).toEqual([]);
+  expect(themesOf([], [])).toEqual([]);
+});
+
+/** A CARD THAT FITS TWO ARCHETYPES GETS BOTH, and this is a deliberate deviation from the plan's
+ *  `string | null`. Picking one would need a priority order nothing in this repo has measured, and
+ *  inventing one is exactly the guess the layer above refuses to make. Two true labels beat one
+ *  arbitrary label. */
+test("a card with two signatures is labelled with both, in signature order", () => {
+  expect(themesOf(["create-token|creature|-", "counter-added|-|-"], []))
+    .toEqual(["Tokens", "+1/+1 Counters"]);
+});
+
+/** WHAT THE DECK HAS TO BRING. A commander that wants creatures dying and makes none die on its own
+ *  is stating a requirement; one that does both is self-sufficient on that event and the page should
+ *  not list it as a gap. Same supply/demand predicate `partnersFor` ranks with, so the two cannot
+ *  disagree about what satisfies what. */
+test("an unmet demand is one the card does not supply itself", () => {
+  expect(unmetDemands(["create-token|creature|goblin"], ["dies|creature|-"])).toEqual(["dies|creature|-"]);
+  // A goblin token entering IS a creature entering, so this demand is self-supplied.
+  expect(unmetDemands(["enters|creature|goblin"], ["enters|creature|-"])).toEqual([]);
+  expect(unmetDemands([], ["dies|creature|-"])).toEqual(["dies|creature|-"]);
+});
+
+/** A COMMANDER'S DECK CANNOT CONTAIN AN OFF-IDENTITY CARD, so a partner list that ignores identity
+ *  is a list of cards this deck may never play. The commander rows are RANKED OVER THE LEGAL POOL
+ *  rather than filtered after ranking: filtering afterwards leaves a mono-red commander showing
+ *  eight of its twenty-four rows with nothing to fill the rest, and the whole point of the second
+ *  URL (spec D5) is that it differs in substance from the card page rather than being a thinner
+ *  view of it. */
+/** BOTH CLONE. The fixtures above are module-level objects shared by every test in this file, and
+ *  the first cut of these two mutated `krenko` in place -- which made the NEXT test see a commander
+ *  and fail, in a file where nothing else has order-dependent state. */
+const asCommander = (d: ReturnType<typeof base>, identity: string[]) => ({
+  ...d,
+  card: {
+    ...d.card, typeLine: "Legendary Creature — Goblin Warrior",
+    colorIdentity: identity, legalities: { commander: "legal" },
+  } as unknown as DeckCard["card"],
+});
+const withIdentity = (d: ReturnType<typeof base>, identity: string[]) => ({
+  ...d,
+  card: { ...d.card, colorIdentity: identity } as unknown as DeckCard["card"],
+});
+
+test("a commander's own partner list holds only cards its deck could legally contain", () => {
+  const payoff = (name: string) => base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  const mono = withIdentity(payoff("Red Payoff"), ["R"]);
+  const simic = withIdentity(payoff("Simic Payoff"), ["G", "U"]);
+  const colourless = withIdentity(payoff("Colourless Payoff"), []);
+  const boss = asCommander(krenko, ["R"]);
+
+  const { shards } = buildPartnerArtifact([boss, mono, simic, colourless], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Krenko, Mob Boss")!;
+
+  expect(rec.partners.map((p) => p.name).sort())
+    .toEqual(["Colourless Payoff", "Red Payoff", "Simic Payoff"]);
+  // A colourless card is legal in every deck: `every` over an empty identity is true, and that is
+  // the correct reading rather than an accident of the predicate.
+  expect(rec.commanderPartners!.map((p) => p.name).sort())
+    .toEqual(["Colourless Payoff", "Red Payoff"]);
+  expect(rec.commanderPool!["enters|creature|-"]).toBe(2);
+});
+
+/** A NON-COMMANDER CARRIES NEITHER FIELD. Every record pays for the bytes of every field it has,
+ *  and 12,927 of the 15,350 cards can never lead a deck. */
+test("only a commander's record carries the commander partner list", () => {
+  const { shards } = buildPartnerArtifact([krenko, impactTremors], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Krenko, Mob Boss")!;
+  expect(rec).not.toHaveProperty("commanderPartners");
+  expect(rec).not.toHaveProperty("commanderPool");
 });

@@ -6,6 +6,7 @@ import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
 import { CardPage } from "./components/CardPage.js";
 import { CardSearch } from "./components/CardSearch.js";
+import { CommanderPage } from "./components/CommanderPage.js";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
@@ -265,6 +266,8 @@ export default function App() {
     <Routes>
       <Route path="/cards" element={<CardSearch />} />
       <Route path="/cards/:slug" element={<CardPage />} />
+      <Route path="/commanders" element={<CardSearch mode="commanders" />} />
+      <Route path="/commanders/:slug" element={<CommanderPage />} />
       <Route path="*" element={
     <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
       {/* RENDERS NOTHING HERE. It portals into the static header's nav, and only once the browser
