@@ -1,6 +1,8 @@
 import { describe, expect, it, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
-import { cardCastability, costRefusal, deckCastability } from "./castability.js";
+import {
+  MIN_HELD_TRIALS, cardCastability as priceCard, costRefusal, deckCastability as priceDeck,
+} from "./castability.js";
 import { manaModel } from "./goldfish.js";
 import type { DeckCard } from "./types.js";
 
@@ -28,6 +30,15 @@ const deckOf = (spells: DeckCard[], lands: number) => [
  *  ordering, not third-decimal probabilities. */
 const curvesFor = (deck: DeckCard[], alsoPrice: DeckCard[] = []) =>
   manaModel(deck, { trials: 600, seed: 5, alsoPrice }).curves;
+
+/** THE DENOMINATOR FLOOR IS OFF IN THIS FILE, deliberately. 600 shuffles hold a singleton some fifty
+ *  times, which is under `MIN_HELD_TRIALS` by construction -- these tests are about structure and
+ *  ordering, so switching the floor off here keeps them about that. The floor has its own tests at
+ *  the bottom, on both sides of its boundary. */
+const cardCastability = (dc: DeckCard, curves: Parameters<typeof priceCard>[1]) =>
+  priceCard(dc, curves, 0);
+const deckCastability = (deck: readonly DeckCard[], curves: Parameters<typeof priceDeck>[1]) =>
+  priceDeck(deck, curves, 0);
 const rowFor = (deck: DeckCard[], name: string) =>
   cardCastability(deck.find((d) => d.card.name === name)!, curvesFor(deck));
 
@@ -241,5 +252,40 @@ describe("cheats into play", () => {
       const same = with_.cards.find((r) => r.name === row.name)!;
       expect(same.castable).toEqual(row.castable);
     }
+  });
+});
+
+describe("a percentage needs a denominator (T18b, claimed since August, built 2026-09-04)", () => {
+  const deck = deckOf([spell("Damnation", "{2}{B}{B}", 4)], 37);
+
+  test("a cell drawn from too few shuffles is refused rather than printed", () => {
+    // Conditioning made every cell a CONDITIONAL one, and a singleton is in hand in roughly
+    // (6 + turn)/99 of trials -- so 600 shuffles price this 4-drop off some fifty of them. Until
+    // this gate existed the module printed that to the nearest percentage point.
+    const row = priceCard(deck.find((d) => d.card.name === "Damnation")!, curvesFor(deck));
+    expect(row.castable).toBeNull();
+    // THE COUNT IS IN THE REFUSAL. "Refused" without the number is a verdict a reader cannot audit,
+    // the same call `refusedCards` makes for the cost refusals.
+    expect(row.refused).toMatch(/held in only \d+ of the simulated shuffles — too thin to price/);
+  });
+
+  test("the floor is about the denominator and fires on both sides of it", () => {
+    // A COMMANDER IS HELD IN EVERY TRIAL (CR 903.6 -- it is priced from the command zone, never
+    // shuffled in), so its denominator IS the trial count. That makes it the one card that can walk
+    // the boundary exactly, in both directions: a ratchet nobody has tested is decoration.
+    const cmd = spell("Atraxa", "{2}{B}{B}", 4);
+    const curvesAt = (trials: number) =>
+      manaModel(deck, { trials, seed: 5, alsoPrice: [cmd] }).curves;
+    expect(priceCard(cmd, curvesAt(MIN_HELD_TRIALS)).castable).not.toBeNull();
+    expect(priceCard(cmd, curvesAt(MIN_HELD_TRIALS - 1)).refused).toMatch(/too thin to price/);
+  });
+
+  test("a refused cell is counted and NAMED, so it does not vanish off the report", () => {
+    // The same promise the cost refusals keep: a card that stops being priced leaves a row saying
+    // why, rather than disappearing from every list with a bare count as its only trace.
+    const out = priceDeck(deck, curvesFor(deck));
+    expect(out.refused).toBeGreaterThan(0);
+    expect(out.refusedCards.some((r) => r.name === "Damnation" && /too thin/.test(r.reason))).toBe(true);
+    expect(out.cards.some((r) => r.name === "Damnation")).toBe(false);
   });
 });

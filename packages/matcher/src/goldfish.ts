@@ -637,8 +637,10 @@ export interface SimulateResult {
    *  trials that now count. Measured on `Curse of Opulence`: 40.0% unconditional, 47.1% held.
    *
    *  THE DENOMINATOR IS SMALL AND `byCardHeld` CARRIES IT, because a singleton is in hand in roughly
-   *  (6 + turn)/99 of trials. `castability.ts` refuses a card whose denominator is too thin rather
-   *  than printing a percentage drawn from a hundred shuffles. */
+   *  (6 + turn)/99 of trials. `castability.ts` refuses a card held fewer than `MIN_HELD_TRIALS` times
+   *  rather than printing a percentage drawn from a hundred shuffles -- a gate this comment claimed
+   *  from T18b onwards and which was only BUILT on 2026-09-04. Until then nothing read the
+   *  denominator at all and `REPORT_TRIALS` was silently doing the guard's job. */
   byCardCastable: Map<string, number[]>;
   /** Per card, per turn: P(the board could tap at least that card's mana value by then), on the same
    *  held denominator. Still not "castable" — see the colour ceiling. */
