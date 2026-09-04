@@ -293,6 +293,33 @@ test("both pages carry the byte-identical nav", () => {
   expect(prose).toBe(app);
 });
 
+/** COMBO, AND THE SPLIT IS THE POINT (research 2026-09-04). NN/g's 179-participant study measured
+ *  three conditions: on phones, navigation behind an icon was USED in 57% of tasks against 86% for
+ *  some-visible-plus-a-menu, 15% slower, with a >20% drop in content discoverability. Their rule
+ *  splits on our exact count -- four or fewer, show them all; more than four, hide SOME.
+ *
+ *  SO THE TEST IS THE SPLIT, not the presence of six links. `both pages carry the byte-identical
+ *  nav` above passes just as happily on a nav with all six behind the menu, which is the condition
+ *  that lost every measure in that study, and it would pass on a nav with the wrong three hidden.
+ *  The two browse surfaces are named explicitly because they are the reason this nav exists: they
+ *  were reachable only from the foot of a card page until 2026-09-04, and hiding them again is the
+ *  specific regression worth a test. */
+test.each(Object.entries(PAGES))("%s keeps the three product destinations out of the menu", (_url, file) => {
+  const page = readFileSync(join(CLIENT, file), "utf8");
+  const nav = /<nav class="site-nav"[\s\S]*?<\/nav>/.exec(page)![0];
+  const menu = /<details class="site-more">[\s\S]*?<\/details>/.exec(nav)?.[0];
+  expect(menu, `${file} has a More menu`).toBeDefined();
+  const visible = nav.replace(menu!, "");
+
+  for (const href of ["/", "/cards", "/commanders"]) {
+    expect(visible, `${file} shows ${href} without opening the menu`).toContain(`href="${href}"`);
+  }
+  // And the menu is labelled with a WORD. The same study's companion measured BBC's labelled bar at
+  // 89% usage against Bloomberg's unlabelled icon at 44%, which readers took for part of the logo it
+  // sat beside -- and ours would sit beside a wordmark too.
+  expect(/<summary>[A-Za-z][^<]*<\/summary>/.test(menu!), `${file} labels the menu`).toBe(true);
+});
+
 /** ONE `h1` PER PAGE, and it has to be the one that says what the page is about. The app page's is
  *  the brand; the prose page's is its own title, which is why the brand is a link there — two `h1`s
  *  is two answers to the same question. */
