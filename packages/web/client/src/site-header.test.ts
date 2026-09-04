@@ -18,10 +18,16 @@ const PAGES = ["index.html", "how-it-works/index.html"] as const;
 const pageText = (file: string): string => readFileSync(join(CLIENT, file), "utf8");
 
 /** The header's script, picked out by what it acts on rather than by position: these pages carry
- *  three other `<script>` blocks (the JSON-LD, the boot recovery, the module tag). */
+ *  three other `<script>` blocks (the JSON-LD, the boot recovery, the module tag).
+ *
+ *  PARSED, NOT MATCHED. This was a `<script>...</script>` regex and CodeQL filed it as
+ *  `js/bad-tag-filter`, high: the pattern is blind to `<SCRIPT>`. The finding is about tag filters
+ *  that make a security decision and this one reads our own file, but the fix is smaller than the
+ *  argument for keeping it -- and a parser cannot be wrong about which tags are tags. `seo.test.ts`
+ *  parses these pages for the same reason. */
 const dismissScript = (file: string): string | undefined =>
-  [...pageText(file).matchAll(/<script>([\s\S]*?)<\/script>/g)]
-    .map((m) => m[1])
+  [...new DOMParser().parseFromString(pageText(file), "text/html").querySelectorAll("script")]
+    .map((el) => el.textContent ?? "")
     .find((body) => body.includes(".site-more[open]"));
 
 const navMarkup = (file: string): string =>
