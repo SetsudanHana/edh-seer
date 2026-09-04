@@ -75,6 +75,39 @@
         </details>
       </nav>
     </header>
+    <!-- DISMISSING THE HEADER MENU, and the only script the header has.
+         `<details>` closes on its own summary and on nothing else, which is the platform's answer
+         and not a reader's: a menu left hanging over the page after a click somewhere else reads as
+         broken, and Escape is the gesture every reader already has for "put that away".
+         IT IS AN ENHANCEMENT, NOT A DEPENDENCY. The nav works with this script removed -- the
+         disclosure, its keyboard model and its accessibility semantics are all the element's own.
+         That is why it stays inline here rather than moving into the bundle: the bundle is 700 KB
+         and does not run on `how-it-works` at all, and this file is the only place the header can
+         be enhanced without waiting for either.
+         FOCUS COMES BACK ONLY IF IT LEFT WITH THE PANEL. Escape pressed while the reader is typing
+         in the decklist should close the menu and leave the cursor where it is; Escape pressed on a
+         link INSIDE the panel has nowhere to put focus once that panel is gone, so it returns to
+         the control that opened it.
+         `pointerdown` RATHER THAN `click`, so the menu is out of the way before the press it was
+         covering resolves. The guard is containment, so pressing the summary still reaches the
+         element's own toggle rather than being closed out from under it. -->
+    <script>
+      (function () {
+        var open = function () { return document.querySelector(".site-more[open]"); };
+        document.addEventListener("keydown", function (e) {
+          if (e.key !== "Escape") return;
+          var d = open();
+          if (!d) return;
+          var inside = d.contains(document.activeElement);
+          d.open = false;
+          if (inside) d.querySelector("summary").focus();
+        });
+        document.addEventListener("pointerdown", function (e) {
+          var d = open();
+          if (d && !d.contains(e.target)) d.open = false;
+        });
+      })();
+    </script>
 
     <article class="prose">
       <h1>How it works</h1>

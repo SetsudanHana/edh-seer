@@ -852,12 +852,11 @@ a.brand:hover .brand-edh { color: var(--foreground); }
   white-space: nowrap;
 }
 
-/* CEILING: the panel closes on its own summary and on Shift-Tab back out of it, and on nothing
-   else -- no Escape, no click-outside. Both would need a script in a header whose whole point is
-   that it works before the bundle does, and the panel is a small block at the top-right rather than
-   a scrim over the page, so a stuck-open one costs a reader nothing but the sight of it. Upgrade
-   path if that stops being true: ~10 lines inline in both shells, `keydown` on Escape and
-   `pointerdown` outside, clearing `open`. */
+/* IT CLOSES ON ESCAPE AND ON A PRESS OUTSIDE IT, from ~15 lines inline in both shells rather than
+   from the bundle -- see the comment on that script. The nav still works with the script deleted,
+   which is the property being protected: `<details>` supplies the disclosure, the keyboard model and
+   the accessibility semantics on its own, and this only adds the two dismissals the element does not
+   have. `site-header.test.ts` runs the shipped script text against the shipped markup. */
 
 /* THE INSTALL BUTTON LOOKS LIKE A NAV ITEM AND SITS BESIDE THE NAV. It is a `button` and not a
    link because it opens the browser's install dialog rather than going anywhere, so it needs the
