@@ -113,6 +113,21 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every substantive card
   }
 });
 
+/** THE PRERENDER ROUTES EXIST, AND ARE NAMED WHAT CLOUDFLARE EXPECTS.
+ *
+ *  A Pages Function is wired by its PATH: `functions/cards/[slug].ts` answers `/cards/:slug` and
+ *  nothing announces it. Rename the file, move the directory, or deploy from a working directory
+ *  where `functions/` is not beside the output, and every card URL quietly goes back to serving the
+ *  empty shell -- with a green suite, a correct sitemap, and 17,775 URLs a crawler reads as blank.
+ *  The logic is tested in `inject.test.ts`; this asserts the wiring that carries it. */
+test("the card and commander prerender functions are where Pages looks for them", () => {
+  const functions = join(CLIENT, "..", "functions");
+  for (const route of ["cards/[slug].ts", "commanders/[slug].ts"]) {
+    expect(existsSync(join(functions, route)), `${route} exists`).toBe(true);
+    expect(readFileSync(join(functions, route), "utf8")).toContain("renderCardPage");
+  }
+});
+
 /** THE WORDMARK GOES HOME, ON BOTH PAGES (owner, 2026-09-03).
  *
  *  `how-it-works` has had `<a class="brand" href="/">` since it was written; the home page's header

@@ -1,5 +1,6 @@
 import type { GameEvent } from "@edh-seer/tagger";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
+import { PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
 import { directedReasons, themeSubjectKey } from "../edges.js";
 import { normalizeZoneEvent, zoneEventKey } from "../zones.js";
 import type { DeckCard, Hierarchy } from "../types.js";
@@ -438,22 +439,9 @@ function pickReason(reasons: { text: string; repeatability?: string; impliedProd
 }
 
 
-/** SMALLER THAN THE CARD SHARDS ON PURPOSE. The deploy is 16,407 files against a 20,000 cap, so the
- *  partner artifact has ~3,500 to spend; 2,048 leaves real headroom at ~7 records per shard.
- *  `assemble-deploy.mjs` asserts the cap, so an artifact that overran would fail at build rather
- *  than minutes into an upload. */
-export const PARTNER_SHARD_COUNT = 2_048;
-
-/** WHICH SHARD A SLUG LIVES IN. Same FNV-1a as `shardOf`, different modulus -- one rule, imported by
- *  both the build and the browser, so they cannot drift about where a page lives. */
-export function partnerShardOf(slug: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < slug.length; i++) {
-    h ^= slug.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return ((h >>> 0) % PARTNER_SHARD_COUNT).toString(16).padStart(3, "0");
-}
+/** Re-exported so every existing importer keeps working; the definition moved to its own file
+ *  because the Pages Function needs the shard rule without `edges.ts` behind it. */
+export { PARTNER_SHARD_COUNT, partnerShardOf };
 
 export const emitKeysOf = (d: DeckCard): string[] =>
   (d.tags?.abilities ?? []).flatMap((a) => (a.emits ?? []).map(eventKey));

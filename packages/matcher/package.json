@@ -13,7 +13,8 @@
     "./wire-graph": "./src/wire-graph.ts",
     "./orchestrate": "./src/orchestrate.ts",
     "./static-lookup": "./src/static-lookup.ts",
-    "./partners-core": "./src/bin/partners-core.ts"
+    "./partners-core": "./src/bin/partners-core.ts",
+    "./partner-shard": "./src/partner-shard.ts"
   },
   "scripts": {
     "test": "vitest run",
