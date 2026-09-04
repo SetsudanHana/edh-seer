@@ -178,31 +178,70 @@ function answerFinding(report: DeckReport): Finding | null {
   };
 }
 
-/** A COLOUR THE DECK CANNOT PAY FOR AT ITS OWN TOP END. `deckMath.colors[].worst` is the hardest
- *  cost the deck actually prints in that colour, with the sources Karsten's mulligan-corrected
- *  model wants for it. It is deliberately quiet about how MANY cards are affected — `worst.cards`
- *  carries that, and one card is a very different finding from ten, so the row says which. */
+/** ONE EARLY MULTI-PIP CAST THE DECK CANNOT RELIABLY MAKE ON TIME. `deckMath.colors[].worst` is the
+ *  hardest cost the deck actually prints in that colour, with the sources Karsten's mulligan-corrected
+ *  model wants for it by that card's own mana value.
+ *
+ *  THE SUBJECT IS THE CARD, NOT THE COLOUR (owner, 2026-09-04). This said *"Blue is short at the top
+ *  of your curve"* over a MONO-BLUE deck running 39 blue sources, which is not a claim a reader can
+ *  accept -- and it was false twice over: an MV3 spell is not the top of a curve that runs to six,
+ *  and the deck is not short of blue. What is true is narrower and checkable: Archmage's Charm wants
+ *  three blue on turn 3, and 35 of the deck's sources can be producing that early against the 37 that
+ *  cast wants. `worst.names` exists so the sentence can say which card.
+ *
+ *  IT READS `available`, WHICH IS WHAT `met` READS. It gated on `supplied` -- the deck's whole source
+ *  count -- while the colour panel two components over printed `available` and called the same row
+ *  SHORT. One number or the readers disagree in front of the reader: `supplied` counts a two-mana
+ *  rock and a land that enters tapped on the very turn the demand is due, so it is the wrong end for
+ *  a deadline. The DIFFERENCE between them is the finding's most useful sentence, not its gate --
+ *  a deck holding enough sources that simply arrive late has a timing problem and is told so. */
 function colourFindings(report: DeckReport): Finding[] {
-  const colours = report.deckMath?.colors ?? [];
   const out: Finding[] = [];
-  for (const c of colours) {
+  for (const c of report.deckMath?.colors ?? []) {
     const worst = c.worst;
-    if (!worst || c.supplied >= worst.required) continue;
+    // A SINGLE PIP IS THE LAND COUNT'S QUESTION, NOT THE COLOUR'S. Every deck that runs a tapped
+    // land misses the turn-1 bar for one pip -- `abzan-defenders` reads 11 of 17 in black and green
+    // both -- and a fault every deck has is not a finding, it is the mana base's speed, judged by
+    // the land block above. TWO pips of one colour by turn N is what composition decides, and it is
+    // what the colour panel's own caveat has always said these rows are.
+    if (!worst || worst.pips < 2) continue;
+    const colour = NAME[c.color]?.toLowerCase() ?? c.color;
+    const pips = PIP_WORD[worst.pips] ?? String(worst.pips);
+    // Named where the wire carries names, counted where it does not or where there are too many to
+    // read: "Archmage's Charm and 3 other cards" beats a list nobody finishes.
+    const named = worst.names ?? [];
+    const others = worst.cards - named.length;
+    const subject = named.length === 0
+      ? `${worst.cards} ${worst.cards === 1 ? "card" : "cards"}`
+      : others > 0
+        ? `${named[0]} and ${others} other ${others === 1 ? "card" : "cards"}`
+        : named.join(" and ");
+    const verb = worst.cards === 1 ? "wants" : "want";
+    // THE ONE THE DECK CAN FIX BY SEQUENCING RATHER THAN BY BUILDING. When the deck holds the
+    // sources and they simply are not online that early, saying "short of blue" is the false half.
+    const timing = c.supplied >= worst.required
+      ? ` The deck runs ${c.supplied} in total, so this is a timing problem rather than a colour one.`
+      : "";
     out.push({
       kind: "colour",
       id: `colour:${c.color}`,
-      headline: `${NAME[c.color] ?? c.color} is short at the top of your curve.`,
-      detail: `${worst.cards} ${worst.cards === 1 ? "card wants" : "cards want"} ${worst.pips} `
-        + `${NAME[c.color]?.toLowerCase() ?? c.color} ${worst.pips === 1 ? "pip" : "pips"}. `
-        + `To cast on turn ${worst.turn} you would want ${worst.required} sources; the deck runs ${c.supplied}.`,
-      figure: `${c.supplied}/${worst.required}`,
-      figureLabel: `${NAME[c.color]?.toLowerCase() ?? c.color} sources`,
-      filled: c.supplied / worst.required,
-      shortfall: (worst.required - c.supplied) / worst.required,
+      headline: `${subject} ${verb} ${pips} ${colour} on turn ${worst.turn}.`,
+      detail: `${worst.available} of the deck's ${c.supplied} ${colour} sources can be producing by then`
+        + " — a land that enters tapped, or a rock you could not have cast yet, is not one —"
+        + ` against the ${worst.required} it takes to make that cast nine games in ten.${timing}`,
+      action: "Delay or cut the early double pip, or trade a tapped source for one that enters untapped.",
+      figure: `${worst.available}/${worst.required}`,
+      figureLabel: `${colour} sources by turn ${worst.turn}`,
+      filled: worst.available / worst.required,
+      shortfall: (worst.required - worst.available) / worst.required,
     });
   }
   return out;
 }
+
+/** Pips read as words because the figure beside the row is already digits, and "2 blue" next to
+ *  "35/37" makes the reader check which 2 that is. */
+const PIP_WORD: Record<number, string> = { 1: "one", 2: "two", 3: "three", 4: "four", 5: "five" };
 
 const NAME: Record<string, string> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", C: "Colourless" };
 

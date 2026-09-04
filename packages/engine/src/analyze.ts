@@ -336,6 +336,10 @@ export interface DeckMath {
      *  model silently (roadmap L5). */
     worst?: {
       pips: number; turn: number; required: number; requiredRaw: number; cards: number;
+      /** The cards carrying the demand, first two only -- enough to name a subject, and `cards`
+       *  carries the rest. A finding about "the colour" is a claim no mono-colour deck can accept;
+       *  a finding about Archmage's Charm on turn 3 is one anybody can check. */
+      names?: string[];
       /** Of `supplied`, the ones that could be producing by `turn`. This is the number `required`
        *  is missed by; `supplied` is the deck total and is not comparable to it. */
       available: number;

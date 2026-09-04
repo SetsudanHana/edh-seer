@@ -470,8 +470,12 @@ function DeckMathRows({
   const answers = [...deckMath.answers].sort(
     (a, b) => (b.required - b.count) - (a.required - a.count) || a.available - b.available,
   );
+  // WORST FIRST, AGAINST THE NUMBER THE ROW ITSELF PRINTS. This sorted on `supplied` while the row
+  // below it printed `available`, so a colour could sort above another and then show the smaller
+  // gap -- the third reader of this row, and the one nobody saw disagreeing (2026-09-04).
   const colors = [...(deckMath.colors ?? [])].sort(
-    (a, b) => ((b.worst?.required ?? 0) - b.supplied) - ((a.worst?.required ?? 0) - a.supplied),
+    (a, b) => ((b.worst?.required ?? 0) - (b.worst?.available ?? 0))
+      - ((a.worst?.required ?? 0) - (a.worst?.available ?? 0)),
   );
   const lands = deckMath.lands;
   const wincons = deckMath.wincons;
@@ -996,7 +1000,7 @@ function DeckMathRows({
               // The deadline is the CARD's own mana value, not a chosen turn: a 3-drop wants its
               // pips on turn 3. That is why this row can name a turn without guessing one.
               const label = c.worst
-                ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${c.worst.cards} card${c.worst.cards === 1 ? " wants" : "s want"} ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
+                ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${(c.worst.names ?? []).join(" and ") || `${c.worst.cards} card${c.worst.cards === 1 ? "" : "s"}`} want${c.worst.cards === 1 ? "s" : ""} ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
                 : `${c.color}, ${c.supplied} sources, enough for every card that costs it`;
               return (
                 <li key={c.color} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" aria-label={label}>
@@ -1083,8 +1087,9 @@ function DeckMathRows({
           ) : null}
           {colors.some((c) => c.worst) ? (
             <Caveat label="what each row is measured against">
-              Each row is the earliest double-pip card in that colour, at 90% confidence — not the
-              deck's land count, which is judged above. Cutting or delaying one early double pip
+              Each row is the demand that misses by the most in that colour, at 90% confidence — the
+              card whose pips the deck is least likely to have on time, which is not always a double
+              pip and is never the deck's land count, judged above. Cutting or delaying that card
               answers a gap as well as adding lands does
               {overcommitted ? ", and here it is the only thing that can" : ""}.{" "}
               {/* BOTH MODELS, IN ONE SENTENCE. The figure prices the free mulligan; the keep band it
