@@ -649,7 +649,7 @@ test("a card the subject counts appears on its page, verified in the feeder dire
   expect(rows[0]!.name).toBe("Goblin Assassin");
   expect(rows[0]!.event).toBe("counts|-|goblin|-");
   expect(rows[0]!.reason)
-    .toBe("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets bigger");
+    .toBe("While you control Goblin Assassin, Krenko, Mob Boss counts it and makes more tokens");
   expect(pool["counts|-|goblin|-"]).toBe(1);
 });
 

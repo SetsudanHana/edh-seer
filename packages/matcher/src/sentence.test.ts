@@ -3,7 +3,7 @@ import { VERB_VOCAB } from "@edh-seer/tagger";
 import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence } from "./sentence.js";
+  boardCountFeedsScaling, emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence } from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
   // effectKind is absent on 8.9% of reasons and `amount` on more than half of abilities, so the
@@ -282,4 +282,17 @@ test("an emit's subtype noun is capitalised and its type noun is not", () => {
   // An emit about the producer ITSELF names no noun -- that is what keeps every correct sentence in
   // the corpus reading as it did.
   expect(emitSubjectNoun({ self: true, subtype: "goblin" })).toBeUndefined();
+});
+
+/** THE COUNT NAMES WHAT IT FEEDS, and "gets bigger" was a wrong claim on most of this channel.
+ *  Reported by the precon reviewer against the card printed beside it: Krenko's X counts Goblins to
+ *  decide HOW MANY TOKENS he makes, and he is a 3/3 either way. */
+test("a board count says what actually grows, and claims nothing where it cannot tell", () => {
+  expect(boardCountFeedsScaling("Goblin Assassin", "Krenko, Mob Boss", "token-generation"))
+    .toBe("While you control Goblin Assassin, Krenko, Mob Boss counts it and makes more tokens");
+  expect(boardCountFeedsScaling("Llanowar Elves", "Bonehoard", "pump"))
+    .toContain("gets bigger");
+  // An effect this map has never seen says the true weak thing rather than inventing a growth.
+  expect(boardCountFeedsScaling("A", "B", "some-new-kind")).toContain("does more");
+  expect(boardCountFeedsScaling("A", "B")).toContain("does more");
 });

@@ -227,8 +227,38 @@ export function graveyardFeedsScaling(producer: string, consumer: string): strin
  *
  *  "COUNTS IT" RATHER THAN "COUNTS GOBLINS", because the subject is already named by the row's own
  *  event line and repeating it here would say the same noun twice in two voices. */
-export function boardCountFeedsScaling(producer: string, consumer: string): string {
-  return `While ${producer} is on the battlefield, ${consumer} counts it and gets bigger`;
+const COUNT_GROWS: Record<string, string> = {
+  "token-generation": "makes more tokens",
+  "token-doubling": "makes more tokens",
+  "deal-damage": "deals more damage",
+  damage: "deals more damage",
+  "draw-card": "draws more cards",
+  lifegain: "gains more life",
+  drain: "drains for more",
+  "counter-placement": "puts on more counters",
+  mill: "mills more",
+  "add-mana": "adds more mana",
+  "cost-reduction": "costs less",
+  pump: "gets bigger",
+};
+
+export function boardCountFeedsScaling(
+  producer: string, consumer: string, effectKind?: string,
+): string {
+  // "GETS BIGGER" WAS A WRONG CLAIM ON MOST OF THIS CHANNEL, reported by the precon reviewer against
+  // the card printed beside it: Krenko's X counts Goblins to decide HOW MANY TOKENS he makes, and he
+  // is a 3/3 either way. A reader who checks the sentence against the card -- which is the whole
+  // point of printing a sentence -- finds it saying something the card does not say.
+  //
+  // The kind is what the count actually feeds, so the kind names the growth. An effect this map has
+  // never seen says "does more", which is true of every scaling effect and claims nothing further.
+  const grows = (effectKind && COUNT_GROWS[effectKind]) ?? "does more";
+  // "YOU CONTROL", NOT "ON THE BATTLEFIELD" -- the skeptic held the sentence against the card six
+  // inches away: Krenko counts "the number of Goblins YOU CONTROL", and an opponent's Goblin is on
+  // the battlefield and counts for nothing. The engine's gate is control-aware already (the count's
+  // `control` is kept when it is matched against a card's printed characteristics); only the prose
+  // was stating the weaker condition.
+  return `While you control ${producer}, ${consumer} counts it and ${grows}`;
 }
 
 /** kind -> what a continuous STATIC effect gives the class of card its subject reaches. Direction

@@ -3387,7 +3387,9 @@ const countsGoblins = () => base("Krenko, Mob Boss", [{
 test("a card of the counted subtype feeds a board-count payoff", () => {
   const reasons = directedReasons(goblinBody(), countsGoblins(), H);
   const scaled = reasons.find((r) => r.tag === "scales:goblin");
-  expect(scaled?.text).toBe("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets bigger");
+  // NOT "gets bigger": Krenko is a 3/3 whatever the count says, and his X decides how many TOKENS
+  // he makes. The precon reviewer caught the old sentence against the card printed beside it.
+  expect(scaled?.text).toBe("While you control Goblin Assassin, Krenko, Mob Boss counts it and makes more tokens");
   expect(scaled?.repeatability).toBe("activated");
 });
 

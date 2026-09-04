@@ -271,6 +271,33 @@ const STAT_METRIC: Record<string, StatPredicate["metric"]> = {
   power: "power", toughness: "toughness", "mana value": "mana-value",
 };
 
+/** A LITERAL PRINTED SIZE — "whenever a 1/1 creature you control enters".
+ *
+ *  `STAT_RE` above reads only the COMPARATIVE form ("power 2 or less"), so a printed size was
+ *  dropped entirely and the trigger derived as a bare `creature`. Sword of the Meek's whole
+ *  restriction is that the creature is a 1/1: without it the engine believed ANY creature entering
+ *  returns it, which is right for a Krenko token by luck and wrong for every deck making bigger
+ *  ones. Reported by a deck tuner reading the row against the card, 2026-09-04.
+ *
+ *  MEASURED over the clause corpus: 4 triggers across 4 cards name a literal size -- Sword of the
+ *  Meek, Bess Soul Nourisher, Duskana the Rage Mother, Forum Filibuster. Small, and each one is an
+ *  OVER-claim, which is the direction that costs.
+ *
+ *  BOTH HALVES OR NEITHER. "1/1" is two conditions and dropping either widens the claim, so this
+ *  emits power eq N AND toughness eq M. A `*` or an X in a printed size is not a number and is not
+ *  matched here -- the matcher stores those as 0, and reading "0/0" as a literal would claim every
+ *  such creature. */
+const LITERAL_SIZE = /\b(\d+)\s*\/\s*(\d+)\b/;
+
+function literalSize(t: string): StatPredicate[] {
+  const m = LITERAL_SIZE.exec(t);
+  if (!m) return [];
+  return [
+    { metric: "power", op: "eq", value: Number(m[1]) },
+    { metric: "toughness", op: "eq", value: Number(m[2]) },
+  ];
+}
+
 /** An ENUMERATED mana cost — Urza's Saga's "artifact card with mana cost {0} or {1}". Not a
  *  comparison, so STAT_RE never saw it, and the card derived as a bare artifact tutor
  *  indistinguishable from Fabricate.
@@ -536,7 +563,7 @@ export function parseSubject(text: string): SubjectFilter {
   const { type, notType, umbrella, plural } = parseTypes(t);
   const { subtype, plural: subtypePlural } = parseSubtypes(t);
   const scope = parseScope(t, plural || subtypePlural);
-  const stats = parseStats(t);
+  const stats = [...parseStats(t), ...literalSize(t)];
   const colors = parseColors(t);
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
   if (CHOSEN.test(t)) out.chosenType = true;
