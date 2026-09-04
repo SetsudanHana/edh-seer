@@ -164,7 +164,18 @@ export function reasonSentence(input: {
   // ONE GRAMMAR FOR BOTH CAUSED CASES. "thanks to <producer>" is the same construction the self
   // branch above already uses, so the producer stays named as the cause while the SUBJECT of the
   // event is named as the thing it happens to.
-  const cause = input.subjectNoun
+  //
+  // EXCEPT FOR `create-token`, THE ONE VERB WHOSE SUBJECT IS ITS OBJECT. Every other emit names the
+  // thing the event HAPPENS TO -- a creature dies, an artifact enters -- so making it the
+  // grammatical subject is right. A create-token emit names the thing CREATED while the verb
+  // describes the maker's action, so the same construction produced "When a goblin makes a token
+  // thanks to Krenko, Mob Boss": the token doing the making. MEASURED on the partner artifact
+  // 2026-09-04, 7,050 of 91,061 rows (7.7%) across 2,671 cards. The producer takes the subject back
+  // and the noun becomes what it always was, the token's own name.
+  const cause = input.subjectNoun && input.eventKey.split(":")[0] === "create-token"
+    // An untyped emit yields "a permanent", and "a permanent token" says nothing "a token" does not.
+    ? `When ${input.producer} makes ${input.subjectNoun === "a permanent" ? "a token" : `${input.subjectNoun} token`}`
+    : input.subjectNoun
     ? `When ${input.subjectNoun} ${verb} thanks to ${input.producer}`
     : `When ${input.producer} ${verb}`;
   return phrase ? `${cause}, ${input.consumer} ${phrase}` : `${cause}, ${input.consumer} triggers`;
@@ -183,7 +194,15 @@ export function emitSubjectNoun(subject: {
   if (!subject || subject.self === true) return undefined;
   const first = (v: string | string[] | undefined): string | undefined =>
     Array.isArray(v) ? v[0] : v;
-  const noun = first(subject.subtype) ?? first(subject.type) ?? "permanent";
+  // A SUBTYPE IS A PROPER NOUN IN MAGIC and a card type is not: a Goblin, an Angel, a Treasure --
+  // but a creature, an artifact. The derived tags are lowercase throughout, so the distinction has
+  // to be restored here, at the one place that knows WHICH of the two it took. Noticed on a card
+  // page printing both at once: `eventKeySentence` said "a Goblin creature token" one line above a
+  // reason sentence saying "a goblin", which reads as two engines disagreeing about the same card.
+  const subtype = first(subject.subtype);
+  const noun = subtype !== undefined
+    ? subtype.charAt(0).toUpperCase() + subtype.slice(1)
+    : first(subject.type) ?? "permanent";
   return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
 }
 
@@ -200,6 +219,16 @@ export function graveyardEnablesRecursion(producer: string, consumer: string): s
  *  than returning one (Bonehoard). Not a trigger either — `effect.scaling` fires nothing. */
 export function graveyardFeedsScaling(producer: string, consumer: string): string {
   return `When ${producer} is in the graveyard, ${consumer} gets bigger`;
+}
+
+/** THE SAME SHAPE ONE ZONE OVER: a payoff that counts what you have ON THE BOARD, and a card that
+ *  is one of them. Krenko, Mob Boss makes a Goblin token per Goblin you control, so every other
+ *  Goblin in the deck makes him bigger -- a relation no event can express, because nothing fires.
+ *
+ *  "COUNTS IT" RATHER THAN "COUNTS GOBLINS", because the subject is already named by the row's own
+ *  event line and repeating it here would say the same noun twice in two voices. */
+export function boardCountFeedsScaling(producer: string, consumer: string): string {
+  return `While ${producer} is on the battlefield, ${consumer} counts it and gets bigger`;
 }
 
 /** kind -> what a continuous STATIC effect gives the class of card its subject reaches. Direction

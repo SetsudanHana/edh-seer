@@ -22,6 +22,14 @@ import { parseSubject } from "./subject.js";
 /** A count OF A GRAVEYARD'S CONTENTS: "in your graveyard", "in all graveyards", "in each graveyard". */
 const GRAVEYARD_COUNT = /\bin (?:your|a|an|each|their|all|its owner's) [^.,;]{0,30}graveyards?\b/i;
 
+/** A COUNT OF WHAT IS ON A BATTLEFIELD: "Goblins you control", "Zombies on the battlefield".
+ *
+ *  MEASURED 2026-09-04, and it is why this exists: 662 corpus cards state a count phrase and this
+ *  file read only the 156 that count a graveyard. Krenko, Mob Boss -- "X 1/1 red Goblin creature
+ *  tokens, where X is the number of Goblins you control" -- derived NO scaling and NO subject, so
+ *  the one thing his deck is built around was invisible to every layer that reads either. */
+const BATTLEFIELD_COUNT = /\b(?:you control|on the battlefield)\b/i;
+
 /** Order matters. A graveyard count is per-graveyard even when the thing counted is a creature --
  *  SCALING_ALIASES maps "per-graveyard-creature" to per-graveyard, so that is the canonical reading
  *  and it must be tested before per-creature can claim Diregraf Colossus. */
@@ -37,6 +45,11 @@ const BASES: [RegExp, ScalingBasis][] = [
   [/\bcreatures?\b/i, "per-creature"],
   [/\b(?:permanents?|artifacts?|enchantments?|lands?|devotion)\b/i, "per-permanent"],
   [/\bspells?\s+you'?ve\s+cast\b|\bstorm\b|\bspells?\s+cast\b/i, "per-cast-or-spell"],
+  // LAST, AND ONLY WHEN A BOARD IS NAMED. Every row above tests a noun this one cannot name -- a
+  // creature type, an artifact subtype, a Shrine -- so it claims what the closed vocabulary has no
+  // better word for: a Goblin on the battlefield is a permanent. It must stay last, or "creatures
+  // you control" would stop being `per-creature`.
+  [BATTLEFIELD_COUNT, "per-permanent"],
 ];
 
 /** The noun a count actually counts. Matching the whole string reads the LOCATION as the basis:
@@ -58,15 +71,29 @@ const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60})/i;
  *  for the size of THEIR yard, which your own fillers do not feed. */
 export function scalingSubject(action: Action): SubjectFilter | undefined {
   const text = `${action.amount ?? ""} ${action.object ?? ""}`;
-  if (!GRAVEYARD_COUNT.test(text)) return undefined;
   const counted = COUNTED.exec(text);
   if (!counted) return undefined;
   const noun = counted[1];
-  const subject = parseSubject(noun.split(/\s{1,4}in\s{1,4}/i)[0]);
-  subject.zone = "graveyard";
-  subject.control = /\btheir\b/i.test(noun) ? "opp"
-    : /\ball graveyards?\b|\beach graveyard\b/i.test(noun) ? "any"
-    : "you";
+
+  if (GRAVEYARD_COUNT.test(text)) {
+    const subject = parseSubject(noun.split(/\s{1,4}in\s{1,4}/i)[0]);
+    subject.zone = "graveyard";
+    subject.control = /\btheir\b/i.test(noun) ? "opp"
+      : /\ball graveyards?\b|\beach graveyard\b/i.test(noun) ? "any"
+      : "you";
+    return subject;
+  }
+
+  // A BOARD COUNT, AND THE GRAVEYARD BRANCH GETS FIRST REFUSAL. "Creature cards in your graveyard"
+  // names neither a controller nor the battlefield, so the order is what keeps a graveyard count
+  // from claiming a board -- the same precedence `BASES` states above.
+  if (!BATTLEFIELD_COUNT.test(noun)) return undefined;
+  const subject = parseSubject(noun.split(/\s{1,4}(?:you control|on the battlefield)\b/i)[0]);
+  subject.zone = "battlefield";
+  // "ON THE BATTLEFIELD" IS EVERYONE'S BOARD and "you control" is yours -- the same distinction the
+  // graveyard branch draws between "your graveyard" and "all graveyards", and it decides whether an
+  // opponent's Goblins count toward the number.
+  subject.control = /\byou control\b/i.test(noun) ? "you" : "any";
   return subject;
 }
 

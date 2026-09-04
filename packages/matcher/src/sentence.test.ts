@@ -3,8 +3,7 @@ import { VERB_VOCAB } from "@edh-seer/tagger";
 import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence,
-} from "./sentence.js";
+  emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence } from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
   // effectKind is absent on 8.9% of reasons and `amount` on more than half of abilities, so the
@@ -242,4 +241,45 @@ describe("the five small verbatim sentences", () => {
   test("createsSentence", () => {
     expect(createsSentence("Krenko's Command", "Goblin")).toBe("Krenko's Command creates Goblin");
   });
+});
+
+/** THE ONE VERB WHOSE SUBJECT IS ITS OBJECT. Every other emit names what the event happens to, so
+ *  the "thanks to" construction reads correctly; a `create-token` emit names what was CREATED while
+ *  the verb describes the MAKER's action, and the same construction had the token doing the making.
+ *  MEASURED on the partner artifact 2026-09-04: 7,050 of 91,061 rows (7.7%) on 2,671 cards. */
+test("a create-token cause names the maker, not the token it made", () => {
+  expect(reasonSentence({
+    producer: "Krenko, Mob Boss", consumer: "Staff of the Storyteller",
+    eventKey: "create-token:goblin", effectKind: "counters", subjectNoun: "a goblin",
+  })).toMatch(/^When Krenko, Mob Boss makes a goblin token, Staff of the Storyteller /);
+});
+
+/** "A permanent token" says nothing "a token" does not, and the untyped emit is what produces it. */
+test("an untyped create-token emit reads as a plain token", () => {
+  expect(reasonSentence({
+    producer: "Anointed Procession", consumer: "Impact Tremors",
+    eventKey: "create-token:any", subjectNoun: "a permanent",
+  })).toMatch(/^When Anointed Procession makes a token, /);
+});
+
+/** AND NO OTHER VERB MOVES. The "thanks to" grammar is right wherever the subject really is what
+ *  the event happens to, which is every emit but this one. */
+test("a non-create-token cause still names the subject the event happens to", () => {
+  expect(reasonSentence({
+    producer: "Austere Command", consumer: "Grim Haruspex",
+    eventKey: "dies:creature", effectKind: "draw-card", subjectNoun: "a creature",
+  })).toMatch(/^When a creature dies thanks to Austere Command, /);
+});
+
+/** A SUBTYPE IS A PROPER NOUN IN MAGIC AND A CARD TYPE IS NOT. Noticed on a card page printing both
+ *  at once: the event line read "a Goblin creature token" and the reason sentence under it read
+ *  "a goblin", which reads as two engines disagreeing about the same card. */
+test("an emit's subtype noun is capitalised and its type noun is not", () => {
+  expect(emitSubjectNoun({ subtype: "goblin", type: "creature" })).toBe("a Goblin");
+  expect(emitSubjectNoun({ type: "creature" })).toBe("a creature");
+  expect(emitSubjectNoun({ type: "artifact" })).toBe("an artifact");
+  expect(emitSubjectNoun({})).toBe("a permanent");
+  // An emit about the producer ITSELF names no noun -- that is what keeps every correct sentence in
+  // the corpus reading as it did.
+  expect(emitSubjectNoun({ self: true, subtype: "goblin" })).toBeUndefined();
 });

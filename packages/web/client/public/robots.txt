@@ -2,10 +2,15 @@
 User-agent: *
 Allow: /
 
-# THE CARD ARTIFACTS ARE NOT CONTENT. `/static/` holds 16,384 JSON shards and two token maps — 98 MB
-# of data the app fetches for itself. Crawling them costs a crawler its budget and this site its
-# bandwidth to index files no human will ever read, and the card text in them is Wizards' property
-# rather than ours to publish as pages.
+# THE CARD ARTIFACTS ARE NOT CONTENT. `/static/` holds the JSON shards, the partner artifact and the
+# token maps — ~100 MB of data the app fetches for itself. Crawling them costs a crawler its budget
+# and this site its bandwidth to index files no human will ever read.
+#
+# THE CARD PAGES THEMSELVES ARE CONTENT AND ARE CRAWLABLE (2026-09-04). What they publish is OUR
+# derivation — the events a card supplies and demands, and the engine's own sentence for why two
+# cards interact — never the card. A card's rules text is not in the artifact at all: name, type
+# line and mana cost are the only card data on the page, because the evidence a reader checks a
+# claim against is the reason sentence, not a reprint of the card.
 Disallow: /static/
 
 Sitemap: https://edhseer.cards/sitemap.xml

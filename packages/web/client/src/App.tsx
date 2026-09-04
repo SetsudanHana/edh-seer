@@ -4,6 +4,9 @@ import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
 import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
+import { CardPage } from "./components/CardPage.js";
+import { CardSearch } from "./components/CardSearch.js";
+import { CommanderPage } from "./components/CommanderPage.js";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
@@ -246,12 +249,26 @@ export default function App() {
     {/* SHARE LINKS COPIED BEFORE THE SURFACES MOVED. `/graph`, `/cards` and `/combos` used to BE the
       * report; they carry `#deck=<payload>` and the hash never reaches the server, so this cannot be
       * a Cloudflare redirect -- see `LegacyDeckRedirect`. Renders nothing when there is no deck in
-      * the hash, which is why it can sit above the app rather than replacing it. */}
+      * the hash, which is why it can sit above the app rather than replacing it.
+      * `/cards` IS NOT HERE ANY MORE: it is the card search now, and that page renders the same
+      * redirect itself. A path that is a real page cannot also be a bare redirect above the app --
+      * the redirect has to be part of what the page does on arrival. */}
     <Routes>
       <Route path="/graph" element={<LegacyDeckRedirect to="/analysis/graph" />} />
-      <Route path="/cards" element={<LegacyDeckRedirect to="/analysis/cards" />} />
       <Route path="/combos" element={<LegacyDeckRedirect to="/analysis/combos" />} />
     </Routes>
+    {/* THE CARD PAGES REPLACE THE DECK TOOL RATHER THAN SITTING UNDER IT, which is why `main` is a
+      * route element now instead of the component's whole body. `*` keeps every other path on the
+      * deck tool, including a bare `/#deck=...`: a share link's path is a hint about which surface
+      * to open, and the deck itself is in the hash.
+      * THE BLOCK BELOW IS UNCHANGED AND UNINDENTED ON PURPOSE -- re-indenting 100 lines to add two
+      * would bury the actual change in the diff. */}
+    <Routes>
+      <Route path="/cards" element={<CardSearch />} />
+      <Route path="/cards/:slug" element={<CardPage />} />
+      <Route path="/commanders" element={<CardSearch mode="commanders" />} />
+      <Route path="/commanders/:slug" element={<CommanderPage />} />
+      <Route path="*" element={
     <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
       {/* RENDERS NOTHING HERE. It portals into the static header's nav, and only once the browser
         *  has said the app can be installed -- see `InstallButton` for why the event is the whole
@@ -358,6 +375,8 @@ export default function App() {
           lived outside it, and a notice that is a CONDITION of showing Wizards' property should not
           depend on the bundle loading at all. */}
     </main>
+      } />
+    </Routes>
     </BrowserRouter>
   );
 }

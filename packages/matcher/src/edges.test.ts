@@ -62,7 +62,7 @@ test("reason text is human-readable — no raw tag tokens leak", () => {
   // token COPY (`token: true`), and Inalla is not a token. Saying "When Inalla enters" described the
   // wrong event — the same defect that made a Sorcery die (roadmap, 2026-08-27 persona run).
   // Still no engine vocabulary and no raw tag.
-  expect(etb.text).toBe("When a wizard enters thanks to Inalla, Kindred Discovery draws you cards");
+  expect(etb.text).toBe("When a Wizard enters thanks to Inalla, Kindred Discovery draws you cards");
   // both card names still present (CLI + engine rely on this)
   expect(etb.text).toContain(maker.card.name);
   expect(etb.text).toContain(etbPayoff.card.name);
@@ -247,6 +247,29 @@ test("token mediation: a Treasure maker's own token-entry event no longer edges 
 test("token mediation: the Treasure NODE's own entry still edges the payoff -- the two-hop path stands", () => {
   const reasons = directedReasons(treasureNode(), artifactPayoff(), H);
   expect(reasons.some((r) => r.tag === "enters:artifact")).toBe(true);
+});
+
+/** SUPPRESSION IS A TRADE, AND A CALLER WITH NO TOKEN NODES RECEIVES NOTHING. The card pages build
+ *  one card at a time, so the second hop this rule pays for is never constructed there: the maker's
+ *  real supply is deleted and the only sentence left is about its own body. MEASURED 2026-09-04 on
+ *  the partner artifact -- 7,266 of 117,946 sampled token-only candidate pairs deleted outright,
+ *  6,407 further rows worded as the body entering. The deck report, the graph and the compass all
+ *  keep the default, so this option cannot move them. */
+test("token mediation is off for a caller with no token nodes, and the maker's own supply returns", () => {
+  const reasons = directedReasons(withTreasurePart(treasureMaker()), artifactPayoff(), H, { tokensMediate: false });
+  expect(reasons.some((r) => r.tag === "enters:artifact")).toBe(true);
+  // The sentence names the TOKEN as the thing that enters, not the sorcery that made it.
+  expect(reasons.find((r) => r.tag === "enters:artifact")!.text)
+    .toBe("When a Treasure enters thanks to Deadly Dispute, Artifact ETB Payoff draws you cards");
+});
+
+/** THE DEFAULT IS THE DECK REPORT and it has to stay byte-identical, so the option is proven to be
+ *  opt-in rather than assumed to be. */
+test("token mediation still fires when the option is absent or explicitly true", () => {
+  for (const opts of [undefined, {}, { tokensMediate: true }]) {
+    const reasons = directedReasons(withTreasurePart(treasureMaker()), artifactPayoff(), H, opts);
+    expect(reasons.some((r) => r.tag.startsWith("enters:"))).toBe(false);
+  }
 });
 
 test("CR 614 multiplier still edges the maker, never the token, after mediation (owner's ruling, verified not assumed)", () => {
@@ -3343,4 +3366,85 @@ test("a type-grant that names neither drops the noun rather than guessing it", (
   // is both: Omo's land static aimed at Dryad Arbor grants LAND types to a land creature.
   const fromSubject = pairReasons(landGranter(), both, H).find((r) => r.tag === "static:type-grant")!;
   expect(fromSubject.text).toBe("Omo, Queen of Vesuva gives Dryad Arbor an extra land type");
+});
+
+/** A BOARD COUNT IS A RELATION NOTHING FIRES. Krenko, Mob Boss makes a Goblin token per Goblin you
+ *  control, so every other Goblin in the deck makes him bigger -- and no event says so: there is no
+ *  trigger, no emit, and until `scalingSubject` learned to read a battlefield count there was not
+ *  even a derived field to hang it on. OWNER-REPORTED as the fourth case a Krenko page should
+ *  answer, after goblin-entering, token-entering and creature-entering. */
+const goblinBody = () => base("Goblin Assassin", [], ["goblin"]);
+const countsGoblins = () => base("Krenko, Mob Boss", [{
+  kind: "activated", cost: "{T}",
+  effect: {
+    kind: "token-generation", scaling: "per-permanent",
+    scalingSubject: { subtype: "goblin", zone: "battlefield", control: "you", token: null },
+    subject: { control: "you", token: true, type: "creature", subtype: "goblin" },
+  },
+  emits: [{ verb: "create-token", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } }],
+}] as unknown as CardTags["abilities"], ["goblin"]);
+
+test("a card of the counted subtype feeds a board-count payoff", () => {
+  const reasons = directedReasons(goblinBody(), countsGoblins(), H);
+  const scaled = reasons.find((r) => r.tag === "scales:goblin");
+  expect(scaled?.text).toBe("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets bigger");
+  expect(scaled?.repeatability).toBe("activated");
+});
+
+/** THE DIRECTION IS ONE WAY. Krenko does not make the Goblin bigger. */
+test("the board count does not run backwards", () => {
+  expect(directedReasons(countsGoblins(), goblinBody(), H).some((r) => r.tag.startsWith("scales:")))
+    .toBe(false);
+});
+
+/** A CARD THAT IS NOT ONE OF THEM IS NOT COUNTED, which is the whole gate: this reads the
+ *  PRODUCER'S PRINTED CHARACTERISTICS, not anything it does. */
+test("a card of another subtype is not counted", () => {
+  expect(directedReasons(base("Llanowar Elves", [], ["elf"]), countsGoblins(), H)
+    .some((r) => r.tag.startsWith("scales:"))).toBe(false);
+});
+
+/** A BARE CARD TYPE FORMS NOTHING, and this is the rule that keeps the channel from being a mesh.
+ *  "Creatures you control" is satisfied by every creature in the deck, which is 40 edges saying the
+ *  same nothing -- the engine's own "playing Magic is not a synergy" rule. 685 battlefield counts
+ *  are derived and only the 248 that name a SUBTYPE may form an edge. */
+test("a count of a bare card type forms no edge", () => {
+  const countsCreatures = base("Axebane Guardian", [{
+    kind: "activated", cost: "{T}",
+    effect: {
+      kind: "add-mana", scaling: "per-creature",
+      scalingSubject: { type: "creature", zone: "battlefield", control: "you", token: null },
+    },
+  }] as unknown as CardTags["abilities"]);
+  expect(directedReasons(goblinBody(), countsCreatures, H).some((r) => r.tag.startsWith("scales:")))
+    .toBe(false);
+});
+
+/** A BASIC LAND TYPE IS THE MANA BASE, NOT A SYNERGY. 20 corpus cards count Swamps and 13 count
+ *  Mountains; a mono-black deck runs 30 Swamps, and 30 edges from lands to one payoff is the same
+ *  mesh in a different costume. */
+test("a count of a basic land type forms no edge", () => {
+  const countsSwamps = base("Cabal Coffers", [{
+    kind: "activated", cost: "{2}, {T}",
+    effect: {
+      kind: "add-mana", scaling: "per-permanent",
+      scalingSubject: { subtype: "swamp", zone: "battlefield", control: "you", token: null },
+    },
+  }] as unknown as CardTags["abilities"]);
+  expect(directedReasons(base("Swamp", [], ["swamp"]), countsSwamps, H)
+    .some((r) => r.tag.startsWith("scales:"))).toBe(false);
+});
+
+/** AN OPPONENT'S BOARD IS NOT FED BY YOUR CARD. "Creatures your opponents control" counts THEIR
+ *  side, and a deckmate cannot add to it. */
+test("a count of what an opponent controls forms no edge", () => {
+  const countsTheirs = base("Opponent Counter", [{
+    kind: "static",
+    effect: {
+      kind: "pump", scaling: "per-permanent",
+      scalingSubject: { subtype: "goblin", zone: "battlefield", control: "opp", token: null },
+    },
+  }] as unknown as CardTags["abilities"]);
+  expect(directedReasons(goblinBody(), countsTheirs, H).some((r) => r.tag.startsWith("scales:")))
+    .toBe(false);
 });

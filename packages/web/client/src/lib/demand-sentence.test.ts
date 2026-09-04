@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { eventLabel, tagLabel, STATIC_KIND, MECHANISM, DEMAND_VERB, DEMAND_SUBJECTLESS, DEMAND_PHASE } from "./demand-sentence.js";
+import { eventLabel, tagLabel, STATIC_KIND, MECHANISM, DEMAND_VERB, DEMAND_SUBJECTLESS, DEMAND_PHASE, eventKeySentence } from "./demand-sentence.js";
 
 /** The graph's trace-event chips label a census key's VERB half. It reuses `DEMAND_VERB` rather
  *  than adding a second vocabulary — this repo has twice shipped an internal identifier rendered as
@@ -102,4 +102,60 @@ test("no two mechanisms share a label", () => {
   const collisions = [...byLabel].filter(([, ms]) => ms.length > 1)
     .map(([label, ms]) => `${label}: ${ms.join(" + ")}`);
   expect(collisions).toEqual([]);
+});
+
+/** AN ARTIFACT EVENT KEY IS ENGINE VOCABULARY, and the card pages print it as their main content.
+ *  Until this read as English, 17,775 indexable pages served four pipe-separated tokens to a
+ *  crawler. */
+test("an artifact event key reads as English, keeping every dimension that narrows it", () => {
+  expect(eventKeySentence("enters|creature|goblin|t"))
+    .toBe("a Goblin creature token entering the battlefield");
+  expect(eventKeySentence("enters|creature|-|-")).toBe("a creature entering the battlefield");
+  expect(eventKeySentence("dies|creature|-|-")).toBe("a creature dying");
+  expect(eventKeySentence("cast|instant|-|-")).toBe("an instant being cast");
+});
+
+/** THE TOKEN FLAG IS SAID ONLY WHEN IT NARROWS. A payoff that wants a token and one that refuses
+ *  tokens are different cards and a reader has to see which; `-` means the trigger never mentioned
+ *  tokens, and "token or not" is a word that changes no meaning. */
+test("the token flag is spoken when it restricts and silent when it does not", () => {
+  expect(eventKeySentence("enters|creature|-|n")).toBe("a nontoken creature entering the battlefield");
+  expect(eventKeySentence("enters|creature|-|t")).toBe("a creature token entering the battlefield");
+  expect(eventKeySentence("enters|creature|-|-")).not.toContain("token");
+});
+
+/** A LIST IS A DISJUNCTION. `enters|artifact,creature|-|-` fires on an artifact OR a creature, and
+ *  "an artifact creature" would be a narrower claim than the card makes. */
+test("a type list reads as a choice, not as one compound noun", () => {
+  expect(eventKeySentence("enters|artifact,creature|-|-"))
+    .toBe("an artifact or creature entering the battlefield");
+  expect(eventKeySentence("cast|instant,sorcery|-|-")).toBe("an instant or sorcery being cast");
+});
+
+test("an untyped event names no noun it does not have", () => {
+  expect(eventKeySentence("counter-added|-|-|-")).toBe("anything getting a counter");
+  expect(eventKeySentence("enters|-|-|n")).toBe("anything that is not a token entering the battlefield");
+});
+
+/** A PHASE AND A PLAYER ACTION HAVE NO SUBJECT to glue a noun onto -- the same two escapes
+ *  `demandSentence` makes. */
+test("a phase and a player action are the whole sentence", () => {
+  expect(eventKeySentence("upkeep|-|-|-")).toBe("an upkeep");
+  expect(eventKeySentence("draw|-|-|-")).toBe("a card being drawn");
+});
+
+/** A VERB THE MAP HAS NEVER SEEN says the true ugly thing rather than inventing a phrase, which is
+ *  the fallback every other function in this file takes. */
+test("an unmapped verb de-slugs rather than printing a raw key", () => {
+  const out = eventKeySentence("teleports|creature|-|-");
+  expect(out).not.toContain("|");
+  expect(out).toContain("teleports");
+});
+
+/** A BOARD COUNT IS NOT AN EVENT. "Goblins you control" is a standing fact about the board, not
+ *  something that happens, so it gets the noun and the possession rather than a verb phrase --
+ *  gluing one on would invent an event nothing fires. */
+test("a board count reads as what you control, not as something happening", () => {
+  expect(eventKeySentence("counts|-|goblin|-")).toBe("a Goblin you control");
+  expect(eventKeySentence("counts|-|elf|-")).toBe("an Elf you control");
 });
