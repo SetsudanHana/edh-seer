@@ -136,6 +136,10 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
       push("attacks");
       push("combat-damage");
     }
+    // A Room can be fully unlocked (CR 717.4): both doors paid for. It is the only thing that can,
+    // so the eerie half -- "whenever you fully unlock a Room" -- is supplied by every Room in the
+    // deck and by nothing else. 28 corpus Rooms, 24 slots across the 71 decks.
+    if (face.subtypes.some((s) => s.toLowerCase() === "room")) push("unlock");
   }
   // Printed keywords are supply too, and were a dead channel until 2026-08-14. Appended once for the
   // whole card rather than per face: a keyword is printed on the card, not on a face.

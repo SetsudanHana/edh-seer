@@ -1766,3 +1766,22 @@ test("an emit from an activated ability, an instant or a flash spell is instant-
   });
   expect(flash.abilities[0].emits?.[0].instantSpeed).toBe(true);
 });
+
+// THE EERIE HALF, AND THE CHANNEL THAT WAS SUPPOSED TO CATCH ITS ABSENCE. "Whenever you fully unlock
+// a Room" was recorded by the clause layer as `unlocked` and derived to nothing, and
+// `unknownTriggers` -- the field that exists so a dropped trigger is visible -- was computed and then
+// discarded by `deriveCardTags`, so every persisted doc read as if nothing had ever been unknown.
+test("an unlocked trigger derives to the unlock verb, and an unknown event is persisted as unknown", () => {
+  const eerie = deriveCardTags({
+    oracleId: "leech",
+    clauses: [
+      { id: 1, abilityType: "triggered", trigger: { event: "unlocked", subject: "a Room", control: "you" }, actions: [{ verb: "lose-life", object: "each opponent", amount: "1" }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "no-such-event", subject: "a Room", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }] },
+    ],
+    characteristics: MINIMAL_CHARACTERISTICS,
+  });
+  expect(eerie.abilities.some((a) => a.trigger?.verbs.includes("unlock"))).toBe(true);
+  expect(eerie.unknownTriggers).toEqual(["no-such-event"]);
+  const clean = deriveCardTags({ oracleId: "clean", clauses: [], characteristics: MINIMAL_CHARACTERISTICS });
+  expect("unknownTriggers" in clean).toBe(false);
+});

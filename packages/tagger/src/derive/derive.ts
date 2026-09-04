@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 94;
+export const DERIVE_VERSION = 95;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -115,6 +115,9 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   sacrificed: "sacrifice",
   discarded: "discard",
   milled: "mill",
+  // The eerie half: "whenever you fully unlock a Room". 35 clause docs carry it; every Room supplies
+  // it by being one (`impliedEvents`).
+  unlocked: "unlock",
   // ORIGIN-BLIND BY DESIGN (CR 703/116 sweep, 2026-08-20). `dies`, `milled` and `discarded` split
   // one event by where the card came FROM; "put into a graveyard from anywhere" is the union, which
   // is precisely what `enters-graveyard` already means to the matcher — `normalizeZoneEvent` derives
@@ -1087,7 +1090,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
   const chars = input.characteristics;
   const castAtInstantSpeed = chars.types.some((t) => t.toLowerCase() === "instant")
     || (chars.keywords ?? []).some((k) => k.toLowerCase() === "flash");
-  const { abilities } = deriveAbilities(
+  const { abilities, unknownTriggers } = deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed);
   return {
@@ -1101,5 +1104,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     model: "derived",
     characteristics: input.characteristics,
     abilities,
+    // Written only when there is something to surface, so a clean card stays byte-identical.
+    ...(unknownTriggers.length ? { unknownTriggers } : {}),
   };
 }

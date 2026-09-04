@@ -611,3 +611,12 @@ test("one demand however the template is dressed", () => {
     "You may have this Vehicle enter as a copy of a creature an opponent controls, except it's a Vehicle artifact.",
   ]) expect(enterAsCopyAbilities(t, chars(["creature"], ["shapeshifter"])), t).toHaveLength(1);
 });
+
+// A Room is the only thing that can be fully unlocked, so it is the only implied supply for the eerie
+// half; nothing else advertises `unlock`.
+test("a Room implies being fully unlocked; a plain enchantment does not", () => {
+  const room = impliedEvents(chars(["enchantment"], ["room"]));
+  expect(room.some((e) => e.verb === "unlock" && e.implied)).toBe(true);
+  const aura = impliedEvents(chars(["enchantment"], ["aura"]));
+  expect(aura.some((e) => e.verb === "unlock")).toBe(false);
+});

@@ -144,6 +144,7 @@ export function effectPhrase(
 export const VERB_PHRASES: Record<string, string> = {
   enters: "enters",
   "enters-graveyard": "hits the graveyard",
+  unlock: "is fully unlocked",
   dies: "dies",
   leaves: "leaves the battlefield",
   cast: "is cast",
