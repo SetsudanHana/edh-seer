@@ -164,7 +164,18 @@ export function reasonSentence(input: {
   // ONE GRAMMAR FOR BOTH CAUSED CASES. "thanks to <producer>" is the same construction the self
   // branch above already uses, so the producer stays named as the cause while the SUBJECT of the
   // event is named as the thing it happens to.
-  const cause = input.subjectNoun
+  //
+  // EXCEPT FOR `create-token`, THE ONE VERB WHOSE SUBJECT IS ITS OBJECT. Every other emit names the
+  // thing the event HAPPENS TO -- a creature dies, an artifact enters -- so making it the
+  // grammatical subject is right. A create-token emit names the thing CREATED while the verb
+  // describes the maker's action, so the same construction produced "When a goblin makes a token
+  // thanks to Krenko, Mob Boss": the token doing the making. MEASURED on the partner artifact
+  // 2026-09-04, 7,050 of 91,061 rows (7.7%) across 2,671 cards. The producer takes the subject back
+  // and the noun becomes what it always was, the token's own name.
+  const cause = input.subjectNoun && input.eventKey.split(":")[0] === "create-token"
+    // An untyped emit yields "a permanent", and "a permanent token" says nothing "a token" does not.
+    ? `When ${input.producer} makes ${input.subjectNoun === "a permanent" ? "a token" : `${input.subjectNoun} token`}`
+    : input.subjectNoun
     ? `When ${input.subjectNoun} ${verb} thanks to ${input.producer}`
     : `When ${input.producer} ${verb}`;
   return phrase ? `${cause}, ${input.consumer} ${phrase}` : `${cause}, ${input.consumer} triggers`;
