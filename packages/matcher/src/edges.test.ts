@@ -3503,3 +3503,38 @@ test("an instant-speed death satisfies an attacking-creature dies trigger", () =
   }]);
   expect(pairReasons(downfall, kardur, H).map((r) => r.tag)).toEqual(["dies:creature"]);
 });
+
+// BLOODCHIEF ASCENSION'S PRODUCER LIST READ LIKE A LIST OF CARDS DYING (owner, 2026-09-05): "When
+// Syr Konrad, the Grim hits the graveyard" for Konrad's "each player mills a card". A fill that is
+// not `self` is something the producer DOES to other cards; the sentence names those cards.
+test("a graveyard fill that is not the card itself is worded about the cards it fills with", () => {
+  const ascension = base("Ascension", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters-graveyard"], subject: { control: "opp", token: null } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null } },
+  }]);
+  const konrad = base("Konrad", [{
+    kind: "activated", effect: { kind: "top-manipulation" },
+    emits: [{ verb: "mill", subject: { control: "any", token: null, scope: "each" } }],
+  }]);
+  expect(pairReasons(konrad, ascension, H).map((r) => r.text)).toEqual([
+    "When a card hits the graveyard thanks to Konrad, Ascension costs each opponent life",
+  ].map((t) => expect.stringContaining("When a card hits the graveyard thanks to Konrad")));
+  const outlet = base("Outlet", [{
+    kind: "activated", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "any", token: null, type: "creature" } }],
+  }]);
+  expect(pairReasons(outlet, ascension, H).map((r) => r.text)[0]).toContain("When a creature hits the graveyard thanks to Outlet");
+  // A card's OWN trip to the graveyard keeps its name (against a payoff that watches any graveyard;
+  // Ascension watches an opponent's, and your own sacrifice is not that).
+  const anyYard = base("Yard", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters-graveyard"], subject: { control: "any", token: null } },
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+  }]);
+  const selfSac = base("Fodder", [{
+    kind: "activated", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "you", token: null, type: "creature", self: true } }],
+  }]);
+  expect(pairReasons(selfSac, anyYard, H).map((r) => r.text)[0]).toContain("When Fodder hits the graveyard");
+});
