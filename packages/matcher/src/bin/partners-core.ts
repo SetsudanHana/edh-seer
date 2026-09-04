@@ -1,5 +1,6 @@
 import type { GameEvent } from "@edh-seer/tagger";
-import { directedReasons } from "../edges.js";
+import { directedReasons, themeSubjectKey } from "../edges.js";
+import { normalizeZoneEvent, zoneEventKey } from "../zones.js";
 import type { DeckCard, Hierarchy } from "../types.js";
 
 /** PURE, AND IT HAS TO STAY THAT WAY. `build-partners.ts` is the Mongo and fs wiring; everything
@@ -241,8 +242,10 @@ export function partnersFor(
     // so the exclusion is explicit rather than left to the reason layer.
     .filter((c) => c.card.name !== subject.card.name)
     .map((c) => {
-      let best = "";
-      let score = 0;
+      // EVERY EVENT THE PAIR COULD CONNECT THROUGH, not just the best one. The best RANKS the
+      // candidate; which one PRICES the row is decided after the engine has spoken, because a pair
+      // usually shares several demand keys and the engine confirms some and refuses others.
+      const events = new Map<string, { score: number; tags: Set<string> }>();
       for (const a of c.tags?.abilities ?? []) {
         for (const verb of a.trigger?.verbs ?? []) {
           const key = eventKey({ verb, subject: a.trigger!.subject } as GameEvent);
@@ -250,45 +253,65 @@ export function partnersFor(
           // Widening it here would admit every permanent as a candidate for a goblin demand, and the
           // score is taken on the demand's own key, so a widened match would also be mispriced.
           if (!demandForms(key).some((f) => subjectEmits.has(f))) continue;
-          const s = specificity(key, freq);
-          if (s > score) { score = s; best = key; }
+          // THE ENGINE'S OWN TAG FOR THIS DEMAND, built from the same trigger by the same two
+          // functions `directedReasons` uses, so "did the engine confirm THIS event" is string
+          // equality against what the engine wrote. Comparing verbs instead was a near miss twice
+          // over: `zoneEventKey` renames a graveyard entry and a battlefield departure while
+          // `eventKey` drops the zone, and a verb-only test cannot tell `enters:goblin` from
+          // `enters:creature`, so a generic sentence would be priced at the rare demand's rate.
+          const t = normalizeZoneEvent({ verb, subject: a.trigger!.subject } as GameEvent);
+          const tag = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
+          const e = events.get(key) ?? { score: specificity(key, freq), tags: new Set<string>() };
+          e.tags.add(tag);
+          events.set(key, e);
         }
       }
-      return { card: c, score, event: best };
+      const byScore = [...events].sort((a, b) => b[1].score - a[1].score);
+      return { card: c, events: byScore, score: byScore[0]?.[1].score ?? 0 };
     })
     .filter((r) => r.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  // COUNTED BEFORE THE CUT, so the page can say how many it is not showing.
+  // COUNTED BEFORE THE CUT, so the page can say how many it is not showing. Counted over EVERY
+  // event a candidate matched rather than only its best, because any of them can end up pricing a
+  // row -- a pool keyed on the best alone would leave a row's own event uncounted.
   const pool: Record<string, number> = {};
-  for (const r of ranked) pool[r.event] = (pool[r.event] ?? 0) + 1;
+  for (const r of ranked) for (const [key] of r.events) pool[key] = (pool[key] ?? 0) + 1;
 
   const rows: PartnerRow[] = [];
   const shown: Record<string, number> = {};
   for (const r of ranked.slice(0, VERIFY_LIMIT)) {
-    if ((shown[r.event] ?? 0) >= PER_EVENT_CAP) continue;
     const reasons = directedReasons(subject, r.card, h);
     if (reasons.length === 0) continue;
-    shown[r.event] = (shown[r.event] ?? 0) + 1;
+    // THE ROW IS PRICED ON AN EVENT THE ENGINE ACTUALLY CONFIRMED.
+    //
+    // MEASURED, 2026-09-04: verifying the PAIR while scoring the EVENT let an event that formed no
+    // edge set the price and the label. 10,411 of 88,768 rows (11.7%) carried no sentence for their
+    // own event at all -- the pair connects, but through some other channel, so the number beside
+    // the row was earned by a relation the engine had refused. The candidate's events are tried
+    // highest-specificity first and the first one the reasons support wins; a candidate none of
+    // them support is dropped rather than priced on a refusal.
+    const hit = r.events.map(([event, { score, tags }]) => ({ event, score, on: reasons.filter((x) => tags.has(x.tag)) }))
+      .find((e) => e.on.length > 0);
+    if (!hit) continue;
+    if ((shown[hit.event] ?? 0) >= PER_EVENT_CAP) continue;
+    shown[hit.event] = (shown[hit.event] ?? 0) + 1;
     rows.push({
       name: r.card.card.name,
       slug: slugs.get(r.card.card.name) ?? slugOf(r.card.card.name),
-      score: r.score,
-      event: r.event,
-      reason: pickReason(reasons, r.event),
+      score: hit.score,
+      event: hit.event,
+      reason: pickReason(hit.on),
     });
     if (rows.length === KEEP) break;
   }
+  // A ROW CAN NOW BE PRICED BELOW THE SCORE THAT RANKED IT, so the order the loop produced is no
+  // longer the order the page wants. Sorting here rather than re-ranking keeps the CEILING above
+  // honest: `VERIFY_LIMIT` still cuts on the best-possible score, which is the only score known
+  // before the engine runs.
+  rows.sort((a, b) => b.score - a.score);
   return { rows, pool };
 }
-
-/** THE SPELLINGS OF ONE VERB. `Reason.tag` comes from `zoneEventKey`, which renames two
- *  zone-qualified events; `eventKey` drops the zone entirely. So a demand key spelled `enters` has
- *  to accept a `enters-graveyard` tag, and `leaves` has to accept `dies`. */
-const eventVerbs = (event: string): Set<string> => {
-  const v = event.split("|")[0]!;
-  return new Set(v === "leaves" ? [v, "dies"] : v === "enters" ? [v, "enters-graveyard"] : [v]);
-};
 
 /** WHICH OF THE ENGINE'S SENTENCES TO STORE.
  *
@@ -297,24 +320,20 @@ const eventVerbs = (event: string): Set<string> => {
  *  goblins repeatedly, satisfies the same trigger and is the half worth printing. `reasons[0]` was
  *  simply whichever the engine emitted first.
  *
- *  THE ROW'S OWN EVENT COMES FIRST, and preferring repeatability without it was measurably wrong:
- *  **11,928 of 88,768 rows (13.4%) printed an event key beside a sentence about a different
- *  channel** -- a row labelled `dies|-|-` reading "When Wild Magic Surge is cast, Sedgemoor Witch
- *  makes a token". Both halves can be true and the page still contradicts itself, because `event`
- *  is what earned the score and the sentence is what the reader checks it against. A pair usually
- *  connects through several channels; only one of them is the row.
+ *  IT IS HANDED ONLY THE SENTENCES FOR THE ROW'S OWN EVENT, because preferring
+ *  repeatability across all of them was measurably wrong: **11,928 of 88,768 rows (13.4%) printed
+ *  an event key beside a sentence about a different channel** -- a row labelled `dies|-|-` reading
+ *  "When Wild Magic Surge is cast, Sedgemoor Witch makes a token". Both halves can be true and the
+ *  page still contradicts itself, because `event` is what earned the score and the sentence is what
+ *  the reader checks it against.
  *
- *  A REPEATABLE REASON BEATS A ONE-SHOT within that event, and nothing else is reordered: this
- *  picks between sentences the engine already wrote, it never composes one and never promotes a
- *  pair the engine refused. When NO sentence carries the row's event -- a reanimator row whose
- *  reason is tagged `graveyard-recursion` -- the whole set stands rather than none of it, because a
- *  sentence about the wrong channel still beats no sentence at all. */
-function pickReason(reasons: { tag: string; text: string; repeatability?: string }[], event: string): string {
-  const verbs = eventVerbs(event);
-  const onEvent = reasons.filter((r) => verbs.has(r.tag.split(":")[0]!));
-  const pool = onEvent.length > 0 ? onEvent : reasons;
-  return (pool.find((r) => r.repeatability && r.repeatability !== "oneshot") ?? pool[0]!).text;
+ *  A REPEATABLE REASON BEATS A ONE-SHOT, and nothing else is reordered: this picks between
+ *  sentences the engine already wrote, it never composes one and never promotes a pair the engine
+ *  refused. */
+function pickReason(reasons: { text: string; repeatability?: string }[]): string {
+  return (reasons.find((r) => r.repeatability && r.repeatability !== "oneshot") ?? reasons[0]!).text;
 }
+
 
 /** SMALLER THAN THE CARD SHARDS ON PURPOSE. The deploy is 16,407 files against a 20,000 cap, so the
  *  partner artifact has ~3,500 to spend; 2,048 leaves real headroom at ~7 records per shard.

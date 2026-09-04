@@ -366,32 +366,73 @@ test("among sentences for the row's event, the repeatable one is still preferred
   } finally { spy.mockRestore(); }
 });
 
-/** A SENTENCE ABOUT THE WRONG CHANNEL BEATS NO SENTENCE. `graveyard-recursion` is a real tag with
- *  no verb any demand key spells, and a reanimator row that stored "" would be worse than one that
- *  states the other half of why the pair connects. */
-test("with no sentence for the row's event, the whole set stands", async () => {
+/** A PAIR THAT CONNECTS THROUGH SOME OTHER CHANNEL IS NOT A ROW FOR THIS EVENT. The engine really
+ *  does relate these two -- `graveyard-recursion` is a real tag -- but nothing it returned is about
+ *  the `enters` demand that ranked and priced the candidate, so the row would print a number earned
+ *  by a relation the engine refused. Dropped, in the direction this repo always fails. */
+test("a candidate whose reasons are all about other events is dropped", async () => {
   const edges = await import("../edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "graveyard-recursion:creature", text: "OTHER CHANNEL", repeatability: "triggered" },
   ] as never);
   try {
-    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
-    expect(rows[0]!.reason).toBe("OTHER CHANNEL");
+    expect(partnersFor(krenko, [impactTremors], FREQ, SLUGS, H).rows).toEqual([]);
   } finally { spy.mockRestore(); }
 });
 
-/** ONE VERB, TWO SPELLINGS. `zoneEventKey` renames a graveyard entry and a battlefield departure;
- *  `eventKey` drops the zone. Without the rename an `enters-graveyard` sentence never matches the
- *  `enters` row it belongs to, and the fix would silently do nothing on the whole mill/reanimate
- *  family. */
-test("a zone-renamed tag matches the demand key that dropped the zone", async () => {
+/** THE ROW IS PRICED ON THE EVENT THAT VERIFIED, NOT THE ONE THAT RANKED. This payoff demands both
+ *  `enters|creature|goblin` (rare, and what puts it at the top of the candidate list) and
+ *  `enters|creature|-` (common). The engine confirms only the common one, so the row has to carry
+ *  the common one's key and its lower score. */
+test("a row carries the confirmed event, not the best-scoring one", async () => {
+  const twoDemands = base("Two Demands", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", subtype: "goblin", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }, {
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  const slugs = resolveSlugs(["Two Demands"]);
+  const edges = await import("../edges.js");
+  // Only the untyped `enters` relation is confirmed; nothing here is about goblins.
+  const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
+    { tag: "enters:creature", text: "CREATURES ENTER", repeatability: "triggered" },
+  ] as never);
+  try {
+    const { rows } = partnersFor(krenko, [twoDemands], FREQ, slugs, H);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.event).toBe("enters|creature|-");
+    expect(rows[0]!.score).toBeCloseTo(specificity("enters|creature|-", FREQ));
+  } finally { spy.mockRestore(); }
+});
+
+/** ONE EVENT, TWO SPELLINGS. `eventKey` reads the RAW verb, `zoneEventKey` renames the canonical
+ *  one, so a sacrifice outlet's `leaves` demand keys as `leaves|creature|-` and tags as
+ *  `dies:creature`. Matching the two strings against each other would drop the whole dies family
+ *  without a test noticing; both are built here by the functions that build them for real. */
+test("a zone-renamed tag matches the demand key that kept the raw verb", async () => {
+  const outlet = base("Sac Outlet", [{
+    kind: "activated", cost: "{T}",
+    effect: { kind: "sacrifice" },
+    emits: [{ verb: "leaves", subject: { zone: "battlefield", control: "you", token: null, type: "creature" } }],
+  }] as unknown as CardTags["abilities"]);
+  const deathPayoff = base("Death Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["leaves"], subject: { zone: "battlefield", type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  const slugs = resolveSlugs(["Death Payoff"]);
   const edges = await import("../edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "cast:creature", text: "OFF EVENT, REPEATABLE", repeatability: "triggered" },
-    { tag: "enters-graveyard:creature", text: "ON EVENT", repeatability: "oneshot" },
+    { tag: "dies:creature", text: "ON EVENT", repeatability: "oneshot" },
   ] as never);
   try {
-    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    const { rows } = partnersFor(outlet, [deathPayoff], FREQ, slugs, H);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.event).toBe("leaves|creature|-");
     expect(rows[0]!.reason).toBe("ON EVENT");
   } finally { spy.mockRestore(); }
 });
