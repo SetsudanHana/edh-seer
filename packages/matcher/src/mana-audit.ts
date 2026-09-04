@@ -2,6 +2,7 @@ import { minCopies } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { minSources } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
+import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import type { DeckCard } from "./types.js";
 
 /** The five colours, in WUBRG order. Colourless is deliberately absent HERE, and the reason the old
@@ -24,6 +25,9 @@ export const SOURCE_CONFIDENCE = 0.9;
 /** The five basic land types, lowercased, as `classifyLand` reports them in `subtypes`. */
 const BASIC_LAND_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
 const EMPTY_TYPES: ReadonlySet<string> = new Set<string>();
+
+const produces = (card: { producedMana?: readonly string[] }, color: Color): boolean =>
+  (card.producedMana ?? []).includes(color);
 
 /** Coloured pips per colour in a mana cost, e.g. `{2}{B}{B}` -> `{ B: 2 }`.
  *
@@ -148,6 +152,7 @@ export function manaAudit(
 ): ManaAuditRow[] {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
+  const libraryCards = library.map((dc) => dc.card);
 
   // The basic land types the deck's own lands carry, lowercased to match `classifyLand`'s subtypes.
   // A check land ("unless you control a Mountain") is satisfiable only if the deck runs something
@@ -160,9 +165,34 @@ export function manaAudit(
 
   const rows: ManaAuditRow[] = [];
   for (const color of COLORS) {
-    const sources = library.filter(
-      (dc) => isManaSource(dc) && (dc.card.producedMana ?? []).includes(color),
-    );
+    // A FETCHLAND PRODUCES THE COLOUR IT FINDS. `producedMana` is empty on a real fetch and that is
+    // correct -- Polluted Delta taps for nothing -- so the printed field alone told a MONO-BLUE deck
+    // with six fetchlands that blue was short at the top of its curve. The simulator has counted
+    // them since N2 (`fetchMask`), which made the colour panel and the goldfish disagree about the
+    // same six cards on the same screen: the T18b defect again, one model over.
+    //
+    // A LAND-FETCH SPELL COUNTS TOO, and is the one place `isManaSource` is deliberately bypassed.
+    // That gate refuses instants and sorceries because a RITUAL is a one-shot; Cultivate is not one.
+    // It leaves a Forest on the battlefield permanently, which is the whole definition of a source,
+    // and `availableBy` already prices the delay the same way it prices a rock.
+    const direct = library.filter((dc) => isManaSource(dc) && (dc.card.producedMana ?? []).includes(color));
+    // Asked of the LIBRARY: a commander is not in it (CR 903.6) and cannot be fetched.
+    const fetches = library.filter((dc) => !direct.includes(dc)
+      && isLandFetch(dc.card.oracleText ?? "")
+      && fetchableLands(dc.card.oracleText ?? "", libraryCards).some((c) => produces(c, color)));
+
+    // CAPPED AT WHAT THERE IS TO FIND. Every fetch is a wildcard for its own fetchable set, but the
+    // sets overlap and the library is finite: `codie` runs 15 fetches over 5 white-producing lands,
+    // so calling all 15 white sources claims ten cards that can never produce white. Measured over
+    // the 71 calibration decks the cap binds on 31 of 153 colour rows across 8 decks -- not a
+    // degenerate corner, so it is a cap and not a comment. The CHEAPEST fetches survive it: a fetch
+    // that is a land beats one that costs {2}, which is the same order `availableBy` prices.
+    const reachable = new Set(fetches.flatMap((f) => fetchableLands(f.card.oracleText ?? "", libraryCards)));
+    const targets = [...reachable].filter((c) => produces(c, color)).length;
+    const sources = [
+      ...direct,
+      ...[...fetches].sort((a, b) => a.card.manaValue - b.card.manaValue).slice(0, targets),
+    ];
     const supplied = sources.length;
 
     // WHAT COULD BE PRODUCING BY TURN N, asked once per deadline and cached, because a deck's
@@ -189,9 +219,19 @@ export function manaAudit(
         opponents: 3,
       };
       const n = sources.filter((dc) => {
-        if (/\bland\b/i.test(dc.card.typeLine)) return !entersTapped(classifyLand(dc.card), board);
+        const text = dc.card.oracleText ?? "";
+        const isLand = /\bland\b/i.test(dc.card.typeLine);
         // A rock cast on turn M taps for mana from turn M+1: you spent the turn's mana casting it.
-        return dc.card.manaValue < turn;
+        // A land-fetch SPELL is on that clock too -- Cultivate on turn 3 pays from turn 4.
+        if (!(isLand ? !entersTapped(classifyLand(dc.card), board) : dc.card.manaValue < turn)) return false;
+        // WHAT IS STANDING THERE IS THE FETCHED LAND, and `classifyLand` cannot see it: Evolving
+        // Wilds enters untapped and the basic it finds does not. Same board the simulator reads.
+        //
+        // ASKED OF A LAND ONLY, because a SPELL's fetch is already on the rock clock above: Cultivate
+        // cast on turn 3 puts its Forest down tapped that turn and taps for mana on turn 4, which is
+        // exactly what `manaValue < turn` says. Charging it for the tapped arrival as well made it a
+        // source on no turn at all.
+        return !isLand || !isLandFetch(text) || !fetchedLandEntersTapped(text, board.lands);
       }).length;
       availableAt.set(turn, n);
       return n;

@@ -3,6 +3,7 @@ import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
+import { FETCHES_TAPPED, FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands, isLandFetch } from "./fetch-land.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
 
 /** THE MANA AVAILABILITY MODEL — a seeded goldfish simulation with a WRITTEN PLAY POLICY, because
@@ -96,11 +97,6 @@ export interface Accelerant {
   fetchTapped?: boolean;
 }
 
-/** A spell that puts a land onto the battlefield — the same two cues `rules.json`'s
- *  `ramp.landFetchSpell` already pairs, kept here rather than routed through the rule engine because
- *  this module needs the TAPPED half too and a rule row carries no payload. */
-const LAND_FETCH = /search your library for (?:a |an |up to \w+ )?(?:basic )?(?:land|forest|island|swamp|mountain|plains)/i;
-const ONTO_BATTLEFIELD = /onto the battlefield/i;
 const SUSPEND = /\bsuspend \d/i;
 /** A TAP-REPLACEMENT: mana that arrives when some OTHER permanent is tapped (roadmap O2). Two shapes,
  *  and they are not the same size -- a land AURA is bounded at what its one enchanted land adds,
@@ -111,25 +107,6 @@ const TAP_REPLACEMENT = /is tapped for mana|tap a (?:permanent|creature|land)\b[
  *  mask bit (N11); before that a colourless source and a colourless COST were the same empty mask. */
 const BONUS_COLORLESS = /tap a permanent for \{c\}|tap a land for \{c\}/i;
 const BONUS_CREATURE = /tap a creature for mana/i;
-/** A FETCH IS NOT FREE JUST BECAUSE THIS MODEL PERFORMS IT (roadmap N12). Myriad Landscape's two
- *  basics cost `{2}`, Urza's Cave `{3}`, and **Wayfarer's Bauble is cast for {1} and then cracked for
- *  {2} a turn later** — none of which the model pays, so each was a free land the moment it appeared.
- *  The activation cost is what sits before the colon on the fetch's own line; `{T}` and a sacrifice
- *  and a life payment are all costs this model CAN pay, and a mana symbol is not.
- *
- *  A LAND THAT FAILS THIS IS STILL A LAND — Myriad Landscape taps for `{C}` and enters tapped — it
- *  simply neither fixes colours nor thins until someone pays. That is the under-claiming direction,
- *  and it is 63 land slots plus 25 spell slots across the 71 decks. */
-const MANA_IN_COST = /\{(?!t\}|q\})[^{}]+\}/i;
-function fetchCostsMana(text: string): boolean {
-  const line = text.split("\n").find((l) => LAND_FETCH.test(l)) ?? "";
-  return line.includes(":") && MANA_IN_COST.test(line.slice(0, line.indexOf(":")));
-}
-/** The fetched land's own tapped state, printed on the fetch: "put it onto the battlefield TAPPED".
- *  Fabled Passage — 21 slots, and the only card of the family that prints the clause — then untaps it
- *  once you control four lands, which is the `slow` shape one board count over. */
-const FETCH_UNTAPS = /untap that land/i;
-const FETCHES_TAPPED = /onto the battlefield tapped/i;
 
 /** DOES THIS CARD MAKE MANA, or does Scryfall merely think so? `producedMana` is stamped from QUOTED
  *  TOKEN TEXT as well as the card's own abilities, so **Pitiless Plunderer** — which taps for nothing
@@ -165,7 +142,7 @@ export function classifyAccelerant(dc: DeckCard): Accelerant | null {
   // it is not until it dies and transforms.
   if (/\bland\b/.test(line)) return null;
   const text = dc.card.oracleText ?? "";
-  if (LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text) && !fetchCostsMana(text)) {
+  if (isLandFetch(text)) {
     return { name, manaValue, kind: "land-fetch", fetchTapped: FETCHES_TAPPED.test(text) };
   }
   // A ONE-SHOT IS NOT A SOURCE at any confidence — `isManaSource`'s own ruling, and the measured
@@ -394,38 +371,14 @@ export function colorMask(producedMana: readonly string[] | undefined): number {
  *  the 71 decks carry one, and the entire remainder is fetchlands, which correctly produce nothing
  *  of their own.
  *
- *  THE GATE IS `LAND_FETCH` FOR A LAND AND A SPELL ALIKE (roadmap N2, 2026-08-26). It used to demand
- *  the literal words "land card" on the land side, and the fetch cycle does not print them --
- *  Scalding Tarn says "an Island or Mountain CARD" -- so all ten real fetchlands fell through, 110
- *  of the 162 slots this correction reaches. One predicate, because the two sides ask the same
- *  question, and the land side gains `ONTO_BATTLEFIELD` with it: a search that puts the land in HAND
- *  is not a land drop. */
-const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
-
-/** What a fetchland can find in THIS deck, as a colour mask.
+ *  WHAT it can find is `fetch-land.ts`'s question, shared with `mana-audit.ts`; the MASK is this
+ *  module's currency, so only the last line is here.
  *
  *  CEILING: computed once off the whole deck, not per trial off the remaining library, so it
  *  over-claims slightly as the library empties. The alternative is recomputing a mask every crack. */
 export function fetchMask(oracleText: string, deck: readonly { typeLine: string; producedMana?: readonly string[] }[]): number {
-  const text = oracleText.toLowerCase();
-  const named = BASIC_TYPES.filter((t) => text.includes(t));
-  // NAMING A TYPE IS NOT DEMANDING A BASIC, and the two are independent (owner, 2026-08-25).
-  // Scalding Tarn searches for "an Island or Mountain CARD", so it finds Steam Vents -- a
-  // `Land - Island Mountain` -- and every other dual carrying one of those types, 20 lands in
-  // `iz-it-izzet` rather than the 19 basics. Seething Landscape says "a BASIC Island, Swamp, or
-  // Mountain card" and finds only basics. The word is read on its own, not as a fallback for a
-  // fetch that names nothing. `nonbasic` needs no stripping -- `\b` does not match inside it, which
-  // the test asserts rather than assumes, because it is exactly the kind of thing that stops being
-  // true when someone "simplifies" the pattern.
-  const wantsBasic = /\bbasic\b/.test(text);
   let m = 0;
-  for (const c of deck) {
-    const line = c.typeLine.toLowerCase();
-    if (!line.includes("land")) continue;
-    if (named.length > 0 && !named.some((t) => line.includes(t))) continue;
-    if (wantsBasic && !line.includes("basic")) continue;
-    m |= colorMask(c.producedMana);
-  }
+  for (const c of fetchableLands(oracleText, deck)) m |= colorMask(c.producedMana);
   return m;
 }
 
@@ -710,7 +663,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     const isLand = /\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout));
     const text = dc.card.oracleText ?? "";
     // A land-fetch SPELL searches the library too, so it fixes colours and thins by the same fact.
-    const fetches = LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text) && !fetchCostsMana(text);
+    const fetches = isLandFetch(text);
     return {
       name: dc.card.name,
       manaValue: dc.card.manaValue ?? 0,
@@ -724,7 +677,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
       ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_CREATURE.test(text) ? { tapBonus: "creature" as const } : {}),
       ...(!isLand && landfallMana(text) > 0 ? { landfall: landfallMana(text) } : {}),
-      ...(fetches && FETCH_UNTAPS.test(text) ? { fetchUntapsAt: 3 } : {}),
+      ...(fetches && FETCH_UNTAPS.test(text) ? { fetchUntapsAt: FETCH_UNTAP_LANDS } : {}),
       // A SPLIT CARD'S JOINED COST IS NOT A COST ANYONE PAYS — see `split-cost.ts`. Identical to
       // `manaCost` for every other card, and `costKey` follows it so the memo cannot key two
       // different costs to one answer.
