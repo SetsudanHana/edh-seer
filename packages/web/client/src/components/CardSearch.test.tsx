@@ -152,3 +152,30 @@ test("the card search shows no identity facets", async () => {
   await screen.findByRole("searchbox");
   expect(screen.queryByRole("button", { name: /^Red$/ })).toBeNull();
 });
+
+/** A SEARCH IS A LINK. `/cards/krenko-mob` is a slug nobody minted and its page cannot guess what
+ *  was meant -- but it hands the reader here with what they typed already in the box, which is the
+ *  recovery from a truncated or misremembered name. It also makes any search shareable. */
+test("the box is seeded from the URL, and typing puts the query back into it", async () => {
+  render(
+    <MemoryRouter initialEntries={["/cards?q=krenko%20mob"]}>
+      <CardSearch load={async () => INDEX} />
+    </MemoryRouter>,
+  );
+  const box = await screen.findByRole("searchbox");
+  expect(box).toHaveValue("krenko mob");
+  // "krenko mob" slugs to `krenko-mob`, which is a prefix of `krenko-mob-boss` -- the near miss the
+  // dead-end page could not resolve on its own.
+  expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+  await userEvent.type(box, "x");
+  expect(await screen.findByText(/No card matches/)).toBeInTheDocument();
+});
+
+/** ONE RESULT IS NOT "1 commanders match", and a single result is the COMMON case here -- it is what
+ *  the not-found page's seeded search produces when a reader mistyped one card's name. */
+test("the count line agrees with itself when there is one result", async () => {
+  render(
+    <MemoryRouter initialEntries={["/cards?q=jotun"]}><CardSearch load={async () => INDEX} /></MemoryRouter>,
+  );
+  expect(await screen.findByText("1 card matches.")).toBeInTheDocument();
+});

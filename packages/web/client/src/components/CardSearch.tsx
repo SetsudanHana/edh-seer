@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { slugOf } from "@edh-seer/matcher/partners-core";
 import { loadNameIndex, type NameIndexEntry } from "../lib/partners.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
@@ -40,7 +40,15 @@ export function CardSearch({
 }) {
   const commanderMode = mode === "commanders";
   const [index, setIndex] = useState<NameIndexEntry[] | null>(null);
-  const [query, setQuery] = useState("");
+  // THE QUERY LIVES IN THE URL, so a search is a link. `/cards/krenko-mob` is a slug nobody minted;
+  // its page cannot guess what was meant, but it CAN hand the reader here with what they typed
+  // already in the box -- which is the whole recovery from a truncated or misremembered name.
+  // Shareable for free, and `replace` keeps a keystroke out of the back button.
+  const [params, setParams] = useSearchParams();
+  const query = params.get("q") ?? "";
+  const setQuery = (next: string) => {
+    setParams(next ? { q: next } : {}, { replace: true });
+  };
   const [colours, setColours] = useState<string[]>([]);
   useEffect(() => {
     let live = true;
@@ -132,7 +140,10 @@ export function CardSearch({
         : (
           <div className="flex flex-col gap-2">
             <p className="text-(--muted) text-sm">
-              {matches.length.toLocaleString("en-US")} {commanderMode ? "commanders" : "cards"} match
+              {matches.length.toLocaleString("en-US")}{" "}
+              {matches.length === 1
+                ? (commanderMode ? "commander matches" : "card matches")
+                : (commanderMode ? "commanders match" : "cards match")}
               {matches.length > SEARCH_LIMIT ? `, showing the first ${SEARCH_LIMIT}` : ""}.
             </p>
             <ul className="flex flex-col gap-1">

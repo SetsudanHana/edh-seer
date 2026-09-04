@@ -25,12 +25,22 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
 
   if (page === undefined) return <p className="text-(--muted)">Reading the corpus…</p>;
 
+  // SAME TWO CASES AS THE CARD PAGE, and the same refusal to guess which: a slug the artifact does
+  // not hold is either a card that produced no events or a name that is wrong.
   if (page === null) {
     return (
       <section className="flex flex-col gap-4">
-        <h2 className="text-3xl font-semibold">Not in the corpus</h2>
+        <h2 className="text-3xl font-semibold">No page for “{slug}”</h2>
         <p className="text-(--muted)">
-          This card has not been read by the engine, so there is nothing here to show.
+          Either that name is wrong, or the engine found nothing to say about the card. A commander
+          page exists only for a legendary creature whose oracle text produces an event some other
+          card can answer.
+        </p>
+        <p>
+          <Link className="text-(--accent) hover:underline"
+            to={`/commanders?q=${encodeURIComponent(slug.replace(/-/g, " "))}`}>
+            Search for “{slug.replace(/-/g, " ")}” →
+          </Link>
         </p>
       </section>
     );
