@@ -927,8 +927,16 @@ a.brand:hover .brand-edh { color: var(--foreground); }
      nav's type itself. `order: 1` puts it between the brand (0) and the nav (2) in a row whose
      source order is brand, nav, button -- the nav has to stay pinned to the right edge, because a
      menu that slides sideways when this button appears is the same defect as one that slides when
-     you change page. See `InstallButton.tsx`. */
+     you change page. See `InstallButton.tsx`.
+     AND `margin-left: auto` PUTS IT BESIDE THE NAV RATHER THAN MID-BAR (owner, 2026-09-04). Order
+     alone left it floating in the middle of a `space-between` row -- the third item in a three-item
+     distribution lands in the centre by definition, attached to neither the brand nor the links, and
+     the owner read it as an accident. The auto margin eats the free space BEFORE the button instead,
+     so the pair sits at the right edge together. It changes nothing on a phone: below 47.99rem the
+     nav takes its own row (`flex: 1 0 100%`), leaving brand and button alone on the first, where
+     `space-between` had already pushed the button right. */
   order: 1;
+  margin-left: auto;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   font-weight: 500;
