@@ -16,12 +16,29 @@ const NO_HIERARCHY: Hierarchy = {};
 
 test("deckSubtypeCounts tallies subtypes across all deck cards", () => {
   const counts = deckSubtypeCounts([
-    { card: {} as never, tags: tagsWith(["wizard"]) },
-    { card: {} as never, tags: tagsWith(["wizard", "human"]) },
-    { card: {} as never, tags: null },
+    { card: { name: "Adeliz" } as never, tags: tagsWith(["wizard"]) },
+    { card: { name: "Naru Meha" } as never, tags: tagsWith(["wizard", "human"]) },
+    { card: { name: "Untagged" } as never, tags: null },
   ]);
   expect(counts.get("wizard")).toBe(2);
   expect(counts.get("human")).toBe(1);
+});
+
+/** ONE VOTE PER DISTINCT CARD. `inputs` is one entry per COPY, and basic land types ARE subtypes,
+ *  so counting slots let a deck's basics outvote the tribe it is built on -- `island` 24 to
+ *  `dragon` 22 on the calibration corpus's `draguns`, which made every "choose a creature type"
+ *  card in it choose a land and match nothing. */
+test("a card's copies vote once, so basics cannot outvote a tribe", () => {
+  const dragon = { card: { name: "Icefall Regent" } as never, tags: tagsWith(["dragon"]) };
+  const counts = deckSubtypeCounts([
+    dragon,
+    { card: { name: "Hraesvelgr" } as never, tags: tagsWith(["dragon"]) },
+    ...Array.from({ length: 24 }, () => (
+      { card: { name: "Island" } as never, tags: tagsWith(["island"]) }
+    )),
+  ]);
+  expect(counts.get("island")).toBe(1);
+  expect(counts.get("dragon")).toBe(2);
 });
 
 test("resolveChosenTypes substitutes the deck's top subtype and drops chosenType (no type constraint)", () => {

@@ -188,18 +188,6 @@ export function analyzeDeckStructured(
   // `cardTagsDerived.findOne({oracleId: tokenDoc._id})`, and return null (never a name lookup) when
   // either step misses.
   tokenTags?: (ref: TokenRef) => CardTags | null,
-  // THE ONE EXPENSIVE HALF OF THIS FUNCTION, MADE REFUSABLE. `manaModel` is 10,000 shuffles
-  // (`REPORT_TRIALS`, T18b) and MEASURED at ~530ms of a ~1.3s deck analysis -- 85% of it, with
-  // everything else together under 100ms. `buildWireGraph` calls this function a SECOND time per
-  // request purely to read `edges`, which are built long before the simulation runs and cannot
-  // depend on it, so the web path was paying the whole model twice and throwing one away.
-  //
-  // WHAT GOES MISSING IS ALREADY OPTIONAL AND ALREADY MEANS "NOT PRICED": `manaAvailability`,
-  // `deckMath` and every row's `castability` are the three readers of the model, and each is
-  // omitted rather than zeroed -- a blank there is the same refusal a land or an unpriceable card
-  // gets today. NOTHING may read this report as a full one: it is for a caller that wants `edges`
-  // and discards the rest.
-  opts?: { skipManaModel?: boolean },
 ): DeckReport {
   const commanderSet = new Set(commanderNames ?? []);
   // A face node carries the FACE's name, and the decklist designated the CARD. Every commander test
@@ -673,11 +661,9 @@ export function analyzeDeckStructured(
   // from the shuffle and PRICED anyway through `alsoPrice` — "can I cast my commander on turn six"
   // is the one card a reader looks for by name.
   const simLibrary = resolved.filter((dc) => !commanderSet.has(dc.card.name));
-  const manaSim = opts?.skipManaModel
-    ? undefined
-    : manaModel(simLibrary, { alsoPrice: resolved.filter((dc) => commanderSet.has(dc.card.name)) });
+  const manaSim = manaModel(simLibrary, { alsoPrice: resolved.filter((dc) => commanderSet.has(dc.card.name)) });
   const castByName = new Map(
-    (manaSim ? deckCastability(resolved, manaSim.curves).cards : [])
+    deckCastability(resolved, manaSim.curves).cards
       .map((r: CardCastability) => [r.name, { turn: r.turn, castable: r.castable!, mana: r.mana! }] as const),
   );
   const printedCost = new Map(resolved.map((dc) => [dc.card.name, dc.card] as const));
@@ -948,7 +934,7 @@ export function analyzeDeckStructured(
   // guard is unchanged and its reasoning still applies: a deck of only commanders makes
   // `library === 0` and `minCopies` throws there on purpose, so the block is omitted rather than
   // faked.
-  const deckMath = manaSim && resolved.length > commanderSet.size
+  const deckMath = resolved.length > commanderSet.size
     ? computeDeckMath(resolved, hierarchy, [...commanderSet], undefined, {
         comboCards, landRecommendation: landRec, primary: strategies[0]?.name,
         castCurves: manaSim.curves,
@@ -1016,7 +1002,7 @@ export function analyzeDeckStructured(
     // (CR 903.6) and this model draws from one, so it is excluded exactly as `deck-math.ts` excludes
     // it — including one in the shuffle would both dilute the draw and pretend it can be drawn.
     // FEEDS NO SCORE, which is the condition the K7/J7 reconciliation holds under.
-    manaAvailability: manaSim?.availability,
+    manaAvailability: manaSim.availability,
     // CR 903.3 and 903.5a-d, as a REPORT (roadmap J4). `resolved` is one entry per COPY, which is
     // what the size and duplicate rules count. Feeds no score and refuses nothing.
     legality: deckLegality({
