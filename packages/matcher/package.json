@@ -12,7 +12,8 @@
     "./deck-cards": "./src/deck-cards.ts",
     "./wire-graph": "./src/wire-graph.ts",
     "./orchestrate": "./src/orchestrate.ts",
-    "./static-lookup": "./src/static-lookup.ts"
+    "./static-lookup": "./src/static-lookup.ts",
+    "./partners-core": "./src/bin/partners-core.ts"
   },
   "scripts": {
     "test": "vitest run",
