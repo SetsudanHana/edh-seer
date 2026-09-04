@@ -3,7 +3,7 @@
  *  This is the load-bearing part of derivation: if `control` and `type` cannot be recovered, no
  *  edge forms and the compass suite goes red for reasons unrelated to the rest of the layer. */
 import type { Control, StatPredicate, SubjectFilter } from "../schema.js";
-import { KEYWORD_ABILITIES, SUBTYPES } from "./subtypes.js";
+import { KEYWORD_ABILITIES, SPELL_SUBTYPES, SUBTYPES } from "./subtypes.js";
 
 /** Card types the engine reasons about, plus the pseudo-types the matcher expands set-wise. */
 const TYPES = [
@@ -205,6 +205,8 @@ function singulars(w: string): string[] {
   return out;
 }
 
+const SPELL_NOUN = /\b(?:spells?|instants?|sorcer(?:y|ies)|cards?)\b/;
+
 /** Subtypes named in the object text. `namesItsTargets` (derive.ts) accepts a static effect only
  *  when it names a type OR a subtype, and this half was dead — a kindred anthem ("Zombies you
  *  control get +1/+1") named neither, so its subject was dropped and it formed no edge with any
@@ -214,9 +216,14 @@ function singulars(w: string): string[] {
 function parseSubtypes(t: string): { subtype?: string | string[]; plural: boolean } {
   const found: string[] = [];
   let plural = false;
+  // A SPELL SUBTYPE COUNTS ONLY BESIDE A SPELL NOUN. "an Adventure instant or sorcery spell"
+  // (Lucky Clover), "a Spirit or Arcane spell", "a Lesson card" are typal; "lesson", "trap" and
+  // "omen" anywhere else are English. Without this Clover derived a bare `cast:instant` and claimed
+  // every instant in the deck (2026-09-05).
+  const spellNoun = SPELL_NOUN.test(t);
   for (const w of t.match(/[a-z'-]+/g) ?? []) {
     for (const s of singulars(w)) {
-      if (!SUBTYPES.has(s)) continue;
+      if (!SUBTYPES.has(s) && !(spellNoun && SPELL_SUBTYPES.has(s))) continue;
       if (!found.includes(s)) found.push(s);
       if (s !== w) plural = true;
       break;

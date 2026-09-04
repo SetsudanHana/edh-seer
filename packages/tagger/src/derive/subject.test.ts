@@ -665,3 +665,23 @@ test("a subject with no printed size carries no stat predicate", () => {
   expect(parseSubject("creatures you control with power 2 or less").stats)
     .toEqual([{ metric: "power", op: "lte", value: 2 }]);
 });
+
+// SPELL SUBTYPES, gated on a spell head noun. `SUBTYPES` deliberately excludes them (several are
+// English words), so Lucky Clover's "an Adventure instant or sorcery spell" derived a bare
+// `cast:instant` and claimed every instant in the deck — The Dawning Archaic's graveyard cast among
+// them, in a colorless deck with no Adventure face at all (owner, 2026-09-05). Corpus demand:
+// Arcane 86 cards, Lesson 49, Adventure 9, Omen 2, Trap 2.
+test("a spell subtype is recovered when the text names a spell, instant, sorcery or card", () => {
+  const clover = parseSubject("an Adventure instant or sorcery spell");
+  expect(clover.subtype).toBe("adventure");
+  expect(clover.type).toEqual(["instant", "sorcery"]);
+  expect(parseSubject("an Adventure spell").subtype).toBe("adventure");
+  expect(parseSubject("a Spirit or Arcane spell").subtype).toEqual(["spirit", "arcane"]);
+  expect(parseSubject("a Lesson card").subtype).toBe("lesson");
+});
+
+test("a spell subtype word without a spell head noun is not a subtype", () => {
+  // "lesson", "trap" and "omen" are ordinary English words; only next to a spell noun are they typal.
+  expect(parseSubject("a trap you control").subtype).toBeUndefined();
+  expect(parseSubject("target creature").subtype).toBeUndefined();
+});
