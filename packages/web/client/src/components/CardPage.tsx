@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
+import { eventKeySentence } from "../lib/demand-sentence.js";
 import { loadCardPage, type CardPageData } from "../lib/partners.js";
 
 /** ONE CARD: what the engine reads on it, and the cards it is most specifically connected to.
@@ -69,8 +70,8 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         <h3 className="eyebrow">What it produces</h3>
         {page.emits.length === 0
           ? <p className="text-(--muted)">Nothing. This card triggers on events but supplies none.</p>
-          : <ul className="flex flex-wrap gap-2">
-              {page.emits.map((e) => <li key={e}><code className="text-sm">{e}</code></li>)}
+          : <ul className="flex flex-col gap-1">
+              {page.emits.map((e) => <li key={e}>{eventKeySentence(e)}</li>)}
             </ul>}
       </section>
 
@@ -78,8 +79,8 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         <h3 className="eyebrow">What it cares about</h3>
         {page.demands.length === 0
           ? <p className="text-(--muted)">Nothing. This card supplies events but does not trigger on any.</p>
-          : <ul className="flex flex-wrap gap-2">
-              {page.demands.map((d) => <li key={d}><code className="text-sm">{d}</code></li>)}
+          : <ul className="flex flex-col gap-1">
+              {page.demands.map((d) => <li key={d}>{eventKeySentence(d)}</li>)}
             </ul>}
       </section>
 
@@ -100,7 +101,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
                 <li key={`${p.event}:${p.slug}`} className="flex flex-col gap-1">
                   <p>
                     <Link className="text-(--accent) hover:underline" to={`/cards/${p.slug}`}>{p.name}</Link>{" "}
-                    <code className="text-sm text-(--muted)">{p.event}</code>
+                    <span className="text-sm text-(--muted)">{eventKeySentence(p.event)}</span>
                   </p>
                   <p className="text-(--muted)">{p.reason}</p>
                 </li>
@@ -115,8 +116,9 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           .filter(([, more]) => more > 0)
           .map(([event, more]) => (
             <p key={event} className="text-(--muted) text-sm">
-              And {more.toLocaleString("en-US")} more cards demand <code>{event}</code>, which this
-              card supplies. They rank identically, so the page shows a few rather than all of them.
+              And {more.toLocaleString("en-US")} more cards trigger on {eventKeySentence(event)},
+              which this card supplies. They rank identically, so the page shows a few rather than
+              all of them.
             </p>
           ))}
       </section>

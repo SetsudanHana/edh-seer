@@ -319,3 +319,72 @@ export function tagLabel(tag: string): string {
   const subject = tag.slice(mechanism.length + 1);
   return subject && subject !== "any" ? `${label} · ${subject}` : label;
 }
+
+/** AN ARTIFACT EVENT KEY (`verb|type|subtype|token`) AS THE WORDS A PLAYER USES.
+ *
+ *  The card and commander pages print these keys, and the Pages Function prints them into the HTML
+ *  a crawler reads -- so until this existed, the main content of 17,775 indexable pages included
+ *  four pipe-separated tokens. `enters|creature|goblin|t` is engine vocabulary; "a Goblin creature
+ *  token entering the battlefield" is the same fact in the reader's language.
+ *
+ *  IT REUSES `DEMAND_VERB` AND ITS TWO SIBLINGS rather than adding a second vocabulary. That is the
+ *  whole argument of this file's own header: a duplicate map is how two surfaces start disagreeing
+ *  about what a key means, and the completeness test above walks these maps against `VERB_VOCAB`
+ *  directly, so a verb the engine grows tomorrow cannot ship unmapped here either.
+ *
+ *  THE KEY SHAPE DIFFERS FROM A CENSUS KEY, which is why this is a second function and not a
+ *  parameter on `demandSentence`: a census key is `verb:subject` with the subject already folded to
+ *  one dimension, while an artifact key keeps type, subtype and the token flag apart -- and the
+ *  token flag is a dimension no census key has ever carried.
+ *
+ *  THE TOKEN FLAG IS SAID ONLY WHEN IT NARROWS. `t` and `n` are real restrictions a reader must
+ *  see -- a payoff that wants a token and one that refuses tokens are different cards -- while `-`
+ *  means the trigger never mentioned tokens and printing "token or not" would add a word that
+ *  changes no meaning. */
+export function eventKeySentence(key: string): string {
+  const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
+
+  // A phase and a player action carry no subject to glue a noun onto -- the same two escapes
+  // `demandSentence` makes, one rung up, and for the same reason.
+  if (type === "-" && subtype === "-") {
+    const phase = DEMAND_PHASE[verb];
+    if (phase) return phase;
+    const subjectless = DEMAND_SUBJECTLESS[verb];
+    if (subjectless) return subjectless;
+  }
+
+  const event = DEMAND_VERB[verb];
+  // A verb this map has never seen says the true ugly thing rather than inventing a phrase for it.
+  if (!event) return deslugify(key.replace(/\|/g, " "));
+
+  const list = (raw: string, proper: boolean): string[] =>
+    raw === "-" ? [] : raw.split(",").map((m) => proper ? capitalize(m) : m);
+  // Subtypes are proper nouns in Magic -- a Goblin, not a goblin -- and they qualify the type
+  // rather than replacing it: "a Goblin creature", the way a type line reads.
+  const words = [
+    ...list(subtype, true),
+    ...list(type, false),
+    ...(token === "t" ? ["token"] : []),
+  ];
+  if (words.length === 0) {
+    return `${token === "n" ? "anything that is not a token" : "anything"} ${event}`;
+  }
+
+  // A LIST IS A DISJUNCTION, because that is what the key means: `enters|artifact,creature|-|-`
+  // fires on an artifact OR a creature, and reading it as "an artifact creature" would be a
+  // narrower claim than the card makes.
+  const noun = words.length > 1 && (list(subtype, true).length > 1 || list(type, false).length > 1)
+    ? oneOfWords(words)
+    : words.join(" ");
+  const article = /^[aeiou]/i.test(noun) ? "an" : "a";
+  return `${article} ${token === "n" ? "nontoken " : ""}${noun} ${event}`;
+}
+
+/** "artifact, creature or enchantment" -- the same joining `demandSentence` does inline, kept here
+ *  because two callers now need it and a second copy of a comma rule is a second thing to get
+ *  wrong. */
+const oneOfWords = (members: string[]): string => {
+  const rest = [...members];
+  const last = rest.pop()!;
+  return rest.length > 0 ? `${rest.join(", ")} or ${last}` : last;
+};

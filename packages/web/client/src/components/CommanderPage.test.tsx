@@ -55,8 +55,9 @@ test("the page names the archetypes this commander's own events point at", async
 /** WHAT THE DECK HAS TO BRING. Krenko wants creatures dying and kills none himself. */
 test("a demand the commander does not answer itself is listed as one the deck must cover", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  const gap = await screen.findByText(/dies\|creature\|-\|-/);
-  expect(gap).toBeInTheDocument();
+  // ENGLISH, NOT THE KEY: `dies|creature|-|-` is engine vocabulary and this page is read by someone
+  // who has never seen it.
+  expect(await screen.findByText("a creature dying")).toBeInTheDocument();
 });
 
 /** A GOBLIN TOKEN ENTERING IS A CREATURE ENTERING, so this commander answers its own demand and the
@@ -69,7 +70,7 @@ test("a self-supplied demand is not listed as a gap", async () => {
   const heading = await screen.findByRole("heading", { name: /other 99 cards/i });
   const section = heading.parentElement!;
   expect(within(section).getByText(/answers every event it watches/i)).toBeInTheDocument();
-  expect(within(section).queryByText(/enters\|creature\|-\|-/)).toBeNull();
+  expect(within(section).queryByText(/entering the battlefield/)).toBeNull();
 });
 
 /** A CARD THAT CANNOT LEAD A DECK HAS NO COMMANDER PAGE, and saying so beats rendering an empty

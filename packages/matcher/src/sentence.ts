@@ -194,7 +194,15 @@ export function emitSubjectNoun(subject: {
   if (!subject || subject.self === true) return undefined;
   const first = (v: string | string[] | undefined): string | undefined =>
     Array.isArray(v) ? v[0] : v;
-  const noun = first(subject.subtype) ?? first(subject.type) ?? "permanent";
+  // A SUBTYPE IS A PROPER NOUN IN MAGIC and a card type is not: a Goblin, an Angel, a Treasure --
+  // but a creature, an artifact. The derived tags are lowercase throughout, so the distinction has
+  // to be restored here, at the one place that knows WHICH of the two it took. Noticed on a card
+  // page printing both at once: `eventKeySentence` said "a Goblin creature token" one line above a
+  // reason sentence saying "a goblin", which reads as two engines disagreeing about the same card.
+  const subtype = first(subject.subtype);
+  const noun = subtype !== undefined
+    ? subtype.charAt(0).toUpperCase() + subtype.slice(1)
+    : first(subject.type) ?? "permanent";
   return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
 }
 

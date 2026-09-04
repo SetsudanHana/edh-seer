@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { themesOf, unmetDemands } from "@edh-seer/matcher/partners-core";
+import { eventKeySentence } from "../lib/demand-sentence.js";
 import { loadCardPage, type CardPageData } from "../lib/partners.js";
 
 /** WHAT A DECK LED BY THIS CARD WANTS.
@@ -100,8 +101,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
               <p className="text-(--muted)">
                 Events it triggers on and does not cause itself.
               </p>
-              <ul className="flex flex-wrap gap-2">
-                {gaps.map((d) => <li key={d}><code className="text-sm">{d}</code></li>)}
+              <ul className="flex flex-col gap-1">
+                {gaps.map((d) => <li key={d}>{eventKeySentence(d)}</li>)}
               </ul>
             </>}
       </section>
@@ -122,7 +123,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
                 <li key={`${p.event}:${p.slug}`} className="flex flex-col gap-1">
                   <p>
                     <Link className="text-(--accent) hover:underline" to={`/cards/${p.slug}`}>{p.name}</Link>{" "}
-                    <code className="text-sm text-(--muted)">{p.event}</code>
+                    <span className="text-sm text-(--muted)">{eventKeySentence(p.event)}</span>
                   </p>
                   <p className="text-(--muted)">{p.reason}</p>
                 </li>
@@ -133,8 +134,9 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           .filter(([, more]) => more > 0)
           .map(([event, more]) => (
             <p key={event} className="text-(--muted) text-sm">
-              And {more.toLocaleString("en-US")} more cards in this identity demand <code>{event}</code>,
-              which this commander supplies. They rank identically, so the page shows a few.
+              And {more.toLocaleString("en-US")} more cards in this identity trigger on{" "}
+              {eventKeySentence(event)}, which this commander supplies. They rank identically, so
+              the page shows a few.
             </p>
           ))}
       </section>

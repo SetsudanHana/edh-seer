@@ -69,7 +69,9 @@ test("the static block carries the card, its derivation and the engine's sentenc
   const html = cardPageHtml(KRENKO, "krenko-mob-boss", "card");
   expect(html).toContain("Krenko, Mob Boss");
   expect(html).toContain("Legendary Creature");
-  expect(html).toContain("create-token|creature|goblin|t");
+  // The block a crawler reads carries ENGLISH, not the artifact's key vocabulary.
+  expect(html).toContain("a Goblin creature token being created");
+  expect(html).not.toContain("|");
   expect(html).toContain("Impact Tremors deals 1 damage");
   expect(html).toContain('href="/cards/impact-tremors"');
   // A commander's card page offers the other URL, and only a commander's.

@@ -3,8 +3,7 @@ import { VERB_VOCAB } from "@edh-seer/tagger";
 import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence,
-} from "./sentence.js";
+  emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence } from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
   // effectKind is absent on 8.9% of reasons and `amount` on more than half of abilities, so the
@@ -270,4 +269,17 @@ test("a non-create-token cause still names the subject the event happens to", ()
     producer: "Austere Command", consumer: "Grim Haruspex",
     eventKey: "dies:creature", effectKind: "draw-card", subjectNoun: "a creature",
   })).toMatch(/^When a creature dies thanks to Austere Command, /);
+});
+
+/** A SUBTYPE IS A PROPER NOUN IN MAGIC AND A CARD TYPE IS NOT. Noticed on a card page printing both
+ *  at once: the event line read "a Goblin creature token" and the reason sentence under it read
+ *  "a goblin", which reads as two engines disagreeing about the same card. */
+test("an emit's subtype noun is capitalised and its type noun is not", () => {
+  expect(emitSubjectNoun({ subtype: "goblin", type: "creature" })).toBe("a Goblin");
+  expect(emitSubjectNoun({ type: "creature" })).toBe("a creature");
+  expect(emitSubjectNoun({ type: "artifact" })).toBe("an artifact");
+  expect(emitSubjectNoun({})).toBe("a permanent");
+  // An emit about the producer ITSELF names no noun -- that is what keeps every correct sentence in
+  // the corpus reading as it did.
+  expect(emitSubjectNoun({ self: true, subtype: "goblin" })).toBeUndefined();
 });

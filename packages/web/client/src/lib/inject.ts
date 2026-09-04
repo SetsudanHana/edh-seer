@@ -14,6 +14,8 @@
  *  section is already real content outside `#root` that React never owns. That is what lets this
  *  work with no prerender step and no hydration mismatch -- React mounts into an empty div and the
  *  crawler's copy sits beside it. */
+import { eventKeySentence } from "./demand-sentence.js";
+
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -86,8 +88,8 @@ export function cardPageHtml(
   return `    <section class="prerendered">
     <h2>${esc(card.name)}</h2>
     <p>${esc(card.typeLine)}</p>
-${crossLink}    <p>Produces: ${card.emits.map(esc).join(", ") || "nothing"}.</p>
-    <p>Cares about: ${card.demands.map(esc).join(", ") || "nothing"}.</p>
+${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeySentence(e))).join(", ") || "nothing"}.</p>
+    <p>Cares about: ${card.demands.map((d) => esc(eventKeySentence(d))).join(", ") || "nothing"}.</p>
 ${partners}
     </section>`;
 }

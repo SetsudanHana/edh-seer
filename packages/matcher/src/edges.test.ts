@@ -62,7 +62,7 @@ test("reason text is human-readable — no raw tag tokens leak", () => {
   // token COPY (`token: true`), and Inalla is not a token. Saying "When Inalla enters" described the
   // wrong event — the same defect that made a Sorcery die (roadmap, 2026-08-27 persona run).
   // Still no engine vocabulary and no raw tag.
-  expect(etb.text).toBe("When a wizard enters thanks to Inalla, Kindred Discovery draws you cards");
+  expect(etb.text).toBe("When a Wizard enters thanks to Inalla, Kindred Discovery draws you cards");
   // both card names still present (CLI + engine rely on this)
   expect(etb.text).toContain(maker.card.name);
   expect(etb.text).toContain(etbPayoff.card.name);
@@ -260,7 +260,7 @@ test("token mediation is off for a caller with no token nodes, and the maker's o
   expect(reasons.some((r) => r.tag === "enters:artifact")).toBe(true);
   // The sentence names the TOKEN as the thing that enters, not the sorcery that made it.
   expect(reasons.find((r) => r.tag === "enters:artifact")!.text)
-    .toBe("When a treasure enters thanks to Deadly Dispute, Artifact ETB Payoff draws you cards");
+    .toBe("When a Treasure enters thanks to Deadly Dispute, Artifact ETB Payoff draws you cards");
 });
 
 /** THE DEFAULT IS THE DECK REPORT and it has to stay byte-identical, so the option is proven to be
