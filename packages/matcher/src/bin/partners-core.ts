@@ -317,18 +317,17 @@ export interface PartnerResult {
 export function partnersFor(
   subject: DeckCard,
   candidates: DeckCard[],
+  feeders: DeckCard[],
   freq: EventFrequency,
   slugs: Map<string, string>,
   h: Hierarchy,
 ): PartnerResult {
   // EVERY DEMAND SHAPE THIS CARD'S EMITS CAN SATISFY. `supplyForms` splits type lists and adds the
   // coarser shapes, so a goblin-token emit is found by a demand for a creature entering.
-  const subjectEmits = new Set(
-    (subject.tags?.abilities ?? [])
-      .flatMap((a) => (a.emits ?? []).map(eventKey))
-      .flatMap(supplyForms),
-  );
-  if (subjectEmits.size === 0) return { rows: [], pool: {} };
+  // WHAT THE SUBJECT SUPPLIES, WHICH INCLUDES WHAT IT IS. A Goblin body supplies "a Goblin you
+  // control" by being one, so a payoff that counts Goblins is a candidate for it -- the relation
+  // `edges.ts` draws and no event can express.
+  const subjectEmits = new Set(supplyKeysOf(subject).flatMap(supplyForms));
 
   const ranked = candidates
     // A CARD IS NEVER ITS OWN PARTNER. `directedReasons(x, x)` can return reasons, and
@@ -401,6 +400,34 @@ export function partnersFor(
     });
     if (rows.length === KEEP) break;
   }
+  // THE ROWS THAT RUN THE OTHER WAY. Everything above is "this card supplies, that card consumes".
+  // A BOARD COUNT IS THE REVERSE: Krenko, Mob Boss counts Goblins, so the Goblins feed HIM and the
+  // pair is verified `feeder -> subject`. Without this phase the engine drew the edge and the page
+  // never asked about it -- the ranking proposes candidates by event key, and a board count has an
+  // event on neither side.
+  //
+  // ONE LIST, NOT TWO SECTIONS: the engine's own sentence names both cards and says which way it
+  // runs ("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets
+  // bigger"), so the row itself tells a reader the direction.
+  for (const key of boardCountKeysOf(subject)) {
+    const score = specificity(key, freq);
+    const usable = feeders.filter((f) => f.card.name !== subject.card.name);
+    for (const f of usable) {
+      if ((shown[key] ?? 0) >= PER_EVENT_CAP || rows.length >= KEEP) break;
+      const slug = slugs.get(f.card.name) ?? slugOf(f.card.name);
+      if (rows.some((r) => r.slug === slug)) continue;
+      // VERIFIED THE WAY EVERY OTHER ROW IS, just in the other direction: the engine decides whether
+      // the relation exists and writes the sentence.
+      const on = directedReasons(f, subject, h, { tokensMediate: false })
+        .filter((r) => r.tag === `scales:${key.split("|")[2]}`);
+      if (on.length === 0) continue;
+      shown[key] = (shown[key] ?? 0) + 1;
+      rows.push({ name: f.card.name, slug, score, event: key, reason: pickReason(on) });
+    }
+    // COUNTED BEFORE THE CUT, like every other pool: how many cards in the corpus are one of these.
+    pool[key] = usable.length;
+  }
+
   // A ROW CAN NOW BE PRICED BELOW THE SCORE THAT RANKED IT, so the order the loop produced is no
   // longer the order the page wants. Sorting here rather than re-ranking keeps the CEILING above
   // honest: `VERIFY_LIMIT` still cuts on the best-possible score, which is the only score known
@@ -446,9 +473,53 @@ export { PARTNER_SHARD_COUNT, partnerShardOf };
 export const emitKeysOf = (d: DeckCard): string[] =>
   (d.tags?.abilities ?? []).flatMap((a) => (a.emits ?? []).map(eventKey));
 
-export const demandKeysOf = (d: DeckCard): string[] =>
-  (d.tags?.abilities ?? []).flatMap((a) =>
-    (a.trigger?.verbs ?? []).map((v) => eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)));
+export const demandKeysOf = (d: DeckCard): string[] => [
+  ...(d.tags?.abilities ?? []).flatMap((a) =>
+    (a.trigger?.verbs ?? []).map((v) => eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))),
+  ...boardCountKeysOf(d),
+];
+
+/** THE FIVE BASIC LAND TYPES, which a board count may name and which never form a row -- the same
+ *  refusal `edges.ts` makes for the same reason: a mono-black deck runs thirty Swamps, and thirty
+ *  rows into one payoff is a mesh, not a synergy. */
+const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "forest"]);
+
+/** WHAT A CARD COUNTS ON THE BOARD, as a demand key.
+ *
+ *  Krenko, Mob Boss makes a Goblin token per Goblin you control. That is a demand on the other 99
+ *  cards and it fires nothing -- no trigger, no emit -- so until this existed his record's
+ *  `demands` was EMPTY and his page could not answer the question his deck is built around.
+ *
+ *  ONLY A SUBTYPE, AND NEVER A BASIC LAND TYPE. `edges.ts` refuses a bare card type on the same
+ *  ground ("creatures you control" is satisfied by every creature in the deck), and a key the
+ *  matcher would refuse is a row the page must not offer. The two gates state the same rule and are
+ *  tested against each other. */
+export const boardCountKeysOf = (d: DeckCard): string[] => [...new Set(
+  (d.tags?.abilities ?? []).flatMap((a) => {
+    const counted = a.effect?.scalingSubject;
+    if (!counted || counted.zone !== "battlefield" || counted.control === "opp") return [];
+    const subtype = Array.isArray(counted.subtype) ? counted.subtype[0] : counted.subtype;
+    if (subtype === undefined || BASIC_LAND_TYPES.has(subtype)) return [];
+    return [`counts|-|${subtype}|-`];
+  }),
+)];
+
+/** WHAT A CARD IS, as a supply key -- its own printed subtypes.
+ *
+ *  A Goblin body supplies "a Goblin you control" simply by being one, which is what lets the
+ *  existing candidate index and frequency table price a board count with no new machinery: the
+ *  rarity of `counts|-|goblin|-` is the number of Goblins in the corpus, exactly as the rarity of
+ *  an event is the number of cards that can cause it.
+ *
+ *  KEPT OUT OF THE RECORD'S `emits`. This is a supply the RANKING uses, not a claim the page should
+ *  print: "what it produces" would fill with a restatement of the card's own type line on all
+ *  15,350 records. */
+export const supplyKeysOf = (d: DeckCard): string[] => [
+  ...emitKeysOf(d),
+  ...(d.tags?.characteristics.subtypes ?? [])
+    .filter((t) => !BASIC_LAND_TYPES.has(t))
+    .map((t) => `counts|-|${t}|-`),
+];
 
 /** SUBSTANTIVE = at least one emit or one trigger.
  *
@@ -521,7 +592,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const substantive = all.filter(isSubstantive);
   const slugs = resolveSlugs(substantive.map((d) => d.card.name));
   const freq = supplyCounts(
-    substantive.map((d) => ({ emits: emitKeysOf(d), demands: demandKeysOf(d) })),
+    substantive.map((d) => ({ emits: supplyKeysOf(d), demands: demandKeysOf(d) })),
   );
 
   // CANDIDATES BY DEMAND KEY, INCLUDING THE COARSER FORMS. Without this index every card would be
@@ -535,6 +606,17 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       if (b) b.push(d); else byDemand.set(k, [d]);
     }
   }
+  // THE MIRROR INDEX, AND ONLY FOR BOARD COUNTS. A card that COUNTS Goblins needs the Goblins, and
+  // they are found by what they ARE rather than by what they demand. Restricted to `counts|` keys:
+  // indexing every card by every event it supplies would be the quadratic build this file avoids.
+  const bySubtype = new Map<string, DeckCard[]>();
+  for (const d of substantive) {
+    for (const k of supplyKeysOf(d)) {
+      if (!k.startsWith("counts|")) continue;
+      const b = bySubtype.get(k);
+      if (b) b.push(d); else bySubtype.set(k, [d]);
+    }
+  }
 
   const shards = new Map<string, Record<string, CardPageRecord>>();
   const index: NameIndexEntry[] = [];
@@ -542,7 +624,11 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   for (const d of substantive) {
     const slug = slugs.get(d.card.name)!;
     const emits = emitKeysOf(d);
-    const candidates = [...new Set(emits.flatMap(supplyForms).flatMap((k) => byDemand.get(k) ?? []))];
+    // CANDIDATES COME FROM WHAT THE CARD SUPPLIES, WHICH INCLUDES WHAT IT IS. `emits` is what the
+    // record PRINTS; `supplyKeysOf` is what the ranking may ask about, and the difference is the
+    // card's own subtypes -- a Goblin body is a candidate for every payoff that counts Goblins.
+    const candidates = [...new Set(supplyKeysOf(d).flatMap(supplyForms).flatMap((k) => byDemand.get(k) ?? []))];
+    const feeders = [...new Set(boardCountKeysOf(d).flatMap((k) => bySubtype.get(k) ?? []))];
     const commander = isCommander(d);
 
     const shardName = partnerShardOf(slug);
@@ -555,7 +641,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       commander,
       emits: [...new Set(emits)],
       demands: [...new Set(demandKeysOf(d))],
-      ...(() => { const { rows, pool } = partnersFor(d, candidates, freq, slugs, h);
+      ...(() => { const { rows, pool } = partnersFor(d, candidates, feeders, freq, slugs, h);
         return { partners: rows, pool }; })(),
       // A CARD IS LEGAL IN A DECK WHEN ITS WHOLE IDENTITY SITS INSIDE THE COMMANDER'S -- the same
       // rule `legality.ts` reports a violation against. An empty identity is inside every one,
@@ -563,7 +649,8 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       ...(commander ? (() => {
         const identity = new Set(d.card.colorIdentity ?? []);
         const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
-        const { rows, pool } = partnersFor(d, legal, freq, slugs, h);
+        const legalFeeders = feeders.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
+        const { rows, pool } = partnersFor(d, legal, legalFeeders, freq, slugs, h);
         return { commanderPartners: rows, commanderPool: pool };
       })() : {}),
     };

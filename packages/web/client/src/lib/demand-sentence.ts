@@ -353,6 +353,14 @@ export function eventKeySentence(key: string): string {
     if (subjectless) return subjectless;
   }
 
+  // A BOARD COUNT IS NOT AN EVENT AND HAS NO VERB PHRASE. "Goblins you control" is a standing fact
+  // about the board, not something that happens, so the sentence is the noun and the possession --
+  // gluing `DEMAND_VERB` onto it would invent an event nothing fires.
+  if (verb === "counts") {
+    const counted = subtype !== "-" ? capitalize(subtype) : type !== "-" ? type : "permanent";
+    return `${/^[aeiou]/i.test(counted) ? "an" : "a"} ${counted} you control`;
+  }
+
   const event = DEMAND_VERB[verb];
   // A verb this map has never seen says the true ugly thing rather than inventing a phrase for it.
   if (!event) return deslugify(key.replace(/\|/g, " "));

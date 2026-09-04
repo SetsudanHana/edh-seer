@@ -151,3 +151,11 @@ test("an unmapped verb de-slugs rather than printing a raw key", () => {
   expect(out).not.toContain("|");
   expect(out).toContain("teleports");
 });
+
+/** A BOARD COUNT IS NOT AN EVENT. "Goblins you control" is a standing fact about the board, not
+ *  something that happens, so it gets the noun and the possession rather than a verb phrase --
+ *  gluing one on would invent an event nothing fires. */
+test("a board count reads as what you control, not as something happening", () => {
+  expect(eventKeySentence("counts|-|goblin|-")).toBe("a Goblin you control");
+  expect(eventKeySentence("counts|-|elf|-")).toBe("an Elf you control");
+});

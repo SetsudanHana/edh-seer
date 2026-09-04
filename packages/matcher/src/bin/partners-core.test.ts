@@ -4,7 +4,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts,
-  supplyForms, themesOf, unmetDemands,
+  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -175,7 +175,7 @@ const FREQ = { "enters|creature|goblin|-": 41, "enters|creature|-|-": 1909, "cre
 const SLUGS = resolveSlugs(["Impact Tremors", "Millstone", "Krenko, Mob Boss"]);
 
 test("a verified partner carries the engine's own reason sentence", () => {
-  const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+  const { rows } = partnersFor(krenko, [impactTremors], [], FREQ, SLUGS, H);
   expect(rows).toHaveLength(1);
   expect(rows[0]!.name).toBe("Impact Tremors");
   expect(rows[0]!.slug).toBe("impact-tremors");
@@ -187,7 +187,7 @@ test("a verified partner carries the engine's own reason sentence", () => {
 /** THE RANKING SELECTS, THE ENGINE DECIDES. A card sharing no event key never even reaches
  *  verification, so it cannot appear at any score. */
 test("a card that demands nothing the subject supplies is absent, not ranked low", () => {
-  expect(partnersFor(krenko, [millstone], FREQ, SLUGS, H).rows).toEqual([]);
+  expect(partnersFor(krenko, [millstone], [], FREQ, SLUGS, H).rows).toEqual([]);
 });
 
 /** THE POINT OF VERIFYING. A key match is necessary and NOT sufficient -- if `directedReasons`
@@ -201,7 +201,7 @@ test("a key match with no engine reason is dropped", () => {
     effect: { kind: "draw-card" },
   }] as unknown as CardTags["abilities"]);
   const slugs = resolveSlugs(["Shape Sharer"]);
-  expect(partnersFor(krenko, [noReason], FREQ, slugs, H).rows).toEqual([]);
+  expect(partnersFor(krenko, [noReason], [], FREQ, slugs, H).rows).toEqual([]);
 });
 
 /** THE CAP THAT ACTUALLY BINDS on a crowd of identical demands. All 34 payoffs here share
@@ -214,7 +214,7 @@ test("one event may occupy only PER_EVENT_CAP rows, and pool counts the rest", (
     effect: { kind: "draw-card" },
   }] as unknown as CardTags["abilities"]));
   const slugs = resolveSlugs(many.map((m) => m.card.name));
-  const { rows, pool } = partnersFor(krenko, many, FREQ, slugs, H);
+  const { rows, pool } = partnersFor(krenko, many, [], FREQ, slugs, H);
   expect(rows.length).toBe(PER_EVENT_CAP);
   expect(pool["enters|creature|-|-"]).toBe(KEEP + 10);
 });
@@ -222,7 +222,7 @@ test("one event may occupy only PER_EVENT_CAP rows, and pool counts the rest", (
 /** A CARD IS NEVER ITS OWN PARTNER. `directedReasons(x, x)` can return reasons -- self-reference is
  *  the biggest defect family this engine has had -- so the exclusion is explicit. */
 test("the subject is not its own partner", () => {
-  expect(partnersFor(krenko, [krenko], FREQ, SLUGS, H).rows).toEqual([]);
+  expect(partnersFor(krenko, [krenko], [], FREQ, SLUGS, H).rows).toEqual([]);
 });
 
 /** THE BUG THE FIXTURES FOUND, PINNED. Krenko emits `enters|creature|goblin`; Impact Tremors demands
@@ -244,7 +244,7 @@ test("a subtype-specific payoff outranks a generic one for the same emit", () =>
     effect: { kind: "draw-card" },
   }] as unknown as CardTags["abilities"]);
   const slugs = resolveSlugs(["Goblin Bushwhacker", "Impact Tremors"]);
-  const { rows } = partnersFor(krenko, [impactTremors, goblinPayoff], FREQ, slugs, H);
+  const { rows } = partnersFor(krenko, [impactTremors, goblinPayoff], [], FREQ, slugs, H);
   expect(rows.map((r) => r.name)).toEqual(["Goblin Bushwhacker", "Impact Tremors"]);
   expect(rows[0]!.event).toBe("enters|creature|goblin|-");
   expect(rows[1]!.event).toBe("enters|creature|-|-");
@@ -319,7 +319,7 @@ test("a repeatable reason is preferred over a one-shot", async () => {
     { tag: "enters:creature", text: "REPEATABLE", repeatability: "triggered" },
   ] as never);
   try {
-    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    const { rows } = partnersFor(krenko, [impactTremors], [], FREQ, SLUGS, H);
     expect(rows[0]!.reason).toBe("REPEATABLE");
   } finally { spy.mockRestore(); }
 });
@@ -330,7 +330,7 @@ test("with only a one-shot on offer, that is what is stored", async () => {
     { tag: "enters:creature", text: "ONLY ONE SHOT", repeatability: "oneshot" },
   ] as never);
   try {
-    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    const { rows } = partnersFor(krenko, [impactTremors], [], FREQ, SLUGS, H);
     expect(rows[0]!.reason).toBe("ONLY ONE SHOT");
   } finally { spy.mockRestore(); }
 });
@@ -347,7 +347,7 @@ test("the sentence for the row's own event wins over a repeatable one for anothe
   ] as never);
   try {
     // Impact Tremors demands `enters|creature|-`, so that is the row's event.
-    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    const { rows } = partnersFor(krenko, [impactTremors], [], FREQ, SLUGS, H);
     expect(rows[0]!.reason).toBe("ON EVENT");
   } finally { spy.mockRestore(); }
 });
@@ -362,7 +362,7 @@ test("among sentences for the row's event, the repeatable one is still preferred
     { tag: "enters:creature", text: "ON EVENT, REPEATABLE", repeatability: "triggered" },
   ] as never);
   try {
-    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    const { rows } = partnersFor(krenko, [impactTremors], [], FREQ, SLUGS, H);
     expect(rows[0]!.reason).toBe("ON EVENT, REPEATABLE");
   } finally { spy.mockRestore(); }
 });
@@ -377,7 +377,7 @@ test("a candidate whose reasons are all about other events is dropped", async ()
     { tag: "graveyard-recursion:creature", text: "OTHER CHANNEL", repeatability: "triggered" },
   ] as never);
   try {
-    expect(partnersFor(krenko, [impactTremors], FREQ, SLUGS, H).rows).toEqual([]);
+    expect(partnersFor(krenko, [impactTremors], [], FREQ, SLUGS, H).rows).toEqual([]);
   } finally { spy.mockRestore(); }
 });
 
@@ -402,7 +402,7 @@ test("a row carries the confirmed event, not the best-scoring one", async () => 
     { tag: "enters:creature", text: "CREATURES ENTER", repeatability: "triggered" },
   ] as never);
   try {
-    const { rows } = partnersFor(krenko, [twoDemands], FREQ, slugs, H);
+    const { rows } = partnersFor(krenko, [twoDemands], [], FREQ, slugs, H);
     expect(rows).toHaveLength(1);
     expect(rows[0]!.event).toBe("enters|creature|-|-");
     expect(rows[0]!.score).toBeCloseTo(specificity("enters|creature|-|-", FREQ));
@@ -431,7 +431,7 @@ test("a zone-renamed tag matches the demand key that kept the raw verb", async (
     { tag: "dies:creature", text: "ON EVENT", repeatability: "oneshot" },
   ] as never);
   try {
-    const { rows } = partnersFor(outlet, [deathPayoff], FREQ, slugs, H);
+    const { rows } = partnersFor(outlet, [deathPayoff], [], FREQ, slugs, H);
     expect(rows).toHaveLength(1);
     expect(rows[0]!.event).toBe("leaves|creature|-|-");
     expect(rows[0]!.reason).toBe("ON EVENT");
@@ -448,7 +448,7 @@ test("an authored sentence outranks the synthesised baseline one", async () => {
     { tag: "enters:creature", text: "AUTHORED", repeatability: "triggered" },
   ] as never);
   try {
-    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    const { rows } = partnersFor(krenko, [impactTremors], [], FREQ, SLUGS, H);
     expect(rows[0]!.reason).toBe("AUTHORED");
   } finally { spy.mockRestore(); }
 });
@@ -463,7 +463,7 @@ test("an authored one-shot still outranks a repeatable baseline", async () => {
     { tag: "enters:creature", text: "AUTHORED", repeatability: "oneshot" },
   ] as never);
   try {
-    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    const { rows } = partnersFor(krenko, [impactTremors], [], FREQ, SLUGS, H);
     expect(rows[0]!.reason).toBe("AUTHORED");
   } finally { spy.mockRestore(); }
 });
@@ -476,7 +476,7 @@ test("the engine is asked with token mediation off", async () => {
   const edges = await import("../edges.js");
   const spy = vi.spyOn(edges, "directedReasons");
   try {
-    partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    partnersFor(krenko, [impactTremors], [], FREQ, SLUGS, H);
     expect(spy).toHaveBeenCalledWith(krenko, impactTremors, H, { tokensMediate: false });
   } finally { spy.mockRestore(); }
 });
@@ -620,4 +620,68 @@ test("a token demand is rarer than an untyped one, so it outranks it", () => {
   expect(freq["enters|creature|-|-"]).toBe(3);
   expect(specificity("enters|creature|-|t", freq))
     .toBeGreaterThan(specificity("enters|creature|-|-", freq));
+});
+
+/** THE ROWS THAT RUN THE OTHER WAY. Every other row is "this card supplies, that card consumes"; a
+ *  board count is the reverse, so the pair is verified `feeder -> subject`. Without this the engine
+ *  drew the edge (`edges.ts`) and the page never asked about it -- the ranking proposes candidates
+ *  by event key, and a board count has an event on neither side. Krenko's page showed no Goblins. */
+const goblinBody = () => base("Goblin Assassin", [], ["goblin"]);
+const krenkoCounting = () => {
+  const d = base("Krenko, Mob Boss", [{
+    kind: "activated", cost: "{T}",
+    effect: {
+      kind: "token-generation", scaling: "per-permanent",
+      scalingSubject: { subtype: "goblin", zone: "battlefield", control: "you", token: null },
+      subject: { control: "you", token: true, type: "creature", subtype: "goblin" },
+    },
+    emits: [{ verb: "create-token", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } }],
+  }] as unknown as CardTags["abilities"], ["goblin"]);
+  return d;
+};
+
+test("a card the subject counts appears on its page, verified in the feeder direction", () => {
+  const slugs = resolveSlugs(["Goblin Assassin", "Krenko, Mob Boss"]);
+  const { rows, pool } = partnersFor(krenkoCounting(), [], [goblinBody()],
+    { "counts|-|goblin|-": 388 }, slugs, H);
+  expect(rows).toHaveLength(1);
+  expect(rows[0]!.name).toBe("Goblin Assassin");
+  expect(rows[0]!.event).toBe("counts|-|goblin|-");
+  expect(rows[0]!.reason)
+    .toBe("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets bigger");
+  expect(pool["counts|-|goblin|-"]).toBe(1);
+});
+
+/** A CARD THAT IS NOT ONE OF THEM IS NOT A ROW, and the engine is what says so -- this phase
+ *  verifies exactly as the forward one does rather than trusting the index. */
+test("a feeder the engine refuses is dropped", () => {
+  const slugs = resolveSlugs(["Llanowar Elves"]);
+  const { rows } = partnersFor(krenkoCounting(), [], [base("Llanowar Elves", [], ["elf"])],
+    { "counts|-|goblin|-": 388 }, slugs, H);
+  expect(rows).toEqual([]);
+});
+
+/** WHAT A CARD COUNTS IS A DEMAND, and Krenko's record carried none until it was one: his X is the
+ *  number of Goblins you control, which is the whole question his deck asks. */
+test("a board count is a demand key, and a basic land type is not", () => {
+  expect(boardCountKeysOf(krenkoCounting())).toEqual(["counts|-|goblin|-"]);
+  const coffers = base("Cabal Coffers", [{
+    kind: "activated", cost: "{2}, {T}",
+    effect: {
+      kind: "add-mana", scaling: "per-permanent",
+      scalingSubject: { subtype: "swamp", zone: "battlefield", control: "you", token: null },
+    },
+  }] as unknown as CardTags["abilities"]);
+  expect(boardCountKeysOf(coffers)).toEqual([]);
+});
+
+/** A CARD SUPPLIES WHAT IT IS, and that supply is kept OUT of the record's `emits`: "what it
+ *  produces" must not fill with a restatement of the card's own type line on all 15,350 records. */
+test("printed subtypes are a supply key but never a printed emit", () => {
+  expect(supplyKeysOf(goblinBody())).toContain("counts|-|goblin|-");
+  expect(emitKeysOf(goblinBody())).toEqual([]);
+  const { shards } = buildPartnerArtifact([goblinBody(), krenkoCounting()], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Goblin Assassin");
+  // A card that only IS something, with no emit and no trigger, is still not substantive.
+  expect(rec).toBeUndefined();
 });
