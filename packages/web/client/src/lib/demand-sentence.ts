@@ -35,6 +35,8 @@
 export const DEMAND_VERB: Record<string, string> = {
   enters: "entering the battlefield",
   "enters-graveyard": "going to a graveyard",
+  // The eerie half: "whenever you fully unlock a Room" (verb added 2026-09-05).
+  unlock: "being fully unlocked",
   dies: "dying",
   leaves: "leaving the battlefield",
   cast: "being cast",
