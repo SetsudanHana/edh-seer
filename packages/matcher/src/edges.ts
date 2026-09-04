@@ -937,6 +937,14 @@ function copySubject(
  *  describe the EVENT, not the card, and comparing them against a type line is the mistake this file
  *  has now recorded four times. An UNTYPED subject matches anything and therefore keeps the old
  *  wording, which is the conservative direction: no noun is invented for an emit naming no class. */
+/** The noun for a graveyard-fill event that is not the card itself: its emitted type, or "a card"
+ *  for an untyped mill/discard -- never "a permanent", which a milled card need not be. Undefined
+ *  for anything that is not a non-self fill, so every other sentence is untouched. */
+function fillNoun(e: GameEvent): string | undefined {
+  if (!(e.verb === "enters" && e.subject.zone === "graveyard") || e.subject.self === true) return undefined;
+  return emitSubjectNoun(e.subject) === "a permanent" && list(e.subject.type).length === 0 ? "a card" : emitSubjectNoun(e.subject);
+}
+
 function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy): boolean {
   // No derived tags means no characteristics to compare, so nothing can be ruled out — keep the
   // old wording rather than invent a noun on a card the engine has not read.
@@ -1143,7 +1151,14 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
             // might be the creature entering, and keeps the old wording; a Sorcery whose emit is
             // `{type: creature}` cannot, and gets the class named instead. Same predicate the
             // self-trigger gate above uses, so the two cannot disagree about what a card can be.
-            subjectNoun: producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject),
+            //
+            // A GRAVEYARD FILL IS NEVER THE PRODUCER ITSELF unless the emit says `self`. "Each
+            // player mills a card" (Syr Konrad) is an UNTYPED fill, so `producerCanBeSubject` was
+            // satisfied by anything and the drawer read "When Syr Konrad, the Grim hits the
+            // graveyard" -- a sentence about the wrong card, seen live on Bloodchief Ascension's
+            // whole producer list (owner, 2026-09-05). The producer is the SOURCE of a fill; the
+            // thing filled is a card of the emitted type, or just "a card" when the type is unknown.
+            subjectNoun: fillNoun(e) ?? (producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject)),
           }),
           effectKind: a.effect.kind,
           repeatability: triggerRepeatability(t.subject),
