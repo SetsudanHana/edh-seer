@@ -285,3 +285,99 @@ test("met and worst read the deadline-aware count, not the deck total", () => {
   expect(row.worst).toBeDefined();
   expect(row.worst!.turn).toBe(1);
 });
+
+/** A FETCHLAND PRODUCES THE COLOUR IT FINDS (2026-09-04). `producedMana` is empty on a real fetch and
+ *  correctly so, which told a mono-blue deck with six fetchlands that blue was short at the top of
+ *  its curve. The simulator has counted them since N2; this is the colour panel catching up. */
+/** A fetch reads the TYPE LINE of what it looks for, so these fixtures print real ones: "Island" on
+ *  a `Land` line is not findable by a card searching for an Island. */
+const basic = (name: string, type: string, produces: string[]): DeckCard => ({
+  card: {
+    name, typeLine: `Basic Land — ${type}`, oracleText: "", keywords: [], colors: [], manaValue: 0,
+    producedMana: produces,
+  } as Card,
+  tags: null,
+});
+
+const fetchland = (name: string, text: string): DeckCard => ({
+  card: {
+    name, typeLine: "Land", oracleText: text, keywords: [], colors: [], manaValue: 0,
+  } as Card,
+  tags: null,
+});
+const DELTA = "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle.";
+const WILDS = "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.";
+const PASSAGE = "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle. Then if you control four or more lands, untap that land.";
+
+test("a fetchland counts for the colours it can find, and only those", () => {
+  const islands = Array.from({ length: 20 }, (_, i) => basic(`Island-${i}`, "Island", ["U"]));
+  const blue = manaAudit(fillTo(100, [
+    card("Counterspell", "{U}{U}", 2), ...islands,
+    ...Array.from({ length: 4 }, (_, i) => fetchland(`Polluted Delta-${i}`, DELTA)),
+  ])).find((r) => r.color === "U")!;
+  expect(blue.supplied).toBe(24);
+
+  // The same fetch in a deck it can find nothing in: a Delta names Island and Swamp, so a Forest is
+  // not a target and the fetch is not a green source.
+  const green = manaAudit(fillTo(100, [
+    card("Overrun", "{2}{G}{G}{G}", 5),
+    ...Array.from({ length: 20 }, (_, i) => basic(`Forest-${i}`, "Forest", ["G"])),
+    ...Array.from({ length: 4 }, (_, i) => fetchland(`Polluted Delta-${i}`, DELTA)),
+  ])).find((r) => r.color === "G")!;
+  expect(green.supplied).toBe(20);
+});
+
+/** THE CAP: every fetch is a wildcard for its own fetchable set, but the library is finite. Fifteen
+ *  fetches over five white lands is five white sources, not fifteen. Binds on 31 of the 153
+ *  calibration colour rows. */
+test("fetches are capped at what the deck gives them to find", () => {
+  const deck = fillTo(100, [
+    card("Counterspell", "{U}{U}", 2),
+    ...Array.from({ length: 2 }, (_, i) => basic(`Island-${i}`, "Island", ["U"])),
+    ...Array.from({ length: 8 }, (_, i) => fetchland(`Polluted Delta-${i}`, DELTA)),
+  ]);
+  expect(manaAudit(deck).find((r) => r.color === "U")!.supplied).toBe(4);
+});
+
+/** `classifyLand` reads the card in front of it and calls Evolving Wilds untapped, which it is -- the
+ *  BASIC it finds is the one that arrives tapped, and no land classifier can see that. */
+test("a fetch whose land arrives tapped is not available on its deadline", () => {
+  const build = (text: string) => fillTo(100, [
+    card("Ancestral Recall", "{U}", 1),
+    card("Counterspell", "{U}{U}", 2),
+    card("Fact or Fiction", "{3}{U}", 4),
+    card("Mystical Tutor", "{2}{U}", 3),
+    ...Array.from({ length: 30 }, (_, i) => basic(`Island-${i}`, "Island", ["U"])),
+    ...Array.from({ length: 4 }, (_, i) => fetchland(`fetch-${i}`, text)),
+  ]);
+  const at = (text: string, turn: number) =>
+    manaAudit(build(text)).find((r) => r.color === "U")!.demands.find((d) => d.turn === turn)!.available;
+  // A Delta's Island is untapped, so all four count from turn 1.
+  expect(at(DELTA, 1)).toBe(34);
+  // Evolving Wilds' basic is tapped on every turn, so the four never count.
+  expect(at(WILDS, 1)).toBe(30);
+  expect(at(WILDS, 4)).toBe(30);
+  // Fabled Passage untaps it once four lands are down -- three before the drop it makes itself.
+  expect(at(PASSAGE, 3)).toBe(30);
+  expect(at(PASSAGE, 4)).toBe(34);
+});
+
+/** THE ONE PLACE `isManaSource` IS BYPASSED. That gate refuses a sorcery because a RITUAL is a
+ *  one-shot; Cultivate is not one -- it leaves a Forest on the battlefield permanently. It is still
+ *  on a rock's clock: cast on turn 3, it pays from turn 4. */
+test("a land-fetch sorcery is a source, and a ritual still is not", () => {
+  const cultivate = (i: number) => card(`Cultivate-${i}`, "{2}{G}", 3, {
+    oracleText: "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.",
+  });
+  const deck = fillTo(100, [
+    card("Overrun", "{2}{G}{G}{G}", 5),
+    ...Array.from({ length: 20 }, (_, i) => basic(`Forest-${i}`, "Forest", ["G"])),
+    ...Array.from({ length: 4 }, (_, i) => cultivate(i)),
+  ]);
+  const green = manaAudit(deck).find((r) => r.color === "G")!;
+  expect(green.supplied).toBe(24);
+  // On a rock's clock: cast on turn 3, its Forest taps for mana on turn 4. The tapped arrival is
+  // not charged twice -- that IS the turn the rock clock already skips.
+  expect(green.demands.find((d) => d.turn === 3)!.available).toBe(20);
+  expect(green.demands.find((d) => d.turn === 5)!.available).toBe(24);
+});
