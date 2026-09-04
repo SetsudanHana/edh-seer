@@ -98,18 +98,50 @@ describe("projectDeckGraph", () => {
       reason("hub", "c", "t1"), reason("hub", "c", "t2"), reason("hub", "c", "t3"),
     ];
     const g = projectDeckGraph(cards, reasons, W, { topK: 2 });
-    const pairs = g.edges.map((e) => `${e.from}->${e.to}`).sort();
+    const pairs = g.edges.filter((e) => e.drawn).map((e) => `${e.from}->${e.to}`).sort();
     expect(pairs).toEqual(["hub->a", "hub->b", "hub->c"]);
   });
 
-  it("drops an edge under the absolute floor even when top-k would keep it", () => {
+  // THE BUDGET IS FOR THE PICTURE, NOT FOR THE TRUTH. Top-k thins what the board DRAWS; it must not
+  // thin what the inspector, the pair list or the score can see. Seen live on the Rani deck
+  // (2026-09-05): Grim Guardian had 34 enchantments feeding it, every one at the same implied
+  // weight, and the drawer said "Fed by 0 -- None" because its own top-4 went to its outgoing
+  // edges and every producer's top-4 went elsewhere. The union kept nothing. 237 of 462 edges
+  // survived the projection on that deck, 48.7% of real claims gone from every reader.
+  it("returns every edge, and marks only the top-k union as drawn", () => {
+    const cards = ["hub", "a", "b", "c"].map((n) => card(n));
+    const reasons = [
+      reason("hub", "a", "t1"),
+      reason("hub", "b", "t1"), reason("hub", "b", "t2"),
+      reason("hub", "c", "t1"), reason("hub", "c", "t2"), reason("hub", "c", "t3"),
+    ];
+    const g = projectDeckGraph(cards, reasons, W, { topK: 1 });
+    const byPair = new Map(g.edges.map((e) => [`${e.from}->${e.to}`, e.drawn]));
+    // hub's own top-1 is c; a and b each keep their only edge, so the union draws all three here...
+    expect(byPair.get("hub->c")).toBe(true);
+    expect(byPair.get("hub->a")).toBe(true);
+    expect(byPair.get("hub->b")).toBe(true);
+    // ...so add a consumer whose ONLY edges are the weakest thing in the deck, seen from both ends.
+    const sink = [...cards, card("sink")];
+    const sinkReasons = [...reasons, reason("hub", "sink", "t1"), reason("a", "sink", "t1")];
+    const g2 = projectDeckGraph(sink, sinkReasons, W, { topK: 1 });
+    const drawn = g2.edges.filter((e) => e.drawn).map((e) => `${e.from}->${e.to}`).sort();
+    const all = g2.edges.map((e) => `${e.from}->${e.to}`).sort();
+    expect(all).toContain("a->sink");
+    expect(all).toContain("hub->sink");
+    // sink's own top-1 keeps one of its two; the other is still RETURNED, just not drawn.
+    expect(drawn.filter((p) => p.endsWith("->sink"))).toHaveLength(1);
+    expect(all).toHaveLength(5);
+  });
+
+  it("keeps an edge under the absolute floor but does not draw it", () => {
     const g = projectDeckGraph(
       [card("A"), card("B")],
       [reason("A", "B", "t")],
       W,
       { floor: 99 },
     );
-    expect(g.edges).toEqual([]);
+    expect(g.edges.map((e) => [e.from, e.to, e.drawn])).toEqual([["A", "B", false]]);
   });
 });
 

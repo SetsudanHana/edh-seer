@@ -50,6 +50,10 @@ export interface WireGraphEdge {
   tags: string[];
   /** Reason texts, for the inspector. The full `Reason` objects stay server-side. */
   reasonTexts: string[];
+  /** `ProjectedEdge.drawn`: the board draws only these; every other reader takes them all. Absent
+   *  on a graph written before the flag existed, and absent reads as drawn -- those graphs were
+   *  already thinned to the drawn set. */
+  drawn?: boolean;
 }
 
 export interface WireGraph {
@@ -214,6 +218,7 @@ export function attachRolesAndArt(
     // the objects must survive even when their sentences do not. Same collapse `claimCount` applies
     // to the score.
     reasonTexts: [...new Set(e.reasons.map((r) => r.text))],
+    drawn: e.drawn,
   }));
 
   return { nodes, edges, undirectedReasons: graph.undirectedReasons, offDeckReasons: graph.offDeckReasons };

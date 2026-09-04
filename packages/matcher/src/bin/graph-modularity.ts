@@ -125,7 +125,10 @@ for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
   // here -- only the face split.
   const reasons = r.edges.flatMap((e) => e.reasons);
   const projectionDeck = [...deckCards.flatMap((dc) => faceDeckCards(dc)), ...collectTokenNodes(deckCards, tokenTags).nodes];
-  const projected = projectDeckGraph(projectionDeck, reasons, weights);
+  const all = projectDeckGraph(projectionDeck, reasons, weights);
+  // The DRAWN set, so this instrument keeps measuring the picture it always measured: the
+  // projection returns every edge since 2026-09-05 and thins only what the board draws.
+  const projected = { nodes: all.nodes, edges: all.edges.filter((e) => e.drawn) };
   const { q, sizes } = communities(projected.nodes.map((n) => n.id), projected.edges);
   rows.push({ deck: file.replace(/\.txt$/, ""), nodes: projected.nodes.length, edges: projected.edges.length, q, sizes });
   console.log(`${rows.length} ${file.replace(/\.txt$/, "")} nodes ${projected.nodes.length} edges ${projected.edges.length} Q ${q.toFixed(3)} biggest ${Math.round((sizes[0] ?? 0) / projected.nodes.length * 100)}% communities ${sizes.filter((s) => s > 1).length}`);

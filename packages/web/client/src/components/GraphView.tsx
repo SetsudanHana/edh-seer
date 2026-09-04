@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { drawnEdges } from "./board-edges.js";
 import { select } from "d3-selection";
 import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
 import type { CardGraph, DeckReport } from "../types.js";
@@ -710,7 +711,7 @@ export function GraphView(
     // `{ source, target }` is what forceLink requires, so it is what the whole effect uses; the
     // wire says `from`/`to`. An edge naming a card the graph does not hold is dropped rather than
     // crashing the layout -- the fixtures assert offDeckReasons is 0, this is the runtime half.
-    const links: SimLink[] = graph.edges
+    const links: SimLink[] = drawnEdges(graph.edges)
       .map((e) => ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight }))
       .filter((l): l is SimLink => Boolean(l.source && l.target));
     // WHICH TAGS EACH DRAWN EDGE CARRIES, keyed the way `flowEdgeByPair` already keys. `SimLink`
