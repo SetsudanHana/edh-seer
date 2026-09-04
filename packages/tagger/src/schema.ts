@@ -295,6 +295,9 @@ export type Verb =
   | "land-play"
   | "untaps"
   | "proliferate"
+  /** A Room is fully unlocked (CR 717). Consumer: "whenever you fully unlock a Room" (the eerie
+   *  half). Producer: every Room, implied from its type line -- see `impliedEvents`. */
+  | "unlock"
   | "upkeep"
   | "begin-combat"
   | "end-step"
@@ -321,6 +324,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "land-play",
   "untaps",
   "proliferate",
+  "unlock",
   // Phase/step triggers. Without these the vocabulary had nowhere to put "at the beginning of your
   // upkeep", so those abilities were tagged with the nearest available verb — a 46-card audit found
   // Nut Collector, Sen Triplets and Crystalline Giant all recorded as `enters`, which does not just
@@ -693,6 +697,12 @@ export interface CardTags {
   model: string;
   characteristics: Characteristics;
   abilities: Ability[];
+  /** Trigger events the clause layer named and derivation could not turn into a verb -- the
+   *  "surface, never swallow" channel. Computed by `deriveAbilities` since 2026-08 and DROPPED by
+   *  `deriveCardTags` until 2026-09-05, so every reader of it (`isolated-cards.ts`, the census)
+   *  saw an empty list and the eerie "fully unlock a Room" half vanished without a trace. Absent
+   *  when empty. */
+  unknownTriggers?: string[];
   /** True for a hand-verified tag that must survive automated re-tagging (e.g. a prompt-version
    *  bump). needsRetag short-circuits to false for a pinned tag regardless of version drift —
    *  set this only for cards where the LLM has demonstrably gotten the shape wrong and a human

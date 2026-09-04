@@ -3538,3 +3538,18 @@ test("a graveyard fill that is not the card itself is worded about the cards it 
   }]);
   expect(pairReasons(selfSac, anyYard, H).map((r) => r.text)[0]).toContain("When Fodder hits the graveyard");
 });
+
+// EERIE (owner, 2026-09-05): Balemurk Leech's second half formed no edge with the Rani deck's own
+// Room and left no trace. A Room supplies `unlock` by being one.
+test("a Room feeds a fully-unlock trigger", () => {
+  const leech = base("Leech", [{
+    kind: "triggered",
+    trigger: { verbs: ["unlock"], subject: { control: "you", token: null, subtype: "room" } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
+  }]);
+  const room = base("Mirror Room", [], ["room"]);
+  room.tags.characteristics.types = ["enchantment"];
+  const rs = pairReasons(room, leech, H);
+  expect(rs.map((r) => r.tag)).toEqual(["unlock:room"]);
+  expect(rs[0]?.text).toContain("is fully unlocked");
+});
