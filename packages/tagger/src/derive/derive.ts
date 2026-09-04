@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 89;
+export const DERIVE_VERSION = 90;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -921,8 +921,9 @@ export function deriveAbilities(
       // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;
       // derivation had simply never set it, so the channel was dark under TAGS_SOURCE=derived.
       const scaling = actionScaling(action);
-      // WHAT the count counts, beside the basis — see `scalingSubject`. Only graveyard counts carry
-      // one today, because that is the slice `edges.ts` can judge with an existing gate.
+      // WHAT the count counts, beside the basis — see `scalingSubject`. Graveyard and battlefield
+      // counts both carry one: those are the two `edges.ts` can judge against something it already
+      // has, a fill it can match and a card's own printed characteristics.
       const countedSubject = scalingSubject(action);
       const effect = effectKind
         ? keepSubject ? { kind: effectKind, subject } : { kind: effectKind }

@@ -221,6 +221,16 @@ export function graveyardFeedsScaling(producer: string, consumer: string): strin
   return `When ${producer} is in the graveyard, ${consumer} gets bigger`;
 }
 
+/** THE SAME SHAPE ONE ZONE OVER: a payoff that counts what you have ON THE BOARD, and a card that
+ *  is one of them. Krenko, Mob Boss makes a Goblin token per Goblin you control, so every other
+ *  Goblin in the deck makes him bigger -- a relation no event can express, because nothing fires.
+ *
+ *  "COUNTS IT" RATHER THAN "COUNTS GOBLINS", because the subject is already named by the row's own
+ *  event line and repeating it here would say the same noun twice in two voices. */
+export function boardCountFeedsScaling(producer: string, consumer: string): string {
+  return `While ${producer} is on the battlefield, ${consumer} counts it and gets bigger`;
+}
+
 /** kind -> what a continuous STATIC effect gives the class of card its subject reaches. Direction
  *  is the mirror of PHRASES above: there the CONSUMER performs what a triggered effect does; here
  *  the PRODUCER's own static keeps granting it, so the phrase reads "<producer> gives <consumer>

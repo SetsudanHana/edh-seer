@@ -13,6 +13,7 @@ import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, fetchSentence, proliferateSentence,
+  boardCountFeedsScaling,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   staticGrantSentence, typeGrantNoun, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
@@ -945,6 +946,10 @@ export interface ReasonOptions {
   tokensMediate?: boolean;
 }
 
+/** The five basic land types, which a board count may name and which never form an edge -- see the
+ *  board-count channel for why. */
+const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "forest"]);
+
 export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
   if (!p.tags || !c.tags) return [];
   const reasons: Reason[] = [];
@@ -1272,6 +1277,52 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
         producer: p.card.name,
       });
     }
+  }
+
+  // BOARD-COUNT EDGE: the producer IS one of the things the consumer counts. Krenko, Mob Boss makes
+  // a Goblin token per Goblin you control, so every other Goblin in the deck makes him bigger --
+  // and no event says so. Nothing fires, nothing enters, nothing dies; the relation is that the
+  // producer's PRINTED CHARACTERISTICS are inside the consumer's count. Owner-reported 2026-09-04
+  // as the fourth case a Krenko page should answer, after goblin-entering, token-entering and
+  // creature-entering, and the only one with no channel at all.
+  //
+  // THE SAME SHAPE AS THE GRAVEYARD SCALING EDGE ABOVE, one zone over: same `effect.scaling`, same
+  // `scalingSubject`, same `ROLE_NOT_SYNERGY` gate. What differs is what it compares the count
+  // against -- a fill there, a type line here.
+  for (const a of c.tags.abilities) {
+    const counted = a.effect.scalingSubject;
+    if (!counted || counted.zone !== "battlefield") continue;
+    if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
+    // A BARE CARD TYPE IS A MESH, NOT A SYNERGY, and this is the gate that keeps the channel honest.
+    // "Creatures you control" is satisfied by every creature in the deck: forty edges saying the
+    // same nothing, which is the engine's own "playing Magic is not a synergy" rule. MEASURED
+    // 2026-09-04: 685 battlefield counts are derived and 248 name a subtype -- those are the ones
+    // that say something about a DECK rather than about Magic.
+    const subtype = Array.isArray(counted.subtype) ? counted.subtype[0] : counted.subtype;
+    if (subtype === undefined) continue;
+    // A BASIC LAND TYPE IS THE MANA BASE. 20 corpus cards count Swamps and 13 count Mountains; a
+    // mono-black deck runs thirty Swamps, and thirty edges into one payoff is the same mesh wearing
+    // a different costume. The partial reversal for fetchlands and Urza's Saga is about a land that
+    // FINDS something, not about a basic being counted.
+    if (BASIC_LAND_TYPES.has(subtype)) continue;
+    // AN OPPONENT'S BOARD IS NOT FED BY YOUR CARD.
+    if (counted.control === "opp") continue;
+    // `zone` IS DROPPED BEFORE THE COMPARISON and `control` IS KEPT, which is the opposite of what
+    // the first cut did. A type line sits in no zone -- the fifth time this file records that
+    // lesson -- but an ABSENT `control` on the consumer side is not a wildcard: `subjectMatches`
+    // fails it against a producer that states one, so stripping it made every board count match
+    // nothing at all and the channel silently produced zero edges.
+    const { zone: _z, ...printed } = counted;
+    if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)) continue;
+    reasons.push({
+      tag: `scales:${themeSubjectKey(counted)}`,
+      text: boardCountFeedsScaling(p.card.name, c.card.name),
+      effectKind: a.effect.kind,
+      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
+      scaling: a.effect.scaling,
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
   }
 
   // A WIN CONDITION THAT NAMES WHAT IT COUNTS IS A RELATION, NOT A ROLE. `win-game` sits in
