@@ -5,14 +5,15 @@ import { InstallButton } from "./InstallButton.js";
 
 afterEach(() => {
   cleanup();
-  document.querySelector(".site-nav")?.remove();
+  document.querySelector(".site-header")?.remove();
 });
 
-/** The static header's nav, which `index.html` ships and React never owns. The button portals into
- *  it, so every test needs it present. */
+/** The static header, which `index.html` ships and React never owns. The button portals into it --
+ *  beside the nav, not inside it, so the nav does not move when the button appears -- so every test
+ *  needs it present. */
 const nav = () => {
-  const el = document.createElement("nav");
-  el.className = "site-nav";
+  const el = document.createElement("header");
+  el.className = "site-header";
   document.body.appendChild(el);
   return el;
 };

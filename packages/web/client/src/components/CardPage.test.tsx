@@ -8,6 +8,12 @@ const KRENKO: CardPageData = {
   name: "Krenko, Mob Boss",
   typeLine: "Legendary Creature — Goblin Warrior",
   manaCost: "{2}{R}{R}",
+  artCrop: "https://cards.scryfall.io/art_crop/front/8/2/824b2d73.jpg",
+  abilities: [{
+    kind: "activated", cost: "{T}", when: [], effect: "token-generation",
+    scaling: "per-permanent", counts: "goblin",
+    emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
+  }],
   identity: ["R"],
   commander: true,
   emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
@@ -17,6 +23,7 @@ const KRENKO: CardPageData = {
     reason: "When a goblin enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage",
   }],
   pool: { "enters|creature|-|-": 1909 },
+  rarity: { "enters|creature|-|-": 2879 },
 };
 
 /** The loader is injected so the test needs no fetch and no artifact on disk. */
@@ -52,8 +59,9 @@ test("an unread card says so rather than rendering an empty page", async () => {
   at("black-lotus", async () => null);
   // IT MUST NOT CLAIM A CARD EXISTS AT A URL THAT MAY NAME NOTHING. The slug is echoed back and
   // both possibilities are named, because this page cannot tell a real unread card from a typo.
-  expect(await screen.findByRole("heading", { name: /No page for/ })).toBeInTheDocument();
-  expect(screen.getByText(/black-lotus/)).toBeInTheDocument();
+  expect(await screen.findByText(/no such page/i)).toBeInTheDocument();
+  // De-slugged: a slug is not what anyone typed, and the heading is what they asked for.
+  expect(screen.getByRole("heading", { name: /black lotus/ })).toBeInTheDocument();
   expect(screen.getByText(/that name is wrong/i)).toBeInTheDocument();
   // THE SEARCH IS SEEDED WITH WHAT WAS ASKED FOR, hyphens back to spaces: a truncated or
   // misremembered name is the likelier of the two cases, and this is the recovery from it.
@@ -73,7 +81,9 @@ test("an unread card says so rather than rendering an empty page", async () => {
 test("the page shows card metadata and the artifact carries no rules text to show", async () => {
   at("krenko-mob-boss", async () => KRENKO);
   expect(await screen.findByText(/Legendary Creature — Goblin Warrior/)).toBeInTheDocument();
-  expect(screen.getByText(/\{2\}\{R\}\{R\}/)).toBeInTheDocument();
+  // THE COST IS MANA SYMBOLS, not a `{2}{R}{R}` string: real symbols are what a player reads, and
+  // DESIGN.md makes them the one place Wizards' own palette is used verbatim.
+  expect(screen.getByRole("img", { name: /2 generic mana, one red mana, one red mana/ })).toBeInTheDocument();
   for (const field of ["clauses", "oracleText", "text"]) {
     expect(KRENKO, `the artifact must not carry ${field}`).not.toHaveProperty(field);
   }
@@ -84,8 +94,9 @@ test("the page shows card metadata and the artifact carries no rules text to sho
  *  so the page has to word it as one -- these are cards that demand the event, not verified edges. */
 test("a capped event says how many candidates it is not showing, as candidates", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  const line = await screen.findByText(/1,908 more/);
-  expect(line.textContent).toMatch(/demand|trigger/i);
+  // The count sits under the event group it is about, not at the foot of the page.
+  const line = await screen.findByText(/other cards ask for it too/);
+  expect(line.textContent).toMatch(/1,908/);
 });
 
 /** A CARD WITH NO PARTNERS IS A REAL ANSWER. 12.3% of substantive cards have none, and an empty
@@ -93,4 +104,69 @@ test("a capped event says how many candidates it is not showing, as candidates",
 test("a card with no partners says so", async () => {
   at("lonely-card", async () => ({ ...KRENKO, partners: [], pool: {} }));
   expect(await screen.findByText(/no partner/i)).toBeInTheDocument();
+});
+
+/** THE CARD ITSELF, WHOLE — and whole is a licence line, not a taste one. An art crop obliges the
+ *  site to credit the artist and the corpus has no artist field (0 of 34,433); the full card prints
+ *  that credit bottom-left, which is the branch spec D2a offers. It is also what let the pages stop
+ *  printing a second copy of the oracle text. */
+test("the page shows the whole card, at the /normal/ size and never the crop", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  const img = await screen.findByRole("img", { name: /Krenko, Mob Boss — the card/ });
+  expect(img).toHaveAttribute("src", expect.stringContaining("/normal/"));
+  expect(img.getAttribute("src")).not.toContain("art_crop");
+  expect(img).toHaveAttribute("loading", "lazy");
+});
+
+/** 491 CORPUS CARDS HAVE NO IMAGE. The page renders without one rather than reserving a hole. */
+test("a card with no image renders without one", async () => {
+  at("krenko-mob-boss", async () => ({ ...KRENKO, artCrop: null }));
+  await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
+  expect(screen.queryByRole("img", { name: /the card/ })).toBeNull();
+});
+
+/** THE CARD ITSELF, WHOLE — and whole is a licence line, not a taste one. An art crop obliges the
+ *  site to credit the artist and the corpus has no artist field (0 of 34,433 cards); the full card
+ *  prints that credit bottom-left, which is the branch spec D2a offers. It is also what lets the
+ *  pages around it stop printing a second copy of the oracle text. */
+test("the page shows the whole card, at the /normal/ size and never the crop", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  const img = await screen.findByRole("img", { name: /Krenko, Mob Boss — the card/ });
+  expect(img.getAttribute("src")).toContain("/normal/");
+  expect(img.getAttribute("src")).not.toContain("art_crop");
+  expect(img).toHaveAttribute("loading", "lazy");
+});
+
+/** 491 CORPUS CARDS HAVE NO IMAGE. The page renders without one rather than reserving a hole. */
+test("a card with no image renders without one", async () => {
+  at("krenko-mob-boss", async () => ({ ...KRENKO, artCrop: null }));
+  await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
+  expect(screen.queryByRole("img", { name: /the card/ })).toBeNull();
+});
+
+/** THE NUMBER THE ORDER IS COMPUTED FROM HAS TO BE ON SCREEN. The page showed only how many cards
+ *  ASK for an event and ranked on how many can CAUSE it -- two different populations. A skeptic
+ *  reconstructed the ranking from the visible figure, found it non-monotonic, and concluded the
+ *  ranking was broken. It was not; the evidence was missing. */
+test("a group states the rarity its ranking is computed from", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  const line = await screen.findByText(/cards can cause this/);
+  expect(line.textContent).toMatch(/2,879/);
+});
+
+/** A LIMIT THE PAGE STATES IS HONEST; A LIMIT IT HIDES IS NOT. 3,453 consumer abilities carry no
+ *  effect kind, so their sentence ends at "triggers" -- and used to sit in the same typeface as the
+ *  rows that say something. */
+test("a row whose effect the engine could not read says so", async () => {
+  at("krenko-mob-boss", async () => ({
+    ...KRENKO,
+    partners: [{ ...KRENKO.partners[0]!, reason: "When a Goblin enters, X triggers", unread: true as const }],
+  }));
+  expect(await screen.findByText(/engine did not read what it does/)).toBeInTheDocument();
+});
+
+test("a row the engine did read carries no such marker", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
+  expect(screen.queryByText(/engine did not read/)).toBeNull();
 });

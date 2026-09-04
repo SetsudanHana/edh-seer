@@ -637,3 +637,31 @@ test("the phrase after 'attached to' describes the target, not the subject", () 
   expect(equipment.subtype).toBe("equipment");
   expect(equipment.type).toBeUndefined();
 });
+
+/** A LITERAL PRINTED SIZE IS A CONDITION, and dropping it over-claims. `STAT_RE` reads only the
+ *  comparative form ("power 2 or less"), so "whenever a 1/1 creature you control enters" derived as
+ *  a bare `creature` and the engine believed ANY creature triggers Sword of the Meek -- right for a
+ *  Krenko token by luck, wrong for every deck making bigger ones. Caught by a deck tuner reading the
+ *  row against the card, 2026-09-04. Four triggers in the corpus name a literal size. */
+test("a literal 1/1 becomes both halves of the condition, not neither", () => {
+  const s = parseSubject("a 1/1 creature you control");
+  expect(s.type).toBe("creature");
+  expect(s.stats).toEqual([
+    { metric: "power", op: "eq", value: 1 },
+    { metric: "toughness", op: "eq", value: 1 },
+  ]);
+});
+
+/** BOTH HALVES OR NEITHER: "2/2" is two conditions and dropping either widens the claim. */
+test("an unequal size keeps its two different numbers", () => {
+  expect(parseSubject("a 3/1 creature")?.stats)
+    .toEqual([{ metric: "power", op: "eq", value: 3 }, { metric: "toughness", op: "eq", value: 1 }]);
+});
+
+/** AN ORDINARY SUBJECT GAINS NOTHING. The 2,000-odd triggers that name no size must not start
+ *  carrying an empty predicate list, and a comparative form still parses as it did. */
+test("a subject with no printed size carries no stat predicate", () => {
+  expect(parseSubject("a creature you control").stats).toBeUndefined();
+  expect(parseSubject("creatures you control with power 2 or less").stats)
+    .toEqual([{ metric: "power", op: "lte", value: 2 }]);
+});

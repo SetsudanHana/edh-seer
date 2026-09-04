@@ -12,12 +12,19 @@ const KRENKO: CardPageData = {
   name: "Krenko, Mob Boss",
   typeLine: "Legendary Creature — Goblin Warrior",
   manaCost: "{2}{R}{R}",
+  artCrop: "https://cards.scryfall.io/art_crop/front/8/2/824b2d73.jpg",
+  abilities: [{
+    kind: "activated", cost: "{T}", when: [], effect: "token-generation",
+    scaling: "per-permanent", counts: "goblin",
+    emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
+  }],
   identity: ["R"],
   commander: true,
   emits: ["create-token|creature|goblin|t", "enters|creature|goblin|t"],
   demands: ["dies|creature|-|-"],
   partners: [row("Simic Payoff", "simic-payoff"), row("Red Payoff", "red-payoff")],
   pool: { "enters|creature|-|-": 1909 },
+  rarity: { "enters|creature|-|-": 2879 },
   commanderPartners: [row("Red Payoff", "red-payoff")],
   commanderPool: { "enters|creature|-|-": 800 },
 };
@@ -67,7 +74,7 @@ test("a demand the commander does not answer itself is listed as one the deck mu
  *  the first cut of this matched those and failed for the wrong reason. */
 test("a self-supplied demand is not listed as a gap", async () => {
   at("krenko-mob-boss", async () => ({ ...KRENKO, demands: ["enters|creature|-|-"] }));
-  const heading = await screen.findByRole("heading", { name: /other 99 cards/i });
+  const heading = await screen.findByText(/the other 99 have to bring/i);
   const section = heading.parentElement!;
   expect(within(section).getByText(/answers every event it watches/i)).toBeInTheDocument();
   expect(within(section).queryByText(/entering the battlefield/)).toBeNull();
@@ -84,7 +91,7 @@ test("a card that is not a commander says so and points at its card page", async
 
 test("an unread card says so rather than rendering an empty page", async () => {
   at("black-lotus", async () => null);
-  expect(await screen.findByRole("heading", { name: /No page for/ })).toBeInTheDocument();
+  expect(await screen.findByText(/no such page/i)).toBeInTheDocument();
   // THE SEARCH IS SEEDED WITH WHAT WAS ASKED FOR, hyphens back to spaces: a truncated or
   // misremembered name is the likelier of the two cases, and this is the recovery from it.
   expect(screen.getByRole("link", { name: /Search for/ }))

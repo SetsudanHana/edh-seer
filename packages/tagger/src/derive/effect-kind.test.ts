@@ -591,3 +591,20 @@ test("a sentence about this spell's own cost is never a tax", () => {
   expect(actionEffectKind({ verb: "cost-modify", object: "Noncreature spells your opponents cast cost {1} more" }))
     .toBe("tax");
 });
+
+/** ENERGY IS NOT MANA. The clause layer writes "you get {E} (an energy counter)" as
+ *  `{verb: "add-mana", object: "E"}`, and reading that as mana put "Decoction Module adds 1 mana" on
+ *  a card page -- a claim big enough to change a build, and false. A deck tuner and a skeptic each
+ *  refused to act on it, independently.
+ *
+ *  MEASURED: 35 of 2,263 `add-mana` actions carry the energy object, across 32 cards. Refused rather
+ *  than relabelled -- energy has no member in `EFFECT_KINDS`, and an invented one is consumed
+ *  downstream as if it were true. */
+test("an energy action is not a mana action, and claims nothing instead", () => {
+  expect(actionEffectKind({ verb: "add-mana", object: "E", amount: "1" } as never, "")).toBeNull();
+  expect(actionEffectKind({ verb: "add-mana", object: "{E}" } as never, "")).toBeNull();
+  // The other 2,228 add-mana actions are real mana and must be untouched.
+  expect(actionEffectKind({ verb: "add-mana", object: "{G}{G}" } as never, "")).toBe("mana-generation");
+  expect(actionEffectKind({ verb: "add-mana", object: "one mana of any color" } as never, ""))
+    .toBe("mana-generation");
+});

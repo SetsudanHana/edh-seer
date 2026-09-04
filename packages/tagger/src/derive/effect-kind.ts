@@ -53,6 +53,16 @@ export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recurs
  *  caught: that one really does place counters later and is ordinary `counter-placement`. */
 const ENTERS_WITH = /\benters? with\b[^.]{0,40}\bcounters?\b/i;
 
+/** The energy object as the clause layer writes it: a bare `E`, `{E}`, or the word itself. No mana
+ *  symbol is ever `E` -- mana is WUBRGC, a number, or X -- so this cannot catch a real mana object.
+ *
+ *  IT WAS A REGEX AND CODEQL WAS RIGHT ABOUT IT. `/^\s*\{?\s*e\s*\}?\s*$/i` puts four `\s*` runs
+ *  around two optional braces, so a long run of spaces that does not match backtracks quadratically
+ *  (`js/polynomial-redos`, high). Stripping the braces and trimming asks the same question in one
+ *  linear pass, and reads as what it means. */
+const isEnergyObject = (object: string): boolean =>
+  object.replaceAll("{", "").replaceAll("}", "").trim().toLowerCase() === "e";
+
 const SIMPLE: Record<string, EffectKind> = {
   create: "token-generation",
   "deal-damage": "damage",
@@ -333,5 +343,21 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   if (verb === "lose-life" || verb === "set-life") {
     return parseSubject(action.object ?? "").control === "you" ? null : "player-life-loss";
   }
+  // ENERGY IS NOT MANA, AND THE NORMALIZER CALLS IT MANA. "Whenever a creature you control enters,
+  // you get {E} (an energy counter)" arrives from the clause layer as `{verb: "add-mana", object:
+  // "E"}`, and `SIMPLE` below turned that into `mana-generation` -- so Decoction Module's page read
+  // "adds 1 mana", a claim big enough to change a build and false. Both a deck tuner and a skeptic
+  // refused to act on that row, independently, on 2026-09-04.
+  //
+  // MEASURED over the clause corpus: 35 of 2,263 `add-mana` actions carry the energy object, across
+  // 32 cards -- Decoction Module, Aetherstorm Roc, Empyreal Voyager, Dr. Madison Li. The other 2,228
+  // are real mana and are untouched.
+  //
+  // REFUSED RATHER THAN RELABELLED. Energy is a player resource with no member in `EFFECT_KINDS`,
+  // and inventing one would be consumed downstream as if it were true by `impact.ts`, `buckets.ts`
+  // and the castability model, none of which can spend it. A missing kind reads as "fixed", which is
+  // the honest answer: the engine has no vocabulary for energy yet. Fixing it in the CLAUSE layer
+  // would cost a re-normalisation; this is free.
+  if (verb === "add-mana" && isEnergyObject(action.object ?? "")) return null;
   return SIMPLE[verb] ?? null;
 }

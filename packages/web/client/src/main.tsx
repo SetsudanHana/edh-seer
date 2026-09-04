@@ -19,6 +19,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 // itself from here. The shell can, and it needs exactly one fact from us: that we got this far.
 (window as unknown as { __appBooted?: boolean }).__appBooted = true;
 
+// AND THE SAME FACT AS AN ATTRIBUTE, so CSS can act on it. The shell carries two blocks of static
+// content that exist for readers WITHOUT JavaScript -- the crawler block a Pages Function injects
+// after `#root`, and `index.html`'s own landing pitch. React never owns either, which is exactly
+// why they survive a hydration it does not perform; it is also why they were still on screen UNDER
+// every card page, printing the same partner list twice. Once the app is running they have done
+// their job.
+document.documentElement.dataset.appBooted = "1";
+
 /** OFFLINE, WHICH THIS APP IS UNUSUALLY CLOSE TO ALREADY: the analysis runs entirely in the browser
  *  and every card shard a deck touches is already kept in the Cache API by `StaticLookup`. What was
  *  missing is the shell — the HTML, the bundle, the CSS — which a service worker precaches.

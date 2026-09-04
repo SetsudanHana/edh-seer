@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import { eventKeySentence } from "../lib/demand-sentence.js";
 import { loadCardPage, type CardPageData } from "../lib/partners.js";
+import { AbilityTable } from "./AbilityTable.js";
+import { CardArt } from "./CardArt.js";
+import { ManaSymbols } from "./ManaSymbols.js";
+import { NotFound } from "./NotFound.js";
+import { PageFoot } from "./PageFoot.js";
+import { PartnerList } from "./PartnerList.js";
 
 /** ONE CARD: what the engine reads on it, and the cards it is most specifically connected to.
  *
  *  TWO SURFACES IN ONE PAGE. It is where a reader looks a card up when reporting a bad edge -- the
  *  reason sentences here are the same ones the deck report prints, so a wrong claim can be named
  *  and quoted from a URL -- and it is the first indexable content this site has beyond two pages.
+ *
+ *  THE CARD LEADS. The first cut gave the name, the events and the partners the same weight, so the
+ *  eye landed nowhere and the page read as a dump of three lists. The name is now display-sized with
+ *  its cost beside it, the derivation is one quiet panel, and the partner list -- the thing a reader
+ *  came for -- is the body of the page.
  *
  *  `load` is injected so the test needs no fetch and no artifact on disk; production passes nothing
  *  and gets the real loader. */
@@ -22,124 +32,85 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
     return () => { live = false; };
   }, [slug, load]);
 
-  if (page === undefined) return <p className="text-(--muted)">Reading the corpus…</p>;
+  if (page === undefined) return <p className="eyebrow text-(--muted)">reading the corpus</p>;
+  if (page === null) return <NotFound slug={slug} kind="card" />;
 
-  // TWO DIFFERENT THINGS LAND HERE AND THIS PAGE CANNOT TELL THEM APART, so it must not claim to.
-  //
-  // The artifact holds the 15,384 cards the engine could read. A slug missing from it is either a
-  // real card that produced no events -- Sol Ring, whose mana ability is neither an emit nor a
-  // trigger -- or a name that is simply wrong. Distinguishing them would need the whole 34,000-card
-  // corpus in the browser, which is not a download this page is worth.
-  //
-  // The first cut said "This card has not been read by the engine", which asserts a card exists at
-  // a URL that may name nothing, and then invited an issue about it -- owner-reported after reading
-  // it on a typo. Naming BOTH possibilities is the honest sentence, and the search link is the one
-  // that actually helps when the name is the problem.
-  if (page === null) {
-    return (
-      <section className="flex flex-col gap-4">
-        <h2 className="text-3xl font-semibold">No page for “{slug}”</h2>
-        <p className="text-(--muted)">
-          Either that name is wrong, or the engine read the card and found nothing to say about it:
-          a page exists only where the oracle text produces an event some other card can answer. A
-          card that just adds mana, or draws you a card, forms no edges and gets no page.
-        </p>
-        <p>
-          <Link className="text-(--accent) hover:underline"
-            to={`/cards?q=${encodeURIComponent(slug.replace(/-/g, " "))}`}>
-            Search for “{slug.replace(/-/g, " ")}” →
-          </Link>
-        </p>
-        <p className="text-(--muted) text-sm">
-          If you know this card and expected edges from it,{" "}
-          <a className="text-(--accent) hover:underline" href="https://github.com/SetsudanHana/edh-seer/issues/new"
-            target="_blank" rel="noopener noreferrer">open an issue</a>{" "}
-          with the card name — a card read badly is a fixable bug rather than an opinion.
-        </p>
-      </section>
-    );
-  }
-
-  // ROWS PER EVENT, so the "and N more" line attaches to the event it is about rather than to the
-  // page. `PER_EVENT_CAP` caps each event separately, so one page can withhold on several.
-  const shownPerEvent = page.partners.reduce<Record<string, number>>((acc, p) => {
-    acc[p.event] = (acc[p.event] ?? 0) + 1;
-    return acc;
-  }, {});
-
+  // THE MEASURE IS PER SECTION, NOT PER PAGE. Prose gets a reading width so hairlines stop running
+  // a third of the viewport past the text they belong to; the TABLE does not, because a table is
+  // the one thing on this page that earns the extra width -- four columns squeezed into 68ch wrap
+  // every cell. DESIGN.md's own rule: a wide viewport buys columns.
   return (
-    <section className="flex flex-col gap-8">
-      <header className="flex flex-col gap-1">
-        {/* AN `h2`, NOT AN `h1`: `index.html` carries the page's one `h1` on the static header and
-          * `seo.test.ts` asserts it. Task 11 injects a card-specific heading outside `#root`, which
-          * is what a crawler reads. */}
-        <h2 className="text-3xl font-semibold">{page.name}</h2>
-        <p className="text-(--muted)">
-          {page.typeLine}{page.manaCost ? <> · <span className="font-mono">{page.manaCost}</span></> : null}
-        </p>
+    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start max-w-7xl">
+    <div className="flex flex-col gap-10 min-w-0">
+      {/* THE CARD IS A RAIL, NOT A BLOCK. It sat beside a 68ch column with the other half of a
+        * 2,000px viewport empty beside it (owner-reported 2026-09-04) -- and DESIGN.md's own rule is
+        * that width buys COLUMNS, never longer lines. The grid below puts the card in its own column
+        * on a wide screen and stacks it above the name on a narrow one; the reading column keeps its
+        * measure either way. */}
+      <div className="flex flex-wrap-reverse items-end gap-x-6 gap-y-4">
+      <header className="flex flex-col gap-3 flex-1 min-w-[16rem]">
+        <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
+          {page.name}
+          {page.manaCost && (
+            <span className="text-2xl sm:text-3xl"><ManaSymbols cost={page.manaCost} /></span>
+          )}
+        </h2>
+        <p className="text-(--muted)">{page.typeLine}</p>
         {page.commander && (
-          <p><Link className="text-(--accent) hover:underline" to={`/commanders/${slug}`}>
-            What a deck led by this card wants →
-          </Link></p>
+          <p>
+            <Link
+              className="inline-flex items-center gap-2 rounded-(--radius) border border-(--separator) px-3 py-1.5 text-sm hover:border-(--accent) hover:text-(--accent)"
+              to={`/commanders/${slug}`}
+            >
+              What a deck led by this card wants
+              <span aria-hidden="true">→</span>
+            </Link>
+          </p>
         )}
       </header>
+      </div>
 
-      <section className="flex flex-col gap-2">
-        <h3 className="eyebrow">What it produces</h3>
-        {page.emits.length === 0
-          ? <p className="text-(--muted)">Nothing. This card triggers on events but supplies none.</p>
-          : <ul className="flex flex-col gap-1">
-              {page.emits.map((e) => <li key={e}>{eventKeySentence(e)}</li>)}
-            </ul>}
+      <section className="lg:hidden flex flex-col gap-3">
+        <h3 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h3>
+        <AbilityTable rows={page.abilities} />
       </section>
 
-      <section className="flex flex-col gap-2">
-        <h3 className="eyebrow">What it cares about</h3>
-        {page.demands.length === 0
-          ? <p className="text-(--muted)">Nothing. This card supplies events but does not trigger on any.</p>
-          : <ul className="flex flex-col gap-1">
-              {page.demands.map((d) => <li key={d}>{eventKeySentence(d)}</li>)}
-            </ul>}
+      <section className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2 max-w-[68ch]">
+          <h3 className="text-2xl font-bold tracking-[-0.01em]">Most specific partners</h3>
+          <p className="text-(--muted) max-w-[65ch]">
+            Ranked by how rare the matched event is across the corpus — how precisely these two cards
+            interact, not how good either one is. Every row is an edge the engine drew, in its own
+            words.{" "}
+            The fewer cards can cause an event, the higher the pairing ranks.
+          </p>
+        </div>
+        <PartnerList
+          rows={page.partners}
+          pool={page.pool}
+          rarity={page.rarity}
+          empty="No partners. Every card this one could feed is fed by so many others that the pairing says nothing, or the engine refused each one on the merits."
+        />
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h3 className="eyebrow">Most specific partners</h3>
-        <p className="text-(--muted)">
-          Ranked by how rare the matched event is across the corpus — how precisely these two cards
-          interact, not how good either one is. Every row is an edge the engine drew, in its own
-          words.
-        </p>
-        {page.partners.length === 0
-          ? <p className="text-(--muted)">
-              No partners. Every card this one could feed is fed by so many others that the pairing
-              says nothing, or the engine refused each one on the merits.
-            </p>
-          : <ol className="flex flex-col gap-3">
-              {page.partners.map((p) => (
-                <li key={`${p.event}:${p.slug}`} className="flex flex-col gap-1">
-                  <p>
-                    <Link className="text-(--accent) hover:underline" to={`/cards/${p.slug}`}>{p.name}</Link>{" "}
-                    <span className="text-sm text-(--muted)">{eventKeySentence(p.event)}</span>
-                  </p>
-                  <p className="text-(--muted)">{p.reason}</p>
-                </li>
-              ))}
-            </ol>}
-        {/* WHAT THE CAP WITHHELD, SAID RATHER THAN PADDED. Twenty rows that all read "triggers when
-          * a creature enters" are one fact printed twenty times. `pool` counts CANDIDATES -- cards
-          * that demand the event -- not verified edges, so the sentence says "demand" and not
-          * "pairs with": the engine was never asked about the ones past the cap. */}
-        {Object.entries(shownPerEvent)
-          .map(([event, shown]) => [event, (page.pool[event] ?? shown) - shown] as const)
-          .filter(([, more]) => more > 0)
-          .map(([event, more]) => (
-            <p key={event} className="text-(--muted) text-sm">
-              And {more.toLocaleString("en-US")} more cards trigger on {eventKeySentence(event)},
-              which this card supplies. They rank identically, so the page shows a few rather than
-              all of them.
-            </p>
-          ))}
-      </section>
-    </section>
+      <div className="max-w-[68ch]"><PageFoot /></div>
+    </div>
+    {/* ONE IMAGE, PLACED BY THE GRID. Rendering it twice behind media queries put two of the same
+      * card in the document -- invisible on screen, and two hits for anything reading the page,
+      * a screen reader and a test alike. Sticky on a wide viewport, because the partner list is
+      * long and the card is what every row on it is about. */}
+    {/* THE RAIL IS A COLUMN, NOT A GUTTER. MEASURED on the deployed preview: the card ended around
+      * y440 and below it ran ~400px of pure background for the whole ~1,300px length of the partner
+      * list -- a quarter of the viewport doing nothing on the densest page. The engine's reading is
+      * card-shaped metadata and belongs with the card; moving it here also demotes a diagnostic
+      * table out of the reader's first scroll and promotes the partners, which are the product. */}
+    <aside className="order-first lg:order-last lg:sticky lg:top-6 flex flex-col gap-6">
+      <CardArt artCrop={page.artCrop} name={page.name} />
+      <div className="hidden lg:flex lg:flex-col gap-3">
+        <h3 className="eyebrow text-(--muted)">how the engine reads this card</h3>
+        <AbilityTable rows={page.abilities} stacked />
+      </div>
+    </aside>
+    </article>
   );
 }

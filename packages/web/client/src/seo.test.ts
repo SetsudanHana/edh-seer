@@ -265,12 +265,32 @@ test.each(Object.entries(PAGES))("%s carries the site header and the same nav", 
   const page = readFileSync(join(CLIENT, file), "utf8");
   expect(page).toContain('class="site-header"');
   expect(page).toContain('class="site-nav"');
+  // THE TWO BROWSE SURFACES ARE IN THE NAV ON BOTH PAGES (owner, 2026-09-04). They were reachable
+  // only from the foot of a card page before this — which is to say, only from a page you had
+  // already found some other way.
   for (const href of [
+    "/",
+    "/cards",
+    "/commanders",
+    "/how-it-works",
     "https://github.com/SetsudanHana/edh-seer",
     "https://github.com/SetsudanHana/edh-seer/issues/new",
   ]) {
     expect(page, `${file} links ${href}`).toContain(`href="${href}"`);
   }
+});
+
+/** THE NAV MAY NOT MOVE WHEN YOU CROSS BETWEEN THE PAGES (owner, 2026-09-04). The two used to differ
+ *  by one item — the app page offered "How it works" and the prose page offered "Analyse a deck" —
+ *  so every crossing shifted every other item sideways by the width difference of those two labels.
+ *  Byte-for-byte is the only assertion that catches it: same items, same order, same labels. A test
+ *  that merely counted links, or checked a set of hrefs, passes on a nav that jumps. */
+test("both pages carry the byte-identical nav", () => {
+  const navOf = (file: string) =>
+    /<nav class="site-nav"[\s\S]*?<\/nav>/.exec(readFileSync(join(CLIENT, file), "utf8"))?.[0];
+  const [app, prose] = Object.values(PAGES).map(navOf);
+  expect(app).toBeDefined();
+  expect(prose).toBe(app);
 });
 
 /** ONE `h1` PER PAGE, and it has to be the one that says what the page is about. The app page's is

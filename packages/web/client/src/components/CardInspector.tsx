@@ -106,6 +106,9 @@ export function CardInspector({
   useEffect(() => { setFaceIdx(node.face ?? 0); }, [node.id, node.face]);
   const faces = node.faces ?? [];
   const face = faces.length > 1 ? faces[Math.min(faceIdx, faces.length - 1)] : undefined;
+  // ONE ANSWER FOR "IS THE CARD ITSELF ON SCREEN", read by the image and by the text below it: the
+  // panel prints the oracle text only when the picture is not already printing it.
+  const hasImage = Boolean(face?.artCrop ?? node.artCrop);
 
   const routes = routesThrough(edges, node.id);
   const cutDown = flow?.truncated.get(node.id)?.down;
@@ -220,7 +223,7 @@ export function CardInspector({
         *  through the aspect, at 0.718 x 32vh = about 45vh, and keeps the box aspect-correct while
         *  doing it. On a short viewport the card shrinks and stays centred; on a tall one it fills
         *  the panel. `object-contain` stays as the guarantee that a card face is never stretched. */}
-      {face?.artCrop ?? node.artCrop ? (
+      {hasImage ? (
         <img
           src={cardImageUrl((face?.artCrop ?? node.artCrop)!)}
           alt={face?.name ?? node.label}
@@ -277,10 +280,26 @@ export function CardInspector({
           *  prints either card's text, so a right answer and a wrong one look identical on my
           *  screen" -- and the roadmap line recorded this panel as already showing the partner's
           *  text one click away. It did not, for any card with one face. */}
+        {/* THE CARD IMAGE ALREADY PRINTS THIS TEXT, so showing it twice fills the panel with a
+          *  second copy of what the reader is looking at (owner-reported 2026-09-04). It does NOT
+          *  simply go: the skeptic's finding above is still true wherever the image is absent -- a
+          *  token, a card whose art never resolved, a reader on a slow link -- and image text is
+          *  invisible to a screen reader and cannot be selected or searched.
+          *  So it stays, folded, whenever the picture is carrying it, and stands open when nothing
+          *  else is. `<details>` is the whole mechanism: assistive technology reads it either way. */}
         {(face?.oracleText ?? node.oracleText) ? (
-          <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">
-            {face?.oracleText ?? node.oracleText}
-          </p>
+          hasImage ? (
+            <details className="mt-1">
+              <summary className="eyebrow text-(--muted) cursor-pointer">card text</summary>
+              <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">
+                {face?.oracleText ?? node.oracleText}
+              </p>
+            </details>
+          ) : (
+            <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">
+              {face?.oracleText ?? node.oracleText}
+            </p>
+          )
         ) : null}
         {/* THE PIN LIVES HERE, NOT ON THE NAME (roadmap S8). Click already opens this drawer and
           *  S18 made that gesture load-bearing -- it is how a reader checks a claim against the

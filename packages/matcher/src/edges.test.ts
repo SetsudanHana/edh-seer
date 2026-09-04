@@ -1879,7 +1879,9 @@ test("a self trigger says whose entry it is, without moving the tag", () => {
   }]);
   const etb = pairReasons(fetch, land, H).find((r) => r.tag.startsWith("enters"))!;
   expect(etb.tag).toBe("enters:any");
-  expect(etb.text).toBe("When Shadowy Backstreet enters thanks to Marsh Flats, it triggers");
+  expect(etb.text).toBe(// The land's effect kind is `top-manipulation`, and the sentence now says so rather than
+    // stopping at "triggers" -- see the nine kinds added to PHRASES.
+    "When Shadowy Backstreet enters thanks to Marsh Flats, it sets up the top of a library");
   expect(etb.text).toContain("Marsh Flats");
 });
 
@@ -3387,7 +3389,9 @@ const countsGoblins = () => base("Krenko, Mob Boss", [{
 test("a card of the counted subtype feeds a board-count payoff", () => {
   const reasons = directedReasons(goblinBody(), countsGoblins(), H);
   const scaled = reasons.find((r) => r.tag === "scales:goblin");
-  expect(scaled?.text).toBe("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets bigger");
+  // NOT "gets bigger": Krenko is a 3/3 whatever the count says, and his X decides how many TOKENS
+  // he makes. The precon reviewer caught the old sentence against the card printed beside it.
+  expect(scaled?.text).toBe("While you control Goblin Assassin, Krenko, Mob Boss counts it and makes more tokens");
   expect(scaled?.repeatability).toBe("activated");
 });
 

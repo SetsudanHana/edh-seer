@@ -96,6 +96,20 @@
         <span class="brand-tagline">Oracle-level deck reading</span>
       </h1>
       <nav class="site-nav" aria-label="Site">
+        <!-- THE SAME SIX ITEMS IN THE SAME ORDER ON BOTH PAGES, and `seo.test.ts` compares the two
+             blocks byte for byte. The two navs used to differ by one item -- the app page offered
+             "How it works" and the prose page offered "Analyse a deck" -- so every crossing between
+             them shifted every other item sideways by the width difference of those two labels. A
+             nav is a map, and a map that changes shape as you walk it is the complaint (owner,
+             2026-09-04).
+             THAT MEANS EACH PAGE LINKS TO ITSELF, which is the ordinary web bargain and the opposite
+             of `PageFoot`'s rule: the FOOT is a way out and may not point at where you already are,
+             while the header is the map and has to show the whole territory to stay still.
+             THE TWO BROWSE SURFACES WERE REACHABLE ONLY FROM THE FOOT OF A CARD PAGE (owner,
+             2026-09-04) -- which is to say, only from a page you had already found another way. -->
+        <a href="/">Analyse a deck</a>
+        <a href="/cards">Cards</a>
+        <a href="/commanders">Commanders</a>
         <a href="/how-it-works">How it works</a>
         <a href="https://github.com/SetsudanHana/edh-seer" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Report an edge</a>

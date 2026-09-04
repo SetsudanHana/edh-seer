@@ -3,7 +3,7 @@ import { VERB_VOCAB } from "@edh-seer/tagger";
 import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence } from "./sentence.js";
+  boardCountFeedsScaling, effectTargetNoun, emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence } from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
   // effectKind is absent on 8.9% of reasons and `amount` on more than half of abilities, so the
@@ -282,4 +282,64 @@ test("an emit's subtype noun is capitalised and its type noun is not", () => {
   // An emit about the producer ITSELF names no noun -- that is what keeps every correct sentence in
   // the corpus reading as it did.
   expect(emitSubjectNoun({ self: true, subtype: "goblin" })).toBeUndefined();
+});
+
+/** THE COUNT NAMES WHAT IT FEEDS, and "gets bigger" was a wrong claim on most of this channel.
+ *  Reported by the precon reviewer against the card printed beside it: Krenko's X counts Goblins to
+ *  decide HOW MANY TOKENS he makes, and he is a 3/3 either way. */
+test("a board count says what actually grows, and claims nothing where it cannot tell", () => {
+  expect(boardCountFeedsScaling("Goblin Assassin", "Krenko, Mob Boss", "token-generation"))
+    .toBe("While you control Goblin Assassin, Krenko, Mob Boss counts it and makes more tokens");
+  expect(boardCountFeedsScaling("Llanowar Elves", "Bonehoard", "pump"))
+    .toContain("gets bigger");
+  // An effect this map has never seen says the true weak thing rather than inventing a growth.
+  expect(boardCountFeedsScaling("A", "B", "some-new-kind")).toContain("does more");
+  expect(boardCountFeedsScaling("A", "B")).toContain("does more");
+});
+
+/** THE KINDS THE ENGINE READ AND THE SENTENCE REFUSED TO SAY. 27.7% of every partner row on the site
+ *  ended in a bare "<card> triggers", and only 3,453 consumer abilities were a genuine blank -- the
+ *  rest were kinds the engine had identified with no words in this table. A skeptic called those
+ *  rows "the sentence generator running out"; an engine that knows a card grants haste and prints
+ *  "triggers" is hiding what it knows behind the wording it uses for what it does not. */
+test("a kind the engine identified gets said, weakly and without over-claiming", () => {
+  for (const [kind, expected] of [
+    ["keyword-grant", "grants a keyword"],
+    ["untap", "untaps a permanent"],
+    ["speed-increase", "grants haste"],
+    ["copy-spell", "copies a spell"],
+    ["flicker", "blinks a permanent"],
+    ["graveyard-hate", "hits a graveyard"],
+  ] as const) {
+    expect(effectPhrase(kind, undefined), kind).toBe(expected);
+  }
+});
+
+/** AND A GENUINE BLANK STILL SAYS NOTHING, which is the distinction the whole change exists to
+ *  restore: "the engine did not read this" and "the engine read it and won't tell you" must not
+ *  render identically. */
+test("an unread effect still has no phrase", () => {
+  expect(effectPhrase("", undefined)).toBeNull();
+  expect(effectPhrase(undefined, undefined)).toBeNull();
+});
+
+/** "PUTS COUNTERS ON IT" HAD TWO LIVE ANTECEDENTS in every row it appeared in. The sentence opens
+ *  "When a Goblin enters thanks to Krenko, Mob Boss…", so "it" reads as the Goblin — and on Quest
+ *  for the Goblin Lord the counters go on the QUEST. A skeptic: "the two readings are a real synergy
+ *  versus a nothing". 25,997 rows carried the pronoun. */
+test("a counter effect says where the counters land", () => {
+  expect(effectPhrase("counter-placement", "1", effectTargetNoun({ self: true })))
+    .toBe("puts a counter on itself");
+  expect(effectPhrase("counter-placement", "2", effectTargetNoun({ type: "creature" })))
+    .toBe("puts 2 counters on a creature");
+  expect(effectPhrase("counter-placement", undefined, effectTargetNoun({ subtype: "goblin" })))
+    .toBe("puts counters on a Goblin");
+});
+
+/** AN UNTYPED SUBJECT FALLS BACK TO THE CLASS, not to a pronoun. "a permanent" is true of every
+ *  counter target and, unlike "it", claims nothing about WHICH one -- which is the whole ambiguity. */
+test("an unknown target names the class rather than pointing", () => {
+  expect(effectPhrase("counter-placement", "1", effectTargetNoun({}))).toBe("puts a counter on a permanent");
+  // With no target threaded at all, the old wording stands -- callers that cannot know keep it.
+  expect(effectPhrase("counter-placement", "1", undefined)).toBe("puts a counter on it");
 });

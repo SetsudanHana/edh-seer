@@ -18,6 +18,42 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   "token-generation": [(n) => (n === "1" ? "makes a token" : `makes ${n} tokens`), "makes a token"],
   "mana-generation": [(n) => `adds ${n} mana`, "adds mana"],
   "graveyard-recursion": [() => "brings a card back", "brings a card back"],
+  // NINE KINDS THE ENGINE READ AND THE SENTENCE REFUSED TO SAY. MEASURED 2026-09-04 over every
+  // consumer ability in the derived corpus: 27.7% of all partner rows on the site ended in a bare
+  // "<card> triggers", and only 3,453 of those were a genuine blank -- the rest were these, kinds
+  // the engine had identified and this table simply had no words for. A skeptic reading the page
+  // called those rows "the sentence generator running out", filed as a refusal that reads as a hole,
+  // and they were right: an engine that knows a card grants haste and prints "triggers" is hiding
+  // what it knows behind the same wording it uses for what it does not.
+  //
+  // WORDED WEAK ON PURPOSE. Each phrase says the category and claims nothing past it -- "hits a
+  // graveyard" rather than "exiles their graveyard", because `graveyard-hate` covers exile, mill and
+  // shuffle-back alike and the kind cannot tell them apart. Over-specifying here would be the
+  // Decoction Module defect one register up.
+  "top-manipulation": [() => "sets up the top of a library", "sets up the top of a library"],
+  "keyword-grant": [() => "grants a keyword", "grants a keyword"],
+  untap: [() => "untaps a permanent", "untaps a permanent"],
+  "speed-increase": [() => "grants haste", "grants haste"],
+  "copy-spell": [() => "copies a spell", "copies a spell"],
+  flicker: [() => "blinks a permanent", "blinks a permanent"],
+  animate: [() => "turns something into a creature", "turns something into a creature"],
+  "graveyard-hate": [() => "hits a graveyard", "hits a graveyard"],
+  debuff: [(n) => `shrinks a creature by ${n}`, "shrinks a creature"],
+  // AND THE MULTIPLIERS, which a sample of the still-bare rows put next in volume: 28 of 400 were
+  // `token-doubling`, 18 `proliferate`, 14 `damage-multiplier`. Each one is a card whose whole
+  // reason for being in a deck is what it multiplies, printed as "triggers".
+  "token-doubling": [() => "doubles the tokens", "doubles the tokens"],
+  "damage-multiplier": [() => "doubles the damage", "doubles the damage"],
+  "trigger-doubling": [() => "doubles the trigger", "doubles the trigger"],
+  proliferate: [() => "proliferates", "proliferates"],
+  clone: [() => "copies a permanent", "copies a permanent"],
+  "enters-with-counters": [() => "arrives with counters", "arrives with counters"],
+  "type-grant": [() => "changes what something is", "changes what something is"],
+  "extra-combat": [() => "takes an extra combat", "takes an extra combat"],
+  "extra-phase": [() => "takes an extra phase", "takes an extra phase"],
+  "extra-turn": [() => "takes an extra turn", "takes an extra turn"],
+  "win-game": [() => "can win the game", "can win the game"],
+  tax: [() => "taxes the table", "taxes the table"],
   // A PUMP AMOUNT IS A P/T DELTA, NOT A NUMBER, and this table read it as a number for as long as
   // it has existed: `+${n}/+${n}` over the corpus's own `"+2/+0"` renders `gives ++2/+0/++2/+0`,
   // which shipped to the Archetypes tab and was reported from a real deck. Measured over the
@@ -51,8 +87,34 @@ function costsLess(amount: string): string {
   return /^\{?[0-9WUBRGC]+\}?$/.test(n) ? `costs ${n} less` : "costs less";
 }
 
-export function effectPhrase(kind: string | undefined, amount: string | undefined): string | null {
+/** WHERE THE COUNTERS GO, as a noun the sentence can end on.
+ *
+ *  "puts counters on it" has TWO live antecedents in every row it appears in: the sentence opens
+ *  "When a Goblin enters thanks to Krenko, Mob Boss…", so "it" reads as the Goblin — and on Quest
+ *  for the Goblin Lord the counters go on the QUEST. A skeptic put it exactly: "the two readings are
+ *  a real synergy versus a nothing". 25,997 rows carried the pronoun.
+ *
+ *  The derived effect subject settles it wherever it says anything: `self` is the card itself, a
+ *  type or subtype names the class, and an untyped one falls back to "a permanent" -- true of every
+ *  counter target and, unlike "it", claiming nothing about WHICH one. That is the whole ambiguity:
+ *  not that the noun is vague, but that the pronoun pointed confidently at the wrong thing. */
+export function effectTargetNoun(subject: {
+  self?: boolean; subtype?: string | string[]; type?: string | string[];
+} | undefined): string {
+  if (subject?.self === true) return "itself";
+  const noun = emitSubjectNoun(subject);
+  return noun ?? "something";
+}
+
+export function effectPhrase(
+  kind: string | undefined, amount: string | undefined, target?: string,
+): string | null {
   if (!kind) return null;
+  // THE ONE KIND WHOSE PHRASE NAMES A TARGET, and the one that was naming the wrong one.
+  if (kind === "counter-placement" && target) {
+    const n = amount === undefined ? "counters" : amount === "1" ? "a counter" : `${amount} counters`;
+    return `puts ${n} on ${target}`;
+  }
   const entry = PHRASES[kind];
   if (!entry) return null;
   const [withAmount, without] = entry;
@@ -137,6 +199,8 @@ export function eventVerbPhrase(key: string): string {
 export function reasonSentence(input: {
   producer: string; consumer: string; eventKey: string;
   effectKind?: string; amount?: string; self?: boolean;
+  /** Where a counter-placing effect actually puts them -- see `effectTargetNoun`. */
+  effectTarget?: string;
   /** WHAT THE EVENT HAPPENS TO, when it does not happen to the producer.
    *
    *  **A SORCERY CANNOT DIE.** Austere Command emits four `dies` events whose subjects are CLASSES
@@ -156,7 +220,7 @@ export function reasonSentence(input: {
   subjectNoun?: string;
 }): string {
   const verb = eventVerbPhrase(input.eventKey);
-  const phrase = effectPhrase(input.effectKind, input.amount);
+  const phrase = effectPhrase(input.effectKind, input.amount, input.effectTarget);
   if (input.self) {
     const effect = phrase ? `it ${phrase}` : "it triggers";
     return `When ${input.consumer} ${verb} thanks to ${input.producer}, ${effect}`;
@@ -227,8 +291,38 @@ export function graveyardFeedsScaling(producer: string, consumer: string): strin
  *
  *  "COUNTS IT" RATHER THAN "COUNTS GOBLINS", because the subject is already named by the row's own
  *  event line and repeating it here would say the same noun twice in two voices. */
-export function boardCountFeedsScaling(producer: string, consumer: string): string {
-  return `While ${producer} is on the battlefield, ${consumer} counts it and gets bigger`;
+const COUNT_GROWS: Record<string, string> = {
+  "token-generation": "makes more tokens",
+  "token-doubling": "makes more tokens",
+  "deal-damage": "deals more damage",
+  damage: "deals more damage",
+  "draw-card": "draws more cards",
+  lifegain: "gains more life",
+  drain: "drains for more",
+  "counter-placement": "puts on more counters",
+  mill: "mills more",
+  "add-mana": "adds more mana",
+  "cost-reduction": "costs less",
+  pump: "gets bigger",
+};
+
+export function boardCountFeedsScaling(
+  producer: string, consumer: string, effectKind?: string,
+): string {
+  // "GETS BIGGER" WAS A WRONG CLAIM ON MOST OF THIS CHANNEL, reported by the precon reviewer against
+  // the card printed beside it: Krenko's X counts Goblins to decide HOW MANY TOKENS he makes, and he
+  // is a 3/3 either way. A reader who checks the sentence against the card -- which is the whole
+  // point of printing a sentence -- finds it saying something the card does not say.
+  //
+  // The kind is what the count actually feeds, so the kind names the growth. An effect this map has
+  // never seen says "does more", which is true of every scaling effect and claims nothing further.
+  const grows = (effectKind && COUNT_GROWS[effectKind]) ?? "does more";
+  // "YOU CONTROL", NOT "ON THE BATTLEFIELD" -- the skeptic held the sentence against the card six
+  // inches away: Krenko counts "the number of Goblins YOU CONTROL", and an opponent's Goblin is on
+  // the battlefield and counts for nothing. The engine's gate is control-aware already (the count's
+  // `control` is kept when it is matched against a card's printed characteristics); only the prose
+  // was stating the weaker condition.
+  return `While you control ${producer}, ${consumer} counts it and ${grows}`;
 }
 
 /** kind -> what a continuous STATIC effect gives the class of card its subject reaches. Direction

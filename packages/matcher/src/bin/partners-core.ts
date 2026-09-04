@@ -2,6 +2,10 @@ import type { GameEvent } from "@edh-seer/tagger";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
 import { directedReasons, themeSubjectKey } from "../edges.js";
+/** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
+ *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
+ *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
+export { effectPhrase } from "../sentence.js";
 import { normalizeZoneEvent, zoneEventKey } from "../zones.js";
 import type { DeckCard, Hierarchy } from "../types.js";
 
@@ -265,6 +269,29 @@ export interface PartnerRow {
   event: string;
   /** The ENGINE'S sentence, naming both cards. Not composed here. */
   reason: string;
+  /** THE HALF OF THE SENTENCE THE HEADING DOES NOT ALREADY SAY.
+   *
+   *  Every row under one group opened with the same 60 characters -- "When a Goblin enters thanks to
+   *  Krenko, Mob Boss," ten times over -- because the group heading states the event and then each
+   *  sentence restates it. A design review measured roughly 60% of the section as repetition, with
+   *  the only new information, the payoff, pushed to the end of every line.
+   *
+   *  COMPUTED FROM THE ENGINE'S OWN SENTENCE, never composed: the tail after ", <partner name> " is
+   *  what that card does, in the words the engine already chose. `reason` is kept in full because
+   *  the deck report prints it and because a reader who wants the whole claim should still be able
+   *  to get it.
+   *
+   *  ABSENT ON A FEEDER ROW. Those run the other way -- "While you control Taster of Wares, Krenko
+   *  counts it and makes more tokens" -- so the tail describes the SUBJECT, not the row's card, and
+   *  collapsing it would put Krenko's behaviour under Taster of Wares' name. */
+  payoff?: string;
+  /** THE ENGINE DID NOT READ WHAT THIS CARD DOES, so its sentence ends at "triggers".
+   *
+   *  MEASURED 2026-09-04: 3,453 consumer abilities in the corpus carry no effect kind at all. Their
+   *  rows used to be indistinguishable from the informative ones -- same typeface, same shape, no
+   *  marker -- which a skeptic called a refusal that reads as a hole. A limit the page states is
+   *  honest; a limit it hides is not. */
+  unread?: true;
 }
 
 /** HOW MANY CANDIDATES ARE WORTH RUNNING THE ENGINE OVER.
@@ -312,7 +339,25 @@ export interface PartnerResult {
    *  capped; this is what the page says instead of padding -- "and 1,974 more trigger on a creature
    *  entering". A CANDIDATE count, not a verified-edge count, and the page must word it that way. */
   pool: Record<string, number>;
+  /** Per event key, how many cards in the corpus can CAUSE it -- which is the number the ranking is
+   *  computed from, and a different population from `pool`.
+   *
+   *  THE PAGE WAS SHOWING ONE NUMBER AND RANKING ON THE OTHER. A skeptic reconstructed the order
+   *  from the only figure on screen and found it non-monotonic -- 2, 263, 1, 3, 1863, 15 -- and
+   *  concluded the ranking was broken. It was not: in THIS number the same groups read 72, 264,
+   *  2159, 2159, 2879, 2963, descending exactly as claimed. The reasoning was sound and the evidence
+   *  was missing, which is the page's fault and not the reader's. */
+  rarity: Record<string, number>;
 }
+
+/** The tail of the engine's sentence after ", <name> " -- what the row's own card does. Returns
+ *  nothing when the sentence does not have that shape, which is the honest failure: a row with no
+ *  payoff keeps the full sentence rather than showing a guess at half of it. */
+const payoffOf = (reason: string, name: string): { payoff?: string } => {
+  const at = reason.indexOf(`, ${name} `);
+  if (at < 0) return {};
+  return { payoff: reason.slice(at + name.length + 3) };
+};
 
 export function partnersFor(
   subject: DeckCard,
@@ -391,12 +436,15 @@ export function partnersFor(
     if (!hit) continue;
     if ((shown[hit.event] ?? 0) >= PER_EVENT_CAP) continue;
     shown[hit.event] = (shown[hit.event] ?? 0) + 1;
+    const chosen = pickReason(hit.on);
     rows.push({
       name: r.card.card.name,
       slug: slugs.get(r.card.card.name) ?? slugOf(r.card.card.name),
       score: hit.score,
       event: hit.event,
-      reason: pickReason(hit.on),
+      reason: chosen.text,
+      ...payoffOf(chosen.text, r.card.card.name),
+      ...(chosen.effectKind ? {} : { unread: true as const }),
     });
     if (rows.length === KEEP) break;
   }
@@ -422,7 +470,11 @@ export function partnersFor(
         .filter((r) => r.tag === `scales:${key.split("|")[2]}`);
       if (on.length === 0) continue;
       shown[key] = (shown[key] ?? 0) + 1;
-      rows.push({ name: f.card.name, slug, score, event: key, reason: pickReason(on) });
+      const chosen = pickReason(on);
+      rows.push({
+        name: f.card.name, slug, score, event: key, reason: chosen.text,
+        ...(chosen.effectKind ? {} : { unread: true as const }),
+      });
     }
     // COUNTED BEFORE THE CUT, like every other pool: how many cards in the corpus are one of these.
     pool[key] = usable.length;
@@ -433,7 +485,10 @@ export function partnersFor(
   // honest: `VERIFY_LIMIT` still cuts on the best-possible score, which is the only score known
   // before the engine runs.
   rows.sort((a, b) => b.score - a.score);
-  return { rows, pool };
+  // THE RANKING BASIS, FOR THE EVENTS THAT ACTUALLY EARNED A ROW.
+  const rarity: Record<string, number> = {};
+  for (const row of rows) rarity[row.event] = freq[row.event] ?? 1;
+  return { rows, pool, rarity };
 }
 
 /** WHICH OF THE ENGINE'S SENTENCES TO STORE.
@@ -453,7 +508,9 @@ export function partnersFor(
  *  A REPEATABLE REASON BEATS A ONE-SHOT, and nothing else is reordered: this picks between
  *  sentences the engine already wrote, it never composes one and never promotes a pair the engine
  *  refused. */
-function pickReason(reasons: { text: string; repeatability?: string; impliedProducer?: boolean }[]): string {
+function pickReason<T extends { text: string; repeatability?: string; impliedProducer?: boolean }>(
+  reasons: T[],
+): T {
   // AN AUTHORED SUPPLY OUTRANKS THE BASELINE ONE, and it outranks repeatability too. Krenko is a
   // Goblin AND he taps to make Goblins, so he satisfies `enters:goblin` twice; both sentences carry
   // the consumer's own repeatability, so that rule cannot separate them and the body's -- "When
@@ -462,13 +519,35 @@ function pickReason(reasons: { text: string; repeatability?: string; impliedProd
   // to the page for. MEASURED 2026-09-04: 6,407 rows on 1,714 cards printed the body's sentence.
   const rank = (r: { repeatability?: string; impliedProducer?: boolean }) =>
     (r.impliedProducer === true ? 2 : 0) + (r.repeatability && r.repeatability !== "oneshot" ? 0 : 1);
-  return reasons.reduce((best, r) => (rank(r) < rank(best) ? r : best)).text;
+  // RETURNS THE REASON, NOT ITS TEXT. The row needs to say whether the engine read the effect behind
+  // the sentence it printed, and that is a property of the CHOSEN reason -- asking whether every
+  // candidate lacked a kind marked 27 rows where roughly fifteen thousand qualified.
+  return reasons.reduce((best, r) => (rank(r) < rank(best) ? r : best));
 }
 
 
 /** Re-exported so every existing importer keeps working; the definition moved to its own file
  *  because the Pages Function needs the shard rule without `edges.ts` behind it. */
 export { PARTNER_SHARD_COUNT, partnerShardOf };
+
+/** THE DERIVED ABILITIES AS PAGE ROWS. Order is the derivation's own, which is the order the clauses
+ *  appear on the card -- so the table reads down the card the way a player does. */
+export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
+  (d.tags?.abilities ?? []).map((a) => {
+    const counted = a.effect?.scalingSubject;
+    const subtype = Array.isArray(counted?.subtype) ? counted?.subtype[0] : counted?.subtype;
+    return {
+      kind: a.kind,
+      ...(a.cost ? { cost: a.cost } : {}),
+      when: (a.trigger?.verbs ?? []).map((v) =>
+        eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)),
+      effect: a.effect?.kind ?? "",
+      ...(a.amount ? { amount: a.amount } : {}),
+      ...(a.effect?.scaling ? { scaling: a.effect.scaling } : {}),
+      ...(subtype ? { counts: subtype } : {}),
+      emits: (a.emits ?? []).map(eventKey),
+    };
+  });
 
 export const emitKeysOf = (d: DeckCard): string[] =>
   (d.tags?.abilities ?? []).flatMap((a) => (a.emits ?? []).map(eventKey));
@@ -537,10 +616,55 @@ export const isSubstantive = (d: DeckCard): boolean =>
  *  naming both cards -- not the card's printed text. Quoting the card would add nothing to that
  *  argument and would only make the page resemble a card database, which is what Scryfall's
  *  "may not simply repackage, republish, or proxy" clause is about. */
+/** ONE DERIVED ABILITY, PROJECTED DOWN TO WHAT A PAGE CAN SHOW.
+ *
+ *  "HOW THE ENGINE READS THIS CARD" IS THE PAGE'S REAL ARGUMENT, and until now the pages printed
+ *  only the union of a card's events -- two flat lines standing in for three abilities. A reader
+ *  checking a claim needs to see WHICH ability produced it: the tap ability that makes the tokens is
+ *  a different fact from the body that happens to be a Goblin.
+ *
+ *  THIS IS OUR DERIVATION AND NOT WIZARDS' TEXT, which is the whole reason it may be published where
+ *  the oracle text may not (spec D2, reversed). The card's own words are on the card image beside it.
+ *
+ *  PROJECTED, NOT COPIED. A derived ability carries clause ids, subject filters, recipients and
+ *  scaling internals; a page can show none of that without becoming a debugger. Each field here
+ *  earns its bytes across 15,384 records. */
+export interface AbilityRow {
+  /** `triggered`, `activated`, `static`, `on-cast` -- what makes this ability happen at all. */
+  kind: string;
+  /** The activation cost, where there is one: `{T}`, `{2}, {T}`. */
+  cost?: string;
+  /** The events that set it off, as event keys, so the page renders them with the same sentence
+   *  function every other event on the site uses. */
+  when: string[];
+  /** The effect's kind (`token-generation`, `draw-card`). Humanised at the edge, never here. */
+  effect: string;
+  amount?: string;
+  /** The basis a magnitude counts on (`per-permanent`), and what it counts, where both are known. */
+  scaling?: string;
+  counts?: string;
+  /** The events it puts into the game. */
+  emits: string[];
+}
+
 export interface CardPageRecord {
   name: string;
   typeLine: string;
   manaCost: string | null;
+  /** THE CARD'S OWN PICTURE, as Scryfall's `art_crop` URL -- the client rewrites the path segment
+   *  to `/normal/` for the whole card, which is what `cardImageUrl` already does for the graph.
+   *
+   *  THE FULL CARD, NEVER THE CROP, and that is a licence line rather than a taste one: an art crop
+   *  has to credit the artist and this corpus HAS NO ARTIST FIELD (measured 2026-09-04: 0 of 34,433
+   *  cards). The whole card prints the credit itself, bottom-left, which is the branch spec D2a
+   *  offers and the only one available here.
+   *
+   *  Present on 33,942 of 34,433 corpus cards; `null` where Scryfall has no image, and the pages
+   *  render without one rather than reserving a hole for it. */
+  artCrop: string | null;
+  /** How the engine read the card, one row per derived ability -- the page's real argument, and the
+   *  half of it that was missing while the record carried only the UNION of a card's events. */
+  abilities: AbilityRow[];
   identity: string[];
   commander: boolean;
   emits: string[];
@@ -549,6 +673,11 @@ export interface CardPageRecord {
   /** Per event key, how many cards demand something this card supplies -- what the page says in
    *  place of the rows `PER_EVENT_CAP` withheld. */
   pool: Record<string, number>;
+  /** Per event key, how many cards in the corpus can CAUSE it -- the number the ranking is computed
+   *  from, and a DIFFERENT population from `pool`. Shipped because the page was showing one and
+   *  ranking on the other, and a reader who reconstructed the order from the visible figure
+   *  correctly concluded it was broken. */
+  rarity: Record<string, number>;
   /** THE SAME LIST OVER THE CARDS THIS COMMANDER'S DECK COULD LEGALLY CONTAIN, on commander records
    *  only. A deck led by a mono-red card can never play a Simic payoff, so a partner list that
    *  ignores colour identity is a list of cards that will never be in the same deck.
@@ -562,6 +691,7 @@ export interface CardPageRecord {
    *  record pays the bytes of every field it carries. */
   commanderPartners?: PartnerRow[];
   commanderPool?: Record<string, number>;
+  commanderRarity?: Record<string, number>;
 }
 
 export interface NameIndexEntry {
@@ -637,12 +767,14 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       name: d.card.name,
       typeLine: d.card.typeLine ?? "",
       manaCost: (d.card as { manaCost?: string }).manaCost ?? null,
+      artCrop: (d.card as { artCrop?: string }).artCrop ?? null,
+      abilities: abilityRowsOf(d),
       identity: d.card.colorIdentity ?? [],
       commander,
       emits: [...new Set(emits)],
       demands: [...new Set(demandKeysOf(d))],
-      ...(() => { const { rows, pool } = partnersFor(d, candidates, feeders, freq, slugs, h);
-        return { partners: rows, pool }; })(),
+      ...(() => { const { rows, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h);
+        return { partners: rows, pool, rarity }; })(),
       // A CARD IS LEGAL IN A DECK WHEN ITS WHOLE IDENTITY SITS INSIDE THE COMMANDER'S -- the same
       // rule `legality.ts` reports a violation against. An empty identity is inside every one,
       // which is why a colourless card belongs in every deck and `every` over `[]` says so.
@@ -650,8 +782,8 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
         const identity = new Set(d.card.colorIdentity ?? []);
         const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
         const legalFeeders = feeders.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
-        const { rows, pool } = partnersFor(d, legal, legalFeeders, freq, slugs, h);
-        return { commanderPartners: rows, commanderPool: pool };
+        const { rows, pool, rarity } = partnersFor(d, legal, legalFeeders, freq, slugs, h);
+        return { commanderPartners: rows, commanderPool: pool, commanderRarity: rarity };
       })() : {}),
     };
     shards.set(shardName, shard);

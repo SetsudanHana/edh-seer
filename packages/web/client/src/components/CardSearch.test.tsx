@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { expect, test, vi } from "vitest";
@@ -68,8 +68,11 @@ test("the search box is labelled and holds focus on arrival", async () => {
  *  reads as a page that failed to load. */
 test("before anything is typed the page says what it holds, and lists nothing", async () => {
   at();
-  expect(await screen.findByText(/4 cards/)).toBeInTheDocument();
-  expect(screen.queryAllByRole("link")).toHaveLength(0);
+  // The figure leads and the sentence follows it, so they are two elements.
+  expect(await screen.findByText("4")).toBeInTheDocument();
+  expect(screen.getByText(/cards the engine has read/)).toBeInTheDocument();
+  // Scoped to the results list: the page foot carries links of its own.
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
 });
 
 test("a query matching more than the cap shows the cap and says how many it found", async () => {
@@ -79,7 +82,8 @@ test("a query matching more than the cap shows the cap and says how many it foun
   at(many);
   await userEvent.type(await screen.findByRole("searchbox"), "goblin");
   expect(await screen.findByText(new RegExp(`${SEARCH_LIMIT + 7} cards match`))).toBeInTheDocument();
-  expect(screen.getAllByRole("link")).toHaveLength(SEARCH_LIMIT);
+  expect(within(screen.getByRole("list", { name: "Results" })).getAllByRole("link"))
+    .toHaveLength(SEARCH_LIMIT);
 });
 
 test("a query that matches nothing says so", async () => {
@@ -120,20 +124,25 @@ test("an identity facet lists commanders without anything typed", async () => {
   commanders();
   await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
-  // WITHIN the chosen colours, not overlapping them: a Grixis commander cannot be built in a
-  // mono-red deck, and this page answers "what can I lead with these colours".
+  // "Red" NAMES THE IDENTITY: mono-red, not everything with red in it. A Grixis commander is a
+  // Grixis commander, and it is the answer to "Blue, Black, Red".
   expect(screen.queryByRole("link", { name: /Kess, Dissident Mage/ })).not.toBeInTheDocument();
-  // A colourless commander fits inside every identity, the same rule the artifact ranks by.
-  expect(screen.getByRole("link", { name: /Kozilek/ })).toBeInTheDocument();
+  // A colourless commander has no red in it either.
+  expect(screen.queryByRole("link", { name: /Kozilek/ })).not.toBeInTheDocument();
 });
 
-test("two facets admit the commanders that need both, and the ones that need either", async () => {
+/** THE FACETS NAME THE IDENTITY EXACTLY (owner ruling 2026-09-04). "Red, Green" asks for Gruul, not
+ *  for the Jund and Naya commanders that also contain both — a colour pair is how a player names a
+ *  deck, and the chips answer with that pair and nothing wider. */
+test("the facets name an identity exactly, not the ones that contain it", async () => {
   commanders();
-  await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
-  await userEvent.click(screen.getByRole("button", { name: /^Blue$/ }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Blue$/ }));
   await userEvent.click(screen.getByRole("button", { name: /^Black$/ }));
+  // Two of Kess's three: Kess is Grixis, and Dimir is not Grixis.
+  expect(await screen.findByText(/No commander matches/)).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: /^Red$/ }));
   expect(await screen.findByRole("link", { name: /Kess, Dissident Mage/ })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Krenko, Mob Boss/ })).not.toBeInTheDocument();
 });
 
 test("a facet toggles off again", async () => {
@@ -142,7 +151,8 @@ test("a facet toggles off again", async () => {
   await userEvent.click(red);
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
   await userEvent.click(red);
-  expect(screen.queryAllByRole("link")).toHaveLength(0);
+  // Scoped to the results list: the page foot carries links of its own.
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
 });
 
 /** THE CARD SEARCH HAS NO FACETS. Colour identity is a question about a DECK, and the card page
@@ -178,4 +188,48 @@ test("the count line agrees with itself when there is one result", async () => {
     <MemoryRouter initialEntries={["/cards?q=jotun"]}><CardSearch load={async () => INDEX} /></MemoryRouter>,
   );
   expect(await screen.findByText("1 card matches.")).toBeInTheDocument();
+});
+
+/** COLOURLESS IS A REAL IDENTITY AND WAS UNREACHABLE (owner-reported 2026-09-04). 13 of the 2,428
+ *  commanders have an empty identity -- Ulamog, Kozilek, Emrakul, Galactus -- and no combination of
+ *  the five colours could ASK for them: an empty identity is a subset of every filter, so they
+ *  appeared under "Red" and under nothing of their own. */
+test("a colourless facet reaches the commanders no colour can ask for", async () => {
+  commanders();
+  await userEvent.click(await screen.findByRole("button", { name: /^Colorless$/ }));
+  expect(await screen.findByRole("link", { name: /Kozilek/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Krenko, Mob Boss/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Kess/ })).not.toBeInTheDocument();
+});
+
+/** AND COLOURLESS IS EXCLUSIVE OF THE FIVE. Every identity already contains the colourless cards,
+ *  so the two questions cannot be asked at once -- holding both selected would only ever draw an
+ *  empty list. Ticking a colour unticks it, and it unticks every colour. */
+test("ticking a colour unticks colourless, and colourless unticks the colours", async () => {
+  commanders();
+  const colourless = await screen.findByRole("button", { name: /^Colorless$/ });
+  await userEvent.click(colourless);
+  expect(colourless).toHaveAttribute("aria-pressed", "true");
+
+  const red = screen.getByRole("button", { name: /^Red$/ });
+  await userEvent.click(red);
+  expect(colourless).toHaveAttribute("aria-pressed", "false");
+  expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Kozilek/ })).not.toBeInTheDocument();
+
+  await userEvent.click(colourless);
+  expect(red).toHaveAttribute("aria-pressed", "false");
+  expect(await screen.findByRole("link", { name: /Kozilek/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Krenko, Mob Boss/ })).not.toBeInTheDocument();
+});
+
+/** AN EMPTY IDENTITY IS COLOURLESS, NOT ABSENT. Rendering nothing there made 1,354 cards look like
+ *  rows whose identity had failed to load. */
+test("a colourless row shows the colourless symbol rather than nothing", async () => {
+  commanders();
+  await userEvent.click(await screen.findByRole("button", { name: /^Colorless$/ }));
+  const row = (await screen.findByRole("link", { name: /Kozilek/ })).closest("li")!;
+  // `ManaSymbols` labels both the wrapper and the symbol itself, so this asserts presence rather
+  // than uniqueness.
+  expect(within(row).getAllByRole("img", { name: /colorless/i }).length).toBeGreaterThan(0);
 });
