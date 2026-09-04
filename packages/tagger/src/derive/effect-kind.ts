@@ -54,8 +54,14 @@ export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recurs
 const ENTERS_WITH = /\benters? with\b[^.]{0,40}\bcounters?\b/i;
 
 /** The energy object as the clause layer writes it: a bare `E`, `{E}`, or the word itself. No mana
- *  symbol is ever `E` -- mana is WUBRGC, a number, or X -- so this cannot catch a real mana object. */
-const ENERGY_OBJECT = /^\s*\{?\s*e\s*\}?\s*$/i;
+ *  symbol is ever `E` -- mana is WUBRGC, a number, or X -- so this cannot catch a real mana object.
+ *
+ *  IT WAS A REGEX AND CODEQL WAS RIGHT ABOUT IT. `/^\s*\{?\s*e\s*\}?\s*$/i` puts four `\s*` runs
+ *  around two optional braces, so a long run of spaces that does not match backtracks quadratically
+ *  (`js/polynomial-redos`, high). Stripping the braces and trimming asks the same question in one
+ *  linear pass, and reads as what it means. */
+const isEnergyObject = (object: string): boolean =>
+  object.replaceAll("{", "").replaceAll("}", "").trim().toLowerCase() === "e";
 
 const SIMPLE: Record<string, EffectKind> = {
   create: "token-generation",
@@ -352,6 +358,6 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // and the castability model, none of which can spend it. A missing kind reads as "fixed", which is
   // the honest answer: the engine has no vocabulary for energy yet. Fixing it in the CLAUSE layer
   // would cost a re-normalisation; this is free.
-  if (verb === "add-mana" && ENERGY_OBJECT.test(action.object ?? "")) return null;
+  if (verb === "add-mana" && isEnergyObject(action.object ?? "")) return null;
   return SIMPLE[verb] ?? null;
 }
