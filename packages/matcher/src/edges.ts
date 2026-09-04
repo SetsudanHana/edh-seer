@@ -931,7 +931,21 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
   return subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h);
 }
 
-export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
+/** WHO IS ASKING. The default is the deck report, and every field here has to leave it unchanged.
+ *
+ *  `tokensMediate` is the token suppression below: a maker's own "a Treasure enters" event and the
+ *  Treasure NODE's implied "it enters" state the same fact twice, so the direct edge is dropped in
+ *  favour of the two-hop path through the token. THAT PATH ONLY EXISTS WHERE TOKEN NODES DO. A card
+ *  page has one card on it, so suppression there deletes the relation and receives nothing back --
+ *  which is the trade `hasMediatingToken` already refuses to make when a card has no token to
+ *  mediate with. Same argument, one step further out. */
+export interface ReasonOptions {
+  /** False where no token node will exist to carry the second hop. Default true (the deck report,
+   *  the graph, the compass -- everything that builds token nodes). */
+  tokensMediate?: boolean;
+}
+
+export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
   if (!p.tags || !c.tags) return [];
   const reasons: Reason[] = [];
   const pEvents = producerEvents(p.tags);
@@ -1010,9 +1024,15 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         //    "for each token you control, create a copy" claimed NOTHING -- 0.3 rating, one
         //    partner, invisible to a Caretaker's Talent in the same deck. See
         //    `hasMediatingToken` in tokens.ts.
+        //  - and the CALLER must be somewhere the second hop can exist. MEASURED 2026-09-04 on the
+        //    partner artifact, which has no token nodes: the gate deleted 7,266 of 117,946 sampled
+        //    token-only candidate pairs outright, and left 6,407 more rows describing the maker's
+        //    own BODY entering, because the body was the only supply left to write a sentence from
+        //    ("When Krenko, Mob Boss enters, Quest for the Goblin Lord puts counters on it" -- the
+        //    one-shot reading of a repeatable engine). See `ReasonOptions.tokensMediate`.
         if (
           e.subject.token === true && t.verb !== "create-token" && !p.isToken && !c.isToken
-          && hasMediatingToken(p.card)
+          && (opts.tokensMediate ?? true) && hasMediatingToken(p.card)
         ) continue;
         // A SELF trigger watches ONE permanent — its own. `selfEtbSelfSupplied` excludes implied and
         // token producers, but an AUTHORED emit that puts some OTHER object onto the battlefield

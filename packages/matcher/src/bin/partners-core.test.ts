@@ -436,3 +436,46 @@ test("a zone-renamed tag matches the demand key that kept the raw verb", async (
     expect(rows[0]!.reason).toBe("ON EVENT");
   } finally { spy.mockRestore(); }
 });
+
+/** THE AUTHORED SUPPLY IS THE ONE THE READER CAME FOR. Krenko is a Goblin AND he taps to make
+ *  Goblins, so he satisfies `enters:goblin` twice and both sentences carry the CONSUMER'S
+ *  repeatability -- the older rule cannot separate them, and emission order decided it. */
+test("an authored sentence outranks the synthesised baseline one", async () => {
+  const edges = await import("../edges.js");
+  const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
+    { tag: "enters:creature", text: "BODY", repeatability: "triggered", impliedProducer: true },
+    { tag: "enters:creature", text: "AUTHORED", repeatability: "triggered" },
+  ] as never);
+  try {
+    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    expect(rows[0]!.reason).toBe("AUTHORED");
+  } finally { spy.mockRestore(); }
+});
+
+/** AND IT OUTRANKS REPEATABILITY, not just ties with it. A one-shot sentence about the card's real
+ *  engine beats a repeatable one about it merely existing; the baseline is what the matcher
+ *  synthesises for ANY card, so it can never be the more informative half. */
+test("an authored one-shot still outranks a repeatable baseline", async () => {
+  const edges = await import("../edges.js");
+  const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
+    { tag: "enters:creature", text: "BODY", repeatability: "triggered", impliedProducer: true },
+    { tag: "enters:creature", text: "AUTHORED", repeatability: "oneshot" },
+  ] as never);
+  try {
+    const { rows } = partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    expect(rows[0]!.reason).toBe("AUTHORED");
+  } finally { spy.mockRestore(); }
+});
+
+/** A CARD PAGE BUILDS NO TOKEN NODES, so it must ask the engine not to suppress a maker's own token
+ *  supply in favour of a second hop nothing will build. Asserted on the CALL rather than on the
+ *  output, because the option's effect is the engine's to test and this file's job is only to pass
+ *  it. */
+test("the engine is asked with token mediation off", async () => {
+  const edges = await import("../edges.js");
+  const spy = vi.spyOn(edges, "directedReasons");
+  try {
+    partnersFor(krenko, [impactTremors], FREQ, SLUGS, H);
+    expect(spy).toHaveBeenCalledWith(krenko, impactTremors, H, { tokensMediate: false });
+  } finally { spy.mockRestore(); }
+});

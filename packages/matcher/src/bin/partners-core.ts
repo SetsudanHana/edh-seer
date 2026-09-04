@@ -281,7 +281,9 @@ export function partnersFor(
   const rows: PartnerRow[] = [];
   const shown: Record<string, number> = {};
   for (const r of ranked.slice(0, VERIFY_LIMIT)) {
-    const reasons = directedReasons(subject, r.card, h);
+    // NO TOKEN NODE EXISTS ON A CARD PAGE, so the engine's token suppression would trade this
+    // card's real supply for a second hop that is never built. See `ReasonOptions.tokensMediate`.
+    const reasons = directedReasons(subject, r.card, h, { tokensMediate: false });
     if (reasons.length === 0) continue;
     // THE ROW IS PRICED ON AN EVENT THE ENGINE ACTUALLY CONFIRMED.
     //
@@ -330,8 +332,16 @@ export function partnersFor(
  *  A REPEATABLE REASON BEATS A ONE-SHOT, and nothing else is reordered: this picks between
  *  sentences the engine already wrote, it never composes one and never promotes a pair the engine
  *  refused. */
-function pickReason(reasons: { text: string; repeatability?: string }[]): string {
-  return (reasons.find((r) => r.repeatability && r.repeatability !== "oneshot") ?? reasons[0]!).text;
+function pickReason(reasons: { text: string; repeatability?: string; impliedProducer?: boolean }[]): string {
+  // AN AUTHORED SUPPLY OUTRANKS THE BASELINE ONE, and it outranks repeatability too. Krenko is a
+  // Goblin AND he taps to make Goblins, so he satisfies `enters:goblin` twice; both sentences carry
+  // the consumer's own repeatability, so that rule cannot separate them and the body's -- "When
+  // Krenko, Mob Boss enters" -- won on emission order. `impliedProducer` marks the baseline the
+  // matcher synthesises for a card merely existing; the authored emit is the engine the reader came
+  // to the page for. MEASURED 2026-09-04: 6,407 rows on 1,714 cards printed the body's sentence.
+  const rank = (r: { repeatability?: string; impliedProducer?: boolean }) =>
+    (r.impliedProducer === true ? 2 : 0) + (r.repeatability && r.repeatability !== "oneshot" ? 0 : 1);
+  return reasons.reduce((best, r) => (rank(r) < rank(best) ? r : best)).text;
 }
 
 

@@ -249,6 +249,29 @@ test("token mediation: the Treasure NODE's own entry still edges the payoff -- t
   expect(reasons.some((r) => r.tag === "enters:artifact")).toBe(true);
 });
 
+/** SUPPRESSION IS A TRADE, AND A CALLER WITH NO TOKEN NODES RECEIVES NOTHING. The card pages build
+ *  one card at a time, so the second hop this rule pays for is never constructed there: the maker's
+ *  real supply is deleted and the only sentence left is about its own body. MEASURED 2026-09-04 on
+ *  the partner artifact -- 7,266 of 117,946 sampled token-only candidate pairs deleted outright,
+ *  6,407 further rows worded as the body entering. The deck report, the graph and the compass all
+ *  keep the default, so this option cannot move them. */
+test("token mediation is off for a caller with no token nodes, and the maker's own supply returns", () => {
+  const reasons = directedReasons(withTreasurePart(treasureMaker()), artifactPayoff(), H, { tokensMediate: false });
+  expect(reasons.some((r) => r.tag === "enters:artifact")).toBe(true);
+  // The sentence names the TOKEN as the thing that enters, not the sorcery that made it.
+  expect(reasons.find((r) => r.tag === "enters:artifact")!.text)
+    .toBe("When a treasure enters thanks to Deadly Dispute, Artifact ETB Payoff draws you cards");
+});
+
+/** THE DEFAULT IS THE DECK REPORT and it has to stay byte-identical, so the option is proven to be
+ *  opt-in rather than assumed to be. */
+test("token mediation still fires when the option is absent or explicitly true", () => {
+  for (const opts of [undefined, {}, { tokensMediate: true }]) {
+    const reasons = directedReasons(withTreasurePart(treasureMaker()), artifactPayoff(), H, opts);
+    expect(reasons.some((r) => r.tag.startsWith("enters:"))).toBe(false);
+  }
+});
+
 test("CR 614 multiplier still edges the maker, never the token, after mediation (owner's ruling, verified not assumed)", () => {
   // "If you would create one or more Treasure tokens, instead create twice that many" derives to a
   // TRIGGER on `create-token` with no emit of its own (derive/replacement.ts) -- it consumes the
