@@ -105,13 +105,15 @@ export function docToCard(d: CardDoc): Card {
     // the engine's meld edge -- Mishra, Claimed by Gix + Phyrexian Dragon Engine -- drew nothing.
     // `allParts` comes from Scryfall bulk data through the ordinary ingest, so it is always current.
     // Scryfall lists the card itself among its own meld parts, hence the name test.
-    // ONLY A PART HAS A PARTNER. A meld RESULT lists its two parts and never itself, so "the first
-    // part that is not me" named one of its own halves on all 7 result cards (Brisela -> Bruna;
-    // branch review 2026-09-05). The card must be among the parts for the other part to be its half.
+    // ONLY A PART HAS A PARTNER, AND A PART HAS EXACTLY ONE OTHER PART. A meld RESULT lists its
+    // two parts, so "the first part that is not me" named one of its own halves on all 7 result
+    // cards (Brisela -> Bruna; branch review 2026-09-05). The next cut asked "is the card among the
+    // parts" -- and this corpus never lists a card among its own parts (Mishra carries only the
+    // Dragon Engine and the result), which dropped 19 of 21 rows on the rebuild. The count is the
+    // discriminator, and it is the rule the deleted ingest-meld-core.ts had (`partner.length === 1`).
     ...(() => {
-      const parts = d.allParts?.filter((p) => p.component === "meld_part") ?? [];
-      const other = parts.some((p) => p.name === d.name) ? parts.find((p) => p.name !== d.name) : undefined;
-      return other ? { meldPartner: other.name } : {};
+      const others = (d.allParts ?? []).filter((p) => p.component === "meld_part" && p.name !== d.name);
+      return others.length === 1 ? { meldPartner: others[0]!.name } : {};
     })(),
     // Needed to tell a card castable from either face from one whose back face is only reached in
     // play. Without it `extractCharacteristics` sees "Artifact // Land — Cave" and cannot know that

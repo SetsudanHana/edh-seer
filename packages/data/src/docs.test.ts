@@ -187,6 +187,23 @@ test("docToCard derives the meld partner from allParts and never names the card 
 /** A MELD RESULT NAMES ITS TWO PARTS AND NEVER ITSELF, so "the first meld_part that is not me" is
  *  one of its own halves -- Brisela claimed to meld with Bruna, on 7 result cards in the corpus
  *  (branch review, 2026-09-05). Only a card that is itself a part has a partner. */
+/** THE CORPUS DOES NOT LIST A CARD AMONG ITS OWN PARTS. Mishra, Claimed by Gix carries
+ *  `[meld_part Phyrexian Dragon Engine, meld_result Mishra, Lost to Phyrexia]` and no entry for
+ *  himself, so "is the card among the parts" was false for every part and a rebuild dropped 19 of
+ *  21 meld rows (2026-09-05). A part has exactly one OTHER part; a result has two. */
+test("a meld part whose allParts omit itself still finds its other half", () => {
+  const mishra = docToCard({
+    _id: "m", name: "Mishra, Claimed by Gix", typeLine: "Legendary Creature — Phyrexian Human Artificer",
+    oracleText: "", keywords: [], colors: ["B", "R"], manaValue: 4, colorIdentity: ["B", "R"],
+    power: "3", toughness: "5", tags: { produces: [], cares: [] }, searchNames: [],
+    allParts: [
+      { component: "meld_part", name: "Phyrexian Dragon Engine", typeLine: "Artifact Creature — Phyrexian Dragon", printingId: "b" },
+      { component: "meld_result", name: "Mishra, Lost to Phyrexia", typeLine: "Legendary Artifact Creature — Phyrexian Artificer", printingId: "c" },
+    ],
+  } as unknown as Parameters<typeof docToCard>[0]);
+  expect(mishra.meldPartner).toBe("Phyrexian Dragon Engine");
+});
+
 test("a meld result card has no meld partner", () => {
   const brisela = docToCard({
     _id: "b", name: "Brisela, Voice of Nightmares", typeLine: "Legendary Creature — Eldrazi Angel",
