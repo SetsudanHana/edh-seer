@@ -97,8 +97,13 @@ test("rule 6/7 extension does NOT over-match a bare 'each turn' with no ordinal"
   // an ordinal, and in the real corpus this line is a static (kind "static", caught by rule 4 before
   // ever reaching the trigger branch). Wrapped as a trigger here to isolate the regex: without an
   // ordinal word, the phase-bound branch must not fire, so an otherwise un-narrowed trigger (no
-  // type/subtype subject) is refused rather than mislabelled per-cycle or per-turn.
-  expect(repeatsFor(triggered(["draw"], { control: "you" }), "Each player can't draw more than one card each turn.")).toBeUndefined();
+  // type/subtype subject) must not come out per-cycle or per-turn. (Until 2026-09-05 it was
+  // refused outright; rule 9 now reads an untyped non-self trigger as a class, so it is
+  // `repeatable` -- still not the phase label this test guards against.)
+  const label = repeatsFor(triggered(["draw"], { control: "you" }), "Each player can't draw more than one card each turn.");
+  expect(label).not.toBe("per-cycle");
+  expect(label).not.toBe("per-turn");
+  expect(label).toBe("repeatable");
 });
 
 test("rule 8: the card's OWN enters/dies fires once; a class-watching trigger does not", () => {
@@ -117,4 +122,40 @@ test("rule 9: an unlimited activated ability is repeatable", () => {
 
 test("rule 10: what the rules cannot name stays UNSET, never guessed", () => {
   expect(repeatsFor({ kind: "triggered", effect: { kind: "" as const } }, "")).toBeUndefined();
+});
+
+// 2026-09-05, owner: "fix the repeats labeller so Black Market Connections counts as engine".
+test("rules 6-7 on the RAW event: a step the Verb union does not carry is still a phase", () => {
+  const noTrigger: Ability = { kind: "triggered", effect: { kind: "draw-card" } };
+  // Black Market Connections: "At the beginning of your first main phase, choose one or more --".
+  expect(repeatsFor(noTrigger, "Buy Information -- Draw a card. You lose 2 life.", "", { event: "main-phase", control: "you" })).toBe("per-cycle");
+  // Howling Mine / Font of Mythos: every player's draw step.
+  expect(repeatsFor(noTrigger, "that player draws an additional card.", "", { event: "draw-step", control: "any" })).toBe("per-turn");
+  // A saga chapter fires once in the saga's life (CR 714.2b).
+  expect(repeatsFor(noTrigger, "You may discard up to two cards. If you do, draw that many cards.", "", { event: "chapter", control: "you" })).toBe("once");
+  // An unknown raw event that is no phase leaves the ability where it was.
+  expect(repeatsFor(noTrigger, "", "", { event: "becomes-target", control: "any" })).toBeUndefined();
+});
+
+test("rule 9: a class needs no TYPE -- an untyped, non-self trigger still watches a class", () => {
+  // Mind's Eye: "Whenever an opponent draws a card".
+  expect(repeatsFor(triggered(["draw"], { control: "opp" }), "Whenever an opponent draws a card, you may pay {1}. If you do, draw a card.")).toBe("repeatable");
+  expect(repeatsFor(triggered(["gain-life"], { control: "you" }), "Whenever you gain life, ...")).toBe("repeatable");
+  // The card's OWN untyped event is not a class, and rule 8 names only arrivals and departures.
+  expect(repeatsFor(triggered(["taps"], { self: true, control: "you" }), "Whenever this creature becomes tapped, ...")).toBeUndefined();
+});
+
+test("rule 8b: combat happens once a turn -- own or untyped combat triggers split on control; a class of attackers stays repeatable", () => {
+  // "Whenever this creature deals combat damage to a player".
+  expect(repeatsFor(triggered(["combat-damage"], { self: true, type: "creature", control: "you" }), "...")).toBe("per-cycle");
+  // Curse of Verbosity: "Whenever enchanted player is attacked".
+  expect(repeatsFor(triggered(["attacks"], { control: "any" }), "Whenever enchanted player is attacked, you draw a card.")).toBe("per-turn");
+  // Finding 3 (2026-08-11) holds: a CLASS of attackers is once per attacker.
+  expect(repeatsFor(triggered(["attacks"], { type: "creature", control: "you" }), "Whenever a creature you control attacks, ...")).toBe("repeatable");
+});
+
+test("rule 8: the card's own sacrifice, graveyard arrival and cast happen once", () => {
+  expect(repeatsFor(triggered(["sacrifice"], { self: true, control: "you" }), "When you sacrifice this creature, ...")).toBe("once");
+  expect(repeatsFor(triggered(["enters-graveyard"], { self: true, control: "any" }), "When this card is put into a graveyard from anywhere, ...")).toBe("once");
+  expect(repeatsFor(triggered(["cast"], { self: true, control: "you" }), "When you cast this spell, ...")).toBe("once");
 });

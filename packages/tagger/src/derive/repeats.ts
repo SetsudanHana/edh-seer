@@ -65,10 +65,28 @@ const ORDINAL_EACH_TURN = /\b(?:first|second|third|fourth|fifth)\b(?:(?!\.).){0,
  *  fix -- the largest rule-6 group, per the design spec's §5 measurement. */
 const PHASE_VERBS = new Set(["upkeep", "end-step", "begin-combat"]);
 
-/** Trigger events that name the card's own arrival or departure -- they happen once. */
-const SELF_EVENTS = new Set(["enters", "dies", "leaves"]);
+/** Trigger events that name the card's own arrival or departure -- they happen once. `sacrifice`,
+ *  `enters-graveyard` and `cast` joined 2026-09-05: "when you sacrifice this", "when this card is
+ *  put into a graveyard" and "when you cast this spell" are the same one-life shape. */
+const SELF_EVENTS = new Set(["enters", "dies", "leaves", "sacrifice", "enters-graveyard", "cast"]);
 
-export function repeatsFor(ability: Ability, clauseText: string, cost = ""): Repeats | undefined {
+/** The clause's OWN trigger event as the normalizer wrote it, and whose turn it names. Passed
+ *  beside the derived ability because the derived ability cannot carry it: an event outside the
+ *  `Verb` union -- `main-phase`, `draw-step`, `chapter` -- is routed to `unknownTriggers` upstream
+ *  and the ability arrives here with NO trigger at all, which is how Black Market Connections
+ *  ("at the beginning of your first main phase, choose one or more") sat refused in 21 of the 71
+ *  decks while its draw mode was counted as a one-shot. Owner, 2026-09-05. */
+export interface RawTrigger { event: string; control?: string }
+
+/** Steps and phases the normalizer names that are not `Verb`s. Each happens once a turn, so the
+ *  control split of rules 6-7 applies unchanged. The three that ARE verbs are listed too, so the
+ *  raw read and the verb read cannot disagree about what a phase is. */
+const RAW_PHASE_EVENTS: ReadonlySet<string> = new Set([
+  "upkeep", "draw-step", "main-phase", "begin-combat", "combat-damage-step", "end-of-combat",
+  "end-step", "cleanup", "untap-step",
+]);
+
+export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?: RawTrigger): Repeats | undefined {
   const text = clauseText ?? "";
 
   // 1-2: the cost, most restrictive first.
@@ -81,6 +99,14 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = ""): Rep
   // 4-5: what the ability KIND settles on its own.
   if (ability.kind === "static") return "continuous";
   if (ability.kind === "on-cast") return "once";
+
+  // 6-7 ON THE RAW EVENT, for the steps the `Verb` union does not carry (and, through a modal
+  // continuation's inherited event, for every mode of such a trigger -- see `deriveAbilities`).
+  if (raw && RAW_PHASE_EVENTS.has(raw.event)) return raw.control === "you" ? "per-cycle" : "per-turn";
+  // A SAGA CHAPTER FIRES ONCE (CR 714.2b: the ability triggers as the lore-counter count reaches
+  // its number, which happens once in the Saga's life). Blink and recursion are the card-level
+  // bias §4.3 already states for `enters`. 532 corpus clauses, every one refused before this.
+  if (raw?.event === "chapter") return "once";
 
   const trigger = ability.trigger;
   if (trigger) {
@@ -98,8 +124,21 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = ""): Rep
     // 8: the card's OWN arrival happens once. "When this creature enters" against "whenever a
     // creature you control enters" -- same verb, opposite buckets, and only `self` separates them.
     if (trigger.subject.self === true && verbs.some((v) => SELF_EVENTS.has(v))) return "once";
-    // 9: anything watching a CLASS of objects fires as often as that class does something.
-    if (trigger.subject.type !== undefined || trigger.subject.subtype !== undefined) return "repeatable";
+    const typed = trigger.subject.type !== undefined || trigger.subject.subtype !== undefined;
+    // 8b: COMBAT HAPPENS ONCE A TURN. "Whenever this creature deals combat damage to a player",
+    // "whenever you attack", "whenever enchanted player is attacked" (Curse of Verbosity) each fire
+    // at most once per combat, on whose turn `control` says -- the same split as a phase trigger.
+    // Only the card's OWN combat or an UNTYPED one: "whenever a creature you control attacks" is
+    // still once per attacker (finding 3, 2026-08-11) and falls to rule 9 below.
+    const combat = verbs.includes("attacks") || verbs.includes("combat-damage");
+    if (combat && (trigger.subject.self === true || !typed)) {
+      return trigger.subject.control === "you" ? "per-cycle" : "per-turn";
+    }
+    // 9: anything watching a CLASS of objects fires as often as that class does something. A class
+    // needs no TYPE to be one: "whenever an opponent draws a card" (Mind's Eye), "whenever you gain
+    // life", "whenever a player casts a spell" watch an event any number of objects can cause. Only
+    // the card's own event is not a class, and rule 8 has already taken the self shapes it can name.
+    if (typed || trigger.subject.self !== true) return "repeatable";
     return undefined;
   }
 

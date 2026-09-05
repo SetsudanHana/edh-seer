@@ -5,7 +5,7 @@
 import { writeFileSync } from "node:fs";
 import { connect, loadConfig } from "@edh-seer/data";
 import type { Ability, CardTags } from "../schema.js";
-import { segment } from "../segment.js";
+import { grantedToOwnToken, segment } from "../segment.js";
 import { deriveAbilities } from "../derive/derive.js";
 import type { CardClausesDoc } from "../clause-store.js";
 
@@ -78,12 +78,25 @@ async function refusedTriples(
   const clauseCosts: Record<number, string> = {};
   for (const c of segClauses) { clauseTexts[c.id] = c.text; if (c.cost) clauseCosts[c.id] = c.cost; }
 
+  // CUMULATIVE, WITH THE CARD-LEVEL INPUTS `derive-corpus.ts` PASSES (2026-09-05). One clause at a
+  // time misaligned rows two ways: a clause whose ability is GRANTED TO A TOKEN is skipped by the
+  // full run and was derived here (Ertha Jo, Frontier Mentor: the refused `activate` trigger took
+  // the Mercenary's "{T}" cost and resolved per-cycle under the ratchet, a phantom), and the
+  // phantom-trigger guard reads the whole card's text, which a per-clause call never supplied. And
+  // since `repeats.ts` learned to inherit a modal parent's raw trigger, a clause DOES read the
+  // clauses before it. Deriving 0..i and taking what 0..i-1 did not produce reproduces the full
+  // run byte-for-byte and still says which clause produced each ability.
+  const granted = grantedToOwnToken(segClauses);
+  const all = cd?.canonical ?? [];
   const out: { ability: Ability; text: string; cost: string; name: string }[] = [];
-  for (const clause of cd?.canonical ?? []) {
+  let seen = 0;
+  for (let i = 0; i < all.length; i++) {
+    const clause = all[i];
     const text = clauseTexts[clause.id] ?? "";
     const cost = clauseCosts[clause.id] ?? "";
-    const { abilities: clauseAbilities } = deriveAbilities([clause], name, clauseTexts, clauseCosts);
-    for (const ability of clauseAbilities) out.push({ ability, text, cost, name });
+    const { abilities: soFar } = deriveAbilities(all.slice(0, i + 1), name, clauseTexts, clauseCosts, card?.oracleText, granted);
+    for (const ability of soFar.slice(seen)) out.push({ ability, text, cost, name });
+    seen = soFar.length;
   }
   return out;
 }
