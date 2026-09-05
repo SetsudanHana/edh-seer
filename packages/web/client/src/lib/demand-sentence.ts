@@ -369,6 +369,9 @@ export function eventKeySentence(key: string): string {
     if (subjectless) return subjectless;
   }
 
+  // MELD IS A CARD-NAME RELATION, and the key carries no class at all.
+  if (verb === "meld") return "the other half of its meld pair";
+
   // A STATIC'S REACH IS NOT AN EVENT EITHER. "A creature it boosts" names the class the static
   // applies to; nothing fires, so the sentence is the noun and what the subject does to it.
   if (verb.startsWith("applies:")) {

@@ -170,3 +170,11 @@ test("a row the engine did read carries no such marker", async () => {
   await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
   expect(screen.queryByText(/engine did not read/)).toBeNull();
 });
+
+/** A CARD THE ENGINE READ NOTHING ON SAYS SO where the ability table would be. Every legal
+ *  commander has a page now, 509 of them with an empty ability list, and a heading over nothing
+ *  read as a broken page rather than as the refusal it is (branch review, 2026-09-05). */
+test("an empty ability table says the engine read nothing on this card", async () => {
+  at("faceless-one", async () => ({ ...KRENKO, name: "Faceless One", abilities: [], emits: [], demands: [], partners: [] }));
+  expect((await screen.findAllByText(/read nothing on this card/i)).length).toBeGreaterThan(0);
+});

@@ -1852,8 +1852,9 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
  *  Mishra, Claimed by Gix names "a creature named Phyrexian Dragon Engine" outright. Everything else
  *  in this file matches a producer EVENT to a consumer TRIGGER, so that shape had nowhere to land —
  *  the recall measurement filed the pair `miss-inexpressible`, which was wrong: Commander Salt
- *  models it as a `named` qualifier, MTGJSON as `cardParts`, and `ingest-meld.ts` now puts
- *  `meldPartner` on the card as a printed characteristic.
+ *  models it as a `named` qualifier, MTGJSON as `cardParts`, and `docToCard` (data/docs.ts) derives
+ *  `meldPartner` from Scryfall's `allParts` on every read -- a stored field was erased by the first
+ *  full re-ingest after it was written, and this edge drew nothing for a month.
  *
  *  Emitted from `pairReasons` rather than `directedReasons` because the relation is SYMMETRIC and the
  *  pair is one fact: both halves must be on the battlefield, so neither is the producer. Emitting it
@@ -1861,7 +1862,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
  *
  *  There is no `effectKind`: the closed 30 are payoff kinds, and melding is not one of them. The
  *  field is optional for exactly this sort of case. */
-function meldReason(a: DeckCard, b: DeckCard): Reason[] {
+export function meldReason(a: DeckCard, b: DeckCard): Reason[] {
   const partnered = a.card.meldPartner === b.card.name || b.card.meldPartner === a.card.name;
   if (!partnered) return [];
   return [stampSides({

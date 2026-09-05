@@ -4,7 +4,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts,
-  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf,
+  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -813,3 +813,164 @@ test("a commander with only statics gets a page, an index row and legal partners
   expect(rec.commanderPartners!.map((r) => r.name)).toEqual(["Dragon Fodder"]);
 });
 
+/** CR 903.3 IS ALREADY READ IN `legality.ts`, and this file had rewritten it narrower: a legendary
+ *  Vehicle with power, a Spacecraft with power, and a card that prints "can be your commander" all
+ *  lead decks and none had a `/commanders` row (measured 2026-09-05: 40 + 5 + 21 corpus cards). */
+const legendary = (name: string, typeLine: string, extra: Partial<DeckCard["card"]> = {}) => {
+  const d = base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  return { ...d, card: { ...d.card, typeLine, legalities: { commander: "legal" }, ...extra } as unknown as DeckCard["card"] };
+};
+
+test("a Vehicle or Spacecraft with power, and a card that says so, are commanders", () => {
+  const vehicle = legendary("Parhelion II", "Legendary Artifact — Vehicle", { power: "5", toughness: "5" });
+  const lift = legendary("The Eternity Elevator", "Legendary Artifact — Spacecraft");
+  const walker = legendary("Will Kenrith", "Legendary Planeswalker — Will",
+    { oracleText: "Partner with Rowan Kenrith\nWill Kenrith can be your commander." });
+  const { index } = buildPartnerArtifact([vehicle, lift, walker], H);
+  const commander = (n: string) => index.find((e) => e.name === n)?.commander;
+  expect(commander("Parhelion II")).toBe(true);
+  expect(commander("The Eternity Elevator")).toBe(false);
+  expect(commander("Will Kenrith")).toBe(true);
+});
+
+/** A BACKGROUND NEVER LEADS ALONE. It is a commander only opposite a card that chooses one, so it
+ *  gets a row and a page, marked, rather than being filtered out with the non-commanders. */
+test("a Background is a commander record marked pairing-only", () => {
+  const bg = legendary("Haunted One", "Legendary Enchantment — Background");
+  const { shards, index } = buildPartnerArtifact([bg], H);
+  expect(index.find((e) => e.name === "Haunted One")?.commander).toBe(true);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Haunted One")!;
+  expect(rec.pairingOnly).toBe(true);
+});
+
+
+/** MELD IS A CARD-NAME RELATION. It emits nothing and counts nothing, so neither ranking phase could
+ *  propose it; the engine drew the edge in the deck report and the page never asked. */
+const meldHalf = (name: string, partner: string) => {
+  const d = base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "player-life-loss" },
+    emits: [{ verb: "lose-life", subject: { control: "opp", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+  return { ...d, card: { ...d.card, meldPartner: partner } as unknown as DeckCard["card"] };
+};
+
+test("a meld card's page lists its other half, verified on the engine's meld tag", () => {
+  const mishra = meldHalf("Mishra, Claimed by Gix", "Phyrexian Dragon Engine");
+  const engine = meldHalf("Phyrexian Dragon Engine", "Mishra, Claimed by Gix");
+  expect(meldKeysOf(mishra)).toEqual(["meld|-|-|-"]);
+  expect(meldKeysOf(goblinBody())).toEqual([]);
+  const { shards } = buildPartnerArtifact([mishra, engine, goblinBody()], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Mishra, Claimed by Gix")!;
+  expect(rec.demands).toContain("meld|-|-|-");
+  const row = rec.partners.find((r) => r.event === "meld|-|-|-")!;
+  expect(row.name).toBe("Phyrexian Dragon Engine");
+  expect(row.reason).toMatch(/meld/i);
+  expect(rec.pool["meld|-|-|-"]).toBe(1);
+});
+
+/** WHO A COMMANDER MAY LEAD WITH, from the same `pairingLicense` the legality report uses. */
+test("a commander record lists the cards it can legally pair with, by licence", () => {
+  const lead = legendary("Wilson, Refined Grizzly", "Legendary Creature — Bear Warrior",
+    { oracleText: "Choose a Background (You can have a Background as a second commander.)", colorIdentity: ["G"] });
+  const bg = legendary("Haunted One", "Legendary Enchantment — Background", { colorIdentity: ["B"] });
+  const bear = legendary("Grizzly Bears", "Legendary Creature — Bear", { colorIdentity: ["G"] });
+  const clara = legendary("Clara Oswald", "Legendary Creature — Human Advisor", {
+    oracleText: "Impossible Girl — If Clara Oswald is your commander, choose a color before the game begins. Clara Oswald is the chosen color.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+  });
+  const { shards } = buildPartnerArtifact([lead, bg, bear, clara], H);
+  const rec = (n: string) => [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === n)!;
+  expect(rec("Wilson, Refined Grizzly").pairsWith).toEqual([
+    { slug: "haunted-one", name: "Haunted One", identity: ["B"], licence: "choose a background" },
+  ]);
+  expect(rec("Haunted One").pairsWith?.map((p) => p.name)).toEqual(["Wilson, Refined Grizzly"]);
+  expect(rec("Grizzly Bears").pairsWith).toBeUndefined();
+  expect(rec("Clara Oswald").choosesColour).toBe(true);
+  expect(rec("Grizzly Bears").choosesColour).toBeUndefined();
+});
+
+/** A PICKED PARTNER CHANGES THE DECK'S IDENTITY, and the partner list is ranked over the legal pool,
+ *  so the list has to be re-ranked per identity the pair can reach. Keyed by colour set, not partner
+ *  card: two mono-black Backgrounds give one list. The own identity is never a key -- that list is
+ *  `commanderPartners`. */
+test("a commander carries a partner list per distinct combined identity it can reach", () => {
+  const lead = legendary("Wilson, Refined Grizzly", "Legendary Creature — Bear Warrior",
+    { oracleText: "Choose a Background (You can have a Background as a second commander.)", colorIdentity: ["G"] });
+  // A supply the ranking can propose a candidate from: `legendary()` gives a trigger and no emit.
+  (lead.tags!.abilities[0] as { emits?: unknown[] }).emits = [
+    { verb: "enters", subject: { control: "you", token: false, type: "creature" } },
+  ];
+  const black = legendary("Haunted One", "Legendary Enchantment — Background", { colorIdentity: ["B"] });
+  const black2 = legendary("Cultist of the Absolute", "Legendary Enchantment — Background", { colorIdentity: ["B"] });
+  const green = legendary("Druid Class Background", "Legendary Enchantment — Background", { colorIdentity: ["G"] });
+  // The Backgrounds watch something the lead never supplies, so the BG list is the payoff alone
+  // and not three Backgrounds filling `PER_EVENT_CAP` ahead of it.
+  for (const b of [black, black2, green]) (b.tags!.abilities[0] as { trigger: { verbs: string[] } }).trigger.verbs = ["upkeep"];
+  const payoffB = withIdentity(legendary("Black Payoff", "Creature — Rat"), ["B"]);
+  const { shards } = buildPartnerArtifact([lead, black, black2, green, payoffB], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Wilson, Refined Grizzly")!;
+  expect(Object.keys(rec.commanderPartnersBy ?? {})).toEqual(["BG"]);
+  expect(rec.commanderPartnersBy!.BG!.partners.map((r) => r.name)).toContain("Black Payoff");
+  expect(rec.commanderPartners!.map((r) => r.name)).not.toContain("Black Payoff");
+  // The Background's own record carries the same key, so the page can merge both halves.
+  const bg = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Haunted One")!;
+  expect(Object.keys(bg.commanderPartnersBy ?? {})).toEqual(["BG"]);
+});
+
+test("a colour chooser carries one list per colour", () => {
+  const clara = legendary("Clara Oswald", "Legendary Creature — Human Advisor", {
+    oracleText: "Impossible Girl — If Clara Oswald is your commander, choose a color before the game begins. Clara Oswald is the chosen color.",
+  });
+  const { shards } = buildPartnerArtifact([clara], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Clara Oswald")!;
+  expect(Object.keys(rec.commanderPartnersBy ?? {}).sort()).toEqual(["B", "G", "R", "U", "W"]);
+  expect(identityKeyOf([])).toBe("C");
+  expect(identityKeyOf(["U", "R"])).toBe("UR");
+});
+
+/** EVERY LEGAL COMMANDER HAS A PAGE, abilities or not. Clara Oswald derives one trigger-doubler
+ *  with no subject, so no key ever made her substantive and the Ninth Doctor's page could offer a
+ *  companion with nowhere to link (real build, 2026-09-05). And a commander the engine read
+ *  NOTHING on needs a page more than most: an empty ability table is the one place the owner can
+ *  see a wrong "no ability" (roadmap W10). */
+test("a legal commander with no derived ability still gets a record and an index row", () => {
+  const vanilla = legendary("Isamaru, Hound of Konda", "Legendary Creature — Dog");
+  vanilla.tags!.abilities = [];
+  const unread = { ...legendary("Faceless One", "Legendary Creature — Shapeshifter"), tags: null };
+  const { shards, index } = buildPartnerArtifact([vanilla, unread], H);
+  expect(index.map((e) => e.name).sort()).toEqual(["Faceless One", "Isamaru, Hound of Konda"]);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Faceless One")!;
+  expect(rec.commander).toBe(true);
+  expect(rec.abilities).toEqual([]);
+  expect(rec.partners).toEqual([]);
+});
+
+/** THE ENGINE READ THE MELD. `meldReason` carries no effect kind by design (melding is not a payoff
+ *  kind), and the row reused the "no effect kind = unread" rule, so every meld row on 21 pages
+ *  printed a refusal under a perfect sentence (branch review, 2026-09-05). */
+test("a meld row is never marked unread", () => {
+  const mishra = meldHalf("Mishra, Claimed by Gix", "Phyrexian Dragon Engine");
+  const engine = meldHalf("Phyrexian Dragon Engine", "Mishra, Claimed by Gix");
+  const { shards } = buildPartnerArtifact([mishra, engine], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Mishra, Claimed by Gix")!;
+  expect(rec.partners.find((r) => r.event === "meld|-|-|-")?.unread).toBeUndefined();
+});
+
+/** THE PARTNER MAY BE THE ONE WHO CHOOSES. The Ninth Doctor does not pick a colour; Clara Oswald
+ *  beside him does, and the pair is three colours. The Doctor's record has to carry the keys the
+ *  pair can reach through HER choice, and say that she chooses. */
+test("a commander whose partner chooses a colour reaches the colour keys through that partner", () => {
+  const doctor = legendary("The Ninth Doctor", "Legendary Creature — Time Lord Doctor", { colorIdentity: ["U", "R"] });
+  const clara = legendary("Clara Oswald", "Legendary Creature — Human Advisor", {
+    oracleText: "Impossible Girl — If Clara Oswald is your commander, choose a color before the game begins. Clara Oswald is the chosen color.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+  });
+  const { shards } = buildPartnerArtifact([doctor, clara], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "The Ninth Doctor")!;
+  expect(rec.pairsWith).toEqual([{ slug: "clara-oswald", name: "Clara Oswald", identity: [], licence: "doctor's companion", choosesColour: true }]);
+  expect(Object.keys(rec.commanderPartnersBy ?? {}).sort()).toEqual(["UBR", "URG", "WUR"]);
+});

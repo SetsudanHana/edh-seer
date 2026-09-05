@@ -22,7 +22,7 @@ import { faceDeckCards } from "./faces.js";
 import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
-import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY } from "./edges.js";
+import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { markCommander } from "./commander.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
@@ -532,7 +532,13 @@ export function analyzeDeckStructured(
       const p = unique[i], c = unique[j];
       if (sameCard(p, c)) continue; // a face never feeds its own other face
       const hop = twoHopReasons.get(hopKey(p.card.name, c.card.name));
-      const direct = directedReasons(p, c, hierarchy); // p feeds c
+      // MELD IS THE ONE RELATION `directedReasons` CANNOT SEE, and this loop is what the card line
+      // and its partner list are built from. `edges` above goes through `pairReasons`, which carries
+      // `meldReason`; this loop did not, so a meld pair had an edge in the report and "synergizes
+      // with 0 cards" on both card lines. Symmetric, so each direction adds it once and
+      // `distinctPartners` below dedupes the pair. Found 2026-09-05, the day `meldPartner` came back
+      // onto the corpus (docs.ts) -- the month it was absent hid this.
+      const direct = [...directedReasons(p, c, hierarchy), ...meldReason(p, c)]; // p feeds c
       const reasons = hop ? [...direct, ...hop] : direct;
       if (reasons.length === 0) continue;
       const maxW = maxAxisWeight(reasons, axis);

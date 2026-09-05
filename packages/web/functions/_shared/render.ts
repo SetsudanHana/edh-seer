@@ -80,7 +80,7 @@ export async function renderCardPage(
       ? `${record.name} — what a deck led by it wants — EDH Seer`
       : `${record.name} — synergies and what the engine reads — EDH Seer`;
     const description = !usable
-      ? `${record.name} is not a legendary creature that can be a commander. The card itself has a page.`
+      ? `${record.name} cannot be a commander. The card itself has a page.`
       : partners.length > 0
       ? `${partners.length} cards ${record.name} interacts with, each with the reason the engine drew the edge.`
       : `What the engine reads on ${record.name}: the events it produces and the ones it cares about.`;
