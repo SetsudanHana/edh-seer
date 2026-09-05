@@ -14,7 +14,7 @@ import { interveningIfOf, conditionCares as conditionCares_ } from "./intervenin
 import { actionRecipients } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject } from "./subject.js";
-import { repeatsFor } from "./repeats.js";
+import { repeatsFor, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { doubledVerbs } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 97;
+export const DERIVE_VERSION = 98;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -703,6 +703,9 @@ export function deriveAbilities(
   // real modal triggers to catch 1 phantom. Absent `clauseTexts` disables the guard rather than
   // guessing, the same contract `recipient.ts` has.
   const cardText = oracleText ?? "";
+  /** The nearest earlier clause's own trigger event, for a trigger-less continuation to inherit.
+   *  See `rawTrigger` below. */
+  let inheritedRaw: RawTrigger | undefined;
 
   for (const clause of clauses) {
     // The whole clause goes, not just its trigger. What is quoted on a created token is a complete
@@ -714,6 +717,18 @@ export function deriveAbilities(
     // matcher can stop reading a back-face ability against the card's UNION of types.
     const face = clauseFaces?.[clause.id];
     const kind = abilityKind(clause);
+    // THE RAW TRIGGER EVENT, FOR THE LABELLER ONLY (`repeatsFor`). An event outside the `Verb`
+    // union reaches `unknownTriggers` below and the ability derives with no trigger, so this is the
+    // one channel through which "at the beginning of your first main phase" can still say it is a
+    // phase. A TRIGGERED clause that states no trigger of its own is a mode or a continuation of
+    // the nearest earlier trigger on the card -- "choose one or more --" segments into clauses that
+    // repeat no trigger (Black Market Connections, 306 such clauses corpus-wide) -- so it inherits
+    // that event. CEILING: adjacency, not a parsed modal tree; a static or activated clause in
+    // between ends the inheritance, so a later stray continuation cannot claim an unrelated trigger.
+    const rawTrigger: RawTrigger | undefined = clause.trigger?.event
+      ? { event: clause.trigger.event, ...(clause.trigger.control ? { control: clause.trigger.control } : {}) }
+      : kind === "triggered" ? inheritedRaw : undefined;
+    inheritedRaw = clause.trigger?.event ? rawTrigger : kind === "triggered" ? inheritedRaw : undefined;
     // Who performs each action, when the clause names someone the object text does not carry. The
     // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
     // is ambiguous and is left alone -- a missing answer beats a wrong one.
@@ -1061,7 +1076,7 @@ export function deriveAbilities(
     const arrivalNotCast = ARRIVED_WITHOUT_CASTING.test(text);
     const arrivalTapped = /\benters tapped\b/i.test(text);
     for (let i = before; i < abilities.length; i++) {
-      const repeats = repeatsFor(abilities[i], text, cost);
+      const repeats = repeatsFor(abilities[i], text, cost, rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
       if (conditionCares.length > 0 && abilities[i].trigger) {
         abilities[i] = { ...abilities[i], conditionCares };

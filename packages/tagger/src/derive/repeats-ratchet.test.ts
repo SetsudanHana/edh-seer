@@ -51,7 +51,18 @@ const FIXTURE = new URL("repeats-refused.json", import.meta.url);
  *  +42 rows. This is a CORRECTNESS fix, not a new gap: a confidently wrong label is worse than an
  *  honest refusal. Verified after re-deriving: population 27380/35037/231 and panel 82.8% both held,
  *  because nothing reads `repeats` yet. */
-const REFUSED_CAP = 621;
+/** Re-banked 621 -> 1413 (2026-09-05, owner: "fix the repeats labeller so Black Market Connections
+ *  counts as engine"). TWO THINGS MOVED AT ONCE and the number only makes sense read as both:
+ *  the fixture had never been regenerated since it was captured on the 2,541-card calibration
+ *  corpus, and the corpus is 21,317 cards now, so the row count was never comparable to the live
+ *  refusal count (3,118 refused of 37,912 abilities, 8.2%, on the morning of the change). Then the
+ *  rules widened -- `RawTrigger` lets a step outside the `Verb` union (main-phase, draw-step) and a
+ *  saga chapter resolve, rule 9 reads an untyped non-self trigger as a class, rule 8b reads the
+ *  card's own or an untyped combat trigger as once per combat, and `sacrifice`/`enters-graveyard`/
+ *  `cast` joined SELF_EVENTS -- and refusal fell to 1,413 (3.7%). 454 of the old 621 rows resolve.
+ *  Verified: population 35655/45598/289 and panel 429 / 387 / 16 both held, because a label still
+ *  changes what nothing matches; the draw facet moved 400 -> 445 engines, 107 -> 41 unlabelled. */
+const REFUSED_CAP = 1413;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the

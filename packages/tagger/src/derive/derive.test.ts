@@ -1948,3 +1948,25 @@ test("a card exiling ITSELF emits a self leaves", () => {
   const leaves = phoenix.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
   expect(leaves.subject.self).toBe(true);
 });
+
+// 2026-09-05, owner: Black Market Connections must count as a draw ENGINE. Its canonical clauses are
+// the corpus's own: the trigger is `main-phase` (no `Verb`), and the three modes state no trigger.
+test("a modal phase trigger's modes inherit its event for the repeats label", () => {
+  const bmc = deriveCardTags({
+    oracleId: "bmc", name: "Black Market Connections",
+    clauses: [
+      { id: 1, abilityType: "triggered", trigger: { event: "main-phase", subject: "you", control: "you" }, actions: [{ verb: "none" }] },
+      { id: 2, abilityType: "triggered", actions: [{ verb: "lose-life", object: "you", amount: "1" }, { verb: "create", object: "a Treasure token", amount: "1" }] },
+      { id: 3, abilityType: "triggered", actions: [{ verb: "draw", object: "a card", amount: "1" }, { verb: "lose-life", object: "you", amount: "2" }] },
+    ],
+    clauseTexts: {
+      1: "At the beginning of your first main phase, choose one or more --",
+      2: "Sell Contraband -- Create a Treasure token. You lose 1 life.",
+      3: "Buy Information -- Draw a card. You lose 2 life.",
+    },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["enchantment"] },
+  });
+  const draw = bmc.abilities.find((a) => a.effect.kind === "draw-card")!;
+  expect(draw.repeats).toBe("per-cycle");
+  expect(bmc.abilities.every((a) => a.repeats === "per-cycle")).toBe(true);
+});
