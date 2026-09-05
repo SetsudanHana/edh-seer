@@ -1,3 +1,4 @@
+import type { GameState } from "@edh-seer/engine";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types.js";
@@ -50,10 +51,10 @@ import { unreadCardNames } from "../lib/unread.js";
  *  marks nothing. Over the cap nothing is seeded and the header line still says "+14". */
 export const SEED_CAP = 8;
 
-export function ReportShell({ data, diff, speed, onSpeed }: {
+export function ReportShell({ data, diff, state, onState }: {
   data: AnalyzeResponse; diff?: RunDiff | null;
   /** The game state the report was run under, and the way to change it (roadmap W18). */
-  speed?: 1 | 2 | 3 | 4; onSpeed?: (speed: 1 | 2 | 3 | 4 | undefined) => void;
+  state?: GameState; onState?: (state: GameState) => void;
 }) {
   // THE CARDS THIS EDIT ADDED, LIT IN EVERY CHAPTER without the reader hunting for them.
   const seedPins = diff && diff.added.length > 0 && diff.added.length <= SEED_CAP ? diff.added : undefined;
@@ -140,9 +141,9 @@ export function ReportShell({ data, diff, speed, onSpeed }: {
           *  this resolves. */}
         <ReportHeader data={data} diff={diff} />
         {/* A GAME STATE THE OWNER SETS, only where the deck can reach it (roadmap W18). */}
-        {onSpeed && data.report.markers && data.report.markers.length > 0 && (
+        {onState && data.report.markers && data.report.markers.length > 0 && (
           <div className="px-4 py-3 border-b border-(--separator)">
-            <StateControls markers={data.report.markers} speed={speed} onSpeed={onSpeed} />
+            <StateControls markers={data.report.markers} state={state} onState={onState} />
           </div>
         )}
         {/* OUTSIDE THE CHAPTERS, ON EVERY SURFACE. A line the engine never matched to a card is not
@@ -258,14 +259,15 @@ export function SurfaceLink({ to, className, children }: {
   const navigate = useNavigate();
   return (
     <a
-      href={`${to}${typeof window === "undefined" ? "" : window.location.hash}`}
+      // THE STATE RIDES IN THE QUERY and the deck in the hash; a surface link keeps both (W18).
+      href={`${to}${typeof window === "undefined" ? "" : window.location.search + window.location.hash}`}
       className={className}
       onClick={(e) => {
         // Let the browser handle every gesture that means "somewhere else": a new tab, a new
         // window, a download. Only a plain left click is ours to intercept.
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
         e.preventDefault();
-        navigate({ pathname: to, hash: window.location.hash });
+        navigate({ pathname: to, search: window.location.search, hash: window.location.hash });
       }}
     >
       {children}

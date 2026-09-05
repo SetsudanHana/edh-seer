@@ -12,8 +12,15 @@ export const COMMANDER_BOOST = 3;
 
 /** A GAME-STATE MARKER THE OWNER SETS (roadmap W18). Speed is the player's (CR 702.179): one number
  *  for the deck, never a fact on a card. Grows one field per marker. */
-export type Marker = "speed";
-export interface GameState { speed?: 1 | 2 | 3 | 4 }
+export type Marker = "speed" | "monarch" | "initiative" | "blessing" | "dungeon" | "night";
+export interface GameState {
+  speed?: 1 | 2 | 3 | 4;
+  monarch?: boolean;
+  initiative?: boolean;
+  blessing?: boolean;
+  dungeon?: boolean;
+  night?: boolean;
+}
 
 export interface SynergyEdge {
   a: string;

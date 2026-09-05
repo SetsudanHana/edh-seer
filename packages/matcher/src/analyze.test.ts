@@ -1613,3 +1613,32 @@ describe("a game state turns conditional abilities on", () => {
     expect(four.state).toEqual({ speed: 4 });
   });
 });
+
+describe("boolean markers", () => {
+  const drawPayoff = dc("Kindred Discovery", [{
+    kind: "triggered", trigger: { verbs: ["draw"], subject: { control: "you", token: null } }, effect: { kind: "token-generation" },
+  }], [], "Enchantment");
+  const seer = dc("Passageway Seer", [{
+    kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, requires: { marker: "initiative", min: 1 },
+    effect: { kind: "draw-card" }, emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }], [], "Creature");
+  const edgeBetween = (r: ReturnType<typeof analyzeDeckStructured>, a: string, b: string) =>
+    r.edges.find((e) => (e.a === a && e.b === b) || (e.a === b && e.b === a));
+
+  test("an initiative ability is silent until the owner has the initiative, and says so when on", () => {
+    const off = analyzeDeckStructured([seer, drawPayoff], undefined, H);
+    expect(edgeBetween(off, "Passageway Seer", "Kindred Discovery")).toBeUndefined();
+    const on = analyzeDeckStructured([seer, drawPayoff], undefined, H, undefined, undefined, undefined, undefined, { initiative: true });
+    expect(edgeBetween(on, "Passageway Seer", "Kindred Discovery")?.enabledBy).toEqual(["initiative"]);
+    const other = analyzeDeckStructured([seer, drawPayoff], undefined, H, undefined, undefined, undefined, undefined, { monarch: true });
+    expect(edgeBetween(other, "Passageway Seer", "Kindred Discovery")).toBeUndefined();
+  });
+
+  test("the report says which markers the deck can reach", () => {
+    const venturer = dc("Nadaar, Selfless Paladin", [], [], "Creature");
+    venturer.card = { ...venturer.card, oracleText: "Whenever this creature enters or attacks, venture into the dungeon." } as never;
+    const court = dc("Court of Grace", [], [], "Enchantment");
+    court.card = { ...court.card, oracleText: "When this enchantment enters, you become the monarch." } as never;
+    expect(analyzeDeckStructured([venturer, court], undefined, H).markers).toEqual(["monarch", "dungeon"]);
+  });
+});
