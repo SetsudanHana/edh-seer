@@ -1011,8 +1011,32 @@ export interface ReasonOptions {
  *  board-count channel for why. */
 const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "forest"]);
 
+/** A CARD THAT TURNS THE BOARD OFF FEEDS NOTHING ON IT. Dress Down's "creatures lose all abilities"
+ *  is a layer-6 effect (CR 613.1f) that applies the moment it is on the battlefield, so when the
+ *  game checks Grim Guardian's constellation the Guardian has no abilities and nothing triggers;
+ *  every claim from P to a creature runs through an ability the creature no longer has. A
+ *  noncreature payoff is untouched, and P's own triggers are its own.
+ *
+ *  CEILINGS, per CR 613. Layer 4 runs first, so an animated land is a creature here at the table
+ *  and a printed noncreature to this test (characteristics are printed). Within layer 6 a later
+ *  grant survives by timestamp; the engine has no timestamps and refuses the pair anyway.
+ *  Dependency loops (613.8, Humility + Opalescence) are not modelled. And a silence is a THREE-card
+ *  fact -- Humility on the board mutes Grim Guardian against every other enchantment -- which a
+ *  pairwise edge cannot see; that is a deck-level report, not an edge. Owner, 2026-09-05. */
+function silencedBy(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
+  if (!p.tags || !c.tags) return false;
+  return p.tags.abilities.some((a) => a.kind === "static" && a.effect.kind === "ability-loss"
+    && a.effect.subject !== undefined && a.effect.subject.self !== true && a.effect.subject.scope !== "target"
+    // A CLASS, OR NOTHING. An Aura's "enchanted creature loses all abilities" keeps no class through
+    // the narrowing gate and arrives typeless -- and a typeless subject matches every card. Darksteel
+    // Mutation silences its host, not the deck.
+    && (list(a.effect.subject.type).length > 0 || list(a.effect.subject.subtype).length > 0)
+    && subjectMatches(characteristicsSubject(c.tags!, c.card.name), a.effect.subject, h));
+}
+
 export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
   if (!p.tags || !c.tags) return [];
+  if (silencedBy(p, c, h)) return [];
   const reasons: Reason[] = [];
   const pEvents = producerEvents(p.tags);
 
@@ -1494,6 +1518,9 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     // has to go, not get renamed. What these cards really relate to is the OPPONENT'S board, which
     // is not in the deck and has no node.
     if (a.effect.kind === "debuff") return undefined;
+    // AN ABILITY LOSS IS A SILENCE, NOT A CLAIM: "Dress Down's ability loss applies to Grim
+    // Guardian" is the opposite of a synergy. `silencedBy` already emptied this pair.
+    if (a.effect.kind === "ability-loss") return undefined;
     // A STATIC THAT DESCRIBES THE CARD ITSELF CLAIMS NO OTHER CARD. Planar Nexus prints "This land
     // is every nonbasic land type", derives `{type: land, scope: each, self: true}` -- the
     // self-reference recorded CORRECTLY -- and this pass rendered "Planar Nexus's type grant applies

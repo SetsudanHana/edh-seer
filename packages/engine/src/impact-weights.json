@@ -17,6 +17,7 @@
     "forced-sacrifice": 0.6,
     "pump": 0.5,
     "debuff": 0.4,
+    "ability-loss": 0.4,
     "counter-placement": 0.5,
     "fast-mana": 0.5,
     "type-grant": 0.45,

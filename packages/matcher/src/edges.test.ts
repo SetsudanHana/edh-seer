@@ -3712,3 +3712,49 @@ describe("damage to a player satisfies a life-loss trigger", () => {
     expect(tags.some((t) => t.startsWith("lose-life"))).toBe(false);
   });
 });
+
+/** A CARD THAT TURNS THE BOARD OFF FEEDS NOTHING ON IT. Dress Down's static applies the moment it
+ *  is on the battlefield, so when the game checks Grim Guardian's constellation the Guardian has no
+ *  abilities and nothing triggers (CR 603.2, 613.1; owner, 2026-09-05). Any creature payoff is
+ *  silenced by it; a noncreature payoff is not. */
+describe("an ability-loss static silences the creatures it reaches", () => {
+  const typed = (d: ReturnType<typeof base>, types: string[]) => {
+    d.tags!.characteristics.types = types;
+    return d;
+  };
+  const dressDown = typed(base("Dress Down", [
+    { kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "enchantment", self: true } },
+      effect: { kind: "draw-card" }, emits: [{ verb: "draw", subject: { control: "you", token: null } }] },
+    { kind: "static", effect: { kind: "ability-loss", subject: { control: "any", token: null, type: "creature", scope: "all" } } },
+  ] as unknown as CardTags["abilities"]), ["enchantment"]);
+  const constellation = (name: string, types: string[]) => typed(base(name, [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "enchantment" } },
+    effect: { kind: "player-life-loss" },
+  }] as unknown as CardTags["abilities"]), types);
+
+  test("a creature's constellation does not trigger on it", () => {
+    expect(pairReasons(dressDown, constellation("Grim Guardian", ["enchantment", "creature"]), H)).toEqual([]);
+  });
+
+  test("a noncreature constellation still does", () => {
+    const tags = pairReasons(dressDown, constellation("Eidolon of Blossoms", ["enchantment"]), H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("enters"))).toBe(true);
+  });
+
+  /** AN AURA SILENCES ITS HOST, NOT THE DECK. "Enchanted creature loses all abilities" keeps no
+   *  class through the narrowing gate, so its subject names no type -- and a typeless subject
+   *  matches every card. The silence needs a class to apply to. */
+  test("an ability loss that names no class silences nothing", () => {
+    const mutation = typed(base("Darksteel Mutation", [
+      { kind: "static", effect: { kind: "ability-loss", subject: { control: "any", token: null } } },
+      { kind: "static", effect: { kind: "keyword-grant" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "enchantment" } }] },
+    ] as unknown as CardTags["abilities"]), ["enchantment"]);
+    const tags = pairReasons(mutation, constellation("Grim Guardian", ["enchantment", "creature"]), H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("enters"))).toBe(true);
+  });
+
+  test("the static itself is never a synergy claim", () => {
+    const bear = base("Grizzly Bears", [], []);
+    expect(pairReasons(dressDown, bear, H)).toEqual([]);
+  });
+});

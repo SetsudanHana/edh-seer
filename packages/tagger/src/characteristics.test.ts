@@ -163,3 +163,10 @@ test("a card that says it is also other creature types carries them as subtypes"
   const odd = { ...burakos, oracleText: "Burakos is also a Commander." };
   expect(extractCharacteristics(odd).subtypes).toEqual(["orc"]);
 });
+
+/** A CARD WITHOUT A NAME STILL DERIVES. `derive-corpus` built its card without one for a month and
+ *  the name-anchored "is also a" reader crashed the whole run on the first card (2026-09-05). */
+test("characteristics survive a card with no name", () => {
+  const { name: _n, ...nameless } = inalla;
+  expect(extractCharacteristics(nameless as never).subtypes).toEqual(["human", "wizard"]);
+});

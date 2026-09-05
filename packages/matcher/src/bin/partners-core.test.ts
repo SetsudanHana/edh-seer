@@ -1074,3 +1074,10 @@ test("a burn spell's page lists a life-loss payoff, verified by the engine", () 
   const row = rec.partners.find((r) => r.name === "Bloodchief Ascension")!;
   expect(row.event).toBe("lose-life|-|-|-");
 });
+
+test("an ability-loss static reaches no partner on the page", () => {
+  const humility = base("Humility", [
+    { kind: "static", effect: { kind: "ability-loss", subject: { control: "any", token: null, type: "creature", scope: "all" } } },
+  ] as unknown as CardTags["abilities"]);
+  expect(staticKeysOf(humility)).toEqual([]);
+});
