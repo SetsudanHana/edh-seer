@@ -40,21 +40,46 @@ const CONDITIONS: [RegExp, Marker][] = [
   [/\byou.?ve completed a dungeon\b/i, "dungeon"],
   [/\bit.?s night\b/i, "night"],
 ];
-// NO OVERLAPPING WHITESPACE TOKENS: a lazy `[^,.]+?` beside `\s*` is polynomial on a run of
-// spaces (CodeQL js/polynomial-redos, PR #197). The capture may carry its edge spaces; it is
-// trimmed below.
-const HEAD = /^(?:(?:whenever|when|at the beginning of|at end of)[^,]*, )?(?:if|as long as) ([^,.]+),/i;
-const TAIL = /(?:^| )(?:if|as long as) ([^,.]+)\.?$/i;
+// NO REGEX SCAN OVER THE CLAUSE. Two cuts flagged as polynomial by CodeQL (js/polynomial-redos,
+// PR #197): a lazy class beside `\s*`, then an anchored tail whose class could span " if " again.
+// The condition is found by index -- an opener cut at its first comma, a tail cut at the LAST
+// "if"/"as long as" -- and only the short condition itself meets a regex.
+const OPENERS = ["whenever ", "when ", "at the beginning of ", "at end of "];
+const CONDITION_WORDS = ["if ", "as long as "];
 
-/** CEILING: ONE REQUIREMENT PER CLAUSE. A condition on a clause's SECOND sentence -- Radiant
- *  Destiny's "Creatures ... get +1/+1. As long as you have the city's blessing, they also have
- *  vigilance." -- cannot be attached without silencing the first sentence too, so it is not read
- *  and the whole clause stays unconditional. Measured 2026-09-06: monarch 11 cards read of 25
- *  printed conditions, blessing 6 of 25, dungeon 5 of 15. The upgrade is a requirement per action. */
+/** The head condition: "[opener,] if COND, ..." -> COND. */
+function headCondition(text: string): string | undefined {
+  const lower = text.toLowerCase();
+  let rest = text;
+  if (OPENERS.some((o) => lower.startsWith(o))) {
+    const comma = text.indexOf(",");
+    if (comma < 0) return undefined;
+    rest = text.slice(comma + 1).trimStart();
+  }
+  const word = CONDITION_WORDS.find((w) => rest.toLowerCase().startsWith(w));
+  if (!word) return undefined;
+  const body = rest.slice(word.length);
+  const comma = body.indexOf(",");
+  if (comma < 0) return undefined;
+  const cond = body.slice(0, comma);
+  return cond.includes(".") ? undefined : cond.trim();
+}
+
+/** The tail condition on a one-sentence clause: "... if COND." -> COND, taken at the LAST "if". */
+function tailCondition(text: string): string | undefined {
+  const body = text.endsWith(".") ? text.slice(0, -1) : text;
+  const lower = body.toLowerCase();
+  const at = Math.max(...CONDITION_WORDS.map((w) => lower.lastIndexOf(` ${w}`)));
+  if (at < 0) return undefined;
+  const word = CONDITION_WORDS.find((w) => lower.startsWith(` ${w}`, at))!;
+  const cond = body.slice(at + 1 + word.length);
+  return cond.includes(",") || cond.includes(".") ? undefined : cond.trim();
+}
+
 export function requiresOf(text: string): Requirement | undefined {
-  const sentences = text.split(/\.\s+/).filter(Boolean).length;
   const trimmed = text.trim();
-  const cond = (HEAD.exec(trimmed)?.[1] ?? (sentences <= 1 ? TAIL.exec(trimmed)?.[1] : undefined))?.trim();
+  const sentences = trimmed.split(". ").filter(Boolean).length;
+  const cond = headCondition(trimmed) ?? (sentences <= 1 ? tailCondition(trimmed) : undefined);
   if (!cond) return undefined;
   for (const [re, marker] of CONDITIONS) if (re.test(cond)) return { marker, min: 1 };
   return undefined;
