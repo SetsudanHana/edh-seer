@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 95;
+export const DERIVE_VERSION = 96;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -901,7 +901,7 @@ export function deriveAbilities(
       // below, which is the shape `prompt.ts` already documents for Tekuthal.
       const effectKind = replacement?.kind ?? actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
-      const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action, text)
+      const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action, text, { self: emitsSelf })
         .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
@@ -938,8 +938,12 @@ export function deriveAbilities(
       if (actor) {
         for (const e of emits) e.subject.control = actor;
         if (subject) subject.control = actor;
-      } else if (REMOVAL_VERBS.has(action.verb ?? "")) {
-        // See REMOVAL_VERBS. Only a TARGETED removal with no stated controller.
+      } else if (REMOVAL_VERBS.has(action.verb ?? "") || emits.some((e) => e.verb === "leaves")) {
+        // See REMOVAL_VERBS. Only a TARGETED removal with no stated controller. A targeted BOUNCE
+        // ("return target creature to its owner's hand") joins the rule for its `leaves` emit: it is
+        // aimed at an opponent's creature exactly as a targeted destroy is, and without this it read
+        // `any` and fed "whenever a creature YOU control leaves". A graveyard-to-hand `return` emits
+        // no `leaves`, so recursion keeps `any`.
         for (const e of emits) {
           if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = "opp";
         }

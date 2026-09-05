@@ -138,13 +138,38 @@ function tapVerbs(subject: SubjectFilter): Verb[] | undefined {
 
 /** Zone-conditioned emits, checked before EMITS. A move's events depend on where it lands, not on
  *  the verb: `return` is a flicker to the battlefield and a bounce to hand, `put` is reanimation to
- *  the battlefield and self-mill to a graveyard. Only the destination is read, because a card
- *  arriving somewhere is what other cards trigger on. */
-const ZONE_EMITS: { verb: string; to: string; verbs: Verb[] }[] = [
+ *  the battlefield and self-mill to a graveyard. The destination is read because a card arriving
+ *  somewhere is what other cards trigger on -- and, since 2026-09-05, the ORIGIN is read for the two
+ *  rows that state a departure, because a permanent leaving the battlefield is what a leaves payoff
+ *  triggers on (CR 603.6c) and the flicker's exile half stated nothing at all. */
+const ZONE_EMITS: { verb: string; to: string; verbs: Verb[]; when?: (a: Action, s: SubjectFilter, self: boolean) => boolean }[] = [
   { verb: "put", to: "graveyard", verbs: ["enters-graveyard"] },
   { verb: "return", to: "battlefield", verbs: ["enters"] },
   { verb: "put", to: "battlefield", verbs: ["enters"] },
+  // THE EXILE HALF OF A FLICKER, AND EXILE REMOVAL. "Exile target creature you control, then return
+  // it" (Ephemerate, 202 corpus clause pairs) left the battlefield and said nothing; Swords to
+  // Plowshares the same. Measured on the 1,381 exiles with an UNSTATED origin: 429 name a "card"
+  // (top of library, hand -- not on the battlefield), 342 are bare pronouns or the card's own name,
+  // 265 "target creature", 53 the permanent list, 34 "permanent". So an unstated origin counts only
+  // when the object is permanent-shaped: no "card", no origin zone of its own, and either a type or
+  // the card itself. A bare "it" that derive could not resolve emits nothing -- silence over a
+  // wildcard that would satisfy every leaves payoff in the deck.
+  { verb: "exile", to: "exile", verbs: ["leaves"], when: leftTheBattlefield },
+  // A BOUNCE. "Return target creature to its owner's hand" is a leave for exactly the same reason;
+  // "return target creature card from your graveyard to your hand" is recursion and stays silent
+  // here (its origin is stated and it is not the battlefield).
+  { verb: "return", to: "hand", verbs: ["leaves"], when: leftTheBattlefield },
 ];
+
+/** Did this action move something OFF THE BATTLEFIELD? A stated battlefield origin says so; an
+ *  unstated one says so only for a permanent-shaped object. See the `exile` row above. */
+function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean {
+  if (a.fromZone === "battlefield") return true;
+  if (a.fromZone != null) return false;
+  if (/\bcards?\b/i.test(a.object ?? "")) return false;
+  if (s.fromZone !== undefined) return false;
+  return s.type !== undefined || s.subtype !== undefined || self;
+}
 
 /** Verbs whose object is NECESSARILY the ability's controller's when the text names no player.
  *
@@ -190,8 +215,7 @@ const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
  *  opponent" -- none of them describes a card, so none should become a typed subject. */
 const PLAYER_OBJECT = /\b(?:controllers?|owners?|players?|opponents?)\b|^\s*you\s*$/i;
 
-export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
-  const zoned = ZONE_EMITS.find((r) => r.verb === action.verb && r.to === (action.toZone ?? null));
+export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean } = {}): GameEvent[] {
   // A RECIPIENT IS NOT A SUBJECT (2026-08-22). `parseSubject` reads type words out of whatever text
   // it is given, so Arcane Denial's draw -- whose object the model records as "TARGET SPELL'S
   // CONTROLLER", correctly naming who draws -- yielded `type: spell` and the theme tag `draw:spell`.
@@ -200,6 +224,8 @@ export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
   // `draw:any` and outranked it: `birb-control` read "draw" at cohesion 0.02, one card of 78.
   // Same shape on Ledger Shredder ("this creature connives") -> `draw:creature`.
   const subject = parseSubject(action.object ?? "");
+  const zoned = ZONE_EMITS.find((r) =>
+    r.verb === action.verb && r.to === (action.toZone ?? null) && (r.when === undefined || r.when(action, subject, opts.self === true)));
   // A DRAW'S OBJECT IS ALMOST NEVER THE CARD DRAWN. It is the player ("target spell's controller",
   // Arcane Denial) or the permanent whose ability it is ("this creature connives", Ledger Shredder),
   // and `parseSubject` reads a type word out of either. A real typed draw says so -- "reveal cards

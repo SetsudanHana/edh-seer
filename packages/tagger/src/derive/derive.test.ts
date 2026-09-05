@@ -1844,3 +1844,78 @@ test("a leaves trigger that says without dying, or if it didn't die, derives wit
   });
   expect(taeko.abilities.every((a) => a.trigger?.subject.withoutDying === true)).toBe(true);
 });
+
+test("a flicker derives leaves from its exile half and enters from its return half, both about the target", () => {
+  const ephemerate = deriveCardTags({
+    oracleId: "ephemerate",
+    clauses: [{
+      id: 1, abilityType: "spell",
+      actions: [
+        { verb: "exile", object: "target creature you control", fromZone: "battlefield", toZone: "exile" },
+        { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" },
+      ],
+    }],
+    clauseTexts: { 1: "Exile target creature you control, then return it to the battlefield under its owner's control." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  const verbs = ephemerate.abilities.flatMap((a) => (a.emits ?? []).map((e) => e.verb)).sort();
+  expect(verbs).toEqual(["enters", "leaves"]);
+  const leaves = ephemerate.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
+  expect(leaves.subject.control).toBe("you");
+  expect(leaves.subject.type).toBe("creature");
+  expect(ephemerate.abilities.some((a) => a.effect.kind === "flicker")).toBe(true);
+});
+
+test("targeted removal by exile, and a targeted bounce, leave under the opponent's control; a self bounce is yours", () => {
+  const swords = deriveCardTags({
+    oracleId: "swords",
+    clauses: [{
+      id: 1, abilityType: "spell",
+      actions: [{ verb: "exile", object: "target creature", fromZone: null, toZone: "exile" }, { verb: "gain-life", object: "its controller" }],
+    }],
+    clauseTexts: { 1: "Exile target creature. Its controller gains life equal to its power." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  const swordsLeaves = swords.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
+  expect(swordsLeaves.subject.control).toBe("opp");
+
+  const unsummon = deriveCardTags({
+    oracleId: "unsummon",
+    clauses: [{
+      id: 1, abilityType: "spell",
+      actions: [{ verb: "return", object: "target creature", fromZone: "battlefield", toZone: "hand" }],
+    }],
+    clauseTexts: { 1: "Return target creature to its owner's hand." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  expect(unsummon.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!.subject.control).toBe("opp");
+
+  const lion = deriveCardTags({
+    oracleId: "lion",
+    clauses: [{
+      id: 1, abilityType: "triggered",
+      trigger: { event: "enters", subject: "this creature", control: "you" },
+      actions: [{ verb: "return", object: "a creature you control", fromZone: "battlefield", toZone: "hand" }],
+    }],
+    clauseTexts: { 1: "When this creature enters, return a creature you control to its owner's hand." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["creature"] },
+  });
+  const lionLeaves = lion.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
+  expect(lionLeaves.subject.control).toBe("you");
+  expect(lionLeaves.subject.type).toBe("creature");
+});
+
+test("a card exiling ITSELF emits a self leaves", () => {
+  const phoenix = deriveCardTags({
+    oracleId: "phoenix", name: "Lamplight Phoenix",
+    clauses: [{
+      id: 1, abilityType: "triggered",
+      trigger: { event: "dies", subject: "this creature", control: "you" },
+      actions: [{ verb: "exile", object: "this creature", fromZone: null, toZone: "exile" }],
+    }],
+    clauseTexts: { 1: "When this creature dies, exile it." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["creature"] },
+  });
+  const leaves = phoenix.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
+  expect(leaves.subject.self).toBe(true);
+});
