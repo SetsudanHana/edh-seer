@@ -164,3 +164,22 @@ test("docToCard leaves faces absent on a single-face card", () => {
   } as unknown as Parameters<typeof docToCard>[0];
   expect(docToCard(doc).faces).toBeUndefined();
 });
+
+/** MELD WAS ON THE CORPUS ONCE AND A RE-INGEST WIPED IT: `ingest.ts` writes with `replaceOne`, and
+ *  `meldPartner` was written only by a separate bin nobody re-ran. Measured 2026-09-05: 0 cards
+ *  carried it, and the deck report drew zero edges for Mishra + Phyrexian Dragon Engine. `allParts`
+ *  is written by the ordinary ingest, so the relation is derived from it here, every time. */
+test("docToCard derives the meld partner from allParts and never names the card itself", () => {
+  const doc = {
+    _id: "m", name: "Mishra, Claimed by Gix", typeLine: "Legendary Creature — Phyrexian Human Artificer",
+    oracleText: "", keywords: [], colors: ["B", "R"], manaValue: 4, colorIdentity: ["B", "R"],
+    power: "3", toughness: "5", tags: { produces: [], cares: [] }, searchNames: [],
+    allParts: [
+      { component: "meld_part", name: "Mishra, Claimed by Gix", typeLine: "Legendary Creature — Phyrexian Human Artificer", printingId: "a" },
+      { component: "meld_part", name: "Phyrexian Dragon Engine", typeLine: "Artifact Creature — Phyrexian Dragon", printingId: "b" },
+      { component: "meld_result", name: "Mishra, Lost to Phyrexia", typeLine: "Legendary Artifact Creature — Phyrexian Artificer", printingId: "c" },
+    ],
+  } as unknown as Parameters<typeof docToCard>[0];
+  expect(docToCard(doc).meldPartner).toBe("Phyrexian Dragon Engine");
+  expect(docToCard({ ...doc, name: "Grizzly Bears", allParts: [] }).meldPartner).toBeUndefined();
+});

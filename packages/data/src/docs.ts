@@ -27,7 +27,8 @@ export interface CardDoc {
   allParts?: RelatedPart[];
   faces?: CardFace[];
   artCrop?: string;
-  /** Written by `ingest-meld.ts`, not by `toCardDoc` — re-run that bin after a full re-ingest. */
+  /** LEGACY: once written by the deleted `ingest-meld` bin and erased by the next full re-ingest;
+   *  `docToCard` derives the relation from `allParts` now. Unused. */
   meldPartner?: string;
   meldResult?: string;
   meldParts?: string[];
@@ -98,7 +99,16 @@ export function docToCard(d: CardDoc): Card {
     colorIdentity: d.colorIdentity,
     power: d.power,
     toughness: d.toughness,
-    ...(d.meldPartner !== undefined ? { meldPartner: d.meldPartner } : {}),
+    // DERIVED FROM `allParts` ON EVERY READ, never from a stored field. `meldPartner` used to be
+    // written by `ingest-meld.ts` alone, and `ingest.ts` replaces whole documents, so the first full
+    // re-ingest after 2026-08-06 silently erased it: 0 of 21 meld cards carried it on 2026-09-05 and
+    // the engine's meld edge -- Mishra, Claimed by Gix + Phyrexian Dragon Engine -- drew nothing.
+    // `allParts` comes from Scryfall bulk data through the ordinary ingest, so it is always current.
+    // Scryfall lists the card itself among its own meld parts, hence the name test.
+    ...(() => {
+      const other = d.allParts?.find((p) => p.component === "meld_part" && p.name !== d.name);
+      return other ? { meldPartner: other.name } : {};
+    })(),
     // Needed to tell a card castable from either face from one whose back face is only reached in
     // play. Without it `extractCharacteristics` sees "Artifact // Land — Cave" and cannot know that
     // no land ever enters.

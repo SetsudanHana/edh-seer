@@ -1548,3 +1548,19 @@ test("END-TO-END: a token read as unpartnered because its maker's OTHER face is 
   expect(treasure).toBeDefined();
   expect(treasure!.hasPartner).toBe(true);
 });
+
+/** MELD REACHED THE EDGE LIST AND NEVER THE CARD. `edges` is built from `pairReasons`, which carries
+ *  `meldReason`; the per-card partner loop called `directedReasons` alone, so Mishra, Claimed by Gix
+ *  and Phyrexian Dragon Engine had an edge in `report.edges` and "synergizes with 0 cards" on the
+ *  card line. Hidden for a month because the corpus had lost `meldPartner` (docs.ts). */
+test("a meld pair counts as partners on both cards, not only as an edge", () => {
+  const a = dc("Mishra, Claimed by Gix", []);
+  (a.card as { meldPartner?: string }).meldPartner = "Phyrexian Dragon Engine";
+  const b = dc("Phyrexian Dragon Engine", []);
+  (b.card as { meldPartner?: string }).meldPartner = "Mishra, Claimed by Gix";
+  const report = analyzeDeckStructured([a, b], undefined, H);
+  expect(report.edges.some((e) => e.reasons.some((r) => r.tag === "meld"))).toBe(true);
+  expect(report.cards.find((c) => c.name === "Mishra, Claimed by Gix")?.partnerCount).toBe(1);
+  expect(report.cards.find((c) => c.name === "Phyrexian Dragon Engine")?.topPartners.map((p) => p.name))
+    .toEqual(["Mishra, Claimed by Gix"]);
+});
