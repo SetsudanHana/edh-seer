@@ -1,5 +1,5 @@
 import type { Clause } from "../segment.js";
-import type { Requirement } from "../schema.js";
+import type { Marker, Requirement } from "../schema.js";
 
 /** ABILITY WORDS THAT NAME A GAME-STATE MARKER. The segmenter strips every ability word off a clause
  *  (`ABILITY_WORD`, segment.ts), which is right for the model -- "Landfall" is flavour to a clause
@@ -25,4 +25,33 @@ export function clauseRequiresOf(oracleText: string, clauses: readonly Clause[])
     }
   }
   return out;
+}
+
+/** THE BOOLEAN MARKERS live inside the clause text: "if you're the monarch", "as long as you have
+ *  the city's blessing", "if you have the initiative", "as long as you've completed a dungeon",
+ *  "as long as it's night". Read only where the condition governs the WHOLE clause -- at its head
+ *  (after the trigger opener) or trailing on a one-sentence clause -- so a mid-clause alternative
+ *  ("create X. If you're the monarch, create Y instead") keeps both branches unconditional, which
+ *  is what the clause records today. Day is not here: no commander-legal card conditions on it. */
+const CONDITIONS: [RegExp, Marker][] = [
+  [/\byou.?re the monarch\b/i, "monarch"],
+  [/\byou have the initiative\b/i, "initiative"],
+  [/\byou have the city.s blessing\b/i, "blessing"],
+  [/\byou.?ve completed a dungeon\b/i, "dungeon"],
+  [/\bit.?s night\b/i, "night"],
+];
+const HEAD = /^\s*(?:(?:whenever|when|at the beginning of|at end of)[^,]*,\s*)?(?:if|as long as)\s+([^,.]+?)\s*,/i;
+const TAIL = /\b(?:if|as long as)\s+([^,.]+?)\.?\s*$/i;
+
+/** CEILING: ONE REQUIREMENT PER CLAUSE. A condition on a clause's SECOND sentence -- Radiant
+ *  Destiny's "Creatures ... get +1/+1. As long as you have the city's blessing, they also have
+ *  vigilance." -- cannot be attached without silencing the first sentence too, so it is not read
+ *  and the whole clause stays unconditional. Measured 2026-09-06: monarch 11 cards read of 25
+ *  printed conditions, blessing 6 of 25, dungeon 5 of 15. The upgrade is a requirement per action. */
+export function requiresOf(text: string): Requirement | undefined {
+  const sentences = text.split(/\.\s+/).filter(Boolean).length;
+  const cond = HEAD.exec(text)?.[1] ?? (sentences <= 1 ? TAIL.exec(text)?.[1] : undefined);
+  if (!cond) return undefined;
+  for (const [re, marker] of CONDITIONS) if (re.test(cond)) return { marker, min: 1 };
+  return undefined;
 }

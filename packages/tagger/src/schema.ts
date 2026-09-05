@@ -555,7 +555,7 @@ export type Repeats = "once" | "per-cycle" | "per-turn" | "repeatable" | "contin
 
 /** A game-state marker (CR 702.179 speed today; monarch, initiative, city's blessing, day/night and
  *  a completed dungeon are the next members) and the value the ability needs it at. */
-export type Marker = "speed";
+export type Marker = "speed" | "monarch" | "initiative" | "blessing" | "dungeon" | "night";
 export interface Requirement { marker: Marker; min: number }
 
 export interface Ability {

@@ -11,6 +11,7 @@ import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, extraPhaseName } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
+import { requiresOf } from "./markers.js";
 import { actionRecipients } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject } from "./subject.js";
@@ -25,7 +26,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 105;
+export const DERIVE_VERSION = 106;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1096,7 +1097,9 @@ export function deriveAbilities(
       if (conditionCares.length > 0 && abilities[i].trigger) {
         abilities[i] = { ...abilities[i], conditionCares };
       }
-      const requires = clauseRequires?.[clause.id];
+      // A GAME-STATE REQUIREMENT: from the ability word the segmenter stripped ("Max speed —"),
+      // else from a condition that governs the whole clause text (roadmap W18).
+      const requires = clauseRequires?.[clause.id] ?? requiresOf(text);
       if (requires) abilities[i] = { ...abilities[i], requires };
       const trig = abilities[i].trigger;
       if (trig && trig.verbs.includes("enters") && (arrivalNotCast || arrivalTapped)) {

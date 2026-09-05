@@ -1982,3 +1982,13 @@ test("deriveCardTags carries a clause's requirement onto its abilities", () => {
   } as never);
   expect(tags.abilities.map((a) => a.requires)).toEqual([{ marker: "speed", min: 4 }]);
 });
+
+test("a clause whose text carries a marker condition derives the requirement", () => {
+  const tags = deriveCardTags({
+    name: "Grave Venerations", characteristics: MINIMAL_CHARACTERISTICS,
+    clauses: [{ id: 1, abilityType: "triggered", trigger: { event: "end-step", control: "you" }, actions: [{ verb: "return", object: "up to one target creature card", fromZone: "graveyard", toZone: "hand" }] }],
+    clauseTexts: { 1: "At the beginning of your end step, if you're the monarch, return up to one target creature card from your graveyard to your hand." },
+  } as never);
+  expect(tags.abilities.every((a) => a.requires?.marker === "monarch")).toBe(true);
+  expect(tags.abilities.length).toBeGreaterThan(0);
+});
