@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/n5uPXwsEAKAJY2U2tRrStw (source https://archidekt.com/decks/15555042)
+# tags Group Hug, Card Draw, +1/+1 Counters; bracket 3; saved 2026-09-05; 3003 tagged of 36594 indexed
+
+Commander
+1 Ms. Bumbleflower
+
+Deck
+1 Adarkar Wastes
+1 Alchemist's Refuge
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Flooded Grove
+4 Forest
+1 Glacial Fortress
+1 Hinterland Harbor
+4 Island
+1 Overflowing Basin
+4 Plains
+1 Prairie Stream
+1 Razorverge Thicket
+1 Reliquary Tower
+1 Seachrome Coast
+1 Seaside Citadel
+1 Skycloud Expanse
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 Temple Garden
+1 Temple of Mystery
+1 Terramorphic Expanse
+1 Waterlogged Grove
+1 Yavimaya Coast
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Beast Within
+1 Counterspell
+1 Generous Gift
+1 Growth Spiral
+1 Inspiring Call
+1 Negate
+1 Path to Exile
+1 Swords to Plowshares
+1 Basking Broodscale
+1 Benthic Biomancer
+1 Coiling Oracle
+1 Conclave Mentor
+1 Deepglow Skate
+1 Devoted Druid
+1 Dreamtide Whale
+1 Evolution Witness
+1 Faeburrow Elder
+1 Fathom Mage
+1 Final-Word Phantom
+1 Forgotten Ancient
+1 Freestrider Lookout
+1 Gyre Sage
+1 Heliod, the Radiant Dawn
+1 High Fae Trickster
+1 Hydroelectric Specimen
+1 Incubation Druid
+1 Kalonian Hydra
+1 Kami of Whispered Hopes
+1 Kros, Defense Contractor
+1 Kutzil, Malamet Exemplar
+1 Managorger Hydra
+1 Pensive Professor
+1 Rishkar, Peema Renegade
+1 Seedborn Muse
+1 The Unagi of Kyoshi Island
+1 Twenty-Toed Toad
+1 Uthros Psionicist
+1 Valley Floodcaller
+1 Whitemane Lion
+1 Bridgeworks Battle
+1 Eldritch Evolution
+1 Explore
+1 Farseek
+1 Neoform
+1 Rampant Growth
+1 Season of Gathering
+1 Supreme Verdict
+1 Wargate
+1 Communal Brewing
+1 Hardened Scales
+1 Leyline of Anticipation
+1 Loading Zone
+1 Privileged Position
+1 Proft's Eidetic Memory
+1 Psychic Possession
+1 Simic Ascendancy
+1 Terrasymbiosis
+1 Wizard Class
+1 Exploration Broodship
+1 Tamiyo, Field Researcher

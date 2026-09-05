@@ -138,6 +138,18 @@ test("archetype deltas shift PARENT targets: Voltron wants fewer wipes, more int
   expect(t(voltron, "Interaction")).toBeGreaterThan(t(goodstuff, "Interaction"));
 });
 
+// Owner ruling 2026-09-06 (roadmap W19): a wipe is not a by-turn requirement, so no hypergeometric
+// derives it -- "three per deck" is the doctrine, and SIX for superfriends, where the deck has few
+// creatures of its own and the wipes protect the walkers. The 71-deck population agrees on the
+// baseline (69 non-superfriends decks: median 2, only 8 run four or more); superfriends is n=2.
+test("superfriends wants twice the wipes: its board is walkers, and a wipe protects them", () => {
+  const cards = [mk("Shield", "Permanents you control gain indestructible.", "Instant")];
+  const t = (a: Parameters<typeof computeBuild>[1]) =>
+    computeBuild(cards, a).buildParents.find((p) => p.name === "Board wipes")!.target;
+  expect(t("goodstuff")).toBe(3);
+  expect(t("superfriends")).toBe(6);
+});
+
 test("a grouped leaf never carries a target of its own, whatever the archetype", () => {
   // Voltron deltas BOTH boardWipe and protection -- the two leaves most likely to leak a stray
   // target back onto the leaf row if the redirection to the parent were wrong.

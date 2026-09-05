@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/uNB8FW6pCeSWnVr77-oTYw (source https://moxfield.com/decks/zMSWxFYNkUG_Mf30BMqBSw)
+# tags Artifacts, Tokens; bracket 3; saved 2026-09-05; 3841 tagged of 22259 indexed
+
+Commander
+1 Breya, Etherium Shaper
+
+Deck
+1 Alibou, Ancient Witness
+1 Cid, Timeless Artificer
+1 Crystalline Crawler
+1 Ethersworn Canonist
+1 Forensic Gadgeteer
+1 Goblin Welder
+1 Illustrious Wanderglyph
+1 Jan Jansen, Chaos Crafter
+1 Losheel, Clockwork Scholar
+1 Loyal Apprentice
+1 Marionette Master
+1 Mondrak, Glory Dominus
+1 Oltec Matterweaver
+1 Padeem, Consul of Innovation
+1 Pinnacle Emissary
+1 Ratchet, Field Medic
+1 Ravenous Robots
+1 Research Thief
+1 Sai, Master Thopterist
+1 Sharding Sphinx
+1 Stridehangar Automaton
+1 Vedalken Archmage
+1 Wurmcoil Engine
+1 Ancient Den
+1 Battlefield Forge
+1 Blood Crypt
+1 Caves of Koilos
+1 Command Tower
+1 Darkwater Catacombs
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Fetid Heath
+1 Godless Shrine
+1 Great Furnace
+1 Hallowed Fountain
+2 Island
+2 Mountain
+1 Path of Ancestry
+2 Plains
+1 Rugged Prairie
+1 Sacred Foundry
+1 Seat of the Synod
+1 Shadowblood Ridge
+1 Shivan Reef
+1 Skycloud Expanse
+1 Spectator Seating
+1 Spire of Industry
+1 Steam Vents
+1 Sulfur Falls
+2 Swamp
+1 Underground River
+1 Uthros, Titanic Godcore
+1 Vault of Whispers
+1 Watery Grave
+1 Arcane Denial
+1 Chaos Warp
+1 Counterspell
+1 Despark
+1 Desynchronization
+1 Dispatch
+1 Enlightened Tutor
+1 Generous Gift
+1 Strix Serenade
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 Arcane Signet
+1 Fellwar Stone
+1 Idol of Oblivion
+1 Memorial Vault
+1 Oni-Cult Anvil
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Talisman of Progress
+1 Thousand Moons Smithy
+1 Uthros Research Craft
+1 Blasphemous Act
+1 Mutinous Massacre
+1 Reckless Handling
+1 Sundering Eruption
+1 Fateful Discovery
+1 Mirrodin Besieged
+1 Revel in Riches
+1 Smothering Tithe
+1 Storm the Vault
+1 Tempered Steel
+1 Thopter Spy Network
+1 Weapons Manufacturing
+1 Karn, Scion of Urza
+1 Saheeli, Filigree Master
+1 Tezzeret, Master of the Bridge

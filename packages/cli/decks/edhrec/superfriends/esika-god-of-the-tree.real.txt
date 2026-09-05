@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/UxIQ6A7_owwEGdq9hz08sA (source https://moxfield.com/decks/Is7QrEISMEuNCn6aoET1_g)
+# tags Planeswalkers, Control, Pillow Fort, Stax; bracket 3; saved 2026-09-04; 1177 tagged of 25701 indexed
+
+Commander
+1 Esika, God of the Tree
+
+Deck
+1 Ajani Steadfast
+1 Ajani, Mentor of Heroes
+1 Aminatou, the Fateshifter
+1 Ashiok, Dream Render
+1 Commodore Guff
+1 Dovin Baan
+1 Elspeth, Sun's Champion
+1 Jace, the Mind Sculptor
+1 Kaya the Inexorable
+1 Liliana, Dreadhorde General
+1 Narset Transcendent
+1 Nicol Bolas, Dragon-God
+1 Nicol Bolas, God-Pharaoh
+1 Oko, Thief of Crowns
+1 Ral Zarek
+1 Tamiyo, Compleated Sage
+1 Tamiyo, Field Researcher
+1 Tamiyo, the Moon Sage
+1 Teferi, Hero of Dominaria
+1 Teferi, Master of Time
+1 Teferi, Temporal Archmage
+1 Teferi, Time Raveler
+1 Ugin, the Spirit Dragon
+1 Vraska, Betrayal's Sting
+1 Wrenn and Realmbreaker
+1 Arcane Signet
+1 Chromatic Lantern
+1 Ichormoon Gauntlet
+1 Lotus Petal
+1 Mox Amber
+1 Sol Ring
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Forbidden Orchard
+1 Gemstone Caverns
+1 Godless Shrine
+1 Hallowed Fountain
+1 Indatha Triome
+1 Karn's Bastion
+1 Ketria Triome
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Overgrown Tomb
+1 Polluted Delta
+1 Raffine's Tower
+1 Reflecting Pool
+1 Sacred Foundry
+1 Scalding Tarn
+1 Spara's Headquarters
+1 Steam Vents
+1 Stomping Ground
+1 Temple Garden
+1 The World Tree
+1 Urza's Saga
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Zagoth Triome
+1 Atraxa, Praetors' Voice
+1 Bloom Tender
+1 Deepglow Skate
+1 Delighted Halfling
+1 Silent Arbiter
+1 Sisay, Weatherlight Captain
+1 Sphinx of the Second Sun
+1 Vorinclex, Monstrous Raider
+1 Blasphemous Act
+1 Damn
+1 Eerie Ultimatum
+1 Farewell
+1 Farseek
+1 Nature's Lore
+1 Skyshroud Claim
+1 Supreme Verdict
+1 Three Visits
+1 Toxic Deluge
+1 Clever Concealment
+1 Deflecting Swat
+1 Final Showdown
+1 Mana Drain
+1 Swords to Plowshares
+1 Doubling Season
+1 Dueling Grounds
+1 Ghostly Prison
+1 Humility
+1 In the Eye of Chaos
+1 Oath of Teferi
+1 Paradox Haze
+1 Propaganda
+1 Rhystic Study
+1 Sterling Grove

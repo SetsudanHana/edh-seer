@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/B_HjExQgqmIyMYSAX2awtQ (source https://moxfield.com/decks/kmwRZQ3I1EadhwpQSCITiQ)
+# tags Control, +1/+1 Counters, Group Hug; bracket 2; saved 2026-09-04; 649 tagged of 36594 indexed
+
+Commander
+1 Ms. Bumbleflower
+
+Deck
+1 Adarkar Wastes
+1 Azorius Chancery
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Fabled Passage
+1 Hallowed Fountain
+1 Hinterland Harbor
+1 Otawara, Soaring City
+1 Prismatic Vista
+1 Rejuvenating Springs
+1 Scalding Tarn
+1 Sea of Clouds
+1 Simic Growth Chamber
+2 Snow-Covered Forest
+2 Snow-Covered Island
+1 Snow-Covered Plains
+1 Spara's Headquarters
+1 Temple Garden
+1 Urza's Saga
+1 Windswept Heath
+1 Yavimaya Coast
+1 An Offer You Can't Refuse
+1 Bilbo's Gambit
+1 Brainstorm
+1 Chain of Vapor
+1 Consider
+1 Dawn's Truce
+1 Erode
+1 Frantic Search
+1 Get Lost
+1 Growth Spiral
+1 Into the Flood Maw
+1 Legolas's Quick Reflexes
+1 Mana Drain
+1 Misdirection
+1 Nature's Claim
+1 Noxious Revival
+1 Opt
+1 Path to Exile
+1 Planar Genesis
+1 Reprieve
+1 Sejiri Shelter
+1 Sink into Stupor
+1 Snap
+1 Swan Song
+1 Swords to Plowshares
+1 Arcane Signet
+1 Bender's Waterskin
+1 Mishra's Bauble
+1 Sol Ring
+1 The Ozolith
+1 Urza's Bauble
+1 Avatar's Wrath
+1 Flow State
+1 Gitaxian Probe
+1 Nature's Lore
+1 Ponder
+1 Stock Up
+1 Three Visits
+1 Wave Goodbye
+1 Birds of Paradise
+1 Bloom Tender
+1 Brazen Borrower
+1 Cathar Commando
+1 Cloud of Faeries
+1 Cosmogrand Zenith
+1 Delighted Halfling
+1 Esper Sentinel
+1 Faeburrow Elder
+1 Faerie Mastermind
+1 Glen Elendra Archmage
+1 Incubation Druid
+1 Jolrael, Mwonvuli Recluse
+1 Kami of Whispered Hopes
+1 King T'Challa
+1 Kutzil, Malamet Exemplar
+1 Loki, God of Mischief
+1 Noble Hierarch
+1 Ouroboroid
+1 Snapcaster Mage
+1 Tataru Taru
+1 Tishana's Tidebinder
+1 Torrential Gearhulk
+1 Gleaming Splendor
+1 Hardened Scales
+1 Psychic Possession
+1 Super State
+1 Sylvan Library
+1 Wild Growth
+1 Wilderness Reclamation
+1 Teferi, Time Raveler

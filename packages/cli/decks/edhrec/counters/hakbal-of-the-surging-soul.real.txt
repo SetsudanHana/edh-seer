@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/rAWL2T3x35RDEiLHln2LBQ (source https://archidekt.com/decks/23847724)
+# tags Merfolk, +1/+1 Counters; bracket 3; saved 2026-09-05; 2719 tagged of 25072 indexed
+
+Commander
+1 Hakbal of the Surging Soul
+
+Deck
+1 Adrix and Nev, Twincasters
+1 Cold-Eyed Selkie
+1 Coralhelm Commander
+1 Deepchannel Mentor
+1 Deeproot Elite
+1 Deeproot Historian
+1 Emperor Mihail II
+1 Harmonized Trio
+1 Herald of Secret Streams
+1 Ink Dissolver
+1 Kiora's Follower
+1 Kiora, the Rising Tide
+1 Kopala, Warden of Waves
+1 Kumena, Tyrant of Orazca
+1 Master of the Pearl Trident
+1 Merfolk Mistbinder
+1 Merfolk Skydiver
+1 Merfolk Sovereign
+1 Merrow Reejerey
+1 Metallic Mimic
+1 Mist Dancer
+1 Murkfiend Liege
+1 Namor the Sub-Mariner
+1 Nev, the Practical Dean
+1 Nicanzil, Current Conductor
+1 Prime Speaker Zegana
+1 Realmwalker
+1 Sage of Fables
+1 Seafloor Oracle
+1 Silvergill Adept
+1 Silvergill Douser
+1 Simic Sky Swallower
+1 Singer of Swift Rivers
+1 Slinn Voda, the Rising Deep
+1 Stonybrook Banneret
+1 Svyelun of Sea and Sky
+1 Tatyova, Benthic Druid
+1 Thieving Skydiver
+1 Tishana's Tidebinder
+1 Tishana, Voice of Thunder
+1 Topography Tracker
+1 Tributary Instructor
+1 True-Name Nemesis
+1 Vorel of the Hull Clade
+1 Wanderwine Prophets
+1 Zegana, Utopian Speaker
+1 Aetherize
+1 Brainstorm
+1 Growth Spiral
+1 Inspiring Call
+1 Quandrix Command
+1 Rapid Hybridization
+1 Resculpt
+1 Ruinous Intrusion
+1 Arcane Signet
+1 Dawn-Blessed Pennant
+1 Simic Signet
+1 Sol Ring
+1 Stoneforge Masterwork
+1 Branching Evolution
+1 Deeproot Pilgrimage
+1 Deeproot Waters
+1 Kindred Discovery
+1 Merrow Commerce
+1 Reflections of Littjara
+1 Simic Ascendancy
+1 Bygone Marvels
+1 Explore
+1 Kodama's Reach
+1 Wave Goodbye
+1 Command Tower
+1 Flooded Grove
+8 Forest
+13 Island
+1 Karn's Bastion
+1 Mystic Sanctuary
+1 Novijen, Heart of Progress
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Narset, Parter of Veils

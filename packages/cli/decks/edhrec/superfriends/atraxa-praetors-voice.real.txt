@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/NbD_a2YtZRs_0naV-HlCNQ (source https://moxfield.com/decks/x44TQzjVx0e_jzaxa4Tk2g)
+# tags Planeswalkers, Midrange; bracket 3; saved 2026-09-05; 2256 tagged of 44172 indexed
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Ajani, Sleeper Agent
+1 Dovin Baan
+1 Elspeth, Storm Slayer
+1 Kaya the Inexorable
+1 Kiora, the Crashing Wave
+1 Narset Transcendent
+1 Nissa, Vital Force
+1 Tamiyo, Compleated Sage
+1 Tamiyo, Field Researcher
+1 Teferi, Hero of Dominaria
+1 Teferi, Who Slows the Sunset
+1 The Eternal Wanderer
+1 Ugin, the Spirit Dragon
+1 Venser, the Sojourner
+1 Vraska, Betrayal's Sting
+1 Vraska, Relic Seeker
+1 Anguished Unmaking
+1 Counterspell
+1 Cyclonic Rift
+1 Flare of Fortitude
+1 Heroic Intervention
+1 Krosan Grip
+1 Negate
+1 Pact of Negation
+1 Ripples of Potential
+1 Arena Rector
+1 Atraxa, Grand Unifier
+1 Birds of Paradise
+1 Bloom Tender
+1 Crystalline Crawler
+1 Deepglow Skate
+1 Delighted Halfling
+1 Dreamtide Whale
+1 Esper Sentinel
+1 Evolution Sage
+1 Flux Channeler
+1 Great Divide Guide
+1 Lotho, Corrupt Shirriff
+1 Onakke Oathkeeper
+1 Pollywog Prodigy
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Vorinclex, Monstrous Raider
+1 Wan Shi Tong, Librarian
+1 Astral Cornucopia
+1 Contagion Engine
+1 Everflowing Chalice
+1 Peter Parker's Camera
+1 Sol Ring
+1 Sword of Truth and Justice
+1 The Aetherspark
+1 The One Ring
+1 Black Market Connections
+1 Doubling Season
+1 Gleaming Splendor
+1 Innkeeper's Talent
+1 Mystic Remora
+1 Rhystic Study
+1 Sylvan Library
+1 Bountiful Promenade
+1 Breeding Pool
+1 Canopy Vista
+1 Command Tower
+1 Fetid Heath
+3 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Hinterland Harbor
+2 Island
+1 Karn's Bastion
+1 Marsh Flats
+1 Mistrise Village
+1 Morphic Pool
+1 Nesting Grounds
+1 Overgrown Tomb
+2 Plains
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sea of Clouds
+1 Sunpetal Grove
+2 Swamp
+1 Temple Garden
+1 Thespian's Stage
+1 Undergrowth Stadium
+1 Vault of Champions
+1 Verdant Catacombs
+1 Watery Grave
+1 Cultivate
+1 Farseek
+1 Flare of Cultivation
+1 Kodama's Reach
+1 Nature's Lore
+1 Primevals' Glorious Rebirth
+1 Skyshroud Claim

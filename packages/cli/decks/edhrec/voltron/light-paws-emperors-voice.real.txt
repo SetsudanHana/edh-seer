@@ -1,0 +1,76 @@
+# edhrec deck https://edhrec.com/deckpreview/EqZ5VlAO4v70M3wu6GPoVw (source https://moxfield.com/decks/Pv9Wfx87Dk6xTu2kZMdbBA)
+# tags Enchantress, Voltron; bracket 3; saved 2026-09-05; 1127 tagged of 12252 indexed
+
+Commander
+1 Light-Paws, Emperor's Voice
+
+Deck
+1 All That Glitters
+1 Angelic Destiny
+1 Battle Mastery
+1 Benevolent Blessing
+1 Cartouche of Solidarity
+1 Cho-Manno's Blessing
+1 Chosen by Heliod
+1 Darksteel Mutation
+1 Daybreak Coronet
+1 Eland Umbra
+1 Ethereal Armor
+1 Feather of Flight
+1 Flickerform
+1 Flickering Ward
+1 Gift of Immortality
+1 Gryff's Boon
+1 Hyena Umbra
+1 Idolized
+1 Land Tax
+1 Light of Promise
+1 Mantle of the Ancients
+1 Mask of Law and Grace
+1 Minimus Containment
+1 Mortal Obstinacy
+1 Rune of Sustenance
+1 Sage's Reverie
+1 Sentinel's Eyes
+1 Shardmage's Rescue
+1 Sheltered by Ghosts
+1 Shield of Duty and Reason
+1 Spectral Steel
+1 Spirit Mantle
+1 Timely Ward
+1 Twinblade Blessing
+1 Unquestioned Authority
+1 Arcane Signet
+1 Mind Stone
+1 Sol Ring
+1 Blacksmith's Skill
+1 Generous Gift
+1 Karametra's Blessing
+1 Loran's Escape
+1 Rebuff the Wicked
+1 Reprieve
+1 Sejiri Shelter
+1 Swords to Plowshares
+1 Unwanted Remake
+1 Eiganjo, Seat of the Empire
+1 Hall of Heliod's Generosity
+31 Plains
+1 War Room
+1 Giver of Runes
+1 Grand Abolisher
+1 Heliod's Pilgrim
+1 Kor Spiritdancer
+1 Mesa Enchantress
+1 Moon-Blessed Cleric
+1 Mother of Runes
+1 Nomad Mythmaker
+1 Pearl-Ear, Imperial Advisor
+1 Samwise the Stouthearted
+1 Skrelv, Defector Mite
+1 Sram, Senior Edificer
+1 Starfield Mystic
+1 Transcendent Envoy
+1 Umbra Mystic
+1 Open the Armory
+1 Single Combat
+1 Winds of Abandon

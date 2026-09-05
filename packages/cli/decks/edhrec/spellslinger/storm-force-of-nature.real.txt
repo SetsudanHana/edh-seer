@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/lkVMM_0jAlSUhNBjNZ-Nwg (source https://moxfield.com/decks/PcW_qSPqF0SQLTucamYkXQ)
+# tags Burn, Spellslinger, Aggro; bracket 3; saved 2026-09-04; 2825 tagged of 16218 indexed
+
+Commander
+1 Storm, Force of Nature
+
+Deck
+1 Alchemist's Refuge
+1 Breeding Pool
+1 Command Tower
+1 Commercial District
+1 Dragon-Cursed Halls
+1 Exotic Orchard
+1 Fabled Passage
+1 Fire-Lit Thicket
+3 Forest
+3 Island
+1 Kessig Wolf Run
+1 Ketria Triome
+1 Mossfire Valley
+3 Mountain
+1 Multiversal Passage
+1 Otawara, Soaring City
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rockfall Vale
+1 Shinka, the Bloodsoaked Keep
+1 Spire Garden
+1 Steam Vents
+1 Stomping Ground
+1 Thornspire Verge
+1 Training Compound
+1 Turbulent Springs
+1 Turbulent Wilderness
+1 Wooded Foothills
+1 Arcane Signet
+1 Crawlspace
+1 Necklace of Girion
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Skullspore Nexus
+1 The Ten Rings
+1 Archmage Emeritus
+1 Birds of Paradise
+1 Bruce Banner
+1 Cheering Crowd
+1 Enduring Curiosity
+1 Enduring Vitality
+1 Hulk, Always Angry
+1 Hulk, Brutal Brawler
+1 Iron Lad, Young Avenger
+1 Iron Man, Armored Avenger
+1 Ivy, Gleeful Spellthief
+1 Ms. Marvel, Kamala Khan
+1 Muse Seeker
+1 Scarlet Spider, Ben Reilly
+1 Storm-Kiln Artist
+1 Temur Battlecrier
+1 The Howling Abomination
+1 Triton Fortune Hunter
+1 Wolverine, Best There Is
+1 Wolverine, Claws Out
+1 Wolverine, Fierce Fighter
+1 Xenagos, God of Revels
+1 Bear Umbra
+1 Case of the Ransacked Lab
+1 Impostor Syndrome
+1 Season of Growth
+1 Shark Typhoon
+1 Sylvan Library
+1 World War Hulk
+1 Beast Within
+1 Berserk
+1 Fists of Flame
+1 HULK SMASH!
+1 Heroic Intervention
+1 Legolas's Quick Reflexes
+1 Lightning Bolt
+1 Manamorphose
+1 Prizefight
+1 Punishing Punch
+1 Ram Through
+1 Strength of Will
+1 The Last Agni Kai
+1 Valakut Awakening
+1 Blasphemous Act
+1 Bridgeworks Battle
+1 Bushwhack
+1 Contest of Claws
+1 Farseek
+1 Flow State
+1 Germination Practicum
+1 Improvisation Capstone
+1 Jeska's Will
+1 Nature's Lore
+1 Ponder
+1 Preordain
+1 Rishkar's Expertise
+1 Stock Up
+1 Super Combo

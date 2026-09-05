@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/ovZh13weLHoCmx9kKEEAyQ (source https://archidekt.com/decks/17659147)
+# tags Planeswalkers; bracket 3; saved 2026-09-05; 783 tagged of 4126 indexed
+
+Commander
+1 Carth the Lion
+
+Deck
+1 Arachnogenesis
+1 Beast Within
+1 Fell the Profane
+1 Fog
+1 Harrow
+1 Malakir Rebirth
+1 Putrefy
+1 Revitalizing Repast
+1 Bala Ged Recovery
+1 Culling Ritual
+1 Cultivate
+1 Damnation
+1 Demonic Tutor
+1 Find // Finality
+1 Rampant Growth
+1 The Elderspell
+1 Three Visits
+1 Toxic Deluge
+1 Bane of Progress
+1 Beledros Witherbloom
+1 Boggart Trawler
+1 Eternal Witness
+1 Evolution Sage
+1 Foulmire Knight
+1 Glissa Sunslayer
+1 Grist, Voracious Larva
+1 Kodama of the East Tree
+1 Leyline Prowler
+1 Nighthawk Scavenger
+1 Nissa, Vastwood Seer
+1 Ophiomancer
+1 Reclamation Sage
+1 Sakura-Tribe Elder
+1 Silent Arbiter
+1 Spore Frog
+1 Tangled Florahedron
+1 Tower Winder
+1 Underrealm Lich
+1 Vorinclex, Monstrous Raider
+1 Bojuka Bog
+1 Command Tower
+1 Festering Thicket
+16 Forest
+1 Khalni Garden
+1 Overgrown Tomb
+11 Swamp
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Woodland Cemetery
+1 Yavimaya, Cradle of Growth
+1 Doubling Season
+1 Elemental Bond
+1 Garruk's Uprising
+1 Oath of Nissa
+1 Garruk Relentless
+1 Garruk Wildspeaker
+1 Garruk, Apex Predator
+1 Garruk, Caller of Beasts
+1 Garruk, Cursed Huntsman
+1 Garruk, Primal Hunter
+1 Garruk, Unleashed
+1 Grist, the Hunger Tide
+1 Nissa of Shadowed Boughs
+1 Nissa, Voice of Zendikar
+1 Nissa, Who Shakes the World
+1 Ob Nixilis Reignited
+1 Tevesh Szat, Doom of Fools
+1 Vivien Reid
+1 Vraska the Unseen
+1 Vraska, Betrayal's Sting
+1 Vraska, Relic Seeker
+1 Wrenn and Realmbreaker
+1 Sol Ring

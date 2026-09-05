@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/ru1c_0F1A9d0QlCr_8JLNQ (source https://moxfield.com/decks/zVSgAeJeBX6QrudgqN-jnQ)
+# tags Combo, Control, Lifegain; bracket 3; saved 2026-09-05; 3091 tagged of 52883 indexed
+
+Commander
+1 Y'shtola, Night's Blessed
+
+Deck
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Caves of Koilos
+1 Choked Estuary
+1 Command Tower
+1 Contaminated Aquifer
+1 Drowned Catacomb
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fetid Heath
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+4 Island
+1 Isolated Chapel
+4 Plains
+1 Prairie Stream
+1 Raffine's Tower
+1 Reliquary Tower
+1 Shattered Sanctum
+1 Sunken Hollow
+1 Sunken Ruins
+4 Swamp
+1 Underground River
+1 Watery Grave
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Bender's Waterskin
+1 Bolas's Citadel
+1 Lightning Greaves
+1 Mindcrank
+1 Relic of Legends
+1 Sensei's Divining Top
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 The Darkness Crystal
+1 Thought Vessel
+1 Anguished Unmaking
+1 Baleful Mastery
+1 Cyclonic Rift
+1 Deadly Rollick
+1 Dismember
+1 Dovin's Veto
+1 Flawless Maneuver
+1 Frantic Search
+1 Lethal Scheme
+1 Mana Sculpt
+1 Misdirection
+1 Refute
+1 Render Silent
+1 Rewind
+1 Sink into Stupor
+1 Snuff Out
+1 Stroke of Midnight
+1 Transpose
+1 Undermine
+1 Unwind
+1 Void Rend
+1 Waterlogged Teachings
+1 Black Market Connections
+1 Bloodchief Ascension
+1 Construct a Cosmic Cube
+1 Curiosity
+1 Exquisite Blood
+1 Helm of the Ghastlord
+1 Phyrexian Arena
+1 Propaganda
+1 Rhystic Study
+1 Sanguine Bond
+1 Sigil of Sleep
+1 Decorum Dissertation
+1 Diabolic Tutor
+1 Risky Shortcut
+1 Vindicate
+1 Emet-Selch of the Third Seat
+1 Enduring Tenacity
+1 Leech Collector
+1 Lotho, Corrupt Shirriff
+1 Ojer Pakpatiq, Deepest Epoch
+1 Papalymo Totolymo
+1 Snapcaster Mage
+1 Spellskite
+1 Tataru Taru
+1 Vito, Thorn of the Dusk Rose
+1 Witch Enchanter
+1 Teferi, Time Raveler

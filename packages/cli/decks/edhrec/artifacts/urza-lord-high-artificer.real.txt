@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/snftYEjxctQXqNtH7iurEQ (source https://archidekt.com/decks/21167925)
+# tags Historic, Artifacts, Legends; bracket 2; saved 2026-09-04; 2703 tagged of 20393 indexed
+
+Commander
+1 Urza, Lord High Artificer
+
+Deck
+1 Academy Ruins
+1 Archway of Innovation
+1 Castle Vantress
+1 Darksteel Citadel
+25 Island
+1 Seat of the Synod
+1 Temple of the False God
+1 The Mycosynth Gardens
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Saga
+1 Urza's Tower
+1 Uthros, Titanic Godcore
+1 An Offer You Can't Refuse
+1 Counterspell
+1 Dramatic Reversal
+1 Flare of Denial
+1 Flow of Knowledge
+1 Force of Negation
+1 Hide on the Ceiling
+1 Mana Leak
+1 Pongify
+1 Scour for Scrap
+1 Slip Out the Back
+1 Spell Pierce
+1 We Say Thee Nay!
+1 Arcane Signet
+1 Everflowing Chalice
+1 Insight Engine
+1 Isochron Scepter
+1 Portal to Phyrexia
+1 Sapphire Medallion
+1 Simulacrum Synthesizer
+1 Sky Diamond
+1 Sol Ring
+1 Thought Vessel
+1 Throne of Eldraine
+1 Wayfarer's Bauble
+1 Big Mother Mouser
+1 Chrome Host Seedshark
+1 Cyberdrive Awakener
+1 Displacer Kitten
+1 Donatello, Gadget Master
+1 Donatello, Mutant Mechanic
+1 Elrond, Moon-Reader
+1 Emry, Lurker of the Loch
+1 Enduring Curiosity
+1 Etherium Sculptor
+1 Fugitive Droid
+1 Irma, Part-Time Mutant
+1 Iron Spider, Stark Upgrade
+1 Krang, Master Mind
+1 Krang, Utrom Warlord
+1 Mulldrifter
+1 Padeem, Consul of Innovation
+1 Sai, Master Thopterist
+1 Shuri, Wakandan Inventor
+1 Solemn Simulacrum
+1 Starfield Vocalist
+1 Steelswarm Operator
+1 The Reality Chip
+1 Treasure Mage
+1 Ulamog, the Ceaseless Hunger
+1 Walking Ballista
+1 Wan Shi Tong, Librarian
+1 Boomerang Basics
+1 Rite of Replication
+1 Stock Up
+1 Stolen Identity
+1 Temporal Manipulation
+1 Fateful Discovery
+1 Mystic Remora
+1 Propaganda
+1 Unstoppable Plan
+1 Tezzeret, Cruel Captain

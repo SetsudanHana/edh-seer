@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/Dr2f069m8vVipk9nVZZ_Lg (source https://archidekt.com/decks/24628516)
+# tags Landfall, Lands Matter, Card Draw; bracket 3; saved 2026-09-05; 1234 tagged of 16925 indexed
+
+Commander
+1 Aesi, Tyrant of Gyre Strait
+
+Deck
+1 Ancient Greenwarden
+1 Ashaya, Soul of the Wild
+1 Avenger of Zendikar
+1 Azusa, Lost but Seeking
+1 Cultivator Colossus
+1 Dryad of the Ilysian Grove
+1 Elven Raft-Steerer
+1 Eternal Witness
+1 Greensleeves, Maro-Sorcerer
+1 Kodama of the East Tree
+1 Laboratory Maniac
+1 Meloku the Clouded Mirror
+1 Mossborn Hydra
+1 Murkfiend Liege
+1 Oracle of Mul Daya
+1 Rampaging Baloths
+1 Ruin Crab
+1 Sakura-Tribe Scout
+1 Scaled Herbalist
+1 Scute Swarm
+1 Skyshroud Ranger
+1 Tatyova, Benthic Druid
+1 The Astonishing Ant-Man
+1 Tireless Provisioner
+1 Undergrowth Champion
+1 Arcane Denial
+1 Beast Within
+1 Counterspell
+1 Crop Rotation
+1 Cyclonic Rift
+1 Entish Restoration
+1 Eureka Moment
+1 Gush
+1 Heroic Intervention
+1 Mana Drain
+1 Negate
+1 Pongify
+1 Rapid Hybridization
+1 Worldly Tutor
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Fabled Passage
+1 Flooded Strand
+14 Forest
+1 Guildless Commons
+6 Island
+1 Misty Rainforest
+1 Oboro, Palace in the Clouds
+1 Polluted Delta
+1 Prismatic Vista
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Scalding Tarn
+1 Simic Growth Chamber
+1 Sodden Verdure
+1 Tropical Island
+1 Verdant Catacombs
+1 Willowrush Verge
+1 Yavimaya, Cradle of Growth
+1 Broken Bond
+1 Cultivate
+1 Finale of Devastation
+1 Kodama's Reach
+1 Nature's Lore
+1 Overwhelming Stampede
+1 Rampant Growth
+1 Sylvan Scrying
+1 Three Visits
+1 Urban Evolution
+1 Burgeoning
+1 Case of the Locked Hothouse
+1 Concordant Crossroads
+1 Druid Class
+1 Exploration
+1 Garruk's Uprising
+1 Retreat to Coralhelm
+1 Wizard Class
+1 Sol Ring
+1 Wrenn and Seven

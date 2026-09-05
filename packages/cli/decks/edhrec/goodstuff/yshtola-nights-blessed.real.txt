@@ -1,0 +1,103 @@
+# edhrec deck https://edhrec.com/deckpreview/ljUTJmV6TR2kWsJxa2XvJQ (source https://archidekt.com/decks/14518903)
+# tags Spellslinger, Burn, Card Draw, Midrange, Lifedrain, Pillow Fort, Control, Good Stuff; bracket 3; saved 2026-09-04; 404 tagged of 52883 indexed
+
+Commander
+1 Y'shtola, Night's Blessed
+
+Deck
+1 Adarkar Wastes
+1 Bloodstained Mire
+1 Caves of Koilos
+1 City of Brass
+1 Command Tower
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Flooded Strand
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+3 Island
+1 Isolated Chapel
+1 Marsh Flats
+1 Meticulous Archive
+1 Mistrise Village
+1 Otawara, Soaring City
+1 Plains
+1 Plaza of Heroes
+1 Polluted Delta
+1 Raffine's Tower
+1 Reliquary Tower
+1 Shadowy Backstreet
+1 Shattered Sanctum
+2 Swamp
+1 Tainted Field
+1 Undercity Sewers
+1 Underground River
+1 Verdant Catacombs
+1 Watery Grave
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Anguished Unmaking
+1 Chain of Vapor
+1 Comeuppance
+1 Counterspell
+1 Dark Ritual
+1 Deadly Rollick
+1 Dismember
+1 Force of Negation
+1 Frantic Search
+1 Lim-Dûl's Vault
+1 Malakir Rebirth
+1 Rewind
+1 Sink into Stupor
+1 Snuff Out
+1 Strix Serenade
+1 Submerge
+1 Sudden Spoiling
+1 Swords to Plowshares
+1 Unwind
+1 Void Rend
+1 Arcane Signet
+1 Azorius Signet
+1 Bender's Waterskin
+1 Bolas's Citadel
+1 Dimir Signet
+1 Fellwar Stone
+1 Orzhov Signet
+1 Relic of Legends
+1 Sol Ring
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 Thought Vessel
+1 Wishclaw Talisman
+1 Avatar's Wrath
+1 Massacre
+1 Ponder
+1 Risky Shortcut
+1 Stock Up
+1 Time Reversal
+1 Toxic Deluge
+1 Vindicate
+1 Windfall
+1 Blind Obedience
+1 Bloodchief Ascension
+1 Curiosity
+1 Exquisite Blood
+1 Ghostly Prison
+1 Gleaming Splendor
+1 Imprisoned in the Moon
+1 Mystic Remora
+1 Ophidian Eye
+1 Propaganda
+1 Rhystic Study
+1 Shadow of the Second Sun
+1 Smothering Tithe
+1 Steel of the Godhead
+1 The Eldest Reborn
+1 Emet-Selch of the Third Seat
+1 High Fae Trickster
+1 Hydroelectric Specimen
+1 Lotho, Corrupt Shirriff
+1 Sheoldred, the Apocalypse
+1 Spellskite
