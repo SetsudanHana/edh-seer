@@ -3657,3 +3657,58 @@ test("cardThemeTags keys a graveyard leave as leaves-graveyard and a battlefield
   expect(out.has("dies:creature")).toBe(true);
   expect(out.has("leaves:any")).toBe(false);
 });
+
+/** DAMAGE TO A PLAYER IS LIFE LOSS (CR 120.3). Every "whenever an opponent loses life" payoff --
+ *  and Start your engines! -- saw drain and nothing else, while a burn spell to the face causes the
+ *  same loss at the table. A damage emit that names NO type is aimed at a player ("each opponent",
+ *  "target opponent", "any target"); one aimed at a creature is not, and combat damage stays out
+ *  (roadmap W15, 2026-09-05): every creature attacks, and a payoff that claims the whole deck is a
+ *  mesh, not a synergy. */
+describe("damage to a player satisfies a life-loss trigger", () => {
+  const watcher = base("Bloodchief Ascension", [{
+    kind: "triggered",
+    trigger: { verbs: ["lose-life"], subject: { control: "opp", token: null } },
+    effect: { kind: "drain" },
+  }] as unknown as CardTags["abilities"]);
+  const burn = (name: string, subject: object) => base(name, [{
+    kind: "on-cast", effect: { kind: "damage" },
+    // `dealer` as the corpus derives it: the fixture without one passed while the corpus refused.
+    emits: [{ verb: "non-combat-damage", subject: { token: null, ...subject }, dealer: { control: "you", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+
+  test("burn to each opponent feeds it", () => {
+    const tags = pairReasons(burn("Blazing Volley", { control: "opp", scope: "each" }), watcher, H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("lose-life"))).toBe(true);
+  });
+
+  /** "ANY TARGET" IS THE CASTER'S CHOICE, and the caster aims at the opponent. Lightning Bolt
+   *  derives control `any`, scope `target`; a trigger that watches an OPPONENT losing life is fed
+   *  by it exactly as by "each opponent". The same reasoning `eventMatches` already applies to a
+   *  targeted kill meeting a combat demand: the producer's controller picks the victim. */
+  test("burn to any target feeds it, because the caster picks the opponent", () => {
+    const tags = pairReasons(burn("Lightning Bolt", { control: "any", scope: "target" }), watcher, H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("lose-life"))).toBe(true);
+  });
+
+  test("a targeted drain feeds it for the same reason", () => {
+    const drain = base("Sovereign's Bite", [{
+      kind: "on-cast", effect: { kind: "drain" },
+      emits: [{ verb: "lose-life", subject: { control: "any", scope: "target", token: null } }],
+    }] as unknown as CardTags["abilities"]);
+    expect(pairReasons(drain, watcher, H).some((r) => r.tag.startsWith("lose-life"))).toBe(true);
+  });
+
+  test("burn aimed at a creature does not", () => {
+    const tags = pairReasons(burn("Flame Slash", { control: "any", type: "creature", scope: "target" }), watcher, H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("lose-life"))).toBe(false);
+  });
+
+  test("combat damage does not", () => {
+    const attacker = base("Grizzly Bears", [{
+      kind: "static", effect: { kind: "" },
+      emits: [{ verb: "combat-damage", subject: { control: "opp", token: null } }],
+    }] as unknown as CardTags["abilities"]);
+    const tags = pairReasons(attacker, watcher, H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("lose-life"))).toBe(false);
+  });
+});

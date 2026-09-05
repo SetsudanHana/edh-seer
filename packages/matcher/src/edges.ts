@@ -713,8 +713,17 @@ export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-dam
  *  graveyard kind, and every death in their decks fed them. */
 function verbSatisfies(producer: GameEvent, consumer: GameEvent): boolean {
   if (producer.verb === consumer.verb) return true;
-  return consumer.verb === "leaves" && producer.verb === "dies"
-    && consumer.subject.zone !== "graveyard" && consumer.subject.withoutDying !== true;
+  if (consumer.verb === "leaves" && producer.verb === "dies"
+    && consumer.subject.zone !== "graveyard" && consumer.subject.withoutDying !== true) return true;
+  // DAMAGE TO A PLAYER IS LIFE LOSS (CR 120.3). A damage emit naming NO type is aimed at a player --
+  // "each opponent" (220 corpus emits), "target opponent" (55), "any target" (451) -- and it feeds
+  // a life-loss trigger the way a drain does; one aimed at a creature or planeswalker does not.
+  // Found by Start your engines! (W9): every "whenever an opponent loses life" payoff saw drain
+  // and nothing else. CEILING: COMBAT DAMAGE STAYS OUT. Every creature attacks, so a payoff that
+  // accepted it would claim the whole deck -- a mesh, not a synergy. The upgrade path is a gate on
+  // evasion, so an unblockable body feeds a life-loss payoff and a vanilla bear does not (W15).
+  return consumer.verb === "lose-life" && producer.verb === "non-combat-damage"
+    && list(producer.subject.type).length === 0 && list(producer.subject.subtype).length === 0;
 }
 
 function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolean {
@@ -777,8 +786,15 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   //
   // `dealer ?? subject` is what makes this additive: only an authored damage emit sets `dealer`, so
   // the implied combat case falls back to exactly the comparison it makes today.
+  // A DAMAGE TRIGGER WATCHES THE DEALER; A LIFE-LOSS TRIGGER WATCHES THE VICTIM. "Whenever a
+  // source you control deals damage" is about who dealt it, so a damage producer is compared on
+  // its `dealer`. The CR 120.3 bridge above lets a life-loss trigger accept a damage emit, and that
+  // trigger names the player who LOSES the life -- the emit's subject -- never the dealer. Without
+  // this line Impact Tremors (dealer: you) met Samut's "an opponent loses life" on the dealer and
+  // was refused on the real corpus while the fixture passed (2026-09-05).
   if (producer.verb === "non-combat-damage" || producer.verb === "combat-damage") {
-    return subjectMatches(producer.dealer ?? producer.subject, consumer.subject, h);
+    const side = consumer.verb === "lose-life" ? producer.subject : producer.dealer ?? producer.subject;
+    return subjectMatches(side, consumer.subject, h);
   }
   return subjectMatches(producer.subject, consumer.subject, h);
 }
