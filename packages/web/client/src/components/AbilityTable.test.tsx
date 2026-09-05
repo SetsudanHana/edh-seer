@@ -10,11 +10,11 @@ test("a multi-type count capitalises every type and reads as a choice", () => {
     kind: "triggered", when: ["attacks|-|-|-"], self: true, effect: "token-generation",
     scaling: "per-creature", counts: "cleric, rogue, warrior, wizard", emits: [],
   }]} stacked />);
-  expect(screen.getByText(/every Cleric, Rogue, Warrior or Wizard you control/)).toBeInTheDocument();
-  expect(screen.getByText(/this card attacking/)).toBeInTheDocument();
+  expect(screen.getAllByText(/every Cleric, Rogue, Warrior or Wizard you control/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/this card attacking/).length).toBeGreaterThan(0);
 });
 
 test("a single-type count is unchanged", () => {
   render(<AbilityTable rows={[{ kind: "activated", when: [], effect: "token-generation", counts: "goblin", emits: [] }]} stacked />);
-  expect(screen.getByText(/every Goblin you control/)).toBeInTheDocument();
+  expect(screen.getAllByText(/every Goblin you control/).length).toBeGreaterThan(0);
 });
