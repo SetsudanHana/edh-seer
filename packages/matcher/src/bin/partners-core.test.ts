@@ -4,7 +4,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts,
-  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf,
+  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -847,3 +847,29 @@ test("a Background is a commander record marked pairing-only", () => {
   expect(rec.pairingOnly).toBe(true);
 });
 
+
+/** MELD IS A CARD-NAME RELATION. It emits nothing and counts nothing, so neither ranking phase could
+ *  propose it; the engine drew the edge in the deck report and the page never asked. */
+const meldHalf = (name: string, partner: string) => {
+  const d = base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "player-life-loss" },
+    emits: [{ verb: "lose-life", subject: { control: "opp", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+  return { ...d, card: { ...d.card, meldPartner: partner } as unknown as DeckCard["card"] };
+};
+
+test("a meld card's page lists its other half, verified on the engine's meld tag", () => {
+  const mishra = meldHalf("Mishra, Claimed by Gix", "Phyrexian Dragon Engine");
+  const engine = meldHalf("Phyrexian Dragon Engine", "Mishra, Claimed by Gix");
+  expect(meldKeysOf(mishra)).toEqual(["meld|-|-|-"]);
+  expect(meldKeysOf(goblinBody())).toEqual([]);
+  const { shards } = buildPartnerArtifact([mishra, engine, goblinBody()], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Mishra, Claimed by Gix")!;
+  expect(rec.demands).toContain("meld|-|-|-");
+  const row = rec.partners.find((r) => r.event === "meld|-|-|-")!;
+  expect(row.name).toBe("Phyrexian Dragon Engine");
+  expect(row.reason).toMatch(/meld/i);
+  expect(rec.pool["meld|-|-|-"]).toBe(1);
+});

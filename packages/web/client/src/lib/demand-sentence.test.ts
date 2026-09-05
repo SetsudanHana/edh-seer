@@ -167,3 +167,7 @@ test("a static's reach reads as the class it applies to", () => {
   expect(eventKeySentence("applies:cost-reduction|instant,sorcery|-|-")).toBe("an instant or sorcery it makes cheaper to cast");
   expect(eventKeySentence("applies:keyword-grant|creature|goblin|-")).toBe("a Goblin creature it grants abilities to");
 });
+
+test("the meld key reads as the other half of the pair", () => {
+  expect(eventKeySentence("meld|-|-|-")).toBe("the other half of its meld pair");
+});

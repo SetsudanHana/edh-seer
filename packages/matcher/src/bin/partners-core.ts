@@ -2,7 +2,7 @@ import type { GameEvent } from "@edh-seer/tagger";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
-import { ROLE_NOT_SYNERGY, directedReasons, themeSubjectKey } from "../edges.js";
+import { ROLE_NOT_SYNERGY, directedReasons, meldReason, themeSubjectKey } from "../edges.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
 import { isLegalCommander, pairingLicense } from "../legality.js";
 /** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
@@ -369,6 +369,8 @@ export function partnersFor(
   freq: EventFrequency,
   slugs: Map<string, string>,
   h: Hierarchy,
+  /** The card this one melds with, when it is in the pool -- the one candidate no key can find. */
+  meldWith?: DeckCard,
 ): PartnerResult {
   // EVERY DEMAND SHAPE THIS CARD'S EMITS CAN SATISFY. `supplyForms` splits type lists and adds the
   // coarser shapes, so a goblin-token emit is found by a demand for a creature entering.
@@ -525,6 +527,24 @@ export function partnersFor(
     }
   }
 
+  // THE OTHER HALF OF A MELD PAIR. One candidate, named on the card, verified exactly as every
+  // other row is: the engine's `meldReason` decides, on the `meld` tag it writes.
+  if (meldWith && rows.length < KEEP) {
+    const key = "meld|-|-|-";
+    pool[key] = 1;
+    // `meldReason` lives beside `directedReasons` in `pairReasons`, not inside it: a meld is
+    // symmetric and stated once per pair, so it is asked for by name here.
+    const on = meldReason(subject, meldWith);
+    if (on.length > 0) {
+      const chosen = pickReason(on);
+      rows.push({
+        name: meldWith.card.name, slug: slugs.get(meldWith.card.name) ?? slugOf(meldWith.card.name),
+        score: specificity(key, freq), event: key, reason: chosen.text,
+        ...(chosen.effectKind ? {} : { unread: true as const }),
+      });
+    }
+  }
+
   // A ROW CAN NOW BE PRICED BELOW THE SCORE THAT RANKED IT, so the order the loop produced is no
   // longer the order the page wants. Sorting here rather than re-ranking keeps the CEILING above
   // honest: `VERIFY_LIMIT` still cuts on the best-possible score, which is the only score known
@@ -653,7 +673,15 @@ export const supplyKeysOf = (d: DeckCard): string[] => [
  *  trigger -- a static, a keyword-only body -- forms no edge, so its page makes no promise to a
  *  crawler even though it still renders. */
 export const isSubstantive = (d: DeckCard): boolean =>
-  emitKeysOf(d).length > 0 || demandKeysOf(d).length > 0 || staticKeysOf(d).length > 0;
+  emitKeysOf(d).length > 0 || demandKeysOf(d).length > 0 || staticKeysOf(d).length > 0
+  || meldKeysOf(d).length > 0;
+
+/** MELD, as a demand key. `meld|-|-|-` when the card names its other half; the candidate is that
+ *  one card, found by name, and the row is verified on the engine's own `meld` tag. A card-NAME
+ *  relation: it emits nothing and counts nothing, so neither ranking phase could ever propose it,
+ *  and the deck report drew the edge while the page never asked (2026-09-05). */
+export const meldKeysOf = (d: DeckCard): string[] =>
+  (d.card as { meldPartner?: string }).meldPartner ? ["meld|-|-|-"] : [];
 
 /** WHAT A STATIC REACHES, as a demand key: `applies:<kind>|<types>|<subtypes>|-`.
  *
@@ -885,6 +913,11 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     for (const k of staticKeysOf(d)) if (freq[k] === undefined) freq[k] = staticCandidates(d).filter((c) => staticReaches(k, c)).length;
   }
 
+  // THE ONE CANDIDATE A NAME FINDS. A meld card names its other half; nothing else here is keyed
+  // on a card name, and one card can cause the relation, so the key is priced as a rarity of one.
+  const byName = new Map(substantive.map((d) => [d.card.name, d] as const));
+  freq["meld|-|-|-"] = 1;
+
   const shards = new Map<string, Record<string, CardPageRecord>>();
   const index: NameIndexEntry[] = [];
 
@@ -900,6 +933,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     ])];
     const feeders = [...new Set(boardCountKeysOf(d).flatMap((k) => bySubtype.get(k) ?? []))];
     const commander = isCommander(d);
+    const meldWith = byName.get((d.card as { meldPartner?: string }).meldPartner ?? "");
 
     const shardName = partnerShardOf(slug);
     const shard = shards.get(shardName) ?? {};
@@ -913,8 +947,8 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       commander,
       ...(commander && isBackground(d) ? { pairingOnly: true as const } : {}),
       emits: [...new Set(emits)],
-      demands: [...new Set([...demandKeysOf(d), ...staticKeysOf(d)])],
-      ...(() => { const { rows, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h);
+      demands: [...new Set([...demandKeysOf(d), ...staticKeysOf(d), ...meldKeysOf(d)])],
+      ...(() => { const { rows, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h, meldWith);
         return { partners: rows, pool, rarity }; })(),
       // A CARD IS LEGAL IN A DECK WHEN ITS WHOLE IDENTITY SITS INSIDE THE COMMANDER'S -- the same
       // rule `legality.ts` reports a violation against. An empty identity is inside every one,
@@ -923,7 +957,8 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
         const identity = new Set(d.card.colorIdentity ?? []);
         const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
         const legalFeeders = feeders.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
-        const { rows, pool, rarity } = partnersFor(d, legal, legalFeeders, freq, slugs, h);
+        // The other half is in the same deck by construction, so it needs no identity check.
+        const { rows, pool, rarity } = partnersFor(d, legal, legalFeeders, freq, slugs, h, meldWith);
         return { commanderPartners: rows, commanderPool: pool, commanderRarity: rarity };
       })() : {}),
     };
