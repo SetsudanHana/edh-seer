@@ -243,6 +243,9 @@ export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<B
   reanimator: { tutor: 2 },
   landfall: { lands: 4 },
   counters: { boardWipe: -1 },
+  // Owner ruling 2026-09-06: six, not three -- the board is walkers, few creatures of its own, and
+  // the wipes are what keeps the walkers alive. The only delta that goes UP on wipes.
+  superfriends: { boardWipe: 3 },
 };
 
 /** Full credit within ±3 of the land target, linear falloff to 0 at ±12 (24 or 48 lands).
