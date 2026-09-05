@@ -444,7 +444,7 @@ export function partnersFor(
     const chosen = pickReason(hit.on);
     rows.push({
       name: r.card.card.name,
-      slug: slugs.get(r.card.card.name) ?? slugOf(r.card.card.name),
+      slug: slugs.get(r.card.card.name)!,
       score: hit.score,
       event: hit.event,
       reason: chosen.text,
@@ -467,7 +467,7 @@ export function partnersFor(
     const usable = feeders.filter((f) => f.card.name !== subject.card.name);
     for (const f of usable) {
       if ((shown[key] ?? 0) >= PER_EVENT_CAP || rows.length >= KEEP) break;
-      const slug = slugs.get(f.card.name) ?? slugOf(f.card.name);
+      const slug = slugs.get(f.card.name)!;
       if (rows.some((r) => r.slug === slug)) continue;
       // VERIFIED THE WAY EVERY OTHER ROW IS, just in the other direction: the engine decides whether
       // the relation exists and writes the sentence.
@@ -508,7 +508,7 @@ export function partnersFor(
     for (const key of staticKeys) pool[key] = hits.filter((x) => x.matched.includes(key)).length;
     for (const { c, matched } of hits.slice(0, VERIFY_LIMIT)) {
       if (rows.length >= KEEP) break;
-      const slug = slugs.get(c.card.name) ?? slugOf(c.card.name);
+      const slug = slugs.get(c.card.name)!;
       if (rows.some((r) => r.slug === slug)) continue;
       const reasons = directedReasons(subject, c, h, { tokensMediate: false });
       for (const key of matched) {
