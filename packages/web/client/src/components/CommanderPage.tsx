@@ -267,8 +267,13 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
 
       <PageFoot />
     </div>
-    <aside className="order-first lg:order-last lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)]">
+    {/* THE PAIR IS TWO CARDS, SO THE RAIL SHOWS TWO. A picked partner's card sits under the
+      * commander's -- owner 2026-09-05: "you should see the card image next to the main commander
+      * you chose". Side by side on a phone, where the rail sits above the text and has the width;
+      * stacked in the desktop rail, which is one card wide. */}
+    <aside className="order-first lg:order-last lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] flex flex-row lg:flex-col gap-4">
       <CardArt artCrop={page.artCrop} name={page.name} />
+      {pair ? <CardArt artCrop={pair.artCrop} name={pair.name} /> : null}
     </aside>
     </article>
   );
