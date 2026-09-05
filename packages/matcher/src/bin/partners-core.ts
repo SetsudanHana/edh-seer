@@ -543,6 +543,7 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
         eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)),
       effect: a.effect?.kind ?? "",
       ...(a.amount ? { amount: a.amount } : {}),
+      ...(a.effect?.subject?.control && a.effect.subject.control !== "you" ? { recipient: a.effect.subject.control } : {}),
       ...(a.effect?.scaling ? { scaling: a.effect.scaling } : {}),
       ...(subtype ? { counts: subtype } : {}),
       emits: (a.emits ?? []).map(eventKey),
@@ -640,6 +641,8 @@ export interface AbilityRow {
   /** The effect's kind (`token-generation`, `draw-card`). Humanised at the edge, never here. */
   effect: string;
   amount?: string;
+  /** Who a draw or a life change goes to, when it is not the card's controller (`opp`, `any`). */
+  recipient?: string;
   /** The basis a magnitude counts on (`per-permanent`), and what it counts, where both are known. */
   scaling?: string;
   counts?: string;

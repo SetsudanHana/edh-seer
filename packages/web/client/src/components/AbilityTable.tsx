@@ -67,7 +67,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
                     </ul>}
               </td>
               <td className="py-3 pr-4">
-                {effectPhrase(a.effect, a.amount) ?? a.effect.replace(/-/g, " ") ?? "—"}
+                {effectPhrase(a.effect, a.amount, undefined, a.recipient) ?? a.effect.replace(/-/g, " ") ?? "—"}
                 {/* A MAGNITUDE THAT COUNTS SOMETHING SAYS WHAT IT COUNTS. "per-permanent" alone is a
                   * word with no object, and the count is the whole reason a Goblin deck runs this. */}
                 {a.counts && (
@@ -99,7 +99,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
               <p><span className="eyebrow text-(--muted)">when </span>{a.when.map(eventKeySentence).join(", ")}</p>
             )}
             <p>
-              {effectPhrase(a.effect, a.amount) ?? a.effect.replace(/-/g, " ") ?? "—"}
+              {effectPhrase(a.effect, a.amount, undefined, a.recipient) ?? a.effect.replace(/-/g, " ") ?? "—"}
               {a.counts && (
                 <span className="text-(--muted)">
                   {" "}once for every {a.counts.charAt(0).toUpperCase() + a.counts.slice(1)} you control

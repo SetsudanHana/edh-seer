@@ -67,3 +67,9 @@ test("a sacrifice the OPPONENT makes is the opponent's creature dying", () => {
   // Your own sacrifice outlet is untouched.
   expect(actionRecipients("Sacrifice another creature: draw a card.")).toEqual({});
 });
+
+test("an amount is optional between the verb and \"life\": Swords' \"its controller gains life equal to its power\"", () => {
+  expect(actionRecipients("Exile target creature. Its controller gains life equal to its power.")).toEqual({ "gain-life": "opp" });
+  expect(actionRecipients("Target creature's controller loses life equal to its toughness.")).toEqual({});
+  expect(actionRecipients("Its controller loses life equal to its power.")).toEqual({ "lose-life": "opp" });
+});
