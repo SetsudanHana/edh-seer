@@ -39,6 +39,7 @@ export const DEMAND_VERB: Record<string, string> = {
   unlock: "being fully unlocked",
   dies: "dying",
   leaves: "leaving the battlefield",
+  "leaves-graveyard": "leaving a graveyard",
   cast: "being cast",
   attacks: "attacking",
   taps: "becoming tapped",

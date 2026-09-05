@@ -147,6 +147,9 @@ export const VERB_PHRASES: Record<string, string> = {
   unlock: "is fully unlocked",
   dies: "dies",
   leaves: "leaves the battlefield",
+  // A `leaves` demand whose subject names the graveyard (Desecrated Tomb, Fang) -- keyed apart from a
+  // battlefield leave by `zoneEventKey` so the sentence cannot say "battlefield" about a graveyard.
+  "leaves-graveyard": "leaves a graveyard",
   cast: "is cast",
   attacks: "attacks",
   taps: "becomes tapped",
