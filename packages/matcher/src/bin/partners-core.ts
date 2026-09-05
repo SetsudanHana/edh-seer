@@ -674,7 +674,13 @@ export const supplyKeysOf = (d: DeckCard): string[] => [
  *  crawler even though it still renders. */
 export const isSubstantive = (d: DeckCard): boolean =>
   emitKeysOf(d).length > 0 || demandKeysOf(d).length > 0 || staticKeysOf(d).length > 0
-  || meldKeysOf(d).length > 0;
+  || meldKeysOf(d).length > 0
+  // EVERY LEGAL COMMANDER, ABILITIES OR NOT. Clara Oswald derives one trigger-doubler with no
+  // subject, so no key above ever admitted her and a Doctor's page offered a companion with
+  // nowhere to link (real build, 2026-09-05). A commander the engine read NOTHING on needs a page
+  // more than most: an empty ability table is where a wrong "no ability" can be seen at all
+  // (roadmap W10) -- 117 derived commanders carried zero abilities and 373 were never bought.
+  || isCommander(d);
 
 /** MELD, as a demand key. `meld|-|-|-` when the card names its other half; the candidate is that
  *  one card, found by name, and the row is verified on the engine's own `meld` tag. A card-NAME

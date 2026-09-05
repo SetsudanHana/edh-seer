@@ -932,3 +932,20 @@ test("a colour chooser carries one list per colour", () => {
   expect(identityKeyOf([])).toBe("C");
   expect(identityKeyOf(["U", "R"])).toBe("UR");
 });
+
+/** EVERY LEGAL COMMANDER HAS A PAGE, abilities or not. Clara Oswald derives one trigger-doubler
+ *  with no subject, so no key ever made her substantive and the Ninth Doctor's page could offer a
+ *  companion with nowhere to link (real build, 2026-09-05). And a commander the engine read
+ *  NOTHING on needs a page more than most: an empty ability table is the one place the owner can
+ *  see a wrong "no ability" (roadmap W10). */
+test("a legal commander with no derived ability still gets a record and an index row", () => {
+  const vanilla = legendary("Isamaru, Hound of Konda", "Legendary Creature — Dog");
+  vanilla.tags!.abilities = [];
+  const unread = { ...legendary("Faceless One", "Legendary Creature — Shapeshifter"), tags: null };
+  const { shards, index } = buildPartnerArtifact([vanilla, unread], H);
+  expect(index.map((e) => e.name).sort()).toEqual(["Faceless One", "Isamaru, Hound of Konda"]);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Faceless One")!;
+  expect(rec.commander).toBe(true);
+  expect(rec.abilities).toEqual([]);
+  expect(rec.partners).toEqual([]);
+});

@@ -12,7 +12,7 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig } from "@edh-seer/data";
+import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-static-core.js";
@@ -155,7 +155,15 @@ writeFileSync(join(stagingDir, "token-art.json"), JSON.stringify(tokenArt));
 // NO CARD RULES TEXT IN THESE RECORDS (spec D2, reversed 2026-09-04): name, type line and mana cost
 // are metadata, and the evidence a reader checks a claim against is the engine's reason sentence,
 // not the card's printed text.
-const partnerDeckCards = cards.map((card) => ({ card, tags: tagsByOracle.get(card._id) ?? null }));
+// THE CARD THE ENGINE READS, NOT THE RAW DOCUMENT, for the one field that is derived on read:
+// `meldPartner` comes off `allParts` in `docToCard` (data/docs.ts) and the raw document has no such
+// field, so the meld channel built from these records found nothing on the first real run
+// (2026-09-05, 0 meld rows). The rest of the record still reads the document's own fields
+// (`legalities`, `artCrop`) that `docToCard` drops.
+const partnerDeckCards = cards.map((card) => ({
+  card: { ...card, meldPartner: docToCard(card).meldPartner },
+  tags: tagsByOracle.get(card._id) ?? null,
+}));
 const partners = buildPartnerArtifact(partnerDeckCards as never, loadHierarchy());
 const partnersDir = join(stagingDir, "partners");
 mkdirSync(partnersDir, { recursive: true });
