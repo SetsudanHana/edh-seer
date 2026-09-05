@@ -1049,3 +1049,28 @@ test("a keyword trigger is a row, a demand and a partner channel on the page", (
   expect(row.event).toBe("lose-life|-|-|-");
   expect(row.reason).toMatch(/speed/);
 });
+
+/** THE PAGE PROPOSES BY KEY BEFORE THE ENGINE VERIFIES, so a verb the engine bridges has to be
+ *  bridged here too or the pair is never asked about. Lightning Bolt's page (2026-09-05) listed
+ *  three damage payoffs and no life-loss one, while the deck report drew Bolt -> Samut through
+ *  CR 120.3. Same for a death satisfying a leave (CR 700.4). */
+test("a supply form carries the verbs the engine lets it satisfy", () => {
+  expect(supplyForms("non-combat-damage|-|-|-")).toContain("lose-life|-|-|-");
+  expect(supplyForms("non-combat-damage|creature|-|-")).not.toContain("lose-life|creature|-|-");
+  expect(supplyForms("non-combat-damage|creature|-|-")).not.toContain("lose-life|-|-|-");
+  expect(supplyForms("dies|creature|goblin|t")).toContain("leaves|creature|goblin|t");
+});
+
+test("a burn spell's page lists a life-loss payoff, verified by the engine", () => {
+  const bolt = base("Lightning Bolt", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", scope: "target", token: null }, dealer: { control: "you", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+  const ascension = base("Bloodchief Ascension", [{
+    kind: "triggered", trigger: { verbs: ["lose-life"], subject: { control: "opp", token: null } }, effect: { kind: "drain" },
+  }] as unknown as CardTags["abilities"]);
+  const { shards } = buildPartnerArtifact([bolt, ascension], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Lightning Bolt")!;
+  const row = rec.partners.find((r) => r.name === "Bloodchief Ascension")!;
+  expect(row.event).toBe("lose-life|-|-|-");
+});
