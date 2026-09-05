@@ -159,3 +159,11 @@ test("a board count reads as what you control, not as something happening", () =
   expect(eventKeySentence("counts|-|goblin|-")).toBe("a Goblin you control");
   expect(eventKeySentence("counts|-|elf|-")).toBe("an Elf you control");
 });
+
+/** A STATIC'S REACH IS A KEY TOO, and it names the class the static applies to rather than an
+ *  event nothing fires: Samut's discount reaches "a noncreature spell", her anthem "a creature". */
+test("a static's reach reads as the class it applies to", () => {
+  expect(eventKeySentence("applies:pump|creature|-|-")).toBe("a creature it boosts");
+  expect(eventKeySentence("applies:cost-reduction|instant,sorcery|-|-")).toBe("an instant or sorcery it makes cheaper to cast");
+  expect(eventKeySentence("applies:keyword-grant|creature|goblin|-")).toBe("a Goblin creature it grants abilities to");
+});
