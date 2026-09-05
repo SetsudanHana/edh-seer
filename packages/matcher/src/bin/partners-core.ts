@@ -1,8 +1,9 @@
-import type { GameEvent } from "@edh-seer/tagger";
+import type { CardTags, GameEvent } from "@edh-seer/tagger";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
 import { ROLE_NOT_SYNERGY, directedReasons, meldReason, themeSubjectKey } from "../edges.js";
+import { keywordAbilities } from "../implied.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "../legality.js";
 /** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
@@ -389,7 +390,7 @@ export function partnersFor(
       // candidate; which one PRICES the row is decided after the engine has spoken, because a pair
       // usually shares several demand keys and the engine confirms some and refuses others.
       const events = new Map<string, { score: number; tags: Set<string> }>();
-      for (const a of c.tags?.abilities ?? []) {
+      for (const a of abilitiesOf(c)) {
         for (const verb of a.trigger?.verbs ?? []) {
           const key = eventKey({ verb, subject: a.trigger!.subject } as GameEvent);
           // THE DEMAND ONLY SPLITS, IT NEVER WIDENS -- the same asymmetry `supplyCounts` relies on.
@@ -604,7 +605,7 @@ export { PARTNER_SHARD_COUNT, partnerShardOf };
 /** THE DERIVED ABILITIES AS PAGE ROWS. Order is the derivation's own, which is the order the clauses
  *  appear on the card -- so the table reads down the card the way a player does. */
 export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
-  (d.tags?.abilities ?? []).map((a) => {
+  abilitiesOf(d).map((a) => {
     const counted = a.effect?.scalingSubject;
     // EVERYTHING IT COUNTS. A party count names four types; the first alone read "counts Clerics".
     const subtype = Array.isArray(counted?.subtype) ? counted?.subtype.join(", ") : counted?.subtype;
@@ -624,15 +625,22 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
     };
   });
 
+/** EVERY ABILITY THE ENGINE READS ON THE CARD: the derived ones and the ones its printed keywords
+ *  give it (`keywordAbilities` -- prowess, extort, Start your engines!). Edge formation has always
+ *  merged the two; the page read the stored list alone, so Samut, the Driving Force showed two
+ *  statics and no reason for a drain card to be near her (roadmap W9, 2026-09-05). */
+export const abilitiesOf = (d: DeckCard): CardTags["abilities"] =>
+  d.tags ? [...d.tags.abilities, ...keywordAbilities(d.tags.characteristics)] : [];
+
 export const emitKeysOf = (d: DeckCard): string[] =>
-  (d.tags?.abilities ?? []).flatMap((a) => (a.emits ?? []).map(eventKey));
+  abilitiesOf(d).flatMap((a) => (a.emits ?? []).map(eventKey));
 
 export const demandKeysOf = (d: DeckCard): string[] => [
   // A CARD'S OWN TRIGGER IS NOT A DEMAND ON THE OTHER 99. Burakos, Party Leader fires when HE
   // attacks (`self: true`, derived correctly); keyed as `attacks|-|-|-` the page filed it as a gap
   // the deck must cover and ranked attackers as his partners (owner, 2026-09-05). The deck report
   // already gates self triggers; the page now does the same.
-  ...(d.tags?.abilities ?? []).flatMap((a) =>
+  ...abilitiesOf(d).flatMap((a) =>
     a.trigger?.subject?.self === true ? []
       : (a.trigger?.verbs ?? []).map((v) => eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))),
   ...boardCountKeysOf(d),
@@ -661,7 +669,7 @@ export const boardCountKeysOf = (d: DeckCard): string[] => [...new Set(boardCoun
  *  the first subtype (`themeSubjectKey`), so a Rogue feeder is verified under `scales:cleric` --
  *  the tag is carried beside the key rather than rebuilt from it. */
 export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
-  (d.tags?.abilities ?? []).flatMap((a) => {
+  abilitiesOf(d).flatMap((a) => {
     const counted = a.effect?.scalingSubject;
     if (!counted || counted.zone !== "battlefield" || counted.control === "opp") return [];
     const subtypes = (Array.isArray(counted.subtype) ? counted.subtype : counted.subtype === undefined ? [] : [counted.subtype])
@@ -740,7 +748,7 @@ const concreteTypes = (types: string[]): string[] => [...new Set(types.flatMap((
   return (ALL_CARD_TYPES as readonly string[]).includes(t) ? [t] : PSEUDO_TYPE_SETS[t] ?? [];
 }))];
 export const staticKeysOf = (d: DeckCard): string[] => [...new Set(
-  (d.tags?.abilities ?? []).flatMap((a) => {
+  abilitiesOf(d).flatMap((a) => {
     const s = a.effect?.subject;
     if (a.kind !== "static" || !s || s.self === true || kindNotARelation(a.effect.kind)) return [];
     const types = concreteTypes(asList(s.type));
@@ -758,7 +766,7 @@ export const staticKeysOf = (d: DeckCard): string[] => [...new Set(
 const reachOf = (c: DeckCard): { types: Set<string>; subtypes: Set<string> } => {
   const types = new Set(c.tags?.characteristics.types.map((t) => t.toLowerCase()) ?? []);
   const subtypes = new Set(c.tags?.characteristics.subtypes.map((t) => t.toLowerCase()) ?? []);
-  for (const a of c.tags?.abilities ?? []) {
+  for (const a of abilitiesOf(c)) {
     for (const e of a.emits ?? []) {
       if (e.subject.token !== true) continue;
       for (const t of asList(e.subject.type)) types.add(t.toLowerCase());

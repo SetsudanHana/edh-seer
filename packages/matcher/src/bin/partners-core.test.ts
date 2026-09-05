@@ -1024,3 +1024,28 @@ test("a board count over a list of subtypes is one demand key per subtype, each 
   expect(row.event).toBe("counts|-|rogue|-");
   expect(row.reason).toMatch(/counts it/);
 });
+
+/** A PRINTED KEYWORD IS ON THE PAGE. `keywordAbilities` gives Start your engines! its trigger for
+ *  edge formation; the page read `tags.abilities` alone, so Samut, the Driving Force showed two
+ *  statics and no reason for a drain card to be near her (roadmap W9, owner 2026-09-05). */
+test("a keyword trigger is a row, a demand and a partner channel on the page", () => {
+  const samut = base("Samut, the Driving Force", [{
+    kind: "static", effect: { kind: "pump", subject: { control: "you", token: null, type: "creature", scope: "all" } },
+  }] as unknown as CardTags["abilities"], ["human"]);
+  samut.tags!.characteristics.keywords = ["start your engines!"];
+  expect(demandKeysOf(samut)).toEqual(["lose-life|-|-|-"]);
+  expect(abilityRowsOf(samut).map((r) => [r.kind, r.effect])).toEqual([["static", "pump"], ["triggered", "speed"]]);
+  const drain = base("Vampire Nighthawk", [{
+    kind: "triggered", trigger: { verbs: ["attacks"], subject: { control: "you", token: null, self: true } },
+    effect: { kind: "drain" },
+    emits: [{ verb: "lose-life", subject: { control: "opp", token: null } }, { verb: "gain-life", subject: { control: "you", token: null } }],
+  }] as unknown as CardTags["abilities"], ["vampire"]);
+  const { shards } = buildPartnerArtifact([samut, drain], H);
+  const rec = (n: string) => [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === n)!;
+  // A page lists what CONSUMES the card's supply, and its own demands are the gap line -- so the
+  // drain card's page is where Samut appears, priced on the life loss she watches for.
+  expect(unmetDemands(rec("Samut, the Driving Force").emits, rec("Samut, the Driving Force").demands)).toContain("lose-life|-|-|-");
+  const row = rec("Vampire Nighthawk").partners.find((r) => r.name === "Samut, the Driving Force")!;
+  expect(row.event).toBe("lose-life|-|-|-");
+  expect(row.reason).toMatch(/speed/);
+});

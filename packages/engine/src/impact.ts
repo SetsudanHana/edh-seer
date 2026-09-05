@@ -89,6 +89,7 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     "graveyard-hate": 0.3,
     "top-manipulation": 0.3,
     "speed-increase": 0.3,
+    "speed": 0.3,
     // A keyword handed to a class of permanents you already control. Only ever typal (a grant to
     // "creatures you control" reaches every creature and forms no edge at all), so when it does
     // count it is a real payoff for a tribe -- but it grants an ability rather than making a

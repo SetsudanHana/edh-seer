@@ -354,3 +354,7 @@ test("effectPhrase names the recipient of a draw or a life change", () => {
   // Kinds whose phrase names no recipient are untouched.
   expect(effectPhrase("damage", "3", undefined, "opp")).toBe("deals 3 damage");
 });
+
+test("gaining speed has a phrase", () => {
+  expect(effectPhrase("speed", undefined)).toBe("gains speed");
+});

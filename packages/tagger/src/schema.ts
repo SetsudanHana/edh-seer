@@ -450,6 +450,9 @@ export const EFFECT_KINDS = [
   "ritual",
   "copy-spell",
   "speed-increase",
+  // SPEED, the Start your engines! resource (CR 702.179) -- not `speed-increase`, which is the flat
+  // tagger's old name for a haste grant and stays what it is.
+  "speed",
   "flicker",
   "animate",
   "untap",

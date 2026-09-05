@@ -635,3 +635,14 @@ test("a Room implies being fully unlocked; a plain enchantment does not", () => 
   const aura = impliedEvents(chars(["enchantment"], ["aura"]));
   expect(aura.some((e) => e.verb === "unlock")).toBe(false);
 });
+
+/** START YOUR ENGINES! IS A TRIGGER ON AN OPPONENT LOSING LIFE (CR 702.179): speed goes up once
+ *  on each of your turns when one does, and every speed payoff hangs off that. 40 commander-legal
+ *  cards print it and all of them derived the reminder as `none` (roadmap W9, owner 2026-09-05). */
+test("start your engines! watches an opponent losing life and gains speed", () => {
+  const a = keywordAbilities(kw(["Start your engines!"]));
+  expect(a).toHaveLength(1);
+  expect(a[0].trigger?.verbs).toEqual(["lose-life"]);
+  expect(a[0].trigger?.subject.control).toBe("opp");
+  expect(a[0].effect.kind).toBe("speed");
+});
