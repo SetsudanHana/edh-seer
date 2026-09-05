@@ -20,7 +20,7 @@ const SPEED_X = /\bwhere x is your speed\b/i;
 
 /** The value of a marker under the state; 0 when the state does not carry it. */
 const markerValue = (state: GameState | undefined, marker: Marker): number =>
-  marker === "speed" ? state?.speed ?? 0 : 0;
+  marker === "speed" ? state?.speed ?? 0 : state?.[marker] ? 1 : 0;
 
 /** Silence and resolve: the card with the abilities the state allows, amounts resolved. Returns the
  *  same object when nothing changes, so a stateless run costs nothing here. */
@@ -73,8 +73,20 @@ export function applyAnthems(pool: DeckCard[], h: Hierarchy): void {
   }
 }
 
-/** Which markers the deck can reach at all: speed when any card prints Start your engines!. */
+/** WHICH MARKERS THE DECK CAN REACH AT ALL, so the page offers a switch only where it can change
+ *  something: speed when a card prints Start your engines!; the monarch when a card makes you it
+ *  (58 commander-legal cards say "become the monarch"); the initiative when one takes it (23);
+ *  the city's blessing when one has Ascend (28); a dungeon when one ventures (38); night when a
+ *  card is daybound or nightbound or turns it night (47). Read off the printed text, in a fixed
+ *  order, so the control's layout is stable across decks. */
+const REACH: [Marker, (dc: DeckCard) => boolean][] = [
+  ["speed", (dc) => (dc.tags?.characteristics.keywords ?? []).some((k) => /start your engines/i.test(k))],
+  ["monarch", (dc) => /\bthe monarch\b/i.test(dc.card.oracleText ?? "")],
+  ["initiative", (dc) => /\bthe initiative\b/i.test(dc.card.oracleText ?? "")],
+  ["blessing", (dc) => /\bascend\b|\bcity.s blessing\b/i.test(dc.card.oracleText ?? "") || (dc.card.keywords ?? []).some((k) => /^ascend$/i.test(k))],
+  ["dungeon", (dc) => /\bventure into the dungeon\b|\bcompleted a dungeon\b/i.test(dc.card.oracleText ?? "")],
+  ["night", (dc) => /\bdaybound\b|\bnightbound\b|\bit becomes (?:day|night)\b|\bit.?s night\b/i.test(dc.card.oracleText ?? "")],
+];
 export function reachableMarkers(inputs: DeckCard[]): Marker[] {
-  const speed = inputs.some((dc) => (dc.tags?.characteristics.keywords ?? []).some((k) => /start your engines/i.test(k)));
-  return speed ? ["speed"] : [];
+  return REACH.filter(([, test]) => inputs.some(test)).map(([m]) => m);
 }

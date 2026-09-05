@@ -13,13 +13,10 @@ import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { clearLastRun, diffRuns, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
 import { decodeShare, encodeShare, payloadFromHash, shareUrl } from "./lib/share-link.js";
+import { searchWithState, stateFromSearch } from "./lib/game-state.js";
+import type { GameState } from "@edh-seer/engine";
 import { deckSourceOf, importDeck } from "./lib/deck-import.js";
 
-/** `?speed=4` -> 4; anything else -> none. */
-function speedFromSearch(search: string): 1 | 2 | 3 | 4 | undefined {
-  const raw = Number(new URLSearchParams(search).get("speed"));
-  return raw === 1 || raw === 2 || raw === 3 || raw === 4 ? raw : undefined;
-}
 
 export default function App() {
   /** WHAT WAS IN THE BOX LAST TIME (roadmap S9). Read once, before anything else, because it feeds
@@ -36,9 +33,9 @@ export default function App() {
   const [data, setData] = useState<AnalyzeResponse | null>(null);
   // A GAME STATE THE OWNER SETS (roadmap W18), carried in the query so a shared link keeps it.
   // Speed is the player's (CR 702.179): one number for the deck, 1 to 4, or none.
-  const [speed, setSpeed] = useState<1 | 2 | 3 | 4 | undefined>(() => speedFromSearch(window.location.search));
-  const speedRef = useRef(speed);
-  speedRef.current = speed;
+  const [state, setState] = useState<GameState>(() => stateFromSearch(window.location.search));
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   /** A DECK IS ALREADY ON ITS WAY, AND THE FIRST PAINT HAS TO KNOW IT. Read from the URL during the
@@ -106,8 +103,8 @@ export default function App() {
     try {
       // THE CALL KEEPS ITS OLD SHAPE WITHOUT A STATE, so nothing that observed it changes; a state
       // adds the arguments only when the owner set one (roadmap W18).
-      const next = speedRef.current
-        ? await analyzeDeck(deckText, commanderText, undefined, { speed: speedRef.current })
+      const next = Object.keys(stateRef.current).length > 0
+        ? await analyzeDeck(deckText, commanderText, undefined, stateRef.current)
         : await analyzeDeck(deckText, commanderText);
       // WAS THAT A DECKLIST? `resolvedCount` counts cards the engine actually found, and a real list
       // finds at least one. Everything that outlives the page view is gated on it.
@@ -163,13 +160,10 @@ export default function App() {
   const onAnalyze = () => void analyse(decklist, commanders);
   // CHANGING THE STATE IS A RE-RUN: the engine reads the deck again under it, and the query says
   // which state the page shows so the link carries it. The hash (the deck) is untouched.
-  const onSpeed = (next: 1 | 2 | 3 | 4 | undefined) => {
-    setSpeed(next);
-    speedRef.current = next;
-    const search = new URLSearchParams(window.location.search);
-    if (next === undefined) search.delete("speed"); else search.set("speed", String(next));
-    const query = search.toString();
-    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+  const onState = (next: GameState) => {
+    setState(next);
+    stateRef.current = next;
+    window.history.replaceState(null, "", `${window.location.pathname}${searchWithState(window.location.search, next)}${window.location.hash}`);
     void analyse(decklist, commanders);
   };
 
@@ -411,7 +405,7 @@ export default function App() {
       )}
       {data && (
         <div className="reveal">
-          <ReportView data={data} diff={diff} speed={speed} onSpeed={onSpeed} />
+          <ReportView data={data} diff={diff} state={state} onState={onState} />
         </div>
       )}
       {/* The fan-content notice used to render here. It is static HTML in `index.html` now, after

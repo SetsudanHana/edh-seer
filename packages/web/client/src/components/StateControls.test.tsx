@@ -7,16 +7,30 @@ import { StateControls } from "./StateControls.js";
  *  is the deck before any engine card is out, which is the report as it always was. */
 test("the speed control offers none and 1 to 4, marks the current one, and reports a pick", async () => {
   const onSpeed = vi.fn();
-  render(<StateControls markers={["speed"]} speed={2} onSpeed={onSpeed} />);
+  render(<StateControls markers={["speed"]} state={{ speed: 2 }} onState={onSpeed} />);
   expect(screen.getByRole("group", { name: /speed/i })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "2" })).toHaveAttribute("aria-pressed", "true");
   await userEvent.click(screen.getByRole("button", { name: "4" }));
-  expect(onSpeed).toHaveBeenCalledWith(4);
+  expect(onSpeed).toHaveBeenCalledWith({ speed: 4 });
   await userEvent.click(screen.getByRole("button", { name: /none/i }));
-  expect(onSpeed).toHaveBeenCalledWith(undefined);
+  expect(onSpeed).toHaveBeenCalledWith({});
 });
 
 test("a deck that reaches no marker gets no control", () => {
-  const { container } = render(<StateControls markers={[]} onSpeed={() => {}} />);
+  const { container } = render(<StateControls markers={[]} onState={() => {}} />);
   expect(container).toBeEmptyDOMElement();
+});
+
+/** THE BOOLEAN MARKERS ARE SWITCHES: the monarch, the initiative, the city's blessing, a completed
+ *  dungeon, night. Each shows only when the deck can reach it, and reports its flip. */
+test("a boolean marker is a pressable switch that reports its flip", async () => {
+  const onState = vi.fn();
+  render(<StateControls markers={["monarch", "dungeon"]} state={{ monarch: true }} onState={onState} />);
+  expect(screen.getByRole("button", { name: /monarch/i })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: /dungeon/i })).toHaveAttribute("aria-pressed", "false");
+  expect(screen.queryByRole("group", { name: /speed/i })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: /dungeon/i }));
+  expect(onState).toHaveBeenCalledWith({ monarch: true, dungeon: true });
+  await userEvent.click(screen.getByRole("button", { name: /monarch/i }));
+  expect(onState).toHaveBeenCalledWith({});
 });
