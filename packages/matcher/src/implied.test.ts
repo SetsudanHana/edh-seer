@@ -645,4 +645,6 @@ test("start your engines! watches an opponent losing life and gains speed", () =
   expect(a[0].trigger?.verbs).toEqual(["lose-life"]);
   expect(a[0].trigger?.subject.control).toBe("opp");
   expect(a[0].effect.kind).toBe("speed");
+  // The PLAYER's marker, not the card's: the effect names you, as a lifegain does.
+  expect(a[0].effect.subject?.control).toBe("you");
 });

@@ -7,6 +7,8 @@
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { connect, loadConfig } from "@edh-seer/data";
 import { extractCharacteristics } from "../characteristics.js";
+import { clauseRequiresOf } from "../derive/markers.js";
+import type { Requirement } from "../schema.js";
 import { grantedToOwnToken, segment } from "../segment.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
@@ -51,6 +53,7 @@ for (const doc of clauseDocs) {
     clauses: doc.canonical,
     characteristics: isToken ? tokenCharsFrom(source as never) : charsFrom(source as never),
     clauseTexts: clauseTexts(source as never),
+    clauseRequires: clauseRequires(source as never),
     clauseCosts: clauseCosts(source as never),
     clauseFaces: clauseFaces(source as never),
     oracleText: (source as { oracleText?: string }).oracleText,
@@ -107,6 +110,12 @@ function clauseFaces(doc: { oracleText?: string; keywords?: string[]; typeLine?:
  *  and this is a fact about the SEGMENTATION, so it is recomputed here rather than stored. */
 function grantedTokenClauses(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): ReadonlySet<number> {
   return grantedToOwnToken(segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? ""));
+}
+
+/** Clause id -> the game-state requirement its ability word carries ("Max speed —"), from the same
+ *  `segment()` call, matched by line tail because the segmenter strips the word (roadmap W18). */
+function clauseRequires(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, Requirement> {
+  return clauseRequiresOf(doc.oracleText ?? "", segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? ""));
 }
 
 /** Clause id -> the clause's activation cost, from the SAME `segment()` call `clauseTexts` uses --

@@ -6,6 +6,7 @@ import { cachedImageLoad } from "./art-cache.js";
 import { cardImageUrl } from "./card-node.js";
 import { ReportChapters } from "./ReportChapters.js";
 import { ReportHeader } from "./ReportHeader.js";
+import { StateControls } from "./StateControls.js";
 import { CardList } from "./CardList.js";
 import { MissingCards } from "./MissingCards.js";
 import { ComboList } from "./ComboList.js";
@@ -49,7 +50,11 @@ import { unreadCardNames } from "../lib/unread.js";
  *  marks nothing. Over the cap nothing is seeded and the header line still says "+14". */
 export const SEED_CAP = 8;
 
-export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
+export function ReportShell({ data, diff, speed, onSpeed }: {
+  data: AnalyzeResponse; diff?: RunDiff | null;
+  /** The game state the report was run under, and the way to change it (roadmap W18). */
+  speed?: 1 | 2 | 3 | 4; onSpeed?: (speed: 1 | 2 | 3 | 4 | undefined) => void;
+}) {
   // THE CARDS THIS EDIT ADDED, LIT IN EVERY CHAPTER without the reader hunting for them.
   const seedPins = diff && diff.added.length > 0 && diff.added.length <= SEED_CAP ? diff.added : undefined;
   // WHICH GRAPH SURFACE THIS DEVICE GETS (roadmap R1). Not a width: see `use-board-mode.ts` for why
@@ -134,6 +139,12 @@ export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunD
           *  `HeadlineScores` lived inside one tab and the coverage gate above the strip is what
           *  this resolves. */}
         <ReportHeader data={data} diff={diff} />
+        {/* A GAME STATE THE OWNER SETS, only where the deck can reach it (roadmap W18). */}
+        {onSpeed && data.report.markers && data.report.markers.length > 0 && (
+          <div className="px-4 py-3 border-b border-(--separator)">
+            <StateControls markers={data.report.markers} speed={speed} onSpeed={onSpeed} />
+          </div>
+        )}
         {/* OUTSIDE THE CHAPTERS, ON EVERY SURFACE. A line the engine never matched to a card is not
           *  a property of any one chapter — the report simply does not contain those cards — and it
           *  is the one failure the reader can fix by editing their paste. It stayed visible across

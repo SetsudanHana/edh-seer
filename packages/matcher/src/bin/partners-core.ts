@@ -611,6 +611,8 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
         eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)),
       // THE TRIGGER IS THE CARD ITSELF: the key cannot carry it, so the row says it beside the key.
       ...(a.trigger?.subject?.self === true ? { self: true as const } : {}),
+      // A GAME-STATE REQUIREMENT the deck report honours only under a state (roadmap W18).
+      ...(a.requires ? { requires: a.requires } : {}),
       effect: a.effect?.kind ?? "",
       ...(a.amount ? { amount: a.amount } : {}),
       ...(a.effect?.subject?.control && a.effect.subject.control !== "you" ? { recipient: a.effect.subject.control } : {}),
@@ -813,6 +815,8 @@ export interface AbilityRow {
   /** The trigger is the card itself ("whenever this creature attacks"); the page reads `when` as
    *  "this card …" rather than "anything …". */
   self?: true;
+  /** "Max speed —": the player's speed this ability needs (CR 702.179), shown on the row. */
+  requires?: { marker: string; min: number };
   /** The effect's kind (`token-generation`, `draw-card`). Humanised at the edge, never here. */
   effect: string;
   amount?: string;

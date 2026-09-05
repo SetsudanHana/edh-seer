@@ -18,3 +18,8 @@ test("a single-type count is unchanged", () => {
   render(<AbilityTable rows={[{ kind: "activated", when: [], effect: "token-generation", counts: "goblin", emits: [] }]} stacked />);
   expect(screen.getAllByText(/every Goblin you control/).length).toBeGreaterThan(0);
 });
+
+test("a row with a speed requirement says it needs max speed", () => {
+  render(<AbilityTable rows={[{ kind: "activated", cost: "{3}", when: [], effect: "draw-card", emits: [], requires: { marker: "speed", min: 4 } }]} stacked />);
+  expect(screen.getAllByText(/at max speed/i).length).toBeGreaterThan(0);
+});

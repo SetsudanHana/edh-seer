@@ -34,7 +34,8 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   "keyword-grant": [() => "grants a keyword", "grants a keyword"],
   untap: [() => "untaps a permanent", "untaps a permanent"],
   "speed-increase": [() => "grants haste", "grants haste"],
-  speed: [() => "gains speed", "gains speed"],
+  // SPEED IS THE PLAYER'S (CR 702.179): the card raises yours, it does not gain one.
+  speed: [() => "raises your speed", "raises your speed"],
   "copy-spell": [() => "copies a spell", "copies a spell"],
   flicker: [() => "blinks a permanent", "blinks a permanent"],
   animate: [() => "turns something into a creature", "turns something into a creature"],

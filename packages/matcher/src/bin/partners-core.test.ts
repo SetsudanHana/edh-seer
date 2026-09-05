@@ -1081,3 +1081,13 @@ test("an ability-loss static reaches no partner on the page", () => {
   ] as unknown as CardTags["abilities"]);
   expect(staticKeysOf(humility)).toEqual([]);
 });
+
+/** A "MAX SPEED" ROW SAYS WHAT IT NEEDS. The requirement rides from derive to the page, so a
+ *  reader sees the condition the deck report only honours under a state (roadmap W18). */
+test("an ability row carries its game-state requirement", () => {
+  const surveyor = base("Goblin Surveyor", [{
+    kind: "activated", cost: "{3}, Exile this card from your graveyard", requires: { marker: "speed", min: 4 },
+    effect: { kind: "draw-card" }, emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+  expect(abilityRowsOf(surveyor)[0]!.requires).toEqual({ marker: "speed", min: 4 });
+});

@@ -1970,3 +1970,15 @@ test("a modal phase trigger's modes inherit its event for the repeats label", ()
   expect(draw.repeats).toBe("per-cycle");
   expect(bmc.abilities.every((a) => a.repeats === "per-cycle")).toBe(true);
 });
+
+/** THE REQUIREMENT RIDES ON THE ABILITY. `clauseRequires` is the fourth per-clause channel beside
+ *  texts, costs and faces, and it reaches every ability the clause produces. */
+test("deriveCardTags carries a clause's requirement onto its abilities", () => {
+  const tags = deriveCardTags({
+    name: "Goblin Surveyor", characteristics: MINIMAL_CHARACTERISTICS,
+    clauses: [{ id: 3, abilityType: "activated", actions: [{ verb: "draw", object: "a card", amount: "1" }] }],
+    clauseTexts: { 3: "Draw a card." }, clauseCosts: { 3: "{3}, Exile this card from your graveyard" },
+    clauseRequires: { 3: { marker: "speed", min: 4 } },
+  } as never);
+  expect(tags.abilities.map((a) => a.requires)).toEqual([{ marker: "speed", min: 4 }]);
+});

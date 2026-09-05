@@ -711,8 +711,8 @@ export function GraphView(
     // `{ source, target }` is what forceLink requires, so it is what the whole effect uses; the
     // wire says `from`/`to`. An edge naming a card the graph does not hold is dropped rather than
     // crashing the layout -- the fixtures assert offDeckReasons is 0, this is the runtime half.
-    const toLink = (e: { from: string; to: string; weight: number }) =>
-      ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight });
+    const toLink = (e: { from: string; to: string; weight: number; enabledBy?: readonly string[] }) =>
+      ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight, ...(e.enabledBy ? { enabledBy: e.enabledBy } : {}) });
     const isLink = (l: ReturnType<typeof toLink>): l is SimLink => Boolean(l.source && l.target);
     const links: SimLink[] = drawnEdges(graph.edges).map(toLink).filter(isLink);
     // What the budget did NOT draw, kept aside for the paint loop only: a hovered or selected card
@@ -993,6 +993,12 @@ export function GraphView(
           // deck 2026-08-27. What is lost is the "radiating outward" reading, which the arrowhead's
           // orientation relative to the clicked card already states.
           ctx.lineDashOffset = -crawl / cam.z;
+        } else if (l.enabledBy && !offEvent && !offFocus) {
+          // THE STATE MADE THIS EDGE (roadmap W18): dashed in the accent, no crawl -- it is a
+          // fact about the setting, not an event flowing.
+          ctx.setLineDash([6 / cam.z, 4 / cam.z]);
+          ctx.lineDashOffset = 0;
+          ctx.strokeStyle = paintColors.accent ?? ctx.strokeStyle;
         } else {
           ctx.setLineDash([]);
         }

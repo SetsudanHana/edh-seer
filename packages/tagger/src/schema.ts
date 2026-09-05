@@ -553,6 +553,11 @@ export type AbilityKind = "triggered" | "activated" | "static" | "on-cast";
  *  player's turn and so up to pod-size times a round; `per-cycle` fires only on yours. */
 export type Repeats = "once" | "per-cycle" | "per-turn" | "repeatable" | "continuous";
 
+/** A game-state marker (CR 702.179 speed today; monarch, initiative, city's blessing, day/night and
+ *  a completed dungeon are the next members) and the value the ability needs it at. */
+export type Marker = "speed";
+export interface Requirement { marker: Marker; min: number }
+
 export interface Ability {
   kind: AbilityKind;
   /** WHICH FACE PRINTS THIS ABILITY — absent for the front face and for every single-face card,
@@ -650,6 +655,11 @@ export interface Ability {
    *  Not an evaluable condition and deliberately not one: see `conditionCares`. It records only the
    *  DEMAND, so `cardCaresTags` can put the card on the right axis. Forms no edge, ever. */
   conditionCares?: string[];
+  /** A GAME-STATE MARKER THE ABILITY NEEDS, evaluable against a state the owner supplies (roadmap
+   *  W18). "Max speed —" abilities need the player's speed at 4 (CR 702.179). Unlike
+   *  `conditionCares` this IS evaluated: with no state, or one that falls short, the ability is
+   *  silent; with one that meets it, the ability is on. The marker is the player's, never a card's. */
+  requires?: Requirement;
   /** How often this ability can fire — see
    *  `docs/superpowers/specs/2026-08-11-repeatability-taxonomy-design.md`.
    *

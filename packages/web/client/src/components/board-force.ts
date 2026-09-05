@@ -93,7 +93,7 @@ export interface Sim extends GraphNode {
 
 /** An edge as forceLink needs it: d3 hardcodes `source`/`target`, so the wire's `from`/`to` are
  *  mapped once at the call site. `weight` is what the link distance and strength read. */
-export interface SimLink { source: Sim; target: Sim; weight: number }
+export interface SimLink { source: Sim; target: Sim; weight: number; enabledBy?: readonly string[] }
 
 /** The radius a node is DRAWN at, in world units. Every consumer -- the repulsion sweep, the edge
  *  springs, hit-testing, the overlap metric -- reads this one function, so the simulated size and
