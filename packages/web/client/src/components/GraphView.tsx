@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { drawnEdges } from "./board-edges.js";
+import { drawnEdges, litUndrawn } from "./board-edges.js";
 import { select } from "d3-selection";
 import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
 import type { CardGraph, DeckReport } from "../types.js";
@@ -711,9 +711,13 @@ export function GraphView(
     // `{ source, target }` is what forceLink requires, so it is what the whole effect uses; the
     // wire says `from`/`to`. An edge naming a card the graph does not hold is dropped rather than
     // crashing the layout -- the fixtures assert offDeckReasons is 0, this is the runtime half.
-    const links: SimLink[] = drawnEdges(graph.edges)
-      .map((e) => ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight }))
-      .filter((l): l is SimLink => Boolean(l.source && l.target));
+    const toLink = (e: { from: string; to: string; weight: number }) =>
+      ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight });
+    const isLink = (l: ReturnType<typeof toLink>): l is SimLink => Boolean(l.source && l.target);
+    const links: SimLink[] = drawnEdges(graph.edges).map(toLink).filter(isLink);
+    // What the budget did NOT draw, kept aside for the paint loop only: a hovered or selected card
+    // paints these too (see `litUndrawn`). Never a simulation link -- the layout is the budget's.
+    const undrawnLinks: SimLink[] = graph.edges.filter((e) => e.drawn === false).map(toLink).filter(isLink);
     // WHICH TAGS EACH DRAWN EDGE CARRIES, keyed the way `flowEdgeByPair` already keys. `SimLink`
     // deliberately does not carry them: it is the SIMULATION's type and the force layout has no
     // business knowing what a mechanism is. Graph-scoped, so it is rebuilt when the board's edges
@@ -918,7 +922,13 @@ export function GraphView(
       const stillMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
       const dashCycle = FLOW_DASH.on + FLOW_DASH.off;
       const crawl = stillMotion ? 0 : (performance.now() / 1000 * FLOW_DASH.speed) % dashCycle;
-      for (const l of links) {
+      // A FOCUSED CARD PAINTS EVERY EDGE IT HAS, drawn or not. The flow and the hover set are both
+      // computed over the whole graph, so without this a partner lit with no line to it -- the
+      // dock said 38 synergies and the board showed 4 of them. Resting board: `links` only.
+      const paintLinks = activeFlow || hoverActive
+        ? [...links, ...litUndrawn(undrawnLinks, hoverActive ? hoveredId : null, flowEdgeByPair)]
+        : links;
+      for (const l of paintLinks) {
         const fe = flowEdgeByPair.get(`${l.source.id}>${l.target.id}`);
         // An edge in the flow takes its direction's hue at full opacity; everything else keeps the
         // neutral stroke and drops to the dim alpha, so the flow reads against the rest of the deck.
