@@ -744,5 +744,51 @@ test("draw facets: engines are any draw above `once`, unlabelled are refused lab
   const row = computeBuild(cards, undefined).buildCategories.find((c) => c.category === "draw")!;
   expect(row.count).toBe(5);
   expect(row.facets).toEqual({ engines: 3, unlabelled: 1 });
-  expect(computeBuild(cards, undefined).buildCategories.find((c) => c.category === "ramp")!.facets).toBeUndefined();
+  // Ramp carries facets of its own since the same day: the fixture's static rock has no label.
+  expect(computeBuild(cards, undefined).buildCategories.find((c) => c.category === "ramp")!.facets).toEqual({ engines: 0, unlabelled: 1 });
+  expect(computeBuild(cards, undefined).buildCategories.find((c) => c.category === "tutor")!.facets).toBeUndefined();
+});
+
+// "Do the same for ramp and removal" (owner, 2026-09-05).
+test("ramp facets: a source that comes back is an engine, a ritual is neither, a fetched land is an engine", () => {
+  const mana = (repeats?: string, kind = "mana-generation"): CardTags["abilities"] =>
+    [{ kind: "activated", effect: { kind }, ...(repeats ? { repeats } : {}) } as never];
+  const cards = [
+    mk("Sol Ring", "{T}: Add {C}{C}.", "Artifact", mana("per-cycle")),
+    mk("Dark Ritual", "Add {B}{B}{B}.", "Instant", [{ kind: "on-cast", effect: { kind: "ritual" }, repeats: "once" } as never]),
+    mk("Cultivate", "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", "Sorcery"),
+    mk("Myriad Landscape", "{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.", "Land", mana("once")),
+    mk("Crypt Ghast", "Whenever you tap a Swamp for mana, add an additional {B}.", "Creature", mana(undefined)),
+    mk("Smothering Tithe", "Whenever an opponent draws a card, that player may pay {2}. If they don't, you create a Treasure token.", "Enchantment",
+      [{ kind: "triggered", effect: { kind: "token-generation" }, repeats: "repeatable" } as never]),
+  ];
+  const members = detectBuildCategories(cards).get("ramp")!;
+  const facets = detectBuildFacets(cards).get("ramp")!;
+  const inRamp = (s: Set<string> | undefined) => [...(s ?? [])].filter((n) => members.has(n)).sort();
+  expect(inRamp(facets.get("engines"))).toEqual(["Cultivate", "Myriad Landscape", "Smothering Tithe", "Sol Ring"]);
+  expect(inRamp(facets.get("unlabelled"))).toEqual(["Crypt Ghast"]);
+  expect(members.has("Dark Ritual")).toBe(true);
+});
+
+test("removal facets: an ability that emits dies/leaves and repeats is an engine; nothing removal-shaped at all is unlabelled", () => {
+  const kill = (repeats?: string, kind = "activated"): CardTags["abilities"] =>
+    [{ kind, effect: { kind: "" }, emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", scope: "target" } }], ...(repeats ? { repeats } : {}) } as never];
+  const cards = [
+    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power.", "Instant",
+      [{ kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "leaves", subject: { control: "opp", token: null, type: "creature", scope: "target" } }], repeats: "once" } as never]),
+    mk("Royal Assassin", "{T}: Destroy target tapped creature.", "Creature", kill("per-cycle")),
+    mk("Ravenous Chupacabra", "When this creature enters, destroy target creature an opponent controls.", "Creature", kill("once", "triggered")),
+    mk("Chaos Warp", "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield.", "Instant"),
+    mk("Mystery Kill", "Destroy target creature.", "Enchantment", kill(undefined, "triggered")),
+    // The regex calls this removal (recursion reads as a bounce); its only dies emit is its OWN
+    // sacrifice, under `you`, so it is neither an engine nor refused -- it is unread.
+    mk("Trading Post", "{1}, {T}, Sacrifice a creature: Return target artifact card from your graveyard to your hand.", "Artifact",
+      [{ kind: "activated", effect: { kind: "" }, emits: [{ verb: "dies", subject: { control: "you", token: null, type: "creature" } }], repeats: "per-cycle" } as never]),
+  ];
+  const members = detectBuildCategories(cards).get("targetedRemoval")!;
+  const facets = detectBuildFacets(cards).get("targetedRemoval")!;
+  const inCat = (s: Set<string> | undefined) => [...(s ?? [])].filter((n) => members.has(n)).sort();
+  expect([...members].sort()).toEqual(["Chaos Warp", "Mystery Kill", "Ravenous Chupacabra", "Royal Assassin", "Swords to Plowshares", "Trading Post"]);
+  expect(inCat(facets.get("engines"))).toEqual(["Royal Assassin"]);
+  expect(inCat(facets.get("unlabelled"))).toEqual(["Chaos Warp", "Mystery Kill", "Trading Post"]);
 });

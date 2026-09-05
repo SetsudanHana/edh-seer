@@ -15,6 +15,18 @@ export type RuleClause =
    *  2026-09-05: "we count the one-off instant that draws 1 card the same way as Rhystic Study".
    *  `Ability.repeats` had sat on every derived ability since 2026-08-11 with no count reading it. */
   | { op: "effectKind"; in: string[]; repeats?: (string | null)[] }
+  /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
+   *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
+   *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
+   *  emit no aristocrats edge ever forms"), so `effectKind` cannot name a removal ability and this
+   *  can. Same per-ability `repeats` narrowing as `effectKind`. The set is still closed: this names
+   *  a channel every derived ability already carries, not a new predicate language. */
+  | { op: "emits"; verbs: string[]; repeats?: (string | null)[];
+      /** Whose permanent the event happens to, and in which zone (`null` = the emit states none,
+       *  i.e. the battlefield). A removal facet asks for `control: ["opp", "any"]` and
+       *  `zone: [null]`: a card's OWN sacrifice emits `dies` under `you` (Trading Post, Grim
+       *  Hireling) and a graveyard recursion emits `leaves` in the graveyard, and neither is removal. */
+      control?: string[]; zone?: (string | null)[] }
   | { op: "typeLine"; contains: string }
   /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
   | { op: "subtype"; in: string[] }
@@ -216,6 +228,13 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     case "effectKind":
       return (dc.tags?.abilities ?? []).some((a) =>
         clause.in.includes(a.effect.kind)
+        && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
+    case "emits":
+      return (dc.tags?.abilities ?? []).some((a) =>
+        (a.emits ?? []).some((e) =>
+          clause.verbs.includes(e.verb)
+          && (clause.control === undefined || clause.control.includes(e.subject.control))
+          && (clause.zone === undefined || clause.zone.includes(e.subject.zone ?? null)))
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
     case "subtype":
       return (dc.tags?.characteristics?.subtypes ?? []).some((s) => clause.in.includes(s.toLowerCase()));

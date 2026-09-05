@@ -33,7 +33,10 @@ import type { Ability, Repeats } from "../schema.js";
  *  falls through to `repeatable`; narrowing the pattern for one card isn't worth it). A card
  *  sacrificing itself by its own printed NAME instead of "this"/"it" (The Filigree Sylex) is out of
  *  scope -- this function has no card name to compare against. */
-const SACRIFICES_ITSELF = /\bsacrifice (?:this|it|~)\b/i;
+/** ...and a cost that DISCARDS or EXILES the card itself is the same one-life shape (2026-09-05):
+ *  channel ("{3}{U}, Discard this card:", Otawara) read `repeatable` and put a channel land among
+ *  the removal ENGINES; "Exile this card from your graveyard:" is the same cost one zone over. */
+const SACRIFICES_ITSELF = /\b(?:sacrifice|discard|exile) (?:this|it|~)\b/i;
 /** Cost is already isolated to the pre-colon segment, so a bare presence check is enough --
  *  verified against real costs like "{T}, Sacrifice this land", "{1}, {T}, Sacrifice this creature",
  *  "{X}{R}, {T}, Sacrifice this creature". */

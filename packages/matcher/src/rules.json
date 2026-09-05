@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -121,6 +121,58 @@
         { "op": "effectKind", "in": ["draw-card"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] }
       ],
       "why": "A draw `repeats.ts` REFUSED to label, on a card with no labelled engine draw beside it. Shown, not hidden: unlabelled beats mislabelled, and a reader who sees 3 unlabelled knows the engine count is a floor."
+    },
+    {
+      "id": "ramp.engine.source",
+      "facet": { "of": "ramp", "name": "engines" },
+      "match": [{ "op": "anyOf", "clauses": [
+        {"op": "effectKind", "in": ["mana-generation", "fast-mana"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
+        {"op": "effectKind", "in": ["token-generation"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
+        { "op": "typeLine", "contains": "land" }
+      ] }],
+      "why": "A MANA SOURCE THAT COMES BACK (owner, 2026-09-05: 'do the same for ramp'). A rock or a dork taps every round, a Treasure ENGINE makes one every turn, and a ramp land is itself the source; a ritual or a one-off pair of Treasures is spent once and is neither facet. The land-fetch half of this facet is the rule below, because a facet rule cannot AND two clauses inside anyOf."
+    },
+    {
+      "id": "ramp.engine.land",
+      "facet": { "of": "ramp", "name": "engines" },
+      "match": [{ "op": "oracle", "pattern": "landFetch" }, { "op": "oracle", "pattern": "ontoBattlefield" }],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "A fetched land taps every turn from then on: the spell resolves once, the acceleration repeats. Same two patterns as `ramp.landFetchSpell`, by name, so the two cannot drift."
+    },
+    {
+      "id": "ramp.unlabelled",
+      "facet": { "of": "ramp", "name": "unlabelled" },
+      "match": [{ "op": "effectKind", "in": ["mana-generation", "fast-mana", "ritual", "token-generation"], "repeats": [null] }],
+      "not": [
+        {"op": "effectKind", "in": ["mana-generation", "fast-mana"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
+        {"op": "effectKind", "in": ["token-generation"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
+        { "op": "typeLine", "contains": "land" },
+        { "op": "oracle", "pattern": "landFetch" }
+      ],
+      "why": "A mana ability `repeats.ts` refused to label, on a card with no labelled engine beside it and no land to fall back on. Shown, not hidden."
+    },
+    {
+      "id": "removal.engine",
+      "facet": { "of": "targetedRemoval", "name": "engines" },
+      "match": [{ "op": "anyOf", "clauses": [{"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}, {"op": "effectKind", "in": ["debuff"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}] }],
+      "why": "REMOVAL THAT COMES BACK (owner, 2026-09-05: 'do the same for removal'). Removal has no effect kind by design, so the ability is found by what it EMITS -- a destroy is a `dies`, an exile or a bounce a `leaves`, burn a `non-combat-damage`, -1/-1 counters a `counter-added`, a shrink a `debuff` kind -- and counted as an engine when that ability repeats: an activated kill on a permanent, a 'whenever ... destroy' trigger. Swords is `on-cast` and once; Chupacabra's ETB is once."
+    },
+    {
+      "id": "removal.unlabelled.refused",
+      "facet": { "of": "targetedRemoval", "name": "unlabelled" },
+      "match": [{ "op": "anyOf", "clauses": [
+        {"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": [null]},
+        {"op": "effectKind", "in": ["debuff"], "repeats": [null]}
+      ] }],
+      "not": [{"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}, {"op": "effectKind", "in": ["debuff"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}],
+      "why": "A removal ability `repeats.ts` refused to label, with no labelled engine beside it."
+    },
+    {
+      "id": "removal.unlabelled.unread",
+      "facet": { "of": "targetedRemoval", "name": "unlabelled" },
+      "match": [],
+      "not": [{"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null]}, { "op": "effectKind", "in": ["debuff"] }],
+      "why": "The oracle regex called it removal and derivation found no removal-shaped ability at all (Chaos Warp: a shuffle-into-library is neither a death nor a leave). Nothing to label, so it is said as unlabelled rather than silently read as a one-shot."
     },
     {
       "id": "burn.effect",

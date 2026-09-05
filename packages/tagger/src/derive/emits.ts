@@ -166,6 +166,9 @@ const ZONE_EMITS: { verb: string; to: string; verbs: Verb[]; when?: (a: Action, 
  *  a graveyard without moving it (Animate Dead's enchant line, Body Double). */
 const GRAVEYARD_MOVE_VERBS: ReadonlySet<string> = new Set(["return", "put", "exile", "cast", "play", "shuffle"]);
 
+/** "Return target creature to its owner's hand" with the destination left out of the action. */
+const RETURNS_TO_HAND = /\bto (?:its|their|that card's|the) owners?'s? hands?\b|\bto your hand\b/i;
+
 /** Did this action move something OFF THE BATTLEFIELD? A stated battlefield origin says so; an
  *  unstated one says so only for a permanent-shaped object. See the `exile` row above. */
 function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean {
@@ -229,8 +232,23 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // `draw:any` and outranked it: `birb-control` read "draw" at cohesion 0.02, one card of 78.
   // Same shape on Ledger Shredder ("this creature connives") -> `draw:creature`.
   const subject = parseSubject(action.object ?? "");
+  // EXILE'S DESTINATION IS IN THE VERB (CR 406.2: "exile" means put into the exile zone), and the
+  // model writes it out less often than not -- Swords to Plowshares, Path to Exile and Deadly
+  // Rollick all record `exile target creature` with `toZone: null`, while Ephemerate happened to
+  // say "exile". Keyed on the stated destination alone, Y1's exile row caught the flicker and
+  // missed the removal: 2026-09-05, every one of those spells derived its exile as UNCLAIMED and
+  // emitted nothing, so no leaves payoff saw a Swords and the removal facet could not find the
+  // removal. Measured on the 21,317 clause docs: 884 exile actions state no zone at all, 347 of
+  // them permanent-shaped. A `return` with no destination is genuinely ambiguous (battlefield or
+  // hand), so it takes the hand ONLY when the clause text says so -- 87 such actions corpus-wide,
+  // 80 of them "to its owner's hand" (Otawara, Aether Spellbomb, Aethersnipe). A `put` with no
+  // destination stays unknown.
+  const toZone = action.toZone
+    ?? (action.verb === "exile" ? "exile"
+      : action.verb === "return" && RETURNS_TO_HAND.test(clauseText ?? "") ? "hand"
+      : null);
   const zoned = ZONE_EMITS.find((r) =>
-    r.verb === action.verb && r.to === (action.toZone ?? null) && (r.when === undefined || r.when(action, subject, opts.self === true)));
+    r.verb === action.verb && r.to === toZone && (r.when === undefined || r.when(action, subject, opts.self === true)));
   // A DRAW'S OBJECT IS ALMOST NEVER THE CARD DRAWN. It is the player ("target spell's controller",
   // Arcane Denial) or the permanent whose ability it is ("this creature connives", Ledger Shredder),
   // and `parseSubject` reads a type word out of either. A real typed draw says so -- "reveal cards

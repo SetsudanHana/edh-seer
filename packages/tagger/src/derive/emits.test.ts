@@ -409,3 +409,19 @@ describe("a card moved out of a graveyard is a graveyard leave", () => {
     expect(actionEmits({ verb: "copy", object: "any creature card in a graveyard", fromZone: "graveyard", toZone: null })).toEqual([]);
   });
 });
+
+// Swords to Plowshares, Path to Exile, Deadly Rollick: the model writes `exile target creature` with
+// no destination at all, and exile's destination is the verb's own (CR 406.2). Keyed on a stated
+// "exile" the row missed every one of them (2026-09-05).
+test("an exile with no stated destination still left the battlefield", () => {
+  const e = actionEmits({ verb: "exile", object: "target creature", fromZone: null, toZone: null });
+  expect(e.map((x) => [x.verb, x.subject.type, x.subject.zone])).toEqual([["leaves", "creature", undefined]]);
+  // A card from the library is still not a permanent, and a `put` with no destination is unknown.
+  expect(actionEmits({ verb: "exile", object: "the top card of your library", fromZone: null, toZone: null })).toEqual([]);
+  expect(actionEmits({ verb: "put", object: "target creature", fromZone: null, toZone: null })).toEqual([]);
+  // A return with no destination is a bounce only when the clause says "to its owner's hand".
+  const otawara = actionEmits({ verb: "return", object: "target artifact, creature, enchantment, or planeswalker", fromZone: null, toZone: null },
+    "Return target artifact, creature, enchantment, or planeswalker to its owner's hand.");
+  expect(otawara.map((x) => x.verb)).toEqual(["leaves"]);
+  expect(actionEmits({ verb: "return", object: "target creature", fromZone: null, toZone: null }, "Return target creature.")).toEqual([]);
+});

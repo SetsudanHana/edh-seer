@@ -578,3 +578,25 @@ test("effectKind with `repeats` is tested per ability, not per card", () => {
   expect(ruleMatches(unlabelled, card([{ effect: { kind: "draw-card" } }]), set)).toBe(true);
   expect(ruleMatches(unlabelled, card([{ effect: { kind: "draw-card" }, repeats: "once" }]), set)).toBe(false);
 });
+
+test("emits is tested per ability like effectKind: a removal ability is what emits dies/leaves", () => {
+  const card = (abilities: unknown[]): DeckCard => ({
+    card: { name: "x", oracleText: "", typeLine: "Creature" } as Card,
+    tags: { abilities } as never,
+  });
+  const set = loadRules();
+  const engine: Rule = { id: "t", match: [{ op: "emits", verbs: ["dies", "leaves"], repeats: ["per-cycle"] }] };
+  const kill = { effect: { kind: "" }, emits: [{ verb: "dies", subject: { control: "opp", token: null, scope: "target" } }] };
+  expect(ruleMatches(engine, card([{ ...kill, repeats: "per-cycle" }]), set)).toBe(true);
+  expect(ruleMatches(engine, card([{ ...kill, repeats: "once" }]), set)).toBe(false);
+  // The label must sit on the SAME ability as the emit.
+  expect(ruleMatches(engine, card([{ ...kill, repeats: "once" }, { effect: { kind: "draw-card" }, repeats: "per-cycle" }]), set)).toBe(false);
+  // A card's OWN sacrifice is not removal, and a graveyard leave is not a battlefield one.
+  const removal: Rule = { id: "r", match: [{ op: "emits", verbs: ["dies", "leaves"], control: ["opp", "any"], zone: [null] }] };
+  expect(ruleMatches(removal, card([{ effect: { kind: "" }, emits: [{ verb: "dies", subject: { control: "you", token: null } }] }]), set)).toBe(false);
+  expect(ruleMatches(removal, card([{ effect: { kind: "" }, emits: [{ verb: "leaves", subject: { control: "any", token: null, zone: "graveyard" } }] }]), set)).toBe(false);
+  expect(ruleMatches(removal, card([{ effect: { kind: "" }, emits: [{ verb: "leaves", subject: { control: "any", token: null } }] }]), set)).toBe(true);
+  const any: Rule = { id: "u", match: [{ op: "emits", verbs: ["dies"] }] };
+  expect(ruleMatches(any, card([{ ...kill }]), set)).toBe(true);
+  expect(ruleMatches(any, card([{ effect: { kind: "draw-card" } }]), set)).toBe(false);
+});

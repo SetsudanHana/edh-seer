@@ -62,7 +62,12 @@ const FIXTURE = new URL("repeats-refused.json", import.meta.url);
  *  `cast` joined SELF_EVENTS -- and refusal fell to 1,413 (3.7%). 454 of the old 621 rows resolve.
  *  Verified: population 35655/45598/289 and panel 429 / 387 / 16 both held, because a label still
  *  changes what nothing matches; the draw facet moved 400 -> 445 engines, 107 -> 41 unlabelled. */
-const REFUSED_CAP = 1413;
+/** 1413 -> 1438 (2026-09-05, same day, later): `emits.ts` gives `exile` its own destination when
+ *  the model states none (Swords to Plowshares' exile was UNCLAIMED and emitted nothing), and a
+ *  `return` the clause text sends "to its owner's hand" the same (Otawara). 582 such actions
+ *  became abilities (37,912 -> 38,494) and 25 of them -- exiles and bounces on triggers the rules
+ *  cannot name -- refuse honestly. Refusal share unchanged at 3.7%. */
+const REFUSED_CAP = 1438;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the
