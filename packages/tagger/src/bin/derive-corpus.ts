@@ -128,11 +128,15 @@ function clauseCosts(doc: { oracleText?: string; keywords?: string[]; typeLine?:
  *  changeling fix (2026-08-14) landed in `extractCharacteristics` and moved the population by
  *  exactly zero, because the corpus never called it. One implementation, one place to fix. */
 function charsFrom(doc: {
-  typeLine?: string; colors?: string[]; colorIdentity?: string[]; manaValue?: number;
+  typeLine?: string; oracleText?: string; colors?: string[]; colorIdentity?: string[]; manaValue?: number;
   power?: string | null; toughness?: string | null; keywords?: string[]; layout?: string;
 }): DerivedTagsDoc["characteristics"] {
   return extractCharacteristics({
     typeLine: doc.typeLine ?? "",
+    // THE TEXT BOX IS PART OF THE TYPE LINE for "X is also a Cleric, Rogue, Warrior, and Wizard":
+    // `extractCharacteristics` reads it, and this projection had never handed it over, so the
+    // corpus re-derived at 103 with Burakos still an Orc alone (2026-09-05).
+    oracleText: doc.oracleText ?? "",
     layout: doc.layout,
     colors: doc.colors ?? [],
     colorIdentity: doc.colorIdentity ?? [],

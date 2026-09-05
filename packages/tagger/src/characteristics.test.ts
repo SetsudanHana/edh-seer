@@ -146,3 +146,20 @@ test("both faces' subtypes survive, and duplicates collapse", () => {
   expect(split.types).toEqual(["instant"]);
   expect(split.subtypes).toEqual([]);
 });
+
+/** "X IS ALSO A CLERIC, ROGUE, WARRIOR, AND WIZARD" IS THE CARD'S OWN TYPE LINE, printed in the
+ *  text box. Four corpus cards say it (Burakos, Party Leader; Stonework Packbeast; Tajuru Paragon;
+ *  Veteran Adventurer) and every one derived subtypes of just its printed line, so no Rogue payoff
+ *  ever saw Burakos and his own party count could not count him (owner, 2026-09-05). */
+test("a card that says it is also other creature types carries them as subtypes", () => {
+  const burakos = {
+    ...inalla,
+    name: "Burakos, Party Leader",
+    typeLine: "Legendary Creature — Orc",
+    oracleText: "Burakos is also a Cleric, Rogue, Warrior, and Wizard.\nWhenever Burakos attacks, defending player loses X life.",
+  };
+  expect(extractCharacteristics(burakos).subtypes).toEqual(["orc", "cleric", "rogue", "warrior", "wizard"]);
+  // A word that is not a creature type is not admitted: the sentence is read, not trusted.
+  const odd = { ...burakos, oracleText: "Burakos is also a Commander." };
+  expect(extractCharacteristics(odd).subtypes).toEqual(["orc"]);
+});

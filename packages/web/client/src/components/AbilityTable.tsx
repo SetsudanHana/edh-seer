@@ -66,7 +66,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
                 {a.when.length === 0
                   ? <span className="text-(--muted)">—</span>
                   : <ul className="flex flex-col gap-1">
-                      {a.when.map((w) => <li key={w}>{eventKeySentence(w)}</li>)}
+                      {a.when.map((w) => <li key={w}>{eventKeySentence(w, a.self ? "this card" : undefined)}</li>)}
                     </ul>}
               </td>
               <td className="py-3 pr-4">
@@ -99,7 +99,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
               {a.cost && <span className="font-mono text-sm">{a.cost}</span>}
             </p>
             {a.when.length > 0 && (
-              <p><span className="eyebrow text-(--muted)">when </span>{a.when.map(eventKeySentence).join(", ")}</p>
+              <p><span className="eyebrow text-(--muted)">when </span>{a.when.map((w) => eventKeySentence(w, a.self ? "this card" : undefined)).join(", ")}</p>
             )}
             <p>
               {effectPhrase(a.effect, a.amount, undefined, a.recipient) ?? a.effect.replace(/-/g, " ") ?? "—"}
@@ -112,7 +112,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
             {a.emits.length > 0 && (
               <p>
                 <span className="eyebrow text-(--muted)">puts into the game </span>
-                {a.emits.map(eventKeySentence).join(", ")}
+                {a.emits.map((w) => eventKeySentence(w)).join(", ")}
               </p>
             )}
           </li>

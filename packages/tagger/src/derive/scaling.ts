@@ -58,6 +58,28 @@ const BASES: [RegExp, ScalingBasis][] = [
  *  from " on " is dropped for that reason; " in " is kept, because "in your graveyard" IS the basis. */
 const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60})/i;
 
+/** "WHERE X IS THE NUMBER OF ..." DEFINES X FOR THE WHOLE CLAUSE, and the own-text rule still holds:
+ *  the count reaches only an action whose amount IS that bare X, never a sibling with a fixed
+ *  amount. Burakos, Party Leader -- "defending player loses X life and you create X Treasure
+ *  tokens, where X is the number of creatures in your party" -- keeps the tail on neither action
+ *  after normalization, so both derived `x-cost` and no subject (owner, 2026-09-05). */
+const DEFINES_X = /\bwhere x is (?:the number of|equal to the number of)\s+([^.,;]{1,60})/i;
+const isBareX = (action: Action): boolean => /^x$/i.test((action.amount ?? "").trim());
+/** The text the count is read from: the action's own, or the clause's definition of its X. */
+const countedText = (action: Action, clauseText?: string): string => {
+  const own = `${action.amount ?? ""} ${action.object ?? ""}`;
+  if (COUNTED.test(own)) return own;
+  const defined = clauseText && isBareX(action) ? DEFINES_X.exec(clauseText)?.[1] : undefined;
+  return defined ? `number of ${defined}` : own;
+};
+
+/** A PARTY IS A BOARD COUNT OF FOUR TYPES (CR 700.7): up to one each of Cleric, Rogue, Warrior and
+ *  Wizard among creatures you control. CEILING: the cap of four is a magnitude the engine does not
+ *  model; the count is read as "creatures you control that are one of these", which is the same
+ *  set of cards, over-counted past four. 43 corpus cards say party. */
+const PARTY = /\bin your party\b/i;
+const PARTY_TYPES = ["cleric", "rogue", "warrior", "wizard"];
+
 /** WHAT a graveyard count counts, as a subject the matcher can compare a fill against.
  *
  *  The BASIS is not the subject: Cavalier of Flame counts LAND cards in your graveyard, Glamdring
@@ -69,8 +91,8 @@ const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60})/i;
  *  The OWNER matters and is read from the same phrase: "your graveyard" is yours, "all graveyards" is
  *  anyone's, and "their graveyard" is the OPPONENT's — Riverchurn Monument mills each target player
  *  for the size of THEIR yard, which your own fillers do not feed. */
-export function scalingSubject(action: Action): SubjectFilter | undefined {
-  const text = `${action.amount ?? ""} ${action.object ?? ""}`;
+export function scalingSubject(action: Action, clauseText?: string): SubjectFilter | undefined {
+  const text = countedText(action, clauseText);
   const counted = COUNTED.exec(text);
   if (!counted) return undefined;
   const noun = counted[1];
@@ -83,6 +105,8 @@ export function scalingSubject(action: Action): SubjectFilter | undefined {
       : "you";
     return subject;
   }
+
+  if (PARTY.test(noun)) return { type: "creature", subtype: PARTY_TYPES, zone: "battlefield", control: "you", token: null };
 
   // A BOARD COUNT, AND THE GRAVEYARD BRANCH GETS FIRST REFUSAL. "Creature cards in your graveyard"
   // names neither a controller nor the battlefield, so the order is what keeps a graveyard count
@@ -97,11 +121,11 @@ export function scalingSubject(action: Action): SubjectFilter | undefined {
   return subject;
 }
 
-export function actionScaling(action: Action): ScalingBasis | undefined {
-  const amount = action.amount ?? "";
-  // A bare X is the cost the player chose, whatever noun follows it.
-  if (/^x$/i.test(amount.trim())) return "x-cost";
-  const counted = COUNTED.exec(`${amount} ${action.object ?? ""}`);
+export function actionScaling(action: Action, clauseText?: string): ScalingBasis | undefined {
+  const text = countedText(action, clauseText);
+  // A bare X the clause never defines is the cost the player chose, whatever noun follows it.
+  if (isBareX(action) && !COUNTED.test(text)) return "x-cost";
+  const counted = COUNTED.exec(text);
   if (!counted) return undefined;
   const noun = counted[1].split(/\s{1,4}on\s{1,4}/i)[0];
   for (const [re, basis] of BASES) if (re.test(noun)) return basis;

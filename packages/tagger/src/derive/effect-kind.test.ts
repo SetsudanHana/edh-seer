@@ -608,3 +608,12 @@ test("an energy action is not a mana action, and claims nothing instead", () => 
   expect(actionEffectKind({ verb: "add-mana", object: "one mana of any color" } as never, ""))
     .toBe("mana-generation");
 });
+
+/** "IS ALSO A CLERIC, ROGUE, WARRIOR, AND WIZARD" GRANTS TYPES, to the card itself. The clause
+ *  records it as `grant-ability` with the object "becomes also a Cleric, Rogue, Warrior, and
+ *  Wizard", and it read as a keyword grant on all four corpus cards (owner, 2026-09-05). */
+test("becoming also other creature types is a type-grant", () => {
+  expect(actionEffectKind({ verb: "grant-ability", object: "becomes also a Cleric, Rogue, Warrior, and Wizard" }))
+    .toBe("type-grant");
+  expect(actionEffectKind({ verb: "grant-ability", object: "is also a Vehicle" })).toBe("type-grant");
+});

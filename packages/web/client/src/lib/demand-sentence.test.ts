@@ -171,3 +171,10 @@ test("a static's reach reads as the class it applies to", () => {
 test("the meld key reads as the other half of the pair", () => {
   expect(eventKeySentence("meld|-|-|-")).toBe("the other half of its meld pair");
 });
+
+/** A SELF TRIGGER NAMES THE CARD, not "anything": Burakos fires when HE attacks. */
+test("a self trigger reads as this card doing the thing", () => {
+  expect(eventKeySentence("attacks|-|-|-", "this card")).toBe("this card attacking");
+  expect(eventKeySentence("dies|creature|-|-", "this card")).toBe("this card dying");
+  expect(eventKeySentence("attacks|-|-|-")).toBe("anything attacking");
+});

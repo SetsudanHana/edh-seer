@@ -33,6 +33,20 @@ export function playableFaces(typeLine: string, layout?: string): Characteristic
   });
 }
 
+/** "X IS ALSO A CLERIC, ROGUE, WARRIOR, AND WIZARD" IS THE CARD'S OWN TYPE LINE, printed in the
+ *  text box. Four corpus cards say it (Burakos, Party Leader; Stonework Packbeast; Tajuru Paragon;
+ *  Veteran Adventurer) and each derived only its printed subtypes, so no Rogue payoff saw Burakos
+ *  and his own party count could not count him (owner, 2026-09-05). Only words the closed creature
+ *  subtype list knows are admitted: the sentence is read, not trusted. */
+const IS_ALSO_A = /(?:^|\n)[^\n.]{1,60}? is also an? ([^.\n]{1,80})\./;
+function alsoTypes(card: Card): string[] {
+  const m = IS_ALSO_A.exec(card.oracleText ?? "");
+  if (!m) return [];
+  const known = new Set<string>(CREATURE_SUBTYPES);
+  // "Cleric, Rogue, Warrior, and Wizard": the Oxford comma leaves "and Wizard" as one token.
+  return m[1]!.split(/,\s*(?:and\s+)?|\s+and\s+/).map((w) => w.trim().toLowerCase()).filter((w) => known.has(w));
+}
+
 export function extractCharacteristics(card: Card): Characteristics {
   const [left, right] = splitTypeLine(card.typeLine);
   const faces = playableFaces(card.typeLine, card.layout);
@@ -46,7 +60,7 @@ export function extractCharacteristics(card: Card): Characteristics {
   // creature type wherever it sits. 66 corpus cards, 32 inside the normalized set.
   const subtypes = keywords.includes("changeling")
     ? [...new Set([...right, ...CREATURE_SUBTYPES])]
-    : right;
+    : [...new Set([...right, ...alsoTypes(card)])];
   return {
     types: left,
     subtypes,
