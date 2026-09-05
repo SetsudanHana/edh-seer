@@ -578,6 +578,16 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
  *  the aristocrats edge this engine most wants to find. */
 const REMOVAL_VERBS = new Set(["destroy", "exile"]);
 
+/** "Whenever one or more creature cards leave YOUR GRAVEYARD" (Desecrated Tomb, Fang, Chalk Outline
+ *  -- 32 of the 71 corpus leaves-payoffs). The model's trigger subject dropped the zone on every one
+ *  of them, so they derived identically to The Ozolith's battlefield leave and every death in the
+ *  deck fed them (panel: Fang x3, Soul Enervation, Defiled Crypt, all FALSE). Read from the clause
+ *  text, which is exactly the channel the subject string lost. */
+const LEAVES_GRAVEYARD = /\bleaves? (?:your|a|an opponent'?s|their|each player'?s|its owner'?s|the|that player'?s)? ?graveyard\b/i;
+/** "leave the battlefield WITHOUT DYING" (Dour Port-Mage), "if it didn't die" (Taeko): a `leaves`
+ *  demand that refuses a death. 5 corpus cards. */
+const WITHOUT_DYING = /\bwithout dying\b|\bdidn'?t die\b|\bdoesn'?t die\b/i;
+
 /** "Activate only as a sorcery" (CR 307.5 timing on an activated ability) and its "only during
  *  your turn" cousin: an activation that cannot happen in combat. */
 const SORCERY_SPEED = /\bactivate (?:this ability )?only as a sorcery\b|\bonly during your turn\b/i;
@@ -835,6 +845,11 @@ export function deriveAbilities(
         // the state, so keeping it here would delete every real edge these have. Kept on every
         // other verb -- "an attacking creature DIES" narrows a death the way the verb cannot.
         if (verb === "attacks" && subject.combat === "attacking") delete subject.combat;
+        // A LEAVE HAS A ZONE. CR 603.6c is about the battlefield; "leave your graveyard" is a
+        // different event that shares nothing with a death, and "without dying" is a battlefield
+        // leave minus `dies`. Both are read off the TEXT because the trigger subject dropped them.
+        if (verb === "leaves" && LEAVES_GRAVEYARD.test(text)) subject.zone = "graveyard";
+        if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
         selfLeavesTrigger = subject.self === true && verb === "leaves";
         // Read from the clause TEXT, not the trigger subject string: the count sits in the trigger
         // clause's prose ("when there are 1,000 or more time counters on ..."), which is the same
