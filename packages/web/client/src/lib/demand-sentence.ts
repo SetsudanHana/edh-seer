@@ -357,7 +357,7 @@ const STATIC_REACH: Record<string, string> = {
   "protection": "it protects",
 };
 
-export function eventKeySentence(key: string): string {
+export function eventKeySentence(key: string, subject?: string): string {
   const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
 
   // A phase and a player action carry no subject to glue a noun onto -- the same two escapes
@@ -394,6 +394,9 @@ export function eventKeySentence(key: string): string {
   const event = DEMAND_VERB[verb];
   // A verb this map has never seen says the true ugly thing rather than inventing a phrase for it.
   if (!event) return deslugify(key.replace(/\|/g, " "));
+  // A SELF TRIGGER NAMES THE CARD. "Whenever Burakos attacks" is not "anything attacking", and the
+  // key cannot carry the self flag, so the caller hands the noun in.
+  if (subject !== undefined) return `${subject} ${event}`;
 
   const list = (raw: string, proper: boolean): string[] =>
     raw === "-" ? [] : raw.split(",").map((m) => proper ? capitalize(m) : m);

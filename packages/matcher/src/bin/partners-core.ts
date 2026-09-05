@@ -462,9 +462,13 @@ export function partnersFor(
   // ONE LIST, NOT TWO SECTIONS: the engine's own sentence names both cards and says which way it
   // runs ("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets
   // bigger"), so the row itself tells a reader the direction.
-  for (const key of boardCountKeysOf(subject)) {
+  for (const { key, tag } of boardCountsOf(subject)) {
+    if (key in pool) continue;
     const score = specificity(key, freq);
-    const usable = feeders.filter((f) => f.card.name !== subject.card.name);
+    // A FEEDER SITS UNDER THE KEY IT SUPPLIES. A party count has four keys and the engine confirms
+    // a Rogue under any of them (an array subtype is OR), so without this every feeder landed under
+    // the first key and the page said "a Cleric you control" over a Rogue.
+    const usable = feeders.filter((f) => f.card.name !== subject.card.name && supplyKeysOf(f).includes(key));
     for (const f of usable) {
       if ((shown[key] ?? 0) >= PER_EVENT_CAP || rows.length >= KEEP) break;
       const slug = slugs.get(f.card.name)!;
@@ -472,7 +476,7 @@ export function partnersFor(
       // VERIFIED THE WAY EVERY OTHER ROW IS, just in the other direction: the engine decides whether
       // the relation exists and writes the sentence.
       const on = directedReasons(f, subject, h, { tokensMediate: false })
-        .filter((r) => r.tag === `scales:${key.split("|")[2]}`);
+        .filter((r) => r.tag === tag);
       if (on.length === 0) continue;
       shown[key] = (shown[key] ?? 0) + 1;
       const chosen = pickReason(on);
@@ -602,12 +606,15 @@ export { PARTNER_SHARD_COUNT, partnerShardOf };
 export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
   (d.tags?.abilities ?? []).map((a) => {
     const counted = a.effect?.scalingSubject;
-    const subtype = Array.isArray(counted?.subtype) ? counted?.subtype[0] : counted?.subtype;
+    // EVERYTHING IT COUNTS. A party count names four types; the first alone read "counts Clerics".
+    const subtype = Array.isArray(counted?.subtype) ? counted?.subtype.join(", ") : counted?.subtype;
     return {
       kind: a.kind,
       ...(a.cost ? { cost: a.cost } : {}),
       when: (a.trigger?.verbs ?? []).map((v) =>
         eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)),
+      // THE TRIGGER IS THE CARD ITSELF: the key cannot carry it, so the row says it beside the key.
+      ...(a.trigger?.subject?.self === true ? { self: true as const } : {}),
       effect: a.effect?.kind ?? "",
       ...(a.amount ? { amount: a.amount } : {}),
       ...(a.effect?.subject?.control && a.effect.subject.control !== "you" ? { recipient: a.effect.subject.control } : {}),
@@ -621,8 +628,13 @@ export const emitKeysOf = (d: DeckCard): string[] =>
   (d.tags?.abilities ?? []).flatMap((a) => (a.emits ?? []).map(eventKey));
 
 export const demandKeysOf = (d: DeckCard): string[] => [
+  // A CARD'S OWN TRIGGER IS NOT A DEMAND ON THE OTHER 99. Burakos, Party Leader fires when HE
+  // attacks (`self: true`, derived correctly); keyed as `attacks|-|-|-` the page filed it as a gap
+  // the deck must cover and ranked attackers as his partners (owner, 2026-09-05). The deck report
+  // already gates self triggers; the page now does the same.
   ...(d.tags?.abilities ?? []).flatMap((a) =>
-    (a.trigger?.verbs ?? []).map((v) => eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))),
+    a.trigger?.subject?.self === true ? []
+      : (a.trigger?.verbs ?? []).map((v) => eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))),
   ...boardCountKeysOf(d),
 ];
 
@@ -641,15 +653,22 @@ const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "fore
  *  ground ("creatures you control" is satisfied by every creature in the deck), and a key the
  *  matcher would refuse is a row the page must not offer. The two gates state the same rule and are
  *  tested against each other. */
-export const boardCountKeysOf = (d: DeckCard): string[] => [...new Set(
+export const boardCountKeysOf = (d: DeckCard): string[] => [...new Set(boardCountsOf(d).map((b) => b.key))];
+
+/** EVERY SUBTYPE A BOARD COUNT NAMES IS ITS OWN KEY, each carrying the tag the engine writes for
+ *  the ability. A party count (CR 700.7) names Cleric, Rogue, Warrior and Wizard; keyed on the
+ *  first alone, Burakos's page asked only for Clerics (owner, 2026-09-05). The engine's tag takes
+ *  the first subtype (`themeSubjectKey`), so a Rogue feeder is verified under `scales:cleric` --
+ *  the tag is carried beside the key rather than rebuilt from it. */
+export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
   (d.tags?.abilities ?? []).flatMap((a) => {
     const counted = a.effect?.scalingSubject;
     if (!counted || counted.zone !== "battlefield" || counted.control === "opp") return [];
-    const subtype = Array.isArray(counted.subtype) ? counted.subtype[0] : counted.subtype;
-    if (subtype === undefined || BASIC_LAND_TYPES.has(subtype)) return [];
-    return [`counts|-|${subtype}|-`];
-  }),
-)];
+    const subtypes = (Array.isArray(counted.subtype) ? counted.subtype : counted.subtype === undefined ? [] : [counted.subtype])
+      .filter((st) => !BASIC_LAND_TYPES.has(st));
+    const tag = `scales:${themeSubjectKey(counted)}`;
+    return subtypes.map((st) => ({ key: `counts|-|${st}|-`, tag }));
+  });
 
 /** WHAT A CARD IS, as a supply key -- its own printed subtypes.
  *
@@ -788,6 +807,9 @@ export interface AbilityRow {
   /** The events that set it off, as event keys, so the page renders them with the same sentence
    *  function every other event on the site uses. */
   when: string[];
+  /** The trigger is the card itself ("whenever this creature attacks"); the page reads `when` as
+   *  "this card …" rather than "anything …". */
+  self?: true;
   /** The effect's kind (`token-generation`, `draw-card`). Humanised at the edge, never here. */
   effect: string;
   amount?: string;

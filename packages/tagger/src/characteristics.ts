@@ -33,6 +33,30 @@ export function playableFaces(typeLine: string, layout?: string): Characteristic
   });
 }
 
+/** "X IS ALSO A CLERIC, ROGUE, WARRIOR, AND WIZARD" IS THE CARD'S OWN TYPE LINE, printed in the
+ *  text box. Four corpus cards say it (Burakos, Party Leader; Stonework Packbeast; Tajuru Paragon;
+ *  Veteran Adventurer) and each derived only its printed subtypes, so no Rogue payoff saw Burakos
+ *  and his own party count could not count him (owner, 2026-09-05). Only words the closed creature
+ *  subtype list knows are admitted: the sentence is read, not trusted. */
+const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function alsoTypes(card: Card): string[] {
+  // ANCHORED ON THE CARD'S OWN NAME, never a wildcard prefix: a lazy `[^\n.]{1,60}?` before the
+  // verb is polynomial on a run of spaces (CodeQL js/polynomial-redos, PR #191). A legendary card
+  // names itself by the part before the comma -- "Burakos is also ..." on Burakos, Party Leader.
+  const names = [...new Set([card.name, card.name.split(",")[0]!.trim(), "This creature"])].filter(Boolean);
+  const re = new RegExp(`(?:^|\\n)(?:${names.map(escapeRe).join("|")}) is also an? ([^.\\n]{1,80})\\.`);
+  const m = re.exec(card.oracleText ?? "");
+  if (!m) return [];
+  const known = new Set<string>(CREATURE_SUBTYPES);
+  // "Cleric, Rogue, Warrior, and Wizard": commas first, then a plain " and " inside each piece, then
+  // a leading "and " left by the Oxford comma. String splits, not one alternating regex -- CodeQL
+  // flagged `,\s*(?:and\s+)?|\s+and\s+` as polynomial on a run of spaces (PR #191, twice).
+  return m[1]!.split(",")
+    .flatMap((piece) => piece.split(" and "))
+    .map((w) => w.trim().toLowerCase().replace(/^and /, ""))
+    .filter((w) => known.has(w));
+}
+
 export function extractCharacteristics(card: Card): Characteristics {
   const [left, right] = splitTypeLine(card.typeLine);
   const faces = playableFaces(card.typeLine, card.layout);
@@ -46,7 +70,7 @@ export function extractCharacteristics(card: Card): Characteristics {
   // creature type wherever it sits. 66 corpus cards, 32 inside the normalized set.
   const subtypes = keywords.includes("changeling")
     ? [...new Set([...right, ...CREATURE_SUBTYPES])]
-    : right;
+    : [...new Set([...right, ...alsoTypes(card)])];
   return {
     types: left,
     subtypes,

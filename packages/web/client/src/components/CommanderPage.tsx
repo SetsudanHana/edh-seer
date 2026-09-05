@@ -195,7 +195,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           <span className="eyebrow text-(--muted)">the other 99 have to bring </span>
           {gaps.length === 0
             ? <span className="text-(--muted)">nothing — it answers every event it watches</span>
-            : gaps.map(eventKeySentence).join(" · ")}
+            : gaps.map((w) => eventKeySentence(w)).join(" · ")}
         </p>
         </>)}
       </div>

@@ -107,3 +107,23 @@ test("a creature count keeps per-creature", () => {
   expect(actionScaling({ verb: "draw", object: "a card for each creature you control" } as never))
     .toBe("per-creature");
 });
+
+/** "WHERE X IS THE NUMBER OF ..." DEFINES X FOR THE CLAUSE, and the own-text rule above still holds:
+ *  the count reaches only an action whose amount IS that bare X, never a sibling with a fixed
+ *  amount. Burakos, Party Leader: "defending player loses X life and you create X Treasure tokens,
+ *  where X is the number of creatures in your party" -- the normalizer keeps the tail on neither
+ *  action, so both derived `x-cost` and no subject (owner, 2026-09-05). And "in your party" is a
+ *  board count of the four party types (CR 700.7). 43 corpus cards say party. */
+test("a clause that defines X hands the count to every action whose amount is X", () => {
+  const clause = "Whenever Burakos attacks, defending player loses X life and you create X Treasure tokens, where X is the number of creatures in your party.";
+  const life = { verb: "lose-life", object: "defending player", amount: "X" } as never;
+  const tokens = { verb: "create", object: "X Treasure tokens", amount: "X" } as never;
+  const fixed = { verb: "draw", amount: "1" } as never;
+  expect(actionScaling(life, clause)).toBe("per-creature");
+  expect(scalingSubject(tokens, clause)).toEqual({
+    type: "creature", subtype: ["cleric", "rogue", "warrior", "wizard"], zone: "battlefield", control: "you", token: null,
+  });
+  expect(actionScaling(fixed, clause)).toBeUndefined();
+  // A bare X with no definition in the clause is still the X the player paid.
+  expect(actionScaling(tokens, "Create X Treasure tokens.")).toBe("x-cost");
+});

@@ -4,7 +4,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts,
-  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf,
+  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -973,4 +973,54 @@ test("a commander whose partner chooses a colour reaches the colour keys through
   const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "The Ninth Doctor")!;
   expect(rec.pairsWith).toEqual([{ slug: "clara-oswald", name: "Clara Oswald", identity: [], licence: "doctor's companion", choosesColour: true }]);
   expect(Object.keys(rec.commanderPartnersBy ?? {}).sort()).toEqual(["UBR", "URG", "WUR"]);
+});
+
+/** A CARD'S OWN ATTACK IS NOT A DEMAND ON THE OTHER 99. Burakos, Party Leader triggers when HE
+ *  attacks (`self: true`, which the engine derives correctly); the page keyed it as
+ *  `attacks|-|-|-`, printed "anything attacking", filed it as a gap the deck must cover and ranked
+ *  attackers as his partners (owner, 2026-09-05). The row says it is the card itself. */
+test("a self trigger is a row that says so, and never a demand", () => {
+  const burakos = base("Burakos, Party Leader", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null, self: true } },
+    effect: { kind: "token-generation", subject: { control: "any", token: true, subtype: "treasure" } },
+    emits: [{ verb: "create-token", subject: { control: "you", token: true, subtype: "treasure", type: "artifact" } }],
+  }] as unknown as CardTags["abilities"], ["orc"]);
+  expect(demandKeysOf(burakos)).toEqual([]);
+  expect(abilityRowsOf(burakos)[0]).toMatchObject({ when: ["attacks|-|-|-"], self: true });
+  const other = base("Coastal Piracy", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null, type: "creature" } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  expect(demandKeysOf(other)).toEqual(["attacks|creature|-|-"]);
+  expect(abilityRowsOf(other)[0]!.self).toBeUndefined();
+});
+
+/** A PARTY COUNT DEMANDS FOUR TYPES, and each is a key of its own so a Rogue body and a Cleric body
+ *  both feed it. Keyed on the first subtype alone, Burakos's page would have asked only for
+ *  Clerics (owner, 2026-09-05; CR 700.7). */
+test("a board count over a list of subtypes is one demand key per subtype, each verified", () => {
+  const burakos = base("Burakos, Party Leader", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null, self: true } },
+    effect: {
+      kind: "token-generation", scaling: "per-creature",
+      scalingSubject: { type: "creature", subtype: ["cleric", "rogue", "warrior", "wizard"], zone: "battlefield", control: "you", token: null },
+      subject: { control: "any", token: true, subtype: "treasure" },
+    },
+    emits: [{ verb: "create-token", subject: { control: "you", token: true, subtype: "treasure", type: "artifact" } }],
+  }] as unknown as CardTags["abilities"], ["orc"]);
+  expect(boardCountKeysOf(burakos)).toEqual(["counts|-|cleric|-", "counts|-|rogue|-", "counts|-|warrior|-", "counts|-|wizard|-"]);
+  // The row names everything it counts, not the first of them.
+  expect(abilityRowsOf(burakos)[0]!.counts).toBe("cleric, rogue, warrior, wizard");
+  // Substantive, so the build indexes it as a body: a page needs a page to link to.
+  const rogue = base("Thieving Skydiver", [{
+    kind: "triggered", trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } }, effect: { kind: "mill" },
+  }] as unknown as CardTags["abilities"], ["merfolk", "rogue"]);
+  const { shards } = buildPartnerArtifact([burakos, rogue], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Burakos, Party Leader")!;
+  const row = rec.partners.find((r) => r.name === "Thieving Skydiver")!;
+  expect(row.event).toBe("counts|-|rogue|-");
+  expect(row.reason).toMatch(/counts it/);
 });
