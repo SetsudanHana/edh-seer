@@ -3640,3 +3640,20 @@ describe("dies is a leave, a leave is not a death", () => {
     expect(directedReasons(phoenix, enchantmentWatcher, H)).toEqual([]);
   });
 });
+
+// ROADMAP Y1b (2026-09-05): a graveyard leave keys apart from a battlefield leave on the THEME axis
+// too, not only on the reason tag -- otherwise a reanimator deck's headline reads "leaves the
+// battlefield" on the strength of its recursion.
+test("cardThemeTags keys a graveyard leave as leaves-graveyard and a battlefield leave as leaves", () => {
+  const s = { control: "you" as const, token: null, type: "creature" };
+  const out = cardThemeTags(base("X", [
+    { kind: "spell", effect: { kind: null }, emits: [{ verb: "leaves", subject: { ...s, zone: "graveyard" } }] },
+    { kind: "spell", effect: { kind: null }, emits: [{ verb: "leaves", subject: s }] },
+    { kind: "triggered", effect: { kind: "token-generation" }, trigger: { verbs: ["leaves"], subject: { ...s, zone: "graveyard" } } },
+    { kind: "triggered", effect: { kind: "token-generation" }, trigger: { verbs: ["dies"], subject: s } },
+  ] as never).tags);
+  expect(out.has("leaves-graveyard:creature")).toBe(true);
+  expect(out.has("leaves:creature")).toBe(true);
+  expect(out.has("dies:creature")).toBe(true);
+  expect(out.has("leaves:any")).toBe(false);
+});

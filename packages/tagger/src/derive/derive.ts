@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 96;
+export const DERIVE_VERSION = 97;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -938,12 +938,15 @@ export function deriveAbilities(
       if (actor) {
         for (const e of emits) e.subject.control = actor;
         if (subject) subject.control = actor;
-      } else if (REMOVAL_VERBS.has(action.verb ?? "") || emits.some((e) => e.verb === "leaves")) {
+      } else if (REMOVAL_VERBS.has(action.verb ?? "") || emits.some((e) => e.verb === "leaves" && e.subject.zone !== "graveyard")) {
         // See REMOVAL_VERBS. Only a TARGETED removal with no stated controller. A targeted BOUNCE
         // ("return target creature to its owner's hand") joins the rule for its `leaves` emit: it is
         // aimed at an opponent's creature exactly as a targeted destroy is, and without this it read
-        // `any` and fed "whenever a creature YOU control leaves". A graveyard-to-hand `return` emits
-        // no `leaves`, so recursion keeps `any`.
+        // `any` and fed "whenever a creature YOU control leaves". A leave from a GRAVEYARD does not
+        // join it: "put target creature card from a graveyard onto the battlefield" (Reanimate) is
+        // aimed at your own graveyard as readily as theirs, so recursion keeps `any`. An `exile` from
+        // a graveyard is still a REMOVAL_VERB and reads `opp` -- Bojuka Bog -> Desecrated Tomb is the
+        // accepted cost, the same one Saw in Half -> Bloodchief pays.
         for (const e of emits) {
           if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = "opp";
         }
