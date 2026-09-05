@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 95;
+export const DERIVE_VERSION = 96;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -578,6 +578,16 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
  *  the aristocrats edge this engine most wants to find. */
 const REMOVAL_VERBS = new Set(["destroy", "exile"]);
 
+/** "Whenever one or more creature cards leave YOUR GRAVEYARD" (Desecrated Tomb, Fang, Chalk Outline
+ *  -- 32 of the 71 corpus leaves-payoffs). The model's trigger subject dropped the zone on every one
+ *  of them, so they derived identically to The Ozolith's battlefield leave and every death in the
+ *  deck fed them (panel: Fang x3, Soul Enervation, Defiled Crypt, all FALSE). Read from the clause
+ *  text, which is exactly the channel the subject string lost. */
+const LEAVES_GRAVEYARD = /\bleaves? (?:your|a|an opponent'?s|their|each player'?s|its owner'?s|the|that player'?s)? ?graveyard\b/i;
+/** "leave the battlefield WITHOUT DYING" (Dour Port-Mage), "if it didn't die" (Taeko): a `leaves`
+ *  demand that refuses a death. 5 corpus cards. */
+const WITHOUT_DYING = /\bwithout dying\b|\bdidn'?t die\b|\bdoesn'?t die\b/i;
+
 /** "Activate only as a sorcery" (CR 307.5 timing on an activated ability) and its "only during
  *  your turn" cousin: an activation that cannot happen in combat. */
 const SORCERY_SPEED = /\bactivate (?:this ability )?only as a sorcery\b|\bonly during your turn\b/i;
@@ -835,6 +845,11 @@ export function deriveAbilities(
         // the state, so keeping it here would delete every real edge these have. Kept on every
         // other verb -- "an attacking creature DIES" narrows a death the way the verb cannot.
         if (verb === "attacks" && subject.combat === "attacking") delete subject.combat;
+        // A LEAVE HAS A ZONE. CR 603.6c is about the battlefield; "leave your graveyard" is a
+        // different event that shares nothing with a death, and "without dying" is a battlefield
+        // leave minus `dies`. Both are read off the TEXT because the trigger subject dropped them.
+        if (verb === "leaves" && LEAVES_GRAVEYARD.test(text)) subject.zone = "graveyard";
+        if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
         selfLeavesTrigger = subject.self === true && verb === "leaves";
         // Read from the clause TEXT, not the trigger subject string: the count sits in the trigger
         // clause's prose ("when there are 1,000 or more time counters on ..."), which is the same
@@ -886,7 +901,7 @@ export function deriveAbilities(
       // below, which is the shape `prompt.ts` already documents for Tekuthal.
       const effectKind = replacement?.kind ?? actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
-      const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action, text)
+      const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action, text, { self: emitsSelf })
         .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
@@ -923,8 +938,12 @@ export function deriveAbilities(
       if (actor) {
         for (const e of emits) e.subject.control = actor;
         if (subject) subject.control = actor;
-      } else if (REMOVAL_VERBS.has(action.verb ?? "")) {
-        // See REMOVAL_VERBS. Only a TARGETED removal with no stated controller.
+      } else if (REMOVAL_VERBS.has(action.verb ?? "") || emits.some((e) => e.verb === "leaves")) {
+        // See REMOVAL_VERBS. Only a TARGETED removal with no stated controller. A targeted BOUNCE
+        // ("return target creature to its owner's hand") joins the rule for its `leaves` emit: it is
+        // aimed at an opponent's creature exactly as a targeted destroy is, and without this it read
+        // `any` and fed "whenever a creature YOU control leaves". A graveyard-to-hand `return` emits
+        // no `leaves`, so recursion keeps `any`.
         for (const e of emits) {
           if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = "opp";
         }

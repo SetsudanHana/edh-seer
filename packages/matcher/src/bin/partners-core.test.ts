@@ -411,28 +411,30 @@ test("a row carries the confirmed event, not the best-scoring one", async () => 
 });
 
 /** ONE EVENT, TWO SPELLINGS. `eventKey` reads the RAW verb, `zoneEventKey` renames the canonical
- *  one, so a sacrifice outlet's `leaves` demand keys as `leaves|creature|-` and tags as
- *  `dies:creature`. Matching the two strings against each other would drop the whole dies family
- *  without a test noticing; both are built here by the functions that build them for real. */
+ *  one, so a "leave your graveyard" demand keys as `leaves|creature|-` and tags as
+ *  `leaves-graveyard:creature`. Matching the two strings against each other would drop the whole
+ *  family without a test noticing; both are built here by the functions that build them for real.
+ *  (Until 2026-09-05 the witness was a sacrifice outlet's `leaves` tagging `dies:`; a death and a
+ *  leave are two verbs now and neither is renamed, so the rename that remains is the graveyard one.) */
 test("a zone-renamed tag matches the demand key that kept the raw verb", async () => {
-  const outlet = base("Sac Outlet", [{
+  const leaver = base("Graveyard Leaver", [{
     kind: "activated", cost: "{T}",
-    effect: { kind: "sacrifice" },
-    emits: [{ verb: "leaves", subject: { zone: "battlefield", control: "you", token: null, type: "creature" } }],
+    effect: { kind: "graveyard-recursion" },
+    emits: [{ verb: "leaves", subject: { zone: "graveyard", control: "you", token: null, type: "creature" } }],
   }] as unknown as CardTags["abilities"]);
-  const deathPayoff = base("Death Payoff", [{
+  const tombPayoff = base("Graveyard-Leave Payoff", [{
     kind: "triggered",
-    trigger: { verbs: ["leaves"], subject: { zone: "battlefield", type: "creature", control: "you", token: null } },
+    trigger: { verbs: ["leaves"], subject: { zone: "graveyard", type: "creature", control: "you", token: null } },
     effect: { kind: "draw-card" },
   }] as unknown as CardTags["abilities"]);
-  const slugs = resolveSlugs(["Death Payoff"]);
+  const slugs = resolveSlugs(["Graveyard-Leave Payoff"]);
   const edges = await import("../edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "cast:creature", text: "OFF EVENT, REPEATABLE", repeatability: "triggered" },
-    { tag: "dies:creature", text: "ON EVENT", repeatability: "oneshot" },
+    { tag: "leaves-graveyard:creature", text: "ON EVENT", repeatability: "oneshot" },
   ] as never);
   try {
-    const { rows } = partnersFor(outlet, [deathPayoff], [], FREQ, slugs, H);
+    const { rows } = partnersFor(leaver, [tombPayoff], [], FREQ, slugs, H);
     expect(rows).toHaveLength(1);
     expect(rows[0]!.event).toBe("leaves|creature|-|-");
     expect(rows[0]!.reason).toBe("ON EVENT");

@@ -154,6 +154,11 @@ export interface SubjectFilter {
    *  Dropped on an `attacks` trigger, where the state IS the event. Corpus: 12 trigger subjects
    *  name an attacking creature, 1 a blocking one; 272 action objects attacking, 34 blocking. */
   combat?: "attacking" | "blocking";
+  /** A `leaves` demand that REFUSES a death. "Whenever one or more other creatures you control leave
+   *  the battlefield without dying" (Dour Port-Mage) and Taeko's "if it didn't die" are `leaves`
+   *  minus `dies` (CR 700.4). Demand only -- read by `eventMatches`, never stamped on a producer, so
+   *  a consumer that does not ask is unaffected. 5 corpus cards. */
+  withoutDying?: true;
   /** The subject demands the LEGENDARY supertype. "Legendary creatures you control get +2/+2"
    *  (Serah Farron) and Jodah's +X/+X derived a subject of EVERY creature without it, which were the
    *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:

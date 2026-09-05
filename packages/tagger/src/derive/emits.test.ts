@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { actionEmits } from "./emits.js";
 
 test("removal emits a death event even though it has no payoff kind", () => {
@@ -101,8 +101,9 @@ test("a move's events come from where it lands, not from the verb alone", () => 
     .toEqual(["enters-graveyard"]);
   expect(actionEmits({ verb: "return", object: "chosen creature cards", fromZone: "graveyard", toZone: "battlefield" }).map((e) => e.verb))
     .toEqual(["enters"]);
-  // A bounce to hand lands nowhere anything triggers on, so it emits nothing rather than guessing.
-  expect(actionEmits({ verb: "return", object: "target creature", toZone: "hand" })).toEqual([]);
+  // A bounce to hand lands nowhere anything triggers on -- but it LEAVES the battlefield, which is
+  // what a leaves payoff watches (CR 603.6c). Since 2026-09-05 that is the one event it states.
+  expect(actionEmits({ verb: "return", object: "target creature", toZone: "hand" }).map((e) => e.verb)).toEqual(["leaves"]);
 });
 
 
@@ -325,4 +326,43 @@ test("a player-shaped object gives a draw no card type", () => {
 test("a life change still carries the player it happens to", () => {
   expect(actionEmits({ verb: "lose-life", object: "each opponent" })[0].subject)
     .toEqual({ control: "opp", token: null, scope: "each" });
+});
+
+// A FLICKER LEAVES BEFORE IT RETURNS (roadmap Y1, 2026-09-05). The exile half of "exile target
+// creature you control, then return it to the battlefield" emitted nothing, so 266 flicker cards fed
+// every ETB payoff and no leaves payoff: Ephemerate -> The Ozolith was 0 reasons.
+describe("an exile or a bounce off the battlefield is a leaves event", () => {
+  test("exile from the battlefield emits leaves with the object's subject", () => {
+    const e = actionEmits({ verb: "exile", object: "target creature you control", fromZone: "battlefield", toZone: "exile" });
+    expect(e.map((x) => x.verb)).toEqual(["leaves"]);
+    expect(e[0].subject).toEqual({ control: "you", token: null, type: "creature", scope: "target", fromZone: "battlefield" });
+  });
+
+  test("exile with an unstated origin emits leaves when the object is a typed permanent", () => {
+    const e = actionEmits({ verb: "exile", object: "target creature", fromZone: null, toZone: "exile" });
+    expect(e.map((x) => x.verb)).toEqual(["leaves"]);
+  });
+
+  test("exile of a CARD, or from a stated non-battlefield zone, emits nothing", () => {
+    expect(actionEmits({ verb: "exile", object: "the top card of your library", fromZone: null, toZone: "exile" })).toEqual([]);
+    expect(actionEmits({ verb: "exile", object: "target creature card from a graveyard", fromZone: "graveyard", toZone: "exile" })).toEqual([]);
+    expect(actionEmits({ verb: "exile", object: "target card from your hand", fromZone: "hand", toZone: "exile" })).toEqual([]);
+  });
+
+  test("exile of an untyped pronoun with no self hint emits nothing; with the self hint it emits a self leaves", () => {
+    expect(actionEmits({ verb: "exile", object: "it", fromZone: null, toZone: "exile" })).toEqual([]);
+    const self = actionEmits({ verb: "exile", object: "this creature", fromZone: null, toZone: "exile" }, undefined, { self: true });
+    expect(self.map((x) => x.verb)).toEqual(["leaves"]);
+  });
+
+  test("return to hand from the battlefield emits leaves; return from a graveyard to hand does not", () => {
+    const bounce = actionEmits({ verb: "return", object: "target creature", fromZone: "battlefield", toZone: "hand" });
+    expect(bounce.map((x) => x.verb)).toEqual(["leaves"]);
+    expect(actionEmits({ verb: "return", object: "target creature card", fromZone: "graveyard", toZone: "hand" })).toEqual([]);
+  });
+
+  test("return to the battlefield still emits enters and never leaves", () => {
+    const e = actionEmits({ verb: "return", object: "target creature you control", fromZone: "exile", toZone: "battlefield" });
+    expect(e.map((x) => x.verb)).toEqual(["enters"]);
+  });
 });

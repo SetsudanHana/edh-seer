@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Characteristics, GameEvent } from "@edh-seer/tagger";
-import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, enterAsCopyAbilities, keywordAbilities, proliferateAbilities, selfFillTypes } from "./implied.js";
+import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, enterAsCopyAbilities, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import type { CardTags } from "@edh-seer/tagger";
 
 const chars = (types: string[], subtypes: string[] = []): Characteristics => ({
@@ -161,14 +161,29 @@ test("mill and discard imply an untyped enters@graveyard", () => {
   expect(out[0].subject.type).toBeUndefined();
 });
 
-test("a nontoken leaves@battlefield (a dies) implies a typed enters@graveyard; a token does not", () => {
+test("a nontoken dies implies a typed enters@graveyard; a token does not; a LEAVES fills nothing", () => {
   const emits: GameEvent[] = [
+    { verb: "dies", subject: { control: "you", token: false, zone: "battlefield", type: "creature" } },
+    { verb: "dies", subject: { control: "you", token: true, zone: "battlefield" } },
+    // A flicker, a bounce or an exile: the permanent left and went anywhere but a graveyard.
     { verb: "leaves", subject: { control: "you", token: false, zone: "battlefield", type: "creature" } },
-    { verb: "leaves", subject: { control: "you", token: true, zone: "battlefield" } },
   ];
   const out = impliedGraveyardEvents(emits);
   expect(out).toHaveLength(1);
   expect(out[0]).toEqual({ verb: "enters", subject: { control: "you", token: false, zone: "graveyard", type: "creature" } });
+});
+
+test("selfLeavesTypes stamps the card's own types on an untyped self leaves and touches nothing else", () => {
+  const events: GameEvent[] = [
+    { verb: "leaves", subject: { control: "you", token: null, self: true, zone: "battlefield" } },
+    { verb: "leaves", subject: { control: "you", token: null, type: "creature", zone: "battlefield" } },
+    { verb: "enters", subject: { control: "you", token: null, self: true, zone: "battlefield" } },
+  ];
+  const out = selfLeavesTypes(events, chars(["artifact", "creature"], ["golem"]));
+  expect(out[0].subject.type).toEqual(["artifact", "creature"]);
+  expect(out[0].subject.subtype).toEqual(["golem"]);
+  expect(out[1]).toEqual(events[1]);
+  expect(out[2]).toEqual(events[2]);
 });
 
 test("mill/discard do NOT imply a leaves (Blood Artist must stay unfed)", () => {
